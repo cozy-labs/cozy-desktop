@@ -1,0 +1,29 @@
+{
+  "name": "cozy-data-proxy",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/cozy-labs/cozy-data-proxy.git"
+  },
+  "keywords": [
+    "proxy",
+    "data",
+    "sync",
+    "cozy"
+  ],
+  "author": "Cozy Cloud <frank@cozycloud.cc> (https://cozycloud.cc/)",
+  "license": "LGPL",
+  "bugs": {
+    "url": "https://github.com/cozy-labs/cozy-data-proxy/issues"
+  },
+  "homepage": "https://github.com/cozy-labs/cozy-data-proxy",
+  "dependencies": {
+    "chokidar": "^0.8.4",
+    "pouchdb": "^3.0.2"
+  }
+}
