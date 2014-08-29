@@ -1,4 +1,4 @@
-request = require 'request-json'
+request = require 'request-json-light'
 PouchDB = require 'pouchdb'
 
 db = require './db'
