@@ -1,5 +1,5 @@
 fs = require 'fs'
-request = require 'request-json-light'
+request = require 'request-json'
 PouchDB = require 'pouchdb'
 mkdirp = require 'mkdirp'
 program = require 'commander'
