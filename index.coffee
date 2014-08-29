@@ -1,4 +1,5 @@
 fs = require 'fs'
+path = require 'path'
 request = require 'request-json'
 PouchDB = require 'pouchdb'
 mkdirp = require 'mkdirp'
@@ -89,13 +90,20 @@ buildFSTree = (devicename) ->
 
     db.db.query { map: map }, (err, res) ->
         for doc in res.rows
+            name = path.join remoteConfig.path, doc.value.path, doc.value.name
             if doc.value.docType is 'Folder'
                 # Create folder
-                mkdirp.sync remoteConfig.path + doc.value.path + '/' + doc.value.name
+                mkdirp.sync name
+                fs.utimesSync name,
+                    new Date(doc.value.creationDate),
+                    new Date(doc.value.lastModification)
             else
                 # Create parent folder and touch file
-                mkdirp.sync remoteConfig.path + doc.value.path + '/'
-                touch remoteConfig.path + doc.value.path + '/' + doc.value.name
+                mkdirp.sync path.join remoteConfig.path, doc.value.path
+                touch name
+                fs.utimesSync name,
+                    new Date(doc.value.creationDate),
+                    new Date(doc.value.lastModification)
 
 
 fetchBinaries = (devicename) ->
@@ -116,12 +124,19 @@ fetchBinaries = (devicename) ->
 
         for doc in res.rows
             # Fetch every binary
-            filePath = remoteConfig.path + doc.value.path + '/' + doc.value.name
+            filePath = path.join remoteConfig.path, doc.value.path, doc.value.name
             if doc.value.binary?
                 binaryUri = 'cozy/' + doc.value.binary.file.id + '/file'
                 client.saveFile binaryUri, filePath, (err, res, body) ->
                     if err
                         console.log err
+
+                    # Rebuild FS Tree to correct utime
+                    buildFSTree devicename
+
+
+watchChanges = (devicename) ->
+    remoteConfig = config.config.remotes[devicename]
 
 
 runSync = (devicename) ->
@@ -160,6 +175,11 @@ program
     .command('sync <devicename>')
     .description('Synchronize binaries')
     .action runSync
+
+program
+    .command('watch <devicename>')
+    .description('Watch changes on FS')
+    .action watchChanges
 
 program
     .command('display-config')
