@@ -1,11 +1,16 @@
+fs = require 'fs'
+request = require 'request-json-light'
 PouchDB = require 'pouchdb'
+mkdirp = require 'mkdirp'
 program = require 'commander'
 read = require 'read'
+touch = require 'touch'
 log = require('printit')
     prefix: 'Data Proxy'
 
 replication = require './replication'
 config = require './config'
+db = require './db'
 
 
 getPassword = (callback) ->
@@ -64,14 +69,63 @@ runReplication = (devicename) ->
 
     urlParser = require 'url'
     url = urlParser.parse remoteConfig.url
-    url.auth = remoteConfig.deviceId + ':' + remoteConfig.devicePassword
-    replication = PouchDB.replicate(config.dbPath, remoteConfig.url + '/cozy', options)
+    url.auth = devicename + ':' + remoteConfig.devicePassword
+    replication = db.db.replicate.from(urlParser.format(url) + 'cozy', options)
       .on 'change', (info) ->
           console.log info
       .on 'complete', (info) ->
           log.info 'Replication is complete'
       .on 'error', (err) ->
           log.error err
+
+
+buildFSTree = (devicename) ->
+    remoteConfig = config.config.remotes[devicename]
+
+    # Fetch folders and files only
+    map = (doc) ->
+        if doc.docType is 'Folder' or doc.docType is 'File'
+            emit(doc._id, doc)
+
+    db.db.query { map: map }, (err, res) ->
+        for doc in res.rows
+            if doc.value.docType is 'Folder'
+                # Create folder
+                mkdirp.sync remoteConfig.path + doc.value.path + '/' + doc.value.name
+            else
+                # Create parent folder and touch file
+                mkdirp.sync remoteConfig.path + doc.value.path + '/'
+                touch remoteConfig.path + doc.value.path + '/' + doc.value.name
+
+
+fetchBinaries = (devicename) ->
+    remoteConfig = config.config.remotes[devicename]
+
+    # Create files and directories in the FS
+    buildFSTree devicename
+
+    # Fetch only files
+    map = (doc) ->
+        if doc.docType is 'File'
+            emit(doc._id, doc)
+
+    db.db.query { map: map }, (err, res) ->
+        # We need to authenticate as a device
+        client = request.newClient remoteConfig.url
+        client.setBasicAuth devicename, remoteConfig.devicePassword
+
+        for doc in res.rows
+            # Fetch every binary
+            filePath = remoteConfig.path + doc.value.path + '/' + doc.value.name
+            if doc.value.binary?
+                binaryUri = 'cozy/' + doc.value.binary.file.id + '/file'
+                client.saveFile binaryUri, filePath, (err, res, body) ->
+                    if err
+                        console.log err
+
+
+runSync = (devicename) ->
+
 
 displayConfig = ->
     console.log JSON.stringify config.config, null, 2
@@ -89,17 +143,27 @@ program
 
 program
     .command('replicate <devicename>')
-    .description('Configure current device to sync with given cozy')
+    .description('Replicate DB documents')
     .action runReplication
+
+program
+    .command('build-tree <devicename>')
+    .description('Create empty files and directories in the filesystem')
+    .action buildFSTree
+
+program
+    .command('fetch-binaries <devicename>')
+    .description('Replicate DB binaries')
+    .action fetchBinaries
 
 program
     .command('sync <devicename>')
-    .description('Configure current device to sync with given cozy')
-    .action runReplication
+    .description('Synchronize binaries')
+    .action runSync
 
 program
     .command('display-config')
-    .description('Configure current device to sync with given cozy')
+    .description('Display device configuration and exit')
     .action displayConfig
 
 program
