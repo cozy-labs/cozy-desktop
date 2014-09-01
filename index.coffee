@@ -6,6 +6,9 @@ mkdirp = require 'mkdirp'
 program = require 'commander'
 read = require 'read'
 touch = require 'touch'
+mime = require 'mime'
+process = require 'process'
+uuid = require 'node-uuid'
 log = require('printit')
     prefix: 'Data Proxy'
 
@@ -20,7 +23,7 @@ getPassword = (callback) ->
     read prompt: promptMsg, silent: true , callback
 
 
-addRemote = (url, devicename, path) ->
+addRemote = (url, devicename, syncpath) ->
     getPassword (err, password) ->
         options =
             url: url
@@ -35,7 +38,7 @@ addRemote = (url, devicename, path) ->
                 options =
                     url: url
                     deviceName: devicename
-                    path: path
+                    path: path.resolve syncpath
                     deviceId: credentials.id
                     devicePassword: credentials.password
                 config.addRemoteCozy options
@@ -80,8 +83,9 @@ runReplication = (devicename) ->
           log.error err
 
 
-buildFSTree = (devicename) ->
+buildFSTree = (devicename, options) ->
     remoteConfig = config.config.remotes[devicename]
+    filepath = options.filepath
 
     # Fetch folders and files only
     map = (doc) ->
@@ -90,27 +94,29 @@ buildFSTree = (devicename) ->
 
     db.db.query { map: map }, (err, res) ->
         for doc in res.rows
-            name = path.join remoteConfig.path, doc.value.path, doc.value.name
-            if doc.value.docType is 'Folder'
-                # Create folder
-                mkdirp.sync name
-                fs.utimesSync name,
-                    new Date(doc.value.creationDate),
-                    new Date(doc.value.lastModification)
-            else
-                # Create parent folder and touch file
-                mkdirp.sync path.join remoteConfig.path, doc.value.path
-                touch name
-                fs.utimesSync name,
-                    new Date(doc.value.creationDate),
-                    new Date(doc.value.lastModification)
+            if not filepath? or filepath is path.join doc.value.path, doc.value.name
+                name = path.join remoteConfig.path, doc.value.path, doc.value.name
+                if doc.value.docType is 'Folder'
+                    # Create folder
+                    mkdirp.sync name
+                    fs.utimesSync name,
+                        new Date(doc.value.creationDate),
+                        new Date(doc.value.lastModification)
+                else
+                    # Create parent folder and touch file
+                    mkdirp.sync path.join remoteConfig.path, doc.value.path
+                    touch name
+                    fs.utimesSync name,
+                        new Date(doc.value.creationDate),
+                        new Date(doc.value.lastModification)
 
 
-fetchBinaries = (devicename) ->
+fetchBinaries = (devicename, options) ->
     remoteConfig = config.config.remotes[devicename]
+    filepath = options.filepath
 
     # Create files and directories in the FS
-    buildFSTree devicename
+    buildFSTree devicename, { filepath: filepath }
 
     # Fetch only files
     map = (doc) ->
@@ -123,17 +129,72 @@ fetchBinaries = (devicename) ->
         client.setBasicAuth devicename, remoteConfig.devicePassword
 
         for doc in res.rows
-            # Fetch every binary
-            filePath = path.join remoteConfig.path, doc.value.path, doc.value.name
-            if doc.value.binary?
-                binaryUri = 'cozy/' + doc.value.binary.file.id + '/file'
-                client.saveFile binaryUri, filePath, (err, res, body) ->
-                    if err
+            if not filepath? or filepath is path.join doc.value.path, doc.value.name
+                filePath = path.join remoteConfig.path, doc.value.path, doc.value.name
+                if doc.value.binary?
+                    binaryUri = 'cozy/' + doc.value.binary.file.id + '/file'
+                    # Fetch binary via CouchDB API
+                    client.saveFile binaryUri, filePath, (err, res, body) ->
+                        if err
+                            console.log err
+
+                        # Rebuild FS Tree to correct utime
+                        buildFSTree devicename, { filepath: path.join doc.value.path, doc.value.name }
+
+
+addFile = (devicename, filePath) ->
+    remoteConfig = config.config.remotes[devicename]
+    absolutePath = path.resolve filePath
+    relativePath = absolutePath.replace remoteConfig.path, ''
+
+    if relativePath is absolutePath
+        console.log 'file is not in the sync dir'
+        process.exit 1
+
+    fileName = path.basename filePath
+    if relativePath.split('/').length > 2
+        parentPath = relativePath.replace '/' + fileName, ''
+    else
+        parentPath = ''
+
+    fileStats = fs.statSync(filePath)
+    lastModification = fileStats.mtime
+    fileSize = fileStats.size
+
+    mimeType = mime.lookup absolutePath
+    fileId = uuid.v4().split('-').join('')
+    binaryId = uuid.v4().split('-').join('')
+
+    client = request.newClient remoteConfig.url
+    client.setBasicAuth devicename, remoteConfig.devicePassword
+
+    # Create binary document
+    client.put 'cozy/'+ binaryId, { docType: 'Binary' }, (err, res, body) ->
+        if res.statusCode isnt 201
+            console.log err
+        else
+            # Upload binary
+            client.putFile 'cozy/' + binaryId + '/file?rev='+ body.rev, absolutePath, {}, (err, res, body) ->
+                if res.statusCode isnt 201
+                    console.log err
+                else
+                    document =
+                        binary:
+                            file:
+                                id: body.id
+                                rev: body.rev
+                        class: 'document'
+                        creationDate: lastModification
+                        docType: 'File'
+                        lastModification: lastModification
+                        mime: mimeType
+                        name: fileName
+                        path: parentPath
+                        size: fileSize
+
+                    db.db.put document, fileId, (err, res) ->
                         console.log err
-
-                    # Rebuild FS Tree to correct utime
-                    buildFSTree devicename
-
+                        console.log res
 
 watchChanges = (devicename) ->
     remoteConfig = config.config.remotes[devicename]
@@ -147,7 +208,7 @@ displayConfig = ->
 
 
 program
-    .command('add-remote-cozy <url> <devicename> <path>')
+    .command('add-remote-cozy <url> <devicename> <syncpath>')
     .description('Configure current device to sync with given cozy')
     .action addRemote
 
@@ -164,12 +225,19 @@ program
 program
     .command('build-tree <devicename>')
     .description('Create empty files and directories in the filesystem')
+    .option('-f, --filepath [filepath]', 'specify file to build FS tree')
     .action buildFSTree
 
 program
-    .command('fetch-binaries <devicename>')
+    .command('fetch-binaries <devicename> ')
     .description('Replicate DB binaries')
+    .option('-f, --filepath [filepath]', 'specify file to fetch associated binary')
     .action fetchBinaries
+
+program
+    .command('add-file <devicename> <filePath>')
+    .description('Add file descriptor to PouchDB')
+    .action addFile
 
 program
     .command('sync <devicename>')
