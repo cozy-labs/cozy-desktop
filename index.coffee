@@ -10,6 +10,8 @@ mime = require 'mime'
 process = require 'process'
 uuid = require 'node-uuid'
 async = require 'async'
+chokidar = require 'chokidar'
+urlParser = require 'url'
 log = require('printit')
     prefix: 'Data Proxy'
 
@@ -65,14 +67,13 @@ removeRemote = (devicename) ->
                 log.info 'Current device properly removed from remote cozy.'
 
 
-runReplication = (devicename) ->
+replicateFromRemote = (devicename) ->
     remoteConfig = config.config.remotes[devicename]
 
     options =
         filter: (doc) ->
             doc.docType is 'Folder' or doc.docType is 'File'
 
-    urlParser = require 'url'
     url = urlParser.parse remoteConfig.url
     url.auth = devicename + ':' + remoteConfig.devicePassword
     replication = db.replicate.from(urlParser.format(url) + 'cozy', options)
@@ -80,6 +81,91 @@ runReplication = (devicename) ->
           console.log info
       .on 'complete', (info) ->
           log.info 'Replication is complete'
+      .on 'error', (err) ->
+          log.error err
+
+
+replicateToRemote = (devicename) ->
+    remoteConfig = config.config.remotes[devicename]
+
+    options =
+        filter: (doc) ->
+            doc.docType is 'Folder' or doc.docType is 'File'
+
+    url = urlParser.parse remoteConfig.url
+    url.auth = "#{devicename}:#{remoteConfig.devicePassword}"
+    replication = db.replicate.to(urlParser.format(url) + 'cozy', options)
+      .on 'change', (info) ->
+          console.log info
+      .on 'complete', (info) ->
+          log.info 'Replication is complete'
+      .on 'error', (err) ->
+          log.error err
+
+
+watchLocalChanges = (devicename) ->
+    # Get config
+    remoteConfig = config.config.remotes[devicename]
+
+    watcher = chokidar.watch remoteConfig.path,
+        ignored: /[\/\\]\./
+        persistent: true
+
+    watcher
+    .on 'add', (path) ->
+        log.info "File added: #{path}"
+        putFile devicename, path, () ->
+    .on 'addDir', (path) ->
+        if path isnt remoteConfig.path
+            log.info "Directory added: #{path}"
+            putDirectory devicename, path, { recursive: true }, () ->
+    .on 'change', (path) ->
+        log.info "File changed: #{path}"
+        putFile devicename, path, () ->
+    .on 'error', (err) ->
+        log.error 'An error occured when watching changes'
+        console.log err
+
+    options =
+        filter: (doc) ->
+            doc.docType is 'Folder' or doc.docType is 'File'
+        live: true
+
+    url = urlParser.parse remoteConfig.url
+    url.auth = devicename + ':' + remoteConfig.devicePassword
+    replication = db.sync(config.dbPath, urlParser.format(url) + 'cozy', options)
+      .on 'change', (info) ->
+          console.log info
+      .on 'uptodate', (info) ->
+          log.info 'Replication is complete, applying changes on the filesystem...'
+          if args.binary?
+              fetchBinaries devicename, {}, () ->
+          else
+              buildFsTree devicename, {}, () ->
+      .on 'error', (err) ->
+          log.error err
+
+
+watchRemoteChanges = (devicename, args) ->
+    # Get config
+    remoteConfig = config.config.remotes[devicename]
+
+    options =
+        filter: (doc) ->
+            doc.docType is 'Folder' or doc.docType is 'File'
+        live: true
+
+    url = urlParser.parse remoteConfig.url
+    url.auth = devicename + ':' + remoteConfig.devicePassword
+    replication = db.replicate.from(urlParser.format(url) + 'cozy', options)
+      .on 'change', (info) ->
+          console.log info
+      .on 'uptodate', (info) ->
+          log.info 'Replication is complete, applying changes on the filesystem...'
+          if args.binary?
+              fetchBinaries devicename, {}, () ->
+          else
+              buildFsTree devicename, {}, () ->
       .on 'error', (err) ->
           log.error err
 
@@ -124,8 +210,9 @@ buildFsTree = (devicename, options, callback) ->
                     mkdirp path.join(remoteConfig.path, doc.path), () ->
                         # Find if binary is already downloaded
                         db.get doc.binary.file.id, (err, binaryDoc) ->
-                            if binaryDoc?
+                            if binaryDoc? and binaryDoc.path isnt name
                                 # And move it to the right path
+                                log.info "Moving #{binaryDoc.path} to #{name}"
                                 fs.rename binaryDoc.path, name, () ->
                                     binaryDoc.path = name
                                     db.put binaryDoc, (err, res) ->
@@ -175,7 +262,7 @@ fetchBinaries = (devicename, options, callback) ->
                         path: binaryPath
                     db.put binaryDoc, doc.binary.file.id, doc.binary.file.rev, (err, res) ->
                         if err? and err.status is 409
-                            log.info "Binary already downloaded: #{path.join doc.path, doc.name}"
+                            # Binary already downloaded, ignore
                             callback()
                         else
                             # Fetch binary via CouchDB API
@@ -190,7 +277,7 @@ fetchBinaries = (devicename, options, callback) ->
             , callback
 
 
-putDirectory = (devicename, directoryPath, recursive, callback) ->
+putDirectory = (devicename, directoryPath, args, callback) ->
     # Fix callback
     if not callback? or typeof callback is 'object'
         callback = (err) ->
@@ -209,7 +296,7 @@ putDirectory = (devicename, directoryPath, recursive, callback) ->
     absolutePath = path.resolve directoryPath
     relativePath = absolutePath.replace remoteConfig.path, ''
     if relativePath is absolutePath
-        log.error "Directory is not located on the synchronized directory: #{dirPath}"
+        log.error "Directory is not located on the synchronized directory: #{absolutePath}"
         return callback()
     if relativePath.split('/').length > 2
         dirPath = relativePath.replace "/#{dirName}", ''
@@ -225,10 +312,10 @@ putDirectory = (devicename, directoryPath, recursive, callback) ->
         for doc in res.rows
             doc = doc.value
             if doc.path is dirPath and doc.name is dirName
-                log.info "Directory already exists: #{doc.path}/#{doc.name}"
-                if recursive
+                if args.recursive?
                     return putSubFiles callback
                 else
+                    log.info "Directory already exists: #{doc.path}/#{doc.name}"
                     return callback err, res
 
         log.info "Creating directory doc: #{dirPath}/#{dirName}"
@@ -242,10 +329,10 @@ putDirectory = (devicename, directoryPath, recursive, callback) ->
             tags: []
 
         db.put document, newId, (err, res) ->
-            if recursive
-                putSubFiles callback
+            if args.recursive?
+                return putSubFiles callback
             else
-                callback err, res
+                return callback err, res
 
     putSubFiles = (callback) ->
         # List files in directory
@@ -254,13 +341,13 @@ putDirectory = (devicename, directoryPath, recursive, callback) ->
                 fileName = "#{absolutePath}/#{file}"
                 # Upload file if it is a file
                 if fs.lstatSync(fileName).isFile()
-                    putFile devicename, fileName, callback
+                    return putFile devicename, fileName, callback
                 # Upload directory recursively if it is a directory
                 else if fs.lstatSync(fileName).isDirectory()
-                    putDirectory devicename, fileName, recursive, callback
+                    return putDirectory devicename, fileName, { recursive: true }, callback
             if res.length is 0
                 log.info "No file to upload in: #{relativePath}"
-                callback err, res
+                return callback err, res
 
 
 putFile = (devicename, filePath, callback) ->
@@ -300,7 +387,7 @@ putFile = (devicename, filePath, callback) ->
     fileSize = stats.size
 
     # Ensure that directory exists
-    putDirectory devicename, ".#{filePath}", false, (err, res) ->
+    putDirectory devicename, path.join(remoteConfig.path, filePath), false, (err, res) ->
 
         # Fetch only files with the same path/filename
         db.query { map: (doc) -> emit doc._id, doc if doc.docType is 'File' }, (err, res) ->
@@ -381,27 +468,6 @@ putFile = (devicename, filePath, callback) ->
                         return callback()
 
 
-watchChanges = (devicename) ->
-    remoteConfig = config.config.remotes[devicename]
-
-
-runSync = (devicename) ->
-    remoteConfig = config.config.remotes[devicename]
-
-    options =
-        filter: (doc) ->
-            doc.docType is 'Folder' or doc.docType is 'File'
-
-    urlParser = require 'url'
-    url = urlParser.parse remoteConfig.url
-    url.auth = "#{devicename}:#{remoteConfig.devicePassword}"
-    replication = db.replicate.to(urlParser.format(url) + 'cozy', options)
-      .on 'change', (info) ->
-          console.log info
-      .on 'complete', (info) ->
-          log.info 'Replication is complete'
-      .on 'error', (err) ->
-          log.error err
 
 
 displayConfig = ->
@@ -419,9 +485,14 @@ program
     .action removeRemote
 
 program
-    .command('replicate <devicename>')
-    .description('Replicate DB documents')
-    .action runReplication
+    .command('replicate-from-remote <devicename>')
+    .description('Replicate remote files/folders to local DB')
+    .action replicateFromRemote
+
+program
+    .command('replicate-to-remote <devicename>')
+    .description('Replicate local files/folders to remote DB')
+    .action replicateToRemote
 
 program
     .command('build-tree <devicename>')
@@ -447,14 +518,15 @@ program
     .action putDirectory
 
 program
-    .command('sync <devicename>')
-    .description('Synchronize binaries')
-    .action runSync
+    .command('watch-local <devicename>')
+    .description('Watch changes on the FS')
+    .action watchLocalChanges
 
 program
-    .command('watch <devicename>')
-    .description('Watch changes on FS')
-    .action watchChanges
+    .command('watch-remote <devicename>')
+    .description('Watch changes on the remote DB')
+    .option('-b, --binary', 'automatically fetch binaries')
+    .action watchRemoteChanges
 
 program
     .command('display-config')
