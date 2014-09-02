@@ -9,6 +9,7 @@ touch = require 'touch'
 mime = require 'mime'
 process = require 'process'
 uuid = require 'node-uuid'
+async = require 'async'
 log = require('printit')
     prefix: 'Data Proxy'
 
@@ -99,23 +100,28 @@ buildFsTree = (devicename, options, callback) ->
             emit doc._id, doc
 
     }, (err, res) ->
-        for doc in res.rows
-            if not filePath? or filePath is path.join doc.value.path, doc.value.name
-                name = path.join remoteConfig.path, doc.value.path, doc.value.name
-                if doc.value.docType is 'Folder'
+        async.each res.rows, (doc, callback) ->
+            doc = doc.value
+            if not filePath? or filePath is path.join doc.path, doc.name
+                name = path.join remoteConfig.path, doc.path, doc.name
+                if doc.docType is 'Folder'
                     # Create folder
-                    mkdirp.sync name
-                    fs.utimesSync name,
-                        new Date(doc.value.creationDate),
-                        new Date(doc.value.lastModification)
+                    mkdirp name, () ->
+                        fs.utimes name,
+                            new Date(doc.creationDate),
+                            new Date(doc.lastModification),
+                            () ->
+                                callback()
                 else
                     # Create parent folder and touch file
-                    mkdirp.sync path.join remoteConfig.path, doc.value.path
-                    touch name
-                    fs.utimesSync name,
-                        new Date(doc.value.creationDate),
-                        new Date(doc.value.lastModification)
-        return callback err, res
+                    mkdirp path.join(remoteConfig.path, doc.path), () ->
+                        touch name, () ->
+                            fs.utimes name,
+                                new Date(doc.creationDate),
+                                new Date(doc.lastModification),
+                                () ->
+                                    callback()
+        , callback
 
 
 fetchBinaries = (devicename, options, callback) ->
@@ -135,25 +141,21 @@ fetchBinaries = (devicename, options, callback) ->
     buildFsTree devicename, { filePath: filePath }, (err, res) ->
 
         # Fetch only files
-        db.db.query { map: (doc) ->
-
-            if doc.docType is 'File'
-                emit doc._id, doc
-
-        }, (err, res) ->
-            for doc in res.rows
+        db.db.query { map: (doc) -> emit doc._id, doc if doc.docType is 'File' }, (err, res) ->
+            async.each res.rows, (doc, callback) ->
                 doc = doc.value
-                if not filePath? or filePath is path.join doc.path, doc.name
-                    filePath = path.join remoteConfig.path, doc.path, doc.name
-                    if doc.binary?
-                        binaryUri = "cozy/#{doc.binary.file.id}/file"
-                        # Fetch binary via CouchDB API
-                        client.saveFile binaryUri, filePath, (err, res, body) ->
-                            if err
-                                console.log err
+                if (not filePath? or filePath is path.join doc.path, doc.name) and doc.binary?
+                    binaryPath = path.join remoteConfig.path, doc.path, doc.name
+                    binaryUri = "cozy/#{doc.binary.file.id}/file"
+                    # Fetch binary via CouchDB API
+                    client.saveFile binaryUri, binaryPath, (err, res, body) ->
+                        console.log err if err
 
-                            # Rebuild FS Tree to correct utime
-                            buildFsTree devicename, { filePath: path.join doc.path, doc.name }, callback
+                        # Rebuild FS Tree to correct utime
+                        buildFsTree devicename, { filePath: path.join doc.path, doc.name }, callback
+                else
+                    callback()
+            , callback
 
 
 putDirectory = (devicename, directoryPath, recursive, callback) ->
@@ -183,12 +185,7 @@ putDirectory = (devicename, directoryPath, recursive, callback) ->
     dirLastModification = stats.mtime
 
     # Lookup for existing directory
-    db.db.query { map: (doc) ->
-
-        if doc.docType is 'Folder'
-            emit doc._id, doc
-
-    }, (err, res) ->
+    db.db.query { map: (doc) -> emit doc._id, doc if doc.docType is 'Folder' }, (err, res) ->
         for doc in res.rows
             doc = doc.value
             if doc.path is dirPath and doc.name is dirName
@@ -268,12 +265,7 @@ putFile = (devicename, filePath, callback) ->
     putDirectory devicename, ".#{filePath}", false, (err, res) ->
 
         # Fetch only files with the same path/filename
-        db.db.query { map: (doc) ->
-
-            if doc.docType is 'File'
-                emit doc._id, doc
-
-        }, (err, res) ->
+        db.db.query { map: (doc) -> emit doc._id, doc if doc.docType is 'File' }, (err, res) ->
             for doc in res.rows
                 doc = doc.value
                 if doc.name is fileName and doc.path is filePath
