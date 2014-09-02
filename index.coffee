@@ -83,7 +83,12 @@ runReplication = (devicename) ->
           log.error err
 
 
-buildFsTree = (devicename, options) ->
+buildFsTree = (devicename, options, callback) ->
+    # Fix callback
+    if not callback?
+        callback = () ->
+
+    # Get config
     remoteConfig = config.config.remotes[devicename]
     filePath = options.filePath
 
@@ -110,39 +115,45 @@ buildFsTree = (devicename, options) ->
                     fs.utimesSync name,
                         new Date(doc.value.creationDate),
                         new Date(doc.value.lastModification)
+        return callback err, res
 
 
-fetchBinaries = (devicename, options) ->
+fetchBinaries = (devicename, options, callback) ->
+    # Fix callback
+    if not callback?
+        callback = () ->
+
+    # Get config
     remoteConfig = config.config.remotes[devicename]
     filePath = options.filePath
 
+    # Initialize remote HTTP client
+    client = request.newClient remoteConfig.url
+    client.setBasicAuth devicename, remoteConfig.devicePassword
+
     # Create files and directories in the FS
-    buildFsTree devicename, { filePath: filePath }
+    buildFsTree devicename, { filePath: filePath }, (err, res) ->
 
-    # Fetch only files
-    db.db.query { map: (doc) ->
+        # Fetch only files
+        db.db.query { map: (doc) ->
 
-        if doc.docType is 'File'
-            emit doc._id, doc
+            if doc.docType is 'File'
+                emit doc._id, doc
 
-    }, (err, res) ->
-        # We need to authenticate as a device
-        client = request.newClient remoteConfig.url
-        client.setBasicAuth devicename, remoteConfig.devicePassword
+        }, (err, res) ->
+            for doc in res.rows
+                doc = doc.value
+                if not filePath? or filePath is path.join doc.path, doc.name
+                    filePath = path.join remoteConfig.path, doc.path, doc.name
+                    if doc.binary?
+                        binaryUri = "cozy/#{doc.binary.file.id}/file"
+                        # Fetch binary via CouchDB API
+                        client.saveFile binaryUri, filePath, (err, res, body) ->
+                            if err
+                                console.log err
 
-        for doc in res.rows
-            doc = doc.value
-            if not filePath? or filePath is path.join doc.path, doc.name
-                filePath = path.join remoteConfig.path, doc.path, doc.name
-                if doc.binary?
-                    binaryUri = "cozy/#{doc.binary.file.id}/file"
-                    # Fetch binary via CouchDB API
-                    client.saveFile binaryUri, filePath, (err, res, body) ->
-                        if err
-                            console.log err
-
-                        # Rebuild FS Tree to correct utime
-                        buildFsTree devicename, { filePath: path.join doc.path, doc.name }
+                            # Rebuild FS Tree to correct utime
+                            buildFsTree devicename, { filePath: path.join doc.path, doc.name }, callback
 
 
 putDirectory = (devicename, directoryPath, recursive, callback) ->
