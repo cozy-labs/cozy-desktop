@@ -122,12 +122,24 @@ buildFsTree = (devicename, options, callback) ->
                 else
                     # Create parent folder and touch file
                     mkdirp path.join(remoteConfig.path, doc.path), () ->
-                        touch name, () ->
-                            fs.utimes name,
-                                new Date(doc.creationDate),
-                                new Date(doc.lastModification),
-                                () ->
-                                    callback()
+                        # Find if binary is already downloaded
+                        db.get doc.binary.file.id, (err, binaryDoc) ->
+                            if binaryDoc?
+                                # And move it to the right path
+                                fs.rename binaryDoc.path, name, () ->
+                                    binaryDoc.path = name
+                                    db.put binaryDoc, (err, res) ->
+                                        fs.utimes name,
+                                            new Date(doc.creationDate),
+                                            new Date(doc.lastModification),
+                                            callback
+                            else
+                                # Otherwise touch the file
+                                touch name, () ->
+                                    fs.utimes name,
+                                        new Date(doc.creationDate),
+                                        new Date(doc.lastModification),
+                                        callback
         , callback
 
 
@@ -167,7 +179,7 @@ fetchBinaries = (devicename, options, callback) ->
                             callback()
                         else
                             # Fetch binary via CouchDB API
-                            log.info "Downloading binary: #{binaryPath}"
+                            log.info "Downloading binary: #{path.join doc.path, doc.name}"
                             client.saveFile binaryUri, binaryPath, (err, res, body) ->
                                 console.log err if err?
 
@@ -297,6 +309,8 @@ putFile = (devicename, filePath, callback) ->
                 if doc.name is fileName and doc.path is filePath
                     existingFileId    = doc._id
                     existingFileRev   = doc._rev
+                    existingFileTags  = doc.tags
+                    existingFileCrea  = doc.creationDate
                     existingBinaryId  = doc.binary.file.id
                     if new Date(doc.lastModification) >= new Date(fileLastModification)
                         log.info "Unchanged file: #{doc.path}/#{doc.name}"
@@ -340,16 +354,16 @@ putFile = (devicename, filePath, callback) ->
                             id: binaryId
                             rev: binaryRev
                     class: 'document'
-                    creationDate: fileLastModification
                     docType: 'File'
                     lastModification: fileLastModification
                     mime: fileMimeType
                     name: fileName
                     path: filePath
                     size: fileSize
-                    tags: []
 
                 if id?
+                    doc.creationDate = existingFileCrea
+                    doc.tags = existingFileTags
                     log.info "Updating file doc: #{relativePath}"
                     db.put doc, id, rev, (err, res) ->
                         if err
@@ -357,6 +371,8 @@ putFile = (devicename, filePath, callback) ->
                         return callback()
 
                 else
+                    doc.creationDate = fileLastModification
+                    doc.tags = []
                     newId = uuid.v4().split('-').join('')
                     log.info "Creating file doc: #{relativePath}"
                     db.put doc, newId, (err, res) ->
