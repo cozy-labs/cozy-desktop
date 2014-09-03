@@ -103,13 +103,14 @@ replicateToRemote = (devicename) ->
           log.error err
 
 
-watchLocalChanges = (devicename) ->
+runSync = (devicename, args) ->
     # Get config
     remoteConfig = config.config.remotes[devicename]
 
     watcher = chokidar.watch remoteConfig.path,
         ignored: /[\/\\]\./
         persistent: true
+        ignoreInitial: not args.catchup?
 
     watcher
     .on 'add', (path) ->
@@ -118,7 +119,7 @@ watchLocalChanges = (devicename) ->
     .on 'addDir', (path) ->
         if path isnt remoteConfig.path
             log.info "Directory added: #{path}"
-            putDirectory devicename, path, { recursive: true }, () ->
+            putDirectory devicename, path, { recursive: false }, () ->
     .on 'change', (path) ->
         log.info "File changed: #{path}"
         putFile devicename, path, () ->
@@ -133,15 +134,61 @@ watchLocalChanges = (devicename) ->
 
     url = urlParser.parse remoteConfig.url
     url.auth = devicename + ':' + remoteConfig.devicePassword
-    replication = db.sync(config.dbPath, urlParser.format(url) + 'cozy', options)
+    needTreeRebuild = false
+    replication = db.sync(urlParser.format(url) + 'cozy', options)
       .on 'change', (info) ->
+          if info.direction is 'pull'
+              needTreeRebuild = true
           console.log info
       .on 'uptodate', (info) ->
           log.info 'Replication is complete, applying changes on the filesystem...'
-          if args.binary?
-              fetchBinaries devicename, {}, () ->
-          else
-              buildFsTree devicename, {}, () ->
+          if needTreeRebuild
+              if args.binary?
+                  fetchBinaries devicename, {}, () ->
+                      needTreeRebuild = false
+              else
+                  buildFsTree devicename, {}, () ->
+                      needTreeRebuild = false
+      .on 'error', (err) ->
+          log.error err
+
+
+watchLocalChanges = (devicename) ->
+    # Get config
+    remoteConfig = config.config.remotes[devicename]
+
+    watcher = chokidar.watch remoteConfig.path,
+        ignored: /[\/\\]\./
+        persistent: true
+        ignoreInitial: true
+
+    watcher
+    .on 'add', (path) ->
+        log.info "File added: #{path}"
+        putFile devicename, path, () ->
+    .on 'addDir', (path) ->
+        if path isnt remoteConfig.path
+            log.info "Directory added: #{path}"
+            putDirectory devicename, path, { recursive: false }, () ->
+    .on 'change', (path) ->
+        log.info "File changed: #{path}"
+        putFile devicename, path, () ->
+    .on 'error', (err) ->
+        log.error 'An error occured when watching changes'
+        console.log err
+
+    options =
+        filter: (doc) ->
+            doc.docType is 'Folder' or doc.docType is 'File'
+        live: true
+
+    url = urlParser.parse remoteConfig.url
+    url.auth = devicename + ':' + remoteConfig.devicePassword
+    replication = db.replicate.to(urlParser.format(url) + 'cozy', options)
+      .on 'change', (info) ->
+          console.log info
+      .on 'uptodate', (info) ->
+          log.info 'Replication is complete'
       .on 'error', (err) ->
           log.error err
 
@@ -429,8 +476,8 @@ putFile = (devicename, filePath, callback) ->
                         body = JSON.parse body
                         binaryDoc =
                             docType: 'Binary'
-                            path: relativePath
-                        log.info "Updating binary doc: #{relativePath}"
+                            path: absolutePath
+                        log.info "Updating binary doc: #{absolutePath}"
                         db.put binaryDoc, body.id, body.rev, (err, res) ->
                             return putFileDoc existingFileId, existingFileRev, body.id, body.rev, callback
 
@@ -527,6 +574,13 @@ program
     .description('Watch changes on the remote DB')
     .option('-b, --binary', 'automatically fetch binaries')
     .action watchRemoteChanges
+
+program
+    .command('sync <devicename>')
+    .description('Watch changes on the remote DB')
+    .option('-b, --binary', 'automatically fetch binaries')
+    .option('-c, --catchup', 'catchup local changes')
+    .action runSync
 
 program
     .command('display-config')
