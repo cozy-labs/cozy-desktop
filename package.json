@@ -35,7 +35,7 @@
     "printit": "^0.1.3",
     "read": "^1.0.5",
     "request": "^2.40.0",
-    "request-json": "^0.4.11",
+    "request-json": "^0.4.12",
     "request-json-light": "^0.5.2",
     "touch": "^0.0.3"
   }
