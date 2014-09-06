@@ -1,7 +1,8 @@
 request = require 'request-json'
-PouchDB = require 'pouchdb'
+log = require('printit')
+    prefix: 'Data Proxy | replication'
 
-db = require './db'
+db = require('./db').db
 
 filters = []
 
@@ -42,6 +43,3 @@ module.exports =
 
     runSync: (target) ->
 
-    addFilter: (docType) ->
-
-    removeFilter: (docType) ->

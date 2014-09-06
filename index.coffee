@@ -1,11 +1,11 @@
-fs = require 'fs'
+Promise = require 'bluebird'
+fs = Promise.promisifyAll require('fs')
 path = require 'path'
-request = require 'request-json'
-PouchDB = require 'pouchdb'
-mkdirp = require 'mkdirp'
+request = Promise.promisifyAll require('request-json')
+mkdirp = Promise.promisifyAll require('mkdirp')
 program = require 'commander'
 read = require 'read'
-touch = require 'touch'
+touch = Promise.promisifyAll require('touch')
 mime = require 'mime'
 process = require 'process'
 uuid = require 'node-uuid'
@@ -15,9 +15,10 @@ urlParser = require 'url'
 log = require('printit')
     prefix: 'Data Proxy'
 
-replication = require './replication'
+replication = Promise.promisifyAll require('./replication')
 config = require './config'
-db = require('./db').db
+db = Promise.promisifyAll require('./db').db
+filesystem = Promise.promisifyAll require('./filesystem')
 
 
 getPassword = (callback) ->
@@ -153,14 +154,14 @@ runSync = (devicename, args) ->
           log.error err
 
 
-watchLocalChanges = (devicename) ->
+watchLocalChanges = (devicename, args) ->
     # Get config
     remoteConfig = config.config.remotes[devicename]
 
     watcher = chokidar.watch remoteConfig.path,
         ignored: /[\/\\]\./
         persistent: true
-        ignoreInitial: true
+        ignoreInitial: not args.catchup?
 
     watcher
     .on 'add', (path) ->
@@ -436,6 +437,9 @@ putFile = (devicename, filePath, callback) ->
     # Ensure that directory exists
     putDirectory devicename, path.join(remoteConfig.path, filePath), false, (err, res) ->
 
+        replication.addFilter('File').then () ->
+            db.query 'file/all', (err, res) ->
+
         # Fetch only files with the same path/filename
         db.query { map: (doc) -> emit doc._id, doc if doc.docType is 'File' }, (err, res) ->
             for doc in res.rows
@@ -515,11 +519,21 @@ putFile = (devicename, filePath, callback) ->
                         return callback()
 
 
-
+addFilter = ->
+        db.queryAsync('file/all')
+        .then (res) ->
+            console.log 'dude'
+        .finally () ->
+            console.log 'ok'
 
 displayConfig = ->
     console.log JSON.stringify config.config, null, 2
 
+
+program
+    .command('add-filter')
+    .description('Configure current device to sync with given cozy')
+    .action addFilter
 
 program
     .command('add-remote-cozy <url> <devicename> <syncPath>')
@@ -542,10 +556,10 @@ program
     .action replicateToRemote
 
 program
-    .command('build-tree <devicename>')
+    .command('build-tree')
     .description('Create empty files and directories in the filesystem')
     .option('-f, --filePath [filePath]', 'specify file to build FS tree')
-    .action buildFsTree
+    .action filesystem.buildTree
 
 program
     .command('fetch-binaries <devicename> ')
@@ -567,6 +581,7 @@ program
 program
     .command('watch-local <devicename>')
     .description('Watch changes on the FS')
+    .option('-c, --catchup', 'catchup local changes')
     .action watchLocalChanges
 
 program
