@@ -19,6 +19,7 @@ replication = Promise.promisifyAll require('./replication')
 config = require './config'
 db = Promise.promisifyAll require('./db').db
 filesystem = require('./filesystem')
+binary = require('./binary')
 
 
 getPassword = (callback) ->
@@ -516,11 +517,15 @@ program
         filesystem.buildTree args.filePath, () ->
 
 program
-    .command('fetch-binaries ')
+    .command('fetch-binary')
     .description('Replicate DB binaries')
     .option('-d, --deviceName [deviceName]', 'device name to deal with')
     .option('-f, --filePath [filePath]', 'specify file to fetch associated binary')
-    .action fetchBinaries
+    .action (args) ->
+        if args.filePath?
+            binary.fetchOne args.deviceName, args.filePath, () ->
+        else
+            binary.fetchAll args.deviceName, () ->
 
 program
     .command('put-file <filePath>')

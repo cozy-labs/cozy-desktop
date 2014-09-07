@@ -22,6 +22,7 @@ touchAsync = Promise.promisify touch
 remoteConfig = config.getConfig()
 
 module.exports =
+
     createDirectoryFromDoc: (doc, callback) ->
         dirName = path.join remoteConfig.path, doc.path, doc.name
 
@@ -38,7 +39,7 @@ module.exports =
         .then -> callback()
 
         .catch (err) ->
-            log.error err
+            log.error err.toString()
             console.error err.stack
 
 
@@ -55,8 +56,8 @@ module.exports =
 
         # Move binary if exists, otherwise touch the file
         .then (binaryDoc) ->
-            if binaryDoc?
-                binary.moveBinaryAsync binaryDoc.path, fileName
+            if binaryDoc? and fs.existsSync binaryDoc.path
+                binary.moveFromDocAsync binaryDoc, fileName
             else
                 touchAsync fileName
 
@@ -87,11 +88,13 @@ module.exports =
         # Query database
         .then -> pouch.db.queryAsync 'folder/all'
 
+        # Filter interesting folder(s)
+        .get('rows').filter (doc) ->
+            return not filePath? \
+                or filePath is path.join doc.value.path, doc.value.name
+
         # Create folder(s)
-        .get('rows').each (doc) ->
-            if not filePath? \
-            or filePath is path.join doc.value.path, doc.value.name
-                @createDirectoryFromDocAsync doc.value
+        .each (doc) ->@createDirectoryFromDocAsync doc.value
 
         # Add file filter if not exists
         .then -> pouch.addFilterAsync 'file'
@@ -99,11 +102,13 @@ module.exports =
         # Query database
         .then -> pouch.db.queryAsync 'file/all'
 
+        # Filter interesting file(s)
+        .get('rows').filter (doc) ->
+            return not filePath? \
+                or filePath is path.join doc.value.path, doc.value.name
+
         # Create file(s)
-        .get('rows').each (doc) ->
-            if not filePath? \
-            or filePath is path.join doc.value.path, doc.value.name
-                @createFileFromDocAsync doc.value
+        .each (doc) -> @createFileFromDocAsync doc.value
 
         .then -> callback()
 
@@ -111,6 +116,6 @@ module.exports =
             log.error err.toString()
             console.error err.stack
 
+
 # Promisify above functions
 Promise.promisifyAll module.exports
-
