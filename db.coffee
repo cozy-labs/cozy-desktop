@@ -39,8 +39,7 @@ module.exports =
                 if err?
                     callback err
                 else
-                    #log.info "Design document created: #{id}" if not currentDesignDoc?
-                    log.info "Design document created: #{id}"
+                    log.info "Design document created: #{id}" if not currentDesignDoc?
                     callback null
 
     removeFilter: (docType, callback) ->

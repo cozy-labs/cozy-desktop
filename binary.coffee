@@ -6,7 +6,7 @@ pouch = require './db'
 
 Promise = require 'bluebird'
 Promise.longStackTraces()
-Promise.promisifyAll lib for lib in [fs, pouch]
+Promise.promisifyAll fs
 
 module.exports =
 

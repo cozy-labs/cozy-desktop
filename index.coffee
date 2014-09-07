@@ -18,7 +18,7 @@ log = require('printit')
 replication = Promise.promisifyAll require('./replication')
 config = require './config'
 db = Promise.promisifyAll require('./db').db
-filesystem = Promise.promisifyAll require('./filesystem')
+filesystem = require('./filesystem')
 
 
 getPassword = (callback) ->
@@ -27,11 +27,11 @@ getPassword = (callback) ->
     read prompt: promptMsg, silent: true , callback
 
 
-addRemote = (url, devicename, syncPath) ->
+addRemote = (url, deviceName, syncPath) ->
     getPassword (err, password) ->
         options =
             url: url
-            deviceName: devicename
+            deviceName: deviceName
             password: password
 
         replication.registerDevice options, (err, credentials) ->
@@ -41,7 +41,7 @@ addRemote = (url, devicename, syncPath) ->
             else
                 options =
                     url: url
-                    deviceName: devicename
+                    deviceName: deviceName
                     path: path.resolve syncPath
                     deviceId: credentials.id
                     devicePassword: credentials.password
@@ -50,8 +50,9 @@ addRemote = (url, devicename, syncPath) ->
                          'with current device.'
 
 
-removeRemote = (devicename) ->
-    remoteConfig = config.config.remotes[devicename]
+removeRemote = (args) ->
+    remoteConfig = config.getConfig()
+    deviceName = args.deviceName or config.getDeviceName()
 
     getPassword (err, password) ->
         options =
@@ -64,19 +65,20 @@ removeRemote = (devicename) ->
                 log.error err
                 log.error 'An error occured while unregistering your device.'
             else
-                config.removeRemoteCozy devicename
+                config.removeRemoteCozy deviceName
                 log.info 'Current device properly removed from remote cozy.'
 
 
-replicateFromRemote = (devicename) ->
-    remoteConfig = config.config.remotes[devicename]
+replicateFromRemote = (args) ->
+    remoteConfig = config.getConfig()
+    deviceName = args.deviceName or config.getDeviceName()
 
     options =
         filter: (doc) ->
             doc.docType is 'Folder' or doc.docType is 'File'
 
     url = urlParser.parse remoteConfig.url
-    url.auth = devicename + ':' + remoteConfig.devicePassword
+    url.auth = deviceName + ':' + remoteConfig.devicePassword
     replication = db.replicate.from(urlParser.format(url) + 'cozy', options)
       .on 'change', (info) ->
           console.log info
@@ -86,15 +88,16 @@ replicateFromRemote = (devicename) ->
           log.error err
 
 
-replicateToRemote = (devicename) ->
-    remoteConfig = config.config.remotes[devicename]
+replicateToRemote = (args) ->
+    remoteConfig = config.getConfig()
+    deviceName = args.deviceName or config.getDeviceName()
 
     options =
         filter: (doc) ->
             doc.docType is 'Folder' or doc.docType is 'File'
 
     url = urlParser.parse remoteConfig.url
-    url.auth = "#{devicename}:#{remoteConfig.devicePassword}"
+    url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
     replication = db.replicate.to(urlParser.format(url) + 'cozy', options)
       .on 'change', (info) ->
           console.log info
@@ -104,9 +107,10 @@ replicateToRemote = (devicename) ->
           log.error err
 
 
-runSync = (devicename, args) ->
+runSync = (args) ->
     # Get config
-    remoteConfig = config.config.remotes[devicename]
+    remoteConfig = config.getConfig()
+    deviceName = args.deviceName or config.getDeviceName()
 
     watcher = chokidar.watch remoteConfig.path,
         ignored: /[\/\\]\./
@@ -116,14 +120,14 @@ runSync = (devicename, args) ->
     watcher
     .on 'add', (path) ->
         log.info "File added: #{path}"
-        putFile devicename, path, () ->
+        putFile deviceName, path, () ->
     .on 'addDir', (path) ->
         if path isnt remoteConfig.path
             log.info "Directory added: #{path}"
-            putDirectory devicename, path, { recursive: false }, () ->
+            putDirectory path, { deviceName: deviceName, recursive: false }, () ->
     .on 'change', (path) ->
         log.info "File changed: #{path}"
-        putFile devicename, path, () ->
+        putFile deviceName, path, () ->
     .on 'error', (err) ->
         log.error 'An error occured when watching changes'
         console.log err
@@ -134,7 +138,7 @@ runSync = (devicename, args) ->
         live: true
 
     url = urlParser.parse remoteConfig.url
-    url.auth = devicename + ':' + remoteConfig.devicePassword
+    url.auth = deviceName + ':' + remoteConfig.devicePassword
     needTreeRebuild = false
     replication = db.sync(urlParser.format(url) + 'cozy', options)
       .on 'change', (info) ->
@@ -145,18 +149,19 @@ runSync = (devicename, args) ->
           log.info 'Replication is complete, applying changes on the filesystem...'
           if needTreeRebuild
               if args.binary?
-                  fetchBinaries devicename, {}, () ->
+                  fetchBinaries deviceName, {}, () ->
                       needTreeRebuild = false
               else
-                  buildFsTree devicename, {}, () ->
+                  buildFsTree deviceName, {}, () ->
                       needTreeRebuild = false
       .on 'error', (err) ->
           log.error err
 
 
-watchLocalChanges = (devicename, args) ->
+watchLocalChanges = (args) ->
     # Get config
-    remoteConfig = config.config.remotes[devicename]
+    remoteConfig = config.getConfig()
+    deviceName = args.deviceName or config.getDeviceName()
 
     watcher = chokidar.watch remoteConfig.path,
         ignored: /[\/\\]\./
@@ -166,14 +171,14 @@ watchLocalChanges = (devicename, args) ->
     watcher
     .on 'add', (path) ->
         log.info "File added: #{path}"
-        putFile devicename, path, () ->
+        putFile deviceName, path, () ->
     .on 'addDir', (path) ->
         if path isnt remoteConfig.path
             log.info "Directory added: #{path}"
-            putDirectory devicename, path, { recursive: false }, () ->
+            putDirectory deviceName, path, { deviceName: deviceName, recursive: false }, () ->
     .on 'change', (path) ->
         log.info "File changed: #{path}"
-        putFile devicename, path, () ->
+        putFile deviceName, path, () ->
     .on 'error', (err) ->
         log.error 'An error occured when watching changes'
         console.log err
@@ -184,7 +189,7 @@ watchLocalChanges = (devicename, args) ->
         live: true
 
     url = urlParser.parse remoteConfig.url
-    url.auth = devicename + ':' + remoteConfig.devicePassword
+    url.auth = deviceName + ':' + remoteConfig.devicePassword
     replication = db.replicate.to(urlParser.format(url) + 'cozy', options)
       .on 'change', (info) ->
           console.log info
@@ -194,9 +199,10 @@ watchLocalChanges = (devicename, args) ->
           log.error err
 
 
-watchRemoteChanges = (devicename, args) ->
+watchRemoteChanges = (args) ->
     # Get config
-    remoteConfig = config.config.remotes[devicename]
+    remoteConfig = config.getConfig()
+    deviceName = args.deviceName or config.getDeviceName()
 
     options =
         filter: (doc) ->
@@ -204,21 +210,21 @@ watchRemoteChanges = (devicename, args) ->
         live: true
 
     url = urlParser.parse remoteConfig.url
-    url.auth = devicename + ':' + remoteConfig.devicePassword
+    url.auth = deviceName + ':' + remoteConfig.devicePassword
     replication = db.replicate.from(urlParser.format(url) + 'cozy', options)
       .on 'change', (info) ->
           console.log info
       .on 'uptodate', (info) ->
           log.info 'Replication is complete, applying changes on the filesystem...'
           if args.binary?
-              fetchBinaries devicename, {}, () ->
+              fetchBinaries deviceName, {}, () ->
           else
-              buildFsTree devicename, {}, () ->
+              buildFsTree deviceName, {}, () ->
       .on 'error', (err) ->
           log.error err
 
 
-buildFsTree = (devicename, options, callback) ->
+fetchBinaries = (args, callback) ->
     # Fix callback
     if not callback? or typeof callback is 'object'
         callback = (err) ->
@@ -226,75 +232,16 @@ buildFsTree = (devicename, options, callback) ->
             process.exit 0
 
     # Get config
-    remoteConfig = config.config.remotes[devicename]
-    filePath = options.filePath
-
-    if filePath?
-        log.info "Updating file info: #{filePath}"
-    else
-        log.info "Rebuilding filesystem tree"
-
-    # Fetch folders and files only
-    db.query { map: (doc) ->
-
-        if doc.docType is 'Folder' or doc.docType is 'File'
-            emit doc._id, doc
-
-    }, (err, res) ->
-        async.each res.rows, (doc, callback) ->
-            doc = doc.value
-            if not filePath? or filePath is path.join doc.path, doc.name
-                name = path.join remoteConfig.path, doc.path, doc.name
-                if doc.docType is 'Folder'
-                    # Create folder
-                    mkdirp name, () ->
-                        fs.utimes name,
-                            new Date(doc.creationDate),
-                            new Date(doc.lastModification),
-                            () ->
-                                callback()
-                else
-                    # Create parent folder and touch file
-                    mkdirp path.join(remoteConfig.path, doc.path), () ->
-                        # Find if binary is already downloaded
-                        db.get doc.binary.file.id, (err, binaryDoc) ->
-                            if binaryDoc? and binaryDoc.path isnt name
-                                # And move it to the right path
-                                log.info "Moving #{binaryDoc.path} to #{name}"
-                                fs.rename binaryDoc.path, name, () ->
-                                    binaryDoc.path = name
-                                    db.put binaryDoc, (err, res) ->
-                                        fs.utimes name,
-                                            new Date(doc.creationDate),
-                                            new Date(doc.lastModification),
-                                            callback
-                            else
-                                # Otherwise touch the file
-                                touch name, () ->
-                                    fs.utimes name,
-                                        new Date(doc.creationDate),
-                                        new Date(doc.lastModification),
-                                        callback
-        , callback
-
-
-fetchBinaries = (devicename, options, callback) ->
-    # Fix callback
-    if not callback? or typeof callback is 'object'
-        callback = (err) ->
-            process.exit 1 if err?
-            process.exit 0
-
-    # Get config
-    remoteConfig = config.config.remotes[devicename]
-    filePath = options.filePath
+    remoteConfig = config.getConfig()
+    deviceName = args.deviceName or config.getDeviceName()
+    filePath = args.filePath
 
     # Initialize remote HTTP client
     client = request.newClient remoteConfig.url
-    client.setBasicAuth devicename, remoteConfig.devicePassword
+    client.setBasicAuth deviceName, remoteConfig.devicePassword
 
     # Create files and directories in the FS
-    buildFsTree devicename, { filePath: filePath }, (err, res) ->
+    buildFsTree deviceName, { filePath: filePath }, (err, res) ->
 
         # Fetch only files
         db.query { map: (doc) -> emit doc._id, doc if doc.docType is 'File' }, (err, res) ->
@@ -319,13 +266,13 @@ fetchBinaries = (devicename, options, callback) ->
                                 console.log err if err?
 
                                 # Rebuild FS Tree to correct utime
-                                buildFsTree devicename, { filePath: path.join doc.path, doc.name }, callback
+                                buildFsTree deviceName, { filePath: path.join doc.path, doc.name }, callback
                 else
                     callback()
             , callback
 
 
-putDirectory = (devicename, directoryPath, args, callback) ->
+putDirectory = (directoryPath, args, callback) ->
     # Fix callback
     if not callback? or typeof callback is 'object'
         callback = (err) ->
@@ -333,7 +280,8 @@ putDirectory = (devicename, directoryPath, args, callback) ->
             process.exit 0
 
     # Get config
-    remoteConfig = config.config.remotes[devicename]
+    remoteConfig = config.getConfig()
+    deviceName = args.deviceName or config.getDeviceName()
 
     # Get dir name
     dirName = path.basename directoryPath
@@ -389,16 +337,16 @@ putDirectory = (devicename, directoryPath, args, callback) ->
                 fileName = "#{absolutePath}/#{file}"
                 # Upload file if it is a file
                 if fs.lstatSync(fileName).isFile()
-                    return putFile devicename, fileName, callback
+                    return putFile deviceName, fileName, callback
                 # Upload directory recursively if it is a directory
                 else if fs.lstatSync(fileName).isDirectory()
-                    return putDirectory devicename, fileName, { recursive: true }, callback
+                    return putDirectory fileName, { deviceName: deviceName, recursive: true }, callback
             if res.length is 0
                 log.info "No file to upload in: #{relativePath}"
                 return callback err, res
 
 
-putFile = (devicename, filePath, callback) ->
+putFile = (filePath, args, callback) ->
     # Fix callback
     if not callback? or typeof callback is 'object'
         callback = (err) ->
@@ -406,11 +354,12 @@ putFile = (devicename, filePath, callback) ->
             process.exit 0
 
     # Get config
-    remoteConfig = config.config.remotes[devicename]
+    remoteConfig = config.getConfig()
+    deviceName = args.deviceName or config.getDeviceName()
 
     # Initialize remote HTTP client
     client = request.newClient remoteConfig.url
-    client.setBasicAuth devicename, remoteConfig.devicePassword
+    client.setBasicAuth deviceName, remoteConfig.devicePassword
 
     # Get file name
     fileName = path.basename filePath
@@ -435,7 +384,7 @@ putFile = (devicename, filePath, callback) ->
     fileSize = stats.size
 
     # Ensure that directory exists
-    putDirectory devicename, path.join(remoteConfig.path, filePath), false, (err, res) ->
+    putDirectory path.join(remoteConfig.path, filePath), { deviceName: deviceName }, (err, res) ->
 
         replication.addFilter('File').then () ->
             db.query 'file/all', (err, res) ->
@@ -538,61 +487,72 @@ program
 program
     .command('add-remote-cozy <url> <devicename> <syncPath>')
     .description('Configure current device to sync with given cozy')
+    .option('-d, --deviceName [deviceName]', 'device name to deal with')
     .action addRemote
 
 program
-    .command('remove-remote-cozy <devicename>')
+    .command('remove-remote-cozy')
     .description('Unsync current device with its remote cozy')
     .action removeRemote
 
 program
-    .command('replicate-from-remote <devicename>')
+    .command('replicate-from-remote')
     .description('Replicate remote files/folders to local DB')
+    .option('-d, --deviceName [deviceName]', 'device name to deal with')
     .action replicateFromRemote
 
 program
-    .command('replicate-to-remote <devicename>')
+    .command('replicate-to-remote')
     .description('Replicate local files/folders to remote DB')
+    .option('-d, --deviceName [deviceName]', 'device name to deal with')
     .action replicateToRemote
 
 program
     .command('build-tree')
     .description('Create empty files and directories in the filesystem')
+    .option('-d, --deviceName [deviceName]', 'device name to deal with')
     .option('-f, --filePath [filePath]', 'specify file to build FS tree')
-    .action filesystem.buildTree
+    .action (args) ->
+        filesystem.buildTree args.filePath, () ->
 
 program
-    .command('fetch-binaries <devicename> ')
+    .command('fetch-binaries ')
     .description('Replicate DB binaries')
+    .option('-d, --deviceName [deviceName]', 'device name to deal with')
     .option('-f, --filePath [filePath]', 'specify file to fetch associated binary')
     .action fetchBinaries
 
 program
-    .command('put-file <devicename> <filePath>')
+    .command('put-file <filePath>')
     .description('Add file descriptor to PouchDB')
+    .option('-d, --deviceName [deviceName]', 'device name to deal with')
     .action putFile
 
 program
-    .command('put-dir <devicename> <dirPath>')
+    .command('put-dir <dirPath>')
     .description('Add folder descriptor to PouchDB')
+    .option('-d, --deviceName [deviceName]', 'device name to deal with')
     .option('-r, --recursive', 'add every file/folder inside')
     .action putDirectory
 
 program
-    .command('watch-local <devicename>')
+    .command('watch-local')
     .description('Watch changes on the FS')
+    .option('-d, --deviceName [deviceName]', 'device name to deal with')
     .option('-c, --catchup', 'catchup local changes')
     .action watchLocalChanges
 
 program
-    .command('watch-remote <devicename>')
+    .command('watch-remote')
     .description('Watch changes on the remote DB')
+    .option('-d, --deviceName [deviceName]', 'device name to deal with')
     .option('-b, --binary', 'automatically fetch binaries')
     .action watchRemoteChanges
 
 program
-    .command('sync <devicename>')
+    .command('sync')
     .description('Watch changes on the remote DB')
+    .option('-d, --deviceName [deviceName]', 'device name to deal with')
     .option('-b, --binary', 'automatically fetch binaries')
     .option('-c, --catchup', 'catchup local changes')
     .action runSync
