@@ -225,128 +225,6 @@ watchRemoteChanges = (args) ->
           log.error err
 
 
-fetchBinaries = (args, callback) ->
-    # Fix callback
-    if not callback? or typeof callback is 'object'
-        callback = (err) ->
-            process.exit 1 if err?
-            process.exit 0
-
-    # Get config
-    remoteConfig = config.getConfig()
-    deviceName = args.deviceName or config.getDeviceName()
-    filePath = args.filePath
-
-    # Initialize remote HTTP client
-    client = request.newClient remoteConfig.url
-    client.setBasicAuth deviceName, remoteConfig.devicePassword
-
-    # Create files and directories in the FS
-    buildFsTree deviceName, { filePath: filePath }, (err, res) ->
-
-        # Fetch only files
-        db.query { map: (doc) -> emit doc._id, doc if doc.docType is 'File' }, (err, res) ->
-            async.each res.rows, (doc, callback) ->
-                doc = doc.value
-                if (not filePath? or filePath is path.join doc.path, doc.name) and doc.binary?
-                    binaryPath = path.join remoteConfig.path, doc.path, doc.name
-                    binaryUri = "cozy/#{doc.binary.file.id}/file"
-
-                    # Check if binary has been downloaded already, otherwise save its path locally
-                    binaryDoc =
-                        docType: 'Binary'
-                        path: binaryPath
-                    db.put binaryDoc, doc.binary.file.id, doc.binary.file.rev, (err, res) ->
-                        if err? and err.status is 409
-                            # Binary already downloaded, ignore
-                            callback()
-                        else
-                            # Fetch binary via CouchDB API
-                            log.info "Downloading binary: #{path.join doc.path, doc.name}"
-                            client.saveFile binaryUri, binaryPath, (err, res, body) ->
-                                console.log err if err?
-
-                                # Rebuild FS Tree to correct utime
-                                buildFsTree deviceName, { filePath: path.join doc.path, doc.name }, callback
-                else
-                    callback()
-            , callback
-
-
-putDirectory = (directoryPath, args, callback) ->
-    # Fix callback
-    if not callback? or typeof callback is 'object'
-        callback = (err) ->
-            process.exit 1 if err?
-            process.exit 0
-
-    # Get config
-    remoteConfig = config.getConfig()
-    deviceName = args.deviceName or config.getDeviceName()
-
-    # Get dir name
-    dirName = path.basename directoryPath
-    if dirName is '.'
-        return callback()
-
-    # Find directory's parent directory
-    absolutePath = path.resolve directoryPath
-    relativePath = absolutePath.replace remoteConfig.path, ''
-    if relativePath is absolutePath
-        log.error "Directory is not located on the synchronized directory: #{absolutePath}"
-        return callback()
-    if relativePath.split('/').length > 2
-        dirPath = relativePath.replace "/#{dirName}", ''
-    else
-        dirPath = ''
-
-    # Get size and modification time
-    stats = fs.statSync(absolutePath)
-    dirLastModification = stats.mtime
-
-    # Lookup for existing directory
-    db.query { map: (doc) -> emit doc._id, doc if doc.docType is 'Folder' }, (err, res) ->
-        for doc in res.rows
-            doc = doc.value
-            if doc.path is dirPath and doc.name is dirName
-                if args.recursive?
-                    return putSubFiles callback
-                else
-                    log.info "Directory already exists: #{doc.path}/#{doc.name}"
-                    return callback err, res
-
-        log.info "Creating directory doc: #{dirPath}/#{dirName}"
-        newId = uuid.v4().split('-').join('')
-        document =
-            creationDate: dirLastModification
-            docType: 'Folder'
-            lastModification: dirLastModification
-            name: dirName
-            path: dirPath
-            tags: []
-
-        db.put document, newId, (err, res) ->
-            if args.recursive?
-                return putSubFiles callback
-            else
-                return callback err, res
-
-    putSubFiles = (callback) ->
-        # List files in directory
-        fs.readdir absolutePath, (err, res) ->
-            for file in res
-                fileName = "#{absolutePath}/#{file}"
-                # Upload file if it is a file
-                if fs.lstatSync(fileName).isFile()
-                    return putFile deviceName, fileName, callback
-                # Upload directory recursively if it is a directory
-                else if fs.lstatSync(fileName).isDirectory()
-                    return putDirectory fileName, { deviceName: deviceName, recursive: true }, callback
-            if res.length is 0
-                log.info "No file to upload in: #{relativePath}"
-                return callback err, res
-
-
 putFile = (filePath, args, callback) ->
     # Fix callback
     if not callback? or typeof callback is 'object'
@@ -469,21 +347,9 @@ putFile = (filePath, args, callback) ->
                         return callback()
 
 
-addFilter = ->
-        db.queryAsync('file/all')
-        .then (res) ->
-            console.log 'dude'
-        .finally () ->
-            console.log 'ok'
-
 displayConfig = ->
     console.log JSON.stringify config.config, null, 2
 
-
-program
-    .command('add-filter')
-    .description('Configure current device to sync with given cozy')
-    .action addFilter
 
 program
     .command('add-remote-cozy <url> <devicename> <syncPath>')
@@ -538,7 +404,11 @@ program
     .description('Add folder descriptor to PouchDB')
     .option('-d, --deviceName [deviceName]', 'device name to deal with')
     .option('-r, --recursive', 'add every file/folder inside')
-    .action putDirectory
+    .action (dirPath, args) ->
+        if args.recursive?
+            filesystem.createDirectoryContentDoc dirPath, ->
+        else
+            filesystem.createDirectoryDoc dirPath, ->
 
 program
     .command('watch-local')

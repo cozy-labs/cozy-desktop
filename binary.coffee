@@ -22,10 +22,9 @@ module.exports =
         # Change path in the binary DB document
         .then ->
             doc.path = finalPath
-            return pouch.db.putAsync doc
+            pouch.db.putAsync doc
 
         .then -> callback()
-
         .catch (err) ->
             log.error err
 

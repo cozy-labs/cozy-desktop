@@ -1,29 +1,28 @@
-fs = require 'fs'
-mkdirp = require 'mkdirp'
-touch = require 'touch'
-path = require 'path'
-log = require('printit')
-    prefix: 'Data Proxy | filesystem'
+fs      = require 'fs'
+mkdirp  = require 'mkdirp'
+touch   = require 'touch'
+path    = require 'path'
+uuid    = require 'node-uuid'
+log     = require('printit')
+          prefix: 'Data Proxy | filesystem'
 
-config = require './config'
-pouch = require './db'
-binary = require './binary'
+config  = require './config'
+pouch   = require './db'
+binary  = require './binary'
 
-# Promisify ALL THE THINGS  \o
 Promise = require 'bluebird'
 Promise.longStackTraces()
 Promise.promisifyAll lib for lib in [fs, mkdirp, touch, pouch, binary]
 
 # Promisify specific functions
 mkdirpAsync = Promise.promisify mkdirp.mkdirp
-touchAsync = Promise.promisify touch
+touchAsync  = Promise.promisify touch
 
-# Get config
 remoteConfig = config.getConfig()
 
 module.exports =
 
-    createDirectoryFromDoc: (doc, callback) ->
+    makeDirectoryFromDoc: (doc, callback) ->
         dirName = path.join remoteConfig.path, doc.path, doc.name
 
         # Create directory
@@ -43,7 +42,7 @@ module.exports =
             console.error err.stack
 
 
-    createFileFromDoc: (doc, callback) ->
+    touchFileFromDoc: (doc, callback) ->
         fileName = path.join remoteConfig.path, doc.path, doc.name
 
         # Ensure parent directory exists
@@ -94,7 +93,7 @@ module.exports =
                 or filePath is path.join doc.value.path, doc.value.name
 
         # Create folder(s)
-        .each (doc) ->@createDirectoryFromDocAsync doc.value
+        .each (doc) -> @makeDirectoryFromDocAsync doc.value
 
         # Add file filter if not exists
         .then -> pouch.addFilterAsync 'file'
@@ -108,13 +107,93 @@ module.exports =
                 or filePath is path.join doc.value.path, doc.value.name
 
         # Create file(s)
-        .each (doc) -> @createFileFromDocAsync doc.value
+        .each (doc) -> @touchFileFromDocAsync doc.value
 
         .then -> callback()
-
         .catch (err) ->
             log.error err.toString()
             console.error err.stack
+
+
+    getPaths: (filePath) ->
+        # Assuming filePath is 'hello/world.html':
+        absolute = path.resolve filePath                      # /home/sync/hello/world.html
+        relative = path.relative remoteConfig.path, absolute  # hello/world.html
+        name     = path.basename filePath                     # world.html
+        parent   = path.dirname path.join path.sep, relative  # /hello
+
+        # Do not keep '/'
+        parent   = '' if parent is '/'
+
+        absolute: absolute
+        relative: relative
+        name: name
+        parent: parent
+
+
+    isInSyncDir: (filePath) ->
+        paths = @getPaths filePath
+        return paths.relative.substring(0,2) isnt '..'
+
+
+    createDirectoryContentDoc: (dirPath, callback) ->
+
+    createDirectoryDoc: (dirPath, callback) ->
+        dirPaths = @getPaths dirPath
+
+        # Check directory's location
+        unless @isInSyncDir(dirPath) and fs.existsSync(dirPaths.absolute)
+            log.error "Directory is not located in the 
+                       synchronized directory: #{dirPaths.absolute}"
+            return callback()
+
+
+        # Initialize doc Object
+        document =
+            _id: uuid.v4().split('-').join('')
+            docType: 'Folder'
+            name: dirPaths.name
+            path: dirPaths.parent
+            tags: []
+
+        # Add directory stats
+        fs.statAsync(dirPaths.absolute)
+        .then (stats) ->
+            document.creationDate     = stats.mtime
+            document.lastModification = stats.mtime
+
+            pouch.db.queryAsync 'folder/all'
+        # Look for directory with the same path/name
+        .get('rows').filter (doc) ->
+            return doc.value.name is document.name \
+               and doc.value.path is document.path
+
+        # If exists, update document information
+        .each (doc) ->
+            document._id          = doc.value._id
+            document._rev         = doc.value._rev
+            document.creationDate = doc.value.creationDate
+            document.tags         = doc.value.tags
+            if new Date(doc.value.lastModification) \
+             > new Date(document.lastModification)
+                document.lastModification = doc.value.lastModification
+
+        # Otherwise do not mind if directory doc is not found
+        .catch (err) ->
+            throw err unless err.status is 404
+
+        # Create or update directory document
+        .then ->
+            pouch.db.putAsync document
+
+        .then -> callback()
+        .catch (err) ->
+            log.error err.toString()
+            console.error err.stack
+
+
+    createFileDoc: (path) ->
+
 
 
 # Promisify above functions

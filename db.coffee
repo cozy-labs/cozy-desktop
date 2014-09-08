@@ -55,3 +55,4 @@ module.exports =
             else
                 log.info "Design document does not exist: #{id}"
                 callback null
+
