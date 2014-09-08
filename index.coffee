@@ -225,128 +225,6 @@ watchRemoteChanges = (args) ->
           log.error err
 
 
-putFile = (filePath, args, callback) ->
-    # Fix callback
-    if not callback? or typeof callback is 'object'
-        callback = (err) ->
-            process.exit 1 if err?
-            process.exit 0
-
-    # Get config
-    remoteConfig = config.getConfig()
-    deviceName = args.deviceName or config.getDeviceName()
-
-    # Initialize remote HTTP client
-    client = request.newClient remoteConfig.url
-    client.setBasicAuth deviceName, remoteConfig.devicePassword
-
-    # Get file name
-    fileName = path.basename filePath
-
-    # Find file's parent directory
-    absolutePath = path.resolve filePath
-    relativePath = absolutePath.replace remoteConfig.path, ''
-    if relativePath is absolutePath
-        log.error "File is not located on the synchronized directory: #{filePath}"
-        return callback(true)
-    if relativePath.split('/').length > 2
-        filePath = relativePath.replace "/#{fileName}", ''
-    else
-        filePath = ''
-
-    # Lookup MIME type
-    fileMimeType = mime.lookup absolutePath
-
-    # Get size and modification time
-    stats = fs.statSync absolutePath
-    fileLastModification = stats.mtime
-    fileSize = stats.size
-
-    # Ensure that directory exists
-    putDirectory path.join(remoteConfig.path, filePath), { deviceName: deviceName }, (err, res) ->
-
-        replication.addFilter('File').then () ->
-            db.query 'file/all', (err, res) ->
-
-        # Fetch only files with the same path/filename
-        db.query { map: (doc) -> emit doc._id, doc if doc.docType is 'File' }, (err, res) ->
-            for doc in res.rows
-                doc = doc.value
-                if doc.name is fileName and doc.path is filePath
-                    existingFileId    = doc._id
-                    existingFileRev   = doc._rev
-                    existingFileTags  = doc.tags
-                    existingFileCrea  = doc.creationDate
-                    existingBinaryId  = doc.binary.file.id
-                    if new Date(doc.lastModification) >= new Date(fileLastModification)
-                        log.info "Unchanged file: #{doc.path}/#{doc.name}"
-                        return callback err, res
-
-            if existingBinaryId?
-                # Fetch last revision from remote
-                client.get "cozy/#{existingBinaryId}", (err, res, body) ->
-                    if res.statusCode isnt 200
-                        log.error "#{body.error}: #{body.reason}"
-                    else
-                        return uploadBinary body._id, body._rev, absolutePath, callback
-            else
-                # Fetch last revision from remote
-                # Create the doc and get revision
-                newBinaryId = uuid.v4().split('-').join('')
-                client.put "cozy/#{newBinaryId}", { docType: 'Binary' }, (err, res, body) ->
-                    if res.statusCode isnt 201
-                        log.error "#{body.error}: #{body.reason}"
-                    else
-                        return uploadBinary body.id, body.rev, absolutePath, callback
-
-            uploadBinary = (id, rev, absolutePath, callback) ->
-                log.info "Uploading binary: #{relativePath}"
-                client.putFile "cozy/#{id}/file?rev=#{rev}", absolutePath, {}, (err, res, body) ->
-                    if res.statusCode isnt 201
-                        log.error "#{body.error}: #{body.reason}"
-                    else
-                        body = JSON.parse body
-                        binaryDoc =
-                            docType: 'Binary'
-                            path: absolutePath
-                        log.info "Updating binary doc: #{absolutePath}"
-                        db.put binaryDoc, body.id, body.rev, (err, res) ->
-                            return putFileDoc existingFileId, existingFileRev, body.id, body.rev, callback
-
-            putFileDoc = (id, rev, binaryId, binaryRev, callback) ->
-                doc =
-                    binary:
-                        file:
-                            id: binaryId
-                            rev: binaryRev
-                    class: 'document'
-                    docType: 'File'
-                    lastModification: fileLastModification
-                    mime: fileMimeType
-                    name: fileName
-                    path: filePath
-                    size: fileSize
-
-                if id?
-                    doc.creationDate = existingFileCrea
-                    doc.tags = existingFileTags
-                    log.info "Updating file doc: #{relativePath}"
-                    db.put doc, id, rev, (err, res) ->
-                        if err
-                            console.log err
-                        return callback()
-
-                else
-                    doc.creationDate = fileLastModification
-                    doc.tags = []
-                    newId = uuid.v4().split('-').join('')
-                    log.info "Creating file doc: #{relativePath}"
-                    db.put doc, newId, (err, res) ->
-                        if err
-                            console.log err
-                        return callback()
-
-
 displayConfig = ->
     console.log JSON.stringify config.config, null, 2
 
@@ -397,7 +275,8 @@ program
     .command('put-file <filePath>')
     .description('Add file descriptor to PouchDB')
     .option('-d, --deviceName [deviceName]', 'device name to deal with')
-    .action putFile
+    .action (filePath, args) ->
+        filesystem.createFileDoc filePath, ->
 
 program
     .command('put-dir <dirPath>')

@@ -1,6 +1,7 @@
 fs         = require 'fs'
 path       = require 'path'
 request    = require 'request-json'
+uuid       = require 'node-uuid'
 log        = require('printit')
              prefix: 'Data Proxy | binary'
 
@@ -28,8 +29,85 @@ module.exports =
         .catch (err) ->
             log.error err
 
+
+    uploadAsAttachment: (remoteId, remoteRev, filePath, callback) ->
+        deviceName = config.getDeviceName()
+        relativePath = path.relative remoteConfig.path, filePath
+
+        log.info "Uploading binary: #{relativePath}"
+
+        # Initialize remote HTTP client
+        client = request.newClient remoteConfig.url
+        client.setBasicAuth deviceName, remoteConfig.devicePassword
+
+        client.putFile "cozy/#{remoteId}/file?rev=#{remoteRev}"
+        , filePath
+        , {}
+        , (err, res, body) ->
+            throw err if err?
+            body = JSON.parse(body) if typeof body is 'string'
+            throw new Error(body.error) if body.error?
+            log.info "Binary uploaded: #{relativePath}"
+            callback err, body
+
+
+    createEmptyRemoteDoc: (callback) ->
+        deviceName = config.getDeviceName()
+
+        newId = uuid.v4().split('-').join('')
+
+        # Initialize remote HTTP client
+        client = request.newClient remoteConfig.url
+        client.setBasicAuth deviceName, remoteConfig.devicePassword
+        client.put "cozy/#{newId}"
+        , { docType: 'Binary' }
+        , (err, res, body) ->
+            throw err if err?
+            throw new Error(body.error) if body.error?
+            callback err, body
+
+
+    getRemoteDoc: (remoteId, callback) ->
+        deviceName = config.getDeviceName()
+
+        # Initialize remote HTTP client
+        client = request.newClient remoteConfig.url
+        client.setBasicAuth deviceName, remoteConfig.devicePassword
+        client.get "cozy/#{remoteId}", (err, res, body) ->
+            throw err if err?
+            throw new Error(body.error) if body.error?
+            body.id  = body._id
+            body.rev = body._rev
+            callback err, body
+
+    saveLocation: (filePath, id, rev, callback) ->
+        # Get binary document
+        pouch.db.getAsync(id)
+
+        # If exists, remove it to avoid conflicts
+        .then (doc) -> pouch.db.removeAsync doc
+
+        # Otherwise the document does not exist
+        .catch (err) ->
+            throw err unless err.status is 404
+
+         # Create the document
+        .then -> pouch.db.putAsync
+                    _id: id
+                    _rev: rev
+                    docType: 'Binary'
+                    path: filePath
+
+        .then -> callback()
+        .catch (err) ->
+            log.error err.toString()
+            console.error err.stack
+
+
     fetchAll: (deviceName, callback) ->
         deviceName ?= config.getDeviceName()
+
+        log.info "Fetching all binaries"
 
         # Ensure filesystem tree is built
         require('./filesystem').buildTreeAsync(null).bind(@)
@@ -52,6 +130,8 @@ module.exports =
 
     fetchOne: (deviceName, filePath, callback) ->
         deviceName ?= config.getDeviceName()
+
+        log.info "Fetching binary: #{filePath}"
 
         # Ensure parent folders exist
         require('./filesystem').buildTreeAsync(filePath).bind(@)
@@ -77,9 +157,10 @@ module.exports =
         # Useful variables
         filePath = path.join doc.path, doc.name
         binaryPath = path.join remoteConfig.path, filePath
+        relativePath = path.relative remoteConfig.path, filePath
 
         # Check if the binary document exists
-        pouch.db.getAsync(doc.binary.file.id)
+        pouch.db.getAsync(doc.binary.file.id).bind(@)
 
         # Move the binary if it has already been downloaded
         .then (binaryDoc) ->
@@ -104,25 +185,20 @@ module.exports =
                 client.setBasicAuth deviceName, remoteConfig.devicePassword
 
                 # Launch download
-                log.info "Downloading binary: #{filePath}"
+                log.info "Downloading binary: #{relativePath}"
                 client.saveFileAsync "cozy/#{doc.binary.file.id}/file", binaryPath
-                .then -> log.info "Binary downloaded: #{filePath}"
+                .then ->
+                    log.info "Binary downloaded: #{relativePath}"
 
-        # Create or update the local binary document
-        # which will not be synchronized, only used
-        # to store the binary's location on the FS
-        .then -> pouch.db.putAsync
-                    _id: doc.binary.file.id
-                    _rev: doc.binary.file.rev
-                    docType: 'Binary'
-                    path: binaryPath
+        # Save binary location in the DB
+        .then -> @saveLocationAsync binaryPath
+                             , doc.binary.file.id
+                             , doc.binary.file.rev
 
         # Update binary information
-        .then -> fs.utimesAsync(
-                    binaryPath,
-                    new Date(doc.creationDate),
-                    new Date(doc.lastModification)
-                 )
+        .then -> fs.utimesAsync binaryPath
+                              , new Date(doc.creationDate)
+                              , new Date(doc.lastModification)
 
         .then -> callback()
         .catch (err) ->
