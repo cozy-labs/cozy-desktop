@@ -321,26 +321,36 @@ module.exports =
         fromNow ?= false
         continuous ?= fromNow
 
+        # Use chokidar since the standard watch() function from
+        # fs module has some issues.
+        # More info on https://github.com/paulmillr/chokidar
         watcher = chokidar.watch remoteConfig.path,
             ignored: /[\/\\]\./
             persistent: continuous
             ignoreInitial: fromNow
+
+        # New file detected
         .on 'add', (filePath) =>
             unless @watchingLocked
                 log.info "File added: #{filePath}"
                 @createFileDoc filePath, ->
+
+        # New directory detected
         .on 'addDir', (dirPath) =>
             unless @watchingLocked
                 if path isnt remoteConfig.path
                     log.info "Directory added: #{dirPath}"
                     @createDirectoryDoc dirPath, ->
+
+        # File update detected
         .on 'change', (filePath) =>
             unless @watchingLocked
                 log.info "File changed: #{filePath}"
                 @createFileDoc filePath, ->
+
         .on 'error', (err) ->
             log.error 'An error occured when watching changes'
-            console.log err
+            console.error err
 
 
     getPaths: (filePath) ->

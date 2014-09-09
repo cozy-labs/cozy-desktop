@@ -52,18 +52,6 @@ module.exports =
         rebuildFs ?= false
         fetchBinary ?= false
 
-        # Rebuild tree of fetch binaries after replication completion
-        applyChanges = (callback) ->
-            filesystem.watchingLocked = true
-            if fetchBinary
-                binary.fetchAll deviceName, ->
-                    filesystem.watchingLocked = false
-                    callback null
-            else
-                filesystem.buildTree null, ->
-                    filesystem.watchingLocked = false
-                    callback null
-
         # Specify which way to replicate
         if fromRemote and not toRemote
             log.info "Running replication from remote database"
@@ -81,21 +69,53 @@ module.exports =
                 doc.docType is 'Folder' or doc.docType is 'File'
             live: continuous
 
+        # Define action after replication completion
+        applyChanges = (callback) ->
+
+            # Lock file watcher to avoid remotely downloaded files to be re-uploaded
+            filesystem.watchingLocked = true
+            if fetchBinary
+
+                # Fetch binaries
+                binary.fetchAll deviceName, ->
+                    filesystem.watchingLocked = false
+                    callback null
+            else
+
+                # Or rebuild the filesystem directory tree only
+                filesystem.buildTree null, ->
+                    filesystem.watchingLocked = false
+                    callback null
+
+        # Do not need rebuild until docs are added
         needTreeRebuild = false
 
+        # Set authentication
         url = urlParser.parse remoteConfig.url
         url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
+
+        # Launch replication
         replicate(urlParser.format(url) + 'cozy', options)
         .on 'change', (info) ->
-            log.info "#{info.direction} DB change: #{info.change.docs_written} doc(s) written"
-            if info.direction is 'pull' and info.change.docs_written > 0
+            changeMessage = "DB change: #{info.change.docs_written} doc(s) written"
+            if info.direction
+                # Specify direction
+                changeMessage = "#{info.direction} #{changeMessage}"
+
+            # Find out if filesystem tree needs a rebuild
+            if (not info.direction? and fromRemote and info.docs_written > 0) \
+                or (info.direction is 'pull' and info.change.docs_written > 0)
                 needTreeRebuild = rebuildFs
+
+        # Called only for a continuous replication
         .on 'uptodate', (info) ->
             log.info 'Replication is complete'
             if needTreeRebuild
                 log.info 'Applying changes on the filesystem'
                 applyChanges ->
                     needTreeRebuild = false
+
+        # Called only for a single replication
         .on 'complete', (info) ->
             log.info 'Replication is complete'
             if fromRemote and not toRemote
@@ -103,6 +123,7 @@ module.exports =
                 applyChanges -> callback null
             else
                 callback null
+
         .on 'error', (err) ->
             log.error err
             callback err
