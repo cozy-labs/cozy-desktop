@@ -12,11 +12,8 @@ config   = require './config'
 pouch    = require './db'
 binary   = require './binary'
 
-Promise  = require 'bluebird'
-Promise.longStackTraces()
-Promise.promisifyAll lib for lib in [fs, mkdirp, touch, pouch, binary]
-
 # Promisify specific functions
+Promise     = require 'bluebird'
 mkdirpAsync = Promise.promisify mkdirp.mkdirp
 touchAsync  = Promise.promisify touch
 

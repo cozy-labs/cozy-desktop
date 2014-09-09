@@ -5,6 +5,7 @@ process     = require 'process'
 log         = require('printit')
               prefix: 'Data Proxy'
 
+promise     = require './promise'
 config      = require './config'
 replication = require './replication'
 filesystem  = require './filesystem'

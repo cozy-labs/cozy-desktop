@@ -10,10 +10,6 @@ config     = require './config'
 filesystem = require './filesystem'
 binary     = require './binary'
 
-Promise    = require 'bluebird'
-Promise.longStackTraces()
-Promise.promisifyAll lib for lib in [fs, request, pouch]
-
 filters = []
 remoteConfig = config.getConfig()
 
@@ -106,7 +102,7 @@ module.exports =
 
             # Find out if filesystem tree needs a rebuild
             if (not info.direction? and fromRemote and info.docs_written > 0) \
-                or (info.direction is 'pull' and info.change.docs_written > 0)
+            or (info.direction is 'pull' and info.change.docs_written > 0)
                 needTreeRebuild = rebuildFs
 
         # Called only for a continuous replication
@@ -129,7 +125,3 @@ module.exports =
         .on 'error', (err) ->
             log.error err
             callback err
-
-
-    runSync: (target) ->
-

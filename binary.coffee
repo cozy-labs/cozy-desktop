@@ -8,10 +8,6 @@ log        = require('printit')
 config     = require './config'
 pouch      = require './db'
 
-Promise    = require 'bluebird'
-Promise.longStackTraces()
-Promise.promisifyAll lib for lib in [fs, request, pouch]
-
 remoteConfig = config.getConfig()
 
 module.exports =
@@ -225,4 +221,5 @@ module.exports =
 
 
 # Promisify above functions
+Promise = require 'bluebird'
 Promise.promisifyAll module.exports

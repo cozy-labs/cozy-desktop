@@ -5,13 +5,14 @@ log = require('printit')
 
 config = require './config'
 
+# Self-promisification
 Promise = require 'bluebird'
-Promise.longStackTraces()
+db = Promise.promisifyAll(new PouchDB config.dbPath)
+
+# Listener memory leak test
+db.setMaxListenersAsync 30
 
 fs.ensureDirSync config.dir
-
-db = Promise.promisifyAll(new PouchDB config.dbPath)
-db.setMaxListenersAsync 30
 
 module.exports =
 
