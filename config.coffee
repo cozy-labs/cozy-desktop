@@ -1,8 +1,9 @@
-path = require 'path-extra'
-fs = require 'fs-extra'
+path    = require 'path-extra'
+fs      = require 'fs-extra'
+touch   = require 'touch'
 process = require 'process'
-log = require('printit')
-    prefix: 'Data Proxy | config'
+log     = require('printit')
+          prefix: 'Data Proxy | config'
 
 defaultDir = path.join path.homedir(), '.cozy-data-proxy'
 configPath = path.join defaultDir, './config.json'
@@ -15,6 +16,14 @@ module.exports =
     dir: defaultDir
     dbPath: path.join defaultDir, 'db'
     config: require configPath or {}
+    lockFile: path.join configPath, '.cozy-lock'
+    lockWatch: (callback) ->
+        touch @lockFile, -> callback null
+    unlockWatch: (callback) ->
+        try
+            fs.unlink(@lockFile, -> callback null)
+        catch
+            callback null
 
     getConfig: (deviceName) ->
         deviceName = @getDeviceName() unless deviceName?

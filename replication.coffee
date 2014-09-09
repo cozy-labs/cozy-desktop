@@ -1,3 +1,5 @@
+fs        = require 'fs'
+touch     = require 'touch'
 request   = require 'request-json'
 urlParser = require 'url'
 log       = require('printit')
@@ -50,10 +52,16 @@ module.exports =
 
         # Rebuild tree of fetch binaries after replication completion
         applyChanges = (callback) ->
-            if binary
-                require('./binary').fetchAll deviceName, callback()
-            else
-                require('./filesystem').buildTree null, callback()
+            config.lockWatch ->
+                try
+                    if binary
+                        require('./binary').fetchAll deviceName, ->
+                            callback null
+                    else
+                        require('./filesystem').buildTree null, ->
+                            callback null
+                finally
+                    config.unlockWatch ->
 
         # Specify which way to replicate
         if fromRemote and not toRemote
@@ -84,13 +92,14 @@ module.exports =
             log.info 'Replication is complete'
             if needTreeRebuild
                 log.info 'Applying changes on the filesystem'
-                applyChanges () ->
+                applyChanges ->
         .on 'complete', (info) ->
             log.info 'Replication is complete'
             if fromRemote and not toRemote
                 log.info 'Applying changes on the filesystem'
-                applyChanges callback()
-            callback()
+                applyChanges -> callback null
+            else
+                callback null
         .on 'error', (err) ->
             log.error err
             callback err

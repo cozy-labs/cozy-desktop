@@ -25,7 +25,7 @@ module.exports =
             doc.path = finalPath
             pouch.db.putAsync doc
 
-        .then -> callback()
+        .then -> callback null
         .catch (err) ->
             log.error err
 
@@ -89,7 +89,8 @@ module.exports =
 
         # Otherwise the document does not exist
         .catch (err) ->
-            throw err unless err.status is 404
+            throw err unless err.status is 404 \
+                          or err.status is 409
 
          # Create the document
         .then -> pouch.db.putAsync
@@ -98,8 +99,10 @@ module.exports =
                     docType: 'Binary'
                     path: filePath
 
-        .then -> callback()
+        .then -> callback null
         .catch (err) ->
+            return callback null if  err.status? \
+                                 and err.status is 409
             log.error err.toString()
             console.error err.stack
 
@@ -123,7 +126,7 @@ module.exports =
         .each (doc) ->
             @fetchFromDocAsync deviceName, doc.value
 
-        .then -> callback()
+        .then -> callback null
         .catch (err) ->
             log.error err.toString()
             console.error err.stack
@@ -145,7 +148,7 @@ module.exports =
         .each (doc) ->
             @fetchFromDocAsync deviceName, doc.value
 
-        .then -> callback()
+        .then -> callback null
         .catch (err) ->
             log.error err.toString()
             console.error err.stack
@@ -164,11 +167,11 @@ module.exports =
 
         # Move the binary if it has already been downloaded
         .then (binaryDoc) ->
-            if binaryDoc.path? and binaryDoc.path isnt binaryPath
-                fs.renameSync(binaryDoc.path, binaryPath)
-
             # Remove binary doc to keep rev up-to-date
             pouch.db.removeAsync binaryDoc
+            .then ->
+                if binaryDoc.path? and binaryDoc.path isnt binaryPath
+                    fs.renameSync(binaryDoc.path, binaryPath)
 
         .catch (err) ->
             # Do not mind if binary doc is not found
@@ -200,7 +203,7 @@ module.exports =
                               , new Date(doc.creationDate)
                               , new Date(doc.lastModification)
 
-        .then -> callback()
+        .then -> callback null
         .catch (err) ->
             log.error err.toString()
             console.error err.stack

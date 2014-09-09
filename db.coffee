@@ -33,11 +33,15 @@ module.exports =
                     map: map
 
         db.get id, (err, currentDesignDoc) ->
+            callback null
             if currentDesignDoc?
                 newDesignDoc._rev = currentDesignDoc._rev
             db.put newDesignDoc, (err, res) ->
                 if err?
-                    callback err
+                    if err.status is 409
+                        callback null
+                    else
+                        callback err
                 else
                     log.info "Design document created: #{id}" if not currentDesignDoc?
                     callback null

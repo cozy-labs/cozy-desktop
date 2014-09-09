@@ -37,7 +37,7 @@ module.exports =
                               , new Date(doc.creationDate)
                               , new Date(doc.lastModification)
 
-        .then -> callback()
+        .then -> callback null
 
         .catch (err) ->
             log.error err.toString()
@@ -58,7 +58,7 @@ module.exports =
         # Move binary if exists, otherwise touch the file
         .then (binaryDoc) ->
             if binaryDoc? and fs.existsSync binaryDoc.path
-                log.info "File exists: #{binaryDoc.path}"
+                # log.info "File exists: #{binaryDoc.path}"
                 binary.moveFromDocAsync binaryDoc
                                       , filePaths.absolute
             else
@@ -70,7 +70,7 @@ module.exports =
                               , new Date(doc.creationDate)
                               , new Date(doc.lastModification)
 
-        .then -> callback()
+        .then -> callback null
 
         .catch (err) ->
             log.error err
@@ -118,7 +118,7 @@ module.exports =
         .each (doc) ->
             @touchFileFromDocAsync doc.value
 
-        .then -> callback()
+        .then -> callback null
         .catch (err) ->
             log.error err.toString()
             console.error err.stack
@@ -148,7 +148,7 @@ module.exports =
                 else if stats.isFile()
                     @createFileDocAsync filePath
 
-        .then -> callback()
+        .then -> callback null
         .catch (err) ->
             log.error err.toString()
             console.error err.stack
@@ -162,7 +162,7 @@ module.exports =
             unless dirPath is '' or dirPath is remoteConfig.path
                 log.error "Directory is not located in the 
                            synchronized directory: #{dirPaths.absolute}"
-            return callback()
+            return callback null
 
 
         # Initialize document Object
@@ -208,7 +208,7 @@ module.exports =
         # Create or update directory document
         .then -> pouch.db.putAsync document
 
-        .then -> callback()
+        .then -> callback null
         .catch (err) ->
             log.error err.toString()
             console.error err.stack
@@ -221,7 +221,7 @@ module.exports =
         unless @isInSyncDir(filePath) and fs.existsSync(filePaths.absolute)
             log.error "File is not located in the 
                        synchronized directory: #{filePaths.absolute}"
-            return callback()
+            return callback null
 
 
         # Initialize document Object
@@ -302,8 +302,10 @@ module.exports =
         # Finally, create or update file document
         .then -> pouch.db.putAsync document
 
-        .then -> callback()
+        .then -> callback null
         .catch (err) ->
+            return callback null if  err.status? \
+                                 and err.status is 409
             log.error err.toString()
             console.error err.stack
 
@@ -312,20 +314,31 @@ module.exports =
         fromNow ?= false
         continuous ?= fromNow
 
+        lockFile = path.join remoteConfig.path, '.cozy-lock'
+
         watcher = chokidar.watch remoteConfig.path,
             ignored: /[\/\\]\./
             persistent: continuous
             ignoreInitial: fromNow
         .on 'add', (filePath) =>
-            log.info "File added: #{filePath}"
-            @createFileDoc filePath, ->
+            fs.existsAsync(lockFile).bind(@)
+            .then (exists) ->
+                unless exists
+                    log.info "File added: #{filePath}"
+                    @createFileDoc filePath, ->
         .on 'addDir', (dirPath) =>
-            if path isnt remoteConfig.path
-                log.info "Directory added: #{dirPath}"
-                @createDirectoryDoc dirPath, ->
+            fs.existsAsync(lockFile).bind(@)
+            .then (exists) ->
+                unless exists
+                    if path isnt remoteConfig.path
+                        log.info "Directory added: #{dirPath}"
+                        @createDirectoryDoc dirPath, ->
         .on 'change', (filePath) =>
-            log.info "File changed: #{filePath}"
-            @createFileDoc filePath, ->
+            fs.existsAsync(lockFile).bind(@)
+            .then (exists) ->
+                unless exists
+                    log.info "File changed: #{filePath}"
+                    @createFileDoc filePath, ->
         .on 'error', (err) ->
             log.error 'An error occured when watching changes'
             console.log err
