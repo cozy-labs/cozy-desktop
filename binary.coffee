@@ -27,8 +27,11 @@ module.exports =
             .catch (err) -> throw err unless err.status is 409
 
         .then -> callback null
+
         .catch (err) ->
-            log.error err
+            log.error err.toString()
+            console.error err
+            callback err
 
 
     uploadAsAttachment: (remoteId, remoteRev, filePath, callback) ->
@@ -103,9 +106,11 @@ module.exports =
             throw err unless err.status is 409
 
         .then -> callback null
+
         .catch (err) ->
             log.error err.toString()
-            console.error err.stack
+            console.error err
+            callback err
 
 
     fetchAll: (deviceName, callback) ->
@@ -128,9 +133,11 @@ module.exports =
             @fetchFromDocAsync deviceName, doc.value
 
         .then -> callback null
+
         .catch (err) ->
             log.error err.toString()
-            console.error err.stack
+            console.error err
+            callback err
 
     fetchOne: (deviceName, filePath, callback) ->
         deviceName ?= config.getDeviceName()
@@ -150,9 +157,11 @@ module.exports =
             @fetchFromDocAsync deviceName, doc.value
 
         .then -> callback null
+
         .catch (err) ->
             log.error err.toString()
-            console.error err.stack
+            console.error err
+            callback err
 
 
     fetchFromDoc: (deviceName, doc, callback) ->
@@ -208,9 +217,11 @@ module.exports =
                               , new Date(doc.lastModification)
 
         .then -> callback null
+
         .catch (err) ->
             log.error err.toString()
-            console.error err.stack
+            console.error err
+            callback err
 
 
 # Promisify above functions

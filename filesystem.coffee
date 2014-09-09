@@ -43,7 +43,8 @@ module.exports =
 
         .catch (err) ->
             log.error err.toString()
-            console.error err.stack
+            console.error err
+            callback err
 
 
     touchFileFromDoc: (doc, callback) ->
@@ -75,8 +76,9 @@ module.exports =
         .then -> callback null
 
         .catch (err) ->
-            log.error err
-            console.error err.stack
+            log.error err.toString()
+            console.error err
+            callback err
 
 
     buildTree: (filePath, callback) ->
@@ -128,9 +130,11 @@ module.exports =
             throw err unless err.status is 404
 
         .then -> callback null
+
         .catch (err) ->
             log.error err.toString()
-            console.error err.stack
+            console.error err
+            callback err
 
 
     createDirectoryContentDoc: (dirPath, callback) ->
@@ -160,7 +164,8 @@ module.exports =
         .then -> callback null
         .catch (err) ->
             log.error err.toString()
-            console.error err.stack
+            console.error err
+            callback err
 
 
     createDirectoryDoc: (dirPath, callback) ->
@@ -218,9 +223,11 @@ module.exports =
         .then -> pouch.db.putAsync document
 
         .then -> callback null
+
         .catch (err) ->
             log.error err.toString()
-            console.error err.stack
+            console.error err
+            callback err
 
 
     createFileDoc: (filePath, callback) ->
@@ -312,9 +319,11 @@ module.exports =
         .then -> pouch.db.putAsync document
 
         .then -> callback null
+
         .catch (err) ->
             log.error err.toString()
-            console.error err.stack
+            console.error err
+            callback err
 
 
     watchChanges: (continuous, fromNow) ->

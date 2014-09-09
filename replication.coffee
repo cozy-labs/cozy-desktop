@@ -10,6 +10,10 @@ config     = require './config'
 filesystem = require './filesystem'
 binary     = require './binary'
 
+Promise    = require 'bluebird'
+Promise.longStackTraces()
+Promise.promisifyAll lib for lib in [fs, request, pouch]
+
 filters = []
 remoteConfig = config.getConfig()
 
@@ -20,31 +24,29 @@ module.exports =
         client.setBasicAuth 'owner', options.password
 
         data = login: options.deviceName
-        client.post 'device/', data, (err, res, body) ->
-            if err
-                callback err + body
+        client.postAsync('device/', data)
+        .then (res, body) ->
+            callback null,
+                id: body.id
+                password: body.password
+        .catch (err) ->
+            log.error err.toString()
+            console.error err
+            callback err
 
-            else if body.error
-                callback new Error body.error
-
-            else
-                callback null,
-                    id: body.id
-                    password: body.password
 
     unregisterDevice: (options, callback) ->
         client = request.newClient options.url
         client.setBasicAuth 'owner', options.password
 
-        client.del "device/#{options.deviceId}/", (err, res, body) ->
-            if err
-                callback err + body
+        client.delAsync("device/#{options.deviceId}/")
+        .then (res, body) ->
+            callback null
+        .catch (err) ->
+            log.error err.toString()
+            console.error err
+            callback err
 
-            else if body.error
-                callback new Error body.error
-
-            else
-                callback null
 
     runReplication: (fromRemote, toRemote, continuous, rebuildFs, fetchBinary, callback) ->
         deviceName = config.getDeviceName()
