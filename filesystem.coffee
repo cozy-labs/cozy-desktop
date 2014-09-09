@@ -1,17 +1,18 @@
-fs      = require 'fs'
-mkdirp  = require 'mkdirp'
-touch   = require 'touch'
-path    = require 'path'
-uuid    = require 'node-uuid'
-mime    = require 'mime'
-log     = require('printit')
-          prefix: 'Data Proxy | filesystem'
+fs       = require 'fs'
+mkdirp   = require 'mkdirp'
+touch    = require 'touch'
+path     = require 'path'
+uuid     = require 'node-uuid'
+mime     = require 'mime'
+chokidar = require 'chokidar'
+log      = require('printit')
+           prefix: 'Data Proxy | filesystem'
 
-config  = require './config'
-pouch   = require './db'
-binary  = require './binary'
+config   = require './config'
+pouch    = require './db'
+binary   = require './binary'
 
-Promise = require 'bluebird'
+Promise  = require 'bluebird'
 Promise.longStackTraces()
 Promise.promisifyAll lib for lib in [fs, mkdirp, touch, pouch, binary]
 
@@ -77,12 +78,12 @@ module.exports =
 
 
     buildTree: (filePath, callback) ->
-        filePaths = @getPaths filePath
-
         # If filePath argument is set, rebuild FS information for this file only
         if filePath?
+            filePaths = @getPaths filePath
             log.info "Updating file info: #{filePaths.relative}"
         else
+            filePaths = @getPaths remoteConfig.path
             log.info "Rebuilding filesystem tree"
 
         # Add folder filter if not exists
@@ -305,6 +306,29 @@ module.exports =
         .catch (err) ->
             log.error err.toString()
             console.error err.stack
+
+
+    watchChanges: (continuous, fromNow) ->
+        fromNow ?= false
+        continuous ?= fromNow
+
+        watcher = chokidar.watch remoteConfig.path,
+            ignored: /[\/\\]\./
+            persistent: continuous
+            ignoreInitial: fromNow
+        .on 'add', (filePath) =>
+            log.info "File added: #{filePath}"
+            @createFileDoc filePath, ->
+        .on 'addDir', (dirPath) =>
+            if path isnt remoteConfig.path
+                log.info "Directory added: #{dirPath}"
+                @createDirectoryDoc dirPath, ->
+        .on 'change', (filePath) =>
+            log.info "File changed: #{filePath}"
+            @createFileDoc filePath, ->
+        .on 'error', (err) ->
+            log.error 'An error occured when watching changes'
+            console.log err
 
 
     getPaths: (filePath) ->

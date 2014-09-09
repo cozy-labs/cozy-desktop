@@ -1,25 +1,14 @@
-Promise = require 'bluebird'
-fs = Promise.promisifyAll require('fs')
-path = require 'path'
-request = Promise.promisifyAll require('request-json')
-mkdirp = Promise.promisifyAll require('mkdirp')
-program = require 'commander'
-read = require 'read'
-touch = Promise.promisifyAll require('touch')
-mime = require 'mime'
-process = require 'process'
-uuid = require 'node-uuid'
-async = require 'async'
-chokidar = require 'chokidar'
-urlParser = require 'url'
-log = require('printit')
-    prefix: 'Data Proxy'
+path        = require 'path'
+program     = require 'commander'
+read        = require 'read'
+process     = require 'process'
+log         = require('printit')
+              prefix: 'Data Proxy'
 
-replication = Promise.promisifyAll require('./replication')
-config = require './config'
-db = Promise.promisifyAll require('./db').db
-filesystem = require('./filesystem')
-binary = require('./binary')
+config      = require './config'
+replication = require './replication'
+filesystem  = require './filesystem'
+binary      = require './binary'
 
 
 getPassword = (callback) ->
@@ -70,161 +59,6 @@ removeRemote = (args) ->
                 log.info 'Current device properly removed from remote cozy.'
 
 
-replicateFromRemote = (args) ->
-    remoteConfig = config.getConfig()
-    deviceName = args.deviceName or config.getDeviceName()
-
-    options =
-        filter: (doc) ->
-            doc.docType is 'Folder' or doc.docType is 'File'
-
-    url = urlParser.parse remoteConfig.url
-    url.auth = deviceName + ':' + remoteConfig.devicePassword
-    replication = db.replicate.from(urlParser.format(url) + 'cozy', options)
-      .on 'change', (info) ->
-          console.log info
-      .on 'complete', (info) ->
-          log.info 'Replication is complete'
-      .on 'error', (err) ->
-          log.error err
-
-
-replicateToRemote = (args) ->
-    remoteConfig = config.getConfig()
-    deviceName = args.deviceName or config.getDeviceName()
-
-    options =
-        filter: (doc) ->
-            doc.docType is 'Folder' or doc.docType is 'File'
-
-    url = urlParser.parse remoteConfig.url
-    url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
-    replication = db.replicate.to(urlParser.format(url) + 'cozy', options)
-      .on 'change', (info) ->
-          console.log info
-      .on 'complete', (info) ->
-          log.info 'Replication is complete'
-      .on 'error', (err) ->
-          log.error err
-
-
-runSync = (args) ->
-    # Get config
-    remoteConfig = config.getConfig()
-    deviceName = args.deviceName or config.getDeviceName()
-
-    watcher = chokidar.watch remoteConfig.path,
-        ignored: /[\/\\]\./
-        persistent: true
-        ignoreInitial: not args.catchup?
-
-    watcher
-    .on 'add', (path) ->
-        log.info "File added: #{path}"
-        putFile deviceName, path, () ->
-    .on 'addDir', (path) ->
-        if path isnt remoteConfig.path
-            log.info "Directory added: #{path}"
-            putDirectory path, { deviceName: deviceName, recursive: false }, () ->
-    .on 'change', (path) ->
-        log.info "File changed: #{path}"
-        putFile deviceName, path, () ->
-    .on 'error', (err) ->
-        log.error 'An error occured when watching changes'
-        console.log err
-
-    options =
-        filter: (doc) ->
-            doc.docType is 'Folder' or doc.docType is 'File'
-        live: true
-
-    url = urlParser.parse remoteConfig.url
-    url.auth = deviceName + ':' + remoteConfig.devicePassword
-    needTreeRebuild = false
-    replication = db.sync(urlParser.format(url) + 'cozy', options)
-      .on 'change', (info) ->
-          if info.direction is 'pull'
-              needTreeRebuild = true
-          console.log info
-      .on 'uptodate', (info) ->
-          log.info 'Replication is complete, applying changes on the filesystem...'
-          if needTreeRebuild
-              if args.binary?
-                  fetchBinaries deviceName, {}, () ->
-                      needTreeRebuild = false
-              else
-                  buildFsTree deviceName, {}, () ->
-                      needTreeRebuild = false
-      .on 'error', (err) ->
-          log.error err
-
-
-watchLocalChanges = (args) ->
-    # Get config
-    remoteConfig = config.getConfig()
-    deviceName = args.deviceName or config.getDeviceName()
-
-    watcher = chokidar.watch remoteConfig.path,
-        ignored: /[\/\\]\./
-        persistent: true
-        ignoreInitial: not args.catchup?
-
-    watcher
-    .on 'add', (path) ->
-        log.info "File added: #{path}"
-        putFile deviceName, path, () ->
-    .on 'addDir', (path) ->
-        if path isnt remoteConfig.path
-            log.info "Directory added: #{path}"
-            putDirectory deviceName, path, { deviceName: deviceName, recursive: false }, () ->
-    .on 'change', (path) ->
-        log.info "File changed: #{path}"
-        putFile deviceName, path, () ->
-    .on 'error', (err) ->
-        log.error 'An error occured when watching changes'
-        console.log err
-
-    options =
-        filter: (doc) ->
-            doc.docType is 'Folder' or doc.docType is 'File'
-        live: true
-
-    url = urlParser.parse remoteConfig.url
-    url.auth = deviceName + ':' + remoteConfig.devicePassword
-    replication = db.replicate.to(urlParser.format(url) + 'cozy', options)
-      .on 'change', (info) ->
-          console.log info
-      .on 'uptodate', (info) ->
-          log.info 'Replication is complete'
-      .on 'error', (err) ->
-          log.error err
-
-
-watchRemoteChanges = (args) ->
-    # Get config
-    remoteConfig = config.getConfig()
-    deviceName = args.deviceName or config.getDeviceName()
-
-    options =
-        filter: (doc) ->
-            doc.docType is 'Folder' or doc.docType is 'File'
-        live: true
-
-    url = urlParser.parse remoteConfig.url
-    url.auth = deviceName + ':' + remoteConfig.devicePassword
-    replication = db.replicate.from(urlParser.format(url) + 'cozy', options)
-      .on 'change', (info) ->
-          console.log info
-      .on 'uptodate', (info) ->
-          log.info 'Replication is complete, applying changes on the filesystem...'
-          if args.binary?
-              fetchBinaries deviceName, {}, () ->
-          else
-              buildFsTree deviceName, {}, () ->
-      .on 'error', (err) ->
-          log.error err
-
-
 displayConfig = ->
     console.log JSON.stringify config.config, null, 2
 
@@ -241,16 +75,46 @@ program
     .action removeRemote
 
 program
-    .command('replicate-from-remote')
-    .description('Replicate remote files/folders to local DB')
+    .command('sync')
+    .description('Sync databases, apply and/or watch changes')
     .option('-d, --deviceName [deviceName]', 'device name to deal with')
-    .action replicateFromRemote
+    .option('-n, --noBinary', 'ignore binary fetching')
+    .option('-i, --initial', 're-detect all the files')
+    .option('-f, --fromRemote', 'replicate from remote database')
+    .option('-t, --toRemote', 'replicate to remote database')
+    .action (args) ->
+        args.noBinary ?= false
+        fetchBinary = not args.noBinary
+        args.initial ?= false
+        fromNow = not args.initial
+
+        # Watch local changes
+        if args.toRemote or (not args.toRemote and not args.fromRemote)
+            filesystem.watchChanges true # Continuous
+                                  , fromNow
+
+        # Replicate databases
+        replication.runReplication args.fromRemote
+                                 , args.toRemote
+                                 , true # Continuous
+                                 , true # Rebuild FS tree
+                                 , fetchBinary
+                                 , ->
+
 
 program
-    .command('replicate-to-remote')
-    .description('Replicate local files/folders to remote DB')
+    .command('replicate')
+    .description('Replicate file/folder database documents')
     .option('-d, --deviceName [deviceName]', 'device name to deal with')
-    .action replicateToRemote
+    .option('-f, --fromRemote', 'replicate from remote database')
+    .option('-t, --toRemote', 'replicate to remote database')
+    .option('-c, --continuous', 'replicate to remote database')
+    .action (args) ->
+        replication.runReplication args.fromRemote
+                                 , args.toRemote
+                                 , args.continuous
+                                 , false, false # Do not rebuild FS tree or fetch binary
+                                 , ->
 
 program
     .command('build-tree')
@@ -288,28 +152,6 @@ program
             filesystem.createDirectoryContentDoc dirPath, ->
         else
             filesystem.createDirectoryDoc dirPath, ->
-
-program
-    .command('watch-local')
-    .description('Watch changes on the FS')
-    .option('-d, --deviceName [deviceName]', 'device name to deal with')
-    .option('-c, --catchup', 'catchup local changes')
-    .action watchLocalChanges
-
-program
-    .command('watch-remote')
-    .description('Watch changes on the remote DB')
-    .option('-d, --deviceName [deviceName]', 'device name to deal with')
-    .option('-b, --binary', 'automatically fetch binaries')
-    .action watchRemoteChanges
-
-program
-    .command('sync')
-    .description('Watch changes on the remote DB')
-    .option('-d, --deviceName [deviceName]', 'device name to deal with')
-    .option('-b, --binary', 'automatically fetch binaries')
-    .option('-c, --catchup', 'catchup local changes')
-    .action runSync
 
 program
     .command('display-config')
