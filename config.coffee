@@ -10,12 +10,12 @@ configPath = path.join defaultDir, './config.json'
 fs.ensureFileSync configPath
 
 if fs.readFileSync(configPath).toString() is ''
-    fs.writeFileSync configPath, '{ "devices": {} }'
+    fs.writeFileSync configPath, JSON.stringify devices: [], null, 2
 
 module.exports =
     dir: defaultDir
     dbPath: path.join defaultDir, 'db'
-    config: require configPath or {}
+    config: require configPath or devices: []
 
     getConfig: (deviceName) ->
         deviceName = @getDeviceName() unless deviceName?
