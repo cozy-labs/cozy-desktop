@@ -24,6 +24,8 @@ remoteConfig = config.getConfig()
 
 module.exports =
 
+    watchingLocked: false
+
     makeDirectoryFromDoc: (doc, callback) ->
         dirPaths = @getPaths(path.join remoteConfig.path, doc.path, doc.name)
 
@@ -102,8 +104,12 @@ module.exports =
         .each (doc) ->
             @makeDirectoryFromDocAsync doc.value
 
-        # Add file filter if not exists
+        .catch (err) ->
+            throw err unless err.status is 404
+
+        # Add file and binary filter if not exist
         .then -> pouch.addFilterAsync 'file'
+        .then -> pouch.addFilterAsync 'binary'
 
         # Query database
         .then -> pouch.db.queryAsync 'file/all'
@@ -117,6 +123,9 @@ module.exports =
         # Create file(s)
         .each (doc) ->
             @touchFileFromDocAsync doc.value
+
+        .catch (err) ->
+            throw err unless err.status is 404
 
         .then -> callback null
         .catch (err) ->
@@ -304,8 +313,6 @@ module.exports =
 
         .then -> callback null
         .catch (err) ->
-            return callback null if  err.status? \
-                                 and err.status is 409
             log.error err.toString()
             console.error err.stack
 
@@ -314,31 +321,23 @@ module.exports =
         fromNow ?= false
         continuous ?= fromNow
 
-        lockFile = path.join remoteConfig.path, '.cozy-lock'
-
         watcher = chokidar.watch remoteConfig.path,
             ignored: /[\/\\]\./
             persistent: continuous
             ignoreInitial: fromNow
         .on 'add', (filePath) =>
-            fs.existsAsync(lockFile).bind(@)
-            .then (exists) ->
-                unless exists
-                    log.info "File added: #{filePath}"
-                    @createFileDoc filePath, ->
+            unless @watchingLocked
+                log.info "File added: #{filePath}"
+                @createFileDoc filePath, ->
         .on 'addDir', (dirPath) =>
-            fs.existsAsync(lockFile).bind(@)
-            .then (exists) ->
-                unless exists
-                    if path isnt remoteConfig.path
-                        log.info "Directory added: #{dirPath}"
-                        @createDirectoryDoc dirPath, ->
+            unless @watchingLocked
+                if path isnt remoteConfig.path
+                    log.info "Directory added: #{dirPath}"
+                    @createDirectoryDoc dirPath, ->
         .on 'change', (filePath) =>
-            fs.existsAsync(lockFile).bind(@)
-            .then (exists) ->
-                unless exists
-                    log.info "File changed: #{filePath}"
-                    @createFileDoc filePath, ->
+            unless @watchingLocked
+                log.info "File changed: #{filePath}"
+                @createFileDoc filePath, ->
         .on 'error', (err) ->
             log.error 'An error occured when watching changes'
             console.log err

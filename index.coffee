@@ -9,6 +9,7 @@ config      = require './config'
 replication = require './replication'
 filesystem  = require './filesystem'
 binary      = require './binary'
+pouch       = require './db'
 
 
 getPassword = (callback) ->
@@ -115,6 +116,13 @@ program
                                  , args.continuous
                                  , false, false # Do not rebuild FS tree or fetch binary
                                  , ->
+
+program
+    .command('show-binaries')
+    .description('Show local binary DB documents (debug function)')
+    .action () ->
+        pouch.db.query 'binary/all', (err, res) ->
+            console.log doc.value.path for doc in res.rows
 
 program
     .command('build-tree')

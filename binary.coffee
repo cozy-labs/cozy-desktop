@@ -24,6 +24,7 @@ module.exports =
         .then ->
             doc.path = finalPath
             pouch.db.putAsync doc
+            .catch (err) -> throw err unless err.status is 409
 
         .then -> callback null
         .catch (err) ->
@@ -89,8 +90,7 @@ module.exports =
 
         # Otherwise the document does not exist
         .catch (err) ->
-            throw err unless err.status is 404 \
-                          or err.status is 409
+            throw err unless err.status is 404
 
          # Create the document
         .then -> pouch.db.putAsync
@@ -98,11 +98,12 @@ module.exports =
                     _rev: rev
                     docType: 'Binary'
                     path: filePath
+        .catch (err) ->
+            # Typical race condition
+            throw err unless err.status is 409
 
         .then -> callback null
         .catch (err) ->
-            return callback null if  err.status? \
-                                 and err.status is 409
             log.error err.toString()
             console.error err.stack
 
@@ -172,6 +173,9 @@ module.exports =
             .then ->
                 if binaryDoc.path? and binaryDoc.path isnt binaryPath
                     fs.renameSync(binaryDoc.path, binaryPath)
+            .catch (err) ->
+                # Ignore race condition
+                throw err unless err.status is 409
 
         .catch (err) ->
             # Do not mind if binary doc is not found

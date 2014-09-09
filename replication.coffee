@@ -1,12 +1,14 @@
-fs        = require 'fs'
-touch     = require 'touch'
-request   = require 'request-json'
-urlParser = require 'url'
-log       = require('printit')
-            prefix: 'Data Proxy | replication'
+fs         = require 'fs'
+touch      = require 'touch'
+request    = require 'request-json'
+urlParser  = require 'url'
+log        = require('printit')
+             prefix: 'Data Proxy | replication'
 
-pouch     = require './db'
-config    = require './config'
+pouch      = require './db'
+config     = require './config'
+filesystem = require './filesystem'
+binary     = require './binary'
 
 filters = []
 remoteConfig = config.getConfig()
@@ -44,24 +46,23 @@ module.exports =
             else
                 callback null
 
-    runReplication: (fromRemote, toRemote, continuous, rebuildFs, binary, callback) ->
+    runReplication: (fromRemote, toRemote, continuous, rebuildFs, fetchBinary, callback) ->
         deviceName = config.getDeviceName()
         continuous ?= false
         rebuildFs ?= false
-        binary ?= false
+        fetchBinary ?= false
 
         # Rebuild tree of fetch binaries after replication completion
         applyChanges = (callback) ->
-            config.lockWatch ->
-                try
-                    if binary
-                        require('./binary').fetchAll deviceName, ->
-                            callback null
-                    else
-                        require('./filesystem').buildTree null, ->
-                            callback null
-                finally
-                    config.unlockWatch ->
+            filesystem.watchingLocked = true
+            if fetchBinary
+                binary.fetchAll deviceName, ->
+                    filesystem.watchingLocked = false
+                    callback null
+            else
+                filesystem.buildTree null, ->
+                    filesystem.watchingLocked = false
+                    callback null
 
         # Specify which way to replicate
         if fromRemote and not toRemote
@@ -86,13 +87,15 @@ module.exports =
         url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
         replicate(urlParser.format(url) + 'cozy', options)
         .on 'change', (info) ->
-            console.log info
-            needTreeRebuild = rebuildFs if info.direction is 'pull'
+            log.info "#{info.direction} DB change: #{info.change.docs_written} doc(s) written"
+            if info.direction is 'pull' and info.change.docs_written > 0
+                needTreeRebuild = rebuildFs
         .on 'uptodate', (info) ->
             log.info 'Replication is complete'
             if needTreeRebuild
                 log.info 'Applying changes on the filesystem'
                 applyChanges ->
+                    needTreeRebuild = false
         .on 'complete', (info) ->
             log.info 'Replication is complete'
             if fromRemote and not toRemote

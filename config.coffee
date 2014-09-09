@@ -16,14 +16,6 @@ module.exports =
     dir: defaultDir
     dbPath: path.join defaultDir, 'db'
     config: require configPath or {}
-    lockFile: path.join configPath, '.cozy-lock'
-    lockWatch: (callback) ->
-        touch @lockFile, -> callback null
-    unlockWatch: (callback) ->
-        try
-            fs.unlink(@lockFile, -> callback null)
-        catch
-            callback null
 
     getConfig: (deviceName) ->
         deviceName = @getDeviceName() unless deviceName?
