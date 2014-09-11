@@ -36,12 +36,7 @@ module.exports =
                               , new Date(doc.creationDate)
                               , new Date(doc.lastModification)
 
-        .then -> callback null
-
-        .catch (err) ->
-            log.error err.toString()
-            console.error err
-            callback err
+        .nodeify callback
 
 
     touchFileFromDoc: (doc, callback) ->
@@ -70,12 +65,7 @@ module.exports =
                               , new Date(doc.creationDate)
                               , new Date(doc.lastModification)
 
-        .then -> callback null
-
-        .catch (err) ->
-            log.error err.toString()
-            console.error err
-            callback err
+        .nodeify callback
 
 
     buildTree: (filePath, callback) ->
@@ -126,12 +116,7 @@ module.exports =
         .catch (err) ->
             throw err unless err.status is 404
 
-        .then -> callback null
-
-        .catch (err) ->
-            log.error err.toString()
-            console.error err
-            callback err
+        .nodeify callback
 
 
     createDirectoryContentDoc: (dirPath, callback) ->
@@ -158,11 +143,7 @@ module.exports =
                 else if stats.isFile()
                     @createFileDocAsync filePath
 
-        .then -> callback null
-        .catch (err) ->
-            log.error err.toString()
-            console.error err
-            callback err
+        .nodeify callback
 
 
     createDirectoryDoc: (dirPath, callback) ->
@@ -219,12 +200,7 @@ module.exports =
         # Create or update directory document
         .then -> pouch.db.putAsync document
 
-        .then -> callback null
-
-        .catch (err) ->
-            log.error err.toString()
-            console.error err
-            callback err
+        .nodeify callback
 
 
     createFileDoc: (filePath, callback) ->
@@ -315,12 +291,7 @@ module.exports =
         # Finally, create or update file document
         .then -> pouch.db.putAsync document
 
-        .then -> callback null
-
-        .catch (err) ->
-            log.error err.toString()
-            console.error err
-            callback err
+        .nodeify callback
 
 
     watchChanges: (continuous, fromNow) ->
