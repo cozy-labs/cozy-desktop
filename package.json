@@ -1,8 +1,15 @@
 {
   "name": "cozy-data-proxy",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "app.html",
+  "window": {
+    "width": 400,
+    "height": 400,
+    "show": false,
+    "title": "Cozy file client",
+    "toolbar": false
+  },
   "scripts": {
     "test": "npm test"
   },
@@ -38,6 +45,9 @@
     "request": "^2.40.0",
     "request-json": "^0.4.12",
     "request-json-light": "^0.5.2",
-    "touch": "^0.0.3"
+    "touch": "^0.0.3",
+    "bluebird": "~2.3.2",
+    "coffee-script": "~1.8.0",
+    "nodewebkit": "~0.10.4"
   }
 }

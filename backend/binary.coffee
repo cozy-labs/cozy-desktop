@@ -22,7 +22,7 @@ module.exports =
             pouch.db.putAsync doc
             .catch (err) -> throw err unless err.status is 409
 
-        .then -> callback null
+        .nodeify callback
 
         .catch (err) ->
             log.error err.toString()
@@ -101,12 +101,7 @@ module.exports =
             # Typical race condition
             throw err unless err.status is 409
 
-        .then -> callback null
-
-        .catch (err) ->
-            log.error err.toString()
-            console.error err
-            callback err
+        .nodeify callback
 
 
     fetchAll: (deviceName, callback) ->
@@ -128,12 +123,8 @@ module.exports =
         .each (doc) ->
             @fetchFromDocAsync deviceName, doc.value
 
-        .then -> callback null
+        .nodeify callback
 
-        .catch (err) ->
-            log.error err.toString()
-            console.error err
-            callback err
 
     fetchOne: (deviceName, filePath, callback) ->
         deviceName ?= config.getDeviceName()
@@ -152,12 +143,7 @@ module.exports =
         .each (doc) ->
             @fetchFromDocAsync deviceName, doc.value
 
-        .then -> callback null
-
-        .catch (err) ->
-            log.error err.toString()
-            console.error err
-            callback err
+        .nodeify callback
 
 
     fetchFromDoc: (deviceName, doc, callback) ->
@@ -212,12 +198,8 @@ module.exports =
                               , new Date(doc.creationDate)
                               , new Date(doc.lastModification)
 
-        .then -> callback null
+        .nodeify callback
 
-        .catch (err) ->
-            log.error err.toString()
-            console.error err
-            callback err
 
 
 # Promisify above functions

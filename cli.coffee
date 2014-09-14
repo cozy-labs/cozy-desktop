@@ -1,3 +1,5 @@
+#!/usr/bin/env coffee
+
 path        = require 'path'
 program     = require 'commander'
 read        = require 'read'
@@ -5,12 +7,12 @@ process     = require 'process'
 log         = require('printit')
               prefix: 'Data Proxy'
 
-promise     = require './promise'
-config      = require './config'
-replication = require './replication'
-filesystem  = require './filesystem'
-binary      = require './binary'
-pouch       = require './db'
+promise     = require './backend/promise'
+config      = require './backend/config'
+replication = require './backend/replication'
+filesystem  = require './backend/filesystem'
+binary      = require './backend/binary'
+pouch       = require './backend/db'
 
 
 getPassword = (callback) ->

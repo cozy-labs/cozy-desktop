@@ -1,8 +1,12 @@
 # Workflow
 
 ```
-coffee index.coffee add-remote-cozy http://url.of.my.cozy devicename /sync/directory
-coffee index.coffee sync
+cli.coffee add-remote-cozy http://url.of.my.cozy devicename /sync/directory
+cli.coffee sync
+
+# Or
+
+build/cli.js sync
 ```
 
 # TODO
