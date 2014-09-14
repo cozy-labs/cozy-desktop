@@ -21,46 +21,57 @@ getPassword = (callback) ->
     read prompt: promptMsg, silent: true , callback
 
 
+# Register current device to remote Cozy. Then it saves related informations
+# to the config file.
 addRemote = (url, deviceName, syncPath) ->
-    getPassword (err, password) ->
+    saveConfig = (err, credentials) ->
+        if err
+            log.error err
+            log.error 'An error occured while registering your device.'
+        else
+            options =
+                url: url
+                deviceName: deviceName
+                path: path.resolve syncPath
+                deviceId: credentials.id
+                devicePassword: credentials.password
+            config.addRemoteCozy options
+            log.info 'Remote Cozy properly configured to work ' + \
+                     'with current device.'
+
+    register = (err, password) ->
         options =
             url: url
             deviceName: deviceName
             password: password
 
-        replication.registerDevice options, (err, credentials) ->
-            if err
-                log.error err
-                log.error 'An error occured while registering your device.'
-            else
-                options =
-                    url: url
-                    deviceName: deviceName
-                    path: path.resolve syncPath
-                    deviceId: credentials.id
-                    devicePassword: credentials.password
-                config.addRemoteCozy options
-                log.info 'Remote Cozy properly configured to work ' + \
-                         'with current device.'
+        replication.registerDevice options, saveConfig
 
+    getPassword register
 
+# Unregister current device from remote Cozy. Then it removes remote from
+# config file.
 removeRemote = (args) ->
     remoteConfig = config.getConfig()
     deviceName = args.deviceName or config.getDeviceName()
 
-    getPassword (err, password) ->
+    saveConfig = (err) ->
+        if err
+            log.error err
+            log.error 'An error occured while unregistering your device.'
+        else
+            config.removeRemoteCozy deviceName
+            log.info 'Current device properly removed from remote cozy.'
+
+    unregister = (err, password) ->
         options =
             url: remoteConfig.url
             deviceId: remoteConfig.deviceId
             password: password
 
-        replication.unregisterDevice options, (err) ->
-            if err
-                log.error err
-                log.error 'An error occured while unregistering your device.'
-            else
-                config.removeRemoteCozy deviceName
-                log.info 'Current device properly removed from remote cozy.'
+        replication.unregisterDevice options, saveConfig
+
+    getPassword unregister
 
 
 displayConfig = ->
@@ -88,23 +99,21 @@ program
     .option('-t, --toRemote', 'replicate to remote database')
     .action (args) ->
         args.noBinary ?= false
-        fetchBinary = not args.noBinary
         args.initial ?= false
+        continuous = true
+        rebuildFSTree = true
+        fetchBinary = not args.noBinary
         fromNow = not args.initial
 
         # Watch local changes
         if args.toRemote or (not args.toRemote and not args.fromRemote)
-            filesystem.watchChanges true # Continuous
-                                  , fromNow
+            filesystem.watchChanges continuous, fromNow
 
         # Replicate databases
-        replication.runReplication args.fromRemote
-                                 , args.toRemote
-                                 , true # Continuous
-                                 , true # Rebuild FS tree
-                                 , fetchBinary
-                                 , ->
-
+        replication.runReplication(
+            args.fromRemote, args.toRemote, true, true, fetchBinary, ->
+                log.info 'Replication ended'
+        )
 
 program
     .command('replicate')
@@ -174,6 +183,6 @@ program
     .description("Display help message for an unknown command.")
     .action ->
         console.log 'Unknown command, run "cozy-monitor --help"' + \
-        ' to know the list of available commands.'
+                    ' to know the list of available commands.'
 
 program.parse process.argv
