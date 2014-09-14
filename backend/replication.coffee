@@ -15,22 +15,29 @@ remoteConfig = config.getConfig()
 
 module.exports =
 
+    # Register device remotely then returns credentials given by remote Cozy.
+    # This credentials will allow the device to access to the Cozy database.
     registerDevice: (options, callback) ->
         client = request.newClient options.url
         client.setBasicAuth 'owner', options.password
 
         data = login: options.deviceName
         client.postAsync('device/', data)
-        .then (res, body) ->
-            callback null,
-                id: body.id
-                password: body.password
+        .then (res) ->
+            if res[0].body.error
+                callback res[0].body.error
+            else
+                body = res[0].body
+                callback null,
+                    id: body.id
+                    password: body.password
         .catch (err) ->
             log.error err.toString()
             console.error err
             callback err
 
 
+    # Unregister device remotely, ask for revocation.
     unregisterDevice: (options, callback) ->
         client = request.newClient options.url
         client.setBasicAuth 'owner', options.password
@@ -44,7 +51,8 @@ module.exports =
             callback err
 
 
-    runReplication: (fromRemote, toRemote, continuous, rebuildFs, fetchBinary, callback) ->
+    runReplication: (fromRemote, toRemote, continuous,
+                     rebuildFs, fetchBinary, callback) ->
         deviceName = config.getDeviceName()
         continuous ?= false
         rebuildFs ?= false
@@ -67,6 +75,13 @@ module.exports =
                 doc.docType is 'Folder' or doc.docType is 'File'
             live: continuous
 
+        # Do not need rebuild until docs are added
+        needTreeRebuild = false
+
+        # Set authentication
+        url = urlParser.parse remoteConfig.url
+        url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
+
         # Define action after replication completion
         applyChanges = (callback) ->
 
@@ -85,16 +100,7 @@ module.exports =
                     filesystem.watchingLocked = false
                     callback null
 
-        # Do not need rebuild until docs are added
-        needTreeRebuild = false
-
-        # Set authentication
-        url = urlParser.parse remoteConfig.url
-        url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
-
-        # Launch replication
-        replicate(urlParser.format(url) + 'cozy', options)
-        .on 'change', (info) ->
+        onChange = (info) ->
             changeMessage = "DB change: #{info.change.docs_written} doc(s) written"
             if info.direction
                 # Specify direction
@@ -105,16 +111,16 @@ module.exports =
             or (info.direction is 'pull' and info.change.docs_written > 0)
                 needTreeRebuild = rebuildFs
 
-        # Called only for a continuous replication
-        .on 'uptodate', (info) ->
+            log.info changeMessage
+
+        onUptoDate = (info) ->
             log.info 'Replication is complete'
             if needTreeRebuild
                 log.info 'Applying changes on the filesystem'
                 applyChanges ->
                     needTreeRebuild = false
 
-        # Called only for a single replication
-        .on 'complete', (info) ->
+        onComplete = (info) ->
             log.info 'Replication is complete'
             if fromRemote and not toRemote
                 log.info 'Applying changes on the filesystem'
@@ -122,6 +128,13 @@ module.exports =
             else
                 callback null
 
-        .on 'error', (err) ->
+        onError = (err) ->
             log.error err
             callback err
+
+        # Launch replication
+        replicate(urlParser.format(url) + 'cozy', options)
+        .on 'change', onChange
+        .on 'uptodate', onUptoDate # Called only for a continuous replication
+        .on 'complete', onComplete # Called only for a single replication
+        .on 'error', onError
