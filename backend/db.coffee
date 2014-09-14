@@ -35,7 +35,6 @@ module.exports =
                     map: map
 
         db.get id, (err, currentDesignDoc) ->
-            callback null
             if currentDesignDoc?
                 newDesignDoc._rev = currentDesignDoc._rev
             db.put newDesignDoc, (err, res) ->
@@ -45,7 +44,8 @@ module.exports =
                     else
                         callback err
                 else
-                    log.info "Design document created: #{id}" if not currentDesignDoc?
+                    if not currentDesignDoc?
+                        log.info "Design document created: #{id}"
                     callback null
 
     removeFilter: (docType, callback) ->
@@ -61,4 +61,3 @@ module.exports =
             else
                 log.info "Design document does not exist: #{id}"
                 callback null
-
