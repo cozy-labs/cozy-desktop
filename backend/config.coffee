@@ -5,6 +5,7 @@ process = require 'process'
 log     = require('printit')
           prefix: 'Data Proxy | config'
 
+# Create config file if it doesn't exist.
 defaultDir = path.join path.homedir(), '.cozy-data-proxy'
 configPath = path.join defaultDir, './config.json'
 fs.ensureFileSync configPath
@@ -17,6 +18,7 @@ module.exports =
     dbPath: path.join defaultDir, 'db'
     config: require configPath or devices: []
 
+    # Return config related to device name.
     getConfig: (deviceName) ->
         deviceName = @getDeviceName() unless deviceName?
 
@@ -28,24 +30,27 @@ module.exports =
             log.error "Device not set locally: #{deviceName}"
             process.exit 1
 
+    # Get the argument after -d or --deviceName
+    # Or return the first device name
     getDeviceName: () ->
-        # Get the argument after -d or --deviceName
         for arg, index in process.argv
             if arg is '-d' or arg is '--deviceName'
                 return process.argv[index + 1]
 
-        # Or return the first device name
         return Object.keys(@config.devices)[0]
 
+    # Add remote configuration for a given device name.
     addRemoteCozy: (options) ->
         @config.devices ?= {}
         @config.devices[options.deviceName] = options
         @saveConfig()
 
+    # Remove remote configuration for a given device name.
     removeRemoteCozy: (deviceName) ->
         @config.devices ?= {}
         delete @config.devices[deviceName]
         @saveConfig()
 
+    # Save configuration to file system.
     saveConfig: ->
         fs.writeFileSync configPath, JSON.stringify @config, null, 2
