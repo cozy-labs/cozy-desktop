@@ -34,30 +34,38 @@ module.exports =
                 all:
                     map: map
 
-        db.get id, (err, currentDesignDoc) ->
+        checkCreation = (err, res) ->
+            if err?
+                if err.status is 409
+                    callback null
+                else
+                    callback err
+            else
+                if not currentDesignDoc?
+                    log.info "Design document created: #{id}"
+                callback null
+
+        createDesignDoc = (err, currentDesignDoc) ->
             if currentDesignDoc?
                 newDesignDoc._rev = currentDesignDoc._rev
-            db.put newDesignDoc, (err, res) ->
-                if err?
-                    if err.status is 409
-                        callback null
-                    else
-                        callback err
-                else
-                    if not currentDesignDoc?
-                        log.info "Design document created: #{id}"
-                    callback null
+            db.put newDesignDoc, checkCreation
+
+        db.get id, createDesignDoc
 
     removeFilter: (docType, callback) ->
         id = "_design/#{docType.toLowerCase()}"
 
-        db.get id, (err, currentDesignDoc) ->
+        checkRemove = (err, res) ->
+            if err?
+                callback err
+            else
+                callback null
+
+        removeDesignDoc = (err, currentDesignDoc) ->
             if currentDesignDoc?
-                db.remove id, currentDesignDoc._rev, (err, res) ->
-                    if err?
-                        callback err
-                    else
-                        callback null
+                db.remove id, currentDesignDoc._rev, checkRemove
             else
                 log.info "Design document does not exist: #{id}"
                 callback null
+
+        db.get id, removeDesignDoc
