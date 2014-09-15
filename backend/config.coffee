@@ -11,12 +11,14 @@ configPath = path.join defaultDir, './config.json'
 fs.ensureFileSync configPath
 
 if fs.readFileSync(configPath).toString() is ''
-    fs.writeFileSync configPath, JSON.stringify devices: [], null, 2
+    fs.writeFileSync configPath, JSON.stringify devices: {}, null, 2
+
 
 module.exports =
     dir: defaultDir
     dbPath: path.join defaultDir, 'db'
-    config: require configPath or devices: []
+    config: require configPath or devices: {}
+
 
     # Return config related to device name.
     getConfig: (deviceName) ->
@@ -30,6 +32,7 @@ module.exports =
             log.error "Device not set locally: #{deviceName}"
             process.exit 1
 
+
     # Get the argument after -d or --deviceName
     # Or return the first device name
     getDeviceName: () ->
@@ -39,17 +42,20 @@ module.exports =
 
         return Object.keys(@config.devices)[0]
 
+
     # Add remote configuration for a given device name.
     addRemoteCozy: (options) ->
         @config.devices ?= {}
         @config.devices[options.deviceName] = options
         @saveConfig()
 
+
     # Remove remote configuration for a given device name.
     removeRemoteCozy: (deviceName) ->
         @config.devices ?= {}
         delete @config.devices[deviceName]
         @saveConfig()
+
 
     # Save configuration to file system.
     saveConfig: ->

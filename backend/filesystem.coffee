@@ -17,11 +17,14 @@ Promise     = require 'bluebird'
 mkdirpAsync = Promise.promisify mkdirp.mkdirp
 touchAsync  = Promise.promisify touch
 
+
 remoteConfig = config.getConfig()
+
 
 module.exports =
 
     watchingLocked: false
+
 
     makeDirectoryFromDoc: (doc, callback) ->
         dirPaths = @getPaths(path.join remoteConfig.path, doc.path, doc.name)
@@ -152,10 +155,9 @@ module.exports =
         # Check directory's location
         unless @isInSyncDir(dirPath) and fs.existsSync(dirPaths.absolute)
             unless dirPath is '' or dirPath is remoteConfig.path
-                log.error "Directory is not located in the 
+                log.error "Directory is not located in the
                            synchronized directory: #{dirPaths.absolute}"
             return callback null
-
 
         # Initialize document Object
         document =
@@ -173,7 +175,7 @@ module.exports =
             log.info "Add directory: #{dirPaths.relative}"
             fs.statAsync(dirPaths.absolute)
         .then (stats) ->
-            document.creationDate     = stats.mtime
+            document.creationDate = stats.mtime
             document.lastModification = stats.mtime
 
             pouch.db.queryAsync 'folder/all'
@@ -185,10 +187,10 @@ module.exports =
 
         # If exists, update document information
         .each (doc) ->
-            document._id          = doc.value._id
-            document._rev         = doc.value._rev
+            document._id = doc.value._id
+            document._rev = doc.value._rev
             document.creationDate = doc.value.creationDate
-            document.tags         = doc.value.tags
+            document.tags = doc.value.tags
             if new Date(doc.value.lastModification) \
              > new Date(document.lastModification)
                 document.lastModification = doc.value.lastModification
@@ -208,7 +210,7 @@ module.exports =
 
         # Check file's location
         unless @isInSyncDir(filePath) and fs.existsSync(filePaths.absolute)
-            log.error "File is not located in the 
+            log.error "File is not located in the
                        synchronized directory: #{filePaths.absolute}"
             return callback null
 
@@ -326,7 +328,7 @@ module.exports =
                 @createFileDoc filePath, ->
 
         .on 'error', (err) ->
-            log.error 'An error occured when watching changes'
+            log.error 'An error occured while watching changes:'
             console.error err
 
 
@@ -340,7 +342,6 @@ module.exports =
 
         # Do not keep '/'
         parent    = '' if parent is '/'
-
 
         absolute: absolute
         relative: relative

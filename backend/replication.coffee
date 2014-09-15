@@ -15,6 +15,7 @@ remoteConfig = config.getConfig()
 
 module.exports =
 
+
     # Register device remotely then returns credentials given by remote Cozy.
     # This credentials will allow the device to access to the Cozy database.
     registerDevice: (options, callback) ->
@@ -22,8 +23,8 @@ module.exports =
         client.setBasicAuth 'owner', options.password
 
         data = login: options.deviceName
-        client.postAsync('device/', data)
-        .then (res) ->
+
+        getCredentials = (res) ->
             if res[0].body.error
                 callback res[0].body.error
             else
@@ -31,10 +32,15 @@ module.exports =
                 callback null,
                     id: body.id
                     password: body.password
-        .catch (err) ->
+
+        onError =  (err) ->
             log.error err.toString()
             console.error err
             callback err
+
+        client.postAsync('device/', data)
+            .then getCredentials
+            .catch onError
 
 
     # Unregister device remotely, ask for revocation.
@@ -42,23 +48,21 @@ module.exports =
         client = request.newClient options.url
         client.setBasicAuth 'owner', options.password
 
-        client.delAsync("device/#{options.deviceId}/")
-        .then (res, body) ->
+        finish =  (res, body) ->
             callback null
-        .catch (err) ->
+
+        onError =  (err) ->
             log.error err.toString()
             console.error err
             callback err
 
+        client.delAsync("device/#{options.deviceId}/")
+        .then finish
+        .catch onError
 
-    runReplication: (fromRemote, toRemote, continuous,
-                     rebuildFs, fetchBinary, callback) ->
-        deviceName = config.getDeviceName()
-        continuous ?= false
-        rebuildFs ?= false
-        fetchBinary ?= false
 
-        # Specify which way to replicate
+    # Specify which way to replicate
+    getReplicator: (toRemote, fromRemote) ->
         if fromRemote and not toRemote
             log.info "Running replication from remote database"
             replicate = pouch.db.replicate.from
@@ -68,6 +72,17 @@ module.exports =
         else
             log.info "Running synchronization with remote database"
             replicate = pouch.db.sync
+
+        replicate
+
+
+    runReplication: (fromRemote, toRemote, continuous,
+                     rebuildFs, fetchBinary, callback) ->
+        deviceName = config.getDeviceName()
+        continuous ?= false
+        rebuildFs ?= false
+        fetchBinary ?= false
+        replicate = @getReplicator toRemote, fromRemote
 
         # Replicate only files and folders for now
         options =
@@ -87,23 +102,22 @@ module.exports =
 
             # Lock file watcher to avoid remotely downloaded files to be re-uploaded
             filesystem.watchingLocked = true
+
+            unlockFileSystemAndReturn =  ->
+                filesystem.watchingLocked = false
+                callback null
+
+            # Fetch binaries Or rebuild the filesystem directory tree only
             if fetchBinary
-
-                # Fetch binaries
-                binary.fetchAll deviceName, ->
-                    filesystem.watchingLocked = false
-                    callback null
+                binary.fetchAll deviceName, unlockFileSystemAndReturn
             else
-
-                # Or rebuild the filesystem directory tree only
-                filesystem.buildTree null, ->
-                    filesystem.watchingLocked = false
-                    callback null
+                filesystem.buildTree null, unlockFileSystemAndReturn
 
         onChange = (info) ->
             changeMessage = "DB change: #{info.change.docs_written} doc(s) written"
+
+            # Specify direction
             if info.direction
-                # Specify direction
                 changeMessage = "#{info.direction} #{changeMessage}"
 
             # Find out if filesystem tree needs a rebuild
@@ -117,14 +131,17 @@ module.exports =
             log.info 'Replication is complete'
             if needTreeRebuild
                 log.info 'Applying changes on the filesystem'
-                applyChanges ->
+                markRebuildTree = ->
                     needTreeRebuild = false
+                applyChanges markRebuildTree
 
         onComplete = (info) ->
             log.info 'Replication is complete'
             if fromRemote and not toRemote
                 log.info 'Applying changes on the filesystem'
-                applyChanges -> callback null
+                finish = ->
+                    callback null
+                applyChanges finish
             else
                 callback null
 

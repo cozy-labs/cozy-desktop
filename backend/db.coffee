@@ -18,6 +18,7 @@ module.exports =
 
     db: db
 
+
     addFilter: (docType, callback) ->
         id = "_design/#{docType.toLowerCase()}"
         map = """
@@ -51,6 +52,7 @@ module.exports =
             db.put newDesignDoc, checkCreation
 
         db.get id, createDesignDoc
+
 
     removeFilter: (docType, callback) ->
         id = "_design/#{docType.toLowerCase()}"
