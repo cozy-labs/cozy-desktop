@@ -1,4 +1,4 @@
-{div, label, input, h1} = React.DOM
+{div, label, input, h1, button} = React.DOM
 
 # Waits for the DOM to be ready
 window.onload = ->

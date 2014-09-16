@@ -3643,6 +3643,12 @@ table {
   font-family: main;
   src: url("../fonts/source-sans-pro.ttf");
 }
+.mt1 {
+  margin-top: 10px;
+}
+.mt2 {
+  margin-top: 20px;
+}
 h1 {
   font-family: styled;
   font-weight: normal;
@@ -3717,7 +3723,8 @@ textarea:focus {
 }
 .btn.btn-cozy {
   background-color: #34a6ff;
-  border-color: #34a6ff;
+  border: 1px solid #34a6ff;
+  padding: 5px;
   font-family: main;
   color: #fff;
 }

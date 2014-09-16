@@ -1,6 +1,8 @@
-var config, configDir, configPath, device, homedir, keys, path;
+var config, configDir, configHelpers, configPath, device, fs, homedir, keys, path;
 
 path = require('path-extra');
+
+fs = require('fs');
 
 homedir = path.homedir();
 
@@ -17,6 +19,16 @@ keys = Object.keys(config.devices);
 if (keys.length > 0) {
   device = config.devices[keys[0]];
 }
+
+configHelpers = {
+  saveConfigSync: function(deviceConfig) {
+    console.log(deviceConfig);
+    config.devices[deviceConfig.deviceName] = deviceConfig;
+    console.log(configPath);
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    return console.log('Configuration file successfully updated');
+  }
+};
 ;var ConfigForm;
 
 ConfigForm = React.createClass({
@@ -28,17 +40,21 @@ ConfigForm = React.createClass({
     }, label({
       className: 'mod left w25 mr2 ml2'
     }, t('your device name')), input({
-      className: 'mod left w75 mt2',
-      ref: 'device-name',
-      defaultValue: this.props.deviceName,
-      onChange: this.onChange
-    })));
+      className: 'mod left w75 mt1',
+      ref: 'deviceName',
+      defaultValue: this.props.deviceName
+    })), div({
+      className: 'line mt2'
+    }, button({
+      className: 'mod right btn btn-cozy',
+      ref: 'saveButton',
+      onClick: this.onSaveButtonClicked
+    }, 'Save changes')));
   },
-  onChange: function() {
-    this.setState({
-      deviceName: this.refs['device-name'].getDOMNode().value
-    });
-    return console.log(this.props);
+  onSaveButtonClicked: function() {
+    this.props.deviceName = this.refs.deviceName.getDOMNode().value;
+    configHelpers.saveConfigSync(this.props);
+    return alert('Config saved');
   }
 });
 ;var router;
@@ -50,9 +66,9 @@ router = React.createClass({
     }, "Hello, I am a router.");
   }
 });
-;var div, h1, input, label, _ref;
+;var button, div, h1, input, label, _ref;
 
-_ref = React.DOM, div = _ref.div, label = _ref.label, input = _ref.input, h1 = _ref.h1;
+_ref = React.DOM, div = _ref.div, label = _ref.label, input = _ref.input, h1 = _ref.h1, button = _ref.button;
 
 window.onload = function() {
   var configComponent, locale, locales, polyglot;
