@@ -1,0 +1,53 @@
+animationDuration = .3s
+
+/*
+  Generic animations
+*/
+@keyframes fadeIn {
+  from {
+    opacity 0
+  }
+  to {
+    opacity 1
+  }
+}
+
+/*
+  Panels animations
+*/
+
+@keyframes moveFromLeft {
+  from {
+    transform translate(-100%)
+  }
+  to {
+    transform translate(0)
+  }
+}
+
+@keyframes moveFromRight {
+  from {
+    transform translate(100%)
+  }
+  to {
+    transform translate(0)
+  }
+}
+
+@keyframes moveFromTopRightCorner {
+  from {
+    transform translate(100%, -100%) scale(0.5)
+  }
+  to {
+    transform translate(0, 0) scale(1)
+  }
+}
+
+@keyframes expandFromRight {
+  from {
+    transform translate(50%)
+  }
+  to {
+    transform translate(0)
+  }
+}
