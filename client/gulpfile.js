@@ -54,5 +54,4 @@ gulp.task('watch', function() {
     gulp.watch('app/*.css', ['stylesheets']);
 });
 
-gulp.task('default',  [
-  'vendorStylesheets']);
+gulp.task('default',  ['vendorStylesheets']);
