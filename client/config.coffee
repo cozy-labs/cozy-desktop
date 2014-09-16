@@ -1,6 +1,9 @@
 path = require 'path'
-exports.config =
 
+exports.config =
+    modules:
+        definition: false
+        wrapper: false
     files:
         javascripts:
             joinTo:
@@ -10,10 +13,18 @@ exports.config =
                 # Files in `vendor` directories are compiled before other files
                 # even if they aren't specified in order.
                 before: [
-                    'vendor/scripts/jquery-1.9.1.js'
-                    'vendor/scripts/underscore-1.4.4.js'
-                    'vendor/scripts/backbone-1.0.0.js'
-                    'vendor/scripts/spin.js'
+                    'vendor/scripts/events.js'
+                    'vendor/scripts/react-with-addons.js'
+                    'vendor/scripts/jquery.js'
+                    'vendor/scripts/underscore.js'
+                    'vendor/scripts/backbone.js'
+                    'vendor/scripts/superagent.js'
+                    'vendor/scripts/bootstrap-3.1.1.min.js'
+                    'vendor/scripts/moment.js'
+                    'vendor/scripts/polyglot.js'
+                ]
+                after: [
+                    'app/initialize.coffee'
                 ]
 
         stylesheets:
@@ -28,7 +39,8 @@ exports.config =
 
     plugins:
         jade:
-            globals: ['t', 'moment', 'filesize']
+            globals: ['t', 'moment']
+            pretty: yes
 
         cleancss:
             keepSpecialComments: 0

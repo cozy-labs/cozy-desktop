@@ -6,9 +6,7 @@
   "window": {
     "width": 400,
     "height": 400,
-    "show": false,
-    "title": "Cozy file client",
-    "toolbar": false
+    "title": "Cozy Files Desktop"
   },
   "scripts": {
     "test": "npm test"
