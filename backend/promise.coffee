@@ -1,5 +1,5 @@
 fs         = require 'fs'
-request    = require 'request-json'
+request    = require 'request-json-light'
 mkdirp     = require 'mkdirp'
 touch      = require 'touch'
 

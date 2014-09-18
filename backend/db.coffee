@@ -42,13 +42,13 @@ module.exports =
                 else
                     callback err
             else
-                if not currentDesignDoc?
-                    log.info "Design document created: #{id}"
                 callback null
 
         createDesignDoc = (err, currentDesignDoc) ->
             if currentDesignDoc?
                 newDesignDoc._rev = currentDesignDoc._rev
+            else
+                log.info "Design document created: #{id}"
             db.put newDesignDoc, checkCreation
 
         db.get id, createDesignDoc

@@ -1,3 +1,4 @@
+Promise    = require 'bluebird'
 fs         = require 'fs'
 path       = require 'path'
 request    = require 'request-json-light'
@@ -126,19 +127,25 @@ module.exports =
 
         log.info "Fetching all binaries"
 
-        fetchFileDocs =  ->
+        fetchFileDocs = ->
             pouch.db.queryAsync('file/all')
 
         filterFileWithBinary = (doc) ->
             return doc.value.binary?
 
-        fetchDoc = (doc) ->
-            @fetchFromDocAsync deviceName, doc.value
+        # Initialize control flow
+        previousRetrieval = Promise.fulfilled()
 
-        filesystem.buildTreeAsync(null).bind(@)
+        retrieveFile = (doc) =>
+            # Retrieve file one-by-one
+            previousRetrieval = previousRetrieval.then =>
+                @fetchFromDocAsync(deviceName, doc.value)
+            return previousRetrieval
+
+        require('./filesystem').buildTreeAsync(null).bind(@)
             .then fetchFileDocs
             .get('rows').filter filterFileWithBinary
-            .each fetchDoc
+            .each retrieveFile
             .nodeify callback
 
 
@@ -158,7 +165,7 @@ module.exports =
 
         # Find file document related to filePath
         # Ensure parent folders exist
-        filesystem.buildTreeAsync(filePath).bind(@)
+        require('./filesystem').buildTreeAsync(filePath).bind(@)
             .then fetchOne
             .get('rows').filter getCurrentFile
             .each retrieveFile
@@ -175,9 +182,10 @@ module.exports =
 
         # Move the binary if it has already been downloaded
         moveBinary = (binaryDoc) ->
-            onError =  (err) ->
-                # Ignore race condition
+            ignoreConflict =  (err) ->
+                # Conflict resulting of race condition
                 callback err unless err.status is 409
+
             move = ->
                 if binaryDoc.path? and binaryDoc.path isnt binaryPath
                     fs.renameSync(binaryDoc.path, binaryPath)
@@ -185,12 +193,12 @@ module.exports =
             # Remove binary doc to keep rev up-to-date
             pouch.db.removeAsync binaryDoc
                 .then move
-                .catch onError
+                .catch ignoreConflict
 
-        onNotFound = (err) ->
+        ignoreNotFound = (err) ->
             callback err unless err.status is 404
 
-        downloadFile ->
+        downloadFile = ->
             # If file exists anyway and has the right size,
             # we assume that it has already been downloaded
             unless fs.existsSync(binaryPath) \
@@ -202,7 +210,7 @@ module.exports =
 
                 # Launch download
                 log.info "Downloading binary: #{relativePath}"
-                urlPath = "cozy/#{doc.binary.file.id}/file",
+                urlPath = "cozy/#{doc.binary.file.id}/file"
 
                 logSuccess = ->
                     log.info "Binary downloaded: #{relativePath}"
@@ -210,7 +218,7 @@ module.exports =
                 client.saveFileAsync urlPath, binaryPath
                     .then logSuccess
 
-        # save Binary path in binary document.
+        # save Binary path in a binary document.
         saveBinaryPath = =>
             id = doc.binary.file.id
             rev = doc.binary.file.rev
@@ -225,7 +233,7 @@ module.exports =
         # Check if the binary document exists
         pouch.db.getAsync(doc.binary.file.id).bind(@)
             .then moveBinary
-            .catch onNotFound
+            .catch ignoreNotFound
             .then downloadFile
             .then saveBinaryPath
             .then changeUtimes
@@ -233,5 +241,4 @@ module.exports =
 
 
 # Promisify above functions
-Promise = require 'bluebird'
 Promise.promisifyAll module.exports
