@@ -5,8 +5,9 @@
   "main": "app.html",
   "window": {
     "width": 700,
-    "height": 800,
-    "title": "Cozy Files Desktop"
+    "height": 500,
+    "title": "Cozy Data Proxy",
+    "toolbar": false
   },
   "scripts": {
     "test": "npm test"
