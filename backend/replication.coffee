@@ -45,7 +45,8 @@ module.exports =
         .nodeify callback
 
 
-    # Specify which way to replicate
+    # Give the right pouch function to run the replication depending on
+    # parameters.
     getReplicator: (toRemote, fromRemote) ->
         if fromRemote and not toRemote
             log.info "Running replication from remote database"
@@ -98,7 +99,8 @@ module.exports =
                 filesystem.buildTree null, unlockFileSystemAndReturn
 
         onChange = (info) ->
-            changeMessage = "DB change: #{info.change.docs_written} doc(s) written"
+            console.log info
+            changeMessage = "DB change: #{info.docs_written} doc(s) written"
 
             # Specify direction
             if info.direction
@@ -106,7 +108,7 @@ module.exports =
 
             # Find out if filesystem tree needs a rebuild
             if (not info.direction? and fromRemote and info.docs_written > 0) \
-            or (info.direction is 'pull' and info.change.docs_written > 0)
+            or (info.direction is 'pull' and info.docs_written > 0)
                 needTreeRebuild = rebuildFs
 
             log.info changeMessage
