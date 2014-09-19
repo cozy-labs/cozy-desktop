@@ -99,7 +99,6 @@ module.exports =
                 filesystem.buildTree null, unlockFileSystemAndReturn
 
         onChange = (info) ->
-            console.log info
             changeMessage = "DB change: #{info.docs_written} doc(s) written"
 
             # Specify direction
