@@ -1,6 +1,6 @@
 fs         = require 'fs'
 touch      = require 'touch'
-request    = require 'request-json'
+request    = require 'request-json-light'
 urlParser  = require 'url'
 log        = require('printit')
              prefix: 'Data Proxy | replication'
@@ -24,23 +24,16 @@ module.exports =
 
         data = login: options.deviceName
 
-        getCredentials = (res) ->
-            if res[0].body.error
-                callback res[0].body.error
+        getCredentials = (res, body) ->
+            if body.error?
+                throw new Error(body.error)
             else
-                body = res[0].body
-                callback null,
-                    id: body.id
-                    password: body.password
-
-        onError =  (err) ->
-            log.error err.toString()
-            console.error err
-            callback err
+                id: body.id
+                password: body.password
 
         client.postAsync('device/', data)
-            .then getCredentials
-            .catch onError
+            .spread getCredentials
+            .nodeify callback
 
 
     # Unregister device remotely, ask for revocation.
@@ -48,17 +41,8 @@ module.exports =
         client = request.newClient options.url
         client.setBasicAuth 'owner', options.password
 
-        finish =  (res, body) ->
-            callback null
-
-        onError =  (err) ->
-            log.error err.toString()
-            console.error err
-            callback err
-
         client.delAsync("device/#{options.deviceId}/")
-        .then finish
-        .catch onError
+        .nodeify callback
 
 
     # Specify which way to replicate
@@ -73,7 +57,7 @@ module.exports =
             log.info "Running synchronization with remote database"
             replicate = pouch.db.sync
 
-        replicate
+        return replicate
 
 
     runReplication: (fromRemote, toRemote, continuous,
@@ -90,7 +74,7 @@ module.exports =
                 doc.docType is 'Folder' or doc.docType is 'File'
             live: continuous
 
-        # Do not need rebuild until docs are added
+        # Do not need rebuild until docs are pulled
         needTreeRebuild = false
 
         # Set authentication
@@ -103,7 +87,7 @@ module.exports =
             # Lock file watcher to avoid remotely downloaded files to be re-uploaded
             filesystem.watchingLocked = true
 
-            unlockFileSystemAndReturn =  ->
+            unlockFileSystemAndReturn = ->
                 filesystem.watchingLocked = false
                 callback null
 
