@@ -16,12 +16,12 @@ animationDuration = .3s
   Panels animations
 */
 
-@keyframes moveFromLeft {
+@keyframes moveToLeft {
   from {
-    transform translate(-100%)
+    transform translate(0)
   }
   to {
-    transform translate(0)
+    transform translate(-100%)
   }
 }
 
@@ -33,6 +33,12 @@ animationDuration = .3s
     transform translate(0)
   }
 }
+
+.slide-enter
+    animation: moveFromRight
+
+.slide-leave
+    animation: moveToLeft
 
 @keyframes moveFromTopRightCorner {
   from {

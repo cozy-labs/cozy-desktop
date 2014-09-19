@@ -1,4 +1,23 @@
-{div, label, input, h1, button} = React.DOM
+{div, p, img, label, input, h1, h2, button} = React.DOM
+
+
+renderState = (state) ->
+    switch state
+        when 'INTRO'
+            currentComponent = Intro()
+        when 'STEP1'
+            currentComponent = ConfigFormStepOne device
+        when 'STEP2'
+            currentComponent = ConfigFormStepTwo device
+        when 'STEP3'
+            currentComponent = ConfigFormStepThree device
+        when 'STATE'
+            currentComponent = StateView device
+        else
+            currentComponent = Intro()
+
+    React.renderComponent currentComponent , document.body
+
 
 # Waits for the DOM to be ready
 window.onload = ->
@@ -9,8 +28,8 @@ window.onload = ->
     locale = window.locale or window.navigator.language or "en"
     locales = {}
     polyglot = new Polyglot()
+    locales = en
     polyglot.extend locales
     window.t = polyglot.t.bind polyglot
 
-    configComponent = ConfigForm device
-    React.renderComponent configComponent, document.body
+    renderState configHelpers.getState()

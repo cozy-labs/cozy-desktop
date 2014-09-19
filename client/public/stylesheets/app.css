@@ -3474,6 +3474,12 @@ table {
 /*
   Panels animations
 */
+.slide-enter {
+  animation: moveFromRight;
+}
+.slide-leave {
+  animation: moveToLeft;
+}
 @-moz-keyframes fadeIn {
   from {
     opacity: 0;
@@ -3506,36 +3512,36 @@ table {
     opacity: 1;
   }
 }
-@-moz-keyframes moveFromLeft {
+@-moz-keyframes moveToLeft {
   from {
-    transform: translate(-100%);
+    transform: translate(0);
   }
   to {
-    transform: translate(0);
+    transform: translate(-100%);
   }
 }
-@-webkit-keyframes moveFromLeft {
+@-webkit-keyframes moveToLeft {
   from {
-    transform: translate(-100%);
+    transform: translate(0);
   }
   to {
-    transform: translate(0);
+    transform: translate(-100%);
   }
 }
-@-o-keyframes moveFromLeft {
+@-o-keyframes moveToLeft {
   from {
-    transform: translate(-100%);
+    transform: translate(0);
   }
   to {
-    transform: translate(0);
+    transform: translate(-100%);
   }
 }
-@keyframes moveFromLeft {
+@keyframes moveToLeft {
   from {
-    transform: translate(-100%);
+    transform: translate(0);
   }
   to {
-    transform: translate(0);
+    transform: translate(-100%);
   }
 }
 @-moz-keyframes moveFromRight {
