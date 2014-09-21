@@ -40,20 +40,16 @@ animationDuration = .3s
 .slide-leave
     animation: moveToLeft
 
-@keyframes moveFromTopRightCorner {
+@keyframes moveFromBottomToTop {
   from {
-    transform translate(100%, -100%) scale(0.5)
+    transform translate(0, 0)
   }
   to {
-    transform translate(0, 0) scale(1)
+    transform translate(0, -100%)
   }
 }
 
-@keyframes expandFromRight {
-  from {
-    transform translate(50%)
-  }
-  to {
-    transform translate(0)
-  }
-}
+.slide-leave-up
+    transition: all ease 0.3s
+    position: absolute
+    top: -100%

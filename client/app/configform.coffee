@@ -8,80 +8,22 @@ isValidForm = (fields) ->
     true
 
 
-Line = React.createClass
-    render: ->
-        div className: 'line mtl clearfix', @props.children
-
-
-Container = React.createClass
-    render: ->
-        ReactCSSTransitionGroup transitionName: "slide", component: div,
-            div className: 'container', @props.children
-
-
-Title = React.createClass
-    render: ->
-            h1 {}, @props.text
-
-Button = React.createClass
-    render: ->
-        button
-            className: 'btn btn-cozy ' + @props.className
-            ref: @props.ref
-            onClick: @props.onClick
-        , @props.text
-
-
-Field = React.createClass
-
-    getInitialState: ->
-        error: null
-
-    render: ->
-        @props.type ?= 'text'
-        Line null,
-            label className: 'mod w100 mrm', @props.label
-            input
-                type: @props.type
-                className: 'mt1 ' + @props.fieldClass
-                ref: @props.inputRef
-                defaultValue: @props.defaultValue
-                onChange: @onChange
-                placeholder: @props.placeholder
-            if @state.error
-                p null, @state.error
-
-    getValue: ->
-        @refs[@props.inputRef].getDOMNode().value
-
-    isValid: ->
-        console.log @getValue()
-        @getValue() isnt ''
-
-    onChange: ->
-        val = @refs[@props.inputRef].getDOMNode().value
-        if val is ''
-            @setState error: 'value is missing'
-        else
-            @setState error: null
-
-
 Intro = React.createClass
 
     render: ->
         Container null,
-           div className: 'txtcenter mtl',
+           div className: 'intro txtcenter mtl',
                img
+                   id: 'logo'
                    src: 'client/public/icon/bighappycloud.png'
-               p className: 'mtl', 'welcome to the cozy data proxy'
+               p className: 'mtl biggest', t 'welcome to the cozy data proxy'
                Button
-                    className: 'mtl txtbigger pam'
+                    className: 'mtl bigger pam'
                     onClick: @onEnterClicked
-                    text: t 'start configuring your device and sync it with your cozy'
+                    text: t 'start configuring your device'
 
     onEnterClicked: ->
-        db = require './backend/db'
-        console.log db
+        $('.intro').addClass 'slide-leave-up'
         renderState 'STEP1'
 
 
@@ -179,4 +121,4 @@ ConfigFormStepThree = React.createClass
 StateView = React.createClass
     render: ->
       div className: 'container',
-          h1 {}, 'Cozy Files'
+          Title text: 'Cozy Data Proxy'

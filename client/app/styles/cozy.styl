@@ -1,6 +1,5 @@
 // blue
-basecolor = #34A6FF
-basecolor-alpha = rgba(49, 156, 256, 0.5)
+blue = #1baaf4
 // green
 contrastcolor = #5C5
 // orange
@@ -34,10 +33,13 @@ h1
     font-size: 40px
 
 a
-    color basecolor
+    color blue
 
 a:hover
     color actioncolor
+
+p 
+    font-family: main
 
 label
     font-family main
@@ -46,7 +48,7 @@ label
 input
 select
 textarea
-    border 1px solid basecolor
+    border 1px solid blue
     border-radius 0
     font-size: 20px
     padding: 4px
@@ -96,36 +98,47 @@ textarea:focus
 
 /*      COZY BUTTONS    */
 .btn
-  // position: relative for spinner
-  position relative
+    // position: relative for spinner
+    position relative
 
-  &.btn-cozy
-    background-color basecolor
-    border 1px solid basecolor
-    padding 5px
-    font-family main
-    color white
+    &.btn-cozy
+        background-color blue
+        border 0px solid blue
+        padding 5px
+        font-family main
+        color white
 
-    .caret
-      border-top-color white
-      border-bottom-color white
+        .caret
+            border-top-color white
+            border-bottom-color white
 
-    &:hover
-      background-color actioncolor
-      border-color actioncolor
+        &:hover
+            background-color actioncolor
+            border-color actioncolor
 
-  &.btn-cozy.toggled
-    box-shadow 1px 3px 2px rgba(0, 0, 0, 0.2) inset, 0 1px 2px rgba(0, 0, 0, 0.0)
-    background-color basecolor - 10%
+        &.bigger
+            font-size: 24px
+            padding: 10px
+            border-radius: 5px
 
-    &:hover
-      background-color actioncolor - 10%
+        &:active
+        &:focus
+            border: 0px
+            box-shadow 1px 3px 2px rgba(0, 0, 0, 0.2) inset, 0 1px 2px rgba(0, 0, 0, 0.0)
 
-  &.btn-cozy-contrast
-    background-color contrastcolor - 10%
-    border-color contrastcolor - 10%
-    color white
+    &.btn-cozy.toggled
+        box-shadow 1px 3px 2px rgba(0, 0, 0, 0.2) inset, 0 1px 2px rgba(0, 0, 0, 0.0)
+        background-color blue - 10%
 
-    &:hover
-      background-color actioncolor
-      border-color actioncolor
+        &:hover
+            background-color actioncolor - 10%
+
+    &.btn-cozy-contrast
+        background-color contrastcolor - 10%
+        border-color contrastcolor - 10%
+        color white
+
+        &:hover
+            background-color actioncolor
+            border-color actioncolor
+

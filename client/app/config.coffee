@@ -25,7 +25,6 @@ configHelpers =
         console.log 'Configuration file successfully updated'
 
     getState: ->
-        console.log device
         if not device.deviceName?
             'INTRO'
         else if not device.path?
