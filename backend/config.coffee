@@ -60,3 +60,14 @@ module.exports =
     # Save configuration to file system.
     saveConfig: ->
         fs.writeFileSync configPath, JSON.stringify @config, null, 2
+
+
+    updateSync: (deviceConfig) ->
+        device = @getConfig()
+        delete @config.devices[device.deviceName]
+        for key, value of deviceConfig
+            device[key] = deviceConfig[key]
+        @config.devices[device.deviceName] = device
+
+        fs.writeFileSync configPath, JSON.stringify @config, null, 2
+        console.log 'Configuration file successfully updated'

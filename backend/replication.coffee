@@ -61,8 +61,13 @@ module.exports =
         return replicate
 
 
-    runReplication: (fromRemote, toRemote, continuous,
-                     rebuildFs, fetchBinary, callback) ->
+    runReplication: (options, callback) ->
+        fromRemote = options.fromRemote
+        toRemote = options.toRemote
+        continuous = options.continuous
+        rebuildFs = options.rebuildFs
+        fetchBinary = options.fetchBinary
+
         deviceName = config.getDeviceName()
         continuous ?= false
         rebuildFs ?= false
@@ -83,14 +88,14 @@ module.exports =
         url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
 
         # Define action after replication completion
-        applyChanges = (callback) ->
+        applyChanges = (cb) ->
 
             # Lock file watcher to avoid remotely downloaded files to be re-uploaded
             filesystem.watchingLocked = true
 
             unlockFileSystemAndReturn = ->
                 filesystem.watchingLocked = false
-                callback null
+                cb null if cb?
 
             # Fetch binaries Or rebuild the filesystem directory tree only
             if fetchBinary
@@ -118,6 +123,7 @@ module.exports =
                 log.info 'Applying changes on the filesystem'
                 markRebuildTree = ->
                     needTreeRebuild = false
+                    callback null if callback?
                 applyChanges markRebuildTree
 
         onComplete = (info) ->
@@ -125,18 +131,19 @@ module.exports =
             if fromRemote and not toRemote
                 log.info 'Applying changes on the filesystem'
                 finish = ->
-                    callback null
+                    callback null if callback?
                 applyChanges finish
             else
-                callback null
+                callback null if callback?
 
-        onError = (err) ->
+        onError = (err, data) ->
             log.error err
-            callback err
+            callback err if callback?
 
         # Launch replication
-        replicate(urlParser.format(url) + 'cozy', options)
-        .on 'change', onChange
-        .on 'uptodate', onUptoDate # Called only for a continuous replication
-        .on 'complete', onComplete # Called only for a single replication
-        .on 'error', onError
+        url = urlParser.format(url) + 'cozy'
+        replicator = replicate(url, options)
+        replicator.on 'change', onChange
+        replicator.on 'uptodate', onUptoDate # Called only for a continuous replication
+        replicator.on 'complete', onComplete # Called only for a single replication
+        replicator.on 'error', onError

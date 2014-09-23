@@ -110,10 +110,15 @@ program
             #filesystem.watchChanges continuous, fromNow
 
         # Replicate databases
-        replication.runReplication(
-            args.fromRemote, args.toRemote, true, true, fetchBinary, ->
-                log.info 'Replication ended'
-        )
+        replication.runReplication
+            fromRemote: args.fromRemote
+            toRemote: args.toRemote
+            continuous: true
+            rebuildTree: true
+            fetchBinary: fetchBinary
+        , (err) ->
+            console.log err
+            log.info 'Replication ended'
 
 program
     .command('replicate')
@@ -121,13 +126,14 @@ program
     .option('-d, --deviceName [deviceName]', 'device name to deal with')
     .option('-f, --fromRemote', 'replicate from remote database')
     .option('-t, --toRemote', 'replicate to remote database')
-    .option('-c, --continuous', 'replicate to remote database')
+    .option('-c, --continuous', 'keep sync alive when finished')
     .action (args) ->
-        replication.runReplication args.fromRemote
-                                 , args.toRemote
-                                 , args.continuous
-                                 , false, false # Do not rebuild FS tree or fetch binary
-                                 , ->
+        replication.runReplication
+            fromRemote: args.fromRemote
+            toRemote: args.toRemote
+            continuous: args.continuous
+            rebuildTree: false
+            fetchBinary: false
 
 program
     .command('show-binaries')
