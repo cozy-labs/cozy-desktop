@@ -9,6 +9,7 @@ log        = require('printit')
 config     = require './config'
 pouch      = require './db'
 filesystem = require('./filesystem')
+async = require 'async'
 
 remoteConfig = config.getConfig()
 
@@ -122,31 +123,45 @@ module.exports =
             .nodeify callback
 
 
-    fetchAll: (deviceName, callback) ->
+    fetchAll: (deviceName) ->
         deviceName ?= config.getDeviceName()
 
-        log.info "Fetching all binaries"
+        #log.info "Fetching all binaries"
+        console.log "Fetching all binaries"
 
-        fetchFileDocs = ->
-            pouch.db.queryAsync('file/all')
+        previousRetrieval = Promise.fulfilled()
+
+        onError = (err) ->
+            console.log 'Fetch all binary error'
+            console.log err
+            callback err
 
         filterFileWithBinary = (doc) ->
             return doc.value.binary?
 
-        # Initialize control flow
-        previousRetrieval = Promise.fulfilled()
+        retrieveFile = (doc, cb) =>
+            @fetchFromDoc deviceName, doc.value, cb
 
-        retrieveFile = (doc) =>
-            # Retrieve file one-by-one
-            previousRetrieval = previousRetrieval.then =>
-                @fetchFromDocAsync(deviceName, doc.value)
-            return previousRetrieval
+        retrieveFiles = (err, result) ->
+            if err
+                console.log 'Build tree failed'
+                console.log err
+            else
+                console.log 'retrieve files'
+                docs = result['rows']
+                docs = docs.filter filterFileWithBinary
+                async.eachSeries docs, retrieveFile, callback
 
-        require('./filesystem').buildTreeAsync(null).bind(@)
-            .then fetchFileDocs
-            .get('rows').filter filterFileWithBinary
-            .each retrieveFile
-            .nodeify callback
+        getFileMetadatas = (err) ->
+            console.log 'ok'
+            if err
+                console.log 'Build tree failed'
+                console.log err
+            else
+                console.log 'build tree done'
+                pouch.db.query 'file/all', retrieveFiles
+
+        filesystem.buildTreeAsync null, getFileMetadatas
 
 
     fetchOne: (deviceName, filePath, callback) ->

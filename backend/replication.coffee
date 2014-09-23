@@ -24,16 +24,17 @@ module.exports =
 
         data = login: options.deviceName
 
-        getCredentials = (res, body) ->
+        getCredentials = (err, res, body) ->
+            if err
+                callback err
             if body.error?
-                throw new Error(body.error)
+                callback new Error(body.error)
             else
-                id: body.id
-                password: body.password
+                callback null,
+                    id: body.id
+                    password: body.password
 
-        client.postAsync('device/', data)
-            .spread getCredentials
-            .nodeify callback
+        client.post 'device/', getCredentials
 
 
     # Unregister device remotely, ask for revocation.
@@ -41,8 +42,7 @@ module.exports =
         client = request.newClient options.url
         client.setBasicAuth 'owner', options.password
 
-        client.delAsync("device/#{options.deviceId}/")
-        .nodeify callback
+        client.del "device/#{options.deviceId}/", callback
 
 
     # Give the right pouch function to run the replication depending on
@@ -104,7 +104,10 @@ module.exports =
                 filesystem.buildTree null, unlockFileSystemAndReturn
 
         onChange = (info) ->
-            changeMessage = "DB change: #{info.docs_written} doc(s) written"
+            if info.change?
+                changeMessage = "DB change: #{info.change.docs_written} doc(s) written"
+            else
+                changeMessage = "DB change: #{info.docs_written} doc(s) written"
 
             # Specify direction
             if info.direction
@@ -115,21 +118,26 @@ module.exports =
             or (info.direction is 'pull' and info.docs_written > 0)
                 needTreeRebuild = rebuildFs
 
-            log.info changeMessage
+            #log.info changeMessage
+            console.log changeMessage
 
         onUptoDate = (info) ->
-            log.info 'Replication is complete'
+            #log.info 'Replication is complete'
+            console.log 'Replication is complete'
             if needTreeRebuild
-                log.info 'Applying changes on the filesystem'
+                #log.info 'Applying changes on the filesystem'
+                console.log 'Applying changes on the filesystem'
                 markRebuildTree = ->
                     needTreeRebuild = false
                     callback null if callback?
                 applyChanges markRebuildTree
 
         onComplete = (info) ->
-            log.info 'Replication is complete'
+            #log.info 'Replication is complete'
+            console.log 'Replication is complete'
             if fromRemote and not toRemote
-                log.info 'Applying changes on the filesystem'
+                #log.info 'Applying changes on the filesystem'
+                console.log 'Applying changes on the filesystem'
                 finish = ->
                     callback null if callback?
                 applyChanges finish
@@ -143,7 +151,7 @@ module.exports =
         # Launch replication
         url = urlParser.format(url) + 'cozy'
         replicator = replicate(url, options)
-        replicator.on 'change', onChange
-        replicator.on 'uptodate', onUptoDate # Called only for a continuous replication
-        replicator.on 'complete', onComplete # Called only for a single replication
-        replicator.on 'error', onError
+            .on 'change', onChange
+            #.on 'uptodate', onUptoDate # Called only for a continuous replication
+            .on 'complete', onComplete # Called only for a single replication
+            .on 'error', onError

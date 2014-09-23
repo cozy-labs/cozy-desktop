@@ -29,7 +29,8 @@ module.exports =
     makeDirectoryFromDoc: (doc, callback) ->
         dirPaths = @getPaths(path.join remoteConfig.path, doc.path, doc.name)
 
-        log.info "Creating directory: #{dirPaths.relative}"
+        #log.info "Creating directory: #{dirPaths.relative}"
+        console.log "Creating directory: #{dirPaths.relative}"
 
         # Create directory
         mkdirpAsync(dirPaths.absolute)
@@ -57,10 +58,12 @@ module.exports =
         .then (binaryDoc) ->
             if binaryDoc? and fs.existsSync binaryDoc.path
                 # log.info "File exists: #{binaryDoc.path}"
+                console.log "File exists: #{binaryDoc.path}"
                 binary.moveFromDocAsync binaryDoc
                                       , filePaths.absolute
             else
-                log.info "Creating file: #{filePaths.relative}"
+                #log.info "Creating file: #{filePaths.relative}"
+                console.log "Creating file: #{filePaths.relative}"
                 touchAsync filePaths.absolute
 
         # Update file information
@@ -75,10 +78,12 @@ module.exports =
         # If filePath argument is set, rebuild FS information for this file only
         if filePath?
             filePaths = @getPaths filePath
-            log.info "Updating file info: #{filePaths.relative}"
+            #log.info "Updating file info: #{filePaths.relative}"
+            console.log "Updating file info: #{filePaths.relative}"
         else
             filePaths = @getPaths remoteConfig.path
-            log.info "Rebuilding filesystem tree"
+            #log.info "Rebuilding filesystem tree"
+            console.log "Rebuilding filesystem tree"
 
         # Add folder filter if not exists
         pouch.addFilterAsync('folder').bind(@)
@@ -125,7 +130,8 @@ module.exports =
     createDirectoryContentDoc: (dirPath, callback) ->
         dirPaths = @getPaths dirPath
 
-        log.info "Add directory and its content: #{dirPaths.relative}"
+        #log.info "Add directory and its content: #{dirPaths.relative}"
+        console.log "Add directory and its content: #{dirPaths.relative}"
 
         # Create the directory itself first
         @createDirectoryDocAsync(dirPaths.absolute).bind(@)
@@ -172,7 +178,8 @@ module.exports =
 
         # Add directory stats
         .then ->
-            log.info "Add directory: #{dirPaths.relative}"
+            #log.info "Add directory: #{dirPaths.relative}"
+            console.log "Add directory: #{dirPaths.relative}"
             fs.statAsync(dirPaths.absolute)
         .then (stats) ->
             document.creationDate = stats.mtime
@@ -231,7 +238,8 @@ module.exports =
 
         # Add file stats
         .then ->
-            log.info "Add file: #{filePaths.relative}"
+            #log.info "Add file: #{filePaths.relative}"
+            console.log "Add file: #{filePaths.relative}"
             fs.statAsync(filePaths.absolute)
         .then (stats) ->
             document.creationDate     = stats.mtime
@@ -311,20 +319,23 @@ module.exports =
         # New file detected
         .on 'add', (filePath) =>
             unless @watchingLocked
-                log.info "File added: #{filePath}"
+                #log.info "File added: #{filePath}"
+                console.log "File added: #{filePath}"
                 @createFileDoc filePath, ->
 
         # New directory detected
         .on 'addDir', (dirPath) =>
             unless @watchingLocked
                 if path isnt remoteConfig.path
-                    log.info "Directory added: #{dirPath}"
+                    #log.info "Directory added: #{dirPath}"
+                    console.log "Directory added: #{dirPath}"
                     @createDirectoryDoc dirPath, ->
 
         # File update detected
         .on 'change', (filePath) =>
             unless @watchingLocked
-                log.info "File changed: #{filePath}"
+                #log.info "File changed: #{filePath}"
+                console.log "File changed: #{filePath}"
                 @createFileDoc filePath, ->
 
         .on 'error', (err) ->
