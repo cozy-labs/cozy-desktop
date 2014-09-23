@@ -23,7 +23,8 @@ module.exports =
 
     makeDirectoryFromDoc: (doc, callback) ->
         doc = doc.value
-        dirPaths = @getPaths(path.join remoteConfig.path, doc.path, doc.name)
+        absPath = path.join remoteConfig.path, doc.path, doc.name
+        dirPaths = module.exports.getPaths absPath
 
         #log.info "Creating directory: #{dirPaths.relative}"
         console.log "Creating directory: #{dirPaths.relative}"
@@ -50,7 +51,8 @@ module.exports =
             creationDate = new Date(doc.creationDate)
             modificationDate = new Date(doc.lastModification)
             absPath = filePaths.absolute
-            fs.utimes absPath, creationDate, modificationDate, callback
+            fs.utimes absPath, creationDate, modificationDate, ->
+                callback()
 
         # Create empty file
         touchFile = (err, binaryDoc) ->
@@ -79,7 +81,6 @@ module.exports =
 
 
     buildTree: (filePath, callback) ->
-        console.log 'buildTree'
 
         # If filePath argument is set, rebuild FS information for this file only
         if filePath?

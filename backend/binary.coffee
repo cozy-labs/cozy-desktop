@@ -111,27 +111,22 @@ module.exports =
         deviceName ?= config.getDeviceName()
         log.info "Fetching all binaries"
 
-        onError = (err) ->
-            console.log 'Fetch all binary error'
-            callback err
-
         filterFileWithBinary = (doc) ->
             return doc.value.binary?
 
         retrieveFile = (doc, cb) =>
-            @fetchFromDoc deviceName, doc.value, cb
+            @fetchFromDoc deviceName, doc.value, ->
+                cb()
 
         retrieveFiles = (err, result) ->
             if err then throw new Error
-            console.log 'retrieve files'
             docs = result['rows']
             docs = docs.filter filterFileWithBinary
-            async.eachSeries docs, retrieveFile, callback
+            async.eachSeries docs, retrieveFile, ->
+                callback()
 
         getFileMetadatas = (err) ->
-            console.log 'metadata'
             if err then throw new Error err
-            console.log 'build tree done!'
             pouch.db.query 'file/all', retrieveFiles
 
         filesystem = require('./filesystem')
@@ -199,6 +194,8 @@ module.exports =
 
                 fs.unlinkSync saveBinaryPath
                 client.saveFile urlPath, binaryPath, saveBinaryPath
+            else
+                saveBinaryPath()
 
         # Move the binary if it has already been downloaded
         removeBinary = (err, binaryDoc) ->

@@ -116,8 +116,12 @@ program
             rebuildTree: true
             fetchBinary: fetchBinary
         , (err) ->
-            console.log err
-            log.info 'Replication ended'
+            log.info 'Sync ended'
+            if err
+                console.log err
+                process.exit 1
+            else
+                process.exit 0
 
 program
     .command('replicate')
@@ -134,10 +138,13 @@ program
             rebuildTree: true
             fetchBinary: true
         , (err) ->
+            log.info 'Replication ended'
             if err
                 log.error 'An error occured while replicating data and files'
                 console.log err
-            log.info 'Replication ended'
+                process.exit 1
+            else
+                process.exit 0
 
 program
     .command('show-binaries')
