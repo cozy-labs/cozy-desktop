@@ -30,7 +30,7 @@ Intro = React.createClass
 ConfigFormStepOne = React.createClass
     render: ->
         Container null,
-            Title text: t 'cozy files configuration 1 on 3'
+            Title text: t 'cozy files configuration 1 on 2'
             Field
                 label: t 'your device name'
                 fieldClass: 'w300p'
@@ -56,7 +56,8 @@ ConfigFormStepOne = React.createClass
         fieldPath = @refs.devicePathField
         isValid = isValidForm [fieldName, fieldPath]
         if isValid
-            configHelpers.saveConfigSync
+            config = require './backend/config'
+            config.updateSync
                 deviceName: fieldName.getValue()
                 path: fieldPath.getValue()
             renderState 'STEP2'
@@ -67,7 +68,7 @@ ConfigFormStepOne = React.createClass
 ConfigFormStepTwo = React.createClass
     render: ->
         Container null,
-            Title text: t 'cozy files configuration 2 on 3'
+            Title text: t 'cozy files configuration 2 on 2'
             Field
                 label: t 'your remote url'
                 fieldClass: 'w300p'
@@ -102,23 +103,86 @@ ConfigFormStepTwo = React.createClass
         fieldPassword = @refs.remotePasswordField
         isValid = isValidForm [fieldUrl, fieldPassword]
         if isValid
-            configHelpers.saveConfigSync
-                url: fieldUrl.getValue()
-            # TODO Register to remote Cozy
-            renderState 'STEP3'
+            config = require './backend/config'
+            replication = require './backend/replication'
+            promise = require './backend/promise'
+
+            url = "https://#{fieldUrl.getValue()}"
+            password = fieldPassword.getValue()
+            options =
+                url: url
+                deviceName: device.deviceName
+                password: password
+
+            saveConfig = (err, credentials) ->
+                if err
+                    console.log err
+                    console.log 'An error occured while registering your device.'
+                else
+                    options =
+                        url: url
+                        deviceId: credentials.id
+                        devicePassword: credentials.password
+                    config.updateSync options
+
+                    console.log 'Remote Cozy properly configured to work ' + \
+                             'with current device.'
+                    renderState 'STATE'
+
+            replication.registerDevice options, saveConfig
         else
             alert 'a value is missing'
 
 
-ConfigFormStepThree = React.createClass
-    render: ->
-      div className: 'container',
-          h1 {}, 'Cozy Files Configuration (3/3)'
-          h2 {}, 'Run replications...'
-          div className: 'line device-name',
-
-
 StateView = React.createClass
     render: ->
-      div className: 'container',
-          Title text: 'Cozy Data Proxy'
+
+        @state ?= changes: []
+        changes = []
+        for change in @state.changes
+            changes.push Line null, change
+
+        Container null,
+            Title text: 'Cozy Data Proxy'
+            Subtitle text: 'Parameters'
+            InfoLine label: t('your device name'), value: device.deviceName
+            InfoLine
+                label: t('path')
+                link:
+                    type: 'file'
+                value: device.path
+            InfoLine label: t('url'), value: device.url
+            Subtitle text: 'Actions'
+            Line null,
+                Button
+                    className: 'left'
+                    ref: 'backButton'
+                    onClick: @onResyncClicked
+                    text: t 'resync all'
+            Line null,
+                Button
+                    className: 'left'
+                    ref: 'backButton'
+                    onClick: @onDeleteClicked
+                    text: t 'delete configuration'
+                    text: t 'delete configuration and files'
+            changes
+
+
+    onResyncClicked: ->
+        alert 'resync all'
+        replication = require './backend/replication'
+
+        @state.changes = []
+
+        onChange = (change) =>
+            @state.changes.push "#{change.docs_written} elements replicated"
+
+        replicator = replication.runReplication
+            fromRemote: true
+            toRemote: false
+            continuous: false
+            rebuildFs: true
+            fetchBinary: true
+
+        replicator.on 'change', onChange

@@ -3480,6 +3480,11 @@ table {
 .slide-leave {
   animation: moveToLeft;
 }
+.slide-leave-up {
+  transition: all ease 0.3s;
+  position: absolute;
+  top: -100%;
+}
 @-moz-keyframes fadeIn {
   from {
     opacity: 0;
@@ -3576,68 +3581,36 @@ table {
     transform: translate(0);
   }
 }
-@-moz-keyframes moveFromTopRightCorner {
+@-moz-keyframes moveFromBottomToTop {
   from {
-    transform: translate(100%, -100%) scale(0.5);
+    transform: translate(0, 0);
   }
   to {
-    transform: translate(0, 0) scale(1);
+    transform: translate(0, -100%);
   }
 }
-@-webkit-keyframes moveFromTopRightCorner {
+@-webkit-keyframes moveFromBottomToTop {
   from {
-    transform: translate(100%, -100%) scale(0.5);
+    transform: translate(0, 0);
   }
   to {
-    transform: translate(0, 0) scale(1);
+    transform: translate(0, -100%);
   }
 }
-@-o-keyframes moveFromTopRightCorner {
+@-o-keyframes moveFromBottomToTop {
   from {
-    transform: translate(100%, -100%) scale(0.5);
+    transform: translate(0, 0);
   }
   to {
-    transform: translate(0, 0) scale(1);
+    transform: translate(0, -100%);
   }
 }
-@keyframes moveFromTopRightCorner {
+@keyframes moveFromBottomToTop {
   from {
-    transform: translate(100%, -100%) scale(0.5);
+    transform: translate(0, 0);
   }
   to {
-    transform: translate(0, 0) scale(1);
-  }
-}
-@-moz-keyframes expandFromRight {
-  from {
-    transform: translate(50%);
-  }
-  to {
-    transform: translate(0);
-  }
-}
-@-webkit-keyframes expandFromRight {
-  from {
-    transform: translate(50%);
-  }
-  to {
-    transform: translate(0);
-  }
-}
-@-o-keyframes expandFromRight {
-  from {
-    transform: translate(50%);
-  }
-  to {
-    transform: translate(0);
-  }
-}
-@keyframes expandFromRight {
-  from {
-    transform: translate(50%);
-  }
-  to {
-    transform: translate(0);
+    transform: translate(0, -100%);
   }
 }
 
@@ -3661,10 +3634,13 @@ h1 {
   font-size: 40px;
 }
 a {
-  color: #34a6ff;
+  color: #1baaf4;
 }
 a:hover {
   color: #fe8800;
+}
+p {
+  font-family: main;
 }
 label {
   font-family: main;
@@ -3673,7 +3649,7 @@ label {
 input,
 select,
 textarea {
-  border: 1px solid #34a6ff;
+  border: 1px solid #1baaf4;
   border-radius: 0;
   font-size: 20px;
   padding: 4px;
@@ -3708,7 +3684,7 @@ textarea:focus {
 }
 .modal-body input,
 .modal-body select {
-  border: 1px solid #00f;
+  border: 1px solid #1baaf4;
   border-radius: 0;
   font-family: styled;
 }
@@ -3720,7 +3696,7 @@ textarea:focus {
 .modal-body select:focus,
 .modal-body input:active,
 .modal-body select:active {
-  border: 1px solid #00f;
+  border: 1px solid #1baaf4;
   box-shadow: none;
 }
 /*      COZY BUTTONS    */
@@ -3728,11 +3704,13 @@ textarea:focus {
   position: relative;
 }
 .btn.btn-cozy {
-  background-color: #34a6ff;
-  border: 1px solid #34a6ff;
-  padding: 5px;
+  background-color: #1baaf4;
+  border: 0px solid #1baaf4;
+  padding: 10px;
   font-family: main;
   color: #fff;
+  border-radius: 5px;
+  font-size: 18px;
 }
 .btn.btn-cozy .caret {
   border-top-color: #fff;
@@ -3742,9 +3720,18 @@ textarea:focus {
   background-color: #fe8800;
   border-color: #fe8800;
 }
+.btn.btn-cozy.bigger {
+  font-size: 24px;
+  padding: 10px;
+}
+.btn.btn-cozy:active,
+.btn.btn-cozy:focus {
+  border: 0px;
+  box-shadow: 1px 3px 2px rgba(0,0,0,0.2) inset, 0 1px 2px rgba(0,0,0,0);
+}
 .btn.btn-cozy.toggled {
   box-shadow: 1px 3px 2px rgba(0,0,0,0.2) inset, 0 1px 2px rgba(0,0,0,0);
-  background-color: #1599ff;
+  background-color: #0b9de9;
 }
 .btn.btn-cozy.toggled:hover {
   background-color: #e57a00;
@@ -3764,6 +3751,9 @@ body {
 }
 .line input {
   margin-top: 10px;
+}
+#logo {
+  width: 250px;
 }
 
 .chromeframe { margin: 0.2em 0; background: #ccc; color: #000; padding: 0.2em 0; }

@@ -1,4 +1,105 @@
-var config, configDir, configHelpers, configPath, device, fs, homedir, keys, path;
+var Button, Container, Field, InfoLine, Line, Subtitle, Title;
+
+Line = React.createClass({
+  render: function() {
+    return div({
+      className: 'line mtl clearfix'
+    }, this.props.children);
+  }
+});
+
+Container = React.createClass({
+  render: function() {
+    return ReactCSSTransitionGroup({
+      transitionName: "slide",
+      component: div
+    }, div({
+      className: 'container'
+    }, this.props.children));
+  }
+});
+
+Title = React.createClass({
+  render: function() {
+    return h1({}, this.props.text);
+  }
+});
+
+Subtitle = React.createClass({
+  render: function() {
+    return h2({}, this.props.text);
+  }
+});
+
+Button = React.createClass({
+  render: function() {
+    return button({
+      className: 'btn btn-cozy ' + this.props.className,
+      ref: this.props.ref,
+      onClick: this.props.onClick
+    }, this.props.text);
+  }
+});
+
+Field = React.createClass({
+  getInitialState: function() {
+    return {
+      error: null
+    };
+  },
+  render: function() {
+    var _base;
+    if ((_base = this.props).type == null) {
+      _base.type = 'text';
+    }
+    return Line(null, label({
+      className: 'mod w100 mrm'
+    }, this.props.label), input({
+      type: this.props.type,
+      className: 'mt1 ' + this.props.fieldClass,
+      ref: this.props.inputRef,
+      defaultValue: this.props.defaultValue,
+      onChange: this.onChange,
+      placeholder: this.props.placeholder
+    }), this.state.error ? p(null, this.state.error) : void 0);
+  },
+  getValue: function() {
+    return this.refs[this.props.inputRef].getDOMNode().value;
+  },
+  isValid: function() {
+    return this.getValue() !== '';
+  },
+  onChange: function() {
+    var val;
+    val = this.refs[this.props.inputRef].getDOMNode().value;
+    if (val === '') {
+      return this.setState({
+        error: 'value is missing'
+      });
+    } else {
+      return this.setState({
+        error: null
+      });
+    }
+  }
+});
+
+InfoLine = React.createClass({
+  render: function() {
+    var value;
+    if (this.props.link != null) {
+      value = span(null, a({
+        href: "" + this.props.link.type + "://" + this.props.value
+      }, this.props.value));
+    } else {
+      value = span(null, this.props.value);
+    }
+    return Line(null, span({
+      className: 'mrm'
+    }, this.props.label), value);
+  }
+});
+;var config, configDir, configHelpers, configPath, device, fs, homedir, keys, path;
 
 path = require('path-extra');
 
@@ -41,7 +142,6 @@ configHelpers = {
     return console.log('Configuration file successfully updated');
   },
   getState: function() {
-    console.log(device);
     if (device.deviceName == null) {
       return 'INTRO';
     } else if (device.path == null) {
@@ -53,7 +153,7 @@ configHelpers = {
     }
   }
 };
-;var Button, ConfigFormStepOne, ConfigFormStepThree, ConfigFormStepTwo, Container, Field, Intro, Line, ReactCSSTransitionGroup, StateView, Title, isValidForm;
+;var ConfigFormStepOne, ConfigFormStepTwo, Intro, ReactCSSTransitionGroup, StateView, isValidForm;
 
 ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 
@@ -68,103 +168,23 @@ isValidForm = function(fields) {
   return true;
 };
 
-Line = React.createClass({
-  render: function() {
-    return div({
-      className: 'line mtl clearfix'
-    }, this.props.children);
-  }
-});
-
-Container = React.createClass({
-  render: function() {
-    return ReactCSSTransitionGroup({
-      transitionName: "slide",
-      component: div
-    }, div({
-      className: 'container'
-    }, this.props.children));
-  }
-});
-
-Title = React.createClass({
-  render: function() {
-    return h1({}, this.props.text);
-  }
-});
-
-Button = React.createClass({
-  render: function() {
-    return button({
-      className: 'btn btn-cozy ' + this.props.className,
-      ref: this.props.ref,
-      onClick: this.props.onClick
-    }, this.props.text);
-  }
-});
-
-Field = React.createClass({
-  getInitialState: function() {
-    return {
-      error: null
-    };
-  },
-  render: function() {
-    var _base;
-    if ((_base = this.props).type == null) {
-      _base.type = 'text';
-    }
-    return Line(null, label({
-      className: 'mod w100 mrm'
-    }, this.props.label), input({
-      type: this.props.type,
-      className: 'mt1 ' + this.props.fieldClass,
-      ref: this.props.inputRef,
-      defaultValue: this.props.defaultValue,
-      onChange: this.onChange,
-      placeholder: this.props.placeholder
-    }), this.state.error ? p(null, this.state.error) : void 0);
-  },
-  getValue: function() {
-    return this.refs[this.props.inputRef].getDOMNode().value;
-  },
-  isValid: function() {
-    console.log(this.getValue());
-    return this.getValue() !== '';
-  },
-  onChange: function() {
-    var val;
-    val = this.refs[this.props.inputRef].getDOMNode().value;
-    if (val === '') {
-      return this.setState({
-        error: 'value is missing'
-      });
-    } else {
-      return this.setState({
-        error: null
-      });
-    }
-  }
-});
-
 Intro = React.createClass({
   render: function() {
     return Container(null, div({
-      className: 'txtcenter mtl'
+      className: 'intro txtcenter mtl'
     }, img({
+      id: 'logo',
       src: 'client/public/icon/bighappycloud.png'
     }), p({
-      className: 'mtl'
-    }, 'welcome to the cozy data proxy'), Button({
-      className: 'mtl txtbigger pam',
+      className: 'mtl biggest'
+    }, t('welcome to the cozy data proxy')), Button({
+      className: 'mtl bigger pam',
       onClick: this.onEnterClicked,
-      text: t('start configuring your device and sync it with your cozy')
+      text: t('start configuring your device')
     })));
   },
   onEnterClicked: function() {
-    var db;
-    db = require('./backend/db');
-    console.log(db);
+    $('.intro').addClass('slide-leave-up');
     return renderState('STEP1');
   }
 });
@@ -172,7 +192,7 @@ Intro = React.createClass({
 ConfigFormStepOne = React.createClass({
   render: function() {
     return Container(null, Title({
-      text: t('cozy files configuration 1 on 3')
+      text: t('cozy files configuration 1 on 2')
     }), Field({
       label: t('your device name'),
       fieldClass: 'w300p',
@@ -194,12 +214,13 @@ ConfigFormStepOne = React.createClass({
     })));
   },
   onSaveButtonClicked: function() {
-    var fieldName, fieldPath, isValid;
+    var config, fieldName, fieldPath, isValid;
     fieldName = this.refs.deviceNameField;
     fieldPath = this.refs.devicePathField;
     isValid = isValidForm([fieldName, fieldPath]);
     if (isValid) {
-      configHelpers.saveConfigSync({
+      config = require('./backend/config');
+      config.updateSync({
         deviceName: fieldName.getValue(),
         path: fieldPath.getValue()
       });
@@ -213,7 +234,7 @@ ConfigFormStepOne = React.createClass({
 ConfigFormStepTwo = React.createClass({
   render: function() {
     return Container(null, Title({
-      text: t('cozy files configuration 2 on 3')
+      text: t('cozy files configuration 2 on 2')
     }), Field({
       label: t('your remote url'),
       fieldClass: 'w300p',
@@ -244,51 +265,122 @@ ConfigFormStepTwo = React.createClass({
     return renderState('STEP1');
   },
   onSaveButtonClicked: function() {
-    var fieldPassword, fieldUrl, isValid;
+    var config, fieldPassword, fieldUrl, isValid, options, password, promise, replication, saveConfig, url;
     fieldUrl = this.refs.remoteUrlField;
     fieldPassword = this.refs.remotePasswordField;
     isValid = isValidForm([fieldUrl, fieldPassword]);
     if (isValid) {
-      configHelpers.saveConfigSync({
-        url: fieldUrl.getValue()
-      });
-      return renderState('STEP3');
+      config = require('./backend/config');
+      replication = require('./backend/replication');
+      promise = require('./backend/promise');
+      url = "https://" + (fieldUrl.getValue());
+      password = fieldPassword.getValue();
+      options = {
+        url: url,
+        deviceName: device.deviceName,
+        password: password
+      };
+      saveConfig = function(err, credentials) {
+        if (err) {
+          console.log(err);
+          return console.log('An error occured while registering your device.');
+        } else {
+          options = {
+            url: url,
+            deviceId: credentials.id,
+            devicePassword: credentials.password
+          };
+          config.updateSync(options);
+          console.log('Remote Cozy properly configured to work ' + 'with current device.');
+          return renderState('STATE');
+        }
+      };
+      return replication.registerDevice(options, saveConfig);
     } else {
       return alert('a value is missing');
     }
   }
 });
 
-ConfigFormStepThree = React.createClass({
-  render: function() {
-    return div({
-      className: 'container'
-    }, h1({}, 'Cozy Files Configuration (3/3)'), h2({}, 'Run replications...'), div({
-      className: 'line device-name'
-    }));
-  }
-});
-
 StateView = React.createClass({
   render: function() {
-    return div({
-      className: 'container'
-    }, h1({}, 'Cozy Files'));
+    var change, changes, _i, _len, _ref;
+    if (this.state == null) {
+      this.state = {
+        changes: []
+      };
+    }
+    changes = [];
+    _ref = this.state.changes;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      change = _ref[_i];
+      changes.push(Line(null, change));
+    }
+    return Container(null, Title({
+      text: 'Cozy Data Proxy'
+    }), Subtitle({
+      text: 'Parameters'
+    }), InfoLine({
+      label: t('your device name'),
+      value: device.deviceName
+    }), InfoLine({
+      label: t('path'),
+      link: {
+        type: 'file'
+      },
+      value: device.path
+    }), InfoLine({
+      label: t('url'),
+      value: device.url
+    }), Subtitle({
+      text: 'Actions'
+    }), Line(null, Button({
+      className: 'left',
+      ref: 'backButton',
+      onClick: this.onResyncClicked,
+      text: t('resync all')
+    })), Line(null, Button({
+      className: 'left',
+      ref: 'backButton',
+      onClick: this.onDeleteClicked,
+      text: t('delete configuration'),
+      text: t('delete configuration and files')
+    })), changes);
+  },
+  onResyncClicked: function() {
+    var onChange, replication, replicator;
+    alert('resync all');
+    replication = require('./backend/replication');
+    this.state.changes = [];
+    onChange = (function(_this) {
+      return function(change) {
+        return _this.state.changes.push("" + change.docs_written + " elements replicated");
+      };
+    })(this);
+    replicator = replication.runReplication({
+      fromRemote: true,
+      toRemote: false,
+      continuous: false,
+      rebuildFs: true,
+      fetchBinary: true
+    });
+    return replicator.on('change', onChange);
   }
 });
 ;var en;
 
 en = {
-  'cozy files configuration 1 on 3': 'Configure your device (1/3)',
-  'cozy files configuration 2 on 3': 'Register your device (2/3)',
-  'cozy files configuration 3 on 3': 'Synchronization (3/3)',
+  'cozy files configuration 1 on 1': 'Configure your device (1/2)',
+  'cozy files configuration 2 on 2': 'Register your device (2/2)',
   'directory to synchronize your data': 'Path of the folder where you will see your cozy files:',
-  'your device name': 'The name used to register your device to your:',
+  'your device name': 'The name used to sign up your device to your Cozy:',
   'your remote url': 'The web URL of your Cozy',
   'your remote password': 'The password you use to connect to your Cozy:',
   'go back to previous step': '< Previous step',
   'save your device information and go to step 2': 'Save then go to next step >',
-  'register device and synchronize': 'Register then go to next step >'
+  'register device and synchronize': 'Register then go to next step >',
+  'start configuring your device': 'Start to configure your device and sync your files',
+  'welcome to the cozy data proxy': 'Welcome to the Cozy Data Proxy, the module that syncs your computer with your Cozy!'
 };
 ;var router;
 
@@ -299,9 +391,9 @@ router = React.createClass({
     }, "Hello, I am a router.");
   }
 });
-;var button, div, h1, h2, img, input, label, p, renderState, _ref;
+;var a, button, div, h1, h2, img, input, label, p, renderState, span, _ref;
 
-_ref = React.DOM, div = _ref.div, p = _ref.p, img = _ref.img, label = _ref.label, input = _ref.input, h1 = _ref.h1, h2 = _ref.h2, button = _ref.button;
+_ref = React.DOM, div = _ref.div, p = _ref.p, img = _ref.img, span = _ref.span, a = _ref.a, label = _ref.label, input = _ref.input, h1 = _ref.h1, h2 = _ref.h2, button = _ref.button;
 
 renderState = function(state) {
   var currentComponent;

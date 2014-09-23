@@ -1,9 +1,8 @@
 en =
-    'cozy files configuration 1 on 3': 'Configure your device (1/3)'
-    'cozy files configuration 2 on 3': 'Register your device (2/3)'
-    'cozy files configuration 3 on 3': 'Synchronization (3/3)'
+    'cozy files configuration 1 on 1': 'Configure your device (1/2)'
+    'cozy files configuration 2 on 2': 'Register your device (2/2)'
     'directory to synchronize your data': 'Path of the folder where you will see your cozy files:'
-    'your device name': 'The name used to register your device to your:'
+    'your device name': 'The name used to sign up your device to your Cozy:'
     'your remote url': 'The web URL of your Cozy'
     'your remote password': 'The password you use to connect to your Cozy:'
     'go back to previous step': '< Previous step'
