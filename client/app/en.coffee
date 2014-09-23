@@ -10,4 +10,9 @@ en =
     'register device and synchronize': 'Register then go to next step >'
     'start configuring your device': 'Start to configure your device and sync your files'
     'welcome to the cozy data proxy': 'Welcome to the Cozy Data Proxy, the module that syncs your computer with your Cozy!'
+    'path': 'Path'
+    'url': 'URL'
+    'resync all': 'Resync All'
+    'delete configuration': 'Delete configuration'
+    'delete configuration and files': 'Delete configuration and files'
 

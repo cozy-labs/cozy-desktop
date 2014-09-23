@@ -66,6 +66,7 @@ ConfigFormStepOne = React.createClass
 
 
 ConfigFormStepTwo = React.createClass
+
     render: ->
         Container null,
             Title text: t 'cozy files configuration 2 on 2'
@@ -135,12 +136,13 @@ ConfigFormStepTwo = React.createClass
 
 
 StateView = React.createClass
-    render: ->
 
-        @state ?= changes: []
-        changes = []
-        for change in @state.changes
-            changes.push Line null, change
+    getInitialState: ->
+        logs: []
+
+    render: ->
+        logs = []
+        logs.push Line null, log for log in @state.logs
 
         Container null,
             Title text: 'Cozy Data Proxy'
@@ -166,17 +168,21 @@ StateView = React.createClass
                     onClick: @onDeleteClicked
                     text: t 'delete configuration'
                     text: t 'delete configuration and files'
-            changes
+            logs
 
+    clearLogs: ->
+        @setState logs: []
 
     onResyncClicked: ->
-        alert 'resync all'
         replication = require './backend/replication'
-
-        @state.changes = []
+        @clearLogs()
+        @displayLog 'Replication is starting'
 
         onChange = (change) =>
-            @state.changes.push "#{change.docs_written} elements replicated"
+            @displayLog "#{change.docs_written} elements replicated"
+
+        onComplete = =>
+            @displayLog 'Replication is finished.'
 
         replicator = replication.runReplication
             fromRemote: true
@@ -186,3 +192,29 @@ StateView = React.createClass
             fetchBinary: true
 
         replicator.on 'change', onChange
+
+    displayLog: (log) ->
+        logs = @state.logs
+        logs.push log
+        @setState logs: logs
+
+    onResyncClicked: ->
+        replication = require './backend/replication'
+        @clearLogs()
+        @displayLog 'Replication is starting'
+
+        onChange = (change) =>
+            @displayLog "#{change.docs_written} elements replicated"
+
+        onComplete = =>
+            @displayLog 'Replication is finished.'
+
+        replicator = replication.runReplication
+            fromRemote: true
+            toRemote: false
+            continuous: false
+            rebuildFs: true
+            fetchBinary: true
+
+        replicator.on 'change', onChange
+        replicator.on 'complete', onComplete

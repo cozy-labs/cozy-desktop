@@ -303,18 +303,18 @@ ConfigFormStepTwo = React.createClass({
 });
 
 StateView = React.createClass({
+  getInitialState: function() {
+    return {
+      logs: []
+    };
+  },
   render: function() {
-    var change, changes, _i, _len, _ref;
-    if (this.state == null) {
-      this.state = {
-        changes: []
-      };
-    }
-    changes = [];
-    _ref = this.state.changes;
+    var log, logs, _i, _len, _ref;
+    logs = [];
+    _ref = this.state.logs;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      change = _ref[_i];
-      changes.push(Line(null, change));
+      log = _ref[_i];
+      logs.push(Line(null, log));
     }
     return Container(null, Title({
       text: 'Cozy Data Proxy'
@@ -345,16 +345,26 @@ StateView = React.createClass({
       onClick: this.onDeleteClicked,
       text: t('delete configuration'),
       text: t('delete configuration and files')
-    })), changes);
+    })), logs);
+  },
+  clearLogs: function() {
+    return this.setState({
+      logs: []
+    });
   },
   onResyncClicked: function() {
-    var onChange, replication, replicator;
-    alert('resync all');
+    var onChange, onComplete, replication, replicator;
     replication = require('./backend/replication');
-    this.state.changes = [];
+    this.clearLogs();
+    this.displayLog('Replication is starting');
     onChange = (function(_this) {
       return function(change) {
-        return _this.state.changes.push("" + change.docs_written + " elements replicated");
+        return _this.displayLog("" + change.docs_written + " elements replicated");
+      };
+    })(this);
+    onComplete = (function(_this) {
+      return function() {
+        return _this.displayLog('Replication is finished.');
       };
     })(this);
     replicator = replication.runReplication({
@@ -365,6 +375,39 @@ StateView = React.createClass({
       fetchBinary: true
     });
     return replicator.on('change', onChange);
+  },
+  displayLog: function(log) {
+    var logs;
+    logs = this.state.logs;
+    logs.push(log);
+    return this.setState({
+      logs: logs
+    });
+  },
+  onResyncClicked: function() {
+    var onChange, onComplete, replication, replicator;
+    replication = require('./backend/replication');
+    this.clearLogs();
+    this.displayLog('Replication is starting');
+    onChange = (function(_this) {
+      return function(change) {
+        return _this.displayLog("" + change.docs_written + " elements replicated");
+      };
+    })(this);
+    onComplete = (function(_this) {
+      return function() {
+        return _this.displayLog('Replication is finished.');
+      };
+    })(this);
+    replicator = replication.runReplication({
+      fromRemote: true,
+      toRemote: false,
+      continuous: false,
+      rebuildFs: true,
+      fetchBinary: true
+    });
+    replicator.on('change', onChange);
+    return replicator.on('complete', onComplete);
   }
 });
 ;var en;
@@ -380,7 +423,12 @@ en = {
   'save your device information and go to step 2': 'Save then go to next step >',
   'register device and synchronize': 'Register then go to next step >',
   'start configuring your device': 'Start to configure your device and sync your files',
-  'welcome to the cozy data proxy': 'Welcome to the Cozy Data Proxy, the module that syncs your computer with your Cozy!'
+  'welcome to the cozy data proxy': 'Welcome to the Cozy Data Proxy, the module that syncs your computer with your Cozy!',
+  'path': 'Path',
+  'url': 'URL',
+  'resync all': 'Resync All',
+  'delete configuration': 'Delete configuration',
+  'delete configuration and files': 'Delete configuration and files'
 };
 ;var router;
 

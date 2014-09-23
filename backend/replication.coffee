@@ -28,13 +28,16 @@ module.exports =
             if err
                 callback err
             if body.error?
-                callback new Error(body.error)
+                if body.error is 'string'
+                    console.log body.error
+                else
+                    callback body.error
             else
                 callback null,
                     id: body.id
                     password: body.password
 
-        client.post 'device/', getCredentials
+        client.post 'device/', data, getCredentials
 
 
     # Unregister device remotely, ask for revocation.
@@ -93,9 +96,12 @@ module.exports =
             # Lock file watcher to avoid remotely downloaded files to be re-uploaded
             filesystem.watchingLocked = true
 
-            unlockFileSystemAndReturn = ->
-                filesystem.watchingLocked = false
-                cb null if cb?
+            unlockFileSystemAndReturn = (err) ->
+                if err
+                    cb err
+                else
+                    filesystem.watchingLocked = false
+                    cb null if cb?
 
             # Fetch binaries Or rebuild the filesystem directory tree only
             if fetchBinary
@@ -127,9 +133,9 @@ module.exports =
             if needTreeRebuild
                 #log.info 'Applying changes on the filesystem'
                 console.log 'Applying changes on the filesystem'
-                markRebuildTree = ->
+                markRebuildTree = (err) ->
                     needTreeRebuild = false
-                    callback null if callback?
+                    callback err if callback?
                 applyChanges markRebuildTree
 
         onComplete = (info) ->
@@ -138,8 +144,8 @@ module.exports =
             if fromRemote and not toRemote
                 #log.info 'Applying changes on the filesystem'
                 console.log 'Applying changes on the filesystem'
-                finish = ->
-                    callback null if callback?
+                finish = (err) ->
+                    callback err if callback?
                 applyChanges finish
             else
                 callback null if callback?

@@ -7,7 +7,6 @@ process     = require 'process'
 log         = require('printit')
               prefix: 'Data Proxy'
 
-promise     = require './backend/promise'
 config      = require './backend/config'
 replication = require './backend/replication'
 filesystem  = require './backend/filesystem'
@@ -106,8 +105,8 @@ program
         fromNow = not args.initial
 
         # Watch local changes
-        #if args.toRemote or (not args.toRemote and not args.fromRemote)
-            #filesystem.watchChanges continuous, fromNow
+        if args.toRemote or (not args.toRemote and not args.fromRemote)
+            filesystem.watchChanges continuous, fromNow
 
         # Replicate databases
         replication.runReplication
@@ -132,8 +131,13 @@ program
             fromRemote: args.fromRemote
             toRemote: args.toRemote
             continuous: args.continuous
-            rebuildTree: false
-            fetchBinary: false
+            rebuildTree: true
+            fetchBinary: true
+        , (err) ->
+            if err
+                log.error 'An error occured while replicating data and files'
+                console.log err
+            log.info 'Replication ended'
 
 program
     .command('show-binaries')

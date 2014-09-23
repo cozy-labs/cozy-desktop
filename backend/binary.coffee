@@ -1,4 +1,3 @@
-Promise    = require 'bluebird'
 fs         = require 'fs'
 path       = require 'path'
 request    = require 'request-json-light'
@@ -8,7 +7,6 @@ log        = require('printit')
 
 config     = require './config'
 pouch      = require './db'
-filesystem = require('./filesystem')
 async = require 'async'
 
 remoteConfig = config.getConfig()
@@ -18,29 +16,21 @@ module.exports =
 
     moveFromDoc: (doc, finalPath, callback) ->
         # Change path in the binary DB document
-        savePathInBinary = ->
-            doc.path = finalPath
-            onError =  (err) ->
-                callback err unless err.status is 409
-            pouch.db.putAsync doc
-            .catch onError
-
-        onError = (err) ->
-            log.error err.toString()
-            console.error err
-            callback err
+        savePathInBinary = (err) ->
+            if err
+                callback err
+            else
+                doc.path = finalPath
+                pouch.db.put callback
 
         # Move file in the filesystem
-        fs.renameAsync doc.path, finalPath
-        .then savePathInBinary
-        .nodeify callback
-        .catch onError
+        fs.rename doc.path, finalPath, savePathInBinary
 
 
     uploadAsAttachment: (remoteId, remoteRev, filePath, callback) ->
         deviceName = config.getDeviceName()
         relativePath = path.relative remoteConfig.path, filePath
-        urlpath = "cozy/#{remoteId}/file?rev=#{remoteRev}"
+        urlPath = "cozy/#{remoteId}/file?rev=#{remoteRev}"
 
         client = request.newClient remoteConfig.url
         client.setBasicAuth deviceName, remoteConfig.devicePassword
@@ -59,7 +49,7 @@ module.exports =
                     log.info "Binary uploaded: #{relativePath}"
                     callback err, body
 
-        client.putFile urlPath, filePath, {}, returnInfos
+        client.putFile urlPath, filePath, returnInfos
 
 
     createEmptyRemoteDoc: (callback) ->
@@ -85,7 +75,7 @@ module.exports =
         client = request.newClient remoteConfig.url
         client.setBasicAuth deviceName, remoteConfig.devicePassword
 
-        onError = (err, res, body) ->
+        checkErrors = (err, res, body) ->
             if err
                 callback err
             else if body.error
@@ -95,45 +85,34 @@ module.exports =
                 body.rev = body._rev
                 callback null, body
 
-        client.get "cozy/#{remoteId}", onError
+        client.get "cozy/#{remoteId}", checkErrors
 
 
     saveLocation: (filePath, id, rev, callback) ->
-        removeDoc =  (doc) ->
-            pouch.db.removeAsync doc
-
-        createDoc = ->
-            pouch.db.putAsync
+        createDoc = (err) ->
+            pouch.db.put
                 _id: id
                 _rev: rev
                 docType: 'Binary'
                 path: filePath
+            , callback
 
-        onError = (err) ->
-            callback err unless err.status is 409
+        removeDoc = (err, doc) ->
+            if err and err.status isnt 404
+                callback err
+            else if err.status is 404
+                createDoc()
+            else
+                pouch.db.remove doc, createDooc
 
-        onNotFound = (err) ->
-            callback err unless err.status is 404
+        pouch.db.get id, removeDoc
 
-        pouch.db.getAsync(id)
-            .then removeDoc # If exists, remove it to avoid conflicts
-            .catch onNotFound # Otherwise the document does not exist
-            .then createDoc # Create the document
-            .catch onError
-            .nodeify callback
-
-
-    fetchAll: (deviceName) ->
+    fetchAll: (deviceName, callback) ->
         deviceName ?= config.getDeviceName()
-
-        #log.info "Fetching all binaries"
-        console.log "Fetching all binaries"
-
-        previousRetrieval = Promise.fulfilled()
+        log.info "Fetching all binaries"
 
         onError = (err) ->
             console.log 'Fetch all binary error'
-            console.log err
             callback err
 
         filterFileWithBinary = (doc) ->
@@ -143,25 +122,20 @@ module.exports =
             @fetchFromDoc deviceName, doc.value, cb
 
         retrieveFiles = (err, result) ->
-            if err
-                console.log 'Build tree failed'
-                console.log err
-            else
-                console.log 'retrieve files'
-                docs = result['rows']
-                docs = docs.filter filterFileWithBinary
-                async.eachSeries docs, retrieveFile, callback
+            if err then throw new Error
+            console.log 'retrieve files'
+            docs = result['rows']
+            docs = docs.filter filterFileWithBinary
+            async.eachSeries docs, retrieveFile, callback
 
         getFileMetadatas = (err) ->
-            console.log 'ok'
-            if err
-                console.log 'Build tree failed'
-                console.log err
-            else
-                console.log 'build tree done'
-                pouch.db.query 'file/all', retrieveFiles
+            console.log 'metadata'
+            if err then throw new Error err
+            console.log 'build tree done!'
+            pouch.db.query 'file/all', retrieveFiles
 
-        filesystem.buildTreeAsync null, getFileMetadatas
+        filesystem = require('./filesystem')
+        filesystem.buildTree null, getFileMetadatas
 
 
     fetchOne: (deviceName, filePath, callback) ->
@@ -169,49 +143,45 @@ module.exports =
 
         log.info "Fetching binary: #{filePath}"
 
-        getFiles = ->
-            pouch.db.queryAsync('file/all')
-
-        getCurrentFile = (doc) ->
-            return path.join(doc.value.path, doc.value.name) is filePath
-
         retrieveFile = (doc) ->
-            @fetchFromDocAsync deviceName, doc.value
 
-        # Find file document related to filePath
-        # Ensure parent folders exist
-        require('./filesystem').buildTreeAsync(filePath).bind(@)
-            .then fetchOne
-            .get('rows').filter getCurrentFile
-            .each retrieveFile
-            .nodeify callback
+        getCurrentFile = (err, result) ->
+            docs = result.rows
+            docs = docs.filter ->
+                return path.join(doc.value.path, doc.value.name) is filePath
+            @fetchFromDoc deviceName, docs[0].value, callback
+
+        getFiles = (err) ->
+            if err
+                callback err
+            else
+                pouch.db.query 'file/all', getCurrentFile
+
+        filesystem = require('./filesystem')
+        filesystem.buildTree filePath, getFiles
 
 
     fetchFromDoc: (deviceName, doc, callback) ->
         deviceName ?= config.getDeviceName()
-
-        # Useful variables
         filePath = path.join doc.path, doc.name
         binaryPath = path.join remoteConfig.path, filePath
         relativePath = path.relative remoteConfig.path, filePath
 
-        # Move the binary if it has already been downloaded
-        moveBinary = (binaryDoc) ->
-            ignoreConflict =  (err) ->
-                # Conflict resulting of race condition
-                callback err unless err.status is 409
+        # Change modification dates on file system.
+        changeUtimes = (err) ->
+            if err then throw new Error err
+            creationDate = new Date doc.creationDate
+            lastModification = new Date doc.lastModification
+            fs.utimes binaryPath, creationDate, lastModification, callback
 
-            move = ->
-                if binaryDoc.path? and binaryDoc.path isnt binaryPath
-                    fs.renameSync(binaryDoc.path, binaryPath)
-
-            # Remove binary doc to keep rev up-to-date
-            pouch.db.removeAsync binaryDoc
-                .then move
-                .catch ignoreConflict
-
-        ignoreNotFound = (err) ->
-            callback err unless err.status is 404
+        # save Binary path in a binary document.
+        saveBinaryPath = (err) =>
+            if err
+                throw err
+            log.info "Binary downloaded: #{relativePath}"
+            id = doc.binary.file.id
+            rev = doc.binary.file.rev
+            @saveLocation binaryPath, id, rev, changeUtimes
 
         downloadFile = ->
             # If file exists anyway and has the right size,
@@ -227,33 +197,19 @@ module.exports =
                 log.info "Downloading binary: #{relativePath}"
                 urlPath = "cozy/#{doc.binary.file.id}/file"
 
-                logSuccess = ->
-                    log.info "Binary downloaded: #{relativePath}"
+                fs.unlinkSync saveBinaryPath
+                client.saveFile urlPath, binaryPath, saveBinaryPath
 
-                client.saveFileAsync urlPath, binaryPath
-                    .then logSuccess
-
-        # save Binary path in a binary document.
-        saveBinaryPath = =>
-            id = doc.binary.file.id
-            rev = doc.binary.file.rev
-            @saveLocationAsync binaryPath, id, rev
-
-        # Change modification dates on file system.
-        changeUtimes = ->
-            creationDate = new Date(doc.creationDate)
-            lastModification = new Date(doc.lastModification)
-            fs.utimesAsync binaryPath, creationDate, lastModification
+        # Move the binary if it has already been downloaded
+        removeBinary = (err, binaryDoc) ->
+            if err and err.status isnt 404 then throw new Error err
+            else if binaryDoc?
+                pouch.db.remove binaryDoc, ->
+                    if binaryDoc.path? and binaryDoc.path isnt binaryPath
+                        fs.renameSync(binaryDoc.path, binaryPath)
+                    downloadFile()
+            else
+                downloadFile()
 
         # Check if the binary document exists
-        pouch.db.getAsync(doc.binary.file.id).bind(@)
-            .then moveBinary
-            .catch ignoreNotFound
-            .then downloadFile
-            .then saveBinaryPath
-            .then changeUtimes
-            .nodeify callback
-
-
-# Promisify above functions
-Promise.promisifyAll module.exports
+        pouch.db.get doc.binary.file.id, removeBinary

@@ -1,5 +1,4 @@
 PouchDB = require 'pouchdb'
-Promise = require 'bluebird'
 fs = require 'fs-extra'
 log = require('printit')
     prefix: 'Data Proxy | db'
@@ -8,10 +7,9 @@ config = require './config'
 
 # Self-promisification
 db = new PouchDB(config.dbPath)
-db = Promise.promisifyAll(db)
 
 # Listener memory leak test
-db.setMaxListenersAsync 30
+db.setMaxListeners 30
 
 fs.ensureDirSync config.dir
 

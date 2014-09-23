@@ -11,12 +11,7 @@ log      = require('printit')
 config   = require './config'
 pouch    = require './db'
 binary   = require './binary'
-
-# Promisify specific functions
-Promise     = require 'bluebird'
-mkdirpAsync = Promise.promisify mkdirp.mkdirp
-touchAsync  = Promise.promisify touch
-
+async = require 'async'
 
 remoteConfig = config.getConfig()
 
@@ -27,54 +22,65 @@ module.exports =
 
 
     makeDirectoryFromDoc: (doc, callback) ->
+        doc = doc.value
         dirPaths = @getPaths(path.join remoteConfig.path, doc.path, doc.name)
 
         #log.info "Creating directory: #{dirPaths.relative}"
         console.log "Creating directory: #{dirPaths.relative}"
 
         # Create directory
-        mkdirpAsync(dirPaths.absolute)
-
-        # Update directory information
-        .then -> fs.utimesAsync dirPaths.absolute
-                              , new Date(doc.creationDate)
-                              , new Date(doc.lastModification)
-
-        .nodeify callback
+        mkdirp dirPaths.absolute, (err) ->
+            if err
+                callback err
+            else
+                # Update directory information
+                creationDate = new Date(doc.creationDate)
+                modificationDate = new Date(doc.lastModification)
+                absPath = dirPaths.absolute
+                fs.utimes absPath, creationDate, modificationDate, callback
 
 
     touchFileFromDoc: (doc, callback) ->
-        filePaths = @getPaths(path.join remoteConfig.path, doc.path, doc.name)
-
-        # Ensure parent directory exists
-        mkdirpAsync(filePaths.absParent)
-
-        # Get binary document from DB
-        .then -> pouch.db.getAsync doc.binary.file.id
-        .catch (err) ->
-            return null if err.status is 404
-
-        # Move binary if exists, otherwise touch the file
-        .then (binaryDoc) ->
-            if binaryDoc? and fs.existsSync binaryDoc.path
-                # log.info "File exists: #{binaryDoc.path}"
-                console.log "File exists: #{binaryDoc.path}"
-                binary.moveFromDocAsync binaryDoc
-                                      , filePaths.absolute
-            else
-                #log.info "Creating file: #{filePaths.relative}"
-                console.log "Creating file: #{filePaths.relative}"
-                touchAsync filePaths.absolute
+        doc = doc.value
+        absPath = path.join remoteConfig.path, doc.path, doc.name
+        filePaths = module.exports.getPaths absPath
 
         # Update file information
-        .then -> fs.utimesAsync filePaths.absolute
-                              , new Date(doc.creationDate)
-                              , new Date(doc.lastModification)
+        changeUtimes = (err) ->
+            creationDate = new Date(doc.creationDate)
+            modificationDate = new Date(doc.lastModification)
+            absPath = filePaths.absolute
+            fs.utimes absPath, creationDate, modificationDate, callback
 
-        .nodeify callback
+        # Create empty file
+        touchFile = (err, binaryDoc) ->
+            if err and err.status isnt 404
+                callback err
+            else
+                # Move binary if exists, otherwise touch the file
+                if binaryDoc? and fs.existsSync binaryDoc.path
+                    # log.info "File exists: #{binaryDoc.path}"
+                    console.log "File exists: #{binaryDoc.path}"
+                    binary.moveFromDoc binaryDoc, filePaths.absolute, changeUtimes
+                else
+                    #log.info "Creating file: #{filePaths.relative}"
+                    console.log "Creating file: #{filePaths.relative}"
+                    touch filePaths.absolute, changeUtimes
+
+        # Get binary metadata
+        getBinary = (err) ->
+            if err
+                callback err
+            else
+                pouch.db.get doc.binary.file.id, touchFile
+
+        # Ensure parent directory exists
+        mkdirp filePaths.absParent, getBinary
 
 
     buildTree: (filePath, callback) ->
+        console.log 'buildTree'
+
         # If filePath argument is set, rebuild FS information for this file only
         if filePath?
             filePaths = @getPaths filePath
@@ -85,46 +91,33 @@ module.exports =
             #log.info "Rebuilding filesystem tree"
             console.log "Rebuilding filesystem tree"
 
-        # Add folder filter if not exists
-        pouch.addFilterAsync('folder').bind(@)
+        makeFiles = (err, result) =>
+            if err then throw new Error err
+            docs = result['rows']
+            async.eachSeries docs, @touchFileFromDoc, callback
 
-        # Query database
-        .then -> pouch.db.queryAsync 'folder/all'
+        getFiles = (err) =>
+            if err then throw new Error err
+            pouch.db.query 'file/all', makeFiles
 
-        # Filter interesting folder(s)
-        .get('rows').filter (doc) ->
-            return not filePath? \
-                or (filePaths.name is doc.value.name \
-                and filePaths.parent is doc.value.path)
+        createFilters = (err) =>
+            if err then throw new Error err
+            pouch.addFilter 'file', (err) =>
+                if err
+                    callback err
+                else
+                   pouch.addFilter 'binary', getFiles
 
-        # Create folder(s)
-        .each (doc) ->
-            @makeDirectoryFromDocAsync doc.value
+        makeDirectories =  (err, result) =>
+            if err then throw new Error err
+            docs = result['rows']
+            async.eachSeries docs, @makeDirectoryFromDoc, createFilters
 
-        .catch (err) ->
-            throw err unless err.status is 404
+        getFolders = (err) =>
+            if err then throw new Error err
+            pouch.db.query 'folder/all', makeDirectories
 
-        # Add file and binary filter if not exist
-        .then -> pouch.addFilterAsync 'file'
-        .then -> pouch.addFilterAsync 'binary'
-
-        # Query database
-        .then -> pouch.db.queryAsync 'file/all'
-
-        # Filter interesting file(s)
-        .get('rows').filter (doc) ->
-            return not filePath? \
-                or (filePaths.name is doc.value.name \
-                and filePaths.parent is doc.value.path)
-
-        # Create file(s)
-        .each (doc) ->
-            @touchFileFromDocAsync doc.value
-
-        .catch (err) ->
-            throw err unless err.status is 404
-
-        .nodeify callback
+        pouch.addFilter 'folder', getFolders
 
 
     createDirectoryContentDoc: (dirPath, callback) ->
@@ -134,23 +127,23 @@ module.exports =
         console.log "Add directory and its content: #{dirPaths.relative}"
 
         # Create the directory itself first
-        @createDirectoryDocAsync(dirPaths.absolute).bind(@)
+        @createDirectoryDoc(dirPaths.absolute).bind(@)
 
         # List directory content
-        .then -> fs.readdirAsync dirPaths.absolute
+        .then -> fs.readdir dirPaths.absolute
 
         .each (file) ->
             filePath = path.join dirPaths.absolute, file
 
             # Get stats
-            fs.lstatAsync(filePath).bind(@)
+            fs.lstat(filePath).bind(@)
 
             # Create directory or file document
             .then (stats) ->
                 if stats.isDirectory()
-                    @createDirectoryContentDocAsync filePath
+                    @createDirectoryContentDoc filePath
                 else if stats.isFile()
-                    @createFileDocAsync filePath
+                    @createFileDoc filePath
 
         .nodeify callback
 
@@ -174,18 +167,18 @@ module.exports =
             tags: []
 
         # Ensure parent directory is saved
-        @createDirectoryDocAsync(dirPaths.absParent)
+        @createDirectoryDoc(dirPaths.absParent)
 
         # Add directory stats
         .then ->
             #log.info "Add directory: #{dirPaths.relative}"
             console.log "Add directory: #{dirPaths.relative}"
-            fs.statAsync(dirPaths.absolute)
+            fs.stat(dirPaths.absolute)
         .then (stats) ->
             document.creationDate = stats.mtime
             document.lastModification = stats.mtime
 
-            pouch.db.queryAsync 'folder/all'
+            pouch.db.query 'folder/all'
 
         # Look for directory with the same path/name
         .get('rows').filter (doc) ->
@@ -207,7 +200,7 @@ module.exports =
             throw err unless err.status is 404
 
         # Create or update directory document
-        .then -> pouch.db.putAsync document
+        .then -> pouch.db.put document
 
         .nodeify callback
 
@@ -232,21 +225,20 @@ module.exports =
             mime: mime.lookup filePaths.name
             tags: []
 
-
         # Ensure parent directory is saved
-        @createDirectoryDocAsync(filePaths.absParent)
+        @createDirectoryDoc(filePaths.absParent).bind(@)
 
         # Add file stats
         .then ->
             #log.info "Add file: #{filePaths.relative}"
             console.log "Add file: #{filePaths.relative}"
-            fs.statAsync(filePaths.absolute)
+            fs.stat(filePaths.absolute)
         .then (stats) ->
             document.creationDate     = stats.mtime
             document.lastModification = stats.mtime
             document.size             = stats.size
 
-            pouch.db.queryAsync 'file/all'
+            pouch.db.query 'file/all'
 
         # Look for file with the same path/name
         .get('rows').filter (doc) ->
@@ -271,18 +263,18 @@ module.exports =
                 document.lastModification = doc.lastModification
 
             # And get remote binary document
-            binary.getRemoteDocAsync doc.binary.file.id
+            binary.getRemoteDoc doc.binary.file.id
 
         # Otherwise do not mind if file doc is not found
         .catch (err) ->
             throw err unless err.status is 404
 
             # And create a remote binary document
-            binary.createEmptyRemoteDocAsync()
+            binary.createEmptyRemoteDoc()
 
         # Upload binary
         .then (doc) ->
-            binary.uploadAsAttachmentAsync doc.id
+            binary.uploadAsAttachment doc.id
                                          , doc.rev
                                          , filePaths.absolute
 
@@ -294,12 +286,12 @@ module.exports =
                     rev: doc.rev
 
             # And save binary location in a local document
-            binary.saveLocationAsync filePaths.absolute
+            binary.saveLocation filePaths.absolute
                                    , doc.id
                                    , doc.rev
 
         # Finally, create or update file document
-        .then -> pouch.db.putAsync document
+        .then -> pouch.db.put document
 
         .nodeify callback
 
@@ -307,6 +299,29 @@ module.exports =
     watchChanges: (continuous, fromNow) ->
         fromNow ?= false
         continuous ?= fromNow
+
+        filesBeingCopied = {}
+
+        # Function to check if file is being copied
+        # to avoid chokidar to detect file multiple times
+        fileIsCopied = (filePath, callback) ->
+            unless filePath in filesBeingCopied
+                filesBeingCopied[filePath] = true
+            getSize = (filePath, callback) ->
+                fs.stat filePath, (err, stats) ->
+                    callback err, stats.size
+
+            # Check if the size of the file has changed during
+            # the last second
+            getSize filePath, (err, earlySize) ->
+                setTimeout () ->
+                    getSize filePath, (err, lateSize) ->
+                        if earlySize is lateSize
+                            delete filesBeingCopied[filePath]
+                            callback()
+                        else
+                            fileIsCopied filePath, callback
+                , 1000
 
         # Use chokidar since the standard watch() function from
         # fs module has some issues.
@@ -318,10 +333,11 @@ module.exports =
 
         # New file detected
         .on 'add', (filePath) =>
-            unless @watchingLocked
-                #log.info "File added: #{filePath}"
-                console.log "File added: #{filePath}"
-                @createFileDoc filePath, ->
+            unless @watchingLocked or filePath in filesBeingCopied
+                log.info "File added: #{filePath}"
+                fileIsCopied filePath, =>
+                    @previousUpload = @previousUpload.then =>
+                        @createFileDoc filePath, ->
 
         # New directory detected
         .on 'addDir', (dirPath) =>
@@ -333,10 +349,11 @@ module.exports =
 
         # File update detected
         .on 'change', (filePath) =>
-            unless @watchingLocked
-                #log.info "File changed: #{filePath}"
-                console.log "File changed: #{filePath}"
-                @createFileDoc filePath, ->
+            unless @watchingLocked or filePath in filesBeingCopied
+                log.info "File changed: #{filePath}"
+                fileIsCopied filePath, =>
+                    @previousUpload = @previousUpload.then =>
+                        @createFileDoc filePath, ->
 
         .on 'error', (err) ->
             log.error 'An error occured while watching changes:'
@@ -365,7 +382,3 @@ module.exports =
         paths = @getPaths filePath
         return paths.relative isnt '' \
            and paths.relative.substring(0,2) isnt '..'
-
-
-# Promisify above functions
-Promise.promisifyAll module.exports

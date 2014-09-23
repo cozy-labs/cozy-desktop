@@ -4,10 +4,9 @@
   "description": "",
   "main": "app.html",
   "window": {
-    "width": 700,
+    "width": 600,
     "height": 500,
-    "title": "Cozy Data Proxy",
-    "toolbar": false
+    "title": "Cozy Data Proxy"
   },
   "scripts": {
     "test": "npm test"
