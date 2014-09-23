@@ -225,13 +225,12 @@ module.exports =
             mime: mime.lookup filePaths.name
             tags: []
 
-
         # Ensure parent directory is saved
-        @createDirectoryDocAsync(filePaths.absParent)
+        @createDirectoryDocAsync(filePaths.absParent).bind(@)
 
         # Add file stats
         .then ->
-            log.info "Add file: #{filePaths.relative}"
+            log.info "Add file doc: #{filePaths.relative}"
             fs.statAsync(filePaths.absolute)
         .then (stats) ->
             document.creationDate     = stats.mtime
@@ -296,9 +295,37 @@ module.exports =
         .nodeify callback
 
 
+    # Initialize queue upload
+    previousUpload: Promise.fulfilled()
+
     watchChanges: (continuous, fromNow) ->
         fromNow ?= false
         continuous ?= fromNow
+
+        filesBeingCopied = {}
+
+        # Function to check if file is being copied
+        # to avoid chokidar to detect file multiple times
+        fileIsCopied = (filePath, callback) ->
+            unless filePath in filesBeingCopied
+                filesBeingCopied[filePath] = true
+            getSize = (filePath, callback) ->
+                fs.stat filePath, (err, stats) ->
+                    callback err, stats.size
+
+            # Check if the size of the file has changed during
+            # the last second
+            getSize filePath, (err, earlySize) ->
+                setTimeout () ->
+                    getSize filePath, (err, lateSize) ->
+                        console.log earlySize
+                        console.log lateSize
+                        if earlySize is lateSize
+                            delete filesBeingCopied[filePath]
+                            callback()
+                        else
+                            fileIsCopied filePath, callback
+                , 1000
 
         # Use chokidar since the standard watch() function from
         # fs module has some issues.
@@ -310,9 +337,11 @@ module.exports =
 
         # New file detected
         .on 'add', (filePath) =>
-            unless @watchingLocked
+            unless @watchingLocked or filePath in filesBeingCopied
                 log.info "File added: #{filePath}"
-                @createFileDoc filePath, ->
+                fileIsCopied filePath, =>
+                    @previousUpload = @previousUpload.then =>
+                        @createFileDoc filePath, ->
 
         # New directory detected
         .on 'addDir', (dirPath) =>
@@ -323,9 +352,11 @@ module.exports =
 
         # File update detected
         .on 'change', (filePath) =>
-            unless @watchingLocked
+            unless @watchingLocked or filePath in filesBeingCopied
                 log.info "File changed: #{filePath}"
-                @createFileDoc filePath, ->
+                fileIsCopied filePath, =>
+                    @previousUpload = @previousUpload.then =>
+                        @createFileDoc filePath, ->
 
         .on 'error', (err) ->
             log.error 'An error occured while watching changes:'

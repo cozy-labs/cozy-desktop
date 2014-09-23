@@ -39,7 +39,7 @@ module.exports =
     uploadAsAttachment: (remoteId, remoteRev, filePath, callback) ->
         deviceName = config.getDeviceName()
         relativePath = path.relative remoteConfig.path, filePath
-        urlpath = "cozy/#{remoteId}/file?rev=#{remoteRev}"
+        urlPath = "cozy/#{remoteId}/file?rev=#{remoteRev}"
 
         client = request.newClient remoteConfig.url
         client.setBasicAuth deviceName, remoteConfig.devicePassword
@@ -58,7 +58,7 @@ module.exports =
                     log.info "Binary uploaded: #{relativePath}"
                     callback err, body
 
-        client.putFile urlPath, filePath, {}, returnInfos
+        client.putFile urlPath, filePath, returnInfos
 
 
     createEmptyRemoteDoc: (callback) ->

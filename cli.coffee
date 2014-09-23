@@ -106,8 +106,8 @@ program
         fromNow = not args.initial
 
         # Watch local changes
-        #if args.toRemote or (not args.toRemote and not args.fromRemote)
-            #filesystem.watchChanges continuous, fromNow
+        if args.toRemote or (not args.toRemote and not args.fromRemote)
+            filesystem.watchChanges continuous, fromNow
 
         # Replicate databases
         replication.runReplication(
