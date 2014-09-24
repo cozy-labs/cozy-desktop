@@ -8,11 +8,14 @@ log        = require('printit')
 config     = require './config'
 pouch      = require './db'
 async = require 'async'
+events = require 'events'
 
 remoteConfig = config.getConfig()
 
+
 module.exports =
 
+    infoPublisher: new events.EventEmitter()
 
     moveFromDoc: (doc, finalPath, callback) ->
         # Change path in the binary DB document
@@ -30,12 +33,14 @@ module.exports =
     uploadAsAttachment: (remoteId, remoteRev, filePath, callback) ->
         deviceName = config.getDeviceName()
         relativePath = path.relative remoteConfig.path, filePath
+        absPath = path.join remoteConfig.path, filePath
         urlPath = "cozy/#{remoteId}/file?rev=#{remoteRev}"
 
         client = request.newClient remoteConfig.url
         client.setBasicAuth deviceName, remoteConfig.devicePassword
 
         log.info "Uploading binary: #{relativePath}"
+        @infoPublisher.emit 'uploadBinary', absPath
 
         returnInfos = (err, res, body) ->
             if err
@@ -47,6 +52,7 @@ module.exports =
                     callback new Error body.error
                 else
                     log.info "Binary uploaded: #{relativePath}"
+                    @infoPublisher.emit 'binaryUploaded', absPath
                     callback err, body
 
         client.putFile urlPath, filePath, returnInfos
@@ -109,6 +115,8 @@ module.exports =
 
     fetchAll: (deviceName, callback) ->
         deviceName ?= config.getDeviceName()
+
+        @infoPublisher.emit 'fetchAll'
         log.info "Fetching all binaries"
 
         filterFileWithBinary = (doc) ->
@@ -136,6 +144,7 @@ module.exports =
     fetchOne: (deviceName, filePath, callback) ->
         deviceName ?= config.getDeviceName()
 
+        @infoPublisher.emit 'fetchOne', filePath
         log.info "Fetching binary: #{filePath}"
 
         retrieveFile = (doc) ->
@@ -174,8 +183,10 @@ module.exports =
             if err
                 throw err
             log.info "Binary downloaded: #{relativePath}"
+            @infoPublisher.emit 'binaryDownloaded', binaryPath
             id = doc.binary.file.id
             rev = doc.binary.file.rev
+
             @saveLocation binaryPath, id, rev, changeUtimes
 
         downloadFile = ->
@@ -189,10 +200,9 @@ module.exports =
                 client.setBasicAuth deviceName, remoteConfig.devicePassword
 
                 # Launch download
-                log.info "Downloading binary: #{relativePath}"
                 urlPath = "cozy/#{doc.binary.file.id}/file"
 
-                fs.unlinkSync saveBinaryPath
+                fs.unlinkSync binaryPath
                 client.saveFile urlPath, binaryPath, saveBinaryPath
             else
                 saveBinaryPath()

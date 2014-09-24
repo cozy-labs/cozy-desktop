@@ -12,6 +12,7 @@ config   = require './config'
 pouch    = require './db'
 binary   = require './binary'
 async = require 'async'
+events = require 'events'
 
 remoteConfig = config.getConfig()
 
@@ -20,6 +21,7 @@ module.exports =
 
     watchingLocked: false
 
+    infoPublisher: new events.EventEmitter
 
     makeDirectoryFromDoc: (doc, callback) ->
         doc = doc.value
@@ -30,15 +32,19 @@ module.exports =
         console.log "Creating directory: #{dirPaths.relative}"
 
         # Create directory
-        mkdirp dirPaths.absolute, (err) ->
+        updateDates = (err) =>
             if err
                 callback err
             else
+                module.exports.infoPublisher.emit 'directoryCreated', absPath
+
                 # Update directory information
                 creationDate = new Date(doc.creationDate)
                 modificationDate = new Date(doc.lastModification)
                 absPath = dirPaths.absolute
                 fs.utimes absPath, creationDate, modificationDate, callback
+
+        mkdirp dirPaths.absolute, updateDates
 
 
     touchFileFromDoc: (doc, callback) ->
@@ -55,7 +61,7 @@ module.exports =
                 callback()
 
         # Create empty file
-        touchFile = (err, binaryDoc) ->
+        touchFile = (err, binaryDoc) =>
             if err and err.status isnt 404
                 callback err
             else
@@ -67,6 +73,7 @@ module.exports =
                 else
                     #log.info "Creating file: #{filePaths.relative}"
                     console.log "Creating file: #{filePaths.relative}"
+                    module.exports.infoPublisher.emit 'fileTouched', absPath
                     touch filePaths.absolute, changeUtimes
 
         # Get binary metadata
@@ -378,6 +385,10 @@ module.exports =
         parent: parent
         absParent: absParent
 
+
+    deleteAll: (dirPath, callback) ->
+        del = require 'del'
+        del "#{dirPath}/*", force: true, callback
 
     isInSyncDir: (filePath) ->
         paths = @getPaths filePath

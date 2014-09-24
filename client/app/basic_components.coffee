@@ -1,25 +1,34 @@
 Line = React.createClass
+
     render: ->
-        div className: 'line mtl clearfix', @props.children
+        className = @props.className
+        className ?= 'mtl'
+        div className: 'line clearfix ' + className, @props.children
 
 
 Container = React.createClass
+
     render: ->
-        ReactCSSTransitionGroup transitionName: "slide", component: div,
-            div className: 'container', @props.children
+        className = 'container '
+        if @props.className
+            className += @props.className
+        div className: className, @props.children
 
 
 Title = React.createClass
+
     render: ->
         h1 {}, @props.text
 
 
 Subtitle = React.createClass
+
     render: ->
         h2 {}, @props.text
 
 
 Button = React.createClass
+
     render: ->
         button
             className: 'btn btn-cozy ' + @props.className
@@ -69,6 +78,6 @@ InfoLine = React.createClass
                 a href: "#{@props.link.type}://#{@props.value}", @props.value
         else
             value = span null,  @props.value
-        Line null,
-            span className: 'mrm', @props.label
-            value
+        Line className: 'line mts',
+            span className: 'mod w100p left', @props.label + ':'
+            span className: 'mod left', value

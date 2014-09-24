@@ -23,7 +23,7 @@ Intro = React.createClass
                     text: t 'start configuring your device'
 
     onEnterClicked: ->
-        $('.intro').addClass 'slide-leave-up'
+        #$('.intro').addClass 'slide-leave-up'
         renderState 'STEP1'
 
 
@@ -106,7 +106,6 @@ ConfigFormStepTwo = React.createClass
         if isValid
             config = require './backend/config'
             replication = require './backend/replication'
-            promise = require './backend/promise'
 
             url = "https://#{fieldUrl.getValue()}"
             password = fieldPassword.getValue()
@@ -118,7 +117,7 @@ ConfigFormStepTwo = React.createClass
             saveConfig = (err, credentials) ->
                 if err
                     console.log err
-                    console.log 'An error occured while registering your device.'
+                    alert "An error occured while registering your device. #{err}"
                 else
                     options =
                         url: url
@@ -142,36 +141,57 @@ StateView = React.createClass
 
     render: ->
         logs = []
-        logs.push Line null, log for log in @state.logs
+        logs.push Line className: 'smaller', log for log in @state.logs
 
-        Container null,
-            Title text: 'Cozy Data Proxy'
-            Subtitle text: 'Parameters'
-            InfoLine label: t('your device name'), value: device.deviceName
-            InfoLine
-                label: t('path')
-                link:
-                    type: 'file'
-                value: device.path
-            InfoLine label: t('url'), value: device.url
-            Subtitle text: 'Actions'
-            Line null,
-                Button
-                    className: 'left'
-                    ref: 'backButton'
-                    onClick: @onResyncClicked
-                    text: t 'resync all'
-            Line null,
-                Button
-                    className: 'left'
-                    ref: 'backButton'
-                    onClick: @onDeleteClicked
-                    text: t 'delete configuration'
-                    text: t 'delete configuration and files'
-            logs
+        Container className: 'line',
+            Container className: 'mod w50 left',
+                Title text: 'Cozy Data Proxy'
+                Subtitle text: 'Parameters'
+                InfoLine label: t('device name'), value: device.deviceName
+                InfoLine
+                    label: t('path')
+                    link:
+                        type: 'file'
+                    value: device.path
+                InfoLine label: t('url'), value: device.url
+                Subtitle text: 'Actions'
+                Line null,
+                    Button
+                        className: 'left'
+                        onClick: @onResyncClicked
+                        text: t 'resync all'
+                Subtitle text: 'Danger Zone'
+                Line null,
+                    Button
+                        className: 'left'
+                        onClick: @onDeleteFilesClicked
+                        text: t 'delete files'
+                Line null,
+                    Button
+                        className: 'left'
+                        onClick: @onDeleteConfigurationClicked
+                        text: t 'delete configuration'
+            Container className: 'mod w50 left',
+                Subtitle text: 'Logs'
+                logs
 
     clearLogs: ->
         @setState logs: []
+
+    onDeleteFilesClicked: ->
+        del = require 'del'
+        alert device.path
+        del "#{device.path}/*", force: true, (err) ->
+            console.log err if err
+            alert t 'All files were successfully deleted.'
+
+    onDeleteConfigurationClicked: ->
+        config = require './backend/config'
+        config.removeRemoteCozy device.deviceName
+        config.saveConfig()
+        alert t 'Configuration deleted.'
+        renderState 'INTRO'
+
 
     onResyncClicked: ->
         replication = require './backend/replication'
@@ -195,11 +215,15 @@ StateView = React.createClass
 
     displayLog: (log) ->
         logs = @state.logs
-        logs.push log
+        moment = require 'moment'
+        logs.push moment().format('HH:MM:SS ') + log
         @setState logs: logs
 
     onResyncClicked: ->
         replication = require './backend/replication'
+        filesystem = require './backend/filesystem'
+        binary = require './backend/binary'
+
         @clearLogs()
         @displayLog 'Replication is starting'
 
@@ -208,6 +232,13 @@ StateView = React.createClass
 
         onComplete = =>
             @displayLog 'Replication is finished.'
+
+        onBinaryDownloaded = (binaryPath) =>
+            @displayLog "File #{binaryPath} downloaded"
+
+        onDirectoryCreated = (dirPath) =>
+            @displayLog "Folder #{dirPath} created"
+
 
         replicator = replication.runReplication
             fromRemote: true
@@ -218,3 +249,6 @@ StateView = React.createClass
 
         replicator.on 'change', onChange
         replicator.on 'complete', onComplete
+
+        binary.infoPublisher.on 'binaryDownloaded', onBinaryDownloaded
+        filesystem.infoPublisher.on 'directoryCreated', onDirectoryCreated

@@ -1,105 +1,4 @@
-var Button, Container, Field, InfoLine, Line, Subtitle, Title;
-
-Line = React.createClass({
-  render: function() {
-    return div({
-      className: 'line mtl clearfix'
-    }, this.props.children);
-  }
-});
-
-Container = React.createClass({
-  render: function() {
-    return ReactCSSTransitionGroup({
-      transitionName: "slide",
-      component: div
-    }, div({
-      className: 'container'
-    }, this.props.children));
-  }
-});
-
-Title = React.createClass({
-  render: function() {
-    return h1({}, this.props.text);
-  }
-});
-
-Subtitle = React.createClass({
-  render: function() {
-    return h2({}, this.props.text);
-  }
-});
-
-Button = React.createClass({
-  render: function() {
-    return button({
-      className: 'btn btn-cozy ' + this.props.className,
-      ref: this.props.ref,
-      onClick: this.props.onClick
-    }, this.props.text);
-  }
-});
-
-Field = React.createClass({
-  getInitialState: function() {
-    return {
-      error: null
-    };
-  },
-  render: function() {
-    var _base;
-    if ((_base = this.props).type == null) {
-      _base.type = 'text';
-    }
-    return Line(null, label({
-      className: 'mod w100 mrm'
-    }, this.props.label), input({
-      type: this.props.type,
-      className: 'mt1 ' + this.props.fieldClass,
-      ref: this.props.inputRef,
-      defaultValue: this.props.defaultValue,
-      onChange: this.onChange,
-      placeholder: this.props.placeholder
-    }), this.state.error ? p(null, this.state.error) : void 0);
-  },
-  getValue: function() {
-    return this.refs[this.props.inputRef].getDOMNode().value;
-  },
-  isValid: function() {
-    return this.getValue() !== '';
-  },
-  onChange: function() {
-    var val;
-    val = this.refs[this.props.inputRef].getDOMNode().value;
-    if (val === '') {
-      return this.setState({
-        error: 'value is missing'
-      });
-    } else {
-      return this.setState({
-        error: null
-      });
-    }
-  }
-});
-
-InfoLine = React.createClass({
-  render: function() {
-    var value;
-    if (this.props.link != null) {
-      value = span(null, a({
-        href: "" + this.props.link.type + "://" + this.props.value
-      }, this.props.value));
-    } else {
-      value = span(null, this.props.value);
-    }
-    return Line(null, span({
-      className: 'mrm'
-    }, this.props.label), value);
-  }
-});
-;var config, configDir, configHelpers, configPath, device, fs, homedir, keys, path;
+var config, configDir, configHelpers, configPath, device, fs, homedir, keys, path;
 
 path = require('path-extra');
 
@@ -184,7 +83,6 @@ Intro = React.createClass({
     })));
   },
   onEnterClicked: function() {
-    $('.intro').addClass('slide-leave-up');
     return renderState('STEP1');
   }
 });
@@ -265,14 +163,13 @@ ConfigFormStepTwo = React.createClass({
     return renderState('STEP1');
   },
   onSaveButtonClicked: function() {
-    var config, fieldPassword, fieldUrl, isValid, options, password, promise, replication, saveConfig, url;
+    var config, fieldPassword, fieldUrl, isValid, options, password, replication, saveConfig, url;
     fieldUrl = this.refs.remoteUrlField;
     fieldPassword = this.refs.remotePasswordField;
     isValid = isValidForm([fieldUrl, fieldPassword]);
     if (isValid) {
       config = require('./backend/config');
       replication = require('./backend/replication');
-      promise = require('./backend/promise');
       url = "https://" + (fieldUrl.getValue());
       password = fieldPassword.getValue();
       options = {
@@ -283,7 +180,7 @@ ConfigFormStepTwo = React.createClass({
       saveConfig = function(err, credentials) {
         if (err) {
           console.log(err);
-          return console.log('An error occured while registering your device.');
+          return alert("An error occured while registering your device. " + err);
         } else {
           options = {
             url: url,
@@ -314,14 +211,20 @@ StateView = React.createClass({
     _ref = this.state.logs;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       log = _ref[_i];
-      logs.push(Line(null, log));
+      logs.push(Line({
+        className: 'smaller'
+      }, log));
     }
-    return Container(null, Title({
+    return Container({
+      className: 'line'
+    }, Container({
+      className: 'mod w50 left'
+    }, Title({
       text: 'Cozy Data Proxy'
     }), Subtitle({
       text: 'Parameters'
     }), InfoLine({
-      label: t('your device name'),
+      label: t('device name'),
       value: device.deviceName
     }), InfoLine({
       label: t('path'),
@@ -336,21 +239,49 @@ StateView = React.createClass({
       text: 'Actions'
     }), Line(null, Button({
       className: 'left',
-      ref: 'backButton',
       onClick: this.onResyncClicked,
       text: t('resync all')
+    })), Subtitle({
+      text: 'Danger Zone'
+    }), Line(null, Button({
+      className: 'left',
+      onClick: this.onDeleteFilesClicked,
+      text: t('delete files')
     })), Line(null, Button({
       className: 'left',
-      ref: 'backButton',
-      onClick: this.onDeleteClicked,
-      text: t('delete configuration'),
-      text: t('delete configuration and files')
-    })), logs);
+      onClick: this.onDeleteConfigurationClicked,
+      text: t('delete configuration')
+    }))), Container({
+      className: 'mod w50 left'
+    }, Subtitle({
+      text: 'Logs'
+    }), logs));
   },
   clearLogs: function() {
     return this.setState({
       logs: []
     });
+  },
+  onDeleteFilesClicked: function() {
+    var del;
+    del = require('del');
+    alert(device.path);
+    return del("" + device.path + "/*", {
+      force: true
+    }, function(err) {
+      if (err) {
+        console.log(err);
+      }
+      return alert(t('All files were successfully deleted.'));
+    });
+  },
+  onDeleteConfigurationClicked: function() {
+    var config;
+    config = require('./backend/config');
+    config.removeRemoteCozy(device.deviceName);
+    config.saveConfig();
+    alert(t('Configuration deleted.'));
+    return renderState('INTRO');
   },
   onResyncClicked: function() {
     var onChange, onComplete, replication, replicator;
@@ -377,16 +308,19 @@ StateView = React.createClass({
     return replicator.on('change', onChange);
   },
   displayLog: function(log) {
-    var logs;
+    var logs, moment;
     logs = this.state.logs;
-    logs.push(log);
+    moment = require('moment');
+    logs.push(moment().format('HH:MM:SS ') + log);
     return this.setState({
       logs: logs
     });
   },
   onResyncClicked: function() {
-    var onChange, onComplete, replication, replicator;
+    var binary, filesystem, onBinaryDownloaded, onChange, onComplete, onDirectoryCreated, replication, replicator;
     replication = require('./backend/replication');
+    filesystem = require('./backend/filesystem');
+    binary = require('./backend/binary');
     this.clearLogs();
     this.displayLog('Replication is starting');
     onChange = (function(_this) {
@@ -399,6 +333,16 @@ StateView = React.createClass({
         return _this.displayLog('Replication is finished.');
       };
     })(this);
+    onBinaryDownloaded = (function(_this) {
+      return function(binaryPath) {
+        return _this.displayLog("File " + binaryPath + " downloaded");
+      };
+    })(this);
+    onDirectoryCreated = (function(_this) {
+      return function(dirPath) {
+        return _this.displayLog("Folder " + dirPath + " created");
+      };
+    })(this);
     replicator = replication.runReplication({
       fromRemote: true,
       toRemote: false,
@@ -407,7 +351,9 @@ StateView = React.createClass({
       fetchBinary: true
     });
     replicator.on('change', onChange);
-    return replicator.on('complete', onComplete);
+    replicator.on('complete', onComplete);
+    binary.infoPublisher.on('binaryDownloaded', onBinaryDownloaded);
+    return filesystem.infoPublisher.on('directoryCreated', onDirectoryCreated);
   }
 });
 ;var en;
