@@ -1,4 +1,116 @@
-var config, configDir, configHelpers, configPath, device, fs, homedir, keys, path;
+var Button, Container, Field, InfoLine, Line, Subtitle, Title;
+
+Line = React.createClass({
+  render: function() {
+    var className;
+    className = this.props.className;
+    if (className == null) {
+      className = 'mtl';
+    }
+    return div({
+      className: 'line clearfix ' + className
+    }, this.props.children);
+  }
+});
+
+Container = React.createClass({
+  render: function() {
+    var className;
+    className = 'container ';
+    if (this.props.className) {
+      className += this.props.className;
+    }
+    return div({
+      className: className
+    }, this.props.children);
+  }
+});
+
+Title = React.createClass({
+  render: function() {
+    return h1({}, this.props.text);
+  }
+});
+
+Subtitle = React.createClass({
+  render: function() {
+    return h2({}, this.props.text);
+  }
+});
+
+Button = React.createClass({
+  render: function() {
+    return button({
+      className: 'btn btn-cozy ' + this.props.className,
+      ref: this.props.ref,
+      onClick: this.props.onClick
+    }, this.props.text);
+  }
+});
+
+Field = React.createClass({
+  getInitialState: function() {
+    return {
+      error: null
+    };
+  },
+  render: function() {
+    var _base;
+    if ((_base = this.props).type == null) {
+      _base.type = 'text';
+    }
+    return Line(null, label({
+      className: 'mod w100 mrm'
+    }, this.props.label), input({
+      type: this.props.type,
+      className: 'mt1 ' + this.props.fieldClass,
+      ref: this.props.inputRef,
+      defaultValue: this.props.defaultValue,
+      onChange: this.onChange,
+      placeholder: this.props.placeholder
+    }), this.state.error ? p(null, this.state.error) : void 0);
+  },
+  getValue: function() {
+    return this.refs[this.props.inputRef].getDOMNode().value;
+  },
+  isValid: function() {
+    return this.getValue() !== '';
+  },
+  onChange: function() {
+    var val;
+    val = this.refs[this.props.inputRef].getDOMNode().value;
+    if (val === '') {
+      return this.setState({
+        error: 'value is missing'
+      });
+    } else {
+      return this.setState({
+        error: null
+      });
+    }
+  }
+});
+
+InfoLine = React.createClass({
+  render: function() {
+    var value;
+    if (this.props.link != null) {
+      value = span(null, a({
+        href: "" + this.props.link.type + "://" + this.props.value
+      }, this.props.value));
+    } else {
+      value = span(null, this.props.value);
+    }
+    return Line({
+      className: 'line mts'
+    }, span({
+      className: 'mod w100p left'
+    }, this.props.label + ':'), span({
+      className: 'mod left'
+    }, value));
+  }
+});
+;var config, configDir, configHelpers, configPath, device, fs, homedir, keys, path;
 
 path = require('path-extra');
 
@@ -202,19 +314,34 @@ ConfigFormStepTwo = React.createClass({
 StateView = React.createClass({
   getInitialState: function() {
     return {
-      logs: []
+      logs: [],
+      sync: true
     };
   },
   render: function() {
-    var log, logs, _i, _len, _ref;
+    var log, logs, state, syncButtonLabel, _i, _len, _ref;
     logs = [];
-    _ref = this.state.logs;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      log = _ref[_i];
+    if (this.state.logs.length === 0) {
       logs.push(Line({
         className: 'smaller'
-      }, log));
+      }, 'nothing to notice...'));
+    } else {
+      _ref = this.state.logs;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        log = _ref[_i];
+        logs.push(Line({
+          className: 'smaller'
+        }, log));
+      }
     }
+    if (this.state.sync) {
+      state = t('on');
+      syncButtonLabel = t('stop sync');
+    } else {
+      state = t('on');
+      syncButtonLabel = t('stop sync');
+    }
+    this.startSync();
     return Container({
       className: 'line'
     }, Container({
@@ -235,12 +362,23 @@ StateView = React.createClass({
     }), InfoLine({
       label: t('url'),
       value: device.url
+    }), InfoLine({
+      label: t('Sync state'),
+      value: state
     }), Subtitle({
       text: 'Actions'
     }), Line(null, Button({
+      className: 'left action',
+      onClick: this.onSyncClicked,
+      text: syncButtonLabel
+    })), Line(null, Button({
       className: 'left',
       onClick: this.onResyncClicked,
       text: t('resync all')
+    })), Line(null, Button({
+      className: 'left',
+      onClick: this.clearLogs,
+      text: t('clear logs')
     })), Subtitle({
       text: 'Danger Zone'
     }), Line(null, Button({
@@ -257,6 +395,7 @@ StateView = React.createClass({
       text: 'Logs'
     }), logs));
   },
+  startSync: function() {},
   clearLogs: function() {
     return this.setState({
       logs: []
@@ -265,7 +404,6 @@ StateView = React.createClass({
   onDeleteFilesClicked: function() {
     var del;
     del = require('del');
-    alert(device.path);
     return del("" + device.path + "/*", {
       force: true
     }, function(err) {

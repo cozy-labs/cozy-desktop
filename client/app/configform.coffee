@@ -138,10 +138,22 @@ StateView = React.createClass
 
     getInitialState: ->
         logs: []
+        sync: true
 
     render: ->
         logs = []
-        logs.push Line className: 'smaller', log for log in @state.logs
+        if @state.logs.length is 0
+            logs.push Line className: 'smaller', 'nothing to notice...'
+        else
+            logs.push Line className: 'smaller', log for log in @state.logs
+
+        if @state.sync
+            state = t 'on'
+            syncButtonLabel = t 'stop sync'
+        else
+            state = t 'on'
+            syncButtonLabel = t 'stop sync'
+        @startSync()
 
         Container className: 'line',
             Container className: 'mod w50 left',
@@ -154,12 +166,23 @@ StateView = React.createClass
                         type: 'file'
                     value: device.path
                 InfoLine label: t('url'), value: device.url
+                InfoLine label: t('Sync state'), value: state
                 Subtitle text: 'Actions'
+                Line null,
+                    Button
+                        className: 'left action'
+                        onClick: @onSyncClicked
+                        text: syncButtonLabel
                 Line null,
                     Button
                         className: 'left'
                         onClick: @onResyncClicked
                         text: t 'resync all'
+                Line null,
+                    Button
+                        className: 'left'
+                        onClick: @clearLogs
+                        text: t 'clear logs'
                 Subtitle text: 'Danger Zone'
                 Line null,
                     Button
@@ -171,16 +194,18 @@ StateView = React.createClass
                         className: 'left'
                         onClick: @onDeleteConfigurationClicked
                         text: t 'delete configuration'
+
             Container className: 'mod w50 left',
                 Subtitle text: 'Logs'
                 logs
+
+    startSync: ->
 
     clearLogs: ->
         @setState logs: []
 
     onDeleteFilesClicked: ->
         del = require 'del'
-        alert device.path
         del "#{device.path}/*", force: true, (err) ->
             console.log err if err
             alert t 'All files were successfully deleted.'

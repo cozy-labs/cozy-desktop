@@ -4,8 +4,8 @@
   "description": "",
   "main": "app.html",
   "window": {
-    "width": 600,
-    "height": 500,
+    "width": 800,
+    "height": 550,
     "title": "Cozy Data Proxy"
   },
   "scripts": {
