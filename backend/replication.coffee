@@ -133,10 +133,9 @@ module.exports =
             if needTreeRebuild
                 #log.info 'Applying changes on the filesystem'
                 console.log 'Applying changes on the filesystem'
-                markRebuildTree = (err) ->
+                applyChanges (err) ->
                     needTreeRebuild = false
                     callback err if callback?
-                applyChanges markRebuildTree
 
         onComplete = (info) ->
             #log.info 'Replication is complete'
@@ -144,9 +143,8 @@ module.exports =
             if fromRemote and not toRemote
                 #log.info 'Applying changes on the filesystem'
                 console.log 'Applying changes on the filesystem'
-                finish = (err) ->
+                applyChanges (err) ->
                     callback err if callback?
-                applyChanges finish
             else
                 callback null if callback?
 
@@ -158,6 +156,6 @@ module.exports =
         url = urlParser.format(url) + 'cozy'
         replicator = replicate(url, options)
             .on 'change', onChange
-            #.on 'uptodate', onUptoDate # Called only for a continuous replication
+            .on 'uptodate', onUptoDate # Called only for a continuous replication
             .on 'complete', onComplete # Called only for a single replication
             .on 'error', onError
