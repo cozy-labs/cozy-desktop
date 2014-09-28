@@ -1,17 +1,11 @@
-// blue
+// Colors
+
 blue = #1baaf4
-// green
-contrastcolor = #5C5
-// orange
-actioncolor = #fe8800
-actioncolor-alpha = rgba(254,128,0,0.5)
-// gray and dark gray
-lightcolor = #EEE
-mediumcolor = #BDBDBD
-mediumcolor-contrast = #428bca
-darkcolor = #444
-// special cozy colors
-homeheadercolor = #363a46
+green = #5C5
+orange = #fe8800
+darkblue = #363a46
+
+// Fonts
 
 @font-face
     font-family styled
@@ -25,31 +19,27 @@ homeheadercolor = #363a46
     font-family main
     src url('../fonts/source-sans-pro.ttf')
 
-.mt1
-    margin-top: 10px
-
-.mt2
-    margin-top: 20px
+// Standard styles
 
 h1
-    font-family: styledlight
-    font-weight: bold
-    font-size: 40px
+    font-family styledlight
+    font-weight bold
+    font-size 40px
 
 h2
-    font-family: styled
-    font-weight: normal
-    font-size: 30px
-    margin-top: 50px
-    margin-bottom: 5px
+    font-family styled
+    font-weight normal
+    font-size 30px
+    margin-top 50px
+    margin-bottom 5px
 a
     color blue
 
 a:hover
-    color actioncolor
+    color orange
 
 p 
-    font-family: main
+    font-family main
 
 label
     font-family main
@@ -58,18 +48,18 @@ label
 input
 select
 textarea
+    padding: 4px
     border 1px solid blue
     border-radius 0
-    font-size: 20px
-    padding: 4px
-    font-weight: normal
     font-family styled
+    font-size: 20px
+    font-weight: normal
 
 
 input:hover
 select:hover
 textarea:hover
-    border 1px solid actioncolor
+    border 1px solid orange
 
 input:active
 select:active
@@ -78,16 +68,18 @@ input:focus
 select:focus
 textarea:focus
     box-shadow none
-    border 1px solid actioncolor
+    border 1px solid orange
+
+// Widget styles
 
 .modal-header
-    background-color bluegreen
-    color white
-    font-family styled
-    font-size 26px
     padding 20px
     border-top-left-radius 5px
     border-top-right-radius 5px
+    font-family styled
+    font-size 26px
+    background-color bluegreen
+    color white
 
 .modal-body
     font-family main
@@ -106,27 +98,26 @@ textarea:focus
             border 1px solid blue
             box-shadow none
 
-/*      COZY BUTTONS    */
 .btn
-    // position: relative for spinner
+    // position: relative for spinner from SpinJS
     position relative
 
     &.btn-cozy
-        background-color blue
-        border 0px solid blue
         padding 10px
+        border-radius 5px
+        border 0px solid blue
         font-family main
+        font-size 18px
+        background-color blue
         color white
-        border-radius: 5px
-        font-size: 18px
 
         .caret
             border-top-color white
             border-bottom-color white
 
         &:hover
-            background-color actioncolor
-            border-color actioncolor
+            background-color orange
+            border-color orange
 
         &.bigger
             font-size: 24px
@@ -142,14 +133,13 @@ textarea:focus
         background-color blue - 10%
 
         &:hover
-            background-color actioncolor - 10%
+            background-color orange - 10%
 
     &.btn-cozy-contrast
-        background-color contrastcolor - 10%
-        border-color contrastcolor - 10%
+        background-color green - 10%
+        border-color green - 10%
         color white
 
         &:hover
-            background-color actioncolor
-            border-color actioncolor
-
+            background-color orange
+            border-color orange

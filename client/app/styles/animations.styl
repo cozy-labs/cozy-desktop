@@ -34,12 +34,6 @@ animationDuration = .3s
   }
 }
 
-.slide-enter
-    animation: moveFromRight
-
-.slide-leave
-    animation: moveToLeft
-
 @keyframes moveFromBottomToTop {
   from {
     transform translate(0, 0)
@@ -48,6 +42,12 @@ animationDuration = .3s
     transform translate(0, -100%)
   }
 }
+
+.slide-enter
+    animation: moveFromRight
+
+.slide-leave
+    animation: moveToLeft
 
 .slide-leave-up
     transition: all ease 0.3s
