@@ -29,7 +29,7 @@ module.exports =
                 callback err
             if body.error?
                 if body.error is 'string'
-                    console.log body.error
+                    log.error body.error
                 else
                     callback body.error
             else
@@ -50,7 +50,7 @@ module.exports =
 
     # Give the right pouch function to run the replication depending on
     # parameters.
-    getReplicator: (toRemote, fromRemote) ->
+    getReplicateFunction: (toRemote, fromRemote) ->
         if fromRemote and not toRemote
             log.info "Running replication from remote database"
             replicate = pouch.db.replicate.from
@@ -63,19 +63,19 @@ module.exports =
 
         return replicate
 
+    replicationIsRunning: false
+
+    treeIsBuilding: false
 
     runReplication: (options, callback) ->
         fromRemote = options.fromRemote
         toRemote = options.toRemote
-        continuous = options.continuous
-        rebuildFs = options.rebuildFs
-        fetchBinary = options.fetchBinary
+        continuous = options.continuous or false
+        rebuildFs = options.rebuildFs or true
+        fetchBinary = options.fetchBinary or false
 
         deviceName = config.getDeviceName()
-        continuous ?= false
-        rebuildFs ?= false
-        fetchBinary ?= false
-        replicate = @getReplicator toRemote, fromRemote
+        replicate = @getReplicateFunction toRemote, fromRemote
 
         # Replicate only files and folders for now
         options =
@@ -91,17 +91,17 @@ module.exports =
         url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
 
         # Define action after replication completion
-        applyChanges = (cb) ->
+        applyChanges = (callback) ->
 
             # Lock file watcher to avoid remotely downloaded files to be re-uploaded
             filesystem.watchingLocked = true
 
             unlockFileSystemAndReturn = (err) ->
+                filesystem.watchingLocked = false
                 if err
-                    cb err
+                    callback err
                 else
-                    filesystem.watchingLocked = false
-                    cb null if cb?
+                    callback null if callback?
 
             # Fetch binaries Or rebuild the filesystem directory tree only
             if fetchBinary
@@ -109,7 +109,7 @@ module.exports =
             else
                 filesystem.buildTree null, unlockFileSystemAndReturn
 
-        onChange = (info) ->
+        onChange = (info) =>
             if info.change?
                 changeMessage = "DB change: #{info.change.docs_written} doc(s) written"
             else
@@ -121,28 +121,33 @@ module.exports =
 
             # Find out if filesystem tree needs a rebuild
             if (not info.direction? and fromRemote and info.docs_written > 0) \
-            or (info.direction is 'pull' and info.docs_written > 0)
+            or (info.direction is 'pull' and info.change.docs_written > 0)
                 needTreeRebuild = rebuildFs
+                @replicationIsRunning = true
 
-            #log.info changeMessage
-            console.log changeMessage
+            log.info changeMessage
 
-        onUptoDate = (info) ->
-            #log.info 'Replication is complete'
-            console.log 'Replication is complete'
-            if needTreeRebuild
-                #log.info 'Applying changes on the filesystem'
-                console.log 'Applying changes on the filesystem'
-                applyChanges (err) ->
-                    needTreeRebuild = false
-                    callback err if callback?
+        onUptoDate = (info) =>
+            @replicationIsRunning = false
+            setTimeout () =>
+                if not @replicationIsRunning and not @treeIsBuilding and needTreeRebuild
+                    @treeIsBuilding = true
+                    applyChanges (err) =>
+                        setTimeout () =>
+                            @treeIsBuilding = false
+                        , 2000
+                        @needTreeRebuild = false
+                        log.info 'Replication is complete'
+                        if err and callback?
+                            callback err if callback?
+            , 3000
 
         onComplete = (info) ->
             #log.info 'Replication is complete'
-            console.log 'Replication is complete'
+            log.info 'Replication is complete'
             if fromRemote and not toRemote
                 #log.info 'Applying changes on the filesystem'
-                console.log 'Applying changes on the filesystem'
+                log.info 'Applying changes on the filesystem'
                 applyChanges (err) ->
                     callback err if callback?
             else

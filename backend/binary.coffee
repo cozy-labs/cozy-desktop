@@ -7,8 +7,8 @@ log        = require('printit')
 
 config     = require './config'
 pouch      = require './db'
-async = require 'async'
-events = require 'events'
+async      = require 'async'
+events     = require 'events'
 
 remoteConfig = config.getConfig()
 
@@ -42,7 +42,7 @@ module.exports =
         log.info "Uploading binary: #{relativePath}"
         @infoPublisher.emit 'uploadBinary', absPath
 
-        returnInfos = (err, res, body) ->
+        returnInfos = (err, res, body) =>
             if err
                 callback err
             else
@@ -106,7 +106,7 @@ module.exports =
         removeDoc = (err, doc) ->
             if err and err.status isnt 404
                 callback err
-            else if err.status is 404
+            else if err and err.status is 404
                 createDoc()
             else
                 pouch.db.remove doc, createDooc
@@ -179,15 +179,19 @@ module.exports =
             fs.utimes binaryPath, creationDate, lastModification, callback
 
         # save Binary path in a binary document.
-        saveBinaryPath = (err) =>
+        saveBinaryPath = (err, res) =>
             if err
-                throw err
-            log.info "Binary downloaded: #{relativePath}"
-            @infoPublisher.emit 'binaryDownloaded', binaryPath
-            id = doc.binary.file.id
-            rev = doc.binary.file.rev
+                callback err
+            if res
+                log.info "Binary downloaded: #{relativePath}"
+                @infoPublisher.emit 'binaryDownloaded', binaryPath
+            if 'binary' in doc
+                id = doc.binary.file.id
+                rev = doc.binary.file.rev
 
-            @saveLocation binaryPath, id, rev, changeUtimes
+                @saveLocation binaryPath, id, rev, changeUtimes
+            else
+                callback null
 
         downloadFile = ->
             # If file exists anyway and has the right size,
@@ -202,8 +206,10 @@ module.exports =
                 # Launch download
                 urlPath = "cozy/#{doc.binary.file.id}/file"
 
-                fs.unlinkSync binaryPath
-                client.saveFile urlPath, binaryPath, saveBinaryPath
+                try
+                    fs.unlinkSync binaryPath
+                finally
+                    client.saveFile urlPath, binaryPath, saveBinaryPath
             else
                 saveBinaryPath()
 

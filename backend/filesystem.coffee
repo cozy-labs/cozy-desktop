@@ -1,3 +1,4 @@
+Promise  = require 'bluebird'
 fs       = require 'fs'
 mkdirp   = require 'mkdirp'
 touch    = require 'touch'
@@ -27,9 +28,6 @@ module.exports =
         doc = doc.value
         absPath = path.join remoteConfig.path, doc.path, doc.name
         dirPaths = module.exports.getPaths absPath
-
-        #log.info "Creating directory: #{dirPaths.relative}"
-        console.log "Creating directory: #{dirPaths.relative}"
 
         # Create directory
         updateDates = (err) =>
@@ -67,12 +65,8 @@ module.exports =
             else
                 # Move binary if exists, otherwise touch the file
                 if binaryDoc? and fs.existsSync binaryDoc.path
-                    # log.info "File exists: #{binaryDoc.path}"
-                    console.log "File exists: #{binaryDoc.path}"
                     binary.moveFromDoc binaryDoc, filePaths.absolute, changeUtimes
                 else
-                    #log.info "Creating file: #{filePaths.relative}"
-                    console.log "Creating file: #{filePaths.relative}"
                     module.exports.infoPublisher.emit 'fileTouched', absPath
                     touch filePaths.absolute, changeUtimes
 
@@ -88,19 +82,16 @@ module.exports =
 
 
     buildTree: (filePath, callback) ->
-
         # If filePath argument is set, rebuild FS information for this file only
         if filePath?
             filePaths = @getPaths filePath
-            #log.info "Updating file info: #{filePaths.relative}"
-            console.log "Updating file info: #{filePaths.relative}"
+            log.info "Updating file info: #{filePaths.relative}"
         else
             filePaths = @getPaths remoteConfig.path
-            #log.info "Rebuilding filesystem tree"
-            console.log "Rebuilding filesystem tree"
+            log.info "Rebuilding filesystem tree"
 
         makeFiles = (err, result) =>
-            if err then throw new Error err
+            if err then callback err
             docs = result['rows']
             async.eachSeries docs, @touchFileFromDoc, callback
 
@@ -108,7 +99,7 @@ module.exports =
             if err then throw new Error err
             pouch.db.query 'file/all', makeFiles
 
-        createFilters = (err) =>
+        createFileFilters = (err) =>
             if err then throw new Error err
             pouch.addFilter 'file', (err) =>
                 if err
@@ -117,25 +108,29 @@ module.exports =
                    pouch.addFilter 'binary', getFiles
 
         makeDirectories =  (err, result) =>
-            if err then throw new Error err
+            if err then callback err
             docs = result['rows']
-            async.eachSeries docs, @makeDirectoryFromDoc, createFilters
+            async.eachSeries docs, @makeDirectoryFromDoc, createFileFilters
 
         getFolders = (err) =>
-            if err then throw new Error err
+            if err
+                callback err
             pouch.db.query 'folder/all', makeDirectories
 
-        pouch.addFilter 'folder', getFolders
+        createFolderFilter = () ->
+            pouch.addFilter 'folder', getFolders
+
+        createFolderFilter()
 
 
     createDirectoryContentDoc: (dirPath, callback) ->
         dirPaths = @getPaths dirPath
 
         #log.info "Add directory and its content: #{dirPaths.relative}"
-        console.log "Add directory and its content: #{dirPaths.relative}"
+        log.info "Add directory and its content: #{dirPaths.relative}"
 
         # Create the directory itself first
-        @createDirectoryDoc(dirPaths.absolute).bind(@)
+        @createDirectoryDocAsync(dirPaths.absolute).bind(@)
 
         # List directory content
         .then -> fs.readdir dirPaths.absolute
@@ -159,149 +154,179 @@ module.exports =
     createDirectoryDoc: (dirPath, callback) ->
         dirPaths = @getPaths dirPath
 
-        # Check directory's location
-        unless @isInSyncDir(dirPath) and fs.existsSync(dirPaths.absolute)
-            unless dirPath is '' or dirPath is remoteConfig.path
-                log.error "Directory is not located in the
-                           synchronized directory: #{dirPaths.absolute}"
-            return callback null
+        putDirectoryDocument = (newDoc) ->
+            pouch.db.put newDoc, (err, res) ->
+                if err
+                    callback err
+                else
+                    callback null, res
 
-        # Initialize document Object
-        document =
-            _id: uuid.v4().split('-').join('')
-            docType: 'Folder'
-            name: dirPaths.name
-            path: dirPaths.parent
-            tags: []
+        updateDirectoryInformation = (existingDoc, newDoc) ->
+            newDoc._id = existingDoc._id
+            newDoc._rev = existingDoc._rev
+            newDoc.creationDate = existingDoc.creationDate
+            newDoc.tags = existingDoc.tags
+            if new Date(existingDoc.lastModification) \
+             > new Date(newDoc.lastModification)
+                newDoc.lastModification = existingDoc.lastModification
+            return newDoc
 
-        # Ensure parent directory is saved
-        @createDirectoryDoc(dirPaths.absParent)
+        checkDirectoryExistence = (newDoc) ->
+            pouch.db.query 'folder/all', (err, existingDocs) ->
+                if err and err.status isnt 404
+                    callback err
+                else
+                    if existingDocs
+                        # Loop through existing directories
+                        for existingDoc in existingDocs.rows
+                            existingDoc = existingDoc.value
+                            if  existingDoc.name is newDoc.name \
+                            and existingDoc.path is newDoc.path
+                                # Directory already exists
+                                newDoc = updateDirectoryInformation existingDoc, newDoc
 
-        # Add directory stats
-        .then ->
-            #log.info "Add directory: #{dirPaths.relative}"
-            console.log "Add directory: #{dirPaths.relative}"
-            fs.stat(dirPaths.absolute)
-        .then (stats) ->
-            document.creationDate = stats.mtime
-            document.lastModification = stats.mtime
+                    # Create or update directory document
+                    putDirectoryDocument newDoc
 
-            pouch.db.query 'folder/all'
+        updateDirectoryStats = (newDoc) ->
+            fs.stat dirPaths.absolute, (err, stats) ->
+                newDoc.creationDate = stats.mtime
+                newDoc.lastModification = stats.mtime
 
-        # Look for directory with the same path/name
-        .get('rows').filter (doc) ->
-            return doc.value.name is document.name \
-               and doc.value.path is document.path
+                checkDirectoryExistence newDoc
 
-        # If exists, update document information
-        .each (doc) ->
-            document._id = doc.value._id
-            document._rev = doc.value._rev
-            document.creationDate = doc.value.creationDate
-            document.tags = doc.value.tags
-            if new Date(doc.value.lastModification) \
-             > new Date(document.lastModification)
-                document.lastModification = doc.value.lastModification
+        createParentDirectory = (newDoc) =>
+            @createDirectoryDoc dirPaths.absParent, (err, res) ->
+                if err
+                    log.error "An error occured at parent directory's creation"
+                    callback err
+                else
+                    log.info "Add directory: #{dirPaths.relative}"
+                    updateDirectoryStats newDoc
 
-        # Otherwise do not mind if directory doc is not found
-        .catch (err) ->
-            throw err unless err.status is 404
+        checkDirectoryLocation = () =>
+            if not @isInSyncDir(dirPath) or not fs.existsSync(dirPaths.absolute)
+               unless dirPath is '' or dirPath is remoteConfig.path
+                   log.error "Directory is not located in the
+                              synchronized directory: #{dirPaths.absolute}"
+                # Do not throw error
+                callback null
+            else
+                createParentDirectory
+                    _id: uuid.v4().split('-').join('')
+                    docType: 'Folder'
+                    name: dirPaths.name
+                    path: dirPaths.parent
+                    tags: []
 
-        # Create or update directory document
-        .then -> pouch.db.put document
-
-        .nodeify callback
+        checkDirectoryLocation()
 
 
     createFileDoc: (filePath, callback) ->
         filePaths = @getPaths filePath
 
-        # Check file's location
-        unless @isInSyncDir(filePath) and fs.existsSync(filePaths.absolute)
-            log.error "File is not located in the
-                       synchronized directory: #{filePaths.absolute}"
-            return callback null
+        putFileDocument = (newDoc) ->
+            pouch.db.put newDoc, (err, res) ->
+                if err
+                    callback err
+                else
+                    callback null, res
 
-
-        # Initialize document Object
-        document =
-            _id: uuid.v4().split('-').join('')
-            docType: 'File'
-            class: 'document'
-            name: filePaths.name
-            path: filePaths.parent
-            mime: mime.lookup filePaths.name
-            tags: []
-
-        # Ensure parent directory is saved
-        @createDirectoryDoc(filePaths.absParent).bind(@)
-
-        # Add file stats
-        .then ->
-            #log.info "Add file: #{filePaths.relative}"
-            console.log "Add file: #{filePaths.relative}"
-            fs.stat(filePaths.absolute)
-        .then (stats) ->
-            document.creationDate     = stats.mtime
-            document.lastModification = stats.mtime
-            document.size             = stats.size
-
-            pouch.db.query 'file/all'
-
-        # Look for file with the same path/name
-        .get('rows').filter (doc) ->
-            return doc.value.name is document.name \
-               and doc.value.path is document.path
-
-        # No document match
-        .then (docs) ->
-            throw status: 404 if docs.length is 0
-            return docs[0].value
-
-        # If exists, update document information
-        .then (doc) ->
-            document._id = doc._id
-            document._rev = doc._rev
-            document.creationDate = doc.creationDate
-            document.tags = doc.tags
-            document.binary = doc.binary
-
-            if new Date(doc.lastModification) \
-             > new Date(document.lastModification)
-                document.lastModification = doc.lastModification
-
-            # And get remote binary document
-            binary.getRemoteDoc doc.binary.file.id
-
-        # Otherwise do not mind if file doc is not found
-        .catch (err) ->
-            throw err unless err.status is 404
-
-            # And create a remote binary document
-            binary.createEmptyRemoteDoc()
-
-        # Upload binary
-        .then (doc) ->
-            binary.uploadAsAttachment doc.id
-                                         , doc.rev
-                                         , filePaths.absolute
-
-        # Update file document's information about binary
-        .then (doc) ->
-            document.binary =
-                file:
-                    id: doc.id
-                    rev: doc.rev
-
-            # And save binary location in a local document
+        saveBinaryDocument = (newDoc) ->
             binary.saveLocation filePaths.absolute
-                                   , doc.id
-                                   , doc.rev
+                                , newDoc.binary.file.id
+                                , newDoc.binary.file.rev
+                                , (err, res) ->
+                if err
+                    callback err
+                else
+                    putFileDocument newDoc
 
-        # Finally, create or update file document
-        .then -> pouch.db.put document
 
-        .nodeify callback
+        uploadBinary = (newDoc, binaryDoc) ->
+            binary.uploadAsAttachment binaryDoc.id
+                                    , binaryDoc.rev
+                                    , filePaths.absolute
+                                    , (err, newBinaryDoc) ->
+                if err
+                    callback err
+                else
+                    newDoc.binary =
+                        file:
+                            id: newBinaryDoc.id
+                            rev: newBinaryDoc.rev
+
+                    saveBinaryDocument newDoc
+
+        updateFileInformation = (existingDoc, newDoc) ->
+            newDoc._id = existingDoc._id
+            newDoc._rev = existingDoc._rev
+            newDoc.creationDate = existingDoc.creationDate
+            newDoc.tags = existingDoc.tags
+            newDoc.binary = existingDoc.binary
+            if new Date(existingDoc.lastModification) \
+             > new Date(newDoc.lastModification)
+                newDoc.lastModification = existingDoc.lastModification
+            return newDoc
+
+        populateBinaryInformation = (newDoc) ->
+            if newDoc.binary?
+                binary.getRemoteDoc newDoc.binary.file.id, (err, binaryDoc) ->
+                    uploadBinary newDoc, binaryDoc
+            else
+                binary.createEmptyRemoteDoc (err, binaryDoc) ->
+                    uploadBinary newDoc, binaryDoc
+
+        checkFileExistence = (newDoc) ->
+            pouch.db.query 'file/all', (err, existingDocs) ->
+                if err and err.status isnt 404
+                    callback err
+                else
+                    if existingDocs
+                        # Loop through existing files
+                        for existingDoc in existingDocs.rows
+                            existingDoc = existingDoc.value
+                            if  existingDoc.name is newDoc.name \
+                            and existingDoc.path is newDoc.path
+                                # File already exists
+                                newDoc = updateFileInformation existingDoc, newDoc
+
+                    populateBinaryInformation newDoc
+
+        updateFileStats = (newDoc) ->
+            fs.stat filePaths.absolute, (err, stats) ->
+                newDoc.creationDate = stats.mtime
+                newDoc.lastModification = stats.mtime
+                newDoc.size = stats.size
+
+                checkFileExistence newDoc
+
+        createParentDirectory = (newDoc) =>
+            @createDirectoryDoc filePaths.absParent, (err, res) ->
+                if err
+                    log.error "An error occured at parent directory's creation"
+                    callback err
+                else
+                    updateFileStats newDoc
+
+        checkFileLocation = () =>
+            if not @isInSyncDir(filePath) or not fs.existsSync(filePaths.absolute)
+               unless filePath is '' or filePath is remoteConfig.path
+                   log.error "File is not located in the
+                              synchronized directory: #{filePaths.absolute}"
+                # Do not throw error
+                callback null
+            else
+                createParentDirectory
+                    _id: uuid.v4().split('-').join('')
+                    docType: 'File'
+                    class: 'document'
+                    name: filePaths.name
+                    path: filePaths.parent
+                    mime: mime.lookup filePaths.name
+                    tags: []
+
+        checkFileLocation()
 
 
     watchChanges: (continuous, fromNow) ->
@@ -341,27 +366,25 @@ module.exports =
 
         # New file detected
         .on 'add', (filePath) =>
-            unless @watchingLocked or filePath in filesBeingCopied
+            if not @watchingLocked and filePath not in filesBeingCopied
                 log.info "File added: #{filePath}"
                 fileIsCopied filePath, =>
-                    @previousUpload = @previousUpload.then =>
-                        @createFileDoc filePath, ->
+                    @createFileDoc filePath, ->
 
         # New directory detected
         .on 'addDir', (dirPath) =>
-            unless @watchingLocked
+            if not @watchingLocked
                 if path isnt remoteConfig.path
                     #log.info "Directory added: #{dirPath}"
-                    console.log "Directory added: #{dirPath}"
+                    log.info "Directory added: #{dirPath}"
                     @createDirectoryDoc dirPath, ->
 
         # File update detected
         .on 'change', (filePath) =>
-            unless @watchingLocked or filePath in filesBeingCopied
+            if not @watchingLocked and filePath not in filesBeingCopied
                 log.info "File changed: #{filePath}"
                 fileIsCopied filePath, =>
-                    @previousUpload = @previousUpload.then =>
-                        @createFileDoc filePath, ->
+                    @createFileDoc filePath, ->
 
         .on 'error', (err) ->
             log.error 'An error occured while watching changes:'
