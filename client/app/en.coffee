@@ -15,4 +15,3 @@ en =
     'resync all': 'Resync All'
     'delete configuration': 'Delete configuration'
     'delete configuration and files': 'Delete configuration and files'
-

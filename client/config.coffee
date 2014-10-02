@@ -4,6 +4,7 @@ exports.config =
     modules:
         definition: false
         wrapper: false
+
     files:
         javascripts:
             joinTo:
@@ -17,9 +18,7 @@ exports.config =
                     'vendor/scripts/react-with-addons.js'
                     'vendor/scripts/jquery.js'
                     'vendor/scripts/underscore.js'
-                    'vendor/scripts/backbone.js'
                     'vendor/scripts/superagent.js'
-                    'vendor/scripts/bootstrap-3.1.1.min.js'
                     'vendor/scripts/moment.js'
                     'vendor/scripts/polyglot.js'
                 ]
@@ -52,8 +51,6 @@ exports.config =
 
     overrides:
         production:
-            # re-enable when uglifyjs will handle properly in source maps
-            # with sourcesContent attribute
             #optimize: true
             sourceMaps: true
             paths:
