@@ -1,3 +1,7 @@
+# Set of components to make the react template building easier.
+
+{div, p, img, span, a, label, input, h1, h2, button} = React.DOM
+
 Line = React.createClass
 
     render: ->
