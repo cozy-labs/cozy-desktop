@@ -76,16 +76,24 @@ removeRemote = (args) ->
 displayDatabase = ->
     db = require('./backend/db').db
     db.allDocs include_docs: true, (err, results) ->
-        results.rows.map (row) ->
-            console.log row.doc
+        if err
+            log.error err
+        else
+            results.rows.map (row) ->
+                console.log row.doc
+
 
 displayQuery = (query) ->
     db = require('./backend/db').db
     log.info "Query: #{query}"
     db.query query, (err, results) ->
-        results.rows.map (row) ->
-            console.log "key: #{row.key}"
-            console.log "value #{JSON.stringify row.value}"
+        if err
+            log.error err
+        else
+            results.rows.map (row) ->
+                console.log "key: #{row.key}"
+                console.log "value #{JSON.stringify row.value}"
+
 
 displayConfig = ->
     console.log JSON.stringify config.config, null, 2
