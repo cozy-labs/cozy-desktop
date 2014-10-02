@@ -3626,12 +3626,6 @@ table {
   font-family: main;
   src: url("../fonts/source-sans-pro.ttf");
 }
-.mt1 {
-  margin-top: 10px;
-}
-.mt2 {
-  margin-top: 20px;
-}
 h1 {
   font-family: styledlight;
   font-weight: bold;
@@ -3660,12 +3654,12 @@ label {
 input,
 select,
 textarea {
+  padding: 4px;
   border: 1px solid #1baaf4;
   border-radius: 0;
-  font-size: 20px;
-  padding: 4px;
-  font-weight: normal;
   font-family: styled;
+  font-size: 20px;
+  font-weight: normal;
 }
 input:hover,
 select:hover,
@@ -3682,13 +3676,13 @@ textarea:focus {
   border: 1px solid #fe8800;
 }
 .modal-header {
-  background-color: bluegreen;
-  color: #fff;
-  font-family: styled;
-  font-size: 26px;
   padding: 20px;
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
+  font-family: styled;
+  font-size: 26px;
+  background-color: bluegreen;
+  color: #fff;
 }
 .modal-body {
   font-family: main;
@@ -3701,7 +3695,7 @@ textarea:focus {
 }
 .modal-body input:hover,
 .modal-body select:hover {
-  border: 1px solid #ffa500;
+  border: 1px solid #fe8800;
 }
 .modal-body input:focus,
 .modal-body select:focus,
@@ -3710,18 +3704,17 @@ textarea:focus {
   border: 1px solid #1baaf4;
   box-shadow: none;
 }
-/*      COZY BUTTONS    */
 .btn {
   position: relative;
 }
 .btn.btn-cozy {
-  background-color: #1baaf4;
-  border: 0px solid #1baaf4;
   padding: 10px;
-  font-family: main;
-  color: #fff;
   border-radius: 5px;
+  border: 0px solid #1baaf4;
+  font-family: main;
   font-size: 18px;
+  background-color: #1baaf4;
+  color: #fff;
 }
 .btn.btn-cozy .caret {
   border-top-color: #fff;

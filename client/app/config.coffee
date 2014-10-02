@@ -1,6 +1,10 @@
 path = require 'path-extra'
 fs = require 'fs'
 
+
+# This module loads the current configuration, sets up the global variables
+# related to configuration and provide helpers to modify it.
+
 homedir = path.homedir()
 configDir = path.join homedir, '.cozy-data-proxy'
 configPath = path.join configDir, 'config.json'
@@ -15,6 +19,7 @@ device ?= {}
 
 configHelpers =
 
+    # Update device config fields in the config file.
     saveConfigSync: (deviceConfig) ->
         delete config.devices[device.deviceName]
         for key, value of deviceConfig

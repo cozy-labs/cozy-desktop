@@ -1,4 +1,3 @@
-{div, p, img, span, a, label, input, h1, h2, button} = React.DOM
 
 
 renderState = (state) ->

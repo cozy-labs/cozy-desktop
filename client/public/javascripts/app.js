@@ -1,4 +1,6 @@
-var Button, Container, Field, InfoLine, Line, Subtitle, Title;
+var Button, Container, Field, InfoLine, Line, Subtitle, Title, a, button, div, h1, h2, img, input, label, p, span, _ref;
+
+_ref = React.DOM, div = _ref.div, p = _ref.p, img = _ref.img, span = _ref.span, a = _ref.a, label = _ref.label, input = _ref.input, h1 = _ref.h1, h2 = _ref.h2, button = _ref.button;
 
 Line = React.createClass({
   render: function() {
@@ -8,7 +10,7 @@ Line = React.createClass({
       className = 'mtl';
     }
     return div({
-      className: 'line clearfix ' + className
+      className: "line clearfix " + className
     }, this.props.children);
   }
 });
@@ -41,7 +43,7 @@ Subtitle = React.createClass({
 Button = React.createClass({
   render: function() {
     return button({
-      className: 'btn btn-cozy ' + this.props.className,
+      className: "btn btn-cozy " + this.props.className,
       ref: this.props.ref,
       onClick: this.props.onClick
     }, this.props.text);
@@ -63,7 +65,7 @@ Field = React.createClass({
       className: 'mod w100 mrm'
     }, this.props.label), input({
       type: this.props.type,
-      className: 'mt1 ' + this.props.fieldClass,
+      className: "mt1 " + this.props.fieldClass,
       ref: this.props.inputRef,
       defaultValue: this.props.defaultValue,
       onChange: this.onChange,
@@ -105,7 +107,7 @@ InfoLine = React.createClass({
       className: 'line mts'
     }, span({
       className: 'mod w100p left'
-    }, this.props.label + ':'), span({
+    }, "" + this.props.label + ":"), span({
       className: 'mod left'
     }, value));
   }
@@ -164,9 +166,250 @@ configHelpers = {
     }
   }
 };
-;var ConfigFormStepOne, ConfigFormStepTwo, Intro, ReactCSSTransitionGroup, StateView, isValidForm;
+;var StateView;
 
-ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
+StateView = React.createClass({
+  getInitialState: function() {
+    return {
+      logs: [],
+      sync: false
+    };
+  },
+  render: function() {
+    var i, log, logs, state, syncButtonLabel, _i, _len, _ref;
+    logs = [];
+    if (this.state.logs.length === 0) {
+      logs.push(Line({
+        className: 'smaller'
+      }, 'nothing to notice...'));
+    } else {
+      i = 0;
+      _ref = this.state.logs;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        log = _ref[_i];
+        logs.push(Line({
+          key: "log-" + (i++),
+          className: 'smaller'
+        }, log));
+      }
+    }
+    if (this.state.sync) {
+      state = t('on');
+      syncButtonLabel = t('stop sync');
+    } else {
+      state = t('off');
+      syncButtonLabel = t('start sync');
+    }
+    return Container({
+      className: 'line'
+    }, Container({
+      className: 'mod w50 left'
+    }, Title({
+      text: 'Cozy Data Proxy'
+    }), Subtitle({
+      text: 'Parameters'
+    }), InfoLine({
+      label: t('device name'),
+      value: device.deviceName
+    }), InfoLine({
+      label: t('path'),
+      link: {
+        type: 'file'
+      },
+      value: device.path
+    }), InfoLine({
+      label: t('url'),
+      value: device.url
+    }), InfoLine({
+      label: t('sync state'),
+      value: state
+    }), Subtitle({
+      text: 'Actions'
+    }), Line(null, Button({
+      className: 'left action',
+      onClick: this.onSyncClicked,
+      text: syncButtonLabel
+    })), Line(null, Button({
+      className: 'left',
+      onClick: this.onResyncClicked,
+      text: t('resync all')
+    })), Line(null, Button({
+      className: 'left',
+      onClick: this.clearLogs,
+      text: t('clear logs')
+    })), Subtitle({
+      text: 'Danger Zone'
+    }), Line(null, Button({
+      className: 'left',
+      onClick: this.onDeleteFilesClicked,
+      text: t('delete files')
+    })), Line(null, Button({
+      className: 'left',
+      onClick: this.onDeleteConfigurationClicked,
+      text: t('delete configuration')
+    }))), Container({
+      className: 'mod w50 left'
+    }, Subtitle({
+      text: 'Logs'
+    }), logs));
+  },
+  onSyncClicked: function() {
+    var binary, filesystem, onBinaryDownloaded, onChange, onComplete, onDirectoryCreated, replication;
+    if (this.state.sync) {
+      this.setState({
+        sync: false
+      });
+      if (this.replicator) {
+        this.replicator.cancel();
+      }
+      if (this.watcher) {
+        this.watcher.close();
+      }
+      return this.displayLog('Synchronization is on');
+    } else {
+      replication = require('./backend/replication');
+      filesystem = require('./backend/filesystem');
+      binary = require('./backend/binary');
+      this.displayLog('Replication is starting');
+      onChange = (function(_this) {
+        return function(change) {
+          return _this.displayLog("" + change.docs_written + " elements replicated");
+        };
+      })(this);
+      onComplete = (function(_this) {
+        return function() {
+          return _this.displayLog('Replication is finished.');
+        };
+      })(this);
+      onBinaryDownloaded = (function(_this) {
+        return function(binaryPath) {
+          return _this.displayLog("File " + binaryPath + " downloaded");
+        };
+      })(this);
+      onDirectoryCreated = (function(_this) {
+        return function(dirPath) {
+          return _this.displayLog("Folder " + dirPath + " created");
+        };
+      })(this);
+      this.replicator = replication.runReplication({
+        fromRemote: true,
+        toRemote: true,
+        continuous: true,
+        rebuildFs: false,
+        fetchBinary: true
+      });
+      this.replicator.on('change', onChange);
+      this.replicator.on('complete', onComplete);
+      this.watcher = filesystem.watchChanges(true, true);
+      binary.infoPublisher.on('binaryDownloaded', onBinaryDownloaded);
+      filesystem.infoPublisher.on('directoryCreated', onDirectoryCreated);
+      this.displayLog('Synchronization is on');
+      return this.setState({
+        sync: true
+      });
+    }
+  },
+  clearLogs: function() {
+    return this.setState({
+      logs: []
+    });
+  },
+  onDeleteConfigurationClicked: function() {
+    var config;
+    config = require('./backend/config');
+    config.removeRemoteCozy(device.deviceName);
+    config.saveConfig();
+    alert(t('Configuration deleted.'));
+    return renderState('INTRO');
+  },
+  displayLog: function(log) {
+    var logs, moment;
+    logs = this.state.logs;
+    moment = require('moment');
+    logs.push(moment().format('HH:MM:SS ') + log);
+    return this.setState({
+      logs: logs
+    });
+  },
+  onDeleteFilesClicked: function() {
+    var del;
+    del = require('del');
+    return del("" + device.path + "/*", {
+      force: true
+    }, function(err) {
+      if (err) {
+        console.log(err);
+      }
+      return alert(t('All files were successfully deleted.'));
+    });
+  },
+  onResyncClicked: function() {
+    var binary, filesystem, onBinaryDownloaded, onChange, onComplete, onDirectoryCreated, replication, replicator;
+    replication = require('./backend/replication');
+    filesystem = require('./backend/filesystem');
+    binary = require('./backend/binary');
+    this.clearLogs();
+    this.displayLog('Replication is starting');
+    onChange = (function(_this) {
+      return function(change) {
+        return _this.displayLog("" + change.docs_written + " elements replicated");
+      };
+    })(this);
+    onComplete = (function(_this) {
+      return function() {
+        return _this.displayLog('Replication is finished.');
+      };
+    })(this);
+    onBinaryDownloaded = (function(_this) {
+      return function(binaryPath) {
+        return _this.displayLog("File " + binaryPath + " downloaded");
+      };
+    })(this);
+    onDirectoryCreated = (function(_this) {
+      return function(dirPath) {
+        return _this.displayLog("Folder " + dirPath + " created");
+      };
+    })(this);
+    replicator = replication.runReplication({
+      fromRemote: true,
+      toRemote: false,
+      continuous: false,
+      rebuildFs: true,
+      fetchBinary: true
+    });
+    replicator.on('change', onChange);
+    replicator.on('complete', onComplete);
+    binary.infoPublisher.on('binaryDownloaded', onBinaryDownloaded);
+    return filesystem.infoPublisher.on('directoryCreated', onDirectoryCreated);
+  }
+});
+;var en;
+
+en = {
+  'cozy files configuration 1 on 1': 'Configure your device (1/2)',
+  'cozy files configuration 2 on 2': 'Register your device (2/2)',
+  'directory to synchronize your data': 'Path of the folder where you will see your cozy files:',
+  'your device name': 'The name used to sign up your device to your Cozy:',
+  'your remote url': 'The web URL of your Cozy',
+  'your remote password': 'The password you use to connect to your Cozy:',
+  'go back to previous step': '< Previous step',
+  'save your device information and go to step 2': 'Save then go to next step >',
+  'register device and synchronize': 'Register then go to next step >',
+  'start configuring your device': 'Start to configure your device and sync your files',
+  'welcome to the cozy data proxy': 'Welcome to the Cozy Data Proxy, the module that syncs your computer with your Cozy!',
+  'path': 'Path',
+  'url': 'URL',
+  'resync all': 'Resync All',
+  'delete configuration': 'Delete configuration',
+  'delete configuration and files': 'Delete configuration and files',
+  'on': 'on',
+  'stop sync': 'Stop sync',
+  'device name': 'Device name',
+  'sync state': 'Sync state',
+  'clear logs': 'Clear logs',
+  'delete files': 'Delete files'
+};
+;var isValidForm;
 
 isValidForm = function(fields) {
   var field, _i, _len;
@@ -178,6 +421,7 @@ isValidForm = function(fields) {
   }
   return true;
 };
+;var ConfigFormStepOne, ConfigFormStepTwo, Intro;
 
 Intro = React.createClass({
   render: function() {
@@ -275,15 +519,15 @@ ConfigFormStepTwo = React.createClass({
     return renderState('STEP1');
   },
   onSaveButtonClicked: function() {
-    var config, fieldPassword, fieldUrl, isValid, options, password, replication, saveConfig, url;
+    var config, fieldPassword, fieldUrl, options, password, replication, saveConfig, url;
     fieldUrl = this.refs.remoteUrlField;
     fieldPassword = this.refs.remotePasswordField;
-    isValid = isValidForm([fieldUrl, fieldPassword]);
-    if (isValid) {
+    if (isValidForm([fieldUrl, fieldPassword])) {
       config = require('./backend/config');
       replication = require('./backend/replication');
       url = "https://" + (fieldUrl.getValue());
       password = fieldPassword.getValue();
+      console.log(device);
       options = {
         url: url,
         deviceName: device.deviceName,
@@ -310,222 +554,7 @@ ConfigFormStepTwo = React.createClass({
     }
   }
 });
-
-StateView = React.createClass({
-  getInitialState: function() {
-    return {
-      logs: [],
-      sync: true
-    };
-  },
-  render: function() {
-    var log, logs, state, syncButtonLabel, _i, _len, _ref;
-    logs = [];
-    if (this.state.logs.length === 0) {
-      logs.push(Line({
-        className: 'smaller'
-      }, 'nothing to notice...'));
-    } else {
-      _ref = this.state.logs;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        log = _ref[_i];
-        logs.push(Line({
-          className: 'smaller'
-        }, log));
-      }
-    }
-    if (this.state.sync) {
-      state = t('on');
-      syncButtonLabel = t('stop sync');
-    } else {
-      state = t('on');
-      syncButtonLabel = t('stop sync');
-    }
-    this.startSync();
-    return Container({
-      className: 'line'
-    }, Container({
-      className: 'mod w50 left'
-    }, Title({
-      text: 'Cozy Data Proxy'
-    }), Subtitle({
-      text: 'Parameters'
-    }), InfoLine({
-      label: t('device name'),
-      value: device.deviceName
-    }), InfoLine({
-      label: t('path'),
-      link: {
-        type: 'file'
-      },
-      value: device.path
-    }), InfoLine({
-      label: t('url'),
-      value: device.url
-    }), InfoLine({
-      label: t('Sync state'),
-      value: state
-    }), Subtitle({
-      text: 'Actions'
-    }), Line(null, Button({
-      className: 'left action',
-      onClick: this.onSyncClicked,
-      text: syncButtonLabel
-    })), Line(null, Button({
-      className: 'left',
-      onClick: this.onResyncClicked,
-      text: t('resync all')
-    })), Line(null, Button({
-      className: 'left',
-      onClick: this.clearLogs,
-      text: t('clear logs')
-    })), Subtitle({
-      text: 'Danger Zone'
-    }), Line(null, Button({
-      className: 'left',
-      onClick: this.onDeleteFilesClicked,
-      text: t('delete files')
-    })), Line(null, Button({
-      className: 'left',
-      onClick: this.onDeleteConfigurationClicked,
-      text: t('delete configuration')
-    }))), Container({
-      className: 'mod w50 left'
-    }, Subtitle({
-      text: 'Logs'
-    }), logs));
-  },
-  startSync: function() {},
-  clearLogs: function() {
-    return this.setState({
-      logs: []
-    });
-  },
-  onDeleteFilesClicked: function() {
-    var del;
-    del = require('del');
-    return del("" + device.path + "/*", {
-      force: true
-    }, function(err) {
-      if (err) {
-        console.log(err);
-      }
-      return alert(t('All files were successfully deleted.'));
-    });
-  },
-  onDeleteConfigurationClicked: function() {
-    var config;
-    config = require('./backend/config');
-    config.removeRemoteCozy(device.deviceName);
-    config.saveConfig();
-    alert(t('Configuration deleted.'));
-    return renderState('INTRO');
-  },
-  onResyncClicked: function() {
-    var onChange, onComplete, replication, replicator;
-    replication = require('./backend/replication');
-    this.clearLogs();
-    this.displayLog('Replication is starting');
-    onChange = (function(_this) {
-      return function(change) {
-        return _this.displayLog("" + change.docs_written + " elements replicated");
-      };
-    })(this);
-    onComplete = (function(_this) {
-      return function() {
-        return _this.displayLog('Replication is finished.');
-      };
-    })(this);
-    replicator = replication.runReplication({
-      fromRemote: true,
-      toRemote: false,
-      continuous: false,
-      rebuildFs: true,
-      fetchBinary: true
-    });
-    return replicator.on('change', onChange);
-  },
-  displayLog: function(log) {
-    var logs, moment;
-    logs = this.state.logs;
-    moment = require('moment');
-    logs.push(moment().format('HH:MM:SS ') + log);
-    return this.setState({
-      logs: logs
-    });
-  },
-  onResyncClicked: function() {
-    var binary, filesystem, onBinaryDownloaded, onChange, onComplete, onDirectoryCreated, replication, replicator;
-    replication = require('./backend/replication');
-    filesystem = require('./backend/filesystem');
-    binary = require('./backend/binary');
-    this.clearLogs();
-    this.displayLog('Replication is starting');
-    onChange = (function(_this) {
-      return function(change) {
-        return _this.displayLog("" + change.docs_written + " elements replicated");
-      };
-    })(this);
-    onComplete = (function(_this) {
-      return function() {
-        return _this.displayLog('Replication is finished.');
-      };
-    })(this);
-    onBinaryDownloaded = (function(_this) {
-      return function(binaryPath) {
-        return _this.displayLog("File " + binaryPath + " downloaded");
-      };
-    })(this);
-    onDirectoryCreated = (function(_this) {
-      return function(dirPath) {
-        return _this.displayLog("Folder " + dirPath + " created");
-      };
-    })(this);
-    replicator = replication.runReplication({
-      fromRemote: true,
-      toRemote: false,
-      continuous: false,
-      rebuildFs: true,
-      fetchBinary: true
-    });
-    replicator.on('change', onChange);
-    replicator.on('complete', onComplete);
-    binary.infoPublisher.on('binaryDownloaded', onBinaryDownloaded);
-    return filesystem.infoPublisher.on('directoryCreated', onDirectoryCreated);
-  }
-});
-;var en;
-
-en = {
-  'cozy files configuration 1 on 1': 'Configure your device (1/2)',
-  'cozy files configuration 2 on 2': 'Register your device (2/2)',
-  'directory to synchronize your data': 'Path of the folder where you will see your cozy files:',
-  'your device name': 'The name used to sign up your device to your Cozy:',
-  'your remote url': 'The web URL of your Cozy',
-  'your remote password': 'The password you use to connect to your Cozy:',
-  'go back to previous step': '< Previous step',
-  'save your device information and go to step 2': 'Save then go to next step >',
-  'register device and synchronize': 'Register then go to next step >',
-  'start configuring your device': 'Start to configure your device and sync your files',
-  'welcome to the cozy data proxy': 'Welcome to the Cozy Data Proxy, the module that syncs your computer with your Cozy!',
-  'path': 'Path',
-  'url': 'URL',
-  'resync all': 'Resync All',
-  'delete configuration': 'Delete configuration',
-  'delete configuration and files': 'Delete configuration and files'
-};
-;var router;
-
-router = React.createClass({
-  render: function() {
-    return div({
-      className: "router"
-    }, "Hello, I am a router.");
-  }
-});
-;var a, button, div, h1, h2, img, input, label, p, renderState, span, _ref;
-
-_ref = React.DOM, div = _ref.div, p = _ref.p, img = _ref.img, span = _ref.span, a = _ref.a, label = _ref.label, input = _ref.input, h1 = _ref.h1, h2 = _ref.h2, button = _ref.button;
+;var renderState;
 
 renderState = function(state) {
   var currentComponent;
