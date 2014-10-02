@@ -73,6 +73,20 @@ removeRemote = (args) ->
     getPassword unregister
 
 
+displayDatabase = ->
+    db = require('./backend/db').db
+    db.allDocs include_docs: true, (err, results) ->
+        results.rows.map (row) ->
+            console.log row.doc
+
+displayQuery = (query) ->
+    db = require('./backend/db').db
+    log.info "Query: #{query}"
+    db.query query, (err, results) ->
+        results.rows.map (row) ->
+            console.log "key: #{row.key}"
+            console.log "value #{JSON.stringify row.value}"
+
 displayConfig = ->
     console.log JSON.stringify config.config, null, 2
 
@@ -189,6 +203,16 @@ program
             filesystem.createDirectoryContentDoc dirPath, ->
         else
             filesystem.createDirectoryDoc dirPath, ->
+
+program
+    .command('display-database')
+    .description('Display database content')
+    .action displayDatabase
+
+program
+    .command('display-query <query>')
+    .description('Display database query result')
+    .action displayQuery
 
 program
     .command('display-config')
