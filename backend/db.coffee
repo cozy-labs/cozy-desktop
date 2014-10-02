@@ -20,10 +20,10 @@ module.exports =
 
     addFilter: (docType, callback) ->
         id = "_design/#{docType.toLowerCase()}"
-        map = """
+        all = """
             function (doc) {
                 if (doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
-                    return emit(doc._id, doc);
+                    emit(doc._id, doc);
                 }
             }
         """
@@ -32,7 +32,19 @@ module.exports =
             _id: id
             views:
                 all:
-                    map: map
+                    map: all
+
+        if docType in ['file', 'folder', 'File', 'Folder']
+            byFullPath = """
+                function (doc) {
+                    if (doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
+                        emit(doc.path + '/' + doc.name, doc);
+                    }
+                }
+            """
+
+            newDesignDoc.views.byFullPath =
+                map: byFullPath
 
         checkCreation = (err, res) ->
             if err?
