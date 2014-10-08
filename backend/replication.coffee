@@ -143,10 +143,8 @@ module.exports =
             , 3000
 
         onComplete = (info) ->
-            #log.info 'Replication is complete'
             log.info 'Replication is complete'
             if fromRemote and not toRemote
-                #log.info 'Applying changes on the filesystem'
                 log.info 'Applying changes on the filesystem'
                 applyChanges (err) ->
                     callback err if callback?

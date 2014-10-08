@@ -24,7 +24,7 @@ module.exports =
                 callback err
             else
                 doc.path = finalPath
-                pouch.db.put callback
+                pouch.db.put doc callback
 
         # Move file in the filesystem
         fs.rename doc.path, finalPath, savePathInBinary
@@ -130,8 +130,7 @@ module.exports =
             if err then throw new Error
             docs = result['rows']
             docs = docs.filter filterFileWithBinary
-            async.eachSeries docs, retrieveFile, ->
-                callback()
+            async.eachSeries docs, retrieveFile, callback
 
         getFileMetadatas = (err) ->
             if err then throw new Error err

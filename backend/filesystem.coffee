@@ -366,6 +366,9 @@ module.exports =
 
         # New file detected
         .on 'add', (filePath) =>
+            console.log 'add'
+            console.log filesBeingCopied
+            console.log @watchingLocked
             if not @watchingLocked and filePath not in filesBeingCopied
                 log.info "File added: #{filePath}"
                 fileIsCopied filePath, =>
@@ -381,6 +384,9 @@ module.exports =
 
         # File update detected
         .on 'change', (filePath) =>
+            console.log 'change'
+            console.log filesBeingCopied
+            console.log @watchingLocked
             if not @watchingLocked and filePath not in filesBeingCopied
                 log.info "File changed: #{filePath}"
                 fileIsCopied filePath, =>
