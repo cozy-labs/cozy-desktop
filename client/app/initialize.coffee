@@ -15,7 +15,8 @@ renderState = (state) ->
         else
             currentComponent = Intro()
 
-    React.renderComponent currentComponent , document.body
+    React.renderComponent currentComponent, document.body
+    $("#folder-input").attr('nwdirectory', '') if state is 'STEP1'
 
 
 # Waits for the DOM to be ready

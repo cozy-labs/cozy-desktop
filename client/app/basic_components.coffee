@@ -56,6 +56,7 @@ Field = React.createClass
                 defaultValue: @props.defaultValue
                 onChange: @onChange
                 placeholder: @props.placeholder
+                id: @props.inputId
 
             p null, @state.error if @state.error
 

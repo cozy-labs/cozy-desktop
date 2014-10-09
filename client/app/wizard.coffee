@@ -39,9 +39,10 @@ ConfigFormStepOne = React.createClass
                 label: t 'directory to synchronize your data'
                 fieldClass: 'w500p'
                 inputRef: 'path'
+                type: 'file'
                 defaultValue: @props.path
                 ref: 'devicePathField'
-                placeholder: '/home/john/mycozyfolder'
+                inputId: 'folder-input'
             Line null,
                 Button
                     className: 'right'
