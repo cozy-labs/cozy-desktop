@@ -1,5 +1,5 @@
 en =
-    'cozy files configuration 1 on 1': 'Configure your device (1/2)'
+    'cozy files configuration 1 on 2': 'Configure your device (1/2)'
     'cozy files configuration 2 on 2': 'Register your device (2/2)'
     'directory to synchronize your data': 'Path of the folder where you will see your cozy files:'
     'your device name': 'The name used to sign up your device to your Cozy:'
