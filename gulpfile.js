@@ -34,7 +34,7 @@ gulp.task('leveldown', shell.task([
   'cd ' + paths.leveldown + ' && nw-gyp build'
 ]));
 
-gulp.task('builder', function() {
+gulp.task('builder', ['scripts', 'leveldown'], function() {
   var NwBuilder = require('node-webkit-builder');
   var nw = new NwBuilder({
       files: paths.all,
