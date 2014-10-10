@@ -20,6 +20,27 @@ remoteConfig = config.getConfig()
 
 module.exports =
 
+    # Changes is the queue of operations, it contains
+    # files that are being downloaded, and files to upload.
+    changes: async.queue (task, callback) ->
+        deviceName ?= config.getDeviceName()
+
+        switch task.operation
+            when task.operation is 'rebuild'
+                if task.file?
+                    @buildTree task.file, callback
+                else
+                    @buildTree null, callback
+            when task.operation is 'get'
+                if task.file?
+                    binary.fetchOne deviceName, task.file, callback
+                else
+                    binary.fetchAll deviceName, callback
+            when task.operation is 'put'
+                if task.file?
+                    @createFileDoc task.file, callback
+    , 1
+
     watchingLocked: false
 
     infoPublisher: new events.EventEmitter
@@ -96,8 +117,11 @@ module.exports =
             async.eachSeries docs, @touchFileFromDoc, callback
 
         getFiles = (err) =>
-            if err then throw new Error err
-            pouch.db.query 'file/all', makeFiles
+            if err
+                callback err
+            else
+                #pouch.db.query 'file/all', makeFiles
+                pouch.allFiles false, makeFiles
 
         createFileFilters = (err) =>
             if err then throw new Error err
@@ -105,7 +129,7 @@ module.exports =
                 if err
                     callback err
                 else
-                   pouch.addFilter 'binary', getFiles
+                    pouch.addFilter 'binary', getFiles
 
         makeDirectories =  (err, result) =>
             if err then callback err
@@ -115,7 +139,9 @@ module.exports =
         getFolders = (err) =>
             if err
                 callback err
-            pouch.db.query 'folder/all', makeDirectories
+            else
+                #pouch.db.query 'folder/all', makeDirectories
+                pouch.allFolders false, makeDirectories
 
         createFolderFilter = () ->
             pouch.addFilter 'folder', getFolders
@@ -146,7 +172,7 @@ module.exports =
                 if stats.isDirectory()
                     @createDirectoryContentDoc filePath
                 else if stats.isFile()
-                    @createFileDoc filePath
+                    @changes.push { operation: 'put', file: filePath }, ->
 
         .nodeify callback
 
@@ -172,7 +198,8 @@ module.exports =
             return newDoc
 
         checkDirectoryExistence = (newDoc) ->
-            pouch.db.query 'folder/all', (err, existingDocs) ->
+            #pouch.db.query 'folder/all', (err, existingDocs) ->
+            pouch.allFolders false, (err, existingDocs) ->
                 if err and err.status isnt 404
                     callback err
                 else
@@ -236,10 +263,11 @@ module.exports =
             binary.saveLocation filePaths.absolute
                                 , newDoc.binary.file.id
                                 , newDoc.binary.file.rev
-                                , (err, res) ->
+                                , (err, doc) ->
                 if err
                     callback err
                 else
+                    newDoc.binary.file.checksum = doc.checksum
                     putFileDocument newDoc
 
 
@@ -278,7 +306,7 @@ module.exports =
                     uploadBinary newDoc, binaryDoc
 
         checkFileExistence = (newDoc) ->
-            pouch.db.query 'file/all', (err, existingDocs) ->
+            pouch.allFiles false, (err, existingDocs) ->
                 if err and err.status isnt 404
                     callback err
                 else
@@ -369,7 +397,7 @@ module.exports =
             if not @watchingLocked and filePath not in filesBeingCopied
                 log.info "File added: #{filePath}"
                 fileIsCopied filePath, =>
-                    @createFileDoc filePath, ->
+                    @changes.push { operation: 'put', file: filePath }, ->
 
         # New directory detected
         .on 'addDir', (dirPath) =>
@@ -384,7 +412,7 @@ module.exports =
             if not @watchingLocked and filePath not in filesBeingCopied
                 log.info "File changed: #{filePath}"
                 fileIsCopied filePath, =>
-                    @createFileDoc filePath, ->
+                    @changes.push { operation: 'put', file: filePath }, ->
 
         .on 'error', (err) ->
             log.error 'An error occured while watching changes:'

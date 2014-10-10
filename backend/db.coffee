@@ -5,7 +5,6 @@ log = require('printit')
 
 config = require './config'
 
-# Self-promisification
 db = new PouchDB(config.dbPath)
 
 # Listener memory leak test
@@ -17,6 +16,39 @@ module.exports =
 
     db: db
 
+    files:
+        rows: []
+
+    allFiles: (forceQuery, callback) ->
+        if forceQuery or @files.rows.length is 0
+            db.query 'file/all', (err, res) ->
+                @files = res or { rows: [] }
+                callback err, res
+        else
+            callback null, @files
+
+    folders:
+        rows: []
+
+    allFolders: (forceQuery, callback) ->
+        if forceQuery or @folders.rows.length is 0
+            db.query 'folder/all', (err, res) ->
+                @folders = res or { rows: [] }
+                callback err, res
+        else
+            console.log 'yay'
+            callback null, @folders
+
+    binaries:
+        rows: []
+
+    allBinaries: (forceQuery, callback) ->
+        if forceQuery or @binaries.rows.length is 0
+            db.query 'binary/all', (err, res) ->
+                @binaries = res or { rows: [] }
+                callback err, res
+        else
+            callback null, @binaries
 
     addFilter: (docType, callback) ->
         id = "_design/#{docType.toLowerCase()}"
@@ -34,7 +66,7 @@ module.exports =
                 all:
                     map: all
 
-        if docType in ['file', 'folder', 'File', 'Folder']
+        if docType in ['file', 'folder', 'binary', 'File', 'Folder', 'Binary']
             byFullPath = """
                 function (doc) {
                     if (doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {

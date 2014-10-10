@@ -106,9 +106,9 @@ module.exports =
 
             # Fetch binaries Or rebuild the filesystem directory tree only
             if fetchBinary
-                binary.fetchAll deviceName, unlockFileSystemAndReturn
+                filesystem.changes.push { operation: 'get' }, unlockFileSystemAndReturn
             else
-                filesystem.buildTree null, unlockFileSystemAndReturn
+                filesystem.changes.push { operation: 'rebuild' }, unlockFileSystemAndReturn
 
         onChange = (info) =>
             if info.change? and info.change.docs_written > 0
