@@ -20,6 +20,10 @@ remoteConfig = config.getConfig()
 
 module.exports =
 
+    # Changes is the queue of operations, it contains
+    # files that are being downloaded, and files to upload.
+    changes: []
+
     watchingLocked: false
 
     infoPublisher: new events.EventEmitter
@@ -96,8 +100,11 @@ module.exports =
             async.eachSeries docs, @touchFileFromDoc, callback
 
         getFiles = (err) =>
-            if err then throw new Error err
-            pouch.db.query 'file/all', makeFiles
+            if err
+                callback err
+            else
+                #pouch.db.query 'file/all', makeFiles
+                pouch.allFiles false, makeFiles
 
         createFileFilters = (err) =>
             if err then throw new Error err
@@ -105,7 +112,7 @@ module.exports =
                 if err
                     callback err
                 else
-                   pouch.addFilter 'binary', getFiles
+                    pouch.addFilter 'binary', getFiles
 
         makeDirectories =  (err, result) =>
             if err then callback err
@@ -115,7 +122,9 @@ module.exports =
         getFolders = (err) =>
             if err
                 callback err
-            pouch.db.query 'folder/all', makeDirectories
+            else
+                #pouch.db.query 'folder/all', makeDirectories
+                pouch.allFolders false, makeDirectories
 
         createFolderFilter = () ->
             pouch.addFilter 'folder', getFolders
@@ -172,7 +181,8 @@ module.exports =
             return newDoc
 
         checkDirectoryExistence = (newDoc) ->
-            pouch.db.query 'folder/all', (err, existingDocs) ->
+            #pouch.db.query 'folder/all', (err, existingDocs) ->
+            pouch.allFolders false, (err, existingDocs) ->
                 if err and err.status isnt 404
                     callback err
                 else
@@ -236,10 +246,11 @@ module.exports =
             binary.saveLocation filePaths.absolute
                                 , newDoc.binary.file.id
                                 , newDoc.binary.file.rev
-                                , (err, res) ->
+                                , (err, doc) ->
                 if err
                     callback err
                 else
+                    newDoc.binary.file.checksum = doc.checksum
                     putFileDocument newDoc
 
 
@@ -278,7 +289,7 @@ module.exports =
                     uploadBinary newDoc, binaryDoc
 
         checkFileExistence = (newDoc) ->
-            pouch.db.query 'file/all', (err, existingDocs) ->
+            pouch.allFiles false, (err, existingDocs) ->
                 if err and err.status isnt 404
                     callback err
                 else
@@ -366,9 +377,6 @@ module.exports =
 
         # New file detected
         .on 'add', (filePath) =>
-            console.log 'add'
-            console.log filesBeingCopied
-            console.log @watchingLocked
             if not @watchingLocked and filePath not in filesBeingCopied
                 log.info "File added: #{filePath}"
                 fileIsCopied filePath, =>
@@ -384,9 +392,6 @@ module.exports =
 
         # File update detected
         .on 'change', (filePath) =>
-            console.log 'change'
-            console.log filesBeingCopied
-            console.log @watchingLocked
             if not @watchingLocked and filePath not in filesBeingCopied
                 log.info "File changed: #{filePath}"
                 fileIsCopied filePath, =>

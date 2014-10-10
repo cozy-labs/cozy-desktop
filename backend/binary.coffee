@@ -2,6 +2,7 @@ fs         = require 'fs'
 path       = require 'path'
 request    = require 'request-json-light'
 uuid       = require 'node-uuid'
+crypto     = require 'crypto'
 log        = require('printit')
              prefix: 'Data Proxy | binary'
 
@@ -15,6 +16,17 @@ remoteConfig = config.getConfig()
 
 module.exports =
 
+    checksum: (filePath, callback) ->
+        fs.readFile filePath, (err, data) ->
+            if err
+                callback err
+            else
+                checksum = crypto
+                           .createHash('sha1')
+                           .update(data)
+                           .digest('hex')
+                callback null, checksum
+
     infoPublisher: new events.EventEmitter()
 
     moveFromDoc: (doc, finalPath, callback) ->
@@ -24,7 +36,7 @@ module.exports =
                 callback err
             else
                 doc.path = finalPath
-                pouch.db.put doc callback
+                pouch.db.put doc, callback
 
         # Move file in the filesystem
         fs.rename doc.path, finalPath, savePathInBinary
@@ -95,13 +107,20 @@ module.exports =
 
 
     saveLocation: (filePath, id, rev, callback) ->
-        createDoc = (err) ->
-            pouch.db.put
-                _id: id
-                _rev: rev
-                docType: 'Binary'
-                path: filePath
-            , callback
+        createDoc = (err) =>
+            @checksum filePath, (err, checksum) ->
+                document =
+                    _id: id
+                    _rev: rev
+                    docType: 'Binary'
+                    path: filePath
+                    checksum: checksum
+
+                pouch.db.put document, (err, res) ->
+                    if err
+                        callback err
+                    else
+                        callback null, document
 
         removeDoc = (err, doc) ->
             if err and err.status isnt 404
@@ -109,12 +128,13 @@ module.exports =
             else if err and err.status is 404
                 createDoc()
             else
-                pouch.db.remove doc, createDooc
+                pouch.db.remove doc, createDoc
 
         pouch.db.get id, removeDoc
 
     fetchAll: (deviceName, callback) ->
         deviceName ?= config.getDeviceName()
+        filesystem = require('./filesystem')
 
         @infoPublisher.emit 'fetchAll'
         log.info "Fetching all binaries"
@@ -123,8 +143,7 @@ module.exports =
             return doc.value.binary?
 
         retrieveFile = (doc, cb) =>
-            @fetchFromDoc deviceName, doc.value, ->
-                cb()
+            @fetchFromDoc deviceName, doc.value, cb
 
         retrieveFiles = (err, result) ->
             if err then throw new Error
@@ -134,9 +153,9 @@ module.exports =
 
         getFileMetadatas = (err) ->
             if err then throw new Error err
-            pouch.db.query 'file/all', retrieveFiles
+            #pouch.db.query 'file/all', retrieveFiles
+            pouch.allFiles false, retrieveFiles
 
-        filesystem = require('./filesystem')
         filesystem.buildTree null, getFileMetadatas
 
 
@@ -158,7 +177,8 @@ module.exports =
             if err
                 callback err
             else
-                pouch.db.query 'file/all', getCurrentFile
+                #pouch.db.query 'file/all', getCurrentFile
+                pouch.allFiles false, getCurrentFile
 
         filesystem = require('./filesystem')
         filesystem.buildTree filePath, getFiles
@@ -171,20 +191,22 @@ module.exports =
         relativePath = path.relative remoteConfig.path, filePath
 
         # Change modification dates on file system.
-        changeUtimes = (err) ->
-            if err then throw new Error err
-            creationDate = new Date doc.creationDate
-            lastModification = new Date doc.lastModification
-            fs.utimes binaryPath, creationDate, lastModification, callback
+        changeUtimes = (err, res) ->
+            if err
+                callback err
+            else
+                creationDate = new Date doc.creationDate
+                lastModification = new Date doc.lastModification
+                fs.utimes binaryPath, creationDate, lastModification, callback
 
         # save Binary path in a binary document.
         saveBinaryPath = (err, res) =>
             if err
                 callback err
             if res
-                log.info "Binary downloaded: #{relativePath}"
+                log.info "Binary downloaded: #{filePath}"
                 @infoPublisher.emit 'binaryDownloaded', binaryPath
-            if 'binary' in doc
+            if doc.binary?
                 id = doc.binary.file.id
                 rev = doc.binary.file.rev
 

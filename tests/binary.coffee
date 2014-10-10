@@ -19,5 +19,4 @@ describe "Binary Tests", ->
         url: 'http://localhost:9104/'
 
     it "When I move a binary from a DB doc", (done) ->
-        
 
