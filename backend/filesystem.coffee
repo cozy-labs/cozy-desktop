@@ -22,7 +22,24 @@ module.exports =
 
     # Changes is the queue of operations, it contains
     # files that are being downloaded, and files to upload.
-    changes: []
+    changes: async.queue (task, callback) ->
+        deviceName ?= config.getDeviceName()
+
+        switch task.operation
+            when task.operation is 'rebuild'
+                if task.file?
+                    @buildTree task.file, callback
+                else
+                    @buildTree null, callback
+            when task.operation is 'get'
+                if task.file?
+                    binary.fetchOne deviceName, task.file, callback
+                else
+                    binary.fetchAll deviceName, callback
+            when task.operation is 'put'
+                if task.file?
+                    @createFileDoc task.file, callback
+    , 1
 
     watchingLocked: false
 
@@ -155,7 +172,7 @@ module.exports =
                 if stats.isDirectory()
                     @createDirectoryContentDoc filePath
                 else if stats.isFile()
-                    @createFileDoc filePath
+                    @changes.push { operation: 'put', file: filePath }, ->
 
         .nodeify callback
 
@@ -380,7 +397,7 @@ module.exports =
             if not @watchingLocked and filePath not in filesBeingCopied
                 log.info "File added: #{filePath}"
                 fileIsCopied filePath, =>
-                    @createFileDoc filePath, ->
+                    @changes.push { operation: 'put', file: filePath }, ->
 
         # New directory detected
         .on 'addDir', (dirPath) =>
@@ -395,7 +412,7 @@ module.exports =
             if not @watchingLocked and filePath not in filesBeingCopied
                 log.info "File changed: #{filePath}"
                 fileIsCopied filePath, =>
-                    @createFileDoc filePath, ->
+                    @changes.push { operation: 'put', file: filePath }, ->
 
         .on 'error', (err) ->
             log.error 'An error occured while watching changes:'
