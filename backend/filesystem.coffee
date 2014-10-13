@@ -26,19 +26,20 @@ module.exports =
         deviceName = config.getDeviceName()
 
         switch task.operation
-            when task.operation is 'rebuild'
+            when 'put'
                 if task.file?
-                    @buildTree task.file, callback
-                else
-                    @buildTree null, callback
-            when task.operation is 'get'
+                    @createFileDoc task.file, callback
+            when 'get'
                 if task.file?
                     binary.fetchOne deviceName, task.file, callback
                 else
                     binary.fetchAll deviceName, callback
-            when task.operation is 'put'
+            else
+                # rebuild
                 if task.file?
-                    @createFileDoc task.file, callback
+                    @buildTree task.file, callback
+                else
+                    @buildTree null, callback
     , 1
 
     watchingLocked: false
