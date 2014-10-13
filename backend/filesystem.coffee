@@ -23,7 +23,7 @@ module.exports =
     # Changes is the queue of operations, it contains
     # files that are being downloaded, and files to upload.
     changes: async.queue (task, callback) ->
-        deviceName ?= config.getDeviceName()
+        deviceName = config.getDeviceName()
 
         switch task.operation
             when task.operation is 'rebuild'
