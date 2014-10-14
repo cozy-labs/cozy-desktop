@@ -1,8 +1,6 @@
 var gulp = require('gulp');
 var coffee = require('gulp-coffee');
 var shell = require('gulp-shell');
-var zip = require('gulp-zip');
-var concat = require('gulp-concat');
 var del = require('del');
 
 var nwVersion = '0.8.6';
