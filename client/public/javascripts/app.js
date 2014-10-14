@@ -69,7 +69,8 @@ Field = React.createClass({
       ref: this.props.inputRef,
       defaultValue: this.props.defaultValue,
       onChange: this.onChange,
-      placeholder: this.props.placeholder
+      placeholder: this.props.placeholder,
+      id: this.props.inputId
     }), this.state.error ? p(null, this.state.error) : void 0);
   },
   getValue: function() {
@@ -386,7 +387,7 @@ StateView = React.createClass({
 ;var en;
 
 en = {
-  'cozy files configuration 1 on 1': 'Configure your device (1/2)',
+  'cozy files configuration 1 on 2': 'Configure your device (1/2)',
   'cozy files configuration 2 on 2': 'Register your device (2/2)',
   'directory to synchronize your data': 'Path of the folder where you will see your cozy files:',
   'your device name': 'The name used to sign up your device to your Cozy:',
@@ -458,14 +459,22 @@ ConfigFormStepOne = React.createClass({
       label: t('directory to synchronize your data'),
       fieldClass: 'w500p',
       inputRef: 'path',
+      type: 'file',
       defaultValue: this.props.path,
       ref: 'devicePathField',
-      placeholder: '/home/john/mycozyfolder'
+      inputId: 'folder-input',
+      onChange: this.onPathChanged
     }), Line(null, Button({
       className: 'right',
       onClick: this.onSaveButtonClicked,
       text: t('save your device information and go to step 2')
     })));
+  },
+  onPathChanged: function(event, files, label) {
+    var folder;
+    folder = this.value.replace(/\\/g, '/').replace(/.*\//, '');
+    $("#input-form").val(folder);
+    return alert(folder);
   },
   onSaveButtonClicked: function() {
     var config, fieldName, fieldPath, isValid;
@@ -577,7 +586,10 @@ renderState = function(state) {
     default:
       currentComponent = Intro();
   }
-  return React.renderComponent(currentComponent, document.body);
+  React.renderComponent(currentComponent, document.body);
+  if (state === 'STEP1') {
+    return $("#folder-input").attr('nwdirectory', '');
+  }
 };
 
 window.onload = function() {

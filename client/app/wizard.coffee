@@ -43,11 +43,17 @@ ConfigFormStepOne = React.createClass
                 defaultValue: @props.path
                 ref: 'devicePathField'
                 inputId: 'folder-input'
+                onChange: @onPathChanged
             Line null,
                 Button
                     className: 'right'
                     onClick: @onSaveButtonClicked
                     text: t 'save your device information and go to step 2'
+
+    onPathChanged: (event, files, label) ->
+        folder = @value.replace(/\\/g, '/').replace(/.*\//, '')
+        $("#input-form").val folder
+        alert folder
 
     onSaveButtonClicked: ->
         fieldName = @refs.deviceNameField
