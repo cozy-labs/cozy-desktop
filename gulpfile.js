@@ -34,6 +34,11 @@ gulp.task('leveldown', shell.task([
   'cd ' + paths.leveldown + ' && nw-gyp build'
 ]));
 
+gulp.task('leveldown-classic', shell.task([
+  'rm -rf ./node_modules/pouchdb',
+  'npm install'
+]));
+
 gulp.task('builder', ['scripts', 'leveldown'], function() {
   var NwBuilder = require('node-webkit-builder');
   var nw = new NwBuilder({
