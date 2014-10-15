@@ -23,3 +23,11 @@ en =
     'clear logs': 'Clear logs'
     'delete files': 'Delete files'
     'start sync': 'Start sync'
+    'value is missing': 'A value is required for this field.'
+    'first step text': """
+Prior to register your computer to your Cozy, we need information about it.
+"""
+    'second step text': """
+It's time to register your computer to your Cozy.
+(password won't be stored).
+"""

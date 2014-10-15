@@ -3,6 +3,5 @@
 
 isValidForm = (fields) ->
     for field in fields
-        unless field.isValid()
-            return false
-    true
+        return false unless field.isValid()
+    return true

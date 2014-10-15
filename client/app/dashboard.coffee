@@ -11,6 +11,7 @@ StateView = React.createClass
         else
             i = 0
             logs.push Line key: "log-#{i++}", className: 'smaller', log for log in @state.logs
+            logs.reverse()
 
         if @state.sync
             state = t 'on'
@@ -20,8 +21,8 @@ StateView = React.createClass
             syncButtonLabel = t 'start sync'
 
         Container className: 'line',
+            Title text: 'Cozy Data Proxy'
             Container className: 'mod w50 left',
-                Title text: 'Cozy Data Proxy'
                 Subtitle text: 'Parameters'
                 InfoLine label: t('device name'), value: device.deviceName
                 InfoLine
@@ -31,37 +32,36 @@ StateView = React.createClass
                     value: device.path
                 InfoLine label: t('url'), value: device.url
                 InfoLine label: t('sync state'), value: state
+            Container className: 'mod w50 left',
                 Subtitle text: 'Actions'
-                Line null,
+                Line className: 'mts',
                     Button
                         className: 'left action'
                         onClick: @onSyncClicked
                         text: syncButtonLabel
-                Line null,
+                Line className: 'mts',
                     Button
                         className: 'left'
                         onClick: @onResyncClicked
                         text: t 'resync all'
-                Line null,
+                    #Button
+                        #className: 'left'
+                        #onClick: @onDeleteFilesClicked
+                        #text: t 'delete files'
+                Line className: 'mtm',
                     Button
-                        className: 'left'
-                        onClick: @clearLogs
-                        text: t 'clear logs'
-                Subtitle text: 'Danger Zone'
-                Line null,
-                    Button
-                        className: 'left'
-                        onClick: @onDeleteFilesClicked
-                        text: t 'delete files'
-                Line null,
-                    Button
-                        className: 'left'
+                        className: 'smaller'
                         onClick: @onDeleteConfigurationClicked
                         text: t 'delete configuration'
-
-            Container className: 'mod w50 left',
+            Line null
+            Line null,
                 Subtitle text: 'Logs'
                 logs
+                Line null,
+                    Button
+                        className: 'left smaller'
+                        onClick: @clearLogs
+                        text: t 'clear logs'
 
     onSyncClicked: ->
         if @state.sync
@@ -108,18 +108,18 @@ StateView = React.createClass
     clearLogs: ->
         @setState logs: []
 
+    displayLog: (log) ->
+        logs = @state.logs
+        moment = require 'moment'
+        logs.push moment().format('HH:MM:SS ') + log
+        @setState logs: logs
+
     onDeleteConfigurationClicked: ->
         config = require './backend/config'
         config.removeRemoteCozy device.deviceName
         config.saveConfig()
         alert t 'Configuration deleted.'
         renderState 'INTRO'
-
-    displayLog: (log) ->
-        logs = @state.logs
-        moment = require 'moment'
-        logs.push moment().format('HH:MM:SS ') + log
-        @setState logs: logs
 
     onDeleteFilesClicked: ->
         del = require 'del'
