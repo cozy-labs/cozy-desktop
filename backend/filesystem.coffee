@@ -322,6 +322,22 @@ module.exports =
                 binary.createEmptyRemoteDoc (err, binaryDoc) ->
                     uploadBinary newDoc, binaryDoc
 
+        checkBinaryExistence = (newDoc) ->
+            # Check if the binary doc exists, using its checksum
+            # It would mean that binary is already uploaded
+            binary.docAlreadyExists filePaths.absolute, (err, doc) ->
+                if err
+                    callback err
+                else if doc
+                    # Binary document exists
+                    newDoc.binary =
+                        file:
+                            id: doc._id
+                            rev: doc._rev
+                    saveBinaryDocument newDoc
+                else
+                    populateBinaryInformation newDoc
+
         checkFileExistence = (newDoc) ->
 
             # Get the existing file (if exists) to prefill
@@ -339,7 +355,7 @@ module.exports =
                                 # File already exists
                                 newDoc = updateFileInformation existingDoc, newDoc
 
-                    populateBinaryInformation newDoc
+                    checkBinaryExistence newDoc
 
         updateFileStats = (newDoc) ->
 
