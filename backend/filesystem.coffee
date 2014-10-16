@@ -28,12 +28,15 @@ module.exports =
         switch task.operation
             when 'put'
                 if task.file?
-                    @createFileDoc task.file, callback
+                    module.exports.createFileDoc task.file, callback
             when 'get'
                 if task.file?
                     binary.fetchOne deviceName, task.file, callback
                 else
                     binary.fetchAll deviceName, callback
+            when 'delete'
+                if task.file?
+                    module.exports.deleteDoc task.file, callback
             else
                 # rebuild
                 if task.file?
@@ -254,6 +257,8 @@ module.exports =
         filePaths = @getPaths filePath
 
         putFileDocument = (newDoc) ->
+
+            # Finally, update local file document
             pouch.db.put newDoc, (err, res) ->
                 if err
                     callback err
@@ -261,6 +266,9 @@ module.exports =
                     callback null, res
 
         saveBinaryDocument = (newDoc) ->
+
+            # Save location and checksum locally to
+            # facilitate further operations
             binary.saveLocation filePaths.absolute
                                 , newDoc.binary.file.id
                                 , newDoc.binary.file.rev
@@ -288,6 +296,8 @@ module.exports =
                     saveBinaryDocument newDoc
 
         updateFileInformation = (existingDoc, newDoc) ->
+
+            # Fullfill document information
             newDoc._id = existingDoc._id
             newDoc._rev = existingDoc._rev
             newDoc.creationDate = existingDoc.creationDate
@@ -300,13 +310,22 @@ module.exports =
 
         populateBinaryInformation = (newDoc) ->
             if newDoc.binary?
+                # Get the ID and the revision of the remote binary document
+                # (since binary documents are not synchronized with the local
+                # pouchDB)
                 binary.getRemoteDoc newDoc.binary.file.id, (err, binaryDoc) ->
                     uploadBinary newDoc, binaryDoc
             else
+                # If binary does not exist remotely yet, we have to
+                # create an empty binary document remotely to have
+                # an ID and a revision
                 binary.createEmptyRemoteDoc (err, binaryDoc) ->
                     uploadBinary newDoc, binaryDoc
 
         checkFileExistence = (newDoc) ->
+
+            # Get the existing file (if exists) to prefill
+            # document with its information
             pouch.allFiles false, (err, existingDocs) ->
                 if err and err.status isnt 404
                     callback err
@@ -323,6 +342,8 @@ module.exports =
                     populateBinaryInformation newDoc
 
         updateFileStats = (newDoc) ->
+
+            # Update size and dates using the value of the FS
             fs.stat filePaths.absolute, (err, stats) ->
                 newDoc.creationDate = stats.mtime
                 newDoc.lastModification = stats.mtime
@@ -346,6 +367,7 @@ module.exports =
                 # Do not throw error
                 callback null
             else
+                # We pass the new document through every local functions
                 createParentDirectory
                     _id: uuid.v4().split('-').join('')
                     docType: 'File'
@@ -356,6 +378,60 @@ module.exports =
                     tags: []
 
         checkFileLocation()
+
+
+    deleteDoc: (filePath, callback) ->
+        filePaths = @getPaths filePath
+
+        removeDoc = (id, rev) ->
+
+            # Remove the document locally
+            # (as in couchDB, it keeps a _deleted version of the doc)
+            pouch.db.remove id, rev, (err, res) ->
+                if err
+                    callback err
+                else
+                    callback null, res
+
+        markAsDeleted = (deletedDoc) ->
+
+            # Use the same pethod as in DS:
+            # https://github.com/cozy/cozy-data-system/blob/master/server/lib/db_remove_helper.coffee#L7
+            emptyDoc =
+                _id: deletedDoc._id
+                _rev: deletedDoc._rev
+                _deleted: true
+                docType: deletedDoc.docType
+
+            # Since we use the same function to delete a file and a folder
+            # we have to check if the binary key exists
+            if deletedDoc.binary?
+                emptyDoc.binary = deletedDoc.binary
+
+            pouch.db.put emptyDoc, (err, res) ->
+                if err
+                    callback err
+                else
+                    removeDoc res.id, res.rev
+
+        getDoc = (deletedFileName, deletedFilePath) ->
+
+            # We want to search through files and folders
+            pouch.db.allDocs { include_docs: true }, (err, existingDocs) ->
+                if err and err.status isnt 404
+                    callback err
+                else
+                    if existingDocs
+                        # Loop through existing documents
+                        for existingDoc in existingDocs.rows
+                            existingDoc = existingDoc.doc
+                            if  existingDoc.name is deletedFileName \
+                            and existingDoc.path is deletedFilePath
+                                # Only one of them should show up,
+                                # but delete all of them anyway
+                                markAsDeleted existingDoc
+
+        getDoc filePaths.name, filePaths.parent
 
 
     watchChanges: (continuous, fromNow) ->
@@ -403,10 +479,20 @@ module.exports =
         # New directory detected
         .on 'addDir', (dirPath) =>
             if not @watchingLocked
-                if path isnt remoteConfig.path
+                if dirPath isnt remoteConfig.path
                     #log.info "Directory added: #{dirPath}"
                     log.info "Directory added: #{dirPath}"
                     @createDirectoryDoc dirPath, ->
+
+        # File deletion detected
+        .on 'unlink', (filePath) =>
+            log.info "File deleted: #{filePath}"
+            @changes.push { operation: 'delete', file: filePath }, ->
+
+        # Folder deletion detected
+        .on 'unlinkDir', (dirPath) =>
+            log.info "Folder deleted: #{dirPath}"
+            @changes.push { operation: 'delete', file: dirPath }, ->
 
         # File update detected
         .on 'change', (filePath) =>
