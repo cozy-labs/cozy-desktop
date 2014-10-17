@@ -474,7 +474,7 @@ filesystem =
                             callback()
                         else
                             fileIsCopied filePath, callback
-                , 1000
+                , 2000
 
         # Use chokidar since the standard watch() function from
         # fs module has some issues.

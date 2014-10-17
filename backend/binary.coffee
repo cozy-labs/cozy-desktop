@@ -18,9 +18,8 @@ module.exports =
 
     checksum: (filePath, callback) ->
         stream = fs.createReadStream filePath
-        checksum = crypto
-                   .createHash('sha1')
-                   .setEncoding('hex')
+        checksum = crypto.createHash('sha1')
+        checksum.setEncoding('hex')
 
         stream.on 'end', ->
             checksum.end()
