@@ -17,15 +17,17 @@ remoteConfig = config.getConfig()
 module.exports =
 
     checksum: (filePath, callback) ->
-        fs.readFile filePath, (err, data) ->
-            if err
-                callback err
-            else
-                checksum = crypto
-                           .createHash('sha1')
-                           .update(data)
-                           .digest('hex')
-                callback null, checksum
+        stream = fs.createReadStream filePath
+        checksum = crypto
+                   .createHash('sha1')
+                   .setEncoding('hex')
+
+        stream.on 'end', ->
+            checksum.end()
+            callback null, checksum.read()
+
+        stream.pipe checksum
+
 
     infoPublisher: new events.EventEmitter()
 
@@ -104,6 +106,28 @@ module.exports =
                 callback null, body
 
         client.get "cozy/#{remoteId}", checkErrors
+
+    docAlreadyExists: (filePath, callback) ->
+        # Check if a binary already exists
+        # If so, return local binary DB document
+        # else, return null
+        @checksum filePath, (err, checksum) ->
+            if err
+                callback err
+            else
+                pouch.allBinaries true, (err, existingDocs) ->
+                    if err
+                        callback err
+                    else
+                        if existingDocs
+                            # Loop through existing binaries
+                            for existingDoc in existingDocs.rows
+                                existingDoc = existingDoc.value
+                                if existingDoc.checksum? and existingDoc.checksum is checksum
+                                    return callback null, existingDoc
+                            return callback null, null
+                        else
+                            return callback null, null
 
 
     saveLocation: (filePath, id, rev, callback) ->
