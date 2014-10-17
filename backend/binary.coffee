@@ -17,15 +17,17 @@ remoteConfig = config.getConfig()
 module.exports =
 
     checksum: (filePath, callback) ->
-        fs.readFile filePath, (err, data) ->
-            if err
-                callback err
-            else
-                checksum = crypto
-                           .createHash('sha1')
-                           .update(data)
-                           .digest('hex')
-                callback null, checksum
+        stream = fs.createReadStream filePath
+        checksum = crypto
+                   .createHash('sha1')
+                   .setEncoding('hex')
+
+        stream.on 'end', ->
+            checksum.end()
+            callback null, checksum.read()
+
+        stream.pipe checksum
+
 
     infoPublisher: new events.EventEmitter()
 

@@ -487,7 +487,7 @@ module.exports =
 
         # New file detected
         .on 'add', (filePath) =>
-            if not @watchingLocked and filePath not in filesBeingCopied
+            if not @watchingLocked and not filesBeingCopied[filePath]?
                 log.info "File added: #{filePath}"
                 fileIsCopied filePath, =>
                     @changes.push { operation: 'put', file: filePath }, ->
@@ -512,7 +512,7 @@ module.exports =
 
         # File update detected
         .on 'change', (filePath) =>
-            if not @watchingLocked and filePath not in filesBeingCopied
+            if not @watchingLocked and not filesBeingCopied[filePath]?
                 log.info "File changed: #{filePath}"
                 fileIsCopied filePath, =>
                     @changes.push { operation: 'put', file: filePath }, ->
