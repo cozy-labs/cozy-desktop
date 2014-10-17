@@ -1,8 +1,8 @@
 # [Cozy](http://cozy.io) Data Proxy
 
 The Data Proxy allows to sync the files stored in your Cozy with your laptop
-and/or your desktop. It replicates your files on your hard drive and report
-changes you made on them.
+and/or your desktop. It replicates your files on your hard drive and apply 
+changes you made on them on other synced devices and on your online Cozy.
 
 # Workflow
 
@@ -39,7 +39,6 @@ same private space.  With it, your web apps and your devices can share data
 easily, providing you
 with a new experience. You can install Cozy on your own hardware where no one
 profiles you.
-
 
 
 ## Community
