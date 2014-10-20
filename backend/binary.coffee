@@ -106,27 +106,23 @@ module.exports =
 
         client.get "cozy/#{remoteId}", checkErrors
 
-    docAlreadyExists: (filePath, callback) ->
+    docAlreadyExists: (checksum, callback) ->
         # Check if a binary already exists
         # If so, return local binary DB document
         # else, return null
-        @checksum filePath, (err, checksum) ->
+        pouch.allBinaries true, (err, existingDocs) ->
             if err
                 callback err
             else
-                pouch.allBinaries true, (err, existingDocs) ->
-                    if err
-                        callback err
-                    else
-                        if existingDocs
-                            # Loop through existing binaries
-                            for existingDoc in existingDocs.rows
-                                existingDoc = existingDoc.value
-                                if existingDoc.checksum? and existingDoc.checksum is checksum
-                                    return callback null, existingDoc
-                            return callback null, null
-                        else
-                            return callback null, null
+                if existingDocs
+                    # Loop through existing binaries
+                    for existingDoc in existingDocs.rows
+                        existingDoc = existingDoc.value
+                        if existingDoc.checksum? and existingDoc.checksum is checksum
+                            return callback null, existingDoc
+                    return callback null, null
+                else
+                    return callback null, null
 
 
     saveLocation: (filePath, id, rev, callback) ->

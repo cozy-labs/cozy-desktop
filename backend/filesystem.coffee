@@ -26,9 +26,12 @@ module.exports =
         deviceName = config.getDeviceName()
 
         switch task.operation
+            when 'post'
+                if task.file?
+                    module.exports.createFileDoc task.file, true, callback
             when 'put'
                 if task.file?
-                    module.exports.createFileDoc task.file, callback
+                    module.exports.createFileDoc task.file, false, callback
             when 'get'
                 if task.file?
                     binary.fetchOne deviceName, task.file, callback
@@ -181,7 +184,7 @@ module.exports =
         .nodeify callback
 
 
-    createDirectoryDoc: (dirPath, callback) ->
+    createDirectoryDoc: (dirPath, ignoreExisting, callback) ->
         dirPaths = @getPaths dirPath
 
         putDirectoryDocument = (newDoc) ->
@@ -214,7 +217,11 @@ module.exports =
                             if  existingDoc.name is newDoc.name \
                             and existingDoc.path is newDoc.path
                                 # Directory already exists
-                                newDoc = updateDirectoryInformation existingDoc, newDoc
+                                if ignoreExisting
+                                    return callback null
+                                else
+                                    newDoc = updateDirectoryInformation existingDoc, newDoc
+
 
                     # Create or update directory document
                     putDirectoryDocument newDoc
@@ -227,12 +234,11 @@ module.exports =
                 checkDirectoryExistence newDoc
 
         createParentDirectory = (newDoc) =>
-            @createDirectoryDoc dirPaths.absParent, (err, res) ->
+            @createDirectoryDoc dirPaths.absParent, true, (err, res) ->
                 if err
                     log.error "An error occured at parent directory's creation"
                     callback err
                 else
-                    log.info "Add directory: #{dirPaths.relative}"
                     updateDirectoryStats newDoc
 
         checkDirectoryLocation = () =>
@@ -253,7 +259,7 @@ module.exports =
         checkDirectoryLocation()
 
 
-    createFileDoc: (filePath, callback) ->
+    createFileDoc: (filePath, ignoreExisting, callback) ->
         filePaths = @getPaths filePath
 
         putFileDocument = (newDoc) ->
@@ -322,10 +328,10 @@ module.exports =
                 binary.createEmptyRemoteDoc (err, binaryDoc) ->
                     uploadBinary newDoc, binaryDoc
 
-        checkBinaryExistence = (newDoc) ->
+        checkBinaryExistence = (newDoc, checksum) ->
             # Check if the binary doc exists, using its checksum
             # It would mean that binary is already uploaded
-            binary.docAlreadyExists filePaths.absolute, (err, doc) ->
+            binary.docAlreadyExists checksum, (err, doc) ->
                 if err
                     callback err
                 else if doc
@@ -340,22 +346,27 @@ module.exports =
 
         checkFileExistence = (newDoc) ->
 
-            # Get the existing file (if exists) to prefill
-            # document with its information
-            pouch.allFiles false, (err, existingDocs) ->
-                if err and err.status isnt 404
-                    callback err
-                else
-                    if existingDocs
-                        # Loop through existing files
-                        for existingDoc in existingDocs.rows
-                            existingDoc = existingDoc.value
-                            if  existingDoc.name is newDoc.name \
-                            and existingDoc.path is newDoc.path
-                                # File already exists
-                                newDoc = updateFileInformation existingDoc, newDoc
+            binary.checksum filePaths.absolute, (err, checksum) ->
+                # Get the existing file (if exists) to prefill
+                # document with its information
+                pouch.allFiles false, (err, existingDocs) ->
+                    if err and err.status isnt 404
+                        callback err
+                    else
+                        if existingDocs
+                            # Loop through existing files
+                            for existingDoc in existingDocs.rows
+                                existingDoc = existingDoc.value
+                                if (existingDoc.name is newDoc.name \
+                                and existingDoc.path is newDoc.path)
+                                    if (existingDoc.binary?.file?.checksum? \
+                                    and existingDoc.binary.file.checksum is checksum) \
+                                    and ignoreExisting
+                                        return callback null
+                                    # File already exists
+                                    newDoc = updateFileInformation existingDoc, newDoc
 
-                    checkBinaryExistence newDoc
+                        checkBinaryExistence newDoc, checksum
 
         updateFileStats = (newDoc) ->
 
@@ -368,7 +379,7 @@ module.exports =
                 checkFileExistence newDoc
 
         createParentDirectory = (newDoc) =>
-            @createDirectoryDoc filePaths.absParent, (err, res) ->
+            @createDirectoryDoc filePaths.absParent, true, (err, res) ->
                 if err
                     log.error "An error occured at parent directory's creation"
                     callback err
@@ -490,7 +501,7 @@ module.exports =
             if not @watchingLocked and not filesBeingCopied[filePath]?
                 log.info "File added: #{filePath}"
                 fileIsCopied filePath, =>
-                    @changes.push { operation: 'put', file: filePath }, ->
+                    @changes.push { operation: 'post', file: filePath }, ->
 
         # New directory detected
         .on 'addDir', (dirPath) =>
@@ -498,7 +509,7 @@ module.exports =
                 if dirPath isnt remoteConfig.path
                     #log.info "Directory added: #{dirPath}"
                     log.info "Directory added: #{dirPath}"
-                    @createDirectoryDoc dirPath, ->
+                    @createDirectoryDoc dirPath, true, ->
 
         # File deletion detected
         .on 'unlink', (filePath) =>
