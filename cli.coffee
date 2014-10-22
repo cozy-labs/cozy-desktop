@@ -5,7 +5,7 @@ program     = require 'commander'
 read        = require 'read'
 process     = require 'process'
 log         = require('printit')
-              prefix: 'Data Proxy'
+              prefix: 'Data Proxy '
 
 config      = require './backend/config'
 replication = require './backend/replication'

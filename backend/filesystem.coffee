@@ -7,7 +7,7 @@ uuid     = require 'node-uuid'
 mime     = require 'mime'
 chokidar = require 'chokidar'
 log      = require('printit')
-           prefix: 'Data Proxy | filesystem'
+           prefix: 'Filesystem '
 
 config   = require './config'
 pouch    = require './db'

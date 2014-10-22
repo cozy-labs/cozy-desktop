@@ -4,7 +4,7 @@ request    = require 'request-json-light'
 uuid       = require 'node-uuid'
 crypto     = require 'crypto'
 log        = require('printit')
-             prefix: 'Data Proxy | binary'
+             prefix: 'Binary     '
 
 config     = require './config'
 pouch      = require './db'

@@ -3,7 +3,7 @@ touch      = require 'touch'
 request    = require 'request-json-light'
 urlParser  = require 'url'
 log        = require('printit')
-             prefix: 'Data Proxy | replication'
+             prefix: 'Replication'
 
 pouch      = require './db'
 config     = require './config'
