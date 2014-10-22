@@ -231,8 +231,8 @@ program
     .command("*")
     .description("Display help message for an unknown command.")
     .action ->
-        console.log 'Unknown command, run "cozy-monitor --help"' + \
-                    ' to know the list of available commands.'
+        log.info 'Unknown command, run "cozy-monitor --help"' + \
+                 ' to know the list of available commands.'
 
 program.parse process.argv
 
