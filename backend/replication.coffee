@@ -11,7 +11,6 @@ filesystem = require './filesystem'
 binary     = require './binary'
 
 filters = []
-remoteConfig = config.getConfig()
 
 module.exports =
 
@@ -68,6 +67,9 @@ module.exports =
     treeIsBuilding: false
 
     runReplication: (options, callback) ->
+
+        remoteConfig = config.getConfig()
+
         fromRemote = options.fromRemote
         toRemote = options.toRemote
         continuous = options.continuous or false
@@ -89,7 +91,6 @@ module.exports =
         # Set authentication
         url = urlParser.parse remoteConfig.url
         url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
-        console.log url.auth
 
         # Define action after replication completion
         applyChanges = (callback) ->

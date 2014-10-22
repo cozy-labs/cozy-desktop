@@ -15,10 +15,6 @@ binary   = require './binary'
 async = require 'async'
 events = require 'events'
 
-
-remoteConfig = config.getConfig()
-
-
 changeHandler =  (task, callback) =>
     deviceName = config.getDeviceName()
 
@@ -74,6 +70,7 @@ filesystem =
     infoPublisher: new events.EventEmitter
 
     makeDirectoryFromDoc: (doc, callback) ->
+        remoteConfig = config.getConfig()
         doc = doc.value
         absPath = path.join remoteConfig.path, doc.path, doc.name
         dirPaths = module.exports.getPaths absPath
@@ -95,6 +92,7 @@ filesystem =
 
 
     touchFileFromDoc: (doc, callback) ->
+        remoteConfig = config.getConfig()
         doc = doc.value
         absPath = path.join remoteConfig.path, doc.path, doc.name
         filePaths = module.exports.getPaths absPath
@@ -131,6 +129,8 @@ filesystem =
 
 
     buildTree: (filePath, callback) ->
+        remoteConfig = config.getConfig()
+
         # If filePath argument is set, rebuild FS information for this file only
         if filePath?
             filePaths = @getPaths filePath
@@ -262,6 +262,7 @@ filesystem =
                     updateDirectoryStats newDoc
 
         checkDirectoryLocation = () =>
+            remoteConfig = config.getConfig()
             if not @isInSyncDir(dirPath) or not fs.existsSync(dirPaths.absolute)
                unless dirPath is '' or dirPath is remoteConfig.path
                    log.error "Directory is not located in the
@@ -407,6 +408,7 @@ filesystem =
                     updateFileStats newDoc
 
         checkFileLocation = () =>
+            remoteConfig = config.getConfig()
             if not @isInSyncDir(filePath) or not fs.existsSync(filePaths.absolute)
                unless filePath is '' or filePath is remoteConfig.path
                    log.error "File is not located in the
@@ -482,6 +484,7 @@ filesystem =
 
 
     watchChanges: (continuous, fromNow) ->
+        remoteConfig = config.getConfig()
         fromNow ?= false
         continuous ?= fromNow
 
@@ -554,6 +557,8 @@ filesystem =
 
 
     getPaths: (filePath) ->
+        remoteConfig = config.getConfig()
+
         # Assuming filePath is 'hello/world.html':
         absolute  = path.resolve filePath                      # /home/sync/hello/world.html
         relative  = path.relative remoteConfig.path, absolute  # hello/world.html

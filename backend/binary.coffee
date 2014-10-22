@@ -11,9 +11,6 @@ pouch      = require './db'
 async      = require 'async'
 events     = require 'events'
 
-remoteConfig = config.getConfig()
-
-
 module.exports =
 
     checksum: (filePath, callback) ->
@@ -44,6 +41,7 @@ module.exports =
 
 
     uploadAsAttachment: (remoteId, remoteRev, filePath, callback) ->
+        remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
         relativePath = path.relative remoteConfig.path, filePath
         absPath = path.join remoteConfig.path, filePath
@@ -72,6 +70,7 @@ module.exports =
 
 
     createEmptyRemoteDoc: (callback) ->
+        remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
         data = { docType: 'Binary' }
         newId = uuid.v4().split('-').join('')
@@ -89,6 +88,7 @@ module.exports =
 
 
     getRemoteDoc: (remoteId, callback) ->
+        remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
 
         client = request.newClient remoteConfig.url
@@ -204,6 +204,7 @@ module.exports =
 
 
     fetchFromDoc: (deviceName, doc, callback) ->
+        remoteConfig = config.getConfig()
         deviceName ?= config.getDeviceName()
         filePath = path.join doc.path, doc.name
         binaryPath = path.join remoteConfig.path, filePath
