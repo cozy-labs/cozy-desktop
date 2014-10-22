@@ -4,15 +4,12 @@ request    = require 'request-json-light'
 uuid       = require 'node-uuid'
 crypto     = require 'crypto'
 log        = require('printit')
-             prefix: 'Data Proxy | binary'
+             prefix: 'Binary     '
 
 config     = require './config'
 pouch      = require './db'
 async      = require 'async'
 events     = require 'events'
-
-remoteConfig = config.getConfig()
-
 
 module.exports =
 
@@ -44,6 +41,7 @@ module.exports =
 
 
     uploadAsAttachment: (remoteId, remoteRev, filePath, callback) ->
+        remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
         relativePath = path.relative remoteConfig.path, filePath
         absPath = path.join remoteConfig.path, filePath
@@ -72,6 +70,7 @@ module.exports =
 
 
     createEmptyRemoteDoc: (callback) ->
+        remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
         data = { docType: 'Binary' }
         newId = uuid.v4().split('-').join('')
@@ -89,6 +88,7 @@ module.exports =
 
 
     getRemoteDoc: (remoteId, callback) ->
+        remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
 
         client = request.newClient remoteConfig.url
@@ -106,27 +106,23 @@ module.exports =
 
         client.get "cozy/#{remoteId}", checkErrors
 
-    docAlreadyExists: (filePath, callback) ->
+    docAlreadyExists: (checksum, callback) ->
         # Check if a binary already exists
         # If so, return local binary DB document
         # else, return null
-        @checksum filePath, (err, checksum) ->
+        pouch.allBinaries true, (err, existingDocs) ->
             if err
                 callback err
             else
-                pouch.allBinaries true, (err, existingDocs) ->
-                    if err
-                        callback err
-                    else
-                        if existingDocs
-                            # Loop through existing binaries
-                            for existingDoc in existingDocs.rows
-                                existingDoc = existingDoc.value
-                                if existingDoc.checksum? and existingDoc.checksum is checksum
-                                    return callback null, existingDoc
-                            return callback null, null
-                        else
-                            return callback null, null
+                if existingDocs
+                    # Loop through existing binaries
+                    for existingDoc in existingDocs.rows
+                        existingDoc = existingDoc.value
+                        if existingDoc.checksum? and existingDoc.checksum is checksum
+                            return callback null, existingDoc
+                    return callback null, null
+                else
+                    return callback null, null
 
 
     saveLocation: (filePath, id, rev, callback) ->
@@ -208,6 +204,7 @@ module.exports =
 
 
     fetchFromDoc: (deviceName, doc, callback) ->
+        remoteConfig = config.getConfig()
         deviceName ?= config.getDeviceName()
         filePath = path.join doc.path, doc.name
         binaryPath = path.join remoteConfig.path, filePath

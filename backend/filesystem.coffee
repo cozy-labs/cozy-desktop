@@ -7,17 +7,13 @@ uuid     = require 'node-uuid'
 mime     = require 'mime'
 chokidar = require 'chokidar'
 log      = require('printit')
-           prefix: 'Data Proxy | filesystem'
+           prefix: 'Filesystem '
 
 config   = require './config'
 pouch    = require './db'
 binary   = require './binary'
 async = require 'async'
 events = require 'events'
-
-
-remoteConfig = config.getConfig()
-
 
 changeHandler =  (task, callback) =>
     deviceName = config.getDeviceName()
@@ -43,13 +39,38 @@ filesystem =
 
     # Changes is the queue of operations, it contains
     # files that are being downloaded, and files to upload.
-    changes: async.queue changeHandler, 1
+    changes: async.queue (task, callback) ->
+        deviceName = config.getDeviceName()
+
+        switch task.operation
+            when 'post'
+                if task.file?
+                    module.exports.createFileDoc task.file, true, callback
+            when 'put'
+                if task.file?
+                    module.exports.createFileDoc task.file, false, callback
+            when 'get'
+                if task.file?
+                    binary.fetchOne deviceName, task.file, callback
+                else
+                    binary.fetchAll deviceName, callback
+            when 'delete'
+                if task.file?
+                    module.exports.deleteDoc task.file, callback
+            else
+                # rebuild
+                if task.file?
+                    @buildTree task.file, callback
+                else
+                    @buildTree null, callback
+    , 1
 
     watchingLocked: false
 
     infoPublisher: new events.EventEmitter
 
     makeDirectoryFromDoc: (doc, callback) ->
+        remoteConfig = config.getConfig()
         doc = doc.value
         absPath = path.join remoteConfig.path, doc.path, doc.name
         dirPaths = module.exports.getPaths absPath
@@ -71,6 +92,7 @@ filesystem =
 
 
     touchFileFromDoc: (doc, callback) ->
+        remoteConfig = config.getConfig()
         doc = doc.value
         absPath = path.join remoteConfig.path, doc.path, doc.name
         filePaths = module.exports.getPaths absPath
@@ -107,6 +129,8 @@ filesystem =
 
 
     buildTree: (filePath, callback) ->
+        remoteConfig = config.getConfig()
+
         # If filePath argument is set, rebuild FS information for this file only
         if filePath?
             filePaths = @getPaths filePath
@@ -181,7 +205,7 @@ filesystem =
         .nodeify callback
 
 
-    createDirectoryDoc: (dirPath, callback) ->
+    createDirectoryDoc: (dirPath, ignoreExisting, callback) ->
         dirPaths = @getPaths dirPath
 
         putDirectoryDocument = (newDoc) ->
@@ -213,7 +237,11 @@ filesystem =
                             if  existingDoc.name is newDoc.name \
                             and existingDoc.path is newDoc.path
                                 # Directory already exists
-                                newDoc = updateDirectoryInformation existingDoc, newDoc
+                                if ignoreExisting
+                                    return callback null
+                                else
+                                    newDoc = updateDirectoryInformation existingDoc, newDoc
+
 
                     # Create or update directory document
                     putDirectoryDocument newDoc
@@ -226,15 +254,15 @@ filesystem =
                 checkDirectoryExistence newDoc
 
         createParentDirectory = (newDoc) =>
-            @createDirectoryDoc dirPaths.absParent, (err, res) ->
+            @createDirectoryDoc dirPaths.absParent, true, (err, res) ->
                 if err
                     log.error "An error occured at parent directory's creation"
                     callback err
                 else
-                    log.info "Add directory: #{dirPaths.relative}"
                     updateDirectoryStats newDoc
 
         checkDirectoryLocation = () =>
+            remoteConfig = config.getConfig()
             if not @isInSyncDir(dirPath) or not fs.existsSync(dirPaths.absolute)
                unless dirPath is '' or dirPath is remoteConfig.path
                    log.error "Directory is not located in the
@@ -252,7 +280,7 @@ filesystem =
         checkDirectoryLocation()
 
 
-    createFileDoc: (filePath, callback) ->
+    createFileDoc: (filePath, ignoreExisting, callback) ->
         filePaths = @getPaths filePath
 
         putFileDocument = (newDoc) ->
@@ -321,10 +349,10 @@ filesystem =
                 binary.createEmptyRemoteDoc (err, binaryDoc) ->
                     uploadBinary newDoc, binaryDoc
 
-        checkBinaryExistence = (newDoc) ->
+        checkBinaryExistence = (newDoc, checksum) ->
             # Check if the binary doc exists, using its checksum
             # It would mean that binary is already uploaded
-            binary.docAlreadyExists filePaths.absolute, (err, doc) ->
+            binary.docAlreadyExists checksum, (err, doc) ->
                 if err
                     callback err
                 else if doc
@@ -339,22 +367,27 @@ filesystem =
 
         checkFileExistence = (newDoc) ->
 
-            # Get the existing file (if exists) to prefill
-            # document with its information
-            pouch.allFiles false, (err, existingDocs) ->
-                if err and err.status isnt 404
-                    callback err
-                else
-                    if existingDocs
-                        # Loop through existing files
-                        for existingDoc in existingDocs.rows
-                            existingDoc = existingDoc.value
-                            if  existingDoc.name is newDoc.name \
-                            and existingDoc.path is newDoc.path
-                                # File already exists
-                                newDoc = updateFileInformation existingDoc, newDoc
+            binary.checksum filePaths.absolute, (err, checksum) ->
+                # Get the existing file (if exists) to prefill
+                # document with its information
+                pouch.allFiles false, (err, existingDocs) ->
+                    if err and err.status isnt 404
+                        callback err
+                    else
+                        if existingDocs
+                            # Loop through existing files
+                            for existingDoc in existingDocs.rows
+                                existingDoc = existingDoc.value
+                                if (existingDoc.name is newDoc.name \
+                                and existingDoc.path is newDoc.path)
+                                    if (existingDoc.binary?.file?.checksum? \
+                                    and existingDoc.binary.file.checksum is checksum) \
+                                    and ignoreExisting
+                                        return callback null
+                                    # File already exists
+                                    newDoc = updateFileInformation existingDoc, newDoc
 
-                    checkBinaryExistence newDoc
+                        checkBinaryExistence newDoc, checksum
 
         updateFileStats = (newDoc) ->
 
@@ -367,7 +400,7 @@ filesystem =
                 checkFileExistence newDoc
 
         createParentDirectory = (newDoc) =>
-            @createDirectoryDoc filePaths.absParent, (err, res) ->
+            @createDirectoryDoc filePaths.absParent, true, (err, res) ->
                 if err
                     log.error "An error occured at parent directory's creation"
                     callback err
@@ -375,6 +408,7 @@ filesystem =
                     updateFileStats newDoc
 
         checkFileLocation = () =>
+            remoteConfig = config.getConfig()
             if not @isInSyncDir(filePath) or not fs.existsSync(filePaths.absolute)
                unless filePath is '' or filePath is remoteConfig.path
                    log.error "File is not located in the
@@ -450,6 +484,7 @@ filesystem =
 
 
     watchChanges: (continuous, fromNow) ->
+        remoteConfig = config.getConfig()
         fromNow ?= false
         continuous ?= fromNow
 
@@ -489,7 +524,7 @@ filesystem =
             if not @watchingLocked and not filesBeingCopied[filePath]?
                 log.info "File added: #{filePath}"
                 fileIsCopied filePath, =>
-                    @changes.push { operation: 'put', file: filePath }, ->
+                    @changes.push { operation: 'post', file: filePath }, ->
 
         # New directory detected
         .on 'addDir', (dirPath) =>
@@ -497,7 +532,7 @@ filesystem =
                 if dirPath isnt remoteConfig.path
                     #log.info "Directory added: #{dirPath}"
                     log.info "Directory added: #{dirPath}"
-                    @createDirectoryDoc dirPath, ->
+                    @createDirectoryDoc dirPath, true, ->
 
         # File deletion detected
         .on 'unlink', (filePath) =>
@@ -522,6 +557,8 @@ filesystem =
 
 
     getPaths: (filePath) ->
+        remoteConfig = config.getConfig()
+
         # Assuming filePath is 'hello/world.html':
         absolute  = path.resolve filePath                      # /home/sync/hello/world.html
         relative  = path.relative remoteConfig.path, absolute  # hello/world.html

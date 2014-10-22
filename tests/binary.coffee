@@ -1,8 +1,8 @@
 fs = require 'fs'
 touch = require 'touch'
 
-should = require('should')
-helpers = require './helpers'
+should = require 'should'
+helpers = require './helpers/helpers'
 client = helpers.getClient()
 
 config      = require '../backend/config'
@@ -48,4 +48,4 @@ describe "Binary Tests", ->
 
 
 
-    it "When I upload an attachment", (done) ->
+    it "When I upload an attachment"
