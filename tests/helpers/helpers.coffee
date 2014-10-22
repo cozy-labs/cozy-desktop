@@ -1,6 +1,8 @@
+{exec} = require 'child_process'
 path = require 'path'
 async = require 'async'
 should = require 'should'
+mkdirp = require 'mkdirp'
 Client = require('request-json-light').JsonClient
 
 module.exports = helpers = {}
@@ -11,6 +13,7 @@ helpers.options =
     url: 'http://localhost:9104'
     syncPath: path.resolve '/tmp/cozy/'
     cozyPassword: 'cozytest'
+    vaultPath: path.resolve __dirname, '../vault'
 
 # default client
 client = new Client "#{helpers.options.serverScheme}://#{helpers.options.serverHost}:#{helpers.options.serverPort}/"
@@ -38,3 +41,11 @@ helpers.ensurePreConditions = (done) ->
         should.exist dataSystem, 'Cozy Data System should be running on 9101'
         should.exist files, 'Cozy Files should be running on 9121'
         done()
+
+# Creates a folder
+module.exports.prepareFolder = (path) -> return -> mkdirp.sync path
+
+# Removes a folder and its content
+module.exports.cleanFolder = (path) -> (done) ->
+    command = "rm -rf #{path}"
+    exec command, {}, (err, stderr, stdout) -> done()
