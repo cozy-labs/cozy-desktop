@@ -89,6 +89,7 @@ module.exports =
         # Set authentication
         url = urlParser.parse remoteConfig.url
         url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
+        console.log url.auth
 
         # Define action after replication completion
         applyChanges = (callback) ->
@@ -110,9 +111,9 @@ module.exports =
                 filesystem.changes.push { operation: 'rebuild' }, unlockFileSystemAndReturn
 
         onChange = (info) =>
-            if info.change?
+            if info.change? and info.change.docs_written > 0
                 changeMessage = "DB change: #{info.change.docs_written} doc(s) written"
-            else
+            else if info.docs_written > 0
                 changeMessage = "DB change: #{info.docs_written} doc(s) written"
 
             # Specify direction
@@ -125,9 +126,10 @@ module.exports =
                 needTreeRebuild = rebuildFs
                 @replicationIsRunning = true
 
-            log.info changeMessage
+            log.info changeMessage if changeMessage?
 
         onUptoDate = (info) =>
+
             @replicationIsRunning = false
             setTimeout () =>
                 if not @replicationIsRunning and not @treeIsBuilding and needTreeRebuild
@@ -157,6 +159,7 @@ module.exports =
 
         # Launch replication
         url = urlParser.format(url) + 'cozy'
+        console.log url
         replicator = replicate(url, options)
             .on 'change', onChange
             .on 'uptodate', onUptoDate # Called only for a continuous replication

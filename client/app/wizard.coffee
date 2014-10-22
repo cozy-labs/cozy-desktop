@@ -25,9 +25,20 @@ Intro = React.createClass
 # Cozy and for the directory in which store the synced fileds.
 # It only saves the value to the configuration file.
 ConfigFormStepOne = React.createClass
+
+    getInitialState: ->
+        isDeviceName = @props.deviceName? and @props.deviceName isnt ''
+        isPath = @props.path? and @props.path isnt ''
+
+        validForm: isDeviceName and isPath
+
     render: ->
+        buttonClass = 'right'
+        buttonClass += ' disabled' unless @state.validForm
         Container null,
             Title text: t 'cozy files configuration 1 on 2'
+            Line className: 'explanation',
+                p null, t 'first step text'
             Field
                 label: t 'your device name'
                 fieldClass: 'w300p'
@@ -35,31 +46,46 @@ ConfigFormStepOne = React.createClass
                 defaultValue: @props.deviceName
                 ref: 'deviceNameField'
                 placeholder: 'Laptop'
+                onChange: @onDeviceNameChanged
             Field
                 label: t 'directory to synchronize your data'
                 fieldClass: 'w500p'
                 inputRef: 'path'
+                type: 'file'
                 defaultValue: @props.path
                 ref: 'devicePathField'
-                placeholder: '/home/john/mycozyfolder'
+                inputId: 'folder-input'
+                onChange: @onPathChanged
             Line null,
                 Button
-                    className: 'right'
+                    className: buttonClass
                     onClick: @onSaveButtonClicked
                     text: t 'save your device information and go to step 2'
+
+    onDeviceNameChanged: ->
+        fieldName = @refs.deviceNameField
+        fieldPath = @refs.devicePathField
+        @setState
+            validForm: isValidForm [fieldName, fieldPath]
+
+    onPathChanged: (event, files, label) ->
+        fieldName = @refs.deviceNameField
+        fieldPath = @refs.devicePathField
+        @setState
+            validForm: isValidForm [fieldName, fieldPath]
 
     onSaveButtonClicked: ->
         fieldName = @refs.deviceNameField
         fieldPath = @refs.devicePathField
-        isValid = isValidForm [fieldName, fieldPath]
-        if isValid
+        if @state.validForm
             config = require './backend/config'
             config.updateSync
                 deviceName: fieldName.getValue()
                 path: fieldPath.getValue()
+            device.deviceName = fieldName.getValue()
+            device.path = fieldPath.getValue()
+
             renderState 'STEP2'
-        else
-            alert 'a value is missing'
 
 
 # Step 2 of the configuration. It asks for the remote Cozy URL and for the
@@ -68,10 +94,21 @@ ConfigFormStepOne = React.createClass
 # the configuration.
 ConfigFormStepTwo = React.createClass
 
+    getInitialState: ->
+        isDeviceName = @props.url? and @props.url isnt ''
+        isPath = @props.path? and @props.path isnt ''
+
+        validForm: isDeviceName and isPath
+
     render: ->
+        buttonClass = 'right'
+        buttonClass += ' disabled' unless @state.validForm
+
         Container null,
             Title
                 text: t 'cozy files configuration 2 on 2'
+            Line className: 'explanation',
+                p null, t 'second step text'
             Field
                 label: t 'your remote url'
                 fieldClass: 'w300p'
@@ -79,6 +116,8 @@ ConfigFormStepTwo = React.createClass
                 defaultValue: @props.url
                 ref: 'remoteUrlField'
                 placeholder: 'john.cozycloud.cc'
+                onChange: @onFieldChanged
+                onKeyUp: @onUrlKeyUp
             Field
                 label: t 'your remote password'
                 fieldClass: 'w300p'
@@ -86,6 +125,8 @@ ConfigFormStepTwo = React.createClass
                 inputRef: 'remotePassword'
                 defaultValue: @props.remotePassword
                 ref: 'remotePasswordField'
+                onChange: @onFieldChanged
+                onKeyUp: @onPasswordKeyUp
             Line null,
                 Button
                     className: 'left'
@@ -93,10 +134,29 @@ ConfigFormStepTwo = React.createClass
                     onClick: @onBackButtonClicked
                     text: t 'go back to previous step'
                 Button
-                    className: 'right'
+                    className: buttonClass
                     ref: 'nextButton'
                     onClick: @onSaveButtonClicked
                     text: t 'register device and synchronize'
+
+    componentDidMount: ->
+        node = @refs.remoteUrlField.refs.remoteUrl.getDOMNode()
+        $(node).focus()
+
+    onFieldChanged: ->
+        fieldUrl = @refs.remoteUrlField
+        fieldPassword = @refs.remotePasswordField
+        @setState
+            validForm: isValidForm [fieldUrl, fieldPassword]
+
+    onUrlKeyUp: (event) ->
+        if event.keyCode is 13
+            node = @refs.remotePasswordField.refs.remotePassword.getDOMNode()
+            $(node).focus()
+
+    onPasswordKeyUp: (event) ->
+        if event.keyCode is 13
+            @onSaveButtonClicked()
 
     onBackButtonClicked: ->
         renderState 'STEP1'
@@ -129,9 +189,7 @@ ConfigFormStepTwo = React.createClass
                     config.updateSync options
 
                     console.log 'Remote Cozy properly configured to work ' + \
-                             'with current device.'
+                                'with current device.'
                     renderState 'STATE'
 
             replication.registerDevice options, saveConfig
-        else
-            alert 'a value is missing'

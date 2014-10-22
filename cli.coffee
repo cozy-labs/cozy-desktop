@@ -235,3 +235,6 @@ program
                     ' to know the list of available commands.'
 
 program.parse process.argv
+
+unless process.argv.slice(2).length
+    program.outputHelp()

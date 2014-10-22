@@ -55,9 +55,11 @@ Field = React.createClass
                 ref: @props.inputRef
                 defaultValue: @props.defaultValue
                 onChange: @onChange
+                onKeyUp: @props.onKeyUp
                 placeholder: @props.placeholder
+                id: @props.inputId
 
-            p null, @state.error if @state.error
+            p className: 'error', @state.error if @state.error
 
     getValue: ->
         @refs[@props.inputRef].getDOMNode().value
@@ -65,12 +67,16 @@ Field = React.createClass
     isValid: ->
         @getValue() isnt ''
 
+    getError: ->
+        'value is missing'
+
     onChange: ->
         val = @refs[@props.inputRef].getDOMNode().value
         if val is ''
-            @setState error: 'value is missing'
+            @setState error: t @getError()
         else
             @setState error: null
+        @props.onChange()
 
 
 InfoLine = React.createClass

@@ -15,10 +15,31 @@ binary   = require './binary'
 async = require 'async'
 events = require 'events'
 
+
 remoteConfig = config.getConfig()
 
 
-module.exports =
+changeHandler =  (task, callback) =>
+    deviceName = config.getDeviceName()
+
+    switch task.operation
+        when 'put'
+            if task.file?
+                filesystem.createFileDoc task.file, callback
+        when 'get'
+            if task.file?
+                binary.fetchOne deviceName, task.file, callback
+            else
+                binary.fetchAll deviceName, callback
+        else
+            # rebuild
+            if task.file?
+                filesystem.buildTree task.file, callback
+            else
+                filesystem.buildTree null, callback
+
+
+filesystem =
 
     # Changes is the queue of operations, it contains
     # files that are being downloaded, and files to upload.
@@ -205,7 +226,6 @@ module.exports =
             return newDoc
 
         checkDirectoryExistence = (newDoc) ->
-            #pouch.db.query 'folder/all', (err, existingDocs) ->
             pouch.allFolders false, (err, existingDocs) ->
                 if err and err.status isnt 404
                     callback err
@@ -559,3 +579,6 @@ module.exports =
         paths = @getPaths filePath
         return paths.relative isnt '' \
            and paths.relative.substring(0,2) isnt '..'
+
+
+module.exports = filesystem
