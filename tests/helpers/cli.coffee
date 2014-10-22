@@ -5,6 +5,7 @@ mkdirp = require 'mkdirp'
 cli = require '../../cli'
 
 # Skips user interaction to ask password
+# @TODO: replace by a sinon's stub
 module.exports.mockGetPassword = ->
     @trueGetPassword = cli.getPassword
     cli.getPassword = (callback) -> callback null, options.cozyPassword
@@ -20,7 +21,6 @@ module.exports.initConfiguration = (done) ->
     {url, syncPath} = options
     deviceName = 'tester'
     cli.addRemote url, deviceName, syncPath
-
     setTimeout done, 5000
 
 # Removes the configuration
@@ -46,3 +46,14 @@ module.exports.startSync = ->
 
 # Stops the sync process
 module.exports.stopSync = -> @syncProcess.kill()
+
+# replicates the remote Couch into the local Pouch
+module.exports.initialReplication = (done) ->
+    replication = require '../../backend/replication'
+    replication.runReplication
+        fromRemote: true
+        toRemote: false
+        continuous: false
+        rebuildTree: true
+        fetchBinary: true
+    , done

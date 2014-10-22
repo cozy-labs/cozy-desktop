@@ -1,1 +1,2 @@
-helpers = require './helpers'
+{getClient} = require './helpers'
+

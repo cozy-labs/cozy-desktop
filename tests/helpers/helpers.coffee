@@ -1,4 +1,6 @@
 path = require 'path'
+async = require 'async'
+should = require 'should'
 Client = require('request-json-light').JsonClient
 
 module.exports = helpers = {}
@@ -20,3 +22,19 @@ helpers.getClient = (url = null) ->
     else
         return client
 
+helpers.ensurePreConditions = (done) ->
+    @timeout 5000
+
+    shouldPing = [5984, 9104, 9101, 9121]
+    async.map shouldPing, (port, cb) ->
+        helpers
+            .getClient "http://localhost:#{port}"
+            .get '/', ((err, res) -> cb null, res?.statusCode), false
+
+    , (err, results) ->
+        [couch, proxy, dataSystem, files] = results
+        should.exist couch, 'Couch should be running on 5934'
+        should.exist proxy, 'Cozy Proxy should be running on 9104'
+        should.exist dataSystem, 'Cozy Data System should be running on 9101'
+        should.exist files, 'Cozy Files should be running on 9121'
+        done()

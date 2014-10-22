@@ -2,21 +2,25 @@
 fs = require 'fs'
 should = require 'should'
 helpers = require './helpers/helpers'
+cliHelpers = require './helpers/cli'
 
 {syncPath} = helpers.options
 
 describe.only "Functional Tests", ->
 
-    before helpers.mockGetPassword
-    before helpers.cleanConfiguration
-    before helpers.cleanSyncFolder
-    before helpers.initConfiguration
-    before helpers.prepareSyncFolder
-    before helpers.startSync
+    before helpers.ensurePreConditions
 
-    after helpers.stopSync
-    after helpers.cleanSyncFolder
-    after helpers.restoreGetPassword
+    before cliHelpers.mockGetPassword
+    before cliHelpers.cleanSyncFolder
+    before cliHelpers.cleanConfiguration
+    before cliHelpers.prepareSyncFolder
+    before cliHelpers.initConfiguration
+    before cliHelpers.initialReplication
+    before cliHelpers.startSync
+
+    after cliHelpers.stopSync
+    after cliHelpers.cleanSyncFolder
+    after cliHelpers.restoreGetPassword
 
     it "When I create a file locally", (done) ->
 
