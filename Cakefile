@@ -41,7 +41,7 @@ task 'tests', "Run tests #{taskDetails}", (opts) ->
     if options.file
         files  = files.concat options.file
     unless options.dir or options.file
-        files = walk "test"
+        files = walk "tests"
 
 
     env = if options['env'] then "NODE_ENV=#{options.env}" else "NODE_ENV=test"
