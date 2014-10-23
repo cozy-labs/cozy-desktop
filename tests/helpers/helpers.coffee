@@ -3,7 +3,7 @@ path = require 'path'
 async = require 'async'
 should = require 'should'
 mkdirp = require 'mkdirp'
-Client = require('request-json-light').JsonClient
+Client = require('request-json').JsonClient
 
 module.exports = helpers = {}
 helpers.options =
