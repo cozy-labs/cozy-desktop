@@ -26,7 +26,7 @@ describe.only "Functional Tests", ->
     # Cleans up local system
     after cliHelpers.stopSync
     after cliHelpers.restoreGetPassword
-    after helpers.cleanFolder syncPath
+    #after helpers.cleanFolder syncPath
     #after filesHelpers.deleteAll
     after cliHelpers.resetDatabase
 
@@ -52,9 +52,10 @@ describe.only "Functional Tests", ->
                         done()
             , 3000
 
-    it "Rename a file locally", (done) ->
+    it.skip "Rename a file locally", (done) ->
         @timeout 5500
 
+        expectedContent = "TEST ME"
         fileName = "test.txt"
         filePath = "#{syncPath}/#{fileName}"
         newName = "test_changed.txt"
@@ -94,9 +95,10 @@ describe.only "Functional Tests", ->
             , 3000
 
 
-    it "Move a file locally into a subfolder", (done) ->
+    it.skip "Move a file locally into a subfolder", (done) ->
         @timeout 5500
 
+        expectedContent = "TEST ME"
         fileName = 'test_changed.txt'
         filePath = "#{syncPath}/#{fileName}"
         folderName = 'test_folder'
@@ -120,9 +122,10 @@ describe.only "Functional Tests", ->
                             done()
             , 3000
 
-    it "Move a file locally from a subfolder", (done) ->
+    it.skip "Move a file locally from a subfolder", (done) ->
         @timeout 5500
 
+        expectedContent = "TEST ME"
         fileName = 'test_changed.txt'
         folderName = 'test_folder'
         filePath = "#{syncPath}/#{folderName}/#{fileName}"
@@ -142,7 +145,29 @@ describe.only "Functional Tests", ->
                         done()
             , 3000
 
-    it "Copy a file locally"
+    it "Copy a file locally", (done) ->
+        @timeout 5500
+
+        expectedContent = "TEST ME"
+        fileName = 'test.txt' # 'test_changed.txt'
+        filePath = "#{syncPath}/#{fileName}"
+        newFileName =  'test_copied.txt'
+        newFilePath = "#{syncPath}/#{newFileName}"
+
+        command = "cp #{filePath} #{newFileName}"
+        exec command, cwd: syncPath, ->
+            # file should exist at the new path
+            (fs.lstatSync.bind null, newFilePath).should.not.throw()
+
+            setTimeout ->
+                filesHelpers.getFolderContent 'root', (err, files) ->
+                    file = filesHelpers.getElementByName newFileName, files
+                    should.exist file
+                    filesHelpers.getFileContent file, (err, content) ->
+                        content.should.equal "#{expectedContent}\n"
+                        done()
+            , 3000
+
     it "Edit a file content locally"
     it "Delete a file locally"
     it "Create a big file locally"
