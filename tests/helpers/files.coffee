@@ -21,12 +21,13 @@ module.exports.getFolderContent = getFolderContent = (folder, callback) ->
         body.should.have.property 'content'
         callback err, body.content
 
-module.exports.getElementByName = (name, elements) ->
+module.exports.getElementByName = (name, elements, checkExistence = true) ->
 
     elements = elements.filter (element) -> element.name is name
-    should.exist elements, "Element #{name} not found."
-    elements.length.should.equal 1, "Element #{name} not found."
-    return elements[0]
+    should.exist elements
+    if checkExistence
+        elements.length.should.equal 1, "Element #{name} not found."
+    return elements?[0] or null
 
 module.exports.deleteAll = (callback) ->
     @timeout 30000

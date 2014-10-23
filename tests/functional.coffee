@@ -190,7 +190,24 @@ describe.only "Functional Tests", ->
                         done()
             , 3000
 
-    it "Delete a file locally"
+    it "Delete a file locally", (done) ->
+        @timeout 5500
+
+        fileName = 'test_copied.txt'
+        filePath = "#{syncPath}/#{fileName}"
+
+        command = "rm -rf #{filePath}"
+        exec command, cwd: syncPath, ->
+            # file should NOT exist
+            (fs.lstatSync.bind null, filePath).should.throw()
+
+            setTimeout ->
+                filesHelpers.getFolderContent 'root', (err, files) ->
+                    file = filesHelpers.getElementByName fileName, files, false
+                    should.not.exist file
+                    done()
+            , 3000
+
     it "Create a big file locally"
 
     it "Create a file remotely"
