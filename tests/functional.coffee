@@ -7,9 +7,9 @@ filesHelpers = require './helpers/files'
 
 {syncPath} = helpers.options
 
-describe.only "Functional Tests", ->
+describe "Functional Tests", ->
 
-    #before helpers.ensurePreConditions
+    before helpers.ensurePreConditions
 
     # Prepares the local system
     before filesHelpers.deleteAll
