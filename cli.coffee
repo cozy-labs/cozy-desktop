@@ -212,6 +212,16 @@ program
         else
             filesystem.createDirectoryDoc dirPath, ->
 
+module.exports.resetDatabase = resetDatabase = (callback) ->
+    pouch.resetDatabase callback
+program
+    .command 'reset-database'
+    .description 'Recreates the local database'
+    .action ->
+        log.info "Recreates the local database..."
+        resetDatabase ->
+            log.info "Database recreated"
+
 program
     .command('display-database')
     .description('Display database content')
@@ -231,8 +241,8 @@ program
     .command("*")
     .description("Display help message for an unknown command.")
     .action ->
-        console.log 'Unknown command, run "cozy-monitor --help"' + \
-                    ' to know the list of available commands.'
+        log.info 'Unknown command, run "cozy-monitor --help"' + \
+                 ' to know the list of available commands.'
 
 program.parse process.argv
 

@@ -1,8 +1,8 @@
-{exec, spawn} = require 'child_process'
-mkdirp = require 'mkdirp'
 {options} = require './helpers'
 
 cli = require '../../cli'
+replication = require '../../backend/replication'
+filesystem = require '../../backend/filesystem'
 
 # Skips user interaction to ask password
 # @TODO: replace by a sinon's stub
@@ -16,40 +16,43 @@ module.exports.restoreGetPassword = ->
 
 # Configures a fake device for a fake remote Cozy
 module.exports.initConfiguration = (done) ->
-    @timeout 5500
+    @timeout 1500
 
     {url, syncPath} = options
     deviceName = 'tester'
     cli.addRemote url, deviceName, syncPath
-    setTimeout done, 5000
+    setTimeout done, 1000
 
 # Removes the configuration
 module.exports.cleanConfiguration = (done) ->
-    @timeout 5500
+    @timeout 1500
     cli.removeRemote {}
-    setTimeout done, 5000
-
-# Creates the sync folder
-module.exports.prepareSyncFolder = -> mkdirp.sync options.syncPath
-
-# Removes the sync folder
-module.exports.cleanSyncFolder = (done) ->
-    command = "rm -rf #{options.syncPath}"
-    exec command, {}, (err, stderr, stdout) -> done()
+    setTimeout done, 1000
 
 # Starts the sync process
-module.exports.startSync = ->
-    @syncProcess = spawn 'coffee', ['cli.coffee', 'sync'], {}
-    @syncProcess.stdout.on 'data', (data) -> console.log "data: #{data}"
-    @syncProcess.stderr.on 'data', (data) -> console.log "error: #{data}"
-    @syncProcess.on 'close', -> console.log 'process closed'
+module.exports.startSync = (done) ->
+    @timeout 3000
 
-# Stops the sync process
-module.exports.stopSync = -> @syncProcess.kill()
+    continuous = true
+    filesystem.watchChanges continuous, true
+
+    # Replicate databases
+    replication.runReplication
+        fromRemote: false
+        toRemote: false
+        continuous: continuous
+        rebuildTree: true
+        fetchBinary: true
+    , (err) -> # nothing
+
+    setTimeout done, 2500
+
+module.exports.stopSync = -> replication.cancelReplication()
 
 # replicates the remote Couch into the local Pouch
 module.exports.initialReplication = (done) ->
-    replication = require '../../backend/replication'
+    @timeout 10000
+
     replication.runReplication
         fromRemote: true
         toRemote: false
@@ -57,3 +60,8 @@ module.exports.initialReplication = (done) ->
         rebuildTree: true
         fetchBinary: true
     , done
+
+# Recreates the local database
+module.exports.resetDatabase = (done) ->
+    @timeout 10000
+    setTimeout cli.resetDatabase.bind(null, done), 5000

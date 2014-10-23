@@ -1,7 +1,9 @@
+{exec} = require 'child_process'
 path = require 'path'
 async = require 'async'
 should = require 'should'
-Client = require('request-json-light').JsonClient
+mkdirp = require 'mkdirp'
+Client = require('request-json').JsonClient
 
 module.exports = helpers = {}
 helpers.options =
@@ -38,3 +40,11 @@ helpers.ensurePreConditions = (done) ->
         should.exist dataSystem, 'Cozy Data System should be running on 9101'
         should.exist files, 'Cozy Files should be running on 9121'
         done()
+
+# Creates a folder
+module.exports.prepareFolder = (path) -> return -> mkdirp.sync path
+
+# Removes a folder and its content
+module.exports.cleanFolder = (path) -> (done) ->
+    command = "rm -rf #{path}"
+    exec command, {}, (err, stderr, stdout) -> done()
