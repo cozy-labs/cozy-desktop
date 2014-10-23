@@ -26,8 +26,8 @@ describe.only "Functional Tests", ->
     # Cleans up local system
     after cliHelpers.stopSync
     after cliHelpers.restoreGetPassword
-    #after helpers.cleanFolder syncPath
-    #after filesHelpers.deleteAll
+    after helpers.cleanFolder syncPath
+    after filesHelpers.deleteAll
     after cliHelpers.resetDatabase
 
     it "When I create a file locally", (done) ->
@@ -45,8 +45,8 @@ describe.only "Functional Tests", ->
             # waits for the replication / upload to be processed
             setTimeout ->
                 filesHelpers.getFolderContent 'root', (err, elements) ->
-                    elements.length.should.equal 1
                     file = filesHelpers.getElementByName 'test.txt', elements
+                    should.exist file
                     filesHelpers.getFileContent file, (err, content) ->
                         content.should.equal "#{expectedContent}\n"
                         done()
@@ -168,7 +168,28 @@ describe.only "Functional Tests", ->
                         done()
             , 3000
 
-    it "Edit a file content locally"
+    it "Edit a file content locally", (done) ->
+        @timeout 5500
+
+        newContent = "MY FRIEND"
+        expectedContent = "TEST ME\n#{newContent}"
+        fileName = 'test.txt' # 'test_changed.txt'
+        filePath = "#{syncPath}/#{fileName}"
+
+        command = "echo \"#{newContent}\" >> #{filePath}"
+        exec command, cwd: syncPath, ->
+            # file should exist
+            (fs.lstatSync.bind null, filePath).should.not.throw()
+
+            setTimeout ->
+                filesHelpers.getFolderContent 'root', (err, files) ->
+                    file = filesHelpers.getElementByName fileName, files
+                    should.exist file
+                    filesHelpers.getFileContent file, (err, content) ->
+                        content.should.equal "#{expectedContent}\n"
+                        done()
+            , 3000
+
     it "Delete a file locally"
     it "Create a big file locally"
 
