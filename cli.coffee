@@ -212,6 +212,16 @@ program
         else
             filesystem.createDirectoryDoc dirPath, ->
 
+module.exports.resetDatabase = resetDatabase = (callback) ->
+    pouch.resetDatabase callback
+program
+    .command 'reset-database'
+    .description 'Recreates the local database'
+    .action ->
+        log.info "Recreates the local database..."
+        resetDatabase ->
+            log.info "Database recreated"
+
 program
     .command('display-database')
     .description('Display database content')

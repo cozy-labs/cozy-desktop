@@ -16,6 +16,11 @@ module.exports =
 
     db: db
 
+    resetDatabase: (callback) ->
+        PouchDB.destroy config.dbPath, ->
+            db = new PouchDB config.dbPath
+            callback()
+
     files:
         rows: []
 
