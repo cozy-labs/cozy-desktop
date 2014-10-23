@@ -161,8 +161,10 @@ module.exports =
         # Launch replication
         url = urlParser.format(url) + 'cozy'
         console.log url
-        replicator = replicate(url, options)
+        @replicator = replicate(url, options)
             .on 'change', onChange
             .on 'uptodate', onUptoDate # Called only for a continuous replication
             .on 'complete', onComplete # Called only for a single replication
             .on 'error', onError
+
+    cancelReplication: -> @replicator.cancel()
