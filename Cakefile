@@ -31,7 +31,7 @@ walk = (dir, excludeElements = []) ->
 
 taskDetails = '(default: ./tests, use -f or -d to specify files and directory)'
 task 'tests', "Run tests #{taskDetails}", (opts) ->
-    logger.options.prefix = 'cake:tests'
+    logger.options.prefix = 'cake:tests '
     files = []
     options = opts
 

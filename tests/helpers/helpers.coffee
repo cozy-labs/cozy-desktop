@@ -13,7 +13,6 @@ helpers.options =
     url: 'http://localhost:9104'
     syncPath: path.resolve '/tmp/cozy/'
     cozyPassword: 'cozytest'
-    vaultPath: path.resolve __dirname, '../vault'
 
 # default client
 client = new Client "#{helpers.options.serverScheme}://#{helpers.options.serverHost}:#{helpers.options.serverPort}/"

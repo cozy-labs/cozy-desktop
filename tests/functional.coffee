@@ -5,18 +5,16 @@ helpers = require './helpers/helpers'
 cliHelpers = require './helpers/cli'
 filesHelpers = require './helpers/files'
 
-{syncPath, vaultPath} = helpers.options
+{syncPath} = helpers.options
 
 describe.only "Functional Tests", ->
 
-    before helpers.ensurePreConditions
+    #before helpers.ensurePreConditions
 
-    # Prepares the local filesystem for the tests
+    # Prepares the local system
     before filesHelpers.deleteAll
     before helpers.cleanFolder syncPath
     before helpers.prepareFolder syncPath
-    before helpers.cleanFolder vaultPath
-    before helpers.prepareFolder vaultPath
 
     # Prepares the sync and starts it
     before cliHelpers.mockGetPassword
@@ -25,44 +23,128 @@ describe.only "Functional Tests", ->
     before cliHelpers.initialReplication
     before cliHelpers.startSync
 
-    # Cleans up things
-    after helpers.cleanFolder syncPath
-    after helpers.cleanFolder vaultPath
+    # Cleans up local system
+    after cliHelpers.stopSync
     after cliHelpers.restoreGetPassword
+    after helpers.cleanFolder syncPath
+    #after filesHelpers.deleteAll
+    after cliHelpers.resetDatabase
 
     it "When I create a file locally", (done) ->
-        @timeout 10000
-
+        @timeout 5500
         expectedContent = "TEST ME"
 
         fileName = 'test.txt'
         filePath = "#{syncPath}/#{fileName}"
 
         command = "echo \"#{expectedContent}\" > #{fileName}"
-        exec command, cwd: syncPath, (err, stderr, stdout) ->
+        exec command, cwd: syncPath, ->
             content = fs.readFileSync filePath, encoding: 'UTF-8'
             content.should.equal "#{expectedContent}\n"
 
             # waits for the replication / upload to be processed
             setTimeout ->
-                filesHelpers.getRootContent (err, files) ->
-                    files.length.should.equal 1
-                    files[0].name.should.equal fileName
-                    filesHelpers.download files[0], ->
-                        vaultPath = "#{vaultPath}/#{fileName}"
-                        content = fs.readFileSync filePath, encoding: 'UTF-8'
+                filesHelpers.getFolderContent 'root', (err, elements) ->
+                    elements.length.should.equal 1
+                    file = filesHelpers.getElementByName 'test.txt', elements
+                    filesHelpers.getFileContent file, (err, content) ->
                         content.should.equal "#{expectedContent}\n"
                         done()
-            , 5000
+            , 3000
 
-    it "Delete a file locally"
-    it "Rename a file locally"
-    it "Move a file locally in the same folder"
-    it "Create a folder locally"
-    it "Move a file locally into a subfolder"
-    it "Move a file locally from a subfolder"
+    it "Rename a file locally", (done) ->
+        @timeout 5500
+
+        fileName = "test.txt"
+        filePath = "#{syncPath}/#{fileName}"
+        newName = "test_changed.txt"
+        newFilePath = "#{syncPath}/#{newName}"
+
+        command = "mv #{filePath} #{newFilePath}"
+        exec command, cwd: syncPath, ->
+
+            # waits for the replication / upload to be processed
+            setTimeout ->
+                filesHelpers.getFolderContent 'root', (err, elements) ->
+                    file = filesHelpers.getElementByName newName, elements
+                    should.exist file
+                    filesHelpers.getFileContent file, (err, content) ->
+                        content.should.equal "#{expectedContent}\n"
+                        done()
+            , 3000
+
+    it "Create a folder locally", (done) ->
+        @timeout 5500
+        folderName = 'test_folder'
+        folderPath = "#{syncPath}/#{folderName}"
+
+        command = "mkdir #{folderName}"
+        exec command, cwd: syncPath, ->
+
+            # folder should exist
+            (fs.lstatSync.bind null, folderPath).should.not.throw()
+
+            # waits for the replication / upload to be processed
+            setTimeout ->
+                filesHelpers.getFolderContent 'root', (err, files) ->
+                    folder = filesHelpers.getElementByName folderName, files
+                    should.exist folder
+                    folder.name.should.equal folderName
+                    done()
+            , 3000
+
+
+    it "Move a file locally into a subfolder", (done) ->
+        @timeout 5500
+
+        fileName = 'test_changed.txt'
+        filePath = "#{syncPath}/#{fileName}"
+        folderName = 'test_folder'
+        folderPath = "#{syncPath}/#{folderName}/"
+        newPath = "#{folderPath}#{fileName}"
+
+        command = "mv #{filePath} #{folderPath}"
+        exec command, cwd: syncPath, ->
+            # file should exist at the new path
+            (fs.lstatSync.bind null, newPath).should.not.throw()
+
+            setTimeout ->
+                filesHelpers.getFolderContent 'root', (err, files) ->
+                    folder = filesHelpers.getElementByName folderName, files
+                    should.exist folder
+                    filesHelpers.getFolderContent folder, (err, files) ->
+                        file = filesHelpers.getElementByName fileName, files
+                        should.exist file
+                        filesHelpers.getFileContent file, (err, content) ->
+                            content.should.equal "#{expectedContent}\n"
+                            done()
+            , 3000
+
+    it "Move a file locally from a subfolder", (done) ->
+        @timeout 5500
+
+        fileName = 'test_changed.txt'
+        folderName = 'test_folder'
+        filePath = "#{syncPath}/#{folderName}/#{fileName}"
+        newPath = "#{syncPath}/#{fileName}"
+
+        command = "mv #{filePath} #{syncPath}"
+        exec command, cwd: syncPath, ->
+            # file should exist at the new path
+            (fs.lstatSync.bind null, newPath).should.not.throw()
+
+            setTimeout ->
+                filesHelpers.getFolderContent 'root', (err, files) ->
+                    file = filesHelpers.getElementByName fileName, files
+                    should.exist file
+                    filesHelpers.getFileContent file, (err, content) ->
+                        content.should.equal "#{expectedContent}\n"
+                        done()
+            , 3000
+
     it "Copy a file locally"
-    it "Edit a file content"
+    it "Edit a file content locally"
+    it "Delete a file locally"
     it "Create a big file locally"
 
     it "Create a file remotely"

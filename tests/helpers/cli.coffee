@@ -47,8 +47,12 @@ module.exports.startSync = (done) ->
 
     setTimeout done, 2500
 
+module.exports.stopSync = -> replication.cancelReplication()
+
 # replicates the remote Couch into the local Pouch
 module.exports.initialReplication = (done) ->
+    @timeout 10000
+
     replication.runReplication
         fromRemote: true
         toRemote: false
@@ -56,3 +60,8 @@ module.exports.initialReplication = (done) ->
         rebuildTree: true
         fetchBinary: true
     , done
+
+# Recreates the local database
+module.exports.resetDatabase = (done) ->
+    @timeout 10000
+    setTimeout cli.resetDatabase.bind(null, done), 5000
