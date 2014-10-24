@@ -12,7 +12,10 @@ binary     = require './binary'
 
 filters = []
 
-module.exports =
+module.exports = replication =
+
+    replicationIsRunning: false
+    treeIsBuilding: false
 
 
     # Register device remotely then returns credentials given by remote Cozy.
@@ -62,10 +65,8 @@ module.exports =
 
         return replicate
 
-    replicationIsRunning: false
 
-    treeIsBuilding: false
-
+    # TODO split this function in smaller functions.
     runReplication: (options, callback) ->
 
         remoteConfig = config.getConfig()
@@ -167,4 +168,5 @@ module.exports =
             .on 'complete', onComplete # Called only for a single replication
             .on 'error', onError
 
-    cancelReplication: -> @replicator.cancel()
+    cancelReplication: ->
+        @replicator.cancel()

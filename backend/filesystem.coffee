@@ -9,11 +9,12 @@ chokidar = require 'chokidar'
 log      = require('printit')
            prefix: 'Filesystem '
 
-config   = require './config'
-pouch    = require './db'
-binary   = require './binary'
+config = require './config'
+pouch = require './db'
+binary = require './binary'
 async = require 'async'
 events = require 'events'
+
 
 changeHandler =  (task, callback) =>
     deviceName = config.getDeviceName()
@@ -35,7 +36,11 @@ changeHandler =  (task, callback) =>
                 filesystem.buildTree null, callback
 
 
-filesystem =
+module.exports = filesystem =
+
+    watchingLocked: false
+    infoPublisher: new events.EventEmitter
+
 
     # Changes is the queue of operations, it contains
     # files that are being downloaded, and files to upload.
@@ -65,9 +70,6 @@ filesystem =
                     @buildTree null, callback
     , 1
 
-    watchingLocked: false
-
-    infoPublisher: new events.EventEmitter
 
     makeDirectoryFromDoc: (doc, callback) ->
         remoteConfig = config.getConfig()
@@ -91,6 +93,7 @@ filesystem =
         mkdirp dirPaths.absolute, updateDates
 
 
+    # TODO refactor it in smaller functions.
     touchFileFromDoc: (doc, callback) ->
         remoteConfig = config.getConfig()
         doc = doc.value
@@ -128,6 +131,7 @@ filesystem =
         mkdirp filePaths.absParent, getBinary
 
 
+    # TODO split this in smaller functions.
     buildTree: (filePath, callback) ->
         remoteConfig = config.getConfig()
 
@@ -177,6 +181,7 @@ filesystem =
         createFolderFilter()
 
 
+    # TODO refactor it in smaller functions.
     createDirectoryDoc: (dirPath, ignoreExisting, callback) ->
         dirPaths = @getPaths dirPath
 
@@ -252,6 +257,7 @@ filesystem =
         checkDirectoryLocation()
 
 
+    # TODO refactor it in smaller functions.
     createFileDoc: (filePath, ignoreExisting, callback) ->
         filePaths = @getPaths filePath
 
@@ -401,6 +407,7 @@ filesystem =
         checkFileLocation()
 
 
+    # TODO refactor it in smaller functions.
     deleteDoc: (filePath, callback) ->
         filePaths = @getPaths filePath
 
@@ -455,6 +462,7 @@ filesystem =
         getDoc filePaths.name, filePaths.parent
 
 
+    # TODO refactor it in smaller functions.
     watchChanges: (continuous, fromNow) ->
         remoteConfig = config.getConfig()
         fromNow ?= false
@@ -532,11 +540,11 @@ filesystem =
         remoteConfig = config.getConfig()
 
         # Assuming filePath is 'hello/world.html':
-        absolute  = path.resolve filePath                      # /home/sync/hello/world.html
-        relative  = path.relative remoteConfig.path, absolute  # hello/world.html
-        name      = path.basename filePath                     # world.html
-        parent    = path.dirname path.join path.sep, relative  # /hello
-        absParent = path.dirname absolute                      # /home/sync/hello
+        absolute  = path.resolve filePath # /home/sync/hello/world.html
+        relative  = path.relative remoteConfig.path, absolute # hello/world.html
+        name      = path.basename filePath # world.html
+        parent    = path.dirname path.join path.sep, relative # /hello
+        absParent = path.dirname absolute # /home/sync/hello
 
         # Do not keep '/'
         parent    = '' if parent is '/'
@@ -552,10 +560,8 @@ filesystem =
         del = require 'del'
         del "#{dirPath}/*", force: true, callback
 
+
     isInSyncDir: (filePath) ->
         paths = @getPaths filePath
         return paths.relative isnt '' \
            and paths.relative.substring(0,2) isnt '..'
-
-
-module.exports = filesystem

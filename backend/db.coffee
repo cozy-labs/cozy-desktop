@@ -58,12 +58,19 @@ module.exports =
     addFilter: (docType, callback) ->
         id = "_design/#{docType.toLowerCase()}"
         all = """
-            function (doc) {
-                if (doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
-                    emit(doc._id, doc);
-                }
-            }
-        """
+function (doc) {
+    if (doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
+        emit(doc._id, doc);
+    }
+}
+"""
+        byFullPath = """
+function (doc) {
+    if (doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
+        emit(doc.path + '/' + doc.name, doc);
+    }
+}
+"""
 
         newDesignDoc =
             _id: id
@@ -72,14 +79,6 @@ module.exports =
                     map: all
 
         if docType in ['file', 'folder', 'binary', 'File', 'Folder', 'Binary']
-            byFullPath = """
-                function (doc) {
-                    if (doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
-                        emit(doc.path + '/' + doc.name, doc);
-                    }
-                }
-            """
-
             newDesignDoc.views.byFullPath =
                 map: byFullPath
 
