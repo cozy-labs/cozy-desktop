@@ -1,12 +1,17 @@
+require('coffee-script/register'); // for mocha
+
 var gulp = require('gulp');
 var coffee = require('gulp-coffee');
 var shell = require('gulp-shell');
 var del = require('del');
+var mocha = require('gulp-mocha');
+var should = require('should');
 
 var nwVersion = '0.8.6';
 var paths = {
   scripts: ['backend/*.coffee'],
   scriptsJS: ['backend/*.js'],
+  tests: ['tests/*.coffee'],
   all: ["backend/**/*.js", "client/public/**", "app.html", "package.json",
         "node_modules/**"],
   leveldown: 'node_modules/pouchdb/node_modules/leveldown'
@@ -51,6 +56,16 @@ gulp.task('builder', ['scripts', 'leveldown'], function() {
      console.log(error);
   });
 });
+
+gulp.task('test', function() {
+    gulp.src(paths.tests, {
+      read: false
+    }).pipe(mocha({
+      reporter: 'spec',
+      globals: {should: require('should')}
+    }));
+});
+
 
 
 gulp.task('default',  ['watch']);
