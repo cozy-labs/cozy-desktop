@@ -11,7 +11,8 @@
     "title": "Cozy Data Proxy"
   },
   "scripts": {
-    "test": "npm test"
+    "test": "gulp test",
+    "build": "gulp build"
   },
   "repository": {
     "type": "git",
