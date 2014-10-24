@@ -5,7 +5,7 @@ program     = require 'commander'
 read        = require 'read'
 process     = require 'process'
 log         = require('printit')
-              prefix: 'Data Proxy'
+              prefix: 'Data Proxy '
 
 config      = require './backend/config'
 replication = require './backend/replication'
@@ -14,7 +14,7 @@ binary      = require './backend/binary'
 pouch       = require './backend/db'
 
 
-getPassword = (callback) ->
+module.exports.getPassword = (callback) ->
     promptMsg = 'Please enter your password to register your device to ' + \
                 'your remote Cozy: '
     read prompt: promptMsg, silent: true , callback
@@ -22,7 +22,7 @@ getPassword = (callback) ->
 
 # Register current device to remote Cozy. Then it saves related informations
 # to the config file.
-addRemote = (url, deviceName, syncPath) ->
+module.exports.addRemote = addRemote = (url, deviceName, syncPath) ->
     saveConfig = (err, credentials) ->
         if err
             log.error err
@@ -34,6 +34,7 @@ addRemote = (url, deviceName, syncPath) ->
                 path: path.resolve syncPath
                 deviceId: credentials.id
                 devicePassword: credentials.password
+
             config.addRemoteCozy options
             log.info 'Remote Cozy properly configured to work ' + \
                      'with current device.'
@@ -46,11 +47,11 @@ addRemote = (url, deviceName, syncPath) ->
 
         replication.registerDevice options, saveConfig
 
-    getPassword register
+    module.exports.getPassword register
 
 # Unregister current device from remote Cozy. Then it removes remote from
 # config file.
-removeRemote = (args) ->
+module.exports.removeRemote = removeRemote = (args) ->
     remoteConfig = config.getConfig()
     deviceName = args.deviceName or config.getDeviceName()
 
@@ -67,10 +68,9 @@ removeRemote = (args) ->
             url: remoteConfig.url
             deviceId: remoteConfig.deviceId
             password: password
-
         replication.unregisterDevice options, saveConfig
 
-    getPassword unregister
+    module.exports.getPassword unregister
 
 
 displayDatabase = ->
@@ -213,6 +213,14 @@ program
             filesystem.createDirectoryDoc dirPath, ->
 
 program
+    .command 'reset-database'
+    .description 'Recreates the local database'
+    .action ->
+        log.info "Recreates the local database..."
+        pouch.resetDatabase ->
+            log.info "Database recreated"
+
+program
     .command('display-database')
     .description('Display database content')
     .action displayDatabase
@@ -231,8 +239,8 @@ program
     .command("*")
     .description("Display help message for an unknown command.")
     .action ->
-        console.log 'Unknown command, run "cozy-monitor --help"' + \
-                    ' to know the list of available commands.'
+        log.info 'Unknown command, run "cozy-monitor --help"' + \
+                 ' to know the list of available commands.'
 
 program.parse process.argv
 

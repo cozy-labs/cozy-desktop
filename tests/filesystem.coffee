@@ -1,8 +1,8 @@
 fs = require 'fs'
 touch = require 'touch'
 
-should = require('should')
-helpers = require './helpers'
+should = require 'should'
+helpers = require './helpers/helpers'
 client = helpers.getClient()
 
 config      = require '../backend/config'
@@ -66,4 +66,4 @@ describe "Filesystem Tests", ->
                         done()
 
 
-    it "When I (re)build filesystem tree from DB documents", (done) ->
+    it "When I (re)build filesystem tree from DB documents"

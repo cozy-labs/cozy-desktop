@@ -3,7 +3,7 @@ touch      = require 'touch'
 request    = require 'request-json-light'
 urlParser  = require 'url'
 log        = require('printit')
-             prefix: 'Data Proxy | replication'
+             prefix: 'Replication'
 
 pouch      = require './db'
 config     = require './config'
@@ -11,7 +11,6 @@ filesystem = require './filesystem'
 binary     = require './binary'
 
 filters = []
-remoteConfig = config.getConfig()
 
 module.exports =
 
@@ -68,6 +67,9 @@ module.exports =
     treeIsBuilding: false
 
     runReplication: (options, callback) ->
+
+        remoteConfig = config.getConfig()
+
         fromRemote = options.fromRemote
         toRemote = options.toRemote
         continuous = options.continuous or false
@@ -89,7 +91,6 @@ module.exports =
         # Set authentication
         url = urlParser.parse remoteConfig.url
         url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
-        console.log url.auth
 
         # Define action after replication completion
         applyChanges = (callback) ->
@@ -160,8 +161,10 @@ module.exports =
         # Launch replication
         url = urlParser.format(url) + 'cozy'
         console.log url
-        replicator = replicate(url, options)
+        @replicator = replicate(url, options)
             .on 'change', onChange
             .on 'uptodate', onUptoDate # Called only for a continuous replication
             .on 'complete', onComplete # Called only for a single replication
             .on 'error', onError
+
+    cancelReplication: -> @replicator.cancel()

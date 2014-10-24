@@ -1,5 +1,5 @@
-should = require('should')
-helpers = require './helpers'
+should = require 'should'
+helpers = require './helpers/helpers'
 client = helpers.getClient()
 
 config      = require '../backend/config'
@@ -44,11 +44,6 @@ describe "Replication Tests", ->
             config.removeRemoteCozy helpers.options.deviceName
             done()
 
-    it "When I run replication from remote", (done) ->
-        done()
-
-    it "When I run replication to remote", (done) ->
-        done()
-
-    it "When I run replication from and to remote", (done) ->
-        done()
+    it "When I run replication from remote"
+    it "When I run replication to remote"
+    it "When I run replication from and to remote"
