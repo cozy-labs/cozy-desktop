@@ -36,7 +36,6 @@ module.exports =
                 @folders = res or { rows: [] }
                 callback err, res
         else
-            console.log 'yay'
             callback null, @folders
 
     binaries:

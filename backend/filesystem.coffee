@@ -6,6 +6,7 @@ path     = require 'path'
 uuid     = require 'node-uuid'
 mime     = require 'mime'
 chokidar = require 'chokidar'
+rimraf   = require 'rimraf'
 log      = require('printit')
            prefix: 'Data Proxy | filesystem'
 
@@ -44,7 +45,19 @@ filesystem =
     # Changes is the queue of operations, it contains
     # files that are being downloaded, and files to upload.
     changes: async.queue (task, callback) ->
+        #console.log task.operation, task.file
         deviceName = config.getDeviceName()
+
+        if task.operation is 'get' or \
+           task.operation is 'delete' or \
+           task.operation is 'newFolder' or \
+           task.operation is 'catchup' or \
+           task.operation is 'reDownload'
+            module.exports.watchingLocked = true
+            callback_orig = callback
+            callback = (err, res) ->
+                module.exports.watchingLocked = false
+                callback_orig err, res
 
         switch task.operation
             when 'post'
@@ -54,19 +67,27 @@ filesystem =
                 if task.file?
                     module.exports.createFileDoc task.file, false, callback
             when 'get'
-                if task.file?
-                    binary.fetchOne deviceName, task.file, callback
-                else
-                    binary.fetchAll deviceName, callback
-            when 'delete'
+                if task.doc?
+                    binary.fetchFromDoc deviceName, task.doc, callback
+            when 'deleteDoc'
                 if task.file?
                     module.exports.deleteDoc task.file, callback
+            when 'delete'
+                if task.id?
+                    module.exports.deleteFromId task.id, callback
+            when 'newFolder'
+                if task.path
+                    mkdirp task.path, callback
+            when 'catchup'
+                module.exports.deleteMissingFileDocs false, callback
+            when 'reDownload'
+                module.exports.deleteMissingFileDocs true, callback
             else
                 # rebuild
                 if task.file?
-                    @buildTree task.file, callback
+                    module.exports.buildTree task.file, callback
                 else
-                    @buildTree null, callback
+                    module.exports.buildTree null, callback
     , 1
 
     watchingLocked: false
@@ -131,45 +152,45 @@ filesystem =
 
 
     buildTree: (filePath, callback) ->
-        # If filePath argument is set, rebuild FS information for this file only
-        if filePath?
-            filePaths = @getPaths filePath
-            log.info "Updating file info: #{filePaths.relative}"
-        else
-            filePaths = @getPaths remoteConfig.path
-            log.info "Rebuilding filesystem tree"
-
-        makeFiles = (err, result) =>
-            if err then callback err
-            docs = result['rows']
-            async.eachSeries docs, @touchFileFromDoc, callback
-
-        getFiles = (err) =>
-            if err
-                callback err
-            else
-                #pouch.db.query 'file/all', makeFiles
-                pouch.allFiles false, makeFiles
-
         createFileFilters = (err) =>
             if err then throw new Error err
             pouch.addFilter 'file', (err) =>
                 if err
                     callback err
                 else
-                    pouch.addFilter 'binary', getFiles
+                    pouch.addFilter 'binary', callback
 
-        makeDirectories =  (err, result) =>
+        removeUnusedDirectories = (err, result) =>
             if err then callback err
-            docs = result['rows']
-            async.eachSeries docs, @makeDirectoryFromDoc, createFileFilters
+
+            walkSync = (dir, filelist) ->
+                files = fs.readdirSync dir
+                filelist = filelist || []
+                for file in files
+                    if fs.statSync("#{dir}/#{file}").isDirectory()
+                        parent = path.relative remoteConfig.path, dir
+                        parent = path.join path.sep, parent if parent isnt ''
+                        filelist.push [parent, file, "#{dir}/#{file}"]
+                        filelist = walkSync("#{dir}/#{file}/", filelist)
+                return filelist
+
+            for dir in walkSync remoteConfig.path
+                docExists = false
+                for doc in result['rows']
+                    if doc.value.path is dir[0] and doc.value.name is dir[1]
+                        docExists = true
+                if not docExists and fs.existsSync dir[2]
+                    log.info "Removing directory: #{dir[2]}"
+                    rimraf.sync dir[2]
+
+            #async.eachSeries result['rows'], @makeDirectoryFromDoc, createFileFilters
+            createFileFilters null
 
         getFolders = (err) =>
             if err
                 callback err
             else
-                #pouch.db.query 'folder/all', makeDirectories
-                pouch.allFolders false, makeDirectories
+                pouch.db.query 'folder/all', removeUnusedDirectories
 
         createFolderFilter = () ->
             pouch.addFilter 'folder', getFolders
@@ -177,32 +198,52 @@ filesystem =
         createFolderFilter()
 
 
-    createDirectoryContentDoc: (dirPath, callback) ->
-        dirPaths = @getPaths dirPath
+    deleteMissingFileDocs: (reDownload, callback) ->
+        deviceName = config.getDeviceName()
+        reDownload ?= false
 
-        #log.info "Add directory and its content: #{dirPaths.relative}"
-        log.info "Add directory and its content: #{dirPaths.relative}"
+        console.log reDownload
 
-        # Create the directory itself first
-        @createDirectoryDocAsync(dirPaths.absolute).bind(@)
+        deleteDocIfNotExists = (doc, callback) =>
+            doc = doc.value
+            filePath = path.resolve remoteConfig.path, doc.path, doc.name
+            if fs.existsSync filePath
+                callback null
+            else
+                if reDownload
+                    binary.fetchFromDoc deviceName, doc, callback
+                else
+                    @deleteDoc filePath, callback
 
-        # List directory content
-        .then -> fs.readdir dirPaths.absolute
+        getFolders = (err, result) =>
+            if err
+                callback err
+            else
+                pouch.db.query 'folder/all', (err, result2) =>
+                    if err
+                        callback err
+                    else
+                        results = result['rows'].concat(result2['rows'])
+                        async.each results, deleteDocIfNotExists, callback
 
-        .each (file) ->
-            filePath = path.join dirPaths.absolute, file
+        getFiles = (err, result) =>
+            if err
+                callback err
+            else
+                pouch.db.query 'files/all', getFolders
 
-            # Get stats
-            fs.lstat(filePath).bind(@)
 
-            # Create directory or file document
-            .then (stats) ->
-                if stats.isDirectory()
-                    @createDirectoryContentDoc filePath
-                else if stats.isFile()
-                    @changes.push { operation: 'put', file: filePath }, ->
+        pouch.addFilter 'file', (err) =>
+            if err
+                callback err
+            else
+                pouch.addFilter 'binary', (err) ->
+                    if err
+                        callback err
+                    else
+                        pouch.addFilter 'folder', getFiles
 
-        .nodeify callback
+
 
 
     createDirectoryDoc: (dirPath, ignoreExisting, callback) ->
@@ -254,12 +295,15 @@ filesystem =
                 checkDirectoryExistence newDoc
 
         createParentDirectory = (newDoc) =>
-            @createDirectoryDoc dirPaths.absParent, true, (err, res) ->
-                if err
-                    log.error "An error occured at parent directory's creation"
-                    callback err
-                else
-                    updateDirectoryStats newDoc
+            if fs.existsSync(dirPaths.absParent)
+                updateDirectoryStats newDoc
+            else
+                @createDirectoryDoc dirPaths.absParent, true, (err, res) ->
+                    if err
+                        log.error "An error occured at parent directory's creation"
+                        callback err
+                    else
+                        updateDirectoryStats newDoc
 
         checkDirectoryLocation = () =>
             if not @isInSyncDir(dirPath) or not fs.existsSync(dirPaths.absolute)
@@ -340,13 +384,19 @@ filesystem =
                 # (since binary documents are not synchronized with the local
                 # pouchDB)
                 binary.getRemoteDoc newDoc.binary.file.id, (err, binaryDoc) ->
-                    uploadBinary newDoc, binaryDoc
+                    if err
+                        callback err
+                    else
+                        uploadBinary newDoc, binaryDoc
             else
                 # If binary does not exist remotely yet, we have to
                 # create an empty binary document remotely to have
                 # an ID and a revision
                 binary.createEmptyRemoteDoc (err, binaryDoc) ->
-                    uploadBinary newDoc, binaryDoc
+                    if err
+                        callback err
+                    else
+                        uploadBinary newDoc, binaryDoc
 
         checkBinaryExistence = (newDoc, checksum) ->
             # Check if the binary doc exists, using its checksum
@@ -354,13 +404,13 @@ filesystem =
             binary.docAlreadyExists checksum, (err, doc) ->
                 if err
                     callback err
-                else if doc
-                    # Binary document exists
-                    newDoc.binary =
-                        file:
-                            id: doc._id
-                            rev: doc._rev
-                    saveBinaryDocument newDoc
+                #else if doc
+                #    # Binary document exists
+                #    newDoc.binary =
+                #        file:
+                #            id: doc._id
+                #            rev: doc._rev
+                #    saveBinaryDocument newDoc
                 else
                     populateBinaryInformation newDoc
 
@@ -426,6 +476,19 @@ filesystem =
 
         checkFileLocation()
 
+    deleteFromId: (id, callback) ->
+        pouch.db.get id, (err, res) ->
+            if err and err.status isnt 404
+                callback err
+            else if res?.path?
+                fs.unlink res.path, ->
+                    callback null
+            else
+                if err and err.status is 404
+                    callback null
+                else
+                    callback err
+
 
     deleteDoc: (filePath, callback) ->
         filePaths = @getPaths filePath
@@ -474,9 +537,10 @@ filesystem =
                             existingDoc = existingDoc.doc
                             if  existingDoc.name is deletedFileName \
                             and existingDoc.path is deletedFilePath
-                                # Only one of them should show up,
-                                # but delete all of them anyway
-                                markAsDeleted existingDoc
+                                return markAsDeleted existingDoc
+
+                        # No doc found
+                        callback null
 
         getDoc filePaths.name, filePaths.parent
 
@@ -534,12 +598,12 @@ filesystem =
         # File deletion detected
         .on 'unlink', (filePath) =>
             log.info "File deleted: #{filePath}"
-            @changes.push { operation: 'delete', file: filePath }, ->
+            @changes.push { operation: 'deleteDoc', file: filePath }, ->
 
         # Folder deletion detected
         .on 'unlinkDir', (dirPath) =>
             log.info "Folder deleted: #{dirPath}"
-            @changes.push { operation: 'delete', file: dirPath }, ->
+            @changes.push { operation: 'deleteDoc', file: dirPath }, ->
 
         # File update detected
         .on 'change', (filePath) =>
@@ -579,6 +643,5 @@ filesystem =
         paths = @getPaths filePath
         return paths.relative isnt '' \
            and paths.relative.substring(0,2) isnt '..'
-
 
 module.exports = filesystem

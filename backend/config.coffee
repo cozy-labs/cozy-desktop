@@ -19,10 +19,9 @@ module.exports =
     dbPath: path.join defaultDir, 'db'
     config: require configPath or devices: {}
 
-
     # Return config related to device name.
     getConfig: (deviceName) ->
-        deviceName = @getDeviceName() unless deviceName?
+        deviceName ?= @getDeviceName()
 
         if @config.devices[deviceName]?
             return @config.devices[deviceName]
@@ -61,6 +60,18 @@ module.exports =
     saveConfig: ->
         fs.writeFileSync configPath, JSON.stringify @config, null, 2
 
+    setSeq: (seq, deviceName) ->
+        deviceName ?= @getDeviceName()
+        @config.devices[deviceName].seq = seq
+        @saveConfig()
+
+    getSeq: (deviceName) ->
+        deviceName ?= @getDeviceName()
+        if @config.devices[deviceName].seq
+            return @config.devices[deviceName].seq
+        else
+            @setSeq(0, deviceName)
+            return 0
 
     updateSync: (deviceConfig) ->
         device = @getConfig()

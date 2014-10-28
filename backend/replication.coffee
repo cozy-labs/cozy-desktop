@@ -1,7 +1,9 @@
 fs         = require 'fs'
+path       = require 'path'
 touch      = require 'touch'
 request    = require 'request-json-light'
 urlParser  = require 'url'
+mkdirp     = require 'mkdirp'
 log        = require('printit')
              prefix: 'Data Proxy | replication'
 
@@ -73,6 +75,8 @@ module.exports =
         continuous = options.continuous or false
         rebuildFs = options.rebuildFs or true
         fetchBinary = options.fetchBinary or false
+        catchup = options.catchup or false
+        initial = options.initial or false
 
         deviceName = config.getDeviceName()
         replicate = @getReplicateFunction toRemote, fromRemote
@@ -81,7 +85,7 @@ module.exports =
         options =
             filter: (doc) ->
                 doc.docType is 'Folder' or doc.docType is 'File'
-            live: continuous
+            #live: continuous
 
         # Do not need rebuild until docs are pulled
         needTreeRebuild = false
@@ -89,26 +93,7 @@ module.exports =
         # Set authentication
         url = urlParser.parse remoteConfig.url
         url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
-        console.log url.auth
 
-        # Define action after replication completion
-        applyChanges = (callback) ->
-
-            # Lock file watcher to avoid remotely downloaded files to be re-uploaded
-            filesystem.watchingLocked = true
-
-            unlockFileSystemAndReturn = (err) ->
-                filesystem.watchingLocked = false
-                if err
-                    callback err
-                else
-                    callback null if callback?
-
-            # Fetch binaries Or rebuild the filesystem directory tree only
-            if fetchBinary
-                filesystem.changes.push { operation: 'get' }, unlockFileSystemAndReturn
-            else
-                filesystem.changes.push { operation: 'rebuild' }, unlockFileSystemAndReturn
 
         onChange = (info) =>
             if info.change? and info.change.docs_written > 0
@@ -117,41 +102,53 @@ module.exports =
                 changeMessage = "DB change: #{info.docs_written} doc(s) written"
 
             # Specify direction
-            if info.direction
+            if info.direction and changeMessage?
                 changeMessage = "#{info.direction} #{changeMessage}"
-
-            # Find out if filesystem tree needs a rebuild
-            if (not info.direction? and fromRemote and info.docs_written > 0) \
-            or (info.direction is 'pull' and info.change.docs_written > 0)
-                needTreeRebuild = rebuildFs
-                @replicationIsRunning = true
 
             log.info changeMessage if changeMessage?
 
-        onUptoDate = (info) =>
 
-            @replicationIsRunning = false
-            setTimeout () =>
-                if not @replicationIsRunning and not @treeIsBuilding and needTreeRebuild
-                    @treeIsBuilding = true
-                    applyChanges (err) =>
-                        setTimeout () =>
-                            @treeIsBuilding = false
-                        , 2000
-                        @needTreeRebuild = false
-                        log.info 'Replication is complete'
-                        if err and callback?
-                            callback err if callback?
-            , 3000
+        
+        firstSync = initial
 
-        onComplete = (info) ->
-            log.info 'Replication is complete'
-            if fromRemote and not toRemote
-                log.info 'Applying changes on the filesystem'
-                applyChanges (err) ->
-                    callback err if callback?
+        onComplete = (info) =>
+            if firstSync
+                since = 'now'
             else
-                callback null if callback?
+                since = config.getSeq()
+            pouch.db.changes(
+                filter: (doc) ->
+                    doc.docType is 'Folder' or doc.docType is 'File'
+                since: since
+                include_docs: true
+            ).on 'complete', (res) =>
+                for change in res.results
+                    saveSeq = (err, res) ->
+                        if err
+                            callback err
+                        else
+                            config.setSeq(change.seq)
+
+                    if change.deleted
+                        if change.doc.docType is 'Folder'
+                            filesystem.changes.push { operation: 'rebuild' }, saveSeq
+                        else if change.doc.binary?.file?.id?
+                            filesystem.changes.push { operation: 'delete', id: change.doc.binary.file.id }, saveSeq
+                    else
+                        if change.doc.docType is 'Folder'
+                            absPath = path.join remoteConfig.path, change.doc.path, change.doc.name
+                            filesystem.changes.push { operation: 'newFolder', path: absPath }, saveSeq
+                                #filesystem.changes.push { operation: 'rebuild' }, saveSeq
+                        else
+                            filesystem.changes.push { operation: 'get', doc: change.doc }, saveSeq
+                setTimeout () =>
+                    replicator = replicate(url, options)
+                        .on 'change', onChange
+                        .on 'complete', (info) =>
+                            firstSync = false
+                            onComplete info
+                        .on 'error', onError
+                , 5000
 
         onError = (err, data) ->
             log.error err
@@ -159,9 +156,19 @@ module.exports =
 
         # Launch replication
         url = urlParser.format(url) + 'cozy'
-        console.log url
-        replicator = replicate(url, options)
-            .on 'change', onChange
-            .on 'uptodate', onUptoDate # Called only for a continuous replication
-            .on 'complete', onComplete # Called only for a single replication
-            .on 'error', onError
+
+        if catchup
+            if initial
+                operation = 'reDownload'
+            else
+                operation = 'catchup'
+        else
+            operation = 'rebuild'
+
+        filesystem.changes.push { operation: operation }, ->
+            setTimeout () =>
+                replicator = replicate(url, options)
+                    .on 'change', onChange
+                    .on 'complete', onComplete # Called only for a single replication
+                    .on 'error', onError
+            , 5000
