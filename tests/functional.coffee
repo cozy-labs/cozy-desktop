@@ -1,5 +1,6 @@
 {exec} = require 'child_process'
 fs = require 'fs'
+path = require 'path'
 should = require 'should'
 helpers = require './helpers/helpers'
 cliHelpers = require './helpers/cli'
@@ -7,7 +8,7 @@ filesHelpers = require './helpers/files'
 
 {syncPath} = helpers.options
 
-describe "Functional Tests", ->
+describe.only "Functional Tests", ->
 
     before helpers.ensurePreConditions
 
@@ -27,7 +28,7 @@ describe "Functional Tests", ->
     after cliHelpers.stopSync
     after cliHelpers.restoreGetPassword
     after helpers.cleanFolder syncPath
-    after filesHelpers.deleteAll
+    #after filesHelpers.deleteAll
     after cliHelpers.resetDatabase
 
     it "When I create a file locally", (done) ->
@@ -52,7 +53,7 @@ describe "Functional Tests", ->
                         done()
             , 3000
 
-    it.skip "Rename a file locally", (done) ->
+    it "Rename a file locally", (done) ->
         @timeout 5500
 
         expectedContent = "TEST ME"
@@ -95,7 +96,7 @@ describe "Functional Tests", ->
             , 3000
 
 
-    it.skip "Move a file locally into a subfolder", (done) ->
+    it "Move a file locally into a subfolder", (done) ->
         @timeout 5500
 
         expectedContent = "TEST ME"
@@ -122,7 +123,7 @@ describe "Functional Tests", ->
                             done()
             , 3000
 
-    it.skip "Move a file locally from a subfolder", (done) ->
+    it "Move a file locally from a subfolder", (done) ->
         @timeout 5500
 
         expectedContent = "TEST ME"
@@ -149,7 +150,7 @@ describe "Functional Tests", ->
         @timeout 5500
 
         expectedContent = "TEST ME"
-        fileName = 'test.txt' # 'test_changed.txt'
+        fileName = 'test_changed.txt'
         filePath = "#{syncPath}/#{fileName}"
         newFileName =  'test_copied.txt'
         newFilePath = "#{syncPath}/#{newFileName}"
@@ -173,7 +174,7 @@ describe "Functional Tests", ->
 
         newContent = "MY FRIEND"
         expectedContent = "TEST ME\n#{newContent}"
-        fileName = 'test.txt' # 'test_changed.txt'
+        fileName = 'test_changed.txt'
         filePath = "#{syncPath}/#{fileName}"
 
         command = "echo \"#{newContent}\" >> #{filePath}"
@@ -198,7 +199,7 @@ describe "Functional Tests", ->
 
         command = "rm -rf #{filePath}"
         exec command, cwd: syncPath, ->
-            # file should NOT exist
+            # file should NOT exist anymore
             (fs.lstatSync.bind null, filePath).should.throw()
 
             setTimeout ->
@@ -208,14 +209,152 @@ describe "Functional Tests", ->
                     done()
             , 3000
 
-    it "Create a big file locally"
+    it "Create a file remotely", (done) ->
+        @timeout 10000
+        fixturePath = path.resolve __dirname, './fixtures/chat-mignon.jpg'
+        fileName = 'chat-mignon.jpg'
+        filePath = "#{syncPath}/#{fileName}"
+        filesHelpers.uploadFile fileName, fixturePath, ->
+            filesHelpers.getFolderContent 'root', (err, files) ->
+                file = filesHelpers.getElementByName fileName, files
+                should.exist file
+                setTimeout ->
+                    # file should exist
+                    (fs.lstatSync.bind null, filePath).should.not.throw()
+                    done()
+                , 5000
 
-    it "Create a file remotely"
-    it "Delete a file remotely"
-    it "Rename a file remotely"
-    it "Move a file remotely in the same folder"
-    it "Create a folder remotely"
-    it "Move a file remotely into a subfolder"
-    it "Move a file remotely from a subfolder"
-    it "Copy a file remotely"
-    it "Create a big file a file remotely"
+    it "Rename a file remotely", (done) ->
+        @timeout 10000
+        fileName = 'chat-mignon.jpg'
+        newName = 'chat-mignon-renamed.jpg'
+        newPath = "#{syncPath}/#{newName}"
+        filesHelpers.getFolderContent 'root', (err, files) ->
+            file = filesHelpers.getElementByName fileName, files
+            should.exist file
+            filesHelpers.renameFile file, newName, ->
+                setTimeout ->
+                    # file should exist
+                    (fs.lstatSync.bind null, newPath).should.not.throw()
+                    done()
+                , 5000
+
+    it "Create a folder remotely", (done) ->
+        @timeout 20000
+        folderName = 'remote-folder'
+        folderPath = "#{syncPath}/#{folderName}"
+        filesHelpers.createFolder folderName, ->
+            filesHelpers.getFolderContent 'root', (err, elements) ->
+                folder = filesHelpers.getElementByName folderName, elements
+                should.exist folder
+                setTimeout ->
+                    # folder should exist
+                    (fs.lstatSync.bind null, folderPath).should.not.throw()
+                    done()
+                , 15000
+
+    it "Move a file remotely into a subfolder", (done) ->
+        @timeout 10000
+        fileName = 'chat-mignon-renamed.jpg'
+        folderName = 'remote-folder'
+        newPath = "#{syncPath}/#{folderName}/#{fileName}"
+        filesHelpers.getFolderContent 'root', (err, files) ->
+            file = filesHelpers.getElementByName fileName, files
+            should.exist file
+            folder = filesHelpers.getElementByName folderName, files
+            should.exist folder
+            filesHelpers.moveFile file, folderName, ->
+                filesHelpers.getFolderContent folder, (err, files) ->
+                    file = filesHelpers.getElementByName fileName, files
+                    should.exist file
+                    setTimeout ->
+                        # file should exist at new path
+                        (fs.lstatSync.bind null, newPath).should.not.throw()
+                        done()
+                    , 5000
+
+    it "Move a file remotely from a subfolder", (done) ->
+        @timeout 10000
+        fileName = 'chat-mignon-renamed.jpg'
+        folderName = 'remote-folder'
+        newPath = "#{syncPath}/#{fileName}"
+        filesHelpers.getFolderContent 'root', (err, files) ->
+            folder = filesHelpers.getElementByName folderName, files
+            should.exist folder
+            filesHelpers.getFolderContent folder, (err, files) ->
+                file = filesHelpers.getElementByName fileName, files
+                should.exist file
+                filesHelpers.moveFile file, "", ->
+                    filesHelpers.getFolderContent "root", (err, files) ->
+                        file = filesHelpers.getElementByName fileName, files
+                        should.exist file
+                        setTimeout ->
+                            # file should exist at new path
+                            (fs.lstatSync.bind null, newPath).should.not.throw()
+                            done()
+                        , 5000
+
+    it "Delete a file remotely", (done) ->
+        @timeout 5500
+
+        filName = 'chat-mignon-renamed.jpg'
+        filePath = "#{syncPath}/#{fileName}"
+        filesHelpers.getFolderContent "root", (err, files) ->
+            file = filesHelpers.getElementByName fileName, files
+            should.exist file
+            filesHelpers.removeFile file, ->
+                file = filesHelpers.getElementByName fileName, files, false
+                should.not.exist file
+                setTimeout ->
+                    # file should exist at new path
+                    (fs.lstatSync.bind null, filePath).should.throw()
+                    done()
+                , 3000
+
+
+    it.skip "Create a big file locally", (done) ->
+        ms = 1000
+        hour = 3600
+        generationDuration = 35
+        @timeout hour * ms
+
+        fileSize = 1.2 * 1024 * 1024 * 1024
+        fileName = 'big_file.bin'
+        filePath = "#{syncPath}/#{fileName}"
+        command = "dd if=/dev/zero bs=1 count=0 seek=2000000000 " + \
+                  "of=#{filePath} > /dev/null 2>&1"
+
+        # this command takes approximately 30s to be run
+        exec command, cwd: syncPath, ->
+            # file should exist
+            (fs.lstatSync.bind null, filePath).should.not.throw()
+            setTimeout ->
+                filesHelpers.getFolderContent 'root', (err, files) ->
+                    file = filesHelpers.getElementByName fileName, files
+                    should.exist file
+                    done()
+            , (hour - generationDuration) * ms
+
+    it.skip "Create a big file a file remotely", (done) ->
+        ms = 1000
+        hour = 3600
+        generationDuration = 35
+        @timeout hour * ms
+
+        fileSize = 1.2 * 1024 * 1024 * 1024
+        fileName = 'big_file.bin'
+        filePath = "/tmp/#{fileName}"
+        command = "dd if=/dev/zero bs=1 count=0 seek=2000000000 " + \
+                  "of=#{filePath} > /dev/null 2>&1"
+
+        # this command takes approximately 30s to be run
+        exec command, cwd: "/tmp", ->
+            filesHelpers.uploadFile 'big_file.bin', filePath, ->
+                filesHelpers.getFolderContent 'root', (err, files) ->
+                    file = filesHelpers.getElementByName fileName, files
+                    should.exist file
+                    setTimeout ->
+                        # file should exists
+                        (fs.lstatSync.bind null, filePath).should.not.throw()
+                    , (hour - generationDuration) * ms
+
