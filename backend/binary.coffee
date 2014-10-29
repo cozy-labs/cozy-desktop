@@ -4,7 +4,7 @@ request    = require 'request-json-light'
 uuid       = require 'node-uuid'
 crypto     = require 'crypto'
 log        = require('printit')
-             prefix: 'Binary     '
+    prefix: 'Binary     '
 
 config     = require './config'
 pouch      = require './db'
@@ -124,7 +124,8 @@ module.exports =
                     # Loop through existing binaries
                     for existingDoc in existingDocs.rows
                         existingDoc = existingDoc.value
-                        if existingDoc.checksum? and existingDoc.checksum is checksum
+                        if existingDoc.checksum? and \
+                        existingDoc.checksum is checksum
                             return callback null, existingDoc
                     return callback null, null
                 else
@@ -256,6 +257,8 @@ module.exports =
 
                 try
                     fs.unlinkSync binaryPath
+                catch e
+                    # nothing
                 finally
                     client.saveFile urlPath, binaryPath, saveBinaryPath
             else
@@ -266,11 +269,15 @@ module.exports =
             if err and err.status isnt 404 then throw new Error err
             else if binaryDoc?
                 pouch.db.remove binaryDoc, ->
-                    if binaryDoc.path? and binaryDoc.path isnt binaryPath
-                        fs.renameSync binaryDoc.path, binaryPath
+                    if binaryDoc.path? and binaryDoc.path isnt binaryPath \
+                    and fs.existsSync(binaryDoc.path)
+                        fs.renameSync(binaryDoc.path, binaryPath)
                     downloadFile()
             else
                 downloadFile()
 
-        # Check if the binary document exists
-        pouch.db.get doc.binary.file.id, removeBinary
+        if doc.binary?.file?.id?
+            # Check if the binary document exists
+            pouch.db.get doc.binary.file.id, removeBinary
+        else
+            callback null

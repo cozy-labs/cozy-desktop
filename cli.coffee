@@ -115,12 +115,14 @@ program
     .description('Sync databases, apply and/or watch changes')
     .option('-d, --deviceName [deviceName]', 'device name to deal with')
     .option('-n, --noBinary', 'ignore binary fetching')
-    .option('-i, --initial', 're-detect all the files')
+    .option('-i, --initial', 're-download all missing files')
+    .option('-c, --catchup', 're-detect all the files')
     .option('-f, --fromRemote', 'replicate from remote database')
     .option('-t, --toRemote', 'replicate to remote database')
     .action (args) ->
         args.noBinary ?= false
         args.initial ?= false
+        args.catchup ?= false
         continuous = true
         rebuildFSTree = true
         fetchBinary = not args.noBinary
@@ -137,6 +139,8 @@ program
             continuous: true
             rebuildTree: true
             fetchBinary: fetchBinary
+            initial: args.initial
+            catchup: args.catchup
         , (err) ->
             log.info 'Sync ended'
             if err

@@ -28,7 +28,7 @@ describe.only "Functional Tests", ->
     after cliHelpers.stopSync
     after cliHelpers.restoreGetPassword
     after helpers.cleanFolder syncPath
-    after filesHelpers.deleteAll
+    #after filesHelpers.deleteAll
     after cliHelpers.resetDatabase
 
     it "When I create a file locally", (done) ->

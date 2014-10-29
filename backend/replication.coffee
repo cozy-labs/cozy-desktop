@@ -1,9 +1,11 @@
 fs         = require 'fs'
+path       = require 'path'
 touch      = require 'touch'
 request    = require 'request-json-light'
 urlParser  = require 'url'
+mkdirp     = require 'mkdirp'
 log        = require('printit')
-             prefix: 'Replication'
+    prefix: 'Replication'
 
 pouch      = require './db'
 config     = require './config'
@@ -66,7 +68,56 @@ module.exports = replication =
         return replicate
 
 
-    # TODO split this function in smaller functions.
+    applyChanges: (since, callback) ->
+        since ?= config.getSeq()
+
+        pouch.db.changes(
+            filter: (doc) ->
+                doc.docType is 'Folder' or doc.docType is 'File'
+            since: since
+            include_docs: true
+        ).on('complete', (res) ->
+
+            for change in res.results
+
+                saveSeq = (err, res) ->
+                    if err
+                        callback err
+                    else
+                        config.setSeq(change.seq)
+                        callback null
+
+                if change.deleted
+                    if change.doc.docType is 'Folder'
+                        filesystem.changes.push
+                            operation: 'removeUnusedDirectories'
+                        , saveSeq
+                    else if change.doc.binary?.file?.id?
+                        filesystem.changes.push
+                            operation: 'delete'
+                            id: change.doc.binary.file.id
+                        , saveSeq
+                else
+                    if change.doc.docType is 'Folder'
+                        absPath = path.join remoteConfig.path,
+                                            change.doc.path,
+                                            change.doc.name
+                        filesystem.changes.push
+                            operation: 'newFolder'
+                            path: absPath
+                        , saveSeq
+                            #filesystem.changes.push
+                            #   operation: 'removeUnusedDirectories'
+                            #, saveSeq
+                    else
+                        filesystem.changes.push
+                            operation: 'get'
+                            doc: change.doc
+                        , saveSeq
+        ).on 'error', (err) ->
+            callback err
+
+
     runReplication: (options, callback) ->
 
         remoteConfig = config.getConfig()
@@ -76,97 +127,71 @@ module.exports = replication =
         continuous = options.continuous or false
         rebuildFs = options.rebuildFs or true
         fetchBinary = options.fetchBinary or false
+        catchup = options.catchup or false
+        initial = options.initial or false
+        firstSync = initial
 
         deviceName = config.getDeviceName()
         replicate = @getReplicateFunction toRemote, fromRemote
+
+        # Do not take into account all the changes if it is the first sync
+        firstSync = initial
 
         # Replicate only files and folders for now
         options =
             filter: (doc) ->
                 doc.docType is 'Folder' or doc.docType is 'File'
-            live: continuous
-
-        # Do not need rebuild until docs are pulled
-        needTreeRebuild = false
+            #live: continuous
 
         # Set authentication
         url = urlParser.parse remoteConfig.url
         url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
+        # Format URL
+        url = urlParser.format(url) + 'cozy'
 
-        # Define action after replication completion
-        applyChanges = (callback) ->
-
-            # Lock file watcher to avoid remotely downloaded files to be re-uploaded
-            filesystem.watchingLocked = true
-
-            unlockFileSystemAndReturn = (err) ->
-                filesystem.watchingLocked = false
-                if err
-                    callback err
-                else
-                    callback null if callback?
-
-            # Fetch binaries Or rebuild the filesystem directory tree only
-            if fetchBinary
-                filesystem.changes.push { operation: 'get' }, unlockFileSystemAndReturn
-            else
-                filesystem.changes.push { operation: 'rebuild' }, unlockFileSystemAndReturn
-
-        onChange = (info) =>
+        onChange = (info) ->
             if info.change? and info.change.docs_written > 0
-                changeMessage = "DB change: #{info.change.docs_written} doc(s) written"
+                changeMessage = "DB change: #{info.change.docs_written}
+                                 doc(s) written"
             else if info.docs_written > 0
                 changeMessage = "DB change: #{info.docs_written} doc(s) written"
 
             # Specify direction
-            if info.direction
+            if info.direction and changeMessage?
                 changeMessage = "#{info.direction} #{changeMessage}"
-
-            # Find out if filesystem tree needs a rebuild
-            if (not info.direction? and fromRemote and info.docs_written > 0) \
-            or (info.direction is 'pull' and info.change.docs_written > 0)
-                needTreeRebuild = rebuildFs
-                @replicationIsRunning = true
 
             log.info changeMessage if changeMessage?
 
-        onUptoDate = (info) =>
-
-            @replicationIsRunning = false
-            setTimeout () =>
-                if not @replicationIsRunning and not @treeIsBuilding and needTreeRebuild
-                    @treeIsBuilding = true
-                    applyChanges (err) =>
-                        setTimeout () =>
-                            @treeIsBuilding = false
-                        , 2000
-                        @needTreeRebuild = false
-                        log.info 'Replication is complete'
-                        if err and callback?
-                            callback err if callback?
-            , 3000
-
-        onComplete = (info) ->
-            log.info 'Replication is complete'
-            if fromRemote and not toRemote
-                log.info 'Applying changes on the filesystem'
-                applyChanges (err) ->
-                    callback err if callback?
+        onComplete = (info) =>
+            if firstSync
+                since = 'now'
+                filesystem.changes.push { operation: 'reDownload' }, ->
             else
-                callback null if callback?
+                since = config.getSeq()
+
+            @applyChanges since, () ->
+                setTimeout () ->
+                    replicator = replicate(url, options)
+                        .on 'change', onChange
+                        .on 'complete', (info) ->
+                            firstSync = false
+                            onComplete info
+                        .on 'error', onError
+                , 5000
 
         onError = (err, data) ->
             log.error err
             callback err if callback?
 
-        # Launch replication
-        url = urlParser.format(url) + 'cozy'
-        console.log url
-        @replicator = replicate(url, options)
-            .on 'change', onChange
-            .on 'uptodate', onUptoDate # Called only for a continuous replication
-            .on 'complete', onComplete # Called only for a single replication
-            .on 'error', onError
+        if catchup
+            operationm= 'catchup'
+        else
+            operation = 'removeUnusedDirectories'
 
-    cancelReplication: ->
-        @replicator.cancel()
+        filesystem.changes.push { operation: operation }, ->
+            setTimeout () ->
+                replicator = replicate(url, options)
+                    .on 'change', onChange
+                    .on 'complete', onComplete
+                    .on 'error', onError
+            , 5000
