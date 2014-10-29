@@ -5,7 +5,7 @@ request    = require 'request-json-light'
 urlParser  = require 'url'
 mkdirp     = require 'mkdirp'
 log        = require('printit')
-             prefix: 'Replication'
+    prefix: 'Replication'
 
 pouch      = require './db'
 config     = require './config'
@@ -76,7 +76,7 @@ module.exports = replication =
                 doc.docType is 'Folder' or doc.docType is 'File'
             since: since
             include_docs: true
-        ).on('complete', (res) =>
+        ).on('complete', (res) ->
 
             for change in res.results
 
@@ -89,16 +89,31 @@ module.exports = replication =
 
                 if change.deleted
                     if change.doc.docType is 'Folder'
-                        filesystem.changes.push { operation: 'removeUnusedDirectories' }, saveSeq
+                        filesystem.changes.push
+                            operation: 'removeUnusedDirectories'
+                        , saveSeq
                     else if change.doc.binary?.file?.id?
-                        filesystem.changes.push { operation: 'delete', id: change.doc.binary.file.id }, saveSeq
+                        filesystem.changes.push
+                            operation: 'delete'
+                            id: change.doc.binary.file.id
+                        , saveSeq
                 else
                     if change.doc.docType is 'Folder'
-                        absPath = path.join remoteConfig.path, change.doc.path, change.doc.name
-                        filesystem.changes.push { operation: 'newFolder', path: absPath }, saveSeq
-                            #filesystem.changes.push { operation: 'removeUnusedDirectories' }, saveSeq
+                        absPath = path.join remoteConfig.path,
+                                            change.doc.path,
+                                            change.doc.name
+                        filesystem.changes.push
+                            operation: 'newFolder'
+                            path: absPath
+                        , saveSeq
+                            #filesystem.changes.push
+                            #   operation: 'removeUnusedDirectories'
+                            #, saveSeq
                     else
-                        filesystem.changes.push { operation: 'get', doc: change.doc }, saveSeq
+                        filesystem.changes.push
+                            operation: 'get'
+                            doc: change.doc
+                        , saveSeq
         ).on 'error', (err) ->
             callback err
 
@@ -134,9 +149,10 @@ module.exports = replication =
         # Format URL
         url = urlParser.format(url) + 'cozy'
 
-        onChange = (info) =>
+        onChange = (info) ->
             if info.change? and info.change.docs_written > 0
-                changeMessage = "DB change: #{info.change.docs_written} doc(s) written"
+                changeMessage = "DB change: #{info.change.docs_written}
+                                 doc(s) written"
             else if info.docs_written > 0
                 changeMessage = "DB change: #{info.docs_written} doc(s) written"
 
@@ -153,11 +169,11 @@ module.exports = replication =
             else
                 since = config.getSeq()
 
-            @applyChanges since, () =>
-                setTimeout () =>
+            @applyChanges since, () ->
+                setTimeout () ->
                     replicator = replicate(url, options)
                         .on 'change', onChange
-                        .on 'complete', (info) =>
+                        .on 'complete', (info) ->
                             firstSync = false
                             onComplete info
                         .on 'error', onError
@@ -173,9 +189,9 @@ module.exports = replication =
             operation = 'removeUnusedDirectories'
 
         filesystem.changes.push { operation: operation }, ->
-            setTimeout () =>
+            setTimeout () ->
                 replicator = replicate(url, options)
                     .on 'change', onChange
-                    .on 'complete', onComplete # Called only for a single replication
+                    .on 'complete', onComplete
                     .on 'error', onError
             , 5000

@@ -4,7 +4,7 @@ request    = require 'request-json-light'
 uuid       = require 'node-uuid'
 crypto     = require 'crypto'
 log        = require('printit')
-             prefix: 'Binary     '
+    prefix: 'Binary     '
 
 config     = require './config'
 pouch      = require './db'
@@ -124,7 +124,8 @@ module.exports =
                     # Loop through existing binaries
                     for existingDoc in existingDocs.rows
                         existingDoc = existingDoc.value
-                        if existingDoc.checksum? and existingDoc.checksum is checksum
+                        if existingDoc.checksum? and \
+                        existingDoc.checksum is checksum
                             return callback null, existingDoc
                     return callback null, null
                 else

@@ -27,7 +27,7 @@ module.exports.initConfiguration = (done) ->
 # Removes the configuration
 module.exports.cleanConfiguration = (done) ->
     @timeout 1500
-    cli.removeRemote {}
+    #cli.removeRemote {}
     setTimeout done, 1000
 
 # Starts the sync process
@@ -48,7 +48,7 @@ module.exports.startSync = (done) ->
 
     setTimeout done, 2500
 
-module.exports.stopSync = -> replication.cancelReplication()
+#module.exports.stopSync = -> replication.cancelReplication()
 
 # replicates the remote Couch into the local Pouch
 module.exports.initialReplication = (done) ->

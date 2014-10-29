@@ -3,7 +3,7 @@ fs      = require 'fs-extra'
 touch   = require 'touch'
 process = require 'process'
 log     = require('printit')
-          prefix: 'Config     '
+    prefix: 'Config     '
 
 # Create config file if it doesn't exist.
 defaultDir = path.join path.homedir(), '.cozy-data-proxy'

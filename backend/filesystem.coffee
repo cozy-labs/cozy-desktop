@@ -8,7 +8,7 @@ mime     = require 'mime'
 chokidar = require 'chokidar'
 rimraf   = require 'rimraf'
 log      = require('printit')
-           prefix: 'Filesystem '
+    prefix: 'Filesystem '
 
 config = require './config'
 pouch = require './db'
@@ -74,7 +74,7 @@ filesystem =
         dirPaths = module.exports.getPaths absPath
 
         # Create directory
-        updateDates = (err) =>
+        updateDates = (err) ->
             if err
                 callback err
             else
@@ -105,13 +105,15 @@ filesystem =
                 callback()
 
         # Create empty file
-        touchFile = (err, binaryDoc) =>
+        touchFile = (err, binaryDoc) ->
             if err and err.status isnt 404
                 callback err
             else
                 # Move binary if exists, otherwise touch the file
                 if binaryDoc? and fs.existsSync binaryDoc.path
-                    binary.moveFromDoc binaryDoc, filePaths.absolute, changeUtimes
+                    binary.moveFromDoc binaryDoc,
+                        filePaths.absolute,
+                        changeUtimes
                 else
                     module.exports.infoPublisher.emit 'fileTouched', absPath
                     touch filePaths.absolute, changeUtimes
@@ -129,7 +131,7 @@ filesystem =
 
     removeUnusedDirectories: (callback) ->
 
-        removeUnusedDirectories = (err, result) =>
+        removeUnusedDirectories = (err, result) ->
             if err then callback err
 
             walkSync = (dir, filelist) ->
@@ -152,10 +154,12 @@ filesystem =
                     log.info "Removing directory: #{dir[2]}"
                     rimraf.sync dir[2]
 
-            #async.eachSeries result['rows'], @makeDirectoryFromDoc, createFileFilters
+            #async.eachSeries result['rows'],
+            #   @makeDirectoryFromDoc,
+            #   createFileFilters
             callback null
 
-        getFolders = (err) =>
+        getFolders = (err) ->
             if err
                 callback err
             else
@@ -182,12 +186,12 @@ filesystem =
                 else
                     @deleteDoc filePath, callback
 
-        getFolders = (err, result) =>
+        getFolders = (err, result) ->
             if err and err.status isnt 404
                 callback err
             else
                 result = { 'rows': [] } if err?.status is 404
-                pouch.db.query 'folder/all', (err, result2) =>
+                pouch.db.query 'folder/all', (err, result2) ->
                     if err and err.status isnt 404
                         callback err
                     else
@@ -195,14 +199,14 @@ filesystem =
                         results = result['rows'].concat(result2['rows'])
                         async.each results, deleteDocIfNotExists, callback
 
-        getFiles = (err, result) =>
+        getFiles = (err, result) ->
             if err
                 callback err
             else
                 pouch.db.query 'file/all', getFolders
 
 
-        pouch.addFilter 'file', (err) =>
+        pouch.addFilter 'file', (err) ->
             if err
                 callback err
             else
@@ -250,7 +254,9 @@ filesystem =
                                 if ignoreExisting
                                     return callback null
                                 else
-                                    newDoc = updateDirectoryInformation existingDoc, newDoc
+                                    newDoc =
+                                        updateDirectoryInformation existingDoc,
+                                            newDoc
 
 
                     # Create or update directory document
@@ -269,7 +275,8 @@ filesystem =
             else
                 @createDirectoryDoc dirPaths.absParent, true, (err, res) ->
                     if err
-                        log.error "An error occured at parent directory's creation"
+                        log.error "An error occured at parent
+                                   directory's creation"
                         callback err
                     else
                         updateDirectoryStats newDoc
@@ -277,9 +284,9 @@ filesystem =
         checkDirectoryLocation = () =>
             remoteConfig = config.getConfig()
             if not @isInSyncDir(dirPath) or not fs.existsSync(dirPaths.absolute)
-               unless dirPath is '' or dirPath is remoteConfig.path
-                   log.error "Directory is not located in the
-                              synchronized directory: #{dirPaths.absolute}"
+                unless dirPath is '' or dirPath is remoteConfig.path
+                    log.error "Directory is not located in the
+                               synchronized directory: #{dirPaths.absolute}"
                 # Do not throw error
                 callback null
             else
@@ -401,11 +408,12 @@ filesystem =
                                 if (existingDoc.name is newDoc.name \
                                 and existingDoc.path is newDoc.path)
                                     if (existingDoc.binary?.file?.checksum? \
-                                    and existingDoc.binary.file.checksum is checksum) \
-                                    and ignoreExisting
+                                    and existingDoc.binary.file.checksum \
+                                    is checksum) and ignoreExisting
                                         return callback null
                                     # File already exists
-                                    newDoc = updateFileInformation existingDoc, newDoc
+                                    newDoc = updateFileInformation existingDoc,
+                                        newDoc
 
                         checkBinaryExistence newDoc, checksum
 
@@ -429,10 +437,11 @@ filesystem =
 
         checkFileLocation = () =>
             remoteConfig = config.getConfig()
-            if not @isInSyncDir(filePath) or not fs.existsSync(filePaths.absolute)
-               unless filePath is '' or filePath is remoteConfig.path
-                   log.error "File is not located in the
-                              synchronized directory: #{filePaths.absolute}"
+            if not @isInSyncDir(filePath) \
+            or not fs.existsSync(filePaths.absolute)
+                unless filePath is '' or filePath is remoteConfig.path
+                    log.error "File is not located in the
+                               synchronized directory: #{filePaths.absolute}"
                 # Do not throw error
                 callback null
             else
