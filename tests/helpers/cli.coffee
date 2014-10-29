@@ -1,6 +1,7 @@
 {options} = require './helpers'
 
 cli = require '../../cli'
+pouch = require '../../backend/db'
 replication = require '../../backend/replication'
 filesystem = require '../../backend/filesystem'
 
@@ -51,7 +52,7 @@ module.exports.stopSync = -> replication.cancelReplication()
 
 # replicates the remote Couch into the local Pouch
 module.exports.initialReplication = (done) ->
-    @timeout 10000
+    @timeout 20000
 
     replication.runReplication
         fromRemote: true
@@ -64,4 +65,4 @@ module.exports.initialReplication = (done) ->
 # Recreates the local database
 module.exports.resetDatabase = (done) ->
     @timeout 10000
-    setTimeout cli.resetDatabase.bind(null, done), 5000
+    setTimeout pouch.resetDatabase.bind(pouch, done), 5000
