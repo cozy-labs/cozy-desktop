@@ -8,11 +8,11 @@ mime     = require 'mime'
 chokidar = require 'chokidar'
 rimraf   = require 'rimraf'
 log      = require('printit')
-           prefix: 'Data Proxy | filesystem'
+           prefix: 'Filesystem '
 
-config   = require './config'
-pouch    = require './db'
-binary   = require './binary'
+config = require './config'
+pouch = require './db'
+binary = require './binary'
 async = require 'async'
 events = require 'events'
 
@@ -20,7 +20,6 @@ events = require 'events'
 remoteConfig = config.getConfig()
 
 filesystem =
-
     # Changes is the queue of operations, it contains
     # files that are being downloaded, and files to upload.
     changes: async.queue (task, callback) ->
@@ -67,11 +66,9 @@ filesystem =
                 module.exports.removeUnusedDirectories callback
     , 1
 
-    watchingLocked: false
-
-    infoPublisher: new events.EventEmitter
 
     makeDirectoryFromDoc: (doc, callback) ->
+        remoteConfig = config.getConfig()
         doc = doc.value
         absPath = path.join remoteConfig.path, doc.path, doc.name
         dirPaths = module.exports.getPaths absPath
@@ -92,7 +89,9 @@ filesystem =
         mkdirp dirPaths.absolute, updateDates
 
 
+    # TODO refactor it in smaller functions.
     touchFileFromDoc: (doc, callback) ->
+        remoteConfig = config.getConfig()
         doc = doc.value
         absPath = path.join remoteConfig.path, doc.path, doc.name
         filePaths = module.exports.getPaths absPath
@@ -276,6 +275,7 @@ filesystem =
                         updateDirectoryStats newDoc
 
         checkDirectoryLocation = () =>
+            remoteConfig = config.getConfig()
             if not @isInSyncDir(dirPath) or not fs.existsSync(dirPaths.absolute)
                unless dirPath is '' or dirPath is remoteConfig.path
                    log.error "Directory is not located in the
@@ -293,6 +293,7 @@ filesystem =
         checkDirectoryLocation()
 
 
+    # TODO refactor it in smaller functions.
     createFileDoc: (filePath, ignoreExisting, callback) ->
         filePaths = @getPaths filePath
 
@@ -427,6 +428,7 @@ filesystem =
                     updateFileStats newDoc
 
         checkFileLocation = () =>
+            remoteConfig = config.getConfig()
             if not @isInSyncDir(filePath) or not fs.existsSync(filePaths.absolute)
                unless filePath is '' or filePath is remoteConfig.path
                    log.error "File is not located in the
@@ -460,6 +462,7 @@ filesystem =
                     callback err
 
 
+    # TODO refactor it in smaller functions.
     deleteDoc: (filePath, callback) ->
         filePaths = @getPaths filePath
 
@@ -515,7 +518,9 @@ filesystem =
         getDoc filePaths.name, filePaths.parent
 
 
+    # TODO refactor it in smaller functions.
     watchChanges: (continuous, fromNow) ->
+        remoteConfig = config.getConfig()
         fromNow ?= false
         continuous ?= fromNow
 
@@ -588,12 +593,14 @@ filesystem =
 
 
     getPaths: (filePath) ->
+        remoteConfig = config.getConfig()
+
         # Assuming filePath is 'hello/world.html':
-        absolute  = path.resolve filePath                      # /home/sync/hello/world.html
-        relative  = path.relative remoteConfig.path, absolute  # hello/world.html
-        name      = path.basename filePath                     # world.html
-        parent    = path.dirname path.join path.sep, relative  # /hello
-        absParent = path.dirname absolute                      # /home/sync/hello
+        absolute  = path.resolve filePath # /home/sync/hello/world.html
+        relative  = path.relative remoteConfig.path, absolute # hello/world.html
+        name      = path.basename filePath # world.html
+        parent    = path.dirname path.join path.sep, relative # /hello
+        absParent = path.dirname absolute # /home/sync/hello
 
         # Do not keep '/'
         parent    = '' if parent is '/'
@@ -608,6 +615,7 @@ filesystem =
     deleteAll: (dirPath, callback) ->
         del = require 'del'
         del "#{dirPath}/*", force: true, callback
+
 
     isInSyncDir: (filePath) ->
         paths = @getPaths filePath

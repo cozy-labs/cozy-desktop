@@ -4,22 +4,23 @@ request    = require 'request-json-light'
 uuid       = require 'node-uuid'
 crypto     = require 'crypto'
 log        = require('printit')
-             prefix: 'Data Proxy | binary'
+             prefix: 'Binary     '
 
 config     = require './config'
 pouch      = require './db'
 async      = require 'async'
 events     = require 'events'
 
-remoteConfig = config.getConfig()
-
-
 module.exports =
+
+
+    infoPublisher: new events.EventEmitter()
+
 
     checksum: (filePath, callback) ->
         stream = fs.createReadStream filePath
-        checksum = crypto.createHash('sha1')
-        checksum.setEncoding('hex')
+        checksum = crypto.createHash 'sha1'
+        checksum.setEncoding 'hex'
 
         stream.on 'end', ->
             checksum.end()
@@ -27,8 +28,6 @@ module.exports =
 
         stream.pipe checksum
 
-
-    infoPublisher: new events.EventEmitter()
 
     moveFromDoc: (doc, finalPath, callback) ->
         # Change path in the binary DB document
@@ -44,6 +43,7 @@ module.exports =
 
 
     uploadAsAttachment: (remoteId, remoteRev, filePath, callback) ->
+        remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
         relativePath = path.relative remoteConfig.path, filePath
         absPath = path.join remoteConfig.path, filePath
@@ -72,6 +72,7 @@ module.exports =
 
 
     createEmptyRemoteDoc: (callback) ->
+        remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
         data = { docType: 'Binary' }
         newId = uuid.v4().split('-').join('')
@@ -80,15 +81,19 @@ module.exports =
         client = request.newClient remoteConfig.url
         client.setBasicAuth deviceName, remoteConfig.devicePassword
 
-        onError = (err, res, body) ->
-            return callback  err if err?
-            callback new Error(body.error) if body.error?
-            callback err, body
+        onResult = (err, res, body) ->
+            if err
+                callback err
+            else if body.error
+                callback new Error body.error
+            else
+                callback err, body
 
-        client.put urlPath, data, onError
+        client.put urlPath, data, onResult
 
 
     getRemoteDoc: (remoteId, callback) ->
+        remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
 
         client = request.newClient remoteConfig.url
@@ -105,6 +110,7 @@ module.exports =
                 callback null, body
 
         client.get "cozy/#{remoteId}", checkErrors
+
 
     docAlreadyExists: (checksum, callback) ->
         # Check if a binary already exists
@@ -141,7 +147,7 @@ module.exports =
                     else
                         callback null, document
 
-        removeDoc = (err, doc) ->
+        removeOrCreateDoc = (err, doc) ->
             if err and err.status isnt 404
                 callback err
             else if err and err.status is 404
@@ -149,11 +155,13 @@ module.exports =
             else
                 pouch.db.remove doc, createDoc
 
-        pouch.db.get id, removeDoc
+        pouch.db.get id, removeOrCreateDoc
 
+
+    # TODO rewrite it with a proper query
     fetchAll: (deviceName, callback) ->
         deviceName ?= config.getDeviceName()
-        filesystem = require('./filesystem')
+        filesystem = require './filesystem'
 
         @infoPublisher.emit 'fetchAll'
         log.info "Fetching all binaries"
@@ -166,18 +174,18 @@ module.exports =
 
         retrieveFiles = (err, result) ->
             if err then throw new Error
-            docs = result['rows']
+            docs = result.rows
             docs = docs.filter filterFileWithBinary
             async.eachSeries docs, retrieveFile, callback
 
         getFileMetadatas = (err) ->
             if err then throw new Error err
-            #pouch.db.query 'file/all', retrieveFiles
             pouch.allFiles false, retrieveFiles
 
         filesystem.buildTree null, getFileMetadatas
 
 
+    # TODO rewrite it with a proper pouch query
     fetchOne: (deviceName, filePath, callback) ->
         deviceName ?= config.getDeviceName()
 
@@ -196,14 +204,14 @@ module.exports =
             if err
                 callback err
             else
-                #pouch.db.query 'file/all', getCurrentFile
                 pouch.allFiles false, getCurrentFile
 
-        filesystem = require('./filesystem')
+        filesystem = require './filesystem'
         filesystem.buildTree filePath, getFiles
 
 
     fetchFromDoc: (deviceName, doc, callback) ->
+        remoteConfig = config.getConfig()
         deviceName ?= config.getDeviceName()
         filePath = path.join doc.path, doc.name
         binaryPath = path.join remoteConfig.path, filePath

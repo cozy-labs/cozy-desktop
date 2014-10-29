@@ -1,8 +1,8 @@
 fs = require 'fs'
 touch = require 'touch'
 
-should = require('should')
-helpers = require './helpers'
+should = require 'should'
+helpers = require './helpers/helpers'
 client = helpers.getClient()
 
 config      = require '../backend/config'
@@ -24,8 +24,8 @@ describe "Binary Tests", ->
         binaryPath = "#{remoteConfig.path}/binary"
 
         fs.writeFile binaryPath, 'Hello', (err) ->
-            binary.checksum binaryPath, (err, res) ->
-                err.shoud.be.equal null
+            binary.checksum binaryPath, (err, checksum) ->
+                should.not.exist err
                 checksum.should.be.equal '9770e0f54128b5e501583979e126a71268d7b54e'
                 fs.unlink binaryPath, ->
                     done()
@@ -40,12 +40,11 @@ describe "Binary Tests", ->
         touch binary1Path, (err, res) ->
             pouch.db.post doc, (err, res) ->
                 binary.moveFromDoc doc, binary2Path, (err) ->
-                    err.shoud.be.equal null
+                    should.not.exist err
                     fs.existsSync(binary2Path).should.be.true
                     fs.unlink binary2Path, ->
                         pouch.db.delete res.id, res.rev, ->
                             done()
 
 
-
-    it "When I upload an attachment", (done) ->
+    it "When I upload an attachment"

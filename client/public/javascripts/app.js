@@ -69,9 +69,12 @@ Field = React.createClass({
       ref: this.props.inputRef,
       defaultValue: this.props.defaultValue,
       onChange: this.onChange,
+      onKeyUp: this.props.onKeyUp,
       placeholder: this.props.placeholder,
       id: this.props.inputId
-    }), this.state.error ? p(null, this.state.error) : void 0);
+    }), this.state.error ? p({
+      className: 'error'
+    }, this.state.error) : void 0);
   },
   getValue: function() {
     return this.refs[this.props.inputRef].getDOMNode().value;
@@ -79,18 +82,22 @@ Field = React.createClass({
   isValid: function() {
     return this.getValue() !== '';
   },
+  getError: function() {
+    return 'value is missing';
+  },
   onChange: function() {
     var val;
     val = this.refs[this.props.inputRef].getDOMNode().value;
     if (val === '') {
-      return this.setState({
-        error: 'value is missing'
+      this.setState({
+        error: t(this.getError())
       });
     } else {
-      return this.setState({
+      this.setState({
         error: null
       });
     }
+    return this.props.onChange();
   }
 });
 
@@ -193,6 +200,7 @@ StateView = React.createClass({
           className: 'smaller'
         }, log));
       }
+      logs.reverse();
     }
     if (this.state.sync) {
       state = t('on');
@@ -203,11 +211,11 @@ StateView = React.createClass({
     }
     return Container({
       className: 'line'
-    }, Container({
-      className: 'mod w50 left'
     }, Title({
       text: 'Cozy Data Proxy'
-    }), Subtitle({
+    }), Container({
+      className: 'mod w50 left'
+    }, Subtitle({
       text: 'Parameters'
     }), InfoLine({
       label: t('device name'),
@@ -224,35 +232,35 @@ StateView = React.createClass({
     }), InfoLine({
       label: t('sync state'),
       value: state
-    }), Subtitle({
+    })), Container({
+      className: 'mod w50 left'
+    }, Subtitle({
       text: 'Actions'
-    }), Line(null, Button({
+    }), Line({
+      className: 'mts'
+    }, Button({
       className: 'left action',
       onClick: this.onSyncClicked,
       text: syncButtonLabel
-    })), Line(null, Button({
+    })), Line({
+      className: 'mts'
+    }, Button({
       className: 'left',
       onClick: this.onResyncClicked,
       text: t('resync all')
-    })), Line(null, Button({
-      className: 'left',
-      onClick: this.clearLogs,
-      text: t('clear logs')
-    })), Subtitle({
-      text: 'Danger Zone'
-    }), Line(null, Button({
-      className: 'left',
-      onClick: this.onDeleteFilesClicked,
-      text: t('delete files')
-    })), Line(null, Button({
-      className: 'left',
+    })), Line({
+      className: 'mtm'
+    }, Button({
+      className: 'smaller',
       onClick: this.onDeleteConfigurationClicked,
       text: t('delete configuration')
-    }))), Container({
-      className: 'mod w50 left'
-    }, Subtitle({
+    }))), Line(null), Line(null, Subtitle({
       text: 'Logs'
-    }), logs));
+    }), logs, Line(null, Button({
+      className: 'left smaller',
+      onClick: this.clearLogs,
+      text: t('clear logs')
+    }))));
   },
   onSyncClicked: function() {
     var binary, filesystem, onBinaryDownloaded, onChange, onComplete, onDirectoryCreated, replication;
@@ -315,14 +323,6 @@ StateView = React.createClass({
       logs: []
     });
   },
-  onDeleteConfigurationClicked: function() {
-    var config;
-    config = require('./backend/config');
-    config.removeRemoteCozy(device.deviceName);
-    config.saveConfig();
-    alert(t('Configuration deleted.'));
-    return renderState('INTRO');
-  },
   displayLog: function(log) {
     var logs, moment;
     logs = this.state.logs;
@@ -331,6 +331,14 @@ StateView = React.createClass({
     return this.setState({
       logs: logs
     });
+  },
+  onDeleteConfigurationClicked: function() {
+    var config;
+    config = require('./backend/config');
+    config.removeRemoteCozy(device.deviceName);
+    config.saveConfig();
+    alert(t('Configuration deleted.'));
+    return renderState('INTRO');
   },
   onDeleteFilesClicked: function() {
     var del;
@@ -404,11 +412,16 @@ en = {
   'delete configuration': 'Delete configuration',
   'delete configuration and files': 'Delete configuration and files',
   'on': 'on',
+  'off': 'off',
   'stop sync': 'Stop sync',
   'device name': 'Device name',
   'sync state': 'Sync state',
   'clear logs': 'Clear logs',
-  'delete files': 'Delete files'
+  'delete files': 'Delete files',
+  'start sync': 'Start sync',
+  'value is missing': 'A value is required for this field.',
+  'first step text': "Prior to register your computer to your Cozy, we need information about it.",
+  'second step text': "It's time to register your computer to your Cozy.\n(password won't be stored)."
 };
 ;var isValidForm;
 
@@ -445,16 +458,32 @@ Intro = React.createClass({
 });
 
 ConfigFormStepOne = React.createClass({
+  getInitialState: function() {
+    var isDeviceName, isPath;
+    isDeviceName = (this.props.deviceName != null) && this.props.deviceName !== '';
+    isPath = (this.props.path != null) && this.props.path !== '';
+    return {
+      validForm: isDeviceName && isPath
+    };
+  },
   render: function() {
+    var buttonClass;
+    buttonClass = 'right';
+    if (!this.state.validForm) {
+      buttonClass += ' disabled';
+    }
     return Container(null, Title({
       text: t('cozy files configuration 1 on 2')
-    }), Field({
+    }), Line({
+      className: 'explanation'
+    }, p(null, t('first step text'))), Field({
       label: t('your device name'),
       fieldClass: 'w300p',
       inputRef: 'deviceName',
       defaultValue: this.props.deviceName,
       ref: 'deviceNameField',
-      placeholder: 'Laptop'
+      placeholder: 'Laptop',
+      onChange: this.onDeviceNameChanged
     }), Field({
       label: t('directory to synchronize your data'),
       fieldClass: 'w500p',
@@ -465,64 +494,117 @@ ConfigFormStepOne = React.createClass({
       inputId: 'folder-input',
       onChange: this.onPathChanged
     }), Line(null, Button({
-      className: 'right',
+      className: buttonClass,
       onClick: this.onSaveButtonClicked,
       text: t('save your device information and go to step 2')
     })));
   },
-  onPathChanged: function(event, files, label) {
-    var folder;
-    folder = this.value.replace(/\\/g, '/').replace(/.*\//, '');
-    $("#input-form").val(folder);
-    return alert(folder);
-  },
-  onSaveButtonClicked: function() {
-    var config, fieldName, fieldPath, isValid;
+  onDeviceNameChanged: function() {
+    var fieldName, fieldPath;
     fieldName = this.refs.deviceNameField;
     fieldPath = this.refs.devicePathField;
-    isValid = isValidForm([fieldName, fieldPath]);
-    if (isValid) {
+    return this.setState({
+      validForm: isValidForm([fieldName, fieldPath])
+    });
+  },
+  onPathChanged: function(event, files, label) {
+    var fieldName, fieldPath;
+    fieldName = this.refs.deviceNameField;
+    fieldPath = this.refs.devicePathField;
+    return this.setState({
+      validForm: isValidForm([fieldName, fieldPath])
+    });
+  },
+  onSaveButtonClicked: function() {
+    var config, fieldName, fieldPath;
+    fieldName = this.refs.deviceNameField;
+    fieldPath = this.refs.devicePathField;
+    if (this.state.validForm) {
       config = require('./backend/config');
       config.updateSync({
         deviceName: fieldName.getValue(),
         path: fieldPath.getValue()
       });
+      device.deviceName = fieldName.getValue();
+      device.path = fieldPath.getValue();
       return renderState('STEP2');
-    } else {
-      return alert('a value is missing');
     }
   }
 });
 
 ConfigFormStepTwo = React.createClass({
+  getInitialState: function() {
+    var isDeviceName, isPath;
+    isDeviceName = (this.props.url != null) && this.props.url !== '';
+    isPath = (this.props.path != null) && this.props.path !== '';
+    return {
+      validForm: isDeviceName && isPath
+    };
+  },
   render: function() {
+    var buttonClass;
+    buttonClass = 'right';
+    if (!this.state.validForm) {
+      buttonClass += ' disabled';
+    }
     return Container(null, Title({
       text: t('cozy files configuration 2 on 2')
-    }), Field({
+    }), Line({
+      className: 'explanation'
+    }, p(null, t('second step text'))), Field({
       label: t('your remote url'),
       fieldClass: 'w300p',
       inputRef: 'remoteUrl',
       defaultValue: this.props.url,
       ref: 'remoteUrlField',
-      placeholder: 'john.cozycloud.cc'
+      placeholder: 'john.cozycloud.cc',
+      onChange: this.onFieldChanged,
+      onKeyUp: this.onUrlKeyUp
     }), Field({
       label: t('your remote password'),
       fieldClass: 'w300p',
       type: 'password',
       inputRef: 'remotePassword',
       defaultValue: this.props.remotePassword,
-      ref: 'remotePasswordField'
+      ref: 'remotePasswordField',
+      onChange: this.onFieldChanged,
+      onKeyUp: this.onPasswordKeyUp
     }), Line(null, Button({
       className: 'left',
       ref: 'backButton',
       onClick: this.onBackButtonClicked,
       text: t('go back to previous step')
     }), Button({
-      className: 'right',
+      className: buttonClass,
       ref: 'nextButton',
       onClick: this.onSaveButtonClicked,
       text: t('register device and synchronize')
     })));
+  },
+  componentDidMount: function() {
+    var node;
+    node = this.refs.remoteUrlField.refs.remoteUrl.getDOMNode();
+    return $(node).focus();
+  },
+  onFieldChanged: function() {
+    var fieldPassword, fieldUrl;
+    fieldUrl = this.refs.remoteUrlField;
+    fieldPassword = this.refs.remotePasswordField;
+    return this.setState({
+      validForm: isValidForm([fieldUrl, fieldPassword])
+    });
+  },
+  onUrlKeyUp: function(event) {
+    var node;
+    if (event.keyCode === 13) {
+      node = this.refs.remotePasswordField.refs.remotePassword.getDOMNode();
+      return $(node).focus();
+    }
+  },
+  onPasswordKeyUp: function(event) {
+    if (event.keyCode === 13) {
+      return this.onSaveButtonClicked();
+    }
   },
   onBackButtonClicked: function() {
     return renderState('STEP1');
@@ -558,8 +640,6 @@ ConfigFormStepTwo = React.createClass({
         }
       };
       return replication.registerDevice(options, saveConfig);
-    } else {
-      return alert('a value is missing');
     }
   }
 });

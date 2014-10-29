@@ -5,7 +5,7 @@ request    = require 'request-json-light'
 urlParser  = require 'url'
 mkdirp     = require 'mkdirp'
 log        = require('printit')
-             prefix: 'Data Proxy | replication'
+             prefix: 'Replication'
 
 pouch      = require './db'
 config     = require './config'
@@ -13,9 +13,11 @@ filesystem = require './filesystem'
 binary     = require './binary'
 
 filters = []
-remoteConfig = config.getConfig()
 
-module.exports =
+module.exports = replication =
+
+    replicationIsRunning: false
+    treeIsBuilding: false
 
 
     # Register device remotely then returns credentials given by remote Cozy.
@@ -65,9 +67,6 @@ module.exports =
 
         return replicate
 
-    replicationIsRunning: false
-
-    treeIsBuilding: false
 
     applyChanges: (since, callback) ->
         since ?= config.getSeq()
@@ -105,6 +104,9 @@ module.exports =
 
 
     runReplication: (options, callback) ->
+
+        remoteConfig = config.getConfig()
+
         fromRemote = options.fromRemote
         toRemote = options.toRemote
         continuous = options.continuous or false
@@ -164,7 +166,6 @@ module.exports =
         onError = (err, data) ->
             log.error err
             callback err if callback?
-
 
         if catchup
             operationm= 'catchup'
