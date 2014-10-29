@@ -54,7 +54,56 @@ module.exports.getFileContent = (file, callback) ->
         should.not.exist err
         should.exist res
         should.exist body
-        res.statusCode.should.equal 200
+        res.statusCode.should.equal 200, "#{file.name} should exist"
         callback err, body
     , false
 
+module.exports.uploadFile = (fileName, fixturePath, callback) ->
+    file =
+        name: fileName
+        path: ''
+        lastModification: "Thu Oct 17 2013 08:29:21 GMT+0200 (CEST)",
+
+    filesClient.sendFile "files/", fixturePath, file, (err, res, body) ->
+        should.not.exist err
+        should.exist res
+        should.exist body
+        res.statusCode.should.equal 200
+        callback()
+
+module.exports.renameFile = (file, newName, callback) ->
+    file.name = newName
+    filesClient.put "files/#{file.id}", file, (err, res, body) ->
+        should.not.exist err
+        should.exist res
+        should.exist body
+        res.statusCode.should.equal 200
+        callback()
+
+module.exports.createFolder = (folderName, callback) ->
+    folder =
+        name: folderName
+        path: ''
+
+    filesClient.post "folders/", folder, (err, res, body) ->
+        should.not.exist err
+        should.exist res
+        should.exist body
+        res.statusCode.should.equal 200
+        callback()
+
+module.exports.moveFile = (file, newPath, callback) ->
+    filesClient.put "files/#{file.id}", path: newPath, (err, res, body) ->
+        should.not.exist err
+        should.exist res
+        should.exist body
+        res.statusCode.should.equal 200
+        callback()
+
+module.exports.removeFile = (file, callback) ->
+    filesClient.del "files/#{file.id}", (err, res, body) ->
+        should.not.exist err
+        should.exist res
+        should.exist body
+        res.statusCode.should.equal 200
+        callback()
