@@ -19,27 +19,6 @@ events = require 'events'
 
 remoteConfig = config.getConfig()
 
-
-changeHandler =  (task, callback) =>
-    deviceName = config.getDeviceName()
-
-    switch task.operation
-        when 'put'
-            if task.file?
-                filesystem.createFileDoc task.file, callback
-        when 'get'
-            if task.file?
-                binary.fetchOne deviceName, task.file, callback
-            else
-                binary.fetchAll deviceName, callback
-        else
-            # rebuild
-            if task.file?
-                filesystem.buildTree task.file, callback
-            else
-                filesystem.buildTree null, callback
-
-
 filesystem =
 
     # Changes is the queue of operations, it contains
@@ -52,7 +31,8 @@ filesystem =
            task.operation is 'delete' or \
            task.operation is 'newFolder' or \
            task.operation is 'catchup' or \
-           task.operation is 'reDownload'
+           task.operation is 'reDownload' or \
+           task.operation is 'removeUnusedDirectories'
             module.exports.watchingLocked = true
             callback_orig = callback
             callback = (err, res) ->
@@ -83,11 +63,8 @@ filesystem =
             when 'reDownload'
                 module.exports.deleteMissingFileDocs true, callback
             else
-                # rebuild
-                if task.file?
-                    module.exports.buildTree task.file, callback
-                else
-                    module.exports.buildTree null, callback
+                # 'removeUnusedDirectories'
+                module.exports.removeUnusedDirectories callback
     , 1
 
     watchingLocked: false
@@ -151,14 +128,7 @@ filesystem =
         mkdirp filePaths.absParent, getBinary
 
 
-    buildTree: (filePath, callback) ->
-        createFileFilters = (err) =>
-            if err then throw new Error err
-            pouch.addFilter 'file', (err) =>
-                if err
-                    callback err
-                else
-                    pouch.addFilter 'binary', callback
+    removeUnusedDirectories: (callback) ->
 
         removeUnusedDirectories = (err, result) =>
             if err then callback err
@@ -184,7 +154,7 @@ filesystem =
                     rimraf.sync dir[2]
 
             #async.eachSeries result['rows'], @makeDirectoryFromDoc, createFileFilters
-            createFileFilters null
+            callback null
 
         getFolders = (err) =>
             if err
@@ -202,8 +172,6 @@ filesystem =
         deviceName = config.getDeviceName()
         reDownload ?= false
 
-        console.log reDownload
-
         deleteDocIfNotExists = (doc, callback) =>
             doc = doc.value
             filePath = path.resolve remoteConfig.path, doc.path, doc.name
@@ -216,13 +184,15 @@ filesystem =
                     @deleteDoc filePath, callback
 
         getFolders = (err, result) =>
-            if err
+            if err and err.status isnt 404
                 callback err
             else
+                result = { 'rows': [] } if err?.status is 404
                 pouch.db.query 'folder/all', (err, result2) =>
-                    if err
+                    if err and err.status isnt 404
                         callback err
                     else
+                        result2 = { 'rows': [] } if err?.status is 404
                         results = result['rows'].concat(result2['rows'])
                         async.each results, deleteDocIfNotExists, callback
 
@@ -230,7 +200,7 @@ filesystem =
             if err
                 callback err
             else
-                pouch.db.query 'files/all', getFolders
+                pouch.db.query 'file/all', getFolders
 
 
         pouch.addFilter 'file', (err) =>

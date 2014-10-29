@@ -69,6 +69,41 @@ module.exports =
 
     treeIsBuilding: false
 
+    applyChanges: (since, callback) ->
+        since ?= config.getSeq()
+
+        pouch.db.changes(
+            filter: (doc) ->
+                doc.docType is 'Folder' or doc.docType is 'File'
+            since: since
+            include_docs: true
+        ).on('complete', (res) =>
+
+            for change in res.results
+
+                saveSeq = (err, res) ->
+                    if err
+                        callback err
+                    else
+                        config.setSeq(change.seq)
+                        callback null
+
+                if change.deleted
+                    if change.doc.docType is 'Folder'
+                        filesystem.changes.push { operation: 'removeUnusedDirectories' }, saveSeq
+                    else if change.doc.binary?.file?.id?
+                        filesystem.changes.push { operation: 'delete', id: change.doc.binary.file.id }, saveSeq
+                else
+                    if change.doc.docType is 'Folder'
+                        absPath = path.join remoteConfig.path, change.doc.path, change.doc.name
+                        filesystem.changes.push { operation: 'newFolder', path: absPath }, saveSeq
+                            #filesystem.changes.push { operation: 'removeUnusedDirectories' }, saveSeq
+                    else
+                        filesystem.changes.push { operation: 'get', doc: change.doc }, saveSeq
+        ).on 'error', (err) ->
+            callback err
+
+
     runReplication: (options, callback) ->
         fromRemote = options.fromRemote
         toRemote = options.toRemote
@@ -77,9 +112,13 @@ module.exports =
         fetchBinary = options.fetchBinary or false
         catchup = options.catchup or false
         initial = options.initial or false
+        firstSync = initial
 
         deviceName = config.getDeviceName()
         replicate = @getReplicateFunction toRemote, fromRemote
+
+        # Do not take into account all the changes if it is the first sync
+        firstSync = initial
 
         # Replicate only files and folders for now
         options =
@@ -87,13 +126,11 @@ module.exports =
                 doc.docType is 'Folder' or doc.docType is 'File'
             #live: continuous
 
-        # Do not need rebuild until docs are pulled
-        needTreeRebuild = false
-
         # Set authentication
         url = urlParser.parse remoteConfig.url
         url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
-
+        # Format URL
+        url = urlParser.format(url) + 'cozy'
 
         onChange = (info) =>
             if info.change? and info.change.docs_written > 0
@@ -107,40 +144,14 @@ module.exports =
 
             log.info changeMessage if changeMessage?
 
-
-        
-        firstSync = initial
-
         onComplete = (info) =>
             if firstSync
                 since = 'now'
+                filesystem.changes.push { operation: 'reDownload' }, ->
             else
                 since = config.getSeq()
-            pouch.db.changes(
-                filter: (doc) ->
-                    doc.docType is 'Folder' or doc.docType is 'File'
-                since: since
-                include_docs: true
-            ).on 'complete', (res) =>
-                for change in res.results
-                    saveSeq = (err, res) ->
-                        if err
-                            callback err
-                        else
-                            config.setSeq(change.seq)
 
-                    if change.deleted
-                        if change.doc.docType is 'Folder'
-                            filesystem.changes.push { operation: 'rebuild' }, saveSeq
-                        else if change.doc.binary?.file?.id?
-                            filesystem.changes.push { operation: 'delete', id: change.doc.binary.file.id }, saveSeq
-                    else
-                        if change.doc.docType is 'Folder'
-                            absPath = path.join remoteConfig.path, change.doc.path, change.doc.name
-                            filesystem.changes.push { operation: 'newFolder', path: absPath }, saveSeq
-                                #filesystem.changes.push { operation: 'rebuild' }, saveSeq
-                        else
-                            filesystem.changes.push { operation: 'get', doc: change.doc }, saveSeq
+            @applyChanges since, () =>
                 setTimeout () =>
                     replicator = replicate(url, options)
                         .on 'change', onChange
@@ -154,16 +165,11 @@ module.exports =
             log.error err
             callback err if callback?
 
-        # Launch replication
-        url = urlParser.format(url) + 'cozy'
 
         if catchup
-            if initial
-                operation = 'reDownload'
-            else
-                operation = 'catchup'
+            operationm= 'catchup'
         else
-            operation = 'rebuild'
+            operation = 'removeUnusedDirectories'
 
         filesystem.changes.push { operation: operation }, ->
             setTimeout () =>
