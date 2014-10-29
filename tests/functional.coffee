@@ -84,7 +84,7 @@ describe.only "Functional Tests", ->
         exec command, cwd: syncPath, ->
 
             # folder should exist
-            (fs.lstatSync.bind null, folderPath).should.not.throw()
+            fs.existsSync(folderPath).should.be.ok
 
             # waits for the replication / upload to be processed
             setTimeout ->
@@ -109,7 +109,7 @@ describe.only "Functional Tests", ->
         command = "mv #{filePath} #{folderPath}"
         exec command, cwd: syncPath, ->
             # file should exist at the new path
-            (fs.lstatSync.bind null, newPath).should.not.throw()
+            fs.existsSync(newPath).should.be.ok
 
             setTimeout ->
                 filesHelpers.getFolderContent 'root', (err, files) ->
@@ -135,7 +135,7 @@ describe.only "Functional Tests", ->
         command = "mv #{filePath} #{syncPath}"
         exec command, cwd: syncPath, ->
             # file should exist at the new path
-            (fs.lstatSync.bind null, newPath).should.not.throw()
+            fs.existsSync(newPath).should.be.ok
 
             setTimeout ->
                 filesHelpers.getFolderContent 'root', (err, files) ->
@@ -158,7 +158,7 @@ describe.only "Functional Tests", ->
         command = "cp #{filePath} #{newFileName}"
         exec command, cwd: syncPath, ->
             # file should exist at the new path
-            (fs.lstatSync.bind null, newFilePath).should.not.throw()
+            fs.existsSync(newFilePath).should.be.ok
 
             setTimeout ->
                 filesHelpers.getFolderContent 'root', (err, files) ->
@@ -180,7 +180,7 @@ describe.only "Functional Tests", ->
         command = "echo \"#{newContent}\" >> #{filePath}"
         exec command, cwd: syncPath, ->
             # file should exist
-            (fs.lstatSync.bind null, filePath).should.not.throw()
+            fs.existsSync(filePath).should.be.ok
 
             setTimeout ->
                 filesHelpers.getFolderContent 'root', (err, files) ->
@@ -200,7 +200,7 @@ describe.only "Functional Tests", ->
         command = "rm -rf #{filePath}"
         exec command, cwd: syncPath, ->
             # file should NOT exist anymore
-            (fs.lstatSync.bind null, filePath).should.throw()
+            fs.existsSync(filePath).should.not.be.ok
 
             setTimeout ->
                 filesHelpers.getFolderContent 'root', (err, files) ->
@@ -220,7 +220,7 @@ describe.only "Functional Tests", ->
                 should.exist file
                 setTimeout ->
                     # file should exist
-                    (fs.lstatSync.bind null, filePath).should.not.throw()
+                    fs.existsSync(filePath).should.be.ok
                     done()
                 , 5000
 
@@ -235,7 +235,7 @@ describe.only "Functional Tests", ->
             filesHelpers.renameFile file, newName, ->
                 setTimeout ->
                     # file should exist
-                    (fs.lstatSync.bind null, newPath).should.not.throw()
+                    fs.existsSync(newPath).should.be.ok
                     done()
                 , 5000
 
@@ -249,7 +249,7 @@ describe.only "Functional Tests", ->
                 should.exist folder
                 setTimeout ->
                     # folder should exist
-                    (fs.lstatSync.bind null, folderPath).should.not.throw()
+                    fs.existsSync(folderPath).should.be.ok
                     done()
                 , 15000
 
@@ -269,7 +269,7 @@ describe.only "Functional Tests", ->
                     should.exist file
                     setTimeout ->
                         # file should exist at new path
-                        (fs.lstatSync.bind null, newPath).should.not.throw()
+                        fs.existsSync(newPath).should.be.ok
                         done()
                     , 5000
 
@@ -290,14 +290,14 @@ describe.only "Functional Tests", ->
                         should.exist file
                         setTimeout ->
                             # file should exist at new path
-                            (fs.lstatSync.bind null, newPath).should.not.throw()
+                            fs.existsSync(newPath).should.be.ok
                             done()
                         , 5000
 
     it "Delete a file remotely", (done) ->
         @timeout 5500
 
-        filName = 'chat-mignon-renamed.jpg'
+        fileName = 'chat-mignon-renamed.jpg'
         filePath = "#{syncPath}/#{fileName}"
         filesHelpers.getFolderContent "root", (err, files) ->
             file = filesHelpers.getElementByName fileName, files
@@ -307,7 +307,7 @@ describe.only "Functional Tests", ->
                 should.not.exist file
                 setTimeout ->
                     # file should exist at new path
-                    (fs.lstatSync.bind null, filePath).should.throw()
+                    fs.existsSync(filePath).should.not.be.ok
                     done()
                 , 3000
 
@@ -327,7 +327,7 @@ describe.only "Functional Tests", ->
         # this command takes approximately 30s to be run
         exec command, cwd: syncPath, ->
             # file should exist
-            (fs.lstatSync.bind null, filePath).should.not.throw()
+            fs.existsSync(filePath).should.be.ok
             setTimeout ->
                 filesHelpers.getFolderContent 'root', (err, files) ->
                     file = filesHelpers.getElementByName fileName, files
@@ -355,6 +355,6 @@ describe.only "Functional Tests", ->
                     should.exist file
                     setTimeout ->
                         # file should exists
-                        (fs.lstatSync.bind null, filePath).should.not.throw()
+                        fs.existsSync(filePath).should.be.ok
                     , (hour - generationDuration) * ms
 
