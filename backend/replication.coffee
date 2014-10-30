@@ -125,8 +125,6 @@ module.exports = replication =
         fromRemote = options.fromRemote
         toRemote = options.toRemote
         continuous = options.continuous or false
-        rebuildFs = options.rebuildFs or true
-        fetchBinary = options.fetchBinary or false
         catchup = options.catchup or false
         initial = options.initial or false
         firstSync = initial
