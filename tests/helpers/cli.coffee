@@ -27,40 +27,23 @@ module.exports.initConfiguration = (done) ->
 # Removes the configuration
 module.exports.cleanConfiguration = (done) ->
     @timeout 1500
-    #cli.removeRemote {}
+    cli.removeRemote {}
     setTimeout done, 1000
 
-# Starts the sync process
+# Replicates the remote Couch into the local Pouch and
+# starts the sync process.
 module.exports.startSync = (done) ->
-    @timeout 3000
-
-    continuous = true
-    filesystem.watchChanges continuous, true
-
-    # Replicate databases
-    replication.runReplication
-        fromRemote: false
-        toRemote: false
-        continuous: continuous
-        initial: false
-        catchup: true
-    , (err) -> # nothing
-
-    setTimeout done, 2500
-
-#module.exports.stopSync = -> replication.cancelReplication()
-
-# replicates the remote Couch into the local Pouch
-module.exports.initialReplication = (done) ->
-    @timeout 20000
+    @timeout 5000
 
     replication.runReplication
-        fromRemote: true
-        toRemote: false
-        continuous: false
         initial: true
         catchup: false
     , done
+
+    setTimeout done, 3000
+
+module.exports.stopSync = ->
+    replication.cancelReplication()
 
 # Recreates the local database
 module.exports.resetDatabase = (done) ->

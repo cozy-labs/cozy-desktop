@@ -167,9 +167,9 @@ module.exports = replication =
             else
                 since = config.getSeq()
 
-            @applyChanges since, () ->
-                setTimeout () ->
-                    replicator = replicate(url, options)
+            @applyChanges since, =>
+                @timeout = setTimeout =>
+                    @replicator = replicate(url, options)
                         .on 'change', onChange
                         .on 'complete', (info) ->
                             firstSync = false
@@ -182,14 +182,20 @@ module.exports = replication =
             callback err if callback?
 
         if catchup
-            operationm= 'catchup'
+            operation = 'catchup'
         else
             operation = 'removeUnusedDirectories'
 
-        filesystem.changes.push { operation: operation }, ->
-            setTimeout () ->
-                replicator = replicate(url, options)
+        filesystem.changes.push { operation: operation }, =>
+            @timeout = setTimeout =>
+                @replicator = replicate(url, options)
                     .on 'change', onChange
                     .on 'complete', onComplete
                     .on 'error', onError
             , 5000
+
+    cancelReplication: ->
+        clearTimeout @timeout
+        @replicator.cancel() if @replicator?
+        @timeout = null
+        @replicator = null
