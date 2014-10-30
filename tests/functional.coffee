@@ -21,14 +21,13 @@ describe.only "Functional Tests", ->
     before cliHelpers.mockGetPassword
     before cliHelpers.cleanConfiguration
     before cliHelpers.initConfiguration
-    before cliHelpers.initialReplication
     before cliHelpers.startSync
 
     # Cleans up local system
     after cliHelpers.stopSync
     after cliHelpers.restoreGetPassword
     after helpers.cleanFolder syncPath
-    #after filesHelpers.deleteAll
+    after filesHelpers.deleteAll
     after cliHelpers.resetDatabase
 
     it "When I create a file locally", (done) ->
@@ -197,17 +196,20 @@ describe.only "Functional Tests", ->
         fileName = 'test_copied.txt'
         filePath = "#{syncPath}/#{fileName}"
 
-        command = "rm -rf #{filePath}"
-        exec command, cwd: syncPath, ->
-            # file should NOT exist anymore
-            fs.existsSync(filePath).should.not.be.ok
+        filesHelpers.getFolderContent 'root', (err, files) ->
+            file = filesHelpers.getElementByName fileName, files
+            should.exist file
+            command = "rm -rf #{filePath}"
+            exec command, cwd: syncPath, ->
+                # file should NOT exist anymore
+                fs.existsSync(filePath).should.not.be.ok
 
-            setTimeout ->
-                filesHelpers.getFolderContent 'root', (err, files) ->
-                    file = filesHelpers.getElementByName fileName, files, false
-                    should.not.exist file
-                    done()
-            , 3000
+                setTimeout ->
+                    filesHelpers.getFolderContent 'root', (err, files) ->
+                        file = filesHelpers.getElementByName fileName, files, false
+                        should.not.exist file
+                        done()
+                , 3000
 
     it "Create a file remotely", (done) ->
         @timeout 10000
@@ -299,6 +301,7 @@ describe.only "Functional Tests", ->
 
         fileName = 'chat-mignon-renamed.jpg'
         filePath = "#{syncPath}/#{fileName}"
+        fs.existsSync(filePath).should.be.ok
         filesHelpers.getFolderContent "root", (err, files) ->
             file = filesHelpers.getElementByName fileName, files
             should.exist file
