@@ -159,58 +159,6 @@ module.exports =
         pouch.db.get id, removeOrCreateDoc
 
 
-    # TODO rewrite it with a proper query
-    fetchAll: (deviceName, callback) ->
-        deviceName ?= config.getDeviceName()
-        filesystem = require './filesystem'
-
-        @infoPublisher.emit 'fetchAll'
-        log.info "Fetching all binaries"
-
-        filterFileWithBinary = (doc) ->
-            return doc.value.binary?
-
-        retrieveFile = (doc, cb) =>
-            @fetchFromDoc deviceName, doc.value, cb
-
-        retrieveFiles = (err, result) ->
-            if err then throw new Error
-            docs = result.rows
-            docs = docs.filter filterFileWithBinary
-            async.eachSeries docs, retrieveFile, callback
-
-        getFileMetadatas = (err) ->
-            if err then throw new Error err
-            pouch.allFiles false, retrieveFiles
-
-        filesystem.buildTree null, getFileMetadatas
-
-
-    # TODO rewrite it with a proper pouch query
-    fetchOne: (deviceName, filePath, callback) ->
-        deviceName ?= config.getDeviceName()
-
-        @infoPublisher.emit 'fetchOne', filePath
-        log.info "Fetching binary: #{filePath}"
-
-        retrieveFile = (doc) ->
-
-        getCurrentFile = (err, result) ->
-            docs = result.rows
-            docs = docs.filter ->
-                return path.join(doc.value.path, doc.value.name) is filePath
-            @fetchFromDoc deviceName, docs[0].value, callback
-
-        getFiles = (err) ->
-            if err
-                callback err
-            else
-                pouch.allFiles false, getCurrentFile
-
-        filesystem = require './filesystem'
-        filesystem.buildTree filePath, getFiles
-
-
     fetchFromDoc: (deviceName, doc, callback) ->
         remoteConfig = config.getConfig()
         deviceName ?= config.getDeviceName()

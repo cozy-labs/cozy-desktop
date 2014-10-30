@@ -42,8 +42,8 @@ module.exports.startSync = (done) ->
         fromRemote: false
         toRemote: false
         continuous: continuous
-        rebuildTree: true
-        fetchBinary: true
+        initial: false
+        catchup: true
     , (err) -> # nothing
 
     setTimeout done, 2500
@@ -58,8 +58,8 @@ module.exports.initialReplication = (done) ->
         fromRemote: true
         toRemote: false
         continuous: false
-        rebuildTree: true
-        fetchBinary: true
+        initial: true
+        catchup: false
     , done
 
 # Recreates the local database
