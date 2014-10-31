@@ -170,6 +170,8 @@ module.exports = replication =
                 console.log 'not first'
                 since = config.getSeq()
 
+            options.live = not firstSync and continuous
+
             @applyChanges since, =>
                 @timeout = setTimeout =>
                     @replicator = replicate(url, options)
@@ -178,6 +180,7 @@ module.exports = replication =
                             firstSync = false
                             filesystem.changes.push { operation: 'reDownload' }, ->
                                 onComplete info
+                        .on 'uptodate', onComplete
                         .on 'error', onError
                 , 5000
 

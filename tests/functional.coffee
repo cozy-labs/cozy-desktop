@@ -50,7 +50,7 @@ describe.only "Functional Tests", ->
                     filesHelpers.getFileContent file, (err, content) ->
                         content.should.equal "#{expectedContent}\n"
                         done()
-            , 15000
+            , 10000
 
     it "Rename a file locally", (done) ->
         @timeout 30000
@@ -72,10 +72,10 @@ describe.only "Functional Tests", ->
                     filesHelpers.getFileContent file, (err, content) ->
                         content.should.equal "#{expectedContent}\n"
                         done()
-            , 15000
+            , 10000
 
     it "Create a folder locally", (done) ->
-        @timeout 5500
+        @timeout 15000
         folderName = 'test_folder'
         folderPath = "#{syncPath}/#{folderName}"
 
@@ -92,11 +92,11 @@ describe.only "Functional Tests", ->
                     should.exist folder
                     folder.name.should.equal folderName
                     done()
-            , 3000
+            , 6000
 
 
     it "Move a file locally into a subfolder", (done) ->
-        @timeout 5500
+        @timeout 15000
 
         expectedContent = "TEST ME"
         fileName = 'test_changed.txt'
@@ -120,10 +120,10 @@ describe.only "Functional Tests", ->
                         filesHelpers.getFileContent file, (err, content) ->
                             content.should.equal "#{expectedContent}\n"
                             done()
-            , 3000
+            , 6000
 
     it "Move a file locally from a subfolder", (done) ->
-        @timeout 5500
+        @timeout 15000
 
         expectedContent = "TEST ME"
         fileName = 'test_changed.txt'
@@ -143,10 +143,10 @@ describe.only "Functional Tests", ->
                     filesHelpers.getFileContent file, (err, content) ->
                         content.should.equal "#{expectedContent}\n"
                         done()
-            , 3000
+            , 6000
 
     it "Copy a file locally", (done) ->
-        @timeout 5500
+        @timeout 15000
 
         expectedContent = "TEST ME"
         fileName = 'test_changed.txt'
@@ -166,10 +166,10 @@ describe.only "Functional Tests", ->
                     filesHelpers.getFileContent file, (err, content) ->
                         content.should.equal "#{expectedContent}\n"
                         done()
-            , 3000
+            , 6000
 
     it "Edit a file content locally", (done) ->
-        @timeout 5500
+        @timeout 15000
 
         newContent = "MY FRIEND"
         expectedContent = "TEST ME\n#{newContent}"
@@ -188,10 +188,10 @@ describe.only "Functional Tests", ->
                     filesHelpers.getFileContent file, (err, content) ->
                         content.should.equal "#{expectedContent}\n"
                         done()
-            , 3000
+            , 6000
 
     it "Delete a file locally", (done) ->
-        @timeout 5500
+        @timeout 15000
 
         fileName = 'test_copied.txt'
         filePath = "#{syncPath}/#{fileName}"
@@ -209,10 +209,10 @@ describe.only "Functional Tests", ->
                         file = filesHelpers.getElementByName fileName, files, false
                         should.not.exist file
                         done()
-                , 3000
+                , 6000
 
     it "Create a file remotely", (done) ->
-        @timeout 10000
+        @timeout 15000
         fixturePath = path.resolve __dirname, './fixtures/chat-mignon.jpg'
         fileName = 'chat-mignon.jpg'
         filePath = "#{syncPath}/#{fileName}"
@@ -227,7 +227,7 @@ describe.only "Functional Tests", ->
                 , 5000
 
     it "Rename a file remotely", (done) ->
-        @timeout 10000
+        @timeout 15000
         fileName = 'chat-mignon.jpg'
         newName = 'chat-mignon-renamed.jpg'
         newPath = "#{syncPath}/#{newName}"
@@ -239,7 +239,7 @@ describe.only "Functional Tests", ->
                     # file should exist
                     fs.existsSync(newPath).should.be.ok
                     done()
-                , 5000
+                , 6000
 
     it "Create a folder remotely", (done) ->
         @timeout 20000
@@ -256,7 +256,7 @@ describe.only "Functional Tests", ->
                 , 15000
 
     it "Move a file remotely into a subfolder", (done) ->
-        @timeout 10000
+        @timeout 15000
         fileName = 'chat-mignon-renamed.jpg'
         folderName = 'remote-folder'
         newPath = "#{syncPath}/#{folderName}/#{fileName}"
@@ -273,10 +273,10 @@ describe.only "Functional Tests", ->
                         # file should exist at new path
                         fs.existsSync(newPath).should.be.ok
                         done()
-                    , 5000
+                    , 6000
 
     it "Move a file remotely from a subfolder", (done) ->
-        @timeout 10000
+        @timeout 15000
         fileName = 'chat-mignon-renamed.jpg'
         folderName = 'remote-folder'
         newPath = "#{syncPath}/#{fileName}"
@@ -294,10 +294,10 @@ describe.only "Functional Tests", ->
                             # file should exist at new path
                             fs.existsSync(newPath).should.be.ok
                             done()
-                        , 5000
+                        , 6000
 
     it "Delete a file remotely", (done) ->
-        @timeout 5500
+        @timeout 15000
 
         fileName = 'chat-mignon-renamed.jpg'
         filePath = "#{syncPath}/#{fileName}"
@@ -311,7 +311,7 @@ describe.only "Functional Tests", ->
                     # file should exist at new path
                     fs.existsSync(filePath).should.not.be.ok
                     done()
-                , 3000
+                , 6000
 
 
     it.skip "Create a big file locally", (done) ->
