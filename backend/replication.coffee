@@ -164,10 +164,8 @@ module.exports = replication =
 
         onComplete = (info) =>
             if firstSync
-                console.log 'first'
                 since = 'now'
             else
-                console.log 'not first'
                 since = config.getSeq()
 
             options.live = not firstSync and continuous
