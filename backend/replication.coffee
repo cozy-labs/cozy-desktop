@@ -185,8 +185,11 @@ module.exports = replication =
                 , 5000
 
         onError = (err, data) ->
-            log.error err
-            callback err if callback?
+            if err?.status is 409
+                log.error "Conflict"
+            else
+                log.error err
+            #callback err if callback?
 
         if catchup
             operation = 'catchup'
