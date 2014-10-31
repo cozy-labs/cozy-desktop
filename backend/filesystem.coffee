@@ -541,8 +541,9 @@ filesystem =
             unless filePath in filesBeingCopied
                 filesBeingCopied[filePath] = true
             getSize = (filePath, callback) ->
-                fs.stat filePath, (err, stats) ->
-                    callback err, stats.size
+                if fs.existsSync filePath
+                    fs.stat filePath, (err, stats) ->
+                        callback err, stats.size
 
             # Check if the size of the file has changed during
             # the last second

@@ -36,9 +36,14 @@ module.exports.startSync = (done) ->
     @timeout 5000
 
     replication.runReplication
+        fromRemote: true
+        toRemote: true
         initial: true
         catchup: false
+        continuous: true
     , done
+
+    filesystem.watchChanges true, true
 
     setTimeout done, 3000
 

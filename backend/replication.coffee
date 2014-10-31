@@ -69,6 +69,8 @@ module.exports = replication =
 
 
     applyChanges: (since, callback) ->
+        remoteConfig = config.getConfig()
+
         since ?= config.getSeq()
 
         pouch.db.changes(
@@ -139,7 +141,7 @@ module.exports = replication =
         options =
             filter: (doc) ->
                 doc.docType is 'Folder' or doc.docType is 'File'
-            #live: continuous
+            live: not firstSync and continuous
 
         # Set authentication
         url = urlParser.parse remoteConfig.url
@@ -162,9 +164,10 @@ module.exports = replication =
 
         onComplete = (info) =>
             if firstSync
+                console.log 'first'
                 since = 'now'
-                filesystem.changes.push { operation: 'reDownload' }, ->
             else
+                console.log 'not first'
                 since = config.getSeq()
 
             @applyChanges since, =>
@@ -173,7 +176,8 @@ module.exports = replication =
                         .on 'change', onChange
                         .on 'complete', (info) ->
                             firstSync = false
-                            onComplete info
+                            filesystem.changes.push { operation: 'reDownload' }, ->
+                                onComplete info
                         .on 'error', onError
                 , 5000
 
@@ -191,8 +195,9 @@ module.exports = replication =
                 @replicator = replicate(url, options)
                     .on 'change', onChange
                     .on 'complete', onComplete
+                    .on 'uptodate', onComplete
                     .on 'error', onError
-            , 5000
+            , 1000
 
     cancelReplication: ->
         clearTimeout @timeout

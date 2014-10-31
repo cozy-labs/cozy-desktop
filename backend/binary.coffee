@@ -134,6 +134,8 @@ module.exports =
 
     saveLocation: (filePath, id, rev, callback) ->
         createDoc = (err) =>
+            if err
+                callback err
             @checksum filePath, (err, checksum) ->
                 document =
                     _id: id

@@ -31,7 +31,7 @@ describe.only "Functional Tests", ->
     after cliHelpers.resetDatabase
 
     it "When I create a file locally", (done) ->
-        @timeout 5500
+        @timeout 30000
         expectedContent = "TEST ME"
 
         fileName = 'test.txt'
@@ -50,10 +50,10 @@ describe.only "Functional Tests", ->
                     filesHelpers.getFileContent file, (err, content) ->
                         content.should.equal "#{expectedContent}\n"
                         done()
-            , 3000
+            , 15000
 
     it "Rename a file locally", (done) ->
-        @timeout 5500
+        @timeout 30000
 
         expectedContent = "TEST ME"
         fileName = "test.txt"
@@ -72,7 +72,7 @@ describe.only "Functional Tests", ->
                     filesHelpers.getFileContent file, (err, content) ->
                         content.should.equal "#{expectedContent}\n"
                         done()
-            , 3000
+            , 15000
 
     it "Create a folder locally", (done) ->
         @timeout 5500
