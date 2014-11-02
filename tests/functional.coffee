@@ -301,6 +301,7 @@ describe.only "Functional Tests", ->
 
         fileName = 'chat-mignon-renamed.jpg'
         filePath = "#{syncPath}/#{fileName}"
+        fs.existsSync(filePath).should.be.ok
         filesHelpers.getFolderContent "root", (err, files) ->
             file = filesHelpers.getElementByName fileName, files
             should.exist file
