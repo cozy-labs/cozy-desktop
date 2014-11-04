@@ -4,6 +4,7 @@ touch      = require 'touch'
 request    = require 'request-json-light'
 urlParser  = require 'url'
 mkdirp     = require 'mkdirp'
+async      = require 'async'
 log        = require('printit')
     prefix: 'Replication'
 
@@ -18,7 +19,6 @@ module.exports = replication =
 
     replicationIsRunning: false
     treeIsBuilding: false
-
 
     # Register device remotely then returns credentials given by remote Cozy.
     # This credentials will allow the device to access to the Cozy database.
@@ -80,8 +80,7 @@ module.exports = replication =
             include_docs: true
         ).on('complete', (res) ->
 
-            for change in res.results
-
+            async.eachSeries res.results, (change, callback) ->
                 saveSeq = (err, res) ->
                     if err
                         callback err
@@ -116,6 +115,8 @@ module.exports = replication =
                             operation: 'get'
                             doc: change.doc
                         , saveSeq
+            , callback
+
         ).on 'error', (err) ->
             callback err
 
@@ -164,29 +165,41 @@ module.exports = replication =
 
         onComplete = (info) =>
             if firstSync
-                since = 'now'
+                if info.last_seq?
+                    since = info.last_seq
+                else if info.pull?.last_seq?
+                    since = info.pull.last_seq
+                else
+                    since = 'now'
             else
                 since = config.getSeq()
 
-            options.live = not firstSync and continuous
+            if firstSync or \
+               (info.change? and info.change.docs_written > 0) or \
+               info.docs_written > 0
 
-            @applyChanges since, =>
-                @timeout = setTimeout =>
-                    @replicator = replicate(url, options)
-                        .on 'change', onChange
-                        .on 'complete', (info) ->
-                            firstSync = false
-                            filesystem.changes.push { operation: 'reDownload' }, ->
-                                onComplete info
-                        .on 'uptodate', onComplete
-                        .on 'error', onError
-                , 5000
+                @cancelReplication()
+
+                @applyChanges since, =>
+                    firstSync = false
+                    options.live = true
+                    @timeout = setTimeout =>
+                        @replicator = replicate(url, options)
+                            .on 'change', onChange
+                            .on 'complete', (info) ->
+                                filesystem.changes.push { operation: 'reDownload' }, ->
+                                    onComplete info
+                            .on 'uptodate', onComplete
+                            .on 'error', onError
+                    , 5000
 
         onError = (err, data) ->
             if err?.status is 409
-                log.error "Conflict"
+                log.error "Conflict, ignoring"
             else
                 log.error err
+
+            onComplete { change: { docs_written: 0 } }
             #callback err if callback?
 
         if catchup

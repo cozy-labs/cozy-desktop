@@ -126,11 +126,11 @@ program
         continuous = true
         rebuildFSTree = true
         fetchBinary = not args.noBinary
-        fromNow = not args.initial
+        fromNow = not args.catchup
 
         # Watch local changes
         if args.toRemote or (not args.toRemote and not args.fromRemote)
-            filesystem.watchChanges continuous, fromNow
+            @watcher = filesystem.watchChanges continuous, fromNow
 
         # Replicate databases
         replication.runReplication
@@ -143,6 +143,7 @@ program
             catchup: args.catchup
         , (err) ->
             log.info 'Sync ended'
+            @watcher.close()
             if err
                 log.error err
                 process.exit 1
