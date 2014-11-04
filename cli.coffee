@@ -126,28 +126,32 @@ program
         continuous = true
         rebuildFSTree = true
         fetchBinary = not args.noBinary
-        fromNow = not args.initial
+        fromNow = not args.catchup
 
-        # Watch local changes
-        if args.toRemote or (not args.toRemote and not args.fromRemote)
-            filesystem.watchChanges continuous, fromNow
+        if args.initial
+            pouch.addAllFilters launchDaemons
 
-        # Replicate databases
-        replication.runReplication
-            fromRemote: args.fromRemote
-            toRemote: args.toRemote
-            continuous: true
-            rebuildTree: true
-            fetchBinary: fetchBinary
-            initial: args.initial
-            catchup: args.catchup
-        , (err) ->
-            log.info 'Sync ended'
-            if err
-                log.error err
-                process.exit 1
-            else
-                process.exit 0
+        launchDaemons = ->
+            # Watch local changes
+            if args.toRemote or (not args.toRemote and not args.fromRemote)
+                filesystem.watchChanges continuous, fromNow
+
+            # Replicate databases
+            replication.runReplication
+                fromRemote: args.fromRemote
+                toRemote: args.toRemote
+                continuous: true
+                rebuildTree: true
+                fetchBinary: fetchBinary
+                initial: args.initial
+                catchup: args.catchup
+            , (err) ->
+                log.info 'Sync ended'
+                if err
+                    log.error err
+                    process.exit 1
+                else
+                    process.exit 0
 
 program
     .command 'reset-database'

@@ -35,17 +35,19 @@ module.exports.cleanConfiguration = (done) ->
 module.exports.startSync = (done) ->
     @timeout 5000
 
-    replication.runReplication
-        fromRemote: true
-        toRemote: true
-        initial: true
-        catchup: false
-        continuous: true
-    , done
+    pouch.addAllFilters ->
 
-    filesystem.watchChanges true, true
+        replication.runReplication
+            fromRemote: true
+            toRemote: true
+            initial: true
+            catchup: false
+            continuous: true
+        , done
 
-    setTimeout done, 3000
+        filesystem.watchChanges true, true
+
+        setTimeout done, 3000
 
 module.exports.stopSync = ->
     replication.cancelReplication()

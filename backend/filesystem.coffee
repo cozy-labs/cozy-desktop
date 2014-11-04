@@ -35,8 +35,14 @@ filesystem =
             module.exports.watchingLocked = true
             callback_orig = callback
             callback = (err, res) ->
+                #console.log 'done'
                 module.exports.watchingLocked = false
                 callback_orig err, res
+        #else
+        #    callback_orig = callback
+        #    callback = (err, res) ->
+        #        console.log 'done'
+        #        callback_orig err, res
 
         switch task.operation
             when 'post'
