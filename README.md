@@ -4,22 +4,25 @@ The Data Proxy allows to sync the files stored in your Cozy with your laptop
 and/or your desktop. It replicates your files on your hard drive and apply 
 changes you made on them on other synced devices and on your online Cozy.
 
-# Workflow
+## Workflow
 
 ```
 cli.coffee add-remote-cozy http://url.of.my.cozy devicename /sync/directory
-cli.coffee replicate --fromRemote # Do it only the first time.
+
+# The first time (or whenever you want to fetch large amount of remote changes)
+cli.coffee sync --initial
+
+# Else
 cli.coffee sync
 ```
 
-# TODO
+## TODO
 
 * Investigate on pouchDB listener limit error
 * Handle conflicts properly
-* Allow files to be added locally while downloading binary from remote
 
 
-# How to run node-webkit application
+## How to run node-webkit application
 
 1. Download [node-webkit](https://github.com/rogerwang/node-webkit#downloads)
 2. unpack downloaded archive
@@ -29,6 +32,15 @@ cli.coffee sync
 
     path/to/node-webkit/nw .
 
+## Run tests
+
+```
+# Make sure to have dev dependencies
+npm install
+
+# Run tests via gulp
+node_modules/.bin/gulp test
+```
 
 ## What is Cozy?
 

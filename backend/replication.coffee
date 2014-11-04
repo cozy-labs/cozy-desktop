@@ -191,6 +191,7 @@ module.exports = replication =
                                     onComplete info
                             .on 'uptodate', onComplete
                             .on 'error', onError
+                        .catch onError
                     , 5000
 
         onError = (err, data) ->
@@ -214,6 +215,7 @@ module.exports = replication =
                     .on 'complete', onComplete
                     .on 'uptodate', onComplete
                     .on 'error', onError
+                .catch onError
             , 1000
 
     cancelReplication: ->
