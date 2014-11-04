@@ -128,9 +128,6 @@ program
         fetchBinary = not args.noBinary
         fromNow = not args.catchup
 
-        if args.initial
-            pouch.addAllFilters launchDaemons
-
         launchDaemons = ->
             # Watch local changes
             if args.toRemote or (not args.toRemote and not args.fromRemote)
@@ -152,6 +149,11 @@ program
                     process.exit 1
                 else
                     process.exit 0
+
+        if args.initial
+            pouch.addAllFilters launchDaemons
+        else
+            launchDaemons()
 
 program
     .command 'reset-database'
