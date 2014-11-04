@@ -1,5 +1,6 @@
 PouchDB = require 'pouchdb'
 fs = require 'fs-extra'
+async = require 'async'
 log = require('printit')
     prefix: 'Data Proxy | db'
 
@@ -53,6 +54,9 @@ module.exports =
                 callback err, res
         else
             callback null, @binaries
+
+    addAllFilters: (callback) ->
+        async.each [ 'folder', 'file', 'binary' ], @addFilter, callback
 
     addFilter: (docType, callback) ->
         id = "_design/#{docType.toLowerCase()}"

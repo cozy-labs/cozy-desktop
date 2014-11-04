@@ -129,10 +129,7 @@ program
         fromNow = not args.catchup
 
         if args.initial
-            pouch.addFilter 'folder', (err, res) ->
-                pouch.addFilter 'file', (err, res) ->
-                    pouch.addFilter 'binary', (err, res) ->
-                        launchDaemons()
+            pouch.addAllFilters launchDaemons
 
         launchDaemons = ->
             # Watch local changes
