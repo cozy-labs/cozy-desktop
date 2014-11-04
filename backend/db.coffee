@@ -56,7 +56,7 @@ module.exports =
             callback null, @binaries
 
     addAllFilters: (callback) ->
-        async.each [ 'folder', 'file', 'binary' ], @addFilter, callback
+        async.eachSeries [ 'folder', 'file', 'binary' ], @addFilter, callback
 
     addFilter: (docType, callback) ->
         id = "_design/#{docType.toLowerCase()}"
