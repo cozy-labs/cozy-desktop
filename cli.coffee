@@ -129,7 +129,6 @@ program
         fromNow = not args.catchup
 
         launchDaemons = ->
-            console.log err
             # Watch local changes
             if args.toRemote or (not args.toRemote and not args.fromRemote)
                 filesystem.watchChanges continuous, fromNow
