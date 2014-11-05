@@ -9,11 +9,12 @@ config = require './config'
 db = new PouchDB(config.dbPath)
 
 # Listener memory leak test
-db.setMaxListeners 30
+db.setMaxListeners 100
 
 fs.ensureDirSync config.dir
 
-module.exports =
+
+module.exports = dbHelpers =
 
     db: db
 
@@ -60,32 +61,23 @@ module.exports =
 
     addFilter: (docType, callback) ->
         id = "_design/#{docType.toLowerCase()}"
-        all = """
-function (doc) {
-    if (doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
-        emit(doc._id, doc);
-    }
-}
-"""
-        byFullPath = """
-function (doc) {
-    if (doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
-        emit(doc.path + '/' + doc.name, doc);
-    }
-}
-"""
+        queries =
+            all: """
+        function (doc) {
+            if (doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
+                emit(doc._id, doc);
+            }
+        }
+        """
+            byFullPath: """
+        function (doc) {
+            if (doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
+                emit(doc.path + '/' + doc.name, doc);
+            }
+        }
+        """
 
-        newDesignDoc =
-            _id: id
-            views:
-                all:
-                    map: all
-
-        if docType in ['file', 'folder', 'binary', 'File', 'Folder', 'Binary']
-            newDesignDoc.views.byFullPath =
-                map: byFullPath
-
-        checkCreation = (err, res) ->
+        dbHelpers.createDesignDoc id, queries, (err, res) ->
             if err?
                 if err.status is 409
                     callback null
@@ -94,14 +86,25 @@ function (doc) {
             else
                 callback null
 
-        createDesignDoc = (err, currentDesignDoc) ->
+
+    # Create or update given design doc.
+    createDesignDoc: (id, queries, callback) ->
+        newDesignDoc =
+            _id: id
+            views:
+                all:
+                    map: queries.all
+
+        if docType in ['file', 'folder', 'binary', 'File', 'Folder', 'Binary']
+            newDesignDoc.views.byFullPath =
+                map: queries.byFullPath
+
+        db.get id, (err, currentDesignDoc) ->
             if currentDesignDoc?
-                newDesignDoc._rev = currentDesignDoc._rev
+                doc._rev = currentDesignDoc._rev
             else
                 log.info "Design document created: #{id}"
-            db.put newDesignDoc, checkCreation
-
-        db.get id, createDesignDoc
+            db.put doc, callback
 
 
     removeFilter: (docType, callback) ->

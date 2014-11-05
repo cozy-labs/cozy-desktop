@@ -58,14 +58,13 @@ gulp.task('builder', ['scripts', 'leveldown'], function() {
 });
 
 gulp.task('test', function() {
-    gulp.src(paths.tests, {
-      read: false
-    }).pipe(mocha({
-      reporter: 'spec',
-      globals: {should: require('should')}
-    }));
+  gulp.src(paths.tests, {
+    read: false
+  }).pipe(mocha({
+    reporter: 'spec',
+    globals: {should: require('should')}
+  }));
 });
-
 
 
 gulp.task('default',  ['watch']);

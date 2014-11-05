@@ -14,7 +14,7 @@ if fs.readFileSync(configPath).toString() is ''
     fs.writeFileSync configPath, JSON.stringify devices: {}, null, 2
 
 
-module.exports =
+module.exports = config =
     dir: defaultDir
     dbPath: path.join defaultDir, 'db'
     config: require configPath or devices: {}
@@ -70,7 +70,7 @@ module.exports =
         if @config.devices[deviceName].seq
             return @config.devices[deviceName].seq
         else
-            @setSeq(0, deviceName)
+            @setSeq 0, deviceName
             return 0
 
     updateSync: (deviceConfig) ->

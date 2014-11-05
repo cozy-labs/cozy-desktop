@@ -32,11 +32,11 @@ filesystem =
            task.operation is 'catchup' or \
            task.operation is 'reDownload' or \
            task.operation is 'removeUnusedDirectories'
-            module.exports.watchingLocked = true
+            filesystem.watchingLocked = true
             callback_orig = callback
             callback = (err, res) ->
                 #console.log 'done'
-                module.exports.watchingLocked = false
+                filesystem.watchingLocked = false
                 callback_orig err, res
         #else
         #    callback_orig = callback
@@ -47,29 +47,29 @@ filesystem =
         switch task.operation
             when 'post'
                 if task.file?
-                    module.exports.createFileDoc task.file, true, callback
+                    filesystem.createFileDoc task.file, true, callback
             when 'put'
                 if task.file?
-                    module.exports.createFileDoc task.file, false, callback
+                    filesystem.createFileDoc task.file, false, callback
             when 'get'
                 if task.doc?
                     binary.fetchFromDoc deviceName, task.doc, callback
             when 'deleteDoc'
                 if task.file?
-                    module.exports.deleteDoc task.file, callback
+                    filesystem.deleteDoc task.file, callback
             when 'delete'
                 if task.id?
-                    module.exports.deleteFromId task.id, callback
+                    filesystem.deleteFromId task.id, callback
             when 'newFolder'
                 if task.path
                     mkdirp task.path, callback
             when 'catchup'
-                module.exports.deleteMissingFileDocs false, callback
+                filesystem.deleteMissingFileDocs false, callback
             when 'reDownload'
-                module.exports.deleteMissingFileDocs true, callback
+                filesystem.deleteMissingFileDocs true, callback
             else
                 # 'removeUnusedDirectories'
-                module.exports.removeUnusedDirectories callback
+                filesystem.removeUnusedDirectories callback
     , 1
 
 
@@ -77,14 +77,14 @@ filesystem =
         remoteConfig = config.getConfig()
         doc = doc.value
         absPath = path.join remoteConfig.path, doc.path, doc.name
-        dirPaths = module.exports.getPaths absPath
+        dirPaths = filesystem.getPaths absPath
 
         # Create directory
         updateDates = (err) ->
             if err
                 callback err
             else
-                module.exports.infoPublisher.emit 'directoryCreated', absPath
+                filesystem.infoPublisher.emit 'directoryCreated', absPath
 
                 # Update directory information
                 creationDate = new Date(doc.creationDate)
@@ -100,7 +100,7 @@ filesystem =
         remoteConfig = config.getConfig()
         doc = doc.value
         absPath = path.join remoteConfig.path, doc.path, doc.name
-        filePaths = module.exports.getPaths absPath
+        filePaths = filesystem.getPaths absPath
 
         # Update file information
         changeUtimes = (err) ->
@@ -121,7 +121,7 @@ filesystem =
                         filePaths.absolute,
                         changeUtimes
                 else
-                    module.exports.infoPublisher.emit 'fileTouched', absPath
+                    filesystem.infoPublisher.emit 'fileTouched', absPath
                     touch filePaths.absolute, changeUtimes
 
         # Get binary metadata

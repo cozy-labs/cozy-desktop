@@ -74,7 +74,8 @@ module.exports =
     createEmptyRemoteDoc: (callback) ->
         remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
-        data = { docType: 'Binary' }
+        data =
+            docType: 'Binary'
         newId = uuid.v4().split('-').join('')
         urlPath = "cozy/#{newId}"
 
@@ -112,6 +113,7 @@ module.exports =
         client.get "cozy/#{remoteId}", checkErrors
 
 
+    # TODO use a query there
     docAlreadyExists: (checksum, callback) ->
         # Check if a binary already exists
         # If so, return local binary DB document
@@ -150,6 +152,7 @@ module.exports =
                     else
                         callback null, document
 
+        # TODO put this function in dbHelpers
         removeOrCreateDoc = (err, doc) ->
             if err and err.status isnt 404
                 callback err
@@ -161,6 +164,7 @@ module.exports =
         pouch.db.get id, removeOrCreateDoc
 
 
+    # Split this function in several other functions
     fetchFromDoc: (deviceName, doc, callback) ->
         remoteConfig = config.getConfig()
         deviceName ?= config.getDeviceName()

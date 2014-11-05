@@ -5,7 +5,7 @@ program     = require 'commander'
 read        = require 'read'
 process     = require 'process'
 log         = require('printit')
-              prefix: 'Data Proxy '
+                  prefix: 'Data Proxy'
 
 config      = require './backend/config'
 replication = require './backend/replication'
@@ -48,6 +48,7 @@ module.exports.addRemote = addRemote = (url, deviceName, syncPath) ->
         replication.registerDevice options, saveConfig
 
     module.exports.getPassword register
+
 
 # Unregister current device from remote Cozy. Then it removes remote from
 # config file.
@@ -185,7 +186,8 @@ program
         log.info 'Unknown command, run "cozy-monitor --help"' + \
                  ' to know the list of available commands.'
 
-program.parse process.argv
+if not module.parent
+    program.parse process.argv
 
 unless process.argv.slice(2).length
     program.outputHelp()

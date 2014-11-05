@@ -26,9 +26,10 @@ module.exports = replication =
         client = request.newClient options.url
         client.setBasicAuth 'owner', options.password
 
-        data = login: options.deviceName
+        data =
+            login: options.deviceName
 
-        getCredentials = (err, res, body) ->
+        client.post 'device/', data, (err, res, body) ->
             if err
                 callback err
             if body.error?
@@ -41,7 +42,6 @@ module.exports = replication =
                     id: body.id
                     password: body.password
 
-        client.post 'device/', data, getCredentials
 
 
     # Unregister device remotely, ask for revocation.
@@ -150,6 +150,8 @@ module.exports = replication =
         # Format URL
         url = urlParser.format(url) + 'cozy'
 
+        # TODO improve loggging
+        # TODO extract this function
         onChange = (info) ->
             if info.change? and info.change.docs_written > 0
                 changeMessage = "DB change: #{info.change.docs_written}
@@ -163,6 +165,7 @@ module.exports = replication =
 
             log.info changeMessage if changeMessage?
 
+        # TODO extract this function
         onComplete = (info) =>
             if firstSync
                 if info.last_seq?
@@ -194,14 +197,16 @@ module.exports = replication =
                         .catch onError
                     , 5000
 
+        # TODO extract this function
         onError = (err, data) ->
             if err?.status is 409
                 log.error "Conflict, ignoring"
             else
                 log.error err
 
-            onComplete { change: { docs_written: 0 } }
-            #callback err if callback?
+            onComplete
+                change:
+                    docs_written: 0
 
         if catchup
             operation = 'catchup'
