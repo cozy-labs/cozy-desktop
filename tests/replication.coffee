@@ -43,7 +43,3 @@ describe "Replication Tests", ->
             res.status.should.be.equal 200
             config.removeRemoteCozy helpers.options.deviceName
             done()
-
-    it "When I run replication from remote"
-    it "When I run replication to remote"
-    it "When I run replication from and to remote"

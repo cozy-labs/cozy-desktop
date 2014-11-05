@@ -3,6 +3,7 @@ path = require 'path'
 async = require 'async'
 should = require 'should'
 mkdirp = require 'mkdirp'
+fsExtra = require 'fs-extra'
 Client = require('request-json').JsonClient
 
 module.exports = helpers = {}
@@ -13,9 +14,14 @@ helpers.options =
     url: 'http://localhost:9104'
     syncPath: path.resolve '/tmp/cozy/'
     cozyPassword: 'cozytest'
+    deviceName: 'tester'
 
 # default client
-client = new Client "#{helpers.options.serverScheme}://#{helpers.options.serverHost}:#{helpers.options.serverPort}/"
+protocol = helpers.options.serverScheme
+host = helpers.options.serverHost
+port = helpers.options.serverPort
+
+client = new Client "#{protocol}://#{host}:#{port}/"
 
 # Returns a client if url is given, default app client otherwise
 helpers.getClient = (url = null) ->
@@ -42,9 +48,12 @@ helpers.ensurePreConditions = (done) ->
         done()
 
 # Creates a folder
-module.exports.prepareFolder = (path) -> return -> mkdirp.sync path
+module.exports.prepareFolder = (path) ->
+    func = (done) ->
+        mkdirp.sync path
+        done()
+    func
 
 # Removes a folder and its content
 module.exports.cleanFolder = (path) -> (done) ->
-    command = "rm -rf #{path}"
-    exec command, {}, (err, stderr, stdout) -> done()
+    fsExtra.remove path, done

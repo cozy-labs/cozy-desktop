@@ -19,14 +19,16 @@ describe "Binary Tests", ->
     params =
         url: 'http://localhost:9104/'
 
-    it "When I calculate the SHA1 checksum of a binary", (done) ->
+    it "Calculate the SHA1 checksum of a binary", (done) ->
         remoteConfig = config.getConfig()
         binaryPath = "#{remoteConfig.path}/binary"
 
         fs.writeFile binaryPath, 'Hello', (err) ->
             binary.checksum binaryPath, (err, checksum) ->
                 should.not.exist err
-                checksum.should.be.equal '9770e0f54128b5e501583979e126a71268d7b54e'
+                expectedSha1 = '9770e0f54128b5e501583979e126a71268d7b54e'
+
+                checksum.should.be.equal expectedSha1
                 fs.unlink binaryPath, ->
                     done()
 
@@ -45,6 +47,3 @@ describe "Binary Tests", ->
                     fs.unlink binary2Path, ->
                         pouch.db.delete res.id, res.rev, ->
                             done()
-
-
-    it "When I upload an attachment"

@@ -1,7 +1,8 @@
-{options} = require './helpers'
+helpers = require './helpers'
 
 cli = require '../../cli'
 pouch = require '../../backend/db'
+config = require '../../backend/config'
 replication = require '../../backend/replication'
 filesystem = require '../../backend/filesystem'
 
@@ -17,18 +18,54 @@ module.exports.restoreGetPassword = ->
 
 # Configures a fake device for a fake remote Cozy
 module.exports.initConfiguration = (done) ->
-    @timeout 1500
+    saveConfig = (err, credentials) ->
+        if err
+            console.log err
+            done()
+        else
+            device =
+                url: helpers.options.url
+                deviceName: helpers.options.deviceName
+                path: helpers.options.syncPath
+                deviceId: credentials.id
+                devicePassword: credentials.password
+            helpers.options.deviceId = credentials.id
+            helpers.options.devicePassword = credentials.password
 
-    {url, syncPath} = options
-    deviceName = 'tester'
-    cli.addRemote url, deviceName, syncPath
-    setTimeout done, 1000
+            config.addRemoteCozy device
+            done()
+
+    opts =
+        url: helpers.options.url
+        deviceName: helpers.options.deviceName
+        password: helpers.options.cozyPassword
+
+    replication.registerDevice opts, saveConfig
+
 
 # Removes the configuration
 module.exports.cleanConfiguration = (done) ->
-    @timeout 1500
-    cli.removeRemote {}
-    setTimeout done, 1000
+    opts = config.getConfig helpers.options.deviceName
+
+    saveConfig = (err) ->
+        if err
+            console.log err
+        else
+            config.removeRemoteCozy helpers.options.deviceName
+            done()
+
+    unregister = (err, password) ->
+        opts =
+            url: helpers.options.url
+            deviceId: opts.deviceId
+            password: helpers.options.password
+        replication.unregisterDevice opts, saveConfig
+
+    if opts.url?
+        unregister()
+    else
+        done()
+
 
 # Replicates the remote Couch into the local Pouch and
 # starts the sync process.

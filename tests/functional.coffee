@@ -25,13 +25,14 @@ describe.only "Functional Tests", ->
 
     # Cleans up local system
     after cliHelpers.stopSync
+    after cliHelpers.cleanConfiguration
     after cliHelpers.restoreGetPassword
     after helpers.cleanFolder syncPath
     after filesHelpers.deleteAll
     after cliHelpers.resetDatabase
 
     it "When I create a file locally", (done) ->
-        @timeout 150000
+        @timeout 30000
         expectedContent = "TEST ME"
 
         fileName = 'test.txt'
