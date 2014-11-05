@@ -9,7 +9,7 @@ config = require './config'
 db = new PouchDB(config.dbPath)
 
 # Listener memory leak test
-db.setMaxListeners 30
+db.setMaxListeners 100
 
 fs.ensureDirSync config.dir
 

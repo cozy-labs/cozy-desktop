@@ -84,7 +84,7 @@ filesystem =
             if err
                 callback err
             else
-                module.exports.infoPublisher.emit 'directoryCreated', absPath
+                binary.infoPublisher.emit 'directoryCreated', absPath
 
                 # Update directory information
                 creationDate = new Date(doc.creationDate)
@@ -121,7 +121,7 @@ filesystem =
                         filePaths.absolute,
                         changeUtimes
                 else
-                    module.exports.infoPublisher.emit 'fileTouched', absPath
+                    binary.infoPublisher.emit 'fileTouched', absPath
                     touch filePaths.absolute, changeUtimes
 
         # Get binary metadata
@@ -137,10 +137,10 @@ filesystem =
 
     removeUnusedDirectories: (callback) ->
 
-        removeUnusedDirectories = (err, result) ->
+        removeUnusedDirectories = (err, result) =>
             if err then callback err
 
-            walkSync = (dir, filelist) ->
+            walkSync = (dir, filelist) =>
                 files = fs.readdirSync dir
                 filelist = filelist || []
                 for file in files
@@ -160,10 +160,10 @@ filesystem =
                     log.info "Removing directory: #{dir[2]}"
                     rimraf.sync dir[2]
 
-            #async.eachSeries result['rows'],
-            #   @makeDirectoryFromDoc,
-            #   createFileFilters
-            callback null
+            async.eachSeries result['rows'],
+               @makeDirectoryFromDoc,
+               callback
+            #callback null
 
         getFolders = (err) ->
             if err
