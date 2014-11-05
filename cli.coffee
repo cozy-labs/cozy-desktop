@@ -126,7 +126,7 @@ program
 
         launchDaemons = ->
             # Watch local changes
-            if args.toRemote or (not args.toRemote and not args.fromRemote)
+            if args['two-way']
                 filesystem.watchChanges continuous, fromNow
 
             # Replicate databases
