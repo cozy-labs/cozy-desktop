@@ -33,11 +33,11 @@ filesystem =
            task.operation is 'reDownload' or \
            task.operation is 'removeUnusedDirectories'
             filesystem.watchingLocked = true
-            callback_orig = callback
+            callbackOrig = callback
             callback = (err, res) ->
                 #console.log 'done'
                 filesystem.watchingLocked = false
-                callback_orig err, res
+                callbackOrig err, res
         #else
         #    callback_orig = callback
         #    callback = (err, res) ->
@@ -122,7 +122,7 @@ filesystem =
                         changeUtimes
                 else
                     filesystem.infoPublisher.emit 'fileTouched', absPath
-                    touch filePaths.absolute, changeUtimes
+                    Touch filePaths.absolute, changeUtimes
 
         # Get binary metadata
         getBinary = (err) ->
@@ -137,10 +137,10 @@ filesystem =
 
     removeUnusedDirectories: (callback) ->
 
-        removeUnusedDirectories = (err, result) ->
+        removeUnusedDirectories = (err, result) =>
             if err then callback err
 
-            walkSync = (dir, filelist) ->
+            walkSync = (dir, filelist) =>
                 files = fs.readdirSync dir
                 filelist = filelist || []
                 for file in files
@@ -160,10 +160,10 @@ filesystem =
                     log.info "Removing directory: #{dir[2]}"
                     rimraf.sync dir[2]
 
-            #async.eachSeries result['rows'],
-            #   @makeDirectoryFromDoc,
-            #   createFileFilters
-            callback null
+            async.eachSeries result['rows'],
+               @makeDirectoryFromDoc,
+               callback
+            #callback null
 
         getFolders = (err) ->
             if err
@@ -467,7 +467,7 @@ filesystem =
         pouch.db.get id, (err, res) ->
             if err and err.status isnt 404
                 callback err
-            else if res?.path?
+            else if res?.path? and fs.existsSync res.path
                 fs.unlink res.path, ->
                     callback null
             else

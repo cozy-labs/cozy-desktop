@@ -2,48 +2,159 @@ fs = require 'fs'
 touch = require 'touch'
 
 should = require 'should'
-helpers = require './helpers/helpers'
-client = helpers.getClient()
 
 config      = require '../backend/config'
 replication = require '../backend/replication'
 binary      = require '../backend/binary'
 pouch       = require '../backend/db'
+request = require 'request-json-light'
+
+helpers = require './helpers/helpers'
+cliHelpers = require './helpers/cli'
+fileHelpers = require './helpers/files'
+
+params =
+    url: 'http://localhost:9104/'
+
 
 describe "Binary Tests", ->
 
-    #before helpers.startVagrant
-    #before helpers.cleanDB
-    #after helpers.cleanDB
+    before cliHelpers.resetDatabase
+    before cliHelpers.initConfiguration
+    before fileHelpers.deleteAll
+    after cliHelpers.resetDatabase
 
-    params =
-        url: 'http://localhost:9104/'
+    describe 'checksum', ->
+        it "calculates the SHA1 checksum of a binary", (done) ->
+            remoteConfig = config.getConfig()
+            binaryPath = "#{remoteConfig.path}/binary"
 
-    it "Calculate the SHA1 checksum of a binary", (done) ->
-        remoteConfig = config.getConfig()
-        binaryPath = "#{remoteConfig.path}/binary"
+            fs.writeFile binaryPath, 'hello', (err) ->
+                binary.checksum binaryPath, (err, checksum) ->
+                    should.not.exist err
+                    expectedSha1 = 'aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d'
+                    checksum.should.be.equal expectedSha1
+                    fs.unlink binaryPath, done
 
-        fs.writeFile binaryPath, 'Hello', (err) ->
-            binary.checksum binaryPath, (err, checksum) ->
+
+    describe 'move from doc', ->
+        it "changes path for a given binary (in db and on the disk)", (done) ->
+            remoteConfig = config.getConfig()
+            binary1Path = "#{remoteConfig.path}/binary1"
+            binary2Path = "#{remoteConfig.path}/binary2"
+            doc = { _id: "test2", path: binary1Path }
+
+            touch binary1Path, (err, res) ->
+                pouch.db.put doc, (err, res) ->
+                    doc._rev = res.rev
+                    binary.moveFromDoc doc, binary2Path, (err) ->
+                        should.not.exist err
+                        fs.existsSync(binary2Path).should.be.true
+                        fs.unlink binary2Path, ->
+                            pouch.db.remove res._id, res.rev, ->
+                                done()
+
+    describe 'createEmptyRemoteDoc', =>
+        it "creates an empty binary doc", (done) =>
+            binary.createEmptyRemoteDoc (err, doc) =>
                 should.not.exist err
-                expectedSha1 = '9770e0f54128b5e501583979e126a71268d7b54e'
+                remoteConfig = config.getConfig()
+                deviceName = config.getDeviceName()
+                urlPath = "cozy/#{doc.id}"
 
-                checksum.should.be.equal expectedSha1
-                fs.unlink binaryPath, ->
+                client = request.newClient remoteConfig.url
+                client.setBasicAuth deviceName, remoteConfig.devicePassword
+
+                client.get urlPath, (err, res, body) =>
+                    should.not.exist err
+                    should.exist body.docType
+                    body.docType.should.be.equal 'Binary'
+                    @doc = body
+
                     done()
 
-
-    it "When I move a binary from a DB doc", (done) ->
-        remoteConfig = config.getConfig()
-        binary1Path = "#{remoteConfig.path}/binary1"
-        binary2Path = "#{remoteConfig.path}/binary2"
-        doc = { path: binary1Path }
-
-        touch binary1Path, (err, res) ->
-            pouch.db.post doc, (err, res) ->
-                binary.moveFromDoc doc, binary2Path, (err) ->
+    describe 'UploadAsAttachment', =>
+        it "set an attachment to a empty binary doc", (done) =>
+            remoteConfig = config.getConfig()
+            path = "#{remoteConfig.path}/binary"
+            fs.writeFile path, 'hello', (err) =>
+                binary.uploadAsAttachment @doc._id, @doc._rev, path, (err) ->
                     should.not.exist err
-                    fs.existsSync(binary2Path).should.be.true
-                    fs.unlink binary2Path, ->
-                        pouch.db.delete res.id, res.rev, ->
-                            done()
+                    done()
+
+        it "and this file is properly attached", (done) =>
+            remoteConfig = config.getConfig()
+            deviceName = config.getDeviceName()
+            urlPath = "cozy/#{@doc._id}"
+
+            client = request.newClient remoteConfig.url
+            client.setBasicAuth deviceName, remoteConfig.devicePassword
+
+            client.get urlPath, (err, res, body) =>
+                should.not.exist err
+                should.exist body.docType
+                body.docType.should.be.equal 'Binary'
+                should.exist body._attachments
+                should.exist body._attachments.file.length
+                body._attachments.file.length.should.be.equal 5
+
+                done()
+
+    describe 'getRemoteDoc',  =>
+        it "retrieves given doc remotely", (done) =>
+            binary.getRemoteDoc @doc._id, (err, doc) =>
+                should.not.exist err
+                should.exist doc.docType
+                doc.docType.should.be.equal 'Binary'
+                should.exist doc._attachments
+                should.exist doc._attachments.file.length
+                done()
+
+    describe 'docAlreadyExists', =>
+        it "returns false when there is no doc with given checksum", (done) =>
+            @checksum = 'aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d'
+            doc1 =
+                _id: "test-checksum-01"
+                docType: "Binary"
+                checksum: "blabla"
+            doc2 =
+                _id: "test-checksum-02"
+                docType: "Binary"
+                checksum: "blublu"
+
+            pouch.addFilter 'binary', (err) =>
+                should.not.exist err
+                pouch.db.bulkDocs [doc1, doc2], (err) =>
+                    should.not.exist err
+                    binary.docAlreadyExists @checksum, (err, doc) ->
+                        should.not.exist err
+                        should.not.exist doc
+                        done()
+
+        it "returns true when there is doc with given checksum", (done) =>
+            doc3 =
+                _id: "test-checksum-03"
+                docType: "Binary"
+                checksum: @checksum
+
+            pouch.db.put doc3, (err, res) =>
+                binary.docAlreadyExists @checksum, (err, doc) =>
+                    should.not.exist err
+                    should.exist doc
+                    doc.checksum.should.be.equal @checksum
+                    done()
+
+    describe 'saveLocation', =>
+        it "saves path and checksum for a given doc", (done) =>
+            remoteConfig = config.getConfig()
+            path = "#{remoteConfig.path}/binary"
+            binary.saveLocation path, @doc._id, @doc._rev, (err, document) =>
+                should.not.exist err
+                should.exist document
+                binary.docAlreadyExists @checksum, (err, doc) =>
+                    should.exist doc
+                    doc.checksum.should.be.equal @checksum
+                    doc.path.should.be.equal path
+                    done()
+
+    #describe 'fetchFromDoc', ->

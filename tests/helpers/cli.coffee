@@ -6,6 +6,8 @@ config = require '../../backend/config'
 replication = require '../../backend/replication'
 filesystem = require '../../backend/filesystem'
 
+module.exports = cliHelpers = {}
+
 # Skips user interaction to ask password
 # @TODO: replace by a sinon's stub
 module.exports.mockGetPassword = ->
@@ -16,49 +18,58 @@ module.exports.mockGetPassword = ->
 module.exports.restoreGetPassword = ->
     cli.getPassword = @trueGetPassword
 
+
 # Configures a fake device for a fake remote Cozy
 module.exports.initConfiguration = (done) ->
-    saveConfig = (err, credentials) ->
-        if err
-            console.log err
-            done()
-        else
-            device =
-                url: helpers.options.url
-                deviceName: helpers.options.deviceName
-                path: helpers.options.syncPath
-                deviceId: credentials.id
-                devicePassword: credentials.password
-            helpers.options.deviceId = credentials.id
-            helpers.options.devicePassword = credentials.password
 
-            config.addRemoteCozy device
-            done()
+    init = ->
+        saveConfig = (err, credentials) ->
+            if err
+                console.log err
+                done()
+            else
+                device =
+                    url: helpers.options.url
+                    deviceName: helpers.options.deviceName
+                    path: helpers.options.syncPath
+                    deviceId: credentials.id
+                    devicePassword: credentials.password
+                helpers.options.deviceId = credentials.id
+                helpers.options.devicePassword = credentials.password
 
-    opts =
-        url: helpers.options.url
-        deviceName: helpers.options.deviceName
-        password: helpers.options.cozyPassword
+                config.addRemoteCozy device
+                done()
 
-    replication.registerDevice opts, saveConfig
+        opts =
+            url: helpers.options.url
+            deviceName: helpers.options.deviceName
+            password: helpers.options.cozyPassword
+
+        replication.registerDevice opts, saveConfig
+
+    opts = config.getConfig()
+    if opts.url?
+        cliHelpers.cleanConfiguration init
+    else
+        init()
 
 
 # Removes the configuration
 module.exports.cleanConfiguration = (done) ->
-    opts = config.getConfig helpers.options.deviceName
+    opts = config.getConfig()
 
     saveConfig = (err) ->
         if err
             console.log err
         else
-            config.removeRemoteCozy helpers.options.deviceName
+            #config.removeRemoteCozy helpers.options.deviceName
             done()
 
     unregister = (err, password) ->
         opts =
             url: helpers.options.url
             deviceId: opts.deviceId
-            password: helpers.options.password
+            password: helpers.options.cozyPassword
         replication.unregisterDevice opts, saveConfig
 
     if opts.url?
@@ -92,4 +103,4 @@ module.exports.stopSync = ->
 # Recreates the local database
 module.exports.resetDatabase = (done) ->
     @timeout 10000
-    setTimeout pouch.resetDatabase.bind(pouch, done), 5000
+    pouch.resetDatabase done

@@ -192,7 +192,9 @@ module.exports = replication =
                             .on 'complete', (info) ->
                                 filesystem.changes.push { operation: 'reDownload' }, ->
                                     onComplete info
-                            .on 'uptodate', onComplete
+                            .on 'uptodate', (info) ->
+                                filesystem.changes.push { operation: 'reDownload' }, ->
+                                    onComplete info
                             .on 'error', onError
                         .catch onError
                     , 5000

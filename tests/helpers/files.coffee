@@ -69,7 +69,7 @@ module.exports.uploadFile = (fileName, fixturePath, callback) ->
         should.exist res
         should.exist body
         res.statusCode.should.equal 200
-        callback()
+        callback err, body
 
 module.exports.renameFile = (file, newName, callback) ->
     file.name = newName

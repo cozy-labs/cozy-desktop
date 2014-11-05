@@ -20,7 +20,7 @@ module.exports = dbHelpers =
 
     resetDatabase: (callback) ->
         PouchDB.destroy config.dbPath, ->
-            db = new PouchDB config.dbPath
+            dbHelpers.db = new PouchDB config.dbPath
             callback()
 
     files:
@@ -64,15 +64,28 @@ module.exports = dbHelpers =
         queries =
             all: """
         function (doc) {
-            if (doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
+            if (doc.docType !== undefined
+                && doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
                 emit(doc._id, doc);
             }
         }
         """
-            byFullPath: """
+        if docType in ['file', 'folder', 'binary', 'File', 'Folder', 'Binary']
+            queries.byFullPath = """
         function (doc) {
-            if (doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
+            if (doc.docType !== undefined
+                && doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
                 emit(doc.path + '/' + doc.name, doc);
+            }
+        }
+        """
+
+        if docType in ['binary', 'Binary']
+            queries.byChecksum = """
+        function (doc) {
+            if (doc.docType !== undefined
+                && doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
+                emit(doc.checksum, null);
             }
         }
         """
@@ -86,25 +99,28 @@ module.exports = dbHelpers =
             else
                 callback null
 
-
     # Create or update given design doc.
     createDesignDoc: (id, queries, callback) ->
-        newDesignDoc =
+        doc =
             _id: id
             views:
                 all:
                     map: queries.all
 
-        if docType in ['file', 'folder', 'binary', 'File', 'Folder', 'Binary']
-            newDesignDoc.views.byFullPath =
+        if queries.byFullPath?
+            doc.views.byFullPath =
                 map: queries.byFullPath
 
-        db.get id, (err, currentDesignDoc) ->
+        if queries.byChecksum?
+            doc.views.byChecksum =
+                map: queries.byChecksum
+
+        dbHelpers.db.get id, (err, currentDesignDoc) ->
             if currentDesignDoc?
                 doc._rev = currentDesignDoc._rev
             else
                 log.info "Design document created: #{id}"
-            db.put doc, callback
+            dbHelpers.db.put doc, callback
 
 
     removeFilter: (docType, callback) ->
@@ -124,3 +140,14 @@ module.exports = dbHelpers =
                 callback null
 
         db.get id, removeDesignDoc
+
+
+    removeIfExists: (id, callback) ->
+        dbHelpers.db.get id, (err, doc) ->
+            if err and err.status isnt 404
+                callback err
+            else if err and err.status is 404
+                callback()
+            else
+                dbHelpers.db.remove doc, callback
+

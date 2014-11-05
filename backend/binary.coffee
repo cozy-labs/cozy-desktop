@@ -17,6 +17,7 @@ module.exports =
     infoPublisher: new events.EventEmitter()
 
 
+    # Get checksum for given file.
     checksum: (filePath, callback) ->
         stream = fs.createReadStream filePath
         checksum = crypto.createHash 'sha1'
@@ -29,46 +30,22 @@ module.exports =
         stream.pipe checksum
 
 
-    moveFromDoc: (doc, finalPath, callback) ->
-        # Change path in the binary DB document
-        savePathInBinary = (err) ->
-            if err
-                callback err
-            else
-                doc.path = finalPath
-                pouch.db.put doc, callback
-
-        # Move file in the filesystem
-        fs.rename doc.path, finalPath, savePathInBinary
-
-
-    uploadAsAttachment: (remoteId, remoteRev, filePath, callback) ->
+    getRemoteDoc: (remoteId, callback) ->
         remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
-        relativePath = path.relative remoteConfig.path, filePath
-        absPath = path.join remoteConfig.path, filePath
-        urlPath = "cozy/#{remoteId}/file?rev=#{remoteRev}"
 
         client = request.newClient remoteConfig.url
         client.setBasicAuth deviceName, remoteConfig.devicePassword
 
-        log.info "Uploading binary: #{relativePath}"
-        @infoPublisher.emit 'uploadBinary', absPath
-
-        returnInfos = (err, res, body) =>
+        client.get "cozy/#{remoteId}", (err, res, body) ->
             if err
                 callback err
+            else if body.error
+                callback new Error body.error
             else
-                body = JSON.parse(body) if typeof body is 'string'
-
-                if body.error
-                    callback new Error body.error
-                else
-                    log.info "Binary uploaded: #{relativePath}"
-                    @infoPublisher.emit 'binaryUploaded', absPath
-                    callback err, body
-
-        client.putFile urlPath, filePath, returnInfos
+                body.id  = body._id
+                body.rev = body._rev
+                callback null, body
 
 
     createEmptyRemoteDoc: (callback) ->
@@ -82,7 +59,7 @@ module.exports =
         client = request.newClient remoteConfig.url
         client.setBasicAuth deviceName, remoteConfig.devicePassword
 
-        onResult = (err, res, body) ->
+        client.put urlPath, data, (err, res, body) ->
             if err
                 callback err
             else if body.error
@@ -90,27 +67,43 @@ module.exports =
             else
                 callback err, body
 
-        client.put urlPath, data, onResult
 
-
-    getRemoteDoc: (remoteId, callback) ->
+    # Upload a binary via the couchd API on the remote cozy.
+    uploadAsAttachment: (remoteId, remoteRev, filePath, callback) ->
         remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
+        relativePath = path.relative remoteConfig.path, filePath
+        absPath = path.join remoteConfig.path, filePath
+        urlPath = "cozy/#{remoteId}/file?rev=#{remoteRev}"
 
         client = request.newClient remoteConfig.url
         client.setBasicAuth deviceName, remoteConfig.devicePassword
 
-        checkErrors = (err, res, body) ->
+        log.info "Uploading binary: #{relativePath}"
+        @infoPublisher.emit 'uploadBinary', absPath
+
+        client.putFile urlPath, filePath, (err, res, body) =>
             if err
                 callback err
-            else if body.error
-                callback new Error body.error
             else
-                body.id  = body._id
-                body.rev = body._rev
-                callback null, body
+                body = JSON.parse(body) if typeof body is 'string'
 
-        client.get "cozy/#{remoteId}", checkErrors
+                if body.error
+                    callback new Error body.error
+                else
+                    log.info "Binary uploaded: #{relativePath}"
+                    @infoPublisher.emit 'binaryUploaded', absPath
+                    callback err, body
+
+
+    # Change path in the binary DB document then move file in the filesystem.
+    moveFromDoc: (doc, finalPath, callback) ->
+        fs.rename doc.path, finalPath, (err) ->
+            if err
+                callback err
+            else
+                doc.path = finalPath
+                pouch.db.put doc, callback
 
 
     # TODO use a query there
@@ -118,24 +111,23 @@ module.exports =
         # Check if a binary already exists
         # If so, return local binary DB document
         # else, return null
-        pouch.allBinaries true, (err, existingDocs) ->
+        options =
+            include_docs: true,
+            key: checksum
+        pouch.db.query 'binary/byChecksum', options, (err, docs) ->
             if err
                 callback err
             else
-                if existingDocs
-                    # Loop through existing binaries
-                    for existingDoc in existingDocs.rows
-                        existingDoc = existingDoc.value
-                        if existingDoc.checksum? and \
-                        existingDoc.checksum is checksum
-                            return callback null, existingDoc
-                    return callback null, null
+                if not docs.rows?
+                    callback null, null
+                else if docs.rows.length is 0
+                    callback null, null
                 else
-                    return callback null, null
+                    callback null, docs.rows[0].doc
 
 
     saveLocation: (filePath, id, rev, callback) ->
-        createDoc = (err) =>
+        pouch.removeIfExists id, (err) =>
             if err
                 callback err
             @checksum filePath, (err, checksum) ->
@@ -151,17 +143,6 @@ module.exports =
                         callback err
                     else
                         callback null, document
-
-        # TODO put this function in dbHelpers
-        removeOrCreateDoc = (err, doc) ->
-            if err and err.status isnt 404
-                callback err
-            else if err and err.status is 404
-                createDoc()
-            else
-                pouch.db.remove doc, createDoc
-
-        pouch.db.get id, removeOrCreateDoc
 
 
     # Split this function in several other functions
@@ -199,8 +180,8 @@ module.exports =
         downloadFile = ->
             # If file exists anyway and has the right size,
             # we assume that it has already been downloaded
-            unless fs.existsSync(binaryPath) \
-               and fs.statSync(binaryPath).size is doc.size
+            if not fs.existsSync(binaryPath) \
+               or fs.statSync(binaryPath).size isnt doc.size
 
                 # Initialize remote HTTP client
                 client = request.newClient remoteConfig.url
@@ -209,12 +190,7 @@ module.exports =
                 # Launch download
                 urlPath = "cozy/#{doc.binary.file.id}/file"
 
-                try
-                    fs.unlinkSync binaryPath
-                catch e
-                    # nothing
-                finally
-                    client.saveFile urlPath, binaryPath, saveBinaryPath
+                client.saveFile urlPath, binaryPath, saveBinaryPath
             else
                 saveBinaryPath()
 
