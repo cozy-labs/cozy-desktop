@@ -195,8 +195,8 @@ module.exports =
         downloadFile = ->
             # If file exists anyway and has the right size,
             # we assume that it has already been downloaded
-            unless fs.existsSync(binaryPath) \
-               and fs.statSync(binaryPath).size is doc.size
+            if not fs.existsSync(binaryPath) \
+               or fs.statSync(binaryPath).size isnt doc.size
 
                 # Initialize remote HTTP client
                 client = request.newClient remoteConfig.url
@@ -205,12 +205,7 @@ module.exports =
                 # Launch download
                 urlPath = "cozy/#{doc.binary.file.id}/file"
 
-                try
-                    fs.unlinkSync binaryPath
-                catch e
-                    # nothing
-                finally
-                    client.saveFile urlPath, binaryPath, saveBinaryPath
+                client.saveFile urlPath, binaryPath, saveBinaryPath
             else
                 saveBinaryPath()
 

@@ -114,18 +114,14 @@ program
     .command('sync')
     .description('Sync databases, apply and/or watch changes')
     .option('-d, --deviceName [deviceName]', 'device name to deal with')
-    .option('-n, --noBinary', 'ignore binary fetching')
-    .option('-i, --initial', 're-download all missing files')
-    .option('-c, --catchup', 're-detect all the files')
-    .option('-f, --fromRemote', 'replicate from remote database')
-    .option('-t, --toRemote', 'replicate to remote database')
+    .option('-2, --two-way', 'apply local changes to remote as well as pulling changes')
+    .option('-c, --catchup', 're-detect all the files locally (works only along --two-way)')
     .action (args) ->
         args.noBinary ?= false
-        args.initial ?= false
+        args['two-way'] ?= false
         args.catchup ?= false
         continuous = true
         rebuildFSTree = true
-        fetchBinary = not args.noBinary
         fromNow = not args.catchup
 
         launchDaemons = ->
@@ -139,8 +135,7 @@ program
                 toRemote: args.toRemote
                 continuous: true
                 rebuildTree: true
-                fetchBinary: fetchBinary
-                initial: args.initial
+                initial: not args['two-way']
                 catchup: args.catchup
             , (err) ->
                 log.info 'Sync ended'
@@ -150,7 +145,7 @@ program
                 else
                     process.exit 0
 
-        if args.initial
+        if not args['two-way']
             pouch.addAllFilters launchDaemons
         else
             launchDaemons()

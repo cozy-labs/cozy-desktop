@@ -467,7 +467,7 @@ filesystem =
         pouch.db.get id, (err, res) ->
             if err and err.status isnt 404
                 callback err
-            else if res?.path?
+            else if res?.path? and fs.existsSync res.path
                 fs.unlink res.path, ->
                     callback null
             else
