@@ -1,4 +1,3 @@
-Promise  = require 'bluebird'
 fs       = require 'fs'
 mkdirp   = require 'mkdirp'
 touch    = require 'touch'
@@ -26,12 +25,13 @@ filesystem =
         #console.log task.operation, task.file
         deviceName = config.getDeviceName()
 
-        if task.operation is 'get' or \
-           task.operation is 'delete' or \
-           task.operation is 'newFolder' or \
-           task.operation is 'catchup' or \
-           task.operation is 'reDownload' or \
-           task.operation is 'removeUnusedDirectories'
+        if task.operation in [
+            'get'
+            'delete'
+            'newFolder'
+            'catchup'
+            'reDownload'
+            'removeUnusedDirectories']
             filesystem.watchingLocked = true
             callbackOrig = callback
             callback = (err, res) ->

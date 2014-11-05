@@ -11,7 +11,7 @@ pouch      = require './db'
 async      = require 'async'
 events     = require 'events'
 
-module.exports =
+module.exports = binary =
 
 
     infoPublisher: new events.EventEmitter()
@@ -79,7 +79,7 @@ module.exports =
         client = request.newClient remoteConfig.url
         client.setBasicAuth deviceName, remoteConfig.devicePassword
 
-        log.info "Uploading binary: #{relativePath}"
+        log.info "Uploading binary: #{relativePath}..."
         @infoPublisher.emit 'uploadBinary', absPath
 
         client.putFile urlPath, filePath, (err, res, body) =>
@@ -144,23 +144,19 @@ module.exports =
                     else
                         callback null, document
 
+    # Change modification dates on file system.
+    changeUtimes: (doc, binaryPath, callback) ->
+        creationDate = new Date doc.creationDate
+        lastModification = new Date doc.lastModification
+        fs.utimes binaryPath, creationDate, lastModification, callback
 
-    # Split this function in several other functions
+    # TODO Split this function in several other functions
     fetchFromDoc: (deviceName, doc, callback) ->
         remoteConfig = config.getConfig()
         deviceName ?= config.getDeviceName()
         filePath = path.join doc.path, doc.name
         binaryPath = path.join remoteConfig.path, filePath
         relativePath = path.relative remoteConfig.path, filePath
-
-        # Change modification dates on file system.
-        changeUtimes = (err, res) ->
-            if err
-                callback err
-            else
-                creationDate = new Date doc.creationDate
-                lastModification = new Date doc.lastModification
-                fs.utimes binaryPath, creationDate, lastModification, callback
 
         # save Binary path in a binary document.
         saveBinaryPath = (err, res) =>
@@ -173,7 +169,11 @@ module.exports =
                 id = doc.binary.file.id
                 rev = doc.binary.file.rev
 
-                @saveLocation binaryPath, id, rev, changeUtimes
+                @saveLocation binaryPath, id, rev, (err) ->
+                    if err
+                        callback err
+                    else
+                        binary.changeUtimes doc, binaryPath, callback
             else
                 callback null
 
@@ -190,8 +190,10 @@ module.exports =
                 # Launch download
                 urlPath = "cozy/#{doc.binary.file.id}/file"
 
+                log.info "Downloading: #{filePath}..."
                 client.saveFile urlPath, binaryPath, saveBinaryPath
             else
+                log.info "File already downloaded: #{filePath}"
                 saveBinaryPath()
 
         # Move the binary if it has already been downloaded

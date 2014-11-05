@@ -13,9 +13,6 @@ filesystem  = require '../backend/filesystem'
 
 describe "Filesystem Tests", ->
 
-    #before helpers.startVagrant
-    #before helpers.cleanDB
-    #after helpers.cleanDB
 
     params =
         url: 'http://localhost:9104/'

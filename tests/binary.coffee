@@ -2,6 +2,7 @@ fs = require 'fs'
 touch = require 'touch'
 
 should = require 'should'
+date = require 'date-utils'
 
 config      = require '../backend/config'
 replication = require '../backend/replication'
@@ -35,7 +36,6 @@ describe "Binary Tests", ->
                     expectedSha1 = 'aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d'
                     checksum.should.be.equal expectedSha1
                     fs.unlink binaryPath, done
-
 
     describe 'move from doc', ->
         it "changes path for a given binary (in db and on the disk)", (done) ->
@@ -157,4 +157,51 @@ describe "Binary Tests", ->
                     doc.path.should.be.equal path
                     done()
 
-    #describe 'fetchFromDoc', ->
+    describe 'fetchFromDoc', ->
+        before (done) =>
+            conf = config.getConfig()
+            @path = "#{conf.path}/binary-to-fetch"
+
+            binary.createEmptyRemoteDoc (err, doc) =>
+                should.not.exist err
+                @urlPath = "cozy/#{doc.id}"
+                fs.writeFile @path, 'hello', (err) =>
+                    should.not.exist err
+                    binary.uploadAsAttachment doc.id, doc.rev, @path, (err) =>
+                        should.not.exist err
+                        done()
+
+        before (done) =>
+            conf = config.getConfig()
+
+            client = request.newClient conf.url
+            client.setBasicAuth conf.deviceName, conf.devicePassword
+            client.get @urlPath, (err, res, body) =>
+                should.not.exist err
+                @doc = body
+                fs.unlink @path, done
+
+        it 'downloads the file from remote and set path and utimes', (done) =>
+            @creationDate = new Date
+            fileDoc =
+                binary:
+                    file:
+                        id: @doc._id
+                path: ''
+                name: 'binary-to-fetch'
+                creationDate: @creationDate
+                lastModification: @creationDate
+            binary.fetchFromDoc null, fileDoc, (err) =>
+                should.not.exist err
+                fs.existsSync(@path).should.be.ok
+                setTimeout done, 1000
+
+        it 'and checksum and date are rightly set', (done) =>
+            pouch.db.get @doc._id, (err, doc) =>
+                @path.should.be.equal doc.path
+                binary.checksum @path, (err, checksum) =>
+                    doc.checksum.should.be.equal checksum
+                    fs.stat @path, (err, stat) =>
+                        @creationDate.setMilliseconds 0
+                        (@creationDate.compareTo stat.mtime).should.be.equal 0
+                        done()
