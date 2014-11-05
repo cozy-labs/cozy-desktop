@@ -157,6 +157,27 @@ describe "Binary Tests", ->
                     doc.path.should.be.equal path
                     done()
 
+    describe 'downloadFile', =>
+        it 'saves remote file on disk', (done) =>
+            remoteConfig = config.getConfig()
+            options =
+                deviceName: null
+                doc:
+                    binary:
+                        file:
+                            id: @doc._id
+                    path: ''
+                    name: 'binary-to-download'
+                filePath: 'binary-to-download'
+                binaryPath: "#{remoteConfig.path}/binary-to-download"
+
+            binary.downloadFile options, (err) =>
+                should.not.exist err
+                binary.checksum options.binaryPath, (err, checksum) =>
+                    should.not.exist err
+                    checksum.should.equal @checksum
+                    done()
+
     describe 'fetchFromDoc', ->
         before (done) =>
             conf = config.getConfig()

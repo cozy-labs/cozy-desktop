@@ -106,11 +106,10 @@ module.exports = binary =
                 pouch.db.put doc, callback
 
 
-    # TODO use a query there
+    # Check if a binary already exists
+    # If so, return local binary DB document
+    # else, return null
     docAlreadyExists: (checksum, callback) ->
-        # Check if a binary already exists
-        # If so, return local binary DB document
-        # else, return null
         options =
             include_docs: true,
             key: checksum
@@ -144,72 +143,94 @@ module.exports = binary =
                     else
                         callback null, document
 
+
     # Change modification dates on file system.
     changeUtimes: (doc, binaryPath, callback) ->
         creationDate = new Date doc.creationDate
         lastModification = new Date doc.lastModification
         fs.utimes binaryPath, creationDate, lastModification, callback
 
-    # TODO Split this function in several other functions
-    fetchFromDoc: (deviceName, doc, callback) ->
+
+    # If file exists anyway and has the right size,
+    # we assume that it has already been downloaded.
+    downloadFile: (options, callback) ->
+        {deviceName, doc, filePath, binaryPath} = options
+
         remoteConfig = config.getConfig()
         deviceName ?= config.getDeviceName()
-        filePath = path.join doc.path, doc.name
-        binaryPath = path.join remoteConfig.path, filePath
-        relativePath = path.relative remoteConfig.path, filePath
 
-        # save Binary path in a binary document.
-        saveBinaryPath = (err, res) =>
-            if err
+        if not fs.existsSync(binaryPath) \
+           or fs.statSync(binaryPath).size isnt doc.size
+
+            client = request.newClient remoteConfig.url
+            client.setBasicAuth deviceName, remoteConfig.devicePassword
+
+            urlPath = "cozy/#{doc.binary.file.id}/file"
+
+            log.info "Downloading: #{filePath}..."
+            client.saveFile urlPath, binaryPath, (err, res) ->
+
+                if res
+                    log.info "Binary downloaded: #{filePath}"
+                    binary.infoPublisher.emit 'binaryDownloaded', binaryPath
+
                 callback err
-            if res
-                log.info "Binary downloaded: #{filePath}"
-                @infoPublisher.emit 'binaryDownloaded', binaryPath
-            if doc.binary?
-                id = doc.binary.file.id
-                rev = doc.binary.file.rev
+        else
+            log.info "File already downloaded: #{filePath}"
+            callback()
 
-                @saveLocation binaryPath, id, rev, (err) ->
-                    if err
-                        callback err
-                    else
-                        binary.changeUtimes doc, binaryPath, callback
-            else
-                callback null
 
-        downloadFile = ->
-            # If file exists anyway and has the right size,
-            # we assume that it has already been downloaded
-            if not fs.existsSync(binaryPath) \
-               or fs.statSync(binaryPath).size isnt doc.size
-
-                # Initialize remote HTTP client
-                client = request.newClient remoteConfig.url
-                client.setBasicAuth deviceName, remoteConfig.devicePassword
-
-                # Launch download
-                urlPath = "cozy/#{doc.binary.file.id}/file"
-
-                log.info "Downloading: #{filePath}..."
-                client.saveFile urlPath, binaryPath, saveBinaryPath
-            else
-                log.info "File already downloaded: #{filePath}"
-                saveBinaryPath()
-
-        # Move the binary if it has already been downloaded
-        removeBinary = (err, binaryDoc) ->
-            if err and err.status isnt 404 then throw new Error err
+    # Move the binary if it has already been downloaded.
+    removeBinaryIfExists: (fileDoc, binaryPath, callback) ->
+        pouch.db.get fileDoc.binary.file.id, (err, binaryDoc) ->
+            if err and err.status isnt 404 then callback err
             else if binaryDoc?
                 pouch.db.remove binaryDoc, ->
-                    if binaryDoc.path? and binaryDoc.path isnt binaryPath \
+                    if binaryDoc.path? \
+                    and binaryDoc.path isnt binaryPath \
                     and fs.existsSync(binaryDoc.path)
+
                         fs.renameSync(binaryDoc.path, binaryPath)
-                    downloadFile()
+                    callback()
             else
-                downloadFile()
+                callback()
+
+
+    # Save binary path on binary object and save dates on binary.
+    saveFileMetadata: (options, callback) ->
+        {doc, filePath, binaryPath} = options
+
+        if doc.binary?
+            id = doc.binary.file.id
+            rev = doc.binary.file.rev
+
+            binary.saveLocation binaryPath, id, rev, (err) ->
+                if err
+                    callback err
+                else
+                    binary.changeUtimes doc, binaryPath, callback
+        else
+            callback null
+
+
+    # Download corresponding binary
+    fetchFromDoc: (deviceName, doc, callback) ->
+        remoteConfig = config.getConfig()
+        filePath = path.join doc.path, doc.name
+        binaryPath = path.join remoteConfig.path, filePath
 
         if doc.binary?.file?.id?
-            # Check if the binary document exists
-            pouch.db.get doc.binary.file.id, removeBinary
+            binary.removeBinaryIfExists doc, binaryPath, (err) ->
+                if err
+                    callback err
+                else
+                    options = {deviceName, doc, filePath, binaryPath}
+
+                    binary.downloadFile options, (err) =>
+                        if err
+                            callback err
+                        else
+                            options = {doc, filePath, binaryPath}
+                            binary.saveFileMetadata options, callback
         else
             callback null
