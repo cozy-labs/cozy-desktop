@@ -91,7 +91,7 @@ module.exports = replication =
                 if change.deleted
                     if change.doc.docType is 'Folder'
                         filesystem.changes.push
-                            operation: 'removeUnusedDirectories'
+                            operation: 'applyFolderDBChanges'
                         , saveSeq
                     else if change.doc.binary?.file?.id?
                         filesystem.changes.push
@@ -108,7 +108,7 @@ module.exports = replication =
                             path: absPath
                         , saveSeq
                             #filesystem.changes.push
-                            #   operation: 'removeUnusedDirectories'
+                            #   operation: 'applyFolderDBChanges'
                             #, saveSeq
                     else
                         filesystem.changes.push
@@ -213,7 +213,7 @@ module.exports = replication =
         if catchup
             operation = 'catchup'
         else
-            operation = 'removeUnusedDirectories'
+            operation = 'applyFolderDBChanges'
 
         filesystem.changes.push { operation: operation }, =>
             @timeout = setTimeout =>
