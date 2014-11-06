@@ -21,7 +21,7 @@ module.exports = dbHelpers =
     resetDatabase: (callback) ->
         PouchDB.destroy config.dbPath, ->
             dbHelpers.db = new PouchDB config.dbPath
-            callback()
+            dbHelpers.addAllFilters callback
 
     files:
         rows: []

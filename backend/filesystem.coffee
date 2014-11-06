@@ -1,4 +1,4 @@
-fs       = require 'fs'
+fs       = require 'fs-extra'
 mkdirp   = require 'mkdirp'
 touch    = require 'touch'
 path     = require 'path'
@@ -19,6 +19,60 @@ events = require 'events'
 remoteConfig = config.getConfig()
 
 filesystem =
+
+    isInSyncDir: (filePath) ->
+        paths = @getPaths filePath
+        return paths.relative isnt '' \
+           and paths.relative.substring(0,2) isnt '..'
+
+
+    deleteAll: (dirPath, callback) ->
+        del = require 'del'
+        del "#{dirPath}/*", force: true, callback
+
+
+    getPaths: (filePath) ->
+        remoteConfig = config.getConfig()
+
+        # Assuming filePath is 'hello/world.html':
+        absolute  = path.resolve filePath # /home/sync/hello/world.html
+        relative  = path.relative remoteConfig.path, absolute # hello/world.html
+        name      = path.basename filePath # world.html
+        parent    = path.dirname path.join path.sep, relative # /hello
+        absParent = path.dirname absolute # /home/sync/hello
+
+        # Do not keep '/'
+        parent    = '' if parent is '/'
+
+        absolute: absolute
+        relative: relative
+        name: name
+        parent: parent
+        absParent: absParent
+
+
+    makeDirectoryFromDoc: (doc, callback) ->
+        remoteConfig = config.getConfig()
+        doc = doc.value
+        absPath = path.join remoteConfig.path, doc.path, doc.name
+        dirPaths = filesystem.getPaths absPath
+
+        # Create directory
+        updateDates = (err) ->
+            if err
+                callback err
+            else
+                binary.infoPublisher.emit 'directoryCreated', absPath
+
+                # Update directory information
+                creationDate = new Date(doc.creationDate)
+                modificationDate = new Date(doc.lastModification)
+                absPath = dirPaths.absolute
+                fs.utimes absPath, creationDate, modificationDate, callback
+
+        mkdirp dirPaths.absolute, updateDates
+
+
     # Changes is the queue of operations, it contains
     # files that are being downloaded, and files to upload.
     changes: async.queue (task, callback) ->
@@ -31,7 +85,7 @@ filesystem =
             'newFolder'
             'catchup'
             'reDownload'
-            'removeUnusedDirectories']
+            'applyFolderDBChanges']
             filesystem.watchingLocked = true
             callbackOrig = callback
             callback = (err, res) ->
@@ -64,81 +118,19 @@ filesystem =
                 if task.path
                     mkdirp task.path, callback
             when 'catchup'
-                filesystem.deleteMissingFileDocs false, callback
+                filesystem.applyFileDBChanges true, callback
             when 'reDownload'
-                filesystem.deleteMissingFileDocs true, callback
+                filesystem.applyFileDBChanges false, callback
             else
-                # 'removeUnusedDirectories'
-                filesystem.removeUnusedDirectories callback
+                # 'applyFolderDBChanges'
+                filesystem.applyFolderDBChanges callback
     , 1
 
 
-    makeDirectoryFromDoc: (doc, callback) ->
-        remoteConfig = config.getConfig()
-        doc = doc.value
-        absPath = path.join remoteConfig.path, doc.path, doc.name
-        dirPaths = filesystem.getPaths absPath
+    applyFolderDBChanges: (callback) ->
 
-        # Create directory
-        updateDates = (err) ->
-            if err
-                callback err
-            else
-                filesystem.infoPublisher.emit 'directoryCreated', absPath
-
-                # Update directory information
-                creationDate = new Date(doc.creationDate)
-                modificationDate = new Date(doc.lastModification)
-                absPath = dirPaths.absolute
-                fs.utimes absPath, creationDate, modificationDate, callback
-
-        mkdirp dirPaths.absolute, updateDates
-
-
-    # TODO refactor it in smaller functions.
-    touchFileFromDoc: (doc, callback) ->
-        remoteConfig = config.getConfig()
-        doc = doc.value
-        absPath = path.join remoteConfig.path, doc.path, doc.name
-        filePaths = filesystem.getPaths absPath
-
-        # Update file information
-        changeUtimes = (err) ->
-            creationDate = new Date(doc.creationDate)
-            modificationDate = new Date(doc.lastModification)
-            absPath = filePaths.absolute
-            fs.utimes absPath, creationDate, modificationDate, ->
-                callback()
-
-        # Create empty file
-        touchFile = (err, binaryDoc) ->
-            if err and err.status isnt 404
-                callback err
-            else
-                # Move binary if exists, otherwise touch the file
-                if binaryDoc? and fs.existsSync binaryDoc.path
-                    binary.moveFromDoc binaryDoc,
-                        filePaths.absolute,
-                        changeUtimes
-                else
-                    filesystem.infoPublisher.emit 'fileTouched', absPath
-                    Touch filePaths.absolute, changeUtimes
-
-        # Get binary metadata
-        getBinary = (err) ->
-            if err
-                callback err
-            else
-                pouch.db.get doc.binary.file.id, touchFile
-
-        # Ensure parent directory exists
-        mkdirp filePaths.absParent, getBinary
-
-
-    removeUnusedDirectories: (callback) ->
-
-        removeUnusedDirectories = (err, result) =>
-            if err then callback err
+        pouch.db.query 'folder/all', (err, result) ->
+            if err then return callback err
 
             walkSync = (dir, filelist) =>
                 files = fs.readdirSync dir
@@ -151,46 +143,39 @@ filesystem =
                         filelist = walkSync("#{dir}/#{file}/", filelist)
                 return filelist
 
-            for dir in walkSync remoteConfig.path
-                docExists = false
-                for doc in result['rows']
-                    if doc.value.path is dir[0] and doc.value.name is dir[1]
-                        docExists = true
-                if not docExists and fs.existsSync dir[2]
-                    log.info "Removing directory: #{dir[2]}"
-                    rimraf.sync dir[2]
-
-            async.eachSeries result['rows'],
-               @makeDirectoryFromDoc,
-               callback
-            #callback null
-
-        getFolders = (err) ->
-            if err
-                callback err
-            else
-                pouch.db.query 'folder/all', removeUnusedDirectories
-
-        createFolderFilter = () ->
-            pouch.addFilter 'folder', getFolders
-
-        createFolderFilter()
+            async.each walkSync(remoteConfig.path), (dir, cb) ->
+                fullPath = "#{dir[0]}/#{dir[1]}"
+                pouch.db.query 'folder/byFullPath', key: fullPath, (err, res) ->
+                    if res.rows.length is 0 and fs.existsSync dir[2]
+                        log.info "Removing directory: #{dir[2]} (not remotely listed)"
+                        fs.remove dir[2], cb
+                    else
+                        cb null
+            , (err) ->
+                if err
+                    callback err
+                else
+                    async.eachSeries result['rows'],
+                       filesystem.makeDirectoryFromDoc,
+                       callback
 
 
-    deleteMissingFileDocs: (reDownload, callback) ->
+    applyFileDBChanges: (keepLocalDeletions, callback) ->
         deviceName = config.getDeviceName()
-        reDownload ?= false
+        keepLocalDeletions ?= false
 
-        deleteDocIfNotExists = (doc, callback) =>
+        downloadIfNotExists = (doc, callback) =>
             doc = doc.value
             filePath = path.resolve remoteConfig.path, doc.path, doc.name
             if fs.existsSync filePath
                 callback null
             else
-                if reDownload
-                    binary.fetchFromDoc deviceName, doc, callback
+                if keepLocalDeletions
+                    # If we want to priorize local changes, delete DB doc
+                    filesystem.deleteDoc filePath, callback
                 else
-                    @deleteDoc filePath, callback
+                    # Else download file
+                    binary.fetchFromDoc deviceName, doc, callback
 
         getFolders = (err, result) ->
             if err and err.status isnt 404
@@ -203,26 +188,9 @@ filesystem =
                     else
                         result2 = { 'rows': [] } if err?.status is 404
                         results = result['rows'].concat(result2['rows'])
-                        async.each results, deleteDocIfNotExists, callback
+                        async.each results, downloadIfNotExists, callback
 
-        getFiles = (err, result) ->
-            if err
-                callback err
-            else
-                pouch.db.query 'file/all', getFolders
-
-
-        pouch.addFilter 'file', (err) ->
-            if err
-                callback err
-            else
-                pouch.addFilter 'binary', (err) ->
-                    if err
-                        callback err
-                    else
-                        pouch.addFilter 'folder', getFiles
-
-
+        pouch.db.query 'file/all', getFolders
 
 
     createDirectoryDoc: (dirPath, ignoreExisting, callback) ->
@@ -481,16 +449,6 @@ filesystem =
     deleteDoc: (filePath, callback) ->
         filePaths = @getPaths filePath
 
-        removeDoc = (id, rev) ->
-
-            # Remove the document locally
-            # (as in couchDB, it keeps a _deleted version of the doc)
-            pouch.db.remove id, rev, (err, res) ->
-                if err
-                    callback err
-                else
-                    callback null, res
-
         markAsDeleted = (deletedDoc) ->
 
             # Use the same pethod as in DS:
@@ -498,7 +456,7 @@ filesystem =
             emptyDoc =
                 _id: deletedDoc._id
                 _rev: deletedDoc._rev
-                _deleted: true
+                _deleted: false
                 docType: deletedDoc.docType
 
             # Since we use the same function to delete a file and a folder
@@ -510,25 +468,24 @@ filesystem =
                 if err
                     callback err
                 else
-                    removeDoc res.id, res.rev
+                    pouch.db.remove res.id, res.rev, callback
 
         getDoc = (deletedFileName, deletedFilePath) ->
 
             # We want to search through files and folders
-            pouch.db.allDocs { include_docs: true }, (err, existingDocs) ->
-                if err and err.status isnt 404
-                    callback err
+            options =
+                include_docs: true
+                key: "#{filePaths.parent}/#{filePaths.name}"
+            pouch.db.query 'file/byFullPath', options, (err, existingDocs) ->
+                if existingDocs.rows.length is 0
+                    pouch.db.query 'folder/byFullPath', options, (err, existingDocs) ->
+                        if existingDocs.rows.length is 0
+                            # Document is already deleted
+                            callback null
+                        else
+                            markAsDeleted existingDocs.rows[0].value
                 else
-                    if existingDocs
-                        # Loop through existing documents
-                        for existingDoc in existingDocs.rows
-                            existingDoc = existingDoc.doc
-                            if  existingDoc.name is deletedFileName \
-                            and existingDoc.path is deletedFilePath
-                                return markAsDeleted existingDoc
-
-                        # No doc found
-                        callback null
+                    markAsDeleted existingDocs.rows[0].value
 
         getDoc filePaths.name, filePaths.parent
 
@@ -607,35 +564,5 @@ filesystem =
             log.error 'An error occured while watching changes:'
             console.error err
 
-
-    getPaths: (filePath) ->
-        remoteConfig = config.getConfig()
-
-        # Assuming filePath is 'hello/world.html':
-        absolute  = path.resolve filePath # /home/sync/hello/world.html
-        relative  = path.relative remoteConfig.path, absolute # hello/world.html
-        name      = path.basename filePath # world.html
-        parent    = path.dirname path.join path.sep, relative # /hello
-        absParent = path.dirname absolute # /home/sync/hello
-
-        # Do not keep '/'
-        parent    = '' if parent is '/'
-
-        absolute: absolute
-        relative: relative
-        name: name
-        parent: parent
-        absParent: absParent
-
-
-    deleteAll: (dirPath, callback) ->
-        del = require 'del'
-        del "#{dirPath}/*", force: true, callback
-
-
-    isInSyncDir: (filePath) ->
-        paths = @getPaths filePath
-        return paths.relative isnt '' \
-           and paths.relative.substring(0,2) isnt '..'
 
 module.exports = filesystem
