@@ -178,7 +178,7 @@ program
     .command("*")
     .description("Display help message for an unknown command.")
     .action ->
-        log.info 'Unknown command, run "cozy-monitor --help"' + \
+        log.info 'Unknown command, run "cozy-data-proxy --help"' + \
                  ' to know the list of available commands.'
 
 if not module.parent
