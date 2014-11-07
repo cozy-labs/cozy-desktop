@@ -1,4 +1,4 @@
-fs = require 'fs'
+fs = require 'fs-extra'
 touch = require 'touch'
 
 should = require 'should'
@@ -22,6 +22,8 @@ describe "Binary Tests", ->
 
     before cliHelpers.resetDatabase
     before cliHelpers.initConfiguration
+    before ->
+        fs.ensureDirSync '/tmp/cozy'
     before fileHelpers.deleteAll
     after cliHelpers.resetDatabase
 
