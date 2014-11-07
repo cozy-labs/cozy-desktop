@@ -153,17 +153,22 @@ module.exports = replication =
         # TODO improve loggging
         # TODO extract this function
         onChange = (info) ->
+            nbDocs = 0
             if info.change? and info.change.docs_written > 0
-                changeMessage = "DB change: #{info.change.docs_written}
-                                 doc(s) written"
+                nbDocs = info.change.docs_written
             else if info.docs_written > 0
-                changeMessage = "DB change: #{info.docs_written} doc(s) written"
+                nbDocs = info.docs_written
 
             # Specify direction
-            if info.direction and changeMessage?
-                changeMessage = "#{info.direction} #{changeMessage}"
+            if info.direction and nbDocs > 0
+                if info.direction is "pull"
+                    changeMessage = \
+                        "overall of #{nbDocs} imported data"
+                else
+                    changeMessage = \
+                        "overall of #{nbDocs} sent data"
 
-            log.info changeMessage if changeMessage?
+                log.info changeMessage if changeMessage?
 
         # TODO extract this function
         onComplete = (info) =>
