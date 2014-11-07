@@ -29,7 +29,7 @@ module.exports = config =
             return {} # No device configured
         else
             log.error "Device not set locally: #{deviceName}"
-            process.exit 1
+            throw "Device not set locally: #{deviceName}"
 
 
     # Get the argument after -d or --deviceName
