@@ -63,6 +63,7 @@
     "should": "^4.1.0",
     "coffee-script": "^1.8.0",
     "gulp-mocha": "^1.1.1",
-    "date-utils": "^1.2.16"
+    "date-utils": "^1.2.16",
+    "gulp-coffeelint": "^0.4.0"
   }
 }

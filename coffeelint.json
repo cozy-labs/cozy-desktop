@@ -1,0 +1,19 @@
+{
+  "indentation" : {
+    "value" : 4,
+    "level" : "error"
+  },
+  "no_empty_param_list": {
+    "level": "warn"
+  },
+  "cyclomatic_complexity": {
+    "level": "warn"
+  },
+  "max_line_length": {
+    "value": 80,
+    "level": "error"
+  },
+  "prefer_english_operator": {
+    "level": "warn"
+  }
+}

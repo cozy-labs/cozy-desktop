@@ -2,6 +2,7 @@ require('coffee-script/register'); // for mocha
 
 var gulp = require('gulp');
 var coffee = require('gulp-coffee');
+var coffeelint = require('gulp-coffeelint');
 var shell = require('gulp-shell');
 var del = require('del');
 var mocha = require('gulp-mocha');
@@ -55,6 +56,12 @@ gulp.task('builder', ['scripts', 'leveldown'], function() {
      console.log('An error occured whild building Cozy Data Proxy.');
      console.log(error);
   });
+});
+
+gulp.task('coffeelint', function() {
+  gulp.src(paths.scripts)
+    .pipe(coffeelint())
+    .pipe(coffeelint.reporter())
 });
 
 gulp.task('test', function() {
