@@ -261,15 +261,6 @@ filesystem =
     createFileDoc: (filePath, ignoreExisting, callback) ->
         filePaths = @getPaths filePath
 
-        putFileDocument = (newDoc) ->
-
-            # Finally, update local file document
-            pouch.db.put newDoc, (err, res) ->
-                if err
-                    callback err
-                else
-                    callback null, res
-
         saveBinaryDocument = (newDoc) ->
 
             # Save location and checksum locally to
@@ -282,7 +273,7 @@ filesystem =
                     callback err
                 else
                     newDoc.binary.file.checksum = doc.checksum
-                    putFileDocument newDoc
+                    pouch.db.put newDoc, callback
 
 
         uploadBinary = (newDoc, binaryDoc) ->
