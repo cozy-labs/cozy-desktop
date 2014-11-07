@@ -1,6 +1,7 @@
 fs = require 'fs-extra'
 touch = require 'touch'
 date = require 'date-utils'
+mkdirp = require 'mkdirp'
 
 path = require 'path'
 should = require 'should'
@@ -186,3 +187,53 @@ describe "Filesystem Tests", ->
                         should.exist err
                         err.status.should.be.equal 404
                         done()
+
+
+    describe "createDirectoryDoc", ->
+        dirName = 'test_dir_to_add'
+        dirName2 = 'test_dir2_to_add'
+        parentDirName = 'test_parent_dir'
+        dirPath = '/tmp/cozy/test_dir_to_add'
+        dirPath2 = '/tmp/cozy/test_parent_dir/test_dir2_to_add'
+
+        it "creates a DB document from a local folder's information", (done) =>
+            fs.mkdir dirPath, (err) =>
+                should.not.exist err
+                filesystem.createDirectoryDoc dirPath, false, (err, res) =>
+                    should.not.exist err
+                    should.exist res.id
+                    pouch.db.query 'folder/byFullPath', key: "/#{dirName}", (err, res) =>
+                        should.not.exist err
+                        @doc = res.rows[0].value
+                        @doc.path.should.be.equal ''
+                        @doc.name.should.be.equal dirName
+                        done()
+
+        it "creates parent directory DB doc", (done) ->
+            mkdirp dirPath2, (err) ->
+                should.not.exist err
+                filesystem.createDirectoryDoc dirPath2, false, (err, res) ->
+                    should.not.exist err
+                    should.exist res.id
+                    pouch.db.query 'folder/byFullPath', key: "/#{parentDirName}", (err, res) ->
+                        should.not.exist err
+                        doc = res.rows[0].value
+                        doc.path.should.be.equal ''
+                        doc.name.should.be.equal parentDirName
+                        pouch.db.query 'folder/byFullPath', key: "/#{parentDirName}/#{dirName2}", (err, res) ->
+                            should.not.exist err
+                            doc = res.rows[0].value
+                            doc.path.should.be.equal "/#{parentDirName}"
+                            doc.name.should.be.equal dirName2
+                            done()
+
+
+        it "does not update DB document when folder exists", (done) =>
+            filesystem.createDirectoryDoc dirPath, true, (err, res) =>
+                pouch.db.query 'folder/byFullPath', key: "/#{dirName}", (err, res) =>
+                    should.not.exist err
+                    for key, value in res.rows[0].value
+                        @doc[key].should.be.equal value
+                    done()
+
+

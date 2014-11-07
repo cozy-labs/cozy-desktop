@@ -196,13 +196,6 @@ filesystem =
     createDirectoryDoc: (dirPath, ignoreExisting, callback) ->
         dirPaths = @getPaths dirPath
 
-        putDirectoryDocument = (newDoc) ->
-            pouch.db.put newDoc, (err, res) ->
-                if err
-                    callback err
-                else
-                    callback null, res
-
         updateDirectoryInformation = (existingDoc, newDoc) ->
             newDoc._id = existingDoc._id
             newDoc._rev = existingDoc._rev
@@ -214,27 +207,20 @@ filesystem =
             return newDoc
 
         checkDirectoryExistence = (newDoc) ->
-            pouch.allFolders false, (err, existingDocs) ->
+            pouch.db.query 'folder/byFullPath'
+            , key: "#{newDoc.path}/#{newDoc.name}"
+            , (err, res) ->
                 if err and err.status isnt 404
                     callback err
+                else if res.rows.length > 0
+                    if ignoreExisting
+                        callback null
+                    else
+                        newDoc =
+                            updateDirectoryInformation res.rows[0].value, newDoc
+                        pouch.db.put newDoc, callback
                 else
-                    if existingDocs
-                        # Loop through existing directories
-                        for existingDoc in existingDocs.rows
-                            existingDoc = existingDoc.value
-                            if  existingDoc.name is newDoc.name \
-                            and existingDoc.path is newDoc.path
-                                # Directory already exists
-                                if ignoreExisting
-                                    return callback null
-                                else
-                                    newDoc =
-                                        updateDirectoryInformation existingDoc,
-                                            newDoc
-
-
-                    # Create or update directory document
-                    putDirectoryDocument newDoc
+                    pouch.db.put newDoc, callback
 
         updateDirectoryStats = (newDoc) ->
             fs.stat dirPaths.absolute, (err, stats) ->
@@ -244,16 +230,13 @@ filesystem =
                 checkDirectoryExistence newDoc
 
         createParentDirectory = (newDoc) =>
-            if fs.existsSync(dirPaths.absParent)
-                updateDirectoryStats newDoc
-            else
-                @createDirectoryDoc dirPaths.absParent, true, (err, res) ->
-                    if err
-                        log.error "An error occured at parent
-                                   directory's creation"
-                        callback err
-                    else
-                        updateDirectoryStats newDoc
+            filesystem.createDirectoryDoc dirPaths.absParent, true, (err, res) ->
+                if err
+                    log.error "An error occured at parent
+                               directory's creation"
+                    callback err
+                else
+                    updateDirectoryStats newDoc
 
         checkDirectoryLocation = () =>
             remoteConfig = config.getConfig()
