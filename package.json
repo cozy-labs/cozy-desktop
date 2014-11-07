@@ -12,8 +12,12 @@
   },
   "scripts": {
     "test": "gulp test",
-    "build": "gulp build"
+    "build": "gulp build",
+    "prepublish": "gulp scripts"
   },
+  "bin": {
+    "cozy-data-proxy": "node cli.js"
+  }
   "repository": {
     "type": "git",
     "url": "git://github.com/cozy-labs/cozy-data-proxy.git"

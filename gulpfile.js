@@ -24,9 +24,13 @@ gulp.task('clean', function(cb) {
 });
 
 gulp.task('scripts', ['clean'], function() {
-  return gulp.src(paths.scripts)
+   gulp.src(paths.scripts)
     .pipe(coffee({bare: true}))
     .pipe(gulp.dest('backend'));
+
+   gulp.src("cli.coffee")
+    .pipe(coffee({bare: true}))
+    .pipe(gulp.dest('./'));
 });
 
 gulp.task('watch', function() {
