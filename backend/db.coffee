@@ -25,6 +25,8 @@ module.exports = dbHelpers =
 
     files:
         rows: []
+        all: (params, callback) ->
+            dbHelpers.db.query 'file/all', params, callback
 
     allFiles: (forceQuery, callback) ->
         if forceQuery or @files.rows.length is 0
@@ -36,6 +38,8 @@ module.exports = dbHelpers =
 
     folders:
         rows: []
+        all: (params, callback) ->
+            dbHelpers.db.query 'folder/all', params, callback
 
     allFolders: (forceQuery, callback) ->
         if forceQuery or @folders.rows.length is 0
@@ -47,6 +51,8 @@ module.exports = dbHelpers =
 
     binaries:
         rows: []
+        all: (params, callback) ->
+            dbHelpers.db.query 'binary/all', params, callback
 
     allBinaries: (forceQuery, callback) ->
         if forceQuery or @binaries.rows.length is 0
@@ -99,6 +105,7 @@ module.exports = dbHelpers =
             else
                 callback null
 
+
     # Create or update given design doc.
     createDesignDoc: (id, queries, callback) ->
         doc =
@@ -118,9 +125,12 @@ module.exports = dbHelpers =
         dbHelpers.db.get id, (err, currentDesignDoc) ->
             if currentDesignDoc?
                 doc._rev = currentDesignDoc._rev
-            else
-                log.info "Design document created: #{id}"
-            dbHelpers.db.put doc, callback
+            dbHelpers.db.put doc, (err) ->
+                if err
+                    callback err
+                else
+                    log.info "Design document created: #{id}"
+                    callback()
 
 
     removeFilter: (docType, callback) ->
@@ -132,14 +142,14 @@ module.exports = dbHelpers =
             else
                 callback null
 
-        removeDesignDoc = (err, currentDesignDoc) ->
+        log.debug id
+        dbHelpers.db.get id, (err, currentDesignDoc) ->
             if currentDesignDoc?
-                db.remove id, currentDesignDoc._rev, checkRemove
+                dbHelpers.db.remove id, currentDesignDoc._rev, checkRemove
             else
-                log.info "Design document does not exist: #{id}"
+                log.warn "Trying to remove a doc that does not exist: #{id}"
                 callback null
 
-        db.get id, removeDesignDoc
 
 
     removeIfExists: (id, callback) ->
