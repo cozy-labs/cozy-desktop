@@ -134,14 +134,14 @@ describe "Filesystem Tests", ->
                 class: "document"
                 mime: "application/octet-stream"
                 tags: []
-                checksum: "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d"
-                size: 4
+                size: 5
                 creationDate: new Date
                 lastModification: new Date
                 binary:
                     file:
                         id: "test-binary-to-fetch"
                         rev: @rev
+                        checksum: "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d"
             , callback
 
         createFolderDocument = (callback) ->
@@ -236,4 +236,68 @@ describe "Filesystem Tests", ->
                         @doc[key].should.be.equal value
                     done()
 
+
+    describe "createFileDoc", ->
+        fileName = 'test_file_to_add'
+        fileName2 = 'test_file2_to_add'
+        parentDirName = 'test_parent_dir2'
+        filePath = '/tmp/cozy/test_file_to_add'
+        filePath2 = '/tmp/cozy/test_parent_dir2/test_file2_to_add'
+
+        it "creates a DB document from a local file's information", (done) =>
+            fs.writeFile filePath, 'hello', (err) =>
+                should.not.exist err
+                filesystem.createFileDoc filePath, false, (err, res) =>
+                    should.not.exist err
+                    should.exist res.id
+                    pouch.db.query 'file/byFullPath', key: "/#{fileName}", (err, res) =>
+                        should.not.exist err
+                        @doc = res.rows[0].value
+                        @doc.path.should.be.equal ''
+                        @doc.name.should.be.equal fileName
+                        @doc.binary.file.checksum.should.be.equal 'aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d'
+                        @doc.mime.should.be.equal 'application/octet-stream'
+                        done()
+
+        it "creates parent directory DB document", (done) ->
+            mkdirp '/tmp/cozy/test_parent_dir2', (err) ->
+                fs.writeFile filePath2, 'hello', (err) ->
+                    should.not.exist err
+                    filesystem.createFileDoc filePath2, false, (err, res) ->
+                        should.not.exist err
+                        should.exist res.id
+                        pouch.db.query 'folder/byFullPath', key: "/#{parentDirName}", (err, res) ->
+                            should.not.exist err
+                            doc = res.rows[0].value
+                            doc.path.should.be.equal ''
+                            doc.name.should.be.equal parentDirName
+                            pouch.db.query 'file/byFullPath', key: "/#{parentDirName}/#{fileName2}", (err, res) ->
+                                should.not.exist err
+                                doc = res.rows[0].value
+                                doc.path.should.be.equal '/test_parent_dir2'
+                                doc.name.should.be.equal fileName2
+                                doc.binary.file.checksum.should.be.equal 'aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d'
+                                doc.mime.should.be.equal 'application/octet-stream'
+                                done()
+
+
+        it "does not update DB document when file exists", (done) =>
+            filesystem.createFileDoc filePath, true, (err, res) =>
+                pouch.db.query 'file/byFullPath', key: "/#{fileName}", (err, res) =>
+                    should.not.exist err
+                    for key, value in res.rows[0].value
+                        @doc[key].should.be.equal value
+                    done()
+
+        it "updates DB documents when file has changed", (done) =>
+            fs.writeFile filePath, 'hello2', (err) =>
+                filesystem.createFileDoc filePath, false, (err, res) =>
+                    pouch.db.query 'file/byFullPath', key: "/#{fileName}", (err, res) =>
+                        should.not.exist err
+                        should.exist res.rows[0].value
+                        doc = res.rows[0].value
+                        doc.binary.file.checksum.should.be.equal '0f1defd5135596709273b3a1a07e466ea2bf4fff'
+                        doc.creationDate.should.not.be.equal @doc.creationDate
+                        doc.lastModification.should.not.be.equal @doc.lastModification
+                        done()
 
