@@ -117,6 +117,7 @@ filesystem =
             when 'newFolder'
                 if task.path
                     mkdirp task.path, callback
+                    log.info "Ensure Folder: #{task.path}"
             when 'catchup'
                 filesystem.applyFileDBChanges true, callback
             when 'reDownload'

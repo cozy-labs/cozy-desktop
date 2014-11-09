@@ -142,12 +142,15 @@ program
                 log.info 'Sync ended'
                 if err
                     log.error err
+                    log.error 'An error occured while running synchronisation.'
                     process.exit 1
                 else
                     process.exit 0
 
+        #TODO answer to: Why filters are added only on two way mode?
         if not args['two-way']
-            pouch.addAllFilters launchDaemons
+            pouch.addAllFilters ->
+                launchDaemons()
         else
             launchDaemons()
 
