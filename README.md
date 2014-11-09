@@ -24,7 +24,7 @@ The cozy-data-proxy requires node.js and build tools to run
 
 Then you can install it via NPM:
 
-    npm install cozy-data-proxy -g
+    sudo npm install cozy-data-proxy -g
 
 ## CLI Running
 
@@ -36,7 +36,7 @@ cozy-data-proxy add-remote-cozy http://url.of.my.cozy devicename /sync/directory
 cozy-data-proxy cli.coffee sync
 ```
 
-Othere commands can be listed with 
+Other commands can be listed with 
     
     cozy-data-proxy -h
 
@@ -49,8 +49,9 @@ Othere commands can be listed with
 
 ### Synchronization engine
 
-To hack the synchronization backend, you can just hack the files under the
-`backend` directory. The CLI is written in `cli.coffee`.
+To hack the synchronization backend, you can just edit the files under the
+`backend` directory. The CLI bin located at the root of the folder, it's the 
+`cli.coffee` file.
 
 ### Graphical User interface 
 
@@ -66,7 +67,7 @@ To run the engine from the GUi, it requires to recompile a given submodule
     npm install nw-gyp -g
     gulp leveldown
     
-If you want to build the final binary of the GUI, type:
+If you want to build the GUI package, type:
 
     gulp build-gui-package
 
