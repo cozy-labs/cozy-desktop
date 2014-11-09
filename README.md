@@ -8,22 +8,69 @@ changes you made on them on other synced devices and on your online Cozy.
 If you want to try the two-way synchronization, add `--two-way` to the `sync`
 command.**
 
-## Workflow
+## GUI Install 
 
-```
-cli.coffee add-remote-cozy http://url.of.my.cozy devicename /sync/directory
+*work in progress*
 
-# Else
-cli.coffee sync
+## GUI Running
+
+*work in progress*
+
+## CLI Install 
+
+The cozy-data-proxy requires node.js and build tools to run
+
+    sudo apt-get install nodejs-legacy build-essentatials
+
+Then you can install it via NPM:
+
+    npm install cozy-data-proxy -g
+
+## CLI Running
+
+```bash
+# Configure it with your remote Cozy
+cozy-data-proxy add-remote-cozy http://url.of.my.cozy devicename /sync/directory
+
+# Then start synchronization daemon:
+cozy-data-proxy cli.coffee sync
 ```
+
+Othere commands can be listed with 
+    
+    cozy-data-proxy -h
 
 ## TODO
 
 * Investigate on pouchDB listener limit error
 * Handle conflicts properly
 
+### Hack
 
-## How to run node-webkit application
+### Synchronization engine
+
+To hack the synchronization backend, you can just hack the files under the
+`backend` directory. The CLI is written in `cli.coffee`.
+
+### Graphical User interface 
+
+The Graphical User Interface requires Node Webkit to be launched. Normally it
+is installed with your dev dependencies. So you can run the GUI via the
+following commmand:
+
+    cd cozy-data-proxy
+    node_modules/nodewebkit/bin/nodewebkit .
+
+To run the engine from the GUi, it requires to recompile a given submodule
+
+    npm install nw-gyp -g
+    gulp leveldown
+    
+If you want to build the final binary of the GUI, type:
+
+    gulp build-gui-package
+
+### How to run install node-webkit globally
 
 1. Download [node-webkit](https://github.com/rogerwang/node-webkit#downloads)
 2. unpack downloaded archive
@@ -33,16 +80,17 @@ cli.coffee sync
 
     path/to/node-webkit/nw .
 
-## Run tests
+### Run tests
 
-Tests require that you have the Cozy dev VM up and that the file application is
-accessible on the 9121 port.
+Tests require that you have the Cozy dev VM up (it means a data-system and a
+proxy up and running) and that the file application is accessible on the 9121
+port.
 
 ```
 # Make sure to have dev dependencies
 npm install
 
-# Run tests via gulp
+# Thne run tests via gulp
 node_modules/.bin/gulp test
 ```
 

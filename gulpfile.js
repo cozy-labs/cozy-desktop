@@ -48,9 +48,6 @@ gulp.task('set-bin-hashbang', function() {
 gulp.task('build-package',
           ['clean', 'scripts', 'bin-scripts', 'set-bin-hashbang']);
 
-gulp.task('watch', function() {
-  gulp.watch(paths.scripts, ['scripts']);
-});
 
 gulp.task('leveldown', shell.task([
   'cd ' + paths.leveldown + ' && nw-gyp configure --target=' + nwVersion,
@@ -62,7 +59,7 @@ gulp.task('leveldown-classic', shell.task([
   'npm install'
 ]));
 
-gulp.task('builder', ['scripts', 'leveldown'], function() {
+gulp.task('build-gui-package', ['scripts', 'leveldown'], function() {
   var NwBuilder = require('node-webkit-builder');
   var nw = new NwBuilder({
       files: paths.all,
@@ -84,6 +81,7 @@ gulp.task('coffeelint', function() {
     .pipe(coffeelint.reporter())
 });
 
+
 gulp.task('test', function() {
   gulp.src(paths.tests, {
     read: false
@@ -91,6 +89,11 @@ gulp.task('test', function() {
     reporter: 'spec',
     globals: {should: require('should')}
   }));
+});
+
+
+gulp.task('watch', function() {
+  gulp.watch(paths.scripts, ['scripts']);
 });
 
 
