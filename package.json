@@ -1,7 +1,7 @@
 {
   "name": "cozy-data-proxy",
   "version": "0.0.2",
-  "description": "",
+  "description": "File Synchronization Client for Cozy Files",
   "main": "app.html",
   "window": {
     "width": 800,
