@@ -4,6 +4,7 @@ var gulp = require('gulp');
 var coffee = require('gulp-coffee');
 var coffeelint = require('gulp-coffeelint');
 var shell = require('gulp-shell');
+var insert = require('gulp-insert');
 var del = require('del');
 var mocha = require('gulp-mocha');
 var should = require('should');
@@ -11,7 +12,8 @@ var should = require('should');
 var nwVersion = '0.8.6';
 var paths = {
   scripts: ['backend/*.coffee'],
-  scriptsJS: ['backend/*.js'],
+  scriptsJS: ['./cli.js', 'backend/*.js'],
+  bin: ['cli.js'],
   tests: ['tests/*.coffee'],
   all: ["backend/**/*.js", "client/public/**", "app.html", "package.json",
         "node_modules/**"],
@@ -23,15 +25,28 @@ gulp.task('clean', function(cb) {
   del(paths.scriptsJS, cb);
 });
 
-gulp.task('scripts', ['clean'], function() {
-   gulp.src(paths.scripts)
+gulp.task('scripts', function() {
+  gulp.src(paths.scripts)
     .pipe(coffee({bare: true}))
     .pipe(gulp.dest('backend'));
+});
 
-   gulp.src("cli.coffee")
+gulp.task('bin-scripts', function() {
+  gulp.src("cli.coffee")
     .pipe(coffee({bare: true}))
     .pipe(gulp.dest('./'));
 });
+
+gulp.task('set-bin-hashbang', function() {
+  setTimeout(function () {
+    gulp.src(paths.bin)
+      .pipe(insert.prepend('#!/usr/bin/env node\n'))
+      .pipe(gulp.dest('./'));
+  }, 1000);
+});
+
+gulp.task('build-package',
+          ['clean', 'scripts', 'bin-scripts', 'set-bin-hashbang']);
 
 gulp.task('watch', function() {
   gulp.watch(paths.scripts, ['scripts']);
@@ -61,6 +76,7 @@ gulp.task('builder', ['scripts', 'leveldown'], function() {
      console.log(error);
   });
 });
+
 
 gulp.task('coffeelint', function() {
   gulp.src(paths.scripts)
