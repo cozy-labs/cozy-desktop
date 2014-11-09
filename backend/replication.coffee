@@ -80,13 +80,13 @@ module.exports = replication =
             include_docs: true
         ).on('complete', (res) ->
 
-            async.eachSeries res.results, (change, callback) ->
+            async.eachSeries res.results, (change, cb) ->
                 saveSeq = (err, res) ->
                     if err
-                        callback err
+                        cb err
                     else
-                        config.setSeq(change.seq)
-                        callback null
+                        config.setSeq change.seq
+                        cb null
 
                 if change.deleted
                     if change.doc.docType is 'Folder'
@@ -115,123 +115,129 @@ module.exports = replication =
                             operation: 'get'
                             doc: change.doc
                         , saveSeq
-            , callback
+            , ->
+                log.info "All changes were applied locally."
+                callback()
 
         ).on 'error', (err) ->
             callback err
+
+    displayChange: (info) ->
+        nbDocs = 0
+        if info.change? and info.change.docs_written > 0
+            nbDocs = info.change.docs_written
+        else if info.docs_written > 0
+            nbDocs = info.docs_written
+
+        # Specify direction
+        if info.direction and nbDocs > 0
+            if info.direction is "pull"
+                changeMessage = \
+                    "overall of #{nbDocs} imported data"
+            else
+                changeMessage = \
+                    "overall of #{nbDocs} sent data"
+
+            log.info changeMessage if changeMessage?
+
+
+    onComplete: (info) ->
+        if replication.firstSync
+            if info.last_seq?
+                since = info.last_seq
+            else if info.pull?.last_seq?
+                since = info.pull.last_seq
+            else
+                since = 'now'
+        else
+            since = config.getSeq()
+
+        if replication.firstSync or \
+           (info.change? and info.change.docs_written > 0) or \
+           info.docs_written > 0
+
+            replication.cancelReplication()
+
+            replication.applyChanges since, ->
+                replication.firstSync = false
+                options =
+                    filter: (doc) ->
+                        doc.docType is 'Folder' or doc.docType is 'File'
+                    live: true
+                replication.timeout = setTimeout ->
+                    options =
+                        operation: 'reDownload'
+                    replication.replicator = \
+                        replication.replicate(replication.url, replication.opts)
+                        .on 'change', replication.displayChange
+                        .on 'complete', (info) ->
+                            filesystem.changes.push options, ->
+                                replication.onComplete info
+                        .on 'uptodate', (info) ->
+                            filesystem.changes.push options, ->
+                                replication.onComplete info
+                        .on 'error', replication.onError
+                    .catch replication.onError
+                , 5000
+
+
+    onError: (err, data) ->
+        if err?.status is 409
+            log.error "Conflict, ignoring"
+        else
+            log.error err
+            replication.onComplete
+                change:
+                    docs_written: 0
 
 
     runReplication: (options, callback) ->
 
         remoteConfig = config.getConfig()
+        deviceName = config.getDeviceName()
 
         fromRemote = options.fromRemote
         toRemote = options.toRemote
         continuous = options.continuous or false
         catchup = options.catchup or false
-        initial = options.initial or false
-        firstSync = initial
+        replication.firstSync = firstSync = options.initial or false
 
-        deviceName = config.getDeviceName()
-        replicate = @getReplicateFunction toRemote, fromRemote
-
-        # Do not take into account all the changes if it is the first sync
-        firstSync = initial
+        log.debug { fromRemote, toRemote, continuous, catchup, replication }
+        replication.replicate = \
+            replication.getReplicateFunction toRemote, fromRemote
 
         # Replicate only files and folders for now
-        options =
+        replication.opts =
             filter: (doc) ->
                 doc.docType is 'Folder' or doc.docType is 'File'
-            live: not firstSync and continuous
+            live: not(replication.firstSync) and continuous
 
         # Set authentication
         url = urlParser.parse remoteConfig.url
         url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
+
         # Format URL
-        url = urlParser.format(url) + 'cozy'
-
-        # TODO improve loggging
-        # TODO extract this function
-        onChange = (info) ->
-            nbDocs = 0
-            if info.change? and info.change.docs_written > 0
-                nbDocs = info.change.docs_written
-            else if info.docs_written > 0
-                nbDocs = info.docs_written
-
-            # Specify direction
-            if info.direction and nbDocs > 0
-                if info.direction is "pull"
-                    changeMessage = \
-                        "overall of #{nbDocs} imported data"
-                else
-                    changeMessage = \
-                        "overall of #{nbDocs} sent data"
-
-                log.info changeMessage if changeMessage?
-
-        # TODO extract this function
-        onComplete = (info) =>
-            if firstSync
-                if info.last_seq?
-                    since = info.last_seq
-                else if info.pull?.last_seq?
-                    since = info.pull.last_seq
-                else
-                    since = 'now'
-            else
-                since = config.getSeq()
-
-            if firstSync or \
-               (info.change? and info.change.docs_written > 0) or \
-               info.docs_written > 0
-
-                @cancelReplication()
-
-                @applyChanges since, =>
-                    firstSync = false
-                    options.live = true
-                    @timeout = setTimeout =>
-                        @replicator = replicate(url, options)
-                            .on 'change', onChange
-                            .on 'complete', (info) ->
-                                filesystem.changes.push { operation: 'reDownload' }, ->
-                                    onComplete info
-                            .on 'uptodate', (info) ->
-                                filesystem.changes.push { operation: 'reDownload' }, ->
-                                    onComplete info
-                            .on 'error', onError
-                        .catch onError
-                    , 5000
-
-        # TODO extract this function
-        onError = (err, data) ->
-            if err?.status is 409
-                log.error "Conflict, ignoring"
-            else
-                log.error err
-
-            onComplete
-                change:
-                    docs_written: 0
+        url = "#{urlParser.format(url)}cozy"
+        replication.url = url
 
         if catchup
             operation = 'catchup'
         else
             operation = 'applyFolderDBChanges'
 
-        filesystem.changes.push { operation: operation }, =>
-            @timeout = setTimeout =>
-                @replicator = replicate(url, options)
-                    .on 'change', onChange
-                    .on 'complete', onComplete
-                    .on 'uptodate', onComplete
-                    .on 'error', onError
-                .catch onError
-            , 1000
+        run = ->
+            replication.replicator = replication.replicate(url, replication.opts)
+                .on 'change', replication.displayChange
+                .on 'complete', replication.onComplete
+                .on 'uptodate', replication.onComplete
+                .on 'error', replication.onError
+            .catch replication.onError
+
+        filesystem.changes.push operation: operation, ->
+            replication.timeout = setTimeout run, 1000
 
     cancelReplication: ->
-        clearTimeout @timeout
-        @replicator.cancel() if @replicator?
-        @timeout = null
-        @replicator = null
+        clearTimeout replication.timeout
+        replication.replicator.cancel() if replication.replicator?
+        replication.timeout = null
+        replication.replicator = null
