@@ -340,40 +340,30 @@ filesystem =
                 else
                     populateBinaryInformation newDoc
 
-        checkFileExistence = (newDoc) ->
+        checkDocExistence = (newDoc) ->
 
             binary.checksum filePaths.absolute, (err, checksum) ->
                 # Get the existing file (if exists) to prefill
                 # document with its information
-                pouch.allFiles false, (err, existingDocs) ->
+                pouch.db.query 'file/byFullPath',
+                    key: "#{filePaths.parent}/#{filePaths.name}"
+                , (err, res) ->
                     if err and err.status isnt 404
-                        callback err
-                    else
-                        if existingDocs
-                            # Loop through existing files
-                            for existingDoc in existingDocs.rows
-                                existingDoc = existingDoc.value
-                                if (existingDoc.name is newDoc.name \
-                                and existingDoc.path is newDoc.path)
-                                    if (existingDoc.binary?.file?.checksum? \
-                                    and existingDoc.binary.file.checksum \
-                                    is checksum) and ignoreExisting
-                                        return callback null
-                                    # File already exists
-                                    newDoc = updateFileInformation existingDoc,
-                                        newDoc
+                        return callback err
+                    else if not err and res.rows.length isnt 0
+                        existingDoc = res.rows[0].value
+                        newDoc = updateFileInformation existingDoc, newDoc
 
-                        checkBinaryExistence newDoc, checksum
+                    checkBinaryExistence newDoc, checksum
 
         updateFileStats = (newDoc) ->
 
             # Update size and dates using the value of the FS
             fs.stat filePaths.absolute, (err, stats) ->
-                newDoc.creationDate = stats.mtime
                 newDoc.lastModification = stats.mtime
                 newDoc.size = stats.size
 
-                checkFileExistence newDoc
+                checkDocExistence newDoc
 
         createParentDirectory = (newDoc) =>
             @createDirectoryDoc filePaths.absParent, true, (err, res) ->

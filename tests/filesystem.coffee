@@ -17,6 +17,7 @@ pouch       = require '../backend/db'
 filesystem  = require '../backend/filesystem'
 
 describe "Filesystem Tests", ->
+    @timeout 4000
 
     before cliHelpers.resetDatabase
     before cliHelpers.initConfiguration
@@ -237,7 +238,7 @@ describe "Filesystem Tests", ->
                     done()
 
 
-    describe "createFileDoc", ->
+    describe "createFileDoc", =>
         fileName = 'test_file_to_add'
         fileName2 = 'test_file2_to_add'
         parentDirName = 'test_parent_dir2'
@@ -290,14 +291,36 @@ describe "Filesystem Tests", ->
                     done()
 
         it "updates DB documents when file has changed", (done) =>
-            fs.writeFile filePath, 'hello2', (err) =>
-                filesystem.createFileDoc filePath, false, (err, res) =>
-                    pouch.db.query 'file/byFullPath', key: "/#{fileName}", (err, res) =>
-                        should.not.exist err
-                        should.exist res.rows[0].value
-                        doc = res.rows[0].value
-                        doc.binary.file.checksum.should.be.equal '0f1defd5135596709273b3a1a07e466ea2bf4fff'
-                        doc.creationDate.should.not.be.equal @doc.creationDate
-                        doc.lastModification.should.not.be.equal @doc.lastModification
-                        done()
+            setTimeout =>
+                fs.writeFile filePath, 'hello2', (err) =>
+                    filesystem.createFileDoc filePath, false, (err, res) =>
+                        pouch.db.query 'file/byFullPath', key: "/#{fileName}", (err, res) =>
+                            should.not.exist err
+                            should.exist res.rows[0].value
+                            doc = res.rows[0].value
+                            doc.binary.file.checksum.should.be.equal '0f1defd5135596709273b3a1a07e466ea2bf4fff'
+                            doc.lastModification.should.not.be.equal @doc.lastModification
+                            done()
+            , 2000
+
+
+    describe "deleteFromId", =>
+        it "deletes a binary from its document ID", (done) =>
+            filesystem.deleteFromId @doc.binary.file.id, (err, res) =>
+                should.not.exist err
+                pouch.db.get @doc.binary.file.id, (err, res) =>
+                    should.not.exist err
+                    should.exist res.path
+                    fs.existsSync(res.path).should.be.false
+                    done()
+
+
+    describe "deleteDoc", =>
+        it "deletes a file DB document from a file path", (done) =>
+            filesystem.deleteDoc '/tmp/cozy/test_file_to_add', (err, res) =>
+                should.not.exist err
+                pouch.db.get @doc._id, (err, res) ->
+                    should.exist err.status
+                    err.status.should.be.equal 404
+                    done()
 
