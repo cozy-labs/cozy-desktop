@@ -100,7 +100,7 @@ module.exports = replication =
         continuous = options.continuous or false
         catchup = options.catchup or false
 
-        config.setSeq 0 if options.force
+        config.setSeq 0 if options.force is true
 
         replication.firstSync = firstSync = options.initial or false
         replication.startSeq = config.getSeq()
@@ -221,7 +221,6 @@ module.exports = replication =
             else
                 callback null
 
-        log.debug change
         if change.deleted
             if change.doc.docType is 'Folder'
                 # We don't have folder information so, we resync all folders.

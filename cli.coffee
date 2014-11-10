@@ -136,7 +136,7 @@ program
                 toRemote: args.toRemote
                 continuous: true
                 rebuildTree: true
-                force: true
+                force: args.force?
                 initial: not args['two-way']
                 catchup: args.catchup
             , (err) ->

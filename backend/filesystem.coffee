@@ -140,7 +140,7 @@ filesystem =
                         filelist = walkSync("#{dir}/#{file}/", filelist)
                 return filelist
 
-            async.each walkSync(remoteConfig.path), (dir, cb) ->
+            deleteIfNotListed = (dir, cb) ->
                 fullPath = "#{dir[0]}/#{dir[1]}"
                 pouch.db.query 'folder/byFullPath', key: fullPath, (err, res) ->
                     if res.rows.length is 0 and fs.existsSync dir[2]
@@ -148,7 +148,9 @@ filesystem =
                         fs.remove dir[2], cb
                     else
                         cb null
-            , (err) ->
+
+            dirList = walkSync(remoteConfig.path)
+            async.eachSeries dirList, deleteIfNotListed, (err) ->
                 if err
                     callback err
                 else
@@ -159,35 +161,49 @@ filesystem =
 
     applyFileDBChanges: (keepLocalDeletions, callback) ->
         deviceName = config.getDeviceName()
-        keepLocalDeletions ?= false
 
-        downloadIfNotExists = (doc, callback) =>
+        downloadIfNotExists = (doc, cb) =>
             doc = doc.value
             filePath = path.resolve remoteConfig.path, doc.path, doc.name
-            if fs.existsSync filePath
-                callback null
-            else
-                if keepLocalDeletions
-                    # If we want to priorize local changes, delete DB doc
-                    filesystem.deleteDoc filePath, callback
-                else
-                    # Else download file
-                    binary.fetchFromDoc deviceName, doc, callback
 
-        getFolders = (err, result) ->
+            # TODO Should test if checksum is right
+            if fs.existsSync filePath
+                cb null
+            else
+                # Else download file
+                binary.fetchFromDoc deviceName, doc, cb
+
+        pouch.db.query 'file/all', (err, result) ->
             if err and err.status isnt 404
                 callback err
             else
-                result = { 'rows': [] } if err?.status is 404
-                pouch.db.query 'folder/all', (err, result2) ->
-                    if err and err.status isnt 404
-                        callback err
-                    else
-                        result2 = { 'rows': [] } if err?.status is 404
-                        results = result['rows'].concat(result2['rows'])
-                        async.each results, downloadIfNotExists, callback
+                results = result.rows
 
-        pouch.db.query 'file/all', getFolders
+                async.eachSeries results, downloadIfNotExists, ->
+                    getCurrentFileList = (dir, filelist) =>
+                        files = fs.readdirSync dir
+                        filelist ?= []
+                        for filename in files
+                            filePath = path.join dir, filename
+                            if not fs.statSync(filePath).isDirectory()
+                                parent = path.relative remoteConfig.path, dir
+                                parent = path.join path.sep, parent if parent isnt ''
+                                filelist.push [parent, filename, filePath]
+                            else
+                                filelist = getCurrentFileList(filePath, filelist)
+                        return filelist
+
+                    deleteIfNotListed = (dir, cb) ->
+                        fullPath = "#{dir[0]}/#{dir[1]}"
+                        pouch.db.query 'file/byFullPath', key: fullPath, (err, res) ->
+                            if res.rows.length is 0 and fs.existsSync dir[2]
+                                log.info "Removing file: #{dir[2]} (not remotely listed)"
+                                fs.remove dir[2], cb
+                            else
+                                cb null
+
+                    fileList = getCurrentFileList remoteConfig.path
+                    async.eachSeries fileList, deleteIfNotListed, callback
 
 
     createDirectoryDoc: (dirPath, ignoreExisting, callback) ->
@@ -260,7 +276,7 @@ filesystem =
 
         saveBinaryDocument = (newDoc) ->
 
-            # Save location and checksum locally to
+        # Save location and checksum locally to
             # facilitate further operations
             binary.saveLocation filePaths.absolute
                                 , newDoc.binary.file.id
