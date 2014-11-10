@@ -62,6 +62,7 @@ filesystem =
             if err
                 callback err
             else
+                log.info "Directory ensured: #{absPath}"
                 binary.infoPublisher.emit 'directoryCreated', absPath
 
                 # Update directory information
@@ -76,7 +77,6 @@ filesystem =
     # Changes is the queue of operations, it contains
     # files that are being downloaded, and files to upload.
     changes: async.queue (task, callback) ->
-        #console.log task.operation, task.file
         deviceName = config.getDeviceName()
 
         if task.operation in [
@@ -89,14 +89,8 @@ filesystem =
             filesystem.watchingLocked = true
             callbackOrig = callback
             callback = (err, res) ->
-                #console.log 'done'
                 filesystem.watchingLocked = false
                 callbackOrig err, res
-        #else
-        #    callback_orig = callback
-        #    callback = (err, res) ->
-        #        console.log 'done'
-        #        callback_orig err, res
 
         switch task.operation
             when 'post'
@@ -121,6 +115,8 @@ filesystem =
             when 'catchup'
                 filesystem.applyFileDBChanges true, callback
             when 'reDownload'
+                filesystem.applyFileDBChanges false, callback
+            when 'applyFileDBChanges'
                 filesystem.applyFileDBChanges false, callback
             else
                 # 'applyFolderDBChanges'
@@ -411,6 +407,7 @@ filesystem =
             if err and err.status isnt 404
                 callback err
             else if res?.path? and fs.existsSync res.path
+                log.info "Remove element at #{res.path}"
                 fs.unlink res.path, ->
                     callback null
             else
