@@ -7,6 +7,7 @@ mkdirp     = require 'mkdirp'
 async      = require 'async'
 log        = require('printit')
     prefix: 'Replication'
+    date: true
 
 pouch      = require './db'
 config     = require './config'
@@ -15,10 +16,33 @@ binary     = require './binary'
 
 filters = []
 
+
 module.exports = replication =
 
     replicationIsRunning: false
     treeIsBuilding: false
+
+
+    # Get from info object last replication sequence number.
+    getInfoSeq: (info) ->
+        if info?
+            if info.last_seq?
+                since = info.last_seq
+            else if info.pull?.last_seq?
+                since = info.pull.last_seq
+            else
+                since = 'now'
+        else
+            since = config.getSeq()
+
+
+    getUrl: ->
+        remoteConfig = config.getConfig()
+        deviceName = config.getDeviceName()
+        url = urlParser.parse remoteConfig.url
+        url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
+        url = "#{urlParser.format(url)}cozy"
+
 
     # Register device remotely then returns credentials given by remote Cozy.
     # This credentials will allow the device to access to the Cozy database.
@@ -41,7 +65,6 @@ module.exports = replication =
                 callback null,
                     id: body.id
                     password: body.password
-
 
 
     # Unregister device remotely, ask for revocation.
@@ -68,117 +91,102 @@ module.exports = replication =
         return replicate
 
 
-    applyChanges: (since, callback) ->
-        remoteConfig = config.getConfig()
+    # Build replication options from given arguments, then run replication
+    # accordingly.
+    runReplication: (options, callback) ->
 
-        since ?= config.getSeq()
+        fromRemote = options.fromRemote
+        toRemote = options.toRemote
+        continuous = options.continuous or false
+        catchup = options.catchup or false
 
-        pouch.db.changes(
+        replication.firstSync = firstSync = options.initial or false
+        replication.startSeq = config.getSeq()
+        replication.replicate = \
+            replication.getReplicateFunction toRemote, fromRemote
+        replication.url = replication.getUrl()
+        replication.opts =
             filter: (doc) ->
                 doc.docType is 'Folder' or doc.docType is 'File'
-            since: since
-            include_docs: true
-        ).on('complete', (res) ->
+            live: not(replication.firstSync) and continuous
+            since: replication.startSeq
 
-            async.eachSeries res.results, (change, cb) ->
-                saveSeq = (err, res) ->
-                    if err
-                        cb err
-                    else
-                        config.setSeq change.seq
-                        cb null
 
-                if change.deleted
-                    if change.doc.docType is 'Folder'
-                        filesystem.changes.push
-                            operation: 'applyFolderDBChanges'
-                        , saveSeq
-                    else if change.doc.binary?.file?.id?
-                        filesystem.changes.push
-                            operation: 'delete'
-                            id: change.doc.binary.file.id
-                        , saveSeq
-                else
-                    if change.doc.docType is 'Folder'
-                        absPath = path.join remoteConfig.path,
-                                            change.doc.path,
-                                            change.doc.name
-                        filesystem.changes.push
-                            operation: 'newFolder'
-                            path: absPath
-                        , saveSeq
-                            #filesystem.changes.push
-                            #   operation: 'applyFolderDBChanges'
-                            #, saveSeq
-                    else
-                        filesystem.changes.push
-                            operation: 'get'
-                            doc: change.doc
-                        , saveSeq
-            , ->
-                log.info "All changes were applied locally."
-                callback()
+        log.info 'Start first replication to resync local device and your Cozy.'
+        log.info "Resync from sequence #{replication.startSeq}"
+        replication.replicator = replication.replicate(
+            replication.url, replication.opts)
+            .on 'change', replication.displayChange
+            .on 'complete', replication.onComplete
+            #.on 'uptodate', replication.onComplete
+            .on 'error', replication.onError
+        .catch replication.onError
 
-        ).on 'error', (err) ->
-            callback err
 
     displayChange: (info) ->
         nbDocs = 0
+
         if info.change? and info.change.docs_written > 0
             nbDocs = info.change.docs_written
         else if info.docs_written > 0
             nbDocs = info.docs_written
 
-        # Specify direction
         if info.direction and nbDocs > 0
             if info.direction is "pull"
-                changeMessage = \
-                    "overall of #{nbDocs} imported data"
+                changeMessage = "#{nbDocs} entries imported from your Cozy"
             else
-                changeMessage = \
-                    "overall of #{nbDocs} sent data"
+                changeMessage = "#{nbDocs} entries to your Cozy"
 
             log.info changeMessage if changeMessage?
 
 
     onComplete: (info) ->
+        previousSince = config.getSeq()
+        since = replication.getInfoSeq info
+        log.info "Replication batch is complete (last sequence: #{since})"
+        config.setSeq since
+
         if replication.firstSync
-            if info.last_seq?
-                since = info.last_seq
-            else if info.pull?.last_seq?
-                since = info.pull.last_seq
-            else
-                since = 'now'
-        else
-            since = config.getSeq()
 
-        if replication.firstSync or \
-           (info.change? and info.change.docs_written > 0) or \
-           info.docs_written > 0
-
+            ## Ensure that previous replication is properly finished.
             replication.cancelReplication()
 
-            replication.applyChanges since, ->
-                replication.firstSync = false
-                options =
-                    filter: (doc) ->
-                        doc.docType is 'Folder' or doc.docType is 'File'
-                    live: true
-                replication.timeout = setTimeout ->
-                    options =
-                        operation: 'reDownload'
-                    replication.replicator = \
-                        replication.replicate(replication.url, replication.opts)
-                        .on 'change', replication.displayChange
-                        .on 'complete', (info) ->
-                            filesystem.changes.push options, ->
-                                replication.onComplete info
-                        .on 'uptodate', (info) ->
-                            filesystem.changes.push options, ->
-                                replication.onComplete info
-                        .on 'error', replication.onError
-                    .catch replication.onError
-                , 5000
+            if replication.startSeq is 0
+                log.info 'Start building your filesystem on your device.'
+                filesystem.changes.push operation: 'applyFolderDBChanges', ->
+                    filesystem.changes.push operation: 'applyFileDBChanges', ->
+                        log.info 'All your files are now available on your device.'
+                        replication.timeout = setTimeout replication.sync, 1000
+
+            else
+                # Then, apply changes retrieved by first sync.
+                # Then, start continuous sync
+                replication.applyChanges replication.startSeq, ->
+                    replication.timeout = setTimeout replication.runSync, 1000
+
+        else
+            replication.applyChanges previousSince
+
+
+    runSync: ->
+        replication.startSeq = config.getSeq()
+        replication.firstSync = false
+        replication.opts.live = true
+
+        run = ->
+            log.info 'Start live synchronization'
+            complete = (info) ->
+                log.info 'Sync complete, applying changes to files'
+                filesystem.changes.push operations: 'reDownload', ->
+                    replication.onComplete info
+
+            replication.replicator = replication.replicate(replication.url, replication.opts)
+                .on 'change', replication.displayChange
+                .on 'uptodate', complete
+                .on 'error', replication.onError
+            .catch replication.onError
+
+        replication.timeout = setTimeout run, 5000
 
 
     onError: (err, data) ->
@@ -191,50 +199,63 @@ module.exports = replication =
                     docs_written: 0
 
 
-    runReplication: (options, callback) ->
+    applyChanges: (since, callback) ->
+        since ?= config.getSeq()
 
-        remoteConfig = config.getConfig()
-        deviceName = config.getDeviceName()
-
-        fromRemote = options.fromRemote
-        toRemote = options.toRemote
-        continuous = options.continuous or false
-        catchup = options.catchup or false
-        replication.firstSync = firstSync = options.initial or false
-
-        log.debug { fromRemote, toRemote, continuous, catchup, replication }
-        replication.replicate = \
-            replication.getReplicateFunction toRemote, fromRemote
-
-        # Replicate only files and folders for now
-        replication.opts =
+        options =
             filter: (doc) ->
                 doc.docType is 'Folder' or doc.docType is 'File'
-            live: not(replication.firstSync) and continuous
+            since: since
+            include_docs: true
 
-        # Set authentication
-        url = urlParser.parse remoteConfig.url
-        url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
+        pouch.db.changes(options)
+        .on 'error', (err) ->
+            log.error "An error occured while applying changes"
+            log.error "Stop applying changes."
+            callback err
+        .on 'complete', (res) ->
+            log.info 'All changes were fetched, now applying them to your files...'
+            async.eachSeries res.results, replication.applyChange, ->
+                log.info "All changes were applied to your files."
+                callback() if callback?
 
-        # Format URL
-        url = "#{urlParser.format(url)}cozy"
-        replication.url = url
 
-        if catchup
-            operation = 'catchup'
+    applyChange: (change, callback) ->
+        remoteConfig = config.getConfig()
+        saveSeq = (err, res) ->
+            if err
+                callback err
+            else
+                config.setSeq change.seq
+                callback null
+
+        log.debug change
+
+        if change.deleted
+            if change.doc.docType is 'Folder'
+                filesystem.changes.push
+                    operation: 'applyFolderDBChanges'
+                , saveSeq
+            else if change.doc.binary?.file?.id?
+                filesystem.changes.push
+                    operation: 'delete'
+                    id: change.doc.binary.file.id
+                , saveSeq
         else
-            operation = 'applyFolderDBChanges'
+            if change.doc.docType is 'Folder'
+                absPath = path.join remoteConfig.path,
+                                    change.doc.path,
+                                    change.doc.name
+                filesystem.changes.push
+                    operation: 'newFolder'
+                    path: absPath
+                , saveSeq
+            else
+                filesystem.changes.push
+                    operation: 'get'
+                    doc: change.doc
+                , saveSeq
 
-        run = ->
-            replication.replicator = replication.replicate(url, replication.opts)
-                .on 'change', replication.displayChange
-                .on 'complete', replication.onComplete
-                .on 'uptodate', replication.onComplete
-                .on 'error', replication.onError
-            .catch replication.onError
-
-        filesystem.changes.push operation: operation, ->
-            replication.timeout = setTimeout run, 1000
 
     cancelReplication: ->
         clearTimeout replication.timeout
