@@ -116,6 +116,7 @@ program
     .description('Sync databases, apply and/or watch changes')
     .option('-2, --two-way', 'apply local changes to remote as well as pulling changes')
     .option('-c, --catchup', 're-detect all the files locally (works only along --two-way)')
+    .option('-f, --force', 'Run sync from the beginning of all the Cozy changes.')
     .action (args) ->
         args.noBinary ?= false
         args['two-way'] ?= false
@@ -135,6 +136,7 @@ program
                 toRemote: args.toRemote
                 continuous: true
                 rebuildTree: true
+                force: true
                 initial: not args['two-way']
                 catchup: args.catchup
             , (err) ->

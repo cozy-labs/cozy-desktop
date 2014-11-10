@@ -100,6 +100,8 @@ module.exports = replication =
         continuous = options.continuous or false
         catchup = options.catchup or false
 
+        config.setSeq 0 if options.force
+
         replication.firstSync = firstSync = options.initial or false
         replication.startSeq = config.getSeq()
         replication.replicate = \
@@ -118,7 +120,6 @@ module.exports = replication =
             replication.url, replication.opts)
             .on 'change', replication.displayChange
             .on 'complete', replication.onComplete
-            #.on 'uptodate', replication.onComplete
             .on 'error', replication.onError
         .catch replication.onError
 
@@ -144,7 +145,7 @@ module.exports = replication =
         previousSince = config.getSeq()
         since = replication.getInfoSeq info
         log.info "Replication batch is complete (last sequence: #{since})"
-        config.setSeq since
+        config.setSeq since if since isnt 'now'
 
         if replication.firstSync
 
@@ -169,7 +170,7 @@ module.exports = replication =
         run = ->
             log.info 'Start live synchronization'
             complete = (info) ->
-                log.info 'Sync complete, applying changes to files'
+                log.info 'Continuous sync session done, applying changes to files'
                 replication.onComplete info
 
             replication.replicator = replication.replicate(replication.url, replication.opts)
@@ -218,15 +219,17 @@ module.exports = replication =
             if err
                 callback err
             else
-                config.setSeq change.seq
                 callback null
 
+        log.debug change
         if change.deleted
             if change.doc.docType is 'Folder'
+                # We don't have folder information so, we resync all folders.
                 filesystem.changes.push
                     operation: 'applyFolderDBChanges'
                 , saveSeq
             else if change.doc.binary?.file?.id?
+                # It's a file, we still have the path on the binary object.
                 filesystem.changes.push
                     operation: 'delete'
                     id: change.doc.binary.file.id
@@ -239,7 +242,10 @@ module.exports = replication =
                 filesystem.changes.push
                     operation: 'newFolder'
                     path: absPath
-                , saveSeq
+                , ->
+                    filesystem.changes.push
+                        operation: 'applyFolderDBChanges'
+                    , saveSeq
             else
                 filesystem.changes.push
                     operation: 'get'
