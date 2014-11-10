@@ -114,7 +114,6 @@ program
 program
     .command('sync')
     .description('Sync databases, apply and/or watch changes')
-    .option('-d, --deviceName [deviceName]', 'device name to deal with')
     .option('-2, --two-way', 'apply local changes to remote as well as pulling changes')
     .option('-c, --catchup', 're-detect all the files locally (works only along --two-way)')
     .action (args) ->
@@ -142,12 +141,15 @@ program
                 log.info 'Sync ended'
                 if err
                     log.error err
+                    log.error 'An error occured while running synchronisation.'
                     process.exit 1
                 else
                     process.exit 0
 
+        #TODO answer to: Why filters are added only on two way mode?
         if not args['two-way']
-            pouch.addAllFilters launchDaemons
+            pouch.addAllFilters ->
+                launchDaemons()
         else
             launchDaemons()
 

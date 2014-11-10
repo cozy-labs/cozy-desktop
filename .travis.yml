@@ -4,3 +4,33 @@ node_js:
 env:
     global:
         - NODE_ENV=test
+services:
+    - couchdb
+env:
+    global:
+        - NODE_ENV=test
+        - TEST_ENV=travis
+before_install:
+    - npm install forever coffee-script -g
+    - git clone git://github.com/cozy/cozy-data-system.git
+    - cd cozy-data-system
+    - npm install
+    - pwd
+    - NAME=data-system TOKEN=token forever start -o forever-ds.log build/server.js
+    - cd
+    - git clone git://github.com/cozy/cozy-proxy.git
+    - cd cozy-proxy
+    - npm install
+    - pwd
+    - NAME=cozy-proxy TOKEN=token forever start -o forever-proxy.log build/server.js
+    - sleep 3
+    - cd
+    - git clone git://github.com/cozy/cozy-files.git
+    - cd cozy-files
+    - npm install
+    - pwd
+    - NAME=cozy-files TOKEN=token forever start -o forever-proxy.log build/server.js
+    - sleep 3
+    - curl http://localhost:9101/
+    - curl http://localhost:9104/
+    - curl http://localhost:9121/
