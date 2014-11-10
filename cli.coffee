@@ -114,7 +114,6 @@ program
 program
     .command('sync')
     .description('Sync databases, apply and/or watch changes')
-    .option('-d, --deviceName [deviceName]', 'device name to deal with')
     .option('-2, --two-way', 'apply local changes to remote as well as pulling changes')
     .option('-c, --catchup', 're-detect all the files locally (works only along --two-way)')
     .action (args) ->
