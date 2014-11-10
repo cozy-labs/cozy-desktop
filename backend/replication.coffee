@@ -151,17 +151,10 @@ module.exports = replication =
             ## Ensure that previous replication is properly finished.
             replication.cancelReplication()
 
-            if replication.startSeq is 0
-                log.info 'Start building your filesystem on your device.'
-                filesystem.changes.push operation: 'applyFolderDBChanges', ->
-                    filesystem.changes.push operation: 'applyFileDBChanges', ->
-                        log.info 'All your files are now available on your device.'
-                        replication.timeout = setTimeout replication.sync, 1000
-
-            else
-                # Then, apply changes retrieved by first sync.
-                # Then, start continuous sync
-                replication.applyChanges replication.startSeq, ->
+            log.info 'Start building your filesystem on your device.'
+            filesystem.changes.push operation: 'applyFolderDBChanges', ->
+                filesystem.changes.push operation: 'applyFileDBChanges', ->
+                    log.info 'All your files are now available on your device.'
                     replication.timeout = setTimeout replication.runSync, 1000
 
         else
@@ -177,8 +170,7 @@ module.exports = replication =
             log.info 'Start live synchronization'
             complete = (info) ->
                 log.info 'Sync complete, applying changes to files'
-                filesystem.changes.push operations: 'reDownload', ->
-                    replication.onComplete info
+                replication.onComplete info
 
             replication.replicator = replication.replicate(replication.url, replication.opts)
                 .on 'change', replication.displayChange
@@ -228,8 +220,6 @@ module.exports = replication =
             else
                 config.setSeq change.seq
                 callback null
-
-        log.debug change
 
         if change.deleted
             if change.doc.docType is 'Folder'
