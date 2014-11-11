@@ -77,7 +77,6 @@ filesystem =
     # Changes is the queue of operations, it contains
     # files that are being downloaded, and files to upload.
     changes: async.queue (task, callback) ->
-        deviceName = config.getDeviceName()
 
         if task.operation in [
             'get'
@@ -92,6 +91,8 @@ filesystem =
                 filesystem.watchingLocked = false
                 callbackOrig err, res
 
+
+        log.debug operation
         switch task.operation
             when 'post'
                 if task.file?
@@ -101,6 +102,7 @@ filesystem =
                     filesystem.createFileDoc task.file, false, callback
             when 'get'
                 if task.doc?
+                    deviceName = config.getDeviceName()
                     binary.fetchFromDoc deviceName, task.doc, callback
             when 'deleteDoc'
                 if task.file?
@@ -108,6 +110,9 @@ filesystem =
             when 'delete'
                 if task.id?
                     filesystem.deleteFromId task.id, callback
+            when 'deleteFolder'
+                if task.id? and task.rev?
+                    filesystem.deleteFolder task.id, task.rev, callback
             when 'newFolder'
                 if task.path
                     mkdirp task.path, callback
@@ -119,9 +124,41 @@ filesystem =
             when 'applyFileDBChanges'
                 filesystem.applyFileDBChanges false, callback
             else
-                # 'applyFolderDBChanges'
                 filesystem.applyFolderDBChanges callback
     , 1
+
+
+    # Get old revision of deleted doc to get path info then remove it from file
+    # system
+    # TODO write test for this function
+    # TODO make that function cleaner
+    deleteFolder: (id, rev, callback) ->
+
+        options =
+            revs: true
+            revs_info: true
+            open_revs: "all"
+        pouch.db.get id, options, (err, infos) ->
+            if err
+                callback err
+            else
+                if infos.length > 0 and infos[0].ok?._revisions?
+                    rev = infos[0].ok._revisions.ids[1]
+                    start = infos[0].ok._revisions.start
+                    rev = "#{start - 1}-#{rev}"
+
+                    pouch.db.get id, rev: rev, (err, doc) ->
+                        if err
+                            callback err
+                        else
+                            folderPath = path.join(
+                                remoteConfig.path,
+                                doc.path,
+                                doc.name
+                            )
+                            fs.remove folderPath, callback
+                else
+                    callback()
 
 
     applyFolderDBChanges: (callback) ->
@@ -413,6 +450,7 @@ filesystem =
         checkFileLocation()
 
     deleteFromId: (id, callback) ->
+        log.debug 'deleteFromId: ' + id
         pouch.db.get id, (err, res) ->
             if err and err.status isnt 404
                 callback err

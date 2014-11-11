@@ -230,19 +230,17 @@ module.exports = replication =
         if change.deleted
             if change.doc.docType is 'Folder'
                 # We don't have folder information so, we resync all folders.
-                filesystem.changes.push
-                    operation: 'applyFolderDBChanges'
-                , endTask
+                task =
+                    operation: 'deleteFolder'
+                    id: change.doc._id
+                    rev: change.doc._rev
+                filesystem.changes.push task, endTask
             else if change.doc.binary?.file?.id?
-                filesystem.changes.push
-                    operation: 'applyFileDBChanges'
-                , endTask
-
                 # It's a file, we still have the path on the binary object.
-                #filesystem.changes.push
-                    #operation: 'delete'
-                    #id: change.doc.binary.file.id
-                #, endTask
+                task =
+                    operation: 'delete'
+                    id: change.doc.binary.file.id
+                filesystem.changes.push task, endTask
         else
             if change.doc.docType is 'Folder'
                 absPath = path.join remoteConfig.path,
