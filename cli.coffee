@@ -12,6 +12,7 @@ replication = require './backend/replication'
 filesystem  = require './backend/filesystem'
 binary      = require './backend/binary'
 pouch       = require './backend/db'
+pkg         = require './package.json'
 
 
 module.exports.getPassword = (callback) ->
@@ -184,6 +185,10 @@ program
     .action ->
         log.info 'Unknown command, run "cozy-data-proxy --help"' + \
                  ' to know the list of available commands.'
+
+program
+    .version(pkg.version)
+
 
 if not module.parent
     program.parse process.argv
