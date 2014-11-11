@@ -7,7 +7,6 @@ mkdirp     = require 'mkdirp'
 async      = require 'async'
 log        = require('printit')
     prefix: 'Replication'
-    date: true
 
 pouch      = require './db'
 config     = require './config'
