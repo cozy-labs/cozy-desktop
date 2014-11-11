@@ -60,15 +60,36 @@ module.exports = config =
     saveConfig: ->
         fs.writeFileSync configPath, JSON.stringify @config, null, 2
 
+
+    # Set last replication sequence in the configuration file.
     setSeq: (seq, deviceName) ->
         deviceName ?= @getDeviceName()
         @config.devices[deviceName].seq = seq
         @saveConfig()
 
+
+    # Get last replication sequence from the configuration file.
     getSeq: (deviceName) ->
         deviceName ?= @getDeviceName()
         if @config.devices[deviceName].seq
             return @config.devices[deviceName].seq
+        else
+            @setSeq 0, deviceName
+            return 0
+
+
+    # Set last change sequence in the configuration file.
+    setChangeSeq: (seq, deviceName) ->
+        deviceName ?= @getDeviceName()
+        @config.devices[deviceName].changeSeq = seq
+        @saveConfig()
+
+
+    # Get last change sequence from the configuration file.
+    getChangeSeq: (deviceName) ->
+        deviceName ?= @getDeviceName()
+        if @config.devices[deviceName].changeSeq
+            return @config.devices[deviceName].changeSeq
         else
             @setSeq 0, deviceName
             return 0

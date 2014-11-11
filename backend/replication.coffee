@@ -100,10 +100,13 @@ module.exports = replication =
         continuous = options.continuous or false
         catchup = options.catchup or false
 
-        config.setSeq 0 if options.force is true
+        if options.force is true
+            config.setSeq 0
+            config.setChangeSeq 0
 
         replication.firstSync = firstSync = options.initial or false
         replication.startSeq = config.getSeq()
+        replication.startChangeSeq = config.getChangeSeq()
         replication.replicate = \
             replication.getReplicateFunction toRemote, fromRemote
         replication.url = replication.getUrl()
@@ -142,12 +145,11 @@ module.exports = replication =
 
 
     onComplete: (info) ->
-        previousSince = config.getSeq()
         since = replication.getInfoSeq info
         log.info "Replication batch is complete (last sequence: #{since})"
-        config.setSeq since if since isnt 'now'
 
         if replication.firstSync
+            config.setSeq since if since isnt 'now'
 
             ## Ensure that previous replication is properly finished.
             replication.cancelReplication()
@@ -159,7 +161,8 @@ module.exports = replication =
                     replication.timeout = setTimeout replication.runSync, 1000
 
         else
-            replication.applyChanges previousSince
+            replication.lastChangeSeq ?= 0
+            replication.applyChanges replication.lastChangeSeq
 
 
     runSync: ->
@@ -193,7 +196,6 @@ module.exports = replication =
 
 
     applyChanges: (since, callback) ->
-        since ?= config.getSeq()
 
         options =
             filter: (doc) ->
@@ -208,48 +210,56 @@ module.exports = replication =
             callback err
         .on 'complete', (res) ->
             log.info 'All changes were fetched, now applying them to your files...'
-            async.eachSeries res.results, replication.applyChange, ->
+            async.eachSeries res.results, replication.applyChange, (err) ->
+                log.error err if err
                 log.info "All changes were applied to your files."
                 callback() if callback?
 
 
+    # Add a task to the chaneg queue.
     applyChange: (change, callback) ->
         remoteConfig = config.getConfig()
-        saveSeq = (err, res) ->
+
+        replication.lastChangeSeq = change.seq
+        config.setChangeSeq change.seq
+
+        endTask = (err) ->
             if err
-                callback err
-            else
-                callback null
+                log.error "An error occured while applying a change."
+                log.raw err
 
         if change.deleted
             if change.doc.docType is 'Folder'
                 # We don't have folder information so, we resync all folders.
                 filesystem.changes.push
                     operation: 'applyFolderDBChanges'
-                , saveSeq
+                , endTask
             else if change.doc.binary?.file?.id?
                 # It's a file, we still have the path on the binary object.
                 filesystem.changes.push
                     operation: 'delete'
                     id: change.doc.binary.file.id
-                , saveSeq
+                , endTask
         else
             if change.doc.docType is 'Folder'
                 absPath = path.join remoteConfig.path,
                                     change.doc.path,
+
                                     change.doc.name
                 filesystem.changes.push
                     operation: 'newFolder'
                     path: absPath
-                , ->
+                , (err) ->
+                    log.error err if err
                     filesystem.changes.push
                         operation: 'applyFolderDBChanges'
-                    , saveSeq
+                    , endTask
             else
                 filesystem.changes.push
-                    operation: 'get'
-                    doc: change.doc
-                , saveSeq
+                    operation: 'applyFileDBChanges'
+                , endTask
+
+        callback()
 
 
     cancelReplication: ->

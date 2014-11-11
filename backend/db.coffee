@@ -142,7 +142,6 @@ module.exports = dbHelpers =
             else
                 callback null
 
-        log.debug id
         dbHelpers.db.get id, (err, currentDesignDoc) ->
             if currentDesignDoc?
                 dbHelpers.db.remove id, currentDesignDoc._rev, checkRemove
