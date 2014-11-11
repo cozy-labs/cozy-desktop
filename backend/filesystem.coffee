@@ -164,14 +164,18 @@ filesystem =
 
         downloadIfNotExists = (doc, cb) =>
             doc = doc.value
-            filePath = path.resolve remoteConfig.path, doc.path, doc.name
+            if doc.path? and doc.name?
+                filePath = path.resolve remoteConfig.path, doc.path, doc.name
 
-            # TODO Should test if checksum is right
-            if fs.existsSync filePath
-                cb null
+                # TODO Should test if checksum is right
+                if fs.existsSync filePath
+                    cb null
+                else
+                    # Else download file
+                    binary.fetchFromDoc deviceName, doc, cb
             else
-                # Else download file
-                binary.fetchFromDoc deviceName, doc, cb
+                # TODO delete corrupte doc
+                cb()
 
         pouch.db.query 'file/all', (err, result) ->
             if err and err.status isnt 404

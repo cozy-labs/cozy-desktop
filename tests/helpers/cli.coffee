@@ -5,6 +5,8 @@ pouch = require '../../backend/db'
 config = require '../../backend/config'
 replication = require '../../backend/replication'
 filesystem = require '../../backend/filesystem'
+path = require 'path-extra'
+fs = require 'fs-extra'
 
 module.exports = cliHelpers = {}
 
@@ -21,6 +23,7 @@ module.exports.restoreGetPassword = ->
 
 # Configures a fake device for a fake remote Cozy
 module.exports.initConfiguration = (done) ->
+
 
     init = ->
         saveConfig = (err, credentials) ->
@@ -81,7 +84,7 @@ module.exports.cleanConfiguration = (done) ->
 # Replicates the remote Couch into the local Pouch and
 # starts the sync process.
 module.exports.startSync = (done) ->
-    @timeout 5000
+    @timeout 10000
 
     pouch.addAllFilters ->
 
@@ -91,14 +94,16 @@ module.exports.startSync = (done) ->
             initial: true
             catchup: false
             continuous: true
+            force: true
         , done
 
         filesystem.watchChanges true, true
 
-        setTimeout done, 3000
+        setTimeout done, 8000
 
 module.exports.stopSync = ->
     replication.cancelReplication()
+
 
 # Recreates the local database
 module.exports.resetDatabase = (done) ->

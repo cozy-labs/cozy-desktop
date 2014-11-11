@@ -234,11 +234,15 @@ module.exports = replication =
                     operation: 'applyFolderDBChanges'
                 , endTask
             else if change.doc.binary?.file?.id?
-                # It's a file, we still have the path on the binary object.
                 filesystem.changes.push
-                    operation: 'delete'
-                    id: change.doc.binary.file.id
+                    operation: 'applyFileDBChanges'
                 , endTask
+
+                # It's a file, we still have the path on the binary object.
+                #filesystem.changes.push
+                    #operation: 'delete'
+                    #id: change.doc.binary.file.id
+                #, endTask
         else
             if change.doc.docType is 'Folder'
                 absPath = path.join remoteConfig.path,

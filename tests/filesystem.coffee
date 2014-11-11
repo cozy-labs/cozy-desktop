@@ -167,27 +167,27 @@ describe "Filesystem Tests", ->
                         fs.existsSync(filePath).should.be.true
                         done()
 
-        it "deletes file document if we want to keep local changes", (done) ->
-            fs.remove filePath, (err) ->
-                should.not.exist err
+        #it "deletes file document if we want to keep local changes", (done) ->
+            #fs.remove filePath, (err) ->
+                #should.not.exist err
 
-                filesystem.applyFileDBChanges true, (err, res) ->
-                    should.not.exist err
-                    fs.existsSync(filePath).should.be.false
-                    pouch.db.get 'test-file-to-fetch', (err, res) ->
-                        should.exist err
-                        err.status.should.be.equal 404
-                        done()
+                #filesystem.applyFileDBChanges true, (err, res) ->
+                    #should.not.exist err
+                    #fs.existsSync(filePath).should.be.false
+                    #pouch.db.get 'test-file-to-fetch', (err, res) ->
+                        #should.exist err
+                        #err.status.should.be.equal 404
+                        #done()
 
-        it "deletes folder document if we want to keep local changes", (done) ->
-            createFolderDocument (err) ->
-                should.not.exist err
-                filesystem.applyFileDBChanges true, (err, res) ->
-                    fs.existsSync("#{syncDir}/test_dir_to_keep").should.be.false
-                    pouch.db.get 'test-dir-to-keep', (err, res) ->
-                        should.exist err
-                        err.status.should.be.equal 404
-                        done()
+        #it "deletes folder document if we want to keep local changes", (done) ->
+            #createFolderDocument (err) ->
+                #should.not.exist err
+                #filesystem.applyFileDBChanges true, (err, res) ->
+                    #fs.existsSync("#{syncDir}/test_dir_to_keep").should.be.false
+                    #pouch.db.get 'test-dir-to-keep', (err, res) ->
+                        #should.exist err
+                        #err.status.should.be.equal 404
+                        #done()
 
 
     describe "createDirectoryDoc", ->
