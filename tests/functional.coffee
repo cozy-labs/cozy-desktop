@@ -30,6 +30,7 @@ describe.only "Functional Tests", ->
     after helpers.cleanFolder syncPath
     after filesHelpers.deleteAll
     after cliHelpers.resetDatabase
+    after cliHelpers.stopSync
 
     #it "When I create a file locally", (done) ->
         #@timeout 30000

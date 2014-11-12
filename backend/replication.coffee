@@ -144,10 +144,10 @@ module.exports = replication =
 
 
     onComplete: (info) ->
-        since = replication.getInfoSeq info
         log.info "Replication batch is complete (last sequence: #{since})"
 
         if replication.firstSync
+            since = replication.getInfoSeq info
             config.setSeq since if since isnt 'now'
 
             ## Ensure that previous replication is properly finished.
@@ -160,6 +160,7 @@ module.exports = replication =
                     replication.timeout = setTimeout replication.runSync, 1000
 
         else
+            replication.lastChangeSeq = config.getChangeSeq()
             replication.lastChangeSeq ?= 0
             replication.applyChanges replication.lastChangeSeq
 
@@ -195,7 +196,6 @@ module.exports = replication =
 
 
     applyChanges: (since, callback) ->
-
         options =
             filter: (doc) ->
                 doc.docType is 'Folder' or doc.docType is 'File'
@@ -227,38 +227,42 @@ module.exports = replication =
                 log.error "An error occured while applying a change."
                 log.raw err
 
-        if change.deleted
+        isDeletion = change.deleted
+        isCreation = change.doc.creationDate is change.doc.lastModification
+
+        if isDeletion
             if change.doc.docType is 'Folder'
-                # We don't have folder information so, we resync all folders.
                 task =
                     operation: 'deleteFolder'
                     id: change.doc._id
                     rev: change.doc._rev
-                filesystem.changes.push task, endTask
-            else if change.doc.binary?.file?.id?
-                # It's a file, we still have the path on the binary object.
-                task =
-                    operation: 'delete'
-                    id: change.doc.binary.file.id
-                filesystem.changes.push task, endTask
-        else
-            if change.doc.docType is 'Folder'
-                absPath = path.join remoteConfig.path,
-                                    change.doc.path,
+            else
+                if change.doc.binary?.file?.id?
+                    task =
+                        operation: 'delete'
+                        id: change.doc.binary.file.id
 
-                                    change.doc.name
-                filesystem.changes.push
+        else if isCreation
+            if change.doc.docType is 'Folder'
+                task =
                     operation: 'newFolder'
-                    path: absPath
-                , (err) ->
-                    log.error err if err
-                    filesystem.changes.push
-                        operation: 'applyFolderDBChanges'
-                    , endTask
+                    doc: change.doc
+            else
+                task =
+                    operation: 'newFile'
+                    doc: change.doc
+
+        else # isModification
+            if change.doc.docType is 'Folder'
+                task =
+                    operation: 'moveFolder'
+                    doc: change.doc
             else
                 filesystem.changes.push
-                    operation: 'applyFileDBChanges'
-                , endTask
+                    operation: 'moveFile'
+                    doc: change.doc
+
+        filesystem.changes.push task, endTask if task?
 
         callback()
 

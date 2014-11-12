@@ -53,7 +53,7 @@ filesystem =
 
     makeDirectoryFromDoc: (doc, callback) ->
         remoteConfig = config.getConfig()
-        doc = doc.value
+        doc = doc.value if not doc.path?
         absPath = path.join remoteConfig.path, doc.path, doc.name
         dirPaths = filesystem.getPaths absPath
 
@@ -92,7 +92,7 @@ filesystem =
                 callbackOrig err, res
 
 
-        log.debug operation
+        log.debug task.operation
         switch task.operation
             when 'post'
                 if task.file?
@@ -100,10 +100,19 @@ filesystem =
             when 'put'
                 if task.file?
                     filesystem.createFileDoc task.file, false, callback
-            when 'get'
+            when 'newFolder'
+                if task.doc?
+                    filesystem.makeDirectoryFromDoc task.doc, callback
+            when 'newFile'
                 if task.doc?
                     deviceName = config.getDeviceName()
                     binary.fetchFromDoc deviceName, task.doc, callback
+            when 'moveFolder'
+                if task.doc?
+                    filesystem.moveDirectoryFromDoc task.doc, callback
+            when 'moveFile'
+                if task.doc?
+                    filesystem.moveDirectoryFromDoc task.doc, callback
             when 'deleteDoc'
                 if task.file?
                     filesystem.deleteDoc task.file, callback
@@ -113,10 +122,6 @@ filesystem =
             when 'deleteFolder'
                 if task.id? and task.rev?
                     filesystem.deleteFolder task.id, task.rev, callback
-            when 'newFolder'
-                if task.path
-                    mkdirp task.path, callback
-                    log.info "Ensure Folder: #{task.path}"
             when 'catchup'
                 filesystem.applyFileDBChanges true, callback
             when 'reDownload'
@@ -128,37 +133,76 @@ filesystem =
     , 1
 
 
+    # Retrieve a previous doc revision from its revi
+    # TODO write a test
+    # TODO move to db module
+    getPreviousRev: (id, rev, callback) ->
+        options =
+            revs: true
+            revs_info: true
+            open_revs: "all"
+
+        pouch.db.get id, options, (err, infos) ->
+            if err
+                callback err
+            else if infos.length > 0 and infos[0].ok?._revisions?
+                rev = infos[0].ok._revisions.ids[1]
+                start = infos[0].ok._revisions.start
+                rev = "#{start - 1}-#{rev}"
+
+                pouch.db.get id, rev: rev, callback
+            else
+                callback new Error 'previous revision not found'
+
+
+    # TODO write test for this function
+    # TODO handle modification date change
+    moveDirectoryFromDoc: (doc, callback) ->
+        filesystem.getPreviousRev doc._id, doc._rev, (err, previousDocRev) ->
+            if err
+                callback err
+            else
+                newPath = path.join remoteConfig.path, doc.path, doc.name
+                previousPath = path.join(
+                    remoteConfig.path,
+                    previousDocRev.path,
+                    previousDocRev.name
+                )
+                isExistPrevious = fs.existsSync previousPath
+                isExistNew = fs.existsSync newPath
+
+                if newPath isnt previousPath and isExistPrevious and not isExistNew
+                    fs.move previousPath, newPath, (err) ->
+                        if err
+                            log.error err
+                        log.info "Entry moved: #{previousPath} -> #{newPath}"
+                        callback()
+
+                # That case only happens with folder
+                else if newPath isnt previousPath and isExistPrevious and isExistNew
+                    task =
+                        operation: 'deleteFolder'
+                        id: doc._id
+                        rev: doc._rev
+                    filesystem.changes.push task, (err) ->
+                        log.error err if err
+                    callback()
+                else
+                    callback()
+
+
     # Get old revision of deleted doc to get path info then remove it from file
     # system
     # TODO write test for this function
     # TODO make that function cleaner
     deleteFolder: (id, rev, callback) ->
-
-        options =
-            revs: true
-            revs_info: true
-            open_revs: "all"
-        pouch.db.get id, options, (err, infos) ->
+        filesystem.getPreviousRev id, rev, (err, doc) ->
             if err
                 callback err
             else
-                if infos.length > 0 and infos[0].ok?._revisions?
-                    rev = infos[0].ok._revisions.ids[1]
-                    start = infos[0].ok._revisions.start
-                    rev = "#{start - 1}-#{rev}"
-
-                    pouch.db.get id, rev: rev, (err, doc) ->
-                        if err
-                            callback err
-                        else
-                            folderPath = path.join(
-                                remoteConfig.path,
-                                doc.path,
-                                doc.name
-                            )
-                            fs.remove folderPath, callback
-                else
-                    callback()
+                folderPath = path.join remoteConfig.path, doc.path, doc.name
+                fs.remove folderPath, callback
+                log.info "Folder deleted: #{folderPath}"
 
 
     applyFolderDBChanges: (callback) ->
@@ -450,7 +494,6 @@ filesystem =
         checkFileLocation()
 
     deleteFromId: (id, callback) ->
-        log.debug 'deleteFromId: ' + id
         pouch.db.get id, (err, res) ->
             if err and err.status isnt 404
                 callback err
@@ -463,6 +506,8 @@ filesystem =
                     callback null
                 else
                     callback err
+
+    isNewFile: ->
 
 
     # TODO refactor it in smaller functions.
