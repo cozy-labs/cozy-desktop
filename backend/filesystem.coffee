@@ -20,17 +20,22 @@ remoteConfig = config.getConfig()
 
 filesystem =
 
+
+    # Ensure that given file is located in the Cozy dir.
     isInSyncDir: (filePath) ->
         paths = @getPaths filePath
         return paths.relative isnt '' \
            and paths.relative.substring(0,2) isnt '..'
 
 
+    # Delete all file for a given path.
     deleteAll: (dirPath, callback) ->
         del = require 'del'
         del "#{dirPath}/*", force: true, callback
 
 
+    # Build usefule path from a given path.
+    # (absolute, relative, filename, parent path, and parent absolute path).
     getPaths: (filePath) ->
         remoteConfig = config.getConfig()
 
@@ -51,13 +56,13 @@ filesystem =
         absParent: absParent
 
 
+    # Create a folder from database data.
     makeDirectoryFromDoc: (doc, callback) ->
         remoteConfig = config.getConfig()
         doc = doc.value if not doc.path?
         absPath = path.join remoteConfig.path, doc.path, doc.name
         dirPaths = filesystem.getPaths absPath
 
-        # Create directory
         updateDates = (err) ->
             if err
                 callback err
@@ -65,7 +70,6 @@ filesystem =
                 log.info "Directory ensured: #{absPath}"
                 binary.infoPublisher.emit 'directoryCreated', absPath
 
-                # Update directory information
                 creationDate = new Date(doc.creationDate)
                 modificationDate = new Date(doc.lastModification)
                 absPath = dirPaths.absolute
@@ -74,23 +78,24 @@ filesystem =
         mkdirp dirPaths.absolute, updateDates
 
 
-    # Changes is the queue of operations, it contains
-    # files that are being downloaded, and files to upload.
-    changes: async.queue (task, callback) ->
-
-        if task.operation in [
+    # Execute the right instruction on the DB or on the filesystem depending
+    # on the task operation.
+    applyOperation: (task, callback) ->
+        blockingOperations = [
             'get'
             'delete'
             'newFolder'
             'catchup'
             'reDownload'
-            'applyFolderDBChanges']
+            'applyFolderDBChanges'
+        ]
+
+        if task.operation in blockingOperations
             filesystem.watchingLocked = true
             callbackOrig = callback
             callback = (err, res) ->
                 filesystem.watchingLocked = false
                 callbackOrig err, res
-
 
         log.debug task.operation
         switch task.operation
@@ -109,34 +114,41 @@ filesystem =
                     binary.fetchFromDoc deviceName, task.doc, callback
             when 'moveFolder'
                 if task.doc?
-                    filesystem.moveDirectoryFromDoc task.doc, callback
+                    filesystem.moveEntryFromDoc task.doc, callback
             when 'moveFile'
                 if task.doc?
-                    filesystem.moveDirectoryFromDoc task.doc, callback
-            when 'deleteDoc'
-                if task.file?
-                    filesystem.deleteDoc task.file, callback
-            when 'delete'
+                    filesystem.moveEntryFromDoc task.doc, callback
+            when 'deleteFile'
                 if task.id?
                     filesystem.deleteFromId task.id, callback
             when 'deleteFolder'
                 if task.id? and task.rev?
                     filesystem.deleteFolder task.id, task.rev, callback
+            when 'deleteDoc'
+                if task.file?
+                    filesystem.deleteDoc task.file, callback
             when 'catchup'
                 filesystem.applyFileDBChanges true, callback
             when 'reDownload'
                 filesystem.applyFileDBChanges false, callback
             when 'applyFileDBChanges'
                 filesystem.applyFileDBChanges false, callback
-            else
+            when 'applyFolderDBChanges'
                 filesystem.applyFolderDBChanges callback
-    , 1
+            else
+                log.error 'Task with a wrong operation for the change queue.'
+                callback()
 
 
-    # Retrieve a previous doc revision from its revi
+    # Changes is the queue of operations, it contains
+    # files that are being downloaded, and files to upload.
+    changes: async.queue filesystem.applyOperation, 1
+
+
+    # Retrieve a previous doc revision from its id.
     # TODO write a test
     # TODO move to db module
-    getPreviousRev: (id, rev, callback) ->
+    getPreviousRev: (id, callback) ->
         options =
             revs: true
             revs_info: true
@@ -155,10 +167,13 @@ filesystem =
                 callback new Error 'previous revision not found'
 
 
+    # Move a folder or a folder to a new location. The target is the path of
+    # the current doc. The source is the path of the previous revision of
+    # the doc.
     # TODO write test for this function
-    # TODO handle modification date change
-    moveDirectoryFromDoc: (doc, callback) ->
-        filesystem.getPreviousRev doc._id, doc._rev, (err, previousDocRev) ->
+    # TODO handle date modification
+    moveEntryFromDoc: (doc, callback) ->
+        filesystem.getPreviousRev doc._id, (err, previousDocRev) ->
             if err
                 callback err
             else
@@ -170,16 +185,19 @@ filesystem =
                 )
                 isExistPrevious = fs.existsSync previousPath
                 isExistNew = fs.existsSync newPath
+                isMoved = newPath isnt previousPath
 
-                if newPath isnt previousPath and isExistPrevious and not isExistNew
+                if isMoved and isExistPrevious and not isExistNew
                     fs.move previousPath, newPath, (err) ->
                         if err
                             log.error err
                         log.info "Entry moved: #{previousPath} -> #{newPath}"
                         callback()
 
-                # That case only happens with folder
-                else if newPath isnt previousPath and isExistPrevious and isExistNew
+                # That case only happens with folder. It occurs when a
+                # subfolder was moved before its parents. So parent target
+                # is created before the parent is moved.
+                else if isMoved and isExistPrevious and isExistNew
                     task =
                         operation: 'deleteFolder'
                         id: doc._id
@@ -192,11 +210,11 @@ filesystem =
 
 
     # Get old revision of deleted doc to get path info then remove it from file
-    # system
+    # system.
     # TODO write test for this function
     # TODO make that function cleaner
     deleteFolder: (id, rev, callback) ->
-        filesystem.getPreviousRev id, rev, (err, doc) ->
+        filesystem.getPreviousRev id, (err, doc) ->
             if err
                 callback err
             else
@@ -205,6 +223,8 @@ filesystem =
                 log.info "Folder deleted: #{folderPath}"
 
 
+    # Make sure that filesystem folder tree matches with information stored in
+    # the database.
     applyFolderDBChanges: (callback) ->
 
         pouch.db.query 'folder/all', (err, result) ->
@@ -240,6 +260,8 @@ filesystem =
                        callback
 
 
+    # Make sure that filesystem files matches with information stored in the
+    # database.
     applyFileDBChanges: (keepLocalDeletions, callback) ->
         deviceName = config.getDeviceName()
 
