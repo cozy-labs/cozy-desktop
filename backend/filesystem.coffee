@@ -18,6 +18,70 @@ events = require 'events'
 
 remoteConfig = config.getConfig()
 
+
+# Execute the right instruction on the DB or on the filesystem depending
+# on the task operation.
+applyOperation = (task, callback) ->
+    blockingOperations = [
+        'get'
+        'delete'
+        'newFolder'
+        'catchup'
+        'reDownload'
+        'applyFolderDBChanges'
+    ]
+
+    if task.operation in blockingOperations
+        filesystem.watchingLocked = true
+        callbackOrig = callback
+        callback = (err, res) ->
+            filesystem.watchingLocked = false
+            callbackOrig err, res
+
+    log.debug task.operation
+    switch task.operation
+        when 'post'
+            if task.file?
+                filesystem.createFileDoc task.file, true, callback
+        when 'put'
+            if task.file?
+                filesystem.createFileDoc task.file, false, callback
+        when 'newFolder'
+            if task.doc?
+                filesystem.makeDirectoryFromDoc task.doc, callback
+        when 'newFile'
+            if task.doc?
+                deviceName = config.getDeviceName()
+                binary.fetchFromDoc deviceName, task.doc, callback
+        when 'moveFolder'
+            if task.doc?
+                filesystem.moveEntryFromDoc task.doc, callback
+        when 'moveFile'
+            if task.doc?
+                filesystem.moveEntryFromDoc task.doc, callback
+        when 'deleteFile'
+            if task.id?
+                filesystem.deleteFromId task.id, callback
+        when 'deleteFolder'
+            if task.id? and task.rev?
+                filesystem.deleteFolder task.id, task.rev, callback
+        when 'deleteDoc'
+            if task.file?
+                filesystem.deleteDoc task.file, callback
+        when 'catchup'
+            filesystem.applyFileDBChanges true, callback
+        when 'reDownload'
+            filesystem.applyFileDBChanges false, callback
+        when 'applyFileDBChanges'
+            filesystem.applyFileDBChanges false, callback
+        when 'applyFolderDBChanges'
+            filesystem.applyFolderDBChanges callback
+        else
+            log.error 'Task with a wrong operation for the change queue.'
+            callback()
+
+
+
 filesystem =
 
 
@@ -78,71 +142,9 @@ filesystem =
         mkdirp dirPaths.absolute, updateDates
 
 
-    # Execute the right instruction on the DB or on the filesystem depending
-    # on the task operation.
-    applyOperation: (task, callback) ->
-        blockingOperations = [
-            'get'
-            'delete'
-            'newFolder'
-            'catchup'
-            'reDownload'
-            'applyFolderDBChanges'
-        ]
-
-        if task.operation in blockingOperations
-            filesystem.watchingLocked = true
-            callbackOrig = callback
-            callback = (err, res) ->
-                filesystem.watchingLocked = false
-                callbackOrig err, res
-
-        log.debug task.operation
-        switch task.operation
-            when 'post'
-                if task.file?
-                    filesystem.createFileDoc task.file, true, callback
-            when 'put'
-                if task.file?
-                    filesystem.createFileDoc task.file, false, callback
-            when 'newFolder'
-                if task.doc?
-                    filesystem.makeDirectoryFromDoc task.doc, callback
-            when 'newFile'
-                if task.doc?
-                    deviceName = config.getDeviceName()
-                    binary.fetchFromDoc deviceName, task.doc, callback
-            when 'moveFolder'
-                if task.doc?
-                    filesystem.moveEntryFromDoc task.doc, callback
-            when 'moveFile'
-                if task.doc?
-                    filesystem.moveEntryFromDoc task.doc, callback
-            when 'deleteFile'
-                if task.id?
-                    filesystem.deleteFromId task.id, callback
-            when 'deleteFolder'
-                if task.id? and task.rev?
-                    filesystem.deleteFolder task.id, task.rev, callback
-            when 'deleteDoc'
-                if task.file?
-                    filesystem.deleteDoc task.file, callback
-            when 'catchup'
-                filesystem.applyFileDBChanges true, callback
-            when 'reDownload'
-                filesystem.applyFileDBChanges false, callback
-            when 'applyFileDBChanges'
-                filesystem.applyFileDBChanges false, callback
-            when 'applyFolderDBChanges'
-                filesystem.applyFolderDBChanges callback
-            else
-                log.error 'Task with a wrong operation for the change queue.'
-                callback()
-
-
     # Changes is the queue of operations, it contains
     # files that are being downloaded, and files to upload.
-    changes: async.queue filesystem.applyOperation, 1
+    changes: async.queue applyOperation, 1
 
 
     # Retrieve a previous doc revision from its id.
