@@ -34,7 +34,7 @@ module.exports = replication =
         else
             since = config.getSeq()
 
-
+    # Build target url for replication from remote Cozy infos.
     getUrl: ->
         remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
@@ -92,8 +92,13 @@ module.exports = replication =
 
     # Build replication options from given arguments, then run replication
     # accordingly.
+    # Options are:
+    # * fromRemote:
+    # * toRemote:
+    # * continuous:
+    # * catchup:
+    # * force: force to stat sync from the beginning.
     runReplication: (options, callback) ->
-
         fromRemote = options.fromRemote
         toRemote = options.toRemote
         continuous = options.continuous or false
@@ -103,29 +108,52 @@ module.exports = replication =
             config.setSeq 0
             config.setChangeSeq 0
 
-        replication.firstSync = firstSync = options.initial or false
         replication.startSeq = config.getSeq()
         replication.startChangeSeq = config.getChangeSeq()
         replication.replicate = \
             replication.getReplicateFunction toRemote, fromRemote
-        replication.url = replication.getUrl()
-        replication.opts =
+        url = replication.url = replication.getUrl()
+
+        opts =
             filter: (doc) ->
                 doc.docType is 'Folder' or doc.docType is 'File'
-            live: not(replication.firstSync) and continuous
+            live: false
             since: replication.startSeq
-
 
         log.info 'Start first replication to resync local device and your Cozy.'
         log.info "Resync from sequence #{replication.startSeq}"
-        replication.replicator = replication.replicate(
-            replication.url, replication.opts)
+        replication.replicator = replication.replicate(url, opts)
             .on 'change', replication.displayChange
-            .on 'complete', replication.onComplete
+            .on 'complete', replication.onRepComplete
             .on 'error', replication.onError
         .catch replication.onError
 
 
+    # Run continuous synchronisation. Apply changes every times new data are
+    # retrieved.
+    runSync: ->
+        replication.startSeq = config.getSeq()
+        replication.opts.live = true
+
+            url = replication.url
+        opts =
+            filter: (doc) ->
+                doc.docType is 'Folder' or doc.docType is 'File'
+            live: true
+            since: replication.startSeq
+
+        run = ->
+            log.info 'Start live synchronization...'
+            replication.replicator = replication.replicate(url, opts)
+                .on 'change', replication.displayChange
+                .on 'uptodate', replication.onSyncUpdate
+                .on 'error', replication.onError
+            .catch replication.onError
+
+        replication.timeout = setTimeout run, 5000
+
+
+    # Log change event information.
     displayChange: (info) ->
         nbDocs = 0
 
@@ -143,58 +171,45 @@ module.exports = replication =
             log.info changeMessage if changeMessage?
 
 
-    onComplete: (info) ->
+    # When replication is complete, is saves the last replicated sequence
+    # then, it syncs file system with database data.
+    # then, it run continuous replication.
+    onRepComplete: (info) ->
         log.info "Replication batch is complete (last sequence: #{since})"
 
-        if replication.firstSync
-            since = replication.getInfoSeq info
-            config.setSeq since if since isnt 'now'
+        since = replication.getInfoSeq info
+        config.setSeq since if since isnt 'now'
 
-            ## Ensure that previous replication is properly finished.
-            replication.cancelReplication()
+        # Ensure that previous replication is properly finished.
+        replication.cancelReplication()
 
-            log.info 'Start building your filesystem on your device.'
-            filesystem.changes.push operation: 'applyFolderDBChanges', ->
-                filesystem.changes.push operation: 'applyFileDBChanges', ->
-                    log.info 'All your files are now available on your device.'
-                    replication.timeout = setTimeout replication.runSync, 1000
-
-        else
-            replication.lastChangeSeq = config.getChangeSeq()
-            replication.lastChangeSeq ?= 0
-            replication.applyChanges replication.lastChangeSeq
+        log.info 'Start building your filesystem on your device.'
+        filesystem.changes.push operation: 'applyFolderDBChanges', ->
+            filesystem.changes.push operation: 'applyFileDBChanges', ->
+                log.info 'All your files are now available on your device.'
+                replication.timeout = setTimeout replication.runSync, 1000
 
 
-    runSync: ->
-        replication.startSeq = config.getSeq()
-        replication.firstSync = false
-        replication.opts.live = true
-
-        run = ->
-            log.info 'Start live synchronization'
-            complete = (info) ->
-                log.info 'Continuous sync session done, applying changes to files'
-                replication.onComplete info
-
-            replication.replicator = replication.replicate(replication.url, replication.opts)
-                .on 'change', replication.displayChange
-                .on 'uptodate', complete
-                .on 'error', replication.onError
-            .catch replication.onError
-
-        replication.timeout = setTimeout run, 5000
+    # When a sync batch has been performed, changes are applied to the file
+    # system.
+    onSyncUpdate: (info) ->
+        replication.lastChangeSeq = config.getChangeSeq()
+        replication.lastChangeSeq ?= 0
+        log.info 'Continuous sync session done, applying changes to files'
+        replication.applyChanges replication.lastChangeSeq
 
 
+    # When an error occured, it displays the error message.
     onError: (err, data) ->
         if err?.status is 409
             log.error "Conflict, ignoring"
         else
             log.error err
-            replication.onComplete
-                change:
-                    docs_written: 0
+            log.error 'An error occured during replication.'
 
 
+    # Retrieve database changes and apply them to the file system.
+    # NB: PouchDB manages another sequence number for the replication.
     applyChanges: (since, callback) ->
         options =
             filter: (doc) ->
@@ -215,17 +230,12 @@ module.exports = replication =
                 callback() if callback?
 
 
-    # Add a task to the chaneg queue.
+    # Define the proper task to perform on the file system and add it to the
+    # filesystem change queue.
     applyChange: (change, callback) ->
         remoteConfig = config.getConfig()
-
         replication.lastChangeSeq = change.seq
         config.setChangeSeq change.seq
-
-        endTask = (err) ->
-            if err
-                log.error "An error occured while applying a change."
-                log.raw err
 
         isDeletion = change.deleted
         isCreation = change.doc.creationDate is change.doc.lastModification
@@ -239,7 +249,7 @@ module.exports = replication =
             else
                 if change.doc.binary?.file?.id?
                     task =
-                        operation: 'delete'
+                        operation: 'deleteFile'
                         id: change.doc.binary.file.id
 
         else if isCreation
@@ -262,11 +272,16 @@ module.exports = replication =
                     operation: 'moveFile'
                     doc: change.doc
 
-        filesystem.changes.push task, endTask if task?
+        if task?
+            filesystem.changes.push task, (err) ->
+                if err
+                    log.error "An error occured while applying a change."
+                    log.raw err
 
         callback()
 
 
+    # Stop running replications and stop
     cancelReplication: ->
         clearTimeout replication.timeout
         replication.replicator.cancel() if replication.replicator?
