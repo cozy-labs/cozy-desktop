@@ -12,6 +12,7 @@ log      = require('printit')
 config = require './config'
 pouch = require './db'
 binary = require './binary'
+publisher = require './publisher'
 async = require 'async'
 events = require 'events'
 
@@ -132,7 +133,7 @@ filesystem =
                 callback err
             else
                 log.info "Directory ensured: #{absPath}"
-                binary.infoPublisher.emit 'directoryCreated', absPath
+                publisher.emit 'directoryEnsured', absPath
 
                 creationDate = new Date(doc.creationDate)
                 modificationDate = new Date(doc.lastModification)
@@ -194,6 +195,12 @@ filesystem =
                         if err
                             log.error err
                         log.info "Entry moved: #{previousPath} -> #{newPath}"
+
+                        if doc.docType is 'Folder'
+                            publisher.emit 'folderMoved', {previousPath, newPath}
+                        else
+                            publisher.emit 'fileMoved', {previousPath, newPath}
+
                         callback()
 
                 # That case only happens with folder. It occurs when a
@@ -223,6 +230,7 @@ filesystem =
                 folderPath = path.join remoteConfig.path, doc.path, doc.name
                 fs.remove folderPath, callback
                 log.info "Folder deleted: #{folderPath}"
+                publisher.emit 'folderDeleted', folderPath
 
 
     # Make sure that filesystem folder tree matches with information stored in
@@ -517,6 +525,8 @@ filesystem =
 
         checkFileLocation()
 
+
+    # TODO rename it deleteFile and move the logic to the db module.
     deleteFromId: (id, callback) ->
         pouch.db.get id, (err, res) ->
             if err and err.status isnt 404
@@ -524,6 +534,7 @@ filesystem =
             else if res?.path? and fs.existsSync res.path
                 log.info "Remove element at #{res.path}"
                 fs.unlink res.path, ->
+                    publisher.emit 'fileDeleted', res.path
                     callback null
             else
                 if err and err.status is 404

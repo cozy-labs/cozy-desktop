@@ -6,7 +6,7 @@
   "window": {
     "width": 800,
     "height": 550,
-    "toolbar": false,
+    "toolbar": true,
     "icon": "client/app/assets/icon/icon.png",
     "title": "Cozy Data Proxy"
   },
@@ -58,7 +58,7 @@
   },
   "devDependencies": {
     "gulp-coffee": "^2.2.0",
-    "nodewebkit": "~0.10.4",
+    "nodewebkit": "0.8.6",
     "gulp": "^3.8.8",
     "gulp-shell": "^0.2.9",
     "node-webkit-builder": "^0.1.3",

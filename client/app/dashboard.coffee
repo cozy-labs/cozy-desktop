@@ -39,15 +39,6 @@ StateView = React.createClass
                         className: 'left action'
                         onClick: @onSyncClicked
                         text: syncButtonLabel
-                Line className: 'mts',
-                    Button
-                        className: 'left'
-                        onClick: @onResyncClicked
-                        text: t 'resync all'
-                    #Button
-                        #className: 'left'
-                        #onClick: @onDeleteFilesClicked
-                        #text: t 'delete files'
                 Line className: 'mtm',
                     Button
                         className: 'smaller'
@@ -64,46 +55,48 @@ StateView = React.createClass
                         text: t 'clear logs'
 
     onSyncClicked: ->
+        # TODO add a checkbox to change this option
+        @sync force: false
+
+    sync: (options)->
+        replication = require './backend/replication'
+        filesystem = require './backend/filesystem'
+        publisher = require './backend/publisher'
+
         if @state.sync
             @setState sync: false
-            @replicator.cancel() if @replicator
-            @watcher.close() if @watcher
-            @displayLog 'Synchronization is on'
+            replication.replicator.cancel() if replication.replicator?
+            @displayLog 'Synchronization is off'
+
         else
-            replication = require './backend/replication'
-            filesystem = require './backend/filesystem'
-            binary = require './backend/binary'
-            @displayLog 'Replication is starting'
+            @displayLog 'Synchronization is on...'
+            @displayLog 'First synchronization can take a while to init...'
+            @setState sync: true
 
-            onChange = (change) =>
-                @displayLog "#{change.docs_written} elements replicated"
-
-            onComplete = =>
-                @displayLog 'Replication is finished.'
-
-            onBinaryDownloaded = (binaryPath) =>
-                @displayLog "File #{binaryPath} downloaded"
-
-            onDirectoryCreated = (dirPath) =>
-                @displayLog "Folder #{dirPath} created"
-
-            @replicator = replication.runReplication
+            replication.runReplication
                 fromRemote: true
                 toRemote: true
-                continuous: true
-                rebuildFs: false
-                fetchBinary: true
+                force: options.force
 
-            @replicator.on 'change', onChange
-            @replicator.on 'complete', onComplete
-            @watcher = filesystem.watchChanges true, true
+            publisher.on 'binaryPresent', (path) =>
+                @displayLog "File #{path} is already there."
+            publisher.on 'binaryDownloadStart', (path) =>
+                @displayLog "File #{path} is downloading..."
+            publisher.on 'binaryDownloaded', (path) =>
+                @displayLog "File #{path} downloaded"
+            publisher.on 'fileDeleted', (path) =>
+                @displayLog "File #{path} deleted"
+            publisher.on 'fileMoved', (info) =>
+                {previousPath, newPath} = info
+                @displayLog "File moved: #{previousPath} -> #{newPath}"
+            publisher.on 'directoryEnsured', (path) =>
+                @displayLog "Folder #{path} ensured"
+            publisher.on 'folderDeleted', (path) =>
+                @displayLog "Folder #{path} deleted"
+            publisher.on 'folderMoved', (info) =>
+                {previousPath, newPath} = info
+                @displayLog "Folder moved: #{previousPath} -> #{newPath}"
 
-            binary.infoPublisher.on 'binaryDownloaded', onBinaryDownloaded
-            filesystem.infoPublisher.on 'directoryCreated', onDirectoryCreated
-
-            @displayLog 'Synchronization is on'
-
-            @setState sync: true
 
     clearLogs: ->
         @setState logs: []
@@ -127,35 +120,3 @@ StateView = React.createClass
             console.log err if err
             alert t 'All files were successfully deleted.'
 
-    onResyncClicked: ->
-        replication = require './backend/replication'
-        filesystem = require './backend/filesystem'
-        binary = require './backend/binary'
-
-        @clearLogs()
-        @displayLog 'Replication is starting'
-
-        onChange = (change) =>
-            @displayLog "#{change.docs_written} elements replicated"
-
-        onComplete = =>
-            @displayLog 'Replication is finished.'
-
-        onBinaryDownloaded = (binaryPath) =>
-            @displayLog "File #{binaryPath} downloaded"
-
-        onDirectoryCreated = (dirPath) =>
-            @displayLog "Folder #{dirPath} created"
-
-        replicator = replication.runReplication
-            fromRemote: true
-            toRemote: false
-            continuous: false
-            rebuildFs: true
-            fetchBinary: true
-
-        replicator.on 'change', onChange
-        replicator.on 'complete', onComplete
-
-        binary.infoPublisher.on 'binaryDownloaded', onBinaryDownloaded
-        filesystem.infoPublisher.on 'directoryCreated', onDirectoryCreated

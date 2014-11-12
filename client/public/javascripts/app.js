@@ -243,12 +243,6 @@ StateView = React.createClass({
       onClick: this.onSyncClicked,
       text: syncButtonLabel
     })), Line({
-      className: 'mts'
-    }, Button({
-      className: 'left',
-      onClick: this.onResyncClicked,
-      text: t('resync all')
-    })), Line({
       className: 'mtm'
     }, Button({
       className: 'smaller',
@@ -263,59 +257,78 @@ StateView = React.createClass({
     }))));
   },
   onSyncClicked: function() {
-    var binary, filesystem, onBinaryDownloaded, onChange, onComplete, onDirectoryCreated, replication;
+    return this.sync({
+      force: false
+    });
+  },
+  sync: function(options) {
+    var filesystem, publisher, replication;
+    replication = require('./backend/replication');
+    filesystem = require('./backend/filesystem');
+    publisher = require('./backend/publisher');
     if (this.state.sync) {
       this.setState({
         sync: false
       });
-      if (this.replicator) {
-        this.replicator.cancel();
+      if (replication.replicator != null) {
+        replication.replicator.cancel();
       }
-      if (this.watcher) {
-        this.watcher.close();
-      }
-      return this.displayLog('Synchronization is on');
+      return this.displayLog('Synchronization is off');
     } else {
-      replication = require('./backend/replication');
-      filesystem = require('./backend/filesystem');
-      binary = require('./backend/binary');
-      this.displayLog('Replication is starting');
-      onChange = (function(_this) {
-        return function(change) {
-          return _this.displayLog("" + change.docs_written + " elements replicated");
-        };
-      })(this);
-      onComplete = (function(_this) {
-        return function() {
-          return _this.displayLog('Replication is finished.');
-        };
-      })(this);
-      onBinaryDownloaded = (function(_this) {
-        return function(binaryPath) {
-          return _this.displayLog("File " + binaryPath + " downloaded");
-        };
-      })(this);
-      onDirectoryCreated = (function(_this) {
-        return function(dirPath) {
-          return _this.displayLog("Folder " + dirPath + " created");
-        };
-      })(this);
-      this.replicator = replication.runReplication({
-        fromRemote: true,
-        toRemote: true,
-        continuous: true,
-        rebuildFs: false,
-        fetchBinary: true
-      });
-      this.replicator.on('change', onChange);
-      this.replicator.on('complete', onComplete);
-      this.watcher = filesystem.watchChanges(true, true);
-      binary.infoPublisher.on('binaryDownloaded', onBinaryDownloaded);
-      filesystem.infoPublisher.on('directoryCreated', onDirectoryCreated);
-      this.displayLog('Synchronization is on');
-      return this.setState({
+      this.displayLog('Synchronization is on...');
+      this.displayLog('First synchronization can take a while to init...');
+      this.setState({
         sync: true
       });
+      replication.runReplication({
+        fromRemote: true,
+        toRemote: true,
+        force: options.force
+      });
+      publisher.on('binaryPresent', (function(_this) {
+        return function(path) {
+          return _this.displayLog("File " + path + " is already there.");
+        };
+      })(this));
+      publisher.on('binaryDownloadStart', (function(_this) {
+        return function(path) {
+          return _this.displayLog("File " + path + " is downloading...");
+        };
+      })(this));
+      publisher.on('binaryDownloaded', (function(_this) {
+        return function(path) {
+          return _this.displayLog("File " + path + " downloaded");
+        };
+      })(this));
+      publisher.on('fileDeleted', (function(_this) {
+        return function(path) {
+          return _this.displayLog("File " + path + " deleted");
+        };
+      })(this));
+      publisher.on('fileMoved', (function(_this) {
+        return function(info) {
+          var newPath, previousPath;
+          previousPath = info.previousPath, newPath = info.newPath;
+          return _this.displayLog("File moved: " + previousPath + " -> " + newPath);
+        };
+      })(this));
+      publisher.on('directoryEnsured', (function(_this) {
+        return function(path) {
+          return _this.displayLog("Folder " + path + " ensured");
+        };
+      })(this));
+      publisher.on('folderDeleted', (function(_this) {
+        return function(path) {
+          return _this.displayLog("Folder " + path + " deleted");
+        };
+      })(this));
+      return publisher.on('folderMoved', (function(_this) {
+        return function(info) {
+          var newPath, previousPath;
+          previousPath = info.previousPath, newPath = info.newPath;
+          return _this.displayLog("Folder moved: " + previousPath + " -> " + newPath);
+        };
+      })(this));
     }
   },
   clearLogs: function() {
@@ -351,45 +364,6 @@ StateView = React.createClass({
       }
       return alert(t('All files were successfully deleted.'));
     });
-  },
-  onResyncClicked: function() {
-    var binary, filesystem, onBinaryDownloaded, onChange, onComplete, onDirectoryCreated, replication, replicator;
-    replication = require('./backend/replication');
-    filesystem = require('./backend/filesystem');
-    binary = require('./backend/binary');
-    this.clearLogs();
-    this.displayLog('Replication is starting');
-    onChange = (function(_this) {
-      return function(change) {
-        return _this.displayLog("" + change.docs_written + " elements replicated");
-      };
-    })(this);
-    onComplete = (function(_this) {
-      return function() {
-        return _this.displayLog('Replication is finished.');
-      };
-    })(this);
-    onBinaryDownloaded = (function(_this) {
-      return function(binaryPath) {
-        return _this.displayLog("File " + binaryPath + " downloaded");
-      };
-    })(this);
-    onDirectoryCreated = (function(_this) {
-      return function(dirPath) {
-        return _this.displayLog("Folder " + dirPath + " created");
-      };
-    })(this);
-    replicator = replication.runReplication({
-      fromRemote: true,
-      toRemote: false,
-      continuous: false,
-      rebuildFs: true,
-      fetchBinary: true
-    });
-    replicator.on('change', onChange);
-    replicator.on('complete', onComplete);
-    binary.infoPublisher.on('binaryDownloaded', onBinaryDownloaded);
-    return filesystem.infoPublisher.on('directoryCreated', onDirectoryCreated);
   }
 });
 ;var en;
