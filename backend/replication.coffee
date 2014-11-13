@@ -98,10 +98,9 @@ module.exports = replication =
     # * continuous:
     # * catchup:
     # * force: force to stat sync from the beginning.
-    runReplication: (options, callback) ->
+    runReplication: (options) ->
         fromRemote = options.fromRemote
         toRemote = options.toRemote
-        continuous = options.continuous or false
         catchup = options.catchup or false
 
         if options.force is true
@@ -133,7 +132,7 @@ module.exports = replication =
     # retrieved.
     runSync: ->
         replication.startSeq = config.getSeq()
-        replication.opts.live = true
+
         url = replication.url
         opts =
             filter: (doc) ->

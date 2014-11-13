@@ -8,13 +8,13 @@ log        = require('printit')
 
 config     = require './config'
 pouch      = require './db'
+publisher  = require './publisher'
 async      = require 'async'
 events     = require 'events'
 
+
+
 module.exports = binary =
-
-
-    infoPublisher: new events.EventEmitter()
 
 
     # Get checksum for given file.
@@ -80,7 +80,7 @@ module.exports = binary =
         client.setBasicAuth deviceName, remoteConfig.devicePassword
 
         log.info "Uploading binary: #{relativePath}..."
-        @infoPublisher.emit 'uploadBinary', absPath
+        publisher.emit 'uploadBinary', absPath
 
         client.putFile urlPath, filePath, (err, res, body) =>
             if err
@@ -92,7 +92,7 @@ module.exports = binary =
                     callback new Error body.error
                 else
                     log.info "Binary uploaded: #{relativePath}"
-                    @infoPublisher.emit 'binaryUploaded', absPath
+                    publisher.emit 'binaryUploaded', absPath
                     callback err, body
 
 
@@ -168,19 +168,22 @@ module.exports = binary =
             urlPath = "cozy/#{doc.binary.file.id}/file"
 
             log.info "Downloading: #{filePath}..."
+            publisher.emit 'binaryDownloadStart', filePath
             client.saveFile urlPath, binaryPath, (err, res) ->
 
                 if res
                     log.info "Binary downloaded: #{filePath}"
-                    binary.infoPublisher.emit 'binaryDownloaded', binaryPath
+                    publisher.emit 'binaryDownloaded', filePath
 
                 callback err
         else
             log.info "File already downloaded: #{filePath}"
+            publisher.emit 'binaryPresent', filePath
             callback()
 
 
     # Move the binary if it has already been downloaded.
+    # TODO do not use the path field anymore, rely on rev instead
     removeBinaryIfExists: (fileDoc, binaryPath, callback) ->
         pouch.db.get fileDoc.binary.file.id, (err, binaryDoc) ->
             if err and err.status isnt 404 then callback err
