@@ -134,8 +134,7 @@ module.exports = replication =
     runSync: ->
         replication.startSeq = config.getSeq()
         replication.opts.live = true
-
-            url = replication.url
+        url = replication.url
         opts =
             filter: (doc) ->
                 doc.docType is 'Folder' or doc.docType is 'File'
