@@ -1,6 +1,6 @@
-# [Cozy](http://cozy.io) Data Proxy
+# [Cozy](http://cozy.io) Desktop
 
-The Data Proxy allows to sync the files stored in your Cozy with your laptop
+The Cozy desktop app allows to sync the files stored in your Cozy with your laptop
 and/or your desktop. It replicates your files on your hard drive and apply 
 changes you made on them on other synced devices and on your online Cozy.
 
@@ -18,27 +18,27 @@ command.**
 
 ## CLI Install 
 
-The cozy-data-proxy requires node.js and build tools to run
+The cozy-desktop requires node.js and build tools to run
 
     sudo apt-get install nodejs-legacy build-essentatials
 
 Then you can install it via NPM:
 
-    sudo npm install cozy-data-proxy -g
+    sudo npm install cozy-desktop -g
 
 ## CLI Running
 
 ```bash
 # Configure it with your remote Cozy
-cozy-data-proxy add-remote-cozy http://url.of.my.cozy devicename /sync/directory
+cozy-desktop add-remote-cozy http://url.of.my.cozy devicename /sync/directory
 
 # Then start synchronization daemon:
-cozy-data-proxy cli.coffee sync
+cozy-desktop cli.coffee sync
 ```
 
 Other commands can be listed with 
     
-    cozy-data-proxy -h
+    cozy-desktop -h
 
 ## TODO
 
@@ -59,7 +59,7 @@ The Graphical User Interface requires Node Webkit to be launched. Normally it
 is installed with your dev dependencies. So you can run the GUI via the
 following commmand:
 
-    cd cozy-data-proxy
+    cd cozy-desktop
     node_modules/nodewebkit/bin/nodewebkit .
 
 To run the engine from the GUi, it requires to recompile a given submodule
@@ -77,7 +77,7 @@ If you want to build the GUI package, type:
 2. unpack downloaded archive
 3. On Ubuntu fix [the libudev
    issue](https://github.com/rogerwang/node-webkit/wiki/The-solution-of-lacking-libudev.so.0)
-4. In your cozy-data-proxy root folder run:
+4. In your cozy-desktop root folder run:
 
     path/to/node-webkit/nw .
 
