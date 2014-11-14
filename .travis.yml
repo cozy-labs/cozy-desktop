@@ -36,3 +36,6 @@ before_install:
     - curl http://localhost:9101/
     - curl http://localhost:9104/
     - curl http://localhost:9121/
+    - cd
+    - pwd
+    - cd cozy-desktop
