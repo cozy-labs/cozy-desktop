@@ -1,0 +1,4 @@
+#!/bin/bash
+
+rm -rf /opt/cozy-data-proxy
+rm -f /usr/bin/cozy-data-proxy

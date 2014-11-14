@@ -74,6 +74,11 @@ gulp.task('build-gui-package', ['scripts', 'leveldown'], function() {
   });
 });
 
+gulp.task('make-deb', shell.task([
+  '/bin/sh packaging/create_deb'
+]));
+
+
 
 gulp.task('coffeelint', function() {
   gulp.src(paths.scripts)
