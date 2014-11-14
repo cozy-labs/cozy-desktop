@@ -107,22 +107,20 @@ module.exports = replication =
 
         replication.startSeq = config.getSeq()
         replication.startChangeSeq = config.getChangeSeq()
-        replication.replicate = pouch.db.replicate.from
         url = replication.url = replication.getUrl()
+
+        log.info 'Start first replication to resync local device and your Cozy.'
+        log.info "Resync from sequence #{replication.startSeq}"
 
         opts =
             filter: (doc) ->
                 doc.docType is 'Folder' or doc.docType is 'File'
             live: false
             since: replication.startSeq
-
-        log.info 'Start first replication to resync local device and your Cozy.'
-        log.info "Resync from sequence #{replication.startSeq}"
-        replication.replicator = replication.replicate(url, opts)
+        replication.replicator = pouch.db.replicate.from(url, opts)
             .on 'change', replication.displayChange
             .on 'complete', replication.onRepComplete
             .on 'error', replication.onError
-        .catch replication.onError
 
 
     # Run continuous synchronisation. Apply changes every times new data are
@@ -138,8 +136,7 @@ module.exports = replication =
                 doc.docType is 'Folder' or doc.docType is 'File'
             live: true
             since: config.getSeq()
-        replication.replicate = pouch.db.replicate.from
-        replication.replicator = replication.replicate(url, opts)
+        replication.replicator = pouch.db.replicate.from(url, opts)
             .on 'change', replication.displayChange
             .on 'uptodate', replication.onSyncUpdate
             .on 'error', replication.onError
@@ -149,11 +146,10 @@ module.exports = replication =
                 doc.docType is 'Folder' or doc.docType is 'File'
             live: true
             since: config.getChangeSeq()
-        replication.replicate = pouch.db.replicate.to
-        replication.replicator = replication.replicate(url, opts)
+        replication.replicator = pouch.db.replicate.to(url, opts)
             .on 'change', replication.displayChange
-            .on 'error', replication.onError
             .on 'uptodate', replication.displayChange
+            .on 'error', replication.onError
 
 
     # Log change event information.
@@ -171,8 +167,6 @@ module.exports = replication =
                 changeMessage = "#{nbDocs} entries to your Cozy"
 
             log.info changeMessage if changeMessage?
-        else
-            log.debug info
 
 
     # When replication is complete, is saves the last replicated sequence
@@ -197,7 +191,6 @@ module.exports = replication =
     # When a sync batch has been performed, changes are applied to the file
     # system.
     onSyncUpdate: (info) ->
-        log.debug info
         replication.lastChangeSeq = config.getChangeSeq()
         replication.lastChangeSeq ?= 0
         log.info 'Continuous sync session done, applying changes to files'

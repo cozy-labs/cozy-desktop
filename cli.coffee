@@ -106,15 +106,16 @@ sync = (args) ->
     if args.twoway
         filesystem.watchChanges true, true
 
-    # Replicate databases
-    replication.runReplication force: args.force, (err) ->
-        log.info 'Sync ended'
-        if err
-            log.error err
-            log.error 'An error occured while running synchronisation.'
-            process.exit 1
-        else
-            process.exit 0
+    pouch.addAllFilters ->
+        # Replicate databases
+        replication.runReplication force: args.force, (err) ->
+            log.info 'Sync ended'
+            if err
+                log.error err
+                log.error 'An error occured while running synchronisation.'
+                process.exit 1
+            else
+                process.exit 0
 
 
 # Display current configuratioN

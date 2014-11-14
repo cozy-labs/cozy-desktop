@@ -40,7 +40,7 @@ applyOperation = (task, callback) ->
             filesystem.watchingLocked = false
             callbackOrig err, res
 
-    log.debug task.operation
+    #log.debug task.operation
     switch task.operation
         when 'post'
             if task.file?
@@ -126,22 +126,25 @@ filesystem =
     makeDirectoryFromDoc: (doc, callback) ->
         remoteConfig = config.getConfig()
         doc = doc.value if not doc.path?
-        absPath = path.join remoteConfig.path, doc.path, doc.name
-        dirPaths = filesystem.getPaths absPath
+        if doc.path? and doc.name?
+            absPath = path.join remoteConfig.path, doc.path, doc.name
+            dirPaths = filesystem.getPaths absPath
 
-        updateDates = (err) ->
-            if err
-                callback err
-            else
-                log.info "Directory ensured: #{absPath}"
-                publisher.emit 'directoryEnsured', absPath
+            updateDates = (err) ->
+                if err
+                    callback err
+                else
+                    log.info "Directory ensured: #{absPath}"
+                    publisher.emit 'directoryEnsured', absPath
 
-                creationDate = new Date(doc.creationDate)
-                modificationDate = new Date(doc.lastModification)
-                absPath = dirPaths.absolute
-                fs.utimes absPath, creationDate, modificationDate, callback
+                    creationDate = new Date(doc.creationDate)
+                    modificationDate = new Date(doc.lastModification)
+                    absPath = dirPaths.absolute
+                    fs.utimes absPath, creationDate, modificationDate, callback
 
-        mkdirp dirPaths.absolute, updateDates
+            mkdirp dirPaths.absolute, updateDates
+        else
+            callback()
 
 
     # Changes is the queue of operations, it contains
@@ -292,7 +295,7 @@ filesystem =
                 cb()
 
         pouch.db.query 'file/all', (err, result) ->
-            if err and err.status isnt 404
+            if err and err.status isnt 404 or result is undefined
                 callback err
             else
                 results = result.rows
@@ -341,7 +344,7 @@ filesystem =
             pouch.db.query 'folder/byFullPath'
             , key: "#{newDoc.path}/#{newDoc.name}"
             , (err, res) ->
-                if err and err.status isnt 404
+                if err and err.status isnt 404  or res is undefined
                     callback err
                 else if res.rows.length > 0
                     if ignoreExisting
@@ -593,7 +596,7 @@ filesystem =
 
     # TODO refactor it in smaller functions.
     watchChanges: (continuous, fromNow) ->
-        log.debug 'Start watching file system for changes'
+        log.info 'Start watching file system for changes'
         remoteConfig = config.getConfig()
         fromNow ?= false
         continuous ?= fromNow
