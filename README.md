@@ -8,15 +8,23 @@ changes you made on them on other synced devices and on your online Cozy.
 If you want to try the two-way synchronization, add `--two-way` to the `sync`
 command.**
 
-## GUI Install 
+## GUI Install
 
-*work in progress*
+Build the package first:
+
+    npm install
+    node_modules/.bin/gulp build-gui-package
+    node_modules/.bin/gulp make-deb
+
+The install it:
+
+    sudo dpkg -i cozy-desktop_0.1.2-1.deb
 
 ## GUI Running
 
 *work in progress*
 
-## CLI Install 
+## CLI Install
 
 The cozy-desktop requires node.js and build tools to run
 
@@ -36,8 +44,8 @@ cozy-desktop add-remote-cozy http://url.of.my.cozy devicename /sync/directory
 cozy-desktop cli.coffee sync
 ```
 
-Other commands can be listed with 
-    
+Other commands can be listed with
+
     cozy-desktop -h
 
 ## TODO
@@ -50,10 +58,10 @@ Other commands can be listed with
 ### Synchronization engine
 
 To hack the synchronization backend, you can just edit the files under the
-`backend` directory. The CLI bin located at the root of the folder, it's the 
+`backend` directory. The CLI bin located at the root of the folder, it's the
 `cli.coffee` file.
 
-### Graphical User interface 
+### Graphical User interface
 
 The Graphical User Interface requires Node Webkit to be launched. Normally it
 is installed with your dev dependencies. So you can run the GUI via the
@@ -66,7 +74,7 @@ To run the engine from the GUi, it requires to recompile a given submodule
 
     npm install nw-gyp -g
     gulp leveldown
-    
+
 If you want to build the GUI package, type:
 
     gulp build-gui-package
