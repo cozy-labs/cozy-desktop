@@ -5,7 +5,7 @@ program     = require 'commander'
 read        = require 'read'
 process     = require 'process'
 log         = require('printit')
-                  prefix: 'Data Proxy'
+                  prefix: 'Cozy Desktop'
 
 config      = require './backend/config'
 replication = require './backend/replication'
@@ -183,7 +183,7 @@ program
     .command("*")
     .description("Display help message for an unknown command.")
     .action ->
-        log.info 'Unknown command, run "cozy-data-proxy --help"' + \
+        log.info 'Unknown command, run "cozy-desktop --help"' + \
                  ' to know the list of available commands.'
 
 program
