@@ -16,24 +16,25 @@
     "prepublish": "gulp build-package"
   },
   "bin": {
-    "cozy-data-proxy": "cli.js"
+    "cozy-desktop": "cli.js"
   },
   "repository": {
     "type": "git",
     "url": "git://github.com/cozy-labs/cozy-desktop.git"
   },
   "keywords": [
-    "proxy",
+    "desktop",
     "data",
     "sync",
+    "files",
     "cozy"
   ],
   "author": "Cozy Cloud <frank@cozycloud.cc> (https://cozycloud.cc/)",
   "license": "LGPL",
   "bugs": {
-    "url": "https://github.com/cozy-labs/cozy-data-proxy/issues"
+    "url": "https://github.com/cozy-labs/cozy-desktop/issues"
   },
-  "homepage": "https://github.com/cozy-labs/cozy-data-proxy",
+  "homepage": "https://github.com/cozy-labs/cozy-desktop",
   "dependencies": {
     "async": "^0.9.0",
     "chokidar": "^0.8.4",
