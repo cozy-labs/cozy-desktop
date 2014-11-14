@@ -18,6 +18,7 @@ module.exports = dbHelpers =
 
     db: db
 
+    # Create database and recreate all filters
     resetDatabase: (callback) ->
         PouchDB.destroy config.dbPath, ->
             dbHelpers.db = new PouchDB config.dbPath
@@ -28,43 +29,23 @@ module.exports = dbHelpers =
         all: (params, callback) ->
             dbHelpers.db.query 'file/all', params, callback
 
-    allFiles: (forceQuery, callback) ->
-        if forceQuery or @files.rows.length is 0
-            db.query 'file/all', (err, res) ->
-                @files = res or { rows: [] }
-                callback err, res
-        else
-            callback null, @files
-
     folders:
         rows: []
         all: (params, callback) ->
             dbHelpers.db.query 'folder/all', params, callback
-
-    allFolders: (forceQuery, callback) ->
-        if forceQuery or @folders.rows.length is 0
-            db.query 'folder/all', (err, res) ->
-                @folders = res or { rows: [] }
-                callback err, res
-        else
-            callback null, @folders
 
     binaries:
         rows: []
         all: (params, callback) ->
             dbHelpers.db.query 'binary/all', params, callback
 
-    allBinaries: (forceQuery, callback) ->
-        if forceQuery or @binaries.rows.length is 0
-            db.query 'binary/all', (err, res) ->
-                @binaries = res or { rows: [] }
-                callback err, res
-        else
-            callback null, @binaries
 
+    # Create all required views in the database.
     addAllFilters: (callback) ->
         async.eachSeries [ 'folder', 'file', 'binary' ], @addFilter, callback
 
+
+    # Add required views for a given doctype.
     addFilter: (docType, callback) ->
         id = "_design/#{docType.toLowerCase()}"
         queries =
@@ -133,6 +114,7 @@ module.exports = dbHelpers =
                     callback()
 
 
+    # Remove filters for a given doc type.
     removeFilter: (docType, callback) ->
         id = "_design/#{docType.toLowerCase()}"
 
@@ -150,7 +132,8 @@ module.exports = dbHelpers =
                 callback null
 
 
-
+    # Remove given document id if it exists. Doesn't return an error if the
+    # dociment doesn't exist.
     removeIfExists: (id, callback) ->
         dbHelpers.db.get id, (err, doc) ->
             if err and err.status isnt 404
@@ -159,4 +142,34 @@ module.exports = dbHelpers =
                 callback()
             else
                 dbHelpers.db.remove doc, callback
+
+
+    # Deprecated
+    #
+    allFiles: (forceQuery, callback) ->
+        if forceQuery or @files.rows.length is 0
+            db.query 'file/all', (err, res) ->
+                @files = res or { rows: [] }
+                callback err, res
+        else
+            callback null, @files
+
+
+    allFolders: (forceQuery, callback) ->
+        if forceQuery or @folders.rows.length is 0
+            db.query 'folder/all', (err, res) ->
+                @folders = res or { rows: [] }
+                callback err, res
+        else
+            callback null, @folders
+
+
+    allBinaries: (forceQuery, callback) ->
+        if forceQuery or @binaries.rows.length is 0
+            db.query 'binary/all', (err, res) ->
+                @binaries = res or { rows: [] }
+                callback err, res
+        else
+            callback null, @binaries
+
 
