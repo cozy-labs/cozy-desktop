@@ -119,4 +119,3 @@ StateView = React.createClass
         del "#{device.path}/*", force: true, (err) ->
             console.log err if err
             alert t 'All files were successfully deleted.'
-

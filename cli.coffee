@@ -115,12 +115,11 @@ program
 program
     .command('sync')
     .description('Sync databases, apply and/or watch changes')
-    .option('-2, --two-way', 'apply local changes to remote as well as pulling changes')
+    .option('-2, --twoway', 'apply local changes to remote as well as pulling changes')
     .option('-c, --catchup', 're-detect all the files locally (works only along --two-way)')
     .option('-f, --force', 'Run sync from the beginning of all the Cozy changes.')
     .action (args) ->
         args.noBinary ?= false
-        args['two-way'] ?= false
         args.catchup ?= false
         continuous = true
         rebuildFSTree = true
@@ -128,13 +127,13 @@ program
 
         launchDaemons = ->
             # Watch local changes
-            if args['two-way']
+            if args.twoway
                 filesystem.watchChanges continuous, fromNow
 
             # Replicate databases
             replication.runReplication
-                fromRemote: args.fromRemote
-                toRemote: args.toRemote
+                fromRemote: true
+                toRemote: true
                 continuous: true
                 rebuildTree: true
                 force: args.force?
