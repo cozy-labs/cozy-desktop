@@ -5,7 +5,7 @@
 # > gem install fpm
 
 fpm -s dir -t deb -f --verbose -n cozy-data-proxy -v 0.1.2 --iteration 1 -a amd64 \
--C build/cozy-data-proxy/linux64/ \
+-C pkg_tree \
 --description "Synchronization client for Cozy" \
 --depends "libudev1 | libudev0" \
 --provides cozy-data-proxy \
@@ -14,7 +14,6 @@ fpm -s dir -t deb -f --verbose -n cozy-data-proxy -v 0.1.2 --iteration 1 -a amd6
 --after-install "packaging/scripts/debian_postinst" \
 --after-remove "packaging/scripts/debian_postrm" \
 --deb-compression "xz" \
---prefix /opt/cozy-data-proxy/ \
-cozy-data-proxy libffmpegsumo.so nw.pak
+opt usr
 
 # Can also use --deb-custom-control "packaging/debian_control"
