@@ -1,0 +1,4 @@
+#!/bin/bash
+
+rm -rf /opt/cozy-desktop
+rm -f /usr/bin/cozy-desktop

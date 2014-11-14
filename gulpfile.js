@@ -74,6 +74,16 @@ gulp.task('build-gui-package', ['scripts', 'leveldown'], function() {
   });
 });
 
+gulp.task('make-deb', shell.task([
+  'rm -rf pkg_tree',
+  'mkdir -p pkg_tree/opt/cozy-desktop pkg_tree/usr/share/doc/cozy-desktop pkg_tree/usr/share/applications',
+  'install -b -o root -g root -m 0755 build/cozy-desktop/linux64/* pkg_tree/opt/cozy-desktop/',
+  'install -b -o root -g root -m 0644 packaging/icon.png pkg_tree/usr/share/doc/cozy-desktop/',
+  'install -b -o root -g root -m 0644 packaging/cozy-desktop.desktop pkg_tree/usr/share/applications/',
+  '/bin/sh packaging/create_deb'
+]));
+
+
 
 gulp.task('coffeelint', function() {
   gulp.src(paths.scripts)
