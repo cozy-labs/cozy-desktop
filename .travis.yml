@@ -24,14 +24,14 @@ before_install:
     - cd cozy-proxy
     - npm install
     - pwd
-    - NAME=cozy-proxy TOKEN=token forever start -o forever-proxy.log build/server.js
+    - NAME=proxy TOKEN=token forever start -o forever-proxy.log build/server.js
     - sleep 3
     - cd
     - git clone git://github.com/cozy/cozy-files.git
     - cd cozy-files
     - npm install
     - pwd
-    - NAME=cozy-files TOKEN=token forever start -o forever-proxy.log build/server.js
+    - NAME=files TOKEN=apptoken forever start -o forever-proxy.log build/server.js
     - sleep 3
     - curl http://localhost:9101/
     - curl http://localhost:9104/
