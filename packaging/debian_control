@@ -1,11 +1,11 @@
-Package: cozy-data-proxy
+Package: cozy-desktop
 Version: 0.1.2-1
 License: AGPL-3
 Architecture: amd64
 Maintainer: <kload@cozycloud.cc>
 Installed-Size: 157786
 Depends: libudev1 | libudev0
-Provides: cozy-data-proxy
+Provides: cozy-desktop
 Section: net
 Priority: extra
 Homepage: http://cozy.io

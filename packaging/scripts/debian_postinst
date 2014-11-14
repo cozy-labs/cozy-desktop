@@ -9,5 +9,5 @@ fi
 
 
 # Link to the binary
-rm -f /usr/bin/cozy-data-proxy
-ln -s /opt/cozy-data-proxy/cozy-data-proxy /usr/bin/cozy-data-proxy
+rm -f /usr/bin/cozy-desktop
+ln -s /opt/cozy-desktop/cozy-desktop /usr/bin/cozy-desktop

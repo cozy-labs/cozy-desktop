@@ -4,11 +4,11 @@
 # > apt-get install ruby-dev rubygem build-essentials
 # > gem install fpm
 
-fpm -s dir -t deb -f --verbose -n cozy-data-proxy -v 0.1.2 --iteration 1 -a amd64 \
+fpm -s dir -t deb -f --verbose -n cozy-desktop -v 0.1.2 --iteration 1 -a amd64 \
 -C pkg_tree \
 --description "Synchronization client for Cozy" \
 --depends "libudev1 | libudev0" \
---provides cozy-data-proxy \
+--provides cozy-desktop \
 --maintainer "<kload@cozycloud.cc>" \
 --url "http://cozy.io" \
 --after-install "packaging/scripts/debian_postinst" \

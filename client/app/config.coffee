@@ -6,7 +6,7 @@ fs = require 'fs'
 # related to configuration and provide helpers to modify it.
 
 homedir = path.homedir()
-configDir = path.join homedir, '.cozy-data-proxy'
+configDir = path.join homedir, '.cozy-desktop'
 configPath = path.join configDir, 'config.json'
 if not fs.existsSync configPath
     fs.writeFileSync configPath, JSON.stringify devices: {}, null, 2

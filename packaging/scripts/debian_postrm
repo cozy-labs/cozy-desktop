@@ -1,4 +1,4 @@
 #!/bin/bash
 
-rm -rf /opt/cozy-data-proxy
-rm -f /usr/bin/cozy-data-proxy
+rm -rf /opt/cozy-desktop
+rm -f /usr/bin/cozy-desktop
