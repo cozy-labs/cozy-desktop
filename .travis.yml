@@ -17,6 +17,8 @@ before_install:
     - npm install
     - pwd
     - NAME=data-system TOKEN=token forever start -o forever-ds.log build/server.js
+    - sleep 3
+    - coffee commands.coffee test-install files
     - cd
     - git clone git://github.com/cozy/cozy-proxy.git
     - cd cozy-proxy

@@ -30,6 +30,7 @@ applyOperation = (task, callback) ->
         'catchup'
         'reDownload'
         'applyFolderDBChanges'
+        'applyFileDBChanges'
     ]
 
     if task.operation in blockingOperations
@@ -592,6 +593,7 @@ filesystem =
 
     # TODO refactor it in smaller functions.
     watchChanges: (continuous, fromNow) ->
+        log.debug 'Start watching file system for changes'
         remoteConfig = config.getConfig()
         fromNow ?= false
         continuous ?= fromNow

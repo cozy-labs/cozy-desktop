@@ -30,6 +30,7 @@ module.exports = binary =
         stream.pipe checksum
 
 
+    # Retrieve info remotely for a given id.
     getRemoteDoc: (remoteId, callback) ->
         remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
@@ -48,6 +49,8 @@ module.exports = binary =
                 callback null, body
 
 
+    # Create empty binary remotely. It will be used to link file object to
+    # a given binary.
     createEmptyRemoteDoc: (callback) ->
         remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()

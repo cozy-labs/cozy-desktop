@@ -1,5 +1,5 @@
 {
-  "name": "cozy-data-proxy",
+  "name": "cozy-desktop",
   "version": "0.1.1",
   "description": "File Synchronization Client for Cozy Files",
   "main": "app.html",
@@ -8,7 +8,7 @@
     "height": 550,
     "toolbar": true,
     "icon": "client/app/assets/icon/icon.png",
-    "title": "Cozy Data Proxy"
+    "title": "Cozy Desktop"
   },
   "scripts": {
     "test": "gulp test",
@@ -16,24 +16,25 @@
     "prepublish": "gulp build-package"
   },
   "bin": {
-    "cozy-data-proxy": "cli.js"
+    "cozy-desktop": "cli.js"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/cozy-labs/cozy-data-proxy.git"
+    "url": "git://github.com/cozy-labs/cozy-desktop.git"
   },
   "keywords": [
-    "proxy",
+    "desktop",
     "data",
     "sync",
+    "files",
     "cozy"
   ],
   "author": "Cozy Cloud <frank@cozycloud.cc> (https://cozycloud.cc/)",
   "license": "LGPL",
   "bugs": {
-    "url": "https://github.com/cozy-labs/cozy-data-proxy/issues"
+    "url": "https://github.com/cozy-labs/cozy-desktop/issues"
   },
-  "homepage": "https://github.com/cozy-labs/cozy-data-proxy",
+  "homepage": "https://github.com/cozy-labs/cozy-desktop",
   "dependencies": {
     "async": "^0.9.0",
     "chokidar": "^0.8.4",

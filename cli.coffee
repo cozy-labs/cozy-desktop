@@ -5,7 +5,7 @@ program     = require 'commander'
 read        = require 'read'
 process     = require 'process'
 log         = require('printit')
-                  prefix: 'Data Proxy'
+                  prefix: 'Cozy Desktop'
 
 config      = require './backend/config'
 replication = require './backend/replication'
@@ -15,6 +15,7 @@ pouch       = require './backend/db'
 pkg         = require './package.json'
 
 
+# Helpers to get cozy password from user.
 module.exports.getPassword = (callback) ->
     promptMsg = 'Please enter your password to register your device to ' + \
                 'your remote Cozy: '
@@ -75,6 +76,7 @@ module.exports.removeRemote = removeRemote = (args) ->
     module.exports.getPassword unregister
 
 
+# Display the whole content of the database.
 displayDatabase = ->
     db = require('./backend/db').db
     db.allDocs include_docs: true, (err, results) ->
@@ -84,7 +86,7 @@ displayDatabase = ->
             results.rows.map (row) ->
                 console.log row.doc
 
-
+# Disaply all docs returned by a given query.
 displayQuery = (query) ->
     db = require('./backend/db').db
     log.info "Query: #{query}"
@@ -97,6 +99,25 @@ displayQuery = (query) ->
                 console.log "value #{JSON.stringify row.value}"
 
 
+# Start database sync process and setup file change watcher.
+sync = (args) ->
+
+    # Watch local changes
+    if args.twoway
+        filesystem.watchChanges true, true
+
+    # Replicate databases
+    replication.runReplication force: args.force, (err) ->
+        log.info 'Sync ended'
+        if err
+            log.error err
+            log.error 'An error occured while running synchronisation.'
+            process.exit 1
+        else
+            process.exit 0
+
+
+# Display current configuratioN
 displayConfig = ->
     console.log JSON.stringify config.config, null, 2
 
@@ -115,46 +136,10 @@ program
 program
     .command('sync')
     .description('Sync databases, apply and/or watch changes')
-    .option('-2, --two-way', 'apply local changes to remote as well as pulling changes')
+    .option('-2, --twoway', 'apply local changes to remote as well as pulling changes')
     .option('-c, --catchup', 're-detect all the files locally (works only along --two-way)')
     .option('-f, --force', 'Run sync from the beginning of all the Cozy changes.')
-    .action (args) ->
-        args.noBinary ?= false
-        args['two-way'] ?= false
-        args.catchup ?= false
-        continuous = true
-        rebuildFSTree = true
-        fromNow = not args.catchup
-
-        launchDaemons = ->
-            # Watch local changes
-            if args['two-way']
-                filesystem.watchChanges continuous, fromNow
-
-            # Replicate databases
-            replication.runReplication
-                fromRemote: args.fromRemote
-                toRemote: args.toRemote
-                continuous: true
-                rebuildTree: true
-                force: args.force?
-                initial: not args['two-way']
-                catchup: args.catchup
-            , (err) ->
-                log.info 'Sync ended'
-                if err
-                    log.error err
-                    log.error 'An error occured while running synchronisation.'
-                    process.exit 1
-                else
-                    process.exit 0
-
-        #TODO answer to: Why filters are added only on two way mode?
-        if not args['two-way']
-            pouch.addAllFilters ->
-                launchDaemons()
-        else
-            launchDaemons()
+    .action sync
 
 program
     .command 'reset-database'
@@ -183,7 +168,7 @@ program
     .command("*")
     .description("Display help message for an unknown command.")
     .action ->
-        log.info 'Unknown command, run "cozy-data-proxy --help"' + \
+        log.info 'Unknown command, run "cozy-desktop --help"' + \
                  ' to know the list of available commands.'
 
 program
