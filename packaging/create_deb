@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# Make sure you have build-essentials & fpm gem installed
+# > apt-get install ruby-dev rubygem build-essentials
+# > gem install fpm
+
+fpm -s dir -t deb -f --verbose -n cozy-data-proxy -v 0.1.2 --iteration 1 -a amd64 \
+-C pkg_tree \
+--description "Synchronization client for Cozy" \
+--depends "libudev1 | libudev0" \
+--provides cozy-data-proxy \
+--maintainer "<kload@cozycloud.cc>" \
+--url "http://cozy.io" \
+--after-install "packaging/scripts/debian_postinst" \
+--after-remove "packaging/scripts/debian_postrm" \
+--deb-compression "xz" \
+opt usr
+
+# Can also use --deb-custom-control "packaging/debian_control"

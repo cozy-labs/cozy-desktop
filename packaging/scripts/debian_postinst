@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# For ubuntu 64bit
+# See https://github.com/rogerwang/node-webkit/wiki/The-solution-of-lacking-libudev.so.0
+if [ ! -f /lib/x86_64-linux-gnu/libudev.so.0 ] && [ -f /lib/x86_64-linux-gnu/libudev.so.1 ];
+then
+    ln -s /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.0
+fi
+
+
+# Link to the binary
+rm -f /usr/bin/cozy-data-proxy
+ln -s /opt/cozy-data-proxy/cozy-data-proxy /usr/bin/cozy-data-proxy
