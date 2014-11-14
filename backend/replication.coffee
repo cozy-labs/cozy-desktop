@@ -99,8 +99,6 @@ module.exports = replication =
     # * catchup:
     # * force: force to stat sync from the beginning.
     runReplication: (options) ->
-        fromRemote = options.fromRemote
-        toRemote = options.toRemote
         catchup = options.catchup or false
 
         if options.force is true
@@ -110,7 +108,6 @@ module.exports = replication =
         replication.startSeq = config.getSeq()
         replication.startChangeSeq = config.getChangeSeq()
         replication.replicate = pouch.db.replicate.from
-        #replication.getReplicateFunction toRemote, fromRemote
         url = replication.url = replication.getUrl()
 
         opts =

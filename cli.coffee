@@ -15,6 +15,7 @@ pouch       = require './backend/db'
 pkg         = require './package.json'
 
 
+# Helpers to get cozy password from user.
 module.exports.getPassword = (callback) ->
     promptMsg = 'Please enter your password to register your device to ' + \
                 'your remote Cozy: '
@@ -75,6 +76,7 @@ module.exports.removeRemote = removeRemote = (args) ->
     module.exports.getPassword unregister
 
 
+# Display the whole content of the database.
 displayDatabase = ->
     db = require('./backend/db').db
     db.allDocs include_docs: true, (err, results) ->
@@ -84,7 +86,7 @@ displayDatabase = ->
             results.rows.map (row) ->
                 console.log row.doc
 
-
+# Disaply all docs returned by a given query.
 displayQuery = (query) ->
     db = require('./backend/db').db
     log.info "Query: #{query}"
@@ -97,6 +99,25 @@ displayQuery = (query) ->
                 console.log "value #{JSON.stringify row.value}"
 
 
+# Start database sync process and setup file change watcher.
+sync = (args) ->
+
+    # Watch local changes
+    if args.twoway
+        filesystem.watchChanges true, true
+
+    # Replicate databases
+    replication.runReplication force: args.force, (err) ->
+        log.info 'Sync ended'
+        if err
+            log.error err
+            log.error 'An error occured while running synchronisation.'
+            process.exit 1
+        else
+            process.exit 0
+
+
+# Display current configuratioN
 displayConfig = ->
     console.log JSON.stringify config.config, null, 2
 
@@ -118,42 +139,7 @@ program
     .option('-2, --twoway', 'apply local changes to remote as well as pulling changes')
     .option('-c, --catchup', 're-detect all the files locally (works only along --two-way)')
     .option('-f, --force', 'Run sync from the beginning of all the Cozy changes.')
-    .action (args) ->
-        args.noBinary ?= false
-        args.catchup ?= false
-        continuous = true
-        rebuildFSTree = true
-        fromNow = not args.catchup
-
-        launchDaemons = ->
-            # Watch local changes
-            if args.twoway
-                filesystem.watchChanges continuous, fromNow
-
-            # Replicate databases
-            replication.runReplication
-                fromRemote: true
-                toRemote: true
-                continuous: true
-                rebuildTree: true
-                force: args.force?
-                initial: not args['two-way']
-                catchup: args.catchup
-            , (err) ->
-                log.info 'Sync ended'
-                if err
-                    log.error err
-                    log.error 'An error occured while running synchronisation.'
-                    process.exit 1
-                else
-                    process.exit 0
-
-        #TODO answer to: Why filters are added only on two way mode?
-        if not args['two-way']
-            pouch.addAllFilters ->
-                launchDaemons()
-        else
-            launchDaemons()
+    .action sync
 
 program
     .command 'reset-database'
