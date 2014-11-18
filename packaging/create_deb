@@ -4,7 +4,7 @@
 # > apt-get install ruby-dev rubygem build-essentials
 # > gem install fpm
 
-fpm -s dir -t deb -f --verbose -n cozy-desktop -v 0.1.2 --iteration 1 -a amd64 \
+fpm -s dir -t deb -f --verbose -n cozy-desktop -v 0.1.2 --iteration 1 -a $1 \
 -C pkg_tree \
 --description "Synchronization client for Cozy" \
 --depends "libudev1 | libudev0" \
