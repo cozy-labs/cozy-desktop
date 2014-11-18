@@ -5,6 +5,7 @@ process = require 'process'
 log     = require('printit')
     prefix: 'Config     '
 
+
 # Create config file if it doesn't exist.
 defaultDir = path.join path.homedir(), '.cozy-desktop'
 configPath = path.join defaultDir, './config.json'

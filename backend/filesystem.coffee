@@ -31,6 +31,11 @@ applyOperation = (task, callback) ->
         'reDownload'
         'applyFolderDBChanges'
         'applyFileDBChanges'
+        'deleteFolder'
+        'deleteFile'
+        'newFolder'
+        'newFile'
+        'moveFile'
     ]
 
     if task.operation in blockingOperations
