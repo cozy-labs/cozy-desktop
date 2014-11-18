@@ -106,16 +106,24 @@ sync = (args) ->
     if args.twoway
         filesystem.watchChanges true, true
 
-    pouch.addAllFilters ->
-        # Replicate databases
-        replication.runReplication force: args.force, (err) ->
-            log.info 'Sync ended'
-            if err
-                log.error err
-                log.error 'An error occured while running synchronisation.'
-                process.exit 1
-            else
-                process.exit 0
+    config = config.getConfig()
+
+    if not (config.deviceName? and config.url? and config.path?)
+        log.error """
+No configuration found, please run add-remote-cozy command before running a synchronization.
+"""
+    else
+
+        pouch.addAllFilters ->
+            # Replicate databases
+            replication.runReplication force: args.force, (err) ->
+                log.info 'Sync ended'
+                if err
+                    log.error err
+                    log.error 'An error occured while running synchronisation.'
+                    process.exit 1
+                else
+                    process.exit 0
 
 
 # Display current configuratioN
