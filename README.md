@@ -79,6 +79,21 @@ If you want to build the GUI package, type:
 
     gulp build-gui-package
 
+To make a package for your platform, choose either:
+
+    gulp make-deb-32
+    gulp make-deb-64
+    gulp make-rpm-32
+    gulp make-rpm-64
+    gulp make-osx-app
+
+**Note:** On Debian Wheezy (7.x) you will have to install libc6 from the
+`testing` repository. Be careful, it may break other services.
+
+    echo 'deb http://ftp.us.debian.org/debian/ testing main contrib non-free' | sudo tee -a /etc/apt/sources.list
+    sudo apt-get update
+    sudo apt-get install -t testing libc6
+
 ### How to run install node-webkit globally
 
 1. Download [node-webkit](https://github.com/rogerwang/node-webkit#downloads)

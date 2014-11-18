@@ -64,7 +64,8 @@ gulp.task('build-gui-package', ['scripts', 'leveldown'], function() {
   var nw = new NwBuilder({
       files: paths.all,
       version: nwVersion,
-      platforms: ['linux64']
+      macIcns: 'packaging/icon.png',
+      platforms: ['linux64', 'linux32', 'osx']
   });
   nw.build().then(function () {
      console.log('Cozy Data Proxy was successfully built.');
@@ -74,16 +75,45 @@ gulp.task('build-gui-package', ['scripts', 'leveldown'], function() {
   });
 });
 
-gulp.task('make-deb', shell.task([
+gulp.task('make-deb-32', shell.task([
+  'rm -rf pkg_tree',
+  'mkdir -p pkg_tree/opt/cozy-desktop pkg_tree/usr/share/doc/cozy-desktop pkg_tree/usr/share/applications',
+  'install -b -o root -g root -m 0755 build/cozy-desktop/linux32/* pkg_tree/opt/cozy-desktop/',
+  'install -b -o root -g root -m 0644 packaging/icon.png pkg_tree/usr/share/doc/cozy-desktop/',
+  'install -b -o root -g root -m 0644 packaging/cozy-desktop.desktop pkg_tree/usr/share/applications/',
+  '/bin/sh packaging/create_deb i386'
+]));
+
+gulp.task('make-deb-64', shell.task([
   'rm -rf pkg_tree',
   'mkdir -p pkg_tree/opt/cozy-desktop pkg_tree/usr/share/doc/cozy-desktop pkg_tree/usr/share/applications',
   'install -b -o root -g root -m 0755 build/cozy-desktop/linux64/* pkg_tree/opt/cozy-desktop/',
   'install -b -o root -g root -m 0644 packaging/icon.png pkg_tree/usr/share/doc/cozy-desktop/',
   'install -b -o root -g root -m 0644 packaging/cozy-desktop.desktop pkg_tree/usr/share/applications/',
-  '/bin/sh packaging/create_deb'
+  '/bin/sh packaging/create_deb amd64'
 ]));
 
+gulp.task('make-rpm-32', shell.task([
+  'rm -rf pkg_tree',
+  'mkdir -p pkg_tree/opt/cozy-desktop pkg_tree/usr/share/doc/cozy-desktop pkg_tree/usr/share/applications',
+  'install -b -o root -g root -m 0755 build/cozy-desktop/linux32/* pkg_tree/opt/cozy-desktop/',
+  'install -b -o root -g root -m 0644 packaging/icon.png pkg_tree/usr/share/doc/cozy-desktop/',
+  'install -b -o root -g root -m 0644 packaging/cozy-desktop.desktop pkg_tree/usr/share/applications/',
+  '/bin/sh packaging/create_rpm i386'
+]));
 
+gulp.task('make-deb-64', shell.task([
+  'rm -rf pkg_tree',
+  'mkdir -p pkg_tree/opt/cozy-desktop pkg_tree/usr/share/doc/cozy-desktop pkg_tree/usr/share/applications',
+  'install -b -o root -g root -m 0755 build/cozy-desktop/linux64/* pkg_tree/opt/cozy-desktop/',
+  'install -b -o root -g root -m 0644 packaging/icon.png pkg_tree/usr/share/doc/cozy-desktop/',
+  'install -b -o root -g root -m 0644 packaging/cozy-desktop.desktop pkg_tree/usr/share/applications/',
+  '/bin/sh packaging/create_rpm amd64'
+]));
+
+gulp.task('make-osx-app', shell.task([
+  'cp build/cozy-desktop/osx/cozy-desktop.app .'
+]);
 
 gulp.task('coffeelint', function() {
   gulp.src(paths.scripts)

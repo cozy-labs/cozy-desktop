@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# Make sure you have fpm gem installed
+# > yum install ruby rubygems
+# > gem install fpm
+
+fpm -s dir -t rpm -f --verbose -n cozy-desktop -v 0.1.2 --iteration 1 -a $1 \
+-C pkg_tree \
+--description "Synchronization client for Cozy" \
+--provides cozy-desktop \
+--maintainer "<kload@cozycloud.cc>" \
+--url "http://cozy.io" \
+--after-install "packaging/scripts/debian_postinst" \
+--after-remove "packaging/scripts/debian_postrm" \
+--rpm-compression "xz" \
+opt usr
