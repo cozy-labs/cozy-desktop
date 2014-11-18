@@ -25,17 +25,20 @@ gulp.task('clean', function(cb) {
   del(paths.scriptsJS, cb);
 });
 
+
 gulp.task('scripts', function() {
   gulp.src(paths.scripts)
     .pipe(coffee({bare: true}))
     .pipe(gulp.dest('backend'));
 });
 
+
 gulp.task('bin-scripts', function() {
   gulp.src("cli.coffee")
     .pipe(coffee({bare: true}))
     .pipe(gulp.dest('./'));
 });
+
 
 gulp.task('set-bin-hashbang', function() {
   setTimeout(function () {
@@ -44,6 +47,7 @@ gulp.task('set-bin-hashbang', function() {
       .pipe(gulp.dest('./'));
   }, 1000);
 });
+
 
 gulp.task('build-package',
           ['clean', 'scripts', 'bin-scripts', 'set-bin-hashbang']);
@@ -54,10 +58,12 @@ gulp.task('leveldown', shell.task([
   'cd ' + paths.leveldown + ' && nw-gyp build'
 ]));
 
+
 gulp.task('leveldown-classic', shell.task([
   'rm -rf ./node_modules/pouchdb',
   'npm install'
 ]));
+
 
 gulp.task('build-gui-package', ['scripts', 'leveldown'], function() {
   var NwBuilder = require('node-webkit-builder');
@@ -75,6 +81,7 @@ gulp.task('build-gui-package', ['scripts', 'leveldown'], function() {
   });
 });
 
+
 gulp.task('make-deb-32', shell.task([
   'rm -rf pkg_tree',
   'mkdir -p pkg_tree/opt/cozy-desktop pkg_tree/usr/share/doc/cozy-desktop pkg_tree/usr/share/applications',
@@ -83,6 +90,7 @@ gulp.task('make-deb-32', shell.task([
   'install -b -o root -g root -m 0644 packaging/cozy-desktop.desktop pkg_tree/usr/share/applications/',
   '/bin/sh packaging/create_deb i386'
 ]));
+
 
 gulp.task('make-deb-64', shell.task([
   'rm -rf pkg_tree',
@@ -93,6 +101,7 @@ gulp.task('make-deb-64', shell.task([
   '/bin/sh packaging/create_deb amd64'
 ]));
 
+
 gulp.task('make-rpm-32', shell.task([
   'rm -rf pkg_tree',
   'mkdir -p pkg_tree/opt/cozy-desktop pkg_tree/usr/share/doc/cozy-desktop pkg_tree/usr/share/applications',
@@ -101,6 +110,7 @@ gulp.task('make-rpm-32', shell.task([
   'install -b -o root -g root -m 0644 packaging/cozy-desktop.desktop pkg_tree/usr/share/applications/',
   '/bin/sh packaging/create_rpm i386'
 ]));
+
 
 gulp.task('make-deb-64', shell.task([
   'rm -rf pkg_tree',
@@ -111,9 +121,11 @@ gulp.task('make-deb-64', shell.task([
   '/bin/sh packaging/create_rpm amd64'
 ]));
 
+
 gulp.task('make-osx-app', shell.task([
   'cp build/cozy-desktop/osx/cozy-desktop.app .'
-]);
+]));
+
 
 gulp.task('coffeelint', function() {
   gulp.src(paths.scripts)
