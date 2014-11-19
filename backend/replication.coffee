@@ -182,7 +182,6 @@ module.exports = replication =
 
         log.info 'Start building your filesystem on your device.'
         filesystem.changes.push operation: 'applyFolderDBChanges', ->
-            log.debug 'ok'
             filesystem.changes.push operation: 'applyFileDBChanges', ->
                 log.info 'All your files are now available on your device.'
                 replication.runSync()
@@ -263,6 +262,8 @@ module.exports = replication =
             filesystem.changes.push task, (err) ->
                 if err
                     log.error "An error occured while applying a change."
+                    log.debug task.operation
+                    log.debug task.doc
                     log.raw err
 
         callback()

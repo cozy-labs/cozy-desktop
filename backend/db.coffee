@@ -27,19 +27,25 @@ module.exports = dbHelpers =
     files:
         rows: []
         all: (params, callback) ->
-            callback = params if typeof params is 'function'
+            if typeof params is 'function'
+                callback = params
+                params = {}
             dbHelpers.db.query 'file/all', params, callback
 
     folders:
         rows: []
         all: (params, callback) ->
-            callback = params if typeof params is 'function'
+            if typeof params is 'function'
+                callback = params
+                params = {}
             dbHelpers.db.query 'folder/all', params, callback
 
     binaries:
         rows: []
         all: (params, callback) ->
-            callback = params if typeof params is 'function'
+            if typeof params is 'function'
+                callback = params
+                params = {}
             dbHelpers.db.query 'binary/all', params, callback
 
 

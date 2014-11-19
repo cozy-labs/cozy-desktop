@@ -68,10 +68,10 @@ applyOperation = (task, callback) ->
                 filesystem.moveEntryFromDoc task.doc, callback
         when 'deleteFile'
             if task.doc?
-                filesystem.removeDeletedFile doc._id, doc._rev, callback
+                filesystem.removeDeletedFile task.doc._id, task.doc._rev, callback
         when 'deleteFolder'
             if task.doc?
-                filesystem.removeDeletedFolder doc_.id, doc._rev, callback
+                filesystem.removeDeletedFolder task.doc._id, task.doc._rev, callback
         when 'deleteDoc'
             if task.file?
                 filesystem.deleteDoc task.file, callback
@@ -127,7 +127,7 @@ filesystem =
     makeDirectoryFromDoc: (doc, callback) ->
         remoteConfig = config.getConfig()
         doc = doc.value if not doc.path?
-        if doc.path? and doc.name?
+        if doc? and doc.path? and doc.name?
             absPath = path.join remoteConfig.path, doc.path, doc.name
             dirPaths = filesystem.getPaths absPath
 
@@ -160,6 +160,8 @@ filesystem =
     moveEntryFromDoc: (doc, callback) ->
         pouch.getPreviousRev doc._id, (err, previousDocRev) ->
             if err
+                log.error 'Cannot find previous revision'
+                log.error doc
                 callback err
             else
                 newPath = path.join remoteConfig.path, doc.path, doc.name
@@ -220,8 +222,6 @@ filesystem =
 
     # Delete file require the related binary id, not the file object id.
     # This function removes from the disk given binary.
-    # TODO refactor: use rev instead of binary or use binary removeifexists
-    # function.
     removeDeletedFile: (id, rev, callback) ->
         pouch.getPreviousRev id, (err, doc) ->
             if err
@@ -275,11 +275,12 @@ filesystem =
     # TODO: add test
     deleteFolderIfNotListed: (dir, callback) ->
         fullPath = dir.filePath
-        pouch.db.query 'folder/byFullPath', key: fullPath, (err, res) ->
+        relativePath = path.join dir.parent, dir.filename
+        pouch.db.query 'folder/byFullPath', key: relativePath, (err, res) ->
             if err
                 callback err
             else if res.rows.length is 0 and fs.existsSync fullPath
-                log.info "Removing directory: #{fullPath} (not remotely listed)"
+                log.info "Removing directory: #{relativePath} (not remotely listed)"
                 fs.remove fullPath, callback
             else
                 callback()
@@ -287,10 +288,12 @@ filesystem =
 
     # TODO: add test
     deleteFileIfNotListed: (file, callback) ->
-        fullPath = file.fullPath
-        pouch.db.query 'file/byFullPath', key: fullPath, (err, res) ->
+        fullPath = file.filePath
+        relativePath = path.join file.parent, file.filename
+        relativePath = "/#{relativePath}" if relativePath[0] isnt '/'
+        pouch.db.query 'file/byFullPath', key: relativePath, (err, res) ->
             if res.rows.length is 0 and fs.existsSync fullPath
-                log.info "Removing file: #{fullPath} (not remotely listed)"
+                log.info "Removing file: #{relativePath} (not remotely listed)"
                 fs.remove fullPath, callback
             else
                 callback()
@@ -306,10 +309,12 @@ filesystem =
                 callback()
             else
                 # Else download file
-                binary.fetchFromDoc deviceName, doc, callback
+                binary.fetchFromDoc remoteConfig.deviceName, doc, callback
         else
-            # TODO delete corrupted doc
             callback()
+            #pouch.db.remove doc, (err) ->
+                #log.warn err if err
+                #callback()
 
 
     # Make sure that filesystem folder tree matches with information stored in
@@ -320,6 +325,7 @@ filesystem =
                 callback err
             else
                 folders = result.rows
+
                 dirList = filesystem.walkDirSync remoteConfig.path
                 async.eachSeries dirList, filesystem.deleteFolderIfNotListed, (err) ->
                     if err
