@@ -68,10 +68,10 @@ applyOperation = (task, callback) ->
                 filesystem.moveEntryFromDoc task.doc, callback
         when 'deleteFile'
             if task.id?
-                filesystem.deleteFromId task.id, callback
+                filesystem.deleteFile task.id, callback
         when 'deleteFolder'
             if task.id? and task.rev?
-                filesystem.deleteFolder task.id, task.rev, callback
+                filesystem.removeDeletedFolder task.id, task.rev, callback
         when 'deleteDoc'
             if task.file?
                 filesystem.deleteDoc task.file, callback
@@ -112,19 +112,15 @@ filesystem =
 
         # Assuming filePath is 'hello/world.html':
         absolute  = path.resolve filePath # /home/sync/hello/world.html
-        relative  = path.relative remoteConfig.path, absolute # hello/world.html
-        name      = path.basename filePath # world.html
-        parent    = path.dirname path.join path.sep, relative # /hello
+        relative = path.relative remoteConfig.path, absolute # hello/world.html
+        name = path.basename filePath # world.html
+        parent = path.dirname path.join path.sep, relative # /hello
         absParent = path.dirname absolute # /home/sync/hello
 
         # Do not keep '/'
-        parent    = '' if parent is '/'
+        parent = '' if parent is '/'
 
-        absolute: absolute
-        relative: relative
-        name: name
-        parent: parent
-        absParent: absParent
+        {absolute, relative, name, parent, absParent}
 
 
     # Create a folder from database data.
@@ -135,19 +131,18 @@ filesystem =
             absPath = path.join remoteConfig.path, doc.path, doc.name
             dirPaths = filesystem.getPaths absPath
 
-            updateDates = (err) ->
+            mkdirp dirPaths.absolute, (err) ->
                 if err
                     callback err
                 else
                     log.info "Directory ensured: #{absPath}"
                     publisher.emit 'directoryEnsured', absPath
 
-                    creationDate = new Date(doc.creationDate)
-                    modificationDate = new Date(doc.lastModification)
+                    creationDate = new Date doc.creationDate
+                    modificationDate = new Date doc.lastModification
                     absPath = dirPaths.absolute
                     fs.utimes absPath, creationDate, modificationDate, callback
 
-            mkdirp dirPaths.absolute, updateDates
         else
             callback()
 
@@ -157,35 +152,13 @@ filesystem =
     changes: async.queue applyOperation, 1
 
 
-    # Retrieve a previous doc revision from its id.
-    # TODO write a test
-    # TODO move to db module
-    getPreviousRev: (id, callback) ->
-        options =
-            revs: true
-            revs_info: true
-            open_revs: "all"
-
-        pouch.db.get id, options, (err, infos) ->
-            if err
-                callback err
-            else if infos.length > 0 and infos[0].ok?._revisions?
-                rev = infos[0].ok._revisions.ids[1]
-                start = infos[0].ok._revisions.start
-                rev = "#{start - 1}-#{rev}"
-
-                pouch.db.get id, rev: rev, callback
-            else
-                callback new Error 'previous revision not found'
-
-
     # Move a folder or a folder to a new location. The target is the path of
     # the current doc. The source is the path of the previous revision of
     # the doc.
     # TODO write test for this function
     # TODO handle date modification
     moveEntryFromDoc: (doc, callback) ->
-        filesystem.getPreviousRev doc._id, (err, previousDocRev) ->
+        pouch.getPreviousRev doc._id, (err, previousDocRev) ->
             if err
                 callback err
             else
@@ -230,53 +203,85 @@ filesystem =
     # Get old revision of deleted doc to get path info then remove it from file
     # system.
     # TODO write test for this function
-    # TODO make that function cleaner
-    deleteFolder: (id, rev, callback) ->
-        filesystem.getPreviousRev id, (err, doc) ->
+    removeDeletedFolder: (id, rev, callback) ->
+        pouch.getPreviousRev id, (err, doc) ->
             if err
                 callback err
             else
                 folderPath = path.join remoteConfig.path, doc.path, doc.name
-                fs.remove folderPath, callback
-                log.info "Folder deleted: #{folderPath}"
-                publisher.emit 'folderDeleted', folderPath
+                fs.remove folderPath, (err) ->
+                    if err
+                        callback err
+                    else
+                        log.info "Folder deleted: #{folderPath}"
+                        publisher.emit 'folderDeleted', folderPath
+                        callback()
+
+
+    # Return file list in given dir. Parent path, filename and full path
+    # are stored for each file.
+    # TODO: add test
+    walkSync: (dir, filelist) =>
+        files = fs.readdirSync dir
+        filelist = filelist || []
+        for file in files
+            filePath = path.join dir, file
+            if fs.statSync(filePath).isDirectory()
+                parent = path.relative remoteConfig.path, dir
+                parent = path.join path.sep, parent if parent isnt ''
+                filelist.push {parent, file, filePath}
+                filelist = filesystem.walkSync filePath, filelist
+        return filelist
+
+
+    # TODO: add test
+    deleteIfNotListed: (dir, callback) ->
+        fullPath = dir.filePath
+        pouch.db.query 'folder/byFullPath', key: fullPath, (err, res) ->
+            if err
+                callback err
+            else if res.rows.length is 0 and fs.existsSync dir[2]
+                log.info "Removing directory: #{dir[2]} (not remotely listed)"
+                fs.remove dir[2], callback
+            else
+                callback()
+
+
+    # Delete file require the related binary id, not the file object id.
+    # This function removes from the disk given binary.
+    # TODO refactor: use rev instead of binary or use binary removeifexists
+    # function.
+    deleteFile: (id, callback) ->
+        pouch.db.get id, (err, res) ->
+            if err and err.status isnt 404
+                callback err
+            else if err and err.status is 404
+                callback()
+            else if res?.docType isnt 'Binary'
+                callback()
+            else if res?.path? and fs.existsSync res.path
+                log.info "Remove element at #{res.path}"
+                fs.unlink res.path, ->
+                    publisher.emit 'fileDeleted', res.path
+                    callback()
+            else
+                callback()
 
 
     # Make sure that filesystem folder tree matches with information stored in
     # the database.
     applyFolderDBChanges: (callback) ->
-
-        pouch.db.query 'folder/all', (err, result) ->
+        pouch.folders.all (err, result) ->
             if err then return callback err
 
-            walkSync = (dir, filelist) =>
-                files = fs.readdirSync dir
-                filelist = filelist || []
-                for file in files
-                    if fs.statSync("#{dir}/#{file}").isDirectory()
-                        parent = path.relative remoteConfig.path, dir
-                        parent = path.join path.sep, parent if parent isnt ''
-                        filelist.push [parent, file, "#{dir}/#{file}"]
-                        filelist = walkSync("#{dir}/#{file}/", filelist)
-                return filelist
-
-            deleteIfNotListed = (dir, cb) ->
-                fullPath = "#{dir[0]}/#{dir[1]}"
-                pouch.db.query 'folder/byFullPath', key: fullPath, (err, res) ->
-                    if res.rows.length is 0 and fs.existsSync dir[2]
-                        log.info "Removing directory: #{dir[2]} (not remotely listed)"
-                        fs.remove dir[2], cb
-                    else
-                        cb null
-
-            dirList = walkSync(remoteConfig.path)
-            async.eachSeries dirList, deleteIfNotListed, (err) ->
+            dirList = filesystem.walkSync remoteConfig.path
+            async.eachSeries dirList, filesystem.deleteIfNotListed, (err) ->
                 if err
                     callback err
                 else
                     async.eachSeries result['rows'],
                        filesystem.makeDirectoryFromDoc,
-                       callback
+                       callback()
 
 
     # Make sure that filesystem files matches with information stored in the
@@ -332,6 +337,7 @@ filesystem =
                     async.eachSeries fileList, deleteIfNotListed, callback
 
 
+    # TODO refactor it in smaller functions.
     createDirectoryDoc: (dirPath, ignoreExisting, callback) ->
         dirPaths = @getPaths dirPath
 
@@ -535,25 +541,6 @@ filesystem =
         checkFileLocation()
 
 
-    # TODO rename it deleteFile and move the logic to the db module.
-    deleteFromId: (id, callback) ->
-        pouch.db.get id, (err, res) ->
-            if err and err.status isnt 404
-                callback err
-            else if res?.path? and fs.existsSync res.path
-                log.info "Remove element at #{res.path}"
-                fs.unlink res.path, ->
-                    publisher.emit 'fileDeleted', res.path
-                    callback null
-            else
-                if err and err.status is 404
-                    callback null
-                else
-                    callback err
-
-    isNewFile: ->
-
-
     # TODO refactor it in smaller functions.
     deleteDoc: (filePath, callback) ->
         filePaths = @getPaths filePath
@@ -649,7 +636,6 @@ filesystem =
         .on 'addDir', (dirPath) =>
             if not @watchingLocked
                 if dirPath isnt remoteConfig.path
-                    #log.info "Directory added: #{dirPath}"
                     log.info "Directory added: #{dirPath}"
                     @createDirectoryDoc dirPath, true, ->
 

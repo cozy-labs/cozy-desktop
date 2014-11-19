@@ -173,9 +173,8 @@ module.exports = replication =
     # then, it syncs file system with database data.
     # then, it run continuous replication.
     onRepComplete: (info) ->
-        log.info "Replication batch is complete (last sequence: #{since})"
-
         since = replication.getInfoSeq info
+        log.info "Replication batch is complete (last sequence: #{since})"
         config.setSeq since if since isnt 'now'
 
         # Ensure that previous replication is properly finished.
@@ -183,6 +182,7 @@ module.exports = replication =
 
         log.info 'Start building your filesystem on your device.'
         filesystem.changes.push operation: 'applyFolderDBChanges', ->
+            log.debug 'ok'
             filesystem.changes.push operation: 'applyFileDBChanges', ->
                 log.info 'All your files are now available on your device.'
                 replication.runSync()

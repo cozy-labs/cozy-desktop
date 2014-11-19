@@ -128,6 +128,7 @@ module.exports = binary =
                     callback null, docs.rows[0].doc
 
 
+    # Save path and checksum at the binary level.
     saveLocation: (filePath, id, rev, callback) ->
         pouch.removeIfExists id, (err) =>
             if err
@@ -222,21 +223,22 @@ module.exports = binary =
     # Download corresponding binary
     fetchFromDoc: (deviceName, doc, callback) ->
         remoteConfig = config.getConfig()
-        filePath = path.join doc.path, doc.name
-        binaryPath = path.join remoteConfig.path, filePath
+        if doc.path? and doc.name? and doc.binary?.file?.id?
+            filePath = path.join doc.path, doc.name
+            binaryPath = path.join remoteConfig.path, filePath
 
-        if doc.binary?.file?.id?
             binary.removeBinaryIfExists doc, binaryPath, (err) ->
                 if err
                     callback err
                 else
-                    options = {deviceName, doc, filePath, binaryPath}
 
+                    options = {deviceName, doc, filePath, binaryPath}
                     binary.downloadFile options, (err) =>
                         if err
                             callback err
                         else
+
                             options = {doc, filePath, binaryPath}
                             binary.saveFileMetadata options, callback
         else
-            callback null
+            callback()

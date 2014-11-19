@@ -27,16 +27,19 @@ module.exports = dbHelpers =
     files:
         rows: []
         all: (params, callback) ->
+            callback = params if typeof params is 'function'
             dbHelpers.db.query 'file/all', params, callback
 
     folders:
         rows: []
         all: (params, callback) ->
+            callback = params if typeof params is 'function'
             dbHelpers.db.query 'folder/all', params, callback
 
     binaries:
         rows: []
         all: (params, callback) ->
+            callback = params if typeof params is 'function'
             dbHelpers.db.query 'binary/all', params, callback
 
 
@@ -142,6 +145,27 @@ module.exports = dbHelpers =
                 callback()
             else
                 dbHelpers.db.remove doc, callback
+
+
+    # Retrieve a previous doc revision from its id.
+    # TODO write a test
+    getPreviousRev: (id, callback) ->
+        options =
+            revs: true
+            revs_info: true
+            open_revs: "all"
+
+        pouch.db.get id, options, (err, infos) ->
+            if err
+                callback err
+            else if infos.length > 0 and infos[0].ok?._revisions?
+                rev = infos[0].ok._revisions.ids[1]
+                start = infos[0].ok._revisions.start
+                rev = "#{start - 1}-#{rev}"
+
+                pouch.db.get id, rev: rev, callback
+            else
+                callback new Error 'previous revision not found'
 
 
     # Deprecated
