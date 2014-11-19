@@ -86,6 +86,7 @@ displayDatabase = ->
             results.rows.map (row) ->
                 console.log row.doc
 
+
 # Disaply all docs returned by a given query.
 displayQuery = (query) ->
     db = require('./backend/db').db
@@ -102,17 +103,17 @@ displayQuery = (query) ->
 # Start database sync process and setup file change watcher.
 sync = (args) ->
 
-    # Watch local changes
-    if args.twoway
-        filesystem.watchChanges true, true
-
     config = config.getConfig()
 
     if not (config.deviceName? and config.url? and config.path?)
         log.error """
-No configuration found, please run add-remote-cozy command before running a synchronization.
+No configuration found, please run add-remote-cozy command before running
+a synchronization.
 """
     else
+        # Watch local changes
+        if not args.readonly
+            filesystem.watchChanges true, true
 
         pouch.addAllFilters ->
             # Replicate databases
@@ -131,57 +132,61 @@ displayConfig = ->
     console.log JSON.stringify config.config, null, 2
 
 
+resetDatabase = ->
+    log.info "Recreates the local database..."
+    pouch.resetDatabase ->
+        log.info "Database recreated"
+
+
 program
-    .command('add-remote-cozy <url> <devicename> <syncPath>')
-    .description('Configure current device to sync with given cozy')
-    .option('-d, --deviceName [deviceName]', 'device name to deal with')
+    .command 'add-remote-cozy <url> <devicename> <syncPath>'
+    .description 'Configure current device to sync with given cozy'
+    .option '-d, --deviceName [deviceName]', 'device name to deal with'
     .action addRemote
 
 program
-    .command('remove-remote-cozy')
-    .description('Unsync current device with its remote cozy')
+    .command 'remove-remote-cozy'
+    .description 'Unsync current device with its remote cozy'
     .action removeRemote
 
 program
-    .command('sync')
-    .description('Sync databases, apply and/or watch changes')
-    .option('-2, --twoway', 'apply local changes to remote as well as pulling changes')
-    .option('-c, --catchup', 're-detect all the files locally (works only along --two-way)')
-    .option('-f, --force', 'Run sync from the beginning of all the Cozy changes.')
+    .command 'sync'
+    .description 'Sync databases, apply and/or watch changes'
+    .option('-r, --readonly',
+            'only apply remote changes to local folder')
+    .option('-f, --force',
+            'Run sync from the beginning of all the Cozy changes.')
     .action sync
 
 program
     .command 'reset-database'
     .description 'Recreates the local database'
-    .action ->
-        log.info "Recreates the local database..."
-        pouch.resetDatabase ->
-            log.info "Database recreated"
+    .action resetDatabase
 
 program
-    .command('display-database')
-    .description('Display database content')
+    .command 'display-database'
+    .description 'Display database content'
     .action displayDatabase
 
 program
-    .command('display-query <query>')
-    .description('Display database query result')
+    .command 'display-query <query>'
+    .description 'Display database query result'
     .action displayQuery
 
 program
-    .command('display-config')
-    .description('Display device configuration and exit')
+    .command 'display-config'
+    .description 'Display device configuration and exit'
     .action displayConfig
 
 program
-    .command("*")
-    .description("Display help message for an unknown command.")
+    .command "*"
+    .description "Display help message for an unknown command."
     .action ->
         log.info 'Unknown command, run "cozy-desktop --help"' + \
                  ' to know the list of available commands.'
 
 program
-    .version(pkg.version)
+    .version pkg.version
 
 
 if not module.parent
