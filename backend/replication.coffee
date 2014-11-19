@@ -238,40 +238,28 @@ module.exports = replication =
 
         isDeletion = change.deleted
         isCreation = change.doc.creationDate is change.doc.lastModification
+        task =
+            doc: change.doc
 
         if isDeletion
             if change.doc.docType is 'Folder'
-                task =
-                    operation: 'deleteFolder'
-                    id: change.doc._id
-                    rev: change.doc._rev
+                task.operation = 'deleteFolder'
             else
-                if change.doc.binary?.file?.id?
-                    task =
-                        operation: 'deleteFile'
-                        id: change.doc.binary.file.id
+                task.operation = 'deleteFile'
 
         else if isCreation
             if change.doc.docType is 'Folder'
-                task =
-                    operation: 'newFolder'
-                    doc: change.doc
+                task.operation = 'newFolder'
             else
-                task =
-                    operation: 'newFile'
-                    doc: change.doc
+                task.operation = 'newFile'
 
         else # isModification
             if change.doc.docType is 'Folder'
-                task =
-                    operation: 'moveFolder'
-                    doc: change.doc
+                task.operation = 'moveFolder'
             else
-                filesystem.changes.push
-                    operation: 'moveFile'
-                    doc: change.doc
+                task.operation = 'moveFile'
 
-        if task?
+        if task.operation?
             filesystem.changes.push task, (err) ->
                 if err
                     log.error "An error occured while applying a change."

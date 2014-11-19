@@ -26,7 +26,6 @@ applyOperation = (task, callback) ->
     blockingOperations = [
         'get'
         'delete'
-        'newFolder'
         'catchup'
         'reDownload'
         'applyFolderDBChanges'
@@ -36,6 +35,7 @@ applyOperation = (task, callback) ->
         'newFolder'
         'newFile'
         'moveFile'
+        'moveFolder'
     ]
 
     if task.operation in blockingOperations
@@ -67,11 +67,11 @@ applyOperation = (task, callback) ->
             if task.doc?
                 filesystem.moveEntryFromDoc task.doc, callback
         when 'deleteFile'
-            if task.id?
-                filesystem.deleteFile task.id, callback
+            if task.doc?
+                filesystem.removeDeletedFile doc._id, doc._rev, callback
         when 'deleteFolder'
-            if task.id? and task.rev?
-                filesystem.removeDeletedFolder task.id, task.rev, callback
+            if task.doc?
+                filesystem.removeDeletedFolder doc_.id, doc._rev, callback
         when 'deleteDoc'
             if task.file?
                 filesystem.deleteDoc task.file, callback
@@ -218,6 +218,27 @@ filesystem =
                         callback()
 
 
+    # Delete file require the related binary id, not the file object id.
+    # This function removes from the disk given binary.
+    # TODO refactor: use rev instead of binary or use binary removeifexists
+    # function.
+    removeDeletedFile: (id, rev, callback) ->
+        pouch.getPreviousRev id, (err, doc) ->
+            if err
+                callback err
+            else if doc.path? and doc.name?
+                filePath = path.join remoteConfig.path, doc.path, doc.name
+                fs.remove filePath, (err) ->
+                    if err
+                        callback err
+                    else
+                        log.info "File deleted: #{filePath}"
+                        publisher.emit 'fileDeleted', filePath
+                        callback()
+            else
+                callback()
+
+
     # Return folder list in given dir. Parent path, filename and full path
     # are stored for each file.
     # TODO: add test
@@ -271,27 +292,6 @@ filesystem =
             if res.rows.length is 0 and fs.existsSync fullPath
                 log.info "Removing file: #{fullPath} (not remotely listed)"
                 fs.remove fullPath, callback
-            else
-                callback()
-
-
-    # Delete file require the related binary id, not the file object id.
-    # This function removes from the disk given binary.
-    # TODO refactor: use rev instead of binary or use binary removeifexists
-    # function.
-    deleteFile: (id, callback) ->
-        pouch.db.get id, (err, res) ->
-            if err and err.status isnt 404
-                callback err
-            else if err and err.status is 404
-                callback()
-            else if res?.docType isnt 'Binary'
-                callback()
-            else if res?.path? and fs.existsSync res.path
-                log.info "Remove element at #{res.path}"
-                fs.unlink res.path, ->
-                    publisher.emit 'fileDeleted', res.path
-                    callback()
             else
                 callback()
 
