@@ -155,7 +155,7 @@ module.exports = dbHelpers =
             revs_info: true
             open_revs: "all"
 
-        pouch.db.get id, options, (err, infos) ->
+        db.get id, options, (err, infos) ->
             if err
                 callback err
             else if infos.length > 0 and infos[0].ok?._revisions?
@@ -163,7 +163,7 @@ module.exports = dbHelpers =
                 start = infos[0].ok._revisions.start
                 rev = "#{start - 1}-#{rev}"
 
-                pouch.db.get id, rev: rev, callback
+                db.get id, rev: rev, callback
             else
                 callback new Error 'previous revision not found'
 

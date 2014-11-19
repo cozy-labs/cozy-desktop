@@ -202,7 +202,7 @@ filesystem =
 
     # Get old revision of deleted doc to get path info then remove it from file
     # system.
-    # TODO write test for this function
+    # TODO add test
     removeDeletedFolder: (id, rev, callback) ->
         pouch.getPreviousRev id, (err, doc) ->
             if err
@@ -218,31 +218,59 @@ filesystem =
                         callback()
 
 
-    # Return file list in given dir. Parent path, filename and full path
+    # Return folder list in given dir. Parent path, filename and full path
     # are stored for each file.
     # TODO: add test
-    walkSync: (dir, filelist) =>
+    walkDirSync: (dir, filelist) =>
         files = fs.readdirSync dir
-        filelist = filelist || []
-        for file in files
-            filePath = path.join dir, file
+        filelist ?= []
+        for filename in files
+            filePath = path.join dir, filename
             if fs.statSync(filePath).isDirectory()
                 parent = path.relative remoteConfig.path, dir
                 parent = path.join path.sep, parent if parent isnt ''
-                filelist.push {parent, file, filePath}
-                filelist = filesystem.walkSync filePath, filelist
+                filelist.push {parent, filename, filePath}
+                filelist = filesystem.walkDirSync filePath, filelist
+        return filelist
+
+
+    # Return file list in given dir. Parent path, filename and full path
+    # are stored for each file.
+    # TODO: add test
+    walkFileSync: (dir, filelist) =>
+        files = fs.readdirSync dir
+        filelist ?= []
+        for filename in files
+            filePath = path.join dir, filename
+            if not fs.statSync(filePath).isDirectory()
+                parent = path.relative remoteConfig.path, dir
+                parent = path.join path.sep, parent if parent isnt ''
+                filelist.push {parent, filename, filePath}
+            else
+                filelist = filesystem.walkFileSync filePath, filelist
         return filelist
 
 
     # TODO: add test
-    deleteIfNotListed: (dir, callback) ->
+    deleteFolderIfNotListed: (dir, callback) ->
         fullPath = dir.filePath
         pouch.db.query 'folder/byFullPath', key: fullPath, (err, res) ->
             if err
                 callback err
-            else if res.rows.length is 0 and fs.existsSync dir[2]
-                log.info "Removing directory: #{dir[2]} (not remotely listed)"
-                fs.remove dir[2], callback
+            else if res.rows.length is 0 and fs.existsSync fullPath
+                log.info "Removing directory: #{fullPath} (not remotely listed)"
+                fs.remove fullPath, callback
+            else
+                callback()
+
+
+    # TODO: add test
+    deleteFileIfNotListed: (file, callback) ->
+        fullPath = file.fullPath
+        pouch.db.query 'file/byFullPath', key: fullPath, (err, res) ->
+            if res.rows.length is 0 and fs.existsSync fullPath
+                log.info "Removing file: #{fullPath} (not remotely listed)"
+                fs.remove fullPath, callback
             else
                 callback()
 
@@ -268,73 +296,56 @@ filesystem =
                 callback()
 
 
+    downloadIfNotExists: (doc, callback) =>
+        doc = doc.value
+        if doc.path? and doc.name?
+            filePath = path.resolve remoteConfig.path, doc.path, doc.name
+
+            # TODO Should test if checksum is right
+            if fs.existsSync filePath
+                callback()
+            else
+                # Else download file
+                binary.fetchFromDoc deviceName, doc, callback
+        else
+            # TODO delete corrupted doc
+            callback()
+
+
     # Make sure that filesystem folder tree matches with information stored in
     # the database.
     applyFolderDBChanges: (callback) ->
         pouch.folders.all (err, result) ->
-            if err then return callback err
-
-            dirList = filesystem.walkSync remoteConfig.path
-            async.eachSeries dirList, filesystem.deleteIfNotListed, (err) ->
-                if err
-                    callback err
-                else
-                    async.eachSeries result['rows'],
-                       filesystem.makeDirectoryFromDoc,
-                       callback()
+            if err
+                callback err
+            else
+                folders = result.rows
+                dirList = filesystem.walkDirSync remoteConfig.path
+                async.eachSeries dirList, filesystem.deleteFolderIfNotListed, (err) ->
+                    if err
+                        callback err
+                    else
+                        async.eachSeries(folders,
+                                         filesystem.makeDirectoryFromDoc,
+                                         callback)
 
 
     # Make sure that filesystem files matches with information stored in the
     # database.
     applyFileDBChanges: (keepLocalDeletions, callback) ->
-        deviceName = config.getDeviceName()
-
-        downloadIfNotExists = (doc, cb) =>
-            doc = doc.value
-            if doc.path? and doc.name?
-                filePath = path.resolve remoteConfig.path, doc.path, doc.name
-
-                # TODO Should test if checksum is right
-                if fs.existsSync filePath
-                    cb null
-                else
-                    # Else download file
-                    binary.fetchFromDoc deviceName, doc, cb
-            else
-                # TODO delete corrupte doc
-                cb()
-
-        pouch.db.query 'file/all', (err, result) ->
+        pouch.files.all (err, result) ->
             if err and err.status isnt 404 or result is undefined
                 callback err
             else
-                results = result.rows
-
-                async.eachSeries results, downloadIfNotExists, ->
-                    getCurrentFileList = (dir, filelist) =>
-                        files = fs.readdirSync dir
-                        filelist ?= []
-                        for filename in files
-                            filePath = path.join dir, filename
-                            if not fs.statSync(filePath).isDirectory()
-                                parent = path.relative remoteConfig.path, dir
-                                parent = path.join path.sep, parent if parent isnt ''
-                                filelist.push [parent, filename, filePath]
-                            else
-                                filelist = getCurrentFileList(filePath, filelist)
-                        return filelist
-
-                    deleteIfNotListed = (dir, cb) ->
-                        fullPath = "#{dir[0]}/#{dir[1]}"
-                        pouch.db.query 'file/byFullPath', key: fullPath, (err, res) ->
-                            if res.rows.length is 0 and fs.existsSync dir[2]
-                                log.info "Removing file: #{dir[2]} (not remotely listed)"
-                                fs.remove dir[2], cb
-                            else
-                                cb null
-
-                    fileList = getCurrentFileList remoteConfig.path
-                    async.eachSeries fileList, deleteIfNotListed, callback
+                files = result.rows
+                async.eachSeries files, filesystem.downloadIfNotExists, (err) ->
+                    if err
+                        callback err
+                    else
+                        fileList = filesystem.walkFileSync remoteConfig.path
+                        async.eachSeries(fileList,
+                                         filesystem.deleteFileIfNotListed,
+                                         callback)
 
 
     # TODO refactor it in smaller functions.
@@ -383,7 +394,7 @@ filesystem =
                 else
                     updateDirectoryStats newDoc
 
-        checkDirectoryLocation = () =>
+        checkDirectoryLocation = =>
             remoteConfig = config.getConfig()
             if not @isInSyncDir(dirPath) or not fs.existsSync(dirPaths.absolute)
                 unless dirPath is '' or dirPath is remoteConfig.path

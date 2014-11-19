@@ -304,9 +304,9 @@ describe "Filesystem Tests", ->
             , 2000
 
 
-    describe "deleteFromId", =>
+    describe "deleteFile", =>
         it "deletes a binary from its document ID", (done) =>
-            filesystem.deleteFromId @doc.binary.file.id, (err, res) =>
+            filesystem.deleteFile @doc.binary.file.id, (err, res) =>
                 should.not.exist err
                 pouch.db.get @doc.binary.file.id, (err, res) =>
                     should.not.exist err
