@@ -81,9 +81,7 @@ module.exports = dbHelpers =
                         if prevDate > newDate
                             newDoc.lastModification =  prevDoc.lastModification
 
-                    db.put newDoc, (err) ->
-                        log.error err
-                        callback
+                    db.put newDoc, callback
 
     binaries:
         rows: []
