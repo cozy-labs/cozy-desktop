@@ -275,7 +275,7 @@ filesystem =
     # TODO: add test
     deleteFolderIfNotListed: (dir, callback) ->
         fullPath = dir.filePath
-        relativePath = path.join dir.parent, dir.filename
+        relativePath = "#{dir.parent}/#{dir.filename}"
         pouch.db.query 'folder/byFullPath', key: relativePath, (err, res) ->
             if err
                 callback err
@@ -289,8 +289,7 @@ filesystem =
     # TODO: add test
     deleteFileIfNotListed: (file, callback) ->
         fullPath = file.filePath
-        relativePath = path.join file.parent, file.filename
-        relativePath = "/#{relativePath}" if relativePath[0] isnt '/'
+        relativePath = "#{file.parent}/#{file.filename}"
         pouch.db.query 'file/byFullPath', key: relativePath, (err, res) ->
             if res.rows.length is 0 and fs.existsSync fullPath
                 log.info "Removing file: #{relativePath} (not remotely listed)"
@@ -299,6 +298,7 @@ filesystem =
                 callback()
 
 
+    # TODO: add test
     downloadIfNotExists: (doc, callback) =>
         doc = doc.value
         if doc.path? and doc.name?
@@ -354,69 +354,53 @@ filesystem =
                                          callback)
 
 
-    # TODO refactor it in smaller functions.
+    # Check for directoy existence. If it exists, it
     createDirectoryDoc: (dirPath, ignoreExisting, callback) ->
-        dirPaths = @getPaths dirPath
+        dirPaths = filesystem.getPaths dirPath
+        remoteConfig = config.getConfig()
 
-        updateDirectoryInformation = (existingDoc, newDoc) ->
-            newDoc._id = existingDoc._id
-            newDoc._rev = existingDoc._rev
-            newDoc.creationDate = existingDoc.creationDate
-            newDoc.tags = existingDoc.tags
-            if new Date(existingDoc.lastModification) \
-             > new Date(newDoc.lastModification)
-                newDoc.lastModification = existingDoc.lastModification
-            return newDoc
+        isInDir = filesystem.isInSyncDir dirPath
+        isExist = isInDir and fs.existsSync(dirPaths.absolute)
 
-        checkDirectoryExistence = (newDoc) ->
-            pouch.db.query 'folder/byFullPath'
-            , key: "#{newDoc.path}/#{newDoc.name}"
-            , (err, res) ->
-                if err and err.status isnt 404  or res is undefined
+        if not isExist
+            unless dirPath is '' or dirPath is remoteConfig.path
+                log.error """
+Directory is not located in the synchronized directory: #{dirPaths.absolute}
+"""
+            callback()
+
+        else
+            absParent = dirPaths.absParent
+            filesystem.createDirectoryDoc absParent, true, (err, res) ->
+                if err
+                    log.error "An error occured at parent directory's creation"
                     callback err
-                else if res.rows.length > 0
-                    if ignoreExisting
-                        callback null
-                    else
-                        newDoc =
-                            updateDirectoryInformation res.rows[0].value, newDoc
-                        pouch.db.put newDoc, callback
                 else
-                    pouch.db.put newDoc, callback
+                    newDoc =
+                        _id: uuid.v4().split('-').join('')
+                        docType: 'Folder'
+                        name: dirPaths.name
+                        path: dirPaths.parent
+                        tags: []
+                    absPath = dirPaths.absolute
+                    log.debug newDoc
+                    log.debug absPath
+                    filesystem.updateDirStats absPath, newDoc, (err, newDoc) ->
+                        log.debug newDoc
+                        if err
+                            callback err
+                        else
+                            pouch.folders.upsert newDoc, callback
 
-        updateDirectoryStats = (newDoc) ->
-            fs.stat dirPaths.absolute, (err, stats) ->
+
+    updateDirStats: (absPath, newDoc, callback) ->
+        fs.stat absPath, (err, stats) ->
+            if err
+                callback err
+            else
                 newDoc.creationDate = stats.mtime
                 newDoc.lastModification = stats.mtime
-
-                checkDirectoryExistence newDoc
-
-        createParentDirectory = (newDoc) =>
-            filesystem.createDirectoryDoc dirPaths.absParent, true, (err, res) ->
-                if err
-                    log.error "An error occured at parent
-                               directory's creation"
-                    callback err
-                else
-                    updateDirectoryStats newDoc
-
-        checkDirectoryLocation = =>
-            remoteConfig = config.getConfig()
-            if not @isInSyncDir(dirPath) or not fs.existsSync(dirPaths.absolute)
-                unless dirPath is '' or dirPath is remoteConfig.path
-                    log.error "Directory is not located in the
-                               synchronized directory: #{dirPaths.absolute}"
-                # Do not throw error
-                callback null
-            else
-                createParentDirectory
-                    _id: uuid.v4().split('-').join('')
-                    docType: 'Folder'
-                    name: dirPaths.name
-                    path: dirPaths.parent
-                    tags: []
-
-        checkDirectoryLocation()
+                callback null, newDoc
 
 
     # TODO refactor it in smaller functions.
@@ -558,49 +542,24 @@ filesystem =
         checkFileLocation()
 
 
-    # TODO refactor it in smaller functions.
     deleteDoc: (filePath, callback) ->
         filePaths = @getPaths filePath
 
-        markAsDeleted = (deletedDoc) ->
+        key = "#{filePaths.parent}/#{filePaths.name}"
 
-            # Use the same pethod as in DS:
-            # https://github.com/cozy/cozy-data-system/blob/master/server/lib/db_remove_helper.coffee#L7
-            emptyDoc =
-                _id: deletedDoc._id
-                _rev: deletedDoc._rev
-                _deleted: false
-                docType: deletedDoc.docType
-
-            # Since we use the same function to delete a file and a folder
-            # we have to check if the binary key exists
-            if deletedDoc.binary?
-                emptyDoc.binary = deletedDoc.binary
-
-            pouch.db.put emptyDoc, (err, res) ->
-                if err
-                    callback err
-                else
-                    pouch.db.remove res.id, res.rev, callback
-
-        getDoc = (deletedFileName, deletedFilePath) ->
-
-            # We want to search through files and folders
-            options =
-                include_docs: true
-                key: "#{filePaths.parent}/#{filePaths.name}"
-            pouch.db.query 'file/byFullPath', options, (err, existingDocs) ->
-                if existingDocs.rows.length is 0
-                    pouch.db.query 'folder/byFullPath', options, (err, existingDocs) ->
-                        if existingDocs.rows.length is 0
-                            # Document is already deleted
-                            callback null
-                        else
-                            markAsDeleted existingDocs.rows[0].value
-                else
-                    markAsDeleted existingDocs.rows[0].value
-
-        getDoc filePaths.name, filePaths.parent
+        pouch.files.get key, (err, docFile) ->
+            if docFile? and not err
+                pouch.markAsDeleted docFile, callback
+            else
+                pouch.folders.get key, (err, docFolder) ->
+                    if err
+                        callback err
+                        log.raw err
+                    else if docFolder?
+                        pouch.markAsDeleted docFolder, callback
+                    else
+                        # Document is already deleted
+                        callback()
 
 
     # TODO refactor it in smaller functions.
