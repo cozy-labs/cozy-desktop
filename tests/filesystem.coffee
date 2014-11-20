@@ -115,6 +115,7 @@ describe "Filesystem Tests", ->
     describe "applyFileDBChanges", ->
         syncDir = '/tmp/cozy'
         filePath = "#{syncDir}/test_file_to_fetch"
+        rev = ''
 
         createFileRemotely = (callback) =>
             fs.writeFile filePath, 'hello', (err) ->
@@ -122,12 +123,12 @@ describe "Filesystem Tests", ->
                 binary.createEmptyRemoteDoc (err, doc) =>
                     should.not.exist err
                     binary.uploadAsAttachment doc.id, doc.rev, filePath, (err, body) ->
-                        @rev = body.rev
+                        rev = body.rev
                         should.not.exist err
                         fs.remove filePath, callback
 
         createFileDocument = (callback) =>
-            pouch.db.put
+            pouch.db.put(
                 _id: "test-file-to-fetch"
                 path: ""
                 name: "test_file_to_fetch"
@@ -141,9 +142,9 @@ describe "Filesystem Tests", ->
                 binary:
                     file:
                         id: "test-binary-to-fetch"
-                        rev: @rev
+                        rev: rev
                         checksum: "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d"
-            , callback
+            , callback)
 
         createFolderDocument = (callback) ->
             pouch.db.put
@@ -196,18 +197,19 @@ describe "Filesystem Tests", ->
         parentDirName = 'test_parent_dir'
         dirPath = '/tmp/cozy/test_dir_to_add'
         dirPath2 = '/tmp/cozy/test_parent_dir/test_dir2_to_add'
+        doc = null
 
-        it "creates a DB document from a local folder's information", (done) =>
-            fs.mkdir dirPath, (err) =>
+        it "creates a DB document from a local folder information", (done) ->
+            fs.mkdir dirPath, (err) ->
                 should.not.exist err
-                filesystem.createDirectoryDoc dirPath, false, (err, res) =>
+                filesystem.createDirectoryDoc dirPath, false, (err, res) ->
                     should.not.exist err
-                    should.exist res.id
-                    pouch.db.query 'folder/byFullPath', key: "/#{dirName}", (err, res) =>
+                    should.exist res._id
+                    pouch.db.query 'folder/byFullPath', key: "/#{dirName}", (err, res) ->
                         should.not.exist err
-                        @doc = res.rows[0].value
-                        @doc.path.should.be.equal ''
-                        @doc.name.should.be.equal dirName
+                        doc = res.rows[0].value
+                        doc.path.should.be.equal ''
+                        doc.name.should.be.equal dirName
                         done()
 
         it "creates parent directory DB doc", (done) ->
@@ -215,7 +217,7 @@ describe "Filesystem Tests", ->
                 should.not.exist err
                 filesystem.createDirectoryDoc dirPath2, false, (err, res) ->
                     should.not.exist err
-                    should.exist res.id
+                    should.exist res._id
                     pouch.db.query 'folder/byFullPath', key: "/#{parentDirName}", (err, res) ->
                         should.not.exist err
                         doc = res.rows[0].value
@@ -233,8 +235,9 @@ describe "Filesystem Tests", ->
             filesystem.createDirectoryDoc dirPath, true, (err, res) =>
                 pouch.db.query 'folder/byFullPath', key: "/#{dirName}", (err, res) =>
                     should.not.exist err
+                    res.rows.length.should.not.equal 0
                     for key, value in res.rows[0].value
-                        @doc[key].should.be.equal value
+                        doc[key].should.be.equal value
                     done()
 
 
@@ -304,9 +307,9 @@ describe "Filesystem Tests", ->
             , 2000
 
 
-    describe "deleteFile", =>
-        it "deletes a binary from its document ID", (done) =>
-            filesystem.deleteFile @doc.binary.file.id, (err, res) =>
+    describe "removeDeletedFile", =>
+        it "deletes a binary from its file doc information", (done) =>
+            filesystem.removeDeletedFile @doc._id, @doc._rev, (err, res) =>
                 should.not.exist err
                 pouch.db.get @doc.binary.file.id, (err, res) =>
                     should.not.exist err

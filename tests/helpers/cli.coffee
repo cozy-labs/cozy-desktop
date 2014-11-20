@@ -108,4 +108,5 @@ module.exports.stopSync = ->
 # Recreates the local database
 module.exports.resetDatabase = (done) ->
     @timeout 10000
-    pouch.resetDatabase done
+    pouch.resetDatabase ->
+        setTimeout done, 2000

@@ -45,7 +45,6 @@ applyOperation = (task, callback) ->
             filesystem.watchingLocked = false
             callbackOrig err, res
 
-    #log.debug task.operation
     switch task.operation
         when 'post'
             if task.file?
@@ -225,7 +224,7 @@ filesystem =
     removeDeletedFile: (id, rev, callback) ->
         pouch.getPreviousRev id, (err, doc) ->
             if err
-                callback err
+                callback err if callback?
             else if doc.path? and doc.name?
                 filePath = path.join remoteConfig.path, doc.path, doc.name
                 fs.remove filePath, (err) ->
@@ -234,9 +233,9 @@ filesystem =
                     else
                         log.info "File deleted: #{filePath}"
                         publisher.emit 'fileDeleted', filePath
-                        callback()
+                        callback() if callback?
             else
-                callback()
+                callback() if callback?
 
 
     # Return folder list in given dir. Parent path, filename and full path
@@ -383,14 +382,12 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
                         path: dirPaths.parent
                         tags: []
                     absPath = dirPaths.absolute
-                    log.debug newDoc
-                    log.debug absPath
                     filesystem.updateDirStats absPath, newDoc, (err, newDoc) ->
-                        log.debug newDoc
                         if err
                             callback err
                         else
-                            pouch.folders.upsert newDoc, callback
+                            pouch.folders.upsert newDoc, ->
+                                callback null, newDoc
 
 
     updateDirStats: (absPath, newDoc, callback) ->

@@ -6,7 +6,7 @@ log = require('printit')
 
 config = require './config'
 
-db = new PouchDB(config.dbPath)
+db = new PouchDB config.dbPath
 
 # Listener memory leak test
 db.setMaxListeners 100
@@ -21,7 +21,7 @@ module.exports = dbHelpers =
     # Create database and recreate all filters
     resetDatabase: (callback) ->
         PouchDB.destroy config.dbPath, ->
-            dbHelpers.db = new PouchDB config.dbPath
+            db = dbHelpers.db = new PouchDB config.dbPath
             dbHelpers.addAllFilters callback
 
     files:
@@ -79,9 +79,10 @@ module.exports = dbHelpers =
                         newDate = new Date newDoc.lastModification
 
                         if prevDate > newDate
-                            newDoc.lastModification =  prevDoc.lastModification
+                            newDoc.lastModification = prevDoc.lastModification
 
                     db.put newDoc, callback
+
 
     binaries:
         rows: []
@@ -221,7 +222,7 @@ module.exports = dbHelpers =
     # the document. This operation is required to remove the document remotely
     # via synchronization.
     #TODO add test
-    markAsDeleted: (deletedDoc) ->
+    markAsDeleted: (deletedDoc, callback) ->
 
         # Use the same pethod as in DS:
         # https://github.com/cozy/cozy-data-system/blob/master/server/lib/db_remove_helper.coffee#L7
