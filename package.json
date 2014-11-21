@@ -6,7 +6,7 @@
   "window": {
     "width": 800,
     "height": 550,
-    "toolbar": true,
+    "toolbar": false,
     "icon": "client/app/assets/icon/icon.png",
     "title": "Cozy Desktop"
   },

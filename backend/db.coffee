@@ -1,6 +1,7 @@
 PouchDB = require 'pouchdb'
 fs = require 'fs-extra'
 async = require 'async'
+uuid = require 'node-uuid'
 log = require('printit')
     prefix: 'DB'
 
@@ -95,7 +96,7 @@ module.exports = dbHelpers =
 
     # Create all required views in the database.
     addAllFilters: (callback) ->
-        async.eachSeries [ 'folder', 'file', 'binary' ], @addFilter, callback
+        async.eachSeries [ 'folder', 'file', 'binary', 'localrev' ], @addFilter, callback
 
 
     # Add required views for a given doctype.
@@ -126,6 +127,16 @@ module.exports = dbHelpers =
             if (doc.docType !== undefined
                 && doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
                 emit(doc.checksum, null);
+            }
+        }
+        """
+
+        if docType in ['localrev', 'localRev']
+            queries.byRevision = """
+        function (doc) {
+            if (doc.docType !== undefined
+                && doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
+                emit(doc.revision, null);
             }
         }
         """
@@ -224,7 +235,7 @@ module.exports = dbHelpers =
     #TODO add test
     markAsDeleted: (deletedDoc, callback) ->
 
-        # Use the same pethod as in DS:
+        # Use the same method as in DS:
         # https://github.com/cozy/cozy-data-system/blob/master/server/lib/db_remove_helper.coffee#L7
         emptyDoc =
             _id: deletedDoc._id
@@ -241,7 +252,23 @@ module.exports = dbHelpers =
             if err
                 callback err
             else
-                db.remove res.id, res.rev, callback
+                dbHelpers.storeLocalRev res.rev, ->
+                    db.remove res.id, res.rev, callback
+
+
+    # Store a revision to avoid its re-application
+    # (typically when a doc changes after a local FS modification)
+    storeLocalRev: (rev, callback) ->
+        db.put
+            _id: uuid.v4().split('-').join('')
+            docType: 'localrev'
+            revision: rev
+        , (err, res) ->
+            if err
+                log.error 'Unable to save local revision'
+                callback err
+            else
+                callback null
 
 
     # Deprecated
