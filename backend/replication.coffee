@@ -236,37 +236,37 @@ module.exports = replication =
         config.setChangeSeq change.seq
 
         pouch.db.query 'localrev/byRevision', key: change.doc._rev, (err, res) ->
+            if res.rows.length is 0
+                isDeletion = change.deleted
+                isCreation = change.doc.creationDate is change.doc.lastModification
+                task =
+                    doc: change.doc
 
-            isDeletion = change.deleted
-            isCreation = change.doc.creationDate is change.doc.lastModification
-            task =
-                doc: change.doc
+                if isDeletion
+                    if change.doc.docType is 'Folder'
+                        task.operation = 'deleteFolder'
+                    else
+                        task.operation = 'deleteFile'
 
-            if isDeletion
-                if change.doc.docType is 'Folder'
-                    task.operation = 'deleteFolder'
-                else
-                    task.operation = 'deleteFile'
+                else if isCreation
+                    if change.doc.docType is 'Folder'
+                        task.operation = 'newFolder'
+                    else
+                        task.operation = 'newFile'
 
-            else if isCreation
-                if change.doc.docType is 'Folder'
-                    task.operation = 'newFolder'
-                else
-                    task.operation = 'newFile'
+                else # isModification
+                    if change.doc.docType is 'Folder'
+                        task.operation = 'moveFolder'
+                    else
+                        task.operation = 'moveFile'
 
-            else # isModification
-                if change.doc.docType is 'Folder'
-                    task.operation = 'moveFolder'
-                else
-                    task.operation = 'moveFile'
-
-            if task.operation?
-                filesystem.changes.push task, (err) ->
-                    if err
-                        log.error "An error occured while applying a change."
-                        log.debug task.operation
-                        log.debug task.doc
-                        log.raw err
+                if task.operation?
+                    filesystem.changes.push task, (err) ->
+                        if err
+                            log.error "An error occured while applying a change."
+                            log.debug task.operation
+                            log.debug task.doc
+                            log.raw err
 
             callback()
 

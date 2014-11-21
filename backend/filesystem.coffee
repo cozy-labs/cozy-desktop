@@ -42,8 +42,10 @@ applyOperation = (task, callback) ->
         filesystem.watchingLocked = true
         callbackOrig = callback
         callback = (err, res) ->
-            filesystem.watchingLocked = false
-            callbackOrig err, res
+            setTimeout ->
+                filesystem.watchingLocked = false
+                callbackOrig err, res
+            , 500
 
     switch task.operation
         when 'post'
