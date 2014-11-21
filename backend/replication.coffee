@@ -154,6 +154,7 @@ module.exports = replication =
 
     # Log change event information.
     displayChange: (info) ->
+        console.log info
         nbDocs = 0
         if info.change? and info.change.docs_written > 0
             nbDocs = info.change.docs_written
@@ -235,38 +236,43 @@ module.exports = replication =
         replication.lastChangeSeq = change.seq
         config.setChangeSeq change.seq
 
-        isDeletion = change.deleted
-        isCreation = change.doc.creationDate is change.doc.lastModification
-        task =
-            doc: change.doc
+        pouch.db.query 'localrev/byRevision', key: change.doc._rev, (err, res) ->
+            console.log 'yoloooo'
+            console.log err
+            console.log res
 
-        if isDeletion
-            if change.doc.docType is 'Folder'
-                task.operation = 'deleteFolder'
-            else
-                task.operation = 'deleteFile'
+            isDeletion = change.deleted
+            isCreation = change.doc.creationDate is change.doc.lastModification
+            task =
+                doc: change.doc
 
-        else if isCreation
-            if change.doc.docType is 'Folder'
-                task.operation = 'newFolder'
-            else
-                task.operation = 'newFile'
+            if isDeletion
+                if change.doc.docType is 'Folder'
+                    task.operation = 'deleteFolder'
+                else
+                    task.operation = 'deleteFile'
 
-        else # isModification
-            if change.doc.docType is 'Folder'
-                task.operation = 'moveFolder'
-            else
-                task.operation = 'moveFile'
+            else if isCreation
+                if change.doc.docType is 'Folder'
+                    task.operation = 'newFolder'
+                else
+                    task.operation = 'newFile'
 
-        if task.operation?
-            filesystem.changes.push task, (err) ->
-                if err
-                    log.error "An error occured while applying a change."
-                    log.debug task.operation
-                    log.debug task.doc
-                    log.raw err
+            else # isModification
+                if change.doc.docType is 'Folder'
+                    task.operation = 'moveFolder'
+                else
+                    task.operation = 'moveFile'
 
-        callback()
+            if task.operation?
+                filesystem.changes.push task, (err) ->
+                    if err
+                        log.error "An error occured while applying a change."
+                        log.debug task.operation
+                        log.debug task.doc
+                        log.raw err
+
+            callback()
 
 
     # Stop running replications and stop
