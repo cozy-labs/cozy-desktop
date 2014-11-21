@@ -128,7 +128,7 @@ fs = require('fs');
 
 homedir = path.homedir();
 
-configDir = path.join(homedir, '.cozy-data-proxy');
+configDir = path.join(homedir, '.cozy-desktop');
 
 configPath = path.join(configDir, 'config.json');
 

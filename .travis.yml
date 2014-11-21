@@ -41,7 +41,7 @@ before_install:
     - sleep 3
 
 script:
-    - cd /home/travis/build/Kloadut/cozy-desktop
+    - cd /home/travis/build/cozy-labs/cozy-desktop
     - npm install
     - node_modules/.bin/gulp test
 
