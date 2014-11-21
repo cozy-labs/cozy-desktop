@@ -129,7 +129,7 @@ module.exports = replication =
         replication.startSeq = config.getSeq()
 
         url = replication.url
-        console.log 'Start live synchronization...'
+        log.info 'Start live synchronization...'
 
         opts =
             filter: (doc) ->
@@ -154,7 +154,6 @@ module.exports = replication =
 
     # Log change event information.
     displayChange: (info) ->
-        console.log info
         nbDocs = 0
         if info.change? and info.change.docs_written > 0
             nbDocs = info.change.docs_written
@@ -237,9 +236,6 @@ module.exports = replication =
         config.setChangeSeq change.seq
 
         pouch.db.query 'localrev/byRevision', key: change.doc._rev, (err, res) ->
-            console.log 'yoloooo'
-            console.log err
-            console.log res
 
             isDeletion = change.deleted
             isCreation = change.doc.creationDate is change.doc.lastModification
