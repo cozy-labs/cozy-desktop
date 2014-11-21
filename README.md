@@ -13,6 +13,7 @@ command.**
 Build the package first:
 
     npm install
+    npm install nodewebkit
     node_modules/.bin/gulp build-gui-package
     node_modules/.bin/gulp make-deb
 
