@@ -167,6 +167,10 @@ module.exports = dbHelpers =
             doc.views.byChecksum =
                 map: queries.byChecksum
 
+        if queries.byRevision?
+            doc.views.byRevision =
+                map: queries.byRevision
+
         dbHelpers.db.get id, (err, currentDesignDoc) ->
             if currentDesignDoc?
                 doc._rev = currentDesignDoc._rev
