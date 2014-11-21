@@ -224,7 +224,7 @@ module.exports = dbHelpers =
     #TODO add test
     markAsDeleted: (deletedDoc, callback) ->
 
-        # Use the same pethod as in DS:
+        # Use the same method as in DS:
         # https://github.com/cozy/cozy-data-system/blob/master/server/lib/db_remove_helper.coffee#L7
         emptyDoc =
             _id: deletedDoc._id

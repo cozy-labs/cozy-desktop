@@ -504,6 +504,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
             # Update size and dates using the value of the FS
             fs.stat filePaths.absolute, (err, stats) ->
                 newDoc.lastModification = stats.mtime
+                newDoc.creationDate = stats.mtime
                 newDoc.size = stats.size
 
                 checkDocExistence newDoc
