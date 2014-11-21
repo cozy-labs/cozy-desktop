@@ -117,7 +117,7 @@ module.exports = replication =
                 doc.docType is 'Folder' or doc.docType is 'File'
             live: false
             since: replication.startSeq
-        replication.replicator = pouch.db.replicate.from(url, opts)
+        replication.replicatorFrom = pouch.db.replicate.from(url, opts)
             .on 'change', replication.displayChange
             .on 'complete', replication.onRepComplete
             .on 'error', replication.onError
@@ -136,7 +136,7 @@ module.exports = replication =
                 doc.docType is 'Folder' or doc.docType is 'File'
             live: true
             since: config.getSeq()
-        replication.replicator = pouch.db.replicate.from(url, opts)
+        replication.replicatorFrom = pouch.db.replicate.from(url, opts)
             .on 'change', replication.displayChange
             .on 'uptodate', replication.onSyncUpdate
             .on 'error', replication.onError
@@ -146,7 +146,7 @@ module.exports = replication =
                 doc.docType is 'Folder' or doc.docType is 'File'
             live: true
             since: config.getChangeSeq()
-        replication.replicator = pouch.db.replicate.to(url, opts)
+        replication.replicatorTo = pouch.db.replicate.to(url, opts)
             .on 'change', replication.displayChange
             .on 'uptodate', replication.displayChange
             .on 'error', replication.onError
@@ -272,6 +272,8 @@ module.exports = replication =
     # Stop running replications and stop
     cancelReplication: ->
         clearTimeout replication.timeout
-        replication.replicator.cancel() if replication.replicator?
+        replication.replicatorFrom.cancel() if replication.replicatorFrom?
+        replication.replicatorTo.cancel() if replication.replicatorTo?
         replication.timeout = null
-        replication.replicator = null
+        replication.replicatorFrom = null
+        replication.replicatorTo = null
