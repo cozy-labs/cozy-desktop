@@ -27,7 +27,7 @@ before_install:
     - pwd
     - NAME=proxy TOKEN=token forever start -o forever-proxy.log build/server.js
     - sleep 5
-    - 'curl -X POST -H "Content-Type: application/json" -d "{ \"email\": \"cozytest@cozycloud.cc\", \"password\": \"cozytests\"}" http://127.0.0.1:9104/register'
+    - 'curl -X POST -H "Content-Type: application/json" -d "{ \"email\": \"cozytest@cozycloud.cc\", \"password\": \"cozytest\"}" http://127.0.0.1:9104/register'
     - cd
     - git clone git://github.com/cozy/cozy-files.git
     - cd cozy-files
