@@ -19,7 +19,6 @@ before_install:
     - pwd
     - NAME=data-system TOKEN=token forever start -o forever-ds.log build/server.js
     - sleep 5
-    - 'curl -X PUT -H "Content-Type: application/json" -d "{ \"email\": \"cozytest@cozycloud.cc\", \"owner\": true, \"password\": \"$2a$10$VwA77zUtGj9GoMROFSyyT.2rGrFtqUrF77DGg0Ev3ms6wRNM9HX6q\", \"salt\": \"q24unp9k8qe0cnmiqu3pnhti\", \"public_name\": \"\", \"timezone\": \"GMT\", \"activated\": true, \"docType\": \"User\", \"slaveKey\": \"m87KWEbhpcKm0LDSVymzucyiTAw6OmUBOusdzqalBhrdEzQrVvOMyJ/i5szicln8\" }" http://127.0.0.1:5984/cozy/c50145ae3b1e732dcdb990271400108c'
     - pwd
     - cd
     - git clone git://github.com/cozy/cozy-proxy.git
@@ -27,7 +26,8 @@ before_install:
     - npm install
     - pwd
     - NAME=proxy TOKEN=token forever start -o forever-proxy.log build/server.js
-    - sleep 3
+    - sleep 5
+    - 'curl -X POST -H "Content-Type: application/json" -d "{ \"email\": \"cozytest@cozycloud.cc\", \"password\": \"cozytests\"}" http://127.0.0.1:9104/register'
     - cd
     - git clone git://github.com/cozy/cozy-files.git
     - cd cozy-files
