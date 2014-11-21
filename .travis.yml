@@ -39,13 +39,15 @@ before_install:
     - cd ~/cozy-files
     - NAME=files TOKEN=apptoken forever start -o forever-files.log build/server.js
     - sleep 3
+    - cd /home/travis/build/cozy-labs/cozy-desktop
 
 script:
-    - cd /home/travis/build/cozy-labs/cozy-desktop
+    - pwd
     - npm install
     - node_modules/.bin/gulp test
 
 after_failure:
+    - pwd
     - ps aux | grep server.js
     - sudo netstat -plunt
     - cat ~/cozy-data-system/forever-ds.log
