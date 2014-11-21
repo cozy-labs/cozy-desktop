@@ -129,7 +129,7 @@ module.exports = replication =
         replication.startSeq = config.getSeq()
 
         url = replication.url
-        log.info 'Start live synchronization...'
+        console.log 'Start live synchronization...'
 
         opts =
             filter: (doc) ->

@@ -73,10 +73,7 @@ StateView = React.createClass
             @displayLog 'First synchronization can take a while to init...'
             @setState sync: true
 
-            replication.runReplication
-                fromRemote: true
-                toRemote: true
-                force: options.force
+            replication.runSync()
 
             publisher.on 'binaryPresent', (path) =>
                 @displayLog "File #{path} is already there."
