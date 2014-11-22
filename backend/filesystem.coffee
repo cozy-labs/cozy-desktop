@@ -123,6 +123,7 @@ filesystem =
 
     applicationDelay: 0
 
+
     # Ensure that given file is located in the Cozy dir.
     isInSyncDir: (filePath) ->
         paths = @getPaths filePath
@@ -366,6 +367,83 @@ Folder #{relativePath} can't be created.
 
 
     # TODO: add test
+    createFileFromFS: (dir, callback) ->
+        handleError = (err) ->
+            log.raw err
+            log.error """
+Folder #{relativePath} can't be created.
+"""
+            callback()
+
+        relativePath = "#{dir.parent}/#{dir.filename}"
+
+        pouch.files.get relativePath, (err, doc) ->
+            if err then handleError err
+            else if not doc?
+
+                filesystem.createRemoteBinary relativePath, (err, binaryDoc) ->
+                    if err then handleError err
+                    else
+
+                        fs.stat dir.filePath, (err, stats) ->
+                            binaryClass = binary.getFileClass dir.filename
+                            if err then handleError err
+                            else
+                                log.debug binaryClass
+
+                                doc =
+                                    name: dir.filename
+                                    path: dir.parent
+                                    creationDate: stats.ctime
+                                    lastModification: stats.mtime
+                                    size: stats.size
+                                    class: binaryClass.fileClass
+                                    mime: binaryClass.type
+                                    binary:
+                                        file:
+                                            id: binaryDoc._id
+                                            rev: binaryDoc._rev
+                                            checksum: binaryDoc.checksum
+
+                                log.info """
+Create flle in DB: #{relativePath} (not remotely listed).
+"""
+                                log.debug doc
+
+                                pouch.files.createNew doc, (err, res) ->
+                                    log.debug res
+                                    if err then handleError
+                                    else
+
+                                        pouch.storeLocalRev res.rev, (err) ->
+                                            if err then handleError
+                                            else callback()
+
+            else
+                callback()
+
+
+    createRemoteBinary: (filePath, callback) ->
+        absPath = path.join remoteConfig.path, filePath
+
+        binary.createEmptyRemoteDoc (err, binaryDoc) ->
+            if err
+                callback err
+            else
+                id = binaryDoc.id
+                rev = binaryDoc.rev
+                binary.uploadAsAttachment id, rev, absPath, (err, newBinaryDoc) ->
+                    if err
+                        callback err
+                    else
+                        log.debug err
+                        log.debug newBinaryDoc
+                        id = newBinaryDoc.id
+                        rev = newBinaryDoc.rev
+                        binary.saveLocation absPath, id, rev, callback
+
+
+    # TODO: add test
     deleteFileIfNotListed: (file, callback) ->
         fullPath = file.filePath
         relativePath = "#{file.parent}/#{file.filename}"
@@ -427,7 +505,7 @@ Folder #{relativePath} can't be created.
                     else
                         fileList = filesystem.walkFileSync remoteConfig.path
                         async.eachSeries(fileList,
-                                         filesystem.deleteFileIfNotListed,
+                                         filesystem.createFileFromFS,
                                          callback)
 
 
@@ -606,11 +684,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
                 # Do not throw error
                 callback null
             else
-                mimeType = mime.lookup filePaths.name
-                if mimeType.split('/')[0] is 'image'
-                    fileClass = 'image'
-                else
-                    fileClass = 'document'
+                {type, fileClass} = binary.getFileClass filePaths.name
 
                 # We pass the new document through every local functions
                 createParentDirectory
@@ -619,7 +693,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
                     class: fileClass
                     name: filePaths.name
                     path: filePaths.parent
-                    mime: mimeType
+                    mime: type
                     tags: []
 
         checkFileLocation()

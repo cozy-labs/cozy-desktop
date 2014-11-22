@@ -36,7 +36,7 @@ getByKey = (query, key, callback) ->
 
 # TODO add tests
 createNewDoc = (docType, fields, callback) ->
-    fields.docType = 'Folder'
+    fields.docType = docType
     fields._id = newId()
     db.put fields, callback
 
@@ -52,16 +52,23 @@ module.exports = dbHelpers =
             dbHelpers.addAllFilters callback
 
     files:
+
         rows: []
+
         all: (params, callback) ->
             if typeof params is 'function'
                 callback = params
                 params = {}
             dbHelpers.db.query 'file/all', params, callback
+
         get: (key, callback) ->
             getByKey 'file/byFullPath', key, callback
 
+        createNew: (fields, callback) ->
+            createNewDoc 'File', fields, callback
+
     folders:
+
         rows: []
 
         all: (params, callback) ->

@@ -11,6 +11,7 @@ pouch      = require './db'
 publisher  = require './publisher'
 async      = require 'async'
 events     = require 'events'
+mime       = require 'mime'
 
 
 
@@ -28,6 +29,21 @@ module.exports = binary =
             callback null, checksum.read()
 
         stream.pipe checksum
+
+
+    # TODO add test
+    # TODO make a micromodule from it?
+    getFileClass: (filename) ->
+        type = mime.lookup filename
+        switch type.split('/')[0]
+            when 'image' then fileClass = "image"
+            when 'application' then fileClass = "document"
+            when 'text' then fileClass = "document"
+            when 'audio' then fileClass = "music"
+            when 'video' then fileClass = "video"
+            else
+                fileClass = "file"
+        {type, fileClass}
 
 
     # Retrieve info remotely for a given id.
