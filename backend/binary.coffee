@@ -163,7 +163,7 @@ module.exports = binary =
         {doc, filePath, binaryPath, forced} = options
 
         remoteConfig = config.getConfig()
-        deviceName ?= config.getDeviceName()
+        deviceName = config.getDeviceName()
 
         if (not fs.existsSync(binaryPath) \
            or fs.statSync(binaryPath).size isnt doc.size) \

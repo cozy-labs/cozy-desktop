@@ -186,7 +186,7 @@ filesystem =
 
                         event = if isFolder then 'folderMoved' else 'fileMoved'
                         infos = {previousPath, newPath}
-                        publish.emit event, infos
+                        publisher.emit event, infos
 
                         callback()
 
@@ -224,7 +224,7 @@ filesystem =
         pouch.getPreviousRev id, (err, doc) ->
             if err
                 callback err
-            else
+            else if doc.path? and doc.name?
                 folderPath = path.join remoteConfig.path, doc.path, doc.name
                 fs.remove folderPath, (err) ->
                     if err
@@ -233,6 +233,8 @@ filesystem =
                         log.info "Folder deleted: #{folderPath}"
                         publisher.emit 'folderDeleted', folderPath
                         callback()
+            else
+                callback()
 
 
     # Delete file require the related binary id, not the file object id.
@@ -295,8 +297,39 @@ filesystem =
             if err
                 callback err
             else if res.rows.length is 0 and fs.existsSync fullPath
-                log.info "Removing directory: #{relativePath} (not remotely listed)"
+                log.info """
+Remove directory: #{relativePath} (not remotely listed)
+"""
                 fs.remove fullPath, callback
+            else
+                callback()
+
+
+    # TODO: add test
+    createFromFS: (dir, callback) ->
+        relativePath = "#{dir.parent}/#{dir.filename}"
+        pouch.folders.get relativePath, (err, doc) ->
+            if err then callback err
+            else if not doc?
+                fs.stat dir.filePath, (err, stats) ->
+                    if err then callback err
+                    else
+                        doc =
+                            name: dir.filename
+                            path: dir.parent
+                            creationDate: stats.ctime
+                            lastModification: stats.mtime
+
+                        log.info """
+Create directory in DB: #{relativePath} (not remotely listed).
+"""
+                        pouch.folders.createNew doc, (err) ->
+                            if err
+                                log.raw err
+                                log.error """
+Folder #{relativePath} can't be created.
+"""
+                            callback()
             else
                 callback()
 
@@ -319,19 +352,10 @@ filesystem =
         if doc.path? and doc.name?
             filePath = path.resolve remoteConfig.path, doc.path, doc.name
 
-            download = ->
-                binary.fetchFromDoc remoteConfig.deviceName, doc, callback
-
             if fs.existsSync filePath
-                binary.isChecksumChanged doc, filePath, (err, isChanged) ->
-                    if err then callback err
-                    else
-                        if isChanged
-                            download()
-                        else
-                            callback()
+                callback()
             else
-                download()
+                binary.fetchFromDoc remoteConfig.deviceName, doc, callback
         else
             callback()
             #pouch.db.remove doc, (err) ->
@@ -349,7 +373,7 @@ filesystem =
                 folders = result.rows
 
                 dirList = filesystem.walkDirSync remoteConfig.path
-                async.eachSeries dirList, filesystem.deleteFolderIfNotListed, (err) ->
+                async.eachSeries dirList, filesystem.createFromFS, (err) ->
                     if err
                         callback err
                     else

@@ -1,5 +1,6 @@
 PouchDB = require 'pouchdb'
 fs = require 'fs-extra'
+path = require 'path-extra'
 async = require 'async'
 uuid = require 'node-uuid'
 log = require('printit')
@@ -15,6 +16,11 @@ db.setMaxListeners 100
 fs.ensureDirSync config.dir
 
 
+# TODO add test
+newId = ->
+    uuid.v4().split('-').join('')
+
+
 # TODO add tests
 getByKey = (query, key, callback) ->
     params =
@@ -27,6 +33,12 @@ getByKey = (query, key, callback) ->
             callback()
         else
             callback null,  docs.rows[0].value
+
+# TODO add tests
+createNewDoc = (docType, fields, callback) ->
+    fields.docType = 'Folder'
+    fields._id = newId()
+    db.put fields, callback
 
 
 module.exports = dbHelpers =
@@ -60,6 +72,9 @@ module.exports = dbHelpers =
 
         get: (key, callback) ->
             getByKey 'folder/byFullPath', key, callback
+
+        createNew: (fields, callback) ->
+            createNewDoc 'Folder', fields, callback
 
         upsert: (newDoc, callback) ->
             key = "#{newDoc.path}/#{newDoc.name}"
