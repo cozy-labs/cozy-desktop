@@ -215,17 +215,26 @@ module.exports = replication =
             since: since
             include_docs: true
 
-        pouch.db.changes(options)
-        .on 'error', (err) ->
+        error = (err) ->
             log.error "An error occured while applying changes"
             log.error "Stop applying changes."
             callback err
-        .on 'complete', (res) ->
-            log.info 'All changes were fetched, now applying them to your files...'
-            async.eachSeries res.results, replication.applyChange, (err) ->
-                log.error err if err
-                log.info "All changes were applied to your files."
-                callback() if callback?
+
+        apply = (res) ->
+            if filesystem.applicationDelay is 0
+                log.info 'All changes were fetched, now applying them to your files...'
+                async.eachSeries res.results, replication.applyChange, (err) ->
+                    log.error err if err
+                    log.info "All changes were applied to your files."
+                    callback() if callback?
+            else
+                setTimeout ->
+                    apply res
+                , 1000
+
+        pouch.db.changes(options)
+        .on 'error', error
+        .on 'complete', apply
 
 
     # Define the proper task to perform on the file system and add it to the

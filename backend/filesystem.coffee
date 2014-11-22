@@ -23,7 +23,12 @@ remoteConfig = config.getConfig()
 # Execute the right instruction on the DB or on the filesystem depending
 # on the task operation.
 applyOperation = (task, callback) ->
-    blockingOperations = [
+
+    # Operation that will block chokidar from watching FS changes
+    #
+    # i.e. when files will be downloaded from remote, we don't want them
+    # to be detected as "new files"
+    watchingBlockingOperations = [
         'get'
         'delete'
         'catchup'
@@ -38,9 +43,20 @@ applyOperation = (task, callback) ->
         'moveFolder'
     ]
 
+    # Operations that will delay application of replication changes
+    #
+    # i.e when multiples files are added locally, we don't want those
+    # additions to be interrupted by remote changes application
+    replicationBlockingOperation = [
+        'post'
+        'postFolder'
+        'put'
+        'deleteDoc'
+    ]
+
     log.debug "Operation queued: #{task.operation}"
 
-    if task.operation in blockingOperations
+    if task.operation in watchingBlockingOperations
         filesystem.watchingLocked = true
         callbackOrig = callback
         callback = (err, res) ->
@@ -48,6 +64,13 @@ applyOperation = (task, callback) ->
                 filesystem.watchingLocked = false
                 callbackOrig err, res
             , 500
+
+    if task.operation in replicationBlockingOperation
+        delay = 1000
+        filesystem.applicationDelay += delay
+        setTimeout ->
+            filesystem.applicationDelay -= delay
+        , delay
 
     switch task.operation
         when 'post'
@@ -97,6 +120,7 @@ applyOperation = (task, callback) ->
 
 filesystem =
 
+    applicationDelay: 0
 
     # Ensure that given file is located in the Cozy dir.
     isInSyncDir: (filePath) ->
