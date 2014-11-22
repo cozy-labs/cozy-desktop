@@ -6,6 +6,7 @@ uuid     = require 'node-uuid'
 mime     = require 'mime'
 chokidar = require 'chokidar'
 rimraf   = require 'rimraf'
+wrench   = require 'wrench'
 log      = require('printit')
     prefix: 'Filesystem '
 
@@ -60,13 +61,15 @@ applyOperation = (task, callback) ->
 
     if task.operation in watchingBlockingOperations
         filesystem.watchingLocked = true
-        fs.chmodSync remoteConfig.path, '550'
+        #if task.operation in ['applyFolderDBChanges', 'applyFileDBChanges']
+            #wrench.chmodSyncRecursive remoteConfig.path, '550'
         callbackOrig = callback
         callback = (err, res) ->
             setTimeout ->
-                fs.chmod remoteConfig.path, '750', (err) ->
-                    filesystem.watchingLocked = false
-                    callbackOrig err, res
+                #if task.operation in ['applyFolderDBChanges', 'applyFileDBChanges']
+                    #wrench.chmodSyncRecursive remoteConfig.path, '750'
+                filesystem.watchingLocked = false
+                callbackOrig err, res
             , 500
 
     if task.operation in replicationBlockingOperation
@@ -140,7 +143,7 @@ filesystem =
         del "#{dirPath}/*", force: true, callback
 
 
-    # Build usefule path from a given path.
+    # Build useful path from a given path.
     # (absolute, relative, filename, parent path, and parent absolute path).
     getPaths: (filePath) ->
         remoteConfig = config.getConfig()
@@ -225,7 +228,7 @@ filesystem =
 
                         callback()
 
-                # That case only happens with folder. It occurs when a
+                # That case only happens with folders. It occurs when a
                 # subfolder was moved before its parents. So parent target
                 # is created before the parent is moved.
                 else if isMoved and previousExists and newExists
