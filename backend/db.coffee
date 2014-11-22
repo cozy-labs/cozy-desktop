@@ -14,6 +14,20 @@ db.setMaxListeners 100
 fs.ensureDirSync config.dir
 
 
+# TODO add tests
+getByKey = (query, key, callback) ->
+    params =
+        include_docs: true
+        key: key
+    db.query query, params, (err, docs) ->
+        if err
+            callback err
+        else if docs.rows.length is 0
+            callback()
+        else
+            callback null,  docs.rows[0].value
+
+
 module.exports = dbHelpers =
 
     db: db
@@ -32,16 +46,7 @@ module.exports = dbHelpers =
                 params = {}
             dbHelpers.db.query 'file/all', params, callback
         get: (key, callback) ->
-            params =
-                include_docs: true
-                key: key
-            db.query 'file/byFullPath', params, (err, docs) ->
-                if err
-                    callback err
-                else if docs.rows.length is 0
-                    callback()
-                else
-                    callback null,  docs.rows[0].value
+            getByKey 'file/byFullPath', key, callback
 
     folders:
         rows: []
@@ -53,16 +58,7 @@ module.exports = dbHelpers =
             dbHelpers.db.query 'folder/all', params, callback
 
         get: (key, callback) ->
-            params =
-                include_docs: true
-                key: key
-            db.query 'folder/byFullPath', params, (err, docs) ->
-                if err
-                    callback err
-                else if docs.rows.length is 0
-                    callback()
-                else
-                    callback null,  docs.rows[0].value
+            getByKey 'folder/byFullPath', key, callback
 
         upsert: (newDoc, callback) ->
             key = "#{newDoc.path}/#{newDoc.name}"
@@ -91,6 +87,8 @@ module.exports = dbHelpers =
                 callback = params
                 params = {}
             dbHelpers.db.query 'binary/all', params, callback
+        get: (key, callback) ->
+            getByKey 'binary/byChecksum', key, callback
 
 
     # Create all required views in the database.
