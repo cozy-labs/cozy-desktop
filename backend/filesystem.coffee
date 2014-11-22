@@ -306,7 +306,7 @@ Remove directory: #{relativePath} (not remotely listed)
 
 
     # TODO: add test
-    createFromFS: (dir, callback) ->
+    createFolderFromFS: (dir, callback) ->
         relativePath = "#{dir.parent}/#{dir.filename}"
         pouch.folders.get relativePath, (err, doc) ->
             if err then callback err
@@ -373,13 +373,13 @@ Folder #{relativePath} can't be created.
                 folders = result.rows
 
                 dirList = filesystem.walkDirSync remoteConfig.path
-                async.eachSeries dirList, filesystem.createFromFS, (err) ->
+                mapFunction = filesystem.createFolderFromFS
+                async.eachSeries dirList, mapFunction, (err) ->
                     if err
                         callback err
                     else
-                        async.eachSeries(folders,
-                                         filesystem.makeDirectoryFromDoc,
-                                         callback)
+                        mapFunction = filesystem.makeDirectoryFromDoc
+                        async.eachSeries folders, mapFunction, callback
 
 
     # Make sure that filesystem files matches with information stored in the

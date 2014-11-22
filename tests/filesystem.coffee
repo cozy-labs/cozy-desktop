@@ -82,12 +82,12 @@ describe "Filesystem Tests", ->
 
     describe "applyFolderDBChanges", ->
         syncDir = '/tmp/cozy'
-        it "removes directory that has not been saved to the PouchDB \
+        it "creates directory that has not been saved to the PouchDB \
             and keeps the other", (done) ->
             # root directories
             fs.mkdirSync "#{syncDir}/directory1"
             fs.mkdirSync "#{syncDir}/directory2"
-            # directory1 content (should be removed)
+            # directory1 content (folder should be created)
             fs.mkdirSync "#{syncDir}/directory1/testdir"
             touch.sync "#{syncDir}/directory1/testfile"
 
@@ -106,9 +106,13 @@ describe "Filesystem Tests", ->
                 , (err, res) ->
                     should.not.exist err
                     filesystem.applyFolderDBChanges ->
-                        fs.existsSync("#{syncDir}/directory1").should.be.false
+                        fs.existsSync("#{syncDir}/directory1").should.be.true
                         fs.existsSync("#{syncDir}/directory2").should.be.true
-                        fs.existsSync("#{syncDir}/directory2/directory3").should.be.true
+                        folderPath = "#{syncDir}/directory2/directory3"
+                        fs.existsSync(folderPath).should.be.true
+
+                        pouch.folders.all (err, docs) ->
+                            docs.rows.length.should.equal 3
                         done()
 
 
