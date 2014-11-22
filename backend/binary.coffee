@@ -194,11 +194,18 @@ module.exports = binary =
             publisher.emit 'binaryDownloadStart', filePath
             client.saveFile urlPath, binaryPath, (err, res) ->
 
-                if res
+                if err
+                    callback err
+                else
                     log.info "Binary downloaded: #{filePath}"
                     publisher.emit 'binaryDownloaded', filePath
+                    callback null
+                    #fs.chmod filePath, '550', (err) ->
+                    #    if err
+                    #        callback err
+                    #    else
+                    #        callback null
 
-                callback err
         else
             log.info "File already downloaded: #{filePath}"
             publisher.emit 'binaryPresent', filePath
@@ -242,7 +249,8 @@ module.exports = binary =
     # Download corresponding binary
     fetchFromDoc: (deviceName, doc, callback) ->
         remoteConfig = config.getConfig()
-        if doc.path? and doc.name? and doc.binary?.file?.id?
+        if doc.path? and doc.name? and doc.binary?.file?.id? \
+        and fs.existsSync path.join remoteConfig.path, doc.path
             filePath = path.join doc.path, doc.name
             binaryPath = path.join remoteConfig.path, filePath
 
