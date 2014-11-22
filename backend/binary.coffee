@@ -158,13 +158,14 @@ module.exports = binary =
     # If file exists anyway and has the right size,
     # we assume that it has already been downloaded.
     downloadFile: (options, callback) ->
-        {deviceName, doc, filePath, binaryPath} = options
+        {doc, filePath, binaryPath, forced} = options
 
         remoteConfig = config.getConfig()
         deviceName ?= config.getDeviceName()
 
-        if not fs.existsSync(binaryPath) \
-           or fs.statSync(binaryPath).size isnt doc.size
+        if (not fs.existsSync(binaryPath) \
+           or fs.statSync(binaryPath).size isnt doc.size) \
+           or forced
 
             client = request.newClient remoteConfig.url
             client.setBasicAuth deviceName, remoteConfig.devicePassword
@@ -232,7 +233,7 @@ module.exports = binary =
                     callback err
                 else
 
-                    options = {deviceName, doc, filePath, binaryPath}
+                    options = {doc, filePath, binaryPath}
                     binary.downloadFile options, (err) =>
                         if err
                             callback err
