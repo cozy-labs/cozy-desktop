@@ -535,14 +535,20 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
                 # Do not throw error
                 callback null
             else
+                mimeType = mime.lookup filePaths.name
+                if mimeType.split('/')[0] is 'image'
+                    fileClass = 'image'
+                else
+                    fileClass = 'document'
+
                 # We pass the new document through every local functions
                 createParentDirectory
                     _id: uuid.v4().split('-').join('')
                     docType: 'File'
-                    class: 'document'
+                    class: fileClass
                     name: filePaths.name
                     path: filePaths.parent
-                    mime: mime.lookup filePaths.name
+                    mime: mimeType
                     tags: []
 
         checkFileLocation()
