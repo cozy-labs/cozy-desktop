@@ -38,6 +38,8 @@ applyOperation = (task, callback) ->
         'moveFolder'
     ]
 
+    log.debug "Operation queued: #{task.operation}"
+
     if task.operation in blockingOperations
         filesystem.watchingLocked = true
         callbackOrig = callback
@@ -50,10 +52,13 @@ applyOperation = (task, callback) ->
     switch task.operation
         when 'post'
             if task.file?
-                filesystem.createFileDoc task.file, true, callback
+                filesystem.createFileDoc task.file, callback
+        when 'postFolder'
+            if task.folder?
+                filesystem.createDirectoryDoc task.folder, callback
         when 'put'
             if task.file?
-                filesystem.createFileDoc task.file, false, callback
+                filesystem.createFileDoc task.file, callback
         when 'newFolder'
             if task.doc?
                 filesystem.makeDirectoryFromDoc task.doc, callback
@@ -171,11 +176,11 @@ filesystem =
                     previousDocRev.path,
                     previousDocRev.name
                 )
-                isExistPrevious = fs.existsSync previousPath
-                isExistNew = fs.existsSync newPath
+                previousExists = fs.existsSync previousPath
+                newExists = fs.existsSync newPath
                 isMoved = newPath isnt previousPath
 
-                if isMoved and isExistPrevious and not isExistNew
+                if isMoved and previousExists and not newExists
                     fs.move previousPath, newPath, (err) ->
                         if err
                             log.error err
@@ -191,7 +196,7 @@ filesystem =
                 # That case only happens with folder. It occurs when a
                 # subfolder was moved before its parents. So parent target
                 # is created before the parent is moved.
-                else if isMoved and isExistPrevious and isExistNew
+                else if isMoved and previousExists and newExists
                     task =
                         operation: 'deleteFolder'
                         id: doc._id
@@ -356,14 +361,14 @@ filesystem =
 
 
     # Check for directoy existence. If it exists, it
-    createDirectoryDoc: (dirPath, ignoreExisting, callback) ->
+    createDirectoryDoc: (dirPath, callback) ->
         dirPaths = filesystem.getPaths dirPath
         remoteConfig = config.getConfig()
 
         isInDir = filesystem.isInSyncDir dirPath
-        isExist = isInDir and fs.existsSync(dirPaths.absolute)
+        exists = isInDir and fs.existsSync(dirPaths.absolute)
 
-        if not isExist
+        if not exists
             unless dirPath is '' or dirPath is remoteConfig.path
                 log.error """
 Directory is not located in the synchronized directory: #{dirPaths.absolute}
@@ -372,7 +377,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
 
         else
             absParent = dirPaths.absParent
-            filesystem.createDirectoryDoc absParent, true, (err, res) ->
+            filesystem.createDirectoryDoc absParent, (err, res) ->
                 if err
                     log.error "An error occured at parent directory's creation"
                     callback err
@@ -403,7 +408,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
 
 
     # TODO refactor it in smaller functions.
-    createFileDoc: (filePath, ignoreExisting, callback) ->
+    createFileDoc: (filePath, callback) ->
         filePaths = @getPaths filePath
 
         saveBinaryDocument = (newDoc) ->
@@ -513,7 +518,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
                 checkDocExistence newDoc
 
         createParentDirectory = (newDoc) =>
-            @createDirectoryDoc filePaths.absParent, true, (err, res) ->
+            @createDirectoryDoc filePaths.absParent, (err, res) ->
                 if err
                     log.error "An error occured at parent directory's creation"
                     callback err
@@ -614,7 +619,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
             if not @watchingLocked
                 if dirPath isnt remoteConfig.path
                     log.info "Directory added: #{dirPath}"
-                    @createDirectoryDoc dirPath, true, ->
+                    @changes.push { operation: 'postFolder', folder: dirPath }, ->
 
         # File deletion detected
         .on 'unlink', (filePath) =>
