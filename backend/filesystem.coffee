@@ -24,6 +24,8 @@ remoteConfig = config.getConfig()
 # on the task operation.
 applyOperation = (task, callback) ->
 
+    #TODO: Arrange operation names
+
     # Operation that will block chokidar from watching FS changes
     #
     # i.e. when files will be downloaded from remote, we don't want them
@@ -642,6 +644,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
             if not @watchingLocked and not filesBeingCopied[filePath]?
                 log.info "File added: #{filePath}"
                 fileIsCopied filePath, =>
+                    publisher.emit 'fileAddedLocally', filePath
                     @changes.push { operation: 'post', file: filePath }, ->
 
         # New directory detected
@@ -649,16 +652,19 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
             if not @watchingLocked
                 if dirPath isnt remoteConfig.path
                     log.info "Directory added: #{dirPath}"
+                    publisher.emit 'folderAddedLocally', dirPath
                     @changes.push { operation: 'postFolder', folder: dirPath }, ->
 
         # File deletion detected
         .on 'unlink', (filePath) =>
             log.info "File deleted: #{filePath}"
+            publisher.emit 'fileDeletedLocally', filePath
             @changes.push { operation: 'deleteDoc', file: filePath }, ->
 
         # Folder deletion detected
         .on 'unlinkDir', (dirPath) =>
             log.info "Folder deleted: #{dirPath}"
+            publisher.emit 'folderDeletedLocally', dirPath
             @changes.push { operation: 'deleteDoc', file: dirPath }, ->
 
         # File update detected
@@ -666,6 +672,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
             if not @watchingLocked and not filesBeingCopied[filePath]?
                 log.info "File changed: #{filePath}"
                 fileIsCopied filePath, =>
+                    publisher.emit 'fileChangedLocally', filePath
                     @changes.push { operation: 'put', file: filePath }, ->
 
         .on 'error', (err) ->
