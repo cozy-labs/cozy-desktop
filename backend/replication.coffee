@@ -99,6 +99,7 @@ module.exports = replication =
     # * catchup:
     # * force: force to stat sync from the beginning.
     runReplication: (options) ->
+        options ?= {}
         catchup = options.catchup or false
 
         if options.force is true
@@ -127,6 +128,7 @@ module.exports = replication =
     # retrieved.
     runSync: ->
         replication.startSeq = config.getSeq()
+        replication.startChangeSeq = config.getChangeSeq()
 
         url = replication.url
         log.info 'Start live synchronization...'
@@ -135,7 +137,7 @@ module.exports = replication =
             filter: (doc) ->
                 doc.docType is 'Folder' or doc.docType is 'File'
             live: true
-            since: config.getSeq()
+            since: replication.startSeq
         replication.replicatorFrom = pouch.db.replicate.from(url, opts)
             .on 'change', replication.displayChange
             .on 'uptodate', replication.onSyncUpdate
@@ -145,7 +147,7 @@ module.exports = replication =
             filter: (doc) ->
                 doc.docType is 'Folder' or doc.docType is 'File'
             live: true
-            since: config.getChangeSeq()
+            since: replication.startChangeSeq
         replication.replicatorTo = pouch.db.replicate.to(url, opts)
             .on 'change', replication.displayChange
             .on 'uptodate', replication.displayChange
@@ -215,17 +217,26 @@ module.exports = replication =
             since: since
             include_docs: true
 
-        pouch.db.changes(options)
-        .on 'error', (err) ->
+        error = (err) ->
             log.error "An error occured while applying changes"
             log.error "Stop applying changes."
             callback err
-        .on 'complete', (res) ->
-            log.info 'All changes were fetched, now applying them to your files...'
-            async.eachSeries res.results, replication.applyChange, (err) ->
-                log.error err if err
-                log.info "All changes were applied to your files."
-                callback() if callback?
+
+        apply = (res) ->
+            if filesystem.applicationDelay is 0
+                log.info 'All changes were fetched, now applying them to your files...'
+                async.eachSeries res.results, replication.applyChange, (err) ->
+                    log.error err if err
+                    log.info "All changes were applied to your files."
+                    callback() if callback?
+            else
+                setTimeout ->
+                    apply res
+                , 1000
+
+        pouch.db.changes(options)
+        .on 'error', error
+        .on 'complete', apply
 
 
     # Define the proper task to perform on the file system and add it to the

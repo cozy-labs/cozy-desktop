@@ -73,8 +73,13 @@ StateView = React.createClass
             @displayLog 'First synchronization can take a while to init...'
             @setState sync: true
 
-            replication.runSync()
+            filesystem.watchChanges true, true
+            replication.runReplication
+                force: options.force
 
+            #TODO: Arrange published names
+
+            # Remote to local messages
             publisher.on 'binaryPresent', (path) =>
                 @displayLog "File #{path} is already there."
             publisher.on 'binaryDownloadStart', (path) =>
@@ -93,6 +98,24 @@ StateView = React.createClass
             publisher.on 'folderMoved', (info) =>
                 {previousPath, newPath} = info
                 @displayLog "Folder moved: #{previousPath} -> #{newPath}"
+
+            # Local to remote messages
+             publisher.on 'uploadBinary', (path) =>
+                @displayLog "File #{path} is uploading..."
+            publisher.on 'binaryUploaded', (path) =>
+                @displayLog "File #{path} uploaded"
+            publisher.on 'fileAddedLocally', (path) =>
+                @displayLog "File #{path} locally added"
+            publisher.on 'fileDeletedLocally', (path) =>
+                @displayLog "File #{path} locally deleted"
+            publisher.on 'fileDeletedLocally', (path) =>
+                @displayLog "File #{path} locally deleted"
+            publisher.on 'fileChangedLocally', (path) =>
+                @displayLog "File #{path} locally changed"
+            publisher.on 'folderAddedLocally', (path) =>
+                @displayLog "Folder #{path} locally added"
+            publisher.on 'folderDeletedLocally', (path) =>
+                @displayLog "Folder #{path} locally deleted"
 
 
     clearLogs: ->

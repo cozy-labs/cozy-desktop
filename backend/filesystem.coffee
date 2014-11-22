@@ -23,7 +23,14 @@ remoteConfig = config.getConfig()
 # Execute the right instruction on the DB or on the filesystem depending
 # on the task operation.
 applyOperation = (task, callback) ->
-    blockingOperations = [
+
+    #TODO: Arrange operation names
+
+    # Operation that will block chokidar from watching FS changes
+    #
+    # i.e. when files will be downloaded from remote, we don't want them
+    # to be detected as "new files"
+    watchingBlockingOperations = [
         'get'
         'delete'
         'catchup'
@@ -37,7 +44,20 @@ applyOperation = (task, callback) ->
         'moveFolder'
     ]
 
-    if task.operation in blockingOperations
+    # Operations that will delay application of replication changes
+    #
+    # i.e when multiples files are added locally, we don't want those
+    # additions to be interrupted by remote changes application
+    replicationBlockingOperation = [
+        'post'
+        'postFolder'
+        'put'
+        'deleteDoc'
+    ]
+
+    log.debug "Operation queued: #{task.operation}"
+
+    if task.operation in watchingBlockingOperations
         filesystem.watchingLocked = true
         callbackOrig = callback
         callback = (err, res) ->
@@ -46,13 +66,23 @@ applyOperation = (task, callback) ->
                 callbackOrig err, res
             , 500
 
+    if task.operation in replicationBlockingOperation
+        delay = 1000
+        filesystem.applicationDelay += delay
+        setTimeout ->
+            filesystem.applicationDelay -= delay
+        , delay
+
     switch task.operation
         when 'post'
             if task.file?
-                filesystem.createFileDoc task.file, true, callback
+                filesystem.createFileDoc task.file, callback
+        when 'postFolder'
+            if task.folder?
+                filesystem.createDirectoryDoc task.folder, callback
         when 'put'
             if task.file?
-                filesystem.createFileDoc task.file, false, callback
+                filesystem.createFileDoc task.file, callback
         when 'newFolder'
             if task.doc?
                 filesystem.makeDirectoryFromDoc task.doc, callback
@@ -91,6 +121,7 @@ applyOperation = (task, callback) ->
 
 filesystem =
 
+    applicationDelay: 0
 
     # Ensure that given file is located in the Cozy dir.
     isInSyncDir: (filePath) ->
@@ -170,15 +201,15 @@ filesystem =
                     previousDocRev.path,
                     previousDocRev.name
                 )
-                isExistPrevious = fs.existsSync previousPath
-                isExistNew = fs.existsSync newPath
+                previousExists = fs.existsSync previousPath
+                newExists = fs.existsSync newPath
                 isMoved = newPath isnt previousPath
                 isFolder = doc.docType is 'Folder'
                 isFile = not isFolder
                 isDateChanged = \
                     previousDocRev.lastModification isnt doc.lastModification
 
-                if isMoved and isExistPrevious and not isExistNew
+                if isMoved and previousExists and not newExists
                     fs.move previousPath, newPath, (err) ->
                         if err
                             log.error err
@@ -193,7 +224,7 @@ filesystem =
                 # That case only happens with folder. It occurs when a
                 # subfolder was moved before its parents. So parent target
                 # is created before the parent is moved.
-                else if isMoved and isExistPrevious and isExistNew
+                else if isMoved and previousExists and newExists
                     task =
                         operation: 'deleteFolder'
                         id: doc._id
@@ -401,14 +432,14 @@ Folder #{relativePath} can't be created.
 
 
     # Check for directoy existence. If it exists, it
-    createDirectoryDoc: (dirPath, ignoreExisting, callback) ->
+    createDirectoryDoc: (dirPath, callback) ->
         dirPaths = filesystem.getPaths dirPath
         remoteConfig = config.getConfig()
 
         isInDir = filesystem.isInSyncDir dirPath
-        isExist = isInDir and fs.existsSync(dirPaths.absolute)
+        exists = isInDir and fs.existsSync(dirPaths.absolute)
 
-        if not isExist
+        if not exists
             unless dirPath is '' or dirPath is remoteConfig.path
                 log.error """
 Directory is not located in the synchronized directory: #{dirPaths.absolute}
@@ -417,7 +448,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
 
         else
             absParent = dirPaths.absParent
-            filesystem.createDirectoryDoc absParent, true, (err, res) ->
+            filesystem.createDirectoryDoc absParent, (err, res) ->
                 if err
                     log.error "An error occured at parent directory's creation"
                     callback err
@@ -448,7 +479,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
 
 
     # TODO refactor it in smaller functions.
-    createFileDoc: (filePath, ignoreExisting, callback) ->
+    createFileDoc: (filePath, callback) ->
         filePaths = @getPaths filePath
 
         saveBinaryDocument = (newDoc) ->
@@ -558,7 +589,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
                 checkDocExistence newDoc
 
         createParentDirectory = (newDoc) =>
-            @createDirectoryDoc filePaths.absParent, true, (err, res) ->
+            @createDirectoryDoc filePaths.absParent, (err, res) ->
                 if err
                     log.error "An error occured at parent directory's creation"
                     callback err
@@ -575,14 +606,20 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
                 # Do not throw error
                 callback null
             else
+                mimeType = mime.lookup filePaths.name
+                if mimeType.split('/')[0] is 'image'
+                    fileClass = 'image'
+                else
+                    fileClass = 'document'
+
                 # We pass the new document through every local functions
                 createParentDirectory
                     _id: uuid.v4().split('-').join('')
                     docType: 'File'
-                    class: 'document'
+                    class: fileClass
                     name: filePaths.name
                     path: filePaths.parent
-                    mime: mime.lookup filePaths.name
+                    mime: mimeType
                     tags: []
 
         checkFileLocation()
@@ -652,6 +689,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
             if not @watchingLocked and not filesBeingCopied[filePath]?
                 log.info "File added: #{filePath}"
                 fileIsCopied filePath, =>
+                    publisher.emit 'fileAddedLocally', filePath
                     @changes.push { operation: 'post', file: filePath }, ->
 
         # New directory detected
@@ -659,16 +697,19 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
             if not @watchingLocked
                 if dirPath isnt remoteConfig.path
                     log.info "Directory added: #{dirPath}"
-                    @createDirectoryDoc dirPath, true, ->
+                    publisher.emit 'folderAddedLocally', dirPath
+                    @changes.push { operation: 'postFolder', folder: dirPath }, ->
 
         # File deletion detected
         .on 'unlink', (filePath) =>
             log.info "File deleted: #{filePath}"
+            publisher.emit 'fileDeletedLocally', filePath
             @changes.push { operation: 'deleteDoc', file: filePath }, ->
 
         # Folder deletion detected
         .on 'unlinkDir', (dirPath) =>
             log.info "Folder deleted: #{dirPath}"
+            publisher.emit 'folderDeletedLocally', dirPath
             @changes.push { operation: 'deleteDoc', file: dirPath }, ->
 
         # File update detected
@@ -676,6 +717,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
             if not @watchingLocked and not filesBeingCopied[filePath]?
                 log.info "File changed: #{filePath}"
                 fileIsCopied filePath, =>
+                    publisher.emit 'fileChangedLocally', filePath
                     @changes.push { operation: 'put', file: filePath }, ->
 
         .on 'error', (err) ->

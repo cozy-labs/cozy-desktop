@@ -93,7 +93,12 @@ module.exports = dbHelpers =
                         if prevDate > newDate
                             newDoc.lastModification = prevDoc.lastModification
 
-                    db.put newDoc, callback
+                    db.put newDoc, (err, res) ->
+                        if err
+                            callback err
+                        else
+                            dbHelpers.storeLocalRev res.rev, ->
+                                callback null, res
 
 
     binaries:
