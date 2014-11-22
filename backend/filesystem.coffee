@@ -112,11 +112,11 @@ applyOperation = (task, callback) ->
             if task.file?
                 filesystem.deleteDoc task.file, callback
         when 'catchup'
-            filesystem.applyFileDBChanges true, callback
+            filesystem.applyFileDBChanges callback
         when 'reDownload'
-            filesystem.applyFileDBChanges false, callback
+            filesystem.applyFileDBChanges callback
         when 'applyFileDBChanges'
-            filesystem.applyFileDBChanges false, callback
+            filesystem.applyFileDBChanges callback
         when 'applyFolderDBChanges'
             filesystem.applyFolderDBChanges callback
         else
@@ -395,7 +395,6 @@ Folder #{relativePath} can't be created.
                             binaryClass = binary.getFileClass dir.filename
                             if err then handleError err
                             else
-                                log.debug binaryClass
 
                                 doc =
                                     name: dir.filename
@@ -414,10 +413,8 @@ Folder #{relativePath} can't be created.
                                 log.info """
 Create flle in DB: #{relativePath} (not remotely listed).
 """
-                                log.debug doc
 
                                 pouch.files.createNew doc, (err, res) ->
-                                    log.debug res
                                     if err then handleError
                                     else
 
@@ -442,8 +439,6 @@ Create flle in DB: #{relativePath} (not remotely listed).
                     if err
                         callback err
                     else
-                        log.debug err
-                        log.debug newBinaryDoc
                         id = newBinaryDoc.id
                         rev = newBinaryDoc.rev
                         binary.saveLocation absPath, id, rev, callback
@@ -499,7 +494,7 @@ Create flle in DB: #{relativePath} (not remotely listed).
 
     # Make sure that filesystem files matches with information stored in the
     # database.
-    applyFileDBChanges: (keepLocalDeletions, callback) ->
+    applyFileDBChanges: (callback) ->
         pouch.files.all (err, result) ->
             if err and err.status isnt 404 or result is undefined
                 callback err
@@ -507,6 +502,7 @@ Create flle in DB: #{relativePath} (not remotely listed).
                 files = result.rows
                 async.eachSeries files, filesystem.downloadIfNotExists, (err) ->
                     if err
+                        log.error err
                         callback err
                     else
                         fileList = filesystem.walkFileSync remoteConfig.path

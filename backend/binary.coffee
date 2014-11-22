@@ -151,19 +151,19 @@ module.exports = binary =
         pouch.removeIfExists id, (err) =>
             if err
                 callback err
-            @checksum filePath, (err, checksum) ->
-                document =
-                    _id: id
-                    _rev: rev
-                    docType: 'Binary'
-                    path: filePath
-                    checksum: checksum
+            else
+                @checksum filePath, (err, checksum) ->
+                    document =
+                        _id: id
+                        docType: 'Binary'
+                        path: filePath
+                        checksum: checksum
 
-                pouch.db.put document, (err, res) ->
-                    if err
-                        callback err
-                    else
-                        callback null, document
+                    pouch.db.put document, (err, res) ->
+                        if err
+                            callback err
+                        else
+                            callback null, document
 
 
     # Change modification dates on file system.
@@ -264,7 +264,6 @@ module.exports = binary =
                         if err
                             callback err
                         else
-
                             options = {doc, filePath, binaryPath}
                             binary.saveFileMetadata options, callback
         else

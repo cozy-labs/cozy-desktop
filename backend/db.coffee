@@ -228,7 +228,7 @@ module.exports = dbHelpers =
     # Remove given document id if it exists. Doesn't return an error if the
     # dociment doesn't exist.
     removeIfExists: (id, callback) ->
-        dbHelpers.db.get id, (err, doc) ->
+        db.get id, (err, doc) ->
             if err and err.status isnt 404
                 callback err
             else if err and err.status is 404
