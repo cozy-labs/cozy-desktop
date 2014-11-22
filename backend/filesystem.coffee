@@ -34,7 +34,6 @@ applyOperation = (task, callback) ->
         'deleteFile'
         'newFolder'
         'newFile'
-        'moveFile'
         'moveFolder'
     ]
 
@@ -172,6 +171,10 @@ filesystem =
                 isExistPrevious = fs.existsSync previousPath
                 isExistNew = fs.existsSync newPath
                 isMoved = newPath isnt previousPath
+                isFolder = doc.docType is 'Folder'
+                isFile = not isFolder
+                isDateChanged = \
+                    previousDocRev.lastModification isnt doc.lastModification
 
                 if isMoved and isExistPrevious and not isExistNew
                     fs.move previousPath, newPath, (err) ->
@@ -179,10 +182,9 @@ filesystem =
                             log.error err
                         log.info "Entry moved: #{previousPath} -> #{newPath}"
 
-                        if doc.docType is 'Folder'
-                            publisher.emit 'folderMoved', {previousPath, newPath}
-                        else
-                            publisher.emit 'fileMoved', {previousPath, newPath}
+                        event = if isFolder then 'folderMoved' else 'fileMoved'
+                        infos = {previousPath, newPath}
+                        publish.emit event, infos
 
                         callback()
 
@@ -197,6 +199,18 @@ filesystem =
                     filesystem.changes.push task, (err) ->
                         log.error err if err
                     callback()
+
+                # That case handles files that has bin overwriten remotely
+                else if not isMoved and isDateChanged and isFile
+                    log.info "File overwritten, need redownload: #{isFile}"
+
+                    filePath = path.join doc.path, doc.name
+                    options =
+                        doc: doc
+                        filePath: filePath
+                        binaryPath: path.absolute filePath
+                        forced: true
+                    binary.downloadFile options, callback
                 else
                     callback()
 
@@ -303,12 +317,19 @@ filesystem =
         if doc.path? and doc.name?
             filePath = path.resolve remoteConfig.path, doc.path, doc.name
 
-            # TODO Should test if checksum is right
-            if fs.existsSync filePath
-                callback()
-            else
-                # Else download file
+            download = ->
                 binary.fetchFromDoc remoteConfig.deviceName, doc, callback
+
+            if fs.existsSync filePath
+                binary.isChecksumChanged doc, filePath, (err, isChanged) ->
+                    if err then callback err
+                    else
+                        if isChanged
+                            download()
+                        else
+                            callback()
+            else
+                download()
         else
             callback()
             #pouch.db.remove doc, (err) ->
