@@ -120,7 +120,8 @@ InfoLine = React.createClass({
     }, value));
   }
 });
-;var config, configDir, configHelpers, configPath, device, fs, homedir, keys, path;
+
+var config, configDir, configHelpers, configPath, device, fs, homedir, keys, path;
 
 path = require('path-extra');
 
@@ -174,7 +175,8 @@ configHelpers = {
     }
   }
 };
-;var StateView;
+
+var StateView;
 
 StateView = React.createClass({
   getInitialState: function() {
@@ -280,11 +282,7 @@ StateView = React.createClass({
       this.setState({
         sync: true
       });
-      replication.runReplication({
-        fromRemote: true,
-        toRemote: true,
-        force: options.force
-      });
+      replication.runSync();
       publisher.on('binaryPresent', (function(_this) {
         return function(path) {
           return _this.displayLog("File " + path + " is already there.");
@@ -366,7 +364,8 @@ StateView = React.createClass({
     });
   }
 });
-;var en;
+
+var en;
 
 en = {
   'cozy files configuration 1 on 2': 'Configure your device (1/2)',
@@ -397,7 +396,8 @@ en = {
   'first step text': "Prior to register your computer to your Cozy, we need information about it.",
   'second step text': "It's time to register your computer to your Cozy.\n(password won't be stored)."
 };
-;var isValidForm;
+
+var isValidForm;
 
 isValidForm = function(fields) {
   var field, _i, _len;
@@ -409,7 +409,49 @@ isValidForm = function(fields) {
   }
   return true;
 };
-;var ConfigFormStepOne, ConfigFormStepTwo, Intro;
+
+var renderState;
+
+renderState = function(state) {
+  var currentComponent;
+  switch (state) {
+    case 'INTRO':
+      currentComponent = Intro();
+      break;
+    case 'STEP1':
+      currentComponent = ConfigFormStepOne(device);
+      break;
+    case 'STEP2':
+      currentComponent = ConfigFormStepTwo(device);
+      break;
+    case 'STEP3':
+      currentComponent = ConfigFormStepThree(device);
+      break;
+    case 'STATE':
+      currentComponent = StateView(device);
+      break;
+    default:
+      currentComponent = Intro();
+  }
+  React.renderComponent(currentComponent, document.body);
+  if (state === 'STEP1') {
+    return $("#folder-input").attr('nwdirectory', '');
+  }
+};
+
+window.onload = function() {
+  var locale, locales, polyglot;
+  window.__DEV__ = window.location.hostname === 'localhost';
+  locale = window.locale || window.navigator.language || "en";
+  locales = {};
+  polyglot = new Polyglot();
+  locales = en;
+  polyglot.extend(locales);
+  window.t = polyglot.t.bind(polyglot);
+  return renderState(configHelpers.getState());
+};
+
+var ConfigFormStepOne, ConfigFormStepTwo, Intro;
 
 Intro = React.createClass({
   render: function() {
@@ -617,45 +659,3 @@ ConfigFormStepTwo = React.createClass({
     }
   }
 });
-;var renderState;
-
-renderState = function(state) {
-  var currentComponent;
-  switch (state) {
-    case 'INTRO':
-      currentComponent = Intro();
-      break;
-    case 'STEP1':
-      currentComponent = ConfigFormStepOne(device);
-      break;
-    case 'STEP2':
-      currentComponent = ConfigFormStepTwo(device);
-      break;
-    case 'STEP3':
-      currentComponent = ConfigFormStepThree(device);
-      break;
-    case 'STATE':
-      currentComponent = StateView(device);
-      break;
-    default:
-      currentComponent = Intro();
-  }
-  React.renderComponent(currentComponent, document.body);
-  if (state === 'STEP1') {
-    return $("#folder-input").attr('nwdirectory', '');
-  }
-};
-
-window.onload = function() {
-  var locale, locales, polyglot;
-  window.__DEV__ = window.location.hostname === 'localhost';
-  locale = window.locale || window.navigator.language || "en";
-  locales = {};
-  polyglot = new Polyglot();
-  locales = en;
-  polyglot.extend(locales);
-  window.t = polyglot.t.bind(polyglot);
-  return renderState(configHelpers.getState());
-};
-;
-//# sourceMappingURL=app.js.map

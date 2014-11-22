@@ -106,7 +106,9 @@ module.exports = binary =
                 callback err
             else
                 doc.path = finalPath
-                pouch.db.put doc, callback
+                pouch.db.put doc, (err, res) ->
+                    pouch.storeLocalRev res.rev, ->
+                        callback err, res
 
 
     # Check if a binary already exists

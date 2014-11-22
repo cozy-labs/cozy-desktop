@@ -41,8 +41,10 @@ applyOperation = (task, callback) ->
         filesystem.watchingLocked = true
         callbackOrig = callback
         callback = (err, res) ->
-            filesystem.watchingLocked = false
-            callbackOrig err, res
+            setTimeout ->
+                filesystem.watchingLocked = false
+                callbackOrig err, res
+            , 500
 
     switch task.operation
         when 'post'
@@ -427,7 +429,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
 
         saveBinaryDocument = (newDoc) ->
 
-        # Save location and checksum locally to
+            # Save location and checksum locally to
             # facilitate further operations
             binary.saveLocation filePaths.absolute
                                 , newDoc.binary.file.id
@@ -437,8 +439,9 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
                     callback err
                 else
                     newDoc.binary.file.checksum = doc.checksum
-                    pouch.db.put newDoc, callback
-
+                    pouch.db.put newDoc, (err, res) ->
+                        pouch.storeLocalRev res.rev, ->
+                            callback err, res
 
         uploadBinary = (newDoc, binaryDoc) ->
             binary.uploadAsAttachment binaryDoc.id
@@ -525,6 +528,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
             # Update size and dates using the value of the FS
             fs.stat filePaths.absolute, (err, stats) ->
                 newDoc.lastModification = stats.mtime
+                newDoc.creationDate = stats.mtime
                 newDoc.size = stats.size
 
                 checkDocExistence newDoc

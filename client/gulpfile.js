@@ -27,6 +27,7 @@ gulp.task('assets', [], function() {
 gulp.task('scripts', ['assets'], function() {
   return gulp.src(paths.scripts)
     .pipe(coffee({bare: true}))
+    .pipe(concat('app.js'))
     .pipe(gulp.dest('public/javascripts'));
 });
 
