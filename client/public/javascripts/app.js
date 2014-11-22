@@ -282,7 +282,10 @@ StateView = React.createClass({
       this.setState({
         sync: true
       });
-      replication.runSync();
+      filesystem.watchChanges(true, true);
+      replication.runReplication({
+        force: options.force
+      });
       publisher.on('binaryPresent', (function(_this) {
         return function(path) {
           return _this.displayLog("File " + path + " is already there.");
@@ -320,11 +323,51 @@ StateView = React.createClass({
           return _this.displayLog("Folder " + path + " deleted");
         };
       })(this));
-      return publisher.on('folderMoved', (function(_this) {
+      publisher.on('folderMoved', (function(_this) {
         return function(info) {
           var newPath, previousPath;
           previousPath = info.previousPath, newPath = info.newPath;
           return _this.displayLog("Folder moved: " + previousPath + " -> " + newPath);
+        };
+      })(this));
+      publisher.on('uploadBinary', (function(_this) {
+        return function(path) {
+          return _this.displayLog("File " + path + " is uploading...");
+        };
+      })(this));
+      publisher.on('binaryUploaded', (function(_this) {
+        return function(path) {
+          return _this.displayLog("File " + path + " uploaded");
+        };
+      })(this));
+      publisher.on('fileAddedLocally', (function(_this) {
+        return function(path) {
+          return _this.displayLog("File " + path + " locally added");
+        };
+      })(this));
+      publisher.on('fileDeletedLocally', (function(_this) {
+        return function(path) {
+          return _this.displayLog("File " + path + " locally deleted");
+        };
+      })(this));
+      publisher.on('fileDeletedLocally', (function(_this) {
+        return function(path) {
+          return _this.displayLog("File " + path + " locally deleted");
+        };
+      })(this));
+      publisher.on('fileChangedLocally', (function(_this) {
+        return function(path) {
+          return _this.displayLog("File " + path + " locally changed");
+        };
+      })(this));
+      publisher.on('folderAddedLocally', (function(_this) {
+        return function(path) {
+          return _this.displayLog("Folder " + path + " locally added");
+        };
+      })(this));
+      return publisher.on('folderDeletedLocally', (function(_this) {
+        return function(path) {
+          return _this.displayLog("Folder " + path + " locally deleted");
         };
       })(this));
     }

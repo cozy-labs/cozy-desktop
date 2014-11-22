@@ -99,6 +99,7 @@ module.exports = replication =
     # * catchup:
     # * force: force to stat sync from the beginning.
     runReplication: (options) ->
+        options ?= {}
         catchup = options.catchup or false
 
         if options.force is true
@@ -127,6 +128,7 @@ module.exports = replication =
     # retrieved.
     runSync: ->
         replication.startSeq = config.getSeq()
+        replication.startChangeSeq = config.getChangeSeq()
 
         url = replication.url
         log.info 'Start live synchronization...'
@@ -135,7 +137,7 @@ module.exports = replication =
             filter: (doc) ->
                 doc.docType is 'Folder' or doc.docType is 'File'
             live: true
-            since: config.getSeq()
+            since: replication.startSeq
         replication.replicatorFrom = pouch.db.replicate.from(url, opts)
             .on 'change', replication.displayChange
             .on 'uptodate', replication.onSyncUpdate
@@ -145,7 +147,7 @@ module.exports = replication =
             filter: (doc) ->
                 doc.docType is 'Folder' or doc.docType is 'File'
             live: true
-            since: config.getChangeSeq()
+            since: replication.startChangeSeq
         replication.replicatorTo = pouch.db.replicate.to(url, opts)
             .on 'change', replication.displayChange
             .on 'uptodate', replication.displayChange

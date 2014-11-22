@@ -26,7 +26,7 @@ gulp.task('clean', function(cb) {
 });
 
 
-gulp.task('scripts', function() {
+gulp.task('scripts', ['clean'], function() {
   gulp.src(paths.scripts)
     .pipe(coffee({bare: true}))
     .pipe(gulp.dest('backend'));
