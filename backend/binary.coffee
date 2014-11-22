@@ -194,11 +194,17 @@ module.exports = binary =
             publisher.emit 'binaryDownloadStart', filePath
             client.saveFile urlPath, binaryPath, (err, res) ->
 
-                if res
+                if err
+                    callback err
+                else
                     log.info "Binary downloaded: #{filePath}"
                     publisher.emit 'binaryDownloaded', filePath
+                    fs.chmod filePath, '550', (err) ->
+                        if err
+                            callback err
+                        else
+                            callback null
 
-                callback err
         else
             log.info "File already downloaded: #{filePath}"
             publisher.emit 'binaryPresent', filePath

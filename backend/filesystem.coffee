@@ -23,6 +23,7 @@ remoteConfig = config.getConfig()
 # Execute the right instruction on the DB or on the filesystem depending
 # on the task operation.
 applyOperation = (task, callback) ->
+    remoteConfig = config.getConfig()
 
     #TODO: Arrange operation names
 
@@ -59,11 +60,13 @@ applyOperation = (task, callback) ->
 
     if task.operation in watchingBlockingOperations
         filesystem.watchingLocked = true
+        fs.chmodSync remoteConfig.path, '550'
         callbackOrig = callback
         callback = (err, res) ->
             setTimeout ->
-                filesystem.watchingLocked = false
-                callbackOrig err, res
+                fs.chmod remoteConfig.path, '750', (err) ->
+                    filesystem.watchingLocked = false
+                    callbackOrig err, res
             , 500
 
     if task.operation in replicationBlockingOperation
