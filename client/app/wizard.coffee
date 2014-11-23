@@ -10,7 +10,7 @@ Intro = React.createClass
                img
                    id: 'logo'
                    src: 'client/public/icon/bighappycloud.png'
-               p className: 'mtl biggest', t 'welcome to the cozy data proxy'
+               p className: 'mtl biggest', t 'welcome to the cozy desktop'
                Button
                     className: 'mtl bigger pam'
                     onClick: @onEnterClicked
