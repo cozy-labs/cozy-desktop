@@ -632,6 +632,10 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
             binary.docAlreadyExists checksum, (err, doc) ->
                 if err
                     callback err
+                ##
+                ## Commented out because it raises conflicts when 2 documents
+                ## have the same content
+                ##
                 #else if doc
                 #    # Binary document exists
                 #    newDoc.binary =

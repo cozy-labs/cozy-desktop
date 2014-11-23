@@ -247,7 +247,7 @@ module.exports = replication =
         config.setChangeSeq change.seq
 
         pouch.db.query 'localrev/byRevision', key: change.doc._rev, (err, res) ->
-            if res.rows.length is 0
+            if res?.rows? and res.rows.length is 0
                 isDeletion = change.deleted
                 isCreation = change.doc.creationDate is change.doc.lastModification
                 task =
