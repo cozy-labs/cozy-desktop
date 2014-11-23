@@ -140,6 +140,7 @@ StateView = React.createClass
         moment = require 'moment'
         logs.push moment().format('HH:MM:SS ') + log
         @setState logs: logs
+        tray.tooltip = log
 
     onDeleteConfigurationClicked: ->
         config = require './backend/config'
