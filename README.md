@@ -47,10 +47,6 @@ Other commands can be listed with
 
     cozy-desktop -h
 
-## TODO
-
-* Handle conflicts properly
-
 ### Hack
 
 ### Synchronization engine
