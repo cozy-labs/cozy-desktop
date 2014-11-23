@@ -398,9 +398,10 @@ StateView = React.createClass({
     logs = this.state.logs;
     moment = require('moment');
     logs.push(moment().format('HH:MM:SS ') + log);
-    return this.setState({
+    this.setState({
       logs: logs
     });
+    return tray.tooltip = log;
   },
   onDeleteConfigurationClicked: function() {
     var config;
