@@ -112,8 +112,8 @@ describe "Filesystem Tests", ->
                         fs.existsSync(folderPath).should.be.true
 
                         pouch.folders.all (err, docs) ->
-                            docs.rows.length.should.equal 3
-                        done()
+                            docs.rows.length.should.equal 5
+                            done()
 
 
     describe "applyFileDBChanges", ->
@@ -167,7 +167,7 @@ describe "Filesystem Tests", ->
                 createFileDocument (err, res) ->
                     should.not.exist err
 
-                    filesystem.applyFileDBChanges false, (err, res) ->
+                    filesystem.applyFileDBChanges (err, res) ->
                         should.not.exist err
                         fs.existsSync(filePath).should.be.true
                         done()
@@ -206,7 +206,7 @@ describe "Filesystem Tests", ->
         it "creates a DB document from a local folder information", (done) ->
             fs.mkdir dirPath, (err) ->
                 should.not.exist err
-                filesystem.createDirectoryDoc dirPath, false, (err, res) ->
+                filesystem.createDirectoryDoc dirPath, (err, res) ->
                     should.not.exist err
                     should.exist res._id
                     pouch.db.query 'folder/byFullPath', key: "/#{dirName}", (err, res) ->
@@ -219,7 +219,7 @@ describe "Filesystem Tests", ->
         it "creates parent directory DB doc", (done) ->
             mkdirp dirPath2, (err) ->
                 should.not.exist err
-                filesystem.createDirectoryDoc dirPath2, false, (err, res) ->
+                filesystem.createDirectoryDoc dirPath2, (err, res) ->
                     should.not.exist err
                     should.exist res._id
                     pouch.db.query 'folder/byFullPath', key: "/#{parentDirName}", (err, res) ->
@@ -236,7 +236,7 @@ describe "Filesystem Tests", ->
 
 
         it "does not update DB document when folder exists", (done) =>
-            filesystem.createDirectoryDoc dirPath, true, (err, res) =>
+            filesystem.createDirectoryDoc dirPath, (err, res) =>
                 pouch.db.query 'folder/byFullPath', key: "/#{dirName}", (err, res) =>
                     should.not.exist err
                     res.rows.length.should.not.equal 0
@@ -255,7 +255,7 @@ describe "Filesystem Tests", ->
         it "creates a DB document from a local file's information", (done) =>
             fs.writeFile filePath, 'hello', (err) =>
                 should.not.exist err
-                filesystem.createFileDoc filePath, false, (err, res) =>
+                filesystem.createFileDoc filePath, (err, res) =>
                     should.not.exist err
                     should.exist res.id
                     pouch.db.query 'file/byFullPath', key: "/#{fileName}", (err, res) =>
@@ -271,7 +271,7 @@ describe "Filesystem Tests", ->
             mkdirp '/tmp/cozy/test_parent_dir2', (err) ->
                 fs.writeFile filePath2, 'hello', (err) ->
                     should.not.exist err
-                    filesystem.createFileDoc filePath2, false, (err, res) ->
+                    filesystem.createFileDoc filePath2, (err, res) ->
                         should.not.exist err
                         should.exist res.id
                         pouch.db.query 'folder/byFullPath', key: "/#{parentDirName}", (err, res) ->
@@ -290,7 +290,7 @@ describe "Filesystem Tests", ->
 
 
         it "does not update DB document when file exists", (done) =>
-            filesystem.createFileDoc filePath, true, (err, res) =>
+            filesystem.createFileDoc filePath, (err, res) =>
                 pouch.db.query 'file/byFullPath', key: "/#{fileName}", (err, res) =>
                     should.not.exist err
                     for key, value in res.rows[0].value
@@ -300,7 +300,7 @@ describe "Filesystem Tests", ->
         it "updates DB documents when file has changed", (done) =>
             setTimeout =>
                 fs.writeFile filePath, 'hello2', (err) =>
-                    filesystem.createFileDoc filePath, false, (err, res) =>
+                    filesystem.createFileDoc filePath, (err, res) =>
                         pouch.db.query 'file/byFullPath', key: "/#{fileName}", (err, res) =>
                             should.not.exist err
                             should.exist res.rows[0].value
