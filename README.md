@@ -19,7 +19,9 @@ The install it:
 
 ## GUI Running
 
-*work in progress*
+Just run the main executable:
+
+    cozy-desktop
 
 ## CLI Install
 
@@ -47,7 +49,6 @@ Other commands can be listed with
 
 ## TODO
 
-* Investigate on pouchDB listener limit error
 * Handle conflicts properly
 
 ### Hack
