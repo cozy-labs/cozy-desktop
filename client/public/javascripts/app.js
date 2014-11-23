@@ -276,19 +276,28 @@ StateView = React.createClass({
       if (replication.replicator != null) {
         replication.replicator.cancel();
       }
-      return this.displayLog('Synchronization is off');
+      this.displayLog('Synchronization is off');
+      return menu.items[0].label = 'Start Sync';
     } else {
       this.displayLog('Synchronization is on...');
       this.displayLog('First synchronization can take a while to init...');
       this.setState({
         sync: true
       });
+      menu.items[0].label = 'Stop Sync';
+      tray.icon = 'client/public/icon/icon_sync.png';
       pouch.addAllFilters(function() {
         filesystem.watchChanges(true, true);
         return replication.runReplication({
           force: options.force
         });
       });
+      publisher.on('firstSyncDone', (function(_this) {
+        return function() {
+          tray.icon = 'client/public/icon/icon.png';
+          return _this.displayLog("Successfully synchronized");
+        };
+      })(this));
       publisher.on('binaryPresent', (function(_this) {
         return function(path) {
           return _this.displayLog("File " + path + " is already there.");
@@ -296,11 +305,13 @@ StateView = React.createClass({
       })(this));
       publisher.on('binaryDownloadStart', (function(_this) {
         return function(path) {
+          tray.icon = 'client/public/icon/icon_sync.png';
           return _this.displayLog("File " + path + " is downloading...");
         };
       })(this));
       publisher.on('binaryDownloaded', (function(_this) {
         return function(path) {
+          tray.icon = 'client/public/icon/icon.png';
           return _this.displayLog("File " + path + " downloaded");
         };
       })(this));
@@ -335,11 +346,13 @@ StateView = React.createClass({
       })(this));
       publisher.on('uploadBinary', (function(_this) {
         return function(path) {
+          tray.icon = 'client/public/icon/icon_sync.png';
           return _this.displayLog("File " + path + " is uploading...");
         };
       })(this));
       publisher.on('binaryUploaded', (function(_this) {
         return function(path) {
+          tray.icon = 'client/public/icon/icon.png';
           return _this.displayLog("File " + path + " uploaded");
         };
       })(this));
@@ -496,6 +509,73 @@ window.onload = function() {
   window.t = polyglot.t.bind(polyglot);
   return renderState(configHelpers.getState());
 };
+
+var gui, menu, menuItem1, menuItem2, menuItem3, tray;
+
+gui = require('nw.gui');
+
+tray = new gui.Tray({
+  title: 'Cozy Desktop',
+  icon: 'client/public/icon/icon.png'
+});
+
+menu = new gui.Menu();
+
+menuItem1 = new gui.MenuItem({
+  type: 'normal',
+  label: 'Start sync',
+  click: (function(_this) {
+    return function() {
+      return _this.onSyncClicked();
+    };
+  })(this)
+});
+
+menuItem2 = new gui.MenuItem({
+  type: 'normal',
+  label: 'Show logs',
+  click: function() {
+    return win.show();
+  }
+});
+
+menuItem3 = new gui.MenuItem({
+  type: 'normal',
+  label: 'Quit',
+  click: function() {
+    return win.close(true);
+  }
+});
+
+menu.append(menuItem1);
+
+menu.append(menuItem2);
+
+menu.append(menuItem3);
+
+tray.menu = menu;
+
+tray.on('click', function() {
+  return win.show();
+});
+
+var win;
+
+win = gui.Window.get();
+
+win.setMaximumSize(600, 800);
+
+win.setMinimumSize(600, 800);
+
+win.setResizable(false);
+
+win.setAlwaysOnTop(true);
+
+win.setPosition('center');
+
+win.on('close', function() {
+  return win.hide();
+});
 
 var ConfigFormStepOne, ConfigFormStepTwo, Intro;
 

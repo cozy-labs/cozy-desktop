@@ -68,11 +68,14 @@ StateView = React.createClass
             @setState sync: false
             replication.replicator.cancel() if replication.replicator?
             @displayLog 'Synchronization is off'
+            menu.items[0].label = 'Start Sync'
 
         else
             @displayLog 'Synchronization is on...'
             @displayLog 'First synchronization can take a while to init...'
             @setState sync: true
+            menu.items[0].label = 'Stop Sync'
+            tray.icon = 'client/public/icon/icon_sync.png'
 
             pouch.addAllFilters ->
                 filesystem.watchChanges true, true
@@ -81,12 +84,19 @@ StateView = React.createClass
 
             #TODO: Arrange published names
 
+            # First sync
+            publisher.on 'firstSyncDone', =>
+                tray.icon = 'client/public/icon/icon.png'
+                @displayLog "Successfully synchronized"
+
             # Remote to local messages
             publisher.on 'binaryPresent', (path) =>
                 @displayLog "File #{path} is already there."
             publisher.on 'binaryDownloadStart', (path) =>
+                tray.icon = 'client/public/icon/icon_sync.png'
                 @displayLog "File #{path} is downloading..."
             publisher.on 'binaryDownloaded', (path) =>
+                tray.icon = 'client/public/icon/icon.png'
                 @displayLog "File #{path} downloaded"
             publisher.on 'fileDeleted', (path) =>
                 @displayLog "File #{path} deleted"
@@ -103,8 +113,10 @@ StateView = React.createClass
 
             # Local to remote messages
              publisher.on 'uploadBinary', (path) =>
+                tray.icon = 'client/public/icon/icon_sync.png'
                 @displayLog "File #{path} is uploading..."
             publisher.on 'binaryUploaded', (path) =>
+                tray.icon = 'client/public/icon/icon.png'
                 @displayLog "File #{path} uploaded"
             publisher.on 'fileAddedLocally', (path) =>
                 @displayLog "File #{path} locally added"

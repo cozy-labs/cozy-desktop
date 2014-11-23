@@ -12,6 +12,7 @@ pouch      = require './db'
 config     = require './config'
 filesystem = require './filesystem'
 binary     = require './binary'
+publisher  = require './publisher'
 
 filters = []
 
@@ -185,6 +186,7 @@ module.exports = replication =
         log.info 'Start building your filesystem on your device.'
         filesystem.changes.push operation: 'applyFolderDBChanges', ->
             filesystem.changes.push operation: 'applyFileDBChanges', ->
+                publisher.emit 'firstSyncDone'
                 log.info 'All your files are now available on your device.'
                 replication.runSync()
 
