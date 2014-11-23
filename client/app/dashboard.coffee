@@ -62,6 +62,7 @@ StateView = React.createClass
         replication = require './backend/replication'
         filesystem = require './backend/filesystem'
         publisher = require './backend/publisher'
+        pouch = require './backend/db'
 
         if @state.sync
             @setState sync: false
@@ -73,9 +74,10 @@ StateView = React.createClass
             @displayLog 'First synchronization can take a while to init...'
             @setState sync: true
 
-            filesystem.watchChanges true, true
-            replication.runReplication
-                force: options.force
+            pouch.addAllFilters ->
+                filesystem.watchChanges true, true
+                replication.runReplication
+                    force: options.force
 
             #TODO: Arrange published names
 

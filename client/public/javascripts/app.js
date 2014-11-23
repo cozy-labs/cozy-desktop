@@ -264,10 +264,11 @@ StateView = React.createClass({
     });
   },
   sync: function(options) {
-    var filesystem, publisher, replication;
+    var filesystem, pouch, publisher, replication;
     replication = require('./backend/replication');
     filesystem = require('./backend/filesystem');
     publisher = require('./backend/publisher');
+    pouch = require('./backend/db');
     if (this.state.sync) {
       this.setState({
         sync: false
@@ -282,9 +283,11 @@ StateView = React.createClass({
       this.setState({
         sync: true
       });
-      filesystem.watchChanges(true, true);
-      replication.runReplication({
-        force: options.force
+      pouch.addAllFilters(function() {
+        filesystem.watchChanges(true, true);
+        return replication.runReplication({
+          force: options.force
+        });
       });
       publisher.on('binaryPresent', (function(_this) {
         return function(path) {

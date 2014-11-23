@@ -135,10 +135,10 @@ module.exports = binary =
             include_docs: true,
             key: checksum
         pouch.db.query 'binary/byChecksum', options, (err, docs) ->
-            if err
+            if err and err.status isnt 404
                 callback err
             else
-                if not docs.rows?
+                if not docs?.rows?
                     callback null, null
                 else if docs.rows.length is 0
                     callback null, null
