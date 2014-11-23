@@ -10,7 +10,8 @@ StateView = React.createClass
             logs.push Line className: 'smaller', 'nothing to notice...'
         else
             i = 0
-            logs.push Line key: "log-#{i++}", className: 'smaller', log for log in @state.logs
+            for log in @state.logs
+                logs.push Line key: "log-#{i++}", className: 'smaller', log
             logs.reverse()
 
         if @state.sync
@@ -21,7 +22,7 @@ StateView = React.createClass
             syncButtonLabel = t 'start sync'
 
         Container className: 'line',
-            Title text: 'Cozy Data Proxy'
+            Title text: 'Cozy Desktop'
             Container className: 'mod w50 left',
                 Subtitle text: 'Parameters'
                 InfoLine label: t('device name'), value: device.deviceName
