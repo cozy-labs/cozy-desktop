@@ -261,7 +261,12 @@ filesystem =
     removeDeletedFolder: (id, rev, callback) ->
         pouch.getPreviousRev id, (err, doc) ->
             if err
-                callback err
+                if err.status is 404
+                    log.debug """
+Can't delete folder, previous revison is not registered: #{id}
+"""
+                    callback()
+                else
             else if doc.path? and doc.name?
                 folderPath = path.join remoteConfig.path, doc.path, doc.name
                 fs.remove folderPath, (err) ->
@@ -280,7 +285,13 @@ filesystem =
     removeDeletedFile: (id, rev, callback) ->
         pouch.getPreviousRev id, (err, doc) ->
             if err
-                callback err if callback?
+                if err.status is 404
+                    log.debug """
+Can't delete file, previous revison is not registered: #{id}
+"""
+                    callback()
+                else
+                    callback err
             else if doc.path? and doc.name?
                 filePath = path.join remoteConfig.path, doc.path, doc.name
                 fs.remove filePath, (err) ->

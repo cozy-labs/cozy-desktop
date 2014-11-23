@@ -255,7 +255,9 @@ module.exports = dbHelpers =
 
                 db.get id, rev: rev, callback
             else
-                callback new Error 'previous revision not found'
+                err = new Error 'previous revision not found'
+                err.status = 404
+                callback err
 
 
     # Mark a document as deleted in the database (flag _deleted). Then delete
