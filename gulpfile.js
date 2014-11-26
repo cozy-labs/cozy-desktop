@@ -112,7 +112,7 @@ gulp.task('make-rpm-32', shell.task([
 ]));
 
 
-gulp.task('make-deb-64', shell.task([
+gulp.task('make-rpm-64', shell.task([
   'rm -rf pkg_tree',
   'mkdir -p pkg_tree/opt/cozy-desktop pkg_tree/usr/share/doc/cozy-desktop pkg_tree/usr/share/applications',
   'install -b -o root -g root -m 0755 build/cozy-desktop/linux64/* pkg_tree/opt/cozy-desktop/',
