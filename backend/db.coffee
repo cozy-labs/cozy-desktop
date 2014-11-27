@@ -156,6 +156,16 @@ module.exports = dbHelpers =
         }
         """
 
+        if docType in ['file', 'File']
+            queries.byChecksum = """
+        function (doc) {
+            if (doc.docType !== undefined
+                && doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
+                emit(doc.binary.file.checksum, doc);
+            }
+        }
+        """
+
         if docType in ['localrev', 'localRev']
             queries.byRevision = """
         function (doc) {

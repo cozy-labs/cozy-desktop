@@ -1,6 +1,5 @@
 path = require 'path-extra'
-fs = require 'fs'
-
+fs = require 'fs-extra'
 
 # This module loads the current configuration, sets up the global variables
 # related to configuration and provide helpers to modify it.
@@ -8,7 +7,11 @@ fs = require 'fs'
 homedir = path.homedir()
 configDir = path.join homedir, '.cozy-desktop'
 configPath = path.join configDir, 'config.json'
-if not fs.existsSync configPath
+
+fs.ensureDirSync configDir
+fs.ensureFileSync configPath
+
+if fs.readFileSync(configPath).toString() is ''
     fs.writeFileSync configPath, JSON.stringify devices: {}, null, 2
 
 config = require configPath
@@ -38,3 +41,5 @@ configHelpers =
             'STEP2'
         else
             'STATE'
+
+

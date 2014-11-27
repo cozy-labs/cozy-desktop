@@ -60,22 +60,30 @@ StateView = React.createClass
         @sync force: false
 
     sync: (options)->
+        notifier = require 'node-notifier'
         replication = require './backend/replication'
         filesystem = require './backend/filesystem'
         publisher = require './backend/publisher'
         pouch = require './backend/db'
+        gui = require 'nw.gui'
+        open = require 'open'
 
         if @state.sync
             @setState sync: false
             replication.replicator.cancel() if replication.replicator?
             @displayLog 'Synchronization is off'
-            menu.items[0].label = 'Start Sync'
+            notifier.notify
+                title: 'Synchronization has been stopped'
+            menu.items[10].label = 'Start synchronization'
 
         else
             @displayLog 'Synchronization is on...'
             @displayLog 'First synchronization can take a while to init...'
             @setState sync: true
-            menu.items[0].label = 'Stop Sync'
+            menu.items[10].label = 'Stop synchronization'
+            notifier.notify
+                title: 'Synchronization is on'
+                message: 'First synchronization can take a while to init'
             tray.icon = 'client/public/icon/icon_sync.png'
 
             pouch.addAllFilters ->
@@ -99,11 +107,13 @@ StateView = React.createClass
             publisher.on 'binaryDownloaded', (path) =>
                 tray.icon = 'client/public/icon/icon.png'
                 @displayLog "File #{path} downloaded"
+                @fileModification path
             publisher.on 'fileDeleted', (path) =>
                 @displayLog "File #{path} deleted"
             publisher.on 'fileMoved', (info) =>
                 {previousPath, newPath} = info
                 @displayLog "File moved: #{previousPath} -> #{newPath}"
+                @fileModification newPath
             publisher.on 'directoryEnsured', (path) =>
                 @displayLog "Folder #{path} ensured"
             publisher.on 'folderDeleted', (path) =>
@@ -119,14 +129,17 @@ StateView = React.createClass
             publisher.on 'binaryUploaded', (path) =>
                 tray.icon = 'client/public/icon/icon.png'
                 @displayLog "File #{path} uploaded"
+                @fileModification path
             publisher.on 'fileAddedLocally', (path) =>
                 @displayLog "File #{path} locally added"
+                @fileModification path
             publisher.on 'fileDeletedLocally', (path) =>
                 @displayLog "File #{path} locally deleted"
             publisher.on 'fileDeletedLocally', (path) =>
                 @displayLog "File #{path} locally deleted"
-            publisher.on 'fileChangedLocally', (path) =>
+            publisher.on 'fileModificationLocally', (path) =>
                 @displayLog "File #{path} locally changed"
+                @fileModification path
             publisher.on 'folderAddedLocally', (path) =>
                 @displayLog "Folder #{path} locally added"
             publisher.on 'folderDeletedLocally', (path) =>
@@ -142,6 +155,22 @@ StateView = React.createClass
         logs.push moment().format('HH:MM:SS ') + log
         @setState logs: logs
         tray.tooltip = log
+        if log.length > 40
+            log.substring 0, 37
+            log = log + '...'
+        menu.items[5].label = log
+
+    fileModification: (file) ->
+        modMenu = menu.items[6].submenu
+        modMenu.insert new gui.MenuItem
+            type: 'normal'
+            label: file
+            click: ->
+                open file
+
+        # Do not store more than 10 menu items
+        if modMenu.items.length > 12
+            modMenu.removeAt modMenu.items.length-3
 
     onDeleteConfigurationClicked: ->
         config = require './backend/config'
