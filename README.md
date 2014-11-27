@@ -1,7 +1,7 @@
 # [Cozy](http://cozy.io) Desktop
 
 The Cozy desktop app allows to sync the files stored in your Cozy with your laptop
-and/or your desktop. It replicates your files on your hard drive and apply 
+and/or your desktop. It replicates your files on your hard drive and apply
 changes you made on them on other synced devices and on your online Cozy.
 
 ## GUI Install
@@ -9,13 +9,20 @@ changes you made on them on other synced devices and on your online Cozy.
 Build the package first:
 
     npm install
+    sudo npm install -g nw-gyp
     npm install nodewebkit
+    sudo apt-get install ruby-dev build-essential
+    sudo gem install fpm
     node_modules/.bin/gulp build-gui-package
-    node_modules/.bin/gulp make-deb
+
+Build .deb for your system:
+
+    node_modules/.bin/gulp make-deb-32
+    node_modules/.bin/gulp make-deb-64
 
 The install it:
 
-    sudo dpkg -i cozy-desktop_0.1.2-1.deb
+    sudo dpkg -i cozy-desktop_0.1.2-1_amd64.deb
 
 ## GUI Running
 
