@@ -2,6 +2,7 @@ path    = require 'path-extra'
 fs      = require 'fs-extra'
 touch   = require 'touch'
 process = require 'process'
+request = require 'request-json-light'
 log     = require('printit')
     prefix: 'Config     '
 
@@ -9,6 +10,7 @@ log     = require('printit')
 # Create config file if it doesn't exist.
 defaultDir = path.join path.homedir(), '.cozy-desktop'
 configPath = path.join defaultDir, './config.json'
+fs.ensureDirSync defaultDir
 fs.ensureFileSync configPath
 
 if fs.readFileSync(configPath).toString() is ''
@@ -41,6 +43,22 @@ module.exports = config =
                 return process.argv[index + 1]
 
         return Object.keys(@config.devices)[0]
+
+
+    # Get useful information about the disk space
+    # (total, used and left) on the remote Cozy
+    getDiskSpace: (callback) ->
+        device = config.getConfig()
+        client = request.newClient device.url
+        client.setBasicAuth device.deviceName, device.devicePassword
+
+        client.get "disk-space", (err, res, body) ->
+            if err
+                callback err
+            else if body.error
+                callback new Error body.error
+            else
+                callback null, body
 
 
     # Add remote configuration for a given device name.

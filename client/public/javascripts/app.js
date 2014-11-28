@@ -124,7 +124,7 @@ InfoLine = React.createClass({
 
 path = require('path-extra');
 
-fs = require('fs');
+fs = require('fs-extra');
 
 homedir = path.homedir();
 
@@ -132,7 +132,11 @@ configDir = path.join(homedir, '.cozy-desktop');
 
 configPath = path.join(configDir, 'config.json');
 
-if (!fs.existsSync(configPath)) {
+fs.ensureDirSync(configDir);
+
+fs.ensureFileSync(configPath);
+
+if (fs.readFileSync(configPath).toString() === '') {
   fs.writeFileSync(configPath, JSON.stringify({
     devices: {}
   }, null, 2));
@@ -262,11 +266,14 @@ StateView = React.createClass({
     });
   },
   sync: function(options) {
-    var filesystem, pouch, publisher, replication;
+    var filesystem, gui, notifier, open, pouch, publisher, replication;
+    notifier = require('node-notifier');
     replication = require('./backend/replication');
     filesystem = require('./backend/filesystem');
     publisher = require('./backend/publisher');
     pouch = require('./backend/db');
+    gui = require('nw.gui');
+    open = require('open');
     if (this.state.sync) {
       this.setState({
         sync: false
@@ -275,14 +282,21 @@ StateView = React.createClass({
         replication.replicator.cancel();
       }
       this.displayLog('Synchronization is off');
-      return menu.items[0].label = 'Start Sync';
+      notifier.notify({
+        title: 'Synchronization has been stopped'
+      });
+      return menu.items[10].label = 'Start synchronization';
     } else {
       this.displayLog('Synchronization is on...');
       this.displayLog('First synchronization can take a while to init...');
       this.setState({
         sync: true
       });
-      menu.items[0].label = 'Stop Sync';
+      menu.items[10].label = 'Stop synchronization';
+      notifier.notify({
+        title: 'Synchronization is on',
+        message: 'First synchronization can take a while to init'
+      });
       tray.icon = 'client/public/icon/icon_sync.png';
       pouch.addAllFilters(function() {
         filesystem.watchChanges(true, true);
@@ -310,7 +324,8 @@ StateView = React.createClass({
       publisher.on('binaryDownloaded', (function(_this) {
         return function(path) {
           tray.icon = 'client/public/icon/icon.png';
-          return _this.displayLog("File " + path + " downloaded");
+          _this.displayLog("File " + path + " downloaded");
+          return _this.fileModification(path);
         };
       })(this));
       publisher.on('fileDeleted', (function(_this) {
@@ -322,7 +337,8 @@ StateView = React.createClass({
         return function(info) {
           var newPath, previousPath;
           previousPath = info.previousPath, newPath = info.newPath;
-          return _this.displayLog("File moved: " + previousPath + " -> " + newPath);
+          _this.displayLog("File moved: " + previousPath + " -> " + newPath);
+          return _this.fileModification(newPath);
         };
       })(this));
       publisher.on('directoryEnsured', (function(_this) {
@@ -351,12 +367,14 @@ StateView = React.createClass({
       publisher.on('binaryUploaded', (function(_this) {
         return function(path) {
           tray.icon = 'client/public/icon/icon.png';
-          return _this.displayLog("File " + path + " uploaded");
+          _this.displayLog("File " + path + " uploaded");
+          return _this.fileModification(path);
         };
       })(this));
       publisher.on('fileAddedLocally', (function(_this) {
         return function(path) {
-          return _this.displayLog("File " + path + " locally added");
+          _this.displayLog("File " + path + " locally added");
+          return _this.fileModification(path);
         };
       })(this));
       publisher.on('fileDeletedLocally', (function(_this) {
@@ -369,9 +387,10 @@ StateView = React.createClass({
           return _this.displayLog("File " + path + " locally deleted");
         };
       })(this));
-      publisher.on('fileChangedLocally', (function(_this) {
+      publisher.on('fileModificationLocally', (function(_this) {
         return function(path) {
-          return _this.displayLog("File " + path + " locally changed");
+          _this.displayLog("File " + path + " locally changed");
+          return _this.fileModification(path);
         };
       })(this));
       publisher.on('folderAddedLocally', (function(_this) {
@@ -399,7 +418,26 @@ StateView = React.createClass({
     this.setState({
       logs: logs
     });
-    return tray.tooltip = log;
+    tray.tooltip = log;
+    if (log.length > 40) {
+      log.substring(0, 37);
+      log = log + '...';
+    }
+    return menu.items[5].label = log;
+  },
+  fileModification: function(file) {
+    var modMenu;
+    modMenu = menu.items[6].submenu;
+    modMenu.insert(new gui.MenuItem({
+      type: 'normal',
+      label: file,
+      click: function() {
+        return open(file);
+      }
+    }));
+    if (modMenu.items.length > 12) {
+      return modMenu.removeAt(modMenu.items.length - 3);
+    }
   },
   onDeleteConfigurationClicked: function() {
     var config;
@@ -465,9 +503,15 @@ isValidForm = function(fields) {
   }
   return true;
 };
-;var gui, menu, menuItem1, menuItem2, menuItem3, tray;
+;var config, gui, lastModificationsMenu, menu, open, remoteConfig, setDiskSpace, tray;
 
 gui = require('nw.gui');
+
+open = require('open');
+
+config = require('./backend/config');
+
+remoteConfig = config.getConfig();
 
 tray = new gui.Tray({
   title: 'Cozy Desktop',
@@ -476,43 +520,117 @@ tray = new gui.Tray({
 
 menu = new gui.Menu();
 
-menuItem1 = new gui.MenuItem({
+menu.append(new gui.MenuItem({
   type: 'normal',
-  label: 'Start sync',
-  click: (function(_this) {
-    return function() {
-      return _this.onSyncClicked();
-    };
-  })(this)
-});
+  label: 'Open Cozy Files in a web browser',
+  click: function() {
+    return open("" + remoteConfig.url + "/apps/files");
+  }
+}));
 
-menuItem2 = new gui.MenuItem({
+menu.append(new gui.MenuItem({
+  type: 'normal',
+  label: "Open '" + (path.basename(remoteConfig.path)) + "' directory",
+  click: function() {
+    return open(remoteConfig.path);
+  }
+}));
+
+menu.append(new gui.MenuItem({
+  type: 'separator'
+}));
+
+menu.append(new gui.MenuItem({
+  type: 'normal',
+  label: '0% of 1000GB used',
+  enabled: false
+}));
+
+menu.append(new gui.MenuItem({
+  type: 'separator'
+}));
+
+menu.append(new gui.MenuItem({
+  type: 'normal',
+  label: '',
+  enabled: false
+}));
+
+lastModificationsMenu = new gui.Menu();
+
+lastModificationsMenu.append(new gui.MenuItem({
+  type: 'separator'
+}));
+
+lastModificationsMenu.append(new gui.MenuItem({
   type: 'normal',
   label: 'Show logs',
   click: function() {
     return win.show();
   }
-});
+}));
 
-menuItem3 = new gui.MenuItem({
+menu.append(new gui.MenuItem({
+  type: 'normal',
+  label: 'Last modifications',
+  submenu: lastModificationsMenu
+}));
+
+menu.append(new gui.MenuItem({
+  type: 'separator'
+}));
+
+menu.append(new gui.MenuItem({
+  type: 'normal',
+  label: 'Parameters...',
+  click: function() {
+    return win.show();
+  }
+}));
+
+menu.append(new gui.MenuItem({
+  type: 'separator'
+}));
+
+menu.append(new gui.MenuItem({
+  type: 'normal',
+  label: 'Start synchronization',
+  click: (function(_this) {
+    return function() {
+      return _this.onSyncClicked();
+    };
+  })(this)
+}));
+
+menu.append(new gui.MenuItem({
   type: 'normal',
   label: 'Quit',
   click: function() {
     return win.close(true);
   }
-});
-
-menu.append(menuItem1);
-
-menu.append(menuItem2);
-
-menu.append(menuItem3);
+}));
 
 tray.menu = menu;
 
 tray.on('click', function() {
   return win.show();
 });
+
+setDiskSpace = function() {
+  return config.getDiskSpace(function(err, res) {
+    var percentage;
+    if (res) {
+      percentage = (res.diskSpace.usedDiskSpace / res.diskSpace.totalDiskSpace) * 100;
+      return menu.items[3].label = "" + (Math.round(percentage)) + "% of " + res.diskSpace.totalDiskSpace + "GB used";
+    }
+  });
+};
+
+setDiskSpace();
+
+setInterval(function() {
+  return setDiskSpace();
+}, 20000);
 ;var win;
 
 win = gui.Window.get();

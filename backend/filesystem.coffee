@@ -44,6 +44,7 @@ applyOperation = (task, callback) ->
         'newFolder'
         'newFile'
         'moveFolder'
+        'moveFile'
     ]
 
     # Operations that will delay application of replication changes
@@ -110,7 +111,10 @@ applyOperation = (task, callback) ->
                 filesystem.removeDeletedFolder task.doc._id, task.doc._rev, callback
         when 'deleteDoc'
             if task.file?
-                filesystem.deleteDoc task.file, callback
+                if task.force?
+                    filesystem.deleteDoc task.file, task.force, callback
+                else
+                    filesystem.deleteDoc task.file, false, callback
         when 'catchup'
             filesystem.applyFileDBChanges callback
         when 'reDownload'
@@ -617,7 +621,9 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
                 newDoc.lastModification = existingDoc.lastModification
             return newDoc
 
-        populateBinaryInformation = (newDoc) ->
+        populateBinaryInformation = (newDoc, hasBeenMoved) ->
+            hasBeenMoved ?= false
+
             if newDoc.binary?
                 # Get the ID and the revision of the remote binary document
                 # (since binary documents are not synchronized with the local
@@ -626,7 +632,10 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
                     if err
                         callback err
                     else
-                        uploadBinary newDoc, binaryDoc
+                        if hasBeenMoved
+                            saveBinaryDocument newDoc
+                        else
+                            uploadBinary newDoc, binaryDoc
             else
                 # If binary does not exist remotely yet, we have to
                 # create an empty binary document remotely to have
@@ -637,6 +646,9 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
                     else
                         uploadBinary newDoc, binaryDoc
 
+        #
+        # NOT USEFUL ANYMORE
+        #
         checkBinaryExistence = (newDoc, checksum) ->
             # Check if the binary doc exists, using its checksum
             # It would mean that binary is already uploaded
@@ -671,7 +683,22 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
                         existingDoc = res.rows[0].value
                         newDoc = updateFileInformation existingDoc, newDoc
 
-                    checkBinaryExistence newDoc, checksum
+                    hasBeenMoved = false
+
+                    # If the file has been moved, there is a file with the same
+                    # checksum. If there is more than one, we cannot ensure
+                    # which file has been moved
+                    pouch.db.query 'file/byChecksum',
+                        key: checksum
+                    , (err, res) ->
+                        if err and err.status isnt 404
+                            return callback err
+                        else if not err and res.rows.length is 1
+                            existingDoc = res.rows[0].value
+                            newDoc = updateFileInformation existingDoc, newDoc
+                            hasBeenMoved = true
+
+                        populateBinaryInformation newDoc, hasBeenMoved
 
         updateFileStats = (newDoc) ->
 
@@ -716,24 +743,33 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
         checkFileLocation()
 
 
-    deleteDoc: (filePath, callback) ->
+    deleteDoc: (filePath, force, callback) ->
         filePaths = @getPaths filePath
 
         key = "#{filePaths.parent}/#{filePaths.name}"
 
-        pouch.files.get key, (err, docFile) ->
-            if docFile? and not err
-                pouch.markAsDeleted docFile, callback
-            else
-                pouch.folders.get key, (err, docFolder) ->
-                    if err
-                        callback err
-                        log.raw err
-                    else if docFolder?
-                        pouch.markAsDeleted docFolder, callback
-                    else
-                        # Document is already deleted
-                        callback()
+        if force
+            pouch.files.get key, (err, docFile) ->
+                if docFile? and not err
+                    pouch.markAsDeleted docFile, callback
+                else
+                    pouch.folders.get key, (err, docFolder) ->
+                        if err
+                            callback err
+                            log.raw err
+                        else if docFolder?
+                            pouch.markAsDeleted docFolder, callback
+                        else
+                            # Document is already deleted
+                            callback()
+        else
+            setTimeout ->
+                filesystem.changes.push
+                    operation: 'deleteDoc'
+                    file: filePath
+                    force: true, ->
+                callback()
+            , 5000
 
 
     # TODO refactor it in smaller functions.

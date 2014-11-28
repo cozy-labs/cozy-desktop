@@ -220,9 +220,13 @@ module.exports = replication =
             include_docs: true
 
         error = (err) ->
-            log.error "An error occured while applying changes"
-            log.error "Stop applying changes."
-            callback err
+            if err?.status? and err.status is 404
+                log.info "No file nor folder found remotely"
+                callback() if callback?
+            else
+                log.error "An error occured while applying changes"
+                log.error "Stop applying changes."
+                callback err
 
         apply = (res) ->
             if filesystem.applicationDelay is 0
