@@ -194,17 +194,19 @@ filesystem =
     changes: async.queue applyOperation, 1
 
 
-    # Move a folder or a folder to a new location. The target is the path of
+    # Move a file or a folder to a new location. The target is the path of
     # the current doc. The source is the path of the previous revision of
     # the doc.
     # TODO write test for this function
     # TODO handle date modification
     moveEntryFromDoc: (doc, callback) ->
         pouch.getPreviousRev doc._id, (err, previousDocRev) ->
-            if err
+            if err and err.status isnt 404
                 log.error 'Cannot find previous revision'
                 log.error doc
                 callback err
+            else if err and err.status is 404
+                callback()
             else
                 newPath = path.join remoteConfig.path, doc.path, doc.name
                 previousPath = path.join(
@@ -244,7 +246,7 @@ filesystem =
                         log.error err if err
                     callback()
 
-                # That case handles files that has bin overwriten remotely
+                # That case handles files that have been overwritten remotely
                 else if not isMoved and isDateChanged and isFile
                     log.info "File overwritten, need redownload: #{isFile}"
 
@@ -565,6 +567,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
     # TODO refactor it in smaller functions.
     createFileDoc: (filePath, callback) ->
         filePaths = @getPaths filePath
+        remoteConfig = config.getConfig()
 
         saveBinaryDocument = (newDoc) ->
 
@@ -684,8 +687,12 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
                             return callback err
                         else if not err and res.rows.length is 1
                             existingDoc = res.rows[0].value
-                            newDoc = updateFileInformation existingDoc, newDoc
-                            hasBeenMoved = true
+                            movedFile = path.join remoteConfig.path
+                                                  , existingDoc.path
+                                                  , existingDoc.name
+                            if not fs.existsSync movedFile
+                                newDoc = updateFileInformation existingDoc, newDoc
+                                hasBeenMoved = true
 
                         populateBinaryInformation newDoc, hasBeenMoved
 
@@ -708,7 +715,6 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
                     updateFileStats newDoc
 
         checkFileLocation = () =>
-            remoteConfig = config.getConfig()
             if not @isInSyncDir(filePath) \
             or not fs.existsSync(filePaths.absolute)
                 unless filePath is '' or filePath is remoteConfig.path
@@ -757,8 +763,8 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
                     operation: 'deleteDoc'
                     file: filePath
                     force: true, ->
-                callback()
             , 5000
+            callback()
 
 
     # TODO refactor it in smaller functions.
@@ -796,9 +802,9 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
         # fs module has some issues.
         # More info on https://github.com/paulmillr/chokidar
         watcher = chokidar.watch remoteConfig.path,
-            ignored: /[\/\\]\./
             persistent: continuous
             ignoreInitial: fromNow
+            #ignored: /[\/\\]\./
 
         # New file detected
         .on 'add', (filePath) =>
