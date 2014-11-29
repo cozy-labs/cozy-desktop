@@ -565,6 +565,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
     # TODO refactor it in smaller functions.
     createFileDoc: (filePath, callback) ->
         filePaths = @getPaths filePath
+        remoteConfig = config.getConfig()
 
         saveBinaryDocument = (newDoc) ->
 
@@ -684,8 +685,12 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
                             return callback err
                         else if not err and res.rows.length is 1
                             existingDoc = res.rows[0].value
-                            newDoc = updateFileInformation existingDoc, newDoc
-                            hasBeenMoved = true
+                            movedFile = path.join remoteConfig.path
+                                                  , existingDoc.path
+                                                  , existingDoc.name
+                            if not fs.existsSync movedFile
+                                newDoc = updateFileInformation existingDoc, newDoc
+                                hasBeenMoved = true
 
                         populateBinaryInformation newDoc, hasBeenMoved
 
@@ -708,7 +713,6 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
                     updateFileStats newDoc
 
         checkFileLocation = () =>
-            remoteConfig = config.getConfig()
             if not @isInSyncDir(filePath) \
             or not fs.existsSync(filePaths.absolute)
                 unless filePath is '' or filePath is remoteConfig.path
