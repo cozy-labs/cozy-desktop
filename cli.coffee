@@ -1,6 +1,7 @@
 #!/usr/bin/env coffee
 
 path        = require 'path'
+fs          = require 'fs-extra'
 program     = require 'commander'
 read        = require 'read'
 process     = require 'process'
@@ -111,20 +112,21 @@ No configuration found, please run add-remote-cozy command before running
 a synchronization.
 """
     else
-        # Watch local changes
-        if not args.readonly
-            filesystem.watchChanges true, true
+        fs.ensureDir config.path, ->
+            # Watch local changes
+            if not args.readonly
+                filesystem.watchChanges true, true
 
-        pouch.addAllFilters ->
-            # Replicate databases
-            replication.runReplication force: args.force, (err) ->
-                log.info 'Sync ended'
-                if err
-                    log.error err
-                    log.error 'An error occured while running synchronisation.'
-                    process.exit 1
-                else
-                    process.exit 0
+            pouch.addAllFilters ->
+                # Replicate databases
+                replication.runReplication force: args.force, (err) ->
+                    log.info 'Sync ended'
+                    if err
+                        log.error err
+                        log.error 'An error occured while running synchronisation.'
+                        process.exit 1
+                    else
+                        process.exit 0
 
 
 # Display current configuratioN

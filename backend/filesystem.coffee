@@ -757,8 +757,8 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
                     operation: 'deleteDoc'
                     file: filePath
                     force: true, ->
-                callback()
             , 5000
+            callback()
 
 
     # TODO refactor it in smaller functions.
