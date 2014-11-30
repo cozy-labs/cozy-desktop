@@ -61,7 +61,7 @@ gulp.task('leveldown', shell.task([
 
 gulp.task('leveldown-classic', shell.task([
   'rm -rf ./node_modules/pouchdb',
-  'npm install'
+  'npm install --production'
 ]));
 
 
