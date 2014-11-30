@@ -28,6 +28,6 @@ en =
 Prior to register your computer to your Cozy, we need information about it.
 """
     'second step text': """
-It's time to register your computer to your Cozy.
-(password won't be stored).
+It's time to register your computer to your Cozy
+(your password won't be stored).
 """

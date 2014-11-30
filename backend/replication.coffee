@@ -39,9 +39,12 @@ module.exports = replication =
     getUrl: ->
         remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
-        url = urlParser.parse remoteConfig.url
-        url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
-        url = "#{urlParser.format(url)}cozy"
+        if remoteConfig.url?
+            url = urlParser.parse remoteConfig.url
+            url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
+            url = "#{urlParser.format(url)}cozy"
+        else
+            null
 
 
     # Register device remotely then returns credentials given by remote Cozy.
@@ -56,7 +59,7 @@ module.exports = replication =
         client.post 'device/', data, (err, res, body) ->
             if err
                 callback err
-            if body.error?
+            else if body.error?
                 if body.error is 'string'
                     log.error body.error
                 else

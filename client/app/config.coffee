@@ -37,7 +37,7 @@ configHelpers =
             'INTRO'
         else if not device.path?
             'STEP1'
-        else if not device.deviceId?
+        else if not device.url? or not device.deviceId?
             'STEP2'
         else
             'STATE'

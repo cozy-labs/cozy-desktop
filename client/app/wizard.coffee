@@ -169,9 +169,10 @@ ConfigFormStepTwo = React.createClass
             config = require './backend/config'
             replication = require './backend/replication'
 
-            url = "https://#{fieldUrl.getValue()}"
+            url = fieldUrl.getValue()
+            if url.indexOf('http') < 0
+                url = "https://#{fieldUrl.getValue()}"
             password = fieldPassword.getValue()
-            console.log device
             options =
                 url: url
                 deviceName: device.deviceName
@@ -181,6 +182,7 @@ ConfigFormStepTwo = React.createClass
                 if err
                     console.log err
                     alert "An error occured while registering your device. #{err}"
+                    renderState 'STATE'
                 else
                     options =
                         url: url
