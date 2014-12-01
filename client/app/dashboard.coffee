@@ -174,10 +174,11 @@ StateView = React.createClass
 
     onDeleteConfigurationClicked: ->
         config = require './backend/config'
+        del = require 'del'
         config.removeRemoteCozy device.deviceName
-        config.saveConfig()
-        alert t 'Configuration deleted.'
-        renderState 'INTRO'
+        del config.defaultDir, force: true, (err) ->
+            alert t 'Configuration deleted.'
+            renderState 'INTRO'
 
     onDeleteFilesClicked: ->
         del = require 'del'
