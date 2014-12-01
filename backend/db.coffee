@@ -281,7 +281,7 @@ module.exports = dbHelpers =
         emptyDoc =
             _id: deletedDoc._id
             _rev: deletedDoc._rev
-            _deleted: false
+            _deleted: true
             docType: deletedDoc.docType
 
         # Since we use the same function to delete a file and a folder
@@ -293,8 +293,7 @@ module.exports = dbHelpers =
             if err
                 callback err
             else
-                dbHelpers.storeLocalRev res.rev, ->
-                    db.remove res.id, res.rev, callback
+                dbHelpers.storeLocalRev res.rev, callback
 
 
     # Store a revision to avoid its re-application

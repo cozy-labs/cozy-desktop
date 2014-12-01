@@ -149,7 +149,8 @@ module.exports = replication =
 
         opts =
             filter: (doc) ->
-                doc.docType is 'Folder' or doc.docType is 'File'
+                doc.docType is 'Folder' or doc.docType is 'File' \
+                or (doc._deleted and (doc.docType is 'Folder' or doc.docType is 'File'))
             live: true
             since: replication.startChangeSeq
         replication.replicatorTo = pouch.db.replicate.to(url, opts)
