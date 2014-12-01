@@ -91,14 +91,13 @@ module.exports = binary =
     uploadAsAttachment: (remoteId, remoteRev, filePath, callback) ->
         remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
-        relativePath = path.relative remoteConfig.path, filePath
-        absPath = path.join remoteConfig.path, filePath
+        absPath = filePath # The given path is already absolute
         urlPath = "cozy/#{remoteId}/file?rev=#{remoteRev}"
 
         client = request.newClient remoteConfig.url
         client.setBasicAuth deviceName, remoteConfig.devicePassword
 
-        log.info "Uploading binary: #{relativePath}..."
+        log.info "Uploading binary: #{absPath}..."
         publisher.emit 'uploadBinary', absPath
 
         client.putFile urlPath, filePath, (err, res, body) =>
@@ -110,7 +109,7 @@ module.exports = binary =
                 if body.error
                     callback new Error body.error
                 else
-                    log.info "Binary uploaded: #{relativePath}"
+                    log.info "Binary uploaded: #{absPath}"
                     publisher.emit 'binaryUploaded', absPath
                     callback err, body
 
@@ -180,6 +179,7 @@ module.exports = binary =
 
         remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
+        absPath = path.join remoteConfig.path, filePath
 
         if (not fs.existsSync(binaryPath) \
            or fs.statSync(binaryPath).size isnt doc.size) \
@@ -190,15 +190,15 @@ module.exports = binary =
 
             urlPath = "cozy/#{doc.binary.file.id}/file"
 
-            log.info "Downloading: #{filePath}..."
-            publisher.emit 'binaryDownloadStart', filePath
+            log.info "Downloading: #{absPath}..."
+            publisher.emit 'binaryDownloadStart', absPath
             client.saveFile urlPath, binaryPath, (err, res) ->
 
                 if err
                     callback err
                 else
-                    log.info "Binary downloaded: #{filePath}"
-                    publisher.emit 'binaryDownloaded', filePath
+                    log.info "Binary downloaded: #{absPath}"
+                    publisher.emit 'binaryDownloaded', absPath
                     callback null
                     #fs.chmod filePath, '550', (err) ->
                     #    if err

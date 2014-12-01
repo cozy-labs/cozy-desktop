@@ -171,7 +171,7 @@ configHelpers = {
       return 'INTRO';
     } else if (device.path == null) {
       return 'STEP1';
-    } else if (device.deviceId == null) {
+    } else if ((device.url == null) || (device.deviceId == null)) {
       return 'STEP2';
     } else {
       return 'STATE';
@@ -373,8 +373,7 @@ StateView = React.createClass({
       })(this));
       publisher.on('fileAddedLocally', (function(_this) {
         return function(path) {
-          _this.displayLog("File " + path + " locally added");
-          return _this.fileModification(path);
+          return _this.displayLog("File " + path + " locally added");
         };
       })(this));
       publisher.on('fileDeletedLocally', (function(_this) {
@@ -389,8 +388,7 @@ StateView = React.createClass({
       })(this));
       publisher.on('fileModificationLocally', (function(_this) {
         return function(path) {
-          _this.displayLog("File " + path + " locally changed");
-          return _this.fileModification(path);
+          return _this.displayLog("File " + path + " locally changed");
         };
       })(this));
       publisher.on('folderAddedLocally', (function(_this) {
@@ -493,7 +491,7 @@ en = {
   'start sync': 'Start sync',
   'value is missing': 'A value is required for this field.',
   'first step text': "Prior to register your computer to your Cozy, we need information about it.",
-  'second step text': "It's time to register your computer to your Cozy.\n(password won't be stored)."
+  'second step text': "It's time to register your computer to your Cozy\n(your password won't be stored)."
 };
 ;var isValidForm;
 

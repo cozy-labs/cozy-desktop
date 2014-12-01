@@ -132,14 +132,12 @@ StateView = React.createClass
                 @fileModification path
             publisher.on 'fileAddedLocally', (path) =>
                 @displayLog "File #{path} locally added"
-                @fileModification path
             publisher.on 'fileDeletedLocally', (path) =>
                 @displayLog "File #{path} locally deleted"
             publisher.on 'fileDeletedLocally', (path) =>
                 @displayLog "File #{path} locally deleted"
             publisher.on 'fileModificationLocally', (path) =>
                 @displayLog "File #{path} locally changed"
-                @fileModification path
             publisher.on 'folderAddedLocally', (path) =>
                 @displayLog "Folder #{path} locally added"
             publisher.on 'folderDeletedLocally', (path) =>
