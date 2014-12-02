@@ -67,7 +67,6 @@ gulp.task('leveldown-classic', shell.task([
 gulp.task('build-gui-package', ['scripts', 'leveldown'], function() {
   var NwBuilder = require('node-webkit-builder');
   var nw = new NwBuilder({
-      appName: 'Cozy Desktop',
       files: paths.all,
       version: nwVersion,
       macIcns: 'packaging/nw.icns',
