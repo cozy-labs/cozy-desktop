@@ -1041,21 +1041,29 @@ renderState = function(state) {
   getCurrentComponent = function(state) {
     switch (state) {
       case 'INTRO':
+        win.show();
         return Intro();
       case 'STEP1':
+        win.show();
         return ConfigFormStepOne(device);
       case 'STEP2':
+        win.show();
         return ConfigFormStepTwo(device);
       case 'STEP3':
+        win.show();
         return ConfigFormStepThree(device);
       case 'STATE':
         displayTrayMenu();
         return StateView(device);
       default:
+        win.show();
         return Intro();
     }
   };
   this.currentComponent = React.renderComponent(getCurrentComponent(state), document.body);
+  if (state === 'STATE') {
+    this.currentComponent.onSyncClicked();
+  }
   if (state === 'STEP1') {
     return $("#folder-input").attr('nwdirectory', '');
   }
@@ -1070,6 +1078,7 @@ window.onload = function() {
   locales = en;
   polyglot.extend(locales);
   window.t = polyglot.t.bind(polyglot);
+  win.hide();
   return renderState(configHelpers.getState());
 };
 ;

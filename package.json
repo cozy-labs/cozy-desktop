@@ -6,6 +6,7 @@
   "window": {
     "width": 600,
     "height": 800,
+    "show": false,
     "toolbar": false,
     "icon": "client/public/icon/icon.png",
     "title": "Cozy Desktop"
