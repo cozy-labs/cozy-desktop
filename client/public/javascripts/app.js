@@ -373,8 +373,7 @@ StateView = React.createClass({
       })(this));
       publisher.on('fileAddedLocally', (function(_this) {
         return function(path) {
-          _this.displayLog("File " + path + " locally added");
-          return _this.fileModification(path);
+          return _this.displayLog("File " + path + " locally added");
         };
       })(this));
       publisher.on('fileDeletedLocally', (function(_this) {
@@ -389,8 +388,7 @@ StateView = React.createClass({
       })(this));
       publisher.on('fileModificationLocally', (function(_this) {
         return function(path) {
-          _this.displayLog("File " + path + " locally changed");
-          return _this.fileModification(path);
+          return _this.displayLog("File " + path + " locally changed");
         };
       })(this));
       publisher.on('folderAddedLocally', (function(_this) {
@@ -440,12 +438,16 @@ StateView = React.createClass({
     }
   },
   onDeleteConfigurationClicked: function() {
-    var config;
+    var config, del;
     config = require('./backend/config');
+    del = require('del');
     config.removeRemoteCozy(device.deviceName);
-    config.saveConfig();
-    alert(t('Configuration deleted.'));
-    return renderState('INTRO');
+    return del(config.defaultDir, {
+      force: true
+    }, function(err) {
+      alert(t('Configuration deleted.'));
+      return renderState('INTRO');
+    });
   },
   onDeleteFilesClicked: function() {
     var del;

@@ -208,6 +208,7 @@ filesystem =
             else if err and err.status is 404
                 callback()
             else
+                remoteConfig = config.getConfig()
                 newPath = path.join remoteConfig.path, doc.path, doc.name
                 previousPath = path.join(
                     remoteConfig.path,
@@ -254,7 +255,7 @@ filesystem =
                     options =
                         doc: doc
                         filePath: filePath
-                        binaryPath: path.absolute filePath
+                        binaryPath: path.join remoteConfig.path, filePath
                         forced: true
                     binary.downloadFile options, callback
                 else

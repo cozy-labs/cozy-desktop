@@ -132,14 +132,12 @@ StateView = React.createClass
                 @fileModification path
             publisher.on 'fileAddedLocally', (path) =>
                 @displayLog "File #{path} locally added"
-                @fileModification path
             publisher.on 'fileDeletedLocally', (path) =>
                 @displayLog "File #{path} locally deleted"
             publisher.on 'fileDeletedLocally', (path) =>
                 @displayLog "File #{path} locally deleted"
             publisher.on 'fileModificationLocally', (path) =>
                 @displayLog "File #{path} locally changed"
-                @fileModification path
             publisher.on 'folderAddedLocally', (path) =>
                 @displayLog "Folder #{path} locally added"
             publisher.on 'folderDeletedLocally', (path) =>
@@ -174,10 +172,11 @@ StateView = React.createClass
 
     onDeleteConfigurationClicked: ->
         config = require './backend/config'
+        del = require 'del'
         config.removeRemoteCozy device.deviceName
-        config.saveConfig()
-        alert t 'Configuration deleted.'
-        renderState 'INTRO'
+        del config.defaultDir, force: true, (err) ->
+            alert t 'Configuration deleted.'
+            renderState 'INTRO'
 
     onDeleteFilesClicked: ->
         del = require 'del'
