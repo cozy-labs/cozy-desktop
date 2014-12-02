@@ -285,7 +285,8 @@ StateView = React.createClass({
       }
       this.displayLog('Synchronization is off');
       notifier.notify({
-        title: 'Synchronization has been stopped'
+        title: 'Synchronization has been stopped',
+        icon: 'client/public/icon/bighappycloud.png'
       });
       return menu.items[10].label = 'Start synchronization';
     } else {
@@ -297,7 +298,8 @@ StateView = React.createClass({
       menu.items[10].label = 'Stop synchronization';
       notifier.notify({
         title: 'Synchronization is on',
-        message: 'First synchronization can take a while to init'
+        message: 'First synchronization can take a while to init',
+        icon: 'client/public/icon/bighappycloud.png'
       });
       tray.icon = 'client/public/icon/icon_sync.png';
       pouch.addAllFilters(function() {
@@ -520,7 +522,6 @@ remoteConfig = config.getConfig();
 displayTrayMenu = function() {
   var lastModificationsMenu, setDiskSpace;
   this.tray = new gui.Tray({
-    title: 'Cozy Desktop',
     icon: 'client/public/icon/icon.png'
   });
   this.menu = new gui.Menu();
