@@ -10,6 +10,7 @@ renderState = (state) ->
             when 'STEP3'
                 ConfigFormStepThree device
             when 'STATE'
+                displayTrayMenu()
                 StateView device
             else
                 Intro()

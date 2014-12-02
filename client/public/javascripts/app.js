@@ -691,7 +691,7 @@ startSync = function(options, state, setState) {
     })(this));
   }
 };
-;var config, gui, lastModificationsMenu, menu, open, remoteConfig, setDiskSpace, tray;
+;var config, displayTrayMenu, gui, open, remoteConfig, setDiskSpace;
 
 gui = require('nw.gui');
 
@@ -701,117 +701,104 @@ config = require('./backend/config');
 
 remoteConfig = config.getConfig();
 
-tray = new gui.Tray({
-  title: 'Cozy Desktop',
-  icon: 'client/public/icon/icon.png'
-});
-
-menu = new gui.Menu();
-
-menu.append(new gui.MenuItem({
-  type: 'normal',
-  label: 'Open Cozy Files in a web browser',
-  click: function() {
-    return open("" + remoteConfig.url + "/apps/files");
-  }
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'normal',
-  label: "Open '" + (path.basename(remoteConfig.path)) + "' directory",
-  click: function() {
-    return open(remoteConfig.path);
-  }
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'separator'
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'normal',
-  label: '0% of 1000GB used',
-  enabled: false
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'separator'
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'normal',
-  label: '',
-  enabled: false
-}));
-
-lastModificationsMenu = new gui.Menu();
-
-lastModificationsMenu.append(new gui.MenuItem({
-  type: 'separator'
-}));
-
-lastModificationsMenu.append(new gui.MenuItem({
-  type: 'normal',
-  label: 'Show logs',
-  click: function() {
+displayTrayMenu = function() {
+  var lastModificationsMenu;
+  this.tray = new gui.Tray({
+    title: 'Cozy Desktop',
+    icon: 'client/public/icon/icon.png'
+  });
+  this.menu = new gui.Menu();
+  this.menu.append(new gui.MenuItem({
+    type: 'normal',
+    label: 'Open Cozy Files in a web browser',
+    click: function() {
+      return open("" + remoteConfig.url + "/apps/files");
+    }
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'normal',
+    label: "Open '" + (path.basename(remoteConfig.path)) + "' directory",
+    click: function() {
+      return open(remoteConfig.path);
+    }
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'separator'
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'normal',
+    label: '0% of 1000GB used',
+    enabled: false
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'separator'
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'normal',
+    label: '',
+    enabled: false
+  }));
+  lastModificationsMenu = new gui.Menu();
+  lastModificationsMenu.append(new gui.MenuItem({
+    type: 'separator'
+  }));
+  lastModificationsMenu.append(new gui.MenuItem({
+    type: 'normal',
+    label: 'Show logs',
+    click: function() {
+      return win.show();
+    }
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'normal',
+    label: 'Last modifications',
+    submenu: lastModificationsMenu
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'separator'
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'normal',
+    label: 'Parameters...',
+    click: function() {
+      return win.show();
+    }
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'separator'
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'normal',
+    label: 'Start synchronization',
+    click: (function(_this) {
+      return function() {
+        return currentComponent.onSyncClicked();
+      };
+    })(this)
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'normal',
+    label: 'Quit',
+    click: function() {
+      return win.close(true);
+    }
+  }));
+  this.tray.menu = this.menu;
+  return this.tray.on('click', function() {
     return win.show();
-  }
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'normal',
-  label: 'Last modifications',
-  submenu: lastModificationsMenu
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'separator'
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'normal',
-  label: 'Parameters...',
-  click: function() {
-    return win.show();
-  }
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'separator'
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'normal',
-  label: 'Start synchronization',
-  click: (function(_this) {
-    return function() {
-      return currentComponent.onSyncClicked();
-    };
-  })(this)
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'normal',
-  label: 'Quit',
-  click: function() {
-    return win.close(true);
-  }
-}));
-
-tray.menu = menu;
-
-tray.on('click', function() {
-  return win.show();
-});
+  });
+};
 
 setDiskSpace = function() {
-  return config.getDiskSpace(function(err, res) {
-    var percentage;
-    if (res) {
-      percentage = (res.diskSpace.usedDiskSpace / res.diskSpace.totalDiskSpace) * 100;
-      return menu.items[3].label = "" + (Math.round(percentage)) + "% of " + res.diskSpace.totalDiskSpace + "GB used";
-    }
-  });
+  return config.getDiskSpace((function(_this) {
+    return function(err, res) {
+      var percentage;
+      if (res) {
+        percentage = (res.diskSpace.usedDiskSpace / res.diskSpace.totalDiskSpace) * 100;
+        return _this.menu.items[3].label = "" + (Math.round(percentage)) + "% of " + res.diskSpace.totalDiskSpace + "GB used";
+      }
+    };
+  })(this));
 };
 
 setDiskSpace();
@@ -1062,6 +1049,7 @@ renderState = function(state) {
       case 'STEP3':
         return ConfigFormStepThree(device);
       case 'STATE':
+        displayTrayMenu();
         return StateView(device);
       default:
         return Intro();
