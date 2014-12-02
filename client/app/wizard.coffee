@@ -175,7 +175,7 @@ ConfigFormStepTwo = React.createClass
             password = fieldPassword.getValue()
             options =
                 url: url
-                deviceName: device.deviceName
+                deviceName: config.getConfig().deviceName
                 password: password
 
             saveConfig = (err, credentials) ->

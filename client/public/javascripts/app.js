@@ -142,7 +142,9 @@ if (fs.readFileSync(configPath).toString() === '') {
   }, null, 2));
 }
 
-config = require(configPath);
+config = require(configPath || {
+  devices: {}
+});
 
 keys = Object.keys(config.devices);
 
@@ -442,7 +444,7 @@ StateView = React.createClass({
     config = require('./backend/config');
     del = require('del');
     config.removeRemoteCozy(device.deviceName);
-    return del(config.defaultDir, {
+    return del("" + config.defaultDir + "/*", {
       force: true
     }, function(err) {
       alert(t('Configuration deleted.'));
@@ -505,193 +507,7 @@ isValidForm = function(fields) {
   }
   return true;
 };
-;var displayLog, fileModification, filesystem, gui, notifier, open, pouch, publisher, replication, startSync, stopSync;
-
-notifier = require('node-notifier');
-
-replication = require('./backend/replication');
-
-filesystem = require('./backend/filesystem');
-
-publisher = require('./backend/publisher');
-
-pouch = require('./backend/db');
-
-gui = require('nw.gui');
-
-open = require('open');
-
-displayLog = function(log, state, setState) {
-  var logs, moment;
-  logs = state.logs;
-  moment = require('moment');
-  logs.push(moment().format('DD MMM HH:mm:ss') + ' - ' + log);
-  setState({
-    logs: logs
-  });
-  tray.tooltip = log;
-  if (log.length > 40) {
-    log.substring(0, 37);
-    log = log + '...';
-  }
-  return menu.items[5].label = log;
-};
-
-fileModification = function(file) {
-  var modMenu;
-  modMenu = menu.items[6].submenu;
-  modMenu.insert(new gui.MenuItem({
-    type: 'normal',
-    label: file,
-    click: function() {
-      return open(file);
-    }
-  }));
-  if (modMenu.items.length > 12) {
-    return modMenu.removeAt(modMenu.items.length - 3);
-  }
-};
-
-stopSync = function(state, setState) {
-  if (state.sync) {
-    setState({
-      sync: false
-    });
-    if (replication.replicator != null) {
-      replication.replicator.cancel();
-    }
-    displayLog('Synchronization is off', state, setState);
-    notifier.notify({
-      title: 'Synchronization has been stopped'
-    });
-    return menu.items[10].label = 'Start synchronization';
-  }
-};
-
-startSync = function(options, state, setState) {
-  var displayLog2;
-  displayLog2 = displayLog;
-  displayLog = function(log) {
-    return displayLog2(log, state, setState);
-  };
-  if (!state.sync) {
-    displayLog('Synchronization is on...');
-    displayLog('First synchronization can take a while to init...');
-    setState({
-      sync: true
-    });
-    menu.items[10].label = 'Stop synchronization';
-    notifier.notify({
-      title: 'Synchronization is on',
-      message: 'First synchronization can take a while to init'
-    });
-    tray.icon = 'client/public/icon/icon_sync.png';
-    pouch.addAllFilters(function() {
-      filesystem.watchChanges(true, true);
-      return replication.runReplication({
-        force: options.force
-      });
-    });
-    publisher.on('firstSyncDone', (function(_this) {
-      return function() {
-        tray.icon = 'client/public/icon/icon.png';
-        return displayLog("Successfully synchronized");
-      };
-    })(this));
-    publisher.on('binaryPresent', (function(_this) {
-      return function(path) {
-        return displayLog("File " + path + " is already there.");
-      };
-    })(this));
-    publisher.on('binaryDownloadStart', (function(_this) {
-      return function(path) {
-        tray.icon = 'client/public/icon/icon_sync.png';
-        return displayLog("File " + path + " is downloading...");
-      };
-    })(this));
-    publisher.on('binaryDownloaded', (function(_this) {
-      return function(path) {
-        tray.icon = 'client/public/icon/icon.png';
-        displayLog("File " + path + " downloaded");
-        return fileModification(path);
-      };
-    })(this));
-    publisher.on('fileDeleted', (function(_this) {
-      return function(path) {
-        return displayLog("File " + path + " deleted");
-      };
-    })(this));
-    publisher.on('fileMoved', (function(_this) {
-      return function(info) {
-        var newPath, previousPath;
-        previousPath = info.previousPath, newPath = info.newPath;
-        displayLog("File moved: " + previousPath + " -> " + newPath);
-        return fileModification(newPath);
-      };
-    })(this));
-    publisher.on('directoryEnsured', (function(_this) {
-      return function(path) {
-        return displayLog("Folder " + path + " ensured");
-      };
-    })(this));
-    publisher.on('folderDeleted', (function(_this) {
-      return function(path) {
-        return displayLog("Folder " + path + " deleted");
-      };
-    })(this));
-    publisher.on('folderMoved', (function(_this) {
-      return function(info) {
-        var newPath, previousPath;
-        previousPath = info.previousPath, newPath = info.newPath;
-        return displayLog("Folder moved: " + previousPath + " -> " + newPath);
-      };
-    })(this));
-    publisher.on('uploadBinary', (function(_this) {
-      return function(path) {
-        tray.icon = 'client/public/icon/icon_sync.png';
-        return displayLog("File " + path + " is uploading...");
-      };
-    })(this));
-    publisher.on('binaryUploaded', (function(_this) {
-      return function(path) {
-        tray.icon = 'client/public/icon/icon.png';
-        displayLog("File " + path + " uploaded");
-        return fileModification(path);
-      };
-    })(this));
-    publisher.on('fileAddedLocally', (function(_this) {
-      return function(path) {
-        return displayLog("File " + path + " locally added");
-      };
-    })(this));
-    publisher.on('fileDeletedLocally', (function(_this) {
-      return function(path) {
-        return displayLog("File " + path + " locally deleted");
-      };
-    })(this));
-    publisher.on('fileDeletedLocally', (function(_this) {
-      return function(path) {
-        return displayLog("File " + path + " locally deleted");
-      };
-    })(this));
-    publisher.on('fileModificationLocally', (function(_this) {
-      return function(path) {
-        return displayLog("File " + path + " locally changed");
-      };
-    })(this));
-    publisher.on('folderAddedLocally', (function(_this) {
-      return function(path) {
-        return displayLog("Folder " + path + " locally added");
-      };
-    })(this));
-    return publisher.on('folderDeletedLocally', (function(_this) {
-      return function(path) {
-        return displayLog("Folder " + path + " locally deleted");
-      };
-    })(this));
-  }
-};
-;var config, displayTrayMenu, gui, open, remoteConfig, setDiskSpace;
+;var config, displayTrayMenu, gui, open, remoteConfig;
 
 gui = require('nw.gui');
 
@@ -702,7 +518,7 @@ config = require('./backend/config');
 remoteConfig = config.getConfig();
 
 displayTrayMenu = function() {
-  var lastModificationsMenu;
+  var lastModificationsMenu, setDiskSpace;
   this.tray = new gui.Tray({
     title: 'Cozy Desktop',
     icon: 'client/public/icon/icon.png'
@@ -784,28 +600,24 @@ displayTrayMenu = function() {
     }
   }));
   this.tray.menu = this.menu;
-  return this.tray.on('click', function() {
+  this.tray.on('click', function() {
     return win.show();
   });
+  setDiskSpace = function() {
+    return config.getDiskSpace((function(_this) {
+      return function(err, res) {
+        var percentage;
+        if (res) {
+          percentage = (res.diskSpace.usedDiskSpace / res.diskSpace.totalDiskSpace) * 100;
+          return _this.menu.items[3].label = "" + (Math.round(percentage)) + "% of " + res.diskSpace.totalDiskSpace + "GB used";
+        }
+      };
+    })(this));
+  };
+  return setInterval(function() {
+    return setDiskSpace();
+  }, 20000);
 };
-
-setDiskSpace = function() {
-  return config.getDiskSpace((function(_this) {
-    return function(err, res) {
-      var percentage;
-      if (res) {
-        percentage = (res.diskSpace.usedDiskSpace / res.diskSpace.totalDiskSpace) * 100;
-        return _this.menu.items[3].label = "" + (Math.round(percentage)) + "% of " + res.diskSpace.totalDiskSpace + "GB used";
-      }
-    };
-  })(this));
-};
-
-setDiskSpace();
-
-setInterval(function() {
-  return setDiskSpace();
-}, 20000);
 ;var win;
 
 win = gui.Window.get();
@@ -1011,7 +823,7 @@ ConfigFormStepTwo = React.createClass({
       password = fieldPassword.getValue();
       options = {
         url: url,
-        deviceName: device.deviceName,
+        deviceName: config.getConfig().deviceName,
         password: password
       };
       saveConfig = function(err, credentials) {

@@ -83,13 +83,12 @@ displayTrayMenu = ->
     @tray.on 'click', ->
         win.show()
 
-setDiskSpace = ->
-    config.getDiskSpace (err, res) =>
-        if res
-            percentage = (res.diskSpace.usedDiskSpace / res.diskSpace.totalDiskSpace) * 100
-            @menu.items[3].label = "#{Math.round percentage}% of #{res.diskSpace.totalDiskSpace}GB used"
+    setDiskSpace = ->
+        config.getDiskSpace (err, res) =>
+            if res
+                percentage = (res.diskSpace.usedDiskSpace / res.diskSpace.totalDiskSpace) * 100
+                @menu.items[3].label = "#{Math.round percentage}% of #{res.diskSpace.totalDiskSpace}GB used"
 
-setDiskSpace()
-setInterval ->
-  setDiskSpace()
-, 20000
+    setInterval ->
+      setDiskSpace()
+    , 20000
