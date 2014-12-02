@@ -648,6 +648,217 @@ win.setPosition('center');
 win.on('close', function() {
   return win.hide();
 });
+;var ConfigFormStepOne, ConfigFormStepTwo, Intro;
+
+Intro = React.createClass({
+  render: function() {
+    return Container(null, div({
+      className: 'intro txtcenter mtl'
+    }, img({
+      id: 'logo',
+      src: 'client/public/icon/bighappycloud.png'
+    }), p({
+      className: 'mtl biggest'
+    }, t('welcome to the cozy desktop')), Button({
+      className: 'mtl bigger pam',
+      onClick: this.onEnterClicked,
+      text: t('start configuring your device')
+    })));
+  },
+  onEnterClicked: function() {
+    return renderState('STEP1');
+  }
+});
+
+ConfigFormStepOne = React.createClass({
+  getInitialState: function() {
+    var isDeviceName, isPath;
+    isDeviceName = (this.props.deviceName != null) && this.props.deviceName !== '';
+    isPath = (this.props.path != null) && this.props.path !== '';
+    return {
+      validForm: isDeviceName && isPath
+    };
+  },
+  render: function() {
+    var buttonClass;
+    buttonClass = 'right';
+    if (!this.state.validForm) {
+      buttonClass += ' disabled';
+    }
+    return Container(null, Title({
+      text: t('cozy files configuration 1 on 2')
+    }), Line({
+      className: 'explanation'
+    }, p(null, t('first step text'))), Field({
+      label: t('your device name'),
+      fieldClass: 'w300p',
+      inputRef: 'deviceName',
+      defaultValue: this.props.deviceName,
+      ref: 'deviceNameField',
+      placeholder: 'Laptop',
+      onChange: this.onDeviceNameChanged
+    }), Field({
+      label: t('directory to synchronize your data'),
+      fieldClass: 'w500p',
+      inputRef: 'path',
+      type: 'file',
+      defaultValue: this.props.path,
+      ref: 'devicePathField',
+      inputId: 'folder-input',
+      onChange: this.onPathChanged
+    }), Line(null, Button({
+      className: buttonClass,
+      onClick: this.onSaveButtonClicked,
+      text: t('save your device information and go to step 2')
+    })));
+  },
+  onDeviceNameChanged: function() {
+    var fieldName, fieldPath;
+    fieldName = this.refs.deviceNameField;
+    fieldPath = this.refs.devicePathField;
+    return this.setState({
+      validForm: isValidForm([fieldName, fieldPath])
+    });
+  },
+  onPathChanged: function(event, files, label) {
+    var fieldName, fieldPath;
+    fieldName = this.refs.deviceNameField;
+    fieldPath = this.refs.devicePathField;
+    return this.setState({
+      validForm: isValidForm([fieldName, fieldPath])
+    });
+  },
+  onSaveButtonClicked: function() {
+    var config, fieldName, fieldPath;
+    fieldName = this.refs.deviceNameField;
+    fieldPath = this.refs.devicePathField;
+    if (this.state.validForm) {
+      config = require('./backend/config');
+      config.updateSync({
+        deviceName: fieldName.getValue(),
+        path: fieldPath.getValue()
+      });
+      device.deviceName = fieldName.getValue();
+      device.path = fieldPath.getValue();
+      return renderState('STEP2');
+    }
+  }
+});
+
+ConfigFormStepTwo = React.createClass({
+  getInitialState: function() {
+    var isDeviceName, isPath;
+    isDeviceName = (this.props.url != null) && this.props.url !== '';
+    isPath = (this.props.path != null) && this.props.path !== '';
+    return {
+      validForm: isDeviceName && isPath
+    };
+  },
+  render: function() {
+    var buttonClass;
+    buttonClass = 'right';
+    if (!this.state.validForm) {
+      buttonClass += ' disabled';
+    }
+    return Container(null, Title({
+      text: t('cozy files configuration 2 on 2')
+    }), Line({
+      className: 'explanation'
+    }, p(null, t('second step text'))), Field({
+      label: t('your remote url'),
+      fieldClass: 'w300p',
+      inputRef: 'remoteUrl',
+      defaultValue: this.props.url,
+      ref: 'remoteUrlField',
+      placeholder: 'john.cozycloud.cc',
+      onChange: this.onFieldChanged,
+      onKeyUp: this.onUrlKeyUp
+    }), Field({
+      label: t('your remote password'),
+      fieldClass: 'w300p',
+      type: 'password',
+      inputRef: 'remotePassword',
+      defaultValue: this.props.remotePassword,
+      ref: 'remotePasswordField',
+      onChange: this.onFieldChanged,
+      onKeyUp: this.onPasswordKeyUp
+    }), Line(null, Button({
+      className: 'left',
+      ref: 'backButton',
+      onClick: this.onBackButtonClicked,
+      text: t('go back to previous step')
+    }), Button({
+      className: buttonClass,
+      ref: 'nextButton',
+      onClick: this.onSaveButtonClicked,
+      text: t('register device and synchronize')
+    })));
+  },
+  componentDidMount: function() {
+    var node;
+    node = this.refs.remoteUrlField.refs.remoteUrl.getDOMNode();
+    return $(node).focus();
+  },
+  onFieldChanged: function() {
+    var fieldPassword, fieldUrl;
+    fieldUrl = this.refs.remoteUrlField;
+    fieldPassword = this.refs.remotePasswordField;
+    return this.setState({
+      validForm: isValidForm([fieldUrl, fieldPassword])
+    });
+  },
+  onUrlKeyUp: function(event) {
+    var node;
+    if (event.keyCode === 13) {
+      node = this.refs.remotePasswordField.refs.remotePassword.getDOMNode();
+      return $(node).focus();
+    }
+  },
+  onPasswordKeyUp: function(event) {
+    if (event.keyCode === 13) {
+      return this.onSaveButtonClicked();
+    }
+  },
+  onBackButtonClicked: function() {
+    return renderState('STEP1');
+  },
+  onSaveButtonClicked: function() {
+    var config, fieldPassword, fieldUrl, options, password, replication, saveConfig, url;
+    fieldUrl = this.refs.remoteUrlField;
+    fieldPassword = this.refs.remotePasswordField;
+    if (isValidForm([fieldUrl, fieldPassword])) {
+      config = require('./backend/config');
+      replication = require('./backend/replication');
+      url = fieldUrl.getValue();
+      if (url.indexOf('http') < 0) {
+        url = "https://" + (fieldUrl.getValue());
+      }
+      password = fieldPassword.getValue();
+      options = {
+        url: url,
+        deviceName: device.deviceName,
+        password: password
+      };
+      saveConfig = function(err, credentials) {
+        if (err) {
+          console.log(err);
+          alert("An error occured while registering your device. " + err);
+          return renderState('STATE');
+        } else {
+          options = {
+            url: url,
+            deviceId: credentials.id,
+            devicePassword: credentials.password
+          };
+          config.updateSync(options);
+          console.log('Remote Cozy properly configured to work ' + 'with current device.');
+          return renderState('STATE');
+        }
+      };
+      return replication.registerDevice(options, saveConfig);
+    }
+  }
+});
 ;var renderState;
 
 renderState = function(state) {
