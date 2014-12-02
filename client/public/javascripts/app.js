@@ -505,6 +505,192 @@ isValidForm = function(fields) {
   }
   return true;
 };
+;var displayLog, fileModification, filesystem, gui, notifier, open, pouch, publisher, replication, startSync, stopSync;
+
+notifier = require('node-notifier');
+
+replication = require('./backend/replication');
+
+filesystem = require('./backend/filesystem');
+
+publisher = require('./backend/publisher');
+
+pouch = require('./backend/db');
+
+gui = require('nw.gui');
+
+open = require('open');
+
+displayLog = function(log, state, setState) {
+  var logs, moment;
+  logs = state.logs;
+  moment = require('moment');
+  logs.push(moment().format('DD MMM HH:mm:ss') + ' - ' + log);
+  setState({
+    logs: logs
+  });
+  tray.tooltip = log;
+  if (log.length > 40) {
+    log.substring(0, 37);
+    log = log + '...';
+  }
+  return menu.items[5].label = log;
+};
+
+fileModification = function(file) {
+  var modMenu;
+  modMenu = menu.items[6].submenu;
+  modMenu.insert(new gui.MenuItem({
+    type: 'normal',
+    label: file,
+    click: function() {
+      return open(file);
+    }
+  }));
+  if (modMenu.items.length > 12) {
+    return modMenu.removeAt(modMenu.items.length - 3);
+  }
+};
+
+stopSync = function(state, setState) {
+  if (state.sync) {
+    setState({
+      sync: false
+    });
+    if (replication.replicator != null) {
+      replication.replicator.cancel();
+    }
+    displayLog('Synchronization is off', state, setState);
+    notifier.notify({
+      title: 'Synchronization has been stopped'
+    });
+    return menu.items[10].label = 'Start synchronization';
+  }
+};
+
+startSync = function(options, state, setState) {
+  var displayLog2;
+  displayLog2 = displayLog;
+  displayLog = function(log) {
+    return displayLog2(log, state, setState);
+  };
+  if (!state.sync) {
+    displayLog('Synchronization is on...');
+    displayLog('First synchronization can take a while to init...');
+    setState({
+      sync: true
+    });
+    menu.items[10].label = 'Stop synchronization';
+    notifier.notify({
+      title: 'Synchronization is on',
+      message: 'First synchronization can take a while to init'
+    });
+    tray.icon = 'client/public/icon/icon_sync.png';
+    pouch.addAllFilters(function() {
+      filesystem.watchChanges(true, true);
+      return replication.runReplication({
+        force: options.force
+      });
+    });
+    publisher.on('firstSyncDone', (function(_this) {
+      return function() {
+        tray.icon = 'client/public/icon/icon.png';
+        return displayLog("Successfully synchronized");
+      };
+    })(this));
+    publisher.on('binaryPresent', (function(_this) {
+      return function(path) {
+        return displayLog("File " + path + " is already there.");
+      };
+    })(this));
+    publisher.on('binaryDownloadStart', (function(_this) {
+      return function(path) {
+        tray.icon = 'client/public/icon/icon_sync.png';
+        return displayLog("File " + path + " is downloading...");
+      };
+    })(this));
+    publisher.on('binaryDownloaded', (function(_this) {
+      return function(path) {
+        tray.icon = 'client/public/icon/icon.png';
+        displayLog("File " + path + " downloaded");
+        return fileModification(path);
+      };
+    })(this));
+    publisher.on('fileDeleted', (function(_this) {
+      return function(path) {
+        return displayLog("File " + path + " deleted");
+      };
+    })(this));
+    publisher.on('fileMoved', (function(_this) {
+      return function(info) {
+        var newPath, previousPath;
+        previousPath = info.previousPath, newPath = info.newPath;
+        displayLog("File moved: " + previousPath + " -> " + newPath);
+        return fileModification(newPath);
+      };
+    })(this));
+    publisher.on('directoryEnsured', (function(_this) {
+      return function(path) {
+        return displayLog("Folder " + path + " ensured");
+      };
+    })(this));
+    publisher.on('folderDeleted', (function(_this) {
+      return function(path) {
+        return displayLog("Folder " + path + " deleted");
+      };
+    })(this));
+    publisher.on('folderMoved', (function(_this) {
+      return function(info) {
+        var newPath, previousPath;
+        previousPath = info.previousPath, newPath = info.newPath;
+        return displayLog("Folder moved: " + previousPath + " -> " + newPath);
+      };
+    })(this));
+    publisher.on('uploadBinary', (function(_this) {
+      return function(path) {
+        tray.icon = 'client/public/icon/icon_sync.png';
+        return displayLog("File " + path + " is uploading...");
+      };
+    })(this));
+    publisher.on('binaryUploaded', (function(_this) {
+      return function(path) {
+        tray.icon = 'client/public/icon/icon.png';
+        displayLog("File " + path + " uploaded");
+        return fileModification(path);
+      };
+    })(this));
+    publisher.on('fileAddedLocally', (function(_this) {
+      return function(path) {
+        return displayLog("File " + path + " locally added");
+      };
+    })(this));
+    publisher.on('fileDeletedLocally', (function(_this) {
+      return function(path) {
+        return displayLog("File " + path + " locally deleted");
+      };
+    })(this));
+    publisher.on('fileDeletedLocally', (function(_this) {
+      return function(path) {
+        return displayLog("File " + path + " locally deleted");
+      };
+    })(this));
+    publisher.on('fileModificationLocally', (function(_this) {
+      return function(path) {
+        return displayLog("File " + path + " locally changed");
+      };
+    })(this));
+    publisher.on('folderAddedLocally', (function(_this) {
+      return function(path) {
+        return displayLog("Folder " + path + " locally added");
+      };
+    })(this));
+    return publisher.on('folderDeletedLocally', (function(_this) {
+      return function(path) {
+        return displayLog("Folder " + path + " locally deleted");
+      };
+    })(this));
+  }
+};
 ;var config, gui, lastModificationsMenu, menu, open, remoteConfig, setDiskSpace, tray;
 
 gui = require('nw.gui');
@@ -599,7 +785,7 @@ menu.append(new gui.MenuItem({
   label: 'Start synchronization',
   click: (function(_this) {
     return function() {
-      return _this.onSyncClicked();
+      return currentComponent.onSyncClicked();
     };
   })(this)
 }));
@@ -864,27 +1050,24 @@ ConfigFormStepTwo = React.createClass({
 ;var renderState;
 
 renderState = function(state) {
-  var currentComponent;
-  switch (state) {
-    case 'INTRO':
-      currentComponent = Intro();
-      break;
-    case 'STEP1':
-      currentComponent = ConfigFormStepOne(device);
-      break;
-    case 'STEP2':
-      currentComponent = ConfigFormStepTwo(device);
-      break;
-    case 'STEP3':
-      currentComponent = ConfigFormStepThree(device);
-      break;
-    case 'STATE':
-      currentComponent = StateView(device);
-      break;
-    default:
-      currentComponent = Intro();
-  }
-  React.renderComponent(currentComponent, document.body);
+  var getCurrentComponent;
+  getCurrentComponent = function(state) {
+    switch (state) {
+      case 'INTRO':
+        return Intro();
+      case 'STEP1':
+        return ConfigFormStepOne(device);
+      case 'STEP2':
+        return ConfigFormStepTwo(device);
+      case 'STEP3':
+        return ConfigFormStepThree(device);
+      case 'STATE':
+        return StateView(device);
+      default:
+        return Intro();
+    }
+  };
+  this.currentComponent = React.renderComponent(getCurrentComponent(state), document.body);
   if (state === 'STEP1') {
     return $("#folder-input").attr('nwdirectory', '');
   }

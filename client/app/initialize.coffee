@@ -1,21 +1,20 @@
-
-
 renderState = (state) ->
-    switch state
-        when 'INTRO'
-            currentComponent = Intro()
-        when 'STEP1'
-            currentComponent = ConfigFormStepOne device
-        when 'STEP2'
-            currentComponent = ConfigFormStepTwo device
-        when 'STEP3'
-            currentComponent = ConfigFormStepThree device
-        when 'STATE'
-            currentComponent = StateView device
-        else
-            currentComponent = Intro()
+    getCurrentComponent = (state) ->
+        switch state
+            when 'INTRO'
+                Intro()
+            when 'STEP1'
+                ConfigFormStepOne device
+            when 'STEP2'
+                ConfigFormStepTwo device
+            when 'STEP3'
+                ConfigFormStepThree device
+            when 'STATE'
+                StateView device
+            else
+                Intro()
 
-    React.renderComponent currentComponent, document.body
+    @currentComponent = React.renderComponent getCurrentComponent(state), document.body
     $("#folder-input").attr('nwdirectory', '') if state is 'STEP1'
 
 

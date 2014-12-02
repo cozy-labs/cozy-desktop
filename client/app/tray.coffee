@@ -2,6 +2,7 @@ gui = require 'nw.gui'
 open = require 'open'
 config = require './backend/config'
 remoteConfig = config.getConfig()
+#gui.Window.get().showDevTools()
 
 tray = new gui.Tray
     title: 'Cozy Desktop'
@@ -46,7 +47,7 @@ lastModificationsMenu.append new gui.MenuItem
     label: 'Show logs'
     click: ->
         win.show()
-    
+
 menu.append new gui.MenuItem
     type: 'normal'
     label: 'Last modifications'
@@ -68,7 +69,7 @@ menu.append new gui.MenuItem
     type: 'normal'
     label: 'Start synchronization'
     click: =>
-        @onSyncClicked()
+        currentComponent.onSyncClicked()
 
 menu.append new gui.MenuItem
     type: 'normal'
