@@ -74,6 +74,7 @@ StateView = React.createClass
             @displayLog 'Synchronization is off'
             notifier.notify
                 title: 'Synchronization has been stopped'
+                icon: 'client/public/icon/bighappycloud.png'
             menu.items[10].label = 'Start synchronization'
 
         else
@@ -84,6 +85,7 @@ StateView = React.createClass
             notifier.notify
                 title: 'Synchronization is on'
                 message: 'First synchronization can take a while to init'
+                icon: 'client/public/icon/bighappycloud.png'
             tray.icon = 'client/public/icon/icon_sync.png'
 
             pouch.addAllFilters ->
