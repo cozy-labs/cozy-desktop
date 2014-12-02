@@ -7,14 +7,13 @@ fs = require 'fs-extra'
 homedir = path.homedir()
 configDir = path.join homedir, '.cozy-desktop'
 configPath = path.join configDir, 'config.json'
-
 fs.ensureDirSync configDir
 fs.ensureFileSync configPath
 
 if fs.readFileSync(configPath).toString() is ''
     fs.writeFileSync configPath, JSON.stringify devices: {}, null, 2
 
-config = require configPath
+config = require configPath or devices: {}
 
 keys = Object.keys config.devices
 device = config.devices[keys[0]] if keys.length > 0

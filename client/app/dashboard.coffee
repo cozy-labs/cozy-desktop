@@ -174,7 +174,7 @@ StateView = React.createClass
         config = require './backend/config'
         del = require 'del'
         config.removeRemoteCozy device.deviceName
-        del config.defaultDir, force: true, (err) ->
+        del "#{config.defaultDir}/*", force: true, (err) ->
             alert t 'Configuration deleted.'
             renderState 'INTRO'
 

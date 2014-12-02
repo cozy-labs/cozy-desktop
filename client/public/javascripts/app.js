@@ -142,7 +142,9 @@ if (fs.readFileSync(configPath).toString() === '') {
   }, null, 2));
 }
 
-config = require(configPath);
+config = require(configPath || {
+  devices: {}
+});
 
 keys = Object.keys(config.devices);
 
@@ -442,7 +444,7 @@ StateView = React.createClass({
     config = require('./backend/config');
     del = require('del');
     config.removeRemoteCozy(device.deviceName);
-    return del(config.defaultDir, {
+    return del("" + config.defaultDir + "/*", {
       force: true
     }, function(err) {
       alert(t('Configuration deleted.'));
@@ -505,7 +507,7 @@ isValidForm = function(fields) {
   }
   return true;
 };
-;var config, gui, lastModificationsMenu, menu, open, remoteConfig, setDiskSpace, tray;
+;var config, displayTrayMenu, gui, open, remoteConfig;
 
 gui = require('nw.gui');
 
@@ -515,124 +517,107 @@ config = require('./backend/config');
 
 remoteConfig = config.getConfig();
 
-tray = new gui.Tray({
-  title: 'Cozy Desktop',
-  icon: 'client/public/icon/icon.png'
-});
-
-menu = new gui.Menu();
-
-menu.append(new gui.MenuItem({
-  type: 'normal',
-  label: 'Open Cozy Files in a web browser',
-  click: function() {
-    return open("" + remoteConfig.url + "/apps/files");
-  }
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'normal',
-  label: "Open '" + (path.basename(remoteConfig.path)) + "' directory",
-  click: function() {
-    return open(remoteConfig.path);
-  }
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'separator'
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'normal',
-  label: '0% of 1000GB used',
-  enabled: false
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'separator'
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'normal',
-  label: '',
-  enabled: false
-}));
-
-lastModificationsMenu = new gui.Menu();
-
-lastModificationsMenu.append(new gui.MenuItem({
-  type: 'separator'
-}));
-
-lastModificationsMenu.append(new gui.MenuItem({
-  type: 'normal',
-  label: 'Show logs',
-  click: function() {
-    return win.show();
-  }
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'normal',
-  label: 'Last modifications',
-  submenu: lastModificationsMenu
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'separator'
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'normal',
-  label: 'Parameters...',
-  click: function() {
-    return win.show();
-  }
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'separator'
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'normal',
-  label: 'Start synchronization',
-  click: (function(_this) {
-    return function() {
-      return _this.onSyncClicked();
-    };
-  })(this)
-}));
-
-menu.append(new gui.MenuItem({
-  type: 'normal',
-  label: 'Quit',
-  click: function() {
-    return win.close(true);
-  }
-}));
-
-tray.menu = menu;
-
-tray.on('click', function() {
-  return win.show();
-});
-
-setDiskSpace = function() {
-  return config.getDiskSpace(function(err, res) {
-    var percentage;
-    if (res) {
-      percentage = (res.diskSpace.usedDiskSpace / res.diskSpace.totalDiskSpace) * 100;
-      return menu.items[3].label = "" + (Math.round(percentage)) + "% of " + res.diskSpace.totalDiskSpace + "GB used";
-    }
+displayTrayMenu = function() {
+  var lastModificationsMenu, setDiskSpace;
+  this.tray = new gui.Tray({
+    title: 'Cozy Desktop',
+    icon: 'client/public/icon/icon.png'
   });
+  this.menu = new gui.Menu();
+  this.menu.append(new gui.MenuItem({
+    type: 'normal',
+    label: 'Open Cozy Files in a web browser',
+    click: function() {
+      return open("" + remoteConfig.url + "/apps/files");
+    }
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'normal',
+    label: "Open '" + (path.basename(remoteConfig.path)) + "' directory",
+    click: function() {
+      return open(remoteConfig.path);
+    }
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'separator'
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'normal',
+    label: '0% of 1000GB used',
+    enabled: false
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'separator'
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'normal',
+    label: '',
+    enabled: false
+  }));
+  lastModificationsMenu = new gui.Menu();
+  lastModificationsMenu.append(new gui.MenuItem({
+    type: 'separator'
+  }));
+  lastModificationsMenu.append(new gui.MenuItem({
+    type: 'normal',
+    label: 'Show logs',
+    click: function() {
+      return win.show();
+    }
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'normal',
+    label: 'Last modifications',
+    submenu: lastModificationsMenu
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'separator'
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'normal',
+    label: 'Parameters...',
+    click: function() {
+      return win.show();
+    }
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'separator'
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'normal',
+    label: 'Start synchronization',
+    click: (function(_this) {
+      return function() {
+        return currentComponent.onSyncClicked();
+      };
+    })(this)
+  }));
+  this.menu.append(new gui.MenuItem({
+    type: 'normal',
+    label: 'Quit',
+    click: function() {
+      return win.close(true);
+    }
+  }));
+  this.tray.menu = this.menu;
+  this.tray.on('click', function() {
+    return win.show();
+  });
+  setDiskSpace = function() {
+    return config.getDiskSpace((function(_this) {
+      return function(err, res) {
+        var percentage;
+        if (res) {
+          percentage = (res.diskSpace.usedDiskSpace / res.diskSpace.totalDiskSpace) * 100;
+          return _this.menu.items[3].label = "" + (Math.round(percentage)) + "% of " + res.diskSpace.totalDiskSpace + "GB used";
+        }
+      };
+    })(this));
+  };
+  return setInterval(function() {
+    return setDiskSpace();
+  }, 20000);
 };
-
-setDiskSpace();
-
-setInterval(function() {
-  return setDiskSpace();
-}, 20000);
 ;var win;
 
 win = gui.Window.get();
@@ -838,7 +823,7 @@ ConfigFormStepTwo = React.createClass({
       password = fieldPassword.getValue();
       options = {
         url: url,
-        deviceName: device.deviceName,
+        deviceName: config.getConfig().deviceName,
         password: password
       };
       saveConfig = function(err, credentials) {
@@ -864,27 +849,33 @@ ConfigFormStepTwo = React.createClass({
 ;var renderState;
 
 renderState = function(state) {
-  var currentComponent;
-  switch (state) {
-    case 'INTRO':
-      currentComponent = Intro();
-      break;
-    case 'STEP1':
-      currentComponent = ConfigFormStepOne(device);
-      break;
-    case 'STEP2':
-      currentComponent = ConfigFormStepTwo(device);
-      break;
-    case 'STEP3':
-      currentComponent = ConfigFormStepThree(device);
-      break;
-    case 'STATE':
-      currentComponent = StateView(device);
-      break;
-    default:
-      currentComponent = Intro();
+  var getCurrentComponent;
+  getCurrentComponent = function(state) {
+    switch (state) {
+      case 'INTRO':
+        win.show();
+        return Intro();
+      case 'STEP1':
+        win.show();
+        return ConfigFormStepOne(device);
+      case 'STEP2':
+        win.show();
+        return ConfigFormStepTwo(device);
+      case 'STEP3':
+        win.show();
+        return ConfigFormStepThree(device);
+      case 'STATE':
+        displayTrayMenu();
+        return StateView(device);
+      default:
+        win.show();
+        return Intro();
+    }
+  };
+  this.currentComponent = React.renderComponent(getCurrentComponent(state), document.body);
+  if (state === 'STATE') {
+    this.currentComponent.onSyncClicked();
   }
-  React.renderComponent(currentComponent, document.body);
   if (state === 'STEP1') {
     return $("#folder-input").attr('nwdirectory', '');
   }
@@ -899,6 +890,7 @@ window.onload = function() {
   locales = en;
   polyglot.extend(locales);
   window.t = polyglot.t.bind(polyglot);
+  win.hide();
   return renderState(configHelpers.getState());
 };
 ;

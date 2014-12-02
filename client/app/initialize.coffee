@@ -1,21 +1,27 @@
-
-
 renderState = (state) ->
-    switch state
-        when 'INTRO'
-            currentComponent = Intro()
-        when 'STEP1'
-            currentComponent = ConfigFormStepOne device
-        when 'STEP2'
-            currentComponent = ConfigFormStepTwo device
-        when 'STEP3'
-            currentComponent = ConfigFormStepThree device
-        when 'STATE'
-            currentComponent = StateView device
-        else
-            currentComponent = Intro()
+    getCurrentComponent = (state) ->
+        switch state
+            when 'INTRO'
+                win.show()
+                Intro()
+            when 'STEP1'
+                win.show()
+                ConfigFormStepOne device
+            when 'STEP2'
+                win.show()
+                ConfigFormStepTwo device
+            when 'STEP3'
+                win.show()
+                ConfigFormStepThree device
+            when 'STATE'
+                displayTrayMenu()
+                StateView device
+            else
+                win.show()
+                Intro()
 
-    React.renderComponent currentComponent, document.body
+    @currentComponent = React.renderComponent getCurrentComponent(state), document.body
+    @currentComponent.onSyncClicked() if state is 'STATE'
     $("#folder-input").attr('nwdirectory', '') if state is 'STEP1'
 
 
@@ -31,5 +37,6 @@ window.onload = ->
     locales = en
     polyglot.extend locales
     window.t = polyglot.t.bind polyglot
+    win.hide()
 
     renderState configHelpers.getState()
