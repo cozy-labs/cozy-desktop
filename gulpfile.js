@@ -123,7 +123,7 @@ gulp.task('make-rpm-64', shell.task([
 
 
 gulp.task('make-osx-app', shell.task([
-  'cp build/cozy-desktop/osx/cozy-desktop.app .'
+  'cp -a build/cozy-desktop/osx/cozy-desktop.app .'
 ]));
 
 gulp.task('coffeelint', function() {
