@@ -6,7 +6,6 @@ remoteConfig = config.getConfig()
 
 displayTrayMenu = ->
     @tray = new gui.Tray
-        title: 'Cozy Desktop'
         icon: 'client/public/icon/icon.png'
 
     @menu = new gui.Menu()
