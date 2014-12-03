@@ -21,7 +21,7 @@ Then you can install it via NPM:
 cozy-desktop add-remote-cozy http://url.of.my.cozy devicename /sync/directory
 
 # Then start synchronization daemon:
-cozy-desktop cli.coffee sync
+cozy-desktop sync
 ```
 
 Other commands can be listed with
@@ -32,19 +32,19 @@ Other commands can be listed with
 ## GUI running
 
 The Graphical User Interface requires Node Webkit to be launched. It should be
-installed with your dev dependencies. You can install it with the following
+available in your dev dependencies. You can install it with the following
 commmands:
 
     cd cozy-desktop
     npm install
 
 For an obscure reason, `leveldown` module needs to be recompiled on your platform
-with `node-gyp` in order to run on node webkit.
+with `node-gyp` in order to run on Node Webkit.
 
     sudo npm install -g nw-gyp
     node_modules/.bin/gulp leveldown
 
-One done, you can launch nodewebkit in the current directory
+Once done, you can launch nodewebkit in the current directory
 
     node_modules/nodewebkit/bin/nodewebkit .
 
@@ -65,6 +65,7 @@ run:
     node_modules/.bin/gulp scripts  # Compiles backend files
     cd client
     npm install
+    sudo npm install -g brunch
     brunch build                    # Compiles client files
 
 
@@ -89,7 +90,7 @@ To make a package for your platform, choose either:
 ## Hack
 
 To hack the synchronization backend, you can just edit the files under the
-`backend` directory. Remove the `*.js` files if necessary, the run the
+`backend` directory. Remove the `*.js` files if necessary, then run the
 `cli.coffee` file.
 
 ### Run tests
