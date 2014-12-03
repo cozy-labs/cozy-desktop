@@ -4,32 +4,6 @@ The Cozy desktop app allows to sync the files stored in your Cozy with your lapt
 and/or your desktop. It replicates your files on your hard drive and apply
 changes you made on them on other synced devices and on your online Cozy.
 
-## GUI Install
-
-Build the package first:
-
-    npm install
-    sudo npm install -g nw-gyp
-    npm install nodewebkit
-    sudo apt-get install ruby-dev build-essential
-    sudo gem install fpm
-    node_modules/.bin/gulp build-gui-package
-
-Build .deb for your system:
-
-    node_modules/.bin/gulp make-deb-32
-    node_modules/.bin/gulp make-deb-64
-
-The install it:
-
-    sudo dpkg -i cozy-desktop_0.1.2-1_amd64.deb
-
-## GUI Running
-
-Just run the main executable:
-
-    cozy-desktop
-
 ## CLI Install
 
 The cozy-desktop requires node.js and build tools to run
@@ -54,39 +28,29 @@ Other commands can be listed with
 
     cozy-desktop -h
 
-### Hack
 
-### Synchronization engine
+## GUI running
 
-To hack the synchronization backend, you can just edit the files under the
-`backend` directory. The CLI bin located at the root of the folder, it's the
-`cli.coffee` file.
-
-### Graphical User interface
-
-The Graphical User Interface requires Node Webkit to be launched. Normally it
-is installed with your dev dependencies. So you can run the GUI via the
-following commmand:
+The Graphical User Interface requires Node Webkit to be launched. It should be
+installed with your dev dependencies. You can install it with the following
+commmands:
 
     cd cozy-desktop
+    npm install
+
+For an obscure reason, `leveldown` module needs to be recompiled on your platform
+with `node-gyp` in order to run on node webkit.
+
+    sudo npm install -g nw-gyp
+    node_modules/.bin/gulp leveldown
+
+One done, you can launch nodewebkit in the current directory
+
     node_modules/nodewebkit/bin/nodewebkit .
 
-To run the engine from the GUi, it requires to recompile a given submodule
-
-    npm install nw-gyp -g
-    gulp leveldown
-
-If you want to build the GUI package, type:
-
-    gulp build-gui-package
-
-To make a package for your platform, choose either:
-
-    gulp make-deb-32
-    gulp make-deb-64
-    gulp make-rpm-32
-    gulp make-rpm-64
-    gulp make-osx-app
+**Note:** On Ubuntu 13.04+, Fedora 18+, ArchLinux and Gentoo, you will run
+into a `libudev.so.0` issue. See https://github.com/rogerwang/node-webkit/wiki/The-solution-of-lacking-libudev.so.0
+for more information.
 
 **Note:** On Debian Wheezy (7.x) you will have to install libc6 from the
 `testing` repository. Be careful, it may break other services.
@@ -95,15 +59,38 @@ To make a package for your platform, choose either:
     sudo apt-get update
     sudo apt-get install -t testing libc6
 
-### How to run install node-webkit globally
+If you made a modification in the code and you want to recompile `.coffee` files,
+run:
 
-1. Download [node-webkit](https://github.com/rogerwang/node-webkit#downloads)
-2. unpack downloaded archive
-3. On Ubuntu fix [the libudev
-   issue](https://github.com/rogerwang/node-webkit/wiki/The-solution-of-lacking-libudev.so.0)
-4. In your cozy-desktop root folder run:
+    node_modules/.bin/gulp scripts  # Compiles backend files
+    cd client
+    npm install
+    brunch build                    # Compiles client files
 
-    path/to/node-webkit/nw .
+
+### GUI package building
+
+If you want to build the GUI package, you will need `rubygems` and the `fpm`
+gem:
+
+    sudo apt-get install ruby-dev build-essential  # On Ubuntu/Debian
+    sudo gem install fpm
+    gulp build-gui-package
+
+To make a package for your platform, choose either:
+
+    node_modules/.bin/gulp make-deb-32
+    node_modules/.bin/gulp make-deb-64
+    node_modules/.bin/gulp make-rpm-32
+    node_modules/.bin/gulp make-rpm-64
+    node_modules/.bin/gulp make-osx-app
+
+
+## Hack
+
+To hack the synchronization backend, you can just edit the files under the
+`backend` directory. Remove the `*.js` files if necessary, the run the
+`cli.coffee` file.
 
 ### Run tests
 
@@ -112,10 +99,10 @@ proxy up and running) and that the file application is accessible on the 9121
 port.
 
 ```
-# Make sure to have dev dependencies
+# Make sure to have dev dependencies installed
 npm install
 
-# Thne run tests via gulp
+# Then run tests via gulp
 node_modules/.bin/gulp test
 ```
 
