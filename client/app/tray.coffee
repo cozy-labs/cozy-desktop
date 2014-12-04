@@ -27,7 +27,7 @@ displayTrayMenu = ->
 
     @menu.append new gui.MenuItem
         type: 'normal'
-        label: '0% of 1000GB used'
+        label: 'Refreshing available space...'
         enabled: false
 
     @menu.append new gui.MenuItem
@@ -35,7 +35,7 @@ displayTrayMenu = ->
 
     @menu.append new gui.MenuItem
         type: 'normal'
-        label: ''
+        label: 'Synchronizing...'
         enabled: false
 
     lastModificationsMenu = new gui.Menu()
@@ -58,7 +58,7 @@ displayTrayMenu = ->
 
     @menu.append new gui.MenuItem
         type: 'normal'
-        label: 'Parameters...'
+        label: 'Parameters'
         click: ->
           win.show()
 

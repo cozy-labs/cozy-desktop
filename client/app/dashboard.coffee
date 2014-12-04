@@ -70,7 +70,7 @@ StateView = React.createClass
 
         if @state.sync
             @setState sync: false
-            replication.replicator.cancel() if replication.replicator?
+            replication.cancelReplication()
             @displayLog 'Synchronization is off'
             notifier.notify
                 title: 'Synchronization has been stopped'
@@ -173,11 +173,16 @@ StateView = React.createClass
             modMenu.removeAt modMenu.items.length-3
 
     onDeleteConfigurationClicked: ->
+        replication = require './backend/replication'
+        filesystem = require './backend/filesystem'
         config = require './backend/config'
-        del = require 'del'
-        config.removeRemoteCozy device.deviceName
-        del "#{config.defaultDir}/*", force: true, (err) ->
+        fs = require 'fs-extra'
+        @setState sync: false
+        replication.cancelReplication()
+        filesystem.changes.kill()
+        fs.remove configDir, (err) ->
             alert t 'Configuration deleted.'
+            tray.remove()
             renderState 'INTRO'
 
     onDeleteFilesClicked: ->

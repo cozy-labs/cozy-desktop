@@ -182,7 +182,7 @@ ConfigFormStepTwo = React.createClass
                 if err
                     console.log err
                     alert "An error occured while registering your device. #{err}"
-                    renderState 'STATE'
+                    renderState 'STEP2'
                 else
                     options =
                         url: url

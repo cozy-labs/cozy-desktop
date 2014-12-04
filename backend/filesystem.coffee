@@ -59,6 +59,10 @@ applyOperation = (task, callback) ->
     ]
 
     log.debug "Operation queued: #{task.operation}"
+    if task.file?
+        log.debug "File: #{task.file}"
+    if task.doc?
+        log.debug task.doc
 
     if task.operation in watchingBlockingOperations
         filesystem.watchingLocked = true
@@ -215,6 +219,8 @@ filesystem =
                     previousDocRev.path,
                     previousDocRev.name
                 )
+
+                #TODO: Async this
                 previousExists = fs.existsSync previousPath
                 newExists = fs.existsSync newPath
                 isMoved = newPath isnt previousPath
@@ -238,7 +244,8 @@ filesystem =
                 # That case only happens with folders. It occurs when a
                 # subfolder was moved before its parents. So parent target
                 # is created before the parent is moved.
-                else if isMoved and previousExists and newExists
+                else if isMoved and previousExists and newExists \
+                and previousPath isnt newPath
                     task =
                         operation: 'deleteFolder'
                         id: doc._id
@@ -270,7 +277,7 @@ filesystem =
             if err
                 if err.status is 404
                     log.debug """
-Can't delete folder, previous revison is not registered: #{id}
+Can't delete folder, previous revision is not registered: #{id}
 """
                     callback()
                 else
@@ -294,7 +301,7 @@ Can't delete folder, previous revison is not registered: #{id}
             if err
                 if err.status is 404
                     log.debug """
-Can't delete file, previous revison is not registered: #{id}
+Can't delete file, previous revision is not registered: #{id}
 """
                     callback()
                 else
@@ -363,6 +370,7 @@ Remove directory: #{relativePath} (not remotely listed)
 
     # TODO: add test
     createFolderFromFS: (dir, callback) ->
+        return callback() if not dir.filename?
         relativePath = "#{dir.parent}/#{dir.filename}"
         pouch.folders.get relativePath, (err, doc) ->
             if err then callback err
@@ -813,7 +821,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
         # Use chokidar since the standard watch() function from
         # fs module has some issues.
         # More info on https://github.com/paulmillr/chokidar
-        watcher = chokidar.watch remoteConfig.path,
+        filesystem.watcher = chokidar.watch remoteConfig.path,
             persistent: continuous
             ignoreInitial: fromNow
             #ignored: /[\/\\]\./
@@ -858,5 +866,7 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
             log.error 'An error occured while watching changes:'
             console.error err
 
+
+    watcher: null
 
 module.exports = filesystem

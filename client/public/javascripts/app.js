@@ -280,9 +280,7 @@ StateView = React.createClass({
       this.setState({
         sync: false
       });
-      if (replication.replicator != null) {
-        replication.replicator.cancel();
-      }
+      replication.cancelReplication();
       this.displayLog('Synchronization is off');
       notifier.notify({
         title: 'Synchronization has been stopped',
@@ -442,14 +440,19 @@ StateView = React.createClass({
     }
   },
   onDeleteConfigurationClicked: function() {
-    var config, del;
+    var config, filesystem, fs, replication;
+    replication = require('./backend/replication');
+    filesystem = require('./backend/filesystem');
     config = require('./backend/config');
-    del = require('del');
-    config.removeRemoteCozy(device.deviceName);
-    return del("" + config.defaultDir + "/*", {
-      force: true
-    }, function(err) {
+    fs = require('fs-extra');
+    this.setState({
+      sync: false
+    });
+    replication.cancelReplication();
+    filesystem.changes.kill();
+    return fs.remove(configDir, function(err) {
       alert(t('Configuration deleted.'));
+      tray.remove();
       return renderState('INTRO');
     });
   },
@@ -544,7 +547,7 @@ displayTrayMenu = function() {
   }));
   this.menu.append(new gui.MenuItem({
     type: 'normal',
-    label: '0% of 1000GB used',
+    label: 'Refreshing available space...',
     enabled: false
   }));
   this.menu.append(new gui.MenuItem({
@@ -552,7 +555,7 @@ displayTrayMenu = function() {
   }));
   this.menu.append(new gui.MenuItem({
     type: 'normal',
-    label: '',
+    label: 'Synchronizing...',
     enabled: false
   }));
   lastModificationsMenu = new gui.Menu();
@@ -576,7 +579,7 @@ displayTrayMenu = function() {
   }));
   this.menu.append(new gui.MenuItem({
     type: 'normal',
-    label: 'Parameters...',
+    label: 'Parameters',
     click: function() {
       return win.show();
     }
@@ -831,7 +834,7 @@ ConfigFormStepTwo = React.createClass({
         if (err) {
           console.log(err);
           alert("An error occured while registering your device. " + err);
-          return renderState('STATE');
+          return renderState('STEP2');
         } else {
           options = {
             url: url,
