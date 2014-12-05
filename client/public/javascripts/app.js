@@ -330,6 +330,16 @@ StateView = React.createClass({
           return _this.fileModification(path);
         };
       })(this));
+      publisher.on('applyingChanges', (function(_this) {
+        return function() {
+          return tray.icon = 'client/public/icon/icon_sync.png';
+        };
+      })(this));
+      publisher.on('changesApplied', (function(_this) {
+        return function() {
+          return tray.icon = 'client/public/icon/icon.png';
+        };
+      })(this));
       publisher.on('fileDeleted', (function(_this) {
         return function(path) {
           return _this.displayLog("File " + path + " deleted");

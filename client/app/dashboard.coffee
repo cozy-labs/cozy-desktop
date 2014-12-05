@@ -110,6 +110,10 @@ StateView = React.createClass
                 tray.icon = 'client/public/icon/icon.png'
                 @displayLog "File #{path} downloaded"
                 @fileModification path
+            publisher.on 'applyingChanges', =>
+                tray.icon = 'client/public/icon/icon_sync.png'
+            publisher.on 'changesApplied', =>
+                tray.icon = 'client/public/icon/icon.png'
             publisher.on 'fileDeleted', (path) =>
                 @displayLog "File #{path} deleted"
             publisher.on 'fileMoved', (info) =>

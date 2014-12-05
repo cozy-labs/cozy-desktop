@@ -200,7 +200,7 @@ module.exports = replication =
     onSyncUpdate: (info) ->
         replication.lastChangeSeq = config.getChangeSeq()
         replication.lastChangeSeq ?= 0
-        log.info 'Continuous sync session done, applying changes to files'
+        log.debug 'Database updated, applying changes to files'
         replication.applyChanges replication.lastChangeSeq
 
 
@@ -243,10 +243,12 @@ module.exports = replication =
                     callback() if callback?
                 else
                     # Else just apply every change one by one.
-                    log.info 'All changes were fetched, now applying them to your files...'
+                    log.debug "Applying #{res.results.length} changes..."
+                    publisher.emit 'applyingChanges'
                     async.eachSeries res.results, replication.applyChange, (err) ->
                         log.error err if err
-                        log.info "All changes were applied to your files."
+                        log.debug "Changes applied."
+                        publisher.emit 'changesApplied'
                         callback() if callback?
             else
                 setTimeout ->
