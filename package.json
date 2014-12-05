@@ -59,7 +59,9 @@
     "request-json-light": "^0.5.8",
     "rimraf": "^2.2.8",
     "touch": "^0.0.3",
-    "wrench": "~1.5.8"
+    "wrench": "~1.5.8",
+    "async-each": "~0.1.6",
+    "readdirp": "~1.2.0"
   },
   "devDependencies": {
     "node-webkit-builder": "~0.3.0",

@@ -4,7 +4,7 @@ touch    = require 'touch'
 path     = require 'path'
 uuid     = require 'node-uuid'
 mime     = require 'mime'
-chokidar = require 'chokidar'
+chokidar = require './chokidar'
 rimraf   = require 'rimraf'
 wrench   = require 'wrench'
 log      = require('printit')
@@ -824,6 +824,8 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
         filesystem.watcher = chokidar.watch remoteConfig.path,
             persistent: continuous
             ignoreInitial: fromNow
+            interval: 300
+            binaryInterval: 600
             #ignored: /[\/\\]\./
 
         # New file detected
