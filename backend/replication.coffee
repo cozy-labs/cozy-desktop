@@ -234,11 +234,20 @@ module.exports = replication =
 
         apply = (res) ->
             if filesystem.applicationDelay is 0
-                log.info 'All changes were fetched, now applying them to your files...'
-                async.eachSeries res.results, replication.applyChange, (err) ->
-                    log.error err if err
-                    log.info "All changes were applied to your files."
+                # If you are fetching changes since the beginning, the applyFileDBChanges
+                # and applyFolderDBChanges actions should have done everything OK.
+                if since is 0
+                    log.debug "First synchronization detected"
+                    lastChangeSeq = res.results[res.results.length-1].seq
+                    config.setChangeSeq lastChangeSeq
                     callback() if callback?
+                else
+                    # Else just apply every change one by one.
+                    log.info 'All changes were fetched, now applying them to your files...'
+                    async.eachSeries res.results, replication.applyChange, (err) ->
+                        log.error err if err
+                        log.info "All changes were applied to your files."
+                        callback() if callback?
             else
                 setTimeout ->
                     apply res
