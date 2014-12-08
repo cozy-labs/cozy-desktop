@@ -45,7 +45,7 @@ ConfigFormStepOne = React.createClass
                 inputRef: 'deviceName'
                 defaultValue: @props.deviceName
                 ref: 'deviceNameField'
-                placeholder: 'Laptop'
+                placeholder: t 'Laptop'
                 onChange: @onDeviceNameChanged
             Field
                 label: t 'directory to synchronize your data'
