@@ -35,6 +35,8 @@ window.onload = ->
     locales = {}
     polyglot = new Polyglot()
     locales = en
+    if process.env.LANG.indexOf('fr') is 0
+        locales = fr
     polyglot.extend locales
     window.t = polyglot.t.bind polyglot
     win.hide()

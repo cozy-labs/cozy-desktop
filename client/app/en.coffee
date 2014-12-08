@@ -13,6 +13,7 @@ en =
     'path': 'Path'
     'url': 'URL'
     'resync all': 'Resync All'
+    'Laptop': 'Laptop'
     'delete configuration': 'Delete configuration'
     'delete configuration and files': 'Delete configuration and files'
     'on': 'on'
