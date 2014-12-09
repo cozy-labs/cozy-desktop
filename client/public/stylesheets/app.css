@@ -3749,6 +3749,9 @@ textarea:focus {
   background-color: #fe8800;
   border-color: #fe8800;
 }
+.description {
+  white-space: pre;
+}
 
 body {
   padding: 20px;

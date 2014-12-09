@@ -154,6 +154,7 @@ module.exports = replication =
             else
                 replication.startSeq ?= config.getSeq()
                 replication.startChangeSeq ?= config.getChangeSeq()
+                url = replication.url = replication.getUrl()
 
                 if options.force or replication.startSeq is 0
 
@@ -171,8 +172,6 @@ module.exports = replication =
                 else
 
                     # Run a standard replication
-                    url = replication.url = replication.getUrl()
-
                     log.info 'Start first replication to resync local device and your Cozy.'
                     log.info "Resync from sequence #{replication.startSeq}"
 
@@ -196,12 +195,13 @@ module.exports = replication =
         url = replication.url
         log.info 'Start synchronization...'
 
-        opts =
-            filter: (doc) ->
-                doc.docType is 'Folder' or doc.docType is 'File'
-            live: false
-            since: replication.startSeq
         setInterval ->
+            opts =
+                filter: (doc) ->
+                    doc.docType is 'Folder' or doc.docType is 'File'
+                live: false
+                since: replication.startSeq
+
             # Avoid conflicts with another running replicator
             if filesystem.applicationDelay is 0 \
             and (not replication.replicatorFrom \
