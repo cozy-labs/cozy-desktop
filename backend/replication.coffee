@@ -46,6 +46,19 @@ module.exports = replication =
         else
             null
 
+    # Pings the cozy to check the credentials without creating a device
+    checkCredentials: (options, callback) ->
+        client = request.newClient options.url
+        data =
+            username: 'owner'
+            password: options.password
+        client.post "login", data, (err, res, body) ->
+            if res?.statusCode isnt 200
+                error = err?.message or body.error or body.message
+            else
+                error = null
+            callback error
+
 
     # Register device remotely then returns credentials given by remote Cozy.
     # This credentials will allow the device to access to the Cozy database.
@@ -55,7 +68,6 @@ module.exports = replication =
 
         data =
             login: options.deviceName
-
         client.post 'device/', data, (err, res, body) ->
             if err
                 callback err
