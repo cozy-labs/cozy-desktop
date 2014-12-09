@@ -83,6 +83,12 @@ applyOperation = (task, callback) ->
         setTimeout ->
             filesystem.applicationDelay -= delay
         , delay
+        callbackOrig = callback
+        callback = (err, res) ->
+            setTimeout ->
+                require('./replication').replicateToRemote()
+                callbackOrig err, res
+            , 500
 
     switch task.operation
         when 'post'
@@ -181,8 +187,7 @@ filesystem =
                 if err
                     callback err
                 else
-                    log.info "Directory ensured: #{absPath}"
-                    publisher.emit 'directoryEnsured', absPath
+                    log.debug "Directory ensured: #{absPath}"
 
                     creationDate = new Date doc.creationDate
                     modificationDate = new Date doc.lastModification
@@ -399,11 +404,11 @@ Folder #{relativePath} can't be created.
 
 
     # TODO: add test
-    createFileFromFS: (dir, callback) ->
+    createFileDocFromFS: (dir, callback) ->
         handleError = (err) ->
             log.raw err
             log.error """
-Folder #{relativePath} can't be created.
+File #{relativePath} can't be created.
 """
             callback()
 
@@ -437,7 +442,7 @@ Folder #{relativePath} can't be created.
                                             checksum: binaryDoc.checksum
 
                                 log.info """
-Create flle in DB: #{relativePath} (not remotely listed).
+Create file in DB: #{relativePath} (not remotely listed).
 """
 
                                 pouch.files.createNew doc, (err, res) ->
@@ -508,12 +513,14 @@ Create flle in DB: #{relativePath} (not remotely listed).
             else
                 folders = result.rows
 
+                log.info "Creating unlisted folders remotely..."
                 dirList = filesystem.walkDirSync remoteConfig.path
                 mapFunction = filesystem.createFolderFromFS
                 async.eachSeries dirList, mapFunction, (err) ->
                     if err
                         callback err
                     else
+                        log.info "Creating locally missing folders..."
                         mapFunction = filesystem.makeDirectoryFromDoc
                         async.eachSeries folders, mapFunction, callback
 
@@ -525,15 +532,19 @@ Create flle in DB: #{relativePath} (not remotely listed).
             if err and err.status isnt 404 or result is undefined
                 callback err
             else
+                log.info "Downloading missing files from remote..."
+                publisher.emit 'downloadingRemoteChanges'
                 files = result.rows
                 async.eachSeries files, filesystem.downloadIfNotExists, (err) ->
                     if err
                         log.error err
                         callback err
                     else
+                        log.info "Uploading modifications to remote..."
+                        publisher.emit 'uploadingLocalChanges'
                         fileList = filesystem.walkFileSync remoteConfig.path
                         async.eachSeries(fileList,
-                                         filesystem.createFileFromFS,
+                                         filesystem.createFileDocFromFS,
                                          callback)
 
 
@@ -829,40 +840,42 @@ Directory is not located in the synchronized directory: #{dirPaths.absolute}
             #ignored: /[\/\\]\./
 
         # New file detected
-        .on 'add', (filePath) =>
-            if not @watchingLocked and not filesBeingCopied[filePath]?
+        .on 'add', (filePath) ->
+            if not filesystem.watchingLocked and not filesBeingCopied[filePath]?
                 log.info "File added: #{filePath}"
-                fileIsCopied filePath, =>
+                fileIsCopied filePath, ->
                     publisher.emit 'fileAddedLocally', filePath
-                    @changes.push { operation: 'post', file: filePath }, ->
+                    filesystem.changes.push { operation: 'post', file: filePath }, ->
 
         # New directory detected
-        .on 'addDir', (dirPath) =>
-            if not @watchingLocked
+        .on 'addDir', (dirPath) ->
+            if not filesystem.watchingLocked
                 if dirPath isnt remoteConfig.path
                     log.info "Directory added: #{dirPath}"
                     publisher.emit 'folderAddedLocally', dirPath
-                    @changes.push { operation: 'postFolder', folder: dirPath }, ->
+                    filesystem.changes.push { operation: 'postFolder', folder: dirPath }, ->
 
         # File deletion detected
-        .on 'unlink', (filePath) =>
-            log.info "File deleted: #{filePath}"
-            publisher.emit 'fileDeletedLocally', filePath
-            @changes.push { operation: 'deleteDoc', file: filePath }, ->
+        .on 'unlink', (filePath) ->
+            if not filesystem.watchingLocked
+                log.info "File deleted: #{filePath}"
+                publisher.emit 'fileDeletedLocally', filePath
+                filesystem.changes.push { operation: 'deleteDoc', file: filePath }, ->
 
         # Folder deletion detected
-        .on 'unlinkDir', (dirPath) =>
-            log.info "Folder deleted: #{dirPath}"
-            publisher.emit 'folderDeletedLocally', dirPath
-            @changes.push { operation: 'deleteDoc', file: dirPath }, ->
+        .on 'unlinkDir', (dirPath) ->
+            if not filesystem.watchingLocked
+                log.info "Folder deleted: #{dirPath}"
+                publisher.emit 'folderDeletedLocally', dirPath
+                filesystem.changes.push { operation: 'deleteDoc', file: dirPath }, ->
 
         # File update detected
-        .on 'change', (filePath) =>
-            if not @watchingLocked and not filesBeingCopied[filePath]?
+        .on 'change', (filePath) ->
+            if not filesystem.watchingLocked and not filesBeingCopied[filePath]?
                 log.info "File changed: #{filePath}"
-                fileIsCopied filePath, =>
+                fileIsCopied filePath, ->
                     publisher.emit 'fileChangedLocally', filePath
-                    @changes.push { operation: 'put', file: filePath }, ->
+                    filesystem.changes.push { operation: 'put', file: filePath }, ->
 
         .on 'error', (err) ->
             log.error 'An error occured while watching changes:'
