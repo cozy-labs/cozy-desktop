@@ -20,7 +20,7 @@ displayTrayMenu = ->
         type: 'normal'
         label: "Open '#{path.basename remoteConfig.path}' directory"
         click: ->
-          open remoteConfig.path
+            open device.path
 
     @menu.append new gui.MenuItem
         type: 'separator'
