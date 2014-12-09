@@ -312,12 +312,12 @@ StateView = React.createClass({
           return _this.displayLog("Successfully synchronized");
         };
       })(this));
-      publisher.on('binaryPresent', (function(_this) {
-        return function(path) {
-          return _this.displayLog("File " + path + " is already there.");
+      publisher.on('downloadingRemoteChanges', (function(_this) {
+        return function() {
+          return _this.displayLog('Downloading missing files from remote...');
         };
       })(this));
-      publisher.on('binaryDownloadStart', (function(_this) {
+      publisher.on('binaryDownloadStdebug', (function(_this) {
         return function(path) {
           tray.icon = 'client/public/icon/icon_sync.png';
           return _this.displayLog("File " + path + " is downloading...");
@@ -353,11 +353,6 @@ StateView = React.createClass({
           return _this.fileModification(newPath);
         };
       })(this));
-      publisher.on('directoryEnsured', (function(_this) {
-        return function(path) {
-          return _this.displayLog("Folder " + path + " ensured");
-        };
-      })(this));
       publisher.on('folderDeleted', (function(_this) {
         return function(path) {
           return _this.displayLog("Folder " + path + " deleted");
@@ -368,6 +363,11 @@ StateView = React.createClass({
           var newPath, previousPath;
           previousPath = info.previousPath, newPath = info.newPath;
           return _this.displayLog("Folder moved: " + previousPath + " -> " + newPath);
+        };
+      })(this));
+      publisher.on('uploadingLocalChanges', (function(_this) {
+        return function() {
+          return _this.displayLog('Uploading modifications to remote...');
         };
       })(this));
       publisher.on('uploadBinary', (function(_this) {

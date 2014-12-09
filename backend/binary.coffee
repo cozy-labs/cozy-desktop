@@ -207,8 +207,7 @@ module.exports = binary =
                     #        callback null
 
         else
-            log.info "File already downloaded: #{filePath}"
-            publisher.emit 'binaryPresent', filePath
+            log.debug "File already downloaded: #{filePath}"
             callback()
 
 

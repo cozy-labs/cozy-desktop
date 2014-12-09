@@ -101,9 +101,9 @@ StateView = React.createClass
                 @displayLog "Successfully synchronized"
 
             # Remote to local messages
-            publisher.on 'binaryPresent', (path) =>
-                @displayLog "File #{path} is already there."
-            publisher.on 'binaryDownloadStart', (path) =>
+            publisher.on 'downloadingRemoteChanges', =>
+                @displayLog 'Downloading missing files from remote...'
+            publisher.on 'binaryDownloadStdebug', (path) =>
                 tray.icon = 'client/public/icon/icon_sync.png'
                 @displayLog "File #{path} is downloading..."
             publisher.on 'binaryDownloaded', (path) =>
@@ -120,8 +120,6 @@ StateView = React.createClass
                 {previousPath, newPath} = info
                 @displayLog "File moved: #{previousPath} -> #{newPath}"
                 @fileModification newPath
-            publisher.on 'directoryEnsured', (path) =>
-                @displayLog "Folder #{path} ensured"
             publisher.on 'folderDeleted', (path) =>
                 @displayLog "Folder #{path} deleted"
             publisher.on 'folderMoved', (info) =>
@@ -129,6 +127,8 @@ StateView = React.createClass
                 @displayLog "Folder moved: #{previousPath} -> #{newPath}"
 
             # Local to remote messages
+            publisher.on 'uploadingLocalChanges', =>
+                @displayLog 'Uploading modifications to remote...'
              publisher.on 'uploadBinary', (path) =>
                 tray.icon = 'client/public/icon/icon_sync.png'
                 @displayLog "File #{path} is uploading..."

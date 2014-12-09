@@ -135,28 +135,42 @@ module.exports = replication =
         replication.startChangeSeq = config.getChangeSeq()
 
         url = replication.url
-        log.info 'Start live synchronization...'
+        log.info 'Start synchronization...'
 
         opts =
             filter: (doc) ->
                 doc.docType is 'Folder' or doc.docType is 'File'
-            live: true
+            live: false
             since: replication.startSeq
-        replication.replicatorFrom = pouch.db.replicate.from(url, opts)
-            .on 'change', replication.displayChange
-            .on 'uptodate', replication.onSyncUpdate
-            .on 'error', replication.onError
+        setInterval ->
+            if filesystem.applicationDelay is 0
+                replication.replicatorFrom = pouch.db.replicate.from(url, opts)
+                    .on 'change', replication.displayChange
+                    .on 'complete', replication.onSyncUpdate
+                    .on 'error', replication.onError
+        , 5000
+
+
+    replicateToRemote: ->
+        replication.startSeq = config.getSeq()
+        replication.startChangeSeq = config.getChangeSeq()
+
+        url = replication.url
 
         opts =
             filter: (doc) ->
                 doc.docType is 'Folder' or doc.docType is 'File' \
                 or (doc._deleted and (doc.docType is 'Folder' or doc.docType is 'File'))
-            live: true
+            live: false
             since: replication.startChangeSeq
-        replication.replicatorTo = pouch.db.replicate.to(url, opts)
-            .on 'change', replication.displayChange
-            .on 'uptodate', replication.displayChange
-            .on 'error', replication.onError
+        if filesystem.applicationDelay is 0
+            log.info 'Replicate changes to remote'
+            replication.replicatorTo = pouch.db.replicate.to(url, opts)
+                .on 'error', replication.onError
+        else
+            setTimeout ->
+                replication.replicateToRemote()
+            , 1000
 
 
     # Log change event information.
@@ -198,10 +212,11 @@ module.exports = replication =
     # When a sync batch has been performed, changes are applied to the file
     # system.
     onSyncUpdate: (info) ->
-        replication.lastChangeSeq = config.getChangeSeq()
-        replication.lastChangeSeq ?= 0
-        log.debug 'Database updated, applying changes to files'
-        replication.applyChanges replication.lastChangeSeq
+        if info.docs_written > 0
+            replication.lastChangeSeq = config.getChangeSeq()
+            replication.lastChangeSeq ?= 0
+            log.info 'Database updated, applying changes to files'
+            replication.applyChanges replication.lastChangeSeq
 
 
     # When an error occured, it displays the error message.
@@ -233,22 +248,25 @@ module.exports = replication =
                 callback err
 
         apply = (res) ->
+            # If you are fetching changes since the beginning, the applyFileDBChanges
+            # and applyFolderDBChanges actions should have done everything OK.
             if filesystem.applicationDelay is 0
-                # If you are fetching changes since the beginning, the applyFileDBChanges
-                # and applyFolderDBChanges actions should have done everything OK.
                 if since is 0
                     log.debug "First synchronization detected"
                     lastChangeSeq = res.results[res.results.length-1].seq
                     config.setChangeSeq lastChangeSeq
                     callback() if callback?
                 else
-                    # Else just apply every change one by one.
-                    log.debug "Applying #{res.results.length} changes..."
-                    publisher.emit 'applyingChanges'
-                    async.eachSeries res.results, replication.applyChange, (err) ->
-                        log.error err if err
-                        log.debug "Changes applied."
-                        publisher.emit 'changesApplied'
+                    if res.results.length > 0
+                        # Else just apply every change one by one.
+                        log.debug "Applying #{res.results.length} changes..."
+                        publisher.emit 'applyingChanges'
+                        async.eachSeries res.results, replication.applyChange, (err) ->
+                            log.error err if err
+                            log.debug "Changes applied."
+                            publisher.emit 'changesApplied'
+                            callback() if callback?
+                    else
                         callback() if callback?
             else
                 setTimeout ->
