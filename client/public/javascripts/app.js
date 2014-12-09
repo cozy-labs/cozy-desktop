@@ -687,7 +687,7 @@ displayTrayMenu = function() {
     type: 'normal',
     label: "Open '" + (path.basename(remoteConfig.path)) + "' directory",
     click: function() {
-      return open(remoteConfig.path);
+      return open(device.path);
     }
   }));
   this.menu.append(new gui.MenuItem({
