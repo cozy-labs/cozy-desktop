@@ -22,7 +22,7 @@ renderState = (state) ->
 
     @currentComponent = React.renderComponent getCurrentComponent(state), document.body
     @currentComponent.onSyncClicked() if state is 'STATE'
-    $("#folder-input").attr('nwdirectory', '') if state is 'STEP1'
+    $("#folder-input").attr('nwdirectory', '') if state is 'STEP2'
 
 
 # Waits for the DOM to be ready
