@@ -3751,7 +3751,8 @@ textarea:focus {
 }
 
 body {
-  padding: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 .line input {
   margin-top: 10px;
@@ -3760,7 +3761,7 @@ div.title {
   margin: -20px;
   margin-bottom: 5px;
   padding: 10px;
-  width: 120%;
+  width: 107%;
   height: 70px;
   color: #1baaf4;
   background-color: #1baaf4;
@@ -3776,7 +3777,7 @@ h1 {
   color: #fff;
 }
 h2 {
-  padd: 20px;
+  padding: 20px;
 }
 #logo {
   width: 250px;
@@ -3804,6 +3805,20 @@ button.btn.btn-cozy.smaller {
 }
 button.disabled {
   opacity: 0.5;
+}
+button.btn.btn-cozy.right {
+  font-size: 20px;
+  padding: 10px;
+  bottom: 20px;
+  right: 10px;
+  position: fixed;
+}
+button.btn.btn-cozy.left {
+  font-size: 20px;
+  padding: 10px;
+  bottom: 20px;
+  left: 10px;
+  position: fixed;
 }
 button.btn.btn-cozy.disabled:hover {
   background-color: #1baaf4;

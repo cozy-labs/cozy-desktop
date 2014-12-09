@@ -37,7 +37,7 @@ StateView = React.createClass
                 Subtitle text: 'Actions'
                 Line className: 'mts',
                     Button
-                        className: 'left action'
+                        className: 'action'
                         onClick: @onSyncClicked
                         text: syncButtonLabel
                 Line className: 'mtm',
@@ -45,13 +45,12 @@ StateView = React.createClass
                         className: 'smaller'
                         onClick: @onDeleteConfigurationClicked
                         text: t 'delete configuration'
-            Line null
             Line null,
                 Subtitle text: 'Logs'
                 logs
                 Line null,
                     Button
-                        className: 'left smaller'
+                        className: 'smaller'
                         onClick: @clearLogs
                         text: t 'clear logs'
 

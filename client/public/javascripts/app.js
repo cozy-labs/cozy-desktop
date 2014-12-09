@@ -340,7 +340,7 @@ StateView = React.createClass({
     }), Line({
       className: 'mts'
     }, Button({
-      className: 'left action',
+      className: 'action',
       onClick: this.onSyncClicked,
       text: syncButtonLabel
     })), Line({
@@ -349,10 +349,10 @@ StateView = React.createClass({
       className: 'smaller',
       onClick: this.onDeleteConfigurationClicked,
       text: t('delete configuration')
-    }))), Line(null), Line(null, Subtitle({
+    }))), Line(null, Subtitle({
       text: 'Logs'
     }), logs, Line(null, Button({
-      className: 'left smaller',
+      className: 'smaller',
       onClick: this.clearLogs,
       text: t('clear logs')
     }))));
@@ -773,14 +773,6 @@ displayTrayMenu = function() {
 ;var win;
 
 win = gui.Window.get();
-
-win.setMaximumSize(600, 800);
-
-win.setMinimumSize(600, 800);
-
-win.setResizable(false);
-
-win.setPosition('center');
 
 win.on('close', function() {
   return win.hide();
