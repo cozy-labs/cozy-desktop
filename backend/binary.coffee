@@ -207,7 +207,7 @@ module.exports = binary =
                     #        callback null
 
         else
-            log.debug "File already downloaded: #{filePath}"
+            log.debug "File already downloaded: #{absPath}"
             callback()
 
 

@@ -93,6 +93,37 @@ module.exports = replication =
 
         return replicate
 
+    getLastRemoteChangeSeq: (callback) ->
+        remoteConfig = config.getConfig()
+        deviceName = config.getDeviceName()
+        client = request.newClient remoteConfig.url
+        client.setBasicAuth deviceName, remoteConfig.devicePassword
+
+        urlPath = "cozy/_changes?descending=true&limit=1"
+        log.debug "Getting last remote change sequence number:"
+        client.get urlPath, (err, res, body) ->
+            return callback err if err
+            log.debug body.last_seq
+            callback null, body.last_seq
+
+
+    copyView: (model, callback) ->
+        remoteConfig = config.getConfig()
+        deviceName = config.getDeviceName()
+        client = request.newClient remoteConfig.url
+        client.setBasicAuth deviceName, remoteConfig.devicePassword
+
+        urlPath = "cozy/_design/#{model}/_view/all/"
+        log.debug "Getting all #{model} documents from remote"
+        client.get urlPath, (err, res, body) ->
+            return callback err if err
+            return callback null unless body.rows?.length
+            async.eachSeries body.rows, (doc, callback) ->
+                doc = doc.value
+                pouch.db.put doc, new_edits:false, (err, file) ->
+                    return callback err if err
+                    callback()
+            , callback
 
     # Build replication options from given arguments, then run replication
     # accordingly.
@@ -100,39 +131,55 @@ module.exports = replication =
     # * fromRemote:
     # * toRemote:
     # * continuous:
-    # * catchup:
     # * force: force to stat sync from the beginning.
     runReplication: (options) ->
         options ?= {}
-        catchup = options.catchup or false
 
-        if options.force is true
-            config.setSeq 0
-            config.setChangeSeq 0
+        replication.getLastRemoteChangeSeq (err, seq) ->
+            if err
+                log.error "An error occured contacting your remote Cozy"
+                log.error err
+            else
+                replication.startSeq ?= config.getSeq()
+                replication.startChangeSeq ?= config.getChangeSeq()
 
-        replication.startSeq = config.getSeq()
-        replication.startChangeSeq = config.getChangeSeq()
-        url = replication.url = replication.getUrl()
+                if options.force or replication.startSeq is 0
 
-        log.info 'Start first replication to resync local device and your Cozy.'
-        log.info "Resync from sequence #{replication.startSeq}"
+                    # Copy documents manually to avoid getting all the changes
+                    async.series [
+                        (callback) -> replication.copyView 'folder', callback
+                        (callback) -> replication.copyView 'file', callback
+                    ], (err) ->
+                        if err
+                            log.error "An error occured copying database"
+                            log.error err
+                        else
+                            config.setSeq seq
+                            replication.onRepComplete last_seq: seq
+                else
 
-        opts =
-            filter: (doc) ->
-                doc.docType is 'Folder' or doc.docType is 'File'
-            live: false
-            since: replication.startSeq
-        replication.replicatorFrom = pouch.db.replicate.from(url, opts)
-            .on 'change', replication.displayChange
-            .on 'complete', replication.onRepComplete
-            .on 'error', replication.onError
+                    # Run a standard replication
+                    url = replication.url = replication.getUrl()
+
+                    log.info 'Start first replication to resync local device and your Cozy.'
+                    log.info "Resync from sequence #{replication.startSeq}"
+
+                    opts =
+                        filter: (doc) ->
+                            doc.docType is 'Folder' or doc.docType is 'File'
+                        live: false
+                        since: replication.startSeq
+                    replication.replicatorFrom = pouch.db.replicate.from(url, opts)
+                        .on 'change', replication.displayChange
+                        .on 'complete', replication.onRepComplete
+                        .on 'error', replication.onError
 
 
     # Run continuous synchronisation. Apply changes every times new data are
     # retrieved.
     runSync: ->
-        replication.startSeq = config.getSeq()
-        replication.startChangeSeq = config.getChangeSeq()
+        replication.startSeq ?= config.getSeq()
+        replication.startChangeSeq ?= config.getChangeSeq()
 
         url = replication.url
         log.info 'Start synchronization...'
@@ -143,7 +190,10 @@ module.exports = replication =
             live: false
             since: replication.startSeq
         setInterval ->
-            if filesystem.applicationDelay is 0
+            # Avoid conflicts with another running replicator
+            if filesystem.applicationDelay is 0 \
+            and (not replication.replicatorFrom \
+            or Object.keys(replication.replicatorFrom._events).length is 0)
                 replication.replicatorFrom = pouch.db.replicate.from(url, opts)
                     .on 'change', replication.displayChange
                     .on 'complete', replication.onSyncUpdate
@@ -152,8 +202,8 @@ module.exports = replication =
 
 
     replicateToRemote: ->
-        replication.startSeq = config.getSeq()
-        replication.startChangeSeq = config.getChangeSeq()
+        replication.startSeq ?= config.getSeq()
+        replication.startChangeSeq ?= config.getChangeSeq()
 
         url = replication.url
 
