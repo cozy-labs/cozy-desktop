@@ -14,6 +14,7 @@ en =
     'url': 'URL'
     'resync all': 'Resync All'
     'Laptop': 'Laptop'
+    'select folder': 'Select your folder'
     'delete configuration': 'Delete configuration'
     'delete configuration and files': 'Delete configuration and files'
     'on': 'on'
@@ -37,3 +38,12 @@ Prior to register your computer to your Cozy, we need information about it.
 It's time to register your computer to your Cozy
 (your password won't be stored).
 """
+    'last changes': 'Last changes'
+    'parameters': 'Parameters'
+    'open folder': 'Open folder'
+    'open url': 'Access to your Cozy'
+    'show logs': 'Show last logs'
+    'refreshing available space': 'Refreshing available space...'
+    'quit': 'Quit'
+    'used': 'used'
+    'synchronizing': 'Synchronizing...'

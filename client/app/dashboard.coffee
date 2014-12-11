@@ -13,6 +13,8 @@ StateView = React.createClass
             for log in @state.logs
                 logs.push Line key: "log-#{i++}", className: 'smaller', log
             logs.reverse()
+            if logs.length > 6
+                logs = logs.slice 0, 6
 
         if @state.sync
             state = t 'on'
@@ -23,36 +25,23 @@ StateView = React.createClass
 
         Container className: 'line',
             Title text: 'Cozy Desktop'
-            Container className: 'mod w50 left',
-                Subtitle text: 'Parameters'
-                InfoLine label: t('device name'), value: device.deviceName
+            Container className: 'mod parameters',
+                Subtitle text: t 'parameters'
                 InfoLine
-                    label: t('path')
-                    link:
-                        type: 'file'
-                    value: device.path
-                InfoLine label: t('url'), value: device.url
-                InfoLine label: t('sync state'), value: state
-            Container className: 'mod w50 left',
-                Subtitle text: 'Actions'
-                Line className: 'mts',
-                    Button
-                        className: 'action'
-                        onClick: @onSyncClicked
-                        text: syncButtonLabel
-                Line className: 'mtm',
-                    Button
-                        className: 'smaller'
-                        onClick: @onDeleteConfigurationClicked
-                        text: t 'delete configuration'
-            Line null,
-                Subtitle text: 'Logs'
+                    label: t('path'), value: device.path,
+                    text: t('open folder'), onClick: @onOpenFolder
+                InfoLine
+                    label: t('url'), value: device.url,
+                    text: t('open url'), onClick: @onOpenUrl
+                InfoLine
+                    label: t('sync state'), value: state,
+                    text: syncButtonLabel, onClick: @onSyncClicked
+                InfoLine
+                    label: t('device name'), value: device.deviceName,
+                    text: t('delete configuration'), onClick: @onDeleteConfigurationClicked
+            Line className: 'modifications',
+                Subtitle text: t 'last changes'
                 logs
-                Line null,
-                    Button
-                        className: 'smaller'
-                        onClick: @clearLogs
-                        text: t 'clear logs'
 
     onSyncClicked: ->
         # TODO add a checkbox to change this option
@@ -74,13 +63,13 @@ StateView = React.createClass
             notifier.notify
                 title: 'Synchronization has been stopped'
                 icon: 'client/public/icon/bighappycloud.png'
-            menu.items[10].label = 'Start synchronization'
+            menu.items[10].label = t 'start sync'
 
         else
             @displayLog 'Synchronization is on...'
             @displayLog 'First synchronization can take a while to init...'
             @setState sync: true
-            menu.items[10].label = 'Stop synchronization'
+            menu.items[10].label = t 'stop sync'
             notifier.notify
                 title: 'Synchronization is on'
                 message: 'First synchronization can take a while to init'
@@ -149,18 +138,22 @@ StateView = React.createClass
                 @displayLog "Folder #{path} locally deleted"
 
 
-    clearLogs: ->
-        @setState logs: []
-
     displayLog: (log) ->
         logs = @state.logs
         moment = require 'moment'
-        logs.push moment().format('HH:MM:SS ') + log
         @setState logs: logs
         tray.tooltip = log
+        if log.length > 70
+            length = log.length
+            console.log log.substring(0,2)
+            if log.substring(0,2) is "Fi"
+                log = "File ..." + log.substring(length-67, length)
+            else
+                log = "Folder ..." + log.substring(length-67, length)
+        logs.push moment().format('HH:MM:SS ') + log
         if log.length > 40
-            log.substring 0, 37
-            log = log + '...'
+            length = log.length
+            log = "..." + log.substring(length-37, length)
         menu.items[5].label = log
 
     fileModification: (file) ->
@@ -170,26 +163,32 @@ StateView = React.createClass
             label: file
             click: ->
                 open file
-
         # Do not store more than 10 menu items
         if modMenu.items.length > 12
             modMenu.removeAt modMenu.items.length-3
 
     onDeleteConfigurationClicked: ->
-        replication = require './backend/replication'
-        filesystem = require './backend/filesystem'
-        config = require './backend/config'
-        fs = require 'fs-extra'
-        @setState sync: false
-        replication.cancelReplication()
-        filesystem.changes.kill()
-        fs.remove configDir, (err) ->
-            alert t 'Configuration deleted.'
-            tray.remove()
-            renderState 'INTRO'
+        if confirm('Are you sure?')
+            replication = require './backend/replication'
+            filesystem = require './backend/filesystem'
+            config = require './backend/config'
+            fs = require 'fs-extra'
+            @setState sync: false
+            replication.cancelReplication()
+            filesystem.changes.kill()
+            fs.remove configDir, (err) ->
+                alert t 'Configuration deleted.'
+                tray.remove()
+                renderState 'INTRO'
 
     onDeleteFilesClicked: ->
         del = require 'del'
         del "#{device.path}/*", force: true, (err) ->
             console.log err if err
             alert t 'All files were successfully deleted.'
+
+    onOpenFolder: ->
+        open device.path
+
+    onOpenUrl: ->
+        open "#{device.url}/apps/files"

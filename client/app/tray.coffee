@@ -12,13 +12,13 @@ displayTrayMenu = ->
 
     @menu.append new gui.MenuItem
         type: 'normal'
-        label: 'Open Cozy Files in a web browser'
+        label: t 'open url'
         click: ->
           open "#{remoteConfig.url}/apps/files"
 
     @menu.append new gui.MenuItem
         type: 'normal'
-        label: "Open '#{path.basename remoteConfig.path}' directory"
+        label: "#{t('open folder')} : #{path.basename remoteConfig.path}"
         click: ->
             open device.path
 
@@ -27,7 +27,7 @@ displayTrayMenu = ->
 
     @menu.append new gui.MenuItem
         type: 'normal'
-        label: 'Refreshing available space...'
+        label: t 'refreshing available space'
         enabled: false
 
     @menu.append new gui.MenuItem
@@ -35,7 +35,7 @@ displayTrayMenu = ->
 
     @menu.append new gui.MenuItem
         type: 'normal'
-        label: 'Synchronizing...'
+        label: t 'synchronizing'
         enabled: false
 
     lastModificationsMenu = new gui.Menu()
@@ -44,13 +44,13 @@ displayTrayMenu = ->
 
     lastModificationsMenu.append new gui.MenuItem
         type: 'normal'
-        label: 'Show logs'
+        label: t 'show logs'
         click: ->
             win.show()
 
     @menu.append new gui.MenuItem
         type: 'normal'
-        label: 'Last modifications'
+        label: t 'last changes'
         submenu: lastModificationsMenu
 
     @menu.append new gui.MenuItem
@@ -58,7 +58,7 @@ displayTrayMenu = ->
 
     @menu.append new gui.MenuItem
         type: 'normal'
-        label: 'Parameters'
+        label: t 'parameters'
         click: ->
           win.show()
 
@@ -67,13 +67,13 @@ displayTrayMenu = ->
 
     @menu.append new gui.MenuItem
         type: 'normal'
-        label: 'Start synchronization'
+        label: t 'start sync'
         click: =>
             currentComponent.onSyncClicked()
 
     @menu.append new gui.MenuItem
         type: 'normal'
-        label: 'Quit'
+        label: t 'quit'
         click: ->
             win.close true
 
@@ -86,7 +86,7 @@ displayTrayMenu = ->
         config.getDiskSpace (err, res) =>
             if res
                 percentage = (res.diskSpace.usedDiskSpace / res.diskSpace.totalDiskSpace) * 100
-                @menu.items[3].label = "#{Math.round percentage}% of #{res.diskSpace.totalDiskSpace}GB used"
+                @menu.items[3].label = "#{Math.round percentage}% of #{res.diskSpace.totalDiskSpace}GB #{t('used')}"
 
     setInterval ->
       setDiskSpace()

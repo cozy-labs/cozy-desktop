@@ -4,6 +4,9 @@ body
     padding-left 20px
     padding-right: 20px
 
+.mtl
+    margin-top: 20px
+
 .line
     input
         margin-top 10px
@@ -12,7 +15,7 @@ div.title
     margin: -20px
     margin-bottom: 5px
     padding: 10px
-    width: 107%
+    width: 100% + 7px
     height: 70px
     color: blue
     background-color: blue
@@ -27,13 +30,27 @@ h1
     color: white
 
 h2
-    padding: 20px
+    padding: 10px
+
 
 #logo
     width: 250px
 
 .explanation
     font-size: 16px
+
+button.btn.btn-cozy.folder
+    margin-top: 10px
+    width: 300px
+    height: 45px
+    input
+        width: 300px
+        height: 45px
+        margin-top: -35px
+        opacity: 0
+        cursor: pointer
+        display: block
+        position: absolute
 
 button.btn.help
     width: 45px
@@ -56,11 +73,16 @@ button.disabled
     opacity: 0.5
 
 button.btn.btn-cozy.right
-    font-size: 20px
     padding: 10px
-    bottom: 20px
     right: 10px
     position: fixed
+
+button.btn.btn-cozy.top
+    top: 80px
+
+button.btn.btn-cozy.bottom
+    font-size: 20px
+    bottom: 20px
 
 button.btn.btn-cozy.left
     font-size: 20px
@@ -76,3 +98,25 @@ button.btn.btn-cozy.disabled
     &:active
     &:focus
         box-shadow: none
+
+div.parameter
+    margin-top: 10px
+
+div.parameters
+    padding-bottom: 40px
+    padding-left: 10px
+
+div.modifications
+    padding-left: 10px
+
+div.parameter.value
+    padding-left: 20px
+    margin-top: 0px
+    button
+        width: 200px
+        position: fixed
+        right: 100px
+        margin-top: -4px
+
+span.parameter.label
+    font-size: 18px

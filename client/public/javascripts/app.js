@@ -1,4 +1,4 @@
-var Button, Container, Field, Help, InfoLine, Line, Subtitle, Title, a, button, div, h1, h2, img, input, label, p, span, _ref;
+var Button, Container, Field, Folder, Help, InfoLine, Line, Subtitle, Title, a, button, div, h1, h2, img, input, label, p, span, _ref;
 
 _ref = React.DOM, div = _ref.div, p = _ref.p, img = _ref.img, span = _ref.span, a = _ref.a, label = _ref.label, input = _ref.input, h1 = _ref.h1, h2 = _ref.h2, button = _ref.button;
 
@@ -196,23 +196,103 @@ Help = React.createClass({
   }
 });
 
+Folder = React.createClass({
+  getInitialState: function() {
+    return {
+      error: null,
+      value: null
+    };
+  },
+  render: function() {
+    var _base;
+    if ((_base = this.props).type == null) {
+      _base.type = 'text';
+    }
+    return Line(null, label({
+      className: 'mod w100 mrm'
+    }, this.props.label), button({
+      className: 'btn btn-cozy folder'
+    }, this.state.value ? this.state.value : this.props.text, input({
+      type: this.props.type,
+      className: "mt1 " + this.props.fieldClass,
+      ref: this.props.inputRef,
+      defaultValue: this.props.defaultValue,
+      value: this.props.value,
+      onChange: this.onChange,
+      onKeyUp: this.props.onKeyUp,
+      placeholder: this.props.placeholder,
+      id: this.props.inputId
+    })), button({
+      className: "btn help",
+      onMouseOver: this.props.onMouseOver,
+      onMouseLeave: this.props.onMouseLeave
+    }, img({
+      id: 'help',
+      src: 'client/public/icon/help.png'
+    })), this.state.description ? p({
+      className: 'description'
+    }, this.state.description) : void 0, this.state.error ? p({
+      className: 'error'
+    }, this.state.error) : void 0);
+  },
+  getValue: function() {
+    return this.refs[this.props.inputRef].getDOMNode().value;
+  },
+  setValue: function(val) {
+    return this.refs[this.props.inputRef].getDOMNode().value = val;
+  },
+  displayDescription: function(desc) {
+    return this.setState({
+      description: t(desc)
+    });
+  },
+  unDisplayDescription: function() {
+    return this.setState({
+      description: null
+    });
+  },
+  isValid: function() {
+    return this.getValue() !== '';
+  },
+  setError: function(err) {
+    return this.setState({
+      error: t(err)
+    });
+  },
+  getError: function() {
+    return 'value is missing';
+  },
+  onChange: function() {
+    var val;
+    val = this.refs[this.props.inputRef].getDOMNode().value;
+    if (val === '') {
+      this.setState({
+        error: t(this.getError())
+      });
+    } else {
+      this.setState({
+        error: null
+      });
+      this.setState({
+        value: val
+      });
+    }
+    return this.props.onChange();
+  }
+});
+
 InfoLine = React.createClass({
   render: function() {
-    var value;
-    if (this.props.link != null) {
-      value = span(null, a({
-        href: "" + this.props.link.type + "://" + this.props.value
-      }, this.props.value));
-    } else {
-      value = span(null, this.props.value);
-    }
     return Line({
-      className: 'line mts'
+      className: 'parameter'
     }, span({
-      className: 'mod w100p left'
-    }, "" + this.props.label + ":"), span({
-      className: 'mod left'
-    }, value));
+      className: "parameter label"
+    }, "" + this.props.label + " :"), Line({
+      className: 'parameter value'
+    }, span(null, this.props.value), this.props.text ? button({
+      className: "btn btn-cozy smaller " + this.props.className,
+      onClick: this.props.onClick
+    }, this.props.text) : void 0));
   }
 });
 ;var config, configDir, configHelpers, configPath, device, fs, homedir, keys, path;
@@ -302,6 +382,9 @@ StateView = React.createClass({
         }, log));
       }
       logs.reverse();
+      if (logs.length > 6) {
+        logs = logs.slice(0, 6);
+      }
     }
     if (this.state.sync) {
       state = t('on');
@@ -315,47 +398,34 @@ StateView = React.createClass({
     }, Title({
       text: 'Cozy Desktop'
     }), Container({
-      className: 'mod w50 left'
+      className: 'mod parameters'
     }, Subtitle({
-      text: 'Parameters'
-    }), InfoLine({
-      label: t('device name'),
-      value: device.deviceName
+      text: t('parameters')
     }), InfoLine({
       label: t('path'),
-      link: {
-        type: 'file'
-      },
-      value: device.path
+      value: device.path,
+      text: t('open folder'),
+      onClick: this.onOpenFolder
     }), InfoLine({
       label: t('url'),
-      value: device.url
+      value: device.url,
+      text: t('open url'),
+      onClick: this.onOpenUrl
     }), InfoLine({
       label: t('sync state'),
-      value: state
-    })), Container({
-      className: 'mod w50 left'
-    }, Subtitle({
-      text: 'Actions'
-    }), Line({
-      className: 'mts'
-    }, Button({
-      className: 'action',
-      onClick: this.onSyncClicked,
-      text: syncButtonLabel
+      value: state,
+      text: syncButtonLabel,
+      onClick: this.onSyncClicked
+    }), InfoLine({
+      label: t('device name'),
+      value: device.deviceName,
+      text: t('delete configuration'),
+      onClick: this.onDeleteConfigurationClicked
     })), Line({
-      className: 'mtm'
-    }, Button({
-      className: 'smaller',
-      onClick: this.onDeleteConfigurationClicked,
-      text: t('delete configuration')
-    }))), Line(null, Subtitle({
-      text: 'Logs'
-    }), logs, Line(null, Button({
-      className: 'smaller',
-      onClick: this.clearLogs,
-      text: t('clear logs')
-    }))));
+      className: 'modifications'
+    }, Subtitle({
+      text: t('last changes')
+    }), logs));
   },
   onSyncClicked: function() {
     return this.sync({
@@ -381,14 +451,14 @@ StateView = React.createClass({
         title: 'Synchronization has been stopped',
         icon: 'client/public/icon/bighappycloud.png'
       });
-      return menu.items[10].label = 'Start synchronization';
+      return menu.items[10].label = t('start sync');
     } else {
       this.displayLog('Synchronization is on...');
       this.displayLog('First synchronization can take a while to init...');
       this.setState({
         sync: true
       });
-      menu.items[10].label = 'Stop synchronization';
+      menu.items[10].label = t('stop sync');
       notifier.notify({
         title: 'Synchronization is on',
         message: 'First synchronization can take a while to init',
@@ -510,23 +580,27 @@ StateView = React.createClass({
       })(this));
     }
   },
-  clearLogs: function() {
-    return this.setState({
-      logs: []
-    });
-  },
   displayLog: function(log) {
-    var logs, moment;
+    var length, logs, moment;
     logs = this.state.logs;
     moment = require('moment');
-    logs.push(moment().format('HH:MM:SS ') + log);
     this.setState({
       logs: logs
     });
     tray.tooltip = log;
+    if (log.length > 70) {
+      length = log.length;
+      console.log(log.substring(0, 2));
+      if (log.substring(0, 2) === "Fi") {
+        log = "File ..." + log.substring(length - 67, length);
+      } else {
+        log = "Folder ..." + log.substring(length - 67, length);
+      }
+    }
+    logs.push(moment().format('HH:MM:SS ') + log);
     if (log.length > 40) {
-      log.substring(0, 37);
-      log = log + '...';
+      length = log.length;
+      log = "..." + log.substring(length - 37, length);
     }
     return menu.items[5].label = log;
   },
@@ -546,20 +620,22 @@ StateView = React.createClass({
   },
   onDeleteConfigurationClicked: function() {
     var config, filesystem, fs, replication;
-    replication = require('./backend/replication');
-    filesystem = require('./backend/filesystem');
-    config = require('./backend/config');
-    fs = require('fs-extra');
-    this.setState({
-      sync: false
-    });
-    replication.cancelReplication();
-    filesystem.changes.kill();
-    return fs.remove(configDir, function(err) {
-      alert(t('Configuration deleted.'));
-      tray.remove();
-      return renderState('INTRO');
-    });
+    if (confirm('Are you sure?')) {
+      replication = require('./backend/replication');
+      filesystem = require('./backend/filesystem');
+      config = require('./backend/config');
+      fs = require('fs-extra');
+      this.setState({
+        sync: false
+      });
+      replication.cancelReplication();
+      filesystem.changes.kill();
+      return fs.remove(configDir, function(err) {
+        alert(t('Configuration deleted.'));
+        tray.remove();
+        return renderState('INTRO');
+      });
+    }
   },
   onDeleteFilesClicked: function() {
     var del;
@@ -572,6 +648,12 @@ StateView = React.createClass({
       }
       return alert(t('All files were successfully deleted.'));
     });
+  },
+  onOpenFolder: function() {
+    return open(device.path);
+  },
+  onOpenUrl: function() {
+    return open("" + device.url + "/apps/files");
   }
 });
 ;var en;
@@ -592,6 +674,7 @@ en = {
   'url': 'URL',
   'resync all': 'Resync All',
   'Laptop': 'Laptop',
+  'select folder': 'Select your folder',
   'delete configuration': 'Delete configuration',
   'delete configuration and files': 'Delete configuration and files',
   'on': 'on',
@@ -609,7 +692,16 @@ en = {
   'path description': 'Path of the folder where you will see your cozy files',
   'device already used': "This device name is already used. Could you change it, please.",
   'first step text': "Prior to register your computer to your Cozy, we need information about it.",
-  'second step text': "It's time to register your computer to your Cozy\n(your password won't be stored)."
+  'second step text': "It's time to register your computer to your Cozy\n(your password won't be stored).",
+  'last changes': 'Last changes',
+  'parameters': 'Parameters',
+  'open folder': 'Open folder',
+  'open url': 'Access to your Cozy',
+  'show logs': 'Show last logs',
+  'refreshing available space': 'Refreshing available space...',
+  'quit': 'Quit',
+  'used': 'used',
+  'synchronizing': 'Synchronizing...'
 };
 ;var fr;
 
@@ -628,14 +720,15 @@ fr = {
   'path': 'Chemin',
   'url': 'URL',
   'Laptop': 'MonOrdinateur',
+  'select folder': 'Sélectionnez votre dossier',
   'resync all': 'Tout resynchroniser',
   'delete configuration': 'Supprimer la configuration',
   'delete configuration and files': 'Suppression de la configuration et des fichiers',
-  'on': 'en cours',
-  'off': 'arrêtée',
+  'on': 'En cours',
+  'off': 'Arrêtée',
   'stop sync': 'Stopper la synchronisation',
-  'device name': 'Nom',
-  'sync state': 'Sync',
+  'device name': "Nom de l'appareil",
+  'sync state': 'Synchronisation',
   'clear logs': 'Supprimer les logs',
   'delete files': 'Supprimer mes fichiers',
   'start sync': 'Démarrer la synchronisation',
@@ -646,7 +739,16 @@ fr = {
   'path description': 'Chemin du dossier où seront stockés les fichiers de votre Cozy.',
   'device already used': "Ce nom d'appareil est déjà utilisé pour un autre appareil. Veuillez en choisir un autre.",
   'first step text': "Nous allons pouvoir maintenant configurer votre appareil.",
-  'second step text': "Enregistrer votre appareil auprès de votre Cozy. Votre mot de passe ne sera pas sauvegardé."
+  'second step text': "Enregistrer votre appareil auprès de votre Cozy. Votre mot de passe ne sera pas sauvegardé.",
+  'last changes': 'Derniers changements',
+  'parameters': 'Configuration',
+  'open folder': 'Ouvrir le dossier',
+  'open url': 'Accéder à votre Cozy',
+  'show logs': 'Voir les derniers logs',
+  'refreshing available space': "Récupération de l'espace disponible ...",
+  'quit': 'Quitter',
+  'used': 'utilisé',
+  'synchronizing': "Synchronisation ..."
 };
 ;var isValidForm;
 
@@ -678,14 +780,14 @@ displayTrayMenu = function() {
   this.menu = new gui.Menu();
   this.menu.append(new gui.MenuItem({
     type: 'normal',
-    label: 'Open Cozy Files in a web browser',
+    label: t('open url'),
     click: function() {
       return open("" + remoteConfig.url + "/apps/files");
     }
   }));
   this.menu.append(new gui.MenuItem({
     type: 'normal',
-    label: "Open '" + (path.basename(remoteConfig.path)) + "' directory",
+    label: "" + (t('open folder')) + " : " + (path.basename(remoteConfig.path)),
     click: function() {
       return open(device.path);
     }
@@ -695,7 +797,7 @@ displayTrayMenu = function() {
   }));
   this.menu.append(new gui.MenuItem({
     type: 'normal',
-    label: 'Refreshing available space...',
+    label: t('refreshing available space'),
     enabled: false
   }));
   this.menu.append(new gui.MenuItem({
@@ -703,7 +805,7 @@ displayTrayMenu = function() {
   }));
   this.menu.append(new gui.MenuItem({
     type: 'normal',
-    label: 'Synchronizing...',
+    label: t('synchronizing'),
     enabled: false
   }));
   lastModificationsMenu = new gui.Menu();
@@ -712,14 +814,14 @@ displayTrayMenu = function() {
   }));
   lastModificationsMenu.append(new gui.MenuItem({
     type: 'normal',
-    label: 'Show logs',
+    label: t('show logs'),
     click: function() {
       return win.show();
     }
   }));
   this.menu.append(new gui.MenuItem({
     type: 'normal',
-    label: 'Last modifications',
+    label: t('last changes'),
     submenu: lastModificationsMenu
   }));
   this.menu.append(new gui.MenuItem({
@@ -727,7 +829,7 @@ displayTrayMenu = function() {
   }));
   this.menu.append(new gui.MenuItem({
     type: 'normal',
-    label: 'Parameters',
+    label: t('parameters'),
     click: function() {
       return win.show();
     }
@@ -737,7 +839,7 @@ displayTrayMenu = function() {
   }));
   this.menu.append(new gui.MenuItem({
     type: 'normal',
-    label: 'Start synchronization',
+    label: t('start sync'),
     click: (function(_this) {
       return function() {
         return currentComponent.onSyncClicked();
@@ -746,7 +848,7 @@ displayTrayMenu = function() {
   }));
   this.menu.append(new gui.MenuItem({
     type: 'normal',
-    label: 'Quit',
+    label: t('quit'),
     click: function() {
       return win.close(true);
     }
@@ -761,7 +863,7 @@ displayTrayMenu = function() {
         var percentage;
         if (res) {
           percentage = (res.diskSpace.usedDiskSpace / res.diskSpace.totalDiskSpace) * 100;
-          return _this.menu.items[3].label = "" + (Math.round(percentage)) + "% of " + res.diskSpace.totalDiskSpace + "GB used";
+          return _this.menu.items[3].label = "" + (Math.round(percentage)) + "% of " + res.diskSpace.totalDiskSpace + "GB " + (t('used'));
         }
       };
     })(this));
@@ -814,7 +916,7 @@ ConfigFormStepOne = React.createClass({
   },
   render: function() {
     var buttonClass;
-    buttonClass = 'right';
+    buttonClass = 'right bottom';
     if (!this.state.validForm) {
       buttonClass += ' disabled';
     }
@@ -926,7 +1028,7 @@ ConfigFormStepTwo = React.createClass({
   },
   render: function() {
     var buttonClass;
-    buttonClass = 'right';
+    buttonClass = 'right bottom';
     if (!this.state.validForm) {
       buttonClass += ' disabled';
     }
@@ -943,7 +1045,7 @@ ConfigFormStepTwo = React.createClass({
       onChange: this.onDeviceNameChanged,
       onMouseOver: this.onDisplayDevice,
       onMouseLeave: this.onUnDisplayDevice
-    }), Help({
+    }), Folder({
       label: t('directory to synchronize your data'),
       fieldClass: 'w500p',
       inputRef: 'path',
@@ -953,7 +1055,8 @@ ConfigFormStepTwo = React.createClass({
       inputId: 'folder-input',
       onChange: this.onPathChanged,
       onMouseOver: this.onDisplayPath,
-      onMouseLeave: this.onUnDisplayPath
+      onMouseLeave: this.onUnDisplayPath,
+      text: t('select folder')
     }), Line(null, Button({
       className: 'left',
       ref: 'backButton',
