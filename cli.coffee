@@ -1,19 +1,18 @@
 #!/usr/bin/env coffee
 
-path        = require 'path'
-fs          = require 'fs-extra'
-program     = require 'commander'
-read        = require 'read'
-process     = require 'process'
-log         = require('printit')
-                  prefix: 'Cozy Desktop'
+fs      = require 'fs-extra'
+path    = require 'path-extra'
+program = require 'commander'
+read    = require 'read'
+log     = require('printit')
+    prefix: 'Cozy Desktop'
 
-config      = require './backend/config'
-replication = require './backend/replication'
-filesystem  = require './backend/filesystem'
-binary      = require './backend/binary'
-pouch       = require './backend/db'
-pkg         = require './package.json'
+config             = require './backend/config'
+filesystem         = require './backend/filesystem'
+pouch              = require './backend/db'
+localEventWatcher  = require './backend/localEventWatcher'
+remoteEventWatcher = require './backend/remoteEventWatcher'
+pkg                = require './package.json'
 
 
 # Helpers to get cozy password from user.
@@ -115,18 +114,11 @@ a synchronization.
         fs.ensureDir config.path, ->
             # Watch local changes
             if not args.readonly
-                filesystem.watchChanges true, true
+                localEventWatcher.start()
 
             pouch.addAllFilters ->
                 # Replicate databases
-                replication.runReplication force: args.force, (err) ->
-                    log.info 'Sync ended'
-                    if err
-                        log.error err
-                        log.error 'An error occured while running synchronisation.'
-                        process.exit 1
-                    else
-                        process.exit 0
+                remoteEventWatcher.start()
 
 
 # Display current configuratioN

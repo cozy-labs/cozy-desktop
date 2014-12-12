@@ -1,9 +1,10 @@
-path    = require 'path-extra'
-fs      = require 'fs-extra'
-touch   = require 'touch'
-process = require 'process'
-request = require 'request-json-light'
-log     = require('printit')
+path      = require 'path-extra'
+fs        = require 'fs-extra'
+touch     = require 'touch'
+process   = require 'process'
+request   = require 'request-json-light'
+urlParser = require 'url'
+log       = require('printit')
     prefix: 'Config     '
 
 
@@ -112,6 +113,16 @@ module.exports = config =
         else
             @setSeq 0, deviceName
             return 0
+
+    getUrl: (deviceName) ->
+        deviceName ?= @getDeviceName()
+        remoteConfig = @getConfig(deviceName)
+        if remoteConfig.url?
+            url = urlParser.parse remoteConfig.url
+            url.auth = "#{deviceName}:#{remoteConfig.devicePassword}"
+            url = "#{urlParser.format(url)}cozy"
+        else
+            null
 
     updateSync: (deviceConfig) ->
         device = @getConfig()
