@@ -1,4 +1,4 @@
-chokidar = require '../chokidar' # Wait for the 0.12.0
+chokidar = require 'chokidar'
 log      = require('printit')
     prefix: 'Local watcher '
 
