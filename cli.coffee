@@ -47,7 +47,7 @@ module.exports.addRemote = addRemote = (url, deviceName, syncPath) ->
             deviceName: deviceName
             password: password
 
-        replication.registerDevice options, saveConfig
+        pouch.registerDevice options, saveConfig
 
     module.exports.getPassword register
 
@@ -71,15 +71,14 @@ module.exports.removeRemote = removeRemote = (args) ->
             url: remoteConfig.url
             deviceId: remoteConfig.deviceId
             password: password
-        replication.unregisterDevice options, saveConfig
+        pouch.unregisterDevice options, saveConfig
 
     module.exports.getPassword unregister
 
 
 # Display the whole content of the database.
 displayDatabase = ->
-    db = require('./backend/db').db
-    db.allDocs include_docs: true, (err, results) ->
+    pouch.db.allDocs include_docs: true, (err, results) ->
         if err
             log.error err
         else
@@ -89,9 +88,8 @@ displayDatabase = ->
 
 # Disaply all docs returned by a given query.
 displayQuery = (query) ->
-    db = require('./backend/db').db
     log.info "Query: #{query}"
-    db.query query, (err, results) ->
+    pouch.db.query query, (err, results) ->
         if err
             log.error err
         else
@@ -114,7 +112,9 @@ a synchronization.
         fs.ensureDir config.path, ->
             # Watch local changes
             if not args.readonly
-                localEventWatcher.start()
+                setTimeout ->
+                    localEventWatcher.start()
+                , 1000
 
             pouch.addAllFilters ->
                 # Replicate databases

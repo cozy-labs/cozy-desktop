@@ -2,7 +2,6 @@ fs       = require 'fs-extra'
 path     = require 'path'
 async    = require 'async'
 mime     = require 'mime'
-chokidar = require 'chokidar'
 crypto   = require 'crypto'
 request  = require 'request-json-light'
 log      = require('printit')

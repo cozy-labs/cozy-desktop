@@ -49,8 +49,8 @@ StateView = React.createClass
 
     sync: (options)->
         notifier = require 'node-notifier'
-        replication = require './backend/replication'
-        filesystem = require './backend/filesystem'
+        remoteEventWatcher = require './backend/remoteEventWatcher'
+        localEventWatcher = require './backend/localEventWatcher'
         publisher = require './backend/publisher'
         pouch = require './backend/db'
         gui = require 'nw.gui'
@@ -58,7 +58,7 @@ StateView = React.createClass
 
         if @state.sync
             @setState sync: false
-            replication.cancelReplication()
+            remoteEventWatcher.cancel()
             @displayLog 'Synchronization is off'
             notifier.notify
                 title: 'Synchronization has been stopped'
@@ -77,9 +77,8 @@ StateView = React.createClass
             tray.icon = 'client/public/icon/icon_sync.png'
 
             pouch.addAllFilters ->
-                filesystem.watchChanges true, true
-                replication.runReplication
-                    force: options.force
+                localEventWatcher.start()
+                remoteEventWatcher.start()
 
             #TODO: Arrange published names
 
@@ -168,13 +167,11 @@ StateView = React.createClass
 
     onDeleteConfigurationClicked: ->
         if confirm('Are you sure?')
-            replication = require './backend/replication'
-            filesystem = require './backend/filesystem'
+            remoteEventWatcher = require './backend/remoteEventWatcher'
             config = require './backend/config'
             fs = require 'fs-extra'
             @setState sync: false
-            replication.cancelReplication()
-            filesystem.changes.kill()
+            remoteEventWatcher.cancel()
             fs.remove configDir, (err) ->
                 alert t 'Configuration deleted.'
                 tray.remove()

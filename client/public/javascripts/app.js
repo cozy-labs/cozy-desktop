@@ -440,10 +440,10 @@ StateView = React.createClass({
     });
   },
   sync: function(options) {
-    var filesystem, gui, notifier, open, pouch, publisher, replication;
+    var gui, localEventWatcher, notifier, open, pouch, publisher, remoteEventWatcher;
     notifier = require('node-notifier');
-    replication = require('./backend/replication');
-    filesystem = require('./backend/filesystem');
+    remoteEventWatcher = require('./backend/remoteEventWatcher');
+    localEventWatcher = require('./backend/localEventWatcher');
     publisher = require('./backend/publisher');
     pouch = require('./backend/db');
     gui = require('nw.gui');
@@ -452,7 +452,7 @@ StateView = React.createClass({
       this.setState({
         sync: false
       });
-      replication.cancelReplication();
+      remoteEventWatcher.cancel();
       this.displayLog('Synchronization is off');
       notifier.notify({
         title: 'Synchronization has been stopped',
@@ -473,10 +473,8 @@ StateView = React.createClass({
       });
       tray.icon = 'client/public/icon/icon_sync.png';
       pouch.addAllFilters(function() {
-        filesystem.watchChanges(true, true);
-        return replication.runReplication({
-          force: options.force
-        });
+        localEventWatcher.start();
+        return remoteEventWatcher.start();
       });
       publisher.on('firstSyncDone', (function(_this) {
         return function() {
@@ -625,17 +623,15 @@ StateView = React.createClass({
     }
   },
   onDeleteConfigurationClicked: function() {
-    var config, filesystem, fs, replication;
+    var config, fs, remoteEventWatcher;
     if (confirm('Are you sure?')) {
-      replication = require('./backend/replication');
-      filesystem = require('./backend/filesystem');
+      remoteEventWatcher = require('./backend/remoteEventWatcher');
       config = require('./backend/config');
       fs = require('fs-extra');
       this.setState({
         sync: false
       });
-      replication.cancelReplication();
-      filesystem.changes.kill();
+      remoteEventWatcher.cancel();
       return fs.remove(configDir, function(err) {
         alert(t('Configuration deleted.'));
         tray.remove();
@@ -993,12 +989,12 @@ ConfigFormStepOne = React.createClass({
     return fieldUrl.setError("");
   },
   onSaveButtonClicked: function() {
-    var config, fieldPassword, fieldUrl, options, password, replication, url;
+    var config, db, fieldPassword, fieldUrl, options, password, url;
     fieldUrl = this.refs.remoteUrlField;
     fieldPassword = this.refs.remotePasswordField;
     if (isValidForm([fieldUrl, fieldPassword])) {
       config = require('./backend/config');
-      replication = require('./backend/replication');
+      db = require('./backend/db');
       url = fieldUrl.getValue();
       if (url.indexOf('http') < 0) {
         url = "https://" + (fieldUrl.getValue());
@@ -1010,7 +1006,7 @@ ConfigFormStepOne = React.createClass({
         url: url,
         password: password
       };
-      return replication.checkCredentials(options, function(err) {
+      return db.checkCredentials(options, function(err) {
         if (err && err === "getaddrinfo ENOTFOUND") {
           return fieldUrl.setError('not found');
         } else if (err != null) {
@@ -1117,12 +1113,12 @@ ConfigFormStepTwo = React.createClass({
     });
   },
   onSaveButtonClicked: function() {
-    var config, fieldName, fieldPath, options, replication, saveConfig;
+    var config, db, fieldName, fieldPath, options, saveConfig;
     fieldName = this.refs.deviceNameField;
     fieldPath = this.refs.devicePathField;
     if (this.state.validForm) {
       config = require('./backend/config');
-      replication = require('./backend/replication');
+      db = require('./backend/db');
       config.updateSync({
         deviceName: fieldName.getValue(),
         path: fieldPath.getValue()
@@ -1152,7 +1148,7 @@ ConfigFormStepTwo = React.createClass({
         deviceName: device.deviceName,
         password: cozyPassword
       };
-      return replication.registerDevice(options, function(err, credentials) {
+      return db.registerDevice(options, function(err, credentials) {
         if (err != null) {
           return fieldName.setError("device already used");
         } else {
