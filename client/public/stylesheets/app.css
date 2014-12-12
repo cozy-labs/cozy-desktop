@@ -3754,7 +3754,11 @@ textarea:focus {
 }
 
 body {
-  padding: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+.mtl {
+  margin-top: 20px;
 }
 .line input {
   margin-top: 10px;
@@ -3763,12 +3767,13 @@ div.title {
   margin: -20px;
   margin-bottom: 5px;
   padding: 10px;
-  width: 120%;
+  width: 107%;
   height: 70px;
   color: #1baaf4;
   background-color: #1baaf4;
 }
 div.title img {
+  margin-left: 10px;
   margin-right: 20px;
   width: 50px;
   background-color: #1baaf4;
@@ -3779,13 +3784,27 @@ h1 {
   color: #fff;
 }
 h2 {
-  padd: 20px;
+  padding: 10px;
 }
 #logo {
   width: 250px;
 }
 .explanation {
   font-size: 16px;
+}
+button.btn.btn-cozy.folder {
+  margin-top: 10px;
+  width: 300px;
+  height: 45px;
+}
+button.btn.btn-cozy.folder input {
+  width: 300px;
+  height: 45px;
+  margin-top: -35px;
+  opacity: 0;
+  cursor: pointer;
+  display: block;
+  position: absolute;
 }
 button.btn.help {
   width: 45px;
@@ -3808,12 +3827,54 @@ button.btn.btn-cozy.smaller {
 button.disabled {
   opacity: 0.5;
 }
+button.btn.btn-cozy.right {
+  padding: 10px;
+  right: 10px;
+  position: fixed;
+}
+button.btn.btn-cozy.top {
+  top: 80px;
+}
+button.btn.btn-cozy.bottom {
+  font-size: 20px;
+  bottom: 20px;
+}
+button.btn.btn-cozy.left {
+  font-size: 20px;
+  padding: 10px;
+  bottom: 20px;
+  left: 10px;
+  position: fixed;
+}
 button.btn.btn-cozy.disabled:hover {
   background-color: #1baaf4;
 }
 button.btn.btn-cozy.disabled:active,
 button.btn.btn-cozy.disabled:focus {
   box-shadow: none;
+}
+div.parameter {
+  margin-top: 10px;
+}
+div.parameters {
+  padding-bottom: 40px;
+  padding-left: 10px;
+}
+div.modifications {
+  padding-left: 10px;
+}
+div.parameter.value {
+  padding-left: 20px;
+  margin-top: 0px;
+}
+div.parameter.value button {
+  width: 200px;
+  position: fixed;
+  right: 100px;
+  margin-top: -4px;
+}
+span.parameter.label {
+  font-size: 18px;
 }
 
 .chromeframe { margin: 0.2em 0; background: #ccc; color: #000; padding: 0.2em 0; }

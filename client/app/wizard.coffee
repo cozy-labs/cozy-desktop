@@ -36,7 +36,7 @@ ConfigFormStepOne = React.createClass
         validForm: isDeviceName and isPath
 
     render: ->
-        buttonClass = 'right'
+        buttonClass = 'right bottom'
         buttonClass += ' disabled' unless @state.validForm
 
         Container null,
@@ -137,7 +137,7 @@ ConfigFormStepTwo = React.createClass
         validForm: isDeviceName and isPath
 
     render: ->
-        buttonClass = 'right'
+        buttonClass = 'right bottom'
         buttonClass += ' disabled' unless @state.validForm
         Container null,
             Title text: t 'cozy files configuration 2 on 2'
@@ -152,7 +152,7 @@ ConfigFormStepTwo = React.createClass
                 onChange: @onDeviceNameChanged
                 onMouseOver: @onDisplayDevice
                 onMouseLeave: @onUnDisplayDevice
-            Help
+            Folder
                 label: t 'directory to synchronize your data'
                 fieldClass: 'w500p'
                 inputRef: 'path'
@@ -163,6 +163,7 @@ ConfigFormStepTwo = React.createClass
                 onChange: @onPathChanged
                 onMouseOver: @onDisplayPath
                 onMouseLeave: @onUnDisplayPath
+                text: t 'select folder'
             Line null,
                 Button
                     className: 'left'
@@ -219,6 +220,7 @@ ConfigFormStepTwo = React.createClass
                 path: fieldPath.getValue()
             device.deviceName = fieldName.getValue()
             device.path = fieldPath.getValue()
+            device.url = cozyUrl
             saveConfig = (err, credentials) ->
                 if err
                     console.log err

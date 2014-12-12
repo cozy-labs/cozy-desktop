@@ -13,14 +13,15 @@ fr =
     'path': 'Chemin'
     'url': 'URL'
     'Laptop': 'MonOrdinateur'
+    'select folder': 'Sélectionnez votre dossier'
     'resync all': 'Tout resynchroniser'
     'delete configuration': 'Supprimer la configuration'
     'delete configuration and files': 'Suppression de la configuration et des fichiers'
-    'on': 'en cours'
-    'off': 'arrêtée'
+    'on': 'En cours'
+    'off': 'Arrêtée'
     'stop sync': 'Stopper la synchronisation'
-    'device name': 'Nom'
-    'sync state': 'Sync'
+    'device name': "Nom de l'appareil"
+    'sync state': 'Synchronisation'
     'clear logs': 'Supprimer les logs'
     'delete files': 'Supprimer mes fichiers'
     'start sync': 'Démarrer la synchronisation'
@@ -39,3 +40,12 @@ Nous allons pouvoir maintenant configurer votre appareil.
     'second step text': """
 Enregistrer votre appareil auprès de votre Cozy. Votre mot de passe ne sera pas sauvegardé.
 """
+    'last changes': 'Derniers changements'
+    'parameters': 'Configuration'
+    'open folder': 'Ouvrir le dossier'
+    'open url': 'Accéder à votre Cozy'
+    'show logs': 'Voir les derniers logs'
+    'refreshing available space': "Récupération de l'espace disponible ..."
+    'quit': 'Quitter'
+    'used': 'utilisé'
+    'synchronizing': "Synchronisation ..."

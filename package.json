@@ -4,9 +4,11 @@
   "description": "File Synchronization Client for Cozy Files",
   "main": "app.html",
   "window": {
+    "position": "center",
     "width": 600,
-    "height": 800,
+    "height": 600,
     "show": false,
+    "resizable": false,
     "toolbar": false,
     "icon": "client/public/icon/icon.png",
     "title": "Cozy Desktop"
