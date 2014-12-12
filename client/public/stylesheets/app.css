@@ -3749,6 +3749,9 @@ textarea:focus {
   background-color: #fe8800;
   border-color: #fe8800;
 }
+.description {
+  white-space: pre;
+}
 
 body {
   padding: 20px;
@@ -3756,11 +3759,47 @@ body {
 .line input {
   margin-top: 10px;
 }
+div.title {
+  margin: -20px;
+  margin-bottom: 5px;
+  padding: 10px;
+  width: 120%;
+  height: 70px;
+  color: #1baaf4;
+  background-color: #1baaf4;
+}
+div.title img {
+  margin-right: 20px;
+  width: 50px;
+  background-color: #1baaf4;
+}
+h1 {
+  font-size: 30px;
+  font-style: bold;
+  color: #fff;
+}
+h2 {
+  padd: 20px;
+}
 #logo {
   width: 250px;
 }
 .explanation {
   font-size: 16px;
+}
+button.btn.help {
+  width: 45px;
+  height: 45px;
+  border: 0;
+  padding-top: 10px;
+  background-color: transparent;
+}
+button.btn.help img {
+  opacity: 0.5;
+  width: 45px;
+}
+button.btn.help:hover img {
+  opacity: 1;
 }
 button.btn.btn-cozy.smaller {
   font-size: 14px;

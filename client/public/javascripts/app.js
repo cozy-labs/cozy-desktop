@@ -1,4 +1,4 @@
-var Button, Container, Field, InfoLine, Line, Subtitle, Title, a, button, div, h1, h2, img, input, label, p, span, _ref;
+var Button, Container, Field, Help, InfoLine, Line, Subtitle, Title, a, button, div, h1, h2, img, input, label, p, span, _ref;
 
 _ref = React.DOM, div = _ref.div, p = _ref.p, img = _ref.img, span = _ref.span, a = _ref.a, label = _ref.label, input = _ref.input, h1 = _ref.h1, h2 = _ref.h2, button = _ref.button;
 
@@ -30,7 +30,14 @@ Container = React.createClass({
 
 Title = React.createClass({
   render: function() {
-    return h1({}, this.props.text);
+    return Line(null, div({
+      className: "title"
+    }, h1({
+      ref: this.props.ref
+    }, img({
+      id: 'help',
+      src: 'client/public/icon/happycloud.png'
+    }), this.props.text)));
   }
 });
 
@@ -69,6 +76,7 @@ Field = React.createClass({
       ref: this.props.inputRef,
       defaultValue: this.props.defaultValue,
       onChange: this.onChange,
+      onClick: this.props.onClick,
       onKeyUp: this.props.onKeyUp,
       placeholder: this.props.placeholder,
       id: this.props.inputId
@@ -79,8 +87,95 @@ Field = React.createClass({
   getValue: function() {
     return this.refs[this.props.inputRef].getDOMNode().value;
   },
+  setValue: function(val) {
+    return this.refs[this.props.inputRef].getDOMNode().value = val;
+  },
   isValid: function() {
     return this.getValue() !== '';
+  },
+  setError: function(err) {
+    return this.setState({
+      error: t(err)
+    });
+  },
+  getError: function() {
+    return 'value is missing';
+  },
+  onChange: function() {
+    var val;
+    val = this.refs[this.props.inputRef].getDOMNode().value;
+    if (val === '') {
+      this.setState({
+        error: t(this.getError())
+      });
+    } else {
+      this.setState({
+        error: null
+      });
+    }
+    return this.props.onChange();
+  }
+});
+
+Help = React.createClass({
+  getInitialState: function() {
+    return {
+      error: null
+    };
+  },
+  render: function() {
+    var _base;
+    if ((_base = this.props).type == null) {
+      _base.type = 'text';
+    }
+    return Line(null, label({
+      className: 'mod w100 mrm'
+    }, this.props.label), input({
+      type: this.props.type,
+      className: "mt1 " + this.props.fieldClass,
+      ref: this.props.inputRef,
+      defaultValue: this.props.defaultValue,
+      value: this.props.value,
+      onChange: this.onChange,
+      onKeyUp: this.props.onKeyUp,
+      placeholder: this.props.placeholder,
+      id: this.props.inputId
+    }), button({
+      className: "btn help",
+      onMouseOver: this.props.onMouseOver,
+      onMouseLeave: this.props.onMouseLeave
+    }, img({
+      id: 'help',
+      src: 'client/public/icon/help.png'
+    })), this.state.description ? p({
+      className: 'description'
+    }, this.state.description) : void 0, this.state.error ? p({
+      className: 'error'
+    }, this.state.error) : void 0);
+  },
+  getValue: function() {
+    return this.refs[this.props.inputRef].getDOMNode().value;
+  },
+  setValue: function(val) {
+    return this.refs[this.props.inputRef].getDOMNode().value = val;
+  },
+  displayDescription: function(desc) {
+    return this.setState({
+      description: t(desc)
+    });
+  },
+  unDisplayDescription: function() {
+    return this.setState({
+      description: null
+    });
+  },
+  isValid: function() {
+    return this.getValue() !== '';
+  },
+  setError: function(err) {
+    return this.setState({
+      error: t(err)
+    });
   },
   getError: function() {
     return 'value is missing';
@@ -312,12 +407,12 @@ StateView = React.createClass({
           return _this.displayLog("Successfully synchronized");
         };
       })(this));
-      publisher.on('binaryPresent', (function(_this) {
-        return function(path) {
-          return _this.displayLog("File " + path + " is already there.");
+      publisher.on('downloadingRemoteChanges', (function(_this) {
+        return function() {
+          return _this.displayLog('Downloading missing files from remote...');
         };
       })(this));
-      publisher.on('binaryDownloadStart', (function(_this) {
+      publisher.on('binaryDownloadStdebug', (function(_this) {
         return function(path) {
           tray.icon = 'client/public/icon/icon_sync.png';
           return _this.displayLog("File " + path + " is downloading...");
@@ -353,11 +448,6 @@ StateView = React.createClass({
           return _this.fileModification(newPath);
         };
       })(this));
-      publisher.on('directoryEnsured', (function(_this) {
-        return function(path) {
-          return _this.displayLog("Folder " + path + " ensured");
-        };
-      })(this));
       publisher.on('folderDeleted', (function(_this) {
         return function(path) {
           return _this.displayLog("Folder " + path + " deleted");
@@ -368,6 +458,11 @@ StateView = React.createClass({
           var newPath, previousPath;
           previousPath = info.previousPath, newPath = info.newPath;
           return _this.displayLog("Folder moved: " + previousPath + " -> " + newPath);
+        };
+      })(this));
+      publisher.on('uploadingLocalChanges', (function(_this) {
+        return function() {
+          return _this.displayLog('Uploading modifications to remote...');
         };
       })(this));
       publisher.on('uploadBinary', (function(_this) {
@@ -482,10 +577,10 @@ StateView = React.createClass({
 ;var en;
 
 en = {
-  'cozy files configuration 1 on 2': 'Configure your device (1/2)',
-  'cozy files configuration 2 on 2': 'Register your device (2/2)',
-  'directory to synchronize your data': 'Path of the folder where you will see your cozy files:',
-  'your device name': 'The name used to sign up your device to your Cozy:',
+  'cozy files configuration 2 on 2': 'Configure your device (2/2)',
+  'cozy files configuration 1 on 2': 'Register your device (1/2)',
+  'directory to synchronize your data': 'Synchronized folder:',
+  'your device name': 'The device name:',
   'your remote url': 'The web URL of your Cozy',
   'your remote password': 'The password you use to connect to your Cozy:',
   'go back to previous step': '< Previous step',
@@ -496,6 +591,7 @@ en = {
   'path': 'Path',
   'url': 'URL',
   'resync all': 'Resync All',
+  'Laptop': 'Laptop',
   'delete configuration': 'Delete configuration',
   'delete configuration and files': 'Delete configuration and files',
   'on': 'on',
@@ -507,8 +603,50 @@ en = {
   'delete files': 'Delete files',
   'start sync': 'Start sync',
   'value is missing': 'A value is required for this field.',
+  'bad credentials': "Cozy url and password don't correspond.",
+  'not found': "Can you check your cozy url.",
+  'device description': "The device name is used to sign up to your Cozy. You'll be able to manage your device access in your cozy via this name.",
+  'path description': 'Path of the folder where you will see your cozy files',
+  'device already used': "This device name is already used. Could you change it, please.",
   'first step text': "Prior to register your computer to your Cozy, we need information about it.",
   'second step text': "It's time to register your computer to your Cozy\n(your password won't be stored)."
+};
+;var fr;
+
+fr = {
+  'cozy files configuration 2 on 2': 'Configuration de votre appareil (2/2)',
+  'cozy files configuration 1 on 2': 'Enregistrer votre appareil (1/2)',
+  'directory to synchronize your data': 'Dossier synchronisé :',
+  'your device name': 'Nom de votre appareil :',
+  'your remote url': "L'adresse de votre Cozy :",
+  'your remote password': 'Le mot de passe de votre Cozy :',
+  'go back to previous step': '〈 Etape précédente',
+  'save your device information and go to step 2': "Sauvegarder puis aller à l'étape suivante 〉",
+  'register device and synchronize': "Enregistrer puis aller à l'étape suivante 〉",
+  'start configuring your device': 'Démarrer la configuration de votre appareil et synchroniser vos fichiers',
+  'welcome to the cozy desktop': 'Bienvenue sur Cozy Desktop, le module qui vous permet de synchroniser votre ordinateur avec votre Cozy !',
+  'path': 'Chemin',
+  'url': 'URL',
+  'Laptop': 'MonOrdinateur',
+  'resync all': 'Tout resynchroniser',
+  'delete configuration': 'Supprimer la configuration',
+  'delete configuration and files': 'Suppression de la configuration et des fichiers',
+  'on': 'en cours',
+  'off': 'arrêtée',
+  'stop sync': 'Stopper la synchronisation',
+  'device name': 'Nom',
+  'sync state': 'Sync',
+  'clear logs': 'Supprimer les logs',
+  'delete files': 'Supprimer mes fichiers',
+  'start sync': 'Démarrer la synchronisation',
+  'value is missing': 'Une valeur est nécessaire pour ce champ.',
+  'bad credentials': "L'adresse et le mot de passe de votre Cozy ne correspondent pas.",
+  'not found': "Votre Cozy n'est pas accessible, veuillez vérifier son adresse.",
+  'device description': "Exemple : 'MonOrdinateur', 'FixePerso', 'LaptopPro', ...\nLe nom de votre appareil permet de l'enregistrer auprès de votre Cozy. Cela vous permettra par la suite de gérer les accès de votre appareil dans l'interface de votre Cozy. ",
+  'path description': 'Chemin du dossier où seront stockés les fichiers de votre Cozy.',
+  'device already used': "Ce nom d'appareil est déjà utilisé pour un autre appareil. Veuillez en choisir un autre.",
+  'first step text': "Nous allons pouvoir maintenant configurer votre appareil.",
+  'second step text': "Enregistrer votre appareil auprès de votre Cozy. Votre mot de passe ne sera pas sauvegardé."
 };
 ;var isValidForm;
 
@@ -549,7 +687,7 @@ displayTrayMenu = function() {
     type: 'normal',
     label: "Open '" + (path.basename(remoteConfig.path)) + "' directory",
     click: function() {
-      return open(remoteConfig.path);
+      return open(device.path);
     }
   }));
   this.menu.append(new gui.MenuItem({
@@ -642,14 +780,12 @@ win.setMinimumSize(600, 800);
 
 win.setResizable(false);
 
-win.setAlwaysOnTop(true);
-
 win.setPosition('center');
 
 win.on('close', function() {
   return win.hide();
 });
-;var ConfigFormStepOne, ConfigFormStepTwo, Intro;
+;var ConfigFormStepOne, ConfigFormStepTwo, Intro, cozyPassword, cozyUrl;
 
 Intro = React.createClass({
   render: function() {
@@ -671,82 +807,11 @@ Intro = React.createClass({
   }
 });
 
-ConfigFormStepOne = React.createClass({
-  getInitialState: function() {
-    var isDeviceName, isPath;
-    isDeviceName = (this.props.deviceName != null) && this.props.deviceName !== '';
-    isPath = (this.props.path != null) && this.props.path !== '';
-    return {
-      validForm: isDeviceName && isPath
-    };
-  },
-  render: function() {
-    var buttonClass;
-    buttonClass = 'right';
-    if (!this.state.validForm) {
-      buttonClass += ' disabled';
-    }
-    return Container(null, Title({
-      text: t('cozy files configuration 1 on 2')
-    }), Line({
-      className: 'explanation'
-    }, p(null, t('first step text'))), Field({
-      label: t('your device name'),
-      fieldClass: 'w300p',
-      inputRef: 'deviceName',
-      defaultValue: this.props.deviceName,
-      ref: 'deviceNameField',
-      placeholder: 'Laptop',
-      onChange: this.onDeviceNameChanged
-    }), Field({
-      label: t('directory to synchronize your data'),
-      fieldClass: 'w500p',
-      inputRef: 'path',
-      type: 'file',
-      defaultValue: this.props.path,
-      ref: 'devicePathField',
-      inputId: 'folder-input',
-      onChange: this.onPathChanged
-    }), Line(null, Button({
-      className: buttonClass,
-      onClick: this.onSaveButtonClicked,
-      text: t('save your device information and go to step 2')
-    })));
-  },
-  onDeviceNameChanged: function() {
-    var fieldName, fieldPath;
-    fieldName = this.refs.deviceNameField;
-    fieldPath = this.refs.devicePathField;
-    return this.setState({
-      validForm: isValidForm([fieldName, fieldPath])
-    });
-  },
-  onPathChanged: function(event, files, label) {
-    var fieldName, fieldPath;
-    fieldName = this.refs.deviceNameField;
-    fieldPath = this.refs.devicePathField;
-    return this.setState({
-      validForm: isValidForm([fieldName, fieldPath])
-    });
-  },
-  onSaveButtonClicked: function() {
-    var config, fieldName, fieldPath;
-    fieldName = this.refs.deviceNameField;
-    fieldPath = this.refs.devicePathField;
-    if (this.state.validForm) {
-      config = require('./backend/config');
-      config.updateSync({
-        deviceName: fieldName.getValue(),
-        path: fieldPath.getValue()
-      });
-      device.deviceName = fieldName.getValue();
-      device.path = fieldPath.getValue();
-      return renderState('STEP2');
-    }
-  }
-});
+cozyUrl = "";
 
-ConfigFormStepTwo = React.createClass({
+cozyPassword = "";
+
+ConfigFormStepOne = React.createClass({
   getInitialState: function() {
     var isDeviceName, isPath;
     isDeviceName = (this.props.url != null) && this.props.url !== '';
@@ -762,7 +827,7 @@ ConfigFormStepTwo = React.createClass({
       buttonClass += ' disabled';
     }
     return Container(null, Title({
-      text: t('cozy files configuration 2 on 2')
+      text: t('cozy files configuration 1 on 2')
     }), Line({
       className: 'explanation'
     }, p(null, t('second step text'))), Field({
@@ -782,13 +847,9 @@ ConfigFormStepTwo = React.createClass({
       defaultValue: this.props.remotePassword,
       ref: 'remotePasswordField',
       onChange: this.onFieldChanged,
-      onKeyUp: this.onPasswordKeyUp
+      onKeyUp: this.onPasswordKeyUp,
+      onClick: this.onCompleteUrl
     }), Line(null, Button({
-      className: 'left',
-      ref: 'backButton',
-      onClick: this.onBackButtonClicked,
-      text: t('go back to previous step')
-    }), Button({
       className: buttonClass,
       ref: 'nextButton',
       onClick: this.onSaveButtonClicked,
@@ -815,16 +876,24 @@ ConfigFormStepTwo = React.createClass({
       return $(node).focus();
     }
   },
-  onPasswordKeyUp: function(event) {
-    if (event.keyCode === 13) {
-      return this.onSaveButtonClicked();
+  onCompleteUrl: function() {
+    var fieldUrl;
+    fieldUrl = this.refs.remoteUrlField.getValue();
+    if (fieldUrl && fieldUrl.indexOf('.') === -1) {
+      return this.refs.remoteUrlField.setValue(fieldUrl + ".cozycloud.cc");
     }
   },
-  onBackButtonClicked: function() {
-    return renderState('STEP1');
+  onPasswordKeyUp: function(event) {
+    var fieldUrl;
+    fieldUrl = this.refs.remoteUrlField;
+    if (event.keyCode === 13) {
+      this.onSaveButtonClicked();
+    }
+    this.onCompleteUrl();
+    return fieldUrl.setError("");
   },
   onSaveButtonClicked: function() {
-    var config, fieldPassword, fieldUrl, options, password, replication, saveConfig, url;
+    var config, fieldPassword, fieldUrl, options, password, replication, url;
     fieldUrl = this.refs.remoteUrlField;
     fieldPassword = this.refs.remotePasswordField;
     if (isValidForm([fieldUrl, fieldPassword])) {
@@ -835,19 +904,139 @@ ConfigFormStepTwo = React.createClass({
         url = "https://" + (fieldUrl.getValue());
       }
       password = fieldPassword.getValue();
+      cozyUrl = url;
+      cozyPassword = password;
       options = {
         url: url,
-        deviceName: config.getConfig().deviceName,
         password: password
       };
+      return replication.checkCredentials(options, function(err) {
+        if (err && err === "getaddrinfo ENOTFOUND") {
+          return fieldUrl.setError('not found');
+        } else if (err != null) {
+          return fieldUrl.setError("bad credentials");
+        } else {
+          return renderState('STEP2');
+        }
+      });
+    }
+  }
+});
+
+ConfigFormStepTwo = React.createClass({
+  getInitialState: function() {
+    var isDeviceName, isPath;
+    isDeviceName = (this.props.deviceName != null) && this.props.deviceName !== '';
+    isPath = (this.props.path != null) && this.props.path !== '';
+    return {
+      validForm: isDeviceName && isPath
+    };
+  },
+  render: function() {
+    var buttonClass;
+    buttonClass = 'right';
+    if (!this.state.validForm) {
+      buttonClass += ' disabled';
+    }
+    return Container(null, Title({
+      text: t('cozy files configuration 2 on 2')
+    }), Line({
+      className: 'explanation'
+    }, p(null, t('first step text'))), Help({
+      label: t('your device name'),
+      fieldClass: 'w300p',
+      inputRef: 'deviceName',
+      defaultValue: this.props.deviceName,
+      ref: 'deviceNameField',
+      onChange: this.onDeviceNameChanged,
+      onMouseOver: this.onDisplayDevice,
+      onMouseLeave: this.onUnDisplayDevice
+    }), Help({
+      label: t('directory to synchronize your data'),
+      fieldClass: 'w500p',
+      inputRef: 'path',
+      type: 'file',
+      defaultValue: this.props.path,
+      ref: 'devicePathField',
+      inputId: 'folder-input',
+      onChange: this.onPathChanged,
+      onMouseOver: this.onDisplayPath,
+      onMouseLeave: this.onUnDisplayPath
+    }), Line(null, Button({
+      className: 'left',
+      ref: 'backButton',
+      onClick: this.onBackButtonClicked,
+      text: t('go back to previous step')
+    }), Button({
+      className: buttonClass,
+      onClick: this.onSaveButtonClicked,
+      text: t('save your device information and go to step 2')
+    })));
+  },
+  componentDidMount: function() {
+    return this.refs.deviceNameField.setValue(t('Laptop'));
+  },
+  onDisplayDevice: function() {
+    var fieldName;
+    fieldName = this.refs.deviceNameField;
+    return fieldName.displayDescription('device description');
+  },
+  onUnDisplayDevice: function() {
+    var fieldName;
+    fieldName = this.refs.deviceNameField;
+    return fieldName.unDisplayDescription();
+  },
+  onDisplayPath: function() {
+    var fieldPath;
+    fieldPath = this.refs.devicePathField;
+    return fieldPath.displayDescription('path description');
+  },
+  onUnDisplayPath: function() {
+    var fieldPath;
+    fieldPath = this.refs.devicePathField;
+    return fieldPath.unDisplayDescription();
+  },
+  onBackButtonClicked: function() {
+    return renderState('STEP1');
+  },
+  onDeviceNameChanged: function() {
+    var fieldName, fieldPath;
+    fieldName = this.refs.deviceNameField;
+    fieldPath = this.refs.devicePathField;
+    return this.setState({
+      validForm: isValidForm([fieldName, fieldPath])
+    });
+  },
+  onPathChanged: function(event, files, label) {
+    var fieldName, fieldPath;
+    fieldName = this.refs.deviceNameField;
+    fieldPath = this.refs.devicePathField;
+    return this.setState({
+      validForm: isValidForm([fieldName, fieldPath])
+    });
+  },
+  onSaveButtonClicked: function() {
+    var config, fieldName, fieldPath, options, replication, saveConfig;
+    fieldName = this.refs.deviceNameField;
+    fieldPath = this.refs.devicePathField;
+    if (this.state.validForm) {
+      config = require('./backend/config');
+      replication = require('./backend/replication');
+      config.updateSync({
+        deviceName: fieldName.getValue(),
+        path: fieldPath.getValue()
+      });
+      device.deviceName = fieldName.getValue();
+      device.path = fieldPath.getValue();
       saveConfig = function(err, credentials) {
+        var options;
         if (err) {
           console.log(err);
           alert("An error occured while registering your device. " + err);
-          return renderState('STEP2');
+          return renderState('STEP1');
         } else {
           options = {
-            url: url,
+            url: cozyUrl,
             deviceId: credentials.id,
             devicePassword: credentials.password
           };
@@ -856,7 +1045,18 @@ ConfigFormStepTwo = React.createClass({
           return renderState('STATE');
         }
       };
-      return replication.registerDevice(options, saveConfig);
+      options = {
+        url: cozyUrl,
+        deviceName: device.deviceName,
+        password: cozyPassword
+      };
+      return replication.registerDevice(options, function(err, credentials) {
+        if (err != null) {
+          return fieldName.setError("device already used");
+        } else {
+          return saveConfig(err, credentials);
+        }
+      });
     }
   }
 });
@@ -890,7 +1090,7 @@ renderState = function(state) {
   if (state === 'STATE') {
     this.currentComponent.onSyncClicked();
   }
-  if (state === 'STEP1') {
+  if (state === 'STEP2') {
     return $("#folder-input").attr('nwdirectory', '');
   }
 };
@@ -902,6 +1102,9 @@ window.onload = function() {
   locales = {};
   polyglot = new Polyglot();
   locales = en;
+  if (process.env.LANG.indexOf('fr') === 0) {
+    locales = fr;
+  }
   polyglot.extend(locales);
   window.t = polyglot.t.bind(polyglot);
   win.hide();

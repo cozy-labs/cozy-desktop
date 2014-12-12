@@ -1,8 +1,8 @@
 en =
-    'cozy files configuration 1 on 2': 'Configure your device (1/2)'
-    'cozy files configuration 2 on 2': 'Register your device (2/2)'
-    'directory to synchronize your data': 'Path of the folder where you will see your cozy files:'
-    'your device name': 'The name used to sign up your device to your Cozy:'
+    'cozy files configuration 2 on 2': 'Configure your device (2/2)'
+    'cozy files configuration 1 on 2': 'Register your device (1/2)'
+    'directory to synchronize your data': 'Synchronized folder:'
+    'your device name': 'The device name:'
     'your remote url': 'The web URL of your Cozy'
     'your remote password': 'The password you use to connect to your Cozy:'
     'go back to previous step': '< Previous step'
@@ -13,6 +13,7 @@ en =
     'path': 'Path'
     'url': 'URL'
     'resync all': 'Resync All'
+    'Laptop': 'Laptop'
     'delete configuration': 'Delete configuration'
     'delete configuration and files': 'Delete configuration and files'
     'on': 'on'
@@ -24,6 +25,11 @@ en =
     'delete files': 'Delete files'
     'start sync': 'Start sync'
     'value is missing': 'A value is required for this field.'
+    'bad credentials': "Cozy url and password don't correspond."
+    'not found': "Can you check your cozy url."
+    'device description' : "The device name is used to sign up to your Cozy. You'll be able to manage your device access in your cozy via this name."
+    'path description' : 'Path of the folder where you will see your cozy files'
+    'device already used': "This device name is already used. Could you change it, please."
     'first step text': """
 Prior to register your computer to your Cozy, we need information about it.
 """
