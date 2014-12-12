@@ -314,24 +314,31 @@ operationQueue =
             (next) ->
                 filesystem.checkLocation folderPaths.absolute, next
 
-            # Ensure that its parent directory exists
+            # Check if the folder DB document already exists
             (next) ->
+                key = "#{folderPaths.parent}/#{folderPaths.name}"
+                pouch.folders.get key, next
+
+            (next, docExists) ->
+                # No need to create the doc if it exists already
+                return callback() if docExists?
+
+                # No parent folder to create
                 return next() if folderPaths.parent is ''
+
+                # Otherwise ensure that the parent folder exists and continue.
                 operationQueue.createFolderRemotely folderPaths.absParent, next
 
-            # Make a doc from scratch
-            (next) ->
-                pouch.makeFolderDoc folderPaths.absolute, next
+            # Make a doc from scratch or from an existing one (useful?)
+            (next) -> pouch.makeFolderDoc folderPaths.absolute, next
 
             # Update and save the folder DB document that will be replicated
             # afterward.
-            (folderDoc, next) ->
-                pouch.db.put folderDoc, next
+            (folderDoc, next) -> pouch.db.put folderDoc, next
 
             # Flag the revision of the document as 'made locally' to avoid
             # further conflicts reapplicating changes
-            (res, next) ->
-                pouch.storeLocalRev res.rev, next
+            (res, next) -> pouch.storeLocalRev res.rev, next
 
         ], callback
 
