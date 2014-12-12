@@ -220,6 +220,7 @@ ConfigFormStepTwo = React.createClass
                 path: fieldPath.getValue()
             device.deviceName = fieldName.getValue()
             device.path = fieldPath.getValue()
+            device.url = cozyUrl
             saveConfig = (err, credentials) ->
                 if err
                     console.log err

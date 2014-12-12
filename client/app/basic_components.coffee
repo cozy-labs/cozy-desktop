@@ -213,6 +213,9 @@ Folder = React.createClass
         if val is ''
             @setState error: t @getError()
         else
+            if val.length > 30
+                length = val.length
+                val = "..." + val.substring(length-27, length)
             @setState error: null
             @setState value: val
         @props.onChange()

@@ -263,13 +263,17 @@ Folder = React.createClass({
     return 'value is missing';
   },
   onChange: function() {
-    var val;
+    var length, val;
     val = this.refs[this.props.inputRef].getDOMNode().value;
     if (val === '') {
       this.setState({
         error: t(this.getError())
       });
     } else {
+      if (val.length > 30) {
+        length = val.length;
+        val = "..." + val.substring(length - 27, length);
+      }
       this.setState({
         error: null
       });
@@ -590,7 +594,6 @@ StateView = React.createClass({
     tray.tooltip = log;
     if (log.length > 70) {
       length = log.length;
-      console.log(log.substring(0, 2));
       if (log.substring(0, 2) === "Fi") {
         log = "File ..." + log.substring(length - 67, length);
       } else {
@@ -1123,6 +1126,7 @@ ConfigFormStepTwo = React.createClass({
       });
       device.deviceName = fieldName.getValue();
       device.path = fieldPath.getValue();
+      device.url = cozyUrl;
       saveConfig = function(err, credentials) {
         var options;
         if (err) {
