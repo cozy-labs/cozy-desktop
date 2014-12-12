@@ -414,7 +414,7 @@ operationQueue =
                     done()
                 else
                     log.info "New file detected: #{absPath}"
-                    operationQueue.createFileRemotely relativePath, done
+                    operationQueue.createFileRemotely absPath, done
         , callback
 
 
@@ -436,7 +436,7 @@ operationQueue =
                     done()
                 else
                     log.info "New folder detected: #{absPath}"
-                    operationQueue.createFolderRemotely relativePath, done
+                    operationQueue.createFolderRemotely absPath, done
         , callback
 
 

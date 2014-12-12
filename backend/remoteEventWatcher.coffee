@@ -69,7 +69,7 @@ remoteEventWatcher =
             filter: (doc) ->
                 doc.docType is 'Folder' or doc.docType is 'File'
             live: false
-            since: @startSeq
+            since: @startSeq || config.getSeq()
 
         if pouch.replicationDelay is 0 and (not @replicatorFrom \
         or Object.keys(@replicatorFrom._events).length is 0)
@@ -195,7 +195,7 @@ remoteEventWatcher =
 
     url: null
 
-    startSeq: config.getSeq()
+    startSeq: null
 
 
 module.exports = remoteEventWatcher

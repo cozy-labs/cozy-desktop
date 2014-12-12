@@ -14,13 +14,6 @@ publisher = require './publisher'
 
 filesystem =
 
-    # Ensure that given file is located in the Cozy dir.
-    isInSyncDir: (filePath) ->
-        paths = @getPaths filePath
-        return paths.relative isnt '' \
-           and paths.relative.substring(0,2) isnt '..'
-
-
     # Build useful path from a given path.
     # (absolute, relative, filename, parent path, and parent absolute path).
     getPaths: (filePath) ->
