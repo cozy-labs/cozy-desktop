@@ -18,7 +18,7 @@ displayTrayMenu = ->
 
     @menu.append new gui.MenuItem
         type: 'normal'
-        label: "#{t('open folder')} : #{path.basename remoteConfig.path}"
+        label: "#{t('open folder')} : #{path.basename device.path}"
         click: ->
             open device.path
 

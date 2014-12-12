@@ -269,6 +269,9 @@ Folder = React.createClass({
       this.setState({
         error: t(this.getError())
       });
+      this.setState({
+        value: t('select folder')
+      });
     } else {
       if (val.length > 30) {
         length = val.length;
@@ -790,7 +793,7 @@ displayTrayMenu = function() {
   }));
   this.menu.append(new gui.MenuItem({
     type: 'normal',
-    label: "" + (t('open folder')) + " : " + (path.basename(remoteConfig.path)),
+    label: "" + (t('open folder')) + " : " + (path.basename(device.path)),
     click: function() {
       return open(device.path);
     }

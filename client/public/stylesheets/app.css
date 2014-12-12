@@ -3773,6 +3773,7 @@ div.title {
   background-color: #1baaf4;
 }
 div.title img {
+  margin-left: 10px;
   margin-right: 20px;
   width: 50px;
   background-color: #1baaf4;

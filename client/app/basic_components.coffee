@@ -212,6 +212,7 @@ Folder = React.createClass
         val = @refs[@props.inputRef].getDOMNode().value
         if val is ''
             @setState error: t @getError()
+            @setState value: t 'select folder'
         else
             if val.length > 30
                 length = val.length
