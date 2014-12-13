@@ -1,4 +1,5 @@
 chokidar = require 'chokidar'
+path     = require 'path'
 log      = require('printit')
     prefix: 'Local watcher '
 
@@ -90,6 +91,13 @@ localEventWatcher =
 
         # File update detected
         .on 'change', (filePath) ->
+
+            # Chokidar sometimes detect changes with a relative path
+            # In this case we want to adjust the path to be consistent
+            re = new RegExp "^#{remoteConfig.path}"
+            if not re.test filePath
+                filePath = path.join remoteConfig.path, filePath
+
             if not filesystem.locked \
             and not filesystem.filesBeingCopied[filePath]?
                 log.info "File changed: #{filePath}"

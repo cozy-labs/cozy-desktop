@@ -181,7 +181,12 @@ filesystem =
             (next) -> filesystem.downloadAttachment binaryId, targetPath, next
 
             # Get the remote binary document
-            (next) -> pouch.getRemoteDoc binaryId, next
+            (next) ->
+                pouch.getRemoteDoc binaryId, (err, res) ->
+                    if err and err isnt 404
+                        next err
+                    else
+                        next null, res or _id: binaryId
 
             # Get the checksum
             (remoteBinaryDoc, next) ->

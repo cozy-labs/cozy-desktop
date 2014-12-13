@@ -618,7 +618,7 @@ module.exports = dbHelpers =
             if err
                 callback err
             else if body.error
-                callback new Error body.error
+                callback { status: res.status, error: body.error }
             else
                 body.id  = body._id
                 body.rev = body._rev

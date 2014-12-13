@@ -382,7 +382,7 @@ operationQueue =
                 return callback err
 
             # Document already deleted
-            else if err and err.status is 404
+            else if (err and err.status is 404) or not fileDoc
                 return callback()
 
             else pouch.markAsDeleted fileDoc, callback
