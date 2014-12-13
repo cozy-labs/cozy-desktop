@@ -103,7 +103,7 @@ ConfigFormStepOne = React.createClass
 
         if isValidForm [fieldUrl, fieldPassword]
             config = require './backend/config'
-            db = require './backend/db'
+            device = require './backend/device'
 
             url = fieldUrl.getValue()
             if url.indexOf('http') < 0
@@ -115,7 +115,7 @@ ConfigFormStepOne = React.createClass
                 url: url
                 password: password
 
-            db.checkCredentials options, (err) ->
+            device.checkCredentials options, (err) ->
                 if err and err is "getaddrinfo ENOTFOUND"
                     fieldUrl.setError 'not found'
                 else if err?
@@ -214,7 +214,7 @@ ConfigFormStepTwo = React.createClass
         fieldPath = @refs.devicePathField
         if @state.validForm
             config = require './backend/config'
-            db = require './backend/db'
+            device = require './backend/device'
             config.updateSync
                 deviceName: fieldName.getValue()
                 path: fieldPath.getValue()
@@ -241,7 +241,7 @@ ConfigFormStepTwo = React.createClass
                 url: cozyUrl
                 deviceName: device.deviceName
                 password: cozyPassword
-            db.registerDevice options, (err, credentials) ->
+            device.registerDevice options, (err, credentials) ->
                 if err?
                     fieldName.setError "device already used"
                 else

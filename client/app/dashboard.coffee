@@ -77,8 +77,12 @@ StateView = React.createClass
             tray.icon = 'client/public/icon/icon_sync.png'
 
             pouch.addAllFilters ->
-                localEventWatcher.start()
+
                 remoteEventWatcher.start()
+
+                # Delay the start of the FS watcher to keep applying remote
+                # modifications before local ones.
+                setTimeout (-> localEventWatcher.start()), 2000
 
             #TODO: Arrange published names
 

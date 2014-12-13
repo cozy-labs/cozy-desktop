@@ -5,11 +5,12 @@ path    = require 'path-extra'
 program = require 'commander'
 read    = require 'read'
 log     = require('printit')
-    prefix: 'Cozy Desktop'
+    prefix: 'Cozy Desktop  '
 
 config             = require './backend/config'
 filesystem         = require './backend/filesystem'
 pouch              = require './backend/db'
+device             = require './backend/device'
 localEventWatcher  = require './backend/localEventWatcher'
 remoteEventWatcher = require './backend/remoteEventWatcher'
 pkg                = require './package.json'
@@ -47,7 +48,7 @@ module.exports.addRemote = addRemote = (url, deviceName, syncPath) ->
             deviceName: deviceName
             password: password
 
-        pouch.registerDevice options, saveConfig
+        device.registerDevice options, saveConfig
 
     module.exports.getPassword register
 
@@ -71,7 +72,7 @@ module.exports.removeRemote = removeRemote = (args) ->
             url: remoteConfig.url
             deviceId: remoteConfig.deviceId
             password: password
-        pouch.unregisterDevice options, saveConfig
+        device.unregisterDevice options, saveConfig
 
     module.exports.getPassword unregister
 

@@ -2,7 +2,7 @@ fs       = require 'fs-extra'
 path     = require 'path-extra'
 async    = require 'async'
 log      = require('printit')
-    prefix: 'Queue     '
+    prefix: 'Queue         '
 
 #
 # Local backend files
@@ -51,10 +51,13 @@ applyOperation = (task, callback) ->
         # while applying those operations.
         filesystem.locked = true
         callback = (err, res) ->
-            #
+
+            # We want to log the errors and their trace to be able to find
+            # when and where it occured.
+            operationQueue.displayErrorStack err, task.operation if err
+
             # Wait a bit before unblocking FS watcher, to avoid
             # inotify / kqueue to fire an event anyway.
-            #
             setTimeout ->
                 filesystem.locked = false
                 initialCallback err, res
@@ -83,9 +86,12 @@ applyOperation = (task, callback) ->
             pouch.replicationDelay -= delay
         , delay
         callback = (err, res) ->
-            #
+
+            # We want to log the errors and their trace to be able to find
+            # when and where it occured.
+            operationQueue.displayErrorStack err, task.operation if err
+
             # Launch a replication before calling back
-            #
             pouch.replicateToRemote()
             initialCallback err, res
 
@@ -105,7 +111,8 @@ operationQueue =
     createFileLocally: (doc, callback) ->
         remoteConfig = config.getConfig()
         unless doc?.path? and doc?.name? and doc.binary?.file?.id?
-            return callback new Error 'The doc is invalid'
+            err = new Error "The doc is invalid: #{JSON.stringify doc}"
+            return callback err
 
         parent   = path.join remoteConfig.path, doc.path
         filePath = path.join parent, doc.name
@@ -141,7 +148,8 @@ operationQueue =
     createFolderLocally: (doc, callback) ->
         remoteConfig = config.getConfig()
         unless doc?.path? and doc?.name?
-            return callback new Error 'The doc is invalid'
+            err = new Error "The doc is invalid: #{JSON.stringify doc}"
+            return callback err
 
         fs.ensureDir path.join(remoteConfig.path, doc.path, doc.name), callback
 
@@ -158,7 +166,8 @@ operationQueue =
     moveFileLocally: (doc, callback) ->
         remoteConfig = config.getConfig()
         unless doc?.path? and doc?.name?
-            return callback new Error 'The doc is invalid'
+            err = new Error "The doc is invalid: #{JSON.stringify doc}"
+            return callback err
 
         newPath = path.join remoteConfig.path, doc.path, doc.name
 
@@ -457,6 +466,16 @@ operationQueue =
             (next) => @queue.push operation: 'ensureAllFoldersRemotely', next
             (next) => @queue.push operation: 'ensureAllFilesRemotely', next
         ], callback
+
+
+    #
+    # Error handling
+    #
+    displayErrorStack: (err, operation) ->
+        log.error "An error occured during the operation #{operation}:"
+        if err.stack?
+            for line in err.stack.split('\n')
+                log.raw line
 
 
 module.exports = operationQueue

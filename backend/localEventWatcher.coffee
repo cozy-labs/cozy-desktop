@@ -5,10 +5,9 @@ log      = require('printit')
 #
 # Local backend files
 #
-filesystem     = require './filesystem'
-operationQueue = require './operationQueue'
-config         = require './config'
-publisher      = require './publisher'
+filesystem = require './filesystem'
+config     = require './config'
+publisher  = require './publisher'
 
 #
 # This file contains the filesystem watcher that will trigger operations when
@@ -30,6 +29,7 @@ localEventWatcher =
     #          cause chokidar to detect every files/folders in the
     #          directory as new. Default to `true`.
     start: (continuous, fromNow) ->
+        operationQueue = require './operationQueue'
 
         log.info 'Start watching filesystem for changes'
 

@@ -473,8 +473,10 @@ StateView = React.createClass({
       });
       tray.icon = 'client/public/icon/icon_sync.png';
       pouch.addAllFilters(function() {
-        localEventWatcher.start();
-        return remoteEventWatcher.start();
+        remoteEventWatcher.start();
+        return setTimeout((function() {
+          return localEventWatcher.start();
+        }), 2000);
       });
       publisher.on('firstSyncDone', (function(_this) {
         return function() {
@@ -989,12 +991,12 @@ ConfigFormStepOne = React.createClass({
     return fieldUrl.setError("");
   },
   onSaveButtonClicked: function() {
-    var config, db, fieldPassword, fieldUrl, options, password, url;
+    var config, device, fieldPassword, fieldUrl, options, password, url;
     fieldUrl = this.refs.remoteUrlField;
     fieldPassword = this.refs.remotePasswordField;
     if (isValidForm([fieldUrl, fieldPassword])) {
       config = require('./backend/config');
-      db = require('./backend/db');
+      device = require('./backend/device');
       url = fieldUrl.getValue();
       if (url.indexOf('http') < 0) {
         url = "https://" + (fieldUrl.getValue());
@@ -1006,7 +1008,7 @@ ConfigFormStepOne = React.createClass({
         url: url,
         password: password
       };
-      return db.checkCredentials(options, function(err) {
+      return device.checkCredentials(options, function(err) {
         if (err && err === "getaddrinfo ENOTFOUND") {
           return fieldUrl.setError('not found');
         } else if (err != null) {
@@ -1113,12 +1115,12 @@ ConfigFormStepTwo = React.createClass({
     });
   },
   onSaveButtonClicked: function() {
-    var config, db, fieldName, fieldPath, options, saveConfig;
+    var config, device, fieldName, fieldPath, options, saveConfig;
     fieldName = this.refs.deviceNameField;
     fieldPath = this.refs.devicePathField;
     if (this.state.validForm) {
       config = require('./backend/config');
-      db = require('./backend/db');
+      device = require('./backend/device');
       config.updateSync({
         deviceName: fieldName.getValue(),
         path: fieldPath.getValue()
@@ -1148,7 +1150,7 @@ ConfigFormStepTwo = React.createClass({
         deviceName: device.deviceName,
         password: cozyPassword
       };
-      return db.registerDevice(options, function(err, credentials) {
+      return device.registerDevice(options, function(err, credentials) {
         if (err != null) {
           return fieldName.setError("device already used");
         } else {

@@ -1,6 +1,6 @@
 async    = require 'async'
 log      = require('printit')
-    prefix: 'Remote watcher '
+    prefix: 'Remote watcher'
 
 #
 # Local backend files

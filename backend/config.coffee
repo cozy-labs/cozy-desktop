@@ -5,7 +5,7 @@ process   = require 'process'
 request   = require 'request-json-light'
 urlParser = require 'url'
 log       = require('printit')
-    prefix: 'Config     '
+    prefix: 'Config        '
 
 
 # Create config file if it doesn't exist.

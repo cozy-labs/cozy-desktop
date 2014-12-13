@@ -5,7 +5,7 @@ mime     = require 'mime'
 crypto   = require 'crypto'
 request  = require 'request-json-light'
 log      = require('printit')
-    prefix: 'Filesystem '
+    prefix: 'Filesystem    '
 
 config    = require './config'
 pouch     = require './db'
@@ -79,6 +79,10 @@ filesystem =
                     callback new Error "#{paths.absolute} does not exist"
                 else
                     callback()
+        else
+            callback new Error """
+#{paths.absolute} is not located in the synchronized directory
+"""
 
     # TODO add test
     # TODO make a micromodule from it?

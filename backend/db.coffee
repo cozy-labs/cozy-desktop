@@ -5,7 +5,7 @@ async   = require 'async'
 uuid    = require 'node-uuid'
 request = require 'request-json-light'
 log     = require('printit')
-    prefix: 'DB    '
+    prefix: 'Pouch/CouchDB '
 
 config    = require './config'
 publisher = require './publisher'
@@ -408,9 +408,7 @@ module.exports = dbHelpers =
                     log.info 'Changes replicated to remote'
                     callback() if callback?
         else
-            setTimeout ->
-                dbHelpers.replicateToRemote callback
-            , 1000
+            callback() if callback?
 
 
     replicatorTo: null
@@ -675,45 +673,3 @@ module.exports = dbHelpers =
                     callback err, body
 
 
-    # Pings the cozy to check the credentials without creating a device
-    checkCredentials: (options, callback) ->
-        client = request.newClient options.url
-        data =
-            username: 'owner'
-            password: options.password
-        client.post "login", data, (err, res, body) ->
-            if res?.statusCode isnt 200
-                error = err?.message or body.error or body.message
-            else
-                error = null
-            callback error
-
-
-    # Register device remotely then returns credentials given by remote Cozy.
-    # This credentials will allow the device to access to the Cozy database.
-    registerDevice: (options, callback) ->
-        client = request.newClient options.url
-        client.setBasicAuth 'owner', options.password
-
-        data =
-            login: options.deviceName
-        client.post 'device/', data, (err, res, body) ->
-            if err
-                callback err
-            else if body.error?
-                if body.error is 'string'
-                    log.error body.error
-                else
-                    callback body.error
-            else
-                callback null,
-                    id: body.id
-                    password: body.password
-
-
-    # Unregister device remotely, ask for revocation.
-    unregisterDevice: (options, callback) ->
-        client = request.newClient options.url
-        client.setBasicAuth 'owner', options.password
-
-        client.del "device/#{options.deviceId}/", callback
