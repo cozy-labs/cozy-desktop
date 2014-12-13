@@ -155,12 +155,16 @@ operationQueue =
 
     deleteFileLocally: (doc, callback) ->
         pouch.getKnownPath doc, (err, filePath) ->
-            fs.remove filePath, callback
+            if filePath?
+                fs.remove filePath, callback
+            else callback()
 
 
     deleteFolderLocally: (doc, callback) ->
         pouch.getKnownPath doc, (err, folderPath) ->
-            fs.remove folderPath, callback
+            if folderPath?
+                fs.remove folderPath, callback
+            else callback()
 
 
     moveFileLocally: (doc, callback) ->

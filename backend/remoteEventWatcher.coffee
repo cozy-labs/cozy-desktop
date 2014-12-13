@@ -37,6 +37,7 @@ remoteEventWatcher =
                 publisher.emit 'firstSyncDone'
                 log.info 'All your files are now available on your device.'
                 setInterval ->
+                    remoteEventWatcher.lastChangeSeq = 'now'
                     remoteEventWatcher.replicateFromRemote()
                 , 5000
 
@@ -49,10 +50,8 @@ remoteEventWatcher =
             else
                 # Copy documents manually to avoid getting all the changes
                 async.series [
-                    (callback) ->
-                        pouch.copyViewFromRemote 'folder', callback
-                    (callback) ->
-                        pouch.copyViewFromRemote 'file', callback
+                    (next) -> pouch.copyViewFromRemote 'folder', next
+                    (next) -> pouch.copyViewFromRemote 'file', next
                 ], (err) ->
                     if err
                         log.error "An error occured copying database"

@@ -504,6 +504,7 @@ module.exports = dbHelpers =
 
 
     getDocForFile: (filePath, callback) ->
+        remoteConfig = config.getConfig()
         filesystem = require './filesystem'
         filePaths = filesystem.getPaths filePath
 
