@@ -24,13 +24,13 @@ describe.only "Functional Tests", ->
     before cliHelpers.startSync
 
     # Cleans up local system
-    after cliHelpers.stopSync
+    #after cliHelpers.stopSync
     after cliHelpers.cleanConfiguration
     after cliHelpers.restoreGetPassword
     after helpers.cleanFolder syncPath
     after filesHelpers.deleteAll
     after cliHelpers.resetDatabase
-    after cliHelpers.stopSync
+    #after cliHelpers.stopSync
 
     it "When I create a file locally", (done) ->
         @timeout 30000
@@ -275,7 +275,7 @@ describe.only "Functional Tests", ->
                         # file should exist at new path
                         fs.existsSync(newPath).should.be.ok
                         done()
-                    , 6000
+                    , 7000
 
     it "Move a file remotely from a subfolder", (done) ->
         @timeout 15000

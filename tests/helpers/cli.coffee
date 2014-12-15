@@ -3,8 +3,11 @@ helpers = require './helpers'
 cli = require '../../cli'
 pouch = require '../../backend/db'
 config = require '../../backend/config'
-replication = require '../../backend/replication'
+replication = require '../../backend/db'
+deviceManager = require '../../backend/device'
 filesystem = require '../../backend/filesystem'
+localEventWatcher  = require '../../backend/localEventWatcher'
+remoteEventWatcher = require '../../backend/remoteEventWatcher'
 path = require 'path-extra'
 fs = require 'fs-extra'
 
@@ -48,7 +51,7 @@ module.exports.initConfiguration = (done) ->
             deviceName: helpers.options.deviceName
             password: helpers.options.cozyPassword
 
-        replication.registerDevice opts, saveConfig
+        deviceManager.registerDevice opts, saveConfig
 
     opts = config.getConfig()
     if opts.url?
@@ -73,7 +76,7 @@ module.exports.cleanConfiguration = (done) ->
             url: helpers.options.url
             deviceId: opts.deviceId
             password: helpers.options.cozyPassword
-        replication.unregisterDevice opts, saveConfig
+        deviceManager.unregisterDevice opts, saveConfig
 
     if opts.url?
         unregister()
@@ -84,22 +87,25 @@ module.exports.cleanConfiguration = (done) ->
 # Replicates the remote Couch into the local Pouch and
 # starts the sync process.
 module.exports.startSync = (done) ->
-    @timeout 10000
+    opts = config.getConfig()
 
-    pouch.addAllFilters ->
+    if not (opts.deviceName? and opts.url? and opts.path?)
+        log.error """
+No configuration found, please run add-remote-cozy command before running
+a synchronization.
+"""
+    else
+        fs.ensureDir opts.path, ->
+            # Watch local changes
+            setTimeout ->
+                localEventWatcher.start()
+            , 1000
 
-        replication.runReplication
-            fromRemote: true
-            toRemote: true
-            initial: true
-            catchup: false
-            continuous: true
-            force: true
-        , done
+            pouch.addAllFilters ->
+                # Replicate databases
+                remoteEventWatcher.start()
 
-        filesystem.watchChanges true, true
-
-        setTimeout done, 8000
+    done()
 
 module.exports.stopSync = ->
     replication.cancelReplication()

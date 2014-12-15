@@ -42,6 +42,7 @@ applyOperation = (task, callback) ->
         'deleteFileLocally'
         'deleteFolderLocally'
         'moveFileLocally'
+        'moveFolderLocally'
         'ensureAllFilesLocally'
         'ensureAllFoldersLocally'
     ]

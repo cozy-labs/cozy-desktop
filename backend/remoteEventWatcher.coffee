@@ -170,6 +170,8 @@ remoteEventWatcher =
                 else
                     if not concernsFolder
                         operation = 'moveFileLocally'
+                    else
+                        operation = 'moveFolderLocally'
 
                 if operation?
                     require('./operationQueue').queue.push
