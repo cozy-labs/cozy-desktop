@@ -360,6 +360,12 @@ configHelpers = {
     } else {
       return 'STATE';
     }
+  },
+  getDevice: function() {
+    return device;
+  },
+  setDevice: function(options) {
+    return device = options;
   }
 };
 ;var StateView;
@@ -1128,23 +1134,26 @@ ConfigFormStepTwo = React.createClass({
       device.deviceName = fieldName.getValue();
       device.path = fieldPath.getValue();
       device.url = cozyUrl;
-      saveConfig = function(err, credentials) {
-        var options;
-        if (err) {
-          console.log(err);
-          alert("An error occured while registering your device. " + err);
-          return renderState('STEP1');
-        } else {
-          options = {
-            url: cozyUrl,
-            deviceId: credentials.id,
-            devicePassword: credentials.password
-          };
-          config.updateSync(options);
-          console.log('Remote Cozy properly configured to work ' + 'with current device.');
-          return renderState('STATE');
-        }
-      };
+      saveConfig = (function(_this) {
+        return function(err, credentials) {
+          var options;
+          if (err) {
+            console.log(err);
+            alert("An error occured while registering your device. " + err);
+            return renderState('STEP1');
+          } else {
+            options = {
+              url: cozyUrl,
+              deviceId: credentials.id,
+              devicePassword: credentials.password
+            };
+            config.updateSync(options);
+            console.log('Remote Cozy properly configured to work ' + 'with current device.');
+            configHelpers.setDevice(device);
+            return renderState('STATE');
+          }
+        };
+      })(this);
       options = {
         url: cozyUrl,
         deviceName: device.deviceName,
@@ -1165,6 +1174,7 @@ ConfigFormStepTwo = React.createClass({
 renderState = function(state) {
   var getCurrentComponent;
   getCurrentComponent = function(state) {
+    var device;
     switch (state) {
       case 'INTRO':
         win.show();
@@ -1179,6 +1189,9 @@ renderState = function(state) {
         win.show();
         return ConfigFormStepThree(device);
       case 'STATE':
+        if (typeof device === "undefined" || device === null) {
+          device = configHelpers.getDevice();
+        }
         displayTrayMenu();
         return StateView(device);
       default:

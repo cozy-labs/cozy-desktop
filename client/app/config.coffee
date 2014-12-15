@@ -41,4 +41,8 @@ configHelpers =
         else
             'STATE'
 
+    getDevice: () ->
+        return device
 
+    setDevice: (options) ->
+        device = options
