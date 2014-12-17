@@ -24,13 +24,12 @@ describe.only "Functional Tests", ->
     before cliHelpers.startSync
 
     # Cleans up local system
-    #after cliHelpers.stopSync
+    after cliHelpers.stopSync
     after cliHelpers.cleanConfiguration
     after cliHelpers.restoreGetPassword
     after helpers.cleanFolder syncPath
     after filesHelpers.deleteAll
     after cliHelpers.resetDatabase
-    #after cliHelpers.stopSync
 
     it "When I create a file locally", (done) ->
         @timeout 30000
@@ -258,7 +257,7 @@ describe.only "Functional Tests", ->
                 , 15000
 
     it "Move a file remotely into a subfolder", (done) ->
-        @timeout 15000
+        @timeout 30000
         fileName = 'chat-mignon-renamed.jpg'
         folderName = 'remote-folder'
         newPath = "#{syncPath}/#{folderName}/#{fileName}"
@@ -275,7 +274,7 @@ describe.only "Functional Tests", ->
                         # file should exist at new path
                         fs.existsSync(newPath).should.be.ok
                         done()
-                    , 7000
+                    , 25000
 
     it "Move a file remotely from a subfolder", (done) ->
         @timeout 15000
@@ -299,7 +298,7 @@ describe.only "Functional Tests", ->
                         , 6000
 
     it "Delete a file remotely", (done) ->
-        @timeout 15000
+        @timeout 20000
 
         fileName = 'chat-mignon-renamed.jpg'
         filePath = "#{syncPath}/#{fileName}"
@@ -314,8 +313,27 @@ describe.only "Functional Tests", ->
                     # file should exist at new path
                     fs.existsSync(filePath).should.not.be.ok
                     done()
-                , 10000
+                , 15000
 
+    ###it "Rename a folder remotely", (done) ->
+        @timeout 15000
+        folderName = 'remote-folder'
+        newFolderName = 'new-remote-folder'
+        newPath = "#{syncPath}/#{newFolderName}"
+        filesHelpers.getFolderContent 'root', (err, files) ->
+            file = filesHelpers.getElementByName fileName, files
+            should.exist file
+            folder = filesHelpers.getElementByName folderName, files
+            should.exist folder
+            filesHelpers.moveFile file, folderName, ->
+                filesHelpers.getFolderContent folder, (err, files) ->
+                    file = filesHelpers.getElementByName fileName, files
+                    should.exist file
+                    setTimeout ->
+                        # file should exist at new path
+                        fs.existsSync(newPath).should.be.ok
+                        done()
+                    , 7000###
 
     it.skip "Create a big file locally", (done) ->
         ms = 1000

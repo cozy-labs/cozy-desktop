@@ -42,7 +42,6 @@ applyOperation = (task, callback) ->
         'deleteFileLocally'
         'deleteFolderLocally'
         'moveFileLocally'
-        'moveFolderLocally'
         'ensureAllFilesLocally'
         'ensureAllFoldersLocally'
     ]
@@ -157,7 +156,8 @@ operationQueue =
     deleteFileLocally: (doc, callback) ->
         pouch.getKnownPath doc, (err, filePath) ->
             if filePath?
-                fs.remove filePath, callback
+                fs.remove filePath, (err)->
+                    callback(err)
             else callback()
 
 
@@ -190,7 +190,10 @@ operationQueue =
 
             # Move the file
             if oldPathExists and not newPathExists
-                fs.move oldPath, newPath, callback
+                pouch.db.get doc.binary.file.id, (err, doc) ->
+                    doc.path = newPath
+                    pouch.db.put doc, (err, res) ->
+                        fs.move oldPath, newPath, callback
 
             # Assume that the file has already been moved
             # TODO: base this assumption on checksum ?
@@ -204,8 +207,11 @@ operationQueue =
 
             # The destination file already exists, duplcate
             else if oldPathExists and newPathExists
-                log.info "File #{newPath} already exists, duplicating to #{newPath}.new"
-                fs.copy oldPath, "#{newPath}.new", callback
+                if doc.docType.toLowerCase() is 'folder'
+                    callback()
+                else
+                    log.info "File #{newPath} already exists, duplicating to #{newPath}.new"
+                    fs.copy oldPath, "#{newPath}.new", callback
 
 
     moveFolderLocally: (doc, callback) ->
@@ -481,6 +487,8 @@ operationQueue =
         if err.stack?
             for line in err.stack.split('\n')
                 log.raw line
+        else
+            log.raw err
 
 
 module.exports = operationQueue

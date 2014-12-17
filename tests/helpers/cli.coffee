@@ -27,7 +27,6 @@ module.exports.restoreGetPassword = ->
 # Configures a fake device for a fake remote Cozy
 module.exports.initConfiguration = (done) ->
 
-
     init = ->
         saveConfig = (err, credentials) ->
             if err
@@ -108,7 +107,8 @@ a synchronization.
     done()
 
 module.exports.stopSync = ->
-    replication.cancelReplication()
+    localEventWatcher.watcher.close()
+    remoteEventWatcher.cancel()
 
 
 # Recreates the local database

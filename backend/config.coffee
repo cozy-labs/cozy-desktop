@@ -82,36 +82,35 @@ module.exports = config =
 
 
     # Set last replication sequence in the configuration file.
-    setSeq: (seq, deviceName) ->
+    setRemoteSeq: (seq, deviceName) ->
         deviceName ?= @getDeviceName()
-        @config.devices[deviceName].seq = seq
+        @config.devices[deviceName].remoteSeq = seq
         @saveConfig()
 
 
     # Get last replication sequence from the configuration file.
-    getSeq: (deviceName) ->
+    getRemoteSeq: (deviceName) ->
         deviceName ?= @getDeviceName()
-        if @config.devices[deviceName].seq
-            return @config.devices[deviceName].seq
+        if @config.devices[deviceName].remoteSeq
+            return @config.devices[deviceName].remoteSeq
         else
-            @setSeq 0, deviceName
+            @setRemoteSeq 0, deviceName
             return 0
 
-
-    # Set last change sequence in the configuration file.
-    setChangeSeq: (seq, deviceName) ->
+    # Set last replication sequence in the configuration file.
+    setLocalSeq: (seq, deviceName) ->
         deviceName ?= @getDeviceName()
-        @config.devices[deviceName].changeSeq = seq
+        @config.devices[deviceName].localSeq = seq
         @saveConfig()
 
 
-    # Get last change sequence from the configuration file.
-    getChangeSeq: (deviceName) ->
+    # Get last replication sequence from the configuration file.
+    getLocalSeq: (deviceName) ->
         deviceName ?= @getDeviceName()
-        if @config.devices[deviceName].changeSeq
-            return @config.devices[deviceName].changeSeq
+        if @config.devices[deviceName].localSeq
+            return @config.devices[deviceName].localSeq
         else
-            @setSeq 0, deviceName
+            @setLocalSeq 0, deviceName
             return 0
 
     getUrl: (deviceName) ->

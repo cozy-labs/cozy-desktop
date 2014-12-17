@@ -22,6 +22,7 @@ publisher      = require './publisher'
 remoteEventWatcher =
 
     start: ->
+        pouch.replicationDelay = 0
         operationQueue = require('./operationQueue')
 
         remoteEventWatcher.initialReplication (err, seq) ->
@@ -29,16 +30,19 @@ remoteEventWatcher =
             log.info "Replication batch is complete (last sequence: #{seq})"
 
             # Ensure that previous replication is properly finished.
-            remoteEventWatcher.cancel()
+            # remoteEventWatcher.cancel()
 
             log.info 'Start building your filesystem on your device.'
             operationQueue.makeFSSimilarToDB (err) ->
                 process.exit(1) if err
                 publisher.emit 'firstSyncDone'
                 log.info 'All your files are now available on your device.'
-                setInterval ->
-                    remoteEventWatcher.lastChangeSeq = 'now'
-                    remoteEventWatcher.replicateFromRemote()
+                int = setInterval () ->
+                    if pouch.replicationDelay is 1
+                        clearInterval(int)
+                    else
+                        remoteEventWatcher.replicateFromRemote()
+                        config.saveConfig()
                 , 5000
 
     initialReplication: (callback) ->
@@ -58,7 +62,7 @@ remoteEventWatcher =
                         log.error err
                         callback err if callback?
                     else
-                        config.setSeq seq
+                        config.setRemoteSeq seq
                         callback null, seq
 
 
@@ -66,9 +70,9 @@ remoteEventWatcher =
         url = @url || config.getUrl()
         options =
             filter: (doc) ->
-                doc.docType is 'Folder' or doc.docType is 'File'
+                doc.docType and (doc.docType.toLowerCase() is 'folder' or doc.docType.toLowerCase() is 'file')
             live: false
-            since: @startSeq || config.getSeq()
+            since: config.getRemoteSeq()
 
         if pouch.replicationDelay is 0 and (not @replicatorFrom \
         or Object.keys(@replicatorFrom._events).length is 0)
@@ -77,10 +81,9 @@ remoteEventWatcher =
 
             .on 'complete', (info) ->
                 if info.docs_written > 0
-                    lastChangeSeq = remoteEventWatcher.lastChangeSeq || \
-                                    config.getChangeSeq()
+                    config.setRemoteSeq info.last_seq
                     log.info 'Database updated, applying changes to files'
-                    remoteEventWatcher.applyChanges lastChangeSeq, ->
+                    remoteEventWatcher.applyChanges ->
 
             .on 'error', (err) ->
                 if err?.status is 409
@@ -92,11 +95,11 @@ remoteEventWatcher =
 
     # Retrieve database changes and apply them to the filesystem.
     # NB: PouchDB manages another sequence number for the replication.
-    applyChanges: (since, callback) ->
+    applyChanges: (callback) ->
         options =
             filter: (doc) ->
                 doc.docType is 'Folder' or doc.docType is 'File'
-            since: since
+            since: config.getLocalSeq()
             include_docs: true
 
         error = (err) ->
@@ -140,8 +143,7 @@ remoteEventWatcher =
     # operation queue.
     #
     addToQueue: (change, callback) ->
-        @lastChangeSeq = change.seq
-        config.setChangeSeq change.seq
+        config.setLocalSeq change.seq
 
         pouch.db.query 'localrev/byRevision'
                      , key: change.doc._rev
@@ -170,8 +172,6 @@ remoteEventWatcher =
                 else
                     if not concernsFolder
                         operation = 'moveFileLocally'
-                    else
-                        operation = 'moveFolderLocally'
 
                 if operation?
                     require('./operationQueue').queue.push
@@ -188,9 +188,10 @@ remoteEventWatcher =
 
 
     cancel: ->
+        pouch.replicationDelay = 1
+        config.saveConfig()
         @replicatorFrom.cancel()    if @replicatorFrom
         pouch.replicatorTo.cancel() if pouch.replicatorTo
-        pouch.replicationDelay = 0
 
     replicatorFrom: null
 
