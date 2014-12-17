@@ -42,6 +42,7 @@ applyOperation = (task, callback) ->
         'deleteFileLocally'
         'deleteFolderLocally'
         'moveFileLocally'
+        'moveFolderLocally'
         'ensureAllFilesLocally'
         'ensureAllFoldersLocally'
     ]
@@ -156,8 +157,7 @@ operationQueue =
     deleteFileLocally: (doc, callback) ->
         pouch.getKnownPath doc, (err, filePath) ->
             if filePath?
-                fs.remove filePath, (err)->
-                    callback(err)
+                fs.remove filePath, callback
             else callback()
 
 
@@ -190,10 +190,13 @@ operationQueue =
 
             # Move the file
             if oldPathExists and not newPathExists
-                pouch.db.get doc.binary.file.id, (err, doc) ->
-                    doc.path = newPath
-                    pouch.db.put doc, (err, res) ->
-                        fs.move oldPath, newPath, callback
+                if doc.binary?.file?.id?
+                    pouch.db.get doc.binary.file.id, (err, doc) ->
+                        doc.path = newPath
+                        pouch.db.put doc, (err, res) ->
+                            fs.move oldPath, newPath, callback
+                else
+                    fs.move oldPath, newPath, callback
 
             # Assume that the file has already been moved
             # TODO: base this assumption on checksum ?

@@ -63,5 +63,5 @@ module.exports.removeFolder = (folder, callback) ->
         should.not.exist err
         should.exist res
         should.exist body
-        res.statusCode.should.equal 200
+        res.statusCode.should.equal 204
         callback()
