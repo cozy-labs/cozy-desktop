@@ -225,7 +225,7 @@ describe.only "Functional Tests", ->
                     # file should exist
                     fs.existsSync(filePath).should.be.ok
                     done()
-                , 5000
+                , 7000
 
     it "Rename a file remotely", (done) ->
         @timeout 15000
@@ -240,10 +240,10 @@ describe.only "Functional Tests", ->
                     # file should exist
                     fs.existsSync(newPath).should.be.ok
                     done()
-                , 6000
+                , 7000
 
     it "Create a folder remotely", (done) ->
-        @timeout 20000
+        @timeout 15000
         folderName = 'remote-folder'
         folderPath = "#{syncPath}/#{folderName}"
         filesHelpers.createFolder folderName, ->
@@ -254,10 +254,10 @@ describe.only "Functional Tests", ->
                     # folder should exist
                     fs.existsSync(folderPath).should.be.ok
                     done()
-                , 15000
+                , 7000
 
     it "Move a file remotely into a subfolder", (done) ->
-        @timeout 30000
+        @timeout 15000
         fileName = 'chat-mignon-renamed.jpg'
         folderName = 'remote-folder'
         newPath = "#{syncPath}/#{folderName}/#{fileName}"
@@ -274,7 +274,7 @@ describe.only "Functional Tests", ->
                         # file should exist at new path
                         fs.existsSync(newPath).should.be.ok
                         done()
-                    , 25000
+                    , 7000
 
     it "Move a file remotely from a subfolder", (done) ->
         @timeout 15000
@@ -295,10 +295,10 @@ describe.only "Functional Tests", ->
                             # file should exist at new path
                             fs.existsSync(newPath).should.be.ok
                             done()
-                        , 6000
+                        , 7000
 
     it "Delete a file remotely", (done) ->
-        @timeout 20000
+        @timeout 15000
 
         fileName = 'chat-mignon-renamed.jpg'
         filePath = "#{syncPath}/#{fileName}"
@@ -313,7 +313,7 @@ describe.only "Functional Tests", ->
                     # file should exist at new path
                     fs.existsSync(filePath).should.not.be.ok
                     done()
-                , 15000
+                , 7000
 
     ###it "Rename a folder remotely", (done) ->
         @timeout 15000
