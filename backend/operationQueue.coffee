@@ -164,7 +164,8 @@ operationQueue =
     deleteFolderLocally: (doc, callback) ->
         pouch.getKnownPath doc, (err, folderPath) ->
             if folderPath?
-                fs.remove folderPath, callback
+                fs.remove folderPath, (err) ->
+                    callback(err)
             else callback()
 
 
@@ -211,7 +212,10 @@ operationQueue =
             # The destination file already exists, duplcate
             else if oldPathExists and newPathExists
                 if doc.docType.toLowerCase() is 'folder'
-                    callback()
+                    if newPath isnt oldPath
+                        fs.remove oldPath, callback
+                    else
+                        callback()
                 else
                     log.info "File #{newPath} already exists, duplicating to #{newPath}.new"
                     fs.copy oldPath, "#{newPath}.new", callback

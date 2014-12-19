@@ -431,6 +431,13 @@ module.exports = dbHelpers =
                 return callback err
 
             [ { mimeType, fileClass }, stats, existingDoc ] = results
+            if existingDoc?
+                db.get existingDoc.binary.file.id, (err, doc) ->
+                    if doc?
+                        remoteConfig = config.getConfig()
+                        doc.path =  path.join remoteConfig.path, filePaths.parent, filePaths.name
+                        db.put doc, ->
+
             existingDoc ?= {}
 
             # Populate document information with the existing DB document
