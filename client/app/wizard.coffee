@@ -221,7 +221,7 @@ ConfigFormStepTwo = React.createClass
             device.deviceName = fieldName.getValue()
             device.path = fieldPath.getValue()
             device.url = cozyUrl
-            saveConfig = (err, credentials) ->
+            saveConfig = (err, credentials) =>
                 if err
                     console.log err
                     alert "An error occured while registering your device. #{err}"
@@ -235,6 +235,7 @@ ConfigFormStepTwo = React.createClass
 
                     console.log 'Remote Cozy properly configured to work ' + \
                                 'with current device.'
+                    configHelpers.setDevice device
                     renderState 'STATE'
 
             options =

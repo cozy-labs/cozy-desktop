@@ -5,8 +5,7 @@ should = require 'should'
 
 filesClient = getClient 'http://localhost:9121'
 
-
-module.exports.getFolderContent = getFolderContent = (folder, callback) ->
+getFolderContent = (folder, callback) ->
 
     if folder is "root"
         folder = id: "root"
@@ -74,18 +73,6 @@ module.exports.uploadFile = (fileName, fixturePath, callback) ->
 module.exports.renameFile = (file, newName, callback) ->
     file.name = newName
     filesClient.put "files/#{file.id}", file, (err, res, body) ->
-        should.not.exist err
-        should.exist res
-        should.exist body
-        res.statusCode.should.equal 200
-        callback()
-
-module.exports.createFolder = (folderName, callback) ->
-    folder =
-        name: folderName
-        path: ''
-
-    filesClient.post "folders/", folder, (err, res, body) ->
         should.not.exist err
         should.exist res
         should.exist body

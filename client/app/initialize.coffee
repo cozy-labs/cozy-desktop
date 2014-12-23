@@ -14,6 +14,8 @@ renderState = (state) ->
                 win.show()
                 ConfigFormStepThree device
             when 'STATE'
+                if not device?
+                    device = configHelpers.getDevice()
                 displayTrayMenu()
                 StateView device
             else

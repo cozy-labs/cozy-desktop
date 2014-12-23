@@ -281,7 +281,7 @@ module.exports = dbHelpers =
 
         # Normally a file should have its binary information kept by the
         # data-system.
-        if doc.binary?.file?.id?
+        if doc.binary?.file?.id? and (not doc._deleted)
             db.get doc.binary.file.id, (err, res) ->
                 if err and err.status is 404
                     # Retry with the file DB document if the binary DB document
@@ -384,8 +384,7 @@ module.exports = dbHelpers =
 
 
     replicateToRemote: (callback) ->
-        startSeq = config.getSeq()
-        startChangeSeq = config.getChangeSeq()
+        startChangeSeq = config.getLocalSeq()
         url = config.getUrl()
 
         opts =
@@ -432,6 +431,13 @@ module.exports = dbHelpers =
                 return callback err
 
             [ { mimeType, fileClass }, stats, existingDoc ] = results
+            if existingDoc?
+                db.get existingDoc.binary.file.id, (err, doc) ->
+                    if doc?
+                        remoteConfig = config.getConfig()
+                        doc.path =  path.join remoteConfig.path, filePaths.parent, filePaths.name
+                        db.put doc, ->
+
             existingDoc ?= {}
 
             # Populate document information with the existing DB document
