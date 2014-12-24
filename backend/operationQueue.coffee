@@ -431,13 +431,12 @@ operationQueue =
         key = "#{folderPaths.parent}/#{folderPaths.name}"
 
         pouch.folders.get key, (err, folderDoc) ->
-
             # An error occured
             if err and err.status isnt 404
                 return callback err
 
             # Document already deleted
-            else if err and err.status is 404
+            else if (err and err.status is 404) or not folderDoc?
                 return callback()
 
             else pouch.markAsDeleted folderDoc, callback
