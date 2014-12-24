@@ -4,7 +4,8 @@ async    = require 'async'
 log      = require('printit')
     prefix: 'Queue         '
 
-ping = require ("ping")
+ping = require 'ping'
+url = require 'url'
 
 #
 # Local backend files
@@ -49,14 +50,14 @@ applyOperation = (task, callback) ->
     ]
 
     remoteConfig = config.getConfig()
-    ping.sys.probe remoteConfig.url.replace('https://', ''), (isAlive)->
+    urls = url.parse(remoteConfig.url)
+    ping.sys.probe urls.hostname, (isAlive) ->
         if isAlive
             if task.operation in watchingBlockingOperations
                 # TODO: Change synchronized folder's permission to "read-only"
                 # while applying those operations.
                 filesystem.locked = true
                 callback = (err, res) ->
-
                     # We want to log the errors and their trace to be able to find
                     # when and where it occured.
                     operationQueue.displayErrorStack err, task.operation if err
@@ -121,7 +122,8 @@ operationQueue =
         operationQueue.queue.unshift task, ->
         remoteConfig = config.getConfig()
         interval = setInterval () ->
-            ping.sys.probe remoteConfig.url.replace('https://', ''), (isAlive) ->
+            urls = url.parse(remoteConfig.url)
+            ping.sys.probe urls.hostname, (isAlive) ->
                 if isAlive
                     operationQueue.queue.resume()
                     clearInterval(interval)
