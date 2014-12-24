@@ -4,6 +4,8 @@ async    = require 'async'
 log      = require('printit')
     prefix: 'Queue         '
 
+ping = require ("ping")
+
 #
 # Local backend files
 #
@@ -21,7 +23,6 @@ localEventWatcher  = require './localEventWatcher'
 # added to a synchronous queue that executes operations one-by-one.
 #
 applyOperation = (task, callback) ->
-
     log.debug "Operation queued: #{task.operation}"
     log.debug "File: #{task.file}" if task.file?
     log.debug task.doc if task.doc?
@@ -47,64 +48,84 @@ applyOperation = (task, callback) ->
         'ensureAllFoldersLocally'
     ]
 
-    if task.operation in watchingBlockingOperations
-        # TODO: Change synchronized folder's permission to "read-only"
-        # while applying those operations.
-        filesystem.locked = true
-        callback = (err, res) ->
+    remoteConfig = config.getConfig()
+    ping.sys.probe remoteConfig.url.replace('https://', ''), (isAlive)->
+        if isAlive
+            if task.operation in watchingBlockingOperations
+                # TODO: Change synchronized folder's permission to "read-only"
+                # while applying those operations.
+                filesystem.locked = true
+                callback = (err, res) ->
 
-            # We want to log the errors and their trace to be able to find
-            # when and where it occured.
-            operationQueue.displayErrorStack err, task.operation if err
+                    # We want to log the errors and their trace to be able to find
+                    # when and where it occured.
+                    operationQueue.displayErrorStack err, task.operation if err
 
-            # Wait a bit before unblocking FS watcher, to avoid
-            # inotify / kqueue to fire an event anyway.
-            setTimeout ->
-                filesystem.locked = false
-                initialCallback err, res
-            , 300
+                    # Wait a bit before unblocking FS watcher, to avoid
+                    # inotify / kqueue to fire an event anyway.
+                    setTimeout ->
+                        filesystem.locked = false
+                        initialCallback err, res
+                    , 300
 
-    #
-    # Operations that will delay application of replication changes
-    #
-    # i.e when multiples files are added locally, we don't want those
-    # additions to be interrupted by remote changes application
-    #
-    replicationDelayingOperations = [
-        'createFileRemotely'
-        'createFolderRemotely'
-        'forceDeleteFileRemotely'
-        'deleteFolderRemotely'
-        'updateFileRemotely'
-        'ensureAllFilesRemotely'
-        'ensureAllFoldersRemotely'
-    ]
+            #
+            # Operations that will delay application of replication changes
+            #
+            # i.e when multiples files are added locally, we don't want those
+            # additions to be interrupted by remote changes application
+            #
+            replicationDelayingOperations = [
+                'createFileRemotely'
+                'createFolderRemotely'
+                'forceDeleteFileRemotely'
+                'deleteFolderRemotely'
+                'updateFileRemotely'
+                'ensureAllFilesRemotely'
+                'ensureAllFoldersRemotely'
+            ]
 
-    if task.operation in replicationDelayingOperations
-        delay = 1000
-        pouch.replicationDelay += delay
-        setTimeout ->
-            pouch.replicationDelay -= delay
-        , delay
-        callback = (err, res) ->
+            if task.operation in replicationDelayingOperations
+                    delay = 1000
+                    pouch.replicationDelay += delay
+                    setTimeout ->
+                        pouch.replicationDelay -= delay
+                    , delay
+                    callback = (err, res) ->
 
-            # We want to log the errors and their trace to be able to find
-            # when and where it occured.
-            operationQueue.displayErrorStack err, task.operation if err
+                        # We want to log the errors and their trace to be able to find
+                        # when and where it occured.
+                        operationQueue.displayErrorStack err, task.operation if err
 
-            # Launch a replication before calling back
-            pouch.replicateToRemote()
-            initialCallback err, res
+                        # Launch a replication before calling back
+                        pouch.replicateToRemote()
+                        initialCallback err, res
 
-    # Apply operation
-    if param = task.file || task.folder || task.doc
-        operationQueue[task.operation] param, callback
-    else
-        operationQueue[task.operation] callback
+            # Apply operation
+            if param = task.file || task.folder || task.doc
+                operationQueue[task.operation] param, callback
+            else
+                operationQueue[task.operation] callback
+
+        else
+            operationQueue.waitNetwork task
+            callback()
 
 operationQueue =
 
     queue: async.queue applyOperation, 1
+
+
+
+    waitNetwork: (task) ->
+        operationQueue.queue.pause()
+        operationQueue.queue.unshift task, ->
+        remoteConfig = config.getConfig()
+        interval = setInterval () ->
+            ping.sys.probe remoteConfig.url.replace('https://', ''), (isAlive) ->
+                if isAlive
+                    operationQueue.queue.resume()
+                    clearInterval(interval)
+        , 5 * 1000
 
     #
     # Remote-to-local operations
