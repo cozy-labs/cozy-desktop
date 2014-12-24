@@ -43,7 +43,7 @@ remoteEventWatcher =
                     else
                         remoteEventWatcher.replicateFromRemote()
                         config.saveConfig()
-                , 5000
+                , 500
 
     initialReplication: (callback) ->
         pouch.getLastRemoteChangeSeq (err, seq) ->
