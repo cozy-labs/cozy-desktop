@@ -1,5 +1,5 @@
 async = require 'async'
-
+request = require 'request-json-light'
 should = require 'should'
 date = require 'date-utils'
 
@@ -7,7 +7,6 @@ config      = require '../backend/config'
 replication = require '../backend/replication'
 binary      = require '../backend/binary'
 pouch       = require '../backend/db'
-request = require 'request-json-light'
 
 helpers = require './helpers/helpers'
 cliHelpers = require './helpers/cli'

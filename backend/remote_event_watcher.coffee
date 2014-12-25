@@ -5,11 +5,11 @@ log      = require('printit')
 #
 # Local backend files
 #
-filesystem     = require './filesystem'
-operationQueue = require './operationQueue'
-config         = require './config'
-pouch          = require './db'
-publisher      = require './publisher'
+filesystem = require './filesystem'
+config = require './config'
+pouch = require './db'
+publisher = require './publisher'
+conflict = require './conflict'
 
 #
 # This file contains the database replicator that will trigger operations when
@@ -23,7 +23,7 @@ remoteEventWatcher =
 
     start: ->
         pouch.replicationDelay = 0
-        operationQueue = require('./operationQueue')
+        operationQueue = require('./operation_queue')
 
         remoteEventWatcher.initialReplication (err, seq) ->
             process.exit(1) if err
@@ -87,6 +87,7 @@ remoteEventWatcher =
 
             .on 'error', (err) ->
                 if err?.status is 409
+                    conflict.display err
                     log.error "Conflict, ignoring"
                 else
                     log.error 'An error occured during replication.'
@@ -176,7 +177,7 @@ remoteEventWatcher =
                         operation = 'moveFolderLocally'
 
                 if operation?
-                    require('./operationQueue').queue.push
+                    require('./operation_queue').queue.push
                         operation: operation
                         doc: change.doc
                     , (err) ->

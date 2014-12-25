@@ -30,7 +30,7 @@ localEventWatcher =
     #          cause chokidar to detect every files/folders in the
     #          directory as new. Default to `true`.
     start: (continuous, fromNow) ->
-        operationQueue = require './operationQueue'
+        operationQueue = require './operation_queue'
 
         log.info 'Start watching filesystem for changes'
 

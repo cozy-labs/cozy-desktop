@@ -8,6 +8,7 @@ log     = require('printit')
     prefix: 'Pouch/CouchDB '
 
 config    = require './config'
+conflict    = require './conflict'
 publisher = require './publisher'
 
 db = new PouchDB config.dbPath
@@ -188,6 +189,7 @@ module.exports = dbHelpers =
         dbHelpers.createDesignDoc id, queries, (err, res) ->
             if err?
                 if err.status is 409
+                    conflict.display err
                     callback null
                 else
                     callback err
@@ -405,6 +407,7 @@ module.exports = dbHelpers =
             @replicatorTo = db.replicate.to(url, opts)
                 .on 'error', (err) ->
                     if err?.status is 409
+                        conflict.display err
                         log.error "Conflict, ignoring"
                     else
                         log.error 'An error occured during replication.'

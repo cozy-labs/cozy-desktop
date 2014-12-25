@@ -14,8 +14,8 @@ pouch              = require './db'
 publisher          = require './publisher'
 filesystem         = require './filesystem'
 config             = require './config'
-remoteEventWatcher = require './remoteEventWatcher'
-localEventWatcher  = require './localEventWatcher'
+remoteEventWatcher = require './remote_event_watcher'
+localEventWatcher  = require './local_event_watcher'
 
 #
 # This file contains the operations that are triggered by local and remote
