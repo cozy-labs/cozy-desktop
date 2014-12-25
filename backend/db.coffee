@@ -113,19 +113,23 @@ module.exports = dbHelpers =
 
 
     binaries:
+
         rows: []
+
         all: (params, callback) ->
             if typeof params is 'function'
                 callback = params
                 params = {}
             db.query 'binary/all', params, callback
+
         get: (key, callback) ->
             getByKey 'binary/byChecksum', key, callback
 
 
     # Create all required views in the database.
     addAllFilters: (callback) ->
-        async.eachSeries [ 'folder', 'file', 'binary', 'localrev' ], @addFilter, callback
+        async.eachSeries(
+            [ 'folder', 'file', 'binary', 'localrev' ], @addFilter, callback)
 
 
     # Add required views for a given doctype.
@@ -140,6 +144,7 @@ module.exports = dbHelpers =
             }
         }
         """
+
         if docType in ['file', 'folder', 'binary', 'File', 'Folder', 'Binary']
             queries.byFullPath = """
         function (doc) {
@@ -293,6 +298,7 @@ module.exports = dbHelpers =
                 else
                     callback null, res.path
 
+
         # Otherwise try to get the previous revision that would contain the
         # deleted file or folder path.
         else
@@ -304,6 +310,7 @@ module.exports = dbHelpers =
                     callback null, filePath
                 else
                     log.debug "Unable to find a file/folder path"
+                    log.debug res
                     callback null
 
 
@@ -430,12 +437,13 @@ module.exports = dbHelpers =
             if err and err.status isnt 404
                 return callback err
 
-            [ { mimeType, fileClass }, stats, existingDoc ] = results
+            [{mimeType, fileClass}, stats, existingDoc] = results
             if existingDoc?
                 db.get existingDoc.binary.file.id, (err, doc) ->
                     if doc?
                         remoteConfig = config.getConfig()
-                        doc.path =  path.join remoteConfig.path, filePaths.parent, filePaths.name
+                        doc.path =  path.join(
+                            remoteConfig.path, filePaths.parent, filePaths.name)
                         db.put doc, ->
 
             existingDoc ?= {}
@@ -509,6 +517,8 @@ module.exports = dbHelpers =
                 callback null, newDoc
 
 
+    # TODO refactor: remove return statement in the middle and move the
+    # final block to the filesystem module.
     getDocForFile: (filePath, callback) ->
         remoteConfig = config.getConfig()
         filesystem = require './filesystem'
@@ -542,6 +552,11 @@ module.exports = dbHelpers =
                     # which file has been moved
                     if res.rows? and res.rows.length is 1
                         existingDoc = res.rows[0].value
+
+                        unless existingDoc.path?
+                            return db.remove existingDoc, ->
+                                msg = 'Corrupted metadata, file deleted.'
+                                callback new Error msg
                         movedFile = path.join remoteConfig.path
                                             , existingDoc.path
                                             , existingDoc.name
@@ -553,7 +568,10 @@ module.exports = dbHelpers =
                                 callback null, existingDoc
                             else
                                 # UGLY TRICK
-                                callback null, { binary: file: checksum: checksum }
+                                callback null,
+                                    binary:
+                                        file:
+                                            checksum: checksum
 
                     else
                         # Return the checksum anyway to avoid its recalculation
@@ -678,5 +696,4 @@ module.exports = dbHelpers =
                     log.info "Binary uploaded: #{absPath}"
                     publisher.emit 'binaryUploaded', absPath
                     callback err, body
-
 

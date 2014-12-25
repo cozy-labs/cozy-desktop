@@ -66,7 +66,7 @@ applyOperation = (task, callback) ->
                     # inotify / kqueue to fire an event anyway.
                     setTimeout ->
                         filesystem.locked = false
-                        initialCallback err, res
+                        initialCallback null, res
                     , 300
 
             #
@@ -93,13 +93,14 @@ applyOperation = (task, callback) ->
                     , delay
                     callback = (err, res) ->
 
-                        # We want to log the errors and their trace to be able to find
-                        # when and where it occured.
-                        operationQueue.displayErrorStack err, task.operation if err
+                        # We want to log the errors and their trace to be able
+                        # to find when and where it occured.
+                        if err
+                            operationQueue.displayErrorStack err, task.operation
 
                         # Launch a replication before calling back
                         pouch.replicateToRemote()
-                        initialCallback err, res
+                        initialCallback null, res
 
             # Apply operation
             if param = task.file || task.folder || task.doc
@@ -114,8 +115,6 @@ applyOperation = (task, callback) ->
 operationQueue =
 
     queue: async.queue applyOperation, 1
-
-
 
     waitNetwork: (task) ->
         operationQueue.queue.pause()
@@ -136,46 +135,59 @@ operationQueue =
         remoteConfig = config.getConfig()
         unless doc?.path? and doc?.name? and doc.binary?.file?.id?
             err = new Error "The doc is invalid: #{JSON.stringify doc}"
-            return callback err
+            callback err
 
-        parent   = path.join remoteConfig.path, doc.path
-        filePath = path.join parent, doc.name
-        binaryId = doc.binary.file.id
-        checksum = doc.binary.file.checksum
+        unless doc.path?.indexOf('undefined') < 0
+            pouch.db.remove doc, (err) ->
+                err = new Error "The doc was invalid: #{JSON.stringify doc}"
+                callback err
+        else
 
-        async.waterfall [
+            parent   = path.join remoteConfig.path, doc.path
+            filePath = path.join parent, doc.name
+            binaryId = doc.binary.file.id
+            checksum = doc.binary.file.checksum
 
-            # Ensure that the parent directory is created
-            (next) -> fs.ensureDir parent, next
+            async.waterfall [
 
-            # Check if a file with the same checksum exists
-            (res, next) -> filesystem.fileExistsLocally checksum, next
+                # Ensure that the parent directory is created
+                (next) -> fs.ensureDir parent, next
 
-            # If a similar file exists, we just have to copy it, otherwise
-            # download the binary from CouchDB
-            (existingFilePath, next) ->
-                if existingFilePath
-                    fs.copy existingFilePath, filePath, next
-                else
-                    filesystem.downloadBinary binaryId, filePath, next
+                # Check if a file with the same checksum exists
+                (res, next) -> filesystem.fileExistsLocally checksum, next
 
-            # Change utimes (creation and modification date)
-            (res, next) ->
-                next ?= res
-                creationDate = new Date doc.creationDate
-                lastModification = new Date doc.lastModification
-                fs.utimes filePath, creationDate, lastModification, next
+                # If a similar file exists, we just have to copy it, otherwise
+                # download the binary from CouchDB
+                (existingFilePath, next) ->
+                    if existingFilePath
+                        fs.copy existingFilePath, filePath, next
+                    else
+                        filesystem.downloadBinary binaryId, filePath, next
 
-        ], callback
+                # Change utimes (creation and modification date)
+                (res, next) ->
+                    next ?= res
+                    creationDate = new Date doc.creationDate
+                    lastModification = new Date doc.lastModification
+                    fs.utimes filePath, creationDate, lastModification, next
+
+            ], callback
 
 
     createFolderLocally: (doc, callback) ->
         remoteConfig = config.getConfig()
         unless doc?.path? and doc?.name?
             err = new Error "The doc is invalid: #{JSON.stringify doc}"
-            return callback err
+            callback err
 
-        fs.ensureDir path.join(remoteConfig.path, doc.path, doc.name), callback
+        unless doc.path?.indexOf('undefined') < 0
+            pouch.db.remove doc, (err) ->
+                err = new Error "The doc was invalid: #{JSON.stringify doc}"
+                callback err
+
+        else
+            folderPath = path.join remoteConfig.path, doc.path, doc.name
+            fs.ensureDir folderPath, callback
 
     deleteFileLocally: (doc, callback) ->
         pouch.getKnownPath doc, (err, filePath) ->
@@ -416,11 +428,11 @@ operationQueue =
 
             # An error occured
             if err and err.status isnt 404
-                return callback err
+                callback err
 
             # Document already deleted
             else if (err and err.status is 404) or not fileDoc
-                return callback()
+                callback()
 
             else pouch.markAsDeleted fileDoc, callback
 
@@ -435,11 +447,11 @@ operationQueue =
         pouch.folders.get key, (err, folderDoc) ->
             # An error occured
             if err and err.status isnt 404
-                return callback err
+                callback err
 
             # Document already deleted
             else if (err and err.status is 404) or not folderDoc?
-                return callback()
+                callback()
 
             else pouch.markAsDeleted folderDoc, callback
 
