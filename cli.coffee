@@ -1,19 +1,19 @@
 #!/usr/bin/env coffee
 
-fs      = require 'fs-extra'
-path    = require 'path-extra'
+fs = require 'fs-extra'
+path = require 'path-extra'
 program = require 'commander'
-read    = require 'read'
-log     = require('printit')
+read = require 'read'
+log = require('printit')
     prefix: 'Cozy Desktop  '
 
-config             = require './backend/config'
-filesystem         = require './backend/filesystem'
-pouch              = require './backend/db'
-device             = require './backend/device'
-localEventWatcher  = require './backend/local_event_watcher'
+config = require './backend/config'
+filesystem = require './backend/filesystem'
+pouch = require './backend/db'
+device = require './backend/device'
+localEventWatcher = require './backend/local_event_watcher'
 remoteEventWatcher = require './backend/remote_event_watcher'
-pkg                = require './package.json'
+pkg = require './package.json'
 
 
 # Helpers to get cozy password from user.
