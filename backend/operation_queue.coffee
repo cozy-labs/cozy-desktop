@@ -86,7 +86,7 @@ applyOperation = (task, callback) ->
             ]
 
             if task.operation in replicationDelayingOperations
-                    delay = 1000
+                    delay = 2000
                     pouch.replicationDelay += delay
                     setTimeout ->
                         pouch.replicationDelay -= delay
@@ -137,7 +137,7 @@ operationQueue =
             err = new Error "The doc is invalid: #{JSON.stringify doc}"
             callback err
 
-        unless doc.path?.indexOf('undefined') < 0
+        else if doc.path?.indexOf('undefined') < 0
             pouch.db.remove doc, (err) ->
                 err = new Error "The doc was invalid: #{JSON.stringify doc}"
                 callback err
@@ -180,7 +180,7 @@ operationQueue =
             err = new Error "The doc is invalid: #{JSON.stringify doc}"
             callback err
 
-        unless doc.path?.indexOf('undefined') < 0
+        else if doc.path?.indexOf('undefined') >= 0
             pouch.db.remove doc, (err) ->
                 err = new Error "The doc was invalid: #{JSON.stringify doc}"
                 callback err
@@ -316,8 +316,6 @@ operationQueue =
                     operationQueue.createFolderLocally doc, done
             , callback
 
-
-
     #
     # Local-to-remote operations
     #
@@ -325,46 +323,54 @@ operationQueue =
         filePaths = filesystem.getPaths filePath
         doc = {}
 
-        async.waterfall [
+        # Check that the file exists and is located in the sync
+        # directory
+        filesystem.checkLocation filePaths.absolute, (err) ->
+            if err
+                pouch.files.get filePath, (err, doc) ->
+                    if doc?
+                        pouchd.db.remove doc, callback
+                    else
+                        callback err
+            else
+                async.waterfall [
+                    # Ensure that its parent directory exists
+                    (next) ->
+                        return next() if filePaths.parent is ''
+                        operationQueue.createFolderRemotely(
+                            filePaths.absParent, next)
 
-            # Check that the file exists and is located in the sync directory
-            (next) ->
-                filesystem.checkLocation filePaths.absolute, next
+                    # Make a doc from scratch or by merging with an existing
+                    # one
+                    (next) ->
+                        pouch.makeFileDoc filePaths.absolute, next
 
-            # Ensure that its parent directory exists
-            (next) ->
-                return next() if filePaths.parent is ''
-                operationQueue.createFolderRemotely filePaths.absParent, next
+                    # Upload the binary as a CouchDB document's attachment and
+                    # return the binary document
+                    (fileDoc, next) ->
+                        doc = fileDoc
+                        pouch.uploadBinary filePaths.absolute
+                                         , fileDoc.binary
+                                         , (err) ->
+                            next()
 
-            # Make a doc from scratch or by merging with an existing one
-            (next) ->
-                pouch.makeFileDoc filePaths.absolute, next
+                    # Update and save the file DB document that will be
+                    # replicated afterward.
+                    (binaryDoc, next) ->
+                        doc.binary =
+                            file:
+                                id: binaryDoc.id
+                                rev: binaryDoc.rev
+                                checksum: binaryDoc.checksum
 
-            # Upload the binary as a CouchDB document's attachment and return
-            # the binary document
-            (fileDoc, next) ->
-                doc = fileDoc
-                pouch.uploadBinary filePaths.absolute
-                                 , fileDoc.binary
-                                 , next
+                        pouch.db.put doc, next
 
-            # Update and save the file DB document that will be replicated
-            # afterward.
-            (binaryDoc, next) ->
-                doc.binary =
-                    file:
-                        id: binaryDoc.id
-                        rev: binaryDoc.rev
-                        checksum: binaryDoc.checksum
+                    # Flag the revision of the document as 'made locally' to
+                    # avoid further conflicts reapplicating changes
+                    (res, next) ->
+                        pouch.storeLocalRev res.rev, next
 
-                pouch.db.put doc, next
-
-            # Flag the revision of the document as 'made locally' to avoid
-            # further conflicts reapplicating changes
-            (res, next) ->
-                pouch.storeLocalRev res.rev, next
-
-        ], callback
+                ], callback
 
 
     createFolderRemotely: (folderPath, callback) ->
