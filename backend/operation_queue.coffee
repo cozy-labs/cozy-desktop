@@ -137,7 +137,7 @@ operationQueue =
             err = new Error "The doc is invalid: #{JSON.stringify doc}"
             callback err
 
-        else if doc.path?.indexOf('undefined') < 0
+        else if doc.path?.indexOf('undefined') >= 0
             pouch.db.remove doc, (err) ->
                 err = new Error "The doc was invalid: #{JSON.stringify doc}"
                 callback err
