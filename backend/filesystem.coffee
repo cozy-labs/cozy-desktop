@@ -14,6 +14,10 @@ publisher = require './publisher'
 
 filesystem =
 
+    # Lock filesystem watching
+    locked: false
+    filesBeingCopied: {}
+
     # Build useful path from a given path.
     # (absolute, relative, filename, parent path, and parent absolute path).
     getPaths: (filePath) ->
@@ -112,6 +116,7 @@ filesystem =
         stream.pipe checksum
 
 
+    # Get size of given file.
     getSize: (filePath, callback) ->
         fs.exists filePath, (exists) ->
             if exists
@@ -122,9 +127,6 @@ filesystem =
                         callback null, stats.size
             else
                 callback null, 0
-
-
-    filesBeingCopied: {}
 
 
     isBeingCopied: (filePath, callback) ->
@@ -144,7 +146,7 @@ filesystem =
                         filesystem.isBeingCopied filePath, callback
             , 2000 # TODO: Reduce this to get a faster upload
 
-
+    # Check if a file corresponding to given checksum already exists.
     fileExistsLocally: (checksum, callback) ->
         pouch.binaries.get key: checksum, (err, res) ->
             if err
@@ -159,7 +161,7 @@ filesystem =
                     else
                         callback null, false
 
-
+    # Download given binary to given path and save binary metadata in local DB.
     downloadBinary: (binaryId, targetPath, callback) ->
 
         # We maintain a local 'binary' document for each file present on the
@@ -178,7 +180,8 @@ filesystem =
                     if err and err.status isnt 404 then next(err) else next()
 
             # Download the CouchDB attachment
-            (next) -> filesystem.downloadAttachment binaryId, targetPath, next
+            (next) ->
+                filesystem.downloadAttachment binaryId, targetPath, next
 
             # Get the remote binary document
             (next) ->
@@ -202,12 +205,15 @@ filesystem =
             (checksum, next) ->
                 doc.path = targetPath
                 doc.checksum = checksum
-
-                pouch.db.put doc, next
+                pouch.db.get doc._id, (err, preDoc) ->
+                    if preDoc?
+                        doc._rev = preDoc._rev
+                    pouch.db.put doc, next
 
         ], callback
 
 
+    # Download given binary attahcment to given location.
     downloadAttachment: (binaryId, targetPath, callback) ->
         remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
@@ -227,8 +233,5 @@ filesystem =
                 publisher.emit 'binaryDownloaded', targetPath
                 callback()
 
-
-    # Lock filesystem watching
-    locked: false
 
 module.exports = filesystem

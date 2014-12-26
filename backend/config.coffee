@@ -8,20 +8,23 @@ log       = require('printit')
     prefix: 'Config        '
 
 
-# Create config file if it doesn't exist.
-defaultDir = path.join path.homedir(), '.cozy-desktop'
-configPath = path.join defaultDir, './config.json'
-fs.ensureDirSync defaultDir
-fs.ensureFileSync configPath
-
-if fs.readFileSync(configPath).toString() is ''
-    fs.writeFileSync configPath, JSON.stringify devices: {}, null, 2
-
-
 module.exports = config =
-    dir: defaultDir
-    dbPath: path.join defaultDir, 'db'
-    config: require configPath or devices: {}
+
+    # Create config file if it doesn't exist.
+    # DEFAULT_DIR var is used in case of tests.
+    init: ->
+        basePath = process.env.DEFAULT_DIR or path.homedir()
+        defaultDir = path.join basePath, '.cozy-desktop'
+        @configPath = path.join defaultDir, './config.json'
+        fs.ensureDirSync defaultDir
+        fs.ensureFileSync @configPath
+
+        if fs.readFileSync(@configPath).toString() is ''
+            fs.writeFileSync @configPath, JSON.stringify devices: {}, null, 2
+
+        @dir = defaultDir
+        @dbPath = path.join defaultDir, 'db'
+        @config = require @configPath or devices: {}
 
     # Return config related to device name.
     getConfig: (deviceName) ->
@@ -35,7 +38,6 @@ module.exports = config =
             log.error "Device not set locally: #{deviceName}"
             throw "Device not set locally: #{deviceName}"
 
-
     # Get the argument after -d or --deviceName
     # Or return the first device name
     getDeviceName: () ->
@@ -45,9 +47,9 @@ module.exports = config =
 
         return Object.keys(@config.devices)[0]
 
-
     # Get useful information about the disk space
     # (total, used and left) on the remote Cozy
+    # TODO move to device module.
     getDiskSpace: (callback) ->
         device = config.getConfig()
         client = request.newClient device.url
@@ -61,13 +63,11 @@ module.exports = config =
             else
                 callback null, body
 
-
     # Add remote configuration for a given device name.
     addRemoteCozy: (options) ->
         @config.devices ?= {}
         @config.devices[options.deviceName] = options
         @saveConfig()
-
 
     # Remove remote configuration for a given device name.
     removeRemoteCozy: (deviceName) ->
@@ -75,20 +75,17 @@ module.exports = config =
         delete @config.devices[deviceName]
         @saveConfig()
 
-
     # Save configuration to file system.
     saveConfig: ->
-        fs.writeFileSync configPath, JSON.stringify @config, null, 2
+        fs.writeFileSync config.configPath, JSON.stringify @config, null, 2
 
-
-    # Set last replication sequence in the configuration file.
+    # Set last remote replication sequence in the configuration file.
     setRemoteSeq: (seq, deviceName) ->
         deviceName ?= @getDeviceName()
         @config.devices[deviceName].remoteSeq = seq
         @saveConfig()
 
-
-    # Get last replication sequence from the configuration file.
+    # Get last rempte replication sequence from the configuration file.
     getRemoteSeq: (deviceName) ->
         deviceName ?= @getDeviceName()
         if @config.devices[deviceName].remoteSeq
@@ -97,14 +94,13 @@ module.exports = config =
             @setRemoteSeq 0, deviceName
             return 0
 
-    # Set last replication sequence in the configuration file.
+    # Set last remote replication sequence in the configuration file.
     setLocalSeq: (seq, deviceName) ->
         deviceName ?= @getDeviceName()
         @config.devices[deviceName].localSeq = seq
         @saveConfig()
 
-
-    # Get last replication sequence from the configuration file.
+    # Get last remote replication sequence from the configuration file.
     getLocalSeq: (deviceName) ->
         deviceName ?= @getDeviceName()
         if @config.devices[deviceName].localSeq
@@ -113,6 +109,7 @@ module.exports = config =
             @setLocalSeq 0, deviceName
             return 0
 
+    # Get Couch URL for given device name.
     getUrl: (deviceName) ->
         deviceName ?= @getDeviceName()
         remoteConfig = @getConfig(deviceName)
@@ -123,6 +120,7 @@ module.exports = config =
         else
             null
 
+    # Update synchronously configuration for given device.
     updateSync: (deviceConfig) ->
         device = @getConfig()
         delete @config.devices[device.deviceName]
@@ -130,5 +128,7 @@ module.exports = config =
             device[key] = deviceConfig[key]
         @config.devices[device.deviceName] = device
 
-        fs.writeFileSync configPath, JSON.stringify @config, null, 2
+        fs.writeFileSync config.configPath, JSON.stringify @config, null, 2
         console.log 'Configuration file successfully updated'
+
+config.init()

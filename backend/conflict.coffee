@@ -6,8 +6,9 @@ log = require('printit')
 module.exports = conflict =
 
     # Display the conflict informations (for debugging purpose).
-    displayConflict: (err) ->
+    displayConflict: (err, info) ->
         log.debug err
+        log.debug info
 
     # Apply a proper resolution conflict strategy to the conflict.
     handleConflict: ->

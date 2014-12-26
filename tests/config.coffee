@@ -4,6 +4,8 @@ touch = require 'touch'
 should = require 'should'
 date = require 'date-utils'
 
+process.env.DEFAULT_DIR = __dirname
+
 config      = require '../backend/config'
 replication = require '../backend/replication'
 binary      = require '../backend/binary'

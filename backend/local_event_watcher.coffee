@@ -1,13 +1,13 @@
 chokidar = require 'chokidar'
-path     = require 'path'
-log      = require('printit')
+path = require 'path'
+log = require('printit')
     prefix: 'Local watcher '
 
 #
 # Local backend files
 #
 filesystem = require './filesystem'
-config     = require './config'
+config = require './config'
 publisher  = require './publisher'
 
 #
@@ -42,8 +42,8 @@ localEventWatcher =
         localEventWatcher.watcher = chokidar.watch remoteConfig.path,
             persistent: continuous
             ignoreInitial: fromNow
-            interval: 300
-            binaryInterval: 600
+            interval: 2000
+            binaryInterval: 3000
             #ignored: /[\/\\]\./
 
         # New file detected
