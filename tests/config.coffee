@@ -4,11 +4,7 @@ touch = require 'touch'
 should = require 'should'
 date = require 'date-utils'
 
-process.env.DEFAULT_DIR = __dirname
-
 config      = require '../backend/config'
-replication = require '../backend/replication'
-binary      = require '../backend/binary'
 pouch       = require '../backend/db'
 request = require 'request-json-light'
 
@@ -79,14 +75,42 @@ describe "Config Tests", ->
             conf = config.getConfig()
             config.config.devices["new-cozy3"]
 
-    describe 'setSeq', ->
+    describe 'setRemoteSeq', ->
         it 'saves seq field on default deviceName', ->
-            config.setSeq 3
+            config.setRemoteSeq 3
             conf = config.getConfig()
-            should.exist conf.seq
-            conf.seq.should.equal 3
+            should.exist conf.remoteSeq
+            conf.remoteSeq.should.equal 3
 
-    describe 'getSeq', ->
+    describe 'getRemoteSeq', ->
         it 'gets seq field on default deviceName', ->
             conf = config.getConfig()
-            config.getSeq().should.equal 3
+            config.getRemoteSeq().should.equal 3
+
+    describe 'setLocalSeq', ->
+        it 'saves seq field on default deviceName', ->
+            config.setLocalSeq 3
+            conf = config.getConfig()
+            should.exist conf.localSeq
+            conf.localSeq.should.equal 3
+
+    describe 'getLocalSeq', ->
+        it 'gets seq field on default deviceName', ->
+            conf = config.getConfig()
+            config.getLocalSeq().should.equal 3
+
+    #describe 'getDiskSpace', ->
+        #it 'returns data about cozy diskspace', (done) ->
+            #@conf.url = 'http://localhost:9104'
+            #config.updateSync @conf
+            #config.getDiskSpace (err, data) ->
+                #should.not.exist err
+                #console.log data
+                #done()
+
+    describe 'getUrl', ->
+        it 'should give remote Cozy url', ->
+
+            password = config.getConfig().devicePassword
+            url = "http://new-cozy3:#{password}@localhost:9104/cozy"
+            config.getUrl().should.equal url

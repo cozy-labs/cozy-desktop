@@ -15,7 +15,7 @@ module.exports = config =
     init: ->
         basePath = process.env.DEFAULT_DIR or path.homedir()
         defaultDir = path.join basePath, '.cozy-desktop'
-        @configPath = path.join defaultDir, './config.json'
+        @configPath = path.join path.resolve(defaultDir), 'config.json'
         fs.ensureDirSync defaultDir
         fs.ensureFileSync @configPath
 
