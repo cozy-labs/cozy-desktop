@@ -370,39 +370,49 @@ operationQueue =
     createFolderRemotely: (folderPath, callback) ->
         folderPaths = filesystem.getPaths folderPath
 
-        async.waterfall [
-
-            # Check that the folder exists and is located in the sync directory
-            (next) ->
-                filesystem.checkLocation folderPaths.absolute, next
-
-            # Check if the folder DB document already exists
-            (next) ->
+        # Check that the folder exists and is located in the sync directory
+        filesystem.checkLocation folderPaths.absolute, (err) ->
+            if err
+                callback err
+            else
+                # Check if the folder DB document already exists
                 key = "#{folderPaths.parent}/#{folderPaths.name}"
-                pouch.folders.get key, next
+                pouch.folders.get key, (err, docExists) ->
+                    if err
+                        callback err
 
-            (next, docExists) ->
-                # No need to create the doc if it exists already
-                return callback() if docExists?
+                    # No need to create the doc if it exists already
+                    else if docExists?
+                        callback()
 
-                # No parent folder to create
-                return next() if folderPaths.parent is ''
+                    # No parent folder to create
+                    else if folderPaths.parent is ''
 
-                # Otherwise ensure that the parent folder exists and continue.
-                operationQueue.createFolderRemotely folderPaths.absParent, next
+                    # Otherwise ensure that the parent folder exists and
+                    # continue.
+                    else
+                        async.waterfall [
+                            (next) ->
+                                operationQueue.createFolderRemotely(
+                                    folderPaths.absParent, next)
 
-            # Make a doc from scratch or from an existing one (useful?)
-            (next) -> pouch.makeFolderDoc folderPaths.absolute, next
+                            # Make a doc from scratch or from an existing one
+                            # (useful?).
+                            (next) ->
+                                pouch.makeFolderDoc folderPaths.absolute, next
 
-            # Update and save the folder DB document that will be replicated
-            # afterward.
-            (folderDoc, next) -> pouch.db.put folderDoc, next
+                            # Update and save the folder DB document that will
+                            # be replicated afterward.
+                            (folderDoc, next) ->
+                                pouch.db.put folderDoc, next
 
-            # Flag the revision of the document as 'made locally' to avoid
-            # further conflicts reapplicating changes
-            (res, next) -> pouch.storeLocalRev res.rev, next
+                            # Flag the revision of the document as 'made
+                            # locally' to avoid further conflicts reapplicating
+                            # changes
+                            (res, next) ->
+                                pouch.storeLocalRev res.rev, next
 
-        ], callback
+                        ], callback
 
 
     deleteFileRemotely: (filePath, callback) ->
