@@ -4,6 +4,7 @@ path    = require 'path-extra'
 async   = require 'async'
 uuid    = require 'node-uuid'
 request = require 'request-json-light'
+ProgressBar = require 'progress'
 log     = require('printit')
     prefix: 'Pouch/CouchDB '
 
@@ -690,10 +691,20 @@ module.exports = dbHelpers =
         client = request.newClient remoteConfig.url
         client.setBasicAuth deviceName, remoteConfig.devicePassword
 
+        absPath = filesystem.getPaths(filePath).absolute
+        size = fs.statSync(absPath).size
+        log.debug size
+
+        prog = new ProgressBar 'uploading: [:bar] :percent :etas',
+            total: size
+            complete: '='
+            incomplet: ' '
+            width: 30
+
         log.info "Uploading binary: #{absPath}..."
         publisher.emit 'uploadBinary', absPath
 
-        client.putFile urlPath, filePath, (err, res, body) =>
+        streams = client.putFile urlPath, filePath, (err, res, body) ->
             if err
                 callback err
             else
@@ -706,3 +717,8 @@ module.exports = dbHelpers =
                     publisher.emit 'binaryUploaded', absPath
                     callback err, body
 
+        streams.fileStream.on 'data', (data) ->
+            prog.tick data.length
+
+        streams.fileStream.on 'end', (data) ->
+            console.log '\n'
