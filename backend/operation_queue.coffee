@@ -1,7 +1,7 @@
-fs       = require 'fs-extra'
-path     = require 'path-extra'
-async    = require 'async'
-log      = require('printit')
+fs = require 'fs-extra'
+path = require 'path-extra'
+async = require 'async'
+log = require('printit')
     prefix: 'Queue         '
 
 ping = require 'ping'
@@ -10,10 +10,10 @@ url = require 'url'
 #
 # Local backend files
 #
-pouch              = require './db'
-publisher          = require './publisher'
-filesystem         = require './filesystem'
-config             = require './config'
+pouch = require './db'
+publisher = require './publisher'
+filesystem = require './filesystem'
+config = require './config'
 remoteEventWatcher = require './remote_event_watcher'
 localEventWatcher  = require './local_event_watcher'
 

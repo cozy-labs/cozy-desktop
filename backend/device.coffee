@@ -18,7 +18,6 @@ module.exports = device =
                 error = null
             callback error
 
-
     # Register device remotely then returns credentials given by remote Cozy.
     # This credentials will allow the device to access to the Cozy database.
     registerDevice: (options, callback) ->
@@ -40,10 +39,10 @@ module.exports = device =
                     id: body.id
                     password: body.password
 
-
     # Unregister device remotely, ask for revocation.
     unregisterDevice: (options, callback) ->
         client = request.newClient options.url
         client.setBasicAuth 'owner', options.password
 
         client.del "device/#{options.deviceId}/", callback
+

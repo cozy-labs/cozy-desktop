@@ -21,9 +21,15 @@ conflict = require './conflict'
 #
 remoteEventWatcher =
 
+    replicatorFrom: null
+    url: null
+    startSeq: null
+
+    # Run first time replication (match FS and sequence number with remote) and
+    # run replication regularly
     start: ->
         pouch.replicationDelay = 0
-        operationQueue = require('./operation_queue')
+        operationQueue = require './operation_queue'
 
         remoteEventWatcher.initialReplication (err, seq) ->
             process.exit(1) if err
@@ -39,12 +45,15 @@ remoteEventWatcher =
                 log.info 'All your files are now available on your device.'
                 int = setInterval () ->
                     if pouch.replicationDelay is 1
-                        clearInterval(int)
+                        clearInterval int
                     else
                         remoteEventWatcher.replicateFromRemote()
                         config.saveConfig()
                 , 500
 
+    # First time replication:
+    # * Match local FS with remote Cozy FS
+    # * Set starting sequence at last remote sequence
     initialReplication: (callback) ->
         pouch.getLastRemoteChangeSeq (err, seq) ->
             if err
@@ -65,32 +74,47 @@ remoteEventWatcher =
                         config.setRemoteSeq seq
                         callback null, seq
 
-
     replicateFromRemote: ->
         url = @url || config.getUrl()
         options =
             filter: (doc) ->
-                doc.docType and (doc.docType.toLowerCase() is 'folder' or doc.docType.toLowerCase() is 'file')
+                isDocType = doc.docType?
+                isFolder = doc.docType.toLowerCase() is 'folder'
+                isFile = doc.docType.toLowerCase() is 'file'
+                isDocType and (isFolder or isFile)
             live: false
             since: config.getRemoteSeq()
 
         if pouch.replicationDelay is 0 and (not @replicatorFrom \
         or Object.keys(@replicatorFrom._events).length is 0)
 
-            @replicatorFrom = pouch.db.replicate.from(url, options)
+            reconnecting = false
+
+            @replicatorFrom = pouch.db.replicate.from url, options
 
             .on 'complete', (info) ->
+                if reconnecting
+                    log.info 'Connection is back!'
+                    reconnecting = false
+
+
                 if info.docs_written > 0
                     config.setRemoteSeq info.last_seq
                     log.info 'Database updated, applying changes to files'
                     remoteEventWatcher.applyChanges ->
 
-            .on 'error', (err) ->
+            .on 'error', (err, info) ->
                 if err?.status is 409
-                    conflict.display err
+                    conflict.display err, info
                     log.error "Conflict, ignoring"
                 else
-                    log.error 'An error occured during replication.'
+                    # TODO handle disconnection
+                    log.warn 'An error occured during replication.'
+
+                    if err.status is 400
+                        log.warn 'Connection error, try to reconnect in 5s...'
+                        reconnecting = true
+
                     log.error err
 
 
@@ -138,11 +162,8 @@ remoteEventWatcher =
         .on 'error', error
         .on 'complete', apply
 
-
-    #
     # Define the proper task to perform on the filesystem and add it to the
     # operation queue.
-    #
     addToQueue: (change, callback) ->
         config.setLocalSeq change.seq
 
@@ -189,18 +210,11 @@ remoteEventWatcher =
 
             callback()
 
-
     cancel: ->
         pouch.replicationDelay = 1
         config.saveConfig()
-        @replicatorFrom.cancel()    if @replicatorFrom
+        @replicatorFrom.cancel() if @replicatorFrom
         pouch.replicatorTo.cancel() if pouch.replicatorTo
-
-    replicatorFrom: null
-
-    url: null
-
-    startSeq: null
 
 
 module.exports = remoteEventWatcher

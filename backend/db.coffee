@@ -13,7 +13,7 @@ publisher = require './publisher'
 
 db = new PouchDB config.dbPath
 
-# Listener memory leak test
+# Listener memory leak fix
 db.setMaxListeners 100
 
 fs.ensureDirSync config.dir
@@ -47,7 +47,7 @@ createNewDoc = (docType, fields, callback) ->
 module.exports = dbHelpers =
 
     db: db
-
+    replicatorTo: null
     replicationDelay: 0
 
     # Create database and recreate all filters
@@ -55,6 +55,8 @@ module.exports = dbHelpers =
         PouchDB.destroy config.dbPath, ->
             db = dbHelpers.db = new PouchDB config.dbPath
             dbHelpers.addAllFilters callback
+
+    # Dirty ORM
 
     files:
 
@@ -227,7 +229,6 @@ module.exports = dbHelpers =
                     log.info "Design document created: #{id}"
                     callback()
 
-
     # Remove filters for a given doc type.
     removeFilter: (docType, callback) ->
         id = "_design/#{docType.toLowerCase()}"
@@ -245,9 +246,11 @@ module.exports = dbHelpers =
                 log.warn "Trying to remove a doc that does not exist: #{id}"
                 callback null
 
+    ## Helpers
 
     # Remove given document id if it exists. Doesn't return an error if the
-    # dociment doesn't exist.
+    # document doesn't exist.
+    # TODO write a test
     removeIfExists: (id, callback) ->
         db.get id, (err, doc) ->
             if err and err.status isnt 404
@@ -341,7 +344,6 @@ module.exports = dbHelpers =
             else
                 dbHelpers.storeLocalRev res.rev, callback
 
-
     # Store a revision to avoid its re-application
     # (typically when a doc changes after a local FS modification)
     storeLocalRev: (rev, callback) ->
@@ -356,7 +358,7 @@ module.exports = dbHelpers =
             else
                 callback null
 
-
+    # TODO find a better module for this.
     getLastRemoteChangeSeq: (callback) ->
         remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
@@ -371,7 +373,7 @@ module.exports = dbHelpers =
             log.debug body.last_seq
             callback null, body.last_seq
 
-
+    # TODO find a better module for this.
     copyViewFromRemote: (model, callback) ->
         remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
@@ -391,7 +393,7 @@ module.exports = dbHelpers =
                     callback()
             , callback
 
-
+    # TODO find a better module for this.
     replicateToRemote: (callback) ->
         startChangeSeq = config.getLocalSeq()
         url = config.getUrl()
@@ -419,11 +421,8 @@ module.exports = dbHelpers =
         else
             callback() if callback?
 
-
-    replicatorTo: null
-
-
-    # Create a file document from scratch or from an existing document
+    # Create a file document in local database from given information.
+    # TODO find a better module for this.
     makeFileDoc: (filePath, callback) ->
         filesystem = require './filesystem'
         filePaths = filesystem.getPaths filePath
@@ -470,7 +469,7 @@ module.exports = dbHelpers =
             # Keep the latest modification date
             if existingDoc.lastModification?
                 existingFileLastMod = new Date existingDoc.lastModification
-                newFileLastMod      = new Date doc.lastModification
+                newFileLastMod = new Date doc.lastModification
 
                 if existingFileLastMod > newFileLastMod
                     doc.lastModification = existingDoc.lastModification
@@ -488,6 +487,8 @@ module.exports = dbHelpers =
                 callback null, doc
 
 
+    # Create a folder document in local database from given information.
+    # TODO find a better module for this.
     makeFolderDoc: (folderPath, callback) ->
         filesystem = require './filesystem'
         folderPaths = filesystem.getPaths folderPath
@@ -521,6 +522,7 @@ module.exports = dbHelpers =
 
 
     # TODO refactor: remove return statement in the middle and move the
+    # TODO find a better module for this.
     # final block to the filesystem module.
     getDocForFile: (filePath, callback) ->
         remoteConfig = config.getConfig()
@@ -584,6 +586,7 @@ module.exports = dbHelpers =
 
     # Upload the binary as a CouchDB document's attachment and return
     # the binary document
+    # TODO find a better module for this.
     uploadBinary: (filePath, binaryDoc, callback) ->
         filesystem = require './filesystem'
         filePaths = filesystem.getPaths filePath
@@ -634,6 +637,8 @@ module.exports = dbHelpers =
                 callback null, remoteBinaryDoc
 
 
+    # Retrieve a document from remote cozy based on its ID.
+    # TODO find a better module for this.
     getRemoteDoc: (id, callback) ->
         remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
@@ -673,7 +678,8 @@ module.exports = dbHelpers =
             else
                 callback err, body
 
-
+    # Upload given file as affachment of given document (represented by its id
+    # and its revision).
     uploadAsAttachment: (remoteId, remoteRev, filePath, callback) ->
         filesystem = require './filesystem'
         remoteConfig = config.getConfig()

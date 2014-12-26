@@ -7,7 +7,6 @@ fileHelpers = require './helpers/files'
 client = helpers.getClient()
 
 config      = require '../backend/config'
-replication = require '../backend/replication'
 binary      = require '../backend/binary'
 pouch       = require '../backend/db'
 filesystem  = require '../backend/filesystem'
