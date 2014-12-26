@@ -134,8 +134,8 @@ operationQueue =
     createFileLocally: (doc, callback) ->
         remoteConfig = config.getConfig()
         unless doc?.path? and doc?.name? and doc.binary?.file?.id?
-            err = new Error "The doc is invalid: #{JSON.stringify doc}"
-            callback err
+            log.warn "The doc is invalid: #{JSON.stringify doc}"
+            callback()
 
         else if doc.path?.indexOf('undefined') >= 0
             pouch.db.remove doc, (err) ->

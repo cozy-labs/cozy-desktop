@@ -103,10 +103,12 @@ localEventWatcher =
                 log.info "File changed: #{filePath}"
                 publisher.emit 'fileChangedLocally', filePath
                 filesystem.isBeingCopied filePath, ->
+                    log.debug 'isBeingCopied finished'
                     operationQueue.queue.push
                         operation: 'updateFileRemotely'
                         file: filePath
                     , ->
+                        log.debug 'File uploaded remotely'
 
         .on 'error', (err) ->
             log.error 'An error occured while watching changes:'

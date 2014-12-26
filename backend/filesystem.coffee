@@ -235,7 +235,7 @@ filesystem =
                 res.pipe fileStream
                 progress.showDownload size, res
 
-                res.on 'finish', ->
+                res.on 'end', ->
                     log.info "Binary downloaded: #{targetPath}"
                     publisher.emit 'binaryDownloaded', targetPath
                     callback()
