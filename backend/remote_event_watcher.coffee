@@ -78,13 +78,12 @@ remoteEventWatcher =
         url = @url || config.getUrl()
         options =
             filter: (doc) ->
-                isDocType = doc.docType?
-                isFolder = false
-                isFile = false
-                if isDocType
+                res = false
+                if doc.docType?
                     isFolder = doc.docType.toLowerCase() is 'folder'
                     isFile = doc.docType.toLowerCase() is 'file'
-                isDocType and (isFolder or isFile)
+                    res = isFolder or isFile
+                res
             live: false
             since: config.getRemoteSeq()
 
