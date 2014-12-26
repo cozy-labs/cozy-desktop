@@ -180,7 +180,8 @@ filesystem =
                     if err and err.status isnt 404 then next(err) else next()
 
             # Download the CouchDB attachment
-            (next) -> filesystem.downloadAttachment binaryId, targetPath, next
+            (next) ->
+                filesystem.downloadAttachment binaryId, targetPath, next
 
             # Get the remote binary document
             (next) ->
@@ -204,8 +205,10 @@ filesystem =
             (checksum, next) ->
                 doc.path = targetPath
                 doc.checksum = checksum
-
-                pouch.db.put doc, next
+                pouch.db.get doc._id, (err, preDoc) ->
+                    if preDoc?
+                        doc._rev = preDoc._rev
+                    pouch.db.put doc, next
 
         ], callback
 
