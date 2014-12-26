@@ -81,7 +81,7 @@ remoteEventWatcher =
                 isDocType = doc.docType?
                 isFolder = false
                 isFile = false
-                if isDocType?
+                if isDocType
                     isFolder = doc.docType.toLowerCase() is 'folder'
                     isFile = doc.docType.toLowerCase() is 'file'
                 isDocType and (isFolder or isFile)
