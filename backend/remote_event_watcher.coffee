@@ -79,8 +79,11 @@ remoteEventWatcher =
         options =
             filter: (doc) ->
                 isDocType = doc.docType?
-                isFolder = doc.docType.toLowerCase() is 'folder'
-                isFile = doc.docType.toLowerCase() is 'file'
+                isFolder = false
+                isFile = false
+                if isDocType?
+                    isFolder = doc.docType.toLowerCase() is 'folder'
+                    isFile = doc.docType.toLowerCase() is 'file'
                 isDocType and (isFolder or isFile)
             live: false
             since: config.getRemoteSeq()
