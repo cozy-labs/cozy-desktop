@@ -20,8 +20,8 @@ module.exports =
             prog.tick data.length
             publisher.emit 'uploadProgress', data.length
 
-        fileStream.on 'end', (data) ->
-            publisher.emit 'uploadEnd', data.length
+        fileStream.on 'end', ->
+            publisher.emit 'uploadEnd'
 
     showDownload: (size, resStream) ->
         publisher.emit 'downloadStart', size
@@ -35,7 +35,7 @@ module.exports =
             prog.tick data.length
             publisher.emit 'donwloadProgress', data.length
 
-        resStreal.on 'end', (data) ->
-            publisher.emit 'downloadEnd', data.length
+        resStream.on 'end', ->
+            publisher.emit 'downloadEnd'
 
 

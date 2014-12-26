@@ -215,7 +215,7 @@ filesystem =
 
 
     # Download given binary attachment to given location.
-    downloadAttachment: (binaryId, targetPath, callback) ->
+    downloadAttachment: (binaryId, targetPath, size, callback) ->
         remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
 
@@ -227,7 +227,7 @@ filesystem =
         log.info "Downloading: #{targetPath}..."
         publisher.emit 'binaryDownloadStart', targetPath
 
-        client.saveFileAsStream urlPath, targetPath, (err, res) ->
+        client.saveFileAsStream urlPath, (err, res) ->
             if err
                 callback err
             else
