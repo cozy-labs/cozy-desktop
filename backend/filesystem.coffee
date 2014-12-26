@@ -10,6 +10,7 @@ log      = require('printit')
 config    = require './config'
 pouch     = require './db'
 publisher = require './publisher'
+progress = require './progress'
 
 
 filesystem =
@@ -162,7 +163,7 @@ filesystem =
                         callback null, false
 
     # Download given binary to given path and save binary metadata in local DB.
-    downloadBinary: (binaryId, targetPath, callback) ->
+    downloadBinary: (binaryId, targetPath, size, callback) ->
 
         # We maintain a local 'binary' document for each file present on the
         # filesystem. It allows us to have more flexibility on file checksum
@@ -181,7 +182,7 @@ filesystem =
 
             # Download the CouchDB attachment
             (next) ->
-                filesystem.downloadAttachment binaryId, targetPath, next
+                filesystem.downloadAttachment binaryId, targetPath, size, next
 
             # Get the remote binary document
             (next) ->
@@ -213,7 +214,7 @@ filesystem =
         ], callback
 
 
-    # Download given binary attahcment to given location.
+    # Download given binary attachment to given location.
     downloadAttachment: (binaryId, targetPath, callback) ->
         remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
@@ -225,13 +226,19 @@ filesystem =
 
         log.info "Downloading: #{targetPath}..."
         publisher.emit 'binaryDownloadStart', targetPath
-        client.saveFile urlPath, targetPath, (err, res) ->
+
+        client.saveFileAsStream urlPath, targetPath, (err, res) ->
             if err
                 callback err
             else
-                log.info "Binary downloaded: #{targetPath}"
-                publisher.emit 'binaryDownloaded', targetPath
-                callback()
+                fileStream = fs.createWriteStream targetPath
+                res.pipe fileStream
+                progress.showDownload size, res
+
+                res.on 'finish', ->
+                    log.info "Binary downloaded: #{targetPath}"
+                    publisher.emit 'binaryDownloaded', targetPath
+                    callback()
 
 
 module.exports = filesystem

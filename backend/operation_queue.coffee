@@ -162,7 +162,7 @@ operationQueue =
                     if existingFilePath
                         fs.copy existingFilePath, filePath, next
                     else
-                        filesystem.downloadBinary binaryId, filePath, next
+                        filesystem.downloadBinary binaryId, filePath, doc.size, next
 
                 # Change utimes (creation and modification date)
                 (res, next) ->
