@@ -387,12 +387,14 @@ module.exports = dbHelpers =
         client.get urlPath, (err, res, body) ->
             return callback err if err
             return callback null unless body.rows?.length
-            async.eachSeries body.rows, (doc, callback) ->
+            async.eachSeries body.rows, (doc, cb) ->
                 doc = doc.value
-                db.put doc, new_edits:false, (err, file) ->
+                db.put doc, new_edits: false, (err, file) ->
                     return callback err if err
-                    callback()
-            , callback
+                    cb()
+            , ->
+                log.debug "#{body.rows.length} docs retrieved for #{model}."
+                callback()
 
     # TODO find a better module for this.
     replicateToRemote: (callback) ->
@@ -438,54 +440,69 @@ module.exports = dbHelpers =
             # Do not mind if an existing document does not exists. It
             # means that we need a new file document.
             if err and err.status isnt 404
+                log.error err
                 return callback err
 
             [{mimeType, fileClass}, stats, existingDoc] = results
+
+            infos = {fileClass, filePaths, mimeType, stats}
             if existingDoc?
                 db.get existingDoc.binary.file.id, (err, doc) ->
                     if doc?
                         remoteConfig = config.getConfig()
                         doc.path =  path.join(
                             remoteConfig.path, filePaths.parent, filePaths.name)
-                        db.put doc, ->
-
-            existingDoc ?= {}
-
-            # Populate document information with the existing DB document
-            # if it exists, or with the file stats otherwise.
-            doc =
-                _id: existingDoc._id or uuid.v4().split('-').join('')
-                _rev: existingDoc._rev or null
-                docType: 'File'
-                class: fileClass
-                name: filePaths.name
-                path: filePaths.parent
-                mime: mimeType
-                lastModification: stats.mtime
-                creationDate: existingDoc.creationDate or stats.mtime
-                size: stats.size
-                tags: existingDoc.tags or []
-                binary: existingDoc.binary or null
-
-            # Keep the latest modification date
-            if existingDoc.lastModification?
-                existingFileLastMod = new Date existingDoc.lastModification
-                newFileLastMod = new Date doc.lastModification
-
-                if existingFileLastMod > newFileLastMod
-                    doc.lastModification = existingDoc.lastModification
-
-            # Add the checksum here if it is not set
-            # TODO: Put this in a better place
-            if not doc.binary or not doc.binary.file.checksum
-                filesystem.checksum filePaths.absolute, (err, checksum) ->
-                    if err then callback err
+                        db.put doc, (err) ->
+                            if err
+                                callback err
+                            else
+                                dbHelpers.makeFileDocFrom(
+                                    existingDoc, infos, callback)
                     else
-                        doc.binary ?= file: {}
-                        doc.binary.file.checksum = checksum
-                        callback null, doc
+                        dbHelpers.makeFileDocFrom existingDoc, infos, callback
+
             else
-                callback null, doc
+                existingDoc = {}
+                dbHelpers.makeFileDocFrom existingDoc, infos, callback
+
+
+    makeFileDocFrom: (existingDoc, infos, callback) ->
+
+        # Populate document information with the existing DB document
+        # if it exists, or with the file stats otherwise.
+        doc =
+            _id: existingDoc._id or uuid.v4().split('-').join('')
+            _rev: existingDoc._rev or null
+            docType: 'File'
+            class: infos.fileClass
+            name: infos.filePaths.name
+            path: infos.filePaths.parent
+            mime: infos.mimeType
+            lastModification: infos.stats.mtime
+            creationDate: existingDoc.creationDate or infos.stats.mtime
+            size: infos.stats.size
+            tags: existingDoc.tags or []
+            binary: existingDoc.binary or null
+
+        # Keep the latest modification date
+        if existingDoc.lastModification?
+            existingFileLastMod = new Date existingDoc.lastModification
+            newFileLastMod = new Date doc.lastModification
+
+            if existingFileLastMod > newFileLastMod
+                doc.lastModification = existingDoc.lastModification
+
+        # Add the checksum here if it is not set
+        if not doc.binary or not doc.binary.file.checksum
+            filesystem.checksum infos.filePaths.absolute, (err, checksum) ->
+                if err then callback err
+                else
+                    doc.binary ?= file: {}
+                    doc.binary.file.checksum = checksum
+                    callback null, doc
+
+        else
+            callback null, doc
 
 
     # Create a folder document in local database from given information.
@@ -603,7 +620,15 @@ module.exports = dbHelpers =
                 else
                     # Create a remote binary document if not exists.
                     # Pass the checksum here to save it remotely.
-                    dbHelpers.createEmptyRemoteDoc binaryDoc.file, next
+
+                    filesystem.checksum filePaths.absolute, (err, checksum) ->
+                        if err
+                            next err
+                        else
+                            binaryDoc =
+                                file:
+                                    checksum: checksum
+                            dbHelpers.createEmptyRemoteDoc binaryDoc, next
 
             # Get the binary document
             (binaryInfo, next) ->

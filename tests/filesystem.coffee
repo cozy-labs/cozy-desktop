@@ -11,8 +11,6 @@ fileHelpers = require './helpers/files'
 client = helpers.getClient()
 
 config      = require '../backend/config'
-replication = require '../backend/replication'
-binary      = require '../backend/binary'
 pouch       = require '../backend/db'
 filesystem  = require '../backend/filesystem'
 
@@ -22,27 +20,7 @@ describe "Filesystem Tests", ->
     before cliHelpers.resetDatabase
     before cliHelpers.initConfiguration
     before fileHelpers.deleteAll
-    after cliHelpers.resetDatabase
-
-    describe "isInSyncDir", ->
-        it "returns true when in synchronized directory", ->
-            filesystem.isInSyncDir('/tmp/cozy/hello').should.be.true
-
-        it "return false when not in synchronized directory", ->
-            filesystem.isInSyncDir('/tmp/hello').should.be.false
-
-
-    describe "deleteAll", ->
-        it "deletes all the files and folders in a directory", (done) ->
-            syncDir = '/tmp/cozy'
-            touch "#{syncDir}/hello", ->
-                fs.mkdir "#{syncDir}/directory", ->
-                    filesystem.deleteAll syncDir, ->
-                        fs.existsSync(syncDir).should.be.true
-                        fs.existsSync("#{syncDir}/hello").should.be.false
-                        fs.existsSync("#{syncDir}/directory").should.be.false
-                        done()
-
+    #    after cliHelpers.resetDatabase
 
     describe "getPaths", ->
         it "returns a hash of useful paths related to a given filepath", ->
@@ -53,281 +31,107 @@ describe "Filesystem Tests", ->
                 paths.parent.should.be.equal '/'
                 paths.absParent.should.be.equal '/tmp/cozy'
 
-
-    describe "makeDirectoryFromDoc", ->
-        it "creates a directory from DB document with the right modification time", (done) ->
-            doc =
-                value:
-                    path: "/hello/"
-                    name: "world"
-                    creationDate: new Date
-                    lastModification: new Date
-
-            remoteConfig = config.getConfig()
-            dirPath = path.join remoteConfig.path, doc.value.path, doc.value.name
-
-            filesystem.makeDirectoryFromDoc doc, (err, res) ->
-                should.not.exist err
-                fs.existsSync(dirPath).should.be.true
-                fs.stat dirPath, (err, stats) ->
-                    creationDate = new Date(doc.value.creationDate)
-                    creationDate.setMilliseconds 0
-                    lastModification = new Date(doc.value.lastModification)
-                    lastModification.setMilliseconds 0
-                    (creationDate.compareTo stats.atime).should.be.equal 0
-                    (lastModification.compareTo stats.mtime).should.be.equal 0
-                    fs.rmdir dirPath, ->
-                        done()
-
-
-    describe "applyFolderDBChanges", ->
-        syncDir = '/tmp/cozy'
-        it "creates directory that has not been saved to the PouchDB \
-            and keeps the other", (done) ->
-            # root directories
-            fs.mkdirSync "#{syncDir}/directory1"
-            fs.mkdirSync "#{syncDir}/directory2"
-            # directory1 content (folder should be created)
-            fs.mkdirSync "#{syncDir}/directory1/testdir"
-            touch.sync "#{syncDir}/directory1/testfile"
-
-            pouch.db.put
-                _id: "test-dir2"
-                path: ""
-                name: "directory2"
-                docType: "folder"
-            , (err, res) ->
-                should.not.exist err
-                pouch.db.put
-                    _id: "test-dir3"
-                    path: "/directory2/"
-                    name: "directory3"
-                    docType: "folder"
-                , (err, res) ->
-                    should.not.exist err
-                    filesystem.applyFolderDBChanges ->
-                        fs.existsSync("#{syncDir}/directory1").should.be.true
-                        fs.existsSync("#{syncDir}/directory2").should.be.true
-                        folderPath = "#{syncDir}/directory2/directory3"
-                        fs.existsSync(folderPath).should.be.true
-
-                        pouch.folders.all (err, docs) ->
-                            docs.rows.length.should.equal 5
-                            done()
-
-
-    describe "applyFileDBChanges", ->
-        syncDir = '/tmp/cozy'
-        filePath = "#{syncDir}/test_file_to_fetch"
-        rev = ''
-
-        createFileRemotely = (callback) =>
-            fs.writeFile filePath, 'hello', (err) ->
-                should.not.exist err
-                binary.createEmptyRemoteDoc (err, doc) =>
-                    should.not.exist err
-                    binary.uploadAsAttachment doc.id, doc.rev, filePath, (err, body) ->
-                        rev = body.rev
-                        should.not.exist err
-                        fs.remove filePath, callback
-
-        createFileDocument = (callback) =>
-            pouch.db.put(
-                _id: "test-file-to-fetch"
-                path: ""
-                name: "test_file_to_fetch"
-                docType: "file"
-                class: "document"
-                mime: "application/octet-stream"
-                tags: []
-                size: 5
-                creationDate: new Date
-                lastModification: new Date
-                binary:
-                    file:
-                        id: "test-binary-to-fetch"
-                        rev: rev
-                        checksum: "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d"
-            , callback)
-
-        createFolderDocument = (callback) ->
-            pouch.db.put
-                _id: "test-dir-to-keep"
-                path: ""
-                name: "test_dir_to_keep"
-                docType: "folder"
-                tags: []
-                creationDate: new Date
-                lastModification: new Date
-            , callback
-
-        it "fetch binary if doc is present", (done) ->
-            createFileRemotely (err) ->
-                should.not.exist err
-                createFileDocument (err, res) ->
-                    should.not.exist err
-
-                    filesystem.applyFileDBChanges (err, res) ->
-                        should.not.exist err
-                        fs.existsSync(filePath).should.be.true
-                        done()
-
-        #it "deletes file document if we want to keep local changes", (done) ->
-            #fs.remove filePath, (err) ->
-                #should.not.exist err
-
-                #filesystem.applyFileDBChanges true, (err, res) ->
-                    #should.not.exist err
-                    #fs.existsSync(filePath).should.be.false
-                    #pouch.db.get 'test-file-to-fetch', (err, res) ->
-                        #should.exist err
-                        #err.status.should.be.equal 404
-                        #done()
-
-        #it "deletes folder document if we want to keep local changes", (done) ->
-            #createFolderDocument (err) ->
-                #should.not.exist err
-                #filesystem.applyFileDBChanges true, (err, res) ->
-                    #fs.existsSync("#{syncDir}/test_dir_to_keep").should.be.false
-                    #pouch.db.get 'test-dir-to-keep', (err, res) ->
-                        #should.exist err
-                        #err.status.should.be.equal 404
-                        #done()
-
-
-    describe "createDirectoryDoc", ->
-        dirName = 'test_dir_to_add'
-        dirName2 = 'test_dir2_to_add'
-        parentDirName = 'test_parent_dir'
-        dirPath = '/tmp/cozy/test_dir_to_add'
-        dirPath2 = '/tmp/cozy/test_parent_dir/test_dir2_to_add'
-        doc = null
-
-        it "creates a DB document from a local folder information", (done) ->
-            fs.mkdir dirPath, (err) ->
-                should.not.exist err
-                filesystem.createDirectoryDoc dirPath, (err, res) ->
-                    should.not.exist err
-                    should.exist res._id
-                    pouch.db.query 'folder/byFullPath', key: "/#{dirName}", (err, res) ->
-                        should.not.exist err
-                        doc = res.rows[0].value
-                        doc.path.should.be.equal ''
-                        doc.name.should.be.equal dirName
-                        done()
-
-        it "creates parent directory DB doc", (done) ->
-            mkdirp dirPath2, (err) ->
-                should.not.exist err
-                filesystem.createDirectoryDoc dirPath2, (err, res) ->
-                    should.not.exist err
-                    should.exist res._id
-                    pouch.db.query 'folder/byFullPath', key: "/#{parentDirName}", (err, res) ->
-                        should.not.exist err
-                        doc = res.rows[0].value
-                        doc.path.should.be.equal ''
-                        doc.name.should.be.equal parentDirName
-                        pouch.db.query 'folder/byFullPath', key: "/#{parentDirName}/#{dirName2}", (err, res) ->
-                            should.not.exist err
-                            doc = res.rows[0].value
-                            doc.path.should.be.equal "/#{parentDirName}"
-                            doc.name.should.be.equal dirName2
-                            done()
-
-
-        it "does not update DB document when folder exists", (done) =>
-            filesystem.createDirectoryDoc dirPath, (err, res) =>
-                pouch.db.query 'folder/byFullPath', key: "/#{dirName}", (err, res) =>
-                    should.not.exist err
-                    res.rows.length.should.not.equal 0
-                    for key, value in res.rows[0].value
-                        doc[key].should.be.equal value
+    describe "getFileClass", ->
+        it "returns proper class for given file", (done) ->
+            filesystem.getFileClass 'image.png', (err, infos) ->
+                infos.fileClass.should.equal 'image'
+                filesystem.getFileClass 'doc.txt', (err, infos) ->
+                    infos.fileClass.should.equal 'document'
                     done()
 
-
-    describe "createFileDoc", =>
-        fileName = 'test_file_to_add'
-        fileName2 = 'test_file2_to_add'
-        parentDirName = 'test_parent_dir2'
-        filePath = '/tmp/cozy/test_file_to_add'
-        filePath2 = '/tmp/cozy/test_parent_dir2/test_file2_to_add'
-
-        it "creates a DB document from a local file's information", (done) =>
-            fs.writeFile filePath, 'hello', (err) =>
+    describe "getSize", ->
+        it "returns the size of given file", (done) ->
+            filePath = './tests/fixtures/chat-mignon.jpg'
+            filesystem.getSize filePath, (err, size) ->
                 should.not.exist err
-                filesystem.createFileDoc filePath, (err, res) =>
-                    should.not.exist err
-                    should.exist res.id
-                    pouch.db.query 'file/byFullPath', key: "/#{fileName}", (err, res) =>
-                        should.not.exist err
-                        @doc = res.rows[0].value
-                        @doc.path.should.be.equal ''
-                        @doc.name.should.be.equal fileName
-                        @doc.binary.file.checksum.should.be.equal 'aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d'
-                        @doc.mime.should.be.equal 'application/octet-stream'
-                        done()
+                size.should.equal fs.statSync(filePath).size
+                done()
 
-        it "creates parent directory DB document", (done) ->
-            mkdirp '/tmp/cozy/test_parent_dir2', (err) ->
-                fs.writeFile filePath2, 'hello', (err) ->
+    describe "checksum", ->
+        it "returns the checksum of givenfile", (done) ->
+            filePath = './tests/fixtures/chat-mignon.jpg'
+            filesystem.checksum filePath, (err, sum) ->
+                should.not.exist err
+                sum.should.equal "bf268fcb32d2fd7243780ad27af8ae242a6f0d30"
+                done()
+
+    describe "checkLocation", ->
+        it "checks if given file is in sync dir", (done) ->
+            filePath = '/tmp/cozy/testfile'
+            filesystem.checkLocation filePath, (err, isThere) ->
+                should.exist err
+                mkdirp.sync '/tmp/cozy'
+                touch filePath, {}, (err) ->
                     should.not.exist err
-                    filesystem.createFileDoc filePath2, (err, res) ->
+                    filesystem.checkLocation filePath, (err, isThere) ->
                         should.not.exist err
-                        should.exist res.id
-                        pouch.db.query 'folder/byFullPath', key: "/#{parentDirName}", (err, res) ->
+                        isThere.should.be.ok
+                        filesystem.checkLocation '/tmp/test', (err, isThere) ->
+                            should.exist err
+                            done()
+
+    describe "fileExistsLocally", ->
+        it "checks file existence as a binary in the db and on disk", (done) ->
+            filePath = '/tmp/cozy/testfile'
+            filesystem.checksum filePath, (err, sum) ->
+                should.not.exist err
+                filesystem.fileExistsLocally sum, (err, exist) ->
+                    should.not.exist err
+                    exist.should.not.be.ok
+                    doc =
+                        _id: 'test_exist_locally'
+                        docType: 'Binary'
+                        checksum: sum
+                        path: '/tmp/cozy/testfile'
+
+                    setTimeout ->
+                        pouch.db.put doc, (err, info) ->
                             should.not.exist err
-                            doc = res.rows[0].value
-                            doc.path.should.be.equal ''
-                            doc.name.should.be.equal parentDirName
-                            pouch.db.query 'file/byFullPath', key: "/#{parentDirName}/#{fileName2}", (err, res) ->
+                            filesystem.fileExistsLocally sum, (err, exist) ->
                                 should.not.exist err
-                                doc = res.rows[0].value
-                                doc.path.should.be.equal '/test_parent_dir2'
-                                doc.name.should.be.equal fileName2
-                                doc.binary.file.checksum.should.be.equal 'aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d'
-                                doc.mime.should.be.equal 'application/octet-stream'
+                                exist.should.be.equal filePath
                                 done()
+                    , 500
 
+    describe "walkDirSync", ->
+        before ->
+            mkdirp.sync '/tmp/cozy/folder-1'
+            mkdirp.sync '/tmp/cozy/folder-2'
+            mkdirp.sync '/tmp/cozy/folder-1/subfolder-1'
+            touch.sync '/tmp/cozy/folder-1/subfolder-1/file-1'
+            touch.sync '/tmp/cozy/folder-2/file-2'
 
-        it "does not update DB document when file exists", (done) =>
-            filesystem.createFileDoc filePath, (err, res) =>
-                pouch.db.query 'file/byFullPath', key: "/#{fileName}", (err, res) =>
-                    should.not.exist err
-                    for key, value in res.rows[0].value
-                        @doc[key].should.be.equal value
-                    done()
+        it "returns the list of dir for a given directory", ->
+            folderList = filesystem.walkDirSync '/tmp/cozy/'
+            folderList[0].parent.should.equal ''
+            folderList[0].filename.should.equal 'folder-1'
+            folderList[0].filePath.should.equal '/tmp/cozy/folder-1'
 
-        it "updates DB documents when file has changed", (done) =>
-            setTimeout =>
-                fs.writeFile filePath, 'hello2', (err) =>
-                    filesystem.createFileDoc filePath, (err, res) =>
-                        pouch.db.query 'file/byFullPath', key: "/#{fileName}", (err, res) =>
-                            should.not.exist err
-                            should.exist res.rows[0].value
-                            doc = res.rows[0].value
-                            doc.binary.file.checksum.should.be.equal '0f1defd5135596709273b3a1a07e466ea2bf4fff'
-                            doc.lastModification.should.not.be.equal @doc.lastModification
-                            done()
-            , 2000
+            folderList[1].parent.should.equal '/folder-1'
+            folderList[1].filename.should.equal 'subfolder-1'
+            folderList[1].filePath.should.equal '/tmp/cozy/folder-1/subfolder-1'
 
+            folderList[2].parent.should.equal ''
+            folderList[2].filename.should.equal 'folder-2'
+            folderList[2].filePath.should.equal '/tmp/cozy/folder-2'
 
-    describe "removeDeletedFile", =>
-        it "deletes a binary from its file doc information", (done) =>
-            filesystem.removeDeletedFile @doc._id, @doc._rev, (err, res) =>
-                should.not.exist err
-                pouch.db.get @doc.binary.file.id, (err, res) =>
-                    should.not.exist err
-                    should.exist res.path
-                    fs.existsSync(res.path).should.be.false
-                    done()
+    describe "walkFileSync", ->
+        it "returns the list of file for a given directory", ->
+            fileList = filesystem.walkFileSync '/tmp/cozy/'
+            fileList[0].parent.should.equal '/folder-1/subfolder-1'
+            fileList[0].filename.should.equal 'file-1'
+            fileList[0].filePath.should.equal '/tmp/cozy/folder-1/subfolder-1/file-1'
 
+            fileList[1].parent.should.equal '/folder-2'
+            fileList[1].filename.should.equal 'file-2'
+            fileList[1].filePath.should.equal '/tmp/cozy/folder-2/file-2'
 
-    describe "deleteDoc", =>
-        it "deletes a file DB document from a file path", (done) =>
-            filesystem.deleteDoc '/tmp/cozy/test_file_to_add', (err, res) =>
-                should.not.exist err
-                pouch.db.get @doc._id, (err, res) ->
-                    should.exist err.status
-                    err.status.should.be.equal 404
-                    done()
+            fileList[2].parent.should.equal ''
+            fileList[2].filename.should.equal 'testfile'
+            fileList[2].filePath.should.equal '/tmp/cozy/testfile'
 
+    describe "downloadAttachment", ->
+
+    describe "downloadBinary", ->
+
+    describe "isBeingCopied", ->

@@ -111,18 +111,15 @@ a synchronization.
 """
     else
         fs.ensureDir config.path, ->
-            # Watch local changes
-            if not args.readonly
-                setTimeout ->
-                    localEventWatcher.start()
-                , 1000
-
             pouch.addAllFilters ->
-                # Replicate databases
-                remoteEventWatcher.start()
+                remoteEventWatcher.init ->
+                    log.info "Init done"
+                    #remoteEventWatcher.start ->
+                        #if not args.readonly
+                            #localEventWatcher.start()
 
 
-# Display current configuratioN
+# Display current configuration
 displayConfig = ->
     console.log JSON.stringify config.config, null, 2
 

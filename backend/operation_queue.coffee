@@ -122,10 +122,14 @@ operationQueue =
         remoteConfig = config.getConfig()
         interval = setInterval () ->
             urls = url.parse(remoteConfig.url)
+            log.debug "Ping network..."
             ping.sys.probe urls.hostname, (isAlive) ->
                 if isAlive
+                    log.debug "Network alive."
                     operationQueue.queue.resume()
                     clearInterval(interval)
+                else
+                    log.debug "Network dead."
         , 5 * 1000
 
     #
@@ -316,65 +320,73 @@ operationQueue =
                     operationQueue.createFolderLocally doc, done
             , callback
 
-    #
-    # Local-to-remote operations
-    #
-    createFileRemotely: (filePath, callback) ->
-        filePaths = filesystem.getPaths filePath
-        doc = {}
-
+    # - check file existence locally, if the file doesn't exist, it is deleted
+    # - create remote folder if needed.
+    prepareRemoteCreation: (filePaths, callback) ->
         # Check that the file exists and is located in the sync
         # directory
         filesystem.checkLocation filePaths.absolute, (err) ->
             if err
-                pouch.files.get filePath, (err, doc) ->
+                log.debug "File doesn't exist locally, abort."
+                pouch.files.get filePath, (error, doc) ->
                     if doc?
                         pouchd.db.remove doc, callback
                     else
                         callback err
             else
-                async.waterfall [
-                    # Ensure that its parent directory exists
-                    (next) ->
-                        return next() if filePaths.parent is ''
-                        operationQueue.createFolderRemotely(
-                            filePaths.absParent, next)
+                absPath = filePaths.absParent
+                operationQueue.createFolderRemotely absPath, callback
 
-                    # Make a doc from scratch or by merging with an existing
-                    # one
-                    (next) ->
-                        pouch.makeFileDoc filePaths.absolute, next
+    # Create a file remotely from local file.
+    createFileRemotely: (filePath, callback) ->
+        filePaths = filesystem.getPaths filePath
+        absPath = filePaths.absolute
+        relPath = filePaths.relative
 
-                    # Upload the binary as a CouchDB document's attachment and
-                    # return the binary document
-                    (fileDoc, next) ->
-                        doc = fileDoc
-                        pouch.uploadBinary filePaths.absolute
-                                         , fileDoc.binary
-                                         , (err) ->
-                            next()
+        log.debug "Creating file remotely #{filePath}..."
 
-                    # Update and save the file DB document that will be
-                    # replicated afterward.
-                    (binaryDoc, next) ->
-                        doc.binary =
-                            file:
-                                id: binaryDoc.id
-                                rev: binaryDoc.rev
-                                checksum: binaryDoc.checksum
+        operationQueue.prepareRemoteCreation filePaths, (err) ->
+            if err then callback err
+            else
+                log.debug "Parent folders of #{relPath} created..."
 
-                        pouch.db.put doc, next
+                # Upload binary Doc to remote
+                pouch.uploadBinary absPath, null, (err, binaryDoc) ->
+                    if err then callback err
+                    else
+                        # Make a doc from scratch or by merging with an
+                        # existing one
+                        pouch.makeFileDoc filePaths.absolute, (err, doc) ->
+                            if err then callback err
+                            else
+                                log.debug "Remote doc for #{relPath} created..."
 
-                    # Flag the revision of the document as 'made locally' to
-                    # avoid further conflicts reapplicating changes
-                    (res, next) ->
-                        pouch.storeLocalRev res.rev, next
+                                # Update and save the file DB document that
+                                # will be replicated afterward.
+                                doc.binary =
+                                    file:
+                                        id: binaryDoc.id
+                                        rev: binaryDoc.rev
+                                        checksum: binaryDoc.checksum
 
-                ], callback
+                                pouch.db.put doc, (err, res) ->
+                                    if err
+                                        callback err
+                                    else
+                                        log.debug "Binary Data for #{relPath} updated..."
+                                        # Flag the revision of the document as 'made
+                                        # locally' to avoid further conflicts
+                                        # reapplicating changes
+                                        pouch.storeLocalRev res.rev, ->
+                                            log.debug "File #{relPath} remotely created."
+                                            callback()
 
 
     createFolderRemotely: (folderPath, callback) ->
         folderPaths = filesystem.getPaths folderPath
+        return callback() if folderPaths.relative is ''
+
+        log.debug "Create remotely folder: #{folderPaths.relative}"
 
         # Check that the folder exists and is located in the sync directory
         filesystem.checkLocation folderPaths.absolute, (err) ->
@@ -390,9 +402,6 @@ operationQueue =
                     # No need to create the doc if it exists already
                     else if docExists?
                         callback()
-
-                    # No parent folder to create
-                    else if folderPaths.parent is ''
 
                     # Otherwise ensure that the parent folder exists and
                     # continue.
@@ -488,18 +497,27 @@ operationQueue =
         # Walk through all existing files in the synchronized folder and
         # create all the missing DB documents
         fileList = filesystem.walkFileSync remoteConfig.path
-        async.eachSeries fileList, (file, done) ->
+        creationCounter = 0
+        async.eachSeries fileList, (file, next) ->
             relativePath = "#{file.parent}/#{file.filename}"
             absPath = path.join remoteConfig.path, relativePath
             pouch.files.get relativePath, (err, doc) ->
                 if err
-                    done err
+                    log.error err
+                    log.error "Cannot find #{relativePath} in local database."
+                    next()
                 else if doc?.path? and doc?.name?
-                    done()
+                    next()
                 else
-                    log.info "New file detected: #{absPath}"
-                    operationQueue.createFileRemotely absPath, done
-        , callback
+                    log.info "New file detected: #{absPath}."
+                    creationCounter++
+                    operationQueue.createFileRemotely absPath, next
+        , ->
+            if creationCounter is 0
+                log.info "No new file to create."
+            else
+                log.info "#{creationCounter} missing files created."
+            callback()
 
 
     ensureAllFoldersRemotely: (callback) ->

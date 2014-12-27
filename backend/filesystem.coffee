@@ -36,6 +36,34 @@ filesystem =
 
         {absolute, relative, name, parent, absParent}
 
+    # Return mimetypes and class (like in classification) of a file.
+    # ex: pic.png returns 'image/png' and 'image'.
+    getFileClass: (filename, callback) ->
+        mimeType = mime.lookup filename
+        switch mimeType.split('/')[0]
+            when 'image' then fileClass = "image"
+            when 'application' then fileClass = "document"
+            when 'text' then fileClass = "document"
+            when 'audio' then fileClass = "music"
+            when 'video' then fileClass = "video"
+            else
+                fileClass = "file"
+        callback null, {mimeType, fileClass}
+
+    # Check that a file/folder exists and is in the synchronized directory
+    checkLocation: (fileOrFolderpath, callback) ->
+        paths = @getPaths fileOrFolderpath
+        if paths.relative isnt '' \
+           and paths.relative.substring(0,2) isnt '..'
+            fs.exists paths.absolute, (exists) ->
+                if not exists
+                    callback new Error "#{paths.absolute} does not exist"
+                else
+                    callback null, true
+        else
+            callback new Error """
+#{paths.absolute} is not located in the synchronized directory
+"""
 
     # Return folder list in given dir. Parent path, filename and full path
     # are stored for each file.
@@ -73,37 +101,6 @@ filesystem =
                 filelist = filesystem.walkFileSync filePath, filelist
         return filelist
 
-
-    # Check that a file/folder exists and is in the synchronized directory
-    checkLocation: (fileOrFolderpath, callback) ->
-        paths = @getPaths fileOrFolderpath
-        if paths.relative isnt '' \
-           and paths.relative.substring(0,2) isnt '..'
-            fs.exists paths.absolute, (exists) ->
-                if not exists
-                    callback new Error "#{paths.absolute} does not exist"
-                else
-                    callback()
-        else
-            callback new Error """
-#{paths.absolute} is not located in the synchronized directory
-"""
-
-    # TODO add test
-    # TODO make a micromodule from it?
-    getFileClass: (filename, callback) ->
-        mimeType = mime.lookup filename
-        switch mimeType.split('/')[0]
-            when 'image' then fileClass = "image"
-            when 'application' then fileClass = "document"
-            when 'text' then fileClass = "document"
-            when 'audio' then fileClass = "music"
-            when 'video' then fileClass = "video"
-            else
-                fileClass = "file"
-        callback null, { mimeType, fileClass }
-
-
     # Get checksum for given file.
     checksum: (filePath, callback) ->
         stream = fs.createReadStream filePath
@@ -115,7 +112,6 @@ filesystem =
             callback null, checksum.read()
 
         stream.pipe checksum
-
 
     # Get size of given file.
     getSize: (filePath, callback) ->
@@ -129,6 +125,21 @@ filesystem =
             else
                 callback null, 0
 
+    # Check if a file corresponding to given checksum already exists.
+    fileExistsLocally: (checksum, callback) ->
+        pouch.binaries.get key: checksum, (err, res) ->
+            console.log res
+            if err
+                callback err
+            else if not res?.rows? or res.rows.length is 0
+                callback null, false
+            else
+                binaryDoc = res.rows[0].value
+                fs.exists binaryDoc.path, (exists) ->
+                    if exists
+                        callback null, binaryDoc.path
+                    else
+                        callback null, false
 
     isBeingCopied: (filePath, callback) ->
         #
@@ -146,21 +157,6 @@ filesystem =
                     else
                         filesystem.isBeingCopied filePath, callback
             , 2000 # TODO: Reduce this to get a faster upload
-
-    # Check if a file corresponding to given checksum already exists.
-    fileExistsLocally: (checksum, callback) ->
-        pouch.binaries.get key: checksum, (err, res) ->
-            if err
-                callback err
-            else if not res?.rows? or res.rows.length is 0
-                callback null, false
-            else
-                binaryDoc = res.rows[0].value
-                fs.exists binaryDoc.path, (exists) ->
-                    if exists
-                        callback null, binaryDoc.path
-                    else
-                        callback null, false
 
     # Download given binary to given path and save binary metadata in local DB.
     downloadBinary: (binaryId, targetPath, size, callback) ->

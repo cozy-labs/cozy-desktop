@@ -27,29 +27,34 @@ remoteEventWatcher =
 
     # Run first time replication (match FS and sequence number with remote) and
     # run replication regularly
-    start: ->
+    start: (callback) ->
         pouch.replicationDelay = 0
+        publisher.emit 'firstSyncDone'
+        log.info 'All your files are now available on your device.'
+        int = setInterval () ->
+            #if pouch.replicationDelay is 1
+                #log.debug "Replication canceled"
+                #clearInterval int
+            #else
+            log.debug "Start new replication"
+            remoteEventWatcher.replicateFromRemote()
+            config.saveConfig()
+        , 2000
+
+    init: (callback) ->
         operationQueue = require './operation_queue'
 
+        log.info 'Run first synchronisation...'
         remoteEventWatcher.initialReplication (err, seq) ->
             process.exit(1) if err
-            log.info "Replication batch is complete (last sequence: #{seq})"
-
-            # Ensure that previous replication is properly finished.
-            # remoteEventWatcher.cancel()
+            log.info "First replication is complete (last seq: #{seq})"
 
             log.info 'Start building your filesystem on your device.'
             operationQueue.makeFSSimilarToDB (err) ->
                 process.exit(1) if err
-                publisher.emit 'firstSyncDone'
-                log.info 'All your files are now available on your device.'
-                int = setInterval () ->
-                    if pouch.replicationDelay is 1
-                        clearInterval int
-                    else
-                        remoteEventWatcher.replicateFromRemote()
-                        config.saveConfig()
-                , 500
+                log.info 'Filesystem built on your device.'
+
+                callback()
 
     # First time replication:
     # * Match local FS with remote Cozy FS
@@ -71,6 +76,7 @@ remoteEventWatcher =
                         log.error err
                         callback err if callback?
                     else
+                        log.debug "All changes retrieved."
                         config.setRemoteSeq seq
                         callback null, seq
 
@@ -98,7 +104,6 @@ remoteEventWatcher =
                 if reconnecting
                     log.info 'Connection is back!'
                     reconnecting = false
-
 
                 if info.docs_written > 0
                     config.setRemoteSeq info.last_seq
@@ -146,19 +151,23 @@ remoteEventWatcher =
                     #
                     # Add changes to queue one by one
                     #
-                    async.eachSeries res.results
-                                   , remoteEventWatcher.addToQueue
-                                   , (err) ->
-                        if err
-                            log.error 'An error occured during DB changes application'
-                            log.error err
-                            callback err
-                        else
-                            log.debug 'Changes applied.'
-                            publisher.emit 'changesApplied'
-                            callback()
+                    async.eachSeries res.results, (operation, next) ->
+                        log.debug "Applying remote change: #{operation}..."
+                        remoteEventWatcher.addToQueue operation, (err) ->
+                            if err
+                                log.error 'Error occured while applying change.'
+                                log.error err
+                            else
+                                log.debug "#{operation} applied successfully."
+                            next()
+                    , ->
+                        log.debug 'Changes applied.'
+                        publisher.emit 'changesApplied'
+                        callback()
             else
-                setTimeout ( -> apply res ), 1000
+                setTimeout ->
+                    apply res
+                , 1000
 
         pouch.db.changes(options)
         .on 'error', error
@@ -169,9 +178,8 @@ remoteEventWatcher =
     addToQueue: (change, callback) ->
         config.setLocalSeq change.seq
 
-        pouch.db.query 'localrev/byRevision'
-                     , key: change.doc._rev
-                     , (err, res) ->
+        params = key: change.doc._rev
+        pouch.db.query 'localrev/byRevision', params, (err, res) ->
             if res?.rows? and res.rows.length is 0
 
                 docDeleted = change.deleted

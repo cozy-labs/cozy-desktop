@@ -1,5 +1,6 @@
 async = require 'async'
 should = require 'should'
+del = require 'del'
 
 {getClient, options} = require './helpers'
 
@@ -45,7 +46,8 @@ module.exports.deleteAll = (callback) ->
                 should.exist body
                 res.statusCode.should.equal expectedCode
                 setTimeout cb, 1000
-        , callback
+        , ->
+            del '/tmp/cozy', force: true, callback
 
 module.exports.getFileContent = (file, callback) ->
     url = "files/#{file.id}/attach/#{file.name}"
