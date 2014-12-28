@@ -21,7 +21,9 @@ getFolderContent = (folder, callback) ->
         body.should.have.property 'content'
         callback err, body.content
 
-module.exports.getElementByName = (name, elements, checkExistence = true) ->
+module.exports = fileHelpers = {}
+
+fileHelpers.getElementByName = (name, elements, checkExistence = true) ->
 
     elements = elements.filter (element) -> element.name is name
     should.exist elements
@@ -29,7 +31,7 @@ module.exports.getElementByName = (name, elements, checkExistence = true) ->
         elements.length.should.equal 1, "Element #{name} not found."
     return elements?[0] or null
 
-module.exports.deleteAll = (callback) ->
+fileHelpers.deleteAll = (callback) ->
     @timeout 30000
 
     getFolderContent "root", (err, elements) ->
@@ -49,7 +51,14 @@ module.exports.deleteAll = (callback) ->
         , ->
             del '/tmp/cozy', force: true, callback
 
-module.exports.getFileContent = (file, callback) ->
+fileHelpers.getAll = (callback) ->
+    filesClient.get 'files', (err, res, files) ->
+        if err
+            callback err
+        else
+            callback null, files
+
+fileHelpers.getFileContent = (file, callback) ->
     url = "files/#{file.id}/attach/#{file.name}"
     filesClient.get url, (err, res, body) ->
         should.not.exist err
@@ -59,10 +68,14 @@ module.exports.getFileContent = (file, callback) ->
         callback err, body
     , false
 
-module.exports.uploadFile = (fileName, fixturePath, callback) ->
+fileHelpers.uploadFile = (fileName, fixturePath, path, callback) ->
+    if typeof(path) is "function"
+        callback = path
+        path = ''
+
     file =
         name: fileName
-        path: ''
+        path: path
         lastModification: "Thu Oct 17 2013 08:29:21 GMT+0200 (CEST)",
 
     filesClient.sendFile "files/", fixturePath, file, (err, res, body) ->
@@ -75,7 +88,7 @@ module.exports.uploadFile = (fileName, fixturePath, callback) ->
             res.statusCode.should.equal 200
             callback err, body
 
-module.exports.renameFile = (file, newName, callback) ->
+fileHelpers.renameFile = (file, newName, callback) ->
     file.name = newName
     filesClient.put "files/#{file.id}", file, (err, res, body) ->
         should.not.exist err
@@ -84,7 +97,7 @@ module.exports.renameFile = (file, newName, callback) ->
         res.statusCode.should.equal 200
         callback()
 
-module.exports.moveFile = (file, newPath, callback) ->
+fileHelpers.moveFile = (file, newPath, callback) ->
     filesClient.put "files/#{file.id}", path: newPath, (err, res, body) ->
         should.not.exist err
         should.exist res
@@ -92,7 +105,7 @@ module.exports.moveFile = (file, newPath, callback) ->
         res.statusCode.should.equal 200
         callback()
 
-module.exports.removeFile = (file, callback) ->
+fileHelpers.removeFile = (file, callback) ->
     filesClient.del "files/#{file.id}", (err, res, body) ->
         should.not.exist err
         should.exist res

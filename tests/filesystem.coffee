@@ -8,6 +8,7 @@ should = require 'should'
 helpers = require './helpers/helpers'
 cliHelpers = require './helpers/cli'
 fileHelpers = require './helpers/files'
+folderHelpers = require './helpers/folders'
 client = helpers.getClient()
 
 config = require '../backend/config'

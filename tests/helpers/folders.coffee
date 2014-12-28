@@ -5,8 +5,16 @@ should = require 'should'
 
 filesClient = getClient 'http://localhost:9121'
 
+module.exports = folderHelpers = {}
 
-module.exports.getFolderContent = (folder, callback) ->
+folderHelpers.getAll = (callback) ->
+    filesClient.get 'folders/folders', (err, res, folders) ->
+        if err
+            callback err
+        else
+            callback null, folders
+
+folderHelpers.getFolderContent = (folder, callback) ->
 
     if folder is "root"
         folder = id: "root"
@@ -21,7 +29,7 @@ module.exports.getFolderContent = (folder, callback) ->
         body.should.have.property 'content'
         callback err, body.content
 
-module.exports.getElementByName = (name, elements, checkExistence = true) ->
+folderHelpers.getElementByName = (name, elements, checkExistence = true) ->
 
     elements = elements.filter (element) -> element.name is name
     should.exist elements
@@ -29,7 +37,7 @@ module.exports.getElementByName = (name, elements, checkExistence = true) ->
         elements.length.should.equal 1, "Element #{name} not found."
     return elements?[0] or null
 
-module.exports.renameFolder = (folder, newName, callback) ->
+folderHelpers.renameFolder = (folder, newName, callback) ->
     folder.name = newName
     filesClient.put "folders/#{folder.id}", folder, (err, res, body) ->
         should.not.exist err
@@ -38,10 +46,14 @@ module.exports.renameFolder = (folder, newName, callback) ->
         res.statusCode.should.equal 200
         callback()
 
-module.exports.createFolder = (folderName, callback) ->
+folderHelpers.createFolder = (folderName, path, callback) ->
+    if typeof(path) is 'function'
+        callback = path
+        path = ''
+
     folder =
         name: folderName
-        path: ''
+        path: path
 
     filesClient.post "folders/", folder, (err, res, body) ->
         should.not.exist err
@@ -50,7 +62,7 @@ module.exports.createFolder = (folderName, callback) ->
         res.statusCode.should.equal 200
         callback()
 
-module.exports.moveFolder = (folder, newPath, callback) ->
+folderHelpers.moveFolder = (folder, newPath, callback) ->
     filesClient.put "folders/#{folder.id}", path: newPath, (err, res, body) ->
         should.not.exist err
         should.exist res
@@ -58,7 +70,7 @@ module.exports.moveFolder = (folder, newPath, callback) ->
         res.statusCode.should.equal 200
         callback()
 
-module.exports.removeFolder = (folder, callback) ->
+folderHelpers.removeFolder = (folder, callback) ->
     filesClient.del "folders/#{folder.id}", (err, res, body) ->
         should.not.exist err
         should.exist res
