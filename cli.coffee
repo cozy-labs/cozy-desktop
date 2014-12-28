@@ -114,9 +114,9 @@ a synchronization.
             pouch.addAllFilters ->
                 remoteEventWatcher.init ->
                     log.info "Init done"
-                    #remoteEventWatcher.start ->
-                        #if not args.readonly
-                            #localEventWatcher.start()
+                    remoteEventWatcher.start ->
+                        if not args.readonly
+                            localEventWatcher.start()
 
 
 # Display current configuration

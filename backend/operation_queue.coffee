@@ -155,10 +155,12 @@ operationQueue =
             async.waterfall [
 
                 # Ensure that the parent directory is created
-                (next) -> fs.ensureDir parent, next
+                (next) ->
+                    fs.ensureDir parent, next
 
                 # Check if a file with the same checksum exists
-                (res, next) -> filesystem.fileExistsLocally checksum, next
+                (res, next) ->
+                    filesystem.fileExistsLocally checksum, next
 
                 # If a similar file exists, we just have to copy it, otherwise
                 # download the binary from CouchDB
@@ -328,7 +330,7 @@ operationQueue =
         filesystem.checkLocation filePaths.absolute, (err) ->
             if err
                 log.debug "File doesn't exist locally, abort."
-                pouch.files.get filePath, (error, doc) ->
+                pouch.files.get filePaths.relative, (error, doc) ->
                     if doc?
                         pouchd.db.remove doc, callback
                     else
@@ -354,6 +356,7 @@ operationQueue =
                 pouch.uploadBinary absPath, null, (err, binaryDoc) ->
                     if err then callback err
                     else
+
                         # Make a doc from scratch or by merging with an
                         # existing one
                         pouch.makeFileDoc filePaths.absolute, (err, doc) ->
@@ -440,7 +443,7 @@ operationQueue =
             operationQueue.queue.push
                 operation: 'forceDeleteFileRemotely'
                 file: filePath, ->
-        , 5000
+        , 3000
         callback()
 
 

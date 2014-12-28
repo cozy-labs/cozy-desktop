@@ -98,16 +98,15 @@ a synchronization.
             # Watch local changes
             setTimeout ->
                 localEventWatcher.start()
+                done()
             , 1000
 
             pouch.addAllFilters ->
                 # Replicate databases
                 remoteEventWatcher.start()
 
-    done()
-
 module.exports.stopSync = ->
-    localEventWatcher.watcher.close()
+    localEventWatcher.watcher?.close()
     remoteEventWatcher.cancel()
 
 

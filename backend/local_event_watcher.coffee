@@ -44,7 +44,7 @@ localEventWatcher =
             persistent: continuous
             ignoreInitial: fromNow
             interval: 2000
-            binaryInterval: 3000
+            binaryInterval: 2000
             #ignored: /[\/\\]\./
 
         # New file detected
@@ -72,7 +72,8 @@ localEventWatcher =
 
         # File deletion detected
         .on 'unlink', (filePath) ->
-            if not filesystem.locked
+
+            if not filesystem.locked and not fs.existsSync filePath
                 log.info "File deleted: #{filePath}"
                 publisher.emit 'fileDeletedLocally', filePath
                 operationQueue.queue.push
@@ -93,25 +94,15 @@ localEventWatcher =
         # File update detected
         .on 'change', (filePath) ->
 
-            # Chokidar sometimes detect changes with a relative path
-            # In this case we want to adjust the path to be consistent
-            re = new RegExp "^#{remoteConfig.path}"
-            if not re.test filePath
-                relativePath = filePath
-                filePath = path.join remoteConfig.path, filePath
+            filePath = path.join remoteConfig.path, filePath
 
-            if not filesystem.locked \
-            and not filesystem.filesBeingCopied[filePath]? \
-            and fs.exists filePath
-                log.info "File changed: #{filePath}"
-                publisher.emit 'fileChangedLocally', filePath
-                filesystem.isBeingCopied filePath, ->
-                    log.debug "#{relativePath} copy is finished."
-                    operationQueue.queue.push
-                        operation: 'updateFileRemotely'
-                        file: filePath
-                    , ->
-                        log.debug 'File uploaded remotely'
+            if fs.existsSync filePath
+                onChange filePath
+            else
+                setTimeout ->
+                    if fs.existsSync filePath
+                        onChange filePath
+                , 1000
 
         .on 'error', (err) ->
             log.error 'An error occured while watching changes:'
@@ -119,6 +110,28 @@ localEventWatcher =
 
 
     watcher: null
+
+
+onChange = (filePath) ->
+    # Chokidar sometimes detect changes with a relative path
+    # In this case we want to adjust the path to be consistent
+    re = new RegExp "^#{remoteConfig.path}"
+    if not re.test filePath
+        relativePath = filePath
+        filePath = path.join remoteConfig.path, filePath
+
+    if not filesystem.locked \
+    and not filesystem.filesBeingCopied[filePath]? \
+    and fs.existsSync filePath
+        log.info "File changed: #{filePath}"
+        publisher.emit 'fileChangedLocally', filePath
+        filesystem.isBeingCopied filePath, ->
+            log.debug "#{relativePath} copy is finished."
+            operationQueue.queue.push
+                operation: 'updateFileRemotely'
+                file: filePath
+            , ->
+                log.debug 'File uploaded remotely'
 
 
 module.exports = localEventWatcher

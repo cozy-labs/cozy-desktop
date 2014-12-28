@@ -32,14 +32,15 @@ remoteEventWatcher =
         publisher.emit 'firstSyncDone'
         log.info 'All your files are now available on your device.'
         int = setInterval () ->
-            #if pouch.replicationDelay is 1
-                #log.debug "Replication canceled"
-                #clearInterval int
-            #else
-            log.debug "Start new replication"
-            remoteEventWatcher.replicateFromRemote()
-            config.saveConfig()
+            # 1 is code for cancelation
+            if pouch.replicationDelay is 1
+                log.debug "Replication canceled"
+                clearInterval int
+            else
+                remoteEventWatcher.replicateFromRemote()
+                config.saveConfig()
         , 2000
+        callback() if callback?
 
     init: (callback) ->
         operationQueue = require './operation_queue'
@@ -107,8 +108,9 @@ remoteEventWatcher =
 
                 if info.docs_written > 0
                     config.setRemoteSeq info.last_seq
-                    log.info 'Database updated, applying changes to files'
+                    log.info 'Database updated, applying changes to files...'
                     remoteEventWatcher.applyChanges ->
+                        log.info 'Changes applied.'
 
             .on 'error', (err, info) ->
                 if err?.status is 409
@@ -128,12 +130,6 @@ remoteEventWatcher =
     # Retrieve database changes and apply them to the filesystem.
     # NB: PouchDB manages another sequence number for the replication.
     applyChanges: (callback) ->
-        options =
-            filter: (doc) ->
-                doc.docType is 'Folder' or doc.docType is 'File'
-            since: config.getLocalSeq()
-            include_docs: true
-
         error = (err) ->
             if err?.status? and err.status is 404
                 log.info "No file nor folder found remotely"
@@ -168,6 +164,12 @@ remoteEventWatcher =
                 setTimeout ->
                     apply res
                 , 1000
+
+        options =
+            filter: (doc) ->
+                doc.docType is 'Folder' or doc.docType is 'File'
+            since: config.getLocalSeq()
+            include_docs: true
 
         pouch.db.changes(options)
         .on 'error', error

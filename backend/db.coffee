@@ -470,6 +470,7 @@ module.exports = dbHelpers =
 
 
     makeFileDocFrom: (existingDoc, infos, callback) ->
+        filesystem = require './filesystem'
 
         # Populate document information with the existing DB document
         # if it exists, or with the file stats otherwise.

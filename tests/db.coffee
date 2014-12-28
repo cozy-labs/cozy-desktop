@@ -112,3 +112,39 @@ describe "DB Tests", ->
                 pouch.db.get 'folder-3', (err) ->
                     should.exist err
                     done()
+
+    describe 'newId', ->
+    describe 'getByKey', ->
+    describe 'createNewDoc', ->
+
+    describe 'getPreviousRev', ->
+    describe 'getKnownPath', ->
+    describe 'markAsDeleted', ->
+    describe 'storeLocalRev', ->
+
+    describe 'files', ->
+        describe 'all', ->
+        describe 'get', ->
+        describe 'createNew', ->
+
+    describe 'folders', ->
+        describe 'all', ->
+        describe 'get', ->
+        describe 'createNew', ->
+        describe 'upsert', ->
+
+    describe 'binaries', ->
+        describe 'all', ->
+        describe 'get', ->
+
+    describe 'getLastRemoteChangeSeq' ->
+    describe 'copyViewFromRemote' ->
+    describe 'replicateToRemote' ->
+    makeFileDoc: (filePath, callback) ->
+    makeFileDocFrom: (existingDoc, infos, callback) ->
+    makeFolderDoc: (folderPath, callback) ->
+    getDocForFile: (filePath, callback) ->
+    uploadBinary: (filePath, binaryDoc, callback) ->
+    getRemoteDoc: (id, callback) ->
+    createEmptyRemoteDoc: (binaryDoc, callback) ->
+    uploadAsAttachment: (remoteId, remoteRev, filePath, callback) ->

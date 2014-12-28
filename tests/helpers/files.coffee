@@ -23,8 +23,8 @@ getFolderContent = (folder, callback) ->
 
 module.exports = fileHelpers = {}
 
-fileHelpers.getElementByName = (name, elements, checkExistence = true) ->
 
+fileHelpers.getElementByName = (name, elements, checkExistence = true) ->
     elements = elements.filter (element) -> element.name is name
     should.exist elements
     if checkExistence
