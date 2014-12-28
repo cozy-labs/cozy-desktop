@@ -1,3 +1,8 @@
+path = require 'path-extra'
+fs = require 'fs-extra'
+log = require('printit')
+    prefix: 'Test - cli helpers'
+
 helpers = require './helpers'
 
 cli = require '../../cli'
@@ -8,8 +13,6 @@ deviceManager = require '../../backend/device'
 filesystem = require '../../backend/filesystem'
 localEventWatcher  = require '../../backend/local_event_watcher'
 remoteEventWatcher = require '../../backend/remote_event_watcher'
-path = require 'path-extra'
-fs = require 'fs-extra'
 
 module.exports = cliHelpers = {}
 
@@ -22,6 +25,10 @@ module.exports.mockGetPassword = ->
 # Restores regular behaviour
 module.exports.restoreGetPassword = ->
     cli.getPassword = @trueGetPassword
+
+module.exports.initSync = (done) ->
+    @timeout 60000
+    remoteEventWatcher.init done
 
 
 # Configures a fake device for a fake remote Cozy

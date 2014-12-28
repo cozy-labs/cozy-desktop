@@ -25,12 +25,10 @@ remoteEventWatcher =
     url: null
     startSeq: null
 
-    # Run first time replication (match FS and sequence number with remote) and
-    # run replication regularly
+    # Start metadata sync with remote. Sync is based on replications every 2s.
+    # TODO: do not run a replication if another replication is running.
     start: (callback) ->
         pouch.replicationDelay = 0
-        publisher.emit 'firstSyncDone'
-        log.info 'All your files are now available on your device.'
         int = setInterval () ->
             # 1 is code for cancelation
             if pouch.replicationDelay is 1
@@ -42,6 +40,8 @@ remoteEventWatcher =
         , 2000
         callback() if callback?
 
+    # Run first time replication (match FS and sequence number with remote) and
+    # run replication regularly
     init: (callback) ->
         operationQueue = require './operation_queue'
 
@@ -78,6 +78,8 @@ remoteEventWatcher =
                         callback err if callback?
                     else
                         log.debug "All changes retrieved."
+                        log.info 'All your files are available on your device.'
+                        publisher.emit 'firstSyncDone'
                         config.setRemoteSeq seq
                         callback null, seq
 
@@ -96,7 +98,7 @@ remoteEventWatcher =
 
         if pouch.replicationDelay is 0 and (not @replicatorFrom \
         or Object.keys(@replicatorFrom._events).length is 0)
-
+            log.debug "start replication batch from #{config.getRemoteSeq()}"
             reconnecting = false
 
             @replicatorFrom = pouch.db.replicate.from url, options
@@ -111,6 +113,8 @@ remoteEventWatcher =
                     log.info 'Database updated, applying changes to files...'
                     remoteEventWatcher.applyChanges ->
                         log.info 'Changes applied.'
+                else
+                    log.debug "no change noticed"
 
             .on 'error', (err, info) ->
                 if err?.status is 409

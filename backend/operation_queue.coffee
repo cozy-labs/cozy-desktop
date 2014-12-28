@@ -86,21 +86,21 @@ applyOperation = (task, callback) ->
             ]
 
             if task.operation in replicationDelayingOperations
-                    delay = 2000
-                    pouch.replicationDelay += delay
-                    setTimeout ->
-                        pouch.replicationDelay -= delay
-                    , delay
-                    callback = (err, res) ->
+                #delay = 2000
+                #pouch.replicationDelay += delay
+                #setTimeout ->
+                    #pouch.replicationDelay -= delay
+                #, delay
+                callback = (err, res) ->
 
-                        # We want to log the errors and their trace to be able
-                        # to find when and where it occured.
-                        if err
-                            operationQueue.displayErrorStack err, task.operation
+                    # We want to log the errors and their trace to be able
+                    # to find when and where it occured.
+                    if err
+                        operationQueue.displayErrorStack err, task.operation
 
-                        # Launch a replication before calling back
-                        pouch.replicateToRemote()
-                        initialCallback null, res
+                    # Launch a replication before calling back
+                    pouch.replicateToRemote()
+                    initialCallback null, res
 
             # Apply operation
             if param = task.file || task.folder || task.doc

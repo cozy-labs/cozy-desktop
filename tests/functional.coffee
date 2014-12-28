@@ -26,6 +26,7 @@ describe.only "Functional Tests", ->
     before cliHelpers.mockGetPassword
     before cliHelpers.cleanConfiguration
     before cliHelpers.initConfiguration
+    before cliHelpers.initSync
     before (done) ->
         cliHelpers.startSync ->
             setTimeout done, 500
@@ -54,7 +55,7 @@ describe.only "Functional Tests", ->
                         # folder should exist
                         fs.existsSync(folderPath).should.be.ok
 
-                        ## waits for the replication / upload to be processed
+                        # waits for the replication / upload to be processed
                         setTimeout ->
                             foldersHelpers.getFolderContent 'root', (err, files) ->
                                 folder = foldersHelpers.getElementByName folderName, files
@@ -289,7 +290,7 @@ describe.only "Functional Tests", ->
 
                 #command = "echo \"#{newContent}\" >> #{filePath}"
                 #exec command, cwd: syncPath, ->
-                    ## file should exist
+                    # file should exist
                     #fs.existsSync(filePath).should.be.ok
 
                     #setTimeout ->
@@ -322,181 +323,183 @@ describe.only "Functional Tests", ->
                                 done()
                         , WAIT_TIME * 2
 
-    #describe.only 'Remotely changes', ->
+    describe.only 'Remotely changes', ->
 
-        #describe.only 'Empty folder changes', ->
+        describe.only 'Empty folder changes', ->
 
-            #it "Create a folder remotely", (done) ->
-                #@timeout 15000
-                #folderName = 'remote-folder'
-                #folderPath = "#{syncPath}/#{folderName}"
-                #foldersHelpers.createFolder folderName, ->
-                    #foldersHelpers.getFolderContent 'root', (err, elements) ->
-                        #folder = foldersHelpers.getElementByName folderName, elements
-                        #should.exist folder
-                        #setTimeout ->
-                            ## folder should exist
-                            #fs.existsSync(folderPath).should.be.ok
-                            #done()
-                        #, 7000
+            it "Create a folder remotely", (done) ->
+                @timeout 15000
 
-            #it "Create a second folder remotely", (done) ->
-                #@timeout 15000
-                #folderName = 'remote-folder-2'
-                #folderPath = "#{syncPath}/#{folderName}"
-                #foldersHelpers.createFolder folderName, ->
-                    #foldersHelpers.getFolderContent 'root', (err, elements) ->
-                        #folder = foldersHelpers.getElementByName folderName, elements
-                        #should.exist folder
-                        #setTimeout ->
-                            ## folder should exist
-                            #fs.existsSync(folderPath).should.be.ok
-                            #done()
-                        #, 7000
+                folderName = 'remote-folder'
+                folderPath = "#{syncPath}/#{folderName}"
+                foldersHelpers.createFolder folderName, ->
+                    foldersHelpers.getFolderContent 'root', (err, elements) ->
+                        folder = foldersHelpers.getElementByName(
+                            folderName, elements)
+                        should.exist folder
+                        setTimeout ->
+                            # folder should exist
+                            fs.existsSync(folderPath).should.be.ok
+                            done()
+                        , WAIT_TIME * 2
 
-            #it "Rename folder remotely", (done) ->
-                #@timeout 15000
-                #folderName = 'remote-folder-2'
-                #newName = 'remote-folder-bis'
-                #newPath = "#{syncPath}/#{newName}"
-                #foldersHelpers.getFolderContent 'root', (err, files) ->
-                    #folder = foldersHelpers.getElementByName folderName, files
-                    #should.exist folder
-                    #foldersHelpers.renameFolder folder, newName, ->
-                        #setTimeout ->
-                            ## folder should exist
-                            #fs.existsSync(newPath).should.be.ok
-                            #done()
-                        #, 7000
+            it "Create a second folder remotely", (done) ->
+                @timeout 15000
+                folderName = 'remote-folder-2'
+                folderPath = "#{syncPath}/#{folderName}"
+                foldersHelpers.createFolder folderName, ->
+                    foldersHelpers.getFolderContent 'root', (err, elements) ->
+                        folder = foldersHelpers.getElementByName folderName, elements
+                        should.exist folder
+                        setTimeout ->
+                            # folder should exist
+                            fs.existsSync(folderPath).should.be.ok
+                            done()
+                        , 7000
 
-            #it "Move a folder remotely into a subfolder", (done) ->
-                #@timeout 15000
-                #folderName = 'remote-folder-bis'
-                #folderPathName = 'remote-folder'
-                #newPath = "#{syncPath}/#{folderPathName}/#{folderName}"
-                #foldersHelpers.getFolderContent 'root', (err, files) ->
-                    #folder = filesHelpers.getElementByName folderName, files
-                    #should.exist folder
-                    #folderPath = foldersHelpers.getElementByName folderPathName, files
-                    #should.exist folderPath
-                    #foldersHelpers.moveFolder folder, folderPathName, ->
-                        #foldersHelpers.getFolderContent folderPath, (err, files) ->
-                            #folder = filesHelpers.getElementByName folderName, files
-                            #should.exist folder
-                            #setTimeout ->
-                                ## file should exist at new path
-                                #fs.existsSync(newPath).should.be.ok
-                                #done()
-                            #, 7000
+            it "Rename folder remotely", (done) ->
+                @timeout 15000
+                folderName = 'remote-folder-2'
+                newName = 'remote-folder-bis'
+                newPath = "#{syncPath}/#{newName}"
+                foldersHelpers.getFolderContent 'root', (err, files) ->
+                    folder = foldersHelpers.getElementByName folderName, files
+                    should.exist folder
+                    foldersHelpers.renameFolder folder, newName, ->
+                        setTimeout ->
+                            # folder should exist
+                            fs.existsSync(newPath).should.be.ok
+                            done()
+                        , 7000
 
-            #it "Delete a folder remotely", (done) ->
-                #@timeout 15000
+            it "Move a folder remotely into a subfolder", (done) ->
+                @timeout 15000
+                folderName = 'remote-folder-bis'
+                folderPathName = 'remote-folder'
+                newPath = "#{syncPath}/#{folderPathName}/#{folderName}"
+                foldersHelpers.getFolderContent 'root', (err, files) ->
+                    folder = filesHelpers.getElementByName folderName, files
+                    should.exist folder
+                    folderPath = foldersHelpers.getElementByName folderPathName, files
+                    should.exist folderPath
+                    foldersHelpers.moveFolder folder, folderPathName, ->
+                        foldersHelpers.getFolderContent folderPath, (err, files) ->
+                            folder = filesHelpers.getElementByName folderName, files
+                            should.exist folder
+                            setTimeout ->
+                                # file should exist at new path
+                                fs.existsSync(newPath).should.be.ok
+                                done()
+                            , 7000
 
-                #folderName = 'remote-folder-bis'
-                #folderPathName = 'remote-folder'
-                #folderPath = "#{syncPath}/#{folderPathName}/#{folderName}"
-                #fs.existsSync(folderPath).should.be.ok
-                #foldersHelpers.getFolderContent "root", (err, files) ->
-                    #folderPath = foldersHelpers.getElementByName folderPathName, files
-                    #should.exist folderPath
-                    #foldersHelpers.getFolderContent folderPath, (err, files) ->
-                        #folder = foldersHelpers.getElementByName folderName, files
-                        #should.exist folder
-                        #foldersHelpers.removeFolder folder, ->
-                            #setTimeout ->
-                                ## file should exist at new path
-                                #fs.existsSync(folderPath).should.not.be.ok
-                                #done()
-                            #, 7000
+            it "Delete a folder remotely", (done) ->
+                @timeout 15000
 
-        #describe.only 'File changes', ->
+                folderName = 'remote-folder-bis'
+                folderPathName = 'remote-folder'
+                folderPath = "#{syncPath}/#{folderPathName}/#{folderName}"
+                fs.existsSync(folderPath).should.be.ok
+                foldersHelpers.getFolderContent "root", (err, files) ->
+                    folderPath = foldersHelpers.getElementByName folderPathName, files
+                    should.exist folderPath
+                    foldersHelpers.getFolderContent folderPath, (err, files) ->
+                        folder = foldersHelpers.getElementByName folderName, files
+                        should.exist folder
+                        foldersHelpers.removeFolder folder, ->
+                            setTimeout ->
+                                # file should exist at new path
+                                fs.existsSync(folderPath).should.not.be.ok
+                                done()
+                            , 7000
 
-            #it "Create a file remotely", (done) ->
-                #@timeout 15000
-                #fixturePath = path.resolve __dirname, './fixtures/chat-mignon.jpg'
-                #fileName = 'chat-mignon.jpg'
-                #filePath = "#{syncPath}/#{fileName}"
-                #filesHelpers.uploadFile fileName, fixturePath, ->
-                    #foldersHelpers.getFolderContent 'root', (err, files) ->
-                        #file = filesHelpers.getElementByName fileName, files
-                        #should.exist file
-                        #setTimeout ->
-                            ## file should exist
-                            #fs.existsSync(filePath).should.be.ok
-                            #done()
-                        #, 7000
+        describe.only 'File changes', ->
 
-            #it "Rename a file remotely", (done) ->
-                #@timeout 15000
-                #fileName = 'chat-mignon.jpg'
-                #newName = 'chat-mignon-renamed.jpg'
-                #newPath = "#{syncPath}/#{newName}"
-                #foldersHelpers.getFolderContent 'root', (err, files) ->
-                    #file = filesHelpers.getElementByName fileName, files
-                    #should.exist file
-                    #filesHelpers.renameFile file, newName, ->
-                        #setTimeout ->
-                            ## file should exist
-                            #fs.existsSync(newPath).should.be.ok
-                            #done()
-                        #, 7000
+            it "Create a file remotely", (done) ->
+                @timeout 15000
+                fixturePath = path.resolve __dirname, './fixtures/chat-mignon.jpg'
+                fileName = 'chat-mignon.jpg'
+                filePath = "#{syncPath}/#{fileName}"
+                filesHelpers.uploadFile fileName, fixturePath, ->
+                    foldersHelpers.getFolderContent 'root', (err, files) ->
+                        file = filesHelpers.getElementByName fileName, files
+                        should.exist file
+                        setTimeout ->
+                            # file should exist
+                            fs.existsSync(filePath).should.be.ok
+                            done()
+                        , 7000
 
-            #it "Move a file remotely into a subfolder", (done) ->
-                #@timeout 15000
-                #fileName = 'chat-mignon-renamed.jpg'
-                #folderName = 'remote-folder'
-                #newPath = "#{syncPath}/#{folderName}/#{fileName}"
-                #foldersHelpers.getFolderContent 'root', (err, files) ->
-                    #file = filesHelpers.getElementByName fileName, files
-                    #should.exist file
-                    #folder = foldersHelpers.getElementByName folderName, files
-                    #should.exist folder
-                    #filesHelpers.moveFile file, folderName, ->
-                        #foldersHelpers.getFolderContent folder, (err, files) ->
-                            #file = filesHelpers.getElementByName fileName, files
-                            #should.exist file
-                            #setTimeout ->
-                                ## file should exist at new path
-                                #fs.existsSync(newPath).should.be.ok
-                                #done()
-                            #, 7000
+            it "Rename a file remotely", (done) ->
+                @timeout 15000
+                fileName = 'chat-mignon.jpg'
+                newName = 'chat-mignon-renamed.jpg'
+                newPath = "#{syncPath}/#{newName}"
+                foldersHelpers.getFolderContent 'root', (err, files) ->
+                    file = filesHelpers.getElementByName fileName, files
+                    should.exist file
+                    filesHelpers.renameFile file, newName, ->
+                        setTimeout ->
+                            # file should exist
+                            fs.existsSync(newPath).should.be.ok
+                            done()
+                        , 7000
 
-            #it "Move a file remotely from a subfolder", (done) ->
-                #@timeout 15000
-                #fileName = 'chat-mignon-renamed.jpg'
-                #folderName = 'remote-folder'
-                #newPath = "#{syncPath}/#{fileName}"
-                #foldersHelpers.getFolderContent 'root', (err, files) ->
-                    #folder = foldersHelpers.getElementByName folderName, files
-                    #should.exist folder
-                    #foldersHelpers.getFolderContent folder, (err, files) ->
-                        #file = filesHelpers.getElementByName fileName, files
-                        #should.exist file
-                        #filesHelpers.moveFile file, "", ->
-                            #foldersHelpers.getFolderContent "root", (err, files) ->
-                                #file = filesHelpers.getElementByName fileName, files
-                                #should.exist file
-                                #setTimeout ->
-                                    ## file should exist at new path
-                                    #fs.existsSync(newPath).should.be.ok
-                                    #done()
-                                #, 7000
+            it "Move a file remotely into a subfolder", (done) ->
+                @timeout 15000
+                fileName = 'chat-mignon-renamed.jpg'
+                folderName = 'remote-folder'
+                newPath = "#{syncPath}/#{folderName}/#{fileName}"
+                foldersHelpers.getFolderContent 'root', (err, files) ->
+                    file = filesHelpers.getElementByName fileName, files
+                    should.exist file
+                    folder = foldersHelpers.getElementByName folderName, files
+                    should.exist folder
+                    filesHelpers.moveFile file, folderName, ->
+                        foldersHelpers.getFolderContent folder, (err, files) ->
+                            file = filesHelpers.getElementByName fileName, files
+                            should.exist file
+                            setTimeout ->
+                                # file should exist at new path
+                                fs.existsSync(newPath).should.be.ok
+                                done()
+                            , 7000
 
-            #it "Delete a file remotely", (done) ->
-                #@timeout 15000
+            it "Move a file remotely from a subfolder", (done) ->
+                @timeout 15000
+                fileName = 'chat-mignon-renamed.jpg'
+                folderName = 'remote-folder'
+                newPath = "#{syncPath}/#{fileName}"
+                foldersHelpers.getFolderContent 'root', (err, files) ->
+                    folder = foldersHelpers.getElementByName folderName, files
+                    should.exist folder
+                    foldersHelpers.getFolderContent folder, (err, files) ->
+                        file = filesHelpers.getElementByName fileName, files
+                        should.exist file
+                        filesHelpers.moveFile file, "", ->
+                            foldersHelpers.getFolderContent "root", (err, files) ->
+                                file = filesHelpers.getElementByName fileName, files
+                                should.exist file
+                                setTimeout ->
+                                    # file should exist at new path
+                                    fs.existsSync(newPath).should.be.ok
+                                    done()
+                                , 7000
 
-                #fileName = 'chat-mignon-renamed.jpg'
-                #filePath = "#{syncPath}/#{fileName}"
-                #fs.existsSync(filePath).should.be.ok
-                #foldersHelpers.getFolderContent "root", (err, files) ->
-                    #file = filesHelpers.getElementByName fileName, files
-                    #should.exist file
-                    #filesHelpers.removeFile file, ->
-                        #setTimeout ->
-                            ## file should exist at new path
-                            #fs.existsSync(filePath).should.not.be.ok
-                            #done()
-                        #, 7000
+            it "Delete a file remotely", (done) ->
+                @timeout 15000
+
+                fileName = 'chat-mignon-renamed.jpg'
+                filePath = "#{syncPath}/#{fileName}"
+                fs.existsSync(filePath).should.be.ok
+                foldersHelpers.getFolderContent "root", (err, files) ->
+                    file = filesHelpers.getElementByName fileName, files
+                    should.exist file
+                    filesHelpers.removeFile file, ->
+                        setTimeout ->
+                            # file should exist at new path
+                            fs.existsSync(filePath).should.not.be.ok
+                            done()
+                        , 7000
 
     #it.skip "Create a big file locally", (done) ->
         #ms = 1000

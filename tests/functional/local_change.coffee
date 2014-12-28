@@ -13,7 +13,7 @@ foldersHelpers = require '../helpers/folders'
 
 mkdirp = require 'mkdirp'
 
-WAIT_TIME = 3000
+WAIT_TIME = 6000
 
 {syncPath} = helpers.options
 
@@ -55,17 +55,14 @@ describe.only "Local change", ->
 
         command = "echo \"#{newContent}\" >> #{filePath}"
         exec command, cwd: syncPath, ->
-            ## file should exist
+            # file should exist
             fs.existsSync(filePath).should.be.ok
 
             setTimeout ->
                 foldersHelpers.getFolderContent 'root', (err, files) ->
-                    log.debug files
-                    log.debug fileName
                     file = filesHelpers.getElementByName fileName, files
                     should.exist file
-                    #filesHelpers.getFileContent file, (err, content) ->
-                        #content.should.equal "#{expectedContent}\n"
+                    filesHelpers.getFileContent file, (err, content) ->
+                        content.should.equal "#{expectedContent}\n"
                     done()
             , WAIT_TIME
-
