@@ -1,5 +1,6 @@
 chokidar = require 'chokidar'
 path = require 'path'
+fs = require 'fs'
 log = require('printit')
     prefix: 'Local watcher '
 
@@ -96,14 +97,16 @@ localEventWatcher =
             # In this case we want to adjust the path to be consistent
             re = new RegExp "^#{remoteConfig.path}"
             if not re.test filePath
+                relativePath = filePath
                 filePath = path.join remoteConfig.path, filePath
 
             if not filesystem.locked \
-            and not filesystem.filesBeingCopied[filePath]?
+            and not filesystem.filesBeingCopied[filePath]? \
+            and fs.exists filePath
                 log.info "File changed: #{filePath}"
                 publisher.emit 'fileChangedLocally', filePath
                 filesystem.isBeingCopied filePath, ->
-                    log.debug 'isBeingCopied finished'
+                    log.debug "#{relativePath} copy is finished."
                     operationQueue.queue.push
                         operation: 'updateFileRemotely'
                         file: filePath
