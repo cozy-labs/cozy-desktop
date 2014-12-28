@@ -70,7 +70,10 @@ module.exports.uploadFile = (fileName, fixturePath, callback) ->
         should.exist res
         should.exist body
         res.statusCode.should.equal 200
-        callback err, body
+        body = JSON.parse body
+        filesClient.get "files/#{body.id}", file, (err, res, body) ->
+            res.statusCode.should.equal 200
+            callback err, body
 
 module.exports.renameFile = (file, newName, callback) ->
     file.name = newName

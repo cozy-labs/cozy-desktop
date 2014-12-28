@@ -10,9 +10,10 @@ cliHelpers = require './helpers/cli'
 fileHelpers = require './helpers/files'
 client = helpers.getClient()
 
-config      = require '../backend/config'
-pouch       = require '../backend/db'
-filesystem  = require '../backend/filesystem'
+config = require '../backend/config'
+pouch = require '../backend/db'
+filesystem = require '../backend/filesystem'
+{syncPath} = helpers.options
 
 describe "Filesystem Tests", ->
     @timeout 4000
@@ -20,7 +21,7 @@ describe "Filesystem Tests", ->
     before cliHelpers.resetDatabase
     before cliHelpers.initConfiguration
     before fileHelpers.deleteAll
-    #    after cliHelpers.resetDatabase
+    after cliHelpers.resetDatabase
 
     describe "getPaths", ->
         it "returns a hash of useful paths related to a given filepath", ->
@@ -78,20 +79,17 @@ describe "Filesystem Tests", ->
                 filesystem.fileExistsLocally sum, (err, exist) ->
                     should.not.exist err
                     exist.should.not.be.ok
+
                     doc =
                         _id: 'test_exist_locally'
                         docType: 'Binary'
                         checksum: sum
                         path: '/tmp/cozy/testfile'
-
-                    setTimeout ->
-                        pouch.db.put doc, (err, info) ->
+                    pouch.db.put doc, (err, info) ->
+                        filesystem.fileExistsLocally sum, (err, exist) ->
                             should.not.exist err
-                            filesystem.fileExistsLocally sum, (err, exist) ->
-                                should.not.exist err
-                                exist.should.be.equal filePath
-                                done()
-                    , 500
+                            exist.should.be.equal filePath
+                            done()
 
     describe "walkDirSync", ->
         before ->
@@ -130,8 +128,44 @@ describe "Filesystem Tests", ->
             fileList[2].filename.should.equal 'testfile'
             fileList[2].filePath.should.equal '/tmp/cozy/testfile'
 
-    describe "downloadAttachment", ->
+    describe "download", ->
 
-    describe "downloadBinary", ->
+        fileDoc = null
+        fixturePath = path.resolve __dirname, './fixtures/chat-mignon.jpg'
+        fileName = 'chat-mignon.jpg'
+        filePath = "#{syncPath}/#{fileName}"
+
+        before (done) ->
+            fileHelpers.uploadFile fileName, fixturePath, (err, doc) =>
+                fileDoc = doc
+                done()
+
+        describe "downloadAttachment", ->
+            it "download given attachment to current dir", (done) ->
+                id = fileDoc.binary.file.id
+                filesystem.downloadAttachment id, filePath, null, (err) ->
+                    filesystem.checkLocation filePath, (err, isThere) ->
+                        should.not.exist err
+                        isThere.should.be.ok
+                        done()
+
+        describe "downloadBinary", ->
+            it "download given binary to current dir", (done) ->
+                fs.unlinkSync filePath
+                id = fileDoc.binary.file.id
+                filesystem.downloadBinary id, filePath, null, (err) ->
+                    filesystem.checkLocation filePath, (err, isThere) ->
+                        should.not.exist err
+                        isThere.should.be.ok
+                        done()
+
+            it "and data should be updated", (done) ->
+                id = fileDoc.binary.file.id
+                pouch.db.get id, (err, doc) ->
+                    filesystem.checksum fixturePath, (err, checksum) ->
+                        checksum.should.be.equal doc.checksum
+                        filePath.should.be.equal doc.path
+                        done()
 
     describe "isBeingCopied", ->
+        # TODO

@@ -52,7 +52,7 @@
     "node-uuid": "1.4.1",
     "open": "0.0.5",
     "path-extra": "^0.2.1",
-    "pouchdb": "3.0.6",
+    "pouchdb": "3.2.0",
     "printit": "0.1.4",
     "process": "0.7.0",
     "read": "1.0.5",
