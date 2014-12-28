@@ -36,7 +36,10 @@ getByKey = (query, key, callback) ->
         else if docs.rows.length is 0
             callback()
         else
-            callback null,  docs.rows[0].value
+            if value?
+                callback null, docs.rows[0].value
+            else
+                callback null, docs.rows[0].doc
 
 # TODO add tests
 createNewDoc = (docType, fields, callback) ->

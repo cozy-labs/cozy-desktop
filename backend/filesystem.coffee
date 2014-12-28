@@ -127,14 +127,12 @@ filesystem =
 
     # Check if a file corresponding to given checksum already exists.
     fileExistsLocally: (checksum, callback) ->
-        pouch.binaries.get key: checksum, (err, res) ->
-            console.log res
+        pouch.binaries.get checksum, (err, binaryDoc) ->
             if err
                 callback err
-            else if not res?.rows? or res.rows.length is 0
+            else if not binaryDoc?
                 callback null, false
             else
-                binaryDoc = res.rows[0].value
                 fs.exists binaryDoc.path, (exists) ->
                     if exists
                         callback null, binaryDoc.path
@@ -142,21 +140,27 @@ filesystem =
                         callback null, false
 
     isBeingCopied: (filePath, callback) ->
-        #
         # Check if the size of the file has changed during the last second
-        #
         unless filePath in @filesBeingCopied
             @filesBeingCopied[filePath] = true
 
         filesystem.getSize filePath, (err, earlySize) ->
-            setTimeout () ->
-                filesystem.getSize filePath, (err, lateSize) ->
-                    if earlySize is lateSize
-                        delete filesystem.filesBeingCopied[filePath]
-                        callback()
-                    else
-                        filesystem.isBeingCopied filePath, callback
-            , 2000 # TODO: Reduce this to get a faster upload
+            if err
+                delete filesystem.filesBeingCopied[filePath]
+                callback err
+            else
+                setTimeout () ->
+                    filesystem.getSize filePath, (err, lateSize) ->
+                        if err
+                            delete filesystem.filesBeingCopied[filePath]
+                            callback err
+                        else
+                            if earlySize is lateSize
+                                delete filesystem.filesBeingCopied[filePath]
+                                callback()
+                            else
+                                filesystem.isBeingCopied filePath, callback
+                , 1000
 
     # Download given binary to given path and save binary metadata in local DB.
     downloadBinary: (binaryId, targetPath, size, callback) ->
@@ -174,7 +178,9 @@ filesystem =
             # Ensure that local binary document is deleted
             (next) ->
                 pouch.db.remove binaryId, (err, res) ->
-                    if err and err.status isnt 404 then next(err) else next()
+                    # There we don't really care about error. It's just a
+                    # cleaning operation
+                    next()
 
             # Download the CouchDB attachment
             (next) ->
@@ -229,7 +235,9 @@ filesystem =
             else
                 fileStream = fs.createWriteStream targetPath
                 res.pipe fileStream
-                progress.showDownload size, res
+
+                if size?
+                    progress.showDownload size, res
 
                 res.on 'end', ->
                     log.info "Binary downloaded: #{targetPath}"
