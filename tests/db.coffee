@@ -4,8 +4,6 @@ should = require 'should'
 date = require 'date-utils'
 
 config      = require '../backend/config'
-replication = require '../backend/replication'
-binary      = require '../backend/binary'
 pouch       = require '../backend/db'
 
 helpers = require './helpers/helpers'
@@ -52,99 +50,108 @@ describe "DB Tests", ->
                 async.eachSeries [1..3], createFolder, done
 
 
-    describe 'removeFilter', ->
-        it 'removes given view', (done) ->
-            id = "folder"
-            pouch.folders.all (err, res) ->
-                should.not.exist err
-                pouch.removeFilter id, (err) ->
-                    should.not.exist err
-                    pouch.folders.all (err, res) ->
-                        console.log res
-                        should.exist err
-                        done()
-
-
-    describe 'createDesignDoc', ->
-        it "creates a new design doc", (done) ->
-            id = "_design/folder"
-            queries =
-                all: """
-            function (doc) {
-                if (doc.docType !== undefined
-                    && doc.docType.toLowerCase() === "folder") {
-                    emit(doc._id, doc);
-                }
-            }
-            """
-            pouch.createDesignDoc id, queries, ->
+    describe 'views', ->
+        describe 'removeFilter', ->
+            it 'removes given view', (done) ->
+                id = "folder"
                 pouch.folders.all (err, res) ->
                     should.not.exist err
-                    res.rows.length.should.be.equal 3
-                    done()
-
-
-    describe 'addFilter', ->
-        # Add filter is run at init, we suppose here it is already launched.
-        it "creates all views", (done) ->
-            pouch.folders.all (err, res) ->
-                should.not.exist err
-                pouch.files.all (err, res) ->
-                    should.not.exist err
-                    pouch.binaries.all (err, res) ->
+                    pouch.removeFilter id, (err) ->
                         should.not.exist err
+                        pouch.folders.all (err, res) ->
+                            console.log res
+                            should.exist err
+                            done()
+
+
+        describe 'createDesignDoc', ->
+            it "creates a new design doc", (done) ->
+                id = "_design/folder"
+                queries =
+                    all: """
+                function (doc) {
+                    if (doc.docType !== undefined
+                        && doc.docType.toLowerCase() === "folder") {
+                        emit(doc._id, doc);
+                    }
+                }
+                """
+                pouch.createDesignDoc id, queries, ->
+                    pouch.folders.all (err, res) ->
+                        should.not.exist err
+                        res.rows.length.should.be.equal 3
                         done()
 
 
-    describe 'removeIfExists', ->
-        it 'removes element with given id', (done) ->
-            pouch.db.get 'folder-3', (err) ->
-                should.not.exist err
+        describe 'addFilter', ->
+            # Add filter is run at init, we suppose here it is already launched.
+            it "creates all views", (done) ->
+                pouch.folders.all (err, res) ->
+                    should.not.exist err
+                    pouch.files.all (err, res) ->
+                        should.not.exist err
+                        pouch.binaries.all (err, res) ->
+                            should.not.exist err
+                            done()
+
+
+        describe 'removeIfExists', ->
+            it 'removes element with given id', (done) ->
+                pouch.db.get 'folder-3', (err) ->
+                    should.not.exist err
+                    pouch.removeIfExists 'folder-3', (err) ->
+                        should.not.exist err
+                        pouch.db.get 'folder-3', (err) ->
+                            should.exist err
+                            done()
+
+            it 'doesnt return an error when the doc is not there', (done) ->
                 pouch.removeIfExists 'folder-3', (err) ->
                     should.not.exist err
                     pouch.db.get 'folder-3', (err) ->
                         should.exist err
                         done()
 
-        it 'doesnt return an error when the doc is not there', (done) ->
-            pouch.removeIfExists 'folder-3', (err) ->
-                should.not.exist err
-                pouch.db.get 'folder-3', (err) ->
-                    should.exist err
-                    done()
+    describe 'odm', ->
+        describe 'newId', ->
+            it "returns a complex alpha-numeric chain", ->
+                pouch.odm.newId().length.should.equal 32
 
-    describe 'newId', ->
-    describe 'getByKey', ->
-    describe 'createNewDoc', ->
+        describe 'getByKey', ->
+            it 'returns document corresponding to key for given view'
 
-    describe 'getPreviousRev', ->
-    describe 'getKnownPath', ->
-    describe 'markAsDeleted', ->
-    describe 'storeLocalRev', ->
+        describe 'createNewDoc', ->
 
-    describe 'files', ->
-        describe 'all', ->
-        describe 'get', ->
-        describe 'createNew', ->
+        describe 'files', ->
+            describe 'all', ->
+            describe 'get', ->
+            describe 'createNew', ->
 
-    describe 'folders', ->
-        describe 'all', ->
-        describe 'get', ->
-        describe 'createNew', ->
-        describe 'upsert', ->
+        describe 'folders', ->
+            describe 'all', ->
+            describe 'get', ->
+            describe 'createNew', ->
+            describe 'upsert', ->
 
-    describe 'binaries', ->
-        describe 'all', ->
-        describe 'get', ->
+        describe 'binaries', ->
+            describe 'all', ->
+            describe 'get', ->
 
-    describe 'getLastRemoteChangeSeq' ->
-    describe 'copyViewFromRemote' ->
-    describe 'replicateToRemote' ->
-    makeFileDoc: (filePath, callback) ->
-    makeFileDocFrom: (existingDoc, infos, callback) ->
-    makeFolderDoc: (folderPath, callback) ->
-    getDocForFile: (filePath, callback) ->
-    uploadBinary: (filePath, binaryDoc, callback) ->
-    getRemoteDoc: (id, callback) ->
-    createEmptyRemoteDoc: (binaryDoc, callback) ->
-    uploadAsAttachment: (remoteId, remoteRev, filePath, callback) ->
+    describe 'helpers', ->
+        describe 'getPreviousRev', ->
+        describe 'getKnownPath', ->
+        describe 'markAsDeleted', ->
+        describe 'storeLocalRev', ->
+
+    describe 'remote', ->
+        describe 'getLastRemoteChangeSeq', ->
+        describe 'copyViewFromRemote', ->
+        describe 'replicateToRemote', ->
+        describe 'makeFileDoc', ->
+        describe 'makeFileDocFrom', ->
+        describe 'makeFolderDoc', ->
+        describe 'getDocForFile', ->
+        describe 'uploadBinary', ->
+        describe 'getRemoteDoc', ->
+        describe 'createEmptyRemoteDoc', ->
+        describe 'uploadAsAttachment', ->

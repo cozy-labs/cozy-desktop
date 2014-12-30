@@ -7,14 +7,14 @@
     "position": "center",
     "width": 600,
     "height": 600,
-    "show": false,
+    "show": true,
     "resizable": false,
-    "toolbar": false,
+    "toolbar": true,
     "icon": "client/public/icon/icon.png",
     "title": "Cozy Desktop"
   },
   "scripts": {
-    "test": "gulp test",
+    "test": "sh scripts/tests.sh",
     "build": "gulp build",
     "prepublish": "gulp build-package"
   },
