@@ -448,8 +448,8 @@ StateView = React.createClass({
   sync: function(options) {
     var gui, localEventWatcher, notifier, open, pouch, publisher, remoteEventWatcher;
     notifier = require('node-notifier');
-    remoteEventWatcher = require('./backend/remoteEventWatcher');
-    localEventWatcher = require('./backend/localEventWatcher');
+    remoteEventWatcher = require('./backend/remote_event_watcher');
+    localEventWatcher = require('./backend/local_event_watcher');
     publisher = require('./backend/publisher');
     pouch = require('./backend/db');
     gui = require('nw.gui');
@@ -633,7 +633,7 @@ StateView = React.createClass({
   onDeleteConfigurationClicked: function() {
     var config, fs, remoteEventWatcher;
     if (confirm('Are you sure?')) {
-      remoteEventWatcher = require('./backend/remoteEventWatcher');
+      remoteEventWatcher = require('./backend/remote_event_watcher');
       config = require('./backend/config');
       fs = require('fs-extra');
       this.setState({

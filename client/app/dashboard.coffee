@@ -49,8 +49,8 @@ StateView = React.createClass
 
     sync: (options)->
         notifier = require 'node-notifier'
-        remoteEventWatcher = require './backend/remoteEventWatcher'
-        localEventWatcher = require './backend/localEventWatcher'
+        remoteEventWatcher = require './backend/remote_event_watcher'
+        localEventWatcher = require './backend/local_event_watcher'
         publisher = require './backend/publisher'
         pouch = require './backend/db'
         gui = require 'nw.gui'
@@ -171,7 +171,7 @@ StateView = React.createClass
 
     onDeleteConfigurationClicked: ->
         if confirm('Are you sure?')
-            remoteEventWatcher = require './backend/remoteEventWatcher'
+            remoteEventWatcher = require './backend/remote_event_watcher'
             config = require './backend/config'
             fs = require 'fs-extra'
             @setState sync: false
