@@ -7,7 +7,15 @@ Line = React.createClass
     render: ->
         className = @props.className
         className ?= 'mtl'
-        div className: "line clearfix #{className}", @props.children
+        displayName = @props.displayName
+        displayName ?= 'Line'
+
+        params =
+             className: "line clearfix #{className}"
+             key: @props.key
+             displayName: displayName
+
+        div params, @props.children
 
 
 Container = React.createClass
@@ -15,13 +23,13 @@ Container = React.createClass
     render: ->
         className = 'container '
         className += @props.className if @props.className
-        div className: className, @props.children
+        div className: className, displayName: 'Container', @props.children
 
 
 Title = React.createClass
 
     render: ->
-        Line null,
+        Line displayName: 'Title',
             div
                 className: "title"
                 h1
@@ -34,13 +42,14 @@ Title = React.createClass
 Subtitle = React.createClass
 
     render: ->
-        h2 {}, @props.text
+        h2 displayName: "Subtitle", @props.text
 
 
 Button = React.createClass
 
     render: ->
         button
+            displayName: "Button"
             className: "btn btn-cozy #{@props.className}"
             ref: @props.ref
             onClick: @props.onClick
@@ -54,7 +63,7 @@ Field = React.createClass
 
     render: ->
         @props.type ?= 'text'
-        Line null,
+        Line displayName: "Field",
             label className: 'mod w100 mrm', @props.label
             input
                 type: @props.type
@@ -99,7 +108,7 @@ Help = React.createClass
 
     render: ->
         @props.type ?= 'text'
-        Line null,
+        Line displayName: "Help",
             label className: 'mod w100 mrm', @props.label
             input
                 type: @props.type
@@ -159,7 +168,7 @@ Folder = React.createClass
 
     render: ->
         @props.type ?= 'text'
-        Line null,
+        Line displayName: "Folder",
             label className: 'mod w100 mrm', @props.label
             button
                 className: 'btn btn-cozy folder'
@@ -224,7 +233,10 @@ Folder = React.createClass
 InfoLine = React.createClass
 
     render: ->
-        Line className: 'parameter',
+        params =
+            className: 'parameter'
+            displayName: 'InfoLine'
+        Line params,
             span className: "parameter label", "#{@props.label} :"
             Line className: 'parameter value',
                 span null, @props.value

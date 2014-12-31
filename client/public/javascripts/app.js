@@ -4,14 +4,21 @@ _ref = React.DOM, div = _ref.div, p = _ref.p, img = _ref.img, span = _ref.span, 
 
 Line = React.createClass({
   render: function() {
-    var className;
+    var className, displayName, params;
     className = this.props.className;
     if (className == null) {
       className = 'mtl';
     }
-    return div({
-      className: "line clearfix " + className
-    }, this.props.children);
+    displayName = this.props.displayName;
+    if (displayName == null) {
+      displayName = 'Line';
+    }
+    params = {
+      className: "line clearfix " + className,
+      key: this.props.key,
+      displayName: displayName
+    };
+    return div(params, this.props.children);
   }
 });
 
@@ -23,14 +30,17 @@ Container = React.createClass({
       className += this.props.className;
     }
     return div({
-      className: className
+      className: className,
+      displayName: 'Container'
     }, this.props.children);
   }
 });
 
 Title = React.createClass({
   render: function() {
-    return Line(null, div({
+    return Line({
+      displayName: 'Title'
+    }, div({
       className: "title"
     }, h1({
       ref: this.props.ref
@@ -43,13 +53,16 @@ Title = React.createClass({
 
 Subtitle = React.createClass({
   render: function() {
-    return h2({}, this.props.text);
+    return h2({
+      displayName: "Subtitle"
+    }, this.props.text);
   }
 });
 
 Button = React.createClass({
   render: function() {
     return button({
+      displayName: "Button",
       className: "btn btn-cozy " + this.props.className,
       ref: this.props.ref,
       onClick: this.props.onClick
@@ -68,7 +81,9 @@ Field = React.createClass({
     if ((_base = this.props).type == null) {
       _base.type = 'text';
     }
-    return Line(null, label({
+    return Line({
+      displayName: "Field"
+    }, label({
       className: 'mod w100 mrm'
     }, this.props.label), input({
       type: this.props.type,
@@ -128,7 +143,9 @@ Help = React.createClass({
     if ((_base = this.props).type == null) {
       _base.type = 'text';
     }
-    return Line(null, label({
+    return Line({
+      displayName: "Help"
+    }, label({
       className: 'mod w100 mrm'
     }, this.props.label), input({
       type: this.props.type,
@@ -208,7 +225,9 @@ Folder = React.createClass({
     if ((_base = this.props).type == null) {
       _base.type = 'text';
     }
-    return Line(null, label({
+    return Line({
+      displayName: "Folder"
+    }, label({
       className: 'mod w100 mrm'
     }, this.props.label), button({
       className: 'btn btn-cozy folder'
@@ -290,9 +309,12 @@ Folder = React.createClass({
 
 InfoLine = React.createClass({
   render: function() {
-    return Line({
-      className: 'parameter'
-    }, span({
+    var params;
+    params = {
+      className: 'parameter',
+      displayName: 'InfoLine'
+    };
+    return Line(params, span({
       className: "parameter label"
     }, "" + this.props.label + " :"), Line({
       className: 'parameter value'
@@ -378,12 +400,14 @@ StateView = React.createClass({
     };
   },
   render: function() {
-    var i, log, logs, state, syncButtonLabel, _i, _len, _ref;
+    var i, log, logs, params, state, syncButtonLabel, _i, _len, _ref;
     logs = [];
     if (this.state.logs.length === 0) {
-      logs.push(Line({
-        className: 'smaller'
-      }, 'nothing to notice...'));
+      params = {
+        className: 'smaller',
+        key: '0'
+      };
+      logs.push(Line(params, 'nothing to notice...'));
     } else {
       i = 0;
       _ref = this.state.logs;
@@ -604,9 +628,9 @@ StateView = React.createClass({
     if (log.length > 70) {
       length = log.length;
       if (log.substring(0, 2) === "Fi") {
-        log = "File ..." + log.substring(length - 67, length);
+        log = "File... " + (log.substring(length - 67, length));
       } else {
-        log = "Folder ..." + log.substring(length - 67, length);
+        log = "Folder..." + (log.substring(length - 67, length));
       }
     }
     logs.push(moment().format('HH:MM:SS ') + log);
@@ -1220,7 +1244,6 @@ window.onload = function() {
   }
   polyglot.extend(locales);
   window.t = polyglot.t.bind(polyglot);
-  win.hide();
   return renderState(configHelpers.getState());
 };
 ;

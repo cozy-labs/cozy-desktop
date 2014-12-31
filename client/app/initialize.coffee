@@ -41,6 +41,6 @@ window.onload = ->
         locales = fr
     polyglot.extend locales
     window.t = polyglot.t.bind polyglot
-    win.hide()
+    #win.hide()
 
     renderState configHelpers.getState()

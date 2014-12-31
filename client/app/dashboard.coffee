@@ -7,7 +7,9 @@ StateView = React.createClass
     render: ->
         logs = []
         if @state.logs.length is 0
-            logs.push Line className: 'smaller', 'nothing to notice...'
+            params =
+                className: 'smaller', key: '0'
+            logs.push Line params, 'nothing to notice...'
         else
             i = 0
             for log in @state.logs
@@ -94,25 +96,33 @@ StateView = React.createClass
             # Remote to local messages
             publisher.on 'downloadingRemoteChanges', =>
                 @displayLog 'Downloading missing files from remote...'
+
             publisher.on 'binaryDownloadStdebug', (path) =>
                 tray.icon = 'client/public/icon/icon_sync.png'
                 @displayLog "File #{path} is downloading..."
+
             publisher.on 'binaryDownloaded', (path) =>
                 tray.icon = 'client/public/icon/icon.png'
                 @displayLog "File #{path} downloaded"
                 @fileModification path
+
             publisher.on 'applyingChanges', =>
                 tray.icon = 'client/public/icon/icon_sync.png'
+
             publisher.on 'changesApplied', =>
                 tray.icon = 'client/public/icon/icon.png'
+
             publisher.on 'fileDeleted', (path) =>
                 @displayLog "File #{path} deleted"
+
             publisher.on 'fileMoved', (info) =>
                 {previousPath, newPath} = info
                 @displayLog "File moved: #{previousPath} -> #{newPath}"
                 @fileModification newPath
+
             publisher.on 'folderDeleted', (path) =>
                 @displayLog "Folder #{path} deleted"
+
             publisher.on 'folderMoved', (info) =>
                 {previousPath, newPath} = info
                 @displayLog "Folder moved: #{previousPath} -> #{newPath}"
@@ -120,23 +130,31 @@ StateView = React.createClass
             # Local to remote messages
             publisher.on 'uploadingLocalChanges', =>
                 @displayLog 'Uploading modifications to remote...'
-             publisher.on 'uploadBinary', (path) =>
+
+            publisher.on 'uploadBinary', (path) =>
                 tray.icon = 'client/public/icon/icon_sync.png'
                 @displayLog "File #{path} is uploading..."
+
             publisher.on 'binaryUploaded', (path) =>
                 tray.icon = 'client/public/icon/icon.png'
                 @displayLog "File #{path} uploaded"
                 @fileModification path
+
             publisher.on 'fileAddedLocally', (path) =>
                 @displayLog "File #{path} locally added"
+
             publisher.on 'fileDeletedLocally', (path) =>
                 @displayLog "File #{path} locally deleted"
+
             publisher.on 'fileDeletedLocally', (path) =>
                 @displayLog "File #{path} locally deleted"
+
             publisher.on 'fileModificationLocally', (path) =>
                 @displayLog "File #{path} locally changed"
+
             publisher.on 'folderAddedLocally', (path) =>
                 @displayLog "Folder #{path} locally added"
+
             publisher.on 'folderDeletedLocally', (path) =>
                 @displayLog "Folder #{path} locally deleted"
 
@@ -144,18 +162,23 @@ StateView = React.createClass
     displayLog: (log) ->
         logs = @state.logs
         moment = require 'moment'
+
         @setState logs: logs
         tray.tooltip = log
+
         if log.length > 70
             length = log.length
             if log.substring(0,2) is "Fi"
-                log = "File ..." + log.substring(length-67, length)
+                log = "File... #{log.substring(length-67, length)}"
             else
-                log = "Folder ..." + log.substring(length-67, length)
+                log = "Folder...#{log.substring(length-67, length)}"
+
         logs.push moment().format('HH:MM:SS ') + log
+
         if log.length > 40
             length = log.length
             log = "..." + log.substring(length-37, length)
+
         menu.items[5].label = log
 
     fileModification: (file) ->
@@ -165,17 +188,20 @@ StateView = React.createClass
             label: file
             click: ->
                 open file
+
         # Do not store more than 10 menu items
         if modMenu.items.length > 12
             modMenu.removeAt modMenu.items.length-3
 
     onDeleteConfigurationClicked: ->
         if confirm('Are you sure?')
+
             remoteEventWatcher = require './backend/remote_event_watcher'
             config = require './backend/config'
             fs = require 'fs-extra'
             @setState sync: false
             remoteEventWatcher.cancel()
+
             fs.remove configDir, (err) ->
                 alert t 'Configuration deleted.'
                 tray.remove()
