@@ -30,7 +30,7 @@ getByKey = (query, key, callback) ->
             include_docs: true
             key: key
         db.query query, params, (err, docs) ->
-            if err.status is 404
+            if err?.status is 404
                 callback null, []
             else if err
                 callback err
