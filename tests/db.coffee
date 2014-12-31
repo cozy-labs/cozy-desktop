@@ -20,13 +20,16 @@ describe "DB Tests", ->
     after cliHelpers.resetDatabase
 
     createBinary = (i, callback) ->
-        pouch.db.put
+        doc =
             _id: "binary-#{i}"
             docType: 'Binary'
-            binary:
-                file:
-                    id: "binary-#{i}"
-        , callback
+
+        pouch.db.put doc, ->
+            doc =
+                _id: "binary-checksum"
+                checksum: "123"
+
+            pouch.db.put doc, callback
 
     createFile = (i, callback) ->
         pouch.db.put
@@ -34,6 +37,9 @@ describe "DB Tests", ->
             docType: 'File'
             path: 'myfolder'
             name: "filename-#{i}"
+            bynary:
+                file:
+                    id: "binary-#{i}"
         , callback
 
     createFolder = (i, callback) ->
@@ -118,7 +124,10 @@ describe "DB Tests", ->
                 pouch.odm.newId().length.should.equal 32
 
         describe 'getByKey', ->
-            it 'returns document corresponding to key for given view'
+            it 'returns document corresponding to key for given view', ->
+                pouch.odm.getByKey 'byChecksum', undefined, (err, docs) ->
+                    should.not.exist err
+                    docs.length.should.equal 0
 
         describe 'createNewDoc', ->
 

@@ -20,26 +20,29 @@ db.setMaxListeners 100
 fs.ensureDirSync config.dir
 
 
-# TODO add test
 newId = ->
     uuid.v4().split('-').join('')
 
 
-# TODO add tests
 getByKey = (query, key, callback) ->
-    params =
-        include_docs: true
-        key: key
-    db.query query, params, (err, docs) ->
-        if err
-            callback err
-        else if docs.rows.length is 0
-            callback()
-        else
-            if value?
-                callback null, docs.rows[0].value
+    if key?
+        params =
+            include_docs: true
+            key: key
+        db.query query, params, (err, docs) ->
+            if err.status is 404
+                callback null, []
+            else if err
+                callback err
+            else if docs.rows.length is 0
+                callback()
             else
-                callback null, docs.rows[0].doc
+                if value?
+                    callback null, docs.rows[0].value
+                else
+                    callback null, docs.rows[0].doc
+    else
+        callback null, []
 
 # TODO add tests
 createNewDoc = (docType, fields, callback) ->
@@ -738,3 +741,4 @@ module.exports = dbHelpers =
 
         progress.showUpload filePath, streams.fileStream
 
+    odm: {newId, getByKey, createNewDoc}
