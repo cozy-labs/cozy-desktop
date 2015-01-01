@@ -46,6 +46,7 @@ displayTrayMenu = ->
         type: 'normal'
         label: t 'show logs'
         click: ->
+            win.hide()
             win.show()
 
     @menu.append new gui.MenuItem
@@ -60,6 +61,7 @@ displayTrayMenu = ->
         type: 'normal'
         label: t 'parameters'
         click: ->
+          win.hide()
           win.show()
 
     @menu.append new gui.MenuItem
@@ -79,7 +81,8 @@ displayTrayMenu = ->
 
     @tray.menu = @menu
 
-    @tray.on 'click', ->
+    @tray.on 'click', =>
+        win.hide()
         win.show()
 
     setDiskSpace = ->
