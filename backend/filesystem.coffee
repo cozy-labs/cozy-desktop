@@ -25,7 +25,7 @@ filesystem =
         remoteConfig = config.getConfig()
 
         # Assuming filePath is 'hello/world.html':
-        absolute  = path.resolve filePath # /home/sync/hello/world.html
+        absolute  = path.resolve remoteConfig.path, filePath # /home/sync/hello/world.html
         relative = path.relative remoteConfig.path, absolute # hello/world.html
         name = path.basename filePath # world.html
         parent = path.dirname path.join path.sep, relative # /hello
@@ -130,14 +130,20 @@ filesystem =
         pouch.binaries.get checksum, (err, binaryDoc) ->
             if err
                 callback err
-            else if not binaryDoc?
+            else if not binaryDoc? or binaryDoc.length is 0
+                callback null, false
+            else if not binaryDoc.path?
                 callback null, false
             else
-                fs.exists binaryDoc.path, (exists) ->
-                    if exists
-                        callback null, binaryDoc.path
-                    else
-                        callback null, false
+                binaryPath = filesystem.getPaths binaryDoc.path
+                if binaryPath.absolute?
+                    fs.exists binaryPath.absolute, (exists) ->
+                        if exists
+                            callback null, binaryDoc.path
+                        else
+                            callback null, false
+                else
+                    callback null, false
 
     isBeingCopied: (filePath, callback) ->
         # Check if the size of the file has changed during the last second
@@ -240,9 +246,15 @@ filesystem =
                     progress.showDownload size, res
 
                 res.on 'end', ->
-                    log.info "Binary downloaded: #{targetPath}"
-                    publisher.emit 'binaryDownloaded', targetPath
-                    callback()
+                    if res.statusCode isnt 200
+                        log.error 'File not found'
+                        fs.remove targetPath, ->
+                            callback new Error 'File not found'
+
+                    else
+                        log.info "Binary downloaded: #{targetPath}"
+                        publisher.emit 'binaryDownloaded', targetPath
+                        callback()
 
 
 module.exports = filesystem

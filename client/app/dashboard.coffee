@@ -1,3 +1,5 @@
+moment = require 'moment'
+
 StateView = React.createClass
 
     getInitialState: ->
@@ -162,7 +164,6 @@ StateView = React.createClass
 
     displayLog: (log) ->
         logs = @state.logs
-        moment = require 'moment'
 
         @setState logs: logs
         tray.tooltip = log
@@ -174,7 +175,7 @@ StateView = React.createClass
             else
                 log = "Folder...#{log.substring(length-67, length)}"
 
-        logs.push moment().format('HH:MM:SS ') + log
+        logs.push moment().format('HH:mm:ss ') + log
 
         if log.length > 40
             length = log.length
