@@ -135,7 +135,16 @@ operationQueue =
     #
     # Remote-to-local operations
     #
+    # Steps:
+    # * Checks if the doc is valid: has a path and a name.
+    # * Ensure parent folder exists.
+    # * Try to find a similar file based on his checksum. In that case, it
+    #   just requires a local copy.
+    # * Download the linked binary from remote.
+    # * Update creation and last modification dates
+    #
     createFileLocally: (doc, callback) ->
+
         remoteConfig = config.getConfig()
         unless doc?.path? and doc?.name? and doc.binary?.file?.id?
             log.warn "The doc is invalid: #{JSON.stringify doc}"
@@ -145,9 +154,9 @@ operationQueue =
             pouch.db.remove doc, (err) ->
                 err = new Error "The doc was invalid: #{JSON.stringify doc}"
                 callback err
-        else
 
-            parent   = path.join remoteConfig.path, doc.path
+        else
+            parent = path.join remoteConfig.path, doc.path
             filePath = path.join parent, doc.name
             binaryId = doc.binary.file.id
             checksum = doc.binary.file.checksum
@@ -166,16 +175,19 @@ operationQueue =
                 # download the binary from CouchDB
                 (existingFilePath, next) ->
                     if existingFilePath
-                        fs.copy existingFilePath, filePath, next
+                        source = filesystem.getPaths existingFilePath
+                        target = filesystem.getPaths filePath
+                        fs.copy source.absolute, target.absolute, next
                     else
-                        filesystem.downloadBinary binaryId, filePath, doc.size, next
+                        filesystem.downloadBinary(
+                            binaryId, filePath, doc.size, next)
 
                 # Change utimes (creation and modification date)
                 (res, next) ->
                     next ?= res
                     creationDate = new Date doc.creationDate
                     lastModification = new Date doc.lastModification
-                    fs.utimes filePath, creationDate, lastModification, next
+                    fs.utimes filePath, new Date(), lastModification, next
 
             ], callback
 
