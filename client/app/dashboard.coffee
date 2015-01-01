@@ -82,11 +82,12 @@ StateView = React.createClass
 
             pouch.addAllFilters ->
 
-                remoteEventWatcher.start()
+                remoteEventWatcher.init ->
+                    remoteEventWatcher.start()
 
-                # Delay the start of the FS watcher to keep applying remote
-                # modifications before local ones.
-                setTimeout (-> localEventWatcher.start()), 2000
+                    # Delay the start of the FS watcher to keep applying remote
+                    # modifications before local ones.
+                    setTimeout (-> localEventWatcher.start()), 2000
 
             #TODO: Arrange published names
 

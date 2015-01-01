@@ -10,7 +10,7 @@
     "show": true,
     "resizable": false,
     "toolbar": true,
-    "icon": "client/public/icon/icon.png",
+    "icon": "client/public/icon/main_icon.png",
     "title": "Cozy Desktop"
   },
   "scripts": {

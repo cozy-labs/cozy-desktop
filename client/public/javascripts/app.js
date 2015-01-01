@@ -390,7 +390,9 @@ configHelpers = {
     return device = options;
   }
 };
-;var StateView;
+;var StateView, moment;
+
+moment = require('moment');
 
 StateView = React.createClass({
   getInitialState: function() {
@@ -503,10 +505,12 @@ StateView = React.createClass({
       });
       tray.icon = 'client/public/icon/icon_sync.png';
       pouch.addAllFilters(function() {
-        remoteEventWatcher.start();
-        return setTimeout((function() {
-          return localEventWatcher.start();
-        }), 2000);
+        return remoteEventWatcher.init(function() {
+          remoteEventWatcher.start();
+          return setTimeout((function() {
+            return localEventWatcher.start();
+          }), 2000);
+        });
       });
       publisher.on('firstSyncDone', (function(_this) {
         return function() {
@@ -618,9 +622,8 @@ StateView = React.createClass({
     }
   },
   displayLog: function(log) {
-    var length, logs, moment;
+    var length, logs;
     logs = this.state.logs;
-    moment = require('moment');
     this.setState({
       logs: logs
     });
@@ -633,7 +636,7 @@ StateView = React.createClass({
         log = "Folder..." + (log.substring(length - 67, length));
       }
     }
-    logs.push(moment().format('HH:MM:SS ') + log);
+    logs.push(moment().format('HH:mm:ss ') + log);
     if (log.length > 40) {
       length = log.length;
       log = "..." + log.substring(length - 37, length);
@@ -850,6 +853,7 @@ displayTrayMenu = function() {
     type: 'normal',
     label: t('show logs'),
     click: function() {
+      win.hide();
       return win.show();
     }
   }));
@@ -865,6 +869,7 @@ displayTrayMenu = function() {
     type: 'normal',
     label: t('parameters'),
     click: function() {
+      win.hide();
       return win.show();
     }
   }));
@@ -888,9 +893,12 @@ displayTrayMenu = function() {
     }
   }));
   this.tray.menu = this.menu;
-  this.tray.on('click', function() {
-    return win.show();
-  });
+  this.tray.on('click', (function(_this) {
+    return function() {
+      win.hide();
+      return win.show();
+    };
+  })(this));
   setDiskSpace = function() {
     return config.getDiskSpace((function(_this) {
       return function(err, res) {
