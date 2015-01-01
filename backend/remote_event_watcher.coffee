@@ -54,6 +54,7 @@ remoteEventWatcher =
             operationQueue.makeFSSimilarToDB (err) ->
                 process.exit(1) if err
                 log.info 'Filesystem built on your device.'
+                publisher.emit 'firstSyncDone'
 
                 callback()
 
@@ -79,7 +80,6 @@ remoteEventWatcher =
                     else
                         log.debug "All changes retrieved."
                         log.info 'All your files are available on your device.'
-                        publisher.emit 'firstSyncDone'
                         config.setRemoteSeq seq
                         callback null, seq
 
