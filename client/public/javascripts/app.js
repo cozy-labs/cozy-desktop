@@ -53,9 +53,16 @@ Title = React.createClass({
 
 Subtitle = React.createClass({
   render: function() {
-    return h2({
-      displayName: "Subtitle"
-    }, this.props.text);
+    var className, params;
+    className = this.props.className;
+    if (className == null) {
+      className = '';
+    }
+    params = {
+      displayName: "Subtitle",
+      className: className
+    };
+    return h2(params, this.props.text);
   }
 });
 
@@ -390,7 +397,9 @@ configHelpers = {
     return device = options;
   }
 };
-;var StateView;
+;var StateView, moment;
+
+moment = require('moment');
 
 StateView = React.createClass({
   getInitialState: function() {
@@ -618,9 +627,8 @@ StateView = React.createClass({
     }
   },
   displayLog: function(log) {
-    var length, logs, moment;
+    var length, logs;
     logs = this.state.logs;
-    moment = require('moment');
     this.setState({
       logs: logs
     });
@@ -633,7 +641,7 @@ StateView = React.createClass({
         log = "Folder..." + (log.substring(length - 67, length));
       }
     }
-    logs.push(moment().format('HH:MM:SS ') + log);
+    logs.push(moment().format('HH:mm:ss ') + log);
     if (log.length > 40) {
       length = log.length;
       log = "..." + log.substring(length - 37, length);
@@ -704,7 +712,7 @@ en = {
   'register device and synchronize': 'Register then go to next step >',
   'start configuring your device': 'Start to configure your device and sync your files',
   'welcome to the cozy desktop': 'Welcome to the Cozy Desktop, the module that syncs your computer with your Cozy!',
-  'path': 'Path',
+  'path': 'Synchronized directory',
   'url': 'URL',
   'resync all': 'Resync All',
   'Laptop': 'Laptop',
@@ -726,7 +734,7 @@ en = {
   'path description': 'Path of the folder where you will see your cozy files',
   'device already used': "This device name is already used. Could you change it, please.",
   'first step text': "Prior to register your computer to your Cozy, we need information about it.",
-  'second step text': "It's time to register your computer to your Cozy\n(your password won't be stored).",
+  'second step text': "It's time to register your computer to your Cozy.",
   'last changes': 'Last changes',
   'parameters': 'Parameters',
   'open folder': 'Open folder',
@@ -751,7 +759,7 @@ fr = {
   'register device and synchronize': "Enregistrer puis aller à l'étape suivante 〉",
   'start configuring your device': 'Démarrer la configuration de votre appareil et synchroniser vos fichiers',
   'welcome to the cozy desktop': 'Bienvenue sur Cozy Desktop, le module qui vous permet de synchroniser votre ordinateur avec votre Cozy !',
-  'path': 'Chemin',
+  'path': 'Répertoire Synchrnoisé',
   'url': 'URL',
   'Laptop': 'MonOrdinateur',
   'select folder': 'Sélectionnez votre dossier',
@@ -760,7 +768,7 @@ fr = {
   'delete configuration and files': 'Suppression de la configuration et des fichiers',
   'on': 'En cours',
   'off': 'Arrêtée',
-  'stop sync': 'Stopper la synchronisation',
+  'stop sync': 'Arrêter la synchronisation',
   'device name': "Nom de l'appareil",
   'sync state': 'Synchronisation',
   'clear logs': 'Supprimer les logs',
@@ -769,11 +777,11 @@ fr = {
   'value is missing': 'Une valeur est nécessaire pour ce champ.',
   'bad credentials': "L'adresse et le mot de passe de votre Cozy ne correspondent pas.",
   'not found': "Votre Cozy n'est pas accessible, veuillez vérifier son adresse.",
-  'device description': "Exemple : 'MonOrdinateur', 'FixePerso', 'LaptopPro', ...\nLe nom de votre appareil permet de l'enregistrer auprès de votre Cozy. Cela vous permettra par la suite de gérer les accès de votre appareil dans l'interface de votre Cozy. ",
+  'device description': "Exemple : 'MonOrdinateur', 'FixePerso', 'LaptopPro', ...\nLe nom de votre appareil permet de l'enregistrer auprès de votre Cozy. Cela vous permettra par la suite de gérer les accès de votre appareil dans l'interface de votre Cozy.",
   'path description': 'Chemin du dossier où seront stockés les fichiers de votre Cozy.',
   'device already used': "Ce nom d'appareil est déjà utilisé pour un autre appareil. Veuillez en choisir un autre.",
   'first step text': "Nous allons pouvoir maintenant configurer votre appareil.",
-  'second step text': "Enregistrer votre appareil auprès de votre Cozy. Votre mot de passe ne sera pas sauvegardé.",
+  'second step text': "Enregistrer votre appareil auprès de votre Cozy.",
   'last changes': 'Derniers changements',
   'parameters': 'Configuration',
   'open folder': 'Ouvrir le dossier',
@@ -1233,15 +1241,16 @@ renderState = function(state) {
 };
 
 window.onload = function() {
-  var locale, locales, polyglot;
+  var locales, polyglot;
   window.__DEV__ = window.location.hostname === 'localhost';
-  locale = window.locale || window.navigator.language || "en";
+  locales = window.locale || window.navigator.language || "en";
   locales = {};
   polyglot = new Polyglot();
   locales = en;
   if (process.env.LANG.indexOf('fr') === 0) {
     locales = fr;
   }
+  locales = en;
   polyglot.extend(locales);
   window.t = polyglot.t.bind(polyglot);
   return renderState(configHelpers.getState());

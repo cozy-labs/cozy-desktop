@@ -33,12 +33,13 @@ window.onload = ->
     window.__DEV__ = window.location.hostname is 'localhost'
 
     # use Cozy instance locale or navigator language or "en" by default
-    locale = window.locale or window.navigator.language or "en"
+    locales = window.locale or window.navigator.language or "en"
     locales = {}
     polyglot = new Polyglot()
     locales = en
     if process.env.LANG.indexOf('fr') is 0
         locales = fr
+    locales = en
     polyglot.extend locales
     window.t = polyglot.t.bind polyglot
     #win.hide()

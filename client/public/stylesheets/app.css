@@ -3731,6 +3731,9 @@ textarea:focus {
 .btn.btn-cozy:active,
 .btn.btn-cozy:focus {
   border: 0px;
+  outline: 0;
+}
+.btn.btn-cozy:active {
   box-shadow: 1px 3px 2px rgba(0,0,0,0.2) inset, 0 1px 2px rgba(0,0,0,0);
 }
 .btn.btn-cozy.toggled {
@@ -3784,7 +3787,10 @@ h1 {
   color: #fff;
 }
 h2 {
-  padding: 10px;
+  padding: 10px 0 0 0;
+}
+h2:first-child {
+  padding-top: 30px;
 }
 #logo {
   width: 250px;

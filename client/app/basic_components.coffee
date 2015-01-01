@@ -42,7 +42,12 @@ Title = React.createClass
 Subtitle = React.createClass
 
     render: ->
-        h2 displayName: "Subtitle", @props.text
+        className = @props.className
+        className ?= ''
+        params =
+            displayName: "Subtitle"
+            className: className
+        h2 params, @props.text
 
 
 Button = React.createClass

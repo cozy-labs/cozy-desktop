@@ -10,7 +10,7 @@ en =
     'register device and synchronize': 'Register then go to next step >'
     'start configuring your device': 'Start to configure your device and sync your files'
     'welcome to the cozy desktop': 'Welcome to the Cozy Desktop, the module that syncs your computer with your Cozy!'
-    'path': 'Path'
+    'path': 'Synchronized directory'
     'url': 'URL'
     'resync all': 'Resync All'
     'Laptop': 'Laptop'
@@ -35,8 +35,7 @@ en =
 Prior to register your computer to your Cozy, we need information about it.
 """
     'second step text': """
-It's time to register your computer to your Cozy
-(your password won't be stored).
+It's time to register your computer to your Cozy.
 """
     'last changes': 'Last changes'
     'parameters': 'Parameters'

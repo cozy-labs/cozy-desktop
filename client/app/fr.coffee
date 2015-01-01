@@ -10,7 +10,7 @@ fr =
     'register device and synchronize': "Enregistrer puis aller à l'étape suivante 〉"
     'start configuring your device': 'Démarrer la configuration de votre appareil et synchroniser vos fichiers'
     'welcome to the cozy desktop': 'Bienvenue sur Cozy Desktop, le module qui vous permet de synchroniser votre ordinateur avec votre Cozy !'
-    'path': 'Chemin'
+    'path': 'Répertoire Synchrnoisé'
     'url': 'URL'
     'Laptop': 'MonOrdinateur'
     'select folder': 'Sélectionnez votre dossier'
@@ -19,7 +19,7 @@ fr =
     'delete configuration and files': 'Suppression de la configuration et des fichiers'
     'on': 'En cours'
     'off': 'Arrêtée'
-    'stop sync': 'Stopper la synchronisation'
+    'stop sync': 'Arrêter la synchronisation'
     'device name': "Nom de l'appareil"
     'sync state': 'Synchronisation'
     'clear logs': 'Supprimer les logs'
@@ -30,7 +30,7 @@ fr =
     'not found': "Votre Cozy n'est pas accessible, veuillez vérifier son adresse."
     'device description' : """
     Exemple : 'MonOrdinateur', 'FixePerso', 'LaptopPro', ...
-    Le nom de votre appareil permet de l'enregistrer auprès de votre Cozy. Cela vous permettra par la suite de gérer les accès de votre appareil dans l'interface de votre Cozy. 
+    Le nom de votre appareil permet de l'enregistrer auprès de votre Cozy. Cela vous permettra par la suite de gérer les accès de votre appareil dans l'interface de votre Cozy.
     """
     'path description' : 'Chemin du dossier où seront stockés les fichiers de votre Cozy.'
     'device already used': "Ce nom d'appareil est déjà utilisé pour un autre appareil. Veuillez en choisir un autre."
@@ -38,7 +38,7 @@ fr =
 Nous allons pouvoir maintenant configurer votre appareil.
 """
     'second step text': """
-Enregistrer votre appareil auprès de votre Cozy. Votre mot de passe ne sera pas sauvegardé.
+Enregistrer votre appareil auprès de votre Cozy.
 """
     'last changes': 'Derniers changements'
     'parameters': 'Configuration'
