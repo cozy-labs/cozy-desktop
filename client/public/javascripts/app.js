@@ -1248,13 +1248,13 @@ renderState = function(state) {
 };
 
 window.onload = function() {
-  var locales, polyglot;
+  var locales, polyglot, _ref;
   window.__DEV__ = window.location.hostname === 'localhost';
   locales = window.locale || window.navigator.language || "en";
   locales = {};
   polyglot = new Polyglot();
   locales = en;
-  if (process.env.LANG.indexOf('fr') === 0) {
+  if (((_ref = process.env.LANG) != null ? _ref.indexOf('fr') : void 0) === 0) {
     locales = fr;
   }
   locales = en;
