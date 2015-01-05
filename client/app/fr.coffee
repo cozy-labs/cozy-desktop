@@ -10,7 +10,7 @@ fr =
     'register device and synchronize': "Enregistrer puis aller à l'étape suivante 〉"
     'start configuring your device': 'Démarrer la configuration de votre appareil et synchroniser vos fichiers'
     'welcome to the cozy desktop': 'Bienvenue sur Cozy Desktop, le module qui vous permet de synchroniser votre ordinateur avec votre Cozy !'
-    'path': 'Répertoire Synchrnoisé'
+    'path': 'Dossier synchronisé'
     'url': 'URL'
     'Laptop': 'MonOrdinateur'
     'select folder': 'Sélectionnez votre dossier'
