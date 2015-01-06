@@ -110,7 +110,4 @@ describe "Config Tests", ->
 
     describe 'getUrl', ->
         it 'should give remote Cozy url', ->
-
-            password = config.getConfig().devicePassword
-            url = "http://new-cozy3:#{password}@localhost:9104/cozy"
-            config.getUrl().should.equal url
+            config.getUrl().should.equal "nonecozy"
