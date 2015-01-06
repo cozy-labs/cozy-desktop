@@ -105,6 +105,10 @@ npm install
 
 # Then run tests via gulp
 node_modules/.bin/gulp test
+
+# To run a specific set of tests (here testing local_watcher with DEBUG activated)
+npm install -g mocha
+DEBUG=true DEFAULT_DIR=tests mocha --compilers coffee:coffee-script/register tests/local_watcher.coffee
 ```
 
 ## What is Cozy?
