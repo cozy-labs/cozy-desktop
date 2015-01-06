@@ -3,10 +3,8 @@ request = require 'request-json-light'
 should = require 'should'
 date = require 'date-utils'
 
-config      = require '../backend/config'
-replication = require '../backend/replication'
-binary      = require '../backend/binary'
-pouch       = require '../backend/db'
+config = require '../backend/config'
+pouch  = require '../backend/db'
 
 helpers = require './helpers/helpers'
 cliHelpers = require './helpers/cli'
