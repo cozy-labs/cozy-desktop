@@ -200,12 +200,19 @@ operationQueue =
 
         else if doc.path?.indexOf('undefined') >= 0
             pouch.db.remove doc, (err) ->
-                err = new Error "The doc was invalid: #{JSON.stringify doc}"
-                callback err
+                log.warn "The doc was invalid: #{JSON.stringify doc}"
+                callback()
 
         else
             folderPath = path.join remoteConfig.path, doc.path, doc.name
-            fs.ensureDir folderPath, callback
+            fs.ensureDir folderPath, (err, res) ->
+                return callback() if not doc.lastModification?
+
+                # Update last modification date
+                creationDate = new Date doc.creationDate
+                lastModification = new Date doc.lastModification
+                fs.utimes folderPath, new Date(), lastModification, callback
+
 
     deleteFileLocally: (doc, callback) ->
         pouch.getKnownPath doc, (err, filePath) ->

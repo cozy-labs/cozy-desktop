@@ -129,7 +129,24 @@ describe "DB Tests", ->
                     should.not.exist err
                     docs.length.should.equal 0
 
-        describe 'createNewDoc', ->
+        # Not part of the module exports
+        #
+        #describe 'createNewDoc', ->
+        #    it 'creates a document with the proper docType', (done) ->
+        #        doc =
+        #            path: ''
+        #            name: 'remotefolder-04'
+        #            tags: []
+
+        #        pouch.createNewDoc 'Folder', doc, (err, res) ->
+        #            should.not.exist err
+        #            pouch.folders.get '/remotefolder-04', (err, doc) ->
+        #                should.not.exist err
+        #                doc.path.should.be.equal ''
+        #                doc.name.should.be.equal 'remotefolder-04'
+        #                doc.tags.should.be.equal []
+        #                doc.docType.toLowerCase().should.be.equal 'folder'
+        #                done()
 
         describe 'files', ->
             describe 'all', ->
