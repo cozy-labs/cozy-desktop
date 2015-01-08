@@ -262,7 +262,7 @@ operationQueue =
                 log.error "File #{oldPath} not found, and cannot be moved."
                 callback()
 
-            # The destination file already exists, duplcate
+            # The destination file already exists, duplicate
             else if oldPathExists and newPathExists
                 if doc.docType.toLowerCase() is 'folder'
                     if newPath isnt oldPath
@@ -334,24 +334,9 @@ operationQueue =
                     operationQueue.createFolderLocally doc, done
             , callback
 
-    # - check file existence locally, if the file doesn't exist, it is deleted
-    # - create remote folder if needed.
-    prepareRemoteCreation: (filePaths, callback) ->
-        # Check that the file exists and is located in the sync
-        # directory
-        filesystem.checkLocation filePaths.absolute, (err) ->
-            if err
-                log.debug "File doesn't exist locally, abort."
-                pouch.files.get filePaths.relative, (error, doc) ->
-                    if doc?
-                        pouchd.db.remove doc, callback
-                    else
-                        callback err
-            else
-                absPath = filePaths.absParent
-                operationQueue.createFolderRemotely absPath, callback
 
     # Create a file remotely from local file.
+    # TODO: Refactor with async again
     createFileRemotely: (filePath, callback) ->
         filePaths = filesystem.getPaths filePath
         absPath = filePaths.absolute
@@ -395,6 +380,24 @@ operationQueue =
                                         pouch.storeLocalRev res.rev, ->
                                             log.debug "File #{relPath} remotely created."
                                             callback()
+
+
+    # - check file existence locally, if the file doesn't exist, it is deleted
+    # - create remote folder if needed.
+    prepareRemoteCreation: (filePaths, callback) ->
+        # Check that the file exists and is located in the sync
+        # directory
+        filesystem.checkLocation filePaths.absolute, (err) ->
+            if err
+                log.debug "File doesn't exist locally, abort."
+                pouch.files.get filePaths.relative, (error, doc) ->
+                    if doc?
+                        pouchd.db.remove doc, callback
+                    else
+                        callback err
+            else
+                absPath = filePaths.absParent
+                operationQueue.createFolderRemotely absPath, callback
 
 
     createFolderRemotely: (folderPath, callback) ->

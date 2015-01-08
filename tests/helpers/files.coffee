@@ -1,3 +1,4 @@
+fs = require 'fs-extra'
 async = require 'async'
 should = require 'should'
 del = require 'del'
@@ -76,7 +77,7 @@ fileHelpers.uploadFile = (fileName, fixturePath, path, callback) ->
     file =
         name: fileName
         path: path
-        lastModification: "Thu Oct 17 2013 08:29:21 GMT+0200 (CEST)",
+        lastModification: "Thu Oct 17 2013 08:29:21 GMT+0200 (CEST)"
 
     filesClient.sendFile "files/", fixturePath, file, (err, res, body) ->
         should.not.exist err

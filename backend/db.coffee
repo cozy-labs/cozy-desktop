@@ -310,7 +310,6 @@ module.exports = dbHelpers =
                 else
                     callback null, res.path
 
-
         # Otherwise try to get the previous revision that would contain the
         # deleted file or folder path.
         else

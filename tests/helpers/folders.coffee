@@ -59,7 +59,9 @@ folderHelpers.createFolder = (folderName, path, callback) ->
         should.exist res
         should.exist body
         res.statusCode.should.equal 200
-        callback()
+        filesClient.get "folders/#{body.id}", folder, (err, res, body) ->
+            res.statusCode.should.equal 200
+            callback err, body
 
 folderHelpers.moveFolder = (folder, newPath, callback) ->
     filesClient.put "folders/#{folder.id}", path: newPath, (err, res, body) ->
