@@ -237,6 +237,15 @@ operationQueue =
 
         newPath = path.join remoteConfig.path, doc.path, doc.name
 
+        updateUtimes = (filePath, callback) ->
+            if doc.lastModification
+                fs.utimes filePath
+                        , new Date()
+                        , new Date(doc.lastModification)
+                        , callback
+            else
+                callback()
+
         pouch.getKnownPath doc, (err, oldPath) ->
 
             if oldPath is newPath
@@ -255,9 +264,14 @@ operationQueue =
                     pouch.db.get doc.binary.file.id, (err, doc) ->
                         doc.path = newPath
                         pouch.db.put doc, (err, res) ->
-                            fs.move oldPath, newPath, callback
+                            fs.move oldPath, newPath, (err) ->
+                                return callback err if err?
+                                updateUtimes newPath, callback
+
                 else
-                    fs.move oldPath, newPath, callback
+                    fs.move oldPath, newPath, (err) ->
+                        return callback err if err?
+                        updateUtimes newPath, callback
 
             # Assume that the file has already been moved
             # TODO: base this assumption on checksum ?
@@ -273,12 +287,13 @@ operationQueue =
             else if oldPathExists and newPathExists
                 if doc.docType.toLowerCase() is 'folder'
                     if newPath isnt oldPath
-                        fs.remove oldPath, callback
-                    else
-                        callback()
+                        fs.removeSync oldPath
+                    updateUtimes newPath, callback
                 else
                     log.info "File #{newPath} already exists, duplicating to #{newPath}.new"
-                    fs.copy oldPath, "#{newPath}.new", callback
+                    fs.move oldPath, "#{newPath}.new", (err) ->
+                        return callback err if err?
+                        updateUtimes "#{newPath}.new", callback
 
 
     moveFolderLocally: (doc, callback) ->

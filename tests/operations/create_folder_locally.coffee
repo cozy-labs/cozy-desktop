@@ -1,7 +1,6 @@
 fs = require 'fs-extra'
 touch = require 'touch'
 date = require 'date-utils'
-mkdirp = require 'mkdirp'
 moment = require 'moment'
 log = require('printit')
     prefix: "Tests"
@@ -21,7 +20,7 @@ operationQueue = require '../../backend/operation_queue'
 {syncPath} = helpers.options
 
 
-describe "When creating a folder from a remote document", ->
+describe "Creating a folder from a remote document", ->
     @timeout 4000
 
     before cliHelpers.resetDatabase
@@ -30,7 +29,7 @@ describe "When creating a folder from a remote document", ->
     after fileHelpers.deleteAll
     after cliHelpers.resetDatabase
 
-    describe 'When folder already exists locally', ->
+    describe 'when the folder already exists locally', ->
         folderName = 'folder-1'
         folderPath = path.join syncPath, folderName
         lastModification = null
@@ -50,7 +49,7 @@ describe "When creating a folder from a remote document", ->
             mtime.format().should.equal lastModification.format()
 
 
-    describe 'When folder does not exist locally', ->
+    describe 'when folder does not exist locally', ->
         parentName = 'parent-1'
         folderName = 'folder-2'
         parentPath = path.join syncPath, parentName

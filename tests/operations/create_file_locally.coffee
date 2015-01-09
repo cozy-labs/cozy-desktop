@@ -1,7 +1,6 @@
 fs = require 'fs-extra'
 touch = require 'touch'
 date = require 'date-utils'
-mkdirp = require 'mkdirp'
 moment = require 'moment'
 log = require('printit')
     prefix: "Tests"
@@ -21,7 +20,7 @@ operationQueue = require '../../backend/operation_queue'
 {syncPath} = helpers.options
 
 
-describe "When creating a file from a remote document", ->
+describe "Creating a file from a remote document", ->
     @timeout 4000
 
     before cliHelpers.resetDatabase
@@ -30,7 +29,7 @@ describe "When creating a file from a remote document", ->
     after fileHelpers.deleteAll
     after cliHelpers.resetDatabase
 
-    it 'Returns an error if the file doesnt exist', (done) ->
+    it 'returns an error if the file doesnt exist', (done) ->
         doc =
             path: "folder-1"
             name: "chat-mignon.jpg"
@@ -43,7 +42,7 @@ describe "When creating a file from a remote document", ->
             should.exist err
             done()
 
-    describe 'When similar file exists locally', ->
+    describe 'when similar file exists locally', ->
         fileRelativePath = '../fixtures/chat-mignon.jpg'
         fixturePath = path.resolve __dirname, fileRelativePath
         folderPath = path.join syncPath, 'folder-1'
@@ -94,7 +93,7 @@ describe "When creating a file from a remote document", ->
             expected = lastModification.millisecond(0)
             mtime.format().should.equal lastModification.format()
 
-    describe 'When file exists remotely and not locally', ->
+    describe 'when file exists remotely and not locally', ->
         fileName = 'cool-pillow.jpg'
         folderName = 'folder-2'
         fileRelativePath = path.join '..', 'fixtures', fileName
