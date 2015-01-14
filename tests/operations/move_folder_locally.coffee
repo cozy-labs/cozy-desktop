@@ -91,9 +91,9 @@ describe "Moving a folder locally from DB document's information", ->
 
     describe 'when the folder has not been moved yet', ->
         parentPath  = path.join syncPath, 'parent-1'
-        folderPath  = path.join syncPath, 'folder-1'
-        folderPath2 = path.join parentPath, 'folder-1'
-        filePath = path.join folderPath, 'file-1'
+        folderPath  = path.join syncPath, 'folder-2'
+        folderPath2 = path.join parentPath, 'folder-2'
+        filePath = path.join folderPath, 'file-2'
         creationDate = moment().days(-6)
         lastModification = moment().days(-4)
 
@@ -104,7 +104,7 @@ describe "Moving a folder locally from DB document's information", ->
             doc =
                 docType: 'Folder'
                 path: ''
-                name: 'folder-1'
+                name: 'folder-2'
                 creationDate: creationDate
                 lastModification: lastModification
 
@@ -131,7 +131,7 @@ describe "Moving a folder locally from DB document's information", ->
             fs.existsSync(folderPath2).should.be.ok
 
         it 'ensures that the content of the folder has been kept', ->
-            fs.existsSync(path.join folderPath2, 'file-1').should.be.ok
+            fs.existsSync(path.join folderPath2, 'file-2').should.be.ok
 
         it 'updates the last modification date', ->
             stat = fs.statSync folderPath2
