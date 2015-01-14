@@ -48,16 +48,6 @@ describe "Operation Queue Tests", ->
             operationQueue.waitNetwork task
 
 
-    describe "deleteFileLocally", ->
-        fileName = path.join syncPath, 'localfile-05'
-
-        it "removes a binary from a remote document", (done) ->
-            operationQueue.deleteFileLocally fileDoc, (err, res) ->
-                should.not.exist err
-                fs.existsSync(fileName).should.not.be.ok
-                done()
-
-
     describe "deleteFolderLocally", ->
         folderName = path.join syncPath, 'localfolder-02'
 
