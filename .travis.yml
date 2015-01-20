@@ -45,7 +45,7 @@ before_install:
 script:
     - pwd
     - npm install
-    - scripts/tests.sh
+    - sh scripts/tests.sh
 
 after_failure:
     - pwd

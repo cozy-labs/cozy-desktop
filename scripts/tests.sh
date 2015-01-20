@@ -1,3 +1,5 @@
+#!/bin/sh
+
 export DEBUG=true 
 export DEFAULT_DIR=tests 
 
