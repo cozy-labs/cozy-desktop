@@ -45,7 +45,7 @@ before_install:
 script:
     - pwd
     - npm install
-    - node_modules/.bin/gulp test
+    - scripts/tests.sh
 
 after_failure:
     - pwd

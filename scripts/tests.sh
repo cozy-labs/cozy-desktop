@@ -7,4 +7,4 @@ $BIN tests/functional/remote.coffee
 $BIN tests/functional/local.coffee
 $BIN tests/functional/local_change.coffee
 
-$BIN tests/operations/local_create_file.coffee
+$BIN tests/operations/
