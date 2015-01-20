@@ -12,7 +12,7 @@ env:
         - TEST_ENV=travis
 before_install:
     - cd
-    - npm install forever coffee-script -g
+    - npm install forever coffee-script mocha -g
     - git clone git://github.com/cozy/cozy-data-system.git
     - cd cozy-data-system
     - npm install #data-system
