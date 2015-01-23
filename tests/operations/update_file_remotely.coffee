@@ -81,20 +81,22 @@ describe "Updating a DB document from a local file's information", ->
 
 
     describe 'when the file is updated', ->
-        filePath   = path.join syncPath, 'chat-mignon.jpg'
-        creationDate     = moment().days(-6).millisecond(0)
-        lastModification = moment().days(-4).millisecond(0)
+        filePath            = path.join syncPath, 'cool-pillow.jpg'
+        creationDate        = moment().days(-6).millisecond(0)
+        lastModification    = moment().days(-4).millisecond(0)
+        newLastModification = moment().days(-3).millisecond(0)
         doc = {}
 
         before (done) ->
-            fs.copySync fixturePath, filePath
+            fs.copySync fixturePath3, filePath
 
+            fs.utimesSync filePath, new Date(creationDate), new Date(lastModification)
             operationQueue.createFileRemotely filePath, (err) ->
                 should.not.exist err
                 fs.copySync fixturePath2, filePath
-                fs.utimesSync filePath, new Date(creationDate), new Date(lastModification)
+                fs.utimesSync filePath, new Date(creationDate), new Date(newLastModification)
                 operationQueue.updateFileRemotely filePath, (err) ->
-                    pouch.files.get '/chat-mignon.jpg', (err, res) ->
+                    pouch.files.get '/cool-pillow.jpg', (err, res) ->
                         should.not.exist err
                         doc = res
                         done()
@@ -103,7 +105,7 @@ describe "Updating a DB document from a local file's information", ->
         it "updates DB document's information", ->
             doc.docType.toLowerCase().should.be.equal 'file'
             doc.class.should.be.equal 'image'
-            doc.name.should.be.equal 'chat-mignon.jpg'
+            doc.name.should.be.equal 'cool-pillow.jpg'
             doc.path.should.be.equal ''
             doc.mime.should.be.equal 'image/jpeg'
             doc.size.should.be.equal fs.statSync(filePath).size
@@ -111,4 +113,4 @@ describe "Updating a DB document from a local file's information", ->
 
 
         it "saves the right file's modification date", ->
-            lastModification.format().should.be.equal moment(doc.lastModification).format()
+            moment(doc.lastModification).format().should.be.equal newLastModification.format()

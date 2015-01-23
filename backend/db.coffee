@@ -3,6 +3,7 @@ fs      = require 'fs-extra'
 path    = require 'path-extra'
 async   = require 'async'
 uuid    = require 'node-uuid'
+moment  = require 'moment'
 request = require 'request-json-light'
 log     = require('printit')
     prefix: 'Pouch/CouchDB '
@@ -492,10 +493,10 @@ module.exports = dbHelpers =
 
         # Keep the latest modification date
         if existingDoc.lastModification?
-            existingFileLastMod = new Date existingDoc.lastModification
-            newFileLastMod = new Date doc.lastModification
+            existingFileLastMod = moment existingDoc.lastModification
+            newFileLastMod = moment doc.lastModification
 
-            if existingFileLastMod > newFileLastMod
+            if existingFileLastMod.isAfter newFileLastMod
                 doc.lastModification = existingDoc.lastModification
 
         # Add the checksum here if it is not set
