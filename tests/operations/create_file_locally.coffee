@@ -24,6 +24,7 @@ describe "Creating a file from a remote document", ->
     @timeout 4000
 
     before cliHelpers.resetDatabase
+    before cliHelpers.cleanConfiguration
     before cliHelpers.initConfiguration
     before fileHelpers.deleteAll
     after fileHelpers.deleteAll

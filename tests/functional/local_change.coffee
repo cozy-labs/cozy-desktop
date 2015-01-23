@@ -30,16 +30,18 @@ describe.only "Local change", ->
     before cliHelpers.mockGetPassword
     before cliHelpers.cleanConfiguration
     before cliHelpers.initConfiguration
+    before cliHelpers.initSync
     before (done) ->
         cliHelpers.startSync ->
             setTimeout done, 500
 
     # Cleans up local system
     after cliHelpers.stopSync
+    after cliHelpers.cleanConfiguration
+    after cliHelpers.restoreGetPassword
     after helpers.cleanFolder syncPath
     after filesHelpers.deleteAll
     after cliHelpers.resetDatabase
-
 
     it "Edit a file content locally", (done) ->
         @timeout 15000
