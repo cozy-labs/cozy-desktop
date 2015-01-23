@@ -414,7 +414,7 @@ operationQueue =
                 log.debug "File doesn't exist locally, abort."
                 pouch.files.get filePaths.relative, (error, doc) ->
                     if doc?
-                        pouchd.db.remove doc, (error2, res) ->
+                        pouch.db.remove doc, (error2, res) ->
                             callback err
                     else
                         callback err
