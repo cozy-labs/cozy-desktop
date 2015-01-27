@@ -65,5 +65,5 @@ describe "Creating a DB document from a local folder's information", ->
 
 
         it "saves the right folder's modification date", ->
-            lastModification.format().should.be.equal moment(doc.lastModification).format()
+            moment(doc.lastModification).format().should.be.equal lastModification.format()
 

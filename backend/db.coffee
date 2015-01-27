@@ -536,6 +536,7 @@ module.exports = dbHelpers =
                     path: folderPaths.parent
                     tags: existingDoc.tags or []
                     creationDate: existingDoc.creationDate or stats.mtime
+                    lastModification: existingDoc.lastModification or stats.mtime
 
                 prevDate = new Date existingDoc.lastModification
                 newDate = new Date stats.mtime
