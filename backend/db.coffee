@@ -98,31 +98,6 @@ module.exports = dbHelpers =
         createNew: (fields, callback) ->
             createNewDoc 'Folder', fields, callback
 
-        upsert: (newDoc, callback) ->
-            key = "#{newDoc.path}/#{newDoc.name}"
-            dbHelpers.folders.get key, (err, prevDoc) ->
-                if err and err.status isnt 404
-                    callback err
-                else
-                    if prevDoc?
-                        newDoc._id = prevDoc._id
-                        newDoc._rev = prevDoc._rev
-                        newDoc.creationDate = prevDoc.creationDate
-                        newDoc.tags = prevDoc.tags
-                        prevDate = new Date prevDoc.lastModification
-                        newDate = new Date newDoc.lastModification
-
-                        if prevDate > newDate
-                            newDoc.lastModification = prevDoc.lastModification
-
-                    db.put newDoc, (err, res) ->
-                        if err
-                            callback err
-                        else
-                            dbHelpers.storeLocalRev res.rev, ->
-                                callback null, res
-
-
     binaries:
 
         rows: []
@@ -258,7 +233,6 @@ module.exports = dbHelpers =
 
     # Remove given document id if it exists. Doesn't return an error if the
     # document doesn't exist.
-    # TODO write a test
     removeIfExists: (id, callback) ->
         db.get id, (err, doc) ->
             if err and err.status isnt 404
@@ -270,7 +244,6 @@ module.exports = dbHelpers =
 
 
     # Retrieve a previous doc revision from its id.
-    # TODO write a test
     getPreviousRev: (id, callback) ->
         options =
             revs: true
@@ -293,7 +266,6 @@ module.exports = dbHelpers =
 
 
     # Retrieve a known path from a doc, based on the doc's previous revisions
-    # TODO write a test
     getKnownPath: (doc, callback) ->
         remoteConfig = config.getConfig()
 
