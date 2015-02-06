@@ -95,6 +95,10 @@ remoteEventWatcher =
                 res
             live: false
             since: config.getRemoteSeq()
+            ajax:
+                rejectUnauthorized: false
+                requestCert: true
+                agent: false
 
         if pouch.replicationDelay is 0 and (not @replicatorFrom \
         or Object.keys(@replicatorFrom._events).length is 0)

@@ -385,6 +385,10 @@ module.exports = dbHelpers =
                 or (doc._deleted and (doc.docType is 'Folder' or doc.docType is 'File'))
             live: false
             since: startChangeSeq
+            ajax:
+                rejectUnauthorized: false
+                requestCert: true
+                agent: false
 
         if not @replicatorTo or Object.keys(@replicatorTo._events).length is 0
             @replicatorTo = db.replicate.to(url, opts)
