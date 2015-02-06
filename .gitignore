@@ -1,2 +1,4 @@
 node_modules
 *.swp
+backend/*.js
+cli.js
