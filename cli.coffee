@@ -102,6 +102,8 @@ displayQuery = (query) ->
 # Start database sync process and setup file change watcher.
 sync = (args) ->
 
+    config.setInsecure(args.insecure?)
+
     config = config.getConfig()
 
     if not (config.deviceName? and config.url? and config.path?)
@@ -148,6 +150,8 @@ program
             'only apply remote changes to local folder')
     .option('-f, --force',
             'Run sync from the beginning of all the Cozy changes.')
+    .option('-k, --insecure',
+            'Turn off HTTPS certificate verification.')
     .action sync
 
 program
