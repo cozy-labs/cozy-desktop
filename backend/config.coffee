@@ -131,4 +131,17 @@ module.exports = config =
         fs.writeFileSync config.configPath, JSON.stringify @config, null, 2
         console.log 'Configuration file successfully updated'
 
+    setInsecure: (bool) ->
+        @config.insecure = bool
+        @saveConfig()
+        @config
+
+    augmentPouchOptions: (options) ->
+        if @config.insecure
+            options.ajax =
+                rejectUnauthorized: false
+                requestCert: true
+                agent: false
+        options
+
 config.init()

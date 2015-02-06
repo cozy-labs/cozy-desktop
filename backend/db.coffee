@@ -386,6 +386,8 @@ module.exports = dbHelpers =
             live: false
             since: startChangeSeq
 
+        opts = config.augmentPouchOptions opts
+
         if not @replicatorTo or Object.keys(@replicatorTo._events).length is 0
             @replicatorTo = db.replicate.to(url, opts)
                 .on 'error', (err) ->
