@@ -36,21 +36,12 @@ gulp.task('scripts', ['clean'], function() {
 gulp.task('bin-scripts', function() {
   gulp.src("cli.coffee")
     .pipe(coffee({bare: true}))
+    .pipe(insert.prepend('#!/usr/bin/env node\n'))
     .pipe(gulp.dest('./'));
 });
 
-
-gulp.task('set-bin-hashbang', function() {
-  setTimeout(function () {
-    gulp.src(paths.bin)
-      .pipe(insert.prepend('#!/usr/bin/env node\n'))
-      .pipe(gulp.dest('./'));
-  }, 1000);
-});
-
-
 gulp.task('build-package',
-          ['clean', 'scripts', 'bin-scripts', 'set-bin-hashbang']);
+          ['clean', 'scripts', 'bin-scripts']);
 
 
 gulp.task('leveldown', shell.task([
@@ -144,7 +135,8 @@ gulp.task('test', function() {
 
 gulp.task('watch', function() {
   gulp.watch(paths.scripts, ['scripts']);
+  gulp.watch('cli.coffee', ['bin-scripts']);
 });
 
 
-gulp.task('default',  ['watch']);
+gulp.task('default',  ['build-package', 'watch']);
