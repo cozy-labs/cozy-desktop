@@ -135,7 +135,7 @@ gulp.task('test', function() {
 
 
 gulp.task('watch', function() {
-  gulp.watch(paths.scripts, ['scripts']);
+  gulp.watch(paths.scripts, ['scripts', 'bin-scripts']);
   gulp.watch('cli.coffee', ['bin-scripts']);
 });
 
