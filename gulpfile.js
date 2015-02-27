@@ -64,9 +64,9 @@ gulp.task('build-gui-package', ['scripts', 'leveldown'], function() {
       platforms: ['linux64', 'linux32', 'osx']
   });
   nw.build().then(function () {
-     console.log('Cozy Data Proxy was successfully built.');
+     console.log('Cozy Desktop was successfully built.');
   }).catch(function (error) {
-     console.log('An error occured whild building Cozy Data Proxy.');
+     console.log('An error occured whild building Cozy Desktop.');
      console.log(error);
   });
 });

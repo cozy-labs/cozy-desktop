@@ -68,7 +68,7 @@
     "progress": "1.1.8"
   },
   "devDependencies": {
-    "node-webkit-builder": "~0.3.0",
+    "node-webkit-builder": "~1.0.10",
     "nodewebkit": "^0.8.6",
     "gulp-coffee": "^2.2.0",
     "gulp": "^3.8.8",
