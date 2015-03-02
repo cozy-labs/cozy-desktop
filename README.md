@@ -82,8 +82,8 @@ To make a package for your platform, choose either:
 
     node_modules/.bin/gulp make-deb-32
     node_modules/.bin/gulp make-deb-64
-    node_modules/.bin/gulp make-rpm-32
-    node_modules/.bin/gulp make-rpm-64
+    node_modules/.bin/gulp make-rpm-32 # require the 'npm' package installed
+    node_modules/.bin/gulp make-rpm-64 # require the 'npm' package installed
     node_modules/.bin/gulp make-osx-app
 
 

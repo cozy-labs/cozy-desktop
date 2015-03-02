@@ -61,8 +61,9 @@ gulp.task('build-gui-package', ['scripts', 'leveldown'], function() {
       files: paths.all,
       version: nwVersion,
       macIcns: 'packaging/nw.icns',
-      platforms: ['linux64', 'linux32', 'osx']
+      platforms: ['linux', 'osx32']
   });
+
   nw.build().then(function () {
      console.log('Cozy Desktop was successfully built.');
   }).catch(function (error) {
