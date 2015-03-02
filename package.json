@@ -9,7 +9,7 @@
     "height": 600,
     "show": true,
     "resizable": false,
-    "toolbar": true,
+    "toolbar": false,
     "icon": "client/public/icon/main_icon.png",
     "title": "Cozy Desktop"
   },
