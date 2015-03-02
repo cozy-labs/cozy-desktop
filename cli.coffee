@@ -117,8 +117,8 @@ a synchronization.
                 remoteEventWatcher.init ->
                     log.info "Init done"
                     remoteEventWatcher.start ->
-                        if not args.readonly
-                            localEventWatcher.start()
+                        # if not args.readonly
+                        #     localEventWatcher.start()
 
 
 # Display current configuration
