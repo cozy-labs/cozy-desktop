@@ -353,6 +353,24 @@ module.exports = dbHelpers =
             callback null, body.last_seq
 
     # TODO find a better module for this.
+    pickViewToCopy: (client, model, callback) ->
+        urlPath = "cozy/_design/#{model}"
+        log.debug "Getting design doc #{model} from remote"
+        client.get urlPath, (err, res, designdoc) ->
+            if err
+                callback err
+            else if designdoc.error
+                callback new Error designdoc.error
+            else if designdoc?.views?['files-all']
+                callback null, 'files-all'
+            else if designdoc?.views?.all
+                callback null, 'all'
+            else
+                # TODO : may be create it ourself
+                callback new Error 'install files app on cozy'
+
+
+    # TODO find a better module for this.
     copyViewFromRemote: (model, callback) ->
         remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()
@@ -360,19 +378,24 @@ module.exports = dbHelpers =
         client = request.newClient remoteConfig.url
         client.setBasicAuth deviceName, remoteConfig.devicePassword
 
-        urlPath = "cozy/_design/#{model}/_view/all/"
-        log.debug "Getting latest #{model} documents from remote"
-        client.get urlPath, (err, res, body) ->
+        @pickViewToCopy client, model, (err, viewName) ->
             return callback err if err
-            return callback null unless body.rows?.length
-            async.eachSeries body.rows, (doc, cb) ->
-                doc = doc.value
-                db.put doc, new_edits: false, (err, file) ->
-                    return callback err if err
-                    cb()
-            , ->
-                log.debug "#{body.rows.length} docs retrieved for #{model}."
-                callback()
+
+            urlPath = "cozy/_design/#{model}/_view/#{viewName}/"
+            log.debug "Getting latest #{model} documents from remote"
+            client.get urlPath, (err, res, body) ->
+                return callback err if err
+                return callback null unless body.rows?.length
+                async.eachSeries body.rows, (doc, cb) ->
+                    doc = doc.value
+                    db.put doc, new_edits: false, (err) ->
+                        if err
+                            log.error 'failed to copy one doc'
+                            log.error err
+                        cb null # keep copying other docs
+                , (err) ->
+                    log.debug "#{body.rows.length} docs retrieved for #{model}."
+                    callback err
 
     # TODO find a better module for this.
     replicateToRemote: (callback) ->

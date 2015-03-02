@@ -87,7 +87,7 @@ StateView = React.createClass
 
                     # Delay the start of the FS watcher to keep applying remote
                     # modifications before local ones.
-                    setTimeout (-> localEventWatcher.start()), 2000
+                    # setTimeout (-> localEventWatcher.start()), 2000
 
             #TODO: Arrange published names
 

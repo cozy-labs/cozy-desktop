@@ -63,7 +63,7 @@ gulp.task('build-gui-package', ['scripts', 'leveldown'], function() {
       macIcns: 'packaging/nw.icns',
       platforms: ['linux', 'osx32']
   });
-
+  nw.on('log', console.log.bind(console));
   nw.build().then(function () {
      console.log('Cozy Desktop was successfully built.');
   }).catch(function (error) {
@@ -135,7 +135,7 @@ gulp.task('test', function() {
 
 
 gulp.task('watch', function() {
-  gulp.watch(paths.scripts, ['scripts']);
+  gulp.watch(paths.scripts, ['scripts', 'bin-scripts']);
   gulp.watch('cli.coffee', ['bin-scripts']);
 });
 
