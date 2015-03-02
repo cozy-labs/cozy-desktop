@@ -1,6 +1,9 @@
 node_modules
 *.swp
+*.log
 backend/*.js
+tests/.cozy-desktop
+tmp/
 cli.js
 cache
 build
