@@ -93,7 +93,10 @@ Field = React.createClass
         @getValue() isnt ''
 
     setError: (err) ->
-        @setState error: t err
+        if err is false
+            @setState error: false
+        else
+            @setState error: t err
 
     getError: ->
         'value is missing'

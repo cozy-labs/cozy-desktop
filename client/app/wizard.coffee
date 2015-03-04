@@ -95,7 +95,7 @@ ConfigFormStepOne = React.createClass
         if event.keyCode is 13
             @onSaveButtonClicked()
         @onCompleteUrl()
-        fieldUrl.setError ""
+        fieldUrl.setError false
 
     onSaveButtonClicked: ->
         fieldUrl = @refs.remoteUrlField
