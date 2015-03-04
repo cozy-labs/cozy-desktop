@@ -11,7 +11,7 @@ var paths = {
   scripts: ['app/**/*.coffee', 'app/*.coffee'],
   stylesheets: ['app/styles/*.styl'],
   vendors: ['vendor/scripts/*.js'],
-  vendorStylesheets: ['vendor/stylesheets/*.css'],
+  vendorStylesheets: ['vendor/styles/*.css'],
 };
 
 gulp.task('clean', function(cb) {
