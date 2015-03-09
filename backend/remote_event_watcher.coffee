@@ -173,7 +173,10 @@ remoteEventWatcher =
 
         options =
             filter: (doc) ->
-                doc.docType is 'Folder' or doc.docType is 'File'
+                doc.docType and (
+                    doc.docType.toLowerCase() is 'folder' or
+                    doc.docType.toLowerCase() is 'file'
+                )
             since: config.getLocalSeq()
             include_docs: true
 
@@ -191,7 +194,7 @@ remoteEventWatcher =
             if res?.rows? and res.rows.length is 0
 
                 docDeleted = change.deleted
-                docAdded = change.doc.creationDate is change.doc.lastModification
+                docAdded = change.doc.lastModification <= change.doc.creationDate
                 concernsFolder = change.doc.docType.toLowerCase() is 'folder'
 
                 # Deletion

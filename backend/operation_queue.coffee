@@ -247,6 +247,7 @@ operationQueue =
                 callback()
 
         pouch.getKnownPath doc, (err, oldPath) ->
+            return callback err if err
 
             if oldPath is newPath
                 # Check file similarities
