@@ -1,6 +1,6 @@
-var Button, Container, Field, Folder, Help, InfoLine, Line, Subtitle, Title, a, button, div, h1, h2, img, input, label, p, span, _ref;
+var Button, Container, Field, Folder, Help, InfoLine, Line, Subtitle, Title, a, button, div, h1, h2, img, input, label, p, ref, span;
 
-_ref = React.DOM, div = _ref.div, p = _ref.p, img = _ref.img, span = _ref.span, a = _ref.a, label = _ref.label, input = _ref.input, h1 = _ref.h1, h2 = _ref.h2, button = _ref.button;
+ref = React.DOM, div = ref.div, p = ref.p, img = ref.img, span = ref.span, a = ref.a, label = ref.label, input = ref.input, h1 = ref.h1, h2 = ref.h2, button = ref.button;
 
 Line = React.createClass({
   render: function() {
@@ -84,9 +84,9 @@ Field = React.createClass({
     };
   },
   render: function() {
-    var _base;
-    if ((_base = this.props).type == null) {
-      _base.type = 'text';
+    var base;
+    if ((base = this.props).type == null) {
+      base.type = 'text';
     }
     return Line({
       displayName: "Field"
@@ -116,9 +116,15 @@ Field = React.createClass({
     return this.getValue() !== '';
   },
   setError: function(err) {
-    return this.setState({
-      error: t(err)
-    });
+    if (err === false) {
+      return this.setState({
+        error: false
+      });
+    } else {
+      return this.setState({
+        error: t(err)
+      });
+    }
   },
   getError: function() {
     return 'value is missing';
@@ -146,9 +152,9 @@ Help = React.createClass({
     };
   },
   render: function() {
-    var _base;
-    if ((_base = this.props).type == null) {
-      _base.type = 'text';
+    var base;
+    if ((base = this.props).type == null) {
+      base.type = 'text';
     }
     return Line({
       displayName: "Help"
@@ -228,9 +234,9 @@ Folder = React.createClass({
     };
   },
   render: function() {
-    var _base;
-    if ((_base = this.props).type == null) {
-      _base.type = 'text';
+    var base;
+    if ((base = this.props).type == null) {
+      base.type = 'text';
     }
     return Line({
       displayName: "Folder"
@@ -323,7 +329,7 @@ InfoLine = React.createClass({
     };
     return Line(params, span({
       className: "parameter label"
-    }, "" + this.props.label + " :"), Line({
+    }, this.props.label + " :"), Line({
       className: 'parameter value'
     }, span(null, this.props.value), this.props.text ? button({
       className: "btn btn-cozy smaller " + this.props.className,
@@ -331,7 +337,8 @@ InfoLine = React.createClass({
     }, this.props.text) : void 0));
   }
 });
-;var config, configDir, configHelpers, configPath, device, fs, homedir, keys, path;
+
+var config, configDir, configHelpers, configPath, device, fs, homedir, keys, path;
 
 path = require('path-extra');
 
@@ -397,7 +404,8 @@ configHelpers = {
     return device = options;
   }
 };
-;var StateView, moment;
+
+var StateView, moment;
 
 moment = require('moment');
 
@@ -409,7 +417,7 @@ StateView = React.createClass({
     };
   },
   render: function() {
-    var i, log, logs, params, state, syncButtonLabel, _i, _len, _ref;
+    var i, j, len, log, logs, params, ref, state, syncButtonLabel;
     logs = [];
     if (this.state.logs.length === 0) {
       params = {
@@ -419,9 +427,9 @@ StateView = React.createClass({
       logs.push(Line(params, 'nothing to notice...'));
     } else {
       i = 0;
-      _ref = this.state.logs;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        log = _ref[_i];
+      ref = this.state.logs;
+      for (j = 0, len = ref.length; j < len; j++) {
+        log = ref[j];
         logs.push(Line({
           key: "log-" + (i++),
           className: 'smaller'
@@ -513,10 +521,7 @@ StateView = React.createClass({
       tray.icon = 'client/public/icon/icon_sync.png';
       pouch.addAllFilters(function() {
         return remoteEventWatcher.init(function() {
-          remoteEventWatcher.start();
-          return setTimeout((function() {
-            return localEventWatcher.start();
-          }), 2000);
+          return remoteEventWatcher.start();
         });
       });
       publisher.on('firstSyncDone', (function(_this) {
@@ -684,7 +689,7 @@ StateView = React.createClass({
   onDeleteFilesClicked: function() {
     var del;
     del = require('del');
-    return del("" + device.path + "/*", {
+    return del(device.path + "/*", {
       force: true
     }, function(err) {
       if (err) {
@@ -697,10 +702,11 @@ StateView = React.createClass({
     return open(device.path);
   },
   onOpenUrl: function() {
-    return open("" + device.url + "/apps/files");
+    return open(device.url + "/apps/files");
   }
 });
-;var en;
+
+var en;
 
 en = {
   'cozy files configuration 2 on 2': 'Configure your device (2/2)',
@@ -747,7 +753,8 @@ en = {
   'used': 'used',
   'synchronizing': 'Synchronizing...'
 };
-;var fr;
+
+var fr;
 
 fr = {
   'cozy files configuration 2 on 2': 'Configuration de votre appareil (2/2)',
@@ -794,19 +801,76 @@ fr = {
   'used': 'utilisé',
   'synchronizing': "Synchronisation ..."
 };
-;var isValidForm;
+
+var isValidForm;
 
 isValidForm = function(fields) {
-  var field, _i, _len;
-  for (_i = 0, _len = fields.length; _i < _len; _i++) {
-    field = fields[_i];
+  var field, i, len;
+  for (i = 0, len = fields.length; i < len; i++) {
+    field = fields[i];
     if (!field.isValid()) {
       return false;
     }
   }
   return true;
 };
-;var config, displayTrayMenu, gui, open, remoteConfig;
+
+var renderState;
+
+renderState = function(state) {
+  var getCurrentComponent;
+  getCurrentComponent = function(state) {
+    var device;
+    switch (state) {
+      case 'INTRO':
+        win.show();
+        return Intro();
+      case 'STEP1':
+        win.show();
+        return ConfigFormStepOne(device);
+      case 'STEP2':
+        win.show();
+        return ConfigFormStepTwo(device);
+      case 'STEP3':
+        win.show();
+        return ConfigFormStepThree(device);
+      case 'STATE':
+        if (typeof device === "undefined" || device === null) {
+          device = configHelpers.getDevice();
+        }
+        displayTrayMenu();
+        return StateView(device);
+      default:
+        win.show();
+        return Intro();
+    }
+  };
+  this.currentComponent = React.renderComponent(getCurrentComponent(state), document.body);
+  if (state === 'STATE') {
+    this.currentComponent.onSyncClicked();
+  }
+  if (state === 'STEP2') {
+    return $("#folder-input").attr('nwdirectory', '');
+  }
+};
+
+window.onload = function() {
+  var locales, polyglot, ref;
+  window.__DEV__ = window.location.hostname === 'localhost';
+  locales = window.locale || window.navigator.language || "en";
+  locales = {};
+  polyglot = new Polyglot();
+  locales = en;
+  if (((ref = process.env.LANG) != null ? ref.indexOf('fr') : void 0) === 0) {
+    locales = fr;
+  }
+  locales = en;
+  polyglot.extend(locales);
+  window.t = polyglot.t.bind(polyglot);
+  return renderState(configHelpers.getState());
+};
+
+var config, displayTrayMenu, gui, open, remoteConfig;
 
 gui = require('nw.gui');
 
@@ -826,12 +890,12 @@ displayTrayMenu = function() {
     type: 'normal',
     label: t('open url'),
     click: function() {
-      return open("" + remoteConfig.url + "/apps/files");
+      return open(remoteConfig.url + "/apps/files");
     }
   }));
   this.menu.append(new gui.MenuItem({
     type: 'normal',
-    label: "" + (t('open folder')) + " : " + (path.basename(device.path)),
+    label: (t('open folder')) + " : " + (path.basename(device.path)),
     click: function() {
       return open(device.path);
     }
@@ -912,7 +976,7 @@ displayTrayMenu = function() {
         var percentage;
         if (res) {
           percentage = (res.diskSpace.usedDiskSpace / res.diskSpace.totalDiskSpace) * 100;
-          return _this.menu.items[3].label = "" + (Math.round(percentage)) + "% of " + res.diskSpace.totalDiskSpace + "GB " + (t('used'));
+          return _this.menu.items[3].label = (Math.round(percentage)) + "% of " + res.diskSpace.totalDiskSpace + "GB " + (t('used'));
         }
       };
     })(this));
@@ -921,14 +985,16 @@ displayTrayMenu = function() {
     return setDiskSpace();
   }, 20000);
 };
-;var win;
+
+var win;
 
 win = gui.Window.get();
 
 win.on('close', function() {
   return win.hide();
 });
-;var ConfigFormStepOne, ConfigFormStepTwo, Intro, cozyPassword, cozyUrl;
+
+var ConfigFormStepOne, ConfigFormStepTwo, Intro, cozyPassword, cozyUrl;
 
 Intro = React.createClass({
   render: function() {
@@ -1033,7 +1099,7 @@ ConfigFormStepOne = React.createClass({
       this.onSaveButtonClicked();
     }
     this.onCompleteUrl();
-    return fieldUrl.setError("");
+    return fieldUrl.setError(false);
   },
   onSaveButtonClicked: function() {
     var config, device, fieldPassword, fieldUrl, options, password, url;
@@ -1208,59 +1274,3 @@ ConfigFormStepTwo = React.createClass({
     }
   }
 });
-;var renderState;
-
-renderState = function(state) {
-  var getCurrentComponent;
-  getCurrentComponent = function(state) {
-    var device;
-    switch (state) {
-      case 'INTRO':
-        win.show();
-        return Intro();
-      case 'STEP1':
-        win.show();
-        return ConfigFormStepOne(device);
-      case 'STEP2':
-        win.show();
-        return ConfigFormStepTwo(device);
-      case 'STEP3':
-        win.show();
-        return ConfigFormStepThree(device);
-      case 'STATE':
-        if (typeof device === "undefined" || device === null) {
-          device = configHelpers.getDevice();
-        }
-        displayTrayMenu();
-        return StateView(device);
-      default:
-        win.show();
-        return Intro();
-    }
-  };
-  this.currentComponent = React.renderComponent(getCurrentComponent(state), document.body);
-  if (state === 'STATE') {
-    this.currentComponent.onSyncClicked();
-  }
-  if (state === 'STEP2') {
-    return $("#folder-input").attr('nwdirectory', '');
-  }
-};
-
-window.onload = function() {
-  var locales, polyglot, _ref;
-  window.__DEV__ = window.location.hostname === 'localhost';
-  locales = window.locale || window.navigator.language || "en";
-  locales = {};
-  polyglot = new Polyglot();
-  locales = en;
-  if (((_ref = process.env.LANG) != null ? _ref.indexOf('fr') : void 0) === 0) {
-    locales = fr;
-  }
-  locales = en;
-  polyglot.extend(locales);
-  window.t = polyglot.t.bind(polyglot);
-  return renderState(configHelpers.getState());
-};
-;
-//# sourceMappingURL=app.js.map
