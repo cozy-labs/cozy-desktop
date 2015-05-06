@@ -8,7 +8,7 @@ changes you made on them on other synced devices and on your online Cozy.
 
 The cozy-desktop requires node.js and build tools to run
 
-    sudo apt-get install nodejs-legacy build-essentatials
+    sudo apt-get install nodejs-legacy build-essential
 
 Then you can install it via NPM:
 
