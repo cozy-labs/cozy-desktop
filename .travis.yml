@@ -2,10 +2,11 @@ language: node_js
 matrix:
     fast_finish: true
     allow_failures:
-        - node_js: "0.12"
+        - node_js: 4
 node_js:
-    - "0.10"
-    - "0.12"
+    - 0.10
+    - 0.12
+    - 4
 env:
     global:
         - NODE_ENV=test
@@ -55,7 +56,7 @@ script:
 after_failure:
     - pwd
     - ps aux | grep server.js
-    - sudo netstat -plunt
+    - sudo netstat -lntp
     - cat ~/cozy-data-system/forever-ds.log
     - cat ~/cozy-proxy/forever-proxy.log
     - cat ~/cozy-files/forever-files.log

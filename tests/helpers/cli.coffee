@@ -84,7 +84,7 @@ module.exports.cleanConfiguration = (done) ->
             password: helpers.options.cozyPassword
         deviceManager.unregisterDevice opts, saveConfig
 
-    if opts.url?
+    if opts.url? and opts.deviceId?
         unregister()
     else
         done()

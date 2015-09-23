@@ -1,7 +1,7 @@
 #!/bin/sh
 
-#export DEBUG=true 
-export DEFAULT_DIR=tests 
+#export DEBUG=true
+export DEFAULT_DIR=tests
 
 BIN='mocha --reporter spec --compilers coffee:coffee-script/register '
 

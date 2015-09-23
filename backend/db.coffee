@@ -60,7 +60,7 @@ module.exports = dbHelpers =
 
     # Create database and recreate all filters
     resetDatabase: (callback) ->
-        PouchDB.destroy config.dbPath, ->
+        db.destroy ->
             db = dbHelpers.db = new PouchDB config.dbPath
             dbHelpers.addAllFilters callback
 
