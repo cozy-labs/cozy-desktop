@@ -1,3 +1,4 @@
+sudo: false
 language: node_js
 matrix:
     fast_finish: true
@@ -16,6 +17,10 @@ env:
     global:
         - NODE_ENV=test
         - TEST_ENV=travis
+cache:
+    directories:
+        - node_modules
+
 before_install:
     - cd
     - npm install forever coffee-script mocha -g
@@ -56,7 +61,7 @@ script:
 after_failure:
     - pwd
     - ps aux | grep server.js
-    - sudo netstat -lntp
+    - netstat -lntp
     - cat ~/cozy-data-system/forever-ds.log
     - cat ~/cozy-proxy/forever-proxy.log
     - cat ~/cozy-files/forever-files.log
