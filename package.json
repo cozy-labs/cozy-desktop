@@ -62,7 +62,7 @@
     "progress": "1.1.8",
     "read": "1.0.5",
     "readdirp": "1.2.0",
-    "request-json-light": "0.5.11",
+    "request-json-light": "0.5.20",
     "rimraf": "2.2.8",
     "touch": "0.0.3",
     "wrench": "1.5.8"
