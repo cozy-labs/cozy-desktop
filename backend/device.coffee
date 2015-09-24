@@ -31,6 +31,7 @@ module.exports = device =
                 callback err
             else if body.error?
                 if body.error is 'string'
+                    # FIXME no callback here?
                     log.error body.error
                 else
                     callback body.error

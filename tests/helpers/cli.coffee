@@ -76,7 +76,7 @@ module.exports.cleanConfiguration = (done) ->
             console.log err
         else
             config.removeRemoteCozy helpers.options.deviceName
-            done()
+        done()
 
     unregister = ->
         opts =
