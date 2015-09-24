@@ -14,7 +14,7 @@ var paths = {
   scripts: ['backend/*.coffee'],
   scriptsJS: ['./cli.js', 'backend/*.js'],
   bin: ['cli.js'],
-  tests: ['tests/operations/*.coffee', 'tests/functional/*.coffee'],
+  tests: ['tests/operations/*.coffee', 'tests/functional/remote.coffee'],
   all: ["backend/**/*.js", "client/public/**", "app.html", "package.json",
         "node_modules/**"],
   leveldown: 'node_modules/pouchdb/node_modules/leveldown'

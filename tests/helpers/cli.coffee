@@ -46,6 +46,7 @@ module.exports.initConfiguration = (done) ->
                     path: helpers.options.syncPath
                     deviceId: credentials.id
                     devicePassword: credentials.password
+                # TODO deviceId and deviceName have been merged
                 helpers.options.deviceId = credentials.id
                 helpers.options.devicePassword = credentials.password
 
@@ -74,17 +75,17 @@ module.exports.cleanConfiguration = (done) ->
         if err
             console.log err
         else
-            #config.removeRemoteCozy helpers.options.deviceName
+            config.removeRemoteCozy helpers.options.deviceName
             done()
 
-    unregister = (err, password) ->
+    unregister = ->
         opts =
             url: helpers.options.url
-            deviceId: opts.deviceId
+            deviceId: helpers.options.deviceName
             password: helpers.options.cozyPassword
         deviceManager.unregisterDevice opts, saveConfig
 
-    if opts.url? and opts.deviceId?
+    if opts.url?
         unregister()
     else
         done()

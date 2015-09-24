@@ -14,7 +14,7 @@
     "title": "Cozy Desktop"
   },
   "scripts": {
-    "test": "sh scripts/tests.sh",
+    "test": "gulp test",
     "build": "gulp build",
     "prepublish": "gulp build-package"
   },
@@ -62,8 +62,6 @@
     "progress": "1.1.8",
     "read": "1.0.5",
     "readdirp": "1.2.0",
-    "request": "2.40.0",
-    "request-json": "0.4.12",
     "request-json-light": "0.5.11",
     "rimraf": "2.2.8",
     "touch": "0.0.3",
@@ -80,6 +78,7 @@
     "gulp-shell": "^0.2.9",
     "node-webkit-builder": "~1.0.10",
     "nodewebkit": "^0.8.6",
+    "request-json": "0.4.12",
     "should": "^4.1.0"
   }
 }

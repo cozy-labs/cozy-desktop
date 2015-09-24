@@ -96,8 +96,8 @@ To hack the synchronization backend, you can just edit the files under the
 ### Run tests
 
 Tests require that you have the Cozy dev VM up (it means a data-system and a
-proxy up and running) and that the file application is accessible on the 9121
-port.
+proxy up and running) and that the files application is accessible on the 9121
+port. It's also expected that a user is registered.
 
 ```
 # Make sure to have dev dependencies installed

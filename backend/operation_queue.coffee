@@ -307,8 +307,7 @@ operationQueue =
 
         # Walk through all file DB documents, and download missing files if any
         pouch.files.all (err, res) ->
-            if err? and err.status isnt 404
-                return callback err
+            return callback err if err?
 
             log.info "Downloading missing files from remote..."
             files = res.rows
@@ -335,8 +334,7 @@ operationQueue =
 
         # Walk through all folder DB documents, and create missing folders
         pouch.folders.all (err, res) ->
-            if err? and err.status isnt 404
-                return callback err
+            return callback err if err?
 
             log.info "Creating locally missing folders..."
             folders = res.rows
