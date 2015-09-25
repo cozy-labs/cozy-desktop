@@ -20,6 +20,10 @@ env:
 cache:
     directories:
         - node_modules
+addons:
+    apt:
+        packages:
+            - netstat
 
 before_install:
     - cd

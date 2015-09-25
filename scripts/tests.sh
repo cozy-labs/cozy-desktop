@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+
+set -e
 
 export DEBUG=true
 export DEFAULT_DIR=tests

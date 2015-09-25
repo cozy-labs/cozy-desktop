@@ -33,7 +33,6 @@ module.exports.initSync = (done) ->
 
 # Configures a fake device for a fake remote Cozy
 module.exports.initConfiguration = (done) ->
-
     init = ->
         saveConfig = (err, credentials) ->
             if err
