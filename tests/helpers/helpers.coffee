@@ -10,9 +10,9 @@ Client = require('request-json').JsonClient
 module.exports = helpers = {}
 helpers.options =
     serverScheme: process.env.SCHEME or 'http'
-    serverHost: process.env.HOST or '127.0.0.1'
+    serverHost: process.env.HOST or 'localhost'
     serverPort: process.env.PORT or 9104
-    url: 'http://127.0.0.1:9104'
+    url: 'http://localhost:9104'
     syncPath: path.resolve '/tmp/cozy/'
     cozyPassword: 'cozytest'
     deviceName: 'tester'

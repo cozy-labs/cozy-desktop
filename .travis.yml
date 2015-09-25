@@ -20,6 +20,7 @@ addons:
     apt:
         packages:
             - net-tools
+            - iputils-ping
 
 before_install:
     - cd
@@ -70,4 +71,3 @@ after_failure:
     - curl -v http://localhost:9104/
     - curl -v http://localhost:9121/
     - ping -n -w 2 -c 1 localhost
-    - ping -n -w 2 -c 5 -v localhost
