@@ -13,10 +13,6 @@ env:
         - NODE_ENV=test
 services:
     - couchdb
-env:
-    global:
-        - NODE_ENV=test
-        - TEST_ENV=travis
 cache:
     directories:
         - node_modules
@@ -58,9 +54,7 @@ before_install:
     - pwd
 
 script:
-    - pwd
-    - npm install
-    - sh scripts/tests.sh
+    - bin/ci
 
 after_failure:
     - pwd
