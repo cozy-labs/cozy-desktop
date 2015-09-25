@@ -38,6 +38,7 @@ describe.only "Functional Tests", ->
         before -> console.log "startSync"
         cliHelpers.startSync ->
             setTimeout done, 500
+    before -> console.log "before done"
 
     # Cleans up local system
     after cliHelpers.stopSync
