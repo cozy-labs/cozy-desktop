@@ -50,8 +50,9 @@ applyOperation = (task, callback) ->
     ]
 
     remoteConfig = config.getConfig()
-    urls = url.parse(remoteConfig.url)
-    ping.sys.probe urls.hostname, (isAlive) ->
+    hostname = url.parse(remoteConfig.url).hostname
+    log.debug "Ping #{hostname}..."
+    ping.sys.probe hostname, (isAlive) ->
         if isAlive
             if task.operation in watchingBlockingOperations
                 # TODO: Change synchronized folder's permission to "read-only"
@@ -109,6 +110,7 @@ applyOperation = (task, callback) ->
                 operationQueue[task.operation] callback
 
         else
+            log.debug "Network dead."
             operationQueue.waitNetwork task
             callback()
 
@@ -120,10 +122,10 @@ operationQueue =
         operationQueue.queue.pause()
         operationQueue.queue.unshift task, ->
         remoteConfig = config.getConfig()
-        interval = setInterval () ->
-            urls = url.parse(remoteConfig.url)
-            log.debug "Ping network..."
-            ping.sys.probe urls.hostname, (isAlive) ->
+        interval = setInterval ->
+            hostname = url.parse(remoteConfig.url).hostname
+            log.debug "Ping #{hostname}..."
+            ping.sys.probe hostname, (isAlive) ->
                 if isAlive
                     log.debug "Network alive."
                     operationQueue.queue.resume()
@@ -307,8 +309,7 @@ operationQueue =
 
         # Walk through all file DB documents, and download missing files if any
         pouch.files.all (err, res) ->
-            if err? and err.status isnt 404
-                return callback err
+            return callback err if err?
 
             log.info "Downloading missing files from remote..."
             files = res.rows
@@ -335,8 +336,7 @@ operationQueue =
 
         # Walk through all folder DB documents, and create missing folders
         pouch.folders.all (err, res) ->
-            if err? and err.status isnt 404
-                return callback err
+            return callback err if err?
 
             log.info "Creating locally missing folders..."
             folders = res.rows

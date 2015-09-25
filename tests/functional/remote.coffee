@@ -9,11 +9,12 @@ foldersHelpers = require '../helpers/folders'
 
 mkdirp = require 'mkdirp'
 
-WAIT_TIME = 3000
+WAIT_TIME = 5000
 
 {syncPath} = helpers.options
 
 describe.only "Functional Tests", ->
+    @timeout 15000
 
     before helpers.ensurePreConditions
 
@@ -24,7 +25,6 @@ describe.only "Functional Tests", ->
 
     # Prepares the sync and starts it
     before cliHelpers.mockGetPassword
-    before cliHelpers.cleanConfiguration
     before cliHelpers.initConfiguration
     before cliHelpers.initSync
     before (done) ->
@@ -44,8 +44,6 @@ describe.only "Functional Tests", ->
         describe.only 'Empty folder changes', ->
 
             it "Create a folder remotely", (done) ->
-                @timeout 15000
-
                 folderName = 'remote-folder'
                 folderPath = "#{syncPath}/#{folderName}"
                 foldersHelpers.createFolder folderName, ->
@@ -57,10 +55,9 @@ describe.only "Functional Tests", ->
                             # folder should exist
                             fs.existsSync(folderPath).should.be.ok
                             done()
-                        , WAIT_TIME * 2
+                        , WAIT_TIME
 
             it "Create a second folder remotely", (done) ->
-                @timeout 15000
                 folderName = 'remote-folder-2'
                 folderPath = "#{syncPath}/#{folderName}"
                 foldersHelpers.createFolder folderName, ->
@@ -71,10 +68,9 @@ describe.only "Functional Tests", ->
                             # folder should exist
                             fs.existsSync(folderPath).should.be.ok
                             done()
-                        , 7000
+                        , WAIT_TIME
 
             it "Rename folder remotely", (done) ->
-                @timeout 15000
                 folderName = 'remote-folder-2'
                 newName = 'remote-folder-bis'
                 newPath = "#{syncPath}/#{newName}"
@@ -86,10 +82,9 @@ describe.only "Functional Tests", ->
                             # folder should exist
                             fs.existsSync(newPath).should.be.ok
                             done()
-                        , 7000
+                        , WAIT_TIME
 
             it "Move a folder remotely into a subfolder", (done) ->
-                @timeout 15000
                 folderName = 'remote-folder-bis'
                 folderPathName = 'remote-folder'
                 newPath = "#{syncPath}/#{folderPathName}/#{folderName}"
@@ -106,11 +101,9 @@ describe.only "Functional Tests", ->
                                 # file should exist at new path
                                 fs.existsSync(newPath).should.be.ok
                                 done()
-                            , 7000
+                            , WAIT_TIME
 
             it "Delete a folder remotely", (done) ->
-                @timeout 15000
-
                 folderName = 'remote-folder-bis'
                 folderPathName = 'remote-folder'
                 folderPath = "#{syncPath}/#{folderPathName}/#{folderName}"
@@ -126,12 +119,11 @@ describe.only "Functional Tests", ->
                                 # file should exist at new path
                                 fs.existsSync(folderPath).should.not.be.ok
                                 done()
-                            , 7000
+                            , WAIT_TIME
 
         describe.only 'File changes', ->
 
             it "Create a file remotely", (done) ->
-                @timeout 15000
                 fixturePath = path.resolve __dirname, '../fixtures/chat-mignon.jpg'
                 fileName = 'chat-mignon.jpg'
                 filePath = "#{syncPath}/#{fileName}"
@@ -143,10 +135,9 @@ describe.only "Functional Tests", ->
                             # file should exist
                             fs.existsSync(filePath).should.be.ok
                             done()
-                        , 7000
+                        , WAIT_TIME
 
             it "Rename a file remotely", (done) ->
-                @timeout 15000
                 fileName = 'chat-mignon.jpg'
                 newName = 'chat-mignon-renamed.jpg'
                 newPath = "#{syncPath}/#{newName}"
@@ -158,10 +149,9 @@ describe.only "Functional Tests", ->
                             # file should exist
                             fs.existsSync(newPath).should.be.ok
                             done()
-                        , 7000
+                        , WAIT_TIME
 
             it "Move a file remotely into a subfolder", (done) ->
-                @timeout 15000
                 fileName = 'chat-mignon-renamed.jpg'
                 folderName = 'remote-folder'
                 newPath = "#{syncPath}/#{folderName}/#{fileName}"
@@ -178,10 +168,9 @@ describe.only "Functional Tests", ->
                                 # file should exist at new path
                                 fs.existsSync(newPath).should.be.ok
                                 done()
-                            , 7000
+                            , WAIT_TIME
 
             it "Move a file remotely from a subfolder", (done) ->
-                @timeout 15000
                 fileName = 'chat-mignon-renamed.jpg'
                 folderName = 'remote-folder'
                 newPath = "#{syncPath}/#{fileName}"
@@ -199,11 +188,9 @@ describe.only "Functional Tests", ->
                                     # file should exist at new path
                                     fs.existsSync(newPath).should.be.ok
                                     done()
-                                , 7000
+                                , WAIT_TIME
 
             it "Delete a file remotely", (done) ->
-                @timeout 15000
-
                 fileName = 'chat-mignon-renamed.jpg'
                 filePath = "#{syncPath}/#{fileName}"
                 fs.existsSync(filePath).should.be.ok
@@ -215,7 +202,7 @@ describe.only "Functional Tests", ->
                             # file should exist at new path
                             fs.existsSync(filePath).should.not.be.ok
                             done()
-                        , 7000
+                        , WAIT_TIME
 
     it.skip "Create a big file a file remotely", (done) ->
         ms = 1000

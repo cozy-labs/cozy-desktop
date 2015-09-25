@@ -31,6 +31,7 @@ module.exports = device =
                 callback err
             else if body.error?
                 if body.error is 'string'
+                    # FIXME no callback here?
                     log.error body.error
                 else
                     callback body.error
@@ -43,6 +44,4 @@ module.exports = device =
     unregisterDevice: (options, callback) ->
         client = request.newClient options.url
         client.setBasicAuth 'owner', options.password
-
         client.del "device/#{options.deviceId}/", callback
-

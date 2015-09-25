@@ -33,7 +33,6 @@ module.exports.initSync = (done) ->
 
 # Configures a fake device for a fake remote Cozy
 module.exports.initConfiguration = (done) ->
-
     init = ->
         saveConfig = (err, credentials) ->
             if err
@@ -46,6 +45,7 @@ module.exports.initConfiguration = (done) ->
                     path: helpers.options.syncPath
                     deviceId: credentials.id
                     devicePassword: credentials.password
+                # TODO deviceId and deviceName have been merged
                 helpers.options.deviceId = credentials.id
                 helpers.options.devicePassword = credentials.password
 
@@ -59,11 +59,7 @@ module.exports.initConfiguration = (done) ->
 
         deviceManager.registerDevice opts, saveConfig
 
-    opts = config.getConfig()
-    if opts.url?
-        cliHelpers.cleanConfiguration init
-    else
-        init()
+    cliHelpers.cleanConfiguration init
 
 
 # Removes the configuration
@@ -74,13 +70,13 @@ module.exports.cleanConfiguration = (done) ->
         if err
             console.log err
         else
-            #config.removeRemoteCozy helpers.options.deviceName
-            done()
+            config.removeRemoteCozy helpers.options.deviceName
+        done()
 
-    unregister = (err, password) ->
+    unregister = ->
         opts =
             url: helpers.options.url
-            deviceId: opts.deviceId
+            deviceId: helpers.options.deviceName
             password: helpers.options.cozyPassword
         deviceManager.unregisterDevice opts, saveConfig
 

@@ -2,19 +2,25 @@ language: node_js
 matrix:
     fast_finish: true
     allow_failures:
-        - node_js: "0.12"
+        - node_js: 0.12
+        - node_js: 4
 node_js:
-    - "0.10"
-    - "0.12"
+    - 0.10
+    - 0.12
+    - 4
 env:
     global:
         - NODE_ENV=test
 services:
     - couchdb
-env:
-    global:
-        - NODE_ENV=test
-        - TEST_ENV=travis
+cache:
+    directories:
+        - node_modules
+addons:
+    apt:
+        packages:
+            - net-tools
+
 before_install:
     - cd
     - npm install forever coffee-script mocha -g
@@ -22,7 +28,7 @@ before_install:
     - cd cozy-data-system
     - npm install #data-system
     - pwd
-    - NAME=data-system TOKEN=token forever start -o forever-ds.log build/server.js
+    - NAME=data-system TOKEN=token forever start -o forever-ds.log -e forever-ds-err.log build/server.js
     - sleep 5
     - pwd
     - cd
@@ -30,7 +36,7 @@ before_install:
     - cd cozy-proxy
     - npm install
     - pwd
-    - NAME=proxy TOKEN=token forever start -o forever-proxy.log build/server.js
+    - NAME=proxy TOKEN=token forever start -o forever-proxy.log -e forever-proxy-err.log build/server.js
     - sleep 5
     - 'curl -X POST -H "Content-Type: application/json" -d "{ \"email\": \"cozytest@cozycloud.cc\", \"password\": \"cozytest\", \"timezone\":\"Europe/Paris\"}" http://127.0.0.1:9104/register'
     - cd
@@ -42,23 +48,25 @@ before_install:
     - coffee commands.coffee test-install files ../cozy-files/package.json
     - pwd
     - cd ~/cozy-files
-    - NAME=files TOKEN=apptoken forever start -o forever-files.log build/server.js
+    - NAME=files TOKEN=apptoken forever start -o forever-files.log -e forever-files-err.log build/server.js
     - sleep 3
     - cd /home/travis/build/cozy-labs/cozy-desktop
     - pwd
 
 script:
-    - pwd
-    - npm install
-    - sh scripts/tests.sh
+    - bin/ci
 
 after_failure:
     - pwd
     - ps aux | grep server.js
-    - sudo netstat -plunt
+    - netstat -lntp
     - cat ~/cozy-data-system/forever-ds.log
+    - cat ~/cozy-data-system/forever-ds-err.log
     - cat ~/cozy-proxy/forever-proxy.log
+    - cat ~/cozy-proxy/forever-proxy-err.log
     - cat ~/cozy-files/forever-files.log
-    - curl http://localhost:9101/
-    - curl http://localhost:9104/
-    - curl http://localhost:9121/
+    - cat ~/cozy-files/forever-files-err.log
+    - curl -v http://localhost:9101/
+    - curl -v http://localhost:9104/
+    - curl -v http://localhost:9121/
+    - ping -n -w 2 -c 1 localhost
