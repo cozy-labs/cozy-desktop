@@ -30,8 +30,6 @@ describe.only "Functional Tests", ->
     # Prepares the sync and starts it
     before -> console.log "mockGetPassword"
     before cliHelpers.mockGetPassword
-    before -> console.log "cleanConfiguration"
-    before cliHelpers.cleanConfiguration
     before -> console.log "initConfiguration"
     before cliHelpers.initConfiguration
     before -> console.log "initSync"

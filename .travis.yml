@@ -36,7 +36,7 @@ before_install:
     - cd cozy-proxy
     - npm install
     - pwd
-    - NAME=proxy TOKEN=token forever start -o forever-proxy.log -e forever-proxy-proxy-err.log build/server.js
+    - NAME=proxy TOKEN=token forever start -o forever-proxy.log -e forever-proxy-err.log build/server.js
     - sleep 5
     - 'curl -X POST -H "Content-Type: application/json" -d "{ \"email\": \"cozytest@cozycloud.cc\", \"password\": \"cozytest\", \"timezone\":\"Europe/Paris\"}" http://127.0.0.1:9104/register'
     - cd

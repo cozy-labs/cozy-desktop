@@ -61,12 +61,8 @@ module.exports.initConfiguration = (done) ->
         console.log "deviceManager.registerDevice"
         deviceManager.registerDevice opts, saveConfig
 
-    opts = config.getConfig()
-    if opts.url?
-        console.log "cliHelpers.cleanConfiguration"
-        cliHelpers.cleanConfiguration init
-    else
-        init()
+    console.log "cliHelpers.cleanConfiguration"
+    cliHelpers.cleanConfiguration init
 
 
 # Removes the configuration
