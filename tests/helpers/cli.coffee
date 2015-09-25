@@ -49,6 +49,7 @@ module.exports.initConfiguration = (done) ->
                 helpers.options.deviceId = credentials.id
                 helpers.options.devicePassword = credentials.password
 
+                console.log "config.addRemoteCozy"
                 config.addRemoteCozy device
                 done()
 
@@ -57,10 +58,12 @@ module.exports.initConfiguration = (done) ->
             deviceName: helpers.options.deviceName
             password: helpers.options.cozyPassword
 
+        console.log "deviceManager.registerDevice"
         deviceManager.registerDevice opts, saveConfig
 
     opts = config.getConfig()
     if opts.url?
+        console.log "cliHelpers.cleanConfiguration"
         cliHelpers.cleanConfiguration init
     else
         init()
@@ -74,6 +77,7 @@ module.exports.cleanConfiguration = (done) ->
         if err
             console.log err
         else
+            console.log "config.removeRemoteCozy"
             config.removeRemoteCozy helpers.options.deviceName
         done()
 
@@ -82,6 +86,7 @@ module.exports.cleanConfiguration = (done) ->
             url: helpers.options.url
             deviceId: helpers.options.deviceName
             password: helpers.options.cozyPassword
+        console.log "deviceManager.unregisterDevice"
         deviceManager.unregisterDevice opts, saveConfig
 
     if opts.url?

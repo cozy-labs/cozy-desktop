@@ -78,7 +78,7 @@
     "gulp-shell": "^0.2.9",
     "node-webkit-builder": "~1.0.10",
     "nodewebkit": "^0.8.6",
-    "request-json": "0.4.12",
+    "request-json": "^0.5.3",
     "should": "^4.1.0"
   }
 }

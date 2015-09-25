@@ -16,19 +16,28 @@ WAIT_TIME = 5000
 describe.only "Functional Tests", ->
     @timeout 15000
 
+    before -> console.log "ensurePreConditions"
     before helpers.ensurePreConditions
 
     # Prepares the local system
+    before -> console.log "deleteAll"
     before filesHelpers.deleteAll
+    before -> console.log "cleanFolder"
     before helpers.cleanFolder syncPath
+    before -> console.log "prepareFolder"
     before helpers.prepareFolder syncPath
 
     # Prepares the sync and starts it
+    before -> console.log "mockGetPassword"
     before cliHelpers.mockGetPassword
+    before -> console.log "cleanConfiguration"
     before cliHelpers.cleanConfiguration
+    before -> console.log "initConfiguration"
     before cliHelpers.initConfiguration
+    before -> console.log "initSync"
     before cliHelpers.initSync
     before (done) ->
+        before -> console.log "startSync"
         cliHelpers.startSync ->
             setTimeout done, 500
 

@@ -9,8 +9,6 @@ BIN='mocha --reporter spec --compilers coffee:coffee-script/register '
 
 $BIN tests/operations/
 
-curl -u owner:cozytest -v -X DELETE http://localhost:9104/device/tester/
-
 $BIN tests/functional/remote.coffee
 #$BIN tests/functional/local.coffee
 #$BIN tests/functional/local_change.coffee
