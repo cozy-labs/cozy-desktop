@@ -20,7 +20,6 @@ addons:
     apt:
         packages:
             - net-tools
-            - iputils-ping
 
 before_install:
     - cd
@@ -55,6 +54,7 @@ before_install:
     - pwd
 
 script:
+    - export PATH="bin:$PATH"
     - bin/ci
 
 after_failure:

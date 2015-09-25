@@ -1,0 +1,4 @@
+#/bin/bash
+
+for host; do true; done
+curl -s "http://${host}:5984/" > /dev/null
