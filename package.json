@@ -55,7 +55,7 @@
     "path-extra": "0.2.1",
     "pouchdb": "3.2.0",
     "path-extra": "^0.2.1",
-    "ping": "0.1.9",
+    "ping": "^0.1.9",
     "pouchdb": "^4.0.3",
     "printit": "0.1.4",
     "process": "0.7.0",
