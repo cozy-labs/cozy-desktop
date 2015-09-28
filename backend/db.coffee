@@ -404,8 +404,7 @@ module.exports = dbHelpers =
 
         opts =
             filter: (doc) ->
-                doc.docType is 'Folder' or doc.docType is 'File' \
-                or (doc._deleted and (doc.docType is 'Folder' or doc.docType is 'File'))
+                doc.docType is 'Folder' or doc.docType is 'File'
             live: false
             since: startChangeSeq
 
@@ -522,7 +521,7 @@ module.exports = dbHelpers =
                 return callback err
 
             # Get last modification date
-            fs.stat folderPaths.absolute, (err, stats) ->
+            fs.stat folderPaths.absolute, (err, {mtime}) ->
                 return callback err if err
 
                 existingDoc ?= {}
@@ -532,11 +531,11 @@ module.exports = dbHelpers =
                     name: folderPaths.name
                     path: folderPaths.parent
                     tags: existingDoc.tags or []
-                    creationDate: existingDoc.creationDate or stats.mtime
-                    lastModification: existingDoc.lastModification or stats.mtime
+                    creationDate: existingDoc.creationDate or mtime
+                    lastModification: existingDoc.lastModification or mtime
 
                 prevDate = new Date existingDoc.lastModification
-                newDate = new Date stats.mtime
+                newDate = new Date mtime
 
                 if prevDate > newDate
                     newDoc.lastModification = existingDoc.lastModification
@@ -661,9 +660,9 @@ module.exports = dbHelpers =
             if err
                 # Document not found remotely, force upload
                 if err.status? and err.status is 404
-                   dbHelpers.uploadBinary filePath, null, callback
+                    dbHelpers.uploadBinary filePath, null, callback
                 else
-                   callback err
+                    callback err
             else
                 callback null, remoteBinaryDoc
 

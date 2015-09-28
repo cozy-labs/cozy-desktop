@@ -36,7 +36,7 @@ module.exports.initConfiguration = (done) ->
     init = ->
         saveConfig = (err, credentials) ->
             if err
-                console.log err
+                log.info err
                 done()
             else
                 device =
@@ -68,7 +68,7 @@ module.exports.cleanConfiguration = (done) ->
 
     saveConfig = (err) ->
         if err
-            console.log err
+            log.info err
         else
             config.removeRemoteCozy helpers.options.deviceName
         done()

@@ -36,11 +36,11 @@ module.exports = config =
             return {} # No device configured
         else
             log.error "Device not set locally: #{deviceName}"
-            throw "Device not set locally: #{deviceName}"
+            throw new Error "Device not set locally: #{deviceName}"
 
     # Get the argument after -d or --deviceName
     # Or return the first device name
-    getDeviceName: () ->
+    getDeviceName: ->
         for arg, index in process.argv
             if arg is '-d' or arg is '--deviceName'
                 return process.argv[index + 1]

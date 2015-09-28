@@ -59,8 +59,8 @@ applyOperation = (task, callback) ->
                 # while applying those operations.
                 filesystem.locked = true
                 callback = (err, res) ->
-                    # We want to log the errors and their trace to be able to find
-                    # when and where it occured.
+                    # We want to log the errors and their trace to be able
+                    # to find when and where it occured.
                     operationQueue.displayErrorStack err, task.operation if err
 
                     # Wait a bit before unblocking FS watcher, to avoid
@@ -104,7 +104,7 @@ applyOperation = (task, callback) ->
                     initialCallback null, res
 
             # Apply operation
-            if param = task.file || task.folder || task.doc
+            if param = task.file or task.folder or task.doc
                 operationQueue[task.operation] param, callback
             else
                 operationQueue[task.operation] callback
@@ -293,7 +293,8 @@ operationQueue =
                         fs.removeSync oldPath
                     updateUtimes newPath, callback
                 else
-                    log.info "File #{newPath} already exists, duplicating to #{newPath}.new"
+                    log.info "File #{newPath} already exists, " +
+                        "duplicating to #{newPath}.new"
                     fs.move oldPath, "#{newPath}.new", (err) ->
                         return callback err if err?
                         updateUtimes "#{newPath}.new", callback
@@ -368,41 +369,38 @@ operationQueue =
         log.debug "Creating file remotely #{filePath}..."
 
         operationQueue.prepareRemoteCreation filePaths, (err) ->
-            if err then callback err
-            else
-                log.debug "Parent folders of #{relPath} created..."
+            return callback err if err
 
-                # Upload binary Doc to remote
-                pouch.uploadBinary absPath, null, (err, binaryDoc) ->
-                    if err then callback err
-                    else
+            log.debug "Parent folders of #{relPath} created..."
 
-                        # Make a doc from scratch or by merging with an
-                        # existing one
-                        pouch.makeFileDoc filePaths.absolute, (err, doc) ->
-                            if err then callback err
-                            else
-                                log.debug "Remote doc for #{relPath} created..."
+            # Upload binary Doc to remote
+            pouch.uploadBinary absPath, null, (err, binaryDoc) ->
+                return callback err if err
 
-                                # Update and save the file DB document that
-                                # will be replicated afterward.
-                                doc.binary =
-                                    file:
-                                        id: binaryDoc.id
-                                        rev: binaryDoc.rev
-                                        checksum: binaryDoc.checksum
+                # Make a doc from scratch or by merging with an
+                # existing one
+                pouch.makeFileDoc filePaths.absolute, (err, doc) ->
+                    return callback err if err
 
-                                pouch.db.put doc, (err, res) ->
-                                    if err
-                                        callback err
-                                    else
-                                        log.debug "Binary Data for #{relPath} updated..."
-                                        # Flag the revision of the document as 'made
-                                        # locally' to avoid further conflicts
-                                        # reapplicating changes
-                                        pouch.storeLocalRev res.rev, ->
-                                            log.debug "File #{relPath} remotely created."
-                                            callback()
+                    log.debug "Remote doc for #{relPath} created..."
+
+                    # Update and save the file DB document that
+                    # will be replicated afterward.
+                    doc.binary =
+                        file:
+                            id: binaryDoc.id
+                            rev: binaryDoc.rev
+                            checksum: binaryDoc.checksum
+
+                    pouch.db.put doc, (err, res) ->
+                        return callback err if err
+                        log.debug "Binary Data for #{relPath} updated..."
+                        # Flag the revision of the document as 'made
+                        # locally' to avoid further conflicts
+                        # reapplicating changes
+                        pouch.storeLocalRev res.rev, ->
+                            log.debug "File #{relPath} remotely created."
+                            callback()
 
 
     # - check file existence locally, if the file doesn't exist, it is deleted

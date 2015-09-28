@@ -4,7 +4,7 @@ async = require 'async'
 should = require 'should'
 mkdirp = require 'mkdirp'
 fsExtra = require 'fs-extra'
-Client = require('request-json').JsonClient
+request = require 'request-json-light'
 
 
 module.exports = helpers = {}
@@ -22,12 +22,12 @@ protocol = helpers.options.serverScheme
 host = helpers.options.serverHost
 port = helpers.options.serverPort
 
-client = new Client "#{protocol}://#{host}:#{port}/"
+client = request.newClient "#{protocol}://#{host}:#{port}/"
 
 # Returns a client if url is given, default app client otherwise
 helpers.getClient = (url = null) ->
     if url?
-        return new Client url
+        return request.newClient url
     else
         return client
 

@@ -22,14 +22,14 @@ filesystem =
     # Build useful path from a given path.
     # (absolute, relative, filename, parent path, and parent absolute path).
     getPaths: (filePath) ->
-        remoteConfig = config.getConfig()
+        remote = config.getConfig().path
 
         # Assuming filePath is 'hello/world.html':
-        absolute  = path.resolve remoteConfig.path, filePath # /home/sync/hello/world.html
-        relative = path.relative remoteConfig.path, absolute # hello/world.html
-        name = path.basename filePath # world.html
-        parent = path.dirname path.join path.sep, relative # /hello
-        absParent = path.dirname absolute # /home/sync/hello
+        absolute  = path.resolve remote, filePath  # /home/sync/hello/world.html
+        relative = path.relative remote, absolute  # hello/world.html
+        name = path.basename filePath              # world.html
+        parent = path.dirname path.join path.sep, relative  # /hello
+        absParent = path.dirname absolute          # /home/sync/hello
 
         # Do not keep '/'
         parent = '' if parent is path.sep
@@ -54,7 +54,7 @@ filesystem =
     checkLocation: (fileOrFolderpath, callback) ->
         paths = @getPaths fileOrFolderpath
         if paths.relative isnt '' \
-           and paths.relative.substring(0,2) isnt '..'
+                and paths.relative.substring(0,2) isnt '..'
             fs.exists paths.absolute, (exists) ->
                 if not exists
                     callback new Error "#{paths.absolute} does not exist"
@@ -68,7 +68,7 @@ filesystem =
     # Return folder list in given dir. Parent path, filename and full path
     # are stored for each file.
     # TODO: add test and make async
-    walkDirSync: (dir, filelist) =>
+    walkDirSync: (dir, filelist) ->
         remoteConfig = config.getConfig()
 
         files = fs.readdirSync dir
@@ -86,7 +86,7 @@ filesystem =
     # Return file list in given dir. Parent path, filename and full path
     # are stored for each file.
     # TODO: add test and make async
-    walkFileSync: (dir, filelist) =>
+    walkFileSync: (dir, filelist) ->
         remoteConfig = config.getConfig()
 
         files = fs.readdirSync dir
@@ -155,7 +155,7 @@ filesystem =
                 delete filesystem.filesBeingCopied[filePath]
                 callback err
             else
-                setTimeout () ->
+                setTimeout ->
                     filesystem.getSize filePath, (err, lateSize) ->
                         if err
                             delete filesystem.filesBeingCopied[filePath]

@@ -50,7 +50,8 @@ fileHelpers.deleteAll = (callback) ->
                 res.statusCode.should.equal expectedCode
                 setTimeout cb, 1000
         , ->
-            del '/tmp/cozy', force: true, callback
+            del('/tmp/cozy', force: true).then ->
+                callback()
 
 fileHelpers.getAll = (callback) ->
     filesClient.get 'files', (err, res, files) ->
@@ -84,7 +85,6 @@ fileHelpers.uploadFile = (fileName, fixturePath, path, callback) ->
         should.exist res
         should.exist body
         res.statusCode.should.equal 200
-        body = JSON.parse body
         filesClient.get "files/#{body.id}", file, (err, res, body) ->
             res.statusCode.should.equal 200
             callback err, body

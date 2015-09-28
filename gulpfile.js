@@ -9,10 +9,10 @@ var del = require('del');
 var mocha = require('gulp-mocha');
 var should = require('should');
 
-var nwVersion = '0.8.6';
+var nwVersion = '0.12.3';
 var paths = {
   scripts: ['backend/*.coffee'],
-  scriptsJS: ['./cli.js', 'backend/*.js'],
+  scriptsJS: ['cli.js', 'backend/*.js'],
   bin: ['cli.js'],
   tests: ['tests/operations/*.coffee', 'tests/functional/remote.coffee'],
   all: ["backend/**/*.js", "client/public/**", "app.html", "package.json",
@@ -22,7 +22,9 @@ var paths = {
 
 
 gulp.task('clean', function(cb) {
-  del(paths.scriptsJS, cb);
+  del(paths.scriptsJS).then(function() {
+    cb();
+  });
 });
 
 
@@ -44,19 +46,8 @@ gulp.task('build-package',
           ['clean', 'scripts', 'bin-scripts']);
 
 
-gulp.task('leveldown', shell.task([
-  'cd ' + paths.leveldown + ' && nw-gyp configure --target=' + nwVersion,
-  'cd ' + paths.leveldown + ' && nw-gyp build'
-]));
-
-
-gulp.task('leveldown-classic', shell.task([
-  'rm -rf ./node_modules/pouchdb',
-  'npm install --production'
-]));
-
-gulp.task('build-gui-package', ['scripts', 'leveldown'], function() {
-  var NwBuilder = require('node-webkit-builder');
+gulp.task('build-gui-package', ['scripts'], function() {
+  var NwBuilder = require('nw-builder');
   var nw = new NwBuilder({
       files: paths.all,
       version: nwVersion,
@@ -117,7 +108,7 @@ gulp.task('make-osx-app', shell.task([
   'cp -a build/cozy-desktop/osx32/cozy-desktop.app .'
 ]));
 
-gulp.task('coffeelint', function() {
+gulp.task('lint', function() {
   gulp.src(paths.scripts)
     .pipe(coffeelint())
     .pipe(coffeelint.reporter())

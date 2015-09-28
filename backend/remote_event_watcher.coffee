@@ -29,7 +29,7 @@ remoteEventWatcher =
     # TODO: do not run a replication if another replication is running.
     start: (callback) ->
         pouch.replicationDelay = 0
-        int = setInterval () ->
+        int = setInterval ->
             # 1 is code for cancelation
             if pouch.replicationDelay is 1
                 log.debug "Replication canceled"
@@ -84,7 +84,7 @@ remoteEventWatcher =
                         callback null, seq
 
     replicateFromRemote: ->
-        url = @url || config.getUrl()
+        url = @url or config.getUrl()
         options =
             filter: (doc) ->
                 res = false
@@ -193,9 +193,10 @@ remoteEventWatcher =
         pouch.db.query 'localrev/byRevision', params, (err, res) ->
             if res?.rows? and res.rows.length is 0
 
+                doc = change.doc
                 docDeleted = change.deleted
-                docAdded = change.doc.lastModification <= change.doc.creationDate
-                concernsFolder = change.doc.docType.toLowerCase() is 'folder'
+                docAdded = doc.lastModification <= doc.creationDate
+                concernsFolder = doc.docType.toLowerCase() is 'folder'
 
                 # Deletion
                 if docDeleted
@@ -221,10 +222,10 @@ remoteEventWatcher =
                 if operation?
                     require('./operation_queue').queue.push
                         operation: operation
-                        doc: change.doc
+                        doc: doc
                     , (err) ->
                         if err
-                            log.error "An error occured while applying a change."
+                            log.error "An error occured while applying a change"
                             log.error "Operation #{operation}"
                             log.error change.doc
                             log.raw err
