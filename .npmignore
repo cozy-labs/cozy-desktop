@@ -1,4 +1,12 @@
+.travis.yml
+coffeelint.json
 *.coffee
-todo
-.git*
-.project
+*.styl
+bin/
+build/
+cache/
+client/app/
+client/vendor/
+packaging/
+tests/
+tmp/
