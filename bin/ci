@@ -13,4 +13,4 @@ $BIN tests/functional/remote.coffee
 #$BIN tests/functional/local.coffee
 #$BIN tests/functional/local_change.coffee
 
-./node_modules/bin/gulp lint
+./node_modules/.bin/gulp lint
