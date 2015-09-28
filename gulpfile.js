@@ -12,7 +12,7 @@ var should = require('should');
 var nwVersion = '0.8.6';
 var paths = {
   scripts: ['backend/*.coffee'],
-  scriptsJS: ['./cli.js', 'backend/*.js'],
+  scriptsJS: ['cli.js', 'backend/*.js'],
   bin: ['cli.js'],
   tests: ['tests/operations/*.coffee', 'tests/functional/remote.coffee'],
   all: ["backend/**/*.js", "client/public/**", "app.html", "package.json",
@@ -22,7 +22,9 @@ var paths = {
 
 
 gulp.task('clean', function(cb) {
-  del(paths.scriptsJS, cb);
+  del(paths.scriptsJS).then(function() {
+    cb();
+  });
 });
 
 

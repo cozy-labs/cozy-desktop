@@ -50,7 +50,8 @@ fileHelpers.deleteAll = (callback) ->
                 res.statusCode.should.equal expectedCode
                 setTimeout cb, 1000
         , ->
-            del '/tmp/cozy', force: true, callback
+            del('/tmp/cozy', force: true).then ->
+                callback()
 
 fileHelpers.getAll = (callback) ->
     filesClient.get 'files', (err, res, files) ->
