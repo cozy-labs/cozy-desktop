@@ -108,7 +108,7 @@ gulp.task('make-osx-app', shell.task([
   'cp -a build/cozy-desktop/osx32/cozy-desktop.app .'
 ]));
 
-gulp.task('coffeelint', function() {
+gulp.task('lint', function() {
   gulp.src(paths.scripts)
     .pipe(coffeelint())
     .pipe(coffeelint.reporter())
