@@ -93,7 +93,9 @@ To hack the synchronization backend, you can just edit the files under the
 `backend` directory. Remove the `*.js` files if necessary, then run the
 `cli.coffee` file.
 
-### Run tests
+### Tests
+
+![Build Status](https://travis-ci.org/cozy-labs/cozy-desktop.png?branch=master)
 
 Tests require that you have the Cozy dev VM up (it means a data-system and a
 proxy up and running) and that the files application is accessible on the 9121

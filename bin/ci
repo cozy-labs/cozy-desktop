@@ -2,6 +2,7 @@
 
 set -e
 
+export NODE_ENV=test
 export DEFAULT_DIR=tests
 
 BIN='mocha --reporter spec --compilers coffee:coffee-script/register '
