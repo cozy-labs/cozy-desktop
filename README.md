@@ -38,26 +38,14 @@ commmands:
     cd cozy-desktop
     npm install
 
-For an obscure reason, `leveldown` module needs to be recompiled on your platform
-with `node-gyp` in order to run on Node Webkit.
-
-    sudo npm install -g nw-gyp
-    node_modules/.bin/gulp leveldown
-
 Once done, you can launch nodewebkit in the current directory
 
-    node_modules/nodewebkit/bin/nodewebkit .
+    node_modules/.bin/nw
 
 **Note:** On Ubuntu 13.04+, Fedora 18+, ArchLinux and Gentoo, you will run
-into a `libudev.so.0` issue. See https://github.com/rogerwang/node-webkit/wiki/The-solution-of-lacking-libudev.so.0
+into a `libudev.so.0` issue. See
+https://github.com/rogerwang/node-webkit/wiki/The-solution-of-lacking-libudev.so.0
 for more information.
-
-**Note:** On Debian Wheezy (7.x) you will have to install libc6 from the
-`testing` repository. Be careful, it may break other services.
-
-    echo 'deb http://ftp.us.debian.org/debian/ testing main contrib non-free' | sudo tee -a /etc/apt/sources.list
-    sudo apt-get update
-    sudo apt-get install -t testing libc6
 
 If you made a modification in the code and you want to recompile `.coffee` files,
 run:
@@ -65,7 +53,7 @@ run:
     node_modules/.bin/gulp scripts  # Compiles backend files
     cd client
     npm install
-    sudo npm install -g brunch
+    npm install -g brunch
     brunch build                    # Compiles client files
 
 
