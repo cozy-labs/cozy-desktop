@@ -1,5 +1,4 @@
 async = require 'async'
-request = require 'request-json-light'
 should = require 'should'
 date = require 'date-utils'
 

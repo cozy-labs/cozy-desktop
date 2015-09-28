@@ -84,7 +84,6 @@ fileHelpers.uploadFile = (fileName, fixturePath, path, callback) ->
         should.exist res
         should.exist body
         res.statusCode.should.equal 200
-        body = JSON.parse body
         filesClient.get "files/#{body.id}", file, (err, res, body) ->
             res.statusCode.should.equal 200
             callback err, body
