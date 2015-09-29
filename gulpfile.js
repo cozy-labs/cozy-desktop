@@ -39,7 +39,7 @@ gulp.task('bin-scripts', function() {
   gulp.src("bin/cli.coffee")
     .pipe(coffee({bare: true}))
     .pipe(insert.prepend('#!/usr/bin/env node\n'))
-    .pipe(gulp.dest('./'));
+    .pipe(gulp.dest('bin/'));
 });
 
 gulp.task('build-package',

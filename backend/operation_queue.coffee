@@ -585,13 +585,17 @@ operationQueue =
     #
     # Macro function
     #
-    makeFSSimilarToDB: (callback) ->
-        async.series [
-            (next) => @queue.push operation: 'ensureAllFoldersLocally', next
-            (next) => @queue.push operation: 'ensureAllFilesLocally', next
-            (next) => @queue.push operation: 'ensureAllFoldersRemotely', next
-            (next) => @queue.push operation: 'ensureAllFilesRemotely', next
-        ], callback
+    makeFSSimilarToDB: (readonly, callback) ->
+        operations = [
+            (cb) => @queue.push operation: 'ensureAllFoldersLocally', cb
+            (cb) => @queue.push operation: 'ensureAllFilesLocally', cb
+        ]
+        unless readonly
+            operations = operations.concat [
+                (cb) => @queue.push operation: 'ensureAllFoldersRemotely', cb
+                (cb) => @queue.push operation: 'ensureAllFilesRemotely', cb
+            ]
+        async.series operations, callback
 
 
     #

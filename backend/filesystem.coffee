@@ -10,7 +10,7 @@ log      = require('printit')
 config    = require './config'
 pouch     = require './db'
 publisher = require './publisher'
-progress = require './progress'
+progress  = require './progress'
 
 
 filesystem =

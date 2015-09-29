@@ -129,7 +129,7 @@ module.exports = config =
         @config.devices[device.deviceName] = device
 
         fs.writeFileSync config.configPath, JSON.stringify @config, null, 2
-        console.log 'Configuration file successfully updated'
+        log.info 'Configuration file successfully updated'
 
     setInsecure: (bool) ->
         @config.insecure = bool

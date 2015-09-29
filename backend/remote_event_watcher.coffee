@@ -42,7 +42,7 @@ remoteEventWatcher =
 
     # Run first time replication (match FS and sequence number with remote) and
     # run replication regularly
-    init: (callback) ->
+    init: (readonly, callback) ->
         operationQueue = require './operation_queue'
 
         log.info 'Run first synchronisation...'
@@ -51,7 +51,7 @@ remoteEventWatcher =
             log.info "First replication is complete (last seq: #{seq})"
 
             log.info 'Start building your filesystem on your device.'
-            operationQueue.makeFSSimilarToDB (err) ->
+            operationQueue.makeFSSimilarToDB readonly, (err) ->
                 process.exit(1) if err
                 log.info 'Filesystem built on your device.'
                 publisher.emit 'firstSyncDone'

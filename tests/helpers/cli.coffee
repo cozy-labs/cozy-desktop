@@ -28,7 +28,7 @@ module.exports.restoreGetPassword = ->
 
 module.exports.initSync = (done) ->
     @timeout 60000
-    remoteEventWatcher.init done
+    remoteEventWatcher.init true, done
 
 
 # Configures a fake device for a fake remote Cozy

@@ -59,6 +59,7 @@ StateView = React.createClass
         pouch = require './backend/db'
         gui = require 'nw.gui'
         open = require 'open'
+        readonly = false  # FIXME
 
         if @state.sync
             @setState sync: false
@@ -82,7 +83,7 @@ StateView = React.createClass
 
             pouch.addAllFilters ->
 
-                remoteEventWatcher.init ->
+                remoteEventWatcher.init readonly, ->
                     remoteEventWatcher.start()
 
                     # Delay the start of the FS watcher to keep applying remote

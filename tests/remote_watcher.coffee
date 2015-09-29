@@ -71,7 +71,8 @@ describe "RemoteWatcher Tests", ->
             async.eachSeries remoteFiles, uploadFile, done
 
         it "syncs remote and local folders", (done) ->
-            remoteWatcher.init (err) ->
+            readonly = false
+            remoteWatcher.init readonly, (err) ->
                 should.not.exist err
                 setTimeout done, 1000
 
