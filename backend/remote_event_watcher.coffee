@@ -1,5 +1,6 @@
-async    = require 'async'
-log      = require('printit')
+util  = require 'util'
+async = require 'async'
+log   = require('printit')
     prefix: 'Remote watcher'
 
 #
@@ -154,13 +155,14 @@ remoteEventWatcher =
                     # Add changes to queue one by one
                     #
                     async.eachSeries res.results, (operation, next) ->
-                        log.debug "Applying remote change: #{operation}..."
+                        details = util.inspect operation, colors: true
+                        log.debug "Applying remote change: #{details}..."
                         remoteEventWatcher.addToQueue operation, (err) ->
                             if err
                                 log.error 'Error occured while applying change.'
                                 log.error err
                             else
-                                log.debug "#{operation} applied successfully."
+                                log.debug "Remote change applied successfully."
                             next()
                     , ->
                         log.debug 'Changes applied.'
@@ -214,10 +216,12 @@ remoteEventWatcher =
 
                 # Modification
                 else
-                    if not concernsFolder
-                        operation = 'moveFileLocally'
-                    else
+                    if concernsFolder
                         operation = 'moveFolderLocally'
+                    else
+                        operation = 'moveFileLocally'
+
+                log.debug "addToQueue", operation, change
 
                 if operation?
                     require('./operation_queue').queue.push

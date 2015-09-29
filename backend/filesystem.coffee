@@ -247,9 +247,9 @@ filesystem =
 
                 res.on 'end', ->
                     if res.statusCode isnt 200
-                        log.error 'File not found'
+                        log.error "File not found (#{res.statusCode})"
                         fs.remove targetPath, ->
-                            callback new Error 'File not found'
+                            callback new Error "File not found: #{targetPath}"
 
                     else
                         log.info "Binary downloaded: #{targetPath}"
