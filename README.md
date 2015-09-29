@@ -79,7 +79,7 @@ To make a package for your platform, choose either:
 
 To hack the synchronization backend, you can just edit the files under the
 `backend` directory. Remove the `*.js` files if necessary, then run the
-`cli.coffee` file.
+`bin/cli.coffee` file.
 
 ### Tests
 

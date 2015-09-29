@@ -2,7 +2,7 @@
 coffeelint.json
 *.coffee
 *.styl
-bin/
+bin/ci
 build/
 cache/
 client/app/

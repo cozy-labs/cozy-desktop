@@ -106,7 +106,7 @@ localEventWatcher =
 
         .on 'error', (err) ->
             log.error 'An error occured while watching changes:'
-            console.error err
+            log.error err
 
 
     watcher: null

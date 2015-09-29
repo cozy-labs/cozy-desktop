@@ -7,13 +7,13 @@ read = require 'read'
 log = require('printit')
     prefix: 'Cozy Desktop  '
 
-config = require './backend/config'
-filesystem = require './backend/filesystem'
-pouch = require './backend/db'
-device = require './backend/device'
-localEventWatcher = require './backend/local_event_watcher'
-remoteEventWatcher = require './backend/remote_event_watcher'
-pkg = require './package.json'
+config = require '../backend/config'
+filesystem = require '../backend/filesystem'
+pouch = require '../backend/db'
+device = require '../backend/device'
+localEventWatcher = require '../backend/local_event_watcher'
+remoteEventWatcher = require '../backend/remote_event_watcher'
+pkg = require '../package.json'
 
 
 # Helpers to get cozy password from user.
@@ -101,24 +101,24 @@ displayQuery = (query) ->
 
 # Start database sync process and setup file change watcher.
 sync = (args) ->
+    # FIXME readonly is the only supported mode for the moment
+    args.readonly = true
 
     config.setInsecure(args.insecure?)
 
     config = config.getConfig()
 
-    if not (config.deviceName? and config.url? and config.path?)
-        log.error """
-No configuration found, please run add-remote-cozy command before running
-a synchronization.
-"""
-    else
+    if config.deviceName? and config.url? and config.path?
         fs.ensureDir config.path, ->
             pouch.addAllFilters ->
-                remoteEventWatcher.init ->
+                remoteEventWatcher.init args.readonly, ->
                     log.info "Init done"
                     remoteEventWatcher.start ->
-                        # if not args.readonly
-                        #     localEventWatcher.start()
+                        unless args.readonly
+                            localEventWatcher.start()
+    else
+        log.error 'No configuration found, please run add-remote-cozy' + \
+            'command before running a synchronization.'
 
 
 # Display current configuration
@@ -146,8 +146,9 @@ program
 program
     .command 'sync'
     .description 'Sync databases, apply and/or watch changes'
-    .option('-r, --readonly',
-            'only apply remote changes to local folder')
+    # FIXME readonly is the only supported mode for the moment
+    # .option('-r, --readonly',
+    #        'only apply remote changes to local folder')
     .option('-f, --force',
             'Run sync from the beginning of all the Cozy changes.')
     .option('-k, --insecure',
@@ -185,7 +186,7 @@ program
     .version pkg.version
 
 
-if not module.parent
+unless module.parent
     program.parse process.argv
 
 unless process.argv.slice(2).length

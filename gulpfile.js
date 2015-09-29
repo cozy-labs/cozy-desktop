@@ -12,8 +12,8 @@ var should = require('should');
 var nwVersion = '0.12.3';
 var paths = {
   scripts: ['backend/*.coffee'],
-  scriptsJS: ['cli.js', 'backend/*.js'],
-  bin: ['cli.js'],
+  scriptsJS: ['bin/cli.js', 'backend/*.js'],
+  bin: ['bin/cli.js'],
   tests: ['tests/operations/*.coffee', 'tests/functional/remote.coffee'],
   all: ["backend/**/*.js", "client/public/**", "app.html", "package.json",
         "node_modules/**"],
@@ -36,10 +36,10 @@ gulp.task('scripts', ['clean'], function() {
 
 
 gulp.task('bin-scripts', function() {
-  gulp.src("cli.coffee")
+  gulp.src("bin/cli.coffee")
     .pipe(coffee({bare: true}))
     .pipe(insert.prepend('#!/usr/bin/env node\n'))
-    .pipe(gulp.dest('./'));
+    .pipe(gulp.dest('bin/'));
 });
 
 gulp.task('build-package',
@@ -128,7 +128,7 @@ gulp.task('test', function() {
 
 gulp.task('watch', function() {
   gulp.watch(paths.scripts, ['scripts', 'bin-scripts']);
-  gulp.watch('cli.coffee', ['bin-scripts']);
+  gulp.watch('bin/cli.coffee', ['bin-scripts']);
 });
 
 

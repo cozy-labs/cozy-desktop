@@ -5,7 +5,7 @@ log = require('printit')
 
 helpers = require './helpers'
 
-cli = require '../../cli'
+cli = require '../../bin/cli'
 pouch = require '../../backend/db'
 config = require '../../backend/config'
 replication = require '../../backend/db'
@@ -28,7 +28,7 @@ module.exports.restoreGetPassword = ->
 
 module.exports.initSync = (done) ->
     @timeout 60000
-    remoteEventWatcher.init done
+    remoteEventWatcher.init true, done
 
 
 # Configures a fake device for a fake remote Cozy
