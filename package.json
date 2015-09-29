@@ -20,7 +20,7 @@
     "start": "nw"
   },
   "bin": {
-    "cozy-desktop": "cli.js"
+    "cozy-desktop": "bin/cli.js"
   },
   "repository": {
     "type": "git",

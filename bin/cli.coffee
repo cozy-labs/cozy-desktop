@@ -7,13 +7,13 @@ read = require 'read'
 log = require('printit')
     prefix: 'Cozy Desktop  '
 
-config = require './backend/config'
-filesystem = require './backend/filesystem'
-pouch = require './backend/db'
-device = require './backend/device'
-localEventWatcher = require './backend/local_event_watcher'
-remoteEventWatcher = require './backend/remote_event_watcher'
-pkg = require './package.json'
+config = require '../backend/config'
+filesystem = require '../backend/filesystem'
+pouch = require '../backend/db'
+device = require '../backend/device'
+localEventWatcher = require '../backend/local_event_watcher'
+remoteEventWatcher = require '../backend/remote_event_watcher'
+pkg = require '../package.json'
 
 
 # Helpers to get cozy password from user.

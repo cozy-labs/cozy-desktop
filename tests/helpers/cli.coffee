@@ -5,7 +5,7 @@ log = require('printit')
 
 helpers = require './helpers'
 
-cli = require '../../cli'
+cli = require '../../bin/cli'
 pouch = require '../../backend/db'
 config = require '../../backend/config'
 replication = require '../../backend/db'

@@ -1,7 +1,7 @@
 /backend/*.js
+/bin/cli.js
 /build
 /cache
-/cli.js
 /node_modules
 /pkg_tree
 /tests/.cozy-desktop
