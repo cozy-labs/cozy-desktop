@@ -226,7 +226,6 @@ remoteEventWatcher =
                         push_operation 'deleteFileLocally'
                     else
                         pouch.getPreviousRev doc._id, (err, prev) ->
-                            console.log 'getPreviousRev', err, prev
                             if not prev
                                 push_operation 'createFileLocally'
                             else if prev.name is doc.name and
