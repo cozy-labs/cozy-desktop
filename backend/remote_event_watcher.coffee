@@ -195,35 +195,8 @@ remoteEventWatcher =
         pouch.db.query 'localrev/byRevision', params, (err, res) ->
             if res?.rows? and res.rows.length is 0
 
-                doc = change.doc
-                docDeleted = change.deleted
-                docAdded = doc.lastModification <= doc.creationDate
-                concernsFolder = doc.docType.toLowerCase() is 'folder'
-
-                # Deletion
-                if docDeleted
-                    if concernsFolder
-                        operation = 'deleteFolderLocally'
-                    else
-                        operation = 'deleteFileLocally'
-
-                # Creation
-                else if docAdded
-                    if concernsFolder
-                        operation = 'createFolderLocally'
-                    else
-                        operation = 'createFileLocally'
-
-                # Modification
-                else
-                    if concernsFolder
-                        operation = 'moveFolderLocally'
-                    else
-                        operation = 'moveFileLocally'
-
-                log.debug "addToQueue", operation, change
-
-                if operation?
+                push_operation = (operation) ->
+                    log.debug "addToQueue", operation, change
                     require('./operation_queue').queue.push
                         operation: operation
                         doc: doc
@@ -233,8 +206,34 @@ remoteEventWatcher =
                             log.error "Operation #{operation}"
                             log.error change.doc
                             log.raw err
+                    callback() # TODO is it at its right place?
 
-            callback()
+                doc = change.doc
+                docDeleted = change.deleted
+                folderAdded = doc.lastModification <= doc.creationDate
+                concernsFolder = doc.docType.toLowerCase() is 'folder'
+
+                if concernsFolder
+                    if docDeleted
+                        push_operation 'deleteFolderLocally'
+                    else if folderAdded
+                        push_operation 'createFolderLocally'
+                    else
+                        push_operation 'moveFolderLocally'
+
+                else
+                    if docDeleted
+                        push_operation 'deleteFileLocally'
+                    else
+                        pouch.getPreviousRev doc._id, (err, prev) ->
+                            console.log 'getPreviousRev', err, prev
+                            if not prev
+                                push_operation 'createFileLocally'
+                            else if prev.name is doc.name and
+                                    prev.path is doc.path
+                                push_operation 'createFileLocally'
+                            else
+                                push_operation 'moveFileLocally'
 
     cancel: ->
         pouch.replicationDelay = 1

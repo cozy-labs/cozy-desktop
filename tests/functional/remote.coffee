@@ -9,7 +9,7 @@ foldersHelpers = require '../helpers/folders'
 
 mkdirp = require 'mkdirp'
 
-WAIT_TIME = 5000
+WAIT_TIME = 3000
 
 {syncPath} = helpers.options
 
@@ -139,20 +139,24 @@ describe "Functional Tests", ->
 
             it "Rename a file remotely", (done) ->
                 fileName = 'chat-mignon.jpg'
+                oldPath = "#{syncPath}/#{fileName}"
                 newName = 'chat-mignon-renamed.jpg'
                 newPath = "#{syncPath}/#{newName}"
                 foldersHelpers.getFolderContent 'root', (err, files) ->
                     file = filesHelpers.getElementByName fileName, files
                     should.exist file
+                    fs.existsSync(oldPath).should.be.ok()
                     filesHelpers.renameFile file, newName, ->
                         setTimeout ->
                             # file should exist
                             fs.existsSync(newPath).should.be.ok()
+                            fs.existsSync(oldPath).should.not.be.ok()
                             done()
                         , WAIT_TIME
 
             it "Move a file remotely into a subfolder", (done) ->
                 fileName = 'chat-mignon-renamed.jpg'
+                oldPath = "#{syncPath}/#{fileName}"
                 folderName = 'remote-folder'
                 newPath = "#{syncPath}/#{folderName}/#{fileName}"
                 foldersHelpers.getFolderContent 'root', (err, files) ->
@@ -160,6 +164,7 @@ describe "Functional Tests", ->
                     should.exist file
                     folder = foldersHelpers.getElementByName folderName, files
                     should.exist folder
+                    fs.existsSync(oldPath).should.be.ok()
                     filesHelpers.moveFile file, folderName, ->
                         foldersHelpers.getFolderContent folder, (err, files) ->
                             file = filesHelpers.getElementByName fileName, files
@@ -167,6 +172,7 @@ describe "Functional Tests", ->
                             setTimeout ->
                                 # file should exist at new path
                                 fs.existsSync(newPath).should.be.ok()
+                                fs.existsSync(oldPath).should.not.be.ok()
                                 done()
                             , WAIT_TIME
 
