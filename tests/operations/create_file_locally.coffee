@@ -79,10 +79,10 @@ describe "Creating a file from a remote document", ->
                         done()
 
         it 'creates the parent folder', ->
-            fs.existsSync(folderPath).should.be.ok
+            fs.existsSync(folderPath).should.be.ok()
 
         it 'copies the local file', (done) ->
-            fs.existsSync(filePath).should.be.ok
+            fs.existsSync(filePath).should.be.ok()
             filesystem.checksum fixturePath, (err, baseSum) =>
                 filesystem.checksum filePath, (err, sum) ->
                     sum.should.equal baseSum
@@ -123,10 +123,10 @@ describe "Creating a file from a remote document", ->
                             done()
 
         it 'creates the parent folder', ->
-            fs.existsSync(folderPath).should.be.ok
+            fs.existsSync(folderPath).should.be.ok()
 
         it 'copies the local file', (done) ->
-            fs.existsSync(filePath).should.be.ok
+            fs.existsSync(filePath).should.be.ok()
             filesystem.checksum fixturePath, (err, baseSum) =>
                 filesystem.checksum filePath, (err, sum) ->
                     sum.should.equal baseSum

@@ -73,7 +73,7 @@ describe "Deleting a file locally from DB document's information", ->
                 done()
 
         it 'removes the file', ->
-            fs.existsSync(filePath).should.not.be.ok
+            fs.existsSync(filePath).should.not.be.ok()
 
 
     describe 'when the file has already been deleted', ->
@@ -102,4 +102,4 @@ describe "Deleting a file locally from DB document's information", ->
                 done()
 
         it 'does not raise any error', ->
-            fs.existsSync(filePath).should.not.be.ok
+            fs.existsSync(filePath).should.not.be.ok()

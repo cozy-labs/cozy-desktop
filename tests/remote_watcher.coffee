@@ -85,9 +85,9 @@ describe "RemoteWatcher Tests", ->
                     fileHash[path.join file.path, file.name] = true
 
                 remoteFiles.forEach (file) ->
-                    fileHash[path.join file.parent, file.name].should.be.ok
+                    fileHash[path.join file.parent, file.name].should.be.ok()
                 localFiles.forEach (file) ->
-                    fileHash[path.join file.parent, file.name].should.be.ok
+                    fileHash[path.join file.parent, file.name].should.be.ok()
 
                 done()
 
@@ -101,26 +101,26 @@ describe "RemoteWatcher Tests", ->
 
                 remoteFolders.forEach (folder) ->
                     folderPath = path.join folder.parent, folder.name
-                    folderHash[folderPath].should.be.ok
+                    folderHash[folderPath].should.be.ok()
                 localFolders.forEach (folder) ->
                     folderPath = path.join folder.parent, folder.name
-                    folderHash[folderPath].should.be.ok
+                    folderHash[folderPath].should.be.ok()
 
                 done()
 
         it "and all files are present locally", ->
             remoteFolders.forEach (folder) ->
                 folderPath = path.join syncPath, folder.parent, folder.name
-                fs.existsSync(folderPath).should.be.ok
+                fs.existsSync(folderPath).should.be.ok()
             localFolders.forEach (folder) ->
                 folderPath = path.join syncPath, folder.parent, folder.name
-                fs.existsSync(folderPath).should.be.ok
+                fs.existsSync(folderPath).should.be.ok()
             remoteFiles.forEach (file) ->
                 filePath = path.join syncPath, file.parent, file.name
-                fs.existsSync(filePath).should.be.ok
+                fs.existsSync(filePath).should.be.ok()
             localFiles.forEach (file) ->
                 filePath = path.join syncPath, file.parent, file.name
-                fs.existsSync(filePath).should.be.ok
+                fs.existsSync(filePath).should.be.ok()
 
         it "and all local files are correct", (done) ->
             fixtureSize = fs.statSync(fixturePath).size

@@ -70,7 +70,7 @@ describe "LocalWatcher Tests", ->
                     fileHash[path.join file.path, file.name] = true
 
                 localFiles.forEach (file) ->
-                    fileHash[path.join file.parent, file.name].should.be.ok
+                    fileHash[path.join file.parent, file.name].should.be.ok()
 
                 done()
 
@@ -84,14 +84,14 @@ describe "LocalWatcher Tests", ->
 
                 localFolders.forEach (folder) ->
                     folderPath = path.join folder.parent, folder.name
-                    folderHash[folderPath].should.be.ok
+                    folderHash[folderPath].should.be.ok()
 
                 done()
 
         it "and all files/folders are present locally", ->
             localFolders.forEach (folder) ->
                 folderPath = path.join syncPath, folder.parent, folder.name
-                fs.existsSync(folderPath).should.be.ok
+                fs.existsSync(folderPath).should.be.ok()
             localFiles.forEach (file) ->
                 filePath = path.join syncPath, file.parent, file.name
-                fs.existsSync(filePath).should.be.ok
+                fs.existsSync(filePath).should.be.ok()

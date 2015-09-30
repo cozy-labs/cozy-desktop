@@ -76,13 +76,13 @@ describe "Moving a file locally from DB document's information", ->
                 done()
 
         it 'creates the parent folder', ->
-            fs.existsSync(folderPath).should.be.ok
+            fs.existsSync(folderPath).should.be.ok()
 
         it 'removes the old file', ->
-            fs.existsSync(filePath).should.not.be.ok
+            fs.existsSync(filePath).should.not.be.ok()
 
         it 'renames the moved file to avoid conflicts', ->
-            fs.existsSync("#{filePath2}.new").should.be.ok
+            fs.existsSync("#{filePath2}.new").should.be.ok()
 
         it 'updates the last modification date', ->
             stat = fs.statSync "#{filePath2}.new"
@@ -130,11 +130,11 @@ describe "Moving a file locally from DB document's information", ->
                 done()
 
         it 'creates the parent folder', ->
-            fs.existsSync(folderPath).should.be.ok
+            fs.existsSync(folderPath).should.be.ok()
 
         it 'moves the file to the right place', ->
-            fs.existsSync(filePath).should.not.be.ok
-            fs.existsSync(filePath2).should.be.ok
+            fs.existsSync(filePath).should.not.be.ok()
+            fs.existsSync(filePath2).should.be.ok()
 
         it 'updates the last modification date', ->
             stat = fs.statSync filePath2
