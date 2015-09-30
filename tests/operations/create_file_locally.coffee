@@ -21,7 +21,7 @@ operationQueue = require '../../backend/operation_queue'
 
 
 describe "Creating a file from a remote document", ->
-    @timeout 4000
+    @timeout 8000
 
     before cliHelpers.resetDatabase
     before cliHelpers.cleanConfiguration
