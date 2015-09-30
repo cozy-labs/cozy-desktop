@@ -20,7 +20,7 @@ localWatcher = require '../backend/local_event_watcher'
 describe "LocalWatcher Tests", ->
 
 
-    return it "IS NOT TESTED IN THIS VERSION", -> true
+    return it "IS NOT TESTED IN THIS VERSION"
 
 
     @timeout 8000

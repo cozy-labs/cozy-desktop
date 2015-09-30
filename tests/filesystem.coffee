@@ -168,5 +168,5 @@ describe "Filesystem Tests", ->
                         filePath.should.be.equal doc.path
                         done()
 
-    describe "isBeingCopied"
-        # TODO
+    describe "isBeingCopied", ->
+        it('TODO')

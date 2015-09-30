@@ -7,7 +7,7 @@ export DEFAULT_DIR=tests
 
 BIN='mocha --reporter spec --compilers coffee:coffee-script/register '
 
-$BIN tests/operations/
+$BIN tests/*.coffee tests/operations/*.coffee
 
 $BIN tests/functional/remote.coffee
 #$BIN tests/functional/local.coffee

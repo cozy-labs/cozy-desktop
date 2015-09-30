@@ -13,10 +13,8 @@ module.exports = device =
             password: options.password
         client.post "login", data, (err, res, body) ->
             if res?.statusCode isnt 200
-                error = err?.message or body.error or body.message
-            else
-                error = null
-            callback error
+                err = err?.message or body.error or body.message
+            callback err
 
     # Register device remotely then returns credentials given by remote Cozy.
     # This credentials will allow the device to access to the Cozy database.
@@ -31,10 +29,8 @@ module.exports = device =
                 callback err
             else if body.error?
                 if body.error is 'string'
-                    # FIXME no callback here?
                     log.error body.error
-                else
-                    callback body.error
+                callback body.error
             else
                 callback null,
                     id: body.id

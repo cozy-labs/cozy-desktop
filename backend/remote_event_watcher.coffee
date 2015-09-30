@@ -239,8 +239,9 @@ remoteEventWatcher =
     cancel: ->
         pouch.replicationDelay = 1
         config.saveConfig()
-        @replicatorFrom.cancel() if @replicatorFrom
-        pouch.replicatorTo.cancel() if pouch.replicatorTo
+        @replicatorFrom?.cancel()
+        pouch.replicatorTo?.cancel()
+        # TODO reset @replicatorFrom and pouch.replicatorTo to null?
 
 
 module.exports = remoteEventWatcher

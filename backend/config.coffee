@@ -24,7 +24,7 @@ module.exports = config =
 
         @dir = defaultDir
         @dbPath = path.join defaultDir, 'db'
-        @config = require @configPath or devices: {}
+        @config = require @configPath
 
     # Return config related to device name.
     getConfig: (deviceName) ->
@@ -85,7 +85,7 @@ module.exports = config =
         @config.devices[deviceName].remoteSeq = seq
         @saveConfig()
 
-    # Get last rempte replication sequence from the configuration file.
+    # Get last remote replication sequence from the configuration file.
     getRemoteSeq: (deviceName) ->
         deviceName ?= @getDeviceName()
         if @config.devices[deviceName].remoteSeq
