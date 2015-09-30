@@ -12,3 +12,4 @@ module.exports = conflict =
 
     # Apply a proper resolution conflict strategy to the conflict.
     handleConflict: ->
+        log.debug "handleConflict"

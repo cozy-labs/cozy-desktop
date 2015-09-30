@@ -69,7 +69,7 @@ describe "Deleting a folder locally from DB document's information", ->
                 done()
 
         it 'removes the folder', ->
-            fs.existsSync(folderPath).should.not.be.ok
+            fs.existsSync(folderPath).should.not.be.ok()
 
 
     describe 'when the folder has already been deleted', ->
@@ -93,4 +93,4 @@ describe "Deleting a folder locally from DB document's information", ->
                 done()
 
         it 'does not raise any error', ->
-            fs.existsSync(folderPath).should.not.be.ok
+            fs.existsSync(folderPath).should.not.be.ok()

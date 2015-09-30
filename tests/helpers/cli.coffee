@@ -30,6 +30,15 @@ module.exports.initSync = (done) ->
     @timeout 60000
     remoteEventWatcher.init true, done
 
+withTimeout = (timeout, fn, opts, callback) ->
+    timer = setTimeout ->
+        timer = null
+        callback 'timeout'
+    , timeout
+    fn opts, (err, res) ->
+        if timer
+            clearTimeout timer
+            callback err, res
 
 # Configures a fake device for a fake remote Cozy
 module.exports.initConfiguration = (done) ->
@@ -57,7 +66,7 @@ module.exports.initConfiguration = (done) ->
             deviceName: helpers.options.deviceName
             password: helpers.options.cozyPassword
 
-        deviceManager.registerDevice opts, saveConfig
+        withTimeout 5000, deviceManager.registerDevice, opts, saveConfig
 
     cliHelpers.cleanConfiguration init
 
@@ -78,7 +87,7 @@ module.exports.cleanConfiguration = (done) ->
             url: helpers.options.url
             deviceId: helpers.options.deviceName
             password: helpers.options.cozyPassword
-        deviceManager.unregisterDevice opts, saveConfig
+        withTimeout 5000, deviceManager.unregisterDevice, opts, saveConfig
 
     if opts.url?
         unregister()

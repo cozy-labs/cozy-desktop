@@ -55,7 +55,7 @@ describe.only "Functional Tests", ->
             # this command takes approximately 30s to be run
             exec command, cwd: syncPath, ->
                 # file should exist
-                fs.existsSync(filePath).should.be.ok
+                fs.existsSync(filePath).should.be.ok()
                 setTimeout ->
                     foldersHelpers.getFolderContent 'root', (err, files) ->
                         file = filesHelpers.getElementByName fileName, files

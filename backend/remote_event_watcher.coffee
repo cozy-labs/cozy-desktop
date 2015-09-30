@@ -1,5 +1,6 @@
-async    = require 'async'
-log      = require('printit')
+util  = require 'util'
+async = require 'async'
+log   = require('printit')
     prefix: 'Remote watcher'
 
 #
@@ -154,13 +155,14 @@ remoteEventWatcher =
                     # Add changes to queue one by one
                     #
                     async.eachSeries res.results, (operation, next) ->
-                        log.debug "Applying remote change: #{operation}..."
+                        details = util.inspect operation, colors: true
+                        log.debug "Applying remote change: #{details}..."
                         remoteEventWatcher.addToQueue operation, (err) ->
                             if err
                                 log.error 'Error occured while applying change.'
                                 log.error err
                             else
-                                log.debug "#{operation} applied successfully."
+                                log.debug "Remote change applied successfully."
                             next()
                     , ->
                         log.debug 'Changes applied.'
@@ -193,33 +195,8 @@ remoteEventWatcher =
         pouch.db.query 'localrev/byRevision', params, (err, res) ->
             if res?.rows? and res.rows.length is 0
 
-                doc = change.doc
-                docDeleted = change.deleted
-                docAdded = doc.lastModification <= doc.creationDate
-                concernsFolder = doc.docType.toLowerCase() is 'folder'
-
-                # Deletion
-                if docDeleted
-                    if concernsFolder
-                        operation = 'deleteFolderLocally'
-                    else
-                        operation = 'deleteFileLocally'
-
-                # Creation
-                else if docAdded
-                    if concernsFolder
-                        operation = 'createFolderLocally'
-                    else
-                        operation = 'createFileLocally'
-
-                # Modification
-                else
-                    if not concernsFolder
-                        operation = 'moveFileLocally'
-                    else
-                        operation = 'moveFolderLocally'
-
-                if operation?
+                push_operation = (operation) ->
+                    log.debug "addToQueue", operation, change
                     require('./operation_queue').queue.push
                         operation: operation
                         doc: doc
@@ -229,14 +206,40 @@ remoteEventWatcher =
                             log.error "Operation #{operation}"
                             log.error change.doc
                             log.raw err
+                    callback() # TODO is it at its right place?
 
-            callback()
+                doc = change.doc
+                docDeleted = change.deleted
+                folderAdded = doc.lastModification <= doc.creationDate
+                concernsFolder = doc.docType.toLowerCase() is 'folder'
+
+                if concernsFolder
+                    if docDeleted
+                        push_operation 'deleteFolderLocally'
+                    else if folderAdded
+                        push_operation 'createFolderLocally'
+                    else
+                        push_operation 'moveFolderLocally'
+
+                else
+                    if docDeleted
+                        push_operation 'deleteFileLocally'
+                    else
+                        pouch.getPreviousRev doc._id, (err, prev) ->
+                            if not prev
+                                push_operation 'createFileLocally'
+                            else if prev.name is doc.name and
+                                    prev.path is doc.path
+                                push_operation 'createFileLocally'
+                            else
+                                push_operation 'moveFileLocally'
 
     cancel: ->
         pouch.replicationDelay = 1
         config.saveConfig()
-        @replicatorFrom.cancel() if @replicatorFrom
-        pouch.replicatorTo.cancel() if pouch.replicatorTo
+        @replicatorFrom?.cancel()
+        pouch.replicatorTo?.cancel()
+        # TODO reset @replicatorFrom and pouch.replicatorTo to null?
 
 
 module.exports = remoteEventWatcher

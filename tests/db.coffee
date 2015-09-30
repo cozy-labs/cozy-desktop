@@ -190,7 +190,7 @@ describe "DB Tests", ->
                         done()
 
             describe 'get', ->
-                it 'gets a folder document by its fullpath', (done) ->
+                it.skip 'gets a folder document by its fullpath', ->
                     pouch.folders.get 'myfolder/folder-1', (err, res) ->
                         should.not.exist err
                         fields =

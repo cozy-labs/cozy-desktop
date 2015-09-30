@@ -53,7 +53,7 @@ describe.only "Functional Tests", ->
                     exec command, cwd: syncPath, (err) ->
 
                         # folder should exist
-                        fs.existsSync(folderPath).should.be.ok
+                        fs.existsSync(folderPath).should.be.ok()
 
                         # waits for the replication / upload to be processed
                         setTimeout ->
@@ -74,7 +74,7 @@ describe.only "Functional Tests", ->
                 exec command, cwd: syncPath, ->
 
                     # folder should exist
-                    fs.existsSync(folderPath).should.be.ok
+                    fs.existsSync(folderPath).should.be.ok()
 
                     # waits for the replication / upload to be processed
                     setTimeout ->
@@ -116,7 +116,7 @@ describe.only "Functional Tests", ->
                 command = "mv #{oldPath} #{newFolderPath}"
                 exec command, cwd: syncPath, ->
                     # folder should exist at the new path
-                    fs.existsSync(newPath).should.be.ok
+                    fs.existsSync(newPath).should.be.ok()
 
                     setTimeout ->
                         foldersHelpers.getFolderContent 'root', (err, files) ->
@@ -145,7 +145,7 @@ describe.only "Functional Tests", ->
                         command = "rm -rf #{fullPath}"
                         exec command, cwd: syncPath, ->
                             # folder should NOT exist anymore
-                            fs.existsSync(fullPath).should.not.be.ok
+                            fs.existsSync(fullPath).should.not.be.ok()
 
                             setTimeout ->
                                 foldersHelpers.getFolderContent 'root', (err, files) ->
@@ -218,7 +218,7 @@ describe.only "Functional Tests", ->
                 command = "mv #{filePath} #{folderPath}"
                 exec command, cwd: syncPath, ->
                     # file should exist at the new path
-                    fs.existsSync(newPath).should.be.ok
+                    fs.existsSync(newPath).should.be.ok()
 
                     setTimeout ->
                         foldersHelpers.getFolderContent 'root', (err, files) ->
@@ -244,7 +244,7 @@ describe.only "Functional Tests", ->
                 command = "mv #{filePath} #{syncPath}"
                 exec command, cwd: syncPath, ->
                     # file should exist at the new path
-                    fs.existsSync(newPath).should.be.ok
+                    fs.existsSync(newPath).should.be.ok()
 
                     setTimeout ->
                         foldersHelpers.getFolderContent 'root', (err, files) ->
@@ -267,7 +267,7 @@ describe.only "Functional Tests", ->
                 command = "cp #{filePath} #{newFileName}"
                 exec command, cwd: syncPath, ->
                     # file should exist at the new path
-                    fs.existsSync(newFilePath).should.be.ok
+                    fs.existsSync(newFilePath).should.be.ok()
 
                     setTimeout ->
                         foldersHelpers.getFolderContent 'root', (err, files) ->
@@ -292,7 +292,7 @@ describe.only "Functional Tests", ->
                     command = "rm -f #{filePath}"
                     exec command, cwd: syncPath, ->
                         # file should NOT exist anymore
-                        fs.existsSync(filePath).should.not.be.ok
+                        fs.existsSync(filePath).should.not.be.ok()
 
                         setTimeout ->
                             foldersHelpers.getFolderContent 'root', (err, files) ->

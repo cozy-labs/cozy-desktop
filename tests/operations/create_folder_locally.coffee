@@ -21,7 +21,7 @@ operationQueue = require '../../backend/operation_queue'
 
 
 describe "Creating a folder from a remote document", ->
-    @timeout 4000
+    @timeout 8000
 
     before cliHelpers.resetDatabase
     before cliHelpers.initConfiguration
@@ -65,10 +65,10 @@ describe "Creating a folder from a remote document", ->
                         done()
 
         it 'creates the parent folder', ->
-            fs.existsSync(parentPath).should.be.ok
+            fs.existsSync(parentPath).should.be.ok()
 
         it 'creates the local folder', ->
-            fs.existsSync(folderPath).should.be.ok
+            fs.existsSync(folderPath).should.be.ok()
 
         it 'updates the last modification date', ->
             stat = fs.statSync folderPath

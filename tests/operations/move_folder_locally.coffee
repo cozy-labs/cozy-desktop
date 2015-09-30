@@ -71,16 +71,16 @@ describe "Moving a folder locally from DB document's information", ->
                 done()
 
         it 'creates the parent folder', ->
-            fs.existsSync(parentPath).should.be.ok
+            fs.existsSync(parentPath).should.be.ok()
 
         it 'removes the old folder', ->
-            fs.existsSync(folderPath).should.not.be.ok
+            fs.existsSync(folderPath).should.not.be.ok()
 
         it 'ensures that the new folder exists', ->
-            fs.existsSync(folderPath2).should.be.ok
+            fs.existsSync(folderPath2).should.be.ok()
 
         it 'does not ensure of the content of the new folder', ->
-            fs.existsSync(path.join folderPath2, 'file-1').should.not.be.ok
+            fs.existsSync(path.join folderPath2, 'file-1').should.not.be.ok()
 
         it 'updates the last modification date', ->
             stat = fs.statSync folderPath2
@@ -124,14 +124,14 @@ describe "Moving a folder locally from DB document's information", ->
                 done()
 
         it 'creates the parent folder', ->
-            fs.existsSync(parentPath).should.be.ok
+            fs.existsSync(parentPath).should.be.ok()
 
         it 'moves the folder properly', ->
-            fs.existsSync(folderPath).should.not.be.ok
-            fs.existsSync(folderPath2).should.be.ok
+            fs.existsSync(folderPath).should.not.be.ok()
+            fs.existsSync(folderPath2).should.be.ok()
 
         it 'ensures that the content of the folder has been kept', ->
-            fs.existsSync(path.join folderPath2, 'file-2').should.be.ok
+            fs.existsSync(path.join folderPath2, 'file-2').should.be.ok()
 
         it 'updates the last modification date', ->
             stat = fs.statSync folderPath2

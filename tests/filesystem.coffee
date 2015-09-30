@@ -67,7 +67,7 @@ describe "Filesystem Tests", ->
                     should.not.exist err
                     filesystem.checkLocation filePath, (err, isThere) ->
                         should.not.exist err
-                        isThere.should.be.ok
+                        isThere.should.be.ok()
                         filesystem.checkLocation '/tmp/test', (err, isThere) ->
                             should.exist err
                             done()
@@ -79,7 +79,7 @@ describe "Filesystem Tests", ->
                 should.not.exist err
                 filesystem.fileExistsLocally sum, (err, exist) ->
                     should.not.exist err
-                    exist.should.not.be.ok
+                    exist.should.not.be.ok()
 
                     doc =
                         _id: 'test_exist_locally'
@@ -147,7 +147,7 @@ describe "Filesystem Tests", ->
                 filesystem.downloadAttachment id, filePath, null, (err) ->
                     filesystem.checkLocation filePath, (err, isThere) ->
                         should.not.exist err
-                        isThere.should.be.ok
+                        isThere.should.be.ok()
                         done()
 
         describe "downloadBinary", ->
@@ -157,7 +157,7 @@ describe "Filesystem Tests", ->
                 filesystem.downloadBinary id, filePath, null, (err) ->
                     filesystem.checkLocation filePath, (err, isThere) ->
                         should.not.exist err
-                        isThere.should.be.ok
+                        isThere.should.be.ok()
                         done()
 
             it "and data should be updated", (done) ->
@@ -168,5 +168,5 @@ describe "Filesystem Tests", ->
                         filePath.should.be.equal doc.path
                         done()
 
-    describe "isBeingCopied"
-        # TODO
+    describe "isBeingCopied", ->
+        it('TODO')

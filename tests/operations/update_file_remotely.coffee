@@ -73,7 +73,7 @@ describe "Updating a DB document from a local file's information", ->
             doc.path.should.be.equal ''
             doc.mime.should.be.equal 'image/jpeg'
             doc.size.should.be.equal fs.statSync(filePath2).size
-            doc.binary?.file?.id?.should.exist
+            should.exist doc.binary?.file?.id
 
 
         it "saves the right file's modification date", ->
@@ -109,7 +109,7 @@ describe "Updating a DB document from a local file's information", ->
             doc.path.should.be.equal ''
             doc.mime.should.be.equal 'image/jpeg'
             doc.size.should.be.equal fs.statSync(filePath).size
-            doc.binary?.file?.id?.should.exist
+            should.exist doc.binary?.file?.id
 
 
         it "saves the right file's modification date", ->

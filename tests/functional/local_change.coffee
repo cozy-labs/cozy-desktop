@@ -58,7 +58,7 @@ describe.only "Local change", ->
         command = "echo \"#{newContent}\" >> #{filePath}"
         exec command, cwd: syncPath, ->
             # file should exist
-            fs.existsSync(filePath).should.be.ok
+            fs.existsSync(filePath).should.be.ok()
 
             setTimeout ->
                 foldersHelpers.getFolderContent 'root', (err, files) ->

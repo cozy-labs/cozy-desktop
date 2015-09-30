@@ -40,14 +40,13 @@ filesystem =
     # ex: pic.png returns 'image/png' and 'image'.
     getFileClass: (filename, callback) ->
         mimeType = mime.lookup filename
-        switch mimeType.split('/')[0]
-            when 'image' then fileClass = "image"
-            when 'application' then fileClass = "document"
-            when 'text' then fileClass = "document"
-            when 'audio' then fileClass = "music"
-            when 'video' then fileClass = "video"
-            else
-                fileClass = "file"
+        fileClass = switch mimeType.split('/')[0]
+            when 'image'       then "image"
+            when 'application' then "document"
+            when 'text'        then "document"
+            when 'audio'       then "music"
+            when 'video'       then "video"
+            else                    "file"
         callback null, {mimeType, fileClass}
 
     # Check that a file/folder exists and is in the synchronized directory
@@ -115,6 +114,7 @@ filesystem =
 
     # Get size of given file.
     getSize: (filePath, callback) ->
+        # TODO remove exists, stat should be enough
         fs.exists filePath, (exists) ->
             if exists
                 fs.stat filePath, (err, stats) ->
@@ -247,9 +247,9 @@ filesystem =
 
                 res.on 'end', ->
                     if res.statusCode isnt 200
-                        log.error 'File not found'
+                        log.error "File not found (#{res.statusCode})"
                         fs.remove targetPath, ->
-                            callback new Error 'File not found'
+                            callback new Error "File not found: #{targetPath}"
 
                     else
                         log.info "Binary downloaded: #{targetPath}"

@@ -13,7 +13,7 @@ WAIT_TIME = 3000
 
 {syncPath} = helpers.options
 
-describe.only "Functional Tests", ->
+describe "Functional Tests", ->
 
     before helpers.ensurePreConditions
 
@@ -39,7 +39,7 @@ describe.only "Functional Tests", ->
     after filesHelpers.deleteAll
     after cliHelpers.resetDatabase
 
-    describe.only 'Remote big file', ->
+    describe 'Remote big file', ->
 
         it.skip "Create a big file a file remotely", (done) ->
             ms = 1000
@@ -61,6 +61,6 @@ describe.only "Functional Tests", ->
                         should.exist file
                         setTimeout ->
                             # file should exists
-                            fs.existsSync(filePath).should.be.ok
+                            fs.existsSync(filePath).should.be.ok()
                         , (hour - generationDuration) * ms
 
