@@ -50,11 +50,10 @@ helpers.ensurePreConditions = (done) ->
 
 # Creates a folder
 module.exports.prepareFolder = (path) ->
-    func = (done) ->
-        mkdirp.sync path
-        done()
-    func
+    (done) ->
+        mkdirp path, done
 
 # Removes a folder and its content
-module.exports.cleanFolder = (path) -> (done) ->
-    fsExtra.remove path, done
+module.exports.cleanFolder = (path) ->
+    (done) ->
+        fsExtra.remove path, done

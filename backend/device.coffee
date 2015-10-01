@@ -41,3 +41,21 @@ module.exports = device =
         client = request.newClient options.url
         client.setBasicAuth 'owner', options.password
         client.del "device/#{options.deviceId}/", callback
+
+    # Get useful information about the disk space
+    # (total, used and left) on the remote Cozy
+    getDiskSpace: (options, callback) ->
+        device = config.getConfig()
+        client = request.newClient device.url
+        client.setBasicAuth device.deviceName, device.devicePassword
+
+        client = request.newClient options.url
+        client.setBasicAuth options.user, options.password
+
+        client.get "disk-space", (err, res, body) ->
+            if err
+                callback err
+            else if body.error
+                callback new Error body.error
+            else
+                callback null, body

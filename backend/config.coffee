@@ -47,22 +47,6 @@ module.exports = config =
 
         return Object.keys(@config.devices)[0]
 
-    # Get useful information about the disk space
-    # (total, used and left) on the remote Cozy
-    # TODO move to device module.
-    getDiskSpace: (callback) ->
-        device = config.getConfig()
-        client = request.newClient device.url
-        client.setBasicAuth device.deviceName, device.devicePassword
-
-        client.get "disk-space", (err, res, body) ->
-            if err
-                callback err
-            else if body.error
-                callback new Error body.error
-            else
-                callback null, body
-
     # Add remote configuration for a given device name.
     addRemoteCozy: (options) ->
         @config.devices ?= {}
