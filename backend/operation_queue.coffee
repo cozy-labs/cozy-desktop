@@ -585,12 +585,12 @@ operationQueue =
     #
     # Macro function
     #
-    makeFSSimilarToDB: (readonly, callback) ->
+    makeFSSimilarToDB: (syncToCozy, callback) ->
         operations = [
             (cb) => @queue.push operation: 'ensureAllFoldersLocally', cb
             (cb) => @queue.push operation: 'ensureAllFilesLocally', cb
         ]
-        unless readonly
+        if syncToCozy
             operations = operations.concat [
                 (cb) => @queue.push operation: 'ensureAllFoldersRemotely', cb
                 (cb) => @queue.push operation: 'ensureAllFilesRemotely', cb

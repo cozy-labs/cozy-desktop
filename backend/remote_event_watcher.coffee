@@ -26,6 +26,25 @@ remoteEventWatcher =
     url: null
     startSeq: null
 
+    # Run first time replication (match FS and sequence number with remote) and
+    # run replication regularly
+    init: (syncToCozy, callback) ->
+        operationQueue = require './operation_queue'
+
+        log.info 'Run first synchronisation...'
+        remoteEventWatcher.initialReplication (err, seq) ->
+            # TODO better error management, not just process.exit
+            process.exit(1) if err
+            log.info "First replication is complete (last seq: #{seq})"
+
+            log.info 'Start building your filesystem on your device.'
+            operationQueue.makeFSSimilarToDB syncToCozy, (err) ->
+                process.exit(1) if err
+                log.info 'Filesystem built on your device.'
+                publisher.emit 'firstSyncDone'
+
+                callback()
+
     # Start metadata sync with remote. Sync is based on replications every 2s.
     # TODO: do not run a replication if another replication is running.
     start: (callback) ->
@@ -40,24 +59,6 @@ remoteEventWatcher =
                 config.saveConfig()
         , 2000
         callback() if callback?
-
-    # Run first time replication (match FS and sequence number with remote) and
-    # run replication regularly
-    init: (readonly, callback) ->
-        operationQueue = require './operation_queue'
-
-        log.info 'Run first synchronisation...'
-        remoteEventWatcher.initialReplication (err, seq) ->
-            process.exit(1) if err
-            log.info "First replication is complete (last seq: #{seq})"
-
-            log.info 'Start building your filesystem on your device.'
-            operationQueue.makeFSSimilarToDB readonly, (err) ->
-                process.exit(1) if err
-                log.info 'Filesystem built on your device.'
-                publisher.emit 'firstSyncDone'
-
-                callback()
 
     # First time replication:
     # * Match local FS with remote Cozy FS

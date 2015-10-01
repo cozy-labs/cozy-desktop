@@ -8,7 +8,7 @@ App = require '../backend/app'
 app = new App(process.env.DEFAULT_DIR)
 
 # Helper to get cozy password from user
-app.getPassword = (callback) ->
+app.askPassword = (callback) ->
     promptMsg = """
 Please enter your password to register your device to 'your remote Cozy:
 """
@@ -76,7 +76,7 @@ program
     .command "*"
     .description "Display help message for an unknown command."
     .action ->
-        log.info 'Unknown command, run "cozy-desktop --help"' + \
+        console.log 'Unknown command, run "cozy-desktop --help"' +
                  ' to know the list of available commands.'
 
 program
