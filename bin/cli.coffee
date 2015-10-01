@@ -17,7 +17,7 @@ pkg = require '../package.json'
 
 
 # Helpers to get cozy password from user.
-module.exports.getPassword = (callback) ->
+getPassword = (callback) ->
     promptMsg = 'Please enter your password to register your device to ' + \
                 'your remote Cozy: '
     read prompt: promptMsg, silent: true , callback
@@ -25,7 +25,7 @@ module.exports.getPassword = (callback) ->
 
 # Register current device to remote Cozy. Then it saves related informations
 # to the config file.
-module.exports.addRemote = addRemote = (url, deviceName, syncPath) ->
+addRemote = (url, deviceName, syncPath) ->
     saveConfig = (err, credentials) ->
         if err
             log.error err
@@ -50,12 +50,12 @@ module.exports.addRemote = addRemote = (url, deviceName, syncPath) ->
 
         device.registerDevice options, saveConfig
 
-    module.exports.getPassword register
+    getPassword register
 
 
 # Unregister current device from remote Cozy. Then it removes remote from
 # config file.
-module.exports.removeRemote = removeRemote = (args) ->
+removeRemote = (args) ->
     remoteConfig = config.getConfig()
     deviceName = args.deviceName or config.getDeviceName()
 
@@ -74,7 +74,7 @@ module.exports.removeRemote = removeRemote = (args) ->
             password: password
         device.unregisterDevice options, saveConfig
 
-    module.exports.getPassword unregister
+    getPassword unregister
 
 
 # Display the whole content of the database.
@@ -135,12 +135,12 @@ resetDatabase = ->
 program
     .command 'add-remote-cozy <url> <devicename> <syncPath>'
     .description 'Configure current device to sync with given cozy'
-    .option '-d, --deviceName [deviceName]', 'device name to deal with'
     .action addRemote
 
 program
     .command 'remove-remote-cozy'
     .description 'Unsync current device with its remote cozy'
+    .option '-d, --deviceName [deviceName]', 'device name to deal with'
     .action removeRemote
 
 program
@@ -186,8 +186,6 @@ program
     .version pkg.version
 
 
-unless module.parent
-    program.parse process.argv
-
-unless process.argv.slice(2).length
+program.parse process.argv
+if process.argv.length <= 2
     program.outputHelp()
