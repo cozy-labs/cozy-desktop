@@ -127,6 +127,10 @@ filesystem =
 
     # Check if a file corresponding to given checksum already exists.
     fileExistsLocally: (checksum, callback) ->
+        # For legacy binaries
+        if not checksum or checksum is ''
+            return callback null, false
+
         pouch.binaries.get checksum, (err, binaryDoc) ->
             if err
                 callback err
