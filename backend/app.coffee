@@ -1,6 +1,7 @@
-fs   = require 'fs-extra'
-path = require 'path-extra'
-log  = require('printit')
+fs    = require 'fs-extra'
+path  = require 'path-extra'
+async = require 'async'
+log   = require('printit')
     prefix: 'Cozy Desktop  '
 
 filesystem = require '../backend/filesystem'
@@ -31,8 +32,20 @@ class App
 
     # Register current device to remote Cozy and then save related informations
     # to the config file
+    #
+    # TODO validation of url, deviceName and syncPath
     addRemote: (url, deviceName, syncPath) =>
-        saveConfig = (err, credentials) =>
+        async.waterfall [
+            @askPassword,
+
+            (password, next) ->
+                options =
+                    url: url
+                    deviceName: deviceName
+                    password: password
+                device.registerDevice options, next
+
+        ], (err, credentials) =>
             if err
                 log.error err
                 log.error 'An error occured while registering your device.'
@@ -43,22 +56,9 @@ class App
                     path: path.resolve syncPath
                     deviceId: credentials.id
                     devicePassword: credentials.password
-
                 @config.addRemoteCozy options
-                log.info 'Remote Cozy properly configured to work ' +
-                         'with current device.'
-
-        register = (err, password) ->
-            if err
-                log.error err
-            else
-                options =
-                    url: url
-                    deviceName: deviceName
-                    password: password
-                device.registerDevice options, saveConfig
-
-        @askPassword register
+                log.info 'The remote Cozy has properly been configured ' +
+                    'to work with current device.'
 
 
     # Unregister current device from remote Cozy and then remove remote from
@@ -67,25 +67,23 @@ class App
         remoteConfig = @config.getConfig()
         deviceName = deviceName or @config.getDeviceName()
 
-        saveConfig = (err) =>
-            if err
-                log.error err
-                log.error 'An error occured while unregistering your device.'
-            else
-                @config.removeRemoteCozy deviceName
-                log.info 'Current device properly removed from remote cozy.'
+        async.waterfall [
+            @askPassword,
 
-        unregister = (err, password) ->
-            if err
-                log.error err
-            else
+            (password, next) ->
                 options =
                     url: remoteConfig.url
                     deviceId: remoteConfig.deviceId
                     password: password
                 device.unregisterDevice options, saveConfig
 
-        @askPassword unregister
+        ], (err) =>
+            if err
+                log.error err
+                log.error 'An error occured while unregistering your device.'
+            else
+                @config.removeRemoteCozy deviceName
+                log.info 'Current device properly removed from remote cozy.'
 
 
     # Start database sync process and setup file change watcher
