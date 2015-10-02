@@ -22,8 +22,7 @@ describe "Config Tests", ->
     before ->
         @conf = config.config.devices.tester
     after ->
-        config.config.devices =
-            tester: @conf
+        config.config.devices = tester: @conf
         config.saveConfig()
 
     describe 'getConfig', ->
@@ -33,11 +32,11 @@ describe "Config Tests", ->
             conf.deviceName.should.be.equal 'tester'
 
     describe 'getDeviceName', ->
-        it 'returns devicename from args', ->
+        it 'returns devicename from args with args', ->
             process.argv = [ 'arg1', '-d', 'test']
             name = config.getDeviceName()
             name.should.be.equal 'test'
-        it 'returns devicename from args', ->
+        it 'returns devicename from args with no args', ->
             process.argv = []
             name = config.getDeviceName()
             name.should.be.equal 'tester'
@@ -99,14 +98,14 @@ describe "Config Tests", ->
             conf = config.getConfig()
             config.getLocalSeq().should.equal 3
 
-    #describe 'getDiskSpace', ->
-        #it 'returns data about cozy diskspace', (done) ->
-            #@conf.url = 'http://localhost:9104'
-            #config.updateSync @conf
-            #config.getDiskSpace (err, data) ->
-                #should.not.exist err
-                #console.log data
-                #done()
+    describe 'getDiskSpace', ->
+        it 'returns data about cozy diskspace', (done) ->
+            url = config.getConfig().url
+            config.updateSync url: params.url
+            config.getDiskSpace (err, data) ->
+                should.not.exist err
+                config.updateSync url: url
+                done()
 
     describe 'getUrl', ->
         it 'should give remote Cozy url', ->

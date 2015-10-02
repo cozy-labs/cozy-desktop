@@ -31,6 +31,8 @@ module.exports = config =
         deviceName ?= @getDeviceName()
 
         if @config.devices[deviceName]?
+            # TODO clone the config before returning it
+            # to avoid mutation from outside this module
             return @config.devices[deviceName]
         else if Object.keys(@config.devices).length is 0
             return {} # No device configured
@@ -107,7 +109,6 @@ module.exports = config =
     # Update synchronously configuration for given device.
     updateSync: (deviceConfig) ->
         device = @getConfig()
-        delete @config.devices[device.deviceName]
         for key, value of deviceConfig
             device[key] = deviceConfig[key]
         @config.devices[device.deviceName] = device
