@@ -1,0 +1,12 @@
+describe "DB Tests", ->
+    it 'getLastRemoteChangeSeq'
+    it 'copyViewFromRemote'
+    it 'replicateToRemote'
+    it 'makeFileDoc'
+    it 'makeFileDocFrom'
+    it 'makeFolderDoc'
+    it 'getDocForFile'
+    it 'uploadBinary'
+    it 'getRemoteDoc'
+    it 'createEmptyRemoteDoc'
+    it 'uploadAsAttachment'

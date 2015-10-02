@@ -9,7 +9,7 @@ var del = require('del');
 var mocha = require('gulp-mocha');
 var should = require('should');
 
-var nwVersion = '0.12.3';
+var nwVersion = '0.12.3';  // TODO use the version from package.json
 var paths = {
   scripts: ['backend/*.coffee'],
   scriptsJS: ['bin/cli.js', 'backend/*.js'],

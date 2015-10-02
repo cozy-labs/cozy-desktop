@@ -5,7 +5,6 @@ log = require('printit')
 
 helpers = require './helpers'
 
-cli = require '../../bin/cli'
 pouch = require '../../backend/db'
 config = require '../../backend/config'
 replication = require '../../backend/db'
@@ -15,16 +14,6 @@ localEventWatcher  = require '../../backend/local_event_watcher'
 remoteEventWatcher = require '../../backend/remote_event_watcher'
 
 module.exports = cliHelpers = {}
-
-# Skips user interaction to ask password
-# @TODO: replace by a sinon's stub
-module.exports.mockGetPassword = ->
-    @trueGetPassword = cli.getPassword
-    cli.getPassword = (callback) -> callback null, options.cozyPassword
-
-# Restores regular behaviour
-module.exports.restoreGetPassword = ->
-    cli.getPassword = @trueGetPassword
 
 module.exports.initSync = (done) ->
     @timeout 60000

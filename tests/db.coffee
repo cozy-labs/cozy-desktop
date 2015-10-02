@@ -2,15 +2,12 @@ async = require 'async'
 should = require 'should'
 date = require 'date-utils'
 
-config      = require '../backend/config'
-pouch       = require '../backend/db'
+config = require '../backend/config'
+pouch  = require '../backend/db'
 
 helpers = require './helpers/helpers'
 cliHelpers = require './helpers/cli'
 fileHelpers = require './helpers/files'
-
-params =
-    url: 'http://localhost:9104/'
 
 
 describe "DB Tests", ->
@@ -301,16 +298,3 @@ describe "DB Tests", ->
                         should.exist res.rows
                         res.rows.length.should.not.be.equal 0
                         done()
-
-    describe 'remote', ->
-        describe 'getLastRemoteChangeSeq', ->
-        describe 'copyViewFromRemote', ->
-        describe 'replicateToRemote', ->
-        describe 'makeFileDoc', ->
-        describe 'makeFileDocFrom', ->
-        describe 'makeFolderDoc', ->
-        describe 'getDocForFile', ->
-        describe 'uploadBinary', ->
-        describe 'getRemoteDoc', ->
-        describe 'createEmptyRemoteDoc', ->
-        describe 'uploadAsAttachment', ->
