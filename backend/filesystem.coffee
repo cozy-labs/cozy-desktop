@@ -198,7 +198,8 @@ filesystem =
 
             # Get the remote binary document
             (next) ->
-                pouch.getRemoteDoc binaryId, (err, res) ->
+                couch = require './remote_db'
+                couch.getRemoteDoc binaryId, (err, res) ->
                     if err and err isnt 404
                         next err
                     else
@@ -227,6 +228,7 @@ filesystem =
 
 
     # Download given binary attachment to given location.
+    #  TODO making HTTP requests has nothing to do in a filesystem module
     downloadAttachment: (binaryId, targetPath, size, callback) ->
         remoteConfig = config.getConfig()
         deviceName = config.getDeviceName()

@@ -11,6 +11,7 @@ url = require 'url'
 # Local backend files
 #
 pouch = require './db'
+couch = require './remote_db'
 publisher = require './publisher'
 filesystem = require './filesystem'
 config = require './config'
@@ -100,7 +101,7 @@ applyOperation = (task, callback) ->
                         operationQueue.displayErrorStack err, task.operation
 
                     # Launch a replication before calling back
-                    pouch.replicateToRemote()
+                    couch.replicateToRemote()
                     initialCallback null, res
 
             # Apply operation
@@ -374,12 +375,12 @@ operationQueue =
             log.debug "Parent folders of #{relPath} created..."
 
             # Upload binary Doc to remote
-            pouch.uploadBinary absPath, null, (err, binaryDoc) ->
+            couch.uploadBinary absPath, null, (err, binaryDoc) ->
                 return callback err if err
 
                 # Make a doc from scratch or by merging with an
                 # existing one
-                pouch.makeFileDoc filePaths.absolute, (err, doc) ->
+                couch.makeFileDoc filePaths.absolute, (err, doc) ->
                     return callback err if err
 
                     log.debug "Remote doc for #{relPath} created..."
@@ -454,7 +455,7 @@ operationQueue =
                             # Make a doc from scratch or from an existing one
                             # (useful?).
                             (next) ->
-                                pouch.makeFolderDoc folderPaths.absolute, next
+                                couch.makeFolderDoc folderPaths.absolute, next
 
                             # Update and save the folder DB document that will
                             # be replicated afterward.

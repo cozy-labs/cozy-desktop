@@ -23,7 +23,6 @@ describe.only "Functional Tests", ->
     before helpers.prepareFolder syncPath
 
     # Prepares the sync and starts it
-    before cliHelpers.mockGetPassword
     before cliHelpers.cleanConfiguration
     before cliHelpers.initConfiguration
     before cliHelpers.initSync
@@ -34,7 +33,6 @@ describe.only "Functional Tests", ->
     # Cleans up local system
     after cliHelpers.stopSync
     after cliHelpers.cleanConfiguration
-    after cliHelpers.restoreGetPassword
     after helpers.cleanFolder syncPath
     after filesHelpers.deleteAll
     after cliHelpers.resetDatabase

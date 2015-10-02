@@ -9,6 +9,7 @@ log   = require('printit')
 filesystem = require './filesystem'
 config = require './config'
 pouch = require './db'
+couch = require './remote_db'
 publisher = require './publisher'
 conflict = require './conflict'
 
@@ -64,7 +65,7 @@ remoteEventWatcher =
     # * Match local FS with remote Cozy FS
     # * Set starting sequence at last remote sequence
     initialReplication: (callback) ->
-        pouch.getLastRemoteChangeSeq (err, seq) ->
+        couch.getLastRemoteChangeSeq (err, seq) ->
             if err
                 log.error "An error occured contacting your remote Cozy"
                 log.error err
@@ -72,8 +73,8 @@ remoteEventWatcher =
             else
                 # Copy documents manually to avoid getting all the changes
                 async.series [
-                    (next) -> pouch.copyViewFromRemote 'folder', next
-                    (next) -> pouch.copyViewFromRemote 'file', next
+                    (next) -> couch.copyViewFromRemote 'folder', next
+                    (next) -> couch.copyViewFromRemote 'file', next
                 ], (err) ->
                     if err
                         log.error "An error occured copying database"
