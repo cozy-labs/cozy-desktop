@@ -98,6 +98,8 @@ class App
                 return
 
         config = @config.getConfig()
+        config.user = @config.getDeviceName()
+        config.password = config.devicePassword
         queue  = require './operation_queue'
         @local  = new Local  config, queue, @events
         @remote = new Remote config, queue, @events

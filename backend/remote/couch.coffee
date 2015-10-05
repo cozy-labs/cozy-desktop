@@ -15,26 +15,23 @@ publisher = require './publisher'
 progress  = require './progress'
 
 
-module.exports = dbHelpers =
+class Couch
+    constructor: (config, @events) ->
+        @url = config.url
+        @client = request.newClient options.url
+        @client.setBasicAuth options.user, options.password
 
     getLastRemoteChangeSeq: (callback) ->
-        remoteConfig = config.getConfig()
-        deviceName = config.getDeviceName()
-
-        client = request.newClient remoteConfig.url
-        client.setBasicAuth deviceName, remoteConfig.devicePassword
-
         urlPath = "cozy/_changes?descending=true&limit=1"
         log.debug "Getting last remote change sequence number:"
-        client.get urlPath, (err, res, body) ->
+        @client.get urlPath, (err, res, body) ->
             return callback err if err
-            log.debug body.last_seq
             callback null, body.last_seq
 
-    pickViewToCopy: (client, model, callback) ->
+    pickViewToCopy: (model, callback) ->
         urlPath = "cozy/_design/#{model}"
         log.debug "Getting design doc #{model} from remote"
-        client.get urlPath, (err, res, designdoc) ->
+        @client.get urlPath, (err, res, designdoc) ->
             if err
                 callback err
             else if designdoc.error
@@ -48,18 +45,12 @@ module.exports = dbHelpers =
                 callback new Error 'install files app on cozy'
 
     copyViewFromRemote: (model, callback) ->
-        remoteConfig = config.getConfig()
-        deviceName = config.getDeviceName()
-
-        client = request.newClient remoteConfig.url
-        client.setBasicAuth deviceName, remoteConfig.devicePassword
-
-        @pickViewToCopy client, model, (err, viewName) ->
+        @pickViewToCopy model, (err, viewName) =>
             return callback err if err
 
             urlPath = "cozy/_design/#{model}/_view/#{viewName}/"
             log.debug "Getting latest #{model} documents from remote"
-            client.get urlPath, (err, res, body) ->
+            @client.get urlPath, (err, res, body) ->
                 return callback err if err
                 return callback null unless body.rows?.length
                 async.eachSeries body.rows, (doc, cb) ->
@@ -76,7 +67,6 @@ module.exports = dbHelpers =
 
     replicateToRemote: (callback) ->
         startChangeSeq = config.getLocalSeq()
-        url = config.getUrl()
 
         opts =
             filter: (doc) ->
@@ -87,7 +77,7 @@ module.exports = dbHelpers =
         opts = config.augmentCouchOptions opts
 
         if not @replicatorTo or Object.keys(@replicatorTo._events).length is 0
-            @replicatorTo = pouch.db.replicate.to(url, opts)
+            @replicatorTo = pouch.db.replicate.to(@url, opts)
                 .on 'error', (err) ->
                     if err?.status is 409
                         conflict.display err
@@ -109,7 +99,7 @@ module.exports = dbHelpers =
         filePaths = filesystem.getPaths filePath
 
         async.waterfall [
-            (next) ->
+            (next) =>
                 # In case of an file update, binary document already exists.
                 if binaryDoc?.file?.id? and binaryDoc?.file?.rev?
                     next null,
@@ -120,20 +110,20 @@ module.exports = dbHelpers =
                     # Create a remote binary document if not exists.
                     # Pass the checksum here to save it remotely.
 
-                    filesystem.checksum filePaths.absolute, (err, checksum) ->
+                    filesystem.checksum filePaths.absolute, (err, checksum) =>
                         if err
                             next err
                         else
                             binaryDoc =
                                 file:
                                     checksum: checksum
-                            dbHelpers.createEmptyRemoteDoc binaryDoc, next
+                            @createEmptyRemoteDoc binaryDoc, next
 
             # Get the binary document
-            (binaryInfo, next) ->
-                dbHelpers.getRemoteDoc binaryInfo.id, next
+            (binaryInfo, next) =>
+                @getRemoteDoc binaryInfo.id, next
 
-            (remoteBinaryDoc, next) ->
+            (remoteBinaryDoc, next) =>
                 # If for some reason the remote attachment is already uploaded
                 # and has the same checksum than the local file, just return
                 # the binary document.
@@ -143,19 +133,20 @@ module.exports = dbHelpers =
                     return callback null, remoteBinaryDoc
 
                 # Otherwise upload it
-                dbHelpers.uploadAsAttachment remoteBinaryDoc.id
-                                           , remoteBinaryDoc.rev
-                                           , filePaths.absolute
-                                           , next
+                @uploadAsAttachment remoteBinaryDoc.id
+                                  , remoteBinaryDoc.rev
+                                  , filePaths.absolute
+                                  , next
 
             # Get the binary document again
-            (binaryInfo, next) ->
-                dbHelpers.getRemoteDoc binaryInfo.id, next
-        ], (err, remoteBinaryDoc) ->
+            (binaryInfo, next) =>
+                @getRemoteDoc binaryInfo.id, next
+
+        ], (err, remoteBinaryDoc) =>
             if err
                 # Document not found remotely, force upload
                 if err.status? and err.status is 404
-                    dbHelpers.uploadBinary filePath, null, callback
+                    @uploadBinary filePath, null, callback
                 else
                     callback err
             else
@@ -164,13 +155,7 @@ module.exports = dbHelpers =
 
     # Retrieve a document from remote cozy based on its ID.
     getRemoteDoc: (id, callback) ->
-        remoteConfig = config.getConfig()
-        deviceName = config.getDeviceName()
-
-        client = request.newClient remoteConfig.url
-        client.setBasicAuth deviceName, remoteConfig.devicePassword
-
-        client.get "cozy/#{id}", (err, res, body) ->
+        @client.get "cozy/#{id}", (err, res, body) ->
             if err
                 callback err
             else if body.error
@@ -184,17 +169,12 @@ module.exports = dbHelpers =
     # Create empty binary remotely. It will be used to link file object to
     # a given binary.
     createEmptyRemoteDoc: (binaryDoc, callback) ->
-        remoteConfig = config.getConfig()
-        deviceName = config.getDeviceName()
         data = binaryDoc or {}
         data.docType = 'Binary'
-        newId = data._id or uuid.v4().split('-').join('')
+        newId = data._id or uuid.v4().replace(/-/g, '')
         urlPath = "cozy/#{newId}"
 
-        client = request.newClient remoteConfig.url
-        client.setBasicAuth deviceName, remoteConfig.devicePassword
-
-        client.put urlPath, data, (err, res, body) ->
+        @client.put urlPath, data, (err, res, body) ->
             if err
                 callback err
             else if body.error
@@ -205,28 +185,27 @@ module.exports = dbHelpers =
     # Upload given file as affachment of given document (represented by its id
     # and its revision).
     uploadAsAttachment: (remoteId, remoteRev, filePath, callback) ->
-        remoteConfig = config.getConfig()
-        deviceName = config.getDeviceName()
         absPath = filesystem.getPaths(filePath).absolute
         urlPath = "cozy/#{remoteId}/file?rev=#{remoteRev}"
 
-        client = request.newClient remoteConfig.url
-        client.setBasicAuth deviceName, remoteConfig.devicePassword
-
         log.info "Uploading binary: #{absPath}..."
-        publisher.emit 'uploadBinary', absPath
+        @events.emit 'uploadBinary', absPath
 
-        streams = client.putFile urlPath, filePath, (err, res, body) ->
+        streams = @client.putFile urlPath, filePath, (err, res, body) =>
             if err
                 callback err
             else
+                # TODO is it really necessary to parse JSON ourselves?
                 body = JSON.parse(body) if typeof body is 'string'
 
                 if body.error
                     callback new Error body.error
                 else
                     log.info "Binary uploaded: #{absPath}"
-                    publisher.emit 'binaryUploaded', absPath
+                    @events.emit 'binaryUploaded', absPath
                     callback err, body
 
         progress.showUpload filePath, streams.fileStream
+
+
+module.exports = Couch
