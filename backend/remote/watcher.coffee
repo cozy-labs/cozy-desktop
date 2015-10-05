@@ -81,7 +81,7 @@ remoteEventWatcher =
             live: false
             since: config.getRemoteSeq()
 
-        options = config.augmentPouchOptions options
+        options = config.augmentCouchOptions options
 
         if pouch.replicationDelay is 0 and (not @replicatorFrom \
         or Object.keys(@replicatorFrom._events).length is 0)

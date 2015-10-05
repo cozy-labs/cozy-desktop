@@ -84,7 +84,7 @@ module.exports = dbHelpers =
             live: false
             since: startChangeSeq
 
-        opts = config.augmentPouchOptions opts
+        opts = config.augmentCouchOptions opts
 
         if not @replicatorTo or Object.keys(@replicatorTo._events).length is 0
             @replicatorTo = pouch.db.replicate.to(url, opts)

@@ -120,7 +120,7 @@ module.exports = config =
         @saveConfig()
         @config
 
-    augmentPouchOptions: (options) ->
+    augmentCouchOptions: (options) ->
         if @config.insecure
             options.ajax =
                 rejectUnauthorized: false
