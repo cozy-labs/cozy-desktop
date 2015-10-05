@@ -10,7 +10,6 @@ filesystem = require './filesystem'
 config = require './config'
 pouch = require './db'
 couch = require './remote_db'
-publisher = require './publisher'
 conflict = require './conflict'
 
 #
@@ -26,25 +25,8 @@ remoteEventWatcher =
     replicatorFrom: null
     url: null
     startSeq: null
-
-    # Run first time replication (match FS and sequence number with remote) and
-    # run replication regularly
-    init: (syncToCozy, callback) ->
-        operationQueue = require './operation_queue'
-
-        log.info 'Run first synchronisation...'
-        remoteEventWatcher.initialReplication (err, seq) ->
-            # TODO better error management, not just process.exit
-            process.exit(1) if err
-            log.info "First replication is complete (last seq: #{seq})"
-
-            log.info 'Start building your filesystem on your device.'
-            operationQueue.makeFSSimilarToDB syncToCozy, (err) ->
-                process.exit(1) if err
-                log.info 'Filesystem built on your device.'
-                publisher.emit 'firstSyncDone'
-
-                callback()
+    publisher: null
+    queue: null
 
     # Start metadata sync with remote. Sync is based on replications every 2s.
     # TODO: do not run a replication if another replication is running.
@@ -152,7 +134,7 @@ remoteEventWatcher =
             if pouch.replicationDelay is 0
                 if res.results.length > 0
                     log.debug "Applying #{res.results.length} changes..."
-                    publisher.emit 'applyingChanges'
+                    remoteEventWatcher.publisher.emit 'applyingChanges'
                     #
                     # Add changes to queue one by one
                     #
@@ -168,7 +150,7 @@ remoteEventWatcher =
                             next()
                     , ->
                         log.debug 'Changes applied.'
-                        publisher.emit 'changesApplied'
+                        remoteEventWatcher.publisher.emit 'changesApplied'
                         callback()
             else
                 setTimeout ->
@@ -199,7 +181,7 @@ remoteEventWatcher =
 
                 push_operation = (operation) ->
                     log.debug "addToQueue", operation, change
-                    require('./operation_queue').queue.push
+                    remoteEventWatcher.queue.push
                         operation: operation
                         doc: doc
                     , (err) ->

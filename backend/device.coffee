@@ -3,7 +3,7 @@ log     = require('printit')
     prefix: 'Device        '
 
 
-module.exports = device =
+module.exports =
 
     # Pings the cozy to check the credentials without creating a device
     checkCredentials: (options, callback) ->
@@ -15,6 +15,7 @@ module.exports = device =
             if res?.statusCode isnt 200
                 err = err?.message or body.error or body.message
             callback err
+
 
     # Register device remotely then returns credentials given by remote Cozy.
     # This credentials will allow the device to access to the Cozy database.
@@ -36,19 +37,17 @@ module.exports = device =
                     id: body.id
                     password: body.password
 
+
     # Unregister device remotely, ask for revocation.
     unregisterDevice: (options, callback) ->
         client = request.newClient options.url
         client.setBasicAuth 'owner', options.password
         client.del "device/#{options.deviceId}/", callback
 
+
     # Get useful information about the disk space
     # (total, used and left) on the remote Cozy
     getDiskSpace: (options, callback) ->
-        device = config.getConfig()
-        client = request.newClient device.url
-        client.setBasicAuth device.deviceName, device.devicePassword
-
         client = request.newClient options.url
         client.setBasicAuth options.user, options.password
 

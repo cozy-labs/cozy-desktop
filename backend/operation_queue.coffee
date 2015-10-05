@@ -12,7 +12,6 @@ url = require 'url'
 #
 pouch = require './db'
 couch = require './remote_db'
-publisher = require './publisher'
 filesystem = require './filesystem'
 config = require './config'
 remoteEventWatcher = require './remote_event_watcher'
@@ -118,6 +117,7 @@ applyOperation = (task, callback) ->
 operationQueue =
 
     queue: async.queue applyOperation, 1
+    publisher: null
 
     waitNetwork: (task) ->
         operationQueue.queue.pause()
@@ -533,7 +533,7 @@ operationQueue =
         remoteConfig = config.getConfig()
 
         log.info "Uploading modifications to remote..."
-        publisher.emit 'uploadingLocalChanges'
+        operationQueue.publisher.emit 'uploadingLocalChanges'
 
         # Walk through all existing files in the synchronized folder and
         # create all the missing DB documents

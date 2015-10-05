@@ -1,14 +1,15 @@
+EventEmitter = require('events').EventEmitter
 fs    = require 'fs-extra'
 path  = require 'path-extra'
 async = require 'async'
 log   = require('printit')
     prefix: 'Cozy Desktop  '
 
-filesystem = require '../backend/filesystem'
-pouch = require '../backend/db'
-device = require '../backend/device'
-localEventWatcher = require '../backend/local_event_watcher'
-remoteEventWatcher = require '../backend/remote_event_watcher'
+pouch  = require './pouch'
+device = require './device'
+local  = require './local'
+remote = require './remote'
+progress = require './progress'
 
 
 # App is the entry point for the CLI and GUI.
@@ -21,6 +22,7 @@ class App
         @basePath = basePath or path.homedir()
         @config = require './config'
         # TODO @config.init @basePath
+        @events = new EventEmitter
 
     # This method is here to be surcharged by the UI
     # to ask its password to the user
@@ -96,15 +98,30 @@ class App
                 return
 
         config = @config.getConfig()
+        queue  = require './operation_queue'
+        @local  = new Local  config, queue, @events
+        @remote = new Remote config, queue, @events
+
+        progress.events = @events
+        queue.events = @events
 
         if config.deviceName? and config.url? and config.path?
-            fs.ensureDir config.path, ->
-                pouch.addAllFilters ->
-                    remoteEventWatcher.init syncToCozy, ->
-                        log.info "Init done"
-                        remoteEventWatcher.start ->
-                            if syncToDesktop
-                                localEventWatcher.start()
+            # TODO async, error handling
+            # TODO what order for initial sync (performance wise)?
+            pouch.addAllFilters ->
+                log.info 'Run first synchronisation...'
+                @local.start (err) ->
+                    process.exit(1) if err
+                    @remote.start (err) ->
+                        process.exit(1) if err
+                        seq = "TODO"
+                        log.info "First replication is complete (last seq: #{seq})"
+                        events.emit 'firstSyncDone'
+                        log.info 'Start building your filesystem on your device.'
+                        queue.makeFSSimilarToDB syncToCozy, (err) ->
+                            process.exit(1) if err
+                            log.info 'Filesystem built on your device.'
+                            publisher.emit 'firstSyncDone'
         else
             log.error 'No configuration found, please run add-remote-cozy' +
                 'command before running a synchronization.'

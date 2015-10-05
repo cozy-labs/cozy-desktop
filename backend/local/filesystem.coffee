@@ -7,10 +7,10 @@ request  = require 'request-json-light'
 log      = require('printit')
     prefix: 'Filesystem    '
 
-config    = require './config'
-pouch     = require './db'
-publisher = require './publisher'
-progress  = require './progress'
+config    = require '../config'
+pouch     = require '../db'
+publisher = require '../publisher'
+progress  = require '../progress'
 
 
 filesystem =

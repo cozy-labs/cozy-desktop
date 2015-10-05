@@ -9,7 +9,6 @@ log     = require('printit')
 
 config    = require './config'
 conflict  = require './conflict'
-publisher = require './publisher'
 progress  = require './progress'
 
 fs.ensureDirSync config.dir

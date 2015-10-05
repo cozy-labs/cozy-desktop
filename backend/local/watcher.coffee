@@ -8,8 +8,6 @@ log = require('printit')
 # Local backend files
 #
 filesystem = require './filesystem'
-config = require './config'
-publisher  = require './publisher'
 
 #
 # This file contains the filesystem watcher that will trigger operations when
@@ -20,6 +18,10 @@ publisher  = require './publisher'
 # See `operationQueue.coffee` for more information.
 #
 localEventWatcher =
+
+    publisher: null
+    path: null
+    watcher: null
 
     # Start chokidar, the filesystem watcher
     # https://github.com/paulmillr/chokidar
@@ -35,12 +37,10 @@ localEventWatcher =
 
         log.info 'Start watching filesystem for changes'
 
-        remoteConfig = config.getConfig()
-
         continuous ?= true
         fromNow ?= true
 
-        localEventWatcher.watcher = chokidar.watch remoteConfig.path,
+        localEventWatcher.watcher = chokidar.watch localEventWatcher.path,
             persistent: continuous
             ignoreInitial: fromNow
             interval: 2000
@@ -52,7 +52,7 @@ localEventWatcher =
             if not filesystem.locked \
             and not filesystem.filesBeingCopied[filePath]?
                 log.info "File added: #{filePath}"
-                publisher.emit 'fileAddedLocally', filePath
+                localEventWatcher.publisher.emit 'fileAddedLocally', filePath
                 filesystem.isBeingCopied filePath, ->
                     operationQueue.queue.push
                         operation: 'createFileRemotely'
@@ -62,9 +62,9 @@ localEventWatcher =
         # New directory detected
         .on 'addDir', (folderPath) ->
             if not filesystem.locked \
-            and folderPath isnt remoteConfig.path
+            and folderPath isnt localEventWatcher.path
                 log.info "Directory added: #{folderPath}"
-                publisher.emit 'folderAddedLocally', folderPath
+                localEventWatcher.publisher.emit 'folderAddedLocally', folderPath
                 operationQueue.queue.push
                     operation: 'createFolderRemotely'
                     folder: folderPath
@@ -75,7 +75,7 @@ localEventWatcher =
 
             if not filesystem.locked and not fs.existsSync filePath
                 log.info "File deleted: #{filePath}"
-                publisher.emit 'fileDeletedLocally', filePath
+                localEventWatcher.publisher.emit 'fileDeletedLocally', filePath
                 operationQueue.queue.push
                     operation: 'deleteFileRemotely'
                     file: filePath
@@ -85,7 +85,7 @@ localEventWatcher =
         .on 'unlinkDir', (folderPath) ->
             if not filesystem.locked
                 log.info "Folder deleted: #{folderPath}"
-                publisher.emit 'folderDeletedLocally', folderPath
+                localEventWatcher.publisher.emit 'folderDeletedLocally', folderPath
                 operationQueue.queue.push
                     operation: 'deleteFolderRemotely'
                     folder: folderPath
@@ -94,7 +94,7 @@ localEventWatcher =
         # File update detected
         .on 'change', (filePath) ->
 
-            filePath = path.join remoteConfig.path, filePath
+            filePath = path.join localEventWatcher.path, filePath
 
             if fs.existsSync filePath
                 onChange filePath
@@ -109,22 +109,19 @@ localEventWatcher =
             log.error err
 
 
-    watcher: null
-
-
 onChange = (filePath) ->
     # Chokidar sometimes detect changes with a relative path
     # In this case we want to adjust the path to be consistent
-    re = new RegExp "^#{remoteConfig.path}"
+    re = new RegExp "^#{localEventWatcher.path}"
     if not re.test filePath
         relativePath = filePath
-        filePath = path.join remoteConfig.path, filePath
+        filePath = path.join localEventWatcher.path, filePath
 
     if not filesystem.locked \
     and not filesystem.filesBeingCopied[filePath]? \
     and fs.existsSync filePath
         log.info "File changed: #{filePath}"
-        publisher.emit 'fileChangedLocally', filePath
+        localEventWatcher.publisher.emit 'fileChangedLocally', filePath
         filesystem.isBeingCopied filePath, ->
             log.debug "#{relativePath} copy is finished."
             operationQueue.queue.push
