@@ -1,19 +1,14 @@
-fs = require 'fs'
-touch = require 'touch'
-
-should = require 'should'
-date = require 'date-utils'
-
-config      = require '../backend/config'
-pouch       = require '../backend/db'
+fs      = require 'fs'
+touch   = require 'touch'
+should  = require 'should'
+date    = require 'date-utils'
 request = require 'request-json-light'
 
-helpers = require './helpers/helpers'
-cliHelpers = require './helpers/cli'
-fileHelpers = require './helpers/files'
+config = require '../../backend/config'
 
-params =
-    url: 'http://localhost:9104/'
+helpers     = require '../helpers/helpers'
+cliHelpers  = require '../helpers/cli'
+fileHelpers = require '../helpers/files'
 
 
 describe "Config Tests", ->
@@ -98,15 +93,6 @@ describe "Config Tests", ->
         it 'gets seq field on default deviceName', ->
             conf = config.getConfig()
             config.getLocalSeq().should.equal 3
-
-    #describe 'getDiskSpace', ->
-        #it 'returns data about cozy diskspace', (done) ->
-            #@conf.url = 'http://localhost:9104'
-            #config.updateSync @conf
-            #config.getDiskSpace (err, data) ->
-                #should.not.exist err
-                #console.log data
-                #done()
 
     describe 'getUrl', ->
         it 'should give remote Cozy url', ->

@@ -7,17 +7,16 @@ moment  = require 'moment'
 log     = require('printit')
     prefix: 'Remote CouchDB'
 
-config     = require './config'
-pouch      = require './db'
-filesystem = require './filesystem'
-conflict   = require './conflict'
-publisher = require './publisher'
-progress  = require './progress'
+config     = require '../config'
+pouch      = require '../pouch'
+filesystem = require '../local/filesystem'
+conflict   = require '../conflict'
+progress   = require '../progress'
 
 
 class Couch
-    constructor: (config, @events) ->
-        @url = config.url
+    constructor: (options, @events) ->
+        @url = options.url
         @client = request.newClient options.url
         @client.setBasicAuth options.user, options.password
 
@@ -26,7 +25,10 @@ class Couch
         log.debug "Getting last remote change sequence number:"
         @client.get urlPath, (err, res, body) ->
             return callback err if err
-            callback null, body.last_seq
+            if body.error
+                callback body.error
+            else
+                callback null, body.last_seq
 
     pickViewToCopy: (model, callback) ->
         urlPath = "cozy/_design/#{model}"

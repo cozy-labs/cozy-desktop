@@ -1,12 +1,12 @@
-async = require 'async'
+async  = require 'async'
 should = require 'should'
-date = require 'date-utils'
+date   = require 'date-utils'
 
-config = require '../backend/config'
-pouch  = require '../backend/db'
+config = require '../../backend/config'
+pouch  = require '../../backend/db'
 
-helpers = require './helpers/helpers'
-cliHelpers = require './helpers/cli'
+helpers     = require './helpers/helpers'
+cliHelpers  = require './helpers/cli'
 fileHelpers = require './helpers/files'
 
 
@@ -299,7 +299,8 @@ describe "DB Tests", ->
                         res.rows.length.should.not.be.equal 0
                         done()
 
-    it 'makeFileDoc'
-    it 'makeFileDocFrom'
-    it 'makeFolderDoc'
-    it 'getDocForFile'
+    describe 'TODO', ->
+        it 'makeFileDoc'
+        it 'makeFileDocFrom'
+        it 'makeFolderDoc'
+        it 'getDocForFile'

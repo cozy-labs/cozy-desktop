@@ -72,6 +72,7 @@
     "gulp-shell": "^0.4.3",
     "nw": "^0.12.3",
     "nw-builder": "^2.0.2",
+    "pouchdb-server": "^0.9.0",
     "should": "^7.1.0"
   }
 }

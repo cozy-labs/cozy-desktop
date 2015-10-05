@@ -8,9 +8,9 @@ log      = require('printit')
     prefix: 'Filesystem    '
 
 config    = require '../config'
-pouch     = require '../db'
-publisher = require '../publisher'
+pouch     = require '../pouch'
 progress  = require '../progress'
+# TODO publisher = require '../publisher'
 
 
 filesystem =

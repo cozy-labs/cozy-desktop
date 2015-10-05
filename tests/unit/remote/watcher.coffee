@@ -1,21 +1,22 @@
-fs = require 'fs-extra'
-touch = require 'touch'
-date = require 'date-utils'
+fs     = require 'fs-extra'
+touch  = require 'touch'
+date   = require 'date-utils'
 mkdirp = require 'mkdirp'
-async = require 'async'
-
-path = require 'path'
+async  = require 'async'
+path   = require 'path'
 should = require 'should'
-helpers = require './helpers/helpers'
-cliHelpers = require './helpers/cli'
-fileHelpers = require './helpers/files'
+
+helpers       = require './helpers/helpers'
+cliHelpers    = require './helpers/cli'
+fileHelpers   = require './helpers/files'
 folderHelpers = require './helpers/folders'
 client = helpers.getClient()
-
-config = require '../backend/config'
-pouch = require '../backend/db'
-remoteWatcher = require '../backend/remote_event_watcher'
 {syncPath} = helpers.options
+
+config        = require '../../../backend/config'
+pouch         = require '../../../backend/db'
+remoteWatcher = require '../../../backend/remote/watcher'
+
 
 describe "RemoteWatcher Tests", ->
     @timeout 8000
@@ -128,4 +129,3 @@ describe "RemoteWatcher Tests", ->
                 filepath = path.join syncPath, file.parent, file.name
                 fs.statSync(filepath).size.should.be.equal fixtureSize
             done()
-
