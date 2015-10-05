@@ -298,3 +298,8 @@ describe "DB Tests", ->
                         should.exist res.rows
                         res.rows.length.should.not.be.equal 0
                         done()
+
+    it 'makeFileDoc'
+    it 'makeFileDocFrom'
+    it 'makeFolderDoc'
+    it 'getDocForFile'

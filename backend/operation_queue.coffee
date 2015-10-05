@@ -380,7 +380,7 @@ operationQueue =
 
                 # Make a doc from scratch or by merging with an
                 # existing one
-                couch.makeFileDoc filePaths.absolute, (err, doc) ->
+                pouch.makeFileDoc filePaths.absolute, (err, doc) ->
                     return callback err if err
 
                     log.debug "Remote doc for #{relPath} created..."
@@ -455,7 +455,7 @@ operationQueue =
                             # Make a doc from scratch or from an existing one
                             # (useful?).
                             (next) ->
-                                couch.makeFolderDoc folderPaths.absolute, next
+                                pouch.makeFolderDoc folderPaths.absolute, next
 
                             # Update and save the folder DB document that will
                             # be replicated afterward.
