@@ -97,12 +97,13 @@ class App
                 return
 
         device  = @config.getDevice()
-        queue   = require './operation_queue'
-        @local  = new Local  @config, queue, @events
-        @remote = new Remote @config, queue, @events
+        @local  = new Local  @config, pouch, @events
+        @remote = new Remote @config, pouch, @events
 
-        progress.events = @events
+        queue = require './operation_queue'
+        queue.pouch = pouch
         queue.events = @events
+        progress.events = @events
 
         if device.deviceName? and device.url? and device.path?
             # TODO async, error handling

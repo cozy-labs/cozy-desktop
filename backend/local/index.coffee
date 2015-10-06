@@ -4,7 +4,7 @@ watcher = require './watcher'
 
 
 class Local
-    constructor: (config, @queue, @events) ->
+    constructor: (config, @pouch, @events) ->
         watcher.path = config.path
         watcher.publisher = @events
 

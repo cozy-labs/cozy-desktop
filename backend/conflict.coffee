@@ -1,6 +1,7 @@
 log = require('printit')
     prefix: 'Conflict Handler'
 
+
 module.exports =
 
     # Display the conflict informations (for debugging purpose)

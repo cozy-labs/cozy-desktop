@@ -1,19 +1,18 @@
-Couch = require './couch'
-watcher = require './watcher'
+Couch   = require './couch'
+Watcher = require './watcher'
 
 
 class Remote
-    constructor: (config, @queue, @events) ->
+    constructor: (config, @pouch, @events) ->
         @couch = new Couch options, @events
-        watcher.publisher = @events
-        watcher.queue = @queue
+        @watcher = new Watcher @couch, @pouch, @events
 
     start: (mode, done) ->
-        watcher.initialReplication (err) ->
+        @watcher.initialReplication (err) =>
             if err
                 done err
             else
-                watcher.start done
+                @watcher.startReplication done
 
 
 module.exports = Remote

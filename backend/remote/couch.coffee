@@ -30,7 +30,7 @@ class Couch
             else
                 callback null, body.last_seq
 
-    pickViewToCopy: (model, callback) ->
+    pickViewToCopy: (model, callback) =>
         urlPath = "cozy/_design/#{model}"
         log.debug "Getting design doc #{model} from remote"
         @client.get urlPath, (err, res, designdoc) ->
@@ -46,26 +46,17 @@ class Couch
                 # TODO : may be create it ourself
                 callback new Error 'install files app on cozy'
 
-    copyViewFromRemote: (model, callback) ->
+    copyDocsFromRemoteView: (model, callback) =>
         @pickViewToCopy model, (err, viewName) =>
             return callback err if err
 
             urlPath = "cozy/_design/#{model}/_view/#{viewName}/"
             log.debug "Getting latest #{model} documents from remote"
             @client.get urlPath, (err, res, body) ->
-                return callback err if err
-                return callback null unless body.rows?.length
-                async.eachSeries body.rows, (doc, cb) ->
-                    doc = doc.value
-                    # TODO we shouldn't update pouchdb from this module
-                    pouch.db.put doc, new_edits: false, (err) ->
-                        if err
-                            log.error 'failed to copy one doc'
-                            log.error err
-                        cb null # keep copying other docs
-                , (err) ->
-                    log.debug "#{body.rows.length} docs retrieved for #{model}."
+                if err
                     callback err
+                else
+                    callback body.rows
 
     replicateToRemote: (callback) ->
         startChangeSeq = config.getLocalSeq()
