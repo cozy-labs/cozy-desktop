@@ -11,12 +11,13 @@ config    = require './config'
 conflict  = require './conflict'
 progress  = require './progress'
 
-fs.ensureDirSync config.dir
+initialize: ->
+    fs.ensureDirSync config.dir
 
-db = new PouchDB config.dbPath
+    db = new PouchDB config.dbPath
 
 # Listener memory leak fix
-db.setMaxListeners 100
+    db.setMaxListeners 100
 
 
 newId = ->
@@ -52,7 +53,7 @@ createNewDoc = (docType, fields, callback) ->
 
 module.exports = dbHelpers =
 
-    db: db
+    db: null
     replicatorTo: null
     replicationDelay: 0
 

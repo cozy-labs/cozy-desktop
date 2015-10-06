@@ -4,8 +4,8 @@ Watcher = require './watcher'
 
 class Remote
     constructor: (config, @pouch, @events) ->
-        @couch = new Couch options, @events
-        @watcher = new Watcher @couch, @pouch, @events
+        @couch = new Couch options, @pouch, @events
+        @watcher = new Watcher @couch, @pouch, config
 
     start: (mode, done) ->
         @watcher.initialReplication (err) =>

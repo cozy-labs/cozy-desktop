@@ -8,14 +8,13 @@ log     = require('printit')
     prefix: 'Remote CouchDB'
 
 config     = require '../config'
-pouch      = require '../pouch'
 filesystem = require '../local/filesystem'
 conflict   = require '../conflict'
 progress   = require '../progress'
 
 
 class Couch
-    constructor: (options, @events) ->
+    constructor: (options, @pouch, @events) ->
         @url = options.url
         @client = request.newClient options.url
         @client.setBasicAuth options.user, options.password
@@ -58,7 +57,7 @@ class Couch
                 else
                     callback body.rows
 
-    replicateToRemote: (callback) ->
+    replicateToRemote: (callback) =>
         startChangeSeq = config.getLocalSeq()
 
         opts =
@@ -70,7 +69,7 @@ class Couch
         opts = config.augmentCouchOptions opts
 
         if not @replicatorTo or Object.keys(@replicatorTo._events).length is 0
-            @replicatorTo = pouch.db.replicate.to(@url, opts)
+            @replicatorTo = @pouch.db.replicate.to(@url, opts)
                 .on 'error', (err) ->
                     if err?.status is 409
                         conflict.display err

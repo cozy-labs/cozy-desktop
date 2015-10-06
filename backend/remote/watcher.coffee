@@ -6,8 +6,7 @@ Conflict = require '../conflict'
 
 
 class RemoteWatcher
-
-    constructor: (@couch, @pouch, @events) ->
+    constructor: (@couch, @pouch, @config) ->
 
     # First time replication:
     # * Match local FS with remote Cozy FS
@@ -35,6 +34,8 @@ class RemoteWatcher
                         @config.setRemoteSeq seq
                         callback null, seq
 
+    # Manual replication for a doctype:
+    # copy the documents from a remote view to the local pouchdb
     copyDocsFromRemoteView: (model, callback) =>
         @couch.getFromRemoteView model, (err, rows) =>
             return callback err  if err
@@ -61,7 +62,7 @@ class RemoteWatcher
                 doc.docType?.toLowerCase() is 'File'
             live: true
             retry: true
-            since: config.getRemoteSeq()
+            since: @config.getRemoteSeq()
 
         @replicator = pouch.db.replicate.from @couch.url, options
             .on 'change', (info) ->
@@ -78,6 +79,7 @@ class RemoteWatcher
                     @replicator = null
                     setTimeout @startReplication, 5000
 
+    # Stop the live replication
     stopReplication: ->
         @replicator?.cancel()
         @replicator = null

@@ -1,21 +1,14 @@
-del    = require 'del'
-fs     = require 'fs'
 should = require 'should'
+
+configHelpers = require '../helpers/config'
 
 Config = require '../../backend/config'
 
 
 describe 'Config', ->
 
-    before ->
-        @basePath = process.env['DEFAULT_DIR'] or 'tmp'
-        @config = new Config @basePath
-        @config.devices['tester'] =
-            deviceName: 'tester'
-            password: 'password'
-            url: 'nonecozy'
-    after ->
-        del.sync @config.configPath
+    before 'instanciate config', configHelpers.createConfig
+    after 'clean config directory', configHelpers.cleanConfig
 
     describe 'saveConfig', ->
         it 'saves last changes made on the config', ->

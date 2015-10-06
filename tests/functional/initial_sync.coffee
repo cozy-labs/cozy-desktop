@@ -13,32 +13,50 @@ folderHelpers = require './helpers/folders'
 client = helpers.getClient()
 {syncPath} = helpers.options
 
-Watcher = require '../../../backend/remote/watcher'
+config        = require '../../../backend/config'
+pouch         = require '../../../backend/db'
+remoteWatcher = require '../../../backend/remote/watcher'
 
 
 describe "RemoteWatcher Tests", ->
     @timeout 8000
 
-    before 'instanciate config', configHelpers.createConfig
-    before 'start couch server', couchHelpers.startServer
-    before 'instanciate couch', couchHelpers.createCouchClient
-    before 'instanciate remote watcher', ->
-        pouch = require '../../../backend/pouch'
-        @watcher = new Watcher @couch, pouch, @config
-    after 'stop couch server', couchHelpers.stopServer
-    after 'clean config directory', configHelpers.cleanConfig
+    before cliHelpers.resetDatabase
+    before cliHelpers.initConfiguration
+    before fileHelpers.deleteAll
+    after cliHelpers.resetDatabase
 
-    describe "initial replication", ->
-        fixturePath = path.join  __dirname, '..', 'fixtures', 'chat-mignon.jpg'
-        remoteFolders = [
-            {name: 'remotefolder-01', parent: ''}
-            {name: 'remotesub-01', parent: '/remotefolder-01'}
-        ]
+    describe "init", ->
+        fixturePath = path.join  __dirname, 'fixtures', 'chat-mignon.jpg'
         remoteFiles = [
             {name: 'remotefile-01', parent: ''}
             {name: 'remotefile-02', parent: '/remotefolder-01'}
             {name: 'remotefile-03', parent: '/remotefolder-01/remotesub-01'}
         ]
+        localFiles = [
+            {name: 'localfile-01', parent: ''}
+            {name: 'localfile-02', parent: '/localfolder-01'}
+            {name: 'localfile-03', parent: '/localfolder-01/localsub-01'}
+        ]
+        remoteFolders = [
+            {name: 'remotefolder-01', parent: ''}
+            {name: 'remotesub-01', parent: '/remotefolder-01'}
+        ]
+        localFolders = [
+            {name: 'localfolder-01', parent: ''}
+            {name: 'localsub-01', parent: '/localfolder-01'}
+        ]
+
+
+        # Create local folders
+        before ->
+            localFolders.forEach (folder) ->
+                mkdirp.sync path.join syncPath, folder.parent, folder.name
+
+        # Create local files
+        before ->
+            localFiles.forEach (file) ->
+                touch.sync path.join syncPath, file.parent, file.name
 
         # Create remote folders
         before (done) ->

@@ -96,9 +96,9 @@ class App
                 log.error "Unknown mode for sync: #{mode}"
                 return
 
-        device  = @config.getDevice()
         @local  = new Local  @config, pouch, @events
         @remote = new Remote @config, pouch, @events
+        device  = @config.getDevice()
 
         queue = require './operation_queue'
         queue.pouch = pouch
