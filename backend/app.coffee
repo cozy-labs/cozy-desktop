@@ -5,10 +5,11 @@ async = require 'async'
 log   = require('printit')
     prefix: 'Cozy Desktop  '
 
-pouch  = require './pouch'
-device = require './device'
-local  = require './local'
-remote = require './remote'
+Config  = require './config'
+Devices = require './devices'
+pouch   = require './pouch'
+local   = require './local'
+remote  = require './remote'
 progress = require './progress'
 
 
@@ -20,8 +21,7 @@ class App
     constructor: (basePath) ->
         @lang = 'fr'
         @basePath = basePath or path.homedir()
-        @config = require './config'
-        # TODO @config.init @basePath
+        @config = new Config @basePath
         @events = new EventEmitter
 
     # This method is here to be surcharged by the UI
@@ -45,7 +45,7 @@ class App
                     url: url
                     deviceName: deviceName
                     password: password
-                device.registerDevice options, next
+                Devices.registerDevice options, next
 
         ], (err, credentials) =>
             if err
@@ -57,7 +57,7 @@ class App
                     deviceName: deviceName
                     path: path.resolve syncPath
                     deviceId: credentials.id
-                    devicePassword: credentials.password
+                    password: credentials.password
                 @config.addRemoteCozy options
                 log.info 'The remote Cozy has properly been configured ' +
                     'to work with current device.'
@@ -66,18 +66,17 @@ class App
     # Unregister current device from remote Cozy and then remove remote from
     # the config file
     removeRemote: (deviceName) =>
-        remoteConfig = @config.getConfig()
-        deviceName = deviceName or @config.getDeviceName()
+        device = @config.getDevice deviceName
 
         async.waterfall [
             @askPassword,
 
             (password, next) ->
                 options =
-                    url: remoteConfig.url
-                    deviceId: remoteConfig.deviceId
+                    url: device.url
+                    deviceId: device.deviceId
                     password: password
-                device.unregisterDevice options, saveConfig
+                Devices.unregisterDevice options, next
 
         ], (err) =>
             if err
@@ -97,17 +96,15 @@ class App
                 log.error "Unknown mode for sync: #{mode}"
                 return
 
-        config = @config.getConfig()
-        config.user = @config.getDeviceName()
-        config.password = config.devicePassword
-        queue  = require './operation_queue'
-        @local  = new Local  config, queue, @events
-        @remote = new Remote config, queue, @events
+        device  = @config.getDevice()
+        queue   = require './operation_queue'
+        @local  = new Local  @config, queue, @events
+        @remote = new Remote @config, queue, @events
 
         progress.events = @events
         queue.events = @events
 
-        if config.deviceName? and config.url? and config.path?
+        if device.deviceName? and device.url? and device.path?
             # TODO async, error handling
             # TODO what order for initial sync (performance wise)?
             pouch.addAllFilters ->
@@ -140,7 +137,7 @@ class App
     # Return the whole content of the database
     allDocs: (callback) ->
         pouch.db.allDocs include_docs: true, (err, results) ->
-            log.info err if err
+            log.error err if err
             callback err, results
 
 
@@ -155,12 +152,8 @@ class App
     # Get useful information about the disk space
     # (total, used and left) on the remote Cozy
     getDiskSpace: (callback) =>
-        remoteConfig = @config.getConfig()
-        options =
-            url:      remoteConfig.url
-            user:     remoteConfig.deviceName
-            password: remoteConfig.devicePassword
-        device.getDiskSpace options, callback
+        device = @config.getDevice
+        Devices.getDiskSpace device, callback
 
 
 module.exports = App

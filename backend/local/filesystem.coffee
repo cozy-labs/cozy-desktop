@@ -234,7 +234,7 @@ filesystem =
         deviceName = config.getDeviceName()
 
         client = request.newClient remoteConfig.url
-        client.setBasicAuth deviceName, remoteConfig.devicePassword
+        client.setBasicAuth deviceName, remoteConfig.password
 
         urlPath = "cozy/#{binaryId}/file"
 

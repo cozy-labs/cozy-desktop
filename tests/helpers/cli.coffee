@@ -42,10 +42,10 @@ module.exports.initConfiguration = (done) ->
                     deviceName: helpers.options.deviceName
                     path: helpers.options.syncPath
                     deviceId: credentials.id
-                    devicePassword: credentials.password
+                    password: credentials.password
                 # TODO deviceId and deviceName have been merged
                 helpers.options.deviceId = credentials.id
-                helpers.options.devicePassword = credentials.password
+                helpers.options.password = credentials.password
 
                 config.addRemoteCozy device
                 done()

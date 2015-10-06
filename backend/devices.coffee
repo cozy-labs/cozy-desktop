@@ -1,6 +1,6 @@
 request = require 'request-json-light'
 log     = require('printit')
-    prefix: 'Device        '
+    prefix: 'Devices       '
 
 
 module.exports =
@@ -49,7 +49,7 @@ module.exports =
     # (total, used and left) on the remote Cozy
     getDiskSpace: (options, callback) ->
         client = request.newClient options.url
-        client.setBasicAuth options.user, options.password
+        client.setBasicAuth options.deviceName, options.password
 
         client.get "disk-space", (err, res, body) ->
             if err

@@ -5,7 +5,7 @@ program = require 'commander'
 
 pkg = require '../package.json'
 App = require '../backend/app'
-app = new App(process.env.DEFAULT_DIR)
+app = new App process.env.DEFAULT_DIR
 
 # Helper to get cozy password from user
 app.askPassword = (callback) ->
@@ -38,8 +38,8 @@ program
     .option('-k, --insecure',
             'Turn off HTTPS certificate verification.')
     .action (args) ->
-        app.config.setInsecure(args.insecure?)
-        app.sync('readonly')
+        app.config.setInsecure args.insecure?
+        app.sync 'readonly'
 
 program
     .command 'reset-database'
@@ -70,7 +70,7 @@ program
     .command 'display-config'
     .description 'Display device configuration and exit'
     .action ->
-        console.log JSON.stringify app.config.config, null, 2
+        console.log JSON.stringify app.config.devices, null, 2
 
 program
     .command "*"
