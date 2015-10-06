@@ -32,7 +32,6 @@ module.exports =
 
             # Create a database
             (next) ->
-                console.log next
                 options =
                     id: "cozy"
                     name: "cozy"

@@ -11,7 +11,7 @@ Conflict  = require './conflict'
 
 
 class Pouch
-    initialize: (@config) ->
+    constructor: (@config) ->
         @db = new PouchDB @config.dbPath
         # Listener memory leak fix
         @db.setMaxListeners 100
@@ -47,9 +47,9 @@ class Pouch
         @db.put fields, callback
 
 
-    ### Dirty ORM ###
+    ### Dirty ODM ###
 
-    files:
+    files: =>
         all: (params, callback) =>
             if typeof params is 'function'
                 callback = params
@@ -62,7 +62,7 @@ class Pouch
         createNew: (fields, callback) =>
             @createNewDoc 'File', fields, callback
 
-    folders:
+    folders: =>
         all: (params, callback) =>
             if typeof params is 'function'
                 callback = params
@@ -75,7 +75,7 @@ class Pouch
         createNew: (fields, callback) =>
             @createNewDoc 'Folder', fields, callback
 
-    binaries:
+    binaries: =>
         all: (params, callback) =>
             if typeof params is 'function'
                 callback = params
@@ -157,7 +157,7 @@ class Pouch
 
 
     # Create or update given design doc.
-    createDesignDoc: (id, queries, callback) ->
+    createDesignDoc: (id, queries, callback) =>
         doc =
             _id: id
             views:
@@ -183,19 +183,28 @@ class Pouch
                 log.info "Design document created: #{id}" unless err
                 callback err
 
+    removeFilter: (docType, callback) =>
+        id = "_design/#{docType.toLowerCase()}"
+        @db.get id, (err, currentDesignDoc) =>
+            if currentDesignDoc?
+                @db.remove id, currentDesignDoc._rev, callback
+            else
+                log.warn "Trying to remove a doc that does not exist: #{id}"
+                callback()
+
 
     ### Helpers ###
 
     # Remove given document id if it exists. Doesn't return an error if the
     # document doesn't exist.
     removeIfExists: (id, callback) =>
-        @db.get id, (err, doc) ->
+        @db.get id, (err, doc) =>
             if err and err.status is 404
                 callback()
             else if err
                 callback err
             else
-                db.remove doc, callback
+                @db.remove doc, callback
 
     # Retrieve a previous doc revision from its id
     getPreviousRev: (id, callback) =>
