@@ -14,15 +14,14 @@ class Config
     constructor: (basePath) ->
         defaultDir = path.join basePath, '.cozy-desktop'
         @configPath = path.join path.resolve(defaultDir), 'config.json'
-        fs.ensureDirSync defaultDir
+        @dbPath = path.join defaultDir, 'db'
+        fs.ensureDirSync @dbPath
         fs.ensureFileSync @configPath
 
         if fs.readFileSync(@configPath).toString() is ''
             @devices = {}
             @save()
 
-        @dir = defaultDir
-        @dbPath = path.join defaultDir, 'db'
         @devices = require @configPath
 
     # Save configuration to file system.
