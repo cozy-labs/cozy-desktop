@@ -293,6 +293,7 @@ class Pouch
             callback err
 
 
+# Create a new unique identifier for Pouch/Couch
 Pouch.newId = ->
     uuid.v4().replace /-/g, ''
 

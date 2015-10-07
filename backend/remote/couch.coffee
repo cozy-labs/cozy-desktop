@@ -1,23 +1,24 @@
 fs      = require 'fs-extra'
 path    = require 'path-extra'
 async   = require 'async'
-uuid    = require 'node-uuid'
 request = require 'request-json-light'
 moment  = require 'moment'
 log     = require('printit')
     prefix: 'Remote CouchDB'
 
-config     = require '../config'
+Pouch      = require '../pouch'
 filesystem = require '../local/filesystem'
 conflict   = require '../conflict'
 progress   = require '../progress'
 
 
 class Couch
-    constructor: (options, @pouch, @events) ->
-        @url = options.url
-        @client = request.newClient options.url
-        @client.setBasicAuth options.user, options.password
+    constructor: (@config, @pouch, @events) ->
+        device = @config.getDevice()
+        console.log 'device', device
+        @url = device.url
+        @client = request.newClient @url
+        @client.setBasicAuth device.deviceName, device.password
 
     getLastRemoteChangeSeq: (callback) ->
         urlPath = "cozy/_changes?descending=true&limit=1"
@@ -58,15 +59,13 @@ class Couch
                     callback body.rows
 
     replicateToRemote: (callback) =>
-        startChangeSeq = config.getLocalSeq()
+        startChangeSeq = @config.getLocalSeq()
 
-        opts =
+        opts = @config.augmentCouchOptions
             filter: (doc) ->
                 doc.docType is 'Folder' or doc.docType is 'File'
             live: false
             since: startChangeSeq
-
-        opts = config.augmentCouchOptions opts
 
         if not @replicatorTo or Object.keys(@replicatorTo._events).length is 0
             @replicatorTo = @pouch.db.replicate.to(@url, opts)
@@ -163,7 +162,7 @@ class Couch
     createEmptyRemoteDoc: (binaryDoc, callback) ->
         data = binaryDoc or {}
         data.docType = 'Binary'
-        newId = data._id or uuid.v4().replace(/-/g, '')
+        newId = data._id or Pouch.newId()
         urlPath = "cozy/#{newId}"
 
         @client.put urlPath, data, (err, res, body) ->
