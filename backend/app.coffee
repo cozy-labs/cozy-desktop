@@ -7,7 +7,7 @@ log   = require('printit')
 
 Config  = require './config'
 Devices = require './devices'
-pouch   = require './pouch'
+Pouch   = require './pouch'
 local   = require './local'
 remote  = require './remote'
 progress = require './progress'
@@ -23,6 +23,7 @@ class App
         @basePath = basePath or path.homedir()
         @config = new Config @basePath
         @events = new EventEmitter
+        @pouch  = new Pouch @config
 
     # This method is here to be surcharged by the UI
     # to ask its password to the user
@@ -96,32 +97,22 @@ class App
                 log.error "Unknown mode for sync: #{mode}"
                 return
 
-        @local  = new Local  @config, pouch, @events
-        @remote = new Remote @config, pouch, @events
-        device  = @config.getDevice()
+        @local  = new Local  @config, @pouch, @events
+        @remote = new Remote @config, @pouch, @events
+        @sync   = new Sync @config, @pouch, @local, @remote, @events
 
         queue = require './operation_queue'
-        queue.pouch = pouch
+        queue.pouch = @pouch
         queue.events = @events
         progress.events = @events
 
+        device  = @config.getDevice()
         if device.deviceName? and device.url? and device.path?
-            # TODO async, error handling
-            # TODO what order for initial sync (performance wise)?
-            pouch.addAllFilters ->
-                log.info 'Run first synchronisation...'
-                @local.start (err) ->
-                    process.exit(1) if err
-                    @remote.start (err) ->
-                        process.exit(1) if err
-                        seq = "TODO"
-                        log.info "First replication is complete (last seq: #{seq})"
-                        events.emit 'firstSyncDone'
-                        log.info 'Start building your filesystem on your device.'
-                        queue.makeFSSimilarToDB syncToCozy, (err) ->
-                            process.exit(1) if err
-                            log.info 'Filesystem built on your device.'
-                            publisher.emit 'firstSyncDone'
+            log.info 'Run first synchronisation...'
+            @sync.start (err) ->
+                if err
+                    log.error err
+                    process.exit 1
         else
             log.error 'No configuration found, please run add-remote-cozy' +
                 'command before running a synchronization.'
