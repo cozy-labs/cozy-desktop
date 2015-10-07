@@ -52,9 +52,10 @@ class RemoteWatcher
                 callback err
 
     # Start metadata sync with remote (live filtered replication)
-    startReplication: (callback) =>
+    startReplication: =>
         if @replicator
-            return callback "Replication is already running"
+            log.error "Replication is already running"
+            return
 
         options = config.augmentCouchOptions
             filter: (doc) ->

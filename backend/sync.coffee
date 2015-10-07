@@ -4,6 +4,7 @@ log   = require('printit')
 
 
 class Sync
+    # TODO remove @config and store local seq in pouch
     constructor: (@config, @pouch, @local, @remote, @events) ->
 
     # Start to synchronize the remote cozy with the local filesystem
@@ -17,27 +18,32 @@ class Sync
     #
     # The callback is called only for an error
     start: (mode, callback) =>
-        tasks = [@pouch.addAllFilters]
+        tasks = [
+            (next) => @pouch.addAllFilters next
+        ]
         tasks.push @local.start  unless mode is 'readonly'
         tasks.push @remote.start unless mode is 'writeonly'
-        async.waterfall task, (err) =>
+        async.waterfall tasks, (err) =>
             if err
                 callback err
             else
                 @events.emit 'firstMetadataSyncDone'
-                # TODO find a way to emit 'firstSyncDone'
                 # queue.makeFSSimilarToDB syncToCozy, (err) ->
                 async.forever @sync, callback
 
     # Start taking changes from pouch and applying them
+    # TODO find a way to emit 'firstSyncDone'
     sync: (callback) =>
         @pop (err, change) =>
+            console.log 'pop has called back ', err, change
             if err
                 callback err
             else
                 @apply change, callback
 
     # Take the next change from pouch
+    #
+    # TODO look also to the retry queue for failures
     pop: (callback) =>
         opts =
             live: true
@@ -52,9 +58,10 @@ class Sync
     # Apply a change to both local and remote
     # At least one side should say it has already this change
     # In some cases, both sides have the change
+    #
+    # TODO when applying a change fails, put it again in some queue for retry
     apply: (change, callback) =>
-        console.log 'apply'
-        console.log change
+        console.log 'apply', change
         @config.setLocalSeq 0
 
 

@@ -9,10 +9,8 @@ class Remote
 
     start: (mode, done) ->
         @watcher.initialReplication (err) =>
-            if err
-                done err
-            else
-                @watcher.startReplication done
+            done err
+            @watcher.startReplication() unless err
 
 
 module.exports = Remote

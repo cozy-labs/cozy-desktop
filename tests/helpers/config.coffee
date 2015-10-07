@@ -1,3 +1,4 @@
+EventEmitter = require('events').EventEmitter
 del = require 'del'
 
 Config = require '../../backend/config'
@@ -14,3 +15,6 @@ module.exports =
 
     cleanConfig: ->
         del.sync @config.configPath
+
+    createEvents: ->
+        @events = new EventEmitter

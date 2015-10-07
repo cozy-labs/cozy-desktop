@@ -1,5 +1,4 @@
 EventEmitter = require('events').EventEmitter
-fs    = require 'fs-extra'
 path  = require 'path-extra'
 async = require 'async'
 log   = require('printit')
@@ -8,16 +7,16 @@ log   = require('printit')
 Config  = require './config'
 Devices = require './devices'
 Pouch   = require './pouch'
-local   = require './local'
-remote  = require './remote'
-progress = require './progress'
+Local   = require './local'
+Remote  = require './remote'
+Sync    = require './sync'
 
 
 # App is the entry point for the CLI and GUI.
 # They both can do actions and be notified by events via an App instance.
-#
-# basePath is the directory where the config and pouch are saved
 class App
+
+    # basePath is the directory where the config and pouch are saved
     constructor: (basePath) ->
         @lang = 'fr'
         @basePath = basePath or path.homedir()
@@ -40,14 +39,12 @@ class App
     addRemote: (url, deviceName, syncPath) =>
         async.waterfall [
             @askPassword,
-
             (password, next) ->
                 options =
                     url: url
                     deviceName: deviceName
                     password: password
                 Devices.registerDevice options, next
-
         ], (err, credentials) =>
             if err
                 log.error err
@@ -68,17 +65,14 @@ class App
     # the config file
     removeRemote: (deviceName) =>
         device = @config.getDevice deviceName
-
         async.waterfall [
             @askPassword,
-
             (password, next) ->
                 options =
                     url: device.url
                     deviceId: device.deviceId
                     password: password
                 Devices.unregisterDevice options, next
-
         ], (err) =>
             if err
                 log.error err
@@ -90,53 +84,40 @@ class App
 
     # Start database sync process and setup file change watcher
     sync: (mode) =>
-        syncToCozy = true
-        switch mode
-            when 'readonly' then syncToCozy = false
-            else
-                log.error "Unknown mode for sync: #{mode}"
-                return
-
         @local  = new Local  @config, @pouch, @events
         @remote = new Remote @config, @pouch, @events
         @sync   = new Sync @config, @pouch, @local, @remote, @events
-
-        queue = require './operation_queue'
-        queue.pouch = @pouch
-        queue.events = @events
-        progress.events = @events
-
         device  = @config.getDevice()
         if device.deviceName? and device.url? and device.path?
             log.info 'Run first synchronisation...'
-            @sync.start (err) ->
+            @sync.start mode, (err) ->
                 if err
                     log.error err
-                    process.exit 1
+                    process.exit 1  # TODO don't exit for GUI
         else
             log.error 'No configuration found, please run add-remote-cozy' +
                 'command before running a synchronization.'
 
 
     # Recreate the local pouch database
-    resetDatabase: (callback) ->
+    resetDatabase: (callback) =>
         log.info "Recreates the local database..."
-        pouch.resetDatabase ->
+        @pouch.resetDatabase ->
             log.info "Database recreated"
             callback?()
 
 
     # Return the whole content of the database
-    allDocs: (callback) ->
-        pouch.db.allDocs include_docs: true, (err, results) ->
+    allDocs: (callback) =>
+        @pouch.db.allDocs include_docs: true, (err, results) ->
             log.error err if err
             callback err, results
 
 
     # Return all docs for a given query
-    query: (query, callback) ->
+    query: (query, callback) =>
         log.info "Query: #{query}"
-        pouch.db.query query, (err, results) ->
+        @pouch.db.query query, (err, results) ->
             log.error err if err
             callback err, results
 
