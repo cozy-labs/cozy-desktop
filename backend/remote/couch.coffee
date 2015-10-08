@@ -15,7 +15,6 @@ progress   = require '../progress'
 class Couch
     constructor: (@config, @pouch, @events) ->
         device = @config.getDevice()
-        console.log 'device', device
         @url = device.url
         @client = request.newClient @url
         @client.setBasicAuth device.deviceName, device.password

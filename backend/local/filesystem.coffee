@@ -143,7 +143,7 @@ filesystem =
                 if binaryPath.absolute?
                     fs.exists binaryPath.absolute, (exists) ->
                         if exists
-                            callback null, binaryDoc.path
+                            callback null, binaryDoc.absolute
                         else
                             callback null, false
                 else
