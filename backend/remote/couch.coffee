@@ -57,6 +57,10 @@ class Couch
                 else
                     callback body.rows
 
+    downloadBinary: (binaryId, callback) =>
+        url = "cozy/#{binaryId}/file"
+        @client.saveFileAsStream url, callback
+
     replicateToRemote: (callback) =>
         startChangeSeq = @config.getLocalSeq()
 
@@ -85,6 +89,7 @@ class Couch
 
     # Upload the binary as a CouchDB document's attachment and return
     # the binary document
+    # TODO split this method
     uploadBinary: (filePath, binaryDoc, callback) ->
         filePaths = filesystem.getPaths filePath
 

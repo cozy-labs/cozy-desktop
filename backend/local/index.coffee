@@ -57,7 +57,7 @@ class Local
                         @other.createReadStream doc, next
 
                 # Write the file
-                # TODO verify the checksum
+                # TODO verify the checksum -> remove file if not ok
                 # TODO show progress
                 (stream, next) ->
                     target = fs.createWriteStream filePath

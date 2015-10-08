@@ -8,13 +8,13 @@ class Remote
         @watcher = new Watcher @couch, @pouch, config
         @other = null
 
-    start: (mode, done) ->
+    start: (mode, done) =>
         @watcher.initialReplication (err) =>
             done err
             @watcher.startReplication() unless err
 
-    createReadStream: (doc, callback) ->
-        callback 'TODO'
+    createReadStream: (doc, callback) =>
+        @couch.downloadBinary doc.binary.file.id, callback
 
 
 module.exports = Remote
