@@ -100,6 +100,9 @@ node_modules/.bin/gulp test
 # To run a specific set of tests (here testing local_watcher with DEBUG activated)
 npm install -g mocha
 DEBUG=true DEFAULT_DIR=tests mocha --compilers coffee:coffee-script/register tests/local_watcher.coffee
+
+# Or, if you want pouchdb to be really verbose
+DEBUG=pouchdb:api DEFAULT_DIR=tests mocha --compilers coffee:coffee-script/register tests/local_watcher.coffee
 ```
 
 ## What is Cozy?

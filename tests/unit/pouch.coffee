@@ -14,40 +14,11 @@ describe "Pouch", ->
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
 
-    createBinary = (pouch, i, callback) ->
-        doc =
-            _id: "binary-#{i}"
-            docType: 'Binary'
-            path: '/full/path'
-            checksum: "123#{i}"
-        pouch.db.put doc, callback
-
-    createFile = (pouch, i, callback) ->
-        doc =
-            _id: "file-#{i}"
-            docType: 'File'
-            path: 'myfolder'
-            name: "filename-#{i}"
-            tags: []
-            binary:
-                file:
-                    id: "binary-#{i}"
-        pouch.db.put doc, callback
-
-    createFolder = (pouch, i, callback) ->
-        doc =
-            _id: "folder-#{i}"
-            docType: 'Folder'
-            path: 'myfolder'
-            name: "folder-#{i}"
-            tags: []
-        pouch.db.put doc, callback
-
     before (done) ->
         async.eachSeries [1..3], (i, callback) =>
-            createBinary @pouch, i, =>
-                createFile @pouch, i, =>
-                    createFolder @pouch, i, callback
+            pouchHelpers.createBinary @pouch, i, =>
+                pouchHelpers.createFile @pouch, i, =>
+                    pouchHelpers.createFolder @pouch, i, callback
         , done
 
     describe 'Filters / Views', ->

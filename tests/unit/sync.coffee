@@ -1,3 +1,4 @@
+async  = require 'async'
 sinon  = require 'sinon'
 should = require 'should'
 
@@ -79,7 +80,81 @@ describe "Sync", ->
                 done()
 
     describe 'pop', ->
-        it 'TODO'
+        beforeEach ->
+            @sync = new Sync @config, @pouch
+            @pouch.db.changes().on 'complete', (info) =>
+                @config.setLocalSeq info.last_seq
+
+        it 'gives the next change if there is already one', (done) ->
+            pouchHelpers.createFile @pouch, 1, (err) =>
+                should.not.exist err
+                @sync.pop (err, change) =>
+                    should.not.exist err
+                    change.should.have.properties
+                        id: 'file-1'
+                        seq: @config.getLocalSeq() + 1
+                    change.doc.should.have.properties
+                        docType: 'File'
+                        path: 'myfolder'
+                        name: "filename-1"
+                        tags: []
+                        binary:
+                            file:
+                                id: "binary-1"
+                    done()
+
+        it 'gives only one change', (done) ->
+            async.eachSeries [2..5], (i, callback) =>
+                pouchHelpers.createFile @pouch, i, callback
+            , (err) =>
+                should.not.exist err
+                spy = sinon.spy()
+                @sync.pop spy
+                setTimeout ->
+                    spy.calledOnce.should.be.true()
+                    done()
+                , 10
+
+        it 'waits for the next change if there no available change', (done) ->
+            spy = sinon.spy()
+            @sync.pop (err, change) =>
+                spy()
+                should.not.exist err
+                change.should.have.properties
+                    id: 'file-6'
+                    seq: @config.getLocalSeq() + 1
+                change.doc.should.have.properties
+                    docType: 'File'
+                    path: 'myfolder'
+                    name: "filename-6"
+                    tags: []
+                    binary:
+                        file:
+                            id: "binary-6"
+                done()
+            setTimeout =>
+                spy.called.should.be.false()
+                pouchHelpers.createFile @pouch, 6, (err) ->
+                    should.not.exist err
+            , 10
+
+    describe 'isSpecial', ->
+        beforeEach ->
+            @sync = new Sync
+
+        it 'returns true for a design document', (done) ->
+            @pouch.db.get '_design/file', (err, doc) =>
+                should.not.exist err
+                @sync.isSpecial(doc).should.be.true()
+                done()
+
+        it 'returns false for a normal document', (done) ->
+            pouchHelpers.createFile @pouch, 7, (err) =>
+                should.not.exist err
+                @pouch.db.get 'file-7', (err, doc) =>
+                    should.not.exist err
+                    @sync.isSpecial(doc).should.be.false()
+                done()
 
     describe 'apply', ->
         it 'TODO'

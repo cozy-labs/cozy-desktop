@@ -6,6 +6,8 @@ log   = require('printit')
 class Sync
     # TODO remove @config and store local seq in pouch
     constructor: (@config, @pouch, @local, @remote, @events) ->
+        @local.other = @remote
+        @remote.other = @local
 
     # Start to synchronize the remote cozy with the local filesystem
     # First, start metadata synchronization in pouch, with the watchers
@@ -35,7 +37,6 @@ class Sync
     # TODO find a way to emit 'firstSyncDone'
     sync: (callback) =>
         @pop (err, change) =>
-            console.log 'pop has called back ', err, change
             if err
                 callback err
             else
@@ -47,13 +48,19 @@ class Sync
     pop: (callback) =>
         opts =
             live: true
-            limit: 1
             since: @config.getLocalSeq()
             include_docs: true
             returnDocs: false
-        @pouch.changes(opts)
-            .on 'change', (info) -> callback null, info
-            .on 'error',  (err)  -> callback err, null
+        @pouch.db.changes(opts)
+            .on 'change', (info) ->
+                @cancel()
+                callback null, info
+            .on 'error',  (err) ->
+                callback err, null
+
+    # Return a boolean to indicate if this is a design or local document
+    isSpecial: (doc) ->
+        not doc.docType?
 
     # Apply a change to both local and remote
     # At least one side should say it has already this change
@@ -61,8 +68,80 @@ class Sync
     #
     # TODO when applying a change fails, put it again in some queue for retry
     apply: (change, callback) =>
-        console.log 'apply', change
-        @config.setLocalSeq 0
+        log.debug 'apply', change
+        cb = (err) =>
+            @config.setLocalSeq change.seq
+            callback err
+        doc = change.doc
+        docType = doc.docType?.toLowerCase?()
+        switch
+            when @isSpecial doc
+                # TODO use a filter on db.changes to avoid this case?
+                cb()
+            when docType is 'binary'
+                # TODO avoid this case with a local doc or a filter on changes?
+                cb()
+            when docType is 'file'
+                if change.deleted
+                    @fileDeleted doc, cb
+                else
+                    @fileChanged doc, cb
+            when docType is 'folder'
+                if change.deleted
+                    @folderDeleted doc, cb
+                # TODO what if lastModification or creationDate is missing
+                else if doc.lastModification <= doc.creationDate
+                    @folderAdded doc, cb
+                else
+                    @folderMoved doc, cb
+            else
+                cb "Unknown doctype: #{doc.docType}"
+
+    fileChanged: (doc, callback) =>
+        @pouch.getPreviousRev doc._id, (err, prev) =>
+            if not prev
+                @fileAdded doc, callback
+            else if prev.name is doc.name and
+                    prev.path is doc.path
+                @fileAdded doc, callback
+            else
+                @fileMoved doc, prev, callback
+
+    fileAdded: (doc, callback) =>
+        async.waterfall [
+            (next) => @local.addFile  doc, next
+            (next) => @remote.addFile doc, next
+        ], callback
+
+    fileMoved: (doc, prev, callback) =>
+        async.waterfall [
+            (next) => @local.moveFile  doc, prev, next
+            (next) => @remote.moveFile doc, prev, next
+        ], callback
+
+    fileDeleted: (doc, callback) =>
+        async.waterfall [
+            (next) => @local.deleteFile  doc, next
+            (next) => @remote.deleteFile doc, next
+        ], callback
+
+    folderAdded: (doc, callback) =>
+        async.waterfall [
+            (next) => @local.addFile  doc, next
+            (next) => @remote.addFile doc, next
+        ], callback
+
+    folderMoved: (doc, callback) =>
+        async.waterfall [
+            (next) => @local.moveFile  doc, next
+            (next) => @remote.moveFile doc, next
+        ], callback
+
+    folderDeleted: (doc, callback) =>
+        async.waterfall [
+            (next) => @local.deleteFile  doc, next
+            (next) => @remote.deleteFile doc, next
+        ], callback
 
 
 module.exports = Sync
