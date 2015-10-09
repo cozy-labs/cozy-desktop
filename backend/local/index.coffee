@@ -5,7 +5,9 @@ watcher = require './watcher'
 
 class Local
     constructor: (config, @pouch, @events) ->
-        watcher.path = @path = config.path
+        @basePath = config.path
+        @tmpPath  = path.join @basePath, ".cozy-desktop"
+        watcher.path = @basePath
         watcher.publisher = @events
         @other = null
 
@@ -20,11 +22,14 @@ class Local
     # Remote-to-local operations
     #
     # Steps:
-    # * Checks if the doc is valid: has a path and a name.
-    # * Ensure parent folder exists.
-    # * Try to find a similar file based on his checksum. In that case, it
-    #   just requires a local copy.
-    # * Download the linked binary from remote.
+    # * Checks if the doc is valid: has a path and a name
+    # * Ensure that the temporary directory exists
+    # * Try to find a similar file based on his checksum
+    #   (in that case, it just requires a local copy)
+    # * Download the linked binary from remote
+    # * Write to a temporary file
+    # * Ensure parent folder exists
+    # * Move the temporay file to its final destination
     # * Update creation and last modification dates
     #
     createFile: (doc, callback) =>
@@ -33,22 +38,19 @@ class Local
             callback()
 
         else
-            parent   = path.resolve @path, doc.path
+            tmpFile  = path.join @tmpPath, doc.path
+            parent   = path.resolve @basePath, doc.path
             filePath = path.join parent, doc.name
             binaryId = doc.binary.file.id
             checksum = doc.binary.file.checksum
 
             async.waterfall [
-                # Ensure that the parent directory is created
-                (next) ->
-                    fs.ensureDir parent, next
+                (next) =>
+                    fs.ensureDir @tmpPath, next
 
-                # Check if a file with the same checksum exists
                 (res, next) ->
                     filesystem.fileExistsLocally checksum, next
 
-                # If a similar file exists, we just have to copy it
-                # Otherwise download the binary from CouchDB
                 (existingFilePath, next) =>
                     if existingFilePath
                         stream = fs.createReadStream existingFilePath
@@ -56,19 +58,26 @@ class Local
                     else
                         @other.createReadStream doc, next
 
-                # Write the file
                 # TODO verify the checksum -> remove file if not ok
                 # TODO show progress
                 (stream, next) ->
-                    target = fs.createWriteStream filePath
+                    target = fs.createWriteStream tmpFile
                     stream.pipe target
                     stream.on 'end', next
 
-                # Change utimes (creation and modification date)
+                (next) ->
+                    fs.ensureDir parent, next
+
+                (next) ->
+                    fs.rename tmpFile, filePath, next
+
                 (next) ->
                     lastModification = new Date doc.lastModification
                     fs.utimes filePath, new Date(), lastModification, next
-            ], callback
+
+            ], (err) ->
+                fs.unlink tmpFile, ->
+                    callback err
 
 
     createFolder: (doc, callback) =>
