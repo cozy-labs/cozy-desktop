@@ -126,7 +126,7 @@ filesystem =
                 callback null, 0
 
     # Check if a file corresponding to given checksum already exists.
-    fileExistsLocally: (checksum, callback) ->
+    fileExistsLocally: (checksum, pouch, callback) ->
         # For legacy binaries
         if not checksum or checksum is ''
             return callback null, false

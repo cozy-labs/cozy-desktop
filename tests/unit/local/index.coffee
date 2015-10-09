@@ -1,9 +1,11 @@
-fs     = require 'fs-extra'
-path   = require 'path'
-sinon  = require 'sinon'
-should = require 'should'
+fs       = require 'fs-extra'
+path     = require 'path'
+sinon    = require 'sinon'
+should   = require 'should'
+Readable = require('stream').Readable
 
-Local = require '../../../backend/local'
+filesystem = require '../../../backend/local/filesystem'
+Local      = require '../../../backend/local'
 
 
 configHelpers = require '../../helpers/config'
@@ -61,7 +63,60 @@ describe 'Local', ->
 
 
     describe 'createFile', ->
-        it 'TODO'
+        it 'creates the file by downloading it', (done) ->
+            doc =
+                path: 'files'
+                name: 'file-from-remote'
+                lastModification: new Date '2015-10-09T04:05:06Z'
+                binary:
+                    file:
+                        id: '123'
+                        checksum: ''
+            @local.other =
+                createReadStream: (docToStream, callback) ->
+                    docToStream.should.equal doc
+                    stream = new Readable
+                    stream._read = ->
+                    setTimeout ->
+                        stream.push 'foobar'
+                        stream.push null
+                    , 100
+                    callback null, stream
+            filePath = path.join @basePath, doc.path, doc.name
+            @local.createFile doc, (err) ->
+                should.not.exist err
+                fs.statSync(filePath).isFile().should.be.true()
+                content = fs.readFileSync(filePath, encoding: 'utf-8')
+                content.should.equal 'foobar'
+                mtime = +fs.statSync(filePath).mtime
+                mtime.should.equal +doc.lastModification
+                done()
+
+        it 'creates the file from another file with same checksum', (done) ->
+            doc =
+                path: 'files'
+                name: 'file-with-same-checksum'
+                lastModification: new Date '2015-10-09T04:05:07Z'
+                binary:
+                    file:
+                        id: '123'
+                        checksum: '456'
+            alt = path.join @basePath, 'files', 'my-checkum-is-456'
+            fs.writeFileSync alt, 'foo bar baz'
+            stub = sinon.stub(filesystem, "fileExistsLocally").yields null, alt
+            filePath = path.join @basePath, doc.path, doc.name
+            @local.createFile doc, (err) ->
+                stub.restore()
+                stub.calledWith('456').should.be.true()
+                should.not.exist err
+                fs.statSync(filePath).isFile().should.be.true()
+                content = fs.readFileSync(filePath, encoding: 'utf-8')
+                content.should.equal 'foo bar baz'
+                mtime = +fs.statSync(filePath).mtime
+                mtime.should.equal +doc.lastModification
+                done()
+
+            it 'preserves the existing file if the download fails'
 
 
     describe 'createFolder', ->
@@ -105,6 +160,7 @@ describe 'Local', ->
                 lastModification: new Date '2015-10-09T05:05:10Z'
             oldPath = path.join @basePath, old.path, old.name
             newPath = path.join @basePath, doc.path, doc.name
+            fs.ensureDirSync path.join @basePath, old.path
             fs.writeFileSync oldPath, 'foobar'
             @local.moveFile doc, old, (err) ->
                 should.not.exist err
@@ -126,8 +182,8 @@ describe 'Local', ->
             filePath = path.join @basePath, doc.path, doc.name
             stub = sinon.stub(@local, "createFile").yields()
             @local.moveFile doc, old, (err) ->
-                stub.calledWith(doc).should.be.true()
                 stub.restore()
+                stub.calledWith(doc).should.be.true()
                 should.not.exist err
                 done()
 

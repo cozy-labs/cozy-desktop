@@ -62,10 +62,7 @@ class Local
 
             async.waterfall [
                 (next) =>
-                    fs.ensureDir @tmpPath, next
-
-                (next) ->
-                    filesystem.fileExistsLocally checksum, next
+                    filesystem.fileExistsLocally checksum, @pouch, next
 
                 (existingFilePath, next) =>
                     # TODO what if existingFilePath is filePath
@@ -77,16 +74,15 @@ class Local
 
                 # TODO verify the checksum -> remove file if not ok
                 # TODO show progress
-                (stream, next) ->
-                    target = fs.createWriteStream tmpFile
-                    stream.pipe target
-                    stream.on 'end', next
+                (stream, next) =>
+                    fs.ensureDir @tmpPath, ->
+                        target = fs.createWriteStream tmpFile
+                        stream.on 'end', next
+                        stream.pipe target
 
                 (next) ->
-                    fs.ensureDir parent, next
-
-                (next) ->
-                    fs.rename tmpFile, filePath, next
+                    fs.ensureDir parent, ->
+                        fs.rename tmpFile, filePath, next
 
                 @utimesUpdater(doc, filePath)
 
@@ -116,12 +112,14 @@ class Local
     moveFile: (doc, old, callback) =>
         oldPath = path.join @basePath, old.path, old.name
         newPath = path.join @basePath, doc.path, doc.name
+        parent  = path.join @basePath, doc.path
 
         async.waterfall [
             (next) ->
                 fs.exists oldPath, (oldPathExists) ->
                     if oldPathExists
-                        fs.rename oldPath, newPath, next
+                        fs.ensureDir parent, ->
+                            fs.rename oldPath, newPath, next
                     else
                         log.error "File #{oldPath} not found and can't be moved"
                         # TODO createFile

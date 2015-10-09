@@ -15,7 +15,7 @@ module.exports =
             path: @basePath
 
     cleanConfig: ->
-        del.sync @config.configPath
+        del.sync @basePath
 
     createEvents: ->
         @events = new EventEmitter
