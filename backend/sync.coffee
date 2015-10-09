@@ -98,14 +98,15 @@ class Sync
                 cb "Unknown doctype: #{doc.docType}"
 
     fileChanged: (doc, callback) =>
-        @pouch.getPreviousRev doc._id, (err, prev) =>
-            if not prev
+        @pouch.getPreviousRev doc._id, (err, old) =>
+            if err or not old
                 @fileAdded doc, callback
-            else if prev.name is doc.name and
-                    prev.path is doc.path
+            else if old.name? and old.path? and
+                    old.name is doc.name and
+                    old.path is doc.path
                 @fileAdded doc, callback
             else
-                @fileMoved doc, prev, callback
+                @fileMoved doc, old, callback
 
     fileAdded: (doc, callback) =>
         async.waterfall [
@@ -113,10 +114,10 @@ class Sync
             (next) => @remote.addFile doc, next
         ], callback
 
-    fileMoved: (doc, prev, callback) =>
+    fileMoved: (doc, old, callback) =>
         async.waterfall [
-            (next) => @local.moveFile  doc, prev, next
-            (next) => @remote.moveFile doc, prev, next
+            (next) => @local.moveFile  doc, old, next
+            (next) => @remote.moveFile doc, old, next
         ], callback
 
     fileDeleted: (doc, callback) =>

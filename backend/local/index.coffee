@@ -19,19 +19,27 @@ class Local
         callback 'TODO'
 
 
-    # Remote-to-local operations
+    ### Write operations ###
+
+    # Return a function that will update last modification date
+    utimesUpdater: (doc, filePath) ->
+        (callback) ->
+            lastModification = new Date doc.lastModification
+            fs.utimes folderPath, new Date(), lastModification, callback
+
+    # Steps to create a file:
+    #   * Checks if the doc is valid: has a path and a name
+    #   * Ensure that the temporary directory exists
+    #   * Try to find a similar file based on his checksum
+    #     (in that case, it just requires a local copy)
+    #   * Download the linked binary from remote
+    #   * Write to a temporary file
+    #   * Ensure parent folder exists
+    #   * Move the temporay file to its final destination
+    #   * Update creation and last modification dates
     #
-    # Steps:
-    # * Checks if the doc is valid: has a path and a name
-    # * Ensure that the temporary directory exists
-    # * Try to find a similar file based on his checksum
-    #   (in that case, it just requires a local copy)
-    # * Download the linked binary from remote
-    # * Write to a temporary file
-    # * Ensure parent folder exists
-    # * Move the temporay file to its final destination
-    # * Update creation and last modification dates
-    #
+    # Note: this method is used for adding a new file
+    # or replacing an existing one
     createFile: (doc, callback) =>
         unless doc?.path? and doc?.name? and doc.binary?.file?.id?
             log.warn "The doc is invalid: #{JSON.stringify doc}"
@@ -52,6 +60,7 @@ class Local
                     filesystem.fileExistsLocally checksum, next
 
                 (existingFilePath, next) =>
+                    # TODO what if existingFilePath is filePath
                     if existingFilePath
                         stream = fs.createReadStream existingFilePath
                         next null, stream
@@ -71,15 +80,14 @@ class Local
                 (next) ->
                     fs.rename tmpFile, filePath, next
 
-                (next) ->
-                    lastModification = new Date doc.lastModification
-                    fs.utimes filePath, new Date(), lastModification, next
+                utimesUpdater(doc, filePath)
 
             ], (err) ->
                 fs.unlink tmpFile, ->
                     callback err
 
 
+    # Create a new folder
     createFolder: (doc, callback) =>
         unless doc?.path? and doc?.name?
             log.warn "The doc is invalid: #{JSON.stringify doc}"
@@ -92,85 +100,69 @@ class Local
                 else if doc.lastModification?
                     callback()
                 else
-                    # Update last modification date
-                    lastModification = new Date doc.lastModification
-                    fs.utimes folderPath, new Date(), lastModification, callback
+                    utimesUpdater(doc, folderPath)(callback)
 
 
-    # FIXME too complex
-    moveFile: (doc, callback) ->
-        remoteConfig = config.getConfig()
-        unless doc?.path? and doc?.name?
-            err = new Error "The doc is invalid: #{JSON.stringify doc}"
-            return callback err
+    # Move a file from one place to another
+    # TODO verify checksum
+    moveFile: (doc, old, callback) =>
+        oldPath = path.join @basePath, old.path, old.name
+        newPath = path.join @basePath, doc.path, doc.name
 
-        newPath = path.join remoteConfig.path, doc.path, doc.name
+        async.waterfall [
+            (next) ->
+                fs.exists oldPath, next
 
-        updateUtimes = (filePath, callback) ->
-            if doc.lastModification
-                fs.utimes filePath
-                        , new Date()
-                        , new Date(doc.lastModification)
-                        , callback
-            else
-                callback()
-
-        pouch.getKnownPath doc, (err, oldPath) ->
-            return callback err if err
-
-            if oldPath is newPath
-                # Check file similarities
-                # TODO: base this on the checksum too
-                stats = fs.statSync newPath
-                if doc.size is stats.size and not stats.isDirectory()
-                    return callback()
-
-            oldPathExists = fs.existsSync oldPath
-            newPathExists = fs.existsSync newPath
-
-            # Move the file
-            if oldPathExists and not newPathExists
-                if doc.binary?.file?.id?
-                    pouch.db.get doc.binary.file.id, (err, doc) ->
-                        doc.path = newPath
-                        pouch.db.put doc, (err, res) ->
-                            fs.move oldPath, newPath, (err) ->
-                                return callback err if err?
-                                updateUtimes newPath, callback
-
+            (oldPathExists, next) ->
+                if oldPathExists
+                    fs.rename oldPath, newPath, next
                 else
-                    fs.move oldPath, newPath, (err) ->
-                        return callback err if err?
-                        updateUtimes newPath, callback
+                    log.error "File #{oldPath} not found, and cannot be moved."
+                    # TODO createFile
 
-            # Assume that the file has already been moved
-            # TODO: base this assumption on checksum ?
-            else if not oldPathExists and newPathExists
-                callback()
-
-            # No file to move, do nothing
-            else if not oldPathExists
-                log.error "File #{oldPath} not found, and cannot be moved."
-                callback()
-
-            # The destination file already exists, duplicate
-            else if oldPathExists and newPathExists
-                if doc.docType.toLowerCase() is 'folder'
-                    if newPath isnt oldPath
-                        fs.removeSync oldPath
-                    updateUtimes newPath, callback
-                else
-                    log.info "File #{newPath} already exists, " +
-                        "duplicating to #{newPath}.new"
-                    fs.move oldPath, "#{newPath}.new", (err) ->
-                        return callback err if err?
-                        updateUtimes "#{newPath}.new", callback
+            utimesUpdater(doc, newPath)
+        ], callback
 
 
+    # Move a folder
     moveFolder: (doc, callback) =>
-        # For now both operations are similar.
-        @moveFile doc, callback
+        oldPath = null
+        newPath = path.join @basePath, doc.path, doc.name
 
+        async.waterfall [
+            (next) =>
+                @pouch.getPreviousRev doc, next
+
+            (oldDoc, next) ->
+                if oldDoc? and oldDoc.name? and oldDoc.path?
+                    fs.exists oldPath, next
+                else
+                    callback "Can't move, no previous folder known"
+
+            (oldPathExists, next) ->
+                if oldPathExists
+                    fs.exists newPath, next
+                else
+                    next "Folder #{oldPath} not found and cannot be moved"
+
+            (newPathExists, next) ->
+                if newPathExists
+                    # TODO not good!
+                    fs.remove newPath, next
+                else
+                    next()
+
+            (next) ->
+                fs.rename oldPath, newPath, next
+
+            utimesUpdater(doc, newPath)
+
+        ], (err) ->
+            log.error err
+            createFolder doc, callback
+
+
+    # Delete a file from the local filesystem
     deleteFile: (doc, callback) =>
         @pouch.getKnownPath doc, (err, filePath) ->
             if filePath?
@@ -178,11 +170,9 @@ class Local
             else
                 callback err
 
+    # Delete a folder from the local filesystem
     deleteFolder: (doc, callback) =>
-        @pouch.getKnownPath doc, (err, folderPath) ->
-            if folderPath?
-                fs.remove folderPath, callback
-            else
-                callback err
+        # For now both operations are similar
+        @deleteFile doc, callback
 
 module.exports = Local
