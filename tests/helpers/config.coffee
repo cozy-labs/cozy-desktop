@@ -12,6 +12,7 @@ module.exports =
             deviceName: 'tester'
             password: 'password'
             url: 'nonecozy'
+            path: @basePath
 
     cleanConfig: ->
         del.sync @config.configPath

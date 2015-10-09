@@ -1,18 +1,23 @@
-fs = require 'fs-extra'
+async = require 'async'
+fs    = require 'fs-extra'
+path  = require 'path'
 
-watcher = require './watcher'
+filesystem = require './filesystem'
+watcher    = require './watcher'
+log        = require('printit')
+    prefix: 'Local writer  '
 
 
 class Local
     constructor: (config, @pouch, @events) ->
-        @basePath = config.path
+        @basePath = config.getDevice().path
         @tmpPath  = path.join @basePath, ".cozy-desktop"
         watcher.path = @basePath
         watcher.publisher = @events
         @other = null
 
     start: (mode, done) ->
-        fs.ensureDir @path, ->
+        fs.ensureDir @basePath, ->
             watcher.start done
 
     createReadStream: (doc, callback) ->
@@ -24,8 +29,11 @@ class Local
     # Return a function that will update last modification date
     utimesUpdater: (doc, filePath) ->
         (callback) ->
-            lastModification = new Date doc.lastModification
-            fs.utimes folderPath, new Date(), lastModification, callback
+            if doc.lastModification
+                lastModification = new Date doc.lastModification
+                fs.utimes filePath, new Date(), lastModification, callback
+            else
+                callback()
 
     # Steps to create a file:
     #   * Checks if the doc is valid: has a path and a name
@@ -56,7 +64,7 @@ class Local
                 (next) =>
                     fs.ensureDir @tmpPath, next
 
-                (res, next) ->
+                (next) ->
                     filesystem.fileExistsLocally checksum, next
 
                 (existingFilePath, next) =>
@@ -80,7 +88,7 @@ class Local
                 (next) ->
                     fs.rename tmpFile, filePath, next
 
-                utimesUpdater(doc, filePath)
+                @utimesUpdater(doc, filePath)
 
             ], (err) ->
                 fs.unlink tmpFile, ->
@@ -93,14 +101,14 @@ class Local
             log.warn "The doc is invalid: #{JSON.stringify doc}"
             callback()
         else
-            folderPath = path.join @path, doc.path, doc.name
-            fs.ensureDir folderPath, (err, res) ->
+            folderPath = path.join @basePath, doc.path, doc.name
+            fs.ensureDir folderPath, (err) =>
                 if err
                     callback err
                 else if doc.lastModification?
-                    callback()
+                    @utimesUpdater(doc, folderPath)(callback)
                 else
-                    utimesUpdater(doc, folderPath)(callback)
+                    callback()
 
 
     # Move a file from one place to another
@@ -111,17 +119,19 @@ class Local
 
         async.waterfall [
             (next) ->
-                fs.exists oldPath, next
+                fs.exists oldPath, (oldPathExists) ->
+                    if oldPathExists
+                        fs.rename oldPath, newPath, next
+                    else
+                        log.error "File #{oldPath} not found and can't be moved"
+                        # TODO createFile
+                        next "#{oldPath} not found"
 
-            (oldPathExists, next) ->
-                if oldPathExists
-                    fs.rename oldPath, newPath, next
-                else
-                    log.error "File #{oldPath} not found, and cannot be moved."
-                    # TODO createFile
+            @utimesUpdater(doc, newPath)
 
-            utimesUpdater(doc, newPath)
-        ], callback
+        ], (err) =>
+            log.error err
+            @createFile doc, callback
 
 
     # Move a folder
@@ -133,17 +143,20 @@ class Local
             (next) =>
                 @pouch.getPreviousRev doc, next
 
-            (oldDoc, next) ->
+            (oldDoc, next) =>
                 if oldDoc? and oldDoc.name? and oldDoc.path?
-                    fs.exists oldPath, next
+                    oldPath = path.join @basePath, oldDoc.path, oldDoc.name
+                    fs.exists oldPath, (oldPathExists) ->
+                        next null, oldPathExists
                 else
-                    callback "Can't move, no previous folder known"
+                    next "Can't move, no previous folder known"
 
             (oldPathExists, next) ->
                 if oldPathExists
-                    fs.exists newPath, next
+                    fs.exists newPath, (newPathExists) ->
+                        next null, newPathExists
                 else
-                    next "Folder #{oldPath} not found and cannot be moved"
+                    next "Folder #{oldPath} not found and can't be moved"
 
             (newPathExists, next) ->
                 if newPathExists
@@ -155,18 +168,18 @@ class Local
             (next) ->
                 fs.rename oldPath, newPath, next
 
-            utimesUpdater(doc, newPath)
+            @utimesUpdater(doc, newPath)
 
-        ], (err) ->
+        ], (err) =>
             log.error err
-            createFolder doc, callback
+            @createFolder doc, callback
 
 
     # Delete a file from the local filesystem
     deleteFile: (doc, callback) =>
-        @pouch.getKnownPath doc, (err, filePath) ->
+        @pouch.getKnownPath doc, (err, filePath) =>
             if filePath?
-                fs.remove filePath, callback
+                fs.remove path.join(@basePath, filePath), callback
             else
                 callback err
 
