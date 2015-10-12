@@ -72,26 +72,6 @@ describe "Filesystem Tests", ->
                             should.exist err
                             done()
 
-    describe "fileExistsLocally", ->
-        it "checks file existence as a binary in the db and on disk", (done) ->
-            filePath = '/tmp/cozy/testfile'
-            filesystem.checksum filePath, (err, sum) ->
-                should.not.exist err
-                filesystem.fileExistsLocally sum, (err, exist) ->
-                    should.not.exist err
-                    exist.should.not.be.ok()
-
-                    doc =
-                        _id: 'test_exist_locally'
-                        docType: 'Binary'
-                        checksum: sum
-                        path: '/tmp/cozy/testfile'
-                    pouch.db.put doc, (err, info) ->
-                        filesystem.fileExistsLocally sum, (err, exist) ->
-                            should.not.exist err
-                            exist.should.be.equal filePath
-                            done()
-
     describe "walkDirSync", ->
         before ->
             mkdirp.sync '/tmp/cozy/folder-1'

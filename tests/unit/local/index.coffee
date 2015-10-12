@@ -4,8 +4,7 @@ sinon    = require 'sinon'
 should   = require 'should'
 Readable = require('stream').Readable
 
-filesystem = require '../../../backend/local/filesystem'
-Local      = require '../../../backend/local'
+Local = require '../../../backend/local'
 
 
 configHelpers = require '../../helpers/config'
@@ -62,6 +61,23 @@ describe 'Local', ->
                 done()
 
 
+    describe 'fileExistsLocally', ->
+        it "checks file existence as a binary in the db and on disk", (done) ->
+            filePath = path.resolve @basePath, 'testfile'
+            @pouch.binaries = ->
+                get: sinon.stub().yields(null, false)
+            @local.fileExistsLocally 'deadcafe', (err, exist) =>
+                should.not.exist err
+                exist.should.not.be.ok()
+                @pouch.binaries = ->
+                    get: sinon.stub().yields(null, path: 'testfile')
+                fs.ensureFileSync filePath
+                @local.fileExistsLocally 'deadcafe', (err, exist) ->
+                    should.not.exist err
+                    exist.should.be.equal filePath
+                    done()
+
+
     describe 'createFile', ->
         it 'creates the file by downloading it', (done) ->
             doc =
@@ -103,7 +119,7 @@ describe 'Local', ->
                         checksum: '456'
             alt = path.join @basePath, 'files', 'my-checkum-is-456'
             fs.writeFileSync alt, 'foo bar baz'
-            stub = sinon.stub(filesystem, "fileExistsLocally").yields null, alt
+            stub = sinon.stub(@local, "fileExistsLocally").yields null, alt
             filePath = path.join @basePath, doc.path, doc.name
             @local.createFile doc, (err) ->
                 stub.restore()

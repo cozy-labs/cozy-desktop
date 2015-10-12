@@ -125,30 +125,6 @@ filesystem =
             else
                 callback null, 0
 
-    # Check if a file corresponding to given checksum already exists.
-    fileExistsLocally: (checksum, pouch, callback) ->
-        # For legacy binaries
-        if not checksum or checksum is ''
-            return callback null, false
-
-        pouch.binaries.get checksum, (err, binaryDoc) ->
-            if err
-                callback err
-            else if not binaryDoc? or binaryDoc.length is 0
-                callback null, false
-            else if not binaryDoc.path?
-                callback null, false
-            else
-                binaryPath = filesystem.getPaths binaryDoc.path
-                if binaryPath.absolute?
-                    fs.exists binaryPath.absolute, (exists) ->
-                        if exists
-                            callback null, binaryDoc.absolute
-                        else
-                            callback null, false
-                else
-                    callback null, false
-
     isBeingCopied: (filePath, callback) ->
         # Check if the size of the file has changed during the last second
         unless filePath in @filesBeingCopied

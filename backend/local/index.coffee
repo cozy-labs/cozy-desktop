@@ -2,9 +2,8 @@ async = require 'async'
 fs    = require 'fs-extra'
 path  = require 'path'
 
-filesystem = require './filesystem'
-watcher    = require './watcher'
-log        = require('printit')
+watcher = require './watcher'
+log     = require('printit')
     prefix: 'Local writer  '
 
 
@@ -24,7 +23,7 @@ class Local
         callback 'TODO'
 
 
-    ### Write operations ###
+    ### Helpers ###
 
     # Return a function that will update last modification date
     utimesUpdater: (doc, filePath) ->
@@ -34,6 +33,30 @@ class Local
                 fs.utimes filePath, new Date(), lastModification, callback
             else
                 callback()
+
+    # Check if a file corresponding to given checksum already exists.
+    fileExistsLocally: (checksum, callback) =>
+        # For legacy binaries
+        if not checksum or checksum is ''
+            return callback null, false
+
+        @pouch.binaries().get checksum, (err, binaryDoc) =>
+            if err
+                callback err
+            else if not binaryDoc? or binaryDoc.length is 0
+                callback null, false
+            else if not binaryDoc.path?
+                callback null, false
+            else
+                binaryPath = path.resolve @basePath, binaryDoc.path
+                fs.exists binaryPath, (exists) ->
+                    if exists
+                        callback null, binaryPath
+                    else
+                        callback null, false
+
+
+    ### Write operations ###
 
     # Steps to create a file:
     #   * Checks if the doc is valid: has a path and a name
@@ -62,7 +85,7 @@ class Local
 
             async.waterfall [
                 (next) =>
-                    filesystem.fileExistsLocally checksum, @pouch, next
+                    @fileExistsLocally checksum, next
 
                 (existingFilePath, next) =>
                     # TODO what if existingFilePath is filePath
