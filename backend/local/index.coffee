@@ -4,15 +4,14 @@ path  = require 'path'
 log   = require('printit')
     prefix: 'Local writer  '
 
-watcher = require './watcher'
+Watcher = require './watcher'
 
 
 class Local
     constructor: (config, @pouch, @events) ->
         @basePath = config.getDevice().path
         @tmpPath  = path.join @basePath, ".cozy-desktop"
-        watcher.path = @basePath
-        watcher.publisher = @events
+        @watcher  = new Watcher @basePath, @pouch, @events
         @other = null
 
     start: (mode, done) ->
