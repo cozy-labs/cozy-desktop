@@ -10,7 +10,6 @@ log     = require('printit')
 Conflict  = require './conflict'
 
 
-# TODO kill the localrev doctype
 class Pouch
     constructor: (@config) ->
         @db = new PouchDB @config.dbPath
@@ -50,6 +49,8 @@ class Pouch
 
     ### Dirty ODM ###
 
+    # TODO when a file is removed, we should delete its binary
+    # if it's not used by another file
     files: =>
         all: (params, callback) =>
             if typeof params is 'function'
@@ -92,7 +93,7 @@ class Pouch
     # Create all required views in the database.
     addAllFilters: (callback) ->
         async.eachSeries(
-            ['folder', 'file', 'binary', 'localrev'], @addFilter, callback)
+            ['folder', 'file', 'binary'], @addFilter, callback)
 
     # Add required views for a given doctype.
     # TODO don't emit doc
@@ -135,16 +136,6 @@ class Pouch
             if (doc.docType !== undefined
                 && doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
                 emit(doc.binary.file.checksum, doc);
-            }
-        }
-        """
-
-        if docType in ['localrev', 'localRev']
-            queries.byRevision = """
-        function (doc) {
-            if (doc.docType !== undefined
-                && doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
-                emit(doc.revision, null);
             }
         }
         """
@@ -258,40 +249,6 @@ class Pouch
                     log.debug "Unable to find a file/folder path"
                     log.debug res
                     callback null
-
-    # Mark a document as deleted in the database (flag _deleted). Then delete
-    # the document. This operation is required to remove the document remotely
-    # via synchronization.
-    #
-    # https://github.com/cozy/cozy-data-system/blob/master/server/lib/db_remove_helper.coffee#L7
-    markAsDeleted: (deletedDoc, callback) =>
-        emptyDoc =
-            _id: deletedDoc._id
-            _rev: deletedDoc._rev
-            _deleted: true
-            docType: deletedDoc.docType
-
-        # Since we use the same function to delete a file and a folder
-        # we have to check if the binary key exists
-        if deletedDoc.binary?
-            emptyDoc.binary = deletedDoc.binary
-
-        @db.put emptyDoc, (err, res) =>
-            if err
-                callback err
-            else
-                @storeLocalRev res.rev, callback
-
-    # Store a revision to avoid its re-application
-    # (typically when a doc changes after a local FS modification)
-    storeLocalRev: (rev, callback) ->
-        @db.put
-            _id: uuid.v4().split('-').join('')
-            docType: 'localrev'
-            revision: rev
-        , (err, res) ->
-            log.error 'Unable to save local revision' if err
-            callback err
 
 
 # Create a new unique identifier for Pouch/Couch

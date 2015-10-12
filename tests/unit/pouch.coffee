@@ -235,31 +235,3 @@ describe "Pouch", ->
                         should.not.exist err
                         path.should.be.equal '/full/path'
                         done()
-
-        describe 'markAsDeleted', ->
-            it 'deletes the document but keeps docType and binary', (done) ->
-                @pouch.db.get 'file-2', (err, doc) =>
-                    should.not.exist err
-                    @pouch.markAsDeleted doc, (err, res) =>
-                        should.not.exist err
-                        options =
-                            revs: true
-                            revs_info: true
-                            open_revs: "all"
-                        @pouch.db.get 'file-2', options, (err, infos) ->
-                            should.exist infos[0].ok
-                            fields =
-                                binary: file: id: 'binary-2'
-                                docType: 'File'
-                            infos[0].ok.should.have.properties fields
-                            done()
-
-        describe 'storeLocalRev', ->
-            it "stores a document under 'localrev' doctype", (done) ->
-                @pouch.storeLocalRev '1-dff69', (err, res) =>
-                    query = 'localrev/byRevision'
-                    @pouch.db.query query, key: '1-dff69', (err, res) ->
-                        should.not.exist err
-                        should.exist res.rows
-                        res.rows.length.should.not.be.equal 0
-                        done()
