@@ -6,7 +6,7 @@ log   = require('printit')
 # TODO watchers should not put docs directly in pouch but pass them to Sync
 # it will be used to validate things like:
 # - create the parent, grand-parent, etc. of a folder if they don't exist
-# - avoid empty docs -> local.index.coffee:75 and :119
+# - avoid empty docs -> local/index.coffee:75 and :119
 # - etc.
 # and to mark which side (local or remote) has made the change
 class Sync

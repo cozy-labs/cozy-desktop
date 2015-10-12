@@ -92,10 +92,10 @@ class Pouch
 
     # Create all required views in the database.
     addAllFilters: (callback) ->
-        async.eachSeries(
-            ['folder', 'file', 'binary'], @addFilter, callback)
+        async.eachSeries ['folder', 'file', 'binary'], @addFilter, callback
 
     # Add required views for a given doctype.
+    # TODO normalize docType case to always be in lowercase
     # TODO don't emit doc
     # http://pouchdb.com/2014/06/17/12-pro-tips-for-better-code-with-pouchdb.html
     addFilter: (docType, callback) =>
@@ -175,6 +175,7 @@ class Pouch
                 log.info "Design document created: #{id}" unless err
                 callback err
 
+    # Remove a design document for a given docType
     removeFilter: (docType, callback) =>
         id = "_design/#{docType.toLowerCase()}"
         @db.get id, (err, currentDesignDoc) =>

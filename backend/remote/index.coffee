@@ -127,6 +127,7 @@ class Remote
                 @couch.put doc, oldDoc.rev, callback
 
     # Delete a file on the remote cozy instance
+    # TODO check that the corresponding binary is deleted
     deleteFile: (doc, callback) =>
         @pouch.getPreviousRev doc, (err, oldDoc) =>
             if err
