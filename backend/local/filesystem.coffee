@@ -323,4 +323,60 @@ filesystem =
                         callback null, { binary: file: checksum: checksum }
 
 
+    ### Old stuff from the initial sync ###
+
+    ensureAllFilesRemotely: (callback) ->
+        remoteConfig = config.getConfig()
+
+        log.info "Uploading modifications to remote..."
+        operationQueue.publisher.emit 'uploadingLocalChanges'
+
+        # Walk through all existing files in the synchronized folder and
+        # create all the missing DB documents
+        fileList = filesystem.walkFileSync remoteConfig.path
+        creationCounter = 0
+        async.eachSeries fileList, (file, next) ->
+            relativePath = "#{file.parent}/#{file.filename}"
+            absPath = path.join remoteConfig.path, relativePath
+            pouch.files.get relativePath, (err, doc) ->
+                if err
+                    log.error err
+                    log.error "Cannot find #{relativePath} in local database."
+                    next()
+                else if doc?.path? and doc?.name?
+                    next()
+                else
+                    log.info "New file detected: #{absPath}."
+                    creationCounter++
+                    operationQueue.createFileRemotely absPath, next
+        , ->
+            if creationCounter is 0
+                log.info "No new file to create."
+            else
+                log.info "#{creationCounter} missing files created."
+            callback()
+
+
+    ensureAllFoldersRemotely: (callback) ->
+        remoteConfig = config.getConfig()
+
+        log.info "Creating unlisted folders remotely..."
+
+        # Walk through all existing folders in the synchronized folder and
+        # create all the missing DB documents
+        folderList = filesystem.walkDirSync remoteConfig.path
+        async.eachSeries folderList, (folder, done) ->
+            relativePath = "#{folder.parent}/#{folder.filename}"
+            absPath = path.join remoteConfig.path, relativePath
+            pouch.folders.get relativePath, (err, doc) ->
+                if err
+                    done err
+                else if doc?.path? and doc?.name?
+                    done()
+                else
+                    log.info "New folder detected: #{absPath}"
+                    operationQueue.createFolderRemotely absPath, done
+        , callback
+
+
 module.exports = filesystem

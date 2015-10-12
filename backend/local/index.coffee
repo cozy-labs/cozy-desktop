@@ -1,10 +1,10 @@
 async = require 'async'
 fs    = require 'fs-extra'
 path  = require 'path'
+log   = require('printit')
+    prefix: 'Local writer  '
 
 watcher = require './watcher'
-log     = require('printit')
-    prefix: 'Local writer  '
 
 
 class Local

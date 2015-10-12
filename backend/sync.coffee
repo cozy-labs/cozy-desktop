@@ -3,7 +3,14 @@ log   = require('printit')
     prefix: 'Synchronize   '
 
 
+# TODO watchers should not put docs directly in pouch but pass them to Sync
+# it will be used to validate things like:
+# - create the parent, grand-parent, etc. of a folder if they don't exist
+# - avoid empty docs -> local.index.coffee:75 and :119
+# - etc.
+# and to mark which side (local or remote) has made the change
 class Sync
+
     # TODO remove @config and store local seq in pouch
     constructor: (@config, @pouch, @local, @remote, @events) ->
         @local.other = @remote
@@ -67,6 +74,7 @@ class Sync
     # At least one side should say it has already this change
     # In some cases, both sides have the change
     #
+    # TODO note the success in the doc
     # TODO when applying a change fails, put it again in some queue for retry
     apply: (change, callback) =>
         log.debug 'apply', change
@@ -90,7 +98,7 @@ class Sync
             when docType is 'folder'
                 if change.deleted
                     @folderDeleted doc, cb
-                # TODO what if lastModification or creationDate is missing
+                # TODO use the same strategy as for files
                 else if doc.lastModification <= doc.creationDate
                     @folderAdded doc, cb
                 else

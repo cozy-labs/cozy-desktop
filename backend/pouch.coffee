@@ -10,6 +10,7 @@ log     = require('printit')
 Conflict  = require './conflict'
 
 
+# TODO kill the localrev doctype
 class Pouch
     constructor: (@config) ->
         @db = new PouchDB @config.dbPath
