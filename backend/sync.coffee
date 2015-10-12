@@ -35,6 +35,7 @@ class Sync
 
     # Start taking changes from pouch and applying them
     # TODO find a way to emit 'firstSyncDone'
+    # TODO handle an offline mode
     sync: (callback) =>
         @pop (err, change) =>
             if err
@@ -97,6 +98,8 @@ class Sync
             else
                 cb "Unknown doctype: #{doc.docType}"
 
+    # If a file has been changed, we had to check the previous rev from pouch
+    # to decide if it's a new file that has been added, or a move/rename
     fileChanged: (doc, callback) =>
         @pouch.getPreviousRev doc._id, (err, old) =>
             if err or not old
@@ -108,36 +111,42 @@ class Sync
             else
                 @fileMoved doc, old, callback
 
+    # Let local and remote know that a file has been added
     fileAdded: (doc, callback) =>
         async.waterfall [
             (next) => @local.addFile  doc, next
             (next) => @remote.addFile doc, next
         ], callback
 
+    # Let local and remote know that a file has been moved
     fileMoved: (doc, old, callback) =>
         async.waterfall [
             (next) => @local.moveFile  doc, old, next
             (next) => @remote.moveFile doc, old, next
         ], callback
 
+    # Let local and remote know that a file has been deleted
     fileDeleted: (doc, callback) =>
         async.waterfall [
             (next) => @local.deleteFile  doc, next
             (next) => @remote.deleteFile doc, next
         ], callback
 
+    # Let local and remote know that a folder has been added
     folderAdded: (doc, callback) =>
         async.waterfall [
             (next) => @local.addFile  doc, next
             (next) => @remote.addFile doc, next
         ], callback
 
+    # Let local and remote know that a folder has been moved
     folderMoved: (doc, callback) =>
         async.waterfall [
             (next) => @local.moveFile  doc, next
             (next) => @remote.moveFile doc, next
         ], callback
 
+    # Let local and remote know that a folder has been deleted
     folderDeleted: (doc, callback) =>
         async.waterfall [
             (next) => @local.deleteFile  doc, next

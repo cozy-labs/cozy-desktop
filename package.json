@@ -52,7 +52,6 @@
     "node-uuid": "1.4.3",
     "open": "0.0.5",
     "path-extra": "2.0.0",
-    "ping": "0.1.10",
     "pouchdb": "5.0.0",
     "printit": "0.1.9",
     "process": "0.11.2",
