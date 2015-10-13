@@ -42,7 +42,7 @@
   "dependencies": {
     "async": "1.4.2",
     "chokidar": "1.1.0",
-    "commander": "2.8.1",
+    "commander": "2.9.0",
     "del": "2.0.2",
     "fs-extra": "0.24.0",
     "mime": "1.3.4",
