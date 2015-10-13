@@ -253,6 +253,7 @@ class Pouch
 
 
 # Create a new unique identifier for Pouch/Couch
+# TODO something shorter
 Pouch.newId = ->
     uuid.v4().replace /-/g, ''
 

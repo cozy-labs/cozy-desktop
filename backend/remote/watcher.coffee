@@ -6,7 +6,7 @@ Conflict = require '../conflict'
 
 
 class RemoteWatcher
-    constructor: (@couch, @pouch, @config) ->
+    constructor: (@couch, @normalizer, @pouch, @config) ->
 
     # First time replication:
     # * Match local FS with remote Cozy FS
@@ -53,6 +53,7 @@ class RemoteWatcher
                 callback err
 
     # Start metadata sync with remote (live filtered replication)
+    # TODO remove replication and use normalizer
     startReplication: =>
         if @replicator
             log.error "Replication is already running"
@@ -66,7 +67,7 @@ class RemoteWatcher
             retry: true
             since: @config.getRemoteSeq()
 
-        @replicator = pouch.db.replicate.from @couch.url, options
+        @replicator = @pouch.db.replicate.from @couch.url, options
             .on 'change', (info) ->
                 # TODO save seq number to config
                 console.log 'Change', info

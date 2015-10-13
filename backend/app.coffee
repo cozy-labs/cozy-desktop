@@ -4,12 +4,13 @@ async = require 'async'
 log   = require('printit')
     prefix: 'Cozy Desktop  '
 
-Config  = require './config'
-Devices = require './devices'
-Pouch   = require './pouch'
-Local   = require './local'
-Remote  = require './remote'
-Sync    = require './sync'
+Config     = require './config'
+Devices    = require './devices'
+Pouch      = require './pouch'
+Normalizer = require './normalizer'
+Local      = require './local'
+Remote     = require './remote'
+Sync       = require './sync'
 
 
 # App is the entry point for the CLI and GUI.
@@ -84,10 +85,11 @@ class App
 
     # Start database sync process and setup file change watcher
     sync: (mode) =>
-        @local  = new Local  @config, @pouch, @events
-        @remote = new Remote @config, @pouch, @events
-        @sync   = new Sync @config, @pouch, @local, @remote, @events
-        device  = @config.getDevice()
+        @normalizer = new Normalizer @pouch
+        @local      = new Local  @config, @normalizer, @pouch, @events
+        @remote     = new Remote @config, @normalizer, @pouch, @events
+        @sync       = new Sync @config, @pouch, @local, @remote, @events
+        device      = @config.getDevice()
         if device.deviceName? and device.url? and device.path?
             log.info 'Run first synchronisation...'
             @sync.start mode, (err) ->

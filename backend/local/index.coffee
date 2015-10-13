@@ -71,62 +71,53 @@ class Local
     # Note: this method is used for adding a new file
     # or replacing an existing one
     createFile: (doc, callback) =>
-        unless doc?.path? and doc?.name? and doc.binary?.file?.id?
-            log.warn "The doc is invalid: #{JSON.stringify doc}"
-            callback()
+        tmpFile  = path.join @tmpPath, doc.path
+        parent   = path.resolve @basePath, doc.path
+        filePath = path.join parent, doc.name
+        binaryId = doc.binary.file.id
+        checksum = doc.binary.file.checksum
 
-        else
-            tmpFile  = path.join @tmpPath, doc.path
-            parent   = path.resolve @basePath, doc.path
-            filePath = path.join parent, doc.name
-            binaryId = doc.binary.file.id
-            checksum = doc.binary.file.checksum
+        async.waterfall [
+            (next) =>
+                @fileExistsLocally checksum, next
 
-            async.waterfall [
-                (next) =>
-                    @fileExistsLocally checksum, next
+            (existingFilePath, next) =>
+                # TODO what if existingFilePath is filePath
+                if existingFilePath
+                    stream = fs.createReadStream existingFilePath
+                    next null, stream
+                else
+                    @other.createReadStream doc, next
 
-                (existingFilePath, next) =>
-                    # TODO what if existingFilePath is filePath
-                    if existingFilePath
-                        stream = fs.createReadStream existingFilePath
-                        next null, stream
-                    else
-                        @other.createReadStream doc, next
+            # TODO verify the checksum -> remove file if not ok
+            # TODO show progress
+            (stream, next) =>
+                fs.ensureDir @tmpPath, ->
+                    target = fs.createWriteStream tmpFile
+                    stream.on 'end', next
+                    stream.pipe target
 
-                # TODO verify the checksum -> remove file if not ok
-                # TODO show progress
-                (stream, next) =>
-                    fs.ensureDir @tmpPath, ->
-                        target = fs.createWriteStream tmpFile
-                        stream.on 'end', next
-                        stream.pipe target
+            (next) ->
+                fs.ensureDir parent, ->
+                    fs.rename tmpFile, filePath, next
 
-                (next) ->
-                    fs.ensureDir parent, ->
-                        fs.rename tmpFile, filePath, next
+            @utimesUpdater(doc, filePath)
 
-                @utimesUpdater(doc, filePath)
-
-            ], (err) ->
-                fs.unlink tmpFile, ->
-                    callback err
+        ], (err) ->
+            fs.unlink tmpFile, ->
+                callback err
 
 
     # Create a new folder
     createFolder: (doc, callback) =>
-        unless doc?.path? and doc?.name?
-            log.warn "The doc is invalid: #{JSON.stringify doc}"
-            callback()
-        else
-            folderPath = path.join @basePath, doc.path, doc.name
-            fs.ensureDir folderPath, (err) =>
-                if err
-                    callback err
-                else if doc.lastModification?
-                    @utimesUpdater(doc, folderPath)(callback)
-                else
-                    callback()
+        folderPath = path.join @basePath, doc.path, doc.name
+        fs.ensureDir folderPath, (err) =>
+            if err
+                callback err
+            else if doc.lastModification?
+                @utimesUpdater(doc, folderPath)(callback)
+            else
+                callback()
 
 
     # Move a file from one place to another

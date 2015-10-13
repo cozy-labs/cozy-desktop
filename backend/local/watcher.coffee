@@ -11,9 +11,11 @@ filesystem = require './filesystem'
 # a file or a folder is added/removed/changed locally.
 # Operations will be added to the a common operation queue along with the
 # remote operations triggered by the remoteEventWatcher.
+#
+# TODO find deleted files/folders in the initial scan
 class LocalWatcher
 
-    constructor: (@basePath, @pouch, @events) ->
+    constructor: (@basePath, @normalizer, @pouch, @events) ->
 
     # Start chokidar, the filesystem watcher
     # https://github.com/paulmillr/chokidar
@@ -30,9 +32,14 @@ class LocalWatcher
             # Let paths in events be relative to this base path
             cwd: @basePath
             # Poll newly created files to detect when the write is finished
-            awaitWriteFinish: true
+            awaitWriteFinish:
+                stabilityThreshold: 1000
+                pollInterval: 100
             # Filter out artifacts from editors with atomic writes
             atomic: true
+            # With node 0.10 on linux, only polling is available
+            interval: 1000
+            binaryInterval: 2000
 
             .on 'add', @onAdd
             .on 'addDir', @onAddDir
