@@ -88,6 +88,11 @@ class Pouch
             @getByKey 'binary/byChecksum', key, callback
 
 
+    # TODO returns all the files or folders with this path
+    byPath: (path, callback) ->
+        callback 'TODO'
+
+
     ### Filters ###
 
     # Create all required views in the database.

@@ -45,12 +45,13 @@ class Normalizer
     invalidPathOrName: (doc) ->
         doc.path ?= ''
         doc.name ?= ''
+        doc.path = '' if doc.path is '.'
         parents = doc.path.split '/'
         return '..' in parents or
                doc.name is '' or
                doc.name is '.' or
                doc.name is '..' or
-               '/' in doc.name     # TODO to be tested
+               '/' in doc.name
 
     # Return true if the checksum is valid
     # SHA-1 has 40 hexadecimal letters
@@ -64,7 +65,7 @@ class Normalizer
         if doc.path is ''
             callback()
         else
-            @pouch.folders().get doc.path, (folder) =>
+            @pouch.folders().get doc.path, (err, folder) =>
                 if folder
                     callback()
                 else
@@ -79,6 +80,7 @@ class Normalizer
         @pouch.byPath fullpath, (err, docs) =>
             if err
                 log.error err
+                callback err
             else
                 async.eachSeries docs, (doc, next) =>
                     if doc.docType is 'folder'
@@ -99,16 +101,18 @@ class Normalizer
     #   - add the last modification date if missing
     #   - create the tree structure if needed
     addFile: (doc, callback) ->
-        if invalidPathOrName doc
+        if @invalidPathOrName doc
             log.warn "Invalid path or name: #{JSON.stringify doc, null, 2}"
-        else if invalidChecksum doc
+            callback? 'Invalid path or name'
+        else if @invalidChecksum doc
             log.warn "Invalid checksum: #{JSON.stringify doc, null, 2}"
+            callback? 'Invalid checksum'
         else
             doc.id               ?= Pouch.newId()
             doc.docType           = 'file'
             doc.creationDate     ?= new Date()
             doc.lastModification ?= new Date()
-            ensureFolderExist doc, =>
+            @ensureFolderExist doc, =>
                 @pouch.db.put doc, (err) ->
                     log.error "Can't save #{JSON.stringify doc, null, 2}"
                     log.error err
@@ -121,14 +125,15 @@ class Normalizer
     #   - add the last modification date if missing
     #   - create the tree structure if needed
     addFolder: (doc, callback) ->
-        if invalidPathOrName doc
+        if @invalidPathOrName doc
             log.warn "Invalid path or name: #{JSON.stringify doc, null, 2}"
+            callback? 'Invalid path or name'
         else
             doc.id               ?= Pouch.newId()
             doc.docType           = 'folder'
             doc.creationDate     ?= new Date()
             doc.lastModification ?= new Date()
-            ensureFolderExist doc, =>
+            @ensureFolderExist doc, =>
                 @pouch.db.put doc, (err) ->
                     log.error "Can't save #{JSON.stringify doc, null, 2}"
                     log.error err
@@ -145,14 +150,17 @@ class Normalizer
     moveFile: (doc, callback) ->
         if not doc.id
             log.warn "Missing id: #{JSON.stringify doc, null, 2}"
-        if invalidPathOrName doc
+            callback? 'Missing id'
+        if @invalidPathOrName doc
             log.warn "Invalid path or name: #{JSON.stringify doc, null, 2}"
-        else if invalidChecksum doc
+            callback? 'Invalid path or name'
+        else if @invalidChecksum doc
             log.warn "Invalid checksum: #{JSON.stringify doc, null, 2}"
+            callback? 'Invalid checksum'
         else
             doc.docType          = 'file'
             doc.lastModification = new Date()
-            ensureFolderExist doc, =>
+            @ensureFolderExist doc, =>
                 @pouch.db.put doc, (err) ->
                     log.error "Can't save #{JSON.stringify doc, null, 2}"
                     log.error err
@@ -170,12 +178,14 @@ class Normalizer
     moveFolder: (doc, callback) ->
         if not doc.id
             log.warn "Missing id: #{JSON.stringify doc, null, 2}"
-        if invalidPathOrName doc
+            callback? 'Missing id'
+        if @invalidPathOrName doc
             log.warn "Invalid path or name: #{JSON.stringify doc, null, 2}"
+            callback? 'Invalid path or name'
         else
             doc.docType          = 'folder'
             doc.lastModification = new Date()
-            ensureFolderExist doc, =>
+            @ensureFolderExist doc, =>
                 @pouch.db.put doc, (err) ->
                     log.error "Can't save #{JSON.stringify doc, null, 2}"
                     log.error err
