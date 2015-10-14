@@ -33,26 +33,22 @@ class Local
             else
                 callback()
 
-    # Check if a file corresponding to given checksum already exists.
+    # Check if a file corresponding to given checksum already exists
     fileExistsLocally: (checksum, callback) =>
         # For legacy binaries
         if not checksum or checksum is ''
             return callback null, false
 
-        @pouch.binaries().get checksum, (err, binaryDoc) =>
+        @pouch.byChecksum checksum, (err, docs) =>
             if err
                 callback err
-            else if not binaryDoc? or binaryDoc.length is 0
-                callback null, false
-            else if not binaryDoc.path?
+            else if not docs? or docs.length is 0
                 callback null, false
             else
-                binaryPath = path.resolve @basePath, binaryDoc.path
-                fs.exists binaryPath, (exists) ->
-                    if exists
-                        callback null, binaryPath
-                    else
-                        callback null, false
+                paths = for doc in docs
+                    path.resolve @basePath, doc.path, doc.name
+                async.detect paths, fs.exists, (foundPath) ->
+                    callback null, foundPath
 
 
     ### Write operations ###
@@ -74,8 +70,7 @@ class Local
         tmpFile  = path.join @tmpPath, doc.path
         parent   = path.resolve @basePath, doc.path
         filePath = path.join parent, doc.name
-        binaryId = doc.binary.file.id
-        checksum = doc.binary.file.checksum
+        checksum = doc.checksum
 
         async.waterfall [
             (next) =>
@@ -141,8 +136,11 @@ class Local
             @utimesUpdater(doc, newPath)
 
         ], (err) =>
-            log.error err
-            @createFile doc, callback
+            if err
+                log.error err
+                @createFile doc, callback
+            else
+                callback null
 
 
     # Move a folder
@@ -152,7 +150,7 @@ class Local
 
         async.waterfall [
             (next) =>
-                @pouch.getPreviousRev doc, next
+                @pouch.getPreviousRev doc._id, next
 
             (oldDoc, next) =>
                 if oldDoc? and oldDoc.name? and oldDoc.path?
@@ -169,12 +167,13 @@ class Local
                 else
                     next "Folder #{oldPath} not found and can't be moved"
 
-            (newPathExists, next) ->
+            (newPathExists, next) =>
                 if newPathExists
                     # TODO not good!
                     fs.remove newPath, next
                 else
-                    next()
+                    fs.ensureDir path.join(@basePath, doc.path), ->
+                        next()
 
             (next) ->
                 fs.rename oldPath, newPath, next

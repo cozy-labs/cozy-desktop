@@ -8,15 +8,17 @@ Local = require '../../../backend/local'
 
 
 configHelpers = require '../../helpers/config'
+pouchHelpers  = require '../../helpers/pouch'
 
 
 describe 'Local', ->
 
     before 'instanciate config', configHelpers.createConfig
+    before 'instanciate pouch', pouchHelpers.createDatabase
     before 'instanciate local', ->
-        @pouch = {}
         @local = new Local @config, @pouch
         @basePath = @config.getDevice().path
+    after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
 
 
@@ -63,19 +65,23 @@ describe 'Local', ->
 
     describe 'fileExistsLocally', ->
         it "checks file existence as a binary in the db and on disk", (done) ->
-            filePath = path.resolve @basePath, 'testfile'
-            @pouch.binaries = ->
-                get: sinon.stub().yields(null, false)
+            filePath = path.resolve @basePath, 'folder', 'testfile'
             @local.fileExistsLocally 'deadcafe', (err, exist) =>
                 should.not.exist err
                 exist.should.not.be.ok()
-                @pouch.binaries = ->
-                    get: sinon.stub().yields(null, path: 'testfile')
                 fs.ensureFileSync filePath
-                @local.fileExistsLocally 'deadcafe', (err, exist) ->
+                doc =
+                    _id: '1234'
+                    docType: 'file'
+                    checksum: 'deadcafe'
+                    path: 'folder'
+                    name: 'testfile'
+                @pouch.db.put doc, (err) =>
                     should.not.exist err
-                    exist.should.be.equal filePath
-                    done()
+                    @local.fileExistsLocally 'deadcafe', (err, exist) ->
+                        should.not.exist err
+                        exist.should.be.equal filePath
+                        done()
 
 
     describe 'createFile', ->
@@ -84,10 +90,10 @@ describe 'Local', ->
                 path: 'files'
                 name: 'file-from-remote'
                 lastModification: new Date '2015-10-09T04:05:06Z'
+                checksum: '9876'
                 binary:
                     file:
                         id: '123'
-                        checksum: ''
             @local.other =
                 createReadStream: (docToStream, callback) ->
                     docToStream.should.equal doc
@@ -99,7 +105,8 @@ describe 'Local', ->
                     , 100
                     callback null, stream
             filePath = path.join @basePath, doc.path, doc.name
-            @local.createFile doc, (err) ->
+            @local.createFile doc, (err) =>
+                @local.other = null
                 should.not.exist err
                 fs.statSync(filePath).isFile().should.be.true()
                 content = fs.readFileSync(filePath, encoding: 'utf-8')
@@ -113,10 +120,10 @@ describe 'Local', ->
                 path: 'files'
                 name: 'file-with-same-checksum'
                 lastModification: new Date '2015-10-09T04:05:07Z'
+                checksum: '456'
                 binary:
                     file:
                         id: '123'
-                        checksum: '456'
             alt = path.join @basePath, 'files', 'my-checkum-is-456'
             fs.writeFileSync alt, 'foo bar baz'
             stub = sinon.stub(@local, "fileExistsLocally").yields null, alt
@@ -207,98 +214,125 @@ describe 'Local', ->
     describe 'moveFolder', ->
         it 'moves the folder', (done) ->
             old =
+                _id: '12345'
+                docType: 'folder'
                 path: 'old-parent'
                 name: 'folder-to-move'
                 lastModification: new Date '2016-10-08T05:06:09Z'
             doc =
+                _id: '12345'
+                docType: 'folder'
                 path: 'new-parent'
                 name: 'folder-moved'
                 lastModification: new Date '2015-10-09T05:06:10Z'
             oldPath = path.join @basePath, old.path, old.name
             folderPath = path.join @basePath, doc.path, doc.name
             fs.ensureDirSync oldPath
-            @pouch.getPreviousRev = sinon.stub().yields null, old
-            @local.moveFolder doc, (err) ->
+            @pouch.db.put old, (err, oldDoc) =>
                 should.not.exist err
-                fs.existsSync(oldPath).should.be.false()
-                fs.statSync(folderPath).isDirectory().should.be.true()
-                mtime = +fs.statSync(folderPath).mtime
-                mtime.should.equal +doc.lastModification
-                done()
+                doc._rev = oldDoc.rev
+                @pouch.db.put doc, (err) =>
+                    should.not.exist err
+                    @local.moveFolder doc, (err) ->
+                        should.not.exist err
+                        fs.existsSync(oldPath).should.be.false()
+                        fs.statSync(folderPath).isDirectory().should.be.true()
+                        mtime = +fs.statSync(folderPath).mtime
+                        mtime.should.equal +doc.lastModification
+                        done()
 
         it 'creates the folder is the previous path is unknown', (done) ->
             doc =
+                _id: '12346'
+                docType: 'folder'
                 path: 'new-parent'
                 name: 'folder-moved-2'
                 lastModification: new Date '2015-10-09T05:06:11Z'
             folderPath = path.join @basePath, doc.path, doc.name
-            @pouch.getPreviousRev = sinon.stub().yields 'folder not found'
-            @local.moveFolder doc, (err) ->
+            @pouch.db.put doc, (err) =>
                 should.not.exist err
-                fs.statSync(folderPath).isDirectory().should.be.true()
-                mtime = +fs.statSync(folderPath).mtime
-                mtime.should.equal +doc.lastModification
-                done()
+                @local.moveFolder doc, (err) ->
+                    should.not.exist err
+                    fs.statSync(folderPath).isDirectory().should.be.true()
+                    mtime = +fs.statSync(folderPath).mtime
+                    mtime.should.equal +doc.lastModification
+                    done()
 
         it 'creates the folder is the current directory is missing', (done) ->
             old =
+                _id: '12347'
+                docType: 'folder'
                 path: 'old-parent'
                 name: 'missing-folder'
                 lastModification: new Date '2016-10-08T05:06:09Z'
             doc =
+                _id: '12347'
+                docType: 'folder'
                 path: 'new-parent'
                 name: 'folder-moved-3'
                 lastModification: new Date '2015-10-09T05:06:10Z'
             folderPath = path.join @basePath, doc.path, doc.name
-            @pouch.getPreviousRev = sinon.stub().yields null, old
-            @local.moveFolder doc, (err) ->
+            @pouch.db.put old, (err, oldDoc) =>
                 should.not.exist err
-                fs.statSync(folderPath).isDirectory().should.be.true()
-                mtime = +fs.statSync(folderPath).mtime
-                mtime.should.equal +doc.lastModification
-                done()
+                doc._rev = oldDoc.rev
+                @pouch.db.put doc, (err) =>
+                    should.not.exist err
+                    @local.moveFolder doc, (err) ->
+                        should.not.exist err
+                        fs.statSync(folderPath).isDirectory().should.be.true()
+                        mtime = +fs.statSync(folderPath).mtime
+                        mtime.should.equal +doc.lastModification
+                        done()
 
 
     describe 'deleteFile', ->
         it 'deletes a file from the local filesystem', (done) ->
-            doc = id: 123
+            doc =
+                _id: '321'
+                docType: 'file'
+                path: '',
+                name: 'file-to-delete'
             filePath = path.join @basePath, "file-to-delete"
             fs.ensureFileSync filePath
-            @pouch.getKnownPath = sinon.stub().yields null, "file-to-delete"
-            @local.deleteFile doc, (err) =>
-                @pouch.getKnownPath.calledWith(doc).should.be.true()
+            @pouch.db.put doc, (err, inserted) =>
                 should.not.exist err
-                fs.existsSync(filePath).should.be.false()
-                done()
+                doc._rev = inserted.rev
+                @pouch.db.remove doc, (err) =>
+                    should.not.exist err
+                    @local.deleteFile doc, (err) ->
+                        should.not.exist err
+                        fs.existsSync(filePath).should.be.false()
+                        done()
 
-        it "yields an error if the path can't be found", (done) ->
-            doc = id: 123
-            @pouch.getKnownPath = sinon.stub().yields "no such file"
-            @local.deleteFile doc, (err) =>
-                @pouch.getKnownPath.calledWith(doc).should.be.true()
-                should.exist err
-                err.should.equal "no such file"
+        it "yields no error if the path can't be found", (done) ->
+            doc = _id: '322'
+            @local.deleteFile doc, (err) ->
+                should.not.exist err
                 done()
 
 
     describe 'deleteFolder', ->
         it 'deletes a folder from the local filesystem', (done) ->
-            doc = id: 123
+            doc =
+                _id: '323'
+                docType: 'folder'
+                path: ''
+                name: 'folder-to-delete'
             folderPath = path.join @basePath, "folder-to-delete"
             fs.ensureDirSync folderPath
             fs.ensureFileSync path.join(folderPath, "file-inside-folder")
-            @pouch.getKnownPath = sinon.stub().yields null, "folder-to-delete"
-            @local.deleteFolder doc, (err) =>
-                @pouch.getKnownPath.calledWith(doc).should.be.true()
+            @pouch.db.put doc, (err, inserted) =>
                 should.not.exist err
-                fs.existsSync(folderPath).should.be.false()
-                done()
+                doc._rev = inserted.rev
+                @pouch.db.remove doc, (err) =>
+                    should.not.exist err
+                    @local.deleteFolder doc, (err) ->
+                        should.not.exist err
+                        fs.existsSync(folderPath).should.be.false()
+                        done()
 
-        it "yields an error if the path can't be found", (done) ->
-            doc = id: 123
-            @pouch.getKnownPath = sinon.stub().yields "no such folder"
-            @local.deleteFolder doc, (err) =>
-                @pouch.getKnownPath.calledWith(doc).should.be.true()
-                should.exist err
-                err.should.equal "no such folder"
+        it "yields no error if the path can't be found", (done) ->
+            doc = _id: '324'
+            @local.deleteFolder doc, (err) ->
+                should.not.exist err
                 done()
