@@ -81,7 +81,7 @@ StateView = React.createClass
                 icon: 'client/public/icon/bighappycloud.png'
             tray.icon = 'client/public/icon/icon_sync.png'
 
-            pouch.addAllFilters ->
+            pouch.addAllViews ->
 
                 remoteEventWatcher.init readonly, ->
                     remoteEventWatcher.start()

@@ -59,7 +59,9 @@ describe "Sync", ->
 
     describe 'sync', ->
         beforeEach ->
-            @sync = new Sync
+            @local = {}
+            @remote = {}
+            @sync = new Sync @config, @pouch, @local, @remote
             @sync.apply = sinon.stub().yields()
 
         it 'calls pop and apply', (done) ->
@@ -81,7 +83,9 @@ describe "Sync", ->
 
     describe 'pop', ->
         beforeEach ->
-            @sync = new Sync @config, @pouch
+            @local = {}
+            @remote = {}
+            @sync = new Sync @config, @pouch, @local, @remote
             @pouch.db.changes().on 'complete', (info) =>
                 @config.setLocalSeq info.last_seq
 
@@ -94,7 +98,7 @@ describe "Sync", ->
                         id: 'file-1'
                         seq: @config.getLocalSeq() + 1
                     change.doc.should.have.properties
-                        docType: 'File'
+                        docType: 'file'
                         path: 'myfolder'
                         name: "filename-1"
                         tags: []
@@ -124,7 +128,7 @@ describe "Sync", ->
                     id: 'file-6'
                     seq: @config.getLocalSeq() + 1
                 change.doc.should.have.properties
-                    docType: 'File'
+                    docType: 'file'
                     path: 'myfolder'
                     name: "filename-6"
                     tags: []
@@ -140,7 +144,9 @@ describe "Sync", ->
 
     describe 'isSpecial', ->
         beforeEach ->
-            @sync = new Sync
+            @local = {}
+            @remote = {}
+            @sync = new Sync @config, @pouch, @local, @remote
 
         it 'returns true for a design document', (done) ->
             @pouch.db.get '_design/file', (err, doc) =>

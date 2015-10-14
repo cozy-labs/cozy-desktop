@@ -42,6 +42,7 @@ class RemoteWatcher
             return callback null unless rows?.length
             async.eachSeries rows, (doc, cb) =>
                 doc = doc.value
+                # TODO use Normalizer
                 # XXX new_edits: false is used to preserve the _rev from couch
                 @pouch.db.put doc, new_edits: false, (err) ->
                     if err

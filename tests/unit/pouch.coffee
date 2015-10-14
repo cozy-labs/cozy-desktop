@@ -69,6 +69,19 @@ describe "Pouch", ->
 
         describe 'getFile', ->
             it 'gets a file document by its fullpath', (done) ->
+                doc =
+                    _id: 'file-4'
+                    docType: 'file'
+                    path: ''
+                    name: 'filename-4'
+                @pouch.db.put doc, (err) =>
+                    should.not.exist err
+                    @pouch.getFile 'filename-4', (err, res) ->
+                        should.not.exist err
+                        res.should.have.properties doc
+                        done()
+
+            it 'gets a file document by its fullpath', (done) ->
                 @pouch.getFile 'myfolder/filename-1', (err, res) ->
                     should.not.exist err
                     res.should.have.properties
@@ -79,6 +92,15 @@ describe "Pouch", ->
                         binary:
                             file:
                                 id: "binary-1"
+                    done()
+
+        describe 'byChecksum', ->
+            it 'gets all the files with this checksum', (done) ->
+                @pouch.byChecksum '987654321', (err, docs) ->
+                    should.not.exist err
+                    docs.length.should.be.equal 1
+                    docs[0].checksum.should.equal '987654321'
+                    docs[0].name.should.equal 'filename-1'
                     done()
 
         describe 'allFolders', ->

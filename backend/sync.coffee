@@ -22,7 +22,7 @@ class Sync
     # The callback is called only for an error
     start: (mode, callback) =>
         tasks = [
-            (next) => @pouch.addAllFilters next
+            (next) => @pouch.addAllViews next
         ]
         tasks.push @local.start  unless mode is 'readonly'
         tasks.push @remote.start unless mode is 'writeonly'
@@ -31,7 +31,7 @@ class Sync
                 callback err
             else
                 @events.emit 'firstMetadataSyncDone'
-                # queue.makeFSSimilarToDB syncToCozy, (err) ->
+                # TODO queue.makeFSSimilarToDB syncToCozy, (err) ->
                 async.forever @sync, callback
 
     # Start taking changes from pouch and applying them
@@ -68,6 +68,7 @@ class Sync
     # At least one side should say it has already this change
     # In some cases, both sides have the change
     #
+    # TODO maybe we can put more infos in a change (s/del/put/ for deleted doc)
     # TODO note the success in the doc
     # TODO when applying a change fails, put it again in some queue for retry
     apply: (change, callback) =>
@@ -80,9 +81,6 @@ class Sync
         switch
             when @isSpecial doc
                 # TODO use a filter on db.changes to avoid this case?
-                cb()
-            when docType is 'binary'
-                # TODO avoid this case with a local doc or a filter on changes?
                 cb()
             when docType is 'file'
                 if change.deleted

@@ -63,8 +63,7 @@ program
         app.query query, (err, results) ->
             unless err
                 for row in results.rows
-                    console.log "key: #{row.key}"
-                    console.log "value #{JSON.stringify row.value}"
+                    console.log row.doc
 
 program
     .command 'display-config'

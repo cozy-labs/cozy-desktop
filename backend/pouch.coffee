@@ -65,6 +65,13 @@ class Pouch
     getFile: (key, callback) =>
         @getByKey 'file/byFullPath', key, callback
 
+    # Return all the files with this checksum
+    byChecksum: (checksum, callback) ->
+        params =
+            key: checksum
+            include_docs: true
+        @getAll 'file/byChecksum', params, callback
+
     # Return all the folders
     allFolders: (params, callback) =>
         @getAll 'folder/all', params, callback
@@ -105,7 +112,11 @@ class Pouch
             queries.byFullPath = """
                 function (doc) {
                     if (doc.docType === "#{docType}") {
-                        emit(doc.path + '/' + doc.name);
+                        if (doc.path === "") {
+                            emit(doc.name);
+                        } else {
+                            emit(doc.path + '/' + doc.name);
+                        }
                     }
                 }
                 """

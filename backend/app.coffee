@@ -111,17 +111,12 @@ class App
 
     # Return the whole content of the database
     allDocs: (callback) =>
-        @pouch.db.allDocs include_docs: true, (err, results) ->
-            log.error err if err
-            callback err, results
+        @pouch.db.allDocs include_docs: true, callback
 
 
     # Return all docs for a given query
     query: (query, callback) =>
-        log.info "Query: #{query}"
-        @pouch.db.query query, (err, results) ->
-            log.error err if err
-            callback err, results
+        @pouch.db.query query, include_docs: true, callback
 
 
     # Get useful information about the disk space

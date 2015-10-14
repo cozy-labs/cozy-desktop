@@ -13,6 +13,7 @@ progress  = require '../progress'
 # TODO publisher = require '../publisher'
 
 
+# TODO clean filesystem
 filesystem =
 
     # Lock filesystem watching
