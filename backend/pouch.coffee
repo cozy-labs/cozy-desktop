@@ -1,177 +1,142 @@
 PouchDB = require 'pouchdb'
-fs      = require 'fs-extra'
 path    = require 'path-extra'
 async   = require 'async'
 uuid    = require 'node-uuid'
-moment  = require 'moment'
 log     = require('printit')
     prefix: 'Local Pouchdb '
 
-Conflict  = require './conflict'
 
-
+# Pouchdb is used to store all the metadata about files and folders.
+# These metadata can come from the local filesystem or the remote cozy instance.
+#
+# http://pouchdb.com/2014/06/17/12-pro-tips-for-better-code-with-pouchdb.html
+#
+# TODO when a file is removed, delete its binary if not used by another file
 class Pouch
     constructor: (@config) ->
         @db = new PouchDB @config.dbPath
-        # Listener memory leak fix
+        # TODO Listener memory leak fix -> still necessary?
         @db.setMaxListeners 100
-        # TODO addAllFilters ?
+        # TODO addAllViews?
 
     # Create database and recreate all filters
     resetDatabase: (callback) =>
         @db.destroy =>
             @db = new PouchDB @config.dbPath
             @db.setMaxListeners 100
-            @addAllFilters callback
+            @addAllViews callback
 
-    # Run a query and get results
+
+    ### Mini ODM ###
+
+    # Run a query and get document
     getByKey: (query, key, callback) =>
-        return callback null, [] unless key?
+        return callback null, null unless key?
         params =
             include_docs: true
             key: key
-        @db.query query, params, (err, docs) ->
+        @db.query query, params, (err, res) ->
             if err?.status is 404
-                callback null, []
+                callback null, null
             else if err
                 callback err
-            else if docs.rows.length is 0
-                callback null, []
+            else if res.rows.length is 0
+                callback null, null
             else
-                callback null, docs.rows[0].doc
+                callback null, res.rows[0].doc
 
-    # Create new document
-    createNewDoc: (docType, fields, callback) =>
-        fields.docType = docType
-        fields._id = Pouch.newId()
-        @db.put fields, callback
+    # Run a query and get all the results
+    getAll: (query, params, callback) =>
+        if typeof params is 'function'
+            callback = params
+            params = include_docs: true
+        @db.query query, params, (err, res) ->
+            if err
+                callback err
+            else
+                docs = (row.doc for row in res.rows)
+                callback null, docs
 
+    # Return all the files
+    allFiles: (params, callback) =>
+        @getAll 'file/all', params, callback
 
-    ### Dirty ODM ###
+    # Return the file with the given fullpath
+    getFile: (key, callback) =>
+        @getByKey 'file/byFullPath', key, callback
 
-    # TODO when a file is removed, we should delete its binary
-    # if it's not used by another file
-    files: =>
-        all: (params, callback) =>
-            if typeof params is 'function'
-                callback = params
-                params = {}
-            @db.query 'file/all', params, callback
+    # Return all the folders
+    allFolders: (params, callback) =>
+        @getAll 'folder/all', params, callback
 
-        get: (key, callback) =>
-            @getByKey 'file/byFullPath', key, callback
+    # Return the folder with the given fullpath
+    getFolder: (key, callback) =>
+        @getByKey 'folder/byFullPath', key, callback
 
-        createNew: (fields, callback) =>
-            @createNewDoc 'File', fields, callback
-
-    folders: =>
-        all: (params, callback) =>
-            if typeof params is 'function'
-                callback = params
-                params = {}
-            @db.query 'folder/all', params, callback
-
-        get: (key, callback) =>
-            @getByKey 'folder/byFullPath', key, callback
-
-        createNew: (fields, callback) =>
-            @createNewDoc 'Folder', fields, callback
-
-    binaries: =>
-        all: (params, callback) =>
-            if typeof params is 'function'
-                callback = params
-                params = {}
-            @db.query 'binary/all', params, callback
-
-        get: (key, callback) =>
-            @getByKey 'binary/byChecksum', key, callback
-
-
-    # TODO returns all the files or folders with this path
+    # Return all the files and folders in this path
     byPath: (path, callback) ->
-        callback 'TODO'
+        params =
+            key: path
+            include_docs: true
+        @getAll 'byPath', params, callback
 
 
-    ### Filters ###
+    ### Views ###
 
     # Create all required views in the database.
-    addAllFilters: (callback) ->
-        async.eachSeries ['folder', 'file', 'binary'], @addFilter, callback
+    addAllViews: (callback) ->
+        async.eachSeries ['folder', 'file', 'byPath'], @addViews, callback
 
     # Add required views for a given doctype.
-    # TODO normalize docType case to always be in lowercase
-    # TODO don't emit doc
-    # http://pouchdb.com/2014/06/17/12-pro-tips-for-better-code-with-pouchdb.html
-    addFilter: (docType, callback) =>
-        id = "_design/#{docType.toLowerCase()}"
-        queries =
-            all: """
-        function (doc) {
-            if (doc.docType !== undefined
-                && doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
-                emit(doc._id, doc);
-            }
-        }
-        """
+    addViews: (docType, callback) =>
+        id = "_design/#{docType}"
+        queries = {}
 
-        if docType in ['file', 'folder', 'binary', 'File', 'Folder', 'Binary']
+        if docType in ['file', 'folder']
+            queries.all = """
+                function (doc) {
+                    if (doc.docType === "#{docType}") {
+                        emit(doc._id);
+                    }
+                }
+                """
+
+        if docType in ['file', 'folder']
             queries.byFullPath = """
-        function (doc) {
-            if (doc.docType !== undefined
-                && doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
-                emit(doc.path + '/' + doc.name, doc);
-            }
-        }
-        """
+                function (doc) {
+                    if (doc.docType === "#{docType}") {
+                        emit(doc.path + '/' + doc.name);
+                    }
+                }
+                """
 
-        if docType in ['binary', 'Binary']
+        if docType is 'file'
             queries.byChecksum = """
-        function (doc) {
-            if (doc.docType !== undefined
-                && doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
-                emit(doc.checksum, null);
-            }
-        }
-        """
+                function (doc) {
+                    if (doc.docType === "#{docType}") {
+                        emit(doc.checksum);
+                    }
+                }
+                """
 
-        if docType in ['file', 'File']
-            queries.byChecksum = """
-        function (doc) {
-            if (doc.docType !== undefined
-                && doc.docType.toLowerCase() === "#{docType}".toLowerCase()) {
-                emit(doc.binary.file.checksum, doc);
-            }
-        }
-        """
+        if docType is 'byPath'
+            queries.byPath = """
+                function (doc) {
+                    emit(doc.path);
+                }
+                """
 
-        @createDesignDoc id, queries, (err, res) ->
-            if err?.status is 409
-                Conflict.display err
-                callback null
-            else
-                callback err
+        @createDesignDoc id, queries, callback
 
 
     # Create or update given design doc.
     createDesignDoc: (id, queries, callback) =>
         doc =
             _id: id
-            views:
-                all:
-                    map: queries.all
+            views: {}
 
-        if queries.byFullPath?
-            doc.views.byFullPath =
-                map: queries.byFullPath
-
-        if queries.byChecksum?
-            doc.views.byChecksum =
-                map: queries.byChecksum
-
-        if queries.byRevision?
-            doc.views.byRevision =
-                map: queries.byRevision
+        for name, query of queries
+            doc.views[name] = map: query
 
         @db.get id, (err, currentDesignDoc) =>
             if currentDesignDoc?
@@ -181,8 +146,8 @@ class Pouch
                 callback err
 
     # Remove a design document for a given docType
-    removeFilter: (docType, callback) =>
-        id = "_design/#{docType.toLowerCase()}"
+    removeDesignDoc: (docType, callback) =>
+        id = "_design/#{docType}"
         @db.get id, (err, currentDesignDoc) =>
             if currentDesignDoc?
                 @db.remove id, currentDesignDoc._rev, callback
@@ -192,17 +157,6 @@ class Pouch
 
 
     ### Helpers ###
-
-    # Remove given document id if it exists. Doesn't return an error if the
-    # document doesn't exist.
-    removeIfExists: (id, callback) =>
-        @db.get id, (err, doc) =>
-            if err and err.status is 404
-                callback()
-            else if err
-                callback err
-            else
-                @db.remove doc, callback
 
     # Retrieve a previous doc revision from its id
     getPreviousRev: (id, callback) =>
@@ -226,39 +180,22 @@ class Pouch
 
     # Retrieve a known path from a doc, based on the doc's previous revisions
     getKnownPath: (doc, callback) ->
-        # Normally a file should have its binary information kept by the
-        # data-system.
-        if doc.binary?.file?.id? and not doc._deleted
-            @db.get doc.binary.file.id, (err, res) =>
-                if err and err.status is 404
-                    # Retry with the file DB document if the binary DB document
-                    # was not found.
-                    doc.binary = null
-                    @getKnownPath doc, callback
-                else if err
-                    callback err
-                else
-                    callback null, res.path
-
-        # Otherwise try to get the previous revision that would contain the
-        # deleted file or folder path.
-        else
-            @getPreviousRev doc._id, (err, res) =>
-                if err and err.status isnt 404
-                    callback err
-                else if res?.path? and res?.name?
-                    # TODO it seems weird that pouch has to know the mount path
-                    dir = @config.getDevice().path
-                    filePath = path.join dir, res.path, res.name
-                    callback null, filePath
-                else
-                    log.debug "Unable to find a file/folder path"
-                    log.debug res
-                    callback null
+        @getPreviousRev doc._id, (err, res) ->
+            if err and err.status isnt 404
+                callback err
+            else if res?.path? and res?.name?
+                filePath = path.join res.path, res.name
+                callback null, filePath
+            else
+                log.debug "Unable to find a file/folder path"
+                log.debug res
+                callback null
 
 
 # Create a new unique identifier for Pouch/Couch
-# TODO something shorter
+# TODO 7.Use and abuse your doc IDs of
+# http://pouchdb.com/2014/06/17/12-pro-tips-for-better-code-with-pouchdb.html
+# Maybe use the fullpath -> but what about file/folder move/rename
 Pouch.newId = ->
     uuid.v4().replace /-/g, ''
 

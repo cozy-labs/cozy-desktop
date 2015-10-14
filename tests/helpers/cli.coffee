@@ -102,7 +102,7 @@ a synchronization.
                 done()
             , 1000
 
-            pouch.addAllFilters ->
+            pouch.addAllViews ->
                 # Replicate databases
                 remoteEventWatcher.start()
 
