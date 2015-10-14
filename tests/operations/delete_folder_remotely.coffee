@@ -1,6 +1,5 @@
 fs = require 'fs-extra'
 touch = require 'touch'
-date = require 'date-utils'
 moment = require 'moment'
 async = require 'async'
 log = require('printit')

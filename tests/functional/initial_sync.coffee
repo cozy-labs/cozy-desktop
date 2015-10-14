@@ -1,6 +1,5 @@
 fs     = require 'fs-extra'
 touch  = require 'touch'
-date   = require 'date-utils'
 mkdirp = require 'mkdirp'
 async  = require 'async'
 path   = require 'path'
