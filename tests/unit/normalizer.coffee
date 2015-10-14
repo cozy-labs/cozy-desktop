@@ -1,15 +1,22 @@
+async  = require 'async'
 sinon  = require 'sinon'
 should = require 'should'
 
 Normalizer = require '../../backend/normalizer'
+Pouch      = require '../../backend/pouch'
+
+configHelpers = require '../helpers/config'
+pouchHelpers  = require '../helpers/pouch'
 
 
 describe 'Normalizer', ->
 
+    before 'instanciate config', configHelpers.createConfig
+    before 'instanciate pouch', pouchHelpers.createDatabase
     beforeEach 'instanciate normalizer', ->
-        # TODO use a real pouch db for these tests
-        @pouch = {}
         @normalizer = new Normalizer @pouch
+    after 'clean pouch', pouchHelpers.cleanDatabase
+    after 'clean config directory', configHelpers.cleanConfig
 
 
     describe 'Helpers', ->
@@ -78,64 +85,70 @@ describe 'Normalizer', ->
                     done()
 
             it 'works if the parent directory is present', (done) ->
-                stub = sinon.stub().yields null, path: '', name: 'foo'
-                @pouch.folders = ->
-                    get: stub
-                @normalizer.ensureFolderExist path: 'foo', name: 'b', (err) ->
+                doc =
+                    _id: Pouch.newId()
+                    docType: 'folder'
+                    path: ''
+                    name: 'foo'
+                child =
+                    _id: Pouch.newId()
+                    docType: 'folder'
+                    path: 'foo',
+                    name: 'b'
+                @pouch.db.put doc, (err) =>
                     should.not.exist err
-                    stub.calledWith('foo').should.be.true()
-                    done()
+                    @normalizer.ensureFolderExist child, (err) ->
+                        should.not.exist err
+                        done()
 
             it 'creates the parent directory if missing', (done) ->
-                stub = sinon.stub().yields 'not found'
-                @pouch.folders = ->
-                    get: stub
                 @normalizer.putFolder = sinon.stub().yields null, 'OK'
-                @normalizer.ensureFolderExist path: 'foo', name: 'b', (err) =>
+                @normalizer.ensureFolderExist path: 'bar', name: 'c', (err) =>
                     should.not.exist err
-                    stub.calledWith('foo').should.be.true()
                     @normalizer.putFolder.called.should.be.true()
-                    parent = path: '.', name: 'foo'
+                    parent = path: '.', name: 'bar'
                     @normalizer.putFolder.calledWith(parent).should.be.true()
                     done()
 
         describe 'emptyFolder', ->
             it 'does nothing in an empty folder', (done) ->
-                @pouch.byPath = sinon.stub().yields null, []
-                @normalizer.emptyFolder path: 'foo', name: 'bar', (err) =>
+                @normalizer.emptyFolder path: '', name: 'abc', (err) ->
                     should.not.exist err
-                    @pouch.byPath.calledWith('foo/bar').should.be.true()
                     done()
 
             it 'remove files in the folder', (done) ->
-                files = [
-                    { docType: 'file', path: 'foo/bar', name: 'baz' }
-                    { docType: 'file', path: 'foo/bar', name: 'qux' }
-                    { docType: 'file', path: 'foo/bar', name: 'quux' }
-                ]
-                @pouch.byPath = sinon.stub().yields null, files
-                @pouch.db = remove: sinon.stub().yields null
-                @normalizer.emptyFolder path: 'foo', name: 'bar', (err) =>
+                async.eachSeries ['baz', 'qux', 'quux'], (name, next) =>
+                    doc =
+                        _id: Pouch.newId()
+                        docType: 'file'
+                        path: 'foo/a'
+                        name: name
+                    @pouch.db.put doc, next
+                , (err) =>
                     should.not.exist err
-                    @pouch.byPath.calledWith('foo/bar').should.be.true()
-                    for file in files
-                        @pouch.db.remove.calledWith(file).should.be.true()
-                    done()
+                    @normalizer.emptyFolder path: 'foo', name: 'a', (err) =>
+                        should.not.exist err
+                        @pouch.byPath 'foo/a', (err, docs) ->
+                            docs.length.should.be.equal 0
+                            done()
 
             it 'remove nested folders', (done) ->
-                folders = [
-                    { docType: 'folder', path: 'foo/bar', name: 'baz' }
-                    { docType: 'folder', path: 'foo/bar', name: 'qux' }
-                    { docType: 'folder', path: 'foo/bar', name: 'quux' }
-                ]
-                @pouch.byPath = sinon.stub().yields null, folders
-                @normalizer.deleteFolder = sinon.stub().yields null
-                @normalizer.emptyFolder path: 'foo', name: 'bar', (err) =>
+                async.eachSeries ['baz', 'qux', 'quux'], (name, next) =>
+                    doc =
+                        _id: Pouch.newId()
+                        docType: 'folder'
+                        path: 'foo/b'
+                        name: name
+                    @pouch.db.put doc, next
+                , (err) =>
                     should.not.exist err
-                    @pouch.byPath.calledWith('foo/bar').should.be.true()
-                    for f in folders
-                        @normalizer.deleteFolder.calledWith(f).should.be.true()
-                    done()
+                    @normalizer.deleteFolder = sinon.stub().yields null
+                    @normalizer.emptyFolder path: 'foo', name: 'b', (err) =>
+                        should.not.exist err
+                        names = for args in @normalizer.deleteFolder.args
+                            args[0].name
+                        names.sort().should.eql ['baz', 'quux', 'qux']
+                        done()
 
 
     describe 'Actions', ->
@@ -157,36 +170,38 @@ describe 'Normalizer', ->
 
             it 'saves the new file', (done) ->
                 @normalizer.ensureFolderExist = sinon.stub().yields null
-                @pouch.db = put: sinon.stub().yields null
                 doc =
-                    id: '123'
+                    _id: Pouch.newId()
                     path: 'foo'
                     name: 'bar'
                     checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
                     docType: 'file'
-                    creationDate: new Date()
-                    lastModification: new Date()
+                    creationDate: (new Date).toString()
+                    lastModification: (new Date).toString()
                     tags: ['courge', 'quux']
                 @normalizer.putFile doc, (err) =>
                     should.not.exist err
-                    @pouch.db.put.calledWith(doc).should.be.true()
-                    done()
+                    @pouch.db.get doc._id, (err, res) ->
+                        should.not.exist err
+                        res.should.have.properties doc
+                        done()
 
             it 'adds missing fields', (done) ->
                 @normalizer.ensureFolderExist = sinon.stub().yields null
-                @pouch.db = put: sinon.stub().yields null
                 doc =
                     path: 'foo'
                     name: 'bar'
                     checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
                 @normalizer.putFile doc, (err) =>
                     should.not.exist err
-                    args = @pouch.db.put.args[0][0]
-                    should.exist args.id
-                    args.docType.should.equal 'file'
-                    should.exist args.creationDate
-                    should.exist args.lastModification
-                    done()
+                    @pouch.db.get doc._id, (err, res) ->
+                        should.not.exist err
+                        res.should.have.properties doc
+                        res.docType.should.equal 'file'
+                        should.exist res._id
+                        should.exist res.creationDate
+                        should.exist res.lastModification
+                        done()
 
         describe 'putFolder', ->
             it 'expects a doc with a valid path and name', (done) ->
@@ -196,34 +211,36 @@ describe 'Normalizer', ->
 
             it 'saves the new folder', (done) ->
                 @normalizer.ensureFolderExist = sinon.stub().yields null
-                @pouch.db = put: sinon.stub().yields null
                 doc =
-                    id: '456'
+                    _id: Pouch.newId()
                     path: 'foo'
                     name: 'baz'
                     docType: 'folder'
-                    creationDate: new Date()
-                    lastModification: new Date()
+                    creationDate: (new Date).toString()
+                    lastModification: (new Date).toString()
                     tags: ['courge', 'quux']
                 @normalizer.putFolder doc, (err) =>
                     should.not.exist err
-                    @pouch.db.put.calledWith(doc).should.be.true()
-                    done()
+                    @pouch.db.get doc._id, (err, res) ->
+                        should.not.exist err
+                        res.should.have.properties doc
+                        done()
 
             it 'adds missing fields', (done) ->
                 @normalizer.ensureFolderExist = sinon.stub().yields null
-                @pouch.db = put: sinon.stub().yields null
                 doc =
                     path: 'foo'
                     name: 'bar'
                 @normalizer.putFolder doc, (err) =>
                     should.not.exist err
-                    args = @pouch.db.put.args[0][0]
-                    should.exist args.id
-                    args.docType.should.equal 'folder'
-                    should.exist args.creationDate
-                    should.exist args.lastModification
-                    done()
+                    @pouch.db.get doc._id, (err, res) ->
+                        should.not.exist err
+                        res.should.have.properties doc
+                        res.docType.should.equal 'folder'
+                        should.exist res._id
+                        should.exist res.creationDate
+                        should.exist res.lastModification
+                        done()
 
         describe 'moveFile', ->
             it 'expects a doc with an id', (done) ->
@@ -232,13 +249,13 @@ describe 'Normalizer', ->
                     done()
 
             it 'expects a doc with the file docType', (done) ->
-                @normalizer.moveFile id: '123', docType: 'folder', (err) ->
+                @normalizer.moveFile _id: '123', docType: 'folder', (err) ->
                     err.should.equal 'Invalid docType'
                     done()
 
             it 'expects a doc with a valid path and name', (done) ->
                 doc =
-                    id: '123'
+                    _id: '123'
                     docType: 'file'
                     path: '..'
                     name: ''
@@ -248,7 +265,7 @@ describe 'Normalizer', ->
 
             it 'expects a doc with a valid checksum', (done) ->
                 doc =
-                    id: '123'
+                    _id: '123'
                     docType: 'file'
                     path: 'foo'
                     name: 'bar'
@@ -259,17 +276,18 @@ describe 'Normalizer', ->
 
             it 'saves the moved file', (done) ->
                 @normalizer.ensureFolderExist = sinon.stub().yields null
-                @pouch.db = put: sinon.stub().yields null
                 doc =
-                    id: '123'
+                    _id: Pouch.newId()
                     docType: 'file'
                     path: 'foo'
                     name: 'bar'
                     checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
                 @normalizer.moveFile doc, (err) =>
                     should.not.exist err
-                    @pouch.db.put.calledWith(doc).should.be.true()
-                    done()
+                    @pouch.db.get doc._id, (err, res) ->
+                        should.not.exist err
+                        res.should.have.properties doc
+                        done()
 
         describe 'moveFolder', ->
             it 'expects a doc with an id', (done) ->
@@ -278,13 +296,13 @@ describe 'Normalizer', ->
                     done()
 
             it 'expects a doc with the folder docType', (done) ->
-                @normalizer.moveFolder id: '123', docType: 'file', (err) ->
+                @normalizer.moveFolder _id: '123', docType: 'file', (err) ->
                     err.should.equal 'Invalid docType'
                     done()
 
             it 'expects a doc with a valid path and name', (done) ->
                 doc =
-                    id: '123'
+                    _id: '123'
                     docType: 'folder'
                     path: '..'
                     name: ''
@@ -294,77 +312,78 @@ describe 'Normalizer', ->
 
             it 'saves the moved folder', (done) ->
                 @normalizer.ensureFolderExist = sinon.stub().yields null
-                @pouch.db = put: sinon.stub().yields null
                 doc =
-                    id: '123'
+                    _id: Pouch.newId()
                     docType: 'folder'
                     path: 'foo'
                     name: 'bar'
                 @normalizer.moveFolder doc, (err) =>
                     should.not.exist err
-                    @pouch.db.put.calledWith(doc).should.be.true()
-                    done()
+                    @pouch.db.get doc._id, (err, res) ->
+                        should.not.exist err
+                        res.should.have.properties doc
+                        done()
 
         describe 'deleteFile', ->
             it 'deletes a file identified by its id', (done) ->
                 doc =
-                    id: '42'
+                    _id: Pouch.newId()
+                    docType: 'file'
                     path: 'foo'
-                    name: 'bar'
-                @pouch.db =
-                    get:    sinon.stub().yields null, doc
-                    remove: sinon.stub().yields null
-                @normalizer.deleteFile id: '42', (err) =>
+                    name: 'd'
+                @pouch.db.put doc, (err) =>
                     should.not.exist err
-                    @pouch.db.get.calledWith('42').should.be.true()
-                    @pouch.db.remove.calledWith(doc).should.be.true()
-                    done()
+                    @normalizer.deleteFile _id: doc._id, (err) =>
+                        should.not.exist err
+                        @pouch.db.get doc._id, (err) ->
+                            err.status.should.equal 404
+                            done()
 
             it 'deletes a file identified by its fullpath', (done) ->
                 doc =
-                    id: '42'
+                    _id: Pouch.newId()
+                    docType: 'file'
                     path: 'foo'
-                    name: 'bar'
-                stub = sinon.stub().yields null, doc
-                @pouch.files = -> get: stub
-                @pouch.db =
-                    remove: sinon.stub().yields null
-                @normalizer.deleteFile fullpath: 'foo/bar', (err) =>
+                    name: 'e'
+                @pouch.db.put doc, (err) =>
                     should.not.exist err
-                    stub.calledWith('foo/bar').should.be.true()
-                    @pouch.db.remove.calledWith(doc).should.be.true()
-                    done()
+                    @normalizer.deleteFile fullpath: 'foo/e', (err) =>
+                        should.not.exist err
+                        @pouch.db.get doc._id, (err, res) ->
+                            err.status.should.equal 404
+                            done()
 
         describe 'deleteFolder', ->
             it 'deletes a folder identified by its id', (done) ->
                 doc =
-                    id: '42'
+                    _id: Pouch.newId()
+                    docType: 'folder'
                     path: 'foo'
-                    name: 'bar'
-                @pouch.db =
-                    get:    sinon.stub().yields null, doc
-                    remove: sinon.stub().yields null
+                    name: 'f'
                 @normalizer.emptyFolder = sinon.stub().yields null
-                @normalizer.deleteFolder id: '42', (err) =>
+                @pouch.db.put doc, (err) =>
                     should.not.exist err
-                    @pouch.db.get.calledWith('42').should.be.true()
-                    @normalizer.emptyFolder.calledWith(doc).should.be.true()
-                    @pouch.db.remove.calledWith(doc).should.be.true()
-                    done()
+                    @normalizer.deleteFolder _id: doc._id, (err) =>
+                        should.not.exist err
+                        firstArg = @normalizer.emptyFolder.args[0][0]
+                        firstArg.should.have.properties doc
+                        @pouch.db.get doc._id, (err, res) ->
+                            err.status.should.equal 404
+                            done()
 
             it 'deletes a folder identified by its fullpath', (done) ->
                 doc =
-                    id: '42'
+                    _id: Pouch.newId()
+                    docType: 'folder'
                     path: 'foo'
-                    name: 'bar'
-                stub = sinon.stub().yields null, doc
-                @pouch.folders = -> get: stub
-                @pouch.db =
-                    remove: sinon.stub().yields null
+                    name: 'g'
                 @normalizer.emptyFolder = sinon.stub().yields null
-                @normalizer.deleteFolder fullpath: 'foo/bar', (err) =>
+                @pouch.db.put doc, (err) =>
                     should.not.exist err
-                    stub.calledWith('foo/bar').should.be.true()
-                    @normalizer.emptyFolder.calledWith(doc).should.be.true()
-                    @pouch.db.remove.calledWith(doc).should.be.true()
-                    done()
+                    @normalizer.deleteFolder fullpath: 'foo/g', (err) =>
+                        should.not.exist err
+                        firstArg = @normalizer.emptyFolder.args[0][0]
+                        firstArg.should.have.properties doc
+                        @pouch.db.get doc._id, (err, res) ->
+                            err.status.should.equal 404
+                            done()

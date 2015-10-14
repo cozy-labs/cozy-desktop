@@ -66,7 +66,7 @@ class Normalizer
         if doc.path is ''
             callback()
         else
-            @pouch.folders().get doc.path, (err, folder) =>
+            @pouch.getFolder doc.path, (err, folder) =>
                 if folder
                     callback()
                 else
@@ -111,10 +111,10 @@ class Normalizer
             log.warn "Invalid checksum: #{JSON.stringify doc, null, 2}"
             callback? 'Invalid checksum'
         else
-            doc.id               ?= Pouch.newId()
+            doc._id              ?= Pouch.newId()
             doc.docType           = 'file'
-            doc.creationDate     ?= new Date()
-            doc.lastModification ?= new Date()
+            doc.creationDate     ?= (new Date).toString()
+            doc.lastModification ?= (new Date).toString()
             @ensureFolderExist doc, =>
                 @pouch.db.put doc, (err) ->
                     if callback
@@ -136,10 +136,10 @@ class Normalizer
             log.warn "Invalid path or name: #{JSON.stringify doc, null, 2}"
             callback? 'Invalid path or name'
         else
-            doc.id               ?= Pouch.newId()
+            doc._id              ?= Pouch.newId()
             doc.docType           = 'folder'
-            doc.creationDate     ?= new Date()
-            doc.lastModification ?= new Date()
+            doc.creationDate     ?= (new Date).toString()
+            doc.lastModification ?= (new Date).toString()
             @ensureFolderExist doc, =>
                 @pouch.db.put doc, (err) ->
                     if callback
@@ -156,8 +156,8 @@ class Normalizer
     # TODO
     #   - overwrite the destination if it was present
     moveFile: (doc, callback) ->
-        if not doc.id
-            log.warn "Missing id: #{JSON.stringify doc, null, 2}"
+        if not doc._id
+            log.warn "Missing _id: #{JSON.stringify doc, null, 2}"
             callback? 'Missing id'
         else if doc.docType isnt 'file'
             log.warn "Invalid docType: #{JSON.stringify doc, null, 2}"
@@ -186,8 +186,8 @@ class Normalizer
     #   - move every file and folder inside this folder
     #   - overwrite the destination if it was present
     moveFolder: (doc, callback) ->
-        if not doc.id
-            log.warn "Missing id: #{JSON.stringify doc, null, 2}"
+        if not doc._id
+            log.warn "Missing _id: #{JSON.stringify doc, null, 2}"
             callback? 'Missing id'
         else if doc.docType isnt 'folder'
             log.warn "Invalid docType: #{JSON.stringify doc, null, 2}"
@@ -211,10 +211,10 @@ class Normalizer
         async.waterfall [
             # Find the file
             (next) =>
-                if doc.id
-                    @pouch.db.get doc.id, next
+                if doc._id
+                    @pouch.db.get doc._id, next
                 else if doc.fullpath
-                    @pouch.files().get doc.fullpath, next
+                    @pouch.getFile doc.fullpath, next
                 else
                     callback 'Invalid call to deleteFile'
 
@@ -230,7 +230,7 @@ class Normalizer
                 log.error err
 
     # Expectations:
-    #   - the folder can be found by its id or by its fullpath
+    #   - the folder can be found by its _id or by its fullpath
     #   - the folder still exists in pouch
     # Actions:
     #   - delete every file and folder inside this folder
@@ -238,10 +238,10 @@ class Normalizer
         async.waterfall [
             # Find the folder
             (next) =>
-                if doc.id
-                    @pouch.db.get doc.id, next
+                if doc._id
+                    @pouch.db.get doc._id, next
                 else if doc.fullpath
-                    @pouch.folders().get doc.fullpath, next
+                    @pouch.getFolder doc.fullpath, next
                 else
                     callback 'Invalid call to deleteFolder'
 
