@@ -34,7 +34,8 @@ Pouch = require './pouch'
 #   - tags
 #   - backends
 #
-# TODO overwrite, update metadata
+# TODO find a better name than Normalizer for this class
+# TODO update metadata
 class Normalizer
     constructor: (@pouch) ->
 
@@ -72,7 +73,7 @@ class Normalizer
                     newFolder =
                         name: path.basename doc.path
                         path: path.dirname  doc.path
-                    @addFolder newFolder, callback
+                    @putFolder newFolder, callback
 
     # Delete every files and folders inside the given folder
     emptyFolder: (folder, callback) =>
@@ -100,7 +101,9 @@ class Normalizer
     #   - add the creation date if missing
     #   - add the last modification date if missing
     #   - create the tree structure if needed
-    addFile: (doc, callback) ->
+    # TODO
+    #   - overwrite a possible existing file with the same path
+    putFile: (doc, callback) ->
         if @invalidPathOrName doc
             log.warn "Invalid path or name: #{JSON.stringify doc, null, 2}"
             callback? 'Invalid path or name'
@@ -114,9 +117,11 @@ class Normalizer
             doc.lastModification ?= new Date()
             @ensureFolderExist doc, =>
                 @pouch.db.put doc, (err) ->
-                    log.error "Can't save #{JSON.stringify doc, null, 2}"
-                    log.error err
-                    callback? err
+                    if callback
+                        callback err
+                    else if err
+                        log.error "Can't save #{JSON.stringify doc, null, 2}"
+                        log.error err
 
     # Expectations:
     #   - the folder path and name are present and valid
@@ -124,7 +129,9 @@ class Normalizer
     #   - add the creation date if missing
     #   - add the last modification date if missing
     #   - create the tree structure if needed
-    addFolder: (doc, callback) ->
+    # TODO
+    #   - overwrite a possible existing folder with the same path
+    putFolder: (doc, callback) ->
         if @invalidPathOrName doc
             log.warn "Invalid path or name: #{JSON.stringify doc, null, 2}"
             callback? 'Invalid path or name'
@@ -135,43 +142,46 @@ class Normalizer
             doc.lastModification ?= new Date()
             @ensureFolderExist doc, =>
                 @pouch.db.put doc, (err) ->
-                    log.error "Can't save #{JSON.stringify doc, null, 2}"
-                    log.error err
-                    callback? err
+                    if callback
+                        callback err
+                    else if err
+                        log.error "Can't save #{JSON.stringify doc, null, 2}"
+                        log.error err
 
     # Expectations:
     #   - the file id is present
     #   - the new file path and name are present and valid
     # Actions:
     #   - create the tree structure if needed
-    #   - update the last modification date
     # TODO
     #   - overwrite the destination if it was present
     moveFile: (doc, callback) ->
         if not doc.id
             log.warn "Missing id: #{JSON.stringify doc, null, 2}"
             callback? 'Missing id'
-        if @invalidPathOrName doc
+        else if doc.docType isnt 'file'
+            log.warn "Invalid docType: #{JSON.stringify doc, null, 2}"
+            callback? 'Invalid docType'
+        else if @invalidPathOrName doc
             log.warn "Invalid path or name: #{JSON.stringify doc, null, 2}"
             callback? 'Invalid path or name'
         else if @invalidChecksum doc
             log.warn "Invalid checksum: #{JSON.stringify doc, null, 2}"
             callback? 'Invalid checksum'
         else
-            doc.docType          = 'file'
-            doc.lastModification = new Date()
             @ensureFolderExist doc, =>
                 @pouch.db.put doc, (err) ->
-                    log.error "Can't save #{JSON.stringify doc, null, 2}"
-                    log.error err
-                    callback? err
+                    if callback
+                        callback err
+                    else if err
+                        log.error "Can't save #{JSON.stringify doc, null, 2}"
+                        log.error err
 
     # Expectations:
     #   - the folder id is present
     #   - the new folder path and name are present and valid
     # Actions:
     #   - create the tree structure if needed
-    #   - update the last modification date
     # TODO
     #   - move every file and folder inside this folder
     #   - overwrite the destination if it was present
@@ -179,17 +189,20 @@ class Normalizer
         if not doc.id
             log.warn "Missing id: #{JSON.stringify doc, null, 2}"
             callback? 'Missing id'
-        if @invalidPathOrName doc
+        else if doc.docType isnt 'folder'
+            log.warn "Invalid docType: #{JSON.stringify doc, null, 2}"
+            callback? 'Invalid docType'
+        else if @invalidPathOrName doc
             log.warn "Invalid path or name: #{JSON.stringify doc, null, 2}"
             callback? 'Invalid path or name'
         else
-            doc.docType          = 'folder'
-            doc.lastModification = new Date()
             @ensureFolderExist doc, =>
                 @pouch.db.put doc, (err) ->
-                    log.error "Can't save #{JSON.stringify doc, null, 2}"
-                    log.error err
-                    callback? err
+                    if callback
+                        callback err
+                    else if err
+                        log.error "Can't save #{JSON.stringify doc, null, 2}"
+                        log.error err
 
     # Expectations:
     #   - the file can be found by its id or by its fullpath
@@ -200,18 +213,21 @@ class Normalizer
             (next) =>
                 if doc.id
                     @pouch.db.get doc.id, next
-                else
+                else if doc.fullpath
                     @pouch.files().get doc.fullpath, next
+                else
+                    callback 'Invalid call to deleteFile'
 
             # Delete it
             (file, next) =>
                 @pouch.db.remove file, next
 
         ], (err) ->
-            if err
+            if callback
+                callback err
+            else if err
                 log.error "Can't delete #{JSON.stringify doc, null, 2}"
                 log.error err
-                callback? err
 
     # Expectations:
     #   - the folder can be found by its id or by its fullpath
@@ -224,8 +240,10 @@ class Normalizer
             (next) =>
                 if doc.id
                     @pouch.db.get doc.id, next
+                else if doc.fullpath
+                    @pouch.folders().get doc.fullpath, next
                 else
-                    @pouch.folder().get doc.fullpath, next
+                    callback 'Invalid call to deleteFolder'
 
             # Delete everything inside this folder
             (folder, next) =>
@@ -237,10 +255,11 @@ class Normalizer
                 @pouch.db.remove folder, next
 
         ], (err) ->
-            if err
+            if callback
+                callback err
+            else if err
                 log.error "Can't delete #{JSON.stringify doc, null, 2}"
                 log.error err
-                callback? err
 
 
 module.exports = Normalizer
