@@ -1,28 +1,22 @@
-fs       = require 'fs-extra'
-path     = require 'path'
-async    = require 'async'
-mime     = require 'mime'
-crypto   = require 'crypto'
-request  = require 'request-json-light'
-log      = require('printit')
+async  = require 'async'
+crypto = require 'crypto'
+fs     = require 'fs-extra'
+mime   = require 'mime'
+path   = require 'path'
+log    = require('printit')
     prefix: 'Filesystem    '
-
-config    = require '../config'
-pouch     = require '../pouch'
-progress  = require '../progress'
-# TODO publisher = require '../publisher'
 
 
 # TODO clean filesystem
 filesystem =
 
     # Lock filesystem watching
-    locked: false
     filesBeingCopied: {}
 
     # Build useful path from a given path.
     # (absolute, relative, filename, parent path, and parent absolute path).
-    getPaths: (filePath) ->
+    # TODO kill it or test it
+    getPaths: (config, filePath) ->
         remote = config.getConfig().path
 
         # Assuming filePath is 'hello/world.html':
@@ -50,57 +44,6 @@ filesystem =
             else                    "file"
         callback null, {mimeType, fileClass}
 
-    # Check that a file/folder exists and is in the synchronized directory
-    checkLocation: (fileOrFolderpath, callback) ->
-        paths = @getPaths fileOrFolderpath
-        if paths.relative isnt '' \
-                and paths.relative.substring(0,2) isnt '..'
-            fs.exists paths.absolute, (exists) ->
-                if not exists
-                    callback new Error "#{paths.absolute} does not exist"
-                else
-                    callback null, true
-        else
-            callback new Error """
-#{paths.absolute} is not located in the synchronized directory
-"""
-
-    # Return folder list in given dir. Parent path, filename and full path
-    # are stored for each file.
-    # TODO: add test and make async
-    walkDirSync: (dir, filelist) ->
-        remoteConfig = config.getConfig()
-
-        files = fs.readdirSync dir
-        filelist ?= []
-        for filename in files
-            filePath = path.join dir, filename
-            if fs.statSync(filePath).isDirectory()
-                parent = path.relative remoteConfig.path, dir
-                parent = path.join(path.sep, parent) if parent isnt ''
-                filelist.push {parent, filename, filePath}
-                filelist = filesystem.walkDirSync filePath, filelist
-        return filelist
-
-
-    # Return file list in given dir. Parent path, filename and full path
-    # are stored for each file.
-    # TODO: add test and make async
-    walkFileSync: (dir, filelist) ->
-        remoteConfig = config.getConfig()
-
-        files = fs.readdirSync dir
-        filelist ?= []
-        for filename in files
-            filePath = path.join dir, filename
-            if not fs.statSync(filePath).isDirectory()
-                parent = path.relative remoteConfig.path, dir
-                parent = path.join(path.sep, parent) if parent isnt ''
-                filelist.push {parent, filename, filePath}
-            else
-                filelist = filesystem.walkFileSync filePath, filelist
-        return filelist
-
     # Get checksum for given file.
     checksum: (filePath, callback) ->
         stream = fs.createReadStream filePath
@@ -115,17 +58,13 @@ filesystem =
 
     # Get size of given file.
     getSize: (filePath, callback) ->
-        # TODO remove exists, stat should be enough
-        fs.exists filePath, (exists) ->
-            if exists
-                fs.stat filePath, (err, stats) ->
-                    if err?
-                        callback err
-                    else
-                        callback null, stats.size
+        fs.stat filePath, (err, stats) ->
+            if err?
+                callback err
             else
-                callback null, 0
+                callback null, stats.size
 
+    # TODO is it still useful with awaitWriteFinish from chokidar? or test it!
     isBeingCopied: (filePath, callback) ->
         # Check if the size of the file has changed during the last second
         unless filePath in @filesBeingCopied
@@ -151,10 +90,11 @@ filesystem =
 
 
     ### From pouch module ###
+    # TODO move this somewhere else
 
     # Create a file document in local database from given information.
     makeFileDoc: (filePath, callback) ->
-        filePaths = filesystem.getPaths filePath
+        filePaths = filesystem.getPaths config, filePath
         async.series [
 
            (next) -> filesystem.getFileClass filePaths.name, next
@@ -232,7 +172,7 @@ filesystem =
 
     # Create a folder document in local database from given information.
     makeFolderDoc: (folderPath, callback) ->
-        folderPaths = filesystem.getPaths folderPath
+        folderPaths = filesystem.getPaths config, folderPath
 
         # Check that the folder document exists already in DB
         key = "#{folderPaths.parent}/#{folderPaths.name}"
@@ -267,7 +207,7 @@ filesystem =
     # final block to the filesystem module.
     getDocForFile: (filePath, callback) ->
         remoteConfig = config.getConfig()
-        filePaths = filesystem.getPaths filePath
+        filePaths = filesystem.getPaths config, filePath
 
         # Find a potential existing document by its full path
         pouch.db.query 'file/byFullPath',
@@ -322,62 +262,6 @@ filesystem =
                         # Return the checksum anyway to avoid its recalculation
                         # UGLY TRICK
                         callback null, { binary: file: checksum: checksum }
-
-
-    ### Old stuff from the initial sync ###
-
-    ensureAllFilesRemotely: (callback) ->
-        remoteConfig = config.getConfig()
-
-        log.info "Uploading modifications to remote..."
-        operationQueue.publisher.emit 'uploadingLocalChanges'
-
-        # Walk through all existing files in the synchronized folder and
-        # create all the missing DB documents
-        fileList = filesystem.walkFileSync remoteConfig.path
-        creationCounter = 0
-        async.eachSeries fileList, (file, next) ->
-            relativePath = "#{file.parent}/#{file.filename}"
-            absPath = path.join remoteConfig.path, relativePath
-            pouch.files.get relativePath, (err, doc) ->
-                if err
-                    log.error err
-                    log.error "Cannot find #{relativePath} in local database."
-                    next()
-                else if doc?.path? and doc?.name?
-                    next()
-                else
-                    log.info "New file detected: #{absPath}."
-                    creationCounter++
-                    operationQueue.createFileRemotely absPath, next
-        , ->
-            if creationCounter is 0
-                log.info "No new file to create."
-            else
-                log.info "#{creationCounter} missing files created."
-            callback()
-
-
-    ensureAllFoldersRemotely: (callback) ->
-        remoteConfig = config.getConfig()
-
-        log.info "Creating unlisted folders remotely..."
-
-        # Walk through all existing folders in the synchronized folder and
-        # create all the missing DB documents
-        folderList = filesystem.walkDirSync remoteConfig.path
-        async.eachSeries folderList, (folder, done) ->
-            relativePath = "#{folder.parent}/#{folder.filename}"
-            absPath = path.join remoteConfig.path, relativePath
-            pouch.folders.get relativePath, (err, doc) ->
-                if err
-                    done err
-                else if doc?.path? and doc?.name?
-                    done()
-                else
-                    log.info "New folder detected: #{absPath}"
-                    operationQueue.createFolderRemotely absPath, done
-        , callback
 
 
 module.exports = filesystem

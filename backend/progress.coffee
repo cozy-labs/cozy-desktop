@@ -1,5 +1,7 @@
+fs   = require 'fs'
+path = require 'path'
+
 ProgressBar = require 'progress'
-fs = require 'fs'
 
 
 module.exports = progress =
@@ -8,7 +10,7 @@ module.exports = progress =
 
     showUpload: (filePath, fileStream) ->
         filesystem = require './filesystem'
-        absPath = filesystem.getPaths(filePath).absolute
+        absPath = path.join config.getDevice().path, filePath
         size = fs.statSync(absPath).size
         progress.publisher.emit 'uploadStart', size
         prog = new ProgressBar 'uploading: [:bar] :percent :etas',

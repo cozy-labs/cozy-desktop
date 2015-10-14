@@ -13,6 +13,7 @@ $BIN tests/unit/normalizer.coffee
 $BIN tests/unit/pouch.coffee
 $BIN tests/unit/sync.coffee
 $BIN tests/unit/local/index.coffee
+$BIN tests/unit/local/filesystem.coffee
 $BIN tests/unit/remote/couch.coffee
 
 # Currently red

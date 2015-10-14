@@ -1,4 +1,5 @@
 async = require 'async'
+path  = require 'path'
 log   = require('printit')
     prefix: 'Local writer  '
 
@@ -7,8 +8,8 @@ Watcher = require './watcher'
 
 
 class Remote
-    constructor: (config, @pouch, @events) ->
-        @couch = new Couch config, @pouch, @events
+    constructor: (@config, @pouch, @events) ->
+        @couch = new Couch @config, @pouch, @events
         @watcher = new Watcher @couch, @pouch, config
         @other = null
 
@@ -25,9 +26,9 @@ class Remote
 
     # Upload the binary as a CouchDB document's attachment and return
     # the binary document
-    # TODO split this method
+    # TODO rewrite / split this method
     uploadBinary: (filePath, binaryDoc, callback) ->
-        filePaths = filesystem.getPaths filePath
+        absolute = path.resolve @config.getDevice().path, filePath
 
         async.waterfall [
             (next) =>
@@ -41,7 +42,7 @@ class Remote
                     # Create a remote binary document if not exists.
                     # Pass the checksum here to save it remotely.
 
-                    filesystem.checksum filePaths.absolute, (err, checksum) =>
+                    filesystem.checksum absolute, (err, checksum) =>
                         if err
                             next err
                         else
@@ -66,7 +67,7 @@ class Remote
                 # Otherwise upload it
                 @couch.uploadAsAttachment remoteBinaryDoc.id
                                         , remoteBinaryDoc.rev
-                                        , filePaths.absolute
+                                        , absolute
                                         , next
 
             # Get the binary document again

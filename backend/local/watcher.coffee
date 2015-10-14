@@ -51,8 +51,7 @@ class LocalWatcher
 
     # New file detected
     onAdd: (filePath) =>
-        if not filesystem.locked \
-        and not filesystem.filesBeingCopied[filePath]?
+        if not filesystem.filesBeingCopied[filePath]?
             log.info "File added: #{filePath}"
             localEventWatcher.publisher.emit 'fileAddedLocally', filePath
             filesystem.isBeingCopied filePath, ->
@@ -63,8 +62,7 @@ class LocalWatcher
 
     # New directory detected
     onAddDir: (folderPath) =>
-        if not filesystem.locked \
-        and folderPath isnt localEventWatcher.path
+        if folderPath isnt localEventWatcher.path
             log.info "Directory added: #{folderPath}"
             localEventWatcher.publisher.emit 'folderAddedLocally', folderPath
             operationQueue.queue.push
@@ -74,7 +72,7 @@ class LocalWatcher
 
     # File deletion detected
     onUnlink: (filePath) =>
-        if not filesystem.locked and not fs.existsSync filePath
+        if not fs.existsSync filePath
             log.info "File deleted: #{filePath}"
             localEventWatcher.publisher.emit 'fileDeletedLocally', filePath
             operationQueue.queue.push
@@ -84,13 +82,12 @@ class LocalWatcher
 
     # Folder deletion detected
     onUnlinkDir: (folderPath) =>
-        if not filesystem.locked
-            log.info "Folder deleted: #{folderPath}"
-            localEventWatcher.publisher.emit 'folderDeletedLocally', folderPath
-            operationQueue.queue.push
-                operation: 'deleteFolderRemotely'
-                folder: folderPath
-            , ->
+        log.info "Folder deleted: #{folderPath}"
+        localEventWatcher.publisher.emit 'folderDeletedLocally', folderPath
+        operationQueue.queue.push
+            operation: 'deleteFolderRemotely'
+            folder: folderPath
+        , ->
 
     # File update detected
     onChange: (filePath) =>
@@ -112,8 +109,7 @@ onChange = (filePath) ->
         relativePath = filePath
         filePath = path.join localEventWatcher.path, filePath
 
-    if not filesystem.locked \
-    and not filesystem.filesBeingCopied[filePath]? \
+    if not filesystem.filesBeingCopied[filePath]? \
     and fs.existsSync filePath
         log.info "File changed: #{filePath}"
         localEventWatcher.publisher.emit 'fileChangedLocally', filePath
