@@ -12,7 +12,8 @@ app.askPassword = (callback) ->
     promptMsg = """
 Please enter your password to register your device to 'your remote Cozy:
 """
-    read prompt: promptMsg, silent: true , callback
+    read prompt: promptMsg, silent: true , (err, password, isDefault) ->
+        callback err, password
 
 
 program

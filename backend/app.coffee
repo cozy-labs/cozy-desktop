@@ -52,10 +52,9 @@ class App
                 log.error 'An error occured while registering your device.'
             else
                 options =
+                    path: path.resolve syncPath
                     url: url
                     deviceName: deviceName
-                    path: path.resolve syncPath
-                    deviceId: credentials.id
                     password: credentials.password
                 @config.addRemoteCozy options
                 log.info 'The remote Cozy has properly been configured ' +

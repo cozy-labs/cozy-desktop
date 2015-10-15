@@ -1,7 +1,7 @@
 should = require 'should'
 
 configHelpers = require '../../helpers/config'
-couchHelpers = require '../../helpers/couch'
+couchHelpers  = require '../../helpers/couch'
 
 Couch = require '../../../backend/remote/couch'
 

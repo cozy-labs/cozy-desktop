@@ -42,7 +42,15 @@ module.exports =
     unregisterDevice: (options, callback) ->
         client = request.newClient options.url
         client.setBasicAuth 'owner', options.password
-        client.del "device/#{options.deviceId}/", callback
+        client.del "device/#{options.deviceName}/", (err, res, body) ->
+            if res.statusCode in [200, 204]
+                callback null
+            else if err
+                callback err
+            else if body.error?
+                callback body.error
+            else
+                callback "Something went wrong (#{res.statusCode})"
 
 
     # Get useful information about the disk space

@@ -4,6 +4,7 @@ The Cozy desktop app allows to sync the files stored in your Cozy with your lapt
 and/or your desktop. It replicates your files on your hard drive and apply
 changes you made on them on other synced devices and on your online Cozy.
 
+
 ## CLI Install
 
 The cozy-desktop requires node.js and build tools to run
@@ -13,6 +14,7 @@ The cozy-desktop requires node.js and build tools to run
 Then you can install it via NPM:
 
     sudo npm install cozy-desktop -g
+
 
 ## CLI Running
 
@@ -86,9 +88,7 @@ To hack the synchronization backend, you can just edit the files under the
 [![Build
 Status](https://travis-ci.org/cozy-labs/cozy-desktop.png?branch=master)](https://travis-ci.org/cozy-labs/cozy-desktop)
 
-Tests require that you have the Cozy dev VM up (it means a data-system and a
-proxy up and running) and that the files application is accessible on the 9121
-port. It's also expected that a user is registered.
+Unit tests are easy to launch:
 
 ```
 # Make sure to have dev dependencies installed
@@ -99,11 +99,21 @@ node_modules/.bin/gulp test
 
 # To run a specific set of tests (here testing local_watcher with DEBUG activated)
 npm install -g mocha
-DEBUG=true DEFAULT_DIR=tests mocha --compilers coffee:coffee-script/register tests/local_watcher.coffee
+DEBUG=true DEFAULT_DIR=tmp mocha --compilers coffee:coffee-script/register tests/unit/pouch.coffee
 
 # Or, if you want pouchdb to be really verbose
-DEBUG=pouchdb:api DEFAULT_DIR=tests mocha --compilers coffee:coffee-script/register tests/local_watcher.coffee
+DEBUG=pouchdb:api DEFAULT_DIR=tmp mocha --compilers coffee:coffee-script/register tests/unit/pouch.coffee
 ```
+
+Functional tests require that you have the Cozy dev VM up (it means a
+data-system and a proxy up and running) and that the files application is
+accessible on the 9121 port. It's also expected that a user is registered with
+`cozytest` as password.
+
+```
+DEFAULT_DIR=tmp mocha --compilers coffee:coffee-script/register tests/functional/*.coffee
+```
+
 
 ## What is Cozy?
 
