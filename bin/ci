@@ -9,10 +9,8 @@ BIN='mocha --reporter spec --compilers coffee:coffee-script/register '
 
 $BIN tests/unit/{,local/,remote/}*.coffee
 
-$BIN tests/operations/*.coffee
-
-$BIN tests/functional/remote.coffee
-#$BIN tests/functional/local.coffee
-#$BIN tests/functional/local_change.coffee
+# TODO
+# $BIN tests/operations/*.coffee
+# $BIN tests/functional/*.coffee
 
 ./node_modules/.bin/gulp lint

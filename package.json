@@ -1,7 +1,7 @@
 {
   "name": "cozy-desktop",
   "version": "0.3.0",
-  "description": "File Synchronization Client for Cozy Files",
+  "description": "File Synchronization Client for Cozy Cloud",
   "main": "app.html",
   "window": {
     "position": "center",
@@ -14,6 +14,7 @@
     "title": "Cozy Desktop"
   },
   "scripts": {
+    "lint": "gulp lint",
     "test": "gulp test",
     "build": "gulp build",
     "prepublish": "gulp build-package",
@@ -33,7 +34,7 @@
     "files",
     "cozy"
   ],
-  "author": "Cozy Cloud <frank@cozycloud.cc> (https://cozycloud.cc/)",
+  "author": "Cozy Cloud <contact@cozycloud.cc> (https://cozycloud.cc/)",
   "license": "LGPL",
   "bugs": {
     "url": "https://github.com/cozy-labs/cozy-desktop/issues"
