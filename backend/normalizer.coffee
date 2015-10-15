@@ -20,6 +20,7 @@ Pouch = require './pouch'
 #   - creationDate
 #   - lastModification
 #   - tags
+#   - size
 #   - class
 #   - mime
 #   - backends

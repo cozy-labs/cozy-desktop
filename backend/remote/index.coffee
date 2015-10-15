@@ -53,7 +53,7 @@ class Remote
 
             # Get the binary document
             (binaryInfo, next) =>
-                @couch.getRemoteDoc binaryInfo.id, next
+                @couch.get binaryInfo.id, next
 
             (remoteBinaryDoc, next) =>
                 # If for some reason the remote attachment is already uploaded
@@ -72,7 +72,7 @@ class Remote
 
             # Get the binary document again
             (binaryInfo, next) =>
-                @couch.getRemoteDoc binaryInfo.id, next
+                @couch.get binaryInfo.id, next
 
         ], callback
 
@@ -105,14 +105,14 @@ class Remote
             # Save the 'file' document in the remote couch
             (next) =>
                 @events.emit 'binaryUploaded', doc.path  # FIXME
-                @couch.put doc, null, next
+                @couch.put doc, next
 
         ], callback
 
     # Create a folder on the remote cozy instance
     # TODO check if the folder already exists before trying to create it?
     createFolder: (doc, callback) =>
-        @couch.put doc, null, callback
+        @couch.put doc, callback
 
     # Move a file on the remote cozy instance
     moveFile: (doc, old, callback) =>
@@ -135,7 +135,7 @@ class Remote
                 log.error err
                 callback err
             else
-                @couch.del doc, oldDoc.rev, callback
+                @couch.del doc._id, oldDoc.rev, callback
 
     # Delete a folder on the remote cozy instance
     deleteFolder: (doc, callback) =>
