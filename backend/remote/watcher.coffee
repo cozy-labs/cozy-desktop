@@ -60,7 +60,7 @@ class RemoteWatcher
             log.error "Replication is already running"
             return
 
-        options = config.augmentCouchOptions
+        options = @config.augmentCouchOptions
             filter: (doc) ->
                 doc.docType?.toLowerCase() is 'Folder' or
                 doc.docType?.toLowerCase() is 'File'

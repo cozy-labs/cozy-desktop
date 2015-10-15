@@ -8,10 +8,10 @@ Watcher = require './watcher'
 
 
 class Local
-    constructor: (config, @pouch, @events) ->
+    constructor: (config, @normalizer, @pouch, @events) ->
         @basePath = config.getDevice().path
         @tmpPath  = path.join @basePath, ".cozy-desktop"
-        @watcher  = new Watcher @basePath, @pouch, @events
+        @watcher  = new Watcher @basePath, @normalizer, @pouch, @events
         @other = null
 
     start: (done) ->
@@ -66,7 +66,7 @@ class Local
     #
     # Note: this method is used for adding a new file
     # or replacing an existing one
-    createFile: (doc, callback) =>
+    addFile: (doc, callback) =>
         tmpFile  = path.join @tmpPath, doc.path
         parent   = path.resolve @basePath, doc.path
         filePath = path.join parent, doc.name
@@ -104,7 +104,7 @@ class Local
 
 
     # Create a new folder
-    createFolder: (doc, callback) =>
+    addFolder: (doc, callback) =>
         folderPath = path.join @basePath, doc.path, doc.name
         fs.ensureDir folderPath, (err) =>
             if err
@@ -130,7 +130,6 @@ class Local
                             fs.rename oldPath, newPath, next
                     else
                         log.error "File #{oldPath} not found and can't be moved"
-                        # TODO createFile
                         next "#{oldPath} not found"
 
             @utimesUpdater(doc, newPath)
@@ -138,7 +137,7 @@ class Local
         ], (err) =>
             if err
                 log.error err
-                @createFile doc, callback
+                @addFile doc, callback
             else
                 callback null
 
@@ -182,7 +181,7 @@ class Local
 
         ], (err) =>
             log.error err
-            @createFolder doc, callback
+            @addFolder doc, callback
 
 
     # Delete a file from the local filesystem

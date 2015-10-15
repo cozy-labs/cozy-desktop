@@ -16,7 +16,8 @@ describe 'Local', ->
     before 'instanciate config', configHelpers.createConfig
     before 'instanciate pouch', pouchHelpers.createDatabase
     before 'instanciate local', ->
-        @local = new Local @config, @pouch
+        @normalizer = {}
+        @local = new Local @config, @normalizer, @pouch
         @basePath = @config.getDevice().path
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
@@ -84,7 +85,7 @@ describe 'Local', ->
                         done()
 
 
-    describe 'createFile', ->
+    describe 'addFile', ->
         it 'creates the file by downloading it', (done) ->
             doc =
                 path: 'files'
@@ -105,7 +106,7 @@ describe 'Local', ->
                     , 100
                     callback null, stream
             filePath = path.join @basePath, doc.path, doc.name
-            @local.createFile doc, (err) =>
+            @local.addFile doc, (err) =>
                 @local.other = null
                 should.not.exist err
                 fs.statSync(filePath).isFile().should.be.true()
@@ -128,7 +129,7 @@ describe 'Local', ->
             fs.writeFileSync alt, 'foo bar baz'
             stub = sinon.stub(@local, "fileExistsLocally").yields null, alt
             filePath = path.join @basePath, doc.path, doc.name
-            @local.createFile doc, (err) ->
+            @local.addFile doc, (err) ->
                 stub.restore()
                 stub.calledWith('456').should.be.true()
                 should.not.exist err
@@ -142,14 +143,14 @@ describe 'Local', ->
             it 'preserves the existing file if the download fails'
 
 
-    describe 'createFolder', ->
+    describe 'addFolder', ->
         it 'creates the folder', (done) ->
             doc =
                 path: 'parent'
                 name: 'folder-to-create'
                 lastModification: new Date '2015-10-09T05:06:08Z'
             folderPath = path.join @basePath, doc.path, doc.name
-            @local.createFolder doc, (err) ->
+            @local.addFolder doc, (err) ->
                 should.not.exist err
                 fs.statSync(folderPath).isDirectory().should.be.true()
                 mtime = +fs.statSync(folderPath).mtime
@@ -163,7 +164,7 @@ describe 'Local', ->
                 lastModification: new Date '2015-10-09T05:06:08Z'
             folderPath = path.join @basePath, doc.path, doc.name
             fs.ensureDirSync folderPath
-            @local.createFolder doc, (err) ->
+            @local.addFolder doc, (err) ->
                 should.not.exist err
                 fs.statSync(folderPath).isDirectory().should.be.true()
                 mtime = +fs.statSync(folderPath).mtime
@@ -203,7 +204,7 @@ describe 'Local', ->
                 name: 'file-moved-2'
                 lastModification: new Date '2015-10-09T05:05:12Z'
             filePath = path.join @basePath, doc.path, doc.name
-            stub = sinon.stub(@local, "createFile").yields()
+            stub = sinon.stub(@local, "addFile").yields()
             @local.moveFile doc, old, (err) ->
                 stub.restore()
                 stub.calledWith(doc).should.be.true()

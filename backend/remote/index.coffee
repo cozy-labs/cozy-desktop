@@ -8,9 +8,9 @@ Watcher = require './watcher'
 
 
 class Remote
-    constructor: (@config, @pouch, @events) ->
+    constructor: (@config, @normalizer, @pouch, @events) ->
         @couch = new Couch @config, @pouch, @events
-        @watcher = new Watcher @couch, @pouch, @config
+        @watcher = new Watcher @couch, @normalizer, @pouch, @config
         @other = null
 
     start: (done) =>
@@ -83,7 +83,7 @@ class Remote
     # It can also be an overwrite of the file
     # TODO check if the remote folder exists and create it if missing?
     # TODO save infos in pouch
-    createFile: (doc, callback) =>
+    addFile: (doc, callback) =>
         async.waterfall [
             # Check if the binary already exists on the server
             (next) =>
@@ -111,7 +111,7 @@ class Remote
 
     # Create a folder on the remote cozy instance
     # TODO check if the folder already exists before trying to create it?
-    createFolder: (doc, callback) =>
+    addFolder: (doc, callback) =>
         @couch.put doc, callback
 
     # Move a file on the remote cozy instance

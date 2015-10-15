@@ -13,6 +13,7 @@ progress   = require '../progress'
 
 
 # TODO add comments
+# TODO use pouch lib instead of request-json-light as couch client
 class Couch
     constructor: (@config, @pouch, @events) ->
         device = @config.getDevice()
