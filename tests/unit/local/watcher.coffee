@@ -1,21 +1,3 @@
-fs = require 'fs-extra'
-touch = require 'touch'
-mkdirp = require 'mkdirp'
-async = require 'async'
-
-path = require 'path'
-should = require 'should'
-helpers = require './helpers/helpers'
-cliHelpers = require './helpers/cli'
-fileHelpers = require './helpers/files'
-folderHelpers = require './helpers/folders'
-client = helpers.getClient()
-
-config = require '../backend/config'
-pouch = require '../backend/db'
-localWatcher = require '../backend/local_event_watcher'
-{syncPath} = helpers.options
-
 describe "LocalWatcher Tests", ->
 
 

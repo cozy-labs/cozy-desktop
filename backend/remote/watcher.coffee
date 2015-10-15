@@ -89,4 +89,4 @@ class RemoteWatcher
         @replicator = null
 
 
-module.exports = remoteEventWatcher
+module.exports = RemoteWatcher
