@@ -63,6 +63,7 @@ class App
 
     # Unregister current device from remote Cozy and then remove remote from
     # the config file
+    # TODO also remove the pouch database
     removeRemote: (deviceName) =>
         device = @config.getDevice deviceName
         async.waterfall [

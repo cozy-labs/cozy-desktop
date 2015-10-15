@@ -12,7 +12,7 @@ class RemoteWatcher
     # * Match local FS with remote Cozy FS
     # * Set starting sequence at last remote sequence
     initialReplication: (callback) ->
-        @couch.getLastRemoteChangeSeq (err, seq) ->
+        @couch.getLastRemoteChangeSeq (err, seq) =>
             if err
                 log.error "An error occured contacting your remote Cozy"
                 log.error err

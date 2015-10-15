@@ -10,10 +10,10 @@ Watcher = require './watcher'
 class Remote
     constructor: (@config, @pouch, @events) ->
         @couch = new Couch @config, @pouch, @events
-        @watcher = new Watcher @couch, @pouch, config
+        @watcher = new Watcher @couch, @pouch, @config
         @other = null
 
-    start: (mode, done) =>
+    start: (done) =>
         @watcher.initialReplication (err) =>
             done err
             @watcher.startReplication() unless err

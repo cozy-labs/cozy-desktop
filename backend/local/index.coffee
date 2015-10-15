@@ -14,7 +14,7 @@ class Local
         @watcher  = new Watcher @basePath, @pouch, @events
         @other = null
 
-    start: (mode, done) ->
+    start: (done) ->
         fs.ensureDir @basePath, ->
             watcher.start done
 

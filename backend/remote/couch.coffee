@@ -58,7 +58,7 @@ class Couch
                 # TODO : may be create it ourself
                 callback new Error 'install files app on cozy'
 
-    copyDocsFromRemoteView: (model, callback) =>
+    getFromRemoteView: (model, callback) =>
         @pickViewToCopy model, (err, viewName) =>
             return callback err if err
 
