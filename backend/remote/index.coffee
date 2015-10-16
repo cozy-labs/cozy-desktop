@@ -95,12 +95,13 @@ class Remote
 
             # Upload binary if it doesn't exist on the server
             (next) =>
+                # FIXME uploadAsAttachment expects a filePath, not a stream
                 @other.createReadStream doc, (err, stream) =>
                     if err
                         callback err
                     else
                         @events.emit 'uploadBinary', doc.path  # FIXME
-                        @couch.uploadAsAttachment doc, stream, next
+                        @couch.uploadAsAttachment doc, filePath, next
 
             # Save the 'file' document in the remote couch
             (next) =>

@@ -1,3 +1,4 @@
+crypto = require 'crypto'
 fs     = require 'fs'
 should = require 'should'
 
@@ -9,7 +10,7 @@ Pouch = require '../../../backend/pouch'
 
 
 describe "Couch", ->
-    @timeout 8000
+    @timeout 4000
 
     before 'instanciate config', configHelpers.createConfig
     before 'start couch server', couchHelpers.startServer
@@ -38,8 +39,8 @@ describe "Couch", ->
             @couch.get @doc._id, (err, doc) =>
                 should.not.exist err
                 should.exist doc
-                doc.id.should.equal @doc._id
-                should.exist doc.rev
+                doc._id.should.equal @doc._id
+                should.exist doc._rev
                 doc.docType.should.equal 'binary'
                 done()
 
@@ -57,7 +58,8 @@ describe "Couch", ->
 
         it 'can update a document', (done) ->
             @doc.checksum = 'deadcafe'
-            @couch.put @doc, @rev, (err, updated) =>
+            @doc._rev = @rev
+            @couch.put @doc, (err, updated) =>
                 should.not.exist err
                 should.exist updated
                 should.exist updated.id
@@ -67,9 +69,9 @@ describe "Couch", ->
                     doc.checksum.should.equal @doc.checksum
                     done()
 
-    describe 'del', ->
+    describe 'remove', ->
         it 'deletes a document', (done) ->
-            @couch.del @doc._id, @rev, (err, deleted) ->
+            @couch.remove @doc._id, @rev, (err, deleted) ->
                 should.not.exist err
                 should.exist deleted
                 should.exist deleted.id
@@ -92,13 +94,30 @@ describe "Couch", ->
                 done()
 
     describe 'uploadAsAttachment', ->
-        return it 'FIXME'
-        it 'upload a stream as an attachment to an existing doc', (done) ->
-            stream = fs.createReadStream 'tests/fixtures/chat-mignon.jpg'
-            @couch.uploadAsAttachment @doc._id, @rev, stream, (err, attached) ->
-                console.log 1, err, attached
+        it 'upload a file as an attachment to an existing doc', (done) ->
+            file = 'tests/fixtures/chat-mignon.jpg'
+            @couch.uploadAsAttachment @doc._id, @rev, file, (err, attached) ->
                 should.not.exist err
                 done()
 
     describe 'downloadBinary', ->
-        it 'creates a readable stream from a remote binary doc'
+        it 'creates a readable stream from a remote binary doc', (done) ->
+            file = 'tests/fixtures/chat-mignon.jpg'
+            @couch.uploadAsAttachment @doc._id, @rev, file, (err, attached) =>
+                should.not.exist err
+                stream = fs.createReadStream file
+                checksum = crypto.createHash 'sha1'
+                checksum.setEncoding 'hex'
+                stream.pipe checksum
+                stream.on 'end', =>
+                    checksum.end()
+                    sha1 = checksum.read()
+                    @couch.downloadBinary @doc._id, (err, stream) ->
+                        should.not.exist err
+                        checksum = crypto.createHash 'sha1'
+                        checksum.setEncoding 'hex'
+                        stream.pipe checksum
+                        stream.on 'end', ->
+                            checksum.end()
+                            checksum.read().should.equal sha1
+                            done()
