@@ -7,16 +7,16 @@ request = require 'request-json-light'
 log     = require('printit')
     prefix: 'Remote CouchDB'
 
-Pouch      = require '../pouch'
-filesystem = require '../local/filesystem'
-conflict   = require '../conflict'
-progress   = require '../progress'
+Pouch = require '../pouch'
 
 
-# TODO add comments
-# TODO use pouch lib instead of request-json-light as couch client
+# Couch is an helper class for communication with a remote couchdb.
+# It uses the pouchdb library for usual stuff, as it helps to deal with errors.
+# But for attachments, pouchdb uses buffers, which is not ideal in node.js
+# because it can takes a lot of memory. So, we prefered to use
+# request-json-light, that can stream data.
 class Couch
-    constructor: (@config, @pouch, @events) ->
+    constructor: (@config, @events) ->
         device  = @config.getDevice()
         options = @config.augmentCouchOptions
             auth:
@@ -30,14 +30,15 @@ class Couch
     get: (id, callback) =>
         @client.get id, callback
 
-    # TODO 409 conflict
+    # Save a document on the remote couch
     put: (doc, callback) =>
         @client.put doc, callback
 
-    # TODO 409 conflict
+    # Delete a document on the remote couch
     remove: (id, rev, callback) =>
         @client.remove id, rev, callback
 
+    # Get the last sequence number from the remote couch
     getLastRemoteChangeSeq: (callback) =>
         log.debug "Getting last remote change sequence number:"
         options =
@@ -59,6 +60,7 @@ class Couch
             else
                 callback new Error 'install files app on cozy'
 
+    # Retrieve documents from a view on the remote couch
     getFromRemoteView: (model, callback) =>
         @pickViewToCopy model, (err, viewName) =>
             return callback err if err
@@ -68,8 +70,7 @@ class Couch
                 console.log 'body', body
                 callback err, body?.rows
 
-    # Create empty binary remotely. It will be used to link file object to
-    # a given binary.
+    # Create an empty binary remotely (it will be used to attach a file on it)
     createEmptyRemoteDoc: (binaryDoc, callback) =>
         data = binaryDoc or {}
         data.docType = 'Binary'
@@ -89,6 +90,7 @@ class Couch
                 callback null, body
         # TODO progress.showUpload filePath, streams.fileStream
 
+    # Give a readable stream of a file stored on the remote couch
     downloadBinary: (binaryId, callback) =>
         url = "cozy/#{binaryId}/file"
         @http.saveFileAsStream url, callback
