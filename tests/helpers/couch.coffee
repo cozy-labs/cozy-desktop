@@ -1,8 +1,11 @@
 async   = require 'async'
 child   = require 'child_process'
+fs      = require 'fs-extra'
+path    = require 'path'
 request = require 'request-json-light'
 
 Couch = require '../../backend/remote/couch'
+
 
 params =
     db:   'cozy'
@@ -10,6 +13,7 @@ params =
     pass: 'cozytest'
     port: 5895
 
+# XXX We use pouchdb-server as a fake couchdb instance for unit tests
 module.exports =
 
     startServer: (done) ->
@@ -17,10 +21,11 @@ module.exports =
         async.waterfall [
             # Start the server
             (next) =>
-                # TODO use tmp as the current working directory
-                bin = "node_modules/.bin/pouchdb-server"
+                bin  = path.resolve "node_modules/.bin/pouchdb-server"
                 args = ["-n", "-m", "-p", "#{params.port}"]
-                @server = child.spawn bin, args
+                opts = cwd: process.env.DEFAULT_DIR
+                fs.ensureDirSync opts.cwd
+                @server = child.spawn bin, args, opts
                 setTimeout next, 1000
 
             # Create a user

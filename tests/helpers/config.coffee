@@ -1,7 +1,7 @@
 EventEmitter = require('events').EventEmitter
-del          = require 'del'
-path         = require 'path'
-mkdirp       = require 'mkdirp'
+fs   = require 'fs-extra'
+del  = require 'del'
+path = require 'path'
 
 Config = require '../../backend/config'
 
@@ -10,7 +10,7 @@ module.exports =
     createConfig: ->
         parent = process.env['DEFAULT_DIR'] or 'tmp'
         @basePath = "#{parent}/#{+new Date}"
-        mkdirp.sync @basePath
+        fs.ensureDirSync @basePath
         @config = new Config @basePath
         @config.devices['tester'] =
             deviceName: 'tester'

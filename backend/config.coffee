@@ -1,8 +1,5 @@
-path      = require 'path-extra'
 fs        = require 'fs-extra'
-touch     = require 'touch'
-process   = require 'process'
-request   = require 'request-json-light'
+path      = require 'path-extra'
 urlParser = require 'url'
 log       = require('printit')
     prefix: 'Config        '
