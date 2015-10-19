@@ -67,7 +67,7 @@ class Local
     # Note: this method is used for adding a new file
     # or replacing an existing one
     addFile: (doc, callback) =>
-        tmpFile  = path.join @tmpPath, doc.path
+        tmpFile  = path.join @tmpPath, doc.name
         parent   = path.resolve @basePath, doc.path
         filePath = path.join parent, doc.name
         checksum = doc.checksum

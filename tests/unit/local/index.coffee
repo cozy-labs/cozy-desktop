@@ -140,7 +140,37 @@ describe 'Local', ->
                 mtime.should.equal +doc.lastModification
                 done()
 
-            it 'preserves the existing file if the download fails'
+        it 'preserves the existing file if the download fails'
+
+        it 'can create a file in the root', (done) ->
+            doc =
+                path: ''
+                name: 'file-in-root'
+                lastModification: new Date '2015-10-09T04:05:19Z'
+                checksum: '987642'
+                binary:
+                    file:
+                        id: '1230'
+            @local.other =
+                createReadStream: (docToStream, callback) ->
+                    docToStream.should.equal doc
+                    stream = new Readable
+                    stream._read = ->
+                    setTimeout ->
+                        stream.push 'foobaz'
+                        stream.push null
+                    , 100
+                    callback null, stream
+            filePath = path.join @basePath, doc.path, doc.name
+            @local.addFile doc, (err) =>
+                @local.other = null
+                should.not.exist err
+                fs.statSync(filePath).isFile().should.be.true()
+                content = fs.readFileSync(filePath, encoding: 'utf-8')
+                content.should.equal 'foobaz'
+                mtime = +fs.statSync(filePath).mtime
+                mtime.should.equal +doc.lastModification
+                done()
 
 
     describe 'addFolder', ->

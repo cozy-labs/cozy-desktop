@@ -1,4 +1,4 @@
-/backend/*.js
+/backend/**/*.js
 /bin/cli.js
 /build
 /cache
