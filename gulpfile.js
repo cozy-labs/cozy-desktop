@@ -12,7 +12,7 @@ var paths = {
   scripts: ['backend/**/*.coffee'],
   scriptsJS: ['bin/cli.js', 'backend/**/*.js'],
   bin: ['bin/cli.js'],
-  tests: ['tests/unit/**/*.coffee'],
+  tests: ['tests/{unit,functional}/**/*.coffee'],
   all: ["backend/**/*.js", "client/public/**", "app.html", "package.json",
         "node_modules/**"]
 };

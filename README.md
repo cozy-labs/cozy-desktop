@@ -88,7 +88,15 @@ To hack the synchronization backend, you can just edit the files under the
 [![Build
 Status](https://travis-ci.org/cozy-labs/cozy-desktop.png?branch=master)](https://travis-ci.org/cozy-labs/cozy-desktop)
 
-Unit tests are easy to launch:
+There are several levels of tests in cozy-desktop:
+
+- unit tests, for testing a class in isolation, method per method
+- functional tests, for testing a behaviour that requires the collaboration of
+  several classes, but still in a mock environment
+- integration tests, to test the communication between cozy-desktop and a
+  remote cozy stack (proxy, data-system, files, etc.)
+
+Unit and functional tests are easy to launch:
 
 ```
 # Make sure to have dev dependencies installed
@@ -105,13 +113,13 @@ DEBUG=true DEFAULT_DIR=tmp mocha --compilers coffee:coffee-script/register tests
 DEBUG=pouchdb:api DEFAULT_DIR=tmp mocha --compilers coffee:coffee-script/register tests/unit/pouch.coffee
 ```
 
-Functional tests require that you have the Cozy dev VM up (it means a
+Integration tests require that you have the Cozy dev VM up (it means a
 data-system and a proxy up and running) and that the files application is
 accessible on the 9121 port. It's also expected that a user is registered with
 `cozytest` as password.
 
 ```
-DEFAULT_DIR=tmp mocha --compilers coffee:coffee-script/register tests/functional/*.coffee
+DEFAULT_DIR=tmp mocha --compilers coffee:coffee-script/register tests/integration/*.coffee
 ```
 
 
