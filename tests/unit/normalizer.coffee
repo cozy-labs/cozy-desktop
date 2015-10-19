@@ -52,6 +52,12 @@ describe 'Normalizer', ->
                 ret = @normalizer.invalidPathOrName path: 'foo/bar', name: 'baz'
                 ret.should.be.false()
 
+            it 'returns false for paths witna  leading slash', ->
+                ret = @normalizer.invalidPathOrName path: '/foo', name: 'baz'
+                ret.should.be.false()
+                ret = @normalizer.invalidPathOrName path: '/foo/baz', name: 'bar'
+                ret.should.be.false()
+
         describe 'invalidChecksum', ->
             it 'returns true if the checksum is missing', ->
                 ret = @normalizer.invalidChecksum {}

@@ -138,22 +138,22 @@ class Sync
     # Let local and remote know that a folder has been added
     folderAdded: (doc, callback) =>
         async.waterfall [
-            (next) => @local.addFile  doc, next
-            (next) => @remote.addFile doc, next
+            (next) => @local.addFolder  doc, next
+            (next) => @remote.addFolder doc, next
         ], callback
 
     # Let local and remote know that a folder has been moved
     folderMoved: (doc, callback) =>
         async.waterfall [
-            (next) => @local.moveFile  doc, next
-            (next) => @remote.moveFile doc, next
+            (next) => @local.moveFolder  doc, next
+            (next) => @remote.moveFolder doc, next
         ], callback
 
     # Let local and remote know that a folder has been deleted
     folderDeleted: (doc, callback) =>
         async.waterfall [
-            (next) => @local.deleteFile  doc, next
-            (next) => @remote.deleteFile doc, next
+            (next) => @local.deleteFolder  doc, next
+            (next) => @remote.deleteFolder doc, next
         ], callback
 
 

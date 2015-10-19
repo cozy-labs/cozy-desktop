@@ -48,6 +48,7 @@ class Normalizer
         doc.path ?= ''
         doc.name ?= ''
         doc.path = '' if doc.path is '.'
+        doc.path = doc.path.replace /^\//, ''
         parents = doc.path.split '/'
         return '..' in parents or
                doc.name is '' or

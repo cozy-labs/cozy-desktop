@@ -84,6 +84,10 @@ class Remote
     # TODO check if the remote folder exists and create it if missing?
     # TODO save infos in pouch
     addFile: (doc, callback) =>
+
+        # FIXME
+        return callback()
+
         async.waterfall [
             # Check if the binary already exists on the server
             (next) =>
@@ -113,6 +117,9 @@ class Remote
     # Create a folder on the remote cozy instance
     # TODO check if the folder already exists before trying to create it?
     addFolder: (doc, callback) =>
+        # FIXME
+        return callback()
+
         @couch.put doc, callback
 
     # Move a file on the remote cozy instance
