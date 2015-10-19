@@ -10,7 +10,7 @@ Watcher = require './watcher'
 class Remote
     constructor: (@config, @normalizer, @pouch, @events) ->
         @couch = new Couch @config, @events
-        @watcher = new Watcher @couch, @normalizer, @pouch, @config
+        @watcher = new Watcher @couch, @normalizer, @pouch
         @other = null
 
     start: (done) =>

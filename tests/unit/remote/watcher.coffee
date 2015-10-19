@@ -20,7 +20,7 @@ describe "RemoteWatcher Tests", ->
     before 'instanciate couch', couchHelpers.createCouchClient
     before 'instanciate remote watcher', ->
         @normalizer = new Normalizer @pouch
-        @watcher    = new Watcher @couch, @normalizer, @pouch, @config
+        @watcher    = new Watcher @couch, @normalizer, @pouch
     after 'stop couch server', couchHelpers.stopServer
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig

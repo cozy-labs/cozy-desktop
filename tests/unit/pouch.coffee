@@ -217,3 +217,48 @@ describe "Pouch", ->
                             should.not.exist err
                             path.should.be.equal 'myfolder/filename-1'
                             done()
+
+
+    describe 'Sequence numbers', ->
+        describe 'getLocalSeq', ->
+            it 'gets 0 when the local seq number is not initialized', (done) ->
+                @pouch.getLocalSeq (err, seq) ->
+                    should.not.exist err
+                    seq.should.equal 0
+                    done()
+
+        describe 'setLocalSeq', ->
+            it 'saves the local sequence number', (done) ->
+                @pouch.setLocalSeq 21, (err) =>
+                    should.not.exist err
+                    @pouch.getLocalSeq (err, seq) =>
+                        should.not.exist err
+                        seq.should.equal 21
+                        @pouch.setLocalSeq 22, (err) =>
+                            should.not.exist err
+                            @pouch.getLocalSeq (err, seq) ->
+                                should.not.exist err
+                                seq.should.equal 22
+                                done()
+
+
+        describe 'getRemoteSeq', ->
+            it 'gets 0 when the remote seq number is not initialized', (done) ->
+                @pouch.getRemoteSeq (err, seq) ->
+                    should.not.exist err
+                    seq.should.equal 0
+                    done()
+
+        describe 'setRemoteSeq', ->
+            it 'saves the remote sequence number', (done) ->
+                @pouch.setRemoteSeq 31, (err) =>
+                    should.not.exist err
+                    @pouch.getRemoteSeq (err, seq) =>
+                        should.not.exist err
+                        seq.should.equal 31
+                        @pouch.setRemoteSeq 32, (err) =>
+                            should.not.exist err
+                            @pouch.getRemoteSeq (err, seq) ->
+                                should.not.exist err
+                                seq.should.equal 32
+                                done()

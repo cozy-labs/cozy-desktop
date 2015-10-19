@@ -7,9 +7,7 @@ Conflict = require '../conflict'
 
 # Watch for changes from the remote couchdb and give them to the normalizer
 class RemoteWatcher
-
-    # TODO remove the config dependency
-    constructor: (@couch, @normalizer, @pouch, @config) ->
+    constructor: (@couch, @normalizer, @pouch) ->
 
     # First time replication
     #
@@ -36,8 +34,7 @@ class RemoteWatcher
                         callback err
                     else
                         log.info 'All your files are available on your device.'
-                        @config.setRemoteSeq seq
-                        callback null, seq
+                        @pouch.setRemoteSeq seq, callback
 
     # Manual replication for a doctype:
     # copy the documents from a remote view to the local pouchdb
@@ -59,22 +56,24 @@ class RemoteWatcher
     # TODO add integration tests
     # TODO use a view instead of a filter
     listenToChanges: (options, callback) =>
-        @changes = @couch.client.changes
-            filter: (doc) ->
-                doc.docType?.toLowerCase() in ['file', 'folder']
-            live: options.live
-            retry: true
-            since: @config.getRemoteSeq()
-            include_docs: true
-        @changes.on 'change', @onChange
-            .on 'error', (err) =>
-                @changes = null
-                log.warn 'An error occured during replication.'
-                log.error err
-                callback err
-            .on 'complete', =>
-                @changes = null
-                callback()
+        @pouch.getRemoteSeq (err, seq) =>
+            return callback err if err
+            @changes = @couch.client.changes
+                filter: (doc) ->
+                    doc.docType?.toLowerCase() in ['file', 'folder']
+                live: options.live
+                retry: true
+                since: seq
+                include_docs: true
+            @changes.on 'change', @onChange
+                .on 'error', (err) =>
+                    @changes = null
+                    log.warn 'An error occured during replication.'
+                    log.error err
+                    callback err
+                .on 'complete', =>
+                    @changes = null
+                    callback()
 
     # Take one change from the changes feed and give it to normalizer.
     # Also, keep track of the sequence number.
@@ -85,7 +84,10 @@ class RemoteWatcher
             @normalizer.deleteDoc change.doc
         else
             @normalizer.putDoc change.doc
-        @config.setRemoteSeq change.seq
+        @pouch.setRemoteSeq change.seq, (err) ->
+            if err
+                log.warn 'An error occured on saving the remote sequence number'
+                log.error err
 
 
 module.exports = RemoteWatcher

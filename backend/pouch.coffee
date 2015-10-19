@@ -190,7 +190,7 @@ class Pouch
                 callback err
 
     # Retrieve a known path from a doc, based on the doc's previous revisions
-    getKnownPath: (doc, callback) ->
+    getKnownPath: (doc, callback) =>
         @getPreviousRev doc._id, (err, res) ->
             if err and err.status isnt 404
                 callback err
@@ -201,6 +201,42 @@ class Pouch
                 log.debug "Unable to find a file/folder path"
                 log.debug res
                 callback null
+
+
+    ### Sequence numbers ###
+
+    # Get last local replication sequence,
+    # ie the last change from pouchdb that have been applied
+    getLocalSeq: (callback) =>
+        @db.get '_local/localSeq', (err, doc) ->
+            if err?.status is 404
+                callback null, 0
+            else
+                callback err, doc?.seq
+
+    # Set last local replication sequence
+    # It is saved in PouchDB as a local document
+    # See http://pouchdb.com/guides/local-documents.html
+    setLocalSeq: (seq, callback) =>
+        @db.get '_local/localSeq', (err, doc) =>
+            @db.put _id: '_local/localSeq', _rev: doc?._rev, seq: seq, callback
+
+
+    # Get last remote replication sequence,
+    # ie the last change from couchdb that have been saved in pouch
+    getRemoteSeq: (callback) =>
+        @db.get '_local/remoteSeq', (err, doc) ->
+            if err?.status is 404
+                callback null, 0
+            else
+                callback err, doc?.seq
+
+    # Set last remote replication sequence
+    # It is saved in PouchDB as a local document
+    # See http://pouchdb.com/guides/local-documents.html
+    setRemoteSeq: (seq, callback) =>
+        @db.get '_local/remoteSeq', (err, doc) =>
+            @db.put _id: '_local/remoteSeq', _rev: doc?._rev, seq: seq, callback
 
 
 # Create a new unique identifier for Pouch/Couch

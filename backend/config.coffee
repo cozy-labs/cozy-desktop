@@ -65,36 +65,6 @@ class Config
         delete @devices[deviceName]
         @save()
 
-    # Set last remote replication sequence in the configuration file.
-    setRemoteSeq: (seq, deviceName) ->
-        deviceName ?= @getDefaultDeviceName()
-        @devices[deviceName].remoteSeq = seq
-        @save()
-
-    # Get last remote replication sequence from the configuration file.
-    getRemoteSeq: (deviceName) ->
-        deviceName ?= @getDefaultDeviceName()
-        if @devices[deviceName].remoteSeq
-            return @devices[deviceName].remoteSeq
-        else
-            @setRemoteSeq 0, deviceName
-            return 0
-
-    # Set last remote replication sequence in the configuration file.
-    setLocalSeq: (seq, deviceName) ->
-        deviceName ?= @getDefaultDeviceName()
-        @devices[deviceName].localSeq = seq
-        @save()
-
-    # Get last remote replication sequence from the configuration file.
-    getLocalSeq: (deviceName) ->
-        deviceName ?= @getDefaultDeviceName()
-        if @devices[deviceName].localSeq
-            return @devices[deviceName].localSeq
-        else
-            @setLocalSeq 0, deviceName
-            return 0
-
     # Get Couch URL for given device name.
     getUrl: (deviceName) ->
         deviceName ?= @getDefaultDeviceName()

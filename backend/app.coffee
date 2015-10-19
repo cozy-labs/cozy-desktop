@@ -88,7 +88,7 @@ class App
         @normalizer = new Normalizer @pouch
         @local      = new Local  @config, @normalizer, @pouch, @events
         @remote     = new Remote @config, @normalizer, @pouch, @events
-        @sync       = new Sync @config, @pouch, @local, @remote, @events
+        @sync       = new Sync @pouch, @local, @remote, @events
         device      = @config.getDevice()
         if device.deviceName? and device.url? and device.path?
             log.info 'Run first synchronisation...'

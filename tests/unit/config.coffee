@@ -59,30 +59,6 @@ describe 'Config', ->
             @config.removeRemoteCozy 'tester'
             should.not.exist @config.devices['tester']
 
-    describe 'setRemoteSeq', ->
-        it 'saves seq field on default deviceName', ->
-            @config.setRemoteSeq 3
-            device = @config.getDevice()
-            should.exist device.remoteSeq
-            device.remoteSeq.should.equal 3
-
-    describe 'getRemoteSeq', ->
-        it 'gets seq field on default deviceName', ->
-            @config.setRemoteSeq 3
-            @config.getRemoteSeq().should.equal 3
-
-    describe 'setLocalSeq', ->
-        it 'saves seq field on default deviceName', ->
-            @config.setLocalSeq 4
-            device = @config.getDevice()
-            should.exist device.localSeq
-            device.localSeq.should.equal 4
-
-    describe 'getLocalSeq', ->
-        it 'gets seq field on default deviceName', ->
-            @config.setLocalSeq 4
-            @config.getLocalSeq().should.equal 4
-
     describe 'getUrl', ->
         it 'gives remote Cozy url', ->
             @config.getUrl().should.equal 'nonecozy'

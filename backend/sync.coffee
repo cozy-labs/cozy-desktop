@@ -5,8 +5,7 @@ log   = require('printit')
 
 class Sync
 
-    # TODO remove @config and store local seq in pouch
-    constructor: (@config, @pouch, @local, @remote, @events) ->
+    constructor: (@pouch, @local, @remote, @events) ->
         @local.other = @remote
         @remote.other = @local
 
@@ -48,17 +47,19 @@ class Sync
     #
     # TODO look also to the retry queue for failures
     pop: (callback) =>
-        opts =
-            live: true
-            since: @config.getLocalSeq()
-            include_docs: true
-            returnDocs: false
-        @pouch.db.changes(opts)
-            .on 'change', (info) ->
-                @cancel()
-                callback null, info
-            .on 'error',  (err) ->
-                callback err, null
+        @pouch.getLocalSeq (err, seq) =>
+            return callback err if err
+            opts =
+                live: true
+                since: seq
+                include_docs: true
+                returnDocs: false
+            @pouch.db.changes(opts)
+                .on 'change', (info) ->
+                    @cancel()
+                    callback null, info
+                .on 'error',  (err) ->
+                    callback err, null
 
     # Return a boolean to indicate if this is a design or local document
     isSpecial: (doc) ->
@@ -74,8 +75,10 @@ class Sync
     apply: (change, callback) =>
         log.debug 'apply', change
         cb = (err) =>
-            @config.setLocalSeq change.seq
-            callback err
+            if err
+                callback err
+            else
+                @pouch.setLocalSeq change.seq, callback
         doc = change.doc
         docType = doc.docType?.toLowerCase?()
         switch

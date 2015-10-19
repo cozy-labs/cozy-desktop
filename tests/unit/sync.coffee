@@ -21,7 +21,7 @@ describe "Sync", ->
         beforeEach 'instanciate sync', ->
             @local  = start: sinon.stub().yields()
             @remote = start: sinon.stub().yields()
-            @sync = new Sync @config, @pouch, @local, @remote, @events
+            @sync = new Sync @pouch, @local, @remote, @events
             @sync.sync = sinon.stub().yields 'stopped'
 
         it 'starts the metadata replication of remote in readonly', (done) ->
@@ -61,7 +61,7 @@ describe "Sync", ->
         beforeEach ->
             @local = {}
             @remote = {}
-            @sync = new Sync @config, @pouch, @local, @remote
+            @sync = new Sync @pouch, @local, @remote
             @sync.apply = sinon.stub().yields()
 
         it 'calls pop and apply', (done) ->
@@ -82,30 +82,32 @@ describe "Sync", ->
                 done()
 
     describe 'pop', ->
-        beforeEach ->
+        beforeEach (done) ->
             @local = {}
             @remote = {}
-            @sync = new Sync @config, @pouch, @local, @remote
+            @sync = new Sync @pouch, @local, @remote
             @pouch.db.changes().on 'complete', (info) =>
-                @config.setLocalSeq info.last_seq
+                @pouch.setLocalSeq info.last_seq, done
 
         it 'gives the next change if there is already one', (done) ->
             pouchHelpers.createFile @pouch, 1, (err) =>
                 should.not.exist err
                 @sync.pop (err, change) =>
                     should.not.exist err
-                    change.should.have.properties
-                        id: 'file-1'
-                        seq: @config.getLocalSeq() + 1
-                    change.doc.should.have.properties
-                        docType: 'file'
-                        path: 'myfolder'
-                        name: "filename-1"
-                        tags: []
-                        binary:
-                            file:
-                                id: "binary-1"
-                    done()
+                    @pouch.getLocalSeq (err, seq) ->
+                        should.not.exist err
+                        change.should.have.properties
+                            id: 'file-1'
+                            seq: seq + 1
+                        change.doc.should.have.properties
+                            docType: 'file'
+                            path: 'myfolder'
+                            name: "filename-1"
+                            tags: []
+                            binary:
+                                file:
+                                    id: "binary-1"
+                        done()
 
         it 'gives only one change', (done) ->
             async.eachSeries [2..5], (i, callback) =>
@@ -124,18 +126,20 @@ describe "Sync", ->
             @sync.pop (err, change) =>
                 spy()
                 should.not.exist err
-                change.should.have.properties
-                    id: 'file-6'
-                    seq: @config.getLocalSeq() + 1
-                change.doc.should.have.properties
-                    docType: 'file'
-                    path: 'myfolder'
-                    name: "filename-6"
-                    tags: []
-                    binary:
-                        file:
-                            id: "binary-6"
-                done()
+                @pouch.getLocalSeq (err, seq) ->
+                    should.not.exist err
+                    change.should.have.properties
+                        id: 'file-6'
+                        seq: seq + 1
+                    change.doc.should.have.properties
+                        docType: 'file'
+                        path: 'myfolder'
+                        name: "filename-6"
+                        tags: []
+                        binary:
+                            file:
+                                id: "binary-6"
+                    done()
             setTimeout =>
                 spy.called.should.be.false()
                 pouchHelpers.createFile @pouch, 6, (err) ->
@@ -146,7 +150,7 @@ describe "Sync", ->
         beforeEach ->
             @local = {}
             @remote = {}
-            @sync = new Sync @config, @pouch, @local, @remote
+            @sync = new Sync @pouch, @local, @remote
 
         it 'returns true for a design document', (done) ->
             @pouch.db.get '_design/file', (err, doc) =>
