@@ -91,6 +91,24 @@ class Normalizer
                         @pouch.db.remove doc, next
                 , callback
 
+    # Simple helper to create a file or a folder
+    putDoc: (doc, callback) =>
+        if doc.docType is 'file'
+            @putFile doc, callback
+        else if doc.docType is 'folder'
+            @putFolder doc, callback
+        else
+            callback "Unexpected docType: #{doc.docType}"
+
+    # Simple helper to delete a file or a folder
+    deleteDoc: (doc, callback) =>
+        if doc.docType is 'file'
+            @deleteFile doc, callback
+        else if doc.docType is 'folder'
+            @deleteFolder doc, callback
+        else
+            callback "Unexpected docType: #{doc.docType}"
+
 
     ### Actions ###
 

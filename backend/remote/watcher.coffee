@@ -5,12 +5,20 @@ log   = require('printit')
 Conflict = require '../conflict'
 
 
+# Watch for changes from the remote couchdb and give them to the normalizer
 class RemoteWatcher
+
+    # TODO remove the config dependency
     constructor: (@couch, @normalizer, @pouch, @config) ->
 
-    # First time replication:
-    # * Match local FS with remote Cozy FS
-    # * Set starting sequence at last remote sequence
+    # First time replication
+    #
+    # Filtered replication or changes feed is slow with a lot of documents and
+    # revisions. We prefer to copy manually these documents for the initial
+    # replication.
+    #
+    # TODO use a single view
+    # TODO add integration tests
     initialReplication: (callback) ->
         @couch.getLastRemoteChangeSeq (err, seq) =>
             if err
@@ -18,9 +26,6 @@ class RemoteWatcher
                 log.error err
                 callback err
             else
-                # Filtered replication is slow with a lot of documents.
-                # So, we prefer to copy manually these documents for the
-                # initial replication.
                 async.series [
                     (next) => @copyDocsFromRemoteView 'folder', next
                     (next) => @copyDocsFromRemoteView 'file', next
@@ -40,11 +45,8 @@ class RemoteWatcher
         @couch.getFromRemoteView model, (err, rows) =>
             return callback err  if err
             return callback null unless rows?.length
-            async.eachSeries rows, (doc, cb) =>
-                doc = doc.value
-                # TODO use Normalizer
-                # XXX new_edits: false is used to preserve the _rev from couch
-                @pouch.db.put doc, new_edits: false, (err) ->
+            async.eachSeries rows, (row, cb) =>
+                @normalizer.putDoc row.value, (err) ->
                     if err
                         log.error 'Failed to copy one doc'
                         log.error err
@@ -53,40 +55,37 @@ class RemoteWatcher
                 log.debug "#{rows.length} docs retrieved for #{model}."
                 callback err
 
-    # Start metadata sync with remote (live filtered replication)
-    # TODO remove replication and use normalizer
-    startReplication: =>
-        if @replicator
-            log.error "Replication is already running"
-            return
-
-        options = @config.augmentCouchOptions
+    # Listen to the Couchdb changes feed for files and folders updates
+    # TODO add integration tests
+    # TODO use a view instead of a filter
+    listenToChanges: (options, callback) =>
+        @changes = @couch.client.changes
             filter: (doc) ->
-                doc.docType?.toLowerCase() is 'Folder' or
-                doc.docType?.toLowerCase() is 'File'
-            live: true
+                doc.docType?.toLowerCase() in ['file', 'folder']
+            live: options.live
             retry: true
             since: @config.getRemoteSeq()
-
-        @replicator = @pouch.db.replicate.from @couch.url, options
-            .on 'change', (info) ->
-                # TODO save seq number to config
-                console.log 'Change', info
+            include_docs: true
+        @changes.on 'change', @onChange
             .on 'error', (err) =>
-                if err?.status is 409
-                    Conflict.display err, info
-                    log.error "Conflict, ignoring"
-                else
-                    log.warn 'An error occured during replication.'
-                    log.error err
-                    log.warn 'Try to reconnect in 5s...'
-                    @replicator = null
-                    setTimeout @startReplication, 5000
+                @changes = null
+                log.warn 'An error occured during replication.'
+                log.error err
+                callback err
+            .on 'complete', =>
+                @changes = null
+                callback()
 
-    # Stop the live replication
-    stopReplication: ->
-        @replicator?.cancel()
-        @replicator = null
+    # Take one change from the changes feed and give it to normalizer.
+    # Also, keep track of the sequence number.
+    # TODO add unit tests
+    onChange: (change) =>
+        # TODO move
+        if change.deleted
+            @normalizer.deleteDoc change.doc
+        else
+            @normalizer.putDoc change.doc
+        @config.setRemoteSeq change.seq
 
 
 module.exports = RemoteWatcher

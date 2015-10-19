@@ -150,6 +150,56 @@ describe 'Normalizer', ->
                         names.sort().should.eql ['baz', 'quux', 'qux']
                         done()
 
+        describe 'putDoc', ->
+            it 'calls putFile for a file', (done) ->
+                doc =
+                    _id: Pouch.newId()
+                    docType: 'file'
+                    path: 'parent'
+                    name: 'name'
+                @normalizer.putFile = sinon.stub().yields null
+                @normalizer.putDoc doc, (err) =>
+                    should.not.exist err
+                    @normalizer.putFile.calledWith(doc).should.be.true()
+                    done()
+
+            it 'calls putFolder for a folder', (done) ->
+                doc =
+                    _id: Pouch.newId()
+                    docType: 'folder'
+                    path: 'parent'
+                    name: 'name'
+                @normalizer.putFolder = sinon.stub().yields null
+                @normalizer.putDoc doc, (err) =>
+                    should.not.exist err
+                    @normalizer.putFolder.calledWith(doc).should.be.true()
+                    done()
+
+        describe 'deleteDoc', ->
+            it 'calls deleteFile for a file', (done) ->
+                doc =
+                    _id: Pouch.newId()
+                    docType: 'file'
+                    path: 'parent'
+                    name: 'name'
+                @normalizer.deleteFile = sinon.stub().yields null
+                @normalizer.deleteDoc doc, (err) =>
+                    should.not.exist err
+                    @normalizer.deleteFile.calledWith(doc).should.be.true()
+                    done()
+
+            it 'calls deleteFolder for a folder', (done) ->
+                doc =
+                    _id: Pouch.newId()
+                    docType: 'folder'
+                    path: 'parent'
+                    name: 'name'
+                @normalizer.deleteFolder = sinon.stub().yields null
+                @normalizer.deleteDoc doc, (err) =>
+                    should.not.exist err
+                    @normalizer.deleteFolder.calledWith(doc).should.be.true()
+                    done()
+
 
     describe 'Actions', ->
 

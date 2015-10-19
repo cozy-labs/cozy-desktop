@@ -14,9 +14,9 @@ class Remote
         @other = null
 
     start: (done) =>
-        @watcher.initialReplication (err) =>
+        @watcher.listenToChanges live: false, (err) =>
             done err
-            @watcher.startReplication() unless err
+            @watcher.listenToChanges live: true unless err
 
     createReadStream: (doc, callback) =>
         @couch.downloadBinary doc.binary.file.id, callback
