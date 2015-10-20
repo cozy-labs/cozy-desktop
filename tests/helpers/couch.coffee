@@ -26,7 +26,7 @@ module.exports =
                 opts = cwd: process.env.DEFAULT_DIR
                 fs.ensureDirSync opts.cwd
                 @server = child.spawn bin, args, opts
-                setTimeout next, 1000
+                setTimeout next, 500
 
             # Create a user
             (next) ->
@@ -36,7 +36,9 @@ module.exports =
                     type: "user"
                     roles: []
                     password: params.pass
-                client.put "_users/#{params.user}", options, (err) -> next err
+                async.retry times: 10, interval: 250, (cb) ->
+                    client.put "_users/#{params.user}", options, cb
+                , (err) -> next err
 
             # Create a database
             (next) ->
