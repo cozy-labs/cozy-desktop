@@ -99,7 +99,7 @@ class Normalizer
         else if doc.docType is 'folder'
             @putFolder doc, callback
         else
-            callback "Unexpected docType: #{doc.docType}"
+            callback? "Unexpected docType: #{doc.docType}"
 
     # Simple helper to delete a file or a folder
     deleteDoc: (doc, callback) =>
@@ -108,7 +108,7 @@ class Normalizer
         else if doc.docType is 'folder'
             @deleteFolder doc, callback
         else
-            callback "Unexpected docType: #{doc.docType}"
+            callback? "Unexpected docType: #{doc.docType}"
 
 
     ### Actions ###
@@ -236,7 +236,7 @@ class Normalizer
                 else if doc.fullpath
                     @pouch.getFile doc.fullpath, next
                 else
-                    callback 'Invalid call to deleteFile'
+                    next 'Invalid call to deleteFile'
 
             # Delete it
             (file, next) =>
@@ -263,7 +263,7 @@ class Normalizer
                 else if doc.fullpath
                     @pouch.getFolder doc.fullpath, next
                 else
-                    callback 'Invalid call to deleteFolder'
+                    next 'Invalid call to deleteFolder'
 
             # Delete everything inside this folder
             (folder, next) =>

@@ -81,13 +81,19 @@ class RemoteWatcher
     onChange: (change) =>
         # TODO move
         if change.deleted
-            @normalizer.deleteDoc change.doc
+            @normalizer.deleteDoc change.doc, @changed(change)
         else
-            @normalizer.putDoc change.doc
-        @pouch.setRemoteSeq change.seq, (err) ->
+            @normalizer.putDoc change.doc, @changed(change)
+
+    changed: (change) =>
+        (err) =>
             if err
-                log.warn 'An error occured on saving the remote sequence number'
                 log.error err
+            else
+                @pouch.setRemoteSeq change.seq, (err) ->
+                    if err
+                        log.warn 'Cannot save the remote sequence number'
+                        log.error err
 
 
 module.exports = RemoteWatcher
