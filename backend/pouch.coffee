@@ -1,6 +1,6 @@
 PouchDB = require 'pouchdb'
-path    = require 'path-extra'
 async   = require 'async'
+path    = require 'path-extra'
 uuid    = require 'node-uuid'
 log     = require('printit')
     prefix: 'Local Pouchdb '
@@ -18,6 +18,15 @@ class Pouch
         # TODO Listener memory leak fix -> still necessary?
         @db.setMaxListeners 100
         # TODO addAllViews?
+        @updater = async.queue (task, callback) =>
+            @db.get task._id, (err, doc) =>
+                if err?.status is 404
+                    @db.put task, callback
+                else if err
+                    callback err
+                else
+                    task._rev = doc._rev
+                    @db.put task, callback
 
     # Create database and recreate all filters
     resetDatabase: (callback) =>
@@ -218,9 +227,11 @@ class Pouch
     # It is saved in PouchDB as a local document
     # See http://pouchdb.com/guides/local-documents.html
     setLocalSeq: (seq, callback) =>
-        @db.get '_local/localSeq', (err, doc) =>
-            @db.put _id: '_local/localSeq', _rev: doc?._rev, seq: seq, callback
-
+        task =
+            _id: '_local/localSeq'
+            _rev: doc?._rev
+            seq: seq
+        @updater.push task, callback
 
     # Get last remote replication sequence,
     # ie the last change from couchdb that have been saved in pouch
@@ -235,8 +246,10 @@ class Pouch
     # It is saved in PouchDB as a local document
     # See http://pouchdb.com/guides/local-documents.html
     setRemoteSeq: (seq, callback) =>
-        @db.get '_local/remoteSeq', (err, doc) =>
-            @db.put _id: '_local/remoteSeq', _rev: doc?._rev, seq: seq, callback
+        task =
+            _id: '_local/remoteSeq'
+            seq: seq
+        @updater.push task, callback
 
 
 # Create a new unique identifier for Pouch/Couch

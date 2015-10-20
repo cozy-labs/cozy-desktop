@@ -262,3 +262,8 @@ describe "Pouch", ->
                                 should.not.exist err
                                 seq.should.equal 32
                                 done()
+
+            it 'can be called multiple times in parallel', (done) ->
+                async.each [1..100], @pouch.setRemoteSeq, (err) ->
+                    should.not.exist err
+                    done()
