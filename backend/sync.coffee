@@ -99,7 +99,7 @@ class Sync
                 else
                     @folderMoved doc, cb
             else
-                cb "Unknown doctype: #{doc.docType}"
+                cb new Error "Unknown doctype: #{doc.docType}"
 
     # If a file has been changed, we had to check the previous rev from pouch
     # to decide if it's a new file that has been added, or a move/rename

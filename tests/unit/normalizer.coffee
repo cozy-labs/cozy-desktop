@@ -212,7 +212,8 @@ describe 'Normalizer', ->
         describe 'putFile', ->
             it 'expects a doc with a valid path and name', (done) ->
                 @normalizer.putFile path: 'foo', name: null, (err) ->
-                    err.should.equal 'Invalid path or name'
+                    should.exist err
+                    err.message.should.equal 'Invalid path or name'
                     done()
 
             it 'expects a doc with a checksum', (done) ->
@@ -221,7 +222,8 @@ describe 'Normalizer', ->
                     name: 'bar'
                     checksum: ''
                 @normalizer.putFile doc, (err) ->
-                    err.should.equal 'Invalid checksum'
+                    should.exist err
+                    err.message.should.equal 'Invalid checksum'
                     done()
 
             it 'saves the new file', (done) ->
@@ -262,7 +264,8 @@ describe 'Normalizer', ->
         describe 'putFolder', ->
             it 'expects a doc with a valid path and name', (done) ->
                 @normalizer.putFolder path: 'foo', name: null, (err) ->
-                    err.should.equal 'Invalid path or name'
+                    should.exist err
+                    err.message.should.equal 'Invalid path or name'
                     done()
 
             it 'saves the new folder', (done) ->
@@ -301,12 +304,14 @@ describe 'Normalizer', ->
         describe 'moveFile', ->
             it 'expects a doc with an id', (done) ->
                 @normalizer.moveFile path: 'foo', name: 'bar', (err) ->
-                    err.should.equal 'Missing id'
+                    should.exist err
+                    err.message.should.equal 'Missing id'
                     done()
 
             it 'expects a doc with the file docType', (done) ->
                 @normalizer.moveFile _id: '123', docType: 'folder', (err) ->
-                    err.should.equal 'Invalid docType'
+                    should.exist err
+                    err.message.should.equal 'Invalid docType'
                     done()
 
             it 'expects a doc with a valid path and name', (done) ->
@@ -316,7 +321,8 @@ describe 'Normalizer', ->
                     path: '..'
                     name: ''
                 @normalizer.moveFile doc, (err) ->
-                    err.should.equal 'Invalid path or name'
+                    should.exist err
+                    err.message.should.equal 'Invalid path or name'
                     done()
 
             it 'expects a doc with a valid checksum', (done) ->
@@ -327,7 +333,8 @@ describe 'Normalizer', ->
                     name: 'bar'
                     checksum: 'invalid'
                 @normalizer.moveFile doc, (err) ->
-                    err.should.equal 'Invalid checksum'
+                    should.exist err
+                    err.message.should.equal 'Invalid checksum'
                     done()
 
             it 'saves the moved file', (done) ->
@@ -348,12 +355,14 @@ describe 'Normalizer', ->
         describe 'moveFolder', ->
             it 'expects a doc with an id', (done) ->
                 @normalizer.moveFolder path: 'foo', name: 'bar', (err) ->
-                    err.should.equal 'Missing id'
+                    should.exist err
+                    err.message.should.equal 'Missing id'
                     done()
 
             it 'expects a doc with the folder docType', (done) ->
                 @normalizer.moveFolder _id: '123', docType: 'file', (err) ->
-                    err.should.equal 'Invalid docType'
+                    should.exist err
+                    err.message.should.equal 'Invalid docType'
                     done()
 
             it 'expects a doc with a valid path and name', (done) ->
@@ -363,7 +372,8 @@ describe 'Normalizer', ->
                     path: '..'
                     name: ''
                 @normalizer.moveFolder doc, (err) ->
-                    err.should.equal 'Invalid path or name'
+                    should.exist err
+                    err.message.should.equal 'Invalid path or name'
                     done()
 
             it 'saves the moved folder', (done) ->

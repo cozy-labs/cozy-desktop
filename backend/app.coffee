@@ -30,7 +30,7 @@ class App
     #
     # callback is a function that takes two parameters: error and password
     askPassword: (callback) ->
-        callback 'Not implemented', null
+        callback new Error('Not implemented'), null
 
 
     # Register current device to remote Cozy and then save related informations
@@ -95,6 +95,7 @@ class App
             @sync.start mode, (err) ->
                 if err
                     log.error err
+                    log.error err.stack if err.stack
                     process.exit 1  # TODO don't exit for GUI
         else
             log.error 'No configuration found, please run add-remote-cozy' +

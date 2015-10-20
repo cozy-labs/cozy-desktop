@@ -67,7 +67,6 @@ class Couch
             log.debug "Getting latest #{model} documents from remote"
             id = "_design/#{model}/_view/#{viewName}/"
             @client.get id, (err, body) ->
-                console.log 'body', body
                 callback err, body?.rows
 
     # Create an empty binary remotely (it will be used to attach a file on it)

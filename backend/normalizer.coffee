@@ -99,7 +99,7 @@ class Normalizer
         else if doc.docType is 'folder'
             @putFolder doc, callback
         else
-            callback? "Unexpected docType: #{doc.docType}"
+            callback? new Error "Unexpected docType: #{doc.docType}"
 
     # Simple helper to delete a file or a folder
     deleteDoc: (doc, callback) =>
@@ -108,7 +108,7 @@ class Normalizer
         else if doc.docType is 'folder'
             @deleteFolder doc, callback
         else
-            callback? "Unexpected docType: #{doc.docType}"
+            callback? new Error "Unexpected docType: #{doc.docType}"
 
 
     ### Actions ###
@@ -126,10 +126,10 @@ class Normalizer
     putFile: (doc, callback) ->
         if @invalidPathOrName doc
             log.warn "Invalid path or name: #{JSON.stringify doc, null, 2}"
-            callback? 'Invalid path or name'
+            callback? new Error 'Invalid path or name'
         else if @invalidChecksum doc
             log.warn "Invalid checksum: #{JSON.stringify doc, null, 2}"
-            callback? 'Invalid checksum'
+            callback? new Error 'Invalid checksum'
         else
             doc._id              ?= Pouch.newId()
             doc.docType           = 'file'
@@ -154,7 +154,7 @@ class Normalizer
     putFolder: (doc, callback) ->
         if @invalidPathOrName doc
             log.warn "Invalid path or name: #{JSON.stringify doc, null, 2}"
-            callback? 'Invalid path or name'
+            callback? new Error 'Invalid path or name'
         else
             doc._id              ?= Pouch.newId()
             doc.docType           = 'folder'
@@ -178,16 +178,16 @@ class Normalizer
     moveFile: (doc, callback) ->
         if not doc._id
             log.warn "Missing _id: #{JSON.stringify doc, null, 2}"
-            callback? 'Missing id'
+            callback? new Error 'Missing id'
         else if doc.docType isnt 'file'
             log.warn "Invalid docType: #{JSON.stringify doc, null, 2}"
-            callback? 'Invalid docType'
+            callback? new Error 'Invalid docType'
         else if @invalidPathOrName doc
             log.warn "Invalid path or name: #{JSON.stringify doc, null, 2}"
-            callback? 'Invalid path or name'
+            callback? new Error 'Invalid path or name'
         else if @invalidChecksum doc
             log.warn "Invalid checksum: #{JSON.stringify doc, null, 2}"
-            callback? 'Invalid checksum'
+            callback? new Error 'Invalid checksum'
         else
             @ensureFolderExist doc, =>
                 @pouch.db.put doc, (err) ->
@@ -208,13 +208,13 @@ class Normalizer
     moveFolder: (doc, callback) ->
         if not doc._id
             log.warn "Missing _id: #{JSON.stringify doc, null, 2}"
-            callback? 'Missing id'
+            callback? new Error 'Missing id'
         else if doc.docType isnt 'folder'
             log.warn "Invalid docType: #{JSON.stringify doc, null, 2}"
-            callback? 'Invalid docType'
+            callback? new Error 'Invalid docType'
         else if @invalidPathOrName doc
             log.warn "Invalid path or name: #{JSON.stringify doc, null, 2}"
-            callback? 'Invalid path or name'
+            callback? new Error 'Invalid path or name'
         else
             @ensureFolderExist doc, =>
                 @pouch.db.put doc, (err) ->
@@ -236,7 +236,7 @@ class Normalizer
                 else if doc.fullpath
                     @pouch.getFile doc.fullpath, next
                 else
-                    next 'Invalid call to deleteFile'
+                    next new Error 'Invalid call to deleteFile'
 
             # Delete it
             (file, next) =>
@@ -263,7 +263,7 @@ class Normalizer
                 else if doc.fullpath
                     @pouch.getFolder doc.fullpath, next
                 else
-                    next 'Invalid call to deleteFolder'
+                    next new Error 'Invalid call to deleteFolder'
 
             # Delete everything inside this folder
             (folder, next) =>

@@ -48,9 +48,9 @@ module.exports =
             else if err
                 callback err
             else if body.error?
-                callback body.error
+                callback new Error body.error
             else
-                callback "Something went wrong (#{res.statusCode})"
+                callback new Error "Something went wrong (#{res.statusCode})"
 
 
     # Get useful information about the disk space

@@ -15,11 +15,11 @@ class Local
         @other = null
 
     start: (done) ->
-        fs.ensureDir @basePath, ->
-            watcher.start done
+        fs.ensureDir @basePath, =>
+            @watcher.start done
 
     createReadStream: (doc, callback) ->
-        callback 'TODO'
+        callback new Error 'TODO'
 
 
     ### Helpers ###
@@ -130,12 +130,14 @@ class Local
                             fs.rename oldPath, newPath, next
                     else
                         log.error "File #{oldPath} not found and can't be moved"
-                        next "#{oldPath} not found"
+                        next new Error "#{oldPath} not found"
 
             @utimesUpdater(doc, newPath)
 
         ], (err) =>
             if err
+                log.error "Error while moving #{JSON.stringify doc, null, 2}"
+                log.error JSON.stringify old, null, 2
                 log.error err
                 @addFile doc, callback
             else
@@ -157,14 +159,14 @@ class Local
                     fs.exists oldPath, (oldPathExists) ->
                         next null, oldPathExists
                 else
-                    next "Can't move, no previous folder known"
+                    next new Error "Can't move, no previous folder known"
 
             (oldPathExists, next) ->
                 if oldPathExists
                     fs.exists newPath, (newPathExists) ->
                         next null, newPathExists
                 else
-                    next "Folder #{oldPath} not found and can't be moved"
+                    next new Error "Folder #{oldPath} can't be moved: not found"
 
             (newPathExists, next) =>
                 if newPathExists
@@ -180,6 +182,7 @@ class Local
             @utimesUpdater(doc, newPath)
 
         ], (err) =>
+            log.error "Error while moving #{JSON.stringify doc, null, 2}"
             log.error err
             @addFolder doc, callback
 
