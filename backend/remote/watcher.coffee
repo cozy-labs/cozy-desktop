@@ -89,6 +89,7 @@ class RemoteWatcher
         (err) =>
             if err
                 log.error err
+                log.debug change
             else
                 @pouch.setRemoteSeq change.seq, (err) ->
                     if err

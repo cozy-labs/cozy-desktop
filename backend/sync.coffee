@@ -93,11 +93,8 @@ class Sync
             when docType is 'folder'
                 if change.deleted
                     @folderDeleted doc, cb
-                # TODO use the same strategy as for files
-                else if doc.lastModification <= doc.creationDate
-                    @folderAdded doc, cb
                 else
-                    @folderMoved doc, cb
+                    @folderChanged doc, cb
             else
                 cb new Error "Unknown doctype: #{doc.docType}"
 
@@ -113,6 +110,18 @@ class Sync
                 @fileAdded doc, callback
             else
                 @fileMoved doc, old, callback
+
+    # Same as fileChanged, but for folder
+    folderChanged: (doc, callback) =>
+        @pouch.getPreviousRev doc._id, (err, old) =>
+            if err or not old
+                @folderAdded doc, callback
+            else if old.name? and old.path? and
+                    old.name is doc.name and
+                    old.path is doc.path
+                @folderAdded doc, callback
+            else
+                @folderMoved doc, old, callback
 
     # Let local and remote know that a file has been added
     fileAdded: (doc, callback) =>
