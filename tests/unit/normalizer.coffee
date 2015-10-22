@@ -1,4 +1,5 @@
 async  = require 'async'
+clone  = require 'lodash.clone'
 sinon  = require 'sinon'
 should = require 'should'
 
@@ -55,7 +56,7 @@ describe 'Normalizer', ->
             it 'returns false for paths witna  leading slash', ->
                 ret = @normalizer.invalidPathOrName path: '/foo', name: 'baz'
                 ret.should.be.false()
-                ret = @normalizer.invalidPathOrName path: '/foo/baz', name: 'bar'
+                ret = @normalizer.invalidPathOrName path: '/foo/baz', name: 'ba'
                 ret.should.be.false()
 
         describe 'invalidChecksum', ->
@@ -84,9 +85,9 @@ describe 'Normalizer', ->
                 ret = @normalizer.invalidChecksum doc
                 ret.should.be.false()
 
-        describe 'ensureFolderExist', ->
+        describe 'ensureParentExist', ->
             it 'works when in the root folder', (done) ->
-                @normalizer.ensureFolderExist path: '', name: 'foo', (err) ->
+                @normalizer.ensureParentExist path: '', name: 'foo', (err) ->
                     should.not.exist err
                     done()
 
@@ -103,13 +104,13 @@ describe 'Normalizer', ->
                     name: 'b'
                 @pouch.db.put doc, (err) =>
                     should.not.exist err
-                    @normalizer.ensureFolderExist child, (err) ->
+                    @normalizer.ensureParentExist child, (err) ->
                         should.not.exist err
                         done()
 
             it 'creates the parent directory if missing', (done) ->
                 @normalizer.putFolder = sinon.stub().yields null, 'OK'
-                @normalizer.ensureFolderExist path: 'bar', name: 'c', (err) =>
+                @normalizer.ensureParentExist path: 'bar', name: 'c', (err) =>
                     should.not.exist err
                     @normalizer.putFolder.called.should.be.true()
                     parent = path: '.', name: 'bar'
@@ -227,7 +228,7 @@ describe 'Normalizer', ->
                     done()
 
             it 'saves the new file', (done) ->
-                @normalizer.ensureFolderExist = sinon.stub().yields null
+                @normalizer.ensureParentExist = sinon.stub().yields null
                 doc =
                     _id: Pouch.newId()
                     path: 'foo'
@@ -245,7 +246,7 @@ describe 'Normalizer', ->
                         done()
 
             it 'adds missing fields', (done) ->
-                @normalizer.ensureFolderExist = sinon.stub().yields null
+                @normalizer.ensureParentExist = sinon.stub().yields null
                 doc =
                     path: 'foo'
                     name: 'bar'
@@ -269,7 +270,7 @@ describe 'Normalizer', ->
                     done()
 
             it 'saves the new folder', (done) ->
-                @normalizer.ensureFolderExist = sinon.stub().yields null
+                @normalizer.ensureParentExist = sinon.stub().yields null
                 doc =
                     _id: Pouch.newId()
                     path: 'foo'
@@ -286,7 +287,7 @@ describe 'Normalizer', ->
                         done()
 
             it 'adds missing fields', (done) ->
-                @normalizer.ensureFolderExist = sinon.stub().yields null
+                @normalizer.ensureParentExist = sinon.stub().yields null
                 doc =
                     path: 'foo'
                     name: 'bar'
@@ -300,6 +301,48 @@ describe 'Normalizer', ->
                         should.exist res.creationDate
                         should.exist res.lastModification
                         done()
+
+            describe 'when a folder with the same path exists', ->
+                before 'create a folder', (done) ->
+                    @folder =
+                        _id: Pouch.newId()
+                        path: ''
+                        name: 'fizz'
+                        docType: 'folder'
+                        creationDate: (new Date).toString()
+                        lastModification: (new Date).toString()
+                        tags: ['foo']
+                    @pouch.db.put @folder, done
+
+                it 'can update the tags and last modification date', (done) ->
+                    @normalizer.ensureParentExist = sinon.stub().yields null
+                    doc = clone @folder
+                    doc.tags = ['bar', 'baz']
+                    doc.lastModification = (new Date).toString()
+                    @normalizer.putFolder clone(doc), (err) =>
+                        should.not.exist err
+                        @pouch.db.get doc._id, (err, res) ->
+                            should.not.exist err
+                            res.should.have.properties doc
+                            done()
+
+                it 'can resolve a conflict', (done) ->
+                    @normalizer.ensureParentExist = sinon.stub().yields null
+                    doc =
+                        _id: Pouch.newId()
+                        path: ''
+                        name: 'fizz'
+                        docType: 'folder'
+                        tags: ['bar', 'baz']
+                    @normalizer.putFolder clone(doc), (err) =>
+                        should.not.exist err
+                        expected = doc
+                        expected._id = @folder._id
+                        @pouch.db.get @folder._id, (err, res) ->
+                            should.not.exist err
+                            res.should.have.properties expected
+                            done()
+
 
     describe 'Move', ->
 
@@ -340,7 +383,7 @@ describe 'Normalizer', ->
                     done()
 
             it 'saves the moved file', (done) ->
-                @normalizer.ensureFolderExist = sinon.stub().yields null
+                @normalizer.ensureParentExist = sinon.stub().yields null
                 doc =
                     _id: Pouch.newId()
                     docType: 'file'
@@ -379,7 +422,7 @@ describe 'Normalizer', ->
                     done()
 
             it 'saves the moved folder', (done) ->
-                @normalizer.ensureFolderExist = sinon.stub().yields null
+                @normalizer.ensureParentExist = sinon.stub().yields null
                 doc =
                     _id: Pouch.newId()
                     docType: 'folder'
@@ -391,6 +434,7 @@ describe 'Normalizer', ->
                         should.not.exist err
                         res.should.have.properties doc
                         done()
+
 
     describe 'Delete', ->
 

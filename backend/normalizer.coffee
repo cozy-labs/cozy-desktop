@@ -35,6 +35,13 @@ Pouch = require './pouch'
 #   - tags
 #   - backends
 #
+# Conflicts can happen when we try to write one document for a path, and
+# another document already exists with the same path. The resolution depends of
+# the type of the documents:
+#   - for two files, we rename the latter with a -conflict suffix
+#   - for two folders, we merge them
+#   - for a file and a folder, TODO
+#
 # TODO find a better name than Normalizer for this class
 # TODO update metadata
 class Normalizer
@@ -64,7 +71,7 @@ class Normalizer
         return not doc.checksum.match /^[a-f0-9]{40}$/
 
     # Be sure that the tree structure for the given path exists
-    ensureFolderExist: (doc, callback) =>
+    ensureParentExist: (doc, callback) =>
         if doc.path is ''
             callback()
         else
@@ -135,7 +142,7 @@ class Normalizer
             doc.docType           = 'file'
             doc.creationDate     ?= (new Date).toString()
             doc.lastModification ?= (new Date).toString()
-            @ensureFolderExist doc, =>
+            @ensureParentExist doc, =>
                 @pouch.db.put doc, callback
 
     # Expectations:
@@ -144,19 +151,25 @@ class Normalizer
     #   - add the creation date if missing
     #   - add the last modification date if missing
     #   - create the tree structure if needed
-    # TODO
-    #   - overwrite a possible existing folder with the same path
+    #   - overwrite metadata if this folder alredy existed in pouch
     putFolder: (doc, callback) ->
         if @invalidPathOrName doc
             log.warn "Invalid path or name: #{JSON.stringify doc, null, 2}"
             callback? new Error 'Invalid path or name'
         else
-            doc._id              ?= Pouch.newId()
-            doc.docType           = 'folder'
-            doc.creationDate     ?= (new Date).toString()
-            doc.lastModification ?= (new Date).toString()
-            @ensureFolderExist doc, =>
-                @pouch.db.put doc, callback
+            fullpath = path.join doc.path, doc.name
+            @pouch.getFolder fullpath, (err, folder) =>
+                doc.docType = 'folder'
+                if folder
+                    doc._id  = folder._id
+                    doc._rev = folder._rev
+                    doc.creationDate ?= folder.creationDate
+                else
+                    doc._id ?= Pouch.newId()
+                doc.creationDate     ?= (new Date).toString()
+                doc.lastModification ?= (new Date).toString()
+                @ensureParentExist doc, =>
+                    @pouch.db.put doc, callback
 
     # Expectations:
     #   - the file id is present
@@ -179,7 +192,7 @@ class Normalizer
             log.warn "Invalid checksum: #{JSON.stringify doc, null, 2}"
             callback? new Error 'Invalid checksum'
         else
-            @ensureFolderExist doc, =>
+            @ensureParentExist doc, =>
                 @pouch.db.put doc, callback
 
     # Expectations:
@@ -201,7 +214,7 @@ class Normalizer
             log.warn "Invalid path or name: #{JSON.stringify doc, null, 2}"
             callback? new Error 'Invalid path or name'
         else
-            @ensureFolderExist doc, =>
+            @ensureParentExist doc, =>
                 @pouch.db.put doc, callback
 
     # Expectations:
