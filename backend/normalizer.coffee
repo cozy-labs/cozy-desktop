@@ -99,7 +99,7 @@ class Normalizer
         else if doc.docType is 'folder'
             @putFolder doc, callback
         else
-            callback? new Error "Unexpected docType: #{doc.docType}"
+            callback new Error "Unexpected docType: #{doc.docType}"
 
     # Simple helper to delete a file or a folder
     deleteDoc: (doc, callback) =>
@@ -108,7 +108,7 @@ class Normalizer
         else if doc.docType is 'folder'
             @deleteFolder doc, callback
         else
-            callback? new Error "Unexpected docType: #{doc.docType}"
+            callback new Error "Unexpected docType: #{doc.docType}"
 
 
     ### Actions ###
@@ -136,12 +136,7 @@ class Normalizer
             doc.creationDate     ?= (new Date).toString()
             doc.lastModification ?= (new Date).toString()
             @ensureFolderExist doc, =>
-                @pouch.db.put doc, (err) ->
-                    if callback
-                        callback err
-                    else if err
-                        log.error "Can't save #{JSON.stringify doc, null, 2}"
-                        log.error err
+                @pouch.db.put doc, callback
 
     # Expectations:
     #   - the folder path and name are present and valid
@@ -161,12 +156,7 @@ class Normalizer
             doc.creationDate     ?= (new Date).toString()
             doc.lastModification ?= (new Date).toString()
             @ensureFolderExist doc, =>
-                @pouch.db.put doc, (err) ->
-                    if callback
-                        callback err
-                    else if err
-                        log.error "Can't save #{JSON.stringify doc, null, 2}"
-                        log.error err
+                @pouch.db.put doc, callback
 
     # Expectations:
     #   - the file id is present
@@ -190,12 +180,7 @@ class Normalizer
             callback? new Error 'Invalid checksum'
         else
             @ensureFolderExist doc, =>
-                @pouch.db.put doc, (err) ->
-                    if callback
-                        callback err
-                    else if err
-                        log.error "Can't save #{JSON.stringify doc, null, 2}"
-                        log.error err
+                @pouch.db.put doc, callback
 
     # Expectations:
     #   - the folder id is present
@@ -217,12 +202,7 @@ class Normalizer
             callback? new Error 'Invalid path or name'
         else
             @ensureFolderExist doc, =>
-                @pouch.db.put doc, (err) ->
-                    if callback
-                        callback err
-                    else if err
-                        log.error "Can't save #{JSON.stringify doc, null, 2}"
-                        log.error err
+                @pouch.db.put doc, callback
 
     # Expectations:
     #   - the file can be found by its id or by its fullpath
@@ -241,13 +221,7 @@ class Normalizer
             # Delete it
             (file, next) =>
                 @pouch.db.remove file, next
-
-        ], (err) ->
-            if callback
-                callback err
-            else if err
-                log.error "Can't delete #{JSON.stringify doc, null, 2}"
-                log.error err
+        ], callback
 
     # Expectations:
     #   - the folder can be found by its _id or by its fullpath
@@ -273,13 +247,7 @@ class Normalizer
             # Delete the folder
             (folder, next) =>
                 @pouch.db.remove folder, next
-
-        ], (err) ->
-            if callback
-                callback err
-            else if err
-                log.error "Can't delete #{JSON.stringify doc, null, 2}"
-                log.error err
+        ], callback
 
 
 module.exports = Normalizer

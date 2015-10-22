@@ -207,7 +207,7 @@ describe 'Normalizer', ->
                     done()
 
 
-    describe 'Actions', ->
+    describe 'Put', ->
 
         describe 'putFile', ->
             it 'expects a doc with a valid path and name', (done) ->
@@ -301,6 +301,8 @@ describe 'Normalizer', ->
                         should.exist res.lastModification
                         done()
 
+    describe 'Move', ->
+
         describe 'moveFile', ->
             it 'expects a doc with an id', (done) ->
                 @normalizer.moveFile path: 'foo', name: 'bar', (err) ->
@@ -389,6 +391,8 @@ describe 'Normalizer', ->
                         should.not.exist err
                         res.should.have.properties doc
                         done()
+
+    describe 'Delete', ->
 
         describe 'deleteFile', ->
             it 'deletes a file identified by its id', (done) ->
