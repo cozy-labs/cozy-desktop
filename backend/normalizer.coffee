@@ -128,7 +128,6 @@ class Normalizer
     #   - add the creation date if missing
     #   - add the last modification date if missing
     #   - create the tree structure if needed
-    # TODO
     #   - overwrite a possible existing file with the same path
     putFile: (doc, callback) ->
         if @invalidPathOrName doc
@@ -138,12 +137,29 @@ class Normalizer
             log.warn "Invalid checksum: #{JSON.stringify doc, null, 2}"
             callback? new Error 'Invalid checksum'
         else
-            doc._id              ?= Pouch.newId()
-            doc.docType           = 'file'
-            doc.creationDate     ?= (new Date).toString()
-            doc.lastModification ?= (new Date).toString()
-            @ensureParentExist doc, =>
-                @pouch.db.put doc, callback
+            fullpath = path.join doc.path, doc.name
+            @pouch.getFile fullpath, (err, file) =>
+                doc.docType = 'file'
+                if file and
+                        (file._id is doc._id or
+                         file.checksum is doc.checksum)
+                    doc._id  = file._id
+                    doc._rev = file._rev
+                    doc.creationDate ?= file.creationDate
+                    if file.checksum is doc.checksum
+                        doc.size  ?= file.size
+                        doc.class ?= file.class
+                        doc.mime  ?= file.mime
+                else
+                    doc._id ?= Pouch.newId()
+                    doc.creationDate ?= (new Date).toString()
+                    if file
+                        ext  = path.extname doc.name
+                        base = path.basename doc.name, ext
+                        doc.name = "#{base}-conflict#{ext}"
+                doc.lastModification ?= (new Date).toString()
+                @ensureParentExist doc, =>
+                    @pouch.db.put doc, callback
 
     # Expectations:
     #   - the folder path and name are present and valid

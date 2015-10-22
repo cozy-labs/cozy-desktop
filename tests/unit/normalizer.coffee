@@ -220,7 +220,7 @@ describe 'Normalizer', ->
             it 'expects a doc with a checksum', (done) ->
                 doc =
                     path: 'foo'
-                    name: 'bar'
+                    name: 'bar1'
                     checksum: ''
                 @normalizer.putFile doc, (err) ->
                     should.exist err
@@ -232,7 +232,7 @@ describe 'Normalizer', ->
                 doc =
                     _id: Pouch.newId()
                     path: 'foo'
-                    name: 'bar'
+                    name: 'bar2'
                     checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
                     docType: 'file'
                     creationDate: (new Date).toString()
@@ -249,7 +249,7 @@ describe 'Normalizer', ->
                 @normalizer.ensureParentExist = sinon.stub().yields null
                 doc =
                     path: 'foo'
-                    name: 'bar'
+                    name: 'bar3'
                     checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
                 @normalizer.putFile doc, (err) =>
                     should.not.exist err
@@ -261,6 +261,106 @@ describe 'Normalizer', ->
                         should.exist res.creationDate
                         should.exist res.lastModification
                         done()
+
+            describe 'when a file with the same path exists', ->
+                before 'create a file', (done) ->
+                    @file =
+                        _id: Pouch.newId()
+                        path: ''
+                        name: 'buzz.jpg'
+                        docType: 'file'
+                        checksum: '1111111111111111111111111111111111111111'
+                        creationDate: (new Date).toString()
+                        lastModification: (new Date).toString()
+                        tags: ['foo']
+                        size: 12345
+                        class: 'image'
+                        mime: 'image/jpeg'
+                    @pouch.db.put @file, done
+
+                it 'can update the metadata', (done) ->
+                    @normalizer.ensureParentExist = sinon.stub().yields null
+                    was = clone @file
+                    @file.tags = ['bar', 'baz']
+                    @file.lastModification = (new Date).toString()
+                    doc = clone @file
+                    delete doc.size
+                    delete doc.class
+                    delete doc.mime
+                    @normalizer.putFile doc, (err) =>
+                        should.not.exist err
+                        @pouch.db.get doc._id, (err, res) =>
+                            should.not.exist err
+                            res.should.have.properties @file
+                            res.size.should.equal was.size
+                            res.class.should.equal was.class
+                            res.mime.should.equal was.mime
+                            done()
+
+                it 'merge file when same checksum', (done) ->
+                    @normalizer.ensureParentExist = sinon.stub().yields null
+                    doc =
+                        path: ''
+                        name: 'buzz.jpg'
+                        docType: 'file'
+                        checksum: @file.checksum
+                        creationDate: (new Date).toString()
+                        lastModification: (new Date).toString()
+                        tags: ['foobar', 'sarge']
+                    @normalizer.putFile clone(doc), (err) =>
+                        should.not.exist err
+                        @pouch.db.get @file._id, (err, res) =>
+                            should.not.exist err
+                            @file.lastModification = doc.lastModification
+                            @file.tags = doc.tags
+                            res.should.have.properties @file
+                            done()
+
+                it 'can resolve a conflict', (done) ->
+                    @normalizer.ensureParentExist = sinon.stub().yields null
+                    doc =
+                        _id: Pouch.newId()
+                        path: ''
+                        name: 'buzz.jpg'
+                        docType: 'file'
+                        checksum: '2222222222222222222222222222222222222222'
+                        creationDate: (new Date).toString()
+                        lastModification: (new Date).toString()
+                        tags: ['bar', 'baz']
+                        size: 12346
+                        class: 'image'
+                        mime: 'image/jpeg'
+                    @normalizer.putFile clone(doc), (err) =>
+                        should.not.exist err
+                        expected = doc
+                        expected.name = 'buzz-conflict.jpg'
+                        @pouch.db.get @file._id, (err, res) =>
+                            should.not.exist err
+                            res.should.have.properties @file
+                            @pouch.db.get expected._id, (err, res) ->
+                                should.not.exist err
+                                res.should.have.properties expected
+                                done()
+
+                it 'can overwrite the content of a file', (done) ->
+                    @normalizer.ensureParentExist = sinon.stub().yields null
+                    doc =
+                        _id: @file._id
+                        path: ''
+                        name: 'buzz.jpg'
+                        docType: 'file'
+                        checksum: '3333333333333333333333333333333333333333'
+                        tags: ['qux', 'quux']
+                    @normalizer.putFile clone(doc), (err) =>
+                        should.not.exist err
+                        @pouch.db.get @file._id, (err, res) ->
+                            should.not.exist err
+                            res.should.have.properties doc
+                            should.not.exist res.size
+                            should.not.exist res.class
+                            should.not.exist res.mime
+                            done()
+
 
         describe 'putFolder', ->
             it 'expects a doc with a valid path and name', (done) ->
@@ -333,7 +433,7 @@ describe 'Normalizer', ->
                         path: ''
                         name: 'fizz'
                         docType: 'folder'
-                        tags: ['bar', 'baz']
+                        tags: ['qux', 'quux']
                     @normalizer.putFolder clone(doc), (err) =>
                         should.not.exist err
                         expected = doc
