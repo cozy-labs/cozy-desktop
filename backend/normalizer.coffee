@@ -182,6 +182,9 @@ class Normalizer
                     doc._id  = folder._id
                     doc._rev = folder._rev
                     doc.creationDate ?= folder.creationDate
+                    doc.tags ?= []
+                    for tag in folder.tags or []
+                        doc.tags.push tag unless tag in doc.tags
                 else
                     doc._id ?= Pouch.newId()
                 doc.creationDate     ?= (new Date).toString()

@@ -411,7 +411,7 @@ describe 'Normalizer', ->
                         docType: 'folder'
                         creationDate: (new Date).toString()
                         lastModification: (new Date).toString()
-                        tags: ['foo']
+                        tags: ['foo', 'bar']
                     @pouch.db.put @folder, done
 
                 it 'can update the tags and last modification date', (done) ->
@@ -423,6 +423,7 @@ describe 'Normalizer', ->
                         should.not.exist err
                         @pouch.db.get doc._id, (err, res) ->
                             should.not.exist err
+                            doc.tags = ['bar', 'baz', 'foo']
                             res.should.have.properties doc
                             done()
 
