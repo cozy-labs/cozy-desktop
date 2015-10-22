@@ -99,7 +99,9 @@ class Normalizer
                         @pouch.db.remove doc, next
                 , callback
 
-    # Simple helper to create a file or a folder
+    # Helper to save a file or a folder
+    # (create, move, update the metadata or the content)
+    # TODO move
     putDoc: (doc, callback) =>
         if doc.docType is 'file'
             @putFile doc, callback
@@ -249,7 +251,8 @@ class Normalizer
 
             # Delete it
             (file, next) =>
-                @pouch.db.remove file, next
+                file._deleted = true
+                @pouch.db.put file, next
         ], callback
 
     # Expectations:
@@ -275,7 +278,8 @@ class Normalizer
 
             # Delete the folder
             (folder, next) =>
-                @pouch.db.remove folder, next
+                folder._deleted = true
+                @pouch.db.put folder, next
         ], callback
 
 

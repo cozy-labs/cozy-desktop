@@ -335,12 +335,6 @@ describe 'Local', ->
                         fs.existsSync(filePath).should.be.false()
                         done()
 
-        it "yields no error if the path can't be found", (done) ->
-            doc = _id: '322'
-            @local.deleteFile doc, (err) ->
-                should.not.exist err
-                done()
-
 
     describe 'deleteFolder', ->
         it 'deletes a folder from the local filesystem', (done) ->
@@ -361,9 +355,3 @@ describe 'Local', ->
                         should.not.exist err
                         fs.existsSync(folderPath).should.be.false()
                         done()
-
-        it "yields no error if the path can't be found", (done) ->
-            doc = _id: '324'
-            @local.deleteFolder doc, (err) ->
-                should.not.exist err
-                done()

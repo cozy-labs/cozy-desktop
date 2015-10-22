@@ -79,7 +79,6 @@ class RemoteWatcher
     # Also, keep track of the sequence number.
     # TODO add unit tests
     onChange: (change) =>
-        # TODO move
         if change.deleted
             @normalizer.deleteDoc change.doc, @changed(change)
         else

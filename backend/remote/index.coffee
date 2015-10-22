@@ -1,7 +1,7 @@
 async = require 'async'
 path  = require 'path'
 log   = require('printit')
-    prefix: 'Local writer  '
+    prefix: 'Remote writer '
 
 Couch   = require './couch'
 Watcher = require './watcher'
@@ -138,6 +138,9 @@ class Remote
     # Delete a file on the remote cozy instance
     # TODO check that the corresponding binary is deleted
     deleteFile: (doc, callback) =>
+        # FIXME
+        return callback()
+
         @pouch.getPreviousRev doc, (err, oldDoc) =>
             if err
                 log.error err

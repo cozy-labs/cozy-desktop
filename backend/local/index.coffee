@@ -189,11 +189,8 @@ class Local
 
     # Delete a file from the local filesystem
     deleteFile: (doc, callback) =>
-        @pouch.getKnownPath doc, (err, filePath) =>
-            if filePath?
-                fs.remove path.join(@basePath, filePath), callback
-            else
-                callback err
+        fullpath = path.join @basePath, doc.path, doc.name
+        fs.remove fullpath, callback
 
     # Delete a folder from the local filesystem
     deleteFolder: (doc, callback) =>
