@@ -3,6 +3,11 @@ log   = require('printit')
     prefix: 'Synchronize   '
 
 
+# Sync listens to PouchDB about the metadata changes, and calls local and
+# remote sides to apply the changes on the filesystem and remote CouchDB
+# respectively.
+#
+# TODO find a better name that Sync
 class Sync
 
     constructor: (@pouch, @local, @remote, @events) ->

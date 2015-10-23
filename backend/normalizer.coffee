@@ -35,8 +35,8 @@ Pouch = require './pouch'
 #   - tags
 #   - backends
 #
-# Conflicts can happen when we try to write one document for a path, and
-# another document already exists with the same path. The resolution depends of
+# Conflicts can happen when we try to write one document for a path when
+# another document already exists for the same path. The resolution depends of
 # the type of the documents:
 #   - for two files, we rename the latter with a -conflict suffix
 #   - for two folders, we merge them

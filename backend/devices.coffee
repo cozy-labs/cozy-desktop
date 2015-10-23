@@ -3,6 +3,7 @@ log     = require('printit')
     prefix: 'Devices       '
 
 
+# Some methods to discuss with a cozy stack
 module.exports =
 
     # Pings the cozy to check the credentials without creating a device

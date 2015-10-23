@@ -5,6 +5,8 @@ log       = require('printit')
     prefix: 'Config        '
 
 
+# Config can keep some configuration parameters in a JSON file,
+# like the devices credentials or the mount path
 class Config
 
     # Create config file if it doesn't exist.

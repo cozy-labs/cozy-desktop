@@ -11,6 +11,10 @@ log     = require('printit')
 # Best practices from:
 # http://pouchdb.com/2014/06/17/12-pro-tips-for-better-code-with-pouchdb.html
 # http://docs.ehealthafrica.org/couchdb-best-practices/
+#
+# For naming conventions, we kept those used on cozy and its couchdb. So, it's
+# creationDate and lastModification instead of created_at and updated_at. And
+# views name are in camelcase (byChecksum, not by-checksum).
 class Pouch
     constructor: (@config) ->
         @db = new PouchDB @config.dbPath
@@ -83,6 +87,8 @@ class Pouch
         @createDesignDoc "byChecksum", query, callback
 
     # Create a view to list files and folders inside a path
+    # XXX the path for a file/folder in root will be '',
+    # not '.' as with node's path.dirname
     addByPathView: (callback) =>
         query = """
             function (doc) {
