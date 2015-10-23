@@ -6,7 +6,6 @@ configHelpers = require '../../helpers/config'
 couchHelpers  = require '../../helpers/couch'
 
 Couch = require '../../../backend/remote/couch'
-Pouch = require '../../../backend/pouch'
 
 
 describe "Couch", ->
@@ -17,7 +16,7 @@ describe "Couch", ->
     before 'instanciate couch', couchHelpers.createCouchClient
     beforeEach 'create a document', (done) ->
         @doc =
-            _id: Pouch.newId()
+            _id: Couch.newId()
             docType: 'binary'
             checksum: '42'
         @couch.put @doc, (err, created) =>
@@ -27,11 +26,17 @@ describe "Couch", ->
     after 'stop couch server', couchHelpers.stopServer
     after 'clean config directory', configHelpers.cleanConfig
 
+
+    describe 'newId', ->
+        it "returns a complex alpha-numeric chain", ->
+            Couch.newId().length.should.equal 32
+            Couch.newId().should.match /^\w+$/i
+
     describe 'getLastRemoteChangeSeq', ->
         it 'gets the last change sequence number from couch', (done) ->
             @couch.getLastRemoteChangeSeq (err, seq) ->
                 should.not.exist err
-                seq.should.equal 1
+                seq.should.be.aboveOrEqual 1
                 done()
 
     describe 'get', ->
@@ -47,7 +52,7 @@ describe "Couch", ->
     describe 'put', (done) ->
         it 'can create a new document', (done) ->
             doc =
-                _id: Pouch.newId()
+                _id: Couch.newId()
                 docType: 'binary'
             @couch.put doc, (err, created) ->
                 should.not.exist err

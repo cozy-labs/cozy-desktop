@@ -4,10 +4,9 @@ fs      = require 'fs-extra'
 path    = require 'path-extra'
 moment  = require 'moment'
 request = require 'request-json-light'
+uuid    = require 'node-uuid'
 log     = require('printit')
     prefix: 'Remote CouchDB'
-
-Pouch = require '../pouch'
 
 
 # Couch is an helper class for communication with a remote couchdb.
@@ -16,6 +15,11 @@ Pouch = require '../pouch'
 # because it can takes a lot of memory. So, we prefered to use
 # request-json-light, that can stream data.
 class Couch
+
+    # Create a new unique identifier for CouchDB
+    @newId: ->
+        uuid.v4().replace /-/g, ''
+
     constructor: (@config, @events) ->
         device  = @config.getDevice()
         options = @config.augmentCouchOptions
@@ -73,7 +77,7 @@ class Couch
     createEmptyRemoteDoc: (binaryDoc, callback) =>
         data = binaryDoc or {}
         data.docType = 'Binary'
-        data._id ?= Pouch.newId()
+        data._id ?= Couch.newId()
         @put data, callback
 
     # Upload given file as attachment of given document (id + revision)

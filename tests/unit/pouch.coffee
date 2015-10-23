@@ -21,12 +21,6 @@ describe "Pouch", ->
         , done
 
 
-    describe 'newId', ->
-        it "returns a complex alpha-numeric chain", ->
-            Pouch.newId().length.should.equal 32
-            Pouch.newId().should.match /^\w+$/i
-
-
     describe 'ODM', ->
 
         describe 'getByKey', ->

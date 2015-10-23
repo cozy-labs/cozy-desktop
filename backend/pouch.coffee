@@ -1,7 +1,6 @@
 PouchDB = require 'pouchdb'
 async   = require 'async'
 path    = require 'path-extra'
-uuid    = require 'node-uuid'
 log     = require('printit')
     prefix: 'Local Pouchdb '
 
@@ -250,14 +249,6 @@ class Pouch
             _id: '_local/remoteSeq'
             seq: seq
         @updater.push task, callback
-
-
-# Create a new unique identifier for Pouch/Couch
-# TODO 7.Use and abuse your doc IDs of
-# http://pouchdb.com/2014/06/17/12-pro-tips-for-better-code-with-pouchdb.html
-# Maybe use the fullpath -> but what about file/folder move/rename
-Pouch.newId = ->
-    uuid.v4().replace /-/g, ''
 
 
 module.exports = Pouch
