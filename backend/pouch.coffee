@@ -8,15 +8,13 @@ log     = require('printit')
 # Pouchdb is used to store all the metadata about files and folders.
 # These metadata can come from the local filesystem or the remote cozy instance.
 #
+# Best practices from:
 # http://pouchdb.com/2014/06/17/12-pro-tips-for-better-code-with-pouchdb.html
-#
-# TODO when a file is removed, delete its binary if not used by another file
+# http://docs.ehealthafrica.org/couchdb-best-practices/
 class Pouch
     constructor: (@config) ->
         @db = new PouchDB @config.dbPath
-        # TODO Listener memory leak fix -> still necessary?
         @db.setMaxListeners 100
-        # TODO addAllViews?
         @updater = async.queue (task, callback) =>
             @db.get task._id, (err, doc) =>
                 if err?.status is 404
@@ -37,22 +35,6 @@ class Pouch
 
     ### Mini ODM ###
 
-    # Run a query and get document
-    getByKey: (query, key, callback) =>
-        return callback null, null unless key?
-        params =
-            include_docs: true
-            key: key
-        @db.query query, params, (err, res) ->
-            if err?.status is 404
-                callback null, null
-            else if err
-                callback err
-            else if res.rows.length is 0
-                callback null, null
-            else
-                callback null, res.rows[0].doc
-
     # Run a query and get all the results
     getAll: (query, params, callback) =>
         if typeof params is 'function'
@@ -65,28 +47,12 @@ class Pouch
                 docs = (row.doc for row in res.rows)
                 callback null, docs
 
-    # Return all the files
-    allFiles: (params, callback) =>
-        @getAll 'file/all', params, callback
-
-    # Return the file with the given fullpath
-    getFile: (key, callback) =>
-        @getByKey 'file/byFullPath', key, callback
-
     # Return all the files with this checksum
     byChecksum: (checksum, callback) ->
         params =
             key: checksum
             include_docs: true
-        @getAll 'file/byChecksum', params, callback
-
-    # Return all the folders
-    allFolders: (params, callback) =>
-        @getAll 'folder/all', params, callback
-
-    # Return the folder with the given fullpath
-    getFolder: (key, callback) =>
-        @getByKey 'folder/byFullPath', key, callback
+        @getAll 'byChecksum', params, callback
 
     # Return all the files and folders in this path
     byPath: (path, callback) ->
@@ -98,81 +64,55 @@ class Pouch
 
     ### Views ###
 
-    # Create all required views in the database.
-    addAllViews: (callback) ->
-        async.eachSeries ['folder', 'file', 'byPath'], @addViews, callback
+    # Create all required views in the database
+    addAllViews: (callback) =>
+        async.series [
+            @addByPathView,
+            @addByChecksumView,
+        ], callback
 
-    # Add required views for a given doctype.
-    addViews: (docType, callback) =>
-        id = "_design/#{docType}"
-        queries = {}
-
-        if docType in ['file', 'folder']
-            queries.all = """
-                function (doc) {
-                    if (doc.docType === "#{docType}") {
-                        emit(doc._id);
-                    }
+    # Create a view to find files by their checksum
+    addByChecksumView: (callback) =>
+        query = """
+            function (doc) {
+                if ('checksum' in doc) {
+                    emit(doc.checksum);
                 }
-                """
+            }
+            """
+        @createDesignDoc "byChecksum", query, callback
 
-        if docType in ['file', 'folder']
-            queries.byFullPath = """
-                function (doc) {
-                    if (doc.docType === "#{docType}") {
-                        if (doc.path === "") {
-                            emit(doc.name);
-                        } else {
-                            emit(doc.path + '/' + doc.name);
-                        }
-                    }
-                }
-                """
+    # Create a view to list files and folders inside a path
+    addByPathView: (callback) =>
+        query = """
+            function (doc) {
+                var parts = doc._id.split('#{path.sep}');
+                parts.pop();
+                emit(parts.join('#{path.sep}'), { _id: doc._id });
+            }
+            """
+        @createDesignDoc "byPath", query, callback
 
-        if docType is 'file'
-            queries.byChecksum = """
-                function (doc) {
-                    if (doc.docType === "#{docType}") {
-                        emit(doc.checksum);
-                    }
-                }
-                """
-
-        if docType is 'byPath'
-            queries.byPath = """
-                function (doc) {
-                    emit(doc.path);
-                }
-                """
-
-        @createDesignDoc id, queries, callback
-
-
-    # Create or update given design doc.
-    createDesignDoc: (id, queries, callback) =>
+    # Create or update given design doc
+    createDesignDoc: (name, query, callback) =>
         doc =
-            _id: id
+            _id: "_design/#{name}"
             views: {}
-
-        for name, query of queries
-            doc.views[name] = map: query
-
-        @db.get id, (err, currentDesignDoc) =>
-            if currentDesignDoc?
-                doc._rev = currentDesignDoc._rev
+        doc.views[name] = map: query
+        @db.get doc._id, (err, designDoc) =>
+            doc._rev = designDoc._rev if designDoc?
             @db.put doc, (err) ->
-                log.info "Design document created: #{id}" unless err
+                log.info "Design document created: #{name}" unless err
                 callback err
 
     # Remove a design document for a given docType
     removeDesignDoc: (docType, callback) =>
         id = "_design/#{docType}"
-        @db.get id, (err, currentDesignDoc) =>
-            if currentDesignDoc?
-                @db.remove id, currentDesignDoc._rev, callback
+        @db.get id, (err, designDoc) =>
+            if designDoc?
+                @db.remove id, designDoc._rev, callback
             else
-                log.warn "Trying to remove a doc that does not exist: #{id}"
-                callback()
+                callback err
 
 
     ### Helpers ###
@@ -196,19 +136,6 @@ class Pouch
                 err = new Error 'previous revision not found'
                 err.status = 404
                 callback err
-
-    # Retrieve a known path from a doc, based on the doc's previous revisions
-    getKnownPath: (doc, callback) =>
-        @getPreviousRev doc._id, (err, res) ->
-            if err and err.status isnt 404
-                callback err
-            else if res?.path? and res?.name?
-                filePath = path.join res.path, res.name
-                callback null, filePath
-            else
-                log.debug "Unable to find a file/folder path"
-                log.debug res
-                callback null
 
 
     ### Sequence numbers ###

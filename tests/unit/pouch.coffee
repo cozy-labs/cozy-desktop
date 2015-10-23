@@ -1,4 +1,5 @@
 async  = require 'async'
+path   = require 'path'
 should = require 'should'
 
 Pouch  = require '../../backend/pouch'
@@ -15,201 +16,133 @@ describe "Pouch", ->
     after 'clean config directory', configHelpers.cleanConfig
 
     before (done) ->
-        async.eachSeries [1..3], (i, callback) =>
-            pouchHelpers.createFile @pouch, i, =>
-                pouchHelpers.createFolder @pouch, i, callback
-        , done
+        pouchHelpers.createParentFolder @pouch, =>
+            async.eachSeries [1..3], (i, callback) =>
+                pouchHelpers.createFolder @pouch, i, =>
+                    pouchHelpers.createFile @pouch, i, callback
+            , done
 
 
     describe 'ODM', ->
 
-        describe 'getByKey', ->
-            it 'returns document corresponding to key for given view', (done) ->
-                @pouch.getByKey 'file/byChecksum', '987654321', (err, doc) ->
-                    should.not.exist err
-                    should.exist doc
-                    doc.checksum.should.equal '987654321'
-                    doc.name.should.equal 'filename-1'
-                    done()
-
         describe 'getAll', ->
             it 'returns all the documents matching the query', (done) ->
-                @pouch.getAll 'file/all', (err, docs) ->
+                params =
+                    key: 'my-folder'
+                    include_docs: true
+                @pouch.getAll 'byPath', params, (err, docs) ->
                     should.not.exist err
-                    docs.length.should.equal 3
+                    docs.length.should.equal 6
                     for i in [1..3]
                         docs[i-1].should.have.properties
+                            _id: path.join 'my-folder', "file-#{i}"
                             docType: 'file'
-                            path: 'myfolder'
-                            name: "filename-#{i}"
                             tags: []
-                    done()
-
-        describe 'allFiles', ->
-            it 'gets all the file documents', (done) ->
-                @pouch.allFiles (err, docs) ->
-                    should.not.exist err
-                    docs.length.should.be.equal 3
-                    for i in [1..3]
-                        docs[i-1].should.have.properties
-                            docType: 'file'
-                            path: 'myfolder'
-                            name: "filename-#{i}"
+                        docs[i+2].should.have.properties
+                            _id: path.join 'my-folder', "folder-#{i}"
+                            docType: 'folder'
                             tags: []
-                            binary:
-                                file:
-                                    id: "binary-#{i}"
-                    done()
-
-        describe 'getFile', ->
-            it 'gets a file document by its fullpath', (done) ->
-                doc =
-                    _id: 'file-4'
-                    docType: 'file'
-                    path: ''
-                    name: 'filename-4'
-                @pouch.db.put doc, (err) =>
-                    should.not.exist err
-                    @pouch.getFile 'filename-4', (err, res) ->
-                        should.not.exist err
-                        res.should.have.properties doc
-                        done()
-
-            it 'gets a file document by its fullpath', (done) ->
-                @pouch.getFile 'myfolder/filename-1', (err, res) ->
-                    should.not.exist err
-                    res.should.have.properties
-                        docType: 'file'
-                        path: 'myfolder'
-                        name: "filename-1"
-                        tags: []
-                        binary:
-                            file:
-                                id: "binary-1"
                     done()
 
         describe 'byChecksum', ->
             it 'gets all the files with this checksum', (done) ->
-                @pouch.byChecksum '987654321', (err, docs) ->
+                _id = path.join 'my-folder', 'file-1'
+                checksum = '1111111111111111111111111111111111111111'
+                @pouch.byChecksum checksum, (err, docs) ->
                     should.not.exist err
                     docs.length.should.be.equal 1
-                    docs[0].checksum.should.equal '987654321'
-                    docs[0].name.should.equal 'filename-1'
-                    done()
-
-        describe 'allFolders', ->
-            it 'gets all the folder documents', (done) ->
-                @pouch.allFolders (err, docs) ->
-                    should.not.exist err
-                    docs.length.should.be.equal 3
-                    for i in [1..3]
-                        docs[i-1].should.have.properties
-                            docType: 'folder'
-                            path: 'myfolder'
-                            name: "folder-#{i}"
-                            tags: []
-                    done()
-
-        describe 'getFolder', ->
-            it 'gets a folder document by its fullpath', ->
-                @pouch.getFolder 'myfolder/folder-1', (err, res) ->
-                    should.not.exist err
-                    res.should.have.properties
-                        docType: 'folder'
-                        path: 'myfolder'
-                        name: "folder-1"
-                        tags: []
+                    docs[0]._id.should.equal _id
+                    docs[0].checksum.should.equal checksum
                     done()
 
         describe 'byPath', ->
             it 'gets all the files and folders in this path', (done) ->
-                @pouch.byPath 'myfolder', (err, docs) ->
+                @pouch.byPath 'my-folder', (err, docs) ->
                     should.not.exist err
                     docs.length.should.be.equal 6
                     for i in [1..3]
                         docs[i-1].should.have.properties
+                            _id: path.join 'my-folder', "file-#{i}"
                             docType: 'file'
-                            path: 'myfolder'
-                            name: "filename-#{i}"
                             tags: []
                         docs[i+2].should.have.properties
+                            _id: path.join 'my-folder', "folder-#{i}"
                             docType: 'folder'
-                            path: 'myfolder'
-                            name: "folder-#{i}"
                             tags: []
                     done()
 
 
     describe 'Views', ->
 
-        describe 'removeDesignDoc', ->
-            it 'removes given view', (done) ->
-                @pouch.allFolders (err, res) =>
-                    should.not.exist err
-                    @pouch.removeDesignDoc "folder", (err) =>
-                        should.not.exist err
-                        @pouch.allFolders (err, res) ->
-                            should.exist err
-                            done()
-
         describe 'createDesignDoc', ->
             it "creates a new design doc", (done) ->
-                id = "_design/folder"
-                queries =
-                    all: """
-                function (doc) {
-                    if (doc.docType !== undefined
-                        && doc.docType.toLowerCase() === "folder") {
-                        emit(doc._id, doc);
+                query = """
+                    function (doc) {
+                        if (doc.docType === 'file') {
+                            emit(doc._id);
+                        }
                     }
-                }
-                """
-                @pouch.removeDesignDoc "folder", (err) =>
-                    @pouch.createDesignDoc id, queries, =>
-                        @pouch.allFolders (err, docs) ->
-                            should.not.exist err
-                            docs.length.should.be.equal 3
-                            done()
-
-        describe 'addViews', ->
-            it "creates all views", (done) ->
-                @pouch.removeDesignDoc "folder", (err) =>
-                    @pouch.addViews "folder", (err) =>
+                    """
+                @pouch.createDesignDoc 'file', query, (err) =>
+                    should.not.exist err
+                    @pouch.getAll 'file', (err, docs) ->
                         should.not.exist err
-                        @pouch.allFolders (err, res) =>
+                        docs.length.should.equal 3
+                        for i in [1..3]
+                            docs[i-1].docType.should.equal 'file'
+                        done()
+
+        describe 'addByChecksumView', ->
+            it 'creates the checksum view', (done) ->
+                @pouch.addByChecksumView (err) =>
+                    should.not.exist err
+                    @pouch.db.get '_design/byChecksum', (err, doc) ->
+                        should.not.exist err
+                        should.exist doc
+                        done()
+
+        describe 'addByPathView', ->
+            it 'creates the path view', (done) ->
+                @pouch.addByPathView (err) =>
+                    should.not.exist err
+                    @pouch.db.get '_design/byPath', (err, doc) ->
+                        should.not.exist err
+                        should.exist doc
+                        done()
+
+        describe 'removeDesignDoc', ->
+            it 'removes given view', (done) ->
+                query = """
+                    function (doc) {
+                        if (doc.docType === 'folder') {
+                            emit(doc._id);
+                        }
+                    }
+                    """
+                @pouch.createDesignDoc 'folder', query, (err) =>
+                    should.not.exist err
+                    @pouch.getAll 'folder', (err, docs) =>
+                        should.not.exist err
+                        docs.length.should.be.above 1
+                        @pouch.removeDesignDoc 'folder', (err) =>
                             should.not.exist err
-                            @pouch.allFiles (err, res) =>
-                                should.not.exist err
-                                @pouch.byPath 'myfolder', (err, res) ->
-                                    should.not.exist err
-                                    done()
+                            @pouch.getAll 'folder', (err, res) ->
+                                should.exist err
+                                done()
 
 
     describe 'Helpers', ->
 
         describe 'getPreviousRev', ->
             it "retrieves previous document's information", (done) ->
-                @pouch.db.get 'folder-1', (err, doc) =>
+                id = path.join 'my-folder', 'folder-1'
+                @pouch.db.get id, (err, doc) =>
                     should.not.exist err
-                    @pouch.db.remove 'folder-1', doc._rev, (err) =>
+                    @pouch.db.remove id, doc._rev, (err) =>
                         should.not.exist err
-                        @pouch.getPreviousRev 'folder-1', (err, doc) ->
+                        @pouch.getPreviousRev id, (err, doc) ->
                             should.not.exist err
-                            doc.should.have.properties
-                                path: 'myfolder'
-                                name: 'folder-1'
-                                tags: []
-                            done()
-
-        describe 'getKnownPath', ->
-            it 'retrieves the "last known" full path of a file', (done) ->
-                @pouch.db.get 'file-1', (err, doc) =>
-                    should.not.exist err
-                    @pouch.db.remove 'file-1', doc._rev, (err) =>
-                        should.not.exist err
-                        @pouch.getKnownPath doc, (err, path) ->
-                            should.not.exist err
-                            path.should.be.equal 'myfolder/filename-1'
+                            doc._id.should.equal id
                             done()
 
 

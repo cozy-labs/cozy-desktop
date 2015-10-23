@@ -7,6 +7,7 @@ Couch   = require './couch'
 Watcher = require './watcher'
 
 
+# TODO when a file is removed, delete its binary if not used by another file
 class Remote
     constructor: (@config, @normalizer, @pouch, @events) ->
         @couch = new Couch @config, @events

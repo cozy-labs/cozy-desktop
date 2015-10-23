@@ -1,3 +1,5 @@
+path = require 'path'
+
 Pouch = require '../../backend/pouch'
 
 
@@ -11,24 +13,30 @@ module.exports =
             @pouch = null
             done()
 
-    createFile: (pouch, i, callback) ->
+    createParentFolder: (pouch, callback) ->
         doc =
-            _id: "file-#{i}"
-            docType: 'file'
-            path: 'myfolder'
-            name: "filename-#{i}"
+            _id: 'my-folder'
+            docType: 'folder'
+            creationDate: new Date()
+            lastModification: new Date()
             tags: []
-            checksum: "98765432#{i}"
-            binary:
-                file:
-                    id: "binary-#{i}"
         pouch.db.put doc, callback
 
     createFolder: (pouch, i, callback) ->
         doc =
-            _id: "folder-#{i}"
+            _id: path.join 'my-folder', "folder-#{i}"
             docType: 'folder'
-            path: 'myfolder'
-            name: "folder-#{i}"
+            creationDate: new Date()
+            lastModification: new Date()
+            tags: []
+        pouch.db.put doc, callback
+
+    createFile: (pouch, i, callback) ->
+        doc =
+            _id: path.join 'my-folder', "file-#{i}"
+            docType: 'file'
+            checksum: "111111111111111111111111111111111111111#{i}"
+            creationDate: new Date()
+            lastModification: new Date()
             tags: []
         pouch.db.put doc, callback

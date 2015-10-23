@@ -11,11 +11,13 @@ Pouch = require './pouch'
 # and save it in pouchdb. It avoids a lot of bogus data in pouchdb, like file
 # created in the folder that doesn't exist.
 #
+# The documents in PouchDB have similar informations of those in CouchDB, but
+# are not structured in the same way. In particular, the _id are uuid in CouchDB
+# and the path to the file/folder in PouchDB.
+#
 # File:
 #   - _id / _rev
 #   - docType: 'file'
-#   - name
-#   - path
 #   - checksum
 #   - creationDate
 #   - lastModification
@@ -28,8 +30,6 @@ Pouch = require './pouch'
 # Folder:
 #   - _id / _rev
 #   - docType: 'folder'
-#   - name
-#   - path
 #   - creationDate
 #   - lastModification
 #   - tags
@@ -237,6 +237,11 @@ class Normalizer
         else
             @ensureParentExist doc, =>
                 @pouch.db.put doc, callback
+            # TODO
+            # 1. create the destination doc (if it doesn't exist)
+            # 2. @pouch.byPath to list all files and folders inside the source
+            # 3. move them to the destination with moveFile and moveFolder
+            # 4. remove the source doc
 
     # Expectations:
     #   - the file can be found by its id or by its fullpath
