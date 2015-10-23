@@ -49,19 +49,17 @@ class Normalizer
 
     ### Helpers ###
 
-    # Return true if the document has a valid path and name
+    # Return true if the document has a valid id
+    # (ie a path inside the mount point)
     # TODO what other things are not authorized? ~? $?
-    invalidPathOrName: (doc) ->
-        doc.path ?= ''
-        doc.name ?= ''
-        doc.path = '' if doc.path is '.'
-        doc.path = doc.path.replace /^\//, ''
-        parents = doc.path.split '/'
-        return '..' in parents or
-               doc.name is '' or
-               doc.name is '.' or
-               doc.name is '..' or
-               '/' in doc.name
+    invalidId: (doc) ->
+        return true unless doc._id
+        doc._id = path.normalize doc._id
+        doc._id = doc._id.replace /^\//, ''
+        parts = doc._id.split path.sep
+        return doc._id is '.' or
+            doc._id is '' or
+            parts[0] is '..'
 
     # Return true if the checksum is valid
     # SHA-1 has 40 hexadecimal letters
@@ -72,22 +70,23 @@ class Normalizer
 
     # Be sure that the tree structure for the given path exists
     ensureParentExist: (doc, callback) =>
-        if doc.path is ''
+        parent = path.dirname doc._id
+        if parent is '.'
             callback()
         else
-            @pouch.getFolder doc.path, (err, folder) =>
+            @pouch.db.get parent, (err, folder) =>
                 if folder
                     callback()
                 else
-                    newFolder =
-                        name: path.basename doc.path
-                        path: path.dirname  doc.path
-                    @putFolder newFolder, callback
+                    @ensureParentExist _id: parent, (err) =>
+                        if err
+                            callback err
+                        else
+                            @putFolder _id: parent, callback
 
     # Delete every files and folders inside the given folder
     emptyFolder: (folder, callback) =>
-        fullpath = path.join folder.path, folder.name
-        @pouch.byPath fullpath, (err, docs) =>
+        @pouch.byPath folder._id, (err, docs) =>
             if err
                 log.error err
                 callback err
@@ -131,37 +130,31 @@ class Normalizer
     #   - add the last modification date if missing
     #   - create the tree structure if needed
     #   - overwrite a possible existing file with the same path
+    # TODO how to tell if it's an overwrite or a conflict?
+    # TODO conflict with a folder
     putFile: (doc, callback) ->
-        if @invalidPathOrName doc
-            log.warn "Invalid path or name: #{JSON.stringify doc, null, 2}"
-            callback? new Error 'Invalid path or name'
+        if @invalidId doc
+            log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
+            callback? new Error 'Invalid id'
         else if @invalidChecksum doc
             log.warn "Invalid checksum: #{JSON.stringify doc, null, 2}"
             callback? new Error 'Invalid checksum'
         else
-            fullpath = path.join doc.path, doc.name
-            @pouch.getFile fullpath, (err, file) =>
+            @pouch.db.get doc._id, (err, file) =>
                 doc.docType = 'file'
-                if file and
-                        (file._id is doc._id or
-                         file.checksum is doc.checksum)
-                    doc._id  = file._id
+                doc.lastModification ?= new Date
+                if file
                     doc._rev = file._rev
                     doc.creationDate ?= file.creationDate
                     if file.checksum is doc.checksum
                         doc.size  ?= file.size
                         doc.class ?= file.class
                         doc.mime  ?= file.mime
-                else
-                    doc._id ?= Pouch.newId()
-                    doc.creationDate ?= (new Date).toString()
-                    if file
-                        ext  = path.extname doc.name
-                        base = path.basename doc.name, ext
-                        doc.name = "#{base}-conflict#{ext}"
-                doc.lastModification ?= (new Date).toString()
-                @ensureParentExist doc, =>
                     @pouch.db.put doc, callback
+                else
+                    doc.creationDate ?= new Date
+                    @ensureParentExist doc, =>
+                        @pouch.db.put doc, callback
 
     # Expectations:
     #   - the folder path and name are present and valid
@@ -170,27 +163,28 @@ class Normalizer
     #   - add the last modification date if missing
     #   - create the tree structure if needed
     #   - overwrite metadata if this folder alredy existed in pouch
+    # TODO how to tell if it's an overwrite or a conflict?
+    # TODO conflict with a file
+    # TODO how can we remove a tag?
     putFolder: (doc, callback) ->
-        if @invalidPathOrName doc
-            log.warn "Invalid path or name: #{JSON.stringify doc, null, 2}"
-            callback? new Error 'Invalid path or name'
+        if @invalidId doc
+            log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
+            callback? new Error 'Invalid id'
         else
-            fullpath = path.join doc.path, doc.name
-            @pouch.getFolder fullpath, (err, folder) =>
+            @pouch.db.get doc._id, (err, folder) =>
                 doc.docType = 'folder'
+                doc.lastModification ?= (new Date).toString()
                 if folder
-                    doc._id  = folder._id
                     doc._rev = folder._rev
                     doc.creationDate ?= folder.creationDate
                     doc.tags ?= []
                     for tag in folder.tags or []
                         doc.tags.push tag unless tag in doc.tags
-                else
-                    doc._id ?= Pouch.newId()
-                doc.creationDate     ?= (new Date).toString()
-                doc.lastModification ?= (new Date).toString()
-                @ensureParentExist doc, =>
                     @pouch.db.put doc, callback
+                else
+                    doc.creationDate ?= (new Date).toString()
+                    @ensureParentExist doc, =>
+                        @pouch.db.put doc, callback
 
     # Expectations:
     #   - the file id is present
@@ -250,13 +244,7 @@ class Normalizer
         async.waterfall [
             # Find the file
             (next) =>
-                if doc._id
-                    @pouch.db.get doc._id, next
-                else if doc.fullpath
-                    @pouch.getFile doc.fullpath, next
-                else
-                    next new Error 'Invalid call to deleteFile'
-
+                @pouch.db.get doc._id, next
             # Delete it
             (file, next) =>
                 file._deleted = true
@@ -272,18 +260,11 @@ class Normalizer
         async.waterfall [
             # Find the folder
             (next) =>
-                if doc._id
-                    @pouch.db.get doc._id, next
-                else if doc.fullpath
-                    @pouch.getFolder doc.fullpath, next
-                else
-                    next new Error 'Invalid call to deleteFolder'
-
+                @pouch.db.get doc._id, next
             # Delete everything inside this folder
             (folder, next) =>
                 @emptyFolder folder, (err) ->
                     next err, folder
-
             # Delete the folder
             (folder, next) =>
                 folder._deleted = true
