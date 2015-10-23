@@ -97,16 +97,12 @@ describe "Sync", ->
                     @pouch.getLocalSeq (err, seq) ->
                         should.not.exist err
                         change.should.have.properties
-                            id: 'file-1'
+                            id: 'my-folder/file-1'
                             seq: seq + 1
                         change.doc.should.have.properties
+                            _id: 'my-folder/file-1'
                             docType: 'file'
-                            path: 'myfolder'
-                            name: "filename-1"
                             tags: []
-                            binary:
-                                file:
-                                    id: "binary-1"
                         done()
 
         it 'gives only one change', (done) ->
@@ -129,16 +125,12 @@ describe "Sync", ->
                 @pouch.getLocalSeq (err, seq) ->
                     should.not.exist err
                     change.should.have.properties
-                        id: 'file-6'
+                        id: 'my-folder/file-6'
                         seq: seq + 1
                     change.doc.should.have.properties
+                        _id: 'my-folder/file-6'
                         docType: 'file'
-                        path: 'myfolder'
-                        name: "filename-6"
                         tags: []
-                        binary:
-                            file:
-                                id: "binary-6"
                     done()
             setTimeout =>
                 spy.called.should.be.false()
@@ -153,7 +145,7 @@ describe "Sync", ->
             @sync = new Sync @pouch, @local, @remote
 
         it 'returns true for a design document', (done) ->
-            @pouch.db.get '_design/file', (err, doc) =>
+            @pouch.db.get '_design/byPath', (err, doc) =>
                 should.not.exist err
                 @sync.isSpecial(doc).should.be.true()
                 done()
@@ -161,10 +153,10 @@ describe "Sync", ->
         it 'returns false for a normal document', (done) ->
             pouchHelpers.createFile @pouch, 7, (err) =>
                 should.not.exist err
-                @pouch.db.get 'file-7', (err, doc) =>
+                @pouch.db.get 'my-folder/file-7', (err, doc) =>
                     should.not.exist err
                     @sync.isSpecial(doc).should.be.false()
-                done()
+                    done()
 
     describe 'apply', ->
         it 'TODO'
