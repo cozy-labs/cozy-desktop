@@ -2,8 +2,6 @@ async = require 'async'
 log   = require('printit')
     prefix: 'Remote watcher'
 
-Conflict = require '../conflict'
-
 
 # Watch for changes from the remote couchdb and give them to the normalizer
 class RemoteWatcher
