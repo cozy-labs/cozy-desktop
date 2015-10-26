@@ -40,7 +40,7 @@
   },
   "homepage": "https://github.com/cozy-labs/cozy-desktop",
   "dependencies": {
-    "async": "1.4.2",
+    "async": "1.5.0",
     "chokidar": "1.1.0",
     "commander": "2.8.1",
     "del": "2.0.2",
