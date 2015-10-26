@@ -71,6 +71,51 @@ describe "Pouch", ->
                             tags: []
                     done()
 
+            it 'gets only files and folders in the first level', (done) ->
+                @pouch.byPath '', (err, docs) ->
+                    should.not.exist err
+                    docs.length.should.be.equal 1
+                    docs[0].should.have.properties
+                        _id: 'my-folder'
+                        docType: 'folder'
+                        tags: []
+                    done()
+
+        describe 'byRecurivePath', ->
+            it 'gets the files and folders in this path recursively', (done) ->
+                @pouch.byRecursivePath 'my-folder', (err, docs) ->
+                    should.not.exist err
+                    docs.length.should.be.equal 6
+                    for i in [1..3]
+                        docs[i-1].should.have.properties
+                            _id: path.join 'my-folder', "file-#{i}"
+                            docType: 'file'
+                            tags: []
+                        docs[i+2].should.have.properties
+                            _id: path.join 'my-folder', "folder-#{i}"
+                            docType: 'folder'
+                            tags: []
+                    done()
+
+            it 'gets the files and folders from root', (done) ->
+                @pouch.byRecursivePath '', (err, docs) ->
+                    should.not.exist err
+                    docs.length.should.be.equal 7
+                    docs[0].should.have.properties
+                        _id: 'my-folder'
+                        docType: 'folder'
+                        tags: []
+                    for i in [1..3]
+                        docs[i].should.have.properties
+                            _id: path.join 'my-folder', "file-#{i}"
+                            docType: 'file'
+                            tags: []
+                        docs[i+3].should.have.properties
+                            _id: path.join 'my-folder', "folder-#{i}"
+                            docType: 'folder'
+                            tags: []
+                    done()
+
 
     describe 'Views', ->
 

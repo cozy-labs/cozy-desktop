@@ -52,6 +52,7 @@ class Normalizer
     # Return true if the document has a valid id
     # (ie a path inside the mount point)
     # TODO what other things are not authorized? ~? $?
+    # TODO forbid _design and _local?
     invalidId: (doc) ->
         return true unless doc._id
         doc._id = path.normalize doc._id

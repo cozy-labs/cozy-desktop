@@ -58,13 +58,25 @@ class Pouch
             include_docs: true
         @getAll 'byChecksum', params, callback
 
-    # Return all the files and folders in this path
+    # Return all the files and folders in this path, only at first level
     byPath: (path, callback) ->
         params =
             key: path
             include_docs: true
         @getAll 'byPath', params, callback
 
+    # Return all the files and folders in this path, even in subfolders
+    # TODO add fuzzing tests
+    byRecursivePath: (path, callback) ->
+        if path is ''
+            params =
+                include_docs: true
+        else
+            params =
+                startkey: "#{path}"
+                endkey: "#{path}/\ufff0"
+                include_docs: true
+        @getAll 'byPath', params, callback
 
     ### Views ###
 
