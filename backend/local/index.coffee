@@ -7,6 +7,7 @@ log   = require('printit')
 Watcher = require './watcher'
 
 
+# TODO comments, tests
 class Local
     constructor: (config, @normalizer, @pouch, @events) ->
         @basePath = config.getDevice().path
@@ -25,7 +26,8 @@ class Local
     ### Helpers ###
 
     # Return a function that will update last modification date
-    utimesUpdater: (doc, filePath) ->
+    utimesUpdater: (doc) =>
+        filePath = path.resolve @basePath, doc._id
         (callback) ->
             if doc.lastModification
                 lastModification = new Date doc.lastModification
@@ -35,10 +37,6 @@ class Local
 
     # Check if a file corresponding to given checksum already exists
     fileExistsLocally: (checksum, callback) =>
-        # For legacy binaries
-        if not checksum or checksum is ''
-            return callback null, false
-
         @pouch.byChecksum checksum, (err, docs) =>
             if err
                 callback err
@@ -46,7 +44,7 @@ class Local
                 callback null, false
             else
                 paths = for doc in docs
-                    path.resolve @basePath, doc.path, doc.name
+                    path.resolve @basePath, doc._id
                 async.detect paths, fs.exists, (foundPath) ->
                     callback null, foundPath
 
@@ -67,14 +65,17 @@ class Local
     # Note: this method is used for adding a new file
     # or replacing an existing one
     addFile: (doc, callback) =>
-        tmpFile  = path.join @tmpPath, doc.name
-        parent   = path.resolve @basePath, doc.path
-        filePath = path.join parent, doc.name
-        checksum = doc.checksum
+        basename = path.basename doc._id
+        dirname  = path.dirname doc._id
+        tmpFile  = path.join @tmpPath, basename
+        parent   = path.resolve @basePath, dirname
+        filePath = path.resolve @basePath, doc._id
+
+        log.info "put file #{filePath}"
 
         async.waterfall [
             (next) =>
-                @fileExistsLocally checksum, next
+                @fileExistsLocally doc.checksum, next
 
             (existingFilePath, next) =>
                 # TODO what if existingFilePath is filePath
@@ -96,7 +97,7 @@ class Local
                 fs.ensureDir parent, ->
                     fs.rename tmpFile, filePath, next
 
-            @utimesUpdater(doc, filePath)
+            @utimesUpdater(doc)
 
         ], (err) ->
             fs.unlink tmpFile, ->
@@ -105,22 +106,21 @@ class Local
 
     # Create a new folder
     addFolder: (doc, callback) =>
-        folderPath = path.join @basePath, doc.path, doc.name
+        folderPath = path.join @basePath, doc._id
+        log.info "put folder #{folderPath}"
         fs.ensureDir folderPath, (err) =>
             if err
                 callback err
-            else if doc.lastModification?
-                @utimesUpdater(doc, folderPath)(callback)
             else
-                callback()
+                @utimesUpdater(doc)(callback)
 
 
     # Move a file from one place to another
     # TODO verify checksum
     moveFile: (doc, old, callback) =>
-        oldPath = path.join @basePath, old.path, old.name
-        newPath = path.join @basePath, doc.path, doc.name
-        parent  = path.join @basePath, doc.path
+        oldPath = path.join @basePath, old._id
+        newPath = path.join @basePath, doc._id
+        parent  = path.join @basePath, path.dirname doc._id
 
         async.waterfall [
             (next) ->
@@ -132,7 +132,7 @@ class Local
                         log.error "File #{oldPath} not found and can't be moved"
                         next new Error "#{oldPath} not found"
 
-            @utimesUpdater(doc, newPath)
+            @utimesUpdater(doc)
 
         ], (err) =>
             if err
@@ -145,9 +145,10 @@ class Local
 
 
     # Move a folder
+    # FIXME
     moveFolder: (doc, callback) =>
         oldPath = null
-        newPath = path.join @basePath, doc.path, doc.name
+        newPath = path.join @basePath, doc._id
 
         async.waterfall [
             (next) =>
@@ -179,7 +180,7 @@ class Local
             (next) ->
                 fs.rename oldPath, newPath, next
 
-            @utimesUpdater(doc, newPath)
+            @utimesUpdater(doc)
 
         ], (err) =>
             log.error "Error while moving #{JSON.stringify doc, null, 2}"
@@ -189,7 +190,8 @@ class Local
 
     # Delete a file from the local filesystem
     deleteFile: (doc, callback) =>
-        fullpath = path.join @basePath, doc.path, doc.name
+        log.info "delete #{doc._id}"
+        fullpath = path.join @basePath, doc._id
         fs.remove fullpath, callback
 
     # Delete a folder from the local filesystem

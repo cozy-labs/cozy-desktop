@@ -106,6 +106,8 @@ class Sync
     # If a file has been changed, we had to check the previous rev from pouch
     # to decide if it's a new file that has been added, or a move/rename
     fileChanged: (doc, callback) =>
+        @fileAdded doc, callback
+        return # TODO detect file move
         @pouch.getPreviousRev doc._id, (err, old) =>
             if err or not old
                 @fileAdded doc, callback
@@ -118,6 +120,8 @@ class Sync
 
     # Same as fileChanged, but for folder
     folderChanged: (doc, callback) =>
+        @folderAdded doc, callback
+        return # TODO detect folder move
         @pouch.getPreviousRev doc._id, (err, old) =>
             if err or not old
                 @folderAdded doc, callback
