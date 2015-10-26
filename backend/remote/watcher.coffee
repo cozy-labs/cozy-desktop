@@ -81,20 +81,29 @@ class RemoteWatcher
     # TODO add unit tests
     onChange: (change) =>
         log.debug change
-        if change.deleted
-            @pouch.byRemoteId change.doc._id, (err, deleted) =>
+        @pouch.byRemoteId change.doc._id, (err, was) =>
+            if change.deleted
                 if err
                     log.warn 'Cannot find the document to delete'
                     log.error err
                 else
-                    @normalizer.deleteDoc deleted, @changed(change)
-        else
-            doc = change.doc
-            doc.remote =
-                _id: doc._id
-                _rev: doc._rev
-            doc._id = path.join doc.path, doc.name
-            @normalizer.putDoc change.doc, @changed(change)
+                    @normalizer.deleteDoc was, @changed(change)
+            else
+                log.error err if err
+                doc = change.doc
+                doc.remote =
+                    _id: doc._id
+                    _rev: doc._rev
+                doc._id = path.join doc.path, doc.name
+                if not was or was._id is doc._id
+                    @normalizer.putDoc change.doc, @changed(change)
+                else if was.checksum is doc.checksum
+                    @normalizer.moveDoc change.doc, was, @changed(change)
+                else
+                    # TODO are we sure what to do in that case?
+                    @normalizer.deleteDoc was, (err) =>
+                        log.error err if err
+                        @normalizer.putDoc change.doc, @changed(change)
 
     changed: (change) =>
         (err) =>

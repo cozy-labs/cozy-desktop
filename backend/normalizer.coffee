@@ -44,6 +44,7 @@ Pouch = require './pouch'
 #
 # TODO find a better name than Normalizer for this class
 # TODO update metadata
+# TODO avoid put in pouchdb if nothing has changed
 class Normalizer
     constructor: (@pouch) ->
 
@@ -102,13 +103,24 @@ class Normalizer
                 @pouch.db.bulkDocs docs, callback
 
     # Helper to save a file or a folder
-    # (create, move, update the metadata or the content)
-    # TODO move
+    # (create, update metadata or overwrite a file)
     putDoc: (doc, callback) =>
         if doc.docType is 'file'
             @putFile doc, callback
         else if doc.docType is 'folder'
             @putFolder doc, callback
+        else
+            callback new Error "Unexpected docType: #{doc.docType}"
+
+    # Helper to move/rename a file or a folder
+    # TODO add test
+    # TODO what if doc and was have different docTypes
+    # TODO explain why we need a move method (delete+put is not enough)
+    moveDoc: (doc, was, callback) =>
+        if doc.docType is 'file'
+            @moveFile doc, was, callback
+        else if doc.docType is 'folder'
+            @moveFolder doc, was, callback
         else
             callback new Error "Unexpected docType: #{doc.docType}"
 
@@ -196,7 +208,7 @@ class Normalizer
     #   - create the tree structure if needed
     # TODO
     #   - overwrite the destination if it was present
-    moveFile: (doc, callback) ->
+    moveFile: (doc, was, callback) ->
         if not doc._id
             log.warn "Missing _id: #{JSON.stringify doc, null, 2}"
             callback? new Error 'Missing id'
@@ -211,6 +223,8 @@ class Normalizer
             callback? new Error 'Invalid checksum'
         else
             @ensureParentExist doc, =>
+                # TODO bulk operation for delete + put
+                was.hint = doc._id # Hint to make writers know that it's a move
                 @pouch.db.put doc, callback
 
     # Expectations:
@@ -221,7 +235,7 @@ class Normalizer
     # TODO
     #   - move every file and folder inside this folder
     #   - overwrite the destination if it was present
-    moveFolder: (doc, callback) ->
+    moveFolder: (doc, was, callback) ->
         if not doc._id
             log.warn "Missing _id: #{JSON.stringify doc, null, 2}"
             callback? new Error 'Missing id'
