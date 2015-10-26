@@ -4,6 +4,8 @@ log   = require('printit')
 
 
 # Watch for changes from the remote couchdb and give them to the normalizer
+#
+# TODO add comments
 class RemoteWatcher
     constructor: (@couch, @normalizer, @pouch) ->
 
@@ -51,8 +53,8 @@ class RemoteWatcher
                 callback err
 
     # Listen to the Couchdb changes feed for files and folders updates
-    # TODO add integration tests
     # TODO use a view instead of a filter
+    # TODO add integration tests
     listenToChanges: (options, callback) =>
         @pouch.getRemoteSeq (err, seq) =>
             return callback err if err

@@ -229,8 +229,8 @@ describe 'Normalizer', ->
                     should.not.exist err
                     @pouch.db.get doc._id, (err, res) ->
                         should.not.exist err
-                        doc.creationDate = doc.creationDate.toISOString()
-                        doc.lastModification = doc.lastModification.toISOString()
+                        for date in ['creationDate', 'lastModification']
+                            doc[date] = doc[date].toISOString()
                         res.should.have.properties doc
                         done()
 
@@ -243,8 +243,8 @@ describe 'Normalizer', ->
                     should.not.exist err
                     @pouch.db.get doc._id, (err, res) ->
                         should.not.exist err
-                        doc.creationDate = doc.creationDate.toISOString()
-                        doc.lastModification = doc.lastModification.toISOString()
+                        for date in ['creationDate', 'lastModification']
+                            doc[date] = doc[date].toISOString()
                         res.should.have.properties doc
                         res.docType.should.equal 'file'
                         should.exist res._id
@@ -370,8 +370,8 @@ describe 'Normalizer', ->
                     @normalizer.putFolder clone(doc), (err) =>
                         should.not.exist err
                         doc.tags = ['bar', 'baz', 'foo']
-                        doc.creationDate = doc.creationDate.toISOString()
-                        doc.lastModification = doc.lastModification.toISOString()
+                        for date in ['creationDate', 'lastModification']
+                            doc[date] = doc[date].toISOString()
                         @pouch.db.get doc._id, (err, res) ->
                             should.not.exist err
                             res.should.have.properties doc

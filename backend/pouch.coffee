@@ -81,11 +81,12 @@ class Pouch
     ### Views ###
 
     # Create all required views in the database
+    # TODO don't recreate the same views again and again
     addAllViews: (callback) =>
         async.series [
             @addByPathView,
             @addByChecksumView,
-        ], callback
+        ], (err) -> callback err
 
     # Create a view to find files by their checksum
     addByChecksumView: (callback) =>
