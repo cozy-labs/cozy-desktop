@@ -140,24 +140,20 @@ describe 'Normalizer', ->
                             done()
 
             it 'remove nested folders', (done) ->
-                async.eachSeries ['baz', 'qux', 'quux'], (name, next) =>
+                async.eachSeries ['', '/b', '/b/c', '/b/d'], (name, next) =>
                     doc =
-                        _id: "foo/nested/#{name}"
+                        _id: "nested/foo#{name}"
                         docType: 'folder'
                     @pouch.db.put doc, next
                 , (err) =>
                     should.not.exist err
-                    @normalizer.deleteFolder = sinon.stub().yields null
-                    @normalizer.emptyFolder _id: 'foo/nested', (err) =>
+                    @normalizer.emptyFolder _id: 'nested', (err) =>
                         should.not.exist err
-                        names = for args in @normalizer.deleteFolder.args
-                            args[0]._id
-                        names.sort().should.eql [
-                            'foo/nested/baz',
-                            'foo/nested/quux',
-                            'foo/nested/qux'
-                        ]
-                        done()
+                        @pouch.db.allDocs (err, res) ->
+                            should.not.exist err
+                            for row in res.rows
+                                row.id.should.not.match /^nested/
+                            done()
 
         describe 'putDoc', ->
             it 'calls putFile for a file', (done) ->

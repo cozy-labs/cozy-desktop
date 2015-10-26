@@ -87,17 +87,19 @@ class Normalizer
 
     # Delete every files and folders inside the given folder
     emptyFolder: (folder, callback) =>
-        @pouch.byPath folder._id, (err, docs) =>
+        @pouch.byRecursivePath folder._id, (err, docs) =>
             if err
                 log.error err
                 callback err
+            else if docs.length is 0
+                callback null
             else
-                async.eachSeries docs, (doc, next) =>
-                    if doc.docType is 'folder'
-                        @deleteFolder doc, next
-                    else
-                        @pouch.db.remove doc, next
-                , callback
+                # XXX in the changes feed, nested subfolder must be deleted
+                # before their parents, hence the reverse order.
+                docs = docs.reverse()
+                for doc in docs
+                    doc._deleted = true
+                @pouch.db.bulkDocs docs, callback
 
     # Helper to save a file or a folder
     # (create, move, update the metadata or the content)
@@ -239,8 +241,8 @@ class Normalizer
             # 4. remove the source doc
 
     # Expectations:
-    #   - the file can be found by its id or by its fullpath
     #   - the file still exists in pouch
+    #   - the file can be found by its _id
     deleteFile: (doc, callback) ->
         async.waterfall [
             # Find the file
@@ -253,8 +255,8 @@ class Normalizer
         ], callback
 
     # Expectations:
-    #   - the folder can be found by its _id or by its fullpath
     #   - the folder still exists in pouch
+    #   - the folder can be found by its _id
     # Actions:
     #   - delete every file and folder inside this folder
     deleteFolder: (doc, callback) ->
