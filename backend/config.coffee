@@ -81,8 +81,11 @@ class Config
     # Set insecure flag, for self-signed certificate mainly
     setInsecure: (bool, deviceName) ->
         deviceName ?= @getDefaultDeviceName()
-        @devices[deviceName].insecure = bool
-        @save()
+        if deviceName
+            @devices[deviceName].insecure = bool
+            @save()
+        else
+            false
 
     # Add some options if the insecure flag is set
     augmentCouchOptions: (options, deviceName) ->

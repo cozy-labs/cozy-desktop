@@ -116,6 +116,23 @@ describe "Pouch", ->
                             tags: []
                     done()
 
+        describe 'byRemoteId', ->
+            it 'gets all the file with this remote id', (done) ->
+                id = '12345678901'
+                @pouch.byRemoteId id, (err, doc) ->
+                    should.not.exist err
+                    doc.remote._id.should.equal id
+                    should.exist doc._id
+                    should.exist doc.docType
+                    done()
+
+            it 'returns a 404 error if no file matches', (done) ->
+                id = 'abcdef'
+                @pouch.byRemoteId id, (err, doc) ->
+                    should.exist err
+                    err.status.should.equal 404
+                    done()
+
 
     describe 'Views', ->
 
@@ -137,6 +154,15 @@ describe "Pouch", ->
                             docs[i-1].docType.should.equal 'file'
                         done()
 
+        describe 'addByPathView', ->
+            it 'creates the path view', (done) ->
+                @pouch.addByPathView (err) =>
+                    should.not.exist err
+                    @pouch.db.get '_design/byPath', (err, doc) ->
+                        should.not.exist err
+                        should.exist doc
+                        done()
+
         describe 'addByChecksumView', ->
             it 'creates the checksum view', (done) ->
                 @pouch.addByChecksumView (err) =>
@@ -146,11 +172,11 @@ describe "Pouch", ->
                         should.exist doc
                         done()
 
-        describe 'addByPathView', ->
-            it 'creates the path view', (done) ->
-                @pouch.addByPathView (err) =>
+        describe 'addByRemoteIdView', ->
+            it 'creates the remote id view', (done) ->
+                @pouch.addByRemoteIdView (err) =>
                     should.not.exist err
-                    @pouch.db.get '_design/byPath', (err, doc) ->
+                    @pouch.db.get '_design/byRemoteId', (err, doc) ->
                         should.not.exist err
                         should.exist doc
                         done()

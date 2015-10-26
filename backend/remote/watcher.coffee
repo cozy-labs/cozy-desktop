@@ -1,4 +1,5 @@
 async = require 'async'
+path  = require 'path'
 log   = require('printit')
     prefix: 'Remote watcher'
 
@@ -79,9 +80,20 @@ class RemoteWatcher
     # Also, keep track of the sequence number.
     # TODO add unit tests
     onChange: (change) =>
+        log.debug change
         if change.deleted
-            @normalizer.deleteDoc change.doc, @changed(change)
+            @pouch.byRemoteId change.doc._id, (err, deleted) =>
+                if err
+                    log.warn 'Cannot find the document to delete'
+                    log.error err
+                else
+                    @normalizer.deleteDoc deleted, @changed(change)
         else
+            doc = change.doc
+            doc.remote =
+                _id: doc._id
+                _rev: doc._rev
+            doc._id = path.join doc.path, doc.name
             @normalizer.putDoc change.doc, @changed(change)
 
     changed: (change) =>

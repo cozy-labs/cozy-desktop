@@ -74,15 +74,16 @@ class Sync
     # At least one side should say it has already this change
     # In some cases, both sides have the change
     #
-    # TODO maybe we can put more infos in a change (s/del/put/ for deleted doc)
     # TODO note the success in the doc
     # TODO when applying a change fails, put it again in some queue for retry
     apply: (change, callback) =>
         log.debug 'apply', change
         cb = (err) =>
             if err
+                log.error err
                 callback err
             else
+                log.debug "Applied #{change.seq}"
                 @pouch.setLocalSeq change.seq, callback
         doc = change.doc
         docType = doc.docType?.toLowerCase?()

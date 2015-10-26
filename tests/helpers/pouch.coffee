@@ -29,6 +29,8 @@ module.exports =
             creationDate: new Date()
             lastModification: new Date()
             tags: []
+            remote:
+                _id: "123456789#{i}"
         pouch.db.put doc, callback
 
     createFile: (pouch, i, callback) ->
@@ -39,4 +41,6 @@ module.exports =
             creationDate: new Date()
             lastModification: new Date()
             tags: []
+            remote:
+                _id: "1234567890#{i}"
         pouch.db.put doc, callback

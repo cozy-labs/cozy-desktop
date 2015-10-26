@@ -78,6 +78,20 @@ class Pouch
                 include_docs: true
         @getAll 'byPath', params, callback
 
+    # Return the file/folder with this remote id
+    byRemoteId: (id, callback) ->
+        params =
+            key: id
+            include_docs: true
+        @db.query 'byRemoteId', params, (err, res) ->
+            if err
+                callback err
+            else if res.rows.length is 0
+                callback status: 404, message: 'missing'
+            else
+                callback null, res.rows[0].doc
+
+
     ### Views ###
 
     # Create all required views in the database
@@ -86,18 +100,8 @@ class Pouch
         async.series [
             @addByPathView,
             @addByChecksumView,
+            @addByRemoteIdView,
         ], (err) -> callback err
-
-    # Create a view to find files by their checksum
-    addByChecksumView: (callback) =>
-        query = """
-            function (doc) {
-                if ('checksum' in doc) {
-                    emit(doc.checksum);
-                }
-            }
-            """
-        @createDesignDoc "byChecksum", query, callback
 
     # Create a view to list files and folders inside a path
     # XXX the path for a file/folder in root will be '',
@@ -111,6 +115,28 @@ class Pouch
             }
             """
         @createDesignDoc "byPath", query, callback
+
+    # Create a view to find files by their checksum
+    addByChecksumView: (callback) =>
+        query = """
+            function (doc) {
+                if ('checksum' in doc) {
+                    emit(doc.checksum);
+                }
+            }
+            """
+        @createDesignDoc "byChecksum", query, callback
+
+    # Create a view to find file/folder by their _id on a remote cozy
+    addByRemoteIdView: (callback) =>
+        query = """
+            function (doc) {
+                if ('remote' in doc) {
+                    emit(doc.remote._id);
+                }
+            }
+            """
+        @createDesignDoc "byRemoteId", query, callback
 
     # Create or update given design doc
     createDesignDoc: (name, query, callback) =>
