@@ -203,7 +203,6 @@ class Merge
     #   - the new file path and name are present and valid
     #   - the old file path and name are present and valid
     #   - the checksum is present
-    # TODO
     #   - the revision for the old file is present
     # Actions:
     #   - force the 'file' docType
@@ -222,6 +221,9 @@ class Merge
         else if @invalidChecksum doc
             log.warn "Invalid checksum: #{JSON.stringify doc, null, 2}"
             callback new Error 'Invalid checksum'
+        else if not was._rev
+            log.warn "Missing rev: #{JSON.stringify was, null, 2}"
+            callback new Error 'Missing rev'
         else
             @pouch.db.get doc._id, (err, file) =>
                 doc.docType           = 'file'
