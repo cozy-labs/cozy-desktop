@@ -19,6 +19,7 @@ class Pouch
     constructor: (@config) ->
         @db = new PouchDB @config.dbPath
         @db.setMaxListeners 100
+        @db.on 'error', (err) -> log.debug err
         @updater = async.queue (task, callback) =>
             @db.get task._id, (err, doc) =>
                 if err?.status is 404
@@ -107,37 +108,31 @@ class Pouch
     # The path for a file/folder in root will be '',
     # not '.' as with node's path.dirname
     addByPathView: (callback) =>
-        query = """
-            function (doc) {
-                if ('docType' in doc) {
-                    var parts = doc._id.split('#{path.sep}');
-                    parts.pop();
-                    emit(parts.join('#{path.sep}'), { _id: doc._id });
-                }
-            }
-            """
+        query = (
+            (doc) ->
+                if 'docType' of doc
+                    parts = doc._id.split '/'
+                    parts.pop()
+                    emit parts.join('/'), _id: doc._id
+        ).toString()
         @createDesignDoc "byPath", query, callback
 
     # Create a view to find files by their checksum
     addByChecksumView: (callback) =>
-        query = """
-            function (doc) {
-                if ('checksum' in doc) {
-                    emit(doc.checksum);
-                }
-            }
-            """
+        query = (
+            (doc) ->
+                if 'checksum' of doc
+                    emit doc.checksum
+        ).toString()
         @createDesignDoc "byChecksum", query, callback
 
     # Create a view to find file/folder by their _id on a remote cozy
     addByRemoteIdView: (callback) =>
-        query = """
-            function (doc) {
-                if ('remote' in doc) {
-                    emit(doc.remote._id);
-                }
-            }
-            """
+        query = (
+            (doc) ->
+                if 'remote' of doc
+                    emit doc.remote._id
+        ).toString()
         @createDesignDoc "byRemoteId", query, callback
 
     # Create or update given design doc
