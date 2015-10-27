@@ -393,6 +393,8 @@ describe 'Merge', ->
                     should.not.exist err
                     @pouch.db.get doc._id, (err, res) ->
                         should.not.exist err
+                        for date in ['creationDate', 'lastModification']
+                            doc[date] = doc[date].toISOString()
                         res.should.have.properties doc
                         res.docType.should.equal 'folder'
                         should.exist res._id
@@ -623,44 +625,157 @@ describe 'Merge', ->
 
 
         describe 'moveFolder', ->
-            return it 'TODO'
-
-            it 'expects a doc with an id', (done) ->
-                @merge.moveFolder path: 'foo', name: 'bar', (err) ->
+            it 'expects a doc with a valid id', (done) ->
+                doc = _id: ''
+                was = _id: 'foo/baz'
+                @merge.moveFolder doc, was, (err) ->
                     should.exist err
-                    err.message.should.equal 'Missing id'
+                    err.message.should.equal 'Invalid id'
                     done()
 
-            it 'expects a doc with the folder docType', (done) ->
-                @merge.moveFolder _id: '123', docType: 'file', (err) ->
+            it 'expects a was with a valid id', (done) ->
+                doc = _id: 'foo/bar'
+                was = _id: ''
+                @merge.moveFolder doc, was, (err) ->
                     should.exist err
-                    err.message.should.equal 'Invalid docType'
+                    err.message.should.equal 'Invalid id'
                     done()
 
-            it 'expects a doc with a valid path and name', (done) ->
+            it 'expects a revision for was', (done) ->
                 doc =
-                    _id: '123'
+                    _id: 'foo/bar'
                     docType: 'folder'
-                    path: '..'
-                    name: ''
-                @merge.moveFolder doc, (err) ->
+                was =
+                    _id: 'foo/baz'
+                    docType: 'folder'
+                @merge.moveFolder doc, was, (err) ->
                     should.exist err
-                    err.message.should.equal 'Invalid path or name'
+                    err.message.should.equal 'Missing rev'
                     done()
 
-            it 'saves the moved folder', (done) ->
+            it 'saves the new folder and deletes the old one', (done) ->
                 @merge.ensureParentExist = sinon.stub().yields null
                 doc =
-                    _id: Pouch.newId()
+                    _id: 'foobar/new'
                     docType: 'folder'
-                    path: 'foo'
-                    name: 'bar'
-                @merge.moveFolder doc, (err) =>
+                    creationDate: new Date
+                    lastModification: new Date
+                    tags: ['courge', 'quux']
+                was =
+                    _id: 'foobar/old'
+                    docType: 'folder'
+                    creationDate: new Date
+                    lastModification: new Date
+                    tags: ['courge', 'quux']
+                @pouch.db.put clone(was), (err, inserted) =>
                     should.not.exist err
-                    @pouch.db.get doc._id, (err, res) ->
+                    was._rev = inserted.rev
+                    @merge.moveFolder clone(doc), clone(was), (err) =>
                         should.not.exist err
-                        res.should.have.properties doc
+                        @pouch.db.get doc._id, (err, res) =>
+                            should.not.exist err
+                            for date in ['creationDate', 'lastModification']
+                                doc[date] = doc[date].toISOString()
+                            res.should.have.properties doc
+                            @pouch.db.get was._id, (err, res) ->
+                                should.exist err
+                                err.status.should.equal 404
+                                done()
+
+            it 'adds missing fields', (done) ->
+                @merge.ensureParentExist = sinon.stub().yields null
+                doc =
+                    _id: 'foobar/new-missing-fields'
+                was =
+                    _id: 'foobar/old-missing-fields'
+                    docType: 'folder'
+                    creationDate: new Date
+                    lastModification: new Date
+                    tags: ['courge', 'quux']
+                @pouch.db.put clone(was), (err, inserted) =>
+                    should.not.exist err
+                    was._rev = inserted.rev
+                    @merge.moveFolder doc, clone(was), (err) =>
+                        should.not.exist err
+                        @pouch.db.get doc._id, (err, res) ->
+                            should.not.exist err
+                            for date in ['creationDate', 'lastModification']
+                                doc[date] = doc[date].toISOString()
+                            res.should.have.properties doc
+                            should.exist res._id
+                            should.exist res.creationDate
+                            should.exist res.lastModification
+                            done()
+
+            it 'adds a hint for writers to know that it is a move', (done) ->
+                @merge.ensureParentExist = sinon.stub().yields null
+                doc =
+                    _id: 'foobar/new-hint'
+                    docType: 'folder'
+                    creationDate: new Date
+                    lastModification: new Date
+                    tags: ['courge', 'quux']
+                was =
+                    _id: 'foobar/old-hint'
+                    docType: 'folder'
+                    creationDate: new Date
+                    lastModification: new Date
+                    tags: ['courge', 'quux']
+                opts =
+                    include_docs: true
+                    live: true
+                    since: 'now'
+                @pouch.db.put clone(was), (err, inserted) =>
+                    should.not.exist err
+                    was._rev = inserted.rev
+                    @pouch.db.changes(opts).on 'change', (info) ->
+                        @cancel()
+                        info.id.should.equal was._id
+                        info.doc.moveTo.should.equal doc._id
                         done()
+                    @merge.moveFolder clone(doc), clone(was), (err) ->
+                        should.not.exist err
+
+            describe 'when a file with the same path exists', ->
+                it 'TODO'
+
+            describe 'when a folder with the same path exists', ->
+                before 'create a folder', (done) ->
+                    @folder =
+                        _id: 'foobaz'
+                        docType: 'folder'
+                        creationDate: new Date
+                        lastModification: new Date
+                        tags: ['foo']
+                    @pouch.db.put @folder, done
+
+                it 'can overwrite the content of a folder', (done) ->
+                    @merge.ensureParentExist = sinon.stub().yields null
+                    doc =
+                        _id: 'foobaz'
+                        docType: 'folder'
+                        tags: ['qux', 'quux']
+                    was =
+                        _id: 'old-foobaz'
+                        docType: 'folder'
+                        creationDate: new Date
+                        lastModification: new Date
+                        tags: ['qux', 'quux']
+                    @pouch.db.put clone(was), (err, inserted) =>
+                        should.not.exist err
+                        was._rev = inserted.rev
+                        @merge.moveFolder clone(doc), clone(was), (err) =>
+                            should.not.exist err
+                            @pouch.db.get @folder._id, (err, res) =>
+                                should.not.exist err
+                                res.should.have.properties doc
+                                @pouch.db.get was._id, (err, res) ->
+                                    should.exist err
+                                    err.status.should.equal 404
+                                    done()
+
+                it 'can resolve a conflict', ->
+                    it 'TODO'
 
 
     describe 'Delete', ->

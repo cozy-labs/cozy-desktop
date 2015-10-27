@@ -1,4 +1,5 @@
 async = require 'async'
+clone = require 'lodash.clone'
 path  = require 'path'
 log   = require('printit')
     prefix: 'Merge         '
@@ -186,7 +187,7 @@ class Merge
         else
             @pouch.db.get doc._id, (err, folder) =>
                 doc.docType = 'folder'
-                doc.lastModification ?= (new Date).toString()
+                doc.lastModification ?= new Date
                 if folder
                     doc._rev = folder._rev
                     doc.creationDate ?= folder.creationDate
@@ -195,7 +196,7 @@ class Merge
                         doc.tags.push tag unless tag in doc.tags
                     @pouch.db.put doc, callback
                 else
-                    doc.creationDate ?= (new Date).toString()
+                    doc.creationDate ?= new Date
                     @ensureParentExist doc, =>
                         @pouch.db.put doc, callback
 
@@ -242,31 +243,63 @@ class Merge
                         @pouch.db.bulkDocs [was, doc], callback
 
     # Expectations:
-    #   - the folder id is present
     #   - the new folder path and name are present and valid
+    #   - the old folder path and name are present and valid
+    #   - the revision for the old folder is present
     # Actions:
+    #   - force the 'folder' docType
+    #   - add the creation date if missing
+    #   - add the last modification date if missing
+    #   - add a hint to make writers know that it's a move (moveTo)
     #   - create the tree structure if needed
-    # TODO
     #   - move every file and folder inside this folder
     #   - overwrite the destination if it was present
+    # TODO
+    #   - tags
     moveFolder: (doc, was, callback) ->
-        if not doc._id
-            log.warn "Missing _id: #{JSON.stringify doc, null, 2}"
-            callback? new Error 'Missing id'
-        else if doc.docType isnt 'folder'
-            log.warn "Invalid docType: #{JSON.stringify doc, null, 2}"
-            callback? new Error 'Invalid docType'
-        else if @invalidPathOrName doc
-            log.warn "Invalid path or name: #{JSON.stringify doc, null, 2}"
-            callback? new Error 'Invalid path or name'
+        if @invalidId doc
+            log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
+            callback new Error 'Invalid id'
+        else if @invalidId was
+            log.warn "Invalid id: #{JSON.stringify was, null, 2}"
+            callback new Error 'Invalid id'
+        else if not was._rev
+            log.warn "Missing rev: #{JSON.stringify was, null, 2}"
+            callback new Error 'Missing rev'
         else
-            @ensureParentExist doc, =>
-                @pouch.db.put doc, callback
-            # TODO
-            # 1. create the destination doc (if it doesn't exist)
-            # 2. @pouch.byPath to list all files and folders inside the source
-            # 3. move them to the destination with moveFile and moveFolder
-            # 4. remove the source doc
+            @pouch.db.get doc._id, (err, folder) =>
+                doc.docType           = 'folder'
+                doc.creationDate     ?= was.creationDate
+                doc.lastModification ?= new Date
+                was.moveTo            = doc._id
+                was._deleted          = true
+                if folder
+                    # TODO maybe it is simpler to add a -conflict suffix
+                    doc._rev = folder._rev
+                    @moveFolderRecursively doc, was, callback
+                else
+                    @ensureParentExist doc, =>
+                        @moveFolderRecursively doc, was, callback
+
+    # TODO Add comments, tests
+    # TODO Check if folders/files exists in destination
+    moveFolderRecursively: (doc, was, callback) =>
+        @pouch.byRecursivePath doc._id, (err, docs) =>
+            if err
+                callback err
+            else
+                bulk = [was, doc]
+                for doc in docs
+                    src = clone doc
+                    src._deleted = true
+                    src.moved = true
+                    bulk.push src
+                    dst = clone doc
+                    dst._id = dst._id.replace was._id, doc._id
+                    delete dst._rev
+                    dst.moved = true
+                    bulk.push dst
+                @pouch.db.bulkDocs bulk, callback
 
     # Expectations:
     #   - the file still exists in pouch
