@@ -49,6 +49,7 @@ class Sync
                 @apply change, callback
 
     # Take the next change from pouch
+    # We filter with the byPath view to reject design documents
     #
     # TODO look also to the retry queue for failures
     pop: (callback) =>
@@ -59,16 +60,14 @@ class Sync
                 since: seq
                 include_docs: true
                 returnDocs: false
+                filter: '_view'
+                view: 'byPath'
             @pouch.db.changes(opts)
                 .on 'change', (info) ->
                     @cancel()
                     callback null, info
                 .on 'error',  (err) ->
                     callback err, null
-
-    # Return a boolean to indicate if this is a design or local document
-    isSpecial: (doc) ->
-        not doc.docType?
 
     # Apply a change to both local and remote
     # At least one side should say it has already this change
@@ -86,28 +85,22 @@ class Sync
                 log.debug "Applied #{change.seq}"
                 @pouch.setLocalSeq change.seq, callback
         doc = change.doc
-        docType = doc.docType?.toLowerCase?()
+        docType = doc.docType?.toLowerCase()
         switch
-            when @isSpecial doc
-                # TODO use a filter on db.changes to avoid this case?
-                cb()
             when docType is 'file'
-                if change.deleted
-                    @fileDeleted doc, cb
-                else
-                    @fileChanged doc, cb
+                @fileChanged doc, cb
             when docType is 'folder'
-                if change.deleted
-                    @folderDeleted doc, cb
-                else
-                    @folderChanged doc, cb
+                @folderChanged doc, cb
             else
                 cb new Error "Unknown doctype: #{doc.docType}"
 
     # If a file has been changed, we had to check the previous rev from pouch
     # to decide if it's a new file that has been added, or a move/rename
     fileChanged: (doc, callback) =>
-        @fileAdded doc, callback
+        if doc._deleted
+            @fileDeleted doc, callback
+        else
+            @fileAdded doc, callback
         return # TODO detect file move
         @pouch.getPreviousRev doc._id, (err, old) =>
             if err or not old
@@ -121,7 +114,10 @@ class Sync
 
     # Same as fileChanged, but for folder
     folderChanged: (doc, callback) =>
-        @folderAdded doc, callback
+        if doc._deleted
+            @folderDeleted doc, callback
+        else
+            @folderAdded doc, callback
         return # TODO detect folder move
         @pouch.getPreviousRev doc._id, (err, old) =>
             if err or not old

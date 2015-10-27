@@ -81,6 +81,12 @@ describe "Pouch", ->
                         tags: []
                     done()
 
+            it 'rejects design documents', (done) ->
+                @pouch.byPath '_design', (err, docs) ->
+                    should.not.exist err
+                    docs.length.should.be.equal 0
+                    done()
+
         describe 'byRecurivePath', ->
             it 'gets the files and folders in this path recursively', (done) ->
                 @pouch.byRecursivePath 'my-folder', (err, docs) ->

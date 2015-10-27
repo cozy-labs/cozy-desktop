@@ -283,19 +283,19 @@ class Merge
 
     # TODO Add comments, tests
     # TODO Check if folders/files exists in destination
-    moveFolderRecursively: (doc, was, callback) =>
-        @pouch.byRecursivePath doc._id, (err, docs) =>
+    moveFolderRecursively: (folder, was, callback) =>
+        @pouch.byRecursivePath folder._id, (err, docs) =>
             if err
                 callback err
             else
-                bulk = [was, doc]
+                bulk = [was, folder]
                 for doc in docs
                     src = clone doc
                     src._deleted = true
-                    src.moved = true
+                    src.movedTo = doc._id.replace was._id, folder._id
                     bulk.push src
                     dst = clone doc
-                    dst._id = dst._id.replace was._id, doc._id
+                    dst._id = src.movedTo
                     delete dst._rev
                     dst.moved = true
                     bulk.push dst

@@ -117,6 +117,27 @@ describe "Sync", ->
                     done()
                 , 10
 
+        it 'filters design doc changes', (done) ->
+            query = """
+                function(doc) {
+                    if ('size' in doc) emit(doc.size);
+                }
+                """
+            @pouch.createDesignDoc 'bySize', query, (err) =>
+                should.not.exist err
+                pouchHelpers.createFile @pouch, 6, (err) =>
+                    should.not.exist err
+                    spy = sinon.spy()
+                    @sync.pop spy
+                    setTimeout ->
+                        spy.calledOnce.should.be.true()
+                        [err, change] = spy.args[0]
+                        should.not.exist err
+                        console.log change
+                        change.doc.docType.should.equal 'file'
+                        done()
+                    , 10
+
         it 'waits for the next change if there no available change', (done) ->
             spy = sinon.spy()
             @sync.pop (err, change) =>
@@ -125,38 +146,18 @@ describe "Sync", ->
                 @pouch.getLocalSeq (err, seq) ->
                     should.not.exist err
                     change.should.have.properties
-                        id: 'my-folder/file-6'
+                        id: 'my-folder/file-7'
                         seq: seq + 1
                     change.doc.should.have.properties
-                        _id: 'my-folder/file-6'
+                        _id: 'my-folder/file-7'
                         docType: 'file'
                         tags: []
                     done()
             setTimeout =>
                 spy.called.should.be.false()
-                pouchHelpers.createFile @pouch, 6, (err) ->
+                pouchHelpers.createFile @pouch, 7, (err) ->
                     should.not.exist err
             , 10
-
-    describe 'isSpecial', ->
-        beforeEach ->
-            @local = {}
-            @remote = {}
-            @sync = new Sync @pouch, @local, @remote
-
-        it 'returns true for a design document', (done) ->
-            @pouch.db.get '_design/byPath', (err, doc) =>
-                should.not.exist err
-                @sync.isSpecial(doc).should.be.true()
-                done()
-
-        it 'returns false for a normal document', (done) ->
-            pouchHelpers.createFile @pouch, 7, (err) =>
-                should.not.exist err
-                @pouch.db.get 'my-folder/file-7', (err, doc) =>
-                    should.not.exist err
-                    @sync.isSpecial(doc).should.be.false()
-                    done()
 
     describe 'apply', ->
         it 'TODO'

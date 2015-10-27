@@ -109,9 +109,11 @@ class Pouch
     addByPathView: (callback) =>
         query = """
             function (doc) {
-                var parts = doc._id.split('#{path.sep}');
-                parts.pop();
-                emit(parts.join('#{path.sep}'), { _id: doc._id });
+                if ('docType' in doc) {
+                    var parts = doc._id.split('#{path.sep}');
+                    parts.pop();
+                    emit(parts.join('#{path.sep}'), { _id: doc._id });
+                }
             }
             """
         @createDesignDoc "byPath", query, callback
