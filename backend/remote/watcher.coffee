@@ -44,7 +44,7 @@ class RemoteWatcher
             return callback err  if err
             return callback null unless rows?.length
             async.eachSeries rows, (row, cb) =>
-                @normalizer.putDoc row.value, (err) ->
+                @onChange row.value, (err) ->
                     if err
                         log.error 'Failed to copy one doc'
                         log.error err
@@ -66,7 +66,9 @@ class RemoteWatcher
                 retry: true
                 since: seq
                 include_docs: true
-            @changes.on 'change', @onChange
+            @changes
+                .on 'change', (change) =>
+                    @onChange change.doc, @changed(change)
                 .on 'error', (err) =>
                     @changes = null
                     log.warn 'An error occured during replication.'
@@ -77,34 +79,38 @@ class RemoteWatcher
                     callback()
 
     # Take one change from the changes feed and give it to normalizer.
-    # Also, keep track of the sequence number.
-    # TODO add unit tests
-    onChange: (change) =>
-        log.debug change
-        @pouch.byRemoteId change.doc._id, (err, was) =>
-            if change.deleted
+    #
+    # TODO should we check was.remote._rev and doc._rev for conflict
+    # like local has move file and remote overwrite it?
+    onChange: (doc, callback) =>
+        log.debug doc
+        @pouch.byRemoteId doc._id, (err, was) =>
+            if err and err.status isnt 404
+                callback err
+            else if doc._deleted
                 if err
-                    log.warn 'Cannot find the document to delete'
-                    log.error err
+                    # It's fine if the file was deleted on local and on remote
+                    callback()
                 else
-                    @normalizer.deleteDoc was, @changed(change)
+                    @normalizer.deleteDoc was, callback
             else
-                log.error err if err
-                doc = change.doc
                 doc.remote =
                     _id: doc._id
                     _rev: doc._rev
                 doc._id = path.join doc.path, doc.name
+                delete doc._rev
+                delete doc.path
+                delete doc.name
                 if not was or was._id is doc._id
-                    @normalizer.putDoc change.doc, @changed(change)
+                    @normalizer.putDoc doc, callback
                 else if was.checksum is doc.checksum
-                    @normalizer.moveDoc change.doc, was, @changed(change)
+                    @normalizer.moveDoc doc, was, callback
                 else
-                    # TODO are we sure what to do in that case?
                     @normalizer.deleteDoc was, (err) =>
                         log.error err if err
-                        @normalizer.putDoc change.doc, @changed(change)
+                        @normalizer.putDoc doc, callback
 
+    # Keep track of the sequence number and log errors
     changed: (change) =>
         (err) =>
             if err

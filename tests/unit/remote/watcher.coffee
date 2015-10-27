@@ -1,6 +1,8 @@
 async  = require 'async'
+clone  = require 'lodash.clone'
 fs     = require 'fs-extra'
 path   = require 'path'
+sinon  = require 'sinon'
 should = require 'should'
 
 configHelpers = require '../../helpers/config'
@@ -12,18 +14,210 @@ Watcher    = require '../../../backend/remote/watcher'
 
 
 describe "RemoteWatcher Tests", ->
-    @timeout 8000
 
     before 'instanciate config', configHelpers.createConfig
     before 'instanciate pouch', pouchHelpers.createDatabase
     before 'start couch server', couchHelpers.startServer
     before 'instanciate couch', couchHelpers.createCouchClient
     before 'instanciate remote watcher', ->
-        @normalizer = new Normalizer @pouch
+        @normalizer = {}
         @watcher    = new Watcher @couch, @normalizer, @pouch
     after 'stop couch server', couchHelpers.stopServer
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
+
+    before (done) ->
+        pouchHelpers.createParentFolder @pouch, =>
+            async.eachSeries [1..3], (i, callback) =>
+                pouchHelpers.createFolder @pouch, i, =>
+                    pouchHelpers.createFile @pouch, i, callback
+            , done
+
+
+    describe 'onChange', ->
+        it 'calls putDoc for a new doc', (done) ->
+            @normalizer.putDoc = sinon.stub().yields null
+            doc =
+                _id: '12345678905'
+                _rev: '1-abcdef'
+                docType: 'file'
+                path: 'my-folder'
+                name: 'file-5'
+                checksum: '9999999999999999999999999999999999999999'
+                tags: []
+            @watcher.onChange clone(doc), (err) =>
+                should.not.exist err
+                @normalizer.putDoc.called.should.be.true()
+                args = @normalizer.putDoc.args[0][0]
+                args.should.have.properties
+                    _id: path.join doc.path, doc.name
+                    docType: 'file'
+                    checksum: doc.checksum
+                    tags: doc.tags
+                    remote:
+                        _id: doc._id
+                        _rev: doc._rev
+                args.should.not.have.properties ['_rev', 'path', 'name']
+                done()
+
+        it 'calls putDoc when tags are updated', (done) ->
+            @normalizer.putDoc = sinon.stub().yields null
+            doc =
+                _id: '12345678901'
+                _rev: '2-abcdef'
+                docType: 'file'
+                path: 'my-folder'
+                name: 'file-1'
+                checksum: '1111111111111111111111111111111111111111'
+                tags: ['foo', 'bar', 'baz']
+            @watcher.onChange clone(doc), (err) =>
+                should.not.exist err
+                @normalizer.putDoc.called.should.be.true()
+                args = @normalizer.putDoc.args[0][0]
+                args.should.have.properties
+                    _id: path.join doc.path, doc.name
+                    docType: 'file'
+                    checksum: doc.checksum
+                    tags: doc.tags
+                    remote:
+                        _id: doc._id
+                        _rev: doc._rev
+                args.should.not.have.properties ['_rev', 'path', 'name']
+                done()
+
+        it 'calls putDoc when content is overwritten', (done) ->
+            @normalizer.putDoc = sinon.stub().yields null
+            doc =
+                _id: '12345678901'
+                _rev: '3-abcdef'
+                docType: 'file'
+                path: 'my-folder'
+                name: 'file-1'
+                checksum: '9999999999999999999999999999999999999999'
+                tags: ['foo', 'bar', 'baz']
+            @watcher.onChange clone(doc), (err) =>
+                should.not.exist err
+                @normalizer.putDoc.called.should.be.true()
+                args = @normalizer.putDoc.args[0][0]
+                args.should.have.properties
+                    _id: path.join doc.path, doc.name
+                    docType: 'file'
+                    checksum: doc.checksum
+                    tags: doc.tags
+                    remote:
+                        _id: doc._id
+                        _rev: doc._rev
+                args.should.not.have.properties ['_rev', 'path', 'name']
+                done()
+
+        it 'calls moveDoc when file is renamed', (done) ->
+            @normalizer.moveDoc = sinon.stub().yields null
+            doc =
+                _id: '12345678902'
+                _rev: '4-abcdef'
+                docType: 'file'
+                path: 'my-folder'
+                name: 'file-2-bis'
+                checksum: '1111111111111111111111111111111111111112'
+                tags: []
+            @watcher.onChange clone(doc), (err) =>
+                should.not.exist err
+                @normalizer.moveDoc.called.should.be.true()
+                src = @normalizer.moveDoc.args[0][1]
+                src.should.have.properties
+                    _id: 'my-folder/file-2'
+                    docType: 'file'
+                    checksum: doc.checksum
+                    tags: doc.tags
+                    remote:
+                        _id: '12345678902'
+                dst = @normalizer.moveDoc.args[0][0]
+                dst.should.have.properties
+                    _id: path.join doc.path, doc.name
+                    docType: 'file'
+                    checksum: doc.checksum
+                    tags: doc.tags
+                    remote:
+                        _id: doc._id
+                        _rev: doc._rev
+                dst.should.not.have.properties ['_rev', 'path', 'name']
+                done()
+
+        it 'calls moveDoc when file is moved', (done) ->
+            @normalizer.moveDoc = sinon.stub().yields null
+            doc =
+                _id: '12345678902'
+                _rev: '5-abcdef'
+                docType: 'file'
+                path: 'another-folder/in/some/place'
+                name: 'file-2-ter'
+                checksum: '1111111111111111111111111111111111111112'
+                tags: []
+            @watcher.onChange clone(doc), (err) =>
+                should.not.exist err
+                @normalizer.moveDoc.called.should.be.true()
+                src = @normalizer.moveDoc.args[0][1]
+                src.should.have.properties
+                    _id: 'my-folder/file-2'
+                    docType: 'file'
+                    checksum: doc.checksum
+                    tags: doc.tags
+                    remote:
+                        _id: '12345678902'
+                dst = @normalizer.moveDoc.args[0][0]
+                dst.should.have.properties
+                    _id: path.join doc.path, doc.name
+                    docType: 'file'
+                    checksum: doc.checksum
+                    tags: doc.tags
+                    remote:
+                        _id: doc._id
+                        _rev: doc._rev
+                dst.should.not.have.properties ['_rev', 'path', 'name']
+                done()
+
+        it 'calls deletedDoc&putDoc when file has changed completely', (done) ->
+            @normalizer.deleteDoc = sinon.stub().yields null
+            @normalizer.putDoc = sinon.stub().yields null
+            doc =
+                _id: '12345678903'
+                _rev: '6-abcdef'
+                docType: 'file'
+                path: 'another-folder/in/some/place'
+                name: 'file-3-bis'
+                checksum: '8888888888888888888888888888888888888888'
+                tags: []
+            @watcher.onChange clone(doc), (err) =>
+                should.not.exist err
+                @normalizer.deleteDoc.called.should.be.true()
+                id = @normalizer.deleteDoc.args[0][0]._id
+                id.should.equal 'my-folder/file-3'
+                @normalizer.putDoc.called.should.be.true()
+                args = @normalizer.putDoc.args[0][0]
+                args.should.have.properties
+                    _id: path.join doc.path, doc.name
+                    docType: 'file'
+                    checksum: doc.checksum
+                    tags: doc.tags
+                    remote:
+                        _id: doc._id
+                        _rev: doc._rev
+                args.should.not.have.properties ['_rev', 'path', 'name']
+                done()
+
+        it 'calls deleteDoc for a deleted doc', (done) ->
+            @normalizer.deleteDoc = sinon.stub().yields null
+            doc =
+                _id: '12345678901'
+                _rev: '7-abcdef'
+                _deleted: true
+            @watcher.onChange doc, (err) =>
+                should.not.exist err
+                @normalizer.deleteDoc.called.should.be.true()
+                id = @normalizer.deleteDoc.args[0][0]._id
+                id.should.equal 'my-folder/file-1'
+                done()
+
 
     return it 'TODO fix tests'
 
