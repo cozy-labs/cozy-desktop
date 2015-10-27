@@ -433,60 +433,184 @@ describe 'Merge', ->
 
 
     describe 'Move', ->
-        return it 'TODO'
 
         describe 'moveFile', ->
-            it 'expects a doc with an id', (done) ->
-                @merge.moveFile path: 'foo', name: 'bar', (err) ->
+            it 'expects a doc with a valid id', (done) ->
+                doc = _id: ''
+                was = _id: 'foo/baz'
+                @merge.moveFile doc, was, (err) ->
                     should.exist err
-                    err.message.should.equal 'Missing id'
+                    err.message.should.equal 'Invalid id'
                     done()
 
-            it 'expects a doc with the file docType', (done) ->
-                @merge.moveFile _id: '123', docType: 'folder', (err) ->
+            it 'expects a was with a valid id', (done) ->
+                doc = _id: 'foo/bar'
+                was = _id: ''
+                @merge.moveFile doc, was, (err) ->
                     should.exist err
-                    err.message.should.equal 'Invalid docType'
-                    done()
-
-            it 'expects a doc with a valid path and name', (done) ->
-                doc =
-                    _id: '123'
-                    docType: 'file'
-                    path: '..'
-                    name: ''
-                @merge.moveFile doc, (err) ->
-                    should.exist err
-                    err.message.should.equal 'Invalid path or name'
+                    err.message.should.equal 'Invalid id'
                     done()
 
             it 'expects a doc with a valid checksum', (done) ->
                 doc =
-                    _id: '123'
+                    _id: 'foo/bar'
                     docType: 'file'
-                    path: 'foo'
-                    name: 'bar'
                     checksum: 'invalid'
-                @merge.moveFile doc, (err) ->
+                was = _id: 'foo/baz'
+                @merge.moveFile doc, was, (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid checksum'
                     done()
 
-            it 'saves the moved file', (done) ->
+            it 'saves the new file and deletes the old one', (done) ->
                 @merge.ensureParentExist = sinon.stub().yields null
                 doc =
-                    _id: Pouch.newId()
+                    _id: 'foo/new'
+                    checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517'
                     docType: 'file'
-                    path: 'foo'
-                    name: 'bar'
-                    checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
-                @merge.moveFile doc, (err) =>
+                    creationDate: new Date
+                    lastModification: new Date
+                    tags: ['courge', 'quux']
+                was =
+                    _id: 'foo/old'
+                    checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517'
+                    docType: 'file'
+                    creationDate: new Date
+                    lastModification: new Date
+                    tags: ['courge', 'quux']
+                @pouch.db.put clone(was), (err, inserted) =>
                     should.not.exist err
-                    @pouch.db.get doc._id, (err, res) ->
+                    was._rev = inserted.rev
+                    @merge.moveFile clone(doc), clone(was), (err) =>
                         should.not.exist err
-                        res.should.have.properties doc
+                        @pouch.db.get doc._id, (err, res) =>
+                            should.not.exist err
+                            for date in ['creationDate', 'lastModification']
+                                doc[date] = doc[date].toISOString()
+                            res.should.have.properties doc
+                            @pouch.db.get was._id, (err, res) ->
+                                should.exist err
+                                err.status.should.equal 404
+                                done()
+
+            it 'adds missing fields', (done) ->
+                @merge.ensureParentExist = sinon.stub().yields null
+                doc =
+                    _id: 'foo/new-missing-fields.jpg'
+                    checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517'
+                was =
+                    _id: 'foo/old-missing-fields.jpg'
+                    checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517'
+                    docType: 'file'
+                    creationDate: new Date
+                    lastModification: new Date
+                    tags: ['courge', 'quux']
+                    size: 5426
+                    class: 'image'
+                    mime: 'image/jpeg'
+                @pouch.db.put clone(was), (err, inserted) =>
+                    should.not.exist err
+                    was._rev = inserted.rev
+                    @merge.moveFile doc, clone(was), (err) =>
+                        should.not.exist err
+                        @pouch.db.get doc._id, (err, res) ->
+                            should.not.exist err
+                            for date in ['creationDate', 'lastModification']
+                                doc[date] = doc[date].toISOString()
+                            res.should.have.properties doc
+                            should.exist res._id
+                            should.exist res.creationDate
+                            should.exist res.lastModification
+                            should.exist res.size
+                            should.exist res.class
+                            should.exist res.mime
+                            done()
+
+            it 'adds a hint for writers to know that it is a move', (done) ->
+                @merge.ensureParentExist = sinon.stub().yields null
+                doc =
+                    _id: 'foo/new-hint'
+                    checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517'
+                    docType: 'file'
+                    creationDate: new Date
+                    lastModification: new Date
+                    tags: ['courge', 'quux']
+                was =
+                    _id: 'foo/old-hint'
+                    checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517'
+                    docType: 'file'
+                    creationDate: new Date
+                    lastModification: new Date
+                    tags: ['courge', 'quux']
+                opts =
+                    include_docs: true
+                    live: true
+                    since: 'now'
+                @pouch.db.put clone(was), (err, inserted) =>
+                    should.not.exist err
+                    was._rev = inserted.rev
+                    @pouch.db.changes(opts).on 'change', (info) ->
+                        @cancel()
+                        info.id.should.equal was._id
+                        info.doc.moveTo.should.equal doc._id
                         done()
+                    @merge.moveFile clone(doc), clone(was), (err) ->
+                        should.not.exist err
+
+            describe 'when a folder with the same path exists', ->
+                it 'TODO'
+
+            describe 'when a file with the same path exists', ->
+                before 'create a file', (done) ->
+                    @file =
+                        _id: 'fuzz.jpg'
+                        docType: 'file'
+                        checksum: '1111111111111111111111111111111111111111'
+                        creationDate: new Date
+                        lastModification: new Date
+                        tags: ['foo']
+                        size: 12345
+                        class: 'image'
+                        mime: 'image/jpeg'
+                    @pouch.db.put @file, done
+
+                it 'can overwrite the content of a file', (done) ->
+                    @merge.ensureParentExist = sinon.stub().yields null
+                    doc =
+                        _id: 'fuzz.jpg'
+                        docType: 'file'
+                        checksum: '3333333333333333333333333333333333333333'
+                        tags: ['qux', 'quux']
+                    was =
+                        _id: 'old-fuzz.jpg'
+                        checksum: '3333333333333333333333333333333333333333'
+                        docType: 'file'
+                        creationDate: new Date
+                        lastModification: new Date
+                        tags: ['qux', 'quux']
+                    @pouch.db.put clone(was), (err, inserted) =>
+                        should.not.exist err
+                        was._rev = inserted.rev
+                        @merge.moveFile clone(doc), clone(was), (err) =>
+                            should.not.exist err
+                            @pouch.db.get @file._id, (err, res) =>
+                                should.not.exist err
+                                res.should.have.properties doc
+                                should.not.exist res.size
+                                should.not.exist res.class
+                                should.not.exist res.mime
+                                @pouch.db.get was._id, (err, res) ->
+                                    should.exist err
+                                    err.status.should.equal 404
+                                    done()
+
+                it 'can resolve a conflict', ->
+                    it 'TODO'
+
 
         describe 'moveFolder', ->
+            return it 'TODO'
+
             it 'expects a doc with an id', (done) ->
                 @merge.moveFolder path: 'foo', name: 'bar', (err) ->
                     should.exist err

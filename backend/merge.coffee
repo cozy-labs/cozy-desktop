@@ -112,7 +112,6 @@ class Merge
             callback new Error "Unexpected docType: #{doc.docType}"
 
     # Helper to move/rename a file or a folder
-    # TODO explain why we need a move method (delete+put is not enough)
     moveDoc: (doc, was, callback) =>
         if doc.docType isnt was.docType
             callback new Error "Incompatible docTypes: #{doc.docType}"
@@ -149,10 +148,10 @@ class Merge
     putFile: (doc, callback) ->
         if @invalidId doc
             log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
-            callback? new Error 'Invalid id'
+            callback new Error 'Invalid id'
         else if @invalidChecksum doc
             log.warn "Invalid checksum: #{JSON.stringify doc, null, 2}"
-            callback? new Error 'Invalid checksum'
+            callback new Error 'Invalid checksum'
         else
             @pouch.db.get doc._id, (err, file) =>
                 doc.docType = 'file'
@@ -183,7 +182,7 @@ class Merge
     putFolder: (doc, callback) ->
         if @invalidId doc
             log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
-            callback? new Error 'Invalid id'
+            callback new Error 'Invalid id'
         else
             @pouch.db.get doc._id, (err, folder) =>
                 doc.docType = 'folder'
@@ -201,30 +200,44 @@ class Merge
                         @pouch.db.put doc, callback
 
     # Expectations:
-    #   - the file id is present
     #   - the new file path and name are present and valid
-    # Actions:
-    #   - create the tree structure if needed
+    #   - the old file path and name are present and valid
+    #   - the checksum is present
     # TODO
+    #   - the revision for the old file is present
+    # Actions:
+    #   - force the 'file' docType
+    #   - add the creation date if missing
+    #   - add the last modification date if missing
+    #   - add a hint to make writers know that it's a move (moveTo)
+    #   - create the tree structure if needed
     #   - overwrite the destination if it was present
     moveFile: (doc, was, callback) ->
-        if not doc._id
-            log.warn "Missing _id: #{JSON.stringify doc, null, 2}"
-            callback? new Error 'Missing id'
-        else if doc.docType isnt 'file'
-            log.warn "Invalid docType: #{JSON.stringify doc, null, 2}"
-            callback? new Error 'Invalid docType'
-        else if @invalidPathOrName doc
-            log.warn "Invalid path or name: #{JSON.stringify doc, null, 2}"
-            callback? new Error 'Invalid path or name'
+        if @invalidId doc
+            log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
+            callback new Error 'Invalid id'
+        else if @invalidId was
+            log.warn "Invalid id: #{JSON.stringify was, null, 2}"
+            callback new Error 'Invalid id'
         else if @invalidChecksum doc
             log.warn "Invalid checksum: #{JSON.stringify doc, null, 2}"
-            callback? new Error 'Invalid checksum'
+            callback new Error 'Invalid checksum'
         else
-            @ensureParentExist doc, =>
-                # TODO bulk operation for delete + put
-                was.hint = doc._id # Hint to make writers know that it's a move
-                @pouch.db.put doc, callback
+            @pouch.db.get doc._id, (err, file) =>
+                doc.docType           = 'file'
+                doc.creationDate     ?= was.creationDate
+                doc.lastModification ?= new Date
+                doc.size             ?= was.size
+                doc.class            ?= was.class
+                doc.mime             ?= was.mime
+                was.moveTo            = doc._id
+                was._deleted          = true
+                if file
+                    doc._rev = file._rev
+                    @pouch.db.bulkDocs [was, doc], callback
+                else
+                    @ensureParentExist doc, =>
+                        @pouch.db.bulkDocs [was, doc], callback
 
     # Expectations:
     #   - the folder id is present
