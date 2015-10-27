@@ -13,11 +13,16 @@ params =
     pass: 'cozytest'
     port: 5895
 
+url = "http://localhost:#{params.port}"
+
 # We use pouchdb-server as a fake couchdb instance for unit tests
 module.exports =
 
+    params: params
+    url:    url
+
     startServer: (done) ->
-        client = request.newClient "http://localhost:#{params.port}"
+        client = request.newClient url
         async.waterfall [
             # Start the server
             (next) =>
@@ -66,7 +71,7 @@ module.exports =
     createCouchClient: ->
         @config.removeRemoteCozy @config.getDefaultDeviceName()
         @config.addRemoteCozy
-            url: "http://localhost:#{params.port}"
+            url: url
             deviceName: params.user
             password: params.pass
         @couch = new Couch @config
