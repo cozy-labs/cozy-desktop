@@ -95,7 +95,7 @@ class Normalizer
             else if docs.length is 0
                 callback null
             else
-                # XXX in the changes feed, nested subfolder must be deleted
+                # In the changes feed, nested subfolder must be deleted
                 # before their parents, hence the reverse order.
                 docs = docs.reverse()
                 for doc in docs
@@ -113,11 +113,11 @@ class Normalizer
             callback new Error "Unexpected docType: #{doc.docType}"
 
     # Helper to move/rename a file or a folder
-    # TODO add test
-    # TODO what if doc and was have different docTypes
     # TODO explain why we need a move method (delete+put is not enough)
     moveDoc: (doc, was, callback) =>
-        if doc.docType is 'file'
+        if doc.docType isnt was.docType
+            callback new Error "Incompatible docTypes: #{doc.docType}"
+        else if doc.docType is 'file'
             @moveFile doc, was, callback
         else if doc.docType is 'folder'
             @moveFolder doc, was, callback

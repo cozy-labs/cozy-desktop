@@ -13,7 +13,7 @@ params =
     pass: 'cozytest'
     port: 5895
 
-# XXX We use pouchdb-server as a fake couchdb instance for unit tests
+# We use pouchdb-server as a fake couchdb instance for unit tests
 module.exports =
 
     startServer: (done) ->

@@ -176,6 +176,57 @@ describe 'Normalizer', ->
                     @normalizer.putFolder.calledWith(doc).should.be.true()
                     done()
 
+        describe 'moveDoc', ->
+            it 'calls moveFile for a file', (done) ->
+                doc =
+                    _id: 'move/name'
+                    docType: 'file'
+                was =
+                    _id: 'move/old-name'
+                    docType: 'file'
+                @normalizer.moveFile = sinon.stub().yields null
+                @normalizer.moveDoc doc, was, (err) =>
+                    should.not.exist err
+                    @normalizer.moveFile.calledWith(doc, was).should.be.true()
+                    done()
+
+            it 'calls moveFolder for a folder', (done) ->
+                doc =
+                    _id: 'move/folder'
+                    docType: 'folder'
+                was =
+                    _id: 'move/old-folder'
+                    docType: 'folder'
+                @normalizer.moveFolder = sinon.stub().yields null
+                @normalizer.moveDoc doc, was, (err) =>
+                    should.not.exist err
+                    @normalizer.moveFolder.calledWith(doc, was).should.be.true()
+                    done()
+
+            it 'throws an error if we move a file to a folder', (done) ->
+                doc =
+                    _id: 'move/folder'
+                    docType: 'folder'
+                was =
+                    _id: 'move/old-file'
+                    docType: 'file'
+                @normalizer.moveDoc doc, was, (err) ->
+                    should.exist err
+                    err.message.should.equal 'Incompatible docTypes: folder'
+                    done()
+
+            it 'throws an error if we move a folder to a file', (done) ->
+                doc =
+                    _id: 'move/file'
+                    docType: 'file'
+                was =
+                    _id: 'move/old-folder'
+                    docType: 'folder'
+                @normalizer.moveDoc doc, was, (err) ->
+                    should.exist err
+                    err.message.should.equal 'Incompatible docTypes: file'
+                    done()
+
         describe 'deleteDoc', ->
             it 'calls deleteFile for a file', (done) ->
                 doc =

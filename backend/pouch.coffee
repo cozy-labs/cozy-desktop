@@ -104,7 +104,7 @@ class Pouch
         ], (err) -> callback err
 
     # Create a view to list files and folders inside a path
-    # XXX the path for a file/folder in root will be '',
+    # The path for a file/folder in root will be '',
     # not '.' as with node's path.dirname
     addByPathView: (callback) =>
         query = """
