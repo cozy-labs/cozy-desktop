@@ -3,19 +3,19 @@ clone  = require 'lodash.clone'
 sinon  = require 'sinon'
 should = require 'should'
 
-Normalizer = require '../../backend/normalizer'
-Pouch      = require '../../backend/pouch'
+Merge = require '../../backend/merge'
+Pouch = require '../../backend/pouch'
 
 configHelpers = require '../helpers/config'
 pouchHelpers  = require '../helpers/pouch'
 
 
-describe 'Normalizer', ->
+describe 'Merge', ->
 
     before 'instanciate config', configHelpers.createConfig
     before 'instanciate pouch', pouchHelpers.createDatabase
-    beforeEach 'instanciate normalizer', ->
-        @normalizer = new Normalizer @pouch
+    beforeEach 'instanciate merge', ->
+        @merge = new Merge @pouch
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
 
@@ -24,64 +24,64 @@ describe 'Normalizer', ->
 
         describe 'invalidId', ->
             it 'returns true if the id is incorrect', ->
-                ret = @normalizer.invalidId _id: '/'
+                ret = @merge.invalidId _id: '/'
                 ret.should.be.true()
-                ret = @normalizer.invalidId _id: ''
+                ret = @merge.invalidId _id: ''
                 ret.should.be.true()
-                ret = @normalizer.invalidId _id: '.'
+                ret = @merge.invalidId _id: '.'
                 ret.should.be.true()
-                ret = @normalizer.invalidId _id: '..'
+                ret = @merge.invalidId _id: '..'
                 ret.should.be.true()
-                ret = @normalizer.invalidId _id: '../foo/bar.png'
+                ret = @merge.invalidId _id: '../foo/bar.png'
                 ret.should.be.true()
-                ret = @normalizer.invalidId _id: 'foo/..'
+                ret = @merge.invalidId _id: 'foo/..'
                 ret.should.be.true()
-                ret = @normalizer.invalidId _id: 'f/../oo/../../bar/./baz'
+                ret = @merge.invalidId _id: 'f/../oo/../../bar/./baz'
                 ret.should.be.true()
 
             it 'returns false if everything is OK', ->
-                ret = @normalizer.invalidId _id: 'foo'
+                ret = @merge.invalidId _id: 'foo'
                 ret.should.be.false()
-                ret = @normalizer.invalidId _id: 'foo/bar'
+                ret = @merge.invalidId _id: 'foo/bar'
                 ret.should.be.false()
-                ret = @normalizer.invalidId _id: 'foo/bar/baz.jpg'
+                ret = @merge.invalidId _id: 'foo/bar/baz.jpg'
                 ret.should.be.false()
 
             it 'returns false for paths with a leading slash', ->
-                ret = @normalizer.invalidId _id: '/foo/bar'
+                ret = @merge.invalidId _id: '/foo/bar'
                 ret.should.be.false()
-                ret = @normalizer.invalidId _id: '/foo/bar/baz.bmp'
+                ret = @merge.invalidId _id: '/foo/bar/baz.bmp'
                 ret.should.be.false()
 
         describe 'invalidChecksum', ->
             it 'returns true if the checksum is missing', ->
-                ret = @normalizer.invalidChecksum {}
+                ret = @merge.invalidChecksum {}
                 ret.should.be.true()
-                ret = @normalizer.invalidChecksum checksum: null
+                ret = @merge.invalidChecksum checksum: null
                 ret.should.be.true()
-                ret = @normalizer.invalidChecksum checksum: undefined
+                ret = @merge.invalidChecksum checksum: undefined
                 ret.should.be.true()
 
             it 'returns true if the checksum is incorrect', ->
-                ret = @normalizer.invalidChecksum checksum: ''
+                ret = @merge.invalidChecksum checksum: ''
                 ret.should.be.true()
-                ret = @normalizer.invalidChecksum checksum: 'f00'
+                ret = @merge.invalidChecksum checksum: 'f00'
                 ret.should.be.true()
                 md5 = '68b329da9893e34099c7d8ad5cb9c940'
-                ret = @normalizer.invalidChecksum checksum: md5
+                ret = @merge.invalidChecksum checksum: md5
                 ret.should.be.true()
 
             it 'returns false if the checksum is OK', ->
                 doc = checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
-                ret = @normalizer.invalidChecksum doc
+                ret = @merge.invalidChecksum doc
                 ret.should.be.false()
                 doc = checksum: 'ADC83B19E793491B1C6EA0FD8B46CD9F32E592FC'
-                ret = @normalizer.invalidChecksum doc
+                ret = @merge.invalidChecksum doc
                 ret.should.be.false()
 
         describe 'ensureParentExist', ->
             it 'works when in the root folder', (done) ->
-                @normalizer.ensureParentExist _id: 'foo', (err) ->
+                @merge.ensureParentExist _id: 'foo', (err) ->
                     should.not.exist err
                     done()
 
@@ -94,24 +94,24 @@ describe 'Normalizer', ->
                     docType: 'folder'
                 @pouch.db.put doc, (err) =>
                     should.not.exist err
-                    @normalizer.ensureParentExist child, (err) ->
+                    @merge.ensureParentExist child, (err) ->
                         should.not.exist err
                         done()
 
             it 'creates the parent directory if missing', (done) ->
-                @normalizer.putFolder = sinon.stub().yields null, 'OK'
-                @normalizer.ensureParentExist _id: 'missing/child', (err) =>
+                @merge.putFolder = sinon.stub().yields null, 'OK'
+                @merge.ensureParentExist _id: 'missing/child', (err) =>
                     should.not.exist err
-                    @normalizer.putFolder.called.should.be.true()
+                    @merge.putFolder.called.should.be.true()
                     parent = _id: 'missing'
-                    @normalizer.putFolder.calledWith(parent).should.be.true()
+                    @merge.putFolder.calledWith(parent).should.be.true()
                     done()
 
             it 'creates the full tree if needed', (done) ->
-                @normalizer.putFolder = sinon.stub().yields null, 'OK'
-                @normalizer.ensureParentExist _id: 'a/b/c/d/e', (err) =>
+                @merge.putFolder = sinon.stub().yields null, 'OK'
+                @merge.ensureParentExist _id: 'a/b/c/d/e', (err) =>
                     should.not.exist err
-                    method = @normalizer.putFolder
+                    method = @merge.putFolder
                     method.called.should.be.true()
                     method.calledWith(_id: 'a').should.be.true()
                     method.calledWith(_id: 'a/b').should.be.true()
@@ -121,7 +121,7 @@ describe 'Normalizer', ->
 
         describe 'emptyFolder', ->
             it 'does nothing in an empty folder', (done) ->
-                @normalizer.emptyFolder _id: 'abc', (err) ->
+                @merge.emptyFolder _id: 'abc', (err) ->
                     should.not.exist err
                     done()
 
@@ -133,7 +133,7 @@ describe 'Normalizer', ->
                     @pouch.db.put doc, next
                 , (err) =>
                     should.not.exist err
-                    @normalizer.emptyFolder _id: 'foo/to-remove', (err) =>
+                    @merge.emptyFolder _id: 'foo/to-remove', (err) =>
                         should.not.exist err
                         @pouch.byPath 'foo/to-remove', (err, docs) ->
                             docs.length.should.be.equal 0
@@ -147,7 +147,7 @@ describe 'Normalizer', ->
                     @pouch.db.put doc, next
                 , (err) =>
                     should.not.exist err
-                    @normalizer.emptyFolder _id: 'nested', (err) =>
+                    @merge.emptyFolder _id: 'nested', (err) =>
                         should.not.exist err
                         @pouch.db.allDocs (err, res) ->
                             should.not.exist err
@@ -160,20 +160,20 @@ describe 'Normalizer', ->
                 doc =
                     _id: 'put/name'
                     docType: 'file'
-                @normalizer.putFile = sinon.stub().yields null
-                @normalizer.putDoc doc, (err) =>
+                @merge.putFile = sinon.stub().yields null
+                @merge.putDoc doc, (err) =>
                     should.not.exist err
-                    @normalizer.putFile.calledWith(doc).should.be.true()
+                    @merge.putFile.calledWith(doc).should.be.true()
                     done()
 
             it 'calls putFolder for a folder', (done) ->
                 doc =
                     _id: 'put/folder'
                     docType: 'folder'
-                @normalizer.putFolder = sinon.stub().yields null
-                @normalizer.putDoc doc, (err) =>
+                @merge.putFolder = sinon.stub().yields null
+                @merge.putDoc doc, (err) =>
                     should.not.exist err
-                    @normalizer.putFolder.calledWith(doc).should.be.true()
+                    @merge.putFolder.calledWith(doc).should.be.true()
                     done()
 
         describe 'moveDoc', ->
@@ -184,10 +184,10 @@ describe 'Normalizer', ->
                 was =
                     _id: 'move/old-name'
                     docType: 'file'
-                @normalizer.moveFile = sinon.stub().yields null
-                @normalizer.moveDoc doc, was, (err) =>
+                @merge.moveFile = sinon.stub().yields null
+                @merge.moveDoc doc, was, (err) =>
                     should.not.exist err
-                    @normalizer.moveFile.calledWith(doc, was).should.be.true()
+                    @merge.moveFile.calledWith(doc, was).should.be.true()
                     done()
 
             it 'calls moveFolder for a folder', (done) ->
@@ -197,10 +197,10 @@ describe 'Normalizer', ->
                 was =
                     _id: 'move/old-folder'
                     docType: 'folder'
-                @normalizer.moveFolder = sinon.stub().yields null
-                @normalizer.moveDoc doc, was, (err) =>
+                @merge.moveFolder = sinon.stub().yields null
+                @merge.moveDoc doc, was, (err) =>
                     should.not.exist err
-                    @normalizer.moveFolder.calledWith(doc, was).should.be.true()
+                    @merge.moveFolder.calledWith(doc, was).should.be.true()
                     done()
 
             it 'throws an error if we move a file to a folder', (done) ->
@@ -210,7 +210,7 @@ describe 'Normalizer', ->
                 was =
                     _id: 'move/old-file'
                     docType: 'file'
-                @normalizer.moveDoc doc, was, (err) ->
+                @merge.moveDoc doc, was, (err) ->
                     should.exist err
                     err.message.should.equal 'Incompatible docTypes: folder'
                     done()
@@ -222,7 +222,7 @@ describe 'Normalizer', ->
                 was =
                     _id: 'move/old-folder'
                     docType: 'folder'
-                @normalizer.moveDoc doc, was, (err) ->
+                @merge.moveDoc doc, was, (err) ->
                     should.exist err
                     err.message.should.equal 'Incompatible docTypes: file'
                     done()
@@ -232,20 +232,20 @@ describe 'Normalizer', ->
                 doc =
                     _id: 'delete/name'
                     docType: 'file'
-                @normalizer.deleteFile = sinon.stub().yields null
-                @normalizer.deleteDoc doc, (err) =>
+                @merge.deleteFile = sinon.stub().yields null
+                @merge.deleteDoc doc, (err) =>
                     should.not.exist err
-                    @normalizer.deleteFile.calledWith(doc).should.be.true()
+                    @merge.deleteFile.calledWith(doc).should.be.true()
                     done()
 
             it 'calls deleteFolder for a folder', (done) ->
                 doc =
                     _id: 'delete/folder'
                     docType: 'folder'
-                @normalizer.deleteFolder = sinon.stub().yields null
-                @normalizer.deleteDoc doc, (err) =>
+                @merge.deleteFolder = sinon.stub().yields null
+                @merge.deleteDoc doc, (err) =>
                     should.not.exist err
-                    @normalizer.deleteFolder.calledWith(doc).should.be.true()
+                    @merge.deleteFolder.calledWith(doc).should.be.true()
                     done()
 
 
@@ -253,7 +253,7 @@ describe 'Normalizer', ->
 
         describe 'putFile', ->
             it 'expects a doc with a valid id', (done) ->
-                @normalizer.putFile _id: '/', (err) ->
+                @merge.putFile _id: '/', (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid id'
                     done()
@@ -262,13 +262,13 @@ describe 'Normalizer', ->
                 doc =
                     _id: 'no-checksum'
                     checksum: ''
-                @normalizer.putFile doc, (err) ->
+                @merge.putFile doc, (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid checksum'
                     done()
 
             it 'saves the new file', (done) ->
-                @normalizer.ensureParentExist = sinon.stub().yields null
+                @merge.ensureParentExist = sinon.stub().yields null
                 doc =
                     _id: 'foo/new-file'
                     checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
@@ -276,7 +276,7 @@ describe 'Normalizer', ->
                     creationDate: new Date
                     lastModification: new Date
                     tags: ['courge', 'quux']
-                @normalizer.putFile doc, (err) =>
+                @merge.putFile doc, (err) =>
                     should.not.exist err
                     @pouch.db.get doc._id, (err, res) ->
                         should.not.exist err
@@ -286,11 +286,11 @@ describe 'Normalizer', ->
                         done()
 
             it 'adds missing fields', (done) ->
-                @normalizer.ensureParentExist = sinon.stub().yields null
+                @merge.ensureParentExist = sinon.stub().yields null
                 doc =
                     _id: 'foo/missing-fields'
                     checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
-                @normalizer.putFile doc, (err) =>
+                @merge.putFile doc, (err) =>
                     should.not.exist err
                     @pouch.db.get doc._id, (err, res) ->
                         should.not.exist err
@@ -321,7 +321,7 @@ describe 'Normalizer', ->
                     @pouch.db.put @file, done
 
                 it 'can update the metadata', (done) ->
-                    @normalizer.ensureParentExist = sinon.stub().yields null
+                    @merge.ensureParentExist = sinon.stub().yields null
                     was = clone @file
                     @file.tags = ['bar', 'baz']
                     @file.lastModification = new Date
@@ -331,7 +331,7 @@ describe 'Normalizer', ->
                     delete doc.mime
                     @file.creationDate = doc.creationDate.toISOString()
                     @file.lastModification = doc.lastModification.toISOString()
-                    @normalizer.putFile doc, (err) =>
+                    @merge.putFile doc, (err) =>
                         should.not.exist err
                         @pouch.db.get doc._id, (err, res) =>
                             should.not.exist err
@@ -342,13 +342,13 @@ describe 'Normalizer', ->
                             done()
 
                 it 'can overwrite the content of a file', (done) ->
-                    @normalizer.ensureParentExist = sinon.stub().yields null
+                    @merge.ensureParentExist = sinon.stub().yields null
                     doc =
                         _id: 'buzz.jpg'
                         docType: 'file'
                         checksum: '3333333333333333333333333333333333333333'
                         tags: ['qux', 'quux']
-                    @normalizer.putFile clone(doc), (err) =>
+                    @merge.putFile clone(doc), (err) =>
                         should.not.exist err
                         @pouch.db.get @file._id, (err, res) ->
                             should.not.exist err
@@ -364,20 +364,20 @@ describe 'Normalizer', ->
 
         describe 'putFolder', ->
             it 'expects a doc with a valid id', (done) ->
-                @normalizer.putFolder _id: '..', (err) ->
+                @merge.putFolder _id: '..', (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid id'
                     done()
 
             it 'saves the new folder', (done) ->
-                @normalizer.ensureParentExist = sinon.stub().yields null
+                @merge.ensureParentExist = sinon.stub().yields null
                 doc =
                     _id: 'foo/new-folder'
                     docType: 'folder'
                     creationDate: new Date
                     lastModification: new Date
                     tags: ['courge', 'quux']
-                @normalizer.putFolder doc, (err) =>
+                @merge.putFolder doc, (err) =>
                     should.not.exist err
                     doc.creationDate = doc.creationDate.toISOString()
                     doc.lastModification = doc.lastModification.toISOString()
@@ -387,9 +387,9 @@ describe 'Normalizer', ->
                         done()
 
             it 'adds missing fields', (done) ->
-                @normalizer.ensureParentExist = sinon.stub().yields null
+                @merge.ensureParentExist = sinon.stub().yields null
                 doc = _id: 'foo/folder-missing-fields'
-                @normalizer.putFolder doc, (err) =>
+                @merge.putFolder doc, (err) =>
                     should.not.exist err
                     @pouch.db.get doc._id, (err, res) ->
                         should.not.exist err
@@ -414,11 +414,11 @@ describe 'Normalizer', ->
                     @pouch.db.put @folder, done
 
                 it 'can update the tags and last modification date', (done) ->
-                    @normalizer.ensureParentExist = sinon.stub().yields null
+                    @merge.ensureParentExist = sinon.stub().yields null
                     doc = clone @folder
                     doc.tags = ['bar', 'baz']
                     doc.lastModification = new Date
-                    @normalizer.putFolder clone(doc), (err) =>
+                    @merge.putFolder clone(doc), (err) =>
                         should.not.exist err
                         doc.tags = ['bar', 'baz', 'foo']
                         for date in ['creationDate', 'lastModification']
@@ -437,13 +437,13 @@ describe 'Normalizer', ->
 
         describe 'moveFile', ->
             it 'expects a doc with an id', (done) ->
-                @normalizer.moveFile path: 'foo', name: 'bar', (err) ->
+                @merge.moveFile path: 'foo', name: 'bar', (err) ->
                     should.exist err
                     err.message.should.equal 'Missing id'
                     done()
 
             it 'expects a doc with the file docType', (done) ->
-                @normalizer.moveFile _id: '123', docType: 'folder', (err) ->
+                @merge.moveFile _id: '123', docType: 'folder', (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid docType'
                     done()
@@ -454,7 +454,7 @@ describe 'Normalizer', ->
                     docType: 'file'
                     path: '..'
                     name: ''
-                @normalizer.moveFile doc, (err) ->
+                @merge.moveFile doc, (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid path or name'
                     done()
@@ -466,20 +466,20 @@ describe 'Normalizer', ->
                     path: 'foo'
                     name: 'bar'
                     checksum: 'invalid'
-                @normalizer.moveFile doc, (err) ->
+                @merge.moveFile doc, (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid checksum'
                     done()
 
             it 'saves the moved file', (done) ->
-                @normalizer.ensureParentExist = sinon.stub().yields null
+                @merge.ensureParentExist = sinon.stub().yields null
                 doc =
                     _id: Pouch.newId()
                     docType: 'file'
                     path: 'foo'
                     name: 'bar'
                     checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
-                @normalizer.moveFile doc, (err) =>
+                @merge.moveFile doc, (err) =>
                     should.not.exist err
                     @pouch.db.get doc._id, (err, res) ->
                         should.not.exist err
@@ -488,13 +488,13 @@ describe 'Normalizer', ->
 
         describe 'moveFolder', ->
             it 'expects a doc with an id', (done) ->
-                @normalizer.moveFolder path: 'foo', name: 'bar', (err) ->
+                @merge.moveFolder path: 'foo', name: 'bar', (err) ->
                     should.exist err
                     err.message.should.equal 'Missing id'
                     done()
 
             it 'expects a doc with the folder docType', (done) ->
-                @normalizer.moveFolder _id: '123', docType: 'file', (err) ->
+                @merge.moveFolder _id: '123', docType: 'file', (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid docType'
                     done()
@@ -505,19 +505,19 @@ describe 'Normalizer', ->
                     docType: 'folder'
                     path: '..'
                     name: ''
-                @normalizer.moveFolder doc, (err) ->
+                @merge.moveFolder doc, (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid path or name'
                     done()
 
             it 'saves the moved folder', (done) ->
-                @normalizer.ensureParentExist = sinon.stub().yields null
+                @merge.ensureParentExist = sinon.stub().yields null
                 doc =
                     _id: Pouch.newId()
                     docType: 'folder'
                     path: 'foo'
                     name: 'bar'
-                @normalizer.moveFolder doc, (err) =>
+                @merge.moveFolder doc, (err) =>
                     should.not.exist err
                     @pouch.db.get doc._id, (err, res) ->
                         should.not.exist err
@@ -534,7 +534,7 @@ describe 'Normalizer', ->
                     docType: 'file'
                 @pouch.db.put doc, (err) =>
                     should.not.exist err
-                    @normalizer.deleteFile doc, (err) =>
+                    @merge.deleteFile doc, (err) =>
                         should.not.exist err
                         @pouch.db.get doc._id, (err) ->
                             err.status.should.equal 404
@@ -545,12 +545,12 @@ describe 'Normalizer', ->
                 doc =
                     _id: 'to-delete/folder'
                     docType: 'folder'
-                @normalizer.emptyFolder = sinon.stub().yields null
+                @merge.emptyFolder = sinon.stub().yields null
                 @pouch.db.put doc, (err) =>
                     should.not.exist err
-                    @normalizer.deleteFolder doc, (err) =>
+                    @merge.deleteFolder doc, (err) =>
                         should.not.exist err
-                        firstArg = @normalizer.emptyFolder.args[0][0]
+                        firstArg = @merge.emptyFolder.args[0][0]
                         firstArg.should.have.properties doc
                         @pouch.db.get doc._id, (err, res) ->
                             err.status.should.equal 404

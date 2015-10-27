@@ -4,11 +4,11 @@ log   = require('printit')
     prefix: 'Remote watcher'
 
 
-# Watch for changes from the remote couchdb and give them to the normalizer
+# Watch for changes from the remote couchdb and give them to the merge
 #
 # TODO add comments
 class RemoteWatcher
-    constructor: (@couch, @normalizer, @pouch) ->
+    constructor: (@couch, @merge, @pouch) ->
 
     # First time replication
     #
@@ -78,7 +78,7 @@ class RemoteWatcher
                     @changes = null
                     callback()
 
-    # Take one change from the changes feed and give it to normalizer.
+    # Take one change from the changes feed and give it to merge.
     #
     # TODO should we check was.remote._rev and doc._rev for conflict
     # like local has move file and remote overwrite it?
@@ -92,7 +92,7 @@ class RemoteWatcher
                     # It's fine if the file was deleted on local and on remote
                     callback()
                 else
-                    @normalizer.deleteDoc was, callback
+                    @merge.deleteDoc was, callback
             else
                 doc.remote =
                     _id: doc._id
@@ -102,13 +102,13 @@ class RemoteWatcher
                 delete doc.path
                 delete doc.name
                 if not was or was._id is doc._id
-                    @normalizer.putDoc doc, callback
+                    @merge.putDoc doc, callback
                 else if was.checksum is doc.checksum
-                    @normalizer.moveDoc doc, was, callback
+                    @merge.moveDoc doc, was, callback
                 else
-                    @normalizer.deleteDoc was, (err) =>
+                    @merge.deleteDoc was, (err) =>
                         log.error err if err
-                        @normalizer.putDoc doc, callback
+                        @merge.putDoc doc, callback
 
     # Keep track of the sequence number and log errors
     changed: (change) =>

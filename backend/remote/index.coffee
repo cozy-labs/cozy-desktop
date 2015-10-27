@@ -9,9 +9,9 @@ Watcher = require './watcher'
 
 # TODO when a file is removed, delete its binary if not used by another file
 class Remote
-    constructor: (@config, @normalizer, @pouch, @events) ->
+    constructor: (@config, @merge, @pouch, @events) ->
         @couch = new Couch @config, @events
-        @watcher = new Watcher @couch, @normalizer, @pouch
+        @watcher = new Watcher @couch, @merge, @pouch
         @other = null
 
     start: (done) =>

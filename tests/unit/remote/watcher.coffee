@@ -9,8 +9,8 @@ configHelpers = require '../../helpers/config'
 couchHelpers  = require '../../helpers/couch'
 pouchHelpers  = require '../../helpers/pouch'
 
-Normalizer = require '../../../backend/normalizer'
-Watcher    = require '../../../backend/remote/watcher'
+Merge   = require '../../../backend/merge'
+Watcher = require '../../../backend/remote/watcher'
 
 
 describe "RemoteWatcher Tests", ->
@@ -20,8 +20,8 @@ describe "RemoteWatcher Tests", ->
     before 'start couch server', couchHelpers.startServer
     before 'instanciate couch', couchHelpers.createCouchClient
     before 'instanciate remote watcher', ->
-        @normalizer = {}
-        @watcher    = new Watcher @couch, @normalizer, @pouch
+        @merge   = {}
+        @watcher = new Watcher @couch, @merge, @pouch
     after 'stop couch server', couchHelpers.stopServer
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
@@ -36,7 +36,7 @@ describe "RemoteWatcher Tests", ->
 
     describe 'onChange', ->
         it 'calls putDoc for a new doc', (done) ->
-            @normalizer.putDoc = sinon.stub().yields null
+            @merge.putDoc = sinon.stub().yields null
             doc =
                 _id: '12345678905'
                 _rev: '1-abcdef'
@@ -47,8 +47,8 @@ describe "RemoteWatcher Tests", ->
                 tags: []
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
-                @normalizer.putDoc.called.should.be.true()
-                args = @normalizer.putDoc.args[0][0]
+                @merge.putDoc.called.should.be.true()
+                args = @merge.putDoc.args[0][0]
                 args.should.have.properties
                     _id: path.join doc.path, doc.name
                     docType: 'file'
@@ -61,7 +61,7 @@ describe "RemoteWatcher Tests", ->
                 done()
 
         it 'calls putDoc when tags are updated', (done) ->
-            @normalizer.putDoc = sinon.stub().yields null
+            @merge.putDoc = sinon.stub().yields null
             doc =
                 _id: '12345678901'
                 _rev: '2-abcdef'
@@ -72,8 +72,8 @@ describe "RemoteWatcher Tests", ->
                 tags: ['foo', 'bar', 'baz']
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
-                @normalizer.putDoc.called.should.be.true()
-                args = @normalizer.putDoc.args[0][0]
+                @merge.putDoc.called.should.be.true()
+                args = @merge.putDoc.args[0][0]
                 args.should.have.properties
                     _id: path.join doc.path, doc.name
                     docType: 'file'
@@ -86,7 +86,7 @@ describe "RemoteWatcher Tests", ->
                 done()
 
         it 'calls putDoc when content is overwritten', (done) ->
-            @normalizer.putDoc = sinon.stub().yields null
+            @merge.putDoc = sinon.stub().yields null
             doc =
                 _id: '12345678901'
                 _rev: '3-abcdef'
@@ -97,8 +97,8 @@ describe "RemoteWatcher Tests", ->
                 tags: ['foo', 'bar', 'baz']
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
-                @normalizer.putDoc.called.should.be.true()
-                args = @normalizer.putDoc.args[0][0]
+                @merge.putDoc.called.should.be.true()
+                args = @merge.putDoc.args[0][0]
                 args.should.have.properties
                     _id: path.join doc.path, doc.name
                     docType: 'file'
@@ -111,7 +111,7 @@ describe "RemoteWatcher Tests", ->
                 done()
 
         it 'calls moveDoc when file is renamed', (done) ->
-            @normalizer.moveDoc = sinon.stub().yields null
+            @merge.moveDoc = sinon.stub().yields null
             doc =
                 _id: '12345678902'
                 _rev: '4-abcdef'
@@ -122,8 +122,8 @@ describe "RemoteWatcher Tests", ->
                 tags: []
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
-                @normalizer.moveDoc.called.should.be.true()
-                src = @normalizer.moveDoc.args[0][1]
+                @merge.moveDoc.called.should.be.true()
+                src = @merge.moveDoc.args[0][1]
                 src.should.have.properties
                     _id: 'my-folder/file-2'
                     docType: 'file'
@@ -131,7 +131,7 @@ describe "RemoteWatcher Tests", ->
                     tags: doc.tags
                     remote:
                         _id: '12345678902'
-                dst = @normalizer.moveDoc.args[0][0]
+                dst = @merge.moveDoc.args[0][0]
                 dst.should.have.properties
                     _id: path.join doc.path, doc.name
                     docType: 'file'
@@ -144,7 +144,7 @@ describe "RemoteWatcher Tests", ->
                 done()
 
         it 'calls moveDoc when file is moved', (done) ->
-            @normalizer.moveDoc = sinon.stub().yields null
+            @merge.moveDoc = sinon.stub().yields null
             doc =
                 _id: '12345678902'
                 _rev: '5-abcdef'
@@ -155,8 +155,8 @@ describe "RemoteWatcher Tests", ->
                 tags: []
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
-                @normalizer.moveDoc.called.should.be.true()
-                src = @normalizer.moveDoc.args[0][1]
+                @merge.moveDoc.called.should.be.true()
+                src = @merge.moveDoc.args[0][1]
                 src.should.have.properties
                     _id: 'my-folder/file-2'
                     docType: 'file'
@@ -164,7 +164,7 @@ describe "RemoteWatcher Tests", ->
                     tags: doc.tags
                     remote:
                         _id: '12345678902'
-                dst = @normalizer.moveDoc.args[0][0]
+                dst = @merge.moveDoc.args[0][0]
                 dst.should.have.properties
                     _id: path.join doc.path, doc.name
                     docType: 'file'
@@ -177,8 +177,8 @@ describe "RemoteWatcher Tests", ->
                 done()
 
         it 'calls deletedDoc&putDoc when file has changed completely', (done) ->
-            @normalizer.deleteDoc = sinon.stub().yields null
-            @normalizer.putDoc = sinon.stub().yields null
+            @merge.deleteDoc = sinon.stub().yields null
+            @merge.putDoc = sinon.stub().yields null
             doc =
                 _id: '12345678903'
                 _rev: '6-abcdef'
@@ -189,11 +189,11 @@ describe "RemoteWatcher Tests", ->
                 tags: []
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
-                @normalizer.deleteDoc.called.should.be.true()
-                id = @normalizer.deleteDoc.args[0][0]._id
+                @merge.deleteDoc.called.should.be.true()
+                id = @merge.deleteDoc.args[0][0]._id
                 id.should.equal 'my-folder/file-3'
-                @normalizer.putDoc.called.should.be.true()
-                args = @normalizer.putDoc.args[0][0]
+                @merge.putDoc.called.should.be.true()
+                args = @merge.putDoc.args[0][0]
                 args.should.have.properties
                     _id: path.join doc.path, doc.name
                     docType: 'file'
@@ -206,15 +206,15 @@ describe "RemoteWatcher Tests", ->
                 done()
 
         it 'calls deleteDoc for a deleted doc', (done) ->
-            @normalizer.deleteDoc = sinon.stub().yields null
+            @merge.deleteDoc = sinon.stub().yields null
             doc =
                 _id: '12345678901'
                 _rev: '7-abcdef'
                 _deleted: true
             @watcher.onChange doc, (err) =>
                 should.not.exist err
-                @normalizer.deleteDoc.called.should.be.true()
-                id = @normalizer.deleteDoc.args[0][0]._id
+                @merge.deleteDoc.called.should.be.true()
+                id = @merge.deleteDoc.args[0][0]._id
                 id.should.equal 'my-folder/file-1'
                 done()
 

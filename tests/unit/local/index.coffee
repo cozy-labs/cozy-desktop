@@ -16,8 +16,8 @@ describe 'Local', ->
     before 'instanciate config', configHelpers.createConfig
     before 'instanciate pouch', pouchHelpers.createDatabase
     before 'instanciate local', ->
-        @normalizer = {}
-        @local = new Local @config, @normalizer, @pouch
+        @merge = {}
+        @local = new Local @config, @merge, @pouch
         @basePath = @config.getDevice().path
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig

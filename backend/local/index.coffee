@@ -9,10 +9,10 @@ Watcher = require './watcher'
 
 # TODO comments, tests
 class Local
-    constructor: (config, @normalizer, @pouch, @events) ->
+    constructor: (config, @merge, @pouch, @events) ->
         @basePath = config.getDevice().path
         @tmpPath  = path.join @basePath, ".cozy-desktop"
-        @watcher  = new Watcher @basePath, @normalizer, @pouch, @events
+        @watcher  = new Watcher @basePath, @merge, @pouch, @events
         @other = null
 
     start: (done) ->

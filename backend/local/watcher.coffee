@@ -15,7 +15,7 @@ filesystem = require './filesystem'
 # TODO find deleted files/folders in the initial scan
 class LocalWatcher
 
-    constructor: (@basePath, @normalizer, @pouch, @events) ->
+    constructor: (@basePath, @merge, @pouch, @events) ->
 
     # Start chokidar, the filesystem watcher
     # https://github.com/paulmillr/chokidar

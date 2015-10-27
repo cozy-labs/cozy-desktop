@@ -1,7 +1,7 @@
 async = require 'async'
 path  = require 'path'
 log   = require('printit')
-    prefix: 'Normalizer    '
+    prefix: 'Merge         '
 
 Pouch = require './pouch'
 
@@ -42,10 +42,9 @@ Pouch = require './pouch'
 #   - for two folders, we merge them
 #   - for a file and a folder, TODO
 #
-# TODO find a better name than Normalizer for this class
 # TODO update metadata
 # TODO avoid put in pouchdb if nothing has changed
-class Normalizer
+class Merge
     constructor: (@pouch) ->
 
     ### Helpers ###
@@ -289,4 +288,4 @@ class Normalizer
         ], callback
 
 
-module.exports = Normalizer
+module.exports = Merge
