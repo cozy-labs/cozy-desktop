@@ -125,10 +125,16 @@ class Remote
 
     # Move a file on the remote cozy instance
     moveFile: (doc, old, callback) =>
+        # FIXME
+        return callback()
+
         @couch.put doc, old.rev, callback
 
     # Move a folder on the remote cozy instance
-    moveFolder: (doc, callback) =>
+    moveFolder: (doc, old, callback) =>
+        # FIXME
+        return callback()
+
         @pouch.getPreviousRev doc, (err, oldDoc) =>
             if err
                 log.error err

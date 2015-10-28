@@ -129,8 +129,12 @@ class Local
                         fs.ensureDir parent, ->
                             fs.rename oldPath, newPath, next
                     else
-                        log.error "File #{oldPath} not found and can't be moved"
-                        next new Error "#{oldPath} not found"
+                        fs.exists newPath, (newPathExists) ->
+                            if newPathExists
+                                next()
+                            else
+                                log.error "File #{oldPath} not found"
+                                next new Error "#{oldPath} not found"
 
             @utimesUpdater(doc)
 
@@ -146,46 +150,35 @@ class Local
 
     # Move a folder
     # FIXME
-    moveFolder: (doc, callback) =>
-        oldPath = null
+    moveFolder: (doc, old, callback) =>
+        oldPath = path.join @basePath, old._id
         newPath = path.join @basePath, doc._id
+        parent  = path.join @basePath, path.dirname doc._id
 
         async.waterfall [
-            (next) =>
-                @pouch.getPreviousRev doc._id, next
-
-            (oldDoc, next) =>
-                if oldDoc? and oldDoc.name? and oldDoc.path?
-                    oldPath = path.join @basePath, oldDoc.path, oldDoc.name
-                    fs.exists oldPath, (oldPathExists) ->
-                        next null, oldPathExists
-                else
-                    next new Error "Can't move, no previous folder known"
-
-            (oldPathExists, next) ->
-                if oldPathExists
-                    fs.exists newPath, (newPathExists) ->
-                        next null, newPathExists
-                else
-                    next new Error "Folder #{oldPath} can't be moved: not found"
-
-            (newPathExists, next) =>
-                if newPathExists
-                    # TODO not good!
-                    fs.remove newPath, next
-                else
-                    fs.ensureDir path.join(@basePath, doc.path), ->
-                        next()
-
             (next) ->
-                fs.rename oldPath, newPath, next
+                fs.exists oldPath, (oldPathExists) ->
+                    if oldPathExists
+                        fs.ensureDir parent, ->
+                            fs.rename oldPath, newPath, next
+                    else
+                        fs.exists newPath, (newPathExists) ->
+                            if newPathExists
+                                next()
+                            else
+                                log.error "Folder #{oldPath} not found"
+                                next new Error "#{oldPath} not found"
 
             @utimesUpdater(doc)
 
         ], (err) =>
-            log.error "Error while moving #{JSON.stringify doc, null, 2}"
-            log.error err
-            @addFolder doc, callback
+            if err
+                log.error "Error while moving #{JSON.stringify doc, null, 2}"
+                log.error JSON.stringify old, null, 2
+                log.error err
+                @addFolder doc, callback
+            else
+                callback null
 
 
     # Delete a file from the local filesystem

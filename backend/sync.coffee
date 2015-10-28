@@ -100,6 +100,7 @@ class Sync
     # If a file has been changed, we had to check what operation it is.
     # For a move, the first call will just keep a reference to the document,
     # and only at the second call, the move operation will be executed.
+    # TODO what about overwrite and metadata update?
     fileChanged: (doc, callback) =>
         if @moveFrom
             [from, @moveFrom] = [@moveFrom, null]
@@ -162,10 +163,10 @@ class Sync
         ], callback
 
     # Let local and remote know that a folder has been moved
-    folderMoved: (doc, callback) =>
+    folderMoved: (doc, old, callback) =>
         async.waterfall [
-            (next) => @local.moveFolder  doc, next
-            (next) => @remote.moveFolder doc, next
+            (next) => @local.moveFolder  doc, old, next
+            (next) => @remote.moveFolder doc, old, next
         ], callback
 
     # Let local and remote know that a folder has been deleted
