@@ -85,6 +85,8 @@ class Sync
             when docType is 'folder'
                 @folderChanged doc, @applied(change, callback)
             else
+                # TODO if cozy-desktop was restarted, does a deleted doc have a
+                # docType? Or should we fetch the previous rev to find it?
                 callback new Error "Unknown doctype: #{doc.docType}"
 
     # Keep track of the sequence number and log errors
@@ -100,7 +102,6 @@ class Sync
     # If a file has been changed, we had to check what operation it is.
     # For a move, the first call will just keep a reference to the document,
     # and only at the second call, the move operation will be executed.
-    # TODO what about overwrite and metadata update?
     fileChanged: (doc, callback) =>
         if @moveFrom
             [from, @moveFrom] = [@moveFrom, null]
