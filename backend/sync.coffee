@@ -81,14 +81,14 @@ class Sync
         docType = doc.docType?.toLowerCase()
         switch
             when docType is 'file'
-                @fileChanged doc, @applied(callback)
+                @fileChanged doc, @applied(change, callback)
             when docType is 'folder'
-                @folderChanged doc, @applied(callback)
+                @folderChanged doc, @applied(change, callback)
             else
                 callback new Error "Unknown doctype: #{doc.docType}"
 
     # Keep track of the sequence number and log errors
-    applied: (callback) =>
+    applied: (change, callback) =>
         (err) =>
             if err
                 log.error err

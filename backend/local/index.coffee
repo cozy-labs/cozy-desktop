@@ -68,7 +68,7 @@ class Local
     # TODO verify the checksum -> remove file if not ok
     # TODO show progress
     addFile: (doc, callback) =>
-        tmpFile  = path.revolve @tmpPath, path.basename doc._id
+        tmpFile  = path.resolve @tmpPath, path.basename doc._id
         filePath = path.resolve @basePath, doc._id
         parent   = path.resolve @basePath, path.dirname doc._id
 
