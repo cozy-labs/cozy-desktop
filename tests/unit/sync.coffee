@@ -133,7 +133,6 @@ describe "Sync", ->
                         spy.calledOnce.should.be.true()
                         [err, change] = spy.args[0]
                         should.not.exist err
-                        console.log change
                         change.doc.docType.should.equal 'file'
                         done()
                     , 10
@@ -160,4 +159,31 @@ describe "Sync", ->
             , 10
 
     describe 'apply', ->
+        it 'TODO'
+
+    describe 'applied', ->
+        it 'TODO'
+
+    describe 'fileChanged', ->
+        it 'TODO'
+
+    describe 'folderChanged', ->
+        it 'TODO'
+
+    describe 'fileAdded', ->
+        it 'TODO'
+
+    describe 'fileMoved', ->
+        it 'TODO'
+
+    describe 'fileDeleted', ->
+        it 'TODO'
+
+    describe 'folderAdded', ->
+        it 'TODO'
+
+    describe 'folderMoved', ->
+        it 'TODO'
+
+    describe 'folderDeleted', ->
         it 'TODO'

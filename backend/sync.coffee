@@ -77,57 +77,61 @@ class Sync
     # TODO when applying a change fails, put it again in some queue for retry
     apply: (change, callback) =>
         log.debug 'apply', change
-        cb = (err) =>
+        doc = change.doc
+        docType = doc.docType?.toLowerCase()
+        switch
+            when docType is 'file'
+                @fileChanged doc, @applied(callback)
+            when docType is 'folder'
+                @folderChanged doc, @applied(callback)
+            else
+                callback new Error "Unknown doctype: #{doc.docType}"
+
+    # Keep track of the sequence number and log errors
+    applied: (callback) =>
+        (err) =>
             if err
                 log.error err
                 callback err
             else
                 log.debug "Applied #{change.seq}"
                 @pouch.setLocalSeq change.seq, callback
-        doc = change.doc
-        docType = doc.docType?.toLowerCase()
-        switch
-            when docType is 'file'
-                @fileChanged doc, cb
-            when docType is 'folder'
-                @folderChanged doc, cb
-            else
-                cb new Error "Unknown doctype: #{doc.docType}"
 
-    # If a file has been changed, we had to check the previous rev from pouch
-    # to decide if it's a new file that has been added, or a move/rename
+    # If a file has been changed, we had to check what operation it is.
+    # For a move, the first call will just keep a reference to the document,
+    # and only at the second call, the move operation will be executed.
     fileChanged: (doc, callback) =>
-        if doc._deleted
+        if @moveFrom
+            [from, @moveFrom] = [@moveFrom, null]
+            if from.moveTo is doc._id
+                @fileMoved doc, from, callback
+            else
+                log.error "Invalid move", from, doc
+                callback new Error 'Invalid move'
+        else if doc.moveTo
+            @moveFrom = doc
+            callback()
+        else if doc._deleted
             @fileDeleted doc, callback
         else
             @fileAdded doc, callback
-        return # TODO detect file move
-        @pouch.getPreviousRev doc._id, (err, old) =>
-            if err or not old
-                @fileAdded doc, callback
-            else if old.name? and old.path? and
-                    old.name is doc.name and
-                    old.path is doc.path
-                @fileAdded doc, callback
-            else
-                @fileMoved doc, old, callback
 
     # Same as fileChanged, but for folder
     folderChanged: (doc, callback) =>
-        if doc._deleted
+        if @moveFrom
+            [from, @moveFrom] = [@moveFrom, null]
+            if from.moveTo is doc._id
+                @folderMoved doc, from, callback
+            else
+                log.error "Invalid move", from, doc
+                callback new Error 'Invalid move'
+        else if doc.moveTo
+            @moveFrom = doc
+            callback()
+        else if doc._deleted
             @folderDeleted doc, callback
         else
             @folderAdded doc, callback
-        return # TODO detect folder move
-        @pouch.getPreviousRev doc._id, (err, old) =>
-            if err or not old
-                @folderAdded doc, callback
-            else if old.name? and old.path? and
-                    old.name is doc.name and
-                    old.path is doc.path
-                @folderAdded doc, callback
-            else
-                @folderMoved doc, old, callback
 
     # Let local and remote know that a file has been added
     fileAdded: (doc, callback) =>

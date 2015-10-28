@@ -292,12 +292,11 @@ class Merge
                 for doc in docs
                     src = clone doc
                     src._deleted = true
-                    src.movedTo = doc._id.replace was._id, folder._id
+                    src.moveTo = doc._id.replace was._id, folder._id
                     bulk.push src
                     dst = clone doc
                     dst._id = src.movedTo
                     delete dst._rev
-                    dst.moved = true
                     bulk.push dst
                 @pouch.db.bulkDocs bulk, callback
 
