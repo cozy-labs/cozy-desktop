@@ -123,6 +123,14 @@ class Remote
 
         @couch.put doc, callback
 
+    # TODO
+    updateFile: (doc, callback) ->
+        callback()
+
+    # TODO
+    updateFolder: (doc, callback) ->
+        callback()
+
     # Move a file on the remote cozy instance
     moveFile: (doc, old, callback) =>
         # FIXME

@@ -146,6 +146,7 @@ class Merge
     #   - overwrite a possible existing file with the same path
     # TODO how to tell if it's an overwrite or a conflict?
     # TODO conflict with a folder
+    # TODO test doc.overwrite
     putFile: (doc, callback) ->
         if @invalidId doc
             log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
@@ -164,6 +165,9 @@ class Merge
                         doc.size  ?= file.size
                         doc.class ?= file.class
                         doc.mime  ?= file.mime
+                        delete doc.overwrite
+                    else
+                        doc.overwrite = true
                     @pouch.db.put doc, callback
                 else
                     doc.creationDate ?= new Date
@@ -236,9 +240,11 @@ class Merge
                 was.moveTo            = doc._id
                 was._deleted          = true
                 if file
-                    doc._rev = file._rev
+                    doc._rev      = file._rev
+                    doc.overwrite = true
                     @pouch.db.bulkDocs [was, doc], callback
                 else
+                    delete doc.overwrite
                     @ensureParentExist doc, =>
                         @pouch.db.bulkDocs [was, doc], callback
 

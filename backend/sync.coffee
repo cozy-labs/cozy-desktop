@@ -114,8 +114,10 @@ class Sync
             callback()
         else if doc._deleted
             @fileDeleted doc, callback
-        else
+        else if doc._rev.match /^1-/
             @fileAdded doc, callback
+        else
+            @fileUpdated doc, callback
 
     # Same as fileChanged, but for folder
     folderChanged: (doc, callback) =>
@@ -131,14 +133,23 @@ class Sync
             callback()
         else if doc._deleted
             @folderDeleted doc, callback
-        else
+        else if doc._rev.match /^1-/
             @folderAdded doc, callback
+        else
+            @folderUpdated doc, callback
 
     # Let local and remote know that a file has been added
     fileAdded: (doc, callback) =>
         async.waterfall [
             (next) => @local.addFile  doc, next
             (next) => @remote.addFile doc, next
+        ], callback
+
+    # Let local and remote know that a file has been updated
+    fileUpdated: (doc, callback) =>
+        async.waterfall [
+            (next) => @local.updateFile  doc, next
+            (next) => @remote.updateFile doc, next
         ], callback
 
     # Let local and remote know that a file has been moved
@@ -160,6 +171,13 @@ class Sync
         async.waterfall [
             (next) => @local.addFolder  doc, next
             (next) => @remote.addFolder doc, next
+        ], callback
+
+    # Let local and remote know that a folder has been updated
+    folderUpdated: (doc, callback) =>
+        async.waterfall [
+            (next) => @local.updateFolder  doc, next
+            (next) => @remote.updateFolder doc, next
         ], callback
 
     # Let local and remote know that a folder has been moved

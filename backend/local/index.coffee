@@ -64,12 +64,13 @@ class Local
     #
     # Note: this method is used for adding a new file
     # or replacing an existing one
+    #
+    # TODO verify the checksum -> remove file if not ok
+    # TODO show progress
     addFile: (doc, callback) =>
-        basename = path.basename doc._id
-        dirname  = path.dirname doc._id
-        tmpFile  = path.join @tmpPath, basename
-        parent   = path.resolve @basePath, dirname
+        tmpFile  = path.revolve @tmpPath, path.basename doc._id
         filePath = path.resolve @basePath, doc._id
+        parent   = path.resolve @basePath, path.dirname doc._id
 
         log.info "put file #{filePath}"
 
@@ -85,8 +86,6 @@ class Local
                 else
                     @other.createReadStream doc, next
 
-            # TODO verify the checksum -> remove file if not ok
-            # TODO show progress
             (stream, next) =>
                 fs.ensureDir @tmpPath, ->
                     target = fs.createWriteStream tmpFile
@@ -113,6 +112,18 @@ class Local
                 callback err
             else
                 @utimesUpdater(doc)(callback)
+
+    # Update a file
+    updateFile: (doc, callback) =>
+        if doc.overwrite
+            @addFile doc, callback
+        else
+            log.info "Update metadata of #{doc._id}"
+            callback()
+
+    # Update a folder
+    updateFolder: (doc, callback) =>
+        @addFolder doc, callback
 
 
     # Move a file from one place to another

@@ -173,6 +173,9 @@ describe "Sync", ->
     describe 'fileAdded', ->
         it 'TODO'
 
+    describe 'fileUpdated', ->
+        it 'TODO'
+
     describe 'fileMoved', ->
         it 'TODO'
 
@@ -180,6 +183,9 @@ describe "Sync", ->
         it 'TODO'
 
     describe 'folderAdded', ->
+        it 'TODO'
+
+    describe 'folderUpdated', ->
         it 'TODO'
 
     describe 'folderMoved', ->
