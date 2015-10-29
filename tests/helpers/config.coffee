@@ -8,7 +8,7 @@ Config = require '../../backend/config'
 
 module.exports =
     createConfig: ->
-        parent = process.env['DEFAULT_DIR'] or 'tmp'
+        parent = process.env.DEFAULT_DIR or 'tmp'
         @basePath = "#{parent}/#{+new Date}"
         fs.ensureDirSync @basePath
         @config = new Config @basePath
