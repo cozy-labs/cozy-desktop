@@ -87,11 +87,10 @@ class Sync
     apply: (change, callback) =>
         log.debug 'apply', change
         doc = change.doc
-        docType = doc.docType?.toLowerCase()
         switch
-            when docType is 'file'
+            when doc.docType is 'file'
                 @fileChanged doc, @applied(change, callback)
-            when docType is 'folder'
+            when doc.docType is 'folder'
                 @folderChanged doc, @applied(change, callback)
             else
                 # TODO if cozy-desktop was restarted, does a deleted doc have a

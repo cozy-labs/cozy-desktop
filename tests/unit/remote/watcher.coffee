@@ -228,6 +228,31 @@ describe "RemoteWatcher Tests", ->
                 id.should.equal 'my-folder/file-1'
                 done()
 
+        it 'calls putDoc for folder created by the mobile app', (done) ->
+            @merge.putDoc = sinon.stub().yields null
+            doc =
+                _id: "913F429E-5609-C636-AE9A-CD00BD138B13"
+                _rev: "1-7786acf12a11fad6ad1eeb861953e0d8"
+                docType: "Folder"
+                name: "Photos from devices"
+                path: ""
+                lastModification: "2015-09-29T14:13:33.384Z"
+                creationDate: "2015-09-29T14:13:33.384Z"
+                tags: []
+            @watcher.onChange doc, (err) =>
+                should.not.exist err
+                @merge.putDoc.called.should.be.true()
+                @merge.putDoc.args[0][0].should.have.properties
+                    _id: 'Photos from devices'
+                    docType: 'folder'
+                    lastModification: "2015-09-29T14:13:33.384Z"
+                    creationDate: "2015-09-29T14:13:33.384Z"
+                    tags: []
+                    remote:
+                        _id: "913F429E-5609-C636-AE9A-CD00BD138B13"
+                        _rev: "1-7786acf12a11fad6ad1eeb861953e0d8"
+                done()
+
 
     return it 'TODO fix tests'
 

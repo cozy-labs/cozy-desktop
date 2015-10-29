@@ -114,6 +114,7 @@ class RemoteWatcher
         docPath = doc.path or ''
         docName = doc.name or ''
         doc._id = path.join docPath, docName
+        doc.docType = doc.docType.toLowerCase()
         delete doc._rev
         delete doc.path
         delete doc.name
