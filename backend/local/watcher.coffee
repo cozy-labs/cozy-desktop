@@ -13,6 +13,7 @@ filesystem = require './filesystem'
 # remote operations triggered by the remoteEventWatcher.
 #
 # TODO find deleted files/folders in the initial scan
+# TODO https://github.com/paulmillr/chokidar/issues/303#issuecomment-127039892
 class LocalWatcher
 
     constructor: (@basePath, @merge, @pouch, @events) ->

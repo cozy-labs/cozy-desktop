@@ -28,7 +28,7 @@ module.exports =
             (next) =>
                 bin  = path.resolve "node_modules/.bin/pouchdb-server"
                 args = ["-n", "-m", "-p", "#{params.port}"]
-                opts = cwd: process.env.DEFAULT_DIR
+                opts = cwd: process.env.DEFAULT_DIR or '/tmp'
                 fs.ensureDirSync opts.cwd
                 @server = child.spawn bin, args, opts
                 setTimeout next, 500
