@@ -190,21 +190,49 @@ describe 'Local', ->
                 done()
 
 
-    describe 'moveFile', ->
-        return it 'TODO'
+    describe 'updateFile', ->
+        it 'calls addFile for an overwrite', (done) ->
+            doc =
+                _id: 'a-file-to-overwrite'
+                docType: 'file'
+                checksum: 'abfcfb0dfcfdb36deb1187b456e575472661f97a'
+                lastModification: new Date
+                overwrite: true
+            sinon.stub(@local, 'addFile').yields()
+            @local.updateFile doc, (err) =>
+                should.not.exist err
+                @local.addFile.calledWith(doc).should.be.true()
+                @local.addFile.restore()
+                done()
 
+        it 'updates metadata'
+
+
+    describe 'updateFolder', ->
+        it 'calls addFolder', (done) ->
+            doc =
+                _id: 'a-folder-to-update'
+                docType: 'folder'
+                lastModification: new Date
+            sinon.stub(@local, 'addFolder').yields()
+            @local.updateFolder doc, (err) =>
+                should.not.exist err
+                @local.addFolder.calledWith(doc).should.be.true()
+                @local.addFolder.restore()
+                done()
+
+
+    describe 'moveFile', ->
         it 'moves the file', (done) ->
             old =
-                path: 'old-parent'
-                name: 'file-to-move'
+                _id: 'old-parent/file-to-move'
                 lastModification: new Date '2016-10-08T05:05:09Z'
             doc =
-                path: 'new-parent'
-                name: 'file-moved'
+                _id: 'new-parent/file-moved'
                 lastModification: new Date '2015-10-09T05:05:10Z'
-            oldPath = path.join @basePath, old.path, old.name
-            newPath = path.join @basePath, doc.path, doc.name
-            fs.ensureDirSync path.join @basePath, old.path
+            oldPath = path.join @basePath, old._id
+            newPath = path.join @basePath, doc._id
+            fs.ensureDirSync path.dirname oldPath
             fs.writeFileSync oldPath, 'foobar'
             @local.moveFile doc, old, (err) ->
                 should.not.exist err
@@ -212,18 +240,17 @@ describe 'Local', ->
                 fs.statSync(newPath).isFile().should.be.true()
                 mtime = +fs.statSync(newPath).mtime
                 mtime.should.equal +doc.lastModification
+                enc = encoding: 'utf-8'
+                fs.readFileSync(newPath, enc).should.equal 'foobar'
                 done()
 
         it 'creates the file is the current file is missing', (done) ->
             old =
-                path: 'old-parent'
-                name: 'missing-file'
+                _id: 'old-parent/missing-file'
                 lastModification: new Date '2016-10-08T05:05:11Z'
             doc =
-                path: 'new-parent'
-                name: 'file-moved-2'
+                _id: 'new-parent/recreated-file'
                 lastModification: new Date '2015-10-09T05:05:12Z'
-            filePath = path.join @basePath, doc.path, doc.name
             stub = sinon.stub(@local, "addFile").yields()
             @local.moveFile doc, old, (err) ->
                 stub.restore()
@@ -231,81 +258,80 @@ describe 'Local', ->
                 should.not.exist err
                 done()
 
+        it 'does nothing if the file has already been moved', (done) ->
+            old =
+                _id: 'old-parent/already-moved'
+                lastModification: new Date '2016-10-08T05:05:11Z'
+            doc =
+                _id: 'new-parent/already-here'
+                lastModification: new Date '2015-10-09T05:05:12Z'
+            newPath = path.join @basePath, doc._id
+            fs.ensureDirSync path.dirname newPath
+            fs.writeFileSync newPath, 'foobar'
+            stub = sinon.stub(@local, "addFile").yields()
+            @local.moveFile doc, old, (err) ->
+                stub.restore()
+                stub.calledWith(doc).should.be.false()
+                should.not.exist err
+                enc = encoding: 'utf-8'
+                fs.readFileSync(newPath, enc).should.equal 'foobar'
+                done()
+
 
     describe 'moveFolder', ->
-        return it 'TODO'
-
         it 'moves the folder', (done) ->
             old =
-                _id: '12345'
+                _id: 'old-parent/folder-to-move'
                 docType: 'folder'
-                path: 'old-parent'
-                name: 'folder-to-move'
                 lastModification: new Date '2016-10-08T05:06:09Z'
             doc =
-                _id: '12345'
+                _id: 'new-parent/folder-moved'
                 docType: 'folder'
-                path: 'new-parent'
-                name: 'folder-moved'
                 lastModification: new Date '2015-10-09T05:06:10Z'
-            oldPath = path.join @basePath, old.path, old.name
-            folderPath = path.join @basePath, doc.path, doc.name
+            oldPath = path.join @basePath, old._id
+            folderPath = path.join @basePath, doc._id
             fs.ensureDirSync oldPath
-            @pouch.db.put old, (err, oldDoc) =>
+            @local.moveFolder doc, old, (err) ->
                 should.not.exist err
-                doc._rev = oldDoc.rev
-                @pouch.db.put doc, (err) =>
-                    should.not.exist err
-                    @local.moveFolder doc, (err) ->
-                        should.not.exist err
-                        fs.existsSync(oldPath).should.be.false()
-                        fs.statSync(folderPath).isDirectory().should.be.true()
-                        mtime = +fs.statSync(folderPath).mtime
-                        mtime.should.equal +doc.lastModification
-                        done()
-
-        it 'creates the folder is the previous path is unknown', (done) ->
-            doc =
-                _id: '12346'
-                docType: 'folder'
-                path: 'new-parent'
-                name: 'folder-moved-2'
-                lastModification: new Date '2015-10-09T05:06:11Z'
-            folderPath = path.join @basePath, doc.path, doc.name
-            @pouch.db.put doc, (err) =>
-                should.not.exist err
-                @local.moveFolder doc, (err) ->
-                    should.not.exist err
-                    fs.statSync(folderPath).isDirectory().should.be.true()
-                    mtime = +fs.statSync(folderPath).mtime
-                    mtime.should.equal +doc.lastModification
-                    done()
+                fs.existsSync(oldPath).should.be.false()
+                fs.statSync(folderPath).isDirectory().should.be.true()
+                mtime = +fs.statSync(folderPath).mtime
+                mtime.should.equal +doc.lastModification
+                done()
 
         it 'creates the folder is the current directory is missing', (done) ->
             old =
-                _id: '12347'
+                _id: 'old-parent/missing-folder'
                 docType: 'folder'
-                path: 'old-parent'
-                name: 'missing-folder'
                 lastModification: new Date '2016-10-08T05:06:09Z'
             doc =
-                _id: '12347'
+                _id: 'new-parent/recreated-folder'
                 docType: 'folder'
-                path: 'new-parent'
-                name: 'folder-moved-3'
                 lastModification: new Date '2015-10-09T05:06:10Z'
-            folderPath = path.join @basePath, doc.path, doc.name
-            @pouch.db.put old, (err, oldDoc) =>
+            folderPath = path.join @basePath, doc._id
+            @local.moveFolder doc, old, (err) ->
                 should.not.exist err
-                doc._rev = oldDoc.rev
-                @pouch.db.put doc, (err) =>
-                    should.not.exist err
-                    @local.moveFolder doc, (err) ->
-                        should.not.exist err
-                        fs.statSync(folderPath).isDirectory().should.be.true()
-                        mtime = +fs.statSync(folderPath).mtime
-                        mtime.should.equal +doc.lastModification
-                        done()
+                fs.statSync(folderPath).isDirectory().should.be.true()
+                mtime = +fs.statSync(folderPath).mtime
+                mtime.should.equal +doc.lastModification
+                done()
+
+        it 'does nothing if the folder has already been moved', (done) ->
+            old =
+                _id: 'old-parent/folder-already-moved'
+                lastModification: new Date '2016-10-08T05:05:11Z'
+            doc =
+                _id: 'new-parent/folder-already-here'
+                lastModification: new Date '2015-10-09T05:05:12Z'
+            newPath = path.join @basePath, doc._id
+            fs.ensureDirSync newPath
+            stub = sinon.stub(@local, "addFolder").yields()
+            @local.moveFolder doc, old, (err) ->
+                should.not.exist err
+                stub.restore()
+                stub.calledWith(doc).should.be.false()
+                fs.statSync(newPath).isDirectory().should.be.true()
+                done()
 
 
     describe 'deleteFile', ->

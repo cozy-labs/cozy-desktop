@@ -99,6 +99,7 @@ class Local
             @utimesUpdater(doc)
 
         ], (err) ->
+            log.debug doc
             fs.unlink tmpFile, ->
                 callback err
 
@@ -118,7 +119,7 @@ class Local
         if doc.overwrite
             @addFile doc, callback
         else
-            log.info "Update metadata of #{doc._id}"
+            log.info "Update metadata of #{doc._id}" # TODO
             callback()
 
     # Update a folder
