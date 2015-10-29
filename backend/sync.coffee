@@ -51,12 +51,18 @@ class Sync
     # Take the next change from pouch
     # We filter with the byPath view to reject design documents
     #
+    # Note: it is really difficult to pick only one change at a time
+    # because pouch can emit several docs in a row and limit: 1 seems
+    # to be not effective!
+    #
     # TODO look also to the retry queue for failures
     pop: (callback) =>
+        done = false
         @pouch.getLocalSeq (err, seq) =>
             return callback err if err
             opts =
                 live: true
+                limit: 1
                 since: seq
                 include_docs: true
                 returnDocs: false
@@ -64,9 +70,12 @@ class Sync
                 view: 'byPath'
             @pouch.db.changes(opts)
                 .on 'change', (info) ->
-                    @cancel()
-                    callback null, info
+                    unless done
+                        done = true
+                        @cancel()
+                        callback null, info
                 .on 'error',  (err) ->
+                    done = true
                     callback err, null
 
     # Apply a change to both local and remote
@@ -108,7 +117,9 @@ class Sync
             if from.moveTo is doc._id
                 @fileMoved doc, from, callback
             else
-                log.error "Invalid move", from, doc
+                log.error "Invalid move"
+                log.error from
+                log.error doc
                 callback new Error 'Invalid move'
         else if doc.moveTo
             @moveFrom = doc
@@ -127,7 +138,9 @@ class Sync
             if from.moveTo is doc._id
                 @folderMoved doc, from, callback
             else
-                log.error "Invalid move", from, doc
+                log.error "Invalid move"
+                log.error from
+                log.error doc
                 callback new Error 'Invalid move'
         else if doc.moveTo
             @moveFrom = doc

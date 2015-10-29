@@ -101,7 +101,10 @@ class RemoteWatcher
                 delete doc._rev
                 delete doc.path
                 delete doc.name
-                if not was or was._id is doc._id
+                if @merge.invalidId doc
+                    log.error "Invalid id"
+                    log.error doc
+                else if not was or was._id is doc._id
                     @merge.putDoc doc, callback
                 else if was.checksum is doc.checksum
                     @merge.moveDoc doc, was, callback

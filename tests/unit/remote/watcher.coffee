@@ -20,7 +20,7 @@ describe "RemoteWatcher Tests", ->
     before 'start couch server', couchHelpers.startServer
     before 'instanciate couch', couchHelpers.createCouchClient
     before 'instanciate remote watcher', ->
-        @merge   = {}
+        @merge   = invalidId: Merge::invalidId
         @watcher = new Watcher @couch, @merge, @pouch
     after 'stop couch server', couchHelpers.stopServer
     after 'clean pouch', pouchHelpers.cleanDatabase
@@ -91,7 +91,7 @@ describe "RemoteWatcher Tests", ->
                 _id: '12345678901'
                 _rev: '3-abcdef'
                 docType: 'file'
-                path: 'my-folder'
+                path: '/my-folder'
                 name: 'file-1'
                 checksum: '9999999999999999999999999999999999999999'
                 tags: ['foo', 'bar', 'baz']
@@ -100,7 +100,7 @@ describe "RemoteWatcher Tests", ->
                 @merge.putDoc.called.should.be.true()
                 args = @merge.putDoc.args[0][0]
                 args.should.have.properties
-                    _id: path.join doc.path, doc.name
+                    _id: 'my-folder/file-1'
                     docType: 'file'
                     checksum: doc.checksum
                     tags: doc.tags

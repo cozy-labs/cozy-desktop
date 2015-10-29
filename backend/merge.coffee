@@ -208,6 +208,7 @@ class Merge
     #   - the new file path and name are present and valid
     #   - the old file path and name are present and valid
     #   - the checksum is present
+    #   - the two paths are not the same
     #   - the revision for the old file is present
     # Actions:
     #   - force the 'file' docType
@@ -226,6 +227,10 @@ class Merge
         else if @invalidChecksum doc
             log.warn "Invalid checksum: #{JSON.stringify doc, null, 2}"
             callback new Error 'Invalid checksum'
+        else if doc._id is was._id
+            log.warn "Invalid move: #{JSON.stringify was, null, 2}"
+            log.warn "to #{JSON.stringify doc, null, 2}"
+            callback new Error 'Invalid move'
         else if not was._rev
             log.warn "Missing rev: #{JSON.stringify was, null, 2}"
             callback new Error 'Missing rev'
@@ -251,6 +256,7 @@ class Merge
     # Expectations:
     #   - the new folder path and name are present and valid
     #   - the old folder path and name are present and valid
+    #   - the two paths are not the same
     #   - the revision for the old folder is present
     # Actions:
     #   - force the 'folder' docType
@@ -269,6 +275,9 @@ class Merge
         else if @invalidId was
             log.warn "Invalid id: #{JSON.stringify was, null, 2}"
             callback new Error 'Invalid id'
+        else if doc._id is was._id
+            log.warn "Invalid move: #{JSON.stringify doc, null, 2}"
+            callback new Error 'Invalid move'
         else if not was._rev
             log.warn "Missing rev: #{JSON.stringify was, null, 2}"
             callback new Error 'Missing rev'

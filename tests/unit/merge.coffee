@@ -464,6 +464,20 @@ describe 'Merge', ->
                     err.message.should.equal 'Invalid checksum'
                     done()
 
+            it 'expects two different paths', (done) ->
+                doc =
+                    _id: 'foo/bar'
+                    docType: 'file'
+                    checksum: '5555555555555555555555555555555555555555'
+                was =
+                    _id: 'foo/bar'
+                    docType: 'file'
+                    checksum: '5555555555555555555555555555555555555555'
+                @merge.moveFile doc, was, (err) ->
+                    should.exist err
+                    err.message.should.equal 'Invalid move'
+                    done()
+
             it 'expects a revision for was', (done) ->
                 doc =
                     _id: 'foo/bar'
@@ -641,6 +655,18 @@ describe 'Merge', ->
                     err.message.should.equal 'Invalid id'
                     done()
 
+            it 'expects two different paths', (done) ->
+                doc =
+                    _id: 'foo/bar'
+                    docType: 'folder'
+                was =
+                    _id: 'foo/bar'
+                    docType: 'folder'
+                @merge.moveFolder doc, was, (err) ->
+                    should.exist err
+                    err.message.should.equal 'Invalid move'
+                    done()
+
             it 'expects a revision for was', (done) ->
                 doc =
                     _id: 'foo/bar'
@@ -777,7 +803,7 @@ describe 'Merge', ->
                 it 'can resolve a conflict', ->
                     it 'TODO'
 
-        describe.only 'moveFolderRecursively', ->
+        describe 'moveFolderRecursively', ->
             before (done) ->
                 pouchHelpers.createParentFolder @pouch, =>
                     pouchHelpers.createFolder @pouch, 9, =>
