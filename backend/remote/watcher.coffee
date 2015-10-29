@@ -1,4 +1,5 @@
 async = require 'async'
+clone = require 'lodash.clone'
 path  = require 'path'
 log   = require('printit')
     prefix: 'Remote watcher'
@@ -78,7 +79,7 @@ class RemoteWatcher
                     @changes = null
                     callback()
 
-    # Take one change from the changes feed and give it to merge.
+    # Take one change from the changes feed and give it to merge
     #
     # TODO should we check was.remote._rev and doc._rev for conflict
     # like local has move file and remote overwrite it?
@@ -94,24 +95,36 @@ class RemoteWatcher
                 else
                     @merge.deleteDoc was, callback
             else
-                doc.remote =
-                    _id: doc._id
-                    _rev: doc._rev
-                doc._id = path.join doc.path, doc.name
-                delete doc._rev
-                delete doc.path
-                delete doc.name
-                if @merge.invalidId doc
-                    log.error "Invalid id"
-                    log.error doc
-                else if not was or was._id is doc._id
-                    @merge.putDoc doc, callback
-                else if was.checksum is doc.checksum
-                    @merge.moveDoc doc, was, callback
-                else
-                    @merge.deleteDoc was, (err) =>
-                        log.error err if err
-                        @merge.putDoc doc, callback
+                @putDoc doc, was, callback
+
+    # Transform the doc and save it in pouchdb
+    #
+    # In CouchDB, the filepath is in the path and name fields.
+    # In PouchDB, the filepath is in the _id.
+    # And the _id/_rev from CouchDB are saved in the remote field in PouchDB.
+    putDoc: (doc, was, callback) =>
+        doc = clone doc
+        doc.remote =
+            _id: doc._id
+            _rev: doc._rev
+        docPath = doc.path or ''
+        docName = doc.name or ''
+        doc._id = path.join docPath, docName
+        delete doc._rev
+        delete doc.path
+        delete doc.name
+        if @merge.invalidId doc
+            log.error "Invalid id"
+            log.error doc
+            callback new Error 'Invalid path/name'
+        else if not was or was._id is doc._id
+            @merge.putDoc doc, callback
+        else if was.checksum is doc.checksum
+            @merge.moveDoc doc, was, callback
+        else
+            @merge.deleteDoc was, (err) =>
+                log.error err if err
+                @merge.putDoc doc, callback
 
     # Keep track of the sequence number and log errors
     changed: (change) =>

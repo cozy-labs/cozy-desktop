@@ -35,6 +35,16 @@ describe "RemoteWatcher Tests", ->
 
 
     describe 'onChange', ->
+        it 'does not fail when the path is missing', (done) ->
+            doc =
+                _id: '12345678904'
+                _rev: '1-abcdef'
+                docType: 'file'
+            @watcher.onChange doc, (err) ->
+                should.exist err
+                err.message.should.equal 'Invalid path/name'
+                done()
+
         it 'calls putDoc for a new doc', (done) ->
             @merge.putDoc = sinon.stub().yields null
             doc =
