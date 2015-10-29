@@ -161,7 +161,6 @@ class Local
 
 
     # Move a folder
-    # FIXME
     moveFolder: (doc, old, callback) =>
         oldPath = path.join @basePath, old._id
         newPath = path.join @basePath, doc._id
@@ -170,16 +169,17 @@ class Local
         async.waterfall [
             (next) ->
                 fs.exists oldPath, (oldPathExists) ->
-                    if oldPathExists
-                        fs.ensureDir parent, ->
-                            fs.rename oldPath, newPath, next
-                    else
-                        fs.exists newPath, (newPathExists) ->
-                            if newPathExists
-                                next()
-                            else
-                                log.error "Folder #{oldPath} not found"
-                                next new Error "#{oldPath} not found"
+                    fs.exists newPath, (newPathExists) ->
+                        if oldPathExists and newPathExists
+                            fs.rmdir oldPath, next
+                        else if oldPathExists
+                            fs.ensureDir parent, ->
+                                fs.rename oldPath, newPath, next
+                        else if newPathExists
+                            next()
+                        else
+                            log.error "Folder #{oldPath} not found"
+                            next new Error "#{oldPath} not found"
 
             @utimesUpdater(doc)
 

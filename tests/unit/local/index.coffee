@@ -333,6 +333,26 @@ describe 'Local', ->
                 fs.statSync(newPath).isDirectory().should.be.true()
                 done()
 
+        it 'remove the old directory if everything has been moved', (done) ->
+            old =
+                _id: 'old-parent/folder-already-moved'
+                lastModification: new Date '2016-10-08T05:05:11Z'
+            doc =
+                _id: 'new-parent/folder-already-here'
+                lastModification: new Date '2015-10-09T05:05:12Z'
+            oldPath = path.join @basePath, old._id
+            newPath = path.join @basePath, doc._id
+            fs.ensureDirSync oldPath
+            fs.ensureDirSync newPath
+            stub = sinon.stub(@local, "addFolder").yields()
+            @local.moveFolder doc, old, (err) ->
+                should.not.exist err
+                stub.restore()
+                stub.calledWith(doc).should.be.false()
+                fs.existsSync(oldPath).should.be.false()
+                fs.statSync(newPath).isDirectory().should.be.true()
+                done()
+
 
     describe 'deleteFile', ->
         it 'deletes a file from the local filesystem', (done) ->
