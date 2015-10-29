@@ -43,7 +43,7 @@ Pouch = require './pouch'
 #   - for two folders, we merge them
 #   - for a file and a folder, TODO
 #
-# TODO update metadata
+# TODO update bakends metadata
 # TODO avoid put in pouchdb if nothing has changed
 class Merge
     constructor: (@pouch) ->
@@ -277,8 +277,6 @@ class Merge
                 doc.docType           = 'folder'
                 doc.creationDate     ?= was.creationDate
                 doc.lastModification ?= new Date
-                was.moveTo            = doc._id
-                was._deleted          = true
                 if folder
                     # TODO maybe it is simpler to add a -conflict suffix
                     doc._rev = folder._rev
@@ -287,13 +285,15 @@ class Merge
                     @ensureParentExist doc, =>
                         @moveFolderRecursively doc, was, callback
 
-    # TODO Add comments, tests
+    # Move a folder and all the things inside it
     # TODO Check if folders/files exists in destination
     moveFolderRecursively: (folder, was, callback) =>
-        @pouch.byRecursivePath folder._id, (err, docs) =>
+        @pouch.byRecursivePath was._id, (err, docs) =>
             if err
                 callback err
             else
+                was._deleted = true
+                was.moveTo   = folder._id
                 bulk = [was, folder]
                 for doc in docs
                     src = clone doc
@@ -301,7 +301,7 @@ class Merge
                     src.moveTo = doc._id.replace was._id, folder._id
                     bulk.push src
                     dst = clone doc
-                    dst._id = src.movedTo
+                    dst._id = src.moveTo
                     delete dst._rev
                     bulk.push dst
                 @pouch.db.bulkDocs bulk, callback

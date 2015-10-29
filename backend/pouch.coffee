@@ -197,7 +197,6 @@ class Pouch
     setLocalSeq: (seq, callback) =>
         task =
             _id: '_local/localSeq'
-            _rev: doc?._rev
             seq: seq
         @updater.push task, callback
 

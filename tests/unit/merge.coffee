@@ -777,6 +777,37 @@ describe 'Merge', ->
                 it 'can resolve a conflict', ->
                     it 'TODO'
 
+        describe.only 'moveFolderRecursively', ->
+            before (done) ->
+                pouchHelpers.createParentFolder @pouch, =>
+                    pouchHelpers.createFolder @pouch, 9, =>
+                        pouchHelpers.createFile @pouch, 9, done
+
+            it 'move the folder and files/folders inside it', (done) ->
+                doc =
+                    _id: 'destination'
+                    docType: 'folder'
+                    creationDate: new Date
+                    lastModification: new Date
+                    tags: []
+                @pouch.db.get 'my-folder', (err, was) =>
+                    should.not.exist err
+                    @merge.moveFolderRecursively doc, was, (err) =>
+                        should.not.exist err
+                        ids = [
+                            '',
+                            '/folder-9',
+                            '/file-9'
+                        ]
+                        async.eachSeries ids, (id, next) =>
+                            @pouch.db.get "destination#{id}", (err, res) =>
+                                should.not.exist err
+                                should.exist res
+                                @pouch.db.get "my-folder#{id}", (err, res) ->
+                                    err.status.should.equal 404
+                                    next()
+                        , done
+
 
     describe 'Delete', ->
 
