@@ -66,6 +66,7 @@ class Local
     # or replacing an existing one
     #
     # TODO verify the checksum -> remove file if not ok
+    # TODO save the checksum if it didn't have one
     # TODO show progress
     addFile: (doc, callback) =>
         tmpFile  = path.resolve @tmpPath, path.basename doc._id
@@ -76,7 +77,10 @@ class Local
 
         async.waterfall [
             (next) =>
-                @fileExistsLocally doc.checksum, next
+                if doc.checksum?
+                    @fileExistsLocally doc.checksum, next
+                else
+                    next null, false
 
             (existingFilePath, next) =>
                 # TODO what if existingFilePath is filePath

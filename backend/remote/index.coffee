@@ -20,7 +20,10 @@ class Remote
             @watcher.listenToChanges live: true unless err
 
     createReadStream: (doc, callback) =>
-        @couch.downloadBinary doc.binary.file.id, callback
+        if doc.remote.binary?
+            @couch.downloadBinary doc.remote.binary._id, callback
+        else
+            callback new Error 'Cannot download the file'
 
 
     ### Helpers ###

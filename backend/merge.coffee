@@ -50,7 +50,7 @@ class Merge
 
     ### Helpers ###
 
-    # Return true if the document has a valid id
+    # Return true if the document has not a valid id
     # (ie a path inside the mount point)
     # TODO what other things are not authorized? ~? $?
     # TODO forbid _design and _local?
@@ -63,12 +63,16 @@ class Merge
             doc._id is '' or
             parts[0] is '..'
 
-    # Return true if the checksum is valid
+    # Return true if the checksum is invalid
+    # If the checksum is missing, it is not invalid, just missing,
+    # so it returns false.
     # SHA-1 has 40 hexadecimal letters
     invalidChecksum: (doc) ->
-        doc.checksum ?= ''
-        doc.checksum = doc.checksum.toLowerCase()
-        return not doc.checksum.match /^[a-f0-9]{40}$/
+        if doc.checksum?
+            doc.checksum = doc.checksum.toLowerCase()
+            return not doc.checksum.match /^[a-f0-9]{40}$/
+        else
+            return false
 
     # Be sure that the tree structure for the given path exists
     ensureParentExist: (doc, callback) =>

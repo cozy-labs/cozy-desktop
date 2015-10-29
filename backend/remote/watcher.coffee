@@ -107,19 +107,25 @@ class RemoteWatcher
         doc.remote =
             _id: doc._id
             _rev: doc._rev
+        if doc.binary?.file
+            doc.remote.binary =
+                _id: doc.binary.file.id
+                _rev: doc.binary.file.rev
         docPath = doc.path or ''
         docName = doc.name or ''
         doc._id = path.join docPath, docName
         delete doc._rev
         delete doc.path
         delete doc.name
+        delete doc.binary
+        delete doc.clearance
         if @merge.invalidId doc
             log.error "Invalid id"
             log.error doc
             callback new Error 'Invalid path/name'
         else if not was or was._id is doc._id
             @merge.putDoc doc, callback
-        else if was.checksum is doc.checksum
+        else if doc.checksum? and was.checksum is doc.checksum
             @merge.moveDoc doc, was, callback
         else
             @merge.deleteDoc was, (err) =>

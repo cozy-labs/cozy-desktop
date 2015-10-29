@@ -54,13 +54,13 @@ describe 'Merge', ->
                 ret.should.be.false()
 
         describe 'invalidChecksum', ->
-            it 'returns true if the checksum is missing', ->
+            it 'returns false if the checksum is missing', ->
                 ret = @merge.invalidChecksum {}
-                ret.should.be.true()
+                ret.should.be.false()
                 ret = @merge.invalidChecksum checksum: null
-                ret.should.be.true()
+                ret.should.be.false()
                 ret = @merge.invalidChecksum checksum: undefined
-                ret.should.be.true()
+                ret.should.be.false()
 
             it 'returns true if the checksum is incorrect', ->
                 ret = @merge.invalidChecksum checksum: ''
@@ -258,10 +258,19 @@ describe 'Merge', ->
                     err.message.should.equal 'Invalid id'
                     done()
 
-            it 'expects a doc with a checksum', (done) ->
+            it 'accepts doc with no checksum', (done) ->
+                @merge.ensureParentExist = sinon.stub().yields null
                 doc =
                     _id: 'no-checksum'
-                    checksum: ''
+                    docType: 'file'
+                @merge.putFile doc, (err) ->
+                    should.not.exist err
+                    done()
+
+            it 'rejects doc with an invalid checksum', (done) ->
+                doc =
+                    _id: 'no-checksum'
+                    checksum: 'foobar'
                 @merge.putFile doc, (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid checksum'
