@@ -26,6 +26,7 @@ class Config
     # Save configuration to file system.
     save: ->
         fs.writeFileSync @configPath, JSON.stringify @devices, null, 2
+        true
 
     # Get the argument after -d or --deviceName
     # Or return the first device name
@@ -81,7 +82,7 @@ class Config
     # Set insecure flag, for self-signed certificate mainly
     setInsecure: (bool, deviceName) ->
         deviceName ?= @getDefaultDeviceName()
-        if deviceName
+        if deviceName and @devices[deviceName]?.url
             @devices[deviceName].insecure = bool
             @save()
         else

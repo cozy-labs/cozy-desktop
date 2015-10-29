@@ -39,8 +39,12 @@ program
     .option('-k, --insecure',
             'Turn off HTTPS certificate verification.')
     .action (args) ->
-        app.config.setInsecure args.insecure?
-        app.sync 'readonly'
+        if app.config.setInsecure args.insecure?
+            app.sync 'readonly'
+        else
+            console.log 'Your configuration file seems invalid.'
+            console.log 'Have you added a remote cozy?'
+            process.exit 1
 
 program
     .command 'reset-database'

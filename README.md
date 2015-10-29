@@ -7,24 +7,25 @@ changes you made on them on other synced devices and on your online Cozy.
 
 ## CLI Install
 
-The cozy-desktop requires node.js and build tools to run
+The cozy-desktop requires node.js (at least version 0.10) and build tools.
+For example, you can install them on debian with:
 
     sudo apt-get install nodejs-legacy build-essential
 
-Then you can install it via NPM:
+Then you can install cozy-desktop via NPM:
 
     sudo npm install cozy-desktop -g
 
 
-## CLI Running
+### CLI Running
 
-```bash
-# Configure it with your remote Cozy
-cozy-desktop add-remote-cozy http://url.of.my.cozy devicename /sync/directory
+Configure it with your remote Cozy
 
-# Then start synchronization daemon:
-cozy-desktop sync
-```
+    cozy-desktop add-remote-cozy http://url.of.my.cozy devicename /sync/directory
+
+Then start synchronization daemon:
+
+    cozy-desktop sync
 
 Other commands can be listed with
 
