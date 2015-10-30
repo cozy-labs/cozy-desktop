@@ -85,6 +85,7 @@ class Local
             (existingFilePath, next) =>
                 # TODO what if existingFilePath is filePath
                 if existingFilePath
+                    log.info "Recopy #{existingFilePath} -> #{filePath}"
                     stream = fs.createReadStream existingFilePath
                     next null, stream
                 else

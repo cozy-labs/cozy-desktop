@@ -96,6 +96,7 @@ class Couch
     # Give a readable stream of a file stored on the remote couch
     downloadBinary: (binaryId, callback) =>
         url = "cozy/#{binaryId}/file"
+        log.info "Download #{url}"
         @http.saveFileAsStream url, callback
 
 
