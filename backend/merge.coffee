@@ -74,6 +74,17 @@ class Merge
         else
             return false
 
+    # TODO comments, tests
+    sameBinary: (one, two, callback) ->
+        if one.checksum? and one.checksum is two.checksum
+            return true
+        else if one.remote?.file
+            oneId = one.remote.file._id
+            twoId = two.remote.file._id
+            return oneId and oneId is twoId
+        else
+            return false
+
     # Be sure that the tree structure for the given path exists
     ensureParentExist: (doc, callback) =>
         parent = path.dirname doc._id
@@ -141,7 +152,7 @@ class Merge
 
     # Expectations:
     #   - the file path and name are present and valid
-    #   - the checksum is present
+    #   - the checksum is valid, if present
     # Actions:
     #   - force the 'file' docType
     #   - add the creation date if missing
@@ -165,7 +176,7 @@ class Merge
                 if file
                     doc._rev = file._rev
                     doc.creationDate ?= file.creationDate
-                    if file.checksum is doc.checksum
+                    if @sameBinary file, doc
                         doc.size  ?= file.size
                         doc.class ?= file.class
                         doc.mime  ?= file.mime
@@ -211,7 +222,7 @@ class Merge
     # Expectations:
     #   - the new file path and name are present and valid
     #   - the old file path and name are present and valid
-    #   - the checksum is present
+    #   - the checksum is valid, if present
     #   - the two paths are not the same
     #   - the revision for the old file is present
     # Actions:
