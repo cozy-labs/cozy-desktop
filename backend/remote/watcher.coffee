@@ -94,8 +94,10 @@ class RemoteWatcher
                     callback()
                 else
                     @merge.deleteDoc was, callback
-            else
+            else if doc.binary?.file
                 @putDoc doc, was, callback
+            else
+                callback new Error 'Ghost file'
 
     # Transform the doc and save it in pouchdb
     #
@@ -107,8 +109,7 @@ class RemoteWatcher
         doc.remote =
             _id: doc._id
             _rev: doc._rev
-        if doc.binary?.file
-            doc.remote.binary =
+            binary:
                 _id: doc.binary.file.id
                 _rev: doc.binary.file.rev
         docPath = doc.path or ''

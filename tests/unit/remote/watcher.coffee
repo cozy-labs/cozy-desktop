@@ -40,9 +40,24 @@ describe "RemoteWatcher Tests", ->
                 _id: '12345678904'
                 _rev: '1-abcdef'
                 docType: 'file'
+                binary:
+                    file:
+                        id: '123'
             @watcher.onChange doc, (err) ->
                 should.exist err
                 err.message.should.equal 'Invalid path/name'
+                done()
+
+        it 'does not fail on ghost file', (done) ->
+            doc =
+                _id: '12345678904'
+                _rev: '1-abcdef'
+                docType: 'file'
+                path: 'foo'
+                name: 'bar'
+            @watcher.onChange doc, (err) ->
+                should.exist err
+                err.message.should.equal 'Ghost file'
                 done()
 
         it 'calls putDoc for a new doc', (done) ->
@@ -55,6 +70,10 @@ describe "RemoteWatcher Tests", ->
                 name: 'file-5'
                 checksum: '9999999999999999999999999999999999999999'
                 tags: []
+                binary:
+                    file:
+                        id: '1234'
+                        rev: '5-6789'
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
                 @merge.putDoc.called.should.be.true()
@@ -67,6 +86,9 @@ describe "RemoteWatcher Tests", ->
                     remote:
                         _id: doc._id
                         _rev: doc._rev
+                        binary:
+                            _id: doc.binary.file.id
+                            _rev: doc.binary.file.rev
                 args.should.not.have.properties ['_rev', 'path', 'name']
                 done()
 
@@ -80,6 +102,10 @@ describe "RemoteWatcher Tests", ->
                 name: 'file-1'
                 checksum: '1111111111111111111111111111111111111111'
                 tags: ['foo', 'bar', 'baz']
+                binary:
+                    file:
+                        id: '1234'
+                        rev: '5-6789'
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
                 @merge.putDoc.called.should.be.true()
@@ -92,6 +118,9 @@ describe "RemoteWatcher Tests", ->
                     remote:
                         _id: doc._id
                         _rev: doc._rev
+                        binary:
+                            _id: doc.binary.file.id
+                            _rev: doc.binary.file.rev
                 args.should.not.have.properties ['_rev', 'path', 'name']
                 done()
 
@@ -105,6 +134,10 @@ describe "RemoteWatcher Tests", ->
                 name: 'file-1'
                 checksum: '9999999999999999999999999999999999999999'
                 tags: ['foo', 'bar', 'baz']
+                binary:
+                    file:
+                        id: '4321'
+                        rev: '9-8765'
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
                 @merge.putDoc.called.should.be.true()
@@ -117,6 +150,9 @@ describe "RemoteWatcher Tests", ->
                     remote:
                         _id: doc._id
                         _rev: doc._rev
+                        binary:
+                            _id: doc.binary.file.id
+                            _rev: doc.binary.file.rev
                 args.should.not.have.properties ['_rev', 'path', 'name']
                 done()
 
@@ -130,6 +166,10 @@ describe "RemoteWatcher Tests", ->
                 name: 'file-2-bis'
                 checksum: '1111111111111111111111111111111111111112'
                 tags: []
+                binary:
+                    file:
+                        id: '4321'
+                        rev: '9-8765'
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
                 @merge.moveDoc.called.should.be.true()
@@ -150,6 +190,9 @@ describe "RemoteWatcher Tests", ->
                     remote:
                         _id: doc._id
                         _rev: doc._rev
+                        binary:
+                            _id: doc.binary.file.id
+                            _rev: doc.binary.file.rev
                 dst.should.not.have.properties ['_rev', 'path', 'name']
                 done()
 
@@ -163,6 +206,10 @@ describe "RemoteWatcher Tests", ->
                 name: 'file-2-ter'
                 checksum: '1111111111111111111111111111111111111112'
                 tags: []
+                binary:
+                    file:
+                        id: '4321'
+                        rev: '9-8765'
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
                 @merge.moveDoc.called.should.be.true()
@@ -183,6 +230,9 @@ describe "RemoteWatcher Tests", ->
                     remote:
                         _id: doc._id
                         _rev: doc._rev
+                        binary:
+                            _id: doc.binary.file.id
+                            _rev: doc.binary.file.rev
                 dst.should.not.have.properties ['_rev', 'path', 'name']
                 done()
 
@@ -197,6 +247,10 @@ describe "RemoteWatcher Tests", ->
                 name: 'file-3-bis'
                 checksum: '8888888888888888888888888888888888888888'
                 tags: []
+                binary:
+                    file:
+                        id: '1472'
+                        rev: '5-8369'
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
                 @merge.deleteDoc.called.should.be.true()
@@ -212,6 +266,9 @@ describe "RemoteWatcher Tests", ->
                     remote:
                         _id: doc._id
                         _rev: doc._rev
+                        binary:
+                            _id: doc.binary.file.id
+                            _rev: doc.binary.file.rev
                 args.should.not.have.properties ['_rev', 'path', 'name']
                 done()
 
@@ -239,6 +296,13 @@ describe "RemoteWatcher Tests", ->
                 lastModification: "2015-09-29T14:13:33.384Z"
                 creationDate: "2015-09-29T14:13:33.384Z"
                 tags: []
+                binary:
+                    file:
+                        id: "0365C957-C5F5-3E88-A7F2-275D5F9AE5F2"
+                        rev: "2-961fccd38fd7b2e5a2d6916f5e8fc4a1"
+                    thumb:
+                        id: "883f98d550b30fe64ed500538373ca51"
+                        rev: "2-b3198de4001e1d1c82f9c9a6d99be9e3"
             @watcher.onChange doc, (err) =>
                 should.not.exist err
                 @merge.putDoc.called.should.be.true()
@@ -251,4 +315,7 @@ describe "RemoteWatcher Tests", ->
                     remote:
                         _id: "913F429E-5609-C636-AE9A-CD00BD138B13"
                         _rev: "1-7786acf12a11fad6ad1eeb861953e0d8"
+                        binary:
+                            _id: "0365C957-C5F5-3E88-A7F2-275D5F9AE5F2"
+                            _rev: "2-961fccd38fd7b2e5a2d6916f5e8fc4a1"
                 done()
