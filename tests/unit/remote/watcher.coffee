@@ -49,15 +49,16 @@ describe "RemoteWatcher Tests", ->
                 done()
 
         it 'does not fail on ghost file', (done) ->
+            sinon.stub(@watcher, 'putDoc')
             doc =
                 _id: '12345678904'
                 _rev: '1-abcdef'
                 docType: 'file'
                 path: 'foo'
                 name: 'bar'
-            @watcher.onChange doc, (err) ->
-                should.exist err
-                err.message.should.equal 'Ghost file'
+            @watcher.onChange doc, (err) =>
+                @watcher.putDoc.called.should.be.false()
+                @watcher.putDoc.restore()
                 done()
 
         it 'calls putDoc for a new doc', (done) ->

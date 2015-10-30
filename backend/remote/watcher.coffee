@@ -105,7 +105,7 @@ class RemoteWatcher
             else if doc.binary?.file
                 @putDoc doc, was, callback
             else
-                callback new Error 'Ghost file'
+                callback()
 
     # Transform the doc and save it in pouchdb
     #
