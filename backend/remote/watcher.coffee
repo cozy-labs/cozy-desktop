@@ -85,7 +85,7 @@ class RemoteWatcher
         if @pending is 0
             callback()
         else
-            setTimeout (-> @whenReady callback), 100
+            setTimeout (=> @whenReady callback), 100
 
     # Take one change from the changes feed and give it to merge
     #
