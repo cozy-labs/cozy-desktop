@@ -297,13 +297,6 @@ describe "RemoteWatcher Tests", ->
                 lastModification: "2015-09-29T14:13:33.384Z"
                 creationDate: "2015-09-29T14:13:33.384Z"
                 tags: []
-                binary:
-                    file:
-                        id: "0365C957-C5F5-3E88-A7F2-275D5F9AE5F2"
-                        rev: "2-961fccd38fd7b2e5a2d6916f5e8fc4a1"
-                    thumb:
-                        id: "883f98d550b30fe64ed500538373ca51"
-                        rev: "2-b3198de4001e1d1c82f9c9a6d99be9e3"
             @watcher.onChange doc, (err) =>
                 should.not.exist err
                 @merge.putDoc.called.should.be.true()
@@ -316,7 +309,4 @@ describe "RemoteWatcher Tests", ->
                     remote:
                         _id: "913F429E-5609-C636-AE9A-CD00BD138B13"
                         _rev: "1-7786acf12a11fad6ad1eeb861953e0d8"
-                        binary:
-                            _id: "0365C957-C5F5-3E88-A7F2-275D5F9AE5F2"
-                            _rev: "2-961fccd38fd7b2e5a2d6916f5e8fc4a1"
                 done()

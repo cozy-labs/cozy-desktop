@@ -102,7 +102,7 @@ class RemoteWatcher
                     callback()
                 else
                     @merge.deleteDoc was, callback
-            else if doc.binary?.file
+            else if doc.docType in ['folder', 'Folder'] or doc.binary?.file
                 @putDoc doc, was, callback
             else
                 callback()
@@ -115,16 +115,17 @@ class RemoteWatcher
     putDoc: (doc, was, callback) =>
         # TODO start from {} and add wanted properties instead of deleting somes
         doc = clone doc
+        doc.docType = doc.docType.toLowerCase()
         doc.remote =
             _id: doc._id
             _rev: doc._rev
-            binary:
+        if doc.docType is 'file'
+            doc.remote.binary =
                 _id: doc.binary.file.id
                 _rev: doc.binary.file.rev
         docPath = doc.path or ''
         docName = doc.name or ''
         doc._id = path.join docPath, docName
-        doc.docType = doc.docType.toLowerCase()
         delete doc._rev
         delete doc.path
         delete doc.name
