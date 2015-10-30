@@ -10,6 +10,7 @@ log   = require('printit')
 # TODO add comments
 class RemoteWatcher
     constructor: (@couch, @merge, @pouch) ->
+        @pending = 0
 
     # First time replication
     #
@@ -55,8 +56,8 @@ class RemoteWatcher
                 callback err
 
     # Listen to the Couchdb changes feed for files and folders updates
-    # TODO use a view instead of a filter
     # TODO add integration tests
+    # TODO use a view instead of a filter
     listenToChanges: (options, callback) =>
         @pouch.getRemoteSeq (err, seq) =>
             return callback err if err
@@ -77,7 +78,14 @@ class RemoteWatcher
                     callback err
                 .on 'complete', =>
                     @changes = null
-                    callback()
+                    @whenReady callback
+
+    # TODO comments, tests
+    whenReady: (callback) =>
+        if @pending is 0
+            callback()
+        else
+            setTimeout (-> @whenReady callback), 100
 
     # Take one change from the changes feed and give it to merge
     #
@@ -105,6 +113,7 @@ class RemoteWatcher
     # In PouchDB, the filepath is in the _id.
     # And the _id/_rev from CouchDB are saved in the remote field in PouchDB.
     putDoc: (doc, was, callback) =>
+        # TODO start from {} and add wanted properties instead of deleting somes
         doc = clone doc
         doc.remote =
             _id: doc._id
@@ -121,6 +130,7 @@ class RemoteWatcher
         delete doc.name
         delete doc.binary
         delete doc.clearance
+        delete doc.localPath
         if @merge.invalidId doc
             log.error "Invalid id"
             log.error doc
@@ -135,8 +145,11 @@ class RemoteWatcher
                 @merge.putDoc doc, callback
 
     # Keep track of the sequence number and log errors
+    # TODO test pending counts
     changed: (change) =>
+        @pending++
         (err) =>
+            @pending--
             if err
                 log.error err
                 log.debug change
