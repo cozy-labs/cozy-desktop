@@ -7,7 +7,7 @@ log    = require('printit')
     prefix: 'Filesystem    '
 
 
-# TODO clean filesystem
+# TODO clean filesystem, comments, tests
 filesystem =
 
     # Lock filesystem watching
@@ -42,9 +42,10 @@ filesystem =
             when 'audio'       then "music"
             when 'video'       then "video"
             else                    "file"
-        callback null, {mimeType, fileClass}
+        return [mimeType, fileClass]
 
     # Get checksum for given file.
+    # TODO errors
     checksum: (filePath, callback) ->
         stream = fs.createReadStream filePath
         checksum = crypto.createHash 'sha1'
@@ -55,14 +56,6 @@ filesystem =
             callback null, checksum.read()
 
         stream.pipe checksum
-
-    # Get size of given file.
-    getSize: (filePath, callback) ->
-        fs.stat filePath, (err, stats) ->
-            if err?
-                callback err
-            else
-                callback null, stats.size
 
     # TODO is it still useful with awaitWriteFinish from chokidar? or test it!
     isBeingCopied: (filePath, callback) ->

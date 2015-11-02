@@ -15,8 +15,9 @@ class Local
         @watcher  = new Watcher @basePath, @merge, @pouch, @events
         @other = null
 
-    start: (done) ->
+    start: (done) =>
         fs.ensureDir @basePath, =>
+            # TODO should we wait before calling done that all events are fired?
             @watcher.start done
 
     createReadStream: (doc, callback) ->

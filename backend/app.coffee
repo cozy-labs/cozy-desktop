@@ -18,6 +18,7 @@ Sync    = require './sync'
 class App
 
     # basePath is the directory where the config and pouch are saved
+    # TODO use @events
     constructor: (basePath) ->
         @lang = 'fr'
         @basePath = basePath or path.homedir()
