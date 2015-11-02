@@ -53,6 +53,7 @@ class LocalWatcher
             .on 'error', (err) -> log.error err
 
     # New file detected
+    # TODO pouchdb -> detect updates/conflicts
     onAdd: (filePath, stats) =>
         log.debug 'File added', filePath
         absPath = path.join @basePath, filePath
@@ -73,6 +74,7 @@ class LocalWatcher
                 @merge.putFile doc, @done
 
     # New directory detected
+    # TODO pouchdb -> detect updates/conflicts
     onAddDir: (folderPath, stats) =>
         unless folderPath is ''
             log.debug 'Folder added', folderPath
@@ -94,6 +96,7 @@ class LocalWatcher
         @merge.deleteFolder _id: folderPath, @done
 
     # File update detected
+    # TODO
     onChange: (filePath, stats) =>
         log.debug 'File updated', filePath
         console.log stats

@@ -27,9 +27,31 @@ describe "LocalWatcher Tests", ->
         it 'calls the callback when initial scan is done', (done) ->
             @watcher.start done
 
-        it 'TODO more tests on initial scan'
+        it 'calls addFile/addFolder for files that are aleady here', (done) ->
+            fs.ensureDirSync path.join @basePath, 'aa'
+            fs.ensureFileSync path.join @basePath, 'aa/ab'
+            @merge.putFolder = sinon.spy()
+            @merge.putFile = sinon.spy()
+            @watcher.start =>
+                setTimeout =>
+                    @merge.putFolder.called.should.be.true()
+                    @merge.putFolder.args[0][0]._id.should.equal 'aa'
+                    @merge.putFile.called.should.be.true()
+                    @merge.putFile.args[0][0]._id.should.equal 'aa/ab'
+                    done()
+                , 10
 
-        it 'TODO ignore .cozy-desktop'
+        it 'ignores .cozy-desktop', (done) ->
+            fs.ensureDirSync path.join @basePath, '.cozy-desktop'
+            fs.ensureFileSync path.join @basePath, '.cozy-desktop/ac'
+            @merge.putFolder = sinon.spy()
+            @merge.putFile = sinon.spy()
+            @watcher.start =>
+                setTimeout =>
+                    @merge.putFolder.called.should.be.false()
+                    @merge.putFile.called.should.be.false()
+                    done()
+                , 10
 
 
     describe 'onAdd', ->
@@ -111,5 +133,61 @@ describe "LocalWatcher Tests", ->
         it 'TODO'
 
 
+    describe 'when a directory is file', ->
+        it 'deletes the source and adds the destination', (done) ->
+            src = path.join __dirname, '../../fixtures/chat-mignon.jpg'
+            dst = path.join @basePath, 'afa.jpg'
+            fs.copySync src, dst
+            @merge.putFile = ->
+            @watcher.start =>
+                setTimeout =>
+                    @merge.deleteFile = sinon.spy()
+                    @merge.putFile = (doc) =>
+                        doc.should.have.properties
+                            _id: 'afb.jpg'
+                            docType: 'file'
+                            checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+                            size: 29865
+                            class: 'image'
+                            mime: 'image/jpeg'
+                        setTimeout =>
+                            @merge.deleteFile.called.should.be.true()
+                            @merge.deleteFile.args[0][0].should.have.properties
+                                _id: 'afa.jpg'
+                            done()
+                        , 1000
+                    fs.renameSync dst, path.join @basePath, 'afb.jpg'
+                , 10
+
+
     describe 'when a directory is moved', ->
-        it 'TODO'
+        it 'deletes the source and adds the destination', (done) ->
+            src = path.join @basePath, 'aga'
+            dst = path.join @basePath, 'agb'
+            fs.ensureDirSync src
+            fs.ensureFileSync "#{src}/agc"
+            @merge.putFile = ->
+            @merge.putFolder = ->
+            @watcher.start =>
+                setTimeout =>
+                    @merge.putFile = sinon.spy()
+                    @merge.deleteFile = sinon.spy()
+                    @merge.deleteFolder = sinon.spy()
+                    @merge.putFolder = (doc) =>
+                        doc.should.have.properties
+                            _id: 'agb'
+                            docType: 'folder'
+                        setTimeout =>
+                            @merge.putFile.called.should.be.true()
+                            args = @merge.putFile.args[0][0]
+                            args.should.have.properties _id: 'agb/agc'
+                            @merge.deleteFile.called.should.be.true()
+                            args = @merge.deleteFile.args[0][0]
+                            args.should.have.properties _id: 'aga/agc'
+                            @merge.deleteFolder.called.should.be.true()
+                            args = @merge.deleteFolder.args[0][0]
+                            args.should.have.properties _id: 'aga'
+                            done()
+                        , 1000
+                    fs.renameSync src, dst
+                , 10
