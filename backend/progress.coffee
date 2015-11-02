@@ -1,15 +1,18 @@
+fs   = require 'fs'
+path = require 'path'
+
 ProgressBar = require 'progress'
 
-fs = require 'fs'
-publisher = require './publisher'
 
-module.exports =
+module.exports = progress =
+
+    publisher: null
 
     showUpload: (filePath, fileStream) ->
         filesystem = require './filesystem'
-        absPath = filesystem.getPaths(filePath).absolute
+        absPath = path.join config.getDevice().path, filePath
         size = fs.statSync(absPath).size
-        publisher.emit 'uploadStart', size
+        progress.publisher.emit 'uploadStart', size
         prog = new ProgressBar 'uploading: [:bar] :percent :etas',
             total: size
             complete: '='
@@ -18,13 +21,13 @@ module.exports =
 
         fileStream.on 'data', (data) ->
             prog.tick data.length
-            publisher.emit 'uploadProgress', data.length
+            progress.publisher.emit 'uploadProgress', data.length
 
         fileStream.on 'end', ->
-            publisher.emit 'uploadEnd'
+            progress.publisher.emit 'uploadEnd'
 
     showDownload: (size, resStream) ->
-        publisher.emit 'downloadStart', size
+        progress.publisher.emit 'downloadStart', size
         prog = new ProgressBar 'downloading: [:bar] :percent :etas',
             total: size
             complete: '='
@@ -33,9 +36,7 @@ module.exports =
 
         resStream.on 'data', (data) ->
             prog.tick data.length
-            publisher.emit 'donwloadProgress', data.length
+            progress.publisher.emit 'donwloadProgress', data.length
 
         resStream.on 'end', ->
-            publisher.emit 'downloadEnd'
-
-
+            progress.publisher.emit 'downloadEnd'

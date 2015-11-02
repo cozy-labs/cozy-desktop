@@ -3,14 +3,14 @@
 set -e
 
 export NODE_ENV=test
-export DEFAULT_DIR=tests
+export DEFAULT_DIR=tmp
 
 BIN='mocha --reporter spec --compilers coffee:coffee-script/register '
 
-$BIN tests/*.coffee tests/operations/*.coffee
+$BIN tests/unit/{,local/,remote/}*.coffee
 
-$BIN tests/functional/remote.coffee
-#$BIN tests/functional/local.coffee
-#$BIN tests/functional/local_change.coffee
+# TODO
+# $BIN tests/functional/*.coffee
+# $BIN tests/integration/*.coffee
 
 ./node_modules/.bin/gulp lint

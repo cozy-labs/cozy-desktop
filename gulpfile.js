@@ -1,28 +1,25 @@
-require('coffee-script/register'); // for mocha
-
-var gulp = require('gulp');
+var del    = require('del');
+var gulp   = require('gulp');
 var coffee = require('gulp-coffee');
-var coffeelint = require('gulp-coffeelint');
-var shell = require('gulp-shell');
+var lint   = require('gulp-coffeelint');
 var insert = require('gulp-insert');
-var del = require('del');
-var mocha = require('gulp-mocha');
-var should = require('should');
+var mocha  = require('gulp-mocha');
+var shell  = require('gulp-shell');
+
 
 var nwVersion = '0.12.3';  // TODO use the version from package.json
 var paths = {
-  scripts: ['backend/*.coffee'],
-  scriptsJS: ['bin/cli.js', 'backend/*.js'],
+  scripts: ['backend/**/*.coffee'],
+  scriptsJS: ['bin/cli.js', 'backend/**/*.js'],
   bin: ['bin/cli.js'],
-  tests: ['tests/*.coffee', 'tests/operations/*.coffee', 'tests/functional/remote.coffee'],
+  tests: ['tests/{unit,functional}/**/*.coffee'],
   all: ["backend/**/*.js", "client/public/**", "app.html", "package.json",
-        "node_modules/**"],
-  leveldown: 'node_modules/pouchdb/node_modules/leveldown'
+        "node_modules/**"]
 };
 
 
 gulp.task('clean', function(cb) {
-  del(paths.scriptsJS).then(function() {
+  del(paths.scriptsJS).then(function(paths) {
     cb();
   });
 });
@@ -42,9 +39,7 @@ gulp.task('bin-scripts', function() {
     .pipe(gulp.dest('bin/'));
 });
 
-gulp.task('build-package',
-          ['clean', 'scripts', 'bin-scripts']);
-
+gulp.task('build-package', ['clean', 'scripts', 'bin-scripts']);
 
 gulp.task('build-gui-package', ['scripts'], function() {
   var NwBuilder = require('nw-builder');
@@ -58,7 +53,7 @@ gulp.task('build-gui-package', ['scripts'], function() {
   nw.build().then(function () {
      console.log('Cozy Desktop was successfully built.');
   }).catch(function (error) {
-     console.log('An error occured whild building Cozy Desktop.');
+     console.log('An error occured whild building Cozy Desktop:');
      console.log(error);
   });
 });
@@ -73,7 +68,6 @@ gulp.task('make-deb-32', shell.task([
   '/bin/sh packaging/create_deb i386'
 ]));
 
-
 gulp.task('make-deb-64', shell.task([
   'rm -rf pkg_tree',
   'mkdir -p pkg_tree/opt/cozy-desktop pkg_tree/usr/share/doc/cozy-desktop pkg_tree/usr/share/applications',
@@ -82,7 +76,6 @@ gulp.task('make-deb-64', shell.task([
   'install -b -o root -g root -m 0644 packaging/cozy-desktop.desktop pkg_tree/usr/share/applications/',
   '/bin/sh packaging/create_deb amd64'
 ]));
-
 
 gulp.task('make-rpm-32', shell.task([
   'rm -rf pkg_tree',
@@ -93,7 +86,6 @@ gulp.task('make-rpm-32', shell.task([
   '/bin/sh packaging/create_rpm i386'
 ]));
 
-
 gulp.task('make-rpm-64', shell.task([
   'rm -rf pkg_tree',
   'mkdir -p pkg_tree/opt/cozy-desktop pkg_tree/usr/share/doc/cozy-desktop pkg_tree/usr/share/applications',
@@ -103,32 +95,30 @@ gulp.task('make-rpm-64', shell.task([
   '/bin/sh packaging/create_rpm amd64'
 ]));
 
-
 gulp.task('make-osx-app', shell.task([
   'cp -a build/cozy-desktop/osx32/cozy-desktop.app .'
 ]));
 
+
 gulp.task('lint', function() {
   gulp.src(paths.scripts)
-    .pipe(coffeelint())
-    .pipe(coffeelint.reporter())
+    .pipe(lint())
+    .pipe(lint.reporter())
 });
 
-
 gulp.task('test', function() {
-  process.env.DEFAULT_DIR = 'tests';
+  require('coffee-script/register');
+  process.env.DEFAULT_DIR = 'tmp';
   gulp.src(paths.tests, {
     read: false
   }).pipe(mocha({
-    reporter: 'spec',
-    globals: {should: require('should')}
+    reporter: 'spec'
   }));
 });
 
-
 gulp.task('watch', function() {
-  gulp.watch(paths.scripts, ['scripts', 'bin-scripts']);
-  gulp.watch('bin/cli.coffee', ['bin-scripts']);
+  gulp.watch(paths.scripts, ['lint', 'test', 'scripts']);
+  gulp.watch('bin/cli.coffee', ['lint', 'bin-scripts']);
 });
 
 

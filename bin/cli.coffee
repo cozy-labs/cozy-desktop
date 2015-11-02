@@ -5,14 +5,15 @@ program = require 'commander'
 
 pkg = require '../package.json'
 App = require '../backend/app'
-app = new App(process.env.DEFAULT_DIR)
+app = new App process.env.DEFAULT_DIR
 
 # Helper to get cozy password from user
 app.askPassword = (callback) ->
     promptMsg = """
 Please enter your password to register your device to 'your remote Cozy:
 """
-    read prompt: promptMsg, silent: true , callback
+    read prompt: promptMsg, silent: true , (err, password, isDefault) ->
+        callback err, password
 
 
 program
@@ -38,8 +39,12 @@ program
     .option('-k, --insecure',
             'Turn off HTTPS certificate verification.')
     .action (args) ->
-        app.config.setInsecure(args.insecure?)
-        app.sync('readonly')
+        if app.config.setInsecure args.insecure?
+            app.sync 'readonly'
+        else
+            console.log 'Your configuration file seems invalid.'
+            console.log 'Have you added a remote cozy?'
+            process.exit 1
 
 program
     .command 'reset-database'
@@ -63,14 +68,13 @@ program
         app.query query, (err, results) ->
             unless err
                 for row in results.rows
-                    console.log "key: #{row.key}"
-                    console.log "value #{JSON.stringify row.value}"
+                    console.log row.doc
 
 program
     .command 'display-config'
     .description 'Display device configuration and exit'
     .action ->
-        console.log JSON.stringify app.config.config, null, 2
+        console.log JSON.stringify app.config.devices, null, 2
 
 program
     .command "*"

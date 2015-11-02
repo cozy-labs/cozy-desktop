@@ -4,25 +4,28 @@ The Cozy desktop app allows to sync the files stored in your Cozy with your lapt
 and/or your desktop. It replicates your files on your hard drive and apply
 changes you made on them on other synced devices and on your online Cozy.
 
+
 ## CLI Install
 
-The cozy-desktop requires node.js and build tools to run
+The cozy-desktop requires node.js (at least version 0.10) and build tools.
+For example, you can install them on debian with:
 
     sudo apt-get install nodejs-legacy build-essential
 
-Then you can install it via NPM:
+Then you can install cozy-desktop via NPM:
 
     sudo npm install cozy-desktop -g
 
-## CLI Running
 
-```bash
-# Configure it with your remote Cozy
-cozy-desktop add-remote-cozy http://url.of.my.cozy devicename /sync/directory
+### CLI Running
 
-# Then start synchronization daemon:
-cozy-desktop sync
-```
+Configure it with your remote Cozy
+
+    cozy-desktop add-remote-cozy http://url.of.my.cozy devicename /sync/directory
+
+Then start synchronization daemon:
+
+    cozy-desktop sync
 
 Other commands can be listed with
 
@@ -86,9 +89,15 @@ To hack the synchronization backend, you can just edit the files under the
 [![Build
 Status](https://travis-ci.org/cozy-labs/cozy-desktop.png?branch=master)](https://travis-ci.org/cozy-labs/cozy-desktop)
 
-Tests require that you have the Cozy dev VM up (it means a data-system and a
-proxy up and running) and that the files application is accessible on the 9121
-port. It's also expected that a user is registered.
+There are several levels of tests in cozy-desktop:
+
+- unit tests, for testing a class in isolation, method per method
+- functional tests, for testing a behaviour that requires the collaboration of
+  several classes, but still in a mock environment
+- integration tests, to test the communication between cozy-desktop and a
+  remote cozy stack (proxy, data-system, files, etc.)
+
+Unit and functional tests are easy to launch:
 
 ```
 # Make sure to have dev dependencies installed
@@ -99,8 +108,21 @@ node_modules/.bin/gulp test
 
 # To run a specific set of tests (here testing local_watcher with DEBUG activated)
 npm install -g mocha
-DEBUG=true DEFAULT_DIR=tests mocha --compilers coffee:coffee-script/register tests/local_watcher.coffee
+DEBUG=true DEFAULT_DIR=tmp mocha --compilers coffee:coffee-script/register tests/unit/pouch.coffee
+
+# Or, if you want pouchdb to be really verbose
+DEBUG=pouchdb:api DEFAULT_DIR=tmp mocha --compilers coffee:coffee-script/register tests/unit/pouch.coffee
 ```
+
+Integration tests require that you have the Cozy dev VM up (it means a
+data-system and a proxy up and running) and that the files application is
+accessible on the 9121 port. It's also expected that a user is registered with
+`cozytest` as password.
+
+```
+DEFAULT_DIR=tmp mocha --compilers coffee:coffee-script/register tests/integration/*.coffee
+```
+
 
 ## What is Cozy?
 

@@ -230,7 +230,7 @@ ConfigFormStepTwo = React.createClass
                     options =
                         url: cozyUrl
                         deviceId: credentials.id
-                        devicePassword: credentials.password
+                        password: credentials.password
                     config.updateSync options
 
                     console.log 'Remote Cozy properly configured to work ' + \
