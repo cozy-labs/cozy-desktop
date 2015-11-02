@@ -19,8 +19,8 @@ class Sync
     # Then, when a stable state is reached, start applying changes from pouch
     #
     # The mode can be:
-    # - readonly  if only changes from the remote cozy are applied to the fs
-    # - writeonly if only changes from the fs are applied to the remote cozy
+    # - pull if only changes from the remote cozy are applied to the fs
+    # - push if only changes from the fs are applied to the remote cozy
     # - full for the full synchronization of the both sides
     #
     # The callback is called only for an error
@@ -28,8 +28,8 @@ class Sync
         tasks = [
             (next) => @pouch.addAllViews next
         ]
-        tasks.push @local.start  unless mode is 'readonly'
-        tasks.push @remote.start unless mode is 'writeonly'
+        tasks.push @local.start  unless mode is 'pull'
+        tasks.push @remote.start unless mode is 'push'
         async.waterfall tasks, (err) =>
             if err
                 callback err

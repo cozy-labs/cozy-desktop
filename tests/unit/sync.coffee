@@ -24,16 +24,16 @@ describe "Sync", ->
             @sync = new Sync @pouch, @local, @remote, @events
             @sync.sync = sinon.stub().yields 'stopped'
 
-        it 'starts the metadata replication of remote in readonly', (done) ->
-            @sync.start 'readonly', (err) =>
+        it 'starts the metadata replication of remote in read only', (done) ->
+            @sync.start 'pull', (err) =>
                 err.should.equal 'stopped'
                 @local.start.called.should.be.false()
                 @remote.start.calledOnce.should.be.true()
                 @sync.sync.calledOnce.should.be.true()
                 done()
 
-        it 'starts the metadata replication of local in writeonly', (done) ->
-            @sync.start 'writeonly', (err) =>
+        it 'starts the metadata replication of local in write only', (done) ->
+            @sync.start 'push', (err) =>
                 err.should.equal 'stopped'
                 @local.start.calledOnce.should.be.true()
                 @remote.start.called.should.be.false()
