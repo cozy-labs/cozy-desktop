@@ -88,10 +88,6 @@ class Remote
     # TODO check if the remote folder exists and create it if missing?
     # TODO save infos in pouch
     addFile: (doc, callback) =>
-
-        # FIXME
-        return callback()
-
         async.waterfall [
             # Check if the binary already exists on the server
             (next) =>
@@ -119,57 +115,72 @@ class Remote
         ], callback
 
     # Create a folder on the remote cozy instance
-    # TODO check if the folder already exists before trying to create it?
+    # TODO should we keep remote id and rev here or wait for the changes feed?
     addFolder: (doc, callback) =>
-        # FIXME
-        return callback()
-
-        @couch.put doc, callback
+        folder =
+            _id: Couch.newId()
+            path: path.dirname doc._id
+            name: path.basename doc._id
+            docType: 'folder'
+            tags: doc.tags
+            creationDate: doc.creationDate
+            lastModification: doc.lastModification
+        @couch.put folder, callback
 
     # TODO
     updateFile: (doc, callback) ->
         callback()
 
-    # TODO
+    # Update metadata of a folder
     updateFolder: (doc, callback) ->
-        callback()
+        if doc.remote
+            @couch.get doc.remote._id, (err, folder) =>
+                if err
+                    callback err
+                else
+                    # TODO what if folder.path+name != doc._id ?
+                    # TODO Or folder._rev != doc.remote._rev
+                    folder.tags = doc.tags
+                    folder.lastModification = doc.lastModification
+                    @couch.put folder, callback
+        else
+            @addFolder doc, callback
 
     # Move a file on the remote cozy instance
     moveFile: (doc, old, callback) =>
-        # FIXME
-        return callback()
-
         @couch.put doc, old.rev, callback
 
     # Move a folder on the remote cozy instance
     moveFolder: (doc, old, callback) =>
-        # FIXME
-        return callback()
-
-        @pouch.getPreviousRev doc, (err, oldDoc) =>
-            if err
-                log.error err
-                callback err
-            else
-                @couch.put doc, oldDoc.rev, callback
+        if doc.remote
+            @couch.get doc.remote._id, (err, folder) =>
+                if err
+                    callback err
+                else
+                    # TODO what if folder.path+name != old._id ?
+                    # TODO Or folder._rev != doc.remote._rev
+                    folder.path = path.dirname doc._id
+                    folder.name = path.basename doc._id
+                    folder.tags = doc.tags
+                    folder.lastModification = doc.lastModification
+                    @couch.put folder, callback
+        else
+            @addFolder doc, callback
 
     # Delete a file on the remote cozy instance
-    # TODO check that the corresponding binary is deleted
+    # TODO delete the corresponding binary
     deleteFile: (doc, callback) =>
-        # FIXME
-        return callback()
-
-        @pouch.getPreviousRev doc, (err, oldDoc) =>
-            if err
-                log.error err
-                callback err
-            else
-                @couch.del doc._id, oldDoc.rev, callback
+        if doc.remote
+            @couch.remove doc.remote._id, doc.remote._rev, callback
+        else
+            callback()
 
     # Delete a folder on the remote cozy instance
     deleteFolder: (doc, callback) =>
-        # For now both operations are similar
-        @deleteFile doc, callback
+        if doc.remote
+            @couch.remove doc.remote._id, doc.remote._rev, callback
+        else
+            callback()
 
 
 module.exports = Remote

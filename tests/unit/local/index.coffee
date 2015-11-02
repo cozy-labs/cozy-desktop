@@ -18,7 +18,6 @@ describe 'Local', ->
     before 'instanciate local', ->
         @merge = {}
         @local = new Local @config, @merge, @pouch
-        @basePath = @config.getDevice().path
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
 
