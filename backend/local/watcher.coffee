@@ -27,19 +27,21 @@ class LocalWatcher
         log.info 'Start watching filesystem for changes'
 
         @watcher = chokidar.watch '.',
+            # Let paths in events be relative to this base path
+            cwd: @basePath
             # Ignore our own .cozy-desktop directory
             ignored: /[\/\\]\.cozy-desktop/
             # Don't follow symlinks
             followSymlinks: false
-            # Let paths in events be relative to this base path
-            cwd: @basePath
+            # The stats object is used in methods below
+            alwaysStat: true
+            # Filter out artifacts from editors with atomic writes
+            atomic: true
             # Poll newly created files to detect when the write is finished
-            # FIXME it looks like awaitWriteFinish does not work on node 0.10
+            # TODO see https://github.com/paulmillr/chokidar/issues/384
             # awaitWriteFinish:
             #     pollInterval: 100
             #     stabilityThreshold: 2000
-            # Filter out artifacts from editors with atomic writes
-            atomic: true
             # With node 0.10 on linux, only polling is available
             interval: 1000
             binaryInterval: 2000

@@ -10,6 +10,7 @@ pouchHelpers  = require '../../helpers/pouch'
 
 
 describe "LocalWatcher Tests", ->
+    @timeout 5000
 
     before 'instanciate config', configHelpers.createConfig
     before 'instanciate pouch', pouchHelpers.createDatabase
@@ -32,26 +33,26 @@ describe "LocalWatcher Tests", ->
             fs.ensureFileSync path.join @basePath, 'aa/ab'
             @merge.putFolder = sinon.spy()
             @merge.putFile = sinon.spy()
-            @watcher.start =>
-                setTimeout =>
-                    @merge.putFolder.called.should.be.true()
-                    @merge.putFolder.args[0][0]._id.should.equal 'aa'
-                    @merge.putFile.called.should.be.true()
-                    @merge.putFile.args[0][0]._id.should.equal 'aa/ab'
-                    done()
-                , 10
+            setTimeout =>
+                @merge.putFolder.called.should.be.true()
+                @merge.putFolder.args[0][0]._id.should.equal 'aa'
+                @merge.putFile.called.should.be.true()
+                @merge.putFile.args[0][0]._id.should.equal 'aa/ab'
+                done()
+            , 100
+            @watcher.start ->
 
         it 'ignores .cozy-desktop', (done) ->
             fs.ensureDirSync path.join @basePath, '.cozy-desktop'
             fs.ensureFileSync path.join @basePath, '.cozy-desktop/ac'
             @merge.putFolder = sinon.spy()
             @merge.putFile = sinon.spy()
-            @watcher.start =>
-                setTimeout =>
-                    @merge.putFolder.called.should.be.false()
-                    @merge.putFile.called.should.be.false()
-                    done()
-                , 10
+            setTimeout =>
+                @merge.putFolder.called.should.be.false()
+                @merge.putFile.called.should.be.false()
+                done()
+            , 1000
+            @watcher.start ->
 
 
     describe 'onAdd', ->
