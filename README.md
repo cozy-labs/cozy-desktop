@@ -4,6 +4,11 @@ The Cozy desktop app allows to sync the files stored in your Cozy with your lapt
 and/or your desktop. It replicates your files on your hard drive and apply
 changes you made on them on other synced devices and on your online Cozy.
 
+**Note**: the code is currently alpha quality and there is only a readonly
+mode (files from the cozy are replicated to the local hard drive). But it's
+moving fast and we plan to do a more stable release in the coming weeks. Stay
+tuned!
+
 
 ## CLI Install
 
@@ -21,7 +26,7 @@ Then you can install cozy-desktop via NPM:
 
 Configure it with your remote Cozy
 
-    cozy-desktop add-remote-cozy http://url.of.my.cozy devicename /sync/directory
+    cozy-desktop add-remote-cozy https://url.of.my.cozy/ devicename /sync/directory
 
 Then start synchronization daemon:
 
@@ -32,52 +37,6 @@ Other commands can be listed with
     cozy-desktop -h
 
 
-## GUI running
-
-The Graphical User Interface requires Node Webkit to be launched. It should be
-available in your dev dependencies. You can install it with the following
-commmands:
-
-    cd cozy-desktop
-    npm install
-
-Once done, you can launch nodewebkit in the current directory
-
-    node_modules/.bin/nw
-
-**Note:** On Ubuntu 13.04+, Fedora 18+, ArchLinux and Gentoo, you will run
-into a `libudev.so.0` issue. See
-https://github.com/rogerwang/node-webkit/wiki/The-solution-of-lacking-libudev.so.0
-for more information.
-
-If you made a modification in the code and you want to recompile `.coffee` files,
-run:
-
-    node_modules/.bin/gulp scripts  # Compiles backend files
-    cd client
-    npm install
-    npm install -g brunch
-    brunch build                    # Compiles client files
-
-
-### GUI package building
-
-If you want to build the GUI package, you will need `rubygems` and the `fpm`
-gem:
-
-    sudo apt-get install ruby-dev build-essential  # On Ubuntu/Debian
-    sudo gem install fpm
-    gulp build-gui-package
-
-To make a package for your platform, choose either:
-
-    node_modules/.bin/gulp make-deb-32
-    node_modules/.bin/gulp make-deb-64
-    node_modules/.bin/gulp make-rpm-32 # require the 'npm' package installed
-    node_modules/.bin/gulp make-rpm-64 # require the 'npm' package installed
-    node_modules/.bin/gulp make-osx-app
-
-
 ## Hack
 
 To hack the synchronization backend, you can just edit the files under the
@@ -86,8 +45,8 @@ To hack the synchronization backend, you can just edit the files under the
 
 ### Tests
 
-[![Build
-Status](https://travis-ci.org/cozy-labs/cozy-desktop.png?branch=master)](https://travis-ci.org/cozy-labs/cozy-desktop)
+[![Build Status](https://travis-ci.org/cozy-labs/cozy-desktop.png?branch=master)
+](https://travis-ci.org/cozy-labs/cozy-desktop)
 
 There are several levels of tests in cozy-desktop:
 
