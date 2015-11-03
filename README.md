@@ -4,7 +4,7 @@ The Cozy desktop app allows to sync the files stored in your Cozy with your lapt
 and/or your desktop. It replicates your files on your hard drive and apply
 changes you made on them on other synced devices and on your online Cozy.
 
-**Note**: the code is currently alpha quality and there is only a readonly
+**Note**: the code is currently **alpha** quality and there is only a readonly
 mode (files from the cozy are replicated to the local hard drive). But it's
 moving fast and we plan to do a more stable release in the coming weeks. Stay
 tuned!
@@ -81,6 +81,61 @@ accessible on the 9121 port. It's also expected that a user is registered with
 ```
 DEFAULT_DIR=tmp mocha --compilers coffee:coffee-script/register tests/integration/*.coffee
 ```
+
+
+## Limitations
+
+Cozy-desktop is designed to synchronize files and folders between a remote
+cozy instance and a local hard drive, for a personal usage. We tried to make
+it simple and easy. So, it has some limitations:
+
+- It's only a command-line interface and it works only on Linux for the
+  moment. We are working to improve this in the next weeks.
+
+- It's all or nothing for files and folders to synchronize, but we have on our
+  roadmap to add a mean to select which files and folders to synchronize.
+
+- Files and folders named like this are ignored:
+  - `.cozy-desktop` (they are used to keep internal state)
+  - `_design` (special meaning for pouchdb/couchdb)
+
+- It's not a particularly good idea to share code with cozy-desktop:
+  - `node_modules` can't be ignored for the moment and have tons of small files
+  - compiled code often has to be recompile to works on another environment
+  - git and other VCS are not meant to be share like this. You may lose your
+    work if you make changes on two laptops synchronized by cozy-desktop (it's
+    the same with
+    [dropbox](https://github.com/anishathalye/git-remote-dropbox#faq),
+    [google-drive](https://stackoverflow.com/questions/31984751/google-drive-can-corrupt-repositories-in-github-desktop),
+    [syncthing](https://forum.syncthing.net/t/is-putting-a-git-workspace-in-a-synced-folder-really-a-good-idea/1774),
+    etc.)
+
+- If the same file has been modified in parallel, cozy-desktop don't try to
+  merge the modifications. It will just rename of one the copies with a
+  `-conflict` suffix. It's the same for folders.
+
+- We expect a personal usage:
+  - a reasonable number of files and folders (< 1.000.000)
+  - a reasonable number of files per folder (< 10.000)
+  - a reasonable size for files (< 1 To)
+  - a reasonable size for files and folders path (< 1024 bytes)
+  - not too many changes
+  - etc.
+
+- The full sync directory must be on the same partition.
+
+- Large files must be uploaded/downloaded in one time (we are thinking about
+  making it possible to split a large file in several blocks for
+  download/upload).
+
+- Due to its nature, cozy-desktop needs resources:
+  - CPU, for checksums in particular
+  - RAM, to keep all the metadata in memory, and for nodejs libraries
+  - Disk, but the overhead from cozy-desktop is low
+  - Network bandwidth obviously
+
+- No advanced feature, like P2P replication between several cozy-desktop
+  instances.
 
 
 ## What is Cozy?
