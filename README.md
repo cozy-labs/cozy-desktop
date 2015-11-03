@@ -4,6 +4,11 @@ The Cozy desktop app allows to sync the files stored in your Cozy with your lapt
 and/or your desktop. It replicates your files on your hard drive and apply
 changes you made on them on other synced devices and on your online Cozy.
 
+**Note**: the code is currently **alpha** quality and there is only a readonly
+mode (files from the cozy are replicated to the local hard drive). But it's
+moving fast and we plan to do a more stable release in the coming weeks. Stay
+tuned!
+
 
 ## CLI Install
 
@@ -21,7 +26,7 @@ Then you can install cozy-desktop via NPM:
 
 Configure it with your remote Cozy
 
-    cozy-desktop add-remote-cozy http://url.of.my.cozy devicename /sync/directory
+    cozy-desktop add-remote-cozy https://url.of.my.cozy/ devicename /sync/directory
 
 Then start synchronization daemon:
 
@@ -32,52 +37,6 @@ Other commands can be listed with
     cozy-desktop -h
 
 
-## GUI running
-
-The Graphical User Interface requires Node Webkit to be launched. It should be
-available in your dev dependencies. You can install it with the following
-commmands:
-
-    cd cozy-desktop
-    npm install
-
-Once done, you can launch nodewebkit in the current directory
-
-    node_modules/.bin/nw
-
-**Note:** On Ubuntu 13.04+, Fedora 18+, ArchLinux and Gentoo, you will run
-into a `libudev.so.0` issue. See
-https://github.com/rogerwang/node-webkit/wiki/The-solution-of-lacking-libudev.so.0
-for more information.
-
-If you made a modification in the code and you want to recompile `.coffee` files,
-run:
-
-    node_modules/.bin/gulp scripts  # Compiles backend files
-    cd client
-    npm install
-    npm install -g brunch
-    brunch build                    # Compiles client files
-
-
-### GUI package building
-
-If you want to build the GUI package, you will need `rubygems` and the `fpm`
-gem:
-
-    sudo apt-get install ruby-dev build-essential  # On Ubuntu/Debian
-    sudo gem install fpm
-    gulp build-gui-package
-
-To make a package for your platform, choose either:
-
-    node_modules/.bin/gulp make-deb-32
-    node_modules/.bin/gulp make-deb-64
-    node_modules/.bin/gulp make-rpm-32 # require the 'npm' package installed
-    node_modules/.bin/gulp make-rpm-64 # require the 'npm' package installed
-    node_modules/.bin/gulp make-osx-app
-
-
 ## Hack
 
 To hack the synchronization backend, you can just edit the files under the
@@ -86,8 +45,8 @@ To hack the synchronization backend, you can just edit the files under the
 
 ### Tests
 
-[![Build
-Status](https://travis-ci.org/cozy-labs/cozy-desktop.png?branch=master)](https://travis-ci.org/cozy-labs/cozy-desktop)
+[![Build Status](https://travis-ci.org/cozy-labs/cozy-desktop.png?branch=master)
+](https://travis-ci.org/cozy-labs/cozy-desktop)
 
 There are several levels of tests in cozy-desktop:
 
@@ -122,6 +81,61 @@ accessible on the 9121 port. It's also expected that a user is registered with
 ```
 DEFAULT_DIR=tmp mocha --compilers coffee:coffee-script/register tests/integration/*.coffee
 ```
+
+
+## Limitations
+
+Cozy-desktop is designed to synchronize files and folders between a remote
+cozy instance and a local hard drive, for a personal usage. We tried to make
+it simple and easy. So, it has some limitations:
+
+- It's only a command-line interface and it works only on Linux for the
+  moment. We are working to improve this in the next weeks.
+
+- It's all or nothing for files and folders to synchronize, but we have on our
+  roadmap to add a mean to select which files and folders to synchronize.
+
+- Files and folders named like this are ignored:
+  - `.cozy-desktop` (they are used to keep internal state)
+  - `_design` (special meaning for pouchdb/couchdb)
+
+- It's not a particularly good idea to share code with cozy-desktop:
+  - `node_modules` can't be ignored for the moment and have tons of small files
+  - compiled code often has to be recompile to works on another environment
+  - git and other VCS are not meant to be share like this. You may lose your
+    work if you make changes on two laptops synchronized by cozy-desktop (it's
+    the same with
+    [dropbox](https://github.com/anishathalye/git-remote-dropbox#faq),
+    [google-drive](https://stackoverflow.com/questions/31984751/google-drive-can-corrupt-repositories-in-github-desktop),
+    [syncthing](https://forum.syncthing.net/t/is-putting-a-git-workspace-in-a-synced-folder-really-a-good-idea/1774),
+    etc.)
+
+- If the same file has been modified in parallel, cozy-desktop don't try to
+  merge the modifications. It will just rename of one the copies with a
+  `-conflict` suffix. It's the same for folders.
+
+- We expect a personal usage:
+  - a reasonable number of files and folders (< 1.000.000)
+  - a reasonable number of files per folder (< 10.000)
+  - a reasonable size for files (< 1 To)
+  - a reasonable size for files and folders path (< 1024 bytes)
+  - not too many changes
+  - etc.
+
+- The full sync directory must be on the same partition.
+
+- Large files must be uploaded/downloaded in one time (we are thinking about
+  making it possible to split a large file in several blocks for
+  download/upload).
+
+- Due to its nature, cozy-desktop needs resources:
+  - CPU, for checksums in particular
+  - RAM, to keep all the metadata in memory, and for nodejs libraries
+  - Disk, but the overhead from cozy-desktop is low
+  - Network bandwidth obviously
+
+- No advanced feature, like P2P replication between several cozy-desktop
+  instances.
 
 
 ## What is Cozy?

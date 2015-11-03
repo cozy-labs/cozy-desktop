@@ -16,6 +16,7 @@ Please enter your password to register your device to 'your remote Cozy:
         callback err, password
 
 
+# TODO make devicename optional, and use `hostname` for the default
 program
     .command 'add-remote-cozy <url> <devicename> <syncPath>'
     .description 'Configure current device to sync with given cozy'
