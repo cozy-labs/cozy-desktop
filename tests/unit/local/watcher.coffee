@@ -39,7 +39,7 @@ describe "LocalWatcher Tests", ->
                 @merge.putFile.called.should.be.true()
                 @merge.putFile.args[0][0]._id.should.equal 'aa/ab'
                 done()
-            , 100
+            , 1100
             @watcher.start ->
 
         it 'ignores .cozy-desktop', (done) ->
@@ -134,7 +134,7 @@ describe "LocalWatcher Tests", ->
         it 'TODO'
 
 
-    describe 'when a directory is file', ->
+    describe 'when a file is moved', ->
         it 'deletes the source and adds the destination', (done) ->
             src = path.join __dirname, '../../fixtures/chat-mignon.jpg'
             dst = path.join @basePath, 'afa.jpg'
@@ -156,9 +156,9 @@ describe "LocalWatcher Tests", ->
                             @merge.deleteFile.args[0][0].should.have.properties
                                 _id: 'afa.jpg'
                             done()
-                        , 1000
+                        , 10
                     fs.renameSync dst, path.join @basePath, 'afb.jpg'
-                , 10
+                , 1100
 
 
     describe 'when a directory is moved', ->
@@ -189,6 +189,6 @@ describe "LocalWatcher Tests", ->
                             args = @merge.deleteFolder.args[0][0]
                             args.should.have.properties _id: 'aga'
                             done()
-                        , 1000
+                        , 1100
                     fs.renameSync src, dst
-                , 10
+                , 1100

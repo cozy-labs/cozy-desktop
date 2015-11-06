@@ -38,10 +38,9 @@ class LocalWatcher
             # Filter out artifacts from editors with atomic writes
             atomic: true
             # Poll newly created files to detect when the write is finished
-            # TODO see https://github.com/paulmillr/chokidar/issues/384
-            # awaitWriteFinish:
-            #     pollInterval: 100
-            #     stabilityThreshold: 2000
+            awaitWriteFinish:
+                pollInterval: 100
+                stabilityThreshold: 1000
             # With node 0.10 on linux, only polling is available
             interval: 1000
             binaryInterval: 2000
