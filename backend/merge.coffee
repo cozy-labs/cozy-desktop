@@ -43,7 +43,7 @@ Pouch = require './pouch'
 #   - for two folders, we merge them
 #   - for a file and a folder, TODO
 #
-# TODO update bakends metadata
+# TODO update backends metadata
 # TODO avoid put in pouchdb if nothing has changed
 class Merge
     constructor: (@pouch) ->
@@ -86,6 +86,7 @@ class Merge
             return false
 
     # Be sure that the tree structure for the given path exists
+    # TODO bulk create/update and check status, instead of recursive?
     ensureParentExist: (doc, callback) =>
         parent = path.dirname doc._id
         if parent is '.'

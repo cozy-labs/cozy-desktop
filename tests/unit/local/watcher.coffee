@@ -18,7 +18,7 @@ describe "LocalWatcher Tests", ->
         @merge = {}
         @watcher = new Watcher @basePath, @merge, @pouch
     afterEach 'stop watcher and clean path', (done) ->
-        @watcher.watcher.close()
+        @watcher.watcher?.close()
         fs.emptyDir @basePath, done
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
@@ -55,6 +55,36 @@ describe "LocalWatcher Tests", ->
             @watcher.start ->
 
 
+    describe 'createDoc', ->
+        it 'creates a document for an existing file', (done) ->
+            src = path.join __dirname, '../../fixtures/chat-mignon.jpg'
+            dst = path.join @basePath, 'chat-mignon.jpg'
+            fs.copySync src, dst
+            fs.stat dst, (err, stats) =>
+                should.not.exist err
+                should.exist stats
+                @watcher.createDoc 'chat-mignon.jpg', stats, (err, doc) ->
+                    should.not.exist err
+                    doc.should.have.properties
+                        _id: 'chat-mignon.jpg'
+                        docType: 'file'
+                        checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+                        size: 29865
+                        class: 'image'
+                        mime: 'image/jpeg'
+                    doc.should.have.properties [
+                        'creationDate'
+                        'lastModification'
+                    ]
+                    done()
+
+        it 'calls back with an error if the file is missing', (done) ->
+            @watcher.createDoc 'no/such/file', {}, (err, doc) ->
+                should.exist err
+                err.code.should.equal 'ENOENT'
+                done()
+
+
     describe 'onAdd', ->
         it 'detects when a file is created', (done) ->
             @watcher.start =>
@@ -66,10 +96,6 @@ describe "LocalWatcher Tests", ->
                         size: 29865
                         class: 'image'
                         mime: 'image/jpeg'
-                    doc.should.have.properties [
-                        'creationDate'
-                        'lastModification'
-                    ]
                     done()
                 src = path.join __dirname, '../../fixtures/chat-mignon.jpg'
                 dst = path.join @basePath, 'aaa.jpg'
@@ -131,7 +157,24 @@ describe "LocalWatcher Tests", ->
 
 
     describe 'onChange', ->
-        it 'TODO'
+        it 'detects when a file is changed', (done) ->
+            src = path.join __dirname, '../../fixtures/chat-mignon.jpg'
+            dst = path.join @basePath, 'aea.jpg'
+            fs.copySync src, dst
+            @watcher.start =>
+                @merge.putFile = =>
+                    @merge.putFile = (doc) ->
+                        doc.should.have.properties
+                            _id: 'aea.jpg'
+                            docType: 'file'
+                            checksum: 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
+                            size: 36901
+                            class: 'image'
+                            mime: 'image/jpeg'
+                        done()
+                    src = src.replace /\.jpg$/, '-mod.jpg'
+                    dst = path.join @basePath, 'aea.jpg'
+                    fs.copySync src, dst
 
 
     describe 'when a file is moved', ->

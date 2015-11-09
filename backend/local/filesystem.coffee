@@ -45,7 +45,6 @@ filesystem =
         return [mimeType, fileClass]
 
     # Get checksum for given file.
-    # TODO errors
     checksum: (filePath, callback) ->
         stream = fs.createReadStream filePath
         checksum = crypto.createHash 'sha1'
@@ -54,6 +53,9 @@ filesystem =
         stream.on 'end', ->
             checksum.end()
             callback null, checksum.read()
+        stream.on 'error', (err) ->
+            checksum.end()
+            callback err
 
         stream.pipe checksum
 

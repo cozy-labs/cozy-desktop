@@ -16,9 +16,16 @@ describe "Filesystem Tests", ->
             fileClass.should.equal 'document'
 
     describe "checksum", ->
-        it "returns the checksum of givenfile", (done) ->
+        it "returns the checksum of an existing file", (done) ->
             filePath = 'tests/fixtures/chat-mignon.jpg'
             filesystem.checksum filePath, (err, sum) ->
                 should.not.exist err
                 sum.should.equal "bf268fcb32d2fd7243780ad27af8ae242a6f0d30"
+                done()
+
+        it "returns an error for a missing file", (done) ->
+            filePath = 'no/such/file'
+            filesystem.checksum filePath, (err, sum) ->
+                should.exist err
+                err.code.should.equal 'ENOENT'
                 done()

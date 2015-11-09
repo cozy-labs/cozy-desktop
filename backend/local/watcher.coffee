@@ -13,8 +13,10 @@ filesystem = require './filesystem'
 # remote operations triggered by the remoteEventWatcher.
 #
 # TODO find deleted files/folders in the initial scan
-# TODO detects move/rename
-# TODO https://github.com/paulmillr/chokidar/issues/303#issuecomment-127039892
+# TODO detects move/rename:
+# TODO - https://github.com/paulmillr/chokidar/issues/303#issuecomment-127039892
+# TODO - Inotify.IN_MOVED_FROM & Inotify.IN_MOVED_TO
+# TODO - track inodes
 class LocalWatcher
 
     constructor: (@basePath, @merge, @pouch, @events) ->
@@ -54,25 +56,30 @@ class LocalWatcher
             .on 'ready', callback
             .on 'error', (err) -> log.error err
 
+    # An helper to create a document for a file
+    createDoc: (filePath, stats, callback) =>
+        absPath = path.join @basePath, filePath
+        [mimeType, fileClass] = filesystem.getFileClass absPath
+        filesystem.checksum absPath, (err, checksum) ->
+            doc =
+                _id: filePath
+                docType: 'file'
+                checksum: checksum
+                creationDate: stats.ctime
+                lastModification: stats.mtime
+                size: stats.size
+                class: fileClass
+                mime: mimeType
+            callback err, doc
+
     # New file detected
     # TODO pouchdb -> detect updates/conflicts
     onAdd: (filePath, stats) =>
         log.debug 'File added', filePath
-        absPath = path.join @basePath, filePath
-        [mimeType, fileClass] = filesystem.getFileClass absPath
-        filesystem.checksum absPath, (err, checksum) =>
+        @createDoc filePath, stats, (err, doc) =>
             if err
                 log.debug err
             else
-                doc =
-                    _id: filePath
-                    docType: 'file'
-                    checksum: checksum
-                    creationDate: stats.ctime
-                    lastModification: stats.mtime
-                    size: stats.size
-                    class: fileClass
-                    mime: mimeType
                 @merge.putFile doc, @done
 
     # New directory detected
@@ -98,11 +105,14 @@ class LocalWatcher
         @merge.deleteFolder _id: folderPath, @done
 
     # File update detected
-    # TODO
+    # TODO pouchdb -> detect updates/conflicts
     onChange: (filePath, stats) =>
         log.debug 'File updated', filePath
-        console.log stats
-        @merge
+        @createDoc filePath, stats, (err, doc) =>
+            if err
+                log.debug err
+            else
+                @merge.putFile doc, @done
 
     # A callback that logs errors
     done: (err) ->
