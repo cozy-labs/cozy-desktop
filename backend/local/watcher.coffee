@@ -1,10 +1,10 @@
 chokidar = require 'chokidar'
+crypto   = require 'crypto'
 fs       = require 'fs'
+mime     = require 'mime'
 path     = require 'path'
 log      = require('printit')
     prefix: 'Local watcher '
-
-filesystem = require './filesystem'
 
 
 # This file contains the filesystem watcher that will trigger operations when
@@ -56,11 +56,14 @@ class LocalWatcher
             .on 'ready', callback
             .on 'error', (err) -> log.error err
 
+
+    ### Helpers ###
+
     # An helper to create a document for a file
     createDoc: (filePath, stats, callback) =>
         absPath = path.join @basePath, filePath
-        [mimeType, fileClass] = filesystem.getFileClass absPath
-        filesystem.checksum absPath, (err, checksum) ->
+        [mimeType, fileClass] = @getFileClass absPath
+        @checksum absPath, (err, checksum) ->
             doc =
                 _id: filePath
                 docType: 'file'
@@ -71,6 +74,37 @@ class LocalWatcher
                 class: fileClass
                 mime: mimeType
             callback err, doc
+
+    # Return mimetypes and class (like in classification) of a file.
+    # ex: pic.png returns 'image/png' and 'image'.
+    getFileClass: (filename, callback) ->
+        mimeType = mime.lookup filename
+        fileClass = switch mimeType.split('/')[0]
+            when 'image'       then "image"
+            when 'application' then "document"
+            when 'text'        then "document"
+            when 'audio'       then "music"
+            when 'video'       then "video"
+            else                    "file"
+        return [mimeType, fileClass]
+
+    # Get checksum for given file.
+    checksum: (filePath, callback) ->
+        stream = fs.createReadStream filePath
+        checksum = crypto.createHash 'sha1'
+        checksum.setEncoding 'hex'
+
+        stream.on 'end', ->
+            checksum.end()
+            callback null, checksum.read()
+        stream.on 'error', (err) ->
+            checksum.end()
+            callback err
+
+        stream.pipe checksum
+
+
+    ### Actions ###
 
     # New file detected
     # TODO pouchdb -> detect updates/conflicts

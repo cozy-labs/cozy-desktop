@@ -85,6 +85,32 @@ describe "LocalWatcher Tests", ->
                 done()
 
 
+    describe "getFileClass", ->
+        it "returns proper class for given file", ->
+            [mimeType, fileClass] = @watcher.getFileClass 'image.png'
+            mimeType.should.equal 'image/png'
+            fileClass.should.equal 'image'
+            [mimeType, fileClass] = @watcher.getFileClass 'doc.txt'
+            mimeType.should.equal 'text/plain'
+            fileClass.should.equal 'document'
+
+
+    describe "checksum", ->
+        it "returns the checksum of an existing file", (done) ->
+            filePath = 'tests/fixtures/chat-mignon.jpg'
+            @watcher.checksum filePath, (err, sum) ->
+                should.not.exist err
+                sum.should.equal "bf268fcb32d2fd7243780ad27af8ae242a6f0d30"
+                done()
+
+        it "returns an error for a missing file", (done) ->
+            filePath = 'no/such/file'
+            @watcher.checksum filePath, (err, sum) ->
+                should.exist err
+                err.code.should.equal 'ENOENT'
+                done()
+
+
     describe 'onAdd', ->
         it 'detects when a file is created', (done) ->
             @watcher.start =>
