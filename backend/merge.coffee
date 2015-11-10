@@ -142,7 +142,7 @@ class Merge
     #   - create the tree structure if needed
     #   - overwrite a possible existing file with the same path
     # TODO how to tell if it's an overwrite or a conflict? -> addFile/updateFile
-    # TODO conflict with a folder
+    # TODO conflict with a folder -> file is renamed with -conflict suffix
     # TODO test doc.overwrite
     putFile: (doc, callback) ->
         if @invalidId doc
@@ -179,7 +179,7 @@ class Merge
     #   - create the tree structure if needed
     #   - overwrite metadata if this folder alredy existed in pouch
     # TODO how to tell if it's an overwrite or a conflict?
-    # TODO conflict with a file
+    # TODO conflict with a file -> file is renamed with -conflict suffix
     # TODO how can we remove a tag?
     putFolder: (doc, callback) ->
         if @invalidId doc

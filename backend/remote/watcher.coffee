@@ -8,6 +8,7 @@ log   = require('printit')
 # Watch for changes from the remote couchdb and give them to the merge
 #
 # TODO add comments
+# TODO refactor unit tests
 class RemoteWatcher
     constructor: (@couch, @merge, @pouch) ->
         @pending = 0
@@ -107,31 +108,33 @@ class RemoteWatcher
             else
                 callback()
 
+    # Transform a remote document in a local one
+    createLocalDoc: (remote) ->
+        docPath = remote.path or ''
+        docName = remote.name or ''
+        doc =
+            _id: path.join docPath, docName
+            docType: remote.docType.toLowerCase()
+            creationDate: remote.creationDate
+            lastModification: remote.lastModification
+            remote:
+                _id: remote._id
+                _rev: remote._rev
+        if doc.docType is 'file'
+            doc.remote.binary =
+                _id: remote.binary.file.id
+                _rev: remote.binary.file.rev
+        for field in ['checksum', 'size', 'class', 'mime', 'tags']
+            doc[field] = remote[field] if remote[field]
+        return doc
+
     # Transform the doc and save it in pouchdb
     #
     # In CouchDB, the filepath is in the path and name fields.
     # In PouchDB, the filepath is in the _id.
     # And the _id/_rev from CouchDB are saved in the remote field in PouchDB.
-    putDoc: (doc, was, callback) =>
-        # TODO start from {} and add wanted properties instead of deleting somes
-        doc = clone doc
-        doc.docType = doc.docType.toLowerCase()
-        doc.remote =
-            _id: doc._id
-            _rev: doc._rev
-        if doc.docType is 'file'
-            doc.remote.binary =
-                _id: doc.binary.file.id
-                _rev: doc.binary.file.rev
-        docPath = doc.path or ''
-        docName = doc.name or ''
-        doc._id = path.join docPath, docName
-        delete doc._rev
-        delete doc.path
-        delete doc.name
-        delete doc.binary
-        delete doc.clearance
-        delete doc.localPath
+    putDoc: (remote, was, callback) =>
+        doc = @createLocalDoc remote
         if @merge.invalidId doc
             log.error "Invalid id"
             log.error doc
