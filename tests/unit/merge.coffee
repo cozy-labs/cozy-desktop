@@ -159,27 +159,6 @@ describe 'Merge', ->
                     method.calledWith(_id: 'a/b/c/d').should.be.true()
                     done()
 
-        describe 'putDoc', ->
-            it 'calls putFile for a file', (done) ->
-                doc =
-                    _id: 'put/name'
-                    docType: 'file'
-                @merge.putFile = sinon.stub().yields null
-                @merge.putDoc doc, (err) =>
-                    should.not.exist err
-                    @merge.putFile.calledWith(doc).should.be.true()
-                    done()
-
-            it 'calls putFolder for a folder', (done) ->
-                doc =
-                    _id: 'put/folder'
-                    docType: 'folder'
-                @merge.putFolder = sinon.stub().yields null
-                @merge.putDoc doc, (err) =>
-                    should.not.exist err
-                    @merge.putFolder.calledWith(doc).should.be.true()
-                    done()
-
         describe 'moveDoc', ->
             it 'calls moveFile for a file', (done) ->
                 doc =
@@ -255,9 +234,9 @@ describe 'Merge', ->
 
     describe 'Put', ->
 
-        describe 'putFile', ->
+        describe 'addFile', ->
             it 'expects a doc with a valid id', (done) ->
-                @merge.putFile _id: '/', (err) ->
+                @merge.addFile _id: '/', (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid id'
                     done()
@@ -267,7 +246,7 @@ describe 'Merge', ->
                 doc =
                     _id: 'no-checksum'
                     docType: 'file'
-                @merge.putFile doc, (err) ->
+                @merge.addFile doc, (err) ->
                     should.not.exist err
                     done()
 
@@ -275,7 +254,7 @@ describe 'Merge', ->
                 doc =
                     _id: 'no-checksum'
                     checksum: 'foobar'
-                @merge.putFile doc, (err) ->
+                @merge.addFile doc, (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid checksum'
                     done()
@@ -289,7 +268,7 @@ describe 'Merge', ->
                     creationDate: new Date
                     lastModification: new Date
                     tags: ['courge', 'quux']
-                @merge.putFile doc, (err) =>
+                @merge.addFile doc, (err) =>
                     should.not.exist err
                     @pouch.db.get doc._id, (err, res) ->
                         should.not.exist err
@@ -303,7 +282,7 @@ describe 'Merge', ->
                 doc =
                     _id: 'foo/missing-fields'
                     checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
-                @merge.putFile doc, (err) =>
+                @merge.addFile doc, (err) =>
                     should.not.exist err
                     @pouch.db.get doc._id, (err, res) ->
                         should.not.exist err
@@ -344,7 +323,110 @@ describe 'Merge', ->
                     delete doc.mime
                     @file.creationDate = doc.creationDate.toISOString()
                     @file.lastModification = doc.lastModification.toISOString()
-                    @merge.putFile doc, (err) =>
+                    @merge.addFile doc, (err) =>
+                        should.not.exist err
+                        @pouch.db.get doc._id, (err, res) =>
+                            should.not.exist err
+                            res.should.have.properties @file
+                            res.size.should.equal was.size
+                            res.class.should.equal was.class
+                            res.mime.should.equal was.mime
+                            done()
+
+                it 'can resolve a conflict', ->
+                    it 'TODO'
+
+
+        describe 'updateFile', ->
+            it 'expects a doc with a valid id', (done) ->
+                @merge.updateFile _id: '/', (err) ->
+                    should.exist err
+                    err.message.should.equal 'Invalid id'
+                    done()
+
+            it 'accepts doc with no checksum', (done) ->
+                @merge.ensureParentExist = sinon.stub().yields null
+                doc =
+                    _id: 'no-checksum'
+                    docType: 'file'
+                @merge.updateFile doc, (err) ->
+                    should.not.exist err
+                    done()
+
+            it 'rejects doc with an invalid checksum', (done) ->
+                doc =
+                    _id: 'no-checksum'
+                    checksum: 'foobar'
+                @merge.updateFile doc, (err) ->
+                    should.exist err
+                    err.message.should.equal 'Invalid checksum'
+                    done()
+
+            it 'saves the new file', (done) ->
+                @merge.ensureParentExist = sinon.stub().yields null
+                doc =
+                    _id: 'foobar/new-file'
+                    checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
+                    docType: 'file'
+                    creationDate: new Date
+                    lastModification: new Date
+                    tags: ['courge', 'quux']
+                @merge.updateFile doc, (err) =>
+                    should.not.exist err
+                    @pouch.db.get doc._id, (err, res) ->
+                        should.not.exist err
+                        for date in ['creationDate', 'lastModification']
+                            doc[date] = doc[date].toISOString()
+                        res.should.have.properties doc
+                        done()
+
+            it 'adds missing fields', (done) ->
+                @merge.ensureParentExist = sinon.stub().yields null
+                doc =
+                    _id: 'foobar/missing-fields'
+                    checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
+                @merge.updateFile doc, (err) =>
+                    should.not.exist err
+                    @pouch.db.get doc._id, (err, res) ->
+                        should.not.exist err
+                        for date in ['creationDate', 'lastModification']
+                            doc[date] = doc[date].toISOString()
+                        res.should.have.properties doc
+                        res.docType.should.equal 'file'
+                        should.exist res._id
+                        should.exist res.creationDate
+                        should.exist res.lastModification
+                        done()
+
+            describe 'when a folder with the same path exists', ->
+                it 'TODO'
+
+            describe 'when a file with the same path exists', ->
+                before 'create a file', (done) ->
+                    @file =
+                        _id: 'fizzbuzz.jpg'
+                        docType: 'file'
+                        checksum: '1111111111111111111111111111111111111111'
+                        creationDate: new Date
+                        lastModification: new Date
+                        tags: ['foo']
+                        size: 12345
+                        class: 'image'
+                        mime: 'image/jpeg'
+                    @pouch.db.put @file, done
+
+                it 'can update the metadata', (done) ->
+                    @merge.ensureParentExist = sinon.stub().yields null
+                    was = clone @file
+                    @file.tags = ['bar', 'baz']
+                    @file.lastModification = new Date
+                    doc = clone @file
+                    delete doc.size
+                    delete doc.class
+                    delete doc.mime
+                    @file.creationDate = doc.creationDate.toISOString()
+                    @file.lastModification = doc.lastModification.toISOString()
+                    @merge.updateFile doc, (err) =>
                         should.not.exist err
                         @pouch.db.get doc._id, (err, res) =>
                             should.not.exist err
@@ -357,11 +439,11 @@ describe 'Merge', ->
                 it 'can overwrite the content of a file', (done) ->
                     @merge.ensureParentExist = sinon.stub().yields null
                     doc =
-                        _id: 'buzz.jpg'
+                        _id: 'fizzbuzz.jpg'
                         docType: 'file'
                         checksum: '3333333333333333333333333333333333333333'
                         tags: ['qux', 'quux']
-                    @merge.putFile clone(doc), (err) =>
+                    @merge.updateFile clone(doc), (err) =>
                         should.not.exist err
                         @pouch.db.get @file._id, (err, res) ->
                             should.not.exist err
@@ -370,9 +452,6 @@ describe 'Merge', ->
                             should.not.exist res.class
                             should.not.exist res.mime
                             done()
-
-                it 'can resolve a conflict', ->
-                    it 'TODO'
 
 
         describe 'putFolder', ->

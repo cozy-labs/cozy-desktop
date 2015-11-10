@@ -116,8 +116,7 @@ class LocalWatcher
             if err
                 log.debug err
             else
-                # TODO @merge.addFile
-                @merge.putFile doc, @done
+                @merge.addFile doc, @done
 
     # New directory detected
     # TODO pouchdb -> detect updates/conflicts
@@ -148,8 +147,7 @@ class LocalWatcher
             if err
                 log.debug err
             else
-                # TODO @merge.updateFile
-                @merge.putFile doc, @done
+                @merge.updateFile doc, @done
 
     # A callback that logs errors
     done: (err) ->

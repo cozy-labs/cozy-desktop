@@ -139,14 +139,16 @@ class RemoteWatcher
             log.error "Invalid id"
             log.error doc
             callback new Error 'Invalid path/name'
-        else if not was or was._id is doc._id
-            @merge.putDoc doc, callback
+        else if not was
+            @merge.addDoc doc, callback
+        else if was._id is doc._id
+            @merge.updateDoc doc, callback
         else if doc.checksum? and was.checksum is doc.checksum
             @merge.moveDoc doc, was, callback
         else
             @merge.deleteDoc was, (err) =>
                 log.error err if err
-                @merge.putDoc doc, callback
+                @merge.addDoc doc, callback
 
     # Keep track of the sequence number and log errors
     # TODO test pending counts

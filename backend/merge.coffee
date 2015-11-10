@@ -99,16 +99,6 @@ class Merge
                         else
                             @putFolder _id: parent, callback
 
-    # Helper to save a file or a folder
-    # (create, update metadata or overwrite a file)
-    putDoc: (doc, callback) =>
-        if doc.docType is 'file'
-            @putFile doc, callback
-        else if doc.docType is 'folder'
-            @putFolder doc, callback
-        else
-            callback new Error "Unexpected docType: #{doc.docType}"
-
     # Helper to move/rename a file or a folder
     moveDoc: (doc, was, callback) =>
         if doc.docType isnt was.docType
@@ -140,11 +130,47 @@ class Merge
     #   - add the creation date if missing
     #   - add the last modification date if missing
     #   - create the tree structure if needed
+    # TODO conflict
+    # TODO test doc.overwrite
+    addFile: (doc, callback) ->
+        if @invalidId doc
+            log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
+            callback new Error 'Invalid id'
+        else if @invalidChecksum doc
+            log.warn "Invalid checksum: #{JSON.stringify doc, null, 2}"
+            callback new Error 'Invalid checksum'
+        else
+            @pouch.db.get doc._id, (err, file) =>
+                doc.docType = 'file'
+                doc.lastModification ?= new Date
+                if file and @sameBinary file, doc
+                    doc._rev = file._rev
+                    doc.creationDate ?= file.creationDate
+                    doc.size  ?= file.size
+                    doc.class ?= file.class
+                    doc.mime  ?= file.mime
+                    delete doc.overwrite
+                    @pouch.db.put doc, callback
+                else if file
+                    # TODO conflict
+                    callback new Error 'Conflicts are not yet handled'
+                else
+                    doc.creationDate ?= new Date
+                    @ensureParentExist doc, =>
+                        @pouch.db.put doc, callback
+
+    # Expectations:
+    #   - the file path and name are present and valid
+    #   - the checksum is valid, if present
+    # Actions:
+    #   - force the 'file' docType
+    #   - add the creation date if missing
+    #   - add the last modification date if missing
+    #   - create the tree structure if needed
     #   - overwrite a possible existing file with the same path
-    # TODO how to tell if it's an overwrite or a conflict? -> addFile/updateFile
     # TODO conflict with a folder -> file is renamed with -conflict suffix
     # TODO test doc.overwrite
-    putFile: (doc, callback) ->
+    updateFile: (doc, callback) ->
         if @invalidId doc
             log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
             callback new Error 'Invalid id'
@@ -178,7 +204,6 @@ class Merge
     #   - add the last modification date if missing
     #   - create the tree structure if needed
     #   - overwrite metadata if this folder alredy existed in pouch
-    # TODO how to tell if it's an overwrite or a conflict?
     # TODO conflict with a file -> file is renamed with -conflict suffix
     # TODO how can we remove a tag?
     putFolder: (doc, callback) ->
@@ -242,6 +267,7 @@ class Merge
                 was.moveTo            = doc._id
                 was._deleted          = true
                 if file
+                    # TODO should be a conflict?
                     doc._rev      = file._rev
                     doc.overwrite = true
                     @pouch.db.bulkDocs [was, doc], callback

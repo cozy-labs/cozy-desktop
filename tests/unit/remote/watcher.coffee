@@ -61,8 +61,8 @@ describe "RemoteWatcher Tests", ->
                 @watcher.putDoc.restore()
                 done()
 
-        it 'calls putDoc for a new doc', (done) ->
-            @merge.putDoc = sinon.stub().yields null
+        it 'calls addDoc for a new doc', (done) ->
+            @merge.addDoc = sinon.stub().yields null
             doc =
                 _id: '12345678905'
                 _rev: '1-abcdef'
@@ -77,8 +77,8 @@ describe "RemoteWatcher Tests", ->
                         rev: '5-6789'
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
-                @merge.putDoc.called.should.be.true()
-                args = @merge.putDoc.args[0][0]
+                @merge.addDoc.called.should.be.true()
+                args = @merge.addDoc.args[0][0]
                 args.should.have.properties
                     _id: path.join doc.path, doc.name
                     docType: 'file'
@@ -93,8 +93,8 @@ describe "RemoteWatcher Tests", ->
                 args.should.not.have.properties ['_rev', 'path', 'name']
                 done()
 
-        it 'calls putDoc when tags are updated', (done) ->
-            @merge.putDoc = sinon.stub().yields null
+        it 'calls updateDoc when tags are updated', (done) ->
+            @merge.updateDoc = sinon.stub().yields null
             doc =
                 _id: '12345678901'
                 _rev: '2-abcdef'
@@ -109,8 +109,8 @@ describe "RemoteWatcher Tests", ->
                         rev: '5-6789'
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
-                @merge.putDoc.called.should.be.true()
-                args = @merge.putDoc.args[0][0]
+                @merge.updateDoc.called.should.be.true()
+                args = @merge.updateDoc.args[0][0]
                 args.should.have.properties
                     _id: path.join doc.path, doc.name
                     docType: 'file'
@@ -125,8 +125,8 @@ describe "RemoteWatcher Tests", ->
                 args.should.not.have.properties ['_rev', 'path', 'name']
                 done()
 
-        it 'calls putDoc when content is overwritten', (done) ->
-            @merge.putDoc = sinon.stub().yields null
+        it 'calls updateDoc when content is overwritten', (done) ->
+            @merge.updateDoc = sinon.stub().yields null
             doc =
                 _id: '12345678901'
                 _rev: '3-abcdef'
@@ -141,8 +141,8 @@ describe "RemoteWatcher Tests", ->
                         rev: '9-8765'
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
-                @merge.putDoc.called.should.be.true()
-                args = @merge.putDoc.args[0][0]
+                @merge.updateDoc.called.should.be.true()
+                args = @merge.updateDoc.args[0][0]
                 args.should.have.properties
                     _id: 'my-folder/file-1'
                     docType: 'file'
@@ -237,9 +237,9 @@ describe "RemoteWatcher Tests", ->
                 dst.should.not.have.properties ['_rev', 'path', 'name']
                 done()
 
-        it 'calls deletedDoc&putDoc when file has changed completely', (done) ->
+        it 'calls deletedDoc&addDoc when file has changed completely', (done) ->
             @merge.deleteDoc = sinon.stub().yields null
-            @merge.putDoc = sinon.stub().yields null
+            @merge.addDoc = sinon.stub().yields null
             doc =
                 _id: '12345678903'
                 _rev: '6-abcdef'
@@ -257,8 +257,8 @@ describe "RemoteWatcher Tests", ->
                 @merge.deleteDoc.called.should.be.true()
                 id = @merge.deleteDoc.args[0][0]._id
                 id.should.equal 'my-folder/file-3'
-                @merge.putDoc.called.should.be.true()
-                args = @merge.putDoc.args[0][0]
+                @merge.addDoc.called.should.be.true()
+                args = @merge.addDoc.args[0][0]
                 args.should.have.properties
                     _id: path.join doc.path, doc.name
                     docType: 'file'
@@ -286,8 +286,8 @@ describe "RemoteWatcher Tests", ->
                 id.should.equal 'my-folder/file-1'
                 done()
 
-        it 'calls putDoc for folder created by the mobile app', (done) ->
-            @merge.putDoc = sinon.stub().yields null
+        it 'calls addDoc for folder created by the mobile app', (done) ->
+            @merge.addDoc = sinon.stub().yields null
             doc =
                 _id: "913F429E-5609-C636-AE9A-CD00BD138B13"
                 _rev: "1-7786acf12a11fad6ad1eeb861953e0d8"
@@ -299,8 +299,8 @@ describe "RemoteWatcher Tests", ->
                 tags: []
             @watcher.onChange doc, (err) =>
                 should.not.exist err
-                @merge.putDoc.called.should.be.true()
-                @merge.putDoc.args[0][0].should.have.properties
+                @merge.addDoc.called.should.be.true()
+                @merge.addDoc.args[0][0].should.have.properties
                     _id: 'Photos from devices'
                     docType: 'folder'
                     lastModification: "2015-09-29T14:13:33.384Z"
