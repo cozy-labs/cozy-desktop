@@ -99,23 +99,6 @@ class Merge
                         else
                             @putFolder _id: parent, callback
 
-    # Delete every files and folders inside the given folder
-    # TODO delete folder in the same bulkDocs
-    emptyFolder: (folder, callback) =>
-        @pouch.byRecursivePath folder._id, (err, docs) =>
-            if err
-                log.error err
-                callback err
-            else if docs.length is 0
-                callback null
-            else
-                # In the changes feed, nested subfolder must be deleted
-                # before their parents, hence the reverse order.
-                docs = docs.reverse()
-                for doc in docs
-                    doc._deleted = true
-                @pouch.db.bulkDocs docs, callback
-
     # Helper to save a file or a folder
     # (create, update metadata or overwrite a file)
     putDoc: (doc, callback) =>
@@ -332,38 +315,35 @@ class Merge
     # Expectations:
     #   - the file still exists in pouch
     #   - the file can be found by its _id
-    # TODO refactor without async
     deleteFile: (doc, callback) ->
-        async.waterfall [
-            # Find the file
-            (next) =>
-                @pouch.db.get doc._id, next
-            # Delete it
-            (file, next) =>
+        @pouch.db.get doc._id, (err, file) =>
+            if err
+                callback err
+            else
                 file._deleted = true
-                @pouch.db.put file, next
-        ], callback
+                @pouch.db.put file, callback
 
     # Expectations:
     #   - the folder still exists in pouch
     #   - the folder can be found by its _id
     # Actions:
     #   - delete every file and folder inside this folder
-    # TODO refactor without async
     deleteFolder: (doc, callback) ->
-        async.waterfall [
-            # Find the folder
-            (next) =>
-                @pouch.db.get doc._id, next
-            # Delete everything inside this folder
-            (folder, next) =>
-                @emptyFolder folder, (err) ->
-                    next err, folder
-            # Delete the folder
-            (folder, next) =>
-                folder._deleted = true
-                @pouch.db.put folder, next
-        ], callback
+        @pouch.db.get doc._id, (err, folder) =>
+            if err
+                callback err
+            else
+                @pouch.byRecursivePath folder._id, (err, docs) =>
+                    if err
+                        callback err
+                    else
+                        # In the changes feed, nested subfolder must be deleted
+                        # before their parents, hence the reverse order.
+                        docs = docs.reverse()
+                        docs.push folder
+                        for doc in docs
+                            doc._deleted = true
+                        @pouch.db.bulkDocs docs, callback
 
 
 module.exports = Merge

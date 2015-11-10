@@ -159,42 +159,6 @@ describe 'Merge', ->
                     method.calledWith(_id: 'a/b/c/d').should.be.true()
                     done()
 
-        describe 'emptyFolder', ->
-            it 'does nothing in an empty folder', (done) ->
-                @merge.emptyFolder _id: 'abc', (err) ->
-                    should.not.exist err
-                    done()
-
-            it 'remove files in the folder', (done) ->
-                async.eachSeries ['baz', 'qux', 'quux'], (name, next) =>
-                    doc =
-                        _id: "foo/to-remove/#{name}"
-                        docType: 'file'
-                    @pouch.db.put doc, next
-                , (err) =>
-                    should.not.exist err
-                    @merge.emptyFolder _id: 'foo/to-remove', (err) =>
-                        should.not.exist err
-                        @pouch.byPath 'foo/to-remove', (err, docs) ->
-                            docs.length.should.be.equal 0
-                            done()
-
-            it 'remove nested folders', (done) ->
-                async.eachSeries ['', '/b', '/b/c', '/b/d'], (name, next) =>
-                    doc =
-                        _id: "nested/foo#{name}"
-                        docType: 'folder'
-                    @pouch.db.put doc, next
-                , (err) =>
-                    should.not.exist err
-                    @merge.emptyFolder _id: 'nested', (err) =>
-                        should.not.exist err
-                        @pouch.db.allDocs (err, res) ->
-                            should.not.exist err
-                            for row in res.rows
-                                row.id.should.not.match /^nested/
-                            done()
-
         describe 'putDoc', ->
             it 'calls putFile for a file', (done) ->
                 doc =
@@ -904,13 +868,45 @@ describe 'Merge', ->
                 doc =
                     _id: 'to-delete/folder'
                     docType: 'folder'
-                @merge.emptyFolder = sinon.stub().yields null
                 @pouch.db.put doc, (err) =>
                     should.not.exist err
                     @merge.deleteFolder doc, (err) =>
                         should.not.exist err
-                        firstArg = @merge.emptyFolder.args[0][0]
-                        firstArg.should.have.properties doc
                         @pouch.db.get doc._id, (err, res) ->
                             err.status.should.equal 404
+                            done()
+
+            it 'remove files in the folder', (done) ->
+                doc =
+                    _id: 'foo/to-remove'
+                    docType: 'folder'
+                @pouch.db.put doc, (err) =>
+                    should.not.exist err
+                    async.eachSeries ['baz', 'qux', 'quux'], (name, next) =>
+                        file =
+                            _id: "foo/to-remove/#{name}"
+                            docType: 'file'
+                        @pouch.db.put file, next
+                    , (err) =>
+                        should.not.exist err
+                        @merge.deleteFolder doc, (err) =>
+                            should.not.exist err
+                            @pouch.byPath 'foo/to-remove', (err, docs) ->
+                                docs.length.should.be.equal 0
+                                done()
+
+            it 'remove nested folders', (done) ->
+                async.eachSeries ['', '/b', '/b/c', '/b/d'], (name, next) =>
+                    doc =
+                        _id: "nested/to-delete#{name}"
+                        docType: 'folder'
+                    @pouch.db.put doc, next
+                , (err) =>
+                    should.not.exist err
+                    @merge.deleteFolder _id: 'nested/to-delete', (err) =>
+                        should.not.exist err
+                        @pouch.db.allDocs (err, res) ->
+                            should.not.exist err
+                            for row in res.rows
+                                row.id.should.not.match /^nested/
                             done()
