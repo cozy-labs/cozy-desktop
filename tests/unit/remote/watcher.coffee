@@ -78,8 +78,9 @@ describe "RemoteWatcher Tests", ->
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
                 @merge.addDoc.called.should.be.true()
-                args = @merge.addDoc.args[0][0]
-                args.should.have.properties
+                args = @merge.addDoc.args[0]
+                args[0].should.equal 'remote'
+                args[1].should.have.properties
                     _id: path.join doc.path, doc.name
                     docType: 'file'
                     checksum: doc.checksum
@@ -90,7 +91,7 @@ describe "RemoteWatcher Tests", ->
                         binary:
                             _id: doc.binary.file.id
                             _rev: doc.binary.file.rev
-                args.should.not.have.properties ['_rev', 'path', 'name']
+                args[1].should.not.have.properties ['_rev', 'path', 'name']
                 done()
 
         it 'calls updateDoc when tags are updated', (done) ->
@@ -110,8 +111,9 @@ describe "RemoteWatcher Tests", ->
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
                 @merge.updateDoc.called.should.be.true()
-                args = @merge.updateDoc.args[0][0]
-                args.should.have.properties
+                args = @merge.updateDoc.args[0]
+                args[0].should.equal 'remote'
+                args[1].should.have.properties
                     _id: path.join doc.path, doc.name
                     docType: 'file'
                     checksum: doc.checksum
@@ -122,7 +124,7 @@ describe "RemoteWatcher Tests", ->
                         binary:
                             _id: doc.binary.file.id
                             _rev: doc.binary.file.rev
-                args.should.not.have.properties ['_rev', 'path', 'name']
+                args[1].should.not.have.properties ['_rev', 'path', 'name']
                 done()
 
         it 'calls updateDoc when content is overwritten', (done) ->
@@ -142,8 +144,9 @@ describe "RemoteWatcher Tests", ->
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
                 @merge.updateDoc.called.should.be.true()
-                args = @merge.updateDoc.args[0][0]
-                args.should.have.properties
+                args = @merge.updateDoc.args[0]
+                args[0].should.equal 'remote'
+                args[1].should.have.properties
                     _id: 'my-folder/file-1'
                     docType: 'file'
                     checksum: doc.checksum
@@ -154,7 +157,7 @@ describe "RemoteWatcher Tests", ->
                         binary:
                             _id: doc.binary.file.id
                             _rev: doc.binary.file.rev
-                args.should.not.have.properties ['_rev', 'path', 'name']
+                args[1].should.not.have.properties ['_rev', 'path', 'name']
                 done()
 
         it 'calls moveDoc when file is renamed', (done) ->
@@ -174,7 +177,9 @@ describe "RemoteWatcher Tests", ->
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
                 @merge.moveDoc.called.should.be.true()
-                src = @merge.moveDoc.args[0][1]
+                args = @merge.moveDoc.args[0]
+                args[0].should.equal 'remote'
+                src = args[2]
                 src.should.have.properties
                     _id: 'my-folder/file-2'
                     docType: 'file'
@@ -182,7 +187,7 @@ describe "RemoteWatcher Tests", ->
                     tags: doc.tags
                     remote:
                         _id: '12345678902'
-                dst = @merge.moveDoc.args[0][0]
+                dst = args[1]
                 dst.should.have.properties
                     _id: path.join doc.path, doc.name
                     docType: 'file'
@@ -214,7 +219,7 @@ describe "RemoteWatcher Tests", ->
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
                 @merge.moveDoc.called.should.be.true()
-                src = @merge.moveDoc.args[0][1]
+                src = @merge.moveDoc.args[0][2]
                 src.should.have.properties
                     _id: 'my-folder/file-2'
                     docType: 'file'
@@ -222,7 +227,7 @@ describe "RemoteWatcher Tests", ->
                     tags: doc.tags
                     remote:
                         _id: '12345678902'
-                dst = @merge.moveDoc.args[0][0]
+                dst = @merge.moveDoc.args[0][1]
                 dst.should.have.properties
                     _id: path.join doc.path, doc.name
                     docType: 'file'
@@ -255,11 +260,12 @@ describe "RemoteWatcher Tests", ->
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
                 @merge.deleteDoc.called.should.be.true()
-                id = @merge.deleteDoc.args[0][0]._id
+                id = @merge.deleteDoc.args[0][1]._id
                 id.should.equal 'my-folder/file-3'
                 @merge.addDoc.called.should.be.true()
-                args = @merge.addDoc.args[0][0]
-                args.should.have.properties
+                args = @merge.addDoc.args[0]
+                args[0].should.equal 'remote'
+                args[1].should.have.properties
                     _id: path.join doc.path, doc.name
                     docType: 'file'
                     checksum: doc.checksum
@@ -270,7 +276,7 @@ describe "RemoteWatcher Tests", ->
                         binary:
                             _id: doc.binary.file.id
                             _rev: doc.binary.file.rev
-                args.should.not.have.properties ['_rev', 'path', 'name']
+                args[1].should.not.have.properties ['_rev', 'path', 'name']
                 done()
 
         it 'calls deleteDoc for a deleted doc', (done) ->
@@ -282,7 +288,7 @@ describe "RemoteWatcher Tests", ->
             @watcher.onChange doc, (err) =>
                 should.not.exist err
                 @merge.deleteDoc.called.should.be.true()
-                id = @merge.deleteDoc.args[0][0]._id
+                id = @merge.deleteDoc.args[0][1]._id
                 id.should.equal 'my-folder/file-1'
                 done()
 
@@ -300,7 +306,7 @@ describe "RemoteWatcher Tests", ->
             @watcher.onChange doc, (err) =>
                 should.not.exist err
                 @merge.addDoc.called.should.be.true()
-                @merge.addDoc.args[0][0].should.have.properties
+                @merge.addDoc.args[0][1].should.have.properties
                     _id: 'Photos from devices'
                     docType: 'folder'
                     lastModification: "2015-09-29T14:13:33.384Z"

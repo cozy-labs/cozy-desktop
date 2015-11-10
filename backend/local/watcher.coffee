@@ -20,7 +20,8 @@ log      = require('printit')
 # TODO - track inodes
 class LocalWatcher
 
-    constructor: (@basePath, @merge, @pouch, @events) ->
+    constructor: (@basePath, @merge, @pouch) ->
+        @side = 'local'
 
     # Start chokidar, the filesystem watcher
     # https://github.com/paulmillr/chokidar
@@ -116,7 +117,7 @@ class LocalWatcher
             if err
                 log.debug err
             else
-                @merge.addFile doc, @done
+                @merge.addFile @side, doc, @done
 
     # New directory detected
     # TODO pouchdb -> detect updates/conflicts
@@ -128,17 +129,17 @@ class LocalWatcher
                 docType: 'folder'
                 creationDate: stats.ctime
                 lastModification: stats.mtime
-            @merge.putFolder doc, @done
+            @merge.putFolder @side, doc, @done
 
     # File deletion detected
     onUnlink: (filePath) =>
         log.debug 'File deleted', filePath
-        @merge.deleteFile _id: filePath, @done
+        @merge.deleteFile @side, _id: filePath, @done
 
     # Folder deletion detected
     onUnlinkDir: (folderPath) =>
         log.debug 'Folder deleted', folderPath
-        @merge.deleteFolder _id: folderPath, @done
+        @merge.deleteFolder @side, _id: folderPath, @done
 
     # File update detected
     onChange: (filePath, stats) =>
@@ -147,7 +148,7 @@ class LocalWatcher
             if err
                 log.debug err
             else
-                @merge.updateFile doc, @done
+                @merge.updateFile @side, doc, @done
 
     # A callback that logs errors
     done: (err) ->

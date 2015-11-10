@@ -35,9 +35,11 @@ describe "LocalWatcher Tests", ->
             @merge.addFile = sinon.spy()
             setTimeout =>
                 @merge.putFolder.called.should.be.true()
-                @merge.putFolder.args[0][0]._id.should.equal 'aa'
+                @merge.putFolder.args[0][0].should.equal 'local'
+                @merge.putFolder.args[0][1]._id.should.equal 'aa'
                 @merge.addFile.called.should.be.true()
-                @merge.addFile.args[0][0]._id.should.equal 'aa/ab'
+                @merge.addFile.args[0][0].should.equal 'local'
+                @merge.addFile.args[0][1]._id.should.equal 'aa/ab'
                 done()
             , 1100
             @watcher.start ->
@@ -116,7 +118,8 @@ describe "LocalWatcher Tests", ->
     describe 'onAdd', ->
         it 'detects when a file is created', (done) ->
             @watcher.start =>
-                @merge.addFile = (doc) ->
+                @merge.addFile = (side, doc) ->
+                    side.should.equal 'local'
                     doc.should.have.properties
                         _id: 'aaa.jpg'
                         docType: 'file'
@@ -133,7 +136,8 @@ describe "LocalWatcher Tests", ->
     describe 'onAddDir', ->
         it 'detects when a folder is created', (done) ->
             @watcher.start =>
-                @merge.putFolder = (doc) ->
+                @merge.putFolder = (side, doc) ->
+                    side.should.equal 'local'
                     doc.should.have.properties
                         _id: 'aba'
                         docType: 'folder'
@@ -147,7 +151,8 @@ describe "LocalWatcher Tests", ->
         it 'detects when a sub-folder is created', (done) ->
             fs.mkdirSync path.join @basePath, 'abb'
             @merge.putFolder = =>  # For aba folder
-                @merge.putFolder = (doc) ->
+                @merge.putFolder = (side, doc) ->
+                    side.should.equal 'local'
                     doc.should.have.properties
                         _id: 'abb/abc'
                         docType: 'folder'
@@ -164,7 +169,8 @@ describe "LocalWatcher Tests", ->
         it 'detects when a file is deleted', (done) ->
             fs.ensureFileSync path.join @basePath, 'aca'
             @merge.addFile = =>  # For aca file
-                @merge.deleteFile = (doc) ->
+                @merge.deleteFile = (side, doc) ->
+                    side.should.equal 'local'
                     doc.should.have.properties
                         _id: 'aca'
                     done()
@@ -176,7 +182,8 @@ describe "LocalWatcher Tests", ->
         it 'detects when a folder is deleted', (done) ->
             fs.mkdirSync path.join @basePath, 'ada'
             @merge.putFolder = =>  # For ada folder
-                @merge.deleteFolder = (doc) ->
+                @merge.deleteFolder = (side, doc) ->
+                    side.should.equal 'local'
                     doc.should.have.properties
                         _id: 'ada'
                     done()
@@ -191,7 +198,8 @@ describe "LocalWatcher Tests", ->
             fs.copySync src, dst
             @watcher.start =>
                 @merge.addFile = =>
-                    @merge.updateFile = (doc) ->
+                    @merge.updateFile = (side, doc) ->
+                        side.should.equal 'local'
                         doc.should.have.properties
                             _id: 'aea.jpg'
                             docType: 'file'
@@ -214,7 +222,8 @@ describe "LocalWatcher Tests", ->
             @watcher.start =>
                 setTimeout =>
                     @merge.deleteFile = sinon.spy()
-                    @merge.addFile = (doc) =>
+                    @merge.addFile = (side, doc) =>
+                        side.should.equal 'local'
                         doc.should.have.properties
                             _id: 'afb.jpg'
                             docType: 'file'
@@ -224,7 +233,7 @@ describe "LocalWatcher Tests", ->
                             mime: 'image/jpeg'
                         setTimeout =>
                             @merge.deleteFile.called.should.be.true()
-                            @merge.deleteFile.args[0][0].should.have.properties
+                            @merge.deleteFile.args[0][1].should.have.properties
                                 _id: 'afa.jpg'
                             done()
                         , 10
@@ -245,19 +254,20 @@ describe "LocalWatcher Tests", ->
                     @merge.addFile = sinon.spy()
                     @merge.deleteFile = sinon.spy()
                     @merge.deleteFolder = sinon.spy()
-                    @merge.putFolder = (doc) =>
+                    @merge.putFolder = (side, doc) =>
+                        side.should.equal 'local'
                         doc.should.have.properties
                             _id: 'agb'
                             docType: 'folder'
                         setTimeout =>
                             @merge.addFile.called.should.be.true()
-                            args = @merge.addFile.args[0][0]
+                            args = @merge.addFile.args[0][1]
                             args.should.have.properties _id: 'agb/agc'
                             @merge.deleteFile.called.should.be.true()
-                            args = @merge.deleteFile.args[0][0]
+                            args = @merge.deleteFile.args[0][1]
                             args.should.have.properties _id: 'aga/agc'
                             @merge.deleteFolder.called.should.be.true()
-                            args = @merge.deleteFolder.args[0][0]
+                            args = @merge.deleteFolder.args[0][1]
                             args.should.have.properties _id: 'aga'
                             done()
                         , 1100

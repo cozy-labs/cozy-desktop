@@ -15,6 +15,7 @@ describe 'Merge', ->
     before 'instanciate config', configHelpers.createConfig
     before 'instanciate pouch', pouchHelpers.createDatabase
     beforeEach 'instanciate merge', ->
+        @side  = 'local'
         @merge = new Merge @pouch
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
@@ -144,7 +145,7 @@ describe 'Merge', ->
                     should.not.exist err
                     @merge.putFolder.called.should.be.true()
                     parent = _id: 'missing'
-                    @merge.putFolder.calledWith(parent).should.be.true()
+                    @merge.putFolder.calledWith(null, parent).should.be.true()
                     done()
 
             it 'creates the full tree if needed', (done) ->
@@ -153,10 +154,10 @@ describe 'Merge', ->
                     should.not.exist err
                     method = @merge.putFolder
                     method.called.should.be.true()
-                    method.calledWith(_id: 'a').should.be.true()
-                    method.calledWith(_id: 'a/b').should.be.true()
-                    method.calledWith(_id: 'a/b/c').should.be.true()
-                    method.calledWith(_id: 'a/b/c/d').should.be.true()
+                    method.calledWith(null, _id: 'a').should.be.true()
+                    method.calledWith(null, _id: 'a/b').should.be.true()
+                    method.calledWith(null, _id: 'a/b/c').should.be.true()
+                    method.calledWith(null, _id: 'a/b/c/d').should.be.true()
                     done()
 
         describe 'moveDoc', ->
@@ -168,9 +169,9 @@ describe 'Merge', ->
                     _id: 'move/old-name'
                     docType: 'file'
                 @merge.moveFile = sinon.stub().yields null
-                @merge.moveDoc doc, was, (err) =>
+                @merge.moveDoc @side, doc, was, (err) =>
                     should.not.exist err
-                    @merge.moveFile.calledWith(doc, was).should.be.true()
+                    @merge.moveFile.calledWith(@side, doc, was).should.be.true()
                     done()
 
             it 'calls moveFolder for a folder', (done) ->
@@ -180,10 +181,10 @@ describe 'Merge', ->
                 was =
                     _id: 'move/old-folder'
                     docType: 'folder'
-                @merge.moveFolder = sinon.stub().yields null
-                @merge.moveDoc doc, was, (err) =>
+                spy = @merge.moveFolder = sinon.stub().yields null
+                @merge.moveDoc @side, doc, was, (err) =>
                     should.not.exist err
-                    @merge.moveFolder.calledWith(doc, was).should.be.true()
+                    spy.calledWith(@side, doc, was).should.be.true()
                     done()
 
             it 'throws an error if we move a file to a folder', (done) ->
@@ -193,7 +194,7 @@ describe 'Merge', ->
                 was =
                     _id: 'move/old-file'
                     docType: 'file'
-                @merge.moveDoc doc, was, (err) ->
+                @merge.moveDoc @side, doc, was, (err) ->
                     should.exist err
                     err.message.should.equal 'Incompatible docTypes: folder'
                     done()
@@ -205,7 +206,7 @@ describe 'Merge', ->
                 was =
                     _id: 'move/old-folder'
                     docType: 'folder'
-                @merge.moveDoc doc, was, (err) ->
+                @merge.moveDoc @side, doc, was, (err) ->
                     should.exist err
                     err.message.should.equal 'Incompatible docTypes: file'
                     done()
@@ -216,9 +217,9 @@ describe 'Merge', ->
                     _id: 'delete/name'
                     docType: 'file'
                 @merge.deleteFile = sinon.stub().yields null
-                @merge.deleteDoc doc, (err) =>
+                @merge.deleteDoc @side, doc, (err) =>
                     should.not.exist err
-                    @merge.deleteFile.calledWith(doc).should.be.true()
+                    @merge.deleteFile.calledWith(@side, doc).should.be.true()
                     done()
 
             it 'calls deleteFolder for a folder', (done) ->
@@ -226,17 +227,34 @@ describe 'Merge', ->
                     _id: 'delete/folder'
                     docType: 'folder'
                 @merge.deleteFolder = sinon.stub().yields null
-                @merge.deleteDoc doc, (err) =>
+                @merge.deleteDoc @side, doc, (err) =>
                     should.not.exist err
-                    @merge.deleteFolder.calledWith(doc).should.be.true()
+                    @merge.deleteFolder.calledWith(@side, doc).should.be.true()
                     done()
+
+        describe 'markSide', ->
+            it 'marks local: 1 for a new doc', ->
+                doc = {}
+                @merge.markSide 'local', doc
+                should.exist doc.sides
+                should.exist doc.sides.local
+                doc.sides.local.should.equal 1
+
+            it 'increments the rev for an already existing doc', ->
+                doc =
+                    sides:
+                        local: 3
+                        remote: 5
+                prev = _rev: '5-0123'
+                @merge.markSide 'local', doc, prev
+                doc.sides.local.should.equal 6
 
 
     describe 'Put', ->
 
         describe 'addFile', ->
             it 'expects a doc with a valid id', (done) ->
-                @merge.addFile _id: '/', (err) ->
+                @merge.addFile @side, _id: '/', (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid id'
                     done()
@@ -246,7 +264,7 @@ describe 'Merge', ->
                 doc =
                     _id: 'no-checksum'
                     docType: 'file'
-                @merge.addFile doc, (err) ->
+                @merge.addFile @side, doc, (err) ->
                     should.not.exist err
                     done()
 
@@ -254,7 +272,7 @@ describe 'Merge', ->
                 doc =
                     _id: 'no-checksum'
                     checksum: 'foobar'
-                @merge.addFile doc, (err) ->
+                @merge.addFile @side, doc, (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid checksum'
                     done()
@@ -268,13 +286,14 @@ describe 'Merge', ->
                     creationDate: new Date
                     lastModification: new Date
                     tags: ['courge', 'quux']
-                @merge.addFile doc, (err) =>
+                @merge.addFile @side, doc, (err) =>
                     should.not.exist err
                     @pouch.db.get doc._id, (err, res) ->
                         should.not.exist err
                         for date in ['creationDate', 'lastModification']
                             doc[date] = doc[date].toISOString()
                         res.should.have.properties doc
+                        res.sides.local.should.equal 1
                         done()
 
             it 'adds missing fields', (done) ->
@@ -282,7 +301,7 @@ describe 'Merge', ->
                 doc =
                     _id: 'foo/missing-fields'
                     checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
-                @merge.addFile doc, (err) =>
+                @merge.addFile @side, doc, (err) =>
                     should.not.exist err
                     @pouch.db.get doc._id, (err, res) ->
                         should.not.exist err
@@ -323,7 +342,7 @@ describe 'Merge', ->
                     delete doc.mime
                     @file.creationDate = doc.creationDate.toISOString()
                     @file.lastModification = doc.lastModification.toISOString()
-                    @merge.addFile doc, (err) =>
+                    @merge.addFile @side, doc, (err) =>
                         should.not.exist err
                         @pouch.db.get doc._id, (err, res) =>
                             should.not.exist err
@@ -331,6 +350,7 @@ describe 'Merge', ->
                             res.size.should.equal was.size
                             res.class.should.equal was.class
                             res.mime.should.equal was.mime
+                            res.sides.local.should.equal 2
                             done()
 
                 it 'can resolve a conflict', ->
@@ -339,7 +359,7 @@ describe 'Merge', ->
 
         describe 'updateFile', ->
             it 'expects a doc with a valid id', (done) ->
-                @merge.updateFile _id: '/', (err) ->
+                @merge.updateFile @side, _id: '/', (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid id'
                     done()
@@ -349,7 +369,7 @@ describe 'Merge', ->
                 doc =
                     _id: 'no-checksum'
                     docType: 'file'
-                @merge.updateFile doc, (err) ->
+                @merge.updateFile @side, doc, (err) ->
                     should.not.exist err
                     done()
 
@@ -357,7 +377,7 @@ describe 'Merge', ->
                 doc =
                     _id: 'no-checksum'
                     checksum: 'foobar'
-                @merge.updateFile doc, (err) ->
+                @merge.updateFile @side, doc, (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid checksum'
                     done()
@@ -371,13 +391,14 @@ describe 'Merge', ->
                     creationDate: new Date
                     lastModification: new Date
                     tags: ['courge', 'quux']
-                @merge.updateFile doc, (err) =>
+                @merge.updateFile @side, doc, (err) =>
                     should.not.exist err
                     @pouch.db.get doc._id, (err, res) ->
                         should.not.exist err
                         for date in ['creationDate', 'lastModification']
                             doc[date] = doc[date].toISOString()
                         res.should.have.properties doc
+                        res.sides.local.should.equal 1
                         done()
 
             it 'adds missing fields', (done) ->
@@ -385,7 +406,7 @@ describe 'Merge', ->
                 doc =
                     _id: 'foobar/missing-fields'
                     checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
-                @merge.updateFile doc, (err) =>
+                @merge.updateFile @side, doc, (err) =>
                     should.not.exist err
                     @pouch.db.get doc._id, (err, res) ->
                         should.not.exist err
@@ -426,7 +447,7 @@ describe 'Merge', ->
                     delete doc.mime
                     @file.creationDate = doc.creationDate.toISOString()
                     @file.lastModification = doc.lastModification.toISOString()
-                    @merge.updateFile doc, (err) =>
+                    @merge.updateFile @side, doc, (err) =>
                         should.not.exist err
                         @pouch.db.get doc._id, (err, res) =>
                             should.not.exist err
@@ -434,6 +455,7 @@ describe 'Merge', ->
                             res.size.should.equal was.size
                             res.class.should.equal was.class
                             res.mime.should.equal was.mime
+                            res.sides.local.should.equal 2
                             done()
 
                 it 'can overwrite the content of a file', (done) ->
@@ -443,7 +465,7 @@ describe 'Merge', ->
                         docType: 'file'
                         checksum: '3333333333333333333333333333333333333333'
                         tags: ['qux', 'quux']
-                    @merge.updateFile clone(doc), (err) =>
+                    @merge.updateFile @side, clone(doc), (err) =>
                         should.not.exist err
                         @pouch.db.get @file._id, (err, res) ->
                             should.not.exist err
@@ -451,12 +473,13 @@ describe 'Merge', ->
                             should.not.exist res.size
                             should.not.exist res.class
                             should.not.exist res.mime
+                            res.sides.local.should.equal 3
                             done()
 
 
         describe 'putFolder', ->
             it 'expects a doc with a valid id', (done) ->
-                @merge.putFolder _id: '..', (err) ->
+                @merge.putFolder @side, _id: '..', (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid id'
                     done()
@@ -469,19 +492,20 @@ describe 'Merge', ->
                     creationDate: new Date
                     lastModification: new Date
                     tags: ['courge', 'quux']
-                @merge.putFolder doc, (err) =>
+                @merge.putFolder @side, doc, (err) =>
                     should.not.exist err
                     doc.creationDate = doc.creationDate.toISOString()
                     doc.lastModification = doc.lastModification.toISOString()
                     @pouch.db.get doc._id, (err, res) ->
                         should.not.exist err
                         res.should.have.properties doc
+                        res.sides.local.should.equal 1
                         done()
 
             it 'adds missing fields', (done) ->
                 @merge.ensureParentExist = sinon.stub().yields null
                 doc = _id: 'foo/folder-missing-fields'
-                @merge.putFolder doc, (err) =>
+                @merge.putFolder @side, doc, (err) =>
                     should.not.exist err
                     @pouch.db.get doc._id, (err, res) ->
                         should.not.exist err
@@ -512,7 +536,7 @@ describe 'Merge', ->
                     doc = clone @folder
                     doc.tags = ['bar', 'baz']
                     doc.lastModification = new Date
-                    @merge.putFolder clone(doc), (err) =>
+                    @merge.putFolder @side, clone(doc), (err) =>
                         should.not.exist err
                         doc.tags = ['bar', 'baz', 'foo']
                         for date in ['creationDate', 'lastModification']
@@ -520,6 +544,7 @@ describe 'Merge', ->
                         @pouch.db.get doc._id, (err, res) ->
                             should.not.exist err
                             res.should.have.properties doc
+                            res.sides.local.should.equal 2
                             done()
 
                 it 'can resolve a conflict', ->
@@ -532,7 +557,7 @@ describe 'Merge', ->
             it 'expects a doc with a valid id', (done) ->
                 doc = _id: ''
                 was = _id: 'foo/baz'
-                @merge.moveFile doc, was, (err) ->
+                @merge.moveFile @side, doc, was, (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid id'
                     done()
@@ -540,7 +565,7 @@ describe 'Merge', ->
             it 'expects a was with a valid id', (done) ->
                 doc = _id: 'foo/bar'
                 was = _id: ''
-                @merge.moveFile doc, was, (err) ->
+                @merge.moveFile @side, doc, was, (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid id'
                     done()
@@ -551,7 +576,7 @@ describe 'Merge', ->
                     docType: 'file'
                     checksum: 'invalid'
                 was = _id: 'foo/baz'
-                @merge.moveFile doc, was, (err) ->
+                @merge.moveFile @side, doc, was, (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid checksum'
                     done()
@@ -565,7 +590,7 @@ describe 'Merge', ->
                     _id: 'foo/bar'
                     docType: 'file'
                     checksum: '5555555555555555555555555555555555555555'
-                @merge.moveFile doc, was, (err) ->
+                @merge.moveFile @side, doc, was, (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid move'
                     done()
@@ -579,7 +604,7 @@ describe 'Merge', ->
                     _id: 'foo/baz'
                     docType: 'file'
                     checksum: '5555555555555555555555555555555555555555'
-                @merge.moveFile doc, was, (err) ->
+                @merge.moveFile @side, doc, was, (err) ->
                     should.exist err
                     err.message.should.equal 'Missing rev'
                     done()
@@ -603,13 +628,14 @@ describe 'Merge', ->
                 @pouch.db.put clone(was), (err, inserted) =>
                     should.not.exist err
                     was._rev = inserted.rev
-                    @merge.moveFile clone(doc), clone(was), (err) =>
+                    @merge.moveFile @side, clone(doc), clone(was), (err) =>
                         should.not.exist err
                         @pouch.db.get doc._id, (err, res) =>
                             should.not.exist err
                             for date in ['creationDate', 'lastModification']
                                 doc[date] = doc[date].toISOString()
                             res.should.have.properties doc
+                            res.sides.local.should.equal 1
                             @pouch.db.get was._id, (err, res) ->
                                 should.exist err
                                 err.status.should.equal 404
@@ -633,7 +659,7 @@ describe 'Merge', ->
                 @pouch.db.put clone(was), (err, inserted) =>
                     should.not.exist err
                     was._rev = inserted.rev
-                    @merge.moveFile doc, clone(was), (err) =>
+                    @merge.moveFile @side, doc, clone(was), (err) =>
                         should.not.exist err
                         @pouch.db.get doc._id, (err, res) ->
                             should.not.exist err
@@ -676,7 +702,7 @@ describe 'Merge', ->
                         info.id.should.equal was._id
                         info.doc.moveTo.should.equal doc._id
                         done()
-                    @merge.moveFile clone(doc), clone(was), (err) ->
+                    @merge.moveFile @side, clone(doc), clone(was), (err) ->
                         should.not.exist err
 
             describe 'when a folder with the same path exists', ->
@@ -713,7 +739,7 @@ describe 'Merge', ->
                     @pouch.db.put clone(was), (err, inserted) =>
                         should.not.exist err
                         was._rev = inserted.rev
-                        @merge.moveFile clone(doc), clone(was), (err) =>
+                        @merge.moveFile @side, clone(doc), clone(was), (err) =>
                             should.not.exist err
                             @pouch.db.get @file._id, (err, res) =>
                                 should.not.exist err
@@ -721,6 +747,7 @@ describe 'Merge', ->
                                 should.not.exist res.size
                                 should.not.exist res.class
                                 should.not.exist res.mime
+                                res.sides.local.should.equal 2
                                 @pouch.db.get was._id, (err, res) ->
                                     should.exist err
                                     err.status.should.equal 404
@@ -734,7 +761,7 @@ describe 'Merge', ->
             it 'expects a doc with a valid id', (done) ->
                 doc = _id: ''
                 was = _id: 'foo/baz'
-                @merge.moveFolder doc, was, (err) ->
+                @merge.moveFolder @side, doc, was, (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid id'
                     done()
@@ -742,7 +769,7 @@ describe 'Merge', ->
             it 'expects a was with a valid id', (done) ->
                 doc = _id: 'foo/bar'
                 was = _id: ''
-                @merge.moveFolder doc, was, (err) ->
+                @merge.moveFolder @side, doc, was, (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid id'
                     done()
@@ -754,7 +781,7 @@ describe 'Merge', ->
                 was =
                     _id: 'foo/bar'
                     docType: 'folder'
-                @merge.moveFolder doc, was, (err) ->
+                @merge.moveFolder @side, doc, was, (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid move'
                     done()
@@ -766,7 +793,7 @@ describe 'Merge', ->
                 was =
                     _id: 'foo/baz'
                     docType: 'folder'
-                @merge.moveFolder doc, was, (err) ->
+                @merge.moveFolder @side, doc, was, (err) ->
                     should.exist err
                     err.message.should.equal 'Missing rev'
                     done()
@@ -788,13 +815,14 @@ describe 'Merge', ->
                 @pouch.db.put clone(was), (err, inserted) =>
                     should.not.exist err
                     was._rev = inserted.rev
-                    @merge.moveFolder clone(doc), clone(was), (err) =>
+                    @merge.moveFolder @side, clone(doc), clone(was), (err) =>
                         should.not.exist err
                         @pouch.db.get doc._id, (err, res) =>
                             should.not.exist err
                             for date in ['creationDate', 'lastModification']
                                 doc[date] = doc[date].toISOString()
                             res.should.have.properties doc
+                            res.sides.local.should.equal 1
                             @pouch.db.get was._id, (err, res) ->
                                 should.exist err
                                 err.status.should.equal 404
@@ -813,7 +841,7 @@ describe 'Merge', ->
                 @pouch.db.put clone(was), (err, inserted) =>
                     should.not.exist err
                     was._rev = inserted.rev
-                    @merge.moveFolder doc, clone(was), (err) =>
+                    @merge.moveFolder @side, doc, clone(was), (err) =>
                         should.not.exist err
                         @pouch.db.get doc._id, (err, res) ->
                             should.not.exist err
@@ -851,7 +879,7 @@ describe 'Merge', ->
                         info.id.should.equal was._id
                         info.doc.moveTo.should.equal doc._id
                         done()
-                    @merge.moveFolder clone(doc), clone(was), (err) ->
+                    @merge.moveFolder @side, clone(doc), clone(was), (err) ->
                         should.not.exist err
 
             describe 'when a file with the same path exists', ->
@@ -882,11 +910,12 @@ describe 'Merge', ->
                     @pouch.db.put clone(was), (err, inserted) =>
                         should.not.exist err
                         was._rev = inserted.rev
-                        @merge.moveFolder clone(doc), clone(was), (err) =>
+                        @merge.moveFolder @side, clone(doc), was, (err) =>
                             should.not.exist err
                             @pouch.db.get @folder._id, (err, res) =>
                                 should.not.exist err
                                 res.should.have.properties doc
+                                res.sides.local.should.equal 2
                                 @pouch.db.get was._id, (err, res) ->
                                     should.exist err
                                     err.status.should.equal 404
@@ -936,7 +965,7 @@ describe 'Merge', ->
                     docType: 'file'
                 @pouch.db.put doc, (err) =>
                     should.not.exist err
-                    @merge.deleteFile doc, (err) =>
+                    @merge.deleteFile @side, doc, (err) =>
                         should.not.exist err
                         @pouch.db.get doc._id, (err) ->
                             err.status.should.equal 404
@@ -949,7 +978,7 @@ describe 'Merge', ->
                     docType: 'folder'
                 @pouch.db.put doc, (err) =>
                     should.not.exist err
-                    @merge.deleteFolder doc, (err) =>
+                    @merge.deleteFolder @side, doc, (err) =>
                         should.not.exist err
                         @pouch.db.get doc._id, (err, res) ->
                             err.status.should.equal 404
@@ -968,7 +997,7 @@ describe 'Merge', ->
                         @pouch.db.put file, next
                     , (err) =>
                         should.not.exist err
-                        @merge.deleteFolder doc, (err) =>
+                        @merge.deleteFolder @side, doc, (err) =>
                             should.not.exist err
                             @pouch.byPath 'foo/to-remove', (err, docs) ->
                                 docs.length.should.be.equal 0
@@ -982,7 +1011,7 @@ describe 'Merge', ->
                     @pouch.db.put doc, next
                 , (err) =>
                     should.not.exist err
-                    @merge.deleteFolder _id: 'nested/to-delete', (err) =>
+                    @merge.deleteFolder @side, _id: 'nested/to-delete', (err) =>
                         should.not.exist err
                         @pouch.db.allDocs (err, res) ->
                             should.not.exist err

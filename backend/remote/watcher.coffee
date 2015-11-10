@@ -11,6 +11,7 @@ log   = require('printit')
 # TODO refactor unit tests
 class RemoteWatcher
     constructor: (@couch, @merge, @pouch) ->
+        @side = 'remote'
         @pending = 0
 
     # First time replication
@@ -102,7 +103,7 @@ class RemoteWatcher
                     # It's fine if the file was deleted on local and on remote
                     callback()
                 else
-                    @merge.deleteDoc was, callback
+                    @merge.deleteDoc @side, was, callback
             else if doc.docType in ['folder', 'Folder'] or doc.binary?.file
                 @putDoc doc, was, callback
             else
@@ -140,15 +141,15 @@ class RemoteWatcher
             log.error doc
             callback new Error 'Invalid path/name'
         else if not was
-            @merge.addDoc doc, callback
+            @merge.addDoc @side, doc, callback
         else if was._id is doc._id
-            @merge.updateDoc doc, callback
+            @merge.updateDoc @side, doc, callback
         else if doc.checksum? and was.checksum is doc.checksum
-            @merge.moveDoc doc, was, callback
+            @merge.moveDoc @side, doc, was, callback
         else
-            @merge.deleteDoc was, (err) =>
+            @merge.deleteDoc @side, was, (err) =>
                 log.error err if err
-                @merge.addDoc doc, callback
+                @merge.addDoc @side, doc, callback
 
     # Keep track of the sequence number and log errors
     # TODO test pending counts

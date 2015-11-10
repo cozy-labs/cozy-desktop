@@ -97,27 +97,41 @@ class Merge
                         if err
                             callback err
                         else
-                            @putFolder _id: parent, callback
+                            @putFolder null, _id: parent, callback
 
     # Helper to move/rename a file or a folder
-    moveDoc: (doc, was, callback) =>
+    moveDoc: (side, doc, was, callback) =>
         if doc.docType isnt was.docType
             callback new Error "Incompatible docTypes: #{doc.docType}"
         else if doc.docType is 'file'
-            @moveFile doc, was, callback
+            @moveFile side, doc, was, callback
         else if doc.docType is 'folder'
-            @moveFolder doc, was, callback
+            @moveFolder side, doc, was, callback
         else
             callback new Error "Unexpected docType: #{doc.docType}"
 
     # Simple helper to delete a file or a folder
-    deleteDoc: (doc, callback) =>
+    deleteDoc: (side, doc, callback) =>
         if doc.docType is 'file'
-            @deleteFile doc, callback
+            @deleteFile side, doc, callback
         else if doc.docType is 'folder'
-            @deleteFolder doc, callback
+            @deleteFolder side, doc, callback
         else
             callback new Error "Unexpected docType: #{doc.docType}"
+
+    # Mark the next rev for this side
+    #
+    # To track which side has made which modification, a revision number is
+    # associated to each side. When a side make a modification, we extract the
+    # revision from the previous state, increment it by one to have the next
+    # revision and associate this number to the side that makes the
+    # modification.
+    markSide: (side, doc, prev) ->
+        rev = 0
+        rev = Number prev._rev.split('-')[0] if prev
+        doc.sides ?= {}
+        doc.sides[side] = ++rev
+        doc
 
 
     ### Actions ###
@@ -132,7 +146,7 @@ class Merge
     #   - create the tree structure if needed
     # TODO conflict
     # TODO test doc.overwrite
-    addFile: (doc, callback) ->
+    addFile: (side, doc, callback) ->
         if @invalidId doc
             log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
             callback new Error 'Invalid id'
@@ -141,6 +155,7 @@ class Merge
             callback new Error 'Invalid checksum'
         else
             @pouch.db.get doc._id, (err, file) =>
+                @markSide side, doc, file
                 doc.docType = 'file'
                 doc.lastModification ?= new Date
                 if file and @sameBinary file, doc
@@ -170,7 +185,7 @@ class Merge
     #   - overwrite a possible existing file with the same path
     # TODO conflict with a folder -> file is renamed with -conflict suffix
     # TODO test doc.overwrite
-    updateFile: (doc, callback) ->
+    updateFile: (side, doc, callback) ->
         if @invalidId doc
             log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
             callback new Error 'Invalid id'
@@ -179,6 +194,7 @@ class Merge
             callback new Error 'Invalid checksum'
         else
             @pouch.db.get doc._id, (err, file) =>
+                @markSide side, doc, file
                 doc.docType = 'file'
                 doc.lastModification ?= new Date
                 if file
@@ -206,12 +222,13 @@ class Merge
     #   - overwrite metadata if this folder alredy existed in pouch
     # TODO conflict with a file -> file is renamed with -conflict suffix
     # TODO how can we remove a tag?
-    putFolder: (doc, callback) ->
+    putFolder: (side, doc, callback) ->
         if @invalidId doc
             log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
             callback new Error 'Invalid id'
         else
             @pouch.db.get doc._id, (err, folder) =>
+                @markSide side, doc, folder
                 doc.docType = 'folder'
                 doc.lastModification ?= new Date
                 if folder
@@ -239,7 +256,7 @@ class Merge
     #   - add a hint to make writers know that it's a move (moveTo)
     #   - create the tree structure if needed
     #   - overwrite the destination if it was present
-    moveFile: (doc, was, callback) ->
+    moveFile: (side, doc, was, callback) ->
         if @invalidId doc
             log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
             callback new Error 'Invalid id'
@@ -258,6 +275,8 @@ class Merge
             callback new Error 'Missing rev'
         else
             @pouch.db.get doc._id, (err, file) =>
+                @markSide side, doc, file
+                @markSide side, was, was
                 doc.docType           = 'file'
                 doc.creationDate     ?= was.creationDate
                 doc.lastModification ?= new Date
@@ -291,7 +310,7 @@ class Merge
     #   - overwrite the destination if it was present
     # TODO
     #   - tags
-    moveFolder: (doc, was, callback) ->
+    moveFolder: (side, doc, was, callback) ->
         if @invalidId doc
             log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
             callback new Error 'Invalid id'
@@ -306,6 +325,8 @@ class Merge
             callback new Error 'Missing rev'
         else
             @pouch.db.get doc._id, (err, folder) =>
+                @markSide side, doc, folder
+                @markSide side, was, was
                 doc.docType           = 'folder'
                 doc.creationDate     ?= was.creationDate
                 doc.lastModification ?= new Date
@@ -341,11 +362,12 @@ class Merge
     # Expectations:
     #   - the file still exists in pouch
     #   - the file can be found by its _id
-    deleteFile: (doc, callback) ->
+    deleteFile: (side, doc, callback) ->
         @pouch.db.get doc._id, (err, file) =>
             if err
                 callback err
             else
+                @markSide side, file, file
                 file._deleted = true
                 @pouch.db.put file, callback
 
@@ -354,11 +376,12 @@ class Merge
     #   - the folder can be found by its _id
     # Actions:
     #   - delete every file and folder inside this folder
-    deleteFolder: (doc, callback) ->
+    deleteFolder: (side, doc, callback) ->
         @pouch.db.get doc._id, (err, folder) =>
             if err
                 callback err
             else
+                @markSide side, folder, folder
                 @pouch.byRecursivePath folder._id, (err, docs) =>
                     if err
                         callback err
