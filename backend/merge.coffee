@@ -37,11 +37,8 @@ Pouch = require './pouch'
 #   - sides
 #
 # Conflicts can happen when we try to write one document for a path when
-# another document already exists for the same path. The resolution depends of
-# the type of the documents:
-#   - for two files, we rename the latter with a -conflict suffix
-#   - for two folders, we merge them
-#   - for a file and a folder, TODO
+# another document already exists for the same path. We don't try to be smart
+# and the rename one the two documents with a -conflict suffix.
 #
 # TODO update backends metadata
 # TODO avoid put in pouchdb if nothing has changed
@@ -74,11 +71,11 @@ class Merge
         else
             return false
 
-    # TODO comments, tests
-    sameBinary: (one, two, callback) ->
+    # Return true if the two files have the same content
+    sameBinary: (one, two) ->
         if one.checksum? and one.checksum is two.checksum
             return true
-        else if one.remote?.file
+        else if one.remote?.file? and two.remote?.file?
             oneId = one.remote.file._id
             twoId = two.remote.file._id
             return oneId and oneId is twoId
