@@ -13,7 +13,8 @@ log      = require('printit')
 # remote operations triggered by the remoteEventWatcher.
 #
 # TODO find deleted files/folders in the initial scan
-# TODO detects move/rename:
+#
+# TODO detects move/rename (for files only):
 # TODO - https://github.com/paulmillr/chokidar/issues/303#issuecomment-127039892
 # TODO - Inotify.IN_MOVED_FROM & Inotify.IN_MOVED_TO
 # TODO - track inodes
@@ -41,7 +42,7 @@ class LocalWatcher
             atomic: true
             # Poll newly created files to detect when the write is finished
             awaitWriteFinish:
-                pollInterval: 100
+                pollInterval: 200
                 stabilityThreshold: 1000
             # With node 0.10 on linux, only polling is available
             interval: 1000
@@ -60,6 +61,7 @@ class LocalWatcher
     ### Helpers ###
 
     # An helper to create a document for a file
+    # with checksum and mime informations
     createDoc: (filePath, stats, callback) =>
         absPath = path.join @basePath, filePath
         [mimeType, fileClass] = @getFileClass absPath
@@ -75,8 +77,9 @@ class LocalWatcher
                 mime: mimeType
             callback err, doc
 
-    # Return mimetypes and class (like in classification) of a file.
-    # ex: pic.png returns 'image/png' and 'image'.
+    # Return mimetypes and class (like in classification) of a file
+    # It's only based on the filename, not using libmagic
+    # ex: pic.png returns 'image/png' and 'image'
     getFileClass: (filename, callback) ->
         mimeType = mime.lookup filename
         fileClass = switch mimeType.split('/')[0]
@@ -88,7 +91,7 @@ class LocalWatcher
             else                    "file"
         return [mimeType, fileClass]
 
-    # Get checksum for given file.
+    # Get checksum for given file
     checksum: (filePath, callback) ->
         stream = fs.createReadStream filePath
         checksum = crypto.createHash 'sha1'
@@ -107,13 +110,13 @@ class LocalWatcher
     ### Actions ###
 
     # New file detected
-    # TODO pouchdb -> detect updates/conflicts
     onAdd: (filePath, stats) =>
         log.debug 'File added', filePath
         @createDoc filePath, stats, (err, doc) =>
             if err
                 log.debug err
             else
+                # TODO @merge.addFile
                 @merge.putFile doc, @done
 
     # New directory detected
@@ -139,13 +142,13 @@ class LocalWatcher
         @merge.deleteFolder _id: folderPath, @done
 
     # File update detected
-    # TODO pouchdb -> detect updates/conflicts
     onChange: (filePath, stats) =>
         log.debug 'File updated', filePath
         @createDoc filePath, stats, (err, doc) =>
             if err
                 log.debug err
             else
+                # TODO @merge.updateFile
                 @merge.putFile doc, @done
 
     # A callback that logs errors

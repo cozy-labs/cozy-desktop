@@ -26,7 +26,7 @@ Pouch = require './pouch'
 #   - size
 #   - class
 #   - mime
-#   - backends
+#   - sides
 #
 # Folder:
 #   - _id / _rev
@@ -34,7 +34,7 @@ Pouch = require './pouch'
 #   - creationDate
 #   - lastModification
 #   - tags
-#   - backends
+#   - sides
 #
 # Conflicts can happen when we try to write one document for a path when
 # another document already exists for the same path. The resolution depends of
@@ -103,6 +103,7 @@ class Merge
                             @putFolder _id: parent, callback
 
     # Delete every files and folders inside the given folder
+    # TODO delete folder in the same bulkDocs
     emptyFolder: (folder, callback) =>
         @pouch.byRecursivePath folder._id, (err, docs) =>
             if err
@@ -160,7 +161,7 @@ class Merge
     #   - add the last modification date if missing
     #   - create the tree structure if needed
     #   - overwrite a possible existing file with the same path
-    # TODO how to tell if it's an overwrite or a conflict?
+    # TODO how to tell if it's an overwrite or a conflict? -> addFile/updateFile
     # TODO conflict with a folder
     # TODO test doc.overwrite
     putFile: (doc, callback) ->
@@ -334,6 +335,7 @@ class Merge
     # Expectations:
     #   - the file still exists in pouch
     #   - the file can be found by its _id
+    # TODO refactor without async
     deleteFile: (doc, callback) ->
         async.waterfall [
             # Find the file
@@ -350,6 +352,7 @@ class Merge
     #   - the folder can be found by its _id
     # Actions:
     #   - delete every file and folder inside this folder
+    # TODO refactor without async
     deleteFolder: (doc, callback) ->
         async.waterfall [
             # Find the folder
