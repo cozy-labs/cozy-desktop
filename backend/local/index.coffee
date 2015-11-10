@@ -121,12 +121,9 @@ class Local
                 @utimesUpdater(doc)(callback)
 
     # Update a file
+    # TODO detect if the file content has changed, or if it's just the metadata
     updateFile: (doc, callback) =>
-        if doc.overwrite
-            @addFile doc, callback
-        else
-            log.info "Update metadata of #{doc._id}" # TODO
-            callback()
+        @addFile doc, callback
 
     # Update a folder
     updateFolder: (doc, callback) =>

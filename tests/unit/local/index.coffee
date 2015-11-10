@@ -196,7 +196,6 @@ describe 'Local', ->
                 docType: 'file'
                 checksum: 'abfcfb0dfcfdb36deb1187b456e575472661f97a'
                 lastModification: new Date
-                overwrite: true
             sinon.stub(@local, 'addFile').yields()
             @local.updateFile doc, (err) =>
                 should.not.exist err

@@ -145,7 +145,6 @@ class Merge
     #   - add the last modification date if missing
     #   - create the tree structure if needed
     # TODO conflict
-    # TODO test doc.overwrite
     addFile: (side, doc, callback) ->
         if @invalidId doc
             log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
@@ -164,7 +163,6 @@ class Merge
                     doc.size  ?= file.size
                     doc.class ?= file.class
                     doc.mime  ?= file.mime
-                    delete doc.overwrite
                     @pouch.db.put doc, callback
                 else if file
                     # TODO conflict
@@ -184,7 +182,6 @@ class Merge
     #   - create the tree structure if needed
     #   - overwrite a possible existing file with the same path
     # TODO conflict with a folder -> file is renamed with -conflict suffix
-    # TODO test doc.overwrite
     updateFile: (side, doc, callback) ->
         if @invalidId doc
             log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
@@ -204,9 +201,6 @@ class Merge
                         doc.size  ?= file.size
                         doc.class ?= file.class
                         doc.mime  ?= file.mime
-                        delete doc.overwrite
-                    else
-                        doc.overwrite = true
                     @pouch.db.put doc, callback
                 else
                     doc.creationDate ?= new Date
@@ -287,11 +281,9 @@ class Merge
                 was._deleted          = true
                 if file
                     # TODO should be a conflict?
-                    doc._rev      = file._rev
-                    doc.overwrite = true
+                    doc._rev = file._rev
                     @pouch.db.bulkDocs [was, doc], callback
                 else
-                    delete doc.overwrite
                     @ensureParentExist doc, =>
                         @pouch.db.bulkDocs [was, doc], callback
 
