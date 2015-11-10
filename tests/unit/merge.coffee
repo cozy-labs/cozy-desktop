@@ -538,7 +538,6 @@ describe 'Merge', ->
                     doc.lastModification = new Date
                     @merge.putFolder @side, clone(doc), (err) =>
                         should.not.exist err
-                        doc.tags = ['bar', 'baz', 'foo']
                         for date in ['creationDate', 'lastModification']
                             doc[date] = doc[date].toISOString()
                         @pouch.db.get doc._id, (err, res) ->

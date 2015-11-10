@@ -40,7 +40,6 @@ Pouch = require './pouch'
 # another document already exists for the same path. We don't try to be smart
 # and the rename one the two documents with a -conflict suffix.
 #
-# TODO update backends metadata
 # TODO avoid put in pouchdb if nothing has changed
 class Merge
     constructor: (@pouch) ->
@@ -215,7 +214,6 @@ class Merge
     #   - create the tree structure if needed
     #   - overwrite metadata if this folder alredy existed in pouch
     # TODO conflict with a file -> file is renamed with -conflict suffix
-    # TODO how can we remove a tag?
     putFolder: (side, doc, callback) ->
         if @invalidId doc
             log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
@@ -228,9 +226,7 @@ class Merge
                 if folder
                     doc._rev = folder._rev
                     doc.creationDate ?= folder.creationDate
-                    doc.tags ?= []
-                    for tag in folder.tags or []
-                        doc.tags.push tag unless tag in doc.tags
+                    doc.tags ?= folder.tags
                     @pouch.db.put doc, callback
                 else
                     doc.creationDate ?= new Date
@@ -300,8 +296,6 @@ class Merge
     #   - create the tree structure if needed
     #   - move every file and folder inside this folder
     #   - overwrite the destination if it was present
-    # TODO
-    #   - tags
     moveFolder: (side, doc, was, callback) ->
         if @invalidId doc
             log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
@@ -322,6 +316,7 @@ class Merge
                 doc.docType           = 'folder'
                 doc.creationDate     ?= was.creationDate
                 doc.lastModification ?= new Date
+                doc.tags             ?= was.tags
                 if folder
                     # TODO maybe it is simpler to add a -conflict suffix
                     doc._rev = folder._rev
