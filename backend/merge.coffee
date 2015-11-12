@@ -183,6 +183,7 @@ class Merge
     #   - create the tree structure if needed
     #   - overwrite a possible existing file with the same path
     # TODO conflict with a folder -> file is renamed with -conflict suffix
+    # TODO delete remote if checksum has changed
     updateFile: (side, doc, callback) ->
         if @invalidId doc
             log.warn "Invalid id: #{JSON.stringify doc, null, 2}"

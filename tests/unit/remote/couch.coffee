@@ -89,20 +89,21 @@ describe "Couch", ->
     describe 'getFromRemoteView', ->
         it 'gets documents from a view on a remote couch'
 
-    describe 'createEmptyRemoteDoc', ->
-        it 'creates a remote binary doc', (done) ->
-            @couch.createEmptyRemoteDoc foo: 'bar', (err, doc) ->
-                should.not.exist err
-                should.exist doc
-                should.exist doc.id
-                should.exist doc.rev
-                done()
-
     describe 'uploadAsAttachment', ->
         it 'upload a file as an attachment to an existing doc', (done) ->
             file = 'tests/fixtures/chat-mignon.jpg'
             @couch.uploadAsAttachment @doc._id, @rev, file, (err, attached) ->
                 should.not.exist err
+                should.exist attached.id
+                should.exist attached.rev
+                done()
+
+        it 'upload a stream as an attachment to an existing doc', (done) ->
+            stream = fs.createReadStream 'tests/fixtures/chat-mignon-mod.jpg'
+            @couch.uploadAsAttachment @doc._id, @rev, stream, (err, attached) ->
+                should.not.exist err
+                should.exist attached.id
+                should.exist attached.rev
                 done()
 
     describe 'downloadBinary', ->

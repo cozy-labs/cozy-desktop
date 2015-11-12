@@ -1,3 +1,4 @@
+fs       = require 'fs'
 sinon    = require 'sinon'
 should   = require 'should'
 
@@ -35,6 +36,29 @@ describe 'Remote', ->
 
     describe 'createReadStream', ->
         it 'TODO'
+
+
+    describe 'uploadBinary', ->
+        @timeout 5000
+
+        it 'creates a remote binary document', (done) ->
+            checksum = 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+            fixture = 'tests/fixtures/chat-mignon.jpg'
+            doc =
+                _id: 'chat.jpg'
+                checksum: checksum
+            @remote.other =
+                createReadStream: (localDoc, callback) ->
+                    localDoc.should.equal doc
+                    stream = fs.createReadStream fixture
+                    callback null, stream
+            @remote.uploadBinary doc, (err, binary) =>
+                should.not.exist err
+                binary._id.should.equal checksum
+                @remote.couch.get binary._id, (err, binaryDoc) ->
+                    should.not.exist err
+                    console.log binaryDoc
+                    done()
 
 
     describe 'addFile', ->

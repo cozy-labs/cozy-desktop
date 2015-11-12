@@ -30,86 +30,42 @@ class Remote
 
     # Upload the binary as a CouchDB document's attachment and return
     # the binary document
-    # TODO rewrite / split this method
-    uploadBinary: (filePath, binaryDoc, callback) ->
-        absolute = path.resolve @config.getDevice().path, filePath
-
+    uploadBinary: (doc, callback) ->
+        binary =
+            _id: doc.checksum
+            docType: 'Binary'
+            checksum: doc.checksum
+        rev = null
         async.waterfall [
             (next) =>
-                # In case of an file update, binary document already exists.
-                if binaryDoc?.file?.id? and binaryDoc?.file?.rev?
-                    next null,
-                        id: binaryDoc.file.id
-                        rev: binaryDoc.file.rev
-                        checksum: binaryDoc.file.checksum
-                else
-                    # Create a remote binary document if not exists.
-                    # Pass the checksum here to save it remotely.
-
-                    filesystem.checksum absolute, (err, checksum) =>
-                        if err
-                            next err
-                        else
-                            binaryDoc =
-                                file:
-                                    checksum: checksum
-                            @couch.createEmptyRemoteDoc binaryDoc, next
-
-            # Get the binary document
-            (binaryInfo, next) =>
-                @couch.get binaryInfo.id, next
-
-            (remoteBinaryDoc, next) =>
-                # If for some reason the remote attachment is already uploaded
-                # and has the same checksum than the local file, just return
-                # the binary document.
-                if remoteBinaryDoc._attachments? \
-                and Object.keys(remoteBinaryDoc._attachments) > 0 \
-                and remoteBinaryDoc.checksum is binaryDoc.checksum
-                    return callback null, remoteBinaryDoc
-
-                # Otherwise upload it
-                @couch.uploadAsAttachment remoteBinaryDoc.id
-                                        , remoteBinaryDoc.rev
-                                        , absolute
-                                        , next
-
-            # Get the binary document again
-            (binaryInfo, next) =>
-                @couch.get binaryInfo.id, next
-
-        ], callback
+                @couch.put binary, next
+            (created, next) =>
+                rev = created._rev
+                @other.createReadStream doc, next
+            (stream, next) =>
+                @couch.uploadAsAttachment doc._id, rev, stream, next
+        ], (err) ->
+            if err and rev
+                @couch.remove binary._id, rev, -> callback err
+            else
+                callback err, binary
 
 
     ### Write operations ###
 
     # Create a file on the remote cozy instance
     # It can also be an overwrite of the file
-    # TODO check if the remote folder exists and create it if missing?
-    # TODO save infos in pouch
+    # TODO save infos in pouch?
     addFile: (doc, callback) =>
         async.waterfall [
-            # Check if the binary already exists on the server
-            (next) =>
-                @pouch.binaries().get 'TODO', next
-
             # Create the binary doc if it doesn't exist
             (next) =>
-                @couch.createEmptyRemoteDoc checksum: doc.checksum, next
-
-            # Upload binary if it doesn't exist on the server
-            (next) =>
-                # FIXME uploadAsAttachment expects a filePath, not a stream
-                @other.createReadStream doc, (err, stream) =>
-                    if err
-                        callback err
-                    else
-                        @events.emit 'uploadBinary', doc.path  # FIXME
-                        @couch.uploadAsAttachment doc, filePath, next
+                # TODO check if the binary already exists in pouchdb
+                @uploadBinary doc, next
 
             # Save the 'file' document in the remote couch
-            (next) =>
-                @events.emit 'binaryUploaded', doc.path  # FIXME
+            (binaryDoc, next) =>
+                # TODO transform doc + add binary infos
                 @couch.put doc, next
 
         ], callback
