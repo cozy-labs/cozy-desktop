@@ -159,6 +159,14 @@ class Pouch
 
     ### Helpers ###
 
+    # Extract the revision number, or 0 it not found
+    extractRevNumber: (infos) ->
+        try
+            rev = infos._rev.split('-')[0]
+            return Number rev
+        catch
+            return 0
+
     # Retrieve a previous doc revision from its id
     getPreviousRev: (id, callback) =>
         options =

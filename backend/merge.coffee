@@ -127,7 +127,7 @@ class Merge
     # modification.
     markSide: (side, doc, prev) ->
         rev = 0
-        rev = Number prev._rev.split('-')[0] if prev
+        rev = @pouch.extractRevNumber prev if prev
         doc.sides ?= {}
         doc.sides[side] = ++rev
         doc

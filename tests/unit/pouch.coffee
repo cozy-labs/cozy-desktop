@@ -210,6 +210,16 @@ describe "Pouch", ->
 
     describe 'Helpers', ->
 
+        describe 'extractRevNumber', ->
+            it 'extracts the revision number', ->
+                infos =
+                    _rev: '42-0123456789'
+                @pouch.extractRevNumber(infos).should.equal 42
+
+            it 'returns 0 if not found', ->
+                @pouch.extractRevNumber({}).should.equal 0
+
+
         describe 'getPreviousRev', ->
             it "retrieves previous document's information", (done) ->
                 id = path.join 'my-folder', 'folder-1'

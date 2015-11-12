@@ -128,7 +128,7 @@ class Sync
         # TODO find something better than /^1-/
         # - the changes feed can zap this rev and only give us a future rev
         # - what if a file is deleted and then recreated?
-        else if doc._rev.match /^1-/
+        else if @pouch.extractRevNumber(doc) is 1
             @fileAdded doc, callback
         else
             @fileUpdated doc, callback
@@ -149,7 +149,7 @@ class Sync
             callback()
         else if doc._deleted
             @folderDeleted doc, callback
-        else if doc._rev.match /^1-/
+        else if @pouch.extractRevNumber(doc) is 1
             @folderAdded doc, callback
         else
             @folderUpdated doc, callback
