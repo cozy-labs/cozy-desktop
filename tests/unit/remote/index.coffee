@@ -57,8 +57,65 @@ describe 'Remote', ->
                 binary._id.should.equal checksum
                 @remote.couch.get binary._id, (err, binaryDoc) ->
                     should.not.exist err
-                    console.log binaryDoc
                     done()
+
+
+    describe 'createRemoteDoc', ->
+        it 'transforms a local file in remote file', ->
+            local =
+                _id: 'foo/bar/baz.jpg'
+                docType: 'file'
+                lastModification: "2015-11-12T13:14:32.384Z"
+                creationDate: "2015-11-12T13:14:32.384Z"
+                tags: ['qux']
+                checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+                size: 12345
+                class: 'image'
+                mime: 'image/jpeg'
+            binary =
+                _id: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+                _rev: '2-0123456789'
+            doc = @remote.createRemoteDoc local, binary
+            doc.should.have.properties
+                path: 'foo/bar'
+                name: 'baz.jpg'
+                docType: 'file'
+                lastModification: "2015-11-12T13:14:32.384Z"
+                creationDate: "2015-11-12T13:14:32.384Z"
+                tags: ['qux']
+                size: 12345
+                class: 'image'
+                mime: 'image/jpeg'
+                binary:
+                    file:
+                        id: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+                        rev: '2-0123456789'
+
+        it 'transforms a local folder in remote folder', ->
+            local =
+                _id: 'foo/bar/baz'
+                docType: 'folder'
+                lastModification: "2015-11-12T13:14:33.384Z"
+                creationDate: "2015-11-12T13:14:33.384Z"
+                tags: ['courge']
+            doc = @remote.createRemoteDoc local
+            doc.should.have.properties
+                path: 'foo/bar'
+                name: 'baz'
+                docType: 'folder'
+                lastModification: "2015-11-12T13:14:33.384Z"
+                creationDate: "2015-11-12T13:14:33.384Z"
+                tags: ['courge']
+
+        it 'has the good path when in root folder', ->
+            local =
+                _id: 'in-root-folder'
+                docType: 'folder'
+            doc = @remote.createRemoteDoc local
+            doc.should.have.properties
+                path: ''  # not '.'
+                name: 'in-root-folder'
+                docType: 'folder'
 
 
     describe 'addFile', ->

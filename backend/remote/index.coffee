@@ -52,6 +52,25 @@ class Remote
             else
                 callback err, binary
 
+    # Transform a local document in a remote one, with optional binary ref
+    createRemoteDoc: (local, binary) ->
+        doc =
+            _id: local._id or Couch.newId()
+            docType: local.docType
+            path: path.dirname local._id
+            name: path.basename local._id
+            creationDate: local.creationDate
+            lastModification: local.lastModification
+        doc.path = '' if doc.path is '.'
+        for field in ['size', 'class', 'mime', 'tags']
+            doc[field] = local[field] if local[field]
+        if binary
+            doc.binary =
+                file:
+                    id:  binary._id
+                    rev: binary._rev
+        return doc
+
 
     ### Write operations ###
 
@@ -67,22 +86,15 @@ class Remote
 
             # Save the 'file' document in the remote couch
             (binaryDoc, next) =>
-                # TODO transform doc + add binary infos
-                @couch.put doc, next
+                remoteDoc = @createRemoteDoc doc, binaryDoc
+                @couch.put remoteDoc, next
 
         ], callback
 
     # Create a folder on the remote cozy instance
-    # TODO should we keep remote id and rev here or wait for the changes feed?
+    # TODO save remote id and rev in pouch
     addFolder: (doc, callback) =>
-        folder =
-            _id: Couch.newId()
-            path: path.dirname doc._id
-            name: path.basename doc._id
-            docType: 'folder'
-            tags: doc.tags
-            creationDate: doc.creationDate
-            lastModification: doc.lastModification
+        folder = @createRemoteDoc doc
         @couch.put folder, callback
 
     # TODO
@@ -105,13 +117,14 @@ class Remote
             @addFolder doc, callback
 
     # Move a file on the remote cozy instance
-    moveFile: (doc, old, callback) =>
-        @couch.put doc, old.rev, callback
+    moveFile: (doc, old, callback) ->
+        # TODO
+        callback()
 
     # Move a folder on the remote cozy instance
     moveFolder: (doc, old, callback) =>
-        if doc.remote
-            @couch.get doc.remote._id, (err, folder) =>
+        if old.remote
+            @couch.get old.remote._id, (err, folder) =>
                 if err
                     callback err
                 else
