@@ -1,3 +1,4 @@
+crypto   = require 'crypto'
 fs       = require 'fs-extra'
 path     = require 'path'
 sinon    = require 'sinon'
@@ -36,7 +37,30 @@ describe 'Local', ->
 
 
     describe 'createReadStream', ->
-        it 'TODO'
+        it 'throws an error if no file for this document', (done) ->
+            doc = _id: 'no-such-file'
+            @local.createReadStream doc, (err, stream) ->
+                should.exist err
+                err.message.should.equal 'Cannot read the file'
+                done()
+
+        it 'creates a readable stream for the document', (done) ->
+            src = path.join __dirname, '../../fixtures/chat-mignon.jpg'
+            dst = path.join @basePath, 'read-stream.jpg'
+            fs.copySync src, dst
+            doc =
+                _id: 'read-stream.jpg'
+                checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+            @local.createReadStream doc, (err, stream) ->
+                should.not.exist err
+                should.exist stream
+                checksum = crypto.createHash 'sha1'
+                checksum.setEncoding 'hex'
+                stream.pipe checksum
+                stream.on 'end', ->
+                    checksum.end()
+                    checksum.read().should.equal doc.checksum
+                    done()
 
 
     describe 'utimesUpdater', ->

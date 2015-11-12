@@ -15,13 +15,21 @@ class Local
         @watcher  = new Watcher @basePath, @merge, @pouch, @events
         @other = null
 
+    # Start initial replication + watching changes in live
     start: (done) =>
         fs.ensureDir @basePath, =>
             # TODO should we wait before calling done that all events are fired?
             @watcher.start done
 
+    # Create a readable stream for the given doc
     createReadStream: (doc, callback) ->
-        callback new Error 'TODO'
+        try
+            filePath = path.resolve @basePath, doc._id
+            stream = fs.createReadStream filePath
+            callback null, stream
+        catch err
+            log.error err
+            callback new Error 'Cannot read the file'
 
 
     ### Helpers ###

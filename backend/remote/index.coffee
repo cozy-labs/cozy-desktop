@@ -14,11 +14,13 @@ class Remote
         @watcher = new Watcher @couch, @merge, @pouch
         @other = null
 
+    # Start initial replication + watching changes in live
     start: (done) =>
         @watcher.listenToChanges live: false, (err) =>
             done err
             @watcher.listenToChanges live: true unless err
 
+    # Create a readable stream for the given doc
     createReadStream: (doc, callback) =>
         if doc.remote.binary?
             @couch.downloadBinary doc.remote.binary._id, callback
