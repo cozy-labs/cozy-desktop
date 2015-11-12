@@ -154,61 +154,50 @@ class Sync
         else
             @folderUpdated doc, callback
 
-    # Let local and remote know that a file has been added
+    # Apply the iterator function on local/remote
+    # It selects only the side that hasn't make the last modification
+    selectSide: (doc) =>
+        localRev  = doc.sides.local  or 0
+        remoteRev = doc.sides.remote or 0
+        if localRev > remoteRev
+            return @remote
+        else if remoteRev > localRev
+            return @local
+        else
+            log.error 'Both sides have applied this change'
+            # TODO
+
+    # Let local / remote know that a file has been added
     fileAdded: (doc, callback) =>
-        async.waterfall [
-            (next) => @local.addFile  doc, next
-            (next) => @remote.addFile doc, next
-        ], callback
+        @selectSide(doc).addFile doc, callback
 
-    # Let local and remote know that a file has been updated
+    # Let local / remote know that a file has been updated
     fileUpdated: (doc, callback) =>
-        async.waterfall [
-            (next) => @local.updateFile  doc, next
-            (next) => @remote.updateFile doc, next
-        ], callback
+        @selectSide(doc).updateFile doc, callback
 
-    # Let local and remote know that a file has been moved
+    # Let local / remote know that a file has been moved
     fileMoved: (doc, old, callback) =>
-        async.waterfall [
-            (next) => @local.moveFile  doc, old, next
-            (next) => @remote.moveFile doc, old, next
-        ], callback
+        @selectSide(doc).moveFile doc, old, callback
 
-    # Let local and remote know that a file has been deleted
+    # Let local / remote know that a file has been deleted
     fileDeleted: (doc, callback) =>
-        async.waterfall [
-            (next) => @local.deleteFile  doc, next
-            (next) => @remote.deleteFile doc, next
-        ], callback
+        @selectSide(doc).deleteFile doc, callback
 
-    # Let local and remote know that a folder has been added
+    # Let local / remote know that a folder has been added
     folderAdded: (doc, callback) =>
-        async.waterfall [
-            (next) => @local.addFolder  doc, next
-            (next) => @remote.addFolder doc, next
-        ], callback
+        @selectSide(doc).addFolder doc, callback
 
-    # Let local and remote know that a folder has been updated
+    # Let local / remote know that a folder has been updated
     folderUpdated: (doc, callback) =>
-        async.waterfall [
-            (next) => @local.updateFolder  doc, next
-            (next) => @remote.updateFolder doc, next
-        ], callback
+        @selectSide(doc).updateFolder doc, callback
 
-    # Let local and remote know that a folder has been moved
+    # Let local / remote know that a folder has been moved
     folderMoved: (doc, old, callback) =>
-        async.waterfall [
-            (next) => @local.moveFolder  doc, old, next
-            (next) => @remote.moveFolder doc, old, next
-        ], callback
+        @selectSide(doc).moveFolder doc, old, callback
 
-    # Let local and remote know that a folder has been deleted
+    # Let local / remote know that a folder has been deleted
     folderDeleted: (doc, callback) =>
-        async.waterfall [
-            (next) => @local.deleteFolder  doc, next
-            (next) => @remote.deleteFolder doc, next
-        ], callback
+        @selectSide(doc).deleteFolder doc, callback
 
 
 module.exports = Sync

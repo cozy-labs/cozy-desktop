@@ -125,6 +125,8 @@ class Merge
     # revision from the previous state, increment it by one to have the next
     # revision and associate this number to the side that makes the
     # modification.
+    #
+    # TODO should we save the sides rev in a separate doc?
     markSide: (side, doc, prev) ->
         rev = 0
         rev = @pouch.extractRevNumber prev if prev

@@ -17,6 +17,7 @@ describe "Sync", ->
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
 
+
     describe 'start', ->
         beforeEach 'instanciate sync', ->
             @local  = start: sinon.stub().yields()
@@ -57,6 +58,7 @@ describe "Sync", ->
                 @sync.sync.calledOnce.should.be.false()
                 done()
 
+
     describe 'sync', ->
         beforeEach ->
             @local = {}
@@ -80,6 +82,7 @@ describe "Sync", ->
                 @sync.pop.calledOnce.should.be.true()
                 @sync.apply.calledOnce.should.be.false()
                 done()
+
 
     describe 'pop', ->
         beforeEach (done) ->
@@ -158,6 +161,7 @@ describe "Sync", ->
                     should.not.exist err
             , 10
 
+
     describe 'apply', ->
         beforeEach ->
             @local = {}
@@ -192,6 +196,7 @@ describe "Sync", ->
                 @sync.folderChanged.calledWith(change.doc).should.be.true()
                 done()
 
+
     describe 'applied', ->
         beforeEach ->
             @local = {}
@@ -214,6 +219,7 @@ describe "Sync", ->
                         seq.should.equal 126
                         done()
                 func new Error 'Apply failed'
+
 
     describe 'fileChanged', ->
         beforeEach ->
@@ -281,6 +287,7 @@ describe "Sync", ->
                 @sync.fileDeleted.calledWith(doc).should.be.true()
                 done()
 
+
     describe 'folderChanged', ->
         beforeEach ->
             @local = {}
@@ -347,120 +354,309 @@ describe "Sync", ->
                 @sync.folderDeleted.calledWith(doc).should.be.true()
                 done()
 
+
+    describe 'selectSide', ->
+        beforeEach ->
+            @local = {}
+            @remote = {}
+            @sync = new Sync @pouch, @local, @remote
+
+        it 'selects the local side if remote is up-to-date', ->
+            doc =
+                _id: 'selectSide/1'
+                _rev: '1-0123456789'
+                docType: 'file'
+                sides:
+                    remote: 1
+            @sync.selectSide(doc).should.equal @sync.local
+            doc =
+                _id: 'selectSide/2'
+                _rev: '3-0123456789'
+                docType: 'file'
+                sides:
+                    remote: 3
+                    local: 2
+            @sync.selectSide(doc).should.equal @sync.local
+
+        it 'selects the remote side if local is up-to-date', ->
+            doc =
+                _id: 'selectSide/3'
+                _rev: '1-0123456789'
+                docType: 'file'
+                sides:
+                    local: 1
+            @sync.selectSide(doc).should.equal @sync.remote
+            doc =
+                _id: 'selectSide/4'
+                _rev: '4-0123456789'
+                docType: 'file'
+                sides:
+                    remote: 3
+                    local: 4
+            @sync.selectSide(doc).should.equal @sync.remote
+
+        it 'TODO if both sides are up-to-date'
+
+
     describe 'fileAdded', ->
-        it 'calls addFile on local and remote', (done) ->
+        it 'calls addFile on local', (done) ->
             doc =
                 _id: 'foo/bar'
                 docType: 'file'
+                sides:
+                    remote: 1
             @local  = addFile: sinon.stub().yields()
-            @remote = addFile: sinon.stub().yields()
+            @remote = {}
             @sync = new Sync @pouch, @local, @remote
             @sync.fileAdded doc, (err) =>
                 should.not.exist err
                 @local.addFile.calledWith(doc).should.be.true()
-                @remote.addFile.calledWith(doc).should.be.true()
                 done()
 
-    describe 'fileUpdated', ->
-        it 'calls updateFile on local and remote', (done) ->
+        it 'calls addFile on remote', (done) ->
             doc =
                 _id: 'foo/bar'
                 docType: 'file'
+                sides:
+                    local: 1
+            @local  = {}
+            @remote = addFile: sinon.stub().yields()
+            @sync = new Sync @pouch, @local, @remote
+            @sync.fileAdded doc, (err) =>
+                should.not.exist err
+                @remote.addFile.calledWith(doc).should.be.true()
+                done()
+
+
+    describe 'fileUpdated', ->
+        it 'calls updateFile on local', (done) ->
+            doc =
+                _id: 'foo/bar'
+                docType: 'file'
+                sides:
+                    remote: 1
             @local  = updateFile: sinon.stub().yields()
-            @remote = updateFile: sinon.stub().yields()
+            @remote = {}
             @sync = new Sync @pouch, @local, @remote
             @sync.fileUpdated doc, (err) =>
                 should.not.exist err
                 @local.updateFile.calledWith(doc).should.be.true()
-                @remote.updateFile.calledWith(doc).should.be.true()
                 done()
 
-    describe 'fileMoved', ->
-        it 'calls moveFile on local and remote', (done) ->
+        it 'calls updateFile on remote', (done) ->
             doc =
                 _id: 'foo/bar'
                 docType: 'file'
+                sides:
+                    local: 1
+            @local  = {}
+            @remote = updateFile: sinon.stub().yields()
+            @sync = new Sync @pouch, @local, @remote
+            @sync.fileUpdated doc, (err) =>
+                should.not.exist err
+                @remote.updateFile.calledWith(doc).should.be.true()
+                done()
+
+
+    describe 'fileMoved', ->
+        it 'calls moveFile on local', (done) ->
+            doc =
+                _id: 'foo/bar'
+                docType: 'file'
+                sides:
+                    remote: 1
             old =
                 _id: 'foo/baz'
                 docType: 'file'
+                sides:
+                    local: 2
+                    remote: 1
             @local  = moveFile: sinon.stub().yields()
-            @remote = moveFile: sinon.stub().yields()
+            @remote = {}
             @sync = new Sync @pouch, @local, @remote
             @sync.fileMoved doc, old, (err) =>
                 should.not.exist err
                 @local.moveFile.calledWith(doc, old).should.be.true()
-                @remote.moveFile.calledWith(doc, old).should.be.true()
                 done()
 
-    describe 'fileDeleted', ->
-        it 'calls deleteFile on local and remote', (done) ->
+        it 'calls moveFile on remote', (done) ->
             doc =
                 _id: 'foo/bar'
                 docType: 'file'
+                sides:
+                    local: 1
+            old =
+                _id: 'foo/baz'
+                docType: 'file'
+                sides:
+                    local: 1
+                    remote: 2
+            @local  = {}
+            @remote = moveFile: sinon.stub().yields()
+            @sync = new Sync @pouch, @local, @remote
+            @sync.fileMoved doc, old, (err) =>
+                should.not.exist err
+                @remote.moveFile.calledWith(doc, old).should.be.true()
+                done()
+
+
+    describe 'fileDeleted', ->
+        it 'calls deleteFile on local', (done) ->
+            doc =
+                _id: 'foo/bar'
+                docType: 'file'
+                sides:
+                    remote: 1
             @local  = deleteFile: sinon.stub().yields()
-            @remote = deleteFile: sinon.stub().yields()
+            @remote = {}
             @sync = new Sync @pouch, @local, @remote
             @sync.fileDeleted doc, (err) =>
                 should.not.exist err
                 @local.deleteFile.calledWith(doc).should.be.true()
+                done()
+
+        it 'calls deleteFile on remote', (done) ->
+            doc =
+                _id: 'foo/bar'
+                docType: 'file'
+                sides:
+                    local: 1
+            @local  = {}
+            @remote = deleteFile: sinon.stub().yields()
+            @sync = new Sync @pouch, @local, @remote
+            @sync.fileDeleted doc, (err) =>
+                should.not.exist err
                 @remote.deleteFile.calledWith(doc).should.be.true()
                 done()
 
+
     describe 'folderAdded', ->
-        it 'calls addFolder on local and remote', (done) ->
+        it 'calls addFolder on local', (done) ->
             doc =
                 _id: 'foo/bar'
                 docType: 'folder'
+                sides:
+                    remote: 1
             @local  = addFolder: sinon.stub().yields()
-            @remote = addFolder: sinon.stub().yields()
+            @remote = {}
             @sync = new Sync @pouch, @local, @remote
             @sync.folderAdded doc, (err) =>
                 should.not.exist err
                 @local.addFolder.calledWith(doc).should.be.true()
-                @remote.addFolder.calledWith(doc).should.be.true()
                 done()
 
-    describe 'folderUpdated', ->
-        it 'calls updateFolder on local and remote', (done) ->
+        it 'calls addFolder on remote', (done) ->
             doc =
                 _id: 'foo/bar'
                 docType: 'folder'
+                sides:
+                    local: 1
+            @local  = {}
+            @remote = addFolder: sinon.stub().yields()
+            @sync = new Sync @pouch, @local, @remote
+            @sync.folderAdded doc, (err) =>
+                should.not.exist err
+                @remote.addFolder.calledWith(doc).should.be.true()
+                done()
+
+
+    describe 'folderUpdated', ->
+        it 'calls updateFolder on local', (done) ->
+            doc =
+                _id: 'foo/bar'
+                docType: 'folder'
+                sides:
+                    remote: 1
             @local  = updateFolder: sinon.stub().yields()
-            @remote = updateFolder: sinon.stub().yields()
+            @remote = {}
             @sync = new Sync @pouch, @local, @remote
             @sync.folderUpdated doc, (err) =>
                 should.not.exist err
                 @local.updateFolder.calledWith(doc).should.be.true()
-                @remote.updateFolder.calledWith(doc).should.be.true()
                 done()
 
-    describe 'folderMoved', ->
-        it 'calls moveFolder on local and remote', (done) ->
+        it 'calls updateFolder on remote', (done) ->
             doc =
                 _id: 'foo/bar'
                 docType: 'folder'
+                sides:
+                    local: 1
+            @local  = {}
+            @remote = updateFolder: sinon.stub().yields()
+            @sync = new Sync @pouch, @local, @remote
+            @sync.folderUpdated doc, (err) =>
+                should.not.exist err
+                @remote.updateFolder.calledWith(doc).should.be.true()
+                done()
+
+
+    describe 'folderMoved', ->
+        it 'calls moveFolder on local', (done) ->
+            doc =
+                _id: 'foo/bar'
+                docType: 'folder'
+                sides:
+                    remote: 1
             old =
                 _id: 'foo/baz'
                 docType: 'folder'
+                sides:
+                    local: 2
+                    remote: 1
             @local  = moveFolder: sinon.stub().yields()
-            @remote = moveFolder: sinon.stub().yields()
+            @remote = {}
             @sync = new Sync @pouch, @local, @remote
             @sync.folderMoved doc, old, (err) =>
                 should.not.exist err
                 @local.moveFolder.calledWith(doc, old).should.be.true()
-                @remote.moveFolder.calledWith(doc, old).should.be.true()
                 done()
 
-    describe 'folderDeleted', ->
-        it 'calls deleteFolder on local and remote', (done) ->
+        it 'calls moveFolder on remote', (done) ->
             doc =
                 _id: 'foo/bar'
                 docType: 'folder'
+                sides:
+                    local: 1
+            old =
+                _id: 'foo/baz'
+                docType: 'folder'
+                sides:
+                    local: 1
+                    remote: 2
+            @local  = {}
+            @remote = moveFolder: sinon.stub().yields()
+            @sync = new Sync @pouch, @local, @remote
+            @sync.folderMoved doc, old, (err) =>
+                should.not.exist err
+                @remote.moveFolder.calledWith(doc, old).should.be.true()
+                done()
+
+
+    describe 'folderDeleted', ->
+        it 'calls deleteFolder on local', (done) ->
+            doc =
+                _id: 'foo/bar'
+                docType: 'folder'
+                sides:
+                    remote: 1
             @local  = deleteFolder: sinon.stub().yields()
-            @remote = deleteFolder: sinon.stub().yields()
+            @remote = {}
             @sync = new Sync @pouch, @local, @remote
             @sync.folderDeleted doc, (err) =>
                 should.not.exist err
                 @local.deleteFolder.calledWith(doc).should.be.true()
+                done()
+
+        it 'calls deleteFolder on remote', (done) ->
+            doc =
+                _id: 'foo/bar'
+                docType: 'folder'
+                sides:
+                    local: 1
+            @local  = {}
+            @remote = deleteFolder: sinon.stub().yields()
+            @sync = new Sync @pouch, @local, @remote
+            @sync.folderDeleted doc, (err) =>
+                should.not.exist err
                 @remote.deleteFolder.calledWith(doc).should.be.true()
                 done()
