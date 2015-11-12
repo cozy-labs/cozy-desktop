@@ -106,6 +106,9 @@ class Sync
             else
                 log.debug "Applied #{change.seq}"
                 @pouch.setLocalSeq change.seq, callback
+                # TODO
+                # - update applying side rev number
+                # - save in place doc
 
     # If a file has been changed, we had to check what operation it is.
     # For a move, the first call will just keep a reference to the document,

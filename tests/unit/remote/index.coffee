@@ -41,8 +41,7 @@ describe 'Remote', ->
                 _id: 'pillow.jpg'
                 checksum: checksum
                 remote:
-                    binary:
-                        _id: checksum
+                    binary: checksum
             @remote.other =
                 createReadStream: (localDoc, callback) ->
                     localDoc.should.equal doc
@@ -167,6 +166,9 @@ describe 'Remote', ->
                     callback null, stream
             @remote.addFile doc, (err, created) =>
                 should.not.exist err
+                should.exist doc.remote._id
+                should.exist doc.remote._rev
+                should.exist doc.remote.binary
                 @couch.get created.id, (err, file) =>
                     should.not.exist err
                     file.should.have.properties

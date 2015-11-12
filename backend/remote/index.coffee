@@ -30,7 +30,7 @@ class Remote
     # Create a readable stream for the given doc
     createReadStream: (doc, callback) =>
         if doc.remote.binary?
-            @couch.downloadBinary doc.remote.binary._id, callback
+            @couch.downloadBinary doc.remote.binary, callback
         else
             callback new Error 'Cannot download the file'
 
@@ -84,7 +84,6 @@ class Remote
 
     # Create a file on the remote cozy instance
     # It can also be an overwrite of the file
-    # TODO save infos in pouch?
     addFile: (doc, callback) =>
         async.waterfall [
             # Create the binary doc if it doesn't exist
@@ -95,8 +94,13 @@ class Remote
             # Save the 'file' document in the remote couch
             (binaryDoc, next) =>
                 remoteDoc = @createRemoteDoc doc, binaryDoc
-                @couch.put remoteDoc, next
-
+                @couch.put remoteDoc, (err, created) ->
+                    unless err
+                        doc.remote =
+                            _id: created.id
+                            _rev: created.rev
+                            binary: binaryDoc._id
+                    next err, created
         ], callback
 
     # Create a folder on the remote cozy instance
