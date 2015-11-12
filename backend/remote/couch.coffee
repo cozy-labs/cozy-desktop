@@ -88,10 +88,11 @@ class Couch
         # TODO progress.showUpload filePath, streams.fileStream
 
     # Give a readable stream of a file stored on the remote couch
+    # TODO call the callback with an error when url gives a 404
     downloadBinary: (binaryId, callback) =>
-        url = "cozy/#{binaryId}/file"
-        log.info "Download #{url}"
-        @http.saveFileAsStream url, callback
+        urlPath = "cozy/#{binaryId}/file"
+        log.info "Download #{urlPath}"
+        @http.saveFileAsStream urlPath, callback
 
 
 module.exports = Couch

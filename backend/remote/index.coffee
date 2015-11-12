@@ -7,7 +7,14 @@ Couch   = require './couch'
 Watcher = require './watcher'
 
 
-# TODO when a file is removed, delete its binary if not used by another file
+# Remote is the class that coordinates the interaction with the remote cozy
+# instance. It uses a watcher for replicating changes from the remote cozy to
+# the local pouchdb. It also applies the changes from the local pouchdb to the
+# remote cozy.
+#
+# Please note that the structure of the documents in the remote couchdb and in
+# the local pouchdb are similar, but not exactly the same. A transformation is
+# needed in both ways.
 class Remote
     constructor: (@config, @merge, @pouch, @events) ->
         @couch = new Couch @config, @events
@@ -40,12 +47,13 @@ class Remote
         rev = null
         async.waterfall [
             (next) =>
+                # TODO no error if the binary already exists in the remote
                 @couch.put binary, next
             (created, next) =>
-                rev = created._rev
+                rev = created.rev
                 @other.createReadStream doc, next
             (stream, next) =>
-                @couch.uploadAsAttachment doc._id, rev, stream, next
+                @couch.uploadAsAttachment binary._id, rev, stream, next
         ], (err) ->
             if err and rev
                 @couch.remove binary._id, rev, -> callback err

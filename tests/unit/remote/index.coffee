@@ -1,3 +1,4 @@
+crypto   = require 'crypto'
 fs       = require 'fs'
 sinon    = require 'sinon'
 should   = require 'should'
@@ -11,6 +12,8 @@ couchHelpers  = require '../../helpers/couch'
 
 
 describe 'Remote', ->
+
+    @timeout 5000
 
     before 'instanciate config', configHelpers.createConfig
     before 'instanciate pouch', pouchHelpers.createDatabase
@@ -30,17 +33,40 @@ describe 'Remote', ->
             should.exist @remote.watcher
 
 
-    describe 'start', ->
-        it 'TODO'
-
-
     describe 'createReadStream', ->
-        it 'TODO'
+        it 'create a readable stream from a remote binary', (done) ->
+            checksum = '53a547469e98b667671803adc814d6d1376fae6b'
+            fixture = 'tests/fixtures/cool-pillow.jpg'
+            doc =
+                _id: 'pillow.jpg'
+                checksum: checksum
+                remote:
+                    binary:
+                        _id: checksum
+            @remote.other =
+                createReadStream: (localDoc, callback) ->
+                    localDoc.should.equal doc
+                    stream = fs.createReadStream fixture
+                    callback null, stream
+            @remote.uploadBinary doc, (err, binary) =>
+                should.not.exist err
+                binary._id.should.equal checksum
+                @remote.createReadStream doc, (err, stream) ->
+                    should.not.exist err
+                    should.exist stream
+                    checksum = crypto.createHash 'sha1'
+                    checksum.setEncoding 'hex'
+                    stream.pipe checksum
+                    stream.on 'end', ->
+                        checksum.end()
+                        checksum.read().should.equal doc.checksum
+                        done()
+
+                    w = fs.createWriteStream 'tmp/stream.jpg'
+                    stream.pipe w
 
 
     describe 'uploadBinary', ->
-        @timeout 5000
-
         it 'creates a remote binary document', (done) ->
             checksum = 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
             fixture = 'tests/fixtures/chat-mignon.jpg'
@@ -55,8 +81,14 @@ describe 'Remote', ->
             @remote.uploadBinary doc, (err, binary) =>
                 should.not.exist err
                 binary._id.should.equal checksum
-                @remote.couch.get binary._id, (err, binaryDoc) ->
+                @remote.couch.get checksum, (err, binaryDoc) ->
                     should.not.exist err
+                    binaryDoc.should.have.properties
+                        _id: checksum
+                        checksum: checksum
+                        docType: 'Binary'
+                    should.exist binaryDoc._attachments
+                    binaryDoc._attachments.file.length.should.equal 29865
                     done()
 
 
@@ -119,7 +151,36 @@ describe 'Remote', ->
 
 
     describe 'addFile', ->
-        it 'TODO'
+        it 'adds a file to couchdb', (done) ->
+            checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
+            doc =
+                _id: 'cat2.jpg'
+                docType: 'file'
+                checksum: checksum
+                creationDate: new Date()
+                lastModification: new Date()
+                size: 36901
+            fixture = 'tests/fixtures/chat-mignon-mod.jpg'
+            @remote.other =
+                createReadStream: (localDoc, callback) ->
+                    stream = fs.createReadStream fixture
+                    callback null, stream
+            @remote.addFile doc, (err, created) =>
+                should.not.exist err
+                @couch.get created.id, (err, file) =>
+                    should.not.exist err
+                    file.should.have.properties
+                        path: ''
+                        name: 'cat2.jpg'
+                        docType: 'file'
+                        creationDate: doc.creationDate.toISOString()
+                        lastModification: doc.lastModification.toISOString()
+                        size: 36901
+                    should.exist file.binary.file.id
+                    @couch.get file.binary.file.id, (err, binary) ->
+                        should.not.exist err
+                        binary.checksum.should.equal checksum
+                        done()
 
 
     describe 'addFolder', ->
