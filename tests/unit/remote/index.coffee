@@ -297,7 +297,49 @@ describe 'Remote', ->
 
 
     describe 'moveFile', ->
-        it 'TODO'
+        it 'moves the file', (done) ->
+            checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
+            binary =
+                _id: checksum
+                _rev: '1-0123456789'
+            old =
+                _id: 'cat6.jpg'
+                docType: 'file'
+                checksum: checksum
+                creationDate: new Date()
+                lastModification: new Date()
+                size: 36901
+            doc =
+                _id: 'moved-to/cat7.jpg'
+                docType: 'file'
+                checksum: checksum
+                creationDate: new Date()
+                lastModification: new Date()
+                size: 36901
+            remoteDoc = @remote.createRemoteDoc old, binary
+            @couch.put remoteDoc, (err, created) =>
+                should.not.exist err
+                old.remote =
+                    _id: created.id
+                    _rev: created.rev
+                    binary: checksum
+                @remote.moveFile doc, old, (err, moved) =>
+                    should.not.exist err
+                    moved.id.should.equal old.remote._id
+                    moved.rev.should.not.equal old.remote._rev
+                    @couch.get moved.id, (err, file) ->
+                        should.not.exist err
+                        file.should.have.properties
+                            path: 'moved-to'
+                            name: 'cat7.jpg'
+                            docType: 'file'
+                            lastModification: doc.lastModification.toISOString()
+                            size: 36901
+                            binary:
+                                file:
+                                    id: binary._id
+                                    rev: binary._rev
+                        done()
 
 
     describe 'moveFolder', ->

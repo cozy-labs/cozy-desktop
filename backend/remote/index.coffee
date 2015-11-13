@@ -143,8 +143,23 @@ class Remote
 
     # Move a file on the remote cozy instance
     moveFile: (doc, old, callback) ->
-        # TODO
-        callback()
+        if old.remote
+            @couch.get old.remote._id, (err, remoteDoc) =>
+                if err
+                    @addFile doc, callback
+                else
+                    remoteDoc.path = path.dirname doc._id
+                    remoteDoc.name = path.basename doc._id
+                    remoteDoc.lastModification = doc.lastModification
+                    @couch.put remoteDoc, (err, moved) ->
+                        unless err
+                            doc.remote =
+                                _id: moved.id
+                                _rev: moved.rev
+                                binary: old.remote.binary
+                        callback err, moved
+        else
+            @addFile doc, callback
 
     # Move a folder on the remote cozy instance
     moveFolder: (doc, old, callback) =>
