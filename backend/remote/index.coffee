@@ -111,10 +111,14 @@ class Remote
         ], callback
 
     # Create a folder on the remote cozy instance
-    # TODO save remote id and rev in pouch
     addFolder: (doc, callback) =>
         folder = @createRemoteDoc doc
-        @couch.put folder, callback
+        @couch.put folder, (err, created) ->
+            unless err
+                doc.remote =
+                    _id: created.id
+                    _rev: created.rev
+            callback err, created
 
     # TODO
     updateFile: (doc, callback) ->
@@ -131,7 +135,9 @@ class Remote
                     # TODO Or folder._rev != doc.remote._rev
                     folder.tags = doc.tags
                     folder.lastModification = doc.lastModification
-                    @couch.put folder, callback
+                    @couch.put folder, (err, updated) ->
+                        doc.remote._rev = updated.rev unless err
+                        callback err, updated
         else
             @addFolder doc, callback
 
@@ -158,12 +164,22 @@ class Remote
             @addFolder doc, callback
 
     # Delete a file on the remote cozy instance
-    # TODO delete the corresponding binary
     deleteFile: (doc, callback) =>
-        if doc.remote
-            @couch.remove doc.remote._id, doc.remote._rev, callback
-        else
-            callback()
+        return callback() unless doc.remote
+        @couch.remove doc.remote._id, doc.remote._rev, (err, removed) =>
+            if err
+                callback err, removed
+            else
+                @pouch.byChecksum doc.checksum, (err, files) =>
+                    if files?.length is 0
+                        @couch.get doc.remote.binary, (err, binary) =>
+                            if err
+                                callback null, removed
+                            else
+                                @couch.remove binary.id, binary.rev, (err) ->
+                                    callback null, removed
+                    else
+                        callback null, removed
 
     # Delete a folder on the remote cozy instance
     deleteFolder: (doc, callback) =>

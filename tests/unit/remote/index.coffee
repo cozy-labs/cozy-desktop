@@ -242,6 +242,8 @@ describe 'Remote', ->
                 lastModification: new Date()
             @remote.addFolder doc, (err, created) =>
                 should.not.exist err
+                should.exist doc.remote._id
+                should.exist doc.remote._rev
                 @couch.get created.id, (err, folder) ->
                     should.not.exist err
                     folder.should.have.properties
@@ -268,9 +270,10 @@ describe 'Remote', ->
                     remote:
                         _id: created.id
                         _rev: created.rev
-                @remote.updateFolder doc, (err, created) =>
+                @remote.updateFolder doc, (err, updated) =>
                     should.not.exist err
-                    @couch.get created.id, (err, folder) ->
+                    doc.remote._rev.should.not.equal created.rev
+                    @couch.get updated.id, (err, folder) ->
                         should.not.exist err
                         folder.should.have.properties
                             path: 'couchdb-folder'
@@ -354,13 +357,13 @@ describe 'Remote', ->
 
     describe 'deleteFile', ->
         it 'deletes a file in couchdb', (done) ->
-            couchHelpers.createFile @couch, 9, (err, file) =>
+            couchHelpers.createFile @couch, 8, (err, file) =>
                 should.not.exist err
                 doc =
-                    _id: 'couchdb-folder/file-9'
+                    _id: 'couchdb-folder/file-8'
                     _deleted: true
                     docType: 'file'
-                    checksum: "1111111111111111111111111111111111111129"
+                    checksum: '1111111111111111111111111111111111111128'
                     remote:
                         _id: file.id
                         _rev: file.rev
@@ -369,6 +372,29 @@ describe 'Remote', ->
                     @remote.deleteFile doc, (err) =>
                         should.not.exist err
                         @couch.get doc.remote._id, (err) ->
+                            err.status.should.equal 404
+                            done()
+
+        it 'deletes also the associated binary', (done) ->
+            couchHelpers.createFile @couch, 9, (err, file) =>
+                should.not.exist err
+                doc =
+                    _id: 'couchdb-folder/file-9'
+                    _deleted: true
+                    docType: 'file'
+                    checksum: '1111111111111111111111111111111111111129'
+                    remote:
+                        _id: file.id
+                        _rev: file.rev
+                binary =
+                    _id: doc.checksum
+                    checksum: doc.checksum
+                @couch.put binary, (err) =>
+                    should.not.exist err
+                    doc.remote.binary = binary.id
+                    @remote.deleteFile doc, (err) =>
+                        should.not.exist err
+                        @couch.get binary.id, (err) ->
                             err.status.should.equal 404
                             done()
 
