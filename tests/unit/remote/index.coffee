@@ -90,6 +90,16 @@ describe 'Remote', ->
                     binaryDoc._attachments.file.length.should.equal 29865
                     done()
 
+        it 'does not reupload an existing file', (done) ->
+            checksum = 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+            doc =
+                _id: 'chat-bis.jpg'
+                checksum: checksum
+            @remote.uploadBinary doc, (err, binary) ->
+                should.not.exist err
+                binary._id.should.equal checksum
+                done()
+
 
     describe 'createRemoteDoc', ->
         it 'transforms a local file in remote file', ->
@@ -182,6 +192,44 @@ describe 'Remote', ->
                     @couch.get file.binary.file.id, (err, binary) ->
                         should.not.exist err
                         binary.checksum.should.equal checksum
+                        done()
+
+        it 'does not reupload an existing file', (done) ->
+            checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
+            doc =
+                _id: 'backup/cat3.jpg'
+                docType: 'file'
+                checksum: checksum
+                creationDate: new Date()
+                lastModification: new Date()
+                size: 36901
+            same =
+                _id: 'original/cat3.jpg'
+                docType: 'file'
+                checksum: checksum
+                creationDate: new Date()
+                lastModification: new Date()
+                size: 36901
+                remote:
+                    _id: '05161241-ca73'
+                    _rev: '1-abcdef'
+                    binary: checksum
+            @pouch.db.put same, (err) =>
+                should.not.exist err
+                @remote.addFile doc, (err, created) =>
+                    should.not.exist err
+                    should.exist doc.remote._id
+                    should.exist doc.remote._rev
+                    should.exist doc.remote.binary
+                    @couch.get created.id, (err, file) ->
+                        should.not.exist err
+                        file.should.have.properties
+                            path: 'backup'
+                            name: 'cat3.jpg'
+                            docType: 'file'
+                            creationDate: doc.creationDate.toISOString()
+                            lastModification: doc.lastModification.toISOString()
+                            size: 36901
                         done()
 
 

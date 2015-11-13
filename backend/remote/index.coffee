@@ -47,7 +47,6 @@ class Remote
         rev = null
         async.waterfall [
             (next) =>
-                # TODO no error if the binary already exists in the remote
                 @couch.put binary, next
             (created, next) =>
                 rev = created.rev
@@ -57,6 +56,8 @@ class Remote
         ], (err) ->
             if err and rev
                 @couch.remove binary._id, rev, -> callback err
+            else if err and err.status is 409
+                callback null, binary
             else
                 callback err, binary
 
@@ -86,10 +87,16 @@ class Remote
     # It can also be an overwrite of the file
     addFile: (doc, callback) =>
         async.waterfall [
-            # Create the binary doc if it doesn't exist
+            # Find or create the binary doc
             (next) =>
-                # TODO check if the binary already exists in pouchdb
-                @uploadBinary doc, next
+                @pouch.byChecksum doc.checksum, (err, files) =>
+                    binaryId = false
+                    for file in files or []
+                        binaryId = file.remote.binary if file.remote?
+                    if binaryId
+                        next null, _id: binaryId
+                    else
+                        @uploadBinary doc, next
 
             # Save the 'file' document in the remote couch
             (binaryDoc, next) =>
