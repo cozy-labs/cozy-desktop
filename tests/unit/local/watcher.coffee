@@ -10,7 +10,7 @@ pouchHelpers  = require '../../helpers/pouch'
 
 
 describe "LocalWatcher Tests", ->
-    @timeout 5000
+    @timeout 10000
 
     before 'instanciate config', configHelpers.createConfig
     before 'instanciate pouch', pouchHelpers.createDatabase

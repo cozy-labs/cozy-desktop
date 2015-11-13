@@ -13,8 +13,6 @@ couchHelpers  = require '../../helpers/couch'
 
 describe 'Remote', ->
 
-    @timeout 5000
-
     before 'instanciate config', configHelpers.createConfig
     before 'instanciate pouch', pouchHelpers.createDatabase
     before 'start couch server', couchHelpers.startServer
@@ -60,9 +58,6 @@ describe 'Remote', ->
                         checksum.end()
                         checksum.read().should.equal doc.checksum
                         done()
-
-                    w = fs.createWriteStream 'tmp/stream.jpg'
-                    stream.pipe w
 
 
     describe 'uploadBinary', ->

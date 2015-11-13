@@ -113,6 +113,9 @@ class Sync
     # If a file has been changed, we had to check what operation it is.
     # For a move, the first call will just keep a reference to the document,
     # and only at the second call, the move operation will be executed.
+    #
+    # TODO we should first select a side, then load last rev for this side
+    # and finally decide which action to take
     fileChanged: (doc, callback) =>
         if @moveFrom
             [from, @moveFrom] = [@moveFrom, null]
@@ -134,6 +137,7 @@ class Sync
         else if @pouch.extractRevNumber(doc) is 1
             @fileAdded doc, callback
         else
+            # TODO metadata update and overwrite should be 2 separate actions
             @fileUpdated doc, callback
 
     # Same as fileChanged, but for folder

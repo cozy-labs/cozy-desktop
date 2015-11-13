@@ -5,7 +5,7 @@ set -e
 export NODE_ENV=test
 export DEFAULT_DIR=tmp
 
-BIN='mocha --reporter spec --compilers coffee:coffee-script/register '
+BIN='mocha -t 5000 --reporter spec --compilers coffee:coffee-script/register '
 
 $BIN tests/unit/{,local/,remote/}*.coffee
 

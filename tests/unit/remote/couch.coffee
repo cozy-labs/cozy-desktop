@@ -9,7 +9,6 @@ Couch = require '../../../backend/remote/couch'
 
 
 describe "Couch", ->
-    @timeout 4000
 
     before 'instanciate config', configHelpers.createConfig
     before 'start couch server', couchHelpers.startServer
