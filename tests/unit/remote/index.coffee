@@ -39,7 +39,9 @@ describe 'Remote', ->
                 _id: 'pillow.jpg'
                 checksum: checksum
                 remote:
-                    binary: checksum
+                    binary:
+                        _id: checksum
+                        _rev: '1-01234'
             @remote.other =
                 createReadStream: (localDoc, callback) ->
                     localDoc.should.equal doc
@@ -163,7 +165,9 @@ describe 'Remote', ->
                 remote:
                     _id: 'fc4de46b9b42aaeb23521ff42e23a18e7a812bda'
                     _rev: '1-951357'
-                    binary: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+                    binary:
+                        _id: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+                        _rev: '1-456951'
             doc = @remote.createRemoteDoc local
             doc.should.have.properties
                 _id: local.remote._id
@@ -173,6 +177,10 @@ describe 'Remote', ->
                 docType: 'file'
                 lastModification: "2015-11-12T13:14:32.384Z"
                 creationDate: "2015-11-12T13:14:32.384Z"
+                binary:
+                    file:
+                        id: local.remote.binary._id
+                        rev: local.remote.binary._rev
 
 
     describe 'cleanBinary', ->
@@ -269,7 +277,9 @@ describe 'Remote', ->
                 remote:
                     _id: '05161241-ca73'
                     _rev: '1-abcdef'
-                    binary: checksum
+                    binary:
+                        _id: checksum
+                        _rev: '1-951456'
             @pouch.db.put same, (err) =>
                 should.not.exist err
                 @remote.addFile doc, (err, created) =>
@@ -323,7 +333,9 @@ describe 'Remote', ->
                     remote:
                         _id: created.id
                         _rev: created.rev
-                        binary: '1111111111111111111111111111111111111126'
+                        binary:
+                            _id: '1111111111111111111111111111111111111126'
+                            _rev: '1-852147'
                 @remote.overwriteFile doc, (err) =>
                     should.not.exist err
                     @couch.get doc.remote._id, (err, file) =>
@@ -335,7 +347,9 @@ describe 'Remote', ->
                             name: 'file-6'
                             lastModification: doc.lastModification
                         doc.remote._rev.should.equal file._rev
-                        doc.remote.binary.should.equal doc.checksum
+                        doc.remote.binary.should.have.properties
+                            _id: doc.checksum
+                            _rev: file.binary.file.rev
                         file.binary.file.id.should.equal doc.checksum
                         @couch.get file.binary.file.id, (err, binary) ->
                             should.not.exist err
@@ -355,6 +369,9 @@ describe 'Remote', ->
                     remote:
                         _id: created.id
                         _rev: created.rev
+                        binary:
+                            _id: '1111111111111111111111111111111111111127'
+                            _rev: '1-852654'
                 @remote.updateFileMetadata doc, (err) =>
                     should.not.exist err
                     @couch.get doc.remote._id, (err, file) ->
@@ -365,6 +382,10 @@ describe 'Remote', ->
                             path: 'couchdb-folder'
                             name: 'file-7'
                             lastModification: doc.lastModification
+                            binary:
+                                file:
+                                    id: doc.remote.binary._id
+                                    rev: doc.remote.binary._rev
                         doc.remote._rev.should.equal file._rev
                         done()
 
@@ -437,7 +458,9 @@ describe 'Remote', ->
                 old.remote =
                     _id: created.id
                     _rev: created.rev
-                    binary: checksum
+                    binary:
+                        _id: checksum
+                        _rev: binary._rev
                 @remote.moveFile doc, old, (err, moved) =>
                     should.not.exist err
                     moved.id.should.equal old.remote._id
@@ -519,6 +542,9 @@ describe 'Remote', ->
                     remote:
                         _id: file.id
                         _rev: file.rev
+                        binary:
+                            _id: '1111111111111111111111111111111111111128'
+                            _rev: '1-754123'
                 @couch.get doc.remote._id, (err) =>
                     should.not.exist err
                     @remote.deleteFile doc, (err) =>
@@ -538,12 +564,17 @@ describe 'Remote', ->
                     remote:
                         _id: file.id
                         _rev: file.rev
+                        binary:
+                            _id: '1111111111111111111111111111111111111129'
+                            _rev: '1-954862'
                 binary =
                     _id: doc.checksum
                     checksum: doc.checksum
-                @couch.put binary, (err) =>
+                @couch.put binary, (err, uploaded) =>
                     should.not.exist err
-                    doc.remote.binary = binary._id
+                    doc.remote.binary =
+                        _id: uploaded.id
+                        _rev: uploaded.rev
                     @remote.deleteFile doc, (err) =>
                         should.not.exist err
                         @couch.get binary._id, (err) ->

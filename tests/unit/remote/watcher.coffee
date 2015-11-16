@@ -88,7 +88,9 @@ describe "RemoteWatcher Tests", ->
                     remote:
                         _id: doc._id
                         _rev: doc._rev
-                        binary: doc.binary.file.id
+                        binary:
+                            _id: doc.binary.file.id
+                            _rev: doc.binary.file.rev
                 args[1].should.not.have.properties ['_rev', 'path', 'name']
                 done()
 
@@ -119,7 +121,9 @@ describe "RemoteWatcher Tests", ->
                     remote:
                         _id: doc._id
                         _rev: doc._rev
-                        binary: doc.binary.file.id
+                        binary:
+                            _id: doc.binary.file.id
+                            _rev: doc.binary.file.rev
                 args[1].should.not.have.properties ['_rev', 'path', 'name']
                 done()
 
@@ -150,7 +154,9 @@ describe "RemoteWatcher Tests", ->
                     remote:
                         _id: doc._id
                         _rev: doc._rev
-                        binary: doc.binary.file.id
+                        binary:
+                            _id: doc.binary.file.id
+                            _rev: doc.binary.file.rev
                 args[1].should.not.have.properties ['_rev', 'path', 'name']
                 done()
 
@@ -190,7 +196,9 @@ describe "RemoteWatcher Tests", ->
                     remote:
                         _id: doc._id
                         _rev: doc._rev
-                        binary: doc.binary.file.id
+                        binary:
+                            _id: doc.binary.file.id
+                            _rev: doc.binary.file.rev
                 dst.should.not.have.properties ['_rev', 'path', 'name']
                 done()
 
@@ -228,7 +236,9 @@ describe "RemoteWatcher Tests", ->
                     remote:
                         _id: doc._id
                         _rev: doc._rev
-                        binary: doc.binary.file.id
+                        binary:
+                            _id: doc.binary.file.id
+                            _rev: doc.binary.file.rev
                 dst.should.not.have.properties ['_rev', 'path', 'name']
                 done()
 
@@ -263,7 +273,9 @@ describe "RemoteWatcher Tests", ->
                     remote:
                         _id: doc._id
                         _rev: doc._rev
-                        binary: doc.binary.file.id
+                        binary:
+                            _id: doc.binary.file.id
+                            _rev: doc.binary.file.rev
                 args[1].should.not.have.properties ['_rev', 'path', 'name']
                 done()
 

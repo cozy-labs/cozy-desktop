@@ -30,7 +30,7 @@ class Remote
     # Create a readable stream for the given doc
     createReadStream: (doc, callback) =>
         if doc.remote.binary?
-            @couch.downloadBinary doc.remote.binary, callback
+            @couch.downloadBinary doc.remote.binary._id, callback
         else
             callback new Error 'Cannot download the file'
 
@@ -44,18 +44,17 @@ class Remote
             _id: doc.checksum
             docType: 'Binary'
             checksum: doc.checksum
-        rev = null
         async.waterfall [
             (next) =>
                 @couch.put binary, next
             (created, next) =>
-                rev = created.rev
+                binary._rev = created.rev
                 @other.createReadStream doc, next
             (stream, next) =>
-                @couch.uploadAsAttachment binary._id, rev, stream, next
+                @couch.uploadAsAttachment binary._id, binary._rev, stream, next
         ], (err) ->
-            if err and rev
-                @couch.remove binary._id, rev, -> callback err
+            if err and binary._rev
+                @couch.remove binary._id, binary._rev, -> callback err
             else if err and err.status is 409
                 callback null, binary
             else
@@ -79,6 +78,11 @@ class Remote
                 file:
                     id:  binary._id
                     rev: binary._rev
+        else if local.remote?.binary
+            doc.binary =
+                file:
+                    id:  local.remote.binary._id
+                    rev: local.remote.binary._rev
         return doc
 
     # Remove the binary if it is no longer referenced
@@ -103,12 +107,11 @@ class Remote
             # Find or create the binary doc
             (next) =>
                 @pouch.byChecksum doc.checksum, (err, files) =>
-                    binaryId = false
+                    binary = null
                     for file in files or []
-                        binaryId = file.remote.binary if file.remote?
-                    if binaryId
-                        # TODO what about _rev?
-                        next null, _id: binaryId
+                        binary = file.remote.binary if file.remote?
+                    if binary
+                        next null, binary
                     else
                         @uploadBinary doc, next
 
@@ -118,9 +121,11 @@ class Remote
                 @couch.put remoteDoc, (err, created) ->
                     unless err
                         doc.remote =
-                            _id: created.id
+                            _id:  created.id
                             _rev: created.rev
-                            binary: binaryDoc._id
+                            binary:
+                                _id:  binaryDoc._id
+                                _rev: binaryDoc._rev
                     next err, created
         ], callback
 
@@ -130,13 +135,13 @@ class Remote
         @couch.put folder, (err, created) ->
             unless err
                 doc.remote =
-                    _id: created.id
+                    _id:  created.id
                     _rev: created.rev
             callback err, created
 
     # Overwrite a file
     overwriteFile: (doc, callback) ->
-        binaryId = doc.remote.binary
+        binaryId = doc.remote.binary._id
         @addFile doc, (err, created) =>
             if err
                 callback err, created
@@ -147,9 +152,7 @@ class Remote
     # Update the metadata of a file
     updateFileMetadata: (doc, callback) ->
         if doc.remote
-            # TODO what about _rev?
-            binaryDoc = _id: doc.remote.binary
-            remoteDoc = @createRemoteDoc doc, binaryDoc
+            remoteDoc = @createRemoteDoc doc, doc.remote.binary
             @couch.put remoteDoc, (err, updated) ->
                 doc.remote._rev = updated.rev unless err
                 callback err, updated
@@ -217,7 +220,7 @@ class Remote
             if err
                 callback err, removed
             else
-                @cleanBinary doc.remote.binary, (err) ->
+                @cleanBinary doc.remote.binary._id, (err) ->
                     callback null, removed
 
     # Delete a folder on the remote cozy instance
