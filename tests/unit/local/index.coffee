@@ -32,10 +32,6 @@ describe 'Local', ->
             @local.tmpPath.should.equal tmpPath
 
 
-    describe 'start', ->
-        it 'TODO'
-
-
     describe 'createReadStream', ->
         it 'throws an error if no file for this document', (done) ->
             doc = _id: 'no-such-file'
@@ -213,21 +209,50 @@ describe 'Local', ->
                 done()
 
 
-    describe 'updateFile', ->
-        it 'calls addFile for an overwrite', (done) ->
+    describe 'overwriteFile', ->
+        it 'writes the new content of a file', (done) ->
             doc =
                 _id: 'a-file-to-overwrite'
                 docType: 'file'
-                checksum: 'abfcfb0dfcfdb36deb1187b456e575472661f97a'
-                lastModification: new Date
-            sinon.stub(@local, 'addFile').yields()
-            @local.updateFile doc, (err) =>
+                lastModification: new Date '2015-10-09T05:06:07Z'
+                checksum: '98765'
+            @local.other =
+                createReadStream: (docToStream, callback) ->
+                    docToStream.should.equal doc
+                    stream = new Readable
+                    stream._read = ->
+                    setTimeout ->
+                        stream.push 'Hello world'
+                        stream.push null
+                    , 100
+                    callback null, stream
+            filePath = path.join @basePath, doc._id
+            fs.writeFileSync filePath, 'old content'
+            @local.overwriteFile doc, (err) =>
+                @local.other = null
                 should.not.exist err
-                @local.addFile.calledWith(doc).should.be.true()
-                @local.addFile.restore()
+                fs.statSync(filePath).isFile().should.be.true()
+                content = fs.readFileSync(filePath, encoding: 'utf-8')
+                content.should.equal 'Hello world'
+                mtime = +fs.statSync(filePath).mtime
+                mtime.should.equal +doc.lastModification
                 done()
 
-        it 'updates metadata'
+
+    describe 'updateFileMetadata', ->
+        it 'updates metadata', (done) ->
+            doc =
+                _id: 'file-to-update'
+                docType: 'file'
+                lastModification: new Date '2015-11-10T05:06:07Z'
+            filePath = path.join @basePath, doc._id
+            fs.ensureFileSync filePath
+            @local.updateFileMetadata doc, (err) ->
+                should.not.exist err
+                fs.existsSync(filePath).should.be.true()
+                mtime = +fs.statSync(filePath).mtime
+                mtime.should.equal +doc.lastModification
+                done()
 
 
     describe 'updateFolder', ->
