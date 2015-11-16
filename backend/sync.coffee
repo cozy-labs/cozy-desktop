@@ -7,10 +7,10 @@ log   = require('printit')
 # remote sides to apply the changes on the filesystem and remote CouchDB
 # respectively.
 #
-# TODO find a better name that Sync
+# TODO handle an offline mode
 class Sync
 
-    constructor: (@pouch, @local, @remote, @events) ->
+    constructor: (@pouch, @local, @remote) ->
         @local.other = @remote
         @remote.other = @local
 
@@ -34,13 +34,9 @@ class Sync
             if err
                 callback err
             else
-                @events.emit 'firstMetadataSyncDone'
-                # TODO queue.makeFSSimilarToDB syncToCozy, (err) ->
                 async.forever @sync, callback
 
     # Start taking changes from pouch and applying them
-    # TODO find a way to emit 'firstSyncDone'
-    # TODO handle an offline mode
     sync: (callback) =>
         @pop (err, change) =>
             if err
@@ -51,11 +47,8 @@ class Sync
     # Take the next change from pouch
     # We filter with the byPath view to reject design documents
     #
-    # Note: it is really difficult to pick only one change at a time
-    # because pouch can emit several docs in a row and limit: 1 seems
-    # to be not effective!
-    #
-    # TODO look also to the retry queue for failures
+    # Note: it is difficult to pick only one change at a time because pouch can
+    # emit several docs in a row, and `limit: 1` seems to be not effective!
     pop: (callback) =>
         done = false
         @pouch.getLocalSeq (err, seq) =>

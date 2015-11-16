@@ -16,10 +16,10 @@ Watcher = require './watcher'
 # the local pouchdb are similar, but not exactly the same. A transformation is
 # needed in both ways.
 class Remote
-    constructor: (@config, @merge, @pouch, @events) ->
-        @couch = new Couch @config, @events
+    constructor: (@config, @merge, @pouch) ->
+        @couch   = new Couch @config
         @watcher = new Watcher @couch, @merge, @pouch
-        @other = null
+        @other   = null
 
     # Start initial replication + watching changes in live
     start: (done) =>

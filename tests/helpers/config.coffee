@@ -1,4 +1,3 @@
-EventEmitter = require('events').EventEmitter
 fs   = require 'fs-extra'
 del  = require 'del'
 path = require 'path'
@@ -20,6 +19,3 @@ module.exports =
 
     cleanConfig: ->
         del.sync @basePath
-
-    createEvents: ->
-        @events = new EventEmitter

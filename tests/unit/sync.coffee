@@ -12,7 +12,6 @@ pouchHelpers  = require '../helpers/pouch'
 describe "Sync", ->
 
     before 'instanciate config', configHelpers.createConfig
-    before 'instanciate events', configHelpers.createEvents
     before 'instanciate pouch', pouchHelpers.createDatabase
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
@@ -22,7 +21,7 @@ describe "Sync", ->
         beforeEach 'instanciate sync', ->
             @local  = start: sinon.stub().yields()
             @remote = start: sinon.stub().yields()
-            @sync = new Sync @pouch, @local, @remote, @events
+            @sync = new Sync @pouch, @local, @remote
             @sync.sync = sinon.stub().yields 'stopped'
 
         it 'starts the metadata replication of remote in read only', (done) ->

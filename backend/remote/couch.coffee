@@ -20,7 +20,7 @@ class Couch
     @newId: ->
         uuid.v4().replace /-/g, ''
 
-    constructor: (@config, @events) ->
+    constructor: (@config) ->
         device  = @config.getDevice()
         options = @config.augmentCouchOptions
             auth:

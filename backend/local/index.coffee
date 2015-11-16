@@ -9,11 +9,11 @@ Watcher = require './watcher'
 
 # TODO comments, tests
 class Local
-    constructor: (config, @merge, @pouch, @events) ->
+    constructor: (config, @merge, @pouch) ->
         @basePath = config.getDevice().path
         @tmpPath  = path.join @basePath, ".cozy-desktop"
-        @watcher  = new Watcher @basePath, @merge, @pouch, @events
-        @other = null
+        @watcher  = new Watcher @basePath, @merge, @pouch
+        @other    = null
 
     # Start initial replication + watching changes in live
     start: (done) =>
