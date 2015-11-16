@@ -153,6 +153,27 @@ describe 'Remote', ->
                 name: 'in-root-folder'
                 docType: 'folder'
 
+        it 'transforms an existing local file in remote file', ->
+            local =
+                _id: 'foo/bar/baz.jpg'
+                docType: 'file'
+                lastModification: "2015-11-12T13:14:32.384Z"
+                creationDate: "2015-11-12T13:14:32.384Z"
+                checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+                remote:
+                    _id: 'fc4de46b9b42aaeb23521ff42e23a18e7a812bda'
+                    _rev: '1-951357'
+                    binary: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+            doc = @remote.createRemoteDoc local
+            doc.should.have.properties
+                _id: local.remote._id
+                _rev: local.remote._rev
+                path: 'foo/bar'
+                name: 'baz.jpg'
+                docType: 'file'
+                lastModification: "2015-11-12T13:14:32.384Z"
+                creationDate: "2015-11-12T13:14:32.384Z"
+
 
     describe 'cleanBinary', ->
         it 'deletes the binary if no longer referenced', (done) ->
@@ -290,8 +311,62 @@ describe 'Remote', ->
                     done()
 
 
-    describe 'updateFile', ->
-        it 'TODO'
+    describe 'overwriteFile', ->
+        it 'overwrites the binary content', (done) ->
+            couchHelpers.createFile @couch, 6, (err, created) =>
+                should.not.exist err
+                doc =
+                    _id: 'couchdb-folder/file-6'
+                    docType: 'file'
+                    checksum: '9999999999999999999999999999999999999926'
+                    lastModification: '2015-11-16T16:12:01.002Z'
+                    remote:
+                        _id: created.id
+                        _rev: created.rev
+                        binary: '1111111111111111111111111111111111111126'
+                @remote.overwriteFile doc, (err) =>
+                    should.not.exist err
+                    @couch.get doc.remote._id, (err, file) =>
+                        should.not.exist err
+                        file.should.have.properties
+                            _id: created.id
+                            docType: 'file'
+                            path: 'couchdb-folder'
+                            name: 'file-6'
+                            lastModification: doc.lastModification
+                        doc.remote._rev.should.equal file._rev
+                        doc.remote.binary.should.equal doc.checksum
+                        file.binary.file.id.should.equal doc.checksum
+                        @couch.get file.binary.file.id, (err, binary) ->
+                            should.not.exist err
+                            binary.checksum.should.equal doc.checksum
+                            done()
+
+
+    describe 'updateFileMetadata', ->
+        it 'updates the lastModification', (done) ->
+            couchHelpers.createFile @couch, 7, (err, created) =>
+                should.not.exist err
+                doc =
+                    _id: 'couchdb-folder/file-7'
+                    docType: 'file'
+                    checksum: '1111111111111111111111111111111111111127'
+                    lastModification: '2015-11-16T16:13:01.001Z'
+                    remote:
+                        _id: created.id
+                        _rev: created.rev
+                @remote.updateFileMetadata doc, (err) =>
+                    should.not.exist err
+                    @couch.get doc.remote._id, (err, file) ->
+                        should.not.exist err
+                        file.should.have.properties
+                            _id: created.id
+                            docType: 'file'
+                            path: 'couchdb-folder'
+                            name: 'file-7'
+                            lastModification: doc.lastModification
+                        doc.remote._rev.should.equal file._rev
+                        done()
 
 
     describe 'updateFolder', ->

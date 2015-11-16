@@ -64,13 +64,14 @@ class Remote
     # Transform a local document in a remote one, with optional binary ref
     createRemoteDoc: (local, binary) ->
         doc =
-            _id: local._id or Couch.newId()
+            _id: local.remote?._id or Couch.newId()
             docType: local.docType
             path: path.dirname local._id
             name: path.basename local._id
             creationDate: local.creationDate
             lastModification: local.lastModification
         doc.path = '' if doc.path is '.'
+        doc._rev = local.remote._rev if local.remote
         for field in ['size', 'class', 'mime', 'tags']
             doc[field] = local[field] if local[field]
         if binary
@@ -133,9 +134,27 @@ class Remote
                     _rev: created.rev
             callback err, created
 
-    # TODO
-    updateFile: (doc, callback) ->
-        callback()
+    # Overwrite a file
+    overwriteFile: (doc, callback) ->
+        binaryId = doc.remote.binary
+        @addFile doc, (err, created) =>
+            if err
+                callback err, created
+            else
+                @cleanBinary binaryId, (err) ->
+                    callback null, created
+
+    # Update the metadata of a file
+    updateFileMetadata: (doc, callback) ->
+        if doc.remote
+            # TODO what about _rev?
+            binaryDoc = _id: doc.remote.binary
+            remoteDoc = @createRemoteDoc doc, binaryDoc
+            @couch.put remoteDoc, (err, updated) ->
+                doc.remote._rev = updated.rev unless err
+                callback err, updated
+        else
+            @addFile doc, callback
 
     # Update metadata of a folder
     updateFolder: (doc, callback) ->
