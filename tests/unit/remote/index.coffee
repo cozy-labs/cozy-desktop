@@ -154,6 +154,46 @@ describe 'Remote', ->
                 docType: 'folder'
 
 
+    describe 'cleanBinary', ->
+        it 'deletes the binary if no longer referenced', (done) ->
+            binary =
+                _id: 'binary-5b1b'
+                checksum: '5b1baec8306885df52fdf341efb0087f1a8ac81e'
+                docType: 'Binary'
+            @couch.put binary, (err, created) =>
+                should.not.exist err
+                @remote.cleanBinary binary._id, (err) =>
+                    should.not.exist err
+                    @couch.get binary.id, (err) ->
+                        err.status.should.equal 404
+                        done()
+
+        it 'keeps the binary if referenced by a file', (done) ->
+            binary =
+                _id: 'binary-b410'
+                checksum: 'b410ffdd571d6e86bb8e8bdd054df91e16dfa75e'
+                docType: 'Binary'
+            file =
+                _id: 'a-file-with-b410'
+                docType: 'file'
+                checksum: 'b410ffdd571d6e86bb8e8bdd054df91e16dfa75e'
+                remote:
+                    id: 'remote-file-b410'
+                    rev: '1-123456'
+                    binary: 'binary-410'
+            @pouch.db.put file, (err) =>
+                should.not.exist err
+                @couch.put binary, (err) =>
+                    should.not.exist err
+                    @remote.cleanBinary binary._id, (err) =>
+                        should.not.exist err
+                        @couch.get binary._id, (err, doc) ->
+                            should.not.exist err
+                            doc._id.should.equal binary._id
+                            doc.checksum.should.equal binary.checksum
+                            done()
+
+
     describe 'addFile', ->
         it 'adds a file to couchdb', (done) ->
             checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
@@ -428,10 +468,10 @@ describe 'Remote', ->
                     checksum: doc.checksum
                 @couch.put binary, (err) =>
                     should.not.exist err
-                    doc.remote.binary = binary.id
+                    doc.remote.binary = binary._id
                     @remote.deleteFile doc, (err) =>
                         should.not.exist err
-                        @couch.get binary.id, (err) ->
+                        @couch.get binary._id, (err) ->
                             err.status.should.equal 404
                             done()
 

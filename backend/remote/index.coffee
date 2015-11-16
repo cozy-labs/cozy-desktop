@@ -80,6 +80,18 @@ class Remote
                     rev: binary._rev
         return doc
 
+    # Remove the binary if it is no longer referenced
+    cleanBinary: (binaryId, callback) =>
+        @couch.get binaryId, (err, doc) =>
+            if err
+                callback err
+            else
+                @pouch.byChecksum doc.checksum, (err, files) =>
+                    if err or files.length isnt 0
+                        callback err
+                    else
+                        @couch.remove doc._id, doc._rev, callback
+
 
     ### Write operations ###
 
@@ -94,6 +106,7 @@ class Remote
                     for file in files or []
                         binaryId = file.remote.binary if file.remote?
                     if binaryId
+                        # TODO what about _rev?
                         next null, _id: binaryId
                     else
                         @uploadBinary doc, next
@@ -185,16 +198,8 @@ class Remote
             if err
                 callback err, removed
             else
-                @pouch.byChecksum doc.checksum, (err, files) =>
-                    if files?.length is 0
-                        @couch.get doc.remote.binary, (err, binary) =>
-                            if err
-                                callback null, removed
-                            else
-                                @couch.remove binary.id, binary.rev, (err) ->
-                                    callback null, removed
-                    else
-                        callback null, removed
+                @cleanBinary doc.remote.binary, (err) ->
+                    callback null, removed
 
     # Delete a folder on the remote cozy instance
     deleteFolder: (doc, callback) =>
