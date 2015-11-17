@@ -40,6 +40,7 @@ class Remote
     # Upload the binary as a CouchDB document's attachment and return
     # the binary document
     uploadBinary: (doc, callback) ->
+        log.info "Upload binary #{doc.checksum}"
         binary =
             _id: doc.checksum
             docType: 'Binary'
@@ -103,6 +104,7 @@ class Remote
     # Create a file on the remote cozy instance
     # It can also be an overwrite of the file
     addFile: (doc, callback) =>
+        log.info "Add file #{doc._id}"
         async.waterfall [
             # Find or create the binary doc
             (next) =>
@@ -131,6 +133,7 @@ class Remote
 
     # Create a folder on the remote cozy instance
     addFolder: (doc, callback) =>
+        log.info "Add folder #{doc._id}"
         folder = @createRemoteDoc doc
         @couch.put folder, (err, created) ->
             unless err
@@ -141,6 +144,7 @@ class Remote
 
     # Overwrite a file
     overwriteFile: (doc, callback) ->
+        log.info "Overwrite file #{doc._id}"
         binaryId = doc.remote.binary._id
         @addFile doc, (err, created) =>
             if err
@@ -151,6 +155,7 @@ class Remote
 
     # Update the metadata of a file
     updateFileMetadata: (doc, callback) ->
+        log.info "Update file #{doc._id}"
         if doc.remote
             remoteDoc = @createRemoteDoc doc, doc.remote.binary
             @couch.put remoteDoc, (err, updated) ->
@@ -161,6 +166,7 @@ class Remote
 
     # Update metadata of a folder
     updateFolder: (doc, callback) ->
+        log.info "Update folder #{doc._id}"
         if doc.remote
             @couch.get doc.remote._id, (err, folder) =>
                 if err
@@ -178,6 +184,7 @@ class Remote
 
     # Move a file on the remote cozy instance
     moveFile: (doc, old, callback) ->
+        log.info "Move file #{old._id} → #{doc._id}"
         if old.remote
             @couch.get old.remote._id, (err, remoteDoc) =>
                 if err
@@ -198,6 +205,7 @@ class Remote
 
     # Move a folder on the remote cozy instance
     moveFolder: (doc, old, callback) =>
+        log.info "Move folder #{old._id} → #{doc._id}"
         if old.remote
             @couch.get old.remote._id, (err, folder) =>
                 if err
@@ -215,6 +223,7 @@ class Remote
 
     # Delete a file on the remote cozy instance
     deleteFile: (doc, callback) =>
+        log.info "Delete file #{doc._id}"
         return callback() unless doc.remote
         @couch.remove doc.remote._id, doc.remote._rev, (err, removed) =>
             if err
@@ -225,6 +234,7 @@ class Remote
 
     # Delete a folder on the remote cozy instance
     deleteFolder: (doc, callback) =>
+        log.info "Delete folder #{doc._id}"
         if doc.remote
             @couch.remove doc.remote._id, doc.remote._rev, callback
         else
