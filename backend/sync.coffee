@@ -80,15 +80,32 @@ class Sync
     apply: (change, callback) =>
         log.debug 'apply', change
         doc = change.doc
+        [side, rev] = @selectSide doc
+        done = @applied(change, callback)
+
         switch
+            when not side
+                callback()
             when doc.docType is 'file'
-                @fileChanged doc, @applied(change, callback)
+                @fileChanged doc, side, rev, done
             when doc.docType is 'folder'
-                @folderChanged doc, @applied(change, callback)
+                @folderChanged doc, side, rev, done
             else
                 # TODO if cozy-desktop was restarted, does a deleted doc have a
                 # docType? Or should we fetch the previous rev to find it?
                 callback new Error "Unknown doctype: #{doc.docType}"
+
+    # Select which side will apply the change
+    # It returns the side, and also the last revision applied by this side
+    selectSide: (doc) =>
+        localRev  = doc.sides.local  or 0
+        remoteRev = doc.sides.remote or 0
+        if localRev > remoteRev
+            return [@remote, remoteRev]
+        else if remoteRev > localRev
+            return [@local, localRev]
+        else
+            return []
 
     # Keep track of the sequence number and log errors
     applied: (change, callback) =>
@@ -101,103 +118,61 @@ class Sync
                 @pouch.setLocalSeq change.seq, callback
                 # TODO
                 # - update applying side rev number
-                # - save in place doc
+                # - save in place doc (unless deleted)
 
     # If a file has been changed, we had to check what operation it is.
     # For a move, the first call will just keep a reference to the document,
     # and only at the second call, the move operation will be executed.
-    #
-    # TODO we should first select a side, then load last rev for this side
-    # and finally decide which action to take
-    fileChanged: (doc, callback) =>
-        if @moveFrom
-            [from, @moveFrom] = [@moveFrom, null]
-            if from.moveTo is doc._id
-                @fileMoved doc, from, callback
+    fileChanged: (doc, side, rev, callback) =>
+        switch
+            when doc._deleted and rev is 0
+                callback()
+            when @moveFrom
+                [from, @moveFrom] = [@moveFrom, null]
+                if from.moveTo is doc._id
+                    side.moveFile doc, from, callback
+                else
+                    log.error "Invalid move"
+                    log.error from
+                    log.error doc
+                    callback new Error 'Invalid move'
+                    # TODO
+            when doc.moveTo
+                @moveFrom = doc
+                callback()
+            when doc._deleted
+                side.deleteFile doc, callback
+            when rev is 0
+                side.addFile doc, callback
             else
-                log.error "Invalid move"
-                log.error from
-                log.error doc
-                callback new Error 'Invalid move'
-        else if doc.moveTo
-            @moveFrom = doc
-            callback()
-        else if doc._deleted
-            @fileDeleted doc, callback
-        # TODO find something better than /^1-/
-        # - the changes feed can zap this rev and only give us a future rev
-        # - what if a file is deleted and then recreated?
-        else if @pouch.extractRevNumber(doc) is 1
-            @fileAdded doc, callback
-        else
-            # TODO metadata update and overwrite should be 2 separate actions
-            @fileUpdated doc, callback
+                # TODO metadata update and overwrite are 2 distinct actions
+                # side.overwriteFile doc, callback
+                side.updateFileMetadata doc, callback
 
     # Same as fileChanged, but for folder
-    folderChanged: (doc, callback) =>
-        if @moveFrom
-            [from, @moveFrom] = [@moveFrom, null]
-            if from.moveTo is doc._id
-                @folderMoved doc, from, callback
+    folderChanged: (doc, side, rev, callback) =>
+        switch
+            when doc._deleted and rev is 0
+                callback()
+            when @moveFrom
+                [from, @moveFrom] = [@moveFrom, null]
+                if from.moveTo is doc._id
+                    side.moveFolder doc, from, callback
+                else
+                    log.error "Invalid move"
+                    log.error from
+                    log.error doc
+                    callback new Error 'Invalid move'
+                    # TODO
+            when doc.moveTo
+                @moveFrom = doc
+                callback()
+            when doc._deleted
+                side.deleteFolder doc, callback
+            when rev is 0
+                side.addFolder doc, callback
             else
-                log.error "Invalid move"
-                log.error from
-                log.error doc
-                callback new Error 'Invalid move'
-        else if doc.moveTo
-            @moveFrom = doc
-            callback()
-        else if doc._deleted
-            @folderDeleted doc, callback
-        else if @pouch.extractRevNumber(doc) is 1
-            @folderAdded doc, callback
-        else
-            @folderUpdated doc, callback
-
-    # Apply the iterator function on local/remote
-    # It selects only the side that hasn't make the last modification
-    selectSide: (doc) =>
-        localRev  = doc.sides.local  or 0
-        remoteRev = doc.sides.remote or 0
-        if localRev > remoteRev
-            return @remote
-        else if remoteRev > localRev
-            return @local
-        else
-            log.error 'Both sides have applied this change'
-            # TODO
-
-    # Let local / remote know that a file has been added
-    fileAdded: (doc, callback) =>
-        @selectSide(doc).addFile doc, callback
-
-    # Let local / remote know that a file has been updated
-    fileUpdated: (doc, callback) =>
-        @selectSide(doc).updateFile doc, callback
-
-    # Let local / remote know that a file has been moved
-    fileMoved: (doc, old, callback) =>
-        @selectSide(doc).moveFile doc, old, callback
-
-    # Let local / remote know that a file has been deleted
-    fileDeleted: (doc, callback) =>
-        @selectSide(doc).deleteFile doc, callback
-
-    # Let local / remote know that a folder has been added
-    folderAdded: (doc, callback) =>
-        @selectSide(doc).addFolder doc, callback
-
-    # Let local / remote know that a folder has been updated
-    folderUpdated: (doc, callback) =>
-        @selectSide(doc).updateFolder doc, callback
-
-    # Let local / remote know that a folder has been moved
-    folderMoved: (doc, old, callback) =>
-        @selectSide(doc).moveFolder doc, old, callback
-
-    # Let local / remote know that a folder has been deleted
-    folderDeleted: (doc, callback) =>
-        @selectSide(doc).deleteFolder doc, callback
+                side.updateFolder doc, callback
 
 
 module.exports = Sync
