@@ -222,19 +222,47 @@ describe "Sync", ->
             @sync = new Sync @pouch, @local, @remote
 
         it 'returns a function that saves the seq number if OK', (done) ->
-            func = @sync.applied seq: 125, (err) =>
+            change =
+                seq: 125
+                doc:
+                    _id: 'just/deleted'
+                    _deleted: true
+            func = @sync.applied change, 'remote', (err) =>
                 should.not.exist err
                 @pouch.getLocalSeq (err, seq) ->
                     seq.should.equal 125
                     done()
             func()
 
-        it 'returns a function that does not touch the seq if error', (done) ->
+        it 'saves the revision for the applied side', (done) ->
             @pouch.setLocalSeq 126, =>
-                func = @sync.applied seq: 127, (err) =>
+                change =
+                    seq: 127
+                    doc:
+                        _id: 'just/created'
+                        _rev: '1-0cf9be'
+                        docType: 'folder'
+                        sides:
+                            local: 1
+                func = @sync.applied change, 'remote', (err) =>
+                    should.not.exist err
+                    @pouch.db.get change.doc._id, (err, doc) ->
+                        should.not.exist err
+                        doc.should.have.properties
+                            _id: 'just/created'
+                            docType: 'folder'
+                            sides:
+                                local: 1
+                                remote: 1
+                        done()
+                func()
+
+        it 'returns a function that does not touch the seq if error', (done) ->
+            @pouch.setLocalSeq 128, =>
+                func = @sync.applied seq: 129, 'remote', (err) =>
                     should.exist err
                     @pouch.getLocalSeq (err, seq) ->
-                        seq.should.equal 126
+                        seq.should.equal 128
                         done()
                 func new Error 'Apply failed'
 
@@ -473,8 +501,9 @@ describe "Sync", ->
                 docType: 'file'
                 sides:
                     remote: 1
-            [side, rev] = @sync.selectSide(doc)
+            [side, name, rev] = @sync.selectSide(doc)
             side.should.equal @sync.local
+            name.should.equal 'local'
             rev.should.equal 0
             doc =
                 _id: 'selectSide/2'
@@ -483,8 +512,9 @@ describe "Sync", ->
                 sides:
                     remote: 3
                     local: 2
-            [side, rev] = @sync.selectSide(doc)
+            [side, name, rev] = @sync.selectSide(doc)
             side.should.equal @sync.local
+            name.should.equal 'local'
             rev.should.equal 2
 
         it 'selects the remote side if local is up-to-date', ->
@@ -494,8 +524,9 @@ describe "Sync", ->
                 docType: 'file'
                 sides:
                     local: 1
-            [side, rev] = @sync.selectSide(doc)
+            [side, name, rev] = @sync.selectSide(doc)
             side.should.equal @sync.remote
+            name.should.equal 'remote'
             rev.should.equal 0
             doc =
                 _id: 'selectSide/4'
@@ -504,8 +535,9 @@ describe "Sync", ->
                 sides:
                     remote: 3
                     local: 4
-            [side, rev] = @sync.selectSide(doc)
+            [side, name, rev] = @sync.selectSide(doc)
             side.should.equal @sync.remote
+            name.should.equal 'remote'
             rev.should.equal 3
 
         it 'returns an empty array if both sides are up-to-date', ->
@@ -516,6 +548,7 @@ describe "Sync", ->
                 sides:
                     remote: 5
                     local: 5
-            [side, rev] = @sync.selectSide(doc)
+            [side, name, rev] = @sync.selectSide(doc)
             should.not.exist side
+            should.not.exist name
             should.not.exist rev

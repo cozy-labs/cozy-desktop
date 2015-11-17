@@ -74,14 +74,11 @@ class Sync
     # Apply a change to both local and remote
     # At least one side should say it has already this change
     # In some cases, both sides have the change
-    #
-    # TODO note the success in the doc
-    # TODO when applying a change fails, put it again in some queue for retry
     apply: (change, callback) =>
         log.debug 'apply', change
         doc = change.doc
-        [side, rev] = @selectSide doc
-        done = @applied(change, callback)
+        [side, sideName, rev] = @selectSide doc
+        done = @applied(change, sideName, callback)
 
         switch
             when not side
@@ -96,29 +93,34 @@ class Sync
                 callback new Error "Unknown doctype: #{doc.docType}"
 
     # Select which side will apply the change
-    # It returns the side, and also the last revision applied by this side
+    # It returns the side, its name, and also the last rev applied by this side
     selectSide: (doc) =>
         localRev  = doc.sides.local  or 0
         remoteRev = doc.sides.remote or 0
         if localRev > remoteRev
-            return [@remote, remoteRev]
+            return [@remote, 'remote', remoteRev]
         else if remoteRev > localRev
-            return [@local, localRev]
+            return [@local, 'local', localRev]
         else
             return []
 
-    # Keep track of the sequence number and log errors
-    applied: (change, callback) =>
+    # Keep track of the sequence number, save side rev, and log errors
+    # TODO when applying a change fails, put it again in some queue for retry
+    applied: (change, side, callback) =>
         (err) =>
             if err
                 log.error err
                 callback err
             else
                 log.debug "Applied #{change.seq}"
-                @pouch.setLocalSeq change.seq, callback
-                # TODO
-                # - update applying side rev number
-                # - save in place doc (unless deleted)
+                @pouch.setLocalSeq change.seq, (err) =>
+                    log.error err if err
+                    doc = change.doc
+                    if doc._deleted
+                        callback err
+                    else
+                        doc.sides[side] = @pouch.extractRevNumber doc
+                        @pouch.db.put doc, callback
 
     # If a file has been changed, we had to check what operation it is.
     # For a move, the first call will just keep a reference to the document,
