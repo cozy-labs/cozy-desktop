@@ -249,6 +249,7 @@ describe "Sync", ->
             doc =
                 _id: 'foo/bar'
                 _rev: '1-abcdef0123456789'
+                checksum: '391f7abfca1124c3ca937e5f85687352bcd9f261'
                 docType: 'file'
                 sides:
                     local: 1
@@ -258,20 +259,52 @@ describe "Sync", ->
                 @remote.addFile.calledWith(doc).should.be.true()
                 done()
 
-        it 'calls updateFileMetadata for updated file metadata', (done) ->
+        it 'calls overwriteFile for an overwritten file', (done) ->
             doc =
-                _id: 'foo/bar'
-                _rev: '2-abcdef9876543210'
+                _id: 'overwrite/foo/bar'
+                checksum: '391f7abfca1124c3ca937e5f85687352bcd9f261'
                 docType: 'file'
-                tags: ['qux']
                 sides:
                     local: 1
-                    remote: 2
-            @local.updateFileMetadata = sinon.stub().yields()
-            @sync.fileChanged doc, @local, 1, (err) =>
+            @pouch.db.put doc, (err, created) =>
                 should.not.exist err
-                @local.updateFileMetadata.calledWith(doc).should.be.true()
-                done()
+                doc._rev = created.rev
+                doc.checksum = '389dd709c94a6a7ea56e1d55cbf65eef31b9bc5e'
+                doc.sides =
+                    local: 2
+                    remote: 1
+                @pouch.db.put doc, (err, updated) =>
+                    @remote.overwriteFile = sinon.stub().yields()
+                    @remote.updateFileMetadata = sinon.stub().yields()
+                    @sync.fileChanged doc, @remote, 1, (err) =>
+                        should.not.exist err
+                        @remote.updateFileMetadata.called.should.be.false
+                        @remote.overwriteFile.calledWith(doc).should.be.true()
+                        done()
+
+        it 'calls updateFileMetadata for updated file metadata', (done) ->
+            doc =
+                _id: 'update/foo/bar'
+                checksum: '391f7abfca1124c3ca937e5f85687352bcd9f261'
+                docType: 'file'
+                sides:
+                    local: 1
+            @pouch.db.put doc, (err, created) =>
+                should.not.exist err
+                doc._rev = created.rev
+                doc.tags = ['courge']
+                doc.sides =
+                    local: 2
+                    remote: 1
+                @pouch.db.put doc, (err, updated) =>
+                    @remote.overwriteFile = sinon.stub().yields()
+                    @remote.updateFileMetadata = sinon.stub().yields()
+                    @sync.fileChanged doc, @remote, 1, (err) =>
+                        should.not.exist err
+                        @remote.overwriteFile.called.should.be.false
+                        ufm = @remote.updateFileMetadata
+                        ufm.calledWith(doc).should.be.true()
+                        done()
 
         it 'calls moveFile for a moved file', (done) ->
             was =

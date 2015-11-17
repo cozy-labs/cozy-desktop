@@ -145,9 +145,11 @@ class Sync
             when rev is 0
                 side.addFile doc, callback
             else
-                # TODO metadata update and overwrite are 2 distinct actions
-                # side.overwriteFile doc, callback
-                side.updateFileMetadata doc, callback
+                @pouch.getPreviousRev doc._id, rev, (err, old) ->
+                    if err or old.checksum isnt doc.checksum
+                        side.overwriteFile doc, callback
+                    else
+                        side.updateFileMetadata doc, callback
 
     # Same as fileChanged, but for folder
     folderChanged: (doc, side, rev, callback) =>

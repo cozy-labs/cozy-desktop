@@ -168,24 +168,20 @@ class Pouch
             return 0
 
     # Retrieve a previous doc revision from its id
-    getPreviousRev: (id, callback) =>
+    getPreviousRev: (id, shortRev, callback) =>
         options =
             revs: true
             revs_info: true
-            open_revs: "all"
-
+            open_revs: 'all'
         @db.get id, options, (err, infos) =>
             if err
                 callback err
-            else if infos.length > 0 and infos[0].ok?._revisions?
-                rev = infos[0].ok._revisions.ids[1]
-                start = infos[0].ok._revisions.start
-                rev = "#{start - 1}-#{rev}"
-                @db.get id, rev: rev, callback
             else
-                err = new Error 'previous revision not found'
-                err.status = 404
-                callback err
+                ids = infos[0].ok._revisions.ids
+                revId = ids[ids.length - shortRev]
+                rev = "#{shortRev}-#{revId}"
+                @db.get id, rev: rev, (err, doc) ->
+                    callback err, doc
 
 
     ### Sequence numbers ###
