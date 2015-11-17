@@ -62,28 +62,24 @@ class Remote
                 callback err, binary
 
     # Transform a local document in a remote one, with optional binary ref
-    createRemoteDoc: (local, binary) ->
+    createRemoteDoc: (local, remote) ->
         doc =
-            _id: local.remote?._id or Couch.newId()
             docType: local.docType
             path: path.dirname local._id
             name: path.basename local._id
             creationDate: local.creationDate
             lastModification: local.lastModification
         doc.path = '' if doc.path is '.'
-        doc._rev = local.remote._rev if local.remote
         for field in ['size', 'class', 'mime', 'tags']
             doc[field] = local[field] if local[field]
-        if binary
+        if remote
+            doc._id = remote._id
+            doc._rev = remote._rev
             doc.binary =
                 file:
-                    id:  binary._id
-                    rev: binary._rev
-        else if local.remote?.binary
-            doc.binary =
-                file:
-                    id:  local.remote.binary._id
-                    rev: local.remote.binary._rev
+                    id:  remote.binary._id
+                    rev: remote.binary._rev
+        doc._id ?= Couch.newId()
         return doc
 
     # Remove the binary if it is no longer referenced
@@ -105,6 +101,26 @@ class Remote
     # It can also be an overwrite of the file
     addFile: (doc, callback) =>
         log.info "Add file #{doc._id}"
+        @addOrOverwriteFile doc, null, callback
+
+    # Create a folder on the remote cozy instance
+    addFolder: (doc, callback) =>
+        log.info "Add folder #{doc._id}"
+        folder = @createRemoteDoc doc
+        @couch.put folder, (err, created) ->
+            unless err
+                doc.remote =
+                    _id:  created.id
+                    _rev: created.rev
+            callback err, created
+
+    # Overwrite a file
+    overwriteFile: (doc, old, callback) =>
+        log.info "Overwrite file #{doc._id}"
+        @addOrOverwriteFile doc, old, callback
+
+    # Add or overwrite a file
+    addOrOverwriteFile: (doc, old, callback) =>
         async.waterfall [
             # Find or create the binary doc
             (next) =>
@@ -119,7 +135,11 @@ class Remote
 
             # Save the 'file' document in the remote couch
             (binaryDoc, next) =>
-                remoteDoc = @createRemoteDoc doc, binaryDoc
+                remote =
+                    _id:  old?.remote._id
+                    _rev: old?.remote._rev
+                    binary: binaryDoc
+                remoteDoc = @createRemoteDoc doc, remote
                 @couch.put remoteDoc, (err, created) ->
                     unless err
                         doc.remote =
@@ -129,46 +149,35 @@ class Remote
                                 _id:  binaryDoc._id
                                 _rev: binaryDoc._rev
                     next err, created
+
+            # Clean previous binary
+            (created, next) =>
+                if old?.remote
+                    @cleanBinary old.remote.binary._id, next
+                else
+                    next null, created
         ], callback
 
-    # Create a folder on the remote cozy instance
-    addFolder: (doc, callback) =>
-        log.info "Add folder #{doc._id}"
-        folder = @createRemoteDoc doc
-        @couch.put folder, (err, created) ->
-            unless err
-                doc.remote =
-                    _id:  created.id
-                    _rev: created.rev
-            callback err, created
-
-    # Overwrite a file
-    overwriteFile: (doc, callback) ->
-        log.info "Overwrite file #{doc._id}"
-        binaryId = doc.remote.binary._id
-        @addFile doc, (err, created) =>
-            if err
-                callback err, created
-            else
-                @cleanBinary binaryId, (err) ->
-                    callback null, created
-
     # Update the metadata of a file
-    updateFileMetadata: (doc, callback) ->
+    updateFileMetadata: (doc, old, callback) ->
         log.info "Update file #{doc._id}"
-        if doc.remote
-            remoteDoc = @createRemoteDoc doc, doc.remote.binary
+        if old.remote
+            remoteDoc = @createRemoteDoc doc, old.remote
             @couch.put remoteDoc, (err, updated) ->
-                doc.remote._rev = updated.rev unless err
+                unless err
+                    doc.remote =
+                        _id:  updated.id
+                        _rev: updated.rev
+                        binary: old.remote.binary
                 callback err, updated
         else
             @addFile doc, callback
 
     # Update metadata of a folder
-    updateFolder: (doc, callback) ->
+    updateFolder: (doc, old, callback) ->
         log.info "Update folder #{doc._id}"
-        if doc.remote
-            @couch.get doc.remote._id, (err, folder) =>
+        if old.remote
+            @couch.get old.remote._id, (err, folder) =>
                 if err
                     callback err
                 else
@@ -177,7 +186,10 @@ class Remote
                     folder.tags = doc.tags
                     folder.lastModification = doc.lastModification
                     @couch.put folder, (err, updated) ->
-                        doc.remote._rev = updated.rev unless err
+                        unless err
+                            doc.remote =
+                                _id:  updated.id
+                                _rev: updated.rev
                         callback err, updated
         else
             @addFolder doc, callback

@@ -148,7 +148,7 @@ class Merge
     markSide: (side, doc, prev) ->
         rev = 0
         rev = @pouch.extractRevNumber prev if prev
-        doc.sides ?= {}
+        doc.sides ?= clone prev?.sides or {}
         doc.sides[side] = ++rev
         doc
 

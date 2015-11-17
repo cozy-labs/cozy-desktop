@@ -248,6 +248,7 @@ describe 'Merge', ->
                 prev = _rev: '5-0123'
                 @merge.markSide 'local', doc, prev
                 doc.sides.local.should.equal 6
+                doc.sides.remote.should.equal 5
 
 
     describe 'Put', ->

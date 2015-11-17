@@ -110,10 +110,11 @@ describe 'Remote', ->
                 size: 12345
                 class: 'image'
                 mime: 'image/jpeg'
-            binary =
-                _id: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
-                _rev: '2-0123456789'
-            doc = @remote.createRemoteDoc local, binary
+            remote =
+                binary:
+                    _id: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+                    _rev: '2-0123456789'
+            doc = @remote.createRemoteDoc local, remote
             doc.should.have.properties
                 path: 'foo/bar'
                 name: 'baz.jpg'
@@ -162,16 +163,16 @@ describe 'Remote', ->
                 lastModification: "2015-11-12T13:14:32.384Z"
                 creationDate: "2015-11-12T13:14:32.384Z"
                 checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
-                remote:
-                    _id: 'fc4de46b9b42aaeb23521ff42e23a18e7a812bda'
-                    _rev: '1-951357'
-                    binary:
-                        _id: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
-                        _rev: '1-456951'
-            doc = @remote.createRemoteDoc local
+            remote =
+                _id: 'fc4de46b9b42aaeb23521ff42e23a18e7a812bda'
+                _rev: '1-951357'
+                binary:
+                    _id: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+                    _rev: '1-456951'
+            doc = @remote.createRemoteDoc local, remote
             doc.should.have.properties
-                _id: local.remote._id
-                _rev: local.remote._rev
+                _id:  remote._id
+                _rev: remote._rev
                 path: 'foo/bar'
                 name: 'baz.jpg'
                 docType: 'file'
@@ -179,8 +180,8 @@ describe 'Remote', ->
                 creationDate: "2015-11-12T13:14:32.384Z"
                 binary:
                     file:
-                        id: local.remote.binary._id
-                        rev: local.remote.binary._rev
+                        id:  remote.binary._id
+                        rev: remote.binary._rev
 
 
     describe 'cleanBinary', ->
@@ -209,7 +210,9 @@ describe 'Remote', ->
                 remote:
                     id: 'remote-file-b410'
                     rev: '1-123456'
-                    binary: 'binary-410'
+                    binary:
+                        _id: 'binary-410'
+                        _rev: '1-123456'
             @pouch.db.put file, (err) =>
                 should.not.exist err
                 @couch.put binary, (err) =>
@@ -330,31 +333,40 @@ describe 'Remote', ->
                     docType: 'file'
                     checksum: '9999999999999999999999999999999999999926'
                     lastModification: '2015-11-16T16:12:01.002Z'
+                old =
+                    _id: 'couchdb-folder/file-6'
+                    docType: 'file'
+                    checksum: '1111111111111111111111111111111111111126'
                     remote:
                         _id: created.id
                         _rev: created.rev
                         binary:
                             _id: '1111111111111111111111111111111111111126'
                             _rev: '1-852147'
-                @remote.overwriteFile doc, (err) =>
+                binaryDoc =
+                    _id: old.checksum
+                    checksum: old.checksum
+                @couch.put binaryDoc, (err) =>
                     should.not.exist err
-                    @couch.get doc.remote._id, (err, file) =>
+                    @remote.overwriteFile doc, old, (err) =>
                         should.not.exist err
-                        file.should.have.properties
-                            _id: created.id
-                            docType: 'file'
-                            path: 'couchdb-folder'
-                            name: 'file-6'
-                            lastModification: doc.lastModification
-                        doc.remote._rev.should.equal file._rev
-                        doc.remote.binary.should.have.properties
-                            _id: doc.checksum
-                            _rev: file.binary.file.rev
-                        file.binary.file.id.should.equal doc.checksum
-                        @couch.get file.binary.file.id, (err, binary) ->
+                        @couch.get doc.remote._id, (err, file) =>
                             should.not.exist err
-                            binary.checksum.should.equal doc.checksum
-                            done()
+                            file.should.have.properties
+                                _id: created.id
+                                docType: 'file'
+                                path: 'couchdb-folder'
+                                name: 'file-6'
+                                lastModification: doc.lastModification
+                            doc.remote._rev.should.equal file._rev
+                            doc.remote.binary.should.have.properties
+                                _id: doc.checksum
+                                _rev: file.binary.file.rev
+                            file.binary.file.id.should.equal doc.checksum
+                            @couch.get file.binary.file.id, (err, binary) ->
+                                should.not.exist err
+                                binary.checksum.should.equal doc.checksum
+                                done()
 
 
     describe 'updateFileMetadata', ->
@@ -366,13 +378,17 @@ describe 'Remote', ->
                     docType: 'file'
                     checksum: '1111111111111111111111111111111111111127'
                     lastModification: '2015-11-16T16:13:01.001Z'
+                old =
+                    _id: 'couchdb-folder/file-7'
+                    docType: 'file'
+                    checksum: '1111111111111111111111111111111111111127'
                     remote:
                         _id: created.id
                         _rev: created.rev
                         binary:
                             _id: '1111111111111111111111111111111111111127'
                             _rev: '1-852654'
-                @remote.updateFileMetadata doc, (err) =>
+                @remote.updateFileMetadata doc, old, (err) =>
                     should.not.exist err
                     @couch.get doc.remote._id, (err, file) ->
                         should.not.exist err
@@ -398,11 +414,15 @@ describe 'Remote', ->
                     docType: 'folder'
                     creationDate: new Date()
                     lastModification: new Date()
+                old =
+                    _id: 'couchdb-folder/folder-2'
+                    docType: 'folder'
                     remote:
                         _id: created.id
                         _rev: created.rev
-                @remote.updateFolder doc, (err, updated) =>
+                @remote.updateFolder doc, old, (err, updated) =>
                     should.not.exist err
+                    doc.remote._id.should.equal old.remote._id
                     doc.remote._rev.should.not.equal created.rev
                     @couch.get updated.id, (err, folder) ->
                         should.not.exist err
@@ -419,7 +439,7 @@ describe 'Remote', ->
                 docType: 'folder'
                 creationDate: new Date()
                 lastModification: new Date()
-            @remote.updateFolder doc, (err, created) =>
+            @remote.updateFolder doc, {}, (err, created) =>
                 should.not.exist err
                 @couch.get created.id, (err, folder) ->
                     should.not.exist err
@@ -452,7 +472,7 @@ describe 'Remote', ->
                 creationDate: new Date()
                 lastModification: new Date()
                 size: 36901
-            remoteDoc = @remote.createRemoteDoc old, binary
+            remoteDoc = @remote.createRemoteDoc old, binary: binary
             @couch.put remoteDoc, (err, created) =>
                 should.not.exist err
                 old.remote =

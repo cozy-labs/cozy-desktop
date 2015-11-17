@@ -130,15 +130,15 @@ class Local
 
 
     # Overwrite a file
-    overwriteFile: (doc, callback) =>
+    overwriteFile: (doc, old, callback) =>
         @addFile doc, callback
 
     # Update the metadata of a file
-    updateFileMetadata: (doc, callback) =>
+    updateFileMetadata: (doc, old, callback) =>
         @utimesUpdater(doc) callback
 
     # Update a folder
-    updateFolder: (doc, callback) =>
+    updateFolder: (doc, old, callback) =>
         @addFolder doc, callback
 
 

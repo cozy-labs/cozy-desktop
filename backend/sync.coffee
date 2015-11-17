@@ -149,9 +149,9 @@ class Sync
             else
                 @pouch.getPreviousRev doc._id, rev, (err, old) ->
                     if err or old.checksum isnt doc.checksum
-                        side.overwriteFile doc, callback
+                        side.overwriteFile doc, old, callback
                     else
-                        side.updateFileMetadata doc, callback
+                        side.updateFileMetadata doc, old, callback
 
     # Same as fileChanged, but for folder
     folderChanged: (doc, side, rev, callback) =>
@@ -176,7 +176,8 @@ class Sync
             when rev is 0
                 side.addFolder doc, callback
             else
-                side.updateFolder doc, callback
+                @pouch.getPreviousRev doc._id, rev, (err, old) ->
+                    side.updateFolder doc, old, callback
 
 
 module.exports = Sync

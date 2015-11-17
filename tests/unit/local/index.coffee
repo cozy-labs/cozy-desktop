@@ -228,7 +228,7 @@ describe 'Local', ->
                     callback null, stream
             filePath = path.join @basePath, doc._id
             fs.writeFileSync filePath, 'old content'
-            @local.overwriteFile doc, (err) =>
+            @local.overwriteFile doc, {}, (err) =>
                 @local.other = null
                 should.not.exist err
                 fs.statSync(filePath).isFile().should.be.true()
@@ -247,7 +247,7 @@ describe 'Local', ->
                 lastModification: new Date '2015-11-10T05:06:07Z'
             filePath = path.join @basePath, doc._id
             fs.ensureFileSync filePath
-            @local.updateFileMetadata doc, (err) ->
+            @local.updateFileMetadata doc, {}, (err) ->
                 should.not.exist err
                 fs.existsSync(filePath).should.be.true()
                 mtime = +fs.statSync(filePath).mtime
@@ -262,7 +262,7 @@ describe 'Local', ->
                 docType: 'folder'
                 lastModification: new Date
             sinon.stub(@local, 'addFolder').yields()
-            @local.updateFolder doc, (err) =>
+            @local.updateFolder doc, {}, (err) =>
                 should.not.exist err
                 @local.addFolder.calledWith(doc).should.be.true()
                 @local.addFolder.restore()
