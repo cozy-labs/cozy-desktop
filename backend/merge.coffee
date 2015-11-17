@@ -98,6 +98,24 @@ class Merge
                         else
                             @putFolder null, _id: parent, callback
 
+    # Simple helper to add a file or a folder
+    addDoc: (side, doc, callback) =>
+        if doc.docType is 'file'
+            @addFile side, doc, callback
+        else if doc.docType is 'folder'
+            @putFolder side, doc, callback
+        else
+            callback new Error "Unexpected docType: #{doc.docType}"
+
+    # Simple helper to update a file or a folder
+    updateDoc: (side, doc, callback) =>
+        if doc.docType is 'file'
+            @updateFile side, doc, callback
+        else if doc.docType is 'folder'
+            @putFolder side, doc, callback
+        else
+            callback new Error "Unexpected docType: #{doc.docType}"
+
     # Helper to move/rename a file or a folder
     moveDoc: (side, doc, was, callback) =>
         if doc.docType isnt was.docType

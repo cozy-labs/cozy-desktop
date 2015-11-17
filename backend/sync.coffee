@@ -82,7 +82,7 @@ class Sync
 
         switch
             when not side
-                callback()
+                @pouch.setLocalSeq change.seq, callback
             when doc.docType is 'file'
                 @fileChanged doc, side, rev, done
             when doc.docType is 'folder'
