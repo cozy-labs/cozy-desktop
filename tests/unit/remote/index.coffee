@@ -98,6 +98,19 @@ describe 'Remote', ->
                 done()
 
 
+    describe 'extractDirAndName', ->
+        it 'returns the remote path and name', ->
+            [path, name] = @remote.extractDirAndName 'foo'
+            path.should.equal ''
+            name.should.equal 'foo'
+            [path, name] = @remote.extractDirAndName 'foo/bar'
+            path.should.equal '/foo'
+            name.should.equal 'bar'
+            [path, name] = @remote.extractDirAndName 'foo/bar/baz'
+            path.should.equal '/foo/bar'
+            name.should.equal 'baz'
+
+
     describe 'createRemoteDoc', ->
         it 'transforms a local file in remote file', ->
             local =
@@ -116,7 +129,7 @@ describe 'Remote', ->
                     _rev: '2-0123456789'
             doc = @remote.createRemoteDoc local, remote
             doc.should.have.properties
-                path: 'foo/bar'
+                path: '/foo/bar'
                 name: 'baz.jpg'
                 docType: 'file'
                 lastModification: "2015-11-12T13:14:32.384Z"
@@ -139,7 +152,7 @@ describe 'Remote', ->
                 tags: ['courge']
             doc = @remote.createRemoteDoc local
             doc.should.have.properties
-                path: 'foo/bar'
+                path: '/foo/bar'
                 name: 'baz'
                 docType: 'folder'
                 lastModification: "2015-11-12T13:14:33.384Z"
@@ -152,7 +165,7 @@ describe 'Remote', ->
                 docType: 'folder'
             doc = @remote.createRemoteDoc local
             doc.should.have.properties
-                path: ''  # not '.'
+                path: ''  # not '/' or '.'
                 name: 'in-root-folder'
                 docType: 'folder'
 
@@ -173,7 +186,7 @@ describe 'Remote', ->
             doc.should.have.properties
                 _id:  remote._id
                 _rev: remote._rev
-                path: 'foo/bar'
+                path: '/foo/bar'
                 name: 'baz.jpg'
                 docType: 'file'
                 lastModification: "2015-11-12T13:14:32.384Z"
@@ -293,7 +306,7 @@ describe 'Remote', ->
                     @couch.get created.id, (err, file) ->
                         should.not.exist err
                         file.should.have.properties
-                            path: 'backup'
+                            path: '/backup'
                             name: 'cat3.jpg'
                             docType: 'file'
                             creationDate: doc.creationDate.toISOString()
@@ -316,7 +329,7 @@ describe 'Remote', ->
                 @couch.get created.id, (err, folder) ->
                     should.not.exist err
                     folder.should.have.properties
-                        path: 'couchdb-folder'
+                        path: '/couchdb-folder'
                         name: 'folder-1'
                         docType: 'folder'
                         creationDate: doc.creationDate.toISOString()
@@ -355,7 +368,7 @@ describe 'Remote', ->
                             file.should.have.properties
                                 _id: created.id
                                 docType: 'file'
-                                path: 'couchdb-folder'
+                                path: '/couchdb-folder'
                                 name: 'file-6'
                                 lastModification: doc.lastModification
                             doc.remote._rev.should.equal file._rev
@@ -395,7 +408,7 @@ describe 'Remote', ->
                         file.should.have.properties
                             _id: created.id
                             docType: 'file'
-                            path: 'couchdb-folder'
+                            path: '/couchdb-folder'
                             name: 'file-7'
                             lastModification: doc.lastModification
                             binary:
@@ -427,7 +440,7 @@ describe 'Remote', ->
                     @couch.get updated.id, (err, folder) ->
                         should.not.exist err
                         folder.should.have.properties
-                            path: 'couchdb-folder'
+                            path: '/couchdb-folder'
                             name: 'folder-2'
                             docType: 'folder'
                             lastModification: doc.lastModification.toISOString()
@@ -444,7 +457,7 @@ describe 'Remote', ->
                 @couch.get created.id, (err, folder) ->
                     should.not.exist err
                     folder.should.have.properties
-                        path: 'couchdb-folder'
+                        path: '/couchdb-folder'
                         name: 'folder-3'
                         docType: 'folder'
                         creationDate: doc.creationDate.toISOString()
@@ -488,7 +501,7 @@ describe 'Remote', ->
                     @couch.get moved.id, (err, file) ->
                         should.not.exist err
                         file.should.have.properties
-                            path: 'moved-to'
+                            path: '/moved-to'
                             name: 'cat7.jpg'
                             docType: 'file'
                             lastModification: doc.lastModification.toISOString()
@@ -522,7 +535,7 @@ describe 'Remote', ->
                     @couch.get created.id, (err, folder) ->
                         should.not.exist err
                         folder.should.have.properties
-                            path: 'couchdb-folder'
+                            path: '/couchdb-folder'
                             name: 'folder-5'
                             docType: 'folder'
                             lastModification: doc.lastModification.toISOString()
@@ -542,7 +555,7 @@ describe 'Remote', ->
                 @couch.get created.id, (err, folder) ->
                     should.not.exist err
                     folder.should.have.properties
-                        path: 'couchdb-folder'
+                        path: '/couchdb-folder'
                         name: 'folder-7'
                         docType: 'folder'
                         creationDate: doc.creationDate.toISOString()

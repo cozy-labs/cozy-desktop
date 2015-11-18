@@ -79,7 +79,7 @@ module.exports =
     createFolder: (couch, i, callback) ->
         doc =
             _id: Couch.newId()
-            path: 'couchdb-folder'
+            path: '/couchdb-folder'
             name: "folder-#{i}"
             docType: 'folder'
             creationDate: new Date()
@@ -90,7 +90,7 @@ module.exports =
     createFile: (couch, i, callback) ->
         doc =
             _id: Couch.newId()
-            path: 'couchdb-folder'
+            path: '/couchdb-folder'
             name: "file-#{i}"
             docType: 'file'
             checksum: "111111111111111111111111111111111111112#{i}"

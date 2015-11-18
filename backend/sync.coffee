@@ -40,6 +40,7 @@ class Sync
     sync: (callback) =>
         @pop (err, change) =>
             if err
+                log.error err
                 callback err
             else
                 @apply change, callback

@@ -61,15 +61,22 @@ class Remote
             else
                 callback err, binary
 
+    # Extract the remote path and name from a local id
+    extractDirAndName: (id) ->
+        dir = path.dirname "/#{id}"
+        name = path.basename id
+        dir = '' if dir is '/'
+        return [dir, name]
+
     # Transform a local document in a remote one, with optional binary ref
     createRemoteDoc: (local, remote) ->
+        [dir, name] = @extractDirAndName local._id
         doc =
             docType: local.docType
-            path: path.dirname local._id
-            name: path.basename local._id
+            path: dir
+            name: name
             creationDate: local.creationDate
             lastModification: local.lastModification
-        doc.path = '' if doc.path is '.'
         for field in ['size', 'class', 'mime', 'tags']
             doc[field] = local[field] if local[field]
         if remote
@@ -202,8 +209,9 @@ class Remote
                 if err
                     @addFile doc, callback
                 else
-                    remoteDoc.path = path.dirname doc._id
-                    remoteDoc.name = path.basename doc._id
+                    [dir, name] = @extractDirAndName doc._id
+                    remoteDoc.path = dir
+                    remoteDoc.name = name
                     remoteDoc.lastModification = doc.lastModification
                     @couch.put remoteDoc, (err, moved) ->
                         unless err
@@ -225,8 +233,9 @@ class Remote
                 else
                     # TODO what if folder.path+name != old._id ?
                     # TODO Or folder._rev != doc.remote._rev
-                    folder.path = path.dirname doc._id
-                    folder.name = path.basename doc._id
+                    [dir, name] = @extractDirAndName doc._id
+                    folder.path = dir
+                    folder.name = name
                     folder.tags = doc.tags
                     folder.lastModification = doc.lastModification
                     @couch.put folder, callback
