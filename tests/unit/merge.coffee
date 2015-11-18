@@ -91,12 +91,10 @@ describe 'Merge', ->
                 one =
                     checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
                     remote:
-                        file:
-                            _id: 'f00b4r'
+                        _id: 'f00b4r'
                 two =
                     remote:
-                        file:
-                            _id: 'f00b4r'
+                        _id: 'f00b4r'
                 ret = @merge.sameBinary one, two
                 ret.should.be.true()
                 ret = @merge.sameBinary two, one
@@ -107,12 +105,10 @@ describe 'Merge', ->
                 two =
                     checksum: '2082e7f715f058acab2398d25d135cf5f4c0ce41'
                     remote:
-                        file:
-                            _id: 'f00b4r'
+                        _id: 'f00b4r'
                 three =
                     remote:
-                        file:
-                            _id: 'c00463'
+                        _id: 'c00463'
                 ret = @merge.sameBinary one, two
                 ret.should.be.false()
                 ret = @merge.sameBinary two, three

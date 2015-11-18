@@ -121,6 +121,8 @@ class Sync
                         callback err
                     else
                         doc.sides[side] = @pouch.extractRevNumber doc
+                        for side in ['local', 'remote']
+                            doc.sides[side]++
                         @pouch.db.put doc, callback
 
     # If a file has been changed, we had to check what operation it is.
@@ -149,6 +151,7 @@ class Sync
                 side.addFile doc, callback
             else
                 @pouch.getPreviousRev doc._id, rev, (err, old) ->
+                    log.debug old
                     if err or old.checksum isnt doc.checksum
                         side.overwriteFile doc, old, callback
                     else

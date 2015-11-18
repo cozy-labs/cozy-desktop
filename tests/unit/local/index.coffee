@@ -87,8 +87,26 @@ describe 'Local', ->
                 done()
 
 
+    describe 'isUpToDate', ->
+        it 'says if the local file is up to date', ->
+            doc =
+                _id: 'foo/bar'
+                _rev: '1-0123456'
+                docType: 'file'
+                checksum: '22f7aca0d717eb322d5ae1c97d8aa26eb440287b'
+                sides:
+                    remote: 1
+            @local.isUpToDate(doc).should.be.false()
+            doc.sides.local = 2
+            doc._rev = '2-0123456'
+            @local.isUpToDate(doc).should.be.true()
+            doc.sides.remote = 3
+            doc._rev = '3-0123456'
+            @local.isUpToDate(doc).should.be.false()
+
+
     describe 'fileExistsLocally', ->
-        it "checks file existence as a binary in the db and on disk", (done) ->
+        it 'checks file existence as a binary in the db and on disk', (done) ->
             filePath = path.resolve @basePath, 'folder', 'testfile'
             @local.fileExistsLocally 'deadcafe', (err, exist) =>
                 should.not.exist err
@@ -98,6 +116,8 @@ describe 'Local', ->
                     _id: 'folder/testfile'
                     docType: 'file'
                     checksum: 'deadcafe'
+                    sides:
+                        local:  1
                 @pouch.db.put doc, (err) =>
                     should.not.exist err
                     @local.fileExistsLocally 'deadcafe', (err, exist) ->

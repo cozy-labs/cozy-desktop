@@ -74,10 +74,10 @@ class Merge
     sameBinary: (one, two) ->
         if one.checksum? and one.checksum is two.checksum
             return true
-        else if one.remote?.file? and two.remote?.file?
-            oneId = one.remote.file._id
-            twoId = two.remote.file._id
-            return oneId and oneId is twoId
+        else if one.remote? and two.remote?
+            oneId = one.remote._id
+            twoId = two.remote._id
+            return oneId? and oneId is twoId
         else
             return false
 

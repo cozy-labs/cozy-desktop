@@ -252,8 +252,8 @@ describe "Sync", ->
                             _id: 'just/created'
                             docType: 'folder'
                             sides:
-                                local: 1
-                                remote: 1
+                                local: 2
+                                remote: 2
                         done()
                 func()
 

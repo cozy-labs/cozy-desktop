@@ -135,6 +135,7 @@ describe 'Remote', ->
                 lastModification: "2015-11-12T13:14:32.384Z"
                 creationDate: "2015-11-12T13:14:32.384Z"
                 tags: ['qux']
+                checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
                 size: 12345
                 class: 'image'
                 mime: 'image/jpeg'

@@ -44,6 +44,12 @@ class Local
             else
                 callback()
 
+    # Return true if the local file is up-to-date for this document
+    isUpToDate: (doc) ->
+        currentRev = doc.sides.local or 0
+        lastRev = @pouch.extractRevNumber doc
+        return currentRev is lastRev
+
     # Check if a file corresponding to given checksum already exists
     fileExistsLocally: (checksum, callback) =>
         @pouch.byChecksum checksum, (err, docs) =>
@@ -52,7 +58,7 @@ class Local
             else if not docs? or docs.length is 0
                 callback null, false
             else
-                paths = for doc in docs
+                paths = for doc in docs when @isUpToDate doc
                     path.resolve @basePath, doc._id
                 async.detect paths, fs.exists, (foundPath) ->
                     callback null, foundPath
@@ -92,7 +98,6 @@ class Local
                     next null, false
 
             (existingFilePath, next) =>
-                # TODO what if existingFilePath is filePath
                 if existingFilePath
                     log.info "Recopy #{existingFilePath} -> #{filePath}"
                     stream = fs.createReadStream existingFilePath

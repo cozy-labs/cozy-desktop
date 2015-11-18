@@ -77,7 +77,7 @@ class Remote
             name: name
             creationDate: local.creationDate
             lastModification: local.lastModification
-        for field in ['size', 'class', 'mime', 'tags']
+        for field in ['checksum', 'size', 'class', 'mime', 'tags']
             doc[field] = local[field] if local[field]
         if remote
             doc._id = remote._id
