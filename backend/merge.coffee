@@ -27,6 +27,7 @@ Pouch = require './pouch'
 #   - class
 #   - mime
 #   - sides
+#   - remote
 #
 # Folder:
 #   - _id / _rev
@@ -35,6 +36,7 @@ Pouch = require './pouch'
 #   - lastModification
 #   - tags
 #   - sides
+#   - remote
 #
 # Conflicts can happen when we try to write one document for a path when
 # another document already exists for the same path. We don't try to be smart
@@ -143,8 +145,6 @@ class Merge
     # revision from the previous state, increment it by one to have the next
     # revision and associate this number to the side that makes the
     # modification.
-    #
-    # TODO should we save the sides rev in a separate doc?
     markSide: (side, doc, prev) ->
         rev = 0
         rev = @pouch.extractRevNumber prev if prev
@@ -346,7 +346,6 @@ class Merge
                         @moveFolderRecursively doc, was, callback
 
     # Move a folder and all the things inside it
-    # TODO Check if folders/files exists in destination
     moveFolderRecursively: (folder, was, callback) =>
         @pouch.byRecursivePath was._id, (err, docs) =>
             if err

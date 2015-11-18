@@ -85,7 +85,6 @@ class Couch
             else
                 log.info "Binary uploaded"
                 callback null, body
-        # TODO progress.showUpload filePath, streams.fileStream
 
     # Give a readable stream of a file stored on the remote couch
     # TODO call the callback with an error when url gives a 404
