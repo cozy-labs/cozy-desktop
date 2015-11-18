@@ -7,7 +7,9 @@ log   = require('printit')
 Watcher = require './watcher'
 
 
-# TODO comments, tests
+# Local is the class that interfaces cozy-desktop with the local filesystem.
+# It uses a watcher, based on chokidar, to listen for file and folder changes.
+# It also applied changes from the remote cozy on the local filesystem.
 class Local
     constructor: (config, @merge, @pouch) ->
         @basePath = config.getDevice().path
@@ -18,7 +20,6 @@ class Local
     # Start initial replication + watching changes in live
     start: (done) =>
         fs.ensureDir @basePath, =>
-            # TODO should we wait before calling done that all events are fired?
             @watcher.start done
 
     # Create a readable stream for the given doc
@@ -82,7 +83,6 @@ class Local
     #
     # TODO verify the checksum -> remove file if not ok
     # TODO save the checksum if it didn't have one
-    # TODO show progress
     addFile: (doc, callback) =>
         tmpFile  = path.resolve @tmpPath, path.basename doc._id
         filePath = path.resolve @basePath, doc._id

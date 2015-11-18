@@ -1,3 +1,4 @@
+async    = require 'async'
 chokidar = require 'chokidar'
 crypto   = require 'crypto'
 fs       = require 'fs'
@@ -11,8 +12,6 @@ log      = require('printit')
 # a file or a folder is added/removed/changed locally.
 # Operations will be added to the a common operation queue along with the
 # remote operations triggered by the remoteEventWatcher.
-#
-# TODO find deleted files/folders in the initial scan
 #
 # TODO detects move/rename (for files only):
 # TODO - https://github.com/paulmillr/chokidar/issues/303#issuecomment-127039892
@@ -29,6 +28,7 @@ class LocalWatcher
     # The callback is called when the initial scan is complete
     start: (callback) =>
         log.info 'Start watching filesystem for changes'
+        @paths = []
 
         @watcher = chokidar.watch '.',
             # Let paths in events be relative to this base path
@@ -55,7 +55,7 @@ class LocalWatcher
             .on 'change', @onChange
             .on 'unlink', @onUnlink
             .on 'unlinkDir', @onUnlinkDir
-            .on 'ready', callback
+            .on 'ready', @onReady(callback)
             .on 'error', (err) -> log.error err
 
 
@@ -97,14 +97,12 @@ class LocalWatcher
         stream = fs.createReadStream filePath
         checksum = crypto.createHash 'sha1'
         checksum.setEncoding 'hex'
-
         stream.on 'end', ->
             checksum.end()
             callback null, checksum.read()
         stream.on 'error', (err) ->
             checksum.end()
             callback err
-
         stream.pipe checksum
 
 
@@ -113,6 +111,7 @@ class LocalWatcher
     # New file detected
     onAdd: (filePath, stats) =>
         log.debug 'File added', filePath
+        @paths?.push filePath
         @createDoc filePath, stats, (err, doc) =>
             if err
                 log.debug err
@@ -120,10 +119,10 @@ class LocalWatcher
                 @merge.addFile @side, doc, @done
 
     # New directory detected
-    # TODO pouchdb -> detect updates/conflicts
     onAddDir: (folderPath, stats) =>
         unless folderPath is ''
             log.debug 'Folder added', folderPath
+            @paths?.push folderPath
             doc =
                 _id: folderPath
                 docType: 'folder'
@@ -149,6 +148,23 @@ class LocalWatcher
                 log.debug err
             else
                 @merge.updateFile @side, doc, @done
+
+    # Try to detect removed files&folders
+    # after chokidar has finished its initial scan
+    onReady: (callback) =>
+        =>
+            @pouch.byRecursivePath '', (err, docs) =>
+                if err
+                    callback err
+                else
+                    async.eachSeries docs.reverse(), (doc, next) =>
+                        if doc._id in @paths
+                            next()
+                        else
+                            @merge.deleteDoc @side, doc, next
+                    , (err) =>
+                        @paths = null
+                        callback err
 
     # A callback that logs errors
     done: (err) ->

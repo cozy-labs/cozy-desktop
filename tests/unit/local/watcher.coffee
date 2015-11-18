@@ -1,3 +1,4 @@
+async  = require 'async'
 fs     = require 'fs-extra'
 path   = require 'path'
 sinon  = require 'sinon'
@@ -57,8 +58,6 @@ describe "LocalWatcher Tests", ->
                 done()
             , 1000
             @watcher.start ->
-
-        it 'detects deleted files'
 
 
     describe 'createDoc', ->
@@ -198,21 +197,21 @@ describe "LocalWatcher Tests", ->
             src = path.join __dirname, '../../fixtures/chat-mignon.jpg'
             dst = path.join @basePath, 'aea.jpg'
             fs.copySync src, dst
-            @watcher.start =>
-                @merge.addFile = =>
-                    @merge.updateFile = (side, doc) ->
-                        side.should.equal 'local'
-                        doc.should.have.properties
-                            _id: 'aea.jpg'
-                            docType: 'file'
-                            checksum: 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
-                            size: 36901
-                            class: 'image'
-                            mime: 'image/jpeg'
-                        done()
-                    src = src.replace /\.jpg$/, '-mod.jpg'
-                    dst = path.join @basePath, 'aea.jpg'
-                    fs.copySync src, dst
+            @merge.addFile = =>
+                @merge.updateFile = (side, doc) ->
+                    side.should.equal 'local'
+                    doc.should.have.properties
+                        _id: 'aea.jpg'
+                        docType: 'file'
+                        checksum: 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
+                        size: 36901
+                        class: 'image'
+                        mime: 'image/jpeg'
+                    done()
+                src = src.replace /\.jpg$/, '-mod.jpg'
+                dst = path.join @basePath, 'aea.jpg'
+                fs.copySync src, dst
+            @watcher.start ->
 
 
     describe 'when a file is moved', ->
@@ -275,3 +274,31 @@ describe "LocalWatcher Tests", ->
                         , 1100
                     fs.renameSync src, dst
                 , 1100
+
+    describe 'onReady', ->
+        it 'detects deleted files and folders', (done) ->
+            dd = @merge.deleteDoc = sinon.stub().yields()
+            folder1 =
+                _id: 'folder1'
+                docType: 'folder'
+            folder2 =
+                _id: 'folder2'
+                docType: 'folder'
+            file1 =
+                _id: 'file1'
+                docType: 'folder'
+            file2 =
+                _id: 'file2'
+                docType: 'folder'
+            async.each [folder1, folder2, file1, file2], (doc, next) =>
+                @pouch.db.put doc, next
+            , =>
+                @watcher.paths = ['folder1', 'file1']
+                cb = @watcher.onReady ->
+                    dd.calledTwice.should.be.true()
+                    dd.calledWithMatch('local', folder1).should.be.false()
+                    dd.calledWithMatch('local', folder2).should.be.true()
+                    dd.calledWithMatch('local', file1).should.be.false()
+                    dd.calledWithMatch('local', file2).should.be.true()
+                    done()
+                cb()
