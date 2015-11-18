@@ -1,5 +1,6 @@
 PouchDB = require 'pouchdb'
 async   = require 'async'
+isEqual = require 'lodash.isequal'
 path    = require 'path-extra'
 log     = require('printit')
     prefix: 'Local Pouchdb '
@@ -96,7 +97,6 @@ class Pouch
     ### Views ###
 
     # Create all required views in the database
-    # TODO don't recreate the same views again and again
     addAllViews: (callback) =>
         async.series [
             @addByPathView,
@@ -142,7 +142,9 @@ class Pouch
             views: {}
         doc.views[name] = map: query
         @db.get doc._id, (err, designDoc) =>
-            doc._rev = designDoc._rev if designDoc?
+            if designDoc?
+                doc._rev = designDoc._rev
+                return callback() if isEqual doc, designDoc
             @db.put doc, (err) ->
                 log.info "Design document created: #{name}" unless err
                 callback err
