@@ -82,10 +82,11 @@ class Remote
         if remote
             doc._id = remote._id
             doc._rev = remote._rev
-            doc.binary =
-                file:
-                    id:  remote.binary._id
-                    rev: remote.binary._rev
+            if remote.binary
+                doc.binary =
+                    file:
+                        id:  remote.binary._id
+                        rev: remote.binary._rev
         doc._id ?= Couch.newId()
         return doc
 
@@ -246,7 +247,9 @@ class Remote
     deleteFile: (doc, callback) =>
         log.info "Delete file #{doc._id}"
         return callback() unless doc.remote
-        @couch.remove doc.remote._id, doc.remote._rev, (err, removed) =>
+        remoteDoc = @createRemoteDoc doc, doc.remote
+        remoteDoc._deleted = true
+        @couch.put remoteDoc, (err, removed) =>
             if err
                 callback err, removed
             else
@@ -257,7 +260,9 @@ class Remote
     deleteFolder: (doc, callback) =>
         log.info "Delete folder #{doc._id}"
         if doc.remote
-            @couch.remove doc.remote._id, doc.remote._rev, callback
+            remoteDoc = @createRemoteDoc doc, doc.remote
+            remoteDoc._deleted = true
+            @couch.put remoteDoc, callback
         else
             callback()
 
