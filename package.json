@@ -42,7 +42,7 @@
   "homepage": "https://github.com/cozy-labs/cozy-desktop",
   "dependencies": {
     "async": "1.5.0",
-    "chokidar": "paulmillr/chokidar",
+    "chokidar": "1.3.0",
     "commander": "2.9.0",
     "del": "2.0.2",
     "fs-extra": "0.26.1",
