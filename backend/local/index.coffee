@@ -7,20 +7,30 @@ log   = require('printit')
 Watcher = require './watcher'
 
 
-# TODO comments, tests
+# Local is the class that interfaces cozy-desktop with the local filesystem.
+# It uses a watcher, based on chokidar, to listen for file and folder changes.
+# It also applied changes from the remote cozy on the local filesystem.
 class Local
-    constructor: (config, @merge, @pouch, @events) ->
+    constructor: (config, @merge, @pouch) ->
         @basePath = config.getDevice().path
         @tmpPath  = path.join @basePath, ".cozy-desktop"
-        @watcher  = new Watcher @basePath, @merge, @pouch, @events
-        @other = null
+        @watcher  = new Watcher @basePath, @merge, @pouch
+        @other    = null
 
-    start: (done) ->
+    # Start initial replication + watching changes in live
+    start: (done) =>
         fs.ensureDir @basePath, =>
             @watcher.start done
 
+    # Create a readable stream for the given doc
     createReadStream: (doc, callback) ->
-        callback new Error 'TODO'
+        try
+            filePath = path.resolve @basePath, doc._id
+            stream = fs.createReadStream filePath
+            callback null, stream
+        catch err
+            log.error err
+            callback new Error 'Cannot read the file'
 
 
     ### Helpers ###
@@ -35,6 +45,12 @@ class Local
             else
                 callback()
 
+    # Return true if the local file is up-to-date for this document
+    isUpToDate: (doc) ->
+        currentRev = doc.sides.local or 0
+        lastRev = @pouch.extractRevNumber doc
+        return currentRev is lastRev
+
     # Check if a file corresponding to given checksum already exists
     fileExistsLocally: (checksum, callback) =>
         @pouch.byChecksum checksum, (err, docs) =>
@@ -43,7 +59,7 @@ class Local
             else if not docs? or docs.length is 0
                 callback null, false
             else
-                paths = for doc in docs
+                paths = for doc in docs when @isUpToDate doc
                     path.resolve @basePath, doc._id
                 async.detect paths, fs.exists, (foundPath) ->
                     callback null, foundPath
@@ -67,7 +83,6 @@ class Local
     #
     # TODO verify the checksum -> remove file if not ok
     # TODO save the checksum if it didn't have one
-    # TODO show progress
     addFile: (doc, callback) =>
         tmpFile  = path.resolve @tmpPath, path.basename doc._id
         filePath = path.resolve @basePath, doc._id
@@ -83,7 +98,6 @@ class Local
                     next null, false
 
             (existingFilePath, next) =>
-                # TODO what if existingFilePath is filePath
                 if existingFilePath
                     log.info "Recopy #{existingFilePath} -> #{filePath}"
                     stream = fs.createReadStream existingFilePath
@@ -119,16 +133,17 @@ class Local
             else
                 @utimesUpdater(doc)(callback)
 
-    # Update a file
-    updateFile: (doc, callback) =>
-        if doc.overwrite
-            @addFile doc, callback
-        else
-            log.info "Update metadata of #{doc._id}" # TODO
-            callback()
+
+    # Overwrite a file
+    overwriteFile: (doc, old, callback) =>
+        @addFile doc, callback
+
+    # Update the metadata of a file
+    updateFileMetadata: (doc, old, callback) =>
+        @utimesUpdater(doc) callback
 
     # Update a folder
-    updateFolder: (doc, callback) =>
+    updateFolder: (doc, old, callback) =>
         @addFolder doc, callback
 
 

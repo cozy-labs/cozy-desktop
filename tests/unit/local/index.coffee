@@ -1,3 +1,4 @@
+crypto   = require 'crypto'
 fs       = require 'fs-extra'
 path     = require 'path'
 sinon    = require 'sinon'
@@ -18,7 +19,6 @@ describe 'Local', ->
     before 'instanciate local', ->
         @merge = {}
         @local = new Local @config, @merge, @pouch
-        @basePath = @config.getDevice().path
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
 
@@ -32,12 +32,31 @@ describe 'Local', ->
             @local.tmpPath.should.equal tmpPath
 
 
-    describe 'start', ->
-        it 'TODO'
-
-
     describe 'createReadStream', ->
-        it 'TODO'
+        it 'throws an error if no file for this document', (done) ->
+            doc = _id: 'no-such-file'
+            @local.createReadStream doc, (err, stream) ->
+                should.exist err
+                err.message.should.equal 'Cannot read the file'
+                done()
+
+        it 'creates a readable stream for the document', (done) ->
+            src = path.join __dirname, '../../fixtures/chat-mignon.jpg'
+            dst = path.join @basePath, 'read-stream.jpg'
+            fs.copySync src, dst
+            doc =
+                _id: 'read-stream.jpg'
+                checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+            @local.createReadStream doc, (err, stream) ->
+                should.not.exist err
+                should.exist stream
+                checksum = crypto.createHash 'sha1'
+                checksum.setEncoding 'hex'
+                stream.pipe checksum
+                stream.on 'end', ->
+                    checksum.end()
+                    checksum.read().should.equal doc.checksum
+                    done()
 
 
     describe 'utimesUpdater', ->
@@ -68,8 +87,26 @@ describe 'Local', ->
                 done()
 
 
+    describe 'isUpToDate', ->
+        it 'says if the local file is up to date', ->
+            doc =
+                _id: 'foo/bar'
+                _rev: '1-0123456'
+                docType: 'file'
+                checksum: '22f7aca0d717eb322d5ae1c97d8aa26eb440287b'
+                sides:
+                    remote: 1
+            @local.isUpToDate(doc).should.be.false()
+            doc.sides.local = 2
+            doc._rev = '2-0123456'
+            @local.isUpToDate(doc).should.be.true()
+            doc.sides.remote = 3
+            doc._rev = '3-0123456'
+            @local.isUpToDate(doc).should.be.false()
+
+
     describe 'fileExistsLocally', ->
-        it "checks file existence as a binary in the db and on disk", (done) ->
+        it 'checks file existence as a binary in the db and on disk', (done) ->
             filePath = path.resolve @basePath, 'folder', 'testfile'
             @local.fileExistsLocally 'deadcafe', (err, exist) =>
                 should.not.exist err
@@ -79,6 +116,8 @@ describe 'Local', ->
                     _id: 'folder/testfile'
                     docType: 'file'
                     checksum: 'deadcafe'
+                    sides:
+                        local:  1
                 @pouch.db.put doc, (err) =>
                     should.not.exist err
                     @local.fileExistsLocally 'deadcafe', (err, exist) ->
@@ -190,22 +229,50 @@ describe 'Local', ->
                 done()
 
 
-    describe 'updateFile', ->
-        it 'calls addFile for an overwrite', (done) ->
+    describe 'overwriteFile', ->
+        it 'writes the new content of a file', (done) ->
             doc =
                 _id: 'a-file-to-overwrite'
                 docType: 'file'
-                checksum: 'abfcfb0dfcfdb36deb1187b456e575472661f97a'
-                lastModification: new Date
-                overwrite: true
-            sinon.stub(@local, 'addFile').yields()
-            @local.updateFile doc, (err) =>
+                lastModification: new Date '2015-10-09T05:06:07Z'
+                checksum: '98765'
+            @local.other =
+                createReadStream: (docToStream, callback) ->
+                    docToStream.should.equal doc
+                    stream = new Readable
+                    stream._read = ->
+                    setTimeout ->
+                        stream.push 'Hello world'
+                        stream.push null
+                    , 100
+                    callback null, stream
+            filePath = path.join @basePath, doc._id
+            fs.writeFileSync filePath, 'old content'
+            @local.overwriteFile doc, {}, (err) =>
+                @local.other = null
                 should.not.exist err
-                @local.addFile.calledWith(doc).should.be.true()
-                @local.addFile.restore()
+                fs.statSync(filePath).isFile().should.be.true()
+                content = fs.readFileSync(filePath, encoding: 'utf-8')
+                content.should.equal 'Hello world'
+                mtime = +fs.statSync(filePath).mtime
+                mtime.should.equal +doc.lastModification
                 done()
 
-        it 'updates metadata'
+
+    describe 'updateFileMetadata', ->
+        it 'updates metadata', (done) ->
+            doc =
+                _id: 'file-to-update'
+                docType: 'file'
+                lastModification: new Date '2015-11-10T05:06:07Z'
+            filePath = path.join @basePath, doc._id
+            fs.ensureFileSync filePath
+            @local.updateFileMetadata doc, {}, (err) ->
+                should.not.exist err
+                fs.existsSync(filePath).should.be.true()
+                mtime = +fs.statSync(filePath).mtime
+                mtime.should.equal +doc.lastModification
+                done()
 
 
     describe 'updateFolder', ->
@@ -215,7 +282,7 @@ describe 'Local', ->
                 docType: 'folder'
                 lastModification: new Date
             sinon.stub(@local, 'addFolder').yields()
-            @local.updateFolder doc, (err) =>
+            @local.updateFolder doc, {}, (err) =>
                 should.not.exist err
                 @local.addFolder.calledWith(doc).should.be.true()
                 @local.addFolder.restore()

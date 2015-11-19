@@ -1,5 +1,6 @@
 PouchDB = require 'pouchdb'
 async   = require 'async'
+isEqual = require 'lodash.isequal'
 path    = require 'path-extra'
 log     = require('printit')
     prefix: 'Local Pouchdb '
@@ -96,7 +97,6 @@ class Pouch
     ### Views ###
 
     # Create all required views in the database
-    # TODO don't recreate the same views again and again
     addAllViews: (callback) =>
         async.series [
             @addByPathView,
@@ -142,7 +142,9 @@ class Pouch
             views: {}
         doc.views[name] = map: query
         @db.get doc._id, (err, designDoc) =>
-            doc._rev = designDoc._rev if designDoc?
+            if designDoc?
+                doc._rev = designDoc._rev
+                return callback() if isEqual doc, designDoc
             @db.put doc, (err) ->
                 log.info "Design document created: #{name}" unless err
                 callback err
@@ -159,25 +161,29 @@ class Pouch
 
     ### Helpers ###
 
+    # Extract the revision number, or 0 it not found
+    extractRevNumber: (infos) ->
+        try
+            rev = infos._rev.split('-')[0]
+            return Number rev
+        catch
+            return 0
+
     # Retrieve a previous doc revision from its id
-    getPreviousRev: (id, callback) =>
+    getPreviousRev: (id, shortRev, callback) =>
         options =
             revs: true
             revs_info: true
-            open_revs: "all"
-
+            open_revs: 'all'
         @db.get id, options, (err, infos) =>
             if err
                 callback err
-            else if infos.length > 0 and infos[0].ok?._revisions?
-                rev = infos[0].ok._revisions.ids[1]
-                start = infos[0].ok._revisions.start
-                rev = "#{start - 1}-#{rev}"
-                @db.get id, rev: rev, callback
             else
-                err = new Error 'previous revision not found'
-                err.status = 404
-                callback err
+                ids = infos[0].ok._revisions.ids
+                revId = ids[ids.length - shortRev]
+                rev = "#{shortRev}-#{revId}"
+                @db.get id, rev: rev, (err, doc) ->
+                    callback err, doc
 
 
     ### Sequence numbers ###

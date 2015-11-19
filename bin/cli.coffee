@@ -10,10 +10,18 @@ app = new App process.env.DEFAULT_DIR
 # Helper to get cozy password from user
 app.askPassword = (callback) ->
     promptMsg = """
-Please enter your password to register your device to 'your remote Cozy:
+Please enter your password to register your device on your remote Cozy:
 """
     read prompt: promptMsg, silent: true , (err, password, isDefault) ->
         callback err, password
+
+sync = (mode, args) ->
+    if app.config.setInsecure args.insecure?
+        app.sync mode
+    else
+        console.log 'Your configuration file seems invalid.'
+        console.log 'Have you added a remote cozy?'
+        process.exit 1
 
 
 # TODO make devicename optional, and use `hostname` for the default
@@ -31,21 +39,29 @@ program
 
 program
     .command 'sync'
-    .description 'Sync databases, apply and/or watch changes'
-    # FIXME readonly is the only supported mode for the moment
-    # .option('-r, --readonly',
-    #        'only apply remote changes to local folder')
-    .option('-f, --force',
-            'Run sync from the beginning of all the Cozy changes.')
+    .description 'Synchronize the local filesystem and the remote cozy'
     .option('-k, --insecure',
             'Turn off HTTPS certificate verification.')
     .action (args) ->
-        if app.config.setInsecure args.insecure?
-            app.sync 'readonly'
-        else
-            console.log 'Your configuration file seems invalid.'
-            console.log 'Have you added a remote cozy?'
-            process.exit 1
+        # TODO
+        console.log 'This is not yet implemented'
+        process.exit 1
+
+program
+    .command 'pull'
+    .description 'Pull files & folders from a remote cozy to local filesystem'
+    .option('-k, --insecure',
+            'Turn off HTTPS certificate verification.')
+    .action (args) ->
+        sync 'pull', args
+
+program
+    .command 'push'
+    .description 'Push files & folders from local filesystem to the remote cozy'
+    .option('-k, --insecure',
+            'Turn off HTTPS certificate verification.')
+    .action (args) ->
+        sync 'push', args
 
 program
     .command 'reset-database'

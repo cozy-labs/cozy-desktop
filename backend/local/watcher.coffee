@@ -1,10 +1,11 @@
+async    = require 'async'
 chokidar = require 'chokidar'
-path     = require 'path'
+crypto   = require 'crypto'
 fs       = require 'fs'
+mime     = require 'mime'
+path     = require 'path'
 log      = require('printit')
     prefix: 'Local watcher '
-
-filesystem = require './filesystem'
 
 
 # This file contains the filesystem watcher that will trigger operations when
@@ -12,11 +13,14 @@ filesystem = require './filesystem'
 # Operations will be added to the a common operation queue along with the
 # remote operations triggered by the remoteEventWatcher.
 #
-# TODO find deleted files/folders in the initial scan
-# TODO https://github.com/paulmillr/chokidar/issues/303#issuecomment-127039892
+# TODO detects move/rename (for files only):
+# TODO - https://github.com/paulmillr/chokidar/issues/303#issuecomment-127039892
+# TODO - Inotify.IN_MOVED_FROM & Inotify.IN_MOVED_TO
+# TODO - track inodes
 class LocalWatcher
 
-    constructor: (@basePath, @merge, @pouch, @events) ->
+    constructor: (@basePath, @merge, @pouch) ->
+        @side = 'local'
 
     # Start chokidar, the filesystem watcher
     # https://github.com/paulmillr/chokidar
@@ -24,103 +28,147 @@ class LocalWatcher
     # The callback is called when the initial scan is complete
     start: (callback) =>
         log.info 'Start watching filesystem for changes'
+        @paths = []
 
         @watcher = chokidar.watch '.',
+            # Let paths in events be relative to this base path
+            cwd: @basePath
             # Ignore our own .cozy-desktop directory
             ignored: /[\/\\]\.cozy-desktop/
             # Don't follow symlinks
             followSymlinks: false
-            # Let paths in events be relative to this base path
-            cwd: @basePath
-            # Poll newly created files to detect when the write is finished
-            awaitWriteFinish:
-                stabilityThreshold: 1000
-                pollInterval: 100
+            # The stats object is used in methods below
+            alwaysStat: true
             # Filter out artifacts from editors with atomic writes
             atomic: true
+            # Poll newly created files to detect when the write is finished
+            awaitWriteFinish:
+                pollInterval: 200
+                stabilityThreshold: 1000
             # With node 0.10 on linux, only polling is available
             interval: 1000
             binaryInterval: 2000
 
+        @watcher
             .on 'add', @onAdd
             .on 'addDir', @onAddDir
             .on 'change', @onChange
             .on 'unlink', @onUnlink
             .on 'unlinkDir', @onUnlinkDir
-            .on 'ready', callback
+            .on 'ready', @onReady(callback)
             .on 'error', (err) -> log.error err
 
+
+    ### Helpers ###
+
+    # An helper to create a document for a file
+    # with checksum and mime informations
+    createDoc: (filePath, stats, callback) =>
+        absPath = path.join @basePath, filePath
+        [mimeType, fileClass] = @getFileClass absPath
+        @checksum absPath, (err, checksum) ->
+            doc =
+                _id: filePath
+                docType: 'file'
+                checksum: checksum
+                creationDate: stats.ctime
+                lastModification: stats.mtime
+                size: stats.size
+                class: fileClass
+                mime: mimeType
+            callback err, doc
+
+    # Return mimetypes and class (like in classification) of a file
+    # It's only based on the filename, not using libmagic
+    # ex: pic.png returns 'image/png' and 'image'
+    getFileClass: (filename, callback) ->
+        mimeType = mime.lookup filename
+        fileClass = switch mimeType.split('/')[0]
+            when 'image'       then "image"
+            when 'application' then "document"
+            when 'text'        then "document"
+            when 'audio'       then "music"
+            when 'video'       then "video"
+            else                    "file"
+        return [mimeType, fileClass]
+
+    # Get checksum for given file
+    checksum: (filePath, callback) ->
+        stream = fs.createReadStream filePath
+        checksum = crypto.createHash 'sha1'
+        checksum.setEncoding 'hex'
+        stream.on 'end', ->
+            checksum.end()
+            callback null, checksum.read()
+        stream.on 'error', (err) ->
+            checksum.end()
+            callback err
+        stream.pipe checksum
+
+
+    ### Actions ###
+
     # New file detected
-    onAdd: (filePath) =>
-        if not filesystem.filesBeingCopied[filePath]?
-            log.info "File added: #{filePath}"
-            localEventWatcher.publisher.emit 'fileAddedLocally', filePath
-            filesystem.isBeingCopied filePath, ->
-                operationQueue.queue.push
-                    operation: 'createFileRemotely'
-                    file: filePath
-                , ->
+    onAdd: (filePath, stats) =>
+        log.debug 'File added', filePath
+        @paths?.push filePath
+        @createDoc filePath, stats, (err, doc) =>
+            if err
+                log.debug err
+            else
+                @merge.addFile @side, doc, @done
 
     # New directory detected
-    onAddDir: (folderPath) =>
-        if folderPath isnt localEventWatcher.path
-            log.info "Directory added: #{folderPath}"
-            localEventWatcher.publisher.emit 'folderAddedLocally', folderPath
-            operationQueue.queue.push
-                operation: 'createFolderRemotely'
-                folder: folderPath
-            , ->
+    onAddDir: (folderPath, stats) =>
+        unless folderPath is ''
+            log.debug 'Folder added', folderPath
+            @paths?.push folderPath
+            doc =
+                _id: folderPath
+                docType: 'folder'
+                creationDate: stats.ctime
+                lastModification: stats.mtime
+            @merge.putFolder @side, doc, @done
 
     # File deletion detected
     onUnlink: (filePath) =>
-        if not fs.existsSync filePath
-            log.info "File deleted: #{filePath}"
-            localEventWatcher.publisher.emit 'fileDeletedLocally', filePath
-            operationQueue.queue.push
-                operation: 'deleteFileRemotely'
-                file: filePath
-            , ->
+        log.debug 'File deleted', filePath
+        @merge.deleteFile @side, _id: filePath, @done
 
     # Folder deletion detected
     onUnlinkDir: (folderPath) =>
-        log.info "Folder deleted: #{folderPath}"
-        localEventWatcher.publisher.emit 'folderDeletedLocally', folderPath
-        operationQueue.queue.push
-            operation: 'deleteFolderRemotely'
-            folder: folderPath
-        , ->
+        log.debug 'Folder deleted', folderPath
+        @merge.deleteFolder @side, _id: folderPath, @done
 
     # File update detected
-    onChange: (filePath) =>
-        filePath = path.join localEventWatcher.path, filePath
-        if fs.existsSync filePath
-            onChange filePath
-        else
-            setTimeout ->
-                if fs.existsSync filePath
-                    onChange filePath
-            , 1000
+    onChange: (filePath, stats) =>
+        log.debug 'File updated', filePath
+        @createDoc filePath, stats, (err, doc) =>
+            if err
+                log.debug err
+            else
+                @merge.updateFile @side, doc, @done
 
+    # Try to detect removed files&folders
+    # after chokidar has finished its initial scan
+    onReady: (callback) =>
+        =>
+            @pouch.byRecursivePath '', (err, docs) =>
+                if err
+                    callback err
+                else
+                    async.eachSeries docs.reverse(), (doc, next) =>
+                        if doc._id in @paths
+                            next()
+                        else
+                            @merge.deleteDoc @side, doc, next
+                    , (err) =>
+                        @paths = null
+                        callback err
 
-onChange = (filePath) ->
-    # Chokidar sometimes detect changes with a relative path
-    # In this case we want to adjust the path to be consistent
-    re = new RegExp "^#{localEventWatcher.path}"
-    if not re.test filePath
-        relativePath = filePath
-        filePath = path.join localEventWatcher.path, filePath
-
-    if not filesystem.filesBeingCopied[filePath]? \
-    and fs.existsSync filePath
-        log.info "File changed: #{filePath}"
-        localEventWatcher.publisher.emit 'fileChangedLocally', filePath
-        filesystem.isBeingCopied filePath, ->
-            log.debug "#{relativePath} copy is finished."
-            operationQueue.queue.push
-                operation: 'updateFileRemotely'
-                file: filePath
-            , ->
-                log.debug 'File uploaded remotely'
+    # A callback that logs errors
+    done: (err) ->
+        log.error err if err
 
 
 module.exports = LocalWatcher

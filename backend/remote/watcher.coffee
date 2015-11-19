@@ -8,8 +8,10 @@ log   = require('printit')
 # Watch for changes from the remote couchdb and give them to the merge
 #
 # TODO add comments
+# TODO refactor unit tests
 class RemoteWatcher
     constructor: (@couch, @merge, @pouch) ->
+        @side = 'remote'
         @pending = 0
 
     # First time replication
@@ -101,49 +103,53 @@ class RemoteWatcher
                     # It's fine if the file was deleted on local and on remote
                     callback()
                 else
-                    @merge.deleteDoc was, callback
+                    @merge.deleteDoc @side, was, callback
             else if doc.docType in ['folder', 'Folder'] or doc.binary?.file
                 @putDoc doc, was, callback
             else
                 callback()
+
+    # Transform a remote document in a local one
+    createLocalDoc: (remote) ->
+        docPath = remote.path or ''
+        docName = remote.name or ''
+        doc =
+            _id: path.join docPath, docName
+            docType: remote.docType.toLowerCase()
+            creationDate: remote.creationDate
+            lastModification: remote.lastModification
+            remote:
+                _id:  remote._id
+                _rev: remote._rev
+        if doc.docType is 'file'
+            doc.remote.binary =
+                _id:  remote.binary.file.id
+                _rev: remote.binary.file.rev
+        for field in ['checksum', 'size', 'class', 'mime', 'tags']
+            doc[field] = remote[field] if remote[field]
+        return doc
 
     # Transform the doc and save it in pouchdb
     #
     # In CouchDB, the filepath is in the path and name fields.
     # In PouchDB, the filepath is in the _id.
     # And the _id/_rev from CouchDB are saved in the remote field in PouchDB.
-    putDoc: (doc, was, callback) =>
-        # TODO start from {} and add wanted properties instead of deleting somes
-        doc = clone doc
-        doc.docType = doc.docType.toLowerCase()
-        doc.remote =
-            _id: doc._id
-            _rev: doc._rev
-        if doc.docType is 'file'
-            doc.remote.binary =
-                _id: doc.binary.file.id
-                _rev: doc.binary.file.rev
-        docPath = doc.path or ''
-        docName = doc.name or ''
-        doc._id = path.join docPath, docName
-        delete doc._rev
-        delete doc.path
-        delete doc.name
-        delete doc.binary
-        delete doc.clearance
-        delete doc.localPath
+    putDoc: (remote, was, callback) =>
+        doc = @createLocalDoc remote
         if @merge.invalidId doc
             log.error "Invalid id"
             log.error doc
             callback new Error 'Invalid path/name'
-        else if not was or was._id is doc._id
-            @merge.putDoc doc, callback
+        else if not was
+            @merge.addDoc @side, doc, callback
+        else if was._id is doc._id
+            @merge.updateDoc @side, doc, callback
         else if doc.checksum? and was.checksum is doc.checksum
-            @merge.moveDoc doc, was, callback
+            @merge.moveDoc @side, doc, was, callback
         else
-            @merge.deleteDoc was, (err) =>
+            @merge.deleteDoc @side, was, (err) =>
                 log.error err if err
-                @merge.putDoc doc, callback
+                @merge.addDoc @side, doc, callback
 
     # Keep track of the sequence number and log errors
     # TODO test pending counts

@@ -143,14 +143,15 @@ describe "Pouch", ->
     describe 'Views', ->
 
         describe 'createDesignDoc', ->
-            it "creates a new design doc", (done) ->
-                query = """
-                    function (doc) {
-                        if (doc.docType === 'file') {
-                            emit(doc._id);
-                        }
+            query = """
+                function (doc) {
+                    if (doc.docType === 'file') {
+                        emit(doc._id);
                     }
-                    """
+                }
+                """
+
+            it "creates a new design doc", (done) ->
                 @pouch.createDesignDoc 'file', query, (err) =>
                     should.not.exist err
                     @pouch.getAll 'file', (err, docs) ->
@@ -159,6 +160,35 @@ describe "Pouch", ->
                         for i in [1..3]
                             docs[i-1].docType.should.equal 'file'
                         done()
+
+            it 'does not update the same design doc', (done) ->
+                @pouch.createDesignDoc 'file', query, (err) =>
+                    should.not.exist err
+                    @pouch.db.get '_design/file', (err, was) =>
+                        should.not.exist err
+                        @pouch.createDesignDoc 'file', query, (err) =>
+                            should.not.exist err
+                            @pouch.db.get '_design/file', (err, designDoc) ->
+                                should.not.exist err
+                                designDoc._id.should.equal was._id
+                                designDoc._rev.should.equal was._rev
+                                done()
+
+            it 'updates the design doc if the query change', (done) ->
+                @pouch.createDesignDoc 'file', query, (err) =>
+                    should.not.exist err
+                    @pouch.db.get '_design/file', (err, was) =>
+                        should.not.exist err
+                        newQuery = query.replace 'file', 'File'
+                        @pouch.createDesignDoc 'file', newQuery, (err) =>
+                            should.not.exist err
+                            @pouch.db.get '_design/file', (err, designDoc) ->
+                                should.not.exist err
+                                designDoc._id.should.equal was._id
+                                designDoc._rev.should.not.equal was._rev
+                                designDoc.views.file.map.should.equal newQuery
+                                done()
+
 
         describe 'addByPathView', ->
             it 'creates the path view', (done) ->
@@ -210,17 +240,35 @@ describe "Pouch", ->
 
     describe 'Helpers', ->
 
+        describe 'extractRevNumber', ->
+            it 'extracts the revision number', ->
+                infos =
+                    _rev: '42-0123456789'
+                @pouch.extractRevNumber(infos).should.equal 42
+
+            it 'returns 0 if not found', ->
+                @pouch.extractRevNumber({}).should.equal 0
+
+
         describe 'getPreviousRev', ->
-            it "retrieves previous document's information", (done) ->
+            it 'retrieves previous document informations', (done) ->
                 id = path.join 'my-folder', 'folder-1'
                 @pouch.db.get id, (err, doc) =>
                     should.not.exist err
-                    @pouch.db.remove id, doc._rev, (err) =>
+                    doc.tags = ['yipee']
+                    @pouch.db.put doc, (err, updated) =>
                         should.not.exist err
-                        @pouch.getPreviousRev id, (err, doc) ->
+                        @pouch.db.remove id, updated.rev, (err) =>
                             should.not.exist err
-                            doc._id.should.equal id
-                            done()
+                            @pouch.getPreviousRev id, 1, (err, doc) =>
+                                should.not.exist err
+                                doc._id.should.equal id
+                                doc.tags.should.not.equal ['yipee']
+                                @pouch.getPreviousRev id, 2, (err, doc) ->
+                                    should.not.exist err
+                                    doc._id.should.equal id
+                                    doc.tags.join(',').should.equal 'yipee'
+                                    done()
 
 
     describe 'Sequence numbers', ->

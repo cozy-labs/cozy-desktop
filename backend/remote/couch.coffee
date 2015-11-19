@@ -20,7 +20,7 @@ class Couch
     @newId: ->
         uuid.v4().replace /-/g, ''
 
-    constructor: (@config, @events) ->
+    constructor: (@config) ->
         device  = @config.getDevice()
         options = @config.augmentCouchOptions
             auth:
@@ -73,17 +73,11 @@ class Couch
             @client.get id, (err, body) ->
                 callback err, body?.rows
 
-    # Create an empty binary remotely (it will be used to attach a file on it)
-    createEmptyRemoteDoc: (binaryDoc, callback) =>
-        data = binaryDoc or {}
-        data.docType = 'Binary'
-        data._id ?= Couch.newId()
-        @put data, callback
-
     # Upload given file as attachment of given document (id + revision)
-    uploadAsAttachment: (id, rev, filePath, callback) =>
+    # TODO when we upload a stream, the content-type is lost in couchdb
+    uploadAsAttachment: (id, rev, attachment, callback) =>
         urlPath = "cozy/#{id}/file?rev=#{rev}"
-        @http.putFile urlPath, filePath, (err, res, body) ->
+        @http.putFile urlPath, attachment, (err, res, body) ->
             if err
                 callback err
             else if body.error
@@ -91,13 +85,13 @@ class Couch
             else
                 log.info "Binary uploaded"
                 callback null, body
-        # TODO progress.showUpload filePath, streams.fileStream
 
     # Give a readable stream of a file stored on the remote couch
+    # TODO call the callback with an error when url gives a 404
     downloadBinary: (binaryId, callback) =>
-        url = "cozy/#{binaryId}/file"
-        log.info "Download #{url}"
-        @http.saveFileAsStream url, callback
+        urlPath = "cozy/#{binaryId}/file"
+        log.info "Download #{urlPath}"
+        @http.saveFileAsStream urlPath, callback
 
 
 module.exports = Couch

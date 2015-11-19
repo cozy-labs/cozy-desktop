@@ -1,4 +1,3 @@
-EventEmitter = require('events').EventEmitter
 path  = require 'path-extra'
 async = require 'async'
 log   = require('printit')
@@ -22,7 +21,6 @@ class App
         @lang = 'fr'
         @basePath = basePath or path.homedir()
         @config = new Config @basePath
-        @events = new EventEmitter
         @pouch  = new Pouch @config
 
     # This method is here to be surcharged by the UI
@@ -86,9 +84,9 @@ class App
     # Start database sync process and setup file change watcher
     sync: (mode) =>
         @merge  = new Merge @pouch
-        @local  = new Local  @config, @merge, @pouch, @events
-        @remote = new Remote @config, @merge, @pouch, @events
-        @sync   = new Sync @pouch, @local, @remote, @events
+        @local  = new Local  @config, @merge, @pouch
+        @remote = new Remote @config, @merge, @pouch
+        @sync   = new Sync @pouch, @local, @remote
         device  = @config.getDevice()
         if device.deviceName? and device.url? and device.path?
             log.info 'Run first synchronisation...'

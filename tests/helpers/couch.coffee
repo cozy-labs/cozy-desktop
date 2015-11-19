@@ -75,3 +75,26 @@ module.exports =
             deviceName: params.user
             password: params.pass
         @couch = new Couch @config
+
+    createFolder: (couch, i, callback) ->
+        doc =
+            _id: Couch.newId()
+            path: '/couchdb-folder'
+            name: "folder-#{i}"
+            docType: 'folder'
+            creationDate: new Date()
+            lastModification: new Date()
+            tags: []
+        couch.put doc, callback
+
+    createFile: (couch, i, callback) ->
+        doc =
+            _id: Couch.newId()
+            path: '/couchdb-folder'
+            name: "file-#{i}"
+            docType: 'file'
+            checksum: "111111111111111111111111111111111111112#{i}"
+            creationDate: new Date()
+            lastModification: new Date()
+            tags: []
+        couch.put doc, callback
