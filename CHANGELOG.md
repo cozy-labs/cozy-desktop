@@ -1,3 +1,8 @@
+## 0.5.0 - 2015-11-??
+
+- Add a write-only mode
+- Fix some bugs with the read-only mode
+
 ## 0.4.0 - 2015-11-03
 
 * Rewrite the read-only to prepare full sync
