@@ -2,15 +2,15 @@ sudo: false
 language: node_js
 matrix:
     fast_finish: true
-    allow_failures:
-        - node_js: 4
 node_js:
     - 0.10
     - 0.12
     - 4
+    - 5
 env:
     global:
         - NODE_ENV=test
+        - CXX=g++-4.8
 services:
     - couchdb
 cache:
@@ -18,15 +18,22 @@ cache:
         - node_modules
 addons:
     apt:
+        sources:
+            - ubuntu-toolchain-r-test
         packages:
-            - net-tools
+            - gcc-4.8
+            - g++-4.8
     code_climate:
         repo_token: a8ce9e5e4bade7e8314dd9247b1692c7d253cabe9c4f379f8d29ba241ef0aa3b
 
-
 before_install:
     - cd
-    - npm install forever coffee-script mocha -g
+    - export INDEXES_PATH=/home/travis/build/indexes
+    - mkdir -p $INDEXES_PATH
+    - TESTED_NODE=$(node -v)
+    - nvm install 0.10
+    - nvm use 0.10
+    - npm install forever coffee-script -g
     - git clone git://github.com/cozy/cozy-data-system.git
     - cd cozy-data-system
     - npm install #data-system
@@ -53,7 +60,9 @@ before_install:
     - cd ~/cozy-files
     - NAME=files TOKEN=apptoken forever start -o forever-files.log -e forever-files-err.log build/server.js
     - sleep 3
+    - nvm use $TESTED_NODE
     - cd /home/travis/build/cozy-labs/cozy-desktop
+    - npm install coffee-script mocha -g
     - pwd
 
 script:
@@ -72,4 +81,3 @@ after_failure:
     - curl -v http://localhost:9101/
     - curl -v http://localhost:9104/
     - curl -v http://localhost:9121/
-    - ping -n -w 2 -c 1 localhost
