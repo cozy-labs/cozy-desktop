@@ -23,9 +23,10 @@ addons:
     code_climate:
         repo_token: a8ce9e5e4bade7e8314dd9247b1692c7d253cabe9c4f379f8d29ba241ef0aa3b
 
-
 before_install:
     - cd
+    - export INDEXES_PATH=/home/travis/build/indexes
+    - mkdir -p $INDEXES_PATH
     - npm install forever coffee-script mocha -g
     - git clone git://github.com/cozy/cozy-data-system.git
     - cd cozy-data-system
