@@ -118,7 +118,7 @@ describe 'Merge', ->
 
         describe 'ensureParentExist', ->
             it 'works when in the root folder', (done) ->
-                @merge.ensureParentExist _id: 'foo', (err) ->
+                @merge.ensureParentExist @side, _id: 'foo', (err) ->
                     should.not.exist err
                     done()
 
@@ -131,29 +131,29 @@ describe 'Merge', ->
                     docType: 'folder'
                 @pouch.db.put doc, (err) =>
                     should.not.exist err
-                    @merge.ensureParentExist child, (err) ->
+                    @merge.ensureParentExist @side, child, (err) ->
                         should.not.exist err
                         done()
 
             it 'creates the parent directory if missing', (done) ->
                 @merge.putFolder = sinon.stub().yields null, 'OK'
-                @merge.ensureParentExist _id: 'missing/child', (err) =>
+                @merge.ensureParentExist @side, _id: 'missing/child', (err) =>
                     should.not.exist err
                     @merge.putFolder.called.should.be.true()
                     parent = _id: 'missing'
-                    @merge.putFolder.calledWith(null, parent).should.be.true()
+                    @merge.putFolder.calledWith(@side, parent).should.be.true()
                     done()
 
             it 'creates the full tree if needed', (done) ->
                 @merge.putFolder = sinon.stub().yields null, 'OK'
-                @merge.ensureParentExist _id: 'a/b/c/d/e', (err) =>
+                @merge.ensureParentExist @side, _id: 'a/b/c/d/e', (err) =>
                     should.not.exist err
                     method = @merge.putFolder
                     method.called.should.be.true()
-                    method.calledWith(null, _id: 'a').should.be.true()
-                    method.calledWith(null, _id: 'a/b').should.be.true()
-                    method.calledWith(null, _id: 'a/b/c').should.be.true()
-                    method.calledWith(null, _id: 'a/b/c/d').should.be.true()
+                    method.calledWith(@side, _id: 'a').should.be.true()
+                    method.calledWith(@side, _id: 'a/b').should.be.true()
+                    method.calledWith(@side, _id: 'a/b/c').should.be.true()
+                    method.calledWith(@side, _id: 'a/b/c/d').should.be.true()
                     done()
 
         describe 'moveDoc', ->

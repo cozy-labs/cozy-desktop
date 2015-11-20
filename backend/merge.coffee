@@ -85,7 +85,7 @@ class Merge
 
     # Be sure that the tree structure for the given path exists
     # TODO bulk create/update and check status, instead of recursive?
-    ensureParentExist: (doc, callback) =>
+    ensureParentExist: (side, doc, callback) =>
         parent = path.dirname doc._id
         if parent is '.'
             callback()
@@ -94,11 +94,11 @@ class Merge
                 if folder
                     callback()
                 else
-                    @ensureParentExist _id: parent, (err) =>
+                    @ensureParentExist side, _id: parent, (err) =>
                         if err
                             callback err
                         else
-                            @putFolder null, _id: parent, callback
+                            @putFolder side, _id: parent, callback
 
     # Simple helper to add a file or a folder
     addDoc: (side, doc, callback) =>
@@ -188,7 +188,7 @@ class Merge
                     callback new Error 'Conflicts are not yet handled'
                 else
                     doc.creationDate ?= new Date
-                    @ensureParentExist doc, =>
+                    @ensureParentExist side, doc, =>
                         @pouch.db.put doc, callback
 
     # Expectations:
@@ -223,7 +223,7 @@ class Merge
                     @pouch.db.put doc, callback
                 else
                     doc.creationDate ?= new Date
-                    @ensureParentExist doc, =>
+                    @ensureParentExist side, doc, =>
                         @pouch.db.put doc, callback
 
     # Expectations:
@@ -250,7 +250,7 @@ class Merge
                     @pouch.db.put doc, callback
                 else
                     doc.creationDate ?= new Date
-                    @ensureParentExist doc, =>
+                    @ensureParentExist side, doc, =>
                         @pouch.db.put doc, callback
 
     # Expectations:
@@ -300,7 +300,7 @@ class Merge
                     doc._rev = file._rev
                     @pouch.db.bulkDocs [was, doc], callback
                 else
-                    @ensureParentExist doc, =>
+                    @ensureParentExist side, doc, =>
                         @pouch.db.bulkDocs [was, doc], callback
 
     # Expectations:
@@ -342,7 +342,7 @@ class Merge
                     doc._rev = folder._rev
                     @moveFolderRecursively doc, was, callback
                 else
-                    @ensureParentExist doc, =>
+                    @ensureParentExist side, doc, =>
                         @moveFolderRecursively doc, was, callback
 
     # Move a folder and all the things inside it
