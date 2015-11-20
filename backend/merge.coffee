@@ -396,6 +396,8 @@ class Merge
                         # before their parents, hence the reverse order.
                         docs = docs.reverse()
                         docs.push folder
+                        # TODO find why we have undefined values here sometimes
+                        docs = (doc for doc in docs when doc?)
                         for doc in docs
                             doc._deleted = true
                         @pouch.db.bulkDocs docs, callback
