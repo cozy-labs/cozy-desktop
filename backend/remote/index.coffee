@@ -102,6 +102,33 @@ class Remote
                     else
                         @couch.remove doc._id, doc._rev, callback
 
+    # Compare two remote docs and say if they are the same,
+    # i.e. can we replace one by the other with no impact
+    sameRemoteDoc: (one, two) ->
+        for field in ['path', 'name', 'creationDate', 'checksum', 'size']
+            return false if one[field] isnt two[field]
+        return true
+
+    # Put the document on the remote cozy
+    # In case of a conflict in CouchDB, try to see if the changes on the remote
+    # sides are trivial and can be ignored.
+    # TODO add an integration test where an image is added, updated and removed
+    putRemoteDoc: (doc, old, callback) =>
+        @couch.put doc, (err, created) =>
+            if err?.status is 409
+                oldRemote = {}
+                oldRemote = @createRemoteDoc old if old
+                @couch.get doc._id, (err, remoteDoc) =>
+                    if err
+                        callback err
+                    else if @sameRemoteDoc remoteDoc, oldRemote
+                        doc._rev = remoteDoc._rev
+                        @couch.put doc, callback
+                    else
+                        callback new Error 'Conflict'
+            else
+                callback err, created
+
 
     ### Write operations ###
 
@@ -148,18 +175,17 @@ class Remote
                     _rev: old?.remote._rev
                     binary: binaryDoc
                 remoteDoc = @createRemoteDoc doc, remote
-                @couch.put remoteDoc, (err, created) ->
-                    unless err
-                        doc.remote =
-                            _id:  created.id
-                            _rev: created.rev
-                            binary:
-                                _id:  binaryDoc._id
-                                _rev: binaryDoc._rev
-                    next err, created
+                @putRemoteDoc remoteDoc, old, (err, created) ->
+                    next err, created, binaryDoc
 
-            # Clean previous binary
-            (created, next) =>
+            # Save remote and clean previous binary
+            (created, binaryDoc, next) =>
+                doc.remote =
+                    _id:  created.id
+                    _rev: created.rev
+                    binary:
+                        _id:  binaryDoc._id
+                        _rev: binaryDoc._rev
                 if old?.remote
                     @cleanBinary old.remote.binary._id, next
                 else
@@ -171,7 +197,7 @@ class Remote
         log.info "Update file #{doc._id}"
         if old.remote
             remoteDoc = @createRemoteDoc doc, old.remote
-            @couch.put remoteDoc, (err, updated) ->
+            @putRemoteDoc remoteDoc, old, (err, updated) ->
                 unless err
                     doc.remote =
                         _id:  updated.id
@@ -249,12 +275,25 @@ class Remote
         return callback() unless doc.remote
         remoteDoc = @createRemoteDoc doc, doc.remote
         remoteDoc._deleted = true
-        @couch.put remoteDoc, (err, removed) =>
-            if err
-                callback err, removed
-            else
+        async.waterfall [
+            (next) =>
+                @couch.put remoteDoc, (err, removed) =>
+                    if err?.status is 409
+                        @couch.get remoteDoc._id, (err, current) =>
+                            if err
+                                next err
+                            else if @sameRemoteDoc current, remoteDoc
+                                current._deleted = true
+                                @couch.put current, next
+                            else
+                                next new Error 'Conflict'
+                    else
+                        next err, removed
+
+            (removed, next) =>
                 @cleanBinary doc.remote.binary._id, (err) ->
-                    callback null, removed
+                    next null, removed
+        ], callback
 
     # Delete a folder on the remote cozy instance
     deleteFolder: (doc, callback) =>
