@@ -17,7 +17,7 @@
     "lint": "gulp lint",
     "test": "gulp test",
     "build": "gulp build",
-    "prepublish": "gulp build-package",
+    "prepublish": "gulp build",
     "start": "nw"
   },
   "bin": {
