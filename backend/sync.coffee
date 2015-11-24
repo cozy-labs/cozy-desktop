@@ -107,6 +107,8 @@ class Sync
 
     # Keep track of the sequence number, save side rev, and log errors
     # TODO when applying a change fails, put it again in some queue for retry
+    # TODO add an integration test where a file is deleted and then recreated
+    # TODO add an integration test where a file is moved and then moved back
     applied: (change, side, callback) =>
         (err) =>
             if err
@@ -120,9 +122,9 @@ class Sync
                     if doc._deleted
                         callback err
                     else
-                        doc.sides[side] = @pouch.extractRevNumber doc
+                        rev = @pouch.extractRevNumber(doc) + 1
                         for side in ['local', 'remote']
-                            doc.sides[side]++
+                            doc.sides[side] = rev
                         @pouch.db.put doc, callback
 
     # If a file has been changed, we had to check what operation it is.
