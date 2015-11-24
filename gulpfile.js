@@ -39,7 +39,7 @@ gulp.task('bin-scripts', function() {
     .pipe(gulp.dest('bin/'));
 });
 
-gulp.task('build-package', ['clean', 'scripts', 'bin-scripts']);
+gulp.task('build', ['clean', 'scripts', 'bin-scripts']);
 
 gulp.task('build-gui-package', ['scripts'], function() {
   var NwBuilder = require('nw-builder');
@@ -122,4 +122,4 @@ gulp.task('watch', function() {
 });
 
 
-gulp.task('default',  ['build-package', 'watch']);
+gulp.task('default',  ['build', 'watch']);
