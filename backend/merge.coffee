@@ -72,7 +72,23 @@ class Merge
         else
             return false
 
-    # Return true if the two files have the same content
+    # Return true if the two folders are the same
+    sameFolder: (one, two) ->
+        fields = ['_id', 'docType', 'creationDate', 'lastModification',
+            'remote', 'tags']
+        one = pick one, fields
+        two = pick two, fields
+        return isEqual one, two
+
+    # Return true if the two files are the same
+    sameFile: (one, two) ->
+        fields = ['_id', 'docType', 'creationDate', 'lastModification',
+            'checksum', 'remote', 'tags', 'size', 'class', 'mime']
+        one = pick one, fields
+        two = pick two, fields
+        return isEqual one, two
+
+    # Return true if the two files have the same binary content
     sameBinary: (one, two) ->
         if one.checksum? and one.checksum is two.checksum
             return true
@@ -247,7 +263,8 @@ class Merge
                     doc._rev = folder._rev
                     doc.creationDate ?= folder.creationDate
                     doc.tags ?= folder.tags
-                    @pouch.db.put doc, callback
+                    unless @sameFolder doc, folder
+                        @pouch.db.put doc, callback
                 else
                     doc.creationDate ?= new Date
                     @ensureParentExist side, doc, =>
