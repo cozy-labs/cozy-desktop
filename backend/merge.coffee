@@ -370,7 +370,9 @@ class Merge
     #   - the file can be found by its _id
     deleteFile: (side, doc, callback) ->
         @pouch.db.get doc._id, (err, file) =>
-            if err
+            if err?.status is 404
+                callback null
+            else if err
                 callback err
             else
                 @markSide side, file, file
@@ -382,12 +384,14 @@ class Merge
     #   - the folder can be found by its _id
     # Actions:
     #   - delete every file and folder inside this folder
+    # TODO add an integration test where a folder with a lot of files is removed
     deleteFolder: (side, doc, callback) ->
         @pouch.db.get doc._id, (err, folder) =>
-            if err
+            if err?.status is 404
+                callback null
+            else if err
                 callback err
             else
-                @markSide side, folder, folder
                 @pouch.byRecursivePath folder._id, (err, docs) =>
                     if err
                         callback err
@@ -399,6 +403,7 @@ class Merge
                         # TODO find why we have undefined values here sometimes
                         docs = (doc for doc in docs when doc?)
                         for doc in docs
+                            @markSide side, doc, doc
                             doc._deleted = true
                         @pouch.db.bulkDocs docs, callback
 
