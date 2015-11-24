@@ -314,6 +314,12 @@ describe 'Remote', ->
         it 'does not ignore conflict for important changes'
 
 
+    describe 'removeRemoteDoc', ->
+        it 'removes the doc on the remote cozy'
+        it 'resolves conflict with trivial changes'
+        it 'does not ignore conflict for important changes'
+
+
     describe 'addFile', ->
         it 'adds a file to couchdb', (done) ->
             checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'

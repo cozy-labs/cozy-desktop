@@ -129,6 +129,24 @@ class Remote
             else
                 callback err, created
 
+    # Remove a remote document
+    # In case of a conflict in CouchDB, try to see if the changes on the remote
+    # sides are trivial and can be ignored.
+    removeRemoteDoc: (doc, callback) =>
+        doc._deleted = true
+        @couch.put doc, (err, removed) =>
+            if err?.status is 409
+                @couch.get doc._id, (err, current) =>
+                    if err
+                        callback err
+                    else if @sameRemoteDoc current, doc
+                        current._deleted = true
+                        @couch.put current, callback
+                    else
+                        callback new Error 'Conflict'
+            else
+                callback err, removed
+
 
     ### Write operations ###
 
@@ -274,26 +292,12 @@ class Remote
         log.info "Delete file #{doc._id}"
         return callback() unless doc.remote
         remoteDoc = @createRemoteDoc doc, doc.remote
-        remoteDoc._deleted = true
-        async.waterfall [
-            (next) =>
-                @couch.put remoteDoc, (err, removed) =>
-                    if err?.status is 409
-                        @couch.get remoteDoc._id, (err, current) =>
-                            if err
-                                next err
-                            else if @sameRemoteDoc current, remoteDoc
-                                current._deleted = true
-                                @couch.put current, next
-                            else
-                                next new Error 'Conflict'
-                    else
-                        next err, removed
-
-            (removed, next) =>
+        @removeRemoteDoc remoteDoc, (err, removed) =>
+            if err
+                callback err, removed
+            else
                 @cleanBinary doc.remote.binary._id, (err) ->
-                    next null, removed
-        ], callback
+                    callback null, removed
 
     # Delete a folder on the remote cozy instance
     deleteFolder: (doc, callback) =>
