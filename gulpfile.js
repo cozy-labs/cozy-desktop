@@ -108,7 +108,7 @@ gulp.task('lint', function() {
 
 gulp.task('test', function() {
   require('coffee-script/register');
-  process.env.DEFAULT_DIR = 'tmp';
+  process.env.COZY_DESKTOP_DIR = 'tmp';
   gulp.src(paths.tests, {
     read: false
   }).pipe(mocha({

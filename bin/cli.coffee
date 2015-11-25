@@ -5,7 +5,7 @@ program = require 'commander'
 
 pkg = require '../package.json'
 App = require '../backend/app'
-app = new App process.env.DEFAULT_DIR
+app = new App process.env.COZY_DESKTOP_DIR
 
 # Helper to get cozy password from user
 app.askPassword = (callback) ->

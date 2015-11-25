@@ -3,7 +3,7 @@
 set -e
 
 export NODE_ENV=test
-export DEFAULT_DIR=tmp
+export COZY_DESKTOP_DIR=tmp
 
 BIN='mocha -t 5000 --reporter spec --compilers coffee:coffee-script/register '
 

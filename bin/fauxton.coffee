@@ -20,7 +20,7 @@ helpers.startServer (err) ->
         process.exit 1
     console.log "Pouchdb-server pid is #{helpers.server.pid}"
     helpers.server.on 'close', -> process.exit 0
-    basePath = process.env.DEFAULT_DIR or path.homedir()
+    basePath = process.env.COZY_DESKTOP_DIR or path.homedir()
     config = new Config basePath
     PouchDB.replicate(config.dbPath, "#{helpers.url}/#{helpers.params.db}")
         .on 'error', (err) ->
