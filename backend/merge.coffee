@@ -1,7 +1,9 @@
-async = require 'async'
-clone = require 'lodash.clone'
-path  = require 'path'
-log   = require('printit')
+async   = require 'async'
+clone   = require 'lodash.clone'
+isEqual = require 'lodash.isequal'
+path    = require 'path'
+pick    = require 'lodash.pick'
+log     = require('printit')
     prefix: 'Merge         '
 
 Pouch = require './pouch'
@@ -42,7 +44,6 @@ Pouch = require './pouch'
 # another document already exists for the same path. We don't try to be smart
 # and the rename one the two documents with a -conflict suffix.
 #
-# TODO avoid put in pouchdb if nothing has changed
 class Merge
     constructor: (@pouch) ->
 
@@ -72,7 +73,8 @@ class Merge
         else
             return false
 
-    # Return true if the two folders are the same
+    # Return true if the metadata of the two folders are the same
+    # TODO precision for creationDate and lastModification
     sameFolder: (one, two) ->
         fields = ['_id', 'docType', 'creationDate', 'lastModification',
             'remote', 'tags']
@@ -80,7 +82,8 @@ class Merge
         two = pick two, fields
         return isEqual one, two
 
-    # Return true if the two files are the same
+    # Return true if the metadata of the two files are the same
+    # TODO precision for creationDate and lastModification
     sameFile: (one, two) ->
         fields = ['_id', 'docType', 'creationDate', 'lastModification',
             'checksum', 'remote', 'tags', 'size', 'class', 'mime']
@@ -217,6 +220,7 @@ class Merge
     #   - create the tree structure if needed
     #   - overwrite a possible existing file with the same path
     # TODO conflict with a folder -> file is renamed with -conflict suffix
+    # TODO are tags preserved when doing a touch on a local file?
     updateFile: (side, doc, callback) ->
         if @invalidId doc
             log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
@@ -236,7 +240,10 @@ class Merge
                         doc.size  ?= file.size
                         doc.class ?= file.class
                         doc.mime  ?= file.mime
-                    @pouch.db.put doc, callback
+                    if @sameFile file, doc
+                        callback null
+                    else
+                        @pouch.db.put doc, callback
                 else
                     doc.creationDate ?= new Date
                     @ensureParentExist side, doc, =>
@@ -263,7 +270,9 @@ class Merge
                     doc._rev = folder._rev
                     doc.creationDate ?= folder.creationDate
                     doc.tags ?= folder.tags
-                    unless @sameFolder doc, folder
+                    if @sameFolder folder, doc
+                        callback null
+                    else
                         @pouch.db.put doc, callback
                 else
                     doc.creationDate ?= new Date
