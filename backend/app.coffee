@@ -89,6 +89,7 @@ class App
         @sync   = new Sync @pouch, @local, @remote
         device  = @config.getDevice()
         if device.deviceName? and device.url? and device.path?
+            @config.setMode mode
             log.info 'Run first synchronisation...'
             @sync.start mode, (err) ->
                 if err
