@@ -13,7 +13,6 @@ node_js:
 env:
     global:
         - NODE_ENV=test
-        - INDEXES_PATH=/home/travis/build/indexes
     matrix:
         - TRAVIS_NODE_VERSION="0.10"
         - TRAVIS_NODE_VERSION="0.12"
@@ -39,6 +38,8 @@ before_install:
     - pwd
     - mkdir -p $INDEXES_PATH
     - if [[ $TRAVIS_OS_NAME == "linux" ]]; then export CXX=g++-4.8; fi
+    - if [[ $TRAVIS_OS_NAME == "linux" ]]; then export INDEXES_PATH=/home/travis/build/indexes; fi
+    - if [[ $TRAVIS_OS_NAME == "osx" ]]; then export INDEXES_PATH=/Users/travis/build/indexes; fi
     - rm -rf ~/.nvm/ && git clone --depth 1 https://github.com/creationix/nvm.git ~/.nvm
     - source ~/.nvm/nvm.sh
     - nvm install 0.10
@@ -70,10 +71,9 @@ before_install:
     - sleep 3
 
 install:
-    - cd
     - nvm install $TRAVIS_NODE_VERSION
     - nvm use $TRAVIS_NODE_VERSION
-    - cd /home/travis/build/cozy-labs/cozy-desktop
+    - cd build/cozy-labs/cozy-desktop
     - npm install coffee-script mocha -g
     - travis_retry npm install
 
