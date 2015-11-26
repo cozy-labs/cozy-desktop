@@ -47,7 +47,7 @@ before_install:
         export INDEXES_PATH=/Users/travis/build/indexes;
         brew update;
         brew install couchdb;
-        couchdb;
+        couchdb -b;
       fi
     - mkdir -p $INDEXES_PATH
     - nvm install 0.10
