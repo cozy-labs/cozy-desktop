@@ -39,15 +39,15 @@ before_install:
     - rm -rf ~/.nvm/
     - git clone --depth 1 https://github.com/creationix/nvm.git ~/.nvm
     - source ~/.nvm/nvm.sh
-    - if [[ $TRAVIS_OS_NAME == "linux" ]]
-        export CXX=g++-4.8
-        export INDEXES_PATH=/home/travis/build/indexes
+    - if [[ $TRAVIS_OS_NAME == "linux" ]]; then
+        export CXX=g++-4.8;
+        export INDEXES_PATH=/home/travis/build/indexes;
       fi
-    - if [[ $TRAVIS_OS_NAME == "linux" ]]
-        export INDEXES_PATH=/Users/travis/build/indexes
-        brew update
-        brew outdated couchdb || brew upgrade couchdb
-        couchdb
+    - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
+        export INDEXES_PATH=/Users/travis/build/indexes;
+        brew update;
+        brew outdated couchdb || brew upgrade couchdb;
+        couchdb;
       fi
     - mkdir -p $INDEXES_PATH
     - nvm install 0.10
