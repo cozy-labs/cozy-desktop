@@ -46,7 +46,7 @@ before_install:
     - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
         export INDEXES_PATH=/Users/travis/build/indexes;
         brew update;
-        brew outdated couchdb || brew upgrade couchdb;
+        brew install couchdb;
         couchdb;
       fi
     - mkdir -p $INDEXES_PATH
