@@ -47,6 +47,7 @@ before_install:
         export INDEXES_PATH=/Users/travis/build/indexes
         brew update
         brew outdated couchdb || brew upgrade couchdb
+        couchdb
       fi
     - mkdir -p $INDEXES_PATH
     - nvm install 0.10
@@ -65,7 +66,7 @@ before_install:
     - travis_retry npm install #proxy
     - NAME=proxy TOKEN=token forever start -o forever-proxy.log -e forever-proxy-err.log build/server.js
     - sleep 5
-    - curl -X POST -H "Content-Type: application/json" -d "{ \"email\": \"cozytest@cozycloud.cc\", \"password\": \"cozytest\", \"timezone\":\"Europe/Paris\"}" http://127.0.0.1:9104/register
+    - 'curl -X POST -H "Content-Type: application/json" -d "{ \"email\": \"cozytest@cozycloud.cc\", \"password\": \"cozytest\", \"timezone\":\"Europe/Paris\"}" http://127.0.0.1:9104/register'
     - cd
     - git clone --depth 1 git://github.com/cozy/cozy-files.git
     - cd cozy-files
