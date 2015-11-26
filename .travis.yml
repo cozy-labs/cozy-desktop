@@ -38,7 +38,7 @@ before_install:
     - rm -rf ~/.nvm/
     - git clone --depth 1 https://github.com/creationix/nvm.git ~/.nvm
     - source ~/.nvm/nvm.sh
-    - if [[ $TRAVIS_OS_NAME == "linux" ]]; bin/prepare_travis_for_integration_tests.sh; fi
+    - if [[ $TRAVIS_OS_NAME == "linux" ]]; then bin/prepare_travis_for_integration_tests.sh; fi
 
 install:
     - nvm install $TRAVIS_NODE_VERSION
