@@ -22,7 +22,6 @@ services:
     - couchdb
 cache:
     directories:
-        - node_modules
         - cozy-data-system/node_modules
         - cozy-proxy/node_modules
         - cozy-files/node_modules
@@ -52,6 +51,7 @@ before_install:
     - mkdir -p $INDEXES_PATH
     - nvm install 0.10
     - nvm use 0.10
+    - node -v
     - npm install forever coffee-script -g
     - git clone --depth 1 git://github.com/cozy/cozy-data-system.git
     - cd cozy-data-system
@@ -81,6 +81,7 @@ before_install:
 install:
     - nvm install $TRAVIS_NODE_VERSION
     - nvm use $TRAVIS_NODE_VERSION
+    - node -v
     - cd ~/build/cozy-labs/cozy-desktop
     - npm install coffee-script mocha -g
     - travis_retry npm install
