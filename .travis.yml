@@ -34,10 +34,10 @@ addons:
 
 before_install:
     - cd
-    - mkdir -p $INDEXES_PATH
     - if [[ $TRAVIS_OS_NAME == "linux" ]]; then export CXX=g++-4.8; fi
     - if [[ $TRAVIS_OS_NAME == "linux" ]]; then export INDEXES_PATH=/home/travis/build/indexes; fi
     - if [[ $TRAVIS_OS_NAME == "osx" ]]; then export INDEXES_PATH=/Users/travis/build/indexes; fi
+    - mkdir -p $INDEXES_PATH
     - rm -rf ~/.nvm/ && git clone --depth 1 https://github.com/creationix/nvm.git ~/.nvm
     - source ~/.nvm/nvm.sh
     - nvm install 0.10
