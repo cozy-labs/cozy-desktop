@@ -1,6 +1,8 @@
-async = require 'async'
-path  = require 'path'
-log   = require('printit')
+async   = require 'async'
+isEqual = require 'lodash.isequal'
+path    = require 'path'
+pick    = require 'lodash.pick'
+log     = require('printit')
     prefix: 'Remote writer '
 
 Couch   = require './couch'
@@ -105,9 +107,10 @@ class Remote
     # Compare two remote docs and say if they are the same,
     # i.e. can we replace one by the other with no impact
     sameRemoteDoc: (one, two) ->
-        for field in ['path', 'name', 'creationDate', 'checksum', 'size']
-            return false if one[field] isnt two[field]
-        return true
+        fields = ['path', 'name', 'creationDate', 'checksum', 'size']
+        one = pick one, fields
+        two = pick two, fields
+        return isEqual one, two
 
     # Put the document on the remote cozy
     # In case of a conflict in CouchDB, try to see if the changes on the remote

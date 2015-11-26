@@ -80,6 +80,12 @@ describe 'Merge', ->
                 ret = @merge.invalidChecksum doc
                 ret.should.be.false()
 
+        describe 'sameFolder', ->
+            it 'TODO'
+
+        describe 'sameFile', ->
+            it 'TODO'
+
         describe 'sameBinary', ->
             it 'returns true for two docs with the same checksum', ->
                 one = checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'

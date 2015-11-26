@@ -14,12 +14,13 @@ class RemoteWatcher
         @side = 'remote'
         @pending = 0
 
-    # First time replication
+    # First time replication (when the databases is blank)
     #
     # Filtered replication or changes feed is slow with a lot of documents and
     # revisions. We prefer to copy manually these documents for the initial
     # replication.
     #
+    # TODO use it somewhere, or remove this method
     # TODO use a single view
     # TODO add integration tests
     initialReplication: (callback) ->
@@ -110,6 +111,10 @@ class RemoteWatcher
                 callback()
 
     # Transform a remote document in a local one
+    #
+    # We are tolerant with the input. For example, we don't expect the docType
+    # to be in lower case, and we accept files with no checksum (e.g. from
+    # konnectors).
     createLocalDoc: (remote) ->
         docPath = remote.path or ''
         docName = remote.name or ''
