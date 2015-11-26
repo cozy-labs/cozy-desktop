@@ -86,10 +86,14 @@ class Config
         deviceName ?= @getDefaultDeviceName()
         if deviceName and @devices[deviceName]
             old = @devices[deviceName].mode
-            return true if old is mode
-            throw new Error 'Incompatible mode' if old?
-            @devices[deviceName].mode = mode
-            @save()
+            switch
+                when old is mode
+                    true
+                when old?
+                    throw new Error 'Incompatible mode' if old?
+                else
+                    @devices[deviceName].mode = mode
+                    @save()
         else
             false
 
