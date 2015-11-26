@@ -19,8 +19,6 @@ env:
         - TRAVIS_NODE_VERSION="0.12"
         - TRAVIS_NODE_VERSION="4"
         - TRAVIS_NODE_VERSION="5"
-services:
-    - couchdb
 cache:
     directories:
         - node_modules
@@ -36,7 +34,9 @@ addons:
             - g++-4.8
 
 before_install:
+    - pwd
     - cd
+    - pwd
     - mkdir -p $INDEXES_PATH
     - if [[ $TRAVIS_OS_NAME == "linux" ]]; then export CXX=g++-4.8; fi
     - rm -rf ~/.nvm/ && git clone --depth 1 https://github.com/creationix/nvm.git ~/.nvm
