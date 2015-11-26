@@ -79,6 +79,24 @@ class Config
         else
             null
 
+    # Set the pull or push mode for this device
+    # It wan throw an exception if the mode is not compatible with the last
+    # mode used!
+    setMode: (mode, deviceName) ->
+        deviceName ?= @getDefaultDeviceName()
+        if deviceName and @devices[deviceName]
+            old = @devices[deviceName].mode
+            switch
+                when old is mode
+                    true
+                when old?
+                    throw new Error 'Incompatible mode' if old?
+                else
+                    @devices[deviceName].mode = mode
+                    @save()
+        else
+            false
+
     # Set insecure flag, for self-signed certificate mainly
     setInsecure: (bool, deviceName) ->
         deviceName ?= @getDefaultDeviceName()

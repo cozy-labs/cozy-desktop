@@ -5,7 +5,7 @@ program = require 'commander'
 
 pkg = require '../package.json'
 App = require '../backend/app'
-app = new App process.env.DEFAULT_DIR
+app = new App process.env.COZY_DESKTOP_DIR
 
 # Helper to get cozy password from user
 app.askPassword = (callback) ->
@@ -53,7 +53,16 @@ program
     .option('-k, --insecure',
             'Turn off HTTPS certificate verification.')
     .action (args) ->
-        sync 'pull', args
+        try
+            sync 'pull', args
+        catch err
+            throw err unless err.message is 'Incompatible mode'
+            console.log """
+            Pulling from a mount point already used for pushing is not supported
+
+            You should create a new mount point and use COZY_DESKTOP_DIR.
+            The README has more instructions about that.
+            """
 
 program
     .command 'push'
@@ -61,7 +70,15 @@ program
     .option('-k, --insecure',
             'Turn off HTTPS certificate verification.')
     .action (args) ->
-        sync 'push', args
+        try
+            sync 'push', args
+        catch err
+            console.log """
+            Pushing from a mount point already used for pulling is not supported
+
+            You should create a new mount point and use COZY_DESKTOP_DIR.
+            The README has more instructions about that.
+            """
 
 program
     .command 'reset-database'

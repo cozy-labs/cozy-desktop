@@ -63,6 +63,16 @@ describe 'Config', ->
         it 'gives remote Cozy url', ->
             @config.getUrl().should.equal 'nonecozy'
 
+    describe 'setMode', ->
+        it 'sets the pull or push mode', ->
+            @config.setMode 'push'
+            device = @config.getDevice()
+            device.mode.should.equal 'push'
+
+        it 'throws an error for incompatible mode', ->
+            @config.setMode 'push'
+            should.throws((=> @config.setMode 'pull'), /Incompatible mode/)
+
     describe 'setInsecure', ->
         it 'sets the insecure flag', ->
             @config.setInsecure true

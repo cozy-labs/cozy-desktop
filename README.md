@@ -7,6 +7,8 @@ changes you made on them on other synced devices and on your online Cozy.
 **Note**: the code is currently **alpha** quality. But it's moving fast and we
 plan to do a more stable release in the coming weeks. Stay tuned!
 
+**Backup your data before playing with cozy-desktop!**
+
 
 ## CLI Install
 
@@ -33,6 +35,19 @@ Then start synchronization daemon:
 Other commands can be listed with
 
     cozy-desktop -h
+
+### Advanced use cases
+
+Cozy-desktop keeps the metadata in a pouchdb database. If you want to use
+several synchronized directories, you'll have to tell cozy-desktop to keeps
+its metadata database somewhere else. The `COZY_DESKTOP_DIR` env variable has
+this role.
+
+For example, if you want to add a second synchronized directory, you can do:
+
+    export COZY_DESKTOP_DIR=/sync/other
+    cozy-desktop add-remote-cozy https://url.of.my.other.cozy/ devicename /sync/other
+    cozy-desktop sync
 
 
 ## Hack
@@ -65,10 +80,10 @@ node_modules/.bin/gulp test
 
 # To run a specific set of tests (here testing local_watcher with DEBUG activated)
 npm install -g mocha
-DEBUG=true DEFAULT_DIR=tmp mocha --compilers coffee:coffee-script/register tests/unit/pouch.coffee
+DEBUG=true COZY_DESKTOP_DIR=tmp mocha --compilers coffee:coffee-script/register tests/unit/pouch.coffee
 
 # Or, if you want pouchdb to be really verbose
-DEBUG=pouchdb:api DEFAULT_DIR=tmp mocha --compilers coffee:coffee-script/register tests/unit/pouch.coffee
+DEBUG=pouchdb:api COZY_DESKTOP_DIR=tmp mocha --compilers coffee:coffee-script/register tests/unit/pouch.coffee
 ```
 
 Integration tests require that you have the Cozy dev VM up (it means a
@@ -77,7 +92,7 @@ accessible on the 9121 port. It's also expected that a user is registered with
 `cozytest` as password.
 
 ```
-DEFAULT_DIR=tmp mocha --compilers coffee:coffee-script/register tests/integration/*.coffee
+COZY_DESKTOP_DIR=tmp mocha --compilers coffee:coffee-script/register tests/integration/*.coffee
 ```
 
 

@@ -7,7 +7,7 @@ Config = require '../../backend/config'
 
 module.exports =
     createConfig: ->
-        parent = process.env.DEFAULT_DIR or 'tmp'
+        parent = process.env.COZY_DESKTOP_DIR or 'tmp'
         @basePath = path.resolve "#{parent}/#{+new Date}"
         fs.ensureDirSync @basePath
         @config = new Config @basePath
