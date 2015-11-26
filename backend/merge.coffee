@@ -391,29 +391,38 @@ class Merge
                     bulk.push dst
                 @pouch.db.bulkDocs bulk, callback
 
-    # Expectations:
-    #   - the file still exists in pouch
-    #   - the file can be found by its _id
+    # Remove a file from PouchDB
+    #
+    # As the watchers often detect the deletion of a folder before the deletion
+    # of the files inside it, deleteFile can be called for a file that has
+    # already been removed. This is not considerated as an error.
     deleteFile: (side, doc, callback) ->
         @pouch.db.get doc._id, (err, file) =>
-            if err
+            if err?.status is 404
+                callback null
+            else if err
                 callback err
             else
                 @markSide side, file, file
                 file._deleted = true
                 @pouch.db.put file, callback
 
-    # Expectations:
-    #   - the folder still exists in pouch
-    #   - the folder can be found by its _id
-    # Actions:
-    #   - delete every file and folder inside this folder
+    # Remove a folder and every file and folder inside it
+    #
+    # When a folder is removed in PouchDB, we also remove the files and folders
+    # inside it to ensure consistency. The watchers often detects the deletion
+    # of a nested folder after the deletion of its parent. In this case, the
+    # call to deleteFolder for the child is considered as successful, even if
+    # the folder is missing in pouchdb (error 404).
+    #
+    # TODO add an integration test where a folder with a lot of files is removed
     deleteFolder: (side, doc, callback) ->
         @pouch.db.get doc._id, (err, folder) =>
-            if err
+            if err?.status is 404
+                callback null
+            else if err
                 callback err
             else
-                @markSide side, folder, folder
                 @pouch.byRecursivePath folder._id, (err, docs) =>
                     if err
                         callback err
@@ -425,6 +434,7 @@ class Merge
                         # TODO find why we have undefined values here sometimes
                         docs = (doc for doc in docs when doc?)
                         for doc in docs
+                            @markSide side, doc, doc
                             doc._deleted = true
                         @pouch.db.bulkDocs docs, callback
 
