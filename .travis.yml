@@ -33,9 +33,7 @@ addons:
             - g++-4.8
 
 before_install:
-    - pwd
     - cd
-    - pwd
     - mkdir -p $INDEXES_PATH
     - if [[ $TRAVIS_OS_NAME == "linux" ]]; then export CXX=g++-4.8; fi
     - if [[ $TRAVIS_OS_NAME == "linux" ]]; then export INDEXES_PATH=/home/travis/build/indexes; fi
