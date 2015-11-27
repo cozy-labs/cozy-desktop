@@ -25,6 +25,7 @@ cache:
         - cozy-data-system/node_modules
         - cozy-proxy/node_modules
         - cozy-files/node_modules
+        - /Library/Caches/Homebrew
 addons:
     apt:
         sources:
@@ -44,8 +45,8 @@ before_install:
       fi
     - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
         export INDEXES_PATH=/Users/travis/build/indexes;
-        brew update;
         brew install couchdb;
+        brew --cache;
         couchdb -b;
       fi
     - mkdir -p $INDEXES_PATH
