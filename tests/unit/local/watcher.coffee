@@ -37,10 +37,10 @@ describe "LocalWatcher Tests", ->
             setTimeout =>
                 @merge.putFolder.called.should.be.true()
                 @merge.putFolder.args[0][0].should.equal 'local'
-                @merge.putFolder.args[0][1]._id.should.equal 'aa'
+                @merge.putFolder.args[0][1].path.should.equal 'aa'
                 @merge.addFile.called.should.be.true()
                 @merge.addFile.args[0][0].should.equal 'local'
-                @merge.addFile.args[0][1]._id.should.equal 'aa/ab'
+                @merge.addFile.args[0][1].path.should.equal 'aa/ab'
                 done()
             , 1100
             @watcher.start ->
@@ -71,7 +71,7 @@ describe "LocalWatcher Tests", ->
                 @watcher.createDoc 'chat-mignon.jpg', stats, (err, doc) ->
                     should.not.exist err
                     doc.should.have.properties
-                        _id: 'chat-mignon.jpg'
+                        path: 'chat-mignon.jpg'
                         docType: 'file'
                         checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
                         size: 29865
@@ -122,7 +122,7 @@ describe "LocalWatcher Tests", ->
                 @merge.addFile = (side, doc) ->
                     side.should.equal 'local'
                     doc.should.have.properties
-                        _id: 'aaa.jpg'
+                        path: 'aaa.jpg'
                         docType: 'file'
                         checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
                         size: 29865
@@ -140,7 +140,7 @@ describe "LocalWatcher Tests", ->
                 @merge.putFolder = (side, doc) ->
                     side.should.equal 'local'
                     doc.should.have.properties
-                        _id: 'aba'
+                        path: 'aba'
                         docType: 'folder'
                     doc.should.have.properties [
                         'creationDate'
@@ -155,7 +155,7 @@ describe "LocalWatcher Tests", ->
                 @merge.putFolder = (side, doc) ->
                     side.should.equal 'local'
                     doc.should.have.properties
-                        _id: 'abb/abc'
+                        path: 'abb/abc'
                         docType: 'folder'
                     doc.should.have.properties [
                         'creationDate'
@@ -173,7 +173,7 @@ describe "LocalWatcher Tests", ->
                 @merge.deleteFile = (side, doc) ->
                     side.should.equal 'local'
                     doc.should.have.properties
-                        _id: 'aca'
+                        path: 'aca'
                     done()
                 fs.unlinkSync path.join @basePath, 'aca'
             @watcher.start ->
@@ -186,7 +186,7 @@ describe "LocalWatcher Tests", ->
                 @merge.deleteFolder = (side, doc) ->
                     side.should.equal 'local'
                     doc.should.have.properties
-                        _id: 'ada'
+                        path: 'ada'
                     done()
                 fs.rmdirSync path.join @basePath, 'ada'
             @watcher.start ->
@@ -201,7 +201,7 @@ describe "LocalWatcher Tests", ->
                 @merge.updateFile = (side, doc) ->
                     side.should.equal 'local'
                     doc.should.have.properties
-                        _id: 'aea.jpg'
+                        path: 'aea.jpg'
                         docType: 'file'
                         checksum: 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
                         size: 36901
@@ -226,7 +226,7 @@ describe "LocalWatcher Tests", ->
                     @merge.addFile = (side, doc) =>
                         side.should.equal 'local'
                         doc.should.have.properties
-                            _id: 'afb.jpg'
+                            path: 'afb.jpg'
                             docType: 'file'
                             checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
                             size: 29865
@@ -235,7 +235,7 @@ describe "LocalWatcher Tests", ->
                         setTimeout =>
                             @merge.deleteFile.called.should.be.true()
                             @merge.deleteFile.args[0][1].should.have.properties
-                                _id: 'afa.jpg'
+                                path: 'afa.jpg'
                             done()
                         , 10
                     fs.renameSync dst, path.join @basePath, 'afb.jpg'
@@ -258,18 +258,18 @@ describe "LocalWatcher Tests", ->
                     @merge.putFolder = (side, doc) =>
                         side.should.equal 'local'
                         doc.should.have.properties
-                            _id: 'agb'
+                            path: 'agb'
                             docType: 'folder'
                         setTimeout =>
                             @merge.addFile.called.should.be.true()
                             args = @merge.addFile.args[0][1]
-                            args.should.have.properties _id: 'agb/agc'
+                            args.should.have.properties path: 'agb/agc'
                             @merge.deleteFile.called.should.be.true()
                             args = @merge.deleteFile.args[0][1]
-                            args.should.have.properties _id: 'aga/agc'
+                            args.should.have.properties path: 'aga/agc'
                             @merge.deleteFolder.called.should.be.true()
                             args = @merge.deleteFolder.args[0][1]
-                            args.should.have.properties _id: 'aga'
+                            args.should.have.properties path: 'aga'
                             done()
                         , 1100
                     fs.renameSync src, dst

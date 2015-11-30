@@ -1,4 +1,4 @@
-## 0.5.0 - 2015-11-??
+## 0.5.0 - 2015-11-30
 
 - Add a write-only mode
 - Fix some bugs with the read-only mode
