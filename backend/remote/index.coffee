@@ -72,7 +72,7 @@ class Remote
 
     # Transform a local document in a remote one, with optional binary ref
     createRemoteDoc: (local, remote) ->
-        [dir, name] = @extractDirAndName local._id
+        [dir, name] = @extractDirAndName local.path
         doc =
             docType: local.docType
             path: dir
@@ -156,12 +156,12 @@ class Remote
     # Create a file on the remote cozy instance
     # It can also be an overwrite of the file
     addFile: (doc, callback) =>
-        log.info "Add file #{doc._id}"
+        log.info "Add file #{doc.path}"
         @addOrOverwriteFile doc, null, callback
 
     # Create a folder on the remote cozy instance
     addFolder: (doc, callback) =>
-        log.info "Add folder #{doc._id}"
+        log.info "Add folder #{doc.path}"
         folder = @createRemoteDoc doc
         @couch.put folder, (err, created) ->
             unless err
@@ -172,7 +172,7 @@ class Remote
 
     # Overwrite a file
     overwriteFile: (doc, old, callback) =>
-        log.info "Overwrite file #{doc._id}"
+        log.info "Overwrite file #{doc.path}"
         @addOrOverwriteFile doc, old, callback
 
     # Add or overwrite a file
@@ -215,7 +215,7 @@ class Remote
 
     # Update the metadata of a file
     updateFileMetadata: (doc, old, callback) ->
-        log.info "Update file #{doc._id}"
+        log.info "Update file #{doc.path}"
         if old.remote
             remoteDoc = @createRemoteDoc doc, old.remote
             @putRemoteDoc remoteDoc, old, (err, updated) ->
@@ -230,13 +230,13 @@ class Remote
 
     # Update metadata of a folder
     updateFolder: (doc, old, callback) ->
-        log.info "Update folder #{doc._id}"
+        log.info "Update folder #{doc.path}"
         if old.remote
             @couch.get old.remote._id, (err, folder) =>
                 if err
                     callback err
                 else
-                    # TODO what if folder.path+name != doc._id ?
+                    # TODO what if folder.path+name != doc.path ?
                     # TODO Or folder._rev != doc.remote._rev
                     folder.tags = doc.tags
                     folder.lastModification = doc.lastModification
@@ -251,13 +251,13 @@ class Remote
 
     # Move a file on the remote cozy instance
     moveFile: (doc, old, callback) ->
-        log.info "Move file #{old._id} → #{doc._id}"
+        log.info "Move file #{old.path} → #{doc.path}"
         if old.remote
             @couch.get old.remote._id, (err, remoteDoc) =>
                 if err
                     @addFile doc, callback
                 else
-                    [dir, name] = @extractDirAndName doc._id
+                    [dir, name] = @extractDirAndName doc.path
                     remoteDoc.path = dir
                     remoteDoc.name = name
                     remoteDoc.lastModification = doc.lastModification
@@ -273,15 +273,15 @@ class Remote
 
     # Move a folder on the remote cozy instance
     moveFolder: (doc, old, callback) =>
-        log.info "Move folder #{old._id} → #{doc._id}"
+        log.info "Move folder #{old.path} → #{doc.path}"
         if old.remote
             @couch.get old.remote._id, (err, folder) =>
                 if err
                     callback err
                 else
-                    # TODO what if folder.path+name != old._id ?
+                    # TODO what if folder.path+name != old.path ?
                     # TODO Or folder._rev != doc.remote._rev
-                    [dir, name] = @extractDirAndName doc._id
+                    [dir, name] = @extractDirAndName doc.path
                     folder.path = dir
                     folder.name = name
                     folder.tags = doc.tags
@@ -292,7 +292,7 @@ class Remote
 
     # Delete a file on the remote cozy instance
     deleteFile: (doc, callback) =>
-        log.info "Delete file #{doc._id}"
+        log.info "Delete file #{doc.path}"
         return callback() unless doc.remote
         remoteDoc = @createRemoteDoc doc, doc.remote
         @removeRemoteDoc remoteDoc, (err, removed) =>
@@ -304,7 +304,7 @@ class Remote
 
     # Delete a folder on the remote cozy instance
     deleteFolder: (doc, callback) =>
-        log.info "Delete folder #{doc._id}"
+        log.info "Delete folder #{doc.path}"
         if doc.remote
             remoteDoc = @createRemoteDoc doc, doc.remote
             remoteDoc._deleted = true

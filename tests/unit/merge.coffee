@@ -146,23 +146,30 @@ describe 'Merge', ->
 
             it 'creates the parent directory if missing', (done) ->
                 @merge.putFolder = sinon.stub().yields null, 'OK'
-                @merge.ensureParentExist @side, _id: 'missing/child', (err) =>
+                doc =
+                    _id: 'MISSING/CHILD'
+                    path: 'missing/child'
+                @merge.ensureParentExist @side, doc, (err) =>
                     should.not.exist err
                     @merge.putFolder.called.should.be.true()
-                    parent = _id: 'missing'
+                    parent =
+                        _id: 'MISSING'
+                        path: 'missing'
                     @merge.putFolder.calledWith(@side, parent).should.be.true()
                     done()
 
             it 'creates the full tree if needed', (done) ->
                 @merge.putFolder = sinon.stub().yields null, 'OK'
-                @merge.ensureParentExist @side, _id: 'a/b/c/d/e', (err) =>
+                doc =
+                    _id: 'a/b/c/d/e'
+                    path: 'a/b/c/d/e'
+                @merge.ensureParentExist @side, doc, (err) =>
                     should.not.exist err
                     method = @merge.putFolder
                     method.called.should.be.true()
-                    method.calledWith(@side, _id: 'a').should.be.true()
-                    method.calledWith(@side, _id: 'a/b').should.be.true()
-                    method.calledWith(@side, _id: 'a/b/c').should.be.true()
-                    method.calledWith(@side, _id: 'a/b/c/d').should.be.true()
+                    for id in ['a', 'a/b', 'a/b/c', 'a/b/c/d']
+                        folder = _id: id, path: id
+                        method.calledWith(@side, folder).should.be.true()
                     done()
 
         describe 'moveDoc', ->
