@@ -36,7 +36,7 @@ describe 'Remote', ->
             checksum = '53a547469e98b667671803adc814d6d1376fae6b'
             fixture = 'tests/fixtures/cool-pillow.jpg'
             doc =
-                _id: 'pillow.jpg'
+                path: 'pillow.jpg'
                 checksum: checksum
                 remote:
                     binary:
@@ -67,7 +67,7 @@ describe 'Remote', ->
             checksum = 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
             fixture = 'tests/fixtures/chat-mignon.jpg'
             doc =
-                _id: 'chat.jpg'
+                path: 'chat.jpg'
                 checksum: checksum
             @remote.other =
                 createReadStream: (localDoc, callback) ->
@@ -90,7 +90,7 @@ describe 'Remote', ->
         it 'does not reupload an existing file', (done) ->
             checksum = 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
             doc =
-                _id: 'chat-bis.jpg'
+                path: 'chat-bis.jpg'
                 checksum: checksum
             @remote.uploadBinary doc, (err, binary) ->
                 should.not.exist err
@@ -114,7 +114,8 @@ describe 'Remote', ->
     describe 'createRemoteDoc', ->
         it 'transforms a local file in remote file', ->
             local =
-                _id: 'foo/bar/baz.jpg'
+                _id: 'FOO/BAR/BAZ.JPG'
+                path: 'foo/bar/baz.jpg'
                 docType: 'file'
                 lastModification: "2015-11-12T13:14:32.384Z"
                 creationDate: "2015-11-12T13:14:32.384Z"
@@ -146,7 +147,7 @@ describe 'Remote', ->
 
         it 'transforms a local folder in remote folder', ->
             local =
-                _id: 'foo/bar/baz'
+                path: 'foo/bar/baz'
                 docType: 'folder'
                 lastModification: "2015-11-12T13:14:33.384Z"
                 creationDate: "2015-11-12T13:14:33.384Z"
@@ -162,7 +163,7 @@ describe 'Remote', ->
 
         it 'has the good path when in root folder', ->
             local =
-                _id: 'in-root-folder'
+                path: 'in-root-folder'
                 docType: 'folder'
             doc = @remote.createRemoteDoc local
             doc.should.have.properties
@@ -172,7 +173,7 @@ describe 'Remote', ->
 
         it 'transforms an existing local file in remote file', ->
             local =
-                _id: 'foo/bar/baz.jpg'
+                path: 'foo/bar/baz.jpg'
                 docType: 'file'
                 lastModification: "2015-11-12T13:14:32.384Z"
                 creationDate: "2015-11-12T13:14:32.384Z"
@@ -218,7 +219,8 @@ describe 'Remote', ->
                 checksum: 'b410ffdd571d6e86bb8e8bdd054df91e16dfa75e'
                 docType: 'Binary'
             file =
-                _id: 'a-file-with-b410'
+                _id: 'A-FILE-WITH-B410'
+                path: 'A-FILE-WITH-B410'
                 docType: 'file'
                 checksum: 'b410ffdd571d6e86bb8e8bdd054df91e16dfa75e'
                 remote:
@@ -324,7 +326,7 @@ describe 'Remote', ->
         it 'adds a file to couchdb', (done) ->
             checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
             doc =
-                _id: 'cat2.jpg'
+                path: 'cat2.jpg'
                 docType: 'file'
                 checksum: checksum
                 creationDate: new Date()
@@ -358,14 +360,15 @@ describe 'Remote', ->
         it 'does not reupload an existing file', (done) ->
             checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
             doc =
-                _id: 'backup/cat3.jpg'
+                path: 'backup/cat3.jpg'
                 docType: 'file'
                 checksum: checksum
                 creationDate: new Date()
                 lastModification: new Date()
                 size: 36901
             same =
-                _id: 'original/cat3.jpg'
+                _id: 'ORIGINAL/CAT3.JPG'
+                path: 'ORIGINAL/CAT3.JPG'
                 docType: 'file'
                 checksum: checksum
                 creationDate: new Date()
@@ -399,7 +402,7 @@ describe 'Remote', ->
     describe 'addFolder', ->
         it 'adds a folder to couchdb', (done) ->
             doc =
-                _id: 'couchdb-folder/folder-1'
+                path: 'couchdb-folder/folder-1'
                 docType: 'folder'
                 creationDate: new Date()
                 lastModification: new Date()
@@ -423,12 +426,12 @@ describe 'Remote', ->
             couchHelpers.createFile @couch, 6, (err, created) =>
                 should.not.exist err
                 doc =
-                    _id: 'couchdb-folder/file-6'
+                    path: 'couchdb-folder/file-6'
                     docType: 'file'
                     checksum: '9999999999999999999999999999999999999926'
                     lastModification: '2015-11-16T16:12:01.002Z'
                 old =
-                    _id: 'couchdb-folder/file-6'
+                    path: 'couchdb-folder/file-6'
                     docType: 'file'
                     checksum: '1111111111111111111111111111111111111126'
                     remote:
@@ -468,12 +471,12 @@ describe 'Remote', ->
             couchHelpers.createFile @couch, 7, (err, created) =>
                 should.not.exist err
                 doc =
-                    _id: 'couchdb-folder/file-7'
+                    path: 'couchdb-folder/file-7'
                     docType: 'file'
                     checksum: '1111111111111111111111111111111111111127'
                     lastModification: '2015-11-16T16:13:01.001Z'
                 old =
-                    _id: 'couchdb-folder/file-7'
+                    path: 'couchdb-folder/file-7'
                     docType: 'file'
                     checksum: '1111111111111111111111111111111111111127'
                     remote:
@@ -504,12 +507,12 @@ describe 'Remote', ->
         it 'updates the metadata of a folder in couchdb', (done) ->
             couchHelpers.createFolder @couch, 2, (err, created) =>
                 doc =
-                    _id: 'couchdb-folder/folder-2'
+                    path: 'couchdb-folder/folder-2'
                     docType: 'folder'
                     creationDate: new Date()
                     lastModification: new Date()
                 old =
-                    _id: 'couchdb-folder/folder-2'
+                    path: 'couchdb-folder/folder-2'
                     docType: 'folder'
                     remote:
                         _id: created.id
@@ -529,7 +532,7 @@ describe 'Remote', ->
 
         it 'adds a folder to couchdb if the folder does not exist', (done) ->
             doc =
-                _id: 'couchdb-folder/folder-3'
+                path: 'couchdb-folder/folder-3'
                 docType: 'folder'
                 creationDate: new Date()
                 lastModification: new Date()
@@ -553,14 +556,14 @@ describe 'Remote', ->
                 _id: checksum
                 _rev: '1-0123456789'
             old =
-                _id: 'cat6.jpg'
+                path: 'cat6.jpg'
                 docType: 'file'
                 checksum: checksum
                 creationDate: new Date()
                 lastModification: new Date()
                 size: 36901
             doc =
-                _id: 'moved-to/cat7.jpg'
+                path: 'moved-to/cat7.jpg'
                 docType: 'file'
                 checksum: checksum
                 creationDate: new Date()
@@ -598,7 +601,7 @@ describe 'Remote', ->
         it 'moves the folder in couchdb', (done) ->
             couchHelpers.createFolder @couch, 4, (err, created) =>
                 doc =
-                    _id: 'couchdb-folder/folder-5'
+                    path: 'couchdb-folder/folder-5'
                     docType: 'folder'
                     creationDate: new Date()
                     lastModification: new Date()
@@ -606,7 +609,7 @@ describe 'Remote', ->
                         _id: created.id
                         _rev: created.rev
                 old =
-                    _id: 'couchdb-folder/folder-4'
+                    path: 'couchdb-folder/folder-4'
                     docType: 'folder'
                     remote:
                         _id: created.id
@@ -624,12 +627,12 @@ describe 'Remote', ->
 
         it 'adds a folder to couchdb if the folder does not exist', (done) ->
             doc =
-                _id: 'couchdb-folder/folder-7'
+                path: 'couchdb-folder/folder-7'
                 docType: 'folder'
                 creationDate: new Date()
                 lastModification: new Date()
             old =
-                _id: 'couchdb-folder/folder-6'
+                path: 'couchdb-folder/folder-6'
                 docType: 'folder'
             @remote.moveFolder doc, old, (err, created) =>
                 should.not.exist err
@@ -649,7 +652,7 @@ describe 'Remote', ->
             couchHelpers.createFile @couch, 8, (err, file) =>
                 should.not.exist err
                 doc =
-                    _id: 'couchdb-folder/file-8'
+                    path: 'couchdb-folder/file-8'
                     _deleted: true
                     docType: 'file'
                     checksum: '1111111111111111111111111111111111111128'
@@ -671,7 +674,7 @@ describe 'Remote', ->
             couchHelpers.createFile @couch, 9, (err, file) =>
                 should.not.exist err
                 doc =
-                    _id: 'couchdb-folder/file-9'
+                    path: 'couchdb-folder/file-9'
                     _deleted: true
                     docType: 'file'
                     checksum: '1111111111111111111111111111111111111129'
@@ -701,7 +704,7 @@ describe 'Remote', ->
             couchHelpers.createFolder @couch, 9, (err, folder) =>
                 should.not.exist err
                 doc =
-                    _id: 'couchdb-folder/folder-9'
+                    path: 'couchdb-folder/folder-9'
                     _deleted: true
                     docType: 'folder'
                     remote:

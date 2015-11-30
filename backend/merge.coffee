@@ -133,7 +133,6 @@ class Merge
 
     # Be sure that the tree structure for the given path exists
     # TODO bulk create/update and check status, instead of recursive?
-    # TODO path vs _id
     ensureParentExist: (side, doc, callback) =>
         parent = path.dirname doc._id
         if parent is '.'
@@ -143,11 +142,14 @@ class Merge
                 if folder
                     callback()
                 else
-                    @ensureParentExist side, _id: parent, (err) =>
+                    parentDoc =
+                        _id: parent
+                        path: path.dirname doc.path
+                    @ensureParentExist side, parentDoc, (err) =>
                         if err
                             callback err
                         else
-                            @putFolder side, _id: parent, callback
+                            @putFolder side, parentDoc, callback
 
     # Simple helper to add a file or a folder
     addDoc: (side, doc, callback) =>
@@ -354,7 +356,7 @@ class Merge
                 doc.size             ?= was.size
                 doc.class            ?= was.class
                 doc.mime             ?= was.mime
-                was.moveTo            = doc._id  # TODO doc._id or doc.path?
+                was.moveTo            = doc._id
                 was._deleted          = true
                 if file
                     # TODO should be a conflict?
