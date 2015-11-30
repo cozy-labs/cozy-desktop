@@ -16,11 +16,12 @@ Pouch = require './pouch'
 #
 # The documents in PouchDB have similar informations of those in CouchDB, but
 # are not structured in the same way. In particular, the _id are uuid in CouchDB
-# and the path to the file/folder in PouchDB.
+# and the path to the file/folder (in a normalized form) in PouchDB.
 #
 # File:
 #   - _id / _rev
 #   - docType: 'file'
+#   - path
 #   - checksum
 #   - creationDate
 #   - lastModification
@@ -34,6 +35,7 @@ Pouch = require './pouch'
 # Folder:
 #   - _id / _rev
 #   - docType: 'folder'
+#   - path
 #   - creationDate
 #   - lastModification
 #   - tags
@@ -44,22 +46,49 @@ Pouch = require './pouch'
 # another document already exists for the same path. We don't try to be smart
 # and the rename one the two documents with a -conflict suffix.
 #
+# TODO add some tests for case-insensitivity
 class Merge
     constructor: (@pouch) ->
+        switch process.platform
+            when 'linux', 'freebsd', 'sunos'
+                @buildId = @buildIdUnix
+            when 'darwin'
+                @buildId = @buildIdHFS
+            else
+                log.error "Sorry, #{process.platform} is not supported!"
+                process.exit 1
 
     ### Helpers ###
 
-    # Return true if the document has not a valid id
+    # Build an _id from the path for a case sensitive file system (Linux, BSD)
+    buildIdUnix: (doc) ->
+        doc._id = doc.path
+
+    # Build an _id from the path for OSX (HFS+ file system):
+    # - case preservative, but not case sensitive
+    # - unicode NFD normalization (sort of)
+    #
+    # See https://nodejs.org/en/docs/guides/working-with-different-filesystems/
+    # for why toUpperCase is better than toLowerCase
+    #
+    # Note: String.prototype.normalize is not available on node 0.10 and does
+    # nothing when node is compiled without intl option.
+    buildIdHFS: (doc) ->
+        id = doc.path
+        id = id.normalize 'NFD' if id.normalize
+        doc._id = id.toUpperCase()
+
+    # Return true if the document has not a valid path
     # (ie a path inside the mount point)
     # TODO what other things are not authorized? ~? $?
     # TODO forbid _design and _local?
-    invalidId: (doc) ->
-        return true unless doc._id
-        doc._id = path.normalize doc._id
-        doc._id = doc._id.replace /^\//, ''
-        parts = doc._id.split path.sep
-        return doc._id is '.' or
-            doc._id is '' or
+    invalidPath: (doc) ->
+        return true unless doc.path
+        doc.path = path.normalize doc.path
+        doc.path = doc.path.replace /^\//, ''
+        parts = doc.path.split path.sep
+        return doc.path is '.' or
+            doc.path is '' or
             parts[0] is '..'
 
     # Return true if the checksum is invalid
@@ -104,6 +133,7 @@ class Merge
 
     # Be sure that the tree structure for the given path exists
     # TODO bulk create/update and check status, instead of recursive?
+    # TODO path vs _id
     ensureParentExist: (side, doc, callback) =>
         parent = path.dirname doc._id
         if parent is '.'
@@ -184,13 +214,14 @@ class Merge
     #   - create the tree structure if needed
     # TODO conflict
     addFile: (side, doc, callback) ->
-        if @invalidId doc
-            log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
-            callback new Error 'Invalid id'
+        if @invalidPath doc
+            log.warn "Invalid path: #{JSON.stringify doc, null, 2}"
+            callback new Error 'Invalid path'
         else if @invalidChecksum doc
             log.warn "Invalid checksum: #{JSON.stringify doc, null, 2}"
             callback new Error 'Invalid checksum'
         else
+            @buildId doc
             @pouch.db.get doc._id, (err, file) =>
                 @markSide side, doc, file
                 doc.docType = 'file'
@@ -222,13 +253,14 @@ class Merge
     # TODO conflict with a folder -> file is renamed with -conflict suffix
     # TODO are tags preserved when doing a touch on a local file?
     updateFile: (side, doc, callback) ->
-        if @invalidId doc
-            log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
-            callback new Error 'Invalid id'
+        if @invalidPath doc
+            log.warn "Invalid path: #{JSON.stringify doc, null, 2}"
+            callback new Error 'Invalid path'
         else if @invalidChecksum doc
             log.warn "Invalid checksum: #{JSON.stringify doc, null, 2}"
             callback new Error 'Invalid checksum'
         else
+            @buildId doc
             @pouch.db.get doc._id, (err, file) =>
                 @markSide side, doc, file
                 doc.docType = 'file'
@@ -258,10 +290,11 @@ class Merge
     #   - overwrite metadata if this folder alredy existed in pouch
     # TODO conflict with a file -> file is renamed with -conflict suffix
     putFolder: (side, doc, callback) ->
-        if @invalidId doc
-            log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
-            callback new Error 'Invalid id'
+        if @invalidPath doc
+            log.warn "Invalid path: #{JSON.stringify doc, null, 2}"
+            callback new Error 'Invalid path'
         else
+            @buildId doc
             @pouch.db.get doc._id, (err, folder) =>
                 @markSide side, doc, folder
                 doc.docType = 'folder'
@@ -293,16 +326,16 @@ class Merge
     #   - create the tree structure if needed
     #   - overwrite the destination if it was present
     moveFile: (side, doc, was, callback) ->
-        if @invalidId doc
-            log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
-            callback new Error 'Invalid id'
-        else if @invalidId was
-            log.warn "Invalid id: #{JSON.stringify was, null, 2}"
-            callback new Error 'Invalid id'
+        if @invalidPath doc
+            log.warn "Invalid path: #{JSON.stringify doc, null, 2}"
+            callback new Error 'Invalid path'
+        else if @invalidPath was
+            log.warn "Invalid path: #{JSON.stringify was, null, 2}"
+            callback new Error 'Invalid path'
         else if @invalidChecksum doc
             log.warn "Invalid checksum: #{JSON.stringify doc, null, 2}"
             callback new Error 'Invalid checksum'
-        else if doc._id is was._id
+        else if doc.path is was.path
             log.warn "Invalid move: #{JSON.stringify was, null, 2}"
             log.warn "to #{JSON.stringify doc, null, 2}"
             callback new Error 'Invalid move'
@@ -310,6 +343,8 @@ class Merge
             log.warn "Missing rev: #{JSON.stringify was, null, 2}"
             callback new Error 'Missing rev'
         else
+            @buildId doc
+            @buildId was
             @pouch.db.get doc._id, (err, file) =>
                 @markSide side, doc, file
                 @markSide side, was, was
@@ -319,7 +354,7 @@ class Merge
                 doc.size             ?= was.size
                 doc.class            ?= was.class
                 doc.mime             ?= was.mime
-                was.moveTo            = doc._id
+                was.moveTo            = doc._id  # TODO doc._id or doc.path?
                 was._deleted          = true
                 if file
                     # TODO should be a conflict?
@@ -343,19 +378,21 @@ class Merge
     #   - move every file and folder inside this folder
     #   - overwrite the destination if it was present
     moveFolder: (side, doc, was, callback) ->
-        if @invalidId doc
-            log.warn "Invalid id: #{JSON.stringify doc, null, 2}"
-            callback new Error 'Invalid id'
-        else if @invalidId was
-            log.warn "Invalid id: #{JSON.stringify was, null, 2}"
-            callback new Error 'Invalid id'
-        else if doc._id is was._id
+        if @invalidPath doc
+            log.warn "Invalid path: #{JSON.stringify doc, null, 2}"
+            callback new Error 'Invalid path'
+        else if @invalidPath was
+            log.warn "Invalid path: #{JSON.stringify was, null, 2}"
+            callback new Error 'Invalid path'
+        else if doc.path is was.path
             log.warn "Invalid move: #{JSON.stringify doc, null, 2}"
             callback new Error 'Invalid move'
         else if not was._rev
             log.warn "Missing rev: #{JSON.stringify was, null, 2}"
             callback new Error 'Missing rev'
         else
+            @buildId doc
+            @buildId was
             @pouch.db.get doc._id, (err, folder) =>
                 @markSide side, doc, folder
                 @markSide side, was, was
@@ -372,6 +409,7 @@ class Merge
                         @moveFolderRecursively doc, was, callback
 
     # Move a folder and all the things inside it
+    # TODO kill this method
     moveFolderRecursively: (folder, was, callback) =>
         @pouch.byRecursivePath was._id, (err, docs) =>
             if err
@@ -397,6 +435,7 @@ class Merge
     # of the files inside it, deleteFile can be called for a file that has
     # already been removed. This is not considerated as an error.
     deleteFile: (side, doc, callback) ->
+        @buildId doc
         @pouch.db.get doc._id, (err, file) =>
             if err?.status is 404
                 callback null
@@ -417,6 +456,7 @@ class Merge
     #
     # TODO add an integration test where a folder with a lot of files is removed
     deleteFolder: (side, doc, callback) ->
+        @buildId doc
         @pouch.db.get doc._id, (err, folder) =>
             if err?.status is 404
                 callback null

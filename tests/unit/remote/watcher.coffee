@@ -20,7 +20,7 @@ describe "RemoteWatcher Tests", ->
     before 'start couch server', couchHelpers.startServer
     before 'instanciate couch', couchHelpers.createCouchClient
     before 'instanciate remote watcher', ->
-        @merge   = invalidId: Merge::invalidId
+        @merge   = invalidPath: Merge::invalidPath
         @watcher = new Watcher @couch, @merge, @pouch
     after 'stop couch server', couchHelpers.stopServer
     after 'clean pouch', pouchHelpers.cleanDatabase
@@ -81,7 +81,7 @@ describe "RemoteWatcher Tests", ->
                 args = @merge.addDoc.args[0]
                 args[0].should.equal 'remote'
                 args[1].should.have.properties
-                    _id: path.join doc.path, doc.name
+                    path: path.join doc.path, doc.name
                     docType: 'file'
                     checksum: doc.checksum
                     tags: doc.tags
@@ -114,7 +114,7 @@ describe "RemoteWatcher Tests", ->
                 args = @merge.updateDoc.args[0]
                 args[0].should.equal 'remote'
                 args[1].should.have.properties
-                    _id: path.join doc.path, doc.name
+                    path: path.join doc.path, doc.name
                     docType: 'file'
                     checksum: doc.checksum
                     tags: doc.tags
@@ -147,7 +147,7 @@ describe "RemoteWatcher Tests", ->
                 args = @merge.updateDoc.args[0]
                 args[0].should.equal 'remote'
                 args[1].should.have.properties
-                    _id: 'my-folder/file-1'
+                    path: 'my-folder/file-1'
                     docType: 'file'
                     checksum: doc.checksum
                     tags: doc.tags
@@ -181,7 +181,7 @@ describe "RemoteWatcher Tests", ->
                 args[0].should.equal 'remote'
                 src = args[2]
                 src.should.have.properties
-                    _id: 'my-folder/file-2'
+                    path: 'my-folder/file-2'
                     docType: 'file'
                     checksum: doc.checksum
                     tags: doc.tags
@@ -189,7 +189,7 @@ describe "RemoteWatcher Tests", ->
                         _id: '12345678902'
                 dst = args[1]
                 dst.should.have.properties
-                    _id: path.join doc.path, doc.name
+                    path: path.join doc.path, doc.name
                     docType: 'file'
                     checksum: doc.checksum
                     tags: doc.tags
@@ -221,7 +221,7 @@ describe "RemoteWatcher Tests", ->
                 @merge.moveDoc.called.should.be.true()
                 src = @merge.moveDoc.args[0][2]
                 src.should.have.properties
-                    _id: 'my-folder/file-2'
+                    path: 'my-folder/file-2'
                     docType: 'file'
                     checksum: doc.checksum
                     tags: doc.tags
@@ -229,7 +229,7 @@ describe "RemoteWatcher Tests", ->
                         _id: '12345678902'
                 dst = @merge.moveDoc.args[0][1]
                 dst.should.have.properties
-                    _id: path.join doc.path, doc.name
+                    path: path.join doc.path, doc.name
                     docType: 'file'
                     checksum: doc.checksum
                     tags: doc.tags
@@ -260,13 +260,13 @@ describe "RemoteWatcher Tests", ->
             @watcher.onChange clone(doc), (err) =>
                 should.not.exist err
                 @merge.deleteDoc.called.should.be.true()
-                id = @merge.deleteDoc.args[0][1]._id
+                id = @merge.deleteDoc.args[0][1].path
                 id.should.equal 'my-folder/file-3'
                 @merge.addDoc.called.should.be.true()
                 args = @merge.addDoc.args[0]
                 args[0].should.equal 'remote'
                 args[1].should.have.properties
-                    _id: path.join doc.path, doc.name
+                    path: path.join doc.path, doc.name
                     docType: 'file'
                     checksum: doc.checksum
                     tags: doc.tags
@@ -288,7 +288,7 @@ describe "RemoteWatcher Tests", ->
             @watcher.onChange doc, (err) =>
                 should.not.exist err
                 @merge.deleteDoc.called.should.be.true()
-                id = @merge.deleteDoc.args[0][1]._id
+                id = @merge.deleteDoc.args[0][1].path
                 id.should.equal 'my-folder/file-1'
                 done()
 
@@ -307,7 +307,7 @@ describe "RemoteWatcher Tests", ->
                 should.not.exist err
                 @merge.addDoc.called.should.be.true()
                 @merge.addDoc.args[0][1].should.have.properties
-                    _id: 'Photos from devices'
+                    path: 'Photos from devices'
                     docType: 'folder'
                     lastModification: "2015-09-29T14:13:33.384Z"
                     creationDate: "2015-09-29T14:13:33.384Z"

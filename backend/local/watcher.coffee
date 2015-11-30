@@ -68,7 +68,7 @@ class LocalWatcher
         [mimeType, fileClass] = @getFileClass absPath
         @checksum absPath, (err, checksum) ->
             doc =
-                _id: filePath
+                path: filePath
                 docType: 'file'
                 checksum: checksum
                 creationDate: stats.ctime
@@ -124,7 +124,7 @@ class LocalWatcher
             log.debug 'Folder added', folderPath
             @paths?.push folderPath
             doc =
-                _id: folderPath
+                path: folderPath
                 docType: 'folder'
                 creationDate: stats.ctime
                 lastModification: stats.mtime
@@ -133,12 +133,12 @@ class LocalWatcher
     # File deletion detected
     onUnlink: (filePath) =>
         log.debug 'File deleted', filePath
-        @merge.deleteFile @side, _id: filePath, @done
+        @merge.deleteFile @side, path: filePath, @done
 
     # Folder deletion detected
     onUnlinkDir: (folderPath) =>
         log.debug 'Folder deleted', folderPath
-        @merge.deleteFolder @side, _id: folderPath, @done
+        @merge.deleteFolder @side, path: folderPath, @done
 
     # File update detected
     onChange: (filePath, stats) =>
@@ -158,6 +158,7 @@ class LocalWatcher
                     callback err
                 else
                     async.eachSeries docs.reverse(), (doc, next) =>
+                        # TODO _id vs path -> normalize @paths
                         if doc._id in @paths
                             next()
                         else
