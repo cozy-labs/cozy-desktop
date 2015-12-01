@@ -98,6 +98,16 @@ describe 'Merge', ->
                 ret = @merge.invalidChecksum doc
                 ret.should.be.false()
 
+        describe 'updatePathOnConflict', ->
+            it 'appends -conflict- and the date to the path', ->
+                doc = path: 'foo/bar'
+                @merge.updatePathOnConflict doc
+                parts = doc.path.split '-conflict-'
+                parts[0].should.equal 'foo/bar'
+                parts = parts[1].split 'T'
+                parts[0].should.match /^\d{4}-\d{2}-\d{2}$/
+                parts[1].should.match /^\d{2}:\d{2}:\d{2}.\d{3}Z$/
+
         describe 'sameDate', ->
             it 'returns true if the date are nearly the same', ->
                 a = '2015-12-01T11:22:56.517Z'

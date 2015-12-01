@@ -102,6 +102,14 @@ class Merge
         else
             return false
 
+    # Update the path of a document in case of a conflict
+    # A suffix composed of -conflict- and the date is added to the path.
+    # It also returns the modified doc.
+    updatePathOnConflict: (doc) ->
+        date = new Date().toISOString()
+        doc.path = "#{doc.path}-conflict-#{date}"
+        doc
+
     # Return true if the two dates are the same, +/- 3 seconds
     sameDate: (one, two) ->
         one = +new Date one
@@ -414,17 +422,14 @@ class Merge
                 doc.lastModification ?= new Date
                 doc.tags             ?= was.tags
                 if folder?.docType is 'file'
-                    file = clone folder
-                    date = new Date().toISOString()
-                    file.path = "#{file.path}-conflict-#{date}"
+                    file = @updatePathOnConflict clone folder
                     @moveFile side, file, folder, (err) =>
                         if err
                             callback err
                         else
                             @moveFolder side, doc, was, callback
                 else if folder
-                    date = new Date().toISOString()
-                    doc.path = "#{doc.path}-conflict-#{date}"
+                    @updatePathOnConflict doc
                     @moveFolder side, doc, was, callback
                 else
                     @ensureParentExist side, doc, =>
