@@ -102,20 +102,31 @@ class Merge
         else
             return false
 
+    # Return true if the two dates are the same, +/- 3 seconds
+    sameDate: (one, two) ->
+        one = +new Date one
+        two = +new Date two
+        return Math.abs(two - one) < 3000
+
     # Return true if the metadata of the two folders are the same
-    # TODO precision for creationDate and lastModification
+    # For creationDate and lastModification, we accept up to 3s of differences
+    # because we can't rely on file systems to be precise to the millisecond.
     sameFolder: (one, two) ->
-        fields = ['_id', 'docType', 'creationDate', 'lastModification',
-            'remote', 'tags']
+        return false unless @sameDate one.creationDate, two.creationDate
+        return false unless @sameDate one.lastModification, two.lastModification
+        fields = ['_id', 'docType', 'remote', 'tags']
         one = pick one, fields
         two = pick two, fields
         return isEqual one, two
 
     # Return true if the metadata of the two files are the same
-    # TODO precision for creationDate and lastModification
+    # For creationDate and lastModification, we accept up to 3s of differences
+    # because we can't rely on file systems to be precise to the millisecond.
     sameFile: (one, two) ->
-        fields = ['_id', 'docType', 'creationDate', 'lastModification',
-            'checksum', 'remote', 'tags', 'size', 'class', 'mime']
+        return false unless @sameDate one.creationDate, two.creationDate
+        return false unless @sameDate one.lastModification, two.lastModification
+        fields = ['_id', 'docType', 'checksum', 'remote',
+            'tags', 'size', 'class', 'mime']
         one = pick one, fields
         two = pick two, fields
         return isEqual one, two

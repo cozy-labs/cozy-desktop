@@ -98,11 +98,171 @@ describe 'Merge', ->
                 ret = @merge.invalidChecksum doc
                 ret.should.be.false()
 
+        describe 'sameDate', ->
+            it 'returns true if the date are nearly the same', ->
+                a = '2015-12-01T11:22:56.517Z'
+                b = '2015-12-01T11:22:56.000Z'
+                c = '2015-12-01T11:22:57.000Z'
+                d = '2015-12-01T11:22:59.200Z'
+                e = '2015-12-01T11:22:52.200Z'
+                @merge.sameDate(a, b).should.be.true()
+                @merge.sameDate(a, c).should.be.true()
+                @merge.sameDate(a, d).should.be.true()
+                @merge.sameDate(a, e).should.be.false()
+                @merge.sameDate(b, c).should.be.true()
+                @merge.sameDate(b, d).should.be.false()
+                @merge.sameDate(b, e).should.be.false()
+                @merge.sameDate(c, d).should.be.true()
+                @merge.sameDate(c, e).should.be.false()
+                @merge.sameDate(d, e).should.be.false()
+
         describe 'sameFolder', ->
-            it 'TODO'
+            it 'returns true if the folders are the same', ->
+                a =
+                    _id: 'FOO/BAR'
+                    docType: 'folder'
+                    path: 'foo/bar'
+                    creationDate: '2015-12-01T11:22:56.517Z'
+                    lastModification: '2015-12-01T11:22:56.517Z'
+                    tags: ['qux']
+                    remote:
+                        id: '123'
+                        rev: '4-567'
+                b =
+                    _id: 'FOO/BAR'
+                    docType: 'folder'
+                    path: 'FOO/BAR'
+                    creationDate: '2015-12-01T11:22:56.000Z'
+                    lastModification: '2015-12-01T11:22:57.000Z'
+                    tags: ['qux']
+                    remote:
+                        id: '123'
+                        rev: '4-567'
+                c =
+                    _id: 'FOO/BAR'
+                    docType: 'folder'
+                    path: 'FOO/BAR'
+                    creationDate: '2015-12-01T11:22:56.000Z'
+                    lastModification: '2015-12-01T11:22:57.000Z'
+                    tags: ['qux', 'courge']
+                    remote:
+                        id: '123'
+                        rev: '4-567'
+                d =
+                    _id: 'FOO/BAR'
+                    docType: 'folder'
+                    path: 'FOO/BAR'
+                    creationDate: '2015-12-01T11:22:56.000Z'
+                    lastModification: '2015-12-01T11:22:57.000Z'
+                    tags: ['qux', 'courge']
+                    remote:
+                        id: '123'
+                        rev: '8-901'
+                e =
+                    _id: 'FOO/BAZ'
+                    docType: 'folder'
+                    path: 'FOO/BAZ'
+                    creationDate: '2015-12-01T11:22:56.000Z'
+                    lastModification: '2015-12-01T11:22:57.000Z'
+                    tags: ['qux']
+                    remote:
+                        id: '123'
+                        rev: '4-567'
+                @merge.sameFolder(a, b).should.be.true()
+                @merge.sameFolder(a, c).should.be.false()
+                @merge.sameFolder(a, d).should.be.false()
+                @merge.sameFolder(a, e).should.be.false()
+                @merge.sameFolder(b, c).should.be.false()
+                @merge.sameFolder(b, d).should.be.false()
+                @merge.sameFolder(b, e).should.be.false()
+                @merge.sameFolder(c, d).should.be.false()
+                @merge.sameFolder(c, e).should.be.false()
+                @merge.sameFolder(d, e).should.be.false()
 
         describe 'sameFile', ->
-            it 'TODO'
+            it 'returns true if the files are the same', ->
+                a =
+                    _id: 'FOO/BAR'
+                    docType: 'file'
+                    path: 'foo/bar'
+                    checksum: '9440ca447681546bd781d6a5166d18737223b3f6'
+                    creationDate: '2015-12-01T11:22:56.517Z'
+                    lastModification: '2015-12-01T11:22:56.517Z'
+                    tags: ['qux']
+                    remote:
+                        id: '123'
+                        rev: '4-567'
+                b =
+                    _id: 'FOO/BAR'
+                    docType: 'file'
+                    path: 'FOO/BAR'
+                    checksum: '9440ca447681546bd781d6a5166d18737223b3f6'
+                    creationDate: '2015-12-01T11:22:56.000Z'
+                    lastModification: '2015-12-01T11:22:57.000Z'
+                    tags: ['qux']
+                    remote:
+                        id: '123'
+                        rev: '4-567'
+                c =
+                    _id: 'FOO/BAR'
+                    docType: 'file'
+                    path: 'FOO/BAR'
+                    checksum: '000000047681546bd781d6a5166d18737223b3f6'
+                    creationDate: '2015-12-01T11:22:56.000Z'
+                    lastModification: '2015-12-01T11:22:57.000Z'
+                    tags: ['qux']
+                    remote:
+                        id: '123'
+                        rev: '4-567'
+                d =
+                    _id: 'FOO/BAR'
+                    docType: 'file'
+                    path: 'FOO/BAR'
+                    checksum: '9440ca447681546bd781d6a5166d18737223b3f6'
+                    creationDate: '2015-12-01T11:22:56.000Z'
+                    lastModification: '2015-12-01T11:22:57.000Z'
+                    tags: ['qux']
+                    remote:
+                        id: '123'
+                        rev: '8-901'
+                e =
+                    _id: 'FOO/BAZ'
+                    docType: 'file'
+                    path: 'FOO/BAZ'
+                    checksum: '9440ca447681546bd781d6a5166d18737223b3f6'
+                    creationDate: '2015-12-01T11:22:56.000Z'
+                    lastModification: '2015-12-01T11:22:57.000Z'
+                    tags: ['qux']
+                    remote:
+                        id: '123'
+                        rev: '4-567'
+                f =
+                    _id: 'FOO/BAR'
+                    docType: 'file'
+                    path: 'foo/bar'
+                    checksum: '9440ca447681546bd781d6a5166d18737223b3f6'
+                    creationDate: '2015-12-01T11:22:56.517Z'
+                    lastModification: '2015-12-01T11:22:56.517Z'
+                    size: 12345
+                    tags: ['qux']
+                    remote:
+                        id: '123'
+                        rev: '4-567'
+                @merge.sameFile(a, b).should.be.true()
+                @merge.sameFile(a, c).should.be.false()
+                @merge.sameFile(a, d).should.be.false()
+                @merge.sameFile(a, e).should.be.false()
+                @merge.sameFile(a, f).should.be.false()
+                @merge.sameFile(b, c).should.be.false()
+                @merge.sameFile(b, d).should.be.false()
+                @merge.sameFile(b, e).should.be.false()
+                @merge.sameFile(b, f).should.be.false()
+                @merge.sameFile(c, d).should.be.false()
+                @merge.sameFile(c, e).should.be.false()
+                @merge.sameFile(c, f).should.be.false()
+                @merge.sameFile(d, e).should.be.false()
+                @merge.sameFile(d, f).should.be.false()
+                @merge.sameFile(e, f).should.be.false()
 
         describe 'sameBinary', ->
             it 'returns true for two docs with the same checksum', ->
