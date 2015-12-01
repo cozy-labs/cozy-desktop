@@ -413,16 +413,24 @@ class Merge
                 doc.creationDate     ?= was.creationDate
                 doc.lastModification ?= new Date
                 doc.tags             ?= was.tags
-                if folder
-                    # TODO maybe it is simpler to add a -conflict suffix
-                    doc._rev = folder._rev
-                    @moveFolderRecursively doc, was, callback
+                if folder?.docType is 'file'
+                    file = clone folder
+                    date = new Date().toISOString()
+                    file.path = "#{file.path}-conflict-#{date}"
+                    @moveFile side, file, folder, (err) =>
+                        if err
+                            callback err
+                        else
+                            @moveFolder side, doc, was, callback
+                else if folder
+                    date = new Date().toISOString()
+                    doc.path = "#{doc.path}-conflict-#{date}"
+                    @moveFolder side, doc, was, callback
                 else
                     @ensureParentExist side, doc, =>
                         @moveFolderRecursively doc, was, callback
 
     # Move a folder and all the things inside it
-    # TODO kill this method
     moveFolderRecursively: (folder, was, callback) =>
         @pouch.byRecursivePath was._id, (err, docs) =>
             if err

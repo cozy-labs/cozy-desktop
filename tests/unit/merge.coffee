@@ -1085,23 +1085,68 @@ describe 'Merge', ->
                         should.not.exist err
 
             describe 'when a file with the same path exists', ->
-                it 'TODO'
+                before 'create a file', (done) ->
+                    @folder =
+                        _id: 'CONFLICT/FOOBAR'
+                        path: 'CONFLICT/FOOBAR'
+                        docType: 'file'
+                        checksum: '1bc9425d0ff90c05c17b9f39a7b7854be9992564'
+                        creationDate: new Date
+                        lastModification: new Date
+                    @pouch.db.put @folder, done
+
+                it 'can resolve a conflict', (done) ->
+                    @merge.ensureParentExist = sinon.stub().yields null
+                    doc =
+                        path: 'CONFLICT/FOOBAR'
+                        docType: 'folder'
+                        tags: ['qux', 'quux']
+                    was =
+                        _id: 'OLD-FOOBAR'
+                        path: 'OLD-FOOBAR'
+                        docType: 'folder'
+                        creationDate: new Date
+                        lastModification: new Date
+                        tags: ['qux', 'quux']
+                    opts =
+                        include_docs: true
+                        live: true
+                        since: 'now'
+                    @pouch.db.put clone(was), (err, inserted) =>
+                        should.not.exist err
+                        was._rev = inserted.rev
+                        @pouch.db.changes(opts).on 'change', (info) ->
+                            @cancel()
+                            info.id.should.match doc._id
+                            info.doc.docType.should.equal 'file'
+                            info.doc.moveTo.should.match /-conflict-/
+                        @merge.moveFolder @side, doc, was, (err) =>
+                            should.not.exist err
+                            @pouch.db.get @folder._id, (err, res) =>
+                                should.not.exist err
+                                for date in ['creationDate', 'lastModification']
+                                    doc[date] = doc[date].toISOString()
+                                res.should.have.properties doc
+                                @pouch.db.get was._id, (err, res) ->
+                                    should.exist err
+                                    err.status.should.equal 404
+                                    setTimeout done, 10
 
             describe 'when a folder with the same path exists', ->
                 before 'create a folder', (done) ->
                     @folder =
-                        _id: 'FOOBAZ'
-                        path: 'FOOBAZ'
+                        _id: 'CONFLICT/FOOBAZ'
+                        path: 'CONFLICT/FOOBAZ'
                         docType: 'folder'
                         creationDate: new Date
                         lastModification: new Date
                         tags: ['foo']
                     @pouch.db.put @folder, done
 
-                it 'can overwrite the content of a folder', (done) ->
+                it 'can resolve a conflict', (done) ->
                     @merge.ensureParentExist = sinon.stub().yields null
                     doc =
-                        path: 'FOOBAZ'
+                        path: 'CONFLICT/FOOBAZ'
                         docType: 'folder'
                         tags: ['qux', 'quux']
                     was =
@@ -1114,19 +1159,54 @@ describe 'Merge', ->
                     @pouch.db.put clone(was), (err, inserted) =>
                         should.not.exist err
                         was._rev = inserted.rev
-                        @merge.moveFolder @side, clone(doc), was, (err) =>
+                        @merge.moveFolder @side, doc, was, (err) =>
                             should.not.exist err
+                            doc._id.should.not.equal @folder._id
+                            doc.path.should.not.equal @folder.path
                             @pouch.db.get @folder._id, (err, res) =>
                                 should.not.exist err
-                                res.should.have.properties doc
-                                res.sides.local.should.equal 2
-                                @pouch.db.get was._id, (err, res) ->
-                                    should.exist err
-                                    err.status.should.equal 404
-                                    done()
+                                should.exist res
+                                res.tags.should.deepEqual ['foo']
+                                @pouch.db.get doc._id, (err, res) =>
+                                    doc.path.should.match /-conflict-/
+                                    res.sides.local.should.equal 1
+                                    @pouch.db.get was._id, (err, res) ->
+                                        should.exist err
+                                        err.status.should.equal 404
+                                        done()
 
-                it 'can resolve a conflict', ->
-                    it 'TODO'
+
+        describe 'moveFolderRecursively', ->
+            before (done) ->
+                pouchHelpers.createParentFolder @pouch, =>
+                    pouchHelpers.createFolder @pouch, 9, =>
+                        pouchHelpers.createFile @pouch, 9, done
+
+            it 'move the folder and files/folders inside it', (done) ->
+                doc =
+                    _id: 'DESTINATION'
+                    path: 'DESTINATION'
+                    docType: 'folder'
+                    creationDate: new Date
+                    lastModification: new Date
+                    tags: []
+                @pouch.db.get 'my-folder', (err, was) =>
+                    should.not.exist err
+                    @merge.moveFolderRecursively doc, was, (err) =>
+                        should.not.exist err
+                        ids = [
+                            '',
+                            '/folder-9',
+                            '/file-9'
+                        ]
+                        async.eachSeries ids, (id, next) =>
+                            @pouch.db.get "DESTINATION#{id}", (err, res) =>
+                                should.not.exist err
+                                should.exist res
+                                @pouch.db.get "my-folder#{id}", (err, res) ->
+                                    err.status.should.equal 404
+                                    next()
+                        , done
 
 
     describe 'Delete', ->
