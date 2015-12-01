@@ -43,9 +43,16 @@ program
     .option('-k, --insecure',
             'Turn off HTTPS certificate verification.')
     .action (args) ->
-        # TODO
-        console.log 'This is not yet implemented'
-        process.exit 1
+        try
+            sync 'full', args
+        catch err
+            throw err unless err.message is 'Incompatible mode'
+            console.log """
+            Full sync from a mount point already used otherwise is not supported
+
+            You should create a new mount point and use COZY_DESKTOP_DIR.
+            The README has more instructions about that.
+            """
 
 program
     .command 'pull'
