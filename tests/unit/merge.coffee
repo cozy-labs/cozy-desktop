@@ -24,7 +24,22 @@ describe 'Merge', ->
     describe 'Helpers', ->
 
         describe 'buildId', ->
-            it 'TODO'
+            it 'is available', ->
+                doc = path: 'FOO'
+                @merge.buildId doc
+                doc._id.should.equal 'FOO'
+
+            if process.platform in ['linux', 'freebsd', 'sunos']
+                it 'is case insensitive on UNIX', ->
+                    doc = path: 'foo/bar/café'
+                    @merge.buildId doc
+                    doc._id.should.equal 'foo/bar/café'
+
+            if process.platform is 'darwin'
+                it 'is case sensitive on OSX', ->
+                    doc = path: 'foo/bar/café'
+                    @merge.buildId doc
+                    doc._id.should.equal 'FOO/BAR/CAFÉ'
 
         describe 'invalidPath', ->
             it 'returns true if the path is incorrect', ->
