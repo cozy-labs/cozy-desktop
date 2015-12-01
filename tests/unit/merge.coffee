@@ -911,7 +911,50 @@ describe 'Merge', ->
                         should.not.exist err
 
             describe 'when a folder with the same path exists', ->
-                it 'TODO'
+                before 'create a folder', (done) ->
+                    @folder =
+                        _id: 'FUZZ'
+                        path: 'FUZZ'
+                        docType: 'folder'
+                        tags: ['foo']
+                    @pouch.db.put @folder, done
+
+                it 'can resolve the conflict', (done) ->
+                    @merge.ensureParentExist = sinon.stub().yields null
+                    doc =
+                        path: 'FUZZ'
+                        docType: 'file'
+                        checksum: '3333333333333333333333333333333333333333'
+                        tags: ['qux', 'quux']
+                        size: 12345
+                        class: 'image'
+                        mime: 'image/jpeg'
+                    was =
+                        _id: 'old-fuzz'
+                        path: 'old-fuzz'
+                        checksum: '3333333333333333333333333333333333333333'
+                        docType: 'file'
+                        creationDate: new Date
+                        lastModification: new Date
+                        tags: ['qux', 'quux']
+                    @pouch.db.put clone(was), (err, inserted) =>
+                        should.not.exist err
+                        was._rev = inserted.rev
+                        @merge.moveFile @side, doc, clone(was), (err) =>
+                            should.not.exist err
+                            doc._id.should.match /-conflict-/
+                            @pouch.db.get doc._id, (err, res) =>
+                                should.not.exist err
+                                for date in ['creationDate', 'lastModification']
+                                    doc[date] = doc[date].toISOString()
+                                res.should.have.properties doc
+                                @pouch.db.get @folder._id, (err, res) =>
+                                    should.not.exist err
+                                    res.should.have.properties @folder
+                                    @pouch.db.get was._id, (err, res) ->
+                                        should.exist err
+                                        err.status.should.equal 404
+                                        done()
 
             describe 'when a file with the same path exists', ->
                 before 'create a file', (done) ->
@@ -920,21 +963,19 @@ describe 'Merge', ->
                         path: 'FUZZ.JPG'
                         docType: 'file'
                         checksum: '1111111111111111111111111111111111111111'
-                        creationDate: new Date
-                        lastModification: new Date
                         tags: ['foo']
-                        size: 12345
-                        class: 'image'
-                        mime: 'image/jpeg'
                     @pouch.db.put @file, done
 
-                it 'can overwrite the content of a file', (done) ->
+                it 'can resolve the conflict', (done) ->
                     @merge.ensureParentExist = sinon.stub().yields null
                     doc =
                         path: 'FUZZ.JPG'
                         docType: 'file'
                         checksum: '3333333333333333333333333333333333333333'
                         tags: ['qux', 'quux']
+                        size: 12345
+                        class: 'image'
+                        mime: 'image/jpeg'
                     was =
                         _id: 'old-fuzz.jpg'
                         path: 'old-fuzz.jpg'
@@ -946,22 +987,21 @@ describe 'Merge', ->
                     @pouch.db.put clone(was), (err, inserted) =>
                         should.not.exist err
                         was._rev = inserted.rev
-                        @merge.moveFile @side, clone(doc), clone(was), (err) =>
+                        @merge.moveFile @side, doc, clone(was), (err) =>
                             should.not.exist err
-                            @pouch.db.get @file._id, (err, res) =>
+                            doc._id.should.match /-conflict-/
+                            @pouch.db.get doc._id, (err, res) =>
                                 should.not.exist err
+                                for date in ['creationDate', 'lastModification']
+                                    doc[date] = doc[date].toISOString()
                                 res.should.have.properties doc
-                                should.not.exist res.size
-                                should.not.exist res.class
-                                should.not.exist res.mime
-                                res.sides.local.should.equal 2
-                                @pouch.db.get was._id, (err, res) ->
-                                    should.exist err
-                                    err.status.should.equal 404
-                                    done()
-
-                it 'can resolve a conflict', ->
-                    it 'TODO'
+                                @pouch.db.get @file._id, (err, res) =>
+                                    should.not.exist err
+                                    res.should.have.properties @file
+                                    @pouch.db.get was._id, (err, res) ->
+                                        should.exist err
+                                        err.status.should.equal 404
+                                        done()
 
 
         describe 'moveFolder', ->
@@ -1096,14 +1136,14 @@ describe 'Merge', ->
 
             describe 'when a file with the same path exists', ->
                 before 'create a file', (done) ->
-                    @folder =
+                    @file =
                         _id: 'CONFLICT/FOOBAR'
                         path: 'CONFLICT/FOOBAR'
                         docType: 'file'
                         checksum: '1bc9425d0ff90c05c17b9f39a7b7854be9992564'
                         creationDate: new Date
                         lastModification: new Date
-                    @pouch.db.put @folder, done
+                    @pouch.db.put @file, done
 
                 it 'can resolve a conflict', (done) ->
                     @merge.ensureParentExist = sinon.stub().yields null
@@ -1132,7 +1172,7 @@ describe 'Merge', ->
                             info.doc.moveTo.should.match /-conflict-/
                         @merge.moveFolder @side, doc, was, (err) =>
                             should.not.exist err
-                            @pouch.db.get @folder._id, (err, res) =>
+                            @pouch.db.get @file._id, (err, res) =>
                                 should.not.exist err
                                 for date in ['creationDate', 'lastModification']
                                     doc[date] = doc[date].toISOString()

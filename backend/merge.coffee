@@ -378,9 +378,8 @@ class Merge
                 was.moveTo            = doc._id
                 was._deleted          = true
                 if file
-                    # TODO should be a conflict?
-                    doc._rev = file._rev
-                    @pouch.db.bulkDocs [was, doc], callback
+                    @updatePathOnConflict doc
+                    @moveFile side, doc, was, callback
                 else
                     @ensureParentExist side, doc, =>
                         @pouch.db.bulkDocs [was, doc], callback
