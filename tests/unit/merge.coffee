@@ -719,7 +719,39 @@ describe 'Merge', ->
                         done()
 
             describe 'when a file with the same path exists', ->
-                it 'TODO'
+                before 'create a file', (done) ->
+                    @file =
+                        _id: 'CONFLICT/PUT-FOLDER'
+                        path: 'CONFLICT/PUT-FOLDER'
+                        docType: 'file'
+                        checksum: '1bc9425d0ff90c05c17b9f39a7b7854be9992564'
+                        creationDate: new Date
+                        lastModification: new Date
+                    @pouch.db.put @file, done
+
+                it 'can resolve a conflict', (done) ->
+                    @merge.ensureParentExist = sinon.stub().yields null
+                    doc =
+                        path: 'CONFLICT/PUT-FOLDER'
+                        docType: 'folder'
+                        tags: ['qux', 'quux']
+                    opts =
+                        include_docs: true
+                        live: true
+                        since: 'now'
+                    @pouch.db.changes(opts).on 'change', (info) ->
+                        @cancel()
+                        info.id.should.match doc._id
+                        info.doc.docType.should.equal 'file'
+                        info.doc.moveTo.should.match /-conflict-/
+                    @merge.putFolder @side, doc, (err) =>
+                        should.not.exist err
+                        @pouch.db.get doc._id, (err, res) ->
+                            should.not.exist err
+                            for date in ['creationDate', 'lastModification']
+                                doc[date] = doc[date].toISOString()
+                            res.should.have.properties doc
+                            setTimeout done, 10
 
             describe 'when a folder with the same path exists', ->
                 before 'create a folder', (done) ->
@@ -746,9 +778,6 @@ describe 'Merge', ->
                             res.should.have.properties doc
                             res.sides.local.should.equal 2
                             done()
-
-                it 'can resolve a conflict', ->
-                    it 'TODO'
 
 
     describe 'Move', ->
@@ -1172,7 +1201,7 @@ describe 'Merge', ->
                             info.doc.moveTo.should.match /-conflict-/
                         @merge.moveFolder @side, doc, was, (err) =>
                             should.not.exist err
-                            @pouch.db.get @file._id, (err, res) =>
+                            @pouch.db.get doc._id, (err, res) =>
                                 should.not.exist err
                                 for date in ['creationDate', 'lastModification']
                                     doc[date] = doc[date].toISOString()

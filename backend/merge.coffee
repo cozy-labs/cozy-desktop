@@ -151,7 +151,6 @@ class Merge
             return false
 
     # Be sure that the tree structure for the given path exists
-    # TODO bulk create/update and check status, instead of recursive?
     ensureParentExist: (side, doc, callback) =>
         parent = path.dirname doc._id
         if parent is '.'
@@ -226,7 +225,7 @@ class Merge
     ### Actions ###
 
     # Expectations:
-    #   - the file path and name are present and valid
+    #   - the file path is present and valid
     #   - the checksum is valid, if present
     # Actions:
     #   - force the 'file' docType
@@ -263,7 +262,7 @@ class Merge
                         @pouch.db.put doc, callback
 
     # Expectations:
-    #   - the file path and name are present and valid
+    #   - the file path is present and valid
     #   - the checksum is valid, if present
     # Actions:
     #   - force the 'file' docType
@@ -303,13 +302,12 @@ class Merge
                         @pouch.db.put doc, callback
 
     # Expectations:
-    #   - the folder path and name are present and valid
+    #   - the folder path is present and valid
     # Actions:
     #   - add the creation date if missing
     #   - add the last modification date if missing
     #   - create the tree structure if needed
     #   - overwrite metadata if this folder alredy existed in pouch
-    # TODO conflict with a file -> file is renamed with -conflict suffix
     putFolder: (side, doc, callback) ->
         if @invalidPath doc
             log.warn "Invalid path: #{JSON.stringify doc, null, 2}"
@@ -320,7 +318,15 @@ class Merge
                 @markSide side, doc, folder
                 doc.docType = 'folder'
                 doc.lastModification ?= new Date
-                if folder
+                if folder?.docType is 'file'
+                    file = @updatePathOnConflict clone folder
+                    @moveFile side, file, folder, (err) =>
+                        if err
+                            callback err
+                        else
+                            doc.creationDate ?= new Date
+                            @pouch.db.put doc, callback
+                else if folder
                     doc._rev = folder._rev
                     doc.creationDate ?= folder.creationDate
                     doc.tags ?= folder.tags
@@ -334,8 +340,8 @@ class Merge
                         @pouch.db.put doc, callback
 
     # Expectations:
-    #   - the new file path and name are present and valid
-    #   - the old file path and name are present and valid
+    #   - the new file path is present and valid
+    #   - the old file path is present and valid
     #   - the checksum is valid, if present
     #   - the two paths are not the same
     #   - the revision for the old file is present
@@ -385,8 +391,8 @@ class Merge
                         @pouch.db.bulkDocs [was, doc], callback
 
     # Expectations:
-    #   - the new folder path and name are present and valid
-    #   - the old folder path and name are present and valid
+    #   - the new folder path is present and valid
+    #   - the old folder path is present and valid
     #   - the two paths are not the same
     #   - the revision for the old folder is present
     # Actions:
