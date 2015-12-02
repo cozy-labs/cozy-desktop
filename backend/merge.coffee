@@ -472,10 +472,13 @@ class Merge
                 callback null
             else if err
                 callback err
-            else
+            else if file.sides?[side]
                 @markSide side, file, file
                 file._deleted = true
                 @pouch.db.put file, callback
+            else
+                # It can happen after a conflict
+                callback null
 
     # Remove a folder and every file and folder inside it
     #
@@ -493,7 +496,7 @@ class Merge
                 callback null
             else if err
                 callback err
-            else
+            else if folder.sides?[side]
                 @pouch.byRecursivePath folder._id, (err, docs) =>
                     if err
                         callback err
@@ -508,6 +511,9 @@ class Merge
                             @markSide side, doc, doc
                             doc._deleted = true
                         @pouch.db.bulkDocs docs, callback
+            else
+                # It can happen after a conflict
+                callback null
 
 
 module.exports = Merge

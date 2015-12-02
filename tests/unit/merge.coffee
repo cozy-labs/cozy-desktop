@@ -1296,6 +1296,8 @@ describe 'Merge', ->
                     _id: 'TO-DELETE/FILE'
                     path: 'TO-DELETE/FILE'
                     docType: 'file'
+                    sides:
+                        local: 1
                 @pouch.db.put doc, (err) =>
                     should.not.exist err
                     @merge.deleteFile @side, doc, (err) =>
@@ -1310,6 +1312,8 @@ describe 'Merge', ->
                     _id: 'TO-DELETE/FOLDER'
                     path: 'TO-DELETE/FOLDER'
                     docType: 'folder'
+                    sides:
+                        local: 1
                 @pouch.db.put doc, (err) =>
                     should.not.exist err
                     @merge.deleteFolder @side, doc, (err) =>
@@ -1323,6 +1327,8 @@ describe 'Merge', ->
                     _id: 'FOO/TO-REMOVE'
                     path: 'FOO/TO-REMOVE'
                     docType: 'folder'
+                    sides:
+                        local: 1
                 @pouch.db.put doc, (err) =>
                     should.not.exist err
                     async.eachSeries ['baz', 'qux', 'quux'], (name, next) =>
@@ -1346,6 +1352,8 @@ describe 'Merge', ->
                         _id: "#{base}#{name}"
                         path: "#{base}#{name}"
                         docType: 'folder'
+                        sides:
+                            local: 1
                     @pouch.db.put doc, next
                 , (err) =>
                     should.not.exist err
