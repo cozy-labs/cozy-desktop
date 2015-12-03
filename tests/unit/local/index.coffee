@@ -17,8 +17,8 @@ describe 'Local', ->
     before 'instanciate config', configHelpers.createConfig
     before 'instanciate pouch', pouchHelpers.createDatabase
     before 'instanciate local', ->
-        @merge = {}
-        @local = new Local @config, @merge, @pouch
+        @prep = {}
+        @local = new Local @config, @prep, @pouch
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
 

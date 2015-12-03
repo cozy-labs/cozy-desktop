@@ -18,9 +18,9 @@ Watcher = require './watcher'
 #
 # TODO add an integration test where an image is added, updated and removed
 class Remote
-    constructor: (@config, @merge, @pouch) ->
+    constructor: (@config, @prep, @pouch) ->
         @couch   = new Couch @config
-        @watcher = new Watcher @couch, @merge, @pouch
+        @watcher = new Watcher @couch, @prep, @pouch
         @other   = null
 
     # Start initial replication + watching changes in live

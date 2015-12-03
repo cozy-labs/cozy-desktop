@@ -10,7 +10,7 @@ log   = require('printit')
 # TODO add comments
 # TODO refactor unit tests
 class RemoteWatcher
-    constructor: (@couch, @merge, @pouch) ->
+    constructor: (@couch, @prep, @pouch) ->
         @side = 'remote'
         @pending = 0
 
@@ -104,7 +104,7 @@ class RemoteWatcher
                     # It's fine if the file was deleted on local and on remote
                     callback()
                 else
-                    @merge.deleteDoc @side, was, callback
+                    @prep.deleteDoc @side, was, callback
             else if doc.docType in ['folder', 'Folder'] or doc.binary?.file
                 @putDoc doc, was, callback
             else
@@ -141,20 +141,20 @@ class RemoteWatcher
     # And the _id/_rev from CouchDB are saved in the remote field in PouchDB.
     putDoc: (remote, was, callback) =>
         doc = @createLocalDoc remote
-        if @merge.invalidPath doc
+        if @prep.invalidPath doc
             log.error "Invalid id"
             log.error doc
             callback new Error 'Invalid path/name'
         else if not was
-            @merge.addDoc @side, doc, callback
+            @prep.addDoc @side, doc, callback
         else if was.path is doc.path
-            @merge.updateDoc @side, doc, callback
+            @prep.updateDoc @side, doc, callback
         else if doc.checksum? and was.checksum is doc.checksum
-            @merge.moveDoc @side, doc, was, callback
+            @prep.moveDoc @side, doc, was, callback
         else
-            @merge.deleteDoc @side, was, (err) =>
+            @prep.deleteDoc @side, was, (err) =>
                 log.error err if err
-                @merge.addDoc @side, doc, callback
+                @prep.addDoc @side, doc, callback
 
     # Keep track of the sequence number and log errors
     # TODO test pending counts

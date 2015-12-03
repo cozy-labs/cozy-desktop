@@ -16,8 +16,8 @@ describe "LocalWatcher Tests", ->
     before 'instanciate config', configHelpers.createConfig
     before 'instanciate pouch', pouchHelpers.createDatabase
     beforeEach 'instanciate local watcher', ->
-        @merge = {}
-        @watcher = new Watcher @basePath, @merge, @pouch
+        @prep = {}
+        @watcher = new Watcher @basePath, @prep, @pouch
     afterEach 'stop watcher and clean path', (done) ->
         @watcher.watcher?.close()
         fs.emptyDir @basePath, done
@@ -32,15 +32,15 @@ describe "LocalWatcher Tests", ->
         it 'calls addFile/putFolder for files that are aleady here', (done) ->
             fs.ensureDirSync path.join @basePath, 'aa'
             fs.ensureFileSync path.join @basePath, 'aa/ab'
-            @merge.putFolder = sinon.spy()
-            @merge.addFile = sinon.spy()
+            @prep.putFolder = sinon.spy()
+            @prep.addFile = sinon.spy()
             setTimeout =>
-                @merge.putFolder.called.should.be.true()
-                @merge.putFolder.args[0][0].should.equal 'local'
-                @merge.putFolder.args[0][1].path.should.equal 'aa'
-                @merge.addFile.called.should.be.true()
-                @merge.addFile.args[0][0].should.equal 'local'
-                @merge.addFile.args[0][1].path.should.equal 'aa/ab'
+                @prep.putFolder.called.should.be.true()
+                @prep.putFolder.args[0][0].should.equal 'local'
+                @prep.putFolder.args[0][1].path.should.equal 'aa'
+                @prep.addFile.called.should.be.true()
+                @prep.addFile.args[0][0].should.equal 'local'
+                @prep.addFile.args[0][1].path.should.equal 'aa/ab'
                 done()
             , 1100
             @watcher.start ->
@@ -48,13 +48,13 @@ describe "LocalWatcher Tests", ->
         it 'ignores .cozy-desktop', (done) ->
             fs.ensureDirSync path.join @basePath, '.cozy-desktop'
             fs.ensureFileSync path.join @basePath, '.cozy-desktop/ac'
-            @merge.putFolder = sinon.spy()
-            @merge.addFile = sinon.spy()
-            @merge.updateFile = sinon.spy()
+            @prep.putFolder = sinon.spy()
+            @prep.addFile = sinon.spy()
+            @prep.updateFile = sinon.spy()
             setTimeout =>
-                @merge.putFolder.called.should.be.false()
-                @merge.addFile.called.should.be.false()
-                @merge.updateFile.called.should.be.false()
+                @prep.putFolder.called.should.be.false()
+                @prep.addFile.called.should.be.false()
+                @prep.updateFile.called.should.be.false()
                 done()
             , 1000
             @watcher.start ->
@@ -119,7 +119,7 @@ describe "LocalWatcher Tests", ->
     describe 'onAdd', ->
         it 'detects when a file is created', (done) ->
             @watcher.start =>
-                @merge.addFile = (side, doc) ->
+                @prep.addFile = (side, doc) ->
                     side.should.equal 'local'
                     doc.should.have.properties
                         path: 'aaa.jpg'
@@ -137,7 +137,7 @@ describe "LocalWatcher Tests", ->
     describe 'onAddDir', ->
         it 'detects when a folder is created', (done) ->
             @watcher.start =>
-                @merge.putFolder = (side, doc) ->
+                @prep.putFolder = (side, doc) ->
                     side.should.equal 'local'
                     doc.should.have.properties
                         path: 'aba'
@@ -151,8 +151,8 @@ describe "LocalWatcher Tests", ->
 
         it 'detects when a sub-folder is created', (done) ->
             fs.mkdirSync path.join @basePath, 'abb'
-            @merge.putFolder = =>  # For aba folder
-                @merge.putFolder = (side, doc) ->
+            @prep.putFolder = =>  # For aba folder
+                @prep.putFolder = (side, doc) ->
                     side.should.equal 'local'
                     doc.should.have.properties
                         path: 'abb/abc'
@@ -169,8 +169,8 @@ describe "LocalWatcher Tests", ->
     describe 'onUnlink', ->
         it 'detects when a file is deleted', (done) ->
             fs.ensureFileSync path.join @basePath, 'aca'
-            @merge.addFile = =>  # For aca file
-                @merge.deleteFile = (side, doc) ->
+            @prep.addFile = =>  # For aca file
+                @prep.deleteFile = (side, doc) ->
                     side.should.equal 'local'
                     doc.should.have.properties
                         path: 'aca'
@@ -182,8 +182,8 @@ describe "LocalWatcher Tests", ->
     describe 'onUnlinkDir', ->
         it 'detects when a folder is deleted', (done) ->
             fs.mkdirSync path.join @basePath, 'ada'
-            @merge.putFolder = =>  # For ada folder
-                @merge.deleteFolder = (side, doc) ->
+            @prep.putFolder = =>  # For ada folder
+                @prep.deleteFolder = (side, doc) ->
                     side.should.equal 'local'
                     doc.should.have.properties
                         path: 'ada'
@@ -197,8 +197,8 @@ describe "LocalWatcher Tests", ->
             src = path.join __dirname, '../../fixtures/chat-mignon.jpg'
             dst = path.join @basePath, 'aea.jpg'
             fs.copySync src, dst
-            @merge.addFile = =>
-                @merge.updateFile = (side, doc) ->
+            @prep.addFile = =>
+                @prep.updateFile = (side, doc) ->
                     side.should.equal 'local'
                     doc.should.have.properties
                         path: 'aea.jpg'
@@ -219,11 +219,11 @@ describe "LocalWatcher Tests", ->
             src = path.join __dirname, '../../fixtures/chat-mignon.jpg'
             dst = path.join @basePath, 'afa.jpg'
             fs.copySync src, dst
-            @merge.addFile = ->
+            @prep.addFile = ->
             @watcher.start =>
                 setTimeout =>
-                    @merge.deleteFile = sinon.spy()
-                    @merge.addFile = (side, doc) =>
+                    @prep.deleteFile = sinon.spy()
+                    @prep.addFile = (side, doc) =>
                         side.should.equal 'local'
                         doc.should.have.properties
                             path: 'afb.jpg'
@@ -233,8 +233,8 @@ describe "LocalWatcher Tests", ->
                             class: 'image'
                             mime: 'image/jpeg'
                         setTimeout =>
-                            @merge.deleteFile.called.should.be.true()
-                            @merge.deleteFile.args[0][1].should.have.properties
+                            @prep.deleteFile.called.should.be.true()
+                            @prep.deleteFile.args[0][1].should.have.properties
                                 path: 'afa.jpg'
                             done()
                         , 10
@@ -248,27 +248,27 @@ describe "LocalWatcher Tests", ->
             dst = path.join @basePath, 'agb'
             fs.ensureDirSync src
             fs.ensureFileSync "#{src}/agc"
-            @merge.addFile = ->
-            @merge.putFolder = ->
+            @prep.addFile = ->
+            @prep.putFolder = ->
             @watcher.start =>
                 setTimeout =>
-                    @merge.addFile = sinon.spy()
-                    @merge.deleteFile = sinon.spy()
-                    @merge.deleteFolder = sinon.spy()
-                    @merge.putFolder = (side, doc) =>
+                    @prep.addFile = sinon.spy()
+                    @prep.deleteFile = sinon.spy()
+                    @prep.deleteFolder = sinon.spy()
+                    @prep.putFolder = (side, doc) =>
                         side.should.equal 'local'
                         doc.should.have.properties
                             path: 'agb'
                             docType: 'folder'
                         setTimeout =>
-                            @merge.addFile.called.should.be.true()
-                            args = @merge.addFile.args[0][1]
+                            @prep.addFile.called.should.be.true()
+                            args = @prep.addFile.args[0][1]
                             args.should.have.properties path: 'agb/agc'
-                            @merge.deleteFile.called.should.be.true()
-                            args = @merge.deleteFile.args[0][1]
+                            @prep.deleteFile.called.should.be.true()
+                            args = @prep.deleteFile.args[0][1]
                             args.should.have.properties path: 'aga/agc'
-                            @merge.deleteFolder.called.should.be.true()
-                            args = @merge.deleteFolder.args[0][1]
+                            @prep.deleteFolder.called.should.be.true()
+                            args = @prep.deleteFolder.args[0][1]
                             args.should.have.properties path: 'aga'
                             done()
                         , 1100
@@ -277,7 +277,7 @@ describe "LocalWatcher Tests", ->
 
     describe 'onReady', ->
         it 'detects deleted files and folders', (done) ->
-            dd = @merge.deleteDoc = sinon.stub().yields()
+            dd = @prep.deleteDoc = sinon.stub().yields()
             folder1 =
                 _id: 'folder1'
                 docType: 'folder'

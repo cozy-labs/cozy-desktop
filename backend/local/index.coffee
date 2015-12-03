@@ -11,10 +11,10 @@ Watcher = require './watcher'
 # It uses a watcher, based on chokidar, to listen for file and folder changes.
 # It also applied changes from the remote cozy on the local filesystem.
 class Local
-    constructor: (config, @merge, @pouch) ->
+    constructor: (config, @prep, @pouch) ->
         @basePath = config.getDevice().path
         @tmpPath  = path.join @basePath, ".cozy-desktop"
-        @watcher  = new Watcher @basePath, @merge, @pouch
+        @watcher  = new Watcher @basePath, @prep, @pouch
         @other    = null
 
     # Start initial replication + watching changes in live

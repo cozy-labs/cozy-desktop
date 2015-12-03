@@ -7,6 +7,7 @@ Config  = require './config'
 Devices = require './devices'
 Pouch   = require './pouch'
 Merge   = require './merge'
+Prep    = require './prep'
 Local   = require './local'
 Remote  = require './remote'
 Sync    = require './sync'
@@ -84,8 +85,9 @@ class App
     # Start database sync process and setup file change watcher
     sync: (mode) =>
         @merge  = new Merge @pouch
-        @local  = new Local  @config, @merge, @pouch
-        @remote = new Remote @config, @merge, @pouch
+        @prep   = new Prep @merge
+        @local  = @merge.local  = new Local  @config, @prep, @pouch
+        @remote = @merge.remote = new Remote @config, @prep, @pouch
         @sync   = new Sync @pouch, @local, @remote
         device  = @config.getDevice()
         if device.deviceName? and device.url? and device.path?

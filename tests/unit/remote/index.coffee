@@ -18,8 +18,8 @@ describe 'Remote', ->
     before 'start couch server', couchHelpers.startServer
     before 'instanciate couch', couchHelpers.createCouchClient
     before 'instanciate remote', ->
-        @merge = {}
-        @remote = new Remote @config, @merge, @pouch
+        @prep = {}
+        @remote = new Remote @config, @prep, @pouch
     after 'stop couch server', couchHelpers.stopServer
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
