@@ -55,7 +55,8 @@ describe "Devices", ->
                 password: 'xxxxxxxx'
                 deviceName: Cozy.deviceName
             Devices.unregisterDevice options, (err) ->
-                err.should.equal 'Bad credentials'
+                should.exist err
+                err.message.should.equal 'Bad credentials'
                 done()
 
         it 'unregister a device', (done) ->

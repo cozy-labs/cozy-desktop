@@ -1,3 +1,5 @@
+# TODO remove this file?
+
 fs = require 'fs-extra'
 async = require 'async'
 should = require 'should'
