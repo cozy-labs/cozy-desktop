@@ -1,7 +1,5 @@
 async   = require 'async'
-isEqual = require 'lodash.isequal'
 path    = require 'path'
-pick    = require 'lodash.pick'
 log     = require('printit')
     prefix: 'Remote writer '
 
@@ -17,6 +15,8 @@ Watcher = require './watcher'
 # Please note that the structure of the documents in the remote couchdb and in
 # the local pouchdb are similar, but not exactly the same. A transformation is
 # needed in both ways.
+#
+# TODO add an integration test where an image is added, updated and removed
 class Remote
     constructor: (@config, @merge, @pouch) ->
         @couch   = new Couch @config
@@ -104,52 +104,6 @@ class Remote
                     else
                         @couch.remove doc._id, doc._rev, callback
 
-    # Compare two remote docs and say if they are the same,
-    # i.e. can we replace one by the other with no impact
-    sameRemoteDoc: (one, two) ->
-        fields = ['path', 'name', 'creationDate', 'checksum', 'size']
-        one = pick one, fields
-        two = pick two, fields
-        return isEqual one, two
-
-    # Put the document on the remote cozy
-    # In case of a conflict in CouchDB, try to see if the changes on the remote
-    # sides are trivial and can be ignored.
-    # TODO add an integration test where an image is added, updated and removed
-    putRemoteDoc: (doc, old, callback) =>
-        @couch.put doc, (err, created) =>
-            if err?.status is 409
-                oldRemote = {}
-                oldRemote = @createRemoteDoc old if old
-                @couch.get doc._id, (err, remoteDoc) =>
-                    if err
-                        callback err
-                    else if @sameRemoteDoc remoteDoc, oldRemote
-                        doc._rev = remoteDoc._rev
-                        @couch.put doc, callback
-                    else
-                        callback new Error 'Conflict'
-            else
-                callback err, created
-
-    # Remove a remote document
-    # In case of a conflict in CouchDB, try to see if the changes on the remote
-    # sides are trivial and can be ignored.
-    removeRemoteDoc: (doc, callback) =>
-        doc._deleted = true
-        @couch.put doc, (err, removed) =>
-            if err?.status is 409
-                @couch.get doc._id, (err, current) =>
-                    if err
-                        callback err
-                    else if @sameRemoteDoc current, doc
-                        current._deleted = true
-                        @couch.put current, callback
-                    else
-                        callback new Error 'Conflict'
-            else
-                callback err, removed
-
 
     ### Write operations ###
 
@@ -196,7 +150,9 @@ class Remote
                     _rev: old?.remote._rev
                     binary: binaryDoc
                 remoteDoc = @createRemoteDoc doc, remote
-                @putRemoteDoc remoteDoc, old, (err, created) ->
+                remoteOld = {}
+                remoteOld = @createRemoteDoc old if old
+                @couch.putRemoteDoc remoteDoc, remoteOld, (err, created) ->
                     next err, created, binaryDoc
 
             # Save remote and clean previous binary
@@ -218,7 +174,9 @@ class Remote
         log.info "Update file #{doc.path}"
         if old.remote
             remoteDoc = @createRemoteDoc doc, old.remote
-            @putRemoteDoc remoteDoc, old, (err, updated) ->
+            remoteOld = {}
+            remoteOld = @createRemoteDoc old if old
+            @couch.putRemoteDoc remoteDoc, remoteOld, (err, updated) ->
                 unless err
                     doc.remote =
                         _id:  updated.id
@@ -295,7 +253,7 @@ class Remote
         log.info "Delete file #{doc.path}"
         return callback() unless doc.remote
         remoteDoc = @createRemoteDoc doc, doc.remote
-        @removeRemoteDoc remoteDoc, (err, removed) =>
+        @couch.removeRemoteDoc remoteDoc, (err, removed) =>
             if err
                 callback err, removed
             else

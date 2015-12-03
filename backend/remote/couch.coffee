@@ -1,8 +1,10 @@
 PouchDB = require 'pouchdb'
 async   = require 'async'
 fs      = require 'fs-extra'
+isEqual = require 'lodash.isequal'
 path    = require 'path-extra'
 moment  = require 'moment'
+pick    = require 'lodash.pick'
 request = require 'request-json-light'
 uuid    = require 'node-uuid'
 log     = require('printit')
@@ -92,6 +94,49 @@ class Couch
         urlPath = "cozy/#{binaryId}/file"
         log.info "Download #{urlPath}"
         @http.saveFileAsStream urlPath, callback
+
+    # Compare two remote docs and say if they are the same,
+    # i.e. can we replace one by the other with no impact
+    sameRemoteDoc: (one, two) ->
+        fields = ['path', 'name', 'creationDate', 'checksum', 'size']
+        one = pick one, fields
+        two = pick two, fields
+        return isEqual one, two
+
+    # Put the document on the remote cozy
+    # In case of a conflict in CouchDB, try to see if the changes on the remote
+    # sides are trivial and can be ignored.
+    putRemoteDoc: (doc, old, callback) =>
+        @put doc, (err, created) =>
+            if err?.status is 409
+                @get doc._id, (err, current) =>
+                    if err
+                        callback err
+                    else if @sameRemoteDoc current, old
+                        doc._rev = current._rev
+                        @put doc, callback
+                    else
+                        callback new Error 'Conflict'
+            else
+                callback err, created
+
+    # Remove a remote document
+    # In case of a conflict in CouchDB, try to see if the changes on the remote
+    # sides are trivial and can be ignored.
+    removeRemoteDoc: (doc, callback) =>
+        doc._deleted = true
+        @put doc, (err, removed) =>
+            if err?.status is 409
+                @get doc._id, (err, current) =>
+                    if err
+                        callback err
+                    else if @sameRemoteDoc current, doc
+                        current._deleted = true
+                        @put current, callback
+                    else
+                        callback new Error 'Conflict'
+            else
+                callback err, removed
 
 
 module.exports = Couch
