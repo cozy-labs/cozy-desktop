@@ -17,30 +17,6 @@ log     = require('printit')
 # are not structured in the same way. In particular, the _id are uuid in CouchDB
 # and the path to the file/folder (in a normalized form) in PouchDB.
 #
-# File:
-#   - _id / _rev
-#   - docType: 'file'
-#   - path
-#   - checksum
-#   - creationDate
-#   - lastModification
-#   - tags
-#   - size
-#   - class
-#   - mime
-#   - sides
-#   - remote
-#
-# Folder:
-#   - _id / _rev
-#   - docType: 'folder'
-#   - path
-#   - creationDate
-#   - lastModification
-#   - tags
-#   - sides
-#   - remote
-#
 # Conflicts can happen when we try to write one document for a path when
 # another document already exists for the same path. We don't try to be smart
 # and the rename one the two documents with a -conflict suffix. And even that

@@ -51,7 +51,33 @@ don't try to be smart and prefer a robust solution.
 Documents schema
 ----------------
 
-See [`backend/merge.coffee`](https://github.com/cozy-labs/cozy-desktop/blob/master/backend/merge.coffee#L15-L37)
+### `File`
+
+- `_id`: the normalized path
+- `_rev`: from PouchDB
+- `docType`: always 'file'
+- `path`: the original path to this file
+- `checksum`: the sha1sum of its content
+- `creationDate`: date and time of the creation
+- `lastModification`: date and time of the last modification
+- `tags`: the list of tags, from the remote cozy
+- `size`: the size on disk
+- `class`: generic class of the mime-type (can be document, image, etc.)
+- `mime`: the precise mime-type (example: image/jpeg)
+- `remote`: id and rev of the associated documents in the remote CouchDB
+- `sides`: for tracking what is applied on local file system and remote cozy
+
+### `Folder`
+
+- `_id`: the normalized path
+- `_rev`: from PouchDB
+- `docType`: always 'folder'
+- `path`: the original path to this file
+- `creationDate`: date and time of the creation
+- `lastModification`: date and time of the last modification
+- `tags`: the list of tags, from the remote cozy
+- `remote`: id and rev of the associated documents in the remote CouchDB
+- `sides`: for tracking what is applied on local file system and remote cozy
 
 
 Differences between file systems
