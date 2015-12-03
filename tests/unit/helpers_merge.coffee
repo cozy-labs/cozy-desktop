@@ -30,6 +30,12 @@ describe 'Merge Helpers', ->
             parts[0].should.match /^\d{4}-\d{2}-\d{2}$/
             parts[1].should.match /^\d{2}:\d{2}:\d{2}.\d{3}Z$/
 
+        it 'does not modify the original document', ->
+            doc = path: 'foo/bar'
+            conflict = @merge.createConflictDoc doc
+            doc.path.should.not.equal conflict.path
+
+
     describe 'sameDate', ->
         it 'returns true if the date are nearly the same', ->
             a = '2015-12-01T11:22:56.517Z'
@@ -47,6 +53,7 @@ describe 'Merge Helpers', ->
             @merge.sameDate(c, d).should.be.true()
             @merge.sameDate(c, e).should.be.false()
             @merge.sameDate(d, e).should.be.false()
+
 
     describe 'sameFolder', ->
         it 'returns true if the folders are the same', ->
@@ -110,6 +117,7 @@ describe 'Merge Helpers', ->
             @merge.sameFolder(c, d).should.be.false()
             @merge.sameFolder(c, e).should.be.false()
             @merge.sameFolder(d, e).should.be.false()
+
 
     describe 'sameFile', ->
         it 'returns true if the files are the same', ->
@@ -196,6 +204,7 @@ describe 'Merge Helpers', ->
             @merge.sameFile(d, f).should.be.false()
             @merge.sameFile(e, f).should.be.false()
 
+
     describe 'sameBinary', ->
         it 'returns true for two docs with the same checksum', ->
             one = checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
@@ -231,6 +240,7 @@ describe 'Merge Helpers', ->
             ret.should.be.false()
             ret = @merge.sameBinary three, one
             ret.should.be.false()
+
 
     describe 'ensureParentExist', ->
         it 'works when in the root folder', (done) ->
@@ -279,6 +289,7 @@ describe 'Merge Helpers', ->
                         path: id
                         docType: 'folder'
                 done()
+
 
     describe 'markSide', ->
         it 'marks local: 1 for a new doc', ->

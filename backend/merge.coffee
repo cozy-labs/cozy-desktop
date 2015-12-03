@@ -25,6 +25,8 @@ log     = require('printit')
 # need to redirect them.
 #
 # TODO add some tests for case-insensitivity
+# TODO add integration tests for conflicts
+# TODO add an integration test where a folder with a lot of files is removed
 class Merge
     constructor: (@pouch) ->
         @local = @remote = null
@@ -35,6 +37,7 @@ class Merge
     # A suffix composed of -conflict- and the date is added to the path.
     # It also returns the modified doc.
     createConflictDoc: (doc) ->
+        doc = clone doc
         date = new Date().toISOString()
         doc.path = "#{doc.path}-conflict-#{date}"
         doc
@@ -118,14 +121,15 @@ class Merge
 
     ### Actions ###
 
-    # TODO rewrite comments
-
     # Add a file, if it doesn't already exist,
     # and create the tree structure if needed
     addFile: (side, doc, callback) ->
         @pouch.db.get doc._id, (err, file) =>
             @markSide side, doc, file
-            if file and @sameBinary file, doc
+            if file?.docType is 'folder'
+                # TODO conflict
+                callback new Error 'Conflicts are not yet handled'
+            else if file and @sameBinary file, doc
                 doc._rev = file._rev
                 doc.size  ?= file.size
                 doc.class ?= file.class
@@ -138,14 +142,13 @@ class Merge
                 @ensureParentExist side, doc, =>
                     @pouch.db.put doc, callback
 
-    # Actions:
-    #   - overwrite a possible existing file with the same path
-    # TODO conflict with a folder -> file is renamed with -conflict suffix
-    # TODO are tags preserved when doing a touch on a local file?
+    # Update a file, when its metadata or its content has changed
     updateFile: (side, doc, callback) ->
         @pouch.db.get doc._id, (err, file) =>
             @markSide side, doc, file
-            if file
+            if file?.docType is 'folder'
+                callback new Error "Can't resolve this conflict!"
+            else if file
                 doc._rev = file._rev
                 doc.creationDate ?= file.creationDate
                 if @sameBinary file, doc
@@ -161,13 +164,12 @@ class Merge
                 @ensureParentExist side, doc, =>
                     @pouch.db.put doc, callback
 
-    # Actions:
-    #   - create the tree structure if needed
-    #   - overwrite metadata if this folder alredy existed in pouch
+    # Create or update a folder
     putFolder: (side, doc, callback) ->
         @pouch.db.get doc._id, (err, folder) =>
             @markSide side, doc, folder
             if folder?.docType is 'file'
+                # TODO conflict
                 file = @createConflictDoc folder
                 @moveFile side, file, folder, (err) =>
                     if err
@@ -188,49 +190,53 @@ class Merge
                 @ensureParentExist side, doc, =>
                     @pouch.db.put doc, callback
 
-    # Actions:
-    #   - add a hint to make writers know that it's a move (moveTo)
-    #   - create the tree structure if needed
+    # Rename or move a file
     moveFile: (side, doc, was, callback) ->
-        @pouch.db.get doc._id, (err, file) =>
-            @markSide side, doc, file
-            @markSide side, was, was
-            doc.creationDate ?= was.creationDate
-            doc.size         ?= was.size
-            doc.class        ?= was.class
-            doc.mime         ?= was.mime
-            was.moveTo        = doc._id
-            was._deleted      = true
-            if file
-                conflict = @createConflictDoc doc
-                @moveFile side, conflict, doc, callback
-            else
-                @ensureParentExist side, doc, =>
-                    @pouch.db.bulkDocs [was, doc], callback
+        if was.sides?[side]
+            @pouch.db.get doc._id, (err, file) =>
+                @markSide side, doc, file
+                @markSide side, was, was
+                doc.creationDate ?= was.creationDate
+                doc.size         ?= was.size
+                doc.class        ?= was.class
+                doc.mime         ?= was.mime
+                was.moveTo        = doc._id
+                was._deleted      = true
+                if file
+                    # TODO conflict
+                    conflict = @createConflictDoc doc
+                    @moveFile side, conflict, doc, callback
+                else
+                    @ensureParentExist side, doc, =>
+                        @pouch.db.bulkDocs [was, doc], callback
+        else # It can happen after a conflict
+            callback null
 
-    # Actions:
-    #   - add a hint to make writers know that it's a move (moveTo)
-    #   - create the tree structure if needed
-    #   - move every file and folder inside this folder
+    # Rename or move a folder (and every file and folder inside it)
     moveFolder: (side, doc, was, callback) ->
-        @pouch.db.get doc._id, (err, folder) =>
-            @markSide side, doc, folder
-            @markSide side, was, was
-            doc.creationDate ?= was.creationDate
-            doc.tags         ?= was.tags
-            if folder?.docType is 'file'
-                file = @createConflictDoc folder
-                @moveFile side, file, folder, (err) =>
-                    if err
-                        callback err
-                    else
-                        @moveFolder side, doc, was, callback
-            else if folder
-                conflict = @createConflictDoc doc
-                @moveFolder side, conflict, doc, callback
-            else
-                @ensureParentExist side, doc, =>
-                    @moveFolderRecursively doc, was, callback
+        if was.sides?[side]
+            @pouch.db.get doc._id, (err, folder) =>
+                @markSide side, doc, folder
+                @markSide side, was, was
+                doc.creationDate ?= was.creationDate
+                doc.tags         ?= was.tags
+                if folder?.docType is 'file'
+                    # TODO conflict
+                    file = @createConflictDoc folder
+                    @moveFile side, file, folder, (err) =>
+                        if err
+                            callback err
+                        else
+                            @moveFolder side, doc, was, callback
+                else if folder
+                    # TODO conflict
+                    conflict = @createConflictDoc doc
+                    @moveFolder side, conflict, doc, callback
+                else
+                    @ensureParentExist side, doc, =>
+                        @moveFolderRecursively doc, was, callback
+        else # It can happen after a conflict
+            callback null
 
     # Move a folder and all the things inside it
     moveFolderRecursively: (folder, was, callback) =>
@@ -268,19 +274,16 @@ class Merge
                 @markSide side, file, file
                 file._deleted = true
                 @pouch.db.put file, callback
-            else
-                # It can happen after a conflict
+            else # It can happen after a conflict
                 callback null
 
-    # Remove a folder and every file and folder inside it
+    # Remove a folder
     #
     # When a folder is removed in PouchDB, we also remove the files and folders
     # inside it to ensure consistency. The watchers often detects the deletion
     # of a nested folder after the deletion of its parent. In this case, the
     # call to deleteFolder for the child is considered as successful, even if
     # the folder is missing in pouchdb (error 404).
-    #
-    # TODO add an integration test where a folder with a lot of files is removed
     deleteFolder: (side, doc, callback) ->
         @pouch.db.get doc._id, (err, folder) =>
             if err?.status is 404
@@ -288,24 +291,25 @@ class Merge
             else if err
                 callback err
             else if folder.sides?[side]
-                # TODO extract method deleteFolderRecursively
-                @pouch.byRecursivePath folder._id, (err, docs) =>
-                    if err
-                        callback err
-                    else
-                        # In the changes feed, nested subfolder must be deleted
-                        # before their parents, hence the reverse order.
-                        docs = docs.reverse()
-                        docs.push folder
-                        # TODO find why we have undefined values here sometimes
-                        docs = (doc for doc in docs when doc?)
-                        for doc in docs
-                            @markSide side, doc, doc
-                            doc._deleted = true
-                        @pouch.db.bulkDocs docs, callback
-            else
-                # It can happen after a conflict
+                @deleteFolderRecursively side, folder, callback
+            else # It can happen after a conflict
                 callback null
 
+    # Remove a folder and every thing inside it
+    deleteFolderRecursively: (side, folder, callback) ->
+        @pouch.byRecursivePath folder._id, (err, docs) =>
+            if err
+                callback err
+            else
+                # In the changes feed, nested subfolder must be deleted
+                # before their parents, hence the reverse order.
+                docs = docs.reverse()
+                docs.push folder
+                # TODO find why we have undefined values here sometimes
+                docs = (doc for doc in docs when doc?)
+                for doc in docs
+                    @markSide side, doc, doc
+                    doc._deleted = true
+                @pouch.db.bulkDocs docs, callback
 
 module.exports = Merge

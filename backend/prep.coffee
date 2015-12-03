@@ -2,6 +2,7 @@ path    = require 'path'
 log     = require('printit')
     prefix: 'Prep '
 
+
 # When the local filesystem or the remote cozy detects a change, it calls this
 # class to inform it. This class will check this event, add some informations,
 # and give it to merge, so it can be saved in pouchdb.
@@ -104,8 +105,6 @@ class Prep
 
 
     ### Actions ###
-    #
-    # TODO rewrite comments
 
     # Expectations:
     #   - the file path is present and valid
@@ -207,7 +206,8 @@ class Prep
             @buildId was
             @merge.moveFolder side, doc, was, callback
 
-    # Remove a file
+    # Expectations:
+    #   - the file path is present and valid
     deleteFile: (side, doc, callback) ->
         if @invalidPath doc
             log.warn "Invalid path: #{JSON.stringify doc, null, 2}"
@@ -217,7 +217,8 @@ class Prep
             @buildId doc
             @merge.deleteFile side, doc, callback
 
-    # Remove a folder
+    # Expectations:
+    #   - the folder path is present and valid
     deleteFolder: (side, doc, callback) ->
         if @invalidPath doc
             log.warn "Invalid path: #{JSON.stringify doc, null, 2}"
