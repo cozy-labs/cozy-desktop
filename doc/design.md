@@ -51,7 +51,7 @@ don't try to be smart and prefer a robust solution.
 Documents schema
 ----------------
 
-### `File`
+### File
 
 - `_id`: the normalized path
 - `_rev`: from PouchDB
@@ -67,7 +67,7 @@ Documents schema
 - `remote`: id and rev of the associated documents in the remote CouchDB
 - `sides`: for tracking what is applied on local file system and remote cozy
 
-### `Folder`
+### Folder
 
 - `_id`: the normalized path
 - `_rev`: from PouchDB
@@ -86,7 +86,7 @@ Differences between file systems
 In short, the file systems have some differences between Linux, BSD, OSX and
 Windows. In short:
 
-- The path separator is `/` everywhere, except on Windows where it's `\\ `.
+- The path separator is `/` everywhere, except on Windows where it's `\ `.
 - Linux and BSD file systems are sensible to the case, OSX and Windows are not
   (they preserve the original case, but they consider `foo` and `FOO` to be
   the same file).
@@ -94,7 +94,7 @@ Windows. In short:
   Windows uses UTF-16. OSX does something stupid: UTF-8 with a normalization
   that is nearly the unicode NFD, but not exactly.
 - `/` and the NULL character are forbidden on all the OSes. On Windows, the
-  list is longer: `"/\\*?<>|:`.
+  list is longer: `"/\*?<>|:`.
 - They are a bunch more restrictions on Windows:
   - the length of a path is limited to 260 characters
   - some names are reserved, like `AUX`, `COM1` or `LPT1`

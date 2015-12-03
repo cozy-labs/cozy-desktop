@@ -34,7 +34,7 @@ class Merge
     # Update the path of a document in case of a conflict
     # A suffix composed of -conflict- and the date is added to the path.
     # It also returns the modified doc.
-    updatePathOnConflict: (doc) ->
+    createConflictDoc: (doc) ->
         date = new Date().toISOString()
         doc.path = "#{doc.path}-conflict-#{date}"
         doc
@@ -168,7 +168,7 @@ class Merge
         @pouch.db.get doc._id, (err, folder) =>
             @markSide side, doc, folder
             if folder?.docType is 'file'
-                file = @updatePathOnConflict clone folder
+                file = @createConflictDoc folder
                 @moveFile side, file, folder, (err) =>
                     if err
                         callback err
@@ -202,8 +202,8 @@ class Merge
             was.moveTo        = doc._id
             was._deleted      = true
             if file
-                @updatePathOnConflict doc
-                @moveFile side, doc, was, callback
+                conflict = @createConflictDoc doc
+                @moveFile side, conflict, doc, callback
             else
                 @ensureParentExist side, doc, =>
                     @pouch.db.bulkDocs [was, doc], callback
@@ -219,15 +219,15 @@ class Merge
             doc.creationDate ?= was.creationDate
             doc.tags         ?= was.tags
             if folder?.docType is 'file'
-                file = @updatePathOnConflict clone folder
+                file = @createConflictDoc folder
                 @moveFile side, file, folder, (err) =>
                     if err
                         callback err
                     else
                         @moveFolder side, doc, was, callback
             else if folder
-                @updatePathOnConflict doc
-                @moveFolder side, doc, was, callback
+                conflict = @createConflictDoc doc
+                @moveFolder side, conflict, doc, callback
             else
                 @ensureParentExist side, doc, =>
                     @moveFolderRecursively doc, was, callback
