@@ -82,12 +82,6 @@ describe "Couch", ->
                 should.exist deleted.rev
                 done()
 
-    describe 'pickViewToCopy', ->
-        it 'fetches the design document from couch with its views'
-
-    describe 'getFromRemoteView', ->
-        it 'gets documents from a view on a remote couch'
-
     describe 'uploadAsAttachment', ->
         it 'upload a file as an attachment to an existing doc', (done) ->
             file = 'tests/fixtures/chat-mignon.jpg'
@@ -193,15 +187,3 @@ describe "Couch", ->
                 class: 'image'
                 mime: 'image/jpeg'
             @couch.sameRemoteDoc(one, two).should.be.false()
-
-
-    describe 'putRemoteDoc', ->
-        it 'puts the doc on the remote cozy'
-        it 'resolves conflict with trivial changes'
-        it 'does not ignore conflict for important changes'
-
-
-    describe 'removeRemoteDoc', ->
-        it 'removes the doc on the remote cozy'
-        it 'resolves conflict with trivial changes'
-        it 'does not ignore conflict for important changes'

@@ -36,7 +36,7 @@ class App
     # to the config file
     #
     # TODO validation of url, deviceName and syncPath
-    addRemote: (url, deviceName, syncPath) =>
+    addRemote: (url, deviceName, syncPath, callback) =>
         async.waterfall [
             @askPassword,
             (password, next) ->
@@ -58,21 +58,19 @@ class App
                 @config.addRemoteCozy options
                 log.info 'The remote Cozy has properly been configured ' +
                     'to work with current device.'
+            callback? err
 
 
     # Unregister current device from remote Cozy and then remove remote from
     # the config file
     # TODO also remove the pouch database
-    removeRemote: (deviceName) =>
+    removeRemote: (deviceName, callback) =>
         device = @config.getDevice deviceName
         async.waterfall [
             @askPassword,
             (password, next) ->
-                options =
-                    url: device.url
-                    deviceId: device.deviceId
-                    password: password
-                Devices.unregisterDevice options, next
+                device.password = password
+                Devices.unregisterDevice device, next
         ], (err) =>
             if err
                 log.error err
@@ -80,10 +78,11 @@ class App
             else
                 @config.removeRemoteCozy deviceName
                 log.info 'Current device properly removed from remote cozy.'
+            callback? err
 
 
     # Start database sync process and setup file change watcher
-    sync: (mode) =>
+    sync: (mode, callback) =>
         @merge  = new Merge @pouch
         @prep   = new Prep @merge
         @local  = @merge.local  = new Local  @config, @prep, @pouch
@@ -97,10 +96,11 @@ class App
                 if err
                     log.error err
                     log.error err.stack if err.stack
-                    process.exit 1  # TODO don't exit for GUI
+                callback? err
         else
             log.error 'No configuration found, please run add-remote-cozy' +
                 'command before running a synchronization.'
+            callback? new Error 'No config'
 
 
     # Recreate the local pouch database

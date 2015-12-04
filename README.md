@@ -93,6 +93,9 @@ accessible on the 9121 port. It's also expected that a user is registered with
 COZY_DESKTOP_DIR=tmp mocha --compilers coffee:coffee-script/register tests/integration/*.coffee
 ```
 
+**Important**: the integration tests remove all the files and folders on the
+Cozy!
+
 
 ## Limitations
 

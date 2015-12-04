@@ -5,7 +5,8 @@ Devices = require '../../backend/devices'
 
 
 describe "Devices", ->
-    @timeout 8000
+    @slow 1000
+    @timeout 10000
 
     before Cozy.ensurePreConditions
 

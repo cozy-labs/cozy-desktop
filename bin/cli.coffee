@@ -17,7 +17,8 @@ Please enter your password to register your device on your remote Cozy:
 
 sync = (mode, args) ->
     if app.config.setInsecure args.insecure?
-        app.sync mode
+        app.sync mode, (err) ->
+            process.exit 1 if err
     else
         console.log 'Your configuration file seems invalid.'
         console.log 'Have you added a remote cozy?'

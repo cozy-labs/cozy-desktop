@@ -1,117 +1,104 @@
-# TODO remove this file?
-
-fs = require 'fs-extra'
-async = require 'async'
-should = require 'should'
-del = require 'del'
-
-{getClient, options} = require './helpers'
-
-filesClient = getClient 'http://localhost:9121'
-
-getFolderContent = (folder, callback) ->
-
-    if folder is "root"
-        folder = id: "root"
-    else
-        should.exist folder
-        folder.docType.toLowerCase().should.equal "folder"
-
-    filesClient.post '/folders/content', folder, (err, res, body) ->
-        should.not.exist err
-        should.exist res
-        should.exist body
-        body.should.have.property 'content'
-        callback err, body.content
-
-module.exports = fileHelpers = {}
+async   = require 'async'
+request = require 'request-json-light'
+should  = require 'should'
 
 
-fileHelpers.getElementByName = (name, elements, checkExistence = true) ->
-    elements = elements.filter (element) -> element.name is name
-    should.exist elements
-    if checkExistence
-        elements.length.should.equal 1, "Element #{name} not found."
-    return elements?[0] or null
+url    = 'http://localhost:9121'
+client = request.newClient url
 
-fileHelpers.deleteAll = (callback) ->
-    @timeout 30000
+# Manipulate files and folders on a remote cozy, via the files application
+module.exports = helpers =
 
-    getFolderContent "root", (err, elements) ->
-        async.each elements, (element, cb) ->
-            if element.docType.toLowerCase() is "file"
-                url = "files/#{element.id}"
-                expectedCode = 200
-            else
-                url = "folders/#{element.id}"
-                expectedCode = 204
-            filesClient.del url, (err, res, body) ->
-                should.not.exist err
-                should.exist res
-                should.exist body
-                res.statusCode.should.equal expectedCode
-                setTimeout cb, 1000
-        , ->
-            del('/tmp/cozy', force: true).then ->
-                callback()
+    deleteAll: (callback) ->
+        @timeout 10000
+        helpers.getFolderContent id: 'root', (err, items) ->
+            async.each items, (item, cb) ->
+                url = "#{item.docType.toLowerCase()}s/#{item.id}"
+                client.del url, (err, res, body) ->
+                    should.not.exist err
+                    should.exist res
+                    should.exist body
+                    res.statusCode.should.be.within 200, 299
+                    setTimeout cb, 1000
+            , callback
 
-fileHelpers.getAll = (callback) ->
-    filesClient.get 'files', (err, res, files) ->
-        if err
-            callback err
-        else
-            callback null, files
+    getAllFiles: (callback) ->
+        client.get 'files', (err, res, files) ->
+            should.not.exist err
+            should.exist body
+            callback err, body
 
-fileHelpers.getFileContent = (file, callback) ->
-    url = "files/#{file.id}/attach/#{file.name}"
-    filesClient.get url, (err, res, body) ->
-        should.not.exist err
-        should.exist res
-        should.exist body
-        res.statusCode.should.equal 200, "#{file.name} should exist"
-        callback err, body
-    , false
-
-fileHelpers.uploadFile = (fileName, fixturePath, path, callback) ->
-    if typeof(path) is "function"
-        callback = path
-        path = ''
-
-    file =
-        name: fileName
-        path: path
-        lastModification: "Thu Oct 17 2013 08:29:21 GMT+0200 (CEST)"
-
-    filesClient.sendFile "files/", fixturePath, file, (err, res, body) ->
-        should.not.exist err
-        should.exist res
-        should.exist body
-        res.statusCode.should.equal 200
-        filesClient.get "files/#{body.id}", file, (err, res, body) ->
+    getFileContent: (file, callback) ->
+        url = "files/#{file.id}/attach/#{file.name}"
+        client.get url, (err, res, body) ->
+            should.not.exist err
+            should.exist res
+            should.exist body
             res.statusCode.should.equal 200
             callback err, body
 
-fileHelpers.renameFile = (file, newName, callback) ->
-    file.name = newName
-    filesClient.put "files/#{file.id}", file, (err, res, body) ->
-        should.not.exist err
-        should.exist res
-        should.exist body
-        res.statusCode.should.equal 200
-        callback()
+    uploadFile: (file, fixturePath, callback) ->
+        client.sendFile 'files/', fixturePath, file, (err, res, body) ->
+            should.not.exist err
+            should.exist res
+            should.exist body
+            res.statusCode.should.equal 200
+            client.get "files/#{body.id}", file, (err, res, body) ->
+                res.statusCode.should.equal 200
+                callback err, body
 
-fileHelpers.moveFile = (file, newPath, callback) ->
-    filesClient.put "files/#{file.id}", path: newPath, (err, res, body) ->
-        should.not.exist err
-        should.exist res
-        should.exist body
-        res.statusCode.should.equal 200
-        callback()
+    updateFile: (file, callback) ->
+        client.put "files/#{file.id}", file, (err, res, body) ->
+            should.not.exist err
+            should.exist res
+            should.exist body
+            res.statusCode.should.equal 200
+            callback()
 
-fileHelpers.removeFile = (file, callback) ->
-    filesClient.del "files/#{file.id}", (err, res, body) ->
-        should.not.exist err
-        should.exist res
-        should.exist body
-        res.statusCode.should.equal 200
-        callback()
+    removeFile: (file, callback) ->
+        client.del "files/#{file.id}", (err, res, body) ->
+            should.not.exist err
+            should.exist res
+            should.exist body
+            res.statusCode.should.equal 200
+            callback()
+
+    getAllFolders: (callback) ->
+        client.get 'folders/folders', (err, res, body) ->
+            should.not.exist err
+            should.exist body
+            callback err, body
+
+    getFolderContent: (folder, callback) ->
+        client.post '/folders/content', folder, (err, res, body) ->
+            should.not.exist err
+            should.exist res
+            should.exist body
+            body.should.have.property 'content'
+            callback err, body.content
+
+    createFolder: (folder, callback) ->
+        client.post 'folders/', folder, (err, res, body) ->
+            should.not.exist err
+            should.exist res
+            should.exist body
+            res.statusCode.should.equal 200
+            client.get "folders/#{body.id}", (err, res, body) ->
+                res.statusCode.should.equal 200
+                callback err, body
+
+    updateFolder: (folder, callback) ->
+        client.put "folders/#{folder.id}", folder, (err, res, body) ->
+            should.not.exist err
+            should.exist res
+            should.exist body
+            res.statusCode.should.equal 200
+            callback err, body
+
+    removeFolder: (folder, callback) ->
+        client.del "folders/#{folder.id}", folder, (err, res, body) ->
+            should.not.exist err
+            should.exist res
+            should.exist body
+            res.statusCode.should.equal 204
+            callback err, body

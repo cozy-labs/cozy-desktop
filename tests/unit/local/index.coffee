@@ -175,8 +175,6 @@ describe 'Local', ->
                 mtime.should.equal +doc.lastModification
                 done()
 
-        it 'preserves the existing file if the download fails'
-
         it 'can create a file in the root', (done) ->
             doc =
                 path: 'file-in-root'
