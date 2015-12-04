@@ -24,13 +24,6 @@ describe 'Pull', ->
                 callback()
         , 20
 
-    waitForSize = (localPath, size, callback) ->
-        interval = setInterval ->
-            if fs.statSync(localPath).size is size
-                clearInterval interval
-                callback()
-        , 20
-
     waitDisappear = (localPath, callback) ->
         interval = setInterval ->
             unless fs.existsSync(localPath)

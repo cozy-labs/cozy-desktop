@@ -107,8 +107,6 @@ class Sync
 
     # Keep track of the sequence number, save side rev, and log errors
     # TODO when applying a change fails, put it again in some queue for retry
-    # TODO add an integration test where a file is deleted and then recreated
-    # TODO add an integration test where a file is moved and then moved back
     applied: (change, side, callback) =>
         (err) =>
             if err
