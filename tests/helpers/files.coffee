@@ -23,7 +23,7 @@ module.exports = helpers =
             , callback
 
     getAllFiles: (callback) ->
-        client.get 'files', (err, res, files) ->
+        client.get 'files', (err, res, body) ->
             should.not.exist err
             should.exist body
             callback err, body

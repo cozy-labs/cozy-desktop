@@ -58,9 +58,9 @@ module.exports.pull = (done) ->
 module.exports.push = (done) ->
     @app.sync 'push', (err) ->
         should.not.exist err
-        done()
+    setTimeout done, 1000
 
 module.exports.sync = (done) ->
     @app.sync 'full', (err) ->
         should.not.exist err
-        done()
+    setTimeout done, 1000

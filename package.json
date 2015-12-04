@@ -68,6 +68,7 @@
     "gulp-mocha": "^2.2.0",
     "gulp-shell": "^0.5.1",
     "lodash.clone": "^3.0.3",
+    "lodash.find": "^3.2.1",
     "nw": "^0.12.3",
     "nw-builder": "^2.0.2",
     "pouchdb-server": "^1.0.0",
