@@ -12,16 +12,105 @@ describe 'Pull', ->
     @timeout 10000
 
     before Cozy.ensurePreConditions
+    before Files.deleteAll
     before Cozy.registerDevice
     before Cozy.pull
     after Cozy.clean
 
+    waitAppear = (localPath, callback) ->
+        interval = setInterval ->
+            if fs.existsSync(localPath)
+                clearInterval interval
+                callback()
+        , 20
+
+    waitForSize = (localPath, size, callback) ->
+        interval = setInterval ->
+            if fs.statSync(localPath).size is size
+                clearInterval interval
+                callback()
+        , 20
+
+    waitDisappear = (localPath, callback) ->
+        interval = setInterval ->
+            unless fs.existsSync(localPath)
+                clearInterval interval
+                callback()
+        , 20
+
+    parent =
+        path: ''
+        name: faker.commerce.color()
+    folder =
+        path: ''
+        name: faker.hacker.noun()
+    file =
+        path: ''
+        name: faker.hacker.adjective()
 
     it 'creates a folder on the local fs from the remote cozy', (done) ->
-        name = faker.hacker.noun()
-        Files.createFolder path: '', name: name, (err, folder) =>
-            setTimeout =>
-                folderPath = path.join @basePath, name
-                fs.existsSync(folderPath).should.be.true()
+        Files.createFolder folder, (err, created) =>
+            folder.id = created.id
+            folderPath = path.join @basePath, folder.path, folder.name
+            waitAppear folderPath, ->
+                stats = fs.statSync(folderPath)
+                stats.isDirectory().should.be.true()
                 done()
-            , 4000
+
+    it 'renames the folder', (done) ->
+        oldPath = path.join @basePath, folder.name
+        folder.name = faker.hacker.noun()
+        Files.updateFolder folder, (err, updated) =>
+            folderPath = path.join @basePath, folder.path, folder.name
+            waitAppear folderPath, ->
+                fs.existsSync(oldPath).should.be.false()
+                done()
+
+    it 'moves the folder', (done) ->
+        oldPath = path.join @basePath, folder.name
+        Files.createFolder parent, (err, created) =>
+            folder.path = parent.name
+            Files.updateFolder folder, (err, updated) =>
+                folderPath = path.join @basePath, folder.path, folder.name
+                waitAppear folderPath, ->
+                    fs.existsSync(oldPath).should.be.false()
+                    done()
+
+    it 'removes the folder', (done) ->
+        Files.removeFolder folder, (err, removed) =>
+            folderPath = path.join @basePath, folder.path, folder.name
+            waitDisappear folderPath, done
+
+    it 'creates a file on the local fs from the remote cozy', (done) ->
+        fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'
+        Files.uploadFile file, fixturePath, (err, created) =>
+            file.id = created.id
+            filePath = path.join @basePath, file.path, file.name
+            waitAppear filePath, ->
+                stats = fs.statSync(filePath)
+                stats.isFile().should.be.true()
+                stats.size.should.equal fs.statSync(fixturePath).size
+                done()
+
+    it 'renames the file', (done) ->
+        oldPath = path.join @basePath, file.name
+        file.name = faker.hacker.noun()
+        Files.updateFile file, (err, updated) =>
+            filePath = path.join @basePath, file.path, file.name
+            waitAppear filePath, ->
+                fs.existsSync(oldPath).should.be.false()
+                done()
+
+    it 'moves the file', (done) ->
+        oldPath = path.join @basePath, file.name
+        file.path = parent.name
+        Files.updateFile file, (err, updated) =>
+            filePath = path.join @basePath, file.path, file.name
+            waitAppear filePath, ->
+                fs.existsSync(oldPath).should.be.false()
+                done()
+
+    it 'removes the file', (done) ->
+        Files.removeFile file, (err, removed) =>
+            filePath = path.join @basePath, file.path, file.name
+            waitDisappear filePath, done

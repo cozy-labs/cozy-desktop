@@ -15,6 +15,7 @@ module.exports = helpers =
     port: process.env.PORT or 9104
     password: 'cozytest'
     deviceName: "test-#{faker.internet.userName()}"
+    fixturesDir: path.join __dirname, '..', 'fixtures'
 
 helpers.url = "#{helpers.scheme}://#{helpers.host}:#{helpers.port}/"
 
