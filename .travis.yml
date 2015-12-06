@@ -1,7 +1,10 @@
 sudo: false
-language: node_js
+language: c
 matrix:
     fast_finish: true
+os:
+    - linux
+    - osx
 node_js:
     - 0.10
     - 0.12
@@ -10,12 +13,19 @@ node_js:
 env:
     global:
         - NODE_ENV=test
-        - CXX=g++-4.8
+    matrix:
+        - TRAVIS_NODE_VERSION="0.10"
+        - TRAVIS_NODE_VERSION="0.12"
+        - TRAVIS_NODE_VERSION="4"
+        - TRAVIS_NODE_VERSION="5"
 services:
     - couchdb
 cache:
     directories:
-        - node_modules
+        - cozy-data-system/node_modules
+        - cozy-proxy/node_modules
+        - cozy-files/node_modules
+        - /Library/Caches/Homebrew
 addons:
     apt:
         sources:
@@ -26,48 +36,63 @@ addons:
 
 before_install:
     - cd
-    - export INDEXES_PATH=/home/travis/build/indexes
+    - rm -rf ~/.nvm/
+    - git clone --depth 1 https://github.com/creationix/nvm.git ~/.nvm
+    - source ~/.nvm/nvm.sh
+    - if [[ $TRAVIS_OS_NAME == "linux" ]]; then
+        export CXX=g++-4.8;
+        export INDEXES_PATH=/home/travis/build/indexes;
+      fi
+    - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
+        export INDEXES_PATH=/Users/travis/build/indexes;
+        brew install couchdb;
+        brew --cache;
+        couchdb -b;
+      fi
     - mkdir -p $INDEXES_PATH
-    - TESTED_NODE=$(node -v)
     - nvm install 0.10
     - nvm use 0.10
+    - node -v
     - npm install forever coffee-script -g
-    - git clone git://github.com/cozy/cozy-data-system.git
+    - git clone --depth 1 git://github.com/cozy/cozy-data-system.git
     - cd cozy-data-system
-    - npm install #data-system
     - pwd
+    - travis_retry npm install #data-system
     - NAME=data-system TOKEN=token forever start -o forever-ds.log -e forever-ds-err.log build/server.js
     - sleep 5
-    - pwd
     - cd
-    - git clone git://github.com/cozy/cozy-proxy.git
+    - git clone --depth 1 git://github.com/cozy/cozy-proxy.git
     - cd cozy-proxy
-    - npm install
     - pwd
+    - travis_retry npm install #proxy
     - NAME=proxy TOKEN=token forever start -o forever-proxy.log -e forever-proxy-err.log build/server.js
     - sleep 5
     - 'curl -X POST -H "Content-Type: application/json" -d "{ \"email\": \"cozytest@cozycloud.cc\", \"password\": \"cozytest\", \"timezone\":\"Europe/Paris\"}" http://127.0.0.1:9104/register'
     - cd
-    - git clone git://github.com/cozy/cozy-files.git
+    - git clone --depth 1 git://github.com/cozy/cozy-files.git
     - cd cozy-files
-    - npm install
     - pwd
+    - travis_retry npm install #files
     - cd ~/cozy-data-system
     - coffee commands.coffee test-install files ../cozy-files/package.json
-    - pwd
     - cd ~/cozy-files
     - NAME=files TOKEN=apptoken forever start -o forever-files.log -e forever-files-err.log build/server.js
     - sleep 3
-    - nvm use $TESTED_NODE
-    - cd /home/travis/build/cozy-labs/cozy-desktop
+
+install:
+    - nvm install $TRAVIS_NODE_VERSION
+    - nvm use $TRAVIS_NODE_VERSION
+    - node -v
+    - cd ~/build/cozy-labs/cozy-desktop
     - npm install coffee-script mocha -g
-    - pwd
+    - travis_retry npm install
 
 script:
     - bin/ci
 
 after_failure:
     - pwd
+    - $CXX --version
     - ps aux | grep server.js
     - netstat -lntp
     - cat ~/cozy-data-system/forever-ds.log
