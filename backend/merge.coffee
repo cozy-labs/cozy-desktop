@@ -33,15 +33,6 @@ class Merge
 
     ### Helpers ###
 
-    # Update the path of a document in case of a conflict
-    # A suffix composed of -conflict- and the date is added to the path.
-    # It also returns the modified doc.
-    createConflictDoc: (doc) ->
-        doc = clone doc
-        date = new Date().toISOString()
-        doc.path = "#{doc.path}-conflict-#{date}"
-        doc
-
     # Return true if the two dates are the same, +/- 3 seconds
     sameDate: (one, two) ->
         one = +new Date one
@@ -73,7 +64,9 @@ class Merge
 
     # Return true if the two files have the same binary content
     sameBinary: (one, two) ->
-        if one.checksum? and one.checksum is two.checksum
+        if one.docType isnt 'file' or two.docType isnt 'file'
+            return false
+        else if one.checksum? and one.checksum is two.checksum
             return true
         else if one.remote? and two.remote?
             oneId = one.remote._id
@@ -118,6 +111,17 @@ class Merge
         doc.sides[side] = ++rev
         doc
 
+    # Resolve a conflict by renaming a file/folder
+    # A suffix composed of -conflict- and the date is added to the path.
+    resolveConflict: (side, doc, callback) ->
+        dst  = clone doc
+        date = new Date().toISOString()
+        ext  = path.extname doc.path
+        dir  = path.dirname doc.path
+        base = path.basename doc.path, ext
+        dst.path = "#{path.join dir, base}-conflict-#{date}#{ext}"
+        @[side].resolveConflict dst, doc, callback
+
 
     ### Actions ###
 
@@ -126,18 +130,14 @@ class Merge
     addFile: (side, doc, callback) ->
         @pouch.db.get doc._id, (err, file) =>
             @markSide side, doc, file
-            if file?.docType is 'folder'
-                # TODO conflict
-                callback new Error 'Conflicts are not yet handled'
-            else if file and @sameBinary file, doc
+            if file and @sameBinary file, doc
                 doc._rev = file._rev
                 doc.size  ?= file.size
                 doc.class ?= file.class
                 doc.mime  ?= file.mime
                 @pouch.db.put doc, callback
             else if file
-                # TODO conflict
-                callback new Error 'Conflicts are not yet handled'
+                @resolveConflict side, doc, callback
             else
                 @ensureParentExist side, doc, =>
                     @pouch.db.put doc, callback
@@ -169,14 +169,7 @@ class Merge
         @pouch.db.get doc._id, (err, folder) =>
             @markSide side, doc, folder
             if folder?.docType is 'file'
-                # TODO conflict
-                file = @createConflictDoc folder
-                @moveFile side, file, folder, (err) =>
-                    if err
-                        callback err
-                    else
-                        doc.creationDate ?= new Date
-                        @pouch.db.put doc, callback
+                @resolveConflict side, doc, callback
             else if folder
                 doc._rev = folder._rev
                 doc.creationDate ?= folder.creationDate
@@ -203,14 +196,13 @@ class Merge
                 was.moveTo        = doc._id
                 was._deleted      = true
                 if file
-                    # TODO conflict
-                    conflict = @createConflictDoc doc
-                    @moveFile side, conflict, doc, callback
+                    @resolveConflict side, doc, callback
+                    # TODO be sure that was is removed
                 else
                     @ensureParentExist side, doc, =>
                         @pouch.db.bulkDocs [was, doc], callback
         else # It can happen after a conflict
-            callback null
+            @addFile side, doc, callback
 
     # Rename or move a folder (and every file and folder inside it)
     moveFolder: (side, doc, was, callback) ->
@@ -220,23 +212,14 @@ class Merge
                 @markSide side, was, was
                 doc.creationDate ?= was.creationDate
                 doc.tags         ?= was.tags
-                if folder?.docType is 'file'
-                    # TODO conflict
-                    file = @createConflictDoc folder
-                    @moveFile side, file, folder, (err) =>
-                        if err
-                            callback err
-                        else
-                            @moveFolder side, doc, was, callback
-                else if folder
-                    # TODO conflict
-                    conflict = @createConflictDoc doc
-                    @moveFolder side, conflict, doc, callback
+                if folder
+                    @resolveConflict side, doc, callback
+                    # TODO be sure that was is removed
                 else
                     @ensureParentExist side, doc, =>
                         @moveFolderRecursively doc, was, callback
         else # It can happen after a conflict
-            callback null
+            @putFolder side, doc, callback
 
     # Move a folder and all the things inside it
     moveFolderRecursively: (folder, was, callback) =>
@@ -311,5 +294,6 @@ class Merge
                     @markSide side, doc, doc
                     doc._deleted = true
                 @pouch.db.bulkDocs docs, callback
+
 
 module.exports = Merge

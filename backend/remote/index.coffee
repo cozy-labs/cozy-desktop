@@ -270,5 +270,16 @@ class Remote
         else
             callback()
 
+    # Rename a file/folder to resolve a conflict
+    resolveConflict: (dst, src, callback) =>
+        log.info "Resolve a conflict: #{src.path} → #{dst.path}"
+        @couch.get src.remote._id, (err, doc) =>
+            # TODO what if doc.path+name != src.path ?
+            # TODO Or doc._rev != src.remote._rev
+            [dir, name] = @extractDirAndName dst.path
+            doc.path = dir
+            doc.name = name
+            @couch.put doc, callback
+
 
 module.exports = Remote

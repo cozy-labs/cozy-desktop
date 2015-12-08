@@ -637,3 +637,49 @@ describe 'Remote', ->
                         @couch.get doc.remote._id, (err) ->
                             err.status.should.equal 404
                             done()
+
+
+    describe 'resolveConflict', ->
+        it 'renames the file/folder', (done) ->
+            checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
+            binary =
+                _id: checksum
+                _rev: '1-0123456789'
+            src =
+                path: 'cat9.jpg'
+                docType: 'file'
+                checksum: checksum
+                creationDate: new Date()
+                lastModification: new Date()
+                size: 36901
+            dst =
+                path: 'cat-conflict-2015-12-01T01:02:03Z.jpg'
+                docType: 'file'
+                checksum: checksum
+                creationDate: new Date()
+                lastModification: new Date()
+                size: 36901
+            remoteDoc = @remote.createRemoteDoc src, binary: binary
+            @couch.put remoteDoc, (err, created) =>
+                should.not.exist err
+                src.remote =
+                    _id: created.id
+                    _rev: created.rev
+                    binary:
+                        _id: checksum
+                        _rev: binary._rev
+                @remote.resolveConflict dst, src, (err, moved) =>
+                    should.not.exist err
+                    @couch.get moved.id, (err, file) ->
+                        should.not.exist err
+                        file.should.have.properties
+                            path: ''
+                            name: dst.path
+                            docType: 'file'
+                            lastModification: dst.lastModification.toISOString()
+                            size: 36901
+                            binary:
+                                file:
+                                    id: binary._id
+                                    rev: binary._rev
+                        done()

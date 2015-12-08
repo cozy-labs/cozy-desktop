@@ -86,7 +86,7 @@ class Local
         filePath = path.resolve @basePath, doc.path
         parent   = path.resolve @basePath, path.dirname doc.path
 
-        log.info "put file #{filePath}"
+        log.info "Put file #{filePath}"
 
         async.waterfall [
             (next) =>
@@ -124,7 +124,7 @@ class Local
     # Create a new folder
     addFolder: (doc, callback) =>
         folderPath = path.join @basePath, doc.path
-        log.info "put folder #{folderPath}"
+        log.info "Put folder #{folderPath}"
         fs.ensureDir folderPath, (err) =>
             if err
                 callback err
@@ -148,6 +148,7 @@ class Local
     # Move a file from one place to another
     # TODO verify checksum
     moveFile: (doc, old, callback) =>
+        log.info "Move file #{old.path} → #{doc.path}"
         oldPath = path.join @basePath, old.path
         newPath = path.join @basePath, doc.path
         parent  = path.join @basePath, path.dirname doc.path
@@ -180,6 +181,7 @@ class Local
 
     # Move a folder
     moveFolder: (doc, old, callback) =>
+        log.info "Move folder #{old.path} → #{doc.path}"
         oldPath = path.join @basePath, old.path
         newPath = path.join @basePath, doc.path
         parent  = path.join @basePath, path.dirname doc.path
@@ -213,7 +215,7 @@ class Local
 
     # Delete a file from the local filesystem
     deleteFile: (doc, callback) =>
-        log.info "delete #{doc.path}"
+        log.info "Delete #{doc.path}"
         fullpath = path.join @basePath, doc.path
         fs.remove fullpath, callback
 
@@ -221,5 +223,13 @@ class Local
     deleteFolder: (doc, callback) =>
         # For now both operations are similar
         @deleteFile doc, callback
+
+    # Rename a file/folder to resolve a conflict
+    resolveConflict: (dst, src, callback) =>
+        log.info "Resolve a conflict: #{src.path} → #{dst.path}"
+        srcPath = path.join @basePath, src.path
+        dstPath = path.join @basePath, dst.path
+        fs.rename srcPath, dstPath, callback
+
 
 module.exports = Local

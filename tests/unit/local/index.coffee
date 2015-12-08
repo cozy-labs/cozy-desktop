@@ -458,3 +458,24 @@ describe 'Local', ->
                         should.not.exist err
                         fs.existsSync(folderPath).should.be.false()
                         done()
+
+
+    describe 'resolveConflict', ->
+        it 'renames the file', (done) ->
+            src =
+                path: 'conflict/file'
+                lastModification: new Date '2015-10-08T05:05:09Z'
+            dst =
+                path: 'conflict/file-conflict-2015-10-09T05:05:10Z'
+                lastModification: new Date '2015-10-09T05:05:10Z'
+            srcPath = path.join @basePath, src.path
+            dstPath = path.join @basePath, dst.path
+            fs.ensureDirSync path.dirname srcPath
+            fs.writeFileSync srcPath, 'foobar'
+            @local.resolveConflict dst, src, (err) ->
+                should.not.exist err
+                fs.existsSync(srcPath).should.be.false()
+                fs.statSync(dstPath).isFile().should.be.true()
+                enc = encoding: 'utf-8'
+                fs.readFileSync(dstPath, enc).should.equal 'foobar'
+                done()

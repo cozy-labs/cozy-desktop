@@ -1,5 +1,6 @@
 async  = require 'async'
 clone  = require 'lodash.clone'
+path   = require 'path'
 sinon  = require 'sinon'
 should = require 'should'
 
@@ -18,22 +19,6 @@ describe 'Merge Helpers', ->
         @merge = new Merge @pouch
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
-
-
-    describe 'createConflictDoc', ->
-        it 'appends -conflict- and the date to the path', ->
-            doc = path: 'foo/bar'
-            conflict = @merge.createConflictDoc doc
-            parts = conflict.path.split '-conflict-'
-            parts[0].should.equal 'foo/bar'
-            parts = parts[1].split 'T'
-            parts[0].should.match /^\d{4}-\d{2}-\d{2}$/
-            parts[1].should.match /^\d{2}:\d{2}:\d{2}.\d{3}Z$/
-
-        it 'does not modify the original document', ->
-            doc = path: 'foo/bar'
-            conflict = @merge.createConflictDoc doc
-            doc.path.should.not.equal conflict.path
 
 
     describe 'sameDate', ->
@@ -207,17 +192,23 @@ describe 'Merge Helpers', ->
 
     describe 'sameBinary', ->
         it 'returns true for two docs with the same checksum', ->
-            one = checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
-            two = checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
+            one =
+                docType: 'file'
+                checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
+            two =
+                docType: 'file'
+                checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
             ret = @merge.sameBinary one, two
             ret.should.be.true()
 
         it 'returns true for two docs with the same remote file', ->
             one =
                 checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
+                docType: 'file'
                 remote:
                     _id: 'f00b4r'
             two =
+                docType: 'file'
                 remote:
                     _id: 'f00b4r'
             ret = @merge.sameBinary one, two
@@ -226,12 +217,16 @@ describe 'Merge Helpers', ->
             ret.should.be.true()
 
         it 'returns false for two different documents', ->
-            one = checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
+            one =
+                docType: 'file'
+                checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
             two =
+                docType: 'file'
                 checksum: '2082e7f715f058acab2398d25d135cf5f4c0ce41'
                 remote:
                     _id: 'f00b4r'
             three =
+                docType: 'file'
                 remote:
                     _id: 'c00463'
             ret = @merge.sameBinary one, two
@@ -308,3 +303,31 @@ describe 'Merge Helpers', ->
             @merge.markSide 'local', doc, prev
             doc.sides.local.should.equal 6
             doc.sides.remote.should.equal 5
+
+
+    describe 'resolveConflictDoc', ->
+        it 'appends -conflict- and the date to the path', (done) ->
+            doc = path: 'foo/bar'
+            @merge.local = {}
+            spy = @merge.local.resolveConflict = sinon.stub().yields null
+            @merge.resolveConflict @side, doc, ->
+                spy.called.should.be.true()
+                dst = spy.args[0][0]
+                parts = dst.path.split '-conflict-'
+                parts[0].should.equal 'foo/bar'
+                parts = parts[1].split 'T'
+                parts[0].should.match /^\d{4}-\d{2}-\d{2}$/
+                parts[1].should.match /^\d{2}:\d{2}:\d{2}.\d{3}Z$/
+                src = spy.args[0][1]
+                src.path.should.equal doc.path
+                done()
+
+        it 'preserves the extension', (done) ->
+            doc = path: 'foo/bar.jpg'
+            @merge.local = {}
+            spy = @merge.local.resolveConflict = sinon.stub().yields null
+            @merge.resolveConflict @side, doc, ->
+                spy.called.should.be.true()
+                dst = spy.args[0][0]
+                path.extname(dst.path).should.equal '.jpg'
+                done()
