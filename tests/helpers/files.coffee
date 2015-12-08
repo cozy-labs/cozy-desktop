@@ -38,6 +38,7 @@ module.exports = helpers =
             callback err, body
 
     uploadFile: (file, fixturePath, callback) ->
+        file.lastModification = new Date().toISOString()
         client.sendFile 'files/', fixturePath, file, (err, res, body) ->
             should.not.exist err
             should.exist res
