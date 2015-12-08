@@ -67,6 +67,8 @@ class Local
 
     ### Write operations ###
 
+    # Add a new file, or replace an existing one
+    #
     # Steps to create a file:
     #   * Try to find a similar file based on his checksum
     #     (in that case, it just requires a local copy)
@@ -76,11 +78,12 @@ class Local
     #   * Move the temporay file to its final destination
     #   * Update creation and last modification dates
     #
-    # Note: this method is used for adding a new file
-    # or replacing an existing one
+    # Note: if no checksum was available for this file, we download the file
+    # from the remote document. Later, chokidar will fire an event for this new
+    # file. The checksum will then be computed and added to the document, and
+    # then pushed to CouchDB.
     #
     # TODO verify the checksum -> remove file if not ok
-    # TODO save the checksum if it didn't have one
     addFile: (doc, callback) =>
         tmpFile  = path.resolve @tmpPath, path.basename doc.path
         filePath = path.resolve @basePath, doc.path
