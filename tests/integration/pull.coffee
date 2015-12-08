@@ -71,7 +71,7 @@ describe 'Pull', ->
 
     it 'removes the folder', (done) ->
         Files.removeFolder folder, (err, removed) =>
-            folderPath = path.join @basePath, folder.path, folder.name
+            folderPath ?= path.join @basePath, folder.path, folder.name
             waitDisappear folderPath, done
 
     it 'creates a file on the local fs from the remote cozy', (done) ->
