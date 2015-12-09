@@ -75,6 +75,7 @@ describe "Devices", ->
                 url: Cozy.url
                 password: Cozy.password
             Devices.getDiskSpace options, (err, body) ->
+                console.log 'getDiskSpace', body
                 should.not.exist err
                 should.exist body
                 should.exist body.diskSpace
