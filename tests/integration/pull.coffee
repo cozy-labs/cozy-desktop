@@ -33,13 +33,13 @@ describe 'Pull', ->
 
     parent =
         path: ''
-        name: faker.commerce.color()
+        name: faker.company.bsBuzz()
     folder =
         path: ''
-        name: faker.hacker.noun()
+        name: faker.company.bsNoun()
     file =
         path: ''
-        name: faker.hacker.adjective()
+        name: faker.company.bsAdjective()
 
     it 'creates a folder on the local fs from the remote cozy', (done) ->
         Files.createFolder folder, (err, created) =>
@@ -71,7 +71,7 @@ describe 'Pull', ->
 
     it 'removes the folder', (done) ->
         Files.removeFolder folder, (err, removed) =>
-            folderPath ?= path.join @basePath, folder.path, folder.name
+            folderPath = path.join @basePath, folder.path, folder.name
             waitDisappear folderPath, done
 
     it 'creates a file on the local fs from the remote cozy', (done) ->

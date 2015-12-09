@@ -48,19 +48,33 @@ module.exports.clean = (done) ->
     @app.removeRemote helpers.deviceName, (err) =>
         del.sync @basePath
         should.not.exist err
-        done()
+        if @app.sync
+            @app.stopSync (err) ->
+                should.not.exist err
+                done()
+        else
+            done()
 
 module.exports.pull = (done) ->
-    @app.sync 'pull', (err) ->
+    @app.instanciate() unless @app.sync
+    @app.startSync 'pull', (err) ->
         should.not.exist err
     setTimeout done, 1000
 
 module.exports.push = (done) ->
-    @app.sync 'push', (err) ->
+    @app.instanciate() unless @app.sync
+    @app.startSync 'push', (err) ->
         should.not.exist err
     setTimeout done, 1000
 
 module.exports.sync = (done) ->
-    @app.sync 'full', (err) ->
+    @app.instanciate() unless @app.sync
+    @app.startSync 'full', (err) ->
         should.not.exist err
     setTimeout done, 1000
+
+module.exports.fetchRemoteMetadata = (done) ->
+    @app.instanciate() unless @app.sync
+    @app.remote.watcher.listenToChanges live: false, (err) ->
+        should.not.exist err
+        done()

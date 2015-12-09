@@ -120,7 +120,8 @@ class Prep
             doc.docType = 'file'
             doc.creationDate ?= new Date
             doc.lastModification ?= new Date
-            doc.lastModification = new Date if doc.lastModification is 'Invalid date'
+            if doc.lastModification is 'Invalid date'
+                doc.lastModification = new Date
             @buildId doc
             @merge.addFile side, doc, callback
 
@@ -137,7 +138,8 @@ class Prep
         else
             doc.docType = 'file'
             doc.lastModification ?= new Date
-            doc.lastModification = new Date if doc.lastModification is 'Invalid date'
+            if doc.lastModification is 'Invalid date'
+                doc.lastModification = new Date
             @buildId doc
             @merge.updateFile side, doc, callback
 
@@ -150,7 +152,8 @@ class Prep
         else
             doc.docType = 'folder'
             doc.lastModification ?= new Date
-            doc.lastModification = new Date if doc.lastModification is 'Invalid date'
+            if doc.lastModification is 'Invalid date'
+                doc.lastModification = new Date
             @buildId doc
             @merge.putFolder side, doc, callback
 
@@ -180,7 +183,8 @@ class Prep
         else
             doc.docType = 'file'
             doc.lastModification ?= new Date
-            doc.lastModification = new Date if doc.lastModification is 'Invalid date'
+            if doc.lastModification is 'Invalid date'
+                doc.lastModification = new Date
             @buildId doc
             @buildId was
             @merge.moveFile side, doc, was, callback
@@ -206,7 +210,8 @@ class Prep
         else
             doc.docType = 'folder'
             doc.lastModification ?= new Date
-            doc.lastModification = new Date if doc.lastModification is 'Invalid date'
+            if doc.lastModification is 'Invalid date'
+                doc.lastModification = new Date
             @buildId doc
             @buildId was
             @merge.moveFolder side, doc, was, callback

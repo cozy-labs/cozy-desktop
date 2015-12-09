@@ -81,22 +81,37 @@ class App
             callback? err
 
 
-    # Start database sync process and setup file change watcher
-    sync: (mode, callback) =>
+    # Instanciate some objects before sync
+    instanciate: ->
         @merge  = new Merge @pouch
         @prep   = new Prep @merge
         @local  = @merge.local  = new Local  @config, @prep, @pouch
         @remote = @merge.remote = new Remote @config, @prep, @pouch
         @sync   = new Sync @pouch, @local, @remote
-        device  = @config.getDevice()
+
+
+    # Start the synchronization
+    startSync: (mode, callback) ->
+        @config.setMode mode
+        log.info 'Run first synchronisation...'
+        @sync.start mode, (err) ->
+            if err
+                log.error err
+                log.error err.stack if err.stack
+            callback? err
+
+
+    # Stop the synchronisation
+    stopSync: (callback) ->
+        @sync.stop callback
+
+
+    # Start database sync process and setup file change watcher
+    synchronize: (mode, callback) =>
+        @instanciate()
+        device = @config.getDevice()
         if device.deviceName? and device.url? and device.path?
-            @config.setMode mode
-            log.info 'Run first synchronisation...'
-            @sync.start mode, (err) ->
-                if err
-                    log.error err
-                    log.error err.stack if err.stack
-                callback? err
+            @startSync mode, callback
         else
             log.error 'No configuration found, please run add-remote-cozy' +
                 'command before running a synchronization.'

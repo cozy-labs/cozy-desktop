@@ -25,6 +25,7 @@ class Sync
     #
     # The callback is called only for an error
     start: (mode, callback) =>
+        @stopped = false
         tasks = [
             (next) => @pouch.addAllViews next
         ]
@@ -36,9 +37,19 @@ class Sync
             else
                 async.forever @sync, callback
 
+    # Stop the synchronization
+    # TODO use correctly the callback + add unit test
+    stop: (callback) =>
+        @stopped = true
+        if @changes
+            @changes.cancel()
+            @changes = null
+        callback()
+
     # Start taking changes from pouch and applying them
     sync: (callback) =>
         @pop (err, change) =>
+            return if @stopped
             if err
                 log.error err
                 callback err
@@ -51,7 +62,6 @@ class Sync
     # Note: it is difficult to pick only one change at a time because pouch can
     # emit several docs in a row, and `limit: 1` seems to be not effective!
     pop: (callback) =>
-        done = false
         @pouch.getLocalSeq (err, seq) =>
             return callback err if err
             opts =
@@ -62,15 +72,16 @@ class Sync
                 returnDocs: false
                 filter: '_view'
                 view: 'byPath'
-            @pouch.db.changes(opts)
-                .on 'change', (info) ->
-                    unless done
-                        done = true
-                        @cancel()
+            @changes = @pouch.db.changes(opts)
+                .on 'change', (info) =>
+                    if @changes
+                        @changes.cancel()
+                        @changes = null
                         callback null, info
-                .on 'error',  (err) ->
-                    done = true
-                    callback err, null
+                .on 'error', (err) =>
+                    if @changes
+                        @changes = null
+                        callback err, null
 
     # Apply a change to both local and remote
     # At least one side should say it has already this change
