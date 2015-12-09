@@ -46,7 +46,7 @@ describe 'Conflict between two files', ->
             expectedSizes = [file.local.size, file.remote.size].sort()
             setTimeout done, 3000
 
-        it 'has the two directories on local', ->
+        it 'has the two files on local', ->
             files = fs.readdirSync @basePath
             files = (f for f in files when f isnt '.cozy-desktop')
             files.length.should.equal 2
@@ -59,7 +59,7 @@ describe 'Conflict between two files', ->
             parts.length.should.equal 2
             parts[0].should.equal file.name
 
-        it 'has the directories on remote', (done) ->
+        it 'has the files on remote', (done) ->
             Files.getAllFiles (err, files) ->
                 files.length.should.equal 2
                 sizes = (f.size for f in files)
@@ -106,7 +106,7 @@ describe 'Conflict between two files', ->
             expectedSizes = [file.local.size, file.remote.size].sort()
             setTimeout done, 1500
 
-        it 'has the two directories on local', ->
+        it 'has the two files on local', ->
             files = fs.readdirSync @basePath
             files = (f for f in files when f isnt '.cozy-desktop')
             files.length.should.equal 2
@@ -119,7 +119,7 @@ describe 'Conflict between two files', ->
             parts.length.should.equal 2
             parts[0].should.equal file.name
 
-        it 'has the directories on remote', (done) ->
+        it 'has the files on remote', (done) ->
             Files.getAllFiles (err, files) ->
                 files.length.should.equal 2
                 sizes = (f.size for f in files)
