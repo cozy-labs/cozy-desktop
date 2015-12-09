@@ -58,6 +58,11 @@ class LocalWatcher
             .on 'ready', @onReady(callback)
             .on 'error', (err) -> log.error err
 
+    # Stop chokidar watcher
+    stop: ->
+        @watcher?.close()
+        @watcher = null
+
 
     ### Helpers ###
 

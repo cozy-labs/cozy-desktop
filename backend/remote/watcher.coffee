@@ -14,6 +14,11 @@ class RemoteWatcher
         @side = 'remote'
         @pending = 0
 
+    # Stop listening to couchdb
+    stopListening: ->
+        @changes?.cancel()
+        @changes = null
+
     # First time replication (when the databases is blank)
     #
     # Filtered replication or changes feed is slow with a lot of documents and
@@ -84,7 +89,7 @@ class RemoteWatcher
                     @whenReady callback
 
     # TODO comments, tests
-    whenReady: (callback) =>
+    whenReady: (callback=->) =>
         if @pending is 0
             callback()
         else

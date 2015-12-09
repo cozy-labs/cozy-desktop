@@ -120,7 +120,8 @@ class Merge
         dir  = path.dirname doc.path
         base = path.basename doc.path, ext
         dst.path = "#{path.join dir, base}-conflict-#{date}#{ext}"
-        @[side].resolveConflict dst, doc, callback
+        @[side].resolveConflict dst, doc, (err) ->
+            callback err, dst
 
 
     ### Actions ###
@@ -195,9 +196,14 @@ class Merge
                 doc.mime         ?= was.mime
                 was.moveTo        = doc._id
                 was._deleted      = true
-                if file
-                    @resolveConflict side, doc, callback
-                    # TODO be sure that was is removed
+                if file and @sameFile file, doc
+                    callback null
+                else if file
+                    @resolveConflict side, doc, (err, dst) =>
+                        was.moveTo = dst._id
+                        dst.sides = {}
+                        dst.sides[side] = 1
+                        @pouch.db.bulkDocs [was, dst], callback
                 else
                     @ensureParentExist side, doc, =>
                         @pouch.db.bulkDocs [was, doc], callback

@@ -44,6 +44,8 @@ class Sync
         if @changes
             @changes.cancel()
             @changes = null
+        @local.stop()
+        @remote.stop()
         callback()
 
     # Start taking changes from pouch and applying them

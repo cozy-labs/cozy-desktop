@@ -51,7 +51,7 @@ module.exports.clean = (done) ->
         if @app.sync
             @app.stopSync (err) ->
                 should.not.exist err
-                done()
+                setTimeout done, 100
         else
             done()
 

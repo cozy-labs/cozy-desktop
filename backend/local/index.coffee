@@ -22,6 +22,10 @@ class Local
         fs.ensureDir @basePath, =>
             @watcher.start done
 
+    # Stop watching the file system
+    stop: ->
+        @watcher.stop()
+
     # Create a readable stream for the given doc
     createReadStream: (doc, callback) ->
         try

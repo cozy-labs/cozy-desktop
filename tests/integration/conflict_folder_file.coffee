@@ -122,6 +122,7 @@ describe 'Conflict', ->
         it 'has the file and the folder on remote', (done) ->
             Files.getAllFiles (err, files) ->
                 files.length.should.equal 2
+                files = files.reverse() if files[0].path is file.path
                 files[0].path.should.equal "/#{child.path}"
                 files[0].name.should.equal child.name
                 files[1].path.should.equal file.path

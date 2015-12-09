@@ -15,8 +15,6 @@ Watcher = require './watcher'
 # Please note that the structure of the documents in the remote couchdb and in
 # the local pouchdb are similar, but not exactly the same. A transformation is
 # needed in both ways.
-#
-# TODO add an integration test where an image is added, updated and removed
 class Remote
     constructor: (@config, @prep, @pouch) ->
         @couch   = new Couch @config
@@ -28,6 +26,10 @@ class Remote
         @watcher.listenToChanges live: false, (err) =>
             done err
             @watcher.listenToChanges live: true unless err
+
+    # Stop listening to couchdb changes
+    stop: ->
+        @watcher.stopListening()
 
     # Create a readable stream for the given doc
     createReadStream: (doc, callback) =>
