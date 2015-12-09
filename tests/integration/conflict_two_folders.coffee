@@ -62,7 +62,10 @@ describe 'Conflict between two folders', ->
         it 'has the two files on remote', (done) ->
             Files.getAllFiles (err, files) ->
                 files.length.should.equal 2
-                [local, remote] = files
+                if files[0].name is localChild.name
+                    [local, remote] = files
+                else
+                    [remote, local] = files
                 local.path.should.equal "/#{localChild.path}"
                 local.name.should.equal localChild.name
                 remote.path.should.equal "/#{remoteChild.path}"
@@ -120,7 +123,10 @@ describe 'Conflict between two folders', ->
         it 'has the two files on remote', (done) ->
             Files.getAllFiles (err, files) ->
                 files.length.should.equal 2
-                [local, remote] = files
+                if files[0].name is localChild.name
+                    [local, remote] = files
+                else
+                    [remote, local] = files
                 local.path.should.equal "/#{localChild.path}"
                 local.name.should.equal localChild.name
                 remote.path.should.equal "/#{remoteChild.path}"
