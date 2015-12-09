@@ -16,6 +16,7 @@ module.exports =
     createParentFolder: (pouch, callback) ->
         doc =
             _id: 'my-folder'
+            path: 'my-folder'
             docType: 'folder'
             creationDate: new Date()
             lastModification: new Date()
@@ -23,8 +24,10 @@ module.exports =
         pouch.db.put doc, callback
 
     createFolder: (pouch, i, callback) ->
+        id = path.join 'my-folder', "folder-#{i}"
         doc =
-            _id: path.join 'my-folder', "folder-#{i}"
+            _id: id
+            path: id
             docType: 'folder'
             creationDate: new Date()
             lastModification: new Date()
@@ -34,8 +37,10 @@ module.exports =
         pouch.db.put doc, callback
 
     createFile: (pouch, i, callback) ->
+        id = path.join 'my-folder', "file-#{i}"
         doc =
-            _id: path.join 'my-folder', "file-#{i}"
+            _id: id
+            path: id
             docType: 'file'
             checksum: "111111111111111111111111111111111111111#{i}"
             creationDate: new Date()

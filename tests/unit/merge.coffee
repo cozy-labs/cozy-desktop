@@ -23,35 +23,53 @@ describe 'Merge', ->
 
     describe 'Helpers', ->
 
-        describe 'invalidId', ->
-            it 'returns true if the id is incorrect', ->
-                ret = @merge.invalidId _id: '/'
+        describe 'buildId', ->
+            it 'is available', ->
+                doc = path: 'FOO'
+                @merge.buildId doc
+                doc._id.should.equal 'FOO'
+
+            if process.platform in ['linux', 'freebsd', 'sunos']
+                it 'is case insensitive on UNIX', ->
+                    doc = path: 'foo/bar/café'
+                    @merge.buildId doc
+                    doc._id.should.equal 'foo/bar/café'
+
+            if process.platform is 'darwin'
+                it 'is case sensitive on OSX', ->
+                    doc = path: 'foo/bar/café'
+                    @merge.buildId doc
+                    doc._id.should.equal 'FOO/BAR/CAFÉ'
+
+        describe 'invalidPath', ->
+            it 'returns true if the path is incorrect', ->
+                ret = @merge.invalidPath path: '/'
                 ret.should.be.true()
-                ret = @merge.invalidId _id: ''
+                ret = @merge.invalidPath path: ''
                 ret.should.be.true()
-                ret = @merge.invalidId _id: '.'
+                ret = @merge.invalidPath path: '.'
                 ret.should.be.true()
-                ret = @merge.invalidId _id: '..'
+                ret = @merge.invalidPath path: '..'
                 ret.should.be.true()
-                ret = @merge.invalidId _id: '../foo/bar.png'
+                ret = @merge.invalidPath path: '../foo/bar.png'
                 ret.should.be.true()
-                ret = @merge.invalidId _id: 'foo/..'
+                ret = @merge.invalidPath path: 'foo/..'
                 ret.should.be.true()
-                ret = @merge.invalidId _id: 'f/../oo/../../bar/./baz'
+                ret = @merge.invalidPath path: 'f/../oo/../../bar/./baz'
                 ret.should.be.true()
 
             it 'returns false if everything is OK', ->
-                ret = @merge.invalidId _id: 'foo'
+                ret = @merge.invalidPath path: 'foo'
                 ret.should.be.false()
-                ret = @merge.invalidId _id: 'foo/bar'
+                ret = @merge.invalidPath path: 'foo/bar'
                 ret.should.be.false()
-                ret = @merge.invalidId _id: 'foo/bar/baz.jpg'
+                ret = @merge.invalidPath path: 'foo/bar/baz.jpg'
                 ret.should.be.false()
 
             it 'returns false for paths with a leading slash', ->
-                ret = @merge.invalidId _id: '/foo/bar'
+                ret = @merge.invalidPath path: '/foo/bar'
                 ret.should.be.false()
-                ret = @merge.invalidId _id: '/foo/bar/baz.bmp'
+                ret = @merge.invalidPath path: '/foo/bar/baz.bmp'
                 ret.should.be.false()
 
         describe 'invalidChecksum', ->
@@ -143,32 +161,39 @@ describe 'Merge', ->
 
             it 'creates the parent directory if missing', (done) ->
                 @merge.putFolder = sinon.stub().yields null, 'OK'
-                @merge.ensureParentExist @side, _id: 'missing/child', (err) =>
+                doc =
+                    _id: 'MISSING/CHILD'
+                    path: 'missing/child'
+                @merge.ensureParentExist @side, doc, (err) =>
                     should.not.exist err
                     @merge.putFolder.called.should.be.true()
-                    parent = _id: 'missing'
+                    parent =
+                        _id: 'MISSING'
+                        path: 'missing'
                     @merge.putFolder.calledWith(@side, parent).should.be.true()
                     done()
 
             it 'creates the full tree if needed', (done) ->
                 @merge.putFolder = sinon.stub().yields null, 'OK'
-                @merge.ensureParentExist @side, _id: 'a/b/c/d/e', (err) =>
+                doc =
+                    _id: 'a/b/c/d/e'
+                    path: 'a/b/c/d/e'
+                @merge.ensureParentExist @side, doc, (err) =>
                     should.not.exist err
                     method = @merge.putFolder
                     method.called.should.be.true()
-                    method.calledWith(@side, _id: 'a').should.be.true()
-                    method.calledWith(@side, _id: 'a/b').should.be.true()
-                    method.calledWith(@side, _id: 'a/b/c').should.be.true()
-                    method.calledWith(@side, _id: 'a/b/c/d').should.be.true()
+                    for id in ['a', 'a/b', 'a/b/c', 'a/b/c/d']
+                        folder = _id: id, path: id
+                        method.calledWith(@side, folder).should.be.true()
                     done()
 
         describe 'moveDoc', ->
             it 'calls moveFile for a file', (done) ->
                 doc =
-                    _id: 'move/name'
+                    path: 'move/name'
                     docType: 'file'
                 was =
-                    _id: 'move/old-name'
+                    path: 'move/old-name'
                     docType: 'file'
                 @merge.moveFile = sinon.stub().yields null
                 @merge.moveDoc @side, doc, was, (err) =>
@@ -178,10 +203,10 @@ describe 'Merge', ->
 
             it 'calls moveFolder for a folder', (done) ->
                 doc =
-                    _id: 'move/folder'
+                    path: 'move/folder'
                     docType: 'folder'
                 was =
-                    _id: 'move/old-folder'
+                    path: 'move/old-folder'
                     docType: 'folder'
                 spy = @merge.moveFolder = sinon.stub().yields null
                 @merge.moveDoc @side, doc, was, (err) =>
@@ -191,10 +216,10 @@ describe 'Merge', ->
 
             it 'throws an error if we move a file to a folder', (done) ->
                 doc =
-                    _id: 'move/folder'
+                    path: 'move/folder'
                     docType: 'folder'
                 was =
-                    _id: 'move/old-file'
+                    path: 'move/old-file'
                     docType: 'file'
                 @merge.moveDoc @side, doc, was, (err) ->
                     should.exist err
@@ -203,10 +228,10 @@ describe 'Merge', ->
 
             it 'throws an error if we move a folder to a file', (done) ->
                 doc =
-                    _id: 'move/file'
+                    path: 'move/file'
                     docType: 'file'
                 was =
-                    _id: 'move/old-folder'
+                    path: 'move/old-folder'
                     docType: 'folder'
                 @merge.moveDoc @side, doc, was, (err) ->
                     should.exist err
@@ -216,7 +241,7 @@ describe 'Merge', ->
         describe 'deleteDoc', ->
             it 'calls deleteFile for a file', (done) ->
                 doc =
-                    _id: 'delete/name'
+                    path: 'delete/name'
                     docType: 'file'
                 @merge.deleteFile = sinon.stub().yields null
                 @merge.deleteDoc @side, doc, (err) =>
@@ -226,7 +251,7 @@ describe 'Merge', ->
 
             it 'calls deleteFolder for a folder', (done) ->
                 doc =
-                    _id: 'delete/folder'
+                    path: 'delete/folder'
                     docType: 'folder'
                 @merge.deleteFolder = sinon.stub().yields null
                 @merge.deleteDoc @side, doc, (err) =>
@@ -256,16 +281,16 @@ describe 'Merge', ->
     describe 'Put', ->
 
         describe 'addFile', ->
-            it 'expects a doc with a valid id', (done) ->
-                @merge.addFile @side, _id: '/', (err) ->
+            it 'expects a doc with a valid path', (done) ->
+                @merge.addFile @side, path: '/', (err) ->
                     should.exist err
-                    err.message.should.equal 'Invalid id'
+                    err.message.should.equal 'Invalid path'
                     done()
 
             it 'accepts doc with no checksum', (done) ->
                 @merge.ensureParentExist = sinon.stub().yields null
                 doc =
-                    _id: 'no-checksum'
+                    path: 'no-checksum'
                     docType: 'file'
                 @merge.addFile @side, doc, (err) ->
                     should.not.exist err
@@ -273,7 +298,7 @@ describe 'Merge', ->
 
             it 'rejects doc with an invalid checksum', (done) ->
                 doc =
-                    _id: 'no-checksum'
+                    path: 'no-checksum'
                     checksum: 'foobar'
                 @merge.addFile @side, doc, (err) ->
                     should.exist err
@@ -283,7 +308,7 @@ describe 'Merge', ->
             it 'saves the new file', (done) ->
                 @merge.ensureParentExist = sinon.stub().yields null
                 doc =
-                    _id: 'foo/new-file'
+                    path: 'foo/new-file'
                     checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
                     docType: 'file'
                     creationDate: new Date
@@ -302,7 +327,7 @@ describe 'Merge', ->
             it 'adds missing fields', (done) ->
                 @merge.ensureParentExist = sinon.stub().yields null
                 doc =
-                    _id: 'foo/missing-fields'
+                    path: 'foo/missing-fields'
                     checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
                 @merge.addFile @side, doc, (err) =>
                     should.not.exist err
@@ -323,7 +348,8 @@ describe 'Merge', ->
             describe 'when a file with the same path exists', ->
                 before 'create a file', (done) ->
                     @file =
-                        _id: 'buzz.jpg'
+                        _id: 'BUZZ.JPG'
+                        path: 'BUZZ.JPG'
                         docType: 'file'
                         checksum: '1111111111111111111111111111111111111111'
                         creationDate: new Date
@@ -361,16 +387,16 @@ describe 'Merge', ->
 
 
         describe 'updateFile', ->
-            it 'expects a doc with a valid id', (done) ->
-                @merge.updateFile @side, _id: '/', (err) ->
+            it 'expects a doc with a valid path', (done) ->
+                @merge.updateFile @side, path: '/', (err) ->
                     should.exist err
-                    err.message.should.equal 'Invalid id'
+                    err.message.should.equal 'Invalid path'
                     done()
 
             it 'accepts doc with no checksum', (done) ->
                 @merge.ensureParentExist = sinon.stub().yields null
                 doc =
-                    _id: 'no-checksum'
+                    path: 'no-checksum'
                     docType: 'file'
                 @merge.updateFile @side, doc, (err) ->
                     should.not.exist err
@@ -378,7 +404,7 @@ describe 'Merge', ->
 
             it 'rejects doc with an invalid checksum', (done) ->
                 doc =
-                    _id: 'no-checksum'
+                    path: 'no-checksum'
                     checksum: 'foobar'
                 @merge.updateFile @side, doc, (err) ->
                     should.exist err
@@ -388,7 +414,7 @@ describe 'Merge', ->
             it 'saves the new file', (done) ->
                 @merge.ensureParentExist = sinon.stub().yields null
                 doc =
-                    _id: 'foobar/new-file'
+                    path: 'foobar/new-file'
                     checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
                     docType: 'file'
                     creationDate: new Date
@@ -407,7 +433,7 @@ describe 'Merge', ->
             it 'adds missing fields', (done) ->
                 @merge.ensureParentExist = sinon.stub().yields null
                 doc =
-                    _id: 'foobar/missing-fields'
+                    path: 'foobar/missing-fields'
                     checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
                 @merge.updateFile @side, doc, (err) =>
                     should.not.exist err
@@ -428,7 +454,8 @@ describe 'Merge', ->
             describe 'when a file with the same path exists', ->
                 before 'create a file', (done) ->
                     @file =
-                        _id: 'fizzbuzz.jpg'
+                        _id: 'FIZZBUZZ.JPG'
+                        path: 'FIZZBUZZ.JPG'
                         docType: 'file'
                         checksum: '1111111111111111111111111111111111111111'
                         creationDate: new Date
@@ -464,7 +491,7 @@ describe 'Merge', ->
                 it 'can overwrite the content of a file', (done) ->
                     @merge.ensureParentExist = sinon.stub().yields null
                     doc =
-                        _id: 'fizzbuzz.jpg'
+                        path: 'FIZZBUZZ.JPG'
                         docType: 'file'
                         checksum: '3333333333333333333333333333333333333333'
                         tags: ['qux', 'quux']
@@ -481,16 +508,16 @@ describe 'Merge', ->
 
 
         describe 'putFolder', ->
-            it 'expects a doc with a valid id', (done) ->
-                @merge.putFolder @side, _id: '..', (err) ->
+            it 'expects a doc with a valid path', (done) ->
+                @merge.putFolder @side, path: '..', (err) ->
                     should.exist err
-                    err.message.should.equal 'Invalid id'
+                    err.message.should.equal 'Invalid path'
                     done()
 
             it 'saves the new folder', (done) ->
                 @merge.ensureParentExist = sinon.stub().yields null
                 doc =
-                    _id: 'foo/new-folder'
+                    path: 'foo/new-folder'
                     docType: 'folder'
                     creationDate: new Date
                     lastModification: new Date
@@ -507,7 +534,7 @@ describe 'Merge', ->
 
             it 'adds missing fields', (done) ->
                 @merge.ensureParentExist = sinon.stub().yields null
-                doc = _id: 'foo/folder-missing-fields'
+                doc = path: 'foo/folder-missing-fields'
                 @merge.putFolder @side, doc, (err) =>
                     should.not.exist err
                     @pouch.db.get doc._id, (err, res) ->
@@ -527,7 +554,8 @@ describe 'Merge', ->
             describe 'when a folder with the same path exists', ->
                 before 'create a folder', (done) ->
                     @folder =
-                        _id: 'fizz'
+                        _id: 'FIZZ'
+                        path: 'FIZZ'
                         docType: 'folder'
                         creationDate: new Date
                         lastModification: new Date
@@ -556,28 +584,28 @@ describe 'Merge', ->
     describe 'Move', ->
 
         describe 'moveFile', ->
-            it 'expects a doc with a valid id', (done) ->
-                doc = _id: ''
-                was = _id: 'foo/baz'
+            it 'expects a doc with a valid path', (done) ->
+                doc = path: ''
+                was = path: 'foo/baz'
                 @merge.moveFile @side, doc, was, (err) ->
                     should.exist err
-                    err.message.should.equal 'Invalid id'
+                    err.message.should.equal 'Invalid path'
                     done()
 
-            it 'expects a was with a valid id', (done) ->
-                doc = _id: 'foo/bar'
-                was = _id: ''
+            it 'expects a was with a valid path', (done) ->
+                doc = path: 'foo/bar'
+                was = path: ''
                 @merge.moveFile @side, doc, was, (err) ->
                     should.exist err
-                    err.message.should.equal 'Invalid id'
+                    err.message.should.equal 'Invalid path'
                     done()
 
             it 'expects a doc with a valid checksum', (done) ->
                 doc =
-                    _id: 'foo/bar'
+                    path: 'foo/bar'
                     docType: 'file'
                     checksum: 'invalid'
-                was = _id: 'foo/baz'
+                was = path: 'foo/baz'
                 @merge.moveFile @side, doc, was, (err) ->
                     should.exist err
                     err.message.should.equal 'Invalid checksum'
@@ -585,11 +613,11 @@ describe 'Merge', ->
 
             it 'expects two different paths', (done) ->
                 doc =
-                    _id: 'foo/bar'
+                    path: 'foo/bar'
                     docType: 'file'
                     checksum: '5555555555555555555555555555555555555555'
                 was =
-                    _id: 'foo/bar'
+                    path: 'foo/bar'
                     docType: 'file'
                     checksum: '5555555555555555555555555555555555555555'
                 @merge.moveFile @side, doc, was, (err) ->
@@ -599,11 +627,11 @@ describe 'Merge', ->
 
             it 'expects a revision for was', (done) ->
                 doc =
-                    _id: 'foo/bar'
+                    path: 'foo/bar'
                     docType: 'file'
                     checksum: '5555555555555555555555555555555555555555'
                 was =
-                    _id: 'foo/baz'
+                    path: 'foo/baz'
                     docType: 'file'
                     checksum: '5555555555555555555555555555555555555555'
                 @merge.moveFile @side, doc, was, (err) ->
@@ -614,14 +642,15 @@ describe 'Merge', ->
             it 'saves the new file and deletes the old one', (done) ->
                 @merge.ensureParentExist = sinon.stub().yields null
                 doc =
-                    _id: 'foo/new'
+                    path: 'FOO/new'
                     checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517'
                     docType: 'file'
                     creationDate: new Date
                     lastModification: new Date
                     tags: ['courge', 'quux']
                 was =
-                    _id: 'foo/old'
+                    _id: 'FOO/OLD'
+                    path: 'FOO/OLD'
                     checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517'
                     docType: 'file'
                     creationDate: new Date
@@ -632,6 +661,7 @@ describe 'Merge', ->
                     was._rev = inserted.rev
                     @merge.moveFile @side, clone(doc), clone(was), (err) =>
                         should.not.exist err
+                        @merge.buildId doc
                         @pouch.db.get doc._id, (err, res) =>
                             should.not.exist err
                             for date in ['creationDate', 'lastModification']
@@ -646,10 +676,11 @@ describe 'Merge', ->
             it 'adds missing fields', (done) ->
                 @merge.ensureParentExist = sinon.stub().yields null
                 doc =
-                    _id: 'foo/new-missing-fields.jpg'
+                    path: 'FOO/new-missing-fields.jpg'
                     checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517'
                 was =
-                    _id: 'foo/old-missing-fields.jpg'
+                    _id: 'FOO/OLD-MISSING-FIELDS.JPG'
+                    path: 'FOO/OLD-MISSING-FIELDS.JPG'
                     checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517'
                     docType: 'file'
                     creationDate: new Date
@@ -679,14 +710,15 @@ describe 'Merge', ->
             it 'adds a hint for writers to know that it is a move', (done) ->
                 @merge.ensureParentExist = sinon.stub().yields null
                 doc =
-                    _id: 'foo/new-hint'
+                    path: 'FOO/new-hint'
                     checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517'
                     docType: 'file'
                     creationDate: new Date
                     lastModification: new Date
                     tags: ['courge', 'quux']
                 was =
-                    _id: 'foo/old-hint'
+                    _id: 'FOO/OLD-HINT'
+                    path: 'FOO/OLD-HINT'
                     checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517'
                     docType: 'file'
                     creationDate: new Date
@@ -696,6 +728,7 @@ describe 'Merge', ->
                     include_docs: true
                     live: true
                     since: 'now'
+                @merge.buildId doc
                 @pouch.db.put clone(was), (err, inserted) =>
                     should.not.exist err
                     was._rev = inserted.rev
@@ -713,7 +746,8 @@ describe 'Merge', ->
             describe 'when a file with the same path exists', ->
                 before 'create a file', (done) ->
                     @file =
-                        _id: 'fuzz.jpg'
+                        _id: 'FUZZ.JPG'
+                        path: 'FUZZ.JPG'
                         docType: 'file'
                         checksum: '1111111111111111111111111111111111111111'
                         creationDate: new Date
@@ -727,12 +761,13 @@ describe 'Merge', ->
                 it 'can overwrite the content of a file', (done) ->
                     @merge.ensureParentExist = sinon.stub().yields null
                     doc =
-                        _id: 'fuzz.jpg'
+                        path: 'FUZZ.JPG'
                         docType: 'file'
                         checksum: '3333333333333333333333333333333333333333'
                         tags: ['qux', 'quux']
                     was =
                         _id: 'old-fuzz.jpg'
+                        path: 'old-fuzz.jpg'
                         checksum: '3333333333333333333333333333333333333333'
                         docType: 'file'
                         creationDate: new Date
@@ -760,28 +795,28 @@ describe 'Merge', ->
 
 
         describe 'moveFolder', ->
-            it 'expects a doc with a valid id', (done) ->
-                doc = _id: ''
-                was = _id: 'foo/baz'
+            it 'expects a doc with a valid path', (done) ->
+                doc = path: ''
+                was = path: 'foo/baz'
                 @merge.moveFolder @side, doc, was, (err) ->
                     should.exist err
-                    err.message.should.equal 'Invalid id'
+                    err.message.should.equal 'Invalid path'
                     done()
 
             it 'expects a was with a valid id', (done) ->
-                doc = _id: 'foo/bar'
-                was = _id: ''
+                doc = path: 'foo/bar'
+                was = path: ''
                 @merge.moveFolder @side, doc, was, (err) ->
                     should.exist err
-                    err.message.should.equal 'Invalid id'
+                    err.message.should.equal 'Invalid path'
                     done()
 
             it 'expects two different paths', (done) ->
                 doc =
-                    _id: 'foo/bar'
+                    path: 'foo/bar'
                     docType: 'folder'
                 was =
-                    _id: 'foo/bar'
+                    path: 'foo/bar'
                     docType: 'folder'
                 @merge.moveFolder @side, doc, was, (err) ->
                     should.exist err
@@ -790,10 +825,10 @@ describe 'Merge', ->
 
             it 'expects a revision for was', (done) ->
                 doc =
-                    _id: 'foo/bar'
+                    path: 'foo/bar'
                     docType: 'folder'
                 was =
-                    _id: 'foo/baz'
+                    path: 'foo/baz'
                     docType: 'folder'
                 @merge.moveFolder @side, doc, was, (err) ->
                     should.exist err
@@ -803,13 +838,14 @@ describe 'Merge', ->
             it 'saves the new folder and deletes the old one', (done) ->
                 @merge.ensureParentExist = sinon.stub().yields null
                 doc =
-                    _id: 'foobar/new'
+                    path: 'FOOBAR/new'
                     docType: 'folder'
                     creationDate: new Date
                     lastModification: new Date
                     tags: ['courge', 'quux']
                 was =
-                    _id: 'foobar/old'
+                    _id: 'FOOBAR/OLD'
+                    path: 'FOOBAR/OLD'
                     docType: 'folder'
                     creationDate: new Date
                     lastModification: new Date
@@ -819,6 +855,7 @@ describe 'Merge', ->
                     was._rev = inserted.rev
                     @merge.moveFolder @side, clone(doc), clone(was), (err) =>
                         should.not.exist err
+                        @merge.buildId doc
                         @pouch.db.get doc._id, (err, res) =>
                             should.not.exist err
                             for date in ['creationDate', 'lastModification']
@@ -833,9 +870,10 @@ describe 'Merge', ->
             it 'adds missing fields', (done) ->
                 @merge.ensureParentExist = sinon.stub().yields null
                 doc =
-                    _id: 'foobar/new-missing-fields'
+                    path: 'FOOBAR/new-missing-fields'
                 was =
-                    _id: 'foobar/old-missing-fields'
+                    _id: 'FOOBAR/OLD-MISSING-FIELDS'
+                    path: 'FOOBAR/OLD-MISSING-FIELDS'
                     docType: 'folder'
                     creationDate: new Date
                     lastModification: new Date
@@ -858,13 +896,14 @@ describe 'Merge', ->
             it 'adds a hint for writers to know that it is a move', (done) ->
                 @merge.ensureParentExist = sinon.stub().yields null
                 doc =
-                    _id: 'foobar/new-hint'
+                    path: 'FOOBAR/NEW-HINT'
                     docType: 'folder'
                     creationDate: new Date
                     lastModification: new Date
                     tags: ['courge', 'quux']
                 was =
-                    _id: 'foobar/old-hint'
+                    _id: 'FOOBAR/OLD-HINT'
+                    path: 'FOOBAR/OLD-HINT'
                     docType: 'folder'
                     creationDate: new Date
                     lastModification: new Date
@@ -873,6 +912,7 @@ describe 'Merge', ->
                     include_docs: true
                     live: true
                     since: 'now'
+                @merge.buildId doc
                 @pouch.db.put clone(was), (err, inserted) =>
                     should.not.exist err
                     was._rev = inserted.rev
@@ -890,7 +930,8 @@ describe 'Merge', ->
             describe 'when a folder with the same path exists', ->
                 before 'create a folder', (done) ->
                     @folder =
-                        _id: 'foobaz'
+                        _id: 'FOOBAZ'
+                        path: 'FOOBAZ'
                         docType: 'folder'
                         creationDate: new Date
                         lastModification: new Date
@@ -900,11 +941,12 @@ describe 'Merge', ->
                 it 'can overwrite the content of a folder', (done) ->
                     @merge.ensureParentExist = sinon.stub().yields null
                     doc =
-                        _id: 'foobaz'
+                        path: 'FOOBAZ'
                         docType: 'folder'
                         tags: ['qux', 'quux']
                     was =
-                        _id: 'old-foobaz'
+                        _id: 'OLD-FOOBAZ'
+                        path: 'OLD-FOOBAZ'
                         docType: 'folder'
                         creationDate: new Date
                         lastModification: new Date
@@ -926,44 +968,14 @@ describe 'Merge', ->
                 it 'can resolve a conflict', ->
                     it 'TODO'
 
-        describe 'moveFolderRecursively', ->
-            before (done) ->
-                pouchHelpers.createParentFolder @pouch, =>
-                    pouchHelpers.createFolder @pouch, 9, =>
-                        pouchHelpers.createFile @pouch, 9, done
-
-            it 'move the folder and files/folders inside it', (done) ->
-                doc =
-                    _id: 'destination'
-                    docType: 'folder'
-                    creationDate: new Date
-                    lastModification: new Date
-                    tags: []
-                @pouch.db.get 'my-folder', (err, was) =>
-                    should.not.exist err
-                    @merge.moveFolderRecursively doc, was, (err) =>
-                        should.not.exist err
-                        ids = [
-                            '',
-                            '/folder-9',
-                            '/file-9'
-                        ]
-                        async.eachSeries ids, (id, next) =>
-                            @pouch.db.get "destination#{id}", (err, res) =>
-                                should.not.exist err
-                                should.exist res
-                                @pouch.db.get "my-folder#{id}", (err, res) ->
-                                    err.status.should.equal 404
-                                    next()
-                        , done
-
 
     describe 'Delete', ->
 
         describe 'deleteFile', ->
             it 'deletes a file', (done) ->
                 doc =
-                    _id: 'to-delete/file'
+                    _id: 'TO-DELETE/FILE'
+                    path: 'TO-DELETE/FILE'
                     docType: 'file'
                 @pouch.db.put doc, (err) =>
                     should.not.exist err
@@ -976,7 +988,8 @@ describe 'Merge', ->
         describe 'deleteFolder', ->
             it 'deletes a folder', (done) ->
                 doc =
-                    _id: 'to-delete/folder'
+                    _id: 'TO-DELETE/FOLDER'
+                    path: 'TO-DELETE/FOLDER'
                     docType: 'folder'
                 @pouch.db.put doc, (err) =>
                     should.not.exist err
@@ -988,35 +1001,39 @@ describe 'Merge', ->
 
             it 'remove files in the folder', (done) ->
                 doc =
-                    _id: 'foo/to-remove'
+                    _id: 'FOO/TO-REMOVE'
+                    path: 'FOO/TO-REMOVE'
                     docType: 'folder'
                 @pouch.db.put doc, (err) =>
                     should.not.exist err
                     async.eachSeries ['baz', 'qux', 'quux'], (name, next) =>
                         file =
-                            _id: "foo/to-remove/#{name}"
+                            _id: "FOO/TO-REMOVE/#{name}"
+                            path: "FOO/TO-REMOVE/#{name}"
                             docType: 'file'
                         @pouch.db.put file, next
                     , (err) =>
                         should.not.exist err
                         @merge.deleteFolder @side, doc, (err) =>
                             should.not.exist err
-                            @pouch.byPath 'foo/to-remove', (err, docs) ->
+                            @pouch.byPath 'FOO/TO-REMOVE', (err, docs) ->
                                 docs.length.should.be.equal 0
                                 done()
 
             it 'remove nested folders', (done) ->
+                base = 'NESTED/TO-DELETE'
                 async.eachSeries ['', '/b', '/b/c', '/b/d'], (name, next) =>
                     doc =
-                        _id: "nested/to-delete#{name}"
+                        _id: "#{base}#{name}"
+                        path: "#{base}#{name}"
                         docType: 'folder'
                     @pouch.db.put doc, next
                 , (err) =>
                     should.not.exist err
-                    @merge.deleteFolder @side, _id: 'nested/to-delete', (err) =>
+                    @merge.deleteFolder @side, path: base, (err) =>
                         should.not.exist err
                         @pouch.db.allDocs (err, res) ->
                             should.not.exist err
                             for row in res.rows
-                                row.id.should.not.match /^nested/
+                                row.id.should.not.match /^NESTED/i
                             done()

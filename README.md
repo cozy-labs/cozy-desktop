@@ -135,6 +135,11 @@ it simple and easy. So, it has some limitations:
   - not too many changes
   - etc.
 
+- For OSX, filenames with weird unicode characters may be problematic in some
+  rare cases.
+
+- Symbolic links and ACL are not yet handled.
+
 - The full sync directory must be on the same partition.
 
 - Large files must be uploaded/downloaded in one time (we are thinking about

@@ -119,7 +119,7 @@ class RemoteWatcher
         docPath = remote.path or ''
         docName = remote.name or ''
         doc =
-            _id: path.join docPath, docName
+            path: path.join docPath, docName
             docType: remote.docType.toLowerCase()
             creationDate: remote.creationDate
             lastModification: remote.lastModification
@@ -137,17 +137,17 @@ class RemoteWatcher
     # Transform the doc and save it in pouchdb
     #
     # In CouchDB, the filepath is in the path and name fields.
-    # In PouchDB, the filepath is in the _id.
+    # In PouchDB, the filepath is in the path only.
     # And the _id/_rev from CouchDB are saved in the remote field in PouchDB.
     putDoc: (remote, was, callback) =>
         doc = @createLocalDoc remote
-        if @merge.invalidId doc
+        if @merge.invalidPath doc
             log.error "Invalid id"
             log.error doc
             callback new Error 'Invalid path/name'
         else if not was
             @merge.addDoc @side, doc, callback
-        else if was._id is doc._id
+        else if was.path is doc.path
             @merge.updateDoc @side, doc, callback
         else if doc.checksum? and was.checksum is doc.checksum
             @merge.moveDoc @side, doc, was, callback
