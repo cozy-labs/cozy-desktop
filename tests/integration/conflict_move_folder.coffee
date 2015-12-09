@@ -15,8 +15,10 @@ describe 'Conflict when moving a folder', ->
     before Cozy.ensurePreConditions
 
 
+    # TODO Add move/rename detection to local watcher
     describe 'on local', ->
         it 'TODO'
 
+    # TODO find how to rename a folder and its files on remote
     describe 'on remote', ->
         it 'TODO'

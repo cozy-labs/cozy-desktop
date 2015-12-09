@@ -219,8 +219,10 @@ class Merge
                 doc.creationDate ?= was.creationDate
                 doc.tags         ?= was.tags
                 if folder
-                    @resolveConflict side, doc, callback
-                    # TODO be sure that was is removed
+                    @resolveConflict side, doc, (err, dst) =>
+                        dst.sides = {}
+                        dst.sides[side] = 1
+                        @moveFolderRecursively dst, was, callback
                 else
                     @ensureParentExist side, doc, =>
                         @moveFolderRecursively doc, was, callback
