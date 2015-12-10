@@ -116,6 +116,7 @@ class Sync
         else if remoteRev > localRev
             return [@local, 'local', localRev]
         else
+            log.debug 'Nothing to do'
             return []
 
     # Keep track of the sequence number, save side rev, and log errors

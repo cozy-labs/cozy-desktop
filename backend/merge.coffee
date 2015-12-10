@@ -151,6 +151,7 @@ class Merge
                 callback new Error "Can't resolve this conflict!"
             else if file
                 doc._rev = file._rev
+                doc.remote ?= file.remote
                 doc.creationDate ?= file.creationDate
                 if @sameBinary file, doc
                     doc.size  ?= file.size
