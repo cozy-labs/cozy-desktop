@@ -6,7 +6,8 @@ path    = require 'path'
 request = require 'request-json-light'
 should  = require 'should'
 
-App = require '../../backend/app'
+App     = require '../../backend/app'
+PouchDB = require 'pouchdb'
 
 
 module.exports = helpers =
@@ -33,6 +34,7 @@ module.exports.ensurePreConditions = (done) ->
         should.exist files, 'Cozy Files should be running on 9121'
         done()
 
+
 module.exports.registerDevice = (done) ->
     parent = process.env.COZY_DESKTOP_DIR or 'tmp'
     @basePath = path.resolve "#{parent}/#{+new Date}"
@@ -43,6 +45,7 @@ module.exports.registerDevice = (done) ->
     @app.addRemote helpers.url, helpers.deviceName, @basePath, (err) ->
         should.not.exist err
         done()
+
 
 module.exports.clean = (done) ->
     @app.removeRemote helpers.deviceName, (err) =>
@@ -55,23 +58,22 @@ module.exports.clean = (done) ->
         else
             done()
 
-module.exports.pull = (done) ->
-    @app.instanciate() unless @app.sync
-    @app.startSync 'pull', (err) ->
+
+start = (app, mode, done) ->
+    app.instanciate() unless app.sync
+    app.startSync mode, (err) ->
         should.not.exist err
     setTimeout done, 1000
+
+module.exports.pull = (done) ->
+    start @app, 'pull', done
 
 module.exports.push = (done) ->
-    @app.instanciate() unless @app.sync
-    @app.startSync 'push', (err) ->
-        should.not.exist err
-    setTimeout done, 1000
+    start @app, 'push', done
 
 module.exports.sync = (done) ->
-    @app.instanciate() unless @app.sync
-    @app.startSync 'full', (err) ->
-        should.not.exist err
-    setTimeout done, 1000
+    start @app, 'full', done
+
 
 module.exports.fetchRemoteMetadata = (done) ->
     @app.instanciate() unless @app.sync

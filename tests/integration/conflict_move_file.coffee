@@ -15,8 +15,7 @@ describe 'Conflict when moving a file', ->
     before Cozy.ensurePreConditions
 
 
-    # TODO Add move/rename detection to local watcher
-    describe.skip 'on local', ->
+    describe 'on local', ->
         src =
             path: ''
             name: faker.name.jobArea()
@@ -30,7 +29,7 @@ describe 'Conflict when moving a file', ->
         before Files.deleteAll
 
         before 'Create the remote tree', (done) ->
-            fixturePath = path.join Cozy.fixturesDir, 'chat-mignon-mod.jpg'
+            fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'
             Files.uploadFile file, fixturePath, (err, created) ->
                 file.remote =
                     id: created.id
@@ -40,23 +39,30 @@ describe 'Conflict when moving a file', ->
         before Cozy.fetchRemoteMetadata
 
         before 'Create the local tree', ->
-            fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'
+            fixturePath = path.join Cozy.fixturesDir, 'chat-mignon-mod.jpg'
             filePath = path.join @basePath, src.path, src.name
             file.local = size: fs.statSync(fixturePath).size
             fs.copySync fixturePath, filePath
+
+        before 'Simulate works/latency for Sync', ->
+            @app.instanciate()
+            apply = @app.sync.apply
+            @app.sync.apply = (change, callback) =>
+                setTimeout =>
+                    @app.sync.apply = apply
+                    @app.sync.apply change, callback
+                , 2500
 
         before Cozy.sync
 
         after Cozy.clean
 
         it 'waits a bit to resolve the conflict', (done) ->
-            setTimeout =>
-                expectedSizes = [file.remote.size, file.local.size]
-                srcPath = path.join @basePath, src.path, src.name
-                dstPath = path.join @basePath, file.path, file.name
-                fs.renameSync srcPath, dstPath
-                setTimeout done, 1200
-            , 1200
+            expectedSizes = [file.remote.size, file.local.size]
+            srcPath = path.join @basePath, src.path, src.name
+            dstPath = path.join @basePath, file.path, file.name
+            fs.renameSync srcPath, dstPath
+            setTimeout done, 5000
 
         it 'has the two files on local', ->
             files = fs.readdirSync @basePath
