@@ -5,7 +5,8 @@ Devices = require '../../backend/devices'
 
 
 describe "Devices", ->
-    @timeout 8000
+    @slow 1000
+    @timeout 10000
 
     before Cozy.ensurePreConditions
 
@@ -55,7 +56,8 @@ describe "Devices", ->
                 password: 'xxxxxxxx'
                 deviceName: Cozy.deviceName
             Devices.unregisterDevice options, (err) ->
-                err.should.equal 'Bad credentials'
+                should.exist err
+                err.message.should.equal 'Bad credentials'
                 done()
 
         it 'unregister a device', (done) ->
@@ -79,7 +81,4 @@ describe "Devices", ->
                 should.exist body.diskSpace.totalDiskSpace
                 should.exist body.diskSpace.freeDiskSpace
                 should.exist body.diskSpace.usedDiskSpace
-                should.exist body.diskSpace.totalUnit
-                should.exist body.diskSpace.freeUnit
-                should.exist body.diskSpace.usedUnit
                 done()

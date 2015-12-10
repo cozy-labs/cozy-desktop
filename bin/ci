@@ -5,12 +5,9 @@ set -e
 export NODE_ENV=test
 export COZY_DESKTOP_DIR=tmp
 
-BIN='mocha -t 5000 --reporter spec --compilers coffee:coffee-script/register '
+BIN='mocha -s 150 -t 5000 --reporter spec --compilers coffee:coffee-script/register '
 
 $BIN tests/unit/{,local/,remote/}*.coffee
-
-# TODO
-# $BIN tests/functional/*.coffee
-# $BIN tests/integration/*.coffee
+for i in tests/integration/*.coffee; do $BIN $i; done
 
 ./node_modules/.bin/gulp lint

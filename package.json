@@ -53,13 +53,14 @@
     "node-uuid": "1.4.7",
     "path-extra": "3.0.0",
     "pouchdb": "5.1.0",
-    "printit": "0.1.10",
+    "printit": "0.1.15",
     "progress": "1.1.8",
     "read": "1.0.7",
     "request-json-light": "0.5.22"
   },
   "devDependencies": {
     "coffee-script": "^1.8.0",
+    "faker": "^3.0.1",
     "gulp": "^3.9.0",
     "gulp-coffee": "^2.2.0",
     "gulp-coffeelint": "^0.5.0",
@@ -67,6 +68,7 @@
     "gulp-mocha": "^2.2.0",
     "gulp-shell": "^0.5.1",
     "lodash.clone": "^3.0.3",
+    "lodash.find": "^3.2.1",
     "nw": "^0.12.3",
     "nw-builder": "^2.0.2",
     "pouchdb-server": "^1.0.0",

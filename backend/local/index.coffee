@@ -11,10 +11,10 @@ Watcher = require './watcher'
 # It uses a watcher, based on chokidar, to listen for file and folder changes.
 # It also applied changes from the remote cozy on the local filesystem.
 class Local
-    constructor: (config, @merge, @pouch) ->
+    constructor: (config, @prep, @pouch) ->
         @basePath = config.getDevice().path
         @tmpPath  = path.join @basePath, ".cozy-desktop"
-        @watcher  = new Watcher @basePath, @merge, @pouch
+        @watcher  = new Watcher @basePath, @prep, @pouch
         @other    = null
 
     # Start initial replication + watching changes in live
@@ -22,10 +22,14 @@ class Local
         fs.ensureDir @basePath, =>
             @watcher.start done
 
+    # Stop watching the file system
+    stop: ->
+        @watcher.stop()
+
     # Create a readable stream for the given doc
     createReadStream: (doc, callback) ->
         try
-            filePath = path.resolve @basePath, doc._id
+            filePath = path.resolve @basePath, doc.path
             stream = fs.createReadStream filePath
             callback null, stream
         catch err
@@ -37,7 +41,7 @@ class Local
 
     # Return a function that will update last modification date
     utimesUpdater: (doc) =>
-        filePath = path.resolve @basePath, doc._id
+        filePath = path.resolve @basePath, doc.path
         (callback) ->
             if doc.lastModification
                 lastModification = new Date doc.lastModification
@@ -60,35 +64,36 @@ class Local
                 callback null, false
             else
                 paths = for doc in docs when @isUpToDate doc
-                    path.resolve @basePath, doc._id
+                    path.resolve @basePath, doc.path
                 async.detect paths, fs.exists, (foundPath) ->
                     callback null, foundPath
 
 
     ### Write operations ###
 
+    # Add a new file, or replace an existing one
+    #
     # Steps to create a file:
-    #   * Checks if the doc is valid: has a path and a name
-    #   * Ensure that the temporary directory exists
     #   * Try to find a similar file based on his checksum
     #     (in that case, it just requires a local copy)
-    #   * Download the linked binary from remote
+    #   * Or download the linked binary from remote
     #   * Write to a temporary file
     #   * Ensure parent folder exists
     #   * Move the temporay file to its final destination
     #   * Update creation and last modification dates
     #
-    # Note: this method is used for adding a new file
-    # or replacing an existing one
+    # Note: if no checksum was available for this file, we download the file
+    # from the remote document. Later, chokidar will fire an event for this new
+    # file. The checksum will then be computed and added to the document, and
+    # then pushed to CouchDB.
     #
     # TODO verify the checksum -> remove file if not ok
-    # TODO save the checksum if it didn't have one
     addFile: (doc, callback) =>
-        tmpFile  = path.resolve @tmpPath, path.basename doc._id
-        filePath = path.resolve @basePath, doc._id
-        parent   = path.resolve @basePath, path.dirname doc._id
+        tmpFile  = path.resolve @tmpPath, path.basename doc.path
+        filePath = path.resolve @basePath, doc.path
+        parent   = path.resolve @basePath, path.dirname doc.path
 
-        log.info "put file #{filePath}"
+        log.info "Put file #{filePath}"
 
         async.waterfall [
             (next) =>
@@ -125,8 +130,8 @@ class Local
 
     # Create a new folder
     addFolder: (doc, callback) =>
-        folderPath = path.join @basePath, doc._id
-        log.info "put folder #{folderPath}"
+        folderPath = path.join @basePath, doc.path
+        log.info "Put folder #{folderPath}"
         fs.ensureDir folderPath, (err) =>
             if err
                 callback err
@@ -150,9 +155,10 @@ class Local
     # Move a file from one place to another
     # TODO verify checksum
     moveFile: (doc, old, callback) =>
-        oldPath = path.join @basePath, old._id
-        newPath = path.join @basePath, doc._id
-        parent  = path.join @basePath, path.dirname doc._id
+        log.info "Move file #{old.path} → #{doc.path}"
+        oldPath = path.join @basePath, old.path
+        newPath = path.join @basePath, doc.path
+        parent  = path.join @basePath, path.dirname doc.path
 
         async.waterfall [
             (next) ->
@@ -182,9 +188,10 @@ class Local
 
     # Move a folder
     moveFolder: (doc, old, callback) =>
-        oldPath = path.join @basePath, old._id
-        newPath = path.join @basePath, doc._id
-        parent  = path.join @basePath, path.dirname doc._id
+        log.info "Move folder #{old.path} → #{doc.path}"
+        oldPath = path.join @basePath, old.path
+        newPath = path.join @basePath, doc.path
+        parent  = path.join @basePath, path.dirname doc.path
 
         async.waterfall [
             (next) ->
@@ -215,13 +222,21 @@ class Local
 
     # Delete a file from the local filesystem
     deleteFile: (doc, callback) =>
-        log.info "delete #{doc._id}"
-        fullpath = path.join @basePath, doc._id
+        log.info "Delete #{doc.path}"
+        fullpath = path.join @basePath, doc.path
         fs.remove fullpath, callback
 
     # Delete a folder from the local filesystem
     deleteFolder: (doc, callback) =>
         # For now both operations are similar
         @deleteFile doc, callback
+
+    # Rename a file/folder to resolve a conflict
+    resolveConflict: (dst, src, callback) =>
+        log.info "Resolve a conflict: #{src.path} → #{dst.path}"
+        srcPath = path.join @basePath, src.path
+        dstPath = path.join @basePath, dst.path
+        fs.rename srcPath, dstPath, callback
+
 
 module.exports = Local

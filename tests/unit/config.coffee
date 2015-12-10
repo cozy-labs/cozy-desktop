@@ -72,6 +72,7 @@ describe 'Config', ->
         it 'throws an error for incompatible mode', ->
             @config.setMode 'push'
             should.throws((=> @config.setMode 'pull'), /Incompatible mode/)
+            should.throws((=> @config.setMode 'full'), /Incompatible mode/)
 
     describe 'setInsecure', ->
         it 'sets the insecure flag', ->

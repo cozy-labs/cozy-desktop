@@ -7,6 +7,7 @@ Config  = require './config'
 Devices = require './devices'
 Pouch   = require './pouch'
 Merge   = require './merge'
+Prep    = require './prep'
 Local   = require './local'
 Remote  = require './remote'
 Sync    = require './sync'
@@ -35,7 +36,7 @@ class App
     # to the config file
     #
     # TODO validation of url, deviceName and syncPath
-    addRemote: (url, deviceName, syncPath) =>
+    addRemote: (url, deviceName, syncPath, callback) =>
         async.waterfall [
             @askPassword,
             (password, next) ->
@@ -57,21 +58,19 @@ class App
                 @config.addRemoteCozy options
                 log.info 'The remote Cozy has properly been configured ' +
                     'to work with current device.'
+            callback? err
 
 
     # Unregister current device from remote Cozy and then remove remote from
     # the config file
     # TODO also remove the pouch database
-    removeRemote: (deviceName) =>
+    removeRemote: (deviceName, callback) =>
         device = @config.getDevice deviceName
         async.waterfall [
             @askPassword,
             (password, next) ->
-                options =
-                    url: device.url
-                    deviceId: device.deviceId
-                    password: password
-                Devices.unregisterDevice options, next
+                device.password = password
+                Devices.unregisterDevice device, next
         ], (err) =>
             if err
                 log.error err
@@ -79,26 +78,44 @@ class App
             else
                 @config.removeRemoteCozy deviceName
                 log.info 'Current device properly removed from remote cozy.'
+            callback? err
+
+
+    # Instanciate some objects before sync
+    instanciate: ->
+        @merge  = new Merge @pouch
+        @prep   = new Prep @merge
+        @local  = @merge.local  = new Local  @config, @prep, @pouch
+        @remote = @merge.remote = new Remote @config, @prep, @pouch
+        @sync   = new Sync @pouch, @local, @remote
+
+
+    # Start the synchronization
+    startSync: (mode, callback) ->
+        @config.setMode mode
+        log.info 'Run first synchronisation...'
+        @sync.start mode, (err) ->
+            if err
+                log.error err
+                log.error err.stack if err.stack
+            callback? err
+
+
+    # Stop the synchronisation
+    stopSync: (callback) ->
+        @sync.stop callback
 
 
     # Start database sync process and setup file change watcher
-    sync: (mode) =>
-        @merge  = new Merge @pouch
-        @local  = new Local  @config, @merge, @pouch
-        @remote = new Remote @config, @merge, @pouch
-        @sync   = new Sync @pouch, @local, @remote
-        device  = @config.getDevice()
+    synchronize: (mode, callback) =>
+        @instanciate()
+        device = @config.getDevice()
         if device.deviceName? and device.url? and device.path?
-            @config.setMode mode
-            log.info 'Run first synchronisation...'
-            @sync.start mode, (err) ->
-                if err
-                    log.error err
-                    log.error err.stack if err.stack
-                    process.exit 1  # TODO don't exit for GUI
+            @startSync mode, callback
         else
             log.error 'No configuration found, please run add-remote-cozy' +
                 'command before running a synchronization.'
+            callback? new Error 'No config'
 
 
     # Recreate the local pouch database

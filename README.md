@@ -64,12 +64,10 @@ To hack the synchronization backend, you can just edit the files under the
 There are several levels of tests in cozy-desktop:
 
 - unit tests, for testing a class in isolation, method per method
-- functional tests, for testing a behaviour that requires the collaboration of
-  several classes, but still in a mock environment
 - integration tests, to test the communication between cozy-desktop and a
   remote cozy stack (proxy, data-system, files, etc.)
 
-Unit and functional tests are easy to launch:
+Unit tests are easy to launch:
 
 ```
 # Make sure to have dev dependencies installed
@@ -86,14 +84,17 @@ DEBUG=true COZY_DESKTOP_DIR=tmp mocha --compilers coffee:coffee-script/register 
 DEBUG=pouchdb:api COZY_DESKTOP_DIR=tmp mocha --compilers coffee:coffee-script/register tests/unit/pouch.coffee
 ```
 
-Integration tests require that you have the Cozy dev VM up (it means a
-data-system and a proxy up and running) and that the files application is
+Integration tests require that you have the Cozy dev VM up (it means CouchDB,
+a data-system and a proxy up and running) and that the files application is
 accessible on the 9121 port. It's also expected that a user is registered with
 `cozytest` as password.
 
 ```
 COZY_DESKTOP_DIR=tmp mocha --compilers coffee:coffee-script/register tests/integration/*.coffee
 ```
+
+**Important**: the integration tests remove all the files and folders on the
+Cozy!
 
 
 ## Limitations
@@ -134,6 +135,11 @@ it simple and easy. So, it has some limitations:
   - a reasonable size for files and folders path (< 1024 bytes)
   - not too many changes
   - etc.
+
+- For OSX, filenames with weird unicode characters may be problematic in some
+  rare cases.
+
+- Symbolic links and ACL are not yet handled.
 
 - The full sync directory must be on the same partition.
 

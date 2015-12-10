@@ -25,6 +25,7 @@ class Sync
     #
     # The callback is called only for an error
     start: (mode, callback) =>
+        @stopped = false
         tasks = [
             (next) => @pouch.addAllViews next
         ]
@@ -36,9 +37,21 @@ class Sync
             else
                 async.forever @sync, callback
 
+    # Stop the synchronization
+    # TODO use correctly the callback + add unit test
+    stop: (callback) =>
+        @stopped = true
+        if @changes
+            @changes.cancel()
+            @changes = null
+        @local.stop()
+        @remote.stop()
+        callback()
+
     # Start taking changes from pouch and applying them
     sync: (callback) =>
         @pop (err, change) =>
+            return if @stopped
             if err
                 log.error err
                 callback err
@@ -51,7 +64,6 @@ class Sync
     # Note: it is difficult to pick only one change at a time because pouch can
     # emit several docs in a row, and `limit: 1` seems to be not effective!
     pop: (callback) =>
-        done = false
         @pouch.getLocalSeq (err, seq) =>
             return callback err if err
             opts =
@@ -62,15 +74,16 @@ class Sync
                 returnDocs: false
                 filter: '_view'
                 view: 'byPath'
-            @pouch.db.changes(opts)
-                .on 'change', (info) ->
-                    unless done
-                        done = true
-                        @cancel()
+            @changes = @pouch.db.changes(opts)
+                .on 'change', (info) =>
+                    if @changes
+                        @changes.cancel()
+                        @changes = null
                         callback null, info
-                .on 'error',  (err) ->
-                    done = true
-                    callback err, null
+                .on 'error', (err) =>
+                    if @changes
+                        @changes = null
+                        callback err, null
 
     # Apply a change to both local and remote
     # At least one side should say it has already this change
@@ -103,12 +116,11 @@ class Sync
         else if remoteRev > localRev
             return [@local, 'local', localRev]
         else
+            log.debug 'Nothing to do'
             return []
 
     # Keep track of the sequence number, save side rev, and log errors
     # TODO when applying a change fails, put it again in some queue for retry
-    # TODO add an integration test where a file is deleted and then recreated
-    # TODO add an integration test where a file is moved and then moved back
     applied: (change, side, callback) =>
         (err) =>
             if err
@@ -122,10 +134,22 @@ class Sync
                     if doc._deleted
                         callback err
                     else
+                        # TODO move this to another method + add tests
                         rev = @pouch.extractRevNumber(doc) + 1
-                        for side in ['local', 'remote']
-                            doc.sides[side] = rev
-                        @pouch.db.put doc, callback
+                        for s in ['local', 'remote']
+                            doc.sides[s] = rev
+                        @pouch.db.put doc, (err) =>
+                            # TODO explain conflict if the doc was updated
+                            # (e.g thumbnail added by the remote)
+                            if err?.status is 409
+                                @pouch.db.get doc._id, (err, doc) =>
+                                    if err
+                                        callback err
+                                    else
+                                        doc.sides[side] = rev
+                                        @pouch.db.put doc, callback
+                            else
+                                callback err
 
     # If a file has been changed, we had to check what operation it is.
     # For a move, the first call will just keep a reference to the document,

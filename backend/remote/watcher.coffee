@@ -10,9 +10,14 @@ log   = require('printit')
 # TODO add comments
 # TODO refactor unit tests
 class RemoteWatcher
-    constructor: (@couch, @merge, @pouch) ->
+    constructor: (@couch, @prep, @pouch) ->
         @side = 'remote'
         @pending = 0
+
+    # Stop listening to couchdb
+    stopListening: ->
+        @changes?.cancel()
+        @changes = null
 
     # First time replication (when the databases is blank)
     #
@@ -84,7 +89,7 @@ class RemoteWatcher
                     @whenReady callback
 
     # TODO comments, tests
-    whenReady: (callback) =>
+    whenReady: (callback=->) =>
         if @pending is 0
             callback()
         else
@@ -104,7 +109,7 @@ class RemoteWatcher
                     # It's fine if the file was deleted on local and on remote
                     callback()
                 else
-                    @merge.deleteDoc @side, was, callback
+                    @prep.deleteDoc @side, was, callback
             else if doc.docType in ['folder', 'Folder'] or doc.binary?.file
                 @putDoc doc, was, callback
             else
@@ -119,7 +124,7 @@ class RemoteWatcher
         docPath = remote.path or ''
         docName = remote.name or ''
         doc =
-            _id: path.join docPath, docName
+            path: path.join docPath, docName
             docType: remote.docType.toLowerCase()
             creationDate: remote.creationDate
             lastModification: remote.lastModification
@@ -137,24 +142,24 @@ class RemoteWatcher
     # Transform the doc and save it in pouchdb
     #
     # In CouchDB, the filepath is in the path and name fields.
-    # In PouchDB, the filepath is in the _id.
+    # In PouchDB, the filepath is in the path only.
     # And the _id/_rev from CouchDB are saved in the remote field in PouchDB.
     putDoc: (remote, was, callback) =>
         doc = @createLocalDoc remote
-        if @merge.invalidId doc
+        if @prep.invalidPath doc
             log.error "Invalid id"
             log.error doc
             callback new Error 'Invalid path/name'
         else if not was
-            @merge.addDoc @side, doc, callback
-        else if was._id is doc._id
-            @merge.updateDoc @side, doc, callback
+            @prep.addDoc @side, doc, callback
+        else if was.path is doc.path
+            @prep.updateDoc @side, doc, callback
         else if doc.checksum? and was.checksum is doc.checksum
-            @merge.moveDoc @side, doc, was, callback
+            @prep.moveDoc @side, doc, was, callback
         else
-            @merge.deleteDoc @side, was, (err) =>
+            @prep.deleteDoc @side, was, (err) =>
                 log.error err if err
-                @merge.addDoc @side, doc, callback
+                @prep.addDoc @side, doc, callback
 
     # Keep track of the sequence number and log errors
     # TODO test pending counts

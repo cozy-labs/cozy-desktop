@@ -64,6 +64,7 @@ describe "Sync", ->
             @remote = {}
             @sync = new Sync @pouch, @local, @remote
             @sync.apply = sinon.stub().yields()
+            @sync.running = true
 
         it 'calls pop and apply', (done) ->
             @sync.pop = sinon.stub().yields null, { change: true }

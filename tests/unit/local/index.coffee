@@ -17,8 +17,8 @@ describe 'Local', ->
     before 'instanciate config', configHelpers.createConfig
     before 'instanciate pouch', pouchHelpers.createDatabase
     before 'instanciate local', ->
-        @merge = {}
-        @local = new Local @config, @merge, @pouch
+        @prep = {}
+        @local = new Local @config, @prep, @pouch
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
 
@@ -34,7 +34,7 @@ describe 'Local', ->
 
     describe 'createReadStream', ->
         it 'throws an error if no file for this document', (done) ->
-            doc = _id: 'no-such-file'
+            doc = path: 'no-such-file'
             @local.createReadStream doc, (err, stream) ->
                 should.exist err
                 err.message.should.equal 'Cannot read the file'
@@ -45,7 +45,7 @@ describe 'Local', ->
             dst = path.join @basePath, 'read-stream.jpg'
             fs.copySync src, dst
             doc =
-                _id: 'read-stream.jpg'
+                path: 'read-stream.jpg'
                 checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
             @local.createReadStream doc, (err, stream) ->
                 should.not.exist err
@@ -65,7 +65,7 @@ describe 'Local', ->
             filePath = path.join @basePath, "utimes-file"
             fs.ensureFileSync filePath
             updater = @local.utimesUpdater
-                _id: 'utimes-file'
+                path: 'utimes-file'
                 lastModification: date
             updater (err) ->
                 should.not.exist err
@@ -78,7 +78,7 @@ describe 'Local', ->
             folderPath = path.join @basePath, "utimes-folder"
             fs.ensureDirSync folderPath
             updater = @local.utimesUpdater
-                _id: 'utimes-folder'
+                path: 'utimes-folder'
                 lastModification: date
             updater (err) ->
                 should.not.exist err
@@ -92,6 +92,7 @@ describe 'Local', ->
             doc =
                 _id: 'foo/bar'
                 _rev: '1-0123456'
+                path: 'foo/bar'
                 docType: 'file'
                 checksum: '22f7aca0d717eb322d5ae1c97d8aa26eb440287b'
                 sides:
@@ -114,6 +115,7 @@ describe 'Local', ->
                 fs.ensureFileSync filePath
                 doc =
                     _id: 'folder/testfile'
+                    path: 'folder/testfile'
                     docType: 'file'
                     checksum: 'deadcafe'
                     sides:
@@ -129,7 +131,7 @@ describe 'Local', ->
     describe 'addFile', ->
         it 'creates the file by downloading it', (done) ->
             doc =
-                _id: 'files/file-from-remote'
+                path: 'files/file-from-remote'
                 lastModification: new Date '2015-10-09T04:05:06Z'
                 checksum: '9876'
             @local.other =
@@ -142,7 +144,7 @@ describe 'Local', ->
                         stream.push null
                     , 100
                     callback null, stream
-            filePath = path.join @basePath, doc._id
+            filePath = path.join @basePath, doc.path
             @local.addFile doc, (err) =>
                 @local.other = null
                 should.not.exist err
@@ -155,13 +157,13 @@ describe 'Local', ->
 
         it 'creates the file from another file with same checksum', (done) ->
             doc =
-                _id: 'files/file-with-same-checksum'
+                path: 'files/file-with-same-checksum'
                 lastModification: new Date '2015-10-09T04:05:07Z'
                 checksum: '456'
             alt = path.join @basePath, 'files', 'my-checkum-is-456'
             fs.writeFileSync alt, 'foo bar baz'
             stub = sinon.stub(@local, "fileExistsLocally").yields null, alt
-            filePath = path.join @basePath, doc._id
+            filePath = path.join @basePath, doc.path
             @local.addFile doc, (err) ->
                 stub.restore()
                 stub.calledWith('456').should.be.true()
@@ -173,11 +175,9 @@ describe 'Local', ->
                 mtime.should.equal +doc.lastModification
                 done()
 
-        it 'preserves the existing file if the download fails'
-
         it 'can create a file in the root', (done) ->
             doc =
-                _id: 'file-in-root'
+                path: 'file-in-root'
                 lastModification: new Date '2015-10-09T04:05:19Z'
                 checksum: '987642'
             @local.other =
@@ -190,7 +190,7 @@ describe 'Local', ->
                         stream.push null
                     , 100
                     callback null, stream
-            filePath = path.join @basePath, doc._id
+            filePath = path.join @basePath, doc.path
             @local.addFile doc, (err) =>
                 @local.other = null
                 should.not.exist err
@@ -205,9 +205,9 @@ describe 'Local', ->
     describe 'addFolder', ->
         it 'creates the folder', (done) ->
             doc =
-                _id: 'parent/folder-to-create'
+                path: 'parent/folder-to-create'
                 lastModification: new Date '2015-10-09T05:06:08Z'
-            folderPath = path.join @basePath, doc._id
+            folderPath = path.join @basePath, doc.path
             @local.addFolder doc, (err) ->
                 should.not.exist err
                 fs.statSync(folderPath).isDirectory().should.be.true()
@@ -217,9 +217,9 @@ describe 'Local', ->
 
         it 'updates mtime if the folder already exists', (done) ->
             doc =
-                _id: 'parent/folder-to-create'
+                path: 'parent/folder-to-create'
                 lastModification: new Date '2015-10-09T05:06:08Z'
-            folderPath = path.join @basePath, doc._id
+            folderPath = path.join @basePath, doc.path
             fs.ensureDirSync folderPath
             @local.addFolder doc, (err) ->
                 should.not.exist err
@@ -232,7 +232,7 @@ describe 'Local', ->
     describe 'overwriteFile', ->
         it 'writes the new content of a file', (done) ->
             doc =
-                _id: 'a-file-to-overwrite'
+                path: 'a-file-to-overwrite'
                 docType: 'file'
                 lastModification: new Date '2015-10-09T05:06:07Z'
                 checksum: '98765'
@@ -246,7 +246,7 @@ describe 'Local', ->
                         stream.push null
                     , 100
                     callback null, stream
-            filePath = path.join @basePath, doc._id
+            filePath = path.join @basePath, doc.path
             fs.writeFileSync filePath, 'old content'
             @local.overwriteFile doc, {}, (err) =>
                 @local.other = null
@@ -262,10 +262,10 @@ describe 'Local', ->
     describe 'updateFileMetadata', ->
         it 'updates metadata', (done) ->
             doc =
-                _id: 'file-to-update'
+                path: 'file-to-update'
                 docType: 'file'
                 lastModification: new Date '2015-11-10T05:06:07Z'
-            filePath = path.join @basePath, doc._id
+            filePath = path.join @basePath, doc.path
             fs.ensureFileSync filePath
             @local.updateFileMetadata doc, {}, (err) ->
                 should.not.exist err
@@ -278,7 +278,7 @@ describe 'Local', ->
     describe 'updateFolder', ->
         it 'calls addFolder', (done) ->
             doc =
-                _id: 'a-folder-to-update'
+                path: 'a-folder-to-update'
                 docType: 'folder'
                 lastModification: new Date
             sinon.stub(@local, 'addFolder').yields()
@@ -292,13 +292,13 @@ describe 'Local', ->
     describe 'moveFile', ->
         it 'moves the file', (done) ->
             old =
-                _id: 'old-parent/file-to-move'
+                path: 'old-parent/file-to-move'
                 lastModification: new Date '2016-10-08T05:05:09Z'
             doc =
-                _id: 'new-parent/file-moved'
+                path: 'new-parent/file-moved'
                 lastModification: new Date '2015-10-09T05:05:10Z'
-            oldPath = path.join @basePath, old._id
-            newPath = path.join @basePath, doc._id
+            oldPath = path.join @basePath, old.path
+            newPath = path.join @basePath, doc.path
             fs.ensureDirSync path.dirname oldPath
             fs.writeFileSync oldPath, 'foobar'
             @local.moveFile doc, old, (err) ->
@@ -313,10 +313,10 @@ describe 'Local', ->
 
         it 'creates the file is the current file is missing', (done) ->
             old =
-                _id: 'old-parent/missing-file'
+                path: 'old-parent/missing-file'
                 lastModification: new Date '2016-10-08T05:05:11Z'
             doc =
-                _id: 'new-parent/recreated-file'
+                path: 'new-parent/recreated-file'
                 lastModification: new Date '2015-10-09T05:05:12Z'
             stub = sinon.stub(@local, "addFile").yields()
             @local.moveFile doc, old, (err) ->
@@ -327,12 +327,12 @@ describe 'Local', ->
 
         it 'does nothing if the file has already been moved', (done) ->
             old =
-                _id: 'old-parent/already-moved'
+                path: 'old-parent/already-moved'
                 lastModification: new Date '2016-10-08T05:05:11Z'
             doc =
-                _id: 'new-parent/already-here'
+                path: 'new-parent/already-here'
                 lastModification: new Date '2015-10-09T05:05:12Z'
-            newPath = path.join @basePath, doc._id
+            newPath = path.join @basePath, doc.path
             fs.ensureDirSync path.dirname newPath
             fs.writeFileSync newPath, 'foobar'
             stub = sinon.stub(@local, "addFile").yields()
@@ -348,15 +348,15 @@ describe 'Local', ->
     describe 'moveFolder', ->
         it 'moves the folder', (done) ->
             old =
-                _id: 'old-parent/folder-to-move'
+                path: 'old-parent/folder-to-move'
                 docType: 'folder'
                 lastModification: new Date '2016-10-08T05:06:09Z'
             doc =
-                _id: 'new-parent/folder-moved'
+                path: 'new-parent/folder-moved'
                 docType: 'folder'
                 lastModification: new Date '2015-10-09T05:06:10Z'
-            oldPath = path.join @basePath, old._id
-            folderPath = path.join @basePath, doc._id
+            oldPath = path.join @basePath, old.path
+            folderPath = path.join @basePath, doc.path
             fs.ensureDirSync oldPath
             @local.moveFolder doc, old, (err) ->
                 should.not.exist err
@@ -368,14 +368,14 @@ describe 'Local', ->
 
         it 'creates the folder is the current directory is missing', (done) ->
             old =
-                _id: 'old-parent/missing-folder'
+                path: 'old-parent/missing-folder'
                 docType: 'folder'
                 lastModification: new Date '2016-10-08T05:06:09Z'
             doc =
-                _id: 'new-parent/recreated-folder'
+                path: 'new-parent/recreated-folder'
                 docType: 'folder'
                 lastModification: new Date '2015-10-09T05:06:10Z'
-            folderPath = path.join @basePath, doc._id
+            folderPath = path.join @basePath, doc.path
             @local.moveFolder doc, old, (err) ->
                 should.not.exist err
                 fs.statSync(folderPath).isDirectory().should.be.true()
@@ -385,12 +385,12 @@ describe 'Local', ->
 
         it 'does nothing if the folder has already been moved', (done) ->
             old =
-                _id: 'old-parent/folder-already-moved'
+                path: 'old-parent/folder-already-moved'
                 lastModification: new Date '2016-10-08T05:05:11Z'
             doc =
-                _id: 'new-parent/folder-already-here'
+                path: 'new-parent/folder-already-here'
                 lastModification: new Date '2015-10-09T05:05:12Z'
-            newPath = path.join @basePath, doc._id
+            newPath = path.join @basePath, doc.path
             fs.ensureDirSync newPath
             stub = sinon.stub(@local, "addFolder").yields()
             @local.moveFolder doc, old, (err) ->
@@ -402,13 +402,13 @@ describe 'Local', ->
 
         it 'remove the old directory if everything has been moved', (done) ->
             old =
-                _id: 'old-parent/folder-already-moved'
+                path: 'old-parent/folder-already-moved'
                 lastModification: new Date '2016-10-08T05:05:11Z'
             doc =
-                _id: 'new-parent/folder-already-here'
+                path: 'new-parent/folder-already-here'
                 lastModification: new Date '2015-10-09T05:05:12Z'
-            oldPath = path.join @basePath, old._id
-            newPath = path.join @basePath, doc._id
+            oldPath = path.join @basePath, old.path
+            newPath = path.join @basePath, doc.path
             fs.ensureDirSync oldPath
             fs.ensureDirSync newPath
             stub = sinon.stub(@local, "addFolder").yields()
@@ -424,9 +424,10 @@ describe 'Local', ->
     describe 'deleteFile', ->
         it 'deletes a file from the local filesystem', (done) ->
             doc =
-                _id: 'file-to-delete'
+                _id: 'FILE-TO-DELETE'
+                path: 'FILE-TO-DELETE'
                 docType: 'file'
-            filePath = path.join @basePath, "file-to-delete"
+            filePath = path.join @basePath, doc.path
             fs.ensureFileSync filePath
             @pouch.db.put doc, (err, inserted) =>
                 should.not.exist err
@@ -442,9 +443,10 @@ describe 'Local', ->
     describe 'deleteFolder', ->
         it 'deletes a folder from the local filesystem', (done) ->
             doc =
-                _id: 'folder-to-delete'
+                _id: 'FOLDER-TO-DELETE'
+                path: 'FOLDER-TO-DELETE'
                 docType: 'folder'
-            folderPath = path.join @basePath, "folder-to-delete"
+            folderPath = path.join @basePath, doc.path
             fs.ensureDirSync folderPath
             fs.ensureFileSync path.join(folderPath, "file-inside-folder")
             @pouch.db.put doc, (err, inserted) =>
@@ -456,3 +458,24 @@ describe 'Local', ->
                         should.not.exist err
                         fs.existsSync(folderPath).should.be.false()
                         done()
+
+
+    describe 'resolveConflict', ->
+        it 'renames the file', (done) ->
+            src =
+                path: 'conflict/file'
+                lastModification: new Date '2015-10-08T05:05:09Z'
+            dst =
+                path: 'conflict/file-conflict-2015-10-09T05:05:10Z'
+                lastModification: new Date '2015-10-09T05:05:10Z'
+            srcPath = path.join @basePath, src.path
+            dstPath = path.join @basePath, dst.path
+            fs.ensureDirSync path.dirname srcPath
+            fs.writeFileSync srcPath, 'foobar'
+            @local.resolveConflict dst, src, (err) ->
+                should.not.exist err
+                fs.existsSync(srcPath).should.be.false()
+                fs.statSync(dstPath).isFile().should.be.true()
+                enc = encoding: 'utf-8'
+                fs.readFileSync(dstPath, enc).should.equal 'foobar'
+                done()

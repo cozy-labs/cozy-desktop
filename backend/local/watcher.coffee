@@ -19,7 +19,7 @@ log      = require('printit')
 # TODO - track inodes
 class LocalWatcher
 
-    constructor: (@basePath, @merge, @pouch) ->
+    constructor: (@basePath, @prep, @pouch) ->
         @side = 'local'
 
     # Start chokidar, the filesystem watcher
@@ -58,6 +58,11 @@ class LocalWatcher
             .on 'ready', @onReady(callback)
             .on 'error', (err) -> log.error err
 
+    # Stop chokidar watcher
+    stop: ->
+        @watcher?.close()
+        @watcher = null
+
 
     ### Helpers ###
 
@@ -68,7 +73,7 @@ class LocalWatcher
         [mimeType, fileClass] = @getFileClass absPath
         @checksum absPath, (err, checksum) ->
             doc =
-                _id: filePath
+                path: filePath
                 docType: 'file'
                 checksum: checksum
                 creationDate: stats.ctime
@@ -116,7 +121,7 @@ class LocalWatcher
             if err
                 log.debug err
             else
-                @merge.addFile @side, doc, @done
+                @prep.addFile @side, doc, @done
 
     # New directory detected
     onAddDir: (folderPath, stats) =>
@@ -124,21 +129,21 @@ class LocalWatcher
             log.debug 'Folder added', folderPath
             @paths?.push folderPath
             doc =
-                _id: folderPath
+                path: folderPath
                 docType: 'folder'
                 creationDate: stats.ctime
                 lastModification: stats.mtime
-            @merge.putFolder @side, doc, @done
+            @prep.putFolder @side, doc, @done
 
     # File deletion detected
     onUnlink: (filePath) =>
         log.debug 'File deleted', filePath
-        @merge.deleteFile @side, _id: filePath, @done
+        @prep.deleteFile @side, path: filePath, @done
 
     # Folder deletion detected
     onUnlinkDir: (folderPath) =>
         log.debug 'Folder deleted', folderPath
-        @merge.deleteFolder @side, _id: folderPath, @done
+        @prep.deleteFolder @side, path: folderPath, @done
 
     # File update detected
     onChange: (filePath, stats) =>
@@ -147,7 +152,7 @@ class LocalWatcher
             if err
                 log.debug err
             else
-                @merge.updateFile @side, doc, @done
+                @prep.updateFile @side, doc, @done
 
     # Try to detect removed files&folders
     # after chokidar has finished its initial scan
@@ -158,10 +163,11 @@ class LocalWatcher
                     callback err
                 else
                     async.eachSeries docs.reverse(), (doc, next) =>
+                        # TODO _id vs path -> normalize @paths
                         if doc._id in @paths
                             next()
                         else
-                            @merge.deleteDoc @side, doc, next
+                            @prep.deleteDoc @side, doc, next
                     , (err) =>
                         @paths = null
                         callback err

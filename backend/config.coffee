@@ -79,7 +79,7 @@ class Config
         else
             null
 
-    # Set the pull or push mode for this device
+    # Set the pull, push or full mode for this device
     # It wan throw an exception if the mode is not compatible with the last
     # mode used!
     setMode: (mode, deviceName) ->
@@ -90,7 +90,7 @@ class Config
                 when old is mode
                     true
                 when old?
-                    throw new Error 'Incompatible mode' if old?
+                    throw new Error 'Incompatible mode'
                 else
                     @devices[deviceName].mode = mode
                     @save()

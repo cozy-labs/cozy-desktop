@@ -1,7 +1,5 @@
 async   = require 'async'
-isEqual = require 'lodash.isequal'
 path    = require 'path'
-pick    = require 'lodash.pick'
 log     = require('printit')
     prefix: 'Remote writer '
 
@@ -18,9 +16,9 @@ Watcher = require './watcher'
 # the local pouchdb are similar, but not exactly the same. A transformation is
 # needed in both ways.
 class Remote
-    constructor: (@config, @merge, @pouch) ->
+    constructor: (@config, @prep, @pouch) ->
         @couch   = new Couch @config
-        @watcher = new Watcher @couch, @merge, @pouch
+        @watcher = new Watcher @couch, @prep, @pouch
         @other   = null
 
     # Start initial replication + watching changes in live
@@ -28,6 +26,10 @@ class Remote
         @watcher.listenToChanges live: false, (err) =>
             done err
             @watcher.listenToChanges live: true unless err
+
+    # Stop listening to couchdb changes
+    stop: ->
+        @watcher.stopListening()
 
     # Create a readable stream for the given doc
     createReadStream: (doc, callback) =>
@@ -54,7 +56,9 @@ class Remote
                 binary._rev = created.rev
                 @other.createReadStream doc, next
             (stream, next) =>
-                @couch.uploadAsAttachment binary._id, binary._rev, stream, next
+                {_id, _rev} = binary
+                mime = doc.mime or 'application/octet-stream'
+                @couch.uploadAsAttachment _id, _rev, mime, stream, next
         ], (err) ->
             if err and binary._rev
                 @couch.remove binary._id, binary._rev, -> callback err
@@ -72,7 +76,7 @@ class Remote
 
     # Transform a local document in a remote one, with optional binary ref
     createRemoteDoc: (local, remote) ->
-        [dir, name] = @extractDirAndName local._id
+        [dir, name] = @extractDirAndName local.path
         doc =
             docType: local.docType
             path: dir
@@ -104,64 +108,18 @@ class Remote
                     else
                         @couch.remove doc._id, doc._rev, callback
 
-    # Compare two remote docs and say if they are the same,
-    # i.e. can we replace one by the other with no impact
-    sameRemoteDoc: (one, two) ->
-        fields = ['path', 'name', 'creationDate', 'checksum', 'size']
-        one = pick one, fields
-        two = pick two, fields
-        return isEqual one, two
-
-    # Put the document on the remote cozy
-    # In case of a conflict in CouchDB, try to see if the changes on the remote
-    # sides are trivial and can be ignored.
-    # TODO add an integration test where an image is added, updated and removed
-    putRemoteDoc: (doc, old, callback) =>
-        @couch.put doc, (err, created) =>
-            if err?.status is 409
-                oldRemote = {}
-                oldRemote = @createRemoteDoc old if old
-                @couch.get doc._id, (err, remoteDoc) =>
-                    if err
-                        callback err
-                    else if @sameRemoteDoc remoteDoc, oldRemote
-                        doc._rev = remoteDoc._rev
-                        @couch.put doc, callback
-                    else
-                        callback new Error 'Conflict'
-            else
-                callback err, created
-
-    # Remove a remote document
-    # In case of a conflict in CouchDB, try to see if the changes on the remote
-    # sides are trivial and can be ignored.
-    removeRemoteDoc: (doc, callback) =>
-        doc._deleted = true
-        @couch.put doc, (err, removed) =>
-            if err?.status is 409
-                @couch.get doc._id, (err, current) =>
-                    if err
-                        callback err
-                    else if @sameRemoteDoc current, doc
-                        current._deleted = true
-                        @couch.put current, callback
-                    else
-                        callback new Error 'Conflict'
-            else
-                callback err, removed
-
 
     ### Write operations ###
 
     # Create a file on the remote cozy instance
     # It can also be an overwrite of the file
     addFile: (doc, callback) =>
-        log.info "Add file #{doc._id}"
+        log.info "Add file #{doc.path}"
         @addOrOverwriteFile doc, null, callback
 
     # Create a folder on the remote cozy instance
     addFolder: (doc, callback) =>
-        log.info "Add folder #{doc._id}"
+        log.info "Add folder #{doc.path}"
         folder = @createRemoteDoc doc
         @couch.put folder, (err, created) ->
             unless err
@@ -172,7 +130,7 @@ class Remote
 
     # Overwrite a file
     overwriteFile: (doc, old, callback) =>
-        log.info "Overwrite file #{doc._id}"
+        log.info "Overwrite file #{doc.path}"
         @addOrOverwriteFile doc, old, callback
 
     # Add or overwrite a file
@@ -196,7 +154,9 @@ class Remote
                     _rev: old?.remote._rev
                     binary: binaryDoc
                 remoteDoc = @createRemoteDoc doc, remote
-                @putRemoteDoc remoteDoc, old, (err, created) ->
+                remoteOld = {}
+                remoteOld = @createRemoteDoc old if old
+                @couch.putRemoteDoc remoteDoc, remoteOld, (err, created) ->
                     next err, created, binaryDoc
 
             # Save remote and clean previous binary
@@ -215,10 +175,12 @@ class Remote
 
     # Update the metadata of a file
     updateFileMetadata: (doc, old, callback) ->
-        log.info "Update file #{doc._id}"
+        log.info "Update file #{doc.path}"
         if old.remote
             remoteDoc = @createRemoteDoc doc, old.remote
-            @putRemoteDoc remoteDoc, old, (err, updated) ->
+            remoteOld = {}
+            remoteOld = @createRemoteDoc old if old
+            @couch.putRemoteDoc remoteDoc, remoteOld, (err, updated) ->
                 unless err
                     doc.remote =
                         _id:  updated.id
@@ -230,13 +192,13 @@ class Remote
 
     # Update metadata of a folder
     updateFolder: (doc, old, callback) ->
-        log.info "Update folder #{doc._id}"
+        log.info "Update folder #{doc.path}"
         if old.remote
             @couch.get old.remote._id, (err, folder) =>
                 if err
                     callback err
                 else
-                    # TODO what if folder.path+name != doc._id ?
+                    # TODO what if folder.path+name != doc.path ?
                     # TODO Or folder._rev != doc.remote._rev
                     folder.tags = doc.tags
                     folder.lastModification = doc.lastModification
@@ -251,13 +213,13 @@ class Remote
 
     # Move a file on the remote cozy instance
     moveFile: (doc, old, callback) ->
-        log.info "Move file #{old._id} → #{doc._id}"
+        log.info "Move file #{old.path} → #{doc.path}"
         if old.remote
             @couch.get old.remote._id, (err, remoteDoc) =>
                 if err
                     @addFile doc, callback
                 else
-                    [dir, name] = @extractDirAndName doc._id
+                    [dir, name] = @extractDirAndName doc.path
                     remoteDoc.path = dir
                     remoteDoc.name = name
                     remoteDoc.lastModification = doc.lastModification
@@ -273,15 +235,15 @@ class Remote
 
     # Move a folder on the remote cozy instance
     moveFolder: (doc, old, callback) =>
-        log.info "Move folder #{old._id} → #{doc._id}"
+        log.info "Move folder #{old.path} → #{doc.path}"
         if old.remote
             @couch.get old.remote._id, (err, folder) =>
                 if err
                     callback err
                 else
-                    # TODO what if folder.path+name != old._id ?
+                    # TODO what if folder.path+name != old.path ?
                     # TODO Or folder._rev != doc.remote._rev
-                    [dir, name] = @extractDirAndName doc._id
+                    [dir, name] = @extractDirAndName doc.path
                     folder.path = dir
                     folder.name = name
                     folder.tags = doc.tags
@@ -292,10 +254,10 @@ class Remote
 
     # Delete a file on the remote cozy instance
     deleteFile: (doc, callback) =>
-        log.info "Delete file #{doc._id}"
+        log.info "Delete file #{doc.path}"
         return callback() unless doc.remote
         remoteDoc = @createRemoteDoc doc, doc.remote
-        @removeRemoteDoc remoteDoc, (err, removed) =>
+        @couch.removeRemoteDoc remoteDoc, (err, removed) =>
             if err
                 callback err, removed
             else
@@ -304,13 +266,24 @@ class Remote
 
     # Delete a folder on the remote cozy instance
     deleteFolder: (doc, callback) =>
-        log.info "Delete folder #{doc._id}"
+        log.info "Delete folder #{doc.path}"
         if doc.remote
             remoteDoc = @createRemoteDoc doc, doc.remote
             remoteDoc._deleted = true
             @couch.put remoteDoc, callback
         else
             callback()
+
+    # Rename a file/folder to resolve a conflict
+    resolveConflict: (dst, src, callback) =>
+        log.info "Resolve a conflict: #{src.path} → #{dst.path}"
+        @couch.get src.remote._id, (err, doc) =>
+            # TODO what if doc.path+name != src.path ?
+            # TODO Or doc._rev != src.remote._rev
+            [dir, name] = @extractDirAndName dst.path
+            doc.path = dir
+            doc.name = name
+            @couch.put doc, callback
 
 
 module.exports = Remote

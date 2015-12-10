@@ -18,8 +18,8 @@ describe 'Remote', ->
     before 'start couch server', couchHelpers.startServer
     before 'instanciate couch', couchHelpers.createCouchClient
     before 'instanciate remote', ->
-        @merge = {}
-        @remote = new Remote @config, @merge, @pouch
+        @prep = {}
+        @remote = new Remote @config, @prep, @pouch
     after 'stop couch server', couchHelpers.stopServer
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
@@ -36,8 +36,9 @@ describe 'Remote', ->
             checksum = '53a547469e98b667671803adc814d6d1376fae6b'
             fixture = 'tests/fixtures/cool-pillow.jpg'
             doc =
-                _id: 'pillow.jpg'
+                path: 'pillow.jpg'
                 checksum: checksum
+                mime: 'image/jpeg'
                 remote:
                     binary:
                         _id: checksum
@@ -67,7 +68,8 @@ describe 'Remote', ->
             checksum = 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
             fixture = 'tests/fixtures/chat-mignon.jpg'
             doc =
-                _id: 'chat.jpg'
+                path: 'chat.jpg'
+                mime: 'image/jpeg'
                 checksum: checksum
             @remote.other =
                 createReadStream: (localDoc, callback) ->
@@ -90,7 +92,8 @@ describe 'Remote', ->
         it 'does not reupload an existing file', (done) ->
             checksum = 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
             doc =
-                _id: 'chat-bis.jpg'
+                path: 'chat-bis.jpg'
+                mime: 'image/jpeg'
                 checksum: checksum
             @remote.uploadBinary doc, (err, binary) ->
                 should.not.exist err
@@ -114,7 +117,8 @@ describe 'Remote', ->
     describe 'createRemoteDoc', ->
         it 'transforms a local file in remote file', ->
             local =
-                _id: 'foo/bar/baz.jpg'
+                _id: 'FOO/BAR/BAZ.JPG'
+                path: 'foo/bar/baz.jpg'
                 docType: 'file'
                 lastModification: "2015-11-12T13:14:32.384Z"
                 creationDate: "2015-11-12T13:14:32.384Z"
@@ -146,7 +150,7 @@ describe 'Remote', ->
 
         it 'transforms a local folder in remote folder', ->
             local =
-                _id: 'foo/bar/baz'
+                path: 'foo/bar/baz'
                 docType: 'folder'
                 lastModification: "2015-11-12T13:14:33.384Z"
                 creationDate: "2015-11-12T13:14:33.384Z"
@@ -162,7 +166,7 @@ describe 'Remote', ->
 
         it 'has the good path when in root folder', ->
             local =
-                _id: 'in-root-folder'
+                path: 'in-root-folder'
                 docType: 'folder'
             doc = @remote.createRemoteDoc local
             doc.should.have.properties
@@ -172,7 +176,7 @@ describe 'Remote', ->
 
         it 'transforms an existing local file in remote file', ->
             local =
-                _id: 'foo/bar/baz.jpg'
+                path: 'foo/bar/baz.jpg'
                 docType: 'file'
                 lastModification: "2015-11-12T13:14:32.384Z"
                 creationDate: "2015-11-12T13:14:32.384Z"
@@ -218,7 +222,8 @@ describe 'Remote', ->
                 checksum: 'b410ffdd571d6e86bb8e8bdd054df91e16dfa75e'
                 docType: 'Binary'
             file =
-                _id: 'a-file-with-b410'
+                _id: 'A-FILE-WITH-B410'
+                path: 'A-FILE-WITH-B410'
                 docType: 'file'
                 checksum: 'b410ffdd571d6e86bb8e8bdd054df91e16dfa75e'
                 remote:
@@ -240,91 +245,11 @@ describe 'Remote', ->
                             done()
 
 
-    describe 'sameRemoteDoc', ->
-        it 'returns true if the documents are the same', ->
-            one =
-                _id: '5e93939833e147a78c61b115f50cc77d'
-                _rev: '12-e91c1c55d2b82087682e32a30036a22b'
-                docType: 'file'
-                path: ''
-                name: 'planche.jpg'
-                creationDate: '2015-11-23T15:30:01.831Z'
-                lastModification: '2015-11-23T15:30:01.831Z'
-                checksum: 'd0d3ddb1ccc7b4362c928b5f194dae5f7a0005f9'
-                size: 539118
-                class: 'image'
-                mime: 'image/jpeg'
-                binary:
-                    file:
-                        id: 'd0d3ddb1ccc7b4362c928b5f194dae5f7a0005f9'
-                        rev: '7-39a6777ab539b47d046888011f4f089d'
-                    thumb:
-                        id: 'df8d4874a4d8316877abf61b3e0057a0'
-                        rev: '2-d3540f14ece76cd5104c0059871f0373'
-            two =
-                _id: '24af4c7ae9454f7e9d1f78219554cf19'
-                docType: 'file'
-                path: ''
-                name: 'planche.jpg'
-                creationDate: '2015-11-23T15:30:01.831Z'
-                lastModification: '2015-11-23T15:30:01.831Z'
-                checksum: 'd0d3ddb1ccc7b4362c928b5f194dae5f7a0005f9'
-                size: 539118
-                class: 'image'
-                mime: 'image/jpeg'
-            @remote.sameRemoteDoc(one, two).should.be.true()
-
-        it 'returns false if the documents are different', ->
-            one =
-                _id: '5e93939833e147a78c61b115f50cc77d'
-                _rev: '12-e91c1c55d2b82087682e32a30036a22b'
-                docType: 'file'
-                path: ''
-                name: 'planche.jpg'
-                creationDate: '2015-11-23T15:30:01.831Z'
-                lastModification: '2015-11-23T15:30:01.831Z'
-                checksum: 'd0d3ddb1ccc7b4362c928b5f194dae5f7a0005f9'
-                size: 539118
-                class: 'image'
-                mime: 'image/jpeg'
-                binary:
-                    file:
-                        id: 'd0d3ddb1ccc7b4362c928b5f194dae5f7a0005f9'
-                        rev: '7-39a6777ab539b47d046888011f4f089d'
-                    thumb:
-                        id: 'df8d4874a4d8316877abf61b3e0057a0'
-                        rev: '2-d3540f14ece76cd5104c0059871f0373'
-            two =
-                _id: '85f39bb308ea4340a606970c1b9e2bb8'
-                docType: 'file'
-                path: ''
-                name: 'planche.jpg'
-                creationDate: '2015-11-23T15:23:46.352Z'
-                lastModification: '2015-11-23T15:23:46.352Z'
-                checksum: 'c584315c6fd2155030808ee96fdf80bf20161cc3',
-                size: 84980,
-                class: 'image'
-                mime: 'image/jpeg'
-            @remote.sameRemoteDoc(one, two).should.be.false()
-
-
-    describe 'putRemoteDoc', ->
-        it 'puts the doc on the remote cozy'
-        it 'resolves conflict with trivial changes'
-        it 'does not ignore conflict for important changes'
-
-
-    describe 'removeRemoteDoc', ->
-        it 'removes the doc on the remote cozy'
-        it 'resolves conflict with trivial changes'
-        it 'does not ignore conflict for important changes'
-
-
     describe 'addFile', ->
         it 'adds a file to couchdb', (done) ->
             checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
             doc =
-                _id: 'cat2.jpg'
+                path: 'cat2.jpg'
                 docType: 'file'
                 checksum: checksum
                 creationDate: new Date()
@@ -358,14 +283,15 @@ describe 'Remote', ->
         it 'does not reupload an existing file', (done) ->
             checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
             doc =
-                _id: 'backup/cat3.jpg'
+                path: 'backup/cat3.jpg'
                 docType: 'file'
                 checksum: checksum
                 creationDate: new Date()
                 lastModification: new Date()
                 size: 36901
             same =
-                _id: 'original/cat3.jpg'
+                _id: 'ORIGINAL/CAT3.JPG'
+                path: 'ORIGINAL/CAT3.JPG'
                 docType: 'file'
                 checksum: checksum
                 creationDate: new Date()
@@ -399,7 +325,7 @@ describe 'Remote', ->
     describe 'addFolder', ->
         it 'adds a folder to couchdb', (done) ->
             doc =
-                _id: 'couchdb-folder/folder-1'
+                path: 'couchdb-folder/folder-1'
                 docType: 'folder'
                 creationDate: new Date()
                 lastModification: new Date()
@@ -423,12 +349,12 @@ describe 'Remote', ->
             couchHelpers.createFile @couch, 6, (err, created) =>
                 should.not.exist err
                 doc =
-                    _id: 'couchdb-folder/file-6'
+                    path: 'couchdb-folder/file-6'
                     docType: 'file'
                     checksum: '9999999999999999999999999999999999999926'
                     lastModification: '2015-11-16T16:12:01.002Z'
                 old =
-                    _id: 'couchdb-folder/file-6'
+                    path: 'couchdb-folder/file-6'
                     docType: 'file'
                     checksum: '1111111111111111111111111111111111111126'
                     remote:
@@ -468,12 +394,12 @@ describe 'Remote', ->
             couchHelpers.createFile @couch, 7, (err, created) =>
                 should.not.exist err
                 doc =
-                    _id: 'couchdb-folder/file-7'
+                    path: 'couchdb-folder/file-7'
                     docType: 'file'
                     checksum: '1111111111111111111111111111111111111127'
                     lastModification: '2015-11-16T16:13:01.001Z'
                 old =
-                    _id: 'couchdb-folder/file-7'
+                    path: 'couchdb-folder/file-7'
                     docType: 'file'
                     checksum: '1111111111111111111111111111111111111127'
                     remote:
@@ -504,12 +430,12 @@ describe 'Remote', ->
         it 'updates the metadata of a folder in couchdb', (done) ->
             couchHelpers.createFolder @couch, 2, (err, created) =>
                 doc =
-                    _id: 'couchdb-folder/folder-2'
+                    path: 'couchdb-folder/folder-2'
                     docType: 'folder'
                     creationDate: new Date()
                     lastModification: new Date()
                 old =
-                    _id: 'couchdb-folder/folder-2'
+                    path: 'couchdb-folder/folder-2'
                     docType: 'folder'
                     remote:
                         _id: created.id
@@ -529,7 +455,7 @@ describe 'Remote', ->
 
         it 'adds a folder to couchdb if the folder does not exist', (done) ->
             doc =
-                _id: 'couchdb-folder/folder-3'
+                path: 'couchdb-folder/folder-3'
                 docType: 'folder'
                 creationDate: new Date()
                 lastModification: new Date()
@@ -553,14 +479,14 @@ describe 'Remote', ->
                 _id: checksum
                 _rev: '1-0123456789'
             old =
-                _id: 'cat6.jpg'
+                path: 'cat6.jpg'
                 docType: 'file'
                 checksum: checksum
                 creationDate: new Date()
                 lastModification: new Date()
                 size: 36901
             doc =
-                _id: 'moved-to/cat7.jpg'
+                path: 'moved-to/cat7.jpg'
                 docType: 'file'
                 checksum: checksum
                 creationDate: new Date()
@@ -598,7 +524,7 @@ describe 'Remote', ->
         it 'moves the folder in couchdb', (done) ->
             couchHelpers.createFolder @couch, 4, (err, created) =>
                 doc =
-                    _id: 'couchdb-folder/folder-5'
+                    path: 'couchdb-folder/folder-5'
                     docType: 'folder'
                     creationDate: new Date()
                     lastModification: new Date()
@@ -606,7 +532,7 @@ describe 'Remote', ->
                         _id: created.id
                         _rev: created.rev
                 old =
-                    _id: 'couchdb-folder/folder-4'
+                    path: 'couchdb-folder/folder-4'
                     docType: 'folder'
                     remote:
                         _id: created.id
@@ -624,12 +550,12 @@ describe 'Remote', ->
 
         it 'adds a folder to couchdb if the folder does not exist', (done) ->
             doc =
-                _id: 'couchdb-folder/folder-7'
+                path: 'couchdb-folder/folder-7'
                 docType: 'folder'
                 creationDate: new Date()
                 lastModification: new Date()
             old =
-                _id: 'couchdb-folder/folder-6'
+                path: 'couchdb-folder/folder-6'
                 docType: 'folder'
             @remote.moveFolder doc, old, (err, created) =>
                 should.not.exist err
@@ -649,7 +575,7 @@ describe 'Remote', ->
             couchHelpers.createFile @couch, 8, (err, file) =>
                 should.not.exist err
                 doc =
-                    _id: 'couchdb-folder/file-8'
+                    path: 'couchdb-folder/file-8'
                     _deleted: true
                     docType: 'file'
                     checksum: '1111111111111111111111111111111111111128'
@@ -671,7 +597,7 @@ describe 'Remote', ->
             couchHelpers.createFile @couch, 9, (err, file) =>
                 should.not.exist err
                 doc =
-                    _id: 'couchdb-folder/file-9'
+                    path: 'couchdb-folder/file-9'
                     _deleted: true
                     docType: 'file'
                     checksum: '1111111111111111111111111111111111111129'
@@ -701,7 +627,7 @@ describe 'Remote', ->
             couchHelpers.createFolder @couch, 9, (err, folder) =>
                 should.not.exist err
                 doc =
-                    _id: 'couchdb-folder/folder-9'
+                    path: 'couchdb-folder/folder-9'
                     _deleted: true
                     docType: 'folder'
                     remote:
@@ -714,3 +640,49 @@ describe 'Remote', ->
                         @couch.get doc.remote._id, (err) ->
                             err.status.should.equal 404
                             done()
+
+
+    describe 'resolveConflict', ->
+        it 'renames the file/folder', (done) ->
+            checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
+            binary =
+                _id: checksum
+                _rev: '1-0123456789'
+            src =
+                path: 'cat9.jpg'
+                docType: 'file'
+                checksum: checksum
+                creationDate: new Date()
+                lastModification: new Date()
+                size: 36901
+            dst =
+                path: 'cat-conflict-2015-12-01T01:02:03Z.jpg'
+                docType: 'file'
+                checksum: checksum
+                creationDate: new Date()
+                lastModification: new Date()
+                size: 36901
+            remoteDoc = @remote.createRemoteDoc src, binary: binary
+            @couch.put remoteDoc, (err, created) =>
+                should.not.exist err
+                src.remote =
+                    _id: created.id
+                    _rev: created.rev
+                    binary:
+                        _id: checksum
+                        _rev: binary._rev
+                @remote.resolveConflict dst, src, (err, moved) =>
+                    should.not.exist err
+                    @couch.get moved.id, (err, file) ->
+                        should.not.exist err
+                        file.should.have.properties
+                            path: ''
+                            name: dst.path
+                            docType: 'file'
+                            lastModification: dst.lastModification.toISOString()
+                            size: 36901
+                            binary:
+                                file:
+                                    id: binary._id
+                                    rev: binary._rev
+                        done()
