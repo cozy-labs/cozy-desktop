@@ -44,19 +44,27 @@ module.exports.registerDevice = (done) ->
         callback null, helpers.password
     @app.addRemote helpers.url, helpers.deviceName, @basePath, (err) ->
         should.not.exist err
+        # For debug:
+        # PouchDB.debug.enable 'pouchdb:*'
         done()
 
 
 module.exports.clean = (done) ->
+    # For debug:
+    # PouchDB.debug.disable()
     @app.removeRemote helpers.deviceName, (err) =>
-        del.sync @basePath
+        callback = =>
+            setTimeout =>
+                del.sync @basePath
+                done()
+            , 200
         should.not.exist err
         if @app.sync
             @app.stopSync (err) ->
                 should.not.exist err
-                setTimeout done, 100
+                callback()
         else
-            done()
+            callback()
 
 
 start = (app, mode, done) ->

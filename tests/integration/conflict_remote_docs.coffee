@@ -29,6 +29,10 @@ describe 'Conflict between remote docs with distinct cases', ->
         before Files.deleteAll
         before Cozy.registerDevice
 
+        before 'force case insensitive for local', ->
+            @app.instanciate()
+            @app.prep.buildId = @app.prep.buildIdHFS
+
         before 'Create the lower file', (done) ->
             fixturePath = path.join Cozy.fixturesDir, 'chat-mignon-mod.jpg'
             Files.uploadFile lower, fixturePath, (err, created) ->
@@ -37,6 +41,8 @@ describe 'Conflict between remote docs with distinct cases', ->
                     size: fs.statSync(fixturePath).size
                 done()
 
+        before Cozy.fetchRemoteMetadata
+
         before 'Create the upper file', (done) ->
             fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'
             Files.uploadFile upper, fixturePath, (err, created) ->
@@ -44,10 +50,6 @@ describe 'Conflict between remote docs with distinct cases', ->
                     id: created.id
                     size: fs.statSync(fixturePath).size
                 done()
-
-        before 'force case insensitive for local', ->
-            @app.instanciate()
-            @app.prep.buildId = @app.prep.buildIdHFS
 
         before Cozy.sync
 
@@ -60,7 +62,6 @@ describe 'Conflict between remote docs with distinct cases', ->
         it 'has the two files on local', ->
             files = fs.readdirSync @basePath
             files = (f for f in files when f isnt '.cozy-desktop')
-            console.log files
             files.length.should.equal 2
             sizes = for f in files
                 fs.statSync(path.join @basePath, f).size
@@ -73,7 +74,6 @@ describe 'Conflict between remote docs with distinct cases', ->
 
         it 'has the files on remote', (done) ->
             Files.getAllFiles (err, files) ->
-                console.log files
                 files.length.should.equal 2
                 sizes = (f.size for f in files)
                 sizes.sort().should.eql expectedSizes.sort()
@@ -109,6 +109,10 @@ describe 'Conflict between remote docs with distinct cases', ->
         before Files.deleteAll
         before Cozy.registerDevice
 
+        before 'force case insensitive for local', ->
+            @app.instanciate()
+            @app.prep.buildId = @app.prep.buildIdHFS
+
         before 'Create the lower folder', (done) ->
             Files.createFolder lower, (err, created) ->
                 fixturePath = path.join Cozy.fixturesDir, 'chat-mignon-mod.jpg'
@@ -118,6 +122,8 @@ describe 'Conflict between remote docs with distinct cases', ->
                         size: fs.statSync(fixturePath).size
                     done()
 
+        before Cozy.fetchRemoteMetadata
+
         before 'Create the upper file', (done) ->
             fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'
             Files.uploadFile upper, fixturePath, (err, created) ->
@@ -125,10 +131,6 @@ describe 'Conflict between remote docs with distinct cases', ->
                     id: created.id
                     size: fs.statSync(fixturePath).size
                 done()
-
-        before 'force case insensitive for local', ->
-            @app.instanciate()
-            @app.prep.buildId = @app.prep.buildIdHFS
 
         before Cozy.sync
 
