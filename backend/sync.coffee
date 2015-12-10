@@ -142,9 +142,11 @@ class Sync
                             # (e.g thumbnail added by the remote)
                             if err?.status is 409
                                 @pouch.db.get doc._id, (err, doc) =>
-                                    # TODO what about err?
-                                    doc.sides[side] = rev
-                                    @pouch.db.put doc, callback
+                                    if err
+                                        callback err
+                                    else
+                                        doc.sides[side] = rev
+                                        @pouch.db.put doc, callback
                             else
                                 callback err
 

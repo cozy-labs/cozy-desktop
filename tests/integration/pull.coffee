@@ -83,7 +83,7 @@ describe 'Pull', ->
                 stats = fs.statSync(filePath)
                 stats.isFile().should.be.true()
                 stats.size.should.equal fs.statSync(fixturePath).size
-                done()
+                setTimeout done, 200
 
     it 'renames the file', (done) ->
         oldPath = path.join @basePath, file.name
