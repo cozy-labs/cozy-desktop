@@ -47,7 +47,7 @@ describe 'Conflict between two folders', ->
         after Cozy.clean
 
         it 'waits a bit to resolve the conflict', (done) ->
-            setTimeout done, 1000
+            setTimeout done, 1500
 
         it 'has the two files on local', ->
             folders = fs.readdirSync @basePath
@@ -108,7 +108,7 @@ describe 'Conflict between two folders', ->
         after Cozy.clean
 
         it 'waits a bit to resolve the conflict', (done) ->
-            setTimeout done, 1000
+            setTimeout done, 1500
 
         it 'has the two files on local', ->
             folders = fs.readdirSync @basePath

@@ -55,12 +55,12 @@ describe 'Conflict between remote docs with distinct cases', ->
 
         it 'waits a bit to resolve the conflict', (done) ->
             expectedSizes = [upper.remote.size, lower.remote.size]
-            setTimeout done, 3000
+            setTimeout done, 3500
 
         it 'has the two files on local', ->
             files = fs.readdirSync @basePath
             files = (f for f in files when f isnt '.cozy-desktop')
-            console.log files if files.length isnt 2
+            console.log files
             files.length.should.equal 2
             sizes = for f in files
                 fs.statSync(path.join @basePath, f).size
@@ -73,7 +73,7 @@ describe 'Conflict between remote docs with distinct cases', ->
 
         it 'has the files on remote', (done) ->
             Files.getAllFiles (err, files) ->
-                console.log files if files.length isnt 2
+                console.log files
                 files.length.should.equal 2
                 sizes = (f.size for f in files)
                 sizes.sort().should.eql expectedSizes.sort()
@@ -88,8 +88,10 @@ describe 'Conflict between remote docs with distinct cases', ->
     describe '2 folders', ->
         it 'TODO'
 
+
     describe 'a file and a folder', ->
         it 'TODO'
+
 
     describe 'a folder and a file', ->
         lower =
@@ -133,7 +135,7 @@ describe 'Conflict between remote docs with distinct cases', ->
         after Cozy.clean
 
         it 'waits a bit to resolve the conflict', (done) ->
-            setTimeout done, 3000
+            setTimeout done, 3500
 
         it 'has the two files on local', ->
             paths = fs.readdirSync @basePath
