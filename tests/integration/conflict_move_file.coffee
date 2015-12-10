@@ -60,7 +60,6 @@ describe 'Conflict when moving a file', ->
 
         it 'has the two files on local', ->
             files = fs.readdirSync @basePath
-            console.log files
             files = (f for f in files when f isnt '.cozy-desktop')
             files.length.should.equal 2
             sizes = for f in files
@@ -74,7 +73,6 @@ describe 'Conflict when moving a file', ->
 
         it 'has the directories on remote', (done) ->
             Files.getAllFiles (err, files) ->
-                console.log files
                 files.length.should.equal 2
                 sizes = (f.size for f in files)
                 sizes.sort().should.eql expectedSizes.sort()

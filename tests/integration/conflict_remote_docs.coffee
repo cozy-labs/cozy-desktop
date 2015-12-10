@@ -57,6 +57,7 @@ describe 'Conflict between remote docs with distinct cases', ->
         it 'has the two files on local', ->
             files = fs.readdirSync @basePath
             files = (f for f in files when f isnt '.cozy-desktop')
+            console.log files if files.length isnt 2
             files.length.should.equal 2
             sizes = for f in files
                 fs.statSync(path.join @basePath, f).size
@@ -69,6 +70,7 @@ describe 'Conflict between remote docs with distinct cases', ->
 
         it 'has the files on remote', (done) ->
             Files.getAllFiles (err, files) ->
+                console.log files if files.length isnt 2
                 files.length.should.equal 2
                 sizes = (f.size for f in files)
                 sizes.sort().should.eql expectedSizes.sort()
@@ -84,4 +86,7 @@ describe 'Conflict between remote docs with distinct cases', ->
         it 'TODO'
 
     describe 'a file and a folder', ->
+        it 'TODO'
+
+    describe 'a folder and a file', ->
         it 'TODO'
