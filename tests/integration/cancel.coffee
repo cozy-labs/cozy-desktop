@@ -67,7 +67,7 @@ describe 'Cancel', ->
     describe 'Delete a file and recreate it', ->
         file =
             path: ''
-            name: faker.hacker.adjective()
+            name: faker.hacker.verb()
 
         filePath = ''
         fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'

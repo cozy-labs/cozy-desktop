@@ -43,6 +43,7 @@ module.exports = helpers =
             should.not.exist err
             should.exist res
             should.exist body
+            console.log body is res.statusCode isnt 200
             res.statusCode.should.equal 200
             client.get "files/#{body.id}", file, (err, res, body) ->
                 res.statusCode.should.equal 200
