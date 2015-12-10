@@ -76,9 +76,9 @@ class Couch
                 callback err, body?.rows
 
     # Upload given file as attachment of given document (id + revision)
-    # TODO when we upload a stream, the content-type is lost in couchdb
-    uploadAsAttachment: (id, rev, attachment, callback) =>
+    uploadAsAttachment: (id, rev, mime, attachment, callback) =>
         urlPath = "cozy/#{id}/file?rev=#{rev}"
+        @http.headers['content-type'] = mime
         @http.putFile urlPath, attachment, (err, res, body) ->
             if err
                 callback err

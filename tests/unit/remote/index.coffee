@@ -38,6 +38,7 @@ describe 'Remote', ->
             doc =
                 path: 'pillow.jpg'
                 checksum: checksum
+                mime: 'image/jpeg'
                 remote:
                     binary:
                         _id: checksum
@@ -68,6 +69,7 @@ describe 'Remote', ->
             fixture = 'tests/fixtures/chat-mignon.jpg'
             doc =
                 path: 'chat.jpg'
+                mime: 'image/jpeg'
                 checksum: checksum
             @remote.other =
                 createReadStream: (localDoc, callback) ->
@@ -91,6 +93,7 @@ describe 'Remote', ->
             checksum = 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
             doc =
                 path: 'chat-bis.jpg'
+                mime: 'image/jpeg'
                 checksum: checksum
             @remote.uploadBinary doc, (err, binary) ->
                 should.not.exist err

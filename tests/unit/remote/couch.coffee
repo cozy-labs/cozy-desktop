@@ -1,5 +1,6 @@
 crypto = require 'crypto'
 fs     = require 'fs'
+http   = require 'http'
 should = require 'should'
 
 configHelpers = require '../../helpers/config'
@@ -85,24 +86,36 @@ describe "Couch", ->
     describe 'uploadAsAttachment', ->
         it 'upload a file as an attachment to an existing doc', (done) ->
             file = 'tests/fixtures/chat-mignon.jpg'
-            @couch.uploadAsAttachment @doc._id, @rev, file, (err, attached) ->
+            mime = 'image/jpeg'
+            @couch.uploadAsAttachment @doc._id, @rev, mime, file, (err, doc) ->
                 should.not.exist err
-                should.exist attached.id
-                should.exist attached.rev
+                should.exist doc.id
+                should.exist doc.rev
                 done()
 
         it 'upload a stream as an attachment to an existing doc', (done) ->
             stream = fs.createReadStream 'tests/fixtures/chat-mignon-mod.jpg'
-            @couch.uploadAsAttachment @doc._id, @rev, stream, (err, attached) ->
+            mime = 'image/jpeg'
+            @couch.uploadAsAttachment @doc._id, @rev, mime, stream, (err, doc)->
                 should.not.exist err
-                should.exist attached.id
-                should.exist attached.rev
+                should.exist doc.id
+                should.exist doc.rev
                 done()
+
+        it 'has the correct content-type', (done) ->
+            stream = fs.createReadStream 'tests/fixtures/cool-pillow.jpg'
+            mime = 'image/jpeg'
+            @couch.uploadAsAttachment @doc._id, @rev, mime, stream, (err, doc)->
+                should.not.exist err
+                http.get "#{couchHelpers.url}/cozy/#{doc.id}/file", (res) ->
+                    res.headers['content-type'].should.equal mime
+                    done()
 
     describe 'downloadBinary', ->
         it 'creates a readable stream from a remote binary doc', (done) ->
             file = 'tests/fixtures/chat-mignon.jpg'
-            @couch.uploadAsAttachment @doc._id, @rev, file, (err, attached) =>
+            mime = 'image/jpeg'
+            @couch.uploadAsAttachment @doc._id, @rev, mime, file, (err, doc) =>
                 should.not.exist err
                 stream = fs.createReadStream file
                 checksum = crypto.createHash 'sha1'

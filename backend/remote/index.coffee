@@ -56,7 +56,9 @@ class Remote
                 binary._rev = created.rev
                 @other.createReadStream doc, next
             (stream, next) =>
-                @couch.uploadAsAttachment binary._id, binary._rev, stream, next
+                {_id, _rev} = binary
+                mime = doc.mime or 'application/octet-stream'
+                @couch.uploadAsAttachment _id, _rev, mime, stream, next
         ], (err) ->
             if err and binary._rev
                 @couch.remove binary._id, binary._rev, -> callback err
