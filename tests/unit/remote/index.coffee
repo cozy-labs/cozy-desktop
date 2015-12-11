@@ -245,6 +245,25 @@ describe 'Remote', ->
                             done()
 
 
+    describe 'isUpToDate', ->
+        it 'says if the remote file is up to date', ->
+            doc =
+                _id: 'foo/bar'
+                _rev: '1-0123456'
+                path: 'foo/bar'
+                docType: 'file'
+                checksum: '22f7aca0d717eb322d5ae1c97d8aa26eb440287b'
+                sides:
+                    local: 1
+            @remote.isUpToDate(doc).should.be.false()
+            doc.sides.remote = 2
+            doc._rev = '2-0123456'
+            @remote.isUpToDate(doc).should.be.true()
+            doc.sides.local = 3
+            doc._rev = '3-0123456'
+            @remote.isUpToDate(doc).should.be.false()
+
+
     describe 'addFile', ->
         it 'adds a file to couchdb', (done) ->
             checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
@@ -303,6 +322,9 @@ describe 'Remote', ->
                     binary:
                         _id: checksum
                         _rev: '1-951456'
+                sides:
+                    local: 1
+                    remote: 1
             @pouch.db.put same, (err) =>
                 should.not.exist err
                 @remote.addFile doc, (err, created) =>
