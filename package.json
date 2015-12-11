@@ -1,6 +1,6 @@
 {
   "name": "cozy-desktop",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "File Synchronization Client for Cozy Cloud",
   "main": "app.html",
   "window": {

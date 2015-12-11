@@ -1,3 +1,9 @@
+## 0.6.0 - 2015-12-14
+
+* Add a full-sync mode
+* Detect and manage conflicts
+* Fix some bugs
+
 ## 0.5.0 - 2015-11-30
 
 - Add a write-only mode
