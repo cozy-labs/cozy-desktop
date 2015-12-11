@@ -136,10 +136,12 @@ class Merge
                 doc.size  ?= file.size
                 doc.class ?= file.class
                 doc.mime  ?= file.mime
+                doc.tags  ?= file.tags or []
                 @pouch.db.put doc, callback
             else if file
                 @resolveConflict side, doc, callback
             else
+                doc.tags ?= []
                 @ensureParentExist side, doc, =>
                     @pouch.db.put doc, callback
 
@@ -151,6 +153,7 @@ class Merge
                 callback new Error "Can't resolve this conflict!"
             else if file
                 doc._rev = file._rev
+                doc.tags ?= file.tags or []
                 doc.remote ?= file.remote
                 doc.creationDate ?= file.creationDate
                 if @sameBinary file, doc
@@ -162,6 +165,7 @@ class Merge
                 else
                     @pouch.db.put doc, callback
             else
+                doc.tags ?= []
                 doc.creationDate ?= new Date
                 @ensureParentExist side, doc, =>
                     @pouch.db.put doc, callback
@@ -174,13 +178,14 @@ class Merge
                 @resolveConflict side, doc, callback
             else if folder
                 doc._rev = folder._rev
+                doc.tags ?= folder.tags or []
                 doc.creationDate ?= folder.creationDate
-                doc.tags ?= folder.tags
                 if @sameFolder folder, doc
                     callback null
                 else
                     @pouch.db.put doc, callback
             else
+                doc.tags ?= []
                 doc.creationDate ?= new Date
                 @ensureParentExist side, doc, =>
                     @pouch.db.put doc, callback
@@ -195,6 +200,7 @@ class Merge
                 doc.size         ?= was.size
                 doc.class        ?= was.class
                 doc.mime         ?= was.mime
+                doc.tags         ?= was.tags or []
                 was.moveTo        = doc._id
                 was._deleted      = true
                 if file and @sameFile file, doc
@@ -218,7 +224,7 @@ class Merge
                 @markSide side, doc, folder
                 @markSide side, was, was
                 doc.creationDate ?= was.creationDate
-                doc.tags         ?= was.tags
+                doc.tags         ?= was.tags or []
                 if folder
                     @resolveConflict side, doc, (err, dst) =>
                         dst.sides = {}
