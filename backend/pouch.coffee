@@ -78,7 +78,10 @@ class Pouch
                 startkey: "#{path}"
                 endkey: "#{path}/\ufff0"
                 include_docs: true
-        @getAll 'byPath', params, callback
+        @getAll 'byPath', params, (err, docs) ->
+            # TODO find why we have undefined values here sometimes
+            docs = (doc for doc in docs when doc?)
+            callback err, docs
 
     # Return the file/folder with this remote id
     byRemoteId: (id, callback) ->

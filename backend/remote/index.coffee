@@ -108,6 +108,12 @@ class Remote
                     else
                         @couch.remove doc._id, doc._rev, callback
 
+    # Return true if the remote file is up-to-date for this document
+    isUpToDate: (doc) ->
+        currentRev = doc.sides.remote or 0
+        lastRev = @pouch.extractRevNumber doc
+        return currentRev is lastRev
+
 
     ### Write operations ###
 
@@ -140,8 +146,8 @@ class Remote
             (next) =>
                 @pouch.byChecksum doc.checksum, (err, files) =>
                     binary = null
-                    for file in files or []
-                        binary = file.remote.binary if file.remote?
+                    for file in files or [] when @isUpToDate file
+                        binary = file.remote.binary
                     if binary
                         next null, binary
                     else
