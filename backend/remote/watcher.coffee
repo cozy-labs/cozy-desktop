@@ -105,7 +105,7 @@ class RemoteWatcher
             if err and err.status isnt 404
                 callback err
             else if doc._deleted
-                if err
+                if err or not was?
                     # It's fine if the file was deleted on local and on remote
                     callback()
                 else
