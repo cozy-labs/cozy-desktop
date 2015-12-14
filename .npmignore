@@ -1,12 +1,13 @@
 .travis.yml
+app.html
 coffeelint.json
+gulpfile.js
 *.coffee
 *.styl
 bin/ci
 build/
 cache/
-client/app/
-client/vendor/
+client/
 packaging/
 tests/
 tmp/
