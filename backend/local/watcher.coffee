@@ -56,7 +56,12 @@ class LocalWatcher
             .on 'unlink', @onUnlink
             .on 'unlinkDir', @onUnlinkDir
             .on 'ready', @onReady(callback)
-            .on 'error', (err) -> log.error err
+            .on 'error', (err) ->
+                if err.message is 'watch ENOSPC'
+                    log.error 'Sorry, the kernel is out of inotify watches!'
+                    log.error 'See doc/inotify.md for how to solve this issue.'
+                else
+                    log.error err
 
     # Stop chokidar watcher
     stop: ->
