@@ -81,7 +81,7 @@ class LocalWatcher
                 path: filePath
                 docType: 'file'
                 checksum: checksum
-                creationDate: stats.ctime
+                creationDate: stats.birthtime or stats.ctime
                 lastModification: stats.mtime
                 size: stats.size
                 class: fileClass
