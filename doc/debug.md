@@ -10,6 +10,12 @@ a bug, the first thing to do is running cozy-desktop with debug:
 DEBUG=true cozy-desktop sync
 ```
 
+To keep logs on a file and also display them on screen, you can use `tee`:
+
+```sh
+DEBUG=true cozy-desktop sync 2>&1 | tee $(date '+%Y-%m-%d.log')
+```
+
 It's possible to have even more logs if you want, by enabling pouchdb debug
 logs:
 

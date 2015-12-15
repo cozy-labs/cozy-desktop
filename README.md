@@ -1,4 +1,4 @@
-# [Cozy](http://cozy.io) Desktop
+# [Cozy](https://cozy.io) Desktop
 
 The Cozy desktop app allows to sync the files stored in your Cozy with your laptop
 and/or your desktop. It replicates your files on your hard drive and apply
@@ -161,7 +161,7 @@ it simple and easy. So, it has some limitations:
 
 ![Cozy Logo](https://raw.github.com/cozy/cozy-setup/gh-pages/assets/images/happycloud.png)
 
-[Cozy](http://cozy.io) is a platform that brings all your web services in the
+[Cozy](https://cozy.io) is a platform that brings all your web services in the
 same private space.  With it, your web apps and your devices can share data
 easily, providing you
 with a new experience. You can install Cozy on your own hardware where no one
