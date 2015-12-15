@@ -117,6 +117,10 @@ class App
                 'command before running a synchronization.'
             callback? new Error 'No config'
 
+    # Display a list of watchers for debugging purpose
+    debugWatchers: ->
+        @local?.watcher.debug()
+
 
     # Recreate the local pouch database
     resetDatabase: (callback) =>

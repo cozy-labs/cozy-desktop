@@ -7,6 +7,9 @@ pkg = require '../package.json'
 App = require '../backend/app'
 app = new App process.env.COZY_DESKTOP_DIR
 
+process.on 'SIGUSR1', ->
+    app.debugWatchers()
+
 # Helper to get cozy password from user
 app.askPassword = (callback) ->
     promptMsg = """
@@ -16,6 +19,7 @@ Please enter your password to register your device on your remote Cozy:
         callback err, password
 
 sync = (mode, args) ->
+    console.log "Cozy-desktop v#{pkg.version} started (PID: #{process.pid})"
     if app.config.setInsecure args.insecure?
         app.synchronize mode, (err) ->
             process.exit 1 if err
