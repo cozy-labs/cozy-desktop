@@ -71,7 +71,7 @@ start = (app, mode, done) ->
     app.instanciate() unless app.sync
     app.startSync mode, (err) ->
         should.not.exist err
-    setTimeout done, 1000
+    setTimeout done, 1500
 
 module.exports.pull = (done) ->
     start @app, 'pull', done

@@ -100,7 +100,7 @@ describe 'Push', ->
                 should.not.exist find files, old
                 should.exist find files, file
                 done()
-        , 2500
+        , 3000
 
     it 'moves the file', (done) ->
         old = clone file
@@ -114,7 +114,7 @@ describe 'Push', ->
                 should.not.exist find files, old
                 should.exist find files, file
                 done()
-        , 2500
+        , 3000
 
     it 'overwrites the file', (done) ->
         fixturePath = path.join Cozy.fixturesDir, 'chat-mignon-mod.jpg'
