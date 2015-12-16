@@ -229,8 +229,7 @@ class LocalWatcher
                     callback err
                 else
                     async.eachSeries docs.reverse(), (doc, next) =>
-                        # TODO _id vs path -> normalize @paths
-                        if doc._id in @paths
+                        if doc.path in @paths
                             next()
                         else
                             @prep.deleteDoc @side, doc, next

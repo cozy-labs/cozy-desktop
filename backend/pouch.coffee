@@ -1,5 +1,6 @@
 PouchDB = require 'pouchdb'
 async   = require 'async'
+fs      = require 'fs-extra'
 isEqual = require 'lodash.isequal'
 path    = require 'path-extra'
 log     = require('printit')
@@ -34,6 +35,7 @@ class Pouch
     # Create database and recreate all filters
     resetDatabase: (callback) =>
         @db.destroy =>
+            fs.ensureDirSync @config.dbPath
             @db = new PouchDB @config.dbPath
             @db.setMaxListeners 100
             @addAllViews callback

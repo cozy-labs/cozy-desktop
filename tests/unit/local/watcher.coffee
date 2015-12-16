@@ -232,6 +232,9 @@ describe "LocalWatcher Tests", ->
 
 
     describe 'when a file is moved', ->
+        before 'reset pouchdb', (done) ->
+            @pouch.resetDatabase done
+
         it 'deletes the source and adds the destination', (done) ->
             src = path.join __dirname, '../../fixtures/chat-mignon.jpg'
             dst = path.join @basePath, 'afa.jpg'
@@ -265,6 +268,9 @@ describe "LocalWatcher Tests", ->
 
 
     describe 'when a directory is moved', ->
+        before 'reset pouchdb', (done) ->
+            @pouch.resetDatabase done
+
         it 'deletes the source and adds the destination', (done) ->
             src = path.join @basePath, 'aga'
             dst = path.join @basePath, 'agb'
@@ -301,19 +307,26 @@ describe "LocalWatcher Tests", ->
                 , 1200
 
     describe 'onReady', ->
+        before 'reset pouchdb', (done) ->
+            @pouch.resetDatabase done
+
         it 'detects deleted files and folders', (done) ->
             dd = @prep.deleteDoc = sinon.stub().yields()
             folder1 =
                 _id: 'folder1'
+                path: 'folder1'
                 docType: 'folder'
             folder2 =
                 _id: 'folder2'
+                path: 'folder2'
                 docType: 'folder'
             file1 =
                 _id: 'file1'
+                path: 'file1'
                 docType: 'folder'
             file2 =
                 _id: 'file2'
+                path: 'file2'
                 docType: 'folder'
             async.each [folder1, folder2, file1, file2], (doc, next) =>
                 @pouch.db.put doc, next
