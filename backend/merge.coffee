@@ -155,7 +155,8 @@ class Merge
                 doc._rev = file._rev
                 doc.tags ?= file.tags or []
                 doc.remote ?= file.remote
-                doc.creationDate ?= file.creationDate
+                # Preserve the creation date even if the file system lost it!
+                doc.creationDate = file.creationDate
                 if @sameBinary file, doc
                     doc.size  ?= file.size
                     doc.class ?= file.class
