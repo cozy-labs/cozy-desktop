@@ -15,7 +15,6 @@ log      = require('printit')
 # remote operations triggered by the remoteEventWatcher.
 #
 # TODO add unit tests for move/rename
-# TODO increase timeouts for integration tests
 class LocalWatcher
 
     constructor: (@basePath, @prep, @pouch) ->
@@ -129,10 +128,10 @@ class LocalWatcher
     ### Actions ###
 
     # New file detected
-    # TODO check @pending
     onAdd: (filePath, stats) =>
         log.debug 'File added', filePath
         @paths?.push filePath
+        @pending[filePath]?.done()
         @checksums++
         @createDoc filePath, stats, (err, doc) =>
             if err
@@ -150,22 +149,24 @@ class LocalWatcher
                         include_docs: true
                     @pouch.db.allDocs options, (err, results) =>
                         @checksums--
-                        # TODO err
-                        docs = (row.doc for row in results.rows)
-                        same = find docs, checksum: doc.checksum
-                        if same
-                            clearTimeout @pending[same.path].timeout
-                            delete @pending[same.path]
-                            @prep.moveFile @side, doc, same, @done
-                        else
+                        if err
                             @prep.addFile @side, doc, @done
+                        else
+                            docs = (row.doc for row in results.rows)
+                            same = find docs, checksum: doc.checksum
+                            if same
+                                clearTimeout @pending[same.path].timeout
+                                delete @pending[same.path]
+                                @prep.moveFile @side, doc, same, @done
+                            else
+                                @prep.addFile @side, doc, @done
 
     # New directory detected
-    # TODO check @pending
     onAddDir: (folderPath, stats) =>
         unless folderPath is ''
             log.debug 'Folder added', folderPath
             @paths?.push folderPath
+            @pending[folderPath]?.done()
             doc =
                 path: folderPath
                 docType: 'folder'
@@ -183,17 +184,18 @@ class LocalWatcher
     onUnlink: (filePath) =>
         done = =>
             clearTimeout @pending[filePath].timeout
+            delete @pending[filePath]
+            log.debug 'File deleted', filePath
+            @prep.deleteFile @side, path: filePath, @done
+        check = =>
             if @checksums is 0
-                delete @pending[filePath]
-                log.debug 'File deleted', filePath
-                @prep.deleteFile @side, path: filePath, @done
+                done()
             else
-                @pending[filePath].timeout = setTimeout done, 100
+                @pending[filePath].timeout = setTimeout check, 100
         @pending[filePath] =
             done: done
-            timeout: setTimeout done, 1250
-            # TODO how can we be sure to not timeout
-            # before the checksum has been computed?
+            check: check
+            timeout: setTimeout check, 1250
 
     # Folder deletion detected
     #
@@ -201,17 +203,18 @@ class LocalWatcher
     # after chokidar event to declare the folder as deleted.
     onUnlinkDir: (folderPath) =>
         done = =>
-            unless @hasPending folderPath
-                clearInterval @pending[folderPath].interval
-                delete @pending[folderPath]
-                log.debug 'Folder deleted', folderPath
-                @prep.deleteFolder @side, path: folderPath, @done
+            clearInterval @pending[folderPath].interval
+            delete @pending[folderPath]
+            log.debug 'Folder deleted', folderPath
+            @prep.deleteFolder @side, path: folderPath, @done
+        check = =>
+            done() unless @hasPending folderPath
         @pending[folderPath] =
             done: done
+            check: check
             interval: setInterval done, 350
 
     # File update detected
-    # TODO check @pending
     onChange: (filePath, stats) =>
         log.debug 'File updated', filePath
         @createDoc filePath, stats, (err, doc) =>
