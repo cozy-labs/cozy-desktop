@@ -13,8 +13,6 @@ log      = require('printit')
 # a file or a folder is added/removed/changed locally.
 # Operations will be added to the a common operation queue along with the
 # remote operations triggered by the remoteEventWatcher.
-#
-# TODO add unit tests for move/rename
 class LocalWatcher
 
     constructor: (@basePath, @prep, @pouch) ->
@@ -178,9 +176,6 @@ class LocalWatcher
     #
     # It can be a file moved out. So, we wait a bit to see if a file with the
     # same checksum is added and, if not, we declare this file as deleted.
-    #
-    # TODO if a file is moved and then deleted, what happens for 2nd onUnlink?
-    # TODO what if we swap 2 files (a->c, b->a, c->b)?
     onUnlink: (filePath) =>
         done = =>
             clearTimeout @pending[filePath].timeout
