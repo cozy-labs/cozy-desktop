@@ -42,7 +42,7 @@ module.exports.registerDevice = (done) ->
     @app = new App @basePath
     @app.askPassword = (callback) ->
         callback null, helpers.password
-    @app.addRemote helpers.url, helpers.deviceName, @basePath, (err) ->
+    @app.addRemote helpers.url, @basePath, helpers.deviceName, (err) ->
         should.not.exist err
         # For debug:
         # PouchDB.debug.enable 'pouchdb:*'

@@ -25,11 +25,12 @@ sync = (mode, args) ->
         process.exit 1
 
 
-# TODO make devicename optional, and use `hostname` for the default
 program
-    .command 'add-remote-cozy <url> <devicename> <syncPath>'
+    .command 'add-remote-cozy <url> <syncPath>'
     .description 'Configure current device to sync with given cozy'
-    .action app.addRemote
+    .option '-d, --deviceName [deviceName]', 'device name to deal with'
+    .action (url, syncPath, args) ->
+        app.addRemote url, syncPath, args.deviceName
 
 program
     .command 'remove-remote-cozy'

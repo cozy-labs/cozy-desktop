@@ -1,5 +1,6 @@
-path  = require 'path-extra'
 async = require 'async'
+path  = require 'path-extra'
+os    = require 'os'
 log   = require('printit')
     prefix: 'Cozy Desktop  '
 
@@ -36,7 +37,8 @@ class App
     # to the config file
     #
     # TODO validation of url, deviceName and syncPath
-    addRemote: (url, deviceName, syncPath, callback) =>
+    addRemote: (url, syncPath, deviceName, callback) =>
+        deviceName ?= os.hostname() or 'desktop'
         async.waterfall [
             @askPassword,
             (password, next) ->
