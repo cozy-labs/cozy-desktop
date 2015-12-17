@@ -25,7 +25,6 @@ class RemoteWatcher
     # revisions. We prefer to copy manually these documents for the initial
     # replication.
     #
-    # TODO use it somewhere, or remove this method
     # TODO use a single view
     # TODO add integration tests
     initialReplication: (callback) ->
@@ -68,25 +67,33 @@ class RemoteWatcher
     # TODO use a view instead of a filter
     listenToChanges: (options, callback) =>
         @pouch.getRemoteSeq (err, seq) =>
-            return callback err if err
-            @changes = @couch.client.changes
-                filter: (doc) ->
-                    doc.docType?.toLowerCase() in ['file', 'folder']
-                live: options.live
-                retry: true
-                since: seq
-                include_docs: true
-            @changes
-                .on 'change', (change) =>
-                    @onChange change.doc, @changed(change)
-                .on 'error', (err) =>
-                    @changes = null
-                    log.warn 'An error occured during replication.'
-                    log.error err
-                    callback err
-                .on 'complete', =>
-                    @changes = null
-                    @whenReady callback
+            if err
+                callback err
+            else if seq is 0
+                @initialReplication (err) =>
+                    if err
+                        callback err
+                    else
+                        @whenReady callback
+            else
+                @changes = @couch.client.changes
+                    filter: (doc) ->
+                        doc.docType?.toLowerCase() in ['file', 'folder']
+                    live: options.live
+                    retry: true
+                    since: seq
+                    include_docs: true
+                @changes
+                    .on 'change', (change) =>
+                        @onChange change.doc, @changed(change)
+                    .on 'error', (err) =>
+                        @changes = null
+                        log.warn 'An error occured during replication.'
+                        log.error err
+                        callback err
+                    .on 'complete', =>
+                        @changes = null
+                        @whenReady callback
 
     # TODO comments, tests
     whenReady: (callback=->) =>
