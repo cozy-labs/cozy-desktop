@@ -17,10 +17,10 @@ DEBUG=true cozy-desktop sync 2>&1 | tee $(date '+%Y-%m-%d.log')
 ```
 
 It's possible to have even more logs if you want, by enabling pouchdb debug
-logs:
+logs and request debug logs:
 
 ```sh
-DEBUG=pouchdb:* cozy-desktop sync
+NODE_DEBUG=request DEBUG=pouchdb:* cozy-desktop sync
 ```
 
 When cozy-desktop is running, it's possible to send it the `USR1` signal to
