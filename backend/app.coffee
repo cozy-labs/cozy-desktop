@@ -44,9 +44,11 @@ class App
 
     # Register current device to remote Cozy and then save related informations
     # to the config file
-    #
-    # TODO validation of url, deviceName and syncPath
     addRemote: (url, syncPath, deviceName, callback) =>
+        unless url.match /^https?:\/\//
+            log.warn "Your URL looks invalid: #{url}"
+            callback? err
+            return
         deviceName ?= os.hostname() or 'desktop'
         async.waterfall [
             @askPassword,
@@ -60,6 +62,8 @@ class App
             if err
                 log.error err
                 log.error 'An error occured while registering your device.'
+                if url[0..6] is 'http://'
+                    log.warn 'Did you try with an httpS URL?'
             else
                 options =
                     path: path.resolve syncPath
@@ -74,7 +78,6 @@ class App
 
     # Unregister current device from remote Cozy and then remove remote from
     # the config file
-    # TODO also remove the pouch database
     removeRemote: (deviceName, callback) =>
         device = @config.getDevice deviceName
         async.waterfall [
