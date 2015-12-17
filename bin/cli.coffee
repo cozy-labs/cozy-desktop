@@ -12,8 +12,14 @@ app.askPassword = (callback) ->
     promptMsg = """
 Please enter your password to register your device on your remote Cozy:
 """
-    read prompt: promptMsg, silent: true , (err, password, isDefault) ->
+    read prompt: promptMsg, silent: true , (err, password) ->
         callback err, password
+
+# Helper for confirmation
+app.askConfirmation = (callback) ->
+    promptMsg = 'Are your sure? [Y/N]'
+    read prompt: promptMsg, (err, response) ->
+        callback err, response.toUpperCase() is 'Y'
 
 sync = (mode, args) ->
     if app.config.setInsecure args.insecure?
@@ -93,7 +99,6 @@ program
     .command 'reset-database'
     .description 'Recreates the local database'
     .action app.resetDatabase
-    # TODO ask confirmation
 
 program
     .command 'display-database'

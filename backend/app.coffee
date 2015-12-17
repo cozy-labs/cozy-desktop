@@ -25,11 +25,20 @@ class App
         @config = new Config @basePath
         @pouch  = new Pouch @config
 
+
     # This method is here to be surcharged by the UI
     # to ask its password to the user
     #
     # callback is a function that takes two parameters: error and password
     askPassword: (callback) ->
+        callback new Error('Not implemented'), null
+
+
+    # This method is here to be surcharged by the UI
+    # to ask for a confirmation before doing something that can't be cancelled
+    #
+    # callback is a function that takes two parameters: error and a boolean
+    askConfirmation: (callback) ->
         callback new Error('Not implemented'), null
 
 
@@ -122,10 +131,16 @@ class App
 
     # Recreate the local pouch database
     resetDatabase: (callback) =>
-        log.info "Recreates the local database..."
-        @pouch.resetDatabase ->
-            log.info "Database recreated"
-            callback?()
+        @askConfirmation (err, ok) =>
+            if err
+                log.error err
+            else if ok
+                log.info "Recreates the local database..."
+                @pouch.resetDatabase ->
+                    log.info "Database recreated"
+                    callback?()
+            else
+                log.info "Abort!"
 
 
     # Return the whole content of the database
