@@ -7,7 +7,7 @@ changes you made on them on other synced devices and on your online Cozy.
 **Note**: the code is currently **alpha** quality. But it's moving fast and we
 plan to do a more stable release in the coming weeks. Stay tuned!
 
-**Backup your data before playing with cozy-desktop!**
+:warning: **Backup your data before playing with cozy-desktop!**
 
 
 ## CLI Install
