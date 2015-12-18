@@ -81,6 +81,19 @@ describe "LocalWatcher Tests", ->
                         'creationDate'
                         'lastModification'
                     ]
+                    doc.executable.should.be.false()
+                    done()
+
+        it 'sets the executable bit', (done) ->
+            filePath = path.join @basePath, 'executable'
+            fs.ensureFileSync filePath
+            fs.chmodSync filePath, '755'
+            fs.stat filePath, (err, stats) =>
+                should.not.exist err
+                should.exist stats
+                @watcher.createDoc 'executable', stats, (err, doc) ->
+                    should.not.exist err
+                    doc.executable.should.be.true()
                     done()
 
         it 'calls back with an error if the file is missing', (done) ->

@@ -128,6 +128,7 @@ class RemoteWatcher
             docType: remote.docType.toLowerCase()
             creationDate: remote.creationDate
             lastModification: remote.lastModification
+            executable: remote.executable
             remote:
                 _id:  remote._id
                 _rev: remote._rev

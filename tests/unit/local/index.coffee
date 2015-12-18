@@ -59,12 +59,26 @@ describe 'Local', ->
                     done()
 
 
-    describe 'utimesUpdater', ->
+    describe 'metadataUpdater', ->
+        it 'chmod +x for an executable file', (done) ->
+            date = new Date '2015-11-09T05:06:07Z'
+            filePath = path.join @basePath, "exec-file"
+            fs.ensureFileSync filePath
+            updater = @local.metadataUpdater
+                path: 'exec-file'
+                lastModification: date
+                executable: true
+            updater (err) ->
+                should.not.exist err
+                mode = +fs.statSync(filePath).mode
+                (mode & 0o100).should.not.equal 0
+                done()
+
         it 'updates mtime for a file', (done) ->
             date = new Date '2015-10-09T05:06:07Z'
             filePath = path.join @basePath, "utimes-file"
             fs.ensureFileSync filePath
-            updater = @local.utimesUpdater
+            updater = @local.metadataUpdater
                 path: 'utimes-file'
                 lastModification: date
             updater (err) ->
@@ -77,7 +91,7 @@ describe 'Local', ->
             date = new Date '2015-10-09T05:06:07Z'
             folderPath = path.join @basePath, "utimes-folder"
             fs.ensureDirSync folderPath
-            updater = @local.utimesUpdater
+            updater = @local.metadataUpdater
                 path: 'utimes-folder'
                 lastModification: date
             updater (err) ->
