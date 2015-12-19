@@ -69,6 +69,22 @@ class LocalWatcher
         @watcher?.close()
         @watcher = null
 
+    # Show watched paths
+    debug: ->
+        if @watcher
+            log.info 'This is the list of the paths watched by chokidar:'
+            for dir, files of @watcher.getWatched()
+                if dir is '..'
+                    for file in files
+                        log.info "- #{dir}/#{file}"
+                else
+                    log.info "- #{dir}" unless dir is '.'
+                    for file in files
+                        log.info "  * #{file}"
+            log.info '--------------------------------------------------'
+        else
+            log.warn 'The file system is not currrently watched'
+
 
     ### Helpers ###
 
