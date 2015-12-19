@@ -57,7 +57,7 @@ class Merge
         return false unless @sameDate one.creationDate, two.creationDate
         return false unless @sameDate one.lastModification, two.lastModification
         fields = ['_id', 'docType', 'checksum', 'remote',
-            'tags', 'size', 'class', 'mime']
+            'tags', 'size', 'class', 'mime', 'executable']
         one = pick one, fields
         two = pick two, fields
         return isEqual one, two

@@ -66,6 +66,7 @@ Documents schema
 - `mime`: the precise mime-type (example: image/jpeg)
 - `remote`: id and rev of the associated documents in the remote CouchDB
 - `sides`: for tracking what is applied on local file system and remote cozy
+- `executable`: true if the file is executable (UNIX permission)
 
 ### Folder
 
@@ -116,3 +117,6 @@ So, even if `path` and `_id` are very similar, they have distinct roles:
 - `_id` is the normalized form and is used for comparison of paths
 - `path` is the prefered form and used for actions on local file system and
   remote cozy.
+
+The permissions are different on Unix and on Windows. So, the `executable`
+field is just ignored on Windows.

@@ -18,6 +18,7 @@ log      = require('printit')
 # TODO - Inotify.IN_MOVED_FROM & Inotify.IN_MOVED_TO
 # TODO - track inodes
 class LocalWatcher
+    EXECUTABLE_MASK = 1<<6
 
     constructor: (@basePath, @prep, @pouch) ->
         @side = 'local'
@@ -76,6 +77,7 @@ class LocalWatcher
     createDoc: (filePath, stats, callback) =>
         absPath = path.join @basePath, filePath
         [mimeType, fileClass] = @getFileClass absPath
+        executable = (stats.mode & EXECUTABLE_MASK) isnt 0
         @checksum absPath, (err, checksum) ->
             doc =
                 path: filePath
@@ -86,6 +88,7 @@ class LocalWatcher
                 size: stats.size
                 class: fileClass
                 mime: mimeType
+                executable: executable
             callback err, doc
 
     # Return mimetypes and class (like in classification) of a file

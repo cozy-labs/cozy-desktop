@@ -40,14 +40,20 @@ class Local
     ### Helpers ###
 
     # Return a function that will update last modification date
-    utimesUpdater: (doc) =>
+    # and does a chmod +x if the file is executable
+    metadataUpdater: (doc) =>
         filePath = path.resolve @basePath, doc.path
         (callback) ->
+            next = (err) ->
+                if doc.executable
+                    fs.chmod filePath, '755', callback
+                else
+                    callback err
             if doc.lastModification
                 lastModification = new Date doc.lastModification
-                fs.utimes filePath, new Date(), lastModification, callback
+                fs.utimes filePath, new Date(), lastModification, next
             else
-                callback()
+                next()
 
     # Return true if the local file is up-to-date for this document
     isUpToDate: (doc) ->
@@ -120,7 +126,7 @@ class Local
                 fs.ensureDir parent, ->
                     fs.rename tmpFile, filePath, next
 
-            @utimesUpdater(doc)
+            @metadataUpdater(doc)
 
         ], (err) ->
             log.debug doc
@@ -136,7 +142,7 @@ class Local
             if err
                 callback err
             else
-                @utimesUpdater(doc)(callback)
+                @metadataUpdater(doc)(callback)
 
 
     # Overwrite a file
@@ -145,7 +151,7 @@ class Local
 
     # Update the metadata of a file
     updateFileMetadata: (doc, old, callback) =>
-        @utimesUpdater(doc) callback
+        @metadataUpdater(doc) callback
 
     # Update a folder
     updateFolder: (doc, old, callback) =>
@@ -174,7 +180,7 @@ class Local
                                 log.error "File #{oldPath} not found"
                                 next new Error "#{oldPath} not found"
 
-            @utimesUpdater(doc)
+            @metadataUpdater(doc)
 
         ], (err) =>
             if err
@@ -208,7 +214,7 @@ class Local
                             log.error "Folder #{oldPath} not found"
                             next new Error "#{oldPath} not found"
 
-            @utimesUpdater(doc)
+            @metadataUpdater(doc)
 
         ], (err) =>
             if err

@@ -85,6 +85,7 @@ class Remote
             lastModification: local.lastModification
         for field in ['checksum', 'size', 'class', 'mime', 'tags']
             doc[field] = local[field] if local[field]
+        doc.executable = true if local.executable
         if remote
             doc._id = remote._id
             doc._rev = remote._rev
