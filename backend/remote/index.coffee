@@ -264,7 +264,10 @@ class Remote
         return callback() unless doc.remote
         remoteDoc = @createRemoteDoc doc, doc.remote
         @couch.removeRemoteDoc remoteDoc, (err, removed) =>
-            if err
+            # Ignore files that have already been removed
+            if err?.status is 404
+                callback null, removed
+            else if err
                 callback err, removed
             else
                 @cleanBinary doc.remote.binary._id, (err) ->
@@ -276,7 +279,12 @@ class Remote
         if doc.remote
             remoteDoc = @createRemoteDoc doc, doc.remote
             remoteDoc._deleted = true
-            @couch.put remoteDoc, callback
+            @couch.put remoteDoc, (err, removed) ->
+                # Ignore folders that have already been removed
+                if err?.status is 404
+                    callback null, removed
+                else
+                    callback err, removed
         else
             callback()
 
