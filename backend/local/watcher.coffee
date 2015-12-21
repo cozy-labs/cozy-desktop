@@ -1,6 +1,7 @@
 async    = require 'async'
 chokidar = require 'chokidar'
 crypto   = require 'crypto'
+find     = require 'lodash.find'
 fs       = require 'fs'
 mime     = require 'mime'
 path     = require 'path'
@@ -12,11 +13,6 @@ log      = require('printit')
 # a file or a folder is added/removed/changed locally.
 # Operations will be added to the a common operation queue along with the
 # remote operations triggered by the remoteEventWatcher.
-#
-# TODO detects move/rename (for files only):
-# TODO - https://github.com/paulmillr/chokidar/issues/303#issuecomment-127039892
-# TODO - Inotify.IN_MOVED_FROM & Inotify.IN_MOVED_TO
-# TODO - track inodes
 class LocalWatcher
     EXECUTABLE_MASK = 1<<6
 
@@ -30,6 +26,8 @@ class LocalWatcher
     start: (callback) =>
         log.info 'Start watching filesystem for changes'
         @paths = []
+        @pending = Object.create null  # ES6 map would be nice!
+        @checksums = 0
 
         @watcher = chokidar.watch '.',
             # Let paths in events be relative to this base path
@@ -65,9 +63,12 @@ class LocalWatcher
                     log.error err
 
     # Stop chokidar watcher
+    # TODO wait 1.2s that awaitWriteFinish detects the last added files?
     stop: ->
         @watcher?.close()
         @watcher = null
+        for _, pending of @pending
+            pending.done()
 
     # Show watched paths
     debug: ->
@@ -98,7 +99,7 @@ class LocalWatcher
                 path: filePath
                 docType: 'file'
                 checksum: checksum
-                creationDate: stats.ctime
+                creationDate: stats.birthtime or stats.ctime
                 lastModification: stats.mtime
                 size: stats.size
                 class: fileClass
@@ -133,6 +134,12 @@ class LocalWatcher
             callback err
         stream.pipe checksum
 
+    # Returns true if a sub-folder of the given path is pending
+    hasPending: (folderPath) ->
+        ret = find @pending, (_, key) ->
+            path.dirname(key) is folderPath
+        ret?  # Coerce the returns to a boolean
+
 
     ### Actions ###
 
@@ -140,17 +147,42 @@ class LocalWatcher
     onAdd: (filePath, stats) =>
         log.debug 'File added', filePath
         @paths?.push filePath
+        @pending[filePath]?.done()
+        @checksums++
         @createDoc filePath, stats, (err, doc) =>
             if err
+                @checksums--
                 log.debug err
             else
-                @prep.addFile @side, doc, @done
+                keys = Object.keys @pending
+                if keys.length is 0
+                    @checksums--
+                    @prep.addFile @side, doc, @done
+                else
+                    # TODO path vs _id: normalize keys?
+                    options =
+                        keys: keys
+                        include_docs: true
+                    @pouch.db.allDocs options, (err, results) =>
+                        @checksums--
+                        if err
+                            @prep.addFile @side, doc, @done
+                        else
+                            docs = (row.doc for row in results.rows)
+                            same = find docs, checksum: doc.checksum
+                            if same
+                                clearTimeout @pending[same.path].timeout
+                                delete @pending[same.path]
+                                @prep.moveFile @side, doc, same, @done
+                            else
+                                @prep.addFile @side, doc, @done
 
     # New directory detected
     onAddDir: (folderPath, stats) =>
         unless folderPath is ''
             log.debug 'Folder added', folderPath
             @paths?.push folderPath
+            @pending[folderPath]?.done()
             doc =
                 path: folderPath
                 docType: 'folder'
@@ -159,14 +191,41 @@ class LocalWatcher
             @prep.putFolder @side, doc, @done
 
     # File deletion detected
+    #
+    # It can be a file moved out. So, we wait a bit to see if a file with the
+    # same checksum is added and, if not, we declare this file as deleted.
     onUnlink: (filePath) =>
-        log.debug 'File deleted', filePath
-        @prep.deleteFile @side, path: filePath, @done
+        done = =>
+            clearTimeout @pending[filePath].timeout
+            delete @pending[filePath]
+            log.debug 'File deleted', filePath
+            @prep.deleteFile @side, path: filePath, @done
+        check = =>
+            if @checksums is 0
+                done()
+            else
+                @pending[filePath].timeout = setTimeout check, 100
+        @pending[filePath] =
+            done: done
+            check: check
+            timeout: setTimeout check, 1250
 
     # Folder deletion detected
+    #
+    # We don't want to delete a folder before files inside it. So we wait a bit
+    # after chokidar event to declare the folder as deleted.
     onUnlinkDir: (folderPath) =>
-        log.debug 'Folder deleted', folderPath
-        @prep.deleteFolder @side, path: folderPath, @done
+        done = =>
+            clearInterval @pending[folderPath].interval
+            delete @pending[folderPath]
+            log.debug 'Folder deleted', folderPath
+            @prep.deleteFolder @side, path: folderPath, @done
+        check = =>
+            done() unless @hasPending folderPath
+        @pending[folderPath] =
+            done: done
+            check: check
+            interval: setInterval done, 350
 
     # File update detected
     onChange: (filePath, stats) =>
@@ -186,8 +245,7 @@ class LocalWatcher
                     callback err
                 else
                     async.eachSeries docs.reverse(), (doc, next) =>
-                        # TODO _id vs path -> normalize @paths
-                        if doc._id in @paths
+                        if doc.path in @paths
                             next()
                         else
                             @prep.deleteDoc @side, doc, next

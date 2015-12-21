@@ -51,7 +51,7 @@ describe 'Push', ->
                 should.not.exist find folders, old
                 should.exist find folders, folder
                 done()
-        , 1000
+        , 1500
 
     it 'moves the folder', (done) ->
         parentPath = path.join @basePath, parent.path, parent.name
@@ -66,7 +66,7 @@ describe 'Push', ->
                 should.not.exist find folders, old
                 should.exist find folders, folder
                 done()
-        , 1000
+        , 1500
 
     it 'removes the folder', (done) ->
         folderPath = path.join @basePath, folder.path, folder.name
@@ -75,7 +75,7 @@ describe 'Push', ->
             Files.getAllFolders (err, folders) ->
                 should.not.exist find folders, folder
                 done()
-        , 1000
+        , 1200
 
     it 'pushs a local file to the remote cozy', (done) ->
         fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'
@@ -100,7 +100,7 @@ describe 'Push', ->
                 should.not.exist find files, old
                 should.exist find files, file
                 done()
-        , 2500
+        , 3000
 
     it 'moves the file', (done) ->
         old = clone file
@@ -114,7 +114,7 @@ describe 'Push', ->
                 should.not.exist find files, old
                 should.exist find files, file
                 done()
-        , 2500
+        , 3000
 
     it 'overwrites the file', (done) ->
         fixturePath = path.join Cozy.fixturesDir, 'chat-mignon-mod.jpg'

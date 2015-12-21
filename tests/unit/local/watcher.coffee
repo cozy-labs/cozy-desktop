@@ -128,6 +128,23 @@ describe "LocalWatcher Tests", ->
                 err.code.should.equal 'ENOENT'
                 done()
 
+    describe 'hasPending', ->
+        it 'returns true if a sub-folder is pending', ->
+            @watcher.pending = Object.create null
+            @watcher.pending['bar'] = {}
+            @watcher.pending['foo/bar'] = {}
+            @watcher.pending['zoo'] = {}
+            @watcher.hasPending('foo').should.be.true()
+            @watcher.pending['foo/baz/bim'] = {}
+            @watcher.hasPending('foo/baz').should.be.true()
+
+        it 'returns false else', ->
+            @watcher.pending = Object.create null
+            @watcher.hasPending('foo').should.be.false()
+            @watcher.pending['foo'] = {}
+            @watcher.pending['bar/baz'] = {}
+            @watcher.hasPending('foo').should.be.false()
+
 
     describe 'onAdd', ->
         it 'detects when a file is created', (done) ->
@@ -228,15 +245,23 @@ describe "LocalWatcher Tests", ->
 
 
     describe 'when a file is moved', ->
+        before 'reset pouchdb', (done) ->
+            @pouch.resetDatabase done
+
         it 'deletes the source and adds the destination', (done) ->
             src = path.join __dirname, '../../fixtures/chat-mignon.jpg'
             dst = path.join @basePath, 'afa.jpg'
             fs.copySync src, dst
-            @prep.addFile = ->
+            @prep.addFile = (side, doc) =>
+                doc._id = doc.path
+                @pouch.db.put doc
             @watcher.start =>
                 setTimeout =>
                     @prep.deleteFile = sinon.spy()
-                    @prep.addFile = (side, doc) =>
+                    @prep.addFile = sinon.spy()
+                    @prep.moveFile = (side, doc, was) =>
+                        @prep.deleteFile.called.should.be.false()
+                        @prep.addFile.called.should.be.false()
                         side.should.equal 'local'
                         doc.should.have.properties
                             path: 'afb.jpg'
@@ -245,28 +270,33 @@ describe "LocalWatcher Tests", ->
                             size: 29865
                             class: 'image'
                             mime: 'image/jpeg'
-                        setTimeout =>
-                            @prep.deleteFile.called.should.be.true()
-                            @prep.deleteFile.args[0][1].should.have.properties
-                                path: 'afa.jpg'
-                            done()
-                        , 10
+                        was.should.have.properties
+                            path: 'afa.jpg'
+                            docType: 'file'
+                            checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+                            size: 29865
+                        done()
                     fs.renameSync dst, path.join @basePath, 'afb.jpg'
-                , 1100
+                , 1500
 
 
     describe 'when a directory is moved', ->
+        before 'reset pouchdb', (done) ->
+            @pouch.resetDatabase done
+
         it 'deletes the source and adds the destination', (done) ->
             src = path.join @basePath, 'aga'
             dst = path.join @basePath, 'agb'
             fs.ensureDirSync src
-            fs.ensureFileSync "#{src}/agc"
-            @prep.addFile = ->
-            @prep.putFolder = ->
+            fs.writeFileSync "#{src}/agc", 'agc'
+            @prep.addFile = @prep.putFolder = (side, doc) =>
+                doc._id = doc.path
+                @pouch.db.put doc
             @watcher.start =>
                 setTimeout =>
                     @prep.addFile = sinon.spy()
                     @prep.deleteFile = sinon.spy()
+                    @prep.moveFile = sinon.spy()
                     @prep.deleteFolder = sinon.spy()
                     @prep.putFolder = (side, doc) =>
                         side.should.equal 'local'
@@ -274,34 +304,42 @@ describe "LocalWatcher Tests", ->
                             path: 'agb'
                             docType: 'folder'
                         setTimeout =>
-                            @prep.addFile.called.should.be.true()
-                            args = @prep.addFile.args[0][1]
-                            args.should.have.properties path: 'agb/agc'
-                            @prep.deleteFile.called.should.be.true()
-                            args = @prep.deleteFile.args[0][1]
-                            args.should.have.properties path: 'aga/agc'
+                            @prep.addFile.called.should.be.false()
+                            @prep.deleteFile.called.should.be.false()
+                            @prep.moveFile.called.should.be.true()
+                            src = @prep.moveFile.args[0][2]
+                            src.should.have.properties path: 'aga/agc'
+                            dst = @prep.moveFile.args[0][1]
+                            dst.should.have.properties path: 'agb/agc'
                             @prep.deleteFolder.called.should.be.true()
                             args = @prep.deleteFolder.args[0][1]
                             args.should.have.properties path: 'aga'
                             done()
-                        , 1100
+                        , 1500
                     fs.renameSync src, dst
-                , 1100
+                , 1200
 
     describe 'onReady', ->
+        before 'reset pouchdb', (done) ->
+            @pouch.resetDatabase done
+
         it 'detects deleted files and folders', (done) ->
             dd = @prep.deleteDoc = sinon.stub().yields()
             folder1 =
                 _id: 'folder1'
+                path: 'folder1'
                 docType: 'folder'
             folder2 =
                 _id: 'folder2'
+                path: 'folder2'
                 docType: 'folder'
             file1 =
                 _id: 'file1'
+                path: 'file1'
                 docType: 'folder'
             file2 =
                 _id: 'file2'
+                path: 'file2'
                 docType: 'folder'
             async.each [folder1, folder2, file1, file2], (doc, next) =>
                 @pouch.db.put doc, next
