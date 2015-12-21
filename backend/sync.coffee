@@ -38,7 +38,6 @@ class Sync
                 async.forever @sync, callback
 
     # Stop the synchronization
-    # TODO add unit test
     stop: (callback) =>
         @stopped = true
         if @changes
@@ -105,8 +104,6 @@ class Sync
             when doc.docType is 'folder'
                 @folderChanged doc, side, rev, done
             else
-                # TODO if cozy-desktop was restarted, does a deleted doc have a
-                # docType? Or should we fetch the previous rev to find it?
                 callback new Error "Unknown doctype: #{doc.docType}"
 
     # Select which side will apply the change

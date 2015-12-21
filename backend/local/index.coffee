@@ -159,7 +159,6 @@ class Local
 
 
     # Move a file from one place to another
-    # TODO verify checksum
     moveFile: (doc, old, callback) =>
         log.info "Move file #{old.path} → #{doc.path}"
         oldPath = path.join @basePath, old.path
