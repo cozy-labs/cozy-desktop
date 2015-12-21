@@ -1,6 +1,7 @@
 async = require 'async'
 path  = require 'path-extra'
 os    = require 'os'
+url   = require 'url'
 log   = require('printit')
     prefix: 'Cozy Desktop  '
 
@@ -44,9 +45,12 @@ class App
 
     # Register current device to remote Cozy and then save related informations
     # to the config file
-    addRemote: (url, syncPath, deviceName, callback) =>
-        unless url.match /^https?:\/\//
-            log.warn "Your URL looks invalid: #{url}"
+    addRemote: (cozyUrl, syncPath, deviceName, callback) =>
+        parsed = url.parse cozyUrl
+        parsed.protocol ?= 'https:'
+        cozyUrl = url.format parsed
+        unless parsed.protocol in ['http:', 'https:'] and parsed.hostname
+            log.warn "Your URL looks invalid: #{cozyUrl}"
             callback? err
             return
         deviceName ?= os.hostname() or 'desktop'
@@ -54,7 +58,7 @@ class App
             @askPassword,
             (password, next) ->
                 options =
-                    url: url
+                    url: cozyUrl
                     deviceName: deviceName
                     password: password
                 Devices.registerDevice options, next
@@ -62,12 +66,12 @@ class App
             if err
                 log.error err
                 log.error 'An error occured while registering your device.'
-                if url[0..6] is 'http://'
+                if parsed.protocol is 'http:'
                     log.warn 'Did you try with an httpS URL?'
             else
                 options =
                     path: path.resolve syncPath
-                    url: url
+                    url: cozyUrl
                     deviceName: deviceName
                     password: credentials.password
                 @config.addRemoteCozy options
