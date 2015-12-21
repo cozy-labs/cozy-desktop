@@ -71,8 +71,8 @@ class Couch
         @pickViewToCopy model, (err, viewName) =>
             return callback err if err
             log.debug "Getting latest #{model} documents from remote"
-            id = "_design/#{model}/_view/#{viewName}/"
-            @client.get id, (err, body) ->
+            opts = include_docs: true
+            @client.query "#{model}/#{viewName}", opts, (err, body) ->
                 callback err, body?.rows
 
     # Upload given file as attachment of given document (id + revision)
