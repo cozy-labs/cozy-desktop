@@ -66,7 +66,7 @@ Documents schema
 - `mime`: the precise mime-type (example: image/jpeg)
 - `remote`: id and rev of the associated documents in the remote CouchDB
 - `sides`: for tracking what is applied on local file system and remote cozy
-- `executable`: true if the file is executable (UNIX permission)
+- `executable`: true if the file is executable (UNIX permission), undefined else
 
 ### Folder
 
