@@ -64,10 +64,17 @@ class App
                 Devices.registerDevice options, next
         ], (err, credentials) =>
             if err
-                log.error err
                 log.error 'An error occured while registering your device.'
-                if parsed.protocol is 'http:'
-                    log.warn 'Did you try with an httpS URL?'
+                if err.code is 'ENOTFOUND'
+                    log.warn "The DNS resolution for #{parsed.hostname} failed."
+                    log.warn 'Are you sure the domain is OK?'
+                else if err is 'Bad credentials'
+                    log.warn err
+                    log.warn "Are you sure you didn't a typo on the password?"
+                else
+                    log.error err
+                    if parsed.protocol is 'http:'
+                        log.warn 'Did you try with an httpS URL?'
             else
                 options =
                     path: path.resolve syncPath
