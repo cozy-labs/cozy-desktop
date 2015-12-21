@@ -1,5 +1,7 @@
-path  = require 'path-extra'
 async = require 'async'
+path  = require 'path-extra'
+os    = require 'os'
+url   = require 'url'
 log   = require('printit')
     prefix: 'Cozy Desktop  '
 
@@ -24,6 +26,7 @@ class App
         @config = new Config @basePath
         @pouch  = new Pouch @config
 
+
     # This method is here to be surcharged by the UI
     # to ask its password to the user
     #
@@ -32,16 +35,30 @@ class App
         callback new Error('Not implemented'), null
 
 
+    # This method is here to be surcharged by the UI
+    # to ask for a confirmation before doing something that can't be cancelled
+    #
+    # callback is a function that takes two parameters: error and a boolean
+    askConfirmation: (callback) ->
+        callback new Error('Not implemented'), null
+
+
     # Register current device to remote Cozy and then save related informations
     # to the config file
-    #
-    # TODO validation of url, deviceName and syncPath
-    addRemote: (url, deviceName, syncPath, callback) =>
+    addRemote: (cozyUrl, syncPath, deviceName, callback) =>
+        parsed = url.parse cozyUrl
+        parsed.protocol ?= 'https:'
+        cozyUrl = url.format parsed
+        unless parsed.protocol in ['http:', 'https:'] and parsed.hostname
+            log.warn "Your URL looks invalid: #{cozyUrl}"
+            callback? err
+            return
+        deviceName ?= os.hostname() or 'desktop'
         async.waterfall [
             @askPassword,
             (password, next) ->
                 options =
-                    url: url
+                    url: cozyUrl
                     deviceName: deviceName
                     password: password
                 Devices.registerDevice options, next
@@ -49,10 +66,12 @@ class App
             if err
                 log.error err
                 log.error 'An error occured while registering your device.'
+                if parsed.protocol is 'http:'
+                    log.warn 'Did you try with an httpS URL?'
             else
                 options =
                     path: path.resolve syncPath
-                    url: url
+                    url: cozyUrl
                     deviceName: deviceName
                     password: credentials.password
                 @config.addRemoteCozy options
@@ -63,7 +82,6 @@ class App
 
     # Unregister current device from remote Cozy and then remove remote from
     # the config file
-    # TODO also remove the pouch database
     removeRemote: (deviceName, callback) =>
         device = @config.getDevice deviceName
         async.waterfall [
@@ -124,10 +142,16 @@ class App
 
     # Recreate the local pouch database
     resetDatabase: (callback) =>
-        log.info "Recreates the local database..."
-        @pouch.resetDatabase ->
-            log.info "Database recreated"
-            callback?()
+        @askConfirmation (err, ok) =>
+            if err
+                log.error err
+            else if ok
+                log.info "Recreates the local database..."
+                @pouch.resetDatabase ->
+                    log.info "Database recreated"
+                    callback?()
+            else
+                log.info "Abort!"
 
 
     # Return the whole content of the database

@@ -15,8 +15,14 @@ app.askPassword = (callback) ->
     promptMsg = """
 Please enter your password to register your device on your remote Cozy:
 """
-    read prompt: promptMsg, silent: true , (err, password, isDefault) ->
+    read prompt: promptMsg, silent: true , (err, password) ->
         callback err, password
+
+# Helper for confirmation
+app.askConfirmation = (callback) ->
+    promptMsg = 'Are your sure? [Y/N]'
+    read prompt: promptMsg, (err, response) ->
+        callback err, response.toUpperCase() is 'Y'
 
 sync = (mode, args) ->
     console.log "Cozy-desktop v#{pkg.version} started (PID: #{process.pid})"
@@ -29,11 +35,12 @@ sync = (mode, args) ->
         process.exit 1
 
 
-# TODO make devicename optional, and use `hostname` for the default
 program
-    .command 'add-remote-cozy <url> <devicename> <syncPath>'
+    .command 'add-remote-cozy <url> <syncPath>'
     .description 'Configure current device to sync with given cozy'
-    .action app.addRemote
+    .option '-d, --deviceName [deviceName]', 'device name to deal with'
+    .action (url, syncPath, args) ->
+        app.addRemote url, syncPath, args.deviceName
 
 program
     .command 'remove-remote-cozy'
@@ -96,7 +103,6 @@ program
     .command 'reset-database'
     .description 'Recreates the local database'
     .action app.resetDatabase
-    # TODO ask confirmation
 
 program
     .command 'display-database'
