@@ -38,15 +38,16 @@ class Sync
                 async.forever @sync, callback
 
     # Stop the synchronization
-    # TODO use correctly the callback + add unit test
+    # TODO add unit test
     stop: (callback) =>
         @stopped = true
         if @changes
             @changes.cancel()
             @changes = null
-        @local.stop()
-        @remote.stop()
-        callback()
+        async.parallel [
+            (done) => @local.stop callback
+            (done) => @remote.stop callback
+        ], callback
 
     # Start taking changes from pouch and applying them
     sync: (callback) =>
@@ -56,7 +57,9 @@ class Sync
                 log.error err
                 callback err
             else
-                @apply change, callback
+                @apply change, (err) ->
+                    err = null if @stopped
+                    callback err
 
     # Take the next change from pouch
     # We filter with the byPath view to reject design documents

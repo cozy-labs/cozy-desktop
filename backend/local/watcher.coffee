@@ -62,13 +62,13 @@ class LocalWatcher
                 else
                     log.error err
 
-    # Stop chokidar watcher
-    # TODO wait 1.2s that awaitWriteFinish detects the last added files?
-    stop: ->
+    stop: (callback) ->
         @watcher?.close()
         @watcher = null
         for _, pending of @pending
             pending.done()
+        # Give some time for awaitWriteFinish events to be fired
+        setTimeout callback, 3000
 
     # Show watched paths
     debug: ->

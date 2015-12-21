@@ -23,8 +23,8 @@ class Local
             @watcher.start done
 
     # Stop watching the file system
-    stop: ->
-        @watcher.stop()
+    stop: (callback) ->
+        @watcher.stop callback
 
     # Create a readable stream for the given doc
     createReadStream: (doc, callback) ->

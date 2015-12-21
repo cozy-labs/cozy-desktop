@@ -25,11 +25,19 @@ class Remote
     start: (done) =>
         @watcher.listenToChanges live: false, (err) =>
             done err
-            @watcher.listenToChanges live: true unless err
+            unless err
+                @watching = true
+                @watcher.listenToChanges live: true, =>
+                    @watching = false
 
     # Stop listening to couchdb changes
-    stop: ->
+    stop: (callback) ->
         @watcher.stopListening()
+        interval = setInterval =>
+            unless @watching
+                clearInterval interval
+                callback()
+        , 100
 
     # Create a readable stream for the given doc
     createReadStream: (doc, callback) =>
