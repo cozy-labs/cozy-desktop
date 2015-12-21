@@ -131,14 +131,16 @@ class Merge
     addFile: (side, doc, callback) ->
         @pouch.db.get doc._id, (err, file) =>
             @markSide side, doc, file
-            if file and @sameBinary file, doc
+            if file?.docType is 'folder'
+                @resolveConflict side, doc, callback
+            else if file and @sameBinary file, doc
                 doc._rev = file._rev
                 doc.size  ?= file.size
                 doc.class ?= file.class
                 doc.mime  ?= file.mime
                 doc.tags  ?= file.tags or []
                 @pouch.db.put doc, callback
-            else if file
+            else if file?.checksum
                 @resolveConflict side, doc, callback
             else
                 doc.tags ?= []

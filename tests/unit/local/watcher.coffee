@@ -81,7 +81,7 @@ describe "LocalWatcher Tests", ->
                         'creationDate'
                         'lastModification'
                     ]
-                    doc.executable.should.be.false()
+                    should.not.exist doc.executable
                     done()
 
         it 'sets the executable bit', (done) ->
