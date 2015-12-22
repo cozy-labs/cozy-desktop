@@ -105,8 +105,8 @@ class RemoteWatcher
             setTimeout (=> @whenReady callback), 100
 
     # When the replication fails, wait before trying again.
-    # For the first error, we wait between 1s and 2s.
-    # For next errors, the duration roughly doubles.
+    # For the first error, we wait between 2s and 4s.
+    # For next errors, it's 4 times longer.
     # After 5 errors, we give up.
     # TODO tests
     backoff: (err, fail, retry) =>
@@ -118,7 +118,7 @@ class RemoteWatcher
             fail err
         else
             wait = (1 + Math.random()) * 500
-            wait = ~~wait << @errors  # ~~ is to coerce to an int
+            wait = ~~wait << (@errors * 2)   # ~~ is to coerce to an int
             setTimeout retry, wait
 
     # Take one change from the changes feed and give it to merge
