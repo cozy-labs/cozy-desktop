@@ -83,6 +83,7 @@ class RemoteWatcher
                     retry: true
                     since: seq
                     include_docs: true
+                    heartbeat: 9500
                 @changes
                     .on 'change', (change) =>
                         @errors = 0
