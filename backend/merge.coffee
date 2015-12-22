@@ -143,6 +143,7 @@ class Merge
             else if file?.checksum
                 @resolveConflict side, doc, callback
             else
+                doc._rev = file._rev if file
                 doc.tags ?= []
                 @ensureParentExist side, doc, =>
                     @pouch.db.put doc, callback
