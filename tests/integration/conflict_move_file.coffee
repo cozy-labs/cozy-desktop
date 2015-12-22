@@ -79,7 +79,6 @@ describe 'Conflict when moving a file', ->
 
         it 'has the files on remote', (done) ->
             Files.getAllFiles (err, files) ->
-                console.log files unless files.length is 2  # TODO debug
                 files.length.should.equal 2
                 sizes = (f.size for f in files)
                 sizes.sort().should.eql expectedSizes.sort()

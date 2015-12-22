@@ -195,9 +195,11 @@ class LocalWatcher
     # It can be a file moved out. So, we wait a bit to see if a file with the
     # same checksum is added and, if not, we declare this file as deleted.
     onUnlink: (filePath) =>
-        done = =>
+        clear = =>
             clearTimeout @pending[filePath].timeout
             delete @pending[filePath]
+        done = =>
+            clear()
             log.debug 'File deleted', filePath
             @prep.deleteFile @side, path: filePath, @done
         check = =>
@@ -206,6 +208,7 @@ class LocalWatcher
             else
                 @pending[filePath].timeout = setTimeout check, 100
         @pending[filePath] =
+            clear: clear
             done: done
             check: check
             timeout: setTimeout check, 1250
@@ -215,14 +218,17 @@ class LocalWatcher
     # We don't want to delete a folder before files inside it. So we wait a bit
     # after chokidar event to declare the folder as deleted.
     onUnlinkDir: (folderPath) =>
-        done = =>
+        clear = =>
             clearInterval @pending[folderPath].interval
             delete @pending[folderPath]
+        done = =>
+            clear()
             log.debug 'Folder deleted', folderPath
             @prep.deleteFolder @side, path: folderPath, @done
         check = =>
             done() unless @hasPending folderPath
         @pending[folderPath] =
+            clear: clear
             done: done
             check: check
             interval: setInterval done, 350

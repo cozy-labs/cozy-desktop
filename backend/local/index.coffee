@@ -243,6 +243,10 @@ class Local
         srcPath = path.join @basePath, src.path
         dstPath = path.join @basePath, dst.path
         fs.rename srcPath, dstPath, callback
+        # Don't fire an event for the deleted file
+        setTimeout =>
+            @watcher.pending[src.path]?.clear()
+        , 1000
 
 
 module.exports = Local
