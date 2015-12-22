@@ -26,7 +26,7 @@ Then you can install cozy-desktop via NPM:
 
 Configure it with your remote Cozy
 
-    cozy-desktop add-remote-cozy https://url.of.my.cozy/ devicename /sync/directory
+    cozy-desktop add-remote-cozy https://url.of.my.cozy/ /sync/directory
 
 Then start synchronization daemon:
 
@@ -46,7 +46,7 @@ this role.
 For example, if you want to add a second synchronized directory, you can do:
 
     export COZY_DESKTOP_DIR=/sync/other
-    cozy-desktop add-remote-cozy https://url.of.my.other.cozy/ devicename /sync/other
+    cozy-desktop add-remote-cozy https://url.of.my.other.cozy/ /sync/other
     cozy-desktop sync
 
 
@@ -76,12 +76,9 @@ npm install
 # Then run tests via gulp
 node_modules/.bin/gulp test
 
-# To run a specific set of tests (here testing local_watcher with DEBUG activated)
+# To run a specific set of tests (here testing pouch with DEBUG activated)
 npm install -g mocha
 DEBUG=true COZY_DESKTOP_DIR=tmp mocha --compilers coffee:coffee-script/register tests/unit/pouch.coffee
-
-# Or, if you want pouchdb to be really verbose
-DEBUG=pouchdb:api COZY_DESKTOP_DIR=tmp mocha --compilers coffee:coffee-script/register tests/unit/pouch.coffee
 ```
 
 Integration tests require that you have the Cozy dev VM up (it means CouchDB,
