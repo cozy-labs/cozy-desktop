@@ -8,7 +8,6 @@ export COZY_DESKTOP_DIR=tmp
 BIN='mocha -s 150 -t 5000 --reporter spec --compilers coffee:coffee-script/register '
 
 $BIN tests/unit/{,local/,remote/}*.coffee
-DEBUG=true $BIN tests/integration/conflict_move_file.coffee
 for i in tests/integration/*.coffee; do $BIN $i; done
 
 ./node_modules/.bin/gulp lint
