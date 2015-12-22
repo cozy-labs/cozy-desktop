@@ -128,7 +128,8 @@ class App
 
     # Stop the synchronisation
     stopSync: (callback) ->
-        @sync.stop callback
+        callback ?= ->
+        @sync?.stop callback
 
 
     # Start database sync process and setup file change watcher
@@ -141,6 +142,7 @@ class App
             log.error 'No configuration found, please run add-remote-cozy' +
                 'command before running a synchronization.'
             callback? new Error 'No config'
+
 
     # Display a list of watchers for debugging purpose
     debugWatchers: ->

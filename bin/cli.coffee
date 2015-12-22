@@ -7,6 +7,13 @@ pkg = require '../package.json'
 App = require '../backend/app'
 app = new App process.env.COZY_DESKTOP_DIR
 
+exit = ->
+    console.log 'Exiting...'
+    app.stopSync ->
+        process.exit()
+
+process.on 'SIGINT',  exit
+process.on 'SIGTERM', exit
 process.on 'SIGUSR1', ->
     app.debugWatchers()
 

@@ -23,8 +23,8 @@ class Local
             @watcher.start done
 
     # Stop watching the file system
-    stop: ->
-        @watcher.stop()
+    stop: (callback) ->
+        @watcher.stop callback
 
     # Create a readable stream for the given doc
     createReadStream: (doc, callback) ->
@@ -159,7 +159,6 @@ class Local
 
 
     # Move a file from one place to another
-    # TODO verify checksum
     moveFile: (doc, old, callback) =>
         log.info "Move file #{old.path} → #{doc.path}"
         oldPath = path.join @basePath, old.path

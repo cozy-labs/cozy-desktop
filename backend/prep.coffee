@@ -43,8 +43,6 @@ class Prep
 
     # Return true if the document has not a valid path
     # (ie a path inside the mount point)
-    # TODO what other things are not authorized? 0x0
-    # TODO forbid _design and _local?
     invalidPath: (doc) ->
         return true unless doc.path
         doc.path = path.normalize doc.path
