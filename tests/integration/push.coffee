@@ -38,7 +38,7 @@ describe 'Push', ->
             Files.getAllFolders (err, folders) ->
                 should.exist find folders, folder
                 done()
-        , 1000
+        , 1500
 
     it 'renames the folder', (done) ->
         old = clone folder
