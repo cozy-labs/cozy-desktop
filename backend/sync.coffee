@@ -44,8 +44,8 @@ class Sync
             @changes.cancel()
             @changes = null
         async.parallel [
-            (done) => @local.stop callback
-            (done) => @remote.stop callback
+            (done) => @local.stop done
+            (done) => @remote.stop done
         ], callback
 
     # Start taking changes from pouch and applying them
