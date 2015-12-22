@@ -51,7 +51,7 @@ describe 'Conflict when moving a file', ->
                 setTimeout =>
                     @app.sync.apply = apply
                     @app.sync.apply change, callback
-                , 2500
+                , 2400
 
         before Cozy.sync
 
@@ -62,7 +62,7 @@ describe 'Conflict when moving a file', ->
             srcPath = path.join @basePath, src.path, src.name
             dstPath = path.join @basePath, file.path, file.name
             fs.renameSync srcPath, dstPath
-            setTimeout done, 5000
+            setTimeout done, 6000
 
         it 'has the two files on local', ->
             files = fs.readdirSync @basePath
@@ -77,8 +77,9 @@ describe 'Conflict when moving a file', ->
             parts.length.should.equal 2
             parts[0].should.equal file.name
 
-        it 'has the directories on remote', (done) ->
+        it 'has the files on remote', (done) ->
             Files.getAllFiles (err, files) ->
+                console.log files unless files.length is 2  # TODO debug
                 files.length.should.equal 2
                 sizes = (f.size for f in files)
                 sizes.sort().should.eql expectedSizes.sort()
