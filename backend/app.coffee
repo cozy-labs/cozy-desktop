@@ -127,8 +127,7 @@ class App
 
 
     # Stop the synchronisation
-    stopSync: (callback) ->
-        callback ?= ->
+    stopSync: (callback=->) ->
         @sync?.stop callback
 
 
