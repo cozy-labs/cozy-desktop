@@ -52,16 +52,20 @@ describe 'Cancel', ->
                 waitAppear onePath, done
 
         it 'moves the file', (done) ->
-            Files.updateFile two, (err, updated) ->
-                waitAppear twoPath, ->
-                    fs.existsSync(onePath).should.be.false()
-                    done()
+            setTimeout ->
+                Files.updateFile two, (err, updated) ->
+                    waitAppear twoPath, ->
+                        fs.existsSync(onePath).should.be.false()
+                        done()
+            , 500
 
         it 'moves back the file to its original path', (done) ->
-            Files.updateFile one, (err, updated) ->
-                waitAppear onePath, ->
-                    fs.existsSync(twoPath).should.be.false()
-                    done()
+            setTimeout ->
+                Files.updateFile one, (err, updated) ->
+                    waitAppear onePath, ->
+                        fs.existsSync(twoPath).should.be.false()
+                        done()
+            , 500
 
 
     describe 'Delete a file and recreate it', ->
@@ -79,10 +83,14 @@ describe 'Cancel', ->
                 waitAppear filePath, done
 
         it 'removes the file', (done) ->
-            Files.removeFile file, (err, removed) ->
-                waitDisappear filePath, done
+            setTimeout ->
+                Files.removeFile file, (err, removed) ->
+                    waitDisappear filePath, done
+            , 500
 
         it 'recreates the file', (done) ->
-            delete file.id
-            Files.uploadFile file, fixturePath, (err, created) ->
-                waitAppear filePath, done
+            setTimeout ->
+                delete file.id
+                Files.uploadFile file, fixturePath, (err, created) ->
+                    waitAppear filePath, done
+            , 500

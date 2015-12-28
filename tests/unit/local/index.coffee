@@ -19,6 +19,7 @@ describe 'Local', ->
     before 'instanciate local', ->
         @prep = {}
         @local = new Local @config, @prep, @pouch
+        @local.watcher.pending = {}
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
 

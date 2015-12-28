@@ -12,6 +12,7 @@ log   = require('printit')
 class RemoteWatcher
     constructor: (@couch, @prep, @pouch) ->
         @side = 'remote'
+        @errors  = 0
         @pending = 0
 
     # Stop listening to couchdb
@@ -63,7 +64,6 @@ class RemoteWatcher
                 callback err
 
     # Listen to the Couchdb changes feed for files and folders updates
-    # TODO add integration tests
     # TODO use a view instead of a filter
     listenToChanges: (options, callback) =>
         @pouch.getRemoteSeq (err, seq) =>
@@ -83,24 +83,44 @@ class RemoteWatcher
                     retry: true
                     since: seq
                     include_docs: true
+                    heartbeat: 9500
                 @changes
                     .on 'change', (change) =>
+                        @errors = 0
                         @onChange change.doc, @changed(change)
                     .on 'error', (err) =>
                         @changes = null
-                        log.warn 'An error occured during replication.'
-                        log.error err
-                        callback err
+                        @backoff err, callback, =>
+                            @listenToChanges options, callback
                     .on 'complete', =>
                         @changes = null
                         @whenReady callback
 
-    # TODO comments, tests
+    # Wait for all the changes from CouchDB has been saved in Pouch
+    # to call the callback
+    # TODO tests
     whenReady: (callback=->) =>
         if @pending is 0
             callback()
         else
             setTimeout (=> @whenReady callback), 100
+
+    # When the replication fails, wait before trying again.
+    # For the first error, we wait between 2s and 4s.
+    # For next errors, it's 4 times longer.
+    # After 5 errors, we give up.
+    # TODO tests
+    backoff: (err, fail, retry) =>
+        @errors++
+        log.warn 'An error occured during replication.'
+        log.error err
+        if @errors >= 5
+            @errors = 0
+            fail err
+        else
+            wait = (1 + Math.random()) * 500
+            wait = ~~wait << (@errors * 2)   # ~~ is to coerce to an int
+            setTimeout retry, wait
 
     # Take one change from the changes feed and give it to merge
     #

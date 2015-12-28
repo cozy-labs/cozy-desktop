@@ -85,14 +85,6 @@ describe 'Conflict between remote docs with distinct cases', ->
                 done()
 
 
-    describe '2 folders', ->
-        it 'TODO'
-
-
-    describe 'a file and a folder', ->
-        it 'TODO'
-
-
     describe 'a folder and a file', ->
         lower =
             path: ''

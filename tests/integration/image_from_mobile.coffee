@@ -20,6 +20,7 @@ describe 'Image from mobile', ->
         path: ''
         name: faker.commerce.color()
         lastModification: '2015-10-12T01:02:03Z'
+        checksum: 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
     expectedSizes = []
 
     before 'Create the remote file', (done) ->
@@ -59,4 +60,5 @@ describe 'Image from mobile', ->
             remote = files[0]
             remote.name.should.equal file.name
             remote.size.should.equal file.size
+            remote.checksum.should.equal file.checksum
             done()

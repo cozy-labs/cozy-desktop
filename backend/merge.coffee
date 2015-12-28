@@ -23,10 +23,6 @@ log     = require('printit')
 # isn't simple to implement. When the document is renamed, it fires some events
 # that are not in the normal flow (rename instead of add, bogus delete) and we
 # need to redirect them.
-#
-# TODO add some tests for case-insensitivity
-# TODO add integration tests for conflicts
-# TODO add an integration test where a folder with a lot of files is removed
 class Merge
     constructor: (@pouch) ->
         @local = @remote = null
@@ -143,6 +139,7 @@ class Merge
             else if file?.checksum
                 @resolveConflict side, doc, callback
             else
+                doc._rev = file._rev if file
                 doc.tags ?= []
                 @ensureParentExist side, doc, =>
                     @pouch.db.put doc, callback
