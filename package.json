@@ -70,7 +70,7 @@
     "lodash.clone": "^3.0.3",
     "lodash.find": "^3.2.1",
     "nw": "^0.12.3",
-    "nw-builder": "^2.0.2",
+    "nw-builder": "^2.2.0",
     "pouchdb-server": "^1.0.0",
     "should": "^8.0.0",
     "sinon": "^1.17.2",
