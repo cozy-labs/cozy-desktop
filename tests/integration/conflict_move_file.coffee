@@ -51,7 +51,7 @@ describe 'Conflict when moving a file', ->
                 setTimeout =>
                     @app.sync.apply = apply
                     @app.sync.apply change, callback
-                , 2400
+                , 3000
 
         before Cozy.sync
 
