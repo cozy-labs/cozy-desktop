@@ -71,7 +71,7 @@
     "nw": "^0.12.3",
     "nw-builder": "^2.0.2",
     "pouchdb-server": "^1.0.0",
-    "should": "^8.0.0",
+    "should": "^8.1.1",
     "sinon": "^1.17.2",
     "touch": "^1.0.0"
   }
