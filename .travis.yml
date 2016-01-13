@@ -30,6 +30,7 @@ before_install:
     - TESTED_NODE=$(node -v)
     - nvm install 0.10
     - nvm use 0.10
+    - travis_retry npm -g install npm@latest-2
     - npm install forever coffee-script -g
     - git clone git://github.com/cozy/cozy-data-system.git
     - cd cozy-data-system
