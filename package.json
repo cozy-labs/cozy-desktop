@@ -65,7 +65,7 @@
     "gulp-coffeelint": "^0.6.0",
     "gulp-insert": "^0.5.0",
     "gulp-mocha": "^2.2.0",
-    "gulp-shell": "^0.5.1",
+    "gulp-shell": "^0.5.2",
     "lodash.clone": "^4.0.1",
     "lodash.find": "^4.0.0",
     "nw": "^0.12.3",
