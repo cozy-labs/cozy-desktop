@@ -42,6 +42,7 @@ module.exports.registerDevice = (done) ->
     @app = new App @basePath
     @app.askPassword = (callback) ->
         callback null, helpers.password
+    helpers.deviceName = "test-#{faker.internet.userName()}"
     @app.addRemote helpers.url, @basePath, helpers.deviceName, (err) ->
         should.not.exist err
         # For debug:
