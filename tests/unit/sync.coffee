@@ -236,27 +236,30 @@ describe "Sync", ->
             func()
 
         it 'saves the revision for the applied side', (done) ->
-            @pouch.setLocalSeq 126, =>
-                change =
-                    seq: 127
-                    doc:
-                        _id: 'just/created'
-                        _rev: '1-0cf9be'
-                        docType: 'folder'
-                        sides:
-                            local: 1
-                func = @sync.applied change, 'remote', (err) =>
-                    should.not.exist err
-                    @pouch.db.get change.doc._id, (err, doc) ->
+            doc =
+                _id: 'just/created'
+                docType: 'folder'
+                sides:
+                    local: 1
+            @pouch.db.put doc, (err, infos) =>
+                should.not.exist err
+                @pouch.setLocalSeq 126, =>
+                    change =
+                        seq: 127
+                        doc: doc
+                    change.doc._rev = infos.rev
+                    func = @sync.applied change, 'remote', (err) =>
                         should.not.exist err
-                        doc.should.have.properties
-                            _id: 'just/created'
-                            docType: 'folder'
-                            sides:
-                                local: 2
-                                remote: 2
-                        done()
-                func()
+                        @pouch.db.get change.doc._id, (err, doc) ->
+                            should.not.exist err
+                            doc.should.have.properties
+                                _id: 'just/created'
+                                docType: 'folder'
+                                sides:
+                                    local: 2
+                                    remote: 2
+                            done()
+                    func()
 
         it 'returns a function that does not touch the seq if error', (done) ->
             @pouch.setLocalSeq 128, =>
