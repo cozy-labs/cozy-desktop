@@ -50,7 +50,7 @@ class Prep
         parts = doc.path.split path.sep
         return doc.path is '.' or
             doc.path is '' or
-            parts[0] is '..'
+            parts.indexOf('..') >= 0
 
     # Return true if the checksum is invalid
     # If the checksum is missing, it is not invalid, just missing,
