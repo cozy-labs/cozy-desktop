@@ -1,6 +1,8 @@
 async  = require 'async'
+jsv    = require 'jsverify'
 path   = require 'path'
 should = require 'should'
+uniq   = require 'lodash.uniq'
 
 Pouch  = require '../../backend/pouch'
 
@@ -319,3 +321,34 @@ describe "Pouch", ->
                 async.each [1..100], @pouch.setRemoteSeq, (err) ->
                     should.not.exist err
                     done()
+
+
+        describe 'byRecursivePath (bis)', ->
+            @timeout 60000
+
+            # jsverify only works with Promise for async stuff
+            return unless typeof Promise is 'function'
+
+            it 'gets the nested files and folders', (done) ->
+                base = 'byRecursivePath'
+                property = jsv.forall 'nearray nestring', (paths) =>
+                    paths = uniq paths.concat([base])
+                    new Promise (resolve, reject) =>
+                        @pouch.resetDatabase (err) ->
+                            if err
+                                reject err
+                            else
+                                resolve()
+                    .then =>
+                        Promise.all paths.map (p) =>
+                            doc = _id: path.join(base, p), docType: 'folder'
+                            @pouch.db.put doc
+                    .then =>
+                        new Promise (resolve, reject) =>
+                            @pouch.byRecursivePath base, (err, docs) ->
+                                if err
+                                    reject err
+                                else
+                                    resolve docs.length is paths.length
+                jsv.assert(property, tests: 10).then (res) ->
+                    if res is true then done() else done res
