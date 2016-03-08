@@ -177,17 +177,15 @@ class LocalWatcher
                     @checksums--
                     @prep.addFile @side, doc, @done
                 else
-                    # TODO path vs _id: normalize keys?
-                    options =
-                        keys: keys
-                        include_docs: true
-                    @pouch.db.allDocs options, (err, results) =>
+                    # Let's see if one of the pending deleted files has the
+                    # same checksum that the added file. If so, we mark them as
+                    # a move.
+                    @pouch.byChecksum doc.checksum, (err, docs) =>
                         @checksums--
                         if err
                             @prep.addFile @side, doc, @done
                         else
-                            docs = (row.doc for row in results.rows)
-                            same = find docs, checksum: doc.checksum
+                            same = find docs, (d) -> ~keys.indexOf(d.path)
                             if same
                                 clearTimeout @pending[same.path].timeout
                                 delete @pending[same.path]
