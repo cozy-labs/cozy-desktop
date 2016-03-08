@@ -4,7 +4,7 @@ path   = require 'path'
 should = require 'should'
 uniq   = require 'lodash.uniq'
 
-Pouch  = require '../../backend/pouch'
+Pouch  = require '../../src/pouch'
 
 configHelpers = require '../helpers/config'
 pouchHelpers  = require '../helpers/pouch'

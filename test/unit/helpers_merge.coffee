@@ -4,7 +4,7 @@ path   = require 'path'
 sinon  = require 'sinon'
 should = require 'should'
 
-Merge = require '../../backend/merge'
+Merge = require '../../src/merge'
 
 configHelpers = require '../helpers/config'
 pouchHelpers  = require '../helpers/pouch'

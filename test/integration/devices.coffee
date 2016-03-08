@@ -1,7 +1,7 @@
 should = require 'should'
 
 Cozy    = require '../helpers/integration'
-Devices = require '../../backend/devices'
+Devices = require '../../src/devices'
 
 
 describe "Devices", ->

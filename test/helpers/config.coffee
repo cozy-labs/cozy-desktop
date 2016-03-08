@@ -2,7 +2,7 @@ fs   = require 'fs-extra'
 del  = require 'del'
 path = require 'path'
 
-Config = require '../../backend/config'
+Config = require '../../src/config'
 
 
 module.exports =

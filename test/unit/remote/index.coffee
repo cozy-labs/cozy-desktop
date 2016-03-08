@@ -3,7 +3,7 @@ fs       = require 'fs'
 sinon    = require 'sinon'
 should   = require 'should'
 
-Remote = require '../../../backend/remote'
+Remote = require '../../../src/remote'
 
 
 configHelpers = require '../../helpers/config'
@@ -34,7 +34,7 @@ describe 'Remote', ->
     describe 'createReadStream', ->
         it 'create a readable stream from a remote binary', (done) ->
             checksum = '53a547469e98b667671803adc814d6d1376fae6b'
-            fixture = 'tests/fixtures/cool-pillow.jpg'
+            fixture = 'test/fixtures/cool-pillow.jpg'
             doc =
                 path: 'pillow.jpg'
                 checksum: checksum
@@ -66,7 +66,7 @@ describe 'Remote', ->
     describe 'uploadBinary', ->
         it 'creates a remote binary document', (done) ->
             checksum = 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
-            fixture = 'tests/fixtures/chat-mignon.jpg'
+            fixture = 'test/fixtures/chat-mignon.jpg'
             doc =
                 path: 'chat.jpg'
                 mime: 'image/jpeg'
@@ -274,7 +274,7 @@ describe 'Remote', ->
                 creationDate: new Date()
                 lastModification: new Date()
                 size: 36901
-            fixture = 'tests/fixtures/chat-mignon-mod.jpg'
+            fixture = 'test/fixtures/chat-mignon-mod.jpg'
             @remote.other =
                 createReadStream: (localDoc, callback) ->
                     stream = fs.createReadStream fixture

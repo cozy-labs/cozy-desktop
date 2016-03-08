@@ -6,7 +6,7 @@ path    = require 'path'
 request = require 'request-json-light'
 should  = require 'should'
 
-App     = require '../../backend/app'
+App     = require '../../src/app'
 PouchDB = require 'pouchdb'
 
 

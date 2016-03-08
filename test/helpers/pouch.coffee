@@ -1,6 +1,6 @@
 path = require 'path'
 
-Pouch = require '../../backend/pouch'
+Pouch = require '../../src/pouch'
 
 
 module.exports =

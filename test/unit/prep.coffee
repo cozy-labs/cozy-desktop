@@ -2,7 +2,7 @@ clone  = require 'lodash.clone'
 sinon  = require 'sinon'
 should = require 'should'
 
-Prep = require '../../backend/prep'
+Prep = require '../../src/prep'
 
 
 describe 'Prep', ->

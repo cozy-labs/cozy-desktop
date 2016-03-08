@@ -5,7 +5,7 @@ sinon    = require 'sinon'
 should   = require 'should'
 Readable = require('stream').Readable
 
-Local = require '../../../backend/local'
+Local = require '../../../src/local'
 
 
 configHelpers = require '../../helpers/config'

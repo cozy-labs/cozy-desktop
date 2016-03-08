@@ -4,7 +4,7 @@ path   = require 'path'
 sinon  = require 'sinon'
 should = require 'should'
 
-Watcher = require '../../../backend/local/watcher'
+Watcher = require '../../../src/local/watcher'
 
 configHelpers = require '../../helpers/config'
 pouchHelpers  = require '../../helpers/pouch'
@@ -115,7 +115,7 @@ describe "LocalWatcher Tests", ->
 
     describe 'checksum', ->
         it 'returns the checksum of an existing file', (done) ->
-            filePath = 'tests/fixtures/chat-mignon.jpg'
+            filePath = 'test/fixtures/chat-mignon.jpg'
             @watcher.checksum filePath, (err, sum) ->
                 should.not.exist err
                 sum.should.equal "bf268fcb32d2fd7243780ad27af8ae242a6f0d30"

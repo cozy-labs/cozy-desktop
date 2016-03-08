@@ -6,7 +6,7 @@ should = require 'should'
 configHelpers = require '../../helpers/config'
 couchHelpers  = require '../../helpers/couch'
 
-Couch = require '../../../backend/remote/couch'
+Couch = require '../../../src/remote/couch'
 
 
 describe "Couch", ->
@@ -85,7 +85,7 @@ describe "Couch", ->
 
     describe 'uploadAsAttachment', ->
         it 'upload a file as an attachment to an existing doc', (done) ->
-            file = 'tests/fixtures/chat-mignon.jpg'
+            file = 'test/fixtures/chat-mignon.jpg'
             mime = 'image/jpeg'
             @couch.uploadAsAttachment @doc._id, @rev, mime, file, (err, doc) ->
                 should.not.exist err
@@ -94,7 +94,7 @@ describe "Couch", ->
                 done()
 
         it 'upload a stream as an attachment to an existing doc', (done) ->
-            stream = fs.createReadStream 'tests/fixtures/chat-mignon-mod.jpg'
+            stream = fs.createReadStream 'test/fixtures/chat-mignon-mod.jpg'
             mime = 'image/jpeg'
             @couch.uploadAsAttachment @doc._id, @rev, mime, stream, (err, doc)->
                 should.not.exist err
@@ -103,7 +103,7 @@ describe "Couch", ->
                 done()
 
         it 'has the correct content-type', (done) ->
-            stream = fs.createReadStream 'tests/fixtures/cool-pillow.jpg'
+            stream = fs.createReadStream 'test/fixtures/cool-pillow.jpg'
             mime = 'image/jpeg'
             @couch.uploadAsAttachment @doc._id, @rev, mime, stream, (err, doc)->
                 should.not.exist err
@@ -113,7 +113,7 @@ describe "Couch", ->
 
     describe 'downloadBinary', ->
         it 'creates a readable stream from a remote binary doc', (done) ->
-            file = 'tests/fixtures/chat-mignon.jpg'
+            file = 'test/fixtures/chat-mignon.jpg'
             mime = 'image/jpeg'
             @couch.uploadAsAttachment @doc._id, @rev, mime, file, (err, doc) =>
                 should.not.exist err

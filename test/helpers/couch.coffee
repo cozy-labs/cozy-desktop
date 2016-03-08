@@ -4,7 +4,7 @@ fs      = require 'fs-extra'
 path    = require 'path'
 request = require 'request-json-light'
 
-Couch = require '../../backend/remote/couch'
+Couch = require '../../src/remote/couch'
 
 
 params =

@@ -9,8 +9,8 @@ configHelpers = require '../../helpers/config'
 couchHelpers  = require '../../helpers/couch'
 pouchHelpers  = require '../../helpers/pouch'
 
-Prep    = require '../../../backend/prep'
-Watcher = require '../../../backend/remote/watcher'
+Prep    = require '../../../src/prep'
+Watcher = require '../../../src/remote/watcher'
 
 
 describe "RemoteWatcher Tests", ->

@@ -2,7 +2,7 @@ async  = require 'async'
 sinon  = require 'sinon'
 should = require 'should'
 
-Sync = require '../../backend/sync'
+Sync = require '../../src/sync'
 
 
 configHelpers = require '../helpers/config'

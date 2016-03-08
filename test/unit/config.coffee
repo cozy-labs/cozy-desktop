@@ -2,7 +2,7 @@ should = require 'should'
 
 configHelpers = require '../helpers/config'
 
-Config = require '../../backend/config'
+Config = require '../../src/config'
 
 
 describe 'Config', ->
