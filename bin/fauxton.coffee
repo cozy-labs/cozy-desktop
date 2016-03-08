@@ -10,8 +10,8 @@
 
 PouchDB = require 'pouchdb'
 path    = require 'path-extra'
-Config  = require '../backend/config'
-helpers = require '../tests/helpers/couch.coffee'
+Config  = require '../src/config'
+helpers = require '../test/helpers/couch.coffee'
 
 
 helpers.startServer (err) ->

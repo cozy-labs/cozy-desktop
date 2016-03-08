@@ -1,5 +1,8 @@
 # [Cozy](https://cozy.io) Desktop
 
+[![Build Status](https://travis-ci.org/cozy-labs/cozy-desktop.png)](https://travis-ci.org/cozy-labs/cozy-desktop)
+
+
 The Cozy desktop app allows to sync the files stored in your Cozy with your laptop
 and/or your desktop. It replicates your files on your hard drive and apply
 changes you made on them on other synced devices and on your online Cozy.
@@ -57,9 +60,6 @@ To hack the synchronization backend, you can just edit the files under the
 `bin/cli.coffee` file.
 
 ### Tests
-
-[![Build Status](https://travis-ci.org/cozy-labs/cozy-desktop.png?branch=master)
-](https://travis-ci.org/cozy-labs/cozy-desktop)
 
 There are several levels of tests in cozy-desktop:
 
@@ -152,6 +152,10 @@ it simple and easy. So, it has some limitations:
 
 - No advanced feature, like P2P replication between several cozy-desktop
   instances.
+
+## License
+
+Cozy Desktop Client is developed by Cozy Cloud and distributed under the AGPL v3 license.
 
 
 ## What is Cozy?
