@@ -213,8 +213,6 @@ class Remote
                 if err
                     callback err
                 else
-                    # TODO what if folder.path+name != doc.path ?
-                    # TODO Or folder._rev != doc.remote._rev
                     folder.tags = doc.tags
                     folder.lastModification = doc.lastModification
                     @couch.put folder, (err, updated) ->
@@ -256,8 +254,6 @@ class Remote
                 if err
                     callback err
                 else
-                    # TODO what if folder.path+name != old.path ?
-                    # TODO Or folder._rev != doc.remote._rev
                     [dir, name] = @extractDirAndName doc.path
                     folder.path = dir
                     folder.name = name
@@ -301,8 +297,6 @@ class Remote
     resolveConflict: (dst, src, callback) =>
         log.info "Resolve a conflict: #{src.path} → #{dst.path}"
         @couch.get src.remote._id, (err, doc) =>
-            # TODO what if doc.path+name != src.path ?
-            # TODO Or doc._rev != src.remote._rev
             [dir, name] = @extractDirAndName dst.path
             doc.path = dir
             doc.name = name
