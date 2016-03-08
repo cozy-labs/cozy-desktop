@@ -3,8 +3,8 @@
 read    = require 'read'
 program = require 'commander'
 
-pkg = require '../package.json'
-App = require '../backend/app'
+pkg = require '../../package.json'
+App = require '../app'
 app = new App process.env.COZY_DESKTOP_DIR
 
 exit = ->
