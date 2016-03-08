@@ -1,8 +1,0 @@
-[Desktop Entry]
-Name=Cozy Desktop
-Comment=Synchonization client for Cozy
-Exec=/usr/bin/cozy-desktop %U
-Icon=/usr/share/doc/cozy-desktop/icon.png
-Terminal=false
-Type=Application
-Categories=Utility;Network;
