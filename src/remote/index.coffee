@@ -67,7 +67,7 @@ class Remote
                 {_id, _rev} = binary
                 mime = doc.mime or 'application/octet-stream'
                 @couch.uploadAsAttachment _id, _rev, mime, stream, next
-        ], (err) ->
+        ], (err) =>
             if err and binary._rev
                 @couch.remove binary._id, binary._rev, -> callback err
             else if err and err.status is 409
