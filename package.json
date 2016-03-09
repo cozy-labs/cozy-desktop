@@ -25,7 +25,9 @@
   ],
   "scripts": {
     "lint": "coffeelint src/ test/",
-    "test": "./bin/ci",
+    "test": "npm run test-unit && npm run test-integration",
+    "test-unit": "mocha test/unit/",
+    "test-integration": "mocha test/integration/",
     "build": "coffee -o lib/ src/",
     "clean": "rm -rf lib/ && rm -rf tmp/"
   },

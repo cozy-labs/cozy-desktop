@@ -11,6 +11,8 @@ node_js:
 env:
     global:
         - CXX=g++-4.8
+        - COZY_DESKTOP_DIR=tmp
+        - DEBUG=true
 services:
     - couchdb
 cache:
@@ -65,7 +67,6 @@ before_install:
     - pwd
 
 script:
-    - npm install
     - npm run build
     - npm run lint
     - npm run test

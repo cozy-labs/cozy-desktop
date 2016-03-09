@@ -1,0 +1,5 @@
+--slow 150
+--timeout 10000
+--reporter spec
+--compilers coffee:coffee-script/register
+--recursive
