@@ -1,6 +1,7 @@
 How to increase the number of inotify watches
 =============================================
 
+
 What is this limit?
 -------------------
 
@@ -18,20 +19,29 @@ If you are running Ubuntu, Debian, RedHat, or another similar Linux
 distribution, run the following in a terminal:
 
 ```bash
-echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf \
+&& sudo sysctl -p
 ```
 
 If you are running ArchLinux, run the following command instead:
 
 ```bash
-echo fs.inotify.max_user_watches=524288 | sudo tee /etc/sysctl.d/40-max-user-watches.conf && sudo sysctl --system
+echo fs.inotify.max_user_watches=524288 \
+| sudo tee /etc/sysctl.d/40-max-user-watches.conf \
+&& sudo sysctl --system
 ```
 
 
 More info
 ---------
 
-* Wiki of Listen: [Increasing the amount of inotify watchers](https://github.com/guard/listen/wiki/Increasing-the-amount-of-inotify-watchers)
-* Manual of [inotify(7)](http://linux.die.net/man/7/inotify)
-* Blog post: [limit of inotify](http://blog.sorah.jp/2012/01/24/inotify-limitation)
-* Forum: [How can I tell if I am out of inotify watches?](https://askubuntu.com/questions/154255/how-can-i-tell-if-i-am-out-of-inotify-watches)
+* Wiki of Listen: [Increasing the amount of inotify watchers][0]
+* Manual of [inotify(7)][1]
+* Blog post: [limit of inotify][2]
+* Forum: [How can I tell if I am out of inotify watches?][3]
+
+
+[0]:  https://github.com/guard/listen/wiki/Increasing-the-amount-of-inotify-watchers
+[1]:  http://linux.die.net/man/7/inotify
+[2]:  http://blog.sorah.jp/2012/01/24/inotify-limitation
+[3]:  https://askubuntu.com/questions/154255/how-can-i-tell-if-i-am-out-of-inotify-watches

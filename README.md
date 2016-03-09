@@ -1,11 +1,12 @@
-# [Cozy](https://cozy.io) Desktop
+[Cozy][0] Desktop <sup>(alpha)</sup>
+=================
 
-[![Build Status](https://travis-ci.org/cozy-labs/cozy-desktop.png)](https://travis-ci.org/cozy-labs/cozy-desktop)
+[![Build Status][1]][2]
 
 
-The Cozy desktop app allows to sync the files stored in your Cozy with your laptop
-and/or your desktop. It replicates your files on your hard drive and apply
-changes you made on them on other synced devices and on your online Cozy.
+The Cozy desktop app allows to sync the files stored in your Cozy with your
+laptop and/or your desktop. It replicates your files on your hard drive and
+apply changes you made on them on other synced devices and on your online Cozy.
 
 **Note**: the code is currently **alpha** quality. But it's moving fast and we
 plan to do a more stable release in the coming weeks. Stay tuned!
@@ -13,33 +14,48 @@ plan to do a more stable release in the coming weeks. Stay tuned!
 :warning: **Backup your data before playing with cozy-desktop!**
 
 
-## CLI Install
+CLI Install
+-----------
 
 The cozy-desktop requires node.js (at least version 0.10) and build tools.
+
 For example, you can install them on debian with:
 
-    sudo apt-get install nodejs-legacy build-essential
+```bash
+sudo apt-get install nodejs-legacy build-essential
+```
 
 Then you can install cozy-desktop via NPM:
 
-    sudo npm install cozy-desktop -g
+```bash
+sudo npm install cozy-desktop -g
+```
 
 
-### CLI Running
+CLI Running
+-----------
 
 Configure it with your remote Cozy
 
-    cozy-desktop add-remote-cozy https://url.of.my.cozy/ /sync/directory
+```bash
+cozy-desktop add-remote-cozy https://url.of.my.cozy/ /sync/directory
+```
 
 Then start synchronization daemon:
 
-    cozy-desktop sync
+```bash
+cozy-desktop sync
+```
 
 Other commands can be listed with
 
-    cozy-desktop -h
+```bash
+cozy-desktop -h
+```
 
-### Advanced use cases
+
+Advanced use cases
+------------------
 
 Cozy-desktop keeps the metadata in a pouchdb database. If you want to use
 several synchronized directories, you'll have to tell cozy-desktop to keeps
@@ -48,60 +64,22 @@ this role.
 
 For example, if you want to add a second synchronized directory, you can do:
 
-    export COZY_DESKTOP_DIR=/sync/other
-    cozy-desktop add-remote-cozy https://url.of.my.other.cozy/ /sync/other
-    cozy-desktop sync
-
-
-## Hack
-
-To hack the synchronization backend, you can just edit the files under the
-`backend` directory. Remove the `*.js` files if necessary, then run the
-`bin/cli.coffee` file.
-
-### Tests
-
-There are several levels of tests in cozy-desktop:
-
-- unit tests, for testing a class in isolation, method per method
-- integration tests, to test the communication between cozy-desktop and a
-  remote cozy stack (proxy, data-system, files, etc.)
-
-Unit tests are easy to launch:
-
-```
-# Make sure to have dev dependencies installed
-npm install
-
-# Then run tests via gulp
-node_modules/.bin/gulp test
-
-# To run a specific set of tests (here testing pouch with DEBUG activated)
-npm install -g mocha
-DEBUG=true COZY_DESKTOP_DIR=tmp mocha --compilers coffee:coffee-script/register tests/unit/pouch.coffee
+```bash
+export COZY_DESKTOP_DIR=/sync/other
+cozy-desktop add-remote-cozy https://url.of.my.others.cozy/ /sync/other
+cozy-desktop sync
 ```
 
-Integration tests require that you have the Cozy dev VM up (it means CouchDB,
-a data-system and a proxy up and running) and that the files application is
-accessible on the 9121 port. It's also expected that a user is registered with
-`cozytest` as password.
 
-```
-COZY_DESKTOP_DIR=tmp mocha --compilers coffee:coffee-script/register tests/integration/*.coffee
-```
-
-**Important**: the integration tests remove all the files and folders on the
-Cozy!
-
-
-## Limitations
+Limitations
+-----------
 
 Cozy-desktop is designed to synchronize files and folders between a remote
 cozy instance and a local hard drive, for a personal usage. We tried to make
 it simple and easy. So, it has some limitations:
 
-- It's only a command-line interface and it works only on Linux for the
-  moment. We are working to improve this in the next weeks.
+- It's only a command-line interface and it works only on Linux for the moment.
+  We are working to improve this in the next weeks.
 
 - It's all or nothing for files and folders to synchronize, but we have on our
   roadmap to add a mean to select which files and folders to synchronize.
@@ -115,11 +93,7 @@ it simple and easy. So, it has some limitations:
   - compiled code often has to be recompile to works on another environment
   - git and other VCS are not meant to be share like this. You may lose your
     work if you make changes on two laptops synchronized by cozy-desktop (it's
-    the same with
-    [dropbox](https://github.com/anishathalye/git-remote-dropbox#faq),
-    [google-drive](https://stackoverflow.com/questions/31984751/google-drive-can-corrupt-repositories-in-github-desktop),
-    [syncthing](https://forum.syncthing.net/t/is-putting-a-git-workspace-in-a-synced-folder-really-a-good-idea/1774),
-    etc.)
+    the same with [dropbox][4], [google-drive][5], [syncthing][6], etc.)
 
 - If the same file has been modified in parallel, cozy-desktop don't try to
   merge the modifications. It will just rename of one the copies with a
@@ -153,20 +127,32 @@ it simple and easy. So, it has some limitations:
 - No advanced feature, like P2P replication between several cozy-desktop
   instances.
 
+
+Development documentation
+-------------------------
+
+You can read more documentation for developer:
+
+ - [App design][12]
+ - [Tests][14]
+ - [Tools for debugging][11]
+ - [How to increase the number of inotify watches][13]
+
+
 ## License
 
-Cozy Desktop Client is developed by Cozy Cloud and distributed under the AGPL v3 license.
+Cozy Desktop Client is developed by Cozy Cloud and distributed under the AGPL
+v3 license.
 
 
 ## What is Cozy?
 
-![Cozy Logo](https://raw.github.com/cozy/cozy-setup/gh-pages/assets/images/happycloud.png)
+![Cozy Logo][7]
 
-[Cozy](https://cozy.io) is a platform that brings all your web services in the
-same private space.  With it, your web apps and your devices can share data
-easily, providing you
-with a new experience. You can install Cozy on your own hardware where no one
-profiles you.
+[Cozy][0] is a platform that brings all your web services in the same private
+space.  With it, your web apps and your devices can share data easily,
+providing you with a new experience. You can install Cozy on your own hardware
+where no one profiles you.
 
 
 ## Community
@@ -174,6 +160,21 @@ profiles you.
 You can reach the Cozy Community by:
 
 * Chatting with us on IRC #cozycloud on irc.freenode.net
-* Posting on our [Forum](https://forum.cozy.io)
-* Posting issues on the [Github repos](https://github.com/cozy/)
-* Mentioning us on [Twitter](https://twitter.com/mycozycloud)
+* Posting on our [Forum][8]
+* Posting issues on the [Github repos][9]
+* Mentioning us on [Twitter][10]
+
+[0]:  https://cozy.io
+[1]:  https://travis-ci.org/cozy-labs/cozy-desktop.png
+[2]:  https://travis-ci.org/cozy-labs/cozy-desktop
+[4]:  https://github.com/anishathalye/git-remote-dropbox#faq
+[5]:  https://stackoverflow.com/questions/31984751/google-drive-can-corrupt-repositories-in-github-desktop
+[6]:  https://forum.syncthing.net/t/is-putting-a-git-workspace-in-a-synced-folder-really-a-good-idea/1774
+[7]:  https://raw.github.com/cozy/cozy-setup/gh-pages/assets/images/happycloud.png
+[8]:  https://forum.cozy.io
+[9]:  https://github.com/cozy/
+[10]: https://twitter.com/mycozycloud
+[11]: doc/debug.md
+[12]: doc/design.md
+[13]: doc/inotify.md
+[14]: doc/test.md

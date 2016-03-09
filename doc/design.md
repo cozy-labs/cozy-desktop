@@ -1,15 +1,15 @@
 Cozy-Desktop - Design
 =====================
 
-The Cozy desktop app allows to sync the files stored in your Cozy with your laptop
-and/or your desktop. It replicates your files on your hard drive and apply
-changes you made on them on other synced devices and on your online Cozy.
+The Cozy desktop app allows to sync the files stored in your Cozy with your
+laptop and/or your desktop. It replicates your files on your hard drive and
+apply changes you made on them on other synced devices and on your online Cozy.
 
 
 Metadata workflow
 -----------------
 
-![Metadata workflow](workflow.png)
+![Metadata workflow][0]
 
 Cozy-desktop is a nodejs app, written in coffeescript to be coherent with
 other cozy codes. As its core, there is a pouchdb database used to keep
@@ -120,3 +120,6 @@ So, even if `path` and `_id` are very similar, they have distinct roles:
 
 The permissions are different on Unix and on Windows. So, the `executable`
 field is just ignored on Windows.
+
+
+[0]:  workflow.png
