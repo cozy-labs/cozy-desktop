@@ -25,8 +25,26 @@ class LocalWatcher
     # The callback is called when the initial scan is complete
     start: (callback) =>
         log.info 'Start watching filesystem for changes'
+
+        # To detect which files&folders have been removed since the last run of
+        # cozy-desktop, we keep all the paths seen by chokidar during its
+        # initial scan in @paths to compare them with pouchdb database.
         @paths = []
+
+        # A map of pending operations. It's used for detecting move operations,
+        # as chokidar only reports adds and deletion. The key is the path (as
+        # seen on the filesystem, not normalized as an _id), and the value is
+        # an object, with at least a done method and a timeout value. The done
+        # method can be used to finalized the pending operation (we are sure we
+        # want to save the operation as it in pouchdb), and the timeout can be
+        # cleared to cancel the operation (for example, a deletion is finally
+        # seen as a part of a move operation).
         @pending = Object.create null  # ES6 map would be nice!
+
+        # A counter of how many files are been read to compute a checksum right
+        # now. It's useful because we can't do some operations when a checksum
+        # is running, like deleting a file, because the checksum operation is
+        # slow but needed to detect move operations.
         @checksums = 0
 
         @watcher = chokidar.watch '.',
@@ -159,17 +177,15 @@ class LocalWatcher
                     @checksums--
                     @prep.addFile @side, doc, @done
                 else
-                    # TODO path vs _id: normalize keys?
-                    options =
-                        keys: keys
-                        include_docs: true
-                    @pouch.db.allDocs options, (err, results) =>
+                    # Let's see if one of the pending deleted files has the
+                    # same checksum that the added file. If so, we mark them as
+                    # a move.
+                    @pouch.byChecksum doc.checksum, (err, docs) =>
                         @checksums--
                         if err
                             @prep.addFile @side, doc, @done
                         else
-                            docs = (row.doc for row in results.rows)
-                            same = find docs, checksum: doc.checksum
+                            same = find docs, (d) -> ~keys.indexOf(d.path)
                             if same
                                 clearTimeout @pending[same.path].timeout
                                 delete @pending[same.path]

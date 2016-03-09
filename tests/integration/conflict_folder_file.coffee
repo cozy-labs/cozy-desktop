@@ -15,8 +15,9 @@ describe 'Conflict', ->
     before Cozy.ensurePreConditions
 
 
-    # TODO when a remote folder is renamed, move also files&folders inside it
-    describe.skip 'between a local file and a remote folder', ->
+    describe 'between a local file and a remote folder', ->
+        return it.skip 'https://github.com/cozy/cozy-files/issues/386'
+
         file =
             path: ''
             name: faker.commerce.color()

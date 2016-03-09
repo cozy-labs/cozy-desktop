@@ -6,8 +6,6 @@ log   = require('printit')
 # Sync listens to PouchDB about the metadata changes, and calls local and
 # remote sides to apply the changes on the filesystem and remote CouchDB
 # respectively.
-#
-# TODO handle an offline mode
 class Sync
 
     constructor: (@pouch, @local, @remote) ->
@@ -134,22 +132,26 @@ class Sync
                     if doc._deleted
                         callback err
                     else
-                        # TODO move this to another method + add tests
-                        rev = @pouch.extractRevNumber(doc) + 1
-                        for s in ['local', 'remote']
-                            doc.sides[s] = rev
-                        @pouch.db.put doc, (err) =>
-                            # TODO explain conflict if the doc was updated
-                            # (e.g thumbnail added by the remote)
-                            if err?.status is 409
-                                @pouch.db.get doc._id, (err, doc) =>
-                                    if err
-                                        callback err
-                                    else
-                                        doc.sides[side] = rev
-                                        @pouch.db.put doc, callback
-                            else
-                                callback err
+                        @updateRevs doc, side, callback
+
+    # Update rev numbers for both local and remote sides
+    updateRevs: (doc, side, callback) ->
+        rev = @pouch.extractRevNumber(doc) + 1
+        for s in ['local', 'remote']
+            doc.sides[s] = rev
+        @pouch.db.put doc, (err) =>
+            # Conflicts can happen here, for example if the data-system has
+            # generated a thumbnail before apply has finished. In that case, we
+            # try to reconciliate the documents.
+            if err?.status is 409
+                @pouch.db.get doc._id, (err, doc) =>
+                    if err
+                        callback err
+                    else
+                        doc.sides[side] = rev
+                        @pouch.db.put doc, callback
+            else
+                callback err
 
     # If a file has been changed, we had to check what operation it is.
     # For a move, the first call will just keep a reference to the document,
@@ -166,8 +168,11 @@ class Sync
                     log.error "Invalid move"
                     log.error from
                     log.error doc
-                    callback new Error 'Invalid move'
-                    # TODO
+                    side.addFile doc, (err) ->
+                        log.error err if err
+                        side.deleteFile from, (err) ->
+                            log.error err if err
+                            callback new Error 'Invalid move'
             when doc.moveTo
                 @moveFrom = doc
                 callback()
@@ -196,8 +201,11 @@ class Sync
                     log.error "Invalid move"
                     log.error from
                     log.error doc
-                    callback new Error 'Invalid move'
-                    # TODO
+                    side.addFolder doc, (err) ->
+                        log.error err if err
+                        side.deleteFolder from, (err) ->
+                            log.error err if err
+                            callback new Error 'Invalid move'
             when doc.moveTo
                 @moveFrom = doc
                 callback()

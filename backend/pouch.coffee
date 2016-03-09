@@ -70,7 +70,6 @@ class Pouch
         @getAll 'byPath', params, callback
 
     # Return all the files and folders in this path, even in subfolders
-    # TODO add fuzzing tests
     byRecursivePath: (path, callback) ->
         if path is ''
             params =
@@ -81,8 +80,10 @@ class Pouch
                 endkey: "#{path}/\ufff0"
                 include_docs: true
         @getAll 'byPath', params, (err, docs) ->
-            # TODO find why we have undefined values here sometimes
-            docs = (doc for doc in docs when doc?)
+            # XXX Pouchdb does sometimes send us undefined values in docs.
+            # It's rare and we didn't find a way to extract a proper test case.
+            # So, we keep a workaround and hope that this bug will be fixed.
+            docs = (doc for doc in docs when doc?) unless err
             callback err, docs
 
     # Return the file/folder with this remote id

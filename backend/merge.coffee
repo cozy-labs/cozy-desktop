@@ -248,7 +248,8 @@ class Merge
                 for doc in docs
                     src = clone doc
                     src._deleted = true
-                    # TODO explain why _id and not path
+                    # moveTo is used for comparison. It's safer to take _id
+                    # than path for this case, as explained in doc/design.md
                     src.moveTo = doc._id.replace was._id, folder._id
                     bulk.push src
                     dst = clone doc
