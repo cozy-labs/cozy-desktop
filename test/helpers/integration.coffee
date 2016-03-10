@@ -17,6 +17,7 @@ module.exports = helpers =
     password: 'cozytest'
     deviceName: "test-#{faker.internet.userName()}"
     fixturesDir: path.join __dirname, '..', 'fixtures'
+    parentDir: process.env.COZY_DESKTOP_DIR or 'tmp'
 
 helpers.url = "#{helpers.scheme}://#{helpers.host}:#{helpers.port}/"
 
@@ -36,8 +37,7 @@ module.exports.ensurePreConditions = (done) ->
 
 
 module.exports.registerDevice = (done) ->
-    parent = process.env.COZY_DESKTOP_DIR or 'tmp'
-    @basePath = path.resolve "#{parent}/#{+new Date}"
+    @basePath = path.resolve "#{helpers.parentDir}/#{+new Date}"
     fs.ensureDirSync @basePath
     @app = new App @basePath
     @app.askPassword = (callback) ->
