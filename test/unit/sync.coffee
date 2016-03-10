@@ -217,6 +217,8 @@ describe "Sync", ->
 
 
     describe 'applied', ->
+        @timeout 5000
+
         beforeEach ->
             @local = {}
             @remote = {}
@@ -263,12 +265,64 @@ describe "Sync", ->
 
         it 'returns a function that does not touch the seq if error', (done) ->
             @pouch.setLocalSeq 128, =>
-                func = @sync.applied seq: 129, 'remote', (err) =>
-                    should.exist err
+                change =
+                    seq: 129
+                    doc:
+                        _id: 'not/important'
+                func = @sync.applied change, 'remote', (err) =>
+                    should.not.exist err
                     @pouch.getLocalSeq (err, seq) ->
                         seq.should.equal 128
                         done()
                 func new Error 'Apply failed'
+
+
+    describe 'updateErrors', ->
+        @timeout 5000
+
+        beforeEach ->
+            @local = {}
+            @remote = {}
+            @sync = new Sync @pouch, @local, @remote
+
+        it 'sets the errors counter to 1 on first error', (done) ->
+            doc =
+                _id: 'first/failure'
+            @pouch.db.put doc, (err, infos) =>
+                should.not.exist err
+                doc._rev = infos.rev
+                @sync.updateErrors doc, =>
+                    @pouch.db.get doc._id, (err, actual) ->
+                        should.not.exist err
+                        actual.errors.should.equal 1
+                        done()
+
+        it 'increments the errors counter to 1 on next error', (done) ->
+            doc =
+                _id: 'fourth/failure'
+                errors: 3
+            @pouch.db.put doc, (err, infos) =>
+                should.not.exist err
+                doc._rev = infos.rev
+                @sync.updateErrors doc, =>
+                    @pouch.db.get doc._id, (err, actual) ->
+                        should.not.exist err
+                        actual.errors.should.equal 4
+                        done()
+
+        it 'stops retrying after 10 errors', (done) ->
+            doc =
+                _id: 'eleventh/failure'
+                errors: 10
+            @pouch.db.put doc, (err, infos) =>
+                should.not.exist err
+                doc._rev = infos.rev
+                @sync.updateErrors doc, =>
+                    @pouch.db.get doc._id, (err, actual) ->
+                        should.not.exist err
+                        actual.errors.should.equal 10
+                        actual._rev.should.equal doc._rev
+                        done()
 
 
     describe 'fileChanged', ->

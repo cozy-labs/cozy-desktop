@@ -203,6 +203,7 @@ class Merge
                 doc.tags         ?= was.tags or []
                 was.moveTo        = doc._id
                 was._deleted      = true
+                delete was.errors
                 if file and @sameFile file, doc
                     callback null
                 else if file
@@ -251,11 +252,13 @@ class Merge
                     # moveTo is used for comparison. It's safer to take _id
                     # than path for this case, as explained in doc/design.md
                     src.moveTo = doc._id.replace was._id, folder._id
+                    delete src.errors
                     bulk.push src
                     dst = clone doc
                     dst._id = src.moveTo
                     delete dst._rev
                     bulk.push dst
+                    delete dst.errors
                 @pouch.db.bulkDocs bulk, callback
 
     # Remove a file from PouchDB
@@ -272,6 +275,7 @@ class Merge
             else if file.sides?[side]
                 @markSide side, file, file
                 file._deleted = true
+                delete file.errors
                 @pouch.db.put file, callback
             else # It can happen after a conflict
                 callback null
@@ -307,6 +311,7 @@ class Merge
                 for doc in docs
                     @markSide side, doc, doc
                     doc._deleted = true
+                    delete doc.errors
                 @pouch.db.bulkDocs docs, callback
 
 
