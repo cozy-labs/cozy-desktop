@@ -1,3 +1,4 @@
+---
 sudo: false
 language: node_js
 matrix:
@@ -10,6 +11,7 @@ node_js:
 env:
     global:
         - CXX=g++-4.8
+        - COZY_DESKTOP_DIR=tmp
 services:
     - couchdb
 cache:
@@ -23,6 +25,7 @@ addons:
             - gcc-4.8
             - g++-4.8
 
+# install cozy stack for integration test
 before_install:
     - cd
     - export INDEXES_PATH=/home/travis/build/indexes
@@ -60,11 +63,12 @@ before_install:
     - sleep 3
     - nvm use $TESTED_NODE
     - cd /home/travis/build/cozy-labs/cozy-desktop
-    - npm install coffee-script mocha -g
     - pwd
 
 script:
-    - bin/ci
+    - npm run build
+    - npm run lint
+    - npm run test
 
 after_failure:
     - pwd
