@@ -92,8 +92,6 @@ class Local
     # from the remote document. Later, chokidar will fire an event for this new
     # file. The checksum will then be computed and added to the document, and
     # then pushed to CouchDB.
-    #
-    # TODO verify the checksum -> remove file if not ok
     addFile: (doc, callback) =>
         tmpFile  = path.resolve @tmpPath, path.basename doc.path
         filePath = path.resolve @basePath, doc.path
@@ -119,8 +117,20 @@ class Local
             (stream, next) =>
                 fs.ensureDir @tmpPath, ->
                     target = fs.createWriteStream tmpFile
-                    stream.on 'end', next
                     stream.pipe target
+                    target.on 'finish', next
+
+            (next) =>
+                if doc.checksum?
+                    @watcher.checksum tmpFile, (err, checksum) ->
+                        if err
+                            next err
+                        else if checksum is doc.checksum
+                            next()
+                        else
+                            next new Error 'Invalid checksum'
+                else
+                    next()
 
             (next) ->
                 fs.ensureDir parent, ->

@@ -681,8 +681,8 @@ describe 'Remote', ->
                 path: 'cat-conflict-2015-12-01T01:02:03Z.jpg'
                 docType: 'file'
                 checksum: checksum
-                creationDate: new Date()
-                lastModification: new Date()
+                creationDate: new Date().toISOString()
+                lastModification: new Date().toISOString()
                 size: 36901
             remoteDoc = @remote.createRemoteDoc src, binary: binary
             @couch.put remoteDoc, (err, created) =>
@@ -701,7 +701,7 @@ describe 'Remote', ->
                             path: ''
                             name: dst.path
                             docType: 'file'
-                            lastModification: dst.lastModification.toISOString()
+                            lastModification: dst.lastModification
                             size: 36901
                             binary:
                                 file:

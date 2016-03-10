@@ -148,7 +148,7 @@ describe 'Local', ->
             doc =
                 path: 'files/file-from-remote'
                 lastModification: new Date '2015-10-09T04:05:06Z'
-                checksum: '9876'
+                checksum: '8843d7f92416211de9ebb963ff4ce28125932878'
             @local.other =
                 createReadStream: (docToStream, callback) ->
                     docToStream.should.equal doc
@@ -174,14 +174,14 @@ describe 'Local', ->
             doc =
                 path: 'files/file-with-same-checksum'
                 lastModification: new Date '2015-10-09T04:05:07Z'
-                checksum: '456'
+                checksum: 'c7567e8b39e2428e38bf9c9226ac68de4c67dc39'
             alt = path.join @basePath, 'files', 'my-checkum-is-456'
             fs.writeFileSync alt, 'foo bar baz'
             stub = sinon.stub(@local, "fileExistsLocally").yields null, alt
             filePath = path.join @basePath, doc.path
             @local.addFile doc, (err) ->
                 stub.restore()
-                stub.calledWith('456').should.be.true()
+                stub.calledWith(doc.checksum).should.be.true()
                 should.not.exist err
                 fs.statSync(filePath).isFile().should.be.true()
                 content = fs.readFileSync(filePath, encoding: 'utf-8')
@@ -194,7 +194,7 @@ describe 'Local', ->
             doc =
                 path: 'file-in-root'
                 lastModification: new Date '2015-10-09T04:05:19Z'
-                checksum: '987642'
+                checksum: '21eb6533733a5e4763acacd1d45a60c2e0e404e1'
             @local.other =
                 createReadStream: (docToStream, callback) ->
                     docToStream.should.equal doc
@@ -215,6 +215,30 @@ describe 'Local', ->
                 mtime = +fs.statSync(filePath).mtime
                 mtime.should.equal +doc.lastModification
                 done()
+
+        it 'aborts when the download is incorrect', (done) ->
+            doc =
+                path: 'files/file-from-remote-2'
+                lastModification: new Date '2015-10-09T04:05:16Z'
+                checksum: '8843d7f92416211de9ebb963ff4ce28125932878'
+            @local.other =
+                createReadStream: (docToStream, callback) ->
+                    docToStream.should.equal doc
+                    stream = new Readable
+                    stream._read = ->
+                    setTimeout ->
+                        stream.push 'foo'
+                        stream.push null
+                    , 100
+                    callback null, stream
+            filePath = path.join @basePath, doc.path
+            @local.addFile doc, (err) =>
+                @local.other = null
+                should.exist err
+                err.message.should.equal 'Invalid checksum'
+                fs.existsSync(filePath).should.be.false()
+                done()
+
 
 
     describe 'addFolder', ->
@@ -250,7 +274,7 @@ describe 'Local', ->
                 path: 'a-file-to-overwrite'
                 docType: 'file'
                 lastModification: new Date '2015-10-09T05:06:07Z'
-                checksum: '98765'
+                checksum: '7b502c3a1f48c8609ae212cdfb639dee39673f5e'
             @local.other =
                 createReadStream: (docToStream, callback) ->
                     docToStream.should.equal doc

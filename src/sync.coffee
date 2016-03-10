@@ -118,27 +118,38 @@ class Sync
             return []
 
     # Keep track of the sequence number, save side rev, and log errors
-    # TODO when applying a change fails, put it again in some queue for retry
     applied: (change, side, callback) =>
         (err) =>
             if err
                 log.error err
-                callback err
+                @updateErrors change.doc, callback
             else
                 log.debug "Applied #{change.seq}"
                 @pouch.setLocalSeq change.seq, (err) =>
                     log.error err if err
-                    doc = change.doc
-                    if doc._deleted
+                    if change.doc._deleted
                         callback err
                     else
-                        @updateRevs doc, side, callback
+                        @updateRevs change.doc, side, callback
+
+    # Increment the counter of errors for this document
+    updateErrors: (doc, callback) ->
+        doc.errors = (doc.errors or 0) + 1
+        # Don't try more than 10 times for the same operation
+        return callback() if doc.errors >= 10
+        @pouch.db.put doc, (err) ->
+            # It's not important if the number of errors can't be saved
+            log.debug err if err
+            # The sync error may be due to the remote cozy being overloaded.
+            # So, it's better to wait a bit before trying the next operation.
+            setTimeout callback, 3000
 
     # Update rev numbers for both local and remote sides
     updateRevs: (doc, side, callback) ->
         rev = @pouch.extractRevNumber(doc) + 1
         for s in ['local', 'remote']
             doc.sides[s] = rev
+        delete doc.errors
         @pouch.db.put doc, (err) =>
             # Conflicts can happen here, for example if the data-system has
             # generated a thumbnail before apply has finished. In that case, we
