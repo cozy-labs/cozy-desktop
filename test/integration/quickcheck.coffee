@@ -12,8 +12,8 @@ Files = require '../helpers/files'
 
 
 deviceNames = [
-    "test#{faker.hacker.noun()}1"
-    "test#{faker.hacker.noun()}2"
+    "test#{faker.hacker.abbreviation()}1"
+    "test#{faker.hacker.abbreviation()}2"
 ]
 
 folders = [
@@ -69,7 +69,9 @@ stopCozyDesktop = (pid, callback) ->
     pid.kill()
 
 
-# List of directories and files that can be used when generating operations
+# List of directories and files that can be used when generating operations.
+# To ease debugging, filenames starts with an uppercase letter and dirnames
+# starts with a lowercase letter.
 dirs = ['.']
 files = []
 
@@ -101,9 +103,25 @@ moveFileOperation = ->
     return createFileOperation() if files.length is 0
     root = if Math.random() > 0.5 then folders[0] else folders[1]
     src = faker.random.arrayElement files
-    dst = faker.company.bs()
+    parent = path.dirname src
+    dst = path.join parent, faker.name.firstName()
+    files.push dst
     op =
         move: 'file'
+        src: path.join root, src
+        dst: path.join root, dst
+    return op
+
+# Create a random copy file operation
+copyFileOperation = ->
+    return createFileOperation() if files.length is 0
+    root = if Math.random() > 0.5 then folders[0] else folders[1]
+    src = faker.random.arrayElement files
+    parent = path.dirname src
+    dst = path.join parent, faker.name.firstName()
+    files.push dst
+    op =
+        copy: 'file'
         src: path.join root, src
         dst: path.join root, dst
     return op
@@ -134,9 +152,25 @@ moveDirOperation = ->
     return mkdirOperation() if dirs.length is 1
     root = if Math.random() > 0.5 then folders[0] else folders[1]
     src = faker.random.arrayElement dirs[1..]
-    dst = faker.company.catchPhrase()
+    parent = path.dirname src
+    dst = path.join parent, faker.company.bs()
+    dirs.push dst
     op =
         move: 'dir'
+        src: path.join root, src
+        dst: path.join root, dst
+    return op
+
+# Create a random copy dir operation
+copyDirOperation = ->
+    return mkdirOperation() if dirs.length is 1
+    root = if Math.random() > 0.5 then folders[0] else folders[1]
+    src = faker.random.arrayElement dirs[1..]
+    parent = path.dirname src
+    dst = path.join parent, faker.company.bs()
+    dirs.push dst
+    op =
+        copy: 'dir'
         src: path.join root, src
         dst: path.join root, dst
     return op
@@ -150,6 +184,8 @@ randomOperation = ->
         when r < 0.40 then removeFileOperation()
         when r < 0.45 then moveFileOperation()
         when r < 0.50 then moveDirOperation()
+        when r < 0.52 then copyFileOperation()
+        when r < 0.54 then copyDirOperation()
         else createFileOperation()
 
 # Apply an operation on the file system
@@ -163,6 +199,8 @@ applyOperation = (op, callback) ->
             fs.remove op.path, callback
         else if op.move
             fs.move op.src, op.dst, callback
+        else if op.copy
+            fs.copy op.src, op.dst, callback
         else
             throw new Error "Unsupported operation: #{op}"
 
@@ -171,7 +209,7 @@ makeOperations = (timeout, callback) ->
     op = randomOperation()
     applyOperation op, ->
         random = Math.random()
-        wait = Math.floor random * random * random * 400
+        wait = Math.floor random * random * random * 1600
         remaining = timeout - wait
         if remaining > 0
             setTimeout (-> makeOperations remaining, callback), wait
@@ -180,9 +218,9 @@ makeOperations = (timeout, callback) ->
 
 
 # In this test, we launch 2 cozy-desktops in two directories, and make them
-# synchronize via a central cozy instance. During ~20 seconds, we do some
+# synchronize via a central cozy instance. During ~10 seconds, we do some
 # operations in both directory (like creating files, or moving folders).
-# After that, we wait 10 seconds and we compare the 2 directories. They should
+# After that, we wait 20 seconds and we compare the 2 directories. They should
 # be identical: same files and folders.
 describe 'Property based testing', ->
     @slow 1000
@@ -195,7 +233,7 @@ describe 'Property based testing', ->
         fs.ensureDirSync folders[0]
         fs.ensureDirSync folders[1]
         fs.unlink logs[2], ->
-            makeOperations 1000, done
+            makeOperations 2000, done
 
     it 'registers two devices', (done) ->
         registerDevice 0, (err) ->
@@ -210,10 +248,10 @@ describe 'Property based testing', ->
                 done()
 
     it 'makes some operations', (done) ->
-        makeOperations 20000, done
+        makeOperations 10000, done
 
     it 'waits that the dust settle', (done) ->
-        setTimeout done, 10000
+        setTimeout done, 20000
 
     it 'stops the two cozy-desktop instances', (done) ->
         stopCozyDesktop @one, (code) =>
