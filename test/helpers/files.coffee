@@ -18,7 +18,6 @@ module.exports = helpers =
                     should.not.exist err
                     should.exist res
                     should.exist body
-                    res.statusCode.should.be.within 200, 299
                     setTimeout cb, 1000
             , callback
 
