@@ -69,21 +69,100 @@ stopCozyDesktop = (pid, callback) ->
     pid.kill()
 
 
-# Generate a random operation, like creating a new file
-randomOperation = ->
-    data = faker.lorem.sentence()
+# List of directories and files that can be used when generating operations
+dirs = ['.']
+files = []
+
+# Create a random file creation operation
+createFileOperation = ->
     root = if Math.random() > 0.5 then folders[0] else folders[1]
+    dir = faker.random.arrayElement dirs
+    data = faker.lorem.sentence()
+    file = path.join dir, data.split(' ')[0]
+    files.push file
     op =
         create: 'file'
-        path: path.join root, data.split(' ')[0]
+        path: path.join root, file
         data: data
     return op
+
+# Create a random file removal operation
+removeFileOperation = ->
+    return createFileOperation() if files.length is 0
+    root = if Math.random() > 0.5 then folders[0] else folders[1]
+    file = faker.random.arrayElement files
+    op =
+        remove: 'file'
+        path: path.join root, file
+    return op
+
+# Create a random move file operation
+moveFileOperation = ->
+    return createFileOperation() if files.length is 0
+    root = if Math.random() > 0.5 then folders[0] else folders[1]
+    src = faker.random.arrayElement files
+    dst = faker.company.bs()
+    op =
+        move: 'file'
+        src: path.join root, src
+        dst: path.join root, dst
+    return op
+
+# Create a random mkdir operation
+mkdirOperation = ->
+    root = if Math.random() > 0.5 then folders[0] else folders[1]
+    parent = faker.random.arrayElement dirs
+    dir = path.join parent, faker.commerce.color()
+    dirs.push dir
+    op =
+        create: 'dir'
+        path: path.join root, dir
+    return op
+
+# Create a random rmdir operation (or mkdir if not possible)
+rmdirOperation = ->
+    return mkdirOperation() if dirs.length is 1
+    root = if Math.random() > 0.5 then folders[0] else folders[1]
+    dir = faker.random.arrayElement dirs[1..]
+    op =
+        remove: 'dir'
+        path: path.join root, dir
+    return op
+
+# Create a random move dir operation
+moveDirOperation = ->
+    return mkdirOperation() if dirs.length is 1
+    root = if Math.random() > 0.5 then folders[0] else folders[1]
+    src = faker.random.arrayElement dirs[1..]
+    dst = faker.company.catchPhrase()
+    op =
+        move: 'dir'
+        src: path.join root, src
+        dst: path.join root, dst
+    return op
+
+# Generate a random operation, like creating a new file
+randomOperation = ->
+    r = Math.random()
+    return switch
+        when r < 0.20 then mkdirOperation()
+        when r < 0.30 then rmdirOperation()
+        when r < 0.40 then removeFileOperation()
+        when r < 0.45 then moveFileOperation()
+        when r < 0.50 then moveDirOperation()
+        else createFileOperation()
 
 # Apply an operation on the file system
 applyOperation = (op, callback) ->
     fs.appendFile logs[2], JSON.stringify(op, null, 2), ->
         if op.create is 'file'
             fs.writeFile op.path, op.data, callback
+        else if op.create is 'dir'
+            fs.ensureDir op.path, callback
+        else if op.remove
+            fs.remove op.path, callback
+        else if op.move
+            fs.move op.src, op.dst, callback
         else
             throw new Error "Unsupported operation: #{op}"
 
@@ -107,7 +186,7 @@ makeOperations = (timeout, callback) ->
 # be identical: same files and folders.
 describe 'Property based testing', ->
     @slow 1000
-    @timeout 60000
+    @timeout 30000
 
     before Cozy.ensurePreConditions
     before Files.deleteAll
@@ -115,7 +194,8 @@ describe 'Property based testing', ->
     it 'creates the directories for both instances', (done) ->
         fs.ensureDirSync folders[0]
         fs.ensureDirSync folders[1]
-        makeOperations 200, done
+        fs.unlink logs[2], ->
+            makeOperations 1000, done
 
     it 'registers two devices', (done) ->
         registerDevice 0, (err) ->
@@ -130,7 +210,7 @@ describe 'Property based testing', ->
                 done()
 
     it 'makes some operations', (done) ->
-        makeOperations 2000, done
+        makeOperations 20000, done
 
     it 'waits that the dust settle', (done) ->
         setTimeout done, 10000
