@@ -107,18 +107,19 @@ class Local
                     next null, false
 
             (existingFilePath, next) =>
-                if existingFilePath
-                    log.info "Recopy #{existingFilePath} -> #{filePath}"
-                    stream = fs.createReadStream existingFilePath
-                    next null, stream
-                else
-                    @other.createReadStream doc, next
-
-            (stream, next) =>
-                fs.ensureDir @tmpPath, ->
-                    target = fs.createWriteStream tmpFile
-                    stream.pipe target
-                    target.on 'finish', next
+                fs.ensureDir @tmpPath, =>
+                    if existingFilePath
+                        log.info "Recopy #{existingFilePath} -> #{filePath}"
+                        fs.copy existingFilePath, tmpFile, next
+                    else
+                        @other.createReadStream doc, (err, stream) ->
+                            # Don't use async callback here!
+                            # Async does some magic and the stream can throw an
+                            # 'error' event before the next async is called...
+                            return next err if err
+                            target = fs.createWriteStream tmpFile
+                            stream.pipe target
+                            target.on 'finish', next
 
             (next) =>
                 if doc.checksum?
