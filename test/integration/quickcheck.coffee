@@ -12,18 +12,19 @@ Files = require '../helpers/files'
 
 
 deviceNames = [
-    "test#{faker.commerce.color()}1"
-    "test#{faker.commerce.color()}2"
+    "test#{faker.hacker.noun()}1"
+    "test#{faker.hacker.noun()}2"
 ]
 
 folders = [
-    path.join Cozy.parentDir, 'one'
-    path.join Cozy.parentDir, 'two'
+    path.resolve Cozy.parentDir, 'one'
+    path.resolve Cozy.parentDir, 'two'
 ]
 
 logs = [
     path.join Cozy.parentDir, 'one.log'
     path.join Cozy.parentDir, 'two.log'
+    path.join Cozy.parentDir, 'operations.log'
 ]
 
 
@@ -32,7 +33,10 @@ registerDevice = (i, callback) ->
     app = new App folders[i]
     app.askPassword = (callback) ->
         callback null, Cozy.password
-    app.addRemote Cozy.url, folders[i], deviceNames[i], callback
+    app.addRemote Cozy.url, folders[i], deviceNames[i], (err) ->
+        app.pouch.db.destroy()
+        app.pouch.db = null
+        callback err
 
 # Remove a device from cozy
 removeRemoteDevice = (i, callback) ->
@@ -51,6 +55,7 @@ spawnCozyDesktop = (i, callback) ->
         env = clone process.env
         env.COZY_DESKTOP_DIR = folders[i]
         env.NODE_ENV = 'test'
+        env.DEBUG = 'true'
         opts =
             cwd: folders[i]
             env: env
@@ -64,12 +69,44 @@ stopCozyDesktop = (pid, callback) ->
     pid.kill()
 
 
+# Generate a random operation, like creating a new file
+randomOperation = ->
+    data = faker.lorem.sentence()
+    root = if Math.random() > 0.5 then folders[0] else folders[1]
+    op =
+        create: 'file'
+        path: path.join root, data.split(' ')[0]
+        data: data
+    return op
+
+# Apply an operation on the file system
+applyOperation = (op, callback) ->
+    fs.appendFile logs[2], JSON.stringify(op, null, 2), ->
+        if op.create is 'file'
+            fs.writeFile op.path, op.data, callback
+        else
+            throw new Error "Unsupported operation: #{op}"
+
+# Generate operations and apply them until the timeout is reached
+makeOperations = (timeout, callback) ->
+    op = randomOperation()
+    applyOperation op, ->
+        random = Math.random()
+        wait = Math.floor random * random * random * 400
+        remaining = timeout - wait
+        if remaining > 0
+            setTimeout (-> makeOperations remaining, callback), wait
+        else
+            callback()
+
+
 # In this test, we launch 2 cozy-desktops in two directories, and make them
 # synchronize via a central cozy instance. During ~20 seconds, we do some
 # operations in both directory (like creating files, or moving folders).
 # After that, we wait 10 seconds and we compare the 2 directories. They should
 # be identical: same files and folders.
 describe 'Property based testing', ->
+    @slow 1000
     @timeout 60000
 
     before Cozy.ensurePreConditions
@@ -78,9 +115,7 @@ describe 'Property based testing', ->
     it 'creates the directories for both instances', (done) ->
         fs.ensureDirSync folders[0]
         fs.ensureDirSync folders[1]
-        fs.ensureDirSync path.join(folders[0], 'foo')
-        # TODO fill one and two with some files and folders
-        done()
+        makeOperations 200, done
 
     it 'registers two devices', (done) ->
         registerDevice 0, (err) ->
@@ -95,23 +130,31 @@ describe 'Property based testing', ->
                 done()
 
     it 'makes some operations', (done) ->
-        # TODO
-        done()
+        makeOperations 2000, done
 
     it 'waits that the dust settle', (done) ->
-        setTimeout done, 1000
-        # TODO setTimeout done, 10000
+        setTimeout done, 10000
 
     it 'stops the two cozy-desktop instances', (done) ->
-        stopCozyDesktop @one, (err) =>
-            should.not.exist err
-            stopCozyDesktop @two, (err) ->
-                should.not.exist err
+        stopCozyDesktop @one, (code) =>
+            code.should.equal 0
+            stopCozyDesktop @two, (code) ->
+                code.should.equal 0
                 done()
 
     it 'has the same files and folders', (done) ->
-        # TODO
-        done()
+        args = [
+            '--recursive'
+            '--exclude=.cozy-desktop'
+            folders[0]
+            folders[1]
+        ]
+        opts =
+            stdio: ['ignore', process.stderr, process.stderr]
+        diff = child.spawn 'diff', args, opts
+        diff.on 'exit', (code) ->
+            code.should.equal 0
+            done()
 
     it 'removes the two devices', (done) ->
         removeRemoteDevice 0, (err) ->
@@ -121,6 +164,6 @@ describe 'Property based testing', ->
                 done()
 
     it 'cleans the directories', (done) ->
-        #del.sync folders[0]
-        #del.sync folders[1]
+        del.sync folders[0]
+        del.sync folders[1]
         done()
