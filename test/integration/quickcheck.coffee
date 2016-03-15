@@ -65,8 +65,9 @@ spawnCozyDesktop = (i, callback) ->
 
 # Stop a cozy-desktop instance
 stopCozyDesktop = (pid, callback) ->
+    pid.kill 'SIGUSR1'
     pid.on 'exit', callback
-    pid.kill()
+    setTimeout (-> pid.kill()), 1000
 
 
 # List of directories and files that can be used when generating operations.

@@ -187,6 +187,7 @@ class LocalWatcher
                         else
                             same = find docs, (d) -> ~keys.indexOf(d.path)
                             if same
+                                log.debug 'was moved from', same.path
                                 clearTimeout @pending[same.path].timeout
                                 delete @pending[same.path]
                                 @prep.moveFile @side, doc, same, @done
