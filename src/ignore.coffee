@@ -1,8 +1,14 @@
+mm = require 'micromatch'
+
 # Cozy-desktop can ignore some files and folders from a list of patterns in the
 # cozyignore file. This class can be used to know if a file/folder is ignored.
 #
 # See https://git-scm.com/docs/gitignore/#_pattern_format
 class Ignore
+
+    # See https://github.com/jonschlinkert/micromatch#options
+    MicromatchOptions =
+        noextglob: true
 
     # Load patterns for detecting ignored files and folders
     constructor: (lines) ->
@@ -17,17 +23,9 @@ class Ignore
             else
                 folder = false
             pattern =
-                description: line
+                match: mm.matcher line, MicromatchOptions
                 folder: folder
             @patterns.push pattern
-
-    # Returns true if the pattern match the give file/folder
-    match: (pattern, path, kind) ->
-        # If the rule is only for folders and it's not a folder,
-        # it can't be a match
-        return false if pattern.folder and kind isnt 'folder'
-        # Else, check if the path match the pattern description
-        return path is pattern.description
 
     # Return true if the file or folder with the given path should be ignored
     #
@@ -35,7 +33,8 @@ class Ignore
     # (a pattern with a trailing slash is only for folders)
     isIgnored: (path, kind) ->
         for pattern in @patterns
-            return true if @match pattern, path, kind
+            if kind is 'folder' or not pattern.folder
+                return true if pattern.match path
         return false
 
 
