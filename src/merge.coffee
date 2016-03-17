@@ -5,6 +5,7 @@ path    = require 'path'
 pick    = require 'lodash.pick'
 log     = require('printit')
     prefix: 'Merge         '
+    date: true
 
 
 # When the local filesystem or the remote cozy detects a change, it calls this

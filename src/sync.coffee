@@ -1,6 +1,7 @@
 async = require 'async'
 log   = require('printit')
     prefix: 'Synchronize   '
+    date: true
 
 
 # Sync listens to PouchDB about the metadata changes, and calls local and

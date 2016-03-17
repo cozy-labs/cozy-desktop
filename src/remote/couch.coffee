@@ -8,6 +8,7 @@ request = require 'request-json-light'
 uuid    = require 'node-uuid'
 log     = require('printit')
     prefix: 'Remote CouchDB'
+    date: true
 
 
 # Couch is an helper class for communication with a remote couchdb.

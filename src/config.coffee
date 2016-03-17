@@ -3,6 +3,7 @@ path      = require 'path-extra'
 urlParser = require 'url'
 log       = require('printit')
     prefix: 'Config        '
+    date: true
 
 
 # Config can keep some configuration parameters in a JSON file,

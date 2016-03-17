@@ -3,6 +3,7 @@ fs    = require 'fs-extra'
 path  = require 'path'
 log   = require('printit')
     prefix: 'Local writer  '
+    date: true
 
 Watcher = require './watcher'
 

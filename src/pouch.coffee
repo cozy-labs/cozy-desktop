@@ -5,6 +5,7 @@ isEqual = require 'lodash.isequal'
 path    = require 'path-extra'
 log     = require('printit')
     prefix: 'Local Pouchdb '
+    date: true
 
 
 # Pouchdb is used to store all the metadata about files and folders.

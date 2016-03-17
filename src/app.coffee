@@ -4,6 +4,7 @@ os    = require 'os'
 url   = require 'url'
 log   = require('printit')
     prefix: 'Cozy Desktop  '
+    date: true
 
 Config  = require './config'
 Devices = require './devices'
