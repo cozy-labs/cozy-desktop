@@ -18,8 +18,9 @@ Watcher = require './watcher'
 # needed in both ways.
 class Remote
     constructor: (@config, @prep, @pouch) ->
+        deviceName = @config.getDefaultDeviceName()
         @couch   = new Couch @config
-        @watcher = new Watcher @couch, @prep, @pouch
+        @watcher = new Watcher @couch, @prep, @pouch, deviceName
         @other   = null
 
     # Start initial replication + watching changes in live
