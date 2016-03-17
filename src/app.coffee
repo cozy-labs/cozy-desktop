@@ -1,4 +1,5 @@
 async = require 'async'
+fs    = require 'fs'
 path  = require 'path-extra'
 os    = require 'os'
 url   = require 'url'
@@ -9,6 +10,7 @@ log   = require('printit')
 Config  = require './config'
 Devices = require './devices'
 Pouch   = require './pouch'
+Ignore  = require './ignore'
 Merge   = require './merge'
 Prep    = require './prep'
 Local   = require './local'
@@ -109,11 +111,17 @@ class App
 
     # Instanciate some objects before sync
     instanciate: ->
+        try
+            ignored = fs.readFileSync(path.join @basePath, '.cozyignore')
+            ignored = ignored.toString().split('\n')
+        catch error
+            ignored = []
+        @ignore = new Ignore ignored
         @merge  = new Merge @pouch
-        @prep   = new Prep @merge
+        @prep   = new Prep @merge, @ignore
         @local  = @merge.local  = new Local  @config, @prep, @pouch
         @remote = @merge.remote = new Remote @config, @prep, @pouch
-        @sync   = new Sync @pouch, @local, @remote
+        @sync   = new Sync @pouch, @local, @remote, @ignore
 
 
     # Start the synchronization

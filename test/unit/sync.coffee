@@ -2,7 +2,8 @@ async  = require 'async'
 sinon  = require 'sinon'
 should = require 'should'
 
-Sync = require '../../src/sync'
+Ignore = require '../../src/ignore'
+Sync   = require '../../src/sync'
 
 
 configHelpers = require '../helpers/config'
@@ -21,7 +22,8 @@ describe "Sync", ->
         beforeEach 'instanciate sync', ->
             @local  = start: sinon.stub().yields()
             @remote = start: sinon.stub().yields()
-            @sync = new Sync @pouch, @local, @remote
+            @ignore = new Ignore []
+            @sync = new Sync @pouch, @local, @remote, @ignore
             @sync.sync = sinon.stub().yields 'stopped'
 
         it 'starts the metadata replication of remote in read only', (done) ->
@@ -62,7 +64,8 @@ describe "Sync", ->
         beforeEach ->
             @local = {}
             @remote = {}
-            @sync = new Sync @pouch, @local, @remote
+            @ignore = new Ignore []
+            @sync = new Sync @pouch, @local, @remote, @ignore
             @sync.apply = sinon.stub().yields()
             @sync.running = true
 
@@ -88,7 +91,8 @@ describe "Sync", ->
         beforeEach (done) ->
             @local = {}
             @remote = {}
-            @sync = new Sync @pouch, @local, @remote
+            @ignore = new Ignore []
+            @sync = new Sync @pouch, @local, @remote, @ignore
             @pouch.db.changes().on 'complete', (info) =>
                 @pouch.setLocalSeq info.last_seq, done
 
@@ -166,7 +170,22 @@ describe "Sync", ->
         beforeEach ->
             @local = {}
             @remote = {}
-            @sync = new Sync @pouch, @local, @remote
+            @ignore = new Ignore ['ignored']
+            @sync = new Sync @pouch, @local, @remote, @ignore
+
+        it 'does nothing for an ignored document', (done) ->
+            change =
+                seq: 121
+                doc:
+                    _id: 'ignored'
+                    docType: 'folder'
+                    sides:
+                        local: 1
+            @sync.folderChanged = sinon.spy()
+            @sync.apply change, (err) =>
+                should.not.exist err
+                @sync.folderChanged.called.should.be.false()
+                done()
 
         it 'does nothing for an up-to-date document', (done) ->
             change =
@@ -177,7 +196,7 @@ describe "Sync", ->
                     sides:
                         local: 1
                         remote: 1
-            @sync.folderChanged = sinon.stub().yields()
+            @sync.folderChanged = sinon.spy()
             @sync.apply change, (err) =>
                 should.not.exist err
                 @sync.folderChanged.called.should.be.false()
@@ -222,7 +241,8 @@ describe "Sync", ->
         beforeEach ->
             @local = {}
             @remote = {}
-            @sync = new Sync @pouch, @local, @remote
+            @ignore = new Ignore []
+            @sync = new Sync @pouch, @local, @remote, @ignore
 
         it 'returns a function that saves the seq number if OK', (done) ->
             change =
@@ -283,7 +303,8 @@ describe "Sync", ->
         beforeEach ->
             @local = {}
             @remote = {}
-            @sync = new Sync @pouch, @local, @remote
+            @ignore = new Ignore []
+            @sync = new Sync @pouch, @local, @remote, @ignore
 
         it 'sets the errors counter to 1 on first error', (done) ->
             doc =
@@ -329,7 +350,8 @@ describe "Sync", ->
         beforeEach ->
             @local = {}
             @remote = {}
-            @sync = new Sync @pouch, @local, @remote
+            @ignore = new Ignore []
+            @sync = new Sync @pouch, @local, @remote, @ignore
 
         it 'calls addFile for an added file', (done) ->
             doc =
@@ -456,7 +478,8 @@ describe "Sync", ->
         beforeEach ->
             @local = {}
             @remote = {}
-            @sync = new Sync @pouch, @local, @remote
+            @ignore = new Ignore []
+            @sync = new Sync @pouch, @local, @remote, @ignore
 
         it 'calls addFolder for an added folder', (done) ->
             doc =
@@ -550,7 +573,8 @@ describe "Sync", ->
         beforeEach ->
             @local = {}
             @remote = {}
-            @sync = new Sync @pouch, @local, @remote
+            @ignore = new Ignore []
+            @sync = new Sync @pouch, @local, @remote, @ignore
 
         it 'selects the local side if remote is up-to-date', ->
             doc =

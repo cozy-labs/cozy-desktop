@@ -27,14 +27,11 @@ class Ignore
                 folder: folder
             @patterns.push pattern
 
-    # Return true if the file or folder with the given path should be ignored
-    #
-    # kind is 'file' or 'folder'
-    # (a pattern with a trailing slash is only for folders)
-    isIgnored: (path, kind) ->
+    # Return true if the given file/folder path should be ignored
+    isIgnored: (doc) ->
         for pattern in @patterns
-            if kind is 'folder' or not pattern.folder
-                return true if pattern.match path
+            if doc.docType is 'folder' or not pattern.folder
+                return true if pattern.match doc._id
         return false
 
 
