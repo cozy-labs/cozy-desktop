@@ -3,6 +3,10 @@ Tools for debugging
 
 Bugs can happen. Cozy-desktop has some tools to track them.
 
+
+Debug logs
+----------
+
 The first and most important one is logging. If you think you might have found
 a bug, the first thing to do is running cozy-desktop with debug:
 
@@ -38,3 +42,13 @@ bin/fauxton.coffee
 ```
 
 Don't forget to kill pouchdb-server when you are done.
+
+
+Debug coffeescript
+------------------
+
+You can launch cozy-desktop directly in coffee:
+
+```bash
+DEBUG=true node_modules/.bin/coffee src/bin/cli.coffee sync
+```
