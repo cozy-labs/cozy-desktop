@@ -3,6 +3,7 @@ clone = require 'lodash.clone'
 path  = require 'path'
 log   = require('printit')
     prefix: 'Remote watcher'
+    date: true
 
 
 # Watch for changes from the remote couchdb and give them to the merge

@@ -7,6 +7,7 @@ mime     = require 'mime'
 path     = require 'path'
 log      = require('printit')
     prefix: 'Local watcher '
+    date: true
 
 
 # This file contains the filesystem watcher that will trigger operations when

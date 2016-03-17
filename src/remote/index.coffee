@@ -2,6 +2,7 @@ async   = require 'async'
 path    = require 'path'
 log     = require('printit')
     prefix: 'Remote writer '
+    date: true
 
 Couch   = require './couch'
 Watcher = require './watcher'

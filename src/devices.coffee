@@ -1,6 +1,7 @@
 request = require 'request-json-light'
 log     = require('printit')
     prefix: 'Devices       '
+    date: true
 
 
 # Some methods to discuss with a cozy stack

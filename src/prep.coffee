@@ -1,6 +1,7 @@
 path    = require 'path'
 log     = require('printit')
-    prefix: 'Prep '
+    prefix: 'Prep          '
+    date: true
 
 
 # When the local filesystem or the remote cozy detects a change, it calls this
