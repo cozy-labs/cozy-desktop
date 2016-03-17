@@ -18,20 +18,26 @@ class Ignore
             continue if line is ''          # Blank line
             continue if line[0] is '#'      # Comments
             folder   = false
-            fullpath = false
+            negate   = false
             noslash  = line.indexOf('/') is -1
-            line = line.replace /\s*$/, ''  # Remove trailing spaces
+            if line.indexOf('**') isnt -1   # Detect two asterisks
+                fullpath = true
+                noslash  = false
+            if line[0] is '!'               # Detect bang prefix
+                line = line.slice 1
+                negate = true
             if line[0] is '/'               # Detect leading slash
                 line = line.slice 1
-                fullpath = true
             if line[line.length-1] is '/'   # Detect trailing slash
                 line = line.slice 0, line.length-1
                 folder = true
+            line = line.replace /^\\/, ''   # Remove leading escaping char
+            line = line.replace /\s*$/, ''  # Remove trailing spaces
             pattern =
                 match: matcher line, MicromatchOptions
-                folder:   folder    # The pattern will only match a folder
-                fullpath: fullpath  # The pattern will only match the full path
                 basename: noslash   # The pattern can match only the basename
+                folder:   folder    # The pattern will only match a folder
+                negate:   negate    # The pattern is negated
             @patterns.push pattern
 
     # Return true if the doc matches the pattern
@@ -40,17 +46,19 @@ class Ignore
             return true if pattern.match basename path
         if isFolder or not pattern.folder
             return true  if pattern.match path
-        return false if pattern.fullpath
         parent = dirname path
         return false if parent is '.'
         return @match parent, true, pattern
 
     # Return true if the given file/folder path should be ignored
     isIgnored: (doc) ->
-        ignored = false
+        result = false
         for pattern in @patterns
-            ignored or= @match doc._id, doc.docType is 'folder', pattern
-        return ignored
+            if pattern.negate
+                result and= not @match doc._id, doc.docType is 'folder', pattern
+            else
+                result or= @match doc._id, doc.docType is 'folder', pattern
+        return result
 
 
 module.exports = Ignore

@@ -141,3 +141,80 @@ describe 'Ignore', ->
             _id: 'bar/foo'
             docType: 'file'
         @ignore.isIgnored(doc).should.be.false()
+
+    it 'accepts two asterisks at the start', ->
+        @ignore = new Ignore ['**/foo']
+        doc =
+            _id: 'abc/def/foo'
+            docType: 'file'
+        @ignore.isIgnored(doc).should.be.true()
+
+    it 'accepts two asterisks at the end', ->
+        @ignore = new Ignore ['foo/**']
+        doc =
+            _id: 'foo/abc/def'
+            docType: 'file'
+        @ignore.isIgnored(doc).should.be.true()
+
+    it 'accepts two asterisks at the middle', ->
+        @ignore = new Ignore ['a/**/b']
+        doc =
+            _id: 'a/foo/bar/b'
+            docType: 'file'
+        @ignore.isIgnored(doc).should.be.true()
+
+    it 'accepts two asterisks at the middle (bis)', ->
+        @ignore = new Ignore ['a/**/b']
+        doc =
+            _id: 'a/b'
+            docType: 'file'
+        @ignore.isIgnored(doc).should.be.true()
+
+    it 'accepts two asterisks at the middle (ter)', ->
+        @ignore = new Ignore ['a/**/b']
+        doc =
+            _id: 'foo/a/b'
+            docType: 'file'
+        @ignore.isIgnored(doc).should.be.false()
+
+    it 'accepts escaping char', ->
+        @ignore = new Ignore ['\\#foo']
+        doc =
+            _id: '#foo'
+            docType: 'file'
+        @ignore.isIgnored(doc).should.be.true()
+
+    it 'accepts escaping char', ->
+        @ignore = new Ignore ['\\!foo']
+        doc =
+            _id: '!foo'
+            docType: 'file'
+        @ignore.isIgnored(doc).should.be.true()
+
+    it 'can negate a previous rule', ->
+        @ignore = new Ignore ['*.foo', '!important.foo']
+        doc =
+            _id: 'important.foo'
+            docType: 'file'
+        @ignore.isIgnored(doc).should.be.false()
+
+    it 'can negate a previous rule (bis)', ->
+        @ignore = new Ignore ['/*', '!/foo', '/foo/*', '!/foo/bar']
+        doc =
+            _id: 'foo/bar/abc/def'
+            docType: 'file'
+        @ignore.isIgnored(doc).should.be.false()
+
+    it 'can negate a previous rule (ter)', ->
+        @ignore = new Ignore ['/*', '!/foo', '/foo/*', '!/foo/bar']
+        doc =
+            _id: 'a/foo/bar'
+            docType: 'file'
+        @ignore.isIgnored(doc).should.be.true()
+
+    it 'can negate a previous rule (quater)', ->
+        @ignore = new Ignore ['bar*', '!/foo/bar*']
+        doc =
+            _id: 'foo/bar'
+            docType: 'file'
+        @ignore.isIgnored(doc).should.be.false()
