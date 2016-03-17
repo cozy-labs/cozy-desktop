@@ -218,3 +218,27 @@ describe 'Ignore', ->
             _id: 'foo/bar'
             docType: 'file'
         @ignore.isIgnored(doc).should.be.false()
+
+    it 'has some defaults rules for dropbox', ->
+        @ignore = new Ignore []
+        @ignore.addDefaultRules()
+        doc =
+            _id: '.dropbox'
+            docType: 'folder'
+        @ignore.isIgnored(doc).should.be.true()
+
+    it 'has some defaults rules for editors', ->
+        @ignore = new Ignore []
+        @ignore.addDefaultRules()
+        doc =
+            _id: 'foo.c.swp~'
+            docType: 'file'
+        @ignore.isIgnored(doc).should.be.true()
+
+    it 'has some defaults rules for OSes', ->
+        @ignore = new Ignore []
+        @ignore.addDefaultRules()
+        doc =
+            _id: 'Thumbs.db'
+            docType: 'file'
+        @ignore.isIgnored(doc).should.be.true()

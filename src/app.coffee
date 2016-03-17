@@ -116,7 +116,7 @@ class App
             ignored = ignored.toString().split('\n')
         catch error
             ignored = []
-        @ignore = new Ignore ignored
+        @ignore = new Ignore(ignored).addDefaultRules()
         @merge  = new Merge @pouch
         @prep   = new Prep @merge, @ignore
         @local  = @merge.local  = new Local  @config, @prep, @pouch
