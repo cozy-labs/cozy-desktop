@@ -62,18 +62,23 @@ class Remote
                 @couch.put binary, next
             (created, next) =>
                 binary._rev = created.rev
-                @other.createReadStream doc, next
-            (stream, next) =>
-                {_id, _rev} = binary
-                mime = doc.mime or 'application/octet-stream'
-                @couch.uploadAsAttachment _id, _rev, mime, stream, next
+                @other.createReadStream doc, (err, stream) =>
+                    # Don't use async callback here!
+                    # Async does some magic and the stream can throw an 'error'
+                    # event before the next async callback is called...
+                    return next err if err
+                    stream.on 'error', -> next new Error 'Invalid file'
+                    {_id, _rev} = binary
+                    mime = doc.mime or 'application/octet-stream'
+                    @couch.uploadAsAttachment _id, _rev, mime, stream, next
         ], (err) =>
+            [cb, callback] = [callback, ->]  # Be sure to callback only once
             if err and binary._rev
-                @couch.remove binary._id, binary._rev, -> callback err
+                @couch.remove binary._id, binary._rev, -> cb err
             else if err and err.status is 409
-                callback null, binary
+                cb null, binary
             else
-                callback err, binary
+                cb err, binary
 
     # Extract the remote path and name from a local id
     extractDirAndName: (id) ->

@@ -157,12 +157,16 @@ class Sync
             if err?.status is 409
                 @pouch.db.get doc._id, (err, doc) =>
                     if err
-                        callback err
+                        log.warn 'Race condition', err
+                        callback()
                     else
                         doc.sides[side] = rev
-                        @pouch.db.put doc, callback
+                        @pouch.db.put doc, (err) ->
+                            log.warn 'Race condition', err if err
+                            callback()
             else
-                callback err
+                log.warn 'Race condition', err if err
+                callback()
 
     # If a file has been changed, we had to check what operation it is.
     # For a move, the first call will just keep a reference to the document,

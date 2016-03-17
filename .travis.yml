@@ -83,3 +83,6 @@ after_failure:
     - curl -v http://localhost:9101/
     - curl -v http://localhost:9104/
     - curl -v http://localhost:9121/
+    - cat tmp/one.log
+    - cat tmp/two.log
+    - cat tmp/operations.log

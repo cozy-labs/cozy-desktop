@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "async": "1.5.2",
-    "chokidar": "1.4.3",
+    "chokidar": "nono/chokidar#unlink-with-awf-cwd",
     "commander": "2.9.0",
     "del": "2.2.0",
     "fs-extra": "0.26.7",
