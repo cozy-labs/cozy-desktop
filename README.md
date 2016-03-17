@@ -35,11 +35,13 @@ sudo npm install cozy-desktop -g
 CLI Running
 -----------
 
-Configure it with your remote Cozy
+Configure it with your remote Cozy and your local directory:
 
 ```bash
-cozy-desktop add-remote-cozy https://url.of.my.cozy/ /sync/directory
+cozy-desktop add-remote-cozy https://url.of.my.cozy/ ~/cozy
 ```
+
+It will synchronize your local directory `~/cozy` with your remote cozy.
 
 Then start synchronization daemon:
 

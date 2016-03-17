@@ -43,7 +43,7 @@ sync = (mode, args) ->
 
 
 program
-    .command 'add-remote-cozy <url> <syncPath>'
+    .command 'add-remote-cozy <url> <localSyncPath>'
     .description 'Configure current device to sync with given cozy'
     .option '-d, --deviceName [deviceName]', 'device name to deal with'
     .action (url, syncPath, args) ->
