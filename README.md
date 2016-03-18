@@ -1,5 +1,5 @@
 [Cozy][0] Desktop <sup>(alpha)</sup>
-=================
+====================================
 
 [![Build Status][1]][2]
 
@@ -35,11 +35,13 @@ sudo npm install cozy-desktop -g
 CLI Running
 -----------
 
-Configure it with your remote Cozy
+Configure it with your remote Cozy and your local directory:
 
 ```bash
-cozy-desktop add-remote-cozy https://url.of.my.cozy/ /sync/directory
+cozy-desktop add-remote-cozy https://url.of.my.cozy/ ~/cozy
 ```
+
+It will synchronize your local directory `~/cozy` with your remote cozy.
 
 Then start synchronization daemon:
 
@@ -56,6 +58,19 @@ cozy-desktop -h
 
 Advanced use cases
 ------------------
+
+It's possible to make cozy-desktop ignore some files and folders by using a
+`.cozyignore` file. It works pretty much like a `.gitignore`, ie you put
+patterns in this file to ignore. The rules for patterns are the same, so you
+can look at
+[git documentation](https://git-scm.com/docs/gitignore/#_pattern_format) to
+see for their format. For example:
+
+```bash
+*.mp4
+heavy-*
+/tmp
+```
 
 Cozy-desktop keeps the metadata in a pouchdb database. If you want to use
 several synchronized directories, you'll have to tell cozy-desktop to keeps
@@ -78,18 +93,15 @@ Cozy-desktop is designed to synchronize files and folders between a remote
 cozy instance and a local hard drive, for a personal usage. We tried to make
 it simple and easy. So, it has some limitations:
 
-- It's only a command-line interface and it works only on Linux for the moment.
-  We are working to improve this in the next weeks.
-
-- It's all or nothing for files and folders to synchronize, but we have on our
-  roadmap to add a mean to select which files and folders to synchronize.
+- It's only a command-line interface and it is tested only on Linux for the
+  moment. We are working to improve this in the next weeks.
 
 - Files and folders named like this are ignored:
   - `.cozy-desktop` (they are used to keep internal state)
   - `_design` (special meaning for pouchdb/couchdb)
 
 - It's not a particularly good idea to share code with cozy-desktop:
-  - `node_modules` can't be ignored for the moment and have tons of small files
+  - `node_modules` have tons of small files
   - compiled code often has to be recompile to works on another environment
   - git and other VCS are not meant to be share like this. You may lose your
     work if you make changes on two laptops synchronized by cozy-desktop (it's

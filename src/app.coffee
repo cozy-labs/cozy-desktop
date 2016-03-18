@@ -1,14 +1,17 @@
-async = require 'async'
-path  = require 'path-extra'
-os    = require 'os'
-url   = require 'url'
-log   = require('printit')
+async    = require 'async'
+fs       = require 'fs'
+os       = require 'os'
+path     = require 'path-extra'
+readdirp = require 'readdirp'
+url      = require 'url'
+log      = require('printit')
     prefix: 'Cozy Desktop  '
     date: true
 
 Config  = require './config'
 Devices = require './devices'
 Pouch   = require './pouch'
+Ignore  = require './ignore'
 Merge   = require './merge'
 Prep    = require './prep'
 Local   = require './local'
@@ -107,13 +110,24 @@ class App
             callback? err
 
 
+    # Load ignore rules
+    loadIgnore: ->
+        try
+            ignored = fs.readFileSync(path.join @basePath, '.cozyignore')
+            ignored = ignored.toString().split('\n')
+        catch error
+            ignored = []
+        @ignore = new Ignore(ignored).addDefaultRules()
+
+
     # Instanciate some objects before sync
     instanciate: ->
+        @loadIgnore()
         @merge  = new Merge @pouch
-        @prep   = new Prep @merge
+        @prep   = new Prep @merge, @ignore
         @local  = @merge.local  = new Local  @config, @prep, @pouch
         @remote = @merge.remote = new Remote @config, @prep, @pouch
-        @sync   = new Sync @pouch, @local, @remote
+        @sync   = new Sync @pouch, @local, @remote, @ignore
 
 
     # Start the synchronization
@@ -147,6 +161,24 @@ class App
     # Display a list of watchers for debugging purpose
     debugWatchers: ->
         @local?.watcher.debug()
+
+
+    # Call the callback for each file
+    walkFiles: (args, callback) ->
+        @loadIgnore()
+        options =
+            root: @basePath
+            directoryFilter: '!.cozy-desktop'
+            entryType: 'both'
+        readdirp options
+            .on 'warn',  (err) -> log.warn err
+            .on 'error', (err) -> log.error err
+            .on 'data', (data) =>
+                doc =
+                    _id: data.path
+                    docType: if data.stat.isFile() then 'file' else 'folder'
+                if @ignore.isIgnored(doc) is args.ignored?
+                    callback data.path
 
 
     # Recreate the local pouch database

@@ -2,15 +2,17 @@ clone  = require 'lodash.clone'
 sinon  = require 'sinon'
 should = require 'should'
 
-Prep = require '../../src/prep'
+Ignore = require '../../src/ignore'
+Prep   = require '../../src/prep'
 
 
 describe 'Prep', ->
 
     beforeEach 'instanciate prep', ->
-        @side  = 'local'
-        @merge = {}
-        @prep  = new Prep @merge
+        @side   = 'local'
+        @merge  = {}
+        @ignore = new Ignore ['ignored']
+        @prep   = new Prep @merge, @ignore
 
 
     describe 'Helpers', ->
@@ -205,6 +207,16 @@ describe 'Prep', ->
                     should.exist doc.lastModification
                     done()
 
+            it 'does nothing for ignored paths on local', (done) ->
+                @merge.addFile = sinon.spy()
+                doc =
+                    path: 'ignored'
+                    checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
+                @prep.addFile 'local', doc, (err) =>
+                    should.not.exist err
+                    @merge.addFile.called.should.be.false()
+                    done()
+
 
         describe 'updateFile', ->
             it 'expects a doc with a valid path', (done) ->
@@ -245,6 +257,16 @@ describe 'Prep', ->
                     should.exist doc.lastModification
                     done()
 
+            it 'does nothing for ignored paths on local', (done) ->
+                @merge.updateFile = sinon.spy()
+                doc =
+                    path: 'ignored'
+                    checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
+                @prep.updateFile 'local', doc, (err) =>
+                    should.not.exist err
+                    @merge.updateFile.called.should.be.false()
+                    done()
+
 
         describe 'putFolder', ->
             it 'expects a doc with a valid path', (done) ->
@@ -262,6 +284,14 @@ describe 'Prep', ->
                     doc.docType.should.equal 'folder'
                     should.exist doc._id
                     should.exist doc.lastModification
+                    done()
+
+            it 'does nothing for ignored paths on local', (done) ->
+                @merge.putFolder = sinon.spy()
+                doc = path: 'ignored'
+                @prep.putFolder 'local', doc, (err) =>
+                    should.not.exist err
+                    @merge.putFolder.called.should.be.false()
                     done()
 
 
@@ -430,6 +460,14 @@ describe 'Prep', ->
                     should.exist doc._id
                     done()
 
+            it 'does nothing for ignored paths on local', (done) ->
+                @merge.deleteFile = sinon.spy()
+                doc = path: 'ignored'
+                @prep.deleteFile 'local', doc, (err) =>
+                    should.not.exist err
+                    @merge.deleteFile.called.should.be.false()
+                    done()
+
         describe 'deleteFolder', ->
             it 'expects a doc with a valid path', (done) ->
                 @prep.deleteFolder @side, path: '/', (err) ->
@@ -445,4 +483,12 @@ describe 'Prep', ->
                     @merge.deleteFolder.calledWith(@side, doc).should.be.true()
                     doc.docType.should.equal 'folder'
                     should.exist doc._id
+                    done()
+
+            it 'does nothing for ignored paths on local', (done) ->
+                @merge.deleteFolder = sinon.spy()
+                doc = path: 'ignored'
+                @prep.deleteFolder 'local', doc, (err) =>
+                    should.not.exist err
+                    @merge.deleteFolder.called.should.be.false()
                     done()

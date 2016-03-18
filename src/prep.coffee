@@ -12,7 +12,7 @@ log     = require('printit')
 # are not structured in the same way. In particular, the _id are uuid in CouchDB
 # and the path to the file/folder (in a normalized form) in PouchDB.
 class Prep
-    constructor: (@merge) ->
+    constructor: (@merge, @ignore) ->
         switch process.platform
             when 'linux', 'freebsd', 'sunos'
                 @buildId = @buildIdUnix
@@ -117,12 +117,15 @@ class Prep
             callback new Error 'Invalid checksum'
         else
             doc.docType = 'file'
-            doc.creationDate ?= new Date
-            doc.lastModification ?= new Date
-            if doc.lastModification is 'Invalid date'
-                doc.lastModification = new Date
             @buildId doc
-            @merge.addFile side, doc, callback
+            if side is 'local' and @ignore.isIgnored doc
+                callback()
+            else
+                doc.creationDate ?= new Date
+                doc.lastModification ?= new Date
+                if doc.lastModification is 'Invalid date'
+                    doc.lastModification = new Date
+                @merge.addFile side, doc, callback
 
     # Expectations:
     #   - the file path is present and valid
@@ -136,11 +139,14 @@ class Prep
             callback new Error 'Invalid checksum'
         else
             doc.docType = 'file'
-            doc.lastModification ?= new Date
-            if doc.lastModification is 'Invalid date'
-                doc.lastModification = new Date
             @buildId doc
-            @merge.updateFile side, doc, callback
+            if side is 'local' and @ignore.isIgnored doc
+                callback()
+            else
+                doc.lastModification ?= new Date
+                if doc.lastModification is 'Invalid date'
+                    doc.lastModification = new Date
+                @merge.updateFile side, doc, callback
 
     # Expectations:
     #   - the folder path is present and valid
@@ -150,11 +156,14 @@ class Prep
             callback new Error 'Invalid path'
         else
             doc.docType = 'folder'
-            doc.lastModification ?= new Date
-            if doc.lastModification is 'Invalid date'
-                doc.lastModification = new Date
             @buildId doc
-            @merge.putFolder side, doc, callback
+            if side is 'local' and @ignore.isIgnored doc
+                callback()
+            else
+                doc.lastModification ?= new Date
+                if doc.lastModification is 'Invalid date'
+                    doc.lastModification = new Date
+                @merge.putFolder side, doc, callback
 
     # Expectations:
     #   - the new file path is present and valid
@@ -186,7 +195,16 @@ class Prep
                 doc.lastModification = new Date
             @buildId doc
             @buildId was
-            @merge.moveFile side, doc, was, callback
+            docIgnored = @ignore.isIgnored doc
+            wasIgnored = @ignore.isIgnored was
+            if side is 'local' and docIgnored and wasIgnored
+                callback()
+            else if side is 'local' and docIgnored
+                @merge.deleteFile side, was, callback
+            else if side is 'local' and wasIgnored
+                @merge.addFile side, doc, callback
+            else
+                @merge.moveFile side, doc, was, callback
 
     # Expectations:
     #   - the new folder path is present and valid
@@ -213,7 +231,16 @@ class Prep
                 doc.lastModification = new Date
             @buildId doc
             @buildId was
-            @merge.moveFolder side, doc, was, callback
+            docIgnored = @ignore.isIgnored doc
+            wasIgnored = @ignore.isIgnored was
+            if side is 'local' and docIgnored and wasIgnored
+                callback()
+            else if side is 'local' and docIgnored
+                @merge.deleteFolder side, was, callback
+            else if side is 'local' and wasIgnored
+                @merge.addFolder side, doc, callback
+            else
+                @merge.moveFolder side, doc, was, callback
 
     # Expectations:
     #   - the file path is present and valid
@@ -224,7 +251,10 @@ class Prep
         else
             doc.docType = 'file'
             @buildId doc
-            @merge.deleteFile side, doc, callback
+            if side is 'local' and @ignore.isIgnored doc
+                callback()
+            else
+                @merge.deleteFile side, doc, callback
 
     # Expectations:
     #   - the folder path is present and valid
@@ -235,7 +265,10 @@ class Prep
         else
             doc.docType = 'folder'
             @buildId doc
-            @merge.deleteFolder side, doc, callback
+            if side is 'local' and @ignore.isIgnored doc
+                callback()
+            else
+                @merge.deleteFolder side, doc, callback
 
 
 module.exports = Prep

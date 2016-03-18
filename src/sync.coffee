@@ -9,7 +9,7 @@ log   = require('printit')
 # respectively.
 class Sync
 
-    constructor: (@pouch, @local, @remote) ->
+    constructor: (@pouch, @local, @remote, @ignore) ->
         @local.other = @remote
         @remote.other = @local
 
@@ -92,6 +92,12 @@ class Sync
     apply: (change, callback) =>
         log.debug 'apply', change
         doc = change.doc
+
+        if @ignore.isIgnored doc
+            @pouch.setLocalSeq change.seq, (err) ->
+                callback()
+            return
+
         [side, sideName, rev] = @selectSide doc
         done = @applied(change, sideName, callback)
 

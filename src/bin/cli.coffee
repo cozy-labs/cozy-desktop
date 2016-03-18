@@ -43,7 +43,7 @@ sync = (mode, args) ->
 
 
 program
-    .command 'add-remote-cozy <url> <syncPath>'
+    .command 'add-remote-cozy <url> <localSyncPath>'
     .description 'Configure current device to sync with given cozy'
     .option '-d, --deviceName [deviceName]', 'device name to deal with'
     .action (url, syncPath, args) ->
@@ -105,6 +105,14 @@ program
             You should create a new mount point and use COZY_DESKTOP_DIR.
             The README has more instructions about that.
             """
+
+program
+    .command 'ls'
+    .description 'List local files that are synchronized with the remote cozy'
+    .option('-i, --ignored', 'List ignored files')
+    .action (args) ->
+        app.walkFiles args, (file) ->
+            console.log file
 
 program
     .command 'reset-database'
