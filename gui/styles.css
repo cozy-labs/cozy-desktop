@@ -1,0 +1,3 @@
+label { display: block; margin: 10px; }
+label span { display:inline-block; width: 100px; }
+label input { width: 200px; }

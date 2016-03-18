@@ -1,18 +1,27 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8">
     <title>Cozy-Desktop</title>
+    <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <div id="container"></div>
-    <script src="./node_modules/pouchdb/dist/pouchdb.js"></script>
-    <h1>Cozy-Desktop</h1>
-    We are using
-    <ul>
-      <li>Node.js <script>document.write(process.version)</script></li>
-      <li>Electron <script>document.write(process.versions.electron)</script></li>
-      <li>PouchDB <script>document.write(PouchDB.version)</script></li>
-    </ul>
+    <h1>Configuration de la synchro</h1>
+    <div id="container">
+      <label>
+        <span>URL du cozy</span>
+        <input type="text"/ placeholder="https://example.cozycloud.cc/" id="url">
+      </label>
+      <label>
+        <span>Répertoire</span>
+        <input type="text"/ placeholder="tmp" id="folder">
+      </label>
+      <label>
+        <span>Password</span>
+        <input type="password"/ id="password">
+      </label>
+      <button id="save">OK</button>
+    </div>
     <script src="lib/app.js"></script>
   </body>
 </html>
