@@ -1,3 +1,10 @@
+## 0.8.0 - 2016-03-21
+
+- Add a way to ignore files/folders via a .cozyignore file
+- Retry on download errors
+- Fix some race conditions
+- Enhance documentation and developer experience
+
 ## 0.7.0 - 2015-12-24
 
 * Detect files move/rename on the local file system
