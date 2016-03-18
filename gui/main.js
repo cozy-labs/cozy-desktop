@@ -1,10 +1,13 @@
 'use strict'
 
+const desktop = require('cozy-desktop')
 const electron = require('electron')
 const path = require('path')
 
 const app = electron.app
 const BrowserWindow = electron.BrowserWindow
+
+console.log(desktop)
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
