@@ -1,6 +1,7 @@
 bin/ci
 bin/fauxton.coffee
 bin/install-cozy
+gui/
 src/
 test/
 tmp/
