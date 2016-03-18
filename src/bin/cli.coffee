@@ -107,6 +107,14 @@ program
             """
 
 program
+    .command 'ls'
+    .description 'List local files that are synchronized with the remote cozy'
+    .option('-i, --ignored', 'List ignored files')
+    .action (args) ->
+        app.walkFiles args, (file) ->
+            console.log file
+
+program
     .command 'reset-database'
     .description 'Recreates the local database'
     .action app.resetDatabase

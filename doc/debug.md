@@ -52,3 +52,19 @@ You can launch cozy-desktop directly in coffee:
 ```bash
 DEBUG=true node_modules/.bin/coffee src/bin/cli.coffee sync
 ```
+
+
+Debug ignored files
+-------------------
+
+You can list the files and folder that are synchronized with:
+
+```bash
+cozy-desktop ls
+```
+
+And those which are ignored:
+
+```bash
+cozy-desktop ls --ignored
+```
