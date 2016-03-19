@@ -29,7 +29,8 @@
     "test-unit": "NODE_ENV=test mocha test/unit/",
     "test-integration": "NODE_ENV=test mocha test/integration/",
     "build": "coffee -o lib/ src/",
-    "clean": "rm -rf lib/ && rm -rf tmp/"
+    "clean": "rm -rf lib/ && rm -rf tmp/",
+    "size": "t=\"$(npm pack .)\"; wc -c \"${t}\"; tar tvf \"${t}\"; rm \"${t}\";"
   },
   "dependencies": {
     "async": "1.5.2",

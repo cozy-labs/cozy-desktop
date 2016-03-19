@@ -29,7 +29,7 @@
     "standard": "6.0.8"
   },
   "scripts": {
-    "lint": "standard main.js lib/**/*.js",
+    "lint": "standard --verbose main.js lib/**/*.js",
     "postinstall": "cd node_modules/leveldown && HOME=~/.electron-gyp node-gyp rebuild --target=0.37.2 --arch=x64 --dist-url=https://atom.io/download/atom-shell",
     "start": "electron ."
   }
