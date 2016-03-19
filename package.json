@@ -59,7 +59,7 @@
     "lodash.find": "^4.2.0",
     "lodash.uniq": "4.2.0",
     "mocha": "^2.4.5",
-    "pouchdb-server": "^1.0.1",
+    "pouchdb-server": "^1.1.0",
     "should": "^8.2.2",
     "sinon": "^1.17.2"
   }
