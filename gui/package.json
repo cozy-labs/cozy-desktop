@@ -1,6 +1,6 @@
 {
   "name": "cozy-desktop-gui",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "File Synchronization Client for Cozy Cloud",
   "homepage": "https://github.com/cozy-labs/cozy-desktop",
   "author": "Cozy Cloud <contact@cozycloud.cc> (https://cozycloud.cc/)",
@@ -25,12 +25,18 @@
     "cozy-desktop": "0.8.0"
   },
   "devDependencies": {
+    "chokidar-cli": "1.2.0",
     "electron-prebuilt": "0.37.2",
+    "elm": "0.16.0",
     "standard": "6.0.8"
   },
   "scripts": {
-    "lint": "standard --verbose main.js lib/**/*.js",
-    "postinstall": "cd node_modules/leveldown && HOME=~/.electron-gyp node-gyp rebuild --target=0.37.2 --arch=x64 --dist-url=https://atom.io/download/atom-shell",
-    "start": "electron ."
+    "build": "npm run build:elm",
+    "build:elm": "elm make lib/Main.elm --output elm.js || true",
+    "lint": "standard --verbose main.js ports.js",
+    "postinstall": "cd node_modules/leveldown && HOME=~/.electron-gyp node-gyp rebuild --target=$npm_package_devDependencies_electron_prebuilt --arch=x64 --dist-url=https://atom.io/download/atom-shell",
+    "start": "electron .",
+    "watch": "env WATCH=true npm run start & npm run watch:elm",
+    "watch:elm": "chokidar 'lib/**/*.elm' -c 'npm run build:elm'"
   }
 }

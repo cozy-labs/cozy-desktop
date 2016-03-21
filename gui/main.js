@@ -2,7 +2,6 @@
 
 const Desktop = require('cozy-desktop')
 const electron = require('electron')
-const path = require('path')
 
 const app = electron.app
 const BrowserWindow = electron.BrowserWindow
@@ -14,9 +13,12 @@ const desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
 let mainWindow
 
 const createWindow = () => {
-  mainWindow = new BrowserWindow({ width: 800, height: 600 })
-  mainWindow.loadURL('file://' + path.join(__dirname, 'index.html'))
-  mainWindow.webContents.openDevTools()
+  mainWindow = new BrowserWindow({ width: 1024, height: 768 })
+  mainWindow.loadURL(`file://${__dirname}/index.html`)
+  if (process.env.WATCH === 'true') {
+    console.log('WATCH')
+    mainWindow.webContents.openDevTools()
+  }
   mainWindow.on('closed', () => { mainWindow = null })
 }
 
@@ -39,12 +41,9 @@ app.on('activate', () => {
   }
 })
 
+// Glue code between cozy-desktop lib and the renderer process
 ipcMain.on('add-remote', (event, arg) => {
-  console.log('arg', arg)
-  desktop.askPassword = (cb) => {
-    console.log('askPassword', arg.password)
-    cb(null, arg.password)
-  }
+  desktop.askPassword = (cb) => { cb(null, arg.password) }
   desktop.addRemote(arg.url, arg.folder, null, (err) => {
     event.sender.send('remote-added', err)
     desktop.synchronize('full', (err) => {
@@ -55,3 +54,14 @@ ipcMain.on('add-remote', (event, arg) => {
     })
   })
 })
+
+// On watch mode, automatically reload the window when sources are updated
+if (process.env.WATCH === 'true') {
+  const chokidar = require('chokidar')
+  chokidar.watch(['index.html', 'elm.js', 'ports.js', 'styles.css'])
+    .on('change', () => {
+      if (mainWindow) {
+        mainWindow.reload()
+      }
+    })
+}

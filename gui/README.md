@@ -11,7 +11,7 @@ plan to do a more stable release in the coming weeks. Stay tuned!
 :warning: **Backup your data before playing with cozy-desktop!**
 
 This repository is for the graphical interface of cozy-desktop, built with
-[Electron][8].
+[Electron][8] and [Elm][9].
 
 
 Limitations
@@ -99,3 +99,4 @@ You can reach the Cozy Community by:
 [6]: https://github.com/cozy/
 [7]: https://twitter.com/mycozycloud
 [8]: http://electron.atom.io/
+[9]: http://elm-lang.org/
