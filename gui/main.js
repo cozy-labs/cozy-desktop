@@ -6,7 +6,6 @@ const electron = require('electron')
 const app = electron.app
 const BrowserWindow = electron.BrowserWindow
 const ipcMain = electron.ipcMain
-const nativeImage = electron.nativeImage
 const desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
 
 // Use a fake window to keep the application running when the main window is
@@ -31,6 +30,7 @@ const createWindow = () => {
   mainWindow = new BrowserWindow(windowOptions)
   mainWindow.loadURL(`file://${__dirname}/index.html`)
   if (process.env.WATCH === 'true') {
+    mainWindow.setBounds({ x: 0, y: 0, width: 1600, height: 768 })
     mainWindow.webContents.openDevTools()
   } else {
     mainWindow.setMenu(null)
