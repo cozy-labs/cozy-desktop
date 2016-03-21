@@ -40,8 +40,9 @@
     "lint": "standard --verbose main.js ports.js",
     "postinstall": "cd node_modules/leveldown && HOME=~/.electron-gyp node-gyp rebuild --target=$npm_package_devDependencies_electron_prebuilt --arch=x64 --dist-url=https://atom.io/download/atom-shell",
     "start": "electron .",
-    "watch": "env WATCH=true npm run start & npm run watch:css & npm run watch:elm",
+    "watch": "env WATCH=true npm run start & npm run watch:css & npm run watch:elm & npm run watch:js",
     "watch:css": "stylus -m -u cozy-ui/lib/stylus -w styles/app.styl",
-    "watch:elm": "chokidar 'lib/**/*.elm' -c 'npm run build:elm'"
+    "watch:elm": "chokidar 'lib/**/*.elm' -c 'npm run build:elm'",
+    "watch:js": "chokidar main.js ports.js -c 'npm run lint'"
   }
 }
