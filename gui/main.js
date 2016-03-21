@@ -58,7 +58,7 @@ ipcMain.on('add-remote', (event, arg) => {
 // On watch mode, automatically reload the window when sources are updated
 if (process.env.WATCH === 'true') {
   const chokidar = require('chokidar')
-  chokidar.watch(['index.html', 'elm.js', 'ports.js', 'styles.css'])
+  chokidar.watch(['index.html', 'elm.js', 'ports.js', 'styles/app.css'])
     .on('change', () => {
       if (mainWindow) {
         mainWindow.reload()
