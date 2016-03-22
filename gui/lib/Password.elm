@@ -10,26 +10,38 @@ import Update exposing (..)
 view : Signal.Address Action -> AppModel -> Html
 view address model =
   div
-    [ id "step-password"
-    , class "step"
+    [ classList
+        [ ( "step", True )
+        , ( "step-password", True )
+        , ( "step-error", model.error /= Models.NoError )
+        ]
     ]
-    [ a
-        [ class "back"
-        , href "#address"
-        , onClick address GoToAddressForm
+    [ div
+        [ class "upper" ]
+        [ input
+            [ placeholder "Password"
+            , type' "password"
+            , value model.password
+            , autofocus True
+            , on "input" targetValue (\value -> Signal.message address (FillPassword value))
+            ]
+            []
         ]
-        [ text "←" ]
-    , input
-        [ placeholder "Password"
-        , type' "password"
-        , value model.password
-        , on "input" targetValue (\value -> Signal.message address (FillPassword value))
-        ]
-        []
     , p
         []
         [ text "Your password for the cozy address: "
         , em [] [ text model.address ]
         ]
-    , button [ onClick address AddDevice ] [ text "Login" ]
+    , a
+        [ href "#"
+        , class "more-info"
+        , onClick address GoToAddressForm
+        ]
+        [ text "Wrong cozy address ?" ]
+    , a
+        [ class "btn"
+        , href "#"
+        , onClick address AddDevice
+        ]
+        [ text "Login" ]
     ]

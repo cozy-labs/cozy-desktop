@@ -10,16 +10,34 @@ import Update exposing (..)
 view : Signal.Address Action -> AppModel -> Html
 view address model =
   div
-    [ id "step-address"
-    , class "step"
-    ]
-    [ input
-        [ placeholder "Cozy address"
-        , value model.address
-        , on "input" targetValue (\value -> Signal.message address (FillAddress value))
+    [ classList
+        [ ( "step", True )
+        , ( "step-address", True )
+        , ( "step-error", model.error /= Models.NoError )
         ]
+    ]
+    [ div
+        [ class "upper" ]
+        [ input
+            [ placeholder "Cozy address"
+            , value model.address
+            , autofocus True
+            , on "input" targetValue (\value -> Signal.message address (FillAddress value))
+            ]
+            []
+        ]
+    , p
         []
-    , p [] [ text "This is the web address you use to sign in to your cozy." ]
-    , a [ href "https://cozy.io/en/try-it/" ] [ text "Don't have an account? Request one here" ]
-    , button [ onClick address GoToPasswordForm ] [ text "Next" ]
+        [ text "This is the web address you use to sign in to your cozy." ]
+    , a
+        [ href "https://cozy.io/en/try-it/"
+        , class "more-info"
+        ]
+        [ text "Don't have an account? Request one here" ]
+    , a
+        [ class "btn"
+        , href "#"
+        , onClick address GoToPasswordForm
+        ]
+        [ text "Next" ]
     ]

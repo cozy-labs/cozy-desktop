@@ -25,16 +25,22 @@ update action model =
       ( { model | page = AddressPage }, Effects.none )
 
     FillAddress address' ->
-      ( { model | address = address' }, Effects.none )
+      ( { model | address = address', error = NoError }, Effects.none )
 
     GoToPasswordForm ->
-      ( { model | page = PasswordPage }, Effects.none )
+      if model.address == "" then
+        ( { model | error = MissingAddress }, Effects.none )
+      else
+        ( { model | page = PasswordPage }, Effects.none )
 
     FillPassword password' ->
-      ( { model | password = password' }, Effects.none )
+      ( { model | password = password', error = NoError }, Effects.none )
 
     AddDevice ->
-      ( { model | page = FolderPage }, Effects.none )
+      if model.password == "" then
+        ( { model | error = MissingPassword }, Effects.none )
+      else
+        ( { model | page = FolderPage }, Effects.none )
 
     FillFolder folder' ->
       ( { model | folder = folder' }, Effects.none )

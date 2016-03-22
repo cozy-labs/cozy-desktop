@@ -10,10 +10,19 @@ import Update exposing (..)
 view : Signal.Address Action -> AppModel -> Html
 view address model =
   div
-    [ id "step-welcome"
-    , class "step"
+    [ classList
+        [ ( "step", True )
+        , ( "step-welcome", True )
+        ]
     ]
-    [ img [ src "images/icon.png" ] []
+    [ div
+        [ class "upper" ]
+        [ img [ src "images/happycloud.png" ] [] ]
     , h2 [] [ text "Your own private cloud" ]
-    , button [ onClick address GoToAddressForm ] [ text "Sign in to your Cozy" ]
+    , a
+        [ class "btn"
+        , href "#"
+        , onClick address GoToAddressForm
+        ]
+        [ text "Sign in to your Cozy" ]
     ]
