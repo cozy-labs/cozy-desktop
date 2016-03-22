@@ -22,7 +22,7 @@
     "cozy"
   ],
   "dependencies": {
-    "cozy-desktop": "0.8.0"
+    "cozy-desktop": "../"
   },
   "devDependencies": {
     "chokidar-cli": "1.2.0",

@@ -3,8 +3,8 @@ module Welcome (..) where
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Actions exposing (Action)
 import Models exposing (AppModel)
+import Update exposing (..)
 
 
 view : Signal.Address Action -> AppModel -> Html
@@ -15,5 +15,5 @@ view address model =
     ]
     [ img [ src "images/icon.png" ] []
     , h2 [] [ text "Your own private cloud" ]
-    , button [ onClick address Actions.NextStep ] [ text "Sign in to your Cozy" ]
+    , button [ onClick address GoToAddressForm ] [ text "Sign in to your Cozy" ]
     ]

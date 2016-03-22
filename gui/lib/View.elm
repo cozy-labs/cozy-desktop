@@ -1,19 +1,31 @@
 module View (..) where
 
 import Html exposing (..)
-import Actions exposing (..)
+import Update exposing (Action)
 import Models exposing (..)
 import Welcome
 import Address
+import Password
+import Folder
+import TwoPanes
 
 
 view : Signal.Address Action -> AppModel -> Html
 view address model =
   case
-    model.step
+    model.page
   of
-    WelcomeStep ->
+    WelcomePage ->
       Welcome.view address model
 
-    AddressStep ->
+    AddressPage ->
       Address.view address model
+
+    PasswordPage ->
+      Password.view address model
+
+    FolderPage ->
+      Folder.view address model
+
+    MainPage ->
+      TwoPanes.view address model

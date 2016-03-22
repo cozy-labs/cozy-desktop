@@ -40,7 +40,7 @@ const createWindow = () => {
 
 app.on('ready', () => {
   createWindow()
-  tray = new electron.Tray(`${__dirname}/images/icon.png`)
+  tray = new electron.Tray(`${__dirname}/images/cozystatus-idle.png`)
   const menu = electron.Menu.buildFromTemplate([
     { label: 'Quit', click: app.quit }
   ])

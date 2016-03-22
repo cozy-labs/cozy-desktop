@@ -4,24 +4,23 @@ import StartApp
 import Html exposing (Html)
 import Effects exposing (Effects, Never)
 import Task exposing (Task)
-import Actions
-import Models
-import Update
-import View
+import Models exposing (AppModel)
+import Update exposing (Action, update)
+import View exposing (view)
 
 
-init : ( Models.AppModel, Effects Actions.Action )
+init : ( AppModel, Effects Action )
 init =
   ( Models.initialModel, Effects.none )
 
 
-app : StartApp.App Models.AppModel
+app : StartApp.App AppModel
 app =
   StartApp.start
     { init = init
     , inputs = []
-    , update = Update.update
-    , view = View.view
+    , update = update
+    , view = view
     }
 
 

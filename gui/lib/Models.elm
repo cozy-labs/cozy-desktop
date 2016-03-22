@@ -1,17 +1,26 @@
 module Models (..) where
 
 
-type Step
-  = WelcomeStep
-  | AddressStep
+type Page
+  = WelcomePage
+  | AddressPage
+  | PasswordPage
+  | FolderPage
+  | MainPage
 
 
 type alias AppModel =
-  { step : Step
+  { page : Page
+  , address : String
+  , password : String
+  , folder : String
   }
 
 
 initialModel : AppModel
 initialModel =
-  { step = WelcomeStep
+  { page = WelcomePage
+  , address = ""
+  , password = ""
+  , folder = "/home/users/Documents/Cozy"
   }
