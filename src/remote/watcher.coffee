@@ -87,13 +87,16 @@ class RemoteWatcher
                     heartbeat: 9500
                 @changes
                     .on 'change', (change) =>
+                        log.debug "watcher change"
                         @errors = 0
                         @onChange change.doc, @changed(change)
                     .on 'error', (err) =>
+                        log.debug "watcher error"
                         @changes = null
                         @backoff err, callback, =>
                             @listenToChanges options, callback
                     .on 'complete', =>
+                        log.debug "watcher complete"
                         @changes = null
                         @whenReady callback
 

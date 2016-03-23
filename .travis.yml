@@ -28,6 +28,7 @@ addons:
 before_install:
     - cd
     - export INDEXES_PATH=/home/travis/build/indexes
+    - export NODE_ENV=test
     - mkdir -p $INDEXES_PATH
     - TESTED_NODE=$(node -v)
     - nvm install 4
