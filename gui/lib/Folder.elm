@@ -3,31 +3,71 @@ module Folder (..) where
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Models exposing (AppModel)
-import Update exposing (..)
 
 
-view : Signal.Address Action -> AppModel -> Html
-view address model =
+-- MODEL
+
+
+type alias Model =
+  { folder : String
+  , error : Bool
+  }
+
+
+init : Model
+init =
+  { folder = "/home/users/Documents/Cozy"
+  , error = False
+  }
+
+
+
+-- UPDATE
+
+
+type Action
+  = FillFolder String
+
+
+update : Action -> Model -> Model
+update action model =
+  case
+    action
+  of
+    FillFolder folder' ->
+      { model | folder = folder', error = False }
+
+
+
+-- VIEW
+
+
+type alias Context =
+  { actions : Signal.Address Action
+  , next : Signal.Address ()
+  }
+
+
+view : Context -> Model -> Html
+view context model =
   div
     [ classList
         [ ( "step", True )
         , ( "step-folder", True )
-        , ( "step-error", model.error /= Models.NoError )
+        , ( "step-error", model.error )
         ]
     ]
     [ h2 [] [ text "All done" ]
     , p [] [ text "Select a location for your Cozy folder:" ]
     , input
         [ value model.folder
-        , autofocus True
-        , on "input" targetValue (\value -> Signal.message address (FillFolder value))
+        , on "input" targetValue (Signal.message context.actions << FillFolder)
         ]
         []
     , a
         [ class "btn"
         , href "#"
-        , onClick address StartSync
+        , onClick context.next ()
         ]
         [ text "Use Cozy Desktop" ]
     ]

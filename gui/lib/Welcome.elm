@@ -3,12 +3,14 @@ module Welcome (..) where
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Models exposing (AppModel)
-import Update exposing (..)
 
 
-view : Signal.Address Action -> AppModel -> Html
-view address model =
+type alias Context =
+  { next : Signal.Address () }
+
+
+view : Context -> Html
+view context =
   div
     [ classList
         [ ( "step", True )
@@ -22,7 +24,7 @@ view address model =
     , a
         [ class "btn"
         , href "#"
-        , onClick address GoToAddressForm
+        , onClick context.next ()
         ]
         [ text "Sign in to your Cozy" ]
     ]

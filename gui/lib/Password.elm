@@ -3,17 +3,61 @@ module Password (..) where
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Models exposing (AppModel)
-import Update exposing (..)
 
 
-view : Signal.Address Action -> AppModel -> Html
-view address model =
+-- MODEL
+
+
+type alias Model =
+  { password : String
+  , address : String
+  , error : Bool
+  }
+
+
+init : Model
+init =
+  { password = ""
+  , address = ""
+  , error = False
+  }
+
+
+
+-- UPDATE
+
+
+type Action
+  = FillPassword String
+
+
+update : Action -> Model -> Model
+update action model =
+  case
+    action
+  of
+    FillPassword password' ->
+      { model | password = password', error = False }
+
+
+
+-- VIEW
+
+
+type alias Context =
+  { actions : Signal.Address Action
+  , next : Signal.Address ()
+  , back : Signal.Address ()
+  }
+
+
+view : Context -> Model -> Html
+view context model =
   div
     [ classList
         [ ( "step", True )
         , ( "step-password", True )
-        , ( "step-error", model.error /= Models.NoError )
+        , ( "step-error", model.error )
         ]
     ]
     [ div
@@ -22,8 +66,7 @@ view address model =
             [ placeholder "Password"
             , type' "password"
             , value model.password
-            , autofocus True
-            , on "input" targetValue (\value -> Signal.message address (FillPassword value))
+            , on "input" targetValue (Signal.message context.actions << FillPassword)
             ]
             []
         ]
@@ -35,13 +78,13 @@ view address model =
     , a
         [ href "#"
         , class "more-info"
-        , onClick address GoToAddressForm
+        , onClick context.back ()
         ]
         [ text "Wrong cozy address ?" ]
     , a
         [ class "btn"
         , href "#"
-        , onClick address AddDevice
+        , onClick context.next ()
         ]
         [ text "Login" ]
     ]
