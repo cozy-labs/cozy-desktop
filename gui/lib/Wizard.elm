@@ -1,6 +1,7 @@
 module Wizard (..) where
 
 import Html exposing (..)
+import Html.Attributes exposing (..)
 import Effects exposing (Effects)
 import Welcome
 import Address
@@ -117,41 +118,50 @@ update action model =
 
 view : Signal.Address Action -> Model -> Html
 view address model =
-  case
-    model.page
-  of
-    WelcomePage ->
-      let
-        context =
-          Welcome.Context
-            (Signal.forwardTo address (always (GoToAddressForm)))
-      in
-        Welcome.view context
+  let
+    welcomeContext =
+      Welcome.Context
+        (Signal.forwardTo address (always (GoToAddressForm)))
 
-    AddressPage ->
-      let
-        context =
-          Address.Context
-            (Signal.forwardTo address UpdateAddress)
-            (Signal.forwardTo address (always (GoToPasswordForm)))
-      in
-        Address.view context model.address
+    welcomeView =
+      Welcome.view welcomeContext
 
-    PasswordPage ->
-      let
-        context =
-          Password.Context
-            (Signal.forwardTo address UpdatePassword)
-            (Signal.forwardTo address (always (AddDevice)))
-            (Signal.forwardTo address (always (GoToAddressForm)))
-      in
-        Password.view context model.password
+    addressContext =
+      Address.Context
+        (Signal.forwardTo address UpdateAddress)
+        (Signal.forwardTo address (always (GoToPasswordForm)))
 
-    FolderPage ->
-      let
-        context =
-          Folder.Context
-            (Signal.forwardTo address UpdateFolder)
-            (Signal.forwardTo address (always (StartSync)))
-      in
-        Folder.view context model.folder
+    addressView =
+      Address.view addressContext model.address
+
+    passwordContext =
+      Password.Context
+        (Signal.forwardTo address UpdatePassword)
+        (Signal.forwardTo address (always (AddDevice)))
+        (Signal.forwardTo address (always (GoToAddressForm)))
+
+    passwordView =
+      Password.view passwordContext model.password
+
+    folderContext =
+      Folder.Context
+        (Signal.forwardTo address UpdateFolder)
+        (Signal.forwardTo address (always (StartSync)))
+
+    folderView =
+      Folder.view folderContext model.folder
+  in
+    section
+      [ classList
+          [ ( "wizard", True )
+          , ( "on-step-welcome", model.page == WelcomePage )
+          , ( "on-step-address", model.page == AddressPage )
+          , ( "on-step-password", model.page == PasswordPage )
+          , ( "on-step-folder", model.page == FolderPage )
+          ]
+      ]
+      [ welcomeView
+      , addressView
+      , passwordView
+      , folderView
+      ]
