@@ -7,6 +7,7 @@ should = require 'should'
 
 Cozy  = require '../helpers/integration'
 Files = require '../helpers/files'
+looper = require '../helpers/looper'
 
 
 describe 'Swap 2 files', ->
@@ -37,8 +38,7 @@ describe 'Swap 2 files', ->
         onePath = path.join @basePath, one.path, one.name
         fs.copySync fixturePath, onePath
         one.size = fs.statSync(fixturePath).size
-        setTimeout ->
-            Files.getAllFiles (err, files) ->
+        looper.check Files.getAllFiles, (err, files) ->
                 found = find files, one
                 should.exist found
                 one.checksum = found.checksum
@@ -50,13 +50,11 @@ describe 'Swap 2 files', ->
         twoPath = path.join @basePath, two.path, two.name
         fs.copySync fixturePath, twoPath
         two.size = fs.statSync(fixturePath).size
-        setTimeout ->
-            Files.getAllFiles (err, files) ->
-                found = find files, two
-                should.exist found
-                two.checksum = found.checksum
-                done()
-        , 2500
+        looper.check Files.getAllFiles, (err, files) ->
+            found = find files, two
+            should.exist found
+            two.checksum = found.checksum
+            done()
 
     it 'swaps the two file', (done) ->
         onePath = path.join @basePath, one.path, one.name
@@ -67,10 +65,8 @@ describe 'Swap 2 files', ->
         fs.renameSync tmpPath, twoPath
         [one.size, two.size] = [two.size, one.size]
         [one.checksum, two.checksum] = [two.checksum, one.checksum]
-        setTimeout ->
-            Files.getAllFiles (err, files) ->
+        looper.check Files.getAllFiles, (err, files) ->
                 should.exist find files, one
                 should.exist find files, two
                 should.not.exist find files, tmp
                 done()
-        , 3000
