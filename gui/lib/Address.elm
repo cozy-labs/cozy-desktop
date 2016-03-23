@@ -3,6 +3,7 @@ module Address (..) where
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import OnEnter exposing (onEnter)
 
 
 -- MODEL
@@ -63,6 +64,7 @@ view context model =
             [ placeholder "Cozy address"
             , value model.address
             , on "input" targetValue (Signal.message context.actions << FillAddress)
+            , onEnter context.next ()
             ]
             []
         ]

@@ -3,6 +3,7 @@ module Password (..) where
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import OnEnter exposing (onEnter)
 
 
 -- MODEL
@@ -67,6 +68,7 @@ view context model =
             , type' "password"
             , value model.password
             , on "input" targetValue (Signal.message context.actions << FillPassword)
+            , onEnter context.next ()
             ]
             []
         ]
