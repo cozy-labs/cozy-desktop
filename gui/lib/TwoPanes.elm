@@ -4,6 +4,10 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Effects exposing (Effects)
+import Dashboard
+import Settings
+import Account
+import Help
 
 
 -- MODEL
@@ -66,7 +70,7 @@ view address model =
         ]
 
     menu =
-      div
+      aside
         [ class "two-panes__menu" ]
         [ ul
             []
@@ -80,15 +84,15 @@ view address model =
     content =
       case model.tab of
         DashboardTab ->
-          div [] [ text "dashboard" ]
+          Dashboard.view
 
         SettingsTab ->
-          div [] [ text "settings" ]
+          Settings.view
 
         AccountTab ->
-          div [] [ text "account" ]
+          Account.view
 
         HelpTab ->
-          div [] [ text "help" ]
+          Help.view
   in
     section [ class "two-panes" ] [ menu, content ]
