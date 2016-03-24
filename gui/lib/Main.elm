@@ -27,7 +27,8 @@ init : ( Model, Effects Action )
 init =
   let
     model =
-      Model WizardPage Wizard.init TwoPanes.init
+      -- Model WizardPage Wizard.init TwoPanes.init
+      Model TwoPanesPage Wizard.init TwoPanes.init
   in
     ( model, Effects.none )
 

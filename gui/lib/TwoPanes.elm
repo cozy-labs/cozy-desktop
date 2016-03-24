@@ -1,9 +1,10 @@
 module TwoPanes (..) where
 
+import Effects exposing (Effects)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Effects exposing (Effects)
+import Icons
 import Dashboard
 import Settings
 import Account
@@ -55,7 +56,10 @@ update action model =
 view : Signal.Address Action -> Model -> Html
 view address model =
   let
-    menu_item title tab =
+    iconSize =
+      30
+
+    menu_item title tab icon =
       li
         [ classList
             [ ( "two-panes__menu__item", True )
@@ -66,7 +70,9 @@ view address model =
             [ href "#"
             , onClick address (GoToTab tab)
             ]
-            [ text title ]
+            [ icon iconSize
+            , span [] [ text title ]
+            ]
         ]
 
     menu =
@@ -74,10 +80,10 @@ view address model =
         [ class "two-panes__menu" ]
         [ ul
             []
-            [ menu_item "Dashboard" DashboardTab
-            , menu_item "Settings" SettingsTab
-            , menu_item "Account" AccountTab
-            , menu_item "Help" HelpTab
+            [ menu_item "Dashboard" DashboardTab Icons.dashboard
+            , menu_item "Settings" SettingsTab Icons.settings
+            , menu_item "Account" AccountTab Icons.account
+            , menu_item "Help" HelpTab Icons.help
             ]
         ]
 
