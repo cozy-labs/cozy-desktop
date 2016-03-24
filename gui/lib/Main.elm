@@ -23,7 +23,7 @@ type alias Model =
   }
 
 
-init : ( Model, Effects Wizard.Action )
+init : ( Model, Effects Action )
 init =
   let
     model =
@@ -36,30 +36,54 @@ init =
 -- UPDATE
 
 
-update : Wizard.Action -> Model -> ( Model, Effects Wizard.Action )
+type Action
+  = NoOp
+  | WizardAction Wizard.Action
+  | TwoPanesAction TwoPanes.Action
+
+
+update : Action -> Model -> ( Model, Effects Action )
 update action model =
   case action of
-    Wizard.StartSync ->
-      ( { model | page = TwoPanesPage }, Effects.none )
+    NoOp ->
+      ( model, Effects.none )
 
-    _ ->
+    WizardAction action' ->
+      if action' == Wizard.StartSync then
+        ( { model | page = TwoPanesPage }, Effects.none )
+      else
+        let
+          ( wizard', effects ) =
+            Wizard.update action' model.wizard
+        in
+          ( { model | wizard = wizard' }, Effects.none )
+
+    TwoPanesAction action' ->
       let
-        ( wizard', effects ) =
-          Wizard.update action model.wizard
+        ( twopanes', effects ) =
+          TwoPanes.update action' model.twopanes
       in
-        ( { model | wizard = wizard' }, effects )
+        ( { model | twopanes = twopanes' }, Effects.none )
 
 
 
 -- VIEW
 
 
-view : Signal.Address Wizard.Action -> Model -> Html
+view : Signal.Address Action -> Model -> Html
 view address model =
   if model.page == WizardPage then
-    Wizard.view address model.wizard
+    let
+      address' =
+        Signal.forwardTo address WizardAction
+    in
+      Wizard.view address' model.wizard
   else
-    TwoPanes.view address model.twopanes
+    let
+      address' =
+        Signal.forwardTo address TwoPanesAction
+    in
+      TwoPanes.view address' model.twopanes
 
 
 app : StartApp.App Model
