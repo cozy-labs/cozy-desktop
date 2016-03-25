@@ -1,10 +1,12 @@
 'use strict'
+/* eslint no-unused-vars: [2, { "varsIgnorePattern": "runAsService" }] */
 
 const Desktop = require('cozy-desktop')
 const electron = require('electron')
 
 const app = electron.app
 const BrowserWindow = electron.BrowserWindow
+const dialog = electron.dialog
 const ipcMain = electron.ipcMain
 const desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
 
@@ -54,6 +56,16 @@ app.on('activate', () => {
     mainWindow.focus()
   } else {
     createWindow()
+  }
+})
+
+// Glue code between the main and renderer processes
+ipcMain.on('choose-folder', (event) => {
+  let folders = dialog.showOpenDialog({
+    properties: ['openDirectory']
+  })
+  if (folders && folders.length > 0) {
+    event.sender.send('folder-chosen', folders[0])
   }
 })
 

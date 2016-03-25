@@ -112,6 +112,16 @@ update action model =
       ( { model | page = WelcomePage }, Effects.none )
 
 
+folderChosen : String -> Action
+folderChosen =
+  UpdateFolder << Folder.FillFolder
+
+
+chooseFolder : Signal.Mailbox ()
+chooseFolder =
+  Signal.mailbox ()
+
+
 
 -- VIEW
 
@@ -145,7 +155,7 @@ view address model =
 
     folderContext =
       Folder.Context
-        (Signal.forwardTo address UpdateFolder)
+        chooseFolder.address
         (Signal.forwardTo address (always (StartSync)))
 
     folderView =

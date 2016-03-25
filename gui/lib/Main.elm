@@ -26,6 +26,9 @@ type alias Model =
 init : ( Model, Effects Action )
 init =
   let
+    page =
+      WizardPage
+
     wizard =
       Wizard.init
 
@@ -33,8 +36,7 @@ init =
       TwoPanes.init version
 
     model =
-      -- Model WizardPage Wizard.init TwoPanes.init
-      Model TwoPanesPage wizard twopanes
+      Model page wizard twopanes
   in
     ( model, Effects.none )
 
@@ -97,7 +99,9 @@ app : StartApp.App Model
 app =
   StartApp.start
     { init = init
-    , inputs = []
+    , inputs =
+        [ Signal.map (WizardAction << Wizard.folderChosen) folder
+        ]
     , update = update
     , view = view
     }
@@ -113,4 +117,10 @@ port runner =
   app.tasks
 
 
+port chooseFolder : Signal ()
+port chooseFolder =
+  Wizard.chooseFolder |> .signal
+
+
+port folder : Signal String
 port version : String

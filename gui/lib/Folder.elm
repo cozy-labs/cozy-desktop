@@ -16,7 +16,7 @@ type alias Model =
 
 init : Model
 init =
-  { folder = "/home/users/Documents/Cozy"
+  { folder = ""
   , error = False
   }
 
@@ -43,7 +43,7 @@ update action model =
 
 
 type alias Context =
-  { actions : Signal.Address Action
+  { chooseFolder : Signal.Address ()
   , next : Signal.Address ()
   }
 
@@ -57,13 +57,22 @@ view context model =
         , ( "step-error", model.error )
         ]
     ]
-    [ h2 [] [ text "All done" ]
-    , p [] [ text "Select a location for your Cozy folder:" ]
-    , input
-        [ value model.folder
-        , on "input" targetValue (Signal.message context.actions << FillFolder)
+    [ p [ class "spacer" ] [ text "" ]
+    , img
+        [ src "images/done.svg"
+        , class "done"
         ]
         []
+    , h2 [] [ text "All done" ]
+    , p [] [ text "Select a location for your Cozy folder:" ]
+    , a
+        [ class "folder__selector"
+        , href "#"
+        , onClick context.chooseFolder ()
+        ]
+        [ text model.folder
+        , img [ src "images/down.svg" ] []
+        ]
     , a
         [ class "btn"
         , href "#"
