@@ -74,6 +74,13 @@ let device
 ipcMain.on('register-remote', (event, arg) => {
   console.log('register-remote', arg)
   desktop.askPassword = (cb) => { cb(null, arg.password) }
+
+  // It looks like Electron detects incorrectly that node has nothing to do
+  // and it prevents it to send its http request to the cozy before the next
+  // event. Putting a new event in the event loop seems to be a work-around
+  // for this mysterious bug!
+  setTimeout(() => {}, 200)
+
   desktop.registerRemote(arg.url, null, (err, credentials) => {
     console.log('register-remote done', err, credentials)
     if (err) {
