@@ -11,15 +11,31 @@ const defaultDir = path.join(path.homedir(), 'Cozy')
 const container = document.getElementById('container')
 const elmectron = Elm.embed(Elm.Main, container, {
   folder: '',
+  registration: [],
   version: pkg.version
 })
 
+// Glue code between Elm and the main process
 elmectron.ports.folder.send(defaultDir)
 ipcRenderer.on('folder-chosen', (event, folder) => {
   elmectron.ports.folder.send(folder)
 })
 elmectron.ports.chooseFolder.subscribe(() => {
   ipcRenderer.send('choose-folder')
+})
+
+ipcRenderer.on('remote-registered', (event) => {
+  elmectron.ports.registration.send([])
+})
+elmectron.ports.registerRemote.subscribe((remote) => {
+  ipcRenderer.send('register-remote', {
+    url: remote[0],
+    password: remote[1]
+  })
+})
+
+elmectron.ports.startSync.subscribe((folder) => {
+  ipcRenderer.send('start-sync', folder)
 })
 
 // Open external links in the browser

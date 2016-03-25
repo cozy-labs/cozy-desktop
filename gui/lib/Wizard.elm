@@ -47,8 +47,10 @@ type Action
   | GoToPasswordForm
   | UpdatePassword Password.Action
   | AddDevice
+  | DeviceRegistered
   | UpdateFolder Folder.Action
   | StartSync
+  | WizardFinished
 
 
 update : Action -> Model -> ( Model, Effects Action )
@@ -99,7 +101,23 @@ update action model =
         in
           ( { model | password = password' }, Effects.none )
       else
-        ( { model | page = FolderPage }, Effects.none )
+        let
+          url =
+            model.address.address
+
+          password =
+            model.password.password
+
+          task =
+            Signal.send registerRemote.address ( url, password )
+
+          effect =
+            Effects.map (always NoOp) (Effects.task task)
+        in
+          ( model, effect )
+
+    DeviceRegistered ->
+      ( { model | page = FolderPage }, Effects.none )
 
     UpdateFolder action' ->
       let
@@ -109,7 +127,27 @@ update action model =
         ( { model | folder = folder' }, Effects.none )
 
     StartSync ->
-      ( { model | page = WelcomePage }, Effects.none )
+      if model.folder.folder == "" then
+        let
+          folder' =
+            { folder = "", error = True }
+        in
+          ( { model | folder = folder' }, Effects.none )
+      else
+        let
+          folder =
+            model.folder.folder
+
+          task =
+            Signal.send startSync.address folder
+
+          effect =
+            Effects.map (always WizardFinished) (Effects.task task)
+        in
+          ( model, effect )
+
+    WizardFinished ->
+      ( model, Effects.none )
 
 
 folderChosen : String -> Action
@@ -120,6 +158,21 @@ folderChosen =
 chooseFolder : Signal.Mailbox ()
 chooseFolder =
   Signal.mailbox ()
+
+
+registered : Action
+registered =
+  DeviceRegistered
+
+
+registerRemote : Signal.Mailbox ( String, String )
+registerRemote =
+  Signal.mailbox ( "", "" )
+
+
+startSync : Signal.Mailbox String
+startSync =
+  Signal.mailbox ""
 
 
 

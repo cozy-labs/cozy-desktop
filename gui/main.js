@@ -70,16 +70,33 @@ ipcMain.on('choose-folder', (event) => {
 })
 
 // Glue code between cozy-desktop lib and the renderer process
-ipcMain.on('add-remote', (event, arg) => {
+let device
+ipcMain.on('register-remote', (event, arg) => {
+  console.log('register-remote', arg)
   desktop.askPassword = (cb) => { cb(null, arg.password) }
-  desktop.addRemote(arg.url, arg.folder, null, (err) => {
-    event.sender.send('remote-added', err)
-    desktop.synchronize('full', (err) => {
-      if (err) {
-        console.log(err)
-        app.quit()
+  desktop.registerRemote(arg.url, null, (err, credentials) => {
+    console.log('register-remote done', err, credentials)
+    if (err) {
+      console.log(err)
+    } else {
+      event.sender.send('remote-registered')
+      device = {
+        url: arg.url,
+        name: credentials.deviceName,
+        password: credentials.password
       }
-    })
+    }
+  })
+})
+
+ipcMain.on('start-sync', (event, arg) => {
+  if (!device) {
+    console.error('No device!')
+    return
+  }
+  desktop.saveConfig(device.url, arg, device.name, device.password)
+  desktop.synchronize('full', (err) => {
+    console.error(err)
   })
 })
 

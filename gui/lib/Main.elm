@@ -58,21 +58,21 @@ update action model =
       ( model, Effects.none )
 
     WizardAction action' ->
-      if action' == Wizard.StartSync then
+      if action' == Wizard.WizardFinished then
         ( { model | page = TwoPanesPage }, Effects.none )
       else
         let
           ( wizard', effects ) =
             Wizard.update action' model.wizard
         in
-          ( { model | wizard = wizard' }, Effects.none )
+          ( { model | wizard = wizard' }, Effects.map WizardAction effects )
 
     TwoPanesAction action' ->
       let
         ( twopanes', effects ) =
           TwoPanes.update action' model.twopanes
       in
-        ( { model | twopanes = twopanes' }, Effects.none )
+        ( { model | twopanes = twopanes' }, Effects.map TwoPanesAction effects )
 
 
 
@@ -101,6 +101,7 @@ app =
     { init = init
     , inputs =
         [ Signal.map (WizardAction << Wizard.folderChosen) folder
+        , Signal.map (always (WizardAction Wizard.registered)) registration
         ]
     , update = update
     , view = view
@@ -117,10 +118,21 @@ port runner =
   app.tasks
 
 
+port folder : Signal String
 port chooseFolder : Signal ()
 port chooseFolder =
   Wizard.chooseFolder |> .signal
 
 
-port folder : Signal String
+port registration : Signal ()
+port registerRemote : Signal ( String, String )
+port registerRemote =
+  Wizard.registerRemote |> .signal
+
+
+port startSync : Signal String
+port startSync =
+  Wizard.startSync |> .signal
+
+
 port version : String

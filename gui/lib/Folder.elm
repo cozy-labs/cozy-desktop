@@ -64,7 +64,7 @@ view context model =
         ]
         []
     , h2 [] [ text "All done" ]
-    , p [] [ text "Select a location for your Cozy folder:" ]
+    , label [] [ text "Select a location for your Cozy folder:" ]
     , a
         [ class "folder__selector"
         , href "#"
