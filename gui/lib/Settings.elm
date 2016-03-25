@@ -8,15 +8,15 @@ import Html.Events exposing (..)
 -- VIEW
 
 
-view : Html
-view =
+view : String -> Html
+view version =
   section
     [ class "two-panes__content" ]
     [ h1 [] [ text "Settings" ]
     , h2 [] [ text "Version" ]
     , p
         []
-        [ text "Cozy-Desktop v0.932.123"
+        [ text ("Cozy-Desktop " ++ version)
         , br [] []
         , a
             [ href "https://github.com/cozy-labs/cozy-desktop" ]

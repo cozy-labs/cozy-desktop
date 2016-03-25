@@ -3,9 +3,12 @@
 
 const shell = require('electron').shell
 const ipcRenderer = require('electron').ipcRenderer
+const pkg = require('remote').require('./package.json')
 
 const container = document.getElementById('container')
-const elmectron = Elm.embed(Elm.Main, container)
+const elmectron = Elm.embed(Elm.Main, container, {
+  version: pkg.version
+})
 
 console.log(elmectron.ports, ipcRenderer)
 

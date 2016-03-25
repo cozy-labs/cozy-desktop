@@ -26,9 +26,15 @@ type alias Model =
 init : ( Model, Effects Action )
 init =
   let
+    wizard =
+      Wizard.init
+
+    twopanes =
+      TwoPanes.init version
+
     model =
       -- Model WizardPage Wizard.init TwoPanes.init
-      Model TwoPanesPage Wizard.init TwoPanes.init
+      Model TwoPanesPage wizard twopanes
   in
     ( model, Effects.none )
 
@@ -105,3 +111,6 @@ main =
 port runner : Signal (Task Never ())
 port runner =
   app.tasks
+
+
+port version : String
