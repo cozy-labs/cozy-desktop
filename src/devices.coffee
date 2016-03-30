@@ -1,3 +1,4 @@
+clone   = require 'lodash.clone'
 request = require 'request-json-light'
 log     = require('printit')
     prefix: 'Devices       '
@@ -18,6 +19,21 @@ module.exports =
                 err = err?.message or body.error or body.message
             callback err
 
+    # Same as registerDevice, but it will try again of the device name is
+    # already taken.
+    registerDeviceSafe: (options, callback) ->
+        module.exports.registerDevice options, (err, credentials) ->
+            if err is 'This name is already used'
+                unless options.tries?
+                    options = clone options
+                    options.originalName = options.deviceName
+                    options.tries = 1
+                options.tries++
+                options.deviceName = "#{options.originalName}-#{options.tries}"
+                module.exports.registerDeviceSafe options, callback
+            else
+                callback err, credentials
+
 
     # Register device remotely then returns credentials given by remote Cozy.
     # This credentials will allow the device to access to the Cozy database.
@@ -31,12 +47,11 @@ module.exports =
             if err
                 callback err
             else if body.error?
-                if body.error is 'string'
-                    log.error body.error
                 callback body.error
             else
                 callback null,
                     id: body.id
+                    deviceName: options.deviceName
                     password: body.password
 
 

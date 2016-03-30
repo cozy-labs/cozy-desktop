@@ -65,7 +65,7 @@ class App
                     url: cozyUrl
                     deviceName: deviceName
                     password: password
-                Devices.registerDevice options, next
+                Devices.registerDeviceSafe options, next
         ], (err, credentials) =>
             if err
                 log.error 'An error occured while registering your device.'
@@ -83,7 +83,7 @@ class App
                 options =
                     path: path.resolve syncPath
                     url: cozyUrl
-                    deviceName: deviceName
+                    deviceName: credentials.deviceName
                     password: credentials.password
                 @config.addRemoteCozy options
                 log.info 'The remote Cozy has properly been configured ' +
