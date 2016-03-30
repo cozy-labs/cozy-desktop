@@ -50,7 +50,6 @@ type Action
   | DeviceRegistered
   | UpdateFolder Folder.Action
   | StartSync
-  | WizardFinished
 
 
 update : Action -> Model -> ( Model, Effects Action )
@@ -142,12 +141,9 @@ update action model =
             Signal.send startSync.address folder
 
           effect =
-            Effects.map (always WizardFinished) (Effects.task task)
+            Effects.map (always NoOp) (Effects.task task)
         in
           ( model, effect )
-
-    WizardFinished ->
-      ( model, Effects.none )
 
 
 folderChosen : String -> Action

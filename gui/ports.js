@@ -12,6 +12,7 @@ const container = document.getElementById('container')
 const elmectron = Elm.embed(Elm.Main, container, {
   folder: '',
   registration: [],
+  synchonization: '',
   version: pkg.version
 })
 
@@ -34,6 +35,9 @@ elmectron.ports.registerRemote.subscribe((remote) => {
   })
 })
 
+ipcRenderer.on('synchonization', (event, url) => {
+  elmectron.ports.synchonization.send(url)
+})
 elmectron.ports.startSync.subscribe((folder) => {
   ipcRenderer.send('start-sync', folder)
 })

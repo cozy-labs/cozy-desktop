@@ -38,6 +38,12 @@ const createWindow = () => {
     mainWindow.setMenu(null)
   }
   mainWindow.on('closed', () => { mainWindow = null })
+  mainWindow.webContents.on('dom-ready', () => {
+    if (desktop.config.hasDevice()) {
+      const cozyUrl = desktop.config.getDevice().url
+      mainWindow.webContents.send('synchonization', cozyUrl)
+    }
+  })
 }
 
 app.on('ready', () => {
@@ -72,7 +78,6 @@ ipcMain.on('choose-folder', (event) => {
 // Glue code between cozy-desktop lib and the renderer process
 let device
 ipcMain.on('register-remote', (event, arg) => {
-  console.log('register-remote', arg)
   desktop.askPassword = (cb) => { cb(null, arg.password) }
 
   // It looks like Electron detects incorrectly that node has nothing to do
@@ -82,11 +87,10 @@ ipcMain.on('register-remote', (event, arg) => {
   setTimeout(() => {}, 200)
 
   desktop.registerRemote(arg.url, null, (err, credentials) => {
-    console.log('register-remote done', err, credentials)
     if (err) {
       console.log(err)
     } else {
-      event.sender.send('remote-registered')
+      event.sender.send('remote-registered', arg.url)
       device = {
         url: arg.url,
         name: credentials.deviceName,
@@ -103,7 +107,11 @@ ipcMain.on('start-sync', (event, arg) => {
   }
   desktop.saveConfig(device.url, arg, device.name, device.password)
   desktop.synchronize('full', (err) => {
-    console.error(err)
+    if (err) {
+      console.error(err)
+    } else {
+      event.sender.send('synchonization', device.url)
+    }
   })
 })
 

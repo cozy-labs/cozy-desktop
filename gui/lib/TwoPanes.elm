@@ -23,6 +23,7 @@ type Tab
 
 type alias Model =
   { tab : Tab
+  , address : String
   , version : String
   }
 
@@ -30,6 +31,7 @@ type alias Model =
 init : String -> Model
 init version' =
   { tab = DashboardTab
+  , address = ""
   , version = version'
   }
 
@@ -100,7 +102,7 @@ view address model =
           Settings.view model.version
 
         AccountTab ->
-          Account.view
+          Account.view model.address
 
         HelpTab ->
           Help.view

@@ -48,6 +48,7 @@ init =
 type Action
   = NoOp
   | WizardAction Wizard.Action
+  | WizardFinished String
   | TwoPanesAction TwoPanes.Action
 
 
@@ -58,14 +59,21 @@ update action model =
       ( model, Effects.none )
 
     WizardAction action' ->
-      if action' == Wizard.WizardFinished then
-        ( { model | page = TwoPanesPage }, Effects.none )
-      else
-        let
-          ( wizard', effects ) =
-            Wizard.update action' model.wizard
-        in
-          ( { model | wizard = wizard' }, Effects.map WizardAction effects )
+      let
+        ( wizard', effects ) =
+          Wizard.update action' model.wizard
+      in
+        ( { model | wizard = wizard' }, Effects.map WizardAction effects )
+
+    WizardFinished address' ->
+      let
+        twopanes =
+          model.twopanes
+
+        twopanes' =
+          { twopanes | address = address' }
+      in
+        ( { model | page = TwoPanesPage, twopanes = twopanes' }, Effects.none )
 
     TwoPanesAction action' ->
       let
@@ -102,6 +110,7 @@ app =
     , inputs =
         [ Signal.map (WizardAction << Wizard.folderChosen) folder
         , Signal.map (always (WizardAction Wizard.registered)) registration
+        , Signal.map WizardFinished synchonization
         ]
     , update = update
     , view = view
@@ -130,6 +139,7 @@ port registerRemote =
   Wizard.registerRemote |> .signal
 
 
+port synchonization : Signal String
 port startSync : Signal String
 port startSync =
   Wizard.startSync |> .signal

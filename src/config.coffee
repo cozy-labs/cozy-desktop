@@ -50,6 +50,10 @@ class Config
             log.error "Device not set locally: #{deviceName}"
             throw new Error "Device not set locally: #{deviceName}"
 
+    # Return true if a device has been configured
+    hasDevice: ->
+        return Object.keys(@devices).length > 0
+
     # Update synchronously configuration for given device.
     updateSync: (deviceConfig) ->
         device = @getDevice deviceConfig.deviceName
