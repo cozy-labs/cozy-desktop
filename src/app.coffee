@@ -1,10 +1,11 @@
-async    = require 'async'
-fs       = require 'fs'
-os       = require 'os'
-path     = require 'path-extra'
-readdirp = require 'readdirp'
-url      = require 'url'
-log      = require('printit')
+async     = require 'async'
+fs        = require 'fs'
+os        = require 'os'
+path      = require 'path-extra'
+readdirp  = require 'readdirp'
+filterSDK = require('cozy-device-sdk').filteredReplication
+url       = require 'url'
+log       = require('printit')
     prefix: 'Cozy Desktop  '
     date: true
 
@@ -66,6 +67,12 @@ class App
                     deviceName: deviceName
                     password: password
                 Devices.registerDevice options, next
+            (credentials, next) ->
+                password = credentials.password
+                config = file: true
+                filterSDK.setDesignDoc cozyUrl, deviceName, password, config, \
+                        (err) ->
+                    next err, credentials
         ], (err, credentials) =>
             if err
                 log.error 'An error occured while registering your device.'

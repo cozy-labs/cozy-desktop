@@ -27,6 +27,8 @@ describe "Devices", ->
                 should.exist err
                 done()
 
+    devicePassword = ''
+
     describe 'registerDevice', ->
         it 'gives an error when the password is invalid', (done) ->
             options =
@@ -49,6 +51,21 @@ describe "Devices", ->
                 devicePassword = credentials.password
                 done()
 
+    describe 'getDiskSpace', ->
+        it 'gets informations about disk space', (done) ->
+            options =
+                url: Cozy.url
+                deviceName: Cozy.deviceName
+                password: devicePassword
+            Devices.getDiskSpace options, (err, body) ->
+                should.not.exist err
+                should.exist body
+                should.exist body.diskSpace
+                should.exist body.diskSpace.totalDiskSpace
+                should.exist body.diskSpace.freeDiskSpace
+                should.exist body.diskSpace.usedDiskSpace
+                done()
+
     describe 'unregisterDevice', ->
         it 'gives an error when the password is invalid', (done) ->
             options =
@@ -67,18 +84,4 @@ describe "Devices", ->
                 deviceName: Cozy.deviceName
             Devices.unregisterDevice options, (err) ->
                 should.not.exist err
-                done()
-
-    describe 'getDiskSpace', ->
-        it 'gets informations about disk space', (done) ->
-            options =
-                url: Cozy.url
-                password: Cozy.password
-            Devices.getDiskSpace options, (err, body) ->
-                should.not.exist err
-                should.exist body
-                should.exist body.diskSpace
-                should.exist body.diskSpace.totalDiskSpace
-                should.exist body.diskSpace.freeDiskSpace
-                should.exist body.diskSpace.usedDiskSpace
                 done()
