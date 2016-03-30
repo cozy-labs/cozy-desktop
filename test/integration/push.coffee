@@ -7,6 +7,7 @@ should = require 'should'
 
 Cozy  = require '../helpers/integration'
 Files = require '../helpers/files'
+looper = require '../helpers/looper'
 
 
 describe 'Push', ->
@@ -34,11 +35,9 @@ describe 'Push', ->
     it 'pushs a local folder to the remote cozy', (done) ->
         folderPath = path.join @basePath, folder.path, folder.name
         fs.ensureDirSync folderPath
-        setTimeout ->
-            Files.getAllFolders (err, folders) ->
-                should.exist find folders, folder
-                done()
-        , 1500
+        looper.check Files.getAllFolders, (err, folders) ->
+            should.exist find folders, folder
+            done()
 
     it 'renames the folder', (done) ->
         old = clone folder
@@ -46,12 +45,10 @@ describe 'Push', ->
         oldPath = path.join @basePath, old.path, old.name
         newPath = path.join @basePath, folder.path, folder.name
         fs.renameSync oldPath, newPath
-        setTimeout ->
-            Files.getAllFolders (err, folders) ->
-                should.not.exist find folders, old
-                should.exist find folders, folder
-                done()
-        , 2500
+        looper.check Files.getAllFolders, (err, folders) ->
+            should.not.exist find folders, old
+            should.exist find folders, folder
+            done()
 
     it 'moves the folder', (done) ->
         parentPath = path.join @basePath, parent.path, parent.name
@@ -61,32 +58,26 @@ describe 'Push', ->
         oldPath = path.join @basePath, old.path, old.name
         newPath = path.join @basePath, folder.path, folder.name
         fs.renameSync oldPath, newPath
-        setTimeout ->
-            Files.getAllFolders (err, folders) ->
-                should.not.exist find folders, old
-                should.exist find folders, folder
-                done()
-        , 2500
+        looper.check Files.getAllFolders, (err, folders) ->
+            should.not.exist find folders, old
+            should.exist find folders, folder
+            done()
 
     it 'removes the folder', (done) ->
         folderPath = path.join @basePath, folder.path, folder.name
         fs.rmdirSync folderPath
-        setTimeout ->
-            Files.getAllFolders (err, folders) ->
-                should.not.exist find folders, folder
-                done()
-        , 3500
+        looper.check Files.getAllFolders, (err, folders) ->
+            should.not.exist find folders, folder
+            done()
 
     it 'pushs a local file to the remote cozy', (done) ->
         fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'
         filePath = path.join @basePath, file.path, file.name
         fs.copySync fixturePath, filePath
         file.size = fs.statSync(fixturePath).size
-        setTimeout ->
-            Files.getAllFiles (err, files) ->
-                should.exist find files, file
-                done()
-        , 3000
+        looper.check Files.getAllFiles, (err, files) ->
+            should.exist find files, file
+            done()
 
     it 'renames the file', (done) ->
         old = clone file
@@ -95,12 +86,10 @@ describe 'Push', ->
         oldPath = path.join @basePath, old.path, old.name
         newPath = path.join @basePath, file.path, file.name
         fs.renameSync oldPath, newPath
-        setTimeout ->
-            Files.getAllFiles (err, files) ->
-                should.not.exist find files, old
-                should.exist find files, file
-                done()
-        , 3000
+        looper.check Files.getAllFiles, (err, files) ->
+            should.not.exist find files, old
+            should.exist find files, file
+            done()
 
     it 'moves the file', (done) ->
         old = clone file
@@ -109,29 +98,23 @@ describe 'Push', ->
         oldPath = path.join @basePath, old.path, old.name
         newPath = path.join @basePath, file.path, file.name
         fs.renameSync oldPath, newPath
-        setTimeout ->
-            Files.getAllFiles (err, files) ->
-                should.not.exist find files, old
-                should.exist find files, file
-                done()
-        , 3000
+        looper.check Files.getAllFiles, (err, files) ->
+            should.not.exist find files, old
+            should.exist find files, file
+            done()
 
     it 'overwrites the file', (done) ->
         fixturePath = path.join Cozy.fixturesDir, 'chat-mignon-mod.jpg'
         filePath = path.join @basePath, file.path, file.name
         fs.copySync fixturePath, filePath
         file.size = fs.statSync(fixturePath).size
-        setTimeout ->
-            Files.getAllFiles (err, files) ->
-                should.exist find files, file
-                done()
-        , 3000
+        looper.check Files.getAllFiles, (err, files) ->
+            should.exist find files, file
+            done()
 
     it 'removes the file', (done) ->
         filePath = path.join @basePath, file.path, file.name
         fs.unlinkSync filePath
-        setTimeout ->
-            Files.getAllFiles (err, files) ->
-                should.not.exist find files, file
-                done()
-        , 3500
+        looper.check Files.getAllFiles, (err, files) ->
+            should.not.exist find files, file
+            done()
