@@ -37,7 +37,7 @@
     "commander": "2.9.0",
     "fs-extra": "0.26.7",
     "lodash.clone": "4.3.1",
-    "lodash.find": "4.2.0",
+    "lodash.find": "4.2.1",
     "lodash.isequal": "4.1.1",
     "lodash.pick": "4.1.0",
     "micromatch": "2.3.7",
