@@ -20,7 +20,7 @@ view context =
     [ div
         [ class "upper" ]
         [ img [ src "images/happycloud.png" ] [] ]
-    , h2 [] [ text "Your own private cloud" ]
+    , h1 [] [ text "Your own private cloud" ]
     , a
         [ class "btn"
         , href "#"

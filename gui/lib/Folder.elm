@@ -63,7 +63,7 @@ view context model =
         , class "done"
         ]
         []
-    , h2 [] [ text "All done" ]
+    , h1 [] [ text "All done" ]
     , label [] [ text "Select a location for your Cozy folder:" ]
     , a
         [ class "folder__selector"

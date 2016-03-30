@@ -63,23 +63,27 @@ view : Signal.Address Action -> Model -> Html
 view address model =
   let
     iconSize =
-      30
+      20
 
     menu_item title tab icon =
-      li
-        [ classList
-            [ ( "two-panes__menu__item", True )
-            , ( "two-panes__menu__item--active", model.tab == tab )
-            ]
-        ]
-        [ a
-            [ href "#"
-            , onClick address (GoToTab tab)
-            ]
-            [ icon iconSize
-            , span [] [ text title ]
-            ]
-        ]
+      let
+        active =
+          model.tab == tab
+      in
+        li
+          [ classList
+              [ ( "two-panes__menu__item", True )
+              , ( "two-panes__menu__item--active", active )
+              ]
+          ]
+          [ a
+              [ href "#"
+              , onClick address (GoToTab tab)
+              ]
+              [ icon iconSize active
+              , text title
+              ]
+          ]
 
     menu =
       aside
