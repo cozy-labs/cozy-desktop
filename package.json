@@ -36,7 +36,7 @@
     "chokidar": "nono/chokidar#unlink-with-awf-cwd",
     "commander": "2.9.0",
     "fs-extra": "0.26.7",
-    "lodash.clone": "4.3.1",
+    "lodash.clone": "4.3.2",
     "lodash.find": "4.2.0",
     "lodash.isequal": "4.1.1",
     "lodash.pick": "4.1.0",
