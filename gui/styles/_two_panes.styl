@@ -61,3 +61,35 @@
 
   .btn--danger
     color #FD7461
+
+  .help-list
+    display flex
+    padding 0
+    li
+      flex 1
+      display inline-block
+      box-sizing border-box
+      padding 1em
+    a
+      display flex
+      flex-direction column
+      align-items center
+    .icon
+      display block
+      width 96px
+      height 96px
+      background-image url('../images/sprite-help.svg')
+      background-size auto 100%
+      background-repeat no-repeat
+    .icon--forum
+      background-position 0 0
+    .icon--irc
+      background-position -96px 0
+    .icon--github
+      background-position -192px 0
+    .icon--email
+      background-position -288px 0
+    .icon--twitter
+      background-position -384px 0
+    .icon--documentation
+      background-position -480px 0

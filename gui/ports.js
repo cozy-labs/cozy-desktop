@@ -43,9 +43,13 @@ elmectron.ports.startSync.subscribe((folder) => {
 })
 
 // Open external links in the browser
-document.addEventListener('click', (event) => {
-  if (event.target.matches('a[href^="http"]')) {
+function tryToOpenExternalLink (event, target) {
+  if (target && target.matches('a[href^="https"]')) {
     event.preventDefault()
-    shell.openExternal(event.target.href)
+    shell.openExternal(target.href)
   }
+}
+document.addEventListener('click', (event) => {
+  tryToOpenExternalLink(event, event.target)
+  tryToOpenExternalLink(event, event.target.parentElement)
 })
