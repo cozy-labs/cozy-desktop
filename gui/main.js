@@ -18,6 +18,7 @@ let runAsService
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
 let tray
+let device
 
 const windowOptions = {
   width: 1024,
@@ -40,8 +41,8 @@ const createWindow = () => {
   mainWindow.on('closed', () => { mainWindow = null })
   mainWindow.webContents.on('dom-ready', () => {
     if (desktop.config.hasDevice()) {
-      const cozyUrl = desktop.config.getDevice().url
-      mainWindow.webContents.send('synchronization', cozyUrl)
+      device = desktop.config.getDevice()
+      mainWindow.webContents.send('synchronization', device.url)
     }
   })
 }
@@ -76,7 +77,6 @@ ipcMain.on('choose-folder', (event) => {
 })
 
 // Glue code between cozy-desktop lib and the renderer process
-let device
 ipcMain.on('register-remote', (event, arg) => {
   desktop.askPassword = (cb) => { cb(null, arg.password) }
 
@@ -108,6 +108,22 @@ ipcMain.on('start-sync', (event, arg) => {
   desktop.saveConfig(device.url, arg, device.name, device.password)
   desktop.synchronize('full', (err) => { console.error(err) })
   event.sender.send('synchronization', device.url)
+})
+
+ipcMain.on('unlink-cozy', (event) => {
+  if (!device) {
+    console.error('No device!')
+    return
+  }
+  desktop.askPassword = (cb) => { cb(null, device.password) }
+  desktop.removeRemote(device.deviceName, (err) => {
+    if (err) {
+      console.error(err)
+    } else {
+      device = null
+      event.sender.send('unlinked')
+    }
+  })
 })
 
 // On watch mode, automatically reload the window when sources are updated

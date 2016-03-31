@@ -43,6 +43,7 @@ init version' =
 type Action
   = NoOp
   | GoToTab Tab
+  | UnlinkCozy
 
 
 update : Action -> Model -> ( Model, Effects Action )
@@ -53,6 +54,21 @@ update action model =
 
     GoToTab tab' ->
       ( { model | tab = tab' }, Effects.none )
+
+    UnlinkCozy ->
+      let
+        task =
+          Signal.send unlinkCozy.address ()
+
+        effect =
+          Effects.map (always NoOp) (Effects.task task)
+      in
+        ( model, effect )
+
+
+unlinkCozy : Signal.Mailbox ()
+unlinkCozy =
+  Signal.mailbox ()
 
 
 
@@ -106,7 +122,12 @@ view address model =
           Settings.view model.version
 
         AccountTab ->
-          Account.view model.address
+          let
+            context =
+              Account.Context
+                (Signal.forwardTo address (always (UnlinkCozy)))
+          in
+            Account.view context model.address
 
         HelpTab ->
           Help.view

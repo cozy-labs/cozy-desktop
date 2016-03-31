@@ -8,8 +8,12 @@ import Html.Events exposing (..)
 -- VIEW
 
 
-view : String -> Html
-view address =
+type alias Context =
+  { unlinkCozy : Signal.Address () }
+
+
+view : Context -> String -> Html
+view context address =
   section
     [ class "two-panes__content" ]
     [ h1 [] [ text "Account" ]
@@ -26,6 +30,7 @@ view address =
     , a
         [ class "btn btn--danger"
         , href "#"
+        , onClick context.unlinkCozy ()
         ]
         [ text "Unlink this Cozy" ]
     ]

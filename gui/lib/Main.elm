@@ -50,6 +50,7 @@ type Action
   | WizardAction Wizard.Action
   | WizardFinished String
   | TwoPanesAction TwoPanes.Action
+  | Unlink
 
 
 update : Action -> Model -> ( Model, Effects Action )
@@ -82,6 +83,9 @@ update action model =
       in
         ( { model | twopanes = twopanes' }, Effects.map TwoPanesAction effects )
 
+    Unlink ->
+      init
+
 
 
 -- VIEW
@@ -111,6 +115,7 @@ app =
         [ Signal.map (WizardAction << Wizard.folderChosen) folder
         , Signal.map (always (WizardAction Wizard.registered)) registration
         , Signal.map WizardFinished synchonization
+        , Signal.map (always Unlink) unlink
         ]
     , update = update
     , view = view
@@ -143,6 +148,12 @@ port synchonization : Signal String
 port startSync : Signal String
 port startSync =
   Wizard.startSync |> .signal
+
+
+port unlink : Signal ()
+port unlinkCozy : Signal ()
+port unlinkCozy =
+  TwoPanes.unlinkCozy |> .signal
 
 
 port version : String

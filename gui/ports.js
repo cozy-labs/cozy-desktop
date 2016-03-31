@@ -13,6 +13,7 @@ const elmectron = Elm.embed(Elm.Main, container, {
   folder: '',
   registration: [],
   synchonization: '',
+  unlink: [],
   version: pkg.version
 })
 
@@ -40,6 +41,13 @@ ipcRenderer.on('synchronization', (event, url) => {
 })
 elmectron.ports.startSync.subscribe((folder) => {
   ipcRenderer.send('start-sync', folder)
+})
+
+ipcRenderer.on('unlinked', (event) => {
+  elmectron.ports.unlink.send([])
+})
+elmectron.ports.unlinkCozy.subscribe(() => {
+  ipcRenderer.send('unlink-cozy')
 })
 
 // Open external links in the browser
