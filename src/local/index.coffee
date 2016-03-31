@@ -96,7 +96,7 @@ class Local
     # file. The checksum will then be computed and added to the document, and
     # then pushed to CouchDB.
     addFile: (doc, callback) =>
-        tmpFile  = path.resolve @tmpPath, path.basename doc.path
+        tmpFile  = path.resolve @tmpPath, "#{path.basename doc.path}.tmp"
         filePath = path.resolve @basePath, doc.path
         parent   = path.resolve @basePath, path.dirname doc.path
 
