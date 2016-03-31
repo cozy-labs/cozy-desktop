@@ -62,6 +62,7 @@ view context model =
         [ class "upper" ]
         [ input
             [ placeholder "Cozy address"
+            , class "wizard__address"
             , value model.address
             , on "input" targetValue (Signal.message context.actions << FillAddress)
             , onEnter context.next ()

@@ -65,6 +65,7 @@ view context model =
         [ class "upper" ]
         [ input
             [ placeholder "Password"
+            , class "wizard__password"
             , type' "password"
             , value model.password
             , on "input" targetValue (Signal.message context.actions << FillPassword)

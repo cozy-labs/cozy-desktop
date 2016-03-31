@@ -61,3 +61,14 @@ document.addEventListener('click', (event) => {
   tryToOpenExternalLink(event, event.target)
   tryToOpenExternalLink(event, event.target.parentElement)
 })
+
+// Give focus to DOM nodes
+elmectron.ports.focus.subscribe((selector) => {
+  // We wait that the CSS transition has finished before focusing the node
+  setTimeout(() => {
+    const nodes = document.querySelectorAll(selector)
+    if (nodes && nodes.length > 0) {
+      nodes[0].focus()
+    }
+  }, 300)
+})

@@ -59,7 +59,14 @@ update action model =
       ( model, Effects.none )
 
     GoToAddressForm ->
-      ( { model | page = AddressPage }, Effects.none )
+      let
+        task =
+          Signal.send focus.address ".wizard__address"
+
+        effect =
+          Effects.map (always NoOp) (Effects.task task)
+      in
+        ( { model | page = AddressPage }, effect )
 
     UpdateAddress action' ->
       let
@@ -82,8 +89,14 @@ update action model =
 
           password'' =
             { password' | address = model.address.address }
+
+          task =
+            Signal.send focus.address ".wizard__password"
+
+          effect =
+            Effects.map (always NoOp) (Effects.task task)
         in
-          ( { model | page = PasswordPage, password = password'' }, Effects.none )
+          ( { model | page = PasswordPage, password = password'' }, effect )
 
     UpdatePassword action' ->
       let
@@ -144,6 +157,11 @@ update action model =
             Effects.map (always NoOp) (Effects.task task)
         in
           ( model, effect )
+
+
+focus : Signal.Mailbox String
+focus =
+  Signal.mailbox ""
 
 
 folderChosen : String -> Action

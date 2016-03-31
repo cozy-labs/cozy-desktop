@@ -132,6 +132,11 @@ port runner =
   app.tasks
 
 
+port focus : Signal String
+port focus =
+  Wizard.focus |> .signal
+
+
 port folder : Signal String
 port chooseFolder : Signal ()
 port chooseFolder =
