@@ -27,13 +27,13 @@ describe "Devices", ->
                 should.exist err
                 done()
 
-    describe 'registerDevice', ->
+    describe 'registerDeviceSafe', ->
         it 'gives an error when the password is invalid', (done) ->
             options =
                 url: Cozy.url
                 password: 'xxxxxxxx'
                 deviceName: Cozy.deviceName
-            Devices.registerDevice options, (err, credentials) ->
+            Devices.registerDeviceSafe options, (err, credentials) ->
                 err.should.equal 'Bad credentials'
                 done()
 
@@ -42,11 +42,41 @@ describe "Devices", ->
                 url: Cozy.url
                 password: Cozy.password
                 deviceName: Cozy.deviceName
-            Devices.registerDevice options, (err, credentials) ->
+            Devices.registerDeviceSafe options, (err, credentials) ->
                 should.not.exist err
                 should.exist credentials
                 should.exist credentials.password
+                should.exist credentials.deviceName
+                credentials.deviceName.should.equal Cozy.deviceName
                 devicePassword = credentials.password
+                done()
+
+        it 'register a device with a suffix when it already exists', (done) ->
+            options =
+                url: Cozy.url
+                password: Cozy.password
+                deviceName: Cozy.deviceName
+            Devices.registerDeviceSafe options, (err, credentials) ->
+                should.not.exist err
+                should.exist credentials
+                should.exist credentials.password
+                should.exist credentials.deviceName
+                credentials.deviceName.should.not.equal Cozy.deviceName
+                credentials.deviceName.should.match /-2$/
+                done()
+
+        it 'register a device with a suffix when it already exists', (done) ->
+            options =
+                url: Cozy.url
+                password: Cozy.password
+                deviceName: Cozy.deviceName
+            Devices.registerDeviceSafe options, (err, credentials) ->
+                should.not.exist err
+                should.exist credentials
+                should.exist credentials.password
+                should.exist credentials.deviceName
+                credentials.deviceName.should.not.equal Cozy.deviceName
+                credentials.deviceName.should.match /-3$/
                 done()
 
     describe 'unregisterDevice', ->
@@ -65,6 +95,24 @@ describe "Devices", ->
                 url: Cozy.url
                 password: Cozy.password
                 deviceName: Cozy.deviceName
+            Devices.unregisterDevice options, (err) ->
+                should.not.exist err
+                done()
+
+        it 'unregister a device (bis)', (done) ->
+            options =
+                url: Cozy.url
+                password: Cozy.password
+                deviceName: "#{Cozy.deviceName}-2"
+            Devices.unregisterDevice options, (err) ->
+                should.not.exist err
+                done()
+
+        it 'unregister a device (ter)', (done) ->
+            options =
+                url: Cozy.url
+                password: Cozy.password
+                deviceName: "#{Cozy.deviceName}-3"
             Devices.unregisterDevice options, (err) ->
                 should.not.exist err
                 done()
