@@ -30,7 +30,7 @@ type alias Model =
 
 init : String -> Model
 init version' =
-  { tab = HelpTab
+  { tab = DashboardTab
   , address = ""
   , version = version'
   }

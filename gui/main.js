@@ -41,7 +41,7 @@ const createWindow = () => {
   mainWindow.webContents.on('dom-ready', () => {
     if (desktop.config.hasDevice()) {
       const cozyUrl = desktop.config.getDevice().url
-      mainWindow.webContents.send('synchonization', cozyUrl)
+      mainWindow.webContents.send('synchronization', cozyUrl)
     }
   })
 }
@@ -88,7 +88,7 @@ ipcMain.on('register-remote', (event, arg) => {
 
   desktop.registerRemote(arg.url, null, (err, credentials) => {
     if (err) {
-      console.log(err)
+      console.error(err)
     } else {
       event.sender.send('remote-registered', arg.url)
       device = {
@@ -106,13 +106,8 @@ ipcMain.on('start-sync', (event, arg) => {
     return
   }
   desktop.saveConfig(device.url, arg, device.name, device.password)
-  desktop.synchronize('full', (err) => {
-    if (err) {
-      console.error(err)
-    } else {
-      event.sender.send('synchonization', device.url)
-    }
-  })
+  desktop.synchronize('full', (err) => { console.error(err) })
+  event.sender.send('synchronization', device.url)
 })
 
 // On watch mode, automatically reload the window when sources are updated

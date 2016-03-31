@@ -35,7 +35,7 @@ elmectron.ports.registerRemote.subscribe((remote) => {
   })
 })
 
-ipcRenderer.on('synchonization', (event, url) => {
+ipcRenderer.on('synchronization', (event, url) => {
   elmectron.ports.synchonization.send(url)
 })
 elmectron.ports.startSync.subscribe((folder) => {
