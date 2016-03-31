@@ -113,7 +113,8 @@ class App
     # Load ignore rules
     loadIgnore: ->
         try
-            ignored = fs.readFileSync(path.join @basePath, '.cozyignore')
+            syncPath = @config.getDevice().path
+            ignored = fs.readFileSync(path.join syncPath, '.cozyignore')
             ignored = ignored.toString().split('\n')
         catch error
             ignored = []
