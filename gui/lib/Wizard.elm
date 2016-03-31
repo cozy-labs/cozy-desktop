@@ -80,8 +80,14 @@ update action model =
         let
           address' =
             { address = "", error = True }
+
+          task =
+            Signal.send focus.address ".wizard__address"
+
+          effect =
+            Effects.map (always NoOp) (Effects.task task)
         in
-          ( { model | address = address' }, Effects.none )
+          ( { model | address = address' }, effect )
       else
         let
           password' =

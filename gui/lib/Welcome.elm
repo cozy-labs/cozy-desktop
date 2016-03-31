@@ -17,7 +17,8 @@ view context =
         , ( "step-welcome", True )
         ]
     ]
-    [ div
+    [ div [ class "upper" ] []
+    , div
         [ class "upper" ]
         [ img [ src "images/happycloud.png" ] [] ]
     , h1 [] [ text "Your own private cloud" ]

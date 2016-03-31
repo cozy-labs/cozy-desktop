@@ -58,7 +58,14 @@ view context model =
         , ( "step-error", model.error )
         ]
     ]
-    [ div
+    [ p
+        [ class "upper error-message" ]
+        [ if model.error then
+            text "You don't have filled the address!"
+          else
+            text ""
+        ]
+    , div
         [ class "upper" ]
         [ input
             [ placeholder "Cozy address"
