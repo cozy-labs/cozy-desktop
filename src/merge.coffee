@@ -142,7 +142,13 @@ class Merge
                 else
                     @pouch.db.put doc, callback
             else if file?.checksum
-                @resolveConflict side, doc, callback
+                if side is 'local' and file.sides.local?
+                    # When a file is modified on local when cozy-desktop is not
+                    # running, it is detected as a new file when cozy-desktop
+                    # is started. But it's an update!
+                    @updateFile side, doc, callback
+                else
+                    @resolveConflict side, doc, callback
             else
                 doc._rev = file._rev if file
                 doc.tags ?= []
