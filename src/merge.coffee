@@ -132,11 +132,15 @@ class Merge
                 @resolveConflict side, doc, callback
             else if file and @sameBinary file, doc
                 doc._rev = file._rev
-                doc.size  ?= file.size
-                doc.class ?= file.class
-                doc.mime  ?= file.mime
-                doc.tags  ?= file.tags or []
-                @pouch.db.put doc, callback
+                doc.size   ?= file.size
+                doc.class  ?= file.class
+                doc.mime   ?= file.mime
+                doc.tags   ?= file.tags or []
+                doc.remote ?= file.remote
+                if @sameFile file, doc
+                    callback null
+                else
+                    @pouch.db.put doc, callback
             else if file?.checksum
                 @resolveConflict side, doc, callback
             else
