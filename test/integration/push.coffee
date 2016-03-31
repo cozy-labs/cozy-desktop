@@ -51,7 +51,7 @@ describe 'Push', ->
                 should.not.exist find folders, old
                 should.exist find folders, folder
                 done()
-        , 2500
+        , 5000
 
     it 'moves the folder', (done) ->
         parentPath = path.join @basePath, parent.path, parent.name
