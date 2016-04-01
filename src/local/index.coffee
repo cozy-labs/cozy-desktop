@@ -51,8 +51,9 @@ class Local
                 else
                     callback err
             if doc.lastModification
+                creationDate = new Date doc.creationDate
                 lastModification = new Date doc.lastModification
-                fs.utimes filePath, new Date(), lastModification, ->
+                fs.utimes filePath, creationDate, lastModification, ->
                     # Ignore errors
                     next()
             else
