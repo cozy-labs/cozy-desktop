@@ -49,11 +49,15 @@ class App
 
     # Register a device on the remote cozy
     registerRemote: (cozyUrl, deviceName, callback) =>
+        if cozyUrl.indexOf(':') is -1
+            if cozyUrl.indexOf('.')
+                cozyUrl += ".cozycloud.cc"
+            cozyUrl = "https://#{cozyUrl}"
         parsed = url.parse cozyUrl
-        parsed.protocol ?= 'https:'
         cozyUrl = url.format parsed
         unless parsed.protocol in ['http:', 'https:'] and parsed.hostname
-            log.warn "Your URL looks invalid: #{cozyUrl}"
+            err = new Error "Your URL looks invalid: #{cozyUrl}"
+            log.warn err
             callback? err
             return
         deviceName ?= os.hostname() or 'desktop'

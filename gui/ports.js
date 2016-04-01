@@ -12,6 +12,7 @@ const container = document.getElementById('container')
 const elmectron = Elm.embed(Elm.Main, container, {
   folder: '',
   registration: [],
+  registrationError: '',
   synchonization: '',
   unlink: [],
   version: pkg.version
@@ -26,6 +27,9 @@ elmectron.ports.chooseFolder.subscribe(() => {
   ipcRenderer.send('choose-folder')
 })
 
+ipcRenderer.on('remote-error', (event, err) => {
+  elmectron.ports.registrationError.send(err)
+})
 ipcRenderer.on('remote-registered', (event) => {
   elmectron.ports.registration.send([])
 })

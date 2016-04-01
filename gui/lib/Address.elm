@@ -49,6 +49,14 @@ type alias Context =
   }
 
 
+errorMessage : Model -> String
+errorMessage model =
+  if model.error then
+    "You don't have filled the address!"
+  else
+    ""
+
+
 view : Context -> Model -> Html
 view context model =
   div
@@ -60,11 +68,7 @@ view context model =
     ]
     [ p
         [ class "upper error-message" ]
-        [ if model.error then
-            text "You don't have filled the address!"
-          else
-            text ""
-        ]
+        [ text (errorMessage model) ]
     , div
         [ class "upper" ]
         [ input

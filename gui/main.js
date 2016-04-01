@@ -88,7 +88,7 @@ ipcMain.on('register-remote', (event, arg) => {
 
   desktop.registerRemote(arg.url, null, (err, credentials) => {
     if (err) {
-      console.error(err)
+      event.sender.send('remote-error', err)
     } else {
       event.sender.send('remote-registered', arg.url)
       device = {

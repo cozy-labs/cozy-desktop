@@ -47,6 +47,7 @@ type Action
   | GoToPasswordForm
   | UpdatePassword Password.Action
   | AddDevice
+  | RegistrationError String
   | DeviceRegistered
   | UpdateFolder Folder.Action
   | StartSync
@@ -115,9 +116,18 @@ update action model =
       if model.password.password == "" then
         let
           password' =
-            { password = "", address = model.address.address, error = True }
+            { password = ""
+            , address = model.address.address
+            , error = "You don't have filled the password!"
+            }
+
+          task =
+            Signal.send focus.address ".wizard__password"
+
+          effect =
+            Effects.map (always NoOp) (Effects.task task)
         in
-          ( { model | password = password' }, Effects.none )
+          ( { model | password = password' }, effect )
       else
         let
           url =
@@ -133,6 +143,13 @@ update action model =
             Effects.map (always NoOp) (Effects.task task)
         in
           ( model, effect )
+
+    RegistrationError message ->
+      let
+        password' =
+          Password.update (Password.SetError message) model.password
+      in
+        ( { model | password = password' }, Effects.none )
 
     DeviceRegistered ->
       ( { model | page = FolderPage }, Effects.none )
@@ -183,6 +200,11 @@ chooseFolder =
 registered : Action
 registered =
   DeviceRegistered
+
+
+registrationError : String -> Action
+registrationError message =
+  RegistrationError message
 
 
 registerRemote : Signal.Mailbox ( String, String )

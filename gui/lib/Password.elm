@@ -12,7 +12,7 @@ import OnEnter exposing (onEnter)
 type alias Model =
   { password : String
   , address : String
-  , error : Bool
+  , error : String
   }
 
 
@@ -20,7 +20,7 @@ init : Model
 init =
   { password = ""
   , address = ""
-  , error = False
+  , error = ""
   }
 
 
@@ -30,6 +30,7 @@ init =
 
 type Action
   = FillPassword String
+  | SetError String
 
 
 update : Action -> Model -> Model
@@ -38,7 +39,10 @@ update action model =
     action
   of
     FillPassword password' ->
-      { model | password = password', error = False }
+      { model | password = password', error = "" }
+
+    SetError error' ->
+      { model | error = error' }
 
 
 
@@ -58,10 +62,13 @@ view context model =
     [ classList
         [ ( "step", True )
         , ( "step-password", True )
-        , ( "step-error", model.error )
+        , ( "step-error", model.error /= "" )
         ]
     ]
-    [ div
+    [ p
+        [ class "upper error-message" ]
+        [ text model.error ]
+    , div
         [ class "upper" ]
         [ input
             [ placeholder "Password"

@@ -114,6 +114,7 @@ app =
     , inputs =
         [ Signal.map (WizardAction << Wizard.folderChosen) folder
         , Signal.map (always (WizardAction Wizard.registered)) registration
+        , Signal.map (WizardAction << Wizard.registrationError) registrationError
         , Signal.map WizardFinished synchonization
         , Signal.map (always Unlink) unlink
         ]
@@ -144,6 +145,7 @@ port chooseFolder =
 
 
 port registration : Signal ()
+port registrationError : Signal String
 port registerRemote : Signal ( String, String )
 port registerRemote =
   Wizard.registerRemote |> .signal
