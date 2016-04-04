@@ -143,10 +143,7 @@ class Merge
                     @pouch.db.put doc, callback
             else if file?.checksum
                 if side is 'local' and file.sides.local?
-                    # When a file is modified on local when cozy-desktop is not
-                    # running, it is detected as a new file when cozy-desktop
-                    # is started. But it's an update!
-                    @updateFile side, doc, callback
+                    @resolveInitialAdd side, doc, file, callback
                 else
                     @resolveConflict side, doc, callback
             else
@@ -154,6 +151,23 @@ class Merge
                 doc.tags ?= []
                 @ensureParentExist side, doc, =>
                     @pouch.db.put doc, callback
+
+    # When a file is modified when cozy-desktop is not running,
+    # it is detected as a new file when cozy-desktop is started.
+    resolveInitialAdd: (side, doc, file, callback) ->
+        if file.sides.remote is file.sides.local
+            # The file was updated on local
+            @updateFile side, doc, callback
+        else
+            # The file was updated on remote and maybe in local too
+            shortRev = file.sides.local
+            @pouch.getPreviousRev doc._id, shortRev, (err, prev) =>
+                if err or prev.checksum isnt doc.checksum
+                    # It's safer to handle it as a conflict
+                    @resolveConflict 'remote', doc, callback
+                else
+                    # The file was only updated on remote
+                    callback null
 
     # Update a file, when its metadata or its content has changed
     updateFile: (side, doc, callback) ->
