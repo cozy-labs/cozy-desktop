@@ -8,6 +8,15 @@ log     = require('printit')
 # Some methods to discuss with a cozy stack
 module.exports =
 
+    # Pings the URL to check if it is a Cozy
+    pingCozy: (url, callback) ->
+        client = request.newClient url
+        client.get "status", (err, res, body) ->
+            if res?.statusCode isnt 200
+                callback new Error "No cozy at this URL"
+            else
+                callback()
+
     # Pings the cozy to check the credentials without creating a device
     checkCredentials: (options, callback) ->
         client = request.newClient options.url
