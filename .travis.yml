@@ -63,6 +63,8 @@ before_install:
     - nvm use $TESTED_NODE
     - cd /home/travis/build/cozy-labs/cozy-desktop
     - pwd
+    - mkdir /tmp/cozy-desktop
+    - ln -s /tmp/cozy-desktop tmp
 
 script:
     - npm run build

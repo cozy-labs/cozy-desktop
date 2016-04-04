@@ -323,32 +323,34 @@ describe "Pouch", ->
                     done()
 
 
-        describe 'byRecursivePath (bis)', ->
-            @timeout 60000
+    # Disable this test on travis because it can be really slow...
+    return if process.env.TRAVIS
+    describe 'byRecursivePath (bis)', ->
+        @timeout 60000
 
-            # jsverify only works with Promise for async stuff
-            return unless typeof Promise is 'function'
+        # jsverify only works with Promise for async stuff
+        return unless typeof Promise is 'function'
 
-            it 'gets the nested files and folders', (done) ->
-                base = 'byRecursivePath'
-                property = jsv.forall 'nearray nestring', (paths) =>
-                    paths = uniq paths.concat([base])
+        it 'gets the nested files and folders', (done) ->
+            base = 'byRecursivePath'
+            property = jsv.forall 'nearray nestring', (paths) =>
+                paths = uniq paths.concat([base])
+                new Promise (resolve, reject) =>
+                    @pouch.resetDatabase (err) ->
+                        if err
+                            reject err
+                        else
+                            resolve()
+                .then =>
+                    Promise.all paths.map (p) =>
+                        doc = _id: path.join(base, p), docType: 'folder'
+                        @pouch.db.put doc
+                .then =>
                     new Promise (resolve, reject) =>
-                        @pouch.resetDatabase (err) ->
+                        @pouch.byRecursivePath base, (err, docs) ->
                             if err
                                 reject err
                             else
-                                resolve()
-                    .then =>
-                        Promise.all paths.map (p) =>
-                            doc = _id: path.join(base, p), docType: 'folder'
-                            @pouch.db.put doc
-                    .then =>
-                        new Promise (resolve, reject) =>
-                            @pouch.byRecursivePath base, (err, docs) ->
-                                if err
-                                    reject err
-                                else
-                                    resolve docs.length is paths.length
-                jsv.assert(property, tests: 10).then (res) ->
-                    if res is true then done() else done res
+                                resolve docs.length is paths.length
+            jsv.assert(property, tests: 10).then (res) ->
+                if res is true then done() else done res
