@@ -189,22 +189,25 @@ class Prep
             log.warn "Missing rev: #{JSON.stringify was, null, 2}"
             callback new Error 'Missing rev'
         else
-            doc.docType = 'file'
-            doc.lastModification ?= new Date
-            if doc.lastModification is 'Invalid date'
-                doc.lastModification = new Date
-            @buildId doc
-            @buildId was
-            docIgnored = @ignore.isIgnored doc
-            wasIgnored = @ignore.isIgnored was
-            if side is 'local' and docIgnored and wasIgnored
-                callback()
-            else if side is 'local' and docIgnored
-                @merge.deleteFile side, was, callback
-            else if side is 'local' and wasIgnored
-                @merge.addFile side, doc, callback
-            else
-                @merge.moveFile side, doc, was, callback
+            @doMoveFile side, doc, was, callback
+
+    doMoveFile: (side, doc, was, callback) ->
+        doc.docType = 'file'
+        doc.lastModification ?= new Date
+        if doc.lastModification is 'Invalid date'
+            doc.lastModification = new Date
+        @buildId doc
+        @buildId was
+        docIgnored = @ignore.isIgnored doc
+        wasIgnored = @ignore.isIgnored was
+        if side is 'local' and docIgnored and wasIgnored
+            callback()
+        else if side is 'local' and docIgnored
+            @merge.deleteFile side, was, callback
+        else if side is 'local' and wasIgnored
+            @merge.addFile side, doc, callback
+        else
+            @merge.moveFile side, doc, was, callback
 
     # Expectations:
     #   - the new folder path is present and valid
@@ -225,22 +228,25 @@ class Prep
             log.warn "Missing rev: #{JSON.stringify was, null, 2}"
             callback new Error 'Missing rev'
         else
-            doc.docType = 'folder'
-            doc.lastModification ?= new Date
-            if doc.lastModification is 'Invalid date'
-                doc.lastModification = new Date
-            @buildId doc
-            @buildId was
-            docIgnored = @ignore.isIgnored doc
-            wasIgnored = @ignore.isIgnored was
-            if side is 'local' and docIgnored and wasIgnored
-                callback()
-            else if side is 'local' and docIgnored
-                @merge.deleteFolder side, was, callback
-            else if side is 'local' and wasIgnored
-                @merge.addFolder side, doc, callback
-            else
-                @merge.moveFolder side, doc, was, callback
+            @doMoveFolder side, doc, was, callback
+
+    doMoveFolder: (side, doc, was, callback) ->
+        doc.docType = 'folder'
+        doc.lastModification ?= new Date
+        if doc.lastModification is 'Invalid date'
+            doc.lastModification = new Date
+        @buildId doc
+        @buildId was
+        docIgnored = @ignore.isIgnored doc
+        wasIgnored = @ignore.isIgnored was
+        if side is 'local' and docIgnored and wasIgnored
+            callback()
+        else if side is 'local' and docIgnored
+            @merge.deleteFolder side, was, callback
+        else if side is 'local' and wasIgnored
+            @merge.addFolder side, doc, callback
+        else
+            @merge.moveFolder side, doc, was, callback
 
     # Expectations:
     #   - the file path is present and valid
