@@ -82,15 +82,19 @@ ipcMain.on('register-remote', (event, arg) => {
 
   // It looks like Electron detects incorrectly that node has nothing to do
   // and it prevents it to send its http request to the cozy before the next
-  // event. Putting a new event in the event loop seems to be a work-around
+  // event. Putting new events in the event loop seems to be a work-around
   // for this mysterious bug!
-  setTimeout(() => {}, 200)
+  setTimeout(() => {}, 250)
+  setTimeout(() => {}, 500)
+  setTimeout(() => {}, 1000)
 
   desktop.registerRemote(arg.url, null, (err, credentials) => {
-    if (err) {
-      event.sender.send('remote-error', err)
-    } else {
-      event.sender.send('remote-registered', arg.url)
+    let message = err
+    if (err && err.message) {
+      message = err.message
+    }
+    event.sender.send('remote-registered', message)
+    if (!err) {
       device = {
         url: arg.url,
         name: credentials.deviceName,

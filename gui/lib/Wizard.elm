@@ -47,8 +47,7 @@ type Action
   | GoToPasswordForm
   | UpdatePassword Password.Action
   | AddDevice
-  | RegistrationError String
-  | DeviceRegistered
+  | Register (Maybe String)
   | UpdateFolder Folder.Action
   | StartSync
 
@@ -144,14 +143,14 @@ update action model =
         in
           ( model, effect )
 
-    RegistrationError message ->
+    Register (Just error) ->
       let
         password' =
-          Password.update (Password.SetError message) model.password
+          Password.update (Password.SetError error) model.password
       in
         ( { model | password = password' }, Effects.none )
 
-    DeviceRegistered ->
+    Register Nothing ->
       ( { model | page = FolderPage }, Effects.none )
 
     UpdateFolder action' ->
@@ -197,14 +196,9 @@ chooseFolder =
   Signal.mailbox ()
 
 
-registered : Action
-registered =
-  DeviceRegistered
-
-
-registrationError : String -> Action
-registrationError message =
-  RegistrationError message
+registration : Maybe String -> Action
+registration maybe =
+  Register maybe
 
 
 registerRemote : Signal.Mailbox ( String, String )
