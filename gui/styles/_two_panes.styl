@@ -1,0 +1,98 @@
+.two-panes
+  @extend $app-2panes-toolbar
+
+.two-panes__menu
+  width 250px
+  padding-right .5em
+  background-color grey-01
+  font-size 1.25rem
+  font-weight bold
+  ul
+    padding 0
+
+.two-panes__menu__item
+  list-style none
+  border-radius 0 4px 4px 0
+  transition background-color .1s
+  &:hover
+    background-color grey-03
+  a
+    display block
+    padding .6em 2.5em
+    color grey-06
+    text-decoration none
+    line-height 1
+  svg
+    margin-right .7em
+
+.two-panes__menu__item--active
+  background-color blue
+  &:hover
+    background-color blue
+  a
+    color white
+
+.two-panes__content
+  flex 1
+  padding 2em
+  color grey-06
+
+  a
+    color blue
+    text-decoration none
+  h3
+    a
+      color grey-06
+
+  .btn
+    display inline-block
+    width 300px
+    color blue
+    background-color grey-01
+    padding .8em
+    text-align center
+    text-transform uppercase
+    text-decoration none
+    font-weight bold
+    font-size 1.25rem
+    border-radius .25em
+    &:hover
+      background-color grey-03
+    &:active
+      background-color grey-04
+
+  .btn--danger
+    color #FD7461
+
+  .help-list
+    display flex
+    padding 0
+    li
+      flex 1
+      display inline-block
+      box-sizing border-box
+      padding 1em
+    a
+      display flex
+      flex-direction column
+      align-items center
+    .icon
+      display block
+      width 96px
+      height 96px
+      margin-bottom .3em
+      background-image url('../images/sprite-help.svg')
+      background-size auto 100%
+      background-repeat no-repeat
+    .icon--forum
+      background-position 0 0
+    .icon--irc
+      background-position -96px 0
+    .icon--github
+      background-position -192px 0
+    .icon--email
+      background-position -288px 0
+    .icon--twitter
+      background-position -384px 0
+    .icon--documentation
+      background-position -480px 0

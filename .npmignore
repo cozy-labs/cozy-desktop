@@ -1,10 +1,10 @@
-bin/ci
 bin/fauxton.coffee
-bin/install-cozy
+gui/
 src/
-test/
-tmp/
+test*
+tmp
 .editorconfig
 .gitignore
+.npmignore
 .travis.yml
 coffeelint.json

@@ -47,26 +47,45 @@ class App
         callback new Error('Not implemented'), null
 
 
-    # Register current device to remote Cozy and then save related informations
-    # to the config file
-    addRemote: (cozyUrl, syncPath, deviceName, callback) =>
+    # Register a device on the remote cozy
+    registerRemote: (cozyUrl, deviceName, callback) =>
+        if cozyUrl.indexOf(':') is -1
+            if cozyUrl.indexOf('.')
+                cozyUrl += ".cozycloud.cc"
+            cozyUrl = "https://#{cozyUrl}"
         parsed = url.parse cozyUrl
-        parsed.protocol ?= 'https:'
         cozyUrl = url.format parsed
         unless parsed.protocol in ['http:', 'https:'] and parsed.hostname
-            log.warn "Your URL looks invalid: #{cozyUrl}"
+            err = new Error "Your URL looks invalid: #{cozyUrl}"
+            log.warn err
             callback? err
             return
         deviceName ?= os.hostname() or 'desktop'
-        async.waterfall [
-            @askPassword,
-            (password, next) ->
-                options =
-                    url: cozyUrl
-                    deviceName: deviceName
-                    password: password
-                Devices.registerDeviceSafe options, next
-        ], (err, credentials) =>
+        @askPassword (err, password, next) ->
+            options =
+                url: cozyUrl
+                deviceName: deviceName
+                password: password
+            Devices.registerDeviceSafe options, (err, credentials) ->
+                callback err, credentials
+
+
+    # Save the config with all the informations for synchonization
+    saveConfig: (cozyUrl, syncPath, deviceName, password) =>
+        options =
+            path: path.resolve syncPath
+            url: cozyUrl
+            deviceName: deviceName
+            password: password
+        @config.addRemoteCozy options
+        log.info 'The remote Cozy has properly been configured ' +
+            'to work with current device.'
+
+
+    # Register current device to remote Cozy and then save related informations
+    # to the config file
+    addRemote: (cozyUrl, syncPath, deviceName, callback) =>
+        @registerRemote cozyUrl, deviceName, (err, credentials) =>
             if err
                 log.error 'An error occured while registering your device.'
                 if err.code is 'ENOTFOUND'
@@ -80,14 +99,9 @@ class App
                     if parsed.protocol is 'http:'
                         log.warn 'Did you try with an httpS URL?'
             else
-                options =
-                    path: path.resolve syncPath
-                    url: cozyUrl
-                    deviceName: credentials.deviceName
-                    password: credentials.password
-                @config.addRemoteCozy options
-                log.info 'The remote Cozy has properly been configured ' +
-                    'to work with current device.'
+                deviceName = credentials.deviceName
+                password   = credentials.password
+                @saveConfig cozyUrl, syncPath, deviceName, password
             callback? err
 
 

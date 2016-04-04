@@ -1,0 +1,141 @@
+.wizard
+  overflow hidden
+  width 100vw
+  height 100vh
+  position relative
+
+.on-step-address
+  .step
+    transform translate(-100%, 0)
+
+.on-step-password
+  .step
+    transform translate(-200%, 0)
+
+.on-step-folder
+  .step
+    transform translate(-300%, 0)
+
+.step
+  position absolute
+  left 0
+  top 0
+  display flex
+  flex-direction column
+  justify-content space-between
+  align-items center
+  width 100vw
+  height 100vh
+  color white
+  transition transform .2s ease-out, background-color .1s
+
+  .upper
+    flex 1
+    display flex
+    flex-direction column
+    justify-content flex-end
+
+  h1
+    flex 1
+
+  input
+    width 50vw
+    background-color transparent
+    border 0
+    font-weight bold
+    font-size 2rem
+    &::-webkit-input-placeholder
+      color white
+      font-weight normal
+    &:focus
+      outline none
+
+  a, p
+    box-sizing border-box
+    width 50vw
+
+  a
+    color white
+
+  p
+    flex 1
+    font-size 1.5rem
+
+  .error-message
+    font-size 2rem
+    vertical-align bottom
+    text-align left
+
+  .more-info
+    padding-bottom .5em
+    text-decoration none
+    font-size 1.25rem
+
+  .btn
+    box-shadow 0 1px 3px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)
+    color blue
+    background-color white
+    margin-bottom 2em
+    padding 1em
+    text-align center
+    text-transform uppercase
+    text-decoration none
+    font-weight bold
+    font-size 1.25rem
+    border-radius .2em
+    overflow hidden
+    &:hover
+      opacity 0.9
+    &:active
+      opacity 0.8
+
+.step-welcome
+  h1
+    color grey-06
+  .btn
+    color white
+    background-color blue
+
+.step-address
+  left 100vw
+  background-color blue
+
+.step-password
+  left 200vw
+  background-color turquoise
+  .btn
+    color turquoise
+
+.step-folder
+  left 300vw
+  background-color purple
+  p.spacer
+    flex 2
+  img.done
+    height 25vh
+  label
+    box-sizing border-box
+    width 50vw
+    font-size 1.5rem
+    padding-bottom .5em
+  .folder__selector
+    color white
+    background-color lighten(purple, 30%)
+    margin-bottom 1em
+    padding 1em
+    text-decoration none
+    font-size 1.25rem
+    font-weight bold
+    border-radius .2em
+    overflow hidden
+    position relative
+    img
+      position absolute
+      top .8em
+      right 1em
+
+  .btn
+    color purple
+
+.step-error
+  background-color red
