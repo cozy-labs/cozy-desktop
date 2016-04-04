@@ -1,3 +1,8 @@
+## 0.9.0 - 2016-04-04
+
+* Add a new GUI based on Electron
+* Fix some bugs when cozy-desktop is stopped and restarted
+
 ## 0.8.0 - 2016-03-21
 
 - Add a way to ignore files/folders via a .cozyignore file
