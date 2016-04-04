@@ -8,10 +8,16 @@ should = require 'should'
 Cozy  = require '../helpers/integration'
 Files = require '../helpers/files'
 
-
 describe 'Swap 2 files', ->
     @slow 1000
     @timeout 10000
+
+    # This integration test is unstable on travis (too often red).
+    # It's disabled for the moment, but we should find a way to make it
+    # more stable on travis, and enable it again.
+    if process.env.TRAVIS
+        it 'is unstable on travis'
+        return
 
     before Cozy.ensurePreConditions
     before Files.deleteAll
