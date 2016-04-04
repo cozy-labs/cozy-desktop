@@ -12,18 +12,18 @@ const container = document.getElementById('container')
 const elmectron = Elm.embed(Elm.Main, container, {
   folder: '',
   registration: null,
+  pong: null,
   synchonization: '',
   unlink: [],
   version: pkg.version
 })
 
 // Glue code between Elm and the main process
-elmectron.ports.folder.send(defaultDir)
-ipcRenderer.on('folder-chosen', (event, folder) => {
-  elmectron.ports.folder.send(folder)
+ipcRenderer.on('cozy-pong', (event, url) => {
+  elmectron.ports.pong.send(url)
 })
-elmectron.ports.chooseFolder.subscribe(() => {
-  ipcRenderer.send('choose-folder')
+elmectron.ports.pingCozy.subscribe((url) => {
+  ipcRenderer.send('ping-cozy', url)
 })
 
 ipcRenderer.on('remote-registered', (event, err) => {
@@ -34,6 +34,14 @@ elmectron.ports.registerRemote.subscribe((remote) => {
     url: remote[0],
     password: remote[1]
   })
+})
+
+elmectron.ports.folder.send(defaultDir)
+ipcRenderer.on('folder-chosen', (event, folder) => {
+  elmectron.ports.folder.send(folder)
+})
+elmectron.ports.chooseFolder.subscribe(() => {
+  ipcRenderer.send('choose-folder')
 })
 
 ipcRenderer.on('synchronization', (event, url) => {

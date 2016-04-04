@@ -66,17 +66,17 @@ app.on('activate', () => {
   }
 })
 
-// Glue code between the main and renderer processes
-ipcMain.on('choose-folder', (event) => {
-  let folders = dialog.showOpenDialog({
-    properties: ['openDirectory']
+// Glue code between cozy-desktop lib and the renderer process
+ipcMain.on('ping-cozy', (event, url) => {
+  desktop.pingCozy(url, (err, cozyUrl) => {
+    let pong = null
+    if (!err) {
+      pong = cozyUrl
+    }
+    event.sender.send('cozy-pong', pong)
   })
-  if (folders && folders.length > 0) {
-    event.sender.send('folder-chosen', folders[0])
-  }
 })
 
-// Glue code between cozy-desktop lib and the renderer process
 ipcMain.on('register-remote', (event, arg) => {
   desktop.askPassword = (cb) => { cb(null, arg.password) }
 
@@ -102,6 +102,15 @@ ipcMain.on('register-remote', (event, arg) => {
       }
     }
   })
+})
+
+ipcMain.on('choose-folder', (event) => {
+  let folders = dialog.showOpenDialog({
+    properties: ['openDirectory']
+  })
+  if (folders && folders.length > 0) {
+    event.sender.send('folder-chosen', folders[0])
+  }
 })
 
 ipcMain.on('start-sync', (event, arg) => {

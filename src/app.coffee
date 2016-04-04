@@ -65,7 +65,8 @@ class App
             callback? err
             return
         cozyUrl = url.format parsed
-        Devices.pingCozy cozyUrl, callback
+        Devices.pingCozy cozyUrl, (err) ->
+            callback err, cozyUrl
 
 
     # Register a device on the remote cozy

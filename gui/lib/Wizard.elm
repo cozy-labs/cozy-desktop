@@ -45,9 +45,12 @@ type Action
   | GoToAddressForm
   | UpdateAddress Address.Action
   | GoToPasswordForm
+  | SetAddress (Maybe String)
+    -- String is the address
   | UpdatePassword Password.Action
   | AddDevice
   | Register (Maybe String)
+    -- String is an error
   | UpdateFolder Folder.Action
   | StartSync
 
@@ -72,14 +75,19 @@ update action model =
       let
         address' =
           Address.update action' model.address
+
+        password' =
+          Password.update (Password.SetError "") model.password
       in
-        ( { model | address = address' }, Effects.none )
+        ( { model | address = address', password = password' }, Effects.none )
 
     GoToPasswordForm ->
       if model.address.address == "" then
         let
           address' =
-            { address = "", error = True }
+            { address = ""
+            , error = "You don't have filled the address!"
+            }
 
           task =
             Signal.send focus.address ".wizard__address"
@@ -90,19 +98,41 @@ update action model =
           ( { model | address = address' }, effect )
       else
         let
-          password' =
-            model.password
-
-          password'' =
-            { password' | address = model.address.address }
+          url =
+            model.address.address
 
           task =
-            Signal.send focus.address ".wizard__password"
+            Signal.send pingCozy.address url
 
           effect =
             Effects.map (always NoOp) (Effects.task task)
         in
-          ( { model | page = PasswordPage, password = password'' }, effect )
+          ( model, effect )
+
+    SetAddress Nothing ->
+      let
+        address' =
+          { address = model.address.address
+          , error = "No cozy instance at this address!"
+          }
+      in
+        ( { model | address = address' }, Effects.none )
+
+    SetAddress (Just address') ->
+      let
+        password' =
+          model.password
+
+        password'' =
+          { password' | address = address' }
+
+        task =
+          Signal.send focus.address ".wizard__password"
+
+        effect =
+          Effects.map (always NoOp) (Effects.task task)
+      in
+        ( { model | page = PasswordPage, password = password'' }, effect )
 
     UpdatePassword action' ->
       let
@@ -186,6 +216,26 @@ focus =
   Signal.mailbox ""
 
 
+pong : Maybe String -> Action
+pong =
+  SetAddress
+
+
+pingCozy : Signal.Mailbox String
+pingCozy =
+  Signal.mailbox ""
+
+
+registration : Maybe String -> Action
+registration =
+  Register
+
+
+registerRemote : Signal.Mailbox ( String, String )
+registerRemote =
+  Signal.mailbox ( "", "" )
+
+
 folderChosen : String -> Action
 folderChosen =
   UpdateFolder << Folder.FillFolder
@@ -194,16 +244,6 @@ folderChosen =
 chooseFolder : Signal.Mailbox ()
 chooseFolder =
   Signal.mailbox ()
-
-
-registration : Maybe String -> Action
-registration maybe =
-  Register maybe
-
-
-registerRemote : Signal.Mailbox ( String, String )
-registerRemote =
-  Signal.mailbox ( "", "" )
 
 
 startSync : Signal.Mailbox String
