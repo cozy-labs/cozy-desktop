@@ -315,9 +315,9 @@ describe "LocalWatcher Tests", ->
                             args = @prep.deleteFolder.args[0][1]
                             args.should.have.properties path: 'aga'
                             done()
-                        , 1500
+                        , 1800
                     fs.renameSync src, dst
-                , 1200
+                , 1500
 
     describe 'onReady', ->
         before 'reset pouchdb', (done) ->
