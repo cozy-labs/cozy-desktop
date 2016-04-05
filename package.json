@@ -36,6 +36,7 @@
     "async": "1.5.2",
     "chokidar": "nono/chokidar#unlink-with-awf-cwd",
     "commander": "2.9.0",
+    "cozy-device-sdk": "1.2.2",
     "fs-extra": "0.26.7",
     "lodash.clone": "4.3.2",
     "lodash.find": "4.3.0",

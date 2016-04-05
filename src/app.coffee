@@ -4,6 +4,7 @@ os       = require 'os'
 path     = require 'path-extra'
 readdirp = require 'readdirp'
 url      = require 'url'
+filterSDK = require('cozy-device-sdk').filteredReplication
 log      = require('printit')
     prefix: 'Cozy Desktop  '
     date: true
@@ -105,7 +106,7 @@ class App
 
     # Register current device to remote Cozy and then save related informations
     # to the config file
-    addRemote: (cozyUrl, syncPath, deviceName, callback) =>
+    addRemote: (cozyUrl, syncPath, deviceName, callback = ->) =>
         @registerRemote cozyUrl, deviceName, (err, credentials) =>
             if err
                 log.error 'An error occured while registering your device.'
@@ -119,11 +120,14 @@ class App
                     log.error err
                     if parsed.protocol is 'http:'
                         log.warn 'Did you try with an httpS URL?'
+                callback err
             else
                 deviceName = credentials.deviceName
                 password   = credentials.password
                 @saveConfig cozyUrl, syncPath, deviceName, password
-            callback? err
+                config = file: true
+                filterSDK.setDesignDoc cozyUrl, deviceName, password, config, \
+                    callback
 
 
     # Unregister current device from remote Cozy and then remove remote from

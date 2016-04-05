@@ -11,6 +11,7 @@ env:
     global:
         - CXX=g++-4.8
         - COZY_DESKTOP_DIR=tmp
+        - NODE_ENV=test
 services:
     - couchdb
 cache:
