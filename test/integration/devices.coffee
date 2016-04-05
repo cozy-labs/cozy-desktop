@@ -10,6 +10,17 @@ describe "Devices", ->
 
     before Cozy.ensurePreConditions
 
+    describe 'pingCozy', ->
+        it 'says OK when the URL belongs to a cozy', (done) ->
+            Devices.pingCozy Cozy.url, (err) ->
+                should.not.exist err
+                done()
+
+        it 'says KO else', (done) ->
+            Devices.pingCozy 'http://localhost:12345', (err) ->
+                should.exist err
+                done()
+
     describe 'checkCredentials', ->
         it 'says OK with good credentials', (done) ->
             options =

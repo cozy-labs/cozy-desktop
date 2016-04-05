@@ -11,14 +11,14 @@ import OnEnter exposing (onEnter)
 
 type alias Model =
   { address : String
-  , error : Bool
+  , error : String
   }
 
 
 init : Model
 init =
   { address = ""
-  , error = False
+  , error = ""
   }
 
 
@@ -28,6 +28,7 @@ init =
 
 type Action
   = FillAddress String
+  | SetError String
 
 
 update : Action -> Model -> Model
@@ -36,7 +37,10 @@ update action model =
     action
   of
     FillAddress address' ->
-      { address = address', error = False }
+      { address = address', error = "" }
+
+    SetError error' ->
+      { model | error = error' }
 
 
 
@@ -49,26 +53,18 @@ type alias Context =
   }
 
 
-errorMessage : Model -> String
-errorMessage model =
-  if model.error then
-    "You don't have filled the address!"
-  else
-    ""
-
-
 view : Context -> Model -> Html
 view context model =
   div
     [ classList
         [ ( "step", True )
         , ( "step-address", True )
-        , ( "step-error", model.error )
+        , ( "step-error", model.error /= "" )
         ]
     ]
     [ p
         [ class "upper error-message" ]
-        [ text (errorMessage model) ]
+        [ text model.error ]
     , div
         [ class "upper" ]
         [ input

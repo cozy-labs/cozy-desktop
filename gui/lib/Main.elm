@@ -112,9 +112,9 @@ app =
   StartApp.start
     { init = init
     , inputs =
-        [ Signal.map (WizardAction << Wizard.folderChosen) folder
-        , Signal.map (always (WizardAction Wizard.registered)) registration
-        , Signal.map (WizardAction << Wizard.registrationError) registrationError
+        [ Signal.map (WizardAction << Wizard.pong) pong
+        , Signal.map (WizardAction << Wizard.registration) registration
+        , Signal.map (WizardAction << Wizard.folderChosen) folder
         , Signal.map WizardFinished synchonization
         , Signal.map (always Unlink) unlink
         ]
@@ -138,17 +138,22 @@ port focus =
   Wizard.focus |> .signal
 
 
+port pong : Signal (Maybe String)
+port pingCozy : Signal String
+port pingCozy =
+  Wizard.pingCozy |> .signal
+
+
+port registration : Signal (Maybe String)
+port registerRemote : Signal ( String, String )
+port registerRemote =
+  Wizard.registerRemote |> .signal
+
+
 port folder : Signal String
 port chooseFolder : Signal ()
 port chooseFolder =
   Wizard.chooseFolder |> .signal
-
-
-port registration : Signal ()
-port registrationError : Signal String
-port registerRemote : Signal ( String, String )
-port registerRemote =
-  Wizard.registerRemote |> .signal
 
 
 port synchonization : Signal String

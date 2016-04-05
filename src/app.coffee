@@ -47,13 +47,31 @@ class App
         callback new Error('Not implemented'), null
 
 
-    # Register a device on the remote cozy
-    registerRemote: (cozyUrl, deviceName, callback) =>
+    # Parse the URL
+    parseCozyUrl: (cozyUrl) ->
         if cozyUrl.indexOf(':') is -1
             if cozyUrl.indexOf('.')
                 cozyUrl += ".cozycloud.cc"
             cozyUrl = "https://#{cozyUrl}"
-        parsed = url.parse cozyUrl
+        return url.parse cozyUrl
+
+
+    # Check that the URL belongs to a cozy
+    pingCozy: (cozyUrl, callback) =>
+        parsed = @parseCozyUrl cozyUrl
+        unless parsed.protocol in ['http:', 'https:'] and parsed.hostname
+            err = new Error "Your URL looks invalid"
+            log.warn err
+            callback? err
+            return
+        cozyUrl = url.format parsed
+        Devices.pingCozy cozyUrl, (err) ->
+            callback err, cozyUrl
+
+
+    # Register a device on the remote cozy
+    registerRemote: (cozyUrl, deviceName, callback) =>
+        parsed = @parseCozyUrl cozyUrl
         cozyUrl = url.format parsed
         unless parsed.protocol in ['http:', 'https:'] and parsed.hostname
             err = new Error "Your URL looks invalid: #{cozyUrl}"
