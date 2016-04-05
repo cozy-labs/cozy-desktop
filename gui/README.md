@@ -14,8 +14,7 @@ This repository is for the graphical interface of cozy-desktop, built with
 [Electron][8] and [Elm][9].
 
 
-Limitations
------------
+## Limitations
 
 Cozy-desktop is designed to synchronize files and folders between a remote
 cozy instance and a local hard drive, for a personal usage. We tried to make
@@ -63,6 +62,27 @@ it simple and easy. So, it has some limitations:
 
 - No advanced feature, like P2P replication between several cozy-desktop
   instances.
+
+
+## Hack
+
+First, you need to build cozy-desktop in the parent directory with `npm run
+build`.
+
+Electron is based on node 5 and npm 3. So, it's better to install the
+`node_modules` in `gui` with a node 5 and npm 3:
+
+```sh
+cd gui
+npm install -g node-gyp
+npm install
+npm run build
+```
+
+Then, you launch the GUI with `npm run start`.
+
+You have also `npm run watch` that will run the lint on JS files and compile
+the Elm and Stylus stuff when a change is made.
 
 
 ## License
