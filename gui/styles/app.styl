@@ -5,6 +5,13 @@
   src url('../fonts/sourcesanspro-regular.woff') format('woff')
 
 @import 'cozy-ui'
+
+@keyframes spin
+  from
+    transform translateY(-50%) rotate(0deg)
+  to
+    transform translateY(-50%) rotate(359deg)
+
 @import '_wizard'
 @import '_two_panes'
 

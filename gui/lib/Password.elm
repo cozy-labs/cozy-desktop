@@ -13,6 +13,7 @@ type alias Model =
   { password : String
   , address : String
   , error : String
+  , busy : Bool
   }
 
 
@@ -21,6 +22,7 @@ init =
   { password = ""
   , address = ""
   , error = ""
+  , busy = False
   }
 
 
@@ -30,7 +32,9 @@ init =
 
 type Action
   = FillPassword String
+  | FillAddress String
   | SetError String
+  | SetBusy
 
 
 update : Action -> Model -> Model
@@ -39,10 +43,16 @@ update action model =
     action
   of
     FillPassword password' ->
-      { model | password = password', error = "" }
+      { model | password = password', error = "", busy = False }
+
+    FillAddress address' ->
+      { model | address = address', busy = False }
 
     SetError error' ->
-      { model | error = error' }
+      { model | error = error', busy = False }
+
+    SetBusy ->
+      { model | busy = True }
 
 
 
@@ -94,7 +104,10 @@ view context model =
     , a
         [ class "btn"
         , href "#"
-        , onClick context.next ()
+        , if model.busy then
+            attribute "aria-busy" "true"
+          else
+            onClick context.next ()
         ]
         [ text "Login" ]
     ]
