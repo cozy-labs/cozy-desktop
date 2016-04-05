@@ -76,7 +76,6 @@ Electron is based on node 5 and npm 3. So, it's better to install the
 cd gui
 npm install -g node-gyp
 npm install
-elm-package install
 npm run build
 ```
 
