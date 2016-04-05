@@ -32,6 +32,10 @@ Then you can install cozy-desktop via NPM:
 sudo npm install cozy-desktop -g
 ```
 
+Note: if you see a warning about `fsevents` and you are not on OSX, you can
+safely ignore it. `fsevents` is an optional dependency that is only used on
+OSX.
+
 
 CLI Running
 -----------
