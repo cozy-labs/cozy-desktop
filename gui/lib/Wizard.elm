@@ -84,10 +84,11 @@ update action model =
     GoToPasswordForm ->
       if model.address.address == "" then
         let
+          message =
+            "You don't have filled the address!"
+
           address' =
-            { address = ""
-            , error = "You don't have filled the address!"
-            }
+            Address.update (Address.SetError message) model.address
 
           task =
             Signal.send focus.address ".wizard__address"
@@ -98,6 +99,9 @@ update action model =
           ( { model | address = address' }, effect )
       else
         let
+          address' =
+            Address.update Address.SetBusy model.address
+
           url =
             model.address.address
 
@@ -107,32 +111,40 @@ update action model =
           effect =
             Effects.map (always NoOp) (Effects.task task)
         in
-          ( model, effect )
+          ( { model | address = address' }, effect )
 
     SetAddress Nothing ->
       let
+        message =
+          "No cozy instance at this address!"
+
         address' =
-          { address = model.address.address
-          , error = "No cozy instance at this address!"
-          }
+          Address.update (Address.SetError message) model.address
       in
         ( { model | address = address' }, Effects.none )
 
-    SetAddress (Just address') ->
+    SetAddress (Just address'') ->
       let
-        password' =
-          model.password
+        address' =
+          Address.update (Address.FillAddress address'') model.address
 
-        password'' =
-          { password' | address = address' }
+        password' =
+          Password.update (Password.FillAddress address'') model.password
 
         task =
           Signal.send focus.address ".wizard__password"
 
         effect =
           Effects.map (always NoOp) (Effects.task task)
+
+        model' =
+          { model
+            | page = PasswordPage
+            , address = address'
+            , password = password'
+          }
       in
-        ( { model | page = PasswordPage, password = password'' }, effect )
+        ( model', effect )
 
     UpdatePassword action' ->
       let
@@ -144,11 +156,11 @@ update action model =
     AddDevice ->
       if model.password.password == "" then
         let
+          message =
+            "You don't have filled the password!"
+
           password' =
-            { password = ""
-            , address = model.address.address
-            , error = "You don't have filled the password!"
-            }
+            Password.update (Password.SetError message) model.password
 
           task =
             Signal.send focus.address ".wizard__password"
@@ -159,6 +171,9 @@ update action model =
           ( { model | password = password' }, effect )
       else
         let
+          password' =
+            Password.update Password.SetBusy model.password
+
           url =
             model.address.address
 
@@ -171,7 +186,7 @@ update action model =
           effect =
             Effects.map (always NoOp) (Effects.task task)
         in
-          ( model, effect )
+          ( { model | password = password' }, effect )
 
     Register (Just error) ->
       let

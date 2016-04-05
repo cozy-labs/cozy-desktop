@@ -12,6 +12,7 @@ import OnEnter exposing (onEnter)
 type alias Model =
   { address : String
   , error : String
+  , busy : Bool
   }
 
 
@@ -19,6 +20,7 @@ init : Model
 init =
   { address = ""
   , error = ""
+  , busy = False
   }
 
 
@@ -29,6 +31,7 @@ init =
 type Action
   = FillAddress String
   | SetError String
+  | SetBusy
 
 
 update : Action -> Model -> Model
@@ -37,10 +40,13 @@ update action model =
     action
   of
     FillAddress address' ->
-      { address = address', error = "" }
+      { address = address', error = "", busy = False }
 
     SetError error' ->
-      { model | error = error' }
+      { model | error = error', busy = False }
+
+    SetBusy ->
+      { model | busy = True }
 
 
 
@@ -87,7 +93,10 @@ view context model =
     , a
         [ class "btn"
         , href "#"
-        , onClick context.next ()
+        , if model.busy then
+            attribute "aria-busy" "true"
+          else
+            onClick context.next ()
         ]
         [ text "Next" ]
     ]
