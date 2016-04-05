@@ -50,7 +50,7 @@ class App
     # Parse the URL
     parseCozyUrl: (cozyUrl) ->
         if cozyUrl.indexOf(':') is -1
-            if cozyUrl.indexOf('.')
+            if cozyUrl.indexOf('.') is -1
                 cozyUrl += ".cozycloud.cc"
             cozyUrl = "https://#{cozyUrl}"
         return url.parse cozyUrl
