@@ -23,7 +23,8 @@ describe "Sync", ->
             @local  = start: sinon.stub().yields()
             @remote = start: sinon.stub().yields()
             @ignore = new Ignore []
-            @sync = new Sync @pouch, @local, @remote, @ignore
+            @events = {}
+            @sync = new Sync @pouch, @local, @remote, @ignore, @events
             @sync.sync = sinon.stub().yields 'stopped'
 
         it 'starts the metadata replication of remote in read only', (done) ->
@@ -65,7 +66,8 @@ describe "Sync", ->
             @local = {}
             @remote = {}
             @ignore = new Ignore []
-            @sync = new Sync @pouch, @local, @remote, @ignore
+            @events = {}
+            @sync = new Sync @pouch, @local, @remote, @ignore, @events
             @sync.apply = sinon.stub().yields()
             @sync.running = true
 
@@ -92,7 +94,8 @@ describe "Sync", ->
             @local = {}
             @remote = {}
             @ignore = new Ignore []
-            @sync = new Sync @pouch, @local, @remote, @ignore
+            @events = emit: sinon.spy()
+            @sync = new Sync @pouch, @local, @remote, @ignore, @events
             @pouch.db.changes().on 'complete', (info) =>
                 @pouch.setLocalSeq info.last_seq, done
 
@@ -165,13 +168,25 @@ describe "Sync", ->
                     should.not.exist err
             , 10
 
+        it 'emits up-to-date if there are no available change', (done) ->
+            spy = sinon.spy()
+            @sync.pop (err, change) =>
+                should.not.exist err
+                setTimeout done, 11
+            setTimeout =>
+                @events.emit.calledWith('up-to-date').should.be.true()
+                pouchHelpers.createFile @pouch, 8, (err) ->
+                    should.not.exist err
+            , 10
+
 
     describe 'apply', ->
         beforeEach ->
             @local = {}
             @remote = {}
             @ignore = new Ignore ['ignored']
-            @sync = new Sync @pouch, @local, @remote, @ignore
+            @events = {}
+            @sync = new Sync @pouch, @local, @remote, @ignore, @events
 
         it 'does nothing for an ignored document', (done) ->
             change =
@@ -242,7 +257,8 @@ describe "Sync", ->
             @local = {}
             @remote = {}
             @ignore = new Ignore []
-            @sync = new Sync @pouch, @local, @remote, @ignore
+            @events = {}
+            @sync = new Sync @pouch, @local, @remote, @ignore, @events
 
         it 'returns a function that saves the seq number if OK', (done) ->
             change =
@@ -304,7 +320,8 @@ describe "Sync", ->
             @local = {}
             @remote = {}
             @ignore = new Ignore []
-            @sync = new Sync @pouch, @local, @remote, @ignore
+            @events = {}
+            @sync = new Sync @pouch, @local, @remote, @ignore, @events
 
         it 'sets the errors counter to 1 on first error', (done) ->
             doc =
@@ -351,7 +368,8 @@ describe "Sync", ->
             @local = {}
             @remote = {}
             @ignore = new Ignore []
-            @sync = new Sync @pouch, @local, @remote, @ignore
+            @events = {}
+            @sync = new Sync @pouch, @local, @remote, @ignore, @events
 
         it 'calls addFile for an added file', (done) ->
             doc =
@@ -479,7 +497,8 @@ describe "Sync", ->
             @local = {}
             @remote = {}
             @ignore = new Ignore []
-            @sync = new Sync @pouch, @local, @remote, @ignore
+            @events = {}
+            @sync = new Sync @pouch, @local, @remote, @ignore, @events
 
         it 'calls addFolder for an added folder', (done) ->
             doc =
@@ -574,7 +593,8 @@ describe "Sync", ->
             @local = {}
             @remote = {}
             @ignore = new Ignore []
-            @sync = new Sync @pouch, @local, @remote, @ignore
+            @events = {}
+            @sync = new Sync @pouch, @local, @remote, @ignore, @events
 
         it 'selects the local side if remote is up-to-date', ->
             doc =

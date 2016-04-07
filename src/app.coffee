@@ -8,6 +8,8 @@ log      = require('printit')
     prefix: 'Cozy Desktop  '
     date: true
 
+EventEmitter = require 'events'
+
 Config  = require './config'
 Devices = require './devices'
 Pouch   = require './pouch'
@@ -29,6 +31,7 @@ class App
         @basePath = basePath or path.homedir()
         @config = new Config @basePath
         @pouch  = new Pouch @config
+        @events = new EventEmitter
 
 
     # This method is here to be surcharged by the UI
@@ -160,7 +163,7 @@ class App
         @prep   = new Prep @merge, @ignore
         @local  = @merge.local  = new Local  @config, @prep, @pouch
         @remote = @merge.remote = new Remote @config, @prep, @pouch
-        @sync   = new Sync @pouch, @local, @remote, @ignore
+        @sync   = new Sync @pouch, @local, @remote, @ignore, @events
 
 
     # Start the synchronization
