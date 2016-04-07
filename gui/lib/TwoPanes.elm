@@ -23,16 +23,18 @@ type Tab
 
 type alias Model =
   { tab : Tab
-  , address : String
-  , version : String
+  , dashboard : Dashboard.Model
+  , settings : Settings.Model
+  , account : Account.Model
   }
 
 
 init : String -> Model
-init version' =
+init version =
   { tab = DashboardTab
-  , address = ""
-  , version = version'
+  , dashboard = Dashboard.init
+  , settings = Settings.init version
+  , account = Account.init
   }
 
 
@@ -43,6 +45,7 @@ init version' =
 type Action
   = NoOp
   | GoToTab Tab
+  | FillAddress String
   | UnlinkCozy
 
 
@@ -54,6 +57,13 @@ update action model =
 
     GoToTab tab' ->
       ( { model | tab = tab' }, Effects.none )
+
+    FillAddress address ->
+      let
+        account' =
+          Account.update (Account.FillAddress address) model.account
+      in
+        ( { model | account = account' }, Effects.none )
 
     UnlinkCozy ->
       let
@@ -116,10 +126,10 @@ view address model =
     content =
       case model.tab of
         DashboardTab ->
-          Dashboard.view
+          Dashboard.view model.dashboard
 
         SettingsTab ->
-          Settings.view model.version
+          Settings.view model.settings
 
         AccountTab ->
           let
@@ -127,7 +137,7 @@ view address model =
               Account.Context
                 (Signal.forwardTo address (always (UnlinkCozy)))
           in
-            Account.view context model.address
+            Account.view context model.account
 
         HelpTab ->
           Help.view

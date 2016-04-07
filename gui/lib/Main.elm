@@ -66,15 +66,15 @@ update action model =
       in
         ( { model | wizard = wizard' }, Effects.map WizardAction effects )
 
-    WizardFinished address' ->
+    WizardFinished address ->
       let
-        twopanes =
-          model.twopanes
+        ( twopanes', effects ) =
+          TwoPanes.update (TwoPanes.FillAddress address) model.twopanes
 
-        twopanes' =
-          { twopanes | address = address' }
+        model' =
+          { model | twopanes = twopanes', page = TwoPanesPage }
       in
-        ( { model | page = TwoPanesPage, twopanes = twopanes' }, Effects.none )
+        ( model', Effects.map TwoPanesAction effects )
 
     TwoPanesAction action' ->
       let
