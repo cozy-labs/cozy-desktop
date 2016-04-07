@@ -161,8 +161,8 @@ class App
         @loadIgnore()
         @merge  = new Merge @pouch
         @prep   = new Prep @merge, @ignore
-        @local  = @merge.local  = new Local  @config, @prep, @pouch
-        @remote = @merge.remote = new Remote @config, @prep, @pouch
+        @local  = @merge.local  = new Local  @config, @prep, @pouch, @events
+        @remote = @merge.remote = new Remote @config, @prep, @pouch, @events
         @sync   = new Sync @pouch, @local, @remote, @ignore, @events
 
 

@@ -1,4 +1,5 @@
 async = require 'async'
+clone = require 'lodash.clone'
 fs    = require 'fs-extra'
 path  = require 'path'
 log   = require('printit')
@@ -12,7 +13,7 @@ Watcher = require './watcher'
 # It uses a watcher, based on chokidar, to listen for file and folder changes.
 # It also applied changes from the remote cozy on the local filesystem.
 class Local
-    constructor: (config, @prep, @pouch) ->
+    constructor: (config, @prep, @pouch, @events) ->
         @basePath = config.getDevice().path
         @tmpPath  = path.join @basePath, ".cozy-desktop"
         @watcher  = new Watcher @basePath, @prep, @pouch
@@ -116,7 +117,7 @@ class Local
                         log.info "Recopy #{existingFilePath} -> #{filePath}"
                         fs.copy existingFilePath, tmpFile, next
                     else
-                        @other.createReadStream doc, (err, stream) ->
+                        @other.createReadStream doc, (err, stream) =>
                             # Don't use async callback here!
                             # Async does some magic and the stream can throw an
                             # 'error' event before the next async is called...
@@ -124,6 +125,15 @@ class Local
                             target = fs.createWriteStream tmpFile
                             stream.pipe target
                             target.on 'finish', next
+                            # Emit events to track the download progress
+                            info = clone doc
+                            info.way = 'down'
+                            info.eventName = "transfer-down-#{doc._id}"
+                            @events.emit 'transfer-started', info
+                            stream.on 'data', (data) =>
+                                @events.emit info.eventName, data
+                            target.on 'finish', =>
+                                @events.emit info.eventName, finished: true
 
             (next) =>
                 if doc.checksum?

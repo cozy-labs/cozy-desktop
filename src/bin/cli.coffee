@@ -1,7 +1,9 @@
 #!/usr/bin/env coffee
 
-read    = require 'read'
-program = require 'commander'
+read     = require 'read'
+path     = require 'path'
+program  = require 'commander'
+Progress = require 'progress'
 
 pkg = require '../../package.json'
 App = require '../app'
@@ -34,6 +36,19 @@ app.askConfirmation = (callback) ->
 sync = (mode, args) ->
     console.log "Cozy-desktop v#{pkg.version} started (PID: #{process.pid})"
     if app.config.setInsecure args.insecure?
+        app.events.on 'transfer-started', (info) ->
+            what = if info.way is 'up' then 'Uploading' else 'Downloading'
+            filename = path.basename info.path
+            format = "#{what} #{filename} [:bar] :percent :etas"
+            options =
+                total: info.size
+                width: 30
+            bar = new Progress format, options
+            app.events.on info.eventName, (data) ->
+                if data.finished
+                    app.events.removeAllListeners info.eventName
+                else
+                    bar.tick data.length
         app.synchronize mode, (err) ->
             process.exit 1 if err
     else

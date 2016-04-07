@@ -170,7 +170,7 @@ describe "Sync", ->
 
         it 'emits up-to-date if there are no available change', (done) ->
             spy = sinon.spy()
-            @sync.pop (err, change) =>
+            @sync.pop (err, change) ->
                 should.not.exist err
                 setTimeout done, 11
             setTimeout =>
