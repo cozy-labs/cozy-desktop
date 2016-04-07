@@ -6,6 +6,7 @@ import Effects exposing (Effects, Never)
 import Task exposing (Task)
 import Wizard
 import TwoPanes
+import Dashboard exposing (File)
 
 
 -- MODEL
@@ -117,6 +118,8 @@ app =
         , Signal.map (WizardAction << Wizard.folderChosen) folder
         , Signal.map WizardFinished synchonization
         , Signal.map (always Unlink) unlink
+        , Signal.map (always (TwoPanesAction TwoPanes.Updated)) updated
+        , Signal.map (TwoPanesAction << TwoPanes.Transfer) transfer
         ]
     , update = update
     , view = view
@@ -169,3 +172,5 @@ port unlinkCozy =
 
 
 port version : String
+port transfer : Signal File
+port updated : Signal ()

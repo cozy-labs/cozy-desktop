@@ -14,7 +14,13 @@ const elmectron = Elm.embed(Elm.Main, container, {
   registration: null,
   pong: null,
   synchonization: '',
+  transfer: {
+    filename: '',
+    icon: '',
+    size: 0
+  },
   unlink: [],
+  updated: [],
   version: pkg.version
 })
 
@@ -56,6 +62,19 @@ ipcRenderer.on('unlinked', (event) => {
 })
 elmectron.ports.unlinkCozy.subscribe(() => {
   ipcRenderer.send('unlink-cozy')
+})
+
+ipcRenderer.on('up-to-date', () => {
+  elmectron.ports.updated.send([])
+})
+
+ipcRenderer.on('transfer', (event, info) => {
+  const file = {
+    filename: path.basename(info.path),
+    size: info.size,
+    icon: 'TODO'
+  }
+  elmectron.ports.transfer.send(file)
 })
 
 // Open external links in the browser

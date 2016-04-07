@@ -47,6 +47,8 @@ type Action
   | GoToTab Tab
   | FillAddress String
   | UnlinkCozy
+  | Updated
+  | Transfer Dashboard.File
 
 
 update : Action -> Model -> ( Model, Effects Action )
@@ -74,6 +76,20 @@ update action model =
           Effects.map (always NoOp) (Effects.task task)
       in
         ( model, effect )
+
+    Updated ->
+      let
+        dashboard' =
+          Dashboard.update Dashboard.Updated model.dashboard
+      in
+        ( { model | dashboard = dashboard' }, Effects.none )
+
+    Transfer file ->
+      let
+        dashboard' =
+          Dashboard.update (Dashboard.Transfer file) model.dashboard
+      in
+        ( { model | dashboard = dashboard' }, Effects.none )
 
 
 unlinkCozy : Signal.Mailbox ()

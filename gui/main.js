@@ -28,6 +28,19 @@ const windowOptions = {
   closable: false
 }
 
+const startSync = (url) => {
+  mainWindow.webContents.send('synchronization', url)
+  if (!desktop.sync) {
+    desktop.events.on('up-to-date', () => {
+      mainWindow.webContents.send('up-to-date')
+    })
+    desktop.events.on('transfer-started', (info) => {
+      mainWindow.webContents.send('transfer', info)
+    })
+    desktop.synchronize('full', (err) => { console.error(err) })
+  }
+}
+
 const createWindow = () => {
   runAsService = new BrowserWindow({ show: false })
   mainWindow = new BrowserWindow(windowOptions)
@@ -42,7 +55,7 @@ const createWindow = () => {
   mainWindow.webContents.on('dom-ready', () => {
     if (desktop.config.hasDevice()) {
       device = desktop.config.getDevice()
-      mainWindow.webContents.send('synchronization', device.url)
+      startSync(device.url)
     }
   })
 }
@@ -119,8 +132,7 @@ ipcMain.on('start-sync', (event, arg) => {
     return
   }
   desktop.saveConfig(device.url, arg, device.name, device.password)
-  desktop.synchronize('full', (err) => { console.error(err) })
-  event.sender.send('synchronization', device.url)
+  startSync(device.url)
 })
 
 ipcMain.on('unlink-cozy', (event) => {
