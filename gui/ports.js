@@ -68,11 +68,38 @@ ipcRenderer.on('up-to-date', () => {
   elmectron.ports.updated.send([])
 })
 
+const selectIcon = (info) => {
+  if (['image', 'video'].indexOf(info.class) !== -1) {
+    return info.class
+  } else if (info.class === 'music') {
+    return 'audio'
+  } else if (info.mime === 'application/pdf') {
+    return 'pdf'
+  } else if (info.mime === 'application/x-binary') {
+    return 'binary'
+  } else if (info.mime.match(/[/-][bg]?zip2?$/)) {
+    return 'archive'
+  } else if (info.mime.match(/^(text|application)\/(html|xml)/)) {
+    return 'code'
+  } else if (info.mime.match(/^text\//)) {
+    return 'text'
+  } else if (info.mime.match(/^application\/.*rtf/)) {
+    return 'text'
+  } else if (info.mime.match(/word/)) {
+    return 'text'
+  } else if (info.mime.match(/powerpoint/)) {
+    return 'presentation'
+  } else if (info.mime.match(/excel/)) {
+    return 'spreadsheet'
+  }
+  return 'file'
+}
+
 ipcRenderer.on('transfer', (event, info) => {
   const file = {
     filename: path.basename(info.path),
     size: info.size,
-    icon: 'TODO'
+    icon: selectIcon(info)
   }
   elmectron.ports.transfer.send(file)
 })

@@ -30,7 +30,7 @@ type alias Model =
 
 init : Model
 init =
-  { status = Sync "..."
+  { status = Sync "…"
   , files = []
   }
 
@@ -117,10 +117,24 @@ view model =
                 ]
             ]
 
+    displaySize size =
+      if size < 10 ^ 3 then
+        (toString size) ++ " B"
+      else if size < 10 ^ 6 then
+        (toString (toFloat (size // 10 ^ 2) / 10)) ++ " KB"
+      else if size < 10 ^ 9 then
+        (toString (toFloat (size // 10 ^ 5) / 10)) ++ " MB"
+      else
+        (toString (toFloat (size // 10 ^ 9) / 10)) ++ " GB"
+
     fileToListItem file =
       li
         []
-        [ text file.filename ]
+        [ i [ class ("file-type file-type-" ++ file.icon) ] []
+        , h3 [ class "file-name" ] [ text file.filename ]
+        , span [ class "file-size" ] [ text (displaySize file.size) ]
+        , span [ class "file-time-ago" ] [ text "Just now" ]
+        ]
 
     recentList =
       List.map fileToListItem model.files
