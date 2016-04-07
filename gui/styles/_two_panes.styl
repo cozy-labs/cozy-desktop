@@ -96,3 +96,22 @@
       background-position -384px 0
     .icon--documentation
       background-position -480px 0
+
+  .status
+    display flex
+    line-height 2
+  .status__icon
+    box-sizing border-box
+    width 2em
+    height 2em
+    border-radius 1em
+    margin-right .5em
+  .status__icon--uptodate
+    background-color #27d179
+    padding .2em
+  .status__icon--sync
+    background-color blue
+    padding .1em
+    animation rotate linear 1.3s infinite
+  .status__icon--error
+    background-color red

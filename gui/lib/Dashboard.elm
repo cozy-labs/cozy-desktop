@@ -11,6 +11,7 @@ import Html.Events exposing (..)
 type Status
   = UpToDate
   | Sync String
+  | Error String
 
 
 type alias Model =
@@ -36,16 +37,49 @@ view model =
         model.status
       of
         UpToDate ->
-          [ text "Your cozy is up to date!" ]
+          p
+            [ class "status" ]
+            [ img
+                [ src "images/done.svg"
+                , class "status__icon status__icon--uptodate"
+                ]
+                []
+            , text "Your cozy is up to date!"
+            ]
 
         Sync filename ->
-          [ text "Syncing "
-          , em [] [ text filename ]
-          ]
+          p
+            [ class "status" ]
+            [ img
+                [ src "images/sync.svg"
+                , class "status__icon status__icon--sync"
+                ]
+                []
+            , span
+                []
+                [ text "Syncing "
+                , em [] [ text filename ]
+                ]
+            ]
+
+        Error message ->
+          p
+            [ class "status" ]
+            [ img
+                [ src "images/error.svg"
+                , class "status__icon status__icon--error"
+                ]
+                []
+            , span
+                []
+                [ text "Error: "
+                , em [] [ text message ]
+                ]
+            ]
   in
     section
       [ class "two-panes__content" ]
       [ h1 [] [ text "Dashboard" ]
-      , p [] statusMessage
+      , statusMessage
       , h2 [] [ text "Recent activities" ]
       ]
