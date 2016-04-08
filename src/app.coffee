@@ -8,7 +8,7 @@ log      = require('printit')
     prefix: 'Cozy Desktop  '
     date: true
 
-EventEmitter = require 'events'
+EventEmitter = require('events').EventEmitter
 
 Config  = require './config'
 Devices = require './devices'
