@@ -1,9 +1,10 @@
 module Main (..) where
 
 import StartApp
-import Html exposing (Html)
 import Effects exposing (Effects, Never)
+import Html exposing (Html)
 import Task exposing (Task)
+import Time exposing (Time)
 import Wizard
 import TwoPanes
 import Dashboard exposing (File)
@@ -120,6 +121,7 @@ app =
         , Signal.map (always Unlink) unlink
         , Signal.map (always (TwoPanesAction TwoPanes.Updated)) updated
         , Signal.map (TwoPanesAction << TwoPanes.Transfer) transfer
+        , Signal.map (TwoPanesAction << TwoPanes.Tick) everySecond
         ]
     , update = update
     , view = view
@@ -129,6 +131,11 @@ app =
 main : Signal Html
 main =
   app.html
+
+
+everySecond : Signal Time
+everySecond =
+  Time.every (1 * Time.second)
 
 
 port runner : Signal (Task Never ())

@@ -4,6 +4,7 @@ import Effects exposing (Effects)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Time exposing (Time)
 import Icons
 import Dashboard
 import Settings
@@ -49,6 +50,7 @@ type Action
   | UnlinkCozy
   | Updated
   | Transfer Dashboard.File
+  | Tick Time
 
 
 update : Action -> Model -> ( Model, Effects Action )
@@ -88,6 +90,13 @@ update action model =
       let
         dashboard' =
           Dashboard.update (Dashboard.Transfer file) model.dashboard
+      in
+        ( { model | dashboard = dashboard' }, Effects.none )
+
+    Tick now ->
+      let
+        dashboard' =
+          Dashboard.update (Dashboard.Tick now) model.dashboard
       in
         ( { model | dashboard = dashboard' }, Effects.none )
 

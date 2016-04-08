@@ -17,7 +17,8 @@ const elmectron = Elm.embed(Elm.Main, container, {
   transfer: {
     filename: '',
     icon: '',
-    size: 0
+    size: 0,
+    updated: 0
   },
   unlink: [],
   updated: [],
@@ -99,7 +100,8 @@ ipcRenderer.on('transfer', (event, info) => {
   const file = {
     filename: path.basename(info.path),
     size: info.size,
-    icon: selectIcon(info)
+    icon: selectIcon(info),
+    updated: +new Date()
   }
   elmectron.ports.transfer.send(file)
 })

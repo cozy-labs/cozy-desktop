@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Time exposing (Time)
+import Helpers exposing (distance_of_time_in_words)
 
 
 -- MODEL
@@ -19,11 +20,13 @@ type alias File =
   { filename : String
   , icon : String
   , size : Int
+  , updated : Time
   }
 
 
 type alias Model =
   { status : Status
+  , now : Time
   , files : List File
   }
 
@@ -31,6 +34,7 @@ type alias Model =
 init : Model
 init =
   { status = Sync "…"
+  , now = 0
   , files = []
   }
 
@@ -42,10 +46,12 @@ init =
 type Action
   = Updated
   | Transfer File
+  | Tick Time
 
 
 
 -- TODO when a file is deleted, remove it from the files list
+-- TODO don't put twice the same file in the list
 
 
 update : Action -> Model -> Model
@@ -63,6 +69,9 @@ update action model =
           Sync file.filename
       in
         { model | status = status', files = files' }
+
+    Tick now' ->
+      { model | now = now' }
 
 
 
@@ -128,13 +137,17 @@ view model =
         (toString (toFloat (size // 10 ^ 9) / 10)) ++ " GB"
 
     fileToListItem file =
-      li
-        []
-        [ i [ class ("file-type file-type-" ++ file.icon) ] []
-        , h3 [ class "file-name" ] [ text file.filename ]
-        , span [ class "file-size" ] [ text (displaySize file.size) ]
-        , span [ class "file-time-ago" ] [ text "Just now" ]
-        ]
+      let
+        time_ago =
+          distance_of_time_in_words file.updated model.now
+      in
+        li
+          []
+          [ i [ class ("file-type file-type-" ++ file.icon) ] []
+          , h3 [ class "file-name" ] [ text file.filename ]
+          , span [ class "file-size" ] [ text (displaySize file.size) ]
+          , span [ class "file-time-ago" ] [ text time_ago ]
+          ]
 
     recentList =
       List.map fileToListItem model.files

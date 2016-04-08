@@ -123,7 +123,8 @@
       display block
       height 3em
       padding .8em .2em
-      border-bottom 1px solid grey-03
+      &:not(:last-child)
+        border-bottom 1px solid grey-03
   .file-name
     margin .2em 0
   .file-size::after
