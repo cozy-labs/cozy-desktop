@@ -121,6 +121,7 @@ app =
         , Signal.map (always Unlink) unlink
         , Signal.map (always (TwoPanesAction TwoPanes.Updated)) updated
         , Signal.map (TwoPanesAction << TwoPanes.Transfer) transfer
+        , Signal.map (TwoPanesAction << TwoPanes.Remove) remove
         , Signal.map (TwoPanesAction << TwoPanes.Tick) everySecond
         ]
     , update = update
@@ -180,4 +181,5 @@ port unlinkCozy =
 
 port version : String
 port transfer : Signal File
+port remove : Signal File
 port updated : Signal ()

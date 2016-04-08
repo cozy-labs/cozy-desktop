@@ -19,6 +19,7 @@ type Status
 type alias File =
   { filename : String
   , icon : String
+  , path : String
   , size : Int
   , updated : Time
   }
@@ -46,12 +47,13 @@ init =
 type Action
   = Updated
   | Transfer File
+  | Remove File
   | Tick Time
 
 
-
--- TODO when a file is deleted, remove it from the files list
--- TODO don't put twice the same file in the list
+samePath : File -> File -> Bool
+samePath a b =
+  a.path == b.path
 
 
 update : Action -> Model -> Model
@@ -63,12 +65,21 @@ update action model =
     Transfer file ->
       let
         files' =
-          List.take 5 (file :: model.files)
+          file
+            :: (List.filter (samePath file >> not) model.files)
+            |> List.take 5
 
         status' =
           Sync file.filename
       in
         { model | status = status', files = files' }
+
+    Remove file ->
+      let
+        files' =
+          List.filter (samePath file >> not) model.files
+      in
+        { model | files = files' }
 
     Tick now' ->
       { model | now = now' }
@@ -142,7 +153,7 @@ view model =
           distance_of_time_in_words file.updated model.now
       in
         li
-          []
+          [ title file.path ]
           [ i [ class ("file-type file-type-" ++ file.icon) ] []
           , h3 [ class "file-name" ] [ text file.filename ]
           , span [ class "file-size" ] [ text (displaySize file.size) ]

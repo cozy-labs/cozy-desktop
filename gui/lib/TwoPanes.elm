@@ -50,6 +50,7 @@ type Action
   | UnlinkCozy
   | Updated
   | Transfer Dashboard.File
+  | Remove Dashboard.File
   | Tick Time
 
 
@@ -90,6 +91,13 @@ update action model =
       let
         dashboard' =
           Dashboard.update (Dashboard.Transfer file) model.dashboard
+      in
+        ( { model | dashboard = dashboard' }, Effects.none )
+
+    Remove file ->
+      let
+        dashboard' =
+          Dashboard.update (Dashboard.Remove file) model.dashboard
       in
         ( { model | dashboard = dashboard' }, Effects.none )
 

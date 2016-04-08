@@ -37,6 +37,9 @@ const startSync = (url) => {
     desktop.events.on('transfer-started', (info) => {
       mainWindow.webContents.send('transfer', info)
     })
+    desktop.events.on('delete-file', (info) => {
+      mainWindow.webContents.send('delete-file', info)
+    })
     desktop.synchronize('full', (err) => { console.error(err) })
   }
 }

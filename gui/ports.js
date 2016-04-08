@@ -13,13 +13,9 @@ const elmectron = Elm.embed(Elm.Main, container, {
   folder: '',
   registration: null,
   pong: null,
+  remove: { filename: '', icon: '', path: '', size: 0, updated: 0 },
   synchonization: '',
-  transfer: {
-    filename: '',
-    icon: '',
-    size: 0,
-    updated: 0
-  },
+  transfer: { filename: '', icon: '', path: '', size: 0, updated: 0 },
   unlink: [],
   updated: [],
   version: pkg.version
@@ -97,13 +93,23 @@ const selectIcon = (info) => {
 }
 
 ipcRenderer.on('transfer', (event, info) => {
-  const file = {
+  elmectron.ports.transfer.send({
     filename: path.basename(info.path),
-    size: info.size,
+    path: info.path,
     icon: selectIcon(info),
+    size: info.size,
     updated: +new Date()
-  }
-  elmectron.ports.transfer.send(file)
+  })
+})
+
+ipcRenderer.on('delete-file', (event, info) => {
+  elmectron.ports.remove.send({
+    filename: path.basename(info.path),
+    path: info.path,
+    icon: '',
+    size: 0,
+    updated: 0
+  })
 })
 
 // Open external links in the browser

@@ -253,6 +253,7 @@ class Local
     # Delete a file from the local filesystem
     deleteFile: (doc, callback) =>
         log.info "Delete #{doc.path}"
+        @events.emit 'delete-file', doc
         fullpath = path.join @basePath, doc.path
         fs.remove fullpath, callback
 

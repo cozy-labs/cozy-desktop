@@ -282,6 +282,7 @@ class Remote
     # Delete a file on the remote cozy instance
     deleteFile: (doc, callback) =>
         log.info "Delete file #{doc.path}"
+        @events.emit 'delete-file', doc
         return callback() unless doc.remote
         remoteDoc = @createRemoteDoc doc, doc.remote
         @couch.removeRemoteDoc remoteDoc, (err, removed) =>
