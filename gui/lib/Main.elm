@@ -1,11 +1,13 @@
 module Main (..) where
 
 import StartApp
-import Html exposing (Html)
 import Effects exposing (Effects, Never)
+import Html exposing (Html)
 import Task exposing (Task)
+import Time exposing (Time)
 import Wizard
 import TwoPanes
+import Dashboard exposing (File)
 
 
 -- MODEL
@@ -66,15 +68,15 @@ update action model =
       in
         ( { model | wizard = wizard' }, Effects.map WizardAction effects )
 
-    WizardFinished address' ->
+    WizardFinished address ->
       let
-        twopanes =
-          model.twopanes
+        ( twopanes', effects ) =
+          TwoPanes.update (TwoPanes.FillAddress address) model.twopanes
 
-        twopanes' =
-          { twopanes | address = address' }
+        model' =
+          { model | twopanes = twopanes', page = TwoPanesPage }
       in
-        ( { model | page = TwoPanesPage, twopanes = twopanes' }, Effects.none )
+        ( model', Effects.map TwoPanesAction effects )
 
     TwoPanesAction action' ->
       let
@@ -117,6 +119,10 @@ app =
         , Signal.map (WizardAction << Wizard.folderChosen) folder
         , Signal.map WizardFinished synchonization
         , Signal.map (always Unlink) unlink
+        , Signal.map (always (TwoPanesAction TwoPanes.Updated)) updated
+        , Signal.map (TwoPanesAction << TwoPanes.Transfer) transfer
+        , Signal.map (TwoPanesAction << TwoPanes.Remove) remove
+        , Signal.map (TwoPanesAction << TwoPanes.Tick) everySecond
         ]
     , update = update
     , view = view
@@ -126,6 +132,11 @@ app =
 main : Signal Html
 main =
   app.html
+
+
+everySecond : Signal Time
+everySecond =
+  Time.every (1 * Time.second)
 
 
 port runner : Signal (Task Never ())
@@ -169,3 +180,6 @@ port unlinkCozy =
 
 
 port version : String
+port transfer : Signal File
+port remove : Signal File
+port updated : Signal ()

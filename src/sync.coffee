@@ -9,7 +9,7 @@ log   = require('printit')
 # respectively.
 class Sync
 
-    constructor: (@pouch, @local, @remote, @ignore) ->
+    constructor: (@pouch, @local, @remote, @ignore, @events) ->
         @local.other = @remote
         @remote.other = @local
 
@@ -68,23 +68,32 @@ class Sync
         @pouch.getLocalSeq (err, seq) =>
             return callback err if err
             opts =
-                live: true
                 limit: 1
                 since: seq
                 include_docs: true
-                returnDocs: false
                 filter: '_view'
                 view: 'byPath'
-            @changes = @pouch.db.changes(opts)
-                .on 'change', (info) =>
-                    if @changes
-                        @changes.cancel()
-                        @changes = null
-                        callback null, info
-                .on 'error', (err) =>
-                    if @changes
-                        @changes = null
-                        callback err, null
+            @pouch.db.changes(opts)
+                .on 'change', (info) ->
+                    callback null, info
+                .on 'error', (err) ->
+                    callback err
+                .on 'complete', (info) =>
+                    return if info.results?.length
+                    @events.emit 'up-to-date'
+                    log.info 'Your cozy is up to date!'
+                    opts.live = true
+                    opts.returnDocs = false
+                    @changes = @pouch.db.changes(opts)
+                        .on 'change', (info) =>
+                            if @changes
+                                @changes.cancel()
+                                @changes = null
+                                callback null, info
+                        .on 'error', (err) =>
+                            if @changes
+                                @changes = null
+                                callback err, null
 
     # Apply a change to both local and remote
     # At least one side should say it has already this change

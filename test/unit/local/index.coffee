@@ -18,7 +18,8 @@ describe 'Local', ->
     before 'instanciate pouch', pouchHelpers.createDatabase
     before 'instanciate local', ->
         @prep = {}
-        @local = new Local @config, @prep, @pouch
+        @events = {}
+        @local = new Local @config, @prep, @pouch, @events
         @local.watcher.pending = {}
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
@@ -145,6 +146,7 @@ describe 'Local', ->
 
     describe 'addFile', ->
         it 'creates the file by downloading it', (done) ->
+            @events.emit = sinon.spy()
             doc =
                 path: 'files/file-from-remote'
                 lastModification: new Date '2015-10-09T04:05:06Z'
@@ -217,6 +219,7 @@ describe 'Local', ->
                 done()
 
         it 'aborts when the download is incorrect', (done) ->
+            @events.emit = sinon.spy()
             doc =
                 path: 'files/file-from-remote-2'
                 lastModification: new Date '2015-10-09T04:05:16Z'
@@ -270,6 +273,7 @@ describe 'Local', ->
 
     describe 'overwriteFile', ->
         it 'writes the new content of a file', (done) ->
+            @events.emit = sinon.spy()
             doc =
                 path: 'a-file-to-overwrite'
                 docType: 'file'

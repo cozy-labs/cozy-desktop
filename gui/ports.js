@@ -13,8 +13,11 @@ const elmectron = Elm.embed(Elm.Main, container, {
   folder: '',
   registration: null,
   pong: null,
+  remove: { filename: '', icon: '', path: '', size: 0, updated: 0 },
   synchonization: '',
+  transfer: { filename: '', icon: '', path: '', size: 0, updated: 0 },
   unlink: [],
+  updated: [],
   version: pkg.version
 })
 
@@ -56,6 +59,57 @@ ipcRenderer.on('unlinked', (event) => {
 })
 elmectron.ports.unlinkCozy.subscribe(() => {
   ipcRenderer.send('unlink-cozy')
+})
+
+ipcRenderer.on('up-to-date', () => {
+  elmectron.ports.updated.send([])
+})
+
+const selectIcon = (info) => {
+  if (['image', 'video'].indexOf(info.class) !== -1) {
+    return info.class
+  } else if (info.class === 'music') {
+    return 'audio'
+  } else if (info.mime === 'application/pdf') {
+    return 'pdf'
+  } else if (info.mime === 'application/x-binary') {
+    return 'binary'
+  } else if (info.mime.match(/[/-][bg]?zip2?$/)) {
+    return 'archive'
+  } else if (info.mime.match(/^(text|application)\/(html|xml)/)) {
+    return 'code'
+  } else if (info.mime.match(/^text\//)) {
+    return 'text'
+  } else if (info.mime.match(/^application\/.*rtf/)) {
+    return 'text'
+  } else if (info.mime.match(/word/)) {
+    return 'text'
+  } else if (info.mime.match(/powerpoint/)) {
+    return 'presentation'
+  } else if (info.mime.match(/excel/)) {
+    return 'spreadsheet'
+  }
+  return 'file'
+}
+
+ipcRenderer.on('transfer', (event, info) => {
+  elmectron.ports.transfer.send({
+    filename: path.basename(info.path),
+    path: info.path,
+    icon: selectIcon(info),
+    size: info.size,
+    updated: +new Date()
+  })
+})
+
+ipcRenderer.on('delete-file', (event, info) => {
+  elmectron.ports.remove.send({
+    filename: path.basename(info.path),
+    path: info.path,
+    icon: '',
+    size: 0,
+    updated: 0
+  })
 })
 
 // Open external links in the browser

@@ -5,6 +5,38 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 
 
+-- MODEL
+
+
+type alias Model =
+  { address : String
+  }
+
+
+init : Model
+init =
+  { address = ""
+  }
+
+
+
+-- UPDATE
+
+
+type Action
+  = FillAddress String
+
+
+update : Action -> Model -> Model
+update action model =
+  case
+    action
+  of
+    FillAddress address' ->
+      { model | address = address' }
+
+
+
 -- VIEW
 
 
@@ -12,14 +44,14 @@ type alias Context =
   { unlinkCozy : Signal.Address () }
 
 
-view : Context -> String -> Html
-view context address =
+view : Context -> Model -> Html
+view context model =
   section
     [ class "two-panes__content" ]
     [ h1 [] [ text "Account" ]
     , h3
         []
-        [ a [ href address ] [ text address ] ]
+        [ a [ href model.address ] [ text model.address ] ]
     , h2 [] [ text "Unlink Cozy" ]
     , p
         []

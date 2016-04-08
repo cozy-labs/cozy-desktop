@@ -1,4 +1,5 @@
 async   = require 'async'
+clone   = require 'lodash.clone'
 path    = require 'path'
 log     = require('printit')
     prefix: 'Remote writer '
@@ -17,7 +18,7 @@ Watcher = require './watcher'
 # the local pouchdb are similar, but not exactly the same. A transformation is
 # needed in both ways.
 class Remote
-    constructor: (@config, @prep, @pouch) ->
+    constructor: (@config, @prep, @pouch, @events) ->
         @couch   = new Couch @config
         @watcher = new Watcher @couch, @prep, @pouch
         @other   = null
@@ -72,6 +73,15 @@ class Remote
                     {_id, _rev} = binary
                     mime = doc.mime or 'application/octet-stream'
                     @couch.uploadAsAttachment _id, _rev, mime, stream, next
+                    # Emit events to track the download progress
+                    info = clone doc
+                    info.way = 'up'
+                    info.eventName = "transfer-up-#{doc._id}"
+                    @events.emit 'transfer-started', info
+                    stream.on 'data', (data) =>
+                        @events.emit info.eventName, data
+                    stream.on 'close', =>
+                        @events.emit info.eventName, finished: true
         ], (err) =>
             [cb, callback] = [callback, ->]  # Be sure to callback only once
             if err and binary._rev
@@ -272,6 +282,7 @@ class Remote
     # Delete a file on the remote cozy instance
     deleteFile: (doc, callback) =>
         log.info "Delete file #{doc.path}"
+        @events.emit 'delete-file', doc
         return callback() unless doc.remote
         remoteDoc = @createRemoteDoc doc, doc.remote
         @couch.removeRemoteDoc remoteDoc, (err, removed) =>

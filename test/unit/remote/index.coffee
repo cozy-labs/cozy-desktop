@@ -19,7 +19,8 @@ describe 'Remote', ->
     before 'instanciate couch', couchHelpers.createCouchClient
     before 'instanciate remote', ->
         @prep = {}
-        @remote = new Remote @config, @prep, @pouch
+        @events = {}
+        @remote = new Remote @config, @prep, @pouch, @events
     after 'stop couch server', couchHelpers.stopServer
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
@@ -33,6 +34,7 @@ describe 'Remote', ->
 
     describe 'createReadStream', ->
         it 'create a readable stream from a remote binary', (done) ->
+            @events.emit = sinon.spy()
             checksum = '53a547469e98b667671803adc814d6d1376fae6b'
             fixture = 'test/fixtures/cool-pillow.jpg'
             doc =
@@ -65,6 +67,7 @@ describe 'Remote', ->
 
     describe 'uploadBinary', ->
         it 'creates a remote binary document', (done) ->
+            @events.emit = sinon.spy()
             checksum = 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
             fixture = 'test/fixtures/chat-mignon.jpg'
             doc =

@@ -96,3 +96,68 @@
       background-position -384px 0
     .icon--documentation
       background-position -480px 0
+
+  .status
+    display flex
+    line-height 2
+  .status__icon
+    box-sizing border-box
+    width 2em
+    height 2em
+    border-radius 1em
+    margin-right .5em
+  .status__icon--uptodate
+    background-color #27d179
+    padding .2em
+  .status__icon--sync
+    background-color blue
+    padding .1em
+    animation rotate linear 1.3s infinite
+  .status__icon--error
+    background-color red
+
+  .recent-files
+    padding 0
+    list-style none
+    li
+      display block
+      height 3em
+      padding .8em .2em
+      &:not(:last-child)
+        border-bottom 1px solid grey-03
+  .file-name
+    margin .2em 0
+  .file-size::after
+    content ' • '
+    margin 0 .25em
+  .file-type
+    display block
+    float left
+    width 48px
+    height 48px
+    margin-right .8em
+    background-image url('../images/sprite-files-type.svg')
+    &.file-type-folder
+      background-position 0 0
+    &.file-type-file
+      background-position -48px 0
+    &.file-type-archive
+      background-position -96px 0
+    &.file-type-code
+      background-position -144px 0
+    &.file-type-text
+      background-position -192px 0
+    &.file-type-presentation
+      background-position -240px 0
+    &.file-type-spreadsheet
+      background-position -288px 0
+    &.file-type-pdf
+      background-position -336px 0
+    &.file-type-binary
+      background-position -364px 0
+    &.file-type-audio
+      background-position -432px 0
+    &.file-type-video
+      background-position -480px 0
+    &.file-type-image
+      background-position -528px 4px

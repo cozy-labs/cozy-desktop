@@ -4,6 +4,7 @@ import Effects exposing (Effects)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Time exposing (Time)
 import Icons
 import Dashboard
 import Settings
@@ -23,16 +24,18 @@ type Tab
 
 type alias Model =
   { tab : Tab
-  , address : String
-  , version : String
+  , dashboard : Dashboard.Model
+  , settings : Settings.Model
+  , account : Account.Model
   }
 
 
 init : String -> Model
-init version' =
+init version =
   { tab = DashboardTab
-  , address = ""
-  , version = version'
+  , dashboard = Dashboard.init
+  , settings = Settings.init version
+  , account = Account.init
   }
 
 
@@ -43,7 +46,12 @@ init version' =
 type Action
   = NoOp
   | GoToTab Tab
+  | FillAddress String
   | UnlinkCozy
+  | Updated
+  | Transfer Dashboard.File
+  | Remove Dashboard.File
+  | Tick Time
 
 
 update : Action -> Model -> ( Model, Effects Action )
@@ -55,6 +63,13 @@ update action model =
     GoToTab tab' ->
       ( { model | tab = tab' }, Effects.none )
 
+    FillAddress address ->
+      let
+        account' =
+          Account.update (Account.FillAddress address) model.account
+      in
+        ( { model | account = account' }, Effects.none )
+
     UnlinkCozy ->
       let
         task =
@@ -64,6 +79,34 @@ update action model =
           Effects.map (always NoOp) (Effects.task task)
       in
         ( model, effect )
+
+    Updated ->
+      let
+        dashboard' =
+          Dashboard.update Dashboard.Updated model.dashboard
+      in
+        ( { model | dashboard = dashboard' }, Effects.none )
+
+    Transfer file ->
+      let
+        dashboard' =
+          Dashboard.update (Dashboard.Transfer file) model.dashboard
+      in
+        ( { model | dashboard = dashboard' }, Effects.none )
+
+    Remove file ->
+      let
+        dashboard' =
+          Dashboard.update (Dashboard.Remove file) model.dashboard
+      in
+        ( { model | dashboard = dashboard' }, Effects.none )
+
+    Tick now ->
+      let
+        dashboard' =
+          Dashboard.update (Dashboard.Tick now) model.dashboard
+      in
+        ( { model | dashboard = dashboard' }, Effects.none )
 
 
 unlinkCozy : Signal.Mailbox ()
@@ -116,10 +159,10 @@ view address model =
     content =
       case model.tab of
         DashboardTab ->
-          Dashboard.view
+          Dashboard.view model.dashboard
 
         SettingsTab ->
-          Settings.view model.version
+          Settings.view model.settings
 
         AccountTab ->
           let
@@ -127,7 +170,7 @@ view address model =
               Account.Context
                 (Signal.forwardTo address (always (UnlinkCozy)))
           in
-            Account.view context model.address
+            Account.view context model.account
 
         HelpTab ->
           Help.view
