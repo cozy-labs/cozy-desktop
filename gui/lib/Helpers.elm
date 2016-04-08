@@ -41,3 +41,15 @@ distance_of_time_in_words from_time to_time =
       (pluralize distance_in_minutes "minute" "minutes") ++ " ago"
     else
       "Just now"
+
+
+number_to_human_size : number -> String
+number_to_human_size size =
+  if size < 10 ^ 3 then
+    pluralize size "Byte" "Bytes"
+  else if size < 10 ^ 6 then
+    (toString (toFloat (size // 10 ^ 2) / 10)) ++ " KB"
+  else if size < 10 ^ 9 then
+    (toString (toFloat (size // 10 ^ 5) / 10)) ++ " MB"
+  else
+    (toString (toFloat (size // 10 ^ 9) / 10)) ++ " GB"

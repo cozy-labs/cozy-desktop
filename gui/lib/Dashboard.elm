@@ -4,7 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Time exposing (Time)
-import Helpers exposing (distance_of_time_in_words)
+import Helpers exposing (..)
 
 
 -- MODEL
@@ -137,18 +137,11 @@ view model =
                 ]
             ]
 
-    displaySize size =
-      if size < 10 ^ 3 then
-        (toString size) ++ " B"
-      else if size < 10 ^ 6 then
-        (toString (toFloat (size // 10 ^ 2) / 10)) ++ " KB"
-      else if size < 10 ^ 9 then
-        (toString (toFloat (size // 10 ^ 5) / 10)) ++ " MB"
-      else
-        (toString (toFloat (size // 10 ^ 9) / 10)) ++ " GB"
-
     fileToListItem file =
       let
+        file_size =
+          number_to_human_size file.size
+
         time_ago =
           distance_of_time_in_words file.updated model.now
       in
@@ -156,7 +149,7 @@ view model =
           [ title file.path ]
           [ i [ class ("file-type file-type-" ++ file.icon) ] []
           , h3 [ class "file-name" ] [ text file.filename ]
-          , span [ class "file-size" ] [ text (displaySize file.size) ]
+          , span [ class "file-size" ] [ text file_size ]
           , span [ class "file-time-ago" ] [ text time_ago ]
           ]
 
