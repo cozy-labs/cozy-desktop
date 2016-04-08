@@ -43,6 +43,13 @@ class Local
 
     # Return a function that will update last modification date
     # and does a chmod +x if the file is executable
+    #
+    # Note: UNIX has 3 timestamps for a file/folder:
+    # - atime for last access
+    # - ctime for change (metadata or content)
+    # - utime for update (content only)
+    # This function updates utime and ctime according to the last
+    # modification date.
     metadataUpdater: (doc) =>
         filePath = path.resolve @basePath, doc.path
         (callback) ->
@@ -52,9 +59,8 @@ class Local
                 else
                     callback err
             if doc.lastModification
-                creationDate = new Date doc.creationDate
                 lastModification = new Date doc.lastModification
-                fs.utimes filePath, creationDate, lastModification, ->
+                fs.utimes filePath, lastModification, lastModification, ->
                     # Ignore errors
                     next()
             else

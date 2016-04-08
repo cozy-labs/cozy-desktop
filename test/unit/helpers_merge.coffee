@@ -189,6 +189,31 @@ describe 'Merge Helpers', ->
             @merge.sameFile(d, f).should.be.false()
             @merge.sameFile(e, f).should.be.false()
 
+        it 'does not fail when one file has executable: undefined', ->
+            a =
+                _id: 'FOO/BAR'
+                docType: 'file'
+                path: 'foo/bar'
+                checksum: '9440ca447681546bd781d6a5166d18737223b3f6'
+                creationDate: '2015-12-01T11:22:56.517Z'
+                lastModification: '2015-12-01T11:22:56.517Z'
+                tags: ['qux']
+                remote:
+                    id: '123'
+                    rev: '4-567'
+            b = clone a
+            b.executable = undefined
+            c = clone a
+            c.executable = false
+            d = clone a
+            d.executable = true
+            @merge.sameFile(a, b).should.be.true()
+            @merge.sameFile(a, c).should.be.true()
+            @merge.sameFile(a, d).should.be.false()
+            @merge.sameFile(b, c).should.be.true()
+            @merge.sameFile(b, d).should.be.false()
+            @merge.sameFile(c, d).should.be.false()
+
 
     describe 'sameBinary', ->
         it 'returns true for two docs with the same checksum', ->
