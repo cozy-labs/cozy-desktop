@@ -37,10 +37,11 @@ class Merge
         return Math.abs(two - one) < 3000
 
     # Return true if the metadata of the two folders are the same
-    # For creationDate and lastModification, we accept up to 3s of differences
+    # The creationDate of the two folders are not compared, because the local
+    # filesystem can't give us a relevant information for that.
+    # For lastModification, we accept up to 3s of differences
     # because we can't rely on file systems to be precise to the millisecond.
     sameFolder: (one, two) ->
-        return false unless @sameDate one.creationDate, two.creationDate
         return false unless @sameDate one.lastModification, two.lastModification
         fields = ['_id', 'docType', 'remote', 'tags']
         one = pick one, fields
@@ -206,6 +207,7 @@ class Merge
                 doc._rev = folder._rev
                 doc.tags ?= folder.tags or []
                 doc.creationDate ?= folder.creationDate
+                doc.remote ?= folder.remote
                 if @sameFolder folder, doc
                     callback null
                 else
