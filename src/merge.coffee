@@ -53,8 +53,9 @@ class Merge
     sameFile: (one, two) ->
         return false unless @sameDate one.creationDate, two.creationDate
         return false unless @sameDate one.lastModification, two.lastModification
+        return false unless not one.executable is not two.executable
         fields = ['_id', 'docType', 'checksum', 'remote',
-            'tags', 'size', 'class', 'mime', 'executable']
+            'tags', 'size', 'class', 'mime']
         one = pick one, fields
         two = pick two, fields
         return isEqual one, two
