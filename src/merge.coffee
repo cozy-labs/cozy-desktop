@@ -39,8 +39,8 @@ class Merge
     # Return true if the metadata of the two folders are the same
     # The creationDate of the two folders are not compared, because the local
     # filesystem can't give us a relevant information for that.
-    # For lastModification, we accept up to 3s of differences
-    # because we can't rely on file systems to be precise to the millisecond.
+    # For lastModification, we accept up to 3s of differences because we can't
+    # rely on file systems to be precise to the millisecond.
     sameFolder: (one, two) ->
         return false unless @sameDate one.lastModification, two.lastModification
         fields = ['_id', 'docType', 'remote', 'tags']
@@ -49,10 +49,11 @@ class Merge
         return isEqual one, two
 
     # Return true if the metadata of the two files are the same
-    # For creationDate and lastModification, we accept up to 3s of differences
-    # because we can't rely on file systems to be precise to the millisecond.
+    # The creationDate of the two files are not compared, because the local
+    # filesystem can't give us a relevant information for that.
+    # For lastModification, we accept up to 3s of differences because we can't
+    # rely on file systems to be precise to the millisecond.
     sameFile: (one, two) ->
-        return false unless @sameDate one.creationDate, two.creationDate
         return false unless @sameDate one.lastModification, two.lastModification
         return false unless not one.executable is not two.executable
         fields = ['_id', 'docType', 'checksum', 'remote',
