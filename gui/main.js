@@ -18,6 +18,9 @@ let mainWindow
 let tray
 let device
 
+let state = 'not-configured'
+let lastFiles = []
+
 const windowOptions = {
   width: 1024,
   height: 768,
@@ -26,20 +29,29 @@ const windowOptions = {
   closable: false
 }
 
-const updateTrayMenu = (filename) => {
-  let statusLabel = 'Syncing…'
+const updateState = (newState, filename) => {
+  state = newState
+  let statusLabel = ''
   if (filename) {
+    tray.setImage(`${__dirname}/images/tray-icon/sync.png`)
     statusLabel = `Syncing ‟${filename}“`
-  } else if (upToDate) {
+  } else if (state === 'up-to-date') {
+    tray.setImage(`${__dirname}/images/tray-icon/idle.png`)
     statusLabel = 'Your cozy is up to date'
+  } else if (state === 'syncing') {
+    tray.setImage(`${__dirname}/images/tray-icon/sync.png`)
+    statusLabel = 'Syncing…'
   }
   const menu = electron.Menu.buildFromTemplate([
     { label: statusLabel, enabled: false },
+    { type: 'separator' },
     { label: 'Help', click: goToTab.bind(null, 'help') },
     { label: 'Settings', click: goToTab.bind(null, 'settings') },
-    { label: 'Quit', click: app.quit }
+    { type: 'separator' },
+    { label: 'Quit application', click: app.quit }
   ])
   tray.setContextMenu(menu)
+  tray.setToolTip(statusLabel)
 }
 
 const selectIcon = (info) => {
@@ -69,23 +81,19 @@ const selectIcon = (info) => {
   return 'file'
 }
 
-let upToDate = false
-let lastFiles = []
-
 const startSync = (url) => {
   mainWindow.webContents.send('synchronization', url)
   if (desktop.sync) {
     for (let file of lastFiles) {
       mainWindow.webContents.send('transfer', file)
     }
-    if (upToDate) {
+    if (state === 'up-to-date') {
       mainWindow.webContents.send('up-to-date')
     }
   } else {
-    updateTrayMenu()
+    updateState('syncing')
     desktop.events.on('up-to-date', () => {
-      upToDate = true
-      updateTrayMenu()
+      updateState('up-to-date')
       if (mainWindow) {
         mainWindow.webContents.send('up-to-date')
       }
@@ -98,10 +106,9 @@ const startSync = (url) => {
         size: info.size,
         updated: +new Date()
       }
-      upToDate = false
+      updateState('syncing', file.filename)
       lastFiles.push(file)
       lastFiles = lastFiles.slice(-5)
-      updateTrayMenu(file.filename)
       if (mainWindow) {
         mainWindow.webContents.send('transfer', file)
       }
@@ -164,8 +171,11 @@ const goToTab = (tab) => {
 
 app.on('ready', () => {
   createWindow()
-  tray = new electron.Tray(`${__dirname}/images/cozystatus-idle.png`)
-  updateTrayMenu()
+  tray = new electron.Tray(`${__dirname}/images/tray-icon/idle.png`)
+  const menu = electron.Menu.buildFromTemplate([
+    { label: 'Quit application', click: app.quit }
+  ])
+  tray.setContextMenu(menu)
 })
 
 // On OS X it's common to re-create a window in the app when the
