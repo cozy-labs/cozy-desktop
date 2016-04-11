@@ -26,6 +26,22 @@ const windowOptions = {
   closable: false
 }
 
+const updateTrayMenu = (filename) => {
+  let statusLabel = 'Syncing…'
+  if (filename) {
+    statusLabel = `Syncing ‟${filename}“`
+  } else if (upToDate) {
+    statusLabel = 'Your cozy is up to date'
+  }
+  const menu = electron.Menu.buildFromTemplate([
+    { label: statusLabel, enabled: false },
+    { label: 'Help', click: goToTab.bind(null, 'help') },
+    { label: 'Settings', click: goToTab.bind(null, 'settings') },
+    { label: 'Quit', click: app.quit }
+  ])
+  tray.setContextMenu(menu)
+}
+
 const selectIcon = (info) => {
   if (['image', 'video'].indexOf(info.class) !== -1) {
     return info.class
@@ -66,8 +82,10 @@ const startSync = (url) => {
       mainWindow.webContents.send('up-to-date')
     }
   } else {
+    updateTrayMenu()
     desktop.events.on('up-to-date', () => {
       upToDate = true
+      updateTrayMenu()
       if (mainWindow) {
         mainWindow.webContents.send('up-to-date')
       }
@@ -83,6 +101,7 @@ const startSync = (url) => {
       upToDate = false
       lastFiles.push(file)
       lastFiles = lastFiles.slice(-5)
+      updateTrayMenu(file.filename)
       if (mainWindow) {
         mainWindow.webContents.send('transfer', file)
       }
@@ -146,12 +165,7 @@ const goToTab = (tab) => {
 app.on('ready', () => {
   createWindow()
   tray = new electron.Tray(`${__dirname}/images/cozystatus-idle.png`)
-  const menu = electron.Menu.buildFromTemplate([
-    { label: 'Help', click: goToTab.bind(null, 'help') },
-    { label: 'Settings', click: goToTab.bind(null, 'settings') },
-    { label: 'Quit', click: app.quit }
-  ])
-  tray.setContextMenu(menu)
+  updateTrayMenu()
 })
 
 // On OS X it's common to re-create a window in the app when the
