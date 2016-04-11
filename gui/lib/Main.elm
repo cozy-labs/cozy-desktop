@@ -52,6 +52,7 @@ type Action
   | WizardAction Wizard.Action
   | WizardFinished String
   | TwoPanesAction TwoPanes.Action
+  | GoToTab String
   | Unlink
 
 
@@ -82,6 +83,26 @@ update action model =
       let
         ( twopanes', effects ) =
           TwoPanes.update action' model.twopanes
+      in
+        ( { model | twopanes = twopanes' }, Effects.map TwoPanesAction effects )
+
+    GoToTab tab' ->
+      let
+        tab =
+          case
+            tab'
+          of
+            "help" ->
+              TwoPanes.HelpTab
+
+            "settings" ->
+              TwoPanes.SettingsTab
+
+            _ ->
+              TwoPanes.DashboardTab
+
+        ( twopanes', effects ) =
+          TwoPanes.update (TwoPanes.GoToTab tab) model.twopanes
       in
         ( { model | twopanes = twopanes' }, Effects.map TwoPanesAction effects )
 
@@ -123,6 +144,7 @@ app =
         , Signal.map (TwoPanesAction << TwoPanes.Transfer) transfer
         , Signal.map (TwoPanesAction << TwoPanes.Remove) remove
         , Signal.map (TwoPanesAction << TwoPanes.Tick) everySecond
+        , Signal.map GoToTab gototab
         ]
     , update = update
     , view = view
@@ -179,6 +201,7 @@ port unlinkCozy =
   TwoPanes.unlinkCozy |> .signal
 
 
+port gototab : Signal String
 port version : String
 port transfer : Signal File
 port remove : Signal File

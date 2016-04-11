@@ -3,11 +3,9 @@
 
 const Desktop = require('cozy-desktop')
 const electron = require('electron')
+const path = require('path')
 
-const app = electron.app
-const BrowserWindow = electron.BrowserWindow
-const dialog = electron.dialog
-const ipcMain = electron.ipcMain
+const {app, BrowserWindow, dialog, ipcMain, shell} = electron
 const desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
 
 // Use a fake window to keep the application running when the main window is
@@ -20,6 +18,9 @@ let mainWindow
 let tray
 let device
 
+let state = 'not-configured'
+let lastFiles = []
+
 const windowOptions = {
   width: 1024,
   height: 768,
@@ -28,17 +29,135 @@ const windowOptions = {
   closable: false
 }
 
+const showWindow = () => {
+  if (mainWindow) {
+    mainWindow.focus()
+  } else {
+    createWindow()
+  }
+}
+
+const goToTab = (tab) => {
+  const alreadyShown = !!mainWindow
+  showWindow()
+  if (alreadyShown) {
+    mainWindow.webContents.send('go-to-tab', tab)
+  } else {
+    mainWindow.webContents.once('dom-ready', () => {
+      mainWindow.webContents.send('go-to-tab', tab)
+    })
+  }
+}
+
+const goToMyCozy = () => {
+  const device = desktop.config.getDevice()
+  shell.openExternal(device.url)
+}
+
+const openCozyFolder = () => {
+  const device = desktop.config.getDevice()
+  shell.openItem(device.path)
+}
+
+const updateState = (newState, filename) => {
+  state = newState
+  let statusLabel = ''
+  if (filename) {
+    tray.setImage(`${__dirname}/images/tray-icon/sync.png`)
+    statusLabel = `Syncing ‟${filename}“`
+  } else if (state === 'up-to-date') {
+    tray.setImage(`${__dirname}/images/tray-icon/idle.png`)
+    statusLabel = 'Your cozy is up to date'
+  } else if (state === 'syncing') {
+    tray.setImage(`${__dirname}/images/tray-icon/sync.png`)
+    statusLabel = 'Syncing…'
+  }
+  const menu = electron.Menu.buildFromTemplate([
+    { label: statusLabel, enabled: false },
+    { type: 'separator' },
+    { label: 'Open Cozy folder', click: openCozyFolder },
+    { label: 'Go to my Cozy', click: goToMyCozy },
+    { type: 'separator' },
+    { label: 'Help', click: goToTab.bind(null, 'help') },
+    { label: 'Settings', click: goToTab.bind(null, 'settings') },
+    { type: 'separator' },
+    { label: 'Quit application', click: app.quit }
+  ])
+  tray.setContextMenu(menu)
+  tray.setToolTip(statusLabel)
+}
+
+const selectIcon = (info) => {
+  if (['image', 'video'].indexOf(info.class) !== -1) {
+    return info.class
+  } else if (info.class === 'music') {
+    return 'audio'
+  } else if (info.mime === 'application/pdf') {
+    return 'pdf'
+  } else if (info.mime === 'application/x-binary') {
+    return 'binary'
+  } else if (info.mime.match(/[/-][bg]?zip2?$/)) {
+    return 'archive'
+  } else if (info.mime.match(/^(text|application)\/(html|xml)/)) {
+    return 'code'
+  } else if (info.mime.match(/^text\//)) {
+    return 'text'
+  } else if (info.mime.match(/^application\/.*rtf/)) {
+    return 'text'
+  } else if (info.mime.match(/word/)) {
+    return 'text'
+  } else if (info.mime.match(/powerpoint/)) {
+    return 'presentation'
+  } else if (info.mime.match(/excel/)) {
+    return 'spreadsheet'
+  }
+  return 'file'
+}
+
 const startSync = (url) => {
   mainWindow.webContents.send('synchronization', url)
-  if (!desktop.sync) {
-    desktop.events.on('up-to-date', () => {
+  if (desktop.sync) {
+    for (let file of lastFiles) {
+      mainWindow.webContents.send('transfer', file)
+    }
+    if (state === 'up-to-date') {
       mainWindow.webContents.send('up-to-date')
+    }
+  } else {
+    updateState('syncing')
+    desktop.events.on('up-to-date', () => {
+      updateState('up-to-date')
+      if (mainWindow) {
+        mainWindow.webContents.send('up-to-date')
+      }
     })
     desktop.events.on('transfer-started', (info) => {
-      mainWindow.webContents.send('transfer', info)
+      const file = {
+        filename: path.basename(info.path),
+        path: info.path,
+        icon: selectIcon(info),
+        size: info.size,
+        updated: +new Date()
+      }
+      updateState('syncing', file.filename)
+      lastFiles.push(file)
+      lastFiles = lastFiles.slice(-5)
+      if (mainWindow) {
+        mainWindow.webContents.send('transfer', file)
+      }
     })
     desktop.events.on('delete-file', (info) => {
-      mainWindow.webContents.send('delete-file', info)
+      const file = {
+        filename: path.basename(info.path),
+        path: info.path,
+        icon: '',
+        size: 0,
+        updated: 0
+      }
+      lastFiles = lastFiles.filter((f) => f.path !== file.path)
+      if (mainWindow) {
+        mainWindow.webContents.send('delete-file', file)
+      }
     })
     desktop.synchronize('full', (err) => { console.error(err) })
   }
@@ -65,22 +184,16 @@ const createWindow = () => {
 
 app.on('ready', () => {
   createWindow()
-  tray = new electron.Tray(`${__dirname}/images/cozystatus-idle.png`)
+  tray = new electron.Tray(`${__dirname}/images/tray-icon/idle.png`)
   const menu = electron.Menu.buildFromTemplate([
-    { label: 'Quit', click: app.quit }
+    { label: 'Quit application', click: app.quit }
   ])
   tray.setContextMenu(menu)
 })
 
-app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (mainWindow) {
-    mainWindow.focus()
-  } else {
-    createWindow()
-  }
-})
+// On OS X it's common to re-create a window in the app when the
+// dock icon is clicked and there are no other windows open.
+app.on('activate', showWindow)
 
 // Glue code between cozy-desktop lib and the renderer process
 ipcMain.on('ping-cozy', (event, url) => {
