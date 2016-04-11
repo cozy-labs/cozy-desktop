@@ -214,10 +214,16 @@ class Sync
             else
                 @pouch.getPreviousRev doc._id, rev, (err, old) ->
                     log.debug old
-                    if err or old.checksum isnt doc.checksum
+                    if err
                         side.overwriteFile doc, old, callback
-                    else
+                    else if old.checksum is doc.checksum
                         side.updateFileMetadata doc, old, callback
+                    else if old.remote and not old.checksum
+                        # Photos uploaded by cozy-mobile have no checksum,
+                        # but it's useless to reupload the binary
+                        side.updateFileMetadata doc, old, callback
+                    else
+                        side.overwriteFile doc, old, callback
 
     # Same as fileChanged, but for folder
     folderChanged: (doc, side, rev, callback) =>
