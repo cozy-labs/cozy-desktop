@@ -3,6 +3,7 @@
 
 const Desktop = require('cozy-desktop')
 const electron = require('electron')
+const path = require('path')
 
 const app = electron.app
 const BrowserWindow = electron.BrowserWindow
@@ -28,17 +29,79 @@ const windowOptions = {
   closable: false
 }
 
+const selectIcon = (info) => {
+  if (['image', 'video'].indexOf(info.class) !== -1) {
+    return info.class
+  } else if (info.class === 'music') {
+    return 'audio'
+  } else if (info.mime === 'application/pdf') {
+    return 'pdf'
+  } else if (info.mime === 'application/x-binary') {
+    return 'binary'
+  } else if (info.mime.match(/[/-][bg]?zip2?$/)) {
+    return 'archive'
+  } else if (info.mime.match(/^(text|application)\/(html|xml)/)) {
+    return 'code'
+  } else if (info.mime.match(/^text\//)) {
+    return 'text'
+  } else if (info.mime.match(/^application\/.*rtf/)) {
+    return 'text'
+  } else if (info.mime.match(/word/)) {
+    return 'text'
+  } else if (info.mime.match(/powerpoint/)) {
+    return 'presentation'
+  } else if (info.mime.match(/excel/)) {
+    return 'spreadsheet'
+  }
+  return 'file'
+}
+
+let upToDate = false
+let lastFiles = []
+
 const startSync = (url) => {
   mainWindow.webContents.send('synchronization', url)
-  if (!desktop.sync) {
-    desktop.events.on('up-to-date', () => {
+  if (desktop.sync) {
+    for (let file of lastFiles) {
+      mainWindow.webContents.send('transfer', file)
+    }
+    if (upToDate) {
       mainWindow.webContents.send('up-to-date')
+    }
+  } else {
+    desktop.events.on('up-to-date', () => {
+      upToDate = true
+      if (mainWindow) {
+        mainWindow.webContents.send('up-to-date')
+      }
     })
     desktop.events.on('transfer-started', (info) => {
-      mainWindow.webContents.send('transfer', info)
+      const file = {
+        filename: path.basename(info.path),
+        path: info.path,
+        icon: selectIcon(info),
+        size: info.size,
+        updated: +new Date()
+      }
+      upToDate = false
+      lastFiles.push(file)
+      lastFiles = lastFiles.slice(-5)
+      if (mainWindow) {
+        mainWindow.webContents.send('transfer', file)
+      }
     })
     desktop.events.on('delete-file', (info) => {
-      mainWindow.webContents.send('delete-file', info)
+      const file = {
+        filename: path.basename(info.path),
+        path: info.path,
+        icon: '',
+        size: 0,
+        updated: 0
+      }
+      lastFiles = lastFiles.filter((f) => f.path !== file.path)
+      if (mainWindow) {
+        mainWindow.webContents.send('delete-file', file)
+      }
     })
     desktop.synchronize('full', (err) => { console.error(err) })
   }
@@ -63,24 +126,27 @@ const createWindow = () => {
   })
 }
 
-app.on('ready', () => {
-  createWindow()
-  tray = new electron.Tray(`${__dirname}/images/cozystatus-idle.png`)
-  const menu = electron.Menu.buildFromTemplate([
-    { label: 'Quit', click: app.quit }
-  ])
-  tray.setContextMenu(menu)
-})
-
-app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
+const showWindow = () => {
   if (mainWindow) {
     mainWindow.focus()
   } else {
     createWindow()
   }
+}
+
+app.on('ready', () => {
+  createWindow()
+  tray = new electron.Tray(`${__dirname}/images/cozystatus-idle.png`)
+  const menu = electron.Menu.buildFromTemplate([
+    { label: 'Show', click: showWindow },
+    { label: 'Quit', click: app.quit }
+  ])
+  tray.setContextMenu(menu)
 })
+
+// On OS X it's common to re-create a window in the app when the
+// dock icon is clicked and there are no other windows open.
+app.on('activate', showWindow)
 
 // Glue code between cozy-desktop lib and the renderer process
 ipcMain.on('ping-cozy', (event, url) => {
