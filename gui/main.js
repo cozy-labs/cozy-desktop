@@ -5,7 +5,7 @@ const Desktop = require('cozy-desktop')
 const electron = require('electron')
 const path = require('path')
 
-const {app, BrowserWindow, dialog, ipcMain} = electron
+const {app, BrowserWindow, dialog, ipcMain, shell} = electron
 const desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
 
 // Use a fake window to keep the application running when the main window is
@@ -29,6 +29,36 @@ const windowOptions = {
   closable: false
 }
 
+const showWindow = () => {
+  if (mainWindow) {
+    mainWindow.focus()
+  } else {
+    createWindow()
+  }
+}
+
+const goToTab = (tab) => {
+  const alreadyShown = !!mainWindow
+  showWindow()
+  if (alreadyShown) {
+    mainWindow.webContents.send('go-to-tab', tab)
+  } else {
+    mainWindow.webContents.once('dom-ready', () => {
+      mainWindow.webContents.send('go-to-tab', tab)
+    })
+  }
+}
+
+const goToMyCozy = () => {
+  const device = desktop.config.getDevice()
+  shell.openExternal(device.url)
+}
+
+const openCozyFolder = () => {
+  const device = desktop.config.getDevice()
+  shell.openItem(device.path)
+}
+
 const updateState = (newState, filename) => {
   state = newState
   let statusLabel = ''
@@ -44,6 +74,9 @@ const updateState = (newState, filename) => {
   }
   const menu = electron.Menu.buildFromTemplate([
     { label: statusLabel, enabled: false },
+    { type: 'separator' },
+    { label: 'Open Cozy folder', click: openCozyFolder },
+    { label: 'Go to my Cozy', click: goToMyCozy },
     { type: 'separator' },
     { label: 'Help', click: goToTab.bind(null, 'help') },
     { label: 'Settings', click: goToTab.bind(null, 'settings') },
@@ -147,26 +180,6 @@ const createWindow = () => {
       startSync(device.url)
     }
   })
-}
-
-const showWindow = () => {
-  if (mainWindow) {
-    mainWindow.focus()
-  } else {
-    createWindow()
-  }
-}
-
-const goToTab = (tab) => {
-  const alreadyShown = !!mainWindow
-  showWindow()
-  if (alreadyShown) {
-    mainWindow.webContents.send('go-to-tab', tab)
-  } else {
-    mainWindow.webContents.once('dom-ready', () => {
-      mainWindow.webContents.send('go-to-tab', tab)
-    })
-  }
 }
 
 app.on('ready', () => {
