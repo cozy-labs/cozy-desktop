@@ -5,10 +5,7 @@ const Desktop = require('cozy-desktop')
 const electron = require('electron')
 const path = require('path')
 
-const app = electron.app
-const BrowserWindow = electron.BrowserWindow
-const dialog = electron.dialog
-const ipcMain = electron.ipcMain
+const {app, BrowserWindow, dialog, ipcMain} = electron
 const desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
 
 // Use a fake window to keep the application running when the main window is
@@ -134,11 +131,24 @@ const showWindow = () => {
   }
 }
 
+const goToTab = (tab) => {
+  const alreadyShown = !!mainWindow
+  showWindow()
+  if (alreadyShown) {
+    mainWindow.webContents.send('go-to-tab', tab)
+  } else {
+    mainWindow.webContents.once('dom-ready', () => {
+      mainWindow.webContents.send('go-to-tab', tab)
+    })
+  }
+}
+
 app.on('ready', () => {
   createWindow()
   tray = new electron.Tray(`${__dirname}/images/cozystatus-idle.png`)
   const menu = electron.Menu.buildFromTemplate([
-    { label: 'Show', click: showWindow },
+    { label: 'Help', click: goToTab.bind(null, 'help') },
+    { label: 'Settings', click: goToTab.bind(null, 'settings') },
     { label: 'Quit', click: app.quit }
   ])
   tray.setContextMenu(menu)

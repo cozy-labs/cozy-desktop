@@ -11,8 +11,9 @@ const defaultDir = path.join(path.homedir(), 'Cozy')
 const container = document.getElementById('container')
 const elmectron = Elm.embed(Elm.Main, container, {
   folder: '',
-  registration: null,
+  gototab: '',
   pong: null,
+  registration: null,
   remove: { filename: '', icon: '', path: '', size: 0, updated: 0 },
   synchonization: '',
   transfer: { filename: '', icon: '', path: '', size: 0, updated: 0 },
@@ -52,6 +53,10 @@ ipcRenderer.on('synchronization', (event, url) => {
 })
 elmectron.ports.startSync.subscribe((folder) => {
   ipcRenderer.send('start-sync', folder)
+})
+
+ipcRenderer.on('go-to-tab', (event, tab) => {
+  elmectron.ports.gototab.send(tab)
 })
 
 ipcRenderer.on('unlinked', (event) => {
