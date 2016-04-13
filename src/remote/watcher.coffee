@@ -1,6 +1,7 @@
 async = require 'async'
 clone = require 'lodash.clone'
 path  = require 'path'
+filterSDK = require('cozy-device-sdk').filteredReplication
 log   = require('printit')
     prefix: 'Remote watcher'
     date: true
@@ -11,7 +12,7 @@ log   = require('printit')
 # TODO add comments
 # TODO refactor unit tests
 class RemoteWatcher
-    constructor: (@couch, @prep, @pouch) ->
+    constructor: (@couch, @prep, @pouch, @deviceName) ->
         @side = 'remote'
         @errors  = 0
         @pending = 0
@@ -78,8 +79,7 @@ class RemoteWatcher
                         @whenReady callback
             else
                 @changes = @couch.client.changes
-                    filter: (doc) ->
-                        doc.docType?.toLowerCase() in ['file', 'folder']
+                    filter: filterSDK.getFilterName @deviceName
                     live: options.live
                     retry: true
                     since: seq
