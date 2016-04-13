@@ -108,7 +108,7 @@ class Remote
             name: name
             creationDate: local.creationDate
             lastModification: local.lastModification
-        for field in ['checksum', 'size', 'class', 'mime', 'tags']
+        for field in ['checksum', 'size', 'class', 'mime', 'tags', 'localPath']
             doc[field] = local[field] if local[field]
         doc.executable = true if local.executable
         if remote

@@ -71,6 +71,7 @@ describe "RemoteWatcher Tests", ->
                 name: 'file-5'
                 checksum: '9999999999999999999999999999999999999999'
                 tags: []
+                localPath: '/storage/DCIM/IMG_123.jpg'
                 binary:
                     file:
                         id: '1234'
@@ -85,6 +86,7 @@ describe "RemoteWatcher Tests", ->
                     docType: 'file'
                     checksum: doc.checksum
                     tags: doc.tags
+                    localPath: doc.localPath
                     remote:
                         _id: doc._id
                         _rev: doc._rev
