@@ -31,6 +31,7 @@ describe 'Merge', ->
                 creationDate: new Date
                 lastModification: new Date
                 tags: ['courge', 'quux']
+                localPath: '/storage/DCIM/IMG_123.jpg'
             @merge.addFile @side, doc, (err) =>
                 should.not.exist err
                 @pouch.db.get doc._id, (err, res) ->
@@ -243,6 +244,7 @@ describe 'Merge', ->
                     should.not.exist err
                     @pouch.db.get doc._id, (err, res) ->
                         should.not.exist err
+                        delete doc.localPath
                         doc.creationDate = doc.creationDate.toISOString()
                         res.should.have.properties doc
                         should.exist res.creationDate

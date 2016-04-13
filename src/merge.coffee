@@ -131,15 +131,22 @@ class Merge
     addFile: (side, doc, callback) ->
         @pouch.db.get doc._id, (err, file) =>
             @markSide side, doc, file
+            hasSameBinary = false
+            if file
+                hasSameBinary = @sameBinary file, doc
+                # Photos uploaded by cozy-mobile have no checksum
+                # but we should preserve metadata like tags
+                hasSameBinary or= file.remote and not file.checksum
             if file?.docType is 'folder'
                 @resolveConflict side, doc, callback
-            else if file and @sameBinary file, doc
-                doc._rev = file._rev
-                doc.size   ?= file.size
-                doc.class  ?= file.class
-                doc.mime   ?= file.mime
-                doc.tags   ?= file.tags or []
-                doc.remote ?= file.remote
+            else if hasSameBinary
+                doc._rev       = file._rev
+                doc.size      ?= file.size
+                doc.class     ?= file.class
+                doc.mime      ?= file.mime
+                doc.tags      ?= file.tags or []
+                doc.remote    ?= file.remote
+                doc.localPath ?= file.localPath
                 if @sameFile file, doc
                     callback null
                 else
@@ -179,15 +186,16 @@ class Merge
             if file?.docType is 'folder'
                 callback new Error "Can't resolve this conflict!"
             else if file
-                doc._rev = file._rev
-                doc.tags ?= file.tags or []
+                doc._rev    = file._rev
+                doc.tags   ?= file.tags or []
                 doc.remote ?= file.remote
                 # Preserve the creation date even if the file system lost it!
                 doc.creationDate = file.creationDate
                 if @sameBinary file, doc
-                    doc.size  ?= file.size
-                    doc.class ?= file.class
-                    doc.mime  ?= file.mime
+                    doc.size      ?= file.size
+                    doc.class     ?= file.class
+                    doc.mime      ?= file.mime
+                    doc.localPath ?= file.localPath
                 if @sameFile file, doc
                     callback null
                 else
@@ -205,10 +213,10 @@ class Merge
             if folder?.docType is 'file'
                 @resolveConflict side, doc, callback
             else if folder
-                doc._rev = folder._rev
-                doc.tags ?= folder.tags or []
+                doc._rev          = folder._rev
+                doc.tags         ?= folder.tags or []
                 doc.creationDate ?= folder.creationDate
-                doc.remote ?= folder.remote
+                doc.remote       ?= folder.remote
                 if @sameFolder folder, doc
                     callback null
                 else
@@ -230,6 +238,7 @@ class Merge
                 doc.class        ?= was.class
                 doc.mime         ?= was.mime
                 doc.tags         ?= was.tags or []
+                doc.localPath    ?= was.localPath
                 was.moveTo        = doc._id
                 was._deleted      = true
                 delete was.errors

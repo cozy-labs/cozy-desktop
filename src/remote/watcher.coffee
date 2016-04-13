@@ -164,7 +164,7 @@ class RemoteWatcher
             doc.remote.binary =
                 _id:  remote.binary.file.id
                 _rev: remote.binary.file.rev
-        for field in ['checksum', 'size', 'class', 'mime', 'tags']
+        for field in ['checksum', 'size', 'class', 'mime', 'tags', 'localPath']
             doc[field] = remote[field] if remote[field]
         return doc
 
