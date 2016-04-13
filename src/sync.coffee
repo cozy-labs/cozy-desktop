@@ -138,7 +138,7 @@ class Sync
         (err) =>
             if err
                 log.error err
-                @updateErrors change.doc, callback
+                @updateErrors change, callback
             else
                 log.debug "Applied #{change.seq}"
                 @pouch.setLocalSeq change.seq, (err) =>
@@ -149,13 +149,18 @@ class Sync
                         @updateRevs change.doc, side, callback
 
     # Increment the counter of errors for this document
-    updateErrors: (doc, callback) ->
+    updateErrors: (change, callback) ->
+        doc = change.doc
         doc.errors = (doc.errors or 0) + 1
         # Don't try more than 10 times for the same operation
         return callback() if doc.errors >= 10
-        @pouch.db.put doc, (err) ->
-            # It's not important if the number of errors can't be saved
-            log.debug err if err
+        @pouch.db.put doc, (err) =>
+            # If the doc can't be saved, it's because of a new revision.
+            # So, we can skip this revision
+            if err
+                log.debug err
+                log.debug "Ignored #{change.seq}"
+                @pouch.setLocalSeq change.seq, callback
             # The sync error may be due to the remote cozy being overloaded.
             # So, it's better to wait a bit before trying the next operation.
             setTimeout callback, 3000
