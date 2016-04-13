@@ -1,11 +1,11 @@
-async    = require 'async'
-fs       = require 'fs'
-os       = require 'os'
-path     = require 'path-extra'
-readdirp = require 'readdirp'
-url      = require 'url'
+async     = require 'async'
+fs        = require 'fs'
+os        = require 'os'
+path      = require 'path-extra'
+readdirp  = require 'readdirp'
+url       = require 'url'
 filterSDK = require('cozy-device-sdk').filteredReplication
-log      = require('printit')
+log       = require('printit')
     prefix: 'Cozy Desktop  '
     date: true
 
@@ -80,7 +80,7 @@ class App
         unless parsed.protocol in ['http:', 'https:'] and parsed.hostname
             err = new Error "Your URL looks invalid: #{cozyUrl}"
             log.warn err
-            callback? err
+            callback err
             return
         deviceName ?= os.hostname() or 'desktop'
         @askPassword (err, password, next) ->
@@ -89,7 +89,11 @@ class App
                 deviceName: deviceName
                 password: password
             Devices.registerDeviceSafe options, (err, credentials) ->
-                callback err, credentials
+                return callback err if err
+                config = file: true
+                setDesignDoc = filterSDK.setDesignDoc.bind filterSDK
+                setDesignDoc cozyUrl, deviceName, password, config, (err) ->
+                    callback err, credentials
 
 
     # Save the config with all the informations for synchonization
@@ -105,8 +109,8 @@ class App
 
 
     # Register current device to remote Cozy and then save related informations
-    # to the config file
-    addRemote: (cozyUrl, syncPath, deviceName, callback = ->) =>
+    # to the config file (used by CLI, not GUI)
+    addRemote: (cozyUrl, syncPath, deviceName, callback) =>
         @registerRemote cozyUrl, deviceName, (err, credentials) =>
             if err
                 log.error 'An error occured while registering your device.'
@@ -120,14 +124,11 @@ class App
                     log.error err
                     if parsed.protocol is 'http:'
                         log.warn 'Did you try with an httpS URL?'
-                callback err
             else
                 deviceName = credentials.deviceName
                 password   = credentials.password
                 @saveConfig cozyUrl, syncPath, deviceName, password
-                config = file: true
-                filterSDK.setDesignDoc cozyUrl, deviceName, password, config, \
-                    callback
+            callback? err
 
 
     # Unregister current device from remote Cozy and then remove remote from
