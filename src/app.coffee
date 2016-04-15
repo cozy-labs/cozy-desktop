@@ -83,7 +83,7 @@ class App
             callback err
             return
         deviceName ?= os.hostname() or 'desktop'
-        @askPassword (err, password, next) ->
+        @askPassword (err, password) ->
             options =
                 url: cozyUrl
                 deviceName: deviceName
@@ -91,8 +91,10 @@ class App
             Devices.registerDeviceSafe options, (err, credentials) ->
                 return callback err if err
                 config = file: true
+                log.debug 'setDesignDoc', cozyUrl, deviceName, config
                 setDesignDoc = filterSDK.setDesignDoc.bind filterSDK
                 setDesignDoc cozyUrl, deviceName, password, config, (err) ->
+                    log.debug 'arguments'
                     callback err, credentials
 
 
@@ -128,7 +130,7 @@ class App
                 deviceName = credentials.deviceName
                 password   = credentials.password
                 @saveConfig cozyUrl, syncPath, deviceName, password
-            callback? err
+            callback? err, credentials
 
 
     # Unregister current device from remote Cozy and then remove remote from

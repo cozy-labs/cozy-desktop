@@ -12,6 +12,7 @@ env:
         - CXX=g++-4.8
         - COZY_DESKTOP_DIR=tmp
         - NODE_ENV=test
+        - DEBUG=true
 services:
     - couchdb
 cache:
@@ -37,7 +38,9 @@ before_install:
     - npm install forever coffee-script -g
     - git clone git://github.com/cozy/cozy-data-system.git
     - cd cozy-data-system
+    - git checkout origin/development
     - npm install #data-system
+    - npm run build
     - pwd
     - NAME=data-system TOKEN=token forever start -o forever-ds.log -e forever-ds-err.log build/server.js
     - sleep 5
@@ -85,6 +88,3 @@ after_failure:
     - curl -v http://localhost:9101/
     - curl -v http://localhost:9104/
     - curl -v http://localhost:9121/
-    - cat tmp/one.log
-    - cat tmp/two.log
-    - cat tmp/operations.log

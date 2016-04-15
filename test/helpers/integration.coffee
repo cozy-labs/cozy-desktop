@@ -43,11 +43,17 @@ module.exports.registerDevice = (done) ->
     @app.askPassword = (callback) ->
         callback null, helpers.password
     helpers.deviceName = "test-#{faker.internet.userName()}"
-    @app.addRemote helpers.url, @basePath, helpers.deviceName, (err) ->
+    console.log "deviceName =", helpers.deviceName
+    @app.addRemote helpers.url, @basePath, helpers.deviceName, (err, credentials) ->
         should.not.exist err
+        helpers.deviceName = credentials.deviceName
+        console.log "credentials =", credentials
         # For debug:
         # PouchDB.debug.enable 'pouchdb:*'
-        done()
+        filterSDK = require('cozy-device-sdk').filteredReplication
+        filterSDK.getDesignDoc helpers.url, helpers.deviceName, credentials.password, (err, doc) ->
+            console.log 'getDesignDoc', err, doc
+            done()
 
 
 module.exports.clean = (done) ->
