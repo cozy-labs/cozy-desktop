@@ -48,7 +48,9 @@ before_install:
     - cd
     - git clone git://github.com/cozy/cozy-proxy.git
     - cd cozy-proxy
-    - npm install
+    - git checkout origin/development
+    - npm install #proxy
+    - npm run build
     - pwd
     - NAME=proxy TOKEN=token forever start -o forever-proxy.log -e forever-proxy-err.log build/server.js
     - sleep 5
