@@ -1,5 +1,8 @@
 {basename,dirname} = require('path')
 matcher            = require('micromatch').matcher
+log     = require('printit')
+    prefix: 'Ignore        '
+    date: true
 
 # Cozy-desktop can ignore some files and folders from a list of patterns in the
 # cozyignore file. This class can be used to know if a file/folder is ignored.
