@@ -329,7 +329,7 @@ describe "Sync", ->
             @pouch.db.put doc, (err, infos) =>
                 should.not.exist err
                 doc._rev = infos.rev
-                @sync.updateErrors doc, =>
+                @sync.updateErrors doc: doc, =>
                     @pouch.db.get doc._id, (err, actual) ->
                         should.not.exist err
                         actual.errors.should.equal 1
@@ -342,7 +342,7 @@ describe "Sync", ->
             @pouch.db.put doc, (err, infos) =>
                 should.not.exist err
                 doc._rev = infos.rev
-                @sync.updateErrors doc, =>
+                @sync.updateErrors doc: doc, =>
                     @pouch.db.get doc._id, (err, actual) ->
                         should.not.exist err
                         actual.errors.should.equal 4
@@ -355,7 +355,7 @@ describe "Sync", ->
             @pouch.db.put doc, (err, infos) =>
                 should.not.exist err
                 doc._rev = infos.rev
-                @sync.updateErrors doc, =>
+                @sync.updateErrors doc: doc, =>
                     @pouch.db.get doc._id, (err, actual) ->
                         should.not.exist err
                         actual.errors.should.equal 10
