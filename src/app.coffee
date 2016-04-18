@@ -87,13 +87,11 @@ class App
             register = device.registerDeviceSafe
             register cozyUrl, deviceName, password, (err, credentials) ->
                 return callback err if err
-                config = file: true
-                deviceName = credentials.deviceName
-                password = credentials.password
-                log.debug 'setDesignDoc', cozyUrl, deviceName, config
+                config       = file: true
+                deviceName   = credentials.deviceName
+                password     = credentials.password
                 setDesignDoc = filterSDK.setDesignDoc.bind filterSDK
                 setDesignDoc cozyUrl, deviceName, password, config, (err) ->
-                    log.debug arguments
                     callback err, credentials
 
 
@@ -135,12 +133,10 @@ class App
     # Unregister current device from remote Cozy and then remove remote from
     # the config file
     removeRemote: (deviceName, callback) =>
-        cozyUrl = @config.getDevice(deviceName).url
-        async.waterfall [
-            @askPassword,
-            (password, next) ->
-                device.unregisterDevice cozyUrl, deviceName, password, next
-        ], (err) =>
+        conf     = @config.getDevice()
+        cozyUrl  = conf.url
+        password = conf.password
+        device.unregisterDevice cozyUrl, deviceName, password, (err) =>
             if err
                 log.error err
                 log.error 'An error occured while unregistering your device.'
@@ -249,8 +245,11 @@ class App
     # Get useful information about the disk space
     # (total, used and left) on the remote Cozy
     getDiskSpace: (callback) =>
-        {url, deviceName, password} = @config.getDevice
-        device.getDiskSpace url, deviceName, password, callback
+        conf       = @config.getDevice()
+        cozyUrl    = conf.url
+        deviceName = conf.deviceName
+        password   = conf.password
+        device.getDiskSpace cozyUrl, deviceName, password, callback
 
 
 module.exports = App

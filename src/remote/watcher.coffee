@@ -78,8 +78,6 @@ class RemoteWatcher
                     else
                         @whenReady callback
             else
-                log.debug 'deviceName', @deviceName
-                log.debug 'getFilterName', filterSDK.getFilterName(@deviceName)
                 @changes = @couch.client.changes
                     filter: filterSDK.getFilterName @deviceName
                     live: options.live

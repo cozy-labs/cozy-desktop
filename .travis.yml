@@ -75,7 +75,7 @@ before_install:
 script:
     - npm run build
     - npm run lint
-    - mocha test/integration/cancel.coffee #npm run test
+    - npm run test
 
 after_failure:
     - pwd
