@@ -32,7 +32,7 @@ describe "device", ->
                 should.exist err
                 done()
 
-    devicePassword = ''
+    devicePasswords = []
 
     describe 'registerDeviceSafe', ->
         it 'gives an error when the password is invalid', (done) ->
@@ -49,7 +49,7 @@ describe "device", ->
                 should.exist res.password
                 should.exist res.deviceName
                 res.deviceName.should.equal Cozy.deviceName
-                devicePassword = res.password
+                devicePasswords.push res.password
                 done()
 
         it 'register a device with a suffix when it already exists', (done) ->
@@ -61,6 +61,7 @@ describe "device", ->
                 should.exist res.deviceName
                 res.deviceName.should.not.equal Cozy.deviceName
                 res.deviceName.should.match /-2$/
+                devicePasswords.push res.password
                 done()
 
         it 'register a device with a suffix when it already exists', (done) ->
@@ -72,44 +73,48 @@ describe "device", ->
                 should.exist res.deviceName
                 res.deviceName.should.not.equal Cozy.deviceName
                 res.deviceName.should.match /-3$/
-                done()
-
-    describe 'getDiskSpace', ->
-        it 'gets informations about disk space', (done) ->
-            diskSpace = device.getDiskSpace
-            diskSpace Cozy.url, Cozy.deviceName, Cozy.password, (err, body) ->
-                should.not.exist err
-                should.exist body
-                should.exist body.diskSpace
-                should.exist body.diskSpace.totalDiskSpace
-                should.exist body.diskSpace.freeDiskSpace
-                should.exist body.diskSpace.usedDiskSpace
+                devicePasswords.push res.password
                 done()
 
     describe 'unregisterDevice', ->
         it 'gives an error when the password is invalid', (done) ->
             unregister = device.unregisterDevice
-            unregister Cozy.url, 'xxxxxxxx', Cozy.deviceName, (err) ->
+            unregister Cozy.url, Cozy.deviceName, 'xxxxxxxx', (err) ->
                 should.exist err
-                err.message.should.equal 'Bad credentials'
+                if err.message is 'Bad credentials'
+                    err.message.should.equal 'Bad credentials'
+                else
+                    err.message.should.equal 'Request unauthorized'
                 done()
 
         it 'unregister a device', (done) ->
             unregister = device.unregisterDevice
-            unregister Cozy.url, devicePassword, Cozy.deviceName, (err) ->
+            unregister Cozy.url, Cozy.deviceName, devicePasswords[0], (err) ->
                 should.not.exist err
                 done()
 
         it 'unregister a device (bis)', (done) ->
             deviceName = "#{Cozy.deviceName}-2"
             unregister = device.unregisterDevice
-            unregister Cozy.url, Cozy.password, deviceName, (err) ->
+            unregister Cozy.url, deviceName, devicePasswords[1], (err) ->
                 should.not.exist err
                 done()
 
         it 'unregister a device (ter)', (done) ->
             deviceName = "#{Cozy.deviceName}-3"
             unregister = device.unregisterDevice
-            unregister Cozy.url, Cozy.password, deviceName, (err) ->
+            unregister Cozy.url, deviceName, devicePasswords[2], (err) ->
                 should.not.exist err
+                done()
+
+    describe 'getDiskSpace', ->
+        it 'gets informations about disk space', (done) ->
+            diskSpace = device.getDiskSpace
+            diskSpace Cozy.url, 'owner', Cozy.password, (err, body) ->
+                should.not.exist err
+                should.exist body
+                should.exist body.diskSpace
+                should.exist body.diskSpace.totalDiskSpace
+                should.exist body.diskSpace.freeDiskSpace
+                should.exist body.diskSpace.usedDiskSpace
                 done()
