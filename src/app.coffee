@@ -89,10 +89,11 @@ class App
                 return callback err if err
                 config = file: true
                 deviceName = credentials.deviceName
+                password = credentials.password
                 log.debug 'setDesignDoc', cozyUrl, deviceName, config
                 setDesignDoc = filterSDK.setDesignDoc.bind filterSDK
                 setDesignDoc cozyUrl, deviceName, password, config, (err) ->
-                    log.debug 'arguments'
+                    log.debug arguments
                     callback err, credentials
 
 
