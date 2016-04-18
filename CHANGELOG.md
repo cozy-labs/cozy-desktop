@@ -1,3 +1,10 @@
+## 0.10.0 - 2016-04-18
+
+- Show the recent activities in the GUI
+- Use filters for faster replication
+- Add progress bar for download and uploads in CLI
+- Fix some bugs with conflicts when cozy-desktop is stopped
+
 ## 0.9.0 - 2016-04-04
 
 * Add a new GUI based on Electron
