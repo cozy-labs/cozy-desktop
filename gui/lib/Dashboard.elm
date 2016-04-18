@@ -67,7 +67,7 @@ update action model =
         files' =
           file
             :: (List.filter (samePath file >> not) model.files)
-            |> List.take 5
+            |> List.take 20
 
         status' =
           Sync file.filename

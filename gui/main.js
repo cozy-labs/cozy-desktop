@@ -24,9 +24,7 @@ let lastFiles = []
 const windowOptions = {
   width: 1024,
   height: 768,
-  icon: `${__dirname}/images/icon.png`,
-  skipTaskbar: true,
-  closable: false
+  icon: `${__dirname}/images/icon.png`
 }
 
 const showWindow = () => {
@@ -141,7 +139,7 @@ const startSync = (url) => {
       }
       updateState('syncing', file.filename)
       lastFiles.push(file)
-      lastFiles = lastFiles.slice(-5)
+      lastFiles = lastFiles.slice(-20)
       if (mainWindow) {
         mainWindow.webContents.send('transfer', file)
       }
@@ -189,6 +187,7 @@ app.on('ready', () => {
     { label: 'Quit application', click: app.quit }
   ])
   tray.setContextMenu(menu)
+  tray.on('click', showWindow)
 })
 
 // On OS X it's common to re-create a window in the app when the

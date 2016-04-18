@@ -6,7 +6,7 @@
 .two-panes__menu
   display flex
   flex-direction column
-  width 250px
+  width 12em
   padding-right .5em
   background-color grey-01
   font-size 1.25rem
@@ -38,6 +38,7 @@
 
 .two-panes__content
   flex 1
+  overflow hidden
   padding 2em
   color grey-06
 
@@ -50,7 +51,7 @@
 
   .btn
     display inline-block
-    width 300px
+    width 15em
     color blue
     background-color grey-01
     padding .8em
@@ -130,6 +131,8 @@
       &:not(:last-child)
         border-bottom 1px solid grey-03
   .file-name
+    overflow hidden
+    text-overflow ellipsis
     margin .2em 0
   .file-size::after
     content ' • '
