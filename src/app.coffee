@@ -242,14 +242,4 @@ class App
         @pouch.db.query query, include_docs: true, callback
 
 
-    # Get useful information about the disk space
-    # (total, used and left) on the remote Cozy
-    getDiskSpace: (callback) =>
-        conf       = @config.getDevice()
-        cozyUrl    = conf.url
-        deviceName = conf.deviceName
-        password   = conf.password
-        device.getDiskSpace cozyUrl, deviceName, password, callback
-
-
 module.exports = App

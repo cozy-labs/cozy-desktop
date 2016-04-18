@@ -106,15 +106,3 @@ describe "device", ->
             unregister Cozy.url, deviceName, devicePasswords[2], (err) ->
                 should.not.exist err
                 done()
-
-    describe 'getDiskSpace', ->
-        it 'gets informations about disk space', (done) ->
-            diskSpace = device.getDiskSpace
-            diskSpace Cozy.url, 'owner', Cozy.password, (err, body) ->
-                should.not.exist err
-                should.exist body
-                should.exist body.diskSpace
-                should.exist body.diskSpace.totalDiskSpace
-                should.exist body.diskSpace.freeDiskSpace
-                should.exist body.diskSpace.usedDiskSpace
-                done()
