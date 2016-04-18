@@ -42,9 +42,10 @@ module.exports.registerDevice = (done) ->
     @app = new App @basePath
     @app.askPassword = (callback) ->
         callback null, helpers.password
-    helpers.deviceName = "test-#{faker.internet.userName()}"
-    @app.addRemote helpers.url, @basePath, helpers.deviceName, (err) ->
+    deviceName = helpers.deviceName = "test-#{faker.internet.userName()}"
+    @app.addRemote helpers.url, @basePath, deviceName, (err, credentials) ->
         should.not.exist err
+        helpers.deviceName = credentials.deviceName
         # For debug:
         # PouchDB.debug.enable 'pouchdb:*'
         done()

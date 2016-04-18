@@ -5,6 +5,7 @@ path      = require 'path-extra'
 readdirp  = require 'readdirp'
 url       = require 'url'
 filterSDK = require('cozy-device-sdk').filteredReplication
+device    = require('cozy-device-sdk').device
 log       = require('printit')
     prefix: 'Cozy Desktop  '
     date: true
@@ -12,7 +13,6 @@ log       = require('printit')
 EventEmitter = require('events').EventEmitter
 
 Config  = require './config'
-Devices = require './devices'
 Pouch   = require './pouch'
 Ignore  = require './ignore'
 Merge   = require './merge'
@@ -69,7 +69,7 @@ class App
             callback? err
             return
         cozyUrl = url.format parsed
-        Devices.pingCozy cozyUrl, (err) ->
+        device.pingCozy cozyUrl, (err) ->
             callback err, cozyUrl
 
 
@@ -83,14 +83,13 @@ class App
             callback err
             return
         deviceName ?= os.hostname() or 'desktop'
-        @askPassword (err, password, next) ->
-            options =
-                url: cozyUrl
-                deviceName: deviceName
-                password: password
-            Devices.registerDeviceSafe options, (err, credentials) ->
+        @askPassword (err, password) ->
+            register = device.registerDeviceSafe
+            register cozyUrl, deviceName, password, (err, credentials) ->
                 return callback err if err
-                config = file: true
+                config       = file: true
+                deviceName   = credentials.deviceName
+                password     = credentials.password
                 setDesignDoc = filterSDK.setDesignDoc.bind filterSDK
                 setDesignDoc cozyUrl, deviceName, password, config, (err) ->
                     callback err, credentials
@@ -128,19 +127,16 @@ class App
                 deviceName = credentials.deviceName
                 password   = credentials.password
                 @saveConfig cozyUrl, syncPath, deviceName, password
-            callback? err
+            callback? err, credentials
 
 
     # Unregister current device from remote Cozy and then remove remote from
     # the config file
     removeRemote: (deviceName, callback) =>
-        device = @config.getDevice deviceName
-        async.waterfall [
-            @askPassword,
-            (password, next) ->
-                device.password = password
-                Devices.unregisterDevice device, next
-        ], (err) =>
+        conf     = @config.getDevice()
+        cozyUrl  = conf.url
+        password = conf.password
+        device.unregisterDevice cozyUrl, deviceName, password, (err) =>
             if err
                 log.error err
                 log.error 'An error occured while unregistering your device.'
@@ -190,8 +186,8 @@ class App
     # Start database sync process and setup file change watcher
     synchronize: (mode, callback) =>
         @instanciate()
-        device = @config.getDevice()
-        if device.deviceName? and device.url? and device.path?
+        conf = @config.getDevice()
+        if conf.deviceName? and conf.url? and conf.path?
             @startSync mode, callback
         else
             log.error 'No configuration found, please run add-remote-cozy' +
@@ -244,13 +240,6 @@ class App
     # Return all docs for a given query
     query: (query, callback) =>
         @pouch.db.query query, include_docs: true, callback
-
-
-    # Get useful information about the disk space
-    # (total, used and left) on the remote Cozy
-    getDiskSpace: (callback) =>
-        device = @config.getDevice
-        Devices.getDiskSpace device, callback
 
 
 module.exports = App
