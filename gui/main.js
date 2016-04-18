@@ -139,7 +139,7 @@ const startSync = (url) => {
       }
       updateState('syncing', file.filename)
       lastFiles.push(file)
-      lastFiles = lastFiles.slice(-5)
+      lastFiles = lastFiles.slice(-20)
       if (mainWindow) {
         mainWindow.webContents.send('transfer', file)
       }
