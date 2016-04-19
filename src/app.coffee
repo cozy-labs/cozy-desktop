@@ -6,10 +6,12 @@ readdirp  = require 'readdirp'
 url       = require 'url'
 filterSDK = require('cozy-device-sdk').filteredReplication
 device    = require('cozy-device-sdk').device
-log       = require('printit')
+printit   = require 'printit'
+log       = printit
     prefix: 'Cozy Desktop  '
     date: true
 
+Console      = require('console').Console
 EventEmitter = require('events').EventEmitter
 
 Config  = require './config'
@@ -49,6 +51,12 @@ class App
     # callback is a function that takes two parameters: error and a boolean
     askConfirmation: (callback) ->
         callback new Error('Not implemented'), null
+
+
+    # Write logs in a file, by overriding the global console
+    writeLogsTo: (@logfile) ->
+        out = fs.createWriteStream @logfile, flags: 'a+', mode: 0o0644
+        printit.console = new Console out, out
 
 
     # Parse the URL

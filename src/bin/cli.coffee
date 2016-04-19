@@ -8,9 +8,10 @@ Progress = require 'progress'
 pkg = require '../../package.json'
 App = require '../app'
 app = new App process.env.COZY_DESKTOP_DIR
+log = global.console
 
 exit = ->
-    console.log 'Exiting...'
+    log.log 'Exiting...'
     app.stopSync ->
         process.exit()
 
@@ -34,8 +35,12 @@ app.askConfirmation = (callback) ->
         callback err, response.toUpperCase() is 'Y'
 
 sync = (mode, args) ->
-    console.log "Cozy-desktop v#{pkg.version} started (PID: #{process.pid})"
+    log.log "Cozy-desktop v#{pkg.version} started (PID: #{process.pid})"
+    if args.logfile?
+        app.writeLogsTo args.logfile
     if app.config.setInsecure args.insecure?
+        app.events.on 'up-to-date', ->
+            log.log 'Your cozy is up to date!'
         app.events.on 'transfer-started', (info) ->
             what = if info.way is 'up' then 'Uploading' else 'Downloading'
             filename = path.basename info.path
@@ -52,8 +57,8 @@ sync = (mode, args) ->
         app.synchronize mode, (err) ->
             process.exit 1 if err
     else
-        console.log 'Your configuration file seems invalid.'
-        console.log 'Have you added a remote cozy?'
+        log.log 'Your configuration file seems invalid.'
+        log.log 'Have you added a remote cozy?'
         process.exit 1
 
 
@@ -75,12 +80,13 @@ program
     .command 'sync'
     .description 'Synchronize the local filesystem and the remote cozy'
     .option('-k, --insecure', 'Turn off HTTPS certificate verification.')
+    .option('-l, --logfile [logfile]', 'Write logs to this file')
     .action (args) ->
         try
             sync 'full', args
         catch err
             throw err unless err.message is 'Incompatible mode'
-            console.log """
+            log.log """
             Full sync from a mount point already used otherwise is not supported
 
             You should create a new mount point and use COZY_DESKTOP_DIR.
@@ -91,12 +97,13 @@ program
     .command 'pull'
     .description 'Pull files & folders from a remote cozy to local filesystem'
     .option('-k, --insecure', 'Turn off HTTPS certificate verification.')
+    .option('-l, --logfile [logfile]', 'Write logs to this file')
     .action (args) ->
         try
             sync 'pull', args
         catch err
             throw err unless err.message is 'Incompatible mode'
-            console.log """
+            log.log """
             Pulling from a mount point already used for pushing is not supported
 
             You should create a new mount point and use COZY_DESKTOP_DIR.
@@ -107,11 +114,12 @@ program
     .command 'push'
     .description 'Push files & folders from local filesystem to the remote cozy'
     .option('-k, --insecure', 'Turn off HTTPS certificate verification.')
+    .option('-l, --logfile [logfile]', 'Write logs to this file')
     .action (args) ->
         try
             sync 'push', args
         catch err
-            console.log """
+            log.log """
             Pushing from a mount point already used for pulling is not supported
 
             You should create a new mount point and use COZY_DESKTOP_DIR.
@@ -124,7 +132,7 @@ program
     .option('-i, --ignored', 'List ignored files')
     .action (args) ->
         app.walkFiles args, (file) ->
-            console.log file
+            log.log file
 
 program
     .command 'reset-database'
@@ -138,7 +146,7 @@ program
         app.allDocs (err, results) ->
             unless err
                 for row in results.rows
-                    console.log row.doc
+                    log.log row.doc
 
 program
     .command 'display-query <query>'
@@ -147,19 +155,19 @@ program
         app.query query, (err, results) ->
             unless err
                 for row in results.rows
-                    console.log row.doc
+                    log.log row.doc
 
 program
     .command 'display-config'
     .description 'Display device configuration and exit'
     .action ->
-        console.log JSON.stringify app.config.devices, null, 2
+        log.log JSON.stringify app.config.devices, null, 2
 
 program
     .command "*"
     .description "Display help message for an unknown command."
     .action ->
-        console.log 'Unknown command, run "cozy-desktop --help"' +
+        log.log 'Unknown command, run "cozy-desktop --help"' +
                  ' to know the list of available commands.'
 
 program
