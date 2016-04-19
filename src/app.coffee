@@ -55,7 +55,7 @@ class App
     parseCozyUrl: (cozyUrl) ->
         if cozyUrl.indexOf(':') is -1
             if cozyUrl.indexOf('.') is -1
-                cozyUrl += ".cozycloud.cc"
+                cozyUrl += '.cozycloud.cc'
             cozyUrl = "https://#{cozyUrl}"
         return url.parse cozyUrl
 
@@ -64,7 +64,7 @@ class App
     pingCozy: (cozyUrl, callback) =>
         parsed = @parseCozyUrl cozyUrl
         unless parsed.protocol in ['http:', 'https:'] and parsed.hostname
-            err = new Error "Your URL looks invalid"
+            err = new Error 'Your URL looks invalid'
             log.warn err
             callback? err
             return
@@ -118,7 +118,7 @@ class App
                     log.warn 'Are you sure the domain is OK?'
                 else if err is 'Bad credentials'
                     log.warn err
-                    log.warn "Are you sure you didn't a typo on the password?"
+                    log.warn 'Are you sure there are no typo on the password?'
                 else
                     log.error err
                     if parsed.protocol is 'http:'
@@ -126,6 +126,7 @@ class App
             else
                 deviceName = credentials.deviceName
                 password   = credentials.password
+                log.info "Device #{deviceName} has been added to #{cozyUrl}"
                 @saveConfig cozyUrl, syncPath, deviceName, password
             callback? err, credentials
 
@@ -138,8 +139,8 @@ class App
         password = conf.password
         device.unregisterDevice cozyUrl, deviceName, password, (err) =>
             if err
-                log.error err
                 log.error 'An error occured while unregistering your device.'
+                log.error err
             else
                 @config.removeRemoteCozy deviceName
                 log.info 'Current device properly removed from remote cozy.'
@@ -224,12 +225,12 @@ class App
             if err
                 log.error err
             else if ok
-                log.info "Recreates the local database..."
+                log.info 'Recreates the local database...'
                 @pouch.resetDatabase ->
-                    log.info "Database recreated"
+                    log.info 'Database recreated'
                     callback?()
             else
-                log.info "Abort!"
+                log.info 'Abort!'
 
 
     # Return the whole content of the database

@@ -74,8 +74,7 @@ program
 program
     .command 'sync'
     .description 'Synchronize the local filesystem and the remote cozy'
-    .option('-k, --insecure',
-            'Turn off HTTPS certificate verification.')
+    .option('-k, --insecure', 'Turn off HTTPS certificate verification.')
     .action (args) ->
         try
             sync 'full', args
@@ -91,8 +90,7 @@ program
 program
     .command 'pull'
     .description 'Pull files & folders from a remote cozy to local filesystem'
-    .option('-k, --insecure',
-            'Turn off HTTPS certificate verification.')
+    .option('-k, --insecure', 'Turn off HTTPS certificate verification.')
     .action (args) ->
         try
             sync 'pull', args
@@ -108,8 +106,7 @@ program
 program
     .command 'push'
     .description 'Push files & folders from local filesystem to the remote cozy'
-    .option('-k, --insecure',
-            'Turn off HTTPS certificate verification.')
+    .option('-k, --insecure', 'Turn off HTTPS certificate verification.')
     .action (args) ->
         try
             sync 'push', args

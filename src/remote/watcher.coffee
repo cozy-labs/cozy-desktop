@@ -62,7 +62,7 @@ class RemoteWatcher
                         log.error err
                     cb()
             , (err) ->
-                log.debug "#{rows.length} docs retrieved for #{model}."
+                log.info "#{rows.length} docs retrieved for #{model}."
                 callback err
 
     # Listen to the Couchdb changes feed for files and folders updates
@@ -128,7 +128,7 @@ class RemoteWatcher
     # TODO should we check was.remote._rev and doc._rev for conflict
     # like local has move file and remote overwrite it?
     onChange: (doc, callback) =>
-        log.debug doc
+        log.info "OnChange", doc
         @pouch.byRemoteId doc._id, (err, was) =>
             if err and err.status isnt 404
                 callback err
@@ -197,8 +197,7 @@ class RemoteWatcher
         (err) =>
             @pending--
             if err
-                log.error err
-                log.debug change
+                log.error err, change
             else
                 @pouch.setRemoteSeq change.seq, (err) ->
                     if err

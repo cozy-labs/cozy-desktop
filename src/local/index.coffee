@@ -161,7 +161,7 @@ class Local
             @metadataUpdater(doc)
 
         ], (err) ->
-            log.debug doc
+            log.warn "addFile failed:", err, doc if err
             fs.unlink tmpFile, ->
                 callback err
 

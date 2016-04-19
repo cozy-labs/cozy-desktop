@@ -22,7 +22,7 @@ class Pouch
     constructor: (@config) ->
         @db = new PouchDB @config.dbPath
         @db.setMaxListeners 100
-        @db.on 'error', (err) -> log.debug err
+        @db.on 'error', (err) -> log.warn err
         @updater = async.queue (task, callback) =>
             @db.get task._id, (err, doc) =>
                 if err?.status is 404
@@ -39,6 +39,7 @@ class Pouch
             fs.ensureDirSync @config.dbPath
             @db = new PouchDB @config.dbPath
             @db.setMaxListeners 100
+            @db.on 'error', (err) -> log.warn err
             @addAllViews callback
 
 
