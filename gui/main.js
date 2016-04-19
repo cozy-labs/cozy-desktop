@@ -7,6 +7,7 @@ const path = require('path')
 
 const {app, BrowserWindow, dialog, ipcMain, shell} = electron
 const desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
+desktop.writeLogsTo(path.join(desktop.basePath, '.cozy-desktop', 'logs.txt'))
 
 // Use a fake window to keep the application running when the main window is
 // closed: it runs as a service, with a tray icon if you want to quit it
@@ -272,6 +273,13 @@ ipcMain.on('unlink-cozy', (event) => {
       device = null
       event.sender.send('unlinked')
     }
+  })
+})
+
+ipcMain.on('send-mail', (event, body) => {
+  console.log('send-mail', body)
+  desktop.sendMailToSupport(body, (err) => {
+    console.log('sendMailToSupport', err)
   })
 })
 

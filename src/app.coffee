@@ -23,6 +23,16 @@ Local   = require './local'
 Remote  = require './remote'
 Sync    = require './sync'
 
+Permissions =
+    'File':
+        'description': 'Useful to synchronize your files'
+    'Folder':
+        'description': 'Useful to synchronize your folders'
+    'Binary':
+        'description': 'Useful to synchronize the content of your files'
+    'send email from user':
+        'description': 'Useful to send issues by mail to the cozy team'
+
 
 # App is the entry point for the CLI and GUI.
 # They both can do actions and be notified by events via an App instance.
@@ -93,14 +103,14 @@ class App
         deviceName ?= os.hostname() or 'desktop'
         @askPassword (err, password) ->
             register = device.registerDeviceSafe
-            register cozyUrl, deviceName, password, (err, credentials) ->
+            register cozyUrl, deviceName, password, Permissions, (err, res) ->
                 return callback err if err
                 config       = file: true
-                deviceName   = credentials.deviceName
-                password     = credentials.password
+                deviceName   = res.deviceName
+                password     = res.password
                 setDesignDoc = filterSDK.setDesignDoc.bind filterSDK
                 setDesignDoc cozyUrl, deviceName, password, config, (err) ->
-                    callback err, credentials
+                    callback err, res
 
 
     # Save the config with all the informations for synchonization
@@ -153,6 +163,25 @@ class App
                 @config.removeRemoteCozy deviceName
                 log.info 'Current device properly removed from remote cozy.'
             callback? err
+
+
+    # Send an issue by mail to the support
+    sendMailToSupport: (content, callback) ->
+        conf       = @config.getDevice()
+        cozyUrl    = conf.url
+        deviceName = conf.deviceName
+        password   = conf.password
+        mail =
+            to: 'log-desktop@cozycloud.cc'
+            subject: 'Ask support for cozy-desktop'
+            content: content
+        if @logfile
+            attachment =
+                content: fs.readFileSync @logfile, 'utf-8'
+                filename: path.basename @logfile
+                contentType: 'application/text'
+            mail.attachments = [attachment]
+        device.sendMailFromUser cozyUrl, deviceName, password, mail, callback
 
 
     # Load ignore rules
