@@ -201,6 +201,11 @@ port unlinkCozy =
   TwoPanes.unlinkCozy |> .signal
 
 
+port sendMail : Signal String
+port sendMail =
+  TwoPanes.sendMail |> .signal
+
+
 port gototab : Signal String
 port version : String
 port transfer : Signal File

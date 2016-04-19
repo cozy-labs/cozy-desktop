@@ -47,7 +47,7 @@ type alias Context =
 view : Context -> Model -> Html
 view context model =
   section
-    [ class "two-panes__content" ]
+    [ class "two-panes__content two-panes__content--account" ]
     [ h1 [] [ text "Account" ]
     , h3
         []

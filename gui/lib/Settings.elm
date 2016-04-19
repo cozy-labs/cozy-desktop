@@ -26,7 +26,7 @@ init version' =
 view : Model -> Html
 view model =
   section
-    [ class "two-panes__content" ]
+    [ class "two-panes__content two-panes__content--settings" ]
     [ h1 [] [ text "Settings" ]
     , h2 [] [ text "Version" ]
     , p

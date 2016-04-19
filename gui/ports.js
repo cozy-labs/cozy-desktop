@@ -66,6 +66,11 @@ elmectron.ports.unlinkCozy.subscribe(() => {
   ipcRenderer.send('unlink-cozy')
 })
 
+elmectron.ports.sendMail.subscribe((body) => {
+  console.log('send mail', body)
+  ipcRenderer.send('send-mail', body)
+})
+
 ipcRenderer.on('up-to-date', () => {
   elmectron.ports.updated.send([])
 })
