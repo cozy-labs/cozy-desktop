@@ -121,6 +121,7 @@ class Local
                 fs.ensureDir @tmpPath, =>
                     if existingFilePath
                         log.info "Recopy #{existingFilePath} -> #{filePath}"
+                        @events.emit 'transfer-copy', doc
                         fs.copy existingFilePath, tmpFile, next
                     else
                         @other.createReadStream doc, (err, stream) =>
@@ -219,6 +220,7 @@ class Local
                 log.error err
                 @addFile doc, callback
             else
+                @events.emit 'transfer-move', doc, old
                 callback null
 
 
@@ -267,6 +269,7 @@ class Local
     deleteFolder: (doc, callback) =>
         # For now both operations are similar
         @deleteFile doc, callback
+
 
     # Rename a file/folder to resolve a conflict
     resolveConflict: (dst, src, callback) =>
