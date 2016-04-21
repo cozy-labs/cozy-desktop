@@ -1,5 +1,5 @@
-{basename,dirname} = require('path')
-matcher            = require('micromatch').matcher
+{basename,dirname} = require 'path'
+{matcher,makeRe}   = require 'micromatch'
 
 # Cozy-desktop can ignore some files and folders from a list of patterns in the
 # cozyignore file. This class can be used to know if a file/folder is ignored.
@@ -79,6 +79,9 @@ class Ignore
             folder = true
         line = line.replace /^\\/, ''   # Remove leading escaping char
         line = line.replace /\s*$/, ''  # Remove trailing spaces
+        # Ignore case for case insensitive file-systems
+        if process.platform is 'darwin'
+            line = makeRe line, nocase: true
         pattern =
             match: matcher line, MicromatchOptions
             basename: noslash   # The pattern can match only the basename
