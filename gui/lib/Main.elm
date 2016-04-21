@@ -135,15 +135,16 @@ app =
   StartApp.start
     { init = init
     , inputs =
-        [ Signal.map (WizardAction << Wizard.pong) pong
+        [ Signal.map (TwoPanesAction << TwoPanes.Tick) everySecond
+        , Signal.map (WizardAction << Wizard.pong) pong
         , Signal.map (WizardAction << Wizard.registration) registration
         , Signal.map (WizardAction << Wizard.folderChosen) folder
         , Signal.map WizardFinished synchonization
         , Signal.map (always Unlink) unlink
-        , Signal.map (always (TwoPanesAction TwoPanes.Updated)) updated
+        , Signal.map (TwoPanesAction << TwoPanes.Mail) mail
         , Signal.map (TwoPanesAction << TwoPanes.Transfer) transfer
         , Signal.map (TwoPanesAction << TwoPanes.Remove) remove
-        , Signal.map (TwoPanesAction << TwoPanes.Tick) everySecond
+        , Signal.map (always (TwoPanesAction TwoPanes.Updated)) updated
         , Signal.map GoToTab gototab
         ]
     , update = update
@@ -201,13 +202,14 @@ port unlinkCozy =
   TwoPanes.unlinkCozy |> .signal
 
 
+port mail : Signal (Maybe String)
 port sendMail : Signal String
 port sendMail =
   TwoPanes.sendMail |> .signal
 
 
-port gototab : Signal String
-port version : String
 port transfer : Signal File
 port remove : Signal File
 port updated : Signal ()
+port gototab : Signal String
+port version : String

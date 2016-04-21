@@ -52,6 +52,8 @@ type Action
   | UnlinkCozy
   | UpdateHelp Help.Action
   | SendMail String
+  | Mail (Maybe String)
+    -- String is an error
   | Updated
   | Transfer Dashboard.File
   | Remove Dashboard.File
@@ -93,13 +95,30 @@ update action model =
 
     SendMail body ->
       let
+        help' =
+          Help.update Help.SetBusy model.help
+
         task =
           Signal.send sendMail.address body
 
         effect =
           Effects.map (always NoOp) (Effects.task task)
       in
-        ( model, effect )
+        ( { model | help = help' }, effect )
+
+    Mail (Just error) ->
+      let
+        help' =
+          Help.update (Help.SetError error) model.help
+      in
+        ( { model | help = help' }, Effects.none )
+
+    Mail Nothing ->
+      let
+        help' =
+          Help.update Help.SetSuccess model.help
+      in
+        ( { model | help = help' }, Effects.none )
 
     Updated ->
       let
@@ -133,6 +152,11 @@ update action model =
 unlinkCozy : Signal.Mailbox ()
 unlinkCozy =
   Signal.mailbox ()
+
+
+mail : Maybe String -> Action
+mail =
+  Mail
 
 
 sendMail : Signal.Mailbox String

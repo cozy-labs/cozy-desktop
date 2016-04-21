@@ -9,9 +9,11 @@ const path = remote.require('path-extra')
 const pkg = remote.require('./package.json')
 const defaultDir = path.join(path.homedir(), 'Cozy')
 const container = document.getElementById('container')
+
 const elmectron = Elm.embed(Elm.Main, container, {
   folder: '',
   gototab: '',
+  mail: '',
   pong: null,
   registration: null,
   remove: { filename: '', icon: '', path: '', size: 0, updated: 0 },
@@ -22,6 +24,8 @@ const elmectron = Elm.embed(Elm.Main, container, {
   version: pkg.version
 })
 
+const errMessage = (err) => (err && err.message) ? err.message : err
+
 // Glue code between Elm and the main process
 ipcRenderer.on('cozy-pong', (event, url) => {
   elmectron.ports.pong.send(url)
@@ -31,6 +35,7 @@ elmectron.ports.pingCozy.subscribe((url) => {
 })
 
 ipcRenderer.on('remote-registered', (event, err) => {
+  err = errMessage(err)
   elmectron.ports.registration.send(err)
 })
 elmectron.ports.registerRemote.subscribe((remote) => {
@@ -66,6 +71,10 @@ elmectron.ports.unlinkCozy.subscribe(() => {
   ipcRenderer.send('unlink-cozy')
 })
 
+ipcRenderer.on('mail-sent', (event, err) => {
+  err = errMessage(err)
+  elmectron.ports.mail.send(err)
+})
 elmectron.ports.sendMail.subscribe((body) => {
   ipcRenderer.send('send-mail', body)
 })

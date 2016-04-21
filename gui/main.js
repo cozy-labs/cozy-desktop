@@ -227,11 +227,7 @@ ipcMain.on('register-remote', (event, arg) => {
   setTimeout(() => {}, 1000)
 
   desktop.registerRemote(arg.url, null, (err, credentials) => {
-    let message = err
-    if (err && err.message) {
-      message = err.message
-    }
-    event.sender.send('remote-registered', message)
+    event.sender.send('remote-registered', err)
     if (!err) {
       device = {
         url: arg.url,
@@ -277,9 +273,8 @@ ipcMain.on('unlink-cozy', (event) => {
 })
 
 ipcMain.on('send-mail', (event, body) => {
-  console.log('send-mail', body)
   desktop.sendMailToSupport(body, (err) => {
-    console.log('sendMailToSupport', err)
+    event.sender.send('mail-sent', err)
   })
 })
 
