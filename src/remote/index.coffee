@@ -175,6 +175,7 @@ class Remote
                     for file in files or [] when @isUpToDate file
                         binary = file.remote.binary
                     if binary
+                        @events.emit 'transfer-copy', doc
                         next null, binary
                     else
                         @uploadBinary doc, next
@@ -253,8 +254,9 @@ class Remote
                     remoteDoc.path = dir
                     remoteDoc.name = name
                     remoteDoc.lastModification = doc.lastModification
-                    @couch.put remoteDoc, (err, moved) ->
+                    @couch.put remoteDoc, (err, moved) =>
                         unless err
+                            @events.emit 'transfer-move', doc, old
                             doc.remote =
                                 _id: moved.id
                                 _rev: moved.rev

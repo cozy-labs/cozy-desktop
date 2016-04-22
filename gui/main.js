@@ -112,6 +112,36 @@ const selectIcon = (info) => {
   return 'file'
 }
 
+const addFile = (info) => {
+  const file = {
+    filename: path.basename(info.path),
+    path: info.path,
+    icon: selectIcon(info),
+    size: info.size,
+    updated: +new Date()
+  }
+  updateState('syncing', file.filename)
+  lastFiles.push(file)
+  lastFiles = lastFiles.slice(-20)
+  if (mainWindow) {
+    mainWindow.webContents.send('transfer', file)
+  }
+}
+
+const removeFile = (info) => {
+  const file = {
+    filename: path.basename(info.path),
+    path: info.path,
+    icon: '',
+    size: 0,
+    updated: 0
+  }
+  lastFiles = lastFiles.filter((f) => f.path !== file.path)
+  if (mainWindow) {
+    mainWindow.webContents.send('delete-file', file)
+  }
+}
+
 const startSync = (url) => {
   mainWindow.webContents.send('synchronization', url)
   if (desktop.sync) {
@@ -129,34 +159,13 @@ const startSync = (url) => {
         mainWindow.webContents.send('up-to-date')
       }
     })
-    desktop.events.on('transfer-started', (info) => {
-      const file = {
-        filename: path.basename(info.path),
-        path: info.path,
-        icon: selectIcon(info),
-        size: info.size,
-        updated: +new Date()
-      }
-      updateState('syncing', file.filename)
-      lastFiles.push(file)
-      lastFiles = lastFiles.slice(-20)
-      if (mainWindow) {
-        mainWindow.webContents.send('transfer', file)
-      }
+    desktop.events.on('transfer-started', addFile)
+    desktop.events.on('transfer-copy', addFile)
+    desktop.events.on('transfer-move', (info, old) => {
+      addFile(info)
+      removeFile(old)
     })
-    desktop.events.on('delete-file', (info) => {
-      const file = {
-        filename: path.basename(info.path),
-        path: info.path,
-        icon: '',
-        size: 0,
-        updated: 0
-      }
-      lastFiles = lastFiles.filter((f) => f.path !== file.path)
-      if (mainWindow) {
-        mainWindow.webContents.send('delete-file', file)
-      }
-    })
+    desktop.events.on('delete-file', removeFile)
     desktop.synchronize('full', (err) => { console.error(err) })
   }
 }
