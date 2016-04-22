@@ -55,7 +55,7 @@
   },
   "devDependencies": {
     "coffee-script": "1.10.0",
-    "coffeelint": "1.15.2",
+    "coffeelint": "1.15.7",
     "del": "2.2.0",
     "faker": "3.0.1",
     "jsverify": "0.7.1",
