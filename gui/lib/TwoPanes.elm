@@ -33,7 +33,8 @@ type alias Model =
 
 init : String -> Model
 init version =
-  { tab = DashboardTab
+  -- { tab = DashboardTab
+  { tab = SettingsTab
   , dashboard = Dashboard.init
   , settings = Settings.init version
   , account = Account.init
@@ -48,6 +49,7 @@ init version =
 type Action
   = NoOp
   | GoToTab Tab
+  | UpdateSettings Settings.Action
   | FillAddress String
   | UnlinkCozy
   | UpdateHelp Help.Action
@@ -68,6 +70,13 @@ update action model =
 
     GoToTab tab' ->
       ( { model | tab = tab' }, Effects.none )
+
+    UpdateSettings action' ->
+      let
+        settings' =
+          Settings.update action' model.settings
+      in
+        ( { model | settings = settings' }, Effects.none )
 
     FillAddress address ->
       let
@@ -212,7 +221,12 @@ view address model =
           Dashboard.view model.dashboard
 
         SettingsTab ->
-          Settings.view model.settings
+          let
+            context =
+              Settings.Context
+                (Signal.forwardTo address UpdateSettings)
+          in
+            Settings.view context model.settings
 
         AccountTab ->
           let
