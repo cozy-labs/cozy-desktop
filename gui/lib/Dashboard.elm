@@ -157,7 +157,7 @@ view model =
       List.map fileToListItem model.files
   in
     section
-      [ class "two-panes__content" ]
+      [ class "two-panes__content two-panes__content--dashboard" ]
       [ h1 [] [ text "Dashboard" ]
       , statusMessage
       , h2 [] [ text "Recent activities" ]

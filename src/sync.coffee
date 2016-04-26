@@ -99,7 +99,7 @@ class Sync
     # At least one side should say it has already this change
     # In some cases, both sides have the change
     apply: (change, callback) =>
-        log.debug 'apply', change
+        log.info 'apply', change
         doc = change.doc
 
         if @ignore.isIgnored doc
@@ -130,7 +130,7 @@ class Sync
         else if remoteRev > localRev
             return [@local, 'local', localRev]
         else
-            log.debug 'Nothing to do'
+            log.info 'Nothing to do'
             return []
 
     # Keep track of the sequence number, save side rev, and log errors
@@ -140,7 +140,7 @@ class Sync
                 log.error err
                 @updateErrors change, callback
             else
-                log.debug "Applied #{change.seq}"
+                log.info "Applied #{change.seq}"
                 @pouch.setLocalSeq change.seq, (err) =>
                     log.error err if err
                     if change.doc._deleted
@@ -158,8 +158,7 @@ class Sync
             # If the doc can't be saved, it's because of a new revision.
             # So, we can skip this revision
             if err
-                log.debug err
-                log.debug "Ignored #{change.seq}"
+                log.info "Ignored #{change.seq}", err
                 @pouch.setLocalSeq change.seq, callback
             # The sync error may be due to the remote cozy being overloaded.
             # So, it's better to wait a bit before trying the next operation.
@@ -218,7 +217,6 @@ class Sync
                 side.addFile doc, callback
             else
                 @pouch.getPreviousRev doc._id, rev, (err, old) ->
-                    log.debug old
                     if err
                         side.overwriteFile doc, old, callback
                     else if old.checksum is doc.checksum

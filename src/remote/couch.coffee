@@ -46,7 +46,7 @@ class Couch
 
     # Get the last sequence number from the remote couch
     getLastRemoteChangeSeq: (callback) =>
-        log.debug "Getting last remote change sequence number:"
+        log.info "Getting last remote change sequence number:"
         options =
             descending: true
             limit: 1
@@ -55,7 +55,7 @@ class Couch
 
     # TODO create our views on couch, instead of using those of files
     pickViewToCopy: (model, callback) =>
-        log.debug "Getting design doc #{model} from remote"
+        log.info "Getting design doc #{model} from remote"
         @client.get "_design/#{model}", (err, designdoc) ->
             if err
                 callback err
@@ -70,7 +70,7 @@ class Couch
     getFromRemoteView: (model, callback) =>
         @pickViewToCopy model, (err, viewName) =>
             return callback err if err
-            log.debug "Getting latest #{model} documents from remote"
+            log.info "Getting latest #{model} documents from remote"
             opts = include_docs: true
             @client.query "#{model}/#{viewName}", opts, (err, body) ->
                 callback err, body?.rows

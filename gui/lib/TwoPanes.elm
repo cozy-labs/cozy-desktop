@@ -27,6 +27,7 @@ type alias Model =
   , dashboard : Dashboard.Model
   , settings : Settings.Model
   , account : Account.Model
+  , help : Help.Model
   }
 
 
@@ -36,6 +37,7 @@ init version =
   , dashboard = Dashboard.init
   , settings = Settings.init version
   , account = Account.init
+  , help = Help.init
   }
 
 
@@ -48,6 +50,10 @@ type Action
   | GoToTab Tab
   | FillAddress String
   | UnlinkCozy
+  | UpdateHelp Help.Action
+  | SendMail String
+  | Mail (Maybe String)
+    -- String is an error
   | Updated
   | Transfer Dashboard.File
   | Remove Dashboard.File
@@ -79,6 +85,40 @@ update action model =
           Effects.map (always NoOp) (Effects.task task)
       in
         ( model, effect )
+
+    UpdateHelp action' ->
+      let
+        help' =
+          Help.update action' model.help
+      in
+        ( { model | help = help' }, Effects.none )
+
+    SendMail body ->
+      let
+        help' =
+          Help.update Help.SetBusy model.help
+
+        task =
+          Signal.send sendMail.address body
+
+        effect =
+          Effects.map (always NoOp) (Effects.task task)
+      in
+        ( { model | help = help' }, effect )
+
+    Mail (Just error) ->
+      let
+        help' =
+          Help.update (Help.SetError error) model.help
+      in
+        ( { model | help = help' }, Effects.none )
+
+    Mail Nothing ->
+      let
+        help' =
+          Help.update Help.SetSuccess model.help
+      in
+        ( { model | help = help' }, Effects.none )
 
     Updated ->
       let
@@ -112,6 +152,16 @@ update action model =
 unlinkCozy : Signal.Mailbox ()
 unlinkCozy =
   Signal.mailbox ()
+
+
+mail : Maybe String -> Action
+mail =
+  Mail
+
+
+sendMail : Signal.Mailbox String
+sendMail =
+  Signal.mailbox ""
 
 
 
@@ -173,6 +223,12 @@ view address model =
             Account.view context model.account
 
         HelpTab ->
-          Help.view
+          let
+            context =
+              Help.Context
+                (Signal.forwardTo address UpdateHelp)
+                (Signal.forwardTo address SendMail)
+          in
+            Help.view context model.help
   in
     section [ class "two-panes" ] [ menu, content ]

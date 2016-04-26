@@ -164,14 +164,14 @@ class LocalWatcher
 
     # New file detected
     onAdd: (filePath, stats) =>
-        log.debug 'File added', filePath
+        log.info 'File added', filePath
         @paths?.push filePath
         @pending[filePath]?.done()
         @checksums++
         @createDoc filePath, stats, (err, doc) =>
             if err
                 @checksums--
-                log.debug err
+                log.info err
             else
                 keys = Object.keys @pending
                 if keys.length is 0
@@ -188,7 +188,7 @@ class LocalWatcher
                         else
                             same = find docs, (d) -> ~keys.indexOf(d.path)
                             if same
-                                log.debug 'was moved from', same.path
+                                log.info 'was moved from', same.path
                                 clearTimeout @pending[same.path].timeout
                                 delete @pending[same.path]
                                 @prep.moveFile @side, doc, same, @done
@@ -198,7 +198,7 @@ class LocalWatcher
     # New directory detected
     onAddDir: (folderPath, stats) =>
         unless folderPath is ''
-            log.debug 'Folder added', folderPath
+            log.info 'Folder added', folderPath
             @paths?.push folderPath
             @pending[folderPath]?.done()
             doc =
@@ -218,7 +218,7 @@ class LocalWatcher
             delete @pending[filePath]
         done = =>
             clear()
-            log.debug 'File deleted', filePath
+            log.info 'File deleted', filePath
             @prep.deleteFile @side, path: filePath, @done
         check = =>
             if @checksums is 0
@@ -241,7 +241,7 @@ class LocalWatcher
             delete @pending[folderPath]
         done = =>
             clear()
-            log.debug 'Folder deleted', folderPath
+            log.info 'Folder deleted', folderPath
             @prep.deleteFolder @side, path: folderPath, @done
         check = =>
             done() unless @hasPending folderPath
@@ -253,10 +253,10 @@ class LocalWatcher
 
     # File update detected
     onChange: (filePath, stats) =>
-        log.debug 'File updated', filePath
+        log.info 'File updated', filePath
         @createDoc filePath, stats, (err, doc) =>
             if err
-                log.debug err
+                log.info err
             else
                 @prep.updateFile @side, doc, @done
 
