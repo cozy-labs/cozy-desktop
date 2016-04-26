@@ -1,6 +1,7 @@
 /gui/app/*.css
 /gui/app/*.map
 /gui/app/elm.js
+/gui/dist
 /gui/elm-stuff
 /lib
 node_modules
