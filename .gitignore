@@ -1,7 +1,7 @@
-/gui/elm.js
+/gui/app/*.css
+/gui/app/*.map
+/gui/app/elm.js
 /gui/elm-stuff
-/gui/styles/**/*.css
-/gui/styles/**/*.map
 /lib
 node_modules
 tmp
