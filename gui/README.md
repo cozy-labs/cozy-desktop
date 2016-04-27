@@ -10,7 +10,7 @@ plan to do a more stable release in the coming weeks. Stay tuned!
 
 :warning: **Backup your data before playing with cozy-desktop!**
 
-This repository is for the graphical interface of cozy-desktop, built with
+This directory is for the graphical interface of cozy-desktop, built with
 [Electron][8] and [Elm][9].
 
 
