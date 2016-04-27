@@ -145,6 +145,7 @@ app =
         , Signal.map (TwoPanesAction << TwoPanes.Transfer) transfer
         , Signal.map (TwoPanesAction << TwoPanes.Remove) remove
         , Signal.map (always (TwoPanesAction TwoPanes.Updated)) updated
+        , Signal.map (TwoPanesAction << TwoPanes.SetAutoLaunch) autolaunch
         , Signal.map GoToTab gototab
         ]
     , update = update
@@ -206,6 +207,12 @@ port mail : Signal (Maybe String)
 port sendMail : Signal String
 port sendMail =
   TwoPanes.sendMail |> .signal
+
+
+port autolaunch : Signal Bool
+port autoLauncher : Signal Bool
+port autoLauncher =
+  TwoPanes.autoLauncher |> .signal
 
 
 port transfer : Signal File

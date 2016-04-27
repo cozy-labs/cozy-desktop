@@ -26,7 +26,7 @@ init version' =
 
 
 type Action
-  = ToggleAutoLaunch Bool
+  = SetAutoLaunch Bool
 
 
 update : Action -> Model -> Model
@@ -34,7 +34,7 @@ update action model =
   case
     action
   of
-    ToggleAutoLaunch autoLaunch' ->
+    SetAutoLaunch autoLaunch' ->
       { model | autoLaunch = autoLaunch' }
 
 
@@ -43,7 +43,7 @@ update action model =
 
 
 type alias Context =
-  { actions : Signal.Address Action
+  { autoLaunch : Signal.Address Bool
   }
 
 
@@ -58,7 +58,7 @@ view context model =
             [ type' "checkbox"
             , checked model.autoLaunch
             , id "auto-launch"
-            , on "change" targetChecked (Signal.message context.actions << ToggleAutoLaunch)
+            , on "change" targetChecked (Signal.message context.autoLaunch)
             ]
             []
         , label

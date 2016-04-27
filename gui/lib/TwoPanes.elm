@@ -33,8 +33,7 @@ type alias Model =
 
 init : String -> Model
 init version =
-  -- { tab = DashboardTab
-  { tab = SettingsTab
+  { tab = DashboardTab
   , dashboard = Dashboard.init
   , settings = Settings.init version
   , account = Account.init
@@ -49,7 +48,7 @@ init version =
 type Action
   = NoOp
   | GoToTab Tab
-  | UpdateSettings Settings.Action
+  | SetAutoLaunch Bool
   | FillAddress String
   | UnlinkCozy
   | UpdateHelp Help.Action
@@ -71,12 +70,18 @@ update action model =
     GoToTab tab' ->
       ( { model | tab = tab' }, Effects.none )
 
-    UpdateSettings action' ->
+    SetAutoLaunch autolaunch ->
       let
         settings' =
-          Settings.update action' model.settings
+          Settings.update (Settings.SetAutoLaunch autolaunch) model.settings
+
+        task =
+          Signal.send autoLauncher.address autolaunch
+
+        effect =
+          Effects.map (always NoOp) (Effects.task task)
       in
-        ( { model | settings = settings' }, Effects.none )
+        ( { model | settings = settings' }, effect )
 
     FillAddress address ->
       let
@@ -158,6 +163,11 @@ update action model =
         ( { model | dashboard = dashboard' }, Effects.none )
 
 
+autoLauncher : Signal.Mailbox Bool
+autoLauncher =
+  Signal.mailbox True
+
+
 unlinkCozy : Signal.Mailbox ()
 unlinkCozy =
   Signal.mailbox ()
@@ -224,7 +234,7 @@ view address model =
           let
             context =
               Settings.Context
-                (Signal.forwardTo address UpdateSettings)
+                (Signal.forwardTo address SetAutoLaunch)
           in
             Settings.view context model.settings
 
