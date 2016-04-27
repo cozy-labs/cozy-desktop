@@ -182,7 +182,7 @@ class RemoteWatcher
             @prep.updateDoc @side, doc, callback
         else if doc.checksum? and was.checksum is doc.checksum
             @prep.moveDoc @side, doc, was, callback
-        else if was.remote._rev is doc._rev
+        else if doc.docType is 'folder' or was.remote._rev is doc._rev
             # Example: doc is modified + renamed on cozy with desktop stopped
             @prep.deleteDoc @side, was, (err) =>
                 log.error err if err
