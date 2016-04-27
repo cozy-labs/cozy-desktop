@@ -124,9 +124,6 @@ class RemoteWatcher
             setTimeout retry, wait
 
     # Take one change from the changes feed and give it to merge
-    #
-    # TODO should we check was.remote._rev and doc._rev for conflict
-    # like local has move file and remote overwrite it?
     onChange: (doc, callback) =>
         log.info "OnChange", doc
         @pouch.byRemoteId doc._id, (err, was) =>
@@ -185,10 +182,24 @@ class RemoteWatcher
             @prep.updateDoc @side, doc, callback
         else if doc.checksum? and was.checksum is doc.checksum
             @prep.moveDoc @side, doc, was, callback
-        else
+        else if was.remote._rev is doc._rev
+            # Example: doc is modified + renamed on cozy with desktop stopped
             @prep.deleteDoc @side, was, (err) =>
                 log.error err if err
                 @prep.addDoc @side, doc, callback
+        else
+            # Example: doc is renamed on cozy while modified on desktop
+            @removeRemote was, (err) =>
+                log.error err if err
+                @prep.addDoc @side, doc, callback
+
+    # Remove the association between a document and its remote
+    # It's useful when a file has diverged (updated/renamed both in local and
+    # remote) while cozy-desktop was not running.
+    removeRemote: (doc, callback) ->
+        delete doc.remote
+        delete doc.sides.remote
+        @pouch.db.put doc, callback
 
     # Keep track of the sequence number and log errors
     # TODO test pending counts
