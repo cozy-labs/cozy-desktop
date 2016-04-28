@@ -318,3 +318,27 @@ describe "RemoteWatcher Tests", ->
                         _id: "913F429E-5609-C636-AE9A-CD00BD138B13"
                         _rev: "1-7786acf12a11fad6ad1eeb861953e0d8"
                 done()
+
+    describe 'removeRemote', ->
+        it 'remove the association between a document and its remote', (done) ->
+            doc =
+                _id: 'removeRemote'
+                path: 'removeRemote'
+                docType: 'file'
+                checksum: 'd3e2163ccd0c497969233a6bd2a4ac843fb8165e'
+                sides:
+                    local: 2
+                    remote: 1
+            @pouch.db.put doc, (err) =>
+                should.not.exist err
+                @pouch.db.get doc._id, (err, was) =>
+                    should.not.exist err
+                    @watcher.removeRemote was, (err) =>
+                        should.not.exist err
+                        @pouch.db.get doc._id, (err, actual) ->
+                            should.not.exist err
+                            should.not.exist actual.sides.remote
+                            should.not.exist actual.remote
+                            actual._id.should.equal doc._id
+                            actual.sides.local.should.equal 2
+                            done()
