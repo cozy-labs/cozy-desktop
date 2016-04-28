@@ -11,6 +11,7 @@ const defaultDir = path.join(path.homedir(), 'Cozy')
 const container = document.getElementById('container')
 
 const elmectron = Elm.embed(Elm.Main, container, {
+  autolaunch: false,
   folder: '',
   gototab: '',
   mail: '',
@@ -58,6 +59,13 @@ ipcRenderer.on('synchronization', (event, url) => {
 })
 elmectron.ports.startSync.subscribe((folder) => {
   ipcRenderer.send('start-sync', folder)
+})
+
+ipcRenderer.on('auto-launch', (event, enabled) => {
+  elmectron.ports.autolaunch.send(enabled)
+})
+elmectron.ports.autoLauncher.subscribe((enabled) => {
+  ipcRenderer.send('auto-launcher', enabled)
 })
 
 ipcRenderer.on('go-to-tab', (event, tab) => {

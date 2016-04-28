@@ -1,11 +1,16 @@
 'use strict'
 /* eslint no-unused-vars: [2, { "varsIgnorePattern": "runAsService" }] */
 
+const AutoLaunch = require('auto-launch')
 const Desktop = require('cozy-desktop')
 const electron = require('electron')
 const path = require('path')
 
 const {app, BrowserWindow, dialog, ipcMain, shell} = electron
+const autoLauncher = new AutoLaunch({
+  name: 'Cozy-Desktop',
+  isHidden: true
+})
 const desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
 desktop.writeLogsTo(path.join(desktop.basePath, '.cozy-desktop', 'logs.txt'))
 
@@ -169,13 +174,16 @@ const startSync = (url) => {
     desktop.events.on('delete-file', removeFile)
     desktop.synchronize('full', (err) => { console.error(err) })
   }
+  autoLauncher.isEnabled().then((enabled) => {
+    mainWindow.webContents.send('auto-launch', enabled)
+  })
 }
 
 const createWindow = () => {
   runAsService = new BrowserWindow({ show: false })
   mainWindow = new BrowserWindow(windowOptions)
   mainWindow.loadURL(`file://${__dirname}/index.html`)
-  if (process.env.WATCH === 'true') {
+  if (process.env.WATCH === 'true' || process.env.DEBUG === 'true') {
     mainWindow.setBounds({ x: 0, y: 0, width: 1600, height: 768 })
     mainWindow.webContents.openDevTools()
   } else {
@@ -256,6 +264,18 @@ ipcMain.on('start-sync', (event, arg) => {
   startSync(device.url)
 })
 
+ipcMain.on('auto-launcher', (event, enabled) => {
+  autoLauncher.isEnabled().then((was) => {
+    if (was === enabled) {
+      return
+    } else if (enabled) {
+      autoLauncher.enable()
+    } else {
+      autoLauncher.disable()
+    }
+  })
+})
+
 ipcMain.on('unlink-cozy', (event) => {
   if (!device) {
     console.error('No device!')
@@ -281,7 +301,7 @@ ipcMain.on('send-mail', (event, body) => {
 // On watch mode, automatically reload the window when sources are updated
 if (process.env.WATCH === 'true') {
   const chokidar = require('chokidar')
-  chokidar.watch(['index.html', 'elm.js', 'ports.js', 'styles/app.css'])
+  chokidar.watch(['*.{html,js,css}'], { cwd: __dirname })
     .on('change', () => {
       if (mainWindow) {
         mainWindow.reload()

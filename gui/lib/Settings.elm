@@ -10,24 +10,61 @@ import Html.Events exposing (..)
 
 type alias Model =
   { version : String
+  , autoLaunch : Bool
   }
 
 
 init : String -> Model
 init version' =
   { version = version'
+  , autoLaunch = True
   }
+
+
+
+-- UPDATE
+
+
+type Action
+  = SetAutoLaunch Bool
+
+
+update : Action -> Model -> Model
+update action model =
+  case
+    action
+  of
+    SetAutoLaunch autoLaunch' ->
+      { model | autoLaunch = autoLaunch' }
 
 
 
 -- VIEW
 
 
-view : Model -> Html
-view model =
+type alias Context =
+  { autoLaunch : Signal.Address Bool
+  }
+
+
+view : Context -> Model -> Html
+view context model =
   section
     [ class "two-panes__content two-panes__content--settings" ]
     [ h1 [] [ text "Settings" ]
+    , div
+        [ attribute "data-input" "checkbox" ]
+        [ input
+            [ type' "checkbox"
+            , checked model.autoLaunch
+            , id "auto-launch"
+            , on "change" targetChecked (Signal.message context.autoLaunch)
+            ]
+            []
+        , label
+            [ for "auto-launch" ]
+            [ text "Start Cozy-Desktop on system startup" ]
+        ]
     , h2 [] [ text "Version" ]
     , p
         []
