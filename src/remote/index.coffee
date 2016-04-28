@@ -1,5 +1,6 @@
 async   = require 'async'
 clone   = require 'lodash.clone'
+crypto  = require 'crypto'
 path    = require 'path'
 log     = require('printit')
     prefix: 'Remote writer '
@@ -71,9 +72,14 @@ class Remote
                     # event before the next async callback is called...
                     return next err if err
                     stream.on 'error', -> next new Error 'Invalid file'
-                    {_id, _rev} = binary
-                    mime = doc.mime or 'application/octet-stream'
-                    @couch.uploadAsAttachment _id, _rev, mime, stream, next
+                    # Be sure that the checksum is correct
+                    checksum = crypto.createHash 'sha1'
+                    checksum.setEncoding 'hex'
+                    stream.pipe checksum
+                    stream.on 'end', ->
+                        checksum.end()
+                        if checksum.read() isnt doc.checksum
+                            next new Error 'Invalid checksum'
                     # Emit events to track the download progress
                     info = clone doc
                     info.way = 'up'
@@ -83,6 +89,9 @@ class Remote
                         @events.emit info.eventName, data
                     stream.on 'close', =>
                         @events.emit info.eventName, finished: true
+                    {_id, _rev} = binary
+                    mime = doc.mime or 'application/octet-stream'
+                    @couch.uploadAsAttachment _id, _rev, mime, stream, next
         ], (err) =>
             [cb, callback] = [callback, ->]  # Be sure to callback only once
             if err and binary._rev

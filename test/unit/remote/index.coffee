@@ -378,7 +378,7 @@ describe 'Remote', ->
                 doc =
                     path: 'couchdb-folder/file-6'
                     docType: 'file'
-                    checksum: '9999999999999999999999999999999999999926'
+                    checksum: 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
                     lastModification: '2015-11-16T16:12:01.002Z'
                 old =
                     path: 'couchdb-folder/file-6'
@@ -414,6 +414,35 @@ describe 'Remote', ->
                                 should.not.exist err
                                 binary.checksum.should.equal doc.checksum
                                 done()
+
+
+        it 'throws an error if the checksum is invalid', (done) ->
+            couchHelpers.createFile @couch, 6, (err, created) =>
+                should.not.exist err
+                doc =
+                    path: 'couchdb-folder/file-6b'
+                    docType: 'file'
+                    checksum: '9999999999999999999999999999999999999936'
+                    lastModification: '2015-11-16T16:12:01.002Z'
+                old =
+                    path: 'couchdb-folder/file-6b'
+                    docType: 'file'
+                    checksum: '1111111111111111111111111111111111111136'
+                    remote:
+                        _id: created.id
+                        _rev: created.rev
+                        binary:
+                            _id: '1111111111111111111111111111111111111136'
+                            _rev: '1-852146'
+                binaryDoc =
+                    _id: old.checksum
+                    checksum: old.checksum
+                @couch.put binaryDoc, (err) =>
+                    should.not.exist err
+                    @remote.overwriteFile doc, old, (err) ->
+                        should.exist err
+                        err.message.should.equal 'Invalid checksum'
+                        done()
 
 
     describe 'updateFileMetadata', ->
