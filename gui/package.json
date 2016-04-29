@@ -10,11 +10,11 @@
   "devDependencies": {
     "chokidar-cli": "1.2.0",
     "cozy-ui": "0.1.6",
-    "electron-builder": "3.11.0",
-    "electron-prebuilt": "0.37.2",
+    "electron-builder": "3.13.1",
+    "electron-prebuilt": "0.37.7",
     "elm": "0.16.0",
     "standard": "6.0.8",
-    "stylus": "0.54.2"
+    "stylus": "0.54.5"
   },
   "scripts": {
     "build": "npm run build:css & npm run build:elm",
