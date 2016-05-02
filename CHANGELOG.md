@@ -1,3 +1,10 @@
+## 0.11.0 - 2016-05-02
+
+* New packaging with electron-builder
+* Improve recent activities in GUI
+* Auto-start option at system startup
+* Allow users to contact support via the GUI
+
 ## 0.10.0 - 2016-04-18
 
 - Show the recent activities in the GUI
