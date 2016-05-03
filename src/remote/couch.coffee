@@ -32,9 +32,22 @@ class Couch
         @http = request.newClient device.url
         @http.setBasicAuth device.deviceName, device.password
 
+    # Try to ping CouchDb to check that we can communicate with it
+    # (the desktop has network access and the cozy stack is up).
     ping: (callback) =>
         @client.get '', (err, res) ->
             callback not err and res.db_name?
+
+    # The callback will be called when couch will be available again.
+    # The checks are made every minute.
+    whenAvailable: (callback) =>
+        @ping (available) =>
+            if available
+                callback()
+            else
+                setTimeout =>
+                    @whenAvailable callback
+                , 60000
 
     # Retrieve a document from remote cozy based on its ID
     get: (id, callback) =>
