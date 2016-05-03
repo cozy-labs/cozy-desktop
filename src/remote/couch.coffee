@@ -32,6 +32,10 @@ class Couch
         @http = request.newClient device.url
         @http.setBasicAuth device.deviceName, device.password
 
+    ping: (callback) =>
+        @client.get '', (err, res) ->
+            callback not err and res.db_name?
+
     # Retrieve a document from remote cozy based on its ID
     get: (id, callback) =>
         @client.get id, callback

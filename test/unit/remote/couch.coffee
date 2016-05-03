@@ -39,6 +39,12 @@ describe "Couch", ->
                 seq.should.be.aboveOrEqual 1
                 done()
 
+    describe 'ping', ->
+        it 'answers true if CouchDb is available', (done) ->
+            @couch.ping (available) ->
+                available.should.be.true()
+                done()
+
     describe 'get', ->
         it 'retrieves a document by its id', (done) ->
             @couch.get @doc._id, (err, doc) =>
