@@ -36,13 +36,16 @@ class Couch
     # (the desktop has network access and the cozy stack is up).
     ping: (callback) =>
         @client.get '', (err, res) ->
-            callback not err and res.db_name?
+            online = not err and res.db_name?
+            log.info "The Cozy can't be reached currently" unless online
+            callback online
 
     # The callback will be called when couch will be available again.
     # The checks are made every minute.
     whenAvailable: (callback) =>
         @ping (available) =>
             if available
+                log.info 'The network is available again'
                 callback()
             else
                 setTimeout =>

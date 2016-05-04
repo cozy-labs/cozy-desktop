@@ -255,7 +255,9 @@ describe "Sync", ->
 
         beforeEach ->
             @local = {}
-            @remote = {}
+            @remote =
+                couch:
+                    ping: (callback) -> callback true
             @ignore = new Ignore []
             @events = {}
             @sync = new Sync @pouch, @local, @remote, @ignore, @events

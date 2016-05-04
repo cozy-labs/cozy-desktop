@@ -138,7 +138,11 @@ class Sync
         (err) =>
             if err
                 log.error err
-                @updateErrors change, callback
+                @remote.couch.ping (available) =>
+                    if available
+                        @updateErrors change, callback
+                    else
+                        @remote.couch.whenAvailable callback
             else
                 log.info "Applied #{change.seq}"
                 @pouch.setLocalSeq change.seq, (err) =>

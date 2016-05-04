@@ -97,10 +97,7 @@ class RemoteWatcher
                             if available
                                 @backoff err, callback, retry
                             else
-                                log.info "The Cozy can't be reached currently"
-                                @couch.whenAvailable ->
-                                    log.info 'The network is available again'
-                                    retry()
+                                @couch.whenAvailable retry
                     .on 'complete', =>
                         @changes = null
                         @whenReady callback
