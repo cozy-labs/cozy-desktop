@@ -31,26 +31,42 @@ class Couch
         @client = new PouchDB "#{device.url}/cozy", options
         @http = request.newClient device.url
         @http.setBasicAuth device.deviceName, device.password
+        @online = true
+        @upCallbacks = []
 
     # Try to ping CouchDb to check that we can communicate with it
     # (the desktop has network access and the cozy stack is up).
     ping: (callback) =>
-        @client.get '', (err, res) ->
+        @client.get '', (err, res) =>
             online = not err and res.db_name?
-            log.info "The Cozy can't be reached currently" unless online
-            callback online
+            if online and not @online
+                @goingOnline()
+            else if not online and @online
+                @goingOffline()
+            @online = online
+            callback @online
+
+    # Couch is available again!
+    goingOnline: ->
+        log.info 'The network is available again'
+        cb() for cb in @upCallbacks
+        @upCallbacks = []
+
+    # Couch is no longer available.
+    # Check every minute if the network is back.
+    goingOffline: ->
+        log.info "The Cozy can't be reached currently"
+        interval = setInterval =>
+            @ping (available) ->
+                clearInterval interval if available
+        , 60000
 
     # The callback will be called when couch will be available again.
-    # The checks are made every minute.
     whenAvailable: (callback) =>
-        @ping (available) =>
-            if available
-                log.info 'The network is available again'
-                callback()
-            else
-                setTimeout =>
-                    @whenAvailable callback
-                , 60000
+        if @online
+            callback()
+        else
+            @upCallbacks.push callback
 
     # Retrieve a document from remote cozy based on its ID
     get: (id, callback) =>
