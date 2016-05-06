@@ -136,7 +136,10 @@ class Sync
     # Keep track of the sequence number, save side rev, and log errors
     applied: (change, side, callback) =>
         (err) =>
-            if err
+            if err?.code is 'ENOSPC'
+                log.error err
+                callback new Error 'The file system is full!'
+            else if err
                 log.error err
                 @updateErrors change, callback
             else

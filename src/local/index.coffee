@@ -132,6 +132,7 @@ class Local
                             target = fs.createWriteStream tmpFile
                             stream.pipe target
                             target.on 'finish', next
+                            target.on 'error', next
                             # Emit events to track the download progress
                             info = clone doc
                             info.way = 'down'
