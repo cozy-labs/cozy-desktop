@@ -19,6 +19,7 @@ const elmectron = Elm.embed(Elm.Main, container, {
   registration: null,
   remove: { filename: '', icon: '', path: '', size: 0, updated: 0 },
   synchonization: '',
+  syncError: '',
   transfer: { filename: '', icon: '', path: '', size: 0, updated: 0 },
   unlink: [],
   updated: [],
@@ -96,6 +97,10 @@ ipcRenderer.on('transfer', (event, info) => {
 })
 ipcRenderer.on('delete-file', (event, info) => {
   elmectron.ports.remove.send(info)
+})
+
+ipcRenderer.on('sync-error', (event, err) => {
+  elmectron.ports.syncError.send(err)
 })
 
 // Open external links in the browser

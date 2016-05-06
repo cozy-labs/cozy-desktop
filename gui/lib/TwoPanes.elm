@@ -58,6 +58,7 @@ type Action
   | Updated
   | Transfer Dashboard.File
   | Remove Dashboard.File
+  | SyncError String
   | Tick Time
 
 
@@ -152,6 +153,13 @@ update action model =
       let
         dashboard' =
           Dashboard.update (Dashboard.Remove file) model.dashboard
+      in
+        ( { model | dashboard = dashboard' }, Effects.none )
+
+    SyncError error ->
+      let
+        dashboard' =
+          Dashboard.update (Dashboard.SetError error) model.dashboard
       in
         ( { model | dashboard = dashboard' }, Effects.none )
 

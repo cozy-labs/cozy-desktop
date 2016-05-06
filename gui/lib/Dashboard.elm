@@ -48,6 +48,7 @@ type Action
   = Updated
   | Transfer File
   | Remove File
+  | SetError String
   | Tick Time
 
 
@@ -80,6 +81,9 @@ update action model =
           List.filter (samePath file >> not) model.files
       in
         { model | files = files' }
+
+    SetError error ->
+      { model | status = Error error }
 
     Tick now' ->
       { model | now = now' }
