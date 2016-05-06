@@ -267,10 +267,13 @@ const createWindow = () => {
 }
 
 app.on('ready', () => {
-  createWindow()
+  if (process.argv.indexOf('--isHidden') === -1) {
+    createWindow()
+  }
   tray = new electron.Tray(`${__dirname}/images/tray-icon-linux/idle.png`)
   setTrayIcon('idle')
   const menu = electron.Menu.buildFromTemplate([
+    { label: 'Show application', click: showWindow },
     { label: 'Quit application', click: app.quit }
   ])
   tray.setContextMenu(menu)
