@@ -7,7 +7,7 @@ import Task exposing (Task)
 import Time exposing (Time)
 import Wizard
 import TwoPanes
-import Dashboard exposing (File)
+import Dashboard exposing (File, DiskSpace)
 
 
 -- MODEL
@@ -145,6 +145,7 @@ app =
         , Signal.map (TwoPanesAction << TwoPanes.Transfer) transfer
         , Signal.map (TwoPanesAction << TwoPanes.Remove) remove
         , Signal.map (always (TwoPanesAction TwoPanes.Updated)) updated
+        , Signal.map (TwoPanesAction << TwoPanes.UpdateDiskSpace) diskSpace
         , Signal.map (TwoPanesAction << TwoPanes.SyncError) syncError
         , Signal.map (TwoPanesAction << TwoPanes.SetAutoLaunch) autolaunch
         , Signal.map GoToTab gototab
@@ -219,6 +220,7 @@ port autoLauncher =
 port transfer : Signal File
 port remove : Signal File
 port updated : Signal ()
+port diskSpace : Signal DiskSpace
 port syncError : Signal String
 port gototab : Signal String
 port version : String

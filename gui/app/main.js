@@ -160,6 +160,24 @@ const removeFile = (info) => {
   }
 }
 
+const sendDiskSpace = () => {
+  if (mainWindow) {
+    desktop.getDiskSpace((err, res) => {
+      if (err) {
+        console.error(err)
+      } else {
+        const space = {
+          used: +res.diskSpace.usedDiskSpace,
+          usedUnit: res.diskSpace.usedUnit,
+          total: +res.diskSpace.totalDiskSpace,
+          totalUnit: res.diskSpace.totalUnit
+        }
+        mainWindow.webContents.send('disk-space', space)
+      }
+    })
+  }
+}
+
 const startSync = (url) => {
   mainWindow.webContents.send('synchronization', url)
   if (desktop.sync) {
@@ -195,6 +213,8 @@ const startSync = (url) => {
       }
     })
   }
+  sendDiskSpace()
+  setInterval(sendDiskSpace, 10 * 60 * 1000)  // every 10 minutes
   autoLauncher.isEnabled().then((enabled) => {
     mainWindow.webContents.send('auto-launch', enabled)
   })
