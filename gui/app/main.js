@@ -63,17 +63,26 @@ const openCozyFolder = () => {
   shell.openItem(device.path)
 }
 
+const setTrayIcon = (state) => {
+  if (process.platform === 'darwin') {
+    tray.setImage(`${__dirname}/images/tray-icon-osx/${state}Template.png`)
+    tray.setPressedImage(`${__dirname}/images/tray-icon-osx/${state}Highlight.png`)
+  } else {
+    tray.setImage(`${__dirname}/images/tray-icon-linux/${state}.png`)
+  }
+}
+
 const updateState = (newState, filename) => {
   state = newState
   let statusLabel = ''
   if (filename) {
-    tray.setImage(`${__dirname}/images/tray-icon/sync.png`)
+    setTrayIcon('sync')
     statusLabel = `Syncing ‟${filename}“`
   } else if (state === 'up-to-date') {
-    tray.setImage(`${__dirname}/images/tray-icon/idle.png`)
+    setTrayIcon('idle')
     statusLabel = 'Your cozy is up to date'
   } else if (state === 'syncing') {
-    tray.setImage(`${__dirname}/images/tray-icon/sync.png`)
+    setTrayIcon('sync')
     statusLabel = 'Syncing…'
   }
   const menu = electron.Menu.buildFromTemplate([
@@ -200,7 +209,8 @@ const createWindow = () => {
 
 app.on('ready', () => {
   createWindow()
-  tray = new electron.Tray(`${__dirname}/images/tray-icon/idle.png`)
+  tray = new electron.Tray(`${__dirname}/images/tray-icon-linux/idle.png`)
+  setTrayIcon('idle')
   const menu = electron.Menu.buildFromTemplate([
     { label: 'Quit application', click: app.quit }
   ])
