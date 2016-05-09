@@ -203,6 +203,7 @@ class App
         @local  = @merge.local  = new Local  @config, @prep, @pouch, @events
         @remote = @merge.remote = new Remote @config, @prep, @pouch, @events
         @sync   = new Sync @pouch, @local, @remote, @ignore, @events
+        @sync.getDiskSpace = @getDiskSpace
 
 
     # Start the synchronization
@@ -278,6 +279,12 @@ class App
     # Return all docs for a given query
     query: (query, callback) =>
         @pouch.db.query query, include_docs: true, callback
+
+
+    # Get disk space informations from the cozy
+    getDiskSpace: (callback) =>
+        conf = @config.getDevice()
+        device.getDiskSpace conf.url, conf.deviceName, conf.password, callback
 
 
 module.exports = App

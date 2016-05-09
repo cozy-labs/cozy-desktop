@@ -58,6 +58,7 @@ type Action
   | Updated
   | Transfer Dashboard.File
   | Remove Dashboard.File
+  | UpdateDiskSpace Dashboard.DiskSpace
   | SyncError String
   | Tick Time
 
@@ -153,6 +154,13 @@ update action model =
       let
         dashboard' =
           Dashboard.update (Dashboard.Remove file) model.dashboard
+      in
+        ( { model | dashboard = dashboard' }, Effects.none )
+
+    UpdateDiskSpace disk ->
+      let
+        dashboard' =
+          Dashboard.update (Dashboard.UpdateDiskSpace disk) model.dashboard
       in
         ( { model | dashboard = dashboard' }, Effects.none )
 

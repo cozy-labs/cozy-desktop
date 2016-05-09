@@ -12,6 +12,7 @@ const container = document.getElementById('container')
 
 const elmectron = Elm.embed(Elm.Main, container, {
   autolaunch: false,
+  diskSpace: { used: 0, usedUnit: '', total: 0, totalUnit: '' },
   folder: '',
   gototab: '',
   mail: '',
@@ -97,6 +98,10 @@ ipcRenderer.on('transfer', (event, info) => {
 })
 ipcRenderer.on('delete-file', (event, info) => {
   elmectron.ports.remove.send(info)
+})
+
+ipcRenderer.on('disk-space', (event, info) => {
+  elmectron.ports.diskSpace.send(info)
 })
 
 ipcRenderer.on('sync-error', (event, err) => {

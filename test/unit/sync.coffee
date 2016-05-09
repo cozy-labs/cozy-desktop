@@ -261,6 +261,11 @@ describe "Sync", ->
             @ignore = new Ignore []
             @events = {}
             @sync = new Sync @pouch, @local, @remote, @ignore, @events
+            @sync.getDiskSpace = (callback) ->
+                space =
+                    freeDiskSpace: '10'
+                    freeUnit: 'G'
+                callback null, diskSpace: space
 
         it 'returns a function that saves the seq number if OK', (done) ->
             change =
@@ -328,6 +333,7 @@ describe "Sync", ->
         it 'sets the errors counter to 1 on first error', (done) ->
             doc =
                 _id: 'first/failure'
+                errors: 0
             @pouch.db.put doc, (err, infos) =>
                 should.not.exist err
                 doc._rev = infos.rev
