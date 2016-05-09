@@ -7,16 +7,19 @@
     "app-category-type": "public.app-category.productivity",
     "iconUrl": "https://cozy.io/en/images/desktop/icon.ico",
     "linux": {
-      "fpm": ["--depends", "libappindicator1"]
-	}
+      "fpm": [
+        "--depends",
+        "libappindicator1"
+      ]
+    }
   },
   "devDependencies": {
     "chokidar-cli": "1.2.0",
     "cozy-ui": "0.1.6",
-    "electron-builder": "3.13.1",
-    "electron-prebuilt": "0.37.7",
+    "electron-builder": "3.17.1",
+    "electron-prebuilt": "0.37.8",
     "elm": "0.16.0",
-    "standard": "6.0.8",
+    "standard": "7.0.1",
     "stylus": "0.54.5"
   },
   "scripts": {
