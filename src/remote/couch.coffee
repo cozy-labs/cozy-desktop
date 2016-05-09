@@ -43,12 +43,12 @@ class Couch
                 @goingOnline()
             else if not online and @online
                 @goingOffline()
-            @online = online
             callback @online
 
     # Couch is available again!
     goingOnline: ->
         log.info 'The network is available again'
+        @online = true
         cb() for cb in @upCallbacks
         @upCallbacks = []
 
@@ -56,6 +56,7 @@ class Couch
     # Check every minute if the network is back.
     goingOffline: ->
         log.info "The Cozy can't be reached currently"
+        @online = false
         interval = setInterval =>
             @ping (available) ->
                 clearInterval interval if available
