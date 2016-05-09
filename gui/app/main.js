@@ -75,7 +75,10 @@ const setTrayIcon = (state) => {
 const updateState = (newState, filename) => {
   state = newState
   let statusLabel = ''
-  if (filename) {
+  if (state === 'error') {
+    setTrayIcon('error')
+    statusLabel = filename
+  } else if (filename) {
     setTrayIcon('sync')
     statusLabel = `Syncing ‟${filename}“`
   } else if (state === 'up-to-date') {
@@ -181,7 +184,16 @@ const startSync = (url) => {
       removeFile(old)
     })
     desktop.events.on('delete-file', removeFile)
-    desktop.synchronize('full', (err) => { console.error(err) })
+    desktop.synchronize('full', (err) => {
+      if (err) {
+        console.error(err)
+        updateState('error', err.message || err)
+      }
+      if (mainWindow) {
+        const msg = (err && err.message) || 'stopped'
+        mainWindow.webContents.send('sync-error', msg)
+      }
+    })
   }
   autoLauncher.isEnabled().then((enabled) => {
     mainWindow.webContents.send('auto-launch', enabled)
