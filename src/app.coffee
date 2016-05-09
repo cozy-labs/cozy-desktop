@@ -223,9 +223,9 @@ class App
 
     # Start database sync process and setup file change watcher
     synchronize: (mode, callback) =>
-        @instanciate()
         conf = @config.getDevice()
         if conf.deviceName? and conf.url? and conf.path?
+            @instanciate()
             @startSync mode, callback
         else
             log.error 'No configuration found, please run add-remote-cozy' +

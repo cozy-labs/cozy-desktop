@@ -214,7 +214,9 @@ const createWindow = () => {
   mainWindow.webContents.on('dom-ready', () => {
     if (desktop.config.hasDevice()) {
       device = desktop.config.getDevice()
-      startSync(device.url)
+      if (device.deviceName && device.url && device.path) {
+        startSync(device.url)
+      }
     }
   })
 }
