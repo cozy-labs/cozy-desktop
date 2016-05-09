@@ -30,7 +30,7 @@ Permissions =
         'description': 'Useful to synchronize your folders'
     'Binary':
         'description': 'Useful to synchronize the content of your files'
-    'send email from user':
+    'send mail from user':
         'description': 'Useful to send issues by mail to the cozy team'
 
 
