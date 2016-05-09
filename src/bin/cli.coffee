@@ -164,6 +164,19 @@ program
         log.log JSON.stringify app.config.devices, null, 2
 
 program
+    .command 'show-disk-space'
+    .description 'Show disk space usage for the cozy'
+    .action ->
+        app.getDiskSpace (err, res) ->
+            if err
+                console.log 'Error:', err
+            else
+                space = res.diskSpace
+                console.log "Used:  #{space.usedDiskSpace} #{space.usedUnit}b"
+                console.log "Free:  #{space.freeDiskSpace} #{space.freeUnit}b"
+                console.log "Total: #{space.totalDiskSpace} #{space.totalUnit}b"
+
+program
     .command "*"
     .description "Display help message for an unknown command."
     .action ->

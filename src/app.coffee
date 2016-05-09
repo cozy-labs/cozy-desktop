@@ -280,4 +280,10 @@ class App
         @pouch.db.query query, include_docs: true, callback
 
 
+    # Get disk space informations from the cozy
+    getDiskSpace: (callback) =>
+        conf = @config.getDevice()
+        device.getDiskSpace conf.url, conf.deviceName, conf.password, callback
+
+
 module.exports = App
