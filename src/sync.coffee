@@ -1,5 +1,6 @@
-async = require 'async'
-log   = require('printit')
+async  = require 'async'
+device = require('cozy-device-sdk').device
+log    = require('printit')
     prefix: 'Synchronize   '
     date: true
 
@@ -141,11 +142,18 @@ class Sync
                 callback new Error 'The file system is full!'
             else if err
                 log.error err
-                @remote.couch.ping (available) =>
-                    if available
-                        @updateErrors change, callback
+                change.doc.errors or= 0
+                @isCozyFull (err, full) =>
+                    if err
+                        @remote.couch.ping (available) =>
+                            if available
+                                @updateErrors change, callback
+                            else
+                                @remote.couch.whenAvailable callback
+                    else if full
+                        callback new Error 'The Cozy is full!'
                     else
-                        @remote.couch.whenAvailable callback
+                        @updateErrors change, callback
             else
                 log.info "Applied #{change.seq}"
                 @pouch.setLocalSeq change.seq, (err) =>
@@ -155,10 +163,18 @@ class Sync
                     else
                         @updateRevs change.doc, side, callback
 
+    # Says is the Cozy has no more free disk space
+    isCozyFull: (callback) ->
+        @getDiskSpace (err, res) ->
+            if err
+                callback err
+            else
+                callback null, res.diskSpace.freeDiskSpace in ['', '0']
+
     # Increment the counter of errors for this document
     updateErrors: (change, callback) ->
         doc = change.doc
-        doc.errors = (doc.errors or 0) + 1
+        doc.errors++
         # Don't try more than 10 times for the same operation
         if doc.errors >= 10
             @pouch.setLocalSeq change.seq, callback

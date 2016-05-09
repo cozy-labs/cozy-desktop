@@ -203,6 +203,7 @@ class App
         @local  = @merge.local  = new Local  @config, @prep, @pouch, @events
         @remote = @merge.remote = new Remote @config, @prep, @pouch, @events
         @sync   = new Sync @pouch, @local, @remote, @ignore, @events
+        @sync.getDiskSpace = @getDiskSpace
 
 
     # Start the synchronization
