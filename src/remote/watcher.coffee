@@ -91,8 +91,13 @@ class RemoteWatcher
                         @onChange change.doc, @changed(change)
                     .on 'error', (err) =>
                         @changes = null
-                        @backoff err, callback, =>
+                        retry = =>
                             @listenToChanges options, callback
+                        @couch.ping (available) =>
+                            if available
+                                @backoff err, callback, retry
+                            else
+                                @couch.whenAvailable retry
                     .on 'complete', =>
                         @changes = null
                         @whenReady callback
@@ -100,7 +105,7 @@ class RemoteWatcher
     # Wait for all the changes from CouchDB has been saved in Pouch
     # to call the callback
     # TODO tests
-    whenReady: (callback=->) =>
+    whenReady: (callback) =>
         if @pending is 0
             callback()
         else
