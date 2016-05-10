@@ -22,7 +22,6 @@ const elmectron = Elm.embed(Elm.Main, container, {
   synchonization: '',
   syncError: '',
   transfer: { filename: '', icon: '', path: '', size: 0, updated: 0 },
-  unlink: [],
   updated: [],
   version: pkg.version
 })
@@ -78,10 +77,6 @@ ipcRenderer.on('go-to-tab', (event, tab) => {
   elmectron.ports.gototab.send(tab)
 })
 
-ipcRenderer.on('unlinked', (event) => {
-  init()
-  elmectron.ports.unlink.send([])
-})
 elmectron.ports.unlinkCozy.subscribe(() => {
   ipcRenderer.send('unlink-cozy')
 })

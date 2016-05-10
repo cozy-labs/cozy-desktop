@@ -53,7 +53,6 @@ type Action
   | WizardFinished String
   | TwoPanesAction TwoPanes.Action
   | GoToTab String
-  | Unlink
 
 
 update : Action -> Model -> ( Model, Effects Action )
@@ -106,9 +105,6 @@ update action model =
       in
         ( { model | twopanes = twopanes' }, Effects.map TwoPanesAction effects )
 
-    Unlink ->
-      init
-
 
 
 -- VIEW
@@ -140,7 +136,6 @@ app =
         , Signal.map (WizardAction << Wizard.registration) registration
         , Signal.map (WizardAction << Wizard.folderChosen) folder
         , Signal.map WizardFinished synchonization
-        , Signal.map (always Unlink) unlink
         , Signal.map (TwoPanesAction << TwoPanes.Mail) mail
         , Signal.map (TwoPanesAction << TwoPanes.Transfer) transfer
         , Signal.map (TwoPanesAction << TwoPanes.Remove) remove
@@ -199,7 +194,6 @@ port startSync =
   Wizard.startSync |> .signal
 
 
-port unlink : Signal ()
 port unlinkCozy : Signal ()
 port unlinkCozy =
   TwoPanes.unlinkCozy |> .signal

@@ -332,7 +332,7 @@ ipcMain.on('unlink-cozy', (event) => {
         console.error(err)
       } else {
         device = null
-        event.sender.send('unlinked')
+        app.exit()
       }
     })
   })
