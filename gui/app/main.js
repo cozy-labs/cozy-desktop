@@ -325,14 +325,16 @@ ipcMain.on('unlink-cozy', (event) => {
     console.error('No device!')
     return
   }
-  desktop.askPassword = (cb) => { cb(null, device.password) }
-  desktop.removeRemote(device.deviceName, (err) => {
-    if (err) {
-      console.error(err)
-    } else {
-      device = null
-      event.sender.send('unlinked')
-    }
+  desktop.stopSync(() => {
+    desktop.askPassword = (cb) => { cb(null, device.password) }
+    desktop.removeRemote(device.deviceName, (err) => {
+      if (err) {
+        console.error(err)
+      } else {
+        device = null
+        event.sender.send('unlinked')
+      }
+    })
   })
 })
 
