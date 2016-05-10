@@ -29,6 +29,11 @@ const elmectron = Elm.embed(Elm.Main, container, {
 
 const errMessage = (err) => (err && err.message) ? err.message : err
 
+const init = () => {
+  elmectron.ports.folder.send(defaultDir)
+}
+init()
+
 // Glue code between Elm and the main process
 ipcRenderer.on('cozy-pong', (event, url) => {
   elmectron.ports.pong.send(url)
@@ -48,7 +53,6 @@ elmectron.ports.registerRemote.subscribe((remote) => {
   })
 })
 
-elmectron.ports.folder.send(defaultDir)
 ipcRenderer.on('folder-chosen', (event, folder) => {
   elmectron.ports.folder.send(folder)
 })
@@ -75,6 +79,7 @@ ipcRenderer.on('go-to-tab', (event, tab) => {
 })
 
 ipcRenderer.on('unlinked', (event) => {
+  init()
   elmectron.ports.unlink.send([])
 })
 elmectron.ports.unlinkCozy.subscribe(() => {
