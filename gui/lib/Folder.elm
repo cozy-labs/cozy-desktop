@@ -1,82 +1,103 @@
-module Folder (..) where
+port module Folder exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Focus exposing (focus)
 
 
 -- MODEL
 
 
 type alias Model =
-  { folder : String
-  , error : Bool
-  }
+    { folder : String
+    , error : Bool
+    }
 
 
 init : Model
 init =
-  { folder = ""
-  , error = False
-  }
+    { folder = "/"
+    , error = False
+    }
 
 
 
 -- UPDATE
 
 
-type Action
-  = FillFolder String
+type Msg
+    = ChooseFolder
+    | FillFolder String
+    | StartSync
 
 
-update : Action -> Model -> Model
-update action model =
-  case
-    action
-  of
-    FillFolder folder' ->
-      { model | folder = folder', error = False }
+port chooseFolder : () -> Cmd msg
+
+
+port startSync : String -> Cmd msg
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case
+        msg
+    of
+        ChooseFolder ->
+            ( model, chooseFolder () )
+
+        FillFolder folder' ->
+            ( { model | folder = folder', error = False }, Cmd.none )
+
+        StartSync ->
+            ( model, startSync model.folder )
+
+
+
+-- SUBSCRIPTIONS
+
+
+port folder : (String -> msg) -> Sub msg
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    folder FillFolder
 
 
 
 -- VIEW
 
 
-type alias Context =
-  { chooseFolder : Signal.Address ()
-  , next : Signal.Address ()
-  }
-
-
-view : Context -> Model -> Html
-view context model =
-  div
-    [ classList
-        [ ( "step", True )
-        , ( "step-folder", True )
-        , ( "step-error", model.error )
+view : Model -> Html Msg
+view model =
+    div
+        [ classList
+            [ ( "step", True )
+            , ( "step-folder", True )
+            , ( "step-error", model.error )
+            ]
         ]
-    ]
-    [ p [ class "spacer" ] [ text "" ]
-    , img
-        [ src "images/done.svg"
-        , class "done"
+        [ p [ class "spacer" ] [ text "" ]
+        , img
+            [ src "images/done.svg"
+            , class "done"
+            ]
+            []
+        , h1 [] [ text "All done" ]
+        , label [] [ text "Select a location for your Cozy folder:" ]
+        , a
+            [ class "folder__selector"
+            , href "#"
+            , onClick ChooseFolder
+            ]
+            [ text model.folder
+            , img [ src "images/down.svg" ] []
+            ]
+        , a
+            [ class "btn"
+            , href "#"
+            , onClick StartSync
+            ]
+            [ text "Use Cozy Desktop" ]
         ]
-        []
-    , h1 [] [ text "All done" ]
-    , label [] [ text "Select a location for your Cozy folder:" ]
-    , a
-        [ class "folder__selector"
-        , href "#"
-        , onClick context.chooseFolder ()
-        ]
-        [ text model.folder
-        , img [ src "images/down.svg" ] []
-        ]
-    , a
-        [ class "btn"
-        , href "#"
-        , onClick context.next ()
-        ]
-        [ text "Use Cozy Desktop" ]
-    ]

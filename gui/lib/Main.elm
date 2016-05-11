@@ -1,220 +1,120 @@
-module Main (..) where
+port module Main exposing (..)
 
-import StartApp
-import Effects exposing (Effects, Never)
 import Html exposing (Html)
-import Task exposing (Task)
-import Time exposing (Time)
+import Html.App as Html
 import Wizard
 import TwoPanes
-import Dashboard exposing (File, DiskSpace)
+
+
+main =
+    Html.program
+        { init = init
+        , update = update
+        , view = view
+        , subscriptions = subscriptions
+        }
+
 
 
 -- MODEL
 
 
 type Page
-  = WizardPage
-  | TwoPanesPage
+    = WizardPage
+    | TwoPanesPage
 
 
 type alias Model =
-  { page : Page
-  , wizard : Wizard.Model
-  , twopanes : TwoPanes.Model
-  }
+    { page : Page
+    , wizard : Wizard.Model
+    , twopanes : TwoPanes.Model
+    }
 
 
-init : ( Model, Effects Action )
+init : ( Model, Cmd Msg )
 init =
-  let
-    page =
-      WizardPage
+    let
+        page =
+            WizardPage
 
-    wizard =
-      Wizard.init
+        wizard =
+            Wizard.init
 
-    twopanes =
-      TwoPanes.init version
+        twopanes =
+            TwoPanes.init
 
-    model =
-      Model page wizard twopanes
-  in
-    ( model, Effects.none )
+        model =
+            Model page wizard twopanes
+    in
+        ( model, Cmd.none )
 
 
 
 -- UPDATE
 
 
-type Action
-  = NoOp
-  | WizardAction Wizard.Action
-  | WizardFinished String
-  | TwoPanesAction TwoPanes.Action
-  | GoToTab String
+type Msg
+    = NoOp
+    | WizardMsg Wizard.Msg
+    | SyncStart String
+    | TwoPanesMsg TwoPanes.Msg
 
 
-update : Action -> Model -> ( Model, Effects Action )
-update action model =
-  case action of
-    NoOp ->
-      ( model, Effects.none )
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        NoOp ->
+            ( model, Cmd.none )
 
-    WizardAction action' ->
-      let
-        ( wizard', effects ) =
-          Wizard.update action' model.wizard
-      in
-        ( { model | wizard = wizard' }, Effects.map WizardAction effects )
+        WizardMsg msg' ->
+            let
+                ( wizard', cmd ) =
+                    Wizard.update msg' model.wizard
+            in
+                ( { model | wizard = wizard' }, Cmd.map WizardMsg cmd )
 
-    WizardFinished address ->
-      let
-        ( twopanes', effects ) =
-          TwoPanes.update (TwoPanes.FillAddress address) model.twopanes
+        SyncStart address ->
+            let
+                ( twopanes', _ ) =
+                    TwoPanes.update (TwoPanes.FillAddress address) model.twopanes
+            in
+                ( { model | page = TwoPanesPage, twopanes = twopanes' }, Cmd.none )
 
-        model' =
-          { model | twopanes = twopanes', page = TwoPanesPage }
-      in
-        ( model', Effects.map TwoPanesAction effects )
-
-    TwoPanesAction action' ->
-      let
-        ( twopanes', effects ) =
-          TwoPanes.update action' model.twopanes
-      in
-        ( { model | twopanes = twopanes' }, Effects.map TwoPanesAction effects )
-
-    GoToTab tab' ->
-      let
-        tab =
-          case
-            tab'
-          of
-            "help" ->
-              TwoPanes.HelpTab
-
-            "settings" ->
-              TwoPanes.SettingsTab
-
-            _ ->
-              TwoPanes.DashboardTab
-
-        ( twopanes', effects ) =
-          TwoPanes.update (TwoPanes.GoToTab tab) model.twopanes
-      in
-        ( { model | twopanes = twopanes' }, Effects.map TwoPanesAction effects )
+        TwoPanesMsg msg' ->
+            let
+                ( twopanes', cmd ) =
+                    TwoPanes.update msg' model.twopanes
+            in
+                ( { model | twopanes = twopanes' }, Cmd.map TwoPanesMsg cmd )
 
 
 
 -- VIEW
 
 
-view : Signal.Address Action -> Model -> Html
-view address model =
-  if model.page == WizardPage then
-    let
-      address' =
-        Signal.forwardTo address WizardAction
-    in
-      Wizard.view address' model.wizard
-  else
-    let
-      address' =
-        Signal.forwardTo address TwoPanesAction
-    in
-      TwoPanes.view address' model.twopanes
+view : Model -> Html Msg
+view model =
+    case
+        model.page
+    of
+        WizardPage ->
+            Html.map WizardMsg (Wizard.view model.wizard)
+
+        TwoPanesPage ->
+            Html.map TwoPanesMsg (TwoPanes.view model.twopanes)
 
 
-app : StartApp.App Model
-app =
-  StartApp.start
-    { init = init
-    , inputs =
-        [ Signal.map (TwoPanesAction << TwoPanes.Tick) everySecond
-        , Signal.map (WizardAction << Wizard.pong) pong
-        , Signal.map (WizardAction << Wizard.registration) registration
-        , Signal.map (WizardAction << Wizard.folderChosen) folder
-        , Signal.map WizardFinished synchonization
-        , Signal.map (TwoPanesAction << TwoPanes.Mail) mail
-        , Signal.map (TwoPanesAction << TwoPanes.Transfer) transfer
-        , Signal.map (TwoPanesAction << TwoPanes.Remove) remove
-        , Signal.map (always (TwoPanesAction TwoPanes.Updated)) updated
-        , Signal.map (TwoPanesAction << TwoPanes.UpdateDiskSpace) diskSpace
-        , Signal.map (TwoPanesAction << TwoPanes.SyncError) syncError
-        , Signal.map (TwoPanesAction << TwoPanes.SetAutoLaunch) autolaunch
-        , Signal.map GoToTab gototab
+
+-- SUBSCRIPTIONS
+
+
+port synchonization : (String -> msg) -> Sub msg
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ Sub.map WizardMsg (Wizard.subscriptions model.wizard)
+        , Sub.map TwoPanesMsg (TwoPanes.subscriptions model.twopanes)
+        , synchonization SyncStart
         ]
-    , update = update
-    , view = view
-    }
-
-
-main : Signal Html
-main =
-  app.html
-
-
-everySecond : Signal Time
-everySecond =
-  Time.every (1 * Time.second)
-
-
-port runner : Signal (Task Never ())
-port runner =
-  app.tasks
-
-
-port focus : Signal String
-port focus =
-  Wizard.focus |> .signal
-
-
-port pong : Signal (Maybe String)
-port pingCozy : Signal String
-port pingCozy =
-  Wizard.pingCozy |> .signal
-
-
-port registration : Signal (Maybe String)
-port registerRemote : Signal ( String, String )
-port registerRemote =
-  Wizard.registerRemote |> .signal
-
-
-port folder : Signal String
-port chooseFolder : Signal ()
-port chooseFolder =
-  Wizard.chooseFolder |> .signal
-
-
-port synchonization : Signal String
-port startSync : Signal String
-port startSync =
-  Wizard.startSync |> .signal
-
-
-port unlinkCozy : Signal ()
-port unlinkCozy =
-  TwoPanes.unlinkCozy |> .signal
-
-
-port mail : Signal (Maybe String)
-port sendMail : Signal String
-port sendMail =
-  TwoPanes.sendMail |> .signal
-
-
-port autolaunch : Signal Bool
-port autoLauncher : Signal Bool
-port autoLauncher =
-  TwoPanes.autoLauncher |> .signal
-
-
-port transfer : Signal File
-port remove : Signal File
-port updated : Signal ()
-port diskSpace : Signal DiskSpace
-port syncError : Signal String
-port gototab : Signal String
-port version : String

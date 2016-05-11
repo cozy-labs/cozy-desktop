@@ -320,7 +320,7 @@ ipcMain.on('auto-launcher', (event, enabled) => {
   })
 })
 
-ipcMain.on('unlink-cozy', (event) => {
+ipcMain.on('unlink-cozy', () => {
   if (!device) {
     console.error('No device!')
     return

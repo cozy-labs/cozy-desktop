@@ -1,5 +1,4 @@
 'use strict'
-/* global Elm */
 
 const ipcRenderer = require('electron').ipcRenderer
 const remote = require('remote')
@@ -10,28 +9,26 @@ const pkg = remote.require('./package.json')
 const defaultDir = path.join(path.homedir(), 'Cozy')
 const container = document.getElementById('container')
 
-const elmectron = Elm.embed(Elm.Main, container, {
-  autolaunch: false,
-  diskSpace: { used: 0, usedUnit: '', total: 0, totalUnit: '' },
-  folder: '',
-  gototab: '',
-  mail: '',
-  pong: null,
-  registration: null,
-  remove: { filename: '', icon: '', path: '', size: 0, updated: 0 },
-  synchonization: '',
-  syncError: '',
-  transfer: { filename: '', icon: '', path: '', size: 0, updated: 0 },
-  updated: [],
-  version: pkg.version
-})
+const Elm = require('./elm').Main
+const elmectron = Elm.embed(container)
 
-const errMessage = (err) => (err && err.message) ? err.message : err
+const errMessage = (err) => {
+  if (!err) {
+    return null
+  } else if (err.code === 'ENOTFOUND') {
+    return "The host can't be found"
+  } else if (err.message) {
+    return err.message
+  } else {
+    return `${err}`
+  }
+}
 
 const init = () => {
   elmectron.ports.folder.send(defaultDir)
+  elmectron.ports.version.send(pkg.version)
 }
-init()
+setTimeout(init, 10)
 
 // Glue code between Elm and the main process
 ipcRenderer.on('cozy-pong', (event, url) => {
@@ -90,7 +87,7 @@ elmectron.ports.sendMail.subscribe((body) => {
 })
 
 ipcRenderer.on('up-to-date', () => {
-  elmectron.ports.updated.send([])
+  elmectron.ports.updated.send(true)
 })
 
 ipcRenderer.on('transfer', (event, info) => {
