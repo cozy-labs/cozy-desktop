@@ -1,8 +1,7 @@
 'use strict'
 
-const ipcRenderer = require('electron').ipcRenderer
-const remote = require('remote')
-const shell = require('electron').shell
+const electron = require('electron')
+const {ipcRenderer, remote, shell} = electron
 
 const path = remote.require('path-extra')
 const pkg = remote.require('./package.json')
@@ -127,3 +126,9 @@ elmectron.ports.focus.subscribe((selector) => {
     }
   }, 300)
 })
+
+// Chrome-like "inspect element" for Electron
+if (process.env.WATCH === 'true' || process.env.DEBUG === 'true') {
+  const debugMenu = require('debug-menu')
+  debugMenu.install()
+}
