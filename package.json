@@ -59,7 +59,7 @@
     "del": "2.2.0",
     "faker": "3.0.1",
     "jsverify": "0.7.1",
-    "lodash.uniq": "4.2.1",
+    "lodash.uniq": "4.3.0",
     "mocha": "2.4.5",
     "pouchdb-server": "1.0.1",
     "should": "8.3.1",
