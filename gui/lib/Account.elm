@@ -1,4 +1,4 @@
-module Account (..) where
+port module Account exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -9,60 +9,60 @@ import Html.Events exposing (..)
 
 
 type alias Model =
-  { address : String
-  }
+    { address : String
+    }
 
 
 init : Model
 init =
-  { address = ""
-  }
+    { address = ""
+    }
 
 
 
 -- UPDATE
 
 
-type Action
-  = FillAddress String
+type Msg
+    = FillAddress String
+    | UnlinkCozy
 
 
-update : Action -> Model -> Model
-update action model =
-  case
-    action
-  of
-    FillAddress address' ->
-      { model | address = address' }
+port unlinkCozy : () -> Cmd msg
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case
+        msg
+    of
+        FillAddress address' ->
+            ( { model | address = address' }, Cmd.none )
+
+        UnlinkCozy ->
+            ( model, unlinkCozy () )
 
 
 
 -- VIEW
 
 
-type alias Context =
-  { unlinkCozy : Signal.Address () }
-
-
-view : Context -> Model -> Html
-view context model =
-  section
-    [ class "two-panes__content two-panes__content--account" ]
-    [ h1 [] [ text "Account" ]
-    , h3
-        []
-        [ a [ href model.address ] [ text model.address ] ]
-    , h2 [] [ text "Unlink Cozy" ]
-    , p
-        []
-        [ text "It will unlink your account to this computer. "
-        , text "Your files won't be deleted. "
-        , text "Are you sure to unlink this account?"
+view : Model -> Html Msg
+view model =
+    section [ class "two-panes__content two-panes__content--account" ]
+        [ h1 [] [ text "Account" ]
+        , h3 []
+            [ a [ href model.address ] [ text model.address ] ]
+        , h2 [] [ text "Unlink Cozy" ]
+        , p []
+            [ text "It will unlink your account to this computer. "
+            , text "Your files won't be deleted. "
+            , text "Are you sure to unlink this account?"
+            ]
+        , a
+            [ class "btn btn--danger"
+            , href "#"
+            , onClick UnlinkCozy
+            ]
+            [ text "Unlink this Cozy" ]
         ]
-    , a
-        [ class "btn btn--danger"
-        , href "#"
-        , onClick context.unlinkCozy ()
-        ]
-        [ text "Unlink this Cozy" ]
-    ]

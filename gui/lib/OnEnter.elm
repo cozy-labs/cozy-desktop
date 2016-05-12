@@ -1,21 +1,19 @@
-module OnEnter (..) where
+module OnEnter exposing (..)
 
 import Html
 import Html.Events exposing (on, keyCode)
 import Json.Decode as Json
 
 
-onEnter : Signal.Address a -> a -> Html.Attribute
-onEnter address value =
-  on
-    "keydown"
-    (Json.customDecoder keyCode is13)
-    (\_ -> Signal.message address value)
+onEnter : msg -> Html.Attribute msg
+onEnter message =
+    on "keydown"
+        (Json.customDecoder keyCode (is13 message))
 
 
-is13 : Int -> Result String ()
-is13 code =
-  if code == 13 then
-    Ok ()
-  else
-    Err "not the right key code"
+is13 : msg -> Int -> Result String msg
+is13 message code =
+    if code == 13 then
+        Ok message
+    else
+        Err "not the right key code"

@@ -1,8 +1,9 @@
-module Password (..) where
+port module Password exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Focus exposing (focus)
 import OnEnter exposing (onEnter)
 
 
@@ -10,104 +11,152 @@ import OnEnter exposing (onEnter)
 
 
 type alias Model =
-  { password : String
-  , address : String
-  , error : String
-  , busy : Bool
-  }
+    { password : String
+    , address : String
+    , error : String
+    , busy : Bool
+    }
 
 
 init : Model
 init =
-  { password = ""
-  , address = ""
-  , error = ""
-  , busy = False
-  }
+    { password = ""
+    , address = ""
+    , error = ""
+    , busy = False
+    }
 
 
 
 -- UPDATE
 
 
-type Action
-  = FillPassword String
-  | FillAddress String
-  | SetError String
-  | SetBusy
+type Msg
+    = FillPassword String
+    | FillAddress String
+    | SetError String
+    | GoToPrevPage
+    | Register
+    | Registered (Maybe String)
 
 
-update : Action -> Model -> Model
-update action model =
-  case
-    action
-  of
-    FillPassword password' ->
-      { model | password = password', error = "", busy = False }
+type Navigation
+    = None
+    | NextPage
+    | PrevPage
 
-    FillAddress address' ->
-      { model | address = address', busy = False }
 
-    SetError error' ->
-      { model | error = error', busy = False }
+port registerRemote : ( String, String ) -> Cmd msg
 
-    SetBusy ->
-      { model | busy = True }
+
+setError : Model -> String -> ( Model, Cmd msg, Navigation )
+setError model message =
+    ( { model | error = message, busy = False }
+    , focus ".wizard__password"
+    , None
+    )
+
+
+update : Msg -> Model -> ( Model, Cmd Msg, Navigation )
+update msg model =
+    case
+        msg
+    of
+        FillPassword password' ->
+            let
+                model' =
+                    { model | password = password', error = "", busy = False }
+            in
+                ( model', Cmd.none, None )
+
+        FillAddress address' ->
+            let
+                model' =
+                    { model | address = address', busy = False }
+            in
+                ( model', Cmd.none, None )
+
+        SetError error ->
+            setError model error
+
+        GoToPrevPage ->
+            ( model, Cmd.none, PrevPage )
+
+        Register ->
+            if model.password == "" then
+                setError model "You don't have filled the password!"
+            else
+                let
+                    model' =
+                        { model | busy = True }
+
+                    cmd =
+                        registerRemote ( model.address, model.password )
+                in
+                    ( model', cmd, None )
+
+        Registered Nothing ->
+            ( { model | busy = False }, Cmd.none, NextPage )
+
+        Registered (Just error) ->
+            setError model error
+
+
+
+-- SUBSCRIPTIONS
+
+
+port registration : (Maybe String -> msg) -> Sub msg
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    registration Registered
 
 
 
 -- VIEW
 
 
-type alias Context =
-  { actions : Signal.Address Action
-  , next : Signal.Address ()
-  , back : Signal.Address ()
-  }
-
-
-view : Context -> Model -> Html
-view context model =
-  div
-    [ classList
-        [ ( "step", True )
-        , ( "step-password", True )
-        , ( "step-error", model.error /= "" )
-        ]
-    ]
-    [ p
-        [ class "upper error-message" ]
-        [ text model.error ]
-    , div
-        [ class "upper" ]
-        [ input
-            [ placeholder "Password"
-            , class "wizard__password"
-            , type' "password"
-            , value model.password
-            , on "input" targetValue (Signal.message context.actions << FillPassword)
-            , onEnter context.next ()
+view : Model -> Html Msg
+view model =
+    div
+        [ classList
+            [ ( "step", True )
+            , ( "step-password", True )
+            , ( "step-error", model.error /= "" )
             ]
-            []
         ]
-    , p
-        []
-        [ text "Your password for the cozy address: "
-        , em [] [ text model.address ]
+        [ p [ class "upper error-message" ]
+            [ text model.error ]
+        , div [ class "upper" ]
+            [ input
+                [ placeholder "Password"
+                , class "wizard__password"
+                , type' "password"
+                , value model.password
+                , onInput FillPassword
+                , onEnter Register
+                ]
+                []
+            ]
+        , p []
+            [ text "Your password for the cozy address: "
+            , em [] [ text model.address ]
+            ]
+        , a
+            [ href "#"
+            , class "more-info"
+            , onClick GoToPrevPage
+            ]
+            [ text "Wrong cozy address ?" ]
+        , a
+            [ class "btn"
+            , href "#"
+            , if model.busy then
+                attribute "aria-busy" "true"
+              else
+                onClick Register
+            ]
+            [ text "Login" ]
         ]
-    , a
-        [ href "#"
-        , class "more-info"
-        , onClick context.back ()
-        ]
-        [ text "Wrong cozy address ?" ]
-    , a
-        [ class "btn"
-        , href "#"
-        , if model.busy then
-            attribute "aria-busy" "true"
-          else
-            onClick context.next ()
-        ]
-        [ text "Login" ]
-    ]

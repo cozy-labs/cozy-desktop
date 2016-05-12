@@ -1,10 +1,9 @@
-module TwoPanes (..) where
+port module TwoPanes exposing (..)
 
-import Effects exposing (Effects)
 import Html exposing (..)
+import Html.App as Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Time exposing (Time)
 import Icons
 import Dashboard
 import Settings
@@ -16,259 +15,176 @@ import Help
 
 
 type Tab
-  = DashboardTab
-  | SettingsTab
-  | AccountTab
-  | HelpTab
+    = DashboardTab
+    | SettingsTab
+    | AccountTab
+    | HelpTab
 
 
 type alias Model =
-  { tab : Tab
-  , dashboard : Dashboard.Model
-  , settings : Settings.Model
-  , account : Account.Model
-  , help : Help.Model
-  }
+    { tab : Tab
+    , dashboard : Dashboard.Model
+    , settings : Settings.Model
+    , account : Account.Model
+    , help : Help.Model
+    }
 
 
-init : String -> Model
-init version =
-  { tab = DashboardTab
-  , dashboard = Dashboard.init
-  , settings = Settings.init version
-  , account = Account.init
-  , help = Help.init
-  }
+init : Model
+init =
+    { tab = DashboardTab
+    , dashboard = Dashboard.init
+    , settings = Settings.init
+    , account = Account.init
+    , help = Help.init
+    }
 
 
 
 -- UPDATE
 
 
-type Action
-  = NoOp
-  | GoToTab Tab
-  | SetAutoLaunch Bool
-  | FillAddress String
-  | UnlinkCozy
-  | UpdateHelp Help.Action
-  | SendMail String
-  | Mail (Maybe String)
-    -- String is an error
-  | Updated
-  | Transfer Dashboard.File
-  | Remove Dashboard.File
-  | UpdateDiskSpace Dashboard.DiskSpace
-  | SyncError String
-  | Tick Time
+type Msg
+    = NoOp
+    | GoToTab Tab
+    | GoToStrTab String
+    | FillAddress String
+    | DashboardMsg Dashboard.Msg
+    | SettingsMsg Settings.Msg
+    | AccountMsg Account.Msg
+    | HelpMsg Help.Msg
 
 
-update : Action -> Model -> ( Model, Effects Action )
-update action model =
-  case action of
-    NoOp ->
-      ( model, Effects.none )
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        NoOp ->
+            ( model, Cmd.none )
 
-    GoToTab tab' ->
-      ( { model | tab = tab' }, Effects.none )
+        GoToTab tab' ->
+            ( { model | tab = tab' }, Cmd.none )
 
-    SetAutoLaunch autolaunch ->
-      let
-        settings' =
-          Settings.update (Settings.SetAutoLaunch autolaunch) model.settings
+        GoToStrTab tab ->
+            case
+                tab
+            of
+                "settings" ->
+                    update (GoToTab SettingsTab) model
 
-        task =
-          Signal.send autoLauncher.address autolaunch
+                "account" ->
+                    update (GoToTab AccountTab) model
 
-        effect =
-          Effects.map (always NoOp) (Effects.task task)
-      in
-        ( { model | settings = settings' }, effect )
+                "help" ->
+                    update (GoToTab HelpTab) model
 
-    FillAddress address ->
-      let
-        account' =
-          Account.update (Account.FillAddress address) model.account
-      in
-        ( { model | account = account' }, Effects.none )
+                _ ->
+                    update (GoToTab DashboardTab) model
 
-    UnlinkCozy ->
-      let
-        task =
-          Signal.send unlinkCozy.address ()
+        FillAddress address ->
+            let
+                ( account', _ ) =
+                    Account.update (Account.FillAddress address) model.account
+            in
+                ( { model | account = account' }, Cmd.none )
 
-        effect =
-          Effects.map (always NoOp) (Effects.task task)
-      in
-        ( model, effect )
+        DashboardMsg msg' ->
+            let
+                dashboard' =
+                    Dashboard.update msg' model.dashboard
+            in
+                ( { model | dashboard = dashboard' }, Cmd.none )
 
-    UpdateHelp action' ->
-      let
-        help' =
-          Help.update action' model.help
-      in
-        ( { model | help = help' }, Effects.none )
+        SettingsMsg msg' ->
+            let
+                ( settings', cmd ) =
+                    Settings.update msg' model.settings
+            in
+                ( { model | settings = settings' }, Cmd.map SettingsMsg cmd )
 
-    SendMail body ->
-      let
-        help' =
-          Help.update Help.SetBusy model.help
+        AccountMsg msg' ->
+            let
+                ( account', cmd ) =
+                    Account.update msg' model.account
+            in
+                ( { model | account = account' }, Cmd.map AccountMsg cmd )
 
-        task =
-          Signal.send sendMail.address body
-
-        effect =
-          Effects.map (always NoOp) (Effects.task task)
-      in
-        ( { model | help = help' }, effect )
-
-    Mail (Just error) ->
-      let
-        help' =
-          Help.update (Help.SetError error) model.help
-      in
-        ( { model | help = help' }, Effects.none )
-
-    Mail Nothing ->
-      let
-        help' =
-          Help.update Help.SetSuccess model.help
-      in
-        ( { model | help = help' }, Effects.none )
-
-    Updated ->
-      let
-        dashboard' =
-          Dashboard.update Dashboard.Updated model.dashboard
-      in
-        ( { model | dashboard = dashboard' }, Effects.none )
-
-    Transfer file ->
-      let
-        dashboard' =
-          Dashboard.update (Dashboard.Transfer file) model.dashboard
-      in
-        ( { model | dashboard = dashboard' }, Effects.none )
-
-    Remove file ->
-      let
-        dashboard' =
-          Dashboard.update (Dashboard.Remove file) model.dashboard
-      in
-        ( { model | dashboard = dashboard' }, Effects.none )
-
-    UpdateDiskSpace disk ->
-      let
-        dashboard' =
-          Dashboard.update (Dashboard.UpdateDiskSpace disk) model.dashboard
-      in
-        ( { model | dashboard = dashboard' }, Effects.none )
-
-    SyncError error ->
-      let
-        dashboard' =
-          Dashboard.update (Dashboard.SetError error) model.dashboard
-      in
-        ( { model | dashboard = dashboard' }, Effects.none )
-
-    Tick now ->
-      let
-        dashboard' =
-          Dashboard.update (Dashboard.Tick now) model.dashboard
-      in
-        ( { model | dashboard = dashboard' }, Effects.none )
+        HelpMsg msg' ->
+            let
+                ( help', cmd ) =
+                    Help.update msg' model.help
+            in
+                ( { model | help = help' }, Cmd.map HelpMsg cmd )
 
 
-autoLauncher : Signal.Mailbox Bool
-autoLauncher =
-  Signal.mailbox True
+
+-- SUBSCRIPTIONS
 
 
-unlinkCozy : Signal.Mailbox ()
-unlinkCozy =
-  Signal.mailbox ()
+port gototab : (String -> msg) -> Sub msg
 
 
-mail : Maybe String -> Action
-mail =
-  Mail
-
-
-sendMail : Signal.Mailbox String
-sendMail =
-  Signal.mailbox ""
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ gototab GoToStrTab
+        , Sub.map DashboardMsg (Dashboard.subscriptions model.dashboard)
+        , Sub.map SettingsMsg (Settings.subscriptions model.settings)
+        , Sub.map HelpMsg (Help.subscriptions model.help)
+        ]
 
 
 
 -- VIEW
 
 
-view : Signal.Address Action -> Model -> Html
-view address model =
-  let
-    iconSize =
-      20
+view : Model -> Html Msg
+view model =
+    let
+        iconSize =
+            20
 
-    menu_item title tab icon =
-      let
-        active =
-          model.tab == tab
-      in
-        li
-          [ classList
-              [ ( "two-panes__menu__item", True )
-              , ( "two-panes__menu__item--active", active )
-              ]
-          ]
-          [ a
-              [ href "#"
-              , onClick address (GoToTab tab)
-              ]
-              [ icon iconSize active
-              , text title
-              ]
-          ]
+        menu_item title tab icon =
+            let
+                active =
+                    model.tab == tab
+            in
+                li
+                    [ classList
+                        [ ( "two-panes__menu__item", True )
+                        , ( "two-panes__menu__item--active", active )
+                        ]
+                    ]
+                    [ a
+                        [ href "#"
+                        , onClick (GoToTab tab)
+                        ]
+                        [ icon iconSize active
+                        , text title
+                        ]
+                    ]
 
-    menu =
-      aside
-        [ class "two-panes__menu" ]
-        [ ul
-            []
-            [ menu_item "Dashboard" DashboardTab Icons.dashboard
-            , menu_item "Settings" SettingsTab Icons.settings
-            , menu_item "Account" AccountTab Icons.account
-            , menu_item "Help" HelpTab Icons.help
-            ]
-        ]
+        menu =
+            aside [ class "two-panes__menu" ]
+                [ ul []
+                    [ menu_item "Dashboard" DashboardTab Icons.dashboard
+                    , menu_item "Settings" SettingsTab Icons.settings
+                    , menu_item "Account" AccountTab Icons.account
+                    , menu_item "Help" HelpTab Icons.help
+                    ]
+                ]
 
-    content =
-      case model.tab of
-        DashboardTab ->
-          Dashboard.view model.dashboard
+        content =
+            case model.tab of
+                DashboardTab ->
+                    Html.map DashboardMsg (Dashboard.view model.dashboard)
 
-        SettingsTab ->
-          let
-            context =
-              Settings.Context
-                (Signal.forwardTo address SetAutoLaunch)
-          in
-            Settings.view context model.settings
+                SettingsTab ->
+                    Html.map SettingsMsg (Settings.view model.settings)
 
-        AccountTab ->
-          let
-            context =
-              Account.Context
-                (Signal.forwardTo address (always (UnlinkCozy)))
-          in
-            Account.view context model.account
+                AccountTab ->
+                    Html.map AccountMsg (Account.view model.account)
 
-        HelpTab ->
-          let
-            context =
-              Help.Context
-                (Signal.forwardTo address UpdateHelp)
-                (Signal.forwardTo address SendMail)
-          in
-            Help.view context model.help
-  in
-    section [ class "two-panes" ] [ menu, content ]
+                HelpTab ->
+                    Html.map HelpMsg (Help.view model.help)
+    in
+        section [ class "two-panes" ] [ menu, content ]

@@ -1,8 +1,9 @@
-module Wizard (..) where
+port module Wizard exposing (..)
 
 import Html exposing (..)
+import Html.App as Html
 import Html.Attributes exposing (..)
-import Effects exposing (Effects)
+import Focus exposing (focus)
 import Welcome
 import Address
 import Password
@@ -13,309 +14,153 @@ import Folder
 
 
 type Page
-  = WelcomePage
-  | AddressPage
-  | PasswordPage
-  | FolderPage
+    = WelcomePage
+    | AddressPage
+    | PasswordPage
+    | FolderPage
 
 
 type alias Model =
-  { page : Page
-  , address : Address.Model
-  , password : Password.Model
-  , folder : Folder.Model
-  }
+    { page : Page
+    , address : Address.Model
+    , password : Password.Model
+    , folder : Folder.Model
+    }
 
 
 init : Model
 init =
-  { page = WelcomePage
-  , address = Address.init
-  , password = Password.init
-  , folder = Folder.init
-  }
+    { page = WelcomePage
+    , address = Address.init
+    , password = Password.init
+    , folder = Folder.init
+    }
 
 
 
 -- UPDATE
 
 
-type Action
-  = NoOp
-  | GoToAddressForm
-  | UpdateAddress Address.Action
-  | GoToPasswordForm
-  | SetAddress (Maybe String)
-    -- String is the address
-  | UpdatePassword Password.Action
-  | AddDevice
-  | Register (Maybe String)
-    -- String is an error
-  | UpdateFolder Folder.Action
-  | StartSync
+type Msg
+    = NoOp
+    | WelcomeMsg Welcome.Msg
+    | AddressMsg Address.Msg
+    | PasswordMsg Password.Msg
+    | FolderMsg Folder.Msg
 
 
-update : Action -> Model -> ( Model, Effects Action )
-update action model =
-  case action of
-    NoOp ->
-      ( model, Effects.none )
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        NoOp ->
+            ( model, Cmd.none )
 
-    GoToAddressForm ->
-      let
-        task =
-          Signal.send focus.address ".wizard__address"
+        WelcomeMsg msg' ->
+            case
+                msg'
+            of
+                Welcome.NextPage ->
+                    ( { model | page = AddressPage }, focus ".wizard__address" )
 
-        effect =
-          Effects.map (always NoOp) (Effects.task task)
-      in
-        ( { model | page = AddressPage }, effect )
+        AddressMsg msg' ->
+            let
+                ( address', cmd, nav ) =
+                    Address.update msg' model.address
+            in
+                case
+                    nav
+                of
+                    Nothing ->
+                        let
+                            ( password', _, _ ) =
+                                Password.update (Password.SetError "") model.password
 
-    UpdateAddress action' ->
-      let
-        address' =
-          Address.update action' model.address
+                            model' =
+                                { model | address = address', password = password' }
+                        in
+                            ( model', Cmd.map AddressMsg cmd )
 
-        password' =
-          Password.update (Password.SetError "") model.password
-      in
-        ( { model | address = address', password = password' }, Effects.none )
+                    Just address'' ->
+                        let
+                            ( password', _, _ ) =
+                                Password.update (Password.FillAddress address'') model.password
 
-    GoToPasswordForm ->
-      if model.address.address == "" then
-        let
-          message =
-            "You don't have filled the address!"
+                            model' =
+                                { model | address = address', password = password', page = PasswordPage }
 
-          address' =
-            Address.update (Address.SetError message) model.address
+                            cmd' =
+                                focus ".wizard__password"
+                        in
+                            ( model', cmd' )
 
-          task =
-            Signal.send focus.address ".wizard__address"
+        PasswordMsg msg' ->
+            let
+                ( password', cmd, nav ) =
+                    Password.update msg' model.password
+            in
+                case
+                    nav
+                of
+                    Password.NextPage ->
+                        ( { model | password = password', page = FolderPage }, Cmd.none )
 
-          effect =
-            Effects.map (always NoOp) (Effects.task task)
-        in
-          ( { model | address = address' }, effect )
-      else
-        let
-          address' =
-            Address.update Address.SetBusy model.address
+                    Password.PrevPage ->
+                        ( { model | password = password', page = AddressPage }, Cmd.none )
 
-          url =
-            model.address.address
+                    Password.None ->
+                        ( { model | password = password' }, Cmd.map PasswordMsg cmd )
 
-          task =
-            Signal.send pingCozy.address url
-
-          effect =
-            Effects.map (always NoOp) (Effects.task task)
-        in
-          ( { model | address = address' }, effect )
-
-    SetAddress Nothing ->
-      let
-        message =
-          "No cozy instance at this address!"
-
-        address' =
-          Address.update (Address.SetError message) model.address
-      in
-        ( { model | address = address' }, Effects.none )
-
-    SetAddress (Just address'') ->
-      let
-        address' =
-          Address.update (Address.FillAddress address'') model.address
-
-        password' =
-          Password.update (Password.FillAddress address'') model.password
-
-        task =
-          Signal.send focus.address ".wizard__password"
-
-        effect =
-          Effects.map (always NoOp) (Effects.task task)
-
-        model' =
-          { model
-            | page = PasswordPage
-            , address = address'
-            , password = password'
-          }
-      in
-        ( model', effect )
-
-    UpdatePassword action' ->
-      let
-        password' =
-          Password.update action' model.password
-      in
-        ( { model | password = password' }, Effects.none )
-
-    AddDevice ->
-      if model.password.password == "" then
-        let
-          message =
-            "You don't have filled the password!"
-
-          password' =
-            Password.update (Password.SetError message) model.password
-
-          task =
-            Signal.send focus.address ".wizard__password"
-
-          effect =
-            Effects.map (always NoOp) (Effects.task task)
-        in
-          ( { model | password = password' }, effect )
-      else
-        let
-          password' =
-            Password.update Password.SetBusy model.password
-
-          url =
-            model.address.address
-
-          password =
-            model.password.password
-
-          task =
-            Signal.send registerRemote.address ( url, password )
-
-          effect =
-            Effects.map (always NoOp) (Effects.task task)
-        in
-          ( { model | password = password' }, effect )
-
-    Register (Just error) ->
-      let
-        password' =
-          Password.update (Password.SetError error) model.password
-      in
-        ( { model | password = password' }, Effects.none )
-
-    Register Nothing ->
-      ( { model | page = FolderPage }, Effects.none )
-
-    UpdateFolder action' ->
-      let
-        folder' =
-          Folder.update action' model.folder
-      in
-        ( { model | folder = folder' }, Effects.none )
-
-    StartSync ->
-      if model.folder.folder == "" then
-        let
-          folder' =
-            { folder = "", error = True }
-        in
-          ( { model | folder = folder' }, Effects.none )
-      else
-        let
-          folder =
-            model.folder.folder
-
-          task =
-            Signal.send startSync.address folder
-
-          effect =
-            Effects.map (always NoOp) (Effects.task task)
-        in
-          ( model, effect )
+        FolderMsg msg' ->
+            let
+                ( folder', cmd ) =
+                    Folder.update msg' model.folder
+            in
+                ( { model | folder = folder' }, Cmd.map FolderMsg cmd )
 
 
-focus : Signal.Mailbox String
-focus =
-  Signal.mailbox ""
+
+-- SUBSCRIPTIONS
 
 
-pong : Maybe String -> Action
-pong =
-  SetAddress
-
-
-pingCozy : Signal.Mailbox String
-pingCozy =
-  Signal.mailbox ""
-
-
-registration : Maybe String -> Action
-registration =
-  Register
-
-
-registerRemote : Signal.Mailbox ( String, String )
-registerRemote =
-  Signal.mailbox ( "", "" )
-
-
-folderChosen : String -> Action
-folderChosen =
-  UpdateFolder << Folder.FillFolder
-
-
-chooseFolder : Signal.Mailbox ()
-chooseFolder =
-  Signal.mailbox ()
-
-
-startSync : Signal.Mailbox String
-startSync =
-  Signal.mailbox ""
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ Sub.map AddressMsg (Address.subscriptions model.address)
+        , Sub.map PasswordMsg (Password.subscriptions model.password)
+        , Sub.map FolderMsg (Folder.subscriptions model.folder)
+        ]
 
 
 
 -- VIEW
 
 
-view : Signal.Address Action -> Model -> Html
-view address model =
-  let
-    welcomeContext =
-      Welcome.Context
-        (Signal.forwardTo address (always (GoToAddressForm)))
+view : Model -> Html Msg
+view model =
+    let
+        welcomeView =
+            Html.map WelcomeMsg Welcome.view
 
-    welcomeView =
-      Welcome.view welcomeContext
+        addressView =
+            Html.map AddressMsg (Address.view model.address)
 
-    addressContext =
-      Address.Context
-        (Signal.forwardTo address UpdateAddress)
-        (Signal.forwardTo address (always (GoToPasswordForm)))
+        passwordView =
+            Html.map PasswordMsg (Password.view model.password)
 
-    addressView =
-      Address.view addressContext model.address
-
-    passwordContext =
-      Password.Context
-        (Signal.forwardTo address UpdatePassword)
-        (Signal.forwardTo address (always (AddDevice)))
-        (Signal.forwardTo address (always (GoToAddressForm)))
-
-    passwordView =
-      Password.view passwordContext model.password
-
-    folderContext =
-      Folder.Context
-        chooseFolder.address
-        (Signal.forwardTo address (always (StartSync)))
-
-    folderView =
-      Folder.view folderContext model.folder
-  in
-    section
-      [ classList
-          [ ( "wizard", True )
-          , ( "on-step-welcome", model.page == WelcomePage )
-          , ( "on-step-address", model.page == AddressPage )
-          , ( "on-step-password", model.page == PasswordPage )
-          , ( "on-step-folder", model.page == FolderPage )
-          ]
-      ]
-      [ welcomeView
-      , addressView
-      , passwordView
-      , folderView
-      ]
+        folderView =
+            Html.map FolderMsg (Folder.view model.folder)
+    in
+        section
+            [ classList
+                [ ( "wizard", True )
+                , ( "on-step-welcome", model.page == WelcomePage )
+                , ( "on-step-address", model.page == AddressPage )
+                , ( "on-step-password", model.page == PasswordPage )
+                , ( "on-step-folder", model.page == FolderPage )
+                ]
+            ]
+            [ welcomeView
+            , addressView
+            , passwordView
+            , folderView
+            ]

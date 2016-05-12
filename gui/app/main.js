@@ -5,6 +5,7 @@ const AutoLaunch = require('auto-launch')
 const Desktop = require('cozy-desktop')
 const electron = require('electron')
 const path = require('path')
+const {spawn} = require('child_process')
 
 const {app, BrowserWindow, dialog, ipcMain, shell} = electron
 const autoLauncher = new AutoLaunch({
@@ -209,7 +210,12 @@ const startSync = (url) => {
       }
       if (mainWindow) {
         const msg = (err && err.message) || 'stopped'
-        mainWindow.webContents.send('sync-error', msg)
+        if (msg === 'The device is no longer registered' ||
+            msg === "This device doesn't exist") {
+          mainWindow.webContents.send('unlinked')
+        } else {
+          mainWindow.webContents.send('sync-error', msg)
+        }
       }
     })
   }
@@ -320,19 +326,21 @@ ipcMain.on('auto-launcher', (event, enabled) => {
   })
 })
 
-ipcMain.on('unlink-cozy', (event) => {
+ipcMain.on('unlink-cozy', () => {
   if (!device) {
     console.error('No device!')
     return
   }
-  desktop.askPassword = (cb) => { cb(null, device.password) }
-  desktop.removeRemote(device.deviceName, (err) => {
-    if (err) {
-      console.error(err)
-    } else {
-      device = null
-      event.sender.send('unlinked')
-    }
+  desktop.stopSync(() => {
+    desktop.askPassword = (cb) => { cb(null, device.password) }
+    desktop.removeRemote(device.deviceName, (err) => {
+      if (err) {
+        console.error(err)
+      } else {
+        device = null
+        mainWindow.webContents.send('unlinked')
+      }
+    })
   })
 })
 
@@ -340,6 +348,12 @@ ipcMain.on('send-mail', (event, body) => {
   desktop.sendMailToSupport(body, (err) => {
     event.sender.send('mail-sent', err)
   })
+})
+
+ipcMain.on('restart', () => {
+  setTimeout(app.quit, 500)
+  const args = process.argv.slice(1).filter(a => a !== '--isHidden')
+  spawn(process.argv[0], args)
 })
 
 // On watch mode, automatically reload the window when sources are updated

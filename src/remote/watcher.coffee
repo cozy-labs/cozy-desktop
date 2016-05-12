@@ -91,6 +91,9 @@ class RemoteWatcher
                         @onChange change.doc, @changed(change)
                     .on 'error', (err) =>
                         @changes = null
+                        if err?.status is 401
+                            msg = 'The device is no longer registered'
+                            return callback new Error msg
                         retry = =>
                             @listenToChanges options, callback
                         @couch.ping (available) =>
