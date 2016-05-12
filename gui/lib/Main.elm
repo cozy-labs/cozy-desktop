@@ -4,6 +4,7 @@ import Html exposing (Html)
 import Html.App as Html
 import Wizard
 import TwoPanes
+import Unlinked
 
 
 main =
@@ -22,6 +23,7 @@ main =
 type Page
     = WizardPage
     | TwoPanesPage
+    | UnlinkedPage
 
 
 type alias Model =
@@ -58,6 +60,11 @@ type Msg
     | WizardMsg Wizard.Msg
     | SyncStart String
     | TwoPanesMsg TwoPanes.Msg
+    | Unlink Bool
+    | Restart
+
+
+port restart : Bool -> Cmd msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -87,6 +94,32 @@ update msg model =
             in
                 ( { model | twopanes = twopanes' }, Cmd.map TwoPanesMsg cmd )
 
+        Unlink _ ->
+            ( { model | page = UnlinkedPage }, Cmd.none )
+
+        Restart ->
+            ( model, restart True )
+
+
+
+-- SUBSCRIPTIONS
+
+
+port synchonization : (String -> msg) -> Sub msg
+
+
+port unlink : (Bool -> msg) -> Sub msg
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ Sub.map WizardMsg (Wizard.subscriptions model.wizard)
+        , Sub.map TwoPanesMsg (TwoPanes.subscriptions model.twopanes)
+        , synchonization SyncStart
+        , unlink Unlink
+        ]
+
 
 
 -- VIEW
@@ -103,18 +136,5 @@ view model =
         TwoPanesPage ->
             Html.map TwoPanesMsg (TwoPanes.view model.twopanes)
 
-
-
--- SUBSCRIPTIONS
-
-
-port synchonization : (String -> msg) -> Sub msg
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.batch
-        [ Sub.map WizardMsg (Wizard.subscriptions model.wizard)
-        , Sub.map TwoPanesMsg (TwoPanes.subscriptions model.twopanes)
-        , synchonization SyncStart
-        ]
+        UnlinkedPage ->
+            Html.map (\_ -> Restart) Unlinked.view

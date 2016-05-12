@@ -73,6 +73,9 @@ ipcRenderer.on('go-to-tab', (event, tab) => {
   elmectron.ports.gototab.send(tab)
 })
 
+ipcRenderer.on('unlinked', (event) => {
+  elmectron.ports.unlink.send(true)
+})
 elmectron.ports.unlinkCozy.subscribe(() => {
   ipcRenderer.send('unlink-cozy')
 })
@@ -102,6 +105,10 @@ ipcRenderer.on('disk-space', (event, info) => {
 
 ipcRenderer.on('sync-error', (event, err) => {
   elmectron.ports.syncError.send(err)
+})
+
+elmectron.ports.restart.subscribe(() => {
+  ipcRenderer.send('restart')
 })
 
 // Open external links in the browser
