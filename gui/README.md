@@ -14,6 +14,23 @@ This directory is for the graphical interface of cozy-desktop, built with
 [Electron][8] and [Elm][9].
 
 
+## FAQ
+
+If you have an error that looks like this:
+
+> [Error: Error: /tmp/.org.chromium.Chromium.ox2yyn: failed to map segment from shared object: Operation not permitted: unable to import leveldown]
+
+It means that Cozy-desktop can't run correctly because the temporary directory
+is mounted with the `noexec` option and that prevents loading dynamic library
+like leveldown from there. The work-around is to use another temp directory:
+
+```bash
+$ export TMPDIR="$HOME/tmp"
+$ mkdir -p $TMPDIR
+$ cozy-desktop
+```
+
+
 ## Limitations
 
 Cozy-desktop is designed to synchronize files and folders between a remote
