@@ -332,6 +332,9 @@ ipcMain.on('unlink-cozy', () => {
     return
   }
   desktop.stopSync(() => {
+    if (!device) {
+      return
+    }
     desktop.askPassword = (cb) => { cb(null, device.password) }
     desktop.removeRemote(device.deviceName, (err) => {
       if (err) {
