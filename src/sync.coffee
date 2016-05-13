@@ -224,7 +224,9 @@ class Sync
             when @moveFrom
                 [from, @moveFrom] = [@moveFrom, null]
                 if from.moveTo is doc._id
-                    side.moveFile doc, from, callback
+                    side.moveFile doc, from, (err) =>
+                        @moveFrom = from if err
+                        callback err
                 else
                     log.error "Invalid move"
                     log.error from
@@ -262,7 +264,9 @@ class Sync
             when @moveFrom
                 [from, @moveFrom] = [@moveFrom, null]
                 if from.moveTo is doc._id
-                    side.moveFolder doc, from, callback
+                    side.moveFolder doc, from, (err) =>
+                        @moveFrom = from if err
+                        callback err
                 else
                     log.error "Invalid move"
                     log.error from
