@@ -113,6 +113,8 @@ const selectIcon = (info) => {
     return 'pdf'
   } else if (info.mime === 'application/x-binary') {
     return 'binary'
+  } else if (!info.mime) {
+    return 'file'
   } else if (info.mime.match(/[/-][bg]?zip2?$/)) {
     return 'archive'
   } else if (info.mime.match(/^(text|application)\/(html|xml)/)) {
