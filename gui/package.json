@@ -11,9 +11,9 @@
     "chokidar-cli": "1.2.0",
     "cozy-ui": "0.1.6",
     "debug-menu": "0.4.0",
-    "devtron": "1.0.1",
+    "devtron": "1.1.0",
     "electron-builder": "3.24.0",
-    "electron-prebuilt": "1.0.1",
+    "electron-prebuilt": "1.1.0",
     "elm": "0.17.0",
     "standard": "7.0.1",
     "stylus": "0.54.5"

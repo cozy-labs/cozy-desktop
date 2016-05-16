@@ -18,7 +18,7 @@ CLI Install
 -----------
 
 The cozy-desktop requires node.js (4 recommended, but it is tested on 0.10 and
-5 too) and build tools.
+6 too) and build tools.
 
 For example, you can install them on debian with:
 
