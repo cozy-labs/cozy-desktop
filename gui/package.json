@@ -5,7 +5,10 @@
   "build": {
     "app-bundle-id": "io.cozy.desktop",
     "app-category-type": "public.app-category.productivity",
-    "iconUrl": "https://cozy.io/en/images/desktop/icon.ico"
+    "iconUrl": "https://cozy.io/en/images/desktop/icon.ico",
+    "linux": {
+      "depends": ["libappindicator1", "libnotify-bin"]
+	}
   },
   "devDependencies": {
     "chokidar-cli": "1.2.0",
