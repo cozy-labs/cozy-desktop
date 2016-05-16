@@ -1,3 +1,9 @@
+## 0.12.0 - 2016-05-16
+
+* Detect full file system on local and on the cozy
+* Support network interruptions
+* Improve the tray icon on linux
+
 ## 0.11.0 - 2016-05-02
 
 * New packaging with electron-builder

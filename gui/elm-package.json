@@ -1,5 +1,5 @@
 {
-    "version": "0.11.0",
+    "version": "0.12.0",
     "summary": "File Synchronization Client for Cozy Cloud",
     "repository": "https://github.com/cozy-labs/cozy-desktop.git",
     "license": "AGPL-3.0",
