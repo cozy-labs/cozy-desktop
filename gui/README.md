@@ -86,8 +86,8 @@ it simple and easy. So, it has some limitations:
 First, you need to build cozy-desktop in the parent directory with `npm run
 build`.
 
-Electron is based on node 5 and npm 3. So, it's better to install the
-`node_modules` in `gui` with a node 5 and npm 3:
+Electron is based on node 6 and npm 3. So, it's better to install the
+`node_modules` in `gui` with a node 6 and npm 3:
 
 ```sh
 cd gui

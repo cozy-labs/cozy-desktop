@@ -6,7 +6,6 @@ matrix:
 node_js:
     - 0.10
     - 4
-    - 5
     - 6
 env:
     global:
