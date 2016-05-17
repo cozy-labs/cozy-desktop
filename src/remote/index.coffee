@@ -20,7 +20,7 @@ Watcher = require './watcher'
 # needed in both ways.
 class Remote
     constructor: (@config, @prep, @pouch, @events) ->
-        @couch   = new Couch @config
+        @couch   = new Couch @config, @events
         deviceName = @config.getDefaultDeviceName()
         @watcher = new Watcher @couch, @prep, @pouch, deviceName
         @other   = null

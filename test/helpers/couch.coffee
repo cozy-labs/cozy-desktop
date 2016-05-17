@@ -74,7 +74,9 @@ module.exports =
             url: url
             deviceName: params.user
             password: params.pass
-        @couch = new Couch @config
+        events =
+            emit: ->
+        @couch = new Couch @config, events
 
     createFolder: (couch, i, callback) ->
         doc =

@@ -12,6 +12,7 @@ import Helpers exposing (..)
 
 type Status
     = UpToDate
+    | Offline
     | Sync String
     | Error String
 
@@ -61,6 +62,7 @@ init =
 
 type Msg
     = Updated
+    | GoOffline
     | Transfer File
     | Remove File
     | UpdateDiskSpace DiskSpace
@@ -78,6 +80,9 @@ update msg model =
     case msg of
         Updated ->
             { model | status = UpToDate }
+
+        GoOffline ->
+            { model | status = Offline }
 
         Transfer file ->
             let
@@ -112,13 +117,16 @@ update msg model =
 -- SUBSCRIPTIONS
 
 
+port offline : (Bool -> msg) -> Sub msg
+
+
+port updated : (Bool -> msg) -> Sub msg
+
+
 port transfer : (File -> msg) -> Sub msg
 
 
 port remove : (File -> msg) -> Sub msg
-
-
-port updated : (Bool -> msg) -> Sub msg
 
 
 port diskSpace : (DiskSpace -> msg) -> Sub msg
@@ -131,9 +139,10 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Time.every Time.second Tick
+        , offline (always GoOffline)
+        , updated (always Updated)
         , transfer Transfer
         , remove Remove
-        , updated (always Updated)
         , diskSpace UpdateDiskSpace
         , syncError SetError
         ]
@@ -158,6 +167,16 @@ view model =
                             ]
                             []
                         , text "Your cozy is up to date!"
+                        ]
+
+                Offline ->
+                    p [ class "status" ]
+                        [ img
+                            [ src "images/pause.svg"
+                            , class "status__icon status__icon--offline"
+                            ]
+                            []
+                        , text "Offline"
                         ]
 
                 Sync filename ->
