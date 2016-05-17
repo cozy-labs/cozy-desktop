@@ -209,6 +209,7 @@ const startSync = (url) => {
       if (err) {
         console.error(err)
         updateState('error', err.message || err)
+        sendDiskSpace()
       }
       if (mainWindow) {
         const msg = (err && err.message) || 'stopped'
