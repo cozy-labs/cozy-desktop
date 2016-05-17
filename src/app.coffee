@@ -38,6 +38,9 @@ Permissions =
 # They both can do actions and be notified by events via an App instance.
 class App
 
+    # When a log file weights more than 0.5Mo, rotate it
+    MAX_LOG_SIZE = 500000
+
     # basePath is the directory where the config and pouch are saved
     constructor: (basePath) ->
         @lang = 'fr'
@@ -63,10 +66,24 @@ class App
         callback new Error('Not implemented'), null
 
 
-    # Write logs in a file, by overriding the global console
+    # Configure a file to write logs to
     writeLogsTo: (@logfile) ->
+        @writeToLogfile()
+        clearInterval @logsInterval if @logsInterval
+        @logsInterval = setInterval @rotateLogfile, 10000
+
+
+    # Write logs in a file, by overriding the global console
+    writeToLogfile: =>
         out = fs.createWriteStream @logfile, flags: 'a+', mode: 0o0644
         printit.console = new Console out, out
+
+
+    # Rotate the log file if it's too heavy
+    rotateLogfile: =>
+        fs.stat @logfile, (err, stats) =>
+            return if err or stats.size < MAX_LOG_SIZE
+            fs.rename @logfile, "#{@logfile}.old", @writeToLogfile
 
 
     # Parse the URL
