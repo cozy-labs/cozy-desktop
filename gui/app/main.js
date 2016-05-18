@@ -103,6 +103,11 @@ const updateState = (newState, filename) => {
     { type: 'separator' },
     { label: 'Quit application', click: app.quit }
   ])
+  if (state === 'error') {
+    menu.insert(2, new electron.MenuItem({
+      label: 'Relaunch synchronization', click: startSync
+    }))
+  }
   tray.setContextMenu(menu)
   tray.setToolTip(statusLabel)
 }
@@ -184,8 +189,8 @@ const sendDiskSpace = () => {
   }
 }
 
-const startSync = (url) => {
-  mainWindow.webContents.send('synchronization', url)
+const startSync = () => {
+  mainWindow.webContents.send('synchronization', device.url)
   if (desktop.sync) {
     for (let file of lastFiles) {
       mainWindow.webContents.send('transfer', file)
@@ -255,7 +260,7 @@ const createWindow = () => {
     if (desktop.config.hasDevice()) {
       device = desktop.config.getDevice()
       if (device.deviceName && device.url && device.path) {
-        startSync(device.url)
+        startSync()
       }
     }
   })
@@ -325,7 +330,7 @@ ipcMain.on('start-sync', (event, arg) => {
     return
   }
   desktop.saveConfig(device.url, arg, device.name, device.password)
-  startSync(device.url)
+  startSync()
 })
 
 ipcMain.on('auto-launcher', (event, enabled) => {
