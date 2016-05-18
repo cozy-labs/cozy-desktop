@@ -22,7 +22,7 @@ class Couch
     @newId: ->
         uuid.v4().replace /-/g, ''
 
-    constructor: (@config) ->
+    constructor: (@config, @events) ->
         device  = @config.getDevice()
         options = @config.augmentCouchOptions
             auth:
@@ -51,12 +51,14 @@ class Couch
         @online = true
         cb() for cb in @upCallbacks
         @upCallbacks = []
+        @events.emit 'online'
 
     # Couch is no longer available.
     # Check every minute if the network is back.
     goingOffline: ->
         log.info "The Cozy can't be reached currently"
         @online = false
+        @events.emit 'offline'
         interval = setInterval =>
             @ping (available) ->
                 clearInterval interval if available

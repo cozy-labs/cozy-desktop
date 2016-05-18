@@ -88,6 +88,10 @@ elmectron.ports.sendMail.subscribe((body) => {
   ipcRenderer.send('send-mail', body)
 })
 
+ipcRenderer.on('offline', () => {
+  elmectron.ports.offline.send(true)
+})
+
 ipcRenderer.on('up-to-date', () => {
   elmectron.ports.updated.send(true)
 })
@@ -138,4 +142,5 @@ elmectron.ports.focus.subscribe((selector) => {
 if (process.env.WATCH === 'true' || process.env.DEBUG === 'true') {
   const debugMenu = require('debug-menu')
   debugMenu.install()
+  window.elmectron = elmectron
 }

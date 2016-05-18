@@ -82,12 +82,15 @@ const updateState = (newState, filename) => {
   } else if (filename) {
     setTrayIcon('sync')
     statusLabel = `Syncing ‟${filename}“`
-  } else if (state === 'up-to-date') {
+  } else if (state === 'up-to-date' || state === 'online') {
     setTrayIcon('idle')
     statusLabel = 'Your cozy is up to date'
   } else if (state === 'syncing') {
     setTrayIcon('sync')
     statusLabel = 'Syncing…'
+  } else if (state === 'offline') {
+    setTrayIcon('pause')
+    statusLabel = 'Offline'
   }
   const menu = electron.Menu.buildFromTemplate([
     { label: statusLabel, enabled: false },
@@ -187,7 +190,7 @@ const startSync = (url) => {
     for (let file of lastFiles) {
       mainWindow.webContents.send('transfer', file)
     }
-    if (state === 'up-to-date') {
+    if (state === 'up-to-date' || state === 'online') {
       mainWindow.webContents.send('up-to-date')
     }
   } else {
@@ -197,6 +200,14 @@ const startSync = (url) => {
       if (mainWindow) {
         mainWindow.webContents.send('up-to-date')
       }
+    })
+    desktop.events.on('online', () => {
+      updateState('online')
+      mainWindow.webContents.send('up-to-date')
+    })
+    desktop.events.on('offline', () => {
+      updateState('offline')
+      mainWindow.webContents.send('offline')
     })
     desktop.events.on('transfer-started', addFile)
     desktop.events.on('transfer-copy', addFile)
