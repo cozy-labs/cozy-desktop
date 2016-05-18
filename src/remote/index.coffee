@@ -192,8 +192,8 @@ class Remote
             # Save the 'file' document in the remote couch
             (binaryDoc, next) =>
                 remote =
-                    _id:  old?.remote._id
-                    _rev: old?.remote._rev
+                    _id:  doc.remote?._id  or old?.remote._id
+                    _rev: doc.remote?._rev or old?.remote._rev
                     binary: binaryDoc
                 remoteDoc = @createRemoteDoc doc, remote
                 remoteOld = {}
