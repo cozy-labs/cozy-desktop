@@ -139,7 +139,7 @@ class Sync
         (err) =>
             if err?.code is 'ENOSPC'
                 log.error err
-                callback new Error 'The file system is full!'
+                callback new Error 'The disk space on your computer is full!'
             else if err
                 log.error err
                 change.doc.errors or= 0
@@ -151,7 +151,9 @@ class Sync
                             else
                                 @remote.couch.whenAvailable callback
                     else if full
-                        callback new Error 'The Cozy is full!'
+                        callback new Error 'Your Cozy is full! ' +
+                            'You can delete some files to be able' +
+                            'to add new ones or upgrade your storage plan.'
                     else
                         @updateErrors change, callback
             else
