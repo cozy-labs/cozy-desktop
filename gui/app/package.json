@@ -23,7 +23,7 @@
     "cozy"
   ],
   "dependencies": {
-    "auto-launch": "2.0.1",
+    "cozy-auto-launch": "2.0.2",
     "cozy-desktop": "../../"
   }
 }

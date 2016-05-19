@@ -1,7 +1,7 @@
 'use strict'
 /* eslint no-unused-vars: [2, { "varsIgnorePattern": "runAsService" }] */
 
-const AutoLaunch = require('auto-launch')
+const AutoLaunch = require('cozy-auto-launch')
 const Desktop = require('cozy-desktop')
 const electron = require('electron')
 const path = require('path')
@@ -42,14 +42,29 @@ const showWindow = () => {
   }
 }
 
+const sendToMainWindow = (...args) => {
+  if (mainWindow && mainWindow.webContents) {
+    mainWindow.webContents.send(...args)
+  }
+}
+
+const sendErrorToMainWindow = (msg) => {
+  if (msg === 'The device is no longer registered' ||
+      msg === "This device doesn't exist") {
+    sendToMainWindow('unlinked')
+  } else {
+    sendToMainWindow('sync-error', msg)
+  }
+}
+
 const goToTab = (tab) => {
   const alreadyShown = !!mainWindow
   showWindow()
   if (alreadyShown) {
-    mainWindow.webContents.send('go-to-tab', tab)
+    sendToMainWindow('go-to-tab', tab)
   } else {
     mainWindow.webContents.once('dom-ready', () => {
-      mainWindow.webContents.send('go-to-tab', tab)
+      sendToMainWindow('go-to-tab', tab)
     })
   }
 }
@@ -78,7 +93,7 @@ const updateState = (newState, filename) => {
   let statusLabel = ''
   if (state === 'error') {
     setTrayIcon('error')
-    statusLabel = filename
+    statusLabel = state.message = filename
   } else if (filename) {
     setTrayIcon('sync')
     statusLabel = `Syncing ‟${filename}“`
@@ -152,9 +167,7 @@ const addFile = (info) => {
   updateState('syncing', file.filename)
   lastFiles.push(file)
   lastFiles = lastFiles.slice(-20)
-  if (mainWindow) {
-    mainWindow.webContents.send('transfer', file)
-  }
+  sendToMainWindow('transfer', file)
 }
 
 const removeFile = (info) => {
@@ -166,9 +179,7 @@ const removeFile = (info) => {
     updated: 0
   }
   lastFiles = lastFiles.filter((f) => f.path !== file.path)
-  if (mainWindow) {
-    mainWindow.webContents.send('delete-file', file)
-  }
+  sendToMainWindow('delete-file', file)
 }
 
 const sendDiskSpace = () => {
@@ -183,36 +194,38 @@ const sendDiskSpace = () => {
           total: +res.diskSpace.totalDiskSpace,
           totalUnit: res.diskSpace.totalUnit
         }
-        mainWindow.webContents.send('disk-space', space)
+        sendToMainWindow('disk-space', space)
       }
     })
   }
 }
 
 const startSync = () => {
-  mainWindow.webContents.send('synchronization', device.url)
+  sendToMainWindow('synchronization', device.url)
   if (desktop.sync) {
     for (let file of lastFiles) {
-      mainWindow.webContents.send('transfer', file)
+      sendToMainWindow('transfer', file)
     }
     if (state === 'up-to-date' || state === 'online') {
-      mainWindow.webContents.send('up-to-date')
+      sendToMainWindow('up-to-date')
+    } else if (state === 'offline') {
+      sendToMainWindow('offline')
+    } else if (state === 'error') {
+      sendErrorToMainWindow(state.message)
     }
   } else {
     updateState('syncing')
     desktop.events.on('up-to-date', () => {
       updateState('up-to-date')
-      if (mainWindow) {
-        mainWindow.webContents.send('up-to-date')
-      }
+      sendToMainWindow('up-to-date')
     })
     desktop.events.on('online', () => {
       updateState('online')
-      mainWindow.webContents.send('up-to-date')
+      sendToMainWindow('up-to-date')
     })
     desktop.events.on('offline', () => {
       updateState('offline')
-      mainWindow.webContents.send('offline')
+      sendToMainWindow('offline')
     })
     desktop.events.on('transfer-started', addFile)
     desktop.events.on('transfer-copy', addFile)
@@ -222,26 +235,19 @@ const startSync = () => {
     })
     desktop.events.on('delete-file', removeFile)
     desktop.synchronize('full', (err) => {
+      const msg = (err && err.message) || 'stopped'
       if (err) {
         console.error(err)
-        updateState('error', err.message || err)
+        updateState('error', msg)
         sendDiskSpace()
       }
-      if (mainWindow) {
-        const msg = (err && err.message) || 'stopped'
-        if (msg === 'The device is no longer registered' ||
-            msg === "This device doesn't exist") {
-          mainWindow.webContents.send('unlinked')
-        } else {
-          mainWindow.webContents.send('sync-error', msg)
-        }
-      }
+      sendErrorToMainWindow(msg)
     })
+    sendDiskSpace()
+    setInterval(sendDiskSpace, 10 * 60 * 1000)  // every 10 minutes
   }
-  sendDiskSpace()
-  setInterval(sendDiskSpace, 10 * 60 * 1000)  // every 10 minutes
   autoLauncher.isEnabled().then((enabled) => {
-    mainWindow.webContents.send('auto-launch', enabled)
+    sendToMainWindow('auto-launch', enabled)
   })
 }
 
@@ -267,10 +273,13 @@ const createWindow = () => {
 }
 
 app.on('ready', () => {
-  createWindow()
+  if (process.argv.indexOf('--isHidden') === -1) {
+    createWindow()
+  }
   tray = new electron.Tray(`${__dirname}/images/tray-icon-linux/idle.png`)
   setTrayIcon('idle')
   const menu = electron.Menu.buildFromTemplate([
+    { label: 'Show application', click: showWindow },
     { label: 'Quit application', click: app.quit }
   ])
   tray.setContextMenu(menu)
@@ -360,7 +369,7 @@ ipcMain.on('unlink-cozy', () => {
         console.error(err)
       } else {
         device = null
-        mainWindow.webContents.send('unlinked')
+        sendToMainWindow('unlinked')
       }
     })
   })
