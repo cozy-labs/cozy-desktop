@@ -61,15 +61,29 @@ class Remote
             _id: doc.checksum
             docType: 'Binary'
             checksum: doc.checksum
-        async.waterfall [
-            (next) =>
-                @couch.put binary, next
-            (created, next) =>
+
+        done = (err) =>
+            [cb, callback] = [callback, ->]  # Be sure to callback only once
+            if err
+                @couch.remove binary._id, binary._rev, -> cb err
+            else
+                cb err, binary
+
+        # Don't use async callback here!
+        # Async does some magic and the stream can throw an 'error'
+        # event before the next async callback is called...
+        @couch.put binary, (err, created) =>
+            if err?.status is 409
+                @couch.get binary._id, (err, binaryDoc) ->
+                    if binaryDoc._attachments
+                        callback null, binaryDoc
+                    else
+                        done new Error 'Binary is blank'
+            else if err
+                callback err
+            else
                 binary._rev = created.rev
                 @other.createReadStream doc, (err, stream) =>
-                    # Don't use async callback here!
-                    # Async does some magic and the stream can throw an 'error'
-                    # event before the next async callback is called...
                     return next err if err
                     stream.on 'error', -> next new Error 'Invalid file'
                     # Be sure that the checksum is correct
@@ -79,7 +93,7 @@ class Remote
                     stream.on 'end', ->
                         checksum.end()
                         if checksum.read() isnt doc.checksum
-                            next new Error 'Invalid checksum'
+                            done new Error 'Invalid checksum'
                     # Emit events to track the download progress
                     info = clone doc
                     info.way = 'up'
@@ -91,15 +105,8 @@ class Remote
                         @events.emit info.eventName, finished: true
                     {_id, _rev} = binary
                     mime = doc.mime or 'application/octet-stream'
-                    @couch.uploadAsAttachment _id, _rev, mime, stream, next
-        ], (err) =>
-            [cb, callback] = [callback, ->]  # Be sure to callback only once
-            if err and binary._rev
-                @couch.remove binary._id, binary._rev, -> cb err
-            else if err and err.status is 409
-                cb null, binary
-            else
-                cb err, binary
+                    @couch.uploadAsAttachment _id, _rev, mime, stream, done
+
 
     # Extract the remote path and name from a local id
     extractDirAndName: (id) ->
