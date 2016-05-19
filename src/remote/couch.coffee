@@ -128,11 +128,14 @@ class Couch
                 callback null, body
 
     # Give a readable stream of a file stored on the remote couch
-    # TODO call the callback with an error when url gives a 404
     downloadBinary: (binaryId, callback) =>
         urlPath = "cozy/#{binaryId}/file"
         log.info "Download #{urlPath}"
-        @http.saveFileAsStream urlPath, callback
+        @http.saveFileAsStream urlPath, (err, res) ->
+            if res?.statusCode is 404
+                err = new Error 'Cannot download the file'
+                res.on 'data', ->  # Purge the stream
+            callback err, res
 
     # Compare two remote docs and say if they are the same,
     # i.e. can we replace one by the other with no impact
