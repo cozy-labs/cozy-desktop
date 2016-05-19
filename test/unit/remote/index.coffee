@@ -370,12 +370,13 @@ describe 'Remote', ->
                         should.exist doc.remote.binary
                         @couch.get created.id, (err, file) ->
                             should.not.exist err
+                            lastModified = doc.lastModification.toISOString()
                             file.should.have.properties
                                 path: '/backup'
                                 name: 'cat3.jpg'
                                 docType: 'file'
                                 creationDate: doc.creationDate.toISOString()
-                                lastModification: doc.lastModification.toISOString()
+                                lastModification: lastModified
                                 size: 36901
                             done()
 
