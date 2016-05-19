@@ -294,46 +294,54 @@ describe 'Remote', ->
         it 'adds a file to couchdb', (done) ->
             checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
             doc =
+                _id: 'cat2.jpg'
                 path: 'cat2.jpg'
                 docType: 'file'
                 checksum: checksum
                 creationDate: new Date()
                 lastModification: new Date()
                 size: 36901
+                sides:
+                    local: 1
             fixture = 'test/fixtures/chat-mignon-mod.jpg'
             @remote.other =
                 createReadStream: (localDoc, callback) ->
                     stream = fs.createReadStream fixture
                     callback null, stream
-            @remote.addFile doc, (err, created) =>
+            @pouch.db.put doc, (err) =>
                 should.not.exist err
-                should.exist doc.remote._id
-                should.exist doc.remote._rev
-                should.exist doc.remote.binary
-                @couch.get created.id, (err, file) =>
+                @remote.addFile doc, (err, created) =>
                     should.not.exist err
-                    file.should.have.properties
-                        path: ''
-                        name: 'cat2.jpg'
-                        docType: 'file'
-                        creationDate: doc.creationDate.toISOString()
-                        lastModification: doc.lastModification.toISOString()
-                        size: 36901
-                    should.exist file.binary.file.id
-                    @couch.get file.binary.file.id, (err, binary) ->
+                    should.exist doc.remote._id
+                    should.exist doc.remote._rev
+                    should.exist doc.remote.binary
+                    @couch.get created.id, (err, file) =>
                         should.not.exist err
-                        binary.checksum.should.equal checksum
-                        done()
+                        file.should.have.properties
+                            path: ''
+                            name: 'cat2.jpg'
+                            docType: 'file'
+                            creationDate: doc.creationDate.toISOString()
+                            lastModification: doc.lastModification.toISOString()
+                            size: 36901
+                        should.exist file.binary.file.id
+                        @couch.get file.binary.file.id, (err, binary) ->
+                            should.not.exist err
+                            binary.checksum.should.equal checksum
+                            done()
 
         it 'does not reupload an existing file', (done) ->
             checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
             doc =
+                _id: 'backup/cat3.jpg'
                 path: 'backup/cat3.jpg'
                 docType: 'file'
                 checksum: checksum
                 creationDate: new Date()
                 lastModification: new Date()
                 size: 36901
+                sides:
+                    local: 1
             same =
                 _id: 'ORIGINAL/CAT3.JPG'
                 path: 'ORIGINAL/CAT3.JPG'
@@ -351,23 +359,25 @@ describe 'Remote', ->
                 sides:
                     local: 1
                     remote: 1
-            @pouch.db.put same, (err) =>
+            @pouch.db.put doc, (err) =>
                 should.not.exist err
-                @remote.addFile doc, (err, created) =>
+                @pouch.db.put same, (err) =>
                     should.not.exist err
-                    should.exist doc.remote._id
-                    should.exist doc.remote._rev
-                    should.exist doc.remote.binary
-                    @couch.get created.id, (err, file) ->
+                    @remote.addFile doc, (err, created) =>
                         should.not.exist err
-                        file.should.have.properties
-                            path: '/backup'
-                            name: 'cat3.jpg'
-                            docType: 'file'
-                            creationDate: doc.creationDate.toISOString()
-                            lastModification: doc.lastModification.toISOString()
-                            size: 36901
-                        done()
+                        should.exist doc.remote._id
+                        should.exist doc.remote._rev
+                        should.exist doc.remote.binary
+                        @couch.get created.id, (err, file) ->
+                            should.not.exist err
+                            file.should.have.properties
+                                path: '/backup'
+                                name: 'cat3.jpg'
+                                docType: 'file'
+                                creationDate: doc.creationDate.toISOString()
+                                lastModification: doc.lastModification.toISOString()
+                                size: 36901
+                            done()
 
 
     describe 'addFolder', ->
@@ -397,10 +407,13 @@ describe 'Remote', ->
             couchHelpers.createFile @couch, 6, (err, created) =>
                 should.not.exist err
                 doc =
+                    _id: 'couchdb-folder/file-6'
                     path: 'couchdb-folder/file-6'
                     docType: 'file'
                     checksum: 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
                     lastModification: '2015-11-16T16:12:01.002Z'
+                    sides:
+                        local: 1
                 old =
                     path: 'couchdb-folder/file-6'
                     docType: 'file'
@@ -414,27 +427,29 @@ describe 'Remote', ->
                 binaryDoc =
                     _id: old.checksum
                     checksum: old.checksum
-                @couch.put binaryDoc, (err) =>
+                @pouch.db.put doc, (err) =>
                     should.not.exist err
-                    @remote.overwriteFile doc, old, (err) =>
+                    @couch.put binaryDoc, (err) =>
                         should.not.exist err
-                        @couch.get doc.remote._id, (err, file) =>
+                        @remote.overwriteFile doc, old, (err) =>
                             should.not.exist err
-                            file.should.have.properties
-                                _id: created.id
-                                docType: 'file'
-                                path: '/couchdb-folder'
-                                name: 'file-6'
-                                lastModification: doc.lastModification
-                            doc.remote._rev.should.equal file._rev
-                            doc.remote.binary.should.have.properties
-                                _id: doc.checksum
-                                _rev: file.binary.file.rev
-                            file.binary.file.id.should.equal doc.checksum
-                            @couch.get file.binary.file.id, (err, binary) ->
+                            @couch.get doc.remote._id, (err, file) =>
                                 should.not.exist err
-                                binary.checksum.should.equal doc.checksum
-                                done()
+                                file.should.have.properties
+                                    _id: created.id
+                                    docType: 'file'
+                                    path: '/couchdb-folder'
+                                    name: 'file-6'
+                                    lastModification: doc.lastModification
+                                doc.remote._rev.should.equal file._rev
+                                doc.remote.binary.should.have.properties
+                                    _id: doc.checksum
+                                    _rev: file.binary.file.rev
+                                file.binary.file.id.should.equal doc.checksum
+                                @couch.get file.binary.file.id, (err, binary) ->
+                                    should.not.exist err
+                                    binary.checksum.should.equal doc.checksum
+                                    done()
 
 
         it 'throws an error if the checksum is invalid', (done) ->
