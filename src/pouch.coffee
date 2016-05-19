@@ -187,10 +187,12 @@ class Pouch
             if err
                 callback err
             else
-                ids = infos[0].ok._revisions.ids
-                revId = ids[ids.length - shortRev]
-                rev = "#{shortRev}-#{revId}"
+                ids   = infos[0].ok._revisions.ids
+                start = infos[0].ok._revisions.start
+                revId = ids[start - shortRev]
+                rev   = "#{shortRev}-#{revId}"
                 @db.get id, rev: rev, (err, doc) ->
+                    log.debug infos[0].doc if err
                     callback err, doc
 
 

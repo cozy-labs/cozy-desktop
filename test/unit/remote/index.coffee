@@ -103,6 +103,27 @@ describe 'Remote', ->
                 binary._id.should.equal checksum
                 done()
 
+        it 'removes blank binaries', (done) ->
+            checksum = '988881adc9fc3655077dc2d4d757d480b5ea0e11'
+            fixture = 'test/fixtures/foobar.txt'
+            doc =
+                path: 'foobar.txt'
+                mime: 'text/plain'
+                checksum: checksum
+            binary =
+                _id: checksum
+                docType: 'Binary'
+                checksum: checksum
+            @couch.put binary, (err, created) =>
+                should.not.exist err
+                @remote.uploadBinary doc, (err) =>
+                    should.exist err
+                    err.message.should.equal 'Binary is blank'
+                    @couch.get created._id, (err) ->
+                        should.exist err
+                        err.status.should.equal 404
+                        done()
+
 
     describe 'extractDirAndName', ->
         it 'returns the remote path and name', ->
