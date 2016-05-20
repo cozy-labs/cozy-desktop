@@ -39,6 +39,7 @@ type alias Model =
     , now : Time
     , disk : DiskSpace
     , files : List File
+    , page : Int
     }
 
 
@@ -53,7 +54,16 @@ init =
         , totalUnit = ""
         }
     , files = []
+    , page = 1
     }
+
+
+nbActivitiesPerPage =
+    20
+
+
+maxActivities =
+    250
 
 
 
@@ -68,6 +78,7 @@ type Msg
     | UpdateDiskSpace DiskSpace
     | SetError String
     | Tick Time
+    | ShowMore
 
 
 samePath : File -> File -> Bool
@@ -89,7 +100,7 @@ update msg model =
                 files' =
                     file
                         :: (List.filter (samePath file >> not) model.files)
-                        |> List.take 250
+                        |> List.take maxActivities
 
                 status' =
                     Sync file.filename
@@ -111,6 +122,9 @@ update msg model =
 
         Tick now' ->
             { model | now = now' }
+
+        ShowMore ->
+            { model | page = model.page + 1 }
 
 
 
@@ -197,8 +211,27 @@ view model =
                     , span [ class "file-time-ago" ] [ text time_ago ]
                     ]
 
+        nbFiles =
+            model.page * nbActivitiesPerPage
+
         recentList =
-            List.map fileToListItem model.files
+            List.map fileToListItem (List.take nbFiles model.files)
+
+        showMoreButton =
+            li []
+                [ a
+                    [ class "btn"
+                    , href "#"
+                    , onClick ShowMore
+                    ]
+                    [ text "Show more files" ]
+                ]
+
+        recentListWithMore =
+            if List.length model.files > nbFiles then
+                recentList ++ [ showMoreButton ]
+            else
+                recentList
     in
         section [ class "two-panes__content two-panes__content--dashboard" ]
             [ h1 [] [ text "Dashboard" ]
@@ -206,5 +239,5 @@ view model =
             , h2 [] [ text "Cozy disk space" ]
             , diskSpace
             , h2 [] [ text "Recent activities" ]
-            , ul [ class "recent-files" ] recentList
+            , ul [ class "recent-files" ] recentListWithMore
             ]

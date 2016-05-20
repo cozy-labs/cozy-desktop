@@ -62,7 +62,14 @@ update msg model =
             ( model, Cmd.none )
 
         GoToTab tab' ->
-            ( { model | tab = tab' }, Cmd.none )
+            let
+                dashboard'' =
+                    model.dashboard
+
+                dashboard' =
+                    { dashboard'' | page = 1 }
+            in
+                ( { model | tab = tab', dashboard = dashboard' }, Cmd.none )
 
         GoToStrTab tab ->
             case

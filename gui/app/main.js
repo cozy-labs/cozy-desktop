@@ -188,7 +188,7 @@ const addFile = (info) => {
   }
   updateState('syncing', file.filename)
   lastFiles.push(file)
-  lastFiles = lastFiles.slice(-20)
+  lastFiles = lastFiles.slice(-250)
   sendToMainWindow('transfer', file)
   persistLastFiles()
 }
