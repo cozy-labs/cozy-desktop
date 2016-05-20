@@ -196,6 +196,14 @@ class Remote
                     else
                         @uploadBinary doc, next
 
+            # Check that the file was not removed/deleted while uploaded
+            (binaryDoc, next) =>
+                @pouch.db.get doc._id, (err) =>
+                    if err
+                        @cleanBinary binaryDoc._id, -> next err
+                    else
+                        next null, binaryDoc
+
             # Save the 'file' document in the remote couch
             (binaryDoc, next) =>
                 remote =
