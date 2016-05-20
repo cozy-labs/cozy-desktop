@@ -72,18 +72,6 @@ update msg model =
 
 
 
--- SUBSCRIPTIONS
-
-
-port pong : (Maybe String -> msg) -> Sub msg
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    pong Pong
-
-
-
 -- VIEW
 
 

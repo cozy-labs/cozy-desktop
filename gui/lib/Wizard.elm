@@ -1,4 +1,4 @@
-port module Wizard exposing (..)
+module Wizard exposing (..)
 
 import Html exposing (..)
 import Html.App as Html
@@ -116,19 +116,6 @@ update msg model =
                     Folder.update msg' model.folder
             in
                 ( { model | folder = folder' }, Cmd.map FolderMsg cmd )
-
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.batch
-        [ Sub.map AddressMsg (Address.subscriptions model.address)
-        , Sub.map PasswordMsg (Password.subscriptions model.password)
-        , Sub.map FolderMsg (Folder.subscriptions model.folder)
-        ]
 
 
 

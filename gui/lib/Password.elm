@@ -103,18 +103,6 @@ update msg model =
 
 
 
--- SUBSCRIPTIONS
-
-
-port registration : (Maybe String -> msg) -> Sub msg
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    registration Registered
-
-
-
 -- VIEW
 
 

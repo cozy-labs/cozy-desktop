@@ -5,20 +5,17 @@
   "build": {
     "app-bundle-id": "io.cozy.desktop",
     "app-category-type": "public.app-category.productivity",
-    "iconUrl": "https://cozy.io/en/images/desktop/icon.ico",
-    "linux": {
-      "depends": ["libappindicator1", "libnotify-bin"]
-	}
+    "iconUrl": "https://cozy.io/en/images/desktop/icon.ico"
   },
   "devDependencies": {
     "chokidar-cli": "1.2.0",
     "cozy-ui": "0.1.6",
     "debug-menu": "0.4.0",
-    "devtron": "1.1.0",
-    "electron-builder": "3.24.0",
+    "devtron": "1.1.2",
+    "electron-builder": "3.25.0",
     "electron-prebuilt": "1.1.0",
     "elm": "0.17.0",
-    "standard": "7.0.1",
+    "standard": "7.1.0",
     "stylus": "0.54.5"
   },
   "scripts": {

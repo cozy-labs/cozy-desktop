@@ -67,18 +67,6 @@ update msg model =
 
 
 
--- SUBSCRIPTIONS
-
-
-port mail : (Maybe String -> msg) -> Sub msg
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    mail MailSent
-
-
-
 -- VIEW
 
 
