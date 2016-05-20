@@ -343,7 +343,7 @@ ipcMain.on('register-remote', (event, arg) => {
     if (!err) {
       device = {
         url: arg.url,
-        name: credentials.deviceName,
+        deviceName: credentials.deviceName,
         password: credentials.password
       }
     }
@@ -364,7 +364,7 @@ ipcMain.on('start-sync', (event, arg) => {
     console.error('No device!')
     return
   }
-  desktop.saveConfig(device.url, arg, device.name, device.password)
+  desktop.saveConfig(device.url, arg, device.deviceName, device.password)
   startSync()
 })
 
