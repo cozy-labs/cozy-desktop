@@ -1,4 +1,4 @@
-port module Dashboard exposing (..)
+module Dashboard exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -111,41 +111,6 @@ update msg model =
 
         Tick now' ->
             { model | now = now' }
-
-
-
--- SUBSCRIPTIONS
-
-
-port offline : (Bool -> msg) -> Sub msg
-
-
-port updated : (Bool -> msg) -> Sub msg
-
-
-port transfer : (File -> msg) -> Sub msg
-
-
-port remove : (File -> msg) -> Sub msg
-
-
-port diskSpace : (DiskSpace -> msg) -> Sub msg
-
-
-port syncError : (String -> msg) -> Sub msg
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.batch
-        [ Time.every Time.second Tick
-        , offline (always GoOffline)
-        , updated (always Updated)
-        , transfer Transfer
-        , remove Remove
-        , diskSpace UpdateDiskSpace
-        , syncError SetError
-        ]
 
 
 

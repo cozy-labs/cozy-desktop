@@ -50,24 +50,6 @@ update msg model =
 
 
 
--- SUBSCRIPTIONS
-
-
-port version : (String -> msg) -> Sub msg
-
-
-port autolaunch : (Bool -> msg) -> Sub msg
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.batch
-        [ version SetVersion
-        , autolaunch AutoLaunchSet
-        ]
-
-
-
 -- VIEW
 
 

@@ -54,18 +54,6 @@ update msg model =
 
 
 
--- SUBSCRIPTIONS
-
-
-port folder : (String -> msg) -> Sub msg
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    folder FillFolder
-
-
-
 -- VIEW
 
 

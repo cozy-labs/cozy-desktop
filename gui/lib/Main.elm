@@ -2,8 +2,15 @@ port module Main exposing (..)
 
 import Html exposing (Html)
 import Html.App as Html
+import Time exposing (Time)
 import Wizard
+import Address
+import Password
+import Folder
 import TwoPanes
+import Dashboard
+import Settings
+import Help
 import Unlinked
 
 
@@ -60,7 +67,7 @@ type Msg
     | WizardMsg Wizard.Msg
     | SyncStart String
     | TwoPanesMsg TwoPanes.Msg
-    | Unlink Bool
+    | Unlink
     | Restart
 
 
@@ -91,7 +98,7 @@ update msg model =
             in
                 ( { model | twopanes = twopanes' }, Cmd.map TwoPanesMsg cmd )
 
-        Unlink _ ->
+        Unlink ->
             ( { model | page = UnlinkedPage }, Cmd.none )
 
         Restart ->
@@ -105,7 +112,46 @@ update msg model =
 -- SUBSCRIPTIONS
 
 
+port pong : (Maybe String -> msg) -> Sub msg
+
+
+port registration : (Maybe String -> msg) -> Sub msg
+
+
+port folder : (String -> msg) -> Sub msg
+
+
 port synchonization : (String -> msg) -> Sub msg
+
+
+port gototab : (String -> msg) -> Sub msg
+
+
+port offline : (Bool -> msg) -> Sub msg
+
+
+port updated : (Bool -> msg) -> Sub msg
+
+
+port transfer : (Dashboard.File -> msg) -> Sub msg
+
+
+port remove : (Dashboard.File -> msg) -> Sub msg
+
+
+port diskSpace : (Dashboard.DiskSpace -> msg) -> Sub msg
+
+
+port syncError : (String -> msg) -> Sub msg
+
+
+port version : (String -> msg) -> Sub msg
+
+
+port autolaunch : (Bool -> msg) -> Sub msg
+
+
+port mail : (Maybe String -> msg) -> Sub msg
 
 
 
@@ -118,10 +164,22 @@ port unlink : (Bool -> msg) -> Sub msg
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Sub.map WizardMsg (Wizard.subscriptions model.wizard)
-        , Sub.map TwoPanesMsg (TwoPanes.subscriptions model.twopanes)
+        [ pong (WizardMsg << Wizard.AddressMsg << Address.Pong)
+        , registration (WizardMsg << Wizard.PasswordMsg << Password.Registered)
+        , folder (WizardMsg << Wizard.FolderMsg << Folder.FillFolder)
         , synchonization SyncStart
-        , unlink Unlink
+        , gototab (TwoPanesMsg << TwoPanes.GoToStrTab)
+        , Time.every Time.second (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.Tick)
+        , transfer (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.Transfer)
+        , remove (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.Remove)
+        , diskSpace (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.UpdateDiskSpace)
+        , syncError (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.SetError)
+        , offline (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.GoOffline)))
+        , updated (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.Updated)))
+        , mail (TwoPanesMsg << TwoPanes.HelpMsg << Help.MailSent)
+        , version (TwoPanesMsg << TwoPanes.SettingsMsg << Settings.SetVersion)
+        , autolaunch (TwoPanesMsg << TwoPanes.SettingsMsg << Settings.AutoLaunchSet)
+        , unlink (always Unlink)
         ]
 
 

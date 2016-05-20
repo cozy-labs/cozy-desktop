@@ -1,4 +1,4 @@
-port module TwoPanes exposing (..)
+module TwoPanes exposing (..)
 
 import Html exposing (..)
 import Html.App as Html
@@ -114,23 +114,6 @@ update msg model =
                     Help.update msg' model.help
             in
                 ( { model | help = help' }, Cmd.map HelpMsg cmd )
-
-
-
--- SUBSCRIPTIONS
-
-
-port gototab : (String -> msg) -> Sub msg
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.batch
-        [ gototab GoToStrTab
-        , Sub.map DashboardMsg (Dashboard.subscriptions model.dashboard)
-        , Sub.map SettingsMsg (Settings.subscriptions model.settings)
-        , Sub.map HelpMsg (Help.subscriptions model.help)
-        ]
 
 
 
