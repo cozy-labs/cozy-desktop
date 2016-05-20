@@ -70,9 +70,6 @@ port restart : Bool -> Cmd msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model, Cmd.none )
-
         WizardMsg msg' ->
             let
                 ( wizard', cmd ) =
@@ -100,12 +97,19 @@ update msg model =
         Restart ->
             ( model, restart True )
 
+        NoOp ->
+            ( model, Cmd.none )
+
 
 
 -- SUBSCRIPTIONS
 
 
 port synchonization : (String -> msg) -> Sub msg
+
+
+
+-- https://github.com/elm-lang/elm-compiler/issues/1367
 
 
 port unlink : (Bool -> msg) -> Sub msg

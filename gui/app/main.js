@@ -4,6 +4,7 @@
 const AutoLaunch = require('cozy-auto-launch')
 const Desktop = require('cozy-desktop')
 const electron = require('electron')
+const fs = require('fs')
 const path = require('path')
 const {spawn} = require('child_process')
 
@@ -13,6 +14,7 @@ const autoLauncher = new AutoLaunch({
   isHidden: true
 })
 const desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
+const lastFilesPath = path.join(desktop.basePath, '.cozy-desktop', 'last-files')
 desktop.writeLogsTo(path.join(desktop.basePath, '.cozy-desktop', 'logs.txt'))
 
 // Use a fake window to keep the application running when the main window is
@@ -26,6 +28,7 @@ let tray
 let device
 
 let state = 'not-configured'
+let errorMessage = ''
 let lastFiles = []
 
 const windowOptions = {
@@ -93,7 +96,7 @@ const updateState = (newState, filename) => {
   let statusLabel = ''
   if (state === 'error') {
     setTrayIcon('error')
-    statusLabel = state.message = filename
+    statusLabel = errorMessage = filename
   } else if (filename) {
     setTrayIcon('sync')
     statusLabel = `Syncing ‟${filename}“`
@@ -156,6 +159,25 @@ const selectIcon = (info) => {
   return 'file'
 }
 
+const loadLastFiles = () => {
+  fs.readFile(lastFilesPath, 'utf-8', (err, data) => {
+    if (!err && data) {
+      try {
+        lastFiles = JSON.parse(data)
+      } catch (err) {}
+    }
+  })
+}
+
+const persistLastFiles = () => {
+  const data = JSON.stringify(lastFiles)
+  fs.writeFile(lastFilesPath, data, (err) => {
+    if (err) {
+      console.log(err)
+    }
+  })
+}
+
 const addFile = (info) => {
   const file = {
     filename: path.basename(info.path),
@@ -168,6 +190,7 @@ const addFile = (info) => {
   lastFiles.push(file)
   lastFiles = lastFiles.slice(-20)
   sendToMainWindow('transfer', file)
+  persistLastFiles()
 }
 
 const removeFile = (info) => {
@@ -180,6 +203,7 @@ const removeFile = (info) => {
   }
   lastFiles = lastFiles.filter((f) => f.path !== file.path)
   sendToMainWindow('delete-file', file)
+  persistLastFiles()
 }
 
 const sendDiskSpace = () => {
@@ -202,16 +226,16 @@ const sendDiskSpace = () => {
 
 const startSync = () => {
   sendToMainWindow('synchronization', device.url)
+  for (let file of lastFiles) {
+    sendToMainWindow('transfer', file)
+  }
   if (desktop.sync) {
-    for (let file of lastFiles) {
-      sendToMainWindow('transfer', file)
-    }
     if (state === 'up-to-date' || state === 'online') {
       sendToMainWindow('up-to-date')
     } else if (state === 'offline') {
       sendToMainWindow('offline')
     } else if (state === 'error') {
-      sendErrorToMainWindow(state.message)
+      sendErrorToMainWindow(errorMessage)
     }
   } else {
     updateState('syncing')
@@ -266,11 +290,13 @@ const createWindow = () => {
     if (desktop.config.hasDevice()) {
       device = desktop.config.getDevice()
       if (device.deviceName && device.url && device.path) {
-        startSync()
+        setTimeout(startSync, 20)
       }
     }
   })
 }
+
+loadLastFiles()
 
 app.on('ready', () => {
   if (process.argv.indexOf('--isHidden') === -1) {

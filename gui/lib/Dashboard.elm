@@ -89,7 +89,7 @@ update msg model =
                 files' =
                     file
                         :: (List.filter (samePath file >> not) model.files)
-                        |> List.take 20
+                        |> List.take 250
 
                 status' =
                     Sync file.filename
