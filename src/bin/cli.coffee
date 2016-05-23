@@ -14,6 +14,9 @@ exit = ->
     log.log 'Exiting...'
     app.stopSync ->
         process.exit()
+    setTimeout ->
+        process.exist()
+    , 2000
 
 process.on 'SIGINT',  exit
 process.on 'SIGTERM', exit
