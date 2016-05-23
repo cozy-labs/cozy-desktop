@@ -299,7 +299,7 @@ const createWindow = () => {
 loadLastFiles()
 
 app.on('ready', () => {
-  if (process.argv.indexOf('--isHidden') === -1) {
+  if (process.argv.indexOf('--hidden') === -1) {
     createWindow()
   }
   tray = new electron.Tray(`${__dirname}/images/tray-icon-linux/idle.png`)
