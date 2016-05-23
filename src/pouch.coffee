@@ -50,11 +50,14 @@ class Pouch
         if typeof params is 'function'
             callback = params
             params = include_docs: true
+        # XXX Pouchdb does sometimes send us undefined values in docs.
+        # It's rare and we didn't find a way to extract a proper test case.
+        # So, we keep a workaround and hope that this bug will be fixed.
         @db.query query, params, (err, res) ->
             if err
                 callback err
             else
-                docs = (row.doc for row in res.rows)
+                docs = (row.doc for row in res.rows when row.doc?)
                 callback null, docs
 
     # Return all the files with this checksum
@@ -81,12 +84,7 @@ class Pouch
                 startkey: "#{path}"
                 endkey: "#{path}/\ufff0"
                 include_docs: true
-        @getAll 'byPath', params, (err, docs) ->
-            # XXX Pouchdb does sometimes send us undefined values in docs.
-            # It's rare and we didn't find a way to extract a proper test case.
-            # So, we keep a workaround and hope that this bug will be fixed.
-            docs = (doc for doc in docs when doc?) unless err
-            callback err, docs
+        @getAll 'byPath', params, callback
 
     # Return the file/folder with this remote id
     byRemoteId: (id, callback) ->

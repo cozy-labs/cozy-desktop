@@ -236,7 +236,10 @@ class App
 
     # Stop the synchronisation
     stopSync: (callback=->) ->
-        @sync?.stop callback
+        if @sync
+            @sync.stop callback
+        else
+            callback()
 
 
     # Start database sync process and setup file change watcher

@@ -84,8 +84,8 @@ class Remote
             else
                 binary._rev = created.rev
                 @other.createReadStream doc, (err, stream) =>
-                    return next err if err
-                    stream.on 'error', -> next new Error 'Invalid file'
+                    return callback err if err
+                    stream.on 'error', -> callback new Error 'Invalid file'
                     # Be sure that the checksum is correct
                     checksum = crypto.createHash 'sha1'
                     checksum.setEncoding 'hex'
