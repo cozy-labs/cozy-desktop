@@ -42,11 +42,11 @@ class App
     MAX_LOG_SIZE = 500000
 
     # basePath is the directory where the config and pouch are saved
-    constructor: (basePath) ->
+    constructor: (basePath, pouchAdapter) ->
         @lang = 'fr'
         @basePath = basePath or path.homedir()
         @config = new Config @basePath
-        @pouch  = new Pouch @config
+        @pouch  = new Pouch @config, pouchAdapter
         @events = new EventEmitter
 
 

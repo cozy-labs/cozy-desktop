@@ -1,5 +1,6 @@
 ## 0.12.1 - 2016-05-23
 
+* Use websql instead of leveldown for GUI (compatibility issues)
 * Just some bugfixes
 
 ## 0.12.0 - 2016-05-16

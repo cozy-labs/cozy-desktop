@@ -13,7 +13,7 @@ const autoLauncher = new AutoLaunch({
   name: 'Cozy-Desktop',
   isHidden: true
 })
-const desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
+const desktop = new Desktop(process.env.COZY_DESKTOP_DIR, 'websql')
 const lastFilesPath = path.join(desktop.basePath, '.cozy-desktop', 'last-files')
 desktop.writeLogsTo(path.join(desktop.basePath, '.cozy-desktop', 'logs.txt'))
 
