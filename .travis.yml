@@ -12,6 +12,7 @@ env:
         - CXX=g++-4.8
         - COZY_DESKTOP_DIR=tmp
         - NODE_ENV=test
+        - NPM_CONFIG_PROGRESS=false
 services:
     - couchdb
 cache:
