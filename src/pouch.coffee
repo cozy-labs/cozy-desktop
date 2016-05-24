@@ -19,14 +19,8 @@ log     = require('printit')
 # creationDate and lastModification instead of created_at and updated_at. And
 # views name are in camelcase (byChecksum, not by-checksum).
 class Pouch
-    constructor: (@config, @adapter) ->
-        if @adapter is 'websql'
-            require 'pouchdb/extras/websql'
-            @dbPath = path.join @config.dbPath, 'cozy.db'
-        else
-            @adapter ?= 'leveldb'
-            @dbPath = @config.dbPath
-        @db = new PouchDB @dbPath, adapter: @adapter
+    constructor: (@config) ->
+        @db = new PouchDB @config.dbPath
         @db.setMaxListeners 100
         @db.on 'error', (err) -> log.warn err
         @updater = async.queue (task, callback) =>
@@ -43,7 +37,7 @@ class Pouch
     resetDatabase: (callback) =>
         @db.destroy =>
             fs.ensureDirSync @config.dbPath
-            @db = new PouchDB @dbPath, adapter: @adapter
+            @db = new PouchDB @config.dbPath
             @db.setMaxListeners 100
             @db.on 'error', (err) -> log.warn err
             @addAllViews callback
