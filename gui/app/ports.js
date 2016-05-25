@@ -30,6 +30,10 @@ const init = () => {
 setTimeout(init, 10)
 
 // Glue code between Elm and the main process
+ipcRenderer.on('locale', (event, locale) => {
+  elmectron.ports.locale.send(locale)
+})
+
 ipcRenderer.on('cozy-pong', (event, url) => {
   elmectron.ports.pong.send(url)
 })
