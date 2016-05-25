@@ -3,6 +3,7 @@ port module Main exposing (..)
 import Html exposing (Html)
 import Html.App as Html
 import Time exposing (Time)
+import Helpers
 import Wizard
 import Address
 import Password
@@ -34,7 +35,8 @@ type Page
 
 
 type alias Model =
-    { page : Page
+    { locale : String
+    , page : Page
     , wizard : Wizard.Model
     , twopanes : TwoPanes.Model
     }
@@ -43,6 +45,9 @@ type alias Model =
 init : ( Model, Cmd Msg )
 init =
     let
+        locale =
+            "en"
+
         page =
             WizardPage
 
@@ -53,7 +58,7 @@ init =
             TwoPanes.init
 
         model =
-            Model page wizard twopanes
+            Model locale page wizard twopanes
     in
         ( model, Cmd.none )
 
@@ -64,6 +69,7 @@ init =
 
 type Msg
     = NoOp
+    | SetLocale String
     | WizardMsg Wizard.Msg
     | SyncStart String
     | TwoPanesMsg TwoPanes.Msg
@@ -77,6 +83,13 @@ port restart : Bool -> Cmd msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        SetLocale locale' ->
+            let
+                _ =
+                    Debug.log locale'
+            in
+                ( { model | locale = locale' }, Cmd.none )
+
         WizardMsg msg' ->
             let
                 ( wizard', cmd ) =
@@ -110,6 +123,9 @@ update msg model =
 
 
 -- SUBSCRIPTIONS
+
+
+port locale : (String -> msg) -> Sub msg
 
 
 port pong : (Maybe String -> msg) -> Sub msg
@@ -164,7 +180,8 @@ port unlink : (Bool -> msg) -> Sub msg
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ pong (WizardMsg << Wizard.AddressMsg << Address.Pong)
+        [ locale SetLocale
+        , pong (WizardMsg << Wizard.AddressMsg << Address.Pong)
         , registration (WizardMsg << Wizard.PasswordMsg << Password.Registered)
         , folder (WizardMsg << Wizard.FolderMsg << Folder.FillFolder)
         , synchonization SyncStart
@@ -189,14 +206,18 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    case
-        model.page
-    of
-        WizardPage ->
-            Html.map WizardMsg (Wizard.view model.wizard)
+    let
+        helpers =
+            Helpers.forLocale model.locale
+    in
+        case
+            model.page
+        of
+            WizardPage ->
+                Html.map WizardMsg (Wizard.view helpers model.wizard)
 
-        TwoPanesPage ->
-            Html.map TwoPanesMsg (TwoPanes.view model.twopanes)
+            TwoPanesPage ->
+                Html.map TwoPanesMsg (TwoPanes.view helpers model.twopanes)
 
-        UnlinkedPage ->
-            Html.map (\_ -> Restart) Unlinked.view
+            UnlinkedPage ->
+                Html.map (\_ -> Restart) (Unlinked.view helpers)

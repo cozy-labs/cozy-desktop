@@ -3,6 +3,7 @@ port module Help exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Helpers exposing (Helpers)
 
 
 -- MODEL
@@ -70,36 +71,36 @@ update msg model =
 -- VIEW
 
 
-view : Model -> Html Msg
-view model =
+view : Helpers -> Model -> Html Msg
+view helpers model =
     section [ class "two-panes__content two-panes__content--help" ]
-        [ h1 [] [ text "Help" ]
-        , h2 [] [ text "Community Support" ]
-        , p [] [ text "Our community grows everyday and will be happy to give you an helping hand in one of these media:" ]
+        [ h1 [] [ text (helpers.t "Help Help") ]
+        , h2 [] [ text (helpers.t "Help Community Support") ]
+        , p [] [ text (helpers.t "Help Our community grows everyday and will be happy to give you an helping hand in one of these media:") ]
         , ul [ class "help-list" ]
             [ li []
                 [ a [ href "https://forum.cozy.io/" ]
                     [ i [ class "icon icon--forum" ] []
-                    , text "Forum"
+                    , text (helpers.t "Help Forum")
                     ]
                 ]
             , li []
                 [ a [ href "https://webchat.freenode.net/?channels=cozycloud" ]
                     [ i [ class "icon icon--irc" ] []
-                    , text "IRC"
+                    , text (helpers.t "Help IRC")
                     ]
                 ]
             , li []
                 [ a [ href "https://github.com/cozy" ]
                     [ i [ class "icon icon--github" ] []
-                    , text "Github"
+                    , text (helpers.t "Help Github")
                     ]
                 ]
             ]
-        , h2 [] [ text "Official Support" ]
+        , h2 [] [ text (helpers.t "Help Official Support") ]
         , if model.status == Success then
             p [ class "message--success" ]
-                [ text "Your mail has been sent. We will try to respond to it really soon!" ]
+                [ text (helpers.t "Help Your mail has been sent. We will try to respond to it really soon!") ]
           else
             Html.form [ class "send-mail-to-support" ]
                 [ case model.status of
@@ -109,8 +110,9 @@ view model =
 
                     _ ->
                         p []
-                            [ text "You can send us feedback, report bugs and ask for assistance. "
-                            , text "We will get back to you as soon as possible."
+                            [ text (helpers.t "Help You can send us feedback, report bugs and ask for assistance.")
+                            , text " "
+                            , text (helpers.t "Help We will get back to you as soon as possible.")
                             ]
                 , textarea [ onInput FillBody ]
                     [ text model.body ]
@@ -122,26 +124,26 @@ view model =
                       else
                         onClick SendMail
                     ]
-                    [ text "Send us a message" ]
+                    [ text (helpers.t "Help Send us a message") ]
                 ]
-        , p [] [ text "There are still a few more options to contact us:" ]
+        , p [] [ text (helpers.t "Help There are still a few more options to contact us:") ]
         , ul [ class "help-list" ]
             [ li []
                 [ a [ href "mailto:support@cozycloud.cc" ]
                     [ i [ class "icon icon--email" ] []
-                    , text "Email"
+                    , text (helpers.t "Help Email")
                     ]
                 ]
             , li []
                 [ a [ href "https://twitter.com/intent/tweet?text=@mycozycloud%20" ]
                     [ i [ class "icon icon--twitter" ] []
-                    , text "Twitter"
+                    , text (helpers.t "Twitter")
                     ]
                 ]
             , li []
                 [ a [ href "https://docs.cozy.io/en/" ]
                     [ i [ class "icon icon--documentation" ] []
-                    , text "Documentation"
+                    , text (helpers.t "help Documentation")
                     ]
                 ]
             ]

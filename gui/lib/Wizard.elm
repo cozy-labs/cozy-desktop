@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.App as Html
 import Html.Attributes exposing (..)
 import Focus exposing (focus)
+import Helpers exposing (Helpers)
 import Welcome
 import Address
 import Password
@@ -122,20 +123,20 @@ update msg model =
 -- VIEW
 
 
-view : Model -> Html Msg
-view model =
+view : Helpers -> Model -> Html Msg
+view helpers model =
     let
         welcomeView =
-            Html.map WelcomeMsg Welcome.view
+            Html.map WelcomeMsg (Welcome.view helpers)
 
         addressView =
-            Html.map AddressMsg (Address.view model.address)
+            Html.map AddressMsg (Address.view helpers model.address)
 
         passwordView =
-            Html.map PasswordMsg (Password.view model.password)
+            Html.map PasswordMsg (Password.view helpers model.password)
 
         folderView =
-            Html.map FolderMsg (Folder.view model.folder)
+            Html.map FolderMsg (Folder.view helpers model.folder)
     in
         section
             [ classList

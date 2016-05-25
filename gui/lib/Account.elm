@@ -3,6 +3,7 @@ port module Account exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Helpers exposing (Helpers)
 
 
 -- MODEL
@@ -49,17 +50,19 @@ update msg model =
 -- VIEW
 
 
-view : Model -> Html Msg
-view model =
+view : Helpers -> Model -> Html Msg
+view helpers model =
     section [ class "two-panes__content two-panes__content--account" ]
-        [ h1 [] [ text "Account" ]
+        [ h1 [] [ text (helpers.t "Account Account") ]
         , h3 []
             [ a [ href model.address ] [ text model.address ] ]
-        , h2 [] [ text "Unlink Cozy" ]
+        , h2 [] [ text (helpers.t "Account Unlink Cozy") ]
         , p []
-            [ text "It will unlink your account to this computer. "
-            , text "Your files won't be deleted. "
-            , text "Are you sure to unlink this account?"
+            [ text (helpers.t "Account It will unlink your account to this computer.")
+            , text " "
+            , text (helpers.t "Account Your files won't be deleted.")
+            , text " "
+            , text (helpers.t "Account Are you sure to unlink this account?")
             ]
         , a
             [ class "btn btn--danger"
@@ -69,5 +72,5 @@ view model =
               else
                 onClick UnlinkCozy
             ]
-            [ text "Unlink this Cozy" ]
+            [ text (helpers.t "Account Unlink this Cozy") ]
         ]

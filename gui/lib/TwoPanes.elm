@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.App as Html
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Helpers exposing (Helpers)
 import Icons
 import Dashboard
 import Settings
@@ -127,8 +128,8 @@ update msg model =
 -- VIEW
 
 
-view : Model -> Html Msg
-view model =
+view : Helpers -> Model -> Html Msg
+view helpers model =
     let
         iconSize =
             20
@@ -137,6 +138,9 @@ view model =
             let
                 active =
                     model.tab == tab
+
+                translated =
+                    helpers.t ("TwoPanes " ++ title)
             in
                 li
                     [ classList
@@ -149,7 +153,7 @@ view model =
                         , onClick (GoToTab tab)
                         ]
                         [ icon iconSize active
-                        , text title
+                        , text translated
                         ]
                     ]
 
@@ -166,15 +170,15 @@ view model =
         content =
             case model.tab of
                 DashboardTab ->
-                    Html.map DashboardMsg (Dashboard.view model.dashboard)
+                    Html.map DashboardMsg (Dashboard.view helpers model.dashboard)
 
                 SettingsTab ->
-                    Html.map SettingsMsg (Settings.view model.settings)
+                    Html.map SettingsMsg (Settings.view helpers model.settings)
 
                 AccountTab ->
-                    Html.map AccountMsg (Account.view model.account)
+                    Html.map AccountMsg (Account.view helpers model.account)
 
                 HelpTab ->
-                    Html.map HelpMsg (Help.view model.help)
+                    Html.map HelpMsg (Help.view helpers model.help)
     in
         section [ class "two-panes" ] [ menu, content ]

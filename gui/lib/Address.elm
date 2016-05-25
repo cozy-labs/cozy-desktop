@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Focus exposing (focus)
+import Helpers exposing (Helpers)
 import OnEnter exposing (onEnter)
 
 
@@ -75,8 +76,8 @@ update msg model =
 -- VIEW
 
 
-view : Model -> Html Msg
-view model =
+view : Helpers -> Model -> Html Msg
+view helpers model =
     div
         [ classList
             [ ( "step", True )
@@ -88,7 +89,7 @@ view model =
             [ text model.error ]
         , div [ class "upper" ]
             [ input
-                [ placeholder "Cozy address"
+                [ placeholder (helpers.t "Address Cozy address")
                 , class "wizard__address"
                 , value model.address
                 , onInput FillAddress
@@ -97,12 +98,12 @@ view model =
                 []
             ]
         , p []
-            [ text "This is the web address you use to sign in to your cozy." ]
+            [ text (helpers.t "Address This is the web address you use to sign in to your cozy.") ]
         , a
             [ href "https://cozy.io/en/try-it/"
             , class "more-info"
             ]
-            [ text "Don't have an account? Request one here" ]
+            [ text (helpers.t "Address Don't have an account? Request one here") ]
         , a
             [ class "btn"
             , href "#"
@@ -111,5 +112,5 @@ view model =
               else
                 onClick PingCozy
             ]
-            [ text "Next" ]
+            [ text (helpers.t "Address Next") ]
         ]

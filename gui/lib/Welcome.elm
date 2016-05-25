@@ -3,6 +3,7 @@ module Welcome exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Helpers exposing (Helpers)
 
 
 -- UPDATE
@@ -16,8 +17,8 @@ type Msg
 -- VIEW
 
 
-view : Html Msg
-view =
+view : Helpers -> Html Msg
+view helpers =
     div
         [ classList
             [ ( "step", True )
@@ -27,11 +28,11 @@ view =
         [ div [ class "upper" ] []
         , div [ class "upper" ]
             [ img [ src "images/happycloud.png" ] [] ]
-        , h1 [] [ text "Your own private cloud" ]
+        , h1 [] [ text (helpers.t "Welcome Your own private cloud") ]
         , a
             [ class "btn"
             , href "#"
             , onClick NextPage
             ]
-            [ text "Sign in to your Cozy" ]
+            [ text (helpers.t "Welcome Sign in to your Cozy") ]
         ]
