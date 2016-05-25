@@ -10,12 +10,14 @@ import Html.Events exposing (..)
 
 type alias Model =
     { address : String
+    , busy : Bool
     }
 
 
 init : Model
 init =
     { address = ""
+    , busy = False
     }
 
 
@@ -40,7 +42,7 @@ update msg model =
             ( { model | address = address' }, Cmd.none )
 
         UnlinkCozy ->
-            ( model, unlinkCozy () )
+            ( { model | busy = True }, unlinkCozy () )
 
 
 
@@ -62,7 +64,10 @@ view model =
         , a
             [ class "btn btn--danger"
             , href "#"
-            , onClick UnlinkCozy
+            , if model.busy then
+                attribute "aria-busy" "true"
+              else
+                onClick UnlinkCozy
             ]
             [ text "Unlink this Cozy" ]
         ]
