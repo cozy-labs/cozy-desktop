@@ -39,7 +39,7 @@ describe 'Push', ->
         docType: 'file'
 
     it 'pushs a local folder to the remote cozy', (done) ->
-        folderPath = path.join @basePath, folder.path, folder.name
+        folderPath = path.join @syncPath, folder.path, folder.name
         fs.ensureDirSync folderPath
         setTimeout ->
             Files.getAllFolders (err, folders) ->
@@ -50,8 +50,8 @@ describe 'Push', ->
     it 'renames the folder', (done) ->
         old = clone folder
         folder.name = faker.hacker.noun()
-        oldPath = path.join @basePath, old.path, old.name
-        newPath = path.join @basePath, folder.path, folder.name
+        oldPath = path.join @syncPath, old.path, old.name
+        newPath = path.join @syncPath, folder.path, folder.name
         fs.renameSync oldPath, newPath
         setTimeout ->
             Files.getAllFolders (err, folders) ->
@@ -61,12 +61,12 @@ describe 'Push', ->
         , 5000
 
     it 'moves the folder', (done) ->
-        parentPath = path.join @basePath, parent.path, parent.name
+        parentPath = path.join @syncPath, parent.path, parent.name
         fs.ensureDirSync parentPath
         old = clone folder
         folder.path = "/#{parent.name}"
-        oldPath = path.join @basePath, old.path, old.name
-        newPath = path.join @basePath, folder.path, folder.name
+        oldPath = path.join @syncPath, old.path, old.name
+        newPath = path.join @syncPath, folder.path, folder.name
         fs.renameSync oldPath, newPath
         setTimeout ->
             Files.getAllFolders (err, folders) ->
@@ -76,7 +76,7 @@ describe 'Push', ->
         , 2500
 
     it 'removes the folder', (done) ->
-        folderPath = path.join @basePath, folder.path, folder.name
+        folderPath = path.join @syncPath, folder.path, folder.name
         fs.rmdirSync folderPath
         setTimeout ->
             Files.getAllFolders (err, folders) ->
@@ -86,7 +86,7 @@ describe 'Push', ->
 
     it 'pushs a local file to the remote cozy', (done) ->
         fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'
-        filePath = path.join @basePath, file.path, file.name
+        filePath = path.join @syncPath, file.path, file.name
         fs.copySync fixturePath, filePath
         file.size = fs.statSync(fixturePath).size
         setTimeout ->
@@ -99,8 +99,8 @@ describe 'Push', ->
         old = clone file
         delete old.size
         file.name = "#{faker.hacker.noun()}.jpg"
-        oldPath = path.join @basePath, old.path, old.name
-        newPath = path.join @basePath, file.path, file.name
+        oldPath = path.join @syncPath, old.path, old.name
+        newPath = path.join @syncPath, file.path, file.name
         fs.renameSync oldPath, newPath
         setTimeout ->
             Files.getAllFiles (err, files) ->
@@ -113,8 +113,8 @@ describe 'Push', ->
         old = clone file
         delete old.size
         file.path = "/#{parent.name}"
-        oldPath = path.join @basePath, old.path, old.name
-        newPath = path.join @basePath, file.path, file.name
+        oldPath = path.join @syncPath, old.path, old.name
+        newPath = path.join @syncPath, file.path, file.name
         fs.renameSync oldPath, newPath
         setTimeout ->
             Files.getAllFiles (err, files) ->
@@ -125,7 +125,7 @@ describe 'Push', ->
 
     it 'overwrites the file', (done) ->
         fixturePath = path.join Cozy.fixturesDir, 'chat-mignon-mod.jpg'
-        filePath = path.join @basePath, file.path, file.name
+        filePath = path.join @syncPath, file.path, file.name
         fs.copySync fixturePath, filePath
         file.size = fs.statSync(fixturePath).size
         setTimeout ->
@@ -135,7 +135,7 @@ describe 'Push', ->
         , 3000
 
     it 'removes the file', (done) ->
-        filePath = path.join @basePath, file.path, file.name
+        filePath = path.join @syncPath, file.path, file.name
         fs.unlinkSync filePath
         setTimeout ->
             Files.getAllFiles (err, files) ->

@@ -1,3 +1,4 @@
+path   = require 'path'
 should = require 'should'
 
 configHelpers = require '../helpers/config'
@@ -17,7 +18,7 @@ describe 'Config', ->
                 password: 'password'
                 url: 'none'
             @config.save()
-            conf = new Config @basePath
+            conf = new Config path.join(@syncPath, '.cozy-desktop')
             should.exist conf.devices['new-cozy2']
 
     describe 'getDefaultDeviceName', ->

@@ -40,7 +40,7 @@ describe 'Swap 2 files', ->
 
     it 'pushs a local file to the remote cozy', (done) ->
         fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'
-        onePath = path.join @basePath, one.path, one.name
+        onePath = path.join @syncPath, one.path, one.name
         fs.copySync fixturePath, onePath
         one.size = fs.statSync(fixturePath).size
         setTimeout ->
@@ -53,7 +53,7 @@ describe 'Swap 2 files', ->
 
     it 'pushs another local file to the remote cozy', (done) ->
         fixturePath = path.join Cozy.fixturesDir, 'chat-mignon-mod.jpg'
-        twoPath = path.join @basePath, two.path, two.name
+        twoPath = path.join @syncPath, two.path, two.name
         fs.copySync fixturePath, twoPath
         two.size = fs.statSync(fixturePath).size
         setTimeout ->
@@ -65,9 +65,9 @@ describe 'Swap 2 files', ->
         , 2500
 
     it 'swaps the two file', (done) ->
-        onePath = path.join @basePath, one.path, one.name
-        twoPath = path.join @basePath, two.path, two.name
-        tmpPath = path.join @basePath, tmp.path, tmp.name
+        onePath = path.join @syncPath, one.path, one.name
+        twoPath = path.join @syncPath, two.path, two.name
+        tmpPath = path.join @syncPath, tmp.path, tmp.name
         fs.renameSync onePath, tmpPath
         fs.renameSync twoPath, onePath
         fs.renameSync tmpPath, twoPath

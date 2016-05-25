@@ -21,6 +21,7 @@ helpers.startServer (err) ->
     console.log "Pouchdb-server pid is #{helpers.server.pid}"
     helpers.server.on 'close', -> process.exit 0
     basePath = process.env.COZY_DESKTOP_DIR or path.homedir()
+    basePath = path.join basePath, '.cozy-desktop'
     config = new Config basePath
     PouchDB.replicate(config.dbPath, "#{helpers.url}/#{helpers.params.db}")
         .on 'error', (err) ->

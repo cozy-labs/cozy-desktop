@@ -40,7 +40,7 @@ describe 'Conflict', ->
 
         before 'Create the local tree', ->
             fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'
-            filePath = path.join @basePath, file.path, file.name
+            filePath = path.join @syncPath, file.path, file.name
             fs.copySync fixturePath, filePath
 
         before Cozy.sync
@@ -51,17 +51,17 @@ describe 'Conflict', ->
             setTimeout done, 3000
 
         it 'has the file and the folder on local', ->
-            paths = fs.readdirSync @basePath
+            paths = fs.readdirSync @syncPath
             paths = (f for f in paths when f isnt '.cozy-desktop')
             paths.length.should.equal 2
             [f1, f2] = paths.sort()
-            fs.statSync(path.join @basePath, f1).isFile()
-            fs.statSync(path.join @basePath, f2).isDirectory()
+            fs.statSync(path.join @syncPath, f1).isFile()
+            fs.statSync(path.join @syncPath, f2).isDirectory()
             f1.should.equal file.name
             parts = f2.split '-conflict-'
             parts.length.should.equal 2
             parts[0].should.equal folder.name
-            children = fs.readdirSync path.join @basePath, f2
+            children = fs.readdirSync path.join @syncPath, f2
             children.length.should.equal 1
             children[0].should.equal child.name
 
@@ -92,10 +92,10 @@ describe 'Conflict', ->
             Files.uploadFile file, fixturePath, done
 
         before 'Create the local tree', ->
-            folderPath = path.join @basePath, folder.path, folder.name
+            folderPath = path.join @syncPath, folder.path, folder.name
             fs.ensureDirSync folderPath
             fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'
-            childPath = path.join @basePath, child.path, child.name
+            childPath = path.join @syncPath, child.path, child.name
             fs.copySync fixturePath, childPath
 
         before Cozy.sync
@@ -106,17 +106,17 @@ describe 'Conflict', ->
             setTimeout done, 3000
 
         it 'has the file and the folder on local', ->
-            paths = fs.readdirSync @basePath
+            paths = fs.readdirSync @syncPath
             paths = (f for f in paths when f isnt '.cozy-desktop')
             paths.length.should.equal 2
             [f1, f2] = paths.sort()
-            fs.statSync(path.join @basePath, f1).isDirectory()
-            fs.statSync(path.join @basePath, f2).isFile()
+            fs.statSync(path.join @syncPath, f1).isDirectory()
+            fs.statSync(path.join @syncPath, f2).isFile()
             f1.should.equal folder.name
             parts = f2.split '-conflict-'
             parts.length.should.equal 2
             parts[0].should.equal folder.name
-            children = fs.readdirSync path.join @basePath, f1
+            children = fs.readdirSync path.join @syncPath, f1
             children.length.should.equal 1
             children[0].should.equal child.name
 

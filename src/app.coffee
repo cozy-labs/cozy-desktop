@@ -1,5 +1,5 @@
 async     = require 'async'
-fs        = require 'fs'
+fs        = require 'fs-extra'
 os        = require 'os'
 path      = require 'path-extra'
 readdirp  = require 'readdirp'
@@ -44,7 +44,8 @@ class App
     # basePath is the directory where the config and pouch are saved
     constructor: (basePath) ->
         @lang = 'fr'
-        @basePath = basePath or path.homedir()
+        basePath ?= path.homedir()
+        @basePath = path.join basePath, '.cozy-desktop'
         @config = new Config @basePath
         @pouch  = new Pouch @config
         @events = new EventEmitter
@@ -173,13 +174,14 @@ class App
         cozyUrl  = conf.url
         password = conf.password
         device.unregisterDevice cozyUrl, deviceName, password, (err) =>
-            if err
+            if err and err.message isnt "This device doesn't exist"
                 log.error 'An error occured while unregistering your device.'
                 log.error err
+                callback? err
             else
-                @config.removeRemoteCozy deviceName
                 log.info 'Current device properly removed from remote cozy.'
-            callback? err
+                fs.remove @basePath, ->
+                    callback? err
 
 
     # Send an issue by mail to the support
@@ -263,7 +265,7 @@ class App
     walkFiles: (args, callback) ->
         @loadIgnore()
         options =
-            root: @basePath
+            root: @config.getDevice().path
             directoryFilter: '!.cozy-desktop'
             entryType: 'both'
         readdirp options

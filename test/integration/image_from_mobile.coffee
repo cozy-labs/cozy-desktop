@@ -50,12 +50,12 @@ describe 'Image from mobile', ->
         setTimeout done, 5000
 
     it 'has the file on local', ->
-        files = fs.readdirSync @basePath
+        files = fs.readdirSync @syncPath
         files = (f for f in files when f isnt '.cozy-desktop')
         files.length.should.equal 1
         local = files[0]
         local.should.equal file.name
-        size = fs.statSync(path.join @basePath, local).size
+        size = fs.statSync(path.join @syncPath, local).size
         size.should.equal file.size
 
     it 'has the file on remote', (done) ->

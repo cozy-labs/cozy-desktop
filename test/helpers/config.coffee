@@ -8,14 +8,14 @@ Config = require '../../src/config'
 module.exports =
     createConfig: ->
         parent = process.env.COZY_DESKTOP_DIR or 'tmp'
-        @basePath = path.resolve "#{parent}/#{+new Date}"
-        fs.ensureDirSync @basePath
-        @config = new Config @basePath
+        @syncPath = path.resolve "#{parent}/#{+new Date}"
+        fs.ensureDirSync @syncPath
+        @config = new Config path.join @syncPath, '.cozy-desktop'
         @config.devices['tester'] =
             deviceName: 'tester'
             password: 'password'
             url: 'nonecozy'
-            path: @basePath
+            path: @syncPath
 
     cleanConfig: ->
-        del.sync @basePath
+        del.sync @syncPath

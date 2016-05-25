@@ -14,14 +14,14 @@ Watcher = require './watcher'
 # It also applied changes from the remote cozy on the local filesystem.
 class Local
     constructor: (config, @prep, @pouch, @events) ->
-        @basePath = config.getDevice().path
-        @tmpPath  = path.join @basePath, ".cozy-desktop"
-        @watcher  = new Watcher @basePath, @prep, @pouch
+        @syncPath = config.getDevice().path
+        @tmpPath  = path.join @syncPath, ".cozy-desktop"
+        @watcher  = new Watcher @syncPath, @prep, @pouch
         @other    = null
 
     # Start initial replication + watching changes in live
     start: (done) =>
-        fs.ensureDir @basePath, =>
+        fs.ensureDir @syncPath, =>
             @watcher.start done
 
     # Stop watching the file system
@@ -31,7 +31,7 @@ class Local
     # Create a readable stream for the given doc
     createReadStream: (doc, callback) ->
         try
-            filePath = path.resolve @basePath, doc.path
+            filePath = path.resolve @syncPath, doc.path
             stream = fs.createReadStream filePath
             callback null, stream
         catch err
@@ -51,7 +51,7 @@ class Local
     # This function updates utime and ctime according to the last
     # modification date.
     metadataUpdater: (doc) =>
-        filePath = path.resolve @basePath, doc.path
+        filePath = path.resolve @syncPath, doc.path
         (callback) ->
             next = (err) ->
                 if doc.executable
@@ -81,7 +81,7 @@ class Local
                 callback null, false
             else
                 paths = for doc in docs when @isUpToDate doc
-                    path.resolve @basePath, doc.path
+                    path.resolve @syncPath, doc.path
                 async.detect paths, fs.exists, (foundPath) ->
                     callback null, foundPath
 
@@ -105,8 +105,8 @@ class Local
     # then pushed to CouchDB.
     addFile: (doc, callback) =>
         tmpFile  = path.resolve @tmpPath, "#{path.basename doc.path}.tmp"
-        filePath = path.resolve @basePath, doc.path
-        parent   = path.resolve @basePath, path.dirname doc.path
+        filePath = path.resolve @syncPath, doc.path
+        parent   = path.resolve @syncPath, path.dirname doc.path
 
         log.info "Put file #{filePath}"
 
@@ -169,7 +169,7 @@ class Local
 
     # Create a new folder
     addFolder: (doc, callback) =>
-        folderPath = path.join @basePath, doc.path
+        folderPath = path.join @syncPath, doc.path
         log.info "Put folder #{folderPath}"
         fs.ensureDir folderPath, (err) =>
             if err
@@ -194,9 +194,9 @@ class Local
     # Move a file from one place to another
     moveFile: (doc, old, callback) =>
         log.info "Move file #{old.path} → #{doc.path}"
-        oldPath = path.join @basePath, old.path
-        newPath = path.join @basePath, doc.path
-        parent  = path.join @basePath, path.dirname doc.path
+        oldPath = path.join @syncPath, old.path
+        newPath = path.join @syncPath, doc.path
+        parent  = path.join @syncPath, path.dirname doc.path
 
         async.waterfall [
             (next) ->
@@ -228,9 +228,9 @@ class Local
     # Move a folder
     moveFolder: (doc, old, callback) =>
         log.info "Move folder #{old.path} → #{doc.path}"
-        oldPath = path.join @basePath, old.path
-        newPath = path.join @basePath, doc.path
-        parent  = path.join @basePath, path.dirname doc.path
+        oldPath = path.join @syncPath, old.path
+        newPath = path.join @syncPath, doc.path
+        parent  = path.join @syncPath, path.dirname doc.path
 
         async.waterfall [
             (next) ->
@@ -263,7 +263,7 @@ class Local
     deleteFile: (doc, callback) =>
         log.info "Delete #{doc.path}"
         @events.emit 'delete-file', doc
-        fullpath = path.join @basePath, doc.path
+        fullpath = path.join @syncPath, doc.path
         fs.remove fullpath, callback
 
     # Delete a folder from the local filesystem
@@ -275,8 +275,8 @@ class Local
     # Rename a file/folder to resolve a conflict
     resolveConflict: (dst, src, callback) =>
         log.info "Resolve a conflict: #{src.path} → #{dst.path}"
-        srcPath = path.join @basePath, src.path
-        dstPath = path.join @basePath, dst.path
+        srcPath = path.join @syncPath, src.path
+        dstPath = path.join @syncPath, dst.path
         fs.rename srcPath, dstPath, callback
         # Don't fire an event for the deleted file
         setTimeout =>

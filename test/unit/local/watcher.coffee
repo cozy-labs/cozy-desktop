@@ -17,10 +17,10 @@ describe "LocalWatcher Tests", ->
     before 'instanciate pouch', pouchHelpers.createDatabase
     beforeEach 'instanciate local watcher', ->
         @prep = {}
-        @watcher = new Watcher @basePath, @prep, @pouch
+        @watcher = new Watcher @syncPath, @prep, @pouch
     afterEach 'stop watcher and clean path', (done) ->
         @watcher.watcher?.close()
-        fs.emptyDir @basePath, done
+        fs.emptyDir @syncPath, done
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
 
@@ -30,8 +30,8 @@ describe "LocalWatcher Tests", ->
             @watcher.start done
 
         it 'calls addFile/putFolder for files that are aleady here', (done) ->
-            fs.ensureDirSync path.join @basePath, 'aa'
-            fs.ensureFileSync path.join @basePath, 'aa/ab'
+            fs.ensureDirSync path.join @syncPath, 'aa'
+            fs.ensureFileSync path.join @syncPath, 'aa/ab'
             @prep.putFolder = sinon.spy()
             @prep.addFile = sinon.spy()
             setTimeout =>
@@ -46,8 +46,8 @@ describe "LocalWatcher Tests", ->
             @watcher.start ->
 
         it 'ignores .cozy-desktop', (done) ->
-            fs.ensureDirSync path.join @basePath, '.cozy-desktop'
-            fs.ensureFileSync path.join @basePath, '.cozy-desktop/ac'
+            fs.ensureDirSync path.join @syncPath, '.cozy-desktop'
+            fs.ensureFileSync path.join @syncPath, '.cozy-desktop/ac'
             @prep.putFolder = sinon.spy()
             @prep.addFile = sinon.spy()
             @prep.updateFile = sinon.spy()
@@ -63,7 +63,7 @@ describe "LocalWatcher Tests", ->
     describe 'createDoc', ->
         it 'creates a document for an existing file', (done) ->
             src = path.join __dirname, '../../fixtures/chat-mignon.jpg'
-            dst = path.join @basePath, 'chat-mignon.jpg'
+            dst = path.join @syncPath, 'chat-mignon.jpg'
             fs.copySync src, dst
             fs.stat dst, (err, stats) =>
                 should.not.exist err
@@ -85,7 +85,7 @@ describe "LocalWatcher Tests", ->
                     done()
 
         it 'sets the executable bit', (done) ->
-            filePath = path.join @basePath, 'executable'
+            filePath = path.join @syncPath, 'executable'
             fs.ensureFileSync filePath
             fs.chmodSync filePath, '755'
             fs.stat filePath, (err, stats) =>
@@ -160,7 +160,7 @@ describe "LocalWatcher Tests", ->
                         mime: 'image/jpeg'
                     done()
                 src = path.join __dirname, '../../fixtures/chat-mignon.jpg'
-                dst = path.join @basePath, 'aaa.jpg'
+                dst = path.join @syncPath, 'aaa.jpg'
                 fs.copySync src, dst
 
 
@@ -177,10 +177,10 @@ describe "LocalWatcher Tests", ->
                         'lastModification'
                     ]
                     done()
-                fs.mkdirSync path.join @basePath, 'aba'
+                fs.mkdirSync path.join @syncPath, 'aba'
 
         it 'detects when a sub-folder is created', (done) ->
-            fs.mkdirSync path.join @basePath, 'abb'
+            fs.mkdirSync path.join @syncPath, 'abb'
             @prep.putFolder = =>  # For aba folder
                 @prep.putFolder = (side, doc) ->
                     side.should.equal 'local'
@@ -192,40 +192,40 @@ describe "LocalWatcher Tests", ->
                         'lastModification'
                     ]
                     done()
-                fs.mkdirSync path.join @basePath, 'abb/abc'
+                fs.mkdirSync path.join @syncPath, 'abb/abc'
             @watcher.start ->
 
 
     describe 'onUnlink', ->
         it 'detects when a file is deleted', (done) ->
-            fs.ensureFileSync path.join @basePath, 'aca'
+            fs.ensureFileSync path.join @syncPath, 'aca'
             @prep.addFile = =>  # For aca file
                 @prep.deleteFile = (side, doc) ->
                     side.should.equal 'local'
                     doc.should.have.properties
                         path: 'aca'
                     done()
-                fs.unlinkSync path.join @basePath, 'aca'
+                fs.unlinkSync path.join @syncPath, 'aca'
             @watcher.start ->
 
 
     describe 'onUnlinkDir', ->
         it 'detects when a folder is deleted', (done) ->
-            fs.mkdirSync path.join @basePath, 'ada'
+            fs.mkdirSync path.join @syncPath, 'ada'
             @prep.putFolder = =>  # For ada folder
                 @prep.deleteFolder = (side, doc) ->
                     side.should.equal 'local'
                     doc.should.have.properties
                         path: 'ada'
                     done()
-                fs.rmdirSync path.join @basePath, 'ada'
+                fs.rmdirSync path.join @syncPath, 'ada'
             @watcher.start ->
 
 
     describe 'onChange', ->
         it 'detects when a file is changed', (done) ->
             src = path.join __dirname, '../../fixtures/chat-mignon.jpg'
-            dst = path.join @basePath, 'aea.jpg'
+            dst = path.join @syncPath, 'aea.jpg'
             fs.copySync src, dst
             @prep.addFile = =>
                 @prep.updateFile = (side, doc) ->
@@ -239,7 +239,7 @@ describe "LocalWatcher Tests", ->
                         mime: 'image/jpeg'
                     done()
                 src = src.replace /\.jpg$/, '-mod.jpg'
-                dst = path.join @basePath, 'aea.jpg'
+                dst = path.join @syncPath, 'aea.jpg'
                 fs.copySync src, dst
             @watcher.start ->
 
@@ -250,7 +250,7 @@ describe "LocalWatcher Tests", ->
 
         it 'deletes the source and adds the destination', (done) ->
             src = path.join __dirname, '../../fixtures/chat-mignon.jpg'
-            dst = path.join @basePath, 'afa.jpg'
+            dst = path.join @syncPath, 'afa.jpg'
             fs.copySync src, dst
             @prep.addFile = (side, doc) =>
                 doc._id = doc.path
@@ -276,7 +276,7 @@ describe "LocalWatcher Tests", ->
                             checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
                             size: 29865
                         done()
-                    fs.renameSync dst, path.join @basePath, 'afb.jpg'
+                    fs.renameSync dst, path.join @syncPath, 'afb.jpg'
                 , 1500
 
 
@@ -285,8 +285,8 @@ describe "LocalWatcher Tests", ->
             @pouch.resetDatabase done
 
         it 'deletes the source and adds the destination', (done) ->
-            src = path.join @basePath, 'aga'
-            dst = path.join @basePath, 'agb'
+            src = path.join @syncPath, 'aga'
+            dst = path.join @syncPath, 'agb'
             fs.ensureDirSync src
             fs.writeFileSync "#{src}/agc", 'agc'
             @prep.addFile = @prep.putFolder = (side, doc) =>

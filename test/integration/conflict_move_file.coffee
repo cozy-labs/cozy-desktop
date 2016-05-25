@@ -40,7 +40,7 @@ describe 'Conflict when moving a file', ->
 
         before 'Create the local tree', ->
             fixturePath = path.join Cozy.fixturesDir, 'chat-mignon-mod.jpg'
-            filePath = path.join @basePath, src.path, src.name
+            filePath = path.join @syncPath, src.path, src.name
             file.local = size: fs.statSync(fixturePath).size
             fs.copySync fixturePath, filePath
 
@@ -59,17 +59,17 @@ describe 'Conflict when moving a file', ->
 
         it 'waits a bit to resolve the conflict', (done) ->
             expectedSizes = [file.remote.size, file.local.size]
-            srcPath = path.join @basePath, src.path, src.name
-            dstPath = path.join @basePath, file.path, file.name
+            srcPath = path.join @syncPath, src.path, src.name
+            dstPath = path.join @syncPath, file.path, file.name
             fs.renameSync srcPath, dstPath
             setTimeout done, 6000
 
         it 'has the two files on local', ->
-            files = fs.readdirSync @basePath
+            files = fs.readdirSync @syncPath
             files = (f for f in files when f isnt '.cozy-desktop')
             files.length.should.equal 2
             sizes = for f in files
-                fs.statSync(path.join @basePath, f).size
+                fs.statSync(path.join @syncPath, f).size
             sizes.should.eql expectedSizes
             names = files.sort()
             names[0].should.equal file.name
@@ -114,13 +114,13 @@ describe 'Conflict when moving a file', ->
 
         before 'Create the local tree', ->
             fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'
-            filePath = path.join @basePath, file.path, file.name
+            filePath = path.join @syncPath, file.path, file.name
             file.local = size: fs.statSync(fixturePath).size
             fs.copySync fixturePath, filePath
 
         before (done) ->
-            srcPath = path.join @basePath, src.path, src.name
-            dstPath = path.join @basePath, file.path, file.name
+            srcPath = path.join @syncPath, src.path, src.name
+            dstPath = path.join @syncPath, file.path, file.name
             file.id = file.remote.id
             Files.updateFile file, done
 
@@ -129,11 +129,11 @@ describe 'Conflict when moving a file', ->
         after Cozy.clean
 
         it 'has the two files on local', ->
-            files = fs.readdirSync @basePath
+            files = fs.readdirSync @syncPath
             files = (f for f in files when f isnt '.cozy-desktop')
             files.length.should.equal 2
             sizes = for f in files
-                fs.statSync(path.join @basePath, f).size
+                fs.statSync(path.join @syncPath, f).size
             sizes.should.eql [file.local.size, file.remote.size]
             names = files.sort()
             names[0].should.equal file.name
