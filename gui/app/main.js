@@ -92,6 +92,9 @@ const setTrayIcon = (state) => {
 }
 
 const updateState = (newState, filename) => {
+  if (state === 'error' && newState === 'offline') {
+    return
+  }
   state = newState
   let statusLabel = ''
   if (state === 'error') {

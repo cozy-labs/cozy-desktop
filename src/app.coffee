@@ -174,7 +174,7 @@ class App
         cozyUrl  = conf.url
         password = conf.password
         device.unregisterDevice cozyUrl, deviceName, password, (err) =>
-            if err and err.message isnt "This device doesn't exist"
+            if err and err.message isnt 'Request unauthorized'
                 log.error 'An error occured while unregistering your device.'
                 log.error err
                 callback? err
