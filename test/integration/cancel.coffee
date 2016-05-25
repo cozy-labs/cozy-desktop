@@ -42,8 +42,8 @@ describe 'Cancel', ->
         onePath = twoPath = ''
 
         it 'sets paths', ->
-            onePath = path.join @basePath, one.path, one.name
-            twoPath = path.join @basePath, two.path, two.name
+            onePath = path.join @syncPath, one.path, one.name
+            twoPath = path.join @syncPath, two.path, two.name
 
         it 'creates a file on the local', (done) ->
             fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'
@@ -77,7 +77,7 @@ describe 'Cancel', ->
         fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'
 
         it 'creates a file on the local', (done) ->
-            filePath = path.join @basePath, file.path, file.name
+            filePath = path.join @syncPath, file.path, file.name
             Files.uploadFile file, fixturePath, (err, created) ->
                 file.id = created.id
                 waitAppear filePath, done

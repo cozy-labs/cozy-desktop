@@ -14,8 +14,8 @@ const autoLauncher = new AutoLaunch({
   isHidden: true
 })
 const desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
-const lastFilesPath = path.join(desktop.basePath, '.cozy-desktop', 'last-files')
-desktop.writeLogsTo(path.join(desktop.basePath, '.cozy-desktop', 'logs.txt'))
+const lastFilesPath = path.join(desktop.basePath, 'last-files')
+desktop.writeLogsTo(path.join(desktop.basePath, 'logs.txt'))
 
 // Use a fake window to keep the application running when the main window is
 // closed: it runs as a service, with a tray icon if you want to quit it

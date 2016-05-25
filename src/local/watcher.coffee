@@ -17,7 +17,7 @@ log      = require('printit')
 class LocalWatcher
     EXECUTABLE_MASK = 1<<6
 
-    constructor: (@basePath, @prep, @pouch) ->
+    constructor: (@syncPath, @prep, @pouch) ->
         @side = 'local'
 
     # Start chokidar, the filesystem watcher
@@ -50,7 +50,7 @@ class LocalWatcher
 
         @watcher = chokidar.watch '.',
             # Let paths in events be relative to this base path
-            cwd: @basePath
+            cwd: @syncPath
             # Ignore our own .cozy-desktop directory
             ignored: /[\/\\]\.cozy-desktop/
             # Don't follow symlinks
@@ -111,7 +111,7 @@ class LocalWatcher
     # An helper to create a document for a file
     # with checksum and mime informations
     createDoc: (filePath, stats, callback) =>
-        absPath = path.join @basePath, filePath
+        absPath = path.join @syncPath, filePath
         [mimeType, fileClass] = @getFileClass absPath
         @checksum absPath, (err, checksum) ->
             doc =

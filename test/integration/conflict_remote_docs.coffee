@@ -60,11 +60,11 @@ describe 'Conflict between remote docs with distinct cases', ->
             setTimeout done, 3500
 
         it 'has the two files on local', ->
-            files = fs.readdirSync @basePath
+            files = fs.readdirSync @syncPath
             files = (f for f in files when f isnt '.cozy-desktop')
             files.length.should.equal 2
             sizes = for f in files
-                fs.statSync(path.join @basePath, f).size
+                fs.statSync(path.join @syncPath, f).size
             sizes.should.eql expectedSizes
             names = files.sort()
             parts = names[0].split '-conflict-'
@@ -132,17 +132,17 @@ describe 'Conflict between remote docs with distinct cases', ->
             setTimeout done, 3500
 
         it 'has the two files on local', ->
-            paths = fs.readdirSync @basePath
+            paths = fs.readdirSync @syncPath
             paths = (f for f in paths when f isnt '.cozy-desktop')
             paths.length.should.equal 2
             [file, folder] = paths
-            size = fs.statSync(path.join @basePath, file).size
+            size = fs.statSync(path.join @syncPath, file).size
             size.should.eql upper.remote.size
             parts = file.split '-conflict-'
             parts.length.should.equal 2
             parts[0].should.equal upper.name
             folder.should.equal lower.name
-            children = fs.readdirSync path.join @basePath, folder
+            children = fs.readdirSync path.join @syncPath, folder
             children.length.should.equal 1
             children[0].should.equal child.name
 

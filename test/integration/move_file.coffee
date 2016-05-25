@@ -31,7 +31,7 @@ describe 'Move a file', ->
 
         it 'create the local file', ->
             fixturePath = path.join Cozy.fixturesDir, 'chat-mignon-mod.jpg'
-            filePath = path.join @basePath, src.path, src.name
+            filePath = path.join @syncPath, src.path, src.name
             src.size = fs.statSync(fixturePath).size
             fs.copySync fixturePath, filePath
 
@@ -39,18 +39,18 @@ describe 'Move a file', ->
             setTimeout done, 4000
 
         it 'renames the file', (done) ->
-            srcPath = path.join @basePath, src.path, src.name
-            dstPath = path.join @basePath, dst.path, dst.name
+            srcPath = path.join @syncPath, src.path, src.name
+            dstPath = path.join @syncPath, dst.path, dst.name
             fs.rename srcPath, dstPath, done
 
         it 'waits a bit', (done) ->
             setTimeout done, 4000
 
         it 'has the file on local', ->
-            files = fs.readdirSync @basePath
+            files = fs.readdirSync @syncPath
             files = (f for f in files when f isnt '.cozy-desktop')
             files.length.should.equal 1
-            size = fs.statSync(path.join @basePath, files[0]).size
+            size = fs.statSync(path.join @syncPath, files[0]).size
             size.should.equal src.size
             files[0].should.equal dst.name
 
@@ -88,8 +88,8 @@ describe 'Move a file', ->
             setTimeout done, 4000
 
         it 'renames the file', (done) ->
-            srcPath = path.join @basePath, src.path, src.name
-            dstPath = path.join @basePath, dst.path, dst.name
+            srcPath = path.join @syncPath, src.path, src.name
+            dstPath = path.join @syncPath, dst.path, dst.name
             dst.id = src.id
             Files.updateFile dst, done
 
@@ -97,10 +97,10 @@ describe 'Move a file', ->
             setTimeout done, 4000
 
         it 'has the file on local', ->
-            files = fs.readdirSync @basePath
+            files = fs.readdirSync @syncPath
             files = (f for f in files when f isnt '.cozy-desktop')
             files.length.should.equal 1
-            size = fs.statSync(path.join @basePath, files[0]).size
+            size = fs.statSync(path.join @syncPath, files[0]).size
             size.should.equal src.size
             files[0].should.equal dst.name
 

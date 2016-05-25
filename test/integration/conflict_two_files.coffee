@@ -34,7 +34,7 @@ describe 'Conflict between two files', ->
 
         before 'Create the local tree', ->
             fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'
-            filePath = path.join @basePath, file.path, file.name
+            filePath = path.join @syncPath, file.path, file.name
             file.local = size: fs.statSync(fixturePath).size
             fs.copySync fixturePath, filePath
 
@@ -47,11 +47,11 @@ describe 'Conflict between two files', ->
             setTimeout done, 3000
 
         it 'has the two files on local', ->
-            files = fs.readdirSync @basePath
+            files = fs.readdirSync @syncPath
             files = (f for f in files when f isnt '.cozy-desktop')
             files.length.should.equal 2
             sizes = for f in files
-                fs.statSync(path.join @basePath, f).size
+                fs.statSync(path.join @syncPath, f).size
             sizes.sort().should.eql expectedSizes
             names = files.sort()
             names[0].should.equal file.name
@@ -94,7 +94,7 @@ describe 'Conflict between two files', ->
 
         before 'Create the local tree', ->
             fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'
-            filePath = path.join @basePath, file.path, file.name
+            filePath = path.join @syncPath, file.path, file.name
             file.local = size: fs.statSync(fixturePath).size
             fs.copySync fixturePath, filePath
 
@@ -107,11 +107,11 @@ describe 'Conflict between two files', ->
             setTimeout done, 1500
 
         it 'has the two files on local', ->
-            files = fs.readdirSync @basePath
+            files = fs.readdirSync @syncPath
             files = (f for f in files when f isnt '.cozy-desktop')
             files.length.should.equal 2
             sizes = for f in files
-                fs.statSync(path.join @basePath, f).size
+                fs.statSync(path.join @syncPath, f).size
             sizes.sort().should.eql expectedSizes
             names = files.sort()
             names[0].should.equal file.name

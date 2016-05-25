@@ -36,10 +36,10 @@ describe 'Conflict between two folders', ->
                 Files.uploadFile remoteChild, fixturePath, done
 
         before 'Create the local tree', ->
-            folderPath = path.join @basePath, folder.path, folder.name
+            folderPath = path.join @syncPath, folder.path, folder.name
             fs.ensureDirSync folderPath
             fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'
-            filePath = path.join @basePath, localChild.path, localChild.name
+            filePath = path.join @syncPath, localChild.path, localChild.name
             fs.copySync fixturePath, filePath
 
         before Cozy.sync
@@ -50,10 +50,10 @@ describe 'Conflict between two folders', ->
             setTimeout done, 2000
 
         it 'has the two files on local', ->
-            folders = fs.readdirSync @basePath
+            folders = fs.readdirSync @syncPath
             folders = (f for f in folders when f isnt '.cozy-desktop')
             folders.length.should.equal 1
-            files = fs.readdirSync path.join @basePath, folders[0]
+            files = fs.readdirSync path.join @syncPath, folders[0]
             files.length.should.equal 2
             [local, remote] = files.sort()
             local.should.equal localChild.name
@@ -97,10 +97,10 @@ describe 'Conflict between two folders', ->
         before Cozy.fetchRemoteMetadata
 
         before 'Create the local tree', ->
-            folderPath = path.join @basePath, folder.path, folder.name
+            folderPath = path.join @syncPath, folder.path, folder.name
             fs.ensureDirSync folderPath
             fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'
-            filePath = path.join @basePath, localChild.path, localChild.name
+            filePath = path.join @syncPath, localChild.path, localChild.name
             fs.copySync fixturePath, filePath
 
         before Cozy.sync
@@ -111,10 +111,10 @@ describe 'Conflict between two folders', ->
             setTimeout done, 2000
 
         it 'has the two files on local', ->
-            folders = fs.readdirSync @basePath
+            folders = fs.readdirSync @syncPath
             folders = (f for f in folders when f isnt '.cozy-desktop')
             folders.length.should.equal 1
-            files = fs.readdirSync path.join @basePath, folders[0]
+            files = fs.readdirSync path.join @syncPath, folders[0]
             files.length.should.equal 2
             [local, remote] = files.sort()
             local.should.equal localChild.name

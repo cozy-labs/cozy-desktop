@@ -12,9 +12,8 @@ class Config
 
     # Create config file if it doesn't exist.
     constructor: (basePath) ->
-        defaultDir = path.join basePath, '.cozy-desktop'
-        @configPath = path.join path.resolve(defaultDir), 'config.json'
-        @dbPath = path.join defaultDir, 'db'
+        @configPath = path.join basePath, 'config.json'
+        @dbPath = path.join basePath, 'db'
         fs.ensureDirSync @dbPath
         fs.ensureFileSync @configPath
 

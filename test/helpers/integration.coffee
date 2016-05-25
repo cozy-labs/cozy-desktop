@@ -37,13 +37,13 @@ module.exports.ensurePreConditions = (done) ->
 
 
 module.exports.registerDevice = (done) ->
-    @basePath = path.resolve "#{helpers.parentDir}/#{+new Date}"
-    fs.ensureDirSync @basePath
-    @app = new App @basePath
+    @syncPath = path.resolve "#{helpers.parentDir}/#{+new Date}"
+    fs.ensureDirSync @syncPath
+    @app = new App @syncPath
     @app.askPassword = (callback) ->
         callback null, helpers.password
     deviceName = helpers.deviceName = "test-#{faker.internet.userName()}"
-    @app.addRemote helpers.url, @basePath, deviceName, (err, credentials) ->
+    @app.addRemote helpers.url, @syncPath, deviceName, (err, credentials) ->
         should.not.exist err
         helpers.deviceName = credentials.deviceName
         # For debug:
@@ -57,7 +57,7 @@ module.exports.clean = (done) ->
     @app.removeRemote helpers.deviceName, (err) =>
         callback = =>
             setTimeout =>
-                del.sync @basePath
+                del.sync @syncPath
                 done()
             , 200
         should.not.exist err

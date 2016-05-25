@@ -44,7 +44,8 @@ class App
     # basePath is the directory where the config and pouch are saved
     constructor: (basePath) ->
         @lang = 'fr'
-        @basePath = basePath or path.homedir()
+        basePath ?= path.homedir()
+        @basePath = path.join basePath, '.cozy-desktop'
         @config = new Config @basePath
         @pouch  = new Pouch @config
         @events = new EventEmitter
@@ -263,7 +264,7 @@ class App
     walkFiles: (args, callback) ->
         @loadIgnore()
         options =
-            root: @basePath
+            root: @config.getDevice().path
             directoryFilter: '!.cozy-desktop'
             entryType: 'both'
         readdirp options
