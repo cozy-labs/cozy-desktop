@@ -13,7 +13,7 @@
     "debug-menu": "0.4.0",
     "devtron": "1.1.2",
     "electron-builder": "3.25.0",
-    "electron-prebuilt": "1.1.1",
+    "electron-prebuilt": "1.0.2",
     "elm": "0.17.0",
     "standard": "7.1.0",
     "stylus": "0.54.5"
@@ -26,7 +26,7 @@
     "dist": "build --dist --arch all",
     "lint": "standard --verbose app/main.js app/ports.js",
     "pack": "build",
-    "postinstall": "npm run postinstall:electron & npm run postinstall:elm",
+    "postinstall": "npm run postinstall:electron && npm run postinstall:elm",
     "postinstall:electron": "install-app-deps",
     "postinstall:elm": "elm-package install -y",
     "start": "electron ./app",

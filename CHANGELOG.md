@@ -1,3 +1,7 @@
+## 0.12.1 - 2016-05-23
+
+* Just some bugfixes
+
 ## 0.12.0 - 2016-05-16
 
 * Detect full file system on local and on the cozy
