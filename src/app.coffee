@@ -1,5 +1,5 @@
 async     = require 'async'
-fs        = require 'fs'
+fs        = require 'fs-extra'
 os        = require 'os'
 path      = require 'path-extra'
 readdirp  = require 'readdirp'
@@ -177,10 +177,11 @@ class App
             if err and err.message isnt "This device doesn't exist"
                 log.error 'An error occured while unregistering your device.'
                 log.error err
+                callback? err
             else
-                @config.removeRemoteCozy deviceName
                 log.info 'Current device properly removed from remote cozy.'
-            callback? err
+                fs.remove @basePath, ->
+                    callback? err
 
 
     # Send an issue by mail to the support
