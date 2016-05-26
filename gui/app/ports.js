@@ -13,7 +13,8 @@ const elmectron = Elm.embed(container, {
   folder: defaultDir,
   locale: remote.app.locale,
   locales: {
-    en: remote.require('../locales/en.json')
+    en: remote.require('../locales/en.json'),
+    fr: remote.require('../locales/fr.json')
   },
   version: pkg.version
 })

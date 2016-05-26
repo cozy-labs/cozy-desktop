@@ -139,7 +139,7 @@ view helpers model =
             , class "more-info"
             , onClick GoToPrevPage
             ]
-            [ text (helpers.t "Password Wrong cozy address ?") ]
+            [ text (helpers.t "Password Wrong cozy address?") ]
         , a
             [ class "btn"
             , href "#"
