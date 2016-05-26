@@ -137,13 +137,13 @@ view helpers model =
             , li []
                 [ a [ href "https://twitter.com/intent/tweet?text=@mycozycloud%20" ]
                     [ i [ class "icon icon--twitter" ] []
-                    , text (helpers.t "Twitter")
+                    , text (helpers.t "Help Twitter")
                     ]
                 ]
             , li []
                 [ a [ href "https://docs.cozy.io/en/" ]
                     [ i [ class "icon icon--documentation" ] []
-                    , text (helpers.t "help Documentation")
+                    , text (helpers.t "Help Documentation")
                     ]
                 ]
             ]

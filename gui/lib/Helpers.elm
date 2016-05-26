@@ -1,11 +1,12 @@
 module Helpers exposing (..)
 
+import Dict exposing (Dict)
 import String exposing (join, split)
 import Time exposing (Time)
 
 
 type alias Locale =
-    String
+    Dict String String
 
 
 type alias Translate =
@@ -41,22 +42,15 @@ forLocale locale =
 
 
 translate : Locale -> Translate
-translate locale original =
-    let
-        key =
-            List.tail (split " " original)
+translate locale key =
+    case
+        Dict.get key locale
+    of
+        Nothing ->
+            key
 
-        translation =
-            case
-                key
-            of
-                Nothing ->
-                    ""
-
-                Just parts ->
-                    join " " parts
-    in
-        translation
+        Just translation ->
+            translation
 
 
 pluralize : Locale -> Pluralize

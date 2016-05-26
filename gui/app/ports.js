@@ -12,6 +12,9 @@ const Elm = require('./elm').Main
 const elmectron = Elm.embed(container, {
   folder: defaultDir,
   locale: remote.app.locale,
+  locales: {
+    en: remote.require('../locales/en.json')
+  },
   version: pkg.version
 })
 

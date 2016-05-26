@@ -2,8 +2,10 @@ port module Main exposing (..)
 
 import Html exposing (Html)
 import Html.App as Html
+import Dict exposing (Dict)
+import Json.Decode as Json
 import Time exposing (Time)
-import Helpers
+import Helpers exposing (Locale)
 import Wizard
 import Address
 import Password
@@ -35,7 +37,8 @@ type Page
 
 
 type alias Model =
-    { locale : String
+    { localeIdentifier : String
+    , locales : Dict String Locale
     , page : Page
     , wizard : Wizard.Model
     , twopanes : TwoPanes.Model
@@ -43,8 +46,9 @@ type alias Model =
 
 
 type alias Flags =
-    { locale : String
-    , folder : String
+    { folder : String
+    , locale : String
+    , locales : Json.Value
     , version : String
     }
 
@@ -52,8 +56,18 @@ type alias Flags =
 init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
-        locale =
+        localeIdentifier =
             flags.locale
+
+        locales =
+            case
+                Json.decodeValue (Json.dict (Json.dict Json.string)) flags.locales
+            of
+                Ok value ->
+                    value
+
+                Err _ ->
+                    Dict.empty
 
         page =
             WizardPage
@@ -65,7 +79,7 @@ init flags =
             TwoPanes.init flags.version
 
         model =
-            Model locale page wizard twopanes
+            Model localeIdentifier locales page wizard twopanes
     in
         ( model, Cmd.none )
 
@@ -198,8 +212,18 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     let
+        locale =
+            case
+                Dict.get model.localeIdentifier model.locales
+            of
+                Nothing ->
+                    Dict.empty
+
+                Just value ->
+                    value
+
         helpers =
-            Helpers.forLocale model.locale
+            Helpers.forLocale locale
     in
         case
             model.page
