@@ -15,9 +15,9 @@ type alias Model =
     }
 
 
-init : Model
-init =
-    { version = ""
+init : String -> Model
+init version' =
+    { version = version'
     , autoLaunch = True
     }
 
@@ -29,7 +29,6 @@ init =
 type Msg
     = SetAutoLaunch Bool
     | AutoLaunchSet Bool
-    | SetVersion String
 
 
 port autoLauncher : Bool -> Cmd msg
@@ -45,9 +44,6 @@ update msg model =
 
         AutoLaunchSet autoLaunch' ->
             ( { model | autoLaunch = autoLaunch' }, Cmd.none )
-
-        SetVersion version' ->
-            ( { model | version = version' }, Cmd.none )
 
 
 

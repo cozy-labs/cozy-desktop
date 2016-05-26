@@ -16,9 +16,9 @@ type alias Model =
     }
 
 
-init : Model
-init =
-    { folder = "/"
+init : String -> Model
+init folder' =
+    { folder = folder'
     , error = False
     }
 

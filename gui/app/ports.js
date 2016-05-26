@@ -9,7 +9,11 @@ const defaultDir = path.join(path.homedir(), 'Cozy')
 const container = document.getElementById('container')
 
 const Elm = require('./elm').Main
-const elmectron = Elm.embed(container)
+const elmectron = Elm.embed(container, {
+  folder: defaultDir,
+  locale: remote.app.locale,
+  version: pkg.version
+})
 
 const errMessage = (err) => {
   if (!err) {
@@ -23,17 +27,7 @@ const errMessage = (err) => {
   }
 }
 
-const init = () => {
-  elmectron.ports.folder.send(defaultDir)
-  elmectron.ports.version.send(pkg.version)
-}
-setTimeout(init, 10)
-
 // Glue code between Elm and the main process
-ipcRenderer.on('locale', (event, locale) => {
-  elmectron.ports.locale.send(locale)
-})
-
 ipcRenderer.on('cozy-pong', (event, url) => {
   elmectron.ports.pong.send(url)
 })

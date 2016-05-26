@@ -31,11 +31,11 @@ type alias Model =
     }
 
 
-init : Model
-init =
+init : String -> Model
+init version =
     { tab = DashboardTab
     , dashboard = Dashboard.init
-    , settings = Settings.init
+    , settings = Settings.init version
     , account = Account.init
     , help = Help.init
     }

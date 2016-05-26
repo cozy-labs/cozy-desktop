@@ -17,7 +17,7 @@ const desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
 const lastFilesPath = path.join(desktop.basePath, 'last-files')
 desktop.writeLogsTo(path.join(desktop.basePath, 'logs.txt'))
 
-const locale = (() => {
+app.locale = (() => {
   const env = process.env
   const envLocale = env.LC_ALL || env.LC_MESSAGES || env.LANG || env.LANGUAGE
   if (envLocale.match(/^fr_/i)) {
@@ -297,7 +297,6 @@ const createWindow = () => {
   }
   mainWindow.on('closed', () => { mainWindow = null })
   mainWindow.webContents.on('dom-ready', () => {
-    sendToMainWindow('locale', locale)
     if (desktop.config.hasDevice()) {
       device = desktop.config.getDevice()
       if (device.deviceName && device.url && device.path) {

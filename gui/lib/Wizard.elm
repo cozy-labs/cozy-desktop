@@ -29,12 +29,12 @@ type alias Model =
     }
 
 
-init : Model
-init =
+init : String -> Model
+init folder' =
     { page = WelcomePage
     , address = Address.init
     , password = Password.init
-    , folder = Folder.init
+    , folder = Folder.init folder'
     }
 
 

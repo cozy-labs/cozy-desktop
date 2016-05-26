@@ -16,7 +16,7 @@ import Unlinked
 
 
 main =
-    Html.program
+    Html.programWithFlags
         { init = init
         , update = update
         , view = view
@@ -42,20 +42,27 @@ type alias Model =
     }
 
 
-init : ( Model, Cmd Msg )
-init =
+type alias Flags =
+    { locale : String
+    , folder : String
+    , version : String
+    }
+
+
+init : Flags -> ( Model, Cmd Msg )
+init flags =
     let
         locale =
-            "en"
+            flags.locale
 
         page =
             WizardPage
 
         wizard =
-            Wizard.init
+            Wizard.init flags.folder
 
         twopanes =
-            TwoPanes.init
+            TwoPanes.init flags.version
 
         model =
             Model locale page wizard twopanes
@@ -69,7 +76,6 @@ init =
 
 type Msg
     = NoOp
-    | SetLocale String
     | WizardMsg Wizard.Msg
     | SyncStart String
     | TwoPanesMsg TwoPanes.Msg
@@ -83,13 +89,6 @@ port restart : Bool -> Cmd msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        SetLocale locale' ->
-            let
-                _ =
-                    Debug.log locale'
-            in
-                ( { model | locale = locale' }, Cmd.none )
-
         WizardMsg msg' ->
             let
                 ( wizard', cmd ) =
@@ -125,9 +124,6 @@ update msg model =
 -- SUBSCRIPTIONS
 
 
-port locale : (String -> msg) -> Sub msg
-
-
 port pong : (Maybe String -> msg) -> Sub msg
 
 
@@ -161,9 +157,6 @@ port diskSpace : (Dashboard.DiskSpace -> msg) -> Sub msg
 port syncError : (String -> msg) -> Sub msg
 
 
-port version : (String -> msg) -> Sub msg
-
-
 port autolaunch : (Bool -> msg) -> Sub msg
 
 
@@ -180,8 +173,7 @@ port unlink : (Bool -> msg) -> Sub msg
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ locale SetLocale
-        , pong (WizardMsg << Wizard.AddressMsg << Address.Pong)
+        [ pong (WizardMsg << Wizard.AddressMsg << Address.Pong)
         , registration (WizardMsg << Wizard.PasswordMsg << Password.Registered)
         , folder (WizardMsg << Wizard.FolderMsg << Folder.FillFolder)
         , synchonization SyncStart
@@ -194,7 +186,6 @@ subscriptions model =
         , offline (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.GoOffline)))
         , updated (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.Updated)))
         , mail (TwoPanesMsg << TwoPanes.HelpMsg << Help.MailSent)
-        , version (TwoPanesMsg << TwoPanes.SettingsMsg << Settings.SetVersion)
         , autolaunch (TwoPanesMsg << TwoPanes.SettingsMsg << Settings.AutoLaunchSet)
         , unlink (always Unlink)
         ]
