@@ -85,7 +85,7 @@ update msg model =
 
         Register ->
             if model.password == "" then
-                setError model "You don't have filled the password!"
+                setError model "Password You don't have filled the password!"
             else
                 let
                     model' =
@@ -117,7 +117,7 @@ view helpers model =
             ]
         ]
         [ p [ class "upper error-message" ]
-            [ text model.error ]
+            [ text (helpers.t model.error) ]
         , div [ class "upper" ]
             [ input
                 [ placeholder (helpers.t "Password Password")

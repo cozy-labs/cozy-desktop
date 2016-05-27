@@ -57,12 +57,12 @@ update msg model =
 
         PingCozy ->
             if model.address == "" then
-                setError model "You don't have filled the address!"
+                setError model "Address You don't have filled the address!"
             else
                 ( { model | busy = True }, pingCozy model.address, Nothing )
 
         Pong Nothing ->
-            setError model "No cozy instance at this address!"
+            setError model "Address No cozy instance at this address!"
 
         Pong (Just address') ->
             let
@@ -86,7 +86,7 @@ view helpers model =
             ]
         ]
         [ p [ class "upper error-message" ]
-            [ text model.error ]
+            [ text (helpers.t model.error) ]
         , div [ class "upper" ]
             [ input
                 [ placeholder (helpers.t "Address Cozy address")
