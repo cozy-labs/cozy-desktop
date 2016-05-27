@@ -140,7 +140,7 @@ const updateState = (newState, filename) => {
   ])
   if (state === 'error') {
     menu.insert(2, new electron.MenuItem({
-      label: translate('Tray Relaunch synchronization'), click: startSync
+      label: translate('Tray Relaunch synchronization'), click: () => { startSync(true) }
     }))
   }
   tray.setContextMenu(menu)
@@ -241,12 +241,12 @@ const sendDiskSpace = () => {
   }
 }
 
-const startSync = () => {
+const startSync = (force) => {
   sendToMainWindow('synchronization', device.url)
   for (let file of lastFiles) {
     sendToMainWindow('transfer', file)
   }
-  if (desktop.sync) {
+  if (desktop.sync && !force) {
     if (state === 'up-to-date' || state === 'online') {
       sendToMainWindow('up-to-date')
     } else if (state === 'offline') {
