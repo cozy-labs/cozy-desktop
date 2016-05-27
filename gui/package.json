@@ -19,9 +19,10 @@
     "stylus": "0.54.5"
   },
   "scripts": {
-    "build": "npm run build:css & npm run build:elm",
+    "build": "npm run build:css & npm run build:tx && npm run build:elm",
     "build:css": "stylus -c -u cozy-ui/lib/stylus styles/app.styl -o app/",
     "build:elm": "elm make lib/Main.elm --output app/elm.js || true",
+    "build:tx": "tx pull --all || true",
     "clean": "rm -rf app/elm.js app/app.css* dist/",
     "dist": "build --dist --arch all",
     "lint": "standard --verbose app/main.js app/ports.js",
