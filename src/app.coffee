@@ -228,7 +228,8 @@ class App
     startSync: (mode, callback) ->
         @config.setMode mode
         log.info 'Run first synchronisation...'
-        @sync.start mode, (err) ->
+        @sync.start mode, (err) =>
+            @sync.stop ->
             if err
                 log.error err
                 log.error err.stack if err.stack

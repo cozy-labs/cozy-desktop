@@ -12,7 +12,7 @@ log = global.console
 
 exit = ->
     log.log 'Exiting...'
-    setTimeout process.exit, 2000
+    setTimeout process.exit, 3500
     app.stopSync ->
         process.exit()
 
