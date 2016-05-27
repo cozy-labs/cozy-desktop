@@ -2,7 +2,10 @@ port module Main exposing (..)
 
 import Html exposing (Html)
 import Html.App as Html
+import Dict exposing (Dict)
+import Json.Decode as Json
 import Time exposing (Time)
+import Helpers exposing (Locale)
 import Wizard
 import Address
 import Password
@@ -15,7 +18,7 @@ import Unlinked
 
 
 main =
-    Html.program
+    Html.programWithFlags
         { init = init
         , update = update
         , view = view
@@ -34,26 +37,49 @@ type Page
 
 
 type alias Model =
-    { page : Page
+    { localeIdentifier : String
+    , locales : Dict String Locale
+    , page : Page
     , wizard : Wizard.Model
     , twopanes : TwoPanes.Model
     }
 
 
-init : ( Model, Cmd Msg )
-init =
+type alias Flags =
+    { folder : String
+    , locale : String
+    , locales : Json.Value
+    , version : String
+    }
+
+
+init : Flags -> ( Model, Cmd Msg )
+init flags =
     let
+        localeIdentifier =
+            flags.locale
+
+        locales =
+            case
+                Json.decodeValue (Json.dict (Json.dict Json.string)) flags.locales
+            of
+                Ok value ->
+                    value
+
+                Err _ ->
+                    Dict.empty
+
         page =
             WizardPage
 
         wizard =
-            Wizard.init
+            Wizard.init flags.folder
 
         twopanes =
-            TwoPanes.init
+            TwoPanes.init flags.version
 
         model =
-            Model page wizard twopanes
+            Model localeIdentifier locales page wizard twopanes
     in
         ( model, Cmd.none )
 
@@ -145,9 +171,6 @@ port diskSpace : (Dashboard.DiskSpace -> msg) -> Sub msg
 port syncError : (String -> msg) -> Sub msg
 
 
-port version : (String -> msg) -> Sub msg
-
-
 port autolaunch : (Bool -> msg) -> Sub msg
 
 
@@ -177,7 +200,6 @@ subscriptions model =
         , offline (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.GoOffline)))
         , updated (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.Updated)))
         , mail (TwoPanesMsg << TwoPanes.HelpMsg << Help.MailSent)
-        , version (TwoPanesMsg << TwoPanes.SettingsMsg << Settings.SetVersion)
         , autolaunch (TwoPanesMsg << TwoPanes.SettingsMsg << Settings.AutoLaunchSet)
         , unlink (always Unlink)
         ]
@@ -189,14 +211,28 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    case
-        model.page
-    of
-        WizardPage ->
-            Html.map WizardMsg (Wizard.view model.wizard)
+    let
+        locale =
+            case
+                Dict.get model.localeIdentifier model.locales
+            of
+                Nothing ->
+                    Dict.empty
 
-        TwoPanesPage ->
-            Html.map TwoPanesMsg (TwoPanes.view model.twopanes)
+                Just value ->
+                    value
 
-        UnlinkedPage ->
-            Html.map (\_ -> Restart) Unlinked.view
+        helpers =
+            Helpers.forLocale locale
+    in
+        case
+            model.page
+        of
+            WizardPage ->
+                Html.map WizardMsg (Wizard.view helpers model.wizard)
+
+            TwoPanesPage ->
+                Html.map TwoPanesMsg (TwoPanes.view helpers model.twopanes)
+
+            UnlinkedPage ->
+                Html.map (\_ -> Restart) (Unlinked.view helpers)

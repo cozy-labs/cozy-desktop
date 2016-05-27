@@ -4,7 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Time exposing (Time)
-import Helpers exposing (..)
+import Helpers exposing (Helpers)
 
 
 -- MODEL
@@ -131,8 +131,8 @@ update msg model =
 -- VIEW
 
 
-view : Model -> Html Msg
-view model =
+view : Helpers -> Model -> Html Msg
+view helpers model =
     let
         statusMessage =
             case
@@ -145,7 +145,7 @@ view model =
                             , class "status__icon status__icon--uptodate"
                             ]
                             []
-                        , text "Your cozy is up to date!"
+                        , text (helpers.t "Dashboard Your cozy is up to date!")
                         ]
 
                 Offline ->
@@ -155,7 +155,7 @@ view model =
                             , class "status__icon status__icon--offline"
                             ]
                             []
-                        , text "Offline"
+                        , text (helpers.t "Dashboard Offline")
                         ]
 
                 Sync filename ->
@@ -166,7 +166,8 @@ view model =
                             ]
                             []
                         , span []
-                            [ text "Syncing "
+                            [ text (helpers.t "Dashboard Syncing")
+                            , text " "
                             , em [] [ text filename ]
                             ]
                         ]
@@ -179,10 +180,14 @@ view model =
                             ]
                             []
                         , span []
-                            [ text "Error: "
+                            [ text (helpers.t "Dashboard Error:")
+                            , text " "
                             , em [] [ text message ]
                             ]
                         ]
+
+        diskUnit =
+            helpers.t "Dashboard b"
 
         diskSpace =
             p [ class "disk-space" ]
@@ -191,18 +196,18 @@ view model =
                     , class "disk-space__icon"
                     ]
                     []
-                , text (toString (model.disk.used) ++ " " ++ model.disk.usedUnit ++ "b")
+                , text (toString (model.disk.used) ++ " " ++ model.disk.usedUnit ++ diskUnit)
                 , text " / "
-                , text (toString (model.disk.total) ++ " " ++ model.disk.totalUnit ++ "b")
+                , text (toString (model.disk.total) ++ " " ++ model.disk.totalUnit ++ diskUnit)
                 ]
 
         fileToListItem file =
             let
                 file_size =
-                    number_to_human_size file.size
+                    helpers.number_to_human_size file.size
 
                 time_ago =
-                    distance_of_time_in_words file.updated model.now
+                    helpers.distance_of_time_in_words file.updated model.now
             in
                 li [ title file.path ]
                     [ i [ class ("file-type file-type-" ++ file.icon) ] []
@@ -224,7 +229,7 @@ view model =
                     , href "#"
                     , onClick ShowMore
                     ]
-                    [ text "Show more files" ]
+                    [ text (helpers.t "Dashboard Show more files") ]
                 ]
 
         recentListWithMore =
@@ -234,10 +239,10 @@ view model =
                 recentList
     in
         section [ class "two-panes__content two-panes__content--dashboard" ]
-            [ h1 [] [ text "Dashboard" ]
+            [ h1 [] [ text (helpers.t "Dashboard Dashboard") ]
             , statusMessage
-            , h2 [] [ text "Cozy disk space" ]
+            , h2 [] [ text (helpers.t "Dashboard Cozy disk space") ]
             , diskSpace
-            , h2 [] [ text "Recent activities" ]
+            , h2 [] [ text (helpers.t "Dashboard Recent activities") ]
             , ul [ class "recent-files" ] recentListWithMore
             ]

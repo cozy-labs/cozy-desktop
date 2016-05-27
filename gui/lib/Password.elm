@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Focus exposing (focus)
+import Helpers exposing (Helpers)
 import OnEnter exposing (onEnter)
 
 
@@ -84,7 +85,7 @@ update msg model =
 
         Register ->
             if model.password == "" then
-                setError model "You don't have filled the password!"
+                setError model "Password You don't have filled the password!"
             else
                 let
                     model' =
@@ -106,8 +107,8 @@ update msg model =
 -- VIEW
 
 
-view : Model -> Html Msg
-view model =
+view : Helpers -> Model -> Html Msg
+view helpers model =
     div
         [ classList
             [ ( "step", True )
@@ -116,10 +117,10 @@ view model =
             ]
         ]
         [ p [ class "upper error-message" ]
-            [ text model.error ]
+            [ text (helpers.t model.error) ]
         , div [ class "upper" ]
             [ input
-                [ placeholder "Password"
+                [ placeholder (helpers.t "Password Password")
                 , class "wizard__password"
                 , type' "password"
                 , value model.password
@@ -129,7 +130,8 @@ view model =
                 []
             ]
         , p []
-            [ text "Your password for the cozy address: "
+            [ text (helpers.t "Password Your password for the cozy address:")
+            , text " "
             , em [] [ text model.address ]
             ]
         , a
@@ -137,7 +139,7 @@ view model =
             , class "more-info"
             , onClick GoToPrevPage
             ]
-            [ text "Wrong cozy address ?" ]
+            [ text (helpers.t "Password Wrong cozy address?") ]
         , a
             [ class "btn"
             , href "#"
@@ -146,5 +148,5 @@ view model =
               else
                 onClick Register
             ]
-            [ text "Login" ]
+            [ text (helpers.t "Password Login") ]
         ]

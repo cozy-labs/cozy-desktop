@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Focus exposing (focus)
+import Helpers exposing (Helpers)
 
 
 -- MODEL
@@ -15,9 +16,9 @@ type alias Model =
     }
 
 
-init : Model
-init =
-    { folder = "/"
+init : String -> Model
+init folder' =
+    { folder = folder'
     , error = False
     }
 
@@ -57,8 +58,8 @@ update msg model =
 -- VIEW
 
 
-view : Model -> Html Msg
-view model =
+view : Helpers -> Model -> Html Msg
+view helpers model =
     div
         [ classList
             [ ( "step", True )
@@ -72,8 +73,8 @@ view model =
             , class "done"
             ]
             []
-        , h1 [] [ text "All done" ]
-        , label [] [ text "Select a location for your Cozy folder:" ]
+        , h1 [] [ text (helpers.t "Folder All done") ]
+        , label [] [ text (helpers.t "Folder Select a location for your Cozy folder:") ]
         , a
             [ class "folder__selector"
             , href "#"
@@ -87,5 +88,5 @@ view model =
             , href "#"
             , onClick StartSync
             ]
-            [ text "Use Cozy Desktop" ]
+            [ text (helpers.t "Folder Use Cozy Desktop") ]
         ]

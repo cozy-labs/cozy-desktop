@@ -3,6 +3,7 @@ module Unlinked exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Helpers exposing (Helpers)
 
 
 -- UPDATE
@@ -16,16 +17,17 @@ type Msg
 -- VIEW
 
 
-view : Html Msg
-view =
+view : Helpers -> Html Msg
+view helpers =
     section [ class "unlinked" ]
         [ div [ class "spacer" ] []
-        , h1 [] [ text "Your device has been unlinked" ]
+        , h1 [] [ text (helpers.t "Unlinked Your device has been unlinked") ]
         , p []
-            [ text "Your device is no longer registered on your Cozy."
+            [ text (helpers.t "Unlinked Your device is no longer registered on your Cozy.")
             , br [] []
-            , text "If you want to register it again, you can restart Cozy-desktop. "
-            , text "Else, you can just close Cozy-desktop."
+            , text (helpers.t "Unlinked If you want to register it again, you can restart Cozy-desktop.")
+            , text " "
+            , text (helpers.t "Unlinked Else, you can just close Cozy-desktop.")
             ]
         , div [ class "spacer" ] []
         , a
@@ -33,5 +35,5 @@ view =
             , href "#"
             , onClick Restart
             ]
-            [ text "Restart Cozy-desktop" ]
+            [ text (helpers.t "Unlinked Restart Cozy-desktop") ]
         ]

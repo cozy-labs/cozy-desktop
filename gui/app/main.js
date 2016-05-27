@@ -17,6 +17,20 @@ const desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
 const lastFilesPath = path.join(desktop.basePath, 'last-files')
 desktop.writeLogsTo(path.join(desktop.basePath, 'logs.txt'))
 
+app.locale = (() => {
+  const env = process.env
+  const envLocale = env.LC_ALL || env.LC_MESSAGES || env.LANG || env.LANGUAGE
+  if (envLocale.match(/^fr_/i)) {
+    return 'fr'
+  } else {
+    return 'en'
+  }
+})()
+
+const translations = require(`../locales/${app.locale}.json`)
+
+const translate = key => translations[key] || key
+
 // Use a fake window to keep the application running when the main window is
 // closed: it runs as a service, with a tray icon if you want to quit it
 let runAsService
@@ -102,31 +116,31 @@ const updateState = (newState, filename) => {
     statusLabel = errorMessage = filename
   } else if (filename) {
     setTrayIcon('sync')
-    statusLabel = `Syncing ‟${filename}“`
+    statusLabel = `${translate('Tray Syncing')} ‟${filename}“`
   } else if (state === 'up-to-date' || state === 'online') {
     setTrayIcon('idle')
-    statusLabel = 'Your cozy is up to date'
+    statusLabel = translate('Tray Your cozy is up to date')
   } else if (state === 'syncing') {
     setTrayIcon('sync')
-    statusLabel = 'Syncing…'
+    statusLabel = translate('Tray Syncing') + '…'
   } else if (state === 'offline') {
     setTrayIcon('pause')
-    statusLabel = 'Offline'
+    statusLabel = translate('Tray Offline')
   }
   const menu = electron.Menu.buildFromTemplate([
     { label: statusLabel, enabled: false },
     { type: 'separator' },
-    { label: 'Open Cozy folder', click: openCozyFolder },
-    { label: 'Go to my Cozy', click: goToMyCozy },
+    { label: translate('Tray Open Cozy folder'), click: openCozyFolder },
+    { label: translate('Tray Go to my Cozy'), click: goToMyCozy },
     { type: 'separator' },
-    { label: 'Help', click: goToTab.bind(null, 'help') },
-    { label: 'Settings', click: goToTab.bind(null, 'settings') },
+    { label: translate('Tray Help'), click: goToTab.bind(null, 'help') },
+    { label: translate('Tray Settings'), click: goToTab.bind(null, 'settings') },
     { type: 'separator' },
-    { label: 'Quit application', click: app.quit }
+    { label: translate('Tray Quit application'), click: app.quit }
   ])
   if (state === 'error') {
     menu.insert(2, new electron.MenuItem({
-      label: 'Relaunch synchronization', click: startSync
+      label: translate('Tray Relaunch synchronization'), click: startSync
     }))
   }
   tray.setContextMenu(menu)
@@ -308,8 +322,8 @@ app.on('ready', () => {
   tray = new electron.Tray(`${__dirname}/images/tray-icon-linux/idle.png`)
   setTrayIcon('idle')
   const menu = electron.Menu.buildFromTemplate([
-    { label: 'Show application', click: showWindow },
-    { label: 'Quit application', click: app.quit }
+    { label: translate('Tray Show application'), click: showWindow },
+    { label: translate('Tray Quit application'), click: app.quit }
   ])
   tray.setContextMenu(menu)
   tray.on('click', showWindow)
