@@ -54,18 +54,20 @@ describe 'Cancel', ->
         it 'moves the file', (done) ->
             setTimeout ->
                 Files.updateFile two, (err, updated) ->
+                    should.not.exist err
                     waitAppear twoPath, ->
                         fs.existsSync(onePath).should.be.false()
                         done()
-            , 500
+            , 800
 
         it 'moves back the file to its original path', (done) ->
             setTimeout ->
                 Files.updateFile one, (err, updated) ->
+                    should.not.exist err
                     waitAppear onePath, ->
                         fs.existsSync(twoPath).should.be.false()
                         done()
-            , 500
+            , 800
 
 
     describe 'Delete a file and recreate it', ->

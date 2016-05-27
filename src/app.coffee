@@ -169,7 +169,7 @@ class App
 
     # Unregister current device from remote Cozy and then remove remote from
     # the config file
-    removeRemote: (deviceName, callback) =>
+    removeRemote: (deviceName, callback=->) =>
         conf     = @config.getDevice()
         cozyUrl  = conf.url
         password = conf.password
@@ -177,11 +177,10 @@ class App
             if err and err.message isnt 'Request unauthorized'
                 log.error 'An error occured while unregistering your device.'
                 log.error err
-                callback? err
+                callback err
             else
                 log.info 'Current device properly removed from remote cozy.'
-                fs.remove @basePath, ->
-                    callback? err
+                fs.remove @basePath, callback
 
 
     # Send an issue by mail to the support
