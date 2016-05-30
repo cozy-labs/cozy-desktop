@@ -27,7 +27,7 @@ app.locale = (() => {
   }
 })()
 
-const translations = require(`../locales/${app.locale}.json`)
+const translations = require(`./locales/${app.locale}.json`)
 
 const translate = key => translations[key] || key
 
