@@ -5,8 +5,8 @@ The Cozy desktop app allows to sync the files stored in your Cozy with your
 laptop and/or your desktop. It replicates your files on your hard drive and
 apply changes you made on them on other synced devices and on your online Cozy.
 
-**Note**: the code is currently **alpha** quality. But it's moving fast and we
-plan to do a more stable release in the coming weeks. Stay tuned!
+**Note**: this is currently a **beta** for Linux. We plan to add support for
+OSX and Windows in the coming weeks. Stay tuned!
 
 :warning: **Backup your data before playing with cozy-desktop!**
 
