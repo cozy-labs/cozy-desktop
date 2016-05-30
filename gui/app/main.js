@@ -200,7 +200,7 @@ const addFile = (info) => {
     filename: path.basename(info.path),
     path: info.path,
     icon: selectIcon(info),
-    size: info.size,
+    size: info.size || 0,
     updated: +new Date()
   }
   updateState('syncing', file.filename)
@@ -242,7 +242,7 @@ const sendDiskSpace = () => {
 }
 
 const startSync = (force) => {
-  sendToMainWindow('synchronization', device.url)
+  sendToMainWindow('synchronization', device.url, device.deviceName)
   for (let file of lastFiles) {
     sendToMainWindow('transfer', file)
   }

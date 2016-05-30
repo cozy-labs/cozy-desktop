@@ -49,7 +49,7 @@ type Msg
     = NoOp
     | GoToTab Tab
     | GoToStrTab String
-    | FillAddress String
+    | FillAddressAndDevice ( String, String )
     | DashboardMsg Dashboard.Msg
     | SettingsMsg Settings.Msg
     | AccountMsg Account.Msg
@@ -88,10 +88,10 @@ update msg model =
                 _ ->
                     update (GoToTab DashboardTab) model
 
-        FillAddress address ->
+        FillAddressAndDevice info ->
             let
                 ( account', _ ) =
-                    Account.update (Account.FillAddress address) model.account
+                    Account.update (Account.FillAddressAndDevice info) model.account
             in
                 ( { model | account = account' }, Cmd.none )
 

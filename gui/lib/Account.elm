@@ -11,6 +11,7 @@ import Helpers exposing (Helpers)
 
 type alias Model =
     { address : String
+    , deviceName : String
     , busy : Bool
     }
 
@@ -18,6 +19,7 @@ type alias Model =
 init : Model
 init =
     { address = ""
+    , deviceName = ""
     , busy = False
     }
 
@@ -27,7 +29,7 @@ init =
 
 
 type Msg
-    = FillAddress String
+    = FillAddressAndDevice ( String, String )
     | UnlinkCozy
 
 
@@ -39,8 +41,8 @@ update msg model =
     case
         msg
     of
-        FillAddress address' ->
-            ( { model | address = address' }, Cmd.none )
+        FillAddressAndDevice ( address', deviceName' ) ->
+            ( { model | address = address', deviceName = deviceName' }, Cmd.none )
 
         UnlinkCozy ->
             ( { model | busy = True }, unlinkCozy () )
@@ -54,8 +56,9 @@ view : Helpers -> Model -> Html Msg
 view helpers model =
     section [ class "two-panes__content two-panes__content--account" ]
         [ h1 [] [ text (helpers.t "Account Account") ]
-        , h3 []
-            [ a [ href model.address ] [ text model.address ] ]
+        , h3 [] [ a [ href model.address ] [ text model.address ] ]
+        , h2 [] [ text (helpers.t "Account Device name") ]
+        , p [] [ text model.deviceName ]
         , h2 [] [ text (helpers.t "Account Unlink Cozy") ]
         , p []
             [ text (helpers.t "Account It will unlink your account to this computer.")
