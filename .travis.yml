@@ -3,14 +3,21 @@ sudo: false
 language: node_js
 matrix:
     fast_finish: true
-os:
-    - linux
-    - osx
-node_js:
-    - 0.10
-    - 4
-    - 5
-    - 6
+    include:
+        - os: linux
+          node_js: 0.10
+          env: CXX=g++-4.8
+        - os: linux
+          node_js: 4
+          env: CXX=g++-4.8
+        - os: linux
+          node_js: 5
+          env: CXX=g++-4.8
+        - os: linux
+          node_js: 6
+          env: CXX=g++-4.8
+        - os: osx
+          node_js: 4
 env:
     global:
         - COZY_DESKTOP_DIR=tmp
@@ -35,11 +42,7 @@ addons:
 
 # install cozy stack for integration test
 before_install:
-    - echo $HOME
     - cd
-    - if [[ $TRAVIS_OS_NAME == "linux" ]]; then
-        export CXX=g++-4.8;
-      fi
     - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
         brew install couchdb;
         brew --cache;
