@@ -277,7 +277,7 @@ describe "LocalWatcher Tests", ->
                             size: 29865
                         done()
                     fs.renameSync dst, path.join @syncPath, 'afb.jpg'
-                , 1500
+                , 2000
 
 
     describe 'when a directory is moved', ->
@@ -315,9 +315,9 @@ describe "LocalWatcher Tests", ->
                             args = @prep.deleteFolder.args[0][1]
                             args.should.have.properties path: 'aga'
                             done()
-                        , 1800
+                        , 2500
                     fs.renameSync src, dst
-                , 1500
+                , 1800
 
     describe 'onReady', ->
         before 'reset pouchdb', (done) ->
