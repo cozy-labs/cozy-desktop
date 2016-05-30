@@ -1,6 +1,6 @@
 {
   "name": "cozy-desktop",
-  "version": "0.12.1",
+  "version": "0.13.0",
   "description": "File Synchronization Client for Cozy Cloud",
   "homepage": "https://github.com/cozy-labs/cozy-desktop",
   "author": "Cozy Cloud <contact@cozycloud.cc> (https://cozycloud.cc/)",

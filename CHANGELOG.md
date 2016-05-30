@@ -1,3 +1,8 @@
+## 0.13.0 - 2016-05-30
+
+* First public beta for Linux!
+* Internationalization
+
 ## 0.12.1 - 2016-05-23
 
 * Just some bugfixes
