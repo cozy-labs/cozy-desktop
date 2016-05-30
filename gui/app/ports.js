@@ -57,8 +57,8 @@ elmectron.ports.chooseFolder.subscribe(() => {
   ipcRenderer.send('choose-folder')
 })
 
-ipcRenderer.on('synchronization', (event, url) => {
-  elmectron.ports.synchonization.send(url)
+ipcRenderer.on('synchronization', (event, url, deviceName) => {
+  elmectron.ports.synchonization.send([url, deviceName])
 })
 elmectron.ports.startSync.subscribe((folder) => {
   ipcRenderer.send('start-sync', folder)

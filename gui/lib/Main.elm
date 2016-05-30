@@ -91,7 +91,7 @@ init flags =
 type Msg
     = NoOp
     | WizardMsg Wizard.Msg
-    | SyncStart String
+    | SyncStart ( String, String )
     | TwoPanesMsg TwoPanes.Msg
     | Unlink
     | Restart
@@ -110,10 +110,10 @@ update msg model =
             in
                 ( { model | wizard = wizard' }, Cmd.map WizardMsg cmd )
 
-        SyncStart address ->
+        SyncStart info ->
             let
                 ( twopanes', _ ) =
-                    TwoPanes.update (TwoPanes.FillAddress address) model.twopanes
+                    TwoPanes.update (TwoPanes.FillAddressAndDevice info) model.twopanes
             in
                 ( { model | page = TwoPanesPage, twopanes = twopanes' }, Cmd.none )
 
@@ -147,7 +147,7 @@ port registration : (Maybe String -> msg) -> Sub msg
 port folder : (String -> msg) -> Sub msg
 
 
-port synchonization : (String -> msg) -> Sub msg
+port synchonization : (( String, String ) -> msg) -> Sub msg
 
 
 port gototab : (String -> msg) -> Sub msg
