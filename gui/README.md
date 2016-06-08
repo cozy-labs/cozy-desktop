@@ -14,6 +14,11 @@ This directory is for the graphical interface of cozy-desktop, built with
 [Electron][8] and [Elm][9].
 
 
+## Install
+
+Follow the instructions on https://docs.cozy.io/en/mobile/desktop.html
+
+
 ## FAQ
 
 If you have an error that looks like this:
