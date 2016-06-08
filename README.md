@@ -14,6 +14,12 @@ OSX and Windows in the coming weeks. Stay tuned!
 :warning: **Backup your data before playing with cozy-desktop!**
 
 
+GUI Install
+-----------
+
+Follow the instructions on https://docs.cozy.io/en/mobile/desktop.html
+
+
 CLI Install
 -----------
 
