@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "async": "1.5.2",
-    "chokidar": "nono/chokidar#osx",
+    "chokidar": "1.5.2",
     "commander": "2.9.0",
     "cozy-device-sdk": "1.4.0",
     "fs-extra": "0.30.0",
