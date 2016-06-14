@@ -44,7 +44,7 @@ describe 'Move a file', ->
             fs.rename srcPath, dstPath, done
 
         it 'waits a bit', (done) ->
-            setTimeout done, 4000
+            setTimeout done, 6000
 
         it 'has the file on local', ->
             files = fs.readdirSync @syncPath
