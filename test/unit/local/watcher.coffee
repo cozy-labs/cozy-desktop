@@ -294,6 +294,7 @@ describe "LocalWatcher Tests", ->
                 @pouch.db.put doc
             @watcher.start =>
                 setTimeout =>
+                    @prep.updateFile = sinon.spy()
                     @prep.addFile = sinon.spy()
                     @prep.deleteFile = sinon.spy()
                     @prep.moveFile = sinon.spy()
