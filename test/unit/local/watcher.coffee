@@ -315,7 +315,7 @@ describe "LocalWatcher Tests", ->
                             args = @prep.deleteFolder.args[0][1]
                             args.should.have.properties path: 'aga'
                             done()
-                        , 2500
+                        , 4000
                     fs.renameSync src, dst
                 , 1800
 
