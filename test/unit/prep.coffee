@@ -33,7 +33,7 @@ describe 'Prep', ->
                 it 'is case sensitive on OSX', ->
                     doc = path: 'foo/bar/café'
                     @prep.buildId doc
-                    doc._id.should.equal 'FOO/BAR/CAFÉ'
+                    doc._id.should.equal 'FOO/BAR/CAFÉ'
 
         describe 'invalidPath', ->
             it 'returns true if the path is incorrect', ->

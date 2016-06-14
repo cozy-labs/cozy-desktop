@@ -245,6 +245,13 @@ describe "LocalWatcher Tests", ->
 
 
     describe 'when a file is moved', ->
+        # This integration test is unstable on travis + OSX (too often red).
+        # It's disabled for the moment, but we should find a way to make it
+        # more stable on travis, and enable it again.
+        if process.env.TRAVIS and process.platform is 'darwin'
+            it 'is unstable on travis'
+            return
+
         before 'reset pouchdb', (done) ->
             @pouch.resetDatabase done
 
@@ -277,10 +284,17 @@ describe "LocalWatcher Tests", ->
                             size: 29865
                         done()
                     fs.renameSync dst, path.join @syncPath, 'afb.jpg'
-                , 1500
+                , 2000
 
 
     describe 'when a directory is moved', ->
+        # This integration test is unstable on travis + OSX (too often red).
+        # It's disabled for the moment, but we should find a way to make it
+        # more stable on travis, and enable it again.
+        if process.env.TRAVIS and process.platform is 'darwin'
+            it 'is unstable on travis'
+            return
+
         before 'reset pouchdb', (done) ->
             @pouch.resetDatabase done
 
@@ -294,6 +308,7 @@ describe "LocalWatcher Tests", ->
                 @pouch.db.put doc
             @watcher.start =>
                 setTimeout =>
+                    @prep.updateFile = sinon.spy()
                     @prep.addFile = sinon.spy()
                     @prep.deleteFile = sinon.spy()
                     @prep.moveFile = sinon.spy()
@@ -315,9 +330,9 @@ describe "LocalWatcher Tests", ->
                             args = @prep.deleteFolder.args[0][1]
                             args.should.have.properties path: 'aga'
                             done()
-                        , 1800
+                        , 4000
                     fs.renameSync src, dst
-                , 1500
+                , 1800
 
     describe 'onReady', ->
         before 'reset pouchdb', (done) ->

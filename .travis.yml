@@ -3,14 +3,23 @@ sudo: false
 language: node_js
 matrix:
     fast_finish: true
-node_js:
-    - 0.10
-    - 4
-    - 5
-    - 6
+    include:
+        - os: linux
+          node_js: 0.10
+          env: CXX=g++-4.8
+        - os: linux
+          node_js: 4
+          env: CXX=g++-4.8
+        - os: linux
+          node_js: 5
+          env: CXX=g++-4.8
+        - os: linux
+          node_js: 6
+          env: CXX=g++-4.8
+        - os: osx
+          node_js: 4
 env:
     global:
-        - CXX=g++-4.8
         - COZY_DESKTOP_DIR=tmp
         - NODE_ENV=test
         - NPM_CONFIG_PROGRESS=false
@@ -19,6 +28,10 @@ services:
 cache:
     directories:
         - node_modules
+        - cozy-data-system/node_modules
+        - cozy-proxy/node_modules
+        - cozy-files/node_modules
+        - /Library/Caches/Homebrew
 addons:
     apt:
         sources:
@@ -30,7 +43,12 @@ addons:
 # install cozy stack for integration test
 before_install:
     - cd
-    - export INDEXES_PATH=/home/travis/build/indexes
+    - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
+        brew install couchdb;
+        brew --cache;
+        couchdb -b;
+      fi
+    - export INDEXES_PATH=$HOME/build/indexes
     - mkdir -p $INDEXES_PATH
     - TESTED_NODE=$(node -v)
     - nvm install 4
@@ -40,7 +58,7 @@ before_install:
     - git clone git://github.com/cozy/cozy-data-system.git
     - cd cozy-data-system
     - git checkout origin/development
-    - npm install #data-system
+    - travis_retry npm install #data-system
     - npm run build
     - pwd
     - NAME=data-system TOKEN=token forever start -o forever-ds.log -e forever-ds-err.log build/server.js
@@ -50,7 +68,7 @@ before_install:
     - git clone git://github.com/cozy/cozy-proxy.git
     - cd cozy-proxy
     - git checkout origin/development
-    - npm install #proxy
+    - travis_retry npm install #proxy
     - npm run build
     - pwd
     - NAME=proxy TOKEN=token forever start -o forever-proxy.log -e forever-proxy-err.log build/server.js
@@ -59,7 +77,7 @@ before_install:
     - cd
     - git clone git://github.com/cozy/cozy-files.git
     - cd cozy-files
-    - npm install
+    - travis_retry npm install #files
     - pwd
     - cd ~/cozy-data-system
     - coffee commands.coffee test-install files ../cozy-files/package.json
@@ -68,7 +86,7 @@ before_install:
     - NAME=files TOKEN=apptoken forever start -o forever-files.log -e forever-files-err.log build/server.js
     - sleep 3
     - nvm use $TESTED_NODE
-    - cd /home/travis/build/cozy-labs/cozy-desktop
+    - cd $HOME/build/cozy-labs/cozy-desktop
     - pwd
     - mkdir /tmp/cozy-desktop
     - ln -s /tmp/cozy-desktop tmp
@@ -80,6 +98,7 @@ script:
 
 after_failure:
     - pwd
+    - $CXX --version
     - ps aux | grep server.js
     - netstat -lntp
     - cat ~/cozy-data-system/forever-ds.log
