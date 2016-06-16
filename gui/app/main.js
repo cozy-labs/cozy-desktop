@@ -327,11 +327,11 @@ app.on('ready', () => {
   ])
   tray.setContextMenu(menu)
   tray.on('click', showWindow)
-})
 
-// On OS X it's common to re-create a window in the app when the
-// dock icon is clicked and there are no other windows open.
-app.on('activate', showWindow)
+  // On OS X it's common to re-create a window in the app when the
+  // dock icon is clicked and there are no other windows open.
+  app.on('activate', showWindow)
+})
 
 // Glue code between cozy-desktop lib and the renderer process
 ipcMain.on('ping-cozy', (event, url) => {
