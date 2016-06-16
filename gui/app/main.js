@@ -20,7 +20,7 @@ desktop.writeLogsTo(path.join(desktop.basePath, 'logs.txt'))
 app.locale = (() => {
   const env = process.env
   const envLocale = env.LC_ALL || env.LC_MESSAGES || env.LANG || env.LANGUAGE
-  if (envLocale.match(/^fr_/i)) {
+  if (envLocale && envLocale.match(/^fr_/i)) {
     return 'fr'
   } else {
     return 'en'

@@ -45,7 +45,7 @@ class App
     constructor: (basePath) ->
         @lang = 'fr'
         basePath ?= path.homedir()
-        @basePath = path.join basePath, '.cozy-desktop'
+        @basePath = path.resolve '.cozy-desktop', basePath
         @config = new Config @basePath
         @pouch  = new Pouch @config
         @events = new EventEmitter
