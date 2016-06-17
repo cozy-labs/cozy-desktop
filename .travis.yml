@@ -44,9 +44,8 @@ addons:
 before_install:
     - cd
     - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
-        brew install couchdb;
-        brew --cache;
-        couchdb -b;
+        npm install -g pouchdb-server;
+        pouchdb-server -n -m -p 5984;
       fi
     - export INDEXES_PATH=$HOME/build/indexes
     - mkdir -p $INDEXES_PATH
