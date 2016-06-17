@@ -31,7 +31,6 @@ cache:
         - cozy-data-system/node_modules
         - cozy-proxy/node_modules
         - cozy-files/node_modules
-        - /Library/Caches/Homebrew
 addons:
     apt:
         sources:
