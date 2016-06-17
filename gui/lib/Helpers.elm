@@ -1,6 +1,7 @@
 module Helpers exposing (..)
 
 import Dict exposing (Dict)
+import Regex exposing (replace, regex)
 import String exposing (join, split)
 import Time exposing (Time)
 
@@ -53,14 +54,26 @@ translate locale key =
             translation
 
 
+isSingular : Int -> Bool
+isSingular count =
+    count == 1
+
+
 pluralize : Locale -> Pluralize
 pluralize locale count singular plural =
-    (toString count)
-        ++ " "
-        ++ if count == 1 then
-            translate locale singular
-           else
-            translate locale plural
+    let
+        translated =
+            if isSingular count then
+                translate locale singular
+            else
+                translate locale plural
+    in
+        (toString count) ++ " " ++ translated
+
+
+interpolate : String -> String -> String
+interpolate string arg =
+    replace Regex.All (regex "\\{\\d\\}") (\_ -> arg) string
 
 
 distance_of_time_in_words : Locale -> DistanceOfTime
@@ -81,17 +94,24 @@ distance_of_time_in_words locale from_time to_time =
         distance_in_months =
             round (Time.inHours distance / (24 * 30))
 
-        ago =
-            translate locale "Helpers ago"
+        transform count what =
+            let
+                key =
+                    if isSingular count then
+                        "Helpers {0} " ++ what ++ " ago"
+                    else
+                        "Helpers {0} " ++ what ++ "s ago"
+            in
+                interpolate (translate locale key) (toString count)
     in
         if distance_in_months > 0 then
-            (pluralize locale distance_in_months "Helpers month" "Helpers months") ++ " " ++ ago
+            transform distance_in_months "month"
         else if distance_in_days > 0 then
-            (pluralize locale distance_in_days "Helpers day" "Helpers days") ++ " " ++ ago
+            transform distance_in_days "day"
         else if distance_in_hours > 0 then
-            (pluralize locale distance_in_hours "Helpers hour" "Helpers hours") ++ " " ++ ago
+            transform distance_in_hours "hour"
         else if distance_in_minutes > 0 then
-            (pluralize locale distance_in_minutes "Helpers minute" "Helpers minutes") ++ " " ++ ago
+            transform distance_in_minutes "minute"
         else
             translate locale "Helpers Just now"
 
