@@ -8,7 +8,7 @@ const fs = require('fs')
 const path = require('path')
 const {spawn} = require('child_process')
 
-const {app, BrowserWindow, dialog, ipcMain, shell} = electron
+const {app, BrowserWindow, dialog, ipcMain, Menu, shell} = electron
 const autoLauncher = new AutoLaunch({
   name: 'Cozy-Desktop',
   isHidden: true
@@ -96,6 +96,44 @@ const openCozyFolder = () => {
   shell.openItem(device.path)
 }
 
+const buildAppMenu = () => {
+  const template = [
+    {
+      label: 'Edit', submenu: [
+        { label: 'Undo', accelerator: 'CmdOrCtrl+Z', role: 'undo' },
+        { label: 'Redo', accelerator: 'Shift+CmdOrCtrl+Z', role: 'redo' },
+        { type: 'separator' },
+        { label: 'Cut', accelerator: 'CmdOrCtrl+X', role: 'cut' },
+        { label: 'Copy', accelerator: 'CmdOrCtrl+C', role: 'copy' },
+        { label: 'Paste', accelerator: 'CmdOrCtrl+V', role: 'paste' }
+      ]
+    },
+    {
+      label: 'Window', role: 'window', submenu: [
+        { label: 'Minimize', accelerator: 'CmdOrCtrl+M', role: 'minimize' },
+        { label: 'Close', accelerator: 'CmdOrCtrl+W', role: 'close' }
+      ]
+    }
+  ]
+
+  if (process.platform === 'darwin') {
+    template.unshift({
+      label: 'Electron', submenu: [
+        { label: 'Hide Electron', accelerator: 'Command+H', role: 'hide' },
+        { label: 'Hide Others', accelerator: 'Command+Alt+H', role: 'hideothers' },
+        { label: 'Show All', role: 'unhide' },
+        { type: 'separator' },
+        { label: 'Quit ' + app.getName(), accelerator: 'Command+Q', click () { app.quit() } }
+      ]
+    })
+    template[2].submenu.push({ type: 'separator' })
+    template[2].submenu.push({ label: 'Bring All to Front', role: 'front' })
+  }
+
+  const menu = Menu.buildFromTemplate(template)
+  Menu.setApplicationMenu(menu)
+}
+
 const setTrayIcon = (state) => {
   if (process.platform === 'darwin') {
     tray.setImage(`${__dirname}/images/tray-icon-osx/${state}Template.png`)
@@ -127,7 +165,7 @@ const updateState = (newState, filename) => {
     setTrayIcon('pause')
     statusLabel = translate('Tray Offline')
   }
-  const menu = electron.Menu.buildFromTemplate([
+  const menu = Menu.buildFromTemplate([
     { label: statusLabel, enabled: false },
     { type: 'separator' },
     { label: translate('Tray Open Cozy folder'), click: openCozyFolder },
@@ -369,7 +407,7 @@ ipcMain.on('register-remote', (event, arg) => {
 
 ipcMain.on('choose-folder', (event) => {
   let folders = dialog.showOpenDialog({
-    properties: ['openDirectory']
+    properties: ['openDirectory', 'createDirectory']
   })
   if (folders && folders.length > 0) {
     event.sender.send('folder-chosen', folders[0])
@@ -439,4 +477,6 @@ if (process.env.WATCH === 'true') {
         mainWindow.reload()
       }
     })
+} else {
+  app.once('ready', buildAppMenu)
 }
