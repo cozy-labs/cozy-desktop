@@ -26,18 +26,9 @@ type alias File =
     }
 
 
-type alias DiskSpace =
-    { used : Float
-    , usedUnit : String
-    , total : Float
-    , totalUnit : String
-    }
-
-
 type alias Model =
     { status : Status
     , now : Time
-    , disk : DiskSpace
     , files : List File
     , page : Int
     }
@@ -47,12 +38,6 @@ init : Model
 init =
     { status = Sync "…"
     , now = 0
-    , disk =
-        { used = 0
-        , usedUnit = ""
-        , total = 0
-        , totalUnit = ""
-        }
     , files = []
     , page = 1
     }
@@ -75,7 +60,6 @@ type Msg
     | GoOffline
     | Transfer File
     | Remove File
-    | UpdateDiskSpace DiskSpace
     | SetError String
     | Tick Time
     | ShowMore
@@ -113,9 +97,6 @@ update msg model =
                     List.filter (samePath file >> not) model.files
             in
                 { model | files = files' }
-
-        UpdateDiskSpace disk' ->
-            { model | disk = disk' }
 
         SetError error ->
             { model | status = Error error }
@@ -186,21 +167,6 @@ view helpers model =
                             ]
                         ]
 
-        diskUnit =
-            helpers.t "Dashboard b"
-
-        diskSpace =
-            p [ class "disk-space" ]
-                [ img
-                    [ src "images/hard-drive.svg"
-                    , class "disk-space__icon"
-                    ]
-                    []
-                , text (toString (model.disk.used) ++ " " ++ model.disk.usedUnit ++ diskUnit)
-                , text " / "
-                , text (toString (model.disk.total) ++ " " ++ model.disk.totalUnit ++ diskUnit)
-                ]
-
         fileToListItem file =
             let
                 file_size =
@@ -241,8 +207,6 @@ view helpers model =
         section [ class "two-panes__content two-panes__content--dashboard" ]
             [ h1 [] [ text (helpers.t "Dashboard Dashboard") ]
             , statusMessage
-            , h2 [] [ text (helpers.t "Dashboard Cozy disk space") ]
-            , diskSpace
             , h2 [] [ text (helpers.t "Dashboard Recent activities") ]
             , ul [ class "recent-files" ] recentListWithMore
             ]

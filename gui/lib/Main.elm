@@ -13,6 +13,7 @@ import Folder
 import TwoPanes
 import Dashboard
 import Settings
+import Account
 import Help
 import Unlinked
 
@@ -165,7 +166,7 @@ port transfer : (Dashboard.File -> msg) -> Sub msg
 port remove : (Dashboard.File -> msg) -> Sub msg
 
 
-port diskSpace : (Dashboard.DiskSpace -> msg) -> Sub msg
+port diskSpace : (Account.DiskSpace -> msg) -> Sub msg
 
 
 port syncError : (String -> msg) -> Sub msg
@@ -195,7 +196,7 @@ subscriptions model =
         , Time.every Time.second (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.Tick)
         , transfer (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.Transfer)
         , remove (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.Remove)
-        , diskSpace (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.UpdateDiskSpace)
+        , diskSpace (TwoPanesMsg << TwoPanes.AccountMsg << Account.UpdateDiskSpace)
         , syncError (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.SetError)
         , offline (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.GoOffline)))
         , updated (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.Updated)))
