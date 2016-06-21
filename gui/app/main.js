@@ -103,6 +103,8 @@ const buildAppMenu = () => {
         { label: 'Undo', accelerator: 'CmdOrCtrl+Z', role: 'undo' },
         { label: 'Redo', accelerator: 'Shift+CmdOrCtrl+Z', role: 'redo' },
         { type: 'separator' },
+        { label: 'Select All', accelerator: 'CmdOrCtrl+A', role: 'selectall' },
+        { type: 'separator' },
         { label: 'Cut', accelerator: 'CmdOrCtrl+X', role: 'cut' },
         { label: 'Copy', accelerator: 'CmdOrCtrl+C', role: 'copy' },
         { label: 'Paste', accelerator: 'CmdOrCtrl+V', role: 'paste' }
@@ -118,8 +120,8 @@ const buildAppMenu = () => {
 
   if (process.platform === 'darwin') {
     template.unshift({
-      label: 'Electron', submenu: [
-        { label: 'Hide Electron', accelerator: 'Command+H', role: 'hide' },
+      label: 'Cozy Desktop', submenu: [
+        { label: 'Hide Cozy Desktop', accelerator: 'Command+H', role: 'hide' },
         { label: 'Hide Others', accelerator: 'Command+Alt+H', role: 'hideothers' },
         { label: 'Show All', role: 'unhide' },
         { type: 'separator' },
