@@ -137,11 +137,12 @@ class Sync
     # Keep track of the sequence number, save side rev, and log errors
     applied: (change, side, callback) =>
         (err) =>
+            log.error err if err
             if err?.code is 'ENOSPC'
-                log.error err
                 callback new Error 'The disk space on your computer is full!'
+            else if err?.status is 401
+                callback new Error 'The device is no longer registered'
             else if err
-                log.error err
                 change.doc.errors or= 0
                 @isCozyFull (err, full) =>
                     if err
