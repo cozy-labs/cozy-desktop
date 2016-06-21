@@ -40,6 +40,7 @@ let runAsService
 let mainWindow
 let tray
 let device
+let diskTimeout
 
 let state = 'not-configured'
 let errorMessage = ''
@@ -264,7 +265,12 @@ const removeFile = (info) => {
 }
 
 const sendDiskSpace = () => {
+  if (diskTimeout) {
+    clearTimeout(diskTimeout)
+    diskTimeout = null
+  }
   if (mainWindow) {
+    diskTimeout = setTimeout(sendDiskSpace, 10 * 60 * 1000)  // every 10 minutes
     desktop.getDiskSpace((err, res) => {
       if (err) {
         console.error(err)
@@ -294,6 +300,7 @@ const startSync = (force) => {
     } else if (state === 'error') {
       sendErrorToMainWindow(errorMessage)
     }
+    sendDiskSpace()
   } else {
     updateState('syncing')
     desktop.events.on('up-to-date', () => {
@@ -325,7 +332,6 @@ const startSync = (force) => {
       sendErrorToMainWindow(msg)
     })
     sendDiskSpace()
-    setInterval(sendDiskSpace, 10 * 60 * 1000)  // every 10 minutes
   }
   autoLauncher.isEnabled().then((enabled) => {
     sendToMainWindow('auto-launch', enabled)
