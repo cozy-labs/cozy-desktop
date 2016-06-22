@@ -40,6 +40,7 @@ let runAsService
 let mainWindow
 let tray
 let device
+let diskTimeout
 
 let state = 'not-configured'
 let errorMessage = ''
@@ -99,35 +100,37 @@ const openCozyFolder = () => {
 const buildAppMenu = () => {
   const template = [
     {
-      label: 'Edit', submenu: [
-        { label: 'Undo', accelerator: 'CmdOrCtrl+Z', role: 'undo' },
-        { label: 'Redo', accelerator: 'Shift+CmdOrCtrl+Z', role: 'redo' },
+      label: translate('AppMenu Edit'), submenu: [
+        { label: translate('AppMenu Undo'), accelerator: 'CmdOrCtrl+Z', role: 'undo' },
+        { label: translate('AppMenu Redo'), accelerator: 'Shift+CmdOrCtrl+Z', role: 'redo' },
         { type: 'separator' },
-        { label: 'Cut', accelerator: 'CmdOrCtrl+X', role: 'cut' },
-        { label: 'Copy', accelerator: 'CmdOrCtrl+C', role: 'copy' },
-        { label: 'Paste', accelerator: 'CmdOrCtrl+V', role: 'paste' }
+        { label: translate('AppMenu Select All'), accelerator: 'CmdOrCtrl+A', role: 'selectall' },
+        { type: 'separator' },
+        { label: translate('AppMenu Cut'), accelerator: 'CmdOrCtrl+X', role: 'cut' },
+        { label: translate('AppMenu Copy'), accelerator: 'CmdOrCtrl+C', role: 'copy' },
+        { label: translate('AppMenu Paste'), accelerator: 'CmdOrCtrl+V', role: 'paste' }
       ]
     },
     {
-      label: 'Window', role: 'window', submenu: [
-        { label: 'Minimize', accelerator: 'CmdOrCtrl+M', role: 'minimize' },
-        { label: 'Close', accelerator: 'CmdOrCtrl+W', role: 'close' }
+      label: translate('AppMenu Window'), role: 'window', submenu: [
+        { label: translate('AppMenu Minimize'), accelerator: 'CmdOrCtrl+M', role: 'minimize' },
+        { label: translate('AppMenu Close'), accelerator: 'CmdOrCtrl+W', role: 'close' }
       ]
     }
   ]
 
   if (process.platform === 'darwin') {
     template.unshift({
-      label: 'Electron', submenu: [
-        { label: 'Hide Electron', accelerator: 'Command+H', role: 'hide' },
-        { label: 'Hide Others', accelerator: 'Command+Alt+H', role: 'hideothers' },
-        { label: 'Show All', role: 'unhide' },
+      label: 'Cozy Desktop', submenu: [
+        { label: translate('AppMenu Hide Cozy Desktop'), accelerator: 'Command+H', role: 'hide' },
+        { label: translate('AppMenu Hide Others'), accelerator: 'Command+Alt+H', role: 'hideothers' },
+        { label: translate('AppMenu Show All'), role: 'unhide' },
         { type: 'separator' },
-        { label: 'Quit ' + app.getName(), accelerator: 'Command+Q', click () { app.quit() } }
+        { label: translate('AppMenu Quit'), accelerator: 'Command+Q', click () { app.quit() } }
       ]
     })
     template[2].submenu.push({ type: 'separator' })
-    template[2].submenu.push({ label: 'Bring All to Front', role: 'front' })
+    template[2].submenu.push({ label: translate('AppMenu Bring All to Front'), role: 'front' })
   }
 
   const menu = Menu.buildFromTemplate(template)
@@ -262,7 +265,12 @@ const removeFile = (info) => {
 }
 
 const sendDiskSpace = () => {
+  if (diskTimeout) {
+    clearTimeout(diskTimeout)
+    diskTimeout = null
+  }
   if (mainWindow) {
+    diskTimeout = setTimeout(sendDiskSpace, 10 * 60 * 1000)  // every 10 minutes
     desktop.getDiskSpace((err, res) => {
       if (err) {
         console.error(err)
@@ -292,6 +300,7 @@ const startSync = (force) => {
     } else if (state === 'error') {
       sendErrorToMainWindow(errorMessage)
     }
+    sendDiskSpace()
   } else {
     updateState('syncing')
     desktop.events.on('up-to-date', () => {
@@ -323,7 +332,6 @@ const startSync = (force) => {
       sendErrorToMainWindow(msg)
     })
     sendDiskSpace()
-    setInterval(sendDiskSpace, 10 * 60 * 1000)  // every 10 minutes
   }
   autoLauncher.isEnabled().then((enabled) => {
     sendToMainWindow('auto-launch', enabled)
