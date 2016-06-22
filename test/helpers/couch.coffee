@@ -41,7 +41,7 @@ module.exports =
                     type: "user"
                     roles: []
                     password: params.pass
-                async.retry times: 10, interval: 250, (cb) ->
+                async.retry times: 30, interval: 250, (cb) ->
                     client.put "_users/#{params.user}", options, cb
                 , (err) -> next err
 

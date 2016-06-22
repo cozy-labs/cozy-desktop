@@ -15,6 +15,9 @@ matrix:
           env: CXX=g++-4.8
         - os: osx
           node_js: 4
+    allow_failures:
+        - os: osx
+          node_js: 4
 env:
     global:
         - COZY_DESKTOP_DIR=tmp
@@ -51,7 +54,7 @@ before_install:
     - nvm install 4
     - nvm use 4
     - travis_retry npm -g install npm@latest-2
-    - npm install forever coffee-script -g
+    - travis_retry npm install forever coffee-script -g
     - git clone git://github.com/cozy/cozy-data-system.git
     - cd cozy-data-system
     - git checkout origin/development
