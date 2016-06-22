@@ -53,15 +53,8 @@ class Remote
 
     ### Helpers ###
 
-    # Upload the binary as a CouchDB document's attachment and return
-    # the binary document
-    uploadBinary: (doc, callback) ->
-        log.info "Upload binary #{doc.checksum}"
-        binary =
-            _id: doc.checksum
-            docType: 'Binary'
-            checksum: doc.checksum
-
+    # Add attachment to the binary document by uploading a file
+    addAttachment: (doc, binary, callback) ->
         done = (err) =>
             [cb, callback] = [callback, ->]  # Be sure to callback only once
             if err
@@ -72,40 +65,53 @@ class Remote
         # Don't use async callback here!
         # Async does some magic and the stream can throw an 'error'
         # event before the next async callback is called...
+        @other.createReadStream doc, (err, stream) =>
+            return callback err if err
+            stream.on 'error', -> callback new Error 'Invalid file'
+            # Be sure that the checksum is correct
+            checksum = crypto.createHash 'sha1'
+            checksum.setEncoding 'hex'
+            stream.pipe checksum
+            stream.on 'end', ->
+                checksum.end()
+                if checksum.read() isnt doc.checksum
+                    done new Error 'Invalid checksum'
+            # Emit events to track the download progress
+            info = clone doc
+            info.way = 'up'
+            info.eventName = "transfer-up-#{doc._id}"
+            @events.emit 'transfer-started', info
+            stream.on 'data', (data) =>
+                @events.emit info.eventName, data
+            stream.on 'close', =>
+                @events.emit info.eventName, finished: true
+            {_id, _rev} = binary
+            mime = doc.mime or 'application/octet-stream'
+            @couch.uploadAsAttachment _id, _rev, mime, stream, done
+
+
+    # Upload the binary as a CouchDB document's attachment and return
+    # the binary document
+    uploadBinary: (doc, callback) ->
+        log.info "Upload binary #{doc.checksum}"
+        binary =
+            _id: doc.checksum
+            docType: 'Binary'
+            checksum: doc.checksum
+
         @couch.put binary, (err, created) =>
             if err?.status is 409
-                @couch.get binary._id, (err, binaryDoc) ->
+                @couch.get binary._id, (err, binaryDoc) =>
                     if binaryDoc._attachments
                         callback null, binaryDoc
                     else
-                        done new Error 'Binary is blank'
+                        binary._rev = binaryDoc._rev
+                        @addAttachment doc, binary, callback
             else if err
                 callback err
             else
                 binary._rev = created.rev
-                @other.createReadStream doc, (err, stream) =>
-                    return callback err if err
-                    stream.on 'error', -> callback new Error 'Invalid file'
-                    # Be sure that the checksum is correct
-                    checksum = crypto.createHash 'sha1'
-                    checksum.setEncoding 'hex'
-                    stream.pipe checksum
-                    stream.on 'end', ->
-                        checksum.end()
-                        if checksum.read() isnt doc.checksum
-                            done new Error 'Invalid checksum'
-                    # Emit events to track the download progress
-                    info = clone doc
-                    info.way = 'up'
-                    info.eventName = "transfer-up-#{doc._id}"
-                    @events.emit 'transfer-started', info
-                    stream.on 'data', (data) =>
-                        @events.emit info.eventName, data
-                    stream.on 'close', =>
-                        @events.emit info.eventName, finished: true
-                    {_id, _rev} = binary
-                    mime = doc.mime or 'application/octet-stream'
-                    @couch.uploadAsAttachment _id, _rev, mime, stream, done
+                @addAttachment doc, binary, callback
 
 
     # Extract the remote path and name from a local id

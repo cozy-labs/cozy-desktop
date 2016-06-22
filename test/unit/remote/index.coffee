@@ -103,7 +103,7 @@ describe 'Remote', ->
                 binary._id.should.equal checksum
                 done()
 
-        it 'removes blank binaries', (done) ->
+        it 'uploads the file even if a blank binary is present', (done) ->
             checksum = '988881adc9fc3655077dc2d4d757d480b5ea0e11'
             fixture = 'test/fixtures/foobar.txt'
             doc =
@@ -114,14 +114,18 @@ describe 'Remote', ->
                 _id: checksum
                 docType: 'Binary'
                 checksum: checksum
+            @remote.other =
+                createReadStream: (localDoc, callback) ->
+                    localDoc.should.equal doc
+                    stream = fs.createReadStream fixture
+                    callback null, stream
             @couch.put binary, (err, created) =>
                 should.not.exist err
                 @remote.uploadBinary doc, (err) =>
-                    should.exist err
-                    err.message.should.equal 'Binary is blank'
-                    @couch.get created._id, (err) ->
-                        should.exist err
-                        err.status.should.equal 404
+                    should.not.exist err
+                    @couch.get created.id, (err, binaryDoc) ->
+                        should.not.exist err
+                        should.exist binaryDoc._attachments
                         done()
 
 
