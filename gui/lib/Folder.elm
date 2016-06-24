@@ -12,14 +12,14 @@ import Helpers exposing (Helpers)
 
 type alias Model =
     { folder : String
-    , error : Bool
+    , error : String
     }
 
 
 init : String -> Model
 init folder' =
     { folder = folder'
-    , error = False
+    , error = ""
     }
 
 
@@ -30,6 +30,7 @@ init folder' =
 type Msg
     = ChooseFolder
     | FillFolder String
+    | SetError String
     | StartSync
 
 
@@ -48,7 +49,10 @@ update msg model =
             ( model, chooseFolder () )
 
         FillFolder folder' ->
-            ( { model | folder = folder', error = False }, Cmd.none )
+            ( { model | folder = folder', error = "" }, Cmd.none )
+
+        SetError error' ->
+            ( { model | error = error' }, Cmd.none )
 
         StartSync ->
             ( model, startSync model.folder )
@@ -64,10 +68,11 @@ view helpers model =
         [ classList
             [ ( "step", True )
             , ( "step-folder", True )
-            , ( "step-error", model.error )
+            , ( "step-error", model.error /= "" )
             ]
         ]
-        [ p [ class "spacer" ] [ text "" ]
+        [ p [ class "upper error-message" ]
+            [ text (helpers.t model.error) ]
         , img
             [ src "images/done.svg"
             , class "done"
