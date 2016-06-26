@@ -29,7 +29,7 @@ The cozy-desktop requires node.js (4 recommended, but it is tested on 0.10 and
 For example, you can install them on debian with:
 
 ```bash
-sudo apt-get install nodejs-legacy build-essential
+sudo apt-get install nodejs-legacy build-essential npm
 ```
 
 Then you can install cozy-desktop via NPM:
