@@ -1,3 +1,8 @@
+## 0.14.0 - 2016-06-27
+
+* Works for OSX support
+* Improve UX, thanks to the many feedbacks to the users
+
 ## 0.13.0 - 2016-05-30
 
 * First public beta for Linux!
