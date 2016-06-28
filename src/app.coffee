@@ -133,15 +133,20 @@ class App
 
 
     # Save the config with all the informations for synchonization
-    saveConfig: (cozyUrl, syncPath, deviceName, password) =>
-        options =
-            path: path.resolve syncPath
-            url: cozyUrl
-            deviceName: deviceName
-            password: password
-        @config.addRemoteCozy options
-        log.info 'The remote Cozy has properly been configured ' +
-            'to work with current device.'
+    saveConfig: (cozyUrl, syncPath, deviceName, password, callback) =>
+        fs.ensureDir syncPath, (err) =>
+            if err
+                callback err
+            else
+                options =
+                    path: path.resolve syncPath
+                    url: cozyUrl
+                    deviceName: deviceName
+                    password: password
+                @config.addRemoteCozy options
+                log.info 'The remote Cozy has properly been configured ' +
+                    'to work with current device.'
+                callback null
 
 
     # Register current device to remote Cozy and then save related informations
@@ -160,12 +165,13 @@ class App
                     log.error err
                     if parsed.protocol is 'http:'
                         log.warn 'Did you try with an httpS URL?'
+                callback? err
             else
                 deviceName = credentials.deviceName
                 password   = credentials.password
                 log.info "Device #{deviceName} has been added to #{cozyUrl}"
-                @saveConfig cozyUrl, syncPath, deviceName, password
-            callback? err, credentials
+                @saveConfig cozyUrl, syncPath, deviceName, password, (err) ->
+                    callback? err, credentials
 
 
     # Unregister current device from remote Cozy and then remove remote from

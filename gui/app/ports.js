@@ -53,6 +53,9 @@ elmectron.ports.registerRemote.subscribe((remote) => {
 ipcRenderer.on('folder-chosen', (event, folder) => {
   elmectron.ports.folder.send(folder)
 })
+ipcRenderer.on('folder-error', (event, err) => {
+  elmectron.ports.folderError.send(err)
+})
 elmectron.ports.chooseFolder.subscribe(() => {
   ipcRenderer.send('choose-folder')
 })

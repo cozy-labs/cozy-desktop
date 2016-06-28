@@ -145,6 +145,9 @@ port pong : (Maybe String -> msg) -> Sub msg
 port registration : (Maybe String -> msg) -> Sub msg
 
 
+port folderError : (String -> msg) -> Sub msg
+
+
 port folder : (String -> msg) -> Sub msg
 
 
@@ -190,6 +193,7 @@ subscriptions model =
     Sub.batch
         [ pong (WizardMsg << Wizard.AddressMsg << Address.Pong)
         , registration (WizardMsg << Wizard.PasswordMsg << Password.Registered)
+        , folderError (WizardMsg << Wizard.FolderMsg << Folder.SetError)
         , folder (WizardMsg << Wizard.FolderMsg << Folder.FillFolder)
         , synchonization SyncStart
         , gototab (TwoPanesMsg << TwoPanes.GoToStrTab)

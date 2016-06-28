@@ -427,8 +427,13 @@ ipcMain.on('start-sync', (event, arg) => {
     console.error('No device!')
     return
   }
-  desktop.saveConfig(device.url, arg, device.deviceName, device.password)
-  startSync()
+  desktop.saveConfig(device.url, arg, device.deviceName, device.password, (err) => {
+    if (err) {
+      event.sender.send('folder-error', translate('Error Invalid path'))
+    } else {
+      startSync()
+    }
+  })
 })
 
 ipcMain.on('auto-launcher', (event, enabled) => {
