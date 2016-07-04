@@ -274,7 +274,7 @@ const sendDiskSpace = () => {
     desktop.getDiskSpace((err, res) => {
       if (err) {
         console.error(err)
-      } else {
+      } else if (res.diskSpace) {
         const space = {
           used: +res.diskSpace.usedDiskSpace,
           usedUnit: res.diskSpace.usedUnit,
