@@ -1,7 +1,7 @@
 'use strict'
 /* eslint no-unused-vars: [2, { "varsIgnorePattern": "runAsService" }] */
 
-const AutoLaunch = require('cozy-auto-launch')
+const AutoLaunch = require('auto-launch')
 const Desktop = require('cozy-desktop')
 const electron = require('electron')
 const fs = require('fs')
