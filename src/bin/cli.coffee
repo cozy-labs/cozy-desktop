@@ -46,15 +46,18 @@ sync = (mode, args) ->
             what = if info.way is 'up' then 'Uploading' else 'Downloading'
             filename = path.basename info.path
             format = "#{what} #{filename} [:bar] :percent :etas"
-            options =
-                total: info.size
-                width: 30
-            bar = new Progress format, options
-            app.events.on info.eventName, (data) ->
-                if data.finished
-                    app.events.removeAllListeners info.eventName
-                else
-                    bar.tick data.length
+            if info.size
+                options =
+                    total: info.size
+                    width: 30
+                bar = new Progress format, options
+                app.events.on info.eventName, (data) ->
+                    if data.finished
+                        app.events.removeAllListeners info.eventName
+                    else
+                        bar.tick data.length
+            else
+                log.log "#{what} #{filename} (unknown size)"
         app.synchronize mode, (err) ->
             process.exit 1 if err
     else
