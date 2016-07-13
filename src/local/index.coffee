@@ -82,8 +82,10 @@ class Local
             else
                 paths = for doc in docs when @isUpToDate doc
                     path.resolve @syncPath, doc.path
-                async.detect paths, fs.exists, (foundPath) ->
-                    callback null, foundPath
+                async.detect paths, (filePath, next) ->
+                    fs.exists filePath, (found) ->
+                        next null, found
+                , callback
 
 
     ### Write operations ###

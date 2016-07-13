@@ -165,8 +165,11 @@ class Merge
     # When a file is modified when cozy-desktop is not running,
     # it is detected as a new file when cozy-desktop is started.
     resolveInitialAdd: (side, doc, file, callback) ->
-        if file.sides.remote is file.sides.local
-            # The file was updated on local
+        if not file.sides.remote
+            # The file was updated on local before being pushed to remote
+            @updateFile side, doc, callback
+        else if file.sides.remote is file.sides.local
+            # The file was updated on local after being synched to remote
             @updateFile side, doc, callback
         else
             # The file was updated on remote and maybe in local too
