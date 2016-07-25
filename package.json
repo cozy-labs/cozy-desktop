@@ -38,7 +38,7 @@
     "commander": "2.9.0",
     "cozy-device-sdk": "1.4.0",
     "fs-extra": "0.30.0",
-    "lodash.clone": "4.3.2",
+    "lodash.clone": "4.4.0",
     "lodash.find": "4.4.0",
     "lodash.isequal": "4.2.0",
     "lodash.pick": "4.2.1",
