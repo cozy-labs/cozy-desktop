@@ -20,6 +20,12 @@ class LocalWatcher
     constructor: (@syncPath, @prep, @pouch) ->
         @side = 'local'
 
+        # Use a queue for checksums to avoid computing many checksums at the
+        # same time. It's better for performance (hard disk are faster with
+        # linear readings).
+        @checksumer = async.queue @computeChecksum
+
+
     # Start chokidar, the filesystem watcher
     # https://github.com/paulmillr/chokidar
     #
@@ -113,7 +119,7 @@ class LocalWatcher
     createDoc: (filePath, stats, callback) =>
         absPath = path.join @syncPath, filePath
         [mimeType, fileClass] = @getFileClass absPath
-        @checksum absPath, (err, checksum) ->
+        @checksumer.push filePath: absPath, (err, checksum) ->
             doc =
                 path: filePath
                 docType: 'file'
@@ -140,9 +146,13 @@ class LocalWatcher
             else                    "file"
         return [mimeType, fileClass]
 
-    # Get checksum for given file
+    # Put a checksum computation in the queue
     checksum: (filePath, callback) ->
-        stream = fs.createReadStream filePath
+        @checksumer.push filePath: filePath, callback
+
+    # Get checksum for given file
+    computeChecksum: (task, callback) ->
+        stream = fs.createReadStream task.filePath
         checksum = crypto.createHash 'sha1'
         checksum.setEncoding 'hex'
         stream.on 'end', ->
