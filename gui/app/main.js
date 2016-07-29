@@ -50,6 +50,7 @@ let diskTimeout
 let state = 'not-configured'
 let errorMessage = ''
 let lastFiles = []
+let newReleaseAvailable = false
 
 const windowOptions = {
   width: 1024,
@@ -159,9 +160,9 @@ const checkForNewRelease = () => {
     return
   }
   autoUpdater.addListener('update-downloaded', (event, releaseNotes, releaseName) => {
-    console.log('update-downloaded', releaseNotes, releaseName)
     releaseName = releaseName || 'unknown'
     releaseNotes = releaseNotes || `New version ${releaseName} available`
+    newReleaseAvailable = true
     sendToMainWindow('new-release-available', releaseNotes || '', releaseName || '')
   })
   autoUpdater.addListener('error', (err) => console.error(err))
@@ -208,6 +209,11 @@ const updateState = (newState, filename) => {
   if (state === 'error') {
     menu.insert(2, new electron.MenuItem({
       label: translate('Tray Relaunch synchronization'), click: () => { startSync(true) }
+    }))
+  }
+  if (newReleaseAvailable) {
+    menu.insert(2, new electron.MenuItem({
+      label: translate('Tray A new release is available'), click: goToTab.bind(null, 'settings')
     }))
   }
   tray.setContextMenu(menu)
