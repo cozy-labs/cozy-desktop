@@ -74,11 +74,11 @@ view helpers model =
                     []
 
                 Just ( notes, name ) ->
-                    [ h2 [] [ text (helpers.t "A new release is available") ]
+                    [ h2 [] [ text (helpers.t "Settings A new release is available") ]
                     , p [] [ text name ]
                     , p [] [ text notes ]
                     , a [ onClick QuitAndInstall, href "#", class "btn btn--action" ]
-                        [ text (helpers.t "Install the new release and restart the application") ]
+                        [ text (helpers.t "Settings Install the new release and restart the application") ]
                     ]
     in
         section [ class "two-panes__content two-panes__content--settings" ]

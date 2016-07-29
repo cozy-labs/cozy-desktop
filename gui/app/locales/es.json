@@ -81,6 +81,8 @@
   "Settings Start Cozy-Desktop on system startup": "Activar el Escritorio Cozy al iniciar el sistema.",
   "Settings Version": "Versión",
   "Settings Github Page": "Página Github",
+  "Settings A new release is available": "A new release is available",
+  "Settings Install the new release and restart the application": "Install the new release and restart the application",
   "Tray Your cozy is up to date": "Su cozy esta actualizado",
   "Tray Syncing": "Sincronizando",
   "Tray Offline": "Fuera de línea",
