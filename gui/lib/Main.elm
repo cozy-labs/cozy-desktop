@@ -154,6 +154,9 @@ port folder : (String -> msg) -> Sub msg
 port synchonization : (( String, String ) -> msg) -> Sub msg
 
 
+port newRelease : (( String, String ) -> msg) -> Sub msg
+
+
 port gototab : (String -> msg) -> Sub msg
 
 
@@ -196,6 +199,7 @@ subscriptions model =
         , folderError (WizardMsg << Wizard.FolderMsg << Folder.SetError)
         , folder (WizardMsg << Wizard.FolderMsg << Folder.FillFolder)
         , synchonization SyncStart
+        , newRelease (TwoPanesMsg << TwoPanes.SettingsMsg << Settings.NewRelease)
         , gototab (TwoPanesMsg << TwoPanes.GoToStrTab)
         , Time.every Time.second (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.Tick)
         , transfer (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.Transfer)
