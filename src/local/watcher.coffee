@@ -119,7 +119,7 @@ class LocalWatcher
     createDoc: (filePath, stats, callback) =>
         absPath = path.join @syncPath, filePath
         [mimeType, fileClass] = @getFileClass absPath
-        @checksumer.push filePath: absPath, (err, checksum) ->
+        @checksum absPath, (err, checksum) ->
             doc =
                 path: filePath
                 docType: 'file'
