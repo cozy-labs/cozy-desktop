@@ -370,6 +370,15 @@ const startSync = (force) => {
   })
 }
 
+const appLoaded = () => {
+  if (desktop.config.hasDevice()) {
+    device = desktop.config.getDevice()
+    if (device.deviceName && device.url && device.path) {
+      setTimeout(startSync, 20)
+    }
+  }
+}
+
 const createWindow = () => {
   runAsService = new BrowserWindow({ show: false })
   mainWindow = new BrowserWindow(windowOptions)
@@ -381,14 +390,7 @@ const createWindow = () => {
     mainWindow.setMenu(null)
   }
   mainWindow.on('closed', () => { mainWindow = null })
-  mainWindow.webContents.on('dom-ready', () => {
-    if (desktop.config.hasDevice()) {
-      device = desktop.config.getDevice()
-      if (device.deviceName && device.url && device.path) {
-        setTimeout(startSync, 20)
-      }
-    }
-  })
+  mainWindow.webContents.on('dom-ready', appLoaded)
 }
 
 loadLastFiles()
@@ -396,6 +398,8 @@ loadLastFiles()
 app.on('ready', () => {
   if (process.argv.indexOf('--hidden') === -1) {
     createWindow()
+  } else {
+    appLoaded()
   }
   tray = new electron.Tray(`${__dirname}/images/tray-icon-linux/idle.png`)
   setTrayIcon('idle')
