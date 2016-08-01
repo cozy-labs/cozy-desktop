@@ -5,10 +5,11 @@ const AutoLaunch = require('auto-launch')
 const Desktop = require('cozy-desktop')
 const electron = require('electron')
 const fs = require('fs')
+const os = require('os')
 const path = require('path')
 const {spawn} = require('child_process')
 
-const {app, BrowserWindow, dialog, ipcMain, Menu, shell} = electron
+const {app, autoUpdater, BrowserWindow, dialog, ipcMain, Menu, shell} = electron
 const autoLauncher = new AutoLaunch({
   name: 'Cozy-Desktop',
   isHidden: true
@@ -31,6 +32,10 @@ const translations = require(`./locales/${app.locale}.json`)
 
 const translate = key => translations[key] || key
 
+// This server is used for checking if a new release is available
+// and installing the updates
+const nutsServer = 'https://nuts.cozycloud.cc'
+
 // Use a fake window to keep the application running when the main window is
 // closed: it runs as a service, with a tray icon if you want to quit it
 let runAsService
@@ -45,6 +50,7 @@ let diskTimeout
 let state = 'not-configured'
 let errorMessage = ''
 let lastFiles = []
+let newReleaseAvailable = false
 
 const windowOptions = {
   width: 1024,
@@ -146,6 +152,27 @@ const setTrayIcon = (state) => {
   }
 }
 
+const checkForNewRelease = () => {
+  const arch = os.arch()
+  const platform = os.platform()
+  const version = app.getVersion()
+  if (platform !== 'darwin') {
+    return
+  }
+  autoUpdater.addListener('update-downloaded', (event, releaseNotes, releaseName) => {
+    releaseName = releaseName || 'unknown'
+    releaseNotes = releaseNotes || `New version ${releaseName} available`
+    newReleaseAvailable = true
+    sendToMainWindow('new-release-available', releaseNotes || '', releaseName || '')
+  })
+  autoUpdater.addListener('error', (err) => console.error(err))
+  autoUpdater.setFeedURL(`${nutsServer}/update/${platform}_${arch}/${version}`)
+  autoUpdater.checkForUpdates()
+  setInterval(() => {
+    autoUpdater.checkForUpdates()
+  }, 86400) // Check if a new release is available once per day
+}
+
 const updateState = (newState, filename) => {
   if (state === 'error' && newState === 'offline') {
     return
@@ -182,6 +209,11 @@ const updateState = (newState, filename) => {
   if (state === 'error') {
     menu.insert(2, new electron.MenuItem({
       label: translate('Tray Relaunch synchronization'), click: () => { startSync(true) }
+    }))
+  }
+  if (newReleaseAvailable) {
+    menu.insert(2, new electron.MenuItem({
+      label: translate('Tray A new release is available'), click: goToTab.bind(null, 'settings')
     }))
   }
   tray.setContextMenu(menu)
@@ -436,6 +468,10 @@ ipcMain.on('start-sync', (event, arg) => {
   })
 })
 
+ipcMain.on('quit-and-install', () => {
+  autoUpdater.quitAndInstall()
+})
+
 ipcMain.on('auto-launcher', (event, enabled) => {
   autoLauncher.isEnabled().then((was) => {
     if (was === enabled) {
@@ -491,5 +527,8 @@ if (process.env.WATCH === 'true') {
       }
     })
 } else {
-  app.once('ready', buildAppMenu)
+  app.once('ready', () => {
+    buildAppMenu()
+    checkForNewRelease()
+  })
 }

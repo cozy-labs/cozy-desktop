@@ -67,6 +67,14 @@ elmectron.ports.startSync.subscribe((folder) => {
   ipcRenderer.send('start-sync', folder)
 })
 
+ipcRenderer.on('new-release-available', (event, notes, name) => {
+  console.log('new-release-available', notes, name)
+  elmectron.ports.newRelease.send([notes, name])
+})
+elmectron.ports.quitAndInstall.subscribe(() => {
+  ipcRenderer.send('quit-and-install')
+})
+
 ipcRenderer.on('auto-launch', (event, enabled) => {
   elmectron.ports.autolaunch.send(enabled)
 })

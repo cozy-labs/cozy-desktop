@@ -11,6 +11,7 @@ import Helpers exposing (Helpers)
 
 type alias Model =
     { version : String
+    , newRelease : Maybe ( String, String )
     , autoLaunch : Bool
     }
 
@@ -18,6 +19,7 @@ type alias Model =
 init : String -> Model
 init version' =
     { version = version'
+    , newRelease = Nothing
     , autoLaunch = True
     }
 
@@ -29,9 +31,14 @@ init version' =
 type Msg
     = SetAutoLaunch Bool
     | AutoLaunchSet Bool
+    | QuitAndInstall
+    | NewRelease ( String, String )
 
 
 port autoLauncher : Bool -> Cmd msg
+
+
+port quitAndInstall : () -> Cmd msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -45,6 +52,12 @@ update msg model =
         AutoLaunchSet autoLaunch' ->
             ( { model | autoLaunch = autoLaunch' }, Cmd.none )
 
+        QuitAndInstall ->
+            ( model, quitAndInstall () )
+
+        NewRelease ( notes, name ) ->
+            ( { model | newRelease = Just ( notes, name ) }, Cmd.none )
+
 
 
 -- VIEW
@@ -52,24 +65,41 @@ update msg model =
 
 view : Helpers -> Model -> Html Msg
 view helpers model =
-    section [ class "two-panes__content two-panes__content--settings" ]
-        [ h1 [] [ text (helpers.t "Settings Settings") ]
-        , div [ attribute "data-input" "checkbox" ]
-            [ input
-                [ type' "checkbox"
-                , checked model.autoLaunch
-                , id "auto-launch"
-                , onCheck SetAutoLaunch
+    let
+        updateDiv =
+            case
+                model.newRelease
+            of
+                Nothing ->
+                    []
+
+                Just ( notes, name ) ->
+                    [ h2 [] [ text (helpers.t "Settings A new release is available") ]
+                    , p [] [ text name ]
+                    , p [] [ text notes ]
+                    , a [ onClick QuitAndInstall, href "#", class "btn btn--action" ]
+                        [ text (helpers.t "Settings Install the new release and restart the application") ]
+                    ]
+    in
+        section [ class "two-panes__content two-panes__content--settings" ]
+            [ h1 [] [ text (helpers.t "Settings Settings") ]
+            , div [ attribute "data-input" "checkbox" ]
+                [ input
+                    [ type' "checkbox"
+                    , checked model.autoLaunch
+                    , id "auto-launch"
+                    , onCheck SetAutoLaunch
+                    ]
+                    []
+                , label [ for "auto-launch" ]
+                    [ text (helpers.t "Settings Start Cozy-Desktop on system startup") ]
                 ]
-                []
-            , label [ for "auto-launch" ]
-                [ text (helpers.t "Settings Start Cozy-Desktop on system startup") ]
+            , h2 [] [ text (helpers.t "Settings Version") ]
+            , p []
+                [ text ("Cozy-Desktop " ++ model.version)
+                , br [] []
+                , a [ href "https://github.com/cozy-labs/cozy-desktop" ]
+                    [ text (helpers.t "Settings Github Page") ]
+                ]
+            , div [] updateDiv
             ]
-        , h2 [] [ text (helpers.t "Settings Version") ]
-        , p []
-            [ text ("Cozy-Desktop " ++ model.version)
-            , br [] []
-            , a [ href "https://github.com/cozy-labs/cozy-desktop" ]
-                [ text (helpers.t "Settings Github Page") ]
-            ]
-        ]
