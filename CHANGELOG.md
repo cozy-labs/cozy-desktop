@@ -1,3 +1,8 @@
+## 0.15.0 - 2016-08-08
+
+* Auto-update for OSX
+* Add polish translation
+
 ## 0.14.0 - 2016-06-27
 
 * Works for OSX support
