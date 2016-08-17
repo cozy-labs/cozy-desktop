@@ -280,7 +280,7 @@ class LocalWatcher
                 else
                     async.eachSeries docs.reverse(), (doc, next) =>
                         if doc.path in @paths
-                            next()
+                            async.setImmediate next
                         else
                             @prep.deleteDoc @side, doc, next
                     , (err) =>
