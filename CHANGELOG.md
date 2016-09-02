@@ -1,3 +1,7 @@
+## 0.16.0 - 2016-09-02
+
+* Fix a big regression where sync stops working for a large number of files
+
 ## 0.15.0 - 2016-08-08
 
 * Auto-update for OSX
