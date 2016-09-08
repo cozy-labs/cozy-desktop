@@ -5,14 +5,17 @@
   "build": {
     "appId": "io.cozy.desktop",
     "app-category-type": "public.app-category.productivity",
-    "iconUrl": "https://cozy.io/en/images/desktop/icon.ico"
+    "iconUrl": "https://cozy.io/en/images/desktop/icon.ico",
+    "linux": {
+      "target": ["deb"]
+    }
   },
   "devDependencies": {
     "chokidar-cli": "1.2.0",
     "cozy-ui": "0.1.7",
     "debug-menu": "0.4.0",
     "devtron": "1.2.1",
-    "electron-builder": "5.18.0",
+    "electron-builder": "6.5.2",
     "electron-prebuilt": "1.1.3",
     "elm": "0.17.1",
     "standard": "7.1.2",
@@ -24,9 +27,9 @@
     "build:elm": "elm make lib/Main.elm --output app/elm.js || true",
     "build:tx": "tx pull --all || true",
     "clean": "rm -rf app/elm.js app/app.css* dist/",
-    "dist": "build --arch all",
+    "dist": "build --x64 --ia32",
     "lint": "standard --verbose app/main.js app/ports.js",
-    "pack": "build --target dir",
+    "pack": "build --dir",
     "postinstall": "npm run postinstall:electron && npm run postinstall:elm",
     "postinstall:electron": "install-app-deps",
     "postinstall:elm": "elm-package install -y",
