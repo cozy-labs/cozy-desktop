@@ -1,5 +1,4 @@
 'use strict'
-/* eslint no-unused-vars: [2, { "varsIgnorePattern": "runAsService" }] */
 
 const AutoLaunch = require('auto-launch')
 const Desktop = require('cozy-desktop')
@@ -35,10 +34,6 @@ const translate = key => translations[key] || key
 // This server is used for checking if a new release is available
 // and installing the updates
 const nutsServer = 'https://nuts.cozycloud.cc'
-
-// Use a fake window to keep the application running when the main window is
-// closed: it runs as a service, with a tray icon if you want to quit it
-let runAsService
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -380,7 +375,6 @@ const appLoaded = () => {
 }
 
 const createWindow = () => {
-  runAsService = new BrowserWindow({ show: false })
   mainWindow = new BrowserWindow(windowOptions)
   mainWindow.loadURL(`file://${__dirname}/index.html`)
   if (process.env.WATCH === 'true' || process.env.DEBUG === 'true') {
@@ -414,6 +408,10 @@ app.on('ready', () => {
   // dock icon is clicked and there are no other windows open.
   app.on('activate', showWindow)
 })
+
+// Don't quit the app when all windows are closed, keep the tray icon
+// See http://electron.atom.io/docs/api/app/#event-window-all-closed
+app.on('window-all-closed', () => {})
 
 // Glue code between cozy-desktop lib and the renderer process
 ipcMain.on('ping-cozy', (event, url) => {
