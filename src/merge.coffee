@@ -130,6 +130,7 @@ class Merge
     # and create the tree structure if needed
     addFile: (side, doc, callback) ->
         @pouch.db.get doc._id, (err, file) =>
+            log.warn err if err and err.status isnt 404
             @markSide side, doc, file
             hasSameBinary = false
             if file
@@ -177,6 +178,7 @@ class Merge
             @pouch.getPreviousRev doc._id, shortRev, (err, prev) =>
                 if err or prev.checksum isnt doc.checksum
                     # It's safer to handle it as a conflict
+                    doc.remote ?= file.remote
                     @resolveConflict 'remote', doc, callback
                 else
                     # The file was only updated on remote
@@ -185,6 +187,7 @@ class Merge
     # Update a file, when its metadata or its content has changed
     updateFile: (side, doc, callback) ->
         @pouch.db.get doc._id, (err, file) =>
+            log.warn err if err and err.status isnt 404
             @markSide side, doc, file
             if file?.docType is 'folder'
                 callback new Error "Can't resolve this conflict!"
@@ -212,6 +215,7 @@ class Merge
     # Create or update a folder
     putFolder: (side, doc, callback) ->
         @pouch.db.get doc._id, (err, folder) =>
+            log.warn err if err and err.status isnt 404
             @markSide side, doc, folder
             if folder?.docType is 'file'
                 @resolveConflict side, doc, callback
@@ -234,6 +238,7 @@ class Merge
     moveFile: (side, doc, was, callback) ->
         if was.sides?[side]
             @pouch.db.get doc._id, (err, file) =>
+                log.warn err if err and err.status isnt 404
                 @markSide side, doc, file
                 @markSide side, was, was
                 doc.creationDate ?= was.creationDate
@@ -263,6 +268,7 @@ class Merge
     moveFolder: (side, doc, was, callback) ->
         if was.sides?[side]
             @pouch.db.get doc._id, (err, folder) =>
+                log.warn err if err and err.status isnt 404
                 @markSide side, doc, folder
                 @markSide side, was, was
                 doc.creationDate ?= was.creationDate
