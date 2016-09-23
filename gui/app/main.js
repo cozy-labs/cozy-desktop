@@ -514,9 +514,9 @@ ipcMain.on('send-mail', (event, body) => {
 })
 
 ipcMain.on('restart', () => {
-  setTimeout(app.quit, 500)
+  setTimeout(app.quit, 50)
   const args = process.argv.slice(1).filter(a => a !== '--isHidden')
-  spawn(process.argv[0], args)
+  spawn(process.argv[0], args, { detached: true })
 })
 
 // On watch mode, automatically reload the window when sources are updated
