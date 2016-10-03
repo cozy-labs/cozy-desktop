@@ -63,6 +63,6 @@
     "mocha": "2.5.3",
     "pouchdb-server": "1.2.0",
     "should": "11.1.0",
-    "sinon": "1.17.5"
+    "sinon": "1.17.6"
   }
 }
