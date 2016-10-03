@@ -60,7 +60,7 @@
     "faker": "3.1.0",
     "jsverify": "0.7.4",
     "lodash.uniq": "4.5.0",
-    "mocha": "2.5.3",
+    "mocha": "3.1.0",
     "pouchdb-server": "1.2.0",
     "should": "11.1.0",
     "sinon": "1.17.5"
