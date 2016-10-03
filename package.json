@@ -54,7 +54,7 @@
     "request-json-light": "0.5.25"
   },
   "devDependencies": {
-    "coffee-script": "1.10.0",
+    "coffee-script": "1.11.1",
     "coffeelint": "1.16.0",
     "del": "2.2.2",
     "faker": "3.1.0",
