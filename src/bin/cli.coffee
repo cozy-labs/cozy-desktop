@@ -46,7 +46,7 @@ sync = (mode, args) ->
             what = if info.way is 'up' then 'Uploading' else 'Downloading'
             filename = path.basename info.path
             format = "#{what} #{filename} [:bar] :percent :etas"
-            if info.size
+            if +info.size > 0
                 options =
                     total: info.size
                     width: 30
