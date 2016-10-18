@@ -33,7 +33,7 @@
     "size": "t=\"$(npm pack .)\"; wc -c \"${t}\"; tar tvf \"${t}\"; rm \"${t}\";"
   },
   "dependencies": {
-    "async": "2.1.1",
+    "async": "2.1.2",
     "chokidar": "1.6.0",
     "commander": "2.9.0",
     "cozy-device-sdk": "1.4.0",
