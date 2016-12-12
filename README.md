@@ -188,7 +188,7 @@ You can reach the Cozy Community by:
 * Mentioning us on [Twitter][10]
 
 [0]:  https://cozy.io
-[1]:  https://travis-ci.org/cozy-labs/cozy-desktop.png
+[1]:  https://travis-ci.org/cozy-labs/cozy-desktop.svg?branch=master
 [2]:  https://travis-ci.org/cozy-labs/cozy-desktop
 [4]:  https://github.com/anishathalye/git-remote-dropbox#faq
 [5]:  https://stackoverflow.com/questions/31984751/google-drive-can-corrupt-repositories-in-github-desktop
