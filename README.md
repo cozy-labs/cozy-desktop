@@ -189,7 +189,7 @@ You can reach the Cozy Community by:
 
 [0]:  https://cozy.io
 [1]:  https://travis-ci.org/cozy-labs/cozy-desktop.svg?branch=master
-[2]:  https://travis-ci.org/cozy-labs/cozy-desktop
+[2]:  https://travis-ci.org/cozy-labs/cozy-desktop/branches
 [4]:  https://github.com/anishathalye/git-remote-dropbox#faq
 [5]:  https://stackoverflow.com/questions/31984751/google-drive-can-corrupt-repositories-in-github-desktop
 [6]:  https://forum.syncthing.net/t/is-putting-a-git-workspace-in-a-synced-folder-really-a-good-idea/1774
