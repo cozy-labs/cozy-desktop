@@ -58,6 +58,7 @@
     "coffeelint": "1.16.0",
     "del": "2.2.2",
     "faker": "3.1.0",
+    "installed-check": "^2.1.1",
     "jsverify": "0.7.4",
     "lodash.uniq": "4.5.0",
     "mocha": "3.2.0",

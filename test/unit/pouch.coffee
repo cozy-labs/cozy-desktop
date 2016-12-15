@@ -1,3 +1,5 @@
+require '../spec_helper'
+
 async  = require 'async'
 jsv    = require 'jsverify'
 path   = require 'path'
