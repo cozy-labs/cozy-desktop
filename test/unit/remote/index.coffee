@@ -273,6 +273,7 @@ describe 'Remote', ->
                             doc._id.should.equal binary._id
                             doc.checksum.should.equal binary.checksum
                             done()
+            return
 
 
     describe 'isUpToDate', ->
@@ -333,6 +334,7 @@ describe 'Remote', ->
                             should.not.exist err
                             binary.checksum.should.equal checksum
                             done()
+            return
 
         it 'does not reupload an existing file', (done) ->
             checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
@@ -383,6 +385,7 @@ describe 'Remote', ->
                                 lastModification: lastModified
                                 size: 36901
                             done()
+            return
 
 
     describe 'addFolder', ->

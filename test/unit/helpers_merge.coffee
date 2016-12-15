@@ -280,6 +280,7 @@ describe 'Merge Helpers', ->
                 @merge.ensureParentExist @side, child, (err) ->
                     should.not.exist err
                     done()
+            return
 
         it 'creates the parent directory if missing', (done) ->
             @merge.putFolder = sinon.stub().yields null, 'OK'

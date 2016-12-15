@@ -342,3 +342,4 @@ describe "RemoteWatcher Tests", ->
                             actual._id.should.equal doc._id
                             actual.sides.local.should.equal 2
                             done()
+            return

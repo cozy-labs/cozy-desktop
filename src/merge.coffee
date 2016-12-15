@@ -96,6 +96,7 @@ class Merge
                             callback err
                         else
                             @putFolder side, parentDoc, callback
+        return
 
     # Mark the next rev for this side
     #
@@ -162,6 +163,7 @@ class Merge
                 doc.tags ?= []
                 @ensureParentExist side, doc, =>
                     @pouch.db.put doc, callback
+        return
 
     # When a file is modified when cozy-desktop is not running,
     # it is detected as a new file when cozy-desktop is started.
@@ -211,6 +213,7 @@ class Merge
                 doc.creationDate ?= new Date
                 @ensureParentExist side, doc, =>
                     @pouch.db.put doc, callback
+        return
 
     # Create or update a folder
     putFolder: (side, doc, callback) ->
@@ -233,6 +236,7 @@ class Merge
                 doc.creationDate ?= new Date
                 @ensureParentExist side, doc, =>
                     @pouch.db.put doc, callback
+        return
 
     # Rename or move a file
     moveFile: (side, doc, was, callback) ->
@@ -263,6 +267,7 @@ class Merge
                         @pouch.db.bulkDocs [was, doc], callback
         else # It can happen after a conflict
             @addFile side, doc, callback
+        return
 
     # Rename or move a folder (and every file and folder inside it)
     moveFolder: (side, doc, was, callback) ->
@@ -283,6 +288,7 @@ class Merge
                         @moveFolderRecursively doc, was, callback
         else # It can happen after a conflict
             @putFolder side, doc, callback
+        return
 
     # Move a folder and all the things inside it
     moveFolderRecursively: (folder, was, callback) =>
@@ -326,6 +332,7 @@ class Merge
                 @pouch.db.put file, callback
             else # It can happen after a conflict
                 callback null
+        return
 
     # Remove a folder
     #
@@ -344,6 +351,7 @@ class Merge
                 @deleteFolderRecursively side, folder, callback
             else # It can happen after a conflict
                 callback null
+        return
 
     # Remove a folder and every thing inside it
     deleteFolderRecursively: (side, folder, callback) ->

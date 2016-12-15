@@ -481,6 +481,7 @@ describe 'Local', ->
                         should.not.exist err
                         fs.existsSync(filePath).should.be.false()
                         done()
+            return
 
 
     describe 'deleteFolder', ->
@@ -501,6 +502,7 @@ describe 'Local', ->
                         should.not.exist err
                         fs.existsSync(folderPath).should.be.false()
                         done()
+            return
 
 
     describe 'resolveConflict', ->

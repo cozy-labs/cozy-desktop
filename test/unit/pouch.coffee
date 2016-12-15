@@ -271,6 +271,7 @@ describe "Pouch", ->
                                     doc._id.should.equal id
                                     doc.tags.join(',').should.equal 'yipee'
                                     done()
+                return
 
 
     describe 'Sequence numbers', ->

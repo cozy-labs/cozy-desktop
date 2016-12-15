@@ -98,6 +98,7 @@ describe "Sync", ->
             @sync = new Sync @pouch, @local, @remote, @ignore, @events
             @pouch.db.changes().on 'complete', (info) =>
                 @pouch.setLocalSeq info.last_seq, done
+            return
 
         it 'gives the next change if there is already one', (done) ->
             pouchHelpers.createFile @pouch, 1, (err) =>
@@ -305,6 +306,7 @@ describe "Sync", ->
                                     remote: 2
                             done()
                     func()
+            return
 
         it 'returns a function that does not touch the seq if error', (done) ->
             @pouch.setLocalSeq 128, =>
@@ -342,6 +344,7 @@ describe "Sync", ->
                         should.not.exist err
                         actual.errors.should.equal 1
                         done()
+            return
 
         it 'increments the errors counter to 1 on next error', (done) ->
             doc =
@@ -355,6 +358,7 @@ describe "Sync", ->
                         should.not.exist err
                         actual.errors.should.equal 4
                         done()
+            return
 
         it 'stops retrying after 10 errors', (done) ->
             doc =
@@ -369,6 +373,7 @@ describe "Sync", ->
                         actual.errors.should.equal 10
                         actual._rev.should.equal doc._rev
                         done()
+            return
 
 
     describe 'fileChanged', ->
@@ -415,6 +420,7 @@ describe "Sync", ->
                         @remote.updateFileMetadata.called.should.be.false
                         @remote.overwriteFile.calledWith(doc).should.be.true()
                         done()
+            return
 
         it 'calls updateFileMetadata for updated file metadata', (done) ->
             doc =
@@ -439,6 +445,7 @@ describe "Sync", ->
                         ufm = @remote.updateFileMetadata
                         ufm.calledWith(doc).should.be.true()
                         done()
+            return
 
         it 'calls moveFile for a moved file', (done) ->
             was =

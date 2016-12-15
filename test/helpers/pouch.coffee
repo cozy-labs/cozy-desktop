@@ -12,6 +12,7 @@ module.exports =
         @pouch.db.destroy =>
             @pouch = null
             done()
+        return
 
     createParentFolder: (pouch, callback) ->
         doc =
@@ -22,6 +23,7 @@ module.exports =
             lastModification: new Date()
             tags: []
         pouch.db.put doc, callback
+        return
 
     createFolder: (pouch, i, callback) ->
         id = path.join 'my-folder', "folder-#{i}"
@@ -35,6 +37,7 @@ module.exports =
             remote:
                 _id: "123456789#{i}"
         pouch.db.put doc, callback
+        return
 
     createFile: (pouch, i, callback) ->
         id = path.join 'my-folder', "file-#{i}"
@@ -49,3 +52,4 @@ module.exports =
             remote:
                 _id: "1234567890#{i}"
         pouch.db.put doc, callback
+        return

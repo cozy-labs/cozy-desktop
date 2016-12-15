@@ -56,6 +56,7 @@ describe 'Merge', ->
                     class: 'image'
                     mime: 'image/jpeg'
                 @pouch.db.put @file, done
+                return
 
             it 'can update the metadata', (done) ->
                 @merge.ensureParentExist = sinon.stub().yields null
@@ -115,6 +116,7 @@ describe 'Merge', ->
                     class: 'image'
                     mime: 'image/jpeg'
                 @pouch.db.put @file, done
+                return
 
             it 'can update the metadata', (done) ->
                 @merge.ensureParentExist = sinon.stub().yields null
@@ -216,6 +218,7 @@ describe 'Merge', ->
                             should.exist err
                             err.status.should.equal 404
                             done()
+            return
 
         it 'adds missing fields', (done) ->
             @merge.ensureParentExist = sinon.stub().yields null
@@ -252,6 +255,7 @@ describe 'Merge', ->
                         should.exist res.class
                         should.exist res.mime
                         done()
+            return
 
         it 'adds a hint for writers to know that it is a move', (done) ->
             @merge.ensureParentExist = sinon.stub().yields null
@@ -288,6 +292,7 @@ describe 'Merge', ->
                     done()
                 @merge.moveFile @side, clone(doc), clone(was), (err) ->
                     should.not.exist err
+            return
 
 
     describe 'moveFolder', ->
@@ -325,6 +330,7 @@ describe 'Merge', ->
                             should.exist err
                             err.status.should.equal 404
                             done()
+            return
 
         it 'adds a hint for writers to know that it is a move', (done) ->
             @merge.ensureParentExist = sinon.stub().yields null
@@ -359,6 +365,7 @@ describe 'Merge', ->
                     done()
                 @merge.moveFolder @side, clone(doc), clone(was), (err) ->
                     should.not.exist err
+            return
 
 
     describe 'moveFolderRecursively', ->
@@ -388,6 +395,7 @@ describe 'Merge', ->
                                 err.status.should.equal 404
                                 next()
                     , done
+            return
 
 
     describe 'deleteFile', ->
@@ -405,6 +413,7 @@ describe 'Merge', ->
                     @pouch.db.get doc._id, (err) ->
                         err.status.should.equal 404
                         done()
+            return
 
     describe 'deleteFolder', ->
         it 'deletes a folder', (done) ->
@@ -421,6 +430,7 @@ describe 'Merge', ->
                     @pouch.db.get doc._id, (err, res) ->
                         err.status.should.equal 404
                         done()
+            return
 
         it 'remove files in the folder', (done) ->
             doc =
@@ -444,6 +454,7 @@ describe 'Merge', ->
                         @pouch.byPath 'FOO/TO-REMOVE', (err, docs) ->
                             docs.length.should.be.equal 0
                             done()
+            return
 
         it 'remove nested folders', (done) ->
             base = 'NESTED/TO-DELETE'
