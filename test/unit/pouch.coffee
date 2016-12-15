@@ -355,3 +355,4 @@ describe "Pouch", ->
                                 resolve docs.length is paths.length
             jsv.assert(property, tests: 10).then (res) ->
                 if res is true then done() else done res
+            return
