@@ -17,7 +17,7 @@ describe "Pouch", ->
     after 'clean pouch', pouchHelpers.cleanDatabase
     after 'clean config directory', configHelpers.cleanConfig
 
-    before (done) ->
+    before 'create folders and files', (done) ->
         pouchHelpers.createParentFolder @pouch, =>
             async.eachSeries [1..3], (i, callback) =>
                 pouchHelpers.createFolder @pouch, i, =>
