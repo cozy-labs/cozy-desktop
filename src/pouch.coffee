@@ -41,6 +41,7 @@ class Pouch
             @db.setMaxListeners 100
             @db.on 'error', (err) -> log.warn err
             @addAllViews callback
+        return
 
 
     ### Mini ODM ###
@@ -59,6 +60,7 @@ class Pouch
             else
                 docs = (row.doc for row in res.rows when row.doc?)
                 callback null, docs
+        return
 
     # Return all the files with this checksum
     byChecksum: (checksum, callback) ->
@@ -98,6 +100,7 @@ class Pouch
                 callback status: 404, message: 'missing'
             else
                 callback null, res.rows[0].doc
+        return
 
 
     ### Views ###
@@ -154,6 +157,7 @@ class Pouch
             @db.put doc, (err) ->
                 log.info "Design document created: #{name}" unless err
                 callback err
+        return
 
     # Remove a design document for a given docType
     removeDesignDoc: (docType, callback) =>
@@ -163,6 +167,7 @@ class Pouch
                 @db.remove id, designDoc._rev, callback
             else
                 callback err
+        return
 
 
     ### Helpers ###
@@ -192,6 +197,7 @@ class Pouch
                 @db.get id, rev: rev, (err, doc) ->
                     log.debug infos[0].doc if err
                     callback err, doc
+        return
 
 
     ### Sequence numbers ###
@@ -204,6 +210,7 @@ class Pouch
                 callback null, 0
             else
                 callback err, doc?.seq
+        return
 
     # Set last local replication sequence
     # It is saved in PouchDB as a local document
@@ -222,6 +229,7 @@ class Pouch
                 callback null, 0
             else
                 callback err, doc?.seq
+        return
 
     # Set last remote replication sequence
     # It is saved in PouchDB as a local document
