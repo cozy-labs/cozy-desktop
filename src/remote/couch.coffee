@@ -44,6 +44,7 @@ class Couch
             else if not online and @online
                 @goingOffline()
             callback @online
+        return
 
     # Couch is available again!
     goingOnline: ->
@@ -74,14 +75,17 @@ class Couch
     # Retrieve a document from remote cozy based on its ID
     get: (id, callback) =>
         @client.get id, callback
+        return
 
     # Save a document on the remote couch
     put: (doc, callback) =>
         @client.put doc, callback
+        return
 
     # Delete a document on the remote couch
     remove: (id, rev, callback) =>
         @client.remove id, rev, callback
+        return
 
     # Get the last sequence number from the remote couch
     getLastRemoteChangeSeq: (callback) =>
@@ -91,6 +95,7 @@ class Couch
             limit: 1
         @client.changes options, (err, change) ->
             callback err, change?.last_seq
+        return
 
     # TODO create our views on couch, instead of using those of files
     pickViewToCopy: (model, callback) =>
@@ -104,6 +109,7 @@ class Couch
                 callback null, 'all'
             else
                 callback new Error 'install files app on cozy'
+        return
 
     # Retrieve documents from a view on the remote couch
     getFromRemoteView: (model, callback) =>
