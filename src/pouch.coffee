@@ -117,6 +117,7 @@ class Pouch
     # The path for a file/folder in root will be '',
     # not '.' as with node's path.dirname
     addByPathView: (callback) =>
+        ### !pragma no-coverage-next ###
         query = (
             (doc) ->
                 if 'docType' of doc
@@ -128,6 +129,7 @@ class Pouch
 
     # Create a view to find files by their checksum
     addByChecksumView: (callback) =>
+        ### !pragma no-coverage-next ###
         query = (
             (doc) ->
                 if 'checksum' of doc
@@ -137,6 +139,7 @@ class Pouch
 
     # Create a view to find file/folder by their _id on a remote cozy
     addByRemoteIdView: (callback) =>
+        ### !pragma no-coverage-next ###
         query = (
             (doc) ->
                 if 'remote' of doc
