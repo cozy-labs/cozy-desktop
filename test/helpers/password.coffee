@@ -1,5 +1,5 @@
 # The password used for integration tests:
-password = 'cozytest'
+password = 'CozyTest$1'
 
 # You can retrieve it by requiring this module:
 #     password = require '.../password'
