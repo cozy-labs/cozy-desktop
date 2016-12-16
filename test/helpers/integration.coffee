@@ -14,7 +14,7 @@ module.exports = helpers =
     scheme: process.env.SCHEME or 'http'
     host: process.env.HOST or 'localhost'
     port: process.env.PORT or 9104
-    password: 'cozytest'
+    password: require './password'
     deviceName: "test-#{faker.internet.userName()}"
     fixturesDir: path.join __dirname, '..', 'fixtures'
     parentDir: process.env.COZY_DESKTOP_DIR or 'tmp'
