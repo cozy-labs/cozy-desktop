@@ -3,6 +3,9 @@
 
 [![Build Status][1]][2]
 
+| Core / CLI | GUI |
+| --- | --- |
+| [![Dependency Status](https://www.versioneye.com/user/projects/58541beead9aa20037389fff/badge.svg?style=flat-square)](https://www.versioneye.com/user/projects/58541beead9aa20037389fff) | [![Dependency Status](https://www.versioneye.com/user/projects/58541bf34d6466004c28cc09/badge.svg?style=flat-square)](https://www.versioneye.com/user/projects/58541bf34d6466004c28cc09) |
 
 The Cozy desktop app allows to sync the files stored in your Cozy with your
 laptop and/or your desktop. It replicates your files on your hard drive and
