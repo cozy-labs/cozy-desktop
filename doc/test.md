@@ -33,7 +33,7 @@ on the Cozy! We recommend using the default repository with
 Integration tests require that you have the Cozy dev VM up (it means CouchDB, a
 data-system and a proxy up and running) and that the files application is
 accessible on the 9121 port. It's also expected that a user is registered with
-`cozytest` as password.
+the [test password](../test/helpers/password.coffee).
 
 To test the communication between cozy-desktop and a remote cozy stack (proxy,
 data-system, files, etc.)
