@@ -202,4 +202,4 @@ You can reach the Cozy Community by:
 [13]: doc/inotify.md
 [14]: doc/test.md
 [15]: https://www.versioneye.com/user/projects/58541beead9aa20037389fff/badge.svg?style=flat-square
-[16]: https://www.versioneye.com/user/projects/58541beead9aa20037389fff
+[16]: https://www.versioneye.com/user/projects/58541beead9aa20037389fff?child=summary#tab-dependencies
