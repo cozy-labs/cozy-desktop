@@ -26,7 +26,7 @@
   "scripts": {
     "lint": "coffeelint src/ test/",
     "test": "installed-check && npm run test-unit && npm run test-integration",
-    "test-unit": "NODE_ENV=test mocha test/unit/",
+    "test-unit": "NODE_ENV=test mocha $MOCHA_UNIT_TEST_FLAGS test/unit/",
     "test-integration": "NODE_ENV=test mocha test/integration/",
     "build": "coffee -o lib/ src/",
     "clean": "rm -rf lib/ && rm -rf tmp/",
