@@ -92,7 +92,10 @@ before_install:
 script:
     - npm run build
     - npm run lint
-    - npm run test
+    - ./scripts/coverage.sh npm run test
+
+after_success:
+    - bash <(curl -s https://codecov.io/bash)
 
 after_failure:
     - pwd
