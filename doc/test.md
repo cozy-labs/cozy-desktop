@@ -83,6 +83,8 @@ Integration tests have another purpose, so they are deliberately excluded,
 even when running `./scripts/coverage.sh npm run test-integration`
 explicitely.
 
+Please also note that we don't measure coverage on the GUI for now.
+
 Implementation details:
 
 1. `coverage.sh` runs the `mocha` command with the [appropriate option][3] to load
