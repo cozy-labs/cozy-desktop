@@ -4,6 +4,7 @@
 [![Build Status][1]][2]
 [![Dependency Status][15]][16]
 [![Code Climate][17]][18]
+[![codecov][19]][20]
 
 The Cozy desktop app allows to sync the files stored in your Cozy with your
 laptop and/or your desktop. It replicates your files on your hard drive and
@@ -206,3 +207,5 @@ You can reach the Cozy Community by:
 [16]: https://www.versioneye.com/user/projects/58541beead9aa20037389fff?child=summary#tab-dependencies
 [17]: https://codeclimate.com/github/cozy-labs/cozy-desktop/badges/gpa.svg
 [18]: https://codeclimate.com/github/cozy-labs/cozy-desktop
+[19]: https://codecov.io/gh/cozy-labs/cozy-desktop/branch/master/graph/badge.svg
+[20]: https://codecov.io/gh/cozy-labs/cozy-desktop
