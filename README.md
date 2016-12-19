@@ -208,4 +208,4 @@ You can reach the Cozy Community by:
 [17]: https://codeclimate.com/github/cozy-labs/cozy-desktop/badges/gpa.svg
 [18]: https://codeclimate.com/github/cozy-labs/cozy-desktop
 [19]: https://codecov.io/gh/cozy-labs/cozy-desktop/branch/master/graph/badge.svg
-[20]: https://codecov.io/gh/cozy-labs/cozy-desktop
+[20]: https://codecov.io/gh/cozy-labs/cozy-desktop/list/master
