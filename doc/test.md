@@ -65,5 +65,40 @@ DEBUG=true COZY_DESKTOP_DIR=tmp npm run test
 ```
 
 
+Coverage
+--------
+
+You can enable coverage metrics for any npm command with the
+[`coverage.sh`][3] script.
+
+Examples:
+
+```bash
+./scripts/coverage.sh npm run test
+./scripts/coverage.sh npm run test-unit
+```
+
+Please note that code coverage is only measured for unit tests.
+Integration tests have another purpose, so they are deliberately excluded,
+even when running `./scripts/coverage.sh npm run test-integration`
+explicitely.
+
+Implementation details:
+
+1. `coverage.sh` runs the `mocha` command with the [appropriate option][3] to load
+   [`coffee-coverage`][4].
+2. `coffee-coverage` inserts instrumentation code when compiling from
+   CoffeeScript to JavaScript
+3. The mocha tests are run and generate `coverage/coverage-coffee.json`
+4. `coverage.sh` then runs [`istanbul`][5], who reads the json and turns it
+   into an lcov-style report (including HTML output).
+5. Finally, when run on the CI, we [tell Travis](../.travis.yml) to upload the report to the
+   [Codecov][6] service.
+
+
 [1]:  https://mochajs.org/
 [2]:  ../test/mocha.opts
+[3]: ../scripts/coverage.sh
+[4]: https://github.com/benbria/coffee-coverage
+[5]: https://github.com/gotwarlost/istanbul
+[6]: https://codecov.io/gh/cozy-labs/cozy-desktop
