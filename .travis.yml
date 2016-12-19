@@ -10,6 +10,9 @@ matrix:
         - os: linux
           node_js: 6
           env: CXX=g++-4.8
+        - os: linux
+          node_js: 7
+          env: CXX=g++-4.8
         - os: osx
           node_js: 4
     allow_failures:
