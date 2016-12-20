@@ -85,7 +85,7 @@ view helpers model =
             [ h1 [] [ text (helpers.t "Settings Settings") ]
             , div [ attribute "data-input" "checkbox" ]
                 [ input
-                    [ type' "checkbox"
+                    [ type_ "checkbox"
                     , checked model.autoLaunch
                     , id "auto-launch"
                     , onCheck SetAutoLaunch

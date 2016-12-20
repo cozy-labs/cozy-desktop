@@ -122,7 +122,7 @@ view helpers model =
             [ input
                 [ placeholder (helpers.t "Password Password")
                 , class "wizard__password"
-                , type' "password"
+                , type_ "password"
                 , value model.password
                 , onInput FillPassword
                 , onEnter Register
