@@ -1,7 +1,6 @@
 port module Main exposing (..)
 
 import Html exposing (Html)
-import Html.App as Html
 import Dict exposing (Dict)
 import Json.Decode as Json
 import Time exposing (Time)
