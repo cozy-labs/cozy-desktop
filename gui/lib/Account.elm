@@ -57,11 +57,11 @@ update msg model =
     case
         msg
     of
-        FillAddressAndDevice ( address', deviceName' ) ->
-            ( { model | address = address', deviceName = deviceName' }, Cmd.none )
+        FillAddressAndDevice ( address, deviceName ) ->
+            ( { model | address = address, deviceName = deviceName }, Cmd.none )
 
-        UpdateDiskSpace disk' ->
-            ( { model | disk = disk' }, Cmd.none )
+        UpdateDiskSpace disk ->
+            ( { model | disk = disk }, Cmd.none )
 
         UnlinkCozy ->
             ( { model | busy = True }, unlinkCozy () )

@@ -63,19 +63,19 @@ update msg model =
     case
         msg
     of
-        FillPassword password' ->
+        FillPassword password ->
             let
-                model' =
-                    { model | password = password', error = "", busy = False }
+                newModel =
+                    { model | password = password, error = "", busy = False }
             in
-                ( model', Cmd.none, None )
+                ( newModel, Cmd.none, None )
 
-        FillAddress address' ->
+        FillAddress address ->
             let
-                model' =
-                    { model | address = address', busy = False }
+                newModel =
+                    { model | address = address, busy = False }
             in
-                ( model', Cmd.none, None )
+                ( newModel, Cmd.none, None )
 
         SetError error ->
             setError model error
@@ -88,13 +88,13 @@ update msg model =
                 setError model "Password You don't have filled the password!"
             else
                 let
-                    model' =
+                    newModel =
                         { model | busy = True }
 
                     cmd =
                         registerRemote ( model.address, model.password )
                 in
-                    ( model', cmd, None )
+                    ( newModel, cmd, None )
 
         Registered Nothing ->
             ( { model | busy = False }, Cmd.none, NextPage )

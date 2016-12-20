@@ -17,8 +17,8 @@ type alias Model =
 
 
 init : String -> Model
-init version' =
-    { version = version'
+init version =
+    { version = version
     , newRelease = Nothing
     , autoLaunch = True
     }
@@ -46,11 +46,11 @@ update msg model =
     case
         msg
     of
-        SetAutoLaunch autoLaunch' ->
-            ( model, autoLauncher autoLaunch' )
+        SetAutoLaunch autoLaunch ->
+            ( model, autoLauncher autoLaunch )
 
-        AutoLaunchSet autoLaunch' ->
-            ( { model | autoLaunch = autoLaunch' }, Cmd.none )
+        AutoLaunchSet autoLaunch ->
+            ( { model | autoLaunch = autoLaunch }, Cmd.none )
 
         QuitAndInstall ->
             ( model, quitAndInstall () )

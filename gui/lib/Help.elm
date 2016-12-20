@@ -58,8 +58,8 @@ update msg model =
     case
         msg
     of
-        FillBody body' ->
-            ( { model | body = Just body', status = Writing }, Cmd.none )
+        FillBody body ->
+            ( { model | body = Just body, status = Writing }, Cmd.none )
 
         SendMail ->
             let
@@ -70,8 +70,8 @@ update msg model =
                         Nothing ->
                             String.join "\n\n" defaultBody
 
-                        Just body' ->
-                            body'
+                        Just body ->
+                            body
             in
                 ( { model | status = Sending }, sendMail body )
 
@@ -96,8 +96,8 @@ view helpers model =
                 Nothing ->
                     String.join "\n\n" (List.map helpers.t defaultBody)
 
-                Just body' ->
-                    body'
+                Just body ->
+                    body
     in
         section [ class "two-panes__content two-panes__content--help" ]
             [ h1 [] [ text (helpers.t "Help Help") ]

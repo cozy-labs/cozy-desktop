@@ -62,15 +62,15 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
-        GoToTab tab' ->
+        GoToTab tab_ ->
             let
-                dashboard'' =
+                dashboard =
                     model.dashboard
 
-                dashboard' =
-                    { dashboard'' | page = 1 }
+                newDashboard =
+                    { dashboard | page = 1 }
             in
-                ( { model | tab = tab', dashboard = dashboard' }, Cmd.none )
+                ( { model | tab = tab_, dashboard = newDashboard }, Cmd.none )
 
         GoToStrTab tab ->
             case
@@ -90,38 +90,38 @@ update msg model =
 
         FillAddressAndDevice info ->
             let
-                ( account', _ ) =
+                ( account, _ ) =
                     Account.update (Account.FillAddressAndDevice info) model.account
             in
-                ( { model | account = account' }, Cmd.none )
+                ( { model | account = account }, Cmd.none )
 
-        DashboardMsg msg' ->
+        DashboardMsg subMsg ->
             let
-                dashboard' =
-                    Dashboard.update msg' model.dashboard
+                dashboard =
+                    Dashboard.update subMsg model.dashboard
             in
-                ( { model | dashboard = dashboard' }, Cmd.none )
+                ( { model | dashboard = dashboard }, Cmd.none )
 
-        SettingsMsg msg' ->
+        SettingsMsg subMsg ->
             let
-                ( settings', cmd ) =
-                    Settings.update msg' model.settings
+                ( settings, cmd ) =
+                    Settings.update subMsg model.settings
             in
-                ( { model | settings = settings' }, Cmd.map SettingsMsg cmd )
+                ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
 
-        AccountMsg msg' ->
+        AccountMsg subMsg ->
             let
-                ( account', cmd ) =
-                    Account.update msg' model.account
+                ( account, cmd ) =
+                    Account.update subMsg model.account
             in
-                ( { model | account = account' }, Cmd.map AccountMsg cmd )
+                ( { model | account = account }, Cmd.map AccountMsg cmd )
 
-        HelpMsg msg' ->
+        HelpMsg subMsg ->
             let
-                ( help', cmd ) =
-                    Help.update msg' model.help
+                ( help, cmd ) =
+                    Help.update subMsg model.help
             in
-                ( { model | help = help' }, Cmd.map HelpMsg cmd )
+                ( { model | help = help }, Cmd.map HelpMsg cmd )
 
 
 
