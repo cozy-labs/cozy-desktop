@@ -1,5 +1,5 @@
 fs        = require 'fs-extra'
-path      = require 'path-extra'
+path      = require 'path'
 urlParser = require 'url'
 log       = require('printit')
     prefix: 'Config        '

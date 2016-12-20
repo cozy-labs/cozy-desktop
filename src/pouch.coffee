@@ -2,7 +2,7 @@ PouchDB = require 'pouchdb'
 async   = require 'async'
 fs      = require 'fs-extra'
 isEqual = require 'lodash.isequal'
-path    = require 'path-extra'
+path    = require 'path'
 log     = require('printit')
     prefix: 'Local Pouchdb '
     date: true

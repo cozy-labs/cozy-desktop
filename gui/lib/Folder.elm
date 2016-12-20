@@ -17,8 +17,8 @@ type alias Model =
 
 
 init : String -> Model
-init folder' =
-    { folder = folder'
+init folder =
+    { folder = folder
     , error = ""
     }
 
@@ -48,11 +48,11 @@ update msg model =
         ChooseFolder ->
             ( model, chooseFolder () )
 
-        FillFolder folder' ->
-            ( { model | folder = folder', error = "" }, Cmd.none )
+        FillFolder folder ->
+            ( { model | folder = folder, error = "" }, Cmd.none )
 
-        SetError error' ->
-            ( { model | error = error' }, Cmd.none )
+        SetError error ->
+            ( { model | error = error }, Cmd.none )
 
         StartSync ->
             ( model, startSync model.folder )

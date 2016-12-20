@@ -52,8 +52,8 @@ update msg model =
     case
         msg
     of
-        FillAddress address' ->
-            ( { address = address', error = "", busy = False }, Cmd.none, Nothing )
+        FillAddress address ->
+            ( { address = address, error = "", busy = False }, Cmd.none, Nothing )
 
         PingCozy ->
             if model.address == "" then
@@ -64,12 +64,11 @@ update msg model =
         Pong Nothing ->
             setError model "Address No cozy instance at this address!"
 
-        Pong (Just address') ->
-            let
-                model' =
-                    { model | address = address', error = "", busy = False }
-            in
-                ( model', Cmd.none, Just address' )
+        Pong (Just address) ->
+            ( { model | address = address, error = "", busy = False }
+            , Cmd.none
+            , Just address
+            )
 
 
 

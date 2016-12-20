@@ -1,7 +1,7 @@
 async     = require 'async'
 fs        = require 'fs-extra'
 os        = require 'os'
-path      = require 'path-extra'
+path      = require 'path'
 readdirp  = require 'readdirp'
 url       = require 'url'
 filterSDK = require('cozy-device-sdk').filteredReplication
@@ -44,7 +44,7 @@ class App
     # basePath is the directory where the config and pouch are saved
     constructor: (basePath) ->
         @lang = 'fr'
-        basePath ?= path.homedir()
+        basePath ?= os.homedir()
         basePath  = path.resolve basePath
         @basePath = path.join basePath, '.cozy-desktop'
         @config = new Config @basePath

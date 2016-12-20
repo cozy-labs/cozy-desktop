@@ -1,7 +1,6 @@
 port module Main exposing (..)
 
 import Html exposing (Html)
-import Html.App as Html
 import Dict exposing (Dict)
 import Json.Decode as Json
 import Time exposing (Time)
@@ -104,26 +103,26 @@ port restart : Bool -> Cmd msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        WizardMsg msg' ->
+        WizardMsg subMsg ->
             let
-                ( wizard', cmd ) =
-                    Wizard.update msg' model.wizard
+                ( wizard_, cmd ) =
+                    Wizard.update subMsg model.wizard
             in
-                ( { model | wizard = wizard' }, Cmd.map WizardMsg cmd )
+                ( { model | wizard = wizard_ }, Cmd.map WizardMsg cmd )
 
         SyncStart info ->
             let
-                ( twopanes', _ ) =
+                ( twopanes, _ ) =
                     TwoPanes.update (TwoPanes.FillAddressAndDevice info) model.twopanes
             in
-                ( { model | page = TwoPanesPage, twopanes = twopanes' }, Cmd.none )
+                ( { model | page = TwoPanesPage, twopanes = twopanes }, Cmd.none )
 
-        TwoPanesMsg msg' ->
+        TwoPanesMsg subMsg ->
             let
-                ( twopanes', cmd ) =
-                    TwoPanes.update msg' model.twopanes
+                ( twopanes, cmd ) =
+                    TwoPanes.update subMsg model.twopanes
             in
-                ( { model | twopanes = twopanes' }, Cmd.map TwoPanesMsg cmd )
+                ( { model | twopanes = twopanes }, Cmd.map TwoPanesMsg cmd )
 
         Unlink ->
             ( { model | page = UnlinkedPage }, Cmd.none )

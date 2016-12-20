@@ -81,28 +81,28 @@ update msg model =
 
         Transfer file ->
             let
-                files' =
+                files =
                     file
                         :: (List.filter (samePath file >> not) model.files)
                         |> List.take maxActivities
 
-                status' =
+                status =
                     Sync file.filename
             in
-                { model | status = status', files = files' }
+                { model | status = status, files = files }
 
         Remove file ->
             let
-                files' =
+                files =
                     List.filter (samePath file >> not) model.files
             in
-                { model | files = files' }
+                { model | files = files }
 
         SetError error ->
             { model | status = Error error }
 
-        Tick now' ->
-            { model | now = now' }
+        Tick now ->
+            { model | now = now }
 
         ShowMore ->
             { model | page = model.page + 1 }

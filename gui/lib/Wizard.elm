@@ -1,7 +1,6 @@
 module Wizard exposing (..)
 
 import Html exposing (..)
-import Html.App as Html
 import Html.Attributes exposing (..)
 import Focus exposing (focus)
 import Helpers exposing (Helpers)
@@ -30,11 +29,11 @@ type alias Model =
 
 
 init : String -> Model
-init folder' =
+init folder =
     { page = WelcomePage
     , address = Address.init
     , password = Password.init
-    , folder = Folder.init folder'
+    , folder = Folder.init folder
     }
 
 
@@ -56,67 +55,67 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
-        WelcomeMsg msg' ->
+        WelcomeMsg subMsg ->
             case
-                msg'
+                subMsg
             of
                 Welcome.NextPage ->
                     ( { model | page = AddressPage }, focus ".wizard__address" )
 
-        AddressMsg msg' ->
+        AddressMsg subMsg ->
             let
-                ( address', cmd, nav ) =
-                    Address.update msg' model.address
+                ( address, subCmd, nav ) =
+                    Address.update subMsg model.address
             in
                 case
                     nav
                 of
                     Nothing ->
                         let
-                            ( password', _, _ ) =
+                            ( password, _, _ ) =
                                 Password.update (Password.SetError "") model.password
 
-                            model' =
-                                { model | address = address', password = password' }
+                            newModel =
+                                { model | address = address, password = password }
                         in
-                            ( model', Cmd.map AddressMsg cmd )
+                            ( newModel, Cmd.map AddressMsg subCmd )
 
-                    Just address'' ->
+                    Just addressUrl ->
                         let
-                            ( password', _, _ ) =
-                                Password.update (Password.FillAddress address'') model.password
+                            ( password, _, _ ) =
+                                Password.update (Password.FillAddress addressUrl) model.password
 
-                            model' =
-                                { model | address = address', password = password', page = PasswordPage }
+                            newModel =
+                                { model | address = address, password = password, page = PasswordPage }
 
-                            cmd' =
+                            cmd =
                                 focus ".wizard__password"
                         in
-                            ( model', cmd' )
+                            ( newModel, cmd )
 
-        PasswordMsg msg' ->
+        PasswordMsg subMsg ->
             let
-                ( password', cmd, nav ) =
-                    Password.update msg' model.password
+                ( password, cmd, nav ) =
+                    Password.update subMsg model.password
             in
                 case
                     nav
                 of
                     Password.NextPage ->
-                        ( { model | password = password', page = FolderPage }, Cmd.none )
+                        ( { model | password = password, page = FolderPage }, Cmd.none )
 
                     Password.PrevPage ->
-                        ( { model | password = password', page = AddressPage }, Cmd.none )
+                        ( { model | password = password, page = AddressPage }, Cmd.none )
 
                     Password.None ->
-                        ( { model | password = password' }, Cmd.map PasswordMsg cmd )
+                        ( { model | password = password }, Cmd.map PasswordMsg cmd )
 
-        FolderMsg msg' ->
+        FolderMsg subMsg ->
             let
-                ( folder', cmd ) =
-                    Folder.update msg' model.folder
+                ( folder, cmd ) =
+                    Folder.update subMsg model.folder
             in
-                ( { model | folder = folder' }, Cmd.map FolderMsg cmd )
+                ( { model | folder = folder }, Cmd.map FolderMsg cmd )
 
 
 
