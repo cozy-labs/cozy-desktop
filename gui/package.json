@@ -38,6 +38,7 @@
     "watch": "env WATCH=true npm run start & npm run watch:css & npm run watch:elm & npm run watch:js",
     "watch:css": "stylus -m -u cozy-ui/lib/stylus -w styles/app.styl -o app/",
     "watch:elm": "chokidar 'lib/**/*.elm' -c 'npm run build:elm'",
-    "watch:js": "chokidar app/main.js app/ports.js -c 'npm run lint'"
+    "watch:js": "chokidar app/main.js app/ports.js -c 'npm run lint'",
+    "elm-upgrade": "npm install --save-dev elm@latest elm-upgrade@latest && ./node_modules/.bin/elm-upgrade"
   }
 }
