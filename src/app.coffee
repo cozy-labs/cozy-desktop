@@ -1,7 +1,7 @@
 async     = require 'async'
 fs        = require 'fs-extra'
 os        = require 'os'
-path      = require 'path-extra'
+path      = require 'path'
 readdirp  = require 'readdirp'
 url       = require 'url'
 filterSDK = require('cozy-device-sdk').filteredReplication

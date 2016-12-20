@@ -3,7 +3,7 @@
 const electron = require('electron')
 const {ipcRenderer, remote, shell} = electron
 
-const path = remote.require('path-extra')
+const path = remote.require('path')
 const os = require('os')
 const pkg = remote.require('./package.json')
 const defaultDir = path.join(os.homedir(), 'Cozy')
