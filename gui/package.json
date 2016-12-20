@@ -7,7 +7,9 @@
     "app-category-type": "public.app-category.productivity",
     "iconUrl": "https://cozy.io/en/images/desktop/icon.ico",
     "linux": {
-      "target": ["deb"]
+      "target": [
+        "deb"
+      ]
     }
   },
   "devDependencies": {
