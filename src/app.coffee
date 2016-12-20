@@ -44,7 +44,7 @@ class App
     # basePath is the directory where the config and pouch are saved
     constructor: (basePath) ->
         @lang = 'fr'
-        basePath ?= path.homedir()
+        basePath ?= os.homedir()
         basePath  = path.resolve basePath
         @basePath = path.join basePath, '.cozy-desktop'
         @config = new Config @basePath
