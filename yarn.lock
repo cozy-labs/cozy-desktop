@@ -418,9 +418,13 @@ coffee-coverage@^1.0.1:
     minimatch "^3.0.0"
     pkginfo ">=0.2.3"
 
-coffee-script@1.12.1, coffee-script@>=1.6.2:
+coffee-script@>=1.6.2:
   version "1.12.1"
   resolved "https://registry.yarnpkg.com/coffee-script/-/coffee-script-1.12.1.tgz#67b8dfec64f0620f82f39583f04fbdd9f01e9cfd"
+
+coffee-script@^1.12.2:
+  version "1.12.2"
+  resolved "https://registry.yarnpkg.com/coffee-script/-/coffee-script-1.12.2.tgz#0d4cbdee183f650da95419570c4929d08ef91376"
 
 coffee-script@~1.11.0:
   version "1.11.1"
@@ -2590,7 +2594,7 @@ pouchdb-promise@5.4.0:
   dependencies:
     lie "3.0.4"
 
-pouchdb-promise@5.4.3:
+pouchdb-promise@5.4.3, pouchdb-promise@^5.4.0, pouchdb-promise@^5.4.3:
   version "5.4.3"
   resolved "https://registry.yarnpkg.com/pouchdb-promise/-/pouchdb-promise-5.4.3.tgz#331d670b1989d5a03f268811214f27f54150cb2b"
   dependencies:
@@ -2608,12 +2612,6 @@ pouchdb-promise@^0.0.0:
   dependencies:
     bluebird "~1.2.4"
     lie "~2.7.4"
-
-pouchdb-promise@^5.4.0, pouchdb-promise@^5.4.3:
-  version "5.4.5"
-  resolved "https://registry.yarnpkg.com/pouchdb-promise/-/pouchdb-promise-5.4.5.tgz#5c2a69759141eb73be1e172e522fd84da2e0752e"
-  dependencies:
-    lie "3.0.4"
 
 pouchdb-replicator@2.1.3:
   version "2.1.3"
@@ -3232,7 +3230,7 @@ secure-random@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/secure-random/-/secure-random-1.1.1.tgz#0880f2d8c5185f4bcb4684058c836b4ddb07145a"
 
-"semver-set@github:voxpelli/semver-set#7fc070b53130604a9749a642e496ded9aecad98a":
+semver-set@voxpelli/semver-set#7fc070b53130604a9749a642e496ded9aecad98a:
   version "0.1.1"
   resolved "https://codeload.github.com/voxpelli/semver-set/tar.gz/7fc070b53130604a9749a642e496ded9aecad98a"
   dependencies:
