@@ -12,10 +12,7 @@
   "bin": {
     "cozy-desktop": "bin/cozy-desktop"
   },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/cozy-labs/cozy-desktop.git"
-  },
+  "repository": "git://github.com/cozy-labs/cozy-desktop.git",
   "keywords": [
     "desktop",
     "data",
