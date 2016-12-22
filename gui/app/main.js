@@ -101,7 +101,8 @@ const openCozyFolder = () => {
 const buildAppMenu = () => {
   const template = [
     {
-      label: translate('AppMenu Edit'), submenu: [
+      label: translate('AppMenu Edit'),
+      submenu: [
         { label: translate('AppMenu Undo'), accelerator: 'CmdOrCtrl+Z', role: 'undo' },
         { label: translate('AppMenu Redo'), accelerator: 'Shift+CmdOrCtrl+Z', role: 'redo' },
         { type: 'separator' },
@@ -113,7 +114,9 @@ const buildAppMenu = () => {
       ]
     },
     {
-      label: translate('AppMenu Window'), role: 'window', submenu: [
+      label: translate('AppMenu Window'),
+      role: 'window',
+      submenu: [
         { label: translate('AppMenu Minimize'), accelerator: 'CmdOrCtrl+M', role: 'minimize' },
         { label: translate('AppMenu Close'), accelerator: 'CmdOrCtrl+W', role: 'close' }
       ]
@@ -122,7 +125,8 @@ const buildAppMenu = () => {
 
   if (process.platform === 'darwin') {
     template.unshift({
-      label: 'Cozy Desktop', submenu: [
+      label: 'Cozy Desktop',
+      submenu: [
         { label: translate('AppMenu Hide Cozy Desktop'), accelerator: 'Command+H', role: 'hide' },
         { label: translate('AppMenu Hide Others'), accelerator: 'Command+Alt+H', role: 'hideothers' },
         { label: translate('AppMenu Show All'), role: 'unhide' },
