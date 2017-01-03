@@ -78,7 +78,7 @@ class Sync {
                 log.error(err);
                 return callback(err);
             } else {
-                return this.apply(change, function(err) {
+                return this.apply(change, (err) => {
                     if (this.stopped) { err = null; }
                     return callback(err);
                 });
