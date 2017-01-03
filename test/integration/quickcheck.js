@@ -1,11 +1,3 @@
-// Disable this test on travis because it's not simple as green or red.
-// It can fail for reasons other than a bug in cozy-desktop.
-// For example, it can be that the test has not waited long enough after a
-// conflict between 2 folders with many files. Cozy-desktop will manage the
-// situation but it takes several minutes for that.
-if (process.env.TRAVIS) { return; }
-
-
 import child from 'child_process';
 import clone from 'lodash.clone';
 import del from 'del';
@@ -263,6 +255,16 @@ let makeOperations = function(timeout, callback) {
 describe('Property based testing', function() {
     this.slow(1000);
     this.timeout(30000);
+
+    // Disable this test on travis because it's not simple as green or red.
+    // It can fail for reasons other than a bug in cozy-desktop.
+    // For example, it can be that the test has not waited long enough after a
+    // conflict between 2 folders with many files. Cozy-desktop will manage the
+    // situation but it takes several minutes for that.
+    if (process.env.TRAVIS) {
+        it('is unstable on travis');
+        return;
+    }
 
     before(Cozy.ensurePreConditions);
     before(Files.deleteAll);
