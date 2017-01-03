@@ -1,10 +1,13 @@
 Tests
 =====
 
-Make sure to have dev dependencies installed:
+Dependencies are managed with [Yarn](https://yarnpkg.com/), so you'll
+have to [install it](https://yarnpkg.com/en/docs/install) first.
+
+Then, to install dev dependencies:
 
 ```bash
-npm install
+yarn
 ```
 
 We use [`mocha`][1] for testing cozy-desktop, the options are in
