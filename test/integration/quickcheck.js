@@ -285,7 +285,7 @@ describe('Property based testing', function() {
         })
     );
 
-    it('spawns two instances of cozy-desktop', done =>
+    it('spawns two instances of cozy-desktop', function(done) {
         spawnCozyDesktop(0, one => {
             this.one = one;
             return spawnCozyDesktop(1, two => {
@@ -295,7 +295,7 @@ describe('Property based testing', function() {
             );
         }
         )
-    );
+    });
 
     it('makes some operations', done => makeOperations(10000, done));
 

@@ -147,7 +147,7 @@ describe("Sync", function() {
             );
         });
 
-        it('gives only one change', done =>
+        it('gives only one change', function(done) {
             async.eachSeries([2, 3, 4, 5], (i, callback) => {
                 return pouchHelpers.createFile(this.pouch, i, callback);
             }
@@ -162,7 +162,7 @@ describe("Sync", function() {
                 , 10);
             }
             )
-        );
+        });
 
         it('filters design doc changes', function(done) {
             let query = `\

@@ -52,7 +52,7 @@ describe('Pull', function() {
         name: faker.company.bsAdjective()
     };
 
-    it('creates a folder on the local fs from the remote cozy', done =>
+    it('creates a folder on the local fs from the remote cozy', function(done) {
         Files.createFolder(folder, (err, created) => {
             folder.id = created.id;
             let folderPath = path.join(this.syncPath, folder.path, folder.name);
@@ -63,7 +63,7 @@ describe('Pull', function() {
             });
         }
         )
-    );
+    });
 
     it('renames the folder', function(done) {
         let oldPath = path.join(this.syncPath, folder.name);
@@ -94,13 +94,13 @@ describe('Pull', function() {
         );
     });
 
-    it('removes the folder', done =>
+    it('removes the folder', function(done) {
         Files.removeFolder(folder, (err, removed) => {
             let folderPath = path.join(this.syncPath, folder.path, folder.name);
             return waitDisappear(folderPath, done);
         }
         )
-    );
+    });
 
     it('creates a file on the local fs from the remote cozy', function(done) {
         let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon.jpg');
@@ -143,11 +143,11 @@ describe('Pull', function() {
         );
     });
 
-    return it('removes the file', done =>
+    return it('removes the file', function(done) {
         Files.removeFile(file, (err, removed) => {
             let filePath = path.join(this.syncPath, file.path, file.name);
             return waitDisappear(filePath, done);
         }
         )
-    );
+    });
 });
