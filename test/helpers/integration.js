@@ -9,13 +9,14 @@ import should from 'should';
 
 import App from '../../src/app';
 import PouchDB from 'pouchdb';
+import password from './password';
 
 
 helpers = {
     scheme: process.env.SCHEME || 'http',
     host: process.env.HOST || 'localhost',
     port: process.env.PORT || 9104,
-    password: require('./password'),
+    password: password,
     deviceName: `test-${faker.internet.userName()}`,
     fixturesDir: path.join(__dirname, '..', 'fixtures'),
     parentDir: process.env.COZY_DESKTOP_DIR || 'tmp'
