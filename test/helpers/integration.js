@@ -11,7 +11,7 @@ import App from '../../src/app';
 import PouchDB from 'pouchdb';
 
 
-export default helpers = {
+helpers = {
     scheme: process.env.SCHEME || 'http',
     host: process.env.HOST || 'localhost',
     port: process.env.PORT || 9104,
@@ -23,7 +23,7 @@ export default helpers = {
 
 helpers.url = `${helpers.scheme}://${helpers.host}:${helpers.port}/`;
 
-export function ensurePreConditions(done) {
+helpers.ensurePreConditions = function ensurePreConditions(done) {
     let ports = [5984, 9104, 9101, 9121];
     return async.map(ports, function(port, cb) {
         let client = request.newClient(`http://${helpers.host}:${port}`);
@@ -41,7 +41,7 @@ export function ensurePreConditions(done) {
 }
 
 
-export function registerDevice(done) {
+helpers.registerDevice = function registerDevice(done) {
     this.syncPath = path.resolve(`${helpers.parentDir}/${+new Date}`);
     fs.ensureDirSync(this.syncPath);
     this.app = new App(this.syncPath);
@@ -57,7 +57,7 @@ export function registerDevice(done) {
 }
 
 
-export function clean(done) {
+helpers.clean = function clean(done) {
     // For debug:
     // PouchDB.debug.disable()
     return this.app.removeRemote(helpers.deviceName, err => {
@@ -88,26 +88,28 @@ let start = function(app, mode, done) {
     return setTimeout(done, 1500);
 };
 
-export function pull(done) {
+helpers.pull = function pull(done) {
     return start(this.app, 'pull', done);
 }
 
-export function push(done) {
+helpers.push = function push(done) {
     return start(this.app, 'push', done);
 }
 
-export function sync(done) {
+helpers.sync = function sync(done) {
     return start(this.app, 'full', done);
 }
 
 
-export function fetchRemoteMetadata(done) {
+helpers.fetchRemoteMetadata = function fetchRemoteMetadata(done) {
     if (!this.app.sync) { this.app.instanciate(); }
     return this.app.remote.watcher.listenToChanges({live: false}, function(err) {
         should.not.exist(err);
         return done();
     });
 }
+
+export default helpers;
 
 function __guard__(value, transform) {
   return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined;
