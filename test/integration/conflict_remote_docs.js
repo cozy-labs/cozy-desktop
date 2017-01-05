@@ -43,7 +43,7 @@ describe('Conflict between remote docs with distinct cases', function() {
                     id: created.id,
                     size: fs.statSync(fixturePath).size
                 };
-                return done();
+                done();
             });
         });
 
@@ -56,7 +56,7 @@ describe('Conflict between remote docs with distinct cases', function() {
                     id: created.id,
                     size: fs.statSync(fixturePath).size
                 };
-                return done();
+                done();
             });
         });
 
@@ -117,7 +117,7 @@ describe('Conflict between remote docs with distinct cases', function() {
                 parts.length.should.equal(2);
                 parts[0].should.equal(upper.name);
                 names[1].should.equal(lower.name);
-                return done();
+                done();
             })
         );
     });
@@ -155,7 +155,7 @@ describe('Conflict between remote docs with distinct cases', function() {
                         id: created.id,
                         size: fs.statSync(fixturePath).size
                     };
-                    return done();
+                    done();
                 });
             })
         );
@@ -169,7 +169,7 @@ describe('Conflict between remote docs with distinct cases', function() {
                     id: created.id,
                     size: fs.statSync(fixturePath).size
                 };
-                return done();
+                done();
             });
         });
 
@@ -210,7 +210,7 @@ describe('Conflict between remote docs with distinct cases', function() {
                     parts[0].should.equal(upper.name);
                     files[1].path.should.equal(upper.path);
                     files[1].size.should.equal(upper.remote.size);
-                    return done();
+                    done();
                 });
             })
         );

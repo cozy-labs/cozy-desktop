@@ -56,7 +56,7 @@ describe("RemoteWatcher Tests", function() {
             return this.watcher.onChange(doc, function(err) {
                 should.exist(err);
                 err.message.should.equal('Invalid path/name');
-                return done();
+                done();
             });
         });
 
@@ -72,7 +72,7 @@ describe("RemoteWatcher Tests", function() {
             return this.watcher.onChange(doc, err => {
                 this.watcher.putDoc.called.should.be.false();
                 this.watcher.putDoc.restore();
-                return done();
+                done();
             }
             );
         });
@@ -116,7 +116,7 @@ describe("RemoteWatcher Tests", function() {
                     }
                 });
                 args[1].should.not.have.properties(['_rev', 'path', 'name']);
-                return done();
+                done();
             }
             );
         });
@@ -158,7 +158,7 @@ describe("RemoteWatcher Tests", function() {
                     }
                 });
                 args[1].should.not.have.properties(['_rev', 'path', 'name']);
-                return done();
+                done();
             }
             );
         });
@@ -200,7 +200,7 @@ describe("RemoteWatcher Tests", function() {
                     }
                 });
                 args[1].should.not.have.properties(['_rev', 'path', 'name']);
-                return done();
+                done();
             }
             );
         });
@@ -253,7 +253,7 @@ describe("RemoteWatcher Tests", function() {
                     }
                 });
                 dst.should.not.have.properties(['_rev', 'path', 'name']);
-                return done();
+                done();
             }
             );
         });
@@ -304,7 +304,7 @@ describe("RemoteWatcher Tests", function() {
                     }
                 });
                 dst.should.not.have.properties(['_rev', 'path', 'name']);
-                return done();
+                done();
             }
             );
         });
@@ -350,7 +350,7 @@ describe("RemoteWatcher Tests", function() {
                     }
                 });
                 args[1].should.not.have.properties(['_rev', 'path', 'name']);
-                return done();
+                done();
             }
             );
         });
@@ -367,7 +367,7 @@ describe("RemoteWatcher Tests", function() {
                 this.prep.deleteDoc.called.should.be.true();
                 let id = this.prep.deleteDoc.args[0][1].path;
                 id.should.equal('my-folder/file-1');
-                return done();
+                done();
             }
             );
         });
@@ -398,7 +398,7 @@ describe("RemoteWatcher Tests", function() {
                         _rev: "1-7786acf12a11fad6ad1eeb861953e0d8"
                     }
                 });
-                return done();
+                done();
             }
             );
         });
@@ -428,7 +428,7 @@ describe("RemoteWatcher Tests", function() {
                             should.not.exist(actual.remote);
                             actual._id.should.equal(doc._id);
                             actual.sides.local.should.equal(2);
-                            return done();
+                            done();
                         });
                     }
                     );

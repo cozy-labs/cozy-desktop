@@ -52,7 +52,7 @@ describe("Pouch", function() {
                             docType: 'folder',
                             tags: []});
                     }
-                    return done();
+                    done();
                 });
             })
         );
@@ -66,7 +66,7 @@ describe("Pouch", function() {
                     docs.length.should.be.equal(1);
                     docs[0]._id.should.equal(_id);
                     docs[0].checksum.should.equal(checksum);
-                    return done();
+                    done();
                 });
             })
         );
@@ -86,7 +86,7 @@ describe("Pouch", function() {
                             docType: 'folder',
                             tags: []});
                     }
-                    return done();
+                    done();
                 });
             });
 
@@ -98,7 +98,7 @@ describe("Pouch", function() {
                         _id: 'my-folder',
                         docType: 'folder',
                         tags: []});
-                    return done();
+                    done();
                 });
             });
 
@@ -106,7 +106,7 @@ describe("Pouch", function() {
                 return this.pouch.byPath('_design', function(err, docs) {
                     should.not.exist(err);
                     docs.length.should.be.equal(0);
-                    return done();
+                    done();
                 });
             });
         });
@@ -126,7 +126,7 @@ describe("Pouch", function() {
                             docType: 'folder',
                             tags: []});
                     }
-                    return done();
+                    done();
                 });
             });
 
@@ -148,7 +148,7 @@ describe("Pouch", function() {
                             docType: 'folder',
                             tags: []});
                     }
-                    return done();
+                    done();
                 });
             });
         });
@@ -161,7 +161,7 @@ describe("Pouch", function() {
                     doc.remote._id.should.equal(id);
                     should.exist(doc._id);
                     should.exist(doc.docType);
-                    return done();
+                    done();
                 });
             });
 
@@ -170,7 +170,7 @@ describe("Pouch", function() {
                 return this.pouch.byRemoteId(id, function(err, doc) {
                     should.exist(err);
                     err.status.should.equal(404);
-                    return done();
+                    done();
                 });
             });
         });
@@ -197,7 +197,7 @@ function (doc) {
                         for (let i = 1; i <= 3; i++) {
                             docs[i-1].docType.should.equal('file');
                         }
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -214,7 +214,7 @@ function (doc) {
                                 should.not.exist(err);
                                 designDoc._id.should.equal(was._id);
                                 designDoc._rev.should.equal(was._rev);
-                                return done();
+                                done();
                             });
                         }
                         );
@@ -237,7 +237,7 @@ function (doc) {
                                 designDoc._id.should.equal(was._id);
                                 designDoc._rev.should.not.equal(was._rev);
                                 designDoc.views.file.map.should.equal(newQuery);
-                                return done();
+                                done();
                             });
                         }
                         );
@@ -256,7 +256,7 @@ function (doc) {
                     return this.pouch.db.get('_design/byPath', function(err, doc) {
                         should.not.exist(err);
                         should.exist(doc);
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -270,7 +270,7 @@ function (doc) {
                     return this.pouch.db.get('_design/byChecksum', function(err, doc) {
                         should.not.exist(err);
                         should.exist(doc);
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -284,7 +284,7 @@ function (doc) {
                     return this.pouch.db.get('_design/byRemoteId', function(err, doc) {
                         should.not.exist(err);
                         should.exist(doc);
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -309,7 +309,7 @@ function (doc) {
                             should.not.exist(err);
                             return this.pouch.getAll('folder', function(err, res) {
                                 should.exist(err);
-                                return done();
+                                done();
                             });
                         }
                         );
@@ -355,7 +355,7 @@ function (doc) {
                                     should.not.exist(err);
                                     doc._id.should.equal(id);
                                     doc.tags.join(',').should.equal('yipee');
-                                    return done();
+                                    done();
                                 });
                             }
                             );
@@ -376,7 +376,7 @@ function (doc) {
                 return this.pouch.getLocalSeq(function(err, seq) {
                     should.not.exist(err);
                     seq.should.equal(0);
-                    return done();
+                    done();
                 });
             })
         );
@@ -393,7 +393,7 @@ function (doc) {
                             return this.pouch.getLocalSeq(function(err, seq) {
                                 should.not.exist(err);
                                 seq.should.equal(22);
-                                return done();
+                                done();
                             });
                         }
                         );
@@ -410,7 +410,7 @@ function (doc) {
                 return this.pouch.getRemoteSeq(function(err, seq) {
                     should.not.exist(err);
                     seq.should.equal(0);
-                    return done();
+                    done();
                 });
             })
         );
@@ -427,7 +427,7 @@ function (doc) {
                             return this.pouch.getRemoteSeq(function(err, seq) {
                                 should.not.exist(err);
                                 seq.should.equal(32);
-                                return done();
+                                done();
                             });
                         }
                         );
@@ -440,7 +440,7 @@ function (doc) {
             it('can be called multiple times in parallel', function(done) {
                 return async.each(__range__(1, 100, true), this.pouch.setRemoteSeq, function(err) {
                     should.not.exist(err);
-                    return done();
+                    done();
                 });
             });
         });
@@ -494,7 +494,7 @@ function (doc) {
             }
             );
             jsv.assert(property, {tests: 10}).then(function(res) {
-                if (res === true) { return done(); } else { return done(res); }
+                if (res === true) { done(); } else { return done(res); }
             });
         });
     });

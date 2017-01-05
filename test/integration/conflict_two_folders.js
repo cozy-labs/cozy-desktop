@@ -78,7 +78,7 @@ describe('Conflict between two folders', function() {
                 local.name.should.equal(localChild.name);
                 remote.path.should.equal(`/${remoteChild.path}`);
                 remote.name.should.equal(remoteChild.name);
-                return done();
+                done();
             })
         );
     });
@@ -150,7 +150,7 @@ describe('Conflict between two folders', function() {
                 local.name.should.equal(localChild.name);
                 remote.path.should.equal(`/${remoteChild.path}`);
                 remote.name.should.equal(remoteChild.name);
-                return done();
+                done();
             })
         );
     });

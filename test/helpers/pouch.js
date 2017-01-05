@@ -12,7 +12,7 @@ export default {
     cleanDatabase(done) {
         this.pouch.db.destroy(() => {
             this.pouch = null;
-            return done();
+            done();
         }
         );
     },

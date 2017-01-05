@@ -31,7 +31,7 @@ describe('Image from mobile', function() {
         return Files.uploadFile(file, fixturePath, function(err, created) {
             file.remote = {id: created.id};
             file.size = fs.statSync(fixturePath).size;
-            return done();
+            done();
         });
     });
 
@@ -70,7 +70,7 @@ describe('Image from mobile', function() {
             remote.size.should.equal(file.size);
             remote.checksum.should.equal(file.checksum);
             remote.tags.should.eql(['foo', 'bar']);
-            return done();
+            done();
         })
     );
 
@@ -79,7 +79,7 @@ describe('Image from mobile', function() {
         return client.get(`cozy/${file.remote.id}`, function(err, res, body) {
             should.not.exist(err);
             body.localPath.should.equal(localPath);
-            return done();
+            done();
         });
     });
 });

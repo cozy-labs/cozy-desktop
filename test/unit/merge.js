@@ -43,7 +43,7 @@ describe('Merge', function() {
                     }
                     res.should.have.properties(doc);
                     res.sides.local.should.equal(1);
-                    return done();
+                    done();
                 });
             }
             );
@@ -86,7 +86,7 @@ describe('Merge', function() {
                         res.class.should.equal(was.class);
                         res.mime.should.equal(was.mime);
                         res.sides.local.should.equal(2);
-                        return done();
+                        done();
                     }
                     );
                 }
@@ -117,7 +117,7 @@ describe('Merge', function() {
                     }
                     res.should.have.properties(doc);
                     res.sides.local.should.equal(1);
-                    return done();
+                    done();
                 });
             }
             );
@@ -160,7 +160,7 @@ describe('Merge', function() {
                         res.class.should.equal(was.class);
                         res.mime.should.equal(was.mime);
                         res.sides.local.should.equal(2);
-                        return done();
+                        done();
                     }
                     );
                 }
@@ -185,7 +185,7 @@ describe('Merge', function() {
                         should.not.exist(res.class);
                         should.not.exist(res.mime);
                         res.sides.local.should.equal(3);
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -213,7 +213,7 @@ describe('Merge', function() {
                     should.not.exist(err);
                     res.should.have.properties(doc);
                     res.sides.local.should.equal(1);
-                    return done();
+                    done();
                 });
             }
             );
@@ -261,7 +261,7 @@ describe('Merge', function() {
                         return this.pouch.db.get(was._id, function(err, res) {
                             should.exist(err);
                             err.status.should.equal(404);
-                            return done();
+                            done();
                         });
                     }
                     );
@@ -308,7 +308,7 @@ describe('Merge', function() {
                         should.exist(res.size);
                         should.exist(res.class);
                         should.exist(res.mime);
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -352,7 +352,7 @@ describe('Merge', function() {
                     this.cancel();
                     info.id.should.equal(was._id);
                     info.doc.moveTo.should.equal(doc._id);
-                    return done();
+                    done();
                 });
                 return this.merge.moveFile(this.side, clone(doc), clone(was), err => should.not.exist(err));
             }
@@ -399,7 +399,7 @@ describe('Merge', function() {
                         return this.pouch.db.get(was._id, function(err, res) {
                             should.exist(err);
                             err.status.should.equal(404);
-                            return done();
+                            done();
                         });
                     }
                     );
@@ -443,7 +443,7 @@ describe('Merge', function() {
                     this.cancel();
                     info.id.should.equal(was._id);
                     info.doc.moveTo.should.equal(doc._id);
-                    return done();
+                    done();
                 });
                 return this.merge.moveFolder(this.side, clone(doc), clone(was), err => should.not.exist(err));
             }
@@ -513,7 +513,7 @@ describe('Merge', function() {
                     should.not.exist(err);
                     return this.pouch.db.get(doc._id, function(err) {
                         err.status.should.equal(404);
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -538,7 +538,7 @@ describe('Merge', function() {
                     should.not.exist(err);
                     return this.pouch.db.get(doc._id, function(err, res) {
                         err.status.should.equal(404);
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -571,7 +571,7 @@ describe('Merge', function() {
                         should.not.exist(err);
                         return this.pouch.byPath('FOO/TO-REMOVE', function(err, docs) {
                             docs.length.should.be.equal(0);
-                            return done();
+                            done();
                         });
                     }
                     );
@@ -603,7 +603,7 @@ describe('Merge', function() {
                         for (let row of Array.from(res.rows)) {
                             row.id.should.not.match(/^NESTED/i);
                         }
-                        return done();
+                        done();
                     });
                 }
                 );

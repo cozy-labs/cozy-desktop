@@ -79,7 +79,7 @@ describe('Cancel', function() {
                     should.not.exist(err);
                     return waitAppear(twoPath, function() {
                         fs.existsSync(onePath).should.be.false();
-                        return done();
+                        done();
                     });
                 })
             
@@ -92,7 +92,7 @@ describe('Cancel', function() {
                     should.not.exist(err);
                     return waitAppear(onePath, function() {
                         fs.existsSync(twoPath).should.be.false();
-                        return done();
+                        done();
                     });
                 })
             

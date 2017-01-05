@@ -59,7 +59,7 @@ describe('Pull', function() {
             return waitAppear(folderPath, function() {
                 let stats = fs.statSync(folderPath);
                 stats.isDirectory().should.be.true();
-                return done();
+                done();
             });
         }
         )
@@ -72,7 +72,7 @@ describe('Pull', function() {
             let folderPath = path.join(this.syncPath, folder.path, folder.name);
             return waitAppear(folderPath, function() {
                 fs.existsSync(oldPath).should.be.false();
-                return done();
+                done();
             });
         }
         );
@@ -86,7 +86,7 @@ describe('Pull', function() {
                 let folderPath = path.join(this.syncPath, folder.path, folder.name);
                 return waitAppear(folderPath, function() {
                     fs.existsSync(oldPath).should.be.false();
-                    return done();
+                    done();
                 });
             }
             );
@@ -124,7 +124,7 @@ describe('Pull', function() {
             let filePath = path.join(this.syncPath, file.path, file.name);
             return waitAppear(filePath, function() {
                 fs.existsSync(oldPath).should.be.false();
-                return done();
+                done();
             });
         }
         );
@@ -137,7 +137,7 @@ describe('Pull', function() {
             let filePath = path.join(this.syncPath, file.path, file.name);
             return waitAppear(filePath, function() {
                 fs.existsSync(oldPath).should.be.false();
-                return done();
+                done();
             });
         }
         );

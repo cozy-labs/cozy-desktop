@@ -70,7 +70,7 @@ describe('Remote', function() {
                     return stream.on('end', function() {
                         checksum.end();
                         checksum.read().should.equal(doc.checksum);
-                        return done();
+                        done();
                     });
                 });
             }
@@ -108,7 +108,7 @@ describe('Remote', function() {
                     });
                     should.exist(binaryDoc._attachments);
                     binaryDoc._attachments.file.length.should.equal(29865);
-                    return done();
+                    done();
                 });
             }
             );
@@ -124,7 +124,7 @@ describe('Remote', function() {
             return this.remote.uploadBinary(doc, function(err, binary) {
                 should.not.exist(err);
                 binary._id.should.equal(checksum);
-                return done();
+                done();
             });
         });
 
@@ -155,7 +155,7 @@ describe('Remote', function() {
                     return this.couch.get(created.id, function(err, binaryDoc) {
                         should.not.exist(err);
                         should.exist(binaryDoc._attachments);
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -302,7 +302,7 @@ describe('Remote', function() {
                     should.not.exist(err);
                     return this.couch.get(binary.id, function(err) {
                         err.status.should.equal(404);
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -340,7 +340,7 @@ describe('Remote', function() {
                             should.not.exist(err);
                             doc._id.should.equal(binary._id);
                             doc.checksum.should.equal(binary.checksum);
-                            return done();
+                            done();
                         });
                     }
                     );
@@ -418,7 +418,7 @@ describe('Remote', function() {
                         return this.couch.get(file.binary.file.id, function(err, binary) {
                             should.not.exist(err);
                             binary.checksum.should.equal(checksum);
-                            return done();
+                            done();
                         });
                     }
                     );
@@ -483,7 +483,7 @@ describe('Remote', function() {
                                 lastModification: lastModified,
                                 size: 36901
                             });
-                            return done();
+                            done();
                         });
                     }
                     );
@@ -516,7 +516,7 @@ describe('Remote', function() {
                         creationDate: doc.creationDate.toISOString(),
                         lastModification: doc.lastModification.toISOString()
                     });
-                    return done();
+                    done();
                 });
             }
             );
@@ -579,7 +579,7 @@ describe('Remote', function() {
                                 return this.couch.get(file.binary.file.id, function(err, binary) {
                                     should.not.exist(err);
                                     binary.checksum.should.equal(doc.checksum);
-                                    return done();
+                                    done();
                                 });
                             }
                             );
@@ -625,7 +625,7 @@ describe('Remote', function() {
                     return this.remote.overwriteFile(doc, old, function(err) {
                         should.exist(err);
                         err.message.should.equal('Invalid checksum');
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -676,7 +676,7 @@ describe('Remote', function() {
                             }
                         });
                         doc.remote._rev.should.equal(file._rev);
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -715,7 +715,7 @@ describe('Remote', function() {
                             docType: 'folder',
                             lastModification: doc.lastModification.toISOString()
                         });
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -741,7 +741,7 @@ describe('Remote', function() {
                         creationDate: doc.creationDate.toISOString(),
                         lastModification: doc.lastModification.toISOString()
                     });
-                    return done();
+                    done();
                 });
             }
             );
@@ -802,7 +802,7 @@ describe('Remote', function() {
                                 }
                             }
                         });
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -843,7 +843,7 @@ describe('Remote', function() {
                             docType: 'folder',
                             lastModification: doc.lastModification.toISOString()
                         });
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -873,7 +873,7 @@ describe('Remote', function() {
                         creationDate: doc.creationDate.toISOString(),
                         lastModification: doc.lastModification.toISOString()
                     });
-                    return done();
+                    done();
                 });
             }
             );
@@ -905,7 +905,7 @@ describe('Remote', function() {
                         should.not.exist(err);
                         return this.couch.get(doc.remote._id, function(err) {
                             err.status.should.equal(404);
-                            return done();
+                            done();
                         });
                     }
                     );
@@ -946,7 +946,7 @@ describe('Remote', function() {
                         should.not.exist(err);
                         return this.couch.get(binary._id, function(err) {
                             err.status.should.equal(404);
-                            return done();
+                            done();
                         });
                     }
                     );
@@ -977,7 +977,7 @@ describe('Remote', function() {
                         should.not.exist(err);
                         return this.couch.get(doc.remote._id, function(err) {
                             err.status.should.equal(404);
-                            return done();
+                            done();
                         });
                     }
                     );
@@ -1040,7 +1040,7 @@ describe('Remote', function() {
                                 }
                             }
                         });
-                        return done();
+                        done();
                     });
                 }
                 );

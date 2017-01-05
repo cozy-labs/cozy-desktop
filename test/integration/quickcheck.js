@@ -280,7 +280,7 @@ describe('Property based testing', function() {
             should.not.exist(err);
             return registerDevice(1, function(err) {
                 should.not.exist(err);
-                return done();
+                done();
             });
         })
     );
@@ -290,7 +290,7 @@ describe('Property based testing', function() {
             this.one = one;
             return spawnCozyDesktop(1, two => {
                 this.two = two;
-                return done();
+                done();
             }
             );
         }
@@ -306,7 +306,7 @@ describe('Property based testing', function() {
             code.should.equal(0);
             return stopCozyDesktop(this.two, function(code) {
                 code.should.equal(0);
-                return done();
+                done();
             });
         }
         );
@@ -324,7 +324,7 @@ describe('Property based testing', function() {
         let diff = child.spawn('diff', args, opts);
         return diff.on('exit', function(code) {
             code.should.equal(0);
-            return done();
+            done();
         });
     });
 
@@ -333,7 +333,7 @@ describe('Property based testing', function() {
             should.not.exist(err);
             return removeRemoteDevice(1, function(err) {
                 should.not.exist(err);
-                return done();
+                done();
             });
         })
     );
@@ -341,6 +341,6 @@ describe('Property based testing', function() {
     it('cleans the directories', function(done) {
         del.sync(folders[0]);
         del.sync(folders[1]);
-        return done();
+        done();
     });
 });

@@ -23,7 +23,7 @@ describe("Couch", function() {
         return this.couch.put(this.doc, (err, created) => {
             should.not.exist(err);
             this.rev = created.rev;
-            return done();
+            done();
         }
         );
     });
@@ -43,7 +43,7 @@ describe("Couch", function() {
             return this.couch.getLastRemoteChangeSeq(function(err, seq) {
                 should.not.exist(err);
                 seq.should.be.aboveOrEqual(1);
-                return done();
+                done();
             });
         })
     );
@@ -52,7 +52,7 @@ describe("Couch", function() {
         it('answers true if CouchDb is available', function(done) {
             return this.couch.ping(function(available) {
                 available.should.be.true();
-                return done();
+                done();
             });
         })
     );
@@ -65,7 +65,7 @@ describe("Couch", function() {
                 doc._id.should.equal(this.doc._id);
                 should.exist(doc._rev);
                 doc.docType.should.equal('binary');
-                return done();
+                done();
             }
             );
         })
@@ -82,7 +82,7 @@ describe("Couch", function() {
                 should.exist(created);
                 should.exist(created.id);
                 should.exist(created.rev);
-                return done();
+                done();
             });
         });
 
@@ -97,7 +97,7 @@ describe("Couch", function() {
                 return this.couch.get(this.doc._id, (err, doc) => {
                     should.not.exist(err);
                     doc.checksum.should.equal(this.doc.checksum);
-                    return done();
+                    done();
                 }
                 );
             }
@@ -112,7 +112,7 @@ describe("Couch", function() {
                 should.exist(deleted);
                 should.exist(deleted.id);
                 should.exist(deleted.rev);
-                return done();
+                done();
             });
         })
     );
@@ -125,7 +125,7 @@ describe("Couch", function() {
                 should.not.exist(err);
                 should.exist(doc.id);
                 should.exist(doc.rev);
-                return done();
+                done();
             });
         });
 
@@ -136,7 +136,7 @@ describe("Couch", function() {
                 should.not.exist(err);
                 should.exist(doc.id);
                 should.exist(doc.rev);
-                return done();
+                done();
             });
         });
 
@@ -147,7 +147,7 @@ describe("Couch", function() {
                 should.not.exist(err);
                 return http.get(`${couchHelpers.url}/cozy/${doc.id}/file`, function(res) {
                     res.headers['content-type'].should.equal(mime);
-                    return done();
+                    done();
                 });
             });
         });
@@ -174,7 +174,7 @@ describe("Couch", function() {
                         return stream.on('end', function() {
                             checksum.end();
                             checksum.read().should.equal(sha1);
-                            return done();
+                            done();
                         });
                     });
                 }

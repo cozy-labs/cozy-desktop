@@ -121,7 +121,7 @@ describe('Prep', function() {
                 return this.prep.moveDoc(this.side, doc, was, err => {
                     should.not.exist(err);
                     this.prep.moveFile.calledWith(this.side, doc, was).should.be.true();
-                    return done();
+                    done();
                 }
                 );
             });
@@ -139,7 +139,7 @@ describe('Prep', function() {
                 return this.prep.moveDoc(this.side, doc, was, err => {
                     should.not.exist(err);
                     spy.calledWith(this.side, doc, was).should.be.true();
-                    return done();
+                    done();
                 }
                 );
             });
@@ -156,7 +156,7 @@ describe('Prep', function() {
                 return this.prep.moveDoc(this.side, doc, was, function(err) {
                     should.exist(err);
                     err.message.should.equal('Incompatible docTypes: folder');
-                    return done();
+                    done();
                 });
             });
 
@@ -172,7 +172,7 @@ describe('Prep', function() {
                 return this.prep.moveDoc(this.side, doc, was, function(err) {
                     should.exist(err);
                     err.message.should.equal('Incompatible docTypes: file');
-                    return done();
+                    done();
                 });
             });
         });
@@ -187,7 +187,7 @@ describe('Prep', function() {
                 return this.prep.deleteDoc(this.side, doc, err => {
                     should.not.exist(err);
                     this.prep.deleteFile.calledWith(this.side, doc).should.be.true();
-                    return done();
+                    done();
                 }
                 );
             });
@@ -201,7 +201,7 @@ describe('Prep', function() {
                 return this.prep.deleteDoc(this.side, doc, err => {
                     should.not.exist(err);
                     this.prep.deleteFolder.calledWith(this.side, doc).should.be.true();
-                    return done();
+                    done();
                 }
                 );
             });
@@ -216,7 +216,7 @@ describe('Prep', function() {
                 return this.prep.addFile(this.side, {path: '/'}, function(err) {
                     should.exist(err);
                     err.message.should.equal('Invalid path');
-                    return done();
+                    done();
                 });
             });
 
@@ -229,7 +229,7 @@ describe('Prep', function() {
                 return this.prep.addFile(this.side, doc, err => {
                     should.not.exist(err);
                     this.merge.addFile.calledWith(this.side, doc).should.be.true();
-                    return done();
+                    done();
                 }
                 );
             });
@@ -242,7 +242,7 @@ describe('Prep', function() {
                 return this.prep.addFile(this.side, doc, function(err) {
                     should.exist(err);
                     err.message.should.equal('Invalid checksum');
-                    return done();
+                    done();
                 });
             });
 
@@ -259,7 +259,7 @@ describe('Prep', function() {
                     should.exist(doc._id);
                     should.exist(doc.creationDate);
                     should.exist(doc.lastModification);
-                    return done();
+                    done();
                 }
                 );
             });
@@ -273,7 +273,7 @@ describe('Prep', function() {
                 return this.prep.addFile('local', doc, err => {
                     should.not.exist(err);
                     this.merge.addFile.called.should.be.false();
-                    return done();
+                    done();
                 }
                 );
             });
@@ -285,7 +285,7 @@ describe('Prep', function() {
                 return this.prep.updateFile(this.side, {path: '/'}, function(err) {
                     should.exist(err);
                     err.message.should.equal('Invalid path');
-                    return done();
+                    done();
                 });
             });
 
@@ -298,7 +298,7 @@ describe('Prep', function() {
                 return this.prep.updateFile(this.side, doc, err => {
                     should.not.exist(err);
                     this.merge.updateFile.calledWith(this.side, doc).should.be.true();
-                    return done();
+                    done();
                 }
                 );
             });
@@ -311,7 +311,7 @@ describe('Prep', function() {
                 return this.prep.updateFile(this.side, doc, function(err) {
                     should.exist(err);
                     err.message.should.equal('Invalid checksum');
-                    return done();
+                    done();
                 });
             });
 
@@ -327,7 +327,7 @@ describe('Prep', function() {
                     doc.docType.should.equal('file');
                     should.exist(doc._id);
                     should.exist(doc.lastModification);
-                    return done();
+                    done();
                 }
                 );
             });
@@ -341,7 +341,7 @@ describe('Prep', function() {
                 return this.prep.updateFile('local', doc, err => {
                     should.not.exist(err);
                     this.merge.updateFile.called.should.be.false();
-                    return done();
+                    done();
                 }
                 );
             });
@@ -353,7 +353,7 @@ describe('Prep', function() {
                 return this.prep.putFolder(this.side, {path: '..'}, function(err) {
                     should.exist(err);
                     err.message.should.equal('Invalid path');
-                    return done();
+                    done();
                 });
             });
 
@@ -366,7 +366,7 @@ describe('Prep', function() {
                     doc.docType.should.equal('folder');
                     should.exist(doc._id);
                     should.exist(doc.lastModification);
-                    return done();
+                    done();
                 }
                 );
             });
@@ -377,7 +377,7 @@ describe('Prep', function() {
                 return this.prep.putFolder('local', doc, err => {
                     should.not.exist(err);
                     this.merge.putFolder.called.should.be.false();
-                    return done();
+                    done();
                 }
                 );
             });
@@ -394,7 +394,7 @@ describe('Prep', function() {
                 return this.prep.moveFile(this.side, doc, was, function(err) {
                     should.exist(err);
                     err.message.should.equal('Invalid path');
-                    return done();
+                    done();
                 });
             });
 
@@ -404,7 +404,7 @@ describe('Prep', function() {
                 return this.prep.moveFile(this.side, doc, was, function(err) {
                     should.exist(err);
                     err.message.should.equal('Invalid path');
-                    return done();
+                    done();
                 });
             });
 
@@ -418,7 +418,7 @@ describe('Prep', function() {
                 return this.prep.moveFile(this.side, doc, was, function(err) {
                     should.exist(err);
                     err.message.should.equal('Invalid checksum');
-                    return done();
+                    done();
                 });
             });
 
@@ -436,7 +436,7 @@ describe('Prep', function() {
                 return this.prep.moveFile(this.side, doc, was, function(err) {
                     should.exist(err);
                     err.message.should.equal('Invalid move');
-                    return done();
+                    done();
                 });
             });
 
@@ -454,7 +454,7 @@ describe('Prep', function() {
                 return this.prep.moveFile(this.side, doc, was, function(err) {
                     should.exist(err);
                     err.message.should.equal('Missing rev');
-                    return done();
+                    done();
                 });
             });
 
@@ -483,7 +483,7 @@ describe('Prep', function() {
                     doc.docType.should.equal('file');
                     should.exist(doc._id);
                     should.exist(doc.lastModification);
-                    return done();
+                    done();
                 }
                 );
             });
@@ -497,7 +497,7 @@ describe('Prep', function() {
                 return this.prep.moveFolder(this.side, doc, was, function(err) {
                     should.exist(err);
                     err.message.should.equal('Invalid path');
-                    return done();
+                    done();
                 });
             });
 
@@ -507,7 +507,7 @@ describe('Prep', function() {
                 return this.prep.moveFolder(this.side, doc, was, function(err) {
                     should.exist(err);
                     err.message.should.equal('Invalid path');
-                    return done();
+                    done();
                 });
             });
 
@@ -523,7 +523,7 @@ describe('Prep', function() {
                 return this.prep.moveFolder(this.side, doc, was, function(err) {
                     should.exist(err);
                     err.message.should.equal('Invalid move');
-                    return done();
+                    done();
                 });
             });
 
@@ -539,7 +539,7 @@ describe('Prep', function() {
                 return this.prep.moveFolder(this.side, doc, was, function(err) {
                     should.exist(err);
                     err.message.should.equal('Missing rev');
-                    return done();
+                    done();
                 });
             });
 
@@ -562,7 +562,7 @@ describe('Prep', function() {
                     doc.docType.should.equal('folder');
                     should.exist(doc._id);
                     should.exist(doc.lastModification);
-                    return done();
+                    done();
                 }
                 );
             });
@@ -577,7 +577,7 @@ describe('Prep', function() {
                 return this.prep.deleteFile(this.side, {path: '/'}, function(err) {
                     should.exist(err);
                     err.message.should.equal('Invalid path');
-                    return done();
+                    done();
                 });
             });
 
@@ -589,7 +589,7 @@ describe('Prep', function() {
                     this.merge.deleteFile.calledWith(this.side, doc).should.be.true();
                     doc.docType.should.equal('file');
                     should.exist(doc._id);
-                    return done();
+                    done();
                 }
                 );
             });
@@ -600,7 +600,7 @@ describe('Prep', function() {
                 return this.prep.deleteFile('local', doc, err => {
                     should.not.exist(err);
                     this.merge.deleteFile.called.should.be.false();
-                    return done();
+                    done();
                 }
                 );
             });
@@ -611,7 +611,7 @@ describe('Prep', function() {
                 return this.prep.deleteFolder(this.side, {path: '/'}, function(err) {
                     should.exist(err);
                     err.message.should.equal('Invalid path');
-                    return done();
+                    done();
                 });
             });
 
@@ -623,7 +623,7 @@ describe('Prep', function() {
                     this.merge.deleteFolder.calledWith(this.side, doc).should.be.true();
                     doc.docType.should.equal('folder');
                     should.exist(doc._id);
-                    return done();
+                    done();
                 }
                 );
             });
@@ -634,7 +634,7 @@ describe('Prep', function() {
                 return this.prep.deleteFolder('local', doc, err => {
                     should.not.exist(err);
                     this.merge.deleteFolder.called.should.be.false();
-                    return done();
+                    done();
                 }
                 );
             });

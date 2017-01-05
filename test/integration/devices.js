@@ -14,14 +14,14 @@ describe("device", function() {
         it('says OK when the URL belongs to a cozy', done =>
             device.pingCozy(Cozy.url, function(err) {
                 should.not.exist(err);
-                return done();
+                done();
             })
         );
 
         it('says KO else', done =>
             device.pingCozy('http://localhost:12345', function(err) {
                 should.exist(err);
-                return done();
+                done();
             })
         );
     });
@@ -30,14 +30,14 @@ describe("device", function() {
         it('says OK with good credentials', done =>
             device.checkCredentials(Cozy.url, Cozy.password, function(err) {
                 should.not.exist(err);
-                return done();
+                done();
             })
         );
 
         it('says KO with bad credentials', done =>
             device.checkCredentials(Cozy.url, 'xxxxxxxx', function(err) {
                 should.exist(err);
-                return done();
+                done();
             })
         );
     });
@@ -49,7 +49,7 @@ describe("device", function() {
             let register = device.registerDeviceSafe;
             return register(Cozy.url, Cozy.deviceName, 'xxxxxxxx', function(err) {
                 err.should.equal('Bad credentials');
-                return done();
+                done();
             });
         });
 
@@ -62,7 +62,7 @@ describe("device", function() {
                 should.exist(res.deviceName);
                 res.deviceName.should.equal(Cozy.deviceName);
                 devicePasswords.push(res.password);
-                return done();
+                done();
             });
         });
 
@@ -76,7 +76,7 @@ describe("device", function() {
                 res.deviceName.should.not.equal(Cozy.deviceName);
                 res.deviceName.should.match(/-2$/);
                 devicePasswords.push(res.password);
-                return done();
+                done();
             });
         });
 
@@ -90,7 +90,7 @@ describe("device", function() {
                 res.deviceName.should.not.equal(Cozy.deviceName);
                 res.deviceName.should.match(/-3$/);
                 devicePasswords.push(res.password);
-                return done();
+                done();
             });
         });
     });
@@ -105,7 +105,7 @@ describe("device", function() {
                 } else {
                     err.message.should.equal('Request unauthorized');
                 }
-                return done();
+                done();
             });
         });
 
@@ -113,7 +113,7 @@ describe("device", function() {
             let unregister = device.unregisterDevice;
             return unregister(Cozy.url, Cozy.deviceName, devicePasswords[0], function(err) {
                 should.not.exist(err);
-                return done();
+                done();
             });
         });
 
@@ -122,7 +122,7 @@ describe("device", function() {
             let unregister = device.unregisterDevice;
             return unregister(Cozy.url, deviceName, devicePasswords[1], function(err) {
                 should.not.exist(err);
-                return done();
+                done();
             });
         });
 
@@ -131,7 +131,7 @@ describe("device", function() {
             let unregister = device.unregisterDevice;
             return unregister(Cozy.url, deviceName, devicePasswords[2], function(err) {
                 should.not.exist(err);
-                return done();
+                done();
             });
         });
     });

@@ -34,7 +34,7 @@ describe("Sync", function() {
                 this.local.start.called.should.be.false();
                 this.remote.start.calledOnce.should.be.true();
                 this.sync.sync.calledOnce.should.be.true();
-                return done();
+                done();
             }
             );
         });
@@ -45,7 +45,7 @@ describe("Sync", function() {
                 this.local.start.calledOnce.should.be.true();
                 this.remote.start.called.should.be.false();
                 this.sync.sync.calledOnce.should.be.true();
-                return done();
+                done();
             }
             );
         });
@@ -56,7 +56,7 @@ describe("Sync", function() {
                 this.local.start.calledOnce.should.be.true();
                 this.remote.start.calledOnce.should.be.true();
                 this.sync.sync.calledOnce.should.be.true();
-                return done();
+                done();
             }
             );
         });
@@ -68,7 +68,7 @@ describe("Sync", function() {
                 this.local.start.calledOnce.should.be.true();
                 this.remote.start.called.should.be.false();
                 this.sync.sync.calledOnce.should.be.false();
-                return done();
+                done();
             }
             );
         });
@@ -93,7 +93,7 @@ describe("Sync", function() {
                 this.sync.pop.calledOnce.should.be.true();
                 this.sync.apply.calledOnce.should.be.true();
                 this.sync.apply.calledWith({change: true}).should.be.true();
-                return done();
+                done();
             }
             );
         });
@@ -104,7 +104,7 @@ describe("Sync", function() {
                 err.should.equal('failed');
                 this.sync.pop.calledOnce.should.be.true();
                 this.sync.apply.calledOnce.should.be.false();
-                return done();
+                done();
             }
             );
         });
@@ -139,7 +139,7 @@ describe("Sync", function() {
                             _id: 'my-folder/file-1',
                             docType: 'file',
                             tags: []});
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -157,7 +157,7 @@ describe("Sync", function() {
                 this.sync.pop(spy);
                 return setTimeout(function() {
                     spy.calledOnce.should.be.true();
-                    return done();
+                    done();
                 }
                 , 10);
             }
@@ -182,7 +182,7 @@ function(doc) {
                         [err, change] = spy.args[0];
                         should.not.exist(err);
                         change.doc.docType.should.equal('file');
-                        return done();
+                        done();
                     }
                     , 10);
                 }
@@ -206,7 +206,7 @@ function(doc) {
                         _id: 'my-folder/file-7',
                         docType: 'file',
                         tags: []});
-                    return done();
+                    done();
                 });
             }
             );
@@ -256,7 +256,7 @@ function(doc) {
             return this.sync.apply(change, err => {
                 should.not.exist(err);
                 this.sync.folderChanged.called.should.be.false();
-                return done();
+                done();
             }
             );
         });
@@ -277,7 +277,7 @@ function(doc) {
             return this.sync.apply(change, err => {
                 should.not.exist(err);
                 this.sync.folderChanged.called.should.be.false();
-                return done();
+                done();
             }
             );
         });
@@ -299,7 +299,7 @@ function(doc) {
                 should.not.exist(err);
                 this.sync.fileChanged.called.should.be.true();
                 this.sync.fileChanged.calledWith(change.doc).should.be.true();
-                return done();
+                done();
             }
             );
         });
@@ -321,7 +321,7 @@ function(doc) {
                 should.not.exist(err);
                 this.sync.folderChanged.called.should.be.true();
                 this.sync.folderChanged.calledWith(change.doc).should.be.true();
-                return done();
+                done();
             }
             );
         });
@@ -362,7 +362,7 @@ function(doc) {
                 should.not.exist(err);
                 return this.pouch.getLocalSeq(function(err, seq) {
                     seq.should.equal(125);
-                    return done();
+                    done();
                 });
             }
             );
@@ -397,7 +397,7 @@ function(doc) {
                                     remote: 2
                                 }
                             });
-                            return done();
+                            done();
                         });
                     }
                     );
@@ -420,7 +420,7 @@ function(doc) {
                     should.not.exist(err);
                     return this.pouch.getLocalSeq(function(err, seq) {
                         seq.should.equal(128);
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -454,7 +454,7 @@ function(doc) {
                     return this.pouch.db.get(doc._id, function(err, actual) {
                         should.not.exist(err);
                         actual.errors.should.equal(1);
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -474,7 +474,7 @@ function(doc) {
                     return this.pouch.db.get(doc._id, function(err, actual) {
                         should.not.exist(err);
                         actual.errors.should.equal(4);
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -495,7 +495,7 @@ function(doc) {
                         should.not.exist(err);
                         actual.errors.should.equal(10);
                         actual._rev.should.equal(doc._rev);
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -528,7 +528,7 @@ function(doc) {
             return this.sync.fileChanged(doc, this.remote, 0, err => {
                 should.not.exist(err);
                 this.remote.addFile.calledWith(doc).should.be.true();
-                return done();
+                done();
             }
             );
         });
@@ -557,7 +557,7 @@ function(doc) {
                         should.not.exist(err);
                         this.remote.updateFileMetadata.called.should.be.false;
                         this.remote.overwriteFile.calledWith(doc).should.be.true();
-                        return done();
+                        done();
                     }
                     );
                 }
@@ -591,7 +591,7 @@ function(doc) {
                         this.remote.overwriteFile.called.should.be.false;
                         let ufm = this.remote.updateFileMetadata;
                         ufm.calledWith(doc).should.be.true();
-                        return done();
+                        done();
                     }
                     );
                 }
@@ -632,7 +632,7 @@ function(doc) {
                     should.not.exist(err);
                     this.remote.addFile.called.should.be.false();
                     this.remote.moveFile.calledWith(doc, was).should.be.true();
-                    return done();
+                    done();
                 }
                 );
             }
@@ -654,7 +654,7 @@ function(doc) {
             return this.sync.fileChanged(doc, this.local, 1, err => {
                 should.not.exist(err);
                 this.local.deleteFile.calledWith(doc).should.be.true();
-                return done();
+                done();
             }
             );
         });
@@ -673,7 +673,7 @@ function(doc) {
             return this.sync.fileChanged(doc, this.remote, 0, err => {
                 should.not.exist(err);
                 this.remote.deleteFile.called.should.be.false();
-                return done();
+                done();
             }
             );
         });
@@ -702,7 +702,7 @@ function(doc) {
             return this.sync.folderChanged(doc, this.remote, 0, err => {
                 should.not.exist(err);
                 this.remote.addFolder.calledWith(doc).should.be.true();
-                return done();
+                done();
             }
             );
         });
@@ -722,7 +722,7 @@ function(doc) {
             return this.sync.folderChanged(doc, this.local, 1, err => {
                 should.not.exist(err);
                 this.local.updateFolder.calledWith(doc).should.be.true();
-                return done();
+                done();
             }
             );
         });
@@ -759,7 +759,7 @@ function(doc) {
                     should.not.exist(err);
                     this.remote.addFolder.called.should.be.false();
                     this.remote.moveFolder.calledWith(doc, was).should.be.true();
-                    return done();
+                    done();
                 }
                 );
             }
@@ -781,7 +781,7 @@ function(doc) {
             return this.sync.folderChanged(doc, this.local, 1, err => {
                 should.not.exist(err);
                 this.local.deleteFolder.calledWith(doc).should.be.true();
-                return done();
+                done();
             }
             );
         });
@@ -800,7 +800,7 @@ function(doc) {
             return this.sync.folderChanged(doc, this.remote, 0, err => {
                 should.not.exist(err);
                 this.remote.deleteFolder.called.should.be.false();
-                return done();
+                done();
             }
             );
         });

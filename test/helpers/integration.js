@@ -37,7 +37,7 @@ helpers.ensurePreConditions = function ensurePreConditions(done) {
         should.exist(proxy, 'Cozy Proxy should be running on 9104');
         should.exist(dataSystem, 'Cozy Data System should be running on 9101');
         should.exist(files, 'Cozy Files should be running on 9121');
-        return done();
+        done();
     });
 }
 
@@ -53,7 +53,7 @@ helpers.registerDevice = function registerDevice(done) {
         helpers.deviceName = credentials.deviceName;
         // For debug:
         // PouchDB.debug.enable 'pouchdb:*'
-        return done();
+        done();
     });
 }
 
@@ -65,7 +65,7 @@ helpers.clean = function clean(done) {
         let callback = () => {
             return setTimeout(() => {
                 del.sync(this.syncPath);
-                return done();
+                done();
             }
             , 200);
         };
@@ -106,7 +106,7 @@ helpers.fetchRemoteMetadata = function fetchRemoteMetadata(done) {
     if (!this.app.sync) { this.app.instanciate(); }
     return this.app.remote.watcher.listenToChanges({live: false}, function(err) {
         should.not.exist(err);
-        return done();
+        done();
     });
 }
 

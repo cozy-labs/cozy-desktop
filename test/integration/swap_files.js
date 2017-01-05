@@ -52,7 +52,7 @@ describe('Swap 2 files', function() {
                 let found = find(files, one);
                 should.exist(found);
                 one.checksum = found.checksum;
-                return done();
+                done();
             })
         
         , 2500);
@@ -68,7 +68,7 @@ describe('Swap 2 files', function() {
                 let found = find(files, two);
                 should.exist(found);
                 two.checksum = found.checksum;
-                return done();
+                done();
             })
         
         , 2500);
@@ -88,7 +88,7 @@ describe('Swap 2 files', function() {
                 should.exist(find(files, one));
                 should.exist(find(files, two));
                 should.not.exist(find(files, tmp));
-                return done();
+                done();
             })
         
         , 3000);

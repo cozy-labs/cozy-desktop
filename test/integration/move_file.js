@@ -62,7 +62,7 @@ describe('Move a file', function() {
                 files.length.should.equal(1);
                 files[0].size.should.eql(src.size);
                 files[0].name.should.equal(dst.name);
-                return done();
+                done();
             })
         );
     });
@@ -90,7 +90,7 @@ describe('Move a file', function() {
             return Files.uploadFile(src, fixturePath, function(err, created) {
                 src.id = created.id;
                 src.size = fs.statSync(fixturePath).size;
-                return done();
+                done();
             });
         });
 
@@ -119,7 +119,7 @@ describe('Move a file', function() {
                 files.length.should.equal(1);
                 files[0].size.should.eql(src.size);
                 files[0].name.should.equal(dst.name);
-                return done();
+                done();
             })
         );
     });

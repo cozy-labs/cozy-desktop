@@ -74,7 +74,7 @@ describe('Conflict', function() {
         it('has the file and the folder on remote', done =>
             Files.getAllFiles(function(err, files) {
                 files.length.should.equal(2);
-                return done();
+                done();
             })
         );
     });
@@ -147,7 +147,7 @@ describe('Conflict', function() {
                 return Files.getAllFolders(function(err, folders) {
                     folders.length.should.equal(1);
                     should.exist(find(folders, folder));
-                    return done();
+                    done();
                 });
             })
         );

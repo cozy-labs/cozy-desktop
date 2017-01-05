@@ -48,7 +48,7 @@ describe('Push', function() {
         return setTimeout(() =>
             Files.getAllFolders(function(err, folders) {
                 should.exist(find(folders, folder));
-                return done();
+                done();
             })
         
         , 1500);
@@ -64,7 +64,7 @@ describe('Push', function() {
             Files.getAllFolders(function(err, folders) {
                 should.not.exist(find(folders, old));
                 should.exist(find(folders, folder));
-                return done();
+                done();
             })
         
         , 5000);
@@ -82,7 +82,7 @@ describe('Push', function() {
             Files.getAllFolders(function(err, folders) {
                 should.not.exist(find(folders, old));
                 should.exist(find(folders, folder));
-                return done();
+                done();
             })
         
         , 2500);
@@ -94,7 +94,7 @@ describe('Push', function() {
         return setTimeout(() =>
             Files.getAllFolders(function(err, folders) {
                 should.not.exist(find(folders, folder));
-                return done();
+                done();
             })
         
         , 3500);
@@ -108,7 +108,7 @@ describe('Push', function() {
         return setTimeout(() =>
             Files.getAllFiles(function(err, files) {
                 should.exist(find(files, file));
-                return done();
+                done();
             })
         
         , 3000);
@@ -125,7 +125,7 @@ describe('Push', function() {
             Files.getAllFiles(function(err, files) {
                 should.not.exist(find(files, old));
                 should.exist(find(files, file));
-                return done();
+                done();
             })
         
         , 3000);
@@ -142,7 +142,7 @@ describe('Push', function() {
             Files.getAllFiles(function(err, files) {
                 should.not.exist(find(files, old));
                 should.exist(find(files, file));
-                return done();
+                done();
             })
         
         , 3000);
@@ -156,7 +156,7 @@ describe('Push', function() {
         return setTimeout(() =>
             Files.getAllFiles(function(err, files) {
                 should.exist(find(files, file));
-                return done();
+                done();
             })
         
         , 3000);
@@ -168,7 +168,7 @@ describe('Push', function() {
         return setTimeout(() =>
             Files.getAllFiles(function(err, files) {
                 should.not.exist(find(files, file));
-                return done();
+                done();
             })
         
         , 3500);

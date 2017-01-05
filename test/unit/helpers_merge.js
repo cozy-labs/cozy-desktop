@@ -313,7 +313,7 @@ describe('Merge Helpers', function() {
         it('works when in the root folder', function(done) {
             return this.merge.ensureParentExist(this.side, {_id: 'foo'}, function(err) {
                 should.not.exist(err);
-                return done();
+                done();
             });
         });
 
@@ -330,7 +330,7 @@ describe('Merge Helpers', function() {
                 should.not.exist(err);
                 return this.merge.ensureParentExist(this.side, child, function(err) {
                     should.not.exist(err);
-                    return done();
+                    done();
                 });
             }
             );
@@ -350,7 +350,7 @@ describe('Merge Helpers', function() {
                     path: 'missing',
                     docType: 'folder'
                 });
-                return done();
+                done();
             }
             );
         });
@@ -373,7 +373,7 @@ describe('Merge Helpers', function() {
                         docType: 'folder'
                     });
                 }
-                return done();
+                done();
             }
             );
         });
@@ -419,7 +419,7 @@ describe('Merge Helpers', function() {
                 parts[1].should.match(/^\d{2}:\d{2}:\d{2}.\d{3}Z$/);
                 let src = spy.args[0][1];
                 src.path.should.equal(doc.path);
-                return done();
+                done();
             });
         });
 
@@ -431,7 +431,7 @@ describe('Merge Helpers', function() {
                 spy.called.should.be.true();
                 let dst = spy.args[0][0];
                 path.extname(dst.path).should.equal('.jpg');
-                return done();
+                done();
             });
         });
     });

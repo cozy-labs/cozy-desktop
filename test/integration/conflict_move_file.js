@@ -37,7 +37,7 @@ describe('Conflict when moving a file', function() {
                     id: created.id,
                     size: fs.statSync(fixturePath).size
                 };
-                return done();
+                done();
             });
         });
 
@@ -122,7 +122,7 @@ describe('Conflict when moving a file', function() {
                 let parts = names[1].split('-conflict-');
                 parts.length.should.equal(2);
                 parts[0].should.equal(file.name);
-                return done();
+                done();
             })
         );
     });
@@ -149,7 +149,7 @@ describe('Conflict when moving a file', function() {
                     id: created.id,
                     size: fs.statSync(fixturePath).size
                 };
-                return done();
+                done();
             });
         });
 
@@ -215,7 +215,7 @@ describe('Conflict when moving a file', function() {
                 let parts = remote.name.split('-conflict-');
                 parts.length.should.equal(2);
                 parts[0].should.equal(file.name);
-                return done();
+                done();
             })
         );
     });

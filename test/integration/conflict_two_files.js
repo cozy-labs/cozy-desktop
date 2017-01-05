@@ -32,7 +32,7 @@ describe('Conflict between two files', function() {
                     id: created.id,
                     size: fs.statSync(fixturePath).size
                 };
-                return done();
+                done();
             });
         });
 
@@ -100,7 +100,7 @@ describe('Conflict between two files', function() {
                 let parts = names[1].split('-conflict-');
                 parts.length.should.equal(2);
                 parts[0].should.equal(file.name);
-                return done();
+                done();
             })
         );
     });
@@ -124,7 +124,7 @@ describe('Conflict between two files', function() {
                     id: created.id,
                     size: fs.statSync(fixturePath).size
                 };
-                return done();
+                done();
             });
         });
 
@@ -194,7 +194,7 @@ describe('Conflict between two files', function() {
                 let parts = names[1].split('-conflict-');
                 parts.length.should.equal(2);
                 parts[0].should.equal(file.name);
-                return done();
+                done();
             })
         );
     });

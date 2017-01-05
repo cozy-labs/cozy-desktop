@@ -44,7 +44,7 @@ describe("LocalWatcher Tests", function() {
                 this.prep.addFile.called.should.be.true();
                 this.prep.addFile.args[0][0].should.equal('local');
                 this.prep.addFile.args[0][1].path.should.equal('aa/ab');
-                return done();
+                done();
             }
             , 1100);
             return this.watcher.start(function() {});
@@ -60,7 +60,7 @@ describe("LocalWatcher Tests", function() {
                 this.prep.putFolder.called.should.be.false();
                 this.prep.addFile.called.should.be.false();
                 this.prep.updateFile.called.should.be.false();
-                return done();
+                done();
             }
             , 1000);
             return this.watcher.start(function() {});
@@ -91,7 +91,7 @@ describe("LocalWatcher Tests", function() {
                         'lastModification'
                     ]);
                     should.not.exist(doc.executable);
-                    return done();
+                    done();
                 });
             }
             );
@@ -107,7 +107,7 @@ describe("LocalWatcher Tests", function() {
                 return this.watcher.createDoc('executable', stats, function(err, doc) {
                     should.not.exist(err);
                     doc.executable.should.be.true();
-                    return done();
+                    done();
                 });
             }
             );
@@ -117,7 +117,7 @@ describe("LocalWatcher Tests", function() {
             return this.watcher.createDoc('no/such/file', {}, function(err, doc) {
                 should.exist(err);
                 err.code.should.equal('ENOENT');
-                return done();
+                done();
             });
         });
     });
@@ -141,7 +141,7 @@ describe("LocalWatcher Tests", function() {
             return this.watcher.checksum(filePath, function(err, sum) {
                 should.not.exist(err);
                 sum.should.equal("bf268fcb32d2fd7243780ad27af8ae242a6f0d30");
-                return done();
+                done();
             });
         });
 
@@ -150,7 +150,7 @@ describe("LocalWatcher Tests", function() {
             return this.watcher.checksum(filePath, function(err, sum) {
                 should.exist(err);
                 err.code.should.equal('ENOENT');
-                return done();
+                done();
             });
         });
     });
@@ -189,7 +189,7 @@ describe("LocalWatcher Tests", function() {
                         class: 'image',
                         mime: 'image/jpeg'
                     });
-                    return done();
+                    done();
                 };
                 let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg');
                 let dst = path.join(this.syncPath, 'aaa.jpg');
@@ -213,7 +213,7 @@ describe("LocalWatcher Tests", function() {
                         'creationDate',
                         'lastModification'
                     ]);
-                    return done();
+                    done();
                 };
                 return fs.mkdirSync(path.join(this.syncPath, 'aba'));
             }
@@ -233,7 +233,7 @@ describe("LocalWatcher Tests", function() {
                         'creationDate',
                         'lastModification'
                     ]);
-                    return done();
+                    done();
                 };
                 return fs.mkdirSync(path.join(this.syncPath, 'abb/abc'));
             };
@@ -250,7 +250,7 @@ describe("LocalWatcher Tests", function() {
                     side.should.equal('local');
                     doc.should.have.properties({
                         path: 'aca'});
-                    return done();
+                    done();
                 };
                 return fs.unlinkSync(path.join(this.syncPath, 'aca'));
             };
@@ -267,7 +267,7 @@ describe("LocalWatcher Tests", function() {
                     side.should.equal('local');
                     doc.should.have.properties({
                         path: 'ada'});
-                    return done();
+                    done();
                 };
                 return fs.rmdirSync(path.join(this.syncPath, 'ada'));
             };
@@ -292,7 +292,7 @@ describe("LocalWatcher Tests", function() {
                         class: 'image',
                         mime: 'image/jpeg'
                     });
-                    return done();
+                    done();
                 };
                 src = src.replace(/\.jpg$/, '-mod.jpg');
                 dst = path.join(this.syncPath, 'aea.jpg');
@@ -346,7 +346,7 @@ describe("LocalWatcher Tests", function() {
                             checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30',
                             size: 29865
                         });
-                        return done();
+                        done();
                     };
                     return fs.renameSync(dst, path.join(this.syncPath, 'afb.jpg'));
                 }
@@ -403,7 +403,7 @@ describe("LocalWatcher Tests", function() {
                             this.prep.deleteFolder.called.should.be.true();
                             let args = this.prep.deleteFolder.args[0][1];
                             args.should.have.properties({path: 'aga'});
-                            return done();
+                            done();
                         }
                         , 4000);
                     };
@@ -453,7 +453,7 @@ describe("LocalWatcher Tests", function() {
                     dd.calledWithMatch('local', folder2).should.be.true();
                     dd.calledWithMatch('local', file1).should.be.false();
                     dd.calledWithMatch('local', file2).should.be.true();
-                    return done();
+                    done();
                 });
                 return cb();
             }

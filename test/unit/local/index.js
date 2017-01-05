@@ -43,7 +43,7 @@ describe('Local', function() {
             return this.local.createReadStream(doc, function(err, stream) {
                 should.exist(err);
                 err.message.should.equal('Cannot read the file');
-                return done();
+                done();
             });
         });
 
@@ -64,7 +64,7 @@ describe('Local', function() {
                 return stream.on('end', function() {
                     checksum.end();
                     checksum.read().should.equal(doc.checksum);
-                    return done();
+                    done();
                 });
             });
         });
@@ -85,7 +85,7 @@ describe('Local', function() {
                 should.not.exist(err);
                 let mode = +fs.statSync(filePath).mode;
                 (mode & 0o100).should.not.equal(0);
-                return done();
+                done();
             });
         });
 
@@ -101,7 +101,7 @@ describe('Local', function() {
                 should.not.exist(err);
                 let mtime = +fs.statSync(filePath).mtime;
                 mtime.should.equal(+date);
-                return done();
+                done();
             });
         });
 
@@ -117,7 +117,7 @@ describe('Local', function() {
                 should.not.exist(err);
                 let mtime = +fs.statSync(folderPath).mtime;
                 mtime.should.equal(+date);
-                return done();
+                done();
             });
         });
     });
@@ -167,7 +167,7 @@ describe('Local', function() {
                     return this.local.fileExistsLocally('deadcafe', function(err, exist) {
                         should.not.exist(err);
                         exist.should.be.equal(filePath);
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -207,7 +207,7 @@ describe('Local', function() {
                 content.should.equal('foobar');
                 let mtime = +fs.statSync(filePath).mtime;
                 mtime.should.equal(+doc.lastModification);
-                return done();
+                done();
             }
             );
         });
@@ -231,7 +231,7 @@ describe('Local', function() {
                 content.should.equal('foo bar baz');
                 let mtime = +fs.statSync(filePath).mtime;
                 mtime.should.equal(+doc.lastModification);
-                return done();
+                done();
             });
         });
 
@@ -263,7 +263,7 @@ describe('Local', function() {
                 content.should.equal('foobaz');
                 let mtime = +fs.statSync(filePath).mtime;
                 mtime.should.equal(+doc.lastModification);
-                return done();
+                done();
             }
             );
         });
@@ -294,7 +294,7 @@ describe('Local', function() {
                 should.exist(err);
                 err.message.should.equal('Invalid checksum');
                 fs.existsSync(filePath).should.be.false();
-                return done();
+                done();
             }
             );
         });
@@ -314,7 +314,7 @@ describe('Local', function() {
                 fs.statSync(folderPath).isDirectory().should.be.true();
                 let mtime = +fs.statSync(folderPath).mtime;
                 mtime.should.equal(+doc.lastModification);
-                return done();
+                done();
             });
         });
 
@@ -330,7 +330,7 @@ describe('Local', function() {
                 fs.statSync(folderPath).isDirectory().should.be.true();
                 let mtime = +fs.statSync(folderPath).mtime;
                 mtime.should.equal(+doc.lastModification);
-                return done();
+                done();
             });
         });
     });
@@ -368,7 +368,7 @@ describe('Local', function() {
                 content.should.equal('Hello world');
                 let mtime = +fs.statSync(filePath).mtime;
                 mtime.should.equal(+doc.lastModification);
-                return done();
+                done();
             }
             );
         })
@@ -389,7 +389,7 @@ describe('Local', function() {
                 fs.existsSync(filePath).should.be.true();
                 let mtime = +fs.statSync(filePath).mtime;
                 mtime.should.equal(+doc.lastModification);
-                return done();
+                done();
             });
         })
     );
@@ -407,7 +407,7 @@ describe('Local', function() {
                 should.not.exist(err);
                 this.local.addFolder.calledWith(doc).should.be.true();
                 this.local.addFolder.restore();
-                return done();
+                done();
             }
             );
         })
@@ -436,7 +436,7 @@ describe('Local', function() {
                 mtime.should.equal(+doc.lastModification);
                 let enc = {encoding: 'utf-8'};
                 fs.readFileSync(newPath, enc).should.equal('foobar');
-                return done();
+                done();
             });
         });
 
@@ -454,7 +454,7 @@ describe('Local', function() {
                 stub.restore();
                 stub.calledWith(doc).should.be.true();
                 should.not.exist(err);
-                return done();
+                done();
             });
         });
 
@@ -477,7 +477,7 @@ describe('Local', function() {
                 should.not.exist(err);
                 let enc = {encoding: 'utf-8'};
                 fs.readFileSync(newPath, enc).should.equal('foobar');
-                return done();
+                done();
             });
         });
     });
@@ -504,7 +504,7 @@ describe('Local', function() {
                 fs.statSync(folderPath).isDirectory().should.be.true();
                 let mtime = +fs.statSync(folderPath).mtime;
                 mtime.should.equal(+doc.lastModification);
-                return done();
+                done();
             });
         });
 
@@ -525,7 +525,7 @@ describe('Local', function() {
                 fs.statSync(folderPath).isDirectory().should.be.true();
                 let mtime = +fs.statSync(folderPath).mtime;
                 mtime.should.equal(+doc.lastModification);
-                return done();
+                done();
             });
         });
 
@@ -546,7 +546,7 @@ describe('Local', function() {
                 stub.restore();
                 stub.calledWith(doc).should.be.false();
                 fs.statSync(newPath).isDirectory().should.be.true();
-                return done();
+                done();
             });
         });
 
@@ -570,7 +570,7 @@ describe('Local', function() {
                 stub.calledWith(doc).should.be.false();
                 fs.existsSync(oldPath).should.be.false();
                 fs.statSync(newPath).isDirectory().should.be.true();
-                return done();
+                done();
             });
         });
     });
@@ -593,7 +593,7 @@ describe('Local', function() {
                     return this.local.deleteFile(doc, function(err) {
                         should.not.exist(err);
                         fs.existsSync(filePath).should.be.false();
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -621,7 +621,7 @@ describe('Local', function() {
                     return this.local.deleteFolder(doc, function(err) {
                         should.not.exist(err);
                         fs.existsSync(folderPath).should.be.false();
-                        return done();
+                        done();
                     });
                 }
                 );
@@ -651,7 +651,7 @@ describe('Local', function() {
                 fs.statSync(dstPath).isFile().should.be.true();
                 let enc = {encoding: 'utf-8'};
                 fs.readFileSync(dstPath, enc).should.equal('foobar');
-                return done();
+                done();
             });
         })
     );
