@@ -4,8 +4,10 @@ import os from 'os'
 import path from 'path'
 import readdirp from 'readdirp'
 import url from 'url'
-import { filteredReplication as filterSDK } from 'cozy-device-sdk'
-import { device } from 'cozy-device-sdk'
+import {
+  filteredReplication as filterSDK,
+  device
+} from 'cozy-device-sdk'
 import printit from 'printit'
 let log = printit({
   prefix: 'Cozy Desktop  ',
