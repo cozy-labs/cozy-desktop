@@ -116,9 +116,15 @@ it simple and easy. So, it has some limitations:
 - It's not a particularly good idea to share code with cozy-desktop:
   - `node_modules` have tons of small files
   - compiled code often has to be recompile to works on another environment
-  - git and other VCS are not meant to be share like this. You may lose your
-    work if you make changes on two laptops synchronized by cozy-desktop (it's
-    the same with [dropbox][4], [google-drive][5], [syncthing][6], etc.)
+  - git (and other VCS) repositories are not meant to be shared this way.
+    You may lose your work if you make changes on two laptops synchronized
+    by cozy-desktop (it's the same with [dropbox][4], [google-drive][5],
+    [syncthing][6], etc.)
+  - `cozy-desktop` keeps the time with only a precision of a second, which may
+    trigger unexpected "file changed" notifications in your editor (see
+    [emacs issue](https://github.com/cozy-labs/cozy-desktop/issues/446) and
+    [workaround](https://github.com/cozy-labs/cozy-desktop/issues/446#issuecomment-262239629)).
+
 
 - If the same file has been modified in parallel, cozy-desktop don't try to
   merge the modifications. It will just rename of one the copies with a
@@ -127,7 +133,7 @@ it simple and easy. So, it has some limitations:
 - We expect a personal usage:
   - a reasonable number of files and folders (< 1.000.000)
   - a reasonable number of files per folder (< 10.000)
-  - a reasonable size for files (< 1 To)
+  - a reasonable size for files (< 1 Tb)
   - a reasonable size for files and folders path (< 1024 bytes)
   - not too many changes
   - etc.
