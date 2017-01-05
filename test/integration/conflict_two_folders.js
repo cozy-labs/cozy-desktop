@@ -60,7 +60,7 @@ describe('Conflict between two folders', function () {
       files.length.should.equal(2)
       let [local, remote] = files.sort()
       local.should.equal(localChild.name)
-      return remote.should.equal(remoteChild.name)
+      remote.should.equal(remoteChild.name)
     })
 
     it('has the two files on remote', done =>
@@ -131,7 +131,7 @@ describe('Conflict between two folders', function () {
       files.length.should.equal(2)
       let [local, remote] = files.sort()
       local.should.equal(localChild.name)
-      return remote.should.equal(remoteChild.name)
+      remote.should.equal(remoteChild.name)
     })
 
     it('has the two files on remote', done =>

@@ -92,7 +92,7 @@ describe('Conflict between remote docs with distinct cases', function () {
       let parts = names[0].split('-conflict-')
       parts.length.should.equal(2)
       parts[0].should.equal(upper.name)
-      return names[1].should.equal(lower.name)
+      names[1].should.equal(lower.name)
     })
 
     it('has the files on remote', done =>
@@ -192,7 +192,7 @@ describe('Conflict between remote docs with distinct cases', function () {
       folder.should.equal(lower.name)
       let children = fs.readdirSync(path.join(this.syncPath, folder))
       children.length.should.equal(1)
-      return children[0].should.equal(child.name)
+      children[0].should.equal(child.name)
     })
 
     it('has the files on remote', done =>

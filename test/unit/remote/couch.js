@@ -31,7 +31,7 @@ describe('Couch', function () {
   describe('newId', () =>
         it('returns a complex alpha-numeric chain', function () {
           Couch.newId().length.should.equal(32)
-          return Couch.newId().should.match(/^\w+$/i)
+          Couch.newId().should.match(/^\w+$/i)
         })
     )
 
@@ -218,7 +218,7 @@ describe('Couch', function () {
         class: 'image',
         mime: 'image/jpeg'
       }
-      return this.couch.sameRemoteDoc(one, two).should.be.true()
+      this.couch.sameRemoteDoc(one, two).should.be.true()
     })
 
     it('returns false if the documents are different', function () {
@@ -257,7 +257,7 @@ describe('Couch', function () {
         class: 'image',
         mime: 'image/jpeg'
       }
-      return this.couch.sameRemoteDoc(one, two).should.be.false()
+      this.couch.sameRemoteDoc(one, two).should.be.false()
     })
   })
 })

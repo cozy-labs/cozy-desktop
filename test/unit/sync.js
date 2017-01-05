@@ -206,7 +206,7 @@ function(doc) {
             )
       return setTimeout(() => {
         spy.called.should.be.false()
-        return pouchHelpers.createFile(this.pouch, 7, err => should.not.exist(err))
+        pouchHelpers.createFile(this.pouch, 7, err => should.not.exist(err))
       }
             , 10)
     })
@@ -219,7 +219,7 @@ function(doc) {
       })
       return setTimeout(() => {
         this.events.emit.calledWith('up-to-date').should.be.true()
-        return pouchHelpers.createFile(this.pouch, 8, err => should.not.exist(err))
+        pouchHelpers.createFile(this.pouch, 8, err => should.not.exist(err))
       }
             , 10)
     })
@@ -829,7 +829,7 @@ function(doc) {
       [side, name, rev] = this.sync.selectSide(doc)
       side.should.equal(this.sync.local)
       name.should.equal('local')
-      return rev.should.equal(2)
+      rev.should.equal(2)
     })
 
     it('selects the remote side if local is up-to-date', function () {
@@ -857,7 +857,7 @@ function(doc) {
       [side, name, rev] = this.sync.selectSide(doc)
       side.should.equal(this.sync.remote)
       name.should.equal('remote')
-      return rev.should.equal(3)
+      rev.should.equal(3)
     })
 
     it('returns an empty array if both sides are up-to-date', function () {
@@ -873,7 +873,7 @@ function(doc) {
       let [side, name, rev] = this.sync.selectSide(doc)
       should.not.exist(side)
       should.not.exist(name)
-      return should.not.exist(rev)
+      should.not.exist(rev)
     })
   })
 })

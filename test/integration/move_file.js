@@ -52,7 +52,7 @@ describe('Move a file', function () {
       files.length.should.equal(1)
       let { size } = fs.statSync(path.join(this.syncPath, files[0]))
       size.should.equal(src.size)
-      return files[0].should.equal(dst.name)
+      files[0].should.equal(dst.name)
     })
 
     it('has the file on remote', done =>
@@ -108,7 +108,7 @@ describe('Move a file', function () {
       files.length.should.equal(1)
       let { size } = fs.statSync(path.join(this.syncPath, files[0]))
       size.should.equal(src.size)
-      return files[0].should.equal(dst.name)
+      files[0].should.equal(dst.name)
     })
 
     it('has the file on remote', done =>

@@ -348,7 +348,7 @@ describe('Merge', function () {
           info.doc.moveTo.should.equal(doc._id)
           done()
         })
-        return this.merge.moveFile(this.side, clone(doc), clone(was), err => should.not.exist(err))
+        this.merge.moveFile(this.side, clone(doc), clone(was), err => should.not.exist(err))
       }
             )
     })
@@ -438,7 +438,7 @@ describe('Merge', function () {
           info.doc.moveTo.should.equal(doc._id)
           done()
         })
-        return this.merge.moveFolder(this.side, clone(doc), clone(was), err => should.not.exist(err))
+        this.merge.moveFolder(this.side, clone(doc), clone(was), err => should.not.exist(err))
       }
             )
     })

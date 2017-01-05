@@ -18,14 +18,14 @@ describe('Prep', function () {
       it('is available', function () {
         let doc = {path: 'FOO'}
         this.prep.buildId(doc)
-        return doc._id.should.equal('FOO')
+        doc._id.should.equal('FOO')
       })
 
       if (['linux', 'freebsd', 'sunos'].includes(process.platform)) {
         it('is case insensitive on UNIX', function () {
           let doc = {path: 'foo/bar/café'}
           this.prep.buildId(doc)
-          return doc._id.should.equal('foo/bar/café')
+          doc._id.should.equal('foo/bar/café')
         })
       }
 
@@ -33,7 +33,7 @@ describe('Prep', function () {
         it('is case sensitive on OSX', function () {
           let doc = {path: 'foo/bar/café'}
           this.prep.buildId(doc)
-          return doc._id.should.equal('FOO/BAR/CAFÉ')
+          doc._id.should.equal('FOO/BAR/CAFÉ')
         })
       }
     })
@@ -53,7 +53,7 @@ describe('Prep', function () {
         ret = this.prep.invalidPath({path: 'foo/..'})
         ret.should.be.true()
         ret = this.prep.invalidPath({path: 'f/../oo/../../bar/./baz'})
-        return ret.should.be.true()
+        ret.should.be.true()
       })
 
       it('returns false if everything is OK', function () {
@@ -62,14 +62,14 @@ describe('Prep', function () {
         ret = this.prep.invalidPath({path: 'foo/bar'})
         ret.should.be.false()
         ret = this.prep.invalidPath({path: 'foo/bar/baz.jpg'})
-        return ret.should.be.false()
+        ret.should.be.false()
       })
 
       it('returns false for paths with a leading slash', function () {
         let ret = this.prep.invalidPath({path: '/foo/bar'})
         ret.should.be.false()
         ret = this.prep.invalidPath({path: '/foo/bar/baz.bmp'})
-        return ret.should.be.false()
+        ret.should.be.false()
       })
     })
 
@@ -80,7 +80,7 @@ describe('Prep', function () {
         ret = this.prep.invalidChecksum({checksum: null})
         ret.should.be.false()
         ret = this.prep.invalidChecksum({checksum: undefined})
-        return ret.should.be.false()
+        ret.should.be.false()
       })
 
       it('returns true if the checksum is incorrect', function () {
@@ -90,7 +90,7 @@ describe('Prep', function () {
         ret.should.be.true()
         let md5 = '68b329da9893e34099c7d8ad5cb9c940'
         ret = this.prep.invalidChecksum({checksum: md5})
-        return ret.should.be.true()
+        ret.should.be.true()
       })
 
       it('returns false if the checksum is OK', function () {
@@ -99,7 +99,7 @@ describe('Prep', function () {
         ret.should.be.false()
         doc = {checksum: 'ADC83B19E793491B1C6EA0FD8B46CD9F32E592FC'}
         ret = this.prep.invalidChecksum(doc)
-        return ret.should.be.false()
+        ret.should.be.false()
       })
     })
 

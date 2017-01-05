@@ -126,7 +126,7 @@ describe('LocalWatcher Tests', function () {
           fileClass.should.equal('image');
           [mimeType, fileClass] = this.watcher.getFileClass('doc.txt')
           mimeType.should.equal('text/plain')
-          return fileClass.should.equal('document')
+          fileClass.should.equal('document')
         })
     )
 
@@ -158,7 +158,7 @@ describe('LocalWatcher Tests', function () {
       this.watcher.pending['zoo'] = {}
       this.watcher.hasPending('foo').should.be.true()
       this.watcher.pending['foo/baz/bim'] = {}
-      return this.watcher.hasPending('foo/baz').should.be.true()
+      this.watcher.hasPending('foo/baz').should.be.true()
     })
 
     it('returns false else', function () {
@@ -166,7 +166,7 @@ describe('LocalWatcher Tests', function () {
       this.watcher.hasPending('foo').should.be.false()
       this.watcher.pending['foo'] = {}
       this.watcher.pending['bar/baz'] = {}
-      return this.watcher.hasPending('foo').should.be.false()
+      this.watcher.hasPending('foo').should.be.false()
     })
   })
 

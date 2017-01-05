@@ -97,7 +97,7 @@ describe('Conflict when moving a file', function () {
       names[0].should.equal(file.name)
       let parts = names[1].split('-conflict-')
       parts.length.should.equal(2)
-      return parts[0].should.equal(file.name)
+      parts[0].should.equal(file.name)
     })
 
     it('has the files on remote', done =>
@@ -198,7 +198,7 @@ describe('Conflict when moving a file', function () {
       names[0].should.equal(file.name)
       let parts = names[1].split('-conflict-')
       parts.length.should.equal(2)
-      return parts[0].should.equal(file.name)
+      parts[0].should.equal(file.name)
     })
 
     it('has the two files on remote', done =>

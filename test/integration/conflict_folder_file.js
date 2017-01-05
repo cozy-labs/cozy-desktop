@@ -66,7 +66,7 @@ describe('Conflict', function () {
       parts[0].should.equal(folder.name)
       let children = fs.readdirSync(path.join(this.syncPath, f2))
       children.length.should.equal(1)
-      return children[0].should.equal(child.name)
+      children[0].should.equal(child.name)
     })
 
     it('has the file and the folder on remote', done =>
@@ -128,7 +128,7 @@ describe('Conflict', function () {
       parts[0].should.equal(folder.name)
       let children = fs.readdirSync(path.join(this.syncPath, f1))
       children.length.should.equal(1)
-      return children[0].should.equal(child.name)
+      children[0].should.equal(child.name)
     })
 
     it('has the file and the folder on remote', done =>

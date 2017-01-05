@@ -5,17 +5,17 @@ import Ignore from '../../src/ignore'
 describe('Ignore', function () {
   it('rejects blank lines for patterns', function () {
     this.ignore = new Ignore(['foo', '', 'bar'])
-    return this.ignore.patterns.length.should.equal(2)
+    this.ignore.patterns.length.should.equal(2)
   })
 
   it('rejects comments for patterns', function () {
     this.ignore = new Ignore(['# Blah', 'foo', 'bar'])
-    return this.ignore.patterns.length.should.equal(2)
+    this.ignore.patterns.length.should.equal(2)
   })
 
   it('does not keep trailing spaces in patterns', function () {
     this.ignore = new Ignore(['foo  '])
-    return this.ignore.patterns[0].match('foo').should.be.true()
+    this.ignore.patterns[0].match('foo').should.be.true()
   })
 
   it('does not match a file when path and pattern are different', function () {
@@ -24,7 +24,7 @@ describe('Ignore', function () {
       _id: 'bar',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.false()
+    this.ignore.isIgnored(doc).should.be.false()
   })
 
   it('matches a file when its path is the pattern description', function () {
@@ -33,7 +33,7 @@ describe('Ignore', function () {
       _id: 'foo',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('matches a folder when its path is the pattern description', function () {
@@ -42,7 +42,7 @@ describe('Ignore', function () {
       _id: 'foo',
       docType: 'folder'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('does not match a file when the pattern is for folders only', function () {
@@ -51,7 +51,7 @@ describe('Ignore', function () {
       _id: 'foo',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.false()
+    this.ignore.isIgnored(doc).should.be.false()
   })
 
   it('matches a folder, even with a folders only pattern', function () {
@@ -60,7 +60,7 @@ describe('Ignore', function () {
       _id: 'foo',
       docType: 'folder'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('matches dotfiles', function () {
@@ -69,7 +69,7 @@ describe('Ignore', function () {
       _id: '.foo',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('accepts glob', function () {
@@ -78,7 +78,7 @@ describe('Ignore', function () {
       _id: 'foo.txt',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('accepts wild card', function () {
@@ -87,7 +87,7 @@ describe('Ignore', function () {
       _id: 'foo',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('accepts wild card (bis)', function () {
@@ -95,7 +95,7 @@ describe('Ignore', function () {
       _id: 'foobar',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.false()
+    this.ignore.isIgnored(doc).should.be.false()
   })
 
   it('accepts braces', function () {
@@ -104,7 +104,7 @@ describe('Ignore', function () {
       _id: 'foo.txt',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('accepts brackets', function () {
@@ -113,7 +113,7 @@ describe('Ignore', function () {
       _id: 'foo',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('ignores files only on basename', function () {
@@ -122,7 +122,7 @@ describe('Ignore', function () {
       _id: 'abc/foo',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('ignores files only on basename (bis)', function () {
@@ -131,7 +131,7 @@ describe('Ignore', function () {
       _id: 'abc/foo',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.false()
+    this.ignore.isIgnored(doc).should.be.false()
   })
 
   it('ignores files in a ignored directory', function () {
@@ -140,7 +140,7 @@ describe('Ignore', function () {
       _id: 'foo/bar',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('ignores files in a ignored directory (bis)', function () {
@@ -149,7 +149,7 @@ describe('Ignore', function () {
       _id: 'foo/bar',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('ignores directories in a ignored directory', function () {
@@ -158,7 +158,7 @@ describe('Ignore', function () {
       _id: 'foo/baz',
       docType: 'folder'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('restricts ignore rules with a leading slash to a full path', function () {
@@ -167,7 +167,7 @@ describe('Ignore', function () {
       _id: 'foo',
       docType: 'folder'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('restricts ignore rules with a leading slash to a full path (bis)', function () {
@@ -176,7 +176,7 @@ describe('Ignore', function () {
       _id: 'bar/foo',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.false()
+    this.ignore.isIgnored(doc).should.be.false()
   })
 
   it('accepts two asterisks at the start', function () {
@@ -185,7 +185,7 @@ describe('Ignore', function () {
       _id: 'abc/def/foo',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('accepts two asterisks at the end', function () {
@@ -194,7 +194,7 @@ describe('Ignore', function () {
       _id: 'foo/abc/def',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('accepts two asterisks at the middle', function () {
@@ -203,7 +203,7 @@ describe('Ignore', function () {
       _id: 'a/foo/bar/b',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('accepts two asterisks at the middle (bis)', function () {
@@ -212,7 +212,7 @@ describe('Ignore', function () {
       _id: 'a/b',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('accepts two asterisks at the middle (ter)', function () {
@@ -221,7 +221,7 @@ describe('Ignore', function () {
       _id: 'foo/a/b',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.false()
+    this.ignore.isIgnored(doc).should.be.false()
   })
 
   it('accepts escaping char', function () {
@@ -230,7 +230,7 @@ describe('Ignore', function () {
       _id: '#foo',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('accepts escaping char', function () {
@@ -239,7 +239,7 @@ describe('Ignore', function () {
       _id: '!foo',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('can negate a previous rule', function () {
@@ -248,7 +248,7 @@ describe('Ignore', function () {
       _id: 'important.foo',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.false()
+    this.ignore.isIgnored(doc).should.be.false()
   })
 
   it('can negate a previous rule (bis)', function () {
@@ -257,7 +257,7 @@ describe('Ignore', function () {
       _id: 'foo/bar/abc/def',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.false()
+    this.ignore.isIgnored(doc).should.be.false()
   })
 
   it('can negate a previous rule (ter)', function () {
@@ -266,7 +266,7 @@ describe('Ignore', function () {
       _id: 'a/foo/bar',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('can negate a previous rule (quater)', function () {
@@ -275,7 +275,7 @@ describe('Ignore', function () {
       _id: 'foo/bar',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.false()
+    this.ignore.isIgnored(doc).should.be.false()
   })
 
   it('has some defaults rules for dropbox', function () {
@@ -285,7 +285,7 @@ describe('Ignore', function () {
       _id: '.dropbox',
       docType: 'folder'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('has some defaults rules for editors', function () {
@@ -295,7 +295,7 @@ describe('Ignore', function () {
       _id: 'foo.c.swp~',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 
   it('has some defaults rules for OSes', function () {
@@ -305,6 +305,6 @@ describe('Ignore', function () {
       _id: 'Thumbs.db',
       docType: 'file'
     }
-    return this.ignore.isIgnored(doc).should.be.true()
+    this.ignore.isIgnored(doc).should.be.true()
   })
 })

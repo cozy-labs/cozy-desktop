@@ -42,7 +42,7 @@ describe('Image from mobile', function () {
       delete doc.checksum
       doc.tags = ['foo', 'bar']
       doc.localPath = localPath
-      return client.put(doc, (err, updated) => should.not.exist(err))
+      client.put(doc, (err, updated) => should.not.exist(err))
     })
   })
 
@@ -58,7 +58,7 @@ describe('Image from mobile', function () {
     let local = files[0]
     local.should.equal(file.name)
     let { size } = fs.statSync(path.join(this.syncPath, local))
-    return size.should.equal(file.size)
+    size.should.equal(file.size)
   })
 
   it('has the file on remote', done =>

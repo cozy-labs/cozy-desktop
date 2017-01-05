@@ -26,7 +26,7 @@ describe('Remote', function () {
   describe('constructor', () =>
         it('has a couch and a watcher', function () {
           should.exist(this.remote.couch)
-          return should.exist(this.remote.watcher)
+          should.exist(this.remote.watcher)
         })
     )
 
@@ -168,7 +168,7 @@ describe('Remote', function () {
           name.should.equal('bar');
           [path, name] = this.remote.extractDirAndName('foo/bar/baz')
           path.should.equal('/foo/bar')
-          return name.should.equal('baz')
+          name.should.equal('baz')
         })
     )
 
@@ -194,7 +194,7 @@ describe('Remote', function () {
         }
       }
       let doc = this.remote.createRemoteDoc(local, remote)
-      return doc.should.have.properties({
+      doc.should.have.properties({
         path: '/foo/bar',
         name: 'baz.jpg',
         docType: 'file',
@@ -224,7 +224,7 @@ describe('Remote', function () {
         tags: ['courge']
       }
       let doc = this.remote.createRemoteDoc(local)
-      return doc.should.have.properties({
+      doc.should.have.properties({
         path: '/foo/bar',
         name: 'baz',
         docType: 'folder',
@@ -239,7 +239,7 @@ describe('Remote', function () {
         docType: 'folder'
       }
       let doc = this.remote.createRemoteDoc(local)
-      return doc.should.have.properties({
+      doc.should.have.properties({
         path: '',  // not '/' or '.'
         name: 'in-root-folder',
         docType: 'folder'
@@ -263,7 +263,7 @@ describe('Remote', function () {
         }
       }
       let doc = this.remote.createRemoteDoc(local, remote)
-      return doc.should.have.properties({
+      doc.should.have.properties({
         _id: remote._id,
         _rev: remote._rev,
         path: '/foo/bar',
@@ -361,7 +361,7 @@ describe('Remote', function () {
           this.remote.isUpToDate(doc).should.be.true()
           doc.sides.local = 3
           doc._rev = '3-0123456'
-          return this.remote.isUpToDate(doc).should.be.false()
+          this.remote.isUpToDate(doc).should.be.false()
         })
     )
 

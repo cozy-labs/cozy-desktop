@@ -24,12 +24,12 @@ describe('Local', function () {
 
   describe('constructor', function () {
     it('has a base path', function () {
-      return this.local.syncPath.should.equal(this.syncPath)
+      this.local.syncPath.should.equal(this.syncPath)
     })
 
     it('has a tmp path', function () {
       let tmpPath = path.join(this.syncPath, '.cozy-desktop')
-      return this.local.tmpPath.should.equal(tmpPath)
+      this.local.tmpPath.should.equal(tmpPath)
     })
   })
 
@@ -135,7 +135,7 @@ describe('Local', function () {
           this.local.isUpToDate(doc).should.be.true()
           doc.sides.remote = 3
           doc._rev = '3-0123456'
-          return this.local.isUpToDate(doc).should.be.false()
+          this.local.isUpToDate(doc).should.be.false()
         })
     )
 

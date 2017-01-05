@@ -35,7 +35,7 @@ describe('Merge Helpers', function () {
           this.merge.sameDate(b, e).should.be.false()
           this.merge.sameDate(c, d).should.be.true()
           this.merge.sameDate(c, e).should.be.false()
-          return this.merge.sameDate(d, e).should.be.false()
+          this.merge.sameDate(d, e).should.be.false()
         })
     )
 
@@ -110,7 +110,7 @@ describe('Merge Helpers', function () {
           this.merge.sameFolder(b, e).should.be.false()
           this.merge.sameFolder(c, d).should.be.false()
           this.merge.sameFolder(c, e).should.be.false()
-          return this.merge.sameFolder(d, e).should.be.false()
+          this.merge.sameFolder(d, e).should.be.false()
         })
     )
 
@@ -209,7 +209,7 @@ describe('Merge Helpers', function () {
       this.merge.sameFile(c, f).should.be.false()
       this.merge.sameFile(d, e).should.be.false()
       this.merge.sameFile(d, f).should.be.false()
-      return this.merge.sameFile(e, f).should.be.false()
+      this.merge.sameFile(e, f).should.be.false()
     })
 
     it('does not fail when one file has executable: undefined', function () {
@@ -237,7 +237,7 @@ describe('Merge Helpers', function () {
       this.merge.sameFile(a, d).should.be.false()
       this.merge.sameFile(b, c).should.be.true()
       this.merge.sameFile(b, d).should.be.false()
-      return this.merge.sameFile(c, d).should.be.false()
+      this.merge.sameFile(c, d).should.be.false()
     })
   })
 
@@ -252,7 +252,7 @@ describe('Merge Helpers', function () {
         checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
       }
       let ret = this.merge.sameBinary(one, two)
-      return ret.should.be.true()
+      ret.should.be.true()
     })
 
     it('returns true for two docs with the same remote file', function () {
@@ -272,7 +272,7 @@ describe('Merge Helpers', function () {
       let ret = this.merge.sameBinary(one, two)
       ret.should.be.true()
       ret = this.merge.sameBinary(two, one)
-      return ret.should.be.true()
+      ret.should.be.true()
     })
 
     it('returns false for two different documents', function () {
@@ -298,7 +298,7 @@ describe('Merge Helpers', function () {
       ret = this.merge.sameBinary(two, three)
       ret.should.be.false()
       ret = this.merge.sameBinary(three, one)
-      return ret.should.be.false()
+      ret.should.be.false()
     })
   })
 
@@ -378,7 +378,7 @@ describe('Merge Helpers', function () {
       this.merge.markSide('local', doc)
       should.exist(doc.sides)
       should.exist(doc.sides.local)
-      return doc.sides.local.should.equal(1)
+      doc.sides.local.should.equal(1)
     })
 
     it('increments the rev for an already existing doc', function () {
@@ -391,7 +391,7 @@ describe('Merge Helpers', function () {
       let prev = {_rev: '5-0123'}
       this.merge.markSide('local', doc, prev)
       doc.sides.local.should.equal(6)
-      return doc.sides.remote.should.equal(5)
+      doc.sides.remote.should.equal(5)
     })
   })
 
