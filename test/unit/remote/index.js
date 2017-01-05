@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 import crypto from 'crypto'
 import fs from 'fs'
 import sinon from 'sinon'

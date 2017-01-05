@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 import faker from 'faker'
 import find from 'lodash.find'
 import fs from 'fs-extra'

@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 import child from 'child_process'
 import clone from 'lodash.clone'
 import del from 'del'

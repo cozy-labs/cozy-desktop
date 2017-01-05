@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 import async from 'async'
 import sinon from 'sinon'
 import should from 'should'

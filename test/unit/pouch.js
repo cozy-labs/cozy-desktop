@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 import async from 'async'
 import jsv from 'jsverify'
 import path from 'path'

@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 import faker from 'faker'
 import fs from 'fs-extra'
 import path from 'path'

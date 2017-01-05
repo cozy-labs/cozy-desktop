@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 import async from 'async'
 import clone from 'lodash.clone'
 import fs from 'fs-extra'

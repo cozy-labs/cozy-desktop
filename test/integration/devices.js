@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 import { device } from 'cozy-device-sdk'
 import should from 'should'
 
