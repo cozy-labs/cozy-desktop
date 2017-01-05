@@ -50,8 +50,8 @@ let removeRemoteDevice = function (i, callback) {
 let spawnCozyDesktop = function (i, callback) {
   let log = fs.createWriteStream(logs[i])
   return log.on('open', function () {
-    let bin = path.resolve('src/bin/cli.coffee')
-    let args = ['sync']
+    let bin = path.resolve('node_modules/.bin/babel-node')
+    let args = ['src/bin/cli.js', 'sync']
     let env = clone(process.env)
     env.COZY_DESKTOP_DIR = folders[i]
     env.NODE_ENV = 'test'

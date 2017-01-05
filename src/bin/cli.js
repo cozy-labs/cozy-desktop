@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import 'source-map-support/register'
 
 import read from 'read'
