@@ -144,6 +144,7 @@ class Pouch {
               if ('docType' in doc) {
                 let parts = doc._id.split('/')
                 parts.pop()
+                // eslint-disable-next-line no-undef
                 return emit(parts.join('/'), {_id: doc._id})
               }
             }.toString()
@@ -156,6 +157,7 @@ class Pouch {
     let query =
             function (doc) {
               if ('checksum' in doc) {
+                // eslint-disable-next-line no-undef
                 return emit(doc.checksum)
               }
             }.toString()
@@ -168,6 +170,7 @@ class Pouch {
     let query =
             function (doc) {
               if ('remote' in doc) {
+                // eslint-disable-next-line no-undef
                 return emit(doc.remote._id)
               }
             }.toString()
