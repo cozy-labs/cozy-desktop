@@ -21,7 +21,7 @@
     "cozy"
   ],
   "scripts": {
-    "lint": "coffeelint src/ test/",
+    "lint": "./node_modules/.bin/standard './src/**/*.js' './test/**/*.js'",
     "test": "installed-check && npm run test-unit && npm run test-integration",
     "test-unit": "NODE_ENV=test mocha $MOCHA_UNIT_TEST_FLAGS test/unit/",
     "test-integration": "NODE_ENV=test mocha test/integration/",
