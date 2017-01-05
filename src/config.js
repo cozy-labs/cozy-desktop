@@ -67,7 +67,6 @@ class Config {
   updateSync (deviceConfig) {
     let device = this.getDevice(deviceConfig.deviceName)
     for (let key in deviceConfig) {
-      let value = deviceConfig[key]
       device[key] = deviceConfig[key]
     }
     this.devices[device.deviceName] = device

@@ -50,7 +50,6 @@ describe('Config', function () {
             deviceName: 'tester',
             url: 'somewhere'
           })
-          let device = this.config.getDevice()
           this.config.devices['tester'].url.should.equal('somewhere')
         })
     )

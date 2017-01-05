@@ -214,7 +214,6 @@ function(doc) {
     })
 
     it('emits up-to-date if there are no available change', function (done) {
-      let spy = sinon.spy()
       this.sync.pop(function (err, change) {
         should.not.exist(err)
         return setTimeout(done, 11)

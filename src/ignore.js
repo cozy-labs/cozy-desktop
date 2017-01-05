@@ -72,7 +72,6 @@ class Ignore {
     let negate = false
     let noslash = line.indexOf('/') === -1
     if (line.indexOf('**') !== -1) {   // Detect two asterisks
-      let fullpath = true
       noslash = false
     }
     if (line[0] === '!') {               // Detect bang prefix

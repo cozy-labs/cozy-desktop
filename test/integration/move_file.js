@@ -24,7 +24,6 @@ describe('Move a file', function () {
       path: '',
       name: faker.name.jobType()
     }
-    let expectedSizes = []
 
     before(Cozy.registerDevice)
     before(Files.deleteAll)
@@ -77,7 +76,6 @@ describe('Move a file', function () {
       path: '',
       name: faker.name.jobType()
     }
-    let expectedSizes = []
 
     before(Cozy.registerDevice)
     before(Files.deleteAll)
@@ -96,8 +94,6 @@ describe('Move a file', function () {
     it('waits a bit', done => setTimeout(done, 4000))
 
     it('renames the file', function (done) {
-      let srcPath = path.join(this.syncPath, src.path, src.name)
-      let dstPath = path.join(this.syncPath, dst.path, dst.name)
       dst.id = src.id
       return Files.updateFile(dst, done)
     })

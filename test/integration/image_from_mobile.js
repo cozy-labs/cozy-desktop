@@ -25,7 +25,6 @@ describe('Image from mobile', function () {
     checksum: 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
   }
   let localPath = '/storage/emulated/0/DCIM/Camera/IMG_20160411_172611324.jpg'
-  let expectedSizes = []
 
   before('Create the remote file', function (done) {
     let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon-mod.jpg')

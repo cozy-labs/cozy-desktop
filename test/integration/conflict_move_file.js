@@ -165,8 +165,6 @@ describe('Conflict when moving a file', function () {
     })
 
     before(function (done) {
-      let srcPath = path.join(this.syncPath, src.path, src.name)
-      let dstPath = path.join(this.syncPath, file.path, file.name)
       file.id = file.remote.id
       return Files.updateFile(file, done)
     })
