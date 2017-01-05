@@ -64,7 +64,7 @@ class LocalWatcher {
             // Let paths in events be relative to this base path
       cwd: this.syncPath,
             // Ignore our own .cozy-desktop directory
-      ignored: /[\/\\]\.cozy-desktop/,
+      ignored: /[\/\\]\.cozy-desktop/, // eslint-disable-line no-useless-escape
             // Don't follow symlinks
       followSymlinks: false,
             // The stats object is used in methods below
