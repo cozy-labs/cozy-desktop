@@ -74,7 +74,7 @@ describe('Swap 2 files', function() {
         , 2500);
     });
 
-    return it('swaps the two file', function(done) {
+    it('swaps the two file', function(done) {
         let onePath = path.join(this.syncPath, one.path, one.name);
         let twoPath = path.join(this.syncPath, two.path, two.name);
         let tmpPath = path.join(this.syncPath, tmp.path, tmp.name);

@@ -71,7 +71,7 @@ describe('Conflict', function() {
             return children[0].should.equal(child.name);
         });
 
-        return it('has the file and the folder on remote', done =>
+        it('has the file and the folder on remote', done =>
             Files.getAllFiles(function(err, files) {
                 files.length.should.equal(2);
                 return done();
@@ -80,7 +80,7 @@ describe('Conflict', function() {
     });
 
 
-    return describe('between a local folder and a remote file', function() {
+    describe('between a local folder and a remote file', function() {
         let file = {
             path: '',
             name: faker.commerce.department(),
@@ -134,7 +134,7 @@ describe('Conflict', function() {
             return children[0].should.equal(child.name);
         });
 
-        return it('has the file and the folder on remote', done =>
+        it('has the file and the folder on remote', done =>
             Files.getAllFiles(function(err, files) {
                 files.length.should.equal(2);
                 if (files[0].path === file.path) { files = files.reverse(); }

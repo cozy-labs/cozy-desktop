@@ -49,7 +49,7 @@ describe('Merge', function() {
             );
         });
 
-        return describe('when a file with the same path exists', function() {
+        describe('when a file with the same path exists', function() {
             before('create a file', function(done) {
                 this.file = {
                     _id: 'BUZZ.JPG',
@@ -66,7 +66,7 @@ describe('Merge', function() {
                 this.pouch.db.put(this.file, done);
             });
 
-            return it('can update the metadata', function(done) {
+            it('can update the metadata', function(done) {
                 this.merge.ensureParentExist = sinon.stub().yields(null);
                 let was = clone(this.file);
                 this.file.tags = ['bar', 'baz'];
@@ -123,7 +123,7 @@ describe('Merge', function() {
             );
         });
 
-        return describe('when a file with the same path exists', function() {
+        describe('when a file with the same path exists', function() {
             before('create a file', function(done) {
                 this.file = {
                     _id: 'FIZZBUZZ.JPG',
@@ -167,7 +167,7 @@ describe('Merge', function() {
                 );
             });
 
-            return it('can overwrite the content of a file', function(done) {
+            it('can overwrite the content of a file', function(done) {
                 this.merge.ensureParentExist = sinon.stub().yields(null);
                 let doc = {
                     _id: 'FIZZBUZZ.JPG',
@@ -316,7 +316,7 @@ describe('Merge', function() {
             );
         });
 
-        return it('adds a hint for writers to know that it is a move', function(done) {
+        it('adds a hint for writers to know that it is a move', function(done) {
             this.merge.ensureParentExist = sinon.stub().yields(null);
             let doc = {
                 _id: 'FOO/NEW-HINT',
@@ -409,7 +409,7 @@ describe('Merge', function() {
             );
         });
 
-        return it('adds a hint for writers to know that it is a move', function(done) {
+        it('adds a hint for writers to know that it is a move', function(done) {
             this.merge.ensureParentExist = sinon.stub().yields(null);
             let doc = {
                 _id: 'FOOBAR/NEW-HINT',
@@ -463,7 +463,7 @@ describe('Merge', function() {
             );
         });
 
-        return it('move the folder and files/folders inside it', function(done) {
+        it('move the folder and files/folders inside it', function(done) {
             let doc = {
                 _id: 'DESTINATION',
                 path: 'DESTINATION',
@@ -522,7 +522,7 @@ describe('Merge', function() {
         })
     );
 
-    return describe('deleteFolder', function() {
+    describe('deleteFolder', function() {
         it('deletes a folder', function(done) {
             let doc = {
                 _id: 'TO-DELETE/FOLDER',
@@ -581,7 +581,7 @@ describe('Merge', function() {
             );
         });
 
-        return it('remove nested folders', function(done) {
+        it('remove nested folders', function(done) {
             let base = 'NESTED/TO-DELETE';
             return async.eachSeries(['', '/b', '/b/c', '/b/d'], (name, next) => {
                 let doc = {

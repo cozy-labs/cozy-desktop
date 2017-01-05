@@ -18,7 +18,7 @@ describe("device", function() {
             })
         );
 
-        return it('says KO else', done =>
+        it('says KO else', done =>
             device.pingCozy('http://localhost:12345', function(err) {
                 should.exist(err);
                 return done();
@@ -34,7 +34,7 @@ describe("device", function() {
             })
         );
 
-        return it('says KO with bad credentials', done =>
+        it('says KO with bad credentials', done =>
             device.checkCredentials(Cozy.url, 'xxxxxxxx', function(err) {
                 should.exist(err);
                 return done();
@@ -80,7 +80,7 @@ describe("device", function() {
             });
         });
 
-        return it('register a device with a suffix when it already exists', function(done) {
+        it('register a device with a suffix when it already exists', function(done) {
             let register = device.registerDeviceSafe;
             return register(Cozy.url, Cozy.deviceName, Cozy.password, function(err, res) {
                 should.not.exist(err);
@@ -95,7 +95,7 @@ describe("device", function() {
         });
     });
 
-    return describe('unregisterDevice', function() {
+    describe('unregisterDevice', function() {
         it('gives an error when the password is invalid', function(done) {
             let unregister = device.unregisterDevice;
             return unregister(Cozy.url, Cozy.deviceName, 'xxxxxxxx', function(err) {
@@ -126,7 +126,7 @@ describe("device", function() {
             });
         });
 
-        return it('unregister a device (ter)', function(done) {
+        it('unregister a device (ter)', function(done) {
             let deviceName = `${Cozy.deviceName}-3`;
             let unregister = device.unregisterDevice;
             return unregister(Cozy.url, deviceName, devicePasswords[2], function(err) {

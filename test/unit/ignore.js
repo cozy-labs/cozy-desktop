@@ -300,7 +300,7 @@ describe('Ignore', function() {
         return this.ignore.isIgnored(doc).should.be.true();
     });
 
-    return it('has some defaults rules for OSes', function() {
+    it('has some defaults rules for OSes', function() {
         this.ignore = new Ignore([]);
         this.ignore.addDefaultRules();
         let doc = {

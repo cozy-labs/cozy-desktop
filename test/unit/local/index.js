@@ -30,7 +30,7 @@ describe('Local', function() {
             return this.local.syncPath.should.equal(this.syncPath);
         });
 
-        return it('has a tmp path', function() {
+        it('has a tmp path', function() {
             let tmpPath = path.join(this.syncPath, ".cozy-desktop");
             return this.local.tmpPath.should.equal(tmpPath);
         });
@@ -47,7 +47,7 @@ describe('Local', function() {
             });
         });
 
-        return it('creates a readable stream for the document', function(done) {
+        it('creates a readable stream for the document', function(done) {
             let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg');
             let dst = path.join(this.syncPath, 'read-stream.jpg');
             fs.copySync(src, dst);
@@ -105,7 +105,7 @@ describe('Local', function() {
             });
         });
 
-        return it('updates mtime for a directory', function(done) {
+        it('updates mtime for a directory', function(done) {
             let date = new Date('2015-10-09T05:06:07Z');
             let folderPath = path.join(this.syncPath, "utimes-folder");
             fs.ensureDirSync(folderPath);
@@ -268,7 +268,7 @@ describe('Local', function() {
             );
         });
 
-        return it('aborts when the download is incorrect', function(done) {
+        it('aborts when the download is incorrect', function(done) {
             this.events.emit = sinon.spy();
             let doc = {
                 path: 'files/file-from-remote-2',
@@ -318,7 +318,7 @@ describe('Local', function() {
             });
         });
 
-        return it('updates mtime if the folder already exists', function(done) {
+        it('updates mtime if the folder already exists', function(done) {
             let doc = {
                 path: 'parent/folder-to-create',
                 lastModification: new Date('2015-10-09T05:06:08Z')
@@ -458,7 +458,7 @@ describe('Local', function() {
             });
         });
 
-        return it('does nothing if the file has already been moved', function(done) {
+        it('does nothing if the file has already been moved', function(done) {
             let old = {
                 path: 'old-parent/already-moved',
                 lastModification: new Date('2016-10-08T05:05:11Z')
@@ -550,7 +550,7 @@ describe('Local', function() {
             });
         });
 
-        return it('remove the old directory if everything has been moved', function(done) {
+        it('remove the old directory if everything has been moved', function(done) {
             let old = {
                 path: 'old-parent/folder-already-moved',
                 lastModification: new Date('2016-10-08T05:05:11Z')
@@ -631,7 +631,7 @@ describe('Local', function() {
     );
 
 
-    return describe('resolveConflict', () =>
+    describe('resolveConflict', () =>
         it('renames the file', function(done) {
             let src = {
                 path: 'conflict/file',

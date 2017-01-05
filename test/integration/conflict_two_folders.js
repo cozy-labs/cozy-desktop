@@ -65,7 +65,7 @@ describe('Conflict between two folders', function() {
             return remote.should.equal(remoteChild.name);
         });
 
-        return it('has the two files on remote', done =>
+        it('has the two files on remote', done =>
             Files.getAllFiles(function(err, files) {
                 let local, remote;
                 files.length.should.equal(2);
@@ -84,7 +84,7 @@ describe('Conflict between two folders', function() {
     });
 
 
-    return describe('with remote first', function() {
+    describe('with remote first', function() {
         let folder = {
             path: '',
             name: faker.internet.domainWord()
@@ -137,7 +137,7 @@ describe('Conflict between two folders', function() {
             return remote.should.equal(remoteChild.name);
         });
 
-        return it('has the two files on remote', done =>
+        it('has the two files on remote', done =>
             Files.getAllFiles(function(err, files) {
                 let local, remote;
                 files.length.should.equal(2);

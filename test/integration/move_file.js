@@ -57,7 +57,7 @@ describe('Move a file', function() {
             return files[0].should.equal(dst.name);
         });
 
-        return it('has the file on remote', done =>
+        it('has the file on remote', done =>
             Files.getAllFiles(function(err, files) {
                 files.length.should.equal(1);
                 files[0].size.should.eql(src.size);
@@ -68,7 +68,7 @@ describe('Move a file', function() {
     });
 
 
-    return describe('on remote', function() {
+    describe('on remote', function() {
         let src = {
             path: '',
             name: faker.name.jobArea(),
@@ -114,7 +114,7 @@ describe('Move a file', function() {
             return files[0].should.equal(dst.name);
         });
 
-        return it('has the file on remote', done =>
+        it('has the file on remote', done =>
             Files.getAllFiles(function(err, files) {
                 files.length.should.equal(1);
                 files[0].size.should.eql(src.size);

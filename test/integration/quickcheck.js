@@ -338,7 +338,7 @@ describe('Property based testing', function() {
         })
     );
 
-    return it('cleans the directories', function(done) {
+    it('cleans the directories', function(done) {
         del.sync(folders[0]);
         del.sync(folders[1]);
         return done();

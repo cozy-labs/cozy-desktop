@@ -50,7 +50,7 @@ describe("LocalWatcher Tests", function() {
             return this.watcher.start(function() {});
         });
 
-        return it('ignores .cozy-desktop', function(done) {
+        it('ignores .cozy-desktop', function(done) {
             fs.ensureDirSync(path.join(this.syncPath, '.cozy-desktop'));
             fs.ensureFileSync(path.join(this.syncPath, '.cozy-desktop/ac'));
             this.prep.putFolder = sinon.spy();
@@ -113,7 +113,7 @@ describe("LocalWatcher Tests", function() {
             );
         });
 
-        return it('calls back with an error if the file is missing', function(done) {
+        it('calls back with an error if the file is missing', function(done) {
             return this.watcher.createDoc('no/such/file', {}, function(err, doc) {
                 should.exist(err);
                 err.code.should.equal('ENOENT');
@@ -145,7 +145,7 @@ describe("LocalWatcher Tests", function() {
             });
         });
 
-        return it('returns an error for a missing file', function(done) {
+        it('returns an error for a missing file', function(done) {
             let filePath = 'no/such/file';
             return this.watcher.checksum(filePath, function(err, sum) {
                 should.exist(err);
@@ -166,7 +166,7 @@ describe("LocalWatcher Tests", function() {
             return this.watcher.hasPending('foo/baz').should.be.true();
         });
 
-        return it('returns false else', function() {
+        it('returns false else', function() {
             this.watcher.pending = Object.create(null);
             this.watcher.hasPending('foo').should.be.false();
             this.watcher.pending['foo'] = {};
@@ -220,7 +220,7 @@ describe("LocalWatcher Tests", function() {
             );
         });
 
-        return it('detects when a sub-folder is created', function(done) {
+        it('detects when a sub-folder is created', function(done) {
             fs.mkdirSync(path.join(this.syncPath, 'abb'));
             this.prep.putFolder = () => {  // For aba folder
                 this.prep.putFolder = function(side, doc) {
@@ -316,7 +316,7 @@ describe("LocalWatcher Tests", function() {
             return this.pouch.resetDatabase(done);
         });
 
-        return it('deletes the source and adds the destination', function(done) {
+        it('deletes the source and adds the destination', function(done) {
             let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg');
             let dst = path.join(this.syncPath, 'afa.jpg');
             fs.copySync(src, dst);
@@ -370,7 +370,7 @@ describe("LocalWatcher Tests", function() {
             return this.pouch.resetDatabase(done);
         });
 
-        return it('deletes the source and adds the destination', function(done) {
+        it('deletes the source and adds the destination', function(done) {
             let src = path.join(this.syncPath, 'aga');
             let dst = path.join(this.syncPath, 'agb');
             fs.ensureDirSync(src);
@@ -415,12 +415,12 @@ describe("LocalWatcher Tests", function() {
         });
     });
 
-    return describe('onReady', function() {
+    describe('onReady', function() {
         before('reset pouchdb', function(done) {
             return this.pouch.resetDatabase(done);
         });
 
-        return it('detects deleted files and folders', function(done) {
+        it('detects deleted files and folders', function(done) {
             let dd = this.prep.deleteDoc = sinon.stub().yields();
             let folder1 = {
                 _id: 'folder1',

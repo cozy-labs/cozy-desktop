@@ -61,7 +61,7 @@ describe("Sync", function() {
             );
         });
 
-        return it('does not start sync if metadata replication fails', function(done) {
+        it('does not start sync if metadata replication fails', function(done) {
             this.local.start = sinon.stub().yields('failed');
             return this.sync.start('full', err => {
                 err.should.equal('failed');
@@ -98,7 +98,7 @@ describe("Sync", function() {
             );
         });
 
-        return it('calls pop but not apply if pop has failed', function(done) {
+        it('calls pop but not apply if pop has failed', function(done) {
             this.sync.pop = sinon.stub().yields('failed');
             return this.sync.sync(err => {
                 err.should.equal('failed');
@@ -217,7 +217,7 @@ function(doc) {
             , 10);
         });
 
-        return it('emits up-to-date if there are no available change', function(done) {
+        it('emits up-to-date if there are no available change', function(done) {
             let spy = sinon.spy();
             this.sync.pop(function(err, change) {
                 should.not.exist(err);
@@ -304,7 +304,7 @@ function(doc) {
             );
         });
 
-        return it('calls folderChanged for a folder', function(done) {
+        it('calls folderChanged for a folder', function(done) {
             let change = {
                 seq: 124,
                 doc: {
@@ -408,7 +408,7 @@ function(doc) {
             );
         });
 
-        return it('returns a function that does not touch the seq if error', function(done) {
+        it('returns a function that does not touch the seq if error', function(done) {
             return this.pouch.setLocalSeq(128, () => {
                 let change = {
                     seq: 129,
@@ -482,7 +482,7 @@ function(doc) {
             );
         });
 
-        return it('stops retrying after 10 errors', function(done) {
+        it('stops retrying after 10 errors', function(done) {
             let doc = {
                 _id: 'eleventh/failure',
                 errors: 10
@@ -659,7 +659,7 @@ function(doc) {
             );
         });
 
-        return it('does nothing for a deleted file that was not added', function(done) {
+        it('does nothing for a deleted file that was not added', function(done) {
             let doc = {
                 _id: 'tmp/fooz',
                 _rev: '2-1234567890',
@@ -786,7 +786,7 @@ function(doc) {
             );
         });
 
-        return it('does nothing for a deleted folder that was not added', function(done) {
+        it('does nothing for a deleted folder that was not added', function(done) {
             let doc = {
                 _id: 'tmp/foobaz',
                 _rev: '2-1234567890',
@@ -807,7 +807,7 @@ function(doc) {
     });
 
 
-    return describe('selectSide', function() {
+    describe('selectSide', function() {
         beforeEach(function() {
             this.local = {};
             this.remote = {};
@@ -872,7 +872,7 @@ function(doc) {
             return rev.should.equal(3);
         });
 
-        return it('returns an empty array if both sides are up-to-date', function() {
+        it('returns an empty array if both sides are up-to-date', function() {
             let doc = {
                 _id: 'selectSide/5',
                 _rev: '5-0123456789',

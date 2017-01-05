@@ -101,7 +101,7 @@ describe('Conflict when moving a file', function() {
             return parts[0].should.equal(file.name);
         });
 
-        return it('has the files on remote', done =>
+        it('has the files on remote', done =>
             Files.getAllFiles(function(err, files) {
                 let f;
                 files.length.should.equal(2);
@@ -128,7 +128,7 @@ describe('Conflict when moving a file', function() {
     });
 
 
-    return describe('on remote', function() {
+    describe('on remote', function() {
         let src = {
             path: '',
             name: faker.name.jobArea(),
@@ -200,7 +200,7 @@ describe('Conflict when moving a file', function() {
             return parts[0].should.equal(file.name);
         });
 
-        return it('has the two files on remote', done =>
+        it('has the two files on remote', done =>
             Files.getAllFiles(function(err, files) {
                 let local, remote;
                 files.length.should.equal(2);

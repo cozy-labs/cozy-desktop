@@ -34,7 +34,7 @@ describe('Prep', function() {
             }
 
             if (process.platform === 'darwin') {
-                return it('is case sensitive on OSX', function() {
+                it('is case sensitive on OSX', function() {
                     let doc = {path: 'foo/bar/café'};
                     this.prep.buildId(doc);
                     return doc._id.should.equal('FOO/BAR/CAFÉ');
@@ -69,7 +69,7 @@ describe('Prep', function() {
                 return ret.should.be.false();
             });
 
-            return it('returns false for paths with a leading slash', function() {
+            it('returns false for paths with a leading slash', function() {
                 let ret = this.prep.invalidPath({path: '/foo/bar'});
                 ret.should.be.false();
                 ret = this.prep.invalidPath({path: '/foo/bar/baz.bmp'});
@@ -97,7 +97,7 @@ describe('Prep', function() {
                 return ret.should.be.true();
             });
 
-            return it('returns false if the checksum is OK', function() {
+            it('returns false if the checksum is OK', function() {
                 let doc = {checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'};
                 let ret = this.prep.invalidChecksum(doc);
                 ret.should.be.false();
@@ -160,7 +160,7 @@ describe('Prep', function() {
                 });
             });
 
-            return it('throws an error if we move a folder to a file', function(done) {
+            it('throws an error if we move a folder to a file', function(done) {
                 let doc = {
                     path: 'move/file',
                     docType: 'file'
@@ -177,7 +177,7 @@ describe('Prep', function() {
             });
         });
 
-        return describe('deleteDoc', function() {
+        describe('deleteDoc', function() {
             it('calls deleteFile for a file', function(done) {
                 let doc = {
                     path: 'delete/name',
@@ -192,7 +192,7 @@ describe('Prep', function() {
                 );
             });
 
-            return it('calls deleteFolder for a folder', function(done) {
+            it('calls deleteFolder for a folder', function(done) {
                 let doc = {
                     path: 'delete/folder',
                     docType: 'folder'
@@ -264,7 +264,7 @@ describe('Prep', function() {
                 );
             });
 
-            return it('does nothing for ignored paths on local', function(done) {
+            it('does nothing for ignored paths on local', function(done) {
                 this.merge.addFile = sinon.spy();
                 let doc = {
                     path: 'ignored',
@@ -332,7 +332,7 @@ describe('Prep', function() {
                 );
             });
 
-            return it('does nothing for ignored paths on local', function(done) {
+            it('does nothing for ignored paths on local', function(done) {
                 this.merge.updateFile = sinon.spy();
                 let doc = {
                     path: 'ignored',
@@ -348,7 +348,7 @@ describe('Prep', function() {
         });
 
 
-        return describe('putFolder', function() {
+        describe('putFolder', function() {
             it('expects a doc with a valid path', function(done) {
                 return this.prep.putFolder(this.side, {path: '..'}, function(err) {
                     should.exist(err);
@@ -371,7 +371,7 @@ describe('Prep', function() {
                 );
             });
 
-            return it('does nothing for ignored paths on local', function(done) {
+            it('does nothing for ignored paths on local', function(done) {
                 this.merge.putFolder = sinon.spy();
                 let doc = {path: 'ignored'};
                 return this.prep.putFolder('local', doc, err => {
@@ -458,7 +458,7 @@ describe('Prep', function() {
                 });
             });
 
-            return it('calls Merge with the correct fields', function(done) {
+            it('calls Merge with the correct fields', function(done) {
                 this.merge.moveFile = sinon.stub().yields(null);
                 let doc = {
                     path: 'FOO/new-missing-fields.jpg',
@@ -490,7 +490,7 @@ describe('Prep', function() {
         });
 
 
-        return describe('moveFolder', function() {
+        describe('moveFolder', function() {
             it('expects a doc with a valid path', function(done) {
                 let doc = {path: ''};
                 let was = {path: 'foo/baz'};
@@ -543,7 +543,7 @@ describe('Prep', function() {
                 });
             });
 
-            return it('calls Merge with the correct fields', function(done) {
+            it('calls Merge with the correct fields', function(done) {
                 let spy = this.merge.moveFolder = sinon.stub().yields(null);
                 let doc =
                     {path: 'FOOBAR/new-missing-fields'};
@@ -570,7 +570,7 @@ describe('Prep', function() {
     });
 
 
-    return describe('Delete', function() {
+    describe('Delete', function() {
 
         describe('deleteFile', function() {
             it('expects a doc with a valid path', function(done) {
@@ -594,7 +594,7 @@ describe('Prep', function() {
                 );
             });
 
-            return it('does nothing for ignored paths on local', function(done) {
+            it('does nothing for ignored paths on local', function(done) {
                 this.merge.deleteFile = sinon.spy();
                 let doc = {path: 'ignored'};
                 return this.prep.deleteFile('local', doc, err => {
@@ -606,7 +606,7 @@ describe('Prep', function() {
             });
         });
 
-        return describe('deleteFolder', function() {
+        describe('deleteFolder', function() {
             it('expects a doc with a valid path', function(done) {
                 return this.prep.deleteFolder(this.side, {path: '/'}, function(err) {
                     should.exist(err);
@@ -628,7 +628,7 @@ describe('Prep', function() {
                 );
             });
 
-            return it('does nothing for ignored paths on local', function(done) {
+            it('does nothing for ignored paths on local', function(done) {
                 this.merge.deleteFolder = sinon.spy();
                 let doc = {path: 'ignored'};
                 return this.prep.deleteFolder('local', doc, err => {

@@ -128,7 +128,7 @@ describe('Remote', function() {
             });
         });
 
-        return it('uploads the file even if a blank binary is present', function(done) {
+        it('uploads the file even if a blank binary is present', function(done) {
             let checksum = '988881adc9fc3655077dc2d4d757d480b5ea0e11';
             let fixture = 'test/fixtures/foobar.txt';
             let doc = {
@@ -253,7 +253,7 @@ describe('Remote', function() {
             });
         });
 
-        return it('transforms an existing local file in remote file', function() {
+        it('transforms an existing local file in remote file', function() {
             let local = {
                 path: 'foo/bar/baz.jpg',
                 docType: 'file',
@@ -310,7 +310,7 @@ describe('Remote', function() {
             );
         });
 
-        return it('keeps the binary if referenced by a file', function(done) {
+        it('keeps the binary if referenced by a file', function(done) {
             let binary = {
                 _id: 'binary-b410',
                 checksum: 'b410ffdd571d6e86bb8e8bdd054df91e16dfa75e',
@@ -428,7 +428,7 @@ describe('Remote', function() {
             );
         });
 
-        return it('does not reupload an existing file', function(done) {
+        it('does not reupload an existing file', function(done) {
             let checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df';
             let doc = {
                 _id: 'backup/cat3.jpg',
@@ -594,7 +594,7 @@ describe('Remote', function() {
         });
 
 
-        return it('throws an error if the checksum is invalid', function(done) {
+        it('throws an error if the checksum is invalid', function(done) {
             return couchHelpers.createFile(this.couch, 6, (err, created) => {
                 should.not.exist(err);
                 let doc = {
@@ -723,7 +723,7 @@ describe('Remote', function() {
             );
         });
 
-        return it('adds a folder to couchdb if the folder does not exist', function(done) {
+        it('adds a folder to couchdb if the folder does not exist', function(done) {
             let doc = {
                 path: 'couchdb-folder/folder-3',
                 docType: 'folder',
@@ -851,7 +851,7 @@ describe('Remote', function() {
             );
         });
 
-        return it('adds a folder to couchdb if the folder does not exist', function(done) {
+        it('adds a folder to couchdb if the folder does not exist', function(done) {
             let doc = {
                 path: 'couchdb-folder/folder-7',
                 docType: 'folder',
@@ -915,7 +915,7 @@ describe('Remote', function() {
             );
         });
 
-        return it('deletes also the associated binary', function(done) {
+        it('deletes also the associated binary', function(done) {
             return couchHelpers.createFile(this.couch, 9, (err, file) => {
                 should.not.exist(err);
                 let doc = {
@@ -989,7 +989,7 @@ describe('Remote', function() {
     );
 
 
-    return describe('resolveConflict', () =>
+    describe('resolveConflict', () =>
         it('renames the file/folder', function(done) {
             let checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df';
             let binary = {

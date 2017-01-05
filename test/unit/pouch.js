@@ -102,7 +102,7 @@ describe("Pouch", function() {
                 });
             });
 
-            return it('rejects design documents', function(done) {
+            it('rejects design documents', function(done) {
                 return this.pouch.byPath('_design', function(err, docs) {
                     should.not.exist(err);
                     docs.length.should.be.equal(0);
@@ -130,7 +130,7 @@ describe("Pouch", function() {
                 });
             });
 
-            return it('gets the files and folders from root', function(done) {
+            it('gets the files and folders from root', function(done) {
                 return this.pouch.byRecursivePath('', function(err, docs) {
                     should.not.exist(err);
                     docs.length.should.be.equal(7);
@@ -153,7 +153,7 @@ describe("Pouch", function() {
             });
         });
 
-        return describe('byRemoteId', function() {
+        describe('byRemoteId', function() {
             it('gets all the file with this remote id', function(done) {
                 let id = '12345678901';
                 return this.pouch.byRemoteId(id, function(err, doc) {
@@ -165,7 +165,7 @@ describe("Pouch", function() {
                 });
             });
 
-            return it('returns a 404 error if no file matches', function(done) {
+            it('returns a 404 error if no file matches', function(done) {
                 let id = 'abcdef';
                 return this.pouch.byRemoteId(id, function(err, doc) {
                     should.exist(err);
@@ -224,7 +224,7 @@ function (doc) {
                 );
             });
 
-            return it('updates the design doc if the query change', function(done) {
+            it('updates the design doc if the query change', function(done) {
                 return this.pouch.createDesignDoc('file', query, err => {
                     should.not.exist(err);
                     return this.pouch.db.get('_design/file', (err, was) => {
@@ -291,7 +291,7 @@ function (doc) {
             })
         );
 
-        return describe('removeDesignDoc', () =>
+        describe('removeDesignDoc', () =>
             it('removes given view', function(done) {
                 let query = `\
 function (doc) {
@@ -331,13 +331,13 @@ function (doc) {
                 return this.pouch.extractRevNumber(infos).should.equal(42);
             });
 
-            return it('returns 0 if not found', function() {
+            it('returns 0 if not found', function() {
                 return this.pouch.extractRevNumber({}).should.equal(0);
             });
         });
 
 
-        return describe('getPreviousRev', () =>
+        describe('getPreviousRev', () =>
             it('retrieves previous document informations', function(done) {
                 let id = path.join('my-folder', 'folder-1');
                 this.pouch.db.get(id, (err, doc) => {
@@ -415,7 +415,7 @@ function (doc) {
             })
         );
 
-        return describe('setRemoteSeq', function() {
+        describe('setRemoteSeq', function() {
             it('saves the remote sequence number', function(done) {
                 return this.pouch.setRemoteSeq(31, err => {
                     should.not.exist(err);
@@ -437,7 +437,7 @@ function (doc) {
                 );
             });
 
-            return it('can be called multiple times in parallel', function(done) {
+            it('can be called multiple times in parallel', function(done) {
                 return async.each(__range__(1, 100, true), this.pouch.setRemoteSeq, function(err) {
                     should.not.exist(err);
                     return done();
@@ -449,13 +449,13 @@ function (doc) {
 
     // Disable this test on travis because it can be really slow...
     if (process.env.TRAVIS) { return; }
-    return describe('byRecursivePath (bis)', function() {
+    describe('byRecursivePath (bis)', function() {
         this.timeout(60000);
 
         // jsverify only works with Promise for async stuff
         if (typeof Promise !== 'function') { return; }
 
-        return it('gets the nested files and folders', function(done) {
+        it('gets the nested files and folders', function(done) {
             let base = 'byRecursivePath';
             let property = jsv.forall('nearray nestring', paths => {
                 paths = uniq(paths.concat([base]));

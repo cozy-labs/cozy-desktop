@@ -74,7 +74,7 @@ describe('Image from mobile', function() {
         })
     );
 
-    return it('has kept the localPath on the remote file', function(done) {
+    it('has kept the localPath on the remote file', function(done) {
         let client = request.newClient('http://localhost:5984/');
         return client.get(`cozy/${file.remote.id}`, function(err, res, body) {
             should.not.exist(err);

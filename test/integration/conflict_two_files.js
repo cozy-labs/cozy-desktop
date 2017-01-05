@@ -79,7 +79,7 @@ describe('Conflict between two files', function() {
             return parts[0].should.equal(file.name);
         });
 
-        return it('has the files on remote', done =>
+        it('has the files on remote', done =>
             Files.getAllFiles(function(err, files) {
                 let f;
                 files.length.should.equal(2);
@@ -106,7 +106,7 @@ describe('Conflict between two files', function() {
     });
 
 
-    return describe('with remote first', function() {
+    describe('with remote first', function() {
         let file = {
             path: '',
             name: faker.commerce.department(),
@@ -173,7 +173,7 @@ describe('Conflict between two files', function() {
             return parts[0].should.equal(file.name);
         });
 
-        return it('has the files on remote', done =>
+        it('has the files on remote', done =>
             Files.getAllFiles(function(err, files) {
                 let f;
                 files.length.should.equal(2);

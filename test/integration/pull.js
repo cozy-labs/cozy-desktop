@@ -143,7 +143,7 @@ describe('Pull', function() {
         );
     });
 
-    return it('removes the file', function(done) {
+    it('removes the file', function(done) {
         Files.removeFile(file, (err, removed) => {
             let filePath = path.join(this.syncPath, file.path, file.name);
             return waitDisappear(filePath, done);

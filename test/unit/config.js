@@ -28,7 +28,7 @@ describe('Config', function() {
             let name = this.config.getDefaultDeviceName();
             return name.should.equal('test');
         });
-        return it('returns default devicename when no args', function() {
+        it('returns default devicename when no args', function() {
             process.argv = [];
             let name = this.config.getDefaultDeviceName();
             return name.should.equal('tester');
@@ -85,7 +85,7 @@ describe('Config', function() {
             return device.mode.should.equal('push');
         });
 
-        return it('throws an error for incompatible mode', function() {
+        it('throws an error for incompatible mode', function() {
             this.config.setMode('push');
             should.throws((() => this.config.setMode('pull')), /Incompatible mode/);
             return should.throws((() => this.config.setMode('full')), /Incompatible mode/);
@@ -100,7 +100,7 @@ describe('Config', function() {
         })
     );
 
-    return describe('augmentCouchOptions', function() {
+    describe('augmentCouchOptions', function() {
         it('enables invalid certificates when insecure', function() {
             this.config.setInsecure(true);
             let options = this.config.augmentCouchOptions({});
@@ -109,7 +109,7 @@ describe('Config', function() {
             options.ajax.requestCert.should.be.true();
             return options.ajax.agent.should.be.false();
         });
-        return it('enables invalid certificates when insecure', function() {
+        it('enables invalid certificates when insecure', function() {
             this.config.setInsecure(false);
             let options = this.config.augmentCouchOptions({});
             return should.not.exist(options.ajax);

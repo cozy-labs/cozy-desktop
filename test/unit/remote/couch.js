@@ -86,7 +86,7 @@ describe("Couch", function() {
             });
         });
 
-        return it('can update a document', function(done) {
+        it('can update a document', function(done) {
             this.doc.checksum = 'deadcafe';
             this.doc._rev = this.rev;
             return this.couch.put(this.doc, (err, updated) => {
@@ -140,7 +140,7 @@ describe("Couch", function() {
             });
         });
 
-        return it('has the correct content-type', function(done) {
+        it('has the correct content-type', function(done) {
             let stream = fs.createReadStream('test/fixtures/cool-pillow.jpg');
             let mime = 'image/jpeg';
             return this.couch.uploadAsAttachment(this.doc._id, this.rev, mime, stream, function(err, doc){
@@ -184,7 +184,7 @@ describe("Couch", function() {
         })
     );
 
-    return describe('sameRemoteDoc', function() {
+    describe('sameRemoteDoc', function() {
         it('returns true if the documents are the same', function() {
             let one = {
                 _id: '5e93939833e147a78c61b115f50cc77d',
@@ -224,7 +224,7 @@ describe("Couch", function() {
             return this.couch.sameRemoteDoc(one, two).should.be.true();
         });
 
-        return it('returns false if the documents are different', function() {
+        it('returns false if the documents are different', function() {
             let one = {
                 _id: '5e93939833e147a78c61b115f50cc77d',
                 _rev: '12-e91c1c55d2b82087682e32a30036a22b',

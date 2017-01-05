@@ -86,7 +86,7 @@ describe('Cancel', function() {
             , 800)
         );
 
-        return it('moves back the file to its original path', done =>
+        it('moves back the file to its original path', done =>
             setTimeout(() =>
                 Files.updateFile(one, function(err, updated) {
                     should.not.exist(err);
@@ -101,7 +101,7 @@ describe('Cancel', function() {
     });
 
 
-    return describe('Delete a file and recreate it', function() {
+    describe('Delete a file and recreate it', function() {
         let file = {
             path: '',
             name: faker.hacker.verb()
@@ -125,7 +125,7 @@ describe('Cancel', function() {
             , 500)
         );
 
-        return it('recreates the file', done =>
+        it('recreates the file', done =>
             setTimeout(function() {
                 delete file.id;
                 return Files.uploadFile(file, fixturePath, (err, created) => waitAppear(filePath, done));

@@ -24,7 +24,7 @@ describe('App', () =>
             return parsed.host.should.equal('zoe.cozycloud.cc');
         });
 
-        return it('parses http://localhost:9104', function() {
+        it('parses http://localhost:9104', function() {
             let parsed = App.prototype.parseCozyUrl('http://localhost:9104');
             parsed.protocol.should.equal('http:');
             parsed.hostname.should.equal('localhost');

@@ -217,7 +217,7 @@ describe('Merge Helpers', function() {
             return this.merge.sameFile(e, f).should.be.false();
         });
 
-        return it('does not fail when one file has executable: undefined', function() {
+        it('does not fail when one file has executable: undefined', function() {
             let a = {
                 _id: 'FOO/BAR',
                 docType: 'file',
@@ -281,7 +281,7 @@ describe('Merge Helpers', function() {
             return ret.should.be.true();
         });
 
-        return it('returns false for two different documents', function() {
+        it('returns false for two different documents', function() {
             let one = {
                 docType: 'file',
                 checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
@@ -355,7 +355,7 @@ describe('Merge Helpers', function() {
             );
         });
 
-        return it('creates the full tree if needed', function(done) {
+        it('creates the full tree if needed', function(done) {
             this.merge.putFolder = sinon.stub().yields(null, 'OK');
             let doc = {
                 _id: 'a/b/c/d/e',
@@ -389,7 +389,7 @@ describe('Merge Helpers', function() {
             return doc.sides.local.should.equal(1);
         });
 
-        return it('increments the rev for an already existing doc', function() {
+        it('increments the rev for an already existing doc', function() {
             let doc = {
                 sides: {
                     local: 3,
@@ -404,7 +404,7 @@ describe('Merge Helpers', function() {
     });
 
 
-    return describe('resolveConflictDoc', function() {
+    describe('resolveConflictDoc', function() {
         it('appends -conflict- and the date to the path', function(done) {
             let doc = {path: 'foo/bar'};
             this.merge.local = {};
@@ -423,7 +423,7 @@ describe('Merge Helpers', function() {
             });
         });
 
-        return it('preserves the extension', function(done) {
+        it('preserves the extension', function(done) {
             let doc = {path: 'foo/bar.jpg'};
             this.merge.local = {};
             let spy = this.merge.local.resolveConflict = sinon.stub().yields(null);

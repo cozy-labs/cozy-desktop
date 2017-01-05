@@ -96,7 +96,7 @@ describe('Conflict between remote docs with distinct cases', function() {
             return names[1].should.equal(lower.name);
         });
 
-        return it('has the files on remote', done =>
+        it('has the files on remote', done =>
             Files.getAllFiles(function(err, files) {
                 let f;
                 files.length.should.equal(2);
@@ -123,7 +123,7 @@ describe('Conflict between remote docs with distinct cases', function() {
     });
 
 
-    return describe('a folder and a file', function() {
+    describe('a folder and a file', function() {
         let lower = {
             path: '',
             name: faker.commerce.product().toLowerCase()
@@ -195,7 +195,7 @@ describe('Conflict between remote docs with distinct cases', function() {
             return children[0].should.equal(child.name);
         });
 
-        return it('has the files on remote', done =>
+        it('has the files on remote', done =>
             Files.getAllFolders(function(err, folders) {
                 folders.length.should.equal(1);
                 folders[0].should.have.properties(lower);

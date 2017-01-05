@@ -162,7 +162,7 @@ describe('Push', function() {
         , 3000);
     });
 
-    return it('removes the file', function(done) {
+    it('removes the file', function(done) {
         let filePath = path.join(this.syncPath, file.path, file.name);
         fs.unlinkSync(filePath);
         return setTimeout(() =>

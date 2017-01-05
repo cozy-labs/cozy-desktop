@@ -372,7 +372,7 @@ describe("RemoteWatcher Tests", function() {
             );
         });
 
-        return it('calls addDoc for folder created by the mobile app', function(done) {
+        it('calls addDoc for folder created by the mobile app', function(done) {
             this.prep.addDoc = sinon.stub().yields(null);
             let doc = {
                 _id: "913F429E-5609-C636-AE9A-CD00BD138B13",
@@ -404,7 +404,7 @@ describe("RemoteWatcher Tests", function() {
         });
     });
 
-    return describe('removeRemote', () =>
+    describe('removeRemote', () =>
         it('remove the association between a document and its remote', function(done) {
             let doc = {
                 _id: 'removeRemote',
