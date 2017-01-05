@@ -1,58 +1,56 @@
-import async from 'async';
-import chokidar from 'chokidar';
-import crypto from 'crypto';
-import find from 'lodash.find';
-import fs from 'fs';
-import mime from 'mime';
-import path from 'path';
-let log      = require('printit')({
-    prefix: 'Local watcher ',
-    date: true
-});
-
+import async from 'async'
+import chokidar from 'chokidar'
+import crypto from 'crypto'
+import find from 'lodash.find'
+import fs from 'fs'
+import mime from 'mime'
+import path from 'path'
+let log = require('printit')({
+  prefix: 'Local watcher ',
+  date: true
+})
 
 // This file contains the filesystem watcher that will trigger operations when
 // a file or a folder is added/removed/changed locally.
 // Operations will be added to the a common operation queue along with the
 // remote operations triggered by the remoteEventWatcher.
-let EXECUTABLE_MASK = undefined;
+let EXECUTABLE_MASK
 class LocalWatcher {
-    static initClass() {
-        EXECUTABLE_MASK = 1<<6;
-    }
+  static initClass () {
+    EXECUTABLE_MASK = 1 << 6
+  }
 
-    constructor(syncPath, prep, pouch) {
-        this.start = this.start.bind(this);
-        this.createDoc = this.createDoc.bind(this);
-        this.onAdd = this.onAdd.bind(this);
-        this.onAddDir = this.onAddDir.bind(this);
-        this.onUnlink = this.onUnlink.bind(this);
-        this.onUnlinkDir = this.onUnlinkDir.bind(this);
-        this.onChange = this.onChange.bind(this);
-        this.onReady = this.onReady.bind(this);
-        this.syncPath = syncPath;
-        this.prep = prep;
-        this.pouch = pouch;
-        this.side = 'local';
+  constructor (syncPath, prep, pouch) {
+    this.start = this.start.bind(this)
+    this.createDoc = this.createDoc.bind(this)
+    this.onAdd = this.onAdd.bind(this)
+    this.onAddDir = this.onAddDir.bind(this)
+    this.onUnlink = this.onUnlink.bind(this)
+    this.onUnlinkDir = this.onUnlinkDir.bind(this)
+    this.onChange = this.onChange.bind(this)
+    this.onReady = this.onReady.bind(this)
+    this.syncPath = syncPath
+    this.prep = prep
+    this.pouch = pouch
+    this.side = 'local'
 
         // Use a queue for checksums to avoid computing many checksums at the
         // same time. It's better for performance (hard disk are faster with
         // linear readings).
-        this.checksumer = async.queue(this.computeChecksum);
-    }
-
+    this.checksumer = async.queue(this.computeChecksum)
+  }
 
     // Start chokidar, the filesystem watcher
     // https://github.com/paulmillr/chokidar
     //
     // The callback is called when the initial scan is complete
-    start(callback) {
-        log.info('Start watching filesystem for changes');
+  start (callback) {
+    log.info('Start watching filesystem for changes')
 
         // To detect which files&folders have been removed since the last run of
         // cozy-desktop, we keep all the paths seen by chokidar during its
         // initial scan in @paths to compare them with pouchdb database.
-        this.paths = [];
+    this.paths = []
 
         // A map of pending operations. It's used for detecting move operations,
         // as chokidar only reports adds and deletion. The key is the path (as
@@ -62,320 +60,319 @@ class LocalWatcher {
         // want to save the operation as it in pouchdb), and the timeout can be
         // cleared to cancel the operation (for example, a deletion is finally
         // seen as a part of a move operation).
-        this.pending = Object.create(null);  // ES6 map would be nice!
+    this.pending = Object.create(null)  // ES6 map would be nice!
 
         // A counter of how many files are been read to compute a checksum right
         // now. It's useful because we can't do some operations when a checksum
         // is running, like deleting a file, because the checksum operation is
         // slow but needed to detect move operations.
-        this.checksums = 0;
+    this.checksums = 0
 
-        this.watcher = chokidar.watch('.', {
+    this.watcher = chokidar.watch('.', {
             // Let paths in events be relative to this base path
-            cwd: this.syncPath,
+      cwd: this.syncPath,
             // Ignore our own .cozy-desktop directory
-            ignored: /[\/\\]\.cozy-desktop/,
+      ignored: /[\/\\]\.cozy-desktop/,
             // Don't follow symlinks
-            followSymlinks: false,
+      followSymlinks: false,
             // The stats object is used in methods below
-            alwaysStat: true,
+      alwaysStat: true,
             // Filter out artifacts from editors with atomic writes
-            atomic: true,
+      atomic: true,
             // Poll newly created files to detect when the write is finished
-            awaitWriteFinish: {
-                pollInterval: 200,
-                stabilityThreshold: 1000
-            },
+      awaitWriteFinish: {
+        pollInterval: 200,
+        stabilityThreshold: 1000
+      },
             // With node 0.10 on linux, only polling is available
-            interval: 1000,
-            binaryInterval: 2000
-        }
-        );
+      interval: 1000,
+      binaryInterval: 2000
+    }
+        )
 
-        return this.watcher
+    return this.watcher
             .on('add', this.onAdd)
             .on('addDir', this.onAddDir)
             .on('change', this.onChange)
             .on('unlink', this.onUnlink)
             .on('unlinkDir', this.onUnlinkDir)
             .on('ready', this.onReady(callback))
-            .on('error', function(err) {
-                if (err.message === 'watch ENOSPC') {
-                    log.error('Sorry, the kernel is out of inotify watches!');
-                    return log.error('See doc/inotify.md for how to solve this issue.');
-                } else {
-                    return log.error(err);
-                }
-        });
-    }
+            .on('error', function (err) {
+              if (err.message === 'watch ENOSPC') {
+                log.error('Sorry, the kernel is out of inotify watches!')
+                return log.error('See doc/inotify.md for how to solve this issue.')
+              } else {
+                return log.error(err)
+              }
+            })
+  }
 
-    stop(callback) {
-        __guard__(this.watcher, x => x.close());
-        this.watcher = null;
-        for (let _ in this.pending) {
-            let pending = this.pending[_];
-            pending.done();
-        }
-        // Give some time for awaitWriteFinish events to be fired
-        return setTimeout(callback, 3000);
+  stop (callback) {
+    __guard__(this.watcher, x => x.close())
+    this.watcher = null
+    for (let _ in this.pending) {
+      let pending = this.pending[_]
+      pending.done()
     }
+        // Give some time for awaitWriteFinish events to be fired
+    return setTimeout(callback, 3000)
+  }
 
     // Show watched paths
-    debug() {
-        if (this.watcher) {
-            log.info('This is the list of the paths watched by chokidar:');
-            let object = this.watcher.getWatched();
-            for (let dir in object) {
-                var file;
-                let files = object[dir];
-                if (dir === '..') {
-                    for (file of Array.from(files)) {
-                        log.info(`- ${dir}/${file}`);
-                    }
-                } else {
-                    if (dir !== '.') { log.info(`- ${dir}`); }
-                    for (file of Array.from(files)) {
-                        log.info(`  * ${file}`);
-                    }
-                }
-            }
-            return log.info('--------------------------------------------------');
+  debug () {
+    if (this.watcher) {
+      log.info('This is the list of the paths watched by chokidar:')
+      let object = this.watcher.getWatched()
+      for (let dir in object) {
+        var file
+        let files = object[dir]
+        if (dir === '..') {
+          for (file of Array.from(files)) {
+            log.info(`- ${dir}/${file}`)
+          }
         } else {
-            return log.warn('The file system is not currrently watched');
+          if (dir !== '.') { log.info(`- ${dir}`) }
+          for (file of Array.from(files)) {
+            log.info(`  * ${file}`)
+          }
         }
+      }
+      return log.info('--------------------------------------------------')
+    } else {
+      return log.warn('The file system is not currrently watched')
     }
-
+  }
 
     /* Helpers */
 
     // An helper to create a document for a file
     // with checksum and mime informations
-    createDoc(filePath, stats, callback) {
-        let absPath = path.join(this.syncPath, filePath);
-        let [mimeType, fileClass] = this.getFileClass(absPath);
-        return this.checksum(absPath, function(err, checksum) {
-            let doc = {
-                path: filePath,
-                docType: 'file',
-                checksum,
-                creationDate: stats.birthtime || stats.ctime,
-                lastModification: stats.mtime,
-                size: stats.size,
-                class: fileClass,
-                mime: mimeType
-            };
-            if ((stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true; }
-            return callback(err, doc);
-        });
-    }
+  createDoc (filePath, stats, callback) {
+    let absPath = path.join(this.syncPath, filePath)
+    let [mimeType, fileClass] = this.getFileClass(absPath)
+    return this.checksum(absPath, function (err, checksum) {
+      let doc = {
+        path: filePath,
+        docType: 'file',
+        checksum,
+        creationDate: stats.birthtime || stats.ctime,
+        lastModification: stats.mtime,
+        size: stats.size,
+        class: fileClass,
+        mime: mimeType
+      }
+      if ((stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
+      return callback(err, doc)
+    })
+  }
 
     // Return mimetypes and class (like in classification) of a file
     // It's only based on the filename, not using libmagic
     // ex: pic.png returns 'image/png' and 'image'
-    getFileClass(filename, callback) {
-        let mimeType = mime.lookup(filename);
-        let fileClass = (() => { switch (mimeType.split('/')[0]) {
-            case 'image':       return "image";
-            case 'application': return "document";
-            case 'text':        return "document";
-            case 'audio':       return "music";
-            case 'video':       return "video";
-            default:                    return "file";
-        } })();
-        return [mimeType, fileClass];
-    }
+  getFileClass (filename, callback) {
+    let mimeType = mime.lookup(filename)
+    let fileClass = (() => {
+      switch (mimeType.split('/')[0]) {
+        case 'image': return 'image'
+        case 'application': return 'document'
+        case 'text': return 'document'
+        case 'audio': return 'music'
+        case 'video': return 'video'
+        default: return 'file'
+      }
+    })()
+    return [mimeType, fileClass]
+  }
 
     // Put a checksum computation in the queue
-    checksum(filePath, callback) {
-        return this.checksumer.push({filePath}, callback);
-    }
+  checksum (filePath, callback) {
+    return this.checksumer.push({filePath}, callback)
+  }
 
     // Get checksum for given file
-    computeChecksum(task, callback) {
-        let stream = fs.createReadStream(task.filePath);
-        let checksum = crypto.createHash('sha1');
-        checksum.setEncoding('hex');
-        stream.on('end', function() {
-            checksum.end();
-            return callback(null, checksum.read());
-        });
-        stream.on('error', function(err) {
-            checksum.end();
-            return callback(err);
-        });
-        return stream.pipe(checksum);
-    }
+  computeChecksum (task, callback) {
+    let stream = fs.createReadStream(task.filePath)
+    let checksum = crypto.createHash('sha1')
+    checksum.setEncoding('hex')
+    stream.on('end', function () {
+      checksum.end()
+      return callback(null, checksum.read())
+    })
+    stream.on('error', function (err) {
+      checksum.end()
+      return callback(err)
+    })
+    return stream.pipe(checksum)
+  }
 
     // Returns true if a sub-folder of the given path is pending
-    hasPending(folderPath) {
-        let ret = find(this.pending, (_, key) => path.dirname(key) === folderPath);
-        return (ret != null);  // Coerce the returns to a boolean
-    }
-
+  hasPending (folderPath) {
+    let ret = find(this.pending, (_, key) => path.dirname(key) === folderPath)
+    return (ret != null)  // Coerce the returns to a boolean
+  }
 
     /* Actions */
 
     // New file detected
-    onAdd(filePath, stats) {
-        log.info('File added', filePath);
-        __guard__(this.paths, x => x.push(filePath));
-        __guard__(this.pending[filePath], x1 => x1.done());
-        this.checksums++;
-        return this.createDoc(filePath, stats, (err, doc) => {
-            if (err) {
-                this.checksums--;
-                return log.info(err);
-            } else {
-                let keys = Object.keys(this.pending);
-                if (keys.length === 0) {
-                    this.checksums--;
-                    return this.prep.addFile(this.side, doc, this.done);
-                } else {
+  onAdd (filePath, stats) {
+    log.info('File added', filePath)
+    __guard__(this.paths, x => x.push(filePath))
+    __guard__(this.pending[filePath], x1 => x1.done())
+    this.checksums++
+    return this.createDoc(filePath, stats, (err, doc) => {
+      if (err) {
+        this.checksums--
+        return log.info(err)
+      } else {
+        let keys = Object.keys(this.pending)
+        if (keys.length === 0) {
+          this.checksums--
+          return this.prep.addFile(this.side, doc, this.done)
+        } else {
                     // Let's see if one of the pending deleted files has the
                     // same checksum that the added file. If so, we mark them as
                     // a move.
-                    return this.pouch.byChecksum(doc.checksum, (err, docs) => {
-                        this.checksums--;
-                        if (err) {
-                            return this.prep.addFile(this.side, doc, this.done);
-                        } else {
-                            let same = find(docs, d => ~keys.indexOf(d.path));
-                            if (same) {
-                                log.info('was moved from', same.path);
-                                clearTimeout(this.pending[same.path].timeout);
-                                delete this.pending[same.path];
-                                return this.prep.moveFile(this.side, doc, same, this.done);
-                            } else {
-                                return this.prep.addFile(this.side, doc, this.done);
-                            }
-                        }
-                    }
-                    );
-                }
+          return this.pouch.byChecksum(doc.checksum, (err, docs) => {
+            this.checksums--
+            if (err) {
+              return this.prep.addFile(this.side, doc, this.done)
+            } else {
+              let same = find(docs, d => ~keys.indexOf(d.path))
+              if (same) {
+                log.info('was moved from', same.path)
+                clearTimeout(this.pending[same.path].timeout)
+                delete this.pending[same.path]
+                return this.prep.moveFile(this.side, doc, same, this.done)
+              } else {
+                return this.prep.addFile(this.side, doc, this.done)
+              }
             }
+          }
+                    )
         }
-        );
+      }
     }
+        )
+  }
 
     // New directory detected
-    onAddDir(folderPath, stats) {
-        if (folderPath !== '') {
-            log.info('Folder added', folderPath);
-            __guard__(this.paths, x => x.push(folderPath));
-            __guard__(this.pending[folderPath], x1 => x1.done());
-            let doc = {
-                path: folderPath,
-                docType: 'folder',
-                creationDate: stats.ctime,
-                lastModification: stats.mtime
-            };
-            return this.prep.putFolder(this.side, doc, this.done);
-        }
+  onAddDir (folderPath, stats) {
+    if (folderPath !== '') {
+      log.info('Folder added', folderPath)
+      __guard__(this.paths, x => x.push(folderPath))
+      __guard__(this.pending[folderPath], x1 => x1.done())
+      let doc = {
+        path: folderPath,
+        docType: 'folder',
+        creationDate: stats.ctime,
+        lastModification: stats.mtime
+      }
+      return this.prep.putFolder(this.side, doc, this.done)
     }
+  }
 
     // File deletion detected
     //
     // It can be a file moved out. So, we wait a bit to see if a file with the
     // same checksum is added and, if not, we declare this file as deleted.
-    onUnlink(filePath) {
-        let clear = () => {
-            clearTimeout(this.pending[filePath].timeout);
-            return delete this.pending[filePath];
-        };
-        let done = () => {
-            clear();
-            log.info('File deleted', filePath);
-            return this.prep.deleteFile(this.side, {path: filePath}, this.done);
-        };
-        let check = () => {
-            if (this.checksums === 0) {
-                return done();
-            } else {
-                return this.pending[filePath].timeout = setTimeout(check, 100);
-            }
-        };
-        return this.pending[filePath] = {
-            clear,
-            done,
-            check,
-            timeout: setTimeout(check, 1250)
-        };
+  onUnlink (filePath) {
+    let clear = () => {
+      clearTimeout(this.pending[filePath].timeout)
+      return delete this.pending[filePath]
     }
+    let done = () => {
+      clear()
+      log.info('File deleted', filePath)
+      return this.prep.deleteFile(this.side, {path: filePath}, this.done)
+    }
+    let check = () => {
+      if (this.checksums === 0) {
+        return done()
+      } else {
+        return this.pending[filePath].timeout = setTimeout(check, 100)
+      }
+    }
+    return this.pending[filePath] = {
+      clear,
+      done,
+      check,
+      timeout: setTimeout(check, 1250)
+    }
+  }
 
     // Folder deletion detected
     //
     // We don't want to delete a folder before files inside it. So we wait a bit
     // after chokidar event to declare the folder as deleted.
-    onUnlinkDir(folderPath) {
-        let clear = () => {
-            clearInterval(this.pending[folderPath].interval);
-            return delete this.pending[folderPath];
-        };
-        let done = () => {
-            clear();
-            log.info('Folder deleted', folderPath);
-            return this.prep.deleteFolder(this.side, {path: folderPath}, this.done);
-        };
-        let check = () => {
-            if (!this.hasPending(folderPath)) { return done(); }
-        };
-        return this.pending[folderPath] = {
-            clear,
-            done,
-            check,
-            interval: setInterval(done, 350)
-        };
+  onUnlinkDir (folderPath) {
+    let clear = () => {
+      clearInterval(this.pending[folderPath].interval)
+      return delete this.pending[folderPath]
     }
+    let done = () => {
+      clear()
+      log.info('Folder deleted', folderPath)
+      return this.prep.deleteFolder(this.side, {path: folderPath}, this.done)
+    }
+    let check = () => {
+      if (!this.hasPending(folderPath)) { return done() }
+    }
+    return this.pending[folderPath] = {
+      clear,
+      done,
+      check,
+      interval: setInterval(done, 350)
+    }
+  }
 
     // File update detected
-    onChange(filePath, stats) {
-        log.info('File updated', filePath);
-        return this.createDoc(filePath, stats, (err, doc) => {
-            if (err) {
-                return log.info(err);
-            } else {
-                return this.prep.updateFile(this.side, doc, this.done);
-            }
-        }
-        );
+  onChange (filePath, stats) {
+    log.info('File updated', filePath)
+    return this.createDoc(filePath, stats, (err, doc) => {
+      if (err) {
+        return log.info(err)
+      } else {
+        return this.prep.updateFile(this.side, doc, this.done)
+      }
     }
+        )
+  }
 
     // Try to detect removed files&folders
     // after chokidar has finished its initial scan
-    onReady(callback) {
-        return () => {
-            return this.pouch.byRecursivePath('', (err, docs) => {
-                if (err) {
-                    return callback(err);
-                } else {
-                    return async.eachSeries(docs.reverse(), (doc, next) => {
-                        if (Array.from(this.paths).includes(doc.path)) {
-                            return async.setImmediate(next);
-                        } else {
-                            return this.prep.deleteDoc(this.side, doc, next);
-                        }
-                    }
-                    , err => {
-                        this.paths = null;
-                        return callback(err);
-                    }
-                    );
-                }
+  onReady (callback) {
+    return () => {
+      return this.pouch.byRecursivePath('', (err, docs) => {
+        if (err) {
+          return callback(err)
+        } else {
+          return async.eachSeries(docs.reverse(), (doc, next) => {
+            if (Array.from(this.paths).includes(doc.path)) {
+              return async.setImmediate(next)
+            } else {
+              return this.prep.deleteDoc(this.side, doc, next)
             }
-            );
-        };
+          }
+                    , err => {
+                      this.paths = null
+                      return callback(err)
+                    }
+                    )
+        }
+      }
+            )
     }
+  }
 
     // A callback that logs errors
-    done(err) {
-        if (err) { return log.error(err); }
-    }
+  done (err) {
+    if (err) { return log.error(err) }
+  }
 }
-LocalWatcher.initClass();
+LocalWatcher.initClass()
 
+export default LocalWatcher
 
-export default LocalWatcher;
-
-function __guard__(value, transform) {
-  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined;
+function __guard__ (value, transform) {
+  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined
 }
