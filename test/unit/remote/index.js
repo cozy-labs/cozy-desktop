@@ -675,7 +675,7 @@ describe('Remote', function () {
 
   describe('updateFolder', function () {
     it('updates the metadata of a folder in couchdb', function (done) {
-      return couchHelpers.createFolder(this.couch, 2, (err, created) => {
+      return couchHelpers.createFolder(this.couch, 2, (_, created) => {
         let doc = {
           path: 'couchdb-folder/folder-2',
           docType: 'folder',
@@ -799,7 +799,7 @@ describe('Remote', function () {
 
   describe('moveFolder', function () {
     it('moves the folder in couchdb', function (done) {
-      return couchHelpers.createFolder(this.couch, 4, (err, created) => {
+      return couchHelpers.createFolder(this.couch, 4, (_, created) => {
         let doc = {
           path: 'couchdb-folder/folder-5',
           docType: 'folder',

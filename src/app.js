@@ -135,7 +135,7 @@ class App {
       return
     }
     if (deviceName == null) { deviceName = os.hostname() || 'desktop' }
-    return this.askPassword(function (err, password) {
+    return this.askPassword(function (_, password) {
       let register = device.registerDeviceSafe
       return register(cozyUrl, deviceName, password, Permissions, function (err, res) {
         if (err) { return callback(err) }

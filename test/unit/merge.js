@@ -562,7 +562,7 @@ describe('Merge', function () {
                   should.not.exist(err)
                   return this.merge.deleteFolder(this.side, doc, err => {
                     should.not.exist(err)
-                    return this.pouch.byPath('FOO/TO-REMOVE', function (err, docs) {
+                    return this.pouch.byPath('FOO/TO-REMOVE', function (_, docs) {
                       docs.length.should.be.equal(0)
                       done()
                     })

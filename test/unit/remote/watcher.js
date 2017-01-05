@@ -68,7 +68,7 @@ describe('RemoteWatcher Tests', function () {
         path: 'foo',
         name: 'bar'
       }
-      return this.watcher.onChange(doc, err => {
+      return this.watcher.onChange(doc, _ => {
         this.watcher.putDoc.called.should.be.false()
         this.watcher.putDoc.restore()
         done()

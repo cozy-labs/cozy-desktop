@@ -68,7 +68,7 @@ describe('Cancel', function () {
 
     it('creates a file on the local', function (done) {
       let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon.jpg')
-      return Files.uploadFile(one, fixturePath, function (err, created) {
+      return Files.uploadFile(one, fixturePath, function (_, created) {
         one.id = two.id = created.id
         return waitAppear(onePath, done)
       })
@@ -112,7 +112,7 @@ describe('Cancel', function () {
 
     it('creates a file on the local', function (done) {
       filePath = path.join(this.syncPath, file.path, file.name)
-      return Files.uploadFile(file, fixturePath, function (err, created) {
+      return Files.uploadFile(file, fixturePath, function (_, created) {
         file.id = created.id
         return waitAppear(filePath, done)
       })
@@ -120,7 +120,7 @@ describe('Cancel', function () {
 
     it('removes the file', done =>
             setTimeout(() =>
-                Files.removeFile(file, (err, removed) => waitDisappear(filePath, done))
+                Files.removeFile(file, (_, removed) => waitDisappear(filePath, done))
 
             , 500)
         )
@@ -128,7 +128,7 @@ describe('Cancel', function () {
     it('recreates the file', done =>
             setTimeout(function () {
               delete file.id
-              return Files.uploadFile(file, fixturePath, (err, created) => waitAppear(filePath, done))
+              return Files.uploadFile(file, fixturePath, (_, created) => waitAppear(filePath, done))
             }
             , 500)
         )

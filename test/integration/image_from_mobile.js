@@ -29,7 +29,7 @@ describe('Image from mobile', function () {
 
   before('Create the remote file', function (done) {
     let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon-mod.jpg')
-    return Files.uploadFile(file, fixturePath, function (err, created) {
+    return Files.uploadFile(file, fixturePath, function (_, created) {
       file.remote = {id: created.id}
       file.size = fs.statSync(fixturePath).size
       done()
@@ -64,7 +64,7 @@ describe('Image from mobile', function () {
   })
 
   it('has the file on remote', done =>
-        Files.getAllFiles(function (err, files) {
+        Files.getAllFiles(function (_, files) {
           files.length.should.equal(1)
           let remote = files[0]
           remote.name.should.equal(file.name)

@@ -47,7 +47,7 @@ describe('Push', function () {
     let folderPath = path.join(this.syncPath, folder.path, folder.name)
     fs.ensureDirSync(folderPath)
     return setTimeout(() =>
-            Files.getAllFolders(function (err, folders) {
+            Files.getAllFolders(function (_, folders) {
               should.exist(find(folders, folder))
               done()
             })
@@ -62,7 +62,7 @@ describe('Push', function () {
     let newPath = path.join(this.syncPath, folder.path, folder.name)
     fs.renameSync(oldPath, newPath)
     return setTimeout(() =>
-            Files.getAllFolders(function (err, folders) {
+            Files.getAllFolders(function (_, folders) {
               should.not.exist(find(folders, old))
               should.exist(find(folders, folder))
               done()
@@ -80,7 +80,7 @@ describe('Push', function () {
     let newPath = path.join(this.syncPath, folder.path, folder.name)
     fs.renameSync(oldPath, newPath)
     return setTimeout(() =>
-            Files.getAllFolders(function (err, folders) {
+            Files.getAllFolders(function (_, folders) {
               should.not.exist(find(folders, old))
               should.exist(find(folders, folder))
               done()
@@ -93,7 +93,7 @@ describe('Push', function () {
     let folderPath = path.join(this.syncPath, folder.path, folder.name)
     fs.rmdirSync(folderPath)
     return setTimeout(() =>
-            Files.getAllFolders(function (err, folders) {
+            Files.getAllFolders(function (_, folders) {
               should.not.exist(find(folders, folder))
               done()
             })
@@ -107,7 +107,7 @@ describe('Push', function () {
     fs.copySync(fixturePath, filePath)
     file.size = fs.statSync(fixturePath).size
     return setTimeout(() =>
-            Files.getAllFiles(function (err, files) {
+            Files.getAllFiles(function (_, files) {
               should.exist(find(files, file))
               done()
             })
@@ -123,7 +123,7 @@ describe('Push', function () {
     let newPath = path.join(this.syncPath, file.path, file.name)
     fs.renameSync(oldPath, newPath)
     return setTimeout(() =>
-            Files.getAllFiles(function (err, files) {
+            Files.getAllFiles(function (_, files) {
               should.not.exist(find(files, old))
               should.exist(find(files, file))
               done()
@@ -140,7 +140,7 @@ describe('Push', function () {
     let newPath = path.join(this.syncPath, file.path, file.name)
     fs.renameSync(oldPath, newPath)
     return setTimeout(() =>
-            Files.getAllFiles(function (err, files) {
+            Files.getAllFiles(function (_, files) {
               should.not.exist(find(files, old))
               should.exist(find(files, file))
               done()
@@ -155,7 +155,7 @@ describe('Push', function () {
     fs.copySync(fixturePath, filePath)
     file.size = fs.statSync(fixturePath).size
     return setTimeout(() =>
-            Files.getAllFiles(function (err, files) {
+            Files.getAllFiles(function (_, files) {
               should.exist(find(files, file))
               done()
             })
@@ -167,7 +167,7 @@ describe('Push', function () {
     let filePath = path.join(this.syncPath, file.path, file.name)
     fs.unlinkSync(filePath)
     return setTimeout(() =>
-            Files.getAllFiles(function (err, files) {
+            Files.getAllFiles(function (_, files) {
               should.not.exist(find(files, file))
               done()
             })

@@ -131,7 +131,7 @@ class Sync {
     let { doc } = change
 
     if (this.ignore.isIgnored(doc)) {
-      this.pouch.setLocalSeq(change.seq, err => callback())
+      this.pouch.setLocalSeq(change.seq, _ => callback())
       return
     }
 
@@ -365,7 +365,7 @@ class Sync {
       case rev !== 0:
         return side.addFolder(doc, callback)
       default:
-        return this.pouch.getPreviousRev(doc._id, rev, (err, old) => side.updateFolder(doc, old, callback))
+        return this.pouch.getPreviousRev(doc._id, rev, (_, old) => side.updateFolder(doc, old, callback))
     }
   }
 }

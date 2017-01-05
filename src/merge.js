@@ -88,7 +88,7 @@ class Merge {
     if (parentId === '.') {
       callback()
     } else {
-      this.pouch.db.get(parentId, (err, folder) => {
+      this.pouch.db.get(parentId, (_, folder) => {
         if (folder) {
           return callback()
         } else {
@@ -298,7 +298,7 @@ class Merge {
         if (file && this.sameFile(file, doc)) {
           return callback(null)
         } else if (file) {
-          return this.resolveConflict(side, doc, (err, dst) => {
+          return this.resolveConflict(side, doc, (_, dst) => {
             was.moveTo = dst._id
             dst.sides = {}
             dst.sides[side] = 1
@@ -328,7 +328,7 @@ class Merge {
         if (doc.creationDate == null) { doc.creationDate = was.creationDate }
         if (doc.tags == null) { doc.tags = was.tags || [] }
         if (folder) {
-          return this.resolveConflict(side, doc, (err, dst) => {
+          return this.resolveConflict(side, doc, (_, dst) => {
             dst.sides = {}
             dst.sides[side] = 1
             return this.moveFolderRecursively(dst, was, callback)

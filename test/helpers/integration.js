@@ -27,7 +27,7 @@ helpers.ensurePreConditions = function ensurePreConditions (done) {
   let ports = [5984, 9104, 9101, 9121]
   return async.map(ports, function (port, cb) {
     let client = request.newClient(`http://${helpers.host}:${port}`)
-    return client.get('/', (err, res) => cb(null, __guard__(res, x => x.statusCode)), false)
+    return client.get('/', (_, res) => cb(null, __guard__(res, x => x.statusCode)), false)
   }
     , function (err, results) {
       should.not.exist(err)

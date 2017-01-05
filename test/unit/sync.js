@@ -354,7 +354,7 @@ function(doc) {
       }
       let func = this.sync.applied(change, 'remote', err => {
         should.not.exist(err)
-        return this.pouch.getLocalSeq(function (err, seq) {
+        return this.pouch.getLocalSeq(function (_, seq) {
           seq.should.equal(125)
           done()
         })
@@ -412,7 +412,7 @@ function(doc) {
         }
         let func = this.sync.applied(change, 'remote', err => {
           should.not.exist(err)
-          return this.pouch.getLocalSeq(function (err, seq) {
+          return this.pouch.getLocalSeq(function (_, seq) {
             seq.should.equal(128)
             done()
           })
@@ -542,7 +542,7 @@ function(doc) {
           local: 2,
           remote: 1
         }
-        return this.pouch.db.put(doc, (err, updated) => {
+        return this.pouch.db.put(doc, (_, updated) => {
           this.remote.overwriteFile = sinon.stub().yields()
           this.remote.updateFileMetadata = sinon.stub().yields()
           return this.sync.fileChanged(doc, this.remote, 1, err => {
@@ -575,7 +575,7 @@ function(doc) {
           local: 2,
           remote: 1
         }
-        return this.pouch.db.put(doc, (err, updated) => {
+        return this.pouch.db.put(doc, (_, updated) => {
           this.remote.overwriteFile = sinon.stub().yields()
           this.remote.updateFileMetadata = sinon.stub().yields()
           return this.sync.fileChanged(doc, this.remote, 1, err => {

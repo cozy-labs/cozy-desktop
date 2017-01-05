@@ -50,7 +50,7 @@ describe('Swap 2 files', function () {
     fs.copySync(fixturePath, onePath)
     one.size = fs.statSync(fixturePath).size
     return setTimeout(() =>
-            Files.getAllFiles(function (err, files) {
+            Files.getAllFiles(function (_, files) {
               let found = find(files, one)
               should.exist(found)
               one.checksum = found.checksum
@@ -66,7 +66,7 @@ describe('Swap 2 files', function () {
     fs.copySync(fixturePath, twoPath)
     two.size = fs.statSync(fixturePath).size
     return setTimeout(() =>
-            Files.getAllFiles(function (err, files) {
+            Files.getAllFiles(function (_, files) {
               let found = find(files, two)
               should.exist(found)
               two.checksum = found.checksum
@@ -86,7 +86,7 @@ describe('Swap 2 files', function () {
     [one.size, two.size] = [two.size, one.size];
     [one.checksum, two.checksum] = [two.checksum, one.checksum]
     return setTimeout(() =>
-            Files.getAllFiles(function (err, files) {
+            Files.getAllFiles(function (_, files) {
               should.exist(find(files, one))
               should.exist(find(files, two))
               should.not.exist(find(files, tmp))

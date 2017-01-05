@@ -27,7 +27,7 @@ describe('Conflict between two files', function () {
 
     before('Create the remote tree', function (done) {
       let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon-mod.jpg')
-      return Files.uploadFile(file, fixturePath, function (err, created) {
+      return Files.uploadFile(file, fixturePath, function (_, created) {
         file.remote = {
           id: created.id,
           size: fs.statSync(fixturePath).size
@@ -81,7 +81,7 @@ describe('Conflict between two files', function () {
     })
 
     it('has the files on remote', done =>
-            Files.getAllFiles(function (err, files) {
+            Files.getAllFiles(function (_, files) {
               let f
               files.length.should.equal(2)
               let sizes = ((() => {
@@ -121,7 +121,7 @@ describe('Conflict between two files', function () {
 
     before('Create the remote tree', function (done) {
       let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon-mod.jpg')
-      return Files.uploadFile(file, fixturePath, function (err, created) {
+      return Files.uploadFile(file, fixturePath, function (_, created) {
         file.remote = {
           id: created.id,
           size: fs.statSync(fixturePath).size
@@ -177,7 +177,7 @@ describe('Conflict between two files', function () {
     })
 
     it('has the files on remote', done =>
-            Files.getAllFiles(function (err, files) {
+            Files.getAllFiles(function (_, files) {
               let f
               files.length.should.equal(2)
               let sizes = ((() => {

@@ -38,7 +38,7 @@ describe('Conflict between remote docs with distinct cases', function () {
 
     before('Create the lower file', function (done) {
       let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon-mod.jpg')
-      return Files.uploadFile(lower, fixturePath, function (err, created) {
+      return Files.uploadFile(lower, fixturePath, function (_, created) {
         lower.remote = {
           id: created.id,
           size: fs.statSync(fixturePath).size
@@ -51,7 +51,7 @@ describe('Conflict between remote docs with distinct cases', function () {
 
     before('Create the upper file', function (done) {
       let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon.jpg')
-      return Files.uploadFile(upper, fixturePath, function (err, created) {
+      return Files.uploadFile(upper, fixturePath, function (_, created) {
         upper.remote = {
           id: created.id,
           size: fs.statSync(fixturePath).size
@@ -98,7 +98,7 @@ describe('Conflict between remote docs with distinct cases', function () {
     })
 
     it('has the files on remote', done =>
-            Files.getAllFiles(function (err, files) {
+            Files.getAllFiles(function (_, files) {
               let f
               files.length.should.equal(2)
               let sizes = ((() => {
@@ -150,9 +150,9 @@ describe('Conflict between remote docs with distinct cases', function () {
     })
 
     before('Create the lower folder', done =>
-            Files.createFolder(lower, function (err, created) {
+            Files.createFolder(lower, function (_, created) {
               let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon-mod.jpg')
-              return Files.uploadFile(child, fixturePath, function (err, created) {
+              return Files.uploadFile(child, fixturePath, function (_, created) {
                 child.remote = {
                   id: created.id,
                   size: fs.statSync(fixturePath).size
@@ -166,7 +166,7 @@ describe('Conflict between remote docs with distinct cases', function () {
 
     before('Create the upper file', function (done) {
       let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon.jpg')
-      return Files.uploadFile(upper, fixturePath, function (err, created) {
+      return Files.uploadFile(upper, fixturePath, function (_, created) {
         upper.remote = {
           id: created.id,
           size: fs.statSync(fixturePath).size
@@ -198,10 +198,10 @@ describe('Conflict between remote docs with distinct cases', function () {
     })
 
     it('has the files on remote', done =>
-            Files.getAllFolders(function (err, folders) {
+            Files.getAllFolders(function (_, folders) {
               folders.length.should.equal(1)
               folders[0].should.have.properties(lower)
-              return Files.getAllFiles(function (err, files) {
+              return Files.getAllFiles(function (_, files) {
                 files.length.should.equal(2)
                 files[0]._id.should.equal(child.remote.id)
                 files[0].path.should.equal(`/${child.path}`)

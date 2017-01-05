@@ -37,7 +37,7 @@ describe('Conflict', function () {
     before(Files.deleteAll)
 
     before('Create the remote tree', done =>
-            Files.createFolder(folder, function (err, created) {
+            Files.createFolder(folder, function (_, created) {
               let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon-mod.jpg')
               return Files.uploadFile(child, fixturePath, done)
             })
@@ -72,7 +72,7 @@ describe('Conflict', function () {
     })
 
     it('has the file and the folder on remote', done =>
-            Files.getAllFiles(function (err, files) {
+            Files.getAllFiles(function (_, files) {
               files.length.should.equal(2)
               done()
             })
@@ -134,7 +134,7 @@ describe('Conflict', function () {
     })
 
     it('has the file and the folder on remote', done =>
-            Files.getAllFiles(function (err, files) {
+            Files.getAllFiles(function (_, files) {
               files.length.should.equal(2)
               if (files[0].path === file.path) { files = files.reverse() }
               files[0].path.should.equal(`/${child.path}`)
@@ -143,7 +143,7 @@ describe('Conflict', function () {
               let parts = files[1].name.split('-conflict-')
               parts.length.should.equal(2)
               parts[0].should.equal(file.name)
-              return Files.getAllFolders(function (err, folders) {
+              return Files.getAllFolders(function (_, folders) {
                 folders.length.should.equal(1)
                 should.exist(find(folders, folder))
                 done()

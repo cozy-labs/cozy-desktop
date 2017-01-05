@@ -182,7 +182,7 @@ class Pouch {
       views: {}
     }
     doc.views[name] = {map: query}
-    this.db.get(doc._id, (err, designDoc) => {
+    this.db.get(doc._id, (_, designDoc) => {
       if (designDoc != null) {
         doc._rev = designDoc._rev
         if (isEqual(doc, designDoc)) { return callback() }

@@ -34,7 +34,7 @@ describe('Conflict between two folders', function () {
     before(Cozy.registerDevice)
 
     before('Create the remote tree', done =>
-            Files.createFolder(folder, function (err, created) {
+            Files.createFolder(folder, function (_, created) {
               let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon-mod.jpg')
               return Files.uploadFile(remoteChild, fixturePath, done)
             })
@@ -66,7 +66,7 @@ describe('Conflict between two folders', function () {
     })
 
     it('has the two files on remote', done =>
-            Files.getAllFiles(function (err, files) {
+            Files.getAllFiles(function (_, files) {
               let local, remote
               files.length.should.equal(2)
               if (files[0].name === localChild.name) {
@@ -103,7 +103,7 @@ describe('Conflict between two folders', function () {
     before(Cozy.registerDevice)
 
     before('Create the remote tree', done =>
-            Files.createFolder(folder, function (err, created) {
+            Files.createFolder(folder, function (_, created) {
               let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon-mod.jpg')
               return Files.uploadFile(remoteChild, fixturePath, done)
             })
@@ -137,7 +137,7 @@ describe('Conflict between two folders', function () {
     })
 
     it('has the two files on remote', done =>
-            Files.getAllFiles(function (err, files) {
+            Files.getAllFiles(function (_, files) {
               let local, remote
               files.length.should.equal(2)
               if (files[0].name === localChild.name) {

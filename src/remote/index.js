@@ -129,7 +129,7 @@ class Remote {
 
     return this.couch.put(binary, (err, created) => {
       if (__guard__(err, x => x.status) === 409) {
-        return this.couch.get(binary._id, (err, binaryDoc) => {
+        return this.couch.get(binary._id, (_, binaryDoc) => {
           if (binaryDoc._attachments) {
             return callback(null, binaryDoc)
           } else {
@@ -248,7 +248,7 @@ class Remote {
     return async.waterfall([
             // Find or create the binary doc
       next => {
-        return this.pouch.byChecksum(doc.checksum, (err, files) => {
+        return this.pouch.byChecksum(doc.checksum, (_, files) => {
           binary = null
           for (let file of Array.from(files || [])) {
             if (this.isUpToDate(file)) {
@@ -425,7 +425,7 @@ class Remote {
       } else if (err) {
         return callback(err, removed)
       } else {
-        return this.cleanBinary(doc.remote.binary._id, err => callback(null, removed))
+        return this.cleanBinary(doc.remote.binary._id, _ => callback(null, removed))
       }
     }
         )
@@ -453,7 +453,7 @@ class Remote {
     // Rename a file/folder to resolve a conflict
   resolveConflict (dst, src, callback) {
     log.info(`Resolve a conflict: ${src.path} → ${dst.path}`)
-    return this.couch.get(src.remote._id, (err, doc) => {
+    return this.couch.get(src.remote._id, (_, doc) => {
       let [dir, name] = this.extractDirAndName(dst.path)
       doc.path = dir
       doc.name = name

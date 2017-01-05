@@ -58,7 +58,7 @@ describe('Move a file', function () {
     })
 
     it('has the file on remote', done =>
-            Files.getAllFiles(function (err, files) {
+            Files.getAllFiles(function (_, files) {
               files.length.should.equal(1)
               files[0].size.should.eql(src.size)
               files[0].name.should.equal(dst.name)
@@ -86,7 +86,7 @@ describe('Move a file', function () {
 
     it('create the remote file', function (done) {
       let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon.jpg')
-      return Files.uploadFile(src, fixturePath, function (err, created) {
+      return Files.uploadFile(src, fixturePath, function (_, created) {
         src.id = created.id
         src.size = fs.statSync(fixturePath).size
         done()
@@ -114,7 +114,7 @@ describe('Move a file', function () {
     })
 
     it('has the file on remote', done =>
-            Files.getAllFiles(function (err, files) {
+            Files.getAllFiles(function (_, files) {
               files.length.should.equal(1)
               files[0].size.should.eql(src.size)
               files[0].name.should.equal(dst.name)
