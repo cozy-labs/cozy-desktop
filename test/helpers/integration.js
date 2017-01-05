@@ -8,8 +8,10 @@ import request from 'request-json-light'
 import should from 'should'
 
 import App from '../../src/app'
-import PouchDB from 'pouchdb'
 import password from './password'
+
+// For debug:
+// import PouchDB from 'pouchdb'
 
 helpers = {
   scheme: process.env.SCHEME || 'http',
