@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import 'source-map-support/register'
+
 import read from 'read'
 import path from 'path'
 import program from 'commander'
