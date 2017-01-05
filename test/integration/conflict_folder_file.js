@@ -18,6 +18,7 @@ describe('Conflict', function () {
   describe('between a local file and a remote folder', function () {
     return it.skip('https://github.com/cozy/cozy-files/issues/386')
 
+    /* eslint-disable no-unreachable */
     let file = {
       path: '',
       name: faker.commerce.color(),
@@ -77,6 +78,7 @@ describe('Conflict', function () {
               done()
             })
         )
+    /* eslint-enable no-unreachable */
   })
 
   describe('between a local folder and a remote file', function () {
