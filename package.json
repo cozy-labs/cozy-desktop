@@ -30,7 +30,8 @@
     "test-integration": "NODE_ENV=test mocha test/integration/",
     "build": "babel --source-maps --out-dir lib/ src/",
     "clean": "rm -rf lib/ && rm -rf tmp/",
-    "size": "t=\"$(npm pack .)\"; wc -c \"${t}\"; tar tvf \"${t}\"; rm \"${t}\";"
+    "size": "t=\"$(npm pack .)\"; wc -c \"${t}\"; tar tvf \"${t}\"; rm \"${t}\";",
+    "watch": "npm run build -- --watch"
   },
   "dependencies": {
     "async": "2.1.4",
