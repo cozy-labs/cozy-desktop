@@ -175,6 +175,7 @@ class App {
     return this.registerRemote(cozyUrl, deviceName, (err, credentials) => {
       if (err) {
         log.error('An error occured while registering your device.')
+        let parsed = this.parseCozyUrl(cozyUrl)
         if (err.code === 'ENOTFOUND') {
           log.warn(`The DNS resolution for ${parsed.hostname} failed.`)
           log.warn('Are you sure the domain is OK?')
