@@ -2,7 +2,6 @@ import PouchDB from 'pouchdb'
 import async from 'async'
 import fs from 'fs-extra'
 import isEqual from 'lodash.isequal'
-import path from 'path'
 let log = require('printit')({
   prefix: 'Local Pouchdb ',
   date: true

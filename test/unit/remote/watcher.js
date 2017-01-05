@@ -2,7 +2,6 @@
 
 import async from 'async'
 import clone from 'lodash.clone'
-import fs from 'fs-extra'
 import path from 'path'
 import sinon from 'sinon'
 import should from 'should'

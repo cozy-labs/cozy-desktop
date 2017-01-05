@@ -1,5 +1,4 @@
 import async from 'async'
-import clone from 'lodash.clone'
 import path from 'path'
 import { filteredReplication as filterSDK } from 'cozy-device-sdk'
 let log = require('printit')({

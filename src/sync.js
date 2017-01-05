@@ -1,5 +1,4 @@
 import async from 'async'
-import { device } from 'cozy-device-sdk'
 let log = require('printit')({
   prefix: 'Synchronize   ',
   date: true

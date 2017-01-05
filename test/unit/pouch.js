@@ -6,8 +6,6 @@ import path from 'path'
 import should from 'should'
 import uniq from 'lodash.uniq'
 
-import Pouch from '../../src/pouch'
-
 import configHelpers from '../helpers/config'
 import pouchHelpers from '../helpers/pouch'
 

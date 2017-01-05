@@ -1,4 +1,3 @@
-import async from 'async'
 import clone from 'lodash.clone'
 import isEqual from 'lodash.isequal'
 import path from 'path'

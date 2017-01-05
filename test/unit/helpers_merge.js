@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 
-import async from 'async'
 import clone from 'lodash.clone'
 import path from 'path'
 import sinon from 'sinon'
