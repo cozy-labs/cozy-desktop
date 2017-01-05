@@ -10,7 +10,7 @@ export default {
     this.syncPath = path.resolve(`${parent}/${+new Date()}`)
     fs.ensureDirSync(this.syncPath)
     this.config = new Config(path.join(this.syncPath, '.cozy-desktop'))
-    return this.config.devices['tester'] = {
+    this.config.devices['tester'] = {
       deviceName: 'tester',
       password: 'password',
       url: 'nonecozy',

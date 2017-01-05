@@ -16,7 +16,7 @@ describe('LocalWatcher Tests', function () {
   before('instanciate pouch', pouchHelpers.createDatabase)
   beforeEach('instanciate local watcher', function () {
     this.prep = {}
-    return this.watcher = new Watcher(this.syncPath, this.prep, this.pouch)
+    this.watcher = new Watcher(this.syncPath, this.prep, this.pouch)
   })
   afterEach('stop watcher and clean path', function (done) {
     __guard__(this.watcher.watcher, x => x.close())

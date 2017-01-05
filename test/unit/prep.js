@@ -10,7 +10,7 @@ describe('Prep', function () {
     this.side = 'local'
     this.merge = {}
     this.ignore = new Ignore(['ignored'])
-    return this.prep = new Prep(this.merge, this.ignore)
+    this.prep = new Prep(this.merge, this.ignore)
   })
 
   describe('Helpers', function () {

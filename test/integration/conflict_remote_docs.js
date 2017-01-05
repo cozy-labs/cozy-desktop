@@ -31,7 +31,7 @@ describe('Conflict between remote docs with distinct cases', function () {
 
     before('force case insensitive for local', function () {
       this.app.instanciate()
-      return this.app.prep.buildId = this.app.prep.buildIdHFS
+      this.app.prep.buildId = this.app.prep.buildIdHFS
     })
 
     before('Create the lower file', function (done) {
@@ -144,7 +144,7 @@ describe('Conflict between remote docs with distinct cases', function () {
 
     before('force case insensitive for local', function () {
       this.app.instanciate()
-      return this.app.prep.buildId = this.app.prep.buildIdHFS
+      this.app.prep.buildId = this.app.prep.buildIdHFS
     })
 
     before('Create the lower folder', done =>

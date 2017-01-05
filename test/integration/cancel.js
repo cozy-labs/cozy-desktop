@@ -26,7 +26,7 @@ describe('Cancel', function () {
 
   let waitAppear = function (localPath, callback) {
     let interval
-    return interval = setInterval(function () {
+    interval = setInterval(function () {
       if (fs.existsSync(localPath)) {
         clearInterval(interval)
         return callback()
@@ -37,7 +37,7 @@ describe('Cancel', function () {
 
   let waitDisappear = function (localPath, callback) {
     let interval
-    return interval = setInterval(function () {
+    interval = setInterval(function () {
       if (!fs.existsSync(localPath)) {
         clearInterval(interval)
         return callback()
@@ -61,7 +61,7 @@ describe('Cancel', function () {
 
     it('sets paths', function () {
       onePath = path.join(this.syncPath, one.path, one.name)
-      return twoPath = path.join(this.syncPath, two.path, two.name)
+      twoPath = path.join(this.syncPath, two.path, two.name)
     })
 
     it('creates a file on the local', function (done) {

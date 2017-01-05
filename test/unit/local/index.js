@@ -17,7 +17,7 @@ describe('Local', function () {
     this.prep = {}
     this.events = {}
     this.local = new Local(this.config, this.prep, this.pouch, this.events)
-    return this.local.watcher.pending = {}
+    this.local.watcher.pending = {}
   })
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)

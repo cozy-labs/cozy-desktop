@@ -19,7 +19,7 @@ describe('RemoteWatcher Tests', function () {
   before('instanciate couch', couchHelpers.createCouchClient)
   before('instanciate remote watcher', function () {
     this.prep = {invalidPath: Prep.prototype.invalidPath}
-    return this.watcher = new Watcher(this.couch, this.prep, this.pouch)
+    this.watcher = new Watcher(this.couch, this.prep, this.pouch)
   })
   after('stop couch server', couchHelpers.stopServer)
   after('clean pouch', pouchHelpers.cleanDatabase)

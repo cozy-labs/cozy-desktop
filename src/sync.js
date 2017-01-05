@@ -110,7 +110,7 @@ class Sync {
                   log.info('Your cozy is up to date!')
                   opts.live = true
                   opts.returnDocs = false
-                  return this.changes = this.pouch.db.changes(opts)
+                  this.changes = this.pouch.db.changes(opts)
                         .on('change', info => {
                           if (this.changes) {
                             this.changes.cancel()

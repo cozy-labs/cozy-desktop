@@ -18,7 +18,7 @@ describe('Pull', function () {
 
   let waitAppear = function (localPath, callback) {
     let interval
-    return interval = setInterval(function () {
+    interval = setInterval(function () {
       if (fs.existsSync(localPath)) {
         clearInterval(interval)
         return callback()
@@ -29,7 +29,7 @@ describe('Pull', function () {
 
   let waitDisappear = function (localPath, callback) {
     let interval
-    return interval = setInterval(function () {
+    interval = setInterval(function () {
       if (!fs.existsSync(localPath)) {
         clearInterval(interval)
         return callback()

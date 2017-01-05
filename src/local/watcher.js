@@ -289,10 +289,10 @@ class LocalWatcher {
       if (this.checksums === 0) {
         return done()
       } else {
-        return this.pending[filePath].timeout = setTimeout(check, 100)
+        this.pending[filePath].timeout = setTimeout(check, 100)
       }
     }
-    return this.pending[filePath] = {
+    this.pending[filePath] = {
       clear,
       done,
       check,
@@ -317,7 +317,7 @@ class LocalWatcher {
     let check = () => {
       if (!this.hasPending(folderPath)) { return done() }
     }
-    return this.pending[folderPath] = {
+    this.pending[folderPath] = {
       clear,
       done,
       check,

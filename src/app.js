@@ -92,13 +92,13 @@ class App {
     this.logfile = logfile
     this.writeToLogfile()
     if (this.logsInterval) { clearInterval(this.logsInterval) }
-    return this.logsInterval = setInterval(this.rotateLogfile, 10000)
+    this.logsInterval = setInterval(this.rotateLogfile, 10000)
   }
 
     // Write logs in a file, by overriding the global console
   writeToLogfile () {
     let out = fs.createWriteStream(this.logfile, {flags: 'a+', mode: 0o0644})
-    return printit.console = new Console(out, out)
+    printit.console = new Console(out, out)
   }
 
     // Rotate the log file if it's too heavy
@@ -261,7 +261,7 @@ class App {
     } catch (error) {
       ignored = []
     }
-    return this.ignore = new Ignore(ignored).addDefaultRules()
+    this.ignore = new Ignore(ignored).addDefaultRules()
   }
 
     // Instanciate some objects before sync
@@ -272,7 +272,7 @@ class App {
     this.local = this.merge.local = new Local(this.config, this.prep, this.pouch, this.events)
     this.remote = this.merge.remote = new Remote(this.config, this.prep, this.pouch, this.events)
     this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
-    return this.sync.getDiskSpace = this.getDiskSpace
+    this.sync.getDiskSpace = this.getDiskSpace
   }
 
     // Start the synchronization

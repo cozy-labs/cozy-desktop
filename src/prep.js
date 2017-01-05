@@ -36,7 +36,7 @@ class Prep {
 
     // Build an _id from the path for a case sensitive file system (Linux, BSD)
   buildIdUnix (doc) {
-    return doc._id = doc.path
+    doc._id = doc.path
   }
 
     // Build an _id from the path for OSX (HFS+ file system):
@@ -51,7 +51,7 @@ class Prep {
   buildIdHFS (doc) {
     let id = doc.path
     if (id.normalize) { id = id.normalize('NFD') }
-    return doc._id = id.toUpperCase()
+    doc._id = id.toUpperCase()
   }
 
     // Return true if the document has not a valid path

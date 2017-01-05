@@ -17,7 +17,7 @@ describe('Remote', function () {
   before('instanciate remote', function () {
     this.prep = {}
     this.events = {}
-    return this.remote = new Remote(this.config, this.prep, this.pouch, this.events)
+    this.remote = new Remote(this.config, this.prep, this.pouch, this.events)
   })
   after('stop couch server', couchHelpers.stopServer)
   after('clean pouch', pouchHelpers.cleanDatabase)

@@ -14,7 +14,7 @@ describe('Merge Helpers', function () {
   before('instanciate pouch', pouchHelpers.createDatabase)
   beforeEach('instanciate merge', function () {
     this.side = 'local'
-    return this.merge = new Merge(this.pouch)
+    this.merge = new Merge(this.pouch)
   })
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)

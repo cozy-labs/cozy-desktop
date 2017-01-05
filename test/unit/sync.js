@@ -21,7 +21,7 @@ describe('Sync', function () {
       this.ignore = new Ignore([])
       this.events = {}
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
-      return this.sync.sync = sinon.stub().yields('stopped')
+      this.sync.sync = sinon.stub().yields('stopped')
     })
 
     it('starts the metadata replication of remote in read only', function (done) {
@@ -78,7 +78,7 @@ describe('Sync', function () {
       this.events = {}
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
       this.sync.apply = sinon.stub().yields()
-      return this.sync.running = true
+      this.sync.running = true
     })
 
     it('calls pop and apply', function (done) {
@@ -231,7 +231,7 @@ function(doc) {
       this.remote = {}
       this.ignore = new Ignore(['ignored'])
       this.events = {}
-      return this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
+      this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
     })
 
     it('does nothing for an ignored document', function (done) {
@@ -333,7 +333,7 @@ function(doc) {
       this.ignore = new Ignore([])
       this.events = {}
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
-      return this.sync.getDiskSpace = function (callback) {
+      this.sync.getDiskSpace = function (callback) {
         let space = {
           freeDiskSpace: '10',
           freeUnit: 'G'
@@ -430,7 +430,7 @@ function(doc) {
       this.remote = {}
       this.ignore = new Ignore([])
       this.events = {}
-      return this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
+      this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
     })
 
     it('sets the errors counter to 1 on first error', function (done) {
@@ -501,7 +501,7 @@ function(doc) {
       this.remote = {}
       this.ignore = new Ignore([])
       this.events = {}
-      return this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
+      this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
     })
 
     it('calls addFile for an added file', function (done) {
@@ -675,7 +675,7 @@ function(doc) {
       this.remote = {}
       this.ignore = new Ignore([])
       this.events = {}
-      return this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
+      this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
     })
 
     it('calls addFolder for an added folder', function (done) {
@@ -801,7 +801,7 @@ function(doc) {
       this.remote = {}
       this.ignore = new Ignore([])
       this.events = {}
-      return this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
+      this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
     })
 
     it('selects the local side if remote is up-to-date', function () {

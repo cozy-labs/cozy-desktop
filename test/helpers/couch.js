@@ -87,7 +87,7 @@ export default {
     })
     let events =
             {emit () {}}
-    return this.couch = new Couch(this.config, events)
+    this.couch = new Couch(this.config, events)
   },
 
   createFolder (couch, i, callback) {

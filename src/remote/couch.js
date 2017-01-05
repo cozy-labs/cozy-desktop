@@ -83,7 +83,7 @@ class Couch {
     log.info("The Cozy can't be reached currently")
     this.online = false
     this.events.emit('offline')
-    return interval = setInterval(() => {
+    interval = setInterval(() => {
       return this.ping(function (available) {
         if (available) { return clearInterval(interval) }
       })

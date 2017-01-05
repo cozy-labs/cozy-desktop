@@ -51,7 +51,7 @@ describe('Conflict when moving a file', function () {
     before('Simulate works/latency for Sync', function () {
       this.app.instanciate()
       let { apply } = this.app.sync
-      return this.app.sync.apply = (change, callback) => {
+      this.app.sync.apply = (change, callback) => {
         return setTimeout(() => {
           this.app.sync.apply = apply
           return this.app.sync.apply(change, callback)

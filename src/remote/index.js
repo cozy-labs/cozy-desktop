@@ -48,7 +48,7 @@ class Remote {
       if (!err) {
         this.watching = true
         return this.watcher.listenToChanges({live: true}, () => {
-          return this.watching = false
+          this.watching = false
         }
                 )
       }
@@ -60,7 +60,7 @@ class Remote {
   stop (callback) {
     let interval
     this.watcher.stopListening()
-    return interval = setInterval(() => {
+    interval = setInterval(() => {
       if (!this.watching) {
         clearInterval(interval)
         return callback()

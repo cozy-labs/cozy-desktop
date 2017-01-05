@@ -32,7 +32,7 @@ class RemoteWatcher {
     // Stop listening to couchdb
   stopListening () {
     __guard__(this.changes, x => x.cancel())
-    return this.changes = null
+    this.changes = null
   }
 
     // First time replication (when the databases is blank)
