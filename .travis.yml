@@ -95,7 +95,7 @@ before_install:
 script:
     - npm run build
     - npm run lint
-    - ./scripts/coverage.sh npm run test
+    - npm run test-coverage
     - cd gui
     - yarn
     - npm run lint

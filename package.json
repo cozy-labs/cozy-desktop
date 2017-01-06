@@ -23,7 +23,9 @@
   "scripts": {
     "lint": "./node_modules/.bin/standard './src/**/*.js' './test/**/*.js'",
     "test": "installed-check && npm run test-unit && npm run test-integration",
-    "test-unit": "NODE_ENV=test mocha $MOCHA_UNIT_TEST_FLAGS test/unit/",
+    "test-coverage": "installed-check && npm run test-unit-coverage && npm run test-integration",
+    "test-unit": "NODE_ENV=test mocha test/unit/",
+    "test-unit-coverage": "NODE_ENV=test nyc mocha test/unit/",
     "test-integration": "NODE_ENV=test mocha test/integration/",
     "build": "babel --source-maps --out-dir lib/ src/",
     "clean": "rm -rf lib/ && rm -rf tmp/",
