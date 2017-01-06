@@ -139,6 +139,7 @@ class Pouch {
     // not '.' as with node's path.dirname
   addByPathView (callback) {
         /* !pragma no-coverage-next */
+    /* istanbul ignore next */
     let query =
             function (doc) {
               if ('docType' in doc) {
@@ -154,6 +155,7 @@ class Pouch {
     // Create a view to find files by their checksum
   addByChecksumView (callback) {
         /* !pragma no-coverage-next */
+    /* istanbul ignore next */
     let query =
             function (doc) {
               if ('checksum' in doc) {
@@ -167,6 +169,7 @@ class Pouch {
     // Create a view to find file/folder by their _id on a remote cozy
   addByRemoteIdView (callback) {
         /* !pragma no-coverage-next */
+    /* istanbul ignore next */
     let query =
             function (doc) {
               if ('remote' in doc) {
