@@ -21,6 +21,7 @@
     "cozy"
   ],
   "scripts": {
+    "fauxton": "babel-node ./src/bin/fauxton.js",
     "lint": "./node_modules/.bin/standard './src/**/*.js' './test/**/*.js'",
     "test": "installed-check && npm run test-unit && npm run test-integration",
     "test-coverage": "installed-check && npm run test-unit-coverage && npm run test-integration",
