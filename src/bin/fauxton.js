@@ -8,23 +8,22 @@
 //
 // It's your job to kill the pouchdb-server when you have finished!
 
-import PouchDB from 'pouchdb';
-import path from 'path-extra';
-import Config from '../src/config';
-import helpers from '../test/helpers/couch.coffee';
+import PouchDB from 'pouchdb'
+import path from 'path-extra'
+import Config from '../src/config'
+import helpers from '../test/helpers/couch.coffee'
 
-
-helpers.startServer(function(err) {
-    if (err) {
-        console.log(err);
-        process.exit(1);
-    }
-    console.log(`Pouchdb-server pid is ${helpers.server.pid}`);
-    helpers.server.on('close', () => process.exit(0));
-    let basePath = process.env.COZY_DESKTOP_DIR || path.homedir();
-    basePath = path.join(basePath, '.cozy-desktop');
-    let config = new Config(basePath);
-    return PouchDB.replicate(config.dbPath, `${helpers.url}/${helpers.params.db}`)
+helpers.startServer(function (err) {
+  if (err) {
+    console.log(err)
+    process.exit(1)
+  }
+  console.log(`Pouchdb-server pid is ${helpers.server.pid}`)
+  helpers.server.on('close', () => process.exit(0))
+  let basePath = process.env.COZY_DESKTOP_DIR || path.homedir()
+  basePath = path.join(basePath, '.cozy-desktop')
+  let config = new Config(basePath)
+  return PouchDB.replicate(config.dbPath, `${helpers.url}/${helpers.params.db}`)
         .on('error', err => console.log(err))
-        .on('complete', info => console.log(`Replication done, you can open ${helpers.url}/_utils`));
-});
+        .on('complete', info => console.log(`Replication done, you can open ${helpers.url}/_utils`))
+})
