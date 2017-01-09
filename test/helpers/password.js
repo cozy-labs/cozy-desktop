@@ -7,6 +7,6 @@ let password = 'CozyTest$1'
 //     password = require '.../password'
 module.exports = password
 
-// Running this script directly with the `coffeescript` command prints the
+// Running this script directly with `node` or `babel-node` prints the
 // password to the console (useful for scripting, e.g. on Travis).
 if (require.main === module) { console.log(password) }

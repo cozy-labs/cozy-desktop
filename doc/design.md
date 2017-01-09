@@ -11,7 +11,7 @@ Metadata workflow
 
 ![Metadata workflow][0]
 
-Cozy-desktop is a nodejs app, written in coffeescript to be coherent with
+Cozy-desktop is a nodejs app, written in EcmaScript to be coherent with
 other cozy codes. As its core, there is a pouchdb database used to keep
 metadata about files and folders.
 

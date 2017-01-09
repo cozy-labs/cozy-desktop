@@ -38,19 +38,19 @@ And after you stopped cozy-desktop, you can examine its pouchdb database (a
 copy in fact) with fauxton:
 
 ```bash
-bin/fauxton.coffee
+npm run fauxton
 ```
 
 Don't forget to kill pouchdb-server when you are done.
 
 
-Debug coffeescript
-------------------
+Debug javascript
+----------------
 
-You can launch cozy-desktop directly in coffee:
+You can launch cozy-desktop directly:
 
 ```bash
-DEBUG=true node_modules/.bin/coffee src/bin/cli.coffee sync
+DEBUG=true node_modules/.bin/babel-node src/bin/cli.js sync
 ```
 
 
