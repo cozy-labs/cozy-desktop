@@ -339,7 +339,7 @@ class LocalWatcher {
           return callback(err)
         } else {
           return async.eachSeries(docs.reverse(), (doc, next) => {
-            if (Array.from(this.paths).includes(doc.path)) {
+            if (this.paths.indexOf(doc.path) !== -1) {
               return async.setImmediate(next)
             } else {
               return this.prep.deleteDoc(this.side, doc, next)
