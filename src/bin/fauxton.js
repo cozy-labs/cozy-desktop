@@ -9,7 +9,8 @@
 // It's your job to kill the pouchdb-server when you have finished!
 
 import PouchDB from 'pouchdb'
-import path from 'path-extra'
+import path from 'path'
+import os from 'os'
 import Config from '../config'
 import helpers from '../../test/helpers/couch'
 
@@ -20,7 +21,7 @@ helpers.startServer(function (err) {
   }
   console.log(`Pouchdb-server pid is ${helpers.server.pid}`)
   helpers.server.on('close', () => process.exit(0))
-  let basePath = process.env.COZY_DESKTOP_DIR || path.homedir()
+  let basePath = process.env.COZY_DESKTOP_DIR || os.homedir()
   basePath = path.join(basePath, '.cozy-desktop')
   let config = new Config(basePath)
   return PouchDB.replicate(config.dbPath, `${helpers.url}/${helpers.params.db}`)
