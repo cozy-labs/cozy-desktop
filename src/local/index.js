@@ -1,289 +1,372 @@
-async = require 'async'
-clone = require 'lodash.clone'
-fs    = require 'fs-extra'
-path  = require 'path'
-log   = require('printit')
-    prefix: 'Local writer  '
+import async from 'async';
+import clone from 'lodash.clone';
+import fs from 'fs-extra';
+import path from 'path';
+let log   = require('printit')({
+    prefix: 'Local writer  ',
     date: true
+});
 
-Watcher = require './watcher'
-
-
-# Local is the class that interfaces cozy-desktop with the local filesystem.
-# It uses a watcher, based on chokidar, to listen for file and folder changes.
-# It also applied changes from the remote cozy on the local filesystem.
-class Local
-    constructor: (config, @prep, @pouch, @events) ->
-        @syncPath = config.getDevice().path
-        @tmpPath  = path.join @syncPath, ".cozy-desktop"
-        @watcher  = new Watcher @syncPath, @prep, @pouch
-        @other    = null
-
-    # Start initial replication + watching changes in live
-    start: (done) =>
-        fs.ensureDir @syncPath, =>
-            @watcher.start done
-
-    # Stop watching the file system
-    stop: (callback) ->
-        @watcher.stop callback
-
-    # Create a readable stream for the given doc
-    createReadStream: (doc, callback) ->
-        try
-            filePath = path.resolve @syncPath, doc.path
-            stream = fs.createReadStream filePath
-            callback null, stream
-        catch err
-            log.error err
-            callback new Error 'Cannot read the file'
+import Watcher from './watcher';
 
 
-    ### Helpers ###
+// Local is the class that interfaces cozy-desktop with the local filesystem.
+// It uses a watcher, based on chokidar, to listen for file and folder changes.
+// It also applied changes from the remote cozy on the local filesystem.
+class Local {
+    constructor(config, prep, pouch, events) {
+        this.start = this.start.bind(this);
+        this.metadataUpdater = this.metadataUpdater.bind(this);
+        this.fileExistsLocally = this.fileExistsLocally.bind(this);
+        this.addFile = this.addFile.bind(this);
+        this.addFolder = this.addFolder.bind(this);
+        this.overwriteFile = this.overwriteFile.bind(this);
+        this.updateFileMetadata = this.updateFileMetadata.bind(this);
+        this.updateFolder = this.updateFolder.bind(this);
+        this.moveFile = this.moveFile.bind(this);
+        this.moveFolder = this.moveFolder.bind(this);
+        this.deleteFile = this.deleteFile.bind(this);
+        this.deleteFolder = this.deleteFolder.bind(this);
+        this.resolveConflict = this.resolveConflict.bind(this);
+        this.prep = prep;
+        this.pouch = pouch;
+        this.events = events;
+        this.syncPath = config.getDevice().path;
+        this.tmpPath  = path.join(this.syncPath, ".cozy-desktop");
+        this.watcher  = new Watcher(this.syncPath, this.prep, this.pouch);
+        this.other    = null;
+    }
 
-    # Return a function that will update last modification date
-    # and does a chmod +x if the file is executable
-    #
-    # Note: UNIX has 3 timestamps for a file/folder:
-    # - atime for last access
-    # - ctime for change (metadata or content)
-    # - utime for update (content only)
-    # This function updates utime and ctime according to the last
-    # modification date.
-    metadataUpdater: (doc) =>
-        filePath = path.resolve @syncPath, doc.path
-        (callback) ->
-            next = (err) ->
-                if doc.executable
-                    fs.chmod filePath, '755', callback
-                else
-                    callback err
-            if doc.lastModification
-                lastModification = new Date doc.lastModification
-                fs.utimes filePath, lastModification, lastModification, ->
-                    # Ignore errors
+    // Start initial replication + watching changes in live
+    start(done) {
+        return fs.ensureDir(this.syncPath, () => {
+            return this.watcher.start(done);
+        }
+        );
+    }
+
+    // Stop watching the file system
+    stop(callback) {
+        return this.watcher.stop(callback);
+    }
+
+    // Create a readable stream for the given doc
+    createReadStream(doc, callback) {
+        try {
+            let filePath = path.resolve(this.syncPath, doc.path);
+            let stream = fs.createReadStream(filePath);
+            return callback(null, stream);
+        } catch (err) {
+            log.error(err);
+            return callback(new Error('Cannot read the file'));
+        }
+    }
+
+
+    /* Helpers */
+
+    // Return a function that will update last modification date
+    // and does a chmod +x if the file is executable
+    //
+    // Note: UNIX has 3 timestamps for a file/folder:
+    // - atime for last access
+    // - ctime for change (metadata or content)
+    // - utime for update (content only)
+    // This function updates utime and ctime according to the last
+    // modification date.
+    metadataUpdater(doc) {
+        let filePath = path.resolve(this.syncPath, doc.path);
+        return function(callback) {
+            let next = function(err) {
+                if (doc.executable) {
+                    return fs.chmod(filePath, '755', callback);
+                } else {
+                    return callback(err);
+                }
+            };
+            if (doc.lastModification) {
+                let lastModification = new Date(doc.lastModification);
+                return fs.utimes(filePath, lastModification, lastModification, () =>
+                    // Ignore errors
                     next()
-            else
-                next()
+                );
+            } else {
+                return next();
+            }
+        };
+    }
 
-    # Return true if the local file is up-to-date for this document
-    isUpToDate: (doc) ->
-        currentRev = doc.sides.local or 0
-        lastRev = @pouch.extractRevNumber doc
-        return currentRev is lastRev
+    // Return true if the local file is up-to-date for this document
+    isUpToDate(doc) {
+        let currentRev = doc.sides.local || 0;
+        let lastRev = this.pouch.extractRevNumber(doc);
+        return currentRev === lastRev;
+    }
 
-    # Check if a file corresponding to given checksum already exists
-    fileExistsLocally: (checksum, callback) =>
-        @pouch.byChecksum checksum, (err, docs) =>
-            if err
-                callback err
-            else if not docs? or docs.length is 0
-                callback null, false
-            else
-                paths = for doc in docs when @isUpToDate doc
-                    path.resolve @syncPath, doc.path
-                async.detect paths, (filePath, next) ->
-                    fs.exists filePath, (found) ->
-                        next null, found
-                , callback
-
-
-    ### Write operations ###
-
-    # Add a new file, or replace an existing one
-    #
-    # Steps to create a file:
-    #   * Try to find a similar file based on his checksum
-    #     (in that case, it just requires a local copy)
-    #   * Or download the linked binary from remote
-    #   * Write to a temporary file
-    #   * Ensure parent folder exists
-    #   * Move the temporay file to its final destination
-    #   * Update creation and last modification dates
-    #
-    # Note: if no checksum was available for this file, we download the file
-    # from the remote document. Later, chokidar will fire an event for this new
-    # file. The checksum will then be computed and added to the document, and
-    # then pushed to CouchDB.
-    addFile: (doc, callback) =>
-        tmpFile  = path.resolve @tmpPath, "#{path.basename doc.path}.tmp"
-        filePath = path.resolve @syncPath, doc.path
-        parent   = path.resolve @syncPath, path.dirname doc.path
-
-        log.info "Put file #{filePath}"
-
-        async.waterfall [
-            (next) =>
-                if doc.checksum?
-                    @fileExistsLocally doc.checksum, next
-                else
-                    next null, false
-
-            (existingFilePath, next) =>
-                fs.ensureDir @tmpPath, =>
-                    if existingFilePath
-                        log.info "Recopy #{existingFilePath} -> #{filePath}"
-                        @events.emit 'transfer-copy', doc
-                        fs.copy existingFilePath, tmpFile, next
-                    else
-                        @other.createReadStream doc, (err, stream) =>
-                            # Don't use async callback here!
-                            # Async does some magic and the stream can throw an
-                            # 'error' event before the next async is called...
-                            return next err if err
-                            target = fs.createWriteStream tmpFile
-                            stream.pipe target
-                            target.on 'finish', next
-                            target.on 'error', next
-                            # Emit events to track the download progress
-                            info = clone doc
-                            info.way = 'down'
-                            info.eventName = "transfer-down-#{doc._id}"
-                            @events.emit 'transfer-started', info
-                            stream.on 'data', (data) =>
-                                @events.emit info.eventName, data
-                            target.on 'finish', =>
-                                @events.emit info.eventName, finished: true
-
-            (next) =>
-                if doc.checksum?
-                    @watcher.checksum tmpFile, (err, checksum) ->
-                        if err
-                            next err
-                        else if checksum is doc.checksum
-                            next()
-                        else
-                            next new Error 'Invalid checksum'
-                else
-                    next()
-
-            (next) ->
-                fs.ensureDir parent, ->
-                    fs.rename tmpFile, filePath, next
-
-            @metadataUpdater(doc)
-
-        ], (err) ->
-            log.warn "addFile failed:", err, doc if err
-            fs.unlink tmpFile, ->
-                callback err
+    // Check if a file corresponding to given checksum already exists
+    fileExistsLocally(checksum, callback) {
+        return this.pouch.byChecksum(checksum, (err, docs) => {
+            if (err) {
+                return callback(err);
+            } else if ((docs == null) || (docs.length === 0)) {
+                return callback(null, false);
+            } else {
+                let paths = Array.from(docs).filter((doc) => this.isUpToDate(doc)).map((doc) =>
+                    path.resolve(this.syncPath, doc.path));
+                return async.detect(paths, (filePath, next) =>
+                    fs.exists(filePath, found => next(null, found))
+                
+                , callback);
+            }
+        }
+        );
+    }
 
 
-    # Create a new folder
-    addFolder: (doc, callback) =>
-        folderPath = path.join @syncPath, doc.path
-        log.info "Put folder #{folderPath}"
-        fs.ensureDir folderPath, (err) =>
-            if err
-                callback err
-            else
-                @metadataUpdater(doc)(callback)
+    /* Write operations */
+
+    // Add a new file, or replace an existing one
+    //
+    // Steps to create a file:
+    //   * Try to find a similar file based on his checksum
+    //     (in that case, it just requires a local copy)
+    //   * Or download the linked binary from remote
+    //   * Write to a temporary file
+    //   * Ensure parent folder exists
+    //   * Move the temporay file to its final destination
+    //   * Update creation and last modification dates
+    //
+    // Note: if no checksum was available for this file, we download the file
+    // from the remote document. Later, chokidar will fire an event for this new
+    // file. The checksum will then be computed and added to the document, and
+    // then pushed to CouchDB.
+    addFile(doc, callback) {
+        let tmpFile  = path.resolve(this.tmpPath, `${path.basename(doc.path)}.tmp`);
+        let filePath = path.resolve(this.syncPath, doc.path);
+        let parent   = path.resolve(this.syncPath, path.dirname(doc.path));
+
+        log.info(`Put file ${filePath}`);
+
+        return async.waterfall([
+            next => {
+                if (doc.checksum != null) {
+                    return this.fileExistsLocally(doc.checksum, next);
+                } else {
+                    return next(null, false);
+                }
+            },
+
+            (existingFilePath, next) => {
+                return fs.ensureDir(this.tmpPath, () => {
+                    if (existingFilePath) {
+                        log.info(`Recopy ${existingFilePath} -> ${filePath}`);
+                        this.events.emit('transfer-copy', doc);
+                        return fs.copy(existingFilePath, tmpFile, next);
+                    } else {
+                        return this.other.createReadStream(doc, (err, stream) => {
+                            // Don't use async callback here!
+                            // Async does some magic and the stream can throw an
+                            // 'error' event before the next async is called...
+                            if (err) { return next(err); }
+                            let target = fs.createWriteStream(tmpFile);
+                            stream.pipe(target);
+                            target.on('finish', next);
+                            target.on('error', next);
+                            // Emit events to track the download progress
+                            let info = clone(doc);
+                            info.way = 'down';
+                            info.eventName = `transfer-down-${doc._id}`;
+                            this.events.emit('transfer-started', info);
+                            stream.on('data', data => {
+                                return this.events.emit(info.eventName, data);
+                            }
+                            );
+                            return target.on('finish', () => {
+                                return this.events.emit(info.eventName, {finished: true});
+                            }
+                            );
+                        }
+                        );
+                    }
+                }
+                );
+            },
+
+            next => {
+                if (doc.checksum != null) {
+                    return this.watcher.checksum(tmpFile, function(err, checksum) {
+                        if (err) {
+                            return next(err);
+                        } else if (checksum === doc.checksum) {
+                            return next();
+                        } else {
+                            return next(new Error('Invalid checksum'));
+                        }
+                    });
+                } else {
+                    return next();
+                }
+            },
+
+            next =>
+                fs.ensureDir(parent, () => fs.rename(tmpFile, filePath, next))
+            ,
+
+            this.metadataUpdater(doc)
+
+        ], function(err) {
+            if (err) { log.warn("addFile failed:", err, doc); }
+            return fs.unlink(tmpFile, () => callback(err));
+        });
+    }
 
 
-    # Overwrite a file
-    overwriteFile: (doc, old, callback) =>
-        @addFile doc, callback
-
-    # Update the metadata of a file
-    updateFileMetadata: (doc, old, callback) =>
-        @metadataUpdater(doc) callback
-
-    # Update a folder
-    updateFolder: (doc, old, callback) =>
-        @addFolder doc, callback
-
-
-    # Move a file from one place to another
-    moveFile: (doc, old, callback) =>
-        log.info "Move file #{old.path} → #{doc.path}"
-        oldPath = path.join @syncPath, old.path
-        newPath = path.join @syncPath, doc.path
-        parent  = path.join @syncPath, path.dirname doc.path
-
-        async.waterfall [
-            (next) ->
-                fs.exists oldPath, (oldPathExists) ->
-                    if oldPathExists
-                        fs.ensureDir parent, ->
-                            fs.rename oldPath, newPath, next
-                    else
-                        fs.exists newPath, (newPathExists) ->
-                            if newPathExists
-                                next()
-                            else
-                                log.error "File #{oldPath} not found"
-                                next new Error "#{oldPath} not found"
-
-            @metadataUpdater(doc)
-
-        ], (err) =>
-            if err
-                log.error "Error while moving #{JSON.stringify doc, null, 2}"
-                log.error JSON.stringify old, null, 2
-                log.error err
-                @addFile doc, callback
-            else
-                @events.emit 'transfer-move', doc, old
-                callback null
+    // Create a new folder
+    addFolder(doc, callback) {
+        let folderPath = path.join(this.syncPath, doc.path);
+        log.info(`Put folder ${folderPath}`);
+        return fs.ensureDir(folderPath, err => {
+            if (err) {
+                return callback(err);
+            } else {
+                return this.metadataUpdater(doc)(callback);
+            }
+        }
+        );
+    }
 
 
-    # Move a folder
-    moveFolder: (doc, old, callback) =>
-        log.info "Move folder #{old.path} → #{doc.path}"
-        oldPath = path.join @syncPath, old.path
-        newPath = path.join @syncPath, doc.path
-        parent  = path.join @syncPath, path.dirname doc.path
+    // Overwrite a file
+    overwriteFile(doc, old, callback) {
+        return this.addFile(doc, callback);
+    }
 
-        async.waterfall [
-            (next) ->
-                fs.exists oldPath, (oldPathExists) ->
-                    fs.exists newPath, (newPathExists) ->
-                        if oldPathExists and newPathExists
-                            fs.rmdir oldPath, next
-                        else if oldPathExists
-                            fs.ensureDir parent, ->
-                                fs.rename oldPath, newPath, next
-                        else if newPathExists
-                            next()
-                        else
-                            log.error "Folder #{oldPath} not found"
-                            next new Error "#{oldPath} not found"
+    // Update the metadata of a file
+    updateFileMetadata(doc, old, callback) {
+        return this.metadataUpdater(doc)(callback);
+    }
 
-            @metadataUpdater(doc)
-
-        ], (err) =>
-            if err
-                log.error "Error while moving #{JSON.stringify doc, null, 2}"
-                log.error JSON.stringify old, null, 2
-                log.error err
-                @addFolder doc, callback
-            else
-                callback null
+    // Update a folder
+    updateFolder(doc, old, callback) {
+        return this.addFolder(doc, callback);
+    }
 
 
-    # Delete a file from the local filesystem
-    deleteFile: (doc, callback) =>
-        log.info "Delete #{doc.path}"
-        @events.emit 'delete-file', doc
-        fullpath = path.join @syncPath, doc.path
-        fs.remove fullpath, callback
+    // Move a file from one place to another
+    moveFile(doc, old, callback) {
+        log.info(`Move file ${old.path} → ${doc.path}`);
+        let oldPath = path.join(this.syncPath, old.path);
+        let newPath = path.join(this.syncPath, doc.path);
+        let parent  = path.join(this.syncPath, path.dirname(doc.path));
 
-    # Delete a folder from the local filesystem
-    deleteFolder: (doc, callback) =>
-        # For now both operations are similar
-        @deleteFile doc, callback
+        return async.waterfall([
+            next =>
+                fs.exists(oldPath, function(oldPathExists) {
+                    if (oldPathExists) {
+                        return fs.ensureDir(parent, () => fs.rename(oldPath, newPath, next));
+                    } else {
+                        return fs.exists(newPath, function(newPathExists) {
+                            if (newPathExists) {
+                                return next();
+                            } else {
+                                log.error(`File ${oldPath} not found`);
+                                return next(new Error(`${oldPath} not found`));
+                            }
+                        });
+                    }
+                })
+            ,
+
+            this.metadataUpdater(doc)
+
+        ], err => {
+            if (err) {
+                log.error(`Error while moving ${JSON.stringify(doc, null, 2)}`);
+                log.error(JSON.stringify(old, null, 2));
+                log.error(err);
+                return this.addFile(doc, callback);
+            } else {
+                this.events.emit('transfer-move', doc, old);
+                return callback(null);
+            }
+        }
+        );
+    }
 
 
-    # Rename a file/folder to resolve a conflict
-    resolveConflict: (dst, src, callback) =>
-        log.info "Resolve a conflict: #{src.path} → #{dst.path}"
-        srcPath = path.join @syncPath, src.path
-        dstPath = path.join @syncPath, dst.path
-        fs.rename srcPath, dstPath, callback
-        # Don't fire an event for the deleted file
-        setTimeout =>
-            @watcher.pending[src.path]?.clear()
-        , 1000
+    // Move a folder
+    moveFolder(doc, old, callback) {
+        log.info(`Move folder ${old.path} → ${doc.path}`);
+        let oldPath = path.join(this.syncPath, old.path);
+        let newPath = path.join(this.syncPath, doc.path);
+        let parent  = path.join(this.syncPath, path.dirname(doc.path));
+
+        return async.waterfall([
+            next =>
+                fs.exists(oldPath, oldPathExists =>
+                    fs.exists(newPath, function(newPathExists) {
+                        if (oldPathExists && newPathExists) {
+                            return fs.rmdir(oldPath, next);
+                        } else if (oldPathExists) {
+                            return fs.ensureDir(parent, () => fs.rename(oldPath, newPath, next));
+                        } else if (newPathExists) {
+                            return next();
+                        } else {
+                            log.error(`Folder ${oldPath} not found`);
+                            return next(new Error(`${oldPath} not found`));
+                        }
+                    })
+                )
+            ,
+
+            this.metadataUpdater(doc)
+
+        ], err => {
+            if (err) {
+                log.error(`Error while moving ${JSON.stringify(doc, null, 2)}`);
+                log.error(JSON.stringify(old, null, 2));
+                log.error(err);
+                return this.addFolder(doc, callback);
+            } else {
+                return callback(null);
+            }
+        }
+        );
+    }
 
 
-module.exports = Local
+    // Delete a file from the local filesystem
+    deleteFile(doc, callback) {
+        log.info(`Delete ${doc.path}`);
+        this.events.emit('delete-file', doc);
+        let fullpath = path.join(this.syncPath, doc.path);
+        return fs.remove(fullpath, callback);
+    }
+
+    // Delete a folder from the local filesystem
+    deleteFolder(doc, callback) {
+        // For now both operations are similar
+        return this.deleteFile(doc, callback);
+    }
+
+
+    // Rename a file/folder to resolve a conflict
+    resolveConflict(dst, src, callback) {
+        log.info(`Resolve a conflict: ${src.path} → ${dst.path}`);
+        let srcPath = path.join(this.syncPath, src.path);
+        let dstPath = path.join(this.syncPath, dst.path);
+        fs.rename(srcPath, dstPath, callback);
+        // Don't fire an event for the deleted file
+        return setTimeout(() => {
+            return __guard__(this.watcher.pending[src.path], x => x.clear());
+        }
+        , 1000);
+    }
+}
+
+
+export default Local;
+
+function __guard__(value, transform) {
+  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined;
+}

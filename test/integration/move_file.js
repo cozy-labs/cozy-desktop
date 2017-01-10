@@ -1,112 +1,126 @@
-faker  = require 'faker'
-find   = require 'lodash.find'
-fs     = require 'fs-extra'
-path   = require 'path'
-should = require 'should'
+import faker from 'faker';
+import find from 'lodash.find';
+import fs from 'fs-extra';
+import path from 'path';
+import should from 'should';
 
-Cozy  = require '../helpers/integration'
-Files = require '../helpers/files'
-
-
-describe 'Move a file', ->
-    @slow 1000
-    @timeout 10000
-
-    before Cozy.ensurePreConditions
+import Cozy from '../helpers/integration';
+import Files from '../helpers/files';
 
 
-    describe 'on local', ->
-        src =
-            path: ''
+describe('Move a file', function() {
+    this.slow(1000);
+    this.timeout(10000);
+
+    before(Cozy.ensurePreConditions);
+
+
+    describe('on local', function() {
+        let src = {
+            path: '',
             name: faker.name.jobArea()
-        dst =
-            path: ''
+        };
+        let dst = {
+            path: '',
             name: faker.name.jobType()
-        expectedSizes = []
+        };
+        let expectedSizes = [];
 
-        before Cozy.registerDevice
-        before Files.deleteAll
-        before Cozy.sync
-        after Cozy.clean
+        before(Cozy.registerDevice);
+        before(Files.deleteAll);
+        before(Cozy.sync);
+        after(Cozy.clean);
 
-        it 'create the local file', ->
-            fixturePath = path.join Cozy.fixturesDir, 'chat-mignon-mod.jpg'
-            filePath = path.join @syncPath, src.path, src.name
-            src.size = fs.statSync(fixturePath).size
-            fs.copySync fixturePath, filePath
+        it('create the local file', function() {
+            let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon-mod.jpg');
+            let filePath = path.join(this.syncPath, src.path, src.name);
+            src.size = fs.statSync(fixturePath).size;
+            return fs.copySync(fixturePath, filePath);
+        });
 
-        it 'waits a bit', (done) ->
-            setTimeout done, 4000
+        it('waits a bit', done => setTimeout(done, 4000));
 
-        it 'renames the file', (done) ->
-            srcPath = path.join @syncPath, src.path, src.name
-            dstPath = path.join @syncPath, dst.path, dst.name
-            fs.rename srcPath, dstPath, done
+        it('renames the file', function(done) {
+            let srcPath = path.join(this.syncPath, src.path, src.name);
+            let dstPath = path.join(this.syncPath, dst.path, dst.name);
+            return fs.rename(srcPath, dstPath, done);
+        });
 
-        it 'waits a bit', (done) ->
-            setTimeout done, 6000
+        it('waits a bit', done => setTimeout(done, 6000));
 
-        it 'has the file on local', ->
-            files = fs.readdirSync @syncPath
-            files = (f for f in files when f isnt '.cozy-desktop')
-            files.length.should.equal 1
-            size = fs.statSync(path.join @syncPath, files[0]).size
-            size.should.equal src.size
-            files[0].should.equal dst.name
+        it('has the file on local', function() {
+            let files = fs.readdirSync(this.syncPath);
+            files = (Array.from(files).filter((f) => f !== '.cozy-desktop').map((f) => f));
+            files.length.should.equal(1);
+            let { size } = fs.statSync(path.join(this.syncPath, files[0]));
+            size.should.equal(src.size);
+            return files[0].should.equal(dst.name);
+        });
 
-        it 'has the file on remote', (done) ->
-            Files.getAllFiles (err, files) ->
-                files.length.should.equal 1
-                files[0].size.should.eql src.size
-                files[0].name.should.equal dst.name
-                done()
+        return it('has the file on remote', done =>
+            Files.getAllFiles(function(err, files) {
+                files.length.should.equal(1);
+                files[0].size.should.eql(src.size);
+                files[0].name.should.equal(dst.name);
+                return done();
+            })
+        );
+    });
 
 
-    describe 'on remote', ->
-        src =
-            path: ''
-            name: faker.name.jobArea()
+    return describe('on remote', function() {
+        let src = {
+            path: '',
+            name: faker.name.jobArea(),
             lastModification: '2015-10-13T02:04:08Z'
-        dst =
-            path: ''
+        };
+        let dst = {
+            path: '',
             name: faker.name.jobType()
-        expectedSizes = []
+        };
+        let expectedSizes = [];
 
-        before Cozy.registerDevice
-        before Files.deleteAll
-        before Cozy.sync
-        after Cozy.clean
+        before(Cozy.registerDevice);
+        before(Files.deleteAll);
+        before(Cozy.sync);
+        after(Cozy.clean);
 
-        it 'create the remote file', (done) ->
-            fixturePath = path.join Cozy.fixturesDir, 'chat-mignon.jpg'
-            Files.uploadFile src, fixturePath, (err, created) ->
-                src.id = created.id
-                src.size = fs.statSync(fixturePath).size
-                done()
+        it('create the remote file', function(done) {
+            let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon.jpg');
+            return Files.uploadFile(src, fixturePath, function(err, created) {
+                src.id = created.id;
+                src.size = fs.statSync(fixturePath).size;
+                return done();
+            });
+        });
 
-        it 'waits a bit', (done) ->
-            setTimeout done, 4000
+        it('waits a bit', done => setTimeout(done, 4000));
 
-        it 'renames the file', (done) ->
-            srcPath = path.join @syncPath, src.path, src.name
-            dstPath = path.join @syncPath, dst.path, dst.name
-            dst.id = src.id
-            Files.updateFile dst, done
+        it('renames the file', function(done) {
+            let srcPath = path.join(this.syncPath, src.path, src.name);
+            let dstPath = path.join(this.syncPath, dst.path, dst.name);
+            dst.id = src.id;
+            return Files.updateFile(dst, done);
+        });
 
-        it 'waits a bit', (done) ->
-            setTimeout done, 4000
+        it('waits a bit', done => setTimeout(done, 4000));
 
-        it 'has the file on local', ->
-            files = fs.readdirSync @syncPath
-            files = (f for f in files when f isnt '.cozy-desktop')
-            files.length.should.equal 1
-            size = fs.statSync(path.join @syncPath, files[0]).size
-            size.should.equal src.size
-            files[0].should.equal dst.name
+        it('has the file on local', function() {
+            let files = fs.readdirSync(this.syncPath);
+            files = (Array.from(files).filter((f) => f !== '.cozy-desktop').map((f) => f));
+            files.length.should.equal(1);
+            let { size } = fs.statSync(path.join(this.syncPath, files[0]));
+            size.should.equal(src.size);
+            return files[0].should.equal(dst.name);
+        });
 
-        it 'has the file on remote', (done) ->
-            Files.getAllFiles (err, files) ->
-                files.length.should.equal 1
-                files[0].size.should.eql src.size
-                files[0].name.should.equal dst.name
-                done()
+        return it('has the file on remote', done =>
+            Files.getAllFiles(function(err, files) {
+                files.length.should.equal(1);
+                files[0].size.should.eql(src.size);
+                files[0].name.should.equal(dst.name);
+                return done();
+            })
+        );
+    });
+});

@@ -1,92 +1,114 @@
-async   = require 'async'
-del     = require 'del'
-faker   = require 'faker'
-fs      = require 'fs-extra'
-path    = require 'path'
-request = require 'request-json-light'
-should  = require 'should'
+let helpers;
+import async from 'async';
+import del from 'del';
+import faker from 'faker';
+import fs from 'fs-extra';
+import path from 'path';
+import request from 'request-json-light';
+import should from 'should';
 
-App     = require '../../src/app'
-PouchDB = require 'pouchdb'
-
-
-module.exports = helpers =
-    scheme: process.env.SCHEME or 'http'
-    host: process.env.HOST or 'localhost'
-    port: process.env.PORT or 9104
-    password: require './password'
-    deviceName: "test-#{faker.internet.userName()}"
-    fixturesDir: path.join __dirname, '..', 'fixtures'
-    parentDir: process.env.COZY_DESKTOP_DIR or 'tmp'
-
-helpers.url = "#{helpers.scheme}://#{helpers.host}:#{helpers.port}/"
-
-module.exports.ensurePreConditions = (done) ->
-    ports = [5984, 9104, 9101, 9121]
-    async.map ports, (port, cb) ->
-        client = request.newClient "http://#{helpers.host}:#{port}"
-        client.get '/', ((err, res) -> cb null, res?.statusCode), false
-    , (err, results) ->
-        should.not.exist err
-        [couch, proxy, dataSystem, files] = results
-        should.exist couch, 'Couch should be running on 5984'
-        should.exist proxy, 'Cozy Proxy should be running on 9104'
-        should.exist dataSystem, 'Cozy Data System should be running on 9101'
-        should.exist files, 'Cozy Files should be running on 9121'
-        done()
+import App from '../../src/app';
+import PouchDB from 'pouchdb';
 
 
-module.exports.registerDevice = (done) ->
-    @syncPath = path.resolve "#{helpers.parentDir}/#{+new Date}"
-    fs.ensureDirSync @syncPath
-    @app = new App @syncPath
-    @app.askPassword = (callback) ->
-        callback null, helpers.password
-    deviceName = helpers.deviceName = "test-#{faker.internet.userName()}"
-    @app.addRemote helpers.url, @syncPath, deviceName, (err, credentials) ->
-        should.not.exist err
-        helpers.deviceName = credentials.deviceName
-        # For debug:
-        # PouchDB.debug.enable 'pouchdb:*'
-        done()
+export default helpers = {
+    scheme: process.env.SCHEME || 'http',
+    host: process.env.HOST || 'localhost',
+    port: process.env.PORT || 9104,
+    password: require('./password'),
+    deviceName: `test-${faker.internet.userName()}`,
+    fixturesDir: path.join(__dirname, '..', 'fixtures'),
+    parentDir: process.env.COZY_DESKTOP_DIR || 'tmp'
+};
+
+helpers.url = `${helpers.scheme}://${helpers.host}:${helpers.port}/`;
+
+export function ensurePreConditions(done) {
+    let ports = [5984, 9104, 9101, 9121];
+    return async.map(ports, function(port, cb) {
+        let client = request.newClient(`http://${helpers.host}:${port}`);
+        return client.get('/', ((err, res) => cb(null, __guard__(res, x => x.statusCode))), false);
+    }
+    , function(err, results) {
+        should.not.exist(err);
+        let [couch, proxy, dataSystem, files] = results;
+        should.exist(couch, 'Couch should be running on 5984');
+        should.exist(proxy, 'Cozy Proxy should be running on 9104');
+        should.exist(dataSystem, 'Cozy Data System should be running on 9101');
+        should.exist(files, 'Cozy Files should be running on 9121');
+        return done();
+    });
+}
 
 
-module.exports.clean = (done) ->
-    # For debug:
-    # PouchDB.debug.disable()
-    @app.removeRemote helpers.deviceName, (err) =>
-        callback = =>
-            setTimeout =>
-                del.sync @syncPath
-                done()
-            , 200
-        should.not.exist err
-        if @app.sync
-            @app.stopSync (err) ->
-                should.not.exist err
-                callback()
-        else
-            callback()
+export function registerDevice(done) {
+    this.syncPath = path.resolve(`${helpers.parentDir}/${+new Date}`);
+    fs.ensureDirSync(this.syncPath);
+    this.app = new App(this.syncPath);
+    this.app.askPassword = callback => callback(null, helpers.password);
+    let deviceName = helpers.deviceName = `test-${faker.internet.userName()}`;
+    return this.app.addRemote(helpers.url, this.syncPath, deviceName, function(err, credentials) {
+        should.not.exist(err);
+        helpers.deviceName = credentials.deviceName;
+        // For debug:
+        // PouchDB.debug.enable 'pouchdb:*'
+        return done();
+    });
+}
 
 
-start = (app, mode, done) ->
-    app.instanciate() unless app.sync
-    app.startSync mode, (err) ->
-        should.not.exist err
-    setTimeout done, 1500
+export function clean(done) {
+    // For debug:
+    // PouchDB.debug.disable()
+    return this.app.removeRemote(helpers.deviceName, err => {
+        let callback = () => {
+            return setTimeout(() => {
+                del.sync(this.syncPath);
+                return done();
+            }
+            , 200);
+        };
+        should.not.exist(err);
+        if (this.app.sync) {
+            return this.app.stopSync(function(err) {
+                should.not.exist(err);
+                return callback();
+            });
+        } else {
+            return callback();
+        }
+    }
+    );
+}
 
-module.exports.pull = (done) ->
-    start @app, 'pull', done
 
-module.exports.push = (done) ->
-    start @app, 'push', done
+let start = function(app, mode, done) {
+    if (!app.sync) { app.instanciate(); }
+    app.startSync(mode, err => should.not.exist(err));
+    return setTimeout(done, 1500);
+};
 
-module.exports.sync = (done) ->
-    start @app, 'full', done
+export function pull(done) {
+    return start(this.app, 'pull', done);
+}
+
+export function push(done) {
+    return start(this.app, 'push', done);
+}
+
+export function sync(done) {
+    return start(this.app, 'full', done);
+}
 
 
-module.exports.fetchRemoteMetadata = (done) ->
-    @app.instanciate() unless @app.sync
-    @app.remote.watcher.listenToChanges live: false, (err) ->
-        should.not.exist err
-        done()
+export function fetchRemoteMetadata(done) {
+    if (!this.app.sync) { this.app.instanciate(); }
+    return this.app.remote.watcher.listenToChanges({live: false}, function(err) {
+        should.not.exist(err);
+        return done();
+    });
+}
+
+function __guard__(value, transform) {
+  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined;
+}

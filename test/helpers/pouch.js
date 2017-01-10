@@ -1,55 +1,64 @@
-path = require 'path'
+import path from 'path';
 
-Pouch = require '../../src/pouch'
+import Pouch from '../../src/pouch';
 
 
-module.exports =
-    createDatabase: (done) ->
-        @pouch = new Pouch @config
-        @pouch.addAllViews done
+export default {
+    createDatabase(done) {
+        this.pouch = new Pouch(this.config);
+        return this.pouch.addAllViews(done);
+    },
 
-    cleanDatabase: (done) ->
-        @pouch.db.destroy =>
-            @pouch = null
-            done()
-        return
+    cleanDatabase(done) {
+        this.pouch.db.destroy(() => {
+            this.pouch = null;
+            return done();
+        }
+        );
+    },
 
-    createParentFolder: (pouch, callback) ->
-        doc =
-            _id: 'my-folder'
-            path: 'my-folder'
-            docType: 'folder'
-            creationDate: new Date()
-            lastModification: new Date()
+    createParentFolder(pouch, callback) {
+        let doc = {
+            _id: 'my-folder',
+            path: 'my-folder',
+            docType: 'folder',
+            creationDate: new Date(),
+            lastModification: new Date(),
             tags: []
-        pouch.db.put doc, callback
-        return
+        };
+        pouch.db.put(doc, callback);
+    },
 
-    createFolder: (pouch, i, callback) ->
-        id = path.join 'my-folder', "folder-#{i}"
-        doc =
-            _id: id
-            path: id
-            docType: 'folder'
-            creationDate: new Date()
-            lastModification: new Date()
-            tags: []
-            remote:
-                _id: "123456789#{i}"
-        pouch.db.put doc, callback
-        return
+    createFolder(pouch, i, callback) {
+        let id = path.join('my-folder', `folder-${i}`);
+        let doc = {
+            _id: id,
+            path: id,
+            docType: 'folder',
+            creationDate: new Date(),
+            lastModification: new Date(),
+            tags: [],
+            remote: {
+                _id: `123456789${i}`
+            }
+        };
+        pouch.db.put(doc, callback);
+    },
 
-    createFile: (pouch, i, callback) ->
-        id = path.join 'my-folder', "file-#{i}"
-        doc =
-            _id: id
-            path: id
-            docType: 'file'
-            checksum: "111111111111111111111111111111111111111#{i}"
-            creationDate: new Date()
-            lastModification: new Date()
-            tags: []
-            remote:
-                _id: "1234567890#{i}"
-        pouch.db.put doc, callback
-        return
+    createFile(pouch, i, callback) {
+        let id = path.join('my-folder', `file-${i}`);
+        let doc = {
+            _id: id,
+            path: id,
+            docType: 'file',
+            checksum: `111111111111111111111111111111111111111${i}`,
+            creationDate: new Date(),
+            lastModification: new Date(),
+            tags: [],
+            remote: {
+                _id: `1234567890${i}`
+            }
+        };
+        pouch.db.put(doc, callback);
+    }
+};

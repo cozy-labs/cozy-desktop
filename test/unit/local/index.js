@@ -1,526 +1,658 @@
-crypto   = require 'crypto'
-fs       = require 'fs-extra'
-path     = require 'path'
-sinon    = require 'sinon'
-should   = require 'should'
-Readable = require('stream').Readable
+import crypto from 'crypto';
+import fs from 'fs-extra';
+import path from 'path';
+import sinon from 'sinon';
+import should from 'should';
+import { Readable } from 'stream';
 
-Local = require '../../../src/local'
-
-
-configHelpers = require '../../helpers/config'
-pouchHelpers  = require '../../helpers/pouch'
+import Local from '../../../src/local';
 
 
-describe 'Local', ->
-
-    before 'instanciate config', configHelpers.createConfig
-    before 'instanciate pouch', pouchHelpers.createDatabase
-    before 'instanciate local', ->
-        @prep = {}
-        @events = {}
-        @local = new Local @config, @prep, @pouch, @events
-        @local.watcher.pending = {}
-    after 'clean pouch', pouchHelpers.cleanDatabase
-    after 'clean config directory', configHelpers.cleanConfig
+import configHelpers from '../../helpers/config';
+import pouchHelpers from '../../helpers/pouch';
 
 
-    describe 'constructor', ->
-        it 'has a base path', ->
-            @local.syncPath.should.equal @syncPath
+describe('Local', function() {
 
-        it 'has a tmp path', ->
-            tmpPath = path.join @syncPath, ".cozy-desktop"
-            @local.tmpPath.should.equal tmpPath
+    before('instanciate config', configHelpers.createConfig);
+    before('instanciate pouch', pouchHelpers.createDatabase);
+    before('instanciate local', function() {
+        this.prep = {};
+        this.events = {};
+        this.local = new Local(this.config, this.prep, this.pouch, this.events);
+        return this.local.watcher.pending = {};});
+    after('clean pouch', pouchHelpers.cleanDatabase);
+    after('clean config directory', configHelpers.cleanConfig);
 
 
-    describe 'createReadStream', ->
-        it 'throws an error if no file for this document', (done) ->
-            doc = path: 'no-such-file'
-            @local.createReadStream doc, (err, stream) ->
-                should.exist err
-                err.message.should.equal 'Cannot read the file'
-                done()
+    describe('constructor', function() {
+        it('has a base path', function() {
+            return this.local.syncPath.should.equal(this.syncPath);
+        });
 
-        it 'creates a readable stream for the document', (done) ->
-            src = path.join __dirname, '../../fixtures/chat-mignon.jpg'
-            dst = path.join @syncPath, 'read-stream.jpg'
-            fs.copySync src, dst
-            doc =
-                path: 'read-stream.jpg'
+        return it('has a tmp path', function() {
+            let tmpPath = path.join(this.syncPath, ".cozy-desktop");
+            return this.local.tmpPath.should.equal(tmpPath);
+        });
+    });
+
+
+    describe('createReadStream', function() {
+        it('throws an error if no file for this document', function(done) {
+            let doc = {path: 'no-such-file'};
+            return this.local.createReadStream(doc, function(err, stream) {
+                should.exist(err);
+                err.message.should.equal('Cannot read the file');
+                return done();
+            });
+        });
+
+        return it('creates a readable stream for the document', function(done) {
+            let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg');
+            let dst = path.join(this.syncPath, 'read-stream.jpg');
+            fs.copySync(src, dst);
+            let doc = {
+                path: 'read-stream.jpg',
                 checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
-            @local.createReadStream doc, (err, stream) ->
-                should.not.exist err
-                should.exist stream
-                checksum = crypto.createHash 'sha1'
-                checksum.setEncoding 'hex'
-                stream.pipe checksum
-                stream.on 'end', ->
-                    checksum.end()
-                    checksum.read().should.equal doc.checksum
-                    done()
+            };
+            return this.local.createReadStream(doc, function(err, stream) {
+                should.not.exist(err);
+                should.exist(stream);
+                let checksum = crypto.createHash('sha1');
+                checksum.setEncoding('hex');
+                stream.pipe(checksum);
+                return stream.on('end', function() {
+                    checksum.end();
+                    checksum.read().should.equal(doc.checksum);
+                    return done();
+                });
+            });
+        });
+    });
 
 
-    describe 'metadataUpdater', ->
-        it 'chmod +x for an executable file', (done) ->
-            date = new Date '2015-11-09T05:06:07Z'
-            filePath = path.join @syncPath, "exec-file"
-            fs.ensureFileSync filePath
-            updater = @local.metadataUpdater
-                path: 'exec-file'
-                lastModification: date
+    describe('metadataUpdater', function() {
+        it('chmod +x for an executable file', function(done) {
+            let date = new Date('2015-11-09T05:06:07Z');
+            let filePath = path.join(this.syncPath, "exec-file");
+            fs.ensureFileSync(filePath);
+            let updater = this.local.metadataUpdater({
+                path: 'exec-file',
+                lastModification: date,
                 executable: true
-            updater (err) ->
-                should.not.exist err
-                mode = +fs.statSync(filePath).mode
-                (mode & 0o100).should.not.equal 0
-                done()
+            });
+            return updater(function(err) {
+                should.not.exist(err);
+                let mode = +fs.statSync(filePath).mode;
+                (mode & 0o100).should.not.equal(0);
+                return done();
+            });
+        });
 
-        it 'updates mtime for a file', (done) ->
-            date = new Date '2015-10-09T05:06:07Z'
-            filePath = path.join @syncPath, "utimes-file"
-            fs.ensureFileSync filePath
-            updater = @local.metadataUpdater
-                path: 'utimes-file'
+        it('updates mtime for a file', function(done) {
+            let date = new Date('2015-10-09T05:06:07Z');
+            let filePath = path.join(this.syncPath, "utimes-file");
+            fs.ensureFileSync(filePath);
+            let updater = this.local.metadataUpdater({
+                path: 'utimes-file',
                 lastModification: date
-            updater (err) ->
-                should.not.exist err
-                mtime = +fs.statSync(filePath).mtime
-                mtime.should.equal +date
-                done()
+            });
+            return updater(function(err) {
+                should.not.exist(err);
+                let mtime = +fs.statSync(filePath).mtime;
+                mtime.should.equal(+date);
+                return done();
+            });
+        });
 
-        it 'updates mtime for a directory', (done) ->
-            date = new Date '2015-10-09T05:06:07Z'
-            folderPath = path.join @syncPath, "utimes-folder"
-            fs.ensureDirSync folderPath
-            updater = @local.metadataUpdater
-                path: 'utimes-folder'
+        return it('updates mtime for a directory', function(done) {
+            let date = new Date('2015-10-09T05:06:07Z');
+            let folderPath = path.join(this.syncPath, "utimes-folder");
+            fs.ensureDirSync(folderPath);
+            let updater = this.local.metadataUpdater({
+                path: 'utimes-folder',
                 lastModification: date
-            updater (err) ->
-                should.not.exist err
-                mtime = +fs.statSync(folderPath).mtime
-                mtime.should.equal +date
-                done()
+            });
+            return updater(function(err) {
+                should.not.exist(err);
+                let mtime = +fs.statSync(folderPath).mtime;
+                mtime.should.equal(+date);
+                return done();
+            });
+        });
+    });
 
 
-    describe 'isUpToDate', ->
-        it 'says if the local file is up to date', ->
-            doc =
-                _id: 'foo/bar'
-                _rev: '1-0123456'
-                path: 'foo/bar'
-                docType: 'file'
-                checksum: '22f7aca0d717eb322d5ae1c97d8aa26eb440287b'
-                sides:
+    describe('isUpToDate', () =>
+        it('says if the local file is up to date', function() {
+            let doc = {
+                _id: 'foo/bar',
+                _rev: '1-0123456',
+                path: 'foo/bar',
+                docType: 'file',
+                checksum: '22f7aca0d717eb322d5ae1c97d8aa26eb440287b',
+                sides: {
                     remote: 1
-            @local.isUpToDate(doc).should.be.false()
-            doc.sides.local = 2
-            doc._rev = '2-0123456'
-            @local.isUpToDate(doc).should.be.true()
-            doc.sides.remote = 3
-            doc._rev = '3-0123456'
-            @local.isUpToDate(doc).should.be.false()
+                }
+            };
+            this.local.isUpToDate(doc).should.be.false();
+            doc.sides.local = 2;
+            doc._rev = '2-0123456';
+            this.local.isUpToDate(doc).should.be.true();
+            doc.sides.remote = 3;
+            doc._rev = '3-0123456';
+            return this.local.isUpToDate(doc).should.be.false();
+        })
+    );
 
 
-    describe 'fileExistsLocally', ->
-        it 'checks file existence as a binary in the db and on disk', (done) ->
-            filePath = path.resolve @syncPath, 'folder', 'testfile'
-            @local.fileExistsLocally 'deadcafe', (err, exist) =>
-                should.not.exist err
-                exist.should.not.be.ok()
-                fs.ensureFileSync filePath
-                doc =
-                    _id: 'folder/testfile'
-                    path: 'folder/testfile'
-                    docType: 'file'
-                    checksum: 'deadcafe'
-                    sides:
+    describe('fileExistsLocally', () =>
+        it('checks file existence as a binary in the db and on disk', function(done) {
+            let filePath = path.resolve(this.syncPath, 'folder', 'testfile');
+            return this.local.fileExistsLocally('deadcafe', (err, exist) => {
+                should.not.exist(err);
+                exist.should.not.be.ok();
+                fs.ensureFileSync(filePath);
+                let doc = {
+                    _id: 'folder/testfile',
+                    path: 'folder/testfile',
+                    docType: 'file',
+                    checksum: 'deadcafe',
+                    sides: {
                         local:  1
-                @pouch.db.put doc, (err) =>
-                    should.not.exist err
-                    @local.fileExistsLocally 'deadcafe', (err, exist) ->
-                        should.not.exist err
-                        exist.should.be.equal filePath
-                        done()
+                    }
+                };
+                return this.pouch.db.put(doc, err => {
+                    should.not.exist(err);
+                    return this.local.fileExistsLocally('deadcafe', function(err, exist) {
+                        should.not.exist(err);
+                        exist.should.be.equal(filePath);
+                        return done();
+                    });
+                }
+                );
+            }
+            );
+        })
+    );
 
 
-    describe 'addFile', ->
-        it 'creates the file by downloading it', (done) ->
-            @events.emit = sinon.spy()
-            doc =
-                path: 'files/file-from-remote'
-                lastModification: new Date '2015-10-09T04:05:06Z'
+    describe('addFile', function() {
+        it('creates the file by downloading it', function(done) {
+            this.events.emit = sinon.spy();
+            let doc = {
+                path: 'files/file-from-remote',
+                lastModification: new Date('2015-10-09T04:05:06Z'),
                 checksum: '8843d7f92416211de9ebb963ff4ce28125932878'
-            @local.other =
-                createReadStream: (docToStream, callback) ->
-                    docToStream.should.equal doc
-                    stream = new Readable
-                    stream._read = ->
-                    setTimeout ->
-                        stream.push 'foobar'
-                        stream.push null
-                    , 100
-                    callback null, stream
-            filePath = path.join @syncPath, doc.path
-            @local.addFile doc, (err) =>
-                @local.other = null
-                should.not.exist err
-                fs.statSync(filePath).isFile().should.be.true()
-                content = fs.readFileSync(filePath, encoding: 'utf-8')
-                content.should.equal 'foobar'
-                mtime = +fs.statSync(filePath).mtime
-                mtime.should.equal +doc.lastModification
-                done()
+            };
+            this.local.other = {
+                createReadStream(docToStream, callback) {
+                    docToStream.should.equal(doc);
+                    let stream = new Readable;
+                    stream._read = function() {};
+                    setTimeout(function() {
+                        stream.push('foobar');
+                        return stream.push(null);
+                    }
+                    , 100);
+                    return callback(null, stream);
+                }
+            };
+            let filePath = path.join(this.syncPath, doc.path);
+            return this.local.addFile(doc, err => {
+                this.local.other = null;
+                should.not.exist(err);
+                fs.statSync(filePath).isFile().should.be.true();
+                let content = fs.readFileSync(filePath, {encoding: 'utf-8'});
+                content.should.equal('foobar');
+                let mtime = +fs.statSync(filePath).mtime;
+                mtime.should.equal(+doc.lastModification);
+                return done();
+            }
+            );
+        });
 
-        it 'creates the file from another file with same checksum', (done) ->
-            doc =
-                path: 'files/file-with-same-checksum'
-                lastModification: new Date '2015-10-09T04:05:07Z'
+        it('creates the file from another file with same checksum', function(done) {
+            let doc = {
+                path: 'files/file-with-same-checksum',
+                lastModification: new Date('2015-10-09T04:05:07Z'),
                 checksum: 'c7567e8b39e2428e38bf9c9226ac68de4c67dc39'
-            alt = path.join @syncPath, 'files', 'my-checkum-is-456'
-            fs.writeFileSync alt, 'foo bar baz'
-            stub = sinon.stub(@local, "fileExistsLocally").yields null, alt
-            filePath = path.join @syncPath, doc.path
-            @local.addFile doc, (err) ->
-                stub.restore()
-                stub.calledWith(doc.checksum).should.be.true()
-                should.not.exist err
-                fs.statSync(filePath).isFile().should.be.true()
-                content = fs.readFileSync(filePath, encoding: 'utf-8')
-                content.should.equal 'foo bar baz'
-                mtime = +fs.statSync(filePath).mtime
-                mtime.should.equal +doc.lastModification
-                done()
+            };
+            let alt = path.join(this.syncPath, 'files', 'my-checkum-is-456');
+            fs.writeFileSync(alt, 'foo bar baz');
+            let stub = sinon.stub(this.local, "fileExistsLocally").yields(null, alt);
+            let filePath = path.join(this.syncPath, doc.path);
+            return this.local.addFile(doc, function(err) {
+                stub.restore();
+                stub.calledWith(doc.checksum).should.be.true();
+                should.not.exist(err);
+                fs.statSync(filePath).isFile().should.be.true();
+                let content = fs.readFileSync(filePath, {encoding: 'utf-8'});
+                content.should.equal('foo bar baz');
+                let mtime = +fs.statSync(filePath).mtime;
+                mtime.should.equal(+doc.lastModification);
+                return done();
+            });
+        });
 
-        it 'can create a file in the root', (done) ->
-            doc =
-                path: 'file-in-root'
-                lastModification: new Date '2015-10-09T04:05:19Z'
+        it('can create a file in the root', function(done) {
+            let doc = {
+                path: 'file-in-root',
+                lastModification: new Date('2015-10-09T04:05:19Z'),
                 checksum: '21eb6533733a5e4763acacd1d45a60c2e0e404e1'
-            @local.other =
-                createReadStream: (docToStream, callback) ->
-                    docToStream.should.equal doc
-                    stream = new Readable
-                    stream._read = ->
-                    setTimeout ->
-                        stream.push 'foobaz'
-                        stream.push null
-                    , 100
-                    callback null, stream
-            filePath = path.join @syncPath, doc.path
-            @local.addFile doc, (err) =>
-                @local.other = null
-                should.not.exist err
-                fs.statSync(filePath).isFile().should.be.true()
-                content = fs.readFileSync(filePath, encoding: 'utf-8')
-                content.should.equal 'foobaz'
-                mtime = +fs.statSync(filePath).mtime
-                mtime.should.equal +doc.lastModification
-                done()
+            };
+            this.local.other = {
+                createReadStream(docToStream, callback) {
+                    docToStream.should.equal(doc);
+                    let stream = new Readable;
+                    stream._read = function() {};
+                    setTimeout(function() {
+                        stream.push('foobaz');
+                        return stream.push(null);
+                    }
+                    , 100);
+                    return callback(null, stream);
+                }
+            };
+            let filePath = path.join(this.syncPath, doc.path);
+            return this.local.addFile(doc, err => {
+                this.local.other = null;
+                should.not.exist(err);
+                fs.statSync(filePath).isFile().should.be.true();
+                let content = fs.readFileSync(filePath, {encoding: 'utf-8'});
+                content.should.equal('foobaz');
+                let mtime = +fs.statSync(filePath).mtime;
+                mtime.should.equal(+doc.lastModification);
+                return done();
+            }
+            );
+        });
 
-        it 'aborts when the download is incorrect', (done) ->
-            @events.emit = sinon.spy()
-            doc =
-                path: 'files/file-from-remote-2'
-                lastModification: new Date '2015-10-09T04:05:16Z'
+        return it('aborts when the download is incorrect', function(done) {
+            this.events.emit = sinon.spy();
+            let doc = {
+                path: 'files/file-from-remote-2',
+                lastModification: new Date('2015-10-09T04:05:16Z'),
                 checksum: '8843d7f92416211de9ebb963ff4ce28125932878'
-            @local.other =
-                createReadStream: (docToStream, callback) ->
-                    docToStream.should.equal doc
-                    stream = new Readable
-                    stream._read = ->
-                    setTimeout ->
-                        stream.push 'foo'
-                        stream.push null
-                    , 100
-                    callback null, stream
-            filePath = path.join @syncPath, doc.path
-            @local.addFile doc, (err) =>
-                @local.other = null
-                should.exist err
-                err.message.should.equal 'Invalid checksum'
-                fs.existsSync(filePath).should.be.false()
-                done()
+            };
+            this.local.other = {
+                createReadStream(docToStream, callback) {
+                    docToStream.should.equal(doc);
+                    let stream = new Readable;
+                    stream._read = function() {};
+                    setTimeout(function() {
+                        stream.push('foo');
+                        return stream.push(null);
+                    }
+                    , 100);
+                    return callback(null, stream);
+                }
+            };
+            let filePath = path.join(this.syncPath, doc.path);
+            return this.local.addFile(doc, err => {
+                this.local.other = null;
+                should.exist(err);
+                err.message.should.equal('Invalid checksum');
+                fs.existsSync(filePath).should.be.false();
+                return done();
+            }
+            );
+        });
+    });
 
 
 
-    describe 'addFolder', ->
-        it 'creates the folder', (done) ->
-            doc =
-                path: 'parent/folder-to-create'
-                lastModification: new Date '2015-10-09T05:06:08Z'
-            folderPath = path.join @syncPath, doc.path
-            @local.addFolder doc, (err) ->
-                should.not.exist err
-                fs.statSync(folderPath).isDirectory().should.be.true()
-                mtime = +fs.statSync(folderPath).mtime
-                mtime.should.equal +doc.lastModification
-                done()
+    describe('addFolder', function() {
+        it('creates the folder', function(done) {
+            let doc = {
+                path: 'parent/folder-to-create',
+                lastModification: new Date('2015-10-09T05:06:08Z')
+            };
+            let folderPath = path.join(this.syncPath, doc.path);
+            return this.local.addFolder(doc, function(err) {
+                should.not.exist(err);
+                fs.statSync(folderPath).isDirectory().should.be.true();
+                let mtime = +fs.statSync(folderPath).mtime;
+                mtime.should.equal(+doc.lastModification);
+                return done();
+            });
+        });
 
-        it 'updates mtime if the folder already exists', (done) ->
-            doc =
-                path: 'parent/folder-to-create'
-                lastModification: new Date '2015-10-09T05:06:08Z'
-            folderPath = path.join @syncPath, doc.path
-            fs.ensureDirSync folderPath
-            @local.addFolder doc, (err) ->
-                should.not.exist err
-                fs.statSync(folderPath).isDirectory().should.be.true()
-                mtime = +fs.statSync(folderPath).mtime
-                mtime.should.equal +doc.lastModification
-                done()
+        return it('updates mtime if the folder already exists', function(done) {
+            let doc = {
+                path: 'parent/folder-to-create',
+                lastModification: new Date('2015-10-09T05:06:08Z')
+            };
+            let folderPath = path.join(this.syncPath, doc.path);
+            fs.ensureDirSync(folderPath);
+            return this.local.addFolder(doc, function(err) {
+                should.not.exist(err);
+                fs.statSync(folderPath).isDirectory().should.be.true();
+                let mtime = +fs.statSync(folderPath).mtime;
+                mtime.should.equal(+doc.lastModification);
+                return done();
+            });
+        });
+    });
 
 
-    describe 'overwriteFile', ->
-        it 'writes the new content of a file', (done) ->
-            @events.emit = sinon.spy()
-            doc =
-                path: 'a-file-to-overwrite'
-                docType: 'file'
-                lastModification: new Date '2015-10-09T05:06:07Z'
+    describe('overwriteFile', () =>
+        it('writes the new content of a file', function(done) {
+            this.events.emit = sinon.spy();
+            let doc = {
+                path: 'a-file-to-overwrite',
+                docType: 'file',
+                lastModification: new Date('2015-10-09T05:06:07Z'),
                 checksum: '7b502c3a1f48c8609ae212cdfb639dee39673f5e'
-            @local.other =
-                createReadStream: (docToStream, callback) ->
-                    docToStream.should.equal doc
-                    stream = new Readable
-                    stream._read = ->
-                    setTimeout ->
-                        stream.push 'Hello world'
-                        stream.push null
-                    , 100
-                    callback null, stream
-            filePath = path.join @syncPath, doc.path
-            fs.writeFileSync filePath, 'old content'
-            @local.overwriteFile doc, {}, (err) =>
-                @local.other = null
-                should.not.exist err
-                fs.statSync(filePath).isFile().should.be.true()
-                content = fs.readFileSync(filePath, encoding: 'utf-8')
-                content.should.equal 'Hello world'
-                mtime = +fs.statSync(filePath).mtime
-                mtime.should.equal +doc.lastModification
-                done()
+            };
+            this.local.other = {
+                createReadStream(docToStream, callback) {
+                    docToStream.should.equal(doc);
+                    let stream = new Readable;
+                    stream._read = function() {};
+                    setTimeout(function() {
+                        stream.push('Hello world');
+                        return stream.push(null);
+                    }
+                    , 100);
+                    return callback(null, stream);
+                }
+            };
+            let filePath = path.join(this.syncPath, doc.path);
+            fs.writeFileSync(filePath, 'old content');
+            return this.local.overwriteFile(doc, {}, err => {
+                this.local.other = null;
+                should.not.exist(err);
+                fs.statSync(filePath).isFile().should.be.true();
+                let content = fs.readFileSync(filePath, {encoding: 'utf-8'});
+                content.should.equal('Hello world');
+                let mtime = +fs.statSync(filePath).mtime;
+                mtime.should.equal(+doc.lastModification);
+                return done();
+            }
+            );
+        })
+    );
 
 
-    describe 'updateFileMetadata', ->
-        it 'updates metadata', (done) ->
-            doc =
-                path: 'file-to-update'
-                docType: 'file'
-                lastModification: new Date '2015-11-10T05:06:07Z'
-            filePath = path.join @syncPath, doc.path
-            fs.ensureFileSync filePath
-            @local.updateFileMetadata doc, {}, (err) ->
-                should.not.exist err
-                fs.existsSync(filePath).should.be.true()
-                mtime = +fs.statSync(filePath).mtime
-                mtime.should.equal +doc.lastModification
-                done()
+    describe('updateFileMetadata', () =>
+        it('updates metadata', function(done) {
+            let doc = {
+                path: 'file-to-update',
+                docType: 'file',
+                lastModification: new Date('2015-11-10T05:06:07Z')
+            };
+            let filePath = path.join(this.syncPath, doc.path);
+            fs.ensureFileSync(filePath);
+            return this.local.updateFileMetadata(doc, {}, function(err) {
+                should.not.exist(err);
+                fs.existsSync(filePath).should.be.true();
+                let mtime = +fs.statSync(filePath).mtime;
+                mtime.should.equal(+doc.lastModification);
+                return done();
+            });
+        })
+    );
 
 
-    describe 'updateFolder', ->
-        it 'calls addFolder', (done) ->
-            doc =
-                path: 'a-folder-to-update'
-                docType: 'folder'
+    describe('updateFolder', () =>
+        it('calls addFolder', function(done) {
+            let doc = {
+                path: 'a-folder-to-update',
+                docType: 'folder',
                 lastModification: new Date
-            sinon.stub(@local, 'addFolder').yields()
-            @local.updateFolder doc, {}, (err) =>
-                should.not.exist err
-                @local.addFolder.calledWith(doc).should.be.true()
-                @local.addFolder.restore()
-                done()
+            };
+            sinon.stub(this.local, 'addFolder').yields();
+            return this.local.updateFolder(doc, {}, err => {
+                should.not.exist(err);
+                this.local.addFolder.calledWith(doc).should.be.true();
+                this.local.addFolder.restore();
+                return done();
+            }
+            );
+        })
+    );
 
 
-    describe 'moveFile', ->
-        it 'moves the file', (done) ->
-            old =
-                path: 'old-parent/file-to-move'
-                lastModification: new Date '2016-10-08T05:05:09Z'
-            doc =
-                path: 'new-parent/file-moved'
-                lastModification: new Date '2015-10-09T05:05:10Z'
-            oldPath = path.join @syncPath, old.path
-            newPath = path.join @syncPath, doc.path
-            fs.ensureDirSync path.dirname oldPath
-            fs.writeFileSync oldPath, 'foobar'
-            @local.moveFile doc, old, (err) ->
-                should.not.exist err
-                fs.existsSync(oldPath).should.be.false()
-                fs.statSync(newPath).isFile().should.be.true()
-                mtime = +fs.statSync(newPath).mtime
-                mtime.should.equal +doc.lastModification
-                enc = encoding: 'utf-8'
-                fs.readFileSync(newPath, enc).should.equal 'foobar'
-                done()
+    describe('moveFile', function() {
+        it('moves the file', function(done) {
+            let old = {
+                path: 'old-parent/file-to-move',
+                lastModification: new Date('2016-10-08T05:05:09Z')
+            };
+            let doc = {
+                path: 'new-parent/file-moved',
+                lastModification: new Date('2015-10-09T05:05:10Z')
+            };
+            let oldPath = path.join(this.syncPath, old.path);
+            let newPath = path.join(this.syncPath, doc.path);
+            fs.ensureDirSync(path.dirname(oldPath));
+            fs.writeFileSync(oldPath, 'foobar');
+            return this.local.moveFile(doc, old, function(err) {
+                should.not.exist(err);
+                fs.existsSync(oldPath).should.be.false();
+                fs.statSync(newPath).isFile().should.be.true();
+                let mtime = +fs.statSync(newPath).mtime;
+                mtime.should.equal(+doc.lastModification);
+                let enc = {encoding: 'utf-8'};
+                fs.readFileSync(newPath, enc).should.equal('foobar');
+                return done();
+            });
+        });
 
-        it 'creates the file is the current file is missing', (done) ->
-            old =
-                path: 'old-parent/missing-file'
-                lastModification: new Date '2016-10-08T05:05:11Z'
-            doc =
-                path: 'new-parent/recreated-file'
-                lastModification: new Date '2015-10-09T05:05:12Z'
-            stub = sinon.stub(@local, "addFile").yields()
-            @local.moveFile doc, old, (err) ->
-                stub.restore()
-                stub.calledWith(doc).should.be.true()
-                should.not.exist err
-                done()
+        it('creates the file is the current file is missing', function(done) {
+            let old = {
+                path: 'old-parent/missing-file',
+                lastModification: new Date('2016-10-08T05:05:11Z')
+            };
+            let doc = {
+                path: 'new-parent/recreated-file',
+                lastModification: new Date('2015-10-09T05:05:12Z')
+            };
+            let stub = sinon.stub(this.local, "addFile").yields();
+            return this.local.moveFile(doc, old, function(err) {
+                stub.restore();
+                stub.calledWith(doc).should.be.true();
+                should.not.exist(err);
+                return done();
+            });
+        });
 
-        it 'does nothing if the file has already been moved', (done) ->
-            old =
-                path: 'old-parent/already-moved'
-                lastModification: new Date '2016-10-08T05:05:11Z'
-            doc =
-                path: 'new-parent/already-here'
-                lastModification: new Date '2015-10-09T05:05:12Z'
-            newPath = path.join @syncPath, doc.path
-            fs.ensureDirSync path.dirname newPath
-            fs.writeFileSync newPath, 'foobar'
-            stub = sinon.stub(@local, "addFile").yields()
-            @local.moveFile doc, old, (err) ->
-                stub.restore()
-                stub.calledWith(doc).should.be.false()
-                should.not.exist err
-                enc = encoding: 'utf-8'
-                fs.readFileSync(newPath, enc).should.equal 'foobar'
-                done()
-
-
-    describe 'moveFolder', ->
-        it 'moves the folder', (done) ->
-            old =
-                path: 'old-parent/folder-to-move'
-                docType: 'folder'
-                lastModification: new Date '2016-10-08T05:06:09Z'
-            doc =
-                path: 'new-parent/folder-moved'
-                docType: 'folder'
-                lastModification: new Date '2015-10-09T05:06:10Z'
-            oldPath = path.join @syncPath, old.path
-            folderPath = path.join @syncPath, doc.path
-            fs.ensureDirSync oldPath
-            @local.moveFolder doc, old, (err) ->
-                should.not.exist err
-                fs.existsSync(oldPath).should.be.false()
-                fs.statSync(folderPath).isDirectory().should.be.true()
-                mtime = +fs.statSync(folderPath).mtime
-                mtime.should.equal +doc.lastModification
-                done()
-
-        it 'creates the folder is the current directory is missing', (done) ->
-            old =
-                path: 'old-parent/missing-folder'
-                docType: 'folder'
-                lastModification: new Date '2016-10-08T05:06:09Z'
-            doc =
-                path: 'new-parent/recreated-folder'
-                docType: 'folder'
-                lastModification: new Date '2015-10-09T05:06:10Z'
-            folderPath = path.join @syncPath, doc.path
-            @local.moveFolder doc, old, (err) ->
-                should.not.exist err
-                fs.statSync(folderPath).isDirectory().should.be.true()
-                mtime = +fs.statSync(folderPath).mtime
-                mtime.should.equal +doc.lastModification
-                done()
-
-        it 'does nothing if the folder has already been moved', (done) ->
-            old =
-                path: 'old-parent/folder-already-moved'
-                lastModification: new Date '2016-10-08T05:05:11Z'
-            doc =
-                path: 'new-parent/folder-already-here'
-                lastModification: new Date '2015-10-09T05:05:12Z'
-            newPath = path.join @syncPath, doc.path
-            fs.ensureDirSync newPath
-            stub = sinon.stub(@local, "addFolder").yields()
-            @local.moveFolder doc, old, (err) ->
-                should.not.exist err
-                stub.restore()
-                stub.calledWith(doc).should.be.false()
-                fs.statSync(newPath).isDirectory().should.be.true()
-                done()
-
-        it 'remove the old directory if everything has been moved', (done) ->
-            old =
-                path: 'old-parent/folder-already-moved'
-                lastModification: new Date '2016-10-08T05:05:11Z'
-            doc =
-                path: 'new-parent/folder-already-here'
-                lastModification: new Date '2015-10-09T05:05:12Z'
-            oldPath = path.join @syncPath, old.path
-            newPath = path.join @syncPath, doc.path
-            fs.ensureDirSync oldPath
-            fs.ensureDirSync newPath
-            stub = sinon.stub(@local, "addFolder").yields()
-            @local.moveFolder doc, old, (err) ->
-                should.not.exist err
-                stub.restore()
-                stub.calledWith(doc).should.be.false()
-                fs.existsSync(oldPath).should.be.false()
-                fs.statSync(newPath).isDirectory().should.be.true()
-                done()
+        return it('does nothing if the file has already been moved', function(done) {
+            let old = {
+                path: 'old-parent/already-moved',
+                lastModification: new Date('2016-10-08T05:05:11Z')
+            };
+            let doc = {
+                path: 'new-parent/already-here',
+                lastModification: new Date('2015-10-09T05:05:12Z')
+            };
+            let newPath = path.join(this.syncPath, doc.path);
+            fs.ensureDirSync(path.dirname(newPath));
+            fs.writeFileSync(newPath, 'foobar');
+            let stub = sinon.stub(this.local, "addFile").yields();
+            return this.local.moveFile(doc, old, function(err) {
+                stub.restore();
+                stub.calledWith(doc).should.be.false();
+                should.not.exist(err);
+                let enc = {encoding: 'utf-8'};
+                fs.readFileSync(newPath, enc).should.equal('foobar');
+                return done();
+            });
+        });
+    });
 
 
-    describe 'deleteFile', ->
-        it 'deletes a file from the local filesystem', (done) ->
-            doc =
-                _id: 'FILE-TO-DELETE'
-                path: 'FILE-TO-DELETE'
+    describe('moveFolder', function() {
+        it('moves the folder', function(done) {
+            let old = {
+                path: 'old-parent/folder-to-move',
+                docType: 'folder',
+                lastModification: new Date('2016-10-08T05:06:09Z')
+            };
+            let doc = {
+                path: 'new-parent/folder-moved',
+                docType: 'folder',
+                lastModification: new Date('2015-10-09T05:06:10Z')
+            };
+            let oldPath = path.join(this.syncPath, old.path);
+            let folderPath = path.join(this.syncPath, doc.path);
+            fs.ensureDirSync(oldPath);
+            return this.local.moveFolder(doc, old, function(err) {
+                should.not.exist(err);
+                fs.existsSync(oldPath).should.be.false();
+                fs.statSync(folderPath).isDirectory().should.be.true();
+                let mtime = +fs.statSync(folderPath).mtime;
+                mtime.should.equal(+doc.lastModification);
+                return done();
+            });
+        });
+
+        it('creates the folder is the current directory is missing', function(done) {
+            let old = {
+                path: 'old-parent/missing-folder',
+                docType: 'folder',
+                lastModification: new Date('2016-10-08T05:06:09Z')
+            };
+            let doc = {
+                path: 'new-parent/recreated-folder',
+                docType: 'folder',
+                lastModification: new Date('2015-10-09T05:06:10Z')
+            };
+            let folderPath = path.join(this.syncPath, doc.path);
+            return this.local.moveFolder(doc, old, function(err) {
+                should.not.exist(err);
+                fs.statSync(folderPath).isDirectory().should.be.true();
+                let mtime = +fs.statSync(folderPath).mtime;
+                mtime.should.equal(+doc.lastModification);
+                return done();
+            });
+        });
+
+        it('does nothing if the folder has already been moved', function(done) {
+            let old = {
+                path: 'old-parent/folder-already-moved',
+                lastModification: new Date('2016-10-08T05:05:11Z')
+            };
+            let doc = {
+                path: 'new-parent/folder-already-here',
+                lastModification: new Date('2015-10-09T05:05:12Z')
+            };
+            let newPath = path.join(this.syncPath, doc.path);
+            fs.ensureDirSync(newPath);
+            let stub = sinon.stub(this.local, "addFolder").yields();
+            return this.local.moveFolder(doc, old, function(err) {
+                should.not.exist(err);
+                stub.restore();
+                stub.calledWith(doc).should.be.false();
+                fs.statSync(newPath).isDirectory().should.be.true();
+                return done();
+            });
+        });
+
+        return it('remove the old directory if everything has been moved', function(done) {
+            let old = {
+                path: 'old-parent/folder-already-moved',
+                lastModification: new Date('2016-10-08T05:05:11Z')
+            };
+            let doc = {
+                path: 'new-parent/folder-already-here',
+                lastModification: new Date('2015-10-09T05:05:12Z')
+            };
+            let oldPath = path.join(this.syncPath, old.path);
+            let newPath = path.join(this.syncPath, doc.path);
+            fs.ensureDirSync(oldPath);
+            fs.ensureDirSync(newPath);
+            let stub = sinon.stub(this.local, "addFolder").yields();
+            return this.local.moveFolder(doc, old, function(err) {
+                should.not.exist(err);
+                stub.restore();
+                stub.calledWith(doc).should.be.false();
+                fs.existsSync(oldPath).should.be.false();
+                fs.statSync(newPath).isDirectory().should.be.true();
+                return done();
+            });
+        });
+    });
+
+
+    describe('deleteFile', () =>
+        it('deletes a file from the local filesystem', function(done) {
+            let doc = {
+                _id: 'FILE-TO-DELETE',
+                path: 'FILE-TO-DELETE',
                 docType: 'file'
-            filePath = path.join @syncPath, doc.path
-            fs.ensureFileSync filePath
-            @pouch.db.put doc, (err, inserted) =>
-                should.not.exist err
-                doc._rev = inserted.rev
-                @pouch.db.remove doc, (err) =>
-                    should.not.exist err
-                    @local.deleteFile doc, (err) ->
-                        should.not.exist err
-                        fs.existsSync(filePath).should.be.false()
-                        done()
-            return
+            };
+            let filePath = path.join(this.syncPath, doc.path);
+            fs.ensureFileSync(filePath);
+            this.pouch.db.put(doc, (err, inserted) => {
+                should.not.exist(err);
+                doc._rev = inserted.rev;
+                return this.pouch.db.remove(doc, err => {
+                    should.not.exist(err);
+                    return this.local.deleteFile(doc, function(err) {
+                        should.not.exist(err);
+                        fs.existsSync(filePath).should.be.false();
+                        return done();
+                    });
+                }
+                );
+            }
+            );
+        })
+    );
 
 
-    describe 'deleteFolder', ->
-        it 'deletes a folder from the local filesystem', (done) ->
-            doc =
-                _id: 'FOLDER-TO-DELETE'
-                path: 'FOLDER-TO-DELETE'
+    describe('deleteFolder', () =>
+        it('deletes a folder from the local filesystem', function(done) {
+            let doc = {
+                _id: 'FOLDER-TO-DELETE',
+                path: 'FOLDER-TO-DELETE',
                 docType: 'folder'
-            folderPath = path.join @syncPath, doc.path
-            fs.ensureDirSync folderPath
-            fs.ensureFileSync path.join(folderPath, "file-inside-folder")
-            @pouch.db.put doc, (err, inserted) =>
-                should.not.exist err
-                doc._rev = inserted.rev
-                @pouch.db.remove doc, (err) =>
-                    should.not.exist err
-                    @local.deleteFolder doc, (err) ->
-                        should.not.exist err
-                        fs.existsSync(folderPath).should.be.false()
-                        done()
-            return
+            };
+            let folderPath = path.join(this.syncPath, doc.path);
+            fs.ensureDirSync(folderPath);
+            fs.ensureFileSync(path.join(folderPath, "file-inside-folder"));
+            this.pouch.db.put(doc, (err, inserted) => {
+                should.not.exist(err);
+                doc._rev = inserted.rev;
+                return this.pouch.db.remove(doc, err => {
+                    should.not.exist(err);
+                    return this.local.deleteFolder(doc, function(err) {
+                        should.not.exist(err);
+                        fs.existsSync(folderPath).should.be.false();
+                        return done();
+                    });
+                }
+                );
+            }
+            );
+        })
+    );
 
 
-    describe 'resolveConflict', ->
-        it 'renames the file', (done) ->
-            src =
-                path: 'conflict/file'
-                lastModification: new Date '2015-10-08T05:05:09Z'
-            dst =
-                path: 'conflict/file-conflict-2015-10-09T05:05:10Z'
-                lastModification: new Date '2015-10-09T05:05:10Z'
-            srcPath = path.join @syncPath, src.path
-            dstPath = path.join @syncPath, dst.path
-            fs.ensureDirSync path.dirname srcPath
-            fs.writeFileSync srcPath, 'foobar'
-            @local.resolveConflict dst, src, (err) ->
-                should.not.exist err
-                fs.existsSync(srcPath).should.be.false()
-                fs.statSync(dstPath).isFile().should.be.true()
-                enc = encoding: 'utf-8'
-                fs.readFileSync(dstPath, enc).should.equal 'foobar'
-                done()
+    return describe('resolveConflict', () =>
+        it('renames the file', function(done) {
+            let src = {
+                path: 'conflict/file',
+                lastModification: new Date('2015-10-08T05:05:09Z')
+            };
+            let dst = {
+                path: 'conflict/file-conflict-2015-10-09T05:05:10Z',
+                lastModification: new Date('2015-10-09T05:05:10Z')
+            };
+            let srcPath = path.join(this.syncPath, src.path);
+            let dstPath = path.join(this.syncPath, dst.path);
+            fs.ensureDirSync(path.dirname(srcPath));
+            fs.writeFileSync(srcPath, 'foobar');
+            return this.local.resolveConflict(dst, src, function(err) {
+                should.not.exist(err);
+                fs.existsSync(srcPath).should.be.false();
+                fs.statSync(dstPath).isFile().should.be.true();
+                let enc = {encoding: 'utf-8'};
+                fs.readFileSync(dstPath, enc).should.equal('foobar');
+                return done();
+            });
+        })
+    );
+});

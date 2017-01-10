@@ -1,21 +1,25 @@
-fs   = require 'fs-extra'
-del  = require 'del'
-path = require 'path'
+import fs from 'fs-extra';
+import del from 'del';
+import path from 'path';
 
-Config = require '../../src/config'
+import Config from '../../src/config';
 
 
-module.exports =
-    createConfig: ->
-        parent = process.env.COZY_DESKTOP_DIR or 'tmp'
-        @syncPath = path.resolve "#{parent}/#{+new Date}"
-        fs.ensureDirSync @syncPath
-        @config = new Config path.join @syncPath, '.cozy-desktop'
-        @config.devices['tester'] =
-            deviceName: 'tester'
-            password: 'password'
-            url: 'nonecozy'
-            path: @syncPath
+export default {
+    createConfig() {
+        let parent = process.env.COZY_DESKTOP_DIR || 'tmp';
+        this.syncPath = path.resolve(`${parent}/${+new Date}`);
+        fs.ensureDirSync(this.syncPath);
+        this.config = new Config(path.join(this.syncPath, '.cozy-desktop'));
+        return this.config.devices['tester'] = {
+            deviceName: 'tester',
+            password: 'password',
+            url: 'nonecozy',
+            path: this.syncPath
+        };
+    },
 
-    cleanConfig: ->
-        del.sync @syncPath
+    cleanConfig() {
+        return del.sync(this.syncPath);
+    }
+};

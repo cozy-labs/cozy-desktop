@@ -1,105 +1,133 @@
-async   = require 'async'
-request = require 'request-json-light'
-should  = require 'should'
+let helpers;
+import async from 'async';
+import request from 'request-json-light';
+import should from 'should';
 
 
-url    = 'http://localhost:9121'
-client = request.newClient url
+let url    = 'http://localhost:9121';
+let client = request.newClient(url);
 
-# Manipulate files and folders on a remote cozy, via the files application
-module.exports = helpers =
+// Manipulate files and folders on a remote cozy, via the files application
+export default helpers = {
 
-    deleteAll: (callback) ->
-        @timeout 10000
-        helpers.getFolderContent id: 'root', (err, items) ->
-            async.each items, (item, cb) ->
-                url = "#{item.docType.toLowerCase()}s/#{item.id}"
-                client.del url, (err, res, body) ->
-                    should.not.exist err
-                    should.exist res
-                    should.exist body
-                    setTimeout cb, 1000
-            , callback
+    deleteAll(callback) {
+        this.timeout(10000);
+        return helpers.getFolderContent({id: 'root'}, (err, items) =>
+            async.each(items, function(item, cb) {
+                url = `${item.docType.toLowerCase()}s/${item.id}`;
+                return client.del(url, function(err, res, body) {
+                    should.not.exist(err);
+                    should.exist(res);
+                    should.exist(body);
+                    return setTimeout(cb, 1000);
+                });
+            }
+            , callback)
+        );
+    },
 
-    getAllFiles: (callback) ->
-        client.get 'files', (err, res, body) ->
-            should.not.exist err
-            should.exist body
-            callback err, body
+    getAllFiles(callback) {
+        return client.get('files', function(err, res, body) {
+            should.not.exist(err);
+            should.exist(body);
+            return callback(err, body);
+        });
+    },
 
-    getFileContent: (file, callback) ->
-        url = "files/#{file.id}/attach/#{file.name}"
-        client.get url, (err, res, body) ->
-            should.not.exist err
-            should.exist res
-            should.exist body
-            res.statusCode.should.equal 200
-            callback err, body
+    getFileContent(file, callback) {
+        url = `files/${file.id}/attach/${file.name}`;
+        return client.get(url, function(err, res, body) {
+            should.not.exist(err);
+            should.exist(res);
+            should.exist(body);
+            res.statusCode.should.equal(200);
+            return callback(err, body);
+        });
+    },
 
-    uploadFile: (file, fixturePath, callback) ->
-        file.lastModification = new Date().toISOString()
-        client.sendFile 'files/', fixturePath, file, (err, res, body) ->
-            should.not.exist err
-            should.exist res
-            should.exist body
-            console.log body if res.statusCode isnt 200
-            res.statusCode.should.equal 200
-            client.get "files/#{body.id}", file, (err, res, body) ->
-                res.statusCode.should.equal 200
-                callback err, body
+    uploadFile(file, fixturePath, callback) {
+        file.lastModification = new Date().toISOString();
+        return client.sendFile('files/', fixturePath, file, function(err, res, body) {
+            should.not.exist(err);
+            should.exist(res);
+            should.exist(body);
+            if (res.statusCode !== 200) { console.log(body); }
+            res.statusCode.should.equal(200);
+            return client.get(`files/${body.id}`, file, function(err, res, body) {
+                res.statusCode.should.equal(200);
+                return callback(err, body);
+            });
+        });
+    },
 
-    updateFile: (file, callback) ->
-        client.put "files/#{file.id}", file, (err, res, body) ->
-            should.not.exist err
-            should.exist res
-            should.exist body
-            res.statusCode.should.equal 200
-            callback()
+    updateFile(file, callback) {
+        return client.put(`files/${file.id}`, file, function(err, res, body) {
+            should.not.exist(err);
+            should.exist(res);
+            should.exist(body);
+            res.statusCode.should.equal(200);
+            return callback();
+        });
+    },
 
-    removeFile: (file, callback) ->
-        client.del "files/#{file.id}", (err, res, body) ->
-            should.not.exist err
-            should.exist res
-            should.exist body
-            res.statusCode.should.equal 200
-            callback()
+    removeFile(file, callback) {
+        return client.del(`files/${file.id}`, function(err, res, body) {
+            should.not.exist(err);
+            should.exist(res);
+            should.exist(body);
+            res.statusCode.should.equal(200);
+            return callback();
+        });
+    },
 
-    getAllFolders: (callback) ->
-        client.get 'folders/folders', (err, res, body) ->
-            should.not.exist err
-            should.exist body
-            callback err, body
+    getAllFolders(callback) {
+        return client.get('folders/folders', function(err, res, body) {
+            should.not.exist(err);
+            should.exist(body);
+            return callback(err, body);
+        });
+    },
 
-    getFolderContent: (folder, callback) ->
-        client.post '/folders/content', folder, (err, res, body) ->
-            should.not.exist err
-            should.exist res
-            should.exist body
-            body.should.have.property 'content'
-            callback err, body.content
+    getFolderContent(folder, callback) {
+        return client.post('/folders/content', folder, function(err, res, body) {
+            should.not.exist(err);
+            should.exist(res);
+            should.exist(body);
+            body.should.have.property('content');
+            return callback(err, body.content);
+        });
+    },
 
-    createFolder: (folder, callback) ->
-        client.post 'folders/', folder, (err, res, body) ->
-            should.not.exist err
-            should.exist res
-            should.exist body
-            res.statusCode.should.equal 200
-            client.get "folders/#{body.id}", (err, res, body) ->
-                res.statusCode.should.equal 200
-                callback err, body
+    createFolder(folder, callback) {
+        return client.post('folders/', folder, function(err, res, body) {
+            should.not.exist(err);
+            should.exist(res);
+            should.exist(body);
+            res.statusCode.should.equal(200);
+            return client.get(`folders/${body.id}`, function(err, res, body) {
+                res.statusCode.should.equal(200);
+                return callback(err, body);
+            });
+        });
+    },
 
-    updateFolder: (folder, callback) ->
-        client.put "folders/#{folder.id}", folder, (err, res, body) ->
-            should.not.exist err
-            should.exist res
-            should.exist body
-            res.statusCode.should.equal 200
-            callback err, body
+    updateFolder(folder, callback) {
+        return client.put(`folders/${folder.id}`, folder, function(err, res, body) {
+            should.not.exist(err);
+            should.exist(res);
+            should.exist(body);
+            res.statusCode.should.equal(200);
+            return callback(err, body);
+        });
+    },
 
-    removeFolder: (folder, callback) ->
-        client.del "folders/#{folder.id}", folder, (err, res, body) ->
-            should.not.exist err
-            should.exist res
-            should.exist body
-            res.statusCode.should.equal 204
-            callback err, body
+    removeFolder(folder, callback) {
+        return client.del(`folders/${folder.id}`, folder, function(err, res, body) {
+            should.not.exist(err);
+            should.exist(res);
+            should.exist(body);
+            res.statusCode.should.equal(204);
+            return callback(err, body);
+        });
+    }
+};

@@ -1,345 +1,441 @@
-async  = require 'async'
-clone  = require 'lodash.clone'
-fs     = require 'fs-extra'
-path   = require 'path'
-sinon  = require 'sinon'
-should = require 'should'
+import async from 'async';
+import clone from 'lodash.clone';
+import fs from 'fs-extra';
+import path from 'path';
+import sinon from 'sinon';
+import should from 'should';
 
-configHelpers = require '../../helpers/config'
-couchHelpers  = require '../../helpers/couch'
-pouchHelpers  = require '../../helpers/pouch'
+import configHelpers from '../../helpers/config';
+import couchHelpers from '../../helpers/couch';
+import pouchHelpers from '../../helpers/pouch';
 
-Prep    = require '../../../src/prep'
-Watcher = require '../../../src/remote/watcher'
-
-
-describe "RemoteWatcher Tests", ->
-
-    before 'instanciate config', configHelpers.createConfig
-    before 'instanciate pouch', pouchHelpers.createDatabase
-    before 'start couch server', couchHelpers.startServer
-    before 'instanciate couch', couchHelpers.createCouchClient
-    before 'instanciate remote watcher', ->
-        @prep    = invalidPath: Prep::invalidPath
-        @watcher = new Watcher @couch, @prep, @pouch
-    after 'stop couch server', couchHelpers.stopServer
-    after 'clean pouch', pouchHelpers.cleanDatabase
-    after 'clean config directory', configHelpers.cleanConfig
-
-    before (done) ->
-        pouchHelpers.createParentFolder @pouch, =>
-            async.eachSeries [1..3], (i, callback) =>
-                pouchHelpers.createFolder @pouch, i, =>
-                    pouchHelpers.createFile @pouch, i, callback
-            , done
+import Prep from '../../../src/prep';
+import Watcher from '../../../src/remote/watcher';
 
 
-    describe 'onChange', ->
-        it 'does not fail when the path is missing', (done) ->
-            doc =
-                _id: '12345678904'
-                _rev: '1-abcdef'
-                docType: 'file'
-                binary:
-                    file:
+describe("RemoteWatcher Tests", function() {
+
+    before('instanciate config', configHelpers.createConfig);
+    before('instanciate pouch', pouchHelpers.createDatabase);
+    before('start couch server', couchHelpers.startServer);
+    before('instanciate couch', couchHelpers.createCouchClient);
+    before('instanciate remote watcher', function() {
+        this.prep    = {invalidPath: Prep.prototype.invalidPath};
+        return this.watcher = new Watcher(this.couch, this.prep, this.pouch);
+    });
+    after('stop couch server', couchHelpers.stopServer);
+    after('clean pouch', pouchHelpers.cleanDatabase);
+    after('clean config directory', configHelpers.cleanConfig);
+
+    before(function(done) {
+        return pouchHelpers.createParentFolder(this.pouch, () => {
+            return async.eachSeries([1, 2, 3], (i, callback) => {
+                return pouchHelpers.createFolder(this.pouch, i, () => {
+                    return pouchHelpers.createFile(this.pouch, i, callback);
+                }
+                );
+            }
+            , done);
+        }
+        );
+    });
+
+
+    describe('onChange', function() {
+        it('does not fail when the path is missing', function(done) {
+            let doc = {
+                _id: '12345678904',
+                _rev: '1-abcdef',
+                docType: 'file',
+                binary: {
+                    file: {
                         id: '123'
-            @watcher.onChange doc, (err) ->
-                should.exist err
-                err.message.should.equal 'Invalid path/name'
-                done()
+                    }
+                }
+            };
+            return this.watcher.onChange(doc, function(err) {
+                should.exist(err);
+                err.message.should.equal('Invalid path/name');
+                return done();
+            });
+        });
 
-        it 'does not fail on ghost file', (done) ->
-            sinon.stub(@watcher, 'putDoc')
-            doc =
-                _id: '12345678904'
-                _rev: '1-abcdef'
-                docType: 'file'
-                path: 'foo'
+        it('does not fail on ghost file', function(done) {
+            sinon.stub(this.watcher, 'putDoc');
+            let doc = {
+                _id: '12345678904',
+                _rev: '1-abcdef',
+                docType: 'file',
+                path: 'foo',
                 name: 'bar'
-            @watcher.onChange doc, (err) =>
-                @watcher.putDoc.called.should.be.false()
-                @watcher.putDoc.restore()
-                done()
+            };
+            return this.watcher.onChange(doc, err => {
+                this.watcher.putDoc.called.should.be.false();
+                this.watcher.putDoc.restore();
+                return done();
+            }
+            );
+        });
 
-        it 'calls addDoc for a new doc', (done) ->
-            @prep.addDoc = sinon.stub().yields null
-            doc =
-                _id: '12345678905'
-                _rev: '1-abcdef'
-                docType: 'file'
-                path: 'my-folder'
-                name: 'file-5'
-                checksum: '9999999999999999999999999999999999999999'
-                tags: []
-                localPath: '/storage/DCIM/IMG_123.jpg'
-                binary:
-                    file:
-                        id: '1234'
+        it('calls addDoc for a new doc', function(done) {
+            this.prep.addDoc = sinon.stub().yields(null);
+            let doc = {
+                _id: '12345678905',
+                _rev: '1-abcdef',
+                docType: 'file',
+                path: 'my-folder',
+                name: 'file-5',
+                checksum: '9999999999999999999999999999999999999999',
+                tags: [],
+                localPath: '/storage/DCIM/IMG_123.jpg',
+                binary: {
+                    file: {
+                        id: '1234',
                         rev: '5-6789'
-            @watcher.onChange clone(doc), (err) =>
-                should.not.exist err
-                @prep.addDoc.called.should.be.true()
-                args = @prep.addDoc.args[0]
-                args[0].should.equal 'remote'
-                args[1].should.have.properties
-                    path: path.join doc.path, doc.name
-                    docType: 'file'
-                    checksum: doc.checksum
-                    tags: doc.tags
-                    localPath: doc.localPath
-                    remote:
-                        _id: doc._id
-                        _rev: doc._rev
-                        binary:
-                            _id: doc.binary.file.id
+                    }
+                }
+            };
+            return this.watcher.onChange(clone(doc), err => {
+                should.not.exist(err);
+                this.prep.addDoc.called.should.be.true();
+                let args = this.prep.addDoc.args[0];
+                args[0].should.equal('remote');
+                args[1].should.have.properties({
+                    path: path.join(doc.path, doc.name),
+                    docType: 'file',
+                    checksum: doc.checksum,
+                    tags: doc.tags,
+                    localPath: doc.localPath,
+                    remote: {
+                        _id: doc._id,
+                        _rev: doc._rev,
+                        binary: {
+                            _id: doc.binary.file.id,
                             _rev: doc.binary.file.rev
-                args[1].should.not.have.properties ['_rev', 'path', 'name']
-                done()
+                        }
+                    }
+                });
+                args[1].should.not.have.properties(['_rev', 'path', 'name']);
+                return done();
+            }
+            );
+        });
 
-        it 'calls updateDoc when tags are updated', (done) ->
-            @prep.updateDoc = sinon.stub().yields null
-            doc =
-                _id: '12345678901'
-                _rev: '2-abcdef'
-                docType: 'file'
-                path: 'my-folder'
-                name: 'file-1'
-                checksum: '1111111111111111111111111111111111111111'
-                tags: ['foo', 'bar', 'baz']
-                binary:
-                    file:
-                        id: '1234'
+        it('calls updateDoc when tags are updated', function(done) {
+            this.prep.updateDoc = sinon.stub().yields(null);
+            let doc = {
+                _id: '12345678901',
+                _rev: '2-abcdef',
+                docType: 'file',
+                path: 'my-folder',
+                name: 'file-1',
+                checksum: '1111111111111111111111111111111111111111',
+                tags: ['foo', 'bar', 'baz'],
+                binary: {
+                    file: {
+                        id: '1234',
                         rev: '5-6789'
-            @watcher.onChange clone(doc), (err) =>
-                should.not.exist err
-                @prep.updateDoc.called.should.be.true()
-                args = @prep.updateDoc.args[0]
-                args[0].should.equal 'remote'
-                args[1].should.have.properties
-                    path: path.join doc.path, doc.name
-                    docType: 'file'
-                    checksum: doc.checksum
-                    tags: doc.tags
-                    remote:
-                        _id: doc._id
-                        _rev: doc._rev
-                        binary:
-                            _id: doc.binary.file.id
+                    }
+                }
+            };
+            return this.watcher.onChange(clone(doc), err => {
+                should.not.exist(err);
+                this.prep.updateDoc.called.should.be.true();
+                let args = this.prep.updateDoc.args[0];
+                args[0].should.equal('remote');
+                args[1].should.have.properties({
+                    path: path.join(doc.path, doc.name),
+                    docType: 'file',
+                    checksum: doc.checksum,
+                    tags: doc.tags,
+                    remote: {
+                        _id: doc._id,
+                        _rev: doc._rev,
+                        binary: {
+                            _id: doc.binary.file.id,
                             _rev: doc.binary.file.rev
-                args[1].should.not.have.properties ['_rev', 'path', 'name']
-                done()
+                        }
+                    }
+                });
+                args[1].should.not.have.properties(['_rev', 'path', 'name']);
+                return done();
+            }
+            );
+        });
 
-        it 'calls updateDoc when content is overwritten', (done) ->
-            @prep.updateDoc = sinon.stub().yields null
-            doc =
-                _id: '12345678901'
-                _rev: '3-abcdef'
-                docType: 'file'
-                path: '/my-folder'
-                name: 'file-1'
-                checksum: '9999999999999999999999999999999999999999'
-                tags: ['foo', 'bar', 'baz']
-                binary:
-                    file:
-                        id: '4321'
+        it('calls updateDoc when content is overwritten', function(done) {
+            this.prep.updateDoc = sinon.stub().yields(null);
+            let doc = {
+                _id: '12345678901',
+                _rev: '3-abcdef',
+                docType: 'file',
+                path: '/my-folder',
+                name: 'file-1',
+                checksum: '9999999999999999999999999999999999999999',
+                tags: ['foo', 'bar', 'baz'],
+                binary: {
+                    file: {
+                        id: '4321',
                         rev: '9-8765'
-            @watcher.onChange clone(doc), (err) =>
-                should.not.exist err
-                @prep.updateDoc.called.should.be.true()
-                args = @prep.updateDoc.args[0]
-                args[0].should.equal 'remote'
-                args[1].should.have.properties
-                    path: 'my-folder/file-1'
-                    docType: 'file'
-                    checksum: doc.checksum
-                    tags: doc.tags
-                    remote:
-                        _id: doc._id
-                        _rev: doc._rev
-                        binary:
-                            _id: doc.binary.file.id
+                    }
+                }
+            };
+            return this.watcher.onChange(clone(doc), err => {
+                should.not.exist(err);
+                this.prep.updateDoc.called.should.be.true();
+                let args = this.prep.updateDoc.args[0];
+                args[0].should.equal('remote');
+                args[1].should.have.properties({
+                    path: 'my-folder/file-1',
+                    docType: 'file',
+                    checksum: doc.checksum,
+                    tags: doc.tags,
+                    remote: {
+                        _id: doc._id,
+                        _rev: doc._rev,
+                        binary: {
+                            _id: doc.binary.file.id,
                             _rev: doc.binary.file.rev
-                args[1].should.not.have.properties ['_rev', 'path', 'name']
-                done()
+                        }
+                    }
+                });
+                args[1].should.not.have.properties(['_rev', 'path', 'name']);
+                return done();
+            }
+            );
+        });
 
-        it 'calls moveDoc when file is renamed', (done) ->
-            @prep.moveDoc = sinon.stub().yields null
-            doc =
-                _id: '12345678902'
-                _rev: '4-abcdef'
-                docType: 'file'
-                path: 'my-folder'
-                name: 'file-2-bis'
-                checksum: '1111111111111111111111111111111111111112'
-                tags: []
-                binary:
-                    file:
-                        id: '4321'
+        it('calls moveDoc when file is renamed', function(done) {
+            this.prep.moveDoc = sinon.stub().yields(null);
+            let doc = {
+                _id: '12345678902',
+                _rev: '4-abcdef',
+                docType: 'file',
+                path: 'my-folder',
+                name: 'file-2-bis',
+                checksum: '1111111111111111111111111111111111111112',
+                tags: [],
+                binary: {
+                    file: {
+                        id: '4321',
                         rev: '9-8765'
-            @watcher.onChange clone(doc), (err) =>
-                should.not.exist err
-                @prep.moveDoc.called.should.be.true()
-                args = @prep.moveDoc.args[0]
-                args[0].should.equal 'remote'
-                src = args[2]
-                src.should.have.properties
-                    path: 'my-folder/file-2'
-                    docType: 'file'
-                    checksum: doc.checksum
-                    tags: doc.tags
-                    remote:
+                    }
+                }
+            };
+            return this.watcher.onChange(clone(doc), err => {
+                should.not.exist(err);
+                this.prep.moveDoc.called.should.be.true();
+                let args = this.prep.moveDoc.args[0];
+                args[0].should.equal('remote');
+                let src = args[2];
+                src.should.have.properties({
+                    path: 'my-folder/file-2',
+                    docType: 'file',
+                    checksum: doc.checksum,
+                    tags: doc.tags,
+                    remote: {
                         _id: '12345678902'
-                dst = args[1]
-                dst.should.have.properties
-                    path: path.join doc.path, doc.name
-                    docType: 'file'
-                    checksum: doc.checksum
-                    tags: doc.tags
-                    remote:
-                        _id: doc._id
-                        _rev: doc._rev
-                        binary:
-                            _id: doc.binary.file.id
+                    }
+                });
+                let dst = args[1];
+                dst.should.have.properties({
+                    path: path.join(doc.path, doc.name),
+                    docType: 'file',
+                    checksum: doc.checksum,
+                    tags: doc.tags,
+                    remote: {
+                        _id: doc._id,
+                        _rev: doc._rev,
+                        binary: {
+                            _id: doc.binary.file.id,
                             _rev: doc.binary.file.rev
-                dst.should.not.have.properties ['_rev', 'path', 'name']
-                done()
+                        }
+                    }
+                });
+                dst.should.not.have.properties(['_rev', 'path', 'name']);
+                return done();
+            }
+            );
+        });
 
-        it 'calls moveDoc when file is moved', (done) ->
-            @prep.moveDoc = sinon.stub().yields null
-            doc =
-                _id: '12345678902'
-                _rev: '5-abcdef'
-                docType: 'file'
-                path: 'another-folder/in/some/place'
-                name: 'file-2-ter'
-                checksum: '1111111111111111111111111111111111111112'
-                tags: []
-                binary:
-                    file:
-                        id: '4321'
+        it('calls moveDoc when file is moved', function(done) {
+            this.prep.moveDoc = sinon.stub().yields(null);
+            let doc = {
+                _id: '12345678902',
+                _rev: '5-abcdef',
+                docType: 'file',
+                path: 'another-folder/in/some/place',
+                name: 'file-2-ter',
+                checksum: '1111111111111111111111111111111111111112',
+                tags: [],
+                binary: {
+                    file: {
+                        id: '4321',
                         rev: '9-8765'
-            @watcher.onChange clone(doc), (err) =>
-                should.not.exist err
-                @prep.moveDoc.called.should.be.true()
-                src = @prep.moveDoc.args[0][2]
-                src.should.have.properties
-                    path: 'my-folder/file-2'
-                    docType: 'file'
-                    checksum: doc.checksum
-                    tags: doc.tags
-                    remote:
+                    }
+                }
+            };
+            return this.watcher.onChange(clone(doc), err => {
+                should.not.exist(err);
+                this.prep.moveDoc.called.should.be.true();
+                let src = this.prep.moveDoc.args[0][2];
+                src.should.have.properties({
+                    path: 'my-folder/file-2',
+                    docType: 'file',
+                    checksum: doc.checksum,
+                    tags: doc.tags,
+                    remote: {
                         _id: '12345678902'
-                dst = @prep.moveDoc.args[0][1]
-                dst.should.have.properties
-                    path: path.join doc.path, doc.name
-                    docType: 'file'
-                    checksum: doc.checksum
-                    tags: doc.tags
-                    remote:
-                        _id: doc._id
-                        _rev: doc._rev
-                        binary:
-                            _id: doc.binary.file.id
+                    }
+                });
+                let dst = this.prep.moveDoc.args[0][1];
+                dst.should.have.properties({
+                    path: path.join(doc.path, doc.name),
+                    docType: 'file',
+                    checksum: doc.checksum,
+                    tags: doc.tags,
+                    remote: {
+                        _id: doc._id,
+                        _rev: doc._rev,
+                        binary: {
+                            _id: doc.binary.file.id,
                             _rev: doc.binary.file.rev
-                dst.should.not.have.properties ['_rev', 'path', 'name']
-                done()
+                        }
+                    }
+                });
+                dst.should.not.have.properties(['_rev', 'path', 'name']);
+                return done();
+            }
+            );
+        });
 
-        it 'calls deletedDoc&addDoc when file has changed completely', (done) ->
-            @prep.deleteDoc = sinon.stub().yields null
-            @prep.addDoc = sinon.stub().yields null
-            doc =
-                _id: '12345678903'
-                _rev: '6-abcdef'
-                docType: 'file'
-                path: 'another-folder/in/some/place'
-                name: 'file-3-bis'
-                checksum: '8888888888888888888888888888888888888888'
-                tags: []
-                binary:
-                    file:
-                        id: '1472'
+        it('calls deletedDoc&addDoc when file has changed completely', function(done) {
+            this.prep.deleteDoc = sinon.stub().yields(null);
+            this.prep.addDoc = sinon.stub().yields(null);
+            let doc = {
+                _id: '12345678903',
+                _rev: '6-abcdef',
+                docType: 'file',
+                path: 'another-folder/in/some/place',
+                name: 'file-3-bis',
+                checksum: '8888888888888888888888888888888888888888',
+                tags: [],
+                binary: {
+                    file: {
+                        id: '1472',
                         rev: '5-8369'
-            @watcher.onChange clone(doc), (err) =>
-                should.not.exist err
-                @prep.deleteDoc.called.should.be.true()
-                id = @prep.deleteDoc.args[0][1].path
-                id.should.equal 'my-folder/file-3'
-                @prep.addDoc.called.should.be.true()
-                args = @prep.addDoc.args[0]
-                args[0].should.equal 'remote'
-                args[1].should.have.properties
-                    path: path.join doc.path, doc.name
-                    docType: 'file'
-                    checksum: doc.checksum
-                    tags: doc.tags
-                    remote:
-                        _id: doc._id
-                        _rev: doc._rev
-                        binary:
-                            _id: doc.binary.file.id
+                    }
+                }
+            };
+            return this.watcher.onChange(clone(doc), err => {
+                should.not.exist(err);
+                this.prep.deleteDoc.called.should.be.true();
+                let id = this.prep.deleteDoc.args[0][1].path;
+                id.should.equal('my-folder/file-3');
+                this.prep.addDoc.called.should.be.true();
+                let args = this.prep.addDoc.args[0];
+                args[0].should.equal('remote');
+                args[1].should.have.properties({
+                    path: path.join(doc.path, doc.name),
+                    docType: 'file',
+                    checksum: doc.checksum,
+                    tags: doc.tags,
+                    remote: {
+                        _id: doc._id,
+                        _rev: doc._rev,
+                        binary: {
+                            _id: doc.binary.file.id,
                             _rev: doc.binary.file.rev
-                args[1].should.not.have.properties ['_rev', 'path', 'name']
-                done()
+                        }
+                    }
+                });
+                args[1].should.not.have.properties(['_rev', 'path', 'name']);
+                return done();
+            }
+            );
+        });
 
-        it 'calls deleteDoc for a deleted doc', (done) ->
-            @prep.deleteDoc = sinon.stub().yields null
-            doc =
-                _id: '12345678901'
-                _rev: '7-abcdef'
+        it('calls deleteDoc for a deleted doc', function(done) {
+            this.prep.deleteDoc = sinon.stub().yields(null);
+            let doc = {
+                _id: '12345678901',
+                _rev: '7-abcdef',
                 _deleted: true
-            @watcher.onChange doc, (err) =>
-                should.not.exist err
-                @prep.deleteDoc.called.should.be.true()
-                id = @prep.deleteDoc.args[0][1].path
-                id.should.equal 'my-folder/file-1'
-                done()
+            };
+            return this.watcher.onChange(doc, err => {
+                should.not.exist(err);
+                this.prep.deleteDoc.called.should.be.true();
+                let id = this.prep.deleteDoc.args[0][1].path;
+                id.should.equal('my-folder/file-1');
+                return done();
+            }
+            );
+        });
 
-        it 'calls addDoc for folder created by the mobile app', (done) ->
-            @prep.addDoc = sinon.stub().yields null
-            doc =
-                _id: "913F429E-5609-C636-AE9A-CD00BD138B13"
-                _rev: "1-7786acf12a11fad6ad1eeb861953e0d8"
-                docType: "Folder"
-                name: "Photos from devices"
-                path: ""
-                lastModification: "2015-09-29T14:13:33.384Z"
-                creationDate: "2015-09-29T14:13:33.384Z"
+        return it('calls addDoc for folder created by the mobile app', function(done) {
+            this.prep.addDoc = sinon.stub().yields(null);
+            let doc = {
+                _id: "913F429E-5609-C636-AE9A-CD00BD138B13",
+                _rev: "1-7786acf12a11fad6ad1eeb861953e0d8",
+                docType: "Folder",
+                name: "Photos from devices",
+                path: "",
+                lastModification: "2015-09-29T14:13:33.384Z",
+                creationDate: "2015-09-29T14:13:33.384Z",
                 tags: []
-            @watcher.onChange doc, (err) =>
-                should.not.exist err
-                @prep.addDoc.called.should.be.true()
-                @prep.addDoc.args[0][1].should.have.properties
-                    path: 'Photos from devices'
-                    docType: 'folder'
-                    lastModification: "2015-09-29T14:13:33.384Z"
-                    creationDate: "2015-09-29T14:13:33.384Z"
-                    tags: []
-                    remote:
-                        _id: "913F429E-5609-C636-AE9A-CD00BD138B13"
+            };
+            return this.watcher.onChange(doc, err => {
+                should.not.exist(err);
+                this.prep.addDoc.called.should.be.true();
+                this.prep.addDoc.args[0][1].should.have.properties({
+                    path: 'Photos from devices',
+                    docType: 'folder',
+                    lastModification: "2015-09-29T14:13:33.384Z",
+                    creationDate: "2015-09-29T14:13:33.384Z",
+                    tags: [],
+                    remote: {
+                        _id: "913F429E-5609-C636-AE9A-CD00BD138B13",
                         _rev: "1-7786acf12a11fad6ad1eeb861953e0d8"
-                done()
+                    }
+                });
+                return done();
+            }
+            );
+        });
+    });
 
-    describe 'removeRemote', ->
-        it 'remove the association between a document and its remote', (done) ->
-            doc =
-                _id: 'removeRemote'
-                path: 'removeRemote'
-                docType: 'file'
-                checksum: 'd3e2163ccd0c497969233a6bd2a4ac843fb8165e'
-                sides:
-                    local: 2
+    return describe('removeRemote', () =>
+        it('remove the association between a document and its remote', function(done) {
+            let doc = {
+                _id: 'removeRemote',
+                path: 'removeRemote',
+                docType: 'file',
+                checksum: 'd3e2163ccd0c497969233a6bd2a4ac843fb8165e',
+                sides: {
+                    local: 2,
                     remote: 1
-            @pouch.db.put doc, (err) =>
-                should.not.exist err
-                @pouch.db.get doc._id, (err, was) =>
-                    should.not.exist err
-                    @watcher.removeRemote was, (err) =>
-                        should.not.exist err
-                        @pouch.db.get doc._id, (err, actual) ->
-                            should.not.exist err
-                            should.not.exist actual.sides.remote
-                            should.not.exist actual.remote
-                            actual._id.should.equal doc._id
-                            actual.sides.local.should.equal 2
-                            done()
-            return
+                }
+            };
+            this.pouch.db.put(doc, err => {
+                should.not.exist(err);
+                return this.pouch.db.get(doc._id, (err, was) => {
+                    should.not.exist(err);
+                    return this.watcher.removeRemote(was, err => {
+                        should.not.exist(err);
+                        return this.pouch.db.get(doc._id, function(err, actual) {
+                            should.not.exist(err);
+                            should.not.exist(actual.sides.remote);
+                            should.not.exist(actual.remote);
+                            actual._id.should.equal(doc._id);
+                            actual.sides.local.should.equal(2);
+                            return done();
+                        });
+                    }
+                    );
+                }
+                );
+            }
+            );
+        })
+    );
+});

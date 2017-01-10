@@ -1,358 +1,511 @@
-async  = require 'async'
-jsv    = require 'jsverify'
-path   = require 'path'
-should = require 'should'
-uniq   = require 'lodash.uniq'
+import async from 'async';
+import jsv from 'jsverify';
+import path from 'path';
+import should from 'should';
+import uniq from 'lodash.uniq';
 
-Pouch  = require '../../src/pouch'
+import Pouch from '../../src/pouch';
 
-configHelpers = require '../helpers/config'
-pouchHelpers  = require '../helpers/pouch'
-
-
-describe "Pouch", ->
-
-    before 'instanciate config', configHelpers.createConfig
-    before 'instanciate pouch', pouchHelpers.createDatabase
-    after 'clean pouch', pouchHelpers.cleanDatabase
-    after 'clean config directory', configHelpers.cleanConfig
-
-    before 'create folders and files', (done) ->
-        pouchHelpers.createParentFolder @pouch, =>
-            async.eachSeries [1..3], (i, callback) =>
-                pouchHelpers.createFolder @pouch, i, =>
-                    pouchHelpers.createFile @pouch, i, callback
-            , done
+import configHelpers from '../helpers/config';
+import pouchHelpers from '../helpers/pouch';
 
 
-    describe 'ODM', ->
+describe("Pouch", function() {
 
-        describe 'getAll', ->
-            it 'returns all the documents matching the query', (done) ->
-                params =
-                    key: 'my-folder'
-                    include_docs: true
-                @pouch.getAll 'byPath', params, (err, docs) ->
-                    should.not.exist err
-                    docs.length.should.equal 6
-                    for i in [1..3]
-                        docs[i-1].should.have.properties
-                            _id: path.join 'my-folder', "file-#{i}"
-                            docType: 'file'
-                            tags: []
-                        docs[i+2].should.have.properties
-                            _id: path.join 'my-folder', "folder-#{i}"
-                            docType: 'folder'
-                            tags: []
-                    done()
+    before('instanciate config', configHelpers.createConfig);
+    before('instanciate pouch', pouchHelpers.createDatabase);
+    after('clean pouch', pouchHelpers.cleanDatabase);
+    after('clean config directory', configHelpers.cleanConfig);
 
-        describe 'byChecksum', ->
-            it 'gets all the files with this checksum', (done) ->
-                _id = path.join 'my-folder', 'file-1'
-                checksum = '1111111111111111111111111111111111111111'
-                @pouch.byChecksum checksum, (err, docs) ->
-                    should.not.exist err
-                    docs.length.should.be.equal 1
-                    docs[0]._id.should.equal _id
-                    docs[0].checksum.should.equal checksum
-                    done()
-
-        describe 'byPath', ->
-            it 'gets all the files and folders in this path', (done) ->
-                @pouch.byPath 'my-folder', (err, docs) ->
-                    should.not.exist err
-                    docs.length.should.be.equal 6
-                    for i in [1..3]
-                        docs[i-1].should.have.properties
-                            _id: path.join 'my-folder', "file-#{i}"
-                            docType: 'file'
-                            tags: []
-                        docs[i+2].should.have.properties
-                            _id: path.join 'my-folder', "folder-#{i}"
-                            docType: 'folder'
-                            tags: []
-                    done()
-
-            it 'gets only files and folders in the first level', (done) ->
-                @pouch.byPath '', (err, docs) ->
-                    should.not.exist err
-                    docs.length.should.be.equal 1
-                    docs[0].should.have.properties
-                        _id: 'my-folder'
-                        docType: 'folder'
-                        tags: []
-                    done()
-
-            it 'rejects design documents', (done) ->
-                @pouch.byPath '_design', (err, docs) ->
-                    should.not.exist err
-                    docs.length.should.be.equal 0
-                    done()
-
-        describe 'byRecurivePath', ->
-            it 'gets the files and folders in this path recursively', (done) ->
-                @pouch.byRecursivePath 'my-folder', (err, docs) ->
-                    should.not.exist err
-                    docs.length.should.be.equal 6
-                    for i in [1..3]
-                        docs[i-1].should.have.properties
-                            _id: path.join 'my-folder', "file-#{i}"
-                            docType: 'file'
-                            tags: []
-                        docs[i+2].should.have.properties
-                            _id: path.join 'my-folder', "folder-#{i}"
-                            docType: 'folder'
-                            tags: []
-                    done()
-
-            it 'gets the files and folders from root', (done) ->
-                @pouch.byRecursivePath '', (err, docs) ->
-                    should.not.exist err
-                    docs.length.should.be.equal 7
-                    docs[0].should.have.properties
-                        _id: 'my-folder'
-                        docType: 'folder'
-                        tags: []
-                    for i in [1..3]
-                        docs[i].should.have.properties
-                            _id: path.join 'my-folder', "file-#{i}"
-                            docType: 'file'
-                            tags: []
-                        docs[i+3].should.have.properties
-                            _id: path.join 'my-folder', "folder-#{i}"
-                            docType: 'folder'
-                            tags: []
-                    done()
-
-        describe 'byRemoteId', ->
-            it 'gets all the file with this remote id', (done) ->
-                id = '12345678901'
-                @pouch.byRemoteId id, (err, doc) ->
-                    should.not.exist err
-                    doc.remote._id.should.equal id
-                    should.exist doc._id
-                    should.exist doc.docType
-                    done()
-
-            it 'returns a 404 error if no file matches', (done) ->
-                id = 'abcdef'
-                @pouch.byRemoteId id, (err, doc) ->
-                    should.exist err
-                    err.status.should.equal 404
-                    done()
-
-
-    describe 'Views', ->
-
-        describe 'createDesignDoc', ->
-            query = """
-                function (doc) {
-                    if (doc.docType === 'file') {
-                        emit(doc._id);
-                    }
+    before('create folders and files', function(done) {
+        return pouchHelpers.createParentFolder(this.pouch, () => {
+            return async.eachSeries([1, 2, 3], (i, callback) => {
+                return pouchHelpers.createFolder(this.pouch, i, () => {
+                    return pouchHelpers.createFile(this.pouch, i, callback);
                 }
-                """
-
-            it "creates a new design doc", (done) ->
-                @pouch.createDesignDoc 'file', query, (err) =>
-                    should.not.exist err
-                    @pouch.getAll 'file', (err, docs) ->
-                        should.not.exist err
-                        docs.length.should.equal 3
-                        for i in [1..3]
-                            docs[i-1].docType.should.equal 'file'
-                        done()
-
-            it 'does not update the same design doc', (done) ->
-                @pouch.createDesignDoc 'file', query, (err) =>
-                    should.not.exist err
-                    @pouch.db.get '_design/file', (err, was) =>
-                        should.not.exist err
-                        @pouch.createDesignDoc 'file', query, (err) =>
-                            should.not.exist err
-                            @pouch.db.get '_design/file', (err, designDoc) ->
-                                should.not.exist err
-                                designDoc._id.should.equal was._id
-                                designDoc._rev.should.equal was._rev
-                                done()
-
-            it 'updates the design doc if the query change', (done) ->
-                @pouch.createDesignDoc 'file', query, (err) =>
-                    should.not.exist err
-                    @pouch.db.get '_design/file', (err, was) =>
-                        should.not.exist err
-                        newQuery = query.replace 'file', 'File'
-                        @pouch.createDesignDoc 'file', newQuery, (err) =>
-                            should.not.exist err
-                            @pouch.db.get '_design/file', (err, designDoc) ->
-                                should.not.exist err
-                                designDoc._id.should.equal was._id
-                                designDoc._rev.should.not.equal was._rev
-                                designDoc.views.file.map.should.equal newQuery
-                                done()
+                );
+            }
+            , done);
+        }
+        );
+    });
 
 
-        describe 'addByPathView', ->
-            it 'creates the path view', (done) ->
-                @pouch.addByPathView (err) =>
-                    should.not.exist err
-                    @pouch.db.get '_design/byPath', (err, doc) ->
-                        should.not.exist err
-                        should.exist doc
-                        done()
+    describe('ODM', function() {
 
-        describe 'addByChecksumView', ->
-            it 'creates the checksum view', (done) ->
-                @pouch.addByChecksumView (err) =>
-                    should.not.exist err
-                    @pouch.db.get '_design/byChecksum', (err, doc) ->
-                        should.not.exist err
-                        should.exist doc
-                        done()
-
-        describe 'addByRemoteIdView', ->
-            it 'creates the remote id view', (done) ->
-                @pouch.addByRemoteIdView (err) =>
-                    should.not.exist err
-                    @pouch.db.get '_design/byRemoteId', (err, doc) ->
-                        should.not.exist err
-                        should.exist doc
-                        done()
-
-        describe 'removeDesignDoc', ->
-            it 'removes given view', (done) ->
-                query = """
-                    function (doc) {
-                        if (doc.docType === 'folder') {
-                            emit(doc._id);
-                        }
+        describe('getAll', () =>
+            it('returns all the documents matching the query', function(done) {
+                let params = {
+                    key: 'my-folder',
+                    include_docs: true
+                };
+                return this.pouch.getAll('byPath', params, function(err, docs) {
+                    should.not.exist(err);
+                    docs.length.should.equal(6);
+                    for (let i = 1; i <= 3; i++) {
+                        docs[i-1].should.have.properties({
+                            _id: path.join('my-folder', `file-${i}`),
+                            docType: 'file',
+                            tags: []});
+                        docs[i+2].should.have.properties({
+                            _id: path.join('my-folder', `folder-${i}`),
+                            docType: 'folder',
+                            tags: []});
                     }
-                    """
-                @pouch.createDesignDoc 'folder', query, (err) =>
-                    should.not.exist err
-                    @pouch.getAll 'folder', (err, docs) =>
-                        should.not.exist err
-                        docs.length.should.be.above 1
-                        @pouch.removeDesignDoc 'folder', (err) =>
-                            should.not.exist err
-                            @pouch.getAll 'folder', (err, res) ->
-                                should.exist err
-                                done()
+                    return done();
+                });
+            })
+        );
+
+        describe('byChecksum', () =>
+            it('gets all the files with this checksum', function(done) {
+                let _id = path.join('my-folder', 'file-1');
+                let checksum = '1111111111111111111111111111111111111111';
+                return this.pouch.byChecksum(checksum, function(err, docs) {
+                    should.not.exist(err);
+                    docs.length.should.be.equal(1);
+                    docs[0]._id.should.equal(_id);
+                    docs[0].checksum.should.equal(checksum);
+                    return done();
+                });
+            })
+        );
+
+        describe('byPath', function() {
+            it('gets all the files and folders in this path', function(done) {
+                return this.pouch.byPath('my-folder', function(err, docs) {
+                    should.not.exist(err);
+                    docs.length.should.be.equal(6);
+                    for (let i = 1; i <= 3; i++) {
+                        docs[i-1].should.have.properties({
+                            _id: path.join('my-folder', `file-${i}`),
+                            docType: 'file',
+                            tags: []});
+                        docs[i+2].should.have.properties({
+                            _id: path.join('my-folder', `folder-${i}`),
+                            docType: 'folder',
+                            tags: []});
+                    }
+                    return done();
+                });
+            });
+
+            it('gets only files and folders in the first level', function(done) {
+                return this.pouch.byPath('', function(err, docs) {
+                    should.not.exist(err);
+                    docs.length.should.be.equal(1);
+                    docs[0].should.have.properties({
+                        _id: 'my-folder',
+                        docType: 'folder',
+                        tags: []});
+                    return done();
+                });
+            });
+
+            return it('rejects design documents', function(done) {
+                return this.pouch.byPath('_design', function(err, docs) {
+                    should.not.exist(err);
+                    docs.length.should.be.equal(0);
+                    return done();
+                });
+            });
+        });
+
+        describe('byRecurivePath', function() {
+            it('gets the files and folders in this path recursively', function(done) {
+                return this.pouch.byRecursivePath('my-folder', function(err, docs) {
+                    should.not.exist(err);
+                    docs.length.should.be.equal(6);
+                    for (let i = 1; i <= 3; i++) {
+                        docs[i-1].should.have.properties({
+                            _id: path.join('my-folder', `file-${i}`),
+                            docType: 'file',
+                            tags: []});
+                        docs[i+2].should.have.properties({
+                            _id: path.join('my-folder', `folder-${i}`),
+                            docType: 'folder',
+                            tags: []});
+                    }
+                    return done();
+                });
+            });
+
+            return it('gets the files and folders from root', function(done) {
+                return this.pouch.byRecursivePath('', function(err, docs) {
+                    should.not.exist(err);
+                    docs.length.should.be.equal(7);
+                    docs[0].should.have.properties({
+                        _id: 'my-folder',
+                        docType: 'folder',
+                        tags: []});
+                    for (let i = 1; i <= 3; i++) {
+                        docs[i].should.have.properties({
+                            _id: path.join('my-folder', `file-${i}`),
+                            docType: 'file',
+                            tags: []});
+                        docs[i+3].should.have.properties({
+                            _id: path.join('my-folder', `folder-${i}`),
+                            docType: 'folder',
+                            tags: []});
+                    }
+                    return done();
+                });
+            });
+        });
+
+        return describe('byRemoteId', function() {
+            it('gets all the file with this remote id', function(done) {
+                let id = '12345678901';
+                return this.pouch.byRemoteId(id, function(err, doc) {
+                    should.not.exist(err);
+                    doc.remote._id.should.equal(id);
+                    should.exist(doc._id);
+                    should.exist(doc.docType);
+                    return done();
+                });
+            });
+
+            return it('returns a 404 error if no file matches', function(done) {
+                let id = 'abcdef';
+                return this.pouch.byRemoteId(id, function(err, doc) {
+                    should.exist(err);
+                    err.status.should.equal(404);
+                    return done();
+                });
+            });
+        });
+    });
 
 
-    describe 'Helpers', ->
+    describe('Views', function() {
 
-        describe 'extractRevNumber', ->
-            it 'extracts the revision number', ->
-                infos =
-                    _rev: '42-0123456789'
-                @pouch.extractRevNumber(infos).should.equal 42
+        describe('createDesignDoc', function() {
+            let query = `\
+function (doc) {
+    if (doc.docType === 'file') {
+        emit(doc._id);
+    }
+}\
+`;
 
-            it 'returns 0 if not found', ->
-                @pouch.extractRevNumber({}).should.equal 0
+            it("creates a new design doc", function(done) {
+                return this.pouch.createDesignDoc('file', query, err => {
+                    should.not.exist(err);
+                    return this.pouch.getAll('file', function(err, docs) {
+                        should.not.exist(err);
+                        docs.length.should.equal(3);
+                        for (let i = 1; i <= 3; i++) {
+                            docs[i-1].docType.should.equal('file');
+                        }
+                        return done();
+                    });
+                }
+                );
+            });
 
+            it('does not update the same design doc', function(done) {
+                return this.pouch.createDesignDoc('file', query, err => {
+                    should.not.exist(err);
+                    return this.pouch.db.get('_design/file', (err, was) => {
+                        should.not.exist(err);
+                        return this.pouch.createDesignDoc('file', query, err => {
+                            should.not.exist(err);
+                            return this.pouch.db.get('_design/file', function(err, designDoc) {
+                                should.not.exist(err);
+                                designDoc._id.should.equal(was._id);
+                                designDoc._rev.should.equal(was._rev);
+                                return done();
+                            });
+                        }
+                        );
+                    }
+                    );
+                }
+                );
+            });
 
-        describe 'getPreviousRev', ->
-            it 'retrieves previous document informations', (done) ->
-                id = path.join 'my-folder', 'folder-1'
-                @pouch.db.get id, (err, doc) =>
-                    should.not.exist err
-                    doc.tags = ['yipee']
-                    @pouch.db.put doc, (err, updated) =>
-                        should.not.exist err
-                        @pouch.db.remove id, updated.rev, (err) =>
-                            should.not.exist err
-                            @pouch.getPreviousRev id, 1, (err, doc) =>
-                                should.not.exist err
-                                doc._id.should.equal id
-                                doc.tags.should.not.equal ['yipee']
-                                @pouch.getPreviousRev id, 2, (err, doc) ->
-                                    should.not.exist err
-                                    doc._id.should.equal id
-                                    doc.tags.join(',').should.equal 'yipee'
-                                    done()
-                return
-
-
-    describe 'Sequence numbers', ->
-        describe 'getLocalSeq', ->
-            it 'gets 0 when the local seq number is not initialized', (done) ->
-                @pouch.getLocalSeq (err, seq) ->
-                    should.not.exist err
-                    seq.should.equal 0
-                    done()
-
-        describe 'setLocalSeq', ->
-            it 'saves the local sequence number', (done) ->
-                @pouch.setLocalSeq 21, (err) =>
-                    should.not.exist err
-                    @pouch.getLocalSeq (err, seq) =>
-                        should.not.exist err
-                        seq.should.equal 21
-                        @pouch.setLocalSeq 22, (err) =>
-                            should.not.exist err
-                            @pouch.getLocalSeq (err, seq) ->
-                                should.not.exist err
-                                seq.should.equal 22
-                                done()
-
-
-        describe 'getRemoteSeq', ->
-            it 'gets 0 when the remote seq number is not initialized', (done) ->
-                @pouch.getRemoteSeq (err, seq) ->
-                    should.not.exist err
-                    seq.should.equal 0
-                    done()
-
-        describe 'setRemoteSeq', ->
-            it 'saves the remote sequence number', (done) ->
-                @pouch.setRemoteSeq 31, (err) =>
-                    should.not.exist err
-                    @pouch.getRemoteSeq (err, seq) =>
-                        should.not.exist err
-                        seq.should.equal 31
-                        @pouch.setRemoteSeq 32, (err) =>
-                            should.not.exist err
-                            @pouch.getRemoteSeq (err, seq) ->
-                                should.not.exist err
-                                seq.should.equal 32
-                                done()
-
-            it 'can be called multiple times in parallel', (done) ->
-                async.each [1..100], @pouch.setRemoteSeq, (err) ->
-                    should.not.exist err
-                    done()
+            return it('updates the design doc if the query change', function(done) {
+                return this.pouch.createDesignDoc('file', query, err => {
+                    should.not.exist(err);
+                    return this.pouch.db.get('_design/file', (err, was) => {
+                        should.not.exist(err);
+                        let newQuery = query.replace('file', 'File');
+                        return this.pouch.createDesignDoc('file', newQuery, err => {
+                            should.not.exist(err);
+                            return this.pouch.db.get('_design/file', function(err, designDoc) {
+                                should.not.exist(err);
+                                designDoc._id.should.equal(was._id);
+                                designDoc._rev.should.not.equal(was._rev);
+                                designDoc.views.file.map.should.equal(newQuery);
+                                return done();
+                            });
+                        }
+                        );
+                    }
+                    );
+                }
+                );
+            });
+        });
 
 
-    # Disable this test on travis because it can be really slow...
-    return if process.env.TRAVIS
-    describe 'byRecursivePath (bis)', ->
-        @timeout 60000
+        describe('addByPathView', () =>
+            it('creates the path view', function(done) {
+                return this.pouch.addByPathView(err => {
+                    should.not.exist(err);
+                    return this.pouch.db.get('_design/byPath', function(err, doc) {
+                        should.not.exist(err);
+                        should.exist(doc);
+                        return done();
+                    });
+                }
+                );
+            })
+        );
 
-        # jsverify only works with Promise for async stuff
-        return unless typeof Promise is 'function'
+        describe('addByChecksumView', () =>
+            it('creates the checksum view', function(done) {
+                return this.pouch.addByChecksumView(err => {
+                    should.not.exist(err);
+                    return this.pouch.db.get('_design/byChecksum', function(err, doc) {
+                        should.not.exist(err);
+                        should.exist(doc);
+                        return done();
+                    });
+                }
+                );
+            })
+        );
 
-        it 'gets the nested files and folders', (done) ->
-            base = 'byRecursivePath'
-            property = jsv.forall 'nearray nestring', (paths) =>
-                paths = uniq paths.concat([base])
-                new Promise (resolve, reject) =>
-                    @pouch.resetDatabase (err) ->
-                        if err
-                            reject err
-                        else
-                            resolve()
-                .then =>
-                    Promise.all paths.map (p) =>
-                        doc = _id: path.join(base, p), docType: 'folder'
-                        @pouch.db.put doc
-                .then =>
-                    new Promise (resolve, reject) =>
-                        @pouch.byRecursivePath base, (err, docs) ->
-                            if err
-                                reject err
-                            else
-                                resolve docs.length is paths.length
-            jsv.assert(property, tests: 10).then (res) ->
-                if res is true then done() else done res
-            return
+        describe('addByRemoteIdView', () =>
+            it('creates the remote id view', function(done) {
+                return this.pouch.addByRemoteIdView(err => {
+                    should.not.exist(err);
+                    return this.pouch.db.get('_design/byRemoteId', function(err, doc) {
+                        should.not.exist(err);
+                        should.exist(doc);
+                        return done();
+                    });
+                }
+                );
+            })
+        );
+
+        return describe('removeDesignDoc', () =>
+            it('removes given view', function(done) {
+                let query = `\
+function (doc) {
+    if (doc.docType === 'folder') {
+        emit(doc._id);
+    }
+}\
+`;
+                return this.pouch.createDesignDoc('folder', query, err => {
+                    should.not.exist(err);
+                    return this.pouch.getAll('folder', (err, docs) => {
+                        should.not.exist(err);
+                        docs.length.should.be.above(1);
+                        return this.pouch.removeDesignDoc('folder', err => {
+                            should.not.exist(err);
+                            return this.pouch.getAll('folder', function(err, res) {
+                                should.exist(err);
+                                return done();
+                            });
+                        }
+                        );
+                    }
+                    );
+                }
+                );
+            })
+        );
+    });
+
+
+    describe('Helpers', function() {
+
+        describe('extractRevNumber', function() {
+            it('extracts the revision number', function() {
+                let infos =
+                    {_rev: '42-0123456789'};
+                return this.pouch.extractRevNumber(infos).should.equal(42);
+            });
+
+            return it('returns 0 if not found', function() {
+                return this.pouch.extractRevNumber({}).should.equal(0);
+            });
+        });
+
+
+        return describe('getPreviousRev', () =>
+            it('retrieves previous document informations', function(done) {
+                let id = path.join('my-folder', 'folder-1');
+                this.pouch.db.get(id, (err, doc) => {
+                    should.not.exist(err);
+                    doc.tags = ['yipee'];
+                    return this.pouch.db.put(doc, (err, updated) => {
+                        should.not.exist(err);
+                        return this.pouch.db.remove(id, updated.rev, err => {
+                            should.not.exist(err);
+                            return this.pouch.getPreviousRev(id, 1, (err, doc) => {
+                                should.not.exist(err);
+                                doc._id.should.equal(id);
+                                doc.tags.should.not.equal(['yipee']);
+                                return this.pouch.getPreviousRev(id, 2, function(err, doc) {
+                                    should.not.exist(err);
+                                    doc._id.should.equal(id);
+                                    doc.tags.join(',').should.equal('yipee');
+                                    return done();
+                                });
+                            }
+                            );
+                        }
+                        );
+                    }
+                    );
+                }
+                );
+            })
+        );
+    });
+
+
+    describe('Sequence numbers', function() {
+        describe('getLocalSeq', () =>
+            it('gets 0 when the local seq number is not initialized', function(done) {
+                return this.pouch.getLocalSeq(function(err, seq) {
+                    should.not.exist(err);
+                    seq.should.equal(0);
+                    return done();
+                });
+            })
+        );
+
+        describe('setLocalSeq', () =>
+            it('saves the local sequence number', function(done) {
+                return this.pouch.setLocalSeq(21, err => {
+                    should.not.exist(err);
+                    return this.pouch.getLocalSeq((err, seq) => {
+                        should.not.exist(err);
+                        seq.should.equal(21);
+                        return this.pouch.setLocalSeq(22, err => {
+                            should.not.exist(err);
+                            return this.pouch.getLocalSeq(function(err, seq) {
+                                should.not.exist(err);
+                                seq.should.equal(22);
+                                return done();
+                            });
+                        }
+                        );
+                    }
+                    );
+                }
+                );
+            })
+        );
+
+
+        describe('getRemoteSeq', () =>
+            it('gets 0 when the remote seq number is not initialized', function(done) {
+                return this.pouch.getRemoteSeq(function(err, seq) {
+                    should.not.exist(err);
+                    seq.should.equal(0);
+                    return done();
+                });
+            })
+        );
+
+        return describe('setRemoteSeq', function() {
+            it('saves the remote sequence number', function(done) {
+                return this.pouch.setRemoteSeq(31, err => {
+                    should.not.exist(err);
+                    return this.pouch.getRemoteSeq((err, seq) => {
+                        should.not.exist(err);
+                        seq.should.equal(31);
+                        return this.pouch.setRemoteSeq(32, err => {
+                            should.not.exist(err);
+                            return this.pouch.getRemoteSeq(function(err, seq) {
+                                should.not.exist(err);
+                                seq.should.equal(32);
+                                return done();
+                            });
+                        }
+                        );
+                    }
+                    );
+                }
+                );
+            });
+
+            return it('can be called multiple times in parallel', function(done) {
+                return async.each(__range__(1, 100, true), this.pouch.setRemoteSeq, function(err) {
+                    should.not.exist(err);
+                    return done();
+                });
+            });
+        });
+    });
+
+
+    // Disable this test on travis because it can be really slow...
+    if (process.env.TRAVIS) { return; }
+    return describe('byRecursivePath (bis)', function() {
+        this.timeout(60000);
+
+        // jsverify only works with Promise for async stuff
+        if (typeof Promise !== 'function') { return; }
+
+        return it('gets the nested files and folders', function(done) {
+            let base = 'byRecursivePath';
+            let property = jsv.forall('nearray nestring', paths => {
+                paths = uniq(paths.concat([base]));
+                return new Promise((resolve, reject) => {
+                    return this.pouch.resetDatabase(function(err) {
+                        if (err) {
+                            return reject(err);
+                        } else {
+                            return resolve();
+                        }
+                    });
+                }
+                )
+                .then(() => {
+                    return Promise.all(paths.map(p => {
+                        let doc = {_id: path.join(base, p), docType: 'folder'};
+                        return this.pouch.db.put(doc);
+                    }
+                    )
+                    );
+                }
+                )
+                .then(() => {
+                    return new Promise((resolve, reject) => {
+                        return this.pouch.byRecursivePath(base, function(err, docs) {
+                            if (err) {
+                                return reject(err);
+                            } else {
+                                return resolve(docs.length === paths.length);
+                            }
+                        });
+                    }
+                    );
+                }
+                );
+            }
+            );
+            jsv.assert(property, {tests: 10}).then(function(res) {
+                if (res === true) { return done(); } else { return done(res); }
+            });
+        });
+    });
+});
+
+function __range__(left, right, inclusive) {
+  let range = [];
+  let ascending = left < right;
+  let end = !inclusive ? right : ascending ? right + 1 : right - 1;
+  for (let i = left; ascending ? i < end : i > end; ascending ? i++ : i--) {
+    range.push(i);
+  }
+  return range;
+}
