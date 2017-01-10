@@ -10,8 +10,8 @@
 
 import PouchDB from 'pouchdb'
 import path from 'path-extra'
-import Config from '../src/config'
-import helpers from '../test/helpers/couch.coffee'
+import Config from '../config'
+import helpers from '../../test/helpers/couch'
 
 helpers.startServer(function (err) {
   if (err) {
