@@ -1,7 +1,7 @@
 'use strict'
 
 const AutoLaunch = require('auto-launch')
-const Desktop = require('cozy-desktop')
+const Desktop = require('cozy-desktop').default
 const electron = require('electron')
 const fs = require('fs')
 const os = require('os')

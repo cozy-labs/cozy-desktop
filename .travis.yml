@@ -73,7 +73,7 @@ before_install:
     - pwd
     - NAME=proxy TOKEN=token forever start -o forever-proxy.log -e forever-proxy-err.log build/server.js
     - sleep 5
-    - PASSWORD="$(coffee $HOME/build/cozy-labs/cozy-desktop/test/helpers/password.coffee)"
+    - PASSWORD="$(node $HOME/build/cozy-labs/cozy-desktop/test/helpers/password.js)"
     - 'curl -f -X POST -H "Content-Type: application/json" -d "{ \"email\": \"cozytest@cozycloud.cc\", \"password\": \"$PASSWORD\", \"timezone\":\"Europe/Paris\"}" http://127.0.0.1:9104/register'
     - cd
     - git clone git://github.com/cozy/cozy-files.git
@@ -95,7 +95,7 @@ before_install:
 script:
     - npm run build
     - npm run lint
-    - ./scripts/coverage.sh npm run test
+    - npm run test-coverage
     - cd gui
     - yarn
     - npm run lint

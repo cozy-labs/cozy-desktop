@@ -21,13 +21,17 @@
     "cozy"
   ],
   "scripts": {
-    "lint": "coffeelint src/ test/",
+    "fauxton": "babel-node ./src/bin/fauxton.js",
+    "lint": "./node_modules/.bin/standard './src/**/*.js' './test/**/*.js'",
     "test": "installed-check && npm run test-unit && npm run test-integration",
-    "test-unit": "NODE_ENV=test mocha $MOCHA_UNIT_TEST_FLAGS test/unit/",
+    "test-coverage": "installed-check && npm run test-unit-coverage && npm run test-integration",
+    "test-unit": "NODE_ENV=test mocha test/unit/",
+    "test-unit-coverage": "NODE_ENV=test nyc mocha test/unit/",
     "test-integration": "NODE_ENV=test mocha test/integration/",
-    "build": "coffee -o lib/ src/",
+    "build": "babel --source-maps --out-dir lib/ src/",
     "clean": "rm -rf lib/ && rm -rf tmp/",
-    "size": "t=\"$(npm pack .)\"; wc -c \"${t}\"; tar tvf \"${t}\"; rm \"${t}\";"
+    "size": "t=\"$(npm pack .)\"; wc -c \"${t}\"; tar tvf \"${t}\"; rm \"${t}\";",
+    "watch": "npm run build -- --watch"
   },
   "dependencies": {
     "async": "2.1.4",
@@ -50,9 +54,14 @@
     "request-json-light": "0.5.25"
   },
   "devDependencies": {
-    "coffee-coverage": "^1.0.1",
-    "coffee-script": "^1.12.2",
-    "coffeelint": "1.16.0",
+    "babel-cli": "^6.18.0",
+    "babel-core": "^6.21.0",
+    "babel-plugin-array-includes": "^2.0.3",
+    "babel-plugin-autobind-class-methods": "^2.1.1",
+    "babel-plugin-istanbul": "^3.1.2",
+    "babel-preset-es2015": "^6.18.0",
+    "babel-preset-es2016": "^6.16.0",
+    "babel-preset-es2017": "^6.16.0",
     "del": "2.2.2",
     "faker": "3.1.0",
     "installed-check": "^2.1.1",
@@ -60,8 +69,11 @@
     "jsverify": "0.7.4",
     "lodash.uniq": "4.5.0",
     "mocha": "3.2.0",
+    "nyc": "^10.0.0",
     "pouchdb-server": "^2.0.0",
     "should": "11.1.2",
-    "sinon": "1.17.6"
+    "sinon": "1.17.6",
+    "source-map-support": "^0.4.8",
+    "standard": "^8.6.0"
   }
 }
