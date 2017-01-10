@@ -52,18 +52,6 @@ class App {
 
     // basePath is the directory where the config and pouch are saved
   constructor (basePath) {
-    this.writeToLogfile = this.writeToLogfile.bind(this)
-    this.rotateLogfile = this.rotateLogfile.bind(this)
-    this.pingCozy = this.pingCozy.bind(this)
-    this.registerRemote = this.registerRemote.bind(this)
-    this.saveConfig = this.saveConfig.bind(this)
-    this.addRemote = this.addRemote.bind(this)
-    this.removeRemote = this.removeRemote.bind(this)
-    this.synchronize = this.synchronize.bind(this)
-    this.resetDatabase = this.resetDatabase.bind(this)
-    this.allDocs = this.allDocs.bind(this)
-    this.query = this.query.bind(this)
-    this.getDiskSpace = this.getDiskSpace.bind(this)
     this.lang = 'fr'
     if (basePath == null) { basePath = os.homedir() }
     basePath = path.resolve(basePath)

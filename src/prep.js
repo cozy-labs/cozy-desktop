@@ -13,10 +13,6 @@ let log = require('printit')({
 // and the path to the file/folder (in a normalized form) in PouchDB.
 class Prep {
   constructor (merge, ignore) {
-    this.addDoc = this.addDoc.bind(this)
-    this.updateDoc = this.updateDoc.bind(this)
-    this.moveDoc = this.moveDoc.bind(this)
-    this.deleteDoc = this.deleteDoc.bind(this)
     this.merge = merge
     this.ignore = ignore
     switch (process.platform) {

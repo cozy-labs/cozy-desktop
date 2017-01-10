@@ -26,8 +26,6 @@ let log = require('printit')({
 // need to redirect them.
 class Merge {
   constructor (pouch) {
-    this.ensureParentExist = this.ensureParentExist.bind(this)
-    this.moveFolderRecursively = this.moveFolderRecursively.bind(this)
     this.pouch = pouch
     this.local = this.remote = null
   }

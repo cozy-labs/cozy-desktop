@@ -13,13 +13,6 @@ let log = require('printit')({
 // TODO refactor unit tests
 class RemoteWatcher {
   constructor (couch, prep, pouch, deviceName) {
-    this.copyDocsFromRemoteView = this.copyDocsFromRemoteView.bind(this)
-    this.listenToChanges = this.listenToChanges.bind(this)
-    this.whenReady = this.whenReady.bind(this)
-    this.backoff = this.backoff.bind(this)
-    this.onChange = this.onChange.bind(this)
-    this.putDoc = this.putDoc.bind(this)
-    this.changed = this.changed.bind(this)
     this.couch = couch
     this.prep = prep
     this.pouch = pouch

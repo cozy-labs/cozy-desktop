@@ -21,14 +21,6 @@ class LocalWatcher {
   }
 
   constructor (syncPath, prep, pouch) {
-    this.start = this.start.bind(this)
-    this.createDoc = this.createDoc.bind(this)
-    this.onAdd = this.onAdd.bind(this)
-    this.onAddDir = this.onAddDir.bind(this)
-    this.onUnlink = this.onUnlink.bind(this)
-    this.onUnlinkDir = this.onUnlinkDir.bind(this)
-    this.onChange = this.onChange.bind(this)
-    this.onReady = this.onReady.bind(this)
     this.syncPath = syncPath
     this.prep = prep
     this.pouch = pouch

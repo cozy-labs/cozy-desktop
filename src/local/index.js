@@ -14,19 +14,6 @@ import Watcher from './watcher'
 // It also applied changes from the remote cozy on the local filesystem.
 class Local {
   constructor (config, prep, pouch, events) {
-    this.start = this.start.bind(this)
-    this.metadataUpdater = this.metadataUpdater.bind(this)
-    this.fileExistsLocally = this.fileExistsLocally.bind(this)
-    this.addFile = this.addFile.bind(this)
-    this.addFolder = this.addFolder.bind(this)
-    this.overwriteFile = this.overwriteFile.bind(this)
-    this.updateFileMetadata = this.updateFileMetadata.bind(this)
-    this.updateFolder = this.updateFolder.bind(this)
-    this.moveFile = this.moveFile.bind(this)
-    this.moveFolder = this.moveFolder.bind(this)
-    this.deleteFile = this.deleteFile.bind(this)
-    this.deleteFolder = this.deleteFolder.bind(this)
-    this.resolveConflict = this.resolveConflict.bind(this)
     this.prep = prep
     this.pouch = pouch
     this.events = events

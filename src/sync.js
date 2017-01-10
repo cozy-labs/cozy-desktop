@@ -11,15 +11,6 @@ let log = require('printit')({
 class Sync {
 
   constructor (pouch, local, remote, ignore, events) {
-    this.start = this.start.bind(this)
-    this.stop = this.stop.bind(this)
-    this.sync = this.sync.bind(this)
-    this.pop = this.pop.bind(this)
-    this.apply = this.apply.bind(this)
-    this.selectSide = this.selectSide.bind(this)
-    this.applied = this.applied.bind(this)
-    this.fileChanged = this.fileChanged.bind(this)
-    this.folderChanged = this.folderChanged.bind(this)
     this.pouch = pouch
     this.local = local
     this.remote = remote

@@ -24,18 +24,6 @@ class Couch {
   }
 
   constructor (config, events) {
-    this.ping = this.ping.bind(this)
-    this.whenAvailable = this.whenAvailable.bind(this)
-    this.get = this.get.bind(this)
-    this.put = this.put.bind(this)
-    this.remove = this.remove.bind(this)
-    this.getLastRemoteChangeSeq = this.getLastRemoteChangeSeq.bind(this)
-    this.pickViewToCopy = this.pickViewToCopy.bind(this)
-    this.getFromRemoteView = this.getFromRemoteView.bind(this)
-    this.uploadAsAttachment = this.uploadAsAttachment.bind(this)
-    this.downloadBinary = this.downloadBinary.bind(this)
-    this.putRemoteDoc = this.putRemoteDoc.bind(this)
-    this.removeRemoteDoc = this.removeRemoteDoc.bind(this)
     this.config = config
     this.events = events
     let device = this.config.getDevice()

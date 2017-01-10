@@ -20,19 +20,6 @@ let log = require('printit')({
 // views name are in camelcase (byChecksum, not by-checksum).
 class Pouch {
   constructor (config) {
-    this.resetDatabase = this.resetDatabase.bind(this)
-    this.getAll = this.getAll.bind(this)
-    this.addAllViews = this.addAllViews.bind(this)
-    this.addByPathView = this.addByPathView.bind(this)
-    this.addByChecksumView = this.addByChecksumView.bind(this)
-    this.addByRemoteIdView = this.addByRemoteIdView.bind(this)
-    this.createDesignDoc = this.createDesignDoc.bind(this)
-    this.removeDesignDoc = this.removeDesignDoc.bind(this)
-    this.getPreviousRev = this.getPreviousRev.bind(this)
-    this.getLocalSeq = this.getLocalSeq.bind(this)
-    this.setLocalSeq = this.setLocalSeq.bind(this)
-    this.getRemoteSeq = this.getRemoteSeq.bind(this)
-    this.setRemoteSeq = this.setRemoteSeq.bind(this)
     this.config = config
     this.db = new PouchDB(this.config.dbPath)
     this.db.setMaxListeners(100)

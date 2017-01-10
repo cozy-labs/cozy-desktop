@@ -20,17 +20,6 @@ import Watcher from './watcher'
 // needed in both ways.
 class Remote {
   constructor (config, prep, pouch, events) {
-    this.start = this.start.bind(this)
-    this.createReadStream = this.createReadStream.bind(this)
-    this.cleanBinary = this.cleanBinary.bind(this)
-    this.addFile = this.addFile.bind(this)
-    this.addFolder = this.addFolder.bind(this)
-    this.overwriteFile = this.overwriteFile.bind(this)
-    this.addOrOverwriteFile = this.addOrOverwriteFile.bind(this)
-    this.moveFolder = this.moveFolder.bind(this)
-    this.deleteFile = this.deleteFile.bind(this)
-    this.deleteFolder = this.deleteFolder.bind(this)
-    this.resolveConflict = this.resolveConflict.bind(this)
     this.config = config
     this.prep = prep
     this.pouch = pouch
