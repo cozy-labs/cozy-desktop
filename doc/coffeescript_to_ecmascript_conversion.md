@@ -10,8 +10,8 @@ EcmaScript, but that's not true anymore:
 - ES provides us with more options (there are far more ES libs/tools than
   Coffee ones out there)
 - ES tooling is becoming better ([Eslint][3] spots far more issues in our
-  codebase than [Coffeelint][4] in our codebase, and tools like [Flow][5]
-  bring static type checking to ES)
+  codebase than [Coffeelint][4], and tools like [Flow][5] bring static type
+  checking to ES)
 - As many Cozy apps were rewritten in EcmaScript, going the same way would
   makes the platform more consistent
 
