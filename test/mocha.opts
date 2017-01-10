@@ -2,4 +2,5 @@
 --timeout 10000
 --reporter spec
 --compilers js:babel-core/register
+--require should
 --recursive

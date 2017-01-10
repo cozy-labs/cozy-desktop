@@ -1,7 +1,5 @@
 /* eslint-env mocha */
 
-import should from 'should'
-
 import App from '../../src/app'
 
 describe('App', () =>

@@ -3,7 +3,6 @@
 import faker from 'faker'
 import fs from 'fs-extra'
 import path from 'path'
-import should from 'should'
 
 import Cozy from '../helpers/integration'
 import Files from '../helpers/files'
