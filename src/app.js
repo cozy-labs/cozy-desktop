@@ -65,7 +65,7 @@ class App {
   //
   // callback is a function that takes two parameters: error and password
   askPassword (callback) {
-    return callback(new Error('Not implemented'), null)
+    callback(new Error('Not implemented'), null)
   }
 
   // This method is here to be surcharged by the UI
@@ -73,7 +73,7 @@ class App {
   //
   // callback is a function that takes two parameters: error and a boolean
   askConfirmation (callback) {
-    return callback(new Error('Not implemented'), null)
+    callback(new Error('Not implemented'), null)
   }
 
   // Configure a file to write logs to
@@ -92,9 +92,9 @@ class App {
 
   // Rotate the log file if it's too heavy
   rotateLogfile () {
-    return fs.stat(this.logfile, (err, stats) => {
+    fs.stat(this.logfile, (err, stats) => {
       if (err || (stats.size < MAX_LOG_SIZE)) { return }
-      return fs.rename(this.logfile, `${this.logfile}.old`, this.writeToLogfile)
+      fs.rename(this.logfile, `${this.logfile}.old`, this.writeToLogfile)
     })
   }
 
@@ -119,7 +119,7 @@ class App {
       return
     }
     cozyUrl = url.format(parsed)
-    return device.pingCozy(cozyUrl, err => callback(err, cozyUrl))
+    device.pingCozy(cozyUrl, err => callback(err, cozyUrl))
   }
 
   // Register a device on the remote cozy
@@ -133,24 +133,24 @@ class App {
       return
     }
     if (deviceName == null) { deviceName = os.hostname() || 'desktop' }
-    return this.askPassword(function (_, password) {
+    this.askPassword(function (_, password) {
       let register = device.registerDeviceSafe
-      return register(cozyUrl, deviceName, password, Permissions, function (err, res) {
-        if (err) { return callback(err) }
+      register(cozyUrl, deviceName, password, Permissions, function (err, res) {
+        if (err) { callback(err) }
         let config = {file: true};
         ({ deviceName } = res);
         ({ password } = res)
         let setDesignDoc = filterSDK.setDesignDoc.bind(filterSDK)
-        return setDesignDoc(cozyUrl, deviceName, password, config, err => callback(err, res))
+        setDesignDoc(cozyUrl, deviceName, password, config, err => callback(err, res))
       })
     })
   }
 
   // Save the config with all the informations for synchonization
   saveConfig (cozyUrl, syncPath, deviceName, password, callback) {
-    return fs.ensureDir(syncPath, err => {
+    fs.ensureDir(syncPath, err => {
       if (err) {
-        return callback(err)
+        callback(err)
       } else {
         let options = {
           path: path.resolve(syncPath),
@@ -161,7 +161,7 @@ class App {
         this.config.addRemoteCozy(options)
         log.info('The remote Cozy has properly been configured ' +
                  'to work with current device.')
-        return callback(null)
+        callback(null)
       }
     })
   }
@@ -169,7 +169,7 @@ class App {
   // Register current device to remote Cozy and then save related informations
   // to the config file (used by CLI, not GUI)
   addRemote (cozyUrl, syncPath, deviceName, callback) {
-    return this.registerRemote(cozyUrl, deviceName, (err, credentials) => {
+    this.registerRemote(cozyUrl, deviceName, (err, credentials) => {
       if (err) {
         log.error('An error occured while registering your device.')
         let parsed = this.parseCozyUrl(cozyUrl)
@@ -185,12 +185,12 @@ class App {
             log.warn('Did you try with an httpS URL?')
           }
         }
-        return __guardFunc__(callback, f => f(err))
+        __guardFunc__(callback, f => f(err))
       } else {
         ({ deviceName } = credentials)
         let { password } = credentials
         log.info(`Device ${deviceName} has been added to ${cozyUrl}`)
-        return this.saveConfig(cozyUrl, syncPath, deviceName, password, err => __guardFunc__(callback, f1 => f1(err, credentials)))
+        this.saveConfig(cozyUrl, syncPath, deviceName, password, err => __guardFunc__(callback, f1 => f1(err, credentials)))
       }
     })
   }
@@ -202,14 +202,14 @@ class App {
     let conf = this.config.getDevice()
     let cozyUrl = conf.url
     let { password } = conf
-    return device.unregisterDevice(cozyUrl, deviceName, password, err => {
+    device.unregisterDevice(cozyUrl, deviceName, password, err => {
       if (err && (err.message !== 'Request unauthorized')) {
         log.error('An error occured while unregistering your device.')
         log.error(err)
-        return callback(err)
+        callback(err)
       } else {
         log.info('Current device properly removed from remote cozy.')
-        return fs.remove(this.basePath, callback)
+        fs.remove(this.basePath, callback)
       }
     })
   }
@@ -233,7 +233,7 @@ class App {
       }
       mail.attachments = [attachment]
     }
-    return device.sendMailFromUser(cozyUrl, deviceName, password, mail, callback)
+    device.sendMailFromUser(cozyUrl, deviceName, password, mail, callback)
   }
 
   // Load ignore rules
@@ -264,13 +264,13 @@ class App {
   startSync (mode, callback) {
     this.config.setMode(mode)
     log.info('Run first synchronisation...')
-    return this.sync.start(mode, err => {
+    this.sync.start(mode, err => {
       this.sync.stop(function () {})
       if (err) {
         log.error(err)
         if (err.stack) { log.error(err.stack) }
       }
-      return __guardFunc__(callback, f => f(err))
+      __guardFunc__(callback, f => f(err))
     })
   }
 
@@ -278,9 +278,9 @@ class App {
   stopSync (callback) {
     if (callback == null) { callback = function () {} }
     if (this.sync) {
-      return this.sync.stop(callback)
+      this.sync.stop(callback)
     } else {
-      return callback()
+      callback()
     }
   }
 
@@ -289,17 +289,17 @@ class App {
     let conf = this.config.getDevice()
     if ((conf.deviceName != null) && (conf.url != null) && (conf.path != null)) {
       this.instanciate()
-      return this.startSync(mode, callback)
+      this.startSync(mode, callback)
     } else {
       log.error('No configuration found, please run add-remote-cozy' +
                 'command before running a synchronization.')
-      return __guardFunc__(callback, f => f(new Error('No config')))
+      __guardFunc__(callback, f => f(new Error('No config')))
     }
   }
 
   // Display a list of watchers for debugging purpose
   debugWatchers () {
-    return __guard__(this.local, x => x.watcher.debug())
+    __guard__(this.local, x => x.watcher.debug())
   }
 
   // Call the callback for each file
@@ -310,7 +310,7 @@ class App {
       directoryFilter: '!.cozy-desktop',
       entryType: 'both'
     }
-    return readdirp(options)
+    readdirp(options)
       .on('warn', err => log.warn(err))
       .on('error', err => log.error(err))
       .on('data', data => {
@@ -319,42 +319,42 @@ class App {
           docType: data.stat.isFile() ? 'file' : 'folder'
         }
         if (this.ignore.isIgnored(doc) === (args.ignored != null)) {
-          return callback(data.path)
+          callback(data.path)
         }
       })
   }
 
   // Recreate the local pouch database
   resetDatabase (callback) {
-    return this.askConfirmation((err, ok) => {
+    this.askConfirmation((err, ok) => {
       if (err) {
-        return log.error(err)
+        log.error(err)
       } else if (ok) {
         log.info('Recreates the local database...')
-        return this.pouch.resetDatabase(function () {
+        this.pouch.resetDatabase(function () {
           log.info('Database recreated')
-          return __guardFunc__(callback, f => f())
+          __guardFunc__(callback, f => f())
         })
       } else {
-        return log.info('Abort!')
+        log.info('Abort!')
       }
     })
   }
 
   // Return the whole content of the database
   allDocs (callback) {
-    return this.pouch.db.allDocs({include_docs: true}, callback)
+    this.pouch.db.allDocs({include_docs: true}, callback)
   }
 
   // Return all docs for a given query
   query (query, callback) {
-    return this.pouch.db.query(query, {include_docs: true}, callback)
+    this.pouch.db.query(query, {include_docs: true}, callback)
   }
 
   // Get disk space informations from the cozy
   getDiskSpace (callback) {
     let conf = this.config.getDevice()
-    return device.getDiskSpace(conf.url, conf.deviceName, conf.password, callback)
+    device.getDiskSpace(conf.url, conf.deviceName, conf.password, callback)
   }
 }
 App.initClass()

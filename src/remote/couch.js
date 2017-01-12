@@ -47,7 +47,7 @@ class Couch {
       } else if (!online && this.online) {
         this.goingOffline()
       }
-      return callback(this.online)
+      callback(this.online)
     })
   }
 
@@ -57,7 +57,7 @@ class Couch {
     this.online = true
     for (let cb of Array.from(this.upCallbacks)) { cb() }
     this.upCallbacks = []
-    return this.events.emit('online')
+    this.events.emit('online')
   }
 
   // Couch is no longer available.
@@ -68,8 +68,8 @@ class Couch {
     this.online = false
     this.events.emit('offline')
     interval = setInterval(() => {
-      return this.ping(function (available) {
-        if (available) { return clearInterval(interval) }
+      this.ping(function (available) {
+        if (available) { clearInterval(interval) }
       })
     }, 60000)
   }
@@ -77,9 +77,9 @@ class Couch {
   // The callback will be called when couch will be available again.
   whenAvailable (callback) {
     if (this.online) {
-      return callback()
+      callback()
     } else {
-      return this.upCallbacks.push(callback)
+      this.upCallbacks.push(callback)
     }
   }
 
@@ -113,24 +113,24 @@ class Couch {
     log.info(`Getting design doc ${model} from remote`)
     this.client.get(`_design/${model}`, function (err, designdoc) {
       if (err) {
-        return callback(err)
+        callback(err)
       } else if (__guard__(designdoc.views, x => x['files-all'])) {
-        return callback(null, 'files-all')
+        callback(null, 'files-all')
       } else if (__guard__(designdoc.views, x1 => x1.all)) {
-        return callback(null, 'all')
+        callback(null, 'all')
       } else {
-        return callback(new Error('install files app on cozy'))
+        callback(new Error('install files app on cozy'))
       }
     })
   }
 
   // Retrieve documents from a view on the remote couch
   getFromRemoteView (model, callback) {
-    return this.pickViewToCopy(model, (err, viewName) => {
-      if (err) { return callback(err) }
+    this.pickViewToCopy(model, (err, viewName) => {
+      if (err) { callback(err) }
       log.info(`Getting latest ${model} documents from remote`)
       let opts = {include_docs: true}
-      return this.client.query(`${model}/${viewName}`, opts, (err, body) => callback(err, __guard__(body, x => x.rows)))
+      this.client.query(`${model}/${viewName}`, opts, (err, body) => callback(err, __guard__(body, x => x.rows)))
     })
   }
 
@@ -138,14 +138,14 @@ class Couch {
   uploadAsAttachment (id, rev, mime, attachment, callback) {
     let urlPath = `cozy/${id}/file?rev=${rev}`
     this.http.headers['content-type'] = mime
-    return this.http.putFile(urlPath, attachment, function (err, res, body) {
+    this.http.putFile(urlPath, attachment, function (err, res, body) {
       if (err) {
-        return callback(err)
+        callback(err)
       } else if (body.error) {
-        return callback(body.error)
+        callback(body.error)
       } else {
         log.info('Binary uploaded')
-        return callback(null, body)
+        callback(null, body)
       }
     })
   }
@@ -154,12 +154,12 @@ class Couch {
   downloadBinary (binaryId, callback) {
     let urlPath = `cozy/${binaryId}/file`
     log.info(`Download ${urlPath}`)
-    return this.http.saveFileAsStream(urlPath, function (err, res) {
+    this.http.saveFileAsStream(urlPath, function (err, res) {
       if (__guard__(res, x => x.statusCode) === 404) {
         err = new Error('Cannot download the file')
         res.on('data', function () {})  // Purge the stream
       }
-      return callback(err, res)
+      callback(err, res)
     })
   }
 
@@ -176,20 +176,20 @@ class Couch {
   // In case of a conflict in CouchDB, try to see if the changes on the remote
   // sides are trivial and can be ignored.
   putRemoteDoc (doc, old, callback) {
-    return this.put(doc, (err, created) => {
+    this.put(doc, (err, created) => {
       if (__guard__(err, x => x.status) === 409) {
-        return this.get(doc._id, (err, current) => {
+        this.get(doc._id, (err, current) => {
           if (err) {
-            return callback(err)
+            callback(err)
           } else if (this.sameRemoteDoc(current, old)) {
             doc._rev = current._rev
-            return this.put(doc, callback)
+            this.put(doc, callback)
           } else {
-            return callback(new Error('Conflict'))
+            callback(new Error('Conflict'))
           }
         })
       } else {
-        return callback(err, created)
+        callback(err, created)
       }
     })
   }
@@ -199,20 +199,20 @@ class Couch {
   // sides are trivial and can be ignored.
   removeRemoteDoc (doc, callback) {
     doc._deleted = true
-    return this.put(doc, (err, removed) => {
+    this.put(doc, (err, removed) => {
       if (__guard__(err, x => x.status) === 409) {
-        return this.get(doc._id, (err, current) => {
+        this.get(doc._id, (err, current) => {
           if (err) {
-            return callback(err)
+            callback(err)
           } else if (this.sameRemoteDoc(current, doc)) {
             current._deleted = true
-            return this.put(current, callback)
+            this.put(current, callback)
           } else {
-            return callback(new Error('Conflict'))
+            callback(new Error('Conflict'))
           }
         })
       } else {
-        return callback(err, removed)
+        callback(err, removed)
       }
     })
   }

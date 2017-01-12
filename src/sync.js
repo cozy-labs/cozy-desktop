@@ -36,11 +36,11 @@ class Sync {
     ]
     if (mode !== 'pull') { tasks.push(this.local.start) }
     if (mode !== 'push') { tasks.push(this.remote.start) }
-    return async.waterfall(tasks, err => {
+    async.waterfall(tasks, err => {
       if (err) {
-        return callback(err)
+        callback(err)
       } else {
-        return async.forever(this.sync, callback)
+        async.forever(this.sync, callback)
       }
     })
   }
@@ -52,7 +52,7 @@ class Sync {
       this.changes.cancel()
       this.changes = null
     }
-    return async.parallel([
+    async.parallel([
       done => this.local.stop(done),
       done => this.remote.stop(done)
     ], callback)
@@ -60,15 +60,15 @@ class Sync {
 
   // Start taking changes from pouch and applying them
   sync (callback) {
-    return this.pop((err, change) => {
+    this.pop((err, change) => {
       if (this.stopped) { return }
       if (err) {
         log.error(err)
-        return callback(err)
+        callback(err)
       } else {
-        return this.apply(change, (err) => {
+        this.apply(change, (err) => {
           if (this.stopped) { err = null }
-          return callback(err)
+          callback(err)
         })
       }
     })
@@ -80,8 +80,11 @@ class Sync {
   // Note: it is difficult to pick only one change at a time because pouch can
   // emit several docs in a row, and `limit: 1` seems to be not effective!
   pop (callback) {
-    return this.pouch.getLocalSeq((err, seq) => {
-      if (err) { return callback(err) }
+    this.pouch.getLocalSeq((err, seq) => {
+      if (err) {
+        callback(err)
+        return
+      }
       let opts = {
         limit: 1,
         since: seq,
@@ -89,7 +92,7 @@ class Sync {
         filter: '_view',
         view: 'byPath'
       }
-      return this.pouch.db.changes(opts)
+      this.pouch.db.changes(opts)
         .on('change', info => callback(null, info))
         .on('error', err => callback(err))
         .on('complete', info => {
@@ -103,13 +106,13 @@ class Sync {
               if (this.changes) {
                 this.changes.cancel()
                 this.changes = null
-                return callback(null, info)
+                callback(null, info)
               }
             })
             .on('error', err => {
               if (this.changes) {
                 this.changes = null
-                return callback(err, null)
+                callback(err, null)
               }
             })
         })
@@ -133,13 +136,16 @@ class Sync {
 
     switch (false) {
       case !!side:
-        return this.pouch.setLocalSeq(change.seq, callback)
+        this.pouch.setLocalSeq(change.seq, callback)
+        break
       case doc.docType !== 'file':
-        return this.fileChanged(doc, side, rev, done)
+        this.fileChanged(doc, side, rev, done)
+        break
       case doc.docType !== 'folder':
-        return this.folderChanged(doc, side, rev, done)
+        this.folderChanged(doc, side, rev, done)
+        break
       default:
-        return callback(new Error(`Unknown doctype: ${doc.docType}`))
+        callback(new Error(`Unknown doctype: ${doc.docType}`))
     }
   }
 
@@ -163,38 +169,38 @@ class Sync {
     return err => {
       if (err) { log.error(err) }
       if (__guard__(err, x => x.code) === 'ENOSPC') {
-        return callback(new Error('The disk space on your computer is full!'))
+        callback(new Error('The disk space on your computer is full!'))
       } else if (__guard__(err, x1 => x1.status) === 401) {
-        return callback(new Error('The device is no longer registered'))
+        callback(new Error('The device is no longer registered'))
       } else if (err) {
         if (!change.doc.errors) { change.doc.errors = 0 }
-        return this.isCozyFull((err, full) => {
+        this.isCozyFull((err, full) => {
           if (err) {
-            return this.remote.couch.ping(available => {
+            this.remote.couch.ping(available => {
               if (available) {
-                return this.updateErrors(change, callback)
+                this.updateErrors(change, callback)
               } else {
-                return this.remote.couch.whenAvailable(callback)
+                this.remote.couch.whenAvailable(callback)
               }
             })
           } else if (full) {
-            return callback(new Error(
+            callback(new Error(
               'Your Cozy is full! ' +
               'You can delete some files to be able' +
               'to add new ones or upgrade your storage plan.'
             ))
           } else {
-            return this.updateErrors(change, callback)
+            this.updateErrors(change, callback)
           }
         })
       } else {
         log.info(`Applied ${change.seq}`)
-        return this.pouch.setLocalSeq(change.seq, err => {
+        this.pouch.setLocalSeq(change.seq, err => {
           if (err) { log.error(err) }
           if (change.doc._deleted) {
-            return callback(err)
+            callback(err)
           } else {
-            return this.updateRevs(change.doc, side, callback)
+            this.updateRevs(change.doc, side, callback)
           }
         })
       }
@@ -203,11 +209,11 @@ class Sync {
 
   // Says is the Cozy has no more free disk space
   isCozyFull (callback) {
-    return this.getDiskSpace(function (err, res) {
+    this.getDiskSpace(function (err, res) {
       if (err) {
-        return callback(err)
+        callback(err)
       } else {
-        return callback(null, ['', '0'].includes(res.diskSpace.freeDiskSpace))
+        callback(null, ['', '0'].includes(res.diskSpace.freeDiskSpace))
       }
     })
   }
@@ -221,7 +227,7 @@ class Sync {
       this.pouch.setLocalSeq(change.seq, callback)
       return
     }
-    return this.pouch.db.put(doc, err => {
+    this.pouch.db.put(doc, err => {
       // If the doc can't be saved, it's because of a new revision.
       // So, we can skip this revision
       if (err) {
@@ -231,7 +237,7 @@ class Sync {
       }
       // The sync error may be due to the remote cozy being overloaded.
       // So, it's better to wait a bit before trying the next operation.
-      return setTimeout(callback, 3000)
+      setTimeout(callback, 3000)
     })
   }
 
@@ -242,26 +248,26 @@ class Sync {
       doc.sides[s] = rev
     }
     delete doc.errors
-    return this.pouch.db.put(doc, err => {
+    this.pouch.db.put(doc, err => {
       // Conflicts can happen here, for example if the data-system has
       // generated a thumbnail before apply has finished. In that case, we
       // try to reconciliate the documents.
       if (__guard__(err, x => x.status) === 409) {
-        return this.pouch.db.get(doc._id, (err, doc) => {
+        this.pouch.db.get(doc._id, (err, doc) => {
           if (err) {
             log.warn('Race condition', err)
-            return callback()
+            callback()
           } else {
             doc.sides[side] = rev
-            return this.pouch.db.put(doc, function (err) {
+            this.pouch.db.put(doc, function (err) {
               if (err) { log.warn('Race condition', err) }
-              return callback()
+              callback()
             })
           }
         })
       } else {
         if (err) { log.warn('Race condition', err) }
-        return callback()
+        callback()
       }
     })
   }
@@ -273,46 +279,51 @@ class Sync {
     let from
     switch (false) {
       case !doc._deleted || (rev !== 0):
-        return callback()
+        callback()
+        break
       case !this.moveFrom:
         [from, this.moveFrom] = [this.moveFrom, null]
         if (from.moveTo === doc._id) {
-          return side.moveFile(doc, from, err => {
+          side.moveFile(doc, from, err => {
             if (err) { this.moveFrom = from }
-            return callback(err)
+            callback(err)
           }
                     )
         } else {
           log.error('Invalid move')
           log.error(from)
           log.error(doc)
-          return side.addFile(doc, function (err) {
+          side.addFile(doc, function (err) {
             if (err) { log.error(err) }
-            return side.deleteFile(from, function (err) {
+            side.deleteFile(from, function (err) {
               if (err) { log.error(err) }
-              return callback(new Error('Invalid move'))
+              callback(new Error('Invalid move'))
             })
           })
         }
+        break
       case !doc.moveTo:
         this.moveFrom = doc
-        return callback()
+        callback()
+        break
       case !doc._deleted:
-        return side.deleteFile(doc, callback)
+        side.deleteFile(doc, callback)
+        break
       case rev !== 0:
-        return side.addFile(doc, callback)
+        side.addFile(doc, callback)
+        break
       default:
-        return this.pouch.getPreviousRev(doc._id, rev, function (err, old) {
+        this.pouch.getPreviousRev(doc._id, rev, function (err, old) {
           if (err) {
-            return side.overwriteFile(doc, old, callback)
+            side.overwriteFile(doc, old, callback)
           } else if (old.checksum === doc.checksum) {
-            return side.updateFileMetadata(doc, old, callback)
+            side.updateFileMetadata(doc, old, callback)
           } else if (old.remote && !old.checksum) {
             // Photos uploaded by cozy-mobile have no checksum,
             // but it's useless to reupload the binary
-            return side.updateFileMetadata(doc, old, callback)
+            side.updateFileMetadata(doc, old, callback)
           } else {
-            return side.overwriteFile(doc, old, callback)
+            side.overwriteFile(doc, old, callback)
           }
         })
     }
@@ -323,35 +334,40 @@ class Sync {
     let from
     switch (false) {
       case !doc._deleted || (rev !== 0):
-        return callback()
+        callback()
+        break
       case !this.moveFrom:
         [from, this.moveFrom] = [this.moveFrom, null]
         if (from.moveTo === doc._id) {
-          return side.moveFolder(doc, from, err => {
+          side.moveFolder(doc, from, err => {
             if (err) { this.moveFrom = from }
-            return callback(err)
+            callback(err)
           })
         } else {
           log.error('Invalid move')
           log.error(from)
           log.error(doc)
-          return side.addFolder(doc, function (err) {
+          side.addFolder(doc, function (err) {
             if (err) { log.error(err) }
-            return side.deleteFolder(from, function (err) {
+            side.deleteFolder(from, function (err) {
               if (err) { log.error(err) }
-              return callback(new Error('Invalid move'))
+              callback(new Error('Invalid move'))
             })
           })
         }
+        break
       case !doc.moveTo:
         this.moveFrom = doc
-        return callback()
+        callback()
+        break
       case !doc._deleted:
-        return side.deleteFolder(doc, callback)
+        side.deleteFolder(doc, callback)
+        break
       case rev !== 0:
-        return side.addFolder(doc, callback)
+        side.addFolder(doc, callback)
+        break
       default:
-        return this.pouch.getPreviousRev(doc._id, rev, (_, old) => side.updateFolder(doc, old, callback))
+        this.pouch.getPreviousRev(doc._id, rev, (_, old) => side.updateFolder(doc, old, callback))
     }
   }
 }

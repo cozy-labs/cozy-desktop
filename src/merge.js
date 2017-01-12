@@ -89,7 +89,7 @@ class Merge {
     } else {
       this.pouch.db.get(parentId, (_, folder) => {
         if (folder) {
-          return callback()
+          callback()
         } else {
           let parentDoc = {
             _id: parentId,
@@ -98,11 +98,11 @@ class Merge {
             creationDate: new Date(),
             lastModification: new Date()
           }
-          return this.ensureParentExist(side, parentDoc, err => {
+          this.ensureParentExist(side, parentDoc, err => {
             if (err) {
-              return callback(err)
+              callback(err)
             } else {
-              return this.putFolder(side, parentDoc, callback)
+              this.putFolder(side, parentDoc, callback)
             }
           })
         }
@@ -134,7 +134,7 @@ class Merge {
     let dir = path.dirname(doc.path)
     let base = path.basename(doc.path, ext)
     dst.path = `${path.join(dir, base)}-conflict-${date}${ext}`
-    return this[side].resolveConflict(dst, doc, err => callback(err, dst))
+    this[side].resolveConflict(dst, doc, err => callback(err, dst))
   }
 
   /* Actions */
@@ -153,7 +153,7 @@ class Merge {
         if (!hasSameBinary) { hasSameBinary = file.remote && !file.checksum }
       }
       if (__guard__(file, x => x.docType) === 'folder') {
-        return this.resolveConflict(side, doc, callback)
+        this.resolveConflict(side, doc, callback)
       } else if (hasSameBinary) {
         doc._rev = file._rev
         if (doc.size == null) { doc.size = file.size }
@@ -163,21 +163,21 @@ class Merge {
         if (doc.remote == null) { doc.remote = file.remote }
         if (doc.localPath == null) { doc.localPath = file.localPath }
         if (this.sameFile(file, doc)) {
-          return callback(null)
+          callback(null)
         } else {
-          return this.pouch.db.put(doc, callback)
+          this.pouch.db.put(doc, callback)
         }
       } else if (__guard__(file, x1 => x1.checksum)) {
         if ((side === 'local') && (file.sides.local != null)) {
-          return this.resolveInitialAdd(side, doc, file, callback)
+          this.resolveInitialAdd(side, doc, file, callback)
         } else {
-          return this.resolveConflict(side, doc, callback)
+          this.resolveConflict(side, doc, callback)
         }
       } else {
         if (file) { doc._rev = file._rev }
         if (doc.tags == null) { doc.tags = [] }
-        return this.ensureParentExist(side, doc, () => {
-          return this.pouch.db.put(doc, callback)
+        this.ensureParentExist(side, doc, () => {
+          this.pouch.db.put(doc, callback)
         })
       }
     })
@@ -188,21 +188,21 @@ class Merge {
   resolveInitialAdd (side, doc, file, callback) {
     if (!file.sides.remote) {
       // The file was updated on local before being pushed to remote
-      return this.updateFile(side, doc, callback)
+      this.updateFile(side, doc, callback)
     } else if (file.sides.remote === file.sides.local) {
       // The file was updated on local after being synched to remote
-      return this.updateFile(side, doc, callback)
+      this.updateFile(side, doc, callback)
     } else {
       // The file was updated on remote and maybe in local too
       let shortRev = file.sides.local
-      return this.pouch.getPreviousRev(doc._id, shortRev, (err, prev) => {
+      this.pouch.getPreviousRev(doc._id, shortRev, (err, prev) => {
         if (err || (prev.checksum !== doc.checksum)) {
           // It's safer to handle it as a conflict
           if (doc.remote == null) { doc.remote = file.remote }
-          return this.resolveConflict('remote', doc, callback)
+          this.resolveConflict('remote', doc, callback)
         } else {
           // The file was only updated on remote
-          return callback(null)
+          callback(null)
         }
       })
     }
@@ -214,7 +214,7 @@ class Merge {
       if (err && (err.status !== 404)) { log.warn(err) }
       this.markSide(side, doc, file)
       if (__guard__(file, x => x.docType) === 'folder') {
-        return callback(new Error("Can't resolve this conflict!"))
+        callback(new Error("Can't resolve this conflict!"))
       } else if (file) {
         doc._rev = file._rev
         if (doc.tags == null) { doc.tags = file.tags || [] }
@@ -228,15 +228,15 @@ class Merge {
           if (doc.localPath == null) { doc.localPath = file.localPath }
         }
         if (this.sameFile(file, doc)) {
-          return callback(null)
+          callback(null)
         } else {
-          return this.pouch.db.put(doc, callback)
+          this.pouch.db.put(doc, callback)
         }
       } else {
         if (doc.tags == null) { doc.tags = [] }
         if (doc.creationDate == null) { doc.creationDate = new Date() }
-        return this.ensureParentExist(side, doc, () => {
-          return this.pouch.db.put(doc, callback)
+        this.ensureParentExist(side, doc, () => {
+          this.pouch.db.put(doc, callback)
         })
       }
     })
@@ -248,22 +248,22 @@ class Merge {
       if (err && (err.status !== 404)) { log.warn(err) }
       this.markSide(side, doc, folder)
       if (__guard__(folder, x => x.docType) === 'file') {
-        return this.resolveConflict(side, doc, callback)
+        this.resolveConflict(side, doc, callback)
       } else if (folder) {
         doc._rev = folder._rev
         if (doc.tags == null) { doc.tags = folder.tags || [] }
         if (doc.creationDate == null) { doc.creationDate = folder.creationDate }
         if (doc.remote == null) { doc.remote = folder.remote }
         if (this.sameFolder(folder, doc)) {
-          return callback(null)
+          callback(null)
         } else {
-          return this.pouch.db.put(doc, callback)
+          this.pouch.db.put(doc, callback)
         }
       } else {
         if (doc.tags == null) { doc.tags = [] }
         if (doc.creationDate == null) { doc.creationDate = new Date() }
-        return this.ensureParentExist(side, doc, () => {
-          return this.pouch.db.put(doc, callback)
+        this.ensureParentExist(side, doc, () => {
+          this.pouch.db.put(doc, callback)
         })
       }
     })
@@ -286,17 +286,17 @@ class Merge {
         was._deleted = true
         delete was.errors
         if (file && this.sameFile(file, doc)) {
-          return callback(null)
+          callback(null)
         } else if (file) {
-          return this.resolveConflict(side, doc, (_, dst) => {
+          this.resolveConflict(side, doc, (_, dst) => {
             was.moveTo = dst._id
             dst.sides = {}
             dst.sides[side] = 1
-            return this.pouch.db.bulkDocs([was, dst], callback)
+            this.pouch.db.bulkDocs([was, dst], callback)
           })
         } else {
-          return this.ensureParentExist(side, doc, () => {
-            return this.pouch.db.bulkDocs([was, doc], callback)
+          this.ensureParentExist(side, doc, () => {
+            this.pouch.db.bulkDocs([was, doc], callback)
           })
         }
       })
@@ -315,14 +315,14 @@ class Merge {
         if (doc.creationDate == null) { doc.creationDate = was.creationDate }
         if (doc.tags == null) { doc.tags = was.tags || [] }
         if (folder) {
-          return this.resolveConflict(side, doc, (_, dst) => {
+          this.resolveConflict(side, doc, (_, dst) => {
             dst.sides = {}
             dst.sides[side] = 1
-            return this.moveFolderRecursively(dst, was, callback)
+            this.moveFolderRecursively(dst, was, callback)
           })
         } else {
-          return this.ensureParentExist(side, doc, () => {
-            return this.moveFolderRecursively(doc, was, callback)
+          this.ensureParentExist(side, doc, () => {
+            this.moveFolderRecursively(doc, was, callback)
           })
         }
       })
@@ -333,9 +333,9 @@ class Merge {
 
   // Move a folder and all the things inside it
   moveFolderRecursively (folder, was, callback) {
-    return this.pouch.byRecursivePath(was._id, (err, docs) => {
+    this.pouch.byRecursivePath(was._id, (err, docs) => {
       if (err) {
-        return callback(err)
+        callback(err)
       } else {
         was._deleted = true
         was.moveTo = folder._id
@@ -354,7 +354,7 @@ class Merge {
           bulk.push(dst)
           delete dst.errors
         }
-        return this.pouch.db.bulkDocs(bulk, callback)
+        this.pouch.db.bulkDocs(bulk, callback)
       }
     })
   }
@@ -367,16 +367,16 @@ class Merge {
   deleteFile (side, doc, callback) {
     this.pouch.db.get(doc._id, (err, file) => {
       if (__guard__(err, x => x.status) === 404) {
-        return callback(null)
+        callback(null)
       } else if (err) {
-        return callback(err)
+        callback(err)
       } else if (__guard__(file.sides, x1 => x1[side])) {
         this.markSide(side, file, file)
         file._deleted = true
         delete file.errors
-        return this.pouch.db.put(file, callback)
+        this.pouch.db.put(file, callback)
       } else { // It can happen after a conflict
-        return callback(null)
+        callback(null)
       }
     })
   }
@@ -391,22 +391,22 @@ class Merge {
   deleteFolder (side, doc, callback) {
     this.pouch.db.get(doc._id, (err, folder) => {
       if (__guard__(err, x => x.status) === 404) {
-        return callback(null)
+        callback(null)
       } else if (err) {
-        return callback(err)
+        callback(err)
       } else if (__guard__(folder.sides, x1 => x1[side])) {
-        return this.deleteFolderRecursively(side, folder, callback)
+        this.deleteFolderRecursively(side, folder, callback)
       } else { // It can happen after a conflict
-        return callback(null)
+        callback(null)
       }
     })
   }
 
   // Remove a folder and every thing inside it
   deleteFolderRecursively (side, folder, callback) {
-    return this.pouch.byRecursivePath(folder._id, (err, docs) => {
+    this.pouch.byRecursivePath(folder._id, (err, docs) => {
       if (err) {
-        return callback(err)
+        callback(err)
       } else {
         // In the changes feed, nested subfolder must be deleted
         // before their parents, hence the reverse order.
@@ -417,7 +417,7 @@ class Merge {
           doc._deleted = true
           delete doc.errors
         }
-        return this.pouch.db.bulkDocs(docs, callback)
+        this.pouch.db.bulkDocs(docs, callback)
       }
     })
   }

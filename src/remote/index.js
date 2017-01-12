@@ -32,11 +32,11 @@ class Remote {
 
   // Start initial replication + watching changes in live
   start (done) {
-    return this.watcher.listenToChanges({live: false}, err => {
+    this.watcher.listenToChanges({live: false}, err => {
       done(err)
       if (!err) {
         this.watching = true
-        return this.watcher.listenToChanges({live: true}, () => {
+        this.watcher.listenToChanges({live: true}, () => {
           this.watching = false
         })
       }
@@ -50,7 +50,7 @@ class Remote {
     interval = setInterval(() => {
       if (!this.watching) {
         clearInterval(interval)
-        return callback()
+        callback()
       }
     }, 100)
   }
@@ -58,9 +58,9 @@ class Remote {
   // Create a readable stream for the given doc
   createReadStream (doc, callback) {
     if (doc.remote.binary != null) {
-      return this.couch.downloadBinary(doc.remote.binary._id, callback)
+      this.couch.downloadBinary(doc.remote.binary._id, callback)
     } else {
-      return callback(new Error('Cannot download the file'))
+      callback(new Error('Cannot download the file'))
     }
   }
 
@@ -72,17 +72,17 @@ class Remote {
       let cb;
       [cb, callback] = [callback, function () {}]  // Be sure to callback only once
       if (err) {
-        return this.couch.remove(binary._id, binary._rev, () => cb(err))
+        this.couch.remove(binary._id, binary._rev, () => cb(err))
       } else {
-        return cb(err, binary)
+        cb(err, binary)
       }
     }
 
     // Don't use async callback here!
     // Async does some magic and the stream can throw an 'error'
     // event before the next async callback is called...
-    return this.other.createReadStream(doc, (err, stream) => {
-      if (err) { return callback(err) }
+    this.other.createReadStream(doc, (err, stream) => {
+      if (err) { callback(err) }
       stream.on('error', () => callback(new Error('Invalid file')))
       // Be sure that the checksum is correct
       let checksum = crypto.createHash('sha1')
@@ -91,7 +91,7 @@ class Remote {
       stream.on('end', function () {
         checksum.end()
         if (checksum.read() !== doc.checksum) {
-          return done(new Error('Invalid checksum'))
+          done(new Error('Invalid checksum'))
         }
       })
       // Emit events to track the download progress
@@ -100,14 +100,14 @@ class Remote {
       info.eventName = `transfer-up-${doc._id}`
       this.events.emit('transfer-started', info)
       stream.on('data', data => {
-        return this.events.emit(info.eventName, data)
+        this.events.emit(info.eventName, data)
       })
       stream.on('close', () => {
-        return this.events.emit(info.eventName, {finished: true})
+        this.events.emit(info.eventName, {finished: true})
       })
       let {_id, _rev} = binary
       let mime = doc.mime || 'application/octet-stream'
-      return this.couch.uploadAsAttachment(_id, _rev, mime, stream, done)
+      this.couch.uploadAsAttachment(_id, _rev, mime, stream, done)
     })
   }
 
@@ -121,21 +121,21 @@ class Remote {
       checksum: doc.checksum
     }
 
-    return this.couch.put(binary, (err, created) => {
+    this.couch.put(binary, (err, created) => {
       if (__guard__(err, x => x.status) === 409) {
-        return this.couch.get(binary._id, (_, binaryDoc) => {
+        this.couch.get(binary._id, (_, binaryDoc) => {
           if (binaryDoc._attachments) {
-            return callback(null, binaryDoc)
+            callback(null, binaryDoc)
           } else {
             binary._rev = binaryDoc._rev
-            return this.addAttachment(doc, binary, callback)
+            this.addAttachment(doc, binary, callback)
           }
         })
       } else if (err) {
-        return callback(err)
+        callback(err)
       } else {
         binary._rev = created.rev
-        return this.addAttachment(doc, binary, callback)
+        this.addAttachment(doc, binary, callback)
       }
     })
   }
@@ -180,15 +180,15 @@ class Remote {
 
   // Remove the binary if it is no longer referenced
   cleanBinary (binaryId, callback) {
-    return this.couch.get(binaryId, (err, doc) => {
+    this.couch.get(binaryId, (err, doc) => {
       if (err) {
-        return callback(err)
+        callback(err)
       } else {
-        return this.pouch.byChecksum(doc.checksum, (err, files) => {
+        this.pouch.byChecksum(doc.checksum, (err, files) => {
           if (err || (files.length !== 0)) {
-            return callback(err)
+            callback(err)
           } else {
-            return this.couch.remove(doc._id, doc._rev, callback)
+            this.couch.remove(doc._id, doc._rev, callback)
           }
         })
       }
@@ -208,37 +208,37 @@ class Remote {
   // It can also be an overwrite of the file
   addFile (doc, callback) {
     log.info(`Add file ${doc.path}`)
-    return this.addOrOverwriteFile(doc, null, callback)
+    this.addOrOverwriteFile(doc, null, callback)
   }
 
   // Create a folder on the remote cozy instance
   addFolder (doc, callback) {
     log.info(`Add folder ${doc.path}`)
     let folder = this.createRemoteDoc(doc)
-    return this.couch.put(folder, function (err, created) {
+    this.couch.put(folder, function (err, created) {
       if (!err) {
         doc.remote = {
           _id: created.id,
           _rev: created.rev
         }
       }
-      return callback(err, created)
+      callback(err, created)
     })
   }
 
   // Overwrite a file
   overwriteFile (doc, old, callback) {
     log.info(`Overwrite file ${doc.path}`)
-    return this.addOrOverwriteFile(doc, old, callback)
+    this.addOrOverwriteFile(doc, old, callback)
   }
 
   // Add or overwrite a file
   addOrOverwriteFile (doc, old, callback) {
     let binary, remote
-    return async.waterfall([
+    async.waterfall([
       // Find or create the binary doc
       next => {
-        return this.pouch.byChecksum(doc.checksum, (_, files) => {
+        this.pouch.byChecksum(doc.checksum, (_, files) => {
           binary = null
           for (let file of Array.from(files || [])) {
             if (this.isUpToDate(file)) {
@@ -247,20 +247,20 @@ class Remote {
           }
           if (binary) {
             this.events.emit('transfer-copy', doc)
-            return next(null, binary)
+            next(null, binary)
           } else {
-            return this.uploadBinary(doc, next)
+            this.uploadBinary(doc, next)
           }
         })
       },
 
       // Check that the file was not removed/deleted while uploaded
       (binaryDoc, next) => {
-        return this.pouch.db.get(doc._id, err => {
+        this.pouch.db.get(doc._id, err => {
           if (err) {
-            return this.cleanBinary(binaryDoc._id, () => next(err))
+            this.cleanBinary(binaryDoc._id, () => next(err))
           } else {
-            return next(null, binaryDoc)
+            next(null, binaryDoc)
           }
         })
       },
@@ -275,7 +275,7 @@ class Remote {
         let remoteDoc = this.createRemoteDoc(doc, remote)
         let remoteOld = {}
         if (old) { remoteOld = this.createRemoteDoc(old) }
-        return this.couch.putRemoteDoc(remoteDoc, remoteOld, (err, created) => next(err, created, binaryDoc))
+        this.couch.putRemoteDoc(remoteDoc, remoteOld, (err, created) => next(err, created, binaryDoc))
       },
 
       // Save remote and clean previous binary
@@ -289,9 +289,9 @@ class Remote {
           }
         }
         if (__guard__(old, x => x.remote)) {
-          return this.cleanBinary(old.remote.binary._id, next)
+          this.cleanBinary(old.remote.binary._id, next)
         } else {
-          return next(null, created)
+          next(null, created)
         }
       }
     ], callback)
@@ -304,7 +304,7 @@ class Remote {
       let remoteDoc = this.createRemoteDoc(doc, old.remote)
       let remoteOld = {}
       if (old) { remoteOld = this.createRemoteDoc(old) }
-      return this.couch.putRemoteDoc(remoteDoc, remoteOld, function (err, updated) {
+      this.couch.putRemoteDoc(remoteDoc, remoteOld, function (err, updated) {
         if (!err) {
           doc.remote = {
             _id: updated.id,
@@ -312,10 +312,10 @@ class Remote {
             binary: old.remote.binary
           }
         }
-        return callback(err, updated)
+        callback(err, updated)
       })
     } else {
-      return this.addFile(doc, callback)
+      this.addFile(doc, callback)
     }
   }
 
@@ -323,25 +323,25 @@ class Remote {
   updateFolder (doc, old, callback) {
     log.info(`Update folder ${doc.path}`)
     if (old.remote) {
-      return this.couch.get(old.remote._id, (err, folder) => {
+      this.couch.get(old.remote._id, (err, folder) => {
         if (err) {
-          return callback(err)
+          callback(err)
         } else {
           folder.tags = doc.tags
           folder.lastModification = doc.lastModification
-          return this.couch.put(folder, function (err, updated) {
+          this.couch.put(folder, function (err, updated) {
             if (!err) {
               doc.remote = {
                 _id: updated.id,
                 _rev: updated.rev
               }
             }
-            return callback(err, updated)
+            callback(err, updated)
           })
         }
       })
     } else {
-      return this.addFolder(doc, callback)
+      this.addFolder(doc, callback)
     }
   }
 
@@ -349,15 +349,15 @@ class Remote {
   moveFile (doc, old, callback) {
     log.info(`Move file ${old.path} → ${doc.path}`)
     if (old.remote) {
-      return this.couch.get(old.remote._id, (err, remoteDoc) => {
+      this.couch.get(old.remote._id, (err, remoteDoc) => {
         if (err) {
-          return this.addFile(doc, callback)
+          this.addFile(doc, callback)
         } else {
           let [dir, name] = this.extractDirAndName(doc.path)
           remoteDoc.path = dir
           remoteDoc.name = name
           remoteDoc.lastModification = doc.lastModification
-          return this.couch.put(remoteDoc, (err, moved) => {
+          this.couch.put(remoteDoc, (err, moved) => {
             if (!err) {
               this.events.emit('transfer-move', doc, old)
               doc.remote = {
@@ -366,12 +366,12 @@ class Remote {
                 binary: old.remote.binary
               }
             }
-            return callback(err, moved)
+            callback(err, moved)
           })
         }
       })
     } else {
-      return this.addFile(doc, callback)
+      this.addFile(doc, callback)
     }
   }
 
@@ -379,20 +379,20 @@ class Remote {
   moveFolder (doc, old, callback) {
     log.info(`Move folder ${old.path} → ${doc.path}`)
     if (old.remote) {
-      return this.couch.get(old.remote._id, (err, folder) => {
+      this.couch.get(old.remote._id, (err, folder) => {
         if (err) {
-          return callback(err)
+          callback(err)
         } else {
           let [dir, name] = this.extractDirAndName(doc.path)
           folder.path = dir
           folder.name = name
           folder.tags = doc.tags
           folder.lastModification = doc.lastModification
-          return this.couch.put(folder, callback)
+          this.couch.put(folder, callback)
         }
       })
     } else {
-      return this.addFolder(doc, callback)
+      this.addFolder(doc, callback)
     }
   }
 
@@ -400,16 +400,16 @@ class Remote {
   deleteFile (doc, callback) {
     log.info(`Delete file ${doc.path}`)
     this.events.emit('delete-file', doc)
-    if (!doc.remote) { return callback() }
+    if (!doc.remote) { callback() }
     let remoteDoc = this.createRemoteDoc(doc, doc.remote)
-    return this.couch.removeRemoteDoc(remoteDoc, (err, removed) => {
+    this.couch.removeRemoteDoc(remoteDoc, (err, removed) => {
       // Ignore files that have already been removed
       if (__guard__(err, x => x.status) === 404) {
-        return callback(null, removed)
+        callback(null, removed)
       } else if (err) {
-        return callback(err, removed)
+        callback(err, removed)
       } else {
-        return this.cleanBinary(doc.remote.binary._id, _ => callback(null, removed))
+        this.cleanBinary(doc.remote.binary._id, _ => callback(null, removed))
       }
     })
   }
@@ -420,27 +420,27 @@ class Remote {
     if (doc.remote) {
       let remoteDoc = this.createRemoteDoc(doc, doc.remote)
       remoteDoc._deleted = true
-      return this.couch.put(remoteDoc, function (err, removed) {
+      this.couch.put(remoteDoc, function (err, removed) {
         // Ignore folders that have already been removed
         if (__guard__(err, x => x.status) === 404) {
-          return callback(null, removed)
+          callback(null, removed)
         } else {
-          return callback(err, removed)
+          callback(err, removed)
         }
       })
     } else {
-      return callback()
+      callback()
     }
   }
 
   // Rename a file/folder to resolve a conflict
   resolveConflict (dst, src, callback) {
     log.info(`Resolve a conflict: ${src.path} → ${dst.path}`)
-    return this.couch.get(src.remote._id, (_, doc) => {
+    this.couch.get(src.remote._id, (_, doc) => {
       let [dir, name] = this.extractDirAndName(dst.path)
       doc.path = dir
       doc.name = name
-      return this.couch.put(doc, callback)
+      this.couch.put(doc, callback)
     })
   }
 }
