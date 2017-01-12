@@ -24,8 +24,7 @@ describe('Pull', function () {
         clearInterval(interval)
         return callback()
       }
-    }
-        , 20)
+    }, 20)
   }
 
   let waitDisappear = function (localPath, callback) {
@@ -35,8 +34,7 @@ describe('Pull', function () {
         clearInterval(interval)
         return callback()
       }
-    }
-        , 20)
+    }, 20)
   }
 
   let parent = {
@@ -61,8 +59,7 @@ describe('Pull', function () {
         stats.isDirectory().should.be.true()
         done()
       })
-    }
-        )
+    })
   })
 
   it('renames the folder', function (done) {
@@ -74,8 +71,7 @@ describe('Pull', function () {
         fs.existsSync(oldPath).should.be.false()
         done()
       })
-    }
-        )
+    })
   })
 
   it('moves the folder', function (done) {
@@ -88,8 +84,7 @@ describe('Pull', function () {
           fs.existsSync(oldPath).should.be.false()
           done()
         })
-      }
-            )
+      })
     }
         )
   })
@@ -98,8 +93,7 @@ describe('Pull', function () {
     Files.removeFolder(folder, (_, removed) => {
       let folderPath = path.join(this.syncPath, folder.path, folder.name)
       return waitDisappear(folderPath, done)
-    }
-        )
+    })
   })
 
   it('creates a file on the local fs from the remote cozy', function (done) {
@@ -113,8 +107,7 @@ describe('Pull', function () {
         stats.size.should.equal(fs.statSync(fixturePath).size)
         return setTimeout(done, 200)
       })
-    }
-        )
+    })
   })
 
   it('renames the file', function (done) {
@@ -126,8 +119,7 @@ describe('Pull', function () {
         fs.existsSync(oldPath).should.be.false()
         done()
       })
-    }
-        )
+    })
   })
 
   it('moves the file', function (done) {
@@ -139,15 +131,13 @@ describe('Pull', function () {
         fs.existsSync(oldPath).should.be.false()
         done()
       })
-    }
-        )
+    })
   })
 
   it('removes the file', function (done) {
     Files.removeFile(file, (_, removed) => {
       let filePath = path.join(this.syncPath, file.path, file.name)
       return waitDisappear(filePath, done)
-    }
-        )
+    })
   })
 })

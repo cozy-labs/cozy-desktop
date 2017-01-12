@@ -21,99 +21,99 @@ describe('Merge Helpers', function () {
   after('clean config directory', configHelpers.cleanConfig)
 
   describe('sameDate', () =>
-        it('returns true if the date are nearly the same', function () {
-          let a = '2015-12-01T11:22:56.517Z'
-          let b = '2015-12-01T11:22:56.000Z'
-          let c = '2015-12-01T11:22:57.000Z'
-          let d = '2015-12-01T11:22:59.200Z'
-          let e = '2015-12-01T11:22:52.200Z'
-          this.merge.sameDate(a, b).should.be.true()
-          this.merge.sameDate(a, c).should.be.true()
-          this.merge.sameDate(a, d).should.be.true()
-          this.merge.sameDate(a, e).should.be.false()
-          this.merge.sameDate(b, c).should.be.true()
-          this.merge.sameDate(b, d).should.be.false()
-          this.merge.sameDate(b, e).should.be.false()
-          this.merge.sameDate(c, d).should.be.true()
-          this.merge.sameDate(c, e).should.be.false()
-          this.merge.sameDate(d, e).should.be.false()
-        })
-    )
+    it('returns true if the date are nearly the same', function () {
+      let a = '2015-12-01T11:22:56.517Z'
+      let b = '2015-12-01T11:22:56.000Z'
+      let c = '2015-12-01T11:22:57.000Z'
+      let d = '2015-12-01T11:22:59.200Z'
+      let e = '2015-12-01T11:22:52.200Z'
+      this.merge.sameDate(a, b).should.be.true()
+      this.merge.sameDate(a, c).should.be.true()
+      this.merge.sameDate(a, d).should.be.true()
+      this.merge.sameDate(a, e).should.be.false()
+      this.merge.sameDate(b, c).should.be.true()
+      this.merge.sameDate(b, d).should.be.false()
+      this.merge.sameDate(b, e).should.be.false()
+      this.merge.sameDate(c, d).should.be.true()
+      this.merge.sameDate(c, e).should.be.false()
+      this.merge.sameDate(d, e).should.be.false()
+    })
+  )
 
   describe('sameFolder', () =>
-        it('returns true if the folders are the same', function () {
-          let a = {
-            _id: 'FOO/BAR',
-            docType: 'folder',
-            path: 'foo/bar',
-            creationDate: '2015-12-01T11:22:56.517Z',
-            lastModification: '2015-12-01T11:22:56.517Z',
-            tags: ['qux'],
-            remote: {
-              id: '123',
-              rev: '4-567'
-            }
-          }
-          let b = {
-            _id: 'FOO/BAR',
-            docType: 'folder',
-            path: 'FOO/BAR',
-            creationDate: '2015-12-01T11:22:56.000Z',
-            lastModification: '2015-12-01T11:22:57.000Z',
-            tags: ['qux'],
-            remote: {
-              id: '123',
-              rev: '4-567'
-            }
-          }
-          let c = {
-            _id: 'FOO/BAR',
-            docType: 'folder',
-            path: 'FOO/BAR',
-            creationDate: '2015-12-01T11:22:56.000Z',
-            lastModification: '2015-12-01T11:22:57.000Z',
-            tags: ['qux', 'courge'],
-            remote: {
-              id: '123',
-              rev: '4-567'
-            }
-          }
-          let d = {
-            _id: 'FOO/BAR',
-            docType: 'folder',
-            path: 'FOO/BAR',
-            creationDate: '2015-12-01T11:22:56.000Z',
-            lastModification: '2015-12-01T11:22:57.000Z',
-            tags: ['qux', 'courge'],
-            remote: {
-              id: '123',
-              rev: '8-901'
-            }
-          }
-          let e = {
-            _id: 'FOO/BAZ',
-            docType: 'folder',
-            path: 'FOO/BAZ',
-            creationDate: '2015-12-01T11:22:56.000Z',
-            lastModification: '2015-12-01T11:22:57.000Z',
-            tags: ['qux'],
-            remote: {
-              id: '123',
-              rev: '4-567'
-            }
-          }
-          this.merge.sameFolder(a, b).should.be.true()
-          this.merge.sameFolder(a, c).should.be.false()
-          this.merge.sameFolder(a, d).should.be.false()
-          this.merge.sameFolder(a, e).should.be.false()
-          this.merge.sameFolder(b, c).should.be.false()
-          this.merge.sameFolder(b, d).should.be.false()
-          this.merge.sameFolder(b, e).should.be.false()
-          this.merge.sameFolder(c, d).should.be.false()
-          this.merge.sameFolder(c, e).should.be.false()
-          this.merge.sameFolder(d, e).should.be.false()
-        })
-    )
+    it('returns true if the folders are the same', function () {
+      let a = {
+        _id: 'FOO/BAR',
+        docType: 'folder',
+        path: 'foo/bar',
+        creationDate: '2015-12-01T11:22:56.517Z',
+        lastModification: '2015-12-01T11:22:56.517Z',
+        tags: ['qux'],
+        remote: {
+          id: '123',
+          rev: '4-567'
+        }
+      }
+      let b = {
+        _id: 'FOO/BAR',
+        docType: 'folder',
+        path: 'FOO/BAR',
+        creationDate: '2015-12-01T11:22:56.000Z',
+        lastModification: '2015-12-01T11:22:57.000Z',
+        tags: ['qux'],
+        remote: {
+          id: '123',
+          rev: '4-567'
+        }
+      }
+      let c = {
+        _id: 'FOO/BAR',
+        docType: 'folder',
+        path: 'FOO/BAR',
+        creationDate: '2015-12-01T11:22:56.000Z',
+        lastModification: '2015-12-01T11:22:57.000Z',
+        tags: ['qux', 'courge'],
+        remote: {
+          id: '123',
+          rev: '4-567'
+        }
+      }
+      let d = {
+        _id: 'FOO/BAR',
+        docType: 'folder',
+        path: 'FOO/BAR',
+        creationDate: '2015-12-01T11:22:56.000Z',
+        lastModification: '2015-12-01T11:22:57.000Z',
+        tags: ['qux', 'courge'],
+        remote: {
+          id: '123',
+          rev: '8-901'
+        }
+      }
+      let e = {
+        _id: 'FOO/BAZ',
+        docType: 'folder',
+        path: 'FOO/BAZ',
+        creationDate: '2015-12-01T11:22:56.000Z',
+        lastModification: '2015-12-01T11:22:57.000Z',
+        tags: ['qux'],
+        remote: {
+          id: '123',
+          rev: '4-567'
+        }
+      }
+      this.merge.sameFolder(a, b).should.be.true()
+      this.merge.sameFolder(a, c).should.be.false()
+      this.merge.sameFolder(a, d).should.be.false()
+      this.merge.sameFolder(a, e).should.be.false()
+      this.merge.sameFolder(b, c).should.be.false()
+      this.merge.sameFolder(b, d).should.be.false()
+      this.merge.sameFolder(b, e).should.be.false()
+      this.merge.sameFolder(c, d).should.be.false()
+      this.merge.sameFolder(c, e).should.be.false()
+      this.merge.sameFolder(d, e).should.be.false()
+    })
+  )
 
   describe('sameFile', function () {
     it('returns true if the files are the same', function () {
@@ -326,8 +326,7 @@ describe('Merge Helpers', function () {
           should.not.exist(err)
           done()
         })
-      }
-            )
+      })
     })
 
     it('creates the parent directory if missing', function (done) {
@@ -345,8 +344,7 @@ describe('Merge Helpers', function () {
           docType: 'folder'
         })
         done()
-      }
-            )
+      })
     })
 
     it('creates the full tree if needed', function (done) {
@@ -368,8 +366,7 @@ describe('Merge Helpers', function () {
           })
         }
         done()
-      }
-            )
+      })
     })
   })
 

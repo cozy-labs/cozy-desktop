@@ -12,8 +12,7 @@ export default {
     this.pouch.db.destroy(() => {
       this.pouch = null
       done()
-    }
-        )
+    })
   },
 
   createParentFolder (pouch, callback) {

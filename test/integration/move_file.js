@@ -55,13 +55,13 @@ describe('Move a file', function () {
     })
 
     it('has the file on remote', done =>
-            Files.getAllFiles(function (_, files) {
-              files.length.should.equal(1)
-              files[0].size.should.eql(src.size)
-              files[0].name.should.equal(dst.name)
-              done()
-            })
-        )
+      Files.getAllFiles(function (_, files) {
+        files.length.should.equal(1)
+        files[0].size.should.eql(src.size)
+        files[0].name.should.equal(dst.name)
+        done()
+      })
+    )
   })
 
   describe('on remote', function () {
@@ -108,12 +108,12 @@ describe('Move a file', function () {
     })
 
     it('has the file on remote', done =>
-            Files.getAllFiles(function (_, files) {
-              files.length.should.equal(1)
-              files[0].size.should.eql(src.size)
-              files[0].name.should.equal(dst.name)
-              done()
-            })
-        )
+      Files.getAllFiles(function (_, files) {
+        files.length.should.equal(1)
+        files[0].size.should.eql(src.size)
+        files[0].name.should.equal(dst.name)
+        done()
+      })
+    )
   })
 })

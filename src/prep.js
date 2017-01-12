@@ -28,30 +28,30 @@ class Prep {
     }
   }
 
-    /* Helpers */
+  /* Helpers */
 
-    // Build an _id from the path for a case sensitive file system (Linux, BSD)
+  // Build an _id from the path for a case sensitive file system (Linux, BSD)
   buildIdUnix (doc) {
     doc._id = doc.path
   }
 
-    // Build an _id from the path for OSX (HFS+ file system):
-    // - case preservative, but not case sensitive
-    // - unicode NFD normalization (sort of)
-    //
-    // See https://nodejs.org/en/docs/guides/working-with-different-filesystems/
-    // for why toUpperCase is better than toLowerCase
-    //
-    // Note: String.prototype.normalize is not available on node 0.10 and does
-    // nothing when node is compiled without intl option.
+  // Build an _id from the path for OSX (HFS+ file system):
+  // - case preservative, but not case sensitive
+  // - unicode NFD normalization (sort of)
+  //
+  // See https://nodejs.org/en/docs/guides/working-with-different-filesystems/
+  // for why toUpperCase is better than toLowerCase
+  //
+  // Note: String.prototype.normalize is not available on node 0.10 and does
+  // nothing when node is compiled without intl option.
   buildIdHFS (doc) {
     let id = doc.path
     if (id.normalize) { id = id.normalize('NFD') }
     doc._id = id.toUpperCase()
   }
 
-    // Return true if the document has not a valid path
-    // (ie a path inside the mount point)
+  // Return true if the document has not a valid path
+  // (ie a path inside the mount point)
   invalidPath (doc) {
     if (!doc.path) { return true }
     doc.path = path.normalize(doc.path)
@@ -62,10 +62,10 @@ class Prep {
             (parts.indexOf('..') >= 0)
   }
 
-    // Return true if the checksum is invalid
-    // If the checksum is missing, it is not invalid, just missing,
-    // so it returns false.
-    // SHA-1 has 40 hexadecimal letters
+  // Return true if the checksum is invalid
+  // If the checksum is missing, it is not invalid, just missing,
+  // so it returns false.
+  // SHA-1 has 40 hexadecimal letters
   invalidChecksum (doc) {
     if (doc.checksum != null) {
       doc.checksum = doc.checksum.toLowerCase()
@@ -75,7 +75,7 @@ class Prep {
     }
   }
 
-    // Simple helper to add a file or a folder
+  // Simple helper to add a file or a folder
   addDoc (side, doc, callback) {
     if (doc.docType === 'file') {
       return this.addFile(side, doc, callback)
@@ -86,7 +86,7 @@ class Prep {
     }
   }
 
-    // Simple helper to update a file or a folder
+  // Simple helper to update a file or a folder
   updateDoc (side, doc, callback) {
     if (doc.docType === 'file') {
       return this.updateFile(side, doc, callback)
@@ -97,7 +97,7 @@ class Prep {
     }
   }
 
-    // Helper to move/rename a file or a folder
+  // Helper to move/rename a file or a folder
   moveDoc (side, doc, was, callback) {
     if (doc.docType !== was.docType) {
       return callback(new Error(`Incompatible docTypes: ${doc.docType}`))
@@ -110,7 +110,7 @@ class Prep {
     }
   }
 
-    // Simple helper to delete a file or a folder
+  // Simple helper to delete a file or a folder
   deleteDoc (side, doc, callback) {
     if (doc.docType === 'file') {
       return this.deleteFile(side, doc, callback)
@@ -121,11 +121,11 @@ class Prep {
     }
   }
 
-    /* Actions */
+  /* Actions */
 
-    // Expectations:
-    //   - the file path is present and valid
-    //   - the checksum is valid, if present
+  // Expectations:
+  //   - the file path is present and valid
+  //   - the checksum is valid, if present
   addFile (side, doc, callback) {
     if (this.invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
@@ -149,9 +149,9 @@ class Prep {
     }
   }
 
-    // Expectations:
-    //   - the file path is present and valid
-    //   - the checksum is valid, if present
+  // Expectations:
+  //   - the file path is present and valid
+  //   - the checksum is valid, if present
   updateFile (side, doc, callback) {
     if (this.invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
@@ -174,8 +174,8 @@ class Prep {
     }
   }
 
-    // Expectations:
-    //   - the folder path is present and valid
+  // Expectations:
+  //   - the folder path is present and valid
   putFolder (side, doc, callback) {
     if (this.invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
@@ -195,12 +195,12 @@ class Prep {
     }
   }
 
-    // Expectations:
-    //   - the new file path is present and valid
-    //   - the old file path is present and valid
-    //   - the checksum is valid, if present
-    //   - the two paths are not the same
-    //   - the revision for the old file is present
+  // Expectations:
+  //   - the new file path is present and valid
+  //   - the old file path is present and valid
+  //   - the checksum is valid, if present
+  //   - the two paths are not the same
+  //   - the revision for the old file is present
   moveFile (side, doc, was, callback) {
     if (this.invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
@@ -244,11 +244,11 @@ class Prep {
     }
   }
 
-    // Expectations:
-    //   - the new folder path is present and valid
-    //   - the old folder path is present and valid
-    //   - the two paths are not the same
-    //   - the revision for the old folder is present
+  // Expectations:
+  //   - the new folder path is present and valid
+  //   - the old folder path is present and valid
+  //   - the two paths are not the same
+  //   - the revision for the old folder is present
   moveFolder (side, doc, was, callback) {
     if (this.invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
@@ -288,8 +288,8 @@ class Prep {
     }
   }
 
-    // Expectations:
-    //   - the file path is present and valid
+  // Expectations:
+  //   - the file path is present and valid
   deleteFile (side, doc, callback) {
     if (this.invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
@@ -305,8 +305,8 @@ class Prep {
     }
   }
 
-    // Expectations:
-    //   - the folder path is present and valid
+  // Expectations:
+  //   - the folder path is present and valid
   deleteFolder (side, doc, callback) {
     if (this.invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)

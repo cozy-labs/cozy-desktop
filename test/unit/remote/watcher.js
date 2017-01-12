@@ -31,12 +31,9 @@ describe('RemoteWatcher Tests', function () {
       return async.eachSeries([1, 2, 3], (i, callback) => {
         return pouchHelpers.createFolder(this.pouch, i, () => {
           return pouchHelpers.createFile(this.pouch, i, callback)
-        }
-                )
-      }
-            , done)
-    }
-        )
+        })
+      }, done)
+    })
   })
 
   describe('onChange', function () {
@@ -71,8 +68,7 @@ describe('RemoteWatcher Tests', function () {
         this.watcher.putDoc.called.should.be.false()
         this.watcher.putDoc.restore()
         done()
-      }
-            )
+      })
     })
 
     it('calls addDoc for a new doc', function (done) {
@@ -115,8 +111,7 @@ describe('RemoteWatcher Tests', function () {
         })
         args[1].should.not.have.properties(['_rev', 'path', 'name'])
         done()
-      }
-            )
+      })
     })
 
     it('calls updateDoc when tags are updated', function (done) {
@@ -252,8 +247,7 @@ describe('RemoteWatcher Tests', function () {
         })
         dst.should.not.have.properties(['_rev', 'path', 'name'])
         done()
-      }
-            )
+      })
     })
 
     it('calls moveDoc when file is moved', function (done) {
@@ -303,8 +297,7 @@ describe('RemoteWatcher Tests', function () {
         })
         dst.should.not.have.properties(['_rev', 'path', 'name'])
         done()
-      }
-            )
+      })
     })
 
     it('calls deletedDoc&addDoc when file has changed completely', function (done) {
@@ -349,8 +342,7 @@ describe('RemoteWatcher Tests', function () {
         })
         args[1].should.not.have.properties(['_rev', 'path', 'name'])
         done()
-      }
-            )
+      })
     })
 
     it('calls deleteDoc for a deleted doc', function (done) {
@@ -366,8 +358,7 @@ describe('RemoteWatcher Tests', function () {
         let id = this.prep.deleteDoc.args[0][1].path
         id.should.equal('my-folder/file-1')
         done()
-      }
-            )
+      })
     })
 
     it('calls addDoc for folder created by the mobile app', function (done) {
@@ -397,43 +388,39 @@ describe('RemoteWatcher Tests', function () {
           }
         })
         done()
-      }
-            )
+      })
     })
   })
 
   describe('removeRemote', () =>
-        it('remove the association between a document and its remote', function (done) {
-          let doc = {
-            _id: 'removeRemote',
-            path: 'removeRemote',
-            docType: 'file',
-            checksum: 'd3e2163ccd0c497969233a6bd2a4ac843fb8165e',
-            sides: {
-              local: 2,
-              remote: 1
-            }
-          }
-          this.pouch.db.put(doc, err => {
+    it('remove the association between a document and its remote', function (done) {
+      let doc = {
+        _id: 'removeRemote',
+        path: 'removeRemote',
+        docType: 'file',
+        checksum: 'd3e2163ccd0c497969233a6bd2a4ac843fb8165e',
+        sides: {
+          local: 2,
+          remote: 1
+        }
+      }
+      this.pouch.db.put(doc, err => {
+        should.not.exist(err)
+        return this.pouch.db.get(doc._id, (err, was) => {
+          should.not.exist(err)
+          return this.watcher.removeRemote(was, err => {
             should.not.exist(err)
-            return this.pouch.db.get(doc._id, (err, was) => {
+            return this.pouch.db.get(doc._id, function (err, actual) {
               should.not.exist(err)
-              return this.watcher.removeRemote(was, err => {
-                should.not.exist(err)
-                return this.pouch.db.get(doc._id, function (err, actual) {
-                  should.not.exist(err)
-                  should.not.exist(actual.sides.remote)
-                  should.not.exist(actual.remote)
-                  actual._id.should.equal(doc._id)
-                  actual.sides.local.should.equal(2)
-                  done()
-                })
-              }
-                    )
-            }
-                )
-          }
-            )
+              should.not.exist(actual.sides.remote)
+              should.not.exist(actual.remote)
+              actual._id.should.equal(doc._id)
+              actual.sides.local.should.equal(2)
+              done()
+            })
+          })
         })
-    )
+      })
+    })
+  )
 })

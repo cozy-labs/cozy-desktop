@@ -13,34 +13,34 @@ describe('device', function () {
 
   describe('pingCozy', function () {
     it('says OK when the URL belongs to a cozy', done =>
-            device.pingCozy(Cozy.url, function (err) {
-              should.not.exist(err)
-              done()
-            })
-        )
+      device.pingCozy(Cozy.url, function (err) {
+        should.not.exist(err)
+        done()
+      })
+    )
 
     it('says KO else', done =>
-            device.pingCozy('http://localhost:12345', function (err) {
-              should.exist(err)
-              done()
-            })
-        )
+      device.pingCozy('http://localhost:12345', function (err) {
+        should.exist(err)
+        done()
+      })
+    )
   })
 
   describe('checkCredentials', function () {
     it('says OK with good credentials', done =>
-            device.checkCredentials(Cozy.url, Cozy.password, function (err) {
-              should.not.exist(err)
-              done()
-            })
-        )
+      device.checkCredentials(Cozy.url, Cozy.password, function (err) {
+        should.not.exist(err)
+        done()
+      })
+    )
 
     it('says KO with bad credentials', done =>
-            device.checkCredentials(Cozy.url, 'xxxxxxxx', function (err) {
-              should.exist(err)
-              done()
-            })
-        )
+      device.checkCredentials(Cozy.url, 'xxxxxxxx', function (err) {
+        should.exist(err)
+        done()
+      })
+    )
   })
 
   let devicePasswords = []

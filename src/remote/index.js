@@ -30,7 +30,7 @@ class Remote {
     this.other = null
   }
 
-    // Start initial replication + watching changes in live
+  // Start initial replication + watching changes in live
   start (done) {
     return this.watcher.listenToChanges({live: false}, err => {
       done(err)
@@ -38,14 +38,12 @@ class Remote {
         this.watching = true
         return this.watcher.listenToChanges({live: true}, () => {
           this.watching = false
-        }
-                )
+        })
       }
-    }
-        )
+    })
   }
 
-    // Stop listening to couchdb changes
+  // Stop listening to couchdb changes
   stop (callback) {
     let interval
     this.watcher.stopListening()
@@ -54,11 +52,10 @@ class Remote {
         clearInterval(interval)
         return callback()
       }
-    }
-        , 100)
+    }, 100)
   }
 
-    // Create a readable stream for the given doc
+  // Create a readable stream for the given doc
   createReadStream (doc, callback) {
     if (doc.remote.binary != null) {
       return this.couch.downloadBinary(doc.remote.binary._id, callback)
@@ -67,9 +64,9 @@ class Remote {
     }
   }
 
-    /* Helpers */
+  /* Helpers */
 
-    // Add attachment to the binary document by uploading a file
+  // Add attachment to the binary document by uploading a file
   addAttachment (doc, binary, callback) {
     let done = err => {
       let cb;
@@ -81,13 +78,13 @@ class Remote {
       }
     }
 
-        // Don't use async callback here!
-        // Async does some magic and the stream can throw an 'error'
-        // event before the next async callback is called...
+    // Don't use async callback here!
+    // Async does some magic and the stream can throw an 'error'
+    // event before the next async callback is called...
     return this.other.createReadStream(doc, (err, stream) => {
       if (err) { return callback(err) }
       stream.on('error', () => callback(new Error('Invalid file')))
-            // Be sure that the checksum is correct
+      // Be sure that the checksum is correct
       let checksum = crypto.createHash('sha1')
       checksum.setEncoding('hex')
       stream.pipe(checksum)
@@ -97,28 +94,25 @@ class Remote {
           return done(new Error('Invalid checksum'))
         }
       })
-            // Emit events to track the download progress
+      // Emit events to track the download progress
       let info = clone(doc)
       info.way = 'up'
       info.eventName = `transfer-up-${doc._id}`
       this.events.emit('transfer-started', info)
       stream.on('data', data => {
         return this.events.emit(info.eventName, data)
-      }
-            )
+      })
       stream.on('close', () => {
         return this.events.emit(info.eventName, {finished: true})
-      }
-            )
+      })
       let {_id, _rev} = binary
       let mime = doc.mime || 'application/octet-stream'
       return this.couch.uploadAsAttachment(_id, _rev, mime, stream, done)
-    }
-        )
+    })
   }
 
-    // Upload the binary as a CouchDB document's attachment and return
-    // the binary document
+  // Upload the binary as a CouchDB document's attachment and return
+  // the binary document
   uploadBinary (doc, callback) {
     log.info(`Upload binary ${doc.checksum}`)
     let binary = {
@@ -136,19 +130,17 @@ class Remote {
             binary._rev = binaryDoc._rev
             return this.addAttachment(doc, binary, callback)
           }
-        }
-                )
+        })
       } else if (err) {
         return callback(err)
       } else {
         binary._rev = created.rev
         return this.addAttachment(doc, binary, callback)
       }
-    }
-        )
+    })
   }
 
-    // Extract the remote path and name from a local id
+  // Extract the remote path and name from a local id
   extractDirAndName (id) {
     let dir = path.dirname(`/${id}`)
     let name = path.basename(id)
@@ -156,7 +148,7 @@ class Remote {
     return [dir, name]
   }
 
-    // Transform a local document in a remote one, with optional binary ref
+  // Transform a local document in a remote one, with optional binary ref
   createRemoteDoc (local, remote) {
     let [dir, name] = this.extractDirAndName(local.path)
     let doc = {
@@ -186,7 +178,7 @@ class Remote {
     return doc
   }
 
-    // Remove the binary if it is no longer referenced
+  // Remove the binary if it is no longer referenced
   cleanBinary (binaryId, callback) {
     return this.couch.get(binaryId, (err, doc) => {
       if (err) {
@@ -198,30 +190,28 @@ class Remote {
           } else {
             return this.couch.remove(doc._id, doc._rev, callback)
           }
-        }
-                )
+        })
       }
-    }
-        )
+    })
   }
 
-    // Return true if the remote file is up-to-date for this document
+  // Return true if the remote file is up-to-date for this document
   isUpToDate (doc) {
     let currentRev = doc.sides.remote || 0
     let lastRev = this.pouch.extractRevNumber(doc)
     return currentRev === lastRev
   }
 
-    /* Write operations */
+  /* Write operations */
 
-    // Create a file on the remote cozy instance
-    // It can also be an overwrite of the file
+  // Create a file on the remote cozy instance
+  // It can also be an overwrite of the file
   addFile (doc, callback) {
     log.info(`Add file ${doc.path}`)
     return this.addOrOverwriteFile(doc, null, callback)
   }
 
-    // Create a folder on the remote cozy instance
+  // Create a folder on the remote cozy instance
   addFolder (doc, callback) {
     log.info(`Add folder ${doc.path}`)
     let folder = this.createRemoteDoc(doc)
@@ -236,17 +226,17 @@ class Remote {
     })
   }
 
-    // Overwrite a file
+  // Overwrite a file
   overwriteFile (doc, old, callback) {
     log.info(`Overwrite file ${doc.path}`)
     return this.addOrOverwriteFile(doc, old, callback)
   }
 
-    // Add or overwrite a file
+  // Add or overwrite a file
   addOrOverwriteFile (doc, old, callback) {
     let binary, remote
     return async.waterfall([
-            // Find or create the binary doc
+      // Find or create the binary doc
       next => {
         return this.pouch.byChecksum(doc.checksum, (_, files) => {
           binary = null
@@ -261,11 +251,10 @@ class Remote {
           } else {
             return this.uploadBinary(doc, next)
           }
-        }
-                )
+        })
       },
 
-            // Check that the file was not removed/deleted while uploaded
+      // Check that the file was not removed/deleted while uploaded
       (binaryDoc, next) => {
         return this.pouch.db.get(doc._id, err => {
           if (err) {
@@ -273,11 +262,10 @@ class Remote {
           } else {
             return next(null, binaryDoc)
           }
-        }
-                )
+        })
       },
 
-            // Save the 'file' document in the remote couch
+      // Save the 'file' document in the remote couch
       (binaryDoc, next) => {
         remote = {
           _id: __guard__(doc.remote, x => x._id) || __guard__(old, x1 => x1.remote._id),
@@ -290,7 +278,7 @@ class Remote {
         return this.couch.putRemoteDoc(remoteDoc, remoteOld, (err, created) => next(err, created, binaryDoc))
       },
 
-            // Save remote and clean previous binary
+      // Save remote and clean previous binary
       (created, binaryDoc, next) => {
         doc.remote = {
           _id: created.id,
@@ -309,7 +297,7 @@ class Remote {
     ], callback)
   }
 
-    // Update the metadata of a file
+  // Update the metadata of a file
   updateFileMetadata (doc, old, callback) {
     log.info(`Update file ${doc.path}`)
     if (old.remote) {
@@ -331,7 +319,7 @@ class Remote {
     }
   }
 
-    // Update metadata of a folder
+  // Update metadata of a folder
   updateFolder (doc, old, callback) {
     log.info(`Update folder ${doc.path}`)
     if (old.remote) {
@@ -351,14 +339,13 @@ class Remote {
             return callback(err, updated)
           })
         }
-      }
-            )
+      })
     } else {
       return this.addFolder(doc, callback)
     }
   }
 
-    // Move a file on the remote cozy instance
+  // Move a file on the remote cozy instance
   moveFile (doc, old, callback) {
     log.info(`Move file ${old.path} → ${doc.path}`)
     if (old.remote) {
@@ -380,17 +367,15 @@ class Remote {
               }
             }
             return callback(err, moved)
-          }
-                    )
+          })
         }
-      }
-            )
+      })
     } else {
       return this.addFile(doc, callback)
     }
   }
 
-    // Move a folder on the remote cozy instance
+  // Move a folder on the remote cozy instance
   moveFolder (doc, old, callback) {
     log.info(`Move folder ${old.path} → ${doc.path}`)
     if (old.remote) {
@@ -405,21 +390,20 @@ class Remote {
           folder.lastModification = doc.lastModification
           return this.couch.put(folder, callback)
         }
-      }
-            )
+      })
     } else {
       return this.addFolder(doc, callback)
     }
   }
 
-    // Delete a file on the remote cozy instance
+  // Delete a file on the remote cozy instance
   deleteFile (doc, callback) {
     log.info(`Delete file ${doc.path}`)
     this.events.emit('delete-file', doc)
     if (!doc.remote) { return callback() }
     let remoteDoc = this.createRemoteDoc(doc, doc.remote)
     return this.couch.removeRemoteDoc(remoteDoc, (err, removed) => {
-            // Ignore files that have already been removed
+      // Ignore files that have already been removed
       if (__guard__(err, x => x.status) === 404) {
         return callback(null, removed)
       } else if (err) {
@@ -427,18 +411,17 @@ class Remote {
       } else {
         return this.cleanBinary(doc.remote.binary._id, _ => callback(null, removed))
       }
-    }
-        )
+    })
   }
 
-    // Delete a folder on the remote cozy instance
+  // Delete a folder on the remote cozy instance
   deleteFolder (doc, callback) {
     log.info(`Delete folder ${doc.path}`)
     if (doc.remote) {
       let remoteDoc = this.createRemoteDoc(doc, doc.remote)
       remoteDoc._deleted = true
       return this.couch.put(remoteDoc, function (err, removed) {
-                // Ignore folders that have already been removed
+        // Ignore folders that have already been removed
         if (__guard__(err, x => x.status) === 404) {
           return callback(null, removed)
         } else {
@@ -450,7 +433,7 @@ class Remote {
     }
   }
 
-    // Rename a file/folder to resolve a conflict
+  // Rename a file/folder to resolve a conflict
   resolveConflict (dst, src, callback) {
     log.info(`Resolve a conflict: ${src.path} → ${dst.path}`)
     return this.couch.get(src.remote._id, (_, doc) => {
@@ -458,8 +441,7 @@ class Remote {
       doc.path = dir
       doc.name = name
       return this.couch.put(doc, callback)
-    }
-        )
+    })
   }
 }
 

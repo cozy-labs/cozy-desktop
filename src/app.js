@@ -45,11 +45,11 @@ let Permissions = {
 let MAX_LOG_SIZE
 class App {
   static initClass () {
-        // When a log file weights more than 0.5Mo, rotate it
+    // When a log file weights more than 0.5Mo, rotate it
     MAX_LOG_SIZE = 500000
   }
 
-    // basePath is the directory where the config and pouch are saved
+  // basePath is the directory where the config and pouch are saved
   constructor (basePath) {
     this.lang = 'fr'
     if (basePath == null) { basePath = os.homedir() }
@@ -60,23 +60,23 @@ class App {
     this.events = new EventEmitter()
   }
 
-    // This method is here to be surcharged by the UI
-    // to ask its password to the user
-    //
-    // callback is a function that takes two parameters: error and password
+  // This method is here to be surcharged by the UI
+  // to ask its password to the user
+  //
+  // callback is a function that takes two parameters: error and password
   askPassword (callback) {
     return callback(new Error('Not implemented'), null)
   }
 
-    // This method is here to be surcharged by the UI
-    // to ask for a confirmation before doing something that can't be cancelled
-    //
-    // callback is a function that takes two parameters: error and a boolean
+  // This method is here to be surcharged by the UI
+  // to ask for a confirmation before doing something that can't be cancelled
+  //
+  // callback is a function that takes two parameters: error and a boolean
   askConfirmation (callback) {
     return callback(new Error('Not implemented'), null)
   }
 
-    // Configure a file to write logs to
+  // Configure a file to write logs to
   writeLogsTo (logfile) {
     this.logfile = logfile
     this.writeToLogfile()
@@ -84,22 +84,21 @@ class App {
     this.logsInterval = setInterval(this.rotateLogfile, 10000)
   }
 
-    // Write logs in a file, by overriding the global console
+  // Write logs in a file, by overriding the global console
   writeToLogfile () {
     let out = fs.createWriteStream(this.logfile, {flags: 'a+', mode: 0o0644})
     printit.console = new Console(out, out)
   }
 
-    // Rotate the log file if it's too heavy
+  // Rotate the log file if it's too heavy
   rotateLogfile () {
     return fs.stat(this.logfile, (err, stats) => {
       if (err || (stats.size < MAX_LOG_SIZE)) { return }
       return fs.rename(this.logfile, `${this.logfile}.old`, this.writeToLogfile)
-    }
-        )
+    })
   }
 
-    // Parse the URL
+  // Parse the URL
   parseCozyUrl (cozyUrl) {
     if (cozyUrl.indexOf(':') === -1) {
       if (cozyUrl.indexOf('.') === -1) {
@@ -110,7 +109,7 @@ class App {
     return url.parse(cozyUrl)
   }
 
-    // Check that the URL belongs to a cozy
+  // Check that the URL belongs to a cozy
   pingCozy (cozyUrl, callback) {
     let parsed = this.parseCozyUrl(cozyUrl)
     if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) {
@@ -123,7 +122,7 @@ class App {
     return device.pingCozy(cozyUrl, err => callback(err, cozyUrl))
   }
 
-    // Register a device on the remote cozy
+  // Register a device on the remote cozy
   registerRemote (cozyUrl, deviceName, callback) {
     let parsed = this.parseCozyUrl(cozyUrl)
     cozyUrl = url.format(parsed)
@@ -147,7 +146,7 @@ class App {
     })
   }
 
-    // Save the config with all the informations for synchonization
+  // Save the config with all the informations for synchonization
   saveConfig (cozyUrl, syncPath, deviceName, password, callback) {
     return fs.ensureDir(syncPath, err => {
       if (err) {
@@ -161,16 +160,14 @@ class App {
         }
         this.config.addRemoteCozy(options)
         log.info('The remote Cozy has properly been configured ' +
-                    'to work with current device.'
-                )
+                 'to work with current device.')
         return callback(null)
       }
-    }
-        )
+    })
   }
 
-    // Register current device to remote Cozy and then save related informations
-    // to the config file (used by CLI, not GUI)
+  // Register current device to remote Cozy and then save related informations
+  // to the config file (used by CLI, not GUI)
   addRemote (cozyUrl, syncPath, deviceName, callback) {
     return this.registerRemote(cozyUrl, deviceName, (err, credentials) => {
       if (err) {
@@ -195,12 +192,11 @@ class App {
         log.info(`Device ${deviceName} has been added to ${cozyUrl}`)
         return this.saveConfig(cozyUrl, syncPath, deviceName, password, err => __guardFunc__(callback, f1 => f1(err, credentials)))
       }
-    }
-        )
+    })
   }
 
-    // Unregister current device from remote Cozy and then remove remote from
-    // the config file
+  // Unregister current device from remote Cozy and then remove remote from
+  // the config file
   removeRemote (deviceName, callback) {
     if (callback == null) { callback = function () {} }
     let conf = this.config.getDevice()
@@ -215,11 +211,10 @@ class App {
         log.info('Current device properly removed from remote cozy.')
         return fs.remove(this.basePath, callback)
       }
-    }
-        )
+    })
   }
 
-    // Send an issue by mail to the support
+  // Send an issue by mail to the support
   sendMailToSupport (content, callback) {
     let conf = this.config.getDevice()
     let cozyUrl = conf.url
@@ -241,7 +236,7 @@ class App {
     return device.sendMailFromUser(cozyUrl, deviceName, password, mail, callback)
   }
 
-    // Load ignore rules
+  // Load ignore rules
   loadIgnore () {
     let ignored
     try {
@@ -254,7 +249,7 @@ class App {
     this.ignore = new Ignore(ignored).addDefaultRules()
   }
 
-    // Instanciate some objects before sync
+  // Instanciate some objects before sync
   instanciate () {
     this.loadIgnore()
     this.merge = new Merge(this.pouch)
@@ -265,7 +260,7 @@ class App {
     this.sync.getDiskSpace = this.getDiskSpace
   }
 
-    // Start the synchronization
+  // Start the synchronization
   startSync (mode, callback) {
     this.config.setMode(mode)
     log.info('Run first synchronisation...')
@@ -276,11 +271,10 @@ class App {
         if (err.stack) { log.error(err.stack) }
       }
       return __guardFunc__(callback, f => f(err))
-    }
-        )
+    })
   }
 
-    // Stop the synchronisation
+  // Stop the synchronisation
   stopSync (callback) {
     if (callback == null) { callback = function () {} }
     if (this.sync) {
@@ -290,7 +284,7 @@ class App {
     }
   }
 
-    // Start database sync process and setup file change watcher
+  // Start database sync process and setup file change watcher
   synchronize (mode, callback) {
     let conf = this.config.getDevice()
     if ((conf.deviceName != null) && (conf.url != null) && (conf.path != null)) {
@@ -298,18 +292,17 @@ class App {
       return this.startSync(mode, callback)
     } else {
       log.error('No configuration found, please run add-remote-cozy' +
-                'command before running a synchronization.'
-            )
+                'command before running a synchronization.')
       return __guardFunc__(callback, f => f(new Error('No config')))
     }
   }
 
-    // Display a list of watchers for debugging purpose
+  // Display a list of watchers for debugging purpose
   debugWatchers () {
     return __guard__(this.local, x => x.watcher.debug())
   }
 
-    // Call the callback for each file
+  // Call the callback for each file
   walkFiles (args, callback) {
     this.loadIgnore()
     let options = {
@@ -318,21 +311,20 @@ class App {
       entryType: 'both'
     }
     return readdirp(options)
-            .on('warn', err => log.warn(err))
-            .on('error', err => log.error(err))
-            .on('data', data => {
-              let doc = {
-                _id: data.path,
-                docType: data.stat.isFile() ? 'file' : 'folder'
-              }
-              if (this.ignore.isIgnored(doc) === (args.ignored != null)) {
-                return callback(data.path)
-              }
-            }
-        )
+      .on('warn', err => log.warn(err))
+      .on('error', err => log.error(err))
+      .on('data', data => {
+        let doc = {
+          _id: data.path,
+          docType: data.stat.isFile() ? 'file' : 'folder'
+        }
+        if (this.ignore.isIgnored(doc) === (args.ignored != null)) {
+          return callback(data.path)
+        }
+      })
   }
 
-    // Recreate the local pouch database
+  // Recreate the local pouch database
   resetDatabase (callback) {
     return this.askConfirmation((err, ok) => {
       if (err) {
@@ -346,21 +338,20 @@ class App {
       } else {
         return log.info('Abort!')
       }
-    }
-        )
+    })
   }
 
-    // Return the whole content of the database
+  // Return the whole content of the database
   allDocs (callback) {
     return this.pouch.db.allDocs({include_docs: true}, callback)
   }
 
-    // Return all docs for a given query
+  // Return all docs for a given query
   query (query, callback) {
     return this.pouch.db.query(query, {include_docs: true}, callback)
   }
 
-    // Get disk space informations from the cozy
+  // Get disk space informations from the cozy
   getDiskSpace (callback) {
     let conf = this.config.getDevice()
     return device.getDiskSpace(conf.url, conf.deviceName, conf.password, callback)

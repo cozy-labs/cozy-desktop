@@ -20,52 +20,49 @@ describe('Pouch', function () {
       return async.eachSeries([1, 2, 3], (i, callback) => {
         return pouchHelpers.createFolder(this.pouch, i, () => {
           return pouchHelpers.createFile(this.pouch, i, callback)
-        }
-                )
-      }
-            , done)
-    }
-        )
+        })
+      }, done)
+    })
   })
 
   describe('ODM', function () {
     describe('getAll', () =>
-            it('returns all the documents matching the query', function (done) {
-              let params = {
-                key: 'my-folder',
-                include_docs: true
-              }
-              return this.pouch.getAll('byPath', params, function (err, docs) {
-                should.not.exist(err)
-                docs.length.should.equal(6)
-                for (let i = 1; i <= 3; i++) {
-                  docs[i - 1].should.have.properties({
-                    _id: path.join('my-folder', `file-${i}`),
-                    docType: 'file',
-                    tags: []})
-                  docs[i + 2].should.have.properties({
-                    _id: path.join('my-folder', `folder-${i}`),
-                    docType: 'folder',
-                    tags: []})
-                }
-                done()
-              })
-            })
-        )
+      it('returns all the documents matching the query', function (done) {
+        let params = {
+          key: 'my-folder',
+          include_docs: true
+        }
+        return this.pouch.getAll('byPath', params, function (err, docs) {
+          should.not.exist(err)
+          docs.length.should.equal(6)
+          for (let i = 1; i <= 3; i++) {
+            docs[i - 1].should.have.properties({
+              _id: path.join('my-folder', `file-${i}`),
+              docType: 'file',
+              tags: []})
+            docs[i + 2].should.have.properties({
+              _id: path.join('my-folder', `folder-${i}`),
+              docType: 'folder',
+              tags: []})
+          }
+          done()
+        })
+      })
+    )
 
     describe('byChecksum', () =>
-            it('gets all the files with this checksum', function (done) {
-              let _id = path.join('my-folder', 'file-1')
-              let checksum = '1111111111111111111111111111111111111111'
-              return this.pouch.byChecksum(checksum, function (err, docs) {
-                should.not.exist(err)
-                docs.length.should.be.equal(1)
-                docs[0]._id.should.equal(_id)
-                docs[0].checksum.should.equal(checksum)
-                done()
-              })
-            })
-        )
+      it('gets all the files with this checksum', function (done) {
+        let _id = path.join('my-folder', 'file-1')
+        let checksum = '1111111111111111111111111111111111111111'
+        return this.pouch.byChecksum(checksum, function (err, docs) {
+          should.not.exist(err)
+          docs.length.should.be.equal(1)
+          docs[0]._id.should.equal(_id)
+          docs[0].checksum.should.equal(checksum)
+          done()
+        })
+      })
+    )
 
     describe('byPath', function () {
       it('gets all the files and folders in this path', function (done) {
@@ -193,8 +190,7 @@ function (doc) {
             }
             done()
           })
-        }
-                )
+        })
       })
 
       it('does not update the same design doc', function (done) {
@@ -210,12 +206,9 @@ function (doc) {
                 designDoc._rev.should.equal(was._rev)
                 done()
               })
-            }
-                        )
-          }
-                    )
-        }
-                )
+            })
+          })
+        })
       })
 
       it('updates the design doc if the query change', function (done) {
@@ -233,92 +226,82 @@ function (doc) {
                 designDoc.views.file.map.should.equal(newQuery)
                 done()
               })
-            }
-                        )
-          }
-                    )
-        }
-                )
+            })
+          })
+        })
       })
     })
 
     describe('addByPathView', () =>
-            it('creates the path view', function (done) {
-              return this.pouch.addByPathView(err => {
-                should.not.exist(err)
-                return this.pouch.db.get('_design/byPath', function (err, doc) {
-                  should.not.exist(err)
-                  should.exist(doc)
-                  done()
-                })
-              }
-                )
-            })
-        )
+      it('creates the path view', function (done) {
+        return this.pouch.addByPathView(err => {
+          should.not.exist(err)
+          return this.pouch.db.get('_design/byPath', function (err, doc) {
+            should.not.exist(err)
+            should.exist(doc)
+            done()
+          })
+        })
+      })
+    )
 
     describe('addByChecksumView', () =>
-            it('creates the checksum view', function (done) {
-              return this.pouch.addByChecksumView(err => {
-                should.not.exist(err)
-                return this.pouch.db.get('_design/byChecksum', function (err, doc) {
-                  should.not.exist(err)
-                  should.exist(doc)
-                  done()
-                })
-              }
-                )
-            })
-        )
+      it('creates the checksum view', function (done) {
+        return this.pouch.addByChecksumView(err => {
+          should.not.exist(err)
+          return this.pouch.db.get('_design/byChecksum', function (err, doc) {
+            should.not.exist(err)
+            should.exist(doc)
+            done()
+          })
+        })
+      })
+    )
 
     describe('addByRemoteIdView', () =>
-            it('creates the remote id view', function (done) {
-              return this.pouch.addByRemoteIdView(err => {
-                should.not.exist(err)
-                return this.pouch.db.get('_design/byRemoteId', function (err, doc) {
-                  should.not.exist(err)
-                  should.exist(doc)
-                  done()
-                })
-              }
-                )
-            })
-        )
+      it('creates the remote id view', function (done) {
+        return this.pouch.addByRemoteIdView(err => {
+          should.not.exist(err)
+          return this.pouch.db.get('_design/byRemoteId', function (err, doc) {
+            should.not.exist(err)
+            should.exist(doc)
+            done()
+          })
+        })
+      })
+    )
 
     describe('removeDesignDoc', () =>
-            it('removes given view', function (done) {
-              let query = `\
+      it('removes given view', function (done) {
+        let query = `\
 function (doc) {
-    if (doc.docType === 'folder') {
-        emit(doc._id);
-    }
+if (doc.docType === 'folder') {
+  emit(doc._id);
+}
 }\
 `
-              return this.pouch.createDesignDoc('folder', query, err => {
-                should.not.exist(err)
-                return this.pouch.getAll('folder', (err, docs) => {
-                  should.not.exist(err)
-                  docs.length.should.be.above(1)
-                  return this.pouch.removeDesignDoc('folder', err => {
-                    should.not.exist(err)
-                    return this.pouch.getAll('folder', function (err, res) {
-                      should.exist(err)
-                      done()
-                    })
-                  }
-                        )
-                }
-                    )
-              }
-                )
+        return this.pouch.createDesignDoc('folder', query, err => {
+          should.not.exist(err)
+          return this.pouch.getAll('folder', (err, docs) => {
+            should.not.exist(err)
+            docs.length.should.be.above(1)
+            return this.pouch.removeDesignDoc('folder', err => {
+              should.not.exist(err)
+              return this.pouch.getAll('folder', function (err, res) {
+                should.exist(err)
+                done()
+              })
             })
-        )
+          })
+        })
+      })
+    )
   })
 
   describe('Helpers', function () {
     describe('extractRevNumber', function () {
       it('extracts the revision number', function () {
-        let infos =
-                    {_rev: '42-0123456789'}
+        let infos = {_rev: '42-0123456789'}
         this.pouch.extractRevNumber(infos).should.equal(42)
       })
 
@@ -328,80 +311,73 @@ function (doc) {
     })
 
     describe('getPreviousRev', () =>
-            it('retrieves previous document informations', function (done) {
-              let id = path.join('my-folder', 'folder-1')
-              this.pouch.db.get(id, (err, doc) => {
+      it('retrieves previous document informations', function (done) {
+        let id = path.join('my-folder', 'folder-1')
+        this.pouch.db.get(id, (err, doc) => {
+          should.not.exist(err)
+          doc.tags = ['yipee']
+          return this.pouch.db.put(doc, (err, updated) => {
+            should.not.exist(err)
+            return this.pouch.db.remove(id, updated.rev, err => {
+              should.not.exist(err)
+              return this.pouch.getPreviousRev(id, 1, (err, doc) => {
                 should.not.exist(err)
-                doc.tags = ['yipee']
-                return this.pouch.db.put(doc, (err, updated) => {
+                doc._id.should.equal(id)
+                doc.tags.should.not.equal(['yipee'])
+                return this.pouch.getPreviousRev(id, 2, function (err, doc) {
                   should.not.exist(err)
-                  return this.pouch.db.remove(id, updated.rev, err => {
-                    should.not.exist(err)
-                    return this.pouch.getPreviousRev(id, 1, (err, doc) => {
-                      should.not.exist(err)
-                      doc._id.should.equal(id)
-                      doc.tags.should.not.equal(['yipee'])
-                      return this.pouch.getPreviousRev(id, 2, function (err, doc) {
-                        should.not.exist(err)
-                        doc._id.should.equal(id)
-                        doc.tags.join(',').should.equal('yipee')
-                        done()
-                      })
-                    }
-                            )
-                  }
-                        )
-                }
-                    )
-              }
-                )
+                  doc._id.should.equal(id)
+                  doc.tags.join(',').should.equal('yipee')
+                  done()
+                })
+              })
             })
-        )
+          })
+        })
+      })
+    )
   })
 
   describe('Sequence numbers', function () {
     describe('getLocalSeq', () =>
-            it('gets 0 when the local seq number is not initialized', function (done) {
-              return this.pouch.getLocalSeq(function (err, seq) {
-                should.not.exist(err)
-                seq.should.equal(0)
-                done()
-              })
-            })
-        )
+      it('gets 0 when the local seq number is not initialized', function (done) {
+        return this.pouch.getLocalSeq(function (err, seq) {
+          should.not.exist(err)
+          seq.should.equal(0)
+          done()
+        })
+      })
+    )
 
     describe('setLocalSeq', () =>
-            it('saves the local sequence number', function (done) {
-              return this.pouch.setLocalSeq(21, err => {
+      it('saves the local sequence number', function (done) {
+        return this.pouch.setLocalSeq(21, err => {
+          should.not.exist(err)
+          return this.pouch.getLocalSeq((err, seq) => {
+            should.not.exist(err)
+            seq.should.equal(21)
+            return this.pouch.setLocalSeq(22, err => {
+              should.not.exist(err)
+              return this.pouch.getLocalSeq(function (err, seq) {
                 should.not.exist(err)
-                return this.pouch.getLocalSeq((err, seq) => {
-                  should.not.exist(err)
-                  seq.should.equal(21)
-                  return this.pouch.setLocalSeq(22, err => {
-                    should.not.exist(err)
-                    return this.pouch.getLocalSeq(function (err, seq) {
-                      should.not.exist(err)
-                      seq.should.equal(22)
-                      done()
-                    })
-                  }
-                        )
-                }
-                    )
-              }
-                )
-            })
-        )
-
-    describe('getRemoteSeq', () =>
-            it('gets 0 when the remote seq number is not initialized', function (done) {
-              return this.pouch.getRemoteSeq(function (err, seq) {
-                should.not.exist(err)
-                seq.should.equal(0)
+                seq.should.equal(22)
                 done()
               })
             })
-        )
+          })
+        })
+      })
+    )
+
+    describe('getRemoteSeq', () =>
+      it('gets 0 when the remote seq number is not initialized', function (done) {
+        return this.pouch.getRemoteSeq(function (err, seq) {
+          should.not.exist(err)
+          seq.should.equal(0)
+          done()
+        })
+      })
+    )
 
     describe('setRemoteSeq', function () {
       it('saves the remote sequence number', function (done) {
@@ -417,12 +393,9 @@ function (doc) {
                 seq.should.equal(32)
                 done()
               })
-            }
-                        )
-          }
-                    )
-        }
-                )
+            })
+          })
+        })
       })
 
       it('can be called multiple times in parallel', function (done) {
@@ -434,12 +407,12 @@ function (doc) {
     })
   })
 
-    // Disable this test on travis because it can be really slow...
+  // Disable this test on travis because it can be really slow...
   if (process.env.TRAVIS) { return }
   describe('byRecursivePath (bis)', function () {
     this.timeout(60000)
 
-        // jsverify only works with Promise for async stuff
+    // jsverify only works with Promise for async stuff
     if (typeof Promise !== 'function') { return }
 
     it('gets the nested files and folders', function (done) {
@@ -454,32 +427,23 @@ function (doc) {
               return resolve()
             }
           })
-        }
-                )
-                .then(() => {
-                  return Promise.all(paths.map(p => {
-                    let doc = {_id: path.join(base, p), docType: 'folder'}
-                    return this.pouch.db.put(doc)
-                  }
-                    )
-                    )
-                }
-                )
-                .then(() => {
-                  return new Promise((resolve, reject) => {
-                    return this.pouch.byRecursivePath(base, function (err, docs) {
-                      if (err) {
-                        return reject(err)
-                      } else {
-                        return resolve(docs.length === paths.length)
-                      }
-                    })
-                  }
-                    )
-                }
-                )
-      }
-            )
+        }).then(() => {
+          return Promise.all(paths.map(p => {
+            let doc = {_id: path.join(base, p), docType: 'folder'}
+            return this.pouch.db.put(doc)
+          }))
+        }).then(() => {
+          return new Promise((resolve, reject) => {
+            return this.pouch.byRecursivePath(base, function (err, docs) {
+              if (err) {
+                return reject(err)
+              } else {
+                return resolve(docs.length === paths.length)
+              }
+            })
+          })
+        })
+      })
       jsv.assert(property, {tests: 10}).then(function (res) {
         if (res === true) { done() } else { return done(res) }
       })

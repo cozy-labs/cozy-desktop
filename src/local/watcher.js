@@ -26,77 +26,76 @@ class LocalWatcher {
     this.pouch = pouch
     this.side = 'local'
 
-        // Use a queue for checksums to avoid computing many checksums at the
-        // same time. It's better for performance (hard disk are faster with
-        // linear readings).
+    // Use a queue for checksums to avoid computing many checksums at the
+    // same time. It's better for performance (hard disk are faster with
+    // linear readings).
     this.checksumer = async.queue(this.computeChecksum)
   }
 
-    // Start chokidar, the filesystem watcher
-    // https://github.com/paulmillr/chokidar
-    //
-    // The callback is called when the initial scan is complete
+  // Start chokidar, the filesystem watcher
+  // https://github.com/paulmillr/chokidar
+  //
+  // The callback is called when the initial scan is complete
   start (callback) {
     log.info('Start watching filesystem for changes')
 
-        // To detect which files&folders have been removed since the last run of
-        // cozy-desktop, we keep all the paths seen by chokidar during its
-        // initial scan in @paths to compare them with pouchdb database.
+    // To detect which files&folders have been removed since the last run of
+    // cozy-desktop, we keep all the paths seen by chokidar during its
+    // initial scan in @paths to compare them with pouchdb database.
     this.paths = []
 
-        // A map of pending operations. It's used for detecting move operations,
-        // as chokidar only reports adds and deletion. The key is the path (as
-        // seen on the filesystem, not normalized as an _id), and the value is
-        // an object, with at least a done method and a timeout value. The done
-        // method can be used to finalized the pending operation (we are sure we
-        // want to save the operation as it in pouchdb), and the timeout can be
-        // cleared to cancel the operation (for example, a deletion is finally
-        // seen as a part of a move operation).
+    // A map of pending operations. It's used for detecting move operations,
+    // as chokidar only reports adds and deletion. The key is the path (as
+    // seen on the filesystem, not normalized as an _id), and the value is
+    // an object, with at least a done method and a timeout value. The done
+    // method can be used to finalized the pending operation (we are sure we
+    // want to save the operation as it in pouchdb), and the timeout can be
+    // cleared to cancel the operation (for example, a deletion is finally
+    // seen as a part of a move operation).
     this.pending = Object.create(null)  // ES6 map would be nice!
 
-        // A counter of how many files are been read to compute a checksum right
-        // now. It's useful because we can't do some operations when a checksum
-        // is running, like deleting a file, because the checksum operation is
-        // slow but needed to detect move operations.
+    // A counter of how many files are been read to compute a checksum right
+    // now. It's useful because we can't do some operations when a checksum
+    // is running, like deleting a file, because the checksum operation is
+    // slow but needed to detect move operations.
     this.checksums = 0
 
     this.watcher = chokidar.watch('.', {
-            // Let paths in events be relative to this base path
+      // Let paths in events be relative to this base path
       cwd: this.syncPath,
-            // Ignore our own .cozy-desktop directory
+      // Ignore our own .cozy-desktop directory
       ignored: /[\/\\]\.cozy-desktop/, // eslint-disable-line no-useless-escape
-            // Don't follow symlinks
+      // Don't follow symlinks
       followSymlinks: false,
-            // The stats object is used in methods below
+      // The stats object is used in methods below
       alwaysStat: true,
-            // Filter out artifacts from editors with atomic writes
+      // Filter out artifacts from editors with atomic writes
       atomic: true,
-            // Poll newly created files to detect when the write is finished
+      // Poll newly created files to detect when the write is finished
       awaitWriteFinish: {
         pollInterval: 200,
         stabilityThreshold: 1000
       },
-            // With node 0.10 on linux, only polling is available
+      // With node 0.10 on linux, only polling is available
       interval: 1000,
       binaryInterval: 2000
-    }
-        )
+    })
 
     return this.watcher
-            .on('add', this.onAdd)
-            .on('addDir', this.onAddDir)
-            .on('change', this.onChange)
-            .on('unlink', this.onUnlink)
-            .on('unlinkDir', this.onUnlinkDir)
-            .on('ready', this.onReady(callback))
-            .on('error', function (err) {
-              if (err.message === 'watch ENOSPC') {
-                log.error('Sorry, the kernel is out of inotify watches!')
-                return log.error('See doc/inotify.md for how to solve this issue.')
-              } else {
-                return log.error(err)
-              }
-            })
+      .on('add', this.onAdd)
+      .on('addDir', this.onAddDir)
+      .on('change', this.onChange)
+      .on('unlink', this.onUnlink)
+      .on('unlinkDir', this.onUnlinkDir)
+      .on('ready', this.onReady(callback))
+      .on('error', function (err) {
+        if (err.message === 'watch ENOSPC') {
+          log.error('Sorry, the kernel is out of inotify watches!')
+          return log.error('See doc/inotify.md for how to solve this issue.')
+        } else {
+          return log.error(err)
+        }
+      })
   }
 
   stop (callback) {
@@ -106,11 +105,11 @@ class LocalWatcher {
       let pending = this.pending[_]
       pending.done()
     }
-        // Give some time for awaitWriteFinish events to be fired
+    // Give some time for awaitWriteFinish events to be fired
     return setTimeout(callback, 3000)
   }
 
-    // Show watched paths
+  // Show watched paths
   debug () {
     if (this.watcher) {
       log.info('This is the list of the paths watched by chokidar:')
@@ -135,10 +134,10 @@ class LocalWatcher {
     }
   }
 
-    /* Helpers */
+  /* Helpers */
 
-    // An helper to create a document for a file
-    // with checksum and mime informations
+  // An helper to create a document for a file
+  // with checksum and mime informations
   createDoc (filePath, stats, callback) {
     let absPath = path.join(this.syncPath, filePath)
     let [mimeType, fileClass] = this.getFileClass(absPath)
@@ -158,9 +157,9 @@ class LocalWatcher {
     })
   }
 
-    // Return mimetypes and class (like in classification) of a file
-    // It's only based on the filename, not using libmagic
-    // ex: pic.png returns 'image/png' and 'image'
+  // Return mimetypes and class (like in classification) of a file
+  // It's only based on the filename, not using libmagic
+  // ex: pic.png returns 'image/png' and 'image'
   getFileClass (filename, callback) {
     let mimeType = mime.lookup(filename)
     let fileClass = (() => {
@@ -176,12 +175,12 @@ class LocalWatcher {
     return [mimeType, fileClass]
   }
 
-    // Put a checksum computation in the queue
+  // Put a checksum computation in the queue
   checksum (filePath, callback) {
     return this.checksumer.push({filePath}, callback)
   }
 
-    // Get checksum for given file
+  // Get checksum for given file
   computeChecksum (task, callback) {
     let stream = fs.createReadStream(task.filePath)
     let checksum = crypto.createHash('sha1')
@@ -197,15 +196,15 @@ class LocalWatcher {
     return stream.pipe(checksum)
   }
 
-    // Returns true if a sub-folder of the given path is pending
+  // Returns true if a sub-folder of the given path is pending
   hasPending (folderPath) {
     let ret = find(this.pending, (_, key) => path.dirname(key) === folderPath)
     return (ret != null)  // Coerce the returns to a boolean
   }
 
-    /* Actions */
+  /* Actions */
 
-    // New file detected
+  // New file detected
   onAdd (filePath, stats) {
     log.info('File added', filePath)
     __guard__(this.paths, x => x.push(filePath))
@@ -221,9 +220,9 @@ class LocalWatcher {
           this.checksums--
           return this.prep.addFile(this.side, doc, this.done)
         } else {
-                    // Let's see if one of the pending deleted files has the
-                    // same checksum that the added file. If so, we mark them as
-                    // a move.
+          // Let's see if one of the pending deleted files has the
+          // same checksum that the added file. If so, we mark them as
+          // a move.
           return this.pouch.byChecksum(doc.checksum, (err, docs) => {
             this.checksums--
             if (err) {
@@ -239,15 +238,13 @@ class LocalWatcher {
                 return this.prep.addFile(this.side, doc, this.done)
               }
             }
-          }
-                    )
+          })
         }
       }
-    }
-        )
+    })
   }
 
-    // New directory detected
+  // New directory detected
   onAddDir (folderPath, stats) {
     if (folderPath !== '') {
       log.info('Folder added', folderPath)
@@ -263,10 +260,10 @@ class LocalWatcher {
     }
   }
 
-    // File deletion detected
-    //
-    // It can be a file moved out. So, we wait a bit to see if a file with the
-    // same checksum is added and, if not, we declare this file as deleted.
+  // File deletion detected
+  //
+  // It can be a file moved out. So, we wait a bit to see if a file with the
+  // same checksum is added and, if not, we declare this file as deleted.
   onUnlink (filePath) {
     let clear = () => {
       clearTimeout(this.pending[filePath].timeout)
@@ -292,10 +289,10 @@ class LocalWatcher {
     }
   }
 
-    // Folder deletion detected
-    //
-    // We don't want to delete a folder before files inside it. So we wait a bit
-    // after chokidar event to declare the folder as deleted.
+  // Folder deletion detected
+  //
+  // We don't want to delete a folder before files inside it. So we wait a bit
+  // after chokidar event to declare the folder as deleted.
   onUnlinkDir (folderPath) {
     let clear = () => {
       clearInterval(this.pending[folderPath].interval)
@@ -317,7 +314,7 @@ class LocalWatcher {
     }
   }
 
-    // File update detected
+  // File update detected
   onChange (filePath, stats) {
     log.info('File updated', filePath)
     return this.createDoc(filePath, stats, (err, doc) => {
@@ -326,12 +323,11 @@ class LocalWatcher {
       } else {
         return this.prep.updateFile(this.side, doc, this.done)
       }
-    }
-        )
+    })
   }
 
-    // Try to detect removed files&folders
-    // after chokidar has finished its initial scan
+  // Try to detect removed files&folders
+  // after chokidar has finished its initial scan
   onReady (callback) {
     return () => {
       return this.pouch.byRecursivePath('', (err, docs) => {
@@ -344,19 +340,16 @@ class LocalWatcher {
             } else {
               return this.prep.deleteDoc(this.side, doc, next)
             }
-          }
-                    , err => {
-                      this.paths = null
-                      return callback(err)
-                    }
-                    )
+          }, err => {
+            this.paths = null
+            return callback(err)
+          })
         }
-      }
-            )
+      })
     }
   }
 
-    // A callback that logs errors
+  // A callback that logs errors
   done (err) {
     if (err) { return log.error(err) }
   }

@@ -33,13 +33,11 @@ class Pouch {
           task._rev = doc._rev
           return this.db.put(task, callback)
         }
-      }
-            )
-    }
-        )
+      })
+    })
   }
 
-    // Create database and recreate all filters
+  // Create database and recreate all filters
   resetDatabase (callback) {
     this.db.destroy(() => {
       fs.ensureDirSync(this.config.dbPath)
@@ -47,21 +45,20 @@ class Pouch {
       this.db.setMaxListeners(100)
       this.db.on('error', err => log.warn(err))
       return this.addAllViews(callback)
-    }
-        )
+    })
   }
 
-    /* Mini ODM */
+  /* Mini ODM */
 
-    // Run a query and get all the results
+  // Run a query and get all the results
   getAll (query, params, callback) {
     if (typeof params === 'function') {
       callback = params
       params = {include_docs: true}
     }
-        // XXX Pouchdb does sometimes send us undefined values in docs.
-        // It's rare and we didn't find a way to extract a proper test case.
-        // So, we keep a workaround and hope that this bug will be fixed.
+    // XXX Pouchdb does sometimes send us undefined values in docs.
+    // It's rare and we didn't find a way to extract a proper test case.
+    // So, we keep a workaround and hope that this bug will be fixed.
     this.db.query(query, params, function (err, res) {
       if (err) {
         return callback(err)
@@ -72,7 +69,7 @@ class Pouch {
     })
   }
 
-    // Return all the files with this checksum
+  // Return all the files with this checksum
   byChecksum (checksum, callback) {
     let params = {
       key: checksum,
@@ -81,7 +78,7 @@ class Pouch {
     return this.getAll('byChecksum', params, callback)
   }
 
-    // Return all the files and folders in this path, only at first level
+  // Return all the files and folders in this path, only at first level
   byPath (path, callback) {
     let params = {
       key: path,
@@ -90,7 +87,7 @@ class Pouch {
     return this.getAll('byPath', params, callback)
   }
 
-    // Return all the files and folders in this path, even in subfolders
+  // Return all the files and folders in this path, even in subfolders
   byRecursivePath (path, callback) {
     let params
     if (path === '') {
@@ -106,7 +103,7 @@ class Pouch {
     return this.getAll('byPath', params, callback)
   }
 
-    // Return the file/folder with this remote id
+  // Return the file/folder with this remote id
   byRemoteId (id, callback) {
     let params = {
       key: id,
@@ -123,9 +120,9 @@ class Pouch {
     })
   }
 
-    /* Views */
+  /* Views */
 
-    // Create all required views in the database
+  // Create all required views in the database
   addAllViews (callback) {
     return async.series([
       this.addByPathView,
@@ -134,53 +131,53 @@ class Pouch {
     ], err => callback(err))
   }
 
-    // Create a view to list files and folders inside a path
-    // The path for a file/folder in root will be '',
-    // not '.' as with node's path.dirname
+  // Create a view to list files and folders inside a path
+  // The path for a file/folder in root will be '',
+  // not '.' as with node's path.dirname
   addByPathView (callback) {
-        /* !pragma no-coverage-next */
+    /* !pragma no-coverage-next */
     /* istanbul ignore next */
     let query =
-            function (doc) {
-              if ('docType' in doc) {
-                let parts = doc._id.split('/')
-                parts.pop()
-                // eslint-disable-next-line no-undef
-                return emit(parts.join('/'), {_id: doc._id})
-              }
-            }.toString()
+      function (doc) {
+        if ('docType' in doc) {
+          let parts = doc._id.split('/')
+          parts.pop()
+          // eslint-disable-next-line no-undef
+          return emit(parts.join('/'), {_id: doc._id})
+        }
+      }.toString()
     return this.createDesignDoc('byPath', query, callback)
   }
 
-    // Create a view to find files by their checksum
+  // Create a view to find files by their checksum
   addByChecksumView (callback) {
-        /* !pragma no-coverage-next */
+    /* !pragma no-coverage-next */
     /* istanbul ignore next */
     let query =
-            function (doc) {
-              if ('checksum' in doc) {
-                // eslint-disable-next-line no-undef
-                return emit(doc.checksum)
-              }
-            }.toString()
+      function (doc) {
+        if ('checksum' in doc) {
+          // eslint-disable-next-line no-undef
+          return emit(doc.checksum)
+        }
+      }.toString()
     return this.createDesignDoc('byChecksum', query, callback)
   }
 
-    // Create a view to find file/folder by their _id on a remote cozy
+  // Create a view to find file/folder by their _id on a remote cozy
   addByRemoteIdView (callback) {
-        /* !pragma no-coverage-next */
+    /* !pragma no-coverage-next */
     /* istanbul ignore next */
     let query =
-            function (doc) {
-              if ('remote' in doc) {
-                // eslint-disable-next-line no-undef
-                return emit(doc.remote._id)
-              }
-            }.toString()
+      function (doc) {
+        if ('remote' in doc) {
+          // eslint-disable-next-line no-undef
+          return emit(doc.remote._id)
+        }
+      }.toString()
     return this.createDesignDoc('byRemoteId', query, callback)
   }
 
-    // Create or update given design doc
+  // Create or update given design doc
   createDesignDoc (name, query, callback) {
     let doc = {
       _id: `_design/${name}`,
@@ -196,11 +193,10 @@ class Pouch {
         if (!err) { log.info(`Design document created: ${name}`) }
         return callback(err)
       })
-    }
-        )
+    })
   }
 
-    // Remove a design document for a given docType
+  // Remove a design document for a given docType
   removeDesignDoc (docType, callback) {
     let id = `_design/${docType}`
     this.db.get(id, (err, designDoc) => {
@@ -209,13 +205,12 @@ class Pouch {
       } else {
         return callback(err)
       }
-    }
-        )
+    })
   }
 
-    /* Helpers */
+  /* Helpers */
 
-    // Extract the revision number, or 0 it not found
+  // Extract the revision number, or 0 it not found
   extractRevNumber (infos) {
     try {
       let rev = infos._rev.split('-')[0]
@@ -225,7 +220,7 @@ class Pouch {
     }
   }
 
-    // Retrieve a previous doc revision from its id
+  // Retrieve a previous doc revision from its id
   getPreviousRev (id, shortRev, callback) {
     let options = {
       revs: true,
@@ -245,14 +240,13 @@ class Pouch {
           return callback(err, doc)
         })
       }
-    }
-        )
+    })
   }
 
-    /* Sequence numbers */
+  /* Sequence numbers */
 
-    // Get last local replication sequence,
-    // ie the last change from pouchdb that have been applied
+  // Get last local replication sequence,
+  // ie the last change from pouchdb that have been applied
   getLocalSeq (callback) {
     this.db.get('_local/localSeq', function (err, doc) {
       if (__guard__(err, x => x.status) === 404) {
@@ -263,9 +257,9 @@ class Pouch {
     })
   }
 
-    // Set last local replication sequence
-    // It is saved in PouchDB as a local document
-    // See http://pouchdb.com/guides/local-documents.html
+  // Set last local replication sequence
+  // It is saved in PouchDB as a local document
+  // See http://pouchdb.com/guides/local-documents.html
   setLocalSeq (seq, callback) {
     let task = {
       _id: '_local/localSeq',
@@ -274,8 +268,8 @@ class Pouch {
     return this.updater.push(task, callback)
   }
 
-    // Get last remote replication sequence,
-    // ie the last change from couchdb that have been saved in pouch
+  // Get last remote replication sequence,
+  // ie the last change from couchdb that have been saved in pouch
   getRemoteSeq (callback) {
     this.db.get('_local/remoteSeq', function (err, doc) {
       if (__guard__(err, x => x.status) === 404) {
@@ -286,9 +280,9 @@ class Pouch {
     })
   }
 
-    // Set last remote replication sequence
-    // It is saved in PouchDB as a local document
-    // See http://pouchdb.com/guides/local-documents.html
+  // Set last remote replication sequence
+  // It is saved in PouchDB as a local document
+  // See http://pouchdb.com/guides/local-documents.html
   setRemoteSeq (seq, callback) {
     let task = {
       _id: '_local/remoteSeq',

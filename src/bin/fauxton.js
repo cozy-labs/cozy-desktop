@@ -25,6 +25,6 @@ helpers.startServer(function (err) {
   basePath = path.join(basePath, '.cozy-desktop')
   let config = new Config(basePath)
   return PouchDB.replicate(config.dbPath, `${helpers.url}/${helpers.params.db}`)
-        .on('error', err => console.log(err))
-        .on('complete', info => console.log(`Replication done, you can open ${helpers.url}/_utils`))
+    .on('error', err => console.log(err))
+    .on('complete', info => console.log(`Replication done, you can open ${helpers.url}/_utils`))
 })

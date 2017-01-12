@@ -119,8 +119,7 @@ describe('Prep', function () {
           should.not.exist(err)
           this.prep.moveFile.calledWith(this.side, doc, was).should.be.true()
           done()
-        }
-                )
+        })
       })
 
       it('calls moveFolder for a folder', function (done) {
@@ -137,8 +136,7 @@ describe('Prep', function () {
           should.not.exist(err)
           spy.calledWith(this.side, doc, was).should.be.true()
           done()
-        }
-                )
+        })
       })
 
       it('throws an error if we move a file to a folder', function (done) {
@@ -185,8 +183,7 @@ describe('Prep', function () {
           should.not.exist(err)
           this.prep.deleteFile.calledWith(this.side, doc).should.be.true()
           done()
-        }
-                )
+        })
       })
 
       it('calls deleteFolder for a folder', function (done) {
@@ -199,8 +196,7 @@ describe('Prep', function () {
           should.not.exist(err)
           this.prep.deleteFolder.calledWith(this.side, doc).should.be.true()
           done()
-        }
-                )
+        })
       })
     })
   })
@@ -225,8 +221,7 @@ describe('Prep', function () {
           should.not.exist(err)
           this.merge.addFile.calledWith(this.side, doc).should.be.true()
           done()
-        }
-                )
+        })
       })
 
       it('rejects doc with an invalid checksum', function (done) {
@@ -255,8 +250,7 @@ describe('Prep', function () {
           should.exist(doc.creationDate)
           should.exist(doc.lastModification)
           done()
-        }
-                )
+        })
       })
 
       it('does nothing for ignored paths on local', function (done) {
@@ -269,8 +263,7 @@ describe('Prep', function () {
           should.not.exist(err)
           this.merge.addFile.called.should.be.false()
           done()
-        }
-                )
+        })
       })
     })
 
@@ -293,8 +286,7 @@ describe('Prep', function () {
           should.not.exist(err)
           this.merge.updateFile.calledWith(this.side, doc).should.be.true()
           done()
-        }
-                )
+        })
       })
 
       it('rejects doc with an invalid checksum', function (done) {
@@ -322,8 +314,7 @@ describe('Prep', function () {
           should.exist(doc._id)
           should.exist(doc.lastModification)
           done()
-        }
-                )
+        })
       })
 
       it('does nothing for ignored paths on local', function (done) {
@@ -336,8 +327,7 @@ describe('Prep', function () {
           should.not.exist(err)
           this.merge.updateFile.called.should.be.false()
           done()
-        }
-                )
+        })
       })
     })
 
@@ -360,8 +350,7 @@ describe('Prep', function () {
           should.exist(doc._id)
           should.exist(doc.lastModification)
           done()
-        }
-                )
+        })
       })
 
       it('does nothing for ignored paths on local', function (done) {
@@ -371,8 +360,7 @@ describe('Prep', function () {
           should.not.exist(err)
           this.merge.putFolder.called.should.be.false()
           done()
-        }
-                )
+        })
       })
     })
   })
@@ -475,8 +463,7 @@ describe('Prep', function () {
           should.exist(doc._id)
           should.exist(doc.lastModification)
           done()
-        }
-                )
+        })
       })
     })
 
@@ -553,8 +540,7 @@ describe('Prep', function () {
           should.exist(doc._id)
           should.exist(doc.lastModification)
           done()
-        }
-                )
+        })
       })
     })
   })
@@ -578,8 +564,7 @@ describe('Prep', function () {
           doc.docType.should.equal('file')
           should.exist(doc._id)
           done()
-        }
-                )
+        })
       })
 
       it('does nothing for ignored paths on local', function (done) {
@@ -589,8 +574,7 @@ describe('Prep', function () {
           should.not.exist(err)
           this.merge.deleteFile.called.should.be.false()
           done()
-        }
-                )
+        })
       })
     })
 
@@ -612,8 +596,7 @@ describe('Prep', function () {
           doc.docType.should.equal('folder')
           should.exist(doc._id)
           done()
-        }
-                )
+        })
       })
 
       it('does nothing for ignored paths on local', function (done) {
@@ -623,8 +606,7 @@ describe('Prep', function () {
           should.not.exist(err)
           this.merge.deleteFolder.called.should.be.false()
           done()
-        }
-                )
+        })
       })
     })
   })

@@ -44,8 +44,7 @@ describe('Merge', function () {
           res.sides.local.should.equal(1)
           done()
         })
-      }
-            )
+      })
     })
 
     describe('when a file with the same path exists', function () {
@@ -86,10 +85,8 @@ describe('Merge', function () {
             res.mime.should.equal(was.mime)
             res.sides.local.should.equal(2)
             done()
-          }
-                    )
-        }
-                )
+          })
+        })
       })
     })
   })
@@ -117,8 +114,7 @@ describe('Merge', function () {
           res.sides.local.should.equal(1)
           done()
         })
-      }
-            )
+      })
     })
 
     describe('when a file with the same path exists', function () {
@@ -159,10 +155,8 @@ describe('Merge', function () {
             res.mime.should.equal(was.mime)
             res.sides.local.should.equal(2)
             done()
-          }
-                    )
-        }
-                )
+          })
+        })
       })
 
       it('can overwrite the content of a file', function (done) {
@@ -185,37 +179,35 @@ describe('Merge', function () {
             res.sides.local.should.equal(3)
             done()
           })
-        }
-                )
+        })
       })
     })
   })
 
   describe('putFolder', () =>
-        it('saves the new folder', function (done) {
-          this.merge.ensureParentExist = sinon.stub().yields(null)
-          let doc = {
-            _id: 'FOO/NEW-FOLDER',
-            path: 'FOO/NEW-FOLDER',
-            docType: 'folder',
-            creationDate: new Date(),
-            lastModification: new Date(),
-            tags: ['courge', 'quux']
-          }
-          return this.merge.putFolder(this.side, doc, err => {
-            should.not.exist(err)
-            doc.creationDate = doc.creationDate.toISOString()
-            doc.lastModification = doc.lastModification.toISOString()
-            return this.pouch.db.get(doc._id, function (err, res) {
-              should.not.exist(err)
-              res.should.have.properties(doc)
-              res.sides.local.should.equal(1)
-              done()
-            })
-          }
-            )
+    it('saves the new folder', function (done) {
+      this.merge.ensureParentExist = sinon.stub().yields(null)
+      let doc = {
+        _id: 'FOO/NEW-FOLDER',
+        path: 'FOO/NEW-FOLDER',
+        docType: 'folder',
+        creationDate: new Date(),
+        lastModification: new Date(),
+        tags: ['courge', 'quux']
+      }
+      return this.merge.putFolder(this.side, doc, err => {
+        should.not.exist(err)
+        doc.creationDate = doc.creationDate.toISOString()
+        doc.lastModification = doc.lastModification.toISOString()
+        return this.pouch.db.get(doc._id, function (err, res) {
+          should.not.exist(err)
+          res.should.have.properties(doc)
+          res.sides.local.should.equal(1)
+          done()
         })
-    )
+      })
+    })
+  )
 
   describe('moveFile', function () {
     it('saves the new file and deletes the old one', function (done) {
@@ -259,12 +251,9 @@ describe('Merge', function () {
               err.status.should.equal(404)
               done()
             })
-          }
-                    )
-        }
-                )
-      }
-            )
+          })
+        })
+      })
     })
 
     it('adds missing fields', function (done) {
@@ -306,10 +295,8 @@ describe('Merge', function () {
             should.exist(res.mime)
             done()
           })
-        }
-                )
-      }
-            )
+        })
+      })
     })
 
     it('adds a hint for writers to know that it is a move', function (done) {
@@ -351,8 +338,7 @@ describe('Merge', function () {
           done()
         })
         this.merge.moveFile(this.side, clone(doc), clone(was), err => should.not.exist(err))
-      }
-            )
+      })
     })
   })
 
@@ -396,12 +382,9 @@ describe('Merge', function () {
               err.status.should.equal(404)
               done()
             })
-          }
-                    )
-        }
-                )
-      }
-            )
+          })
+        })
+      })
     })
 
     it('adds a hint for writers to know that it is a move', function (done) {
@@ -441,8 +424,7 @@ describe('Merge', function () {
           done()
         })
         this.merge.moveFolder(this.side, clone(doc), clone(was), err => should.not.exist(err))
-      }
-            )
+      })
     })
   })
 
@@ -451,10 +433,8 @@ describe('Merge', function () {
       return pouchHelpers.createParentFolder(this.pouch, () => {
         return pouchHelpers.createFolder(this.pouch, 9, () => {
           return pouchHelpers.createFile(this.pouch, 9, done)
-        }
-                )
-      }
-            )
+        })
+      })
     })
 
     it('move the folder and files/folders inside it', function (done) {
@@ -479,41 +459,35 @@ describe('Merge', function () {
                 err.status.should.equal(404)
                 return next()
               })
-            }
-                        )
-          }
-                    , done)
-        }
-                )
-      }
-            )
+            })
+          }, done)
+        })
+      })
     })
   })
 
   describe('deleteFile', () =>
-        it('deletes a file', function (done) {
-          let doc = {
-            _id: 'TO-DELETE/FILE',
-            path: 'TO-DELETE/FILE',
-            docType: 'file',
-            sides: {
-              local: 1
-            }
-          }
-          this.pouch.db.put(doc, err => {
-            should.not.exist(err)
-            return this.merge.deleteFile(this.side, doc, err => {
-              should.not.exist(err)
-              return this.pouch.db.get(doc._id, function (err) {
-                err.status.should.equal(404)
-                done()
-              })
-            }
-                )
-          }
-            )
+    it('deletes a file', function (done) {
+      let doc = {
+        _id: 'TO-DELETE/FILE',
+        path: 'TO-DELETE/FILE',
+        docType: 'file',
+        sides: {
+          local: 1
+        }
+      }
+      this.pouch.db.put(doc, err => {
+        should.not.exist(err)
+        return this.merge.deleteFile(this.side, doc, err => {
+          should.not.exist(err)
+          return this.pouch.db.get(doc._id, function (err) {
+            err.status.should.equal(404)
+            done()
+          })
         })
-    )
+      })
+    })
+  )
 
   describe('deleteFolder', function () {
     it('deletes a folder', function (done) {
@@ -533,10 +507,8 @@ describe('Merge', function () {
             err.status.should.equal(404)
             done()
           })
-        }
-                )
-      }
-            )
+        })
+      })
     })
 
     it('remove files in the folder', function (done) {
@@ -557,21 +529,17 @@ describe('Merge', function () {
             docType: 'file'
           }
           return this.pouch.db.put(file, next)
-        }
-                , err => {
-                  should.not.exist(err)
-                  return this.merge.deleteFolder(this.side, doc, err => {
-                    should.not.exist(err)
-                    return this.pouch.byPath('FOO/TO-REMOVE', function (_, docs) {
-                      docs.length.should.be.equal(0)
-                      done()
-                    })
-                  }
-                    )
-                }
-                )
-      }
-            )
+        }, err => {
+          should.not.exist(err)
+          return this.merge.deleteFolder(this.side, doc, err => {
+            should.not.exist(err)
+            return this.pouch.byPath('FOO/TO-REMOVE', function (_, docs) {
+              docs.length.should.be.equal(0)
+              done()
+            })
+          })
+        })
+      })
     })
 
     it('remove nested folders', function (done) {
@@ -586,22 +554,19 @@ describe('Merge', function () {
           }
         }
         return this.pouch.db.put(doc, next)
-      }
-            , err => {
-              should.not.exist(err)
-              return this.merge.deleteFolder(this.side, {_id: base, path: base}, err => {
-                should.not.exist(err)
-                return this.pouch.db.allDocs(function (err, res) {
-                  should.not.exist(err)
-                  for (let row of Array.from(res.rows)) {
-                    row.id.should.not.match(/^NESTED/i)
-                  }
-                  done()
-                })
-              }
-                )
+      }, err => {
+        should.not.exist(err)
+        return this.merge.deleteFolder(this.side, {_id: base, path: base}, err => {
+          should.not.exist(err)
+          return this.pouch.db.allDocs(function (err, res) {
+            should.not.exist(err)
+            for (let row of Array.from(res.rows)) {
+              row.id.should.not.match(/^NESTED/i)
             }
-            )
+            done()
+          })
+        })
+      })
     })
   })
 })

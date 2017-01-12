@@ -9,32 +9,32 @@ let DefaultRules
 let MicromatchOptions
 class Ignore {
   static initClass () {
-        // See https://github.com/github/gitignore/tree/master/Global
+    // See https://github.com/github/gitignore/tree/master/Global
     DefaultRules = [
-            // Dropbox
+      // Dropbox
       '.dropbox',
       '.dropbox.attr',
       '.dropbox.cache',
 
-            // Eclipse, SublimeText and many others
+      // Eclipse, SublimeText and many others
       '*.tmp',
       '*.bak',
 
-            // Emacs
+      // Emacs
       '*~',
       '\\#*\\#',
 
-            // LibreOffice
+      // LibreOffice
       '.~lock.*#',
 
-            // Linux
+      // Linux
       '.fuse_hidden*',
       '.Trash-*',
 
-            // Microsoft Office
+      // Microsoft Office
       '~$*.{doc,xls,ppt}*',
 
-            // OSX
+      // OSX
       '.DS_Store',
       '.DocumentRevisions-V100',
       '.fseventsd',
@@ -43,20 +43,20 @@ class Ignore {
       '.Trashes',
       '.VolumeIcon.icns',
 
-            // Vim
+      // Vim
       '*.sw[px]',
 
-            // Windows
+      // Windows
       'Thumbs.db',
       'ehthumbs.db'
     ]
 
-        // See https://github.com/jonschlinkert/micromatch#options
+    // See https://github.com/jonschlinkert/micromatch#options
     MicromatchOptions =
             {noextglob: true}
   }
 
-    // Load patterns for detecting ignored files and folders
+  // Load patterns for detecting ignored files and folders
   constructor (lines) {
     this.patterns = []
     for (let line of Array.from(lines)) {
@@ -66,7 +66,7 @@ class Ignore {
     }
   }
 
-    // Parse a line and build the corresponding pattern
+  // Parse a line and build the corresponding pattern
   buildPattern (line) {
     let folder = false
     let negate = false
@@ -87,7 +87,7 @@ class Ignore {
     }
     line = line.replace(/^\\/, '')   // Remove leading escaping char
     line = line.replace(/\s*$/, '')  // Remove trailing spaces
-        // Ignore case for case insensitive file-systems
+    // Ignore case for case insensitive file-systems
     if (process.platform === 'darwin') {
       line = makeRe(line, {nocase: true})
     }
@@ -100,15 +100,15 @@ class Ignore {
     return pattern
   }
 
-    // Add some rules for things that should be always ignored (temporary
-    // files, thumbnails db, trash, etc.)
+  // Add some rules for things that should be always ignored (temporary
+  // files, thumbnails db, trash, etc.)
   addDefaultRules () {
     let morePatterns = (Array.from(DefaultRules).map((rule) => this.buildPattern(rule)))
     this.patterns = morePatterns.concat(this.patterns)
     return this
   }
 
-    // Return true if the doc matches the pattern
+  // Return true if the doc matches the pattern
   match (path, isFolder, pattern) {
     if (pattern.basename) {
       if (pattern.match(basename(path))) { return true }
@@ -121,7 +121,7 @@ class Ignore {
     return this.match(parent, true, pattern)
   }
 
-    // Return true if the given file/folder path should be ignored
+  // Return true if the given file/folder path should be ignored
   isIgnored (doc) {
     let result = false
     for (let pattern of Array.from(this.patterns)) {

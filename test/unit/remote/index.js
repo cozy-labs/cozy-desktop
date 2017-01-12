@@ -26,54 +26,53 @@ describe('Remote', function () {
   after('clean config directory', configHelpers.cleanConfig)
 
   describe('constructor', () =>
-        it('has a couch and a watcher', function () {
-          should.exist(this.remote.couch)
-          should.exist(this.remote.watcher)
-        })
-    )
+    it('has a couch and a watcher', function () {
+      should.exist(this.remote.couch)
+      should.exist(this.remote.watcher)
+    })
+  )
 
   describe('createReadStream', () =>
-        it('create a readable stream from a remote binary', function (done) {
-          this.events.emit = sinon.spy()
-          let checksum = '53a547469e98b667671803adc814d6d1376fae6b'
-          let fixture = 'test/fixtures/cool-pillow.jpg'
-          let doc = {
-            path: 'pillow.jpg',
-            checksum,
-            mime: 'image/jpeg',
-            remote: {
-              binary: {
-                _id: checksum,
-                _rev: '1-01234'
-              }
-            }
+    it('create a readable stream from a remote binary', function (done) {
+      this.events.emit = sinon.spy()
+      let checksum = '53a547469e98b667671803adc814d6d1376fae6b'
+      let fixture = 'test/fixtures/cool-pillow.jpg'
+      let doc = {
+        path: 'pillow.jpg',
+        checksum,
+        mime: 'image/jpeg',
+        remote: {
+          binary: {
+            _id: checksum,
+            _rev: '1-01234'
           }
-          this.remote.other = {
-            createReadStream (localDoc, callback) {
-              localDoc.should.equal(doc)
-              let stream = fs.createReadStream(fixture)
-              return callback(null, stream)
-            }
-          }
-          return this.remote.uploadBinary(doc, (err, binary) => {
-            should.not.exist(err)
-            binary._id.should.equal(checksum)
-            return this.remote.createReadStream(doc, function (err, stream) {
-              should.not.exist(err)
-              should.exist(stream)
-              checksum = crypto.createHash('sha1')
-              checksum.setEncoding('hex')
-              stream.pipe(checksum)
-              return stream.on('end', function () {
-                checksum.end()
-                checksum.read().should.equal(doc.checksum)
-                done()
-              })
-            })
-          }
-            )
+        }
+      }
+      this.remote.other = {
+        createReadStream (localDoc, callback) {
+          localDoc.should.equal(doc)
+          let stream = fs.createReadStream(fixture)
+          return callback(null, stream)
+        }
+      }
+      return this.remote.uploadBinary(doc, (err, binary) => {
+        should.not.exist(err)
+        binary._id.should.equal(checksum)
+        return this.remote.createReadStream(doc, function (err, stream) {
+          should.not.exist(err)
+          should.exist(stream)
+          checksum = crypto.createHash('sha1')
+          checksum.setEncoding('hex')
+          stream.pipe(checksum)
+          return stream.on('end', function () {
+            checksum.end()
+            checksum.read().should.equal(doc.checksum)
+            done()
+          })
         })
-    )
+      })
+    })
+  )
 
   describe('uploadBinary', function () {
     it('creates a remote binary document', function (done) {
@@ -106,8 +105,7 @@ describe('Remote', function () {
           binaryDoc._attachments.file.length.should.equal(29865)
           done()
         })
-      }
-            )
+      })
     })
 
     it('does not reupload an existing file', function (done) {
@@ -153,26 +151,24 @@ describe('Remote', function () {
             should.exist(binaryDoc._attachments)
             done()
           })
-        }
-                )
-      }
-            )
+        })
+      })
     })
   })
 
   describe('extractDirAndName', () =>
-        it('returns the remote path and name', function () {
-          let [path, name] = this.remote.extractDirAndName('foo')
-          path.should.equal('')
-          name.should.equal('foo');
-          [path, name] = this.remote.extractDirAndName('foo/bar')
-          path.should.equal('/foo')
-          name.should.equal('bar');
-          [path, name] = this.remote.extractDirAndName('foo/bar/baz')
-          path.should.equal('/foo/bar')
-          name.should.equal('baz')
-        })
-    )
+    it('returns the remote path and name', function () {
+      let [path, name] = this.remote.extractDirAndName('foo')
+      path.should.equal('')
+      name.should.equal('foo');
+      [path, name] = this.remote.extractDirAndName('foo/bar')
+      path.should.equal('/foo')
+      name.should.equal('bar');
+      [path, name] = this.remote.extractDirAndName('foo/bar/baz')
+      path.should.equal('/foo/bar')
+      name.should.equal('baz')
+    })
+  )
 
   describe('createRemoteDoc', function () {
     it('transforms a local file in remote file', function () {
@@ -298,10 +294,8 @@ describe('Remote', function () {
             err.status.should.equal(404)
             done()
           })
-        }
-                )
-      }
-            )
+        })
+      })
     })
 
     it('keeps the binary if referenced by a file', function (done) {
@@ -336,36 +330,33 @@ describe('Remote', function () {
               doc.checksum.should.equal(binary.checksum)
               done()
             })
-          }
-                    )
-        }
-                )
-      }
-            )
+          })
+        })
+      })
     })
   })
 
   describe('isUpToDate', () =>
-        it('says if the remote file is up to date', function () {
-          let doc = {
-            _id: 'foo/bar',
-            _rev: '1-0123456',
-            path: 'foo/bar',
-            docType: 'file',
-            checksum: '22f7aca0d717eb322d5ae1c97d8aa26eb440287b',
-            sides: {
-              local: 1
-            }
-          }
-          this.remote.isUpToDate(doc).should.be.false()
-          doc.sides.remote = 2
-          doc._rev = '2-0123456'
-          this.remote.isUpToDate(doc).should.be.true()
-          doc.sides.local = 3
-          doc._rev = '3-0123456'
-          this.remote.isUpToDate(doc).should.be.false()
-        })
-    )
+    it('says if the remote file is up to date', function () {
+      let doc = {
+        _id: 'foo/bar',
+        _rev: '1-0123456',
+        path: 'foo/bar',
+        docType: 'file',
+        checksum: '22f7aca0d717eb322d5ae1c97d8aa26eb440287b',
+        sides: {
+          local: 1
+        }
+      }
+      this.remote.isUpToDate(doc).should.be.false()
+      doc.sides.remote = 2
+      doc._rev = '2-0123456'
+      this.remote.isUpToDate(doc).should.be.true()
+      doc.sides.local = 3
+      doc._rev = '3-0123456'
+      this.remote.isUpToDate(doc).should.be.false()
+    })
+  )
 
   describe('addFile', function () {
     it('adds a file to couchdb', function (done) {
@@ -412,12 +403,9 @@ describe('Remote', function () {
               binary.checksum.should.equal(checksum)
               done()
             })
-          }
-                    )
-        }
-                )
-      }
-            )
+          })
+        })
+      })
     })
 
     it('does not reupload an existing file', function (done) {
@@ -477,42 +465,38 @@ describe('Remote', function () {
               })
               done()
             })
-          }
-                    )
-        }
-                )
-      }
-            )
+          })
+        })
+      })
     })
   })
 
   describe('addFolder', () =>
-        it('adds a folder to couchdb', function (done) {
-          let doc = {
-            path: 'couchdb-folder/folder-1',
+    it('adds a folder to couchdb', function (done) {
+      let doc = {
+        path: 'couchdb-folder/folder-1',
+        docType: 'folder',
+        creationDate: new Date(),
+        lastModification: new Date()
+      }
+      return this.remote.addFolder(doc, (err, created) => {
+        should.not.exist(err)
+        should.exist(doc.remote._id)
+        should.exist(doc.remote._rev)
+        return this.couch.get(created.id, function (err, folder) {
+          should.not.exist(err)
+          folder.should.have.properties({
+            path: '/couchdb-folder',
+            name: 'folder-1',
             docType: 'folder',
-            creationDate: new Date(),
-            lastModification: new Date()
-          }
-          return this.remote.addFolder(doc, (err, created) => {
-            should.not.exist(err)
-            should.exist(doc.remote._id)
-            should.exist(doc.remote._rev)
-            return this.couch.get(created.id, function (err, folder) {
-              should.not.exist(err)
-              folder.should.have.properties({
-                path: '/couchdb-folder',
-                name: 'folder-1',
-                docType: 'folder',
-                creationDate: doc.creationDate.toISOString(),
-                lastModification: doc.lastModification.toISOString()
-              })
-              done()
-            })
-          }
-            )
+            creationDate: doc.creationDate.toISOString(),
+            lastModification: doc.lastModification.toISOString()
+          })
+          done()
         })
-    )
+      })
+    })
+  )
 
   describe('overwriteFile', function () {
     it('overwrites the binary content', function (done) {
@@ -571,16 +555,11 @@ describe('Remote', function () {
                   binary.checksum.should.equal(doc.checksum)
                   done()
                 })
-              }
-                            )
-            }
-                        )
-          }
-                    )
-        }
-                )
-      }
-            )
+              })
+            })
+          })
+        })
+      })
     })
 
     it('throws an error if the checksum is invalid', function (done) {
@@ -616,62 +595,58 @@ describe('Remote', function () {
             err.message.should.equal('Invalid checksum')
             done()
           })
-        }
-                )
-      }
-            )
+        })
+      })
     })
   })
 
   describe('updateFileMetadata', () =>
-        it('updates the lastModification', function (done) {
-          return couchHelpers.createFile(this.couch, 7, (err, created) => {
-            should.not.exist(err)
-            let doc = {
-              path: 'couchdb-folder/file-7',
-              docType: 'file',
-              checksum: '1111111111111111111111111111111111111127',
-              lastModification: '2015-11-16T16:13:01.001Z'
+    it('updates the lastModification', function (done) {
+      return couchHelpers.createFile(this.couch, 7, (err, created) => {
+        should.not.exist(err)
+        let doc = {
+          path: 'couchdb-folder/file-7',
+          docType: 'file',
+          checksum: '1111111111111111111111111111111111111127',
+          lastModification: '2015-11-16T16:13:01.001Z'
+        }
+        let old = {
+          path: 'couchdb-folder/file-7',
+          docType: 'file',
+          checksum: '1111111111111111111111111111111111111127',
+          remote: {
+            _id: created.id,
+            _rev: created.rev,
+            binary: {
+              _id: '1111111111111111111111111111111111111127',
+              _rev: '1-852654'
             }
-            let old = {
-              path: 'couchdb-folder/file-7',
+          }
+        }
+        return this.remote.updateFileMetadata(doc, old, err => {
+          should.not.exist(err)
+          return this.couch.get(doc.remote._id, function (err, file) {
+            should.not.exist(err)
+            file.should.have.properties({
+              _id: created.id,
               docType: 'file',
-              checksum: '1111111111111111111111111111111111111127',
-              remote: {
-                _id: created.id,
-                _rev: created.rev,
-                binary: {
-                  _id: '1111111111111111111111111111111111111127',
-                  _rev: '1-852654'
+              path: '/couchdb-folder',
+              name: 'file-7',
+              lastModification: doc.lastModification,
+              binary: {
+                file: {
+                  id: doc.remote.binary._id,
+                  rev: doc.remote.binary._rev
                 }
               }
-            }
-            return this.remote.updateFileMetadata(doc, old, err => {
-              should.not.exist(err)
-              return this.couch.get(doc.remote._id, function (err, file) {
-                should.not.exist(err)
-                file.should.have.properties({
-                  _id: created.id,
-                  docType: 'file',
-                  path: '/couchdb-folder',
-                  name: 'file-7',
-                  lastModification: doc.lastModification,
-                  binary: {
-                    file: {
-                      id: doc.remote.binary._id,
-                      rev: doc.remote.binary._rev
-                    }
-                  }
-                })
-                doc.remote._rev.should.equal(file._rev)
-                done()
-              })
-            }
-                )
-          }
-            )
+            })
+            doc.remote._rev.should.equal(file._rev)
+            done()
+          })
         })
-    )
+      })
+    })
+  )
 
   describe('updateFolder', function () {
     it('updates the metadata of a folder in couchdb', function (done) {
@@ -704,10 +679,8 @@ describe('Remote', function () {
             })
             done()
           })
-        }
-                )
-      }
-            )
+        })
+      })
     })
 
     it('adds a folder to couchdb if the folder does not exist', function (done) {
@@ -730,72 +703,69 @@ describe('Remote', function () {
           })
           done()
         })
-      }
-            )
+      })
     })
   })
 
   describe('moveFile', () =>
-        it('moves the file', function (done) {
-          let checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
-          let binary = {
+    it('moves the file', function (done) {
+      let checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
+      let binary = {
+        _id: checksum,
+        _rev: '1-0123456789'
+      }
+      let old = {
+        path: 'cat6.jpg',
+        docType: 'file',
+        checksum,
+        creationDate: new Date(),
+        lastModification: new Date(),
+        size: 36901
+      }
+      let doc = {
+        path: 'moved-to/cat7.jpg',
+        docType: 'file',
+        checksum,
+        creationDate: new Date(),
+        lastModification: new Date(),
+        size: 36901
+      }
+      let remoteDoc = this.remote.createRemoteDoc(old, {binary})
+      return this.couch.put(remoteDoc, (err, created) => {
+        should.not.exist(err)
+        old.remote = {
+          _id: created.id,
+          _rev: created.rev,
+          binary: {
             _id: checksum,
-            _rev: '1-0123456789'
+            _rev: binary._rev
           }
-          let old = {
-            path: 'cat6.jpg',
-            docType: 'file',
-            checksum,
-            creationDate: new Date(),
-            lastModification: new Date(),
-            size: 36901
-          }
-          let doc = {
-            path: 'moved-to/cat7.jpg',
-            docType: 'file',
-            checksum,
-            creationDate: new Date(),
-            lastModification: new Date(),
-            size: 36901
-          }
-          let remoteDoc = this.remote.createRemoteDoc(old, {binary})
-          return this.couch.put(remoteDoc, (err, created) => {
+        }
+        return this.remote.moveFile(doc, old, (err, moved) => {
+          should.not.exist(err)
+          moved.id.should.equal(old.remote._id)
+          moved.rev.should.not.equal(old.remote._rev)
+          return this.couch.get(moved.id, function (err, file) {
             should.not.exist(err)
-            old.remote = {
-              _id: created.id,
-              _rev: created.rev,
+            file.should.have.properties({
+              path: '/moved-to',
+              name: 'cat7.jpg',
+              docType: 'file',
+              lastModification: doc.lastModification.toISOString(),
+              size: 36901,
               binary: {
-                _id: checksum,
-                _rev: binary._rev
+                file: {
+                  id: binary._id,
+                  rev: binary._rev
+                }
               }
-            }
-            return this.remote.moveFile(doc, old, (err, moved) => {
-              should.not.exist(err)
-              moved.id.should.equal(old.remote._id)
-              moved.rev.should.not.equal(old.remote._rev)
-              return this.couch.get(moved.id, function (err, file) {
-                should.not.exist(err)
-                file.should.have.properties({
-                  path: '/moved-to',
-                  name: 'cat7.jpg',
-                  docType: 'file',
-                  lastModification: doc.lastModification.toISOString(),
-                  size: 36901,
-                  binary: {
-                    file: {
-                      id: binary._id,
-                      rev: binary._rev
-                    }
-                  }
-                })
-                done()
-              })
-            }
-                )
-          }
-            )
+            })
+            done()
+          })
         })
-    )
+      })
+    })
+  )
 
   describe('moveFolder', function () {
     it('moves the folder in couchdb', function (done) {
@@ -830,10 +800,8 @@ describe('Remote', function () {
             })
             done()
           })
-        }
-                )
-      }
-            )
+        })
+      })
     })
 
     it('adds a folder to couchdb if the folder does not exist', function (done) {
@@ -891,12 +859,9 @@ describe('Remote', function () {
               err.status.should.equal(404)
               done()
             })
-          }
-                    )
-        }
-                )
-      }
-            )
+          })
+        })
+      })
     })
 
     it('deletes also the associated binary', function (done) {
@@ -932,102 +897,94 @@ describe('Remote', function () {
               err.status.should.equal(404)
               done()
             })
-          }
-                    )
-        }
-                )
-      }
-            )
+          })
+        })
+      })
     })
   })
 
   describe('deleteFolder', () =>
-        it('deletes a folder in couchdb', function (done) {
-          return couchHelpers.createFolder(this.couch, 9, (err, folder) => {
-            should.not.exist(err)
-            let doc = {
-              path: 'couchdb-folder/folder-9',
-              _deleted: true,
-              docType: 'folder',
-              remote: {
-                _id: folder.id,
-                _rev: folder.rev
-              }
-            }
-            return this.couch.get(doc.remote._id, err => {
-              should.not.exist(err)
-              return this.remote.deleteFolder(doc, err => {
-                should.not.exist(err)
-                return this.couch.get(doc.remote._id, function (err) {
-                  err.status.should.equal(404)
-                  done()
-                })
-              }
-                    )
-            }
-                )
+    it('deletes a folder in couchdb', function (done) {
+      return couchHelpers.createFolder(this.couch, 9, (err, folder) => {
+        should.not.exist(err)
+        let doc = {
+          path: 'couchdb-folder/folder-9',
+          _deleted: true,
+          docType: 'folder',
+          remote: {
+            _id: folder.id,
+            _rev: folder.rev
           }
-            )
+        }
+        return this.couch.get(doc.remote._id, err => {
+          should.not.exist(err)
+          return this.remote.deleteFolder(doc, err => {
+            should.not.exist(err)
+            return this.couch.get(doc.remote._id, function (err) {
+              err.status.should.equal(404)
+              done()
+            })
+          })
         })
-    )
+      })
+    })
+  )
 
   describe('resolveConflict', () =>
-        it('renames the file/folder', function (done) {
-          let checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
-          let binary = {
+    it('renames the file/folder', function (done) {
+      let checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
+      let binary = {
+        _id: checksum,
+        _rev: '1-0123456789'
+      }
+      let src = {
+        path: 'cat9.jpg',
+        docType: 'file',
+        checksum,
+        creationDate: new Date().toISOString(),
+        lastModification: new Date().toISOString(),
+        size: 36901
+      }
+      let dst = {
+        path: 'cat-conflict-2015-12-01T01:02:03Z.jpg',
+        docType: 'file',
+        checksum,
+        creationDate: src.creationDate,
+        lastModification: src.lastModification,
+        size: 36901
+      }
+      let remoteDoc = this.remote.createRemoteDoc(src, {binary})
+      return this.couch.put(remoteDoc, (err, created) => {
+        should.not.exist(err)
+        src.remote = {
+          _id: created.id,
+          _rev: created.rev,
+          binary: {
             _id: checksum,
-            _rev: '1-0123456789'
+            _rev: binary._rev
           }
-          let src = {
-            path: 'cat9.jpg',
-            docType: 'file',
-            checksum,
-            creationDate: new Date().toISOString(),
-            lastModification: new Date().toISOString(),
-            size: 36901
-          }
-          let dst = {
-            path: 'cat-conflict-2015-12-01T01:02:03Z.jpg',
-            docType: 'file',
-            checksum,
-            creationDate: src.creationDate,
-            lastModification: src.lastModification,
-            size: 36901
-          }
-          let remoteDoc = this.remote.createRemoteDoc(src, {binary})
-          return this.couch.put(remoteDoc, (err, created) => {
+        }
+        return this.remote.resolveConflict(dst, src, (err, moved) => {
+          should.not.exist(err)
+          return this.couch.get(moved.id, function (err, file) {
             should.not.exist(err)
-            src.remote = {
-              _id: created.id,
-              _rev: created.rev,
+            file.should.have.properties({
+              path: '',
+              name: dst.path,
+              docType: 'file',
+              lastModification: dst.lastModification,
+              size: 36901,
               binary: {
-                _id: checksum,
-                _rev: binary._rev
+                file: {
+                  id: binary._id,
+                  rev: binary._rev
+                }
               }
-            }
-            return this.remote.resolveConflict(dst, src, (err, moved) => {
-              should.not.exist(err)
-              return this.couch.get(moved.id, function (err, file) {
-                should.not.exist(err)
-                file.should.have.properties({
-                  path: '',
-                  name: dst.path,
-                  docType: 'file',
-                  lastModification: dst.lastModification,
-                  size: 36901,
-                  binary: {
-                    file: {
-                      id: binary._id,
-                      rev: binary._rev
-                    }
-                  }
-                })
-                done()
-              })
-            }
-                )
-          }
-            )
+            })
+            done()
+          })
         })
-    )
+      })
+    })
+  )
 })

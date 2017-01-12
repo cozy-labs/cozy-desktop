@@ -33,8 +33,7 @@ describe('Sync', function () {
         this.remote.start.calledOnce.should.be.true()
         this.sync.sync.calledOnce.should.be.true()
         done()
-      }
-            )
+      })
     })
 
     it('starts the metadata replication of local in write only', function (done) {
@@ -44,8 +43,7 @@ describe('Sync', function () {
         this.remote.start.called.should.be.false()
         this.sync.sync.calledOnce.should.be.true()
         done()
-      }
-            )
+      })
     })
 
     it('starts the metadata replication of both in full', function (done) {
@@ -55,8 +53,7 @@ describe('Sync', function () {
         this.remote.start.calledOnce.should.be.true()
         this.sync.sync.calledOnce.should.be.true()
         done()
-      }
-            )
+      })
     })
 
     it('does not start sync if metadata replication fails', function (done) {
@@ -67,8 +64,7 @@ describe('Sync', function () {
         this.remote.start.called.should.be.false()
         this.sync.sync.calledOnce.should.be.false()
         done()
-      }
-            )
+      })
     })
   })
 
@@ -91,8 +87,7 @@ describe('Sync', function () {
         this.sync.apply.calledOnce.should.be.true()
         this.sync.apply.calledWith({change: true}).should.be.true()
         done()
-      }
-            )
+      })
     })
 
     it('calls pop but not apply if pop has failed', function (done) {
@@ -102,8 +97,7 @@ describe('Sync', function () {
         this.sync.pop.calledOnce.should.be.true()
         this.sync.apply.calledOnce.should.be.false()
         done()
-      }
-            )
+      })
     })
   })
 
@@ -116,8 +110,7 @@ describe('Sync', function () {
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
       this.pouch.db.changes().on('complete', info => {
         return this.pouch.setLocalSeq(info.last_seq, done)
-      }
-            )
+      })
     })
 
     it('gives the next change if there is already one', function (done) {
@@ -137,27 +130,22 @@ describe('Sync', function () {
               tags: []})
             done()
           })
-        }
-                )
-      }
-            )
+        })
+      })
     })
 
     it('gives only one change', function (done) {
       async.eachSeries([2, 3, 4, 5], (i, callback) => {
         return pouchHelpers.createFile(this.pouch, i, callback)
-      }
-            , err => {
-              should.not.exist(err)
-              let spy = sinon.spy()
-              this.sync.pop(spy)
-              return setTimeout(function () {
-                spy.calledOnce.should.be.true()
-                done()
-              }
-                , 10)
-            }
-            )
+      }, err => {
+        should.not.exist(err)
+        let spy = sinon.spy()
+        this.sync.pop(spy)
+        return setTimeout(function () {
+          spy.calledOnce.should.be.true()
+          done()
+        }, 10)
+      })
     })
 
     it('filters design doc changes', function (done) {
@@ -179,12 +167,9 @@ function(doc) {
             should.not.exist(err)
             change.doc.docType.should.equal('file')
             done()
-          }
-                    , 10)
-        }
-                )
-      }
-            )
+          }, 10)
+        })
+      })
     })
 
     it('waits for the next change if there no available change', function (done) {
@@ -204,13 +189,11 @@ function(doc) {
             tags: []})
           done()
         })
-      }
-            )
+      })
       return setTimeout(() => {
         spy.called.should.be.false()
         pouchHelpers.createFile(this.pouch, 7, err => should.not.exist(err))
-      }
-            , 10)
+      }, 10)
     })
 
     it('emits up-to-date if there are no available change', function (done) {
@@ -221,8 +204,7 @@ function(doc) {
       return setTimeout(() => {
         this.events.emit.calledWith('up-to-date').should.be.true()
         pouchHelpers.createFile(this.pouch, 8, err => should.not.exist(err))
-      }
-            , 10)
+      }, 10)
     })
   })
 
@@ -251,8 +233,7 @@ function(doc) {
         should.not.exist(err)
         this.sync.folderChanged.called.should.be.false()
         done()
-      }
-            )
+      })
     })
 
     it('does nothing for an up-to-date document', function (done) {
@@ -272,8 +253,7 @@ function(doc) {
         should.not.exist(err)
         this.sync.folderChanged.called.should.be.false()
         done()
-      }
-            )
+      })
     })
 
     it('calls fileChanged for a file', function (done) {
@@ -294,8 +274,7 @@ function(doc) {
         this.sync.fileChanged.called.should.be.true()
         this.sync.fileChanged.calledWith(change.doc).should.be.true()
         done()
-      }
-            )
+      })
     })
 
     it('calls folderChanged for a folder', function (done) {
@@ -316,8 +295,7 @@ function(doc) {
         this.sync.folderChanged.called.should.be.true()
         this.sync.folderChanged.calledWith(change.doc).should.be.true()
         done()
-      }
-            )
+      })
     })
   })
 
@@ -357,8 +335,7 @@ function(doc) {
           seq.should.equal(125)
           done()
         })
-      }
-            )
+      })
       return func()
     })
 
@@ -392,13 +369,10 @@ function(doc) {
               })
               done()
             })
-          }
-                    )
+          })
           return func()
-        }
-                )
-      }
-            )
+        })
+      })
     })
 
     it('returns a function that does not touch the seq if error', function (done) {
@@ -415,11 +389,9 @@ function(doc) {
             seq.should.equal(128)
             done()
           })
-        }
-                )
+        })
         return func(new Error('Apply failed'))
-      }
-            )
+      })
     })
   })
 
@@ -448,10 +420,8 @@ function(doc) {
             actual.errors.should.equal(1)
             done()
           })
-        }
-                )
-      }
-            )
+        })
+      })
     })
 
     it('increments the errors counter to 1 on next error', function (done) {
@@ -468,10 +438,8 @@ function(doc) {
             actual.errors.should.equal(4)
             done()
           })
-        }
-                )
-      }
-            )
+        })
+      })
     })
 
     it('stops retrying after 10 errors', function (done) {
@@ -489,10 +457,8 @@ function(doc) {
             actual._rev.should.equal(doc._rev)
             done()
           })
-        }
-                )
-      }
-            )
+        })
+      })
     })
   })
 
@@ -520,8 +486,7 @@ function(doc) {
         should.not.exist(err)
         this.remote.addFile.calledWith(doc).should.be.true()
         done()
-      }
-            )
+      })
     })
 
     it('calls overwriteFile for an overwritten file', function (done) {
@@ -549,12 +514,9 @@ function(doc) {
             this.remote.updateFileMetadata.called.should.be.false
             this.remote.overwriteFile.calledWith(doc).should.be.true()
             done()
-          }
-                    )
-        }
-                )
-      }
-            )
+          })
+        })
+      })
     })
 
     it('calls updateFileMetadata for updated file metadata', function (done) {
@@ -583,12 +545,9 @@ function(doc) {
             let ufm = this.remote.updateFileMetadata
             ufm.calledWith(doc).should.be.true()
             done()
-          }
-                    )
-        }
-                )
-      }
-            )
+          })
+        })
+      })
     })
 
     it('calls moveFile for a moved file', function (done) {
@@ -624,10 +583,8 @@ function(doc) {
           this.remote.addFile.called.should.be.false()
           this.remote.moveFile.calledWith(doc, was).should.be.true()
           done()
-        }
-                )
-      }
-            )
+        })
+      })
     })
 
     it('calls deleteFile for a deleted file', function (done) {
@@ -646,8 +603,7 @@ function(doc) {
         should.not.exist(err)
         this.local.deleteFile.calledWith(doc).should.be.true()
         done()
-      }
-            )
+      })
     })
 
     it('does nothing for a deleted file that was not added', function (done) {
@@ -665,8 +621,7 @@ function(doc) {
         should.not.exist(err)
         this.remote.deleteFile.called.should.be.false()
         done()
-      }
-            )
+      })
     })
   })
 
@@ -693,8 +648,7 @@ function(doc) {
         should.not.exist(err)
         this.remote.addFolder.calledWith(doc).should.be.true()
         done()
-      }
-            )
+      })
     })
 
     it('calls updateFolder for an updated folder', function (done) {
@@ -713,8 +667,7 @@ function(doc) {
         should.not.exist(err)
         this.local.updateFolder.calledWith(doc).should.be.true()
         done()
-      }
-            )
+      })
     })
 
     it('calls moveFolder for a moved folder', function (done) {
@@ -750,10 +703,8 @@ function(doc) {
           this.remote.addFolder.called.should.be.false()
           this.remote.moveFolder.calledWith(doc, was).should.be.true()
           done()
-        }
-                )
-      }
-            )
+        })
+      })
     })
 
     it('calls deleteFolder for a deleted folder', function (done) {
@@ -772,8 +723,7 @@ function(doc) {
         should.not.exist(err)
         this.local.deleteFolder.calledWith(doc).should.be.true()
         done()
-      }
-            )
+      })
     })
 
     it('does nothing for a deleted folder that was not added', function (done) {
@@ -791,8 +741,7 @@ function(doc) {
         should.not.exist(err)
         this.remote.deleteFolder.called.should.be.false()
         done()
-      }
-            )
+      })
     })
   })
 

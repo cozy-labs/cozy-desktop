@@ -45,8 +45,7 @@ describe('LocalWatcher Tests', function () {
         this.prep.addFile.args[0][0].should.equal('local')
         this.prep.addFile.args[0][1].path.should.equal('aa/ab')
         done()
-      }
-            , 1100)
+      }, 1100)
       return this.watcher.start(function () {})
     })
 
@@ -61,8 +60,7 @@ describe('LocalWatcher Tests', function () {
         this.prep.addFile.called.should.be.false()
         this.prep.updateFile.called.should.be.false()
         done()
-      }
-            , 1000)
+      }, 1000)
       return this.watcher.start(function () {})
     })
   })
@@ -92,8 +90,7 @@ describe('LocalWatcher Tests', function () {
           should.not.exist(doc.executable)
           done()
         })
-      }
-            )
+      })
     })
 
     it('sets the executable bit', function (done) {
@@ -108,8 +105,7 @@ describe('LocalWatcher Tests', function () {
           doc.executable.should.be.true()
           done()
         })
-      }
-            )
+      })
     })
 
     it('calls back with an error if the file is missing', function (done) {
@@ -122,15 +118,15 @@ describe('LocalWatcher Tests', function () {
   })
 
   describe('getFileClass', () =>
-        it('returns proper class for given file', function () {
-          let [mimeType, fileClass] = this.watcher.getFileClass('image.png')
-          mimeType.should.equal('image/png')
-          fileClass.should.equal('image');
-          [mimeType, fileClass] = this.watcher.getFileClass('doc.txt')
-          mimeType.should.equal('text/plain')
-          fileClass.should.equal('document')
-        })
-    )
+    it('returns proper class for given file', function () {
+      let [mimeType, fileClass] = this.watcher.getFileClass('image.png')
+      mimeType.should.equal('image/png')
+      fileClass.should.equal('image');
+      [mimeType, fileClass] = this.watcher.getFileClass('doc.txt')
+      mimeType.should.equal('text/plain')
+      fileClass.should.equal('document')
+    })
+  )
 
   describe('checksum', function () {
     it('returns the checksum of an existing file', function (done) {
@@ -173,27 +169,27 @@ describe('LocalWatcher Tests', function () {
   })
 
   describe('onAdd', () =>
-        it('detects when a file is created', function (done) {
-          return this.watcher.start(() => {
-            this.prep.addFile = function (side, doc) {
-              side.should.equal('local')
-              doc.should.have.properties({
-                path: 'aaa.jpg',
-                docType: 'file',
-                checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30',
-                size: 29865,
-                class: 'image',
-                mime: 'image/jpeg'
-              })
-              done()
-            }
-            let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
-            let dst = path.join(this.syncPath, 'aaa.jpg')
-            return fs.copySync(src, dst)
-          }
-            )
-        })
-    )
+    it('detects when a file is created', function (done) {
+      return this.watcher.start(() => {
+        this.prep.addFile = function (side, doc) {
+          side.should.equal('local')
+          doc.should.have.properties({
+            path: 'aaa.jpg',
+            docType: 'file',
+            checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30',
+            size: 29865,
+            class: 'image',
+            mime: 'image/jpeg'
+          })
+          done()
+        }
+        let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
+        let dst = path.join(this.syncPath, 'aaa.jpg')
+        return fs.copySync(src, dst)
+      }
+        )
+    })
+  )
 
   describe('onAddDir', function () {
     it('detects when a folder is created', function (done) {
@@ -211,8 +207,7 @@ describe('LocalWatcher Tests', function () {
           done()
         }
         return fs.mkdirSync(path.join(this.syncPath, 'aba'))
-      }
-            )
+      })
     })
 
     it('detects when a sub-folder is created', function (done) {
@@ -237,67 +232,67 @@ describe('LocalWatcher Tests', function () {
   })
 
   describe('onUnlink', () =>
-        it('detects when a file is deleted', function (done) {
-          fs.ensureFileSync(path.join(this.syncPath, 'aca'))
-          this.prep.addFile = () => {  // For aca file
-            this.prep.deleteFile = function (side, doc) {
-              side.should.equal('local')
-              doc.should.have.properties({
-                path: 'aca'})
-              done()
-            }
-            return fs.unlinkSync(path.join(this.syncPath, 'aca'))
-          }
-          return this.watcher.start(function () {})
-        })
-    )
+    it('detects when a file is deleted', function (done) {
+      fs.ensureFileSync(path.join(this.syncPath, 'aca'))
+      this.prep.addFile = () => {  // For aca file
+        this.prep.deleteFile = function (side, doc) {
+          side.should.equal('local')
+          doc.should.have.properties({
+            path: 'aca'})
+          done()
+        }
+        return fs.unlinkSync(path.join(this.syncPath, 'aca'))
+      }
+      return this.watcher.start(function () {})
+    })
+  )
 
   describe('onUnlinkDir', () =>
-        it('detects when a folder is deleted', function (done) {
-          fs.mkdirSync(path.join(this.syncPath, 'ada'))
-          this.prep.putFolder = () => {  // For ada folder
-            this.prep.deleteFolder = function (side, doc) {
-              side.should.equal('local')
-              doc.should.have.properties({
-                path: 'ada'})
-              done()
-            }
-            return fs.rmdirSync(path.join(this.syncPath, 'ada'))
-          }
-          return this.watcher.start(function () {})
-        })
-    )
+    it('detects when a folder is deleted', function (done) {
+      fs.mkdirSync(path.join(this.syncPath, 'ada'))
+      this.prep.putFolder = () => {  // For ada folder
+        this.prep.deleteFolder = function (side, doc) {
+          side.should.equal('local')
+          doc.should.have.properties({
+            path: 'ada'})
+          done()
+        }
+        return fs.rmdirSync(path.join(this.syncPath, 'ada'))
+      }
+      return this.watcher.start(function () {})
+    })
+  )
 
   describe('onChange', () =>
-        it('detects when a file is changed', function (done) {
-          let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
-          let dst = path.join(this.syncPath, 'aea.jpg')
-          fs.copySync(src, dst)
-          this.prep.addFile = () => {
-            this.prep.updateFile = function (side, doc) {
-              side.should.equal('local')
-              doc.should.have.properties({
-                path: 'aea.jpg',
-                docType: 'file',
-                checksum: 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df',
-                size: 36901,
-                class: 'image',
-                mime: 'image/jpeg'
-              })
-              done()
-            }
-            src = src.replace(/\.jpg$/, '-mod.jpg')
-            dst = path.join(this.syncPath, 'aea.jpg')
-            return fs.copySync(src, dst)
-          }
-          return this.watcher.start(function () {})
-        })
-    )
+    it('detects when a file is changed', function (done) {
+      let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
+      let dst = path.join(this.syncPath, 'aea.jpg')
+      fs.copySync(src, dst)
+      this.prep.addFile = () => {
+        this.prep.updateFile = function (side, doc) {
+          side.should.equal('local')
+          doc.should.have.properties({
+            path: 'aea.jpg',
+            docType: 'file',
+            checksum: 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df',
+            size: 36901,
+            class: 'image',
+            mime: 'image/jpeg'
+          })
+          done()
+        }
+        src = src.replace(/\.jpg$/, '-mod.jpg')
+        dst = path.join(this.syncPath, 'aea.jpg')
+        return fs.copySync(src, dst)
+      }
+      return this.watcher.start(function () {})
+    })
+  )
 
   describe('when a file is moved', function () {
-        // This integration test is unstable on travis + OSX (too often red).
-        // It's disabled for the moment, but we should find a way to make it
-        // more stable on travis, and enable it again.
+    // This integration test is unstable on travis + OSX (too often red).
+    // It's disabled for the moment, but we should find a way to make it
+    // more stable on travis, and enable it again.
     if (process.env.TRAVIS && (process.platform === 'darwin')) {
       it('is unstable on travis')
       return
@@ -340,10 +335,8 @@ describe('LocalWatcher Tests', function () {
             done()
           }
           return fs.renameSync(dst, path.join(this.syncPath, 'afb.jpg'))
-        }
-                , 2000)
-      }
-            )
+        }, 2000)
+      })
     })
   })
 
@@ -394,14 +387,11 @@ describe('LocalWatcher Tests', function () {
               let args = this.prep.deleteFolder.args[0][1]
               args.should.have.properties({path: 'aga'})
               done()
-            }
-                        , 4000)
+            }, 4000)
           }
           return fs.renameSync(src, dst)
-        }
-                , 1800)
-      }
-            )
+        }, 1800)
+      })
     })
   })
 
@@ -434,20 +424,18 @@ describe('LocalWatcher Tests', function () {
       }
       return async.each([folder1, folder2, file1, file2], (doc, next) => {
         return this.pouch.db.put(doc, next)
-      }
-            , () => {
-              this.watcher.paths = ['folder1', 'file1']
-              let cb = this.watcher.onReady(function () {
-                dd.calledTwice.should.be.true()
-                dd.calledWithMatch('local', folder1).should.be.false()
-                dd.calledWithMatch('local', folder2).should.be.true()
-                dd.calledWithMatch('local', file1).should.be.false()
-                dd.calledWithMatch('local', file2).should.be.true()
-                done()
-              })
-              return cb()
-            }
-            )
+      }, () => {
+        this.watcher.paths = ['folder1', 'file1']
+        let cb = this.watcher.onReady(function () {
+          dd.calledTwice.should.be.true()
+          dd.calledWithMatch('local', folder1).should.be.false()
+          dd.calledWithMatch('local', folder2).should.be.true()
+          dd.calledWithMatch('local', file1).should.be.false()
+          dd.calledWithMatch('local', file2).should.be.true()
+          done()
+        })
+        return cb()
+      })
     })
   })
 })

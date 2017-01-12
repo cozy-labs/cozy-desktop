@@ -24,7 +24,7 @@ export default {
   startServer (done) {
     let client = request.newClient(url)
     return async.waterfall([
-            // Start the server
+      // Start the server
       next => {
         let bin = path.resolve('node_modules/.bin/pouchdb-server')
         let args = ['-n', '-m', '-p', `${params.port}`]
@@ -34,7 +34,7 @@ export default {
         return setTimeout(next, 500)
       },
 
-            // Create a user
+      // Create a user
       function (next) {
         let options = {
           _id: `org.couchdb.user:${params.user}`,
@@ -44,10 +44,10 @@ export default {
           password: params.pass
         }
         return async.retry({times: 30, interval: 250}, cb => client.put(`_users/${params.user}`, options, cb)
-                , err => next(err))
+        , err => next(err))
       },
 
-            // Create a database
+      // Create a database
       function (next) {
         let options = {
           id: params.db,
@@ -56,7 +56,7 @@ export default {
         return client.put(params.db, options, err => next(err))
       },
 
-            // Add the user to the database admins
+      // Add the user to the database admins
       function (next) {
         let options = {
           admins: {
@@ -85,8 +85,7 @@ export default {
       deviceName: params.user,
       password: params.pass
     })
-    let events =
-            {emit () {}}
+    let events = {emit () {}}
     this.couch = new Couch(this.config, events)
   },
 

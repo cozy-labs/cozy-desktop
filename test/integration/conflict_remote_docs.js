@@ -96,31 +96,31 @@ describe('Conflict between remote docs with distinct cases', function () {
     })
 
     it('has the files on remote', done =>
-            Files.getAllFiles(function (_, files) {
-              let f
-              files.length.should.equal(2)
-              let sizes = ((() => {
-                let result = []
-                for (f of Array.from(files)) {
-                  result.push(f.size)
-                }
-                return result
-              })())
-              sizes.sort().should.eql(expectedSizes.sort())
-              let names = ((() => {
-                let result1 = []
-                for (f of Array.from(files)) {
-                  result1.push(f.name)
-                }
-                return result1
-              })()).sort()
-              let parts = names[0].split('-conflict-')
-              parts.length.should.equal(2)
-              parts[0].should.equal(upper.name)
-              names[1].should.equal(lower.name)
-              done()
-            })
-        )
+      Files.getAllFiles(function (_, files) {
+        let f
+        files.length.should.equal(2)
+        let sizes = ((() => {
+          let result = []
+          for (f of Array.from(files)) {
+            result.push(f.size)
+          }
+          return result
+        })())
+        sizes.sort().should.eql(expectedSizes.sort())
+        let names = ((() => {
+          let result1 = []
+          for (f of Array.from(files)) {
+            result1.push(f.name)
+          }
+          return result1
+        })()).sort()
+        let parts = names[0].split('-conflict-')
+        parts.length.should.equal(2)
+        parts[0].should.equal(upper.name)
+        names[1].should.equal(lower.name)
+        done()
+      })
+    )
   })
 
   describe('a folder and a file', function () {
@@ -148,17 +148,17 @@ describe('Conflict between remote docs with distinct cases', function () {
     })
 
     before('Create the lower folder', done =>
-            Files.createFolder(lower, function (_, created) {
-              let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon-mod.jpg')
-              return Files.uploadFile(child, fixturePath, function (_, created) {
-                child.remote = {
-                  id: created.id,
-                  size: fs.statSync(fixturePath).size
-                }
-                done()
-              })
-            })
-        )
+      Files.createFolder(lower, function (_, created) {
+        let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon-mod.jpg')
+        return Files.uploadFile(child, fixturePath, function (_, created) {
+          child.remote = {
+            id: created.id,
+            size: fs.statSync(fixturePath).size
+          }
+          done()
+        })
+      })
+    )
 
     before(Cozy.fetchRemoteMetadata)
 
@@ -196,23 +196,23 @@ describe('Conflict between remote docs with distinct cases', function () {
     })
 
     it('has the files on remote', done =>
-            Files.getAllFolders(function (_, folders) {
-              folders.length.should.equal(1)
-              folders[0].should.have.properties(lower)
-              return Files.getAllFiles(function (_, files) {
-                files.length.should.equal(2)
-                files[0]._id.should.equal(child.remote.id)
-                files[0].path.should.equal(`/${child.path}`)
-                files[0].name.should.equal(child.name)
-                files[0].size.should.equal(child.remote.size)
-                let parts = files[1].name.split('-conflict-')
-                parts.length.should.equal(2)
-                parts[0].should.equal(upper.name)
-                files[1].path.should.equal(upper.path)
-                files[1].size.should.equal(upper.remote.size)
-                done()
-              })
-            })
-        )
+      Files.getAllFolders(function (_, folders) {
+        folders.length.should.equal(1)
+        folders[0].should.have.properties(lower)
+        return Files.getAllFiles(function (_, files) {
+          files.length.should.equal(2)
+          files[0]._id.should.equal(child.remote.id)
+          files[0].path.should.equal(`/${child.path}`)
+          files[0].name.should.equal(child.name)
+          files[0].size.should.equal(child.remote.size)
+          let parts = files[1].name.split('-conflict-')
+          parts.length.should.equal(2)
+          parts[0].should.equal(upper.name)
+          files[1].path.should.equal(upper.path)
+          files[1].size.should.equal(upper.remote.size)
+          done()
+        })
+      })
+    )
   })
 })

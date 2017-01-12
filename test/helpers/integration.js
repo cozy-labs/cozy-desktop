@@ -30,16 +30,15 @@ helpers.ensurePreConditions = function ensurePreConditions (done) {
   return async.map(ports, function (port, cb) {
     let client = request.newClient(`http://${helpers.host}:${port}`)
     return client.get('/', (_, res) => cb(null, __guard__(res, x => x.statusCode)), false)
-  }
-    , function (err, results) {
-      should.not.exist(err)
-      let [couch, proxy, dataSystem, files] = results
-      should.exist(couch, 'Couch should be running on 5984')
-      should.exist(proxy, 'Cozy Proxy should be running on 9104')
-      should.exist(dataSystem, 'Cozy Data System should be running on 9101')
-      should.exist(files, 'Cozy Files should be running on 9121')
-      done()
-    })
+  }, function (err, results) {
+    should.not.exist(err)
+    let [couch, proxy, dataSystem, files] = results
+    should.exist(couch, 'Couch should be running on 5984')
+    should.exist(proxy, 'Cozy Proxy should be running on 9104')
+    should.exist(dataSystem, 'Cozy Data System should be running on 9101')
+    should.exist(files, 'Cozy Files should be running on 9121')
+    done()
+  })
 }
 
 helpers.registerDevice = function registerDevice (done) {
@@ -51,22 +50,21 @@ helpers.registerDevice = function registerDevice (done) {
   return this.app.addRemote(helpers.url, this.syncPath, deviceName, function (err, credentials) {
     should.not.exist(err)
     helpers.deviceName = credentials.deviceName
-        // For debug:
-        // PouchDB.debug.enable 'pouchdb:*'
+    // For debug:
+    // PouchDB.debug.enable 'pouchdb:*'
     done()
   })
 }
 
 helpers.clean = function clean (done) {
-    // For debug:
-    // PouchDB.debug.disable()
+  // For debug:
+  // PouchDB.debug.disable()
   return this.app.removeRemote(helpers.deviceName, err => {
     let callback = () => {
       return setTimeout(() => {
         del.sync(this.syncPath)
         done()
-      }
-            , 200)
+      }, 200)
     }
     should.not.exist(err)
     if (this.app.sync) {
@@ -77,8 +75,7 @@ helpers.clean = function clean (done) {
     } else {
       return callback()
     }
-  }
-    )
+  })
 }
 
 let start = function (app, mode, done) {

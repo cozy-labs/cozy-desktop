@@ -38,11 +38,11 @@ describe('Conflict', function () {
     before(Files.deleteAll)
 
     before('Create the remote tree', done =>
-            Files.createFolder(folder, function (_, created) {
-              let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon-mod.jpg')
-              return Files.uploadFile(child, fixturePath, done)
-            })
-        )
+      Files.createFolder(folder, function (_, created) {
+        let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon-mod.jpg')
+        return Files.uploadFile(child, fixturePath, done)
+      })
+    )
 
     before('Create the local tree', function () {
       let fixturePath = path.join(Cozy.fixturesDir, 'chat-mignon.jpg')
@@ -73,11 +73,11 @@ describe('Conflict', function () {
     })
 
     it('has the file and the folder on remote', done =>
-            Files.getAllFiles(function (_, files) {
-              files.length.should.equal(2)
-              done()
-            })
-        )
+      Files.getAllFiles(function (_, files) {
+        files.length.should.equal(2)
+        done()
+      })
+    )
     /* eslint-enable no-unreachable */
   })
 
@@ -136,21 +136,21 @@ describe('Conflict', function () {
     })
 
     it('has the file and the folder on remote', done =>
-            Files.getAllFiles(function (_, files) {
-              files.length.should.equal(2)
-              if (files[0].path === file.path) { files = files.reverse() }
-              files[0].path.should.equal(`/${child.path}`)
-              files[0].name.should.equal(child.name)
-              files[1].path.should.equal(file.path)
-              let parts = files[1].name.split('-conflict-')
-              parts.length.should.equal(2)
-              parts[0].should.equal(file.name)
-              return Files.getAllFolders(function (_, folders) {
-                folders.length.should.equal(1)
-                should.exist(find(folders, folder))
-                done()
-              })
-            })
-        )
+      Files.getAllFiles(function (_, files) {
+        files.length.should.equal(2)
+        if (files[0].path === file.path) { files = files.reverse() }
+        files[0].path.should.equal(`/${child.path}`)
+        files[0].name.should.equal(child.name)
+        files[1].path.should.equal(file.path)
+        let parts = files[1].name.split('-conflict-')
+        parts.length.should.equal(2)
+        parts[0].should.equal(file.name)
+        return Files.getAllFolders(function (_, folders) {
+          folders.length.should.equal(1)
+          should.exist(find(folders, folder))
+          done()
+        })
+      })
+    )
   })
 })

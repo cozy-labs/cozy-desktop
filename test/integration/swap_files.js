@@ -13,9 +13,9 @@ describe('Swap 2 files', function () {
   this.slow(1000)
   this.timeout(10000)
 
-    // This integration test is unstable on travis (too often red).
-    // It's disabled for the moment, but we should find a way to make it
-    // more stable on travis, and enable it again.
+  // This integration test is unstable on travis (too often red).
+  // It's disabled for the moment, but we should find a way to make it
+  // more stable on travis, and enable it again.
   if (process.env.TRAVIS) {
     it('is unstable on travis')
     return
@@ -49,14 +49,14 @@ describe('Swap 2 files', function () {
     fs.copySync(fixturePath, onePath)
     one.size = fs.statSync(fixturePath).size
     return setTimeout(() =>
-            Files.getAllFiles(function (_, files) {
-              let found = find(files, one)
-              should.exist(found)
-              one.checksum = found.checksum
-              done()
-            })
+      Files.getAllFiles(function (_, files) {
+        let found = find(files, one)
+        should.exist(found)
+        one.checksum = found.checksum
+        done()
+      })
 
-        , 2500)
+    , 2500)
   })
 
   it('pushs another local file to the remote cozy', function (done) {
@@ -65,14 +65,14 @@ describe('Swap 2 files', function () {
     fs.copySync(fixturePath, twoPath)
     two.size = fs.statSync(fixturePath).size
     return setTimeout(() =>
-            Files.getAllFiles(function (_, files) {
-              let found = find(files, two)
-              should.exist(found)
-              two.checksum = found.checksum
-              done()
-            })
+      Files.getAllFiles(function (_, files) {
+        let found = find(files, two)
+        should.exist(found)
+        two.checksum = found.checksum
+        done()
+      })
 
-        , 2500)
+    , 2500)
   })
 
   it('swaps the two file', function (done) {
@@ -85,13 +85,13 @@ describe('Swap 2 files', function () {
     [one.size, two.size] = [two.size, one.size];
     [one.checksum, two.checksum] = [two.checksum, one.checksum]
     return setTimeout(() =>
-            Files.getAllFiles(function (_, files) {
-              should.exist(find(files, one))
-              should.exist(find(files, two))
-              should.not.exist(find(files, tmp))
-              done()
-            })
+      Files.getAllFiles(function (_, files) {
+        should.exist(find(files, one))
+        should.exist(find(files, two))
+        should.not.exist(find(files, tmp))
+        done()
+      })
 
-        , 3000)
+    , 3000)
   })
 })

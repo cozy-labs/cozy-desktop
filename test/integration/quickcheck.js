@@ -254,11 +254,11 @@ describe('Property based testing', function () {
   this.slow(1000)
   this.timeout(30000)
 
-    // Disable this test on travis because it's not simple as green or red.
-    // It can fail for reasons other than a bug in cozy-desktop.
-    // For example, it can be that the test has not waited long enough after a
-    // conflict between 2 folders with many files. Cozy-desktop will manage the
-    // situation but it takes several minutes for that.
+  // Disable this test on travis because it's not simple as green or red.
+  // It can fail for reasons other than a bug in cozy-desktop.
+  // For example, it can be that the test has not waited long enough after a
+  // conflict between 2 folders with many files. Cozy-desktop will manage the
+  // situation but it takes several minutes for that.
   if (process.env.TRAVIS) {
     it('is unstable on travis')
     return
@@ -274,14 +274,14 @@ describe('Property based testing', function () {
   })
 
   it('registers two devices', done =>
-        registerDevice(0, function (err) {
-          should.not.exist(err)
-          return registerDevice(1, function (err) {
-            should.not.exist(err)
-            done()
-          })
-        })
-    )
+    registerDevice(0, function (err) {
+      should.not.exist(err)
+      return registerDevice(1, function (err) {
+        should.not.exist(err)
+        done()
+      })
+    })
+  )
 
   it('spawns two instances of cozy-desktop', function (done) {
     spawnCozyDesktop(0, one => {
@@ -289,10 +289,8 @@ describe('Property based testing', function () {
       return spawnCozyDesktop(1, two => {
         this.two = two
         done()
-      }
-            )
-    }
-        )
+      })
+    })
   })
 
   it('makes some operations', done => makeOperations(10000, done))
@@ -327,14 +325,14 @@ describe('Property based testing', function () {
   })
 
   it('removes the two devices', done =>
-        removeRemoteDevice(0, function (err) {
-          should.not.exist(err)
-          return removeRemoteDevice(1, function (err) {
-            should.not.exist(err)
-            done()
-          })
-        })
-    )
+    removeRemoteDevice(0, function (err) {
+      should.not.exist(err)
+      return removeRemoteDevice(1, function (err) {
+        should.not.exist(err)
+        done()
+      })
+    })
+  )
 
   it('cleans the directories', function (done) {
     del.sync(folders[0])

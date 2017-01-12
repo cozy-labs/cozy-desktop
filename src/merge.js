@@ -29,20 +29,20 @@ class Merge {
     this.local = this.remote = null
   }
 
-    /* Helpers */
+  /* Helpers */
 
-    // Return true if the two dates are the same, +/- 3 seconds
+  // Return true if the two dates are the same, +/- 3 seconds
   sameDate (one, two) {
     one = +new Date(one)
     two = +new Date(two)
     return Math.abs(two - one) < 3000
   }
 
-    // Return true if the metadata of the two folders are the same
-    // The creationDate of the two folders are not compared, because the local
-    // filesystem can't give us a relevant information for that.
-    // For lastModification, we accept up to 3s of differences because we can't
-    // rely on file systems to be precise to the millisecond.
+  // Return true if the metadata of the two folders are the same
+  // The creationDate of the two folders are not compared, because the local
+  // filesystem can't give us a relevant information for that.
+  // For lastModification, we accept up to 3s of differences because we can't
+  // rely on file systems to be precise to the millisecond.
   sameFolder (one, two) {
     if (!this.sameDate(one.lastModification, two.lastModification)) { return false }
     let fields = ['_id', 'docType', 'remote', 'tags']
@@ -51,11 +51,11 @@ class Merge {
     return isEqual(one, two)
   }
 
-    // Return true if the metadata of the two files are the same
-    // The creationDate of the two files are not compared, because the local
-    // filesystem can't give us a relevant information for that.
-    // For lastModification, we accept up to 3s of differences because we can't
-    // rely on file systems to be precise to the millisecond.
+  // Return true if the metadata of the two files are the same
+  // The creationDate of the two files are not compared, because the local
+  // filesystem can't give us a relevant information for that.
+  // For lastModification, we accept up to 3s of differences because we can't
+  // rely on file systems to be precise to the millisecond.
   sameFile (one, two) {
     if (!this.sameDate(one.lastModification, two.lastModification)) { return false }
     if (!one.executable !== !two.executable) { return false }
@@ -66,7 +66,7 @@ class Merge {
     return isEqual(one, two)
   }
 
-    // Return true if the two files have the same binary content
+  // Return true if the two files have the same binary content
   sameBinary (one, two) {
     if ((one.docType !== 'file') || (two.docType !== 'file')) {
       return false
@@ -81,7 +81,7 @@ class Merge {
     }
   }
 
-    // Be sure that the tree structure for the given path exists
+  // Be sure that the tree structure for the given path exists
   ensureParentExist (side, doc, callback) {
     let parentId = path.dirname(doc._id)
     if (parentId === '.') {
@@ -104,21 +104,19 @@ class Merge {
             } else {
               return this.putFolder(side, parentDoc, callback)
             }
-          }
-                    )
+          })
         }
-      }
-            )
+      })
     }
   }
 
-    // Mark the next rev for this side
-    //
-    // To track which side has made which modification, a revision number is
-    // associated to each side. When a side make a modification, we extract the
-    // revision from the previous state, increment it by one to have the next
-    // revision and associate this number to the side that makes the
-    // modification.
+  // Mark the next rev for this side
+  //
+  // To track which side has made which modification, a revision number is
+  // associated to each side. When a side make a modification, we extract the
+  // revision from the previous state, increment it by one to have the next
+  // revision and associate this number to the side that makes the
+  // modification.
   markSide (side, doc, prev) {
     let rev = 0
     if (prev) { rev = this.pouch.extractRevNumber(prev) }
@@ -127,8 +125,8 @@ class Merge {
     return doc
   }
 
-    // Resolve a conflict by renaming a file/folder
-    // A suffix composed of -conflict- and the date is added to the path.
+  // Resolve a conflict by renaming a file/folder
+  // A suffix composed of -conflict- and the date is added to the path.
   resolveConflict (side, doc, callback) {
     let dst = clone(doc)
     let date = new Date().toISOString()
@@ -139,10 +137,10 @@ class Merge {
     return this[side].resolveConflict(dst, doc, err => callback(err, dst))
   }
 
-    /* Actions */
+  /* Actions */
 
-    // Add a file, if it doesn't already exist,
-    // and create the tree structure if needed
+  // Add a file, if it doesn't already exist,
+  // and create the tree structure if needed
   addFile (side, doc, callback) {
     this.pouch.db.get(doc._id, (err, file) => {
       if (err && (err.status !== 404)) { log.warn(err) }
@@ -150,8 +148,8 @@ class Merge {
       let hasSameBinary = false
       if (file) {
         hasSameBinary = this.sameBinary(file, doc)
-                // Photos uploaded by cozy-mobile have no checksum
-                // but we should preserve metadata like tags
+        // Photos uploaded by cozy-mobile have no checksum
+        // but we should preserve metadata like tags
         if (!hasSameBinary) { hasSameBinary = file.remote && !file.checksum }
       }
       if (__guard__(file, x => x.docType) === 'folder') {
@@ -180,40 +178,37 @@ class Merge {
         if (doc.tags == null) { doc.tags = [] }
         return this.ensureParentExist(side, doc, () => {
           return this.pouch.db.put(doc, callback)
-        }
-                )
+        })
       }
-    }
-        )
+    })
   }
 
-    // When a file is modified when cozy-desktop is not running,
-    // it is detected as a new file when cozy-desktop is started.
+  // When a file is modified when cozy-desktop is not running,
+  // it is detected as a new file when cozy-desktop is started.
   resolveInitialAdd (side, doc, file, callback) {
     if (!file.sides.remote) {
-            // The file was updated on local before being pushed to remote
+      // The file was updated on local before being pushed to remote
       return this.updateFile(side, doc, callback)
     } else if (file.sides.remote === file.sides.local) {
-            // The file was updated on local after being synched to remote
+      // The file was updated on local after being synched to remote
       return this.updateFile(side, doc, callback)
     } else {
-            // The file was updated on remote and maybe in local too
+      // The file was updated on remote and maybe in local too
       let shortRev = file.sides.local
       return this.pouch.getPreviousRev(doc._id, shortRev, (err, prev) => {
         if (err || (prev.checksum !== doc.checksum)) {
-                    // It's safer to handle it as a conflict
+          // It's safer to handle it as a conflict
           if (doc.remote == null) { doc.remote = file.remote }
           return this.resolveConflict('remote', doc, callback)
         } else {
-                    // The file was only updated on remote
+          // The file was only updated on remote
           return callback(null)
         }
-      }
-            )
+      })
     }
   }
 
-    // Update a file, when its metadata or its content has changed
+  // Update a file, when its metadata or its content has changed
   updateFile (side, doc, callback) {
     this.pouch.db.get(doc._id, (err, file) => {
       if (err && (err.status !== 404)) { log.warn(err) }
@@ -224,7 +219,7 @@ class Merge {
         doc._rev = file._rev
         if (doc.tags == null) { doc.tags = file.tags || [] }
         if (doc.remote == null) { doc.remote = file.remote }
-                // Preserve the creation date even if the file system lost it!
+        // Preserve the creation date even if the file system lost it!
         doc.creationDate = file.creationDate
         if (this.sameBinary(file, doc)) {
           if (doc.size == null) { doc.size = file.size }
@@ -242,14 +237,12 @@ class Merge {
         if (doc.creationDate == null) { doc.creationDate = new Date() }
         return this.ensureParentExist(side, doc, () => {
           return this.pouch.db.put(doc, callback)
-        }
-                )
+        })
       }
-    }
-        )
+    })
   }
 
-    // Create or update a folder
+  // Create or update a folder
   putFolder (side, doc, callback) {
     this.pouch.db.get(doc._id, (err, folder) => {
       if (err && (err.status !== 404)) { log.warn(err) }
@@ -271,14 +264,12 @@ class Merge {
         if (doc.creationDate == null) { doc.creationDate = new Date() }
         return this.ensureParentExist(side, doc, () => {
           return this.pouch.db.put(doc, callback)
-        }
-                )
+        })
       }
-    }
-        )
+    })
   }
 
-    // Rename or move a file
+  // Rename or move a file
   moveFile (side, doc, was, callback) {
     if (__guard__(was.sides, x => x[side])) {
       this.pouch.db.get(doc._id, (err, file) => {
@@ -302,22 +293,19 @@ class Merge {
             dst.sides = {}
             dst.sides[side] = 1
             return this.pouch.db.bulkDocs([was, dst], callback)
-          }
-                    )
+          })
         } else {
           return this.ensureParentExist(side, doc, () => {
             return this.pouch.db.bulkDocs([was, doc], callback)
-          }
-                    )
+          })
         }
-      }
-            )
+      })
     } else { // It can happen after a conflict
       this.addFile(side, doc, callback)
     }
   }
 
-    // Rename or move a folder (and every file and folder inside it)
+  // Rename or move a folder (and every file and folder inside it)
   moveFolder (side, doc, was, callback) {
     if (__guard__(was.sides, x => x[side])) {
       this.pouch.db.get(doc._id, (err, folder) => {
@@ -331,22 +319,19 @@ class Merge {
             dst.sides = {}
             dst.sides[side] = 1
             return this.moveFolderRecursively(dst, was, callback)
-          }
-                    )
+          })
         } else {
           return this.ensureParentExist(side, doc, () => {
             return this.moveFolderRecursively(doc, was, callback)
-          }
-                    )
+          })
         }
-      }
-            )
+      })
     } else { // It can happen after a conflict
       this.putFolder(side, doc, callback)
     }
   }
 
-    // Move a folder and all the things inside it
+  // Move a folder and all the things inside it
   moveFolderRecursively (folder, was, callback) {
     return this.pouch.byRecursivePath(was._id, (err, docs) => {
       if (err) {
@@ -358,8 +343,8 @@ class Merge {
         for (let doc of Array.from(docs)) {
           let src = clone(doc)
           src._deleted = true
-                    // moveTo is used for comparison. It's safer to take _id
-                    // than path for this case, as explained in doc/design.md
+          // moveTo is used for comparison. It's safer to take _id
+          // than path for this case, as explained in doc/design.md
           src.moveTo = doc._id.replace(was._id, folder._id)
           delete src.errors
           bulk.push(src)
@@ -371,15 +356,14 @@ class Merge {
         }
         return this.pouch.db.bulkDocs(bulk, callback)
       }
-    }
-        )
+    })
   }
 
-    // Remove a file from PouchDB
-    //
-    // As the watchers often detect the deletion of a folder before the deletion
-    // of the files inside it, deleteFile can be called for a file that has
-    // already been removed. This is not considerated as an error.
+  // Remove a file from PouchDB
+  //
+  // As the watchers often detect the deletion of a folder before the deletion
+  // of the files inside it, deleteFile can be called for a file that has
+  // already been removed. This is not considerated as an error.
   deleteFile (side, doc, callback) {
     this.pouch.db.get(doc._id, (err, file) => {
       if (__guard__(err, x => x.status) === 404) {
@@ -394,17 +378,16 @@ class Merge {
       } else { // It can happen after a conflict
         return callback(null)
       }
-    }
-        )
+    })
   }
 
-    // Remove a folder
-    //
-    // When a folder is removed in PouchDB, we also remove the files and folders
-    // inside it to ensure consistency. The watchers often detects the deletion
-    // of a nested folder after the deletion of its parent. In this case, the
-    // call to deleteFolder for the child is considered as successful, even if
-    // the folder is missing in pouchdb (error 404).
+  // Remove a folder
+  //
+  // When a folder is removed in PouchDB, we also remove the files and folders
+  // inside it to ensure consistency. The watchers often detects the deletion
+  // of a nested folder after the deletion of its parent. In this case, the
+  // call to deleteFolder for the child is considered as successful, even if
+  // the folder is missing in pouchdb (error 404).
   deleteFolder (side, doc, callback) {
     this.pouch.db.get(doc._id, (err, folder) => {
       if (__guard__(err, x => x.status) === 404) {
@@ -416,18 +399,17 @@ class Merge {
       } else { // It can happen after a conflict
         return callback(null)
       }
-    }
-        )
+    })
   }
 
-    // Remove a folder and every thing inside it
+  // Remove a folder and every thing inside it
   deleteFolderRecursively (side, folder, callback) {
     return this.pouch.byRecursivePath(folder._id, (err, docs) => {
       if (err) {
         return callback(err)
       } else {
-                // In the changes feed, nested subfolder must be deleted
-                // before their parents, hence the reverse order.
+        // In the changes feed, nested subfolder must be deleted
+        // before their parents, hence the reverse order.
         docs = docs.reverse()
         docs.push(folder)
         for (let doc of Array.from(docs)) {
@@ -437,8 +419,7 @@ class Merge {
         }
         return this.pouch.db.bulkDocs(docs, callback)
       }
-    }
-        )
+    })
   }
 }
 

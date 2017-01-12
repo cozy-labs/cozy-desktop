@@ -63,16 +63,16 @@ describe('Image from mobile', function () {
   })
 
   it('has the file on remote', done =>
-        Files.getAllFiles(function (_, files) {
-          files.length.should.equal(1)
-          let remote = files[0]
-          remote.name.should.equal(file.name)
-          remote.size.should.equal(file.size)
-          remote.checksum.should.equal(file.checksum)
-          remote.tags.should.eql(['foo', 'bar'])
-          done()
-        })
-    )
+    Files.getAllFiles(function (_, files) {
+      files.length.should.equal(1)
+      let remote = files[0]
+      remote.name.should.equal(file.name)
+      remote.size.should.equal(file.size)
+      remote.checksum.should.equal(file.checksum)
+      remote.tags.should.eql(['foo', 'bar'])
+      done()
+    })
+  )
 
   it('has kept the localPath on the remote file', function (done) {
     let client = request.newClient('http://localhost:5984/')

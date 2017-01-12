@@ -12,9 +12,9 @@ describe('Cancel', function () {
   this.slow(1000)
   this.timeout(10000)
 
-    // This integration test is unstable on travis (too often red).
-    // It's disabled for the moment, but we should find a way to make it
-    // more stable on travis, and enable it again.
+  // This integration test is unstable on travis (too often red).
+  // It's disabled for the moment, but we should find a way to make it
+  // more stable on travis, and enable it again.
   if (process.env.TRAVIS) {
     it('is unstable on travis')
     return
@@ -33,8 +33,7 @@ describe('Cancel', function () {
         clearInterval(interval)
         return callback()
       }
-    }
-        , 20)
+    }, 20)
   }
 
   let waitDisappear = function (localPath, callback) {
@@ -44,8 +43,7 @@ describe('Cancel', function () {
         clearInterval(interval)
         return callback()
       }
-    }
-        , 20)
+    }, 20)
   }
 
   describe('Move a file, then moved it back', function () {
@@ -75,30 +73,28 @@ describe('Cancel', function () {
     })
 
     it('moves the file', done =>
-            setTimeout(() =>
-                Files.updateFile(two, function (err, updated) {
-                  should.not.exist(err)
-                  return waitAppear(twoPath, function () {
-                    fs.existsSync(onePath).should.be.false()
-                    done()
-                  })
-                })
-
-            , 800)
-        )
+      setTimeout(() =>
+        Files.updateFile(two, function (err, updated) {
+          should.not.exist(err)
+          return waitAppear(twoPath, function () {
+            fs.existsSync(onePath).should.be.false()
+            done()
+          })
+        })
+      , 800)
+    )
 
     it('moves back the file to its original path', done =>
-            setTimeout(() =>
-                Files.updateFile(one, function (err, updated) {
-                  should.not.exist(err)
-                  return waitAppear(onePath, function () {
-                    fs.existsSync(twoPath).should.be.false()
-                    done()
-                  })
-                })
-
-            , 800)
-        )
+      setTimeout(() =>
+        Files.updateFile(one, function (err, updated) {
+          should.not.exist(err)
+          return waitAppear(onePath, function () {
+            fs.existsSync(twoPath).should.be.false()
+            done()
+          })
+        })
+      , 800)
+    )
   })
 
   describe('Delete a file and recreate it', function () {
@@ -119,18 +115,16 @@ describe('Cancel', function () {
     })
 
     it('removes the file', done =>
-            setTimeout(() =>
-                Files.removeFile(file, (_, removed) => waitDisappear(filePath, done))
-
-            , 500)
-        )
+      setTimeout(() =>
+        Files.removeFile(file, (_, removed) => waitDisappear(filePath, done))
+      , 500)
+    )
 
     it('recreates the file', done =>
-            setTimeout(function () {
-              delete file.id
-              return Files.uploadFile(file, fixturePath, (_, created) => waitAppear(filePath, done))
-            }
-            , 500)
-        )
+      setTimeout(function () {
+        delete file.id
+        return Files.uploadFile(file, fixturePath, (_, created) => waitAppear(filePath, done))
+      }, 500)
+    )
   })
 })

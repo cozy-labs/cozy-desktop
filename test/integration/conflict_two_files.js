@@ -80,31 +80,31 @@ describe('Conflict between two files', function () {
     })
 
     it('has the files on remote', done =>
-            Files.getAllFiles(function (_, files) {
-              let f
-              files.length.should.equal(2)
-              let sizes = ((() => {
-                let result = []
-                for (f of Array.from(files)) {
-                  result.push(f.size)
-                }
-                return result
-              })())
-              sizes.sort().should.eql(expectedSizes)
-              let names = ((() => {
-                let result1 = []
-                for (f of Array.from(files)) {
-                  result1.push(f.name)
-                }
-                return result1
-              })()).sort()
-              names[0].should.equal(file.name)
-              let parts = names[1].split('-conflict-')
-              parts.length.should.equal(2)
-              parts[0].should.equal(file.name)
-              done()
-            })
-        )
+      Files.getAllFiles(function (_, files) {
+        let f
+        files.length.should.equal(2)
+        let sizes = ((() => {
+          let result = []
+          for (f of Array.from(files)) {
+            result.push(f.size)
+          }
+          return result
+        })())
+        sizes.sort().should.eql(expectedSizes)
+        let names = ((() => {
+          let result1 = []
+          for (f of Array.from(files)) {
+            result1.push(f.name)
+          }
+          return result1
+        })()).sort()
+        names[0].should.equal(file.name)
+        let parts = names[1].split('-conflict-')
+        parts.length.should.equal(2)
+        parts[0].should.equal(file.name)
+        done()
+      })
+    )
   })
 
   describe('with remote first', function () {
@@ -176,30 +176,30 @@ describe('Conflict between two files', function () {
     })
 
     it('has the files on remote', done =>
-            Files.getAllFiles(function (_, files) {
-              let f
-              files.length.should.equal(2)
-              let sizes = ((() => {
-                let result = []
-                for (f of Array.from(files)) {
-                  result.push(f.size)
-                }
-                return result
-              })())
-              sizes.sort().should.eql(expectedSizes)
-              let names = ((() => {
-                let result1 = []
-                for (f of Array.from(files)) {
-                  result1.push(f.name)
-                }
-                return result1
-              })()).sort()
-              names[0].should.equal(file.name)
-              let parts = names[1].split('-conflict-')
-              parts.length.should.equal(2)
-              parts[0].should.equal(file.name)
-              done()
-            })
-        )
+      Files.getAllFiles(function (_, files) {
+        let f
+        files.length.should.equal(2)
+        let sizes = ((() => {
+          let result = []
+          for (f of Array.from(files)) {
+            result.push(f.size)
+          }
+          return result
+        })())
+        sizes.sort().should.eql(expectedSizes)
+        let names = ((() => {
+          let result1 = []
+          for (f of Array.from(files)) {
+            result1.push(f.name)
+          }
+          return result1
+        })()).sort()
+        names[0].should.equal(file.name)
+        let parts = names[1].split('-conflict-')
+        parts.length.should.equal(2)
+        parts[0].should.equal(file.name)
+        done()
+      })
+    )
   })
 })
