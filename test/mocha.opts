@@ -3,4 +3,5 @@
 --reporter spec
 --compilers js:babel-core/register
 --require should
+--require ./test/helpers/sinon_stub_promise
 --recursive
