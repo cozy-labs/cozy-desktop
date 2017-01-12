@@ -52,7 +52,8 @@
     "progress": "1.1.8",
     "read": "1.0.7",
     "readdirp": "2.1.0",
-    "request-json-light": "0.5.25"
+    "request-json-light": "0.5.25",
+    "should-sinon": "^0.0.5"
   },
   "devDependencies": {
     "babel-cli": "^6.18.0",
