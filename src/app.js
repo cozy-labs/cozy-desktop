@@ -7,6 +7,7 @@ import {
   filteredReplication as filterSDK,
   device
 } from 'cozy-device-sdk'
+import fetch from 'node-fetch'
 import printit from 'printit'
 let log = printit({
   prefix: 'Cozy Desktop  ',
@@ -50,7 +51,7 @@ class App {
   }
 
   // basePath is the directory where the config and pouch are saved
-  constructor (basePath) {
+  constructor (basePath, fetch_ = fetch) {
     this.lang = 'fr'
     if (basePath == null) { basePath = os.homedir() }
     basePath = path.resolve(basePath)
@@ -58,6 +59,7 @@ class App {
     this.config = new Config(this.basePath)
     this.pouch = new Pouch(this.config)
     this.events = new EventEmitter()
+    this.fetch = fetch_
   }
 
   // This method is here to be surcharged by the UI
@@ -110,16 +112,33 @@ class App {
   }
 
   // Check that the URL belongs to a cozy
-  pingCozy (cozyUrl, callback) {
+  async pingCozy (cozyUrl) {
     let parsed = this.parseCozyUrl(cozyUrl)
     if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) {
       let err = new Error('Your URL looks invalid')
       log.warn(err)
-      __guardFunc__(callback, f => f(err))
-      return
+      return Promise.reject(err)
     }
     cozyUrl = url.format(parsed)
-    device.pingCozy(cozyUrl, err => callback(err, cozyUrl))
+
+    let resp, body
+    resp = await this.fetch(cozyUrl + 'status')
+
+    if (resp.status !== 200) {
+      throw new Error(`Unexpected response status code: ${resp.status}`)
+    }
+
+    body = await resp.json()
+    let dumpBody = () => JSON.stringify(body)
+
+    switch (body.message) {
+      case 'OK':
+        return cozyUrl
+      case 'KO':
+        throw new Error(`Cozy is KO: ${dumpBody()}`)
+      default:
+        throw new Error(`Cannot extract message: ${dumpBody()}`)
+    }
   }
 
   // Register a device on the remote cozy
