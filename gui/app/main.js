@@ -1,5 +1,7 @@
 'use strict'
 
+require('babel-polyfill')
+
 const AutoLaunch = require('auto-launch')
 const Desktop = require('cozy-desktop').default
 const electron = require('electron')
