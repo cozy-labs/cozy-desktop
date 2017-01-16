@@ -1,5 +1,7 @@
 'use strict'
 
+require('babel-polyfill')
+
 const AutoLaunch = require('auto-launch')
 const Desktop = require('cozy-desktop').default
 const electron = require('electron')
@@ -419,13 +421,14 @@ app.on('window-all-closed', () => {})
 
 // Glue code between cozy-desktop lib and the renderer process
 ipcMain.on('ping-cozy', (event, url) => {
-  desktop.pingCozy(url, (err, cozyUrl) => {
-    let pong = null
-    if (!err) {
-      pong = cozyUrl
-    }
-    event.sender.send('cozy-pong', pong)
-  })
+  const pong = msg => event.sender.send('cozy-pong', msg)
+
+  desktop.pingCozy(url)
+    .then(pong)
+    .catch(err => {
+      console.error(err)
+      pong(null)
+    })
 })
 
 ipcMain.on('register-remote', (event, arg) => {

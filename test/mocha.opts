@@ -2,5 +2,7 @@
 --timeout 10000
 --reporter spec
 --compilers js:babel-core/register
+--require babel-polyfill
 --require should
+--require ./test/helpers/sinon_stub_promise
 --recursive
