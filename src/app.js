@@ -3,10 +3,8 @@ import os from 'os'
 import path from 'path'
 import readdirp from 'readdirp'
 import url from 'url'
-import {
-  filteredReplication as filterSDK,
-  device
-} from 'cozy-device-sdk'
+// TODO: Remove cozy-device-sdk dependency
+import { device } from 'cozy-device-sdk'
 import fetch from 'node-fetch'
 import printit from 'printit'
 let log = printit({
@@ -26,6 +24,8 @@ import Local from './local'
 import Remote from './remote'
 import Sync from './sync'
 
+// TODO: App.Permissions v3
+// eslint-disable-next-line no-unused-vars
 let Permissions = {
   'File': {
     'description': 'Useful to synchronize your files'
@@ -153,15 +153,8 @@ class App {
     }
     if (deviceName == null) { deviceName = os.hostname() || 'desktop' }
     this.askPassword(function (_, password) {
-      let register = device.registerDeviceSafe
-      register(cozyUrl, deviceName, password, Permissions, function (err, res) {
-        if (err) { callback(err) }
-        let config = {file: true};
-        ({ deviceName } = res);
-        ({ password } = res)
-        let setDesignDoc = filterSDK.setDesignDoc.bind(filterSDK)
-        setDesignDoc(cozyUrl, deviceName, password, config, err => callback(err, res))
-      })
+      // TODO: App.registerRemote() v3
+      callback(null, {deviceName, password})
     })
   }
 
@@ -372,8 +365,8 @@ class App {
 
   // Get disk space informations from the cozy
   getDiskSpace (callback) {
-    let conf = this.config.getDevice()
-    device.getDiskSpace(conf.url, conf.deviceName, conf.password, callback)
+    // TODO: App.getDiskSpace() v3
+    callback(null, {})
   }
 }
 App.initClass()
