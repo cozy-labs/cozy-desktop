@@ -6,7 +6,7 @@
 [![Code Climate][17]][18]
 [![codecov][19]][20]
 
-:warning: **Cozy Desktop is currently being ported to the [new Cozy stack](https://github.com/cozy/cozy-stack#readme). This work takes place on the master branch. Maintenance for the old stack is occuring on the [v2/maintenance](https://github.com/cozy-labs/cozy-desktop/tree/v2/maintenance) branch.**
+:warning: **Cozy Desktop is currently being ported to the [new Cozy stack](https://github.com/cozy/cozy-stack#readme). This work takes place on the master branch. Maintenance for the old stack is occuring on the [v2](https://github.com/cozy-labs/cozy-desktop/tree/v2) branch.**
 
 The Cozy desktop app allows to sync the files stored in your Cozy with your
 laptop and/or your desktop. It replicates your files on your hard drive and
