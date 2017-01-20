@@ -45,6 +45,7 @@
     "async": "2.1.4",
     "chokidar": "1.6.1",
     "commander": "2.9.0",
+    "cozy-client-js": "^0.0.2",
     "cozy-device-sdk": "1.4.0",
     "fs-extra": "1.0.0",
     "lodash.clone": "4.5.0",
