@@ -48,6 +48,7 @@
     "cozy-client-js": "^0.0.2",
     "cozy-device-sdk": "1.4.0",
     "fs-extra": "1.0.0",
+    "isomorphic-fetch": "^2.2.1",
     "lodash.clone": "4.5.0",
     "lodash.find": "4.6.0",
     "lodash.isequal": "4.4.0",
