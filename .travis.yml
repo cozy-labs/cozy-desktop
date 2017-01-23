@@ -62,7 +62,7 @@ before_install:
 script:
     - npm run build
     - npm run lint
-    - npm run test-coverage
+    - npm run test-unit-coverage
     - cd gui
     - yarn
     - npm run lint
