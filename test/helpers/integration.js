@@ -1,111 +1,39 @@
-let helpers
-import async from 'async'
-import del from 'del'
-import faker from 'faker'
-import fs from 'fs-extra'
-import path from 'path'
-import request from 'request-json-light'
-import should from 'should'
+/* eslint-env mocha */
 
-import App from '../../src/app'
-import password from './password'
+import { Cozy as CozyClient } from 'cozy-client-js'
 
-// For debug:
-// import PouchDB from 'pouchdb'
+import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } from '../../src/remote/constants'
+import { BuilderFactory } from '../builders'
 
-helpers = {
-  scheme: process.env.SCHEME || 'http',
-  host: process.env.HOST || 'localhost',
-  port: process.env.PORT || 9104,
-  password: password,
-  deviceName: `test-${faker.internet.userName()}`,
-  fixturesDir: path.join(__dirname, '..', 'fixtures'),
-  parentDir: process.env.COZY_DESKTOP_DIR || 'tmp'
-}
+// The URL of the Cozy instance used for tests
+export const COZY_URL = process.env.COZY_URL || 'http://localhost:8080'
 
-helpers.url = `${helpers.scheme}://${helpers.host}:${helpers.port}/`
+// A cozy-client-js instance
+const cozy = new CozyClient({cozyURL: COZY_URL})
 
-helpers.ensurePreConditions = function ensurePreConditions (done) {
-  let ports = [5984, 9104, 9101, 9121]
-  return async.map(ports, function (port, cb) {
-    let client = request.newClient(`http://${helpers.host}:${port}`)
-    return client.get('/', (_, res) => cb(null, __guard__(res, x => x.statusCode)), false)
-  }, function (err, results) {
-    should.not.exist(err)
-    let [couch, proxy, dataSystem, files] = results
-    should.exist(couch, 'Couch should be running on 5984')
-    should.exist(proxy, 'Cozy Proxy should be running on 9104')
-    should.exist(dataSystem, 'Cozy Data System should be running on 9101')
-    should.exist(files, 'Cozy Files should be running on 9121')
-    done()
+// Facade for all the test data builders
+export const builders = new BuilderFactory(cozy)
+
+// List files and directories in the root directory
+async function rootDirContents () {
+  const index = await cozy.defineIndex(FILES_DOCTYPE, ['dir_id'])
+  const docs = await cozy.query(index, {
+    selector: {
+      dir_id: ROOT_DIR_ID,
+      '$not': {_id: TRASH_DIR_ID}
+    },
+    fields: ['_id', 'dir_id']
   })
+
+  return docs
 }
 
-helpers.registerDevice = function registerDevice (done) {
-  this.syncPath = path.resolve(`${helpers.parentDir}/${+new Date()}`)
-  fs.ensureDirSync(this.syncPath)
-  this.app = new App(this.syncPath)
-  this.app.askPassword = callback => callback(null, helpers.password)
-  let deviceName = helpers.deviceName = `test-${faker.internet.userName()}`
-  return this.app.addRemote(helpers.url, this.syncPath, deviceName, function (err, credentials) {
-    should.not.exist(err)
-    helpers.deviceName = credentials.deviceName
-    // For debug:
-    // PouchDB.debug.enable 'pouchdb:*'
-    done()
-  })
-}
+// Clean up the Cozy instance before each integration test
+beforeEach(async function deleteAll () {
+  const docs = await rootDirContents()
 
-helpers.clean = function clean (done) {
-  // For debug:
-  // PouchDB.debug.disable()
-  return this.app.removeRemote(helpers.deviceName, err => {
-    let callback = () => {
-      return setTimeout(() => {
-        del.sync(this.syncPath)
-        done()
-      }, 200)
-    }
-    should.not.exist(err)
-    if (this.app.sync) {
-      return this.app.stopSync(function (err) {
-        should.not.exist(err)
-        return callback()
-      })
-    } else {
-      return callback()
-    }
-  })
-}
+  await Promise.all(docs.map(doc => cozy.files.trashById(doc._id)))
 
-let start = function (app, mode, done) {
-  if (!app.sync) { app.instanciate() }
-  app.startSync(mode, err => should.not.exist(err))
-  return setTimeout(done, 1500)
-}
+  return cozy.files.clearTrash()
+})
 
-helpers.pull = function pull (done) {
-  return start(this.app, 'pull', done)
-}
-
-helpers.push = function push (done) {
-  return start(this.app, 'push', done)
-}
-
-helpers.sync = function sync (done) {
-  return start(this.app, 'full', done)
-}
-
-helpers.fetchRemoteMetadata = function fetchRemoteMetadata (done) {
-  if (!this.app.sync) { this.app.instanciate() }
-  return this.app.remote.watcher.listenToChanges({live: false}, function (err) {
-    should.not.exist(err)
-    done()
-  })
-}
-
-export default helpers
-
-function __guard__ (value, transform) {
-  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined
-}

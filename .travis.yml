@@ -1,4 +1,5 @@
 ---
+dist: trusty
 sudo: false
 language: node_js
 matrix:
@@ -24,13 +25,10 @@ env:
         - NODE_ENV=test
         - NPM_CONFIG_PROGRESS=false
 services:
-    - couchdb
+    - docker
 cache:
     directories:
         - node_modules
-        - cozy-data-system/node_modules
-        - cozy-proxy/node_modules
-        - cozy-files/node_modules
         - /Library/Caches/Homebrew
 addons:
     apt:
@@ -42,51 +40,20 @@ addons:
 
 # install cozy stack for integration test
 before_install:
-    - cd
-    - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
-        brew install couchdb;
-        brew --cache;
-        couchdb -b;
-      fi
-    - export INDEXES_PATH=$HOME/build/indexes
-    - mkdir -p $INDEXES_PATH
-    - TESTED_NODE=$(node -v)
-    - nvm install 4
-    - nvm use 4
-    - travis_retry npm -g install npm@latest-2
-    - travis_retry npm install forever coffee-script -g
-    - git clone git://github.com/cozy/cozy-data-system.git
-    - cd cozy-data-system
-    - git checkout origin/development
-    - travis_retry npm install #data-system
-    - npm run build
-    - pwd
-    - NAME=data-system TOKEN=token forever start -o forever-ds.log -e forever-ds-err.log build/server.js
-    - sleep 5
-    - pwd
-    - cd
-    - git clone git://github.com/cozy/cozy-proxy.git
-    - cd cozy-proxy
-    - git checkout origin/development
-    - travis_retry npm install #proxy
-    - npm run build
-    - pwd
-    - NAME=proxy TOKEN=token forever start -o forever-proxy.log -e forever-proxy-err.log build/server.js
-    - sleep 5
-    - PASSWORD="$(node $HOME/build/cozy-labs/cozy-desktop/test/helpers/password.js)"
-    - 'curl -f -X POST -H "Content-Type: application/json" -d "{ \"email\": \"cozytest@cozycloud.cc\", \"password\": \"$PASSWORD\", \"timezone\":\"Europe/Paris\"}" http://127.0.0.1:9104/register'
-    - cd
-    - git clone git://github.com/cozy/cozy-files.git
-    - cd cozy-files
-    - travis_retry npm install #files
-    - pwd
-    - cd ~/cozy-data-system
-    - coffee commands.coffee test-install files ../cozy-files/package.json
-    - pwd
-    - cd ~/cozy-files
-    - NAME=files TOKEN=apptoken forever start -o forever-files.log -e forever-files-err.log build/server.js
-    - sleep 3
-    - nvm use $TESTED_NODE
+    # CouchDB 2
+    - docker run -d -p 5984:5984 --name couch klaemo/couchdb:2.0.0
+
+    # Go 1.7
+    - gimme 1.7
+
+    # Cozy stack v3
+    - go get -u github.com/cozy/cozy-stack
+    - curl -X PUT http://127.0.0.1:5984/{_users,_replicator,_global_changes}
+    - $GOPATH/bin/cozy-stack serve --assets=$GOPATH/src/github.com/cozy/cozy-stack/assets &
+    - sleep 1
+    - $GOPATH/bin/cozy-stack instances add --dev "localhost:8080"
+
+    # Cozy desktop tmp dir
     - cd $HOME/build/cozy-labs/cozy-desktop
     - pwd
     - mkdir /tmp/cozy-desktop
@@ -95,7 +62,7 @@ before_install:
 script:
     - npm run build
     - npm run lint
-    - npm run test-coverage
+    - npm run test-unit-coverage
     - cd gui
     - yarn
     - npm run lint
