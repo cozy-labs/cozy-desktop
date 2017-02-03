@@ -78,7 +78,7 @@ describe('LocalWatcher Tests', function () {
           doc.should.have.properties({
             path: 'chat-mignon.jpg',
             docType: 'file',
-            checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30',
+            checksum: '+HBGS7uN4XdB0blqLv5tFQ==',
             size: 29865,
             class: 'image',
             mime: 'image/jpeg'
@@ -133,7 +133,7 @@ describe('LocalWatcher Tests', function () {
       let filePath = 'test/fixtures/chat-mignon.jpg'
       return this.watcher.checksum(filePath, function (err, sum) {
         should.not.exist(err)
-        sum.should.equal('bf268fcb32d2fd7243780ad27af8ae242a6f0d30')
+        sum.should.equal('+HBGS7uN4XdB0blqLv5tFQ==')
         done()
       })
     })
@@ -176,7 +176,7 @@ describe('LocalWatcher Tests', function () {
           doc.should.have.properties({
             path: 'aaa.jpg',
             docType: 'file',
-            checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30',
+            checksum: '+HBGS7uN4XdB0blqLv5tFQ==',
             size: 29865,
             class: 'image',
             mime: 'image/jpeg'
@@ -274,7 +274,7 @@ describe('LocalWatcher Tests', function () {
           doc.should.have.properties({
             path: 'aea.jpg',
             docType: 'file',
-            checksum: 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df',
+            checksum: 'tdmDwDisJe/rJn+2fV+rNA==',
             size: 36901,
             class: 'image',
             mime: 'image/jpeg'
@@ -321,7 +321,7 @@ describe('LocalWatcher Tests', function () {
             doc.should.have.properties({
               path: 'afb.jpg',
               docType: 'file',
-              checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30',
+              checksum: '+HBGS7uN4XdB0blqLv5tFQ==',
               size: 29865,
               class: 'image',
               mime: 'image/jpeg'
@@ -329,7 +329,7 @@ describe('LocalWatcher Tests', function () {
             was.should.have.properties({
               path: 'afa.jpg',
               docType: 'file',
-              checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30',
+              checksum: '+HBGS7uN4XdB0blqLv5tFQ==',
               size: 29865
             })
             done()

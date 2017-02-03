@@ -183,8 +183,8 @@ class LocalWatcher {
   // Get checksum for given file
   computeChecksum (task, callback) {
     let stream = fs.createReadStream(task.filePath)
-    let checksum = crypto.createHash('sha1')
-    checksum.setEncoding('hex')
+    let checksum = crypto.createHash('md5')
+    checksum.setEncoding('base64')
     stream.on('end', function () {
       checksum.end()
       return callback(null, checksum.read())

@@ -89,17 +89,26 @@ describe('Prep', function () {
         ret.should.be.true()
         ret = this.prep.invalidChecksum({checksum: 'f00'})
         ret.should.be.true()
-        let md5 = '68b329da9893e34099c7d8ad5cb9c940'
-        ret = this.prep.invalidChecksum({checksum: md5})
+        let sha1 = '68b329da9893e34099c7d8ad5cb9c94068b329da'
+        ret = this.prep.invalidChecksum({checksum: sha1})
+        ret.should.be.true()
+        let md5hex = 'adc83b19e793491b1c6ea0fd8b46cd9f'
+        ret = this.prep.invalidChecksum({checksum: md5hex})
+        ret.should.be.true()
+        let md5base64truncated = 'rcg7GeeTSRscbqD9i0bNn'
+        ret = this.prep.invalidChecksum({checksum: md5base64truncated})
+        ret.should.be.true()
+        let sha1base64 = 'aLMp2piT40CZx9itXLnJQGizKdo='
+        ret = this.prep.invalidChecksum({checksum: sha1base64})
+        ret.should.be.true()
+        let md5base64NonPadded = 'rcg7GeeTSRscbqD9i0bNnw'
+        ret = this.prep.invalidChecksum({checksum: md5base64NonPadded})
         ret.should.be.true()
       })
 
       it('returns false if the checksum is OK', function () {
-        let doc = {checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'}
+        let doc = {checksum: 'rcg7GeeTSRscbqD9i0bNnw=='}
         let ret = this.prep.invalidChecksum(doc)
-        ret.should.be.false()
-        doc = {checksum: 'ADC83B19E793491B1C6EA0FD8B46CD9F32E592FC'}
-        ret = this.prep.invalidChecksum(doc)
         ret.should.be.false()
       })
     })
@@ -240,7 +249,7 @@ describe('Prep', function () {
         this.merge.addFile = sinon.stub().yields(null)
         let doc = {
           path: 'foo/missing-fields',
-          checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
+          checksum: 'rcg7GeeTSRscbqD9i0bNnw=='
         }
         return this.prep.addFile(this.side, doc, err => {
           should.not.exist(err)
@@ -257,7 +266,7 @@ describe('Prep', function () {
         this.merge.addFile = sinon.spy()
         let doc = {
           path: 'ignored',
-          checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
+          checksum: 'rcg7GeeTSRscbqD9i0bNnw=='
         }
         return this.prep.addFile('local', doc, err => {
           should.not.exist(err)
@@ -305,7 +314,7 @@ describe('Prep', function () {
         this.merge.updateFile = sinon.stub().yields(null)
         let doc = {
           path: 'foobar/missing-fields',
-          checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
+          checksum: 'rcg7GeeTSRscbqD9i0bNnw=='
         }
         return this.prep.updateFile(this.side, doc, err => {
           should.not.exist(err)
@@ -321,7 +330,7 @@ describe('Prep', function () {
         this.merge.updateFile = sinon.spy()
         let doc = {
           path: 'ignored',
-          checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
+          checksum: 'rcg7GeeTSRscbqD9i0bNnw=='
         }
         return this.prep.updateFile('local', doc, err => {
           should.not.exist(err)
@@ -405,12 +414,12 @@ describe('Prep', function () {
         let doc = {
           path: 'foo/bar',
           docType: 'file',
-          checksum: '5555555555555555555555555555555555555555'
+          checksum: 'VVVVVVVVVVVVVVVVVVVVVQ=='
         }
         let was = {
           path: 'foo/bar',
           docType: 'file',
-          checksum: '5555555555555555555555555555555555555555'
+          checksum: 'VVVVVVVVVVVVVVVVVVVVVQ=='
         }
         return this.prep.moveFile(this.side, doc, was, function (err) {
           should.exist(err)
@@ -423,12 +432,12 @@ describe('Prep', function () {
         let doc = {
           path: 'foo/bar',
           docType: 'file',
-          checksum: '5555555555555555555555555555555555555555'
+          checksum: 'VVVVVVVVVVVVVVVVVVVVVQ=='
         }
         let was = {
           path: 'foo/baz',
           docType: 'file',
-          checksum: '5555555555555555555555555555555555555555'
+          checksum: 'VVVVVVVVVVVVVVVVVVVVVQ=='
         }
         return this.prep.moveFile(this.side, doc, was, function (err) {
           should.exist(err)
@@ -441,13 +450,13 @@ describe('Prep', function () {
         this.merge.moveFile = sinon.stub().yields(null)
         let doc = {
           path: 'FOO/new-missing-fields.jpg',
-          checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517'
+          checksum: 'uhNoeJzOlbV03scN/UduYQ=='
         }
         let was = {
           _id: 'FOO/OLD-MISSING-FIELDS.JPG',
           _rev: '456',
           path: 'FOO/OLD-MISSING-FIELDS.JPG',
-          checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
+          checksum: 'uhNoeJzOlbV03scN/UduYQ==',
           docType: 'file',
           creationDate: new Date(),
           lastModification: new Date(),
