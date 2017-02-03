@@ -50,6 +50,9 @@ export default class RemoteCozy {
     let doc = await this.client.find(FILES_DOCTYPE, id)
 
     if (doc.type === FILE_TYPE) {
+      // FIXME: Temporarily force empty file checksum
+      doc.md5sum = '1B2M2Y8AsgTpgAmY7PhCfg=='
+
       const parentDir = await this.client.find(FILES_DOCTYPE, doc.dir_id)
       doc.path = path.join(parentDir.path, doc.name)
     }
