@@ -6,7 +6,7 @@ import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } from '../../src/remote/const
 import { BuilderFactory } from '../builders'
 
 // The URL of the Cozy instance used for tests
-export const COZY_URL = process.env.COZY_URL || 'http://localhost:8080'
+export const COZY_URL = process.env.COZY_URL || 'http://test.cozy-desktop.local:8080'
 
 // A cozy-client-js instance
 const cozy = new CozyClient({cozyURL: COZY_URL})
