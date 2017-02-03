@@ -123,6 +123,16 @@ class Pouch {
     })
   }
 
+  byRemoteIdMaybe (id, callback) {
+    this.byRemoteId(id, (err, was) => {
+      if (err && (err.status !== 404)) {
+        callback(err)
+      } else {
+        callback(null, was)
+      }
+    })
+  }
+
   /* Views */
 
   // Create all required views in the database
