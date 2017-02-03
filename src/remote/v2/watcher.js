@@ -186,37 +186,6 @@ class RemoteWatcher {
     })
   }
 
-  // Transform a remote document in a local one
-  //
-  // We are tolerant with the input. For example, we don't expect the docType
-  // to be in lower case, and we accept files with no checksum (e.g. from
-  // konnectors).
-  createLocalDoc (remote) {
-    let docPath = remote.path || ''
-    let docName = remote.name || ''
-    let doc = {
-      path: path.join(docPath, docName),
-      docType: remote.docType.toLowerCase(),
-      creationDate: remote.creationDate,
-      lastModification: remote.lastModification,
-      executable: remote.executable,
-      remote: {
-        _id: remote._id,
-        _rev: remote._rev
-      }
-    }
-    if (doc.docType === 'file') {
-      doc.remote.binary = {
-        _id: remote.binary.file.id,
-        _rev: remote.binary.file.rev
-      }
-    }
-    for (let field of ['checksum', 'size', 'class', 'mime', 'tags', 'localPath']) {
-      if (remote[field]) { doc[field] = remote[field] }
-    }
-    return doc
-  }
-
   // Transform the doc and save it in pouchdb
   //
   // In CouchDB, the filepath is in the path and name fields.
