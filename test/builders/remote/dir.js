@@ -1,4 +1,4 @@
-import { ROOT_DIR_ID } from '../../../src/remote/constants'
+import RemoteBaseBuilder from './base'
 
 // Used to generate readable unique dirnames
 var dirNumber = 1
@@ -7,16 +7,18 @@ var dirNumber = 1
 //
 //     let dir = builders.dir().build()
 //
-export default class RemoteDirBuilder {
+export default class RemoteDirBuilder extends RemoteBaseBuilder {
   constructor (cozy) {
-    this.cozy = cozy
-    this.options = {
-      name: `directory-${dirNumber++}`,
-      dirID: ROOT_DIR_ID
-    }
+    super(cozy)
+
+    Object.assign(this.options, {
+      name: `directory-${dirNumber++}`
+    })
   }
 
-  build () {
-    return this.cozy.files.createDirectory(this.options)
+  async build () {
+    return this.toRemoteMetadata(
+      await this.cozy.files.createDirectory(this.options)
+    )
   }
 }
