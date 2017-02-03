@@ -12,7 +12,7 @@ import PouchDB from 'pouchdb'
 import path from 'path'
 import os from 'os'
 import Config from '../config'
-import helpers from '../../test/helpers/couch'
+import helpers from '../../test/helpers/v2/couch'
 
 helpers.startServer(function (err) {
   if (err) {

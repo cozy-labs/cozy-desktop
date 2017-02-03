@@ -4,7 +4,7 @@ import fs from 'fs-extra'
 import path from 'path'
 import request from 'request-json-light'
 
-import Couch from '../../src/remote/couch'
+import Couch from '../../../src/remote/v2/couch'
 
 let params = {
   db: 'cozy',
