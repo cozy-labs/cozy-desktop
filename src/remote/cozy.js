@@ -2,6 +2,11 @@
 
 import { Cozy as CozyClient } from 'cozy-client-js'
 import fetch from 'node-fetch'
+import path from 'path'
+
+import { FILES_DOCTYPE, FILE_TYPE } from './constants'
+
+import type { RemoteDoc } from './document'
 
 import { FILES_DOCTYPE } from './constants'
 
@@ -28,5 +33,24 @@ export default class RemoteCozy {
     let json = await resp.json()
 
     return json
+  }
+
+  async find (id: string): Promise<RemoteDoc> {
+    let doc = await this.client.find(FILES_DOCTYPE, id)
+
+    if (doc.type === FILE_TYPE) {
+      const parentDir = await this.client.find(FILES_DOCTYPE, doc.dir_id)
+      doc.path = path.join(parentDir.path, doc.name)
+    }
+
+    return doc
+  }
+
+  async findMaybe (id: string): Promise<?RemoteDoc> {
+    try {
+      return await this.find(id)
+    } catch (err) {
+      return null
+    }
   }
 }

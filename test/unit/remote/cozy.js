@@ -1,6 +1,7 @@
 /* eslint-env mocha */
 
 import { FetchError } from 'node-fetch'
+import should from 'should'
 
 import RemoteCozy from '../../../src/remote/cozy'
 import { ROOT_DIR_ID, TRASH_DIR_ID } from '../../../src/remote/constants'
@@ -14,6 +15,12 @@ describe('RemoteCozy', function () {
   before(() => cozyStackDouble.start())
   after(() => cozyStackDouble.stop())
   afterEach(() => cozyStackDouble.clearStub())
+
+  let remoteCozy
+
+  beforeEach(function () {
+    remoteCozy = new RemoteCozy(COZY_URL)
+  })
 
   describe('changes', function () {
     it('rejects when Cozy is unreachable', function () {
@@ -35,12 +42,6 @@ describe('RemoteCozy', function () {
     })
 
     context('when cozy works', function () {
-      let remoteCozy
-
-      beforeEach(function () {
-        remoteCozy = new RemoteCozy(COZY_URL)
-      })
-
       context('without an update sequence', function () {
         it('lists all changes since the database creation', async function () {
           let changes = await remoteCozy.changes()
@@ -65,6 +66,55 @@ describe('RemoteCozy', function () {
           ids.sort().should.eql([file._id, dir._id].sort())
         })
       })
+    })
+  })
+
+  describe('find', function () {
+    it('fetches a remote directory matching the given id', async function () {
+      const remoteDir = await builders.dir().build()
+
+      const foundDir = await remoteCozy.find(remoteDir._id)
+
+      foundDir.should.be.deepEqual(remoteDir)
+    })
+
+    it('fetches a remote root file including its path', async function () {
+      const remoteFile = await builders.file().inRootDir().named('foo').build()
+
+      const foundFile = await remoteCozy.find(remoteFile._id)
+
+      foundFile.should.deepEqual({
+        ...remoteFile,
+        path: '/foo'
+      })
+    })
+
+    it('fetches a remote non-root file including its path', async function () {
+      const remoteDir = await builders.dir().named('foo').inRootDir().build()
+      const remoteFile = await builders.file().named('bar').inDir(remoteDir).build()
+
+      const foundFile = await remoteCozy.find(remoteFile._id)
+
+      foundFile.should.deepEqual({
+        ...remoteFile,
+        path: '/foo/bar'
+      })
+    })
+  })
+
+  describe('findMaybe', function () {
+    it('does the same as find() when file or directory exists', async function () {
+      const remoteDir = await builders.dir().build()
+
+      const foundDir = await remoteCozy.findMaybe(remoteDir._id)
+
+      foundDir.should.deepEqual(remoteDir)
+    })
+
+    it('returns null when file or directory is not found', async function () {
+      const found = await remoteCozy.findMaybe('missing')
+
+      should.not.exist(found)
     })
   })
 })
