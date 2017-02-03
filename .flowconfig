@@ -3,7 +3,6 @@
 <PROJECT_ROOT>/coverage/.*
 <PROJECT_ROOT>/gui/.*
 <PROJECT_ROOT>/lib/.*
-<PROJECT_ROOT>/test/.*
 <PROJECT_ROOT>/tmp/.*
 
 <PROJECT_ROOT>/node_modules/jsverify/.*
