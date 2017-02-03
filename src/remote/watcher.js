@@ -62,7 +62,7 @@ export default class RemoteWatcher {
     log.info('onChange', doc)
     const was: ?Metadata = await this.pouch.byRemoteIdMaybeAsync(doc._id)
 
-    if (doc._deleted) {
+    if (doc.path && doc.path.startsWith('/.cozy_trash/')) {
       if (was == null) {
         log.debug(`Document ${doc._id} was deleted on local and on remote`)
         return

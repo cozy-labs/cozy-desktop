@@ -424,13 +424,13 @@ describe('RemoteWatcher', function () {
       args[1].should.not.have.properties(['_rev', 'path', 'name'])
     })
 
-    it('calls deleteDoc for a deleted doc', async function () {
+    it('calls deleteDoc for a doc put in the trash', async function () {
       this.prep.deleteDocAsync = sinon.stub()
       this.prep.deleteDocAsync.returnsPromise().resolves(null)
       let doc = {
         _id: '12345678901',
         _rev: '7-abcdef',
-        _deleted: true
+        path: '/.cozy_trash/foo'
       }
 
       await this.watcher.onChange(doc)
