@@ -4,7 +4,7 @@ import { FetchError } from 'node-fetch'
 import should from 'should'
 
 import RemoteCozy from '../../../src/remote/cozy'
-import { ROOT_DIR_ID, TRASH_DIR_ID } from '../../../src/remote/constants'
+import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } from '../../../src/remote/constants'
 
 import { COZY_URL, builders } from '../../helpers/integration'
 import CozyStackDouble from '../../doubles/cozy_stack'
@@ -44,24 +44,27 @@ describe('RemoteCozy', function () {
     context('when cozy works', function () {
       context('without an update sequence', function () {
         it('lists all changes since the database creation', async function () {
-          let changes = await remoteCozy.changes()
-          let ids = changes.results.map(result => result.id)
+          let dir = await builders.dir().build()
+          let file = await builders.file().inDir(dir).build()
 
-          ids.should.containEql(ROOT_DIR_ID)
-          ids.should.containEql(TRASH_DIR_ID)
+          let { ids } = await remoteCozy.changes()
+
+          ids.should.containEql(dir._id)
+          ids.should.containEql(file._id)
+          ids.should.not.containEql(ROOT_DIR_ID)
+          ids.should.not.containEql(TRASH_DIR_ID)
+          ids.should.not.containEql(`_design/${FILES_DOCTYPE}`)
         })
       })
 
       context('with an update sequence', function () {
         it('lists only changes that occured since then', async function () {
-          let oldChanges = await remoteCozy.changes()
-          let seq = oldChanges.last_seq
+          let { last_seq } = await remoteCozy.changes()
 
           let dir = await builders.dir().build()
           let file = await builders.file().inDir(dir).build()
 
-          let newChanges = await remoteCozy.changes(seq)
-          let ids = newChanges.results.map(result => result.id).sort()
+          let { ids } = await remoteCozy.changes(last_seq)
 
           ids.sort().should.eql([file._id, dir._id].sort())
         })

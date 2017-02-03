@@ -4,11 +4,17 @@ import { Cozy as CozyClient } from 'cozy-client-js'
 import fetch from 'node-fetch'
 import path from 'path'
 
-import { FILES_DOCTYPE, FILE_TYPE } from './constants'
+import { FILES_DOCTYPE, FILE_TYPE, ROOT_DIR_ID, TRASH_DIR_ID } from './constants'
 
 import type { RemoteDoc } from './document'
 
-import { FILES_DOCTYPE } from './constants'
+function specialId (id) {
+  return (
+    id === ROOT_DIR_ID ||
+    id === TRASH_DIR_ID ||
+    id.startsWith('_design/')
+  )
+}
 
 // A remote Cozy instance.
 //
@@ -32,7 +38,12 @@ export default class RemoteCozy {
     let resp = await fetch(changesUrl)
     let json = await resp.json()
 
-    return json
+    return {
+      last_seq: json.last_seq,
+      ids: json.results
+        .map(result => result.id)
+        .filter(id => !specialId(id))
+    }
   }
 
   async find (id: string): Promise<RemoteDoc> {
