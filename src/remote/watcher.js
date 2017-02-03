@@ -15,6 +15,9 @@ const log = printit({
   date: true
 })
 
+export const DEFAULT_HEARTBEAT: number = 1000 * 60 * 3 // 3 minutes
+export const HEARTBEAT: number = parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || DEFAULT_HEARTBEAT
+
 const SIDE = 'remote'
 
 // Get changes from the remote Cozy and prepare them for merge
@@ -22,11 +25,36 @@ export default class RemoteWatcher {
   pouch: Pouch
   prep: Prep
   remoteCozy: RemoteCozy
+  intervalID: ?number
 
   constructor (pouch: Pouch, prep: Prep, remoteCozy: RemoteCozy) {
     this.pouch = pouch
     this.prep = prep
     this.remoteCozy = remoteCozy
+  }
+
+  start () {
+    this.watch()
+    this.intervalID = setInterval(this.watch, HEARTBEAT)
+  }
+
+  stop () {
+    if (this.intervalID) {
+      clearInterval(this.intervalID)
+      this.intervalID = null
+    }
+  }
+
+  async watch () {
+    try {
+      const seq = await this.pouch.getRemoteSeqAsync()
+      const changes = await this.remoteCozy.changes(seq)
+
+      await this.pullMany(changes.ids)
+      return this.pouch.setRemoteSeqAsync(changes.last_seq)
+    } catch (err) {
+      log.error(err)
+    }
   }
 
   // Pull multiple files/dirs metadata at once, given their ids
