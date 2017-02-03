@@ -3,6 +3,8 @@
 import { Cozy as CozyClient } from 'cozy-client-js'
 import fetch from 'node-fetch'
 
+import { FILES_DOCTYPE } from './constants'
+
 // A remote Cozy instance.
 //
 // This class wraps cozy-client-js to:
@@ -20,7 +22,7 @@ export default class RemoteCozy {
   }
 
   async changes (seq: number = 0) {
-    const changesUrl = `${this.url}/data/io.cozy.files/_changes?since=${seq}`
+    const changesUrl = `${this.url}/data/${FILES_DOCTYPE}/_changes?since=${seq}`
 
     let resp = await fetch(changesUrl)
     let json = await resp.json()
