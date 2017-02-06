@@ -55,7 +55,7 @@
     "btoa": "^1.1.2",
     "chokidar": "1.6.1",
     "commander": "2.9.0",
-    "cozy-client-js": "^0.0.2",
+    "cozy-client-js": "^0.0.4",
     "cozy-device-sdk": "1.4.0",
     "fs-extra": "1.0.0",
     "isomorphic-fetch": "^2.2.1",
