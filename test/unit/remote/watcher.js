@@ -439,38 +439,6 @@ describe('RemoteWatcher', function () {
       let id = this.prep.deleteDocAsync.args[0][1].path
       id.should.equal('my-folder/file-1')
     })
-
-    it('calls addDoc for folder created by the mobile app', async function () {
-      this.prep.addDocAsync = sinon.stub()
-      this.prep.addDocAsync.returnsPromise().resolves(null)
-      let doc: RemoteDoc = {
-        _id: '913F429E-5609-C636-AE9A-CD00BD138B13',
-        _rev: '1-7786acf12a11fad6ad1eeb861953e0d8',
-        _type: FILES_DOCTYPE,
-        type: 'directory',
-        name: 'Photos from devices',
-        dir_id: 'whatever',
-        path: '/Photos from devices',
-        created_at: '2015-09-29T14:13:33.384Z',
-        updated_at: '2015-09-29T14:13:33.384Z',
-        tags: []
-      }
-
-      await this.watcher.onChange(doc)
-
-      this.prep.addDocAsync.called.should.be.true()
-      this.prep.addDocAsync.args[0][1].should.have.properties({
-        path: 'Photos from devices',
-        docType: 'folder',
-        lastModification: '2015-09-29T14:13:33.384Z',
-        creationDate: '2015-09-29T14:13:33.384Z',
-        tags: [],
-        remote: {
-          _id: '913F429E-5609-C636-AE9A-CD00BD138B13',
-          _rev: '1-7786acf12a11fad6ad1eeb861953e0d8'
-        }
-      })
-    })
   })
 
   describe('removeRemote', function () {
