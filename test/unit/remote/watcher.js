@@ -13,12 +13,15 @@ import { COZY_URL } from '../../helpers/integration'
 import { FILES_DOCTYPE } from '../../../src/remote/constants'
 import Prep from '../../../src/prep'
 import RemoteCozy from '../../../src/remote/cozy'
-import RemoteWatcher from '../../../src/remote/watcher'
+import RemoteWatcher, { HEARTBEAT } from '../../../src/remote/watcher'
 
 import type { RemoteDoc } from '../../../src/remote/document'
 import type { Metadata } from '../../../src/metadata'
 
 describe('RemoteWatcher', function () {
+  let clock
+  const tick = () => clock.tick(HEARTBEAT)
+
   before(configHelpers.createConfig)
   before(pouchHelpers.createDatabase)
   before(function instanciateRemoteWatcher () {
@@ -26,6 +29,8 @@ describe('RemoteWatcher', function () {
     this.remoteCozy = new RemoteCozy(COZY_URL)
     this.watcher = new RemoteWatcher(this.pouch, this.prep, this.remoteCozy)
   })
+  beforeEach(() => { clock = sinon.useFakeTimers() })
+  afterEach(() => clock.restore())
   after(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
@@ -37,6 +42,92 @@ describe('RemoteWatcher', function () {
           pouchHelpers.createFile(this.pouch, i, callback)
         })
       }, done)
+    })
+  })
+
+  describe('start', function () {
+    beforeEach(function () {
+      sinon.stub(this.watcher, 'watch')
+      this.watcher.start()
+    })
+
+    afterEach(function () {
+      this.watcher.watch.restore()
+    })
+
+    it('calls watch() a first time', function () {
+      this.watcher.watch.callCount.should.equal(1)
+    })
+
+    it('ensures watch() is called on every time interval', function () {
+      tick()
+      this.watcher.watch.callCount.should.equal(2)
+      tick()
+      this.watcher.watch.callCount.should.equal(3)
+    })
+  })
+
+  describe('stop', function () {
+    beforeEach(function () {
+      sinon.stub(this.watcher, 'watch')
+    })
+
+    afterEach(function () {
+      this.watcher.watch.restore()
+    })
+
+    it('ensures watch is not called anymore', function () {
+      this.watcher.start()
+      this.watcher.stop()
+      const lastCallCount = this.watcher.watch.callCount
+
+      tick()
+      this.watcher.watch.callCount.should.equal(lastCallCount)
+    })
+
+    it('does nothing when called again', function () {
+      this.watcher.start()
+      this.watcher.stop()
+      this.watcher.stop()
+    })
+  })
+
+  describe('watch', function () {
+    const lastLocalSeq = '123'
+    const lastRemoteSeq = lastLocalSeq + '456'
+    const changes = {
+      last_seq: lastRemoteSeq,
+      ids: ['1', '2']
+    }
+
+    beforeEach(function () {
+      sinon.stub(this.pouch, 'getRemoteSeqAsync')
+      sinon.stub(this.pouch, 'setRemoteSeqAsync')
+      sinon.stub(this.watcher, 'pullMany')
+      sinon.stub(this.remoteCozy, 'changes')
+
+      this.pouch.getRemoteSeqAsync.returnsPromise().resolves(lastLocalSeq)
+      this.watcher.pullMany.returnsPromise().resolves()
+      this.remoteCozy.changes.returnsPromise().resolves(changes)
+
+      return this.watcher.watch()
+    })
+
+    afterEach(function () {
+      this.remoteCozy.changes.restore()
+      this.watcher.pullMany.restore()
+      this.pouch.setRemoteSeqAsync.restore()
+      this.pouch.getRemoteSeqAsync.restore()
+    })
+
+    it('pulls the changed files/dirs', function () {
+      this.watcher.pullMany.should.be.calledOnce()
+        .and.be.calledWithExactly(['1', '2'])
+    })
+
+    it('updates the last update sequence in local db', function () {
+      this.pouch.setRemoteSeqAsync.should.be.calledOnce()
+        .and.be.calledWithExactly(lastRemoteSeq)
     })
   })
 
@@ -76,7 +167,7 @@ describe('RemoteWatcher', function () {
           .should.be.rejectedWith(new RegExp(ids[0]))
       })
 
-      it('still tries to pull other files/dirs', async function () {
+      it('still tries to this.watcher other files/dirs', async function () {
         try { await this.watcher.pullMany(ids) } catch (_) {}
         pullOne.calledWith(ids[1]).should.equal(true)
       })
@@ -438,38 +529,6 @@ describe('RemoteWatcher', function () {
       this.prep.deleteDocAsync.called.should.be.true()
       let id = this.prep.deleteDocAsync.args[0][1].path
       id.should.equal('my-folder/file-1')
-    })
-
-    it('calls addDoc for folder created by the mobile app', async function () {
-      this.prep.addDocAsync = sinon.stub()
-      this.prep.addDocAsync.returnsPromise().resolves(null)
-      let doc: RemoteDoc = {
-        _id: '913F429E-5609-C636-AE9A-CD00BD138B13',
-        _rev: '1-7786acf12a11fad6ad1eeb861953e0d8',
-        _type: FILES_DOCTYPE,
-        type: 'directory',
-        name: 'Photos from devices',
-        dir_id: 'whatever',
-        path: '/Photos from devices',
-        created_at: '2015-09-29T14:13:33.384Z',
-        updated_at: '2015-09-29T14:13:33.384Z',
-        tags: []
-      }
-
-      await this.watcher.onChange(doc)
-
-      this.prep.addDocAsync.called.should.be.true()
-      this.prep.addDocAsync.args[0][1].should.have.properties({
-        path: 'Photos from devices',
-        docType: 'folder',
-        lastModification: '2015-09-29T14:13:33.384Z',
-        creationDate: '2015-09-29T14:13:33.384Z',
-        tags: [],
-        remote: {
-          _id: '913F429E-5609-C636-AE9A-CD00BD138B13',
-          _rev: '1-7786acf12a11fad6ad1eeb861953e0d8'
-        }
-      })
     })
   })
 

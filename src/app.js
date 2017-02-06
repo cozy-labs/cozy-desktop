@@ -267,13 +267,16 @@ class App {
     this.merge = new Merge(this.pouch)
     this.prep = new Prep(this.merge, this.ignore)
     this.local = this.merge.local = new Local(this.config, this.prep, this.pouch, this.events)
-    this.remote = this.merge.remote = new Remote(this.config)
+    this.remote = this.merge.remote = new Remote(this.config, this.prep, this.pouch)
     this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
     this.sync.getDiskSpace = this.getDiskSpace
   }
 
   // Start the synchronization
   startSync (mode, callback) {
+    // FIXME: v3: Temporarily force pull mode only, until push works
+    mode = 'pull'
+
     this.config.setMode(mode)
     log.info('Run first synchronisation...')
     this.sync.start(mode, err => {

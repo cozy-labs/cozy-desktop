@@ -1,32 +1,26 @@
-import printit from 'printit'
+/* @flow weak */
 
 import RemoteCozy from './cozy'
-
-const log = printit({
-  prefix: 'Remote ',
-  date: true
-})
+import Watcher from './watcher'
 
 export default class Remote {
-  constructor (config) {
-    let deviceName = config.getDefaultDeviceName()
-    let device = config.getDevice(deviceName)
+  watcher: Watcher
 
-    this.cozy = new RemoteCozy(device.url)
+  constructor (config, prep, pouch) {
+    const deviceName = config.getDefaultDeviceName()
+    const device = config.getDevice(deviceName)
+    const remoteCozy = new RemoteCozy(device.url)
+
+    this.watcher = new Watcher(pouch, prep, remoteCozy)
   }
 
-  start () {
-    let seq = 0
+  start (callback) {
+    this.watcher.start()
+    callback()
+  }
 
-    setInterval(() => {
-      this.cozy.changes(seq)
-        .then(changes => {
-          if (changes.results.length !== 0) {
-            log.info(changes.results)
-            seq = changes.last_seq
-          }
-        })
-        .catch(err => log.error(err))
-    }, 2000)
+  stop (callback) {
+    this.watcher.stop()
+    callback()
   }
 }

@@ -1,6 +1,6 @@
 import async from 'async'
-import clone from 'lodash.clone'
 import fs from 'fs-extra'
+import { O_CREAT } from 'constants'
 import path from 'path'
 let log = require('printit')({
   prefix: 'Local writer  ',
@@ -145,6 +145,12 @@ class Local {
             this.events.emit('transfer-copy', doc)
             return fs.copy(existingFilePath, tmpFile, next)
           } else {
+            // TODO: Fetch file content (v3) instead of creating an empty one
+            fs.open(tmpFile, O_CREAT, (err, fd) => {
+              if (err) next(err)
+              fs.close(fd, next)
+            })
+            /*
             return this.other.createReadStream(doc, (err, stream) => {
               // Don't use async callback here!
               // Async does some magic and the stream can throw an
@@ -167,10 +173,13 @@ class Local {
                 return this.events.emit(info.eventName, {finished: true})
               })
             })
+            */
           }
         })
       },
 
+      // TODO: v3: Validate checksum once pulled files are not empty anymore
+      /*
       next => {
         if (doc.checksum != null) {
           return this.watcher.checksum(tmpFile, function (err, checksum) {
@@ -186,6 +195,7 @@ class Local {
           return next()
         }
       },
+      */
 
       next => fs.ensureDir(parent, () => fs.rename(tmpFile, filePath, next)),
 

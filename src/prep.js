@@ -68,14 +68,15 @@ class Prep {
   // Return true if the checksum is invalid
   // If the checksum is missing, it is not invalid, just missing,
   // so it returns false.
-  // SHA-1 has 40 hexadecimal letters
+  // MD5 has 16 bytes.
+  // Base64 encoding must include padding.
   invalidChecksum (doc) {
-    if (doc.checksum != null) {
-      doc.checksum = doc.checksum.toLowerCase()
-      return !doc.checksum.match(/^[a-f0-9]{40}$/)
-    } else {
-      return false
-    }
+    if (doc.checksum == null) return false
+
+    const buffer = Buffer.from(doc.checksum, 'base64')
+
+    return buffer.byteLength !== 16 ||
+      buffer.toString('base64').length !== doc.checksum.length
   }
 
   // Simple helper to add a file or a folder
