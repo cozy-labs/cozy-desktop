@@ -24,7 +24,7 @@ describe('RemoteWatcher', function () {
   before(function instanciateRemoteWatcher () {
     this.prep = {invalidPath: Prep.prototype.invalidPath}
     this.remoteCozy = new RemoteCozy(COZY_URL)
-    this.pull = new RemoteWatcher(this.pouch, this.prep, this.remoteCozy)
+    this.watcher = new RemoteWatcher(this.pouch, this.prep, this.remoteCozy)
   })
   after(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
@@ -59,12 +59,12 @@ describe('RemoteWatcher', function () {
         }
       }
 
-      return this.pull.onChange(doc)
+      return this.watcher.onChange(doc)
         .should.be.rejectedWith({message: 'Invalid path/name'})
     })
 
     it('does not fail on ghost file', async function () {
-      sinon.stub(this.pull, 'putDoc')
+      sinon.stub(this.watcher, 'putDoc')
       let doc = {
         _id: '12345678904',
         _rev: '1-abcdef',
@@ -72,10 +72,10 @@ describe('RemoteWatcher', function () {
         path: 'foo',
         name: 'bar'
       }
-      await this.pull.onChange(doc)
+      await this.watcher.onChange(doc)
 
-      this.pull.putDoc.called.should.be.false()
-      this.pull.putDoc.restore()
+      this.watcher.putDoc.called.should.be.false()
+      this.watcher.putDoc.restore()
     })
 
     it('calls addDoc for a new doc', async function () {
@@ -101,7 +101,7 @@ describe('RemoteWatcher', function () {
         }
       }
 
-      await this.pull.onChange(clone(doc))
+      await this.watcher.onChange(clone(doc))
 
       this.prep.addDocAsync.called.should.be.true()
       let args = this.prep.addDocAsync.args[0]
@@ -142,7 +142,7 @@ describe('RemoteWatcher', function () {
         }
       }
 
-      await this.pull.onChange(clone(doc))
+      await this.watcher.onChange(clone(doc))
 
       this.prep.updateDocAsync.called.should.be.true()
       let args = this.prep.updateDocAsync.args[0]
@@ -177,7 +177,7 @@ describe('RemoteWatcher', function () {
         tags: ['foo', 'bar', 'baz']
       }
 
-      await this.pull.onChange(clone(doc))
+      await this.watcher.onChange(clone(doc))
 
       this.prep.updateDocAsync.called.should.be.true()
       let args = this.prep.updateDocAsync.args[0]
@@ -212,7 +212,7 @@ describe('RemoteWatcher', function () {
         updated_at: '2017-01-30T09:09:15.217662611+01:00'
       }
 
-      await this.pull.onChange(clone(doc))
+      await this.watcher.onChange(clone(doc))
 
       this.prep.moveDocAsync.called.should.be.true()
       let args = this.prep.moveDocAsync.args[0]
@@ -264,7 +264,7 @@ describe('RemoteWatcher', function () {
         }
       }
 
-      await this.pull.onChange(clone(doc))
+      await this.watcher.onChange(clone(doc))
 
       this.prep.moveDocAsync.called.should.be.true()
       let src = this.prep.moveDocAsync.args[0][2]
@@ -313,7 +313,7 @@ describe('RemoteWatcher', function () {
       was.remote._rev = doc._rev
       await this.pouch.db.put(was)
 
-      await this.pull.onChange(clone(doc))
+      await this.watcher.onChange(clone(doc))
 
       this.prep.deleteDocAsync.called.should.be.true()
       let id = this.prep.deleteDocAsync.args[0][1].path
@@ -343,7 +343,7 @@ describe('RemoteWatcher', function () {
         _deleted: true
       }
 
-      await this.pull.onChange(doc)
+      await this.watcher.onChange(doc)
 
       this.prep.deleteDocAsync.called.should.be.true()
       let id = this.prep.deleteDocAsync.args[0][1].path
@@ -366,7 +366,7 @@ describe('RemoteWatcher', function () {
         tags: []
       }
 
-      await this.pull.onChange(doc)
+      await this.watcher.onChange(doc)
 
       this.prep.addDocAsync.called.should.be.true()
       this.prep.addDocAsync.args[0][1].should.have.properties({
@@ -405,7 +405,7 @@ describe('RemoteWatcher', function () {
       await this.pouch.db.put(doc)
       const was = await this.pouch.db.get(doc._id)
 
-      await this.pull.removeRemote(was)
+      await this.watcher.removeRemote(was)
 
       const actual = await this.pouch.db.get(doc._id)
       should.not.exist(actual.sides.remote)
