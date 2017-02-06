@@ -1,3 +1,4 @@
+import Promise from 'bluebird'
 import path from 'path'
 let log = require('printit')({
   prefix: 'Prep          ',
@@ -26,6 +27,8 @@ class Prep {
         log.error(`Sorry, ${process.platform} is not supported!`)
         process.exit(1)
     }
+
+    Promise.promisifyAll(this)
   }
 
   /* Helpers */

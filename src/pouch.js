@@ -1,3 +1,4 @@
+import Promise from 'bluebird'
 import PouchDB from 'pouchdb'
 import async from 'async'
 import fs from 'fs-extra'
@@ -35,6 +36,8 @@ class Pouch {
         }
       })
     })
+
+    Promise.promisifyAll(this)
   }
 
   // Create database and recreate all filters
