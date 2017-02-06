@@ -4,6 +4,7 @@ import async from 'async'
 import jsv from 'jsverify'
 import path from 'path'
 import should from 'should'
+import sinon from 'sinon'
 import uniq from 'lodash.uniq'
 
 import configHelpers from '../helpers/config'
@@ -163,6 +164,38 @@ describe('Pouch', function () {
         return this.pouch.byRemoteId(id, function (err, doc) {
           should.exist(err)
           err.status.should.equal(404)
+          done()
+        })
+      })
+    })
+
+    describe('byRemoteIdMaybe', function () {
+      it('does the same as byRemoteId() when document exists', function (done) {
+        let id = '12345678901'
+        this.pouch.byRemoteIdMaybe(id, function (err, doc) {
+          should.not.exist(err)
+          doc.remote._id.should.equal(id)
+          should.exist(doc._id)
+          should.exist(doc.docType)
+          done()
+        })
+      })
+
+      it('returns null when document does not exist', function (done) {
+        let id = 'abcdef'
+        this.pouch.byRemoteIdMaybe(id, function (err, doc) {
+          should.not.exist(err)
+          should.equal(null, doc)
+          done()
+        })
+      })
+
+      it('returns any non-404 error', function (done) {
+        const otherError = new Error('not a 404')
+        sinon.stub(this.pouch, 'byRemoteId').yields(otherError)
+
+        this.pouch.byRemoteIdMaybe('12345678901', function (err, doc) {
+          should.equal(otherError, err)
           done()
         })
       })
