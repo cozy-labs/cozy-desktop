@@ -56,8 +56,8 @@ describe('RemoteCozy', function () {
           let oldChanges = await remoteCozy.changes()
           let seq = oldChanges.last_seq
 
-          let dir = await builders.dir(remoteCozy).build()
-          let file = await builders.file(remoteCozy).inDir(dir).build()
+          let dir = await builders.dir().build()
+          let file = await builders.file().inDir(dir).build()
 
           let newChanges = await remoteCozy.changes(seq)
           let ids = newChanges.results.map(result => result.id).sort()
