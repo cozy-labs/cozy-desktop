@@ -102,7 +102,7 @@
     "pouchdb-server": "^2.0.0",
     "should": "11.1.2",
     "sinon": "1.17.6",
-    "source-map-support": "^0.4.8",
+    "source-map-support": "^0.4.11",
     "standard": "^8.6.0"
   }
 }
