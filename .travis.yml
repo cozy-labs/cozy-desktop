@@ -22,6 +22,7 @@ matrix:
 env:
     global:
         - COZY_DESKTOP_DIR=tmp
+        - COZY_URL="http://localhost:8080"
         - NODE_ENV=test
         - NPM_CONFIG_PROGRESS=false
 services:

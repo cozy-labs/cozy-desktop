@@ -21,9 +21,17 @@
     "cozy"
   ],
   "scripts": {
+    "bootstrap-couch": "npm run bootstrap-couch-container && npm run bootstrap-couch-system-tables && docker stop cozy-desktop-couch",
+    "bootstrap-couch-container": "docker run -d --name cozy-desktop-couch -p 5984:5984 -v $PWD/tmp/couchdb:/opt/couchdb/data klaemo/couchdb:2.0.0 && sleep 1",
+    "bootstrap-couch-system-tables": "curl -X PUT http://127.0.0.1:5984/{_global_changes,_metadata,_replicator,_users}",
+    "bootstrap-cozy": "for cozy_env in dev test; do export cozy_env && npm run bootstrap-cozy-env || exit $?; done",
+    "bootstrap-cozy-env": "export cozy_hostname=$cozy_env.cozy-desktop.local && npm run bootstrap-cozy-instance && npm run bootstrap-cozy-hostname",
+    "bootstrap-cozy-hostname": "grep $cozy_hostname /etc/hosts || echo 127.0.0.1 $cozy_hostname | sudo tee -a /etc/hosts",
+    "bootstrap-cozy-instance": "cozy-stack instances add --dev $cozy_hostname:8080",
     "fauxton": "babel-node ./src/bin/fauxton.js",
     "flow": "flow status --quiet --show-all-errors",
     "lint": "npm run standard && npm run flow",
+    "repl": "babel-node ./src/bin/repl.js",
     "standard": "./node_modules/.bin/standard './src/**/*.js' './test/**/*.js'",
     "test": "installed-check && npm run test-unit && npm run test-integration",
     "test-coverage": "installed-check && npm run test-unit-coverage && npm run test-integration",
