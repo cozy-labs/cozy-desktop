@@ -2,7 +2,8 @@
     "plugins": [
         "array-includes",
         "autobind-class-methods",
-        "transform-flow-strip-types"
+        "transform-flow-strip-types",
+        "transform-object-rest-spread"
     ],
     "presets": ["es2015", "es2016", "es2017"],
     "env": {

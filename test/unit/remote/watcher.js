@@ -24,7 +24,7 @@ describe('RemoteWatcher', function () {
   before(function instanciateRemoteWatcher () {
     this.prep = {invalidPath: Prep.prototype.invalidPath}
     this.remoteCozy = new RemoteCozy(COZY_URL)
-    this.pull = new RemoteWatcher(this.pouch, this.prep, this.remoteCozy)
+    this.watcher = new RemoteWatcher(this.pouch, this.prep, this.remoteCozy)
   })
   after(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
@@ -37,6 +37,96 @@ describe('RemoteWatcher', function () {
           pouchHelpers.createFile(this.pouch, i, callback)
         })
       }, done)
+    })
+  })
+
+  describe('pullMany', function () {
+    const ids = [
+      'cb62b7873e1e7f5d7c6946d38f0039eb',
+      '7c72ebd6ae3c13892a9cfcf4b500664f'
+    ]
+    let pullOne
+
+    beforeEach(function () {
+      pullOne = sinon.stub(this.watcher, 'pullOne')
+    })
+
+    afterEach(function () {
+      pullOne.restore()
+    })
+
+    it('pulls many changed files/dirs given their ids', async function () {
+      pullOne.returnsPromise().resolves()
+
+      await this.watcher.pullMany(ids)
+
+      pullOne.callCount.should.equal(2)
+      pullOne.calledWith(ids[0]).should.equal(true)
+      pullOne.calledWith(ids[1]).should.equal(true)
+    })
+
+    context('when pullOne() rejects some file/dir', function () {
+      beforeEach(function () {
+        pullOne.withArgs(ids[0]).returnsPromise().rejects()
+        pullOne.withArgs(ids[1]).returnsPromise().resolves()
+      })
+
+      it('rejects with the failed ids', function () {
+        return this.watcher.pullMany(ids)
+          .should.be.rejectedWith(new RegExp(ids[0]))
+      })
+
+      it('still tries to pull other files/dirs', async function () {
+        try { await this.watcher.pullMany(ids) } catch (_) {}
+        pullOne.calledWith(ids[1]).should.equal(true)
+      })
+    })
+  })
+
+  describe('pullOne', function () {
+    let onChange, findMaybe
+
+    beforeEach(function () {
+      onChange = sinon.stub(this.watcher, 'onChange')
+      findMaybe = sinon.stub(this.remoteCozy, 'findMaybe')
+    })
+
+    afterEach(function () {
+      onChange.restore()
+      findMaybe.restore()
+    })
+
+    it('applies the changes when the document still exists on remote', async function () {
+      let doc: RemoteDoc = {
+        _id: '12345678904',
+        _rev: '1-abcdef',
+        _type: FILES_DOCTYPE,
+        type: 'file',
+        dir_id: 'whatever',
+        name: 'whatever',
+        created_at: '2017-01-30T09:09:15.217662611+01:00',
+        updated_at: '2017-01-30T09:09:15.217662611+01:00',
+        tags: [],
+        binary: {
+          file: {
+            id: '123'
+          }
+        }
+      }
+      findMaybe.withArgs(doc._id).returnsPromise().resolves(doc)
+
+      await this.watcher.pullOne(doc._id)
+
+      onChange.calledWith(doc).should.equal(true)
+    })
+
+    it('does nothing otherwise', async function () {
+      const id = 'missing'
+      findMaybe.withArgs(id).returnsPromise().resolves(null)
+
+      await this.watcher.pullOne(id)
+
+      onChange.calledOnce.should.equal(false)
     })
   })
 
@@ -59,12 +149,12 @@ describe('RemoteWatcher', function () {
         }
       }
 
-      return this.pull.onChange(doc)
+      return this.watcher.onChange(doc)
         .should.be.rejectedWith({message: 'Invalid path/name'})
     })
 
     it('does not fail on ghost file', async function () {
-      sinon.stub(this.pull, 'putDoc')
+      sinon.stub(this.watcher, 'putDoc')
       let doc = {
         _id: '12345678904',
         _rev: '1-abcdef',
@@ -72,10 +162,10 @@ describe('RemoteWatcher', function () {
         path: 'foo',
         name: 'bar'
       }
-      await this.pull.onChange(doc)
+      await this.watcher.onChange(doc)
 
-      this.pull.putDoc.called.should.be.false()
-      this.pull.putDoc.restore()
+      this.watcher.putDoc.called.should.be.false()
+      this.watcher.putDoc.restore()
     })
 
     it('calls addDoc for a new doc', async function () {
@@ -101,7 +191,7 @@ describe('RemoteWatcher', function () {
         }
       }
 
-      await this.pull.onChange(clone(doc))
+      await this.watcher.onChange(clone(doc))
 
       this.prep.addDocAsync.called.should.be.true()
       let args = this.prep.addDocAsync.args[0]
@@ -142,7 +232,7 @@ describe('RemoteWatcher', function () {
         }
       }
 
-      await this.pull.onChange(clone(doc))
+      await this.watcher.onChange(clone(doc))
 
       this.prep.updateDocAsync.called.should.be.true()
       let args = this.prep.updateDocAsync.args[0]
@@ -177,7 +267,7 @@ describe('RemoteWatcher', function () {
         tags: ['foo', 'bar', 'baz']
       }
 
-      await this.pull.onChange(clone(doc))
+      await this.watcher.onChange(clone(doc))
 
       this.prep.updateDocAsync.called.should.be.true()
       let args = this.prep.updateDocAsync.args[0]
@@ -212,7 +302,7 @@ describe('RemoteWatcher', function () {
         updated_at: '2017-01-30T09:09:15.217662611+01:00'
       }
 
-      await this.pull.onChange(clone(doc))
+      await this.watcher.onChange(clone(doc))
 
       this.prep.moveDocAsync.called.should.be.true()
       let args = this.prep.moveDocAsync.args[0]
@@ -264,7 +354,7 @@ describe('RemoteWatcher', function () {
         }
       }
 
-      await this.pull.onChange(clone(doc))
+      await this.watcher.onChange(clone(doc))
 
       this.prep.moveDocAsync.called.should.be.true()
       let src = this.prep.moveDocAsync.args[0][2]
@@ -313,7 +403,7 @@ describe('RemoteWatcher', function () {
       was.remote._rev = doc._rev
       await this.pouch.db.put(was)
 
-      await this.pull.onChange(clone(doc))
+      await this.watcher.onChange(clone(doc))
 
       this.prep.deleteDocAsync.called.should.be.true()
       let id = this.prep.deleteDocAsync.args[0][1].path
@@ -334,16 +424,16 @@ describe('RemoteWatcher', function () {
       args[1].should.not.have.properties(['_rev', 'path', 'name'])
     })
 
-    it('calls deleteDoc for a deleted doc', async function () {
+    it('calls deleteDoc for a doc put in the trash', async function () {
       this.prep.deleteDocAsync = sinon.stub()
       this.prep.deleteDocAsync.returnsPromise().resolves(null)
       let doc = {
         _id: '12345678901',
         _rev: '7-abcdef',
-        _deleted: true
+        path: '/.cozy_trash/foo'
       }
 
-      await this.pull.onChange(doc)
+      await this.watcher.onChange(doc)
 
       this.prep.deleteDocAsync.called.should.be.true()
       let id = this.prep.deleteDocAsync.args[0][1].path
@@ -366,7 +456,7 @@ describe('RemoteWatcher', function () {
         tags: []
       }
 
-      await this.pull.onChange(doc)
+      await this.watcher.onChange(doc)
 
       this.prep.addDocAsync.called.should.be.true()
       this.prep.addDocAsync.args[0][1].should.have.properties({
@@ -405,7 +495,7 @@ describe('RemoteWatcher', function () {
       await this.pouch.db.put(doc)
       const was = await this.pouch.db.get(doc._id)
 
-      await this.pull.removeRemote(was)
+      await this.watcher.removeRemote(was)
 
       const actual = await this.pouch.db.get(doc._id)
       should.not.exist(actual.sides.remote)

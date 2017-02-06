@@ -1,4 +1,4 @@
-import { ROOT_DIR_ID } from '../../../src/remote/constants'
+import RemoteBaseBuilder from './base'
 
 // Used to generate readable unique filenames
 var fileNumber = 1
@@ -7,23 +7,21 @@ var fileNumber = 1
 //
 //     let remoteFile = this.builders.remoteFile().inDir(...).build()
 //
-export default class RemoteFileBuilder {
+export default class RemoteFileBuilder extends RemoteBaseBuilder {
   constructor (cozy) {
-    this.cozy = cozy
+    super(cozy)
+
     this.data = `Content of remote file ${fileNumber}`
-    this.options = {
+
+    Object.assign(this.options, {
       name: `remote-file-${fileNumber++}`,
-      dirID: ROOT_DIR_ID,
       contentType: undefined
-    }
+    })
   }
 
-  inDir (dir) {
-    this.options.dirID = dir.id
-    return this
-  }
-
-  build () {
-    return this.cozy.files.create(this.data, this.options)
+  async build () {
+    return this.toRemoteMetadata(
+      await this.cozy.files.create(this.data, this.options)
+    )
   }
 }

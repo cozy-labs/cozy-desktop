@@ -1,9 +1,10 @@
 /* eslint-env mocha */
 
 import { FetchError } from 'node-fetch'
+import should from 'should'
 
 import RemoteCozy from '../../../src/remote/cozy'
-import { ROOT_DIR_ID, TRASH_DIR_ID } from '../../../src/remote/constants'
+import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } from '../../../src/remote/constants'
 
 import { COZY_URL, builders } from '../../helpers/integration'
 import CozyStackDouble from '../../doubles/cozy_stack'
@@ -14,6 +15,12 @@ describe('RemoteCozy', function () {
   before(() => cozyStackDouble.start())
   after(() => cozyStackDouble.stop())
   afterEach(() => cozyStackDouble.clearStub())
+
+  let remoteCozy
+
+  beforeEach(function () {
+    remoteCozy = new RemoteCozy(COZY_URL)
+  })
 
   describe('changes', function () {
     it('rejects when Cozy is unreachable', function () {
@@ -35,36 +42,84 @@ describe('RemoteCozy', function () {
     })
 
     context('when cozy works', function () {
-      let remoteCozy
-
-      beforeEach(function () {
-        remoteCozy = new RemoteCozy(COZY_URL)
-      })
-
       context('without an update sequence', function () {
         it('lists all changes since the database creation', async function () {
-          let changes = await remoteCozy.changes()
-          let ids = changes.results.map(result => result.id)
+          let dir = await builders.dir().build()
+          let file = await builders.file().inDir(dir).build()
 
-          ids.should.containEql(ROOT_DIR_ID)
-          ids.should.containEql(TRASH_DIR_ID)
+          let { ids } = await remoteCozy.changes()
+
+          ids.should.containEql(dir._id)
+          ids.should.containEql(file._id)
+          ids.should.not.containEql(ROOT_DIR_ID)
+          ids.should.not.containEql(TRASH_DIR_ID)
+          ids.should.not.containEql(`_design/${FILES_DOCTYPE}`)
         })
       })
 
       context('with an update sequence', function () {
         it('lists only changes that occured since then', async function () {
-          let oldChanges = await remoteCozy.changes()
-          let seq = oldChanges.last_seq
+          let { last_seq } = await remoteCozy.changes()
 
           let dir = await builders.dir().build()
           let file = await builders.file().inDir(dir).build()
 
-          let newChanges = await remoteCozy.changes(seq)
-          let ids = newChanges.results.map(result => result.id).sort()
+          let { ids } = await remoteCozy.changes(last_seq)
 
-          ids.should.eql([file._id, dir._id].sort())
+          ids.sort().should.eql([file._id, dir._id].sort())
         })
       })
+    })
+  })
+
+  describe('find', function () {
+    it('fetches a remote directory matching the given id', async function () {
+      const remoteDir = await builders.dir().build()
+
+      const foundDir = await remoteCozy.find(remoteDir._id)
+
+      foundDir.should.be.deepEqual(remoteDir)
+    })
+
+    it('fetches a remote root file including its path', async function () {
+      const remoteFile = await builders.file().inRootDir().named('foo').build()
+
+      const foundFile = await remoteCozy.find(remoteFile._id)
+
+      foundFile.should.deepEqual({
+        ...remoteFile,
+        md5sum: '1B2M2Y8AsgTpgAmY7PhCfg==',
+        path: '/foo'
+      })
+    })
+
+    it('fetches a remote non-root file including its path', async function () {
+      const remoteDir = await builders.dir().named('foo').inRootDir().build()
+      const remoteFile = await builders.file().named('bar').inDir(remoteDir).build()
+
+      const foundFile = await remoteCozy.find(remoteFile._id)
+
+      foundFile.should.deepEqual({
+        ...remoteFile,
+        md5sum: '1B2M2Y8AsgTpgAmY7PhCfg==',
+        path: '/foo/bar'
+      })
+    })
+  })
+
+  describe('findMaybe', function () {
+    it('does the same as find() when file or directory exists', async function () {
+      const remoteDir = await builders.dir().build()
+
+      const foundDir = await remoteCozy.findMaybe(remoteDir._id)
+
+      foundDir.should.deepEqual(remoteDir)
+    })
+
+    it('returns null when file or directory is not found', async function () {
+      const found = await remoteCozy.findMaybe('missing')
+
+      should.not.exist(found)
     })
   })
 })
