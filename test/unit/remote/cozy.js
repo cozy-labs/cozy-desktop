@@ -62,7 +62,7 @@ describe('RemoteCozy', function () {
           let newChanges = await remoteCozy.changes(seq)
           let ids = newChanges.results.map(result => result.id).sort()
 
-          ids.should.eql([file._id, dir._id].sort())
+          ids.sort().should.eql([file._id, dir._id].sort())
         })
       })
     })
