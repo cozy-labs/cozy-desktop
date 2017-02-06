@@ -100,8 +100,8 @@
     "mocha": "3.2.0",
     "nyc": "^10.1.2",
     "pouchdb-server": "^2.0.1",
-    "should": "11.1.2",
-    "sinon": "1.17.6",
+    "should": "^11.2.0",
+    "sinon": "^1.17.7",
     "source-map-support": "^0.4.11",
     "standard": "^8.6.0"
   }
