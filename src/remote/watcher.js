@@ -29,6 +29,35 @@ export default class RemoteWatcher {
     this.remoteCozy = remoteCozy
   }
 
+  // Pull multiple files/dirs metadata at once, given their ids
+  async pullMany (ids: string[]) {
+    let failedIds = []
+
+    for (let id of ids) {
+      try {
+        await this.pullOne(id)
+      } catch (err) {
+        log.error(err)
+        failedIds.push(id)
+      }
+    }
+
+    if (failedIds.length > 0) {
+      throw new Error(
+        `Some documents could not be pulled: ${failedIds.join(', ')}`
+      )
+    }
+  }
+
+  // Pull a single file/dir metadata, given its id
+  async pullOne (id: string): Promise<*> {
+    const doc: ?RemoteDoc = await this.remoteCozy.findMaybe(id)
+
+    if (doc != null) {
+      return this.onChange(doc)
+    }
+  }
+
   async onChange (doc: RemoteDoc) {
     log.info('onChange', doc)
     const was: ?Metadata = await this.pouch.byRemoteIdMaybeAsync(doc._id)

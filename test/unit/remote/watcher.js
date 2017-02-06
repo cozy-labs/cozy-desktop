@@ -40,6 +40,96 @@ describe('RemoteWatcher', function () {
     })
   })
 
+  describe('pullMany', function () {
+    const ids = [
+      'cb62b7873e1e7f5d7c6946d38f0039eb',
+      '7c72ebd6ae3c13892a9cfcf4b500664f'
+    ]
+    let pullOne
+
+    beforeEach(function () {
+      pullOne = sinon.stub(this.watcher, 'pullOne')
+    })
+
+    afterEach(function () {
+      pullOne.restore()
+    })
+
+    it('pulls many changed files/dirs given their ids', async function () {
+      pullOne.returnsPromise().resolves()
+
+      await this.watcher.pullMany(ids)
+
+      pullOne.callCount.should.equal(2)
+      pullOne.calledWith(ids[0]).should.equal(true)
+      pullOne.calledWith(ids[1]).should.equal(true)
+    })
+
+    context('when pullOne() rejects some file/dir', function () {
+      beforeEach(function () {
+        pullOne.withArgs(ids[0]).returnsPromise().rejects()
+        pullOne.withArgs(ids[1]).returnsPromise().resolves()
+      })
+
+      it('rejects with the failed ids', function () {
+        return this.watcher.pullMany(ids)
+          .should.be.rejectedWith(new RegExp(ids[0]))
+      })
+
+      it('still tries to pull other files/dirs', async function () {
+        try { await this.watcher.pullMany(ids) } catch (_) {}
+        pullOne.calledWith(ids[1]).should.equal(true)
+      })
+    })
+  })
+
+  describe('pullOne', function () {
+    let onChange, findMaybe
+
+    beforeEach(function () {
+      onChange = sinon.stub(this.watcher, 'onChange')
+      findMaybe = sinon.stub(this.remoteCozy, 'findMaybe')
+    })
+
+    afterEach(function () {
+      onChange.restore()
+      findMaybe.restore()
+    })
+
+    it('applies the changes when the document still exists on remote', async function () {
+      let doc: RemoteDoc = {
+        _id: '12345678904',
+        _rev: '1-abcdef',
+        _type: FILES_DOCTYPE,
+        type: 'file',
+        dir_id: 'whatever',
+        name: 'whatever',
+        created_at: '2017-01-30T09:09:15.217662611+01:00',
+        updated_at: '2017-01-30T09:09:15.217662611+01:00',
+        tags: [],
+        binary: {
+          file: {
+            id: '123'
+          }
+        }
+      }
+      findMaybe.withArgs(doc._id).returnsPromise().resolves(doc)
+
+      await this.watcher.pullOne(doc._id)
+
+      onChange.calledWith(doc).should.equal(true)
+    })
+
+    it('does nothing otherwise', async function () {
+      const id = 'missing'
+      findMaybe.withArgs(id).returnsPromise().resolves(null)
+
+      await this.watcher.pullOne(id)
+
+      onChange.calledOnce.should.equal(false)
+    })
+  })
+
   describe('onChange', function () {
     it('does not fail when the path is missing', function () {
       let doc: RemoteDoc = {
