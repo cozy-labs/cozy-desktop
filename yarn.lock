@@ -410,9 +410,9 @@ babel-plugin-array-includes@^2.0.3:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/babel-plugin-array-includes/-/babel-plugin-array-includes-2.0.3.tgz#cf5452e81c7b803fb7959f1045ac88e2ec28ff76"
 
-babel-plugin-autobind-class-methods@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/babel-plugin-autobind-class-methods/-/babel-plugin-autobind-class-methods-2.1.1.tgz#5ddad759ed4cdd9b32a15679bdb765345a21710d"
+babel-plugin-autobind-class-methods@3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/babel-plugin-autobind-class-methods/-/babel-plugin-autobind-class-methods-3.0.0.tgz#ea1cbfe5001433218dbcb6af37e7161dd24aed66"
 
 babel-plugin-check-es2015-constants@^6.22.0:
   version "6.22.0"
