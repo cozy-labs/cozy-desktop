@@ -36,6 +36,9 @@ export default class RemoteCozy {
     const changesUrl = `${this.url}/data/${FILES_DOCTYPE}/_changes?since=${seq}`
 
     let resp = await fetch(changesUrl)
+
+    if (!resp.ok) throw new Error(`${resp.status}: ${resp.statusText}: ${changesUrl}`)
+
     let json = await resp.json()
 
     return {
