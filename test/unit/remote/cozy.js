@@ -30,7 +30,7 @@ describe('RemoteCozy', function () {
       return remoteCozy.changes().should.be.rejectedWith(FetchError)
     })
 
-    it('rejects when cozy sends invalid JSON', function () {
+    it('rejects when response status is not ok', function () {
       const remoteCozy = new RemoteCozy(cozyStackDouble.url())
 
       cozyStackDouble.stub((req, res) => {
@@ -38,7 +38,20 @@ describe('RemoteCozy', function () {
         res.end('Not Found')
       })
 
-      return remoteCozy.changes().should.be.rejectedWith(SyntaxError)
+      return remoteCozy.changes()
+        .should.be.rejectedWith(/404.*Not Found/)
+    })
+
+    it('rejects when cozy sends invalid JSON', function () {
+      const remoteCozy = new RemoteCozy(cozyStackDouble.url())
+
+      cozyStackDouble.stub((req, res) => {
+        res.writeHead(200, {'Content-Type': 'application/json'})
+        res.end('')
+      })
+
+      return remoteCozy.changes()
+        .should.be.rejectedWith(SyntaxError)
     })
 
     context('when cozy works', function () {
