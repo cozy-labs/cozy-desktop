@@ -169,13 +169,13 @@ describe('Local', function () {
     })
   )
 
-  xdescribe('addFile', function () {
+  describe('addFile', function () {
     it('creates the file by downloading it', function (done) {
       this.events.emit = sinon.spy()
       let doc = {
         path: 'files/file-from-remote',
         lastModification: new Date('2015-10-09T04:05:06Z'),
-        checksum: '8843d7f92416211de9ebb963ff4ce28125932878'
+        checksum: 'OFj2IjCsPJFfMAxmQxLGPw=='
       }
       this.local.other = {
         createReadStream (docToStream, callback) {
@@ -207,7 +207,7 @@ describe('Local', function () {
       let doc = {
         path: 'files/file-with-same-checksum',
         lastModification: new Date('2015-10-09T04:05:07Z'),
-        checksum: 'c7567e8b39e2428e38bf9c9226ac68de4c67dc39'
+        checksum: 'qwesux5JaAGTet+nckJL9w=='
       }
       let alt = path.join(this.syncPath, 'files', 'my-checkum-is-456')
       fs.writeFileSync(alt, 'foo bar baz')
@@ -230,7 +230,7 @@ describe('Local', function () {
       let doc = {
         path: 'file-in-root',
         lastModification: new Date('2015-10-09T04:05:19Z'),
-        checksum: '21eb6533733a5e4763acacd1d45a60c2e0e404e1'
+        checksum: 'gDOOedLKm5wJDrqqLvKTxw=='
       }
       this.local.other = {
         createReadStream (docToStream, callback) {
@@ -322,14 +322,14 @@ describe('Local', function () {
     })
   })
 
-  xdescribe('overwriteFile', () =>
+  describe('overwriteFile', () =>
     it('writes the new content of a file', function (done) {
       this.events.emit = sinon.spy()
       let doc = {
         path: 'a-file-to-overwrite',
         docType: 'file',
         lastModification: new Date('2015-10-09T05:06:07Z'),
-        checksum: '7b502c3a1f48c8609ae212cdfb639dee39673f5e'
+        checksum: 'PiWWCnnbxptnTNTsZ6csYg=='
       }
       this.local.other = {
         createReadStream (docToStream, callback) {
@@ -396,7 +396,7 @@ describe('Local', function () {
   )
 
   describe('moveFile', function () {
-    xit('moves the file', function (done) {
+    it('moves the file', function (done) {
       let old = {
         path: 'old-parent/file-to-move',
         lastModification: new Date('2016-10-08T05:05:09Z')
@@ -439,7 +439,7 @@ describe('Local', function () {
       })
     })
 
-    xit('does nothing if the file has already been moved', function (done) {
+    it('does nothing if the file has already been moved', function (done) {
       let old = {
         path: 'old-parent/already-moved',
         lastModification: new Date('2016-10-08T05:05:11Z')
@@ -557,7 +557,6 @@ describe('Local', function () {
 
   describe('deleteFile', () =>
     it('deletes a file from the local filesystem', function (done) {
-      this.events.emit = sinon.spy()
       let doc = {
         _id: 'FILE-TO-DELETE',
         path: 'FILE-TO-DELETE',
