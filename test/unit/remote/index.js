@@ -280,7 +280,7 @@ describe('Remote', function () {
         should.not.exist(err)
         return this.remote.cleanBinary(binary._id, err => {
           should.not.exist(err)
-          return this.couch.get(binary.id, function (err) {
+          return this.couch.get(binary._id, function (err) {
             err.status.should.equal(404)
             done()
           })
