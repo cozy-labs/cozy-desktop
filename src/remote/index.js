@@ -5,13 +5,14 @@ import Watcher from './watcher'
 
 export default class Remote {
   watcher: Watcher
+  remoteCozy: RemoteCozy
 
   constructor (config, prep, pouch) {
     const deviceName = config.getDefaultDeviceName()
     const device = config.getDevice(deviceName)
-    const remoteCozy = new RemoteCozy(device.url)
 
-    this.watcher = new Watcher(pouch, prep, remoteCozy)
+    this.remoteCozy = new RemoteCozy(device.url)
+    this.watcher = new Watcher(pouch, prep, this.remoteCozy)
   }
 
   start (callback) {
@@ -22,5 +23,15 @@ export default class Remote {
   stop (callback) {
     this.watcher.stop()
     callback()
+  }
+
+  // Create a readable stream for the given doc
+  async createReadStream (doc, callback) {
+    try {
+      const stream = await this.remoteCozy.downloadBinary(doc.remote._id, callback)
+      callback(null, stream)
+    } catch (err) {
+      callback(err)
+    }
   }
 }

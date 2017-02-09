@@ -369,7 +369,16 @@ class App {
   // Get disk space informations from the cozy
   getDiskSpace (callback) {
     // TODO: App.getDiskSpace() v3
-    callback(null, {})
+    callback(null, {
+      diskSpace: {
+        usedDiskSpace: 0,
+        usedUnit: '',
+        freeDiskSpace: 9223372036854776000,
+        freeUnit: '',
+        totalDiskSpace: 9223372036854776000,
+        totalUnit: ''
+      }
+    })
   }
 }
 App.initClass()

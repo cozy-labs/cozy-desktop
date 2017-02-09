@@ -3,6 +3,7 @@
 import { Cozy as CozyClient } from 'cozy-client-js'
 import fetch from 'node-fetch'
 import path from 'path'
+import { Readable } from 'stream'
 
 import { FILES_DOCTYPE, FILE_TYPE, ROOT_DIR_ID, TRASH_DIR_ID } from './constants'
 
@@ -53,9 +54,6 @@ export default class RemoteCozy {
     let doc = await this.client.find(FILES_DOCTYPE, id)
 
     if (doc.type === FILE_TYPE) {
-      // FIXME: Temporarily force empty file checksum
-      doc.md5sum = '1B2M2Y8AsgTpgAmY7PhCfg=='
-
       const parentDir = await this.client.find(FILES_DOCTYPE, doc.dir_id)
       doc.path = path.join(parentDir.path, doc.name)
     }
@@ -69,5 +67,10 @@ export default class RemoteCozy {
     } catch (err) {
       return null
     }
+  }
+
+  async downloadBinary (id: string): Promise<?Readable> {
+    const resp = await this.client.files.downloadById(id)
+    return resp.body
   }
 }

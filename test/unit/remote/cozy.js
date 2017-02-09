@@ -101,7 +101,6 @@ describe('RemoteCozy', function () {
 
       foundFile.should.deepEqual({
         ...remoteFile,
-        md5sum: '1B2M2Y8AsgTpgAmY7PhCfg==',
         path: '/foo'
       })
     })
@@ -114,7 +113,6 @@ describe('RemoteCozy', function () {
 
       foundFile.should.deepEqual({
         ...remoteFile,
-        md5sum: '1B2M2Y8AsgTpgAmY7PhCfg==',
         path: '/foo/bar'
       })
     })
@@ -133,6 +131,18 @@ describe('RemoteCozy', function () {
       const found = await remoteCozy.findMaybe('missing')
 
       should.not.exist(found)
+    })
+  })
+
+  describe('downloadBinary', function () {
+    it('resolves with a Readable stream of the file content', async function () {
+      const remoteFile = await builders.file().data('foo').build()
+
+      const stream = await remoteCozy.downloadBinary(remoteFile._id)
+
+      let data = ''
+      stream.on('data', chunk => { data += chunk })
+      stream.on('end', () => { data.should.equal('foo') })
     })
   })
 })
