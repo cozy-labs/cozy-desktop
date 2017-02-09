@@ -1,3 +1,4 @@
+/* @flow */
 /* eslint-env mocha */
 
 import crypto from 'crypto'
@@ -327,7 +328,7 @@ describe('Remote', function () {
 
   xdescribe('isUpToDate', () =>
     it('says if the remote file is up to date', function () {
-      let doc = {
+      let doc: Object = {
         _id: 'foo/bar',
         _rev: '1-0123456',
         path: 'foo/bar',
@@ -350,7 +351,7 @@ describe('Remote', function () {
   xdescribe('addFile', function () {
     it('adds a file to couchdb', function (done) {
       let checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
-      let doc = {
+      let doc: Object = {
         _id: 'cat2.jpg',
         path: 'cat2.jpg',
         docType: 'file',
@@ -399,7 +400,7 @@ describe('Remote', function () {
 
     it('does not reupload an existing file', function (done) {
       let checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
-      let doc = {
+      let doc: Object = {
         _id: 'backup/cat3.jpg',
         path: 'backup/cat3.jpg',
         docType: 'file',
@@ -462,7 +463,7 @@ describe('Remote', function () {
 
   xdescribe('addFolder', () =>
     it('adds a folder to couchdb', function (done) {
-      let doc = {
+      let doc: Object = {
         path: 'couchdb-folder/folder-1',
         docType: 'folder',
         creationDate: new Date(),
@@ -491,7 +492,7 @@ describe('Remote', function () {
     it('overwrites the binary content', function (done) {
       return couchHelpers.createFile(this.couch, 6, (err, created) => {
         should.not.exist(err)
-        let doc = {
+        let doc: Object = {
           _id: 'couchdb-folder/file-6',
           path: 'couchdb-folder/file-6',
           docType: 'file',
@@ -593,7 +594,7 @@ describe('Remote', function () {
     it('updates the lastModification', function (done) {
       return couchHelpers.createFile(this.couch, 7, (err, created) => {
         should.not.exist(err)
-        let doc = {
+        let doc: Object = {
           path: 'couchdb-folder/file-7',
           docType: 'file',
           checksum: '1111111111111111111111111111111111111127',
@@ -640,7 +641,7 @@ describe('Remote', function () {
   xdescribe('updateFolder', function () {
     it('updates the metadata of a folder in couchdb', function (done) {
       return couchHelpers.createFolder(this.couch, 2, (_, created) => {
-        let doc = {
+        let doc: Object = {
           path: 'couchdb-folder/folder-2',
           docType: 'folder',
           creationDate: new Date(),
@@ -703,7 +704,7 @@ describe('Remote', function () {
         _id: checksum,
         _rev: '1-0123456789'
       }
-      let old = {
+      let old: Object = {
         path: 'cat6.jpg',
         docType: 'file',
         checksum,
@@ -926,7 +927,7 @@ describe('Remote', function () {
         _id: checksum,
         _rev: '1-0123456789'
       }
-      let src = {
+      let src: Object = {
         path: 'cat9.jpg',
         docType: 'file',
         checksum,
