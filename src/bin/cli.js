@@ -47,7 +47,7 @@ let sync = function (mode, args) {
       let format = `${what} ${filename} [:bar] :percent :etas`
       if (+info.size > 0) {
         let options = {
-          total: info.size,
+          total: Number(info.size),
           width: 30
         }
         let bar = new Progress(format, options)
