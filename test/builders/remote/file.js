@@ -1,3 +1,5 @@
+import fs from 'fs'
+
 import RemoteBaseBuilder from './base'
 
 // Used to generate readable unique filenames
@@ -11,7 +13,7 @@ export default class RemoteFileBuilder extends RemoteBaseBuilder {
   constructor (cozy) {
     super(cozy)
 
-    this.data = `Content of remote file ${fileNumber}`
+    this._data = `Content of remote file ${fileNumber}`
 
     Object.assign(this.options, {
       name: `remote-file-${fileNumber++}`,
@@ -19,9 +21,24 @@ export default class RemoteFileBuilder extends RemoteBaseBuilder {
     })
   }
 
+  contentType (contentType) {
+    this.options.contentType = contentType
+    return this
+  }
+
+  data (data) {
+    this._data = data
+    return this
+  }
+
+  dataFromFile (path) {
+    this._data = fs.readFileSync(path)
+    return this
+  }
+
   async build () {
     return this.toRemoteMetadata(
-      await this.cozy.files.create(this.data, this.options)
+      await this.cozy.files.create(this._data, this.options)
     )
   }
 }
