@@ -55,7 +55,7 @@ describe('Remote', function () {
             stream.pipe(checksum)
             stream.on('end', function () {
               checksum.end()
-              checksum.read().should.equal(expectedChecksum)
+              should.equal(expectedChecksum, checksum.read())
               done()
             })
           })
