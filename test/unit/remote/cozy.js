@@ -88,7 +88,6 @@ describe('RemoteCozy', function () {
 
       foundFile.should.deepEqual({
         ...remoteFile,
-        md5sum: '1B2M2Y8AsgTpgAmY7PhCfg==',
         path: '/foo'
       })
     })
@@ -101,7 +100,6 @@ describe('RemoteCozy', function () {
 
       foundFile.should.deepEqual({
         ...remoteFile,
-        md5sum: '1B2M2Y8AsgTpgAmY7PhCfg==',
         path: '/foo/bar'
       })
     })
