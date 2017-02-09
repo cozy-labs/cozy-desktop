@@ -23,3 +23,16 @@ declare function before(method : TestFunction):void;
 declare function beforeEach(method : TestFunction):void;
 declare function after(method : TestFunction):void;
 declare function afterEach(method : TestFunction):void;
+
+/****************************************************************************/
+/* TODO: Contribute missing definitions upstream                            */
+/****************************************************************************/
+
+declare function before(desc: string, method: TestFunction):void;
+declare function beforeEach(desc: string, method: TestFunction):void;
+declare function after(desc: string, method: TestFunction):void;
+declare function afterEach(desc: string, method: TestFunction):void;
+
+declare var xdescribe : typeof describe;
+declare var xcontext : typeof context;
+declare var xit : typeof it;
