@@ -55,15 +55,6 @@ class Remote {
     }, 100)
   }
 
-  // Create a readable stream for the given doc
-  createReadStream (doc, callback) {
-    if (doc.remote.binary != null) {
-      this.couch.downloadBinary(doc.remote.binary._id, callback)
-    } else {
-      callback(new Error('Cannot download the file'))
-    }
-  }
-
   /* Helpers */
 
   // Add attachment to the binary document by uploading a file
