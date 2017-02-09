@@ -120,4 +120,16 @@ describe('RemoteCozy', function () {
       should.not.exist(found)
     })
   })
+
+  describe('downloadBinary', function () {
+    it('resolves with a Readable stream of the file content', async function () {
+      const remoteFile = await builders.file().data('foo').build()
+
+      const stream = await remoteCozy.downloadBinary(remoteFile._id)
+
+      let data = ''
+      stream.on('data', chunk => { data += chunk })
+      stream.on('end', () => { data.should.equal('foo') })
+    })
+  })
 })

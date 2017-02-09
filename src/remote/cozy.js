@@ -3,6 +3,7 @@
 import { Cozy as CozyClient } from 'cozy-client-js'
 import fetch from 'node-fetch'
 import path from 'path'
+import { Readable } from 'stream'
 
 import { FILES_DOCTYPE, FILE_TYPE, ROOT_DIR_ID, TRASH_DIR_ID } from './constants'
 
@@ -63,5 +64,10 @@ export default class RemoteCozy {
     } catch (err) {
       return null
     }
+  }
+
+  async downloadBinary (id: string): Promise<?Readable> {
+    const resp = await this.client.files.downloadById(id)
+    return resp.body
   }
 }
