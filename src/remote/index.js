@@ -3,6 +3,11 @@
 import RemoteCozy from './cozy'
 import Watcher from './watcher'
 
+let log = require('printit')({
+  prefix: 'Remote writer ',
+  date: true
+})
+
 export default class Remote {
   watcher: Watcher
   remoteCozy: RemoteCozy
@@ -33,5 +38,20 @@ export default class Remote {
     } catch (err) {
       callback(err)
     }
+  }
+
+  // Create a folder on the remote cozy instance
+  addFolder (doc, callback) {
+    log.info(`Add folder ${doc.path}`)
+    let folder = this.createRemoteDoc(doc)
+    this.couch.put(folder, function (err, created) {
+      if (!err) {
+        doc.remote = {
+          _id: created.id,
+          _rev: created.rev
+        }
+      }
+      callback(err, created)
+    })
   }
 }

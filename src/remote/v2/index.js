@@ -1,7 +1,6 @@
 import async from 'async'
 import clone from 'lodash.clone'
 import crypto from 'crypto'
-import path from 'path'
 let log = require('printit')({
   prefix: 'Remote writer ',
   date: true
@@ -131,14 +130,6 @@ class Remote {
     })
   }
 
-  // Extract the remote path and name from a local id
-  extractDirAndName (id) {
-    let dir = path.dirname(`/${id}`)
-    let name = path.basename(id)
-    if (dir === '/') { dir = '' }
-    return [dir, name]
-  }
-
   // Transform a local document in a remote one, with optional binary ref
   createRemoteDoc (local, remote) {
     let [dir, name] = this.extractDirAndName(local.path)
@@ -200,21 +191,6 @@ class Remote {
   addFile (doc, callback) {
     log.info(`Add file ${doc.path}`)
     this.addOrOverwriteFile(doc, null, callback)
-  }
-
-  // Create a folder on the remote cozy instance
-  addFolder (doc, callback) {
-    log.info(`Add folder ${doc.path}`)
-    let folder = this.createRemoteDoc(doc)
-    this.couch.put(folder, function (err, created) {
-      if (!err) {
-        doc.remote = {
-          _id: created.id,
-          _rev: created.rev
-        }
-      }
-      callback(err, created)
-    })
   }
 
   // Overwrite a file

@@ -1,5 +1,7 @@
 /* @flow */
 
+import path from 'path'
+
 import { DIR_TYPE, FILE_TYPE } from './remote/constants'
 
 import type { RemoteDoc } from './remote/document'
@@ -39,4 +41,12 @@ export function createMetadata (remote: RemoteDoc): Metadata {
     if (remote[field]) { doc[field] = remote[field] }
   }
   return doc
+}
+
+// Extract the remote path and name from a local id
+extractDirAndName (id) {
+  let dir = path.dirname(`/${id}`)
+  let name = path.basename(id)
+  if (dir === '/') { dir = '' }
+  return [dir, name]
 }
