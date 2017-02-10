@@ -9,7 +9,7 @@ import { BuilderFactory } from '../builders'
 export const COZY_URL = process.env.COZY_URL || 'http://test.cozy-desktop.local:8080'
 
 // A cozy-client-js instance
-const cozy = new CozyClient({cozyURL: COZY_URL})
+export const cozy = new CozyClient({cozyURL: COZY_URL})
 
 // FIXME: Temporary hack to prevent cozy-client-js to convert node Buffers
 // into node-fetch-unsupported ArrayBuffers, until we implement Stream support
