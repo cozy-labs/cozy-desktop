@@ -274,9 +274,6 @@ class App {
 
   // Start the synchronization
   startSync (mode, callback) {
-    // FIXME: v3: Temporarily force pull mode only, until push works
-    mode = 'pull'
-
     this.config.setMode(mode)
     log.info('Run first synchronisation...')
     this.sync.start(mode, err => {

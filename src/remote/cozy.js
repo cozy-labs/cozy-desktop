@@ -17,6 +17,10 @@ function specialId (id) {
   )
 }
 
+export function DirectoryNotFound (path: string, cozyURL: string) {
+  this.message = `Directory ${path} was not found on Cozy ${cozyURL}`
+}
+
 // A remote Cozy instance.
 //
 // This class wraps cozy-client-js to:
@@ -31,7 +35,12 @@ export default class RemoteCozy {
   constructor (url: string) {
     this.url = url
     this.client = new CozyClient({cozyURL: url})
+
+    // Aliases:
+    this.createDirectory = this.client.files.createDirectory
   }
+
+  createDirectory: ({name: string, dirID: string}) => Promise<RemoteDoc>
 
   async changes (seq: number = 0) {
     const changesUrl = `${this.url}/data/${FILES_DOCTYPE}/_changes?since=${seq}`
@@ -67,6 +76,16 @@ export default class RemoteCozy {
     } catch (err) {
       return null
     }
+  }
+
+  async findDirectoryByPath (path: string): Promise<RemoteDoc> {
+    const index = await this.client.defineIndex(FILES_DOCTYPE, ['path'])
+    const results = await this.client.query(index, {selector: {path}})
+
+    if (results.length === 0) throw new DirectoryNotFound(path, this.url)
+
+    // FIXME: cozy-client-js query results have no _type
+    return {...results[0], _type: FILES_DOCTYPE}
   }
 
   async downloadBinary (id: string): Promise<?Readable> {

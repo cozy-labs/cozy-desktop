@@ -1,7 +1,19 @@
 /* @flow weak */
 
+import printit from 'printit'
+
+import * as conversion from '../conversion'
 import RemoteCozy from './cozy'
 import Watcher from './watcher'
+
+import type { RemoteDoc } from './document'
+import type { Metadata } from '../metadata'
+import type { Callback } from '../utils'
+
+const log = printit({
+  prefix: 'Remote writer ',
+  date: true
+})
 
 export default class Remote {
   watcher: Watcher
@@ -30,6 +42,26 @@ export default class Remote {
     try {
       const stream = await this.remoteCozy.downloadBinary(doc.remote._id, callback)
       callback(null, stream)
+    } catch (err) {
+      callback(err)
+    }
+  }
+
+  // Create a folder on the remote cozy instance
+  async addFolder (doc: Metadata, callback: Callback) {
+    try {
+      log.info(`Add folder ${doc.path}`)
+
+      const [dirPath, name] = conversion.extractDirAndName(doc.path)
+      const dir: RemoteDoc = await this.remoteCozy.findDirectoryByPath(dirPath)
+      const created: RemoteDoc = await this.remoteCozy.createDirectory({name, dirID: dir._id})
+
+      doc.remote = {
+        _id: created._id,
+        _rev: created._rev
+      }
+
+      callback(null, created)
     } catch (err) {
       callback(err)
     }
