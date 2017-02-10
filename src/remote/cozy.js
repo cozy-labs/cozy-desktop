@@ -35,7 +35,12 @@ export default class RemoteCozy {
   constructor (url: string) {
     this.url = url
     this.client = new CozyClient({cozyURL: url})
+
+    // Aliases:
+    this.createDirectory = this.client.files.createDirectory
   }
+
+  createDirectory: ({name: string, dirID: string}) => Promise<RemoteDoc>
 
   async changes (seq: number = 0) {
     const changesUrl = `${this.url}/data/${FILES_DOCTYPE}/_changes?since=${seq}`

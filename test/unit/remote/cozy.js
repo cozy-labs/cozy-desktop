@@ -163,6 +163,13 @@ describe('RemoteCozy', function () {
     })
   })
 
+  describe('createDirectory', function () {
+    it('is the same as cozy.files.createDirectory', function () {
+      remoteCozy.createDirectory
+        .should.equal(remoteCozy.client.files.createDirectory)
+    })
+  })
+
   describe('downloadBinary', function () {
     it('resolves with a Readable stream of the file content', async function () {
       const remoteFile = await builders.file().data('foo').build()
