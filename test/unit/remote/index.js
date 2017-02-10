@@ -6,13 +6,16 @@ import fs from 'fs'
 import sinon from 'sinon'
 import should from 'should'
 
-import Remote from '../../../src/remote'
 import * as conversion from '../../../src/conversion'
+import Remote from '../../../src/remote'
+import { FILES_DOCTYPE } from '../../../src/remote/constants'
+
+import type { RemoteDoc } from '../../../src/remote/document'
 
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
 import couchHelpers from '../../helpers/v2/couch'
-import { COZY_URL, builders } from '../../helpers/integration'
+import { cozy, COZY_URL, builders } from '../../helpers/integration'
 
 describe('Remote', function () {
   before('instanciate config', configHelpers.createConfig)
@@ -25,6 +28,7 @@ describe('Remote', function () {
     this.events = {}
     this.remote = new Remote(this.config, this.prep, this.pouch)
   })
+  beforeEach(() => builders.dir().named('couchdb-folder').inRootDir().build())
   // after('stop couch server', couchHelpers.stopServer)
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
@@ -447,7 +451,7 @@ describe('Remote', function () {
     })
   })
 
-  xdescribe('addFolder', () =>
+  describe('addFolder', () =>
     it('adds a folder to couchdb', function (done) {
       let doc: Object = {
         path: 'couchdb-folder/folder-1',
@@ -455,21 +459,24 @@ describe('Remote', function () {
         creationDate: new Date(),
         lastModification: new Date()
       }
-      return this.remote.addFolder(doc, (err, created) => {
+      this.remote.addFolder(doc, (err, created: RemoteDoc) => {
         should.not.exist(err)
         should.exist(doc.remote._id)
         should.exist(doc.remote._rev)
-        return this.couch.get(created.id, function (err, folder) {
-          should.not.exist(err)
-          folder.should.have.properties({
-            path: '/couchdb-folder',
-            name: 'folder-1',
-            docType: 'folder',
-            creationDate: doc.creationDate.toISOString(),
-            lastModification: doc.lastModification.toISOString()
+
+        cozy.find(FILES_DOCTYPE, created._id)
+          .then(folder => {
+            folder.should.have.properties({
+              path: '/couchdb-folder/folder-1',
+              name: 'folder-1',
+              type: 'directory'
+              // TODO: v3: Override remote timestamps
+              // created_at: doc.creationDate.toISOString(),
+              // updated_at: doc.lastModification.toISOString()
+            })
+            done()
           })
-          done()
-        })
+          .catch(done)
       })
     })
   )
