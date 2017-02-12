@@ -28,7 +28,7 @@ export type Metadata = {
 }
 
 // Build an _id from the path for a case sensitive file system (Linux, BSD)
-buildIdUnix (doc) {
+export function buildIdUnix (doc: Metadata) {
   doc._id = doc.path
 }
 
@@ -41,7 +41,7 @@ buildIdUnix (doc) {
 //
 // Note: String.prototype.normalize is not available on node 0.10 and does
 // nothing when node is compiled without intl option.
-buildIdHFS (doc) {
+export function buildIdHFS (doc: Metadata) {
   let id = doc.path
   if (id.normalize) { id = id.normalize('NFD') }
   doc._id = id.toUpperCase()
@@ -49,7 +49,7 @@ buildIdHFS (doc) {
 
 // Return true if the document has not a valid path
 // (ie a path inside the mount point)
-invalidPath (doc) {
+export function invalidPath (doc: Metadata) {
   if (!doc.path) { return true }
   doc.path = path.normalize(doc.path)
   doc.path = doc.path.replace(/^\//, '')
@@ -64,7 +64,7 @@ invalidPath (doc) {
 // so it returns false.
 // MD5 has 16 bytes.
 // Base64 encoding must include padding.
-invalidChecksum (doc) {
+export function invalidChecksum (doc: Metadata) {
   if (doc.checksum == null) return false
 
   const buffer = Buffer.from(doc.checksum, 'base64')

@@ -1,4 +1,5 @@
 import Promise from 'bluebird'
+import { buildIdHFS, buildIdUnix, invalidChecksum, invalidPath } from './metadata'
 let log = require('printit')({
   prefix: 'Prep          ',
   date: true
@@ -17,10 +18,10 @@ class Prep {
     this.ignore = ignore
     switch (process.platform) {
       case 'linux': case 'freebsd': case 'sunos':
-        this.buildId = this.buildIdUnix
+        this.buildId = buildIdUnix
         break
       case 'darwin':
-        this.buildId = this.buildIdHFS
+        this.buildId = buildIdHFS
         break
       default:
         log.error(`Sorry, ${process.platform} is not supported!`)
@@ -84,10 +85,10 @@ class Prep {
   //   - the file path is present and valid
   //   - the checksum is valid, if present
   addFile (side, doc, callback) {
-    if (this.invalidPath(doc)) {
+    if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid path'))
-    } else if (this.invalidChecksum(doc)) {
+    } else if (invalidChecksum(doc)) {
       log.warn(`Invalid checksum: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid checksum'))
     } else {
@@ -110,10 +111,10 @@ class Prep {
   //   - the file path is present and valid
   //   - the checksum is valid, if present
   updateFile (side, doc, callback) {
-    if (this.invalidPath(doc)) {
+    if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid path'))
-    } else if (this.invalidChecksum(doc)) {
+    } else if (invalidChecksum(doc)) {
       log.warn(`Invalid checksum: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid checksum'))
     } else {
@@ -134,7 +135,7 @@ class Prep {
   // Expectations:
   //   - the folder path is present and valid
   putFolder (side, doc, callback) {
-    if (this.invalidPath(doc)) {
+    if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid path'))
     } else {
@@ -159,13 +160,13 @@ class Prep {
   //   - the two paths are not the same
   //   - the revision for the old file is present
   moveFile (side, doc, was, callback) {
-    if (this.invalidPath(doc)) {
+    if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid path'))
-    } else if (this.invalidPath(was)) {
+    } else if (invalidPath(was)) {
       log.warn(`Invalid path: ${JSON.stringify(was, null, 2)}`)
       return callback(new Error('Invalid path'))
-    } else if (this.invalidChecksum(doc)) {
+    } else if (invalidChecksum(doc)) {
       log.warn(`Invalid checksum: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid checksum'))
     } else if (doc.path === was.path) {
@@ -207,10 +208,10 @@ class Prep {
   //   - the two paths are not the same
   //   - the revision for the old folder is present
   moveFolder (side, doc, was, callback) {
-    if (this.invalidPath(doc)) {
+    if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid path'))
-    } else if (this.invalidPath(was)) {
+    } else if (invalidPath(was)) {
       log.warn(`Invalid path: ${JSON.stringify(was, null, 2)}`)
       return callback(new Error('Invalid path'))
     } else if (doc.path === was.path) {
@@ -248,7 +249,7 @@ class Prep {
   // Expectations:
   //   - the file path is present and valid
   deleteFile (side, doc, callback) {
-    if (this.invalidPath(doc)) {
+    if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid path'))
     } else {
@@ -265,7 +266,7 @@ class Prep {
   // Expectations:
   //   - the folder path is present and valid
   deleteFolder (side, doc, callback) {
-    if (this.invalidPath(doc)) {
+    if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid path'))
     } else {
