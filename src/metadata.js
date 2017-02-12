@@ -70,5 +70,5 @@ export function invalidChecksum (doc: Metadata) {
   const buffer = Buffer.from(doc.checksum, 'base64')
 
   return buffer.byteLength !== 16 ||
-    buffer.toString('base64').length !== doc.checksum.length
+    buffer.toString('base64') !== doc.checksum
 }
