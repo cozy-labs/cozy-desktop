@@ -1,4 +1,10 @@
+/* @flow */
+
+import { Cozy } from 'cozy-client-js'
+
 import RemoteBaseBuilder from './base'
+
+import type { RemoteDoc } from '../../../src/remote/document'
 
 // Used to generate readable unique dirnames
 var dirNumber = 1
@@ -8,7 +14,7 @@ var dirNumber = 1
 //     let dir = builders.dir().build()
 //
 export default class RemoteDirBuilder extends RemoteBaseBuilder {
-  constructor (cozy) {
+  constructor (cozy: Cozy) {
     super(cozy)
 
     Object.assign(this.options, {
@@ -16,7 +22,7 @@ export default class RemoteDirBuilder extends RemoteBaseBuilder {
     })
   }
 
-  async build () {
+  async build (): Promise<RemoteDoc> {
     return this.toRemoteMetadata(
       await this.cozy.files.createDirectory(this.options)
     )

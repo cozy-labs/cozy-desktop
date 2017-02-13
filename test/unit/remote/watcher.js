@@ -8,7 +8,7 @@ import should from 'should'
 
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
-import { COZY_URL } from '../../helpers/integration'
+import { COZY_URL } from '../../helpers/cozy'
 
 import { FILES_DOCTYPE } from '../../../src/remote/constants'
 import Prep from '../../../src/prep'
@@ -195,6 +195,7 @@ describe('RemoteWatcher', function () {
         type: 'file',
         dir_id: 'whatever',
         name: 'whatever',
+        path: '/whatever',
         created_at: '2017-01-30T09:09:15.217662611+01:00',
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
         tags: [],
@@ -230,6 +231,7 @@ describe('RemoteWatcher', function () {
         type: 'file',
         dir_id: 'whatever',
         name: 'whatever',
+        path: '',
         created_at: '2017-01-30T09:09:15.217662611+01:00',
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
         tags: [],

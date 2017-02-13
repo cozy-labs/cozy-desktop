@@ -40,12 +40,21 @@ async function rootDirContents () {
   return docs
 }
 
-// Clean up the Cozy instance before each integration test
-beforeEach(async function deleteAll () {
+// Delete all files and directories
+export async function deleteAll () {
   const docs = await rootDirContents()
 
   await Promise.all(docs.map(doc => cozy.files.trashById(doc._id)))
 
   return cozy.files.clearTrash()
-})
+}
 
+// Creates a root directory named 'couchdb-folder', used in a lot of v2 tests.
+//
+// TODO: Use test data builders instead
+export async function createTheCouchdbFolder () {
+  await builders.dir()
+    .named('couchdb-folder')
+    .inRootDir()
+    .build()
+}

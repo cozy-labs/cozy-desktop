@@ -1,6 +1,11 @@
+/* @flow */
+
 import fs from 'fs'
+import { Cozy } from 'cozy-client-js'
 
 import RemoteBaseBuilder from './base'
+
+import type { RemoteDoc } from '../../../src/remote/document'
 
 // Used to generate readable unique filenames
 var fileNumber = 1
@@ -10,7 +15,9 @@ var fileNumber = 1
 //     let remoteFile = this.builders.remoteFile().inDir(...).build()
 //
 export default class RemoteFileBuilder extends RemoteBaseBuilder {
-  constructor (cozy) {
+  _data: string | Buffer
+
+  constructor (cozy: Cozy) {
     super(cozy)
 
     this._data = `Content of remote file ${fileNumber}`
@@ -21,22 +28,22 @@ export default class RemoteFileBuilder extends RemoteBaseBuilder {
     })
   }
 
-  contentType (contentType) {
+  contentType (contentType: string): RemoteFileBuilder {
     this.options.contentType = contentType
     return this
   }
 
-  data (data) {
+  data (data: string | Buffer): RemoteFileBuilder {
     this._data = data
     return this
   }
 
-  dataFromFile (path) {
+  dataFromFile (path: string): RemoteFileBuilder {
     this._data = fs.readFileSync(path)
     return this
   }
 
-  async build () {
+  async build (): Promise<RemoteDoc> {
     return this.toRemoteMetadata(
       await this.cozy.files.create(this._data, this.options)
     )
