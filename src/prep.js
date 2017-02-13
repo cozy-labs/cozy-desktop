@@ -1,5 +1,5 @@
 import Promise from 'bluebird'
-import { buildIdHFS, buildIdUnix, invalidChecksum, invalidPath } from './metadata'
+import { buildId, invalidChecksum, invalidPath } from './metadata'
 let log = require('printit')({
   prefix: 'Prep          ',
   date: true
@@ -16,17 +16,6 @@ class Prep {
   constructor (merge, ignore) {
     this.merge = merge
     this.ignore = ignore
-    switch (process.platform) {
-      case 'linux': case 'freebsd': case 'sunos':
-        this.buildId = buildIdUnix
-        break
-      case 'darwin':
-        this.buildId = buildIdHFS
-        break
-      default:
-        log.error(`Sorry, ${process.platform} is not supported!`)
-        process.exit(1)
-    }
 
     Promise.promisifyAll(this)
   }
@@ -93,7 +82,7 @@ class Prep {
       return callback(new Error('Invalid checksum'))
     } else {
       doc.docType = 'file'
-      this.buildId(doc)
+      buildId(doc)
       if ((side === 'local') && this.ignore.isIgnored(doc)) {
         return callback()
       } else {
@@ -119,7 +108,7 @@ class Prep {
       return callback(new Error('Invalid checksum'))
     } else {
       doc.docType = 'file'
-      this.buildId(doc)
+      buildId(doc)
       if ((side === 'local') && this.ignore.isIgnored(doc)) {
         return callback()
       } else {
@@ -140,7 +129,7 @@ class Prep {
       return callback(new Error('Invalid path'))
     } else {
       doc.docType = 'folder'
-      this.buildId(doc)
+      buildId(doc)
       if ((side === 'local') && this.ignore.isIgnored(doc)) {
         return callback()
       } else {
@@ -187,8 +176,8 @@ class Prep {
     if (doc.lastModification === 'Invalid date') {
       doc.lastModification = new Date()
     }
-    this.buildId(doc)
-    this.buildId(was)
+    buildId(doc)
+    buildId(was)
     let docIgnored = this.ignore.isIgnored(doc)
     let wasIgnored = this.ignore.isIgnored(was)
     if ((side === 'local') && docIgnored && wasIgnored) {
@@ -231,8 +220,8 @@ class Prep {
     if (doc.lastModification === 'Invalid date') {
       doc.lastModification = new Date()
     }
-    this.buildId(doc)
-    this.buildId(was)
+    buildId(doc)
+    buildId(was)
     let docIgnored = this.ignore.isIgnored(doc)
     let wasIgnored = this.ignore.isIgnored(was)
     if ((side === 'local') && docIgnored && wasIgnored) {
@@ -254,7 +243,7 @@ class Prep {
       return callback(new Error('Invalid path'))
     } else {
       doc.docType = 'file'
-      this.buildId(doc)
+      buildId(doc)
       if ((side === 'local') && this.ignore.isIgnored(doc)) {
         return callback()
       } else {
@@ -271,7 +260,7 @@ class Prep {
       return callback(new Error('Invalid path'))
     } else {
       doc.docType = 'folder'
-      this.buildId(doc)
+      buildId(doc)
       if ((side === 'local') && this.ignore.isIgnored(doc)) {
         return callback()
       } else {

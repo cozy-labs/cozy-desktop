@@ -1,8 +1,32 @@
 /* eslint-env mocha */
 
-import { invalidChecksum, invalidPath } from '../../src/metadata'
+import { buildId, invalidChecksum, invalidPath } from '../../src/metadata'
 
 describe('metadata', function () {
+  describe('buildId', function () {
+    it('is available', function () {
+      let doc = {path: 'FOO'}
+      buildId(doc)
+      doc._id.should.equal('FOO')
+    })
+
+    if (['linux', 'freebsd', 'sunos'].includes(process.platform)) {
+      it('is case insensitive on UNIX', function () {
+        let doc = {path: 'foo/bar/café'}
+        buildId(doc)
+        doc._id.should.equal('foo/bar/café')
+      })
+    }
+
+    if (process.platform === 'darwin') {
+      it('is case sensitive on OSX', function () {
+        let doc = {path: 'foo/bar/café'}
+        buildId(doc)
+        doc._id.should.equal('FOO/BAR/CAFÉ')
+      })
+    }
+  })
+
   describe('invalidPath', function () {
     it('returns true if the path is incorrect', function () {
       let ret = invalidPath({path: '/'})

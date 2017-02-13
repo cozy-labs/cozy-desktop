@@ -1,6 +1,9 @@
 /* @flow */
 
 import path from 'path'
+import printit from 'printit'
+
+const log = printit()
 
 // The files/dirs metadata, as stored in PouchDB
 export type Metadata = {
@@ -27,8 +30,21 @@ export type Metadata = {
   }
 }
 
+export let buildId
+switch (process.platform) {
+  case 'linux': case 'freebsd': case 'sunos':
+    buildId = buildIdUnix
+    break
+  case 'darwin':
+    buildId = buildIdHFS
+    break
+  default:
+    log.error(`Sorry, ${process.platform} is not supported!`)
+    process.exit(1)
+}
+
 // Build an _id from the path for a case sensitive file system (Linux, BSD)
-export function buildIdUnix (doc: Metadata) {
+function buildIdUnix (doc: Metadata) {
   doc._id = doc.path
 }
 
@@ -41,7 +57,7 @@ export function buildIdUnix (doc: Metadata) {
 //
 // Note: String.prototype.normalize is not available on node 0.10 and does
 // nothing when node is compiled without intl option.
-export function buildIdHFS (doc: Metadata) {
+function buildIdHFS (doc: Metadata) {
   let id = doc.path
   if (id.normalize) { id = id.normalize('NFD') }
   doc._id = id.toUpperCase()
