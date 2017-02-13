@@ -4,6 +4,7 @@ import printit from 'printit'
 
 import * as conversion from '../conversion'
 import RemoteCozy from './cozy'
+import Pouch from '../pouch'
 import Watcher from './watcher'
 
 import type { RemoteDoc } from './document'
@@ -16,6 +17,7 @@ const log = printit({
 })
 
 export default class Remote {
+  pouch: Pouch
   watcher: Watcher
   remoteCozy: RemoteCozy
 
@@ -23,6 +25,7 @@ export default class Remote {
     const deviceName = config.getDefaultDeviceName()
     const device = config.getDevice(deviceName)
 
+    this.pouch = pouch
     this.remoteCozy = new RemoteCozy(device.url)
     this.watcher = new Watcher(pouch, prep, this.remoteCozy)
   }
