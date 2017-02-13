@@ -177,13 +177,6 @@ class Remote {
     })
   }
 
-  // Return true if the remote file is up-to-date for this document
-  isUpToDate (doc) {
-    let currentRev = doc.sides.remote || 0
-    let lastRev = this.pouch.extractRevNumber(doc)
-    return currentRev === lastRev
-  }
-
   /* Write operations */
 
   // Create a file on the remote cozy instance

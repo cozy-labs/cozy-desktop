@@ -91,3 +91,20 @@ export function invalidChecksum (doc: Metadata) {
   return buffer.byteLength !== 16 ||
     buffer.toString('base64') !== doc.checksum
 }
+
+// Extract the revision number, or 0 it not found
+extractRevNumber (infos) {
+  try {
+    let rev = infos._rev.split('-')[0]
+    return Number(rev)
+  } catch (error) {
+    return 0
+  }
+}
+
+// Return true if the remote file is up-to-date for this document
+isUpToDate (doc) {
+  let currentRev = doc.sides.remote || 0
+  let lastRev = this.pouch.extractRevNumber(doc)
+  return currentRev === lastRev
+}

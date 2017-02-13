@@ -100,4 +100,15 @@ describe('metadata', function () {
       ret.should.be.false()
     })
   })
+
+  describe('extractRevNumber', function () {
+    it('extracts the revision number', function () {
+      let infos = {_rev: '42-0123456789'}
+      this.pouch.extractRevNumber(infos).should.equal(42)
+    })
+
+    it('returns 0 if not found', function () {
+      this.pouch.extractRevNumber({}).should.equal(0)
+    })
+  })
 })
