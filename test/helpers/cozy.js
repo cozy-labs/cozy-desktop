@@ -49,3 +49,12 @@ export async function deleteAll () {
   return cozy.files.clearTrash()
 }
 
+// Creates a root directory named 'couchdb-folder', used in a lot of v2 tests.
+//
+// TODO: Use test data builders instead
+export async function createTheCouchdbFolder () {
+  await builders.dir()
+    .named('couchdb-folder')
+    .inRootDir()
+    .build()
+}

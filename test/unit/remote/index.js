@@ -15,7 +15,9 @@ import type { RemoteDoc } from '../../../src/remote/document'
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
 import couchHelpers from '../../helpers/v2/couch'
-import { cozy, COZY_URL, builders, deleteAll } from '../../helpers/cozy'
+import {
+  cozy, COZY_URL, builders, deleteAll, createTheCouchdbFolder
+} from '../../helpers/cozy'
 
 describe('Remote', function () {
   before('instanciate config', configHelpers.createConfig)
@@ -29,7 +31,7 @@ describe('Remote', function () {
     this.remote = new Remote(this.config, this.prep, this.pouch)
   })
   beforeEach(deleteAll)
-  beforeEach(() => builders.dir().named('couchdb-folder').inRootDir().build())
+  beforeEach(createTheCouchdbFolder)
   // after('stop couch server', couchHelpers.stopServer)
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
