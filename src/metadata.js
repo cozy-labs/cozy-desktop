@@ -93,7 +93,7 @@ export function invalidChecksum (doc: Metadata) {
 }
 
 // Extract the revision number, or 0 it not found
-extractRevNumber (infos) {
+export function extractRevNumber (infos: Metadata) {
   try {
     let rev = infos._rev.split('-')[0]
     return Number(rev)
@@ -103,8 +103,8 @@ extractRevNumber (infos) {
 }
 
 // Return true if the remote file is up-to-date for this document
-isUpToDate (doc) {
+export function isUpToDate (doc: Metadata) {
   let currentRev = doc.sides.remote || 0
-  let lastRev = this.pouch.extractRevNumber(doc)
+  let lastRev = extractRevNumber(doc)
   return currentRev === lastRev
 }

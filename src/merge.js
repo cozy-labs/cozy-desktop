@@ -7,6 +7,8 @@ let log = require('printit')({
   date: true
 })
 
+import { extractRevNumber } from './metadata'
+
 // When the local filesystem or the remote cozy detects a change, it calls this
 // class to inform it (via Prep). This class will check how to operate this
 // change against the data in pouchdb and then will update pouchdb. It avoids a
@@ -119,7 +121,7 @@ class Merge {
   // modification.
   markSide (side, doc, prev) {
     let rev = 0
-    if (prev) { rev = this.pouch.extractRevNumber(prev) }
+    if (prev) { rev = extractRevNumber(prev) }
     if (doc.sides == null) { doc.sides = clone(__guard__(prev, x => x.sides) || {}) }
     doc.sides[side] = ++rev
     return doc
