@@ -15,7 +15,7 @@ import type { RemoteDoc } from '../../../src/remote/document'
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
 import couchHelpers from '../../helpers/v2/couch'
-import { cozy, COZY_URL, builders } from '../../helpers/integration'
+import { cozy, COZY_URL, builders } from '../../helpers/cozy'
 
 describe('Remote', function () {
   before('instanciate config', configHelpers.createConfig)

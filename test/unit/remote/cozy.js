@@ -6,7 +6,7 @@ import should from 'should'
 import RemoteCozy, { DirectoryNotFound } from '../../../src/remote/cozy'
 import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } from '../../../src/remote/constants'
 
-import { COZY_URL, builders } from '../../helpers/integration'
+import { COZY_URL, builders } from '../../helpers/cozy'
 import CozyStackDouble from '../../doubles/cozy_stack'
 
 const cozyStackDouble = new CozyStackDouble()

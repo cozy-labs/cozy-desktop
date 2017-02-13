@@ -8,7 +8,7 @@ import should from 'should'
 
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
-import { COZY_URL } from '../../helpers/integration'
+import { COZY_URL } from '../../helpers/cozy'
 
 import { FILES_DOCTYPE } from '../../../src/remote/constants'
 import Prep from '../../../src/prep'
