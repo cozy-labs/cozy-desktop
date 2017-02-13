@@ -18,16 +18,18 @@ export type Metadata = {
   lastModification: string,
   mime?: string,
   path: string,
-  remote: {
-    _id: string,
-    _rev: string
-  },
+  remote: MetadataRemoteInfo,
   size?: string,
   tags: string[],
   sides: {
     remote: ?string,
     local: ?string
   }
+}
+
+export type MetadataRemoteInfo = {
+  _id: string,
+  _rev: string
 }
 
 export let buildId
