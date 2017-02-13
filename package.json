@@ -28,11 +28,11 @@
     "bootstrap-cozy-env": "export cozy_hostname=$cozy_env.cozy-desktop.local && npm run bootstrap-cozy-instance && npm run bootstrap-cozy-hostname",
     "bootstrap-cozy-hostname": "grep $cozy_hostname /etc/hosts || echo 127.0.0.1 $cozy_hostname | sudo tee -a /etc/hosts",
     "bootstrap-cozy-instance": "cozy-stack instances add --dev $cozy_hostname:8080",
+    "eslint": "./node_modules/.bin/eslint './src/**/*.js' './test/**/*.js'",
     "fauxton": "babel-node ./src/bin/fauxton.js",
     "flow": "flow status --quiet --show-all-errors",
-    "lint": "npm run standard && npm run flow",
+    "lint": "npm run eslint && npm run flow",
     "repl": "babel-node ./src/bin/repl.js",
-    "standard": "./node_modules/.bin/standard './src/**/*.js' './test/**/*.js'",
     "test": "installed-check && npm run test-unit && npm run test-integration",
     "test-coverage": "installed-check && npm run test-unit-coverage && npm run test-integration",
     "test-unit": "NODE_ENV=test mocha test/unit/",
@@ -43,12 +43,6 @@
     "size": "t=\"$(npm pack .)\"; wc -c \"${t}\"; tar tvf \"${t}\"; rm \"${t}\";",
     "watch": "npm run build -- --watch"
   },
-  "standard": {
-    "parser": "babel-eslint",
-    "plugins": [
-      "flowtype"
-    ]
-  },
   "dependencies": {
     "async": "2.1.4",
     "bluebird": "^3.4.7",
@@ -57,6 +51,7 @@
     "commander": "2.9.0",
     "cozy-client-js": "0.0.7",
     "cozy-device-sdk": "1.4.0",
+    "eslint": "^3.15.0",
     "fs-extra": "^2.0.0",
     "isomorphic-fetch": "^2.2.1",
     "lodash.clone": "4.5.0",
@@ -89,7 +84,11 @@
     "babel-preset-es2016": "^6.22.0",
     "babel-preset-es2017": "^6.22.0",
     "del": "2.2.2",
+    "eslint-config-standard": "^6.2.1",
     "eslint-plugin-flowtype": "^2.30.0",
+    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-promise": "^3.4.1",
+    "eslint-plugin-standard": "^2.0.1",
     "faker": "3.1.0",
     "flow-bin": "^0.38.0",
     "flow-typed": "^2.0.0",
@@ -102,7 +101,6 @@
     "pouchdb-server": "^2.0.1",
     "should": "^11.2.0",
     "sinon": "^1.17.7",
-    "source-map-support": "^0.4.11",
-    "standard": "^8.6.0"
+    "source-map-support": "^0.4.11"
   }
 }

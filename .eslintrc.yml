@@ -1,0 +1,13 @@
+---
+extends:
+  - standard
+  - plugin:import/errors
+  - plugin:import/warnings
+parser: babel-eslint
+plugins:
+  - flowtype
+rules:
+  # We use eslint-plugin-import instead of this rule since:
+  # - it catches more mistakes
+  # - it supports separate Flow type imports
+  no-duplicate-imports: off
