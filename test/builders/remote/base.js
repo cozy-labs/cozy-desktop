@@ -1,4 +1,7 @@
-/* @flow weak */
+/* @flow */
+
+import { Cozy } from 'cozy-client-js'
+
 import { DIR_TYPE, FILE_TYPE, ROOT_DIR_ID } from '../../../src/remote/constants'
 
 import type { RemoteDoc } from '../../../src/remote/document'
@@ -24,27 +27,27 @@ export type FilesResponseData = {
 }
 
 export default class RemoteBaseBuilder {
-  cozy: *
+  cozy: Cozy
   options: Object
 
-  constructor (cozy) {
+  constructor (cozy: Cozy) {
     this.cozy = cozy
     this.options = {
       dirID: ROOT_DIR_ID
     }
   }
 
-  inDir (dir) {
+  inDir (dir: RemoteDoc): RemoteBaseBuilder {
     this.options.dirID = dir._id
     return this
   }
 
-  inRootDir () {
+  inRootDir (): RemoteBaseBuilder {
     this.options.dirID = ROOT_DIR_ID
     return this
   }
 
-  named (name) {
+  named (name: string): RemoteBaseBuilder {
     this.options.name = name
     return this
   }
