@@ -40,12 +40,12 @@ async function rootDirContents () {
   return docs
 }
 
-// Clean up the Cozy instance before each integration test
-beforeEach(async function deleteAll () {
+// Delete all files and directories
+export async function deleteAll () {
   const docs = await rootDirContents()
 
   await Promise.all(docs.map(doc => cozy.files.trashById(doc._id)))
 
   return cozy.files.clearTrash()
-})
+}
 
