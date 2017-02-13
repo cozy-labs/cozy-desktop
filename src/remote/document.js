@@ -12,7 +12,7 @@ export type RemoteDoc = {
   md5sum?: string,
   mime?: string,
   name: string,
-  path?: string,
+  path: string,
   size?: string,
   tags: string[],
   type: string,
