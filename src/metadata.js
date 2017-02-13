@@ -8,6 +8,7 @@ const log = printit()
 // The files/dirs metadata, as stored in PouchDB
 export type Metadata = {
   _id: string,
+  _rev: string,
   // TODO: v3: Rename to md5sum to match remote
   checksum?: string,
   class?: string,
