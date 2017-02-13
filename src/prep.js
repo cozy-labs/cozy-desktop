@@ -1,5 +1,5 @@
 import Promise from 'bluebird'
-import path from 'path'
+import { buildId, invalidChecksum, invalidPath } from './metadata'
 let log = require('printit')({
   prefix: 'Prep          ',
   date: true
@@ -16,68 +16,11 @@ class Prep {
   constructor (merge, ignore) {
     this.merge = merge
     this.ignore = ignore
-    switch (process.platform) {
-      case 'linux': case 'freebsd': case 'sunos':
-        this.buildId = this.buildIdUnix
-        break
-      case 'darwin':
-        this.buildId = this.buildIdHFS
-        break
-      default:
-        log.error(`Sorry, ${process.platform} is not supported!`)
-        process.exit(1)
-    }
 
     Promise.promisifyAll(this)
   }
 
   /* Helpers */
-
-  // Build an _id from the path for a case sensitive file system (Linux, BSD)
-  buildIdUnix (doc) {
-    doc._id = doc.path
-  }
-
-  // Build an _id from the path for OSX (HFS+ file system):
-  // - case preservative, but not case sensitive
-  // - unicode NFD normalization (sort of)
-  //
-  // See https://nodejs.org/en/docs/guides/working-with-different-filesystems/
-  // for why toUpperCase is better than toLowerCase
-  //
-  // Note: String.prototype.normalize is not available on node 0.10 and does
-  // nothing when node is compiled without intl option.
-  buildIdHFS (doc) {
-    let id = doc.path
-    if (id.normalize) { id = id.normalize('NFD') }
-    doc._id = id.toUpperCase()
-  }
-
-  // Return true if the document has not a valid path
-  // (ie a path inside the mount point)
-  invalidPath (doc) {
-    if (!doc.path) { return true }
-    doc.path = path.normalize(doc.path)
-    doc.path = doc.path.replace(/^\//, '')
-    let parts = doc.path.split(path.sep)
-    return (doc.path === '.') ||
-            (doc.path === '') ||
-            (parts.indexOf('..') >= 0)
-  }
-
-  // Return true if the checksum is invalid
-  // If the checksum is missing, it is not invalid, just missing,
-  // so it returns false.
-  // MD5 has 16 bytes.
-  // Base64 encoding must include padding.
-  invalidChecksum (doc) {
-    if (doc.checksum == null) return false
-
-    const buffer = Buffer.from(doc.checksum, 'base64')
-
-    return buffer.byteLength !== 16 ||
-      buffer.toString('base64').length !== doc.checksum.length
-  }
 
   // Simple helper to add a file or a folder
   addDoc (side, doc, callback) {
@@ -131,15 +74,15 @@ class Prep {
   //   - the file path is present and valid
   //   - the checksum is valid, if present
   addFile (side, doc, callback) {
-    if (this.invalidPath(doc)) {
+    if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid path'))
-    } else if (this.invalidChecksum(doc)) {
+    } else if (invalidChecksum(doc)) {
       log.warn(`Invalid checksum: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid checksum'))
     } else {
       doc.docType = 'file'
-      this.buildId(doc)
+      buildId(doc)
       if ((side === 'local') && this.ignore.isIgnored(doc)) {
         return callback()
       } else {
@@ -157,15 +100,15 @@ class Prep {
   //   - the file path is present and valid
   //   - the checksum is valid, if present
   updateFile (side, doc, callback) {
-    if (this.invalidPath(doc)) {
+    if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid path'))
-    } else if (this.invalidChecksum(doc)) {
+    } else if (invalidChecksum(doc)) {
       log.warn(`Invalid checksum: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid checksum'))
     } else {
       doc.docType = 'file'
-      this.buildId(doc)
+      buildId(doc)
       if ((side === 'local') && this.ignore.isIgnored(doc)) {
         return callback()
       } else {
@@ -181,12 +124,12 @@ class Prep {
   // Expectations:
   //   - the folder path is present and valid
   putFolder (side, doc, callback) {
-    if (this.invalidPath(doc)) {
+    if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid path'))
     } else {
       doc.docType = 'folder'
-      this.buildId(doc)
+      buildId(doc)
       if ((side === 'local') && this.ignore.isIgnored(doc)) {
         return callback()
       } else {
@@ -206,13 +149,13 @@ class Prep {
   //   - the two paths are not the same
   //   - the revision for the old file is present
   moveFile (side, doc, was, callback) {
-    if (this.invalidPath(doc)) {
+    if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid path'))
-    } else if (this.invalidPath(was)) {
+    } else if (invalidPath(was)) {
       log.warn(`Invalid path: ${JSON.stringify(was, null, 2)}`)
       return callback(new Error('Invalid path'))
-    } else if (this.invalidChecksum(doc)) {
+    } else if (invalidChecksum(doc)) {
       log.warn(`Invalid checksum: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid checksum'))
     } else if (doc.path === was.path) {
@@ -233,8 +176,8 @@ class Prep {
     if (doc.lastModification === 'Invalid date') {
       doc.lastModification = new Date()
     }
-    this.buildId(doc)
-    this.buildId(was)
+    buildId(doc)
+    buildId(was)
     let docIgnored = this.ignore.isIgnored(doc)
     let wasIgnored = this.ignore.isIgnored(was)
     if ((side === 'local') && docIgnored && wasIgnored) {
@@ -254,10 +197,10 @@ class Prep {
   //   - the two paths are not the same
   //   - the revision for the old folder is present
   moveFolder (side, doc, was, callback) {
-    if (this.invalidPath(doc)) {
+    if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid path'))
-    } else if (this.invalidPath(was)) {
+    } else if (invalidPath(was)) {
       log.warn(`Invalid path: ${JSON.stringify(was, null, 2)}`)
       return callback(new Error('Invalid path'))
     } else if (doc.path === was.path) {
@@ -277,8 +220,8 @@ class Prep {
     if (doc.lastModification === 'Invalid date') {
       doc.lastModification = new Date()
     }
-    this.buildId(doc)
-    this.buildId(was)
+    buildId(doc)
+    buildId(was)
     let docIgnored = this.ignore.isIgnored(doc)
     let wasIgnored = this.ignore.isIgnored(was)
     if ((side === 'local') && docIgnored && wasIgnored) {
@@ -295,12 +238,12 @@ class Prep {
   // Expectations:
   //   - the file path is present and valid
   deleteFile (side, doc, callback) {
-    if (this.invalidPath(doc)) {
+    if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid path'))
     } else {
       doc.docType = 'file'
-      this.buildId(doc)
+      buildId(doc)
       if ((side === 'local') && this.ignore.isIgnored(doc)) {
         return callback()
       } else {
@@ -312,12 +255,12 @@ class Prep {
   // Expectations:
   //   - the folder path is present and valid
   deleteFolder (side, doc, callback) {
-    if (this.invalidPath(doc)) {
+    if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
       return callback(new Error('Invalid path'))
     } else {
       doc.docType = 'folder'
-      this.buildId(doc)
+      buildId(doc)
       if ((side === 'local') && this.ignore.isIgnored(doc)) {
         return callback()
       } else {

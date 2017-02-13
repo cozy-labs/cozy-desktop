@@ -3,6 +3,7 @@
 import printit from 'printit'
 
 import * as conversion from '../conversion'
+import { invalidPath } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import RemoteCozy from './cozy'
@@ -114,7 +115,7 @@ export default class RemoteWatcher {
     let doc: Metadata = conversion.createMetadata(remote)
     log.debug('new local doc', doc)
     log.debug('was', was)
-    if (this.prep.invalidPath(doc)) {
+    if (invalidPath(doc)) {
       log.error('Invalid path / local id')
       log.error(doc)
       throw new Error('Invalid path/name')
