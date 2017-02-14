@@ -22,18 +22,6 @@ cozy._authcreds = Promise.resolve({
   }
 })
 
-// FIXME: Temporary hack to prevent cozy-client-js to convert node Buffers
-// into node-fetch-unsupported ArrayBuffers, until we implement Stream support
-// in cozy-client-js.
-const origCozyFilesCreate = cozy.files.create
-cozy.files.create = function (...args) {
-  const origArrayBuffer = global.ArrayBuffer
-  global.ArrayBuffer = Buffer
-  const result = origCozyFilesCreate(...args)
-  global.ArrayBuffers = origArrayBuffer
-  return result
-}
-
 // Facade for all the test data builders
 export const builders = new BuilderFactory(cozy)
 
