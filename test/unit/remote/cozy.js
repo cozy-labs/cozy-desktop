@@ -25,7 +25,7 @@ describe('RemoteCozy', function () {
     remoteCozy._authstate = 3
     remoteCozy._authcreds = Promise.resolve({
       token: {
-        toAuthHeader() { return "" }
+        toAuthHeader () { return '' }
       }
     })
   })

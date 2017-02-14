@@ -18,7 +18,7 @@ export const cozy = new CozyClient({
 cozy._authstate = 3
 cozy._authcreds = Promise.resolve({
   token: {
-    toAuthHeader() { return "" }
+    toAuthHeader () { return '' }
   }
 })
 
