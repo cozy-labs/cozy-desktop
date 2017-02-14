@@ -19,9 +19,6 @@ matrix:
     allow_failures:
         - os: osx
           node_js: 4
-        # Temporarily fail on node 7, until cozy-client-js hack gets removed
-        - os: linux
-          node_js: 7
 env:
     global:
         - COZY_DESKTOP_DIR=tmp
