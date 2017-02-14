@@ -454,11 +454,12 @@ describe('Remote', function () {
 
   describe('addFolder', () =>
     it('adds a folder to couchdb', function (done) {
+      const dateString = '2017-02-14T15:03:27Z'
       let doc: Object = {
         path: 'couchdb-folder/folder-1',
         docType: 'folder',
-        creationDate: new Date(),
-        lastModification: new Date()
+        creationDate: dateString,
+        lastModification: dateString
       }
       this.remote.addFolder(doc, (err, created: RemoteDoc) => {
         should.not.exist(err)
@@ -470,10 +471,9 @@ describe('Remote', function () {
             folder.should.have.properties({
               path: '/couchdb-folder/folder-1',
               name: 'folder-1',
-              type: 'directory'
-              // TODO: v3: Override remote timestamps
-              // created_at: doc.creationDate.toISOString(),
-              // updated_at: doc.lastModification.toISOString()
+              type: 'directory',
+              created_at: dateString,
+              updated_at: dateString
             })
             done()
           })

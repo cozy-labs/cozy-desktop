@@ -54,7 +54,11 @@ export default class Remote {
 
       const [dirPath, name] = conversion.extractDirAndName(doc.path)
       const dir: RemoteDoc = await this.remoteCozy.findDirectoryByPath(dirPath)
-      const created: RemoteDoc = await this.remoteCozy.createDirectory({name, dirID: dir._id})
+      const created: RemoteDoc = await this.remoteCozy.createDirectory({
+        name,
+        dirID: dir._id,
+        lastModifiedDate: doc.lastModification
+      })
 
       doc.remote = {
         _id: created._id,
