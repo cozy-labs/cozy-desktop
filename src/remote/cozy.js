@@ -34,7 +34,14 @@ export default class RemoteCozy {
 
   constructor (url: string) {
     this.url = url
-    this.client = new CozyClient({cozyURL: url})
+    this.client = new CozyClient({cozyURL: url, oauth: {}})
+    // FIXME: Temporary hack to make cozy-client-js think it has OAuth tokens
+    this.client._authstate = 3
+    this.client._authcreds = Promise.resolve({
+      token: {
+        toAuthHeader() { return "" }
+      }
+    })
 
     // Aliases:
     this.createDirectory = this.client.files.createDirectory
