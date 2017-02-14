@@ -8,6 +8,7 @@ import Pouch from '../pouch'
 import Watcher from './watcher'
 
 import type { RemoteDoc } from './document'
+import type { FileStreamProvider } from '../file_stream_provider'
 import type { Metadata } from '../metadata'
 import type { Callback } from '../utils'
 
@@ -17,6 +18,7 @@ const log = printit({
 })
 
 export default class Remote {
+  other: FileStreamProvider
   pouch: Pouch
   watcher: Watcher
   remoteCozy: RemoteCozy
