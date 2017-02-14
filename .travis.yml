@@ -53,7 +53,7 @@ before_install:
     # Cozy stack v3
     - go get -u github.com/cozy/cozy-stack
     - curl -X PUT http://127.0.0.1:5984/{_users,_replicator,_global_changes}
-    - $GOPATH/bin/cozy-stack serve --assets=$GOPATH/src/github.com/cozy/cozy-stack/assets &
+    - $GOPATH/bin/cozy-stack serve &
     - sleep 1
     - $GOPATH/bin/cozy-stack instances add --dev "localhost:8080"
 
@@ -77,16 +77,5 @@ after_success:
     - bash <(curl -s https://codecov.io/bash)
 
 after_failure:
-    - pwd
     - $CXX --version
-    - ps aux | grep server.js
     - netstat -lntp
-    - cat ~/cozy-data-system/forever-ds.log
-    - cat ~/cozy-data-system/forever-ds-err.log
-    - cat ~/cozy-proxy/forever-proxy.log
-    - cat ~/cozy-proxy/forever-proxy-err.log
-    - cat ~/cozy-files/forever-files.log
-    - cat ~/cozy-files/forever-files-err.log
-    - curl -v http://localhost:9101/
-    - curl -v http://localhost:9104/
-    - curl -v http://localhost:9121/
