@@ -1,6 +1,9 @@
 Tests
 =====
 
+Dependencies
+------------
+
 Dependencies are managed with [Yarn](https://yarnpkg.com/), so you'll
 have to [install it](https://yarnpkg.com/en/docs/install) first.
 
@@ -13,8 +16,12 @@ yarn
 We use [`mocha`][1] for testing cozy-desktop, the options are in
 [`test/mocha.opt`][2].
 
-There are several levels of tests.
+Integration tests and some unit tests require that you have a Cozy stack up.
+It's also expected that you have an instance registered for
+`test.cozy-desktop.local:8080` with the
+[test password](../test/helpers/password.js).
 
+Don't forget to add `127.0.0.1 test.cozy-desktop.local` to your `/etc/hosts`.
 
 Unit tests
 ----------
@@ -22,7 +29,7 @@ Unit tests
 For testing a class in isolation, method per method:
 
 ```bash
-npm run test-unit
+yarn test-unit
 ```
 
 
@@ -33,16 +40,11 @@ Integration tests
 on the Cozy! We recommend using the default repository with
 `COZY_DESKTOP_DIR=tmp`.
 
-Integration tests require that you have the Cozy dev VM up (it means CouchDB, a
-data-system and a proxy up and running) and that the files application is
-accessible on the 9121 port. It's also expected that a user is registered with
-the [test password](../test/helpers/password.js).
-
-To test the communication between cozy-desktop and a remote cozy stack (proxy,
-data-system, files, etc.)
+You can run the integration suite to test the communication between
+cozy-desktop and a remote cozy stack:
 
 ```bash
-COZY_DESKTOP_DIR=tmp npm run test-integration
+COZY_DESKTOP_DIR=tmp yarn test-integration
 ```
 
 
@@ -52,7 +54,7 @@ Options
 It's possible to launch unit and integration tests:
 
 ```bash
-COZY_DESKTOP_DIR=tmp npm test
+COZY_DESKTOP_DIR=tmp yarn test
 ```
 
 To run a specific set of tests (here testing pouch)
@@ -64,7 +66,7 @@ NODE_ENV=test node_modules/.bin/mocha test/unit/pouch.js
 For more logs you can activate debug logs:
 
 ```bash
-DEBUG=true COZY_DESKTOP_DIR=tmp npm run test
+DEBUG=true COZY_DESKTOP_DIR=tmp yarn test
 ```
 
 
@@ -77,20 +79,20 @@ You can enable coverage metrics for any npm command with the
 Examples:
 
 ```bash
-./scripts/coverage.sh npm run test
-./scripts/coverage.sh npm run test-unit
+./scripts/coverage.sh yarn test
+./scripts/coverage.sh yarn test-unit
 ```
 
 Please note that code coverage is only measured for unit tests.
 Integration tests have another purpose, so they are deliberately excluded,
-even when running `./scripts/coverage.sh npm run test-integration`
+even when running `./scripts/coverage.sh yarn test-integration`
 explicitely.
 
 Please also note that we don't measure coverage on the GUI for now.
 
 Implementation details:
 
-1. `npm run test-unit-coverage` wraps the `mocha` command with
+1. `yarn test-unit-coverage` wraps the `mocha` command with
    [nyc][3] to compile the code with [babel-plugin-istanbul][3].
 the [appropriate option][3].
 2. `babel-plugin-istanbul` inserts instrumentation code when compiling from

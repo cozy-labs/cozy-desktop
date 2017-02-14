@@ -140,7 +140,7 @@ class Remote {
       creationDate: local.creationDate,
       lastModification: local.lastModification
     }
-    for (let field of ['checksum', 'size', 'class', 'mime', 'tags', 'localPath']) {
+    for (let field of ['checksum', 'size', 'class', 'mime', 'tags']) {
       if (local[field]) { doc[field] = local[field] }
     }
     if (local.executable) { doc.executable = true }

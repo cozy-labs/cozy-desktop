@@ -14,7 +14,7 @@ a bug, the first thing to do is running cozy-desktop with debug:
 DEBUG=true cozy-desktop sync
 ```
 
-To keep logs on a file and also display them on screen, you can use `tee`:
+To both keep logs on a file and display them on screen, you can use `tee`:
 
 ```bash
 DEBUG=true cozy-desktop sync 2>&1 | tee $(date '+%Y-%m-%d.log')

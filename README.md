@@ -27,13 +27,14 @@ Follow the instructions on https://docs.cozy.io/en/mobile/desktop.html
 CLI Install
 -----------
 
-The cozy-desktop requires node.js (4 recommended, but it is tested on 6 and
+The cozy-desktop requires node.js (6 recommended, but it is tested on 4 and
 7 too) and build tools.
 
 For example, you can install them on debian with:
 
 ```bash
-sudo apt-get install nodejs-legacy build-essential npm
+curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+sudo apt-get install nodejs build-essential
 ```
 
 Then you can install cozy-desktop via NPM:

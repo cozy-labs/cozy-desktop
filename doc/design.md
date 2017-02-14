@@ -31,7 +31,7 @@ will update it on the local filesystem.
 
 If a new file is added, cozy-desktop will ask one side to provide a nodejs
 readable stream, and the other side will pipe it to its destination: a file on
-the local filesytem, or a binary document on the remote couchdb.
+the local filesytem, or a request to the files on the remote cozy.
 
 
 Conflicts
@@ -113,7 +113,6 @@ Documents schema
 - `remote`: id and rev of the associated documents in the remote CouchDB
 - `sides`: for tracking what is applied on local file system and remote cozy
 - `executable`: true if the file is executable (UNIX permission), undefined else
-- `localPath`: used by cozy-mobile (cozy-desktop should only preserve it)
 - `errors`: the number of errors while applying the last modification
 
 ### Folder
