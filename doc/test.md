@@ -1,6 +1,9 @@
 Tests
 =====
 
+Dependencies
+------------
+
 Dependencies are managed with [Yarn](https://yarnpkg.com/), so you'll
 have to [install it](https://yarnpkg.com/en/docs/install) first.
 
@@ -13,8 +16,12 @@ yarn
 We use [`mocha`][1] for testing cozy-desktop, the options are in
 [`test/mocha.opt`][2].
 
-There are several levels of tests.
+Integration tests and some unit tests require that you have a Cozy stack up.
+It's also expected that you have an instance registered for
+`test.cozy-desktop.local:8080` with the
+[test password](../test/helpers/password.js).
 
+Don't forget to add `127.0.0.1 test.cozy-desktop.local` to your `/etc/hosts`.
 
 Unit tests
 ----------
@@ -32,10 +39,6 @@ Integration tests
 :warning: **Important**: the integration tests remove all the files and folders
 on the Cozy! We recommend using the default repository with
 `COZY_DESKTOP_DIR=tmp`.
-
-Integration tests require that you have a Cozy stack up. It's also expected
-that a user is registered with the [test
-password](../test/helpers/password.js).
 
 You can run the integration suite to test the communication between
 cozy-desktop and a remote cozy stack:
