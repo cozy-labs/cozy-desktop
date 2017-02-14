@@ -113,7 +113,6 @@ Documents schema
 - `remote`: id and rev of the associated documents in the remote CouchDB
 - `sides`: for tracking what is applied on local file system and remote cozy
 - `executable`: true if the file is executable (UNIX permission), undefined else
-- `localPath`: used by cozy-mobile (cozy-desktop should only preserve it)
 - `errors`: the number of errors while applying the last modification
 
 ### Folder

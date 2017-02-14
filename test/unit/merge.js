@@ -30,8 +30,7 @@ describe('Merge', function () {
         docType: 'file',
         creationDate: new Date(),
         lastModification: new Date(),
-        tags: ['courge', 'quux'],
-        localPath: '/storage/DCIM/IMG_123.jpg'
+        tags: ['courge', 'quux']
       }
       return this.merge.addFile(this.side, doc, err => {
         should.not.exist(err)
@@ -286,7 +285,6 @@ describe('Merge', function () {
           should.not.exist(err)
           return this.pouch.db.get(doc._id, function (err, res) {
             should.not.exist(err)
-            delete doc.localPath
             doc.creationDate = doc.creationDate.toISOString()
             res.should.have.properties(doc)
             should.exist(res.creationDate)

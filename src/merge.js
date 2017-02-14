@@ -161,7 +161,6 @@ class Merge {
         if (doc.mime == null) { doc.mime = file.mime }
         if (doc.tags == null) { doc.tags = file.tags || [] }
         if (doc.remote == null) { doc.remote = file.remote }
-        if (doc.localPath == null) { doc.localPath = file.localPath }
         if (this.sameFile(file, doc)) {
           callback(null)
         } else {
@@ -225,7 +224,6 @@ class Merge {
           if (doc.size == null) { doc.size = file.size }
           if (doc.class == null) { doc.class = file.class }
           if (doc.mime == null) { doc.mime = file.mime }
-          if (doc.localPath == null) { doc.localPath = file.localPath }
         }
         if (this.sameFile(file, doc)) {
           callback(null)
@@ -281,7 +279,6 @@ class Merge {
         if (doc.class == null) { doc.class = was.class }
         if (doc.mime == null) { doc.mime = was.mime }
         if (doc.tags == null) { doc.tags = was.tags || [] }
-        if (doc.localPath == null) { doc.localPath = was.localPath }
         was.moveTo = doc._id
         was._deleted = true
         delete was.errors
