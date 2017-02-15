@@ -1,7 +1,7 @@
 'use strict'
 
 // The password used for integration tests:
-let password = 'CozyTest$1'
+let password = process.env.COZY_PASSPHRASE || 'CozyTest_1'
 
 // You can retrieve it by requiring this module:
 //     password = require '.../password'
