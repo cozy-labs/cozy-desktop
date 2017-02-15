@@ -8,6 +8,7 @@ const log = printit()
 // The files/dirs metadata, as stored in PouchDB
 export type Metadata = {
   _id: string,
+  _rev: string,
   // TODO: v3: Rename to md5sum to match remote
   checksum?: string,
   class?: string,
@@ -89,4 +90,21 @@ export function invalidChecksum (doc: Metadata) {
 
   return buffer.byteLength !== 16 ||
     buffer.toString('base64') !== doc.checksum
+}
+
+// Extract the revision number, or 0 it not found
+export function extractRevNumber (infos: Metadata) {
+  try {
+    let rev = infos._rev.split('-')[0]
+    return Number(rev)
+  } catch (error) {
+    return 0
+  }
+}
+
+// Return true if the remote file is up-to-date for this document
+export function isUpToDate (doc: Metadata) {
+  let currentRev = doc.sides.remote || 0
+  let lastRev = extractRevNumber(doc)
+  return currentRev === lastRev
 }

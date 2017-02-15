@@ -4,6 +4,8 @@ let log = require('printit')({
   date: true
 })
 
+import { extractRevNumber } from './metadata'
+
 // Sync listens to PouchDB about the metadata changes, and calls local and
 // remote sides to apply the changes on the filesystem and remote CouchDB
 // respectively.
@@ -243,7 +245,7 @@ class Sync {
 
   // Update rev numbers for both local and remote sides
   updateRevs (doc, side, callback) {
-    let rev = this.pouch.extractRevNumber(doc) + 1
+    let rev = extractRevNumber(doc) + 1
     for (let s of ['local', 'remote']) {
       doc.sides[s] = rev
     }

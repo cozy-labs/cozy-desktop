@@ -1,6 +1,8 @@
 /* eslint-env mocha */
 
-import { buildId, invalidChecksum, invalidPath } from '../../src/metadata'
+import {
+  buildId, extractRevNumber, invalidChecksum, invalidPath
+} from '../../src/metadata'
 
 describe('metadata', function () {
   describe('buildId', function () {
@@ -98,6 +100,17 @@ describe('metadata', function () {
       let doc = {checksum: 'rcg7GeeTSRscbqD9i0bNnw=='}
       let ret = invalidChecksum(doc)
       ret.should.be.false()
+    })
+  })
+
+  describe('extractRevNumber', function () {
+    it('extracts the revision number', function () {
+      let infos = {_rev: '42-0123456789'}
+      extractRevNumber(infos).should.equal(42)
+    })
+
+    it('returns 0 if not found', function () {
+      extractRevNumber({}).should.equal(0)
     })
   })
 })

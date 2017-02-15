@@ -7,6 +7,7 @@ let log = require('printit')({
   date: true
 })
 
+import { extractRevNumber } from '../metadata'
 import Watcher from './watcher'
 
 // Local is the class that interfaces cozy-desktop with the local filesystem.
@@ -83,7 +84,7 @@ class Local {
   // Return true if the local file is up-to-date for this document
   isUpToDate (doc) {
     let currentRev = doc.sides.local || 0
-    let lastRev = this.pouch.extractRevNumber(doc)
+    let lastRev = extractRevNumber(doc)
     return currentRev === lastRev
   }
 

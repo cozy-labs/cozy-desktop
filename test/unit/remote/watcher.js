@@ -536,7 +536,7 @@ describe('RemoteWatcher', function () {
 
   describe('removeRemote', function () {
     it('remove the association between a document and its remote', async function () {
-      let doc: Metadata = {
+      let doc = {
         _id: 'removeRemote',
         path: 'removeRemote',
         docType: 'file',

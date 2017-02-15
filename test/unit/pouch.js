@@ -332,17 +332,6 @@ if (doc.docType === 'folder') {
   })
 
   describe('Helpers', function () {
-    describe('extractRevNumber', function () {
-      it('extracts the revision number', function () {
-        let infos = {_rev: '42-0123456789'}
-        this.pouch.extractRevNumber(infos).should.equal(42)
-      })
-
-      it('returns 0 if not found', function () {
-        this.pouch.extractRevNumber({}).should.equal(0)
-      })
-    })
-
     describe('getPreviousRev', () =>
       it('retrieves previous document informations', function (done) {
         let id = path.join('my-folder', 'folder-1')
