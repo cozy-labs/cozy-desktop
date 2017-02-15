@@ -61,13 +61,13 @@ before_install:
     - ln -s /tmp/cozy-desktop tmp
 
 script:
-    - npm run build
-    - npm run lint
-    - npm run test-unit-coverage
+    - yarn build
+    - yarn lint
+    - yarn test-unit-coverage
     - cd gui
     - yarn
-    - npm run lint
-    - npm run build
+    - yarn lint
+    - yarn build
     - cd ..
 
 after_success:
