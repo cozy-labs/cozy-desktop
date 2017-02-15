@@ -446,7 +446,7 @@ describe('Remote', function () {
         should.exist(doc.remote._id)
         should.exist(doc.remote._rev)
 
-        cozy.find(FILES_DOCTYPE, created._id)
+        cozy.data.find(FILES_DOCTYPE, created._id)
           .then(folder => {
             folder.should.have.properties({
               path: '/couchdb-folder/folder-1',

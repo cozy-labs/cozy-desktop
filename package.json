@@ -58,7 +58,7 @@
     "btoa": "^1.1.2",
     "chokidar": "1.6.1",
     "commander": "2.9.0",
-    "cozy-client-js": "0.0.11",
+    "cozy-client-js": "0.1.0",
     "cozy-device-sdk": "1.4.0",
     "eslint": "^3.15.0",
     "fs-extra": "^2.0.0",

@@ -39,7 +39,7 @@ export default class RemoteCozy {
     this.client._authstate = 3
     this.client._authcreds = Promise.resolve({
       token: {
-        toAuthHeader () { return '' }
+        toAuthHeader () { return 'Bearer ' + process.env.COZY_STACK_TOKEN }
       }
     })
 
@@ -54,13 +54,7 @@ export default class RemoteCozy {
   createDirectory: ({name: string, dirID: string}) => Promise<RemoteDoc>
 
   async changes (seq: number = 0) {
-    const changesUrl = `${this.url}/data/${FILES_DOCTYPE}/_changes?since=${seq}`
-
-    let resp = await fetch(changesUrl)
-
-    if (!resp.ok) throw new Error(`${resp.status}: ${resp.statusText}: ${changesUrl}`)
-
-    let json = await resp.json()
+    let json = await this.client.data.changesFeed(FILES_DOCTYPE, { since: seq })
 
     return {
       last_seq: json.last_seq,
@@ -71,10 +65,10 @@ export default class RemoteCozy {
   }
 
   async find (id: string): Promise<RemoteDoc> {
-    let doc = await this.client.find(FILES_DOCTYPE, id)
+    let doc = await this.client.data.find(FILES_DOCTYPE, id)
 
     if (doc.type === FILE_TYPE) {
-      const parentDir = await this.client.find(FILES_DOCTYPE, doc.dir_id)
+      const parentDir = await this.client.data.find(FILES_DOCTYPE, doc.dir_id)
       doc.path = path.join(parentDir.path, doc.name)
     }
 
@@ -90,8 +84,8 @@ export default class RemoteCozy {
   }
 
   async findDirectoryByPath (path: string): Promise<RemoteDoc> {
-    const index = await this.client.defineIndex(FILES_DOCTYPE, ['path'])
-    const results = await this.client.query(index, {selector: {path}})
+    const index = await this.client.data.defineIndex(FILES_DOCTYPE, ['path'])
+    const results = await this.client.data.query(index, {selector: {path}})
 
     if (results.length === 0) throw new DirectoryNotFound(path, this.url)
 
