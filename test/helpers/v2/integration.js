@@ -8,7 +8,7 @@ import request from 'request-json-light'
 import should from 'should'
 
 import App from '../../src/app'
-import password from './password'
+import passphrase from './passphrase'
 
 // For debug:
 // import PouchDB from 'pouchdb'
@@ -17,7 +17,7 @@ helpers = {
   scheme: process.env.SCHEME || 'http',
   host: process.env.HOST || 'localhost',
   port: process.env.PORT || 9104,
-  password: password,
+  passphrase: passphrase,
   deviceName: `test-${faker.internet.userName()}`,
   fixturesDir: path.join(__dirname, '..', 'fixtures'),
   parentDir: process.env.COZY_DESKTOP_DIR || 'tmp'
@@ -45,7 +45,7 @@ helpers.registerDevice = function registerDevice (done) {
   this.syncPath = path.resolve(`${helpers.parentDir}/${+new Date()}`)
   fs.ensureDirSync(this.syncPath)
   this.app = new App(this.syncPath)
-  this.app.askPassword = callback => callback(null, helpers.password)
+  this.app.askPassword = callback => callback(null, helpers.passphrase)
   let deviceName = helpers.deviceName = `test-${faker.internet.userName()}`
   return this.app.addRemote(helpers.url, this.syncPath, deviceName, function (err, credentials) {
     should.not.exist(err)

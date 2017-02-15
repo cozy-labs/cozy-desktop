@@ -29,7 +29,7 @@ describe('device', function () {
 
   describe('checkCredentials', function () {
     it('says OK with good credentials', done =>
-      device.checkCredentials(Cozy.url, Cozy.password, function (err) {
+      device.checkCredentials(Cozy.url, Cozy.passphrase, function (err) {
         should.not.exist(err)
         done()
       })
@@ -46,7 +46,7 @@ describe('device', function () {
   let devicePasswords = []
 
   describe('registerDeviceSafe', function () {
-    it('gives an error when the password is invalid', function (done) {
+    it('gives an error when the passphrase is invalid', function (done) {
       let register = device.registerDeviceSafe
       return register(Cozy.url, Cozy.deviceName, 'xxxxxxxx', function (err) {
         err.should.equal('Bad credentials')
@@ -56,48 +56,48 @@ describe('device', function () {
 
     it('register a device', function (done) {
       let register = device.registerDeviceSafe
-      return register(Cozy.url, Cozy.deviceName, Cozy.password, function (err, res) {
+      return register(Cozy.url, Cozy.deviceName, Cozy.passphrase, function (err, res) {
         should.not.exist(err)
         should.exist(res)
-        should.exist(res.password)
+        should.exist(res.passphrase)
         should.exist(res.deviceName)
         res.deviceName.should.equal(Cozy.deviceName)
-        devicePasswords.push(res.password)
+        devicePasswords.push(res.passphrase)
         done()
       })
     })
 
     it('register a device with a suffix when it already exists', function (done) {
       let register = device.registerDeviceSafe
-      return register(Cozy.url, Cozy.deviceName, Cozy.password, function (err, res) {
+      return register(Cozy.url, Cozy.deviceName, Cozy.passphrase, function (err, res) {
         should.not.exist(err)
         should.exist(res)
-        should.exist(res.password)
+        should.exist(res.passphrase)
         should.exist(res.deviceName)
         res.deviceName.should.not.equal(Cozy.deviceName)
         res.deviceName.should.match(/-2$/)
-        devicePasswords.push(res.password)
+        devicePasswords.push(res.passphrase)
         done()
       })
     })
 
     it('register a device with a suffix when it already exists', function (done) {
       let register = device.registerDeviceSafe
-      return register(Cozy.url, Cozy.deviceName, Cozy.password, function (err, res) {
+      return register(Cozy.url, Cozy.deviceName, Cozy.passphrase, function (err, res) {
         should.not.exist(err)
         should.exist(res)
-        should.exist(res.password)
+        should.exist(res.passphrase)
         should.exist(res.deviceName)
         res.deviceName.should.not.equal(Cozy.deviceName)
         res.deviceName.should.match(/-3$/)
-        devicePasswords.push(res.password)
+        devicePasswords.push(res.passphrase)
         done()
       })
     })
   })
 
   describe('unregisterDevice', function () {
-    it('gives an error when the password is invalid', function (done) {
+    it('gives an error when the passphrase is invalid', function (done) {
       let unregister = device.unregisterDevice
       return unregister(Cozy.url, Cozy.deviceName, 'xxxxxxxx', function (err) {
         should.exist(err)

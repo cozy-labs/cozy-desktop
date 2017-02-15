@@ -20,12 +20,12 @@ process.on('SIGINT', exit)
 process.on('SIGTERM', exit)
 process.on('SIGUSR1', () => app.debugWatchers())
 
-// Helper to get cozy password from user
+// Helper to get cozy passphrase from user
 app.askPassword = function (callback) {
   let promptMsg = `\
-Please enter your password to register your device on your remote Cozy:\
+Please enter your passphrase to register your device on your remote Cozy:\
 `
-  return read({prompt: promptMsg, silent: true}, (err, password) => callback(err, password))
+  return read({prompt: promptMsg, silent: true}, (err, passphrase) => callback(err, passphrase))
 }
 
 // Helper for confirmation
