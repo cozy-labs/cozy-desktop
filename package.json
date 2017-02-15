@@ -20,6 +20,15 @@
     "files",
     "cozy"
   ],
+  "files": [
+	  "bin/cozy-desktop",
+	  "doc/",
+	  "lib/",
+	  "CHANGELOG.md",
+	  "README.md",
+	  "LICENSE",
+	  "package.json"
+  ],
   "scripts": {
     "bootstrap-couch": "npm run bootstrap-couch-container && npm run bootstrap-couch-system-tables && docker stop cozy-desktop-couch",
     "bootstrap-couch-container": "docker run -d --name cozy-desktop-couch -p 5984:5984 -v $PWD/tmp/couchdb:/opt/couchdb/data klaemo/couchdb:2.0.0 && sleep 1",
