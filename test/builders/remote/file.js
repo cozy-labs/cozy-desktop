@@ -1,6 +1,7 @@
 /* @flow */
 
 import fs from 'fs'
+import * as stream from 'stream'
 import { Cozy } from 'cozy-client-js'
 
 import RemoteBaseBuilder from './base'
@@ -15,7 +16,7 @@ var fileNumber = 1
 //     let remoteFile = this.builders.remoteFile().inDir(...).build()
 //
 export default class RemoteFileBuilder extends RemoteBaseBuilder {
-  _data: string | Buffer
+  _data: string | stream.Readable
 
   constructor (cozy: Cozy) {
     super(cozy)
@@ -33,13 +34,13 @@ export default class RemoteFileBuilder extends RemoteBaseBuilder {
     return this
   }
 
-  data (data: string | Buffer): RemoteFileBuilder {
+  data (data: string | stream.Readable): RemoteFileBuilder {
     this._data = data
     return this
   }
 
   dataFromFile (path: string): RemoteFileBuilder {
-    this._data = fs.readFileSync(path)
+    this._data = fs.createReadStream(path)
     return this
   }
 
