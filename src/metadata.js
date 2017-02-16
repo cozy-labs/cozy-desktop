@@ -22,15 +22,17 @@ export type Metadata = {
   remote: MetadataRemoteInfo,
   size?: string,
   tags: string[],
-  sides: {
-    remote: ?string,
-    local: ?string
-  }
+  sides: MetadataSidesInfo
 }
 
 export type MetadataRemoteInfo = {
   _id: string,
   _rev: string
+}
+
+export type MetadataSidesInfo = {
+  remote?: ?number,
+  local?: ?number
 }
 
 export let buildId
