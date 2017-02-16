@@ -38,7 +38,7 @@ export default class RemoteCozy {
     this.client._authstate = 3
     this.client._authcreds = Promise.resolve({
       token: {
-        toAuthHeader () { return 'Bearer ' + process.env.COZY_STACK_TOKEN }
+        toAuthHeader () { return 'Bearer ' + (process.env.COZY_STACK_TOKEN || '') }
       }
     })
 
