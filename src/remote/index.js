@@ -101,9 +101,14 @@ export default class Remote {
       .catch(callback)
   }
 
-  // FIXME: Temporary stub so we can do some acceptance testing on file upload
+  // FIXME: Temporary stubs so we can do some acceptance testing on file upload
   //        without getting errors for methods not implemented yet.
+
   updateFileMetadata (doc: Metadata, _: any, callback: Callback) {
+    callback(null, doc)
+  }
+
+  updateFolder (doc: Metadata, _: any, callback: Callback) {
     callback(null, doc)
   }
 }
