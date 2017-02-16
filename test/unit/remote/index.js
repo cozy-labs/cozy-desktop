@@ -11,6 +11,7 @@ import Remote from '../../../src/remote'
 import { FILES_DOCTYPE } from '../../../src/remote/constants'
 import timestamp from '../../../src/timestamp'
 
+import type { Metadata } from '../../../src/metadata'
 import type { RemoteDoc } from '../../../src/remote/document'
 
 import configHelpers from '../../helpers/config'
@@ -463,104 +464,61 @@ describe('Remote', function () {
     })
   )
 
-  xdescribe('overwriteFile', function () {
-    it('overwrites the binary content', function (done) {
-      return couchHelpers.createFile(this.couch, 6, (err, created) => {
-        should.not.exist(err)
-        let doc: Object = {
-          _id: 'couchdb-folder/file-6',
-          path: 'couchdb-folder/file-6',
-          docType: 'file',
-          checksum: 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df',
-          lastModification: '2015-11-16T16:12:01.002Z',
-          sides: {
-            local: 1
-          }
+  describe('overwriteFileAsync', function () {
+    it('overwrites the binary content', async function () {
+      const created = await builders.file().data('foo').timestamp(2015, 11, 16, 16, 12, 1).build()
+      const old = conversion.createMetadata(created)
+      const doc: Metadata = {
+        ...old,
+        _id: created._id,
+        checksum: 'N7UdGUp1E+RbVvZSTy1R8g==',
+        lastModification: timestamp.stringify(timestamp.build(2015, 11, 16, 16, 12, 1)),
+        sides: {
+          local: 1
         }
-        let old = {
-          path: 'couchdb-folder/file-6',
-          docType: 'file',
-          checksum: '1111111111111111111111111111111111111126',
-          remote: {
-            _id: created.id,
-            _rev: created.rev,
-            binary: {
-              _id: '1111111111111111111111111111111111111126',
-              _rev: '1-852147'
-            }
-          }
+      }
+      await this.pouch.db.put(doc)
+      this.remote.other = {
+        createReadStreamAsync (localDoc) {
+          localDoc.should.equal(doc)
+          const stream = builders.stream().push('bar').build()
+          return Promise.resolve(stream)
         }
-        let binaryDoc = {
-          _id: old.checksum,
-          checksum: old.checksum
-        }
-        return this.pouch.db.put(doc, err => {
-          should.not.exist(err)
-          return this.couch.put(binaryDoc, err => {
-            should.not.exist(err)
-            return this.remote.overwriteFile(doc, old, err => {
-              should.not.exist(err)
-              return this.couch.get(doc.remote._id, (err, file) => {
-                should.not.exist(err)
-                file.should.have.properties({
-                  _id: created.id,
-                  docType: 'file',
-                  path: '/couchdb-folder',
-                  name: 'file-6',
-                  lastModification: doc.lastModification
-                })
-                doc.remote._rev.should.equal(file._rev)
-                doc.remote.binary.should.have.properties({
-                  _id: doc.checksum,
-                  _rev: file.binary.file.rev
-                })
-                file.binary.file.id.should.equal(doc.checksum)
-                return this.couch.get(file.binary.file.id, function (err, binary) {
-                  should.not.exist(err)
-                  binary.checksum.should.equal(doc.checksum)
-                  done()
-                })
-              })
-            })
-          })
-        })
+      }
+
+      await this.remote.overwriteFileAsync(doc, old)
+
+      const file = await cozy.data.find(FILES_DOCTYPE, doc.remote._id)
+      file.should.have.properties({
+        _id: created._id,
+        type: 'file',
+        dir_id: created.dir_id,
+        name: created.name,
+        updated_at: '2015-11-16T16:12:01Z'
       })
+      should(doc.remote._rev).equal(file._rev)
     })
 
-    it('throws an error if the checksum is invalid', function (done) {
-      return couchHelpers.createFile(this.couch, 6, (err, created) => {
-        should.not.exist(err)
-        let doc = {
-          path: 'couchdb-folder/file-6b',
-          docType: 'file',
-          checksum: '9999999999999999999999999999999999999936',
-          lastModification: '2015-11-16T16:12:01.002Z'
+    it('throws an error if the checksum is invalid', async function () {
+      const created = await builders.file().data('foo').build()
+      const old = conversion.createMetadata(created)
+      const doc = {
+        ...old,
+        checksum: 'Invalid///////////////=='
+      }
+      this.remote.other = {
+        createReadStreamAsync (localDoc) {
+          const stream = builders.stream().push('bar').build()
+          return Promise.resolve(stream)
         }
-        let old = {
-          path: 'couchdb-folder/file-6b',
-          docType: 'file',
-          checksum: '1111111111111111111111111111111111111136',
-          remote: {
-            _id: created.id,
-            _rev: created.rev,
-            binary: {
-              _id: '1111111111111111111111111111111111111136',
-              _rev: '1-852146'
-            }
-          }
-        }
-        let binaryDoc = {
-          _id: old.checksum,
-          checksum: old.checksum
-        }
-        return this.couch.put(binaryDoc, err => {
-          should.not.exist(err)
-          return this.remote.overwriteFile(doc, old, function (err) {
-            should.exist(err)
-            err.message.should.equal('Invalid checksum')
-            done()
-          })
-        })
+      }
+
+      await should(this.remote.overwriteFileAsync(doc, old))
+        .be.rejectedWith({status: 412})
+
+      const file = await cozy.data.find(FILES_DOCTYPE, doc.remote._id)
+      should(file).have.properties({
+        md5sum: old.checksum
       })
     })
   })

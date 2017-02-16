@@ -5,6 +5,7 @@ import printit from 'printit'
 import Config from '../config'
 import * as conversion from '../conversion'
 import RemoteCozy from './cozy'
+import { jsonApiToRemoteDoc } from './document'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import Watcher from './watcher'
@@ -99,6 +100,28 @@ export default class Remote {
     this.addFileAsync(doc)
       .then(created => callback(null, created))
       .catch(callback)
+  }
+
+  async overwriteFileAsync (doc: Metadata, old: Metadata): Promise<RemoteDoc> {
+    const stream = await this.other.createReadStreamAsync(doc)
+    const updated = await this.remoteCozy.updateFileById(doc.remote._id, stream, {
+      contentType: doc.mime,
+      checksum: doc.checksum,
+      lastModifiedDate: new Date(doc.lastModification)
+    })
+
+    doc.remote._rev = updated._rev
+
+    return jsonApiToRemoteDoc(updated)
+  }
+
+  async overwriteFile (doc: Metadata, old: Metadata, callback: Callback) {
+    try {
+      const updated = await this.overwriteFileAsync(doc, old)
+      callback(null, updated)
+    } catch (err) {
+      callback(err)
+    }
   }
 
   // FIXME: Temporary stubs so we can do some acceptance testing on file upload
