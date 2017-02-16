@@ -1,6 +1,6 @@
 /* @flow */
 
-import { Cozy as CozyClient } from 'cozy-client-js'
+import { Client as CozyClient } from 'cozy-client-js'
 import fetch from 'node-fetch'
 import path from 'path'
 import { Readable } from 'stream'

@@ -1,6 +1,7 @@
 /* eslint-env mocha */
 
-import { Cozy as CozyClient } from 'cozy-client-js'
+import { Client as CozyClient } from 'cozy-client-js'
+console.log(CozyClient)
 
 import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } from '../../src/remote/constants'
 import { BuilderFactory } from '../builders'
