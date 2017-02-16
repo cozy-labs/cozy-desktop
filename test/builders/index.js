@@ -1,5 +1,6 @@
 import RemoteDirBuilder from './remote/dir'
 import RemoteFileBuilder from './remote/file'
+import StreamBuilder from './stream'
 
 // Instanciate test data builders with their dependencies.
 //
@@ -19,5 +20,9 @@ export class BuilderFactory {
 
   file () {
     return new RemoteFileBuilder(this.cozy)
+  }
+
+  stream () {
+    return new StreamBuilder()
   }
 }
