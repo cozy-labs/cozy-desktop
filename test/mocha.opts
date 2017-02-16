@@ -4,5 +4,6 @@
 --compilers js:babel-core/register
 --require babel-polyfill
 --require should
+--require ./test/assertions/timestamp
 --require ./test/helpers/sinon_stub_promise
 --recursive
