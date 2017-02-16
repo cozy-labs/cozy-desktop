@@ -6,7 +6,7 @@ import { Readable } from 'stream'
 
 import { FILES_DOCTYPE, FILE_TYPE, ROOT_DIR_ID, TRASH_DIR_ID } from './constants'
 
-import type { RemoteDoc } from './document'
+import type { JsonApiDoc, RemoteDoc } from './document'
 
 function specialId (id) {
   return (
@@ -44,12 +44,17 @@ export default class RemoteCozy {
     // Aliases:
     this.createFile = this.client.files.create
     this.createDirectory = this.client.files.createDirectory
+    this.updateFileById = this.client.files.updateById
   }
 
   createFile: (data: Readable, options: {
     name: string, dirID?: ?string, contentType?: ?string, lastModifiedDate?: ?Date
   }) => Promise<RemoteDoc>
   createDirectory: ({name: string, dirID: string}) => Promise<RemoteDoc>
+  // TODO: All RemoteCozy methods should resolve with RemoteDoc instances,
+  //       not JsonApiDoc ones.
+  updateFileById: (id: string, data: Readable,
+    options: {contentType?: ?string, lastModifiedDate?: ?Date }) => Promise<JsonApiDoc>
 
   async changes (seq: number = 0) {
     let json = await this.client.data.changesFeed(FILES_DOCTYPE, { since: seq })
