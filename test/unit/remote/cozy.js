@@ -21,13 +21,6 @@ describe('RemoteCozy', function () {
 
   beforeEach(function () {
     remoteCozy = new RemoteCozy(COZY_URL)
-    // FIXME: Temporary hack to make cozy-client-js think it has OAuth tokens
-    remoteCozy._authstate = 3
-    remoteCozy._authcreds = Promise.resolve({
-      token: {
-        toAuthHeader () { return '' }
-      }
-    })
   })
 
   describe('changes', function () {
@@ -47,7 +40,7 @@ describe('RemoteCozy', function () {
       })
 
       return remoteCozy.changes()
-        .should.be.rejectedWith(/404.*Not Found/)
+        .should.be.rejectedWith(/Could not fetch/)
     })
 
     it('rejects when cozy sends invalid JSON', function () {

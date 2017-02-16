@@ -1,12 +1,22 @@
 /* eslint-env mocha */
 
-import { Cozy as CozyClient } from 'cozy-client-js'
+import { Client as CozyClient } from 'cozy-client-js'
+console.log(CozyClient)
 
 import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } from '../../src/remote/constants'
 import { BuilderFactory } from '../builders'
 
 // The URL of the Cozy instance used for tests
 export const COZY_URL = process.env.COZY_URL || 'http://test.cozy-desktop.local:8080'
+
+if (!process.env.COZY_STACK_TOKEN) {
+  const domain = COZY_URL.replace('http://', '')
+  console.log('COZY_STACK_TOKEN is missing. You can generate it with this command:')
+  console.log(`export COZY_CLIENT_ID=$(cozy-stack instances client-oauth "${domain}" http://localhost/ test github.com/cozy-labs/cozy-desktop)`)
+  console.log(`export COZY_STACK_TOKEN=$(cozy-stack instances token-oauth "${domain}" "$COZY_CLIENT_ID" io.cozy.files)`)
+  console.log(' ')
+  throw new Error('No COZY_STACK_TOKEN')
+}
 
 // A cozy-client-js instance
 export const cozy = new CozyClient({
@@ -18,7 +28,7 @@ export const cozy = new CozyClient({
 cozy._authstate = 3
 cozy._authcreds = Promise.resolve({
   token: {
-    toAuthHeader () { return '' }
+    toAuthHeader () { return 'Bearer ' + process.env.COZY_STACK_TOKEN }
   }
 })
 
@@ -27,8 +37,8 @@ export const builders = new BuilderFactory(cozy)
 
 // List files and directories in the root directory
 async function rootDirContents () {
-  const index = await cozy.defineIndex(FILES_DOCTYPE, ['dir_id'])
-  const docs = await cozy.query(index, {
+  const index = await cozy.data.defineIndex(FILES_DOCTYPE, ['dir_id'])
+  const docs = await cozy.data.query(index, {
     selector: {
       dir_id: ROOT_DIR_ID,
       '$not': {_id: TRASH_DIR_ID}

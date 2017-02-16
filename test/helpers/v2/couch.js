@@ -41,7 +41,7 @@ export default {
           name: params.user,
           type: 'user',
           roles: [],
-          password: params.pass
+          passphrase: params.pass
         }
         return async.retry({times: 30, interval: 250}, cb => client.put(`_users/${params.user}`, options, cb)
         , err => next(err))
@@ -83,7 +83,7 @@ export default {
     this.config.addRemoteCozy({
       url,
       deviceName: params.user,
-      password: params.pass
+      passphrase: params.pass
     })
     let events = {emit () {}}
     this.couch = new Couch(this.config, events)

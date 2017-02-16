@@ -92,7 +92,7 @@ class Config {
     let device = this.getDevice(deviceName)
     if (device.url != null) {
       let url = urlParser.parse(device.url)
-      url.auth = `${deviceName}:${device.password}`
+      url.auth = `${deviceName}:${device.passphrase}`
       return `${urlParser.format(url)}cozy`
     } else {
       return null

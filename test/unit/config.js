@@ -15,7 +15,7 @@ describe('Config', function () {
     it('saves last changes made on the config', function () {
       this.config.devices['new-cozy2'] = {
         deviceName: 'new-cozy2',
-        password: 'password',
+        passphrase: 'passphrase',
         url: 'none'
       }
       this.config.save()

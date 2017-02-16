@@ -27,12 +27,12 @@ class Couch {
     let options = this.config.augmentCouchOptions({
       auth: {
         username: device.deviceName,
-        password: device.password
+        passphrase: device.passphrase
       }
     })
     this.client = new PouchDB(`${device.url}/cozy`, options)
     this.http = request.newClient(device.url)
-    this.http.setBasicAuth(device.deviceName, device.password)
+    this.http.setBasicAuth(device.deviceName, device.passphrase)
     this.online = true
     this.upCallbacks = []
   }

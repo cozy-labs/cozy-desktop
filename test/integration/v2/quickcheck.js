@@ -31,7 +31,7 @@ let logs = [
 // Register a device on cozy
 let registerDevice = function (i, callback) {
   let app = new App(folders[i])
-  app.askPassword = callback => callback(null, Cozy.password)
+  app.askPassphrase = callback => callback(null, Cozy.passphrase)
   return app.addRemote(Cozy.url, folders[i], deviceNames[i], function (err) {
     app.pouch.db.destroy()
     app.pouch.db = null
@@ -42,7 +42,7 @@ let registerDevice = function (i, callback) {
 // Remove a device from cozy
 let removeRemoteDevice = function (i, callback) {
   let app = new App(folders[i])
-  app.askPassword = callback => callback(null, Cozy.password)
+  app.askPassphrase = callback => callback(null, Cozy.passphrase)
   return app.removeRemote(deviceNames[i], callback)
 }
 

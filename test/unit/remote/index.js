@@ -368,7 +368,7 @@ describe('Remote', function () {
 
       should.exist(doc.remote._id)
       should.exist(doc.remote._rev)
-      const file = await cozy.find(FILES_DOCTYPE, created._id)
+      const file = await cozy.data.find(FILES_DOCTYPE, created._id)
       file.should.have.properties({
         dir_id: 'io.cozy.files.root-dir',
         name: 'cat2.jpg',
@@ -420,7 +420,7 @@ describe('Remote', function () {
 
       should.exist(doc.remote._id)
       should.exist(doc.remote._rev)
-      const file = await cozy.find(FILES_DOCTYPE, created._id)
+      const file = await cozy.data.find(FILES_DOCTYPE, created._id)
       file.should.have.properties({
         dir_id: backupDir._id,
         name: 'cat3.jpg',
@@ -446,7 +446,7 @@ describe('Remote', function () {
         should.exist(doc.remote._id)
         should.exist(doc.remote._rev)
 
-        cozy.find(FILES_DOCTYPE, created._id)
+        cozy.data.find(FILES_DOCTYPE, created._id)
           .then(folder => {
             folder.should.have.properties({
               path: '/couchdb-folder/folder-1',

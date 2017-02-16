@@ -12,7 +12,7 @@ export default {
     this.config = new Config(path.join(this.syncPath, '.cozy-desktop'))
     this.config.devices['tester'] = {
       deviceName: 'tester',
-      password: 'password',
+      passphrase: 'passphrase',
       url: 'nonecozy',
       path: this.syncPath
     }

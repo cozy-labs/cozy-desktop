@@ -63,10 +63,10 @@ class App {
   }
 
   // This method is here to be surcharged by the UI
-  // to ask its password to the user
+  // to ask its passphrase to the user
   //
-  // callback is a function that takes two parameters: error and password
-  askPassword (callback) {
+  // callback is a function that takes two parameters: error and passphrase
+  askPassphrase (callback) {
     callback(new Error('Not implemented'), null)
   }
 
@@ -152,14 +152,14 @@ class App {
       return
     }
     if (deviceName == null) { deviceName = os.hostname() || 'desktop' }
-    this.askPassword(function (_, password) {
+    this.askPassphrase(function (_, passphrase) {
       // TODO: App.registerRemote() v3
-      callback(null, {deviceName, password})
+      callback(null, {deviceName, passphrase})
     })
   }
 
   // Save the config with all the informations for synchonization
-  saveConfig (cozyUrl, syncPath, deviceName, password, callback) {
+  saveConfig (cozyUrl, syncPath, deviceName, passphrase, callback) {
     fs.ensureDir(syncPath, err => {
       if (err) {
         callback(err)
@@ -168,7 +168,7 @@ class App {
           path: path.resolve(syncPath),
           url: cozyUrl,
           deviceName,
-          password
+          passphrase
         }
         this.config.addRemoteCozy(options)
         log.info('The remote Cozy has properly been configured ' +
@@ -190,7 +190,7 @@ class App {
           log.warn('Are you sure the domain is OK?')
         } else if (err === 'Bad credentials') {
           log.warn(err)
-          log.warn('Are you sure there are no typo on the password?')
+          log.warn('Are you sure there are no typo on the passphrase?')
         } else {
           log.error(err)
           if (parsed.protocol === 'http:') {
@@ -200,9 +200,9 @@ class App {
         __guardFunc__(callback, f => f(err))
       } else {
         ({ deviceName } = credentials)
-        let { password } = credentials
+        let { passphrase } = credentials
         log.info(`Device ${deviceName} has been added to ${cozyUrl}`)
-        this.saveConfig(cozyUrl, syncPath, deviceName, password, err => __guardFunc__(callback, f1 => f1(err, credentials)))
+        this.saveConfig(cozyUrl, syncPath, deviceName, passphrase, err => __guardFunc__(callback, f1 => f1(err, credentials)))
       }
     })
   }
@@ -213,8 +213,8 @@ class App {
     if (callback == null) { callback = function () {} }
     let conf = this.config.getDevice()
     let cozyUrl = conf.url
-    let { password } = conf
-    device.unregisterDevice(cozyUrl, deviceName, password, err => {
+    let { passphrase } = conf
+    device.unregisterDevice(cozyUrl, deviceName, passphrase, err => {
       if (err && (err.message !== 'Request unauthorized')) {
         log.error('An error occured while unregistering your device.')
         log.error(err)
@@ -231,7 +231,7 @@ class App {
     let conf = this.config.getDevice()
     let cozyUrl = conf.url
     let { deviceName } = conf
-    let { password } = conf
+    let { passphrase } = conf
     let mail = {
       to: 'log-desktop@cozycloud.cc',
       subject: 'Ask support for cozy-desktop',
@@ -245,7 +245,7 @@ class App {
       }
       mail.attachments = [attachment]
     }
-    device.sendMailFromUser(cozyUrl, deviceName, password, mail, callback)
+    device.sendMailFromUser(cozyUrl, deviceName, passphrase, mail, callback)
   }
 
   // Load ignore rules

@@ -432,7 +432,7 @@ ipcMain.on('ping-cozy', (event, url) => {
 })
 
 ipcMain.on('register-remote', (event, arg) => {
-  desktop.askPassword = (cb) => { cb(null, arg.password) }
+  desktop.askPassphrase = (cb) => { cb(null, arg.password) }
 
   // It looks like Electron detects incorrectly that node has nothing to do
   // and it prevents it to send its http request to the cozy before the next
@@ -502,7 +502,7 @@ ipcMain.on('unlink-cozy', () => {
     if (!device) {
       return
     }
-    desktop.askPassword = (cb) => { cb(null, device.password) }
+    desktop.askPassphrase = (cb) => { cb(null, device.password) }
     desktop.removeRemote(device.deviceName, (err) => {
       if (err) {
         console.error(err)
