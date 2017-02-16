@@ -44,9 +44,13 @@ export default class RemoteCozy {
     })
 
     // Aliases:
+    this.createFile = this.client.files.create
     this.createDirectory = this.client.files.createDirectory
   }
 
+  createFile: (data: Readable, options: {
+    name: string, dirID?: ?string, contentType?: ?string, lastModifiedDate?: ?Date
+  }) => Promise<RemoteDoc>
   createDirectory: ({name: string, dirID: string}) => Promise<RemoteDoc>
 
   async changes (seq: number = 0) {
