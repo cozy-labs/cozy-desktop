@@ -1,4 +1,5 @@
 import async from 'async'
+import Promise from 'bluebird'
 import clone from 'lodash.clone'
 import fs from 'fs-extra'
 import path from 'path'
@@ -22,6 +23,8 @@ class Local {
     this.tmpPath = path.join(this.syncPath, '.cozy-desktop')
     this.watcher = new Watcher(this.syncPath, this.prep, this.pouch)
     this.other = null
+
+    Promise.promisifyAll(this)
   }
 
   // Start initial replication + watching changes in live
