@@ -340,8 +340,8 @@ describe('Remote', function () {
     })
   )
 
-  describe('addFile', function () {
-    it('adds a file to couchdb', async function () {
+  describe('addFileAsync', function () {
+    it('adds a file to the remote Cozy', async function () {
       let checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
       let doc: Object = {
         _id: 'cat2.jpg',
@@ -364,7 +364,7 @@ describe('Remote', function () {
       }
       await this.pouch.db.put(doc)
 
-      const created = await this.remote.addFile(doc)
+      const created = await this.remote.addFileAsync(doc)
 
       should.exist(doc.remote._id)
       should.exist(doc.remote._rev)
@@ -416,7 +416,7 @@ describe('Remote', function () {
       await this.pouch.db.put(doc)
       await this.pouch.db.put(same)
 
-      const created = await this.remote.addFile(doc)
+      const created = await this.remote.addFileAsync(doc)
 
       should.exist(doc.remote._id)
       should.exist(doc.remote._rev)
