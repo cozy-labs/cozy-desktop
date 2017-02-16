@@ -66,7 +66,7 @@ class App {
   // to ask its passphrase to the user
   //
   // callback is a function that takes two parameters: error and passphrase
-  askPassword (callback) {
+  askPassphrase (callback) {
     callback(new Error('Not implemented'), null)
   }
 
@@ -152,7 +152,7 @@ class App {
       return
     }
     if (deviceName == null) { deviceName = os.hostname() || 'desktop' }
-    this.askPassword(function (_, passphrase) {
+    this.askPassphrase(function (_, passphrase) {
       // TODO: App.registerRemote() v3
       callback(null, {deviceName, passphrase})
     })

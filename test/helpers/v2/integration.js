@@ -45,7 +45,7 @@ helpers.registerDevice = function registerDevice (done) {
   this.syncPath = path.resolve(`${helpers.parentDir}/${+new Date()}`)
   fs.ensureDirSync(this.syncPath)
   this.app = new App(this.syncPath)
-  this.app.askPassword = callback => callback(null, helpers.passphrase)
+  this.app.askPassphrase = callback => callback(null, helpers.passphrase)
   let deviceName = helpers.deviceName = `test-${faker.internet.userName()}`
   return this.app.addRemote(helpers.url, this.syncPath, deviceName, function (err, credentials) {
     should.not.exist(err)
