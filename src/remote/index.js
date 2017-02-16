@@ -1,10 +1,12 @@
-/* @flow weak */
+/* @flow */
 
 import printit from 'printit'
 
+import Config from '../config'
 import * as conversion from '../conversion'
 import RemoteCozy from './cozy'
 import Pouch from '../pouch'
+import Prep from '../prep'
 import Watcher from './watcher'
 
 import type { RemoteDoc } from './document'
@@ -23,24 +25,24 @@ export default class Remote {
   watcher: Watcher
   remoteCozy: RemoteCozy
 
-  constructor (config, prep, pouch) {
+  constructor (config: Config, prep: Prep, pouch: Pouch) {
     this.pouch = pouch
     this.remoteCozy = new RemoteCozy(config)
     this.watcher = new Watcher(pouch, prep, this.remoteCozy)
   }
 
-  start (callback) {
+  start (callback: Function) {
     this.watcher.start()
     callback()
   }
 
-  stop (callback) {
+  stop (callback: Function) {
     this.watcher.stop()
     callback()
   }
 
   // Create a readable stream for the given doc
-  async createReadStream (doc, callback) {
+  async createReadStream (doc: Metadata, callback: Callback) {
     try {
       const stream = await this.remoteCozy.downloadBinary(doc.remote._id, callback)
       callback(null, stream)
@@ -101,7 +103,7 @@ export default class Remote {
 
   // FIXME: Temporary stub so we can do some acceptance testing on file upload
   //        without getting errors for methods not implemented yet.
-  updateFileMetadata (doc, _, callback: Callback) {
+  updateFileMetadata (doc: Metadata, _: any, callback: Callback) {
     callback(null, doc)
   }
 }
