@@ -75,4 +75,36 @@ export default class Remote {
       callback(err)
     }
   }
+
+  async addFileAsync (doc: Metadata): Promise<RemoteDoc> {
+    const stream = await this.other.createReadStreamAsync(doc)
+    const [dirPath, name] = conversion.extractDirAndName(doc.path)
+    const dir = await this.remoteCozy.findDirectoryByPath(dirPath)
+    const created = await this.remoteCozy.createFile(stream, {
+      name,
+      dirID: dir._id,
+      contentType: doc.mime,
+      lastModifiedDate: new Date(doc.lastModification)
+    })
+
+    doc.remote = {
+      _id: created._id,
+      _rev: created._rev
+    }
+
+    return created
+  }
+
+  // FIXME: Drop this wrapper as soon as Sync uses promises
+  addFile (doc: Metadata, callback: Callback) {
+    this.addFileAsync(doc)
+      .then(created => callback(null, created))
+      .catch(callback)
+  }
+
+  // FIXME: Temporary stub so we can do some acceptance testing on file upload
+  //        without getting errors for methods not implemented yet.
+  updateFileMetadata (doc, _, callback: Callback) {
+    callback(null, doc)
+  }
 }

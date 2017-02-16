@@ -9,6 +9,7 @@ import should from 'should'
 import * as conversion from '../../../src/conversion'
 import Remote from '../../../src/remote'
 import { FILES_DOCTYPE } from '../../../src/remote/constants'
+import timestamp from '../../../src/timestamp'
 
 import type { RemoteDoc } from '../../../src/remote/document'
 
@@ -339,16 +340,16 @@ describe('Remote', function () {
     })
   )
 
-  xdescribe('addFile', function () {
-    it('adds a file to couchdb', function (done) {
+  describe('addFile', function () {
+    it('adds a file to couchdb', async function () {
       let checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
       let doc: Object = {
         _id: 'cat2.jpg',
         path: 'cat2.jpg',
         docType: 'file',
         checksum,
-        creationDate: new Date(),
-        lastModification: new Date(),
+        creationDate: timestamp.current(),
+        lastModification: timestamp.current(),
         size: 36901,
         sides: {
           local: 1
@@ -356,48 +357,40 @@ describe('Remote', function () {
       }
       let fixture = 'test/fixtures/chat-mignon-mod.jpg'
       this.remote.other = {
-        createReadStream (localDoc, callback) {
+        createReadStreamAsync (localDoc) {
           let stream = fs.createReadStream(fixture)
-          return callback(null, stream)
+          return Promise.resolve(stream)
         }
       }
-      this.pouch.db.put(doc, err => {
-        should.not.exist(err)
-        return this.remote.addFile(doc, (err, created) => {
-          should.not.exist(err)
-          should.exist(doc.remote._id)
-          should.exist(doc.remote._rev)
-          should.exist(doc.remote.binary)
-          return this.couch.get(created.id, (err, file) => {
-            should.not.exist(err)
-            file.should.have.properties({
-              path: '',
-              name: 'cat2.jpg',
-              docType: 'file',
-              creationDate: doc.creationDate.toISOString(),
-              lastModification: doc.lastModification.toISOString(),
-              size: 36901
-            })
-            should.exist(file.binary.file.id)
-            return this.couch.get(file.binary.file.id, function (err, binary) {
-              should.not.exist(err)
-              binary.checksum.should.equal(checksum)
-              done()
-            })
-          })
-        })
+      await this.pouch.db.put(doc)
+
+      const created = await this.remote.addFile(doc)
+
+      should.exist(doc.remote._id)
+      should.exist(doc.remote._rev)
+      const file = await cozy.find(FILES_DOCTYPE, created._id)
+      file.should.have.properties({
+        dir_id: 'io.cozy.files.root-dir',
+        name: 'cat2.jpg',
+        _type: 'io.cozy.files',
+        type: 'file',
+        created_at: timestamp.stringify(doc.creationDate),
+        updated_at: timestamp.stringify(doc.lastModification),
+        size: '36901'
       })
     })
 
-    it('does not reupload an existing file', function (done) {
+    it('does not reupload an existing file', async function () {
+      const backupDir = await builders.dir().named('backup').inRootDir().build()
+      await builders.dir().named('ORIGINAL').inRootDir().build()
       let checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
       let doc: Object = {
         _id: 'backup/cat3.jpg',
         path: 'backup/cat3.jpg',
         docType: 'file',
         checksum,
-        creationDate: new Date(),
-        lastModification: new Date(),
+        creationDate: timestamp.current(),
+        lastModification: timestamp.current(),
         size: 36901,
         sides: {
           local: 1
@@ -408,46 +401,33 @@ describe('Remote', function () {
         path: 'ORIGINAL/CAT3.JPG',
         docType: 'file',
         checksum,
-        creationDate: new Date(),
-        lastModification: new Date(),
+        creationDate: timestamp.current(),
+        lastModification: timestamp.current(),
         size: 36901,
         remote: {
           _id: '05161241-ca73',
-          _rev: '1-abcdef',
-          binary: {
-            _id: checksum,
-            _rev: '1-951456'
-          }
+          _rev: '1-abcdef'
         },
         sides: {
           local: 1,
           remote: 1
         }
       }
-      this.pouch.db.put(doc, err => {
-        should.not.exist(err)
-        return this.pouch.db.put(same, err => {
-          should.not.exist(err)
-          return this.remote.addFile(doc, (err, created) => {
-            should.not.exist(err)
-            should.exist(doc.remote._id)
-            should.exist(doc.remote._rev)
-            should.exist(doc.remote.binary)
-            return this.couch.get(created.id, function (err, file) {
-              should.not.exist(err)
-              let lastModified = doc.lastModification.toISOString()
-              file.should.have.properties({
-                path: '/backup',
-                name: 'cat3.jpg',
-                docType: 'file',
-                creationDate: doc.creationDate.toISOString(),
-                lastModification: lastModified,
-                size: 36901
-              })
-              done()
-            })
-          })
-        })
+      await this.pouch.db.put(doc)
+      await this.pouch.db.put(same)
+
+      const created = await this.remote.addFile(doc)
+
+      should.exist(doc.remote._id)
+      should.exist(doc.remote._rev)
+      const file = await cozy.find(FILES_DOCTYPE, created._id)
+      file.should.have.properties({
+        dir_id: backupDir._id,
+        name: 'cat3.jpg',
+        type: 'file',
+        created_at: timestamp.stringify(doc.creationDate),
+        updated_at: timestamp.stringify(doc.lastModification),
+        size: '36901'
       })
     })
   })
