@@ -9,8 +9,11 @@ import { BuilderFactory } from '../builders'
 export const COZY_URL = process.env.COZY_URL || 'http://test.cozy-desktop.local:8080'
 
 if (!process.env.COZY_STACK_TOKEN) {
-  console.log('COZY_STACK_TOKEN is missing. You can generate it with this command')
-  console.log(`export COZY_STACK_TOKEN=$(cozy-stack instances token-oauth "${COZY_URL}" desktop-test io.cozy.files)`)
+  const domain = COZY_URL.replace('http://', '')
+  console.log('COZY_STACK_TOKEN is missing. You can generate it with this command:')
+  console.log(`export COZY_CLIENT_ID=$(cozy-stack instances client-oauth "${domain}" http://localhost/ test github.com/cozy-labs/cozy-desktop)`)
+  console.log(`export COZY_STACK_TOKEN=$(cozy-stack instances token-oauth "${domain}" "$COZY_CLIENT_ID" io.cozy.files)`)
+  console.log(' ')
   throw new Error('No COZY_STACK_TOKEN')
 }
 
@@ -24,7 +27,7 @@ export const cozy = new CozyClient({
 cozy._authstate = 3
 cozy._authcreds = Promise.resolve({
   token: {
-    toAuthHeader () {  'Bearer ' + process.env.COZY_STACK_TOKEN }
+    toAuthHeader () { return 'Bearer ' + process.env.COZY_STACK_TOKEN }
   }
 })
 
