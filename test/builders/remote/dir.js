@@ -3,6 +3,7 @@
 import { Cozy } from 'cozy-client-js'
 
 import RemoteBaseBuilder from './base'
+import { jsonApiToRemoteDoc } from '../../../src/remote/document'
 
 import type { RemoteDoc } from '../../../src/remote/document'
 
@@ -23,7 +24,7 @@ export default class RemoteDirBuilder extends RemoteBaseBuilder {
   }
 
   async build (): Promise<RemoteDoc> {
-    return this.toRemoteMetadata(
+    return jsonApiToRemoteDoc(
       await this.cozy.files.createDirectory(this.options)
     )
   }

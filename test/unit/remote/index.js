@@ -53,7 +53,7 @@ describe('Remote', function () {
       builders.file().named('pillow.jpg').contentType('image/jpeg')
         .dataFromFile(fixture).build()
         .then(binary => {
-          binary.md5sum.should.equal(expectedChecksum)
+          should(binary.md5sum).equal(expectedChecksum)
           this.remote.createReadStream(conversion.createMetadata(binary), function (err, stream) {
             if (err) done(err)
             should.not.exist(err)

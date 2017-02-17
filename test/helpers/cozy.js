@@ -1,7 +1,7 @@
+/* @flow */
 /* eslint-env mocha */
 
 import { Client as CozyClient } from 'cozy-client-js'
-console.log(CozyClient)
 
 import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } from '../../src/remote/constants'
 import { BuilderFactory } from '../builders'
@@ -28,7 +28,7 @@ export const cozy = new CozyClient({
 cozy._authstate = 3
 cozy._authcreds = Promise.resolve({
   token: {
-    toAuthHeader () { return 'Bearer ' + process.env.COZY_STACK_TOKEN }
+    toAuthHeader () { return 'Bearer ' + (process.env.COZY_STACK_TOKEN || '') }
   }
 })
 
