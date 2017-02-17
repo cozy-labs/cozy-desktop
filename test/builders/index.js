@@ -1,3 +1,7 @@
+/* @flow */
+
+import { Cozy } from 'cozy-client-js'
+
 import RemoteDirBuilder from './remote/dir'
 import RemoteFileBuilder from './remote/file'
 import StreamBuilder from './stream'
@@ -10,19 +14,21 @@ import StreamBuilder from './stream'
 //     this.builders.file()...
 //
 export class BuilderFactory {
-  constructor (cozy) {
+  cozy: Cozy
+
+  constructor (cozy: Cozy) {
     this.cozy = cozy
   }
 
-  dir () {
+  dir (): RemoteDirBuilder {
     return new RemoteDirBuilder(this.cozy)
   }
 
-  file () {
+  file (): RemoteFileBuilder {
     return new RemoteFileBuilder(this.cozy)
   }
 
-  stream () {
+  stream (): StreamBuilder {
     return new StreamBuilder()
   }
 }
