@@ -21,13 +21,13 @@
     "cozy"
   ],
   "files": [
-	  "bin/cozy-desktop",
-	  "doc/",
-	  "lib/",
-	  "CHANGELOG.md",
-	  "README.md",
-	  "LICENSE",
-	  "package.json"
+    "bin/cozy-desktop",
+    "doc/",
+    "lib/",
+    "CHANGELOG.md",
+    "README.md",
+    "LICENSE",
+    "package.json"
   ],
   "scripts": {
     "bootstrap-couch": "npm run bootstrap-couch-container && npm run bootstrap-couch-system-tables && docker stop cozy-desktop-couch",
@@ -59,7 +59,6 @@
     "chokidar": "1.6.1",
     "commander": "2.9.0",
     "cozy-client-js": "0.1.0",
-    "cozy-device-sdk": "1.4.0",
     "eslint": "^3.15.0",
     "fs-extra": "^2.0.0",
     "isomorphic-fetch": "^2.2.1",

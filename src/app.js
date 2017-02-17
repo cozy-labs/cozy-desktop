@@ -3,9 +3,6 @@ import os from 'os'
 import path from 'path'
 import readdirp from 'readdirp'
 import url from 'url'
-// TODO: Remove cozy-device-sdk dependency
-import { device } from 'cozy-device-sdk'
-import fetch from 'node-fetch'
 import printit from 'printit'
 let log = printit({
   prefix: 'Cozy Desktop  ',
@@ -51,7 +48,7 @@ class App {
   }
 
   // basePath is the directory where the config and pouch are saved
-  constructor (basePath, fetch_ = fetch) {
+  constructor (basePath) {
     this.lang = 'fr'
     if (basePath == null) { basePath = os.homedir() }
     basePath = path.resolve(basePath)
@@ -59,15 +56,6 @@ class App {
     this.config = new Config(this.basePath)
     this.pouch = new Pouch(this.config)
     this.events = new EventEmitter()
-    this.fetch = fetch_
-  }
-
-  // This method is here to be surcharged by the UI
-  // to ask its passphrase to the user
-  //
-  // callback is a function that takes two parameters: error and passphrase
-  askPassphrase (callback) {
-    callback(new Error('Not implemented'), null)
   }
 
   // This method is here to be surcharged by the UI
@@ -113,32 +101,33 @@ class App {
 
   // Check that the URL belongs to a cozy
   async pingCozy (cozyUrl) {
-    let parsed = this.parseCozyUrl(cozyUrl)
-    if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) {
-      let err = new Error('Your URL looks invalid')
-      log.warn(err)
-      return Promise.reject(err)
-    }
-    cozyUrl = url.format(parsed)
+    // FIXME
+    // let parsed = this.parseCozyUrl(cozyUrl)
+    // if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) {
+    //   let err = new Error('Your URL looks invalid')
+    //   log.warn(err)
+    //   return Promise.reject(err)
+    // }
+    // cozyUrl = url.format(parsed)
 
-    let resp, body
-    resp = await this.fetch(cozyUrl + 'status')
+    // let resp, body
+    // resp = await this.fetch(cozyUrl + 'status')
 
-    if (resp.status !== 200) {
-      throw new Error(`Unexpected response status code: ${resp.status}`)
-    }
+    // if (resp.status !== 200) {
+    //   throw new Error(`Unexpected response status code: ${resp.status}`)
+    // }
 
-    body = await resp.json()
-    let dumpBody = () => JSON.stringify(body)
+    // body = await resp.json()
+    // let dumpBody = () => JSON.stringify(body)
 
-    switch (body.message) {
-      case 'OK':
-        return cozyUrl
-      case 'KO':
-        throw new Error(`Cozy is KO: ${dumpBody()}`)
-      default:
-        throw new Error(`Cannot extract message: ${dumpBody()}`)
-    }
+    // switch (body.message) {
+    //   case 'OK':
+    //     return cozyUrl
+    //   case 'KO':
+    //     throw new Error(`Cozy is KO: ${dumpBody()}`)
+    //   default:
+    //     throw new Error(`Cannot extract message: ${dumpBody()}`)
+    // }
   }
 
   // Register a device on the remote cozy
@@ -210,42 +199,44 @@ class App {
   // Unregister current device from remote Cozy and then remove remote from
   // the config file
   removeRemote (deviceName, callback) {
-    if (callback == null) { callback = function () {} }
-    let conf = this.config.getDevice()
-    let cozyUrl = conf.url
-    let { passphrase } = conf
-    device.unregisterDevice(cozyUrl, deviceName, passphrase, err => {
-      if (err && (err.message !== 'Request unauthorized')) {
-        log.error('An error occured while unregistering your device.')
-        log.error(err)
-        callback(err)
-      } else {
-        log.info('Current device properly removed from remote cozy.')
-        fs.remove(this.basePath, callback)
-      }
-    })
+    // FIXME
+    // if (callback == null) { callback = function () {} }
+    // let conf = this.config.getDevice()
+    // let cozyUrl = conf.url
+    // let { passphrase } = conf
+    // device.unregisterDevice(cozyUrl, deviceName, passphrase, err => {
+    //   if (err && (err.message !== 'Request unauthorized')) {
+    //     log.error('An error occured while unregistering your device.')
+    //     log.error(err)
+    //     callback(err)
+    //   } else {
+    //     log.info('Current device properly removed from remote cozy.')
+    //     fs.remove(this.basePath, callback)
+    //   }
+    // })
   }
 
   // Send an issue by mail to the support
   sendMailToSupport (content, callback) {
-    let conf = this.config.getDevice()
-    let cozyUrl = conf.url
-    let { deviceName } = conf
-    let { passphrase } = conf
-    let mail = {
-      to: 'log-desktop@cozycloud.cc',
-      subject: 'Ask support for cozy-desktop',
-      content
-    }
-    if (this.logfile) {
-      let attachment = {
-        content: fs.readFileSync(this.logfile, 'utf-8'),
-        filename: path.basename(this.logfile),
-        contentType: 'application/text'
-      }
-      mail.attachments = [attachment]
-    }
-    device.sendMailFromUser(cozyUrl, deviceName, passphrase, mail, callback)
+    // FIXME
+    // let conf = this.config.getDevice()
+    // let cozyUrl = conf.url
+    // let { deviceName } = conf
+    // let { passphrase } = conf
+    // let mail = {
+    //   to: 'log-desktop@cozycloud.cc',
+    //   subject: 'Ask support for cozy-desktop',
+    //   content
+    // }
+    // if (this.logfile) {
+    //   let attachment = {
+    //     content: fs.readFileSync(this.logfile, 'utf-8'),
+    //     filename: path.basename(this.logfile),
+    //     contentType: 'application/text'
+    //   }
+    //   mail.attachments = [attachment]
+    // }
+    // device.sendMailFromUser(cozyUrl, deviceName, passphrase, mail, callback)
   }
 
   // Load ignore rules
