@@ -255,8 +255,7 @@ class App {
 
   // Start database sync process and setup file change watcher
   synchronize (mode, callback) {
-    let conf = this.config.getClient()
-    if ((conf.deviceName != null) && (conf.url != null) && (conf.path != null)) {
+    if (this.config.hasClient()) {
       this.instanciate()
       this.startSync(mode, callback)
     } else {

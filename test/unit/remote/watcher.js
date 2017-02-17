@@ -22,12 +22,20 @@ describe('RemoteWatcher', function () {
   let clock
   const tick = () => clock.tick(HEARTBEAT)
 
-  before(configHelpers.createConfig)
+  before('instanciate config', configHelpers.createConfig)
+  before('register OAuth client', configHelpers.registerClient)
   before(pouchHelpers.createDatabase)
   before(function instanciateRemoteWatcher () {
     this.prep = {invalidPath: Prep.prototype.invalidPath}
     this.config.setCozyUrl(COZY_URL)
     this.remoteCozy = new RemoteCozy(this.config)
+    // FIXME: Temporary hack to make cozy-client-js think it has OAuth tokens
+    this.remoteCozy.client._authstate = 3
+    this.remoteCozy.client._authcreds = Promise.resolve({
+      token: {
+        toAuthHeader () { return 'Bearer ' + (process.env.COZY_STACK_TOKEN || '') }
+      }
+    })
     this.watcher = new RemoteWatcher(this.pouch, this.prep, this.remoteCozy)
   })
   beforeEach(() => { clock = sinon.useFakeTimers() })

@@ -13,6 +13,23 @@ export default {
     this.config.setSyncPath(this.syncPath)
   },
 
+  registerClient () {
+    this.config.config.creds = {
+      client: {
+        clientID: process.env.COZY_CLIENT_ID || 'desktop',
+        clientName: 'desktop',
+        softwareID: 'cozy-desktop',
+        redirectURI: 'http://localhost/',
+      },
+      token: {
+        tokenType: 'bearer',
+        accessToken: process.env.COZY_STACK_TOKEN,
+        refreshToken: process.env.COZY_STACK_TOKEN,
+        scope: 'io.cozy.files'
+      }
+    }
+  },
+
   cleanConfig () {
     return del.sync(this.syncPath)
   }

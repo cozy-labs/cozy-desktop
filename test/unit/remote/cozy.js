@@ -16,6 +16,7 @@ describe('RemoteCozy', function () {
   before(() => cozyStackDouble.start())
   beforeEach(deleteAll)
   before('instanciate config', configHelpers.createConfig)
+  before('register OAuth client', configHelpers.registerClient)
   after('clean config directory', configHelpers.cleanConfig)
   after(() => cozyStackDouble.stop())
   afterEach(() => cozyStackDouble.clearStub())
@@ -25,6 +26,13 @@ describe('RemoteCozy', function () {
   beforeEach(function () {
     this.config.setCozyUrl(COZY_URL)
     remoteCozy = new RemoteCozy(this.config)
+    // FIXME: Temporary hack to make cozy-client-js think it has OAuth tokens
+    remoteCozy.client._authstate = 3
+    remoteCozy.client._authcreds = Promise.resolve({
+      token: {
+        toAuthHeader () { return 'Bearer ' + (process.env.COZY_STACK_TOKEN || '') }
+      }
+    })
   })
 
   describe('changes', function () {

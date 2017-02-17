@@ -33,7 +33,6 @@ class Config {
 
   // Transform the config to a JSON string
   toJSON () {
-    console.log('toJSON', this.config)
     return JSON.stringify(this.config, null, 2)
   }
 

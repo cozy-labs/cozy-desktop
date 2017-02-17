@@ -22,6 +22,7 @@ import {
 
 describe('Remote', function () {
   before('instanciate config', configHelpers.createConfig)
+  before('register OAuth client', configHelpers.registerClient)
   before('instanciate pouch', pouchHelpers.createDatabase)
   // before('start couch server', couchHelpers.startServer)
   // before('instanciate couch', couchHelpers.createCouchClient)
