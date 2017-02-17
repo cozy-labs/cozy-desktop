@@ -5,6 +5,7 @@ import * as stream from 'stream'
 import { Cozy } from 'cozy-client-js'
 
 import RemoteBaseBuilder from './base'
+import { jsonApiToRemoteDoc } from '../../../src/remote/document'
 
 import type { RemoteDoc } from '../../../src/remote/document'
 
@@ -45,7 +46,7 @@ export default class RemoteFileBuilder extends RemoteBaseBuilder {
   }
 
   async build (): Promise<RemoteDoc> {
-    return this.toRemoteMetadata(
+    return jsonApiToRemoteDoc(
       await this.cozy.files.create(this._data, this.options)
     )
   }
