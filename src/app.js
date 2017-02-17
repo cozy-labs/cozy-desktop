@@ -243,7 +243,7 @@ class App {
   loadIgnore () {
     let ignored
     try {
-      let syncPath = this.config.getDevice().path
+      let syncPath = this.config.getSyncPath()
       ignored = fs.readFileSync(path.join(syncPath, '.cozyignore'))
       ignored = ignored.toString().split('\n')
     } catch (error) {
@@ -265,7 +265,7 @@ class App {
 
   // Start the synchronization
   startSync (mode, callback) {
-    this.config.setMode(mode)
+    this.config.saveMode(mode)
     log.info('Run first synchronisation...')
     this.sync.start(mode, err => {
       this.sync.stop(function () {})
@@ -289,7 +289,7 @@ class App {
 
   // Start database sync process and setup file change watcher
   synchronize (mode, callback) {
-    let conf = this.config.getDevice()
+    let conf = this.config.getClient()
     if ((conf.deviceName != null) && (conf.url != null) && (conf.path != null)) {
       this.instanciate()
       this.startSync(mode, callback)
@@ -309,7 +309,7 @@ class App {
   walkFiles (args, callback) {
     this.loadIgnore()
     let options = {
-      root: this.config.getDevice().path,
+      root: this.config.getSyncPath()
       directoryFilter: '!.cozy-desktop',
       entryType: 'both'
     }

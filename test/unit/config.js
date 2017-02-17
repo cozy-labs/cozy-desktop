@@ -11,111 +11,52 @@ describe('Config', function () {
   before('instanciate config', configHelpers.createConfig)
   after('clean config directory', configHelpers.cleanConfig)
 
-  describe('saveConfig', () =>
+  describe('persist', function () {
     it('saves last changes made on the config', function () {
-      this.config.devices['new-cozy2'] = {
-        deviceName: 'new-cozy2',
-        passphrase: 'passphrase',
-        url: 'none'
-      }
-      this.config.save()
+      this.config.setCozyUrl('http://cozy.local:8080/')
+      this.config.persist()
       let conf = new Config(path.join(this.syncPath, '.cozy-desktop'))
-      should.exist(conf.devices['new-cozy2'])
-    })
-  )
-
-  describe('getDefaultDeviceName', function () {
-    it('returns devicename from args', function () {
-      process.argv = ['arg1', '-d', 'test']
-      let name = this.config.getDefaultDeviceName()
-      name.should.equal('test')
-    })
-    it('returns default devicename when no args', function () {
-      process.argv = []
-      let name = this.config.getDefaultDeviceName()
-      name.should.equal('tester')
+      conf.getCozyUrl().should.equal('http://cozy.local:8080/')
     })
   })
 
-  describe('getDevice', () =>
-    it('returns config that matches given device name', function () {
-      let device = this.config.getDevice('tester')
-      should.exist(device.deviceName)
-      device.deviceName.should.equal('tester')
+  describe('SyncPath', function () {
+    it('returns the set sync path', function () {
+      this.config.setSyncPath('/path/to/sync/dir')
+      this.config.getSyncPath().should.equal('/path/to/sync/dir')
     })
-  )
+  })
 
-  describe('updateSync', () =>
-    it('updates config from a javascript object', function () {
-      this.config.updateSync({
-        deviceName: 'tester',
-        url: 'somewhere'
-      })
-      this.config.devices['tester'].url.should.equal('somewhere')
+  describe('CozyUrl', function () {
+    it('returns the set Cozy URL', function () {
+      this.config.setCozyUrl('https://cozy.example.com')
+      this.config.getCozyUrl().should.equal('https://cozy.example.com')
     })
-  )
+  })
 
-  describe('addRemoteCozy', () =>
-    it('adds a new entry to the config file', function () {
-      this.config.addRemoteCozy({
-        deviceName: 'new-cozy',
-        url: 'http://something.com',
-        path: '/myfolder'
-      })
-      let device = this.config.getDevice('new-cozy')
-      should.exist(device.deviceName)
-      device.deviceName.should.equal('new-cozy')
+  describe('Client', function () {
+    it('can set a client', function () {
+      this.config.saveClient({ clientName: 'test' })
+      this.config.hasClient().should.be.true()
+      this.config.getClient().clientName.should.equal('test')
     })
-  )
 
-  describe('removeRemoteCozy', () =>
-    it('removes an entry to the config file', function () {
-      this.config.removeRemoteCozy('tester')
-      should.not.exist(this.config.devices['tester'])
+    it('has no client after a reset', function () {
+      this.config.reset()
+      this.config.hasClient().should.be.false()
     })
-  )
+  })
 
-  describe('getUrl', () =>
-    it('gives remote Cozy url', function () {
-      this.config.getUrl().should.equal('nonecozy')
-    })
-  )
-
-  describe('setMode', function () {
+  describe('saveMode', function () {
     it('sets the pull or push mode', function () {
-      this.config.setMode('push')
-      let device = this.config.getDevice()
-      device.mode.should.equal('push')
+      this.config.saveMode('push')
+      this.config.config.mode.should.equal('push')
     })
 
     it('throws an error for incompatible mode', function () {
-      this.config.setMode('push')
-      should.throws(() => this.config.setMode('pull'), /Incompatible mode/)
-      should.throws(() => this.config.setMode('full'), /Incompatible mode/)
-    })
-  })
-
-  describe('setInsecure', () =>
-    it('sets the insecure flag', function () {
-      this.config.setInsecure(true)
-      let device = this.config.getDevice()
-      device.insecure.should.be.true()
-    })
-  )
-
-  describe('augmentCouchOptions', function () {
-    it('enables invalid certificates when insecure', function () {
-      this.config.setInsecure(true)
-      let options = this.config.augmentCouchOptions({})
-      should.exist(options.ajax)
-      options.ajax.rejectUnauthorized.should.be.false()
-      options.ajax.requestCert.should.be.true()
-      options.ajax.agent.should.be.false()
-    })
-    it('enables invalid certificates when insecure', function () {
-      this.config.setInsecure(false)
-      let options = this.config.augmentCouchOptions({})
-      should.not.exist(options.ajax)
+      this.config.saveMode('push')
+      should.throws(() => this.config.saveMode('pull'), /Incompatible mode/)
+      should.throws(() => this.config.saveMode('full'), /Incompatible mode/)
     })
   })
 })

@@ -3,7 +3,7 @@ import { start } from 'repl'
 import App from '../app'
 
 const app = new App(process.env.COZY_DESKTOP_DIR)
-const config = app.config.getDevice()
+const config = app.config.config
 let cozy
 
 console.log(`Welcome to the Cozy Desktop REPL!
@@ -12,7 +12,7 @@ The following objects are available:
   app     The cozy-desktop app
   config  Your active cozy-desktop configuration`)
 
-if ((config.deviceName != null) && (config.url != null) && (config.path != null)) {
+if (config.url) {
   app.instanciate()
   cozy = app.remote.watcher.remoteCozy.client
   console.log(`  cozy    A cozy-client-js instance, set up with your config
