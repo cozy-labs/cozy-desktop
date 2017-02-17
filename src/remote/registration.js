@@ -2,7 +2,7 @@ import os from 'os'
 import http from 'http'
 import opn from 'opn'
 
-import { Client as CozyClient, MemoryStorage } from 'cozy-client-js'
+import { Client as CozyClient } from 'cozy-client-js'
 
 const PORT_NUMBER = 3344
 

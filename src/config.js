@@ -3,7 +3,7 @@ import path from 'path'
 
 // Config can keep some configuration parameters in a JSON file,
 // like the devices credentials or the mount path
-class Config {
+export default class Config {
 
   // Create config file if it doesn't exist.
   constructor (basePath) {
@@ -79,11 +79,11 @@ class Config {
   // It will throw an exception if the mode is not compatible with the last
   // mode used!
   saveMode (mode) {
-    let old = this.config.mode
+    const old = this.config.mode
     if (old === mode) {
       return true
     } else if (old) {
-      throw new Error('Incompatible mode')
+      throw new Error(`Once you set mode to "${old}", you cannot switch to "${mode}"`)
     }
     this.config.mode = mode
     this.persist()
@@ -111,5 +111,3 @@ class Config {
     return Promise.resolve()
   }
 }
-
-export default Config

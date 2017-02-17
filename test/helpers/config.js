@@ -19,7 +19,7 @@ export default {
         clientID: process.env.COZY_CLIENT_ID || 'desktop',
         clientName: 'desktop',
         softwareID: 'cozy-desktop',
-        redirectURI: 'http://localhost/',
+        redirectURI: 'http://localhost/'
       },
       token: {
         tokenType: 'bearer',
