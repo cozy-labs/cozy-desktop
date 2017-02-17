@@ -26,7 +26,8 @@ describe('RemoteWatcher', function () {
   before(pouchHelpers.createDatabase)
   before(function instanciateRemoteWatcher () {
     this.prep = {invalidPath: Prep.prototype.invalidPath}
-    this.remoteCozy = new RemoteCozy(COZY_URL)
+    this.config.setCozyUrl(COZY_URL)
+    this.remoteCozy = new RemoteCozy(this.config)
     this.watcher = new RemoteWatcher(this.pouch, this.prep, this.remoteCozy)
   })
   beforeEach(() => { clock = sinon.useFakeTimers() })

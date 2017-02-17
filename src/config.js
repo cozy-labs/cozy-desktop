@@ -59,12 +59,12 @@ class Config {
 
   // Return true if a device has been configured
   hasClient () {
-    return !!this.config.creds.client
+    return !!this.config.creds
   }
 
   // Return config related to the OAuth client
   getClient () {
-    if (!this.config.creds.client) {
+    if (!this.config.creds) {
       throw new Error(`Device not configured`)
     }
     return this.config.creds.client
@@ -72,7 +72,7 @@ class Config {
 
   // Set the remote configuration
   setClient (options) {
-    this.config.creds.client = options
+    this.config.creds = { client: options }
     this.persist()
   }
 
