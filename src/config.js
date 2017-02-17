@@ -1,10 +1,5 @@
 import fs from 'fs-extra'
 import path from 'path'
-import urlParser from 'url'
-let log = require('printit')({
-  prefix: 'Config        ',
-  date: true
-})
 
 // Config can keep some configuration parameters in a JSON file,
 // like the devices credentials or the mount path
@@ -38,6 +33,7 @@ class Config {
 
   // Transform the config to a JSON string
   toJSON () {
+    console.log('toJSON', this.config)
     return JSON.stringify(this.config, null, 2)
   }
 
@@ -63,20 +59,20 @@ class Config {
 
   // Return true if a device has been configured
   hasClient () {
-    return !!this.config.client
+    return !!this.config.creds.client
   }
 
   // Return config related to the OAuth client
   getClient () {
-    if (!this.config.client) {
+    if (!this.config.creds.client) {
       throw new Error(`Device not configured`)
     }
-    return this.config.client
+    return this.config.creds.client
   }
 
   // Set the remote configuration
-  saveClient (options) {
-    this.config.client = options
+  setClient (options) {
+    this.config.creds.client = options
     this.persist()
   }
 
@@ -94,25 +90,25 @@ class Config {
     this.persist()
   }
 
-  ///////////////////////////////////////////////////////////
   // Implement the Storage interface for cozy-client-js oauth
 
   save (key, value) {
-    this.config.credentials[key] = value
+    this.config[key] = value
     return Promise.resolve(value)
   }
 
   load (key) {
-    return Promise.resolve(this.config.credentials[key])
+    return Promise.resolve(this.config[key])
   }
 
   delete (key) {
-    const deleted = delete this.config.credentials[key]
+    const deleted = delete this.config[key]
     return Promise.resolve(deleted)
   }
 
   clear () {
-    this.config.credentials = Object.create(null)
+    delete this.config.creds
+    delete this.config.state
     return Promise.resolve()
   }
 }

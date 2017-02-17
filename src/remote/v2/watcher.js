@@ -1,5 +1,4 @@
 import async from 'async'
-import { filteredReplication as filterSDK } from 'cozy-device-sdk'
 let log = require('printit')({
   prefix: 'Remote watcher',
   date: true
@@ -95,7 +94,7 @@ class RemoteWatcher {
         })
       } else {
         this.changes = this.couch.client.changes({
-          filter: filterSDK.getFilterName(this.deviceName),
+          // filter: filterSDK.getFilterName(this.deviceName),
           live: options.live,
           retry: true,
           since: seq,

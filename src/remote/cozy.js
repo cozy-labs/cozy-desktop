@@ -1,4 +1,4 @@
-/* @flow */
+/* @flow weak */
 
 import { Client as CozyClient } from 'cozy-client-js'
 import path from 'path'
@@ -31,9 +31,9 @@ export default class RemoteCozy {
   url: string
   client: CozyClient
 
-  constructor (url: string) {
-    this.url = url
-    this.client = new CozyClient({cozyURL: url, oauth: {}})
+  constructor (config) {
+    this.url = config.getCozyUrl()
+    this.client = new CozyClient({cozyURL: this.url, oauth: {}})
     // FIXME: Temporary hack to make cozy-client-js think it has OAuth tokens
     this.client._authstate = 3
     this.client._authcreds = Promise.resolve({

@@ -2,7 +2,7 @@
   "name": "cozy-desktop",
   "version": "0.16.0",
   "description": "File Synchronization Client for Cozy Cloud",
-  "homepage": "https://github.com/cozy-labs/cozy-desktop",
+  "homepage": "https://docs.cozy.io/en/mobile/desktop.html",
   "author": "Cozy Cloud <contact@cozycloud.cc> (https://cozycloud.cc/)",
   "license": "AGPL-3.0",
   "bugs": {
@@ -13,6 +13,7 @@
     "cozy-desktop": "bin/cozy-desktop"
   },
   "repository": "git://github.com/cozy-labs/cozy-desktop.git",
+  "logo": "https://raw.githubusercontent.com/cozy-labs/cozy-desktop/master/gui/app/images/icon.png",
   "keywords": [
     "desktop",
     "data",
@@ -70,6 +71,7 @@
     "mime": "1.3.4",
     "node-fetch": "^1.6.3",
     "node-uuid": "1.4.7",
+    "opn": "^4.0.2",
     "pouchdb": "6.1.2",
     "printit": "0.1.20",
     "progress": "1.1.8",

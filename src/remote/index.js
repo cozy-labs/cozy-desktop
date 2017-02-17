@@ -24,11 +24,8 @@ export default class Remote {
   remoteCozy: RemoteCozy
 
   constructor (config, prep, pouch) {
-    const deviceName = config.getDefaultDeviceName()
-    const device = config.getDevice(deviceName)
-
     this.pouch = pouch
-    this.remoteCozy = new RemoteCozy(device.url)
+    this.remoteCozy = new RemoteCozy(config)
     this.watcher = new Watcher(pouch, prep, this.remoteCozy)
   }
 

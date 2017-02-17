@@ -20,23 +20,7 @@ import Prep from './prep'
 import Local from './local'
 import Remote from './remote'
 import Sync from './sync'
-
-// TODO: App.Permissions v3
-// eslint-disable-next-line no-unused-vars
-let Permissions = {
-  'File': {
-    'description': 'Useful to synchronize your files'
-  },
-  'Folder': {
-    'description': 'Useful to synchronize your folders'
-  },
-  'Binary': {
-    'description': 'Useful to synchronize the content of your files'
-  },
-  'send mail from user': {
-    'description': 'Useful to send issues by mail to the cozy team'
-  }
-}
+import Registration from './remote/registration'
 
 // App is the entry point for the CLI and GUI.
 // They both can do actions and be notified by events via an App instance.
@@ -130,70 +114,52 @@ class App {
     // }
   }
 
-  // Register a device on the remote cozy
-  registerRemote (cozyUrl, deviceName, callback) {
+  // Return a promise for registering a device on the remote cozy
+  registerRemote (cozyUrl, pkg, deviceName) {
     let parsed = this.parseCozyUrl(cozyUrl)
     cozyUrl = url.format(parsed)
     if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) {
       let err = new Error(`Your URL looks invalid: ${cozyUrl}`)
       log.warn(err)
-      callback(err)
-      return
+      throw err
     }
-    if (deviceName == null) { deviceName = os.hostname() || 'desktop' }
-    this.askPassphrase(function (_, passphrase) {
-      // TODO: App.registerRemote() v3
-      callback(null, {deviceName, passphrase})
-    })
+    const registration = new Registration(cozyUrl, this.config)
+    return registration.process(pkg, deviceName)
   }
 
   // Save the config with all the informations for synchonization
-  saveConfig (cozyUrl, syncPath, deviceName, passphrase, callback) {
-    fs.ensureDir(syncPath, err => {
-      if (err) {
-        callback(err)
-      } else {
-        let options = {
-          path: path.resolve(syncPath),
-          url: cozyUrl,
-          deviceName,
-          passphrase
-        }
-        this.config.addRemoteCozy(options)
-        log.info('The remote Cozy has properly been configured ' +
-                 'to work with current device.')
-        callback(null)
-      }
-    })
+  saveConfig (cozyUrl, syncPath) {
+    fs.ensureDirSync(syncPath)
+    this.config.setCozyUrl(cozyUrl)
+    this.config.setSyncPath(syncPath)
+    this.config.persist()
+    log.info('The remote Cozy has properly been configured ' +
+             'to work with current device.')
   }
 
   // Register current device to remote Cozy and then save related informations
   // to the config file (used by CLI, not GUI)
-  addRemote (cozyUrl, syncPath, deviceName, callback) {
-    this.registerRemote(cozyUrl, deviceName, (err, credentials) => {
-      if (err) {
-        log.error('An error occured while registering your device.')
-        let parsed = this.parseCozyUrl(cozyUrl)
-        if (err.code === 'ENOTFOUND') {
-          log.warn(`The DNS resolution for ${parsed.hostname} failed.`)
-          log.warn('Are you sure the domain is OK?')
-        } else if (err === 'Bad credentials') {
-          log.warn(err)
-          log.warn('Are you sure there are no typo on the passphrase?')
-        } else {
-          log.error(err)
-          if (parsed.protocol === 'http:') {
-            log.warn('Did you try with an httpS URL?')
-          }
-        }
-        __guardFunc__(callback, f => f(err))
+  async addRemote (cozyUrl, syncPath, pkg, deviceName) {
+    try {
+      const registered = await this.registerRemote(cozyUrl, pkg, deviceName)
+      log.info(`Device ${registered.client.clientName} has been added to ${cozyUrl}`)
+      this.saveConfig(cozyUrl, syncPath, registered.client)
+    } catch (err) {
+      log.error('An error occured while registering your device.')
+      let parsed = this.parseCozyUrl(cozyUrl)
+      if (err.code === 'ENOTFOUND') {
+        log.warn(`The DNS resolution for ${parsed.hostname} failed.`)
+        log.warn('Are you sure the domain is OK?')
+      } else if (err === 'Bad credentials') {
+        log.warn(err)
+        log.warn('Are you sure there are no typo on the passphrase?')
       } else {
-        ({ deviceName } = credentials)
-        let { passphrase } = credentials
-        log.info(`Device ${deviceName} has been added to ${cozyUrl}`)
-        this.saveConfig(cozyUrl, syncPath, deviceName, passphrase, err => __guardFunc__(callback, f1 => f1(err, credentials)))
+        log.error(err)
+        if (parsed.protocol === 'http:') {
+          log.warn('Did you try with an httpS URL?')
+        }
       }
-    })
+    }
   }
 
   // Unregister current device from remote Cozy and then remove remote from
@@ -309,7 +275,7 @@ class App {
   walkFiles (args, callback) {
     this.loadIgnore()
     let options = {
-      root: this.config.getSyncPath()
+      root: this.config.getSyncPath(),
       directoryFilter: '!.cozy-desktop',
       entryType: 'both'
     }

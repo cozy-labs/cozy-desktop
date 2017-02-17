@@ -36,7 +36,7 @@ describe('Config', function () {
 
   describe('Client', function () {
     it('can set a client', function () {
-      this.config.saveClient({ clientName: 'test' })
+      this.config.setClient({ clientName: 'test' })
       this.config.hasClient().should.be.true()
       this.config.getClient().clientName.should.equal('test')
     })
