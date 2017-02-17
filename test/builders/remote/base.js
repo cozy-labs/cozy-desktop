@@ -17,17 +17,17 @@ export default class RemoteBaseBuilder {
     }
   }
 
-  inDir (dir: RemoteDoc): RemoteBaseBuilder {
+  inDir (dir: RemoteDoc): this {
     this.options.dirID = dir._id
     return this
   }
 
-  inRootDir (): RemoteBaseBuilder {
+  inRootDir (): this {
     this.options.dirID = ROOT_DIR_ID
     return this
   }
 
-  named (name: string): RemoteBaseBuilder {
+  named (name: string): this {
     this.options.name = name
     return this
   }
