@@ -19,7 +19,7 @@ class Local {
     this.prep = prep
     this.pouch = pouch
     this.events = events
-    this.syncPath = config.getSyncPath()
+    this.syncPath = config.syncPath
     this.tmpPath = path.join(this.syncPath, '.cozy-desktop')
     this.watcher = new Watcher(this.syncPath, this.prep, this.pouch)
     this.other = null

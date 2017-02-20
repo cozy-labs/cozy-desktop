@@ -31,7 +31,7 @@ let sync = function (mode, args) {
   if (args.logfile != null) {
     app.writeLogsTo(args.logfile)
   }
-  if (!app.config.hasClient()) {
+  if (!app.config.isValid()) {
     log.log('Your configuration file seems invalid.')
     log.log('Have you added a remote cozy?')
     return process.exit(1)

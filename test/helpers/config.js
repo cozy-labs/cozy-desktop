@@ -10,7 +10,7 @@ export default {
     this.syncPath = path.resolve(`${parent}/${+new Date()}`)
     fs.ensureDirSync(this.syncPath)
     this.config = new Config(path.join(this.syncPath, '.cozy-desktop'))
-    this.config.setSyncPath(this.syncPath)
+    this.config.syncPath = this.syncPath
   },
 
   registerClient () {

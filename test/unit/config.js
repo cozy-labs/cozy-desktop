@@ -14,37 +14,37 @@ describe('Config', function () {
   describe('persist', function () {
     it('saves last changes made on the config', function () {
       const url = 'http://cozy.local:8080/'
-      this.config.setCozyUrl(url)
+      this.config.cozyUrl = url
       this.config.persist()
       let conf = new Config(path.join(this.syncPath, '.cozy-desktop'))
-      should(conf.getCozyUrl()).equal(url)
+      should(conf.cozyUrl).equal(url)
     })
   })
 
   describe('SyncPath', function () {
     it('returns the set sync path', function () {
-      this.config.setSyncPath('/path/to/sync/dir')
-      should(this.config.getSyncPath()).equal('/path/to/sync/dir')
+      this.config.syncPath = '/path/to/sync/dir'
+      should(this.config.syncPath).equal('/path/to/sync/dir')
     })
   })
 
   describe('CozyUrl', function () {
     it('returns the set Cozy URL', function () {
-      this.config.setCozyUrl('https://cozy.example.com')
-      should(this.config.getCozyUrl()).equal('https://cozy.example.com')
+      this.config.cozyUrl = 'https://cozy.example.com'
+      should(this.config.cozyUrl).equal('https://cozy.example.com')
     })
   })
 
   describe('Client', function () {
     it('can set a client', function () {
-      this.config.setClient({ clientName: 'test' })
-      should(this.config.hasClient()).be.true()
-      should(this.config.getClient().clientName).equal('test')
+      this.config.client = { clientName: 'test' }
+      should(this.config.isValid()).be.true()
+      should(this.config.client.clientName).equal('test')
     })
 
     it('has no client after a reset', function () {
       this.config.reset()
-      should(this.config.hasClient()).be.false()
+      should(this.config.isValid()).be.false()
     })
   })
 

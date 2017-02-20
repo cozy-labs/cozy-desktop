@@ -27,7 +27,7 @@ describe('RemoteWatcher', function () {
   before(pouchHelpers.createDatabase)
   before(function instanciateRemoteWatcher () {
     this.prep = {invalidPath: Prep.prototype.invalidPath}
-    this.config.setCozyUrl(COZY_URL)
+    this.config.cozyUrl = COZY_URL
     this.remoteCozy = new RemoteCozy(this.config)
     // FIXME: Temporary hack to make cozy-client-js think it has OAuth tokens
     this.remoteCozy.client._authstate = 3

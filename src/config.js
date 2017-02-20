@@ -37,32 +37,32 @@ export default class Config {
   }
 
   // Get the path on the local file system of the synchronized folder
-  getSyncPath () {
+  get syncPath () {
     return this.config.path
   }
 
   // Set the path on the local file system of the synchronized folder
-  setSyncPath (path) {
+  set syncPath (path) {
     this.config.path = path
   }
 
   // Return the URL of the cozy instance
-  getCozyUrl () {
+  get cozyUrl () {
     return this.config.url
   }
 
   // Set the URL of the cozy instance
-  setCozyUrl (url) {
+  set cozyUrl (url) {
     this.config.url = url
   }
 
   // Return true if a device has been configured
-  hasClient () {
-    return !!this.config.creds
+  isValid () {
+    return !!(this.config.creds && this.cozyUrl)
   }
 
   // Return config related to the OAuth client
-  getClient () {
+  get client () {
     if (!this.config.creds) {
       throw new Error(`Device not configured`)
     }
@@ -70,7 +70,7 @@ export default class Config {
   }
 
   // Set the remote configuration
-  setClient (options) {
+  set client (options) {
     this.config.creds = { client: options }
     this.persist()
   }

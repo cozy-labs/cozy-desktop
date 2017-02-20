@@ -130,8 +130,8 @@ class App {
   // Save the config with all the informations for synchonization
   saveConfig (cozyUrl, syncPath) {
     fs.ensureDirSync(syncPath)
-    this.config.setCozyUrl(cozyUrl)
-    this.config.setSyncPath(syncPath)
+    this.config.cozyUrl = cozyUrl
+    this.config.syncPath = syncPath
     this.config.persist()
     log.info('The remote Cozy has properly been configured ' +
              'to work with current device.')
@@ -209,7 +209,7 @@ class App {
   loadIgnore () {
     let ignored
     try {
-      let syncPath = this.config.getSyncPath()
+      let syncPath = this.config.syncPath
       ignored = fs.readFileSync(path.join(syncPath, '.cozyignore'))
       ignored = ignored.toString().split('\n')
     } catch (error) {
@@ -255,7 +255,7 @@ class App {
 
   // Start database sync process and setup file change watcher
   synchronize (mode, callback) {
-    if (this.config.hasClient()) {
+    if (this.config.isValid()) {
       this.instanciate()
       this.startSync(mode, callback)
     } else {
@@ -274,7 +274,7 @@ class App {
   walkFiles (args, callback) {
     this.loadIgnore()
     let options = {
-      root: this.config.getSyncPath(),
+      root: this.config.syncPath,
       directoryFilter: '!.cozy-desktop',
       entryType: 'both'
     }

@@ -12,7 +12,7 @@ The following objects are available:
   app     The cozy-desktop app
   config  Your active cozy-desktop configuration`)
 
-if (config.hasClient()) {
+if (config.isValid()) {
   app.instanciate()
   cozy = app.remote.watcher.remoteCozy.client
   console.log(`  cozy    A cozy-client-js instance, set up with your config

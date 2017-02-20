@@ -24,7 +24,7 @@ describe('RemoteCozy', function () {
   let remoteCozy
 
   beforeEach(function () {
-    this.config.setCozyUrl(COZY_URL)
+    this.config.cozyUrl = COZY_URL
     remoteCozy = new RemoteCozy(this.config)
     // FIXME: Temporary hack to make cozy-client-js think it has OAuth tokens
     remoteCozy.client._authstate = 3
@@ -37,14 +37,14 @@ describe('RemoteCozy', function () {
 
   describe('changes', function () {
     it('rejects when Cozy is unreachable', function () {
-      this.config.setCozyUrl('http://unreachable.cozy.test')
+      this.config.cozyUrl = 'http://unreachable.cozy.test'
       const remoteCozy = new RemoteCozy(this.config)
 
       return remoteCozy.changes().should.be.rejectedWith(FetchError)
     })
 
     it('rejects when response status is not ok', function () {
-      this.config.setCozyUrl(cozyStackDouble.url())
+      this.config.cozyUrl = cozyStackDouble.url()
       const remoteCozy = new RemoteCozy(this.config)
 
       cozyStackDouble.stub((req, res) => {
@@ -57,7 +57,7 @@ describe('RemoteCozy', function () {
     })
 
     it('rejects when cozy sends invalid JSON', function () {
-      this.config.setCozyUrl(cozyStackDouble.url())
+      this.config.cozyUrl = cozyStackDouble.url()
       const remoteCozy = new RemoteCozy(this.config)
 
       cozyStackDouble.stub((req, res) => {

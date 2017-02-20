@@ -27,7 +27,7 @@ describe('Remote', function () {
   // before('start couch server', couchHelpers.startServer)
   // before('instanciate couch', couchHelpers.createCouchClient)
   before('instanciate remote', function () {
-    this.config.setCozyUrl(COZY_URL)
+    this.config.cozyUrl = COZY_URL
     this.prep = {}
     this.events = {}
     this.remote = new Remote(this.config, this.prep, this.pouch)

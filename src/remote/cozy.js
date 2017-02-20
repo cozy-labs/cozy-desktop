@@ -32,11 +32,11 @@ export default class RemoteCozy {
   client: CozyClient
 
   constructor (config) {
-    this.url = config.getCozyUrl()
+    this.url = config.cozyUrl
     this.client = new CozyClient({
       cozyURL: this.url,
       oauth: {
-        clientParams: config.getClient(),
+        clientParams: config.client,
         storage: config
       }
     })
