@@ -20,14 +20,6 @@ process.on('SIGINT', exit)
 process.on('SIGTERM', exit)
 process.on('SIGUSR1', () => app.debugWatchers())
 
-// Helper to get cozy passphrase from user
-app.askPassphrase = function (callback) {
-  let promptMsg = `\
-Please enter your passphrase to register your device on your remote Cozy:\
-`
-  return read({prompt: promptMsg, silent: true}, (err, passphrase) => callback(err, passphrase))
-}
-
 // Helper for confirmation
 app.askConfirmation = function (callback) {
   let promptMsg = 'Are your sure? [Y/N]'
@@ -39,44 +31,43 @@ let sync = function (mode, args) {
   if (args.logfile != null) {
     app.writeLogsTo(args.logfile)
   }
-  if (app.config.setInsecure(args.insecure != null)) {
-    app.events.on('up-to-date', () => log.log('Your cozy is up to date!'))
-    app.events.on('transfer-started', function (info) {
-      let what = info.way === 'up' ? 'Uploading' : 'Downloading'
-      let filename = path.basename(info.path)
-      let format = `${what} ${filename} [:bar] :percent :etas`
-      if (+info.size > 0) {
-        let options = {
-          total: Number(info.size),
-          width: 30
-        }
-        let bar = new Progress(format, options)
-        return app.events.on(info.eventName, function (data) {
-          if (data.finished) {
-            return app.events.removeAllListeners(info.eventName)
-          } else {
-            return bar.tick(data.length)
-          }
-        })
-      } else {
-        return log.log(`${what} ${filename} (unknown size)`)
-      }
-    })
-    return app.synchronize(mode, function (err) {
-      if (err) { return process.exit(1) }
-    })
-  } else {
+  if (!app.config.isValid()) {
     log.log('Your configuration file seems invalid.')
     log.log('Have you added a remote cozy?')
     return process.exit(1)
   }
+  app.events.on('up-to-date', () => log.log('Your cozy is up to date!'))
+  app.events.on('transfer-started', (info) => {
+    let what = info.way === 'up' ? 'Uploading' : 'Downloading'
+    let filename = path.basename(info.path)
+    let format = `${what} ${filename} [:bar] :percent :etas`
+    if (+info.size > 0) {
+      let options = {
+        total: Number(info.size),
+        width: 30
+      }
+      let bar = new Progress(format, options)
+      return app.events.on(info.eventName, function (data) {
+        if (data.finished) {
+          return app.events.removeAllListeners(info.eventName)
+        } else {
+          return bar.tick(data.length)
+        }
+      })
+    } else {
+      return log.log(`${what} ${filename} (unknown size)`)
+    }
+  })
+  return app.synchronize(mode, (err) => {
+    if (err) { return process.exit(1) }
+  })
 }
 
 program
   .command('add-remote-cozy <url> <localSyncPath>')
   .description('Configure current device to sync with given cozy')
   .option('-d, --deviceName [deviceName]', 'device name to deal with')
-  .action((url, syncPath, args) => app.addRemote(url, syncPath, args.deviceName))
+  .action((url, syncPath, args) => app.addRemote(url, syncPath, pkg, args.deviceName))
 
 program
   .command('remove-remote-cozy')
@@ -87,18 +78,17 @@ program
 program
   .command('sync')
   .description('Synchronize the local filesystem and the remote cozy')
-  .option('-k, --insecure', 'Turn off HTTPS certificate verification.')
   .option('-l, --logfile [logfile]', 'Write logs to this file')
   .action(function (args) {
     try {
       return sync('full', args)
     } catch (err) {
       if (err.message !== 'Incompatible mode') { throw err }
-      return log.log(`\
+      return log.log(`
 Full sync from a mount point already used otherwise is not supported
 
 You should create a new mount point and use COZY_DESKTOP_DIR.
-The README has more instructions about that.\
+The README has more instructions about that.
 `
       )
     }
@@ -107,18 +97,17 @@ The README has more instructions about that.\
 program
   .command('pull')
   .description('Pull files & folders from a remote cozy to local filesystem')
-  .option('-k, --insecure', 'Turn off HTTPS certificate verification.')
   .option('-l, --logfile [logfile]', 'Write logs to this file')
   .action(function (args) {
     try {
       return sync('pull', args)
     } catch (err) {
       if (err.message !== 'Incompatible mode') { throw err }
-      return log.log(`\
+      return log.log(`
 Pulling from a mount point already used for pushing is not supported
 
 You should create a new mount point and use COZY_DESKTOP_DIR.
-The README has more instructions about that.\
+The README has more instructions about that.
 `
       )
     }
@@ -127,17 +116,16 @@ The README has more instructions about that.\
 program
   .command('push')
   .description('Push files & folders from local filesystem to the remote cozy')
-  .option('-k, --insecure', 'Turn off HTTPS certificate verification.')
   .option('-l, --logfile [logfile]', 'Write logs to this file')
   .action(function (args) {
     try {
       return sync('push', args)
     } catch (err) {
-      return log.log(`\
+      return log.log(`
 Pushing from a mount point already used for pulling is not supported
 
 You should create a new mount point and use COZY_DESKTOP_DIR.
-The README has more instructions about that.\
+The README has more instructions about that.
 `
       )
     }
@@ -180,8 +168,8 @@ program
 
 program
   .command('display-config')
-  .description('Display device configuration and exit')
-  .action(() => log.log(JSON.stringify(app.config.devices, null, 2)))
+  .description('Display configuration and exit')
+  .action(() => log.log(app.config.toJSON()))
 
 program
   .command('show-disk-space')

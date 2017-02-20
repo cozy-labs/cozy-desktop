@@ -1,14 +1,9 @@
 import fs from 'fs-extra'
 import path from 'path'
-import urlParser from 'url'
-let log = require('printit')({
-  prefix: 'Config        ',
-  date: true
-})
 
 // Config can keep some configuration parameters in a JSON file,
 // like the devices credentials or the mount path
-class Config {
+export default class Config {
 
   // Create config file if it doesn't exist.
   constructor (basePath) {
@@ -18,135 +13,101 @@ class Config {
     fs.ensureFileSync(this.configPath)
 
     if (fs.readFileSync(this.configPath).toString() === '') {
-      this.devices = {}
-      this.save()
+      this.reset()
     }
 
-    this.devices = require(this.configPath)
+    this.config = require(this.configPath)
+  }
+
+  // Reset the configuration
+  reset () {
+    this.config = Object.create(null)
+    this.clear()
+    this.persist()
   }
 
   // Save configuration to file system.
-  save () {
-    fs.writeFileSync(this.configPath, JSON.stringify(this.devices, null, 2))
-    return true
+  persist () {
+    fs.writeFileSync(this.configPath, this.toJSON())
   }
 
-  // Get the argument after -d or --deviceName
-  // Or return the first device name
-  getDefaultDeviceName () {
-    for (let index = 0; index < process.argv.length; index++) {
-      let arg = process.argv[index]
-      if ((arg === '-d') || (arg === '--deviceName')) {
-        return process.argv[index + 1]
-      }
-    }
-
-    return Object.keys(this.devices)[0]
+  // Transform the config to a JSON string
+  toJSON () {
+    return JSON.stringify(this.config, null, 2)
   }
 
-  // Return config related to device name.
-  getDevice (deviceName) {
-    if (deviceName == null) { deviceName = this.getDefaultDeviceName() }
+  // Get the path on the local file system of the synchronized folder
+  get syncPath () {
+    return this.config.path
+  }
 
-    if (this.devices[deviceName] != null) {
-      return this.devices[deviceName]
-    } else if (Object.keys(this.devices).length === 0) {
-      return {} // No device configured
-    } else {
-      log.error(`Device not set locally: ${deviceName}`)
-      throw new Error(`Device not set locally: ${deviceName}`)
-    }
+  // Set the path on the local file system of the synchronized folder
+  set syncPath (path) {
+    this.config.path = path
+  }
+
+  // Return the URL of the cozy instance
+  get cozyUrl () {
+    return this.config.url
+  }
+
+  // Set the URL of the cozy instance
+  set cozyUrl (url) {
+    this.config.url = url
   }
 
   // Return true if a device has been configured
-  hasDevice () {
-    return Object.keys(this.devices).length > 0
+  isValid () {
+    return !!(this.config.creds && this.cozyUrl)
   }
 
-  // Update synchronously configuration for given device.
-  updateSync (deviceConfig) {
-    let device = this.getDevice(deviceConfig.deviceName)
-    for (let key in deviceConfig) {
-      device[key] = deviceConfig[key]
+  // Return config related to the OAuth client
+  get client () {
+    if (!this.config.creds) {
+      throw new Error(`Device not configured`)
     }
-    this.devices[device.deviceName] = device
-    this.save()
-    return log.info('Configuration file successfully updated')
+    return this.config.creds.client
   }
 
-  // Add remote configuration for a given device name.
-  addRemoteCozy (options) {
-    this.devices[options.deviceName] = options
-    return this.save()
-  }
-
-  // Remove remote configuration for a given device name.
-  removeRemoteCozy (deviceName) {
-    delete this.devices[deviceName]
-    return this.save()
-  }
-
-  // Get Couch URL for given device name.
-  getUrl (deviceName) {
-    if (deviceName == null) { deviceName = this.getDefaultDeviceName() }
-    let device = this.getDevice(deviceName)
-    if (device.url != null) {
-      let url = urlParser.parse(device.url)
-      url.auth = `${deviceName}:${device.passphrase}`
-      return `${urlParser.format(url)}cozy`
-    } else {
-      return null
-    }
+  // Set the remote configuration
+  set client (options) {
+    this.config.creds = { client: options }
+    this.persist()
   }
 
   // Set the pull, push or full mode for this device
-  // It wan throw an exception if the mode is not compatible with the last
+  // It will throw an exception if the mode is not compatible with the last
   // mode used!
-  setMode (mode, deviceName) {
-    if (deviceName == null) { deviceName = this.getDefaultDeviceName() }
-    if (deviceName && this.devices[deviceName]) {
-      let old = this.devices[deviceName].mode
-      switch (false) {
-        case old !== mode:
-          return true
-        case (old == null):
-          throw new Error('Incompatible mode')
-        default:
-          this.devices[deviceName].mode = mode
-          return this.save()
-      }
-    } else {
-      return false
+  saveMode (mode) {
+    const old = this.config.mode
+    if (old === mode) {
+      return true
+    } else if (old) {
+      throw new Error(`Once you set mode to "${old}", you cannot switch to "${mode}"`)
     }
+    this.config.mode = mode
+    this.persist()
   }
 
-  // Set insecure flag, for self-signed certificate mainly
-  setInsecure (bool, deviceName) {
-    if (deviceName == null) { deviceName = this.getDefaultDeviceName() }
-    if (deviceName && __guard__(this.devices[deviceName], x => x.url)) {
-      this.devices[deviceName].insecure = bool
-      return this.save()
-    } else {
-      return false
-    }
+  // Implement the Storage interface for cozy-client-js oauth
+
+  save (key, value) {
+    this.config[key] = value
+    return Promise.resolve(value)
   }
 
-  // Add some options if the insecure flag is set
-  augmentCouchOptions (options, deviceName) {
-    if (deviceName == null) { deviceName = this.getDefaultDeviceName() }
-    if (this.devices[deviceName].insecure) {
-      options.ajax = {
-        rejectUnauthorized: false,
-        requestCert: true,
-        agent: false
-      }
-    }
-    return options
+  load (key) {
+    return Promise.resolve(this.config[key])
   }
-}
 
-export default Config
+  delete (key) {
+    const deleted = delete this.config[key]
+    return Promise.resolve(deleted)
+  }
 
-function __guard__ (value, transform) {
-  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined
+  clear () {
+    delete this.config.creds
+    delete this.config.state
+    return Promise.resolve()
+  }
 }

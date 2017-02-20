@@ -32,7 +32,7 @@ describe('App', function () {
     })
   })
 
-  describe('pingCozy', function () {
+  xdescribe('pingCozy', function () {
     const url = 'http://cozy.test'
     const statusUrl = `${url}/status`
     const basePath = './tmp'

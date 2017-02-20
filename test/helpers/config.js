@@ -10,11 +10,23 @@ export default {
     this.syncPath = path.resolve(`${parent}/${+new Date()}`)
     fs.ensureDirSync(this.syncPath)
     this.config = new Config(path.join(this.syncPath, '.cozy-desktop'))
-    this.config.devices['tester'] = {
-      deviceName: 'tester',
-      passphrase: 'passphrase',
-      url: 'nonecozy',
-      path: this.syncPath
+    this.config.syncPath = this.syncPath
+  },
+
+  registerClient () {
+    this.config.config.creds = {
+      client: {
+        clientID: process.env.COZY_CLIENT_ID || 'desktop',
+        clientName: 'desktop',
+        softwareID: 'cozy-desktop',
+        redirectURI: 'http://localhost/'
+      },
+      token: {
+        tokenType: 'bearer',
+        accessToken: process.env.COZY_STACK_TOKEN,
+        refreshToken: process.env.COZY_STACK_TOKEN,
+        scope: 'io.cozy.files'
+      }
     }
   },
 

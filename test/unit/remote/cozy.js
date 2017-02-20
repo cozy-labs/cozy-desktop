@@ -6,6 +6,7 @@ import should from 'should'
 import RemoteCozy, { DirectoryNotFound } from '../../../src/remote/cozy'
 import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } from '../../../src/remote/constants'
 
+import configHelpers from '../../helpers/config'
 import { COZY_URL, builders, deleteAll } from '../../helpers/cozy'
 import CozyStackDouble from '../../doubles/cozy_stack'
 
@@ -14,25 +15,37 @@ const cozyStackDouble = new CozyStackDouble()
 describe('RemoteCozy', function () {
   before(() => cozyStackDouble.start())
   beforeEach(deleteAll)
+  before('instanciate config', configHelpers.createConfig)
+  before('register OAuth client', configHelpers.registerClient)
+  after('clean config directory', configHelpers.cleanConfig)
   after(() => cozyStackDouble.stop())
   afterEach(() => cozyStackDouble.clearStub())
 
   let remoteCozy
 
   beforeEach(function () {
-    remoteCozy = new RemoteCozy(COZY_URL)
+    this.config.cozyUrl = COZY_URL
+    remoteCozy = new RemoteCozy(this.config)
+    // FIXME: Temporary hack to make cozy-client-js think it has OAuth tokens
+    remoteCozy.client._authstate = 3
+    remoteCozy.client._authcreds = Promise.resolve({
+      token: {
+        toAuthHeader () { return 'Bearer ' + (process.env.COZY_STACK_TOKEN || '') }
+      }
+    })
   })
 
   describe('changes', function () {
     it('rejects when Cozy is unreachable', function () {
-      const url = 'http://unreachable.cozy.test'
-      const remoteCozy = new RemoteCozy(url)
+      this.config.cozyUrl = 'http://unreachable.cozy.test'
+      const remoteCozy = new RemoteCozy(this.config)
 
       return remoteCozy.changes().should.be.rejectedWith(FetchError)
     })
 
     it('rejects when response status is not ok', function () {
-      const remoteCozy = new RemoteCozy(cozyStackDouble.url())
+      this.config.cozyUrl = cozyStackDouble.url()
+      const remoteCozy = new RemoteCozy(this.config)
 
       cozyStackDouble.stub((req, res) => {
         res.writeHead(404, {'Content-Type': 'text/plain'})
@@ -44,7 +57,8 @@ describe('RemoteCozy', function () {
     })
 
     it('rejects when cozy sends invalid JSON', function () {
-      const remoteCozy = new RemoteCozy(cozyStackDouble.url())
+      this.config.cozyUrl = cozyStackDouble.url()
+      const remoteCozy = new RemoteCozy(this.config)
 
       cozyStackDouble.stub((req, res) => {
         res.writeHead(200, {'Content-Type': 'application/json'})
