@@ -64,9 +64,6 @@ export default class Registration {
         onRegistered: this.onRegistered
       }
     })
-    return cozy.authorize().then(
-      (res) => res,
-      (err) => { throw err }
-    )
+    return cozy.authorize()
   }
 }
