@@ -22,10 +22,7 @@ export default {
         redirectURI: 'http://localhost/'
       },
       token: {
-        tokenType: 'bearer',
-        accessToken: process.env.COZY_STACK_TOKEN,
-        refreshToken: process.env.COZY_STACK_TOKEN,
-        scope: 'io.cozy.files'
+        accessToken: process.env.COZY_STACK_TOKEN
       }
     }
   },
