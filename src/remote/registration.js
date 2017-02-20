@@ -35,8 +35,8 @@ export default class Registration {
 
   clientParams (pkg, deviceName) {
     if (!deviceName) {
-      // TODO make it unique
       deviceName = os.hostname() || pkg.name || 'desktop'
+      deviceName += ` ${new Date()}`
     }
     let softwareID = (pkg.repository || 'cozy-desktop')
     softwareID = softwareID.replace('https://', '')
