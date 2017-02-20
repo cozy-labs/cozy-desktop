@@ -5,6 +5,7 @@ import async from 'async'
 import clone from 'lodash.clone'
 import sinon from 'sinon'
 import should from 'should'
+import { Client as CozyClient } from 'cozy-client-js'
 
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
@@ -29,12 +30,9 @@ describe('RemoteWatcher', function () {
     this.prep = {invalidPath: Prep.prototype.invalidPath}
     this.config.cozyUrl = COZY_URL
     this.remoteCozy = new RemoteCozy(this.config)
-    // FIXME: Temporary hack to make cozy-client-js think it has OAuth tokens
-    this.remoteCozy.client._authstate = 3
-    this.remoteCozy.client._authcreds = Promise.resolve({
-      token: {
-        toAuthHeader () { return 'Bearer ' + (process.env.COZY_STACK_TOKEN || '') }
-      }
+    this.remoteCozy.client = new CozyClient({
+      cozyUrl: this.config.cozyUrl,
+      token: process.env.COZY_STACK_TOKEN
     })
     this.watcher = new RemoteWatcher(this.pouch, this.prep, this.remoteCozy)
   })

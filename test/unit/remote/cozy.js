@@ -26,13 +26,6 @@ describe('RemoteCozy', function () {
   beforeEach(function () {
     this.config.cozyUrl = COZY_URL
     remoteCozy = new RemoteCozy(this.config)
-    // FIXME: Temporary hack to make cozy-client-js think it has OAuth tokens
-    remoteCozy.client._authstate = 3
-    remoteCozy.client._authcreds = Promise.resolve({
-      token: {
-        toAuthHeader () { return 'Bearer ' + (process.env.COZY_STACK_TOKEN || '') }
-      }
-    })
   })
 
   describe('changes', function () {

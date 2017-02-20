@@ -21,15 +21,7 @@ if (!process.env.COZY_STACK_TOKEN) {
 // A cozy-client-js instance
 export const cozy = new CozyClient({
   cozyURL: COZY_URL,
-  oauth: {}
-})
-
-// FIXME: Temporary hack to make cozy-client-js think it has OAuth tokens
-cozy._authstate = 3
-cozy._authcreds = Promise.resolve({
-  token: {
-    toAuthHeader () { return 'Bearer ' + (process.env.COZY_STACK_TOKEN || '') }
-  }
+  token: process.env.COZY_STACK_TOKEN
 })
 
 // Facade for all the test data builders
