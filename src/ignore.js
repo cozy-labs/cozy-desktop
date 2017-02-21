@@ -1,5 +1,14 @@
+/* @flow weak */
+
 import { basename, dirname } from 'path'
 import { matcher, makeRe } from 'micromatch'
+
+export type IgnorePattern = {
+  match: (string) => boolean,
+  basename: boolean,
+  folder: boolean,
+  negate: boolean
+}
 
 // Cozy-desktop can ignore some files and folders from a list of patterns in the
 // cozyignore file. This class can be used to know if a file/folder is ignored.
@@ -55,6 +64,8 @@ class Ignore {
     MicromatchOptions =
             {noextglob: true}
   }
+
+  patterns: IgnorePattern[]
 
   // Load patterns for detecting ignored files and folders
   constructor (lines) {

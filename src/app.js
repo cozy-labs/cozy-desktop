@@ -1,3 +1,5 @@
+/* @flow weak */
+
 import fs from 'fs-extra'
 import os from 'os'
 import path from 'path'
@@ -9,8 +11,9 @@ let log = printit({
   date: true
 })
 
+// $FlowFixMe
 import { Console } from 'console'
-import { EventEmitter } from 'events'
+import EventEmitter from 'events'
 
 import Config from './config'
 import Pouch from './pouch'
@@ -30,6 +33,20 @@ class App {
     // When a log file weights more than 0.5Mo, rotate it
     MAX_LOG_SIZE = 500000
   }
+
+  lang: string
+  basePath: string
+  config: Config
+  pouch: Pouch
+  events: EventEmitter
+  logfile: string
+  logsInterval: any
+  ignore: Ignore
+  merge: Merge
+  prep: Prep
+  local: Local
+  remote: Remote
+  sync: Sync
 
   // basePath is the directory where the config and pouch are saved
   constructor (basePath) {

@@ -1,3 +1,5 @@
+/* @flow weak */
+
 import Promise from 'bluebird'
 import PouchDB from 'pouchdb'
 import async from 'async'
@@ -7,6 +9,8 @@ let log = require('printit')({
   prefix: 'Local Pouchdb ',
   date: true
 })
+
+import Config from './config'
 
 // Pouchdb is used to store all the metadata about files and folders.
 // These metadata can come from the local filesystem or the remote cozy instance.
@@ -19,6 +23,10 @@ let log = require('printit')({
 // creationDate and lastModification instead of created_at and updated_at. And
 // views name are in camelcase (byChecksum, not by-checksum).
 class Pouch {
+  config: Config
+  db: PouchDB
+  updater: any
+
   constructor (config) {
     this.config = config
     this.db = new PouchDB(this.config.dbPath)
@@ -133,6 +141,8 @@ class Pouch {
     })
   }
 
+  byRemoteIdMaybeAsync: (id: string) => Promise<*>
+
   /* Views */
 
   // Create all required views in the database
@@ -155,8 +165,8 @@ class Pouch {
         if ('docType' in doc) {
           let parts = doc._id.split('/')
           parts.pop()
-          // eslint-disable-next-line no-undef
-          return emit(parts.join('/'), {_id: doc._id})
+          // $FlowFixMe
+          return emit(parts.join('/'), {_id: doc._id}) // eslint-disable-line no-undef
         }
       }.toString()
     return this.createDesignDoc('byPath', query, callback)
@@ -169,8 +179,8 @@ class Pouch {
     let query =
       function (doc) {
         if ('checksum' in doc) {
-          // eslint-disable-next-line no-undef
-          return emit(doc.checksum)
+          // $FlowFixMe
+          return emit(doc.checksum) // eslint-disable-line no-undef
         }
       }.toString()
     return this.createDesignDoc('byChecksum', query, callback)
@@ -183,8 +193,8 @@ class Pouch {
     let query =
       function (doc) {
         if ('remote' in doc) {
-          // eslint-disable-next-line no-undef
-          return emit(doc.remote._id)
+          // $FlowFixMe
+          return emit(doc.remote._id) // eslint-disable-line no-undef
         }
       }.toString()
     return this.createDesignDoc('byRemoteId', query, callback)
@@ -283,6 +293,8 @@ class Pouch {
     })
   }
 
+  getRemoteSeqAsync: () => number
+
   // Set last remote replication sequence
   // It is saved in PouchDB as a local document
   // See http://pouchdb.com/guides/local-documents.html
@@ -293,6 +305,8 @@ class Pouch {
     }
     return this.updater.push(task, callback)
   }
+
+  setRemoteSeqAsync: (seq: number) => Promise<*>
 }
 
 export default Pouch

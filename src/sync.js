@@ -1,15 +1,31 @@
+/* @flow weak */
+
 import async from 'async'
+import EventEmitter from 'events'
 let log = require('printit')({
   prefix: 'Synchronize   ',
   date: true
 })
 
+import Ignore from './ignore'
+import Local from './local'
 import { extractRevNumber } from './metadata'
+import Pouch from './pouch'
+import Remote from './remote'
 
 // Sync listens to PouchDB about the metadata changes, and calls local and
 // remote sides to apply the changes on the filesystem and remote CouchDB
 // respectively.
 class Sync {
+  changes: any
+  events: EventEmitter
+  ignore: Ignore
+  local: Local
+  pouch: Pouch
+  remote: Remote
+  stopped: ?boolean
+  moveFrom: any
+  moveTo: ?string
 
   constructor (pouch, local, remote, ignore, events) {
     this.pouch = pouch

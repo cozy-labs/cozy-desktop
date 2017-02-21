@@ -1,9 +1,16 @@
+/* @flow weak */
+
 import Promise from 'bluebird'
-import { buildId, invalidChecksum, invalidPath } from './metadata'
 let log = require('printit')({
   prefix: 'Prep          ',
   date: true
 })
+
+import Ignore from './ignore'
+import Merge from './merge'
+import { buildId, invalidChecksum, invalidPath } from './metadata'
+
+import type { Metadata } from './metadata'
 
 // When the local filesystem or the remote cozy detects a change, it calls this
 // class to inform it. This class will check this event, add some informations,
@@ -13,6 +20,9 @@ let log = require('printit')({
 // are not structured in the same way. In particular, the _id are uuid in CouchDB
 // and the path to the file/folder (in a normalized form) in PouchDB.
 class Prep {
+  merge: Merge
+  ignore: Ignore
+
   constructor (merge, ignore) {
     this.merge = merge
     this.ignore = ignore
@@ -33,6 +43,8 @@ class Prep {
     }
   }
 
+  addDocAsync: (side: any, doc: Metadata) => Promise<*>
+
   // Simple helper to update a file or a folder
   updateDoc (side, doc, callback) {
     if (doc.docType === 'file') {
@@ -43,6 +55,8 @@ class Prep {
       return callback(new Error(`Unexpected docType: ${doc.docType}`))
     }
   }
+
+  updateDocAsync: (side: any, doc: Metadata) => Promise<*>
 
   // Helper to move/rename a file or a folder
   moveDoc (side, doc, was, callback) {
@@ -57,6 +71,8 @@ class Prep {
     }
   }
 
+  moveDocAsync: (side: any, doc: Metadata, was: Metadata) => Promise<*>
+
   // Simple helper to delete a file or a folder
   deleteDoc (side, doc, callback) {
     if (doc.docType === 'file') {
@@ -67,6 +83,8 @@ class Prep {
       return callback(new Error(`Unexpected docType: ${doc.docType}`))
     }
   }
+
+  deleteDocAsync: (side: any, doc: Metadata) => Promise<*>
 
   /* Actions */
 
