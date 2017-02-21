@@ -229,7 +229,7 @@ class Prep {
     } else if ((side === 'local') && docIgnored) {
       return this.merge.deleteFolder(side, was, callback)
     } else if ((side === 'local') && wasIgnored) {
-      return this.merge.addFolder(side, doc, callback)
+      return this.merge.putFolder(side, doc, callback)
     } else {
       return this.merge.moveFolder(side, doc, was, callback)
     }
