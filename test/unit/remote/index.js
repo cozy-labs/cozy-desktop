@@ -7,6 +7,7 @@ import sinon from 'sinon'
 import should from 'should'
 
 import * as conversion from '../../../src/conversion'
+import Prep from '../../../src/prep'
 import Remote from '../../../src/remote'
 import { FILES_DOCTYPE } from '../../../src/remote/constants'
 import timestamp from '../../../src/timestamp'
@@ -29,7 +30,7 @@ describe('Remote', function () {
   // before('instanciate couch', couchHelpers.createCouchClient)
   before('instanciate remote', function () {
     this.config.cozyUrl = COZY_URL
-    this.prep = {}
+    this.prep = sinon.createStubInstance(Prep)
     this.events = {}
     this.remote = new Remote(this.config, this.prep, this.pouch)
   })
