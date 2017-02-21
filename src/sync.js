@@ -194,6 +194,9 @@ class Sync {
         if (!change.doc.errors) { change.doc.errors = 0 }
         this.isCozyFull((err, full) => {
           if (err) {
+            // TODO: v3: Ping remote on error?
+            callback(err)
+            /*
             this.remote.couch.ping(available => {
               if (available) {
                 this.updateErrors(change, callback)
@@ -201,6 +204,7 @@ class Sync {
                 this.remote.couch.whenAvailable(callback)
               }
             })
+            */
           } else if (full) {
             callback(new Error(
               'Your Cozy is full! ' +
@@ -227,6 +231,9 @@ class Sync {
 
   // Says is the Cozy has no more free disk space
   isCozyFull (callback) {
+    // TODO: v3: Reimplement Sync#isCozyFull()
+    callback(false)
+    /*
     this.getDiskSpace(function (err, res) {
       if (err) {
         callback(err)
@@ -234,6 +241,7 @@ class Sync {
         callback(null, ['', '0'].includes(res.diskSpace.freeDiskSpace))
       }
     })
+    */
   }
 
   // Increment the counter of errors for this document
