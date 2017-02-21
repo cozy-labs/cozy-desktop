@@ -300,7 +300,8 @@ class Sync {
         callback()
         break
       case !this.moveFrom:
-        [from, this.moveFrom] = [this.moveFrom, null]
+        from = this.moveFrom
+        this.moveFrom = null
         if (from.moveTo === doc._id) {
           side.moveFile(doc, from, err => {
             if (err) { this.moveFrom = from }
@@ -355,7 +356,8 @@ class Sync {
         callback()
         break
       case !this.moveFrom:
-        [from, this.moveFrom] = [this.moveFrom, null]
+        from = this.moveFrom
+        this.moveFrom = null
         if (from.moveTo === doc._id) {
           side.moveFolder(doc, from, err => {
             if (err) { this.moveFrom = from }
