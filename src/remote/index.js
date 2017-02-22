@@ -98,9 +98,13 @@ export default class Remote implements Side {
 
   // FIXME: Drop this wrapper as soon as Sync uses promises
   addFile (doc: Metadata, callback: Callback) {
-    this.addFileAsync(doc)
-      .then(created => callback(null, created))
-      .catch(callback)
+    try {
+      this.addFileAsync(doc)
+        .then(created => callback(null, created))
+        .catch(callback)
+    } catch (err) {
+      callback(err)
+    }
   }
 
   async overwriteFileAsync (doc: Metadata, old: Metadata): Promise<RemoteDoc> {
