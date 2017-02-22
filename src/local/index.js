@@ -17,11 +17,12 @@ import Prep from '../prep'
 import Watcher from './watcher'
 
 import type { FileStreamProvider } from '../file_stream_provider'
+import type { Side } from '../side' // eslint-disable-line
 
 // Local is the class that interfaces cozy-desktop with the local filesystem.
 // It uses a watcher, based on chokidar, to listen for file and folder changes.
 // It also applied changes from the remote cozy on the local filesystem.
-class Local {
+class Local implements Side {
   prep: Prep
   pouch: Pouch
   events: EventEmitter
