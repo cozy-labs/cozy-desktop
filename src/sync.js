@@ -13,6 +13,8 @@ import { extractRevNumber } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
 
+import type { Side } from './side' // eslint-disable-line
+
 // Sync listens to PouchDB about the metadata changes, and calls local and
 // remote sides to apply the changes on the filesystem and remote CouchDB
 // respectively.
@@ -301,7 +303,7 @@ class Sync {
   // If a file has been changed, we had to check what operation it is.
   // For a move, the first call will just keep a reference to the document,
   // and only at the second call, the move operation will be executed.
-  fileChanged (doc, side, rev, callback) {
+  fileChanged (doc, side: Side, rev, callback) {
     let from
     switch (false) {
       case !doc._deleted || (rev !== 0):
@@ -357,7 +359,7 @@ class Sync {
   }
 
   // Same as fileChanged, but for folder
-  folderChanged (doc, side, rev, callback) {
+  folderChanged (doc, side: Side, rev, callback) {
     let from
     switch (false) {
       case !doc._deleted || (rev !== 0):

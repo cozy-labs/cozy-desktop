@@ -13,6 +13,7 @@ import Watcher from './watcher'
 import type { RemoteDoc } from './document'
 import type { FileStreamProvider } from '../file_stream_provider'
 import type { Metadata } from '../metadata'
+import type { Side } from '../side' // eslint-disable-line
 import type { Callback } from '../utils'
 
 const log = printit({
@@ -20,7 +21,7 @@ const log = printit({
   date: true
 })
 
-export default class Remote {
+export default class Remote implements Side {
   other: FileStreamProvider
   pouch: Pouch
   watcher: Watcher
@@ -97,9 +98,13 @@ export default class Remote {
 
   // FIXME: Drop this wrapper as soon as Sync uses promises
   addFile (doc: Metadata, callback: Callback) {
-    this.addFileAsync(doc)
-      .then(created => callback(null, created))
-      .catch(callback)
+    try {
+      this.addFileAsync(doc)
+        .then(created => callback(null, created))
+        .catch(callback)
+    } catch (err) {
+      callback(err)
+    }
   }
 
   async overwriteFileAsync (doc: Metadata, old: Metadata): Promise<RemoteDoc> {
@@ -125,13 +130,29 @@ export default class Remote {
   }
 
   // FIXME: Temporary stubs so we can do some acceptance testing on file upload
-  //        without getting errors for methods not implemented yet.
+  //        without getting errors for missing methods.
 
   updateFileMetadata (doc: Metadata, _: any, callback: Callback) {
-    callback(null, doc)
+    callback(new Error('Remote#updateFileMetadata() is not implemented'))
   }
 
   updateFolder (doc: Metadata, _: any, callback: Callback) {
-    callback(null, doc)
+    callback(new Error('Remote#updateFolder() is not implemented'))
+  }
+
+  moveFile (doc: Metadata, from: Metadata, callback: Callback) {
+    callback(new Error('Remote#moveFile() is not implemented'))
+  }
+
+  moveFolder (doc: Metadata, from: Metadata, callback: Callback) {
+    callback(new Error('Remote#moveFolder() is not implemented'))
+  }
+
+  deleteFile (doc: Metadata, callback: Callback) {
+    callback(new Error('Remote#deleteFile() is not implemented'))
+  }
+
+  deleteFolder (doc: Metadata, callback: Callback) {
+    callback(new Error('Remote#deleteFolder() is not implemented'))
   }
 }
