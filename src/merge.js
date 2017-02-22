@@ -1,3 +1,5 @@
+/* @flow weak */
+
 import clone from 'lodash.clone'
 import isEqual from 'lodash.isequal'
 import path from 'path'
@@ -7,7 +9,10 @@ let log = require('printit')({
   date: true
 })
 
+import Local from './local'
 import { extractRevNumber } from './metadata'
+import Pouch from './pouch'
+import Remote from './remote'
 
 // When the local filesystem or the remote cozy detects a change, it calls this
 // class to inform it (via Prep). This class will check how to operate this
@@ -26,8 +31,13 @@ import { extractRevNumber } from './metadata'
 // that are not in the normal flow (rename instead of add, bogus delete) and we
 // need to redirect them.
 class Merge {
+  pouch: Pouch
+  local: Local
+  remote: Remote
+
   constructor (pouch) {
     this.pouch = pouch
+    // $FlowFixMe
     this.local = this.remote = null
   }
 
@@ -136,6 +146,7 @@ class Merge {
     let dir = path.dirname(doc.path)
     let base = path.basename(doc.path, ext)
     dst.path = `${path.join(dir, base)}-conflict-${date}${ext}`
+    // $FlowFixMe
     this[side].resolveConflict(dst, doc, err => callback(err, dst))
   }
 

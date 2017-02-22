@@ -27,7 +27,7 @@ describe('RemoteWatcher', function () {
   before('register OAuth client', configHelpers.registerClient)
   before(pouchHelpers.createDatabase)
   before(function instanciateRemoteWatcher () {
-    this.prep = {invalidPath: Prep.prototype.invalidPath}
+    this.prep = sinon.createStubInstance(Prep)
     this.config.cozyUrl = COZY_URL
     this.remoteCozy = new RemoteCozy(this.config)
     this.remoteCozy.client = new CozyClient({

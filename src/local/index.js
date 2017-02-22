@@ -1,5 +1,8 @@
+/* @flow weak */
+
 import async from 'async'
 import Promise from 'bluebird'
+import EventEmitter from 'events'
 import clone from 'lodash.clone'
 import fs from 'fs-extra'
 import path from 'path'
@@ -9,12 +12,24 @@ let log = require('printit')({
 })
 
 import { extractRevNumber } from '../metadata'
+import Pouch from '../pouch'
+import Prep from '../prep'
 import Watcher from './watcher'
+
+import type { FileStreamProvider } from '../file_stream_provider'
 
 // Local is the class that interfaces cozy-desktop with the local filesystem.
 // It uses a watcher, based on chokidar, to listen for file and folder changes.
 // It also applied changes from the remote cozy on the local filesystem.
 class Local {
+  prep: Prep
+  pouch: Pouch
+  events: EventEmitter
+  syncPath: string
+  tmpPath: string
+  watcher: Watcher
+  other: FileStreamProvider
+
   constructor (config, prep, pouch, events) {
     this.prep = prep
     this.pouch = pouch
@@ -22,6 +37,7 @@ class Local {
     this.syncPath = config.syncPath
     this.tmpPath = path.join(this.syncPath, '.cozy-desktop')
     this.watcher = new Watcher(this.syncPath, this.prep, this.pouch)
+    // $FlowFixMe
     this.other = null
 
     Promise.promisifyAll(this)

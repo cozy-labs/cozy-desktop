@@ -35,7 +35,8 @@ export type MetadataSidesInfo = {
   local?: ?number
 }
 
-export let buildId
+export let buildId: (doc: Metadata) => void = (_) => {}
+
 switch (process.platform) {
   case 'linux': case 'freebsd': case 'sunos':
     buildId = buildIdUnix

@@ -1,15 +1,31 @@
+/* @flow weak */
+
 import async from 'async'
+import EventEmitter from 'events'
 let log = require('printit')({
   prefix: 'Synchronize   ',
   date: true
 })
 
+import Ignore from './ignore'
+import Local from './local'
 import { extractRevNumber } from './metadata'
+import Pouch from './pouch'
+import Remote from './remote'
 
 // Sync listens to PouchDB about the metadata changes, and calls local and
 // remote sides to apply the changes on the filesystem and remote CouchDB
 // respectively.
 class Sync {
+  changes: any
+  events: EventEmitter
+  ignore: Ignore
+  local: Local
+  pouch: Pouch
+  remote: Remote
+  stopped: ?boolean
+  moveFrom: any
+  moveTo: ?string
 
   constructor (pouch, local, remote, ignore, events) {
     this.pouch = pouch
@@ -178,6 +194,9 @@ class Sync {
         if (!change.doc.errors) { change.doc.errors = 0 }
         this.isCozyFull((err, full) => {
           if (err) {
+            // TODO: v3: Ping remote on error?
+            callback(err)
+            /*
             this.remote.couch.ping(available => {
               if (available) {
                 this.updateErrors(change, callback)
@@ -185,6 +204,7 @@ class Sync {
                 this.remote.couch.whenAvailable(callback)
               }
             })
+            */
           } else if (full) {
             callback(new Error(
               'Your Cozy is full! ' +
@@ -211,6 +231,9 @@ class Sync {
 
   // Says is the Cozy has no more free disk space
   isCozyFull (callback) {
+    // TODO: v3: Reimplement Sync#isCozyFull()
+    callback(false)
+    /*
     this.getDiskSpace(function (err, res) {
       if (err) {
         callback(err)
@@ -218,6 +241,7 @@ class Sync {
         callback(null, ['', '0'].includes(res.diskSpace.freeDiskSpace))
       }
     })
+    */
   }
 
   // Increment the counter of errors for this document
@@ -284,7 +308,8 @@ class Sync {
         callback()
         break
       case !this.moveFrom:
-        [from, this.moveFrom] = [this.moveFrom, null]
+        from = this.moveFrom
+        this.moveFrom = null
         if (from.moveTo === doc._id) {
           side.moveFile(doc, from, err => {
             if (err) { this.moveFrom = from }
@@ -339,7 +364,8 @@ class Sync {
         callback()
         break
       case !this.moveFrom:
-        [from, this.moveFrom] = [this.moveFrom, null]
+        from = this.moveFrom
+        this.moveFrom = null
         if (from.moveTo === doc._id) {
           side.moveFolder(doc, from, err => {
             if (err) { this.moveFrom = from }

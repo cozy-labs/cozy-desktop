@@ -1,3 +1,5 @@
+/* @flow weak */
+
 import async from 'async'
 import chokidar from 'chokidar'
 import crypto from 'crypto'
@@ -10,12 +12,25 @@ let log = require('printit')({
   date: true
 })
 
+import Pouch from '../pouch'
+import Prep from '../prep'
+
 // This file contains the filesystem watcher that will trigger operations when
 // a file or a folder is added/removed/changed locally.
 // Operations will be added to the a common operation queue along with the
 // remote operations triggered by the remoteEventWatcher.
 let EXECUTABLE_MASK
 class LocalWatcher {
+  syncPath: string
+  prep: Prep
+  pouch: Pouch
+  side: string
+  paths: string[]
+  pending: any
+  checksums: number
+  checksumer: any // async.queue
+  watcher: any // chokidar
+
   static initClass () {
     EXECUTABLE_MASK = 1 << 6
   }
@@ -142,7 +157,7 @@ class LocalWatcher {
     let absPath = path.join(this.syncPath, filePath)
     let [mimeType, fileClass] = this.getFileClass(absPath)
     return this.checksum(absPath, function (err, checksum) {
-      let doc = {
+      let doc: Object = {
         path: filePath,
         docType: 'file',
         checksum,
@@ -341,6 +356,7 @@ class LocalWatcher {
               return this.prep.deleteDoc(this.side, doc, next)
             }
           }, err => {
+            // $FlowFixMe
             this.paths = null
             return callback(err)
           })
