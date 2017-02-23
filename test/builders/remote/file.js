@@ -1,10 +1,13 @@
 /* @flow */
 
 import fs from 'fs'
+import path from 'path'
 import * as stream from 'stream'
 import { Cozy } from 'cozy-client-js'
 
 import RemoteBaseBuilder from './base'
+
+import { FILES_DOCTYPE } from '../../../src/remote/constants'
 import { jsonApiToRemoteDoc } from '../../../src/remote/document'
 
 import type { RemoteDoc } from '../../../src/remote/document'
@@ -46,8 +49,13 @@ export default class RemoteFileBuilder extends RemoteBaseBuilder {
   }
 
   async build (): Promise<RemoteDoc> {
-    return jsonApiToRemoteDoc(
+    let doc = jsonApiToRemoteDoc(
       await this.cozy.files.create(this._data, this.options)
     )
+
+    const parentDir = await this.cozy.data.find(FILES_DOCTYPE, doc.dir_id)
+    doc.path = path.join(parentDir.path, doc.name)
+
+    return doc
   }
 }
