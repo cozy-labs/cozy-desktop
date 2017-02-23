@@ -352,6 +352,7 @@ describe('Remote', function () {
         docType: 'file',
         checksum,
         creationDate: timestamp.current(),
+        executable: true,
         lastModification: timestamp.current(),
         size: 36901,
         sides: {
@@ -378,6 +379,7 @@ describe('Remote', function () {
         _type: 'io.cozy.files',
         type: 'file',
         created_at: timestamp.stringify(doc.creationDate),
+        executable: true,
         updated_at: timestamp.stringify(doc.lastModification),
         size: '36901'
       })
