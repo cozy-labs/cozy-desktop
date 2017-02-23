@@ -17,8 +17,8 @@ export function localDocType (remote: string): string {
 
 // Transform a remote document into metadata, as stored in Pouch
 export function createMetadata (remote: RemoteDoc): Metadata {
-  let doc: Object = {
-    path: remote.path,
+  const doc: Object = {
+    path: remote.path.substring(1),
     docType: localDocType(remote.type),
     creationDate: remote.created_at,
     lastModification: remote.updated_at,
@@ -45,7 +45,7 @@ export function createMetadata (remote: RemoteDoc): Metadata {
 
 // Extract the remote path and name from a local id
 export function extractDirAndName (id: string): [string, string] {
-  let dir = path.dirname(`/${id}`)
-  let name = path.basename(id)
+  const dir = path.dirname(`/${id}`)
+  const name = path.basename(id)
   return [dir, name]
 }

@@ -277,7 +277,7 @@ describe('RemoteWatcher', function () {
         _type: FILES_DOCTYPE,
         type: 'file',
         dir_id: '23456789012',
-        path: 'my-folder',
+        path: '/my-folder',
         name: 'file-5',
         md5sum: '9999999999999999999999999999999999999999',
         tags: [],
@@ -297,7 +297,7 @@ describe('RemoteWatcher', function () {
       let args = this.prep.addDocAsync.args[0]
       args[0].should.equal('remote')
       args[1].should.have.properties({
-        path: doc.path,
+        path: 'my-folder',
         docType: 'file',
         checksum: doc.md5sum,
         tags: doc.tags,
@@ -318,7 +318,7 @@ describe('RemoteWatcher', function () {
         _type: FILES_DOCTYPE,
         dir_id: '23456789012',
         type: 'file',
-        path: 'my-folder/file-1',
+        path: '/my-folder/file-1',
         name: 'file-1',
         md5sum: '1111111111111111111111111111111111111111',
         tags: ['foo', 'bar', 'baz'],
@@ -338,7 +338,7 @@ describe('RemoteWatcher', function () {
       let args = this.prep.updateDocAsync.args[0]
       args[0].should.equal('remote')
       args[1].should.have.properties({
-        path: doc.path,
+        path: 'my-folder/file-1',
         docType: 'file',
         checksum: doc.md5sum,
         tags: doc.tags,
@@ -359,7 +359,7 @@ describe('RemoteWatcher', function () {
         _type: FILES_DOCTYPE,
         type: 'file',
         dir_id: 'whatever',
-        path: 'my-folder/file-1',
+        path: '/my-folder/file-1',
         name: 'file-1',
         md5sum: '9999999999999999999999999999999999999999',
         created_at: '2017-01-30T09:09:15.217662611+01:00',
@@ -394,7 +394,7 @@ describe('RemoteWatcher', function () {
         _type: FILES_DOCTYPE,
         type: 'file',
         dir_id: 'whatever',
-        path: 'my-folder',
+        path: '/my-folder',
         name: 'file-2-bis',
         md5sum: '1111111111111111111111111111111111111112',
         tags: [],
@@ -419,7 +419,7 @@ describe('RemoteWatcher', function () {
       })
       let dst = args[1]
       dst.should.have.properties({
-        path: doc.path,
+        path: 'my-folder',
         docType: 'file',
         checksum: doc.md5sum,
         tags: doc.tags,
@@ -440,7 +440,7 @@ describe('RemoteWatcher', function () {
         _type: FILES_DOCTYPE,
         type: 'file',
         dir_id: 'whatever',
-        path: 'another-folder/in/some/place',
+        path: '/another-folder/in/some/place',
         name: 'file-2-ter',
         md5sum: '1111111111111111111111111111111111111112',
         tags: [],
@@ -469,7 +469,7 @@ describe('RemoteWatcher', function () {
       })
       let dst = this.prep.moveDocAsync.args[0][1]
       dst.should.have.properties({
-        path: doc.path,
+        path: 'another-folder/in/some/place',
         docType: 'file',
         checksum: doc.md5sum,
         tags: doc.tags,
@@ -492,7 +492,7 @@ describe('RemoteWatcher', function () {
         _type: FILES_DOCTYPE,
         type: 'file',
         dir_id: 'whatever',
-        path: 'another-folder/in/some/place',
+        path: '/another-folder/in/some/place',
         name: 'file-3-bis',
         md5sum: '8888888888888888888888888888888888888888',
         tags: [],
@@ -512,7 +512,7 @@ describe('RemoteWatcher', function () {
       let args = this.prep.addDocAsync.args[0]
       args[0].should.equal('remote')
       args[1].should.have.properties({
-        path: doc.path,
+        path: 'another-folder/in/some/place',
         docType: 'file',
         checksum: doc.md5sum,
         tags: doc.tags,
