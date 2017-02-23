@@ -22,22 +22,25 @@ export function createMetadata (remote: RemoteDoc): Metadata {
     docType: localDocType(remote.type),
     creationDate: remote.created_at,
     lastModification: remote.updated_at,
-    executable: remote.executable,
     remote: {
       _id: remote._id,
       _rev: remote._rev
-    },
-    sides: {
-      remote: undefined,
-      local: undefined
     }
+  }
+
+  if (remote.executable) {
+    doc.executable = remote.executable
   }
 
   if (remote.md5sum) {
     doc.checksum = remote.md5sum
   }
 
-  for (let field of ['size', 'class', 'mime', 'tags']) {
+  if (remote.size) {
+    doc.size = parseInt(remote.size)
+  }
+
+  for (let field of ['class', 'mime', 'tags']) {
     if (remote[field]) { doc[field] = remote[field] }
   }
   return doc
