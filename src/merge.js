@@ -4,15 +4,17 @@ import clone from 'lodash.clone'
 import isEqual from 'lodash.isequal'
 import path from 'path'
 import pick from 'lodash.pick'
-let log = require('printit')({
-  prefix: 'Merge         ',
-  date: true
-})
 
 import Local from './local'
+import logger from './logger'
 import { extractRevNumber } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
+
+const log = logger({
+  prefix: 'Merge         ',
+  date: true
+})
 
 // When the local filesystem or the remote cozy detects a change, it calls this
 // class to inform it (via Prep). This class will check how to operate this

@@ -1,16 +1,18 @@
 /* @flow weak */
 
 import Promise from 'bluebird'
-let log = require('printit')({
-  prefix: 'Prep          ',
-  date: true
-})
 
 import Ignore from './ignore'
+import logger from './logger'
 import Merge from './merge'
 import { buildId, invalidChecksum, invalidPath } from './metadata'
 
 import type { Metadata } from './metadata'
+
+const log = logger({
+  prefix: 'Prep          ',
+  date: true
+})
 
 // When the local filesystem or the remote cozy detects a change, it calls this
 // class to inform it. This class will check this event, add some informations,

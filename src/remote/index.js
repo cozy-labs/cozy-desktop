@@ -1,11 +1,10 @@
 /* @flow */
 
-import printit from 'printit'
-
 import Config from '../config'
 import * as conversion from '../conversion'
 import RemoteCozy from './cozy'
 import { jsonApiToRemoteDoc } from './document'
+import logger from '../logger'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import Watcher from './watcher'
@@ -16,7 +15,7 @@ import type { Metadata } from '../metadata'
 import type { Side } from '../side' // eslint-disable-line
 import type { Callback } from '../utils'
 
-const log = printit({
+const log = logger({
   prefix: 'Remote writer ',
   date: true
 })

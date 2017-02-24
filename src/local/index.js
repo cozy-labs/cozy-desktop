@@ -6,11 +6,8 @@ import EventEmitter from 'events'
 import clone from 'lodash.clone'
 import fs from 'fs-extra'
 import path from 'path'
-let log = require('printit')({
-  prefix: 'Local writer  ',
-  date: true
-})
 
+import logger from '../logger'
 import { extractRevNumber } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
@@ -19,6 +16,10 @@ import Watcher from './watcher'
 import type { FileStreamProvider } from '../file_stream_provider'
 import type { Side } from '../side' // eslint-disable-line
 
+const log = logger({
+  prefix: 'Local writer  ',
+  date: true
+})
 // Local is the class that interfaces cozy-desktop with the local filesystem.
 // It uses a watcher, based on chokidar, to listen for file and folder changes.
 // It also applied changes from the remote cozy on the local filesystem.

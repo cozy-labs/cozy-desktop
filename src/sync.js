@@ -2,18 +2,20 @@
 
 import async from 'async'
 import EventEmitter from 'events'
-let log = require('printit')({
-  prefix: 'Synchronize   ',
-  date: true
-})
 
 import Ignore from './ignore'
 import Local from './local'
+import logger from './logger'
 import { extractRevNumber } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
 
 import type { Side } from './side' // eslint-disable-line
+
+const log = logger({
+  prefix: 'Synchronize   ',
+  date: true
+})
 
 // Sync listens to PouchDB about the metadata changes, and calls local and
 // remote sides to apply the changes on the filesystem and remote CouchDB

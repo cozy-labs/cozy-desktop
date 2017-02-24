@@ -7,14 +7,15 @@ import find from 'lodash.find'
 import fs from 'fs'
 import mime from 'mime'
 import path from 'path'
-let log = require('printit')({
-  prefix: 'Local watcher ',
-  date: true
-})
 
+import logger from '../logger'
 import Pouch from '../pouch'
 import Prep from '../prep'
 
+const log = logger({
+  prefix: 'Local watcher ',
+  date: true
+})
 // This file contains the filesystem watcher that will trigger operations when
 // a file or a folder is added/removed/changed locally.
 // Operations will be added to the a common operation queue along with the

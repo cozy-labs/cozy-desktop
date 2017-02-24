@@ -1,8 +1,7 @@
 /* @flow */
 
-import printit from 'printit'
-
 import * as conversion from '../conversion'
+import logger from '../logger'
 import { invalidPath } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
@@ -11,7 +10,7 @@ import RemoteCozy from './cozy'
 import type { Metadata } from '../metadata'
 import type { RemoteDoc } from './document'
 
-const log = printit({
+const log = logger({
   prefix: 'RemoteWatcher',
   date: true
 })
