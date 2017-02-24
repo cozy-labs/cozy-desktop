@@ -1,11 +1,39 @@
 /* @flow weak */
 
+import prettyFormat from '@ava/pretty-format'
 import {
   red
 } from 'chalk'
 
 let printit = options => new Logger(options)
 if (printit.console == null) { printit.console = global.console }
+
+const theme = {
+  boolean: 'dim',
+  content: 'dim',
+  date: 'dim',
+  function: 'dim',
+  label: 'dim',
+  misc: 'dim',
+  number: 'dim',
+  prop: 'dim',
+  value: 'dim',
+  regex: 'dim',
+  string: 'dim',
+  tag: 'dim',
+
+  key: 'italic',
+
+  bracket: 'reset',
+  comma: 'reset',
+  symbol: 'reset',
+
+  error: 'red'
+}
+
+function highlight (obj) {
+  return prettyFormat(obj, {highlight: true, theme, min: true})
+}
 
 class Logger {
   options: Object
@@ -49,7 +77,11 @@ class Logger {
     var text = ((() => {
       let result = []
       for (text of Array.from(texts)) {
-        result.push(this.stringify(text))
+        if (typeof text === 'string') {
+          result.push(this.stringify(text))
+        } else {
+          result.push(highlight(text))
+        }
       }
       return result
     })()).join(' ')
