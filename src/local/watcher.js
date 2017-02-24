@@ -176,17 +176,8 @@ class LocalWatcher {
   // It's only based on the filename, not using libmagic
   // ex: pic.png returns 'image/png' and 'image'
   getFileClass (filename, callback) {
-    let mimeType = mime.lookup(filename)
-    let fileClass = (() => {
-      switch (mimeType.split('/')[0]) {
-        case 'image': return 'image'
-        case 'application': return 'document'
-        case 'text': return 'document'
-        case 'audio': return 'music'
-        case 'video': return 'video'
-        default: return 'file'
-      }
-    })()
+    const mimeType = mime.lookup(filename)
+    const fileClass = mimeType.split('/')[0]
     return [mimeType, fileClass]
   }
 
