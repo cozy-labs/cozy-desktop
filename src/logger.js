@@ -3,22 +3,6 @@
 let printit = options => new Logger(options)
 if (printit.console == null) { printit.console = global.console }
 
-let colors = {
-  blue: ['\x1B[34m', '\x1B[39m'],
-  cyan: ['\x1B[36m', '\x1B[39m'],
-  green: ['\x1B[32m', '\x1B[39m'],
-  magenta: ['\x1B[36m', '\x1B[39m'],
-  red: ['\x1B[31m', '\x1B[39m'],
-  yellow: ['\x1B[33m', '\x1B[39m']
-}
-
-let levelColors = {
-  error: colors.red,
-  debug: colors.green,
-  warn: colors.yellow,
-  info: colors.blue
-}
-
 class Logger {
   options: Object
 
@@ -69,10 +53,6 @@ class Logger {
     })()).join(' ')
 
     if (this.options.prefix != null) { text = `${this.options.prefix} | ${text}` }
-
-    if (process.env.NODE_ENV !== 'production') {
-      level = this.colorify(level, levelColors[level])
-    }
 
     if (level) { text = `${level} - ${text}` }
     if (this.options.date) {
