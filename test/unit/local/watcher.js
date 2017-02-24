@@ -124,7 +124,7 @@ describe('LocalWatcher Tests', function () {
       fileClass.should.equal('image');
       [mimeType, fileClass] = this.watcher.getFileClass('doc.txt')
       mimeType.should.equal('text/plain')
-      fileClass.should.equal('document')
+      fileClass.should.equal('text')
     })
   )
 
