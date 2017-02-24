@@ -1,5 +1,9 @@
 /* @flow weak */
 
+import {
+  red
+} from 'chalk'
+
 let printit = options => new Logger(options)
 if (printit.console == null) { printit.console = global.console }
 
@@ -51,6 +55,8 @@ class Logger {
       }
       return result
     })()).join(' ')
+
+    if (level === 'error') { text = red(text) }
 
     if (this.options.prefix != null) { text = `${this.options.prefix} | ${text}` }
 
