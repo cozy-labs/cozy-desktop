@@ -76,8 +76,8 @@ class Logger {
 
     if (level) { text = `${level} - ${text}` }
     if (this.options.date) {
-      let date = new Date().format(this.options.dateFormat)
-      text = `[${date}] ${text}`
+      const date = new Date()
+      text = `[${date.toLocaleString()} ${date.getMilliseconds()}] ${text}`
     }
     return text
   }
