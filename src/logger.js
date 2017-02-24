@@ -58,7 +58,6 @@ class Logger {
 
     if (this.options.prefix != null) { text = `${this.options.prefix} | ${text}` }
 
-    if (level) { text = `${level} - ${text}` }
     if (this.options.date) {
       const date = new Date()
       let ms = date.getMilliseconds().toString()
