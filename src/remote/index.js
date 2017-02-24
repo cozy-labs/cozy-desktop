@@ -84,6 +84,7 @@ export default class Remote implements Side {
     const created = await this.remoteCozy.createFile(stream, {
       name,
       dirID: dir._id,
+      executable: doc.executable,
       contentType: doc.mime,
       lastModifiedDate: new Date(doc.lastModification)
     })
