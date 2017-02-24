@@ -46,8 +46,6 @@ class Logger {
   }
 
   format (level, texts) {
-    if (process.env.DEBUG) { texts.unshift(this.getFileAndLine()) }
-
     var text = ((() => {
       let result = []
       for (text of Array.from(texts)) {
