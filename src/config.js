@@ -93,6 +93,10 @@ export default class Config {
 
   save (key, value) {
     this.config[key] = value
+    if (key === 'creds') {
+      // Persist the access token after it has been refreshed
+      this.persist()
+    }
     return Promise.resolve(value)
   }
 
