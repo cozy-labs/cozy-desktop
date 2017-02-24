@@ -1,3 +1,5 @@
+/* @flow weak */
+
 let printit = options => new Logger(options)
 if (printit.console == null) { printit.console = global.console }
 
@@ -18,6 +20,7 @@ let levelColors = {
 }
 
 class Logger {
+  options: Object
 
   constructor (options) {
     this.options = options
