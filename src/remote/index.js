@@ -131,12 +131,38 @@ export default class Remote implements Side {
     }
   }
 
+  async updateFileMetadataAsync (doc: Metadata, old: any): Promise<*> {
+    log.info(`${doc.path}: Updating metadata...`)
+    // TODO: v3: addFile() when no old.remote
+
+    const attrs = {}
+
+    // TODO: v3: ifMatch old rev
+    const updated = await this.remoteCozy.updateAttributesById(old.remote._id, attrs, {})
+
+    // TODO: v3: Handle trivial remote changes and conflicts.
+    // See Couch#putRemoteDoc() and #sameRemoteDoc()
+
+    doc.remote = {
+      _id: updated._id,
+      _rev: updated._rev
+    }
+
+    return updated
+  }
+
+  updateFileMetadata (doc: Metadata, old: any, callback: Callback) {
+    try {
+      this.updateFileMetadataAsync(doc, old)
+        .then(() => { callback() })
+        .catch(callback)
+    } catch (err) {
+      callback(err)
+    }
+  }
+
   // FIXME: Temporary stubs so we can do some acceptance testing on file upload
   //        without getting errors for missing methods.
-
-  updateFileMetadata (doc: Metadata, _: any, callback: Callback) {
-    callback(new Error('Remote#updateFileMetadata() is not implemented'))
-  }
 
   updateFolder (doc: Metadata, _: any, callback: Callback) {
     callback(new Error('Remote#updateFolder() is not implemented'))

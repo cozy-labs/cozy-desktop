@@ -45,16 +45,23 @@ export default class RemoteCozy {
     this.createFile = this.client.files.create
     this.createDirectory = this.client.files.createDirectory
     this.updateFileById = this.client.files.updateById
+    this.updateAttributesById = this.client.files.updateAttributesById
   }
 
+  // TODO: All RemoteCozy methods should resolve with RemoteDoc instances,
+  //       not JsonApiDoc ones.
+  //
   createFile: (data: Readable, options: {
     name: string, dirID?: ?string, contentType?: ?string, lastModifiedDate?: ?Date
   }) => Promise<RemoteDoc>
+
   createDirectory: ({name: string, dirID: string}) => Promise<RemoteDoc>
-  // TODO: All RemoteCozy methods should resolve with RemoteDoc instances,
-  //       not JsonApiDoc ones.
+
   updateFileById: (id: string, data: Readable,
     options: {contentType?: ?string, lastModifiedDate?: ?Date }) => Promise<JsonApiDoc>
+
+  updateAttributesById: (id: string, attrs: Object, options: {ifMatch?: string})
+    => Promise<RemoteDoc>
 
   async changes (seq: number = 0) {
     let json = await this.client.data.changesFeed(FILES_DOCTYPE, { since: seq })

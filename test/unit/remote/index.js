@@ -526,51 +526,43 @@ describe('Remote', function () {
     })
   })
 
-  xdescribe('updateFileMetadata', () =>
-    it('updates the lastModification', function (done) {
-      return couchHelpers.createFile(this.couch, 7, (err, created) => {
-        should.not.exist(err)
-        let doc: Object = {
-          path: 'couchdb-folder/file-7',
-          docType: 'file',
-          checksum: '1111111111111111111111111111111111111127',
-          lastModification: '2015-11-16T16:13:01.001Z'
+  describe('updateFileMetadataAsync', () =>
+    it('updates the lastModification', async function () {
+      const dir = await builders.dir().named('dir').build()
+      const created = await builders.file()
+        .named('file-7')
+        .inDir(dir)
+        .data('foo')
+        .timestamp(2015, 11, 16, 16, 13, 1)
+        .build()
+
+      const doc: Object = {
+        path: 'dir/file-7',
+        docType: 'file',
+        checksum: 'N7UdGUp1E+RbVvZSTy1R8g==', // foo
+        lastModification: '2015-11-16T16:13:01.001Z'
+      }
+      const old = {
+        path: 'dir/file-7',
+        docType: 'file',
+        checksum: 'N7UdGUp1E+RbVvZSTy1R8g==',
+        remote: {
+          _id: created._id,
+          _rev: created._rev
         }
-        let old = {
-          path: 'couchdb-folder/file-7',
-          docType: 'file',
-          checksum: '1111111111111111111111111111111111111127',
-          remote: {
-            _id: created.id,
-            _rev: created.rev,
-            binary: {
-              _id: '1111111111111111111111111111111111111127',
-              _rev: '1-852654'
-            }
-          }
-        }
-        return this.remote.updateFileMetadata(doc, old, err => {
-          should.not.exist(err)
-          return this.couch.get(doc.remote._id, function (err, file) {
-            should.not.exist(err)
-            file.should.have.properties({
-              _id: created.id,
-              docType: 'file',
-              path: '/couchdb-folder',
-              name: 'file-7',
-              lastModification: doc.lastModification,
-              binary: {
-                file: {
-                  id: doc.remote.binary._id,
-                  rev: doc.remote.binary._rev
-                }
-              }
-            })
-            doc.remote._rev.should.equal(file._rev)
-            done()
-          })
-        })
+      }
+
+      await this.remote.updateFileMetadataAsync(doc, old)
+
+      const file = await cozy.data.find(FILES_DOCTYPE, doc.remote._id)
+      should(file).have.properties({
+        _id: created._id,
+        type: 'file',
+        dir_id: dir._id,
+        name: 'file-7',
+        updated_at: '2015-11-16T16:13:01Z'
       })
+      should(doc.remote._rev).equal(file._rev)
     })
   )
 
