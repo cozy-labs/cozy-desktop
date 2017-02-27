@@ -3,6 +3,7 @@
 import prettyFormat from '@ava/pretty-format'
 import {
   blue,
+  dim,
   magenta,
   red
 } from 'chalk'
@@ -89,11 +90,13 @@ class Logger {
     })()).join(' ')
 
     if (level === 'error') { text = red(text) }
+    if (level === 'debug') { text = dim(text) }
 
     let prefix = this.options.prefix
     if (prefix != null) {
       if (prefix.startsWith('Local')) prefix = magenta(prefix)
       if (prefix.startsWith('Remote')) prefix = blue(prefix)
+      if (level === 'debug') prefix = dim(prefix)
 
       text = `${prefix} | ${text}`
     }
