@@ -9,6 +9,7 @@ import path from 'path'
 import readdirp from 'readdirp'
 import url from 'url'
 
+import pkg from '../package.json'
 import Config from './config'
 import logger from './logger'
 import Pouch from './pouch'
@@ -132,7 +133,7 @@ class App {
   }
 
   // Return a promise for registering a device on the remote cozy
-  registerRemote (cozyUrl, pkg, deviceName) {
+  registerRemote (cozyUrl, deviceName) {
     let parsed = this.parseCozyUrl(cozyUrl)
     cozyUrl = url.format(parsed)
     if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) {
@@ -156,11 +157,11 @@ class App {
 
   // Register current device to remote Cozy and then save related informations
   // to the config file (used by CLI, not GUI)
-  async addRemote (cozyUrl, syncPath, pkg, deviceName) {
+  async addRemote (cozyUrl, syncPath, deviceName) {
     try {
-      const registered = await this.registerRemote(cozyUrl, pkg, deviceName)
-      log.info(`Device ${registered.client.clientName} has been added to ${cozyUrl}`)
-      this.saveConfig(cozyUrl, syncPath, registered.client)
+      const registered = await this.registerRemote(cozyUrl, deviceName)
+      log.info(`Device ${registered.deviceName} has been added to ${cozyUrl}`)
+      this.saveConfig(cozyUrl, syncPath)
     } catch (err) {
       log.error('An error occured while registering your device.')
       let parsed = this.parseCozyUrl(cozyUrl)

@@ -41,7 +41,6 @@ const nutsServer = 'https://nuts.cozycloud.cc'
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
 let tray
-let device
 let diskTimeout
 
 let state = 'not-configured'
@@ -70,6 +69,7 @@ const sendToMainWindow = (...args) => {
 }
 
 const sendErrorToMainWindow = (msg) => {
+  // FIXME
   if (msg === 'The device is no longer registered' ||
       msg === "This device doesn't exist") {
     sendToMainWindow('unlinked')
@@ -91,13 +91,11 @@ const goToTab = (tab) => {
 }
 
 const goToMyCozy = () => {
-  const device = desktop.config.getDevice()
-  shell.openExternal(device.url)
+  shell.openExternal(desktop.config.cozyUrl)
 }
 
 const openCozyFolder = () => {
-  const device = desktop.config.getDevice()
-  shell.openItem(device.path)
+  shell.openItem(desktop.config.syncPath)
 }
 
 const buildAppMenu = () => {
@@ -321,7 +319,7 @@ const sendDiskSpace = () => {
 }
 
 const startSync = (force) => {
-  sendToMainWindow('synchronization', device.url, device.deviceName)
+  sendToMainWindow('synchronization', desktop.config.cozyUrl, desktop.config.deviceName)
   for (let file of lastFiles) {
     sendToMainWindow('transfer', file)
   }
@@ -372,11 +370,8 @@ const startSync = (force) => {
 }
 
 const appLoaded = () => {
-  if (desktop.config.hasDevice()) {
-    device = desktop.config.getDevice()
-    if (device.deviceName && device.url && device.path) {
-      setTimeout(startSync, 20)
-    }
+  if (desktop.config.isValid()) {
+    setTimeout(startSync, 20)
   }
 }
 
@@ -432,26 +427,13 @@ ipcMain.on('ping-cozy', (event, url) => {
 })
 
 ipcMain.on('register-remote', (event, arg) => {
-  desktop.askPassphrase = (cb) => { cb(null, arg.password) }
-
-  // It looks like Electron detects incorrectly that node has nothing to do
-  // and it prevents it to send its http request to the cozy before the next
-  // event. Putting new events in the event loop seems to be a work-around
-  // for this mysterious bug!
-  setTimeout(() => {}, 250)
-  setTimeout(() => {}, 500)
-  setTimeout(() => {}, 1000)
-
-  desktop.registerRemote(arg.url, null, (err, credentials) => {
-    event.sender.send('remote-registered', err)
-    if (!err) {
-      device = {
-        url: arg.url,
-        deviceName: credentials.deviceName,
-        password: credentials.password
-      }
-    }
-  })
+  // TODO use package.json for pkg ({} below)
+  desktop.config.cozyUrl = arg.url
+  desktop.registerRemote(arg.url, {})
+    .then(
+      (reg) => event.sender.send('remote-registered', null),
+      (err) => event.sender.send('remote-registered', err)
+    )
 })
 
 ipcMain.on('choose-folder', (event) => {
@@ -464,17 +446,16 @@ ipcMain.on('choose-folder', (event) => {
 })
 
 ipcMain.on('start-sync', (event, arg) => {
-  if (!device) {
+  if (!desktop.config.client) {
     console.error('No device!')
     return
   }
-  desktop.saveConfig(device.url, arg, device.deviceName, device.password, (err) => {
-    if (err) {
-      event.sender.send('folder-error', translate('Error Invalid path'))
-    } else {
-      startSync()
-    }
-  })
+  try {
+    desktop.saveConfig(desktop.config.cozyUrl, arg)
+    startSync()
+  } catch (err) {
+    event.sender.send('folder-error', translate('Error Invalid path'))
+  }
 })
 
 ipcMain.on('quit-and-install', () => {
@@ -494,20 +475,15 @@ ipcMain.on('auto-launcher', (event, enabled) => {
 })
 
 ipcMain.on('unlink-cozy', () => {
-  if (!device) {
+  if (!desktop.config.isValid()) {
     console.error('No device!')
     return
   }
   desktop.stopSync(() => {
-    if (!device) {
-      return
-    }
-    desktop.askPassphrase = (cb) => { cb(null, device.password) }
-    desktop.removeRemote(device.deviceName, (err) => {
+    desktop.removeRemote((err) => {
       if (err) {
         console.error(err)
       } else {
-        device = null
         sendToMainWindow('unlinked')
       }
     })
