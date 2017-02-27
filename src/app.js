@@ -60,14 +60,6 @@ class App {
     this.events = new EventEmitter()
   }
 
-  // This method is here to be surcharged by the UI
-  // to ask for a confirmation before doing something that can't be cancelled
-  //
-  // callback is a function that takes two parameters: error and a boolean
-  askConfirmation (callback) {
-    callback(new Error('Not implemented'), null)
-  }
-
   // Configure a file to write logs to
   writeLogsTo (logfile) {
     this.logfile = logfile
@@ -152,12 +144,17 @@ class App {
   // Unregister current device from remote Cozy and then remove remote from
   // the config file
   removeRemote () {
-    if (!this.remote) {
-      this.instanciate()
+    try {
+      if (!this.remote) {
+        this.instanciate()
+      }
+      this.remote.unregister()
+      fs.removeSync(this.basePath)
+      log.info('Current device properly removed from remote cozy.')
+    } catch (err) {
+      log.error('An error occured while unregistering your device.')
+      log.error(err)
     }
-    this.remote.unregister()
-    fs.removeSync(this.basePath)
-    log.info('Current device properly removed from remote cozy.')
   }
 
   // Send an issue by mail to the support
@@ -272,18 +269,10 @@ class App {
 
   // Recreate the local pouch database
   resetDatabase (callback) {
-    this.askConfirmation((err, ok) => {
-      if (err) {
-        log.error(err)
-      } else if (ok) {
-        log.info('Recreates the local database...')
-        this.pouch.resetDatabase(function () {
-          log.info('Database recreated')
-          __guardFunc__(callback, f => f())
-        })
-      } else {
-        log.info('Abort!')
-      }
+    log.info('Recreates the local database...')
+    this.pouch.resetDatabase(function () {
+      log.info('Database recreated')
+      __guardFunc__(callback, f => f())
     })
   }
 
