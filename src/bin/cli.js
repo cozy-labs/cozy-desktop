@@ -37,7 +37,6 @@ let sync = function (mode, args) {
     log.log('Have you added a remote cozy?')
     return process.exit(1)
   }
-  app.events.on('up-to-date', () => log.log('Your cozy is up to date!'))
   app.events.on('transfer-started', (info) => {
     let what = info.way === 'up' ? 'Uploading' : 'Downloading'
     let filename = path.basename(info.path)
