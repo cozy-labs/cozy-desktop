@@ -4,6 +4,7 @@ import prettyFormat from '@ava/pretty-format'
 import {
   blue,
   dim,
+  gray,
   magenta,
   red
 } from 'chalk'
@@ -105,7 +106,8 @@ class Logger {
       const date = new Date()
       let ms = date.getMilliseconds().toString()
       ms = '000'.substring(0, 3 - ms.length) + ms
-      text = `[${date.toLocaleString()} ${ms}] ${text}`
+      const timestamp = gray(`[${date.toLocaleString()} ${ms}]`)
+      text = `${timestamp} ${text}`
     }
     return text
   }
