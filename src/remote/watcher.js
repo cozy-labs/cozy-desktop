@@ -90,12 +90,14 @@ export default class RemoteWatcher {
   }
 
   async onChange (doc: RemoteDoc) {
-    log.info('onChange', doc)
+    log.info(`${doc.path}: something happened on remote`)
+    log.inspect(doc)
+
     const was: ?Metadata = await this.pouch.byRemoteIdMaybeAsync(doc._id)
 
     if (doc.path && doc.path.startsWith('/.cozy_trash/')) {
       if (was == null) {
-        log.debug(`${doc.path}: was deleted both remotely and locally`)
+        log.info(`${doc.path}: was deleted both remotely and locally`)
         return
       } else {
         log.info(`${doc.path}: was deleted remotely`)
@@ -104,7 +106,7 @@ export default class RemoteWatcher {
     } else if (['directory', 'file'].includes(doc.type)) {
       return this.putDoc(doc, was)
     } else {
-      log.debug(`Document ${doc._id} is not a file or a directory`)
+      log.error(`Document ${doc._id} is not a file or a directory`)
       return
     }
   }
@@ -116,8 +118,6 @@ export default class RemoteWatcher {
   async putDoc (remote: RemoteDoc, was: ?Metadata): Promise<*> {
     let doc: Metadata = conversion.createMetadata(remote)
     const docType = doc.docType
-    log.debug('new local doc', doc)
-    log.debug('was', was)
     if (invalidPath(doc)) {
       log.error('Invalid path / local id')
       log.error(doc)
