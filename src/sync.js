@@ -2,18 +2,20 @@
 
 import async from 'async'
 import EventEmitter from 'events'
-let log = require('printit')({
-  prefix: 'Synchronize   ',
-  date: true
-})
 
 import Ignore from './ignore'
 import Local from './local'
+import logger from './logger'
 import { extractRevNumber } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
 
 import type { Side } from './side' // eslint-disable-line
+
+const log = logger({
+  prefix: 'Synchronize   ',
+  date: true
+})
 
 // Sync listens to PouchDB about the metadata changes, and calls local and
 // remote sides to apply the changes on the filesystem and remote CouchDB
@@ -119,6 +121,7 @@ class Sync {
           if (__guard__(info.results, x => x.length)) { return }
           this.events.emit('up-to-date')
           log.info('Your cozy is up to date!')
+          log.lineBreak()
           opts.live = true
           opts.returnDocs = false
           this.changes = this.pouch.db.changes(opts)
@@ -143,8 +146,8 @@ class Sync {
   // At least one side should say it has already this change
   // In some cases, both sides have the change
   apply (change, callback) {
-    log.info('apply', change)
     let { doc } = change
+    log.debug(`${doc.path}: Applying change ${change.seq}...`)
 
     if (this.ignore.isIgnored(doc)) {
       this.pouch.setLocalSeq(change.seq, _ => callback())
@@ -179,7 +182,7 @@ class Sync {
     } else if (remoteRev > localRev) {
       return [this.local, 'local', localRev]
     } else {
-      log.info('Nothing to do')
+      log.debug(`${doc.path}: Nothing to do`)
       return []
     }
   }
@@ -218,7 +221,7 @@ class Sync {
           }
         })
       } else {
-        log.info(`Applied ${change.seq}`)
+        log.info(`${change.doc.path}: Applied change ${change.seq}`)
         this.pouch.setLocalSeq(change.seq, err => {
           if (err) { log.error(err) }
           if (change.doc._deleted) {

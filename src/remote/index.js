@@ -1,11 +1,10 @@
 /* @flow */
 
-import printit from 'printit'
-
 import Config from '../config'
 import * as conversion from '../conversion'
 import RemoteCozy from './cozy'
 import { jsonApiToRemoteDoc } from './document'
+import logger from '../logger'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import Watcher from './watcher'
@@ -16,7 +15,7 @@ import type { Metadata } from '../metadata'
 import type { Side } from '../side' // eslint-disable-line
 import type { Callback } from '../utils'
 
-const log = printit({
+const log = logger({
   prefix: 'Remote writer ',
   date: true
 })
@@ -56,7 +55,7 @@ export default class Remote implements Side {
   // Create a folder on the remote cozy instance
   async addFolder (doc: Metadata, callback: Callback) {
     try {
-      log.info(`Add folder ${doc.path}`)
+      log.info(`${doc.path}: Creating folder...`)
 
       const [dirPath, name] = conversion.extractDirAndName(doc.path)
       const dir: RemoteDoc = await this.remoteCozy.findDirectoryByPath(dirPath)
@@ -78,6 +77,7 @@ export default class Remote implements Side {
   }
 
   async addFileAsync (doc: Metadata): Promise<RemoteDoc> {
+    log.info(`${doc.path}: Uploading new file...`)
     const stream = await this.other.createReadStreamAsync(doc)
     const [dirPath, name] = conversion.extractDirAndName(doc.path)
     const dir = await this.remoteCozy.findDirectoryByPath(dirPath)
@@ -109,6 +109,7 @@ export default class Remote implements Side {
   }
 
   async overwriteFileAsync (doc: Metadata, old: Metadata): Promise<RemoteDoc> {
+    log.info(`${doc.path}: Uploading new file version...`)
     const stream = await this.other.createReadStreamAsync(doc)
     const updated = await this.remoteCozy.updateFileById(doc.remote._id, stream, {
       contentType: doc.mime,

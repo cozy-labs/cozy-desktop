@@ -1,9 +1,13 @@
 /* @flow */
 
 import path from 'path'
-import printit from 'printit'
 
-const log = printit()
+import logger from './logger'
+
+const log = logger({
+  prefix: 'Metadata',
+  date: true
+})
 
 // The files/dirs metadata, as stored in PouchDB
 export type Metadata = {

@@ -1,21 +1,16 @@
 /* @flow weak */
 
+// $FlowFixMe
+import { Console } from 'console'
+import EventEmitter from 'events'
 import fs from 'fs-extra'
 import os from 'os'
 import path from 'path'
 import readdirp from 'readdirp'
 import url from 'url'
-import printit from 'printit'
-let log = printit({
-  prefix: 'Cozy Desktop  ',
-  date: true
-})
-
-// $FlowFixMe
-import { Console } from 'console'
-import EventEmitter from 'events'
 
 import Config from './config'
+import logger from './logger'
 import Pouch from './pouch'
 import Ignore from './ignore'
 import Merge from './merge'
@@ -24,6 +19,11 @@ import Local from './local'
 import Remote from './remote'
 import Sync from './sync'
 import Registration from './remote/registration'
+
+const log = logger({
+  prefix: 'Cozy Desktop  ',
+  date: true
+})
 
 // App is the entry point for the CLI and GUI.
 // They both can do actions and be notified by events via an App instance.
@@ -78,7 +78,7 @@ class App {
   // Write logs in a file, by overriding the global console
   writeToLogfile () {
     let out = fs.createWriteStream(this.logfile, {flags: 'a+', mode: 0o0644})
-    printit.console = new Console(out, out)
+    logger.console = new Console(out, out)
   }
 
   // Rotate the log file if it's too heavy

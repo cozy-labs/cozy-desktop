@@ -1,8 +1,7 @@
 /* @flow */
 
-import printit from 'printit'
-
 import * as conversion from '../conversion'
+import logger from '../logger'
 import { invalidPath } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
@@ -11,8 +10,8 @@ import RemoteCozy from './cozy'
 import type { Metadata } from '../metadata'
 import type { RemoteDoc } from './document'
 
-const log = printit({
-  prefix: 'RemoteWatcher',
+const log = logger({
+  prefix: 'Remote watcher',
   date: true
 })
 
@@ -51,8 +50,11 @@ export default class RemoteWatcher {
       const seq = await this.pouch.getRemoteSeqAsync()
       const changes = await this.remoteCozy.changes(seq)
 
+      if (changes.ids.length === 0) return
+
       await this.pullMany(changes.ids)
-      return this.pouch.setRemoteSeqAsync(changes.last_seq)
+      await this.pouch.setRemoteSeqAsync(changes.last_seq)
+      log.lineBreak()
     } catch (err) {
       log.error(err)
     }
@@ -88,21 +90,23 @@ export default class RemoteWatcher {
   }
 
   async onChange (doc: RemoteDoc) {
-    log.info('onChange', doc)
+    log.info(`${doc.path}: something happened on remote`)
+    log.inspect(doc)
+
     const was: ?Metadata = await this.pouch.byRemoteIdMaybeAsync(doc._id)
 
     if (doc.path && doc.path.startsWith('/.cozy_trash/')) {
       if (was == null) {
-        log.debug(`Document ${doc._id} was deleted on local and on remote`)
+        log.info(`${doc.path}: was deleted both remotely and locally`)
         return
       } else {
-        log.debug(`Deleted on remote: ${doc._id}`)
+        log.info(`${doc.path}: was deleted remotely`)
         return this.prep.deleteDocAsync(SIDE, was)
       }
     } else if (['directory', 'file'].includes(doc.type)) {
       return this.putDoc(doc, was)
     } else {
-      log.debug(`Document ${doc._id} is not a file or a directory`)
+      log.error(`Document ${doc._id} is not a file or a directory`)
       return
     }
   }
@@ -113,28 +117,27 @@ export default class RemoteWatcher {
   // And the _id/_rev from CouchDB are saved in the remote field in PouchDB.
   async putDoc (remote: RemoteDoc, was: ?Metadata): Promise<*> {
     let doc: Metadata = conversion.createMetadata(remote)
-    log.debug('new local doc', doc)
-    log.debug('was', was)
+    const docType = doc.docType
     if (invalidPath(doc)) {
       log.error('Invalid path / local id')
       log.error(doc)
       throw new Error('Invalid path/name')
     } else if (!was) {
-      log.debug(`Document ${doc.path} was added remotely`)
+      log.info(`${doc.path}: ${docType} was added remotely`)
       return this.prep.addDocAsync(SIDE, doc)
     } else if (was.path === doc.path) {
-      log.debug(`Document ${doc.path} was updated remotely`)
+      log.info(`${doc.path}: ${docType} was updated remotely`)
       return this.prep.updateDocAsync(SIDE, doc)
     } else if ((doc.checksum != null) && (was.checksum === doc.checksum)) {
-      log.debug(`Document ${doc.path} was moved remotely`)
+      log.info(`${doc.path}: ${docType} was moved remotely`)
       return this.prep.moveDocAsync(SIDE, doc, was)
     } else if ((doc.docType === 'folder') || (was.remote._rev === doc.remote._rev)) {
-      log.debug(`Document ${doc.path} was possibly modified and renamed remotely while cozy-desktop was stopped`)
+      log.info(`${doc.path}: ${docType} was possibly modified and renamed remotely while cozy-desktop was stopped`)
       await this.prep.deleteDocAsync(SIDE, was)
       return this.prep.addDocAsync(SIDE, doc)
     } else {
       // TODO: add unit test
-      log.debug(`Document ${doc.path} was possibly renamed remotely while updated locally`)
+      log.info(`${doc.path}: ${docType} was possibly renamed remotely while updated locally`)
       await this.removeRemote(was)
       return this.prep.addDocAsync(SIDE, doc)
     }
@@ -144,6 +147,7 @@ export default class RemoteWatcher {
   // It's useful when a file has diverged (updated/renamed both in local and
   // remote) while cozy-desktop was not running.
   removeRemote (doc: Metadata) {
+    log.debug(`${doc.path}: Dissociating from remote...`)
     delete doc.remote
     if (doc.sides) delete doc.sides.remote
     return this.pouch.db.put(doc)

@@ -4,15 +4,17 @@ import clone from 'lodash.clone'
 import isEqual from 'lodash.isequal'
 import path from 'path'
 import pick from 'lodash.pick'
-let log = require('printit')({
-  prefix: 'Merge         ',
-  date: true
-})
 
 import Local from './local'
+import logger from './logger'
 import { extractRevNumber } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
+
+const log = logger({
+  prefix: 'Merge         ',
+  date: true
+})
 
 // When the local filesystem or the remote cozy detects a change, it calls this
 // class to inform it (via Prep). This class will check how to operate this
@@ -60,7 +62,9 @@ class Merge {
     let fields = ['_id', 'docType', 'remote', 'tags']
     one = pick(one, fields)
     two = pick(two, fields)
-    return isEqual(one, two)
+    const same = isEqual(one, two)
+    if (!same) log.diff(one, two)
+    return same
   }
 
   // Return true if the metadata of the two files are the same
@@ -70,12 +74,13 @@ class Merge {
   // rely on file systems to be precise to the millisecond.
   sameFile (one, two) {
     if (!this.sameDate(one.lastModification, two.lastModification)) { return false }
-    if (!one.executable !== !two.executable) { return false }
     let fields = ['_id', 'docType', 'checksum', 'remote',
       'tags', 'size', 'class', 'mime']
-    one = pick(one, fields)
-    two = pick(two, fields)
-    return isEqual(one, two)
+    one = {...pick(one, fields), executable: !!one.executable}
+    two = {...pick(two, fields), executable: !!two.executable}
+    const same = isEqual(one, two)
+    if (!same) log.diff(one, two)
+    return same
   }
 
   // Return true if the two files have the same binary content
@@ -239,6 +244,7 @@ class Merge {
           if (doc.mime == null) { doc.mime = file.mime }
         }
         if (this.sameFile(file, doc)) {
+          log.debug(`${doc.path}: already up to date`)
           callback(null)
         } else {
           this.pouch.db.put(doc, callback)
@@ -266,6 +272,7 @@ class Merge {
         if (doc.creationDate == null) { doc.creationDate = folder.creationDate }
         if (doc.remote == null) { doc.remote = folder.remote }
         if (this.sameFolder(folder, doc)) {
+          log.debug(`${doc.path}: already up to date`)
           callback(null)
         } else {
           this.pouch.db.put(doc, callback)

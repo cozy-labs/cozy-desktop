@@ -7,14 +7,15 @@ import find from 'lodash.find'
 import fs from 'fs'
 import mime from 'mime'
 import path from 'path'
-let log = require('printit')({
-  prefix: 'Local watcher ',
-  date: true
-})
 
+import logger from '../logger'
 import Pouch from '../pouch'
 import Prep from '../prep'
 
+const log = logger({
+  prefix: 'Local watcher ',
+  date: true
+})
 // This file contains the filesystem watcher that will trigger operations when
 // a file or a folder is added/removed/changed locally.
 // Operations will be added to the a common operation queue along with the
@@ -212,7 +213,7 @@ class LocalWatcher {
 
   // New file detected
   onAdd (filePath, stats) {
-    log.info('File added', filePath)
+    log.info(`${filePath}: File added`)
     __guard__(this.paths, x => x.push(filePath))
     __guard__(this.pending[filePath], x1 => x1.done())
     this.checksums++
@@ -236,7 +237,7 @@ class LocalWatcher {
             } else {
               let same = find(docs, d => ~keys.indexOf(d.path))
               if (same) {
-                log.info('was moved from', same.path)
+                log.info(`${filePath}: was moved from ${same.path}`)
                 clearTimeout(this.pending[same.path].timeout)
                 delete this.pending[same.path]
                 return this.prep.moveFile(this.side, doc, same, this.done)
@@ -253,7 +254,7 @@ class LocalWatcher {
   // New directory detected
   onAddDir (folderPath, stats) {
     if (folderPath !== '') {
-      log.info('Folder added', folderPath)
+      log.info(`${folderPath}: Folder added`)
       __guard__(this.paths, x => x.push(folderPath))
       __guard__(this.pending[folderPath], x1 => x1.done())
       let doc = {
@@ -277,7 +278,7 @@ class LocalWatcher {
     }
     let done = () => {
       clear()
-      log.info('File deleted', filePath)
+      log.info(`${filePath}: File deleted`)
       return this.prep.deleteFile(this.side, {path: filePath}, this.done)
     }
     let check = () => {
@@ -306,7 +307,7 @@ class LocalWatcher {
     }
     let done = () => {
       clear()
-      log.info('Folder deleted', folderPath)
+      log.info(`${folderPath}: Folder deleted`)
       return this.prep.deleteFolder(this.side, {path: folderPath}, this.done)
     }
     let check = () => {
@@ -322,7 +323,7 @@ class LocalWatcher {
 
   // File update detected
   onChange (filePath, stats) {
-    log.info('File updated', filePath)
+    log.info(`${filePath}: File updated`)
     return this.createDoc(filePath, stats, (err, doc) => {
       if (err) {
         return log.info(err)

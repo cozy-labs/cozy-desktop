@@ -5,12 +5,14 @@ import PouchDB from 'pouchdb'
 import async from 'async'
 import fs from 'fs-extra'
 import isEqual from 'lodash.isequal'
-let log = require('printit')({
+
+import Config from './config'
+import logger from './logger'
+
+const log = logger({
   prefix: 'Local Pouchdb ',
   date: true
 })
-
-import Config from './config'
 
 // Pouchdb is used to store all the metadata about files and folders.
 // These metadata can come from the local filesystem or the remote cozy instance.

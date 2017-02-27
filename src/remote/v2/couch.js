@@ -3,7 +3,9 @@ import isEqual from 'lodash.isequal'
 import pick from 'lodash.pick'
 import request from 'request-json-light'
 import uuid from 'node-uuid'
-let log = require('printit')({
+import logger from '../../logger'
+
+const log = logger({
   prefix: 'Remote CouchDB',
   date: true
 })
