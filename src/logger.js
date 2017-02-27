@@ -83,6 +83,8 @@ class Logger {
       for (text of Array.from(texts)) {
         if (typeof text === 'string') {
           result.push(this.stringify(text))
+        } else if (text.stack) {
+          result.push(text.stack)
         } else {
           result.push(highlight(text))
         }
