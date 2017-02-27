@@ -1,7 +1,5 @@
 /* eslint-env mocha */
 
-import sinon from 'sinon'
-
 import App from '../../src/app'
 
 describe('App', function () {

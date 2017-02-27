@@ -454,8 +454,8 @@ ipcMain.on('choose-folder', (event) => {
 })
 
 ipcMain.on('start-sync', (event, arg) => {
-  if (!desktop.config.client) {
-    console.error('No device!')
+  if (!desktop.config.isValid()) {
+    console.error('No client!')
     return
   }
   try {
@@ -484,7 +484,7 @@ ipcMain.on('auto-launcher', (event, enabled) => {
 
 ipcMain.on('unlink-cozy', () => {
   if (!desktop.config.isValid()) {
-    console.error('No device!')
+    console.error('No client!')
     return
   }
   desktop.stopSync(() => {
