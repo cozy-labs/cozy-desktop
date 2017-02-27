@@ -72,8 +72,7 @@ program
 program
   .command('remove-remote-cozy')
   .description('Unsync current device with its remote cozy')
-  .option('-d, --deviceName [deviceName]', 'device name to deal with')
-  .action(args => app.removeRemote(args.deviceName))
+  .action(args => app.removeRemote())
 
 program
   .command('sync')

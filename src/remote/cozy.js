@@ -42,6 +42,7 @@ export default class RemoteCozy {
     })
 
     // Aliases:
+    this.unregister = this.client.auth.unregisterClient
     this.createFile = this.client.files.create
     this.createDirectory = this.client.files.createDirectory
     this.updateFileById = this.client.files.updateById

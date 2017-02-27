@@ -151,22 +151,13 @@ class App {
 
   // Unregister current device from remote Cozy and then remove remote from
   // the config file
-  removeRemote (deviceName, callback) {
-    // FIXME
-    // if (callback == null) { callback = function () {} }
-    // let conf = this.config.getDevice()
-    // let cozyUrl = conf.url
-    // let { passphrase } = conf
-    // device.unregisterDevice(cozyUrl, deviceName, passphrase, err => {
-    //   if (err && (err.message !== 'Request unauthorized')) {
-    //     log.error('An error occured while unregistering your device.')
-    //     log.error(err)
-    //     callback(err)
-    //   } else {
-    //     log.info('Current device properly removed from remote cozy.')
-    //     fs.remove(this.basePath, callback)
-    //   }
-    // })
+  removeRemote () {
+    if (!this.remote) {
+      this.instanciate()
+    }
+    this.remote.unregister()
+    fs.removeSync(this.basePath)
+    log.info('Current device properly removed from remote cozy.')
   }
 
   // Send an issue by mail to the support
