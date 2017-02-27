@@ -11,7 +11,7 @@ import type { Metadata } from '../metadata'
 import type { RemoteDoc } from './document'
 
 const log = logger({
-  prefix: 'RemoteWatcher',
+  prefix: 'Remote watcher',
   date: true
 })
 
