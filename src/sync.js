@@ -121,6 +121,7 @@ class Sync {
           if (__guard__(info.results, x => x.length)) { return }
           this.events.emit('up-to-date')
           log.info('Your cozy is up to date!')
+          log.lineBreak()
           opts.live = true
           opts.returnDocs = false
           this.changes = this.pouch.db.changes(opts)

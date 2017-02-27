@@ -50,8 +50,11 @@ export default class RemoteWatcher {
       const seq = await this.pouch.getRemoteSeqAsync()
       const changes = await this.remoteCozy.changes(seq)
 
+      if (changes.ids.length === 0) return
+
       await this.pullMany(changes.ids)
-      return this.pouch.setRemoteSeqAsync(changes.last_seq)
+      await this.pouch.setRemoteSeqAsync(changes.last_seq)
+      log.lineBreak()
     } catch (err) {
       log.error(err)
     }
