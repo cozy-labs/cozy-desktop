@@ -32,22 +32,17 @@ const errMessage = (err) => {
   }
 }
 
-// Glue code between Elm and the main process
-ipcRenderer.on('cozy-pong', (event, url) => {
-  elmectron.ports.pong.send(url)
-})
-elmectron.ports.pingCozy.subscribe((url) => {
-  ipcRenderer.send('ping-cozy', url)
-})
-
-ipcRenderer.on('remote-registered', (event, err) => {
+ipcRenderer.on('registration-error', (event, err) => {
   err = errMessage(err)
-  elmectron.ports.registration.send(err)
+  elmectron.ports.registrationError.send(err)
 })
-elmectron.ports.registerRemote.subscribe((remote) => {
+ipcRenderer.on('registration-done', (event) => {
+  elmectron.ports.registrationDone.send(true)
+})
+elmectron.ports.registerRemote.subscribe((url) => {
   ipcRenderer.send('register-remote', {
-    url: remote[0],
-    password: remote[1]
+    cozyUrl: url,
+    location: window.location.toString().replace('#', '')
   })
 })
 

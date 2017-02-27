@@ -318,6 +318,10 @@ const sendDiskSpace = () => {
   }
 }
 
+const chooseSyncPath = () => {
+  sendToMainWindow('registration-done')
+}
+
 const startSync = (force) => {
   sendToMainWindow('synchronization', desktop.config.cozyUrl, desktop.config.deviceName)
   for (let file of lastFiles) {
@@ -370,8 +374,13 @@ const startSync = (force) => {
 }
 
 const appLoaded = () => {
-  if (desktop.config.isValid()) {
+  if (!desktop.config.isValid()) {
+    return
+  }
+  if (desktop.config.syncPath) {
     setTimeout(startSync, 20)
+  } else {
+    setTimeout(chooseSyncPath, 20)
   }
 }
 
@@ -414,25 +423,24 @@ app.on('ready', () => {
 // See http://electron.atom.io/docs/api/app/#event-window-all-closed
 app.on('window-all-closed', () => {})
 
-// Glue code between cozy-desktop lib and the renderer process
-ipcMain.on('ping-cozy', (event, url) => {
-  const pong = msg => event.sender.send('cozy-pong', msg)
-
-  desktop.pingCozy(url)
-    .then(pong)
-    .catch(err => {
-      console.error(err)
-      pong(null)
-    })
-})
-
 ipcMain.on('register-remote', (event, arg) => {
-  // TODO use package.json for pkg ({} below)
-  desktop.config.cozyUrl = arg.url
-  desktop.registerRemote(arg.url, {})
+  desktop.config.cozyUrl = arg.cozyUrl
+  const onRegistered = (client, url) => {
+    let resolveP
+    const promise = new Promise((resolve) => { resolveP = resolve })
+    mainWindow.loadURL(url)
+    mainWindow.webContents.on('did-get-redirect-request', (event, oldUrl, newUrl) => {
+      resolveP(newUrl)
+    })
+    return promise
+  }
+  desktop.registerRemote(arg.cozyUrl, arg.location, onRegistered)
     .then(
-      (reg) => event.sender.send('remote-registered', null),
-      (err) => event.sender.send('remote-registered', err)
+      (reg) => { mainWindow.loadURL(reg.client.redirectURI) },
+      (err) => {
+        console.error(err)
+        event.sender.send('registration-error', 'No cozy instance at this address!')
+      }
     )
 })
 

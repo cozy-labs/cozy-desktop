@@ -32,43 +32,36 @@ init =
 
 type Msg
     = FillAddress String
-    | PingCozy
-    | Pong (Maybe String)
+    | RegisterRemote
+    | RegistrationError String
 
 
-port pingCozy : String -> Cmd msg
+port registerRemote : String -> Cmd msg
 
 
-setError : Model -> String -> ( Model, Cmd msg, Maybe String )
+setError : Model -> String -> ( Model, Cmd msg )
 setError model message =
     ( { model | error = message, busy = False }
     , focus ".wizard__address"
-    , Nothing
     )
 
 
-update : Msg -> Model -> ( Model, Cmd Msg, Maybe String )
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case
         msg
     of
         FillAddress address ->
-            ( { address = address, error = "", busy = False }, Cmd.none, Nothing )
+            ( { address = address, error = "", busy = False }, Cmd.none )
 
-        PingCozy ->
+        RegisterRemote ->
             if model.address == "" then
                 setError model "Address You don't have filled the address!"
             else
-                ( { model | busy = True }, pingCozy model.address, Nothing )
+                ( { model | busy = True }, registerRemote model.address )
 
-        Pong Nothing ->
-            setError model "Address No cozy instance at this address!"
-
-        Pong (Just address) ->
-            ( { model | address = address, error = "", busy = False }
-            , Cmd.none
-            , Just address
-            )
+        RegistrationError error ->
+            setError model error
 
 
 
@@ -92,7 +85,7 @@ view helpers model =
                 , class "wizard__address"
                 , value model.address
                 , onInput FillAddress
-                , onEnter PingCozy
+                , onEnter RegisterRemote
                 ]
                 []
             ]
@@ -109,7 +102,7 @@ view helpers model =
             , if model.busy then
                 attribute "aria-busy" "true"
               else
-                onClick PingCozy
+                onClick RegisterRemote
             ]
             [ text (helpers.t "Address Next") ]
         ]
