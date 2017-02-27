@@ -144,6 +144,12 @@ class Logger {
     }
   }
 
+  inspect (obj) {
+    if (process.env.DEBUG) {
+      this.raw(highlight(obj))
+    }
+  }
+
   raw (...texts) {
     return printit.console.log(...texts)
   }
