@@ -62,7 +62,9 @@ class Merge {
     let fields = ['_id', 'docType', 'remote', 'tags']
     one = pick(one, fields)
     two = pick(two, fields)
-    return isEqual(one, two)
+    const same = isEqual(one, two)
+    if (!same) log.diff(one, two)
+    return same
   }
 
   // Return true if the metadata of the two files are the same
@@ -72,12 +74,13 @@ class Merge {
   // rely on file systems to be precise to the millisecond.
   sameFile (one, two) {
     if (!this.sameDate(one.lastModification, two.lastModification)) { return false }
-    if (!one.executable !== !two.executable) { return false }
     let fields = ['_id', 'docType', 'checksum', 'remote',
       'tags', 'size', 'class', 'mime']
-    one = pick(one, fields)
-    two = pick(two, fields)
-    return isEqual(one, two)
+    one = {...pick(one, fields), executable: !!one.executable}
+    two = {...pick(two, fields), executable: !!two.executable}
+    const same = isEqual(one, two)
+    if (!same) log.diff(one, two)
+    return same
   }
 
   // Return true if the two files have the same binary content
