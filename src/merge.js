@@ -241,6 +241,7 @@ class Merge {
           if (doc.mime == null) { doc.mime = file.mime }
         }
         if (this.sameFile(file, doc)) {
+          log.debug(`${doc.path}: already up to date`)
           callback(null)
         } else {
           this.pouch.db.put(doc, callback)
@@ -268,6 +269,7 @@ class Merge {
         if (doc.creationDate == null) { doc.creationDate = folder.creationDate }
         if (doc.remote == null) { doc.remote = folder.remote }
         if (this.sameFolder(folder, doc)) {
+          log.debug(`${doc.path}: already up to date`)
           callback(null)
         } else {
           this.pouch.db.put(doc, callback)

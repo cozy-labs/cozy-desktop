@@ -145,8 +145,8 @@ class Sync {
   // At least one side should say it has already this change
   // In some cases, both sides have the change
   apply (change, callback) {
-    log.info('apply', change)
     let { doc } = change
+    log.debug(`${doc.path}: Applying change ${change.seq}...`)
 
     if (this.ignore.isIgnored(doc)) {
       this.pouch.setLocalSeq(change.seq, _ => callback())
@@ -181,7 +181,7 @@ class Sync {
     } else if (remoteRev > localRev) {
       return [this.local, 'local', localRev]
     } else {
-      log.info('Nothing to do')
+      log.debug(`${doc.path}: Nothing to do`)
       return []
     }
   }
@@ -220,7 +220,7 @@ class Sync {
           }
         })
       } else {
-        log.info(`Applied ${change.seq}`)
+        log.info(`${change.doc.path}: Applied change ${change.seq}`)
         this.pouch.setLocalSeq(change.seq, err => {
           if (err) { log.error(err) }
           if (change.doc._deleted) {

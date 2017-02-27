@@ -92,10 +92,10 @@ export default class RemoteWatcher {
 
     if (doc.path && doc.path.startsWith('/.cozy_trash/')) {
       if (was == null) {
-        log.debug(`Document ${doc._id} was deleted on local and on remote`)
+        log.debug(`${doc.path}: was deleted both remotely and locally`)
         return
       } else {
-        log.debug(`Deleted on remote: ${doc._id}`)
+        log.info(`${doc.path}: was deleted remotely`)
         return this.prep.deleteDocAsync(SIDE, was)
       }
     } else if (['directory', 'file'].includes(doc.type)) {
@@ -112,6 +112,7 @@ export default class RemoteWatcher {
   // And the _id/_rev from CouchDB are saved in the remote field in PouchDB.
   async putDoc (remote: RemoteDoc, was: ?Metadata): Promise<*> {
     let doc: Metadata = conversion.createMetadata(remote)
+    const docType = doc.docType
     log.debug('new local doc', doc)
     log.debug('was', was)
     if (invalidPath(doc)) {
@@ -119,21 +120,21 @@ export default class RemoteWatcher {
       log.error(doc)
       throw new Error('Invalid path/name')
     } else if (!was) {
-      log.debug(`Document ${doc.path} was added remotely`)
+      log.info(`${doc.path}: ${docType} was added remotely`)
       return this.prep.addDocAsync(SIDE, doc)
     } else if (was.path === doc.path) {
-      log.debug(`Document ${doc.path} was updated remotely`)
+      log.info(`${doc.path}: ${docType} was updated remotely`)
       return this.prep.updateDocAsync(SIDE, doc)
     } else if ((doc.checksum != null) && (was.checksum === doc.checksum)) {
-      log.debug(`Document ${doc.path} was moved remotely`)
+      log.info(`${doc.path}: ${docType} was moved remotely`)
       return this.prep.moveDocAsync(SIDE, doc, was)
     } else if ((doc.docType === 'folder') || (was.remote._rev === doc.remote._rev)) {
-      log.debug(`Document ${doc.path} was possibly modified and renamed remotely while cozy-desktop was stopped`)
+      log.info(`${doc.path}: ${docType} was possibly modified and renamed remotely while cozy-desktop was stopped`)
       await this.prep.deleteDocAsync(SIDE, was)
       return this.prep.addDocAsync(SIDE, doc)
     } else {
       // TODO: add unit test
-      log.debug(`Document ${doc.path} was possibly renamed remotely while updated locally`)
+      log.info(`${doc.path}: ${docType} was possibly renamed remotely while updated locally`)
       await this.removeRemote(was)
       return this.prep.addDocAsync(SIDE, doc)
     }
@@ -143,6 +144,7 @@ export default class RemoteWatcher {
   // It's useful when a file has diverged (updated/renamed both in local and
   // remote) while cozy-desktop was not running.
   removeRemote (doc: Metadata) {
+    log.debug(`${doc.path}: Dissociating from remote...`)
     delete doc.remote
     if (doc.sides) delete doc.sides.remote
     return this.pouch.db.put(doc)
