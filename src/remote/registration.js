@@ -33,17 +33,20 @@ export default class Registration {
       )
   }
 
-  clientParams (pkg, deviceName) {
+  clientParams (pkg, redirectURI, deviceName) {
     if (!deviceName) {
       deviceName = os.hostname() || pkg.name || 'desktop'
       deviceName += ` ${new Date()}`
     }
     let softwareID = (pkg.repository || 'cozy-desktop')
+    if (softwareID.url) {
+      softwareID = softwareID.url
+    }
     softwareID = softwareID.replace('https://', '')
     softwareID = softwareID.replace('git://', '')
     softwareID = softwareID.replace('.git', '')
     return {
-      redirectURI: `http://localhost:${PORT_NUMBER}/callback`,
+      redirectURI: redirectURI || `http://localhost:${PORT_NUMBER}/callback`,
       softwareID: softwareID,
       softwareVersion: pkg.version || 'unknown',
       clientName: deviceName,
@@ -54,14 +57,15 @@ export default class Registration {
     }
   }
 
-  process (pkg, deviceName) {
-    const params = this.clientParams(pkg, deviceName)
+  process (pkg, redirectURI, onRegistered, deviceName) {
+    const params = this.clientParams(pkg, redirectURI, deviceName)
+    onRegistered = onRegistered || this.onRegistered
     const cozy = new CozyClient({
       cozyURL: this.url,
       oauth: {
         storage: this.config,
         clientParams: params,
-        onRegistered: this.onRegistered
+        onRegistered: onRegistered
       }
     })
     return cozy.authorize()

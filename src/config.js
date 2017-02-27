@@ -61,6 +61,11 @@ export default class Config {
     return !!(this.config.creds && this.cozyUrl)
   }
 
+  // Return the name of the registered client
+  get deviceName () {
+    return this.client ? this.client.clientName : ''
+  }
+
   // Return config related to the OAuth client
   get client () {
     if (!this.config.creds) {

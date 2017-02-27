@@ -9,6 +9,7 @@ import path from 'path'
 import readdirp from 'readdirp'
 import url from 'url'
 
+import pkg from '../package.json'
 import Config from './config'
 import logger from './logger'
 import Pouch from './pouch'
@@ -100,39 +101,8 @@ class App {
     return url.parse(cozyUrl)
   }
 
-  // Check that the URL belongs to a cozy
-  async pingCozy (cozyUrl) {
-    // FIXME
-    // let parsed = this.parseCozyUrl(cozyUrl)
-    // if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) {
-    //   let err = new Error('Your URL looks invalid')
-    //   log.warn(err)
-    //   return Promise.reject(err)
-    // }
-    // cozyUrl = url.format(parsed)
-
-    // let resp, body
-    // resp = await this.fetch(cozyUrl + 'status')
-
-    // if (resp.status !== 200) {
-    //   throw new Error(`Unexpected response status code: ${resp.status}`)
-    // }
-
-    // body = await resp.json()
-    // let dumpBody = () => JSON.stringify(body)
-
-    // switch (body.message) {
-    //   case 'OK':
-    //     return cozyUrl
-    //   case 'KO':
-    //     throw new Error(`Cozy is KO: ${dumpBody()}`)
-    //   default:
-    //     throw new Error(`Cannot extract message: ${dumpBody()}`)
-    // }
-  }
-
   // Return a promise for registering a device on the remote cozy
-  registerRemote (cozyUrl, pkg, deviceName) {
+  registerRemote (cozyUrl, redirectURI, onRegistered, deviceName) {
     let parsed = this.parseCozyUrl(cozyUrl)
     cozyUrl = url.format(parsed)
     if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) {
@@ -141,7 +111,7 @@ class App {
       throw err
     }
     const registration = new Registration(cozyUrl, this.config)
-    return registration.process(pkg, deviceName)
+    return registration.process(pkg, redirectURI, onRegistered, deviceName)
   }
 
   // Save the config with all the informations for synchonization
@@ -156,11 +126,11 @@ class App {
 
   // Register current device to remote Cozy and then save related informations
   // to the config file (used by CLI, not GUI)
-  async addRemote (cozyUrl, syncPath, pkg, deviceName) {
+  async addRemote (cozyUrl, syncPath, deviceName) {
     try {
-      const registered = await this.registerRemote(cozyUrl, pkg, deviceName)
-      log.info(`Device ${registered.client.clientName} has been added to ${cozyUrl}`)
-      this.saveConfig(cozyUrl, syncPath, registered.client)
+      const registered = await this.registerRemote(cozyUrl, null, null, deviceName)
+      log.info(`Device ${registered.deviceName} has been added to ${cozyUrl}`)
+      this.saveConfig(cozyUrl, syncPath)
     } catch (err) {
       log.error('An error occured while registering your device.')
       let parsed = this.parseCozyUrl(cozyUrl)

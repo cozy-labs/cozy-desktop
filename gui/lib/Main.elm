@@ -7,7 +7,6 @@ import Time exposing (Time)
 import Helpers exposing (Locale)
 import Wizard
 import Address
-import Password
 import Folder
 import TwoPanes
 import Dashboard
@@ -138,10 +137,10 @@ update msg model =
 -- SUBSCRIPTIONS
 
 
-port pong : (Maybe String -> msg) -> Sub msg
+port registrationError : (String -> msg) -> Sub msg
 
 
-port registration : (Maybe String -> msg) -> Sub msg
+port registrationDone : (Bool -> msg) -> Sub msg
 
 
 port folderError : (String -> msg) -> Sub msg
@@ -193,8 +192,8 @@ port unlink : (Bool -> msg) -> Sub msg
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ pong (WizardMsg << Wizard.AddressMsg << Address.Pong)
-        , registration (WizardMsg << Wizard.PasswordMsg << Password.Registered)
+        [ registrationError (WizardMsg << Wizard.AddressMsg << Address.RegistrationError)
+        , registrationDone (always (WizardMsg Wizard.RegistrationDone))
         , folderError (WizardMsg << Wizard.FolderMsg << Folder.SetError)
         , folder (WizardMsg << Wizard.FolderMsg << Folder.FillFolder)
         , synchonization SyncStart
