@@ -430,7 +430,9 @@ ipcMain.on('register-remote', (event, arg) => {
     const promise = new Promise((resolve) => { resolveP = resolve })
     mainWindow.loadURL(url)
     mainWindow.webContents.on('did-get-redirect-request', (event, oldUrl, newUrl) => {
-      resolveP(newUrl)
+      if (newUrl.match('file://')) {
+        resolveP(newUrl)
+      }
     })
     return promise
   }
