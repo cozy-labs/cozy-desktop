@@ -5,9 +5,11 @@ import {
   blue,
   dim,
   gray,
+  green,
   magenta,
   red
 } from 'chalk'
+import * as diff from 'diff'
 
 let printit = options => new Logger(options)
 if (printit.console == null) { printit.console = global.console }
@@ -147,6 +149,22 @@ class Logger {
   inspect (obj) {
     if (process.env.DEBUG) {
       this.raw(highlight(obj))
+    }
+  }
+
+  diff (was, obj) {
+    if (process.env.DEBUG) {
+      const lines = diff.diffJson(was, obj)
+
+      this.raw(lines.map(line => {
+        if (line.added) {
+          return green(line.value)
+        } else if (line.removed) {
+          return red(line.value)
+        } else {
+          return ''
+        }
+      }).join(''))
     }
   }
 

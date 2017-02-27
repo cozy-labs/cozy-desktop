@@ -62,6 +62,7 @@
     "chokidar": "1.6.1",
     "commander": "2.9.0",
     "cozy-client-js": "git://github.com/cozy/cozy-client-js.git#sebn/build",
+    "diff": "^3.2.0",
     "fs-extra": "2.0.0",
     "isomorphic-fetch": "2.2.1",
     "lodash.clone": "4.5.0",
