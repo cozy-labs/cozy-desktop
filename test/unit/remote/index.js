@@ -625,65 +625,40 @@ describe('Remote', function () {
     })
   })
 
-  xdescribe('moveFile', () =>
-    it('moves the file', function (done) {
-      let checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
-      let binary = {
-        _id: checksum,
-        _rev: '1-0123456789'
-      }
-      let old: Object = {
-        path: 'cat6.jpg',
-        docType: 'file',
-        checksum,
-        creationDate: new Date(),
-        lastModification: new Date(),
-        size: 36901
-      }
-      let doc = {
+  describe('moveFile', () => {
+    it('moves the file', async function () {
+      const remoteDoc: RemoteDoc = await builders
+        .file()
+        .named('cat6.jpg')
+        .data('meow')
+        .build()
+      const old: Metadata = conversion.createMetadata(remoteDoc)
+      const doc: Metadata = {
+        ...old,
         path: 'moved-to/cat7.jpg',
-        docType: 'file',
-        checksum,
-        creationDate: new Date(),
-        lastModification: new Date(),
-        size: 36901
+        name: 'cat7.jpg'
       }
-      let remoteDoc = this.remote.createRemoteDoc(old, {binary})
-      return this.couch.put(remoteDoc, (err, created) => {
-        should.not.exist(err)
-        old.remote = {
-          _id: created.id,
-          _rev: created.rev,
-          binary: {
-            _id: checksum,
-            _rev: binary._rev
-          }
-        }
-        return this.remote.moveFile(doc, old, (err, moved) => {
-          should.not.exist(err)
-          moved.id.should.equal(old.remote._id)
-          moved.rev.should.not.equal(old.remote._rev)
-          return this.couch.get(moved.id, function (err, file) {
-            should.not.exist(err)
-            file.should.have.properties({
-              path: '/moved-to',
-              name: 'cat7.jpg',
-              docType: 'file',
-              lastModification: doc.lastModification.toISOString(),
-              size: 36901,
-              binary: {
-                file: {
-                  id: binary._id,
-                  rev: binary._rev
-                }
-              }
-            })
-            done()
-          })
-        })
+      const newDir: RemoteDoc = await builders.dir()
+        .named('moved-to')
+        .inRootDir()
+        .build()
+
+      const moved: Metadata = await this.remote.moveFileAsync(doc, old)
+
+      should(moved.remote._id).equal(old.remote._id)
+      should(moved.remote._rev).not.equal(old.remote._rev)
+      const file = await cozy.data.find(FILES_DOCTYPE, moved.remote._id)
+      file.should.have.properties({
+        dir_id: newDir._id,
+        name: 'cat7.jpg',
+        type: 'file',
+        updated_at: doc.lastModification,
+        size: '4',
+        _id: old.remote._id,
+        _rev: moved.remote._rev
       })
     })
-  )
+  })
 
   xdescribe('moveFolder', function () {
     it('moves the folder in couchdb', function (done) {
