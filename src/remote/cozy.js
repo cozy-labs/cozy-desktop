@@ -6,6 +6,7 @@ import { Readable } from 'stream'
 
 import { FILES_DOCTYPE, DIR_TYPE, ROOT_DIR_ID, TRASH_DIR_ID } from './constants'
 import { jsonApiToRemoteDoc } from './document'
+import { composeAsync } from '../utils'
 
 import type { JsonApiDoc, RemoteDoc } from './document'
 
@@ -47,7 +48,7 @@ export default class RemoteCozy {
     this.createFile = this.client.files.create
     this.createDirectory = this.client.files.createDirectory
     this.updateFileById = this.client.files.updateById
-    this.updateAttributesById = this.client.files.updateAttributesById
+    this.updateAttributesById = composeAsync(this.client.files.updateAttributesById, this.toRemoteDoc)
   }
 
   // TODO: All RemoteCozy methods should resolve with RemoteDoc instances,
