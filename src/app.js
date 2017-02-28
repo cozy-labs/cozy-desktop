@@ -148,7 +148,7 @@ class App {
       if (!this.remote) {
         this.instanciate()
       }
-      this.remote.unregister()
+      await this.remote.unregister()
       fs.removeSync(this.basePath)
       log.info('Current device properly removed from remote cozy.')
       return null
