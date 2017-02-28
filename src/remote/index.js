@@ -165,15 +165,31 @@ export default class Remote implements Side {
     }
   }
 
+  async moveFileAsync (newMetadata: Metadata, oldMetadata: Metadata): Promise<Metadata> {
+    log.info(`Move file ${oldMetadata.path} → ${newMetadata.path}`)
+    // TODO: v3: Call addFile() when !from.remote?
+    // TODO: v3: Call addFile() when file not found on cozy
+    // TODO: v3: Call addFolder() on DirectoryNotFound?
+    const [newDirPath, newName]: [string, string] = conversion.extractDirAndName(newMetadata.path)
+    const newDir: RemoteDoc = await this.remoteCozy.findDirectoryByPath(newDirPath)
+    const newRemoteDoc: RemoteDoc = await this.remoteCozy.updateAttributesById(oldMetadata.remote._id, {
+      name: newName,
+      dir_id: newDir._id
+    })
+
+    return conversion.createMetadata(newRemoteDoc)
+  }
+
+  moveFile (doc: Metadata, from: Metadata, callback: Callback): void {
+    // $FlowFixMe
+    this.moveFileAsync(doc, from).asCallback(callback)
+  }
+
   // FIXME: Temporary stubs so we can do some acceptance testing on file upload
   //        without getting errors for missing methods.
 
   updateFolder (doc: Metadata, _: any, callback: Callback) {
     callback(new Error('Remote#updateFolder() is not implemented'))
-  }
-
-  moveFile (doc: Metadata, from: Metadata, callback: Callback) {
-    callback(new Error('Remote#moveFile() is not implemented'))
   }
 
   moveFolder (doc: Metadata, from: Metadata, callback: Callback) {
