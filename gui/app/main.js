@@ -491,10 +491,10 @@ ipcMain.on('unlink-cozy', () => {
   }
   const options = {
     type: 'question',
-    title: 'Deconnection',
-    message: 'Are you sure you want to unlink your Cozy?',
-    detail: 'Your file will no longer be synchronized with your Cozy!',
-    buttons: ['Cancel', 'Log out'],
+    title: translate('Unlink Title'),
+    message: translate('Unlink Message'),
+    detail: translate('Unlink Detail'),
+    buttons: [translate('Unlink Cancel'), translate('Unlink OK')],
     cancelId: 0,
     defaultId: 1
   }
