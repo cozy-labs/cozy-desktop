@@ -4,7 +4,8 @@ import { Client as CozyClient } from 'cozy-client-js'
 import path from 'path'
 import { Readable } from 'stream'
 
-import { FILES_DOCTYPE, FILE_TYPE, ROOT_DIR_ID, TRASH_DIR_ID } from './constants'
+import { FILES_DOCTYPE, DIR_TYPE, ROOT_DIR_ID, TRASH_DIR_ID } from './constants'
+import { jsonApiToRemoteDoc } from './document'
 
 import type { JsonApiDoc, RemoteDoc } from './document'
 
@@ -78,14 +79,8 @@ export default class RemoteCozy {
   }
 
   async find (id: string): Promise<RemoteDoc> {
-    let doc = await this.client.data.find(FILES_DOCTYPE, id)
-
-    if (doc.type === FILE_TYPE) {
-      const parentDir = await this.client.data.find(FILES_DOCTYPE, doc.dir_id)
-      doc.path = path.join(parentDir.path, doc.name)
-    }
-
-    return doc
+    const doc = await this.client.data.find(FILES_DOCTYPE, id)
+    return this.toRemoteDoc(doc)
   }
 
   async findMaybe (id: string): Promise<?RemoteDoc> {
@@ -109,5 +104,17 @@ export default class RemoteCozy {
   async downloadBinary (id: string): Promise<?Readable> {
     const resp = await this.client.files.downloadById(id)
     return resp.body
+  }
+
+  async toRemoteDoc (doc: any): Promise<RemoteDoc> {
+    if (doc.attributes) doc = jsonApiToRemoteDoc(doc)
+    if (doc.type === DIR_TYPE) return doc
+
+    const parentDir = await this.client.data.find(FILES_DOCTYPE, doc.dir_id)
+
+    return {
+      ...doc,
+      path: path.join(parentDir.path, doc.name)
+    }
   }
 }
