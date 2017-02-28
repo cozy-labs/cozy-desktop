@@ -34,14 +34,29 @@ export default class RemoteWatcher {
   }
 
   start () {
-    this.watch()
-    this.intervalID = setInterval(this.watch, HEARTBEAT)
+    this.started = new Promise((resolve, reject) => {
+      this.started.resolve = resolve
+      const watch () => {
+        this.watch().catch(err => {
+          reject(err)
+          this.started = null
+          this.stop()
+        })
+      }
+      watch()
+      this.intervalID = setInterval(watch, HEARTBEAT)
+    })
+    return this.started
   }
 
   stop () {
     if (this.intervalID) {
       clearInterval(this.intervalID)
       this.intervalID = null
+    }
+    if (this.started) {
+      this.started.resolve()
+      this.started = null
     }
   }
 
@@ -56,6 +71,9 @@ export default class RemoteWatcher {
       await this.pouch.setRemoteSeqAsync(changes.last_seq)
       log.lineBreak()
     } catch (err) {
+      if (err.message === 'Client has been revoked') {
+        throw err
+      }
       log.error(err)
     }
   }

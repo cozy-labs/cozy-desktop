@@ -33,8 +33,7 @@ export default class Remote implements Side {
   }
 
   start (callback: Function) {
-    this.watcher.start()
-    callback()
+    this.watcher.start().asCallback(callback)
   }
 
   stop (callback: Function) {
