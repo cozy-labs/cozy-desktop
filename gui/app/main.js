@@ -489,13 +489,22 @@ ipcMain.on('unlink-cozy', () => {
     console.error('No client!')
     return
   }
-  desktop.stopSync(() => {
-    desktop.removeRemote((err) => {
-      if (err) {
-        console.error(err)
-      } else {
-        sendToMainWindow('unlinked')
-      }
+  const options = {
+    type: 'question',
+    title: translate('Unlink Title'),
+    message: translate('Unlink Message'),
+    detail: translate('Unlink Detail'),
+    buttons: [translate('Unlink Cancel'), translate('Unlink OK')],
+    cancelId: 0,
+    defaultId: 1
+  }
+  dialog.showMessageBox(mainWindow, options, (response) => {
+    if (response === 0) {
+      sendToMainWindow('cancel-unlink')
+      return
+    }
+    desktop.stopSync(() => {
+      desktop.removeRemote().then(() => sendToMainWindow('unlinked'))
     })
   })
 })

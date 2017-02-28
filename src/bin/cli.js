@@ -22,7 +22,7 @@ process.on('SIGTERM', exit)
 process.on('SIGUSR1', () => app.debugWatchers())
 
 // Helper for confirmation
-app.askConfirmation = function (callback) {
+const askConfirmation = (callback) => {
   let promptMsg = 'Are your sure? [Y/N]'
   return read({prompt: promptMsg}, (err, response) => callback(err, response.toUpperCase() === 'Y'))
 }
@@ -72,8 +72,15 @@ program
 program
   .command('remove-remote-cozy')
   .description('Unsync current device with its remote cozy')
-  .option('-d, --deviceName [deviceName]', 'device name to deal with')
-  .action(args => app.removeRemote(args.deviceName))
+  .action(() => {
+    askConfirmation((err, ok) => {
+      if (err || !ok) {
+        console.log('Abort!')
+        return
+      }
+      app.removeRemote()
+    })
+  })
 
 program
   .command('sync')
@@ -142,7 +149,15 @@ program
 program
   .command('reset-database')
   .description('Recreates the local database')
-  .action(app.resetDatabase)
+  .action(() => {
+    askConfirmation((err, ok) => {
+      if (err || !ok) {
+        console.log('Abort!')
+        return
+      }
+      app.resetDatabase()
+    })
+  })
 
 program
   .command('display-database')

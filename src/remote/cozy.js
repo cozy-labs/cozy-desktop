@@ -42,6 +42,7 @@ export default class RemoteCozy {
     })
 
     // Aliases:
+    this.unregister = this.client.auth.unregisterClient
     this.createFile = this.client.files.create
     this.createDirectory = this.client.files.createDirectory
     this.updateFileById = this.client.files.updateById
@@ -51,6 +52,8 @@ export default class RemoteCozy {
   // TODO: All RemoteCozy methods should resolve with RemoteDoc instances,
   //       not JsonApiDoc ones.
   //
+  unregister: () => Promise<*>
+
   createFile: (data: Readable, options: {
     name: string, dirID?: ?string, contentType?: ?string, lastModifiedDate?: ?Date
   }) => Promise<RemoteDoc>

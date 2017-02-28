@@ -42,6 +42,10 @@ export default class Remote implements Side {
     callback()
   }
 
+  unregister () {
+    return this.remoteCozy.unregister()
+  }
+
   // Create a readable stream for the given doc
   async createReadStream (doc: Metadata, callback: Callback) {
     try {
