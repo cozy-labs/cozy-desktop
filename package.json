@@ -46,6 +46,7 @@
     "lint": "npm run eslint && npm run flow",
     "repl": "babel-node ./src/bin/repl.js",
     "size": "t=\"$(npm pack .)\"; wc -c \"${t}\"; tar tvf \"${t}\"; rm \"${t}\";",
+    "start": "babel-node ./src/bin/cli.js",
     "test": "installed-check && npm run test-unit && npm run test-integration",
     "test-coverage": "installed-check && npm run test-unit-coverage && npm run test-integration",
     "test-integration": "NODE_ENV=test mocha test/integration/v3",
