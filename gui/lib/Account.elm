@@ -47,6 +47,7 @@ type Msg
     = FillAddressAndDevice ( String, String )
     | UpdateDiskSpace DiskSpace
     | UnlinkCozy
+    | CancelUnlink
 
 
 port unlinkCozy : () -> Cmd msg
@@ -65,6 +66,9 @@ update msg model =
 
         UnlinkCozy ->
             ( { model | busy = True }, unlinkCozy () )
+
+        CancelUnlink ->
+            ( { model | busy = False }, Cmd.none )
 
 
 

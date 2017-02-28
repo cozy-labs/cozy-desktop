@@ -82,6 +82,9 @@ ipcRenderer.on('go-to-tab', (event, tab) => {
   elmectron.ports.gototab.send(tab)
 })
 
+ipcRenderer.on('cancel-unlink', (event) => {
+  elmectron.ports.cancelUnlink.send(true)
+})
 ipcRenderer.on('unlinked', (event) => {
   elmectron.ports.unlink.send(true)
 })

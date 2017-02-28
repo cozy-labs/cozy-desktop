@@ -186,6 +186,9 @@ port mail : (Maybe String -> msg) -> Sub msg
 -- https://github.com/elm-lang/elm-compiler/issues/1367
 
 
+port cancelUnlink : (Bool -> msg) -> Sub msg
+
+
 port unlink : (Bool -> msg) -> Sub msg
 
 
@@ -208,6 +211,7 @@ subscriptions model =
         , updated (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.Updated)))
         , mail (TwoPanesMsg << TwoPanes.HelpMsg << Help.MailSent)
         , autolaunch (TwoPanesMsg << TwoPanes.SettingsMsg << Settings.AutoLaunchSet)
+        , cancelUnlink (always (TwoPanesMsg (TwoPanes.AccountMsg Account.CancelUnlink)))
         , unlink (always Unlink)
         ]
 

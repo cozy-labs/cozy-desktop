@@ -489,13 +489,22 @@ ipcMain.on('unlink-cozy', () => {
     console.error('No client!')
     return
   }
-  desktop.stopSync(() => {
-    desktop.removeRemote((err) => {
-      if (err) {
-        console.error(err)
-      } else {
-        sendToMainWindow('unlinked')
-      }
+  const options = {
+    type: 'question',
+    title: 'Deconnection',
+    message: 'Are you sure you want to unlink your Cozy?',
+    detail: 'Your file will no longer be synchronized with your Cozy!',
+    buttons: ['Cancel', 'Log out'],
+    cancelId: 0,
+    defaultId: 1
+  }
+  dialog.showMessageBox(mainWindow, options, (response) => {
+    if (response === 0) {
+      sendToMainWindow('cancel-unlink')
+      return
+    }
+    desktop.stopSync(() => {
+      desktop.removeRemote().then(() => sendToMainWindow('unlinked'))
     })
   })
 })
