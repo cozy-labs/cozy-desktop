@@ -166,6 +166,7 @@ export default class Remote implements Side {
   }
 
   async moveFileAsync (newMetadata: Metadata, oldMetadata: Metadata): Promise<Metadata> {
+    log.info(`Move file ${oldMetadata.path} → ${newMetadata.path}`)
     // TODO: v3: Call addFile() when !from.remote?
     // TODO: v3: Call addFile() when file not found on cozy
     // TODO: v3: Call addFolder() on DirectoryNotFound?
