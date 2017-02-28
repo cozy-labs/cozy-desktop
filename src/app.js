@@ -143,7 +143,7 @@ class App {
 
   // Unregister current device from remote Cozy and then remove remote from
   // the config file
-  removeRemote () {
+  async removeRemote () {
     try {
       if (!this.remote) {
         this.instanciate()
@@ -151,9 +151,11 @@ class App {
       this.remote.unregister()
       fs.removeSync(this.basePath)
       log.info('Current device properly removed from remote cozy.')
+      return null
     } catch (err) {
       log.error('An error occured while unregistering your device.')
       log.error(err)
+      return err
     }
   }
 

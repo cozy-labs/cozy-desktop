@@ -42,8 +42,8 @@ export default class Remote implements Side {
     callback()
   }
 
-  async unregister () {
-    await this.remoteCozy.unregister()
+  unregister () {
+    return this.remoteCozy.unregister()
   }
 
   // Create a readable stream for the given doc
