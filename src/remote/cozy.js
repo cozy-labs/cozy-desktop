@@ -63,7 +63,7 @@ export default class RemoteCozy {
   updateFileById: (id: string, data: Readable,
     options: {contentType?: ?string, lastModifiedDate?: ?Date }) => Promise<JsonApiDoc>
 
-  updateAttributesById: (id: string, attrs: Object, options: {ifMatch?: string})
+  updateAttributesById: (id: string, attrs: Object, options?: {ifMatch?: string})
     => Promise<RemoteDoc>
 
   async changes (seq: number = 0) {
