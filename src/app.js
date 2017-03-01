@@ -210,7 +210,7 @@ class App {
   startSync (mode) {
     this.config.saveMode(mode)
     log.info('Run first synchronisation...')
-    this.sync.start(mode)
+    return this.sync.start(mode)
   }
 
   // Stop the synchronisation

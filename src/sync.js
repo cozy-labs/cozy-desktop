@@ -76,7 +76,6 @@ class Sync {
         running.catch((err) => reject(err))
         async.forever(this.sync, err => reject(err))
       }).catch((err) => {
-        log.error(err)
         this.stop()
         return Promise.reject(err)
       })

@@ -35,14 +35,7 @@ export default class RemoteWatcher {
   }
 
   start () {
-    const started = new Promise((resolve, reject) => {
-      try {
-        this.watch()
-        resolve()
-      } catch (err) {
-        reject(err)
-      }
-    })
+    const started = this.watch()
     const running = started.then(() => {
       return new Promise((resolve, reject) => {
         this.runningResolve = resolve
@@ -50,6 +43,7 @@ export default class RemoteWatcher {
           try {
             this.watch()
           } catch (err) {
+            console.log(2, err)
             reject(err)
           }
         }, HEARTBEAT)
