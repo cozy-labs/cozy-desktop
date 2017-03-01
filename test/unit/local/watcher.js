@@ -28,8 +28,8 @@ describe('LocalWatcher Tests', function () {
   after('clean config directory', configHelpers.cleanConfig)
 
   describe('start', function () {
-    it('calls the callback when initial scan is done', function (done) {
-      return this.watcher.start(done)
+    it('calls the callback when initial scan is done', function () {
+      return this.watcher.start()
     })
 
     it('calls addFile/putFolder for files that are aleady here', function (done) {
@@ -46,7 +46,7 @@ describe('LocalWatcher Tests', function () {
         this.prep.addFile.args[0][1].path.should.equal('aa/ab')
         done()
       }, 1100)
-      return this.watcher.start(function () {})
+      this.watcher.start()
     })
 
     it('ignores .cozy-desktop', function (done) {
@@ -61,7 +61,7 @@ describe('LocalWatcher Tests', function () {
         this.prep.updateFile.called.should.be.false()
         done()
       }, 1000)
-      return this.watcher.start(function () {})
+      this.watcher.start()
     })
   })
 
@@ -170,7 +170,7 @@ describe('LocalWatcher Tests', function () {
 
   describe('onAdd', () =>
     it('detects when a file is created', function (done) {
-      return this.watcher.start(() => {
+      this.watcher.start().then(() => {
         this.prep.addFile = function (side, doc) {
           side.should.equal('local')
           doc.should.have.properties({
@@ -186,14 +186,13 @@ describe('LocalWatcher Tests', function () {
         let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
         let dst = path.join(this.syncPath, 'aaa.jpg')
         return fs.copySync(src, dst)
-      }
-        )
+      })
     })
   )
 
   describe('onAddDir', function () {
     it('detects when a folder is created', function (done) {
-      return this.watcher.start(() => {
+      this.watcher.start().then(() => {
         this.prep.putFolder = function (side, doc) {
           side.should.equal('local')
           doc.should.have.properties({
@@ -227,7 +226,7 @@ describe('LocalWatcher Tests', function () {
         }
         return fs.mkdirSync(path.join(this.syncPath, 'abb/abc'))
       }
-      return this.watcher.start(function () {})
+      this.watcher.start()
     })
   })
 
@@ -243,7 +242,7 @@ describe('LocalWatcher Tests', function () {
         }
         return fs.unlinkSync(path.join(this.syncPath, 'aca'))
       }
-      return this.watcher.start(function () {})
+      this.watcher.start()
     })
   )
 
@@ -259,7 +258,7 @@ describe('LocalWatcher Tests', function () {
         }
         return fs.rmdirSync(path.join(this.syncPath, 'ada'))
       }
-      return this.watcher.start(function () {})
+      this.watcher.start()
     })
   )
 
@@ -285,7 +284,7 @@ describe('LocalWatcher Tests', function () {
         dst = path.join(this.syncPath, 'aea.jpg')
         return fs.copySync(src, dst)
       }
-      return this.watcher.start(function () {})
+      this.watcher.start()
     })
   )
 
@@ -310,7 +309,7 @@ describe('LocalWatcher Tests', function () {
         doc._id = doc.path
         return this.pouch.db.put(doc)
       }
-      return this.watcher.start(() => {
+      this.watcher.start().then(() => {
         return setTimeout(() => {
           this.prep.deleteFile = sinon.spy()
           this.prep.addFile = sinon.spy()
@@ -362,7 +361,7 @@ describe('LocalWatcher Tests', function () {
         doc._id = doc.path
         return this.pouch.db.put(doc)
       }
-      return this.watcher.start(() => {
+      this.watcher.start().then(() => {
         return setTimeout(() => {
           this.prep.updateFile = sinon.spy()
           this.prep.addFile = sinon.spy()

@@ -55,7 +55,7 @@ describe('RemoteWatcher', function () {
   describe('start', function () {
     beforeEach(function () {
       sinon.stub(this.watcher, 'watch')
-      this.watcher.start()
+      return this.watcher.start()
     })
 
     afterEach(function () {

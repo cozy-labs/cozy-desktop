@@ -49,9 +49,9 @@ class Sync {
   // - pull if only changes from the remote cozy are applied to the fs
   // - push if only changes from the fs are applied to the remote cozy
   // - full for the full synchronization of the both sides
-  async start (mode) {
+  start (mode) {
     this.stopped = false
-    await new Promise((resolve, reject) => {
+    let promise = new Promise((resolve, reject) => {
       this.pouch.addAllViews((err) => {
         if (err) {
           reject(err)
@@ -61,20 +61,25 @@ class Sync {
       })
     })
     if (mode !== 'pull') {
-      await this.local.start()
+      promise = promise.then(this.local.start)
     }
-    let remoteRunning = Promise.resolve()
+    let running = Promise.resolve()
     if (mode !== 'push') {
-      let {started, running} = this.remote.start()
-      remoteRunning = running
-      await started
+      promise = promise.then(() => {
+        let res = this.remote.start()
+        running = res.running
+        return res.started
+      })
     }
-    return new Promise((resolve, reject) => {
-      remoteRunning.catch((err) => reject(err))
-      async.forever(this.sync, err => reject(err))
-    }).catch((err) => {
-      log.error(err)
-      this.stop()
+    return promise.then(() => {
+      return new Promise((resolve, reject) => {
+        running.catch((err) => reject(err))
+        async.forever(this.sync, err => reject(err))
+      }).catch((err) => {
+        log.error(err)
+        this.stop()
+        return Promise.reject(err)
+      })
     })
   }
 
@@ -85,7 +90,7 @@ class Sync {
       this.changes.cancel()
       this.changes = null
     }
-    return Promise.all(this.local.stop(), this.remote.stop())
+    return Promise.all([this.local.stop(), this.remote.stop()])
   }
 
   // Start taking changes from pouch and applying them
