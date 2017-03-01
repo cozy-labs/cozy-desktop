@@ -22,13 +22,13 @@ describe('Sync', function () {
         started: Promise.resolve(),
         running: new Promise(() => {})
       }
-      this.local  = {
+      this.local = {
         start: sinon.stub().returns(Promise.resolve()),
-        stop:  sinon.stub().returns(Promise.resolve())
+        stop: sinon.stub().returns(Promise.resolve())
       }
       this.remote = {
         start: sinon.stub().returns(ret),
-        stop:  sinon.stub().returns(Promise.resolve())
+        stop: sinon.stub().returns(Promise.resolve())
       }
       this.ignore = new Ignore([])
       this.events = {}
