@@ -207,43 +207,34 @@ class App {
   }
 
   // Start the synchronization
-  startSync (mode, callback) {
+  startSync (mode) {
     this.config.saveMode(mode)
     log.info('Run first synchronisation...')
-    this.sync.start(mode, err => {
-      this.sync.stop(() => {})
-      if (err) {
-        log.error(err)
-      }
-      callback(err)
-    })
+    this.sync.start(mode)
   }
 
   // Stop the synchronisation
-  stopSync (callback) {
-    if (callback == null) { callback = () => {} }
-    if (this.sync) {
-      this.sync.stop(callback)
-    } else {
-      callback()
+  stopSync () {
+    if (!this.sync) {
+      return Promise.resolve()
     }
+    return this.sync.stop()
   }
 
   // Start database sync process and setup file change watcher
-  synchronize (mode, callback) {
-    if (this.config.isValid()) {
-      this.instanciate()
-      this.startSync(mode, callback)
-    } else {
+  synchronize (mode) {
+    if (!this.config.isValid()) {
       log.error('No configuration found, please run add-remote-cozy' +
                 'command before running a synchronization.')
-      callback(new Error('No client configured'))
+      throw new Error('No client configured')
     }
+    this.instanciate()
+    return this.startSync(mode)
   }
 
   // Display a list of watchers for debugging purpose
   debugWatchers () {
-    if(this.local) {
+    if (this.local) {
       this.local.watcher.debug()
     }
   }

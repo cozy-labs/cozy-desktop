@@ -50,9 +50,7 @@ class LocalWatcher {
 
   // Start chokidar, the filesystem watcher
   // https://github.com/paulmillr/chokidar
-  //
-  // The callback is called when the initial scan is complete
-  start (callback) {
+  start () {
     log.info('Start watching filesystem for changes')
 
     // To detect which files&folders have been removed since the last run of
@@ -97,32 +95,38 @@ class LocalWatcher {
       binaryInterval: 2000
     })
 
-    return this.watcher
-      .on('add', this.onAdd)
-      .on('addDir', this.onAddDir)
-      .on('change', this.onChange)
-      .on('unlink', this.onUnlink)
-      .on('unlinkDir', this.onUnlinkDir)
-      .on('ready', this.onReady(callback))
-      .on('error', function (err) {
-        if (err.message === 'watch ENOSPC') {
-          log.error('Sorry, the kernel is out of inotify watches!')
-          return log.error('See doc/inotify.md for how to solve this issue.')
-        } else {
-          return log.error(err)
-        }
-      })
+    return new Promise((resolve) => {
+      this.watcher
+        .on('add', this.onAdd)
+        .on('addDir', this.onAddDir)
+        .on('change', this.onChange)
+        .on('unlink', this.onUnlink)
+        .on('unlinkDir', this.onUnlinkDir)
+        .on('ready', this.onReady(resolve))
+        .on('error', function (err) {
+          if (err.message === 'watch ENOSPC') {
+            log.error('Sorry, the kernel is out of inotify watches!')
+            return log.error('See doc/inotify.md for how to solve this issue.')
+          } else {
+            return log.error(err)
+          }
+        })
+    })
   }
 
-  stop (callback) {
-    __guard__(this.watcher, x => x.close())
-    this.watcher = null
+  stop () {
+    if (this.watcher) {
+      this.watcher.close()
+      this.watcher = null
+    }
     for (let _ in this.pending) {
       let pending = this.pending[_]
       pending.done()
     }
     // Give some time for awaitWriteFinish events to be fired
-    return setTimeout(callback, 3000)
+    return new Promise((resolve) => {
+      setTimeout(resolve, 3000)
+    })
   }
 
   // Show watched paths

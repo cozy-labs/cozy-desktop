@@ -357,15 +357,14 @@ const startSync = (force) => {
       removeFile(old)
     })
     desktop.events.on('delete-file', removeFile)
-    desktop.synchronize('full', (err) => {
-      const msg = (err && err.message) || 'stopped'
-      if (err) {
+    desktop.synchronize('full')
+      .then(() => sendErrorToMainWindow('stopped'))
+      .catch((err) => {
         console.error(err)
-        updateState('error', msg)
+        updateState('error', err.message)
         sendDiskSpace()
-      }
-      sendErrorToMainWindow(msg)
-    })
+        sendErrorToMainWindow(err.message)
+      })
     sendDiskSpace()
   }
   autoLauncher.isEnabled().then((enabled) => {

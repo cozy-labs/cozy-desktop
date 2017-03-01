@@ -58,9 +58,8 @@ let sync = function (mode, args) {
       return log.log(`${what} ${filename} (unknown size)`)
     }
   })
-  return app.synchronize(mode, (err) => {
-    if (err) { return process.exit(1) }
-  })
+  return app.synchronize(mode)
+    .catch(() => process.exit(1))
 }
 
 program

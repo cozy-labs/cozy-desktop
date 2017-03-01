@@ -49,35 +49,43 @@ class Sync {
   // - pull if only changes from the remote cozy are applied to the fs
   // - push if only changes from the fs are applied to the remote cozy
   // - full for the full synchronization of the both sides
-  //
-  // The callback is called only for an error
-  start (mode, callback) {
+  async start (mode) {
     this.stopped = false
-    let tasks = [
-      next => this.pouch.addAllViews(next)
-    ]
-    if (mode !== 'pull') { tasks.push(this.local.start) }
-    if (mode !== 'push') { tasks.push(this.remote.start) }
-    async.waterfall(tasks, err => {
-      if (err) {
-        callback(err)
-      } else {
-        async.forever(this.sync, callback)
-      }
+    await new Promise((resolve, reject) => {
+      this.pouch.addAllViews((err) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve()
+        }
+      })
+    })
+    if (mode !== 'pull') {
+      await this.local.start()
+    }
+    let remoteRunning = Promise.resolve()
+    if (mode !== 'push') {
+      let {started, running} = this.remote.start()
+      remoteRunning = running
+      await started
+    }
+    return new Promise((resolve, reject) => {
+      remoteRunning.catch((err) => reject(err))
+      async.forever(this.sync, err => reject(err))
+    }).catch((err) => {
+      log.error(err)
+      this.stop()
     })
   }
 
   // Stop the synchronization
-  stop (callback) {
+  stop () {
     this.stopped = true
     if (this.changes) {
       this.changes.cancel()
       this.changes = null
     }
-    async.parallel([
-      done => this.local.stop(done),
-      done => this.remote.stop(done)
-    ], callback)
+    return Promise.all(this.local.stop(), this.remote.stop())
   }
 
   // Start taking changes from pouch and applying them

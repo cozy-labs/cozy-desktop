@@ -32,13 +32,12 @@ export default class Remote implements Side {
     this.watcher = new Watcher(pouch, prep, this.remoteCozy)
   }
 
-  start (callback: Function) {
-    this.watcher.start().asCallback(callback)
+  start () {
+    return this.watcher.start()
   }
 
-  stop (callback: Function) {
-    this.watcher.stop()
-    callback()
+  stop () {
+    return this.watcher.stop()
   }
 
   unregister () {

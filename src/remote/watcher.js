@@ -26,6 +26,7 @@ export default class RemoteWatcher {
   prep: Prep
   remoteCozy: RemoteCozy
   intervalID: ?number
+  runningResolve: ?() => void
 
   constructor (pouch: Pouch, prep: Prep, remoteCozy: RemoteCozy) {
     this.pouch = pouch
@@ -34,19 +35,19 @@ export default class RemoteWatcher {
   }
 
   start () {
-    this.started = new Promise((resolve, reject) => {
-      this.started.resolve = resolve
-      const watch = () => {
-        this.watch().catch(err => {
-          reject(err)
-          this.started = null
-          this.stop()
-        })
-      }
-      watch()
-      this.intervalID = setInterval(watch, HEARTBEAT)
+    const started = this.watch()
+    const running = started.then(() => {
+      return new Promise((resolve, reject) => {
+        this.runningResolve = resolve
+        this.intervalID = setInterval(() => {
+          this.watch().catch(reject)
+        }, HEARTBEAT)
+      })
     })
-    return this.started
+    return {
+      started: started,
+      running: running
+    }
   }
 
   stop () {
@@ -54,9 +55,8 @@ export default class RemoteWatcher {
       clearInterval(this.intervalID)
       this.intervalID = null
     }
-    if (this.started) {
-      this.started.resolve()
-      this.started = null
+    if (this.runningResolve) {
+      this.runningResolve()
     }
   }
 
