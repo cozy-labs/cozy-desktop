@@ -36,7 +36,7 @@ export default class RemoteWatcher {
   start () {
     this.started = new Promise((resolve, reject) => {
       this.started.resolve = resolve
-      const watch () => {
+      const watch = () => {
         this.watch().catch(err => {
           reject(err)
           this.started = null

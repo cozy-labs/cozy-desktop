@@ -118,7 +118,7 @@ class Sync {
         .on('change', info => callback(null, info))
         .on('error', err => callback(err))
         .on('complete', info => {
-          if (__guard__(info.results, x => x.length)) { return }
+          if (info.results && info.results.length) { return }
           this.events.emit('up-to-date')
           log.info('Your cozy is up to date!')
           log.lineBreak()
@@ -191,9 +191,9 @@ class Sync {
   applied (change, side, callback) {
     return err => {
       if (err) { log.error(err) }
-      if (__guard__(err, x => x.code) === 'ENOSPC') {
+      if (err && err.code === 'ENOSPC') {
         callback(new Error('The disk space on your computer is full!'))
-      } else if (__guard__(err, x1 => x1.status) === 401) {
+      } else if (err && err.status === 401) {
         callback(new Error('The device is no longer registered'))
       } else if (err) {
         if (!change.doc.errors) { change.doc.errors = 0 }
@@ -283,7 +283,7 @@ class Sync {
       // Conflicts can happen here, for example if the data-system has
       // generated a thumbnail before apply has finished. In that case, we
       // try to reconciliate the documents.
-      if (__guard__(err, x => x.status) === 409) {
+      if (err && err.status === 409) {
         this.pouch.db.get(doc._id, (err, doc) => {
           if (err) {
             log.warn('Race condition', err)
@@ -406,7 +406,3 @@ class Sync {
 }
 
 export default Sync
-
-function __guard__ (value, transform) {
-  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined
-}

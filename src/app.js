@@ -211,18 +211,17 @@ class App {
     this.config.saveMode(mode)
     log.info('Run first synchronisation...')
     this.sync.start(mode, err => {
-      this.sync.stop(function () {})
+      this.sync.stop(() => {})
       if (err) {
         log.error(err)
-        if (err.stack) { log.error(err.stack) }
       }
-      __guardFunc__(callback, f => f(err))
+      callback(err)
     })
   }
 
   // Stop the synchronisation
   stopSync (callback) {
-    if (callback == null) { callback = function () {} }
+    if (callback == null) { callback = () => {} }
     if (this.sync) {
       this.sync.stop(callback)
     } else {
@@ -238,13 +237,15 @@ class App {
     } else {
       log.error('No configuration found, please run add-remote-cozy' +
                 'command before running a synchronization.')
-      __guardFunc__(callback, f => f(new Error('No config')))
+      callback(new Error('No client configured'))
     }
   }
 
   // Display a list of watchers for debugging purpose
   debugWatchers () {
-    __guard__(this.local, x => x.watcher.debug())
+    if(this.local) {
+      this.local.watcher.debug()
+    }
   }
 
   // Call the callback for each file
@@ -270,11 +271,10 @@ class App {
   }
 
   // Recreate the local pouch database
-  resetDatabase (callback) {
+  resetDatabase () {
     log.info('Recreates the local database...')
     this.pouch.resetDatabase(function () {
       log.info('Database recreated')
-      __guardFunc__(callback, f => f())
     })
   }
 
@@ -306,10 +306,3 @@ class App {
 App.initClass()
 
 export default App
-
-function __guardFunc__ (func, transform) {
-  return typeof func === 'function' ? transform(func) : undefined
-}
-function __guard__ (value, transform) {
-  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined
-}
