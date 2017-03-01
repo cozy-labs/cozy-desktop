@@ -49,6 +49,7 @@ export default class RemoteCozy {
     this.createDirectory = this.client.files.createDirectory
     this.updateFileById = this.client.files.updateById
     this.updateAttributesById = composeAsync(this.client.files.updateAttributesById, this.toRemoteDoc)
+    this.destroyById = this.client.files.destroyById
   }
 
   // TODO: All RemoteCozy methods should resolve with RemoteDoc instances,
@@ -67,6 +68,8 @@ export default class RemoteCozy {
 
   updateAttributesById: (id: string, attrs: Object, options?: {ifMatch?: string})
     => Promise<RemoteDoc>
+
+  destroyById: (id: string) => Promise<void>
 
   async changes (seq: number = 0) {
     let json = await this.client.data.changesFeed(FILES_DOCTYPE, { since: seq })

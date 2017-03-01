@@ -726,73 +726,16 @@ describe('Remote', function () {
     })
   })
 
-  xdescribe('deleteFile', function () {
-    it('deletes a file in couchdb', function (done) {
-      return couchHelpers.createFile(this.couch, 8, (err, file) => {
-        should.not.exist(err)
-        let doc = {
-          path: 'couchdb-folder/file-8',
-          _deleted: true,
-          docType: 'file',
-          checksum: '1111111111111111111111111111111111111128',
-          remote: {
-            _id: file.id,
-            _rev: file.rev,
-            binary: {
-              _id: '1111111111111111111111111111111111111128',
-              _rev: '1-754123'
-            }
-          }
-        }
-        return this.couch.get(doc.remote._id, err => {
-          should.not.exist(err)
-          return this.remote.deleteFile(doc, err => {
-            should.not.exist(err)
-            return this.couch.get(doc.remote._id, function (err) {
-              err.status.should.equal(404)
-              done()
-            })
-          })
-        })
-      })
-    })
+  describe('deleteFile', function () {
+    it('deletes a file in couchdb', async function () {
+      const file = await builders.file().build()
+      const doc = conversion.createMetadata(file)
 
-    it('deletes also the associated binary', function (done) {
-      return couchHelpers.createFile(this.couch, 9, (err, file) => {
-        should.not.exist(err)
-        let doc = {
-          path: 'couchdb-folder/file-9',
-          _deleted: true,
-          docType: 'file',
-          checksum: '1111111111111111111111111111111111111129',
-          remote: {
-            _id: file.id,
-            _rev: file.rev,
-            binary: {
-              _id: '1111111111111111111111111111111111111129',
-              _rev: '1-954862'
-            }
-          }
-        }
-        let binary = {
-          _id: doc.checksum,
-          checksum: doc.checksum
-        }
-        return this.couch.put(binary, (err, uploaded) => {
-          should.not.exist(err)
-          doc.remote.binary = {
-            _id: uploaded.id,
-            _rev: uploaded.rev
-          }
-          return this.remote.deleteFile(doc, err => {
-            should.not.exist(err)
-            return this.couch.get(binary._id, function (err) {
-              err.status.should.equal(404)
-              done()
-            })
-          })
-        })
-      })
+      await this.remote.deleteFileAsync(doc)
+        .should.be.fulfilled()
+
+      await cozy.data.find(FILES_DOCTYPE, doc.remote._id)
+        .should.be.rejectedWith({status: 404})
     })
   })
 
