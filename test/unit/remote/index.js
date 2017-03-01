@@ -566,42 +566,38 @@ describe('Remote', function () {
     })
   )
 
-  xdescribe('updateFolder', function () {
-    it('updates the metadata of a folder in couchdb', function (done) {
-      return couchHelpers.createFolder(this.couch, 2, (_, created) => {
-        let doc: Object = {
-          path: 'couchdb-folder/folder-2',
-          docType: 'folder',
-          creationDate: new Date(),
-          lastModification: new Date()
-        }
-        let old = {
-          path: 'couchdb-folder/folder-2',
-          docType: 'folder',
-          remote: {
-            _id: created.id,
-            _rev: created.rev
-          }
-        }
-        return this.remote.updateFolder(doc, old, (err, updated) => {
-          should.not.exist(err)
-          doc.remote._id.should.equal(old.remote._id)
-          doc.remote._rev.should.not.equal(created.rev)
-          return this.couch.get(updated.id, function (err, folder) {
-            should.not.exist(err)
-            folder.should.have.properties({
-              path: '/couchdb-folder',
-              name: 'folder-2',
-              docType: 'folder',
-              lastModification: doc.lastModification.toISOString()
-            })
-            done()
-          })
-        })
+  describe('updateFolder', function () {
+    it('updates the metadata of a folder', async function () {
+      const created: RemoteDoc = await builders.dir()
+        .named('old-name')
+        .build()
+      const old: Metadata = conversion.createMetadata(created)
+      const newParentDir: RemoteDoc = await builders.dir()
+        .named('new-parent-dir')
+        .inRootDir()
+        .build()
+      const doc: Metadata = {
+        ...old,
+        path: `new-parent-dir/new-name`,
+        updated_at: new Date() // TODO
+      }
+
+      const updated: Metadata = await this.remote.updateFolderAsync(doc, old)
+
+      const folder: RemoteDoc = await cozy.data.find(FILES_DOCTYPE, updated.remote._id)
+      should(folder).have.properties({
+        path: '/new-parent-dir/new-name',
+        type: 'directory',
+        dir_id: newParentDir._id,
+        updated_at: doc.lastModification
+      })
+      should(doc.remote).have.properties({
+        _id: old.remote._id,
+        _rev: folder._rev
       })
     })
 
-    it('adds a folder to couchdb if the folder does not exist', function (done) {
+    xit('adds a folder to couchdb if the folder does not exist', function (done) {
       let doc = {
         path: 'couchdb-folder/folder-3',
         docType: 'folder',
