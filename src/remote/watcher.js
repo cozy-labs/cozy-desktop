@@ -40,12 +40,7 @@ export default class RemoteWatcher {
       return new Promise((resolve, reject) => {
         this.runningResolve = resolve
         this.intervalID = setInterval(() => {
-          try {
-            this.watch()
-          } catch (err) {
-            console.log(2, err)
-            reject(err)
-          }
+          this.watch().catch(err => reject(err))
         }, HEARTBEAT)
       })
     })
