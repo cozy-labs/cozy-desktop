@@ -137,7 +137,10 @@ class Merge {
   markSide (side, doc, prev) {
     let rev = 0
     if (prev) { rev = extractRevNumber(prev) }
-    if (doc.sides == null) { doc.sides = clone(__guard__(prev, x => x.sides) || {}) }
+    if (doc.sides == null) {
+      const was = prev && prev.sides
+      doc.sides = clone(was || {})
+    }
     doc.sides[side] = ++rev
     return doc
   }
@@ -170,7 +173,7 @@ class Merge {
         // but we should preserve metadata like tags
         if (!hasSameBinary) { hasSameBinary = file.remote && !file.checksum }
       }
-      if (__guard__(file, x => x.docType) === 'folder') {
+      if (file && file.docType === 'folder') {
         this.resolveConflict(side, doc, callback)
       } else if (hasSameBinary) {
         doc._rev = file._rev
@@ -184,7 +187,7 @@ class Merge {
         } else {
           this.pouch.db.put(doc, callback)
         }
-      } else if (__guard__(file, x1 => x1.checksum)) {
+      } else if (file && file.checksum) {
         if ((side === 'local') && (file.sides.local != null)) {
           this.resolveInitialAdd(side, doc, file, callback)
         } else {
@@ -230,7 +233,7 @@ class Merge {
     this.pouch.db.get(doc._id, (err, file) => {
       if (err && (err.status !== 404)) { log.warn(err) }
       this.markSide(side, doc, file)
-      if (__guard__(file, x => x.docType) === 'folder') {
+      if (file && file.docType === 'folder') {
         callback(new Error("Can't resolve this conflict!"))
       } else if (file) {
         doc._rev = file._rev
@@ -264,7 +267,7 @@ class Merge {
     this.pouch.db.get(doc._id, (err, folder) => {
       if (err && (err.status !== 404)) { log.warn(err) }
       this.markSide(side, doc, folder)
-      if (__guard__(folder, x => x.docType) === 'file') {
+      if (folder && folder.docType === 'file') {
         this.resolveConflict(side, doc, callback)
       } else if (folder) {
         doc._rev = folder._rev
@@ -289,7 +292,7 @@ class Merge {
 
   // Rename or move a file
   moveFile (side, doc, was, callback) {
-    if (__guard__(was.sides, x => x[side])) {
+    if (was.sides && was.sides[side]) {
       this.pouch.db.get(doc._id, (err, file) => {
         if (err && (err.status !== 404)) { log.warn(err) }
         this.markSide(side, doc, file)
@@ -324,7 +327,7 @@ class Merge {
 
   // Rename or move a folder (and every file and folder inside it)
   moveFolder (side, doc, was, callback) {
-    if (__guard__(was.sides, x => x[side])) {
+    if (was.sides && was.sides[side]) {
       this.pouch.db.get(doc._id, (err, folder) => {
         if (err && (err.status !== 404)) { log.warn(err) }
         this.markSide(side, doc, folder)
@@ -383,11 +386,11 @@ class Merge {
   // already been removed. This is not considerated as an error.
   deleteFile (side, doc, callback) {
     this.pouch.db.get(doc._id, (err, file) => {
-      if (__guard__(err, x => x.status) === 404) {
+      if (err && err.status === 404) {
         callback(null)
       } else if (err) {
         callback(err)
-      } else if (__guard__(file.sides, x1 => x1[side])) {
+      } else if (file.sides && file.sides[side]) {
         this.markSide(side, file, file)
         file._deleted = true
         delete file.errors
@@ -407,11 +410,11 @@ class Merge {
   // the folder is missing in pouchdb (error 404).
   deleteFolder (side, doc, callback) {
     this.pouch.db.get(doc._id, (err, folder) => {
-      if (__guard__(err, x => x.status) === 404) {
+      if (err && err.status === 404) {
         callback(null)
       } else if (err) {
         callback(err)
-      } else if (__guard__(folder.sides, x1 => x1[side])) {
+      } else if (folder.sides && folder.sides[side]) {
         this.deleteFolderRecursively(side, folder, callback)
       } else { // It can happen after a conflict
         callback(null)
@@ -441,7 +444,3 @@ class Merge {
 }
 
 export default Merge
-
-function __guard__ (value, transform) {
-  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined
-}
