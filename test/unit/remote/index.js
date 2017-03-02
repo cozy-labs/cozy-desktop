@@ -636,7 +636,8 @@ describe('Remote', function () {
       const doc: Metadata = {
         ...old,
         path: 'moved-to/cat7.jpg',
-        name: 'cat7.jpg'
+        name: 'cat7.jpg',
+        remote: undefined
       }
       const newDir: RemoteDoc = await builders.dir()
         .named('moved-to')
@@ -647,6 +648,7 @@ describe('Remote', function () {
 
       should(moved.remote._id).equal(old.remote._id)
       should(moved.remote._rev).not.equal(old.remote._rev)
+      should(doc.remote).have.properties(moved.remote)
       const file = await cozy.data.find(FILES_DOCTYPE, moved.remote._id)
       file.should.have.properties({
         dir_id: newDir._id,

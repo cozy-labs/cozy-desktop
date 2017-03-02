@@ -175,6 +175,11 @@ export default class Remote implements Side {
       dir_id: newDir._id
     })
 
+    newMetadata.remote = {
+      _id: newRemoteDoc._id,
+      _rev: newRemoteDoc._rev
+    }
+
     return conversion.createMetadata(newRemoteDoc)
   }
 
