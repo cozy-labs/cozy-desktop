@@ -24,6 +24,6 @@
   ],
   "dependencies": {
     "auto-launch": "2.1.0",
-    "cozy-desktop": "../../"
+    "cozy-desktop": "file:../../"
   }
 }
