@@ -69,10 +69,8 @@ const sendToMainWindow = (...args) => {
 }
 
 const sendErrorToMainWindow = (msg) => {
-  // FIXME
-  if (msg === 'The device is no longer registered' ||
-      msg === "This device doesn't exist") {
-    sendToMainWindow('unlinked')
+  if (msg === 'Client has been revoked') {
+    sendToMainWindow('revoked')
   } else {
     sendToMainWindow('sync-error', msg)
   }
@@ -481,6 +479,11 @@ ipcMain.on('auto-launcher', (event, enabled) => {
       autoLauncher.disable()
     }
   })
+})
+
+ipcMain.on('logout', () => {
+  desktop.removeConfig()
+  sendToMainWindow('unlinked')
 })
 
 ipcMain.on('unlink-cozy', () => {
