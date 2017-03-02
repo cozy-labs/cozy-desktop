@@ -169,7 +169,9 @@ class Logger {
   }
 
   raw (...texts) {
-    return printit.console.log(...texts)
+    if (process.env.DEBUG) {
+      return printit.console.log(...texts)
+    }
   }
 
   lineBreak (text) {
