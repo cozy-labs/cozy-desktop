@@ -14,7 +14,7 @@ import { COZY_URL } from '../../helpers/cozy'
 import { FILES_DOCTYPE } from '../../../src/remote/constants'
 import Prep from '../../../src/prep'
 import RemoteCozy from '../../../src/remote/cozy'
-import RemoteWatcher, { HEARTBEAT } from '../../../src/remote/watcher'
+import RemoteWatcher from '../../../src/remote/watcher'
 
 import type { RemoteDoc } from '../../../src/remote/document'
 import type { Metadata } from '../../../src/metadata'
