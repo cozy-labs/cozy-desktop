@@ -134,7 +134,7 @@ export default class Remote implements Side {
   }
 
   async updateFileMetadataAsync (doc: Metadata, old: any): Promise<*> {
-    log.info(`${doc.path}: Updating metadata...`)
+    log.info(`${doc.path}: Updating file metadata...`)
     // TODO: v3: addFile() when no old.remote
 
     // TODO: v3: Update more metadata, not just the last modification date.
@@ -165,7 +165,7 @@ export default class Remote implements Side {
   }
 
   async moveFileAsync (newMetadata: Metadata, oldMetadata: Metadata): Promise<Metadata> {
-    log.info(`Move file ${oldMetadata.path} → ${newMetadata.path}`)
+    log.info(`${oldMetadata.path}: Moving to ${newMetadata.path}`)
     // TODO: v3: Call addFile() when !from.remote?
     // TODO: v3: Call addFile() when file not found on cozy
     // TODO: v3: Call addFolder() on DirectoryNotFound?
@@ -190,6 +190,7 @@ export default class Remote implements Side {
   }
 
   async updateFolderAsync (doc: Metadata, old: Metadata): Promise<Metadata> {
+    log.info(`${doc.path}: Updating metadata...`)
     const [newParentDirPath, newName] = conversion.extractDirAndName(doc.path)
     const newParentDir = await this.remoteCozy.findDirectoryByPath(newParentDirPath)
     const newRemoteDoc = await this.remoteCozy.updateAttributesById(old.remote._id, {
@@ -207,6 +208,7 @@ export default class Remote implements Side {
   }
 
   async deleteFileAsync (doc: Metadata): Promise<void> {
+    log.info(`${doc.path}: Deleting...`)
     await this.remoteCozy.destroyById(doc.remote._id)
   }
 
