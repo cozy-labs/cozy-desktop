@@ -18,8 +18,18 @@ describe('Sync', function () {
 
   describe('start', function () {
     beforeEach('instanciate sync', function () {
-      this.local = {start: sinon.stub().yields()}
-      this.remote = {start: sinon.stub().yields()}
+      const ret = {
+        started: Promise.resolve(),
+        running: new Promise(() => {})
+      }
+      this.local = {
+        start: sinon.stub().returns(Promise.resolve()),
+        stop: sinon.stub().returns(Promise.resolve())
+      }
+      this.remote = {
+        start: sinon.stub().returns(ret),
+        stop: sinon.stub().returns(Promise.resolve())
+      }
       this.ignore = new Ignore([])
       this.events = {}
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
@@ -27,7 +37,7 @@ describe('Sync', function () {
     })
 
     it('starts the metadata replication of remote in read only', function (done) {
-      return this.sync.start('pull', err => {
+      this.sync.start('pull').catch(err => {
         err.should.equal('stopped')
         this.local.start.called.should.be.false()
         this.remote.start.calledOnce.should.be.true()
@@ -37,7 +47,7 @@ describe('Sync', function () {
     })
 
     it('starts the metadata replication of local in write only', function (done) {
-      return this.sync.start('push', err => {
+      this.sync.start('push').catch(err => {
         err.should.equal('stopped')
         this.local.start.calledOnce.should.be.true()
         this.remote.start.called.should.be.false()
@@ -47,7 +57,7 @@ describe('Sync', function () {
     })
 
     it('starts the metadata replication of both in full', function (done) {
-      return this.sync.start('full', err => {
+      this.sync.start('full').catch(err => {
         err.should.equal('stopped')
         this.local.start.calledOnce.should.be.true()
         this.remote.start.calledOnce.should.be.true()
@@ -57,9 +67,9 @@ describe('Sync', function () {
     })
 
     it('does not start sync if metadata replication fails', function (done) {
-      this.local.start = sinon.stub().yields('failed')
-      return this.sync.start('full', err => {
-        err.should.equal('failed')
+      this.local.start = sinon.stub().returns(Promise.reject(new Error('failed')))
+      this.sync.start('full').catch(err => {
+        err.message.should.equal('failed')
         this.local.start.calledOnce.should.be.true()
         this.remote.start.called.should.be.false()
         this.sync.sync.calledOnce.should.be.false()

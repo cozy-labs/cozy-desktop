@@ -19,7 +19,7 @@
     "cozy-ui": "^0.1.7",
     "debug-menu": "^0.4.0",
     "devtron": "^1.4.0",
-    "electron-builder": "^10.9.3",
+    "electron-builder": "^14.5.3",
     "electron-prebuilt": "^1.4.12",
     "elm": "^0.18.0",
     "elm-upgrade": "^0.18.7",

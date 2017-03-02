@@ -14,15 +14,12 @@ import { COZY_URL } from '../../helpers/cozy'
 import { FILES_DOCTYPE } from '../../../src/remote/constants'
 import Prep from '../../../src/prep'
 import RemoteCozy from '../../../src/remote/cozy'
-import RemoteWatcher, { HEARTBEAT } from '../../../src/remote/watcher'
+import RemoteWatcher from '../../../src/remote/watcher'
 
 import type { RemoteDoc } from '../../../src/remote/document'
 import type { Metadata } from '../../../src/metadata'
 
 describe('RemoteWatcher', function () {
-  let clock
-  const tick = () => clock.tick(HEARTBEAT)
-
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
   before(pouchHelpers.createDatabase)
@@ -36,8 +33,6 @@ describe('RemoteWatcher', function () {
     })
     this.watcher = new RemoteWatcher(this.pouch, this.prep, this.remoteCozy)
   })
-  beforeEach(() => { clock = sinon.useFakeTimers() })
-  afterEach(() => clock.restore())
   after(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
@@ -54,8 +49,8 @@ describe('RemoteWatcher', function () {
 
   describe('start', function () {
     beforeEach(function () {
-      sinon.stub(this.watcher, 'watch')
-      this.watcher.start()
+      sinon.stub(this.watcher, 'watch').returns(Promise.resolve())
+      return this.watcher.start()
     })
 
     afterEach(function () {
@@ -65,18 +60,11 @@ describe('RemoteWatcher', function () {
     it('calls watch() a first time', function () {
       this.watcher.watch.callCount.should.equal(1)
     })
-
-    it('ensures watch() is called on every time interval', function () {
-      tick()
-      this.watcher.watch.callCount.should.equal(2)
-      tick()
-      this.watcher.watch.callCount.should.equal(3)
-    })
   })
 
   describe('stop', function () {
     beforeEach(function () {
-      sinon.stub(this.watcher, 'watch')
+      sinon.stub(this.watcher, 'watch').returns(Promise.resolve())
     })
 
     afterEach(function () {
@@ -85,11 +73,9 @@ describe('RemoteWatcher', function () {
 
     it('ensures watch is not called anymore', function () {
       this.watcher.start()
+      should(this.watcher.intervalID).not.be.null()
       this.watcher.stop()
-      const lastCallCount = this.watcher.watch.callCount
-
-      tick()
-      this.watcher.watch.callCount.should.equal(lastCallCount)
+      should(this.watcher.intervalID).be.null()
     })
 
     it('does nothing when called again', function () {

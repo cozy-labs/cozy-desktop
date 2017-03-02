@@ -1202,9 +1202,9 @@ couchdb-resp-completer@^1.0.0:
     is-empty "^0.0.1"
     pouchdb-plugin-error "^1.0.1"
 
-"cozy-client-js@git://github.com/cozy/cozy-client-js.git":
-  version "0.1.0"
-  resolved "git://github.com/cozy/cozy-client-js.git#d4a8055b7f67f2a6e8652826aa44bc5a4e61d588"
+cozy-client-js@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/cozy-client-js/-/cozy-client-js-0.1.2.tgz#4917e2911a77eb7c7acb5867183296f25b77d52c"
 
 cross-spawn@^4:
   version "4.0.2"

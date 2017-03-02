@@ -8,11 +8,15 @@ import Progress from 'progress'
 
 import pkg from '../../package.json'
 import App from '../app'
+import logger from '../logger'
 let app = new App(process.env.COZY_DESKTOP_DIR)
-let log = global.console
+const log = logger({
+  prefix: 'Cozy Desktop  ',
+  date: true
+})
 
 let exit = function () {
-  log.log('Exiting...')
+  log.info('Exiting...')
   setTimeout(process.exit, 3500)
   return app.stopSync(() => process.exit())
 }
@@ -28,13 +32,13 @@ const askConfirmation = (callback) => {
 }
 
 let sync = function (mode, args) {
-  log.log(`Cozy-desktop v${pkg.version} started (PID: ${process.pid})`)
+  log.info(`Cozy-desktop v${pkg.version} started (PID: ${process.pid})`)
   if (args.logfile != null) {
     app.writeLogsTo(args.logfile)
   }
   if (!app.config.isValid()) {
-    log.log('Your configuration file seems invalid.')
-    log.log('Have you added a remote cozy?')
+    log.info('Your configuration file seems invalid.')
+    log.info('Have you added a remote cozy?')
     return process.exit(1)
   }
   app.events.on('transfer-started', (info) => {
@@ -55,12 +59,14 @@ let sync = function (mode, args) {
         }
       })
     } else {
-      return log.log(`${what} ${filename} (unknown size)`)
+      return log.info(`${what} ${filename} (unknown size)`)
     }
   })
-  return app.synchronize(mode, (err) => {
-    if (err) { return process.exit(1) }
-  })
+  return app.synchronize(mode)
+    .catch((err) => {
+      log.error(err.message)
+      process.exit(1)
+    })
 }
 
 program
@@ -91,7 +97,7 @@ program
       return sync('full', args)
     } catch (err) {
       if (err.message !== 'Incompatible mode') { throw err }
-      return log.log(`
+      return log.info(`
 Full sync from a mount point already used otherwise is not supported
 
 You should create a new mount point and use COZY_DESKTOP_DIR.
@@ -110,7 +116,7 @@ program
       return sync('pull', args)
     } catch (err) {
       if (err.message !== 'Incompatible mode') { throw err }
-      return log.log(`
+      return log.info(`
 Pulling from a mount point already used for pushing is not supported
 
 You should create a new mount point and use COZY_DESKTOP_DIR.
@@ -128,7 +134,7 @@ program
     try {
       return sync('push', args)
     } catch (err) {
-      return log.log(`
+      return log.info(`
 Pushing from a mount point already used for pulling is not supported
 
 You should create a new mount point and use COZY_DESKTOP_DIR.
@@ -143,7 +149,7 @@ program
   .description('List local files that are synchronized with the remote cozy')
   .option('-i, --ignored', 'List ignored files')
   .action(args =>
-    app.walkFiles(args, file => log.log(file))
+    app.walkFiles(args, file => log.info(file))
 )
 
 program
@@ -165,7 +171,7 @@ program
   .action(() => app.allDocs(function (err, results) {
     if (!err) {
       results.rows.forEach(row => {
-        log.log(row.doc)
+        log.info(row.doc)
       })
     }
   }))
@@ -176,7 +182,7 @@ program
   .action(query => app.query(query, function (err, results) {
     if (!err) {
       results.rows.forEach(row => {
-        log.log(row.doc)
+        log.info(row.doc)
       })
     }
   }))
@@ -184,7 +190,7 @@ program
 program
   .command('display-config')
   .description('Display configuration and exit')
-  .action(() => log.log(app.config.toJSON()))
+  .action(() => log.info(app.config.toJSON()))
 
 program
   .command('show-disk-space')
@@ -206,7 +212,7 @@ program
   .command('*')
   .description('Display help message for an unknown command.')
   .action(() =>
-      log.log('Unknown command, run "cozy-desktop --help"' +
+      log.info('Unknown command, run "cozy-desktop --help"' +
                ' to know the list of available commands.')
   )
 

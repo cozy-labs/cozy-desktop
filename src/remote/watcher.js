@@ -26,6 +26,7 @@ export default class RemoteWatcher {
   prep: Prep
   remoteCozy: RemoteCozy
   intervalID: ?number
+  runningResolve: ?() => void
 
   constructor (pouch: Pouch, prep: Prep, remoteCozy: RemoteCozy) {
     this.pouch = pouch
@@ -34,14 +35,28 @@ export default class RemoteWatcher {
   }
 
   start () {
-    this.watch()
-    this.intervalID = setInterval(this.watch, HEARTBEAT)
+    const started = this.watch()
+    const running = started.then(() => {
+      return new Promise((resolve, reject) => {
+        this.runningResolve = resolve
+        this.intervalID = setInterval(() => {
+          this.watch().catch(err => reject(err))
+        }, HEARTBEAT)
+      })
+    })
+    return {
+      started: started,
+      running: running
+    }
   }
 
   stop () {
     if (this.intervalID) {
       clearInterval(this.intervalID)
       this.intervalID = null
+    }
+    if (this.runningResolve) {
+      this.runningResolve()
     }
   }
 
@@ -56,6 +71,9 @@ export default class RemoteWatcher {
       await this.pouch.setRemoteSeqAsync(changes.last_seq)
       log.lineBreak()
     } catch (err) {
+      if (err.message === 'Client has been revoked') {
+        throw err
+      }
       log.error(err)
     }
   }

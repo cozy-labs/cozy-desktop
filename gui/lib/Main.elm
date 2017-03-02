@@ -14,6 +14,7 @@ import Settings
 import Account
 import Help
 import Unlinked
+import Revoked
 
 
 main =
@@ -33,6 +34,7 @@ type Page
     = WizardPage
     | TwoPanesPage
     | UnlinkedPage
+    | RevokedPage
 
 
 type alias Model =
@@ -41,6 +43,7 @@ type alias Model =
     , page : Page
     , wizard : Wizard.Model
     , twopanes : TwoPanes.Model
+    , revoked : Revoked.Model
     }
 
 
@@ -77,8 +80,11 @@ init flags =
         twopanes =
             TwoPanes.init flags.version
 
+        revoked =
+            Revoked.init
+
         model =
-            Model localeIdentifier locales page wizard twopanes
+            Model localeIdentifier locales page wizard twopanes revoked
     in
         ( model, Cmd.none )
 
@@ -93,6 +99,8 @@ type Msg
     | SyncStart ( String, String )
     | TwoPanesMsg TwoPanes.Msg
     | Unlink
+    | Revoked
+    | RevokedMsg Revoked.Msg
     | Restart
 
 
@@ -126,8 +134,18 @@ update msg model =
         Unlink ->
             ( { model | page = UnlinkedPage }, Cmd.none )
 
+        Revoked ->
+            ( { model | page = RevokedPage }, Cmd.none )
+
         Restart ->
             ( model, restart True )
+
+        RevokedMsg subMsg ->
+            let
+                ( revoked, cmd ) =
+                    Revoked.update subMsg model.revoked
+            in
+                ( { model | revoked = revoked }, Cmd.map RevokedMsg cmd )
 
         NoOp ->
             ( model, Cmd.none )
@@ -192,6 +210,9 @@ port cancelUnlink : (Bool -> msg) -> Sub msg
 port unlink : (Bool -> msg) -> Sub msg
 
 
+port revoked : (Bool -> msg) -> Sub msg
+
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
@@ -213,6 +234,7 @@ subscriptions model =
         , autolaunch (TwoPanesMsg << TwoPanes.SettingsMsg << Settings.AutoLaunchSet)
         , cancelUnlink (always (TwoPanesMsg (TwoPanes.AccountMsg Account.CancelUnlink)))
         , unlink (always Unlink)
+        , revoked (always Revoked)
         ]
 
 
@@ -247,3 +269,6 @@ view model =
 
             UnlinkedPage ->
                 Html.map (\_ -> Restart) (Unlinked.view helpers)
+
+            RevokedPage ->
+                Html.map RevokedMsg (Revoked.view helpers model.revoked)

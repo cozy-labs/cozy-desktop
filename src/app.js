@@ -149,7 +149,7 @@ class App {
         this.instanciate()
       }
       await this.remote.unregister()
-      fs.removeSync(this.basePath)
+      this.removeConfig()
       log.info('Current device properly removed from remote cozy.')
       return null
     } catch (err) {
@@ -157,6 +157,10 @@ class App {
       log.error(err)
       return err
     }
+  }
+
+  removeConfig () {
+    fs.removeSync(this.basePath)
   }
 
   // Send an issue by mail to the support
@@ -207,44 +211,36 @@ class App {
   }
 
   // Start the synchronization
-  startSync (mode, callback) {
+  startSync (mode) {
     this.config.saveMode(mode)
     log.info('Run first synchronisation...')
-    this.sync.start(mode, err => {
-      this.sync.stop(function () {})
-      if (err) {
-        log.error(err)
-        if (err.stack) { log.error(err.stack) }
-      }
-      __guardFunc__(callback, f => f(err))
-    })
+    return this.sync.start(mode)
   }
 
   // Stop the synchronisation
-  stopSync (callback) {
-    if (callback == null) { callback = function () {} }
-    if (this.sync) {
-      this.sync.stop(callback)
-    } else {
-      callback()
+  stopSync () {
+    if (!this.sync) {
+      return Promise.resolve()
     }
+    return this.sync.stop()
   }
 
   // Start database sync process and setup file change watcher
-  synchronize (mode, callback) {
-    if (this.config.isValid()) {
-      this.instanciate()
-      this.startSync(mode, callback)
-    } else {
+  synchronize (mode) {
+    if (!this.config.isValid()) {
       log.error('No configuration found, please run add-remote-cozy' +
                 'command before running a synchronization.')
-      __guardFunc__(callback, f => f(new Error('No config')))
+      throw new Error('No client configured')
     }
+    this.instanciate()
+    return this.startSync(mode)
   }
 
   // Display a list of watchers for debugging purpose
   debugWatchers () {
-    __guard__(this.local, x => x.watcher.debug())
+    if (this.local) {
+      this.local.watcher.debug()
+    }
   }
 
   // Call the callback for each file
@@ -270,11 +266,10 @@ class App {
   }
 
   // Recreate the local pouch database
-  resetDatabase (callback) {
+  resetDatabase () {
     log.info('Recreates the local database...')
     this.pouch.resetDatabase(function () {
       log.info('Database recreated')
-      __guardFunc__(callback, f => f())
     })
   }
 
@@ -306,10 +301,3 @@ class App {
 App.initClass()
 
 export default App
-
-function __guardFunc__ (func, transform) {
-  return typeof func === 'function' ? transform(func) : undefined
-}
-function __guard__ (value, transform) {
-  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined
-}

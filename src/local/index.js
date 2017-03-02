@@ -46,15 +46,14 @@ class Local implements Side {
   }
 
   // Start initial replication + watching changes in live
-  start (done) {
-    return fs.ensureDir(this.syncPath, () => {
-      return this.watcher.start(done)
-    })
+  start () {
+    fs.ensureDirSync(this.syncPath)
+    return this.watcher.start()
   }
 
   // Stop watching the file system
-  stop (callback) {
-    return this.watcher.stop(callback)
+  stop () {
+    return this.watcher.stop()
   }
 
   // Create a readable stream for the given doc
