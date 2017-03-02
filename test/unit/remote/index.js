@@ -345,33 +345,34 @@ describe('Remote', function () {
 
   describe('addFileAsync', function () {
     it('adds a file to the remote Cozy', async function () {
-      let checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
-      let doc: Object = {
+      const doc: Object = {
         _id: 'cat2.jpg',
         path: 'cat2.jpg',
         docType: 'file',
-        checksum,
+        checksum: 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df',
+        class: 'image',
         creationDate: timestamp.current(),
         executable: true,
         lastModification: timestamp.current(),
+        mime: 'image/jpg',
         size: 36901,
         sides: {
           local: 1
         }
       }
-      let fixture = 'test/fixtures/chat-mignon-mod.jpg'
+      await this.pouch.db.put(doc)
+
       this.remote.other = {
         createReadStreamAsync (localDoc) {
-          let stream = fs.createReadStream(fixture)
+          const stream = fs.createReadStream('test/fixtures/chat-mignon-mod.jpg')
           return Promise.resolve(stream)
         }
       }
-      await this.pouch.db.put(doc)
 
       const created = await this.remote.addFileAsync(doc)
-
       should.exist(doc.remote._id)
       should.exist(doc.remote._rev)
+
       const file = await cozy.data.find(FILES_DOCTYPE, created._id)
       file.should.have.properties({
         dir_id: 'io.cozy.files.root-dir',
@@ -380,6 +381,7 @@ describe('Remote', function () {
         type: 'file',
         created_at: timestamp.stringify(doc.creationDate),
         executable: true,
+        mime: 'image/jpg',
         updated_at: timestamp.stringify(doc.lastModification),
         size: '36901'
       })
