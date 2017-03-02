@@ -79,9 +79,7 @@ describe('LocalWatcher Tests', function () {
             path: 'chat-mignon.jpg',
             docType: 'file',
             checksum: '+HBGS7uN4XdB0blqLv5tFQ==',
-            size: 29865,
-            class: 'image',
-            mime: 'image/jpeg'
+            size: 29865
           })
           doc.should.have.properties([
             'creationDate',
@@ -116,17 +114,6 @@ describe('LocalWatcher Tests', function () {
       })
     })
   })
-
-  describe('getFileClass', () =>
-    it('returns proper class for given file', function () {
-      let [mimeType, fileClass] = this.watcher.getFileClass('image.png')
-      mimeType.should.equal('image/png')
-      fileClass.should.equal('image');
-      [mimeType, fileClass] = this.watcher.getFileClass('doc.txt')
-      mimeType.should.equal('text/plain')
-      fileClass.should.equal('text')
-    })
-  )
 
   describe('checksum', function () {
     it('returns the checksum of an existing file', function (done) {
@@ -177,9 +164,7 @@ describe('LocalWatcher Tests', function () {
             path: 'aaa.jpg',
             docType: 'file',
             checksum: '+HBGS7uN4XdB0blqLv5tFQ==',
-            size: 29865,
-            class: 'image',
-            mime: 'image/jpeg'
+            size: 29865
           })
           done()
         }
@@ -274,9 +259,7 @@ describe('LocalWatcher Tests', function () {
             path: 'aea.jpg',
             docType: 'file',
             checksum: 'tdmDwDisJe/rJn+2fV+rNA==',
-            size: 36901,
-            class: 'image',
-            mime: 'image/jpeg'
+            size: 36901
           })
           done()
         }
@@ -321,9 +304,7 @@ describe('LocalWatcher Tests', function () {
               path: 'afb.jpg',
               docType: 'file',
               checksum: '+HBGS7uN4XdB0blqLv5tFQ==',
-              size: 29865,
-              class: 'image',
-              mime: 'image/jpeg'
+              size: 29865
             })
             was.should.have.properties({
               path: 'afa.jpg',
