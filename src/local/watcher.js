@@ -5,7 +5,6 @@ import chokidar from 'chokidar'
 import crypto from 'crypto'
 import find from 'lodash.find'
 import fs from 'fs'
-import mime from 'mime'
 import path from 'path'
 
 import logger from '../logger'
@@ -160,7 +159,6 @@ class LocalWatcher {
   // with checksum and mime informations
   createDoc (filePath, stats, callback) {
     let absPath = path.join(this.syncPath, filePath)
-    let [mimeType, fileClass] = this.getFileClass(absPath)
     return this.checksum(absPath, function (err, checksum) {
       let doc: Object = {
         path: filePath,
@@ -168,22 +166,11 @@ class LocalWatcher {
         checksum,
         creationDate: stats.birthtime || stats.ctime,
         lastModification: stats.mtime,
-        size: stats.size,
-        class: fileClass,
-        mime: mimeType
+        size: stats.size
       }
       if ((stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
       return callback(err, doc)
     })
-  }
-
-  // Return mimetypes and class (like in classification) of a file
-  // It's only based on the filename, not using libmagic
-  // ex: pic.png returns 'image/png' and 'image'
-  getFileClass (filename, callback) {
-    const mimeType = mime.lookup(filename)
-    const fileClass = mimeType.split('/')[0]
-    return [mimeType, fileClass]
   }
 
   // Put a checksum computation in the queue

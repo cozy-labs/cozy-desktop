@@ -345,33 +345,34 @@ describe('Remote', function () {
 
   describe('addFileAsync', function () {
     it('adds a file to the remote Cozy', async function () {
-      let checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
-      let doc: Object = {
+      const doc: Object = {
         _id: 'cat2.jpg',
         path: 'cat2.jpg',
         docType: 'file',
-        checksum,
+        checksum: 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df',
+        class: 'image',
         creationDate: timestamp.current(),
         executable: true,
         lastModification: timestamp.current(),
+        mime: 'image/jpg',
         size: 36901,
         sides: {
           local: 1
         }
       }
-      let fixture = 'test/fixtures/chat-mignon-mod.jpg'
+      await this.pouch.db.put(doc)
+
       this.remote.other = {
         createReadStreamAsync (localDoc) {
-          let stream = fs.createReadStream(fixture)
+          const stream = fs.createReadStream('test/fixtures/chat-mignon-mod.jpg')
           return Promise.resolve(stream)
         }
       }
-      await this.pouch.db.put(doc)
 
       const created = await this.remote.addFileAsync(doc)
-
       should.exist(doc.remote._id)
       should.exist(doc.remote._rev)
+
       const file = await cozy.data.find(FILES_DOCTYPE, created._id)
       file.should.have.properties({
         dir_id: 'io.cozy.files.root-dir',
@@ -380,6 +381,7 @@ describe('Remote', function () {
         type: 'file',
         created_at: timestamp.stringify(doc.creationDate),
         executable: true,
+        mime: 'image/jpg',
         updated_at: timestamp.stringify(doc.lastModification),
         size: '36901'
       })
@@ -566,42 +568,38 @@ describe('Remote', function () {
     })
   )
 
-  xdescribe('updateFolder', function () {
-    it('updates the metadata of a folder in couchdb', function (done) {
-      return couchHelpers.createFolder(this.couch, 2, (_, created) => {
-        let doc: Object = {
-          path: 'couchdb-folder/folder-2',
-          docType: 'folder',
-          creationDate: new Date(),
-          lastModification: new Date()
-        }
-        let old = {
-          path: 'couchdb-folder/folder-2',
-          docType: 'folder',
-          remote: {
-            _id: created.id,
-            _rev: created.rev
-          }
-        }
-        return this.remote.updateFolder(doc, old, (err, updated) => {
-          should.not.exist(err)
-          doc.remote._id.should.equal(old.remote._id)
-          doc.remote._rev.should.not.equal(created.rev)
-          return this.couch.get(updated.id, function (err, folder) {
-            should.not.exist(err)
-            folder.should.have.properties({
-              path: '/couchdb-folder',
-              name: 'folder-2',
-              docType: 'folder',
-              lastModification: doc.lastModification.toISOString()
-            })
-            done()
-          })
-        })
+  describe('updateFolder', function () {
+    it('updates the metadata of a folder', async function () {
+      const created: RemoteDoc = await builders.dir()
+        .named('old-name')
+        .build()
+      const old: Metadata = conversion.createMetadata(created)
+      const newParentDir: RemoteDoc = await builders.dir()
+        .named('new-parent-dir')
+        .inRootDir()
+        .build()
+      const doc: Metadata = {
+        ...old,
+        path: `new-parent-dir/new-name`,
+        updated_at: new Date() // TODO
+      }
+
+      const updated: Metadata = await this.remote.updateFolderAsync(doc, old)
+
+      const folder: RemoteDoc = await cozy.data.find(FILES_DOCTYPE, updated.remote._id)
+      should(folder).have.properties({
+        path: '/new-parent-dir/new-name',
+        type: 'directory',
+        dir_id: newParentDir._id,
+        updated_at: doc.lastModification
+      })
+      should(doc.remote).have.properties({
+        _id: old.remote._id,
+        _rev: folder._rev
       })
     })
 
-    it('adds a folder to couchdb if the folder does not exist', function (done) {
+    xit('adds a folder to couchdb if the folder does not exist', function (done) {
       let doc = {
         path: 'couchdb-folder/folder-3',
         docType: 'folder',
@@ -636,7 +634,8 @@ describe('Remote', function () {
       const doc: Metadata = {
         ...old,
         path: 'moved-to/cat7.jpg',
-        name: 'cat7.jpg'
+        name: 'cat7.jpg',
+        remote: undefined
       }
       const newDir: RemoteDoc = await builders.dir()
         .named('moved-to')
@@ -647,6 +646,7 @@ describe('Remote', function () {
 
       should(moved.remote._id).equal(old.remote._id)
       should(moved.remote._rev).not.equal(old.remote._rev)
+      should(doc.remote).have.properties(moved.remote)
       const file = await cozy.data.find(FILES_DOCTYPE, moved.remote._id)
       file.should.have.properties({
         dir_id: newDir._id,
