@@ -343,13 +343,10 @@ class Local implements Side {
     fs.rename(srcPath, dstPath, callback)
     // Don't fire an event for the deleted file
     return setTimeout(() => {
-      return __guard__(this.watcher.pending[src.path], x => x.clear())
+      const p = this.watcher.pending[src.path]
+      if (p) { p.clear() }
     }, 1000)
   }
 }
 
 export default Local
-
-function __guard__ (value, transform) {
-  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined
-}

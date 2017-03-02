@@ -205,8 +205,8 @@ class LocalWatcher {
   // New file detected
   onAdd (filePath, stats) {
     log.info(`${filePath}: File added`)
-    __guard__(this.paths, x => x.push(filePath))
-    __guard__(this.pending[filePath], x1 => x1.done())
+    if (this.paths) { this.paths.push(filePath) }
+    if (this.pending[filePath]) { this.pending[filePath].done() }
     this.checksums++
     return this.createDoc(filePath, stats, (err, doc) => {
       if (err) {
@@ -246,8 +246,8 @@ class LocalWatcher {
   onAddDir (folderPath, stats) {
     if (folderPath !== '') {
       log.info(`${folderPath}: Folder added`)
-      __guard__(this.paths, x => x.push(folderPath))
-      __guard__(this.pending[folderPath], x1 => x1.done())
+      if (this.paths) { this.paths.push(folderPath) }
+      if (this.pending[folderPath]) { this.pending[folderPath].done() }
       let doc = {
         path: folderPath,
         docType: 'folder',
@@ -356,7 +356,3 @@ class LocalWatcher {
 LocalWatcher.initClass()
 
 export default LocalWatcher
-
-function __guard__ (value, transform) {
-  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined
-}

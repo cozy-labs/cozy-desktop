@@ -36,7 +36,7 @@ class Pouch {
     this.db.on('error', err => log.warn(err))
     this.updater = async.queue((task, callback) => {
       return this.db.get(task._id, (err, doc) => {
-        if (__guard__(err, x => x.status) === 404) {
+        if (err && err.status === 404) {
           return this.db.put(task, callback)
         } else if (err) {
           return callback(err)
@@ -264,10 +264,10 @@ class Pouch {
   // ie the last change from pouchdb that have been applied
   getLocalSeq (callback) {
     this.db.get('_local/localSeq', function (err, doc) {
-      if (__guard__(err, x => x.status) === 404) {
-        return callback(null, 0)
+      if (err && err.status === 404) {
+        callback(null, 0)
       } else {
-        return callback(err, __guard__(doc, x1 => x1.seq))
+        callback(err, doc && doc.seq)
       }
     })
   }
@@ -287,10 +287,10 @@ class Pouch {
   // ie the last change from couchdb that have been saved in pouch
   getRemoteSeq (callback) {
     this.db.get('_local/remoteSeq', function (err, doc) {
-      if (__guard__(err, x => x.status) === 404) {
-        return callback(null, 0)
+      if (err && err.status === 404) {
+        callback(null, 0)
       } else {
-        return callback(err, __guard__(doc, x1 => x1.seq))
+        callback(err, doc && doc.seq)
       }
     })
   }
@@ -312,7 +312,3 @@ class Pouch {
 }
 
 export default Pouch
-
-function __guard__ (value, transform) {
-  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined
-}

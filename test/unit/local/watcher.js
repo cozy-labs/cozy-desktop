@@ -21,7 +21,9 @@ describe('LocalWatcher Tests', function () {
     this.watcher = new Watcher(this.syncPath, this.prep, this.pouch)
   })
   afterEach('stop watcher and clean path', function (done) {
-    __guard__(this.watcher.watcher, x => x.close())
+    if (this.watcher.watcher) {
+      this.watcher.watcher.close()
+    }
     return fs.emptyDir(this.syncPath, done)
   })
   after('clean pouch', pouchHelpers.cleanDatabase)
@@ -419,7 +421,3 @@ describe('LocalWatcher Tests', function () {
     })
   })
 })
-
-function __guard__ (value, transform) {
-  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined
-}
