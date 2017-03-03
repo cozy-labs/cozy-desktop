@@ -217,14 +217,20 @@ export default class Remote implements Side {
     this.deleteFileAsync(doc).asCallback(callback)
   }
 
+  async deleteFolderAsync (doc: Metadata): Promise<void> {
+    log.info(`${doc.path}: Putting directory and its content in the trash...`)
+    await this.remoteCozy.trashById(doc.remote._id)
+  }
+
+  deleteFolder (doc: Metadata, callback: Callback) {
+    // $FlowFixMe
+    this.deleteFolderAsync(doc).asCallback(callback)
+  }
+
   // FIXME: Temporary stubs so we can do some acceptance testing on file upload
   //        without getting errors for missing methods.
 
   moveFolder (doc: Metadata, from: Metadata, callback: Callback) {
     callback(new Error('Remote#moveFolder() is not implemented'))
-  }
-
-  deleteFolder (doc: Metadata, callback: Callback) {
-    callback(new Error('Remote#deleteFolder() is not implemented'))
   }
 }
