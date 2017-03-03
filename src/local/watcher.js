@@ -105,9 +105,9 @@ class LocalWatcher {
         .on('error', function (err) {
           if (err.message === 'watch ENOSPC') {
             log.error('Sorry, the kernel is out of inotify watches!')
-            return log.error('See doc/inotify.md for how to solve this issue.')
+            log.error('See doc/inotify.md for how to solve this issue.')
           } else {
-            return log.error(err)
+            log.error(err)
           }
         })
     })
@@ -147,9 +147,9 @@ class LocalWatcher {
           }
         }
       }
-      return log.info('--------------------------------------------------')
+      log.info('--------------------------------------------------')
     } else {
-      return log.warn('The file system is not currrently watched')
+      log.warn('The file system is not currrently watched')
     }
   }
 
@@ -159,7 +159,7 @@ class LocalWatcher {
   // with checksum and mime informations
   createDoc (filePath, stats, callback) {
     let absPath = path.join(this.syncPath, filePath)
-    return this.checksum(absPath, function (err, checksum) {
+    this.checksum(absPath, function (err, checksum) {
       let doc: Object = {
         path: filePath,
         docType: 'file',
@@ -169,13 +169,13 @@ class LocalWatcher {
         size: stats.size
       }
       if ((stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
-      return callback(err, doc)
+      callback(err, doc)
     })
   }
 
   // Put a checksum computation in the queue
   checksum (filePath, callback) {
-    return this.checksumer.push({filePath}, callback)
+    this.checksumer.push({filePath}, callback)
   }
 
   // Get checksum for given file
@@ -185,13 +185,13 @@ class LocalWatcher {
     checksum.setEncoding('base64')
     stream.on('end', function () {
       checksum.end()
-      return callback(null, checksum.read())
+      callback(null, checksum.read())
     })
     stream.on('error', function (err) {
       checksum.end()
-      return callback(err)
+      callback(err)
     })
-    return stream.pipe(checksum)
+    stream.pipe(checksum)
   }
 
   // Returns true if a direct sub-folder/file of the given path is pending
@@ -208,32 +208,32 @@ class LocalWatcher {
     if (this.paths) { this.paths.push(filePath) }
     if (this.pending[filePath]) { this.pending[filePath].done() }
     this.checksums++
-    return this.createDoc(filePath, stats, (err, doc) => {
+    this.createDoc(filePath, stats, (err, doc) => {
       if (err) {
         this.checksums--
-        return log.info(err)
+        log.info(err)
       } else {
         let keys = Object.keys(this.pending)
         if (keys.length === 0) {
           this.checksums--
-          return this.prep.addFile(this.side, doc, this.done)
+          this.prep.addFile(this.side, doc, this.done)
         } else {
           // Let's see if one of the pending deleted files has the
           // same checksum that the added file. If so, we mark them as
           // a move.
-          return this.pouch.byChecksum(doc.checksum, (err, docs) => {
+          this.pouch.byChecksum(doc.checksum, (err, docs) => {
             this.checksums--
             if (err) {
-              return this.prep.addFile(this.side, doc, this.done)
+              this.prep.addFile(this.side, doc, this.done)
             } else {
               let same = find(docs, d => ~keys.indexOf(d.path))
               if (same) {
                 log.info(`${filePath}: was moved from ${same.path}`)
                 clearTimeout(this.pending[same.path].timeout)
                 delete this.pending[same.path]
-                return this.prep.moveFile(this.side, doc, same, this.done)
+                this.prep.moveFile(this.side, doc, same, this.done)
               } else {
-                return this.prep.addFile(this.side, doc, this.done)
+                this.prep.addFile(this.side, doc, this.done)
               }
             }
           })
@@ -254,7 +254,7 @@ class LocalWatcher {
         creationDate: stats.ctime,
         lastModification: stats.mtime
       }
-      return this.prep.putFolder(this.side, doc, this.done)
+      this.prep.putFolder(this.side, doc, this.done)
     }
   }
 
@@ -265,16 +265,16 @@ class LocalWatcher {
   onUnlinkFile (filePath) {
     let clear = () => {
       clearTimeout(this.pending[filePath].timeout)
-      return delete this.pending[filePath]
+      delete this.pending[filePath]
     }
     let done = () => {
       clear()
       log.info(`${filePath}: File deleted`)
-      return this.prep.deleteFile(this.side, {path: filePath}, this.done)
+      this.prep.deleteFile(this.side, {path: filePath}, this.done)
     }
     let check = () => {
       if (this.checksums === 0) {
-        return done()
+        done()
       } else {
         this.pending[filePath].timeout = setTimeout(check, 100)
       }
@@ -294,15 +294,15 @@ class LocalWatcher {
   onUnlinkDir (folderPath) {
     let clear = () => {
       clearInterval(this.pending[folderPath].interval)
-      return delete this.pending[folderPath]
+      delete this.pending[folderPath]
     }
     let done = () => {
       clear()
       log.info(`${folderPath}: Folder deleted`)
-      return this.prep.deleteFolder(this.side, {path: folderPath}, this.done)
+      this.prep.deleteFolder(this.side, {path: folderPath}, this.done)
     }
     let check = () => {
-      if (!this.hasPendingChild(folderPath)) { return done() }
+      if (!this.hasPendingChild(folderPath)) { done() }
     }
     this.pending[folderPath] = {
       clear,
@@ -315,11 +315,11 @@ class LocalWatcher {
   // File update detected
   onChange (filePath, stats) {
     log.info(`${filePath}: File updated`)
-    return this.createDoc(filePath, stats, (err, doc) => {
+    this.createDoc(filePath, stats, (err, doc) => {
       if (err) {
-        return log.info(err)
+        log.info(err)
       } else {
-        return this.prep.updateFile(this.side, doc, this.done)
+        this.prep.updateFile(this.side, doc, this.done)
       }
     })
   }
@@ -328,20 +328,20 @@ class LocalWatcher {
   // after chokidar has finished its initial scan
   onReady (callback) {
     return () => {
-      return this.pouch.byRecursivePath('', (err, docs) => {
+      this.pouch.byRecursivePath('', (err, docs) => {
         if (err) {
-          return callback(err)
+          callback(err)
         } else {
-          return async.eachSeries(docs.reverse(), (doc, next) => {
+          async.eachSeries(docs.reverse(), (doc, next) => {
             if (this.paths.indexOf(doc.path) !== -1) {
-              return async.setImmediate(next)
+              async.setImmediate(next)
             } else {
-              return this.prep.deleteDoc(this.side, doc, next)
+              this.prep.deleteDoc(this.side, doc, next)
             }
           }, err => {
             // $FlowFixMe
             this.paths = null
-            return callback(err)
+            callback(err)
           })
         }
       })
@@ -350,7 +350,7 @@ class LocalWatcher {
 
   // A callback that logs errors
   done (err) {
-    if (err) { return log.error(err) }
+    if (err) { log.error(err) }
   }
 }
 LocalWatcher.initClass()
