@@ -157,7 +157,7 @@ describe('LocalWatcher Tests', function () {
     })
   })
 
-  describe('onAdd', () =>
+  describe('onAddFile', () =>
     it('detects when a file is created', function (done) {
       this.watcher.start().then(() => {
         this.prep.addFile = function (side, doc) {

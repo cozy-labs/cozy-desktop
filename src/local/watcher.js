@@ -96,7 +96,7 @@ class LocalWatcher {
 
     return new Promise((resolve) => {
       this.watcher
-        .on('add', this.onAdd)
+        .on('add', this.onAddFile)
         .on('addDir', this.onAddDir)
         .on('change', this.onChange)
         .on('unlink', this.onUnlinkFile)
@@ -203,7 +203,7 @@ class LocalWatcher {
   /* Actions */
 
   // New file detected
-  onAdd (filePath, stats) {
+  onAddFile (filePath, stats) {
     log.info(`${filePath}: File added`)
     if (this.paths) { this.paths.push(filePath) }
     if (this.pending[filePath]) { this.pending[filePath].done() }
