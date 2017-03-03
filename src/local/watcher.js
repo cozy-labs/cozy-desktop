@@ -194,8 +194,8 @@ class LocalWatcher {
     return stream.pipe(checksum)
   }
 
-  // Returns true if a sub-folder of the given path is pending
-  hasPending (folderPath) {
+  // Returns true if a direct sub-folder/file of the given path is pending
+  hasPendingChild (folderPath) {
     let ret = find(this.pending, (_, key) => path.dirname(key) === folderPath)
     return (ret != null)  // Coerce the returns to a boolean
   }
@@ -302,7 +302,7 @@ class LocalWatcher {
       return this.prep.deleteFolder(this.side, {path: folderPath}, this.done)
     }
     let check = () => {
-      if (!this.hasPending(folderPath)) { return done() }
+      if (!this.hasPendingChild(folderPath)) { return done() }
     }
     this.pending[folderPath] = {
       clear,
