@@ -207,14 +207,14 @@ export default class Remote implements Side {
     this.updateFolderAsync(doc, old).asCallback(callback)
   }
 
-  async deleteFileAsync (doc: Metadata): Promise<void> {
-    log.info(`${doc.path}: Deleting...`)
+  async destroyAsync (doc: Metadata): Promise<void> {
+    log.info(`${doc.path}: Destroying...`)
     await this.remoteCozy.destroyById(doc.remote._id)
   }
 
-  deleteFile (doc: Metadata, callback: Callback) {
+  destroy (doc: Metadata, callback: Callback) {
     // $FlowFixMe
-    this.deleteFileAsync(doc).asCallback(callback)
+    this.destroyAsync(doc).asCallback(callback)
   }
 
   async trashAsync (doc: Metadata): Promise<void> {

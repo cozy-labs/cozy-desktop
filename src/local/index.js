@@ -321,8 +321,8 @@ class Local implements Side {
     })
   }
 
-  // Delete a file from the local filesystem
-  deleteFile (doc, callback) {
+  // Delete a file or folder from the local filesystem
+  destroy (doc, callback) {
     log.info(`Delete ${doc.path}`)
     this.events.emit('delete-file', doc)
     let fullpath = path.join(this.syncPath, doc.path)
@@ -331,7 +331,7 @@ class Local implements Side {
 
   trash (doc, callback) {
     // TODO: v3: Put files and folders into the OS trash
-    return this.deleteFile(doc, callback)
+    return this.destroy(doc, callback)
   }
 
   // Rename a file/folder to resolve a conflict

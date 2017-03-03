@@ -582,12 +582,12 @@ function(doc) {
           local: 1
         }
       }
-      this.remote.deleteFile = sinon.stub().yields()
+      this.remote.destroy = sinon.stub().yields()
       this.remote.addFile = sinon.stub().yields()
       this.remote.moveFile = sinon.stub().yields()
       return this.sync.fileChanged(was, this.remote, 2, err => {
         should.not.exist(err)
-        this.remote.deleteFile.called.should.be.false()
+        this.remote.destroy.called.should.be.false()
         return this.sync.fileChanged(doc, this.remote, 0, err => {
           should.not.exist(err)
           this.remote.addFile.called.should.be.false()
@@ -597,7 +597,7 @@ function(doc) {
       })
     })
 
-    it('calls deleteFile for a deleted file', function (done) {
+    it('calls destroy for a deleted file', function (done) {
       let doc = {
         _id: 'foo/baz',
         _rev: '4-1234567890',
@@ -608,10 +608,10 @@ function(doc) {
           remote: 2
         }
       }
-      this.local.deleteFile = sinon.stub().yields()
+      this.local.destroy = sinon.stub().yields()
       return this.sync.fileChanged(doc, this.local, 1, err => {
         should.not.exist(err)
-        this.local.deleteFile.calledWith(doc).should.be.true()
+        this.local.destroy.calledWith(doc).should.be.true()
         done()
       })
     })
@@ -626,10 +626,10 @@ function(doc) {
           local: 2
         }
       }
-      this.remote.deleteFile = sinon.stub().yields()
+      this.remote.destroy = sinon.stub().yields()
       return this.sync.fileChanged(doc, this.remote, 0, err => {
         should.not.exist(err)
-        this.remote.deleteFile.called.should.be.false()
+        this.remote.destroy.called.should.be.false()
         done()
       })
     })

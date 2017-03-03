@@ -339,7 +339,7 @@ class Sync {
           log.error(doc)
           side.addFile(doc, function (err) {
             if (err) { log.error(err) }
-            side.deleteFile(from, function (err) {
+            side.destroy(from, function (err) {
               if (err) { log.error(err) }
               callback(new Error('Invalid move'))
             })
@@ -351,7 +351,7 @@ class Sync {
         callback()
         break
       case !doc._deleted:
-        side.deleteFile(doc, callback)
+        side.destroy(doc, callback)
         break
       case rev !== 0:
         side.addFile(doc, callback)

@@ -726,12 +726,12 @@ describe('Remote', function () {
     })
   })
 
-  describe('deleteFile', function () {
+  describe('destroy', function () {
     it('deletes a file in couchdb', async function () {
       const file = await builders.file().build()
       const doc = conversion.createMetadata(file)
 
-      await this.remote.deleteFileAsync(doc)
+      await this.remote.destroyAsync(doc)
         .should.be.fulfilled()
 
       await cozy.data.find(FILES_DOCTYPE, doc.remote._id)
