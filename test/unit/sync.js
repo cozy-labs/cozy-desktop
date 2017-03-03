@@ -702,12 +702,12 @@ function(doc) {
           local: 1
         }
       }
-      this.remote.deleteFolder = sinon.stub().yields()
+      this.remote.trash = sinon.stub().yields()
       this.remote.addFolder = sinon.stub().yields()
       this.remote.moveFolder = sinon.stub().yields()
       return this.sync.folderChanged(was, this.remote, 2, err => {
         should.not.exist(err)
-        this.remote.deleteFolder.called.should.be.false()
+        this.remote.trash.called.should.be.false()
         return this.sync.folderChanged(doc, this.remote, 0, err => {
           should.not.exist(err)
           this.remote.addFolder.called.should.be.false()
@@ -717,7 +717,7 @@ function(doc) {
       })
     })
 
-    it('calls deleteFolder for a deleted folder', function (done) {
+    it('calls trash for a deleted folder', function (done) {
       let doc = {
         _id: 'foobar/baz',
         _rev: '4-1234567890',
@@ -728,10 +728,10 @@ function(doc) {
           remote: 2
         }
       }
-      this.local.deleteFolder = sinon.stub().yields()
+      this.local.trash = sinon.stub().yields()
       return this.sync.folderChanged(doc, this.local, 1, err => {
         should.not.exist(err)
-        this.local.deleteFolder.calledWith(doc).should.be.true()
+        this.local.trash.calledWith(doc).should.be.true()
         done()
       })
     })
@@ -746,10 +746,10 @@ function(doc) {
           local: 2
         }
       }
-      this.remote.deleteFolder = sinon.stub().yields()
+      this.remote.trash = sinon.stub().yields()
       return this.sync.folderChanged(doc, this.remote, 0, err => {
         should.not.exist(err)
-        this.remote.deleteFolder.called.should.be.false()
+        this.remote.trash.called.should.be.false()
         done()
       })
     })

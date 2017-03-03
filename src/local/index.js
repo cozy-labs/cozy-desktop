@@ -329,9 +329,8 @@ class Local implements Side {
     return fs.remove(fullpath, callback)
   }
 
-  // Delete a folder from the local filesystem
-  deleteFolder (doc, callback) {
-        // For now both operations are similar
+  trash (doc, callback) {
+    // TODO: v3: Put files and folders into the OS trash
     return this.deleteFile(doc, callback)
   }
 

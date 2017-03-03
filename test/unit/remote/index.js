@@ -739,12 +739,12 @@ describe('Remote', function () {
     })
   })
 
-  describe('deleteFolder', () =>
-    it('deletes a folder in couchdb', async function () {
+  describe('trash', () =>
+    it('moves the file or folder to the Cozy trash', async function () {
       const folder = await builders.dir().build()
       const doc = conversion.createMetadata(folder)
 
-      await this.remote.deleteFolderAsync(doc)
+      await this.remote.trashAsync(doc)
 
       const trashed = await cozy.data.find(FILES_DOCTYPE, doc.remote._id)
       should(trashed).have.property('dir_id', TRASH_DIR_ID)

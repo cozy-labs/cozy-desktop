@@ -217,14 +217,14 @@ export default class Remote implements Side {
     this.deleteFileAsync(doc).asCallback(callback)
   }
 
-  async deleteFolderAsync (doc: Metadata): Promise<void> {
-    log.info(`${doc.path}: Putting directory and its content in the trash...`)
+  async trashAsync (doc: Metadata): Promise<void> {
+    log.info(`${doc.path}: Moving to the trash...`)
     await this.remoteCozy.trashById(doc.remote._id)
   }
 
-  deleteFolder (doc: Metadata, callback: Callback) {
+  trash (doc: Metadata, callback: Callback) {
     // $FlowFixMe
-    this.deleteFolderAsync(doc).asCallback(callback)
+    this.trashAsync(doc).asCallback(callback)
   }
 
   // FIXME: Temporary stubs so we can do some acceptance testing on file upload

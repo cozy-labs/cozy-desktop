@@ -13,5 +13,5 @@ export interface Side {
   moveFile (doc: Metadata, from: Metadata, callback: Callback): void;
   moveFolder (doc: Metadata, from: Metadata, callback: Callback): void;
   deleteFile (doc: Metadata, callback: Callback): void;
-  deleteFolder (doc: Metadata, callback: Callback): void;
+  trash (doc: Metadata, callback: Callback): void;
 }
