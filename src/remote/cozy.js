@@ -49,6 +49,7 @@ export default class RemoteCozy {
     this.createDirectory = this.client.files.createDirectory
     this.updateFileById = this.client.files.updateById
     this.updateAttributesById = composeAsync(this.client.files.updateAttributesById, this.toRemoteDoc)
+    this.trashById = this.client.files.trashById
     this.destroyById = this.client.files.destroyById
   }
 
@@ -68,6 +69,8 @@ export default class RemoteCozy {
 
   updateAttributesById: (id: string, attrs: Object, options?: {ifMatch?: string})
     => Promise<RemoteDoc>
+
+  trashById: (id: string) => Promise<void>
 
   destroyById: (id: string) => Promise<void>
 

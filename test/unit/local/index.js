@@ -555,7 +555,7 @@ describe('Local', function () {
     })
   })
 
-  describe('deleteFile', () =>
+  describe('destroy', () =>
     it('deletes a file from the local filesystem', function (done) {
       let doc = {
         _id: 'FILE-TO-DELETE',
@@ -569,7 +569,7 @@ describe('Local', function () {
         doc._rev = inserted.rev
         return this.pouch.db.remove(doc, err => {
           should.not.exist(err)
-          return this.local.deleteFile(doc, function (err) {
+          return this.local.destroy(doc, function (err) {
             should.not.exist(err)
             fs.existsSync(filePath).should.be.false()
             done()
@@ -579,7 +579,7 @@ describe('Local', function () {
     })
   )
 
-  describe('deleteFolder', () =>
+  describe('trash', () =>
     it('deletes a folder from the local filesystem', function (done) {
       let doc = {
         _id: 'FOLDER-TO-DELETE',
@@ -594,7 +594,7 @@ describe('Local', function () {
         doc._rev = inserted.rev
         return this.pouch.db.remove(doc, err => {
           should.not.exist(err)
-          return this.local.deleteFolder(doc, function (err) {
+          return this.local.trash(doc, function (err) {
             should.not.exist(err)
             fs.existsSync(folderPath).should.be.false()
             done()

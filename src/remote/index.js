@@ -207,14 +207,24 @@ export default class Remote implements Side {
     this.updateFolderAsync(doc, old).asCallback(callback)
   }
 
-  async deleteFileAsync (doc: Metadata): Promise<void> {
-    log.info(`${doc.path}: Deleting...`)
+  async destroyAsync (doc: Metadata): Promise<void> {
+    log.info(`${doc.path}: Destroying...`)
     await this.remoteCozy.destroyById(doc.remote._id)
   }
 
-  deleteFile (doc: Metadata, callback: Callback) {
+  destroy (doc: Metadata, callback: Callback) {
     // $FlowFixMe
-    this.deleteFileAsync(doc).asCallback(callback)
+    this.destroyAsync(doc).asCallback(callback)
+  }
+
+  async trashAsync (doc: Metadata): Promise<void> {
+    log.info(`${doc.path}: Moving to the trash...`)
+    await this.remoteCozy.trashById(doc.remote._id)
+  }
+
+  trash (doc: Metadata, callback: Callback) {
+    // $FlowFixMe
+    this.trashAsync(doc).asCallback(callback)
   }
 
   // FIXME: Temporary stubs so we can do some acceptance testing on file upload
@@ -222,9 +232,5 @@ export default class Remote implements Side {
 
   moveFolder (doc: Metadata, from: Metadata, callback: Callback) {
     callback(new Error('Remote#moveFolder() is not implemented'))
-  }
-
-  deleteFolder (doc: Metadata, callback: Callback) {
-    callback(new Error('Remote#deleteFolder() is not implemented'))
   }
 }

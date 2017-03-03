@@ -9,7 +9,7 @@ import should from 'should'
 import * as conversion from '../../../src/conversion'
 import Prep from '../../../src/prep'
 import Remote from '../../../src/remote'
-import { FILES_DOCTYPE } from '../../../src/remote/constants'
+import { FILES_DOCTYPE, TRASH_DIR_ID } from '../../../src/remote/constants'
 import timestamp from '../../../src/timestamp'
 
 import type { Metadata } from '../../../src/metadata'
@@ -726,12 +726,12 @@ describe('Remote', function () {
     })
   })
 
-  describe('deleteFile', function () {
+  describe('destroy', function () {
     it('deletes a file in couchdb', async function () {
       const file = await builders.file().build()
       const doc = conversion.createMetadata(file)
 
-      await this.remote.deleteFileAsync(doc)
+      await this.remote.destroyAsync(doc)
         .should.be.fulfilled()
 
       await cozy.data.find(FILES_DOCTYPE, doc.remote._id)
@@ -739,30 +739,15 @@ describe('Remote', function () {
     })
   })
 
-  xdescribe('deleteFolder', () =>
-    it('deletes a folder in couchdb', function (done) {
-      return couchHelpers.createFolder(this.couch, 9, (err, folder) => {
-        should.not.exist(err)
-        let doc = {
-          path: 'couchdb-folder/folder-9',
-          _deleted: true,
-          docType: 'folder',
-          remote: {
-            _id: folder.id,
-            _rev: folder.rev
-          }
-        }
-        return this.couch.get(doc.remote._id, err => {
-          should.not.exist(err)
-          return this.remote.deleteFolder(doc, err => {
-            should.not.exist(err)
-            return this.couch.get(doc.remote._id, function (err) {
-              err.status.should.equal(404)
-              done()
-            })
-          })
-        })
-      })
+  describe('trash', () =>
+    it('moves the file or folder to the Cozy trash', async function () {
+      const folder = await builders.dir().build()
+      const doc = conversion.createMetadata(folder)
+
+      await this.remote.trashAsync(doc)
+
+      const trashed = await cozy.data.find(FILES_DOCTYPE, doc.remote._id)
+      should(trashed).have.property('dir_id', TRASH_DIR_ID)
     })
   )
 

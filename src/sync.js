@@ -339,7 +339,7 @@ class Sync {
           log.error(doc)
           side.addFile(doc, function (err) {
             if (err) { log.error(err) }
-            side.deleteFile(from, function (err) {
+            side.destroy(from, function (err) {
               if (err) { log.error(err) }
               callback(new Error('Invalid move'))
             })
@@ -351,7 +351,7 @@ class Sync {
         callback()
         break
       case !doc._deleted:
-        side.deleteFile(doc, callback)
+        side.destroy(doc, callback)
         break
       case rev !== 0:
         side.addFile(doc, callback)
@@ -389,12 +389,16 @@ class Sync {
             callback(err)
           })
         } else {
+          // Since a move requires 2 PouchDB writes, in rare cases the source
+          // and the destination may not match anymore (race condition).
+          // As a fallback, we try to add the folder that should exist, and to
+          // trash the one that shouldn't.
           log.error('Invalid move')
           log.error(from)
           log.error(doc)
           side.addFolder(doc, function (err) {
             if (err) { log.error(err) }
-            side.deleteFolder(from, function (err) {
+            side.trash(from, function (err) {
               if (err) { log.error(err) }
               callback(new Error('Invalid move'))
             })
@@ -406,7 +410,7 @@ class Sync {
         callback()
         break
       case !doc._deleted:
-        side.deleteFolder(doc, callback)
+        side.trash(doc, callback)
         break
       case rev !== 0:
         side.addFolder(doc, callback)
