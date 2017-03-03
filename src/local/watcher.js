@@ -96,10 +96,10 @@ class LocalWatcher {
 
     return new Promise((resolve) => {
       this.watcher
-        .on('add', this.onAdd)
+        .on('add', this.onAddFile)
         .on('addDir', this.onAddDir)
         .on('change', this.onChange)
-        .on('unlink', this.onUnlink)
+        .on('unlink', this.onUnlinkFile)
         .on('unlinkDir', this.onUnlinkDir)
         .on('ready', this.onReady(resolve))
         .on('error', function (err) {
@@ -194,8 +194,8 @@ class LocalWatcher {
     return stream.pipe(checksum)
   }
 
-  // Returns true if a sub-folder of the given path is pending
-  hasPending (folderPath) {
+  // Returns true if a direct sub-folder/file of the given path is pending
+  hasPendingChild (folderPath) {
     let ret = find(this.pending, (_, key) => path.dirname(key) === folderPath)
     return (ret != null)  // Coerce the returns to a boolean
   }
@@ -203,7 +203,7 @@ class LocalWatcher {
   /* Actions */
 
   // New file detected
-  onAdd (filePath, stats) {
+  onAddFile (filePath, stats) {
     log.info(`${filePath}: File added`)
     if (this.paths) { this.paths.push(filePath) }
     if (this.pending[filePath]) { this.pending[filePath].done() }
@@ -262,7 +262,7 @@ class LocalWatcher {
   //
   // It can be a file moved out. So, we wait a bit to see if a file with the
   // same checksum is added and, if not, we declare this file as deleted.
-  onUnlink (filePath) {
+  onUnlinkFile (filePath) {
     let clear = () => {
       clearTimeout(this.pending[filePath].timeout)
       return delete this.pending[filePath]
@@ -302,7 +302,7 @@ class LocalWatcher {
       return this.prep.deleteFolder(this.side, {path: folderPath}, this.done)
     }
     let check = () => {
-      if (!this.hasPending(folderPath)) { return done() }
+      if (!this.hasPendingChild(folderPath)) { return done() }
     }
     this.pending[folderPath] = {
       clear,
