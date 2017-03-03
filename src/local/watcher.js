@@ -99,7 +99,7 @@ class LocalWatcher {
         .on('add', this.onAdd)
         .on('addDir', this.onAddDir)
         .on('change', this.onChange)
-        .on('unlink', this.onUnlink)
+        .on('unlink', this.onUnlinkFile)
         .on('unlinkDir', this.onUnlinkDir)
         .on('ready', this.onReady(resolve))
         .on('error', function (err) {
@@ -262,7 +262,7 @@ class LocalWatcher {
   //
   // It can be a file moved out. So, we wait a bit to see if a file with the
   // same checksum is added and, if not, we declare this file as deleted.
-  onUnlink (filePath) {
+  onUnlinkFile (filePath) {
     let clear = () => {
       clearTimeout(this.pending[filePath].timeout)
       return delete this.pending[filePath]

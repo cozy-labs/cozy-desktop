@@ -217,7 +217,7 @@ describe('LocalWatcher Tests', function () {
     })
   })
 
-  describe('onUnlink', () =>
+  describe('onUnlinkFile', () =>
     it('detects when a file is deleted', function (done) {
       fs.ensureFileSync(path.join(this.syncPath, 'aca'))
       this.prep.addFile = () => {  // For aca file
