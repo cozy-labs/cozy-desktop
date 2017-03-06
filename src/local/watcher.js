@@ -308,7 +308,7 @@ class LocalWatcher {
       clear,
       done,
       check,
-      interval: setInterval(done, 350)
+      interval: setInterval(check, 350)
     }
   }
 
