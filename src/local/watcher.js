@@ -119,7 +119,7 @@ class LocalWatcher {
       this.watcher = null
     }
     for (let _ in this.pending) {
-      let pending = this.pending[_]
+      const pending = this.pending[_]
       pending.done()
     }
     // Give some time for awaitWriteFinish events to be fired
@@ -132,10 +132,10 @@ class LocalWatcher {
   debug () {
     if (this.watcher) {
       log.info('This is the list of the paths watched by chokidar:')
-      let object = this.watcher.getWatched()
+      const object = this.watcher.getWatched()
       for (let dir in object) {
         var file
-        let files = object[dir]
+        const files = object[dir]
         if (dir === '..') {
           for (file of Array.from(files)) {
             log.info(`- ${dir}/${file}`)
@@ -158,7 +158,7 @@ class LocalWatcher {
   // An helper to create a document for a file
   // with checksum and mime informations
   createDoc (filePath, stats, callback) {
-    let absPath = path.join(this.syncPath, filePath)
+    const absPath = path.join(this.syncPath, filePath)
     this.checksum(absPath, function (err, checksum) {
       let doc: Object = {
         path: filePath,
@@ -180,8 +180,8 @@ class LocalWatcher {
 
   // Get checksum for given file
   computeChecksum (task, callback) {
-    let stream = fs.createReadStream(task.filePath)
-    let checksum = crypto.createHash('md5')
+    const stream = fs.createReadStream(task.filePath)
+    const checksum = crypto.createHash('md5')
     checksum.setEncoding('base64')
     stream.on('end', function () {
       checksum.end()
@@ -196,7 +196,7 @@ class LocalWatcher {
 
   // Returns true if a direct sub-folder/file of the given path is pending
   hasPendingChild (folderPath) {
-    let ret = find(this.pending, (_, key) => path.dirname(key) === folderPath)
+    const ret = find(this.pending, (_, key) => path.dirname(key) === folderPath)
     return (ret != null)  // Coerce the returns to a boolean
   }
 
@@ -213,7 +213,7 @@ class LocalWatcher {
         this.checksums--
         log.info(err)
       } else {
-        let keys = Object.keys(this.pending)
+        const keys = Object.keys(this.pending)
         if (keys.length === 0) {
           this.checksums--
           this.prep.addFile(this.side, doc, this.done)
@@ -226,7 +226,7 @@ class LocalWatcher {
             if (err) {
               this.prep.addFile(this.side, doc, this.done)
             } else {
-              let same = find(docs, d => ~keys.indexOf(d.path))
+              const same = find(docs, d => ~keys.indexOf(d.path))
               if (same) {
                 log.info(`${filePath}: was moved from ${same.path}`)
                 clearTimeout(this.pending[same.path].timeout)
@@ -249,7 +249,7 @@ class LocalWatcher {
     log.info(`${folderPath}: Folder added`)
     if (this.paths) { this.paths.push(folderPath) }
     if (this.pending[folderPath]) { this.pending[folderPath].done() }
-    let doc = {
+    const doc = {
       path: folderPath,
       docType: 'folder',
       creationDate: stats.ctime,
@@ -263,16 +263,16 @@ class LocalWatcher {
   // It can be a file moved out. So, we wait a bit to see if a file with the
   // same checksum is added and, if not, we declare this file as deleted.
   onUnlinkFile (filePath) {
-    let clear = () => {
+    const clear = () => {
       clearTimeout(this.pending[filePath].timeout)
       delete this.pending[filePath]
     }
-    let done = () => {
+    const done = () => {
       clear()
       log.info(`${filePath}: File deleted`)
       this.prep.deleteFile(this.side, {path: filePath}, this.done)
     }
-    let check = () => {
+    const check = () => {
       if (this.checksums === 0) {
         done()
       } else {
@@ -292,16 +292,16 @@ class LocalWatcher {
   // We don't want to delete a folder before files inside it. So we wait a bit
   // after chokidar event to declare the folder as deleted.
   onUnlinkDir (folderPath) {
-    let clear = () => {
+    const clear = () => {
       clearInterval(this.pending[folderPath].interval)
       delete this.pending[folderPath]
     }
-    let done = () => {
+    const done = () => {
       clear()
       log.info(`${folderPath}: Folder deleted`)
       this.prep.deleteFolder(this.side, {path: folderPath}, this.done)
     }
-    let check = () => {
+    const check = () => {
       if (!this.hasPendingChild(folderPath)) { done() }
     }
     this.pending[folderPath] = {
