@@ -53,6 +53,7 @@ export default class Registration {
       clientKind: 'desktop',
       clientURI: pkg.homepage,
       logoURI: pkg.logo,
+      policyURI: 'https://files.cozycloud.cc/cgu.pdf',
       scopes: ['io.cozy.files']
     }
   }
