@@ -244,18 +244,18 @@ class LocalWatcher {
 
   // New directory detected
   onAddDir (folderPath, stats) {
-    if (folderPath !== '') {
-      log.info(`${folderPath}: Folder added`)
-      if (this.paths) { this.paths.push(folderPath) }
-      if (this.pending[folderPath]) { this.pending[folderPath].done() }
-      let doc = {
-        path: folderPath,
-        docType: 'folder',
-        creationDate: stats.ctime,
-        lastModification: stats.mtime
-      }
-      this.prep.putFolder(this.side, doc, this.done)
+    if (folderPath === '') return
+
+    log.info(`${folderPath}: Folder added`)
+    if (this.paths) { this.paths.push(folderPath) }
+    if (this.pending[folderPath]) { this.pending[folderPath].done() }
+    let doc = {
+      path: folderPath,
+      docType: 'folder',
+      creationDate: stats.ctime,
+      lastModification: stats.mtime
     }
+    this.prep.putFolder(this.side, doc, this.done)
   }
 
   // File deletion detected
