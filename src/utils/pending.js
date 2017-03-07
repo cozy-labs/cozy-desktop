@@ -1,6 +1,5 @@
 /* @flow */
 
-import find from 'lodash.find'
 import path from 'path'
 
 // A pending operation e.g. on a file or a folder.
@@ -11,45 +10,50 @@ export interface Pending { // eslint-disable-line no-undef
 
 // A map of pending operations
 export class PendingMap {
-  pending: {[path: string]: Pending}; // eslint-disable-line no-undef
+  map: Map<string, Pending>; // eslint-disable-line no-undef
 
   constructor () {
-    this.pending = Object.create(null)  // ES6 map would be nice!
+    this.map = new Map()
   }
 
   add (path: string, pending: Pending) { // eslint-disable-line no-undef
-    this.pending[path] = pending
+    this.map.set(path, pending)
   }
 
   executeAll () {
-    for (let _ in this.pending) {
-      const pending = this.pending[_]
+    for (const pending of this.map.values()) {
       pending.execute()
     }
   }
 
   executeIfAny (path: string) {
-    if (this.pending[path]) { this.pending[path].execute() }
+    const pending = this.map.get(path)
+    if (pending) { pending.execute() }
   }
 
   isEmpty (): boolean {
-    const keys = Object.keys(this.pending)
-    return (keys.length === 0)
+    return this.map.size === 0
   }
 
   hasPath (path: string): boolean {
-    const keys = Object.keys(this.pending)
-    return keys.indexOf(path) !== -1
+    return this.map.has(path)
   }
 
   // Returns true if a direct sub-folder/file of the given path is pending
   hasPendingChild (folderPath: string) {
-    const ret = find(this.pending, (_, key) => path.dirname(key) === folderPath)
-    return (ret != null)  // Coerce the returns to a boolean
+    for (const key of this.map.keys()) {
+      if (path.dirname(key) === folderPath) {
+        return true
+      }
+    }
+    return false
   }
 
   clear (path: string) {
-    this.pending[path].stopChecking()
-    delete this.pending[path]
+    const pending = this.map.get(path)
+    if (pending) {
+      pending.stopChecking()
+      delete this.map.delete(path)
+    }
   }
 }
