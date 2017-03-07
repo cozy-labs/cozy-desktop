@@ -342,8 +342,8 @@ class Local implements Side {
     fs.rename(srcPath, dstPath, callback)
     // Don't fire an event for the deleted file
     return setTimeout(() => {
-      const p = this.watcher.pending[src.path]
-      if (p) { p.clear() }
+      const p = this.watcher.pending
+      if (p.hasPath(src.path)) { p.clear(src.path) }
     }, 1000)
   }
 }

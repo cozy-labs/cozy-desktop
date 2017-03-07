@@ -24,14 +24,14 @@ describe('LocalWatcher Tests', function () {
     if (this.watcher.watcher) {
       this.watcher.watcher.close()
     }
-    return fs.emptyDir(this.syncPath, done)
+    fs.emptyDir(this.syncPath, done)
   })
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
   describe('start', function () {
     it('calls the callback when initial scan is done', function () {
-      return this.watcher.start()
+      this.watcher.start()
     })
 
     it('calls addFile/putFolder for files that are aleady here', function (done) {
@@ -72,10 +72,10 @@ describe('LocalWatcher Tests', function () {
       let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
       let dst = path.join(this.syncPath, 'chat-mignon.jpg')
       fs.copySync(src, dst)
-      return fs.stat(dst, (err, stats) => {
+      fs.stat(dst, (err, stats) => {
         should.not.exist(err)
         should.exist(stats)
-        return this.watcher.createDoc('chat-mignon.jpg', stats, function (err, doc) {
+        this.watcher.createDoc('chat-mignon.jpg', stats, function (err, doc) {
           should.not.exist(err)
           doc.should.have.properties({
             path: 'chat-mignon.jpg',
@@ -97,10 +97,10 @@ describe('LocalWatcher Tests', function () {
       let filePath = path.join(this.syncPath, 'executable')
       fs.ensureFileSync(filePath)
       fs.chmodSync(filePath, '755')
-      return fs.stat(filePath, (err, stats) => {
+      fs.stat(filePath, (err, stats) => {
         should.not.exist(err)
         should.exist(stats)
-        return this.watcher.createDoc('executable', stats, function (err, doc) {
+        this.watcher.createDoc('executable', stats, function (err, doc) {
           should.not.exist(err)
           doc.executable.should.be.true()
           done()
@@ -109,7 +109,7 @@ describe('LocalWatcher Tests', function () {
     })
 
     it('calls back with an error if the file is missing', function (done) {
-      return this.watcher.createDoc('no/such/file', {}, function (err, doc) {
+      this.watcher.createDoc('no/such/file', {}, function (err, doc) {
         should.exist(err)
         err.code.should.equal('ENOENT')
         done()
@@ -120,7 +120,7 @@ describe('LocalWatcher Tests', function () {
   describe('checksum', function () {
     it('returns the checksum of an existing file', function (done) {
       let filePath = 'test/fixtures/chat-mignon.jpg'
-      return this.watcher.checksum(filePath, function (err, sum) {
+      this.watcher.checksum(filePath, function (err, sum) {
         should.not.exist(err)
         sum.should.equal('+HBGS7uN4XdB0blqLv5tFQ==')
         done()
@@ -129,31 +129,11 @@ describe('LocalWatcher Tests', function () {
 
     it('returns an error for a missing file', function (done) {
       let filePath = 'no/such/file'
-      return this.watcher.checksum(filePath, function (err, sum) {
+      this.watcher.checksum(filePath, function (err, sum) {
         should.exist(err)
         err.code.should.equal('ENOENT')
         done()
       })
-    })
-  })
-
-  describe('hasPendingChild', function () {
-    it('returns true if a sub-folder is pending', function () {
-      this.watcher.pending = Object.create(null)
-      this.watcher.pending['bar'] = {}
-      this.watcher.pending['foo/bar'] = {}
-      this.watcher.pending['zoo'] = {}
-      this.watcher.hasPendingChild('foo').should.be.true()
-      this.watcher.pending['foo/baz/bim'] = {}
-      this.watcher.hasPendingChild('foo/baz').should.be.true()
-    })
-
-    it('returns false else', function () {
-      this.watcher.pending = Object.create(null)
-      this.watcher.hasPendingChild('foo').should.be.false()
-      this.watcher.pending['foo'] = {}
-      this.watcher.pending['bar/baz'] = {}
-      this.watcher.hasPendingChild('foo').should.be.false()
     })
   })
 
@@ -172,7 +152,7 @@ describe('LocalWatcher Tests', function () {
         }
         let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
         let dst = path.join(this.syncPath, 'aaa.jpg')
-        return fs.copySync(src, dst)
+        fs.copySync(src, dst)
       })
     })
   )
@@ -192,7 +172,7 @@ describe('LocalWatcher Tests', function () {
           ])
           done()
         }
-        return fs.mkdirSync(path.join(this.syncPath, 'aba'))
+        fs.mkdirSync(path.join(this.syncPath, 'aba'))
       })
     })
 
@@ -211,7 +191,7 @@ describe('LocalWatcher Tests', function () {
           ])
           done()
         }
-        return fs.mkdirSync(path.join(this.syncPath, 'abb/abc'))
+        fs.mkdirSync(path.join(this.syncPath, 'abb/abc'))
       }
       this.watcher.start()
     })
@@ -227,7 +207,7 @@ describe('LocalWatcher Tests', function () {
             path: 'aca'})
           done()
         }
-        return fs.unlinkSync(path.join(this.syncPath, 'aca'))
+        fs.unlinkSync(path.join(this.syncPath, 'aca'))
       }
       this.watcher.start()
     })
@@ -243,7 +223,7 @@ describe('LocalWatcher Tests', function () {
             path: 'ada'})
           done()
         }
-        return fs.rmdirSync(path.join(this.syncPath, 'ada'))
+        fs.rmdirSync(path.join(this.syncPath, 'ada'))
       }
       this.watcher.start()
     })
@@ -267,7 +247,7 @@ describe('LocalWatcher Tests', function () {
         }
         src = src.replace(/\.jpg$/, '-mod.jpg')
         dst = path.join(this.syncPath, 'aea.jpg')
-        return fs.copySync(src, dst)
+        fs.copySync(src, dst)
       }
       this.watcher.start()
     })
@@ -283,7 +263,7 @@ describe('LocalWatcher Tests', function () {
     }
 
     before('reset pouchdb', function (done) {
-      return this.pouch.resetDatabase(done)
+      this.pouch.resetDatabase(done)
     })
 
     it('deletes the source and adds the destination', function (done) {
@@ -292,10 +272,10 @@ describe('LocalWatcher Tests', function () {
       fs.copySync(src, dst)
       this.prep.addFile = (side, doc) => {
         doc._id = doc.path
-        return this.pouch.db.put(doc)
+        this.pouch.db.put(doc)
       }
       this.watcher.start().then(() => {
-        return setTimeout(() => {
+        setTimeout(() => {
           this.prep.deleteFile = sinon.spy()
           this.prep.addFile = sinon.spy()
           this.prep.moveFile = (side, doc, was) => {
@@ -316,7 +296,7 @@ describe('LocalWatcher Tests', function () {
             })
             done()
           }
-          return fs.renameSync(dst, path.join(this.syncPath, 'afb.jpg'))
+          fs.renameSync(dst, path.join(this.syncPath, 'afb.jpg'))
         }, 2000)
       })
     })
@@ -332,7 +312,7 @@ describe('LocalWatcher Tests', function () {
     }
 
     before('reset pouchdb', function (done) {
-      return this.pouch.resetDatabase(done)
+      this.pouch.resetDatabase(done)
     })
 
     it('deletes the source and adds the destination', function (done) {
@@ -342,10 +322,10 @@ describe('LocalWatcher Tests', function () {
       fs.writeFileSync(`${src}/agc`, 'agc')
       this.prep.addFile = this.prep.putFolder = (side, doc) => {
         doc._id = doc.path
-        return this.pouch.db.put(doc)
+        this.pouch.db.put(doc)
       }
       this.watcher.start().then(() => {
-        return setTimeout(() => {
+        setTimeout(() => {
           this.prep.updateFile = sinon.spy()
           this.prep.addFile = sinon.spy()
           this.prep.deleteFile = sinon.spy()
@@ -357,7 +337,7 @@ describe('LocalWatcher Tests', function () {
               path: 'agb',
               docType: 'folder'
             })
-            return setTimeout(() => {
+            setTimeout(() => {
               this.prep.addFile.called.should.be.false()
               this.prep.deleteFile.called.should.be.false()
               this.prep.moveFile.called.should.be.true()
@@ -371,7 +351,7 @@ describe('LocalWatcher Tests', function () {
               done()
             }, 4000)
           }
-          return fs.renameSync(src, dst)
+          fs.renameSync(src, dst)
         }, 1800)
       })
     })
@@ -379,7 +359,7 @@ describe('LocalWatcher Tests', function () {
 
   describe('onReady', function () {
     before('reset pouchdb', function (done) {
-      return this.pouch.resetDatabase(done)
+      this.pouch.resetDatabase(done)
     })
 
     it('detects deleted files and folders', function (done) {
@@ -404,8 +384,8 @@ describe('LocalWatcher Tests', function () {
         path: 'file2',
         docType: 'folder'
       }
-      return async.each([folder1, folder2, file1, file2], (doc, next) => {
-        return this.pouch.db.put(doc, next)
+      async.each([folder1, folder2, file1, file2], (doc, next) => {
+        this.pouch.db.put(doc, next)
       }, () => {
         this.watcher.paths = ['folder1', 'file1']
         let cb = this.watcher.onReady(function () {
@@ -416,7 +396,7 @@ describe('LocalWatcher Tests', function () {
           dd.calledWithMatch('local', file2).should.be.true()
           done()
         })
-        return cb()
+        cb()
       })
     })
   })

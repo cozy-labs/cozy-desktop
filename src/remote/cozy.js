@@ -6,7 +6,7 @@ import { Readable } from 'stream'
 
 import { FILES_DOCTYPE, DIR_TYPE, ROOT_DIR_ID, TRASH_DIR_ID } from './constants'
 import { jsonApiToRemoteDoc } from './document'
-import { composeAsync } from '../utils'
+import { composeAsync } from '../utils/func'
 
 import type { JsonApiDoc, RemoteDoc } from './document'
 

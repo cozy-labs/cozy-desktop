@@ -13,7 +13,7 @@ import type { RemoteDoc } from './document'
 import type { FileStreamProvider } from '../file_stream_provider'
 import type { Metadata } from '../metadata'
 import type { Side } from '../side' // eslint-disable-line
-import type { Callback } from '../utils'
+import type { Callback } from '../utils/func'
 
 const log = logger({
   prefix: 'Remote writer ',

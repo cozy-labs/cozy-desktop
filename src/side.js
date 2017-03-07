@@ -1,7 +1,7 @@
 /* @flow */
 
 import type { Metadata } from './metadata'
-import type { Callback } from './utils'
+import type { Callback } from './utils/func'
 
 // eslint-disable-next-line no-undef
 export interface Side {
