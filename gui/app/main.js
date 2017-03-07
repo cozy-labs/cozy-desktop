@@ -506,8 +506,11 @@ ipcMain.on('unlink-cozy', () => {
       sendToMainWindow('cancel-unlink')
       return
     }
-    desktop.stopSync(() => {
-      desktop.removeRemote().then(() => sendToMainWindow('unlinked'))
+    desktop.stopSync().then(() => {
+      desktop.removeRemote()
+        .then(() => console.log('removed'))
+        .then(() => sendToMainWindow('unlinked'))
+        .catch((err) => console.error('err', err))
     })
   })
 })
