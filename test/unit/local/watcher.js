@@ -137,26 +137,6 @@ describe('LocalWatcher Tests', function () {
     })
   })
 
-  describe('hasPendingChild', function () {
-    it('returns true if a sub-folder is pending', function () {
-      this.watcher.pending = Object.create(null)
-      this.watcher.pending['bar'] = {}
-      this.watcher.pending['foo/bar'] = {}
-      this.watcher.pending['zoo'] = {}
-      this.watcher.hasPendingChild('foo').should.be.true()
-      this.watcher.pending['foo/baz/bim'] = {}
-      this.watcher.hasPendingChild('foo/baz').should.be.true()
-    })
-
-    it('returns false else', function () {
-      this.watcher.pending = Object.create(null)
-      this.watcher.hasPendingChild('foo').should.be.false()
-      this.watcher.pending['foo'] = {}
-      this.watcher.pending['bar/baz'] = {}
-      this.watcher.hasPendingChild('foo').should.be.false()
-    })
-  })
-
   describe('onAddFile', () =>
     it('detects when a file is created', function (done) {
       this.watcher.start().then(() => {
