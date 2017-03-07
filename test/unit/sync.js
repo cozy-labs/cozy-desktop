@@ -5,7 +5,7 @@ import sinon from 'sinon'
 import should from 'should'
 
 import Ignore from '../../src/ignore'
-import Sync from '../../src/sync'
+import Sync, { TRASHING_DELAY } from '../../src/sync'
 
 import configHelpers from '../helpers/config'
 import pouchHelpers from '../helpers/pouch'
@@ -479,6 +479,8 @@ function(doc) {
       this.ignore = new Ignore([])
       this.events = {}
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
+
+      this.sync.trashLaterWithParentOrByItself = sinon.stub()
     })
 
     it('calls addFile for an added file', function (done) {
@@ -597,7 +599,7 @@ function(doc) {
       })
     })
 
-    it('calls destroy for a deleted file', function (done) {
+    it('calls trashLaterWithParentOrByItself for a deleted file', function (done) {
       let doc = {
         _id: 'foo/baz',
         _rev: '4-1234567890',
@@ -608,10 +610,9 @@ function(doc) {
           remote: 2
         }
       }
-      this.local.destroy = sinon.stub().yields()
       return this.sync.fileChanged(doc, this.local, 1, err => {
         should.not.exist(err)
-        this.local.destroy.calledWith(doc).should.be.true()
+        this.sync.trashLaterWithParentOrByItself.calledWith(doc, this.local).should.be.true()
         done()
       })
     })
@@ -626,10 +627,9 @@ function(doc) {
           local: 2
         }
       }
-      this.remote.destroy = sinon.stub().yields()
       return this.sync.fileChanged(doc, this.remote, 0, err => {
         should.not.exist(err)
-        this.remote.destroy.called.should.be.false()
+        this.sync.trashLaterWithParentOrByItself.called.should.be.false()
         done()
       })
     })
@@ -642,6 +642,8 @@ function(doc) {
       this.ignore = new Ignore([])
       this.events = {}
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
+
+      this.sync.trashLaterWithParentOrByItself = sinon.stub()
     })
 
     it('calls addFolder for an added folder', function (done) {
@@ -717,7 +719,7 @@ function(doc) {
       })
     })
 
-    it('calls trash for a deleted folder', function (done) {
+    it('calls trashLaterWithParentOrByItself for a deleted folder', function (done) {
       let doc = {
         _id: 'foobar/baz',
         _rev: '4-1234567890',
@@ -728,10 +730,9 @@ function(doc) {
           remote: 2
         }
       }
-      this.local.trash = sinon.stub().yields()
       return this.sync.folderChanged(doc, this.local, 1, err => {
         should.not.exist(err)
-        this.local.trash.calledWith(doc).should.be.true()
+        this.sync.trashLaterWithParentOrByItself.calledWith(doc, this.local).should.be.true()
         done()
       })
     })
@@ -746,10 +747,9 @@ function(doc) {
           local: 2
         }
       }
-      this.remote.trash = sinon.stub().yields()
       return this.sync.folderChanged(doc, this.remote, 0, err => {
         should.not.exist(err)
-        this.remote.trash.called.should.be.false()
+        this.sync.trashLaterWithParentOrByItself.called.should.be.false()
         done()
       })
     })
@@ -834,6 +834,58 @@ function(doc) {
       should.not.exist(side)
       should.not.exist(name)
       should.not.exist(rev)
+    })
+  })
+
+  describe('trashLaterWithParentOrByItself', () => {
+    let clock, side, sync
+
+    beforeEach(() => {
+      clock = sinon.useFakeTimers()
+      side = {trash: sinon.stub()}
+      sync = new Sync(null, {}, {}, null, null)
+    })
+
+    afterEach(() => {
+      clock.restore()
+    })
+
+    context('after waiting for the trashing delay', () => {
+      const waitAndTrash = (...docs) => {
+        for (let doc of docs) {
+          sync.trashLaterWithParentOrByItself(doc, side)
+          clock.tick(1)
+        }
+
+        clock.tick(TRASHING_DELAY)
+      }
+
+      it('trashes the file or dir by itself when its parent will not be trashed', () => {
+        const foo = {docType: 'folder', path: 'foo'}
+        const bar = {docType: 'file', path: 'bar.txt'}
+        const baz = {docType: 'folder', path: 'other/baz'}
+        const qux = {docType: 'file', path: 'other/qux.txt'}
+
+        waitAndTrash(bar, qux, baz, foo)
+
+        for (let doc of [foo, bar, baz, qux]) {
+          should(side.trash).have.been.calledWith(doc)
+        }
+      })
+
+      it('does nothing when the file or dir will be trashed with its parent', () => {
+        const foo = {docType: 'folder', path: 'foo'}
+        const bar = {docType: 'folder', path: 'foo/bar'}
+        const baz = {docType: 'file', path: 'foo/bar/baz.txt'}
+        const qux = {docType: 'file', path: 'foo/qux.txt'}
+
+        waitAndTrash(qux, baz, bar, foo)
+
+        should(side.trash).have.been.calledWith(foo)
+        for (let doc of [bar, baz, qux]) {
+          should(side.trash).not.have.been.calledWith(doc)
+        }
+      })
     })
   })
 })
