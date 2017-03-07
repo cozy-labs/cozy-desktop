@@ -8,6 +8,7 @@ import should from 'should'
 import { Readable } from 'stream'
 
 import Local from '../../../src/local'
+import { PendingMap } from '../../../src/utils/pending'
 
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
@@ -19,7 +20,7 @@ describe('Local', function () {
     this.prep = {}
     this.events = {}
     this.local = new Local(this.config, this.prep, this.pouch, this.events)
-    this.local.watcher.pending = {}
+    this.local.watcher.pending = new PendingMap()
   })
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
