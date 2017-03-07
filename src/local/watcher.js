@@ -260,13 +260,12 @@ class LocalWatcher {
       clearTimeout(timeout)
     }
     const execute = () => {
-      this.pending.clear(filePath)
       log.info(`${filePath}: File deleted`)
       this.prep.deleteFile(this.side, {path: filePath}, this.done)
     }
     const check = () => {
       if (this.checksums === 0) {
-        execute()
+        this.pending.executeIfAny(filePath)
       } else {
         timeout = setTimeout(check, 100)
       }
@@ -285,13 +284,12 @@ class LocalWatcher {
       clearInterval(interval)
     }
     const execute = () => {
-      this.pending.clear(folderPath)
       log.info(`${folderPath}: Folder deleted`)
       this.prep.deleteFolder(this.side, {path: folderPath}, this.done)
     }
     const check = () => {
       if (!this.pending.hasPendingChild(folderPath)) {
-        execute()
+        this.pending.executeIfAny(folderPath)
       }
     }
     this.pending.add(folderPath, {stopChecking, execute})

@@ -28,7 +28,10 @@ export class PendingMap {
 
   executeIfAny (path: string) {
     const pending = this.map.get(path)
-    if (pending) { pending.execute() }
+    if (pending) {
+      this.clear(path)
+      pending.execute()
+    }
   }
 
   isEmpty (): boolean {
