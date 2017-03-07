@@ -5,8 +5,8 @@ import path from 'path'
 
 // A pending operation e.g. on a file or a folder.
 export interface Pending { // eslint-disable-line no-undef
-  done (): void;
-  clear (): void;
+  execute (): void;
+  stopChecking (): void;
 }
 
 // A map of pending operations
@@ -21,15 +21,15 @@ export class PendingMap {
     this.pending[path] = pending
   }
 
-  doneAll () {
+  executeAll () {
     for (let _ in this.pending) {
       const pending = this.pending[_]
-      pending.done()
+      pending.execute()
     }
   }
 
-  doneIfAny (path: string) {
-    if (this.pending[path]) { this.pending[path].done() }
+  executeIfAny (path: string) {
+    if (this.pending[path]) { this.pending[path].execute() }
   }
 
   isEmpty (): boolean {
@@ -49,7 +49,7 @@ export class PendingMap {
   }
 
   clear (path: string) {
-    this.pending[path].clear()
+    this.pending[path].stopChecking()
     delete this.pending[path]
   }
 }

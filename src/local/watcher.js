@@ -121,7 +121,7 @@ class LocalWatcher {
       this.watcher.close()
       this.watcher = null
     }
-    this.pending.doneAll()
+    this.pending.executeAll()
     // Give some time for awaitWriteFinish events to be fired
     return new Promise((resolve) => {
       setTimeout(resolve, 3000)
@@ -200,7 +200,7 @@ class LocalWatcher {
   onAddFile (filePath, stats) {
     log.info(`${filePath}: File added`)
     if (this.paths) { this.paths.push(filePath) }
-    this.pending.doneIfAny(filePath)
+    this.pending.executeIfAny(filePath)
     this.checksums++
     this.createDoc(filePath, stats, (err, doc) => {
       if (err) {
@@ -240,7 +240,7 @@ class LocalWatcher {
 
     log.info(`${folderPath}: Folder added`)
     if (this.paths) { this.paths.push(folderPath) }
-    this.pending.doneIfAny(folderPath)
+    this.pending.executeIfAny(folderPath)
     const doc = {
       path: folderPath,
       docType: 'folder',
@@ -256,22 +256,22 @@ class LocalWatcher {
   // same checksum is added and, if not, we declare this file as deleted.
   onUnlinkFile (filePath) {
     let timeout
-    const clear = () => {
+    const stopChecking = () => {
       clearTimeout(timeout)
     }
-    const done = () => {
+    const execute = () => {
       this.pending.clear(filePath)
       log.info(`${filePath}: File deleted`)
       this.prep.deleteFile(this.side, {path: filePath}, this.done)
     }
     const check = () => {
       if (this.checksums === 0) {
-        done()
+        execute()
       } else {
         timeout = setTimeout(check, 100)
       }
     }
-    this.pending.add(filePath, {clear, done, check})
+    this.pending.add(filePath, {stopChecking, execute, check})
     timeout = setTimeout(check, 1250)
   }
 
@@ -281,18 +281,20 @@ class LocalWatcher {
   // after chokidar event to declare the folder as deleted.
   onUnlinkDir (folderPath) {
     let interval
-    const clear = () => {
+    const stopChecking = () => {
       clearInterval(interval)
     }
-    const done = () => {
+    const execute = () => {
       this.pending.clear(folderPath)
       log.info(`${folderPath}: Folder deleted`)
       this.prep.deleteFolder(this.side, {path: folderPath}, this.done)
     }
     const check = () => {
-      if (!this.pending.hasPendingChild(folderPath)) { done() }
+      if (!this.pending.hasPendingChild(folderPath)) {
+        execute()
+      }
     }
-    this.pending.add(folderPath, {clear, done, check})
+    this.pending.add(folderPath, {stopChecking, execute, check})
     interval = setInterval(check, 350)
   }
 

@@ -10,8 +10,8 @@ import type { Pending } from '../../../src/utils/pending' // eslint-disable-line
 describe('utils/pending/PendingMap', () => {
   let map
   const whatever: Pending = {
-    done: () => {},
-    clear: () => {}
+    execute: () => {},
+    stopChecking: () => {}
   }
 
   describe('hasPendingChild', function () {
