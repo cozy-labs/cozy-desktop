@@ -271,7 +271,7 @@ class LocalWatcher {
         timeout = setTimeout(check, 100)
       }
     }
-    this.pending.add(filePath, {stopChecking, execute, check})
+    this.pending.add(filePath, {stopChecking, execute})
     timeout = setTimeout(check, 1250)
   }
 
@@ -294,7 +294,7 @@ class LocalWatcher {
         execute()
       }
     }
-    this.pending.add(folderPath, {stopChecking, execute, check})
+    this.pending.add(folderPath, {stopChecking, execute})
     interval = setInterval(check, 350)
   }
 
