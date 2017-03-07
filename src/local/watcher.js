@@ -10,6 +10,9 @@ import path from 'path'
 import logger from '../logger'
 import Pouch from '../pouch'
 import Prep from '../prep'
+import { PendingMap } from '../utils/pending'
+
+import type { Pending } from '../utils/pending' // eslint-disable-line
 
 const log = logger({
   prefix: 'Local watcher ',
@@ -26,7 +29,7 @@ class LocalWatcher {
   pouch: Pouch
   side: string
   paths: string[]
-  pending: any
+  pending: PendingMap
   checksums: number
   checksumer: any // async.queue
   watcher: any // chokidar
@@ -65,7 +68,7 @@ class LocalWatcher {
     // want to save the operation as it in pouchdb), and the timeout can be
     // cleared to cancel the operation (for example, a deletion is finally
     // seen as a part of a move operation).
-    this.pending = Object.create(null)  // ES6 map would be nice!
+    this.pending = new PendingMap()
 
     // A counter of how many files are been read to compute a checksum right
     // now. It's useful because we can't do some operations when a checksum
@@ -118,10 +121,7 @@ class LocalWatcher {
       this.watcher.close()
       this.watcher = null
     }
-    for (let _ in this.pending) {
-      const pending = this.pending[_]
-      pending.done()
-    }
+    this.pending.doneAll()
     // Give some time for awaitWriteFinish events to be fired
     return new Promise((resolve) => {
       setTimeout(resolve, 3000)
@@ -194,27 +194,20 @@ class LocalWatcher {
     stream.pipe(checksum)
   }
 
-  // Returns true if a direct sub-folder/file of the given path is pending
-  hasPendingChild (folderPath) {
-    const ret = find(this.pending, (_, key) => path.dirname(key) === folderPath)
-    return (ret != null)  // Coerce the returns to a boolean
-  }
-
   /* Actions */
 
   // New file detected
   onAddFile (filePath, stats) {
     log.info(`${filePath}: File added`)
     if (this.paths) { this.paths.push(filePath) }
-    if (this.pending[filePath]) { this.pending[filePath].done() }
+    this.pending.doneIfAny(filePath)
     this.checksums++
     this.createDoc(filePath, stats, (err, doc) => {
       if (err) {
         this.checksums--
         log.info(err)
       } else {
-        const keys = Object.keys(this.pending)
-        if (keys.length === 0) {
+        if (this.pending.isEmpty()) {
           this.checksums--
           this.prep.addFile(this.side, doc, this.done)
         } else {
@@ -226,11 +219,10 @@ class LocalWatcher {
             if (err) {
               this.prep.addFile(this.side, doc, this.done)
             } else {
-              const same = find(docs, d => ~keys.indexOf(d.path))
+              const same = find(docs, d => this.pending.hasPath(d.path))
               if (same) {
                 log.info(`${filePath}: was moved from ${same.path}`)
-                clearTimeout(this.pending[same.path].timeout)
-                delete this.pending[same.path]
+                this.pending.clear(same.path)
                 this.prep.moveFile(this.side, doc, same, this.done)
               } else {
                 this.prep.addFile(this.side, doc, this.done)
@@ -248,7 +240,7 @@ class LocalWatcher {
 
     log.info(`${folderPath}: Folder added`)
     if (this.paths) { this.paths.push(folderPath) }
-    if (this.pending[folderPath]) { this.pending[folderPath].done() }
+    this.pending.doneIfAny(folderPath)
     const doc = {
       path: folderPath,
       docType: 'folder',
@@ -263,12 +255,12 @@ class LocalWatcher {
   // It can be a file moved out. So, we wait a bit to see if a file with the
   // same checksum is added and, if not, we declare this file as deleted.
   onUnlinkFile (filePath) {
+    let timeout
     const clear = () => {
-      clearTimeout(this.pending[filePath].timeout)
-      delete this.pending[filePath]
+      clearTimeout(timeout)
     }
     const done = () => {
-      clear()
+      this.pending.clear(filePath)
       log.info(`${filePath}: File deleted`)
       this.prep.deleteFile(this.side, {path: filePath}, this.done)
     }
@@ -276,15 +268,11 @@ class LocalWatcher {
       if (this.checksums === 0) {
         done()
       } else {
-        this.pending[filePath].timeout = setTimeout(check, 100)
+        timeout = setTimeout(check, 100)
       }
     }
-    this.pending[filePath] = {
-      clear,
-      done,
-      check,
-      timeout: setTimeout(check, 1250)
-    }
+    this.pending.add(filePath, {clear, done, check})
+    timeout = setTimeout(check, 1250)
   }
 
   // Folder deletion detected
@@ -292,24 +280,20 @@ class LocalWatcher {
   // We don't want to delete a folder before files inside it. So we wait a bit
   // after chokidar event to declare the folder as deleted.
   onUnlinkDir (folderPath) {
+    let interval
     const clear = () => {
-      clearInterval(this.pending[folderPath].interval)
-      delete this.pending[folderPath]
+      clearInterval(interval)
     }
     const done = () => {
-      clear()
+      this.pending.clear(folderPath)
       log.info(`${folderPath}: Folder deleted`)
       this.prep.deleteFolder(this.side, {path: folderPath}, this.done)
     }
     const check = () => {
-      if (!this.hasPendingChild(folderPath)) { done() }
+      if (!this.pending.hasPendingChild(folderPath)) { done() }
     }
-    this.pending[folderPath] = {
-      clear,
-      done,
-      check,
-      interval: setInterval(check, 350)
-    }
+    this.pending.add(folderPath, {clear, done, check})
+    interval = setInterval(check, 350)
   }
 
   // File update detected
