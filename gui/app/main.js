@@ -421,7 +421,8 @@ app.on('ready', () => {
 app.on('window-all-closed', () => {})
 
 ipcMain.on('register-remote', (event, arg) => {
-  desktop.config.cozyUrl = arg.cozyUrl
+  const cozyUrl = desktop.checkCozyUrl(arg.cozyUrl)
+  desktop.config.cozyUrl = cozyUrl
   const onRegistered = (client, url) => {
     let resolveP
     const promise = new Promise((resolve) => { resolveP = resolve })
@@ -433,7 +434,7 @@ ipcMain.on('register-remote', (event, arg) => {
     })
     return promise
   }
-  desktop.registerRemote(arg.cozyUrl, arg.location, onRegistered)
+  desktop.registerRemote(cozyUrl, arg.location, onRegistered)
     .then(
       (reg) => { mainWindow.loadURL(reg.client.redirectURI) },
       (err) => {

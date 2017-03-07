@@ -73,7 +73,10 @@ program
   .command('add-remote-cozy <url> <localSyncPath>')
   .description('Configure current device to sync with given cozy')
   .option('-d, --deviceName [deviceName]', 'device name to deal with')
-  .action((url, syncPath, args) => app.addRemote(url, syncPath, args.deviceName))
+  .action((url, syncPath, args) => {
+    const cozyUrl = app.checkCozyUrl(url)
+    app.addRemote(cozyUrl, syncPath, args.deviceName)
+  })
 
 program
   .command('remove-remote-cozy')
