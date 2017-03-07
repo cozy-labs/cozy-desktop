@@ -53,7 +53,7 @@ export class PendingMap {
     const pending = this.map.get(path)
     if (pending) {
       pending.stopChecking()
-      delete this.map.delete(path)
+      this.map.delete(path)
     }
   }
 }
