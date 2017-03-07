@@ -421,7 +421,8 @@ app.on('ready', () => {
 app.on('window-all-closed', () => {})
 
 ipcMain.on('register-remote', (event, arg) => {
-  desktop.config.cozyUrl = arg.cozyUrl
+  const cozyUrl = desktop.checkCozyUrl(arg.cozyUrl)
+  desktop.config.cozyUrl = cozyUrl
   const onRegistered = (client, url) => {
     let resolveP
     const promise = new Promise((resolve) => { resolveP = resolve })
@@ -433,7 +434,7 @@ ipcMain.on('register-remote', (event, arg) => {
     })
     return promise
   }
-  desktop.registerRemote(arg.cozyUrl, arg.location, onRegistered)
+  desktop.registerRemote(cozyUrl, arg.location, onRegistered)
     .then(
       (reg) => { mainWindow.loadURL(reg.client.redirectURI) },
       (err) => {
@@ -505,8 +506,11 @@ ipcMain.on('unlink-cozy', () => {
       sendToMainWindow('cancel-unlink')
       return
     }
-    desktop.stopSync(() => {
-      desktop.removeRemote().then(() => sendToMainWindow('unlinked'))
+    desktop.stopSync().then(() => {
+      desktop.removeRemote()
+        .then(() => console.log('removed'))
+        .then(() => sendToMainWindow('unlinked'))
+        .catch((err) => console.error('err', err))
     })
   })
 })
@@ -537,4 +541,12 @@ if (process.env.WATCH === 'true') {
     buildAppMenu()
     checkForNewRelease()
   })
+}
+
+// Network requests can be stuck with Electron on Linux inside the event loop.
+// A hack to deblock them is push some events in the event loop.
+// See https://github.com/electron/electron/issues/7083#issuecomment-262038387
+// And https://github.com/electron/electron/issues/1833
+if (process.platform === 'linux') {
+  setInterval(() => {}, 1000)
 }

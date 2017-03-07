@@ -93,8 +93,8 @@ class App {
     return url.parse(cozyUrl)
   }
 
-  // Return a promise for registering a device on the remote cozy
-  registerRemote (cozyUrl, redirectURI, onRegistered, deviceName) {
+  // Check that the cozyUrl is valid
+  checkCozyUrl (cozyUrl) {
     let parsed = this.parseCozyUrl(cozyUrl)
     cozyUrl = url.format(parsed)
     if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) {
@@ -102,6 +102,11 @@ class App {
       log.warn(err)
       throw err
     }
+    return cozyUrl
+  }
+
+  // Return a promise for registering a device on the remote cozy
+  registerRemote (cozyUrl, redirectURI, onRegistered, deviceName) {
     const registration = new Registration(cozyUrl, this.config)
     return registration.process(pkg, redirectURI, onRegistered, deviceName)
   }
