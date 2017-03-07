@@ -3,7 +3,7 @@
 
 import should from 'should'
 
-import { composeAsync } from '../../src/utils'
+import { composeAsync } from '../../../src/utils/func'
 
 describe('utils', () => {
   describe('composeAsync', () => {
