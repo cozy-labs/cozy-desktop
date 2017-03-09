@@ -1,5 +1,6 @@
 import { start } from 'repl'
 
+import '../globals'
 import App from '../app'
 
 const app = new App(process.env.COZY_DESKTOP_DIR)
@@ -18,7 +19,7 @@ if (config.isValid()) {
   console.log(`  cozy    A cozy-client-js instance, set up with your config
 
 Since a valid configuration is available, app.instanciate() was already called
-for you.`)
+for you, which means you can call app.startSync().`)
 } else {
   console.log(`
 No valid configuration found.
