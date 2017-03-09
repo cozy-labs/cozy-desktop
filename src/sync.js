@@ -176,14 +176,14 @@ class Sync {
     let [side, sideName, rev] = this.selectSide(doc)
     let done = this.applied(change, sideName, callback)
 
-    switch (false) {
-      case !!side:
+    switch (true) {
+      case side == null:
         this.pouch.setLocalSeq(change.seq, callback)
         break
-      case doc.docType !== 'file':
+      case doc.docType === 'file':
         this.fileChanged(doc, side, rev, done)
         break
-      case doc.docType !== 'folder':
+      case doc.docType === 'folder':
         this.folderChanged(doc, side, rev, done)
         break
       default:
@@ -327,19 +327,18 @@ class Sync {
   // and only at the second call, the move operation will be executed.
   fileChanged (doc, side: Side, rev, callback) {
     let from
-    switch (false) {
-      case !doc._deleted || (rev !== 0):
+    switch (true) {
+      case doc._deleted && (rev === 0):
         callback()
         break
-      case !this.moveFrom:
+      case this.moveFrom != null:
         from = this.moveFrom
         this.moveFrom = null
         if (from.moveTo === doc._id) {
           side.moveFile(doc, from, err => {
             if (err) { this.moveFrom = from }
             callback(err)
-          }
-                    )
+          })
         } else {
           log.error('Invalid move')
           log.error(from)
@@ -353,15 +352,15 @@ class Sync {
           })
         }
         break
-      case !doc.moveTo:
+      case doc.moveTo != null:
         this.moveFrom = doc
         callback()
         break
-      case !doc._deleted:
+      case doc._deleted:
         this.trashLaterWithParentOrByItself(doc, side)
         callback()
         break
-      case rev !== 0:
+      case rev === 0:
         side.addFile(doc, callback)
         break
       default:
@@ -384,11 +383,11 @@ class Sync {
   // Same as fileChanged, but for folder
   folderChanged (doc, side: Side, rev, callback) {
     let from
-    switch (false) {
-      case !doc._deleted || (rev !== 0):
+    switch (true) {
+      case doc._deleted && (rev === 0):
         callback()
         break
-      case !this.moveFrom:
+      case this.moveFrom != null:
         from = this.moveFrom
         this.moveFrom = null
         if (from.moveTo === doc._id) {
@@ -413,15 +412,15 @@ class Sync {
           })
         }
         break
-      case !doc.moveTo:
+      case doc.moveTo != null:
         this.moveFrom = doc
         callback()
         break
-      case !doc._deleted:
+      case doc._deleted:
         this.trashLaterWithParentOrByItself(doc, side)
         callback()
         break
-      case rev !== 0:
+      case rev === 0:
         side.addFolder(doc, callback)
         break
       default:
