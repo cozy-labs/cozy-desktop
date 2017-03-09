@@ -9,13 +9,17 @@ import logger from './logger'
 import { extractRevNumber } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
+import { PendingMap } from './utils/pending'
 
+import type { Metadata } from './metadata'
 import type { Side } from './side' // eslint-disable-line
 
 const log = logger({
   prefix: 'Synchronize   ',
   date: true
 })
+
+export const TRASHING_DELAY = 1000
 
 // Sync listens to PouchDB about the metadata changes, and calls local and
 // remote sides to apply the changes on the filesystem and remote CouchDB
@@ -25,6 +29,7 @@ class Sync {
   events: EventEmitter
   ignore: Ignore
   local: Local
+  pending: PendingMap
   pouch: Pouch
   remote: Remote
   stopped: ?boolean
@@ -39,6 +44,7 @@ class Sync {
     this.events = events
     this.local.other = this.remote
     this.remote.other = this.local
+    this.pending = new PendingMap()
   }
 
   // Start to synchronize the remote cozy with the local filesystem
@@ -351,7 +357,8 @@ class Sync {
         callback()
         break
       case !doc._deleted:
-        side.destroy(doc, callback)
+        this.trashLaterWithParentOrByItself(doc, side)
+        callback()
         break
       case rev !== 0:
         side.addFile(doc, callback)
@@ -410,7 +417,8 @@ class Sync {
         callback()
         break
       case !doc._deleted:
-        side.trash(doc, callback)
+        this.trashLaterWithParentOrByItself(doc, side)
+        callback()
         break
       case rev !== 0:
         side.addFolder(doc, callback)
@@ -418,6 +426,38 @@ class Sync {
       default:
         this.pouch.getPreviousRev(doc._id, rev, (_, old) => side.updateFolder(doc, old, callback))
     }
+  }
+
+  // Wait for possibly trashed parent directory. Do nothing if any.
+  // Otherwise trash the file or directory matching the given metadata on the
+  // given side.
+  //
+  // In order to wait for upcoming events, we need not to block them, so
+  // this method doesn't take a callback and returns immediately.
+  trashLaterWithParentOrByItself (doc: Metadata, side: Side) {
+    // TODO: Extract delayed execution logic to utils/pending
+    let timeout
+
+    this.pending.add(doc.path, {
+      stopChecking: () => {
+        clearTimeout(timeout)
+      },
+
+      execute: () => {
+        this.pending.clear(doc.path)
+
+        if (this.pending.hasParentPath(doc.path)) {
+          log.debug(`${doc.path}: will be trashed with parent directory`)
+        } else {
+          log.debug(`${doc.path}: should be trashed by itself`)
+          side.trash(doc, log.errorIfAny)
+        }
+      }
+    })
+
+    timeout = setTimeout(() => {
+      this.pending.executeIfAny(doc.path)
+    }, TRASHING_DELAY)
   }
 }
 

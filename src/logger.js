@@ -140,6 +140,12 @@ class Logger {
     }
   }
 
+  errorIfAny (err) {
+    if (err) {
+      this.error(err)
+    }
+  }
+
   debug (...texts) {
     if (process.env.DEBUG) {
       return printit.console.info(this.format('debug', texts))

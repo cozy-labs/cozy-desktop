@@ -255,6 +255,7 @@ class LocalWatcher {
   // It can be a file moved out. So, we wait a bit to see if a file with the
   // same checksum is added and, if not, we declare this file as deleted.
   onUnlinkFile (filePath) {
+    // TODO: Extract delayed execution logic to utils/pending
     let timeout
     const stopChecking = () => {
       clearTimeout(timeout)
@@ -279,6 +280,7 @@ class LocalWatcher {
   // We don't want to delete a folder before files inside it. So we wait a bit
   // after chokidar event to declare the folder as deleted.
   onUnlinkDir (folderPath) {
+    // TODO: Extract repeated check logic to utils/pending
     let interval
     const stopChecking = () => {
       clearInterval(interval)

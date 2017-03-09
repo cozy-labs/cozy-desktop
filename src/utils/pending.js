@@ -42,6 +42,10 @@ export class PendingMap {
     return this.map.has(path)
   }
 
+  hasParentPath (childPath: string) {
+    return this.map.has(path.dirname(childPath))
+  }
+
   // Returns true if a direct sub-folder/file of the given path is pending
   hasPendingChild (folderPath: string) {
     for (const key of this.map.keys()) {
