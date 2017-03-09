@@ -9,6 +9,7 @@ import logger from './logger'
 import { extractRevNumber } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
+import { REVOKED } from './remote/watcher'
 import { PendingMap } from './utils/pending'
 
 import type { Metadata } from './metadata'
@@ -211,8 +212,8 @@ class Sync {
       if (err) { log.error(err) }
       if (err && err.code === 'ENOSPC') {
         callback(new Error('The disk space on your computer is full!'))
-      } else if (err && err.status === 401) {
-        callback(new Error('The device is no longer registered'))
+      } else if (err && err.message === REVOKED) {
+        callback(err)
       } else if (err) {
         if (!change.doc.errors) { change.doc.errors = 0 }
         this.isCozyFull((err, full) => {
