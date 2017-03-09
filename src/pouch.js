@@ -215,7 +215,7 @@ class Pouch {
         if (isEqual(doc, designDoc)) { return callback() }
       }
       return this.db.put(doc, function (err) {
-        if (!err) { log.info(`Design document created: ${name}`) }
+        if (!err) { log.debug(`Design document created: ${name}`) }
         return callback(err)
       })
     })
