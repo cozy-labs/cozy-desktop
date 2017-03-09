@@ -239,7 +239,7 @@ class Sync {
           }
         })
       } else {
-        log.info(`${change.doc.path}: Applied change ${change.seq}`)
+        log.debug(`${change.doc.path}: Applied change ${change.seq}`)
         this.pouch.setLocalSeq(change.seq, err => {
           if (err) { log.error(err) }
           if (change.doc._deleted) {

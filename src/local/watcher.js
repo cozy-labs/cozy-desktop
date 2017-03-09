@@ -53,7 +53,7 @@ class LocalWatcher {
   // Start chokidar, the filesystem watcher
   // https://github.com/paulmillr/chokidar
   start () {
-    log.info('Start watching filesystem for changes')
+    log.debug('Starting...')
 
     // To detect which files&folders have been removed since the last run of
     // cozy-desktop, we keep all the paths seen by chokidar during its
@@ -113,6 +113,8 @@ class LocalWatcher {
             log.error(err)
           }
         })
+
+      log.info(`Now watching ${this.syncPath}`)
     })
   }
 
