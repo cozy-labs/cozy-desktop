@@ -94,6 +94,7 @@ class Logger {
       return result
     })()).join(' ')
 
+    if (level === 'success') { text = green(text) }
     if (level === 'error') { text = red(text) }
     if (level === 'debug') { text = dim(text) }
 
@@ -119,6 +120,12 @@ class Logger {
   info (...texts) {
     if (process.env.DEBUG || (process.env.NODE_ENV !== 'test')) {
       return printit.console.info(this.format('info', texts))
+    }
+  }
+
+  success (...texts) {
+    if (process.env.DEBUG || (process.env.NODE_ENV !== 'test')) {
+      return printit.console.info(this.format('success', texts))
     }
   }
 
