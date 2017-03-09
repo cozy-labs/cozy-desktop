@@ -435,6 +435,7 @@ class Sync {
   // In order to wait for upcoming events, we need not to block them, so
   // this method doesn't take a callback and returns immediately.
   trashLaterWithParentOrByItself (doc: Metadata, side: Side) {
+    // TODO: Extract delayed execution logic to utils/pending
     let timeout
 
     this.pending.add(doc.path, {
