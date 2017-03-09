@@ -200,7 +200,7 @@ class LocalWatcher {
 
   // New file detected
   onAddFile (filePath, stats) {
-    log.info(`${filePath}: File added`)
+    log.debug(`${filePath}: File added`)
     if (this.paths) { this.paths.push(filePath) }
     this.pending.executeIfAny(filePath)
     this.checksums++
@@ -223,7 +223,7 @@ class LocalWatcher {
             } else {
               const same = find(docs, d => this.pending.hasPath(d.path))
               if (same) {
-                log.info(`${filePath}: was moved from ${same.path}`)
+                log.debug(`${filePath}: was moved from ${same.path}`)
                 this.pending.clear(same.path)
                 this.prep.moveFile(this.side, doc, same, this.done)
               } else {
@@ -240,7 +240,7 @@ class LocalWatcher {
   onAddDir (folderPath, stats) {
     if (folderPath === '') return
 
-    log.info(`${folderPath}: Folder added`)
+    log.debug(`${folderPath}: Folder added`)
     if (this.paths) { this.paths.push(folderPath) }
     this.pending.executeIfAny(folderPath)
     const doc = {
@@ -263,7 +263,7 @@ class LocalWatcher {
       clearTimeout(timeout)
     }
     const execute = () => {
-      log.info(`${filePath}: File deleted`)
+      log.debug(`${filePath}: File deleted`)
       this.prep.deleteFile(this.side, {path: filePath}, this.done)
     }
     const check = () => {
@@ -288,7 +288,7 @@ class LocalWatcher {
       clearInterval(interval)
     }
     const execute = () => {
-      log.info(`${folderPath}: Folder deleted`)
+      log.debug(`${folderPath}: Folder deleted`)
       this.prep.deleteFolder(this.side, {path: folderPath}, this.done)
     }
     const check = () => {
@@ -302,7 +302,7 @@ class LocalWatcher {
 
   // File update detected
   onChange (filePath, stats) {
-    log.info(`${filePath}: File updated`)
+    log.debug(`${filePath}: File updated`)
     this.createDoc(filePath, stats, (err, doc) => {
       if (err) {
         log.info(err)
