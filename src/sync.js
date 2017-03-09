@@ -138,7 +138,7 @@ class Sync {
         .on('complete', info => {
           if (info.results && info.results.length) { return }
           this.events.emit('up-to-date')
-          log.info('Your cozy is up to date!')
+          log.debug('No more metadata changes for now')
           log.lineBreak()
           opts.live = true
           opts.returnDocs = false
