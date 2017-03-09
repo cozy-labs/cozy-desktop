@@ -17,6 +17,7 @@ const log = logger({
 
 export const DEFAULT_HEARTBEAT: number = 1000 * 60 * 3 // 3 minutes
 export const HEARTBEAT: number = parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || DEFAULT_HEARTBEAT
+export const REVOKED: string = 'Client has been revoked'
 
 const SIDE = 'remote'
 
@@ -71,7 +72,7 @@ export default class RemoteWatcher {
       await this.pouch.setRemoteSeqAsync(changes.last_seq)
       log.lineBreak()
     } catch (err) {
-      if (err.message === 'Client has been revoked') {
+      if (err.message === REVOKED) {
         throw err
       }
       log.error(err)
