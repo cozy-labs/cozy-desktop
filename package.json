@@ -111,7 +111,7 @@
     "mocha": "^3.2.0",
     "nyc": "^10.1.2",
     "pouchdb-server": "^2.3.4",
-    "should": "^11.2.0",
+    "should": "^11.2.1",
     "should-sinon": "^0.0.5",
     "sinon": "^2.0.0",
     "sinon-stub-promise": "^4.0.0",
