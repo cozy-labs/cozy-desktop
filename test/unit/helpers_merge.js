@@ -20,26 +20,6 @@ describe('Merge Helpers', function () {
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
-  describe('sameDate', () =>
-    it('returns true if the date are nearly the same', function () {
-      let a = '2015-12-01T11:22:56.517Z'
-      let b = '2015-12-01T11:22:56.000Z'
-      let c = '2015-12-01T11:22:57.000Z'
-      let d = '2015-12-01T11:22:59.200Z'
-      let e = '2015-12-01T11:22:52.200Z'
-      this.merge.sameDate(a, b).should.be.true()
-      this.merge.sameDate(a, c).should.be.true()
-      this.merge.sameDate(a, d).should.be.true()
-      this.merge.sameDate(a, e).should.be.false()
-      this.merge.sameDate(b, c).should.be.true()
-      this.merge.sameDate(b, d).should.be.false()
-      this.merge.sameDate(b, e).should.be.false()
-      this.merge.sameDate(c, d).should.be.true()
-      this.merge.sameDate(c, e).should.be.false()
-      this.merge.sameDate(d, e).should.be.false()
-    })
-  )
-
   describe('sameFolder', () =>
     it('returns true if the folders are the same', function () {
       let a = {

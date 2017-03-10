@@ -10,6 +10,7 @@ import logger from './logger'
 import { extractRevNumber } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
+import { sameDate } from './timestamp'
 
 const log = logger({
   prefix: 'Merge         ',
@@ -45,20 +46,13 @@ class Merge {
 
   /* Helpers */
 
-  // Return true if the two dates are the same, +/- 3 seconds
-  sameDate (one, two) {
-    one = +new Date(one)
-    two = +new Date(two)
-    return Math.abs(two - one) < 3000
-  }
-
   // Return true if the metadata of the two folders are the same
   // The creationDate of the two folders are not compared, because the local
   // filesystem can't give us a relevant information for that.
   // For lastModification, we accept up to 3s of differences because we can't
   // rely on file systems to be precise to the millisecond.
   sameFolder (one, two) {
-    if (!this.sameDate(one.lastModification, two.lastModification)) { return false }
+    if (!sameDate(one.lastModification, two.lastModification)) { return false }
     let fields = ['_id', 'docType', 'remote', 'tags']
     one = pick(one, fields)
     two = pick(two, fields)
@@ -73,7 +67,7 @@ class Merge {
   // For lastModification, we accept up to 3s of differences because we can't
   // rely on file systems to be precise to the millisecond.
   sameFile (one, two) {
-    if (!this.sameDate(one.lastModification, two.lastModification)) { return false }
+    if (!sameDate(one.lastModification, two.lastModification)) { return false }
     let fields = ['_id', 'docType', 'checksum', 'remote',
       'tags', 'size', 'class', 'mime']
     one = {...pick(one, fields), executable: !!one.executable}
