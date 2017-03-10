@@ -5,7 +5,7 @@ import path from 'path'
 
 import Local from './local'
 import logger from './logger'
-import { extractRevNumber, sameBinary, sameFile, sameFolder } from './metadata'
+import { markSide, sameBinary, sameFile, sameFolder } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
 
@@ -72,24 +72,6 @@ class Merge {
     }
   }
 
-  // Mark the next rev for this side
-  //
-  // To track which side has made which modification, a revision number is
-  // associated to each side. When a side make a modification, we extract the
-  // revision from the previous state, increment it by one to have the next
-  // revision and associate this number to the side that makes the
-  // modification.
-  markSide (side, doc, prev) {
-    let rev = 0
-    if (prev) { rev = extractRevNumber(prev) }
-    if (doc.sides == null) {
-      const was = prev && prev.sides
-      doc.sides = clone(was || {})
-    }
-    doc.sides[side] = ++rev
-    return doc
-  }
-
   // Resolve a conflict by renaming a file/folder
   // A suffix composed of -conflict- and the date is added to the path.
   resolveConflict (side, doc, callback) {
@@ -110,7 +92,7 @@ class Merge {
   addFile (side, doc, callback) {
     this.pouch.db.get(doc._id, (err, file) => {
       if (err && (err.status !== 404)) { log.warn(err) }
-      this.markSide(side, doc, file)
+      markSide(side, doc, file)
       let hasSameBinary = false
       if (file) {
         hasSameBinary = sameBinary(file, doc)
@@ -177,7 +159,7 @@ class Merge {
   updateFile (side, doc, callback) {
     this.pouch.db.get(doc._id, (err, file) => {
       if (err && (err.status !== 404)) { log.warn(err) }
-      this.markSide(side, doc, file)
+      markSide(side, doc, file)
       if (file && file.docType === 'folder') {
         callback(new Error("Can't resolve this conflict!"))
       } else if (file) {
@@ -211,7 +193,7 @@ class Merge {
   putFolder (side, doc, callback) {
     this.pouch.db.get(doc._id, (err, folder) => {
       if (err && (err.status !== 404)) { log.warn(err) }
-      this.markSide(side, doc, folder)
+      markSide(side, doc, folder)
       if (folder && folder.docType === 'file') {
         this.resolveConflict(side, doc, callback)
       } else if (folder) {
@@ -240,8 +222,8 @@ class Merge {
     if (was.sides && was.sides[side]) {
       this.pouch.db.get(doc._id, (err, file) => {
         if (err && (err.status !== 404)) { log.warn(err) }
-        this.markSide(side, doc, file)
-        this.markSide(side, was, was)
+        markSide(side, doc, file)
+        markSide(side, was, was)
         if (doc.creationDate == null) { doc.creationDate = was.creationDate }
         if (doc.size == null) { doc.size = was.size }
         if (doc.class == null) { doc.class = was.class }
@@ -275,8 +257,8 @@ class Merge {
     if (was.sides && was.sides[side]) {
       this.pouch.db.get(doc._id, (err, folder) => {
         if (err && (err.status !== 404)) { log.warn(err) }
-        this.markSide(side, doc, folder)
-        this.markSide(side, was, was)
+        markSide(side, doc, folder)
+        markSide(side, was, was)
         if (doc.creationDate == null) { doc.creationDate = was.creationDate }
         if (doc.tags == null) { doc.tags = was.tags || [] }
         if (folder) {
@@ -336,7 +318,7 @@ class Merge {
       } else if (err) {
         callback(err)
       } else if (file.sides && file.sides[side]) {
-        this.markSide(side, file, file)
+        markSide(side, file, file)
         file._deleted = true
         delete file.errors
         this.pouch.db.put(file, callback)
@@ -378,7 +360,7 @@ class Merge {
         docs = docs.reverse()
         docs.push(folder)
         for (let doc of Array.from(docs)) {
-          this.markSide(side, doc, doc)
+          markSide(side, doc, doc)
           doc._deleted = true
           delete doc.errors
         }

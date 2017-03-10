@@ -86,29 +86,6 @@ describe('Merge Helpers', function () {
     })
   })
 
-  describe('markSide', function () {
-    it('marks local: 1 for a new doc', function () {
-      let doc = {}
-      this.merge.markSide('local', doc)
-      should.exist(doc.sides)
-      should.exist(doc.sides.local)
-      doc.sides.local.should.equal(1)
-    })
-
-    it('increments the rev for an already existing doc', function () {
-      let doc = {
-        sides: {
-          local: 3,
-          remote: 5
-        }
-      }
-      let prev = {_rev: '5-0123'}
-      this.merge.markSide('local', doc, prev)
-      doc.sides.local.should.equal(6)
-      doc.sides.remote.should.equal(5)
-    })
-  })
-
   describe('resolveConflictDoc', function () {
     it('appends -conflict- and the date to the path', function (done) {
       let doc = {path: 'foo/bar'}

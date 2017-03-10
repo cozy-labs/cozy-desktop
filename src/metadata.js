@@ -1,5 +1,6 @@
 /* @flow */
 
+import clone from 'lodash.clone'
 import isEqual from 'lodash.isequal'
 import pick from 'lodash.pick'
 import path from 'path'
@@ -163,4 +164,22 @@ export function sameBinary (one: Metadata, two: Metadata) {
   } else {
     return false
   }
+}
+
+// Mark the next rev for this side
+//
+// To track which side has made which modification, a revision number is
+// associated to each side. When a side make a modification, we extract the
+// revision from the previous state, increment it by one to have the next
+// revision and associate this number to the side that makes the
+// modification.
+export function markSide (side: string, doc: Metadata, prev: ?Metadata): Metadata {
+  let rev = 0
+  if (prev) { rev = extractRevNumber(prev) }
+  if (doc.sides == null) {
+    const was = prev && prev.sides
+    doc.sides = clone(was || {})
+  }
+  doc.sides[side] = ++rev
+  return doc
 }
