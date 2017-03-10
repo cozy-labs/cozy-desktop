@@ -1,7 +1,11 @@
 /* eslint-env mocha */
 
+import clone from 'lodash.clone'
+import should from 'should'
+
 import {
-  buildId, extractRevNumber, invalidChecksum, invalidPath
+  buildId, extractRevNumber, invalidChecksum, invalidPath,
+  sameBinary, sameFile, sameFolder
 } from '../../src/metadata'
 
 describe('metadata', function () {
@@ -111,6 +115,269 @@ describe('metadata', function () {
 
     it('returns 0 if not found', function () {
       extractRevNumber({}).should.equal(0)
+    })
+  })
+
+  describe('sameFolder', () =>
+    it('returns true if the folders are the same', function () {
+      let a = {
+        _id: 'FOO/BAR',
+        docType: 'folder',
+        path: 'foo/bar',
+        creationDate: '2015-12-01T11:22:56.517Z',
+        lastModification: '2015-12-01T11:22:56.517Z',
+        tags: ['qux'],
+        remote: {
+          id: '123',
+          rev: '4-567'
+        }
+      }
+      let b = {
+        _id: 'FOO/BAR',
+        docType: 'folder',
+        path: 'FOO/BAR',
+        creationDate: '2015-12-01T11:22:56.000Z',
+        lastModification: '2015-12-01T11:22:57.000Z',
+        tags: ['qux'],
+        remote: {
+          id: '123',
+          rev: '4-567'
+        }
+      }
+      let c = {
+        _id: 'FOO/BAR',
+        docType: 'folder',
+        path: 'FOO/BAR',
+        creationDate: '2015-12-01T11:22:56.000Z',
+        lastModification: '2015-12-01T11:22:57.000Z',
+        tags: ['qux', 'courge'],
+        remote: {
+          id: '123',
+          rev: '4-567'
+        }
+      }
+      let d = {
+        _id: 'FOO/BAR',
+        docType: 'folder',
+        path: 'FOO/BAR',
+        creationDate: '2015-12-01T11:22:56.000Z',
+        lastModification: '2015-12-01T11:22:57.000Z',
+        tags: ['qux', 'courge'],
+        remote: {
+          id: '123',
+          rev: '8-901'
+        }
+      }
+      let e = {
+        _id: 'FOO/BAZ',
+        docType: 'folder',
+        path: 'FOO/BAZ',
+        creationDate: '2015-12-01T11:22:56.000Z',
+        lastModification: '2015-12-01T11:22:57.000Z',
+        tags: ['qux'],
+        remote: {
+          id: '123',
+          rev: '4-567'
+        }
+      }
+      sameFolder(a, b).should.be.true()
+      sameFolder(a, c).should.be.false()
+      sameFolder(a, d).should.be.false()
+      sameFolder(a, e).should.be.false()
+      sameFolder(b, c).should.be.false()
+      sameFolder(b, d).should.be.false()
+      sameFolder(b, e).should.be.false()
+      sameFolder(c, d).should.be.false()
+      sameFolder(c, e).should.be.false()
+      sameFolder(d, e).should.be.false()
+    })
+  )
+
+  describe('sameFile', function () {
+    it('returns true if the files are the same', function () {
+      let a = {
+        _id: 'FOO/BAR',
+        docType: 'file',
+        path: 'foo/bar',
+        checksum: '9440ca447681546bd781d6a5166d18737223b3f6',
+        creationDate: '2015-12-01T11:22:56.517Z',
+        lastModification: '2015-12-01T11:22:56.517Z',
+        tags: ['qux'],
+        remote: {
+          id: '123',
+          rev: '4-567'
+        }
+      }
+      let b = {
+        _id: 'FOO/BAR',
+        docType: 'file',
+        path: 'FOO/BAR',
+        checksum: '9440ca447681546bd781d6a5166d18737223b3f6',
+        creationDate: '2015-12-01T11:22:56.000Z',
+        lastModification: '2015-12-01T11:22:57.000Z',
+        tags: ['qux'],
+        remote: {
+          id: '123',
+          rev: '4-567'
+        }
+      }
+      let c = {
+        _id: 'FOO/BAR',
+        docType: 'file',
+        path: 'FOO/BAR',
+        checksum: '000000047681546bd781d6a5166d18737223b3f6',
+        creationDate: '2015-12-01T11:22:56.000Z',
+        lastModification: '2015-12-01T11:22:57.000Z',
+        tags: ['qux'],
+        remote: {
+          id: '123',
+          rev: '4-567'
+        }
+      }
+      let d = {
+        _id: 'FOO/BAR',
+        docType: 'file',
+        path: 'FOO/BAR',
+        checksum: '9440ca447681546bd781d6a5166d18737223b3f6',
+        creationDate: '2015-12-01T11:22:56.000Z',
+        lastModification: '2015-12-01T11:22:57.000Z',
+        tags: ['qux'],
+        remote: {
+          id: '123',
+          rev: '8-901'
+        }
+      }
+      let e = {
+        _id: 'FOO/BAZ',
+        docType: 'file',
+        path: 'FOO/BAZ',
+        checksum: '9440ca447681546bd781d6a5166d18737223b3f6',
+        creationDate: '2015-12-01T11:22:56.000Z',
+        lastModification: '2015-12-01T11:22:57.000Z',
+        tags: ['qux'],
+        remote: {
+          id: '123',
+          rev: '4-567'
+        }
+      }
+      let f = {
+        _id: 'FOO/BAR',
+        docType: 'file',
+        path: 'foo/bar',
+        checksum: '9440ca447681546bd781d6a5166d18737223b3f6',
+        creationDate: '2015-12-01T11:22:56.517Z',
+        lastModification: '2015-12-01T11:22:56.517Z',
+        size: 12345,
+        tags: ['qux'],
+        remote: {
+          id: '123',
+          rev: '4-567'
+        }
+      }
+      sameFile(a, b).should.be.true()
+      sameFile(a, c).should.be.false()
+      sameFile(a, d).should.be.false()
+      sameFile(a, e).should.be.false()
+      sameFile(a, f).should.be.false()
+      sameFile(b, c).should.be.false()
+      sameFile(b, d).should.be.false()
+      sameFile(b, e).should.be.false()
+      sameFile(b, f).should.be.false()
+      sameFile(c, d).should.be.false()
+      sameFile(c, e).should.be.false()
+      sameFile(c, f).should.be.false()
+      sameFile(d, e).should.be.false()
+      sameFile(d, f).should.be.false()
+      sameFile(e, f).should.be.false()
+    })
+
+    it('does not fail when one file has executable: undefined', function () {
+      let a = {
+        _id: 'FOO/BAR',
+        docType: 'file',
+        path: 'foo/bar',
+        checksum: '9440ca447681546bd781d6a5166d18737223b3f6',
+        creationDate: '2015-12-01T11:22:56.517Z',
+        lastModification: '2015-12-01T11:22:56.517Z',
+        tags: ['qux'],
+        remote: {
+          id: '123',
+          rev: '4-567'
+        }
+      }
+      let b = clone(a)
+      b.executable = undefined
+      let c = clone(a)
+      c.executable = false
+      let d = clone(a)
+      d.executable = true
+      sameFile(a, b).should.be.true()
+      sameFile(a, c).should.be.true()
+      sameFile(a, d).should.be.false()
+      sameFile(b, c).should.be.true()
+      sameFile(b, d).should.be.false()
+      sameFile(c, d).should.be.false()
+    })
+  })
+
+  describe('sameBinary', function () {
+    it('returns true for two docs with the same checksum', function () {
+      let one = {
+        docType: 'file',
+        checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
+      }
+      let two = {
+        docType: 'file',
+        checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
+      }
+      let ret = sameBinary(one, two)
+      ret.should.be.true()
+    })
+
+    it('returns true for two docs with the same remote file', function () {
+      let one = {
+        checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc',
+        docType: 'file',
+        remote: {
+          _id: 'f00b4r'
+        }
+      }
+      let two = {
+        docType: 'file',
+        remote: {
+          _id: 'f00b4r'
+        }
+      }
+      let ret = sameBinary(one, two)
+      ret.should.be.true()
+      ret = sameBinary(two, one)
+      ret.should.be.true()
+    })
+
+    it('returns false for two different documents', function () {
+      let one = {
+        docType: 'file',
+        checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
+      }
+      let two = {
+        docType: 'file',
+        checksum: '2082e7f715f058acab2398d25d135cf5f4c0ce41',
+        remote: {
+          _id: 'f00b4r'
+        }
+      }
+      let three = {
+        docType: 'file',
+        remote: {
+          _id: 'c00463'
+        }
+      }
+      let ret = sameBinary(one, two)
+      ret.should.be.false()
+      ret = sameBinary(two, three)
+      ret.should.be.false()
+      ret = sameBinary(three, one)
+      ret.should.be.false()
     })
   })
 })
