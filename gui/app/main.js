@@ -10,7 +10,7 @@ const os = require('os')
 const path = require('path')
 const {spawn} = require('child_process')
 
-const {app, autoUpdater, BrowserWindow, dialog, ipcMain, Menu, shell} = electron
+const {app, autoUpdater, BrowserWindow, dialog, ipcMain, Menu, shell, session} = electron
 const autoLauncher = new AutoLaunch({
   name: 'Cozy-Desktop',
   isHidden: true
@@ -436,7 +436,10 @@ ipcMain.on('register-remote', (event, arg) => {
   }
   desktop.registerRemote(cozyUrl, arg.location, onRegistered)
     .then(
-      (reg) => { mainWindow.loadURL(reg.client.redirectURI) },
+      (reg) => {
+        session.defaultSession.clearStorageData()
+        mainWindow.loadURL(reg.client.redirectURI)
+      },
       (err) => {
         console.error(err)
         event.sender.send('registration-error', 'No cozy instance at this address!')
