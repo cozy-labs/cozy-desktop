@@ -1,13 +1,9 @@
 /* @flow weak */
 
-import Promise from 'bluebird'
-
 import Ignore from './ignore'
 import logger from './logger'
 import Merge from './merge'
 import { buildId, invalidChecksum, invalidPath } from './metadata'
-
-import type { Metadata } from './metadata'
 
 const log = logger({
   prefix: 'Prep          ',
@@ -28,138 +24,156 @@ class Prep {
   constructor (merge, ignore) {
     this.merge = merge
     this.ignore = ignore
-
-    Promise.promisifyAll(this)
   }
 
   /* Helpers */
 
   // Simple helper to add a file or a folder
-  addDoc (side, doc, callback) {
+  async addDocAsync (side, doc) {
     if (doc.docType === 'file') {
-      return this.addFile(side, doc, callback)
+      return this.addFileAsync(side, doc)
     } else if (doc.docType === 'folder') {
-      return this.putFolder(side, doc, callback)
+      return this.putFolderAsync(side, doc)
     } else {
-      return callback(new Error(`Unexpected docType: ${doc.docType}`))
+      throw new Error(`Unexpected docType: ${doc.docType}`)
     }
   }
 
-  addDocAsync: (side: any, doc: Metadata) => Promise<*>
+  addDoc (side, doc, callback) {
+    this.addDocAsync(side, doc).asCallback(callback)
+  }
 
   // Simple helper to update a file or a folder
-  updateDoc (side, doc, callback) {
+  async updateDocAsync (side, doc) {
     if (doc.docType === 'file') {
-      return this.updateFile(side, doc, callback)
+      return this.updateFileAsync(side, doc)
     } else if (doc.docType === 'folder') {
-      return this.putFolder(side, doc, callback)
+      return this.putFolderAsync(side, doc)
     } else {
-      return callback(new Error(`Unexpected docType: ${doc.docType}`))
+      throw new Error(`Unexpected docType: ${doc.docType}`)
     }
   }
 
-  updateDocAsync: (side: any, doc: Metadata) => Promise<*>
+  updateDoc (side, doc, callback) {
+    this.updateDocAsync(side, doc).asCallback(callback)
+  }
 
   // Helper to move/rename a file or a folder
-  moveDoc (side, doc, was, callback) {
+  async moveDocAsync (side, doc, was) {
     if (doc.docType !== was.docType) {
-      return callback(new Error(`Incompatible docTypes: ${doc.docType}`))
+      throw new Error(`Incompatible docTypes: ${doc.docType}`)
     } else if (doc.docType === 'file') {
-      return this.moveFile(side, doc, was, callback)
+      return this.moveFileAsync(side, doc, was)
     } else if (doc.docType === 'folder') {
-      return this.moveFolder(side, doc, was, callback)
+      return this.moveFolderAsync(side, doc, was)
     } else {
-      return callback(new Error(`Unexpected docType: ${doc.docType}`))
+      throw new Error(`Unexpected docType: ${doc.docType}`)
     }
   }
 
-  moveDocAsync: (side: any, doc: Metadata, was: Metadata) => Promise<*>
+  moveDoc (side, doc, was, callback) {
+    this.moveDocAsync(side, doc, was).asCallback(callback)
+  }
 
   // Simple helper to delete a file or a folder
-  deleteDoc (side, doc, callback) {
+  async deleteDocAsync (side, doc) {
     if (doc.docType === 'file') {
-      return this.deleteFile(side, doc, callback)
+      return this.deleteFileAsync(side, doc)
     } else if (doc.docType === 'folder') {
-      return this.deleteFolder(side, doc, callback)
+      return this.deleteFolderAsync(side, doc)
     } else {
-      return callback(new Error(`Unexpected docType: ${doc.docType}`))
+      throw new Error(`Unexpected docType: ${doc.docType}`)
     }
   }
 
-  deleteDocAsync: (side: any, doc: Metadata) => Promise<*>
+  deleteDoc (side, doc, callback) {
+    this.deleteDocAsync(side, doc).asCallback(callback)
+  }
 
   /* Actions */
 
   // Expectations:
   //   - the file path is present and valid
   //   - the checksum is valid, if present
-  addFile (side, doc, callback) {
+  async addFileAsync (side, doc) {
     if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
-      return callback(new Error('Invalid path'))
+      throw new Error('Invalid path')
     } else if (invalidChecksum(doc)) {
       log.warn(`Invalid checksum: ${JSON.stringify(doc, null, 2)}`)
-      return callback(new Error('Invalid checksum'))
+      throw new Error('Invalid checksum')
     } else {
       doc.docType = 'file'
       buildId(doc)
       if ((side === 'local') && this.ignore.isIgnored(doc)) {
-        return callback()
+        return
       } else {
         if (doc.creationDate == null) { doc.creationDate = new Date() }
         if (doc.lastModification == null) { doc.lastModification = new Date() }
         if (doc.lastModification === 'Invalid date') {
           doc.lastModification = new Date()
         }
-        return this.merge.addFile(side, doc, callback)
+        return this.merge.addFileAsync(side, doc)
       }
     }
+  }
+
+  addFile (side, doc, callback) {
+    this.addFileAsync(side, doc).asCallback(callback)
   }
 
   // Expectations:
   //   - the file path is present and valid
   //   - the checksum is valid, if present
-  updateFile (side, doc, callback) {
+  async updateFileAsync (side, doc) {
     if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
-      return callback(new Error('Invalid path'))
+      throw new Error('Invalid path')
     } else if (invalidChecksum(doc)) {
       log.warn(`Invalid checksum: ${JSON.stringify(doc, null, 2)}`)
-      return callback(new Error('Invalid checksum'))
+      throw new Error('Invalid checksum')
     } else {
       doc.docType = 'file'
       buildId(doc)
       if ((side === 'local') && this.ignore.isIgnored(doc)) {
-        return callback()
+        return
       } else {
         if (doc.lastModification == null) { doc.lastModification = new Date() }
         if (doc.lastModification === 'Invalid date') {
           doc.lastModification = new Date()
         }
-        return this.merge.updateFile(side, doc, callback)
+        return this.merge.updateFileAsync(side, doc)
       }
     }
   }
 
+  updateFile (side, doc, callback) {
+    this.updateFileAsync(side, doc).asCallback(callback)
+  }
+
   // Expectations:
   //   - the folder path is present and valid
-  putFolder (side, doc, callback) {
+  async putFolderAsync (side, doc) {
     if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
-      return callback(new Error('Invalid path'))
+      throw new Error('Invalid path')
     } else {
       doc.docType = 'folder'
       buildId(doc)
       if ((side === 'local') && this.ignore.isIgnored(doc)) {
-        return callback()
+        return
       } else {
         if (doc.lastModification == null) { doc.lastModification = new Date() }
         if (doc.lastModification === 'Invalid date') {
           doc.lastModification = new Date()
         }
-        return this.merge.putFolder(side, doc, callback)
+        return this.merge.putFolderAsync(side, doc)
       }
     }
+  }
+
+  putFolder (side, doc, callback) {
+    this.putFolderAsync(side, doc).asCallback(callback)
   }
 
   // Expectations:
@@ -168,29 +182,33 @@ class Prep {
   //   - the checksum is valid, if present
   //   - the two paths are not the same
   //   - the revision for the old file is present
-  moveFile (side, doc, was, callback) {
+  async moveFileAsync (side, doc, was) {
     if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
-      return callback(new Error('Invalid path'))
+      throw new Error('Invalid path')
     } else if (invalidPath(was)) {
       log.warn(`Invalid path: ${JSON.stringify(was, null, 2)}`)
-      return callback(new Error('Invalid path'))
+      throw new Error('Invalid path')
     } else if (invalidChecksum(doc)) {
       log.warn(`Invalid checksum: ${JSON.stringify(doc, null, 2)}`)
-      return callback(new Error('Invalid checksum'))
+      throw new Error('Invalid checksum')
     } else if (doc.path === was.path) {
       log.warn(`Invalid move: ${JSON.stringify(was, null, 2)}`)
       log.warn(`to ${JSON.stringify(doc, null, 2)}`)
-      return callback(new Error('Invalid move'))
+      throw new Error('Invalid move')
     } else if (!was._rev) {
       log.warn(`Missing rev: ${JSON.stringify(was, null, 2)}`)
-      return callback(new Error('Missing rev'))
+      throw new Error('Missing rev')
     } else {
-      return this.doMoveFile(side, doc, was, callback)
+      return this.doMoveFile(side, doc, was)
     }
   }
 
-  doMoveFile (side, doc, was, callback) {
+  moveFile (side, doc, was, callback) {
+    this.moveFileAsync(side, doc, was).asCallback(callback)
+  }
+
+  doMoveFile (side, doc, was) {
     doc.docType = 'file'
     if (doc.lastModification == null) { doc.lastModification = new Date() }
     if (doc.lastModification === 'Invalid date') {
@@ -201,13 +219,13 @@ class Prep {
     let docIgnored = this.ignore.isIgnored(doc)
     let wasIgnored = this.ignore.isIgnored(was)
     if ((side === 'local') && docIgnored && wasIgnored) {
-      return callback()
+      return
     } else if ((side === 'local') && docIgnored) {
-      return this.merge.deleteFile(side, was, callback)
+      return this.merge.deleteFileAsync(side, was)
     } else if ((side === 'local') && wasIgnored) {
-      return this.merge.addFile(side, doc, callback)
+      return this.merge.addFileAsync(side, doc)
     } else {
-      return this.merge.moveFile(side, doc, was, callback)
+      return this.merge.moveFileAsync(side, doc, was)
     }
   }
 
@@ -216,25 +234,29 @@ class Prep {
   //   - the old folder path is present and valid
   //   - the two paths are not the same
   //   - the revision for the old folder is present
-  moveFolder (side, doc, was, callback) {
+  async moveFolderAsync (side, doc, was) {
     if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
-      return callback(new Error('Invalid path'))
+      throw new Error('Invalid path')
     } else if (invalidPath(was)) {
       log.warn(`Invalid path: ${JSON.stringify(was, null, 2)}`)
-      return callback(new Error('Invalid path'))
+      throw new Error('Invalid path')
     } else if (doc.path === was.path) {
       log.warn(`Invalid move: ${JSON.stringify(doc, null, 2)}`)
-      return callback(new Error('Invalid move'))
+      throw new Error('Invalid move')
     } else if (!was._rev) {
       log.warn(`Missing rev: ${JSON.stringify(was, null, 2)}`)
-      return callback(new Error('Missing rev'))
+      throw new Error('Missing rev')
     } else {
-      return this.doMoveFolder(side, doc, was, callback)
+      return this.doMoveFolder(side, doc, was)
     }
   }
 
-  doMoveFolder (side, doc, was, callback) {
+  moveFolder (side, doc, was, callback) {
+    this.moveFolderAsync(side, doc, was).asCallback(callback)
+  }
+
+  doMoveFolder (side, doc, was) {
     doc.docType = 'folder'
     if (doc.lastModification == null) { doc.lastModification = new Date() }
     if (doc.lastModification === 'Invalid date') {
@@ -245,48 +267,56 @@ class Prep {
     let docIgnored = this.ignore.isIgnored(doc)
     let wasIgnored = this.ignore.isIgnored(was)
     if ((side === 'local') && docIgnored && wasIgnored) {
-      return callback()
+      return
     } else if ((side === 'local') && docIgnored) {
-      return this.merge.deleteFolder(side, was, callback)
+      return this.merge.deleteFolderAsync(side, was)
     } else if ((side === 'local') && wasIgnored) {
-      return this.merge.putFolder(side, doc, callback)
+      return this.merge.putFolderAsync(side, doc)
     } else {
-      return this.merge.moveFolder(side, doc, was, callback)
+      return this.merge.moveFolderAsync(side, doc, was)
     }
   }
 
   // Expectations:
   //   - the file path is present and valid
-  deleteFile (side, doc, callback) {
+  async deleteFileAsync (side, doc) {
     if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
-      return callback(new Error('Invalid path'))
+      throw new Error('Invalid path')
     } else {
       doc.docType = 'file'
       buildId(doc)
       if ((side === 'local') && this.ignore.isIgnored(doc)) {
-        return callback()
+        return
       } else {
-        return this.merge.deleteFile(side, doc, callback)
+        return this.merge.deleteFileAsync(side, doc)
       }
     }
   }
 
+  deleteFile (side, doc, callback) {
+    this.deleteFileAsync(side, doc).asCallback(callback)
+  }
+
   // Expectations:
   //   - the folder path is present and valid
-  deleteFolder (side, doc, callback) {
+  async deleteFolderAsync (side, doc) {
     if (invalidPath(doc)) {
       log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
-      return callback(new Error('Invalid path'))
+      throw new Error('Invalid path')
     } else {
       doc.docType = 'folder'
       buildId(doc)
       if ((side === 'local') && this.ignore.isIgnored(doc)) {
-        return callback()
+        return
       } else {
-        return this.merge.deleteFolder(side, doc, callback)
+        return this.merge.deleteFolderAsync(side, doc)
       }
     }
+  }
+
+  deleteFolder (side, doc, callback) {
+    this.deleteFolderAsync(side, doc).asCallback(callback)
   }
 }
 

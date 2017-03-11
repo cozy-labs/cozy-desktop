@@ -9,7 +9,15 @@ import Prep from '../../src/prep'
 describe('Prep', function () {
   beforeEach('instanciate prep', function () {
     this.side = 'local'
-    this.merge = {}
+    this.merge = {
+      addFileAsync: sinon.stub(),
+      updateFileAsync: sinon.stub(),
+      putFolderAsync: sinon.stub(),
+      moveFileAsync: sinon.stub(),
+      moveFolderAsync: sinon.stub(),
+      deleteFileAsync: sinon.stub(),
+      deleteFolderAsync: sinon.stub()
+    }
     this.ignore = new Ignore(['ignored'])
     this.prep = new Prep(this.merge, this.ignore)
   })
@@ -25,10 +33,11 @@ describe('Prep', function () {
           path: 'move/old-name',
           docType: 'file'
         }
-        this.prep.moveFile = sinon.stub().yields(null)
+        this.prep.moveFileAsync = sinon.stub()
+        this.prep.moveFileAsync.returnsPromise().resolves()
         return this.prep.moveDoc(this.side, doc, was, err => {
           should.not.exist(err)
-          this.prep.moveFile.calledWith(this.side, doc, was).should.be.true()
+          this.prep.moveFileAsync.calledWith(this.side, doc, was).should.be.true()
           done()
         })
       })
@@ -42,7 +51,8 @@ describe('Prep', function () {
           path: 'move/old-folder',
           docType: 'folder'
         }
-        let spy = this.prep.moveFolder = sinon.stub().yields(null)
+        let spy = this.prep.moveFolderAsync = sinon.stub()
+        spy.returnsPromise().resolves()
         return this.prep.moveDoc(this.side, doc, was, err => {
           should.not.exist(err)
           spy.calledWith(this.side, doc, was).should.be.true()
@@ -89,10 +99,11 @@ describe('Prep', function () {
           path: 'delete/name',
           docType: 'file'
         }
-        this.prep.deleteFile = sinon.stub().yields(null)
+        this.prep.deleteFileAsync = sinon.stub()
+        this.prep.deleteFileAsync.returnsPromise().resolves()
         return this.prep.deleteDoc(this.side, doc, err => {
           should.not.exist(err)
-          this.prep.deleteFile.calledWith(this.side, doc).should.be.true()
+          this.prep.deleteFileAsync.calledWith(this.side, doc).should.be.true()
           done()
         })
       })
@@ -102,10 +113,11 @@ describe('Prep', function () {
           path: 'delete/folder',
           docType: 'folder'
         }
-        this.prep.deleteFolder = sinon.stub().yields(null)
+        this.prep.deleteFolderAsync = sinon.stub()
+        this.prep.deleteFolderAsync.returnsPromise().resolves()
         return this.prep.deleteDoc(this.side, doc, err => {
           should.not.exist(err)
-          this.prep.deleteFolder.calledWith(this.side, doc).should.be.true()
+          this.prep.deleteFolderAsync.calledWith(this.side, doc).should.be.true()
           done()
         })
       })
@@ -123,14 +135,14 @@ describe('Prep', function () {
       })
 
       it('accepts doc with no checksum', function (done) {
-        this.merge.addFile = sinon.stub().yields(null)
+        this.merge.addFileAsync.returnsPromise().resolves()
         let doc = {
           path: 'no-checksum',
           docType: 'file'
         }
         return this.prep.addFile(this.side, doc, err => {
           should.not.exist(err)
-          this.merge.addFile.calledWith(this.side, doc).should.be.true()
+          this.merge.addFileAsync.calledWith(this.side, doc).should.be.true()
           done()
         })
       })
@@ -148,14 +160,14 @@ describe('Prep', function () {
       })
 
       it('calls Merge with the correct fields', function (done) {
-        this.merge.addFile = sinon.stub().yields(null)
+        this.merge.addFileAsync.returnsPromise().resolves()
         let doc = {
           path: 'foo/missing-fields',
           checksum: 'rcg7GeeTSRscbqD9i0bNnw=='
         }
         return this.prep.addFile(this.side, doc, err => {
           should.not.exist(err)
-          this.merge.addFile.calledWith(this.side, doc).should.be.true()
+          this.merge.addFileAsync.calledWith(this.side, doc).should.be.true()
           doc.docType.should.equal('file')
           should.exist(doc._id)
           should.exist(doc.creationDate)
@@ -165,14 +177,13 @@ describe('Prep', function () {
       })
 
       it('does nothing for ignored paths on local', function (done) {
-        this.merge.addFile = sinon.spy()
         let doc = {
           path: 'ignored',
           checksum: 'rcg7GeeTSRscbqD9i0bNnw=='
         }
         return this.prep.addFile('local', doc, err => {
           should.not.exist(err)
-          this.merge.addFile.called.should.be.false()
+          this.merge.addFileAsync.called.should.be.false()
           done()
         })
       })
@@ -188,14 +199,14 @@ describe('Prep', function () {
       })
 
       it('accepts doc with no checksum', function (done) {
-        this.merge.updateFile = sinon.stub().yields(null)
+        this.merge.updateFileAsync.returnsPromise().resolves()
         let doc = {
           path: 'no-checksum',
           docType: 'file'
         }
         return this.prep.updateFile(this.side, doc, err => {
           should.not.exist(err)
-          this.merge.updateFile.calledWith(this.side, doc).should.be.true()
+          this.merge.updateFileAsync.calledWith(this.side, doc).should.be.true()
           done()
         })
       })
@@ -213,14 +224,14 @@ describe('Prep', function () {
       })
 
       it('calls Merge with the correct fields', function (done) {
-        this.merge.updateFile = sinon.stub().yields(null)
+        this.merge.updateFileAsync.returnsPromise().resolves()
         let doc = {
           path: 'foobar/missing-fields',
           checksum: 'rcg7GeeTSRscbqD9i0bNnw=='
         }
         return this.prep.updateFile(this.side, doc, err => {
           should.not.exist(err)
-          this.merge.updateFile.calledWith(this.side, doc).should.be.true()
+          this.merge.updateFileAsync.calledWith(this.side, doc).should.be.true()
           doc.docType.should.equal('file')
           should.exist(doc._id)
           should.exist(doc.lastModification)
@@ -229,14 +240,13 @@ describe('Prep', function () {
       })
 
       it('does nothing for ignored paths on local', function (done) {
-        this.merge.updateFile = sinon.spy()
         let doc = {
           path: 'ignored',
           checksum: 'rcg7GeeTSRscbqD9i0bNnw=='
         }
         return this.prep.updateFile('local', doc, err => {
           should.not.exist(err)
-          this.merge.updateFile.called.should.be.false()
+          this.merge.updateFileAsync.called.should.be.false()
           done()
         })
       })
@@ -252,11 +262,11 @@ describe('Prep', function () {
       })
 
       it('calls Merge with the correct fields', function (done) {
-        this.merge.putFolder = sinon.stub().yields(null)
+        this.merge.putFolderAsync.returnsPromise().resolves()
         let doc = {path: 'foo/folder-missing-fields'}
         return this.prep.putFolder(this.side, doc, err => {
           should.not.exist(err)
-          this.merge.putFolder.calledWith(this.side, doc).should.be.true()
+          this.merge.putFolderAsync.calledWith(this.side, doc).should.be.true()
           doc.docType.should.equal('folder')
           should.exist(doc._id)
           should.exist(doc.lastModification)
@@ -265,11 +275,10 @@ describe('Prep', function () {
       })
 
       it('does nothing for ignored paths on local', function (done) {
-        this.merge.putFolder = sinon.spy()
         let doc = {path: 'ignored'}
         return this.prep.putFolder('local', doc, err => {
           should.not.exist(err)
-          this.merge.putFolder.called.should.be.false()
+          this.merge.putFolderAsync.called.should.be.false()
           done()
         })
       })
@@ -349,7 +358,7 @@ describe('Prep', function () {
       })
 
       it('calls Merge with the correct fields', function (done) {
-        this.merge.moveFile = sinon.stub().yields(null)
+        this.merge.moveFileAsync.returnsPromise().resolves()
         let doc = {
           path: 'FOO/new-missing-fields.jpg',
           checksum: 'uhNoeJzOlbV03scN/UduYQ=='
@@ -369,7 +378,7 @@ describe('Prep', function () {
         }
         return this.prep.moveFile(this.side, doc, was, err => {
           should.not.exist(err)
-          this.merge.moveFile.calledWith(this.side, doc, was).should.be.true()
+          this.merge.moveFileAsync.calledWith(this.side, doc, was).should.be.true()
           doc.docType.should.equal('file')
           should.exist(doc._id)
           should.exist(doc.lastModification)
@@ -432,7 +441,7 @@ describe('Prep', function () {
       })
 
       it('calls Merge with the correct fields', function (done) {
-        let spy = this.merge.moveFolder = sinon.stub().yields(null)
+        this.merge.moveFolderAsync.returnsPromise().resolves()
         let doc =
                     {path: 'FOOBAR/new-missing-fields'}
         let was = {
@@ -446,7 +455,7 @@ describe('Prep', function () {
         }
         return this.prep.moveFolder(this.side, doc, was, err => {
           should.not.exist(err)
-          spy.calledWith(this.side, doc, was).should.be.true()
+          this.merge.moveFolderAsync.calledWith(this.side, doc, was).should.be.true()
           doc.docType.should.equal('folder')
           should.exist(doc._id)
           should.exist(doc.lastModification)
@@ -467,11 +476,11 @@ describe('Prep', function () {
       })
 
       it('calls Merge with the correct fields', function (done) {
-        this.merge.deleteFile = sinon.stub().yields(null)
+        this.merge.deleteFileAsync.returnsPromise().resolves()
         let doc = {path: 'kill/file'}
         return this.prep.deleteFile(this.side, doc, err => {
           should.not.exist(err)
-          this.merge.deleteFile.calledWith(this.side, doc).should.be.true()
+          this.merge.deleteFileAsync.calledWith(this.side, doc).should.be.true()
           doc.docType.should.equal('file')
           should.exist(doc._id)
           done()
@@ -479,11 +488,10 @@ describe('Prep', function () {
       })
 
       it('does nothing for ignored paths on local', function (done) {
-        this.merge.deleteFile = sinon.spy()
         let doc = {path: 'ignored'}
         return this.prep.deleteFile('local', doc, err => {
           should.not.exist(err)
-          this.merge.deleteFile.called.should.be.false()
+          this.merge.deleteFileAsync.called.should.be.false()
           done()
         })
       })
@@ -499,11 +507,11 @@ describe('Prep', function () {
       })
 
       it('calls Merge with the correct fields', function (done) {
-        this.merge.deleteFolder = sinon.stub().yields(null)
+        this.merge.deleteFolderAsync.returnsPromise().resolves()
         let doc = {path: 'kill/folder'}
         return this.prep.deleteFolder(this.side, doc, err => {
           should.not.exist(err)
-          this.merge.deleteFolder.calledWith(this.side, doc).should.be.true()
+          this.merge.deleteFolderAsync.calledWith(this.side, doc).should.be.true()
           doc.docType.should.equal('folder')
           should.exist(doc._id)
           done()
@@ -511,11 +519,10 @@ describe('Prep', function () {
       })
 
       it('does nothing for ignored paths on local', function (done) {
-        this.merge.deleteFolder = sinon.spy()
         let doc = {path: 'ignored'}
         return this.prep.deleteFolder('local', doc, err => {
           should.not.exist(err)
-          this.merge.deleteFolder.called.should.be.false()
+          this.merge.deleteFolderAsync.called.should.be.false()
           done()
         })
       })
