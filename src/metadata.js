@@ -1,8 +1,12 @@
 /* @flow */
 
+import clone from 'lodash.clone'
+import isEqual from 'lodash.isequal'
+import pick from 'lodash.pick'
 import path from 'path'
 
 import logger from './logger'
+import { sameDate } from './timestamp'
 
 const log = logger({
   prefix: 'Metadata',
@@ -114,4 +118,68 @@ export function isUpToDate (doc: Metadata) {
   let currentRev = doc.sides.remote || 0
   let lastRev = extractRevNumber(doc)
   return currentRev === lastRev
+}
+
+// Return true if the metadata of the two folders are the same
+// The creationDate of the two folders are not compared, because the local
+// filesystem can't give us a relevant information for that.
+// For lastModification, we accept up to 3s of differences because we can't
+// rely on file systems to be precise to the millisecond.
+export function sameFolder (one: Metadata, two: Metadata) {
+  if (!sameDate(one.lastModification, two.lastModification)) { return false }
+  let fields = ['_id', 'docType', 'remote', 'tags']
+  one = pick(one, fields)
+  two = pick(two, fields)
+  const same = isEqual(one, two)
+  if (!same) log.diff(one, two)
+  return same
+}
+
+// Return true if the metadata of the two files are the same
+// The creationDate of the two files are not compared, because the local
+// filesystem can't give us a relevant information for that.
+// For lastModification, we accept up to 3s of differences because we can't
+// rely on file systems to be precise to the millisecond.
+export function sameFile (one: Metadata, two: Metadata) {
+  if (!sameDate(one.lastModification, two.lastModification)) { return false }
+  let fields = ['_id', 'docType', 'checksum', 'remote',
+    'tags', 'size', 'class', 'mime']
+  one = {...pick(one, fields), executable: !!one.executable}
+  two = {...pick(two, fields), executable: !!two.executable}
+  const same = isEqual(one, two)
+  if (!same) log.diff(one, two)
+  return same
+}
+
+// Return true if the two files have the same binary content
+export function sameBinary (one: Metadata, two: Metadata) {
+  if ((one.docType !== 'file') || (two.docType !== 'file')) {
+    return false
+  } else if ((one.checksum != null) && (one.checksum === two.checksum)) {
+    return true
+  } else if ((one.remote != null) && (two.remote != null)) {
+    let oneId = one.remote._id
+    let twoId = two.remote._id
+    return (oneId != null) && (oneId === twoId)
+  } else {
+    return false
+  }
+}
+
+// Mark the next rev for this side
+//
+// To track which side has made which modification, a revision number is
+// associated to each side. When a side make a modification, we extract the
+// revision from the previous state, increment it by one to have the next
+// revision and associate this number to the side that makes the
+// modification.
+export function markSide (side: string, doc: Metadata, prev: ?Metadata): Metadata {
+  let rev = 0
+  if (prev) { rev = extractRevNumber(prev) }
+  if (doc.sides == null) {
+    const was = prev && prev.sides
+    doc.sides = clone(was || {})
+  }
+  doc.sides[side] = ++rev
+  return doc
 }

@@ -1,13 +1,11 @@
 /* @flow weak */
 
 import clone from 'lodash.clone'
-import isEqual from 'lodash.isequal'
 import path from 'path'
-import pick from 'lodash.pick'
 
 import Local from './local'
 import logger from './logger'
-import { extractRevNumber } from './metadata'
+import { markSide, sameBinary, sameFile, sameFolder } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
 
@@ -45,59 +43,6 @@ class Merge {
 
   /* Helpers */
 
-  // Return true if the two dates are the same, +/- 3 seconds
-  sameDate (one, two) {
-    one = +new Date(one)
-    two = +new Date(two)
-    return Math.abs(two - one) < 3000
-  }
-
-  // Return true if the metadata of the two folders are the same
-  // The creationDate of the two folders are not compared, because the local
-  // filesystem can't give us a relevant information for that.
-  // For lastModification, we accept up to 3s of differences because we can't
-  // rely on file systems to be precise to the millisecond.
-  sameFolder (one, two) {
-    if (!this.sameDate(one.lastModification, two.lastModification)) { return false }
-    let fields = ['_id', 'docType', 'remote', 'tags']
-    one = pick(one, fields)
-    two = pick(two, fields)
-    const same = isEqual(one, two)
-    if (!same) log.diff(one, two)
-    return same
-  }
-
-  // Return true if the metadata of the two files are the same
-  // The creationDate of the two files are not compared, because the local
-  // filesystem can't give us a relevant information for that.
-  // For lastModification, we accept up to 3s of differences because we can't
-  // rely on file systems to be precise to the millisecond.
-  sameFile (one, two) {
-    if (!this.sameDate(one.lastModification, two.lastModification)) { return false }
-    let fields = ['_id', 'docType', 'checksum', 'remote',
-      'tags', 'size', 'class', 'mime']
-    one = {...pick(one, fields), executable: !!one.executable}
-    two = {...pick(two, fields), executable: !!two.executable}
-    const same = isEqual(one, two)
-    if (!same) log.diff(one, two)
-    return same
-  }
-
-  // Return true if the two files have the same binary content
-  sameBinary (one, two) {
-    if ((one.docType !== 'file') || (two.docType !== 'file')) {
-      return false
-    } else if ((one.checksum != null) && (one.checksum === two.checksum)) {
-      return true
-    } else if ((one.remote != null) && (two.remote != null)) {
-      let oneId = one.remote._id
-      let twoId = two.remote._id
-      return (oneId != null) && (oneId === twoId)
-    } else {
-      return false
-    }
-  }
-
   // Be sure that the tree structure for the given path exists
   ensureParentExist (side, doc, callback) {
     let parentId = path.dirname(doc._id)
@@ -127,24 +72,6 @@ class Merge {
     }
   }
 
-  // Mark the next rev for this side
-  //
-  // To track which side has made which modification, a revision number is
-  // associated to each side. When a side make a modification, we extract the
-  // revision from the previous state, increment it by one to have the next
-  // revision and associate this number to the side that makes the
-  // modification.
-  markSide (side, doc, prev) {
-    let rev = 0
-    if (prev) { rev = extractRevNumber(prev) }
-    if (doc.sides == null) {
-      const was = prev && prev.sides
-      doc.sides = clone(was || {})
-    }
-    doc.sides[side] = ++rev
-    return doc
-  }
-
   // Resolve a conflict by renaming a file/folder
   // A suffix composed of -conflict- and the date is added to the path.
   resolveConflict (side, doc, callback) {
@@ -165,10 +92,10 @@ class Merge {
   addFile (side, doc, callback) {
     this.pouch.db.get(doc._id, (err, file) => {
       if (err && (err.status !== 404)) { log.warn(err) }
-      this.markSide(side, doc, file)
+      markSide(side, doc, file)
       let hasSameBinary = false
       if (file) {
-        hasSameBinary = this.sameBinary(file, doc)
+        hasSameBinary = sameBinary(file, doc)
         // Photos uploaded by cozy-mobile have no checksum
         // but we should preserve metadata like tags
         if (!hasSameBinary) { hasSameBinary = file.remote && !file.checksum }
@@ -182,7 +109,7 @@ class Merge {
         if (doc.mime == null) { doc.mime = file.mime }
         if (doc.tags == null) { doc.tags = file.tags || [] }
         if (doc.remote == null) { doc.remote = file.remote }
-        if (this.sameFile(file, doc)) {
+        if (sameFile(file, doc)) {
           callback(null)
         } else {
           this.pouch.db.put(doc, callback)
@@ -232,7 +159,7 @@ class Merge {
   updateFile (side, doc, callback) {
     this.pouch.db.get(doc._id, (err, file) => {
       if (err && (err.status !== 404)) { log.warn(err) }
-      this.markSide(side, doc, file)
+      markSide(side, doc, file)
       if (file && file.docType === 'folder') {
         callback(new Error("Can't resolve this conflict!"))
       } else if (file) {
@@ -241,12 +168,12 @@ class Merge {
         if (doc.remote == null) { doc.remote = file.remote }
         // Preserve the creation date even if the file system lost it!
         doc.creationDate = file.creationDate
-        if (this.sameBinary(file, doc)) {
+        if (sameBinary(file, doc)) {
           if (doc.size == null) { doc.size = file.size }
           if (doc.class == null) { doc.class = file.class }
           if (doc.mime == null) { doc.mime = file.mime }
         }
-        if (this.sameFile(file, doc)) {
+        if (sameFile(file, doc)) {
           log.success(`${doc.path}: up to date`)
           callback(null)
         } else {
@@ -266,7 +193,7 @@ class Merge {
   putFolder (side, doc, callback) {
     this.pouch.db.get(doc._id, (err, folder) => {
       if (err && (err.status !== 404)) { log.warn(err) }
-      this.markSide(side, doc, folder)
+      markSide(side, doc, folder)
       if (folder && folder.docType === 'file') {
         this.resolveConflict(side, doc, callback)
       } else if (folder) {
@@ -274,7 +201,7 @@ class Merge {
         if (doc.tags == null) { doc.tags = folder.tags || [] }
         if (doc.creationDate == null) { doc.creationDate = folder.creationDate }
         if (doc.remote == null) { doc.remote = folder.remote }
-        if (this.sameFolder(folder, doc)) {
+        if (sameFolder(folder, doc)) {
           log.success(`${doc.path}: up to date`)
           callback(null)
         } else {
@@ -295,8 +222,8 @@ class Merge {
     if (was.sides && was.sides[side]) {
       this.pouch.db.get(doc._id, (err, file) => {
         if (err && (err.status !== 404)) { log.warn(err) }
-        this.markSide(side, doc, file)
-        this.markSide(side, was, was)
+        markSide(side, doc, file)
+        markSide(side, was, was)
         if (doc.creationDate == null) { doc.creationDate = was.creationDate }
         if (doc.size == null) { doc.size = was.size }
         if (doc.class == null) { doc.class = was.class }
@@ -305,7 +232,7 @@ class Merge {
         was.moveTo = doc._id
         was._deleted = true
         delete was.errors
-        if (file && this.sameFile(file, doc)) {
+        if (file && sameFile(file, doc)) {
           callback(null)
         } else if (file) {
           this.resolveConflict(side, doc, (_, dst) => {
@@ -330,8 +257,8 @@ class Merge {
     if (was.sides && was.sides[side]) {
       this.pouch.db.get(doc._id, (err, folder) => {
         if (err && (err.status !== 404)) { log.warn(err) }
-        this.markSide(side, doc, folder)
-        this.markSide(side, was, was)
+        markSide(side, doc, folder)
+        markSide(side, was, was)
         if (doc.creationDate == null) { doc.creationDate = was.creationDate }
         if (doc.tags == null) { doc.tags = was.tags || [] }
         if (folder) {
@@ -391,7 +318,7 @@ class Merge {
       } else if (err) {
         callback(err)
       } else if (file.sides && file.sides[side]) {
-        this.markSide(side, file, file)
+        markSide(side, file, file)
         file._deleted = true
         delete file.errors
         this.pouch.db.put(file, callback)
@@ -433,7 +360,7 @@ class Merge {
         docs = docs.reverse()
         docs.push(folder)
         for (let doc of Array.from(docs)) {
-          this.markSide(side, doc, doc)
+          markSide(side, doc, doc)
           doc._deleted = true
           delete doc.errors
         }

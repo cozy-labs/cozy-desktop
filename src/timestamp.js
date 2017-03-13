@@ -45,6 +45,13 @@ function same (t1: Timestamp, t2: Timestamp): boolean {
   return t1.getTime() === t2.getTime()
 }
 
+// Return true if the two dates are the same, +/- 3 seconds
+export function sameDate (one: any, two: any) {
+  one = +new Date(one)
+  two = +new Date(two)
+  return Math.abs(two - one) < 3000
+}
+
 function stringify (t: Timestamp) {
   ensureValid(t)
 

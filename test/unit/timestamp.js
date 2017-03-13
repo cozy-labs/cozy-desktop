@@ -3,7 +3,7 @@
 import should from 'should'
 import sinon from 'sinon'
 
-import timestamp, { InvalidTimestampError } from '../../src/timestamp'
+import timestamp, { InvalidTimestampError, sameDate } from '../../src/timestamp'
 
 // XXX: Pass strings to javascript's Date constructor everywhere, so the tests
 //      don't depend on the current timezone.
@@ -67,6 +67,26 @@ describe('timestamp', () => {
       }, InvalidTimestampError)
     })
   })
+
+  describe('sameDate', () =>
+    it('returns true if the date are nearly the same', function () {
+      let a = '2015-12-01T11:22:56.517Z'
+      let b = '2015-12-01T11:22:56.000Z'
+      let c = '2015-12-01T11:22:57.000Z'
+      let d = '2015-12-01T11:22:59.200Z'
+      let e = '2015-12-01T11:22:52.200Z'
+      sameDate(a, b).should.be.true()
+      sameDate(a, c).should.be.true()
+      sameDate(a, d).should.be.true()
+      sameDate(a, e).should.be.false()
+      sameDate(b, c).should.be.true()
+      sameDate(b, d).should.be.false()
+      sameDate(b, e).should.be.false()
+      sameDate(c, d).should.be.true()
+      sameDate(c, e).should.be.false()
+      sameDate(d, e).should.be.false()
+    })
+  )
 
   describe('stringify', () => {
     it('returns a golang-compatible RFC3339 representation', () => {
