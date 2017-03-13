@@ -44,266 +44,316 @@ class Merge {
   /* Helpers */
 
   // Be sure that the tree structure for the given path exists
-  ensureParentExist (side, doc, callback) {
+  async ensureParentExistAsync (side, doc) {
     let parentId = path.dirname(doc._id)
-    if (parentId === '.') {
-      callback()
-    } else {
-      this.pouch.db.get(parentId, (_, folder) => {
-        if (folder) {
-          callback()
-        } else {
-          let parentDoc = {
-            _id: parentId,
-            path: path.dirname(doc.path),
-            docType: 'folder',
-            creationDate: new Date(),
-            lastModification: new Date()
-          }
-          this.ensureParentExist(side, parentDoc, err => {
-            if (err) {
-              callback(err)
-            } else {
-              this.putFolder(side, parentDoc, callback)
-            }
-          })
-        }
-      })
+    if (parentId === '.') { return }
+
+    let folder
+    try {
+      folder = await this.pouch.db.get(parentId)
+    } catch (_) {}
+    if (folder) { return }
+
+    let parentDoc = {
+      _id: parentId,
+      path: path.dirname(doc.path),
+      docType: 'folder',
+      creationDate: new Date(),
+      lastModification: new Date()
     }
+
+    try {
+      await this.ensureParentExistAsync(side, parentDoc)
+    } catch (err) {
+      throw err
+    }
+
+    return this.putFolderAsync(side, parentDoc)
+  }
+
+  ensureParentExist (side, doc, callback) {
+    this.ensureParentExistAsync(side, doc).asCallback(callback)
   }
 
   // Resolve a conflict by renaming a file/folder
   // A suffix composed of -conflict- and the date is added to the path.
-  resolveConflict (side, doc, callback) {
+  async resolveConflictAsync (side, doc) {
     let dst = clone(doc)
     let date = new Date().toISOString()
     let ext = path.extname(doc.path)
     let dir = path.dirname(doc.path)
     let base = path.basename(doc.path, ext)
     dst.path = `${path.join(dir, base)}-conflict-${date}${ext}`
-    // $FlowFixMe
-    this[side].resolveConflict(dst, doc, err => callback(err, dst))
+    try {
+      // $FlowFixMe
+      await this[side].resolveConflictAsync(dst, doc)
+    } catch (err) {
+      throw err
+    }
+    return dst
+  }
+
+  resolveConflict (side, doc, callback) {
+    this.resolveConflictAsync(side, doc).asCallback(callback)
   }
 
   /* Actions */
 
   // Add a file, if it doesn't already exist,
   // and create the tree structure if needed
-  addFile (side, doc, callback) {
-    this.pouch.db.get(doc._id, (err, file) => {
-      if (err && (err.status !== 404)) { log.warn(err) }
-      markSide(side, doc, file)
-      let hasSameBinary = false
-      if (file) {
-        hasSameBinary = sameBinary(file, doc)
-        // Photos uploaded by cozy-mobile have no checksum
-        // but we should preserve metadata like tags
-        if (!hasSameBinary) { hasSameBinary = file.remote && !file.checksum }
-      }
-      if (file && file.docType === 'folder') {
-        this.resolveConflict(side, doc, callback)
-      } else if (hasSameBinary) {
-        doc._rev = file._rev
-        if (doc.size == null) { doc.size = file.size }
-        if (doc.class == null) { doc.class = file.class }
-        if (doc.mime == null) { doc.mime = file.mime }
-        if (doc.tags == null) { doc.tags = file.tags || [] }
-        if (doc.remote == null) { doc.remote = file.remote }
-        if (sameFile(file, doc)) {
-          callback(null)
-        } else {
-          this.pouch.db.put(doc, callback)
-        }
-      } else if (file && file.checksum) {
-        if ((side === 'local') && (file.sides.local != null)) {
-          this.resolveInitialAdd(side, doc, file, callback)
-        } else {
-          this.resolveConflict(side, doc, callback)
-        }
+  async addFileAsync (side, doc) {
+    let file
+    try {
+      file = await this.pouch.db.get(doc._id)
+    } catch (err) {
+      if (err.status !== 404) { log.warn(err) }
+    }
+
+    markSide(side, doc, file)
+    let hasSameBinary = false
+    if (file) {
+      hasSameBinary = sameBinary(file, doc)
+      // Photos uploaded by cozy-mobile have no checksum
+      // but we should preserve metadata like tags
+      if (!hasSameBinary) { hasSameBinary = file.remote && !file.checksum }
+    }
+    if (file && file.docType === 'folder') {
+      return this.resolveConflictAsync(side, doc)
+    } else if (file && hasSameBinary) {
+      doc._rev = file._rev
+      if (doc.size == null) { doc.size = file.size }
+      if (doc.class == null) { doc.class = file.class }
+      if (doc.mime == null) { doc.mime = file.mime }
+      if (doc.tags == null) { doc.tags = file.tags || [] }
+      if (doc.remote == null) { doc.remote = file.remote }
+      if (sameFile(file, doc)) {
+        return null
       } else {
-        if (file) { doc._rev = file._rev }
-        if (doc.tags == null) { doc.tags = [] }
-        this.ensureParentExist(side, doc, () => {
-          this.pouch.db.put(doc, callback)
-        })
+        return this.pouch.db.put(doc)
       }
-    })
+    } else if (file && file.checksum) {
+      if ((side === 'local') && (file.sides.local != null)) {
+        return this.resolveInitialAddAsync(side, doc, file)
+      } else {
+        return this.resolveConflictAsync(side, doc)
+      }
+    } else {
+      if (file) { doc._rev = file._rev }
+      if (doc.tags == null) { doc.tags = [] }
+      await this.ensureParentExistAsync(side, doc)
+      return this.pouch.db.put(doc)
+    }
+  }
+
+  addFile (side, doc, callback) {
+    this.addFileAsync(side, doc).asCallback(callback)
   }
 
   // When a file is modified when cozy-desktop is not running,
   // it is detected as a new file when cozy-desktop is started.
-  resolveInitialAdd (side, doc, file, callback) {
+  async resolveInitialAddAsync (side, doc, file) {
     if (!file.sides.remote) {
       // The file was updated on local before being pushed to remote
-      this.updateFile(side, doc, callback)
+      return this.updateFileAsync(side, doc)
     } else if (file.sides.remote === file.sides.local) {
       // The file was updated on local after being synched to remote
-      this.updateFile(side, doc, callback)
+      return this.updateFileAsync(side, doc)
     } else {
       // The file was updated on remote and maybe in local too
       let shortRev = file.sides.local
-      this.pouch.getPreviousRev(doc._id, shortRev, (err, prev) => {
-        if (err || (prev.checksum !== doc.checksum)) {
-          // It's safer to handle it as a conflict
-          if (doc.remote == null) { doc.remote = file.remote }
-          this.resolveConflict('remote', doc, callback)
-        } else {
+      try {
+        const prev = await this.pouch.getPreviousRevAsync(doc._id, shortRev)
+        if (prev.checksum === doc.checksum) {
           // The file was only updated on remote
-          callback(null)
+          return null
         }
-      })
+      } catch (_) {}
+
+      // It's safer to handle it as a conflict
+      if (doc.remote == null) { doc.remote = file.remote }
+      return this.resolveConflictAsync('remote', doc)
     }
+  }
+
+  resolveInitialAdd (side, doc, file, callback) {
+    this.resolveInitialAddAsync(side, doc, file).asCallback(callback)
   }
 
   // Update a file, when its metadata or its content has changed
-  updateFile (side, doc, callback) {
-    this.pouch.db.get(doc._id, (err, file) => {
-      if (err && (err.status !== 404)) { log.warn(err) }
-      markSide(side, doc, file)
-      if (file && file.docType === 'folder') {
-        callback(new Error("Can't resolve this conflict!"))
-      } else if (file) {
-        doc._rev = file._rev
-        if (doc.tags == null) { doc.tags = file.tags || [] }
-        if (doc.remote == null) { doc.remote = file.remote }
-        // Preserve the creation date even if the file system lost it!
-        doc.creationDate = file.creationDate
-        if (sameBinary(file, doc)) {
-          if (doc.size == null) { doc.size = file.size }
-          if (doc.class == null) { doc.class = file.class }
-          if (doc.mime == null) { doc.mime = file.mime }
-        }
-        if (sameFile(file, doc)) {
-          log.success(`${doc.path}: up to date`)
-          callback(null)
-        } else {
-          this.pouch.db.put(doc, callback)
-        }
-      } else {
-        if (doc.tags == null) { doc.tags = [] }
-        if (doc.creationDate == null) { doc.creationDate = new Date() }
-        this.ensureParentExist(side, doc, () => {
-          this.pouch.db.put(doc, callback)
-        })
+  async updateFileAsync (side, doc) {
+    let file
+    try {
+      file = await this.pouch.db.get(doc._id)
+    } catch (err) {
+      if (err.status !== 404) { log.warn(err) }
+    }
+    markSide(side, doc, file)
+    if (file && file.docType === 'folder') {
+      throw new Error("Can't resolve this conflict!")
+    } else if (file) {
+      doc._rev = file._rev
+      if (doc.tags == null) { doc.tags = file.tags || [] }
+      if (doc.remote == null) { doc.remote = file.remote }
+      // Preserve the creation date even if the file system lost it!
+      doc.creationDate = file.creationDate
+      if (sameBinary(file, doc)) {
+        if (doc.size == null) { doc.size = file.size }
+        if (doc.class == null) { doc.class = file.class }
+        if (doc.mime == null) { doc.mime = file.mime }
       }
-    })
+      if (sameFile(file, doc)) {
+        log.success(`${doc.path}: up to date`)
+        return null
+      } else {
+        return this.pouch.db.put(doc)
+      }
+    } else {
+      if (doc.tags == null) { doc.tags = [] }
+      if (doc.creationDate == null) { doc.creationDate = new Date() }
+      await this.ensureParentExistAsync(side, doc)
+      return this.pouch.db.put(doc)
+    }
+  }
+
+  updateFile (side, doc, callback) {
+    this.updateFileAsync(side, doc).asCallback(callback)
   }
 
   // Create or update a folder
-  putFolder (side, doc, callback) {
-    this.pouch.db.get(doc._id, (err, folder) => {
-      if (err && (err.status !== 404)) { log.warn(err) }
-      markSide(side, doc, folder)
-      if (folder && folder.docType === 'file') {
-        this.resolveConflict(side, doc, callback)
-      } else if (folder) {
-        doc._rev = folder._rev
-        if (doc.tags == null) { doc.tags = folder.tags || [] }
-        if (doc.creationDate == null) { doc.creationDate = folder.creationDate }
-        if (doc.remote == null) { doc.remote = folder.remote }
-        if (sameFolder(folder, doc)) {
-          log.success(`${doc.path}: up to date`)
-          callback(null)
-        } else {
-          this.pouch.db.put(doc, callback)
-        }
+  async putFolderAsync (side, doc) {
+    let folder
+    try {
+      folder = await this.pouch.db.get(doc._id)
+    } catch (err) {
+      if (err.status !== 404) { log.warn(err) }
+    }
+    markSide(side, doc, folder)
+    if (folder && folder.docType === 'file') {
+      return this.resolveConflictAsync(side, doc)
+    } else if (folder) {
+      doc._rev = folder._rev
+      if (doc.tags == null) { doc.tags = folder.tags || [] }
+      if (doc.creationDate == null) { doc.creationDate = folder.creationDate }
+      if (doc.remote == null) { doc.remote = folder.remote }
+      if (sameFolder(folder, doc)) {
+        log.success(`${doc.path}: up to date`)
+        return null
       } else {
-        if (doc.tags == null) { doc.tags = [] }
-        if (doc.creationDate == null) { doc.creationDate = new Date() }
-        this.ensureParentExist(side, doc, () => {
-          this.pouch.db.put(doc, callback)
-        })
+        return this.pouch.db.put(doc)
       }
-    })
+    } else {
+      if (doc.tags == null) { doc.tags = [] }
+      if (doc.creationDate == null) { doc.creationDate = new Date() }
+      await this.ensureParentExistAsync(side, doc)
+      return this.pouch.db.put(doc)
+    }
+  }
+
+  putFolder (side, doc, callback) {
+    this.putFolderAsync(side, doc).asCallback(callback)
   }
 
   // Rename or move a file
-  moveFile (side, doc, was, callback) {
+  async moveFileAsync (side, doc, was) {
     if (was.sides && was.sides[side]) {
-      this.pouch.db.get(doc._id, (err, file) => {
-        if (err && (err.status !== 404)) { log.warn(err) }
-        markSide(side, doc, file)
-        markSide(side, was, was)
-        if (doc.creationDate == null) { doc.creationDate = was.creationDate }
-        if (doc.size == null) { doc.size = was.size }
-        if (doc.class == null) { doc.class = was.class }
-        if (doc.mime == null) { doc.mime = was.mime }
-        if (doc.tags == null) { doc.tags = was.tags || [] }
-        was.moveTo = doc._id
-        was._deleted = true
-        delete was.errors
-        if (file && sameFile(file, doc)) {
-          callback(null)
-        } else if (file) {
-          this.resolveConflict(side, doc, (_, dst) => {
-            was.moveTo = dst._id
-            dst.sides = {}
-            dst.sides[side] = 1
-            this.pouch.db.bulkDocs([was, dst], callback)
-          })
-        } else {
-          this.ensureParentExist(side, doc, () => {
-            this.pouch.db.bulkDocs([was, doc], callback)
-          })
-        }
-      })
+      let file
+      try {
+        file = await this.pouch.db.get(doc._id)
+      } catch (err) {
+        if (err.status !== 404) { log.warn(err) }
+      }
+      markSide(side, doc, file)
+      markSide(side, was, was)
+      if (doc.creationDate == null) { doc.creationDate = was.creationDate }
+      if (doc.size == null) { doc.size = was.size }
+      if (doc.class == null) { doc.class = was.class }
+      if (doc.mime == null) { doc.mime = was.mime }
+      if (doc.tags == null) { doc.tags = was.tags || [] }
+      was.moveTo = doc._id
+      was._deleted = true
+      delete was.errors
+      if (file && sameFile(file, doc)) {
+        return null
+      } else if (file) {
+        const dst = await this.resolveConflictAsync(side, doc)
+        was.moveTo = dst._id
+        dst.sides = {}
+        dst.sides[side] = 1
+        return this.pouch.db.bulkDocs([was, dst])
+      } else {
+        await this.ensureParentExistAsync(side, doc)
+        return this.pouch.db.bulkDocs([was, doc])
+      }
     } else { // It can happen after a conflict
-      this.addFile(side, doc, callback)
+      return this.addFileAsync(side, doc)
     }
+  }
+
+  moveFile (side, doc, was, callback) {
+    this.moveFileAsync(side, doc, was).asCallback(callback)
   }
 
   // Rename or move a folder (and every file and folder inside it)
-  moveFolder (side, doc, was, callback) {
+  async moveFolderAsync (side, doc, was) {
     if (was.sides && was.sides[side]) {
-      this.pouch.db.get(doc._id, (err, folder) => {
-        if (err && (err.status !== 404)) { log.warn(err) }
-        markSide(side, doc, folder)
-        markSide(side, was, was)
-        if (doc.creationDate == null) { doc.creationDate = was.creationDate }
-        if (doc.tags == null) { doc.tags = was.tags || [] }
-        if (folder) {
-          this.resolveConflict(side, doc, (_, dst) => {
-            dst.sides = {}
-            dst.sides[side] = 1
-            this.moveFolderRecursively(dst, was, callback)
-          })
-        } else {
-          this.ensureParentExist(side, doc, () => {
-            this.moveFolderRecursively(doc, was, callback)
-          })
-        }
-      })
+      let folder
+      try {
+        folder = await this.pouch.db.get(doc._id)
+      } catch (err) {
+        if (err.status !== 404) { log.warn(err) }
+      }
+      markSide(side, doc, folder)
+      markSide(side, was, was)
+      if (doc.creationDate == null) { doc.creationDate = was.creationDate }
+      if (doc.tags == null) { doc.tags = was.tags || [] }
+      if (folder) {
+        const dst = await this.resolveConflictAsync(side, doc)
+        dst.sides = {}
+        dst.sides[side] = 1
+        return this.moveFolderRecursivelyAsync(dst, was)
+      } else {
+        await this.ensureParentExistAsync(side, doc)
+        return this.moveFolderRecursivelyAsync(doc, was)
+      }
     } else { // It can happen after a conflict
-      this.putFolder(side, doc, callback)
+      return this.putFolderAsync(side, doc)
     }
   }
 
+  moveFolder (side, doc, was, callback) {
+    this.moveFolderAsync(side, doc, was).asCallback(callback)
+  }
+
   // Move a folder and all the things inside it
+  async moveFolderRecursivelyAsync (folder, was) {
+    let docs
+    try {
+      docs = await this.pouch.byRecursivePathAsync(was._id)
+    } catch (err) {
+      throw err
+    }
+    was._deleted = true
+    was.moveTo = folder._id
+    let bulk = [was, folder]
+    for (let doc of Array.from(docs)) {
+      let src = clone(doc)
+      src._deleted = true
+      // moveTo is used for comparison. It's safer to take _id
+      // than path for this case, as explained in doc/design.md
+      src.moveTo = doc._id.replace(was._id, folder._id)
+      delete src.errors
+      bulk.push(src)
+      let dst = clone(doc)
+      dst._id = src.moveTo
+      delete dst._rev
+      bulk.push(dst)
+      delete dst.errors
+    }
+    return this.pouch.db.bulkDocs(bulk)
+  }
+
   moveFolderRecursively (folder, was, callback) {
-    this.pouch.byRecursivePath(was._id, (err, docs) => {
-      if (err) {
-        callback(err)
-      } else {
-        was._deleted = true
-        was.moveTo = folder._id
-        let bulk = [was, folder]
-        for (let doc of Array.from(docs)) {
-          let src = clone(doc)
-          src._deleted = true
-          // moveTo is used for comparison. It's safer to take _id
-          // than path for this case, as explained in doc/design.md
-          src.moveTo = doc._id.replace(was._id, folder._id)
-          delete src.errors
-          bulk.push(src)
-          let dst = clone(doc)
-          dst._id = src.moveTo
-          delete dst._rev
-          bulk.push(dst)
-          delete dst.errors
-        }
-        this.pouch.db.bulkDocs(bulk, callback)
-      }
-    })
+    this.moveFolderRecursivelyAsync(folder, was).asCallback(callback)
   }
 
   // Remove a file from PouchDB
@@ -311,21 +361,29 @@ class Merge {
   // As the watchers often detect the deletion of a folder before the deletion
   // of the files inside it, deleteFile can be called for a file that has
   // already been removed. This is not considerated as an error.
-  deleteFile (side, doc, callback) {
-    this.pouch.db.get(doc._id, (err, file) => {
-      if (err && err.status === 404) {
-        callback(null)
-      } else if (err) {
-        callback(err)
-      } else if (file.sides && file.sides[side]) {
-        markSide(side, file, file)
-        file._deleted = true
-        delete file.errors
-        this.pouch.db.put(file, callback)
-      } else { // It can happen after a conflict
-        callback(null)
+  async deleteFileAsync (side, doc) {
+    let file
+    try {
+      file = await this.pouch.db.get(doc._id)
+    } catch (err) {
+      if (err.status === 404) {
+        return null
+      } else {
+        throw err
       }
-    })
+    }
+    if (file.sides && file.sides[side]) {
+      markSide(side, file, file)
+      file._deleted = true
+      delete file.errors
+      return this.pouch.db.put(file)
+    } else { // It can happen after a conflict
+      return null
+    }
+  }
+
+  deleteFile (side, doc, callback) {
+    this.deleteFileAsync(side, doc).asCallback(callback)
   }
 
   // Remove a folder
@@ -335,38 +393,50 @@ class Merge {
   // of a nested folder after the deletion of its parent. In this case, the
   // call to deleteFolder for the child is considered as successful, even if
   // the folder is missing in pouchdb (error 404).
-  deleteFolder (side, doc, callback) {
-    this.pouch.db.get(doc._id, (err, folder) => {
-      if (err && err.status === 404) {
-        callback(null)
-      } else if (err) {
-        callback(err)
-      } else if (folder.sides && folder.sides[side]) {
-        this.deleteFolderRecursively(side, folder, callback)
-      } else { // It can happen after a conflict
-        callback(null)
+  async deleteFolderAsync (side, doc) {
+    let folder
+    try {
+      folder = await this.pouch.db.get(doc._id)
+    } catch (err) {
+      if (err.status === 404) {
+        return null
+      } else {
+        throw err
       }
-    })
+    }
+    if (folder.sides && folder.sides[side]) {
+      return this.deleteFolderRecursivelyAsync(side, folder)
+    } else { // It can happen after a conflict
+      return null
+    }
+  }
+
+  deleteFolder (side, doc, callback) {
+    this.deleteFolderAsync(side, doc).asCallback(callback)
   }
 
   // Remove a folder and every thing inside it
+  async deleteFolderRecursivelyAsync (side, folder) {
+    let docs
+    try {
+      docs = await this.pouch.byRecursivePathAsync(folder._id)
+    } catch (err) {
+      throw err
+    }
+    // In the changes feed, nested subfolder must be deleted
+    // before their parents, hence the reverse order.
+    docs = docs.reverse()
+    docs.push(folder)
+    for (let doc of Array.from(docs)) {
+      markSide(side, doc, doc)
+      doc._deleted = true
+      delete doc.errors
+    }
+    return this.pouch.db.bulkDocs(docs)
+  }
+
   deleteFolderRecursively (side, folder, callback) {
-    this.pouch.byRecursivePath(folder._id, (err, docs) => {
-      if (err) {
-        callback(err)
-      } else {
-        // In the changes feed, nested subfolder must be deleted
-        // before their parents, hence the reverse order.
-        docs = docs.reverse()
-        docs.push(folder)
-        for (let doc of Array.from(docs)) {
-          markSide(side, doc, doc)
-          doc._deleted = true
-          delete doc.errors
-        }
-        this.pouch.db.bulkDocs(docs, callback)
-      }
-    })
+    this.deleteFolderRecursivelyAsync(side, folder).asCallback(callback)
   }
 }
 

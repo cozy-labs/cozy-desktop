@@ -116,6 +116,8 @@ class Pouch {
     return this.getAll('byPath', params, callback)
   }
 
+  byRecursivePathAsync: (string) => Promise<*>
+
   // Return the file/folder with this remote id
   byRemoteId (id, callback) {
     let params = {
@@ -257,6 +259,8 @@ class Pouch {
       }
     })
   }
+
+  getPreviousRevAsync: (id: string, shortRev: string) => Promise<string>
 
   /* Sequence numbers */
 
