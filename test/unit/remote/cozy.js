@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 
-import { FetchError } from 'node-fetch'
 import should from 'should'
 
 import RemoteCozy, { DirectoryNotFound } from '../../../src/remote/cozy'
@@ -29,13 +28,6 @@ describe('RemoteCozy', function () {
   })
 
   describe('changes', function () {
-    it('rejects when Cozy is unreachable', function () {
-      this.config.cozyUrl = 'http://unreachable.cozy.test'
-      const remoteCozy = new RemoteCozy(this.config)
-
-      return remoteCozy.changes().should.be.rejectedWith(FetchError)
-    })
-
     it('rejects when response status is not ok', function () {
       this.config.cozyUrl = cozyStackDouble.url()
       const remoteCozy = new RemoteCozy(this.config)
