@@ -19,7 +19,9 @@ function specialId (id) {
 }
 
 export function DirectoryNotFound (path: string, cozyURL: string) {
+  this.name = 'DirectoryNotFound'
   this.message = `Directory ${path} was not found on Cozy ${cozyURL}`
+  this.stack = (new Error()).stack
 }
 
 // A remote Cozy instance.
