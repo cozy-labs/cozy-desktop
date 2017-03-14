@@ -9,11 +9,11 @@ import should from 'should'
 import * as conversion from '../../../src/conversion'
 import Prep from '../../../src/prep'
 import Remote from '../../../src/remote'
-import { FILES_DOCTYPE, TRASH_DIR_ID } from '../../../src/remote/constants'
+import { TRASH_DIR_ID } from '../../../src/remote/constants'
 import timestamp from '../../../src/timestamp'
 
 import type { Metadata } from '../../../src/metadata'
-import type { RemoteDoc } from '../../../src/remote/document'
+import type { RemoteDoc, JsonApiDoc } from '../../../src/remote/document'
 
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
@@ -373,17 +373,16 @@ describe('Remote', function () {
       should.exist(doc.remote._id)
       should.exist(doc.remote._rev)
 
-      const file = await cozy.data.find(FILES_DOCTYPE, created._id)
-      file.should.have.properties({
-        dir_id: 'io.cozy.files.root-dir',
-        name: 'cat2.jpg',
-        _type: 'io.cozy.files',
-        type: 'file',
+      const file = await cozy.files.statById(created._id)
+      should(file.attributes).have.properties({
         created_at: timestamp.stringify(doc.creationDate),
+        dir_id: 'io.cozy.files.root-dir',
         executable: true,
         mime: 'image/jpg',
-        updated_at: timestamp.stringify(doc.lastModification),
-        size: '36901'
+        name: 'cat2.jpg',
+        size: '36901',
+        type: 'file',
+        updated_at: timestamp.stringify(doc.lastModification)
       })
     })
 
@@ -427,8 +426,8 @@ describe('Remote', function () {
 
       should.exist(doc.remote._id)
       should.exist(doc.remote._rev)
-      const file = await cozy.data.find(FILES_DOCTYPE, created._id)
-      file.should.have.properties({
+      const file = await cozy.files.statById(created._id)
+      should(file.attributes).have.properties({
         dir_id: backupDir._id,
         name: 'cat3.jpg',
         type: 'file',
@@ -453,9 +452,9 @@ describe('Remote', function () {
         should.exist(doc.remote._id)
         should.exist(doc.remote._rev)
 
-        cozy.data.find(FILES_DOCTYPE, created._id)
+        cozy.files.statById(created._id)
           .then(folder => {
-            folder.should.have.properties({
+            should(folder.attributes).have.properties({
               path: '/couchdb-folder/folder-1',
               name: 'folder-1',
               type: 'directory',
@@ -493,9 +492,8 @@ describe('Remote', function () {
 
       await this.remote.overwriteFileAsync(doc, old)
 
-      const file = await cozy.data.find(FILES_DOCTYPE, doc.remote._id)
-      file.should.have.properties({
-        _id: created._id,
+      const file = await cozy.files.statById(doc.remote._id)
+      should(file.attributes).have.properties({
         type: 'file',
         dir_id: created.dir_id,
         name: created.name,
@@ -521,8 +519,8 @@ describe('Remote', function () {
       await should(this.remote.overwriteFileAsync(doc, old))
         .be.rejectedWith({status: 412})
 
-      const file = await cozy.data.find(FILES_DOCTYPE, doc.remote._id)
-      should(file).have.properties({
+      const file = await cozy.files.statById(doc.remote._id)
+      should(file.attributes).have.properties({
         md5sum: old.checksum
       })
     })
@@ -556,9 +554,8 @@ describe('Remote', function () {
 
       await this.remote.updateFileMetadataAsync(doc, old)
 
-      const file = await cozy.data.find(FILES_DOCTYPE, doc.remote._id)
-      should(file).have.properties({
-        _id: created._id,
+      const file = await cozy.files.statById(doc.remote._id)
+      should(file.attributes).have.properties({
         type: 'file',
         dir_id: dir._id,
         name: 'file-7',
@@ -586,8 +583,8 @@ describe('Remote', function () {
 
       const updated: Metadata = await this.remote.updateFolderAsync(doc, old)
 
-      const folder: RemoteDoc = await cozy.data.find(FILES_DOCTYPE, updated.remote._id)
-      should(folder).have.properties({
+      const folder: JsonApiDoc = await cozy.files.statById(updated.remote._id)
+      should(folder.attributes).have.properties({
         path: '/new-parent-dir/new-name',
         type: 'directory',
         dir_id: newParentDir._id,
@@ -647,15 +644,17 @@ describe('Remote', function () {
       should(moved.remote._id).equal(old.remote._id)
       should(moved.remote._rev).not.equal(old.remote._rev)
       should(doc.remote).have.properties(moved.remote)
-      const file = await cozy.data.find(FILES_DOCTYPE, moved.remote._id)
-      file.should.have.properties({
+      const file = await cozy.files.statById(moved.remote._id)
+      should(file).have.properties({
+        _id: old.remote._id,
+        _rev: moved.remote._rev
+      })
+      should(file.attributes).have.properties({
         dir_id: newDir._id,
         name: 'cat7.jpg',
         type: 'file',
         updated_at: doc.lastModification,
-        size: '4',
-        _id: old.remote._id,
-        _rev: moved.remote._rev
+        size: '4'
       })
     })
   })
@@ -734,7 +733,7 @@ describe('Remote', function () {
       await this.remote.destroyAsync(doc)
         .should.be.fulfilled()
 
-      await cozy.data.find(FILES_DOCTYPE, doc.remote._id)
+      await cozy.files.statById(doc.remote._id)
         .should.be.rejectedWith({status: 404})
     })
   })
@@ -746,8 +745,8 @@ describe('Remote', function () {
 
       await this.remote.trashAsync(doc)
 
-      const trashed = await cozy.data.find(FILES_DOCTYPE, doc.remote._id)
-      should(trashed).have.property('dir_id', TRASH_DIR_ID)
+      const trashed = await cozy.files.statById(doc.remote._id)
+      should(trashed).have.propertyByPath('attributes', 'dir_id').eql(TRASH_DIR_ID)
     })
   )
 

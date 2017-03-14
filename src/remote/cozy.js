@@ -82,7 +82,7 @@ export default class RemoteCozy {
   }
 
   async find (id: string): Promise<RemoteDoc> {
-    const doc = await this.client.data.find(FILES_DOCTYPE, id)
+    const doc = await this.client.files.statById(id)
     return this.toRemoteDoc(doc)
   }
 
@@ -113,7 +113,7 @@ export default class RemoteCozy {
     if (doc.attributes) doc = jsonApiToRemoteDoc(doc)
     if (doc.type === DIR_TYPE) return doc
 
-    const parentDir = await this.client.data.find(FILES_DOCTYPE, doc.dir_id)
+    const parentDir = await this.find(doc.dir_id)
 
     return {
       ...doc,
