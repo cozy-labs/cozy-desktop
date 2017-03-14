@@ -4,19 +4,11 @@ import { Client as CozyClient } from 'cozy-client-js'
 import path from 'path'
 import { Readable } from 'stream'
 
-import { FILES_DOCTYPE, DIR_TYPE, ROOT_DIR_ID, TRASH_DIR_ID } from './constants'
-import { jsonApiToRemoteDoc } from './document'
+import { FILES_DOCTYPE, DIR_TYPE } from './constants'
+import { jsonApiToRemoteDoc, specialId } from './document'
 import { composeAsync } from '../utils/func'
 
 import type { JsonApiDoc, RemoteDoc } from './document'
-
-function specialId (id) {
-  return (
-    id === ROOT_DIR_ID ||
-    id === TRASH_DIR_ID ||
-    id.startsWith('_design/')
-  )
-}
 
 export function DirectoryNotFound (path: string, cozyURL: string) {
   this.name = 'DirectoryNotFound'

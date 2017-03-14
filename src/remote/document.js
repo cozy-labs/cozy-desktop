@@ -1,6 +1,14 @@
 /* @flow */
 
-import { DIR_TYPE, FILE_TYPE } from './constants'
+import { DIR_TYPE, FILE_TYPE, ROOT_DIR_ID, TRASH_DIR_ID } from './constants'
+
+export function specialId (id: string) {
+  return (
+    id === ROOT_DIR_ID ||
+    id === TRASH_DIR_ID ||
+    id.startsWith('_design/')
+  )
+}
 
 // TODO: Define separate types for files and folders
 
