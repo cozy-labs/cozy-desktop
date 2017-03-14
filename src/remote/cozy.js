@@ -47,19 +47,24 @@ export default class RemoteCozy {
     this.destroyById = this.client.files.destroyById
   }
 
-  unregister: () => Promise<*>
+  unregister: () => Promise<void>
 
-  createFile: (data: Readable, options: {
-    name: string, dirID?: ?string, contentType?: ?string, lastModifiedDate?: ?Date
-  }) => Promise<RemoteDoc>
+  createFile: (data: Readable,
+               options: {name: string,
+                         dirID?: ?string,
+                         contentType?: ?string,
+                         lastModifiedDate?: ?Date}) => Promise<RemoteDoc>
 
   createDirectory: ({name: string, dirID: string}) => Promise<RemoteDoc>
 
-  updateFileById: (id: string, data: Readable,
-    options: {contentType?: ?string, lastModifiedDate?: ?Date }) => Promise<RemoteDoc>
+  updateFileById: (id: string,
+                   data: Readable,
+                   options: {contentType?: ?string,
+                             lastModifiedDate?: ?Date }) => Promise<RemoteDoc>
 
-  updateAttributesById: (id: string, attrs: Object, options?: {ifMatch?: string})
-    => Promise<RemoteDoc>
+  updateAttributesById: (id: string,
+                         attrs: Object,
+                         options?: {ifMatch?: string}) => Promise<RemoteDoc>
 
   trashById: (id: string) => Promise<void>
 
