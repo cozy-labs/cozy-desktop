@@ -112,7 +112,7 @@
     "pouchdb-server": "^2.0.1",
     "should": "^11.2.0",
     "should-sinon": "^0.0.5",
-    "sinon": "^1.17.7",
+    "sinon": "^2.0.0",
     "sinon-stub-promise": "^4.0.0",
     "source-map-support": "^0.4.11"
   }
