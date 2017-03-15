@@ -3,7 +3,6 @@
 import Config from '../config'
 import * as conversion from '../conversion'
 import RemoteCozy from './cozy'
-import { jsonApiToRemoteDoc } from './document'
 import logger from '../logger'
 import Pouch from '../pouch'
 import Prep from '../prep'
@@ -121,7 +120,7 @@ export default class Remote implements Side {
 
     doc.remote._rev = updated._rev
 
-    return jsonApiToRemoteDoc(updated)
+    return updated
   }
 
   async overwriteFile (doc: Metadata, old: Metadata, callback: Callback) {

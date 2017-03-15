@@ -4,22 +4,16 @@ import { Client as CozyClient } from 'cozy-client-js'
 import path from 'path'
 import { Readable } from 'stream'
 
-import { FILES_DOCTYPE, DIR_TYPE, ROOT_DIR_ID, TRASH_DIR_ID } from './constants'
-import { jsonApiToRemoteDoc } from './document'
+import { FILES_DOCTYPE, DIR_TYPE } from './constants'
+import { jsonApiToRemoteDoc, specialId } from './document'
 import { composeAsync } from '../utils/func'
 
-import type { JsonApiDoc, RemoteDoc } from './document'
-
-function specialId (id) {
-  return (
-    id === ROOT_DIR_ID ||
-    id === TRASH_DIR_ID ||
-    id.startsWith('_design/')
-  )
-}
+import type { RemoteDoc } from './document'
 
 export function DirectoryNotFound (path: string, cozyURL: string) {
+  this.name = 'DirectoryNotFound'
   this.message = `Directory ${path} was not found on Cozy ${cozyURL}`
+  this.stack = (new Error()).stack
 }
 
 // A remote Cozy instance.
@@ -47,28 +41,30 @@ export default class RemoteCozy {
     this.unregister = this.client.auth.unregisterClient
     this.createFile = this.client.files.create
     this.createDirectory = this.client.files.createDirectory
-    this.updateFileById = this.client.files.updateById
+    this.updateFileById = composeAsync(this.client.files.updateById, this.toRemoteDoc)
     this.updateAttributesById = composeAsync(this.client.files.updateAttributesById, this.toRemoteDoc)
     this.trashById = this.client.files.trashById
     this.destroyById = this.client.files.destroyById
   }
 
-  // TODO: All RemoteCozy methods should resolve with RemoteDoc instances,
-  //       not JsonApiDoc ones.
-  //
-  unregister: () => Promise<*>
+  unregister: () => Promise<void>
 
-  createFile: (data: Readable, options: {
-    name: string, dirID?: ?string, contentType?: ?string, lastModifiedDate?: ?Date
-  }) => Promise<RemoteDoc>
+  createFile: (data: Readable,
+               options: {name: string,
+                         dirID?: ?string,
+                         contentType?: ?string,
+                         lastModifiedDate?: ?Date}) => Promise<RemoteDoc>
 
   createDirectory: ({name: string, dirID: string}) => Promise<RemoteDoc>
 
-  updateFileById: (id: string, data: Readable,
-    options: {contentType?: ?string, lastModifiedDate?: ?Date }) => Promise<JsonApiDoc>
+  updateFileById: (id: string,
+                   data: Readable,
+                   options: {contentType?: ?string,
+                             lastModifiedDate?: ?Date }) => Promise<RemoteDoc>
 
-  updateAttributesById: (id: string, attrs: Object, options?: {ifMatch?: string})
-    => Promise<RemoteDoc>
+  updateAttributesById: (id: string,
+                         attrs: Object,
+                         options?: {ifMatch?: string}) => Promise<RemoteDoc>
 
   trashById: (id: string) => Promise<void>
 
@@ -86,7 +82,7 @@ export default class RemoteCozy {
   }
 
   async find (id: string): Promise<RemoteDoc> {
-    const doc = await this.client.data.find(FILES_DOCTYPE, id)
+    const doc = await this.client.files.statById(id)
     return this.toRemoteDoc(doc)
   }
 
@@ -117,7 +113,7 @@ export default class RemoteCozy {
     if (doc.attributes) doc = jsonApiToRemoteDoc(doc)
     if (doc.type === DIR_TYPE) return doc
 
-    const parentDir = await this.client.data.find(FILES_DOCTYPE, doc.dir_id)
+    const parentDir = await this.find(doc.dir_id)
 
     return {
       ...doc,
