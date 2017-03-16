@@ -16,7 +16,6 @@ const log = logger({
 // because it can takes a lot of memory. So, we prefered to use
 // request-json-light, that can stream data.
 class Couch {
-
   // Create a new unique identifier for CouchDB
   static newId () {
     return uuid.v4().replace(/-/g, '')

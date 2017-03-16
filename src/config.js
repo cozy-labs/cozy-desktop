@@ -4,7 +4,6 @@ import path from 'path'
 // Config can keep some configuration parameters in a JSON file,
 // like the devices credentials or the mount path
 export default class Config {
-
   // Create config file if it doesn't exist.
   constructor (basePath) {
     this.configPath = path.join(basePath, 'config.json')

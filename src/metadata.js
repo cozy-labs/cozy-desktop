@@ -13,6 +13,16 @@ const log = logger({
   date: true
 })
 
+export type MetadataRemoteInfo = {
+  _id: string,
+  _rev: string
+}
+
+export type MetadataSidesInfo = {
+  remote?: ?number,
+  local?: ?number
+}
+
 // The files/dirs metadata, as stored in PouchDB
 export type Metadata = {
   _id: string,
@@ -31,16 +41,6 @@ export type Metadata = {
   size?: string,
   tags: string[],
   sides: MetadataSidesInfo
-}
-
-export type MetadataRemoteInfo = {
-  _id: string,
-  _rev: string
-}
-
-export type MetadataSidesInfo = {
-  remote?: ?number,
-  local?: ?number
 }
 
 export let buildId: (doc: Metadata) => void = (_) => {}

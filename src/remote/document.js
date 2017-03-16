@@ -31,13 +31,6 @@ export type RemoteDoc = {
   updated_at: string
 }
 
-export type JsonApiDoc = {
-  _id: string,
-  _rev: string,
-  _type: string,
-  attributes: JsonApiAttributes,
-}
-
 export type JsonApiAttributes = {
   class?: string, // file only
   created_at: string,
@@ -51,6 +44,13 @@ export type JsonApiAttributes = {
   tags: string[],
   type: string,
   updated_at: string
+}
+
+export type JsonApiDoc = {
+  _id: string,
+  _rev: string,
+  _type: string,
+  attributes: JsonApiAttributes,
 }
 
 export function jsonApiToRemoteDoc (json: JsonApiDoc): RemoteDoc {

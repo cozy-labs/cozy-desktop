@@ -117,7 +117,6 @@ export default class RemoteWatcher {
     if (doc.path && doc.path.startsWith('/.cozy_trash/')) {
       if (was == null) {
         log.debug(`${doc.path}: was deleted both remotely and locally`)
-        return
       } else {
         log.debug(`${was.path}: was deleted remotely`)
         return this.prep.deleteDocAsync(SIDE, was)
@@ -126,7 +125,6 @@ export default class RemoteWatcher {
       return this.putDoc(doc, was)
     } else {
       log.error(`Document ${doc._id} is not a file or a directory`)
-      return
     }
   }
 
