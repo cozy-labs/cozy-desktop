@@ -523,7 +523,7 @@ function(doc) {
           this.remote.updateFileMetadata = sinon.stub().yields()
           this.sync.fileChanged(doc, this.remote, 1, err => {
             should.not.exist(err)
-            this.remote.updateFileMetadata.called.should.be.false
+            this.remote.updateFileMetadata.called.should.be.false()
             this.remote.overwriteFile.calledWith(doc).should.be.true()
             done()
           })
@@ -553,7 +553,7 @@ function(doc) {
           this.remote.updateFileMetadata = sinon.stub().yields()
           this.sync.fileChanged(doc, this.remote, 1, err => {
             should.not.exist(err)
-            this.remote.overwriteFile.called.should.be.false
+            this.remote.overwriteFile.called.should.be.false()
             let ufm = this.remote.updateFileMetadata
             ufm.calledWith(doc).should.be.true()
             done()

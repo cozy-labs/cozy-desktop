@@ -105,16 +105,14 @@ class Prep {
     } else {
       doc.docType = 'file'
       buildId(doc)
-      if ((side === 'local') && this.ignore.isIgnored(doc)) {
-        return
-      } else {
-        if (doc.creationDate == null) { doc.creationDate = new Date() }
-        if (doc.lastModification == null) { doc.lastModification = new Date() }
-        if (doc.lastModification === 'Invalid date') {
-          doc.lastModification = new Date()
-        }
-        return this.merge.addFileAsync(side, doc)
+      if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
+
+      if (doc.creationDate == null) { doc.creationDate = new Date() }
+      if (doc.lastModification == null) { doc.lastModification = new Date() }
+      if (doc.lastModification === 'Invalid date') {
+        doc.lastModification = new Date()
       }
+      return this.merge.addFileAsync(side, doc)
     }
   }
 
@@ -135,15 +133,13 @@ class Prep {
     } else {
       doc.docType = 'file'
       buildId(doc)
-      if ((side === 'local') && this.ignore.isIgnored(doc)) {
-        return
-      } else {
-        if (doc.lastModification == null) { doc.lastModification = new Date() }
-        if (doc.lastModification === 'Invalid date') {
-          doc.lastModification = new Date()
-        }
-        return this.merge.updateFileAsync(side, doc)
+      if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
+
+      if (doc.lastModification == null) { doc.lastModification = new Date() }
+      if (doc.lastModification === 'Invalid date') {
+        doc.lastModification = new Date()
       }
+      return this.merge.updateFileAsync(side, doc)
     }
   }
 
@@ -160,15 +156,12 @@ class Prep {
     } else {
       doc.docType = 'folder'
       buildId(doc)
-      if ((side === 'local') && this.ignore.isIgnored(doc)) {
-        return
-      } else {
-        if (doc.lastModification == null) { doc.lastModification = new Date() }
-        if (doc.lastModification === 'Invalid date') {
-          doc.lastModification = new Date()
-        }
-        return this.merge.putFolderAsync(side, doc)
+      if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
+      if (doc.lastModification == null) { doc.lastModification = new Date() }
+      if (doc.lastModification === 'Invalid date') {
+        doc.lastModification = new Date()
       }
+      return this.merge.putFolderAsync(side, doc)
     }
   }
 
@@ -218,9 +211,8 @@ class Prep {
     buildId(was)
     let docIgnored = this.ignore.isIgnored(doc)
     let wasIgnored = this.ignore.isIgnored(was)
-    if ((side === 'local') && docIgnored && wasIgnored) {
-      return
-    } else if ((side === 'local') && docIgnored) {
+    if ((side === 'local') && docIgnored && wasIgnored) { return }
+    if ((side === 'local') && docIgnored) {
       return this.merge.deleteFileAsync(side, was)
     } else if ((side === 'local') && wasIgnored) {
       return this.merge.addFileAsync(side, doc)
@@ -266,9 +258,8 @@ class Prep {
     buildId(was)
     let docIgnored = this.ignore.isIgnored(doc)
     let wasIgnored = this.ignore.isIgnored(was)
-    if ((side === 'local') && docIgnored && wasIgnored) {
-      return
-    } else if ((side === 'local') && docIgnored) {
+    if ((side === 'local') && docIgnored && wasIgnored) { return }
+    if ((side === 'local') && docIgnored) {
       return this.merge.deleteFolderAsync(side, was)
     } else if ((side === 'local') && wasIgnored) {
       return this.merge.putFolderAsync(side, doc)
@@ -286,11 +277,8 @@ class Prep {
     } else {
       doc.docType = 'file'
       buildId(doc)
-      if ((side === 'local') && this.ignore.isIgnored(doc)) {
-        return
-      } else {
-        return this.merge.deleteFileAsync(side, doc)
-      }
+      if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
+      return this.merge.deleteFileAsync(side, doc)
     }
   }
 
@@ -307,11 +295,8 @@ class Prep {
     } else {
       doc.docType = 'folder'
       buildId(doc)
-      if ((side === 'local') && this.ignore.isIgnored(doc)) {
-        return
-      } else {
-        return this.merge.deleteFolderAsync(side, doc)
-      }
+      if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
+      return this.merge.deleteFolderAsync(side, doc)
     }
   }
 

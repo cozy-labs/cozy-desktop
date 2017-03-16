@@ -43,4 +43,3 @@ Object.assign(repl.context, {
   config,
   cozy
 })
-
