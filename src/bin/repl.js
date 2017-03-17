@@ -34,7 +34,10 @@ const defaultEval = repl.eval
 
 repl.eval = function customEval (cmd, context, filename, callback) {
   defaultEval(cmd, context, filename, (err, result) => {
-    if (result instanceof Promise) result.then(console.log).catch(console.error)
+    if (result instanceof Promise) {
+      result.then(console.log).catch(console.error)
+      result = undefined
+    }
     callback(err, result)
   })
 }
