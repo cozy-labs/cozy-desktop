@@ -113,6 +113,8 @@ export default class RemoteWatcher {
     log.inspect(doc)
 
     const was: ?Metadata = await this.pouch.byRemoteIdMaybeAsync(doc._id)
+    log.debug(`${doc.path}: was:`)
+    log.inspect(was)
 
     if (doc.path && doc.path.startsWith('/.cozy_trash/')) {
       if (was == null) {
