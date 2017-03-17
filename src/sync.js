@@ -167,6 +167,7 @@ class Sync {
   apply (change, callback) {
     let { doc } = change
     log.debug(`${doc.path}: Applying change ${change.seq}...`)
+    log.inspect(change)
 
     if (this.ignore.isIgnored(doc)) {
       this.pouch.setLocalSeq(change.seq, _ => callback())
