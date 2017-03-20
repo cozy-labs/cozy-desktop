@@ -273,7 +273,7 @@ class LocalWatcher {
     }
     const execute = () => {
       log.debug(`${filePath}: File deleted`)
-      this.prep.deleteFile(this.side, {path: filePath}, this.done)
+      this.prep.trashFile(this.side, {path: filePath}, this.done)
     }
     const check = () => {
       if (this.checksums === 0) {
@@ -299,7 +299,7 @@ class LocalWatcher {
     }
     const execute = () => {
       log.debug(`${folderPath}: Folder deleted`)
-      this.prep.deleteFolder(this.side, {path: folderPath}, this.done)
+      this.prep.trashFolder(this.side, {path: folderPath}, this.done)
     }
     const check = () => {
       if (!this.pending.hasPendingChild(folderPath)) {

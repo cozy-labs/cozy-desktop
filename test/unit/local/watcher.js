@@ -201,7 +201,7 @@ describe('LocalWatcher Tests', function () {
     it('detects when a file is deleted', function (done) {
       fs.ensureFileSync(path.join(this.syncPath, 'aca'))
       this.prep.addFile = () => {  // For aca file
-        this.prep.deleteFile = function (side, doc) {
+        this.prep.trashFile = function (side, doc) {
           side.should.equal('local')
           doc.should.have.properties({
             path: 'aca'})
@@ -217,7 +217,7 @@ describe('LocalWatcher Tests', function () {
     it('detects when a folder is deleted', function (done) {
       fs.mkdirSync(path.join(this.syncPath, 'ada'))
       this.prep.putFolder = () => {  // For ada folder
-        this.prep.deleteFolder = function (side, doc) {
+        this.prep.trashFolder = function (side, doc) {
           side.should.equal('local')
           doc.should.have.properties({
             path: 'ada'})
@@ -331,6 +331,7 @@ describe('LocalWatcher Tests', function () {
           this.prep.deleteFile = sinon.spy()
           this.prep.moveFile = sinon.spy()
           this.prep.deleteFolder = sinon.spy()
+          this.prep.trashFolder = sinon.spy()
           this.prep.putFolder = (side, doc) => {
             side.should.equal('local')
             doc.should.have.properties({
@@ -345,8 +346,9 @@ describe('LocalWatcher Tests', function () {
               src.should.have.properties({path: 'aga/agc'})
               dst = this.prep.moveFile.args[0][1]
               dst.should.have.properties({path: 'agb/agc'})
-              this.prep.deleteFolder.called.should.be.true()
-              let args = this.prep.deleteFolder.args[0][1]
+              // FIXME: Delete moved dirs
+              this.prep.trashFolder.called.should.be.true()
+              let args = this.prep.trashFolder.args[0][1]
               args.should.have.properties({path: 'aga'})
               done()
             }, 4000)
