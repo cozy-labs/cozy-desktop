@@ -151,7 +151,7 @@ describe('RemoteWatcher', function () {
 
     context('when pullOne() rejects some file/dir', function () {
       beforeEach(function () {
-        pullOne.withArgs(ids[0]).returnsPromise().rejects()
+        pullOne.withArgs(ids[0]).returnsPromise().rejects(new Error('oops'))
         pullOne.withArgs(ids[1]).returnsPromise().resolves()
       })
 
