@@ -248,7 +248,6 @@ class LocalWatcher {
     log.chokidar.inspect(stats)
     if (folderPath === '') return
 
-    log.debug(`${folderPath}: Folder added`)
     if (this.paths) { this.paths.push(folderPath) }
     this.pending.executeIfAny(folderPath)
     const doc = {
