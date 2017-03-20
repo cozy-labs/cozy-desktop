@@ -40,7 +40,8 @@ export type Metadata = {
   remote: MetadataRemoteInfo,
   size?: string,
   tags: string[],
-  sides: MetadataSidesInfo
+  sides: MetadataSidesInfo,
+  toBeTrashed?: true
 }
 
 export let buildId: (doc: Metadata) => void = (_) => {}
