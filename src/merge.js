@@ -9,6 +9,8 @@ import { markSide, sameBinary, sameFile, sameFolder } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
 
+import type { SideName } from './side'
+
 const log = logger({
   prefix: 'Merge         ',
   date: true
@@ -44,7 +46,7 @@ class Merge {
   /* Helpers */
 
   // Be sure that the tree structure for the given path exists
-  async ensureParentExistAsync (side, doc) {
+  async ensureParentExistAsync (side: SideName, doc) {
     let parentId = path.dirname(doc._id)
     if (parentId === '.') { return }
 
@@ -71,13 +73,13 @@ class Merge {
     return this.putFolderAsync(side, parentDoc)
   }
 
-  ensureParentExist (side, doc, callback) {
+  ensureParentExist (side: SideName, doc, callback) {
     this.ensureParentExistAsync(side, doc).asCallback(callback)
   }
 
   // Resolve a conflict by renaming a file/folder
   // A suffix composed of -conflict- and the date is added to the path.
-  async resolveConflictAsync (side, doc) {
+  async resolveConflictAsync (side: SideName, doc) {
     let dst = clone(doc)
     let date = new Date().toISOString()
     let ext = path.extname(doc.path)
@@ -93,7 +95,7 @@ class Merge {
     return dst
   }
 
-  resolveConflict (side, doc, callback) {
+  resolveConflict (side: SideName, doc, callback) {
     this.resolveConflictAsync(side, doc).asCallback(callback)
   }
 
@@ -101,7 +103,7 @@ class Merge {
 
   // Add a file, if it doesn't already exist,
   // and create the tree structure if needed
-  async addFileAsync (side, doc) {
+  async addFileAsync (side: SideName, doc) {
     let file
     try {
       file = await this.pouch.db.get(doc._id)
@@ -145,13 +147,13 @@ class Merge {
     }
   }
 
-  addFile (side, doc, callback) {
+  addFile (side: SideName, doc, callback) {
     this.addFileAsync(side, doc).asCallback(callback)
   }
 
   // When a file is modified when cozy-desktop is not running,
   // it is detected as a new file when cozy-desktop is started.
-  async resolveInitialAddAsync (side, doc, file) {
+  async resolveInitialAddAsync (side: SideName, doc, file) {
     if (!file.sides.remote) {
       // The file was updated on local before being pushed to remote
       return this.updateFileAsync(side, doc)
@@ -175,12 +177,12 @@ class Merge {
     }
   }
 
-  resolveInitialAdd (side, doc, file, callback) {
+  resolveInitialAdd (side: SideName, doc, file, callback) {
     this.resolveInitialAddAsync(side, doc, file).asCallback(callback)
   }
 
   // Update a file, when its metadata or its content has changed
-  async updateFileAsync (side, doc) {
+  async updateFileAsync (side: SideName, doc) {
     let file
     try {
       file = await this.pouch.db.get(doc._id)
@@ -215,12 +217,12 @@ class Merge {
     }
   }
 
-  updateFile (side, doc, callback) {
+  updateFile (side: SideName, doc, callback) {
     this.updateFileAsync(side, doc).asCallback(callback)
   }
 
   // Create or update a folder
-  async putFolderAsync (side, doc) {
+  async putFolderAsync (side: SideName, doc) {
     let folder
     try {
       folder = await this.pouch.db.get(doc._id)
@@ -249,12 +251,12 @@ class Merge {
     }
   }
 
-  putFolder (side, doc, callback) {
+  putFolder (side: SideName, doc, callback) {
     this.putFolderAsync(side, doc).asCallback(callback)
   }
 
   // Rename or move a file
-  async moveFileAsync (side, doc, was) {
+  async moveFileAsync (side: SideName, doc, was) {
     if (was.sides && was.sides[side]) {
       let file
       try {
@@ -289,12 +291,12 @@ class Merge {
     }
   }
 
-  moveFile (side, doc, was, callback) {
+  moveFile (side: SideName, doc, was, callback) {
     this.moveFileAsync(side, doc, was).asCallback(callback)
   }
 
   // Rename or move a folder (and every file and folder inside it)
-  async moveFolderAsync (side, doc, was) {
+  async moveFolderAsync (side: SideName, doc, was) {
     if (was.sides && was.sides[side]) {
       let folder
       try {
@@ -320,7 +322,7 @@ class Merge {
     }
   }
 
-  moveFolder (side, doc, was, callback) {
+  moveFolder (side: SideName, doc, was, callback) {
     this.moveFolderAsync(side, doc, was).asCallback(callback)
   }
 
@@ -361,7 +363,7 @@ class Merge {
   // As the watchers often detect the deletion of a folder before the deletion
   // of the files inside it, deleteFile can be called for a file that has
   // already been removed. This is not considerated as an error.
-  async deleteFileAsync (side, doc) {
+  async deleteFileAsync (side: SideName, doc) {
     let file
     try {
       file = await this.pouch.db.get(doc._id)
@@ -382,7 +384,7 @@ class Merge {
     }
   }
 
-  deleteFile (side, doc, callback) {
+  deleteFile (side: SideName, doc, callback) {
     this.deleteFileAsync(side, doc).asCallback(callback)
   }
 
@@ -393,7 +395,7 @@ class Merge {
   // of a nested folder after the deletion of its parent. In this case, the
   // call to deleteFolder for the child is considered as successful, even if
   // the folder is missing in pouchdb (error 404).
-  async deleteFolderAsync (side, doc) {
+  async deleteFolderAsync (side: SideName, doc) {
     let folder
     try {
       folder = await this.pouch.db.get(doc._id)
@@ -411,12 +413,12 @@ class Merge {
     }
   }
 
-  deleteFolder (side, doc, callback) {
+  deleteFolder (side: SideName, doc, callback) {
     this.deleteFolderAsync(side, doc).asCallback(callback)
   }
 
   // Remove a folder and every thing inside it
-  async deleteFolderRecursivelyAsync (side, folder) {
+  async deleteFolderRecursivelyAsync (side: SideName, folder) {
     let docs
     try {
       docs = await this.pouch.byRecursivePathAsync(folder._id)
@@ -435,7 +437,7 @@ class Merge {
     return this.pouch.db.bulkDocs(docs)
   }
 
-  deleteFolderRecursively (side, folder, callback) {
+  deleteFolderRecursively (side: SideName, folder, callback) {
     this.deleteFolderRecursivelyAsync(side, folder).asCallback(callback)
   }
 }

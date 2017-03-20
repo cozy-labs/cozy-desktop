@@ -12,6 +12,7 @@ import Pouch from '../pouch'
 import Prep from '../prep'
 import { PendingMap } from '../utils/pending'
 
+import type { SideName } from '../side'
 import type { Pending } from '../utils/pending' // eslint-disable-line
 
 const log = logger({
@@ -32,7 +33,7 @@ class LocalWatcher {
   syncPath: string
   prep: Prep
   pouch: Pouch
-  side: string
+  side: SideName
   paths: string[]
   pending: PendingMap
   checksums: number
