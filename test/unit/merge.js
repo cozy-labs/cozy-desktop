@@ -574,4 +574,55 @@ describe('Merge', function () {
       })
     })
   })
+
+  describe('trashAsync', () => {
+    context('when metadata are found in Pouch', () => {
+      it('updates it with toBeTrashed property and up-to-date sides info', async function () {
+        const doc = {_id: 'existing-metadata'}
+        await this.pouch.db.put({...doc, sides: {local: 1, remote: 1}})
+
+        await this.merge.trashAsync(this.side, doc)
+
+        const updated = await this.pouch.db.get(doc._id)
+        should(updated).have.properties({
+          ...doc,
+          toBeTrashed: true,
+          sides: {
+            local: 2,
+            remote: 1
+          }
+        })
+      })
+    })
+
+    context('when metadata are not found in Pouch', () => {
+      it('does nothing', async function () {
+        const doc = {_id: 'missing-metadata'}
+
+        await this.merge.trashAsync(this.side, doc)
+
+        await should(this.pouch.db.get(doc._id))
+          .be.rejectedWith({status: 404})
+      })
+    })
+
+    context('when docType does not match', () => {
+      it('tries to resolve the conflict', async function () {
+        this.merge.local = {resolveConflictAsync: sinon.stub()}
+        this.merge.local.resolveConflictAsync.returnsPromise().resolves()
+
+        const doc = {_id: 'conflicting-doctype', docType: 'folder', path: 'conflicting-doctype'}
+        await this.pouch.db.put({...doc, docType: 'file'})
+
+        await this.merge.trashAsync(this.side, doc)
+
+        should(this.merge.local.resolveConflictAsync).have.been.calledOnce()
+        const [dst, src] = this.merge.local.resolveConflictAsync.getCall(0).args
+        should(src).eql(doc)
+        should(dst).have.properties({...doc, path: dst.path})
+        should(dst.path).match(/conflict/)
+        should(dst).not.have.property('toBeTrashed')
+      })
+    })
+  })
 })

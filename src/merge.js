@@ -9,6 +9,7 @@ import { markSide, sameBinary, sameFile, sameFolder } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
 
+import type { Metadata } from './metadata'
 import type { SideName } from './side'
 
 const log = logger({
@@ -441,6 +442,27 @@ class Merge {
 
   deleteFolderRecursively (side: SideName, folder, callback) {
     this.deleteFolderRecursivelyAsync(side, folder).asCallback(callback)
+  }
+
+  async trashAsync (side: SideName, doc: Metadata): Promise<void> {
+    let oldMetadata
+    try {
+      oldMetadata = await this.pouch.db.get(doc._id)
+    } catch (err) {
+      if (err.status === 404) {
+        log.debug(`${doc._id}: Nothing to trash`)
+        return
+      }
+      throw err
+    }
+    if (doc.docType !== oldMetadata.docType) {
+      this.resolveConflictAsync(side, doc)
+    }
+    const newMetadata = clone(oldMetadata)
+    markSide(side, newMetadata, oldMetadata)
+    newMetadata.toBeTrashed = true
+    // TODO: Handle missing fields?
+    return this.pouch.put(newMetadata)
   }
 }
 
