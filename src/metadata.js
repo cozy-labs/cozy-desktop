@@ -89,6 +89,13 @@ export function invalidPath (doc: Metadata) {
           (parts.indexOf('..') >= 0)
 }
 
+export function ensureValidPath (doc: Metadata) {
+  if (invalidPath(doc)) {
+    log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
+    throw new Error('Invalid path')
+  }
+}
+
 // Return true if the checksum is invalid
 // If the checksum is missing, it is not invalid, just missing,
 // so it returns false.
@@ -101,6 +108,13 @@ export function invalidChecksum (doc: Metadata) {
 
   return buffer.byteLength !== 16 ||
     buffer.toString('base64') !== doc.checksum
+}
+
+export function ensureValidChecksum (doc: Metadata) {
+  if (invalidChecksum(doc)) {
+    log.warn(`Invalid checksum: ${JSON.stringify(doc, null, 2)}`)
+    throw new Error('Invalid checksum')
+  }
 }
 
 // Extract the revision number, or 0 it not found

@@ -3,7 +3,7 @@
 import Ignore from './ignore'
 import logger from './logger'
 import Merge from './merge'
-import { buildId, invalidChecksum, invalidPath } from './metadata'
+import { buildId, ensureValidChecksum, ensureValidPath } from './metadata'
 
 const log = logger({
   prefix: 'Prep          ',
@@ -96,24 +96,19 @@ class Prep {
   //   - the file path is present and valid
   //   - the checksum is valid, if present
   async addFileAsync (side, doc) {
-    if (invalidPath(doc)) {
-      log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
-      throw new Error('Invalid path')
-    } else if (invalidChecksum(doc)) {
-      log.warn(`Invalid checksum: ${JSON.stringify(doc, null, 2)}`)
-      throw new Error('Invalid checksum')
-    } else {
-      doc.docType = 'file'
-      buildId(doc)
-      if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
+    ensureValidPath(doc)
+    ensureValidChecksum(doc)
 
-      if (doc.creationDate == null) { doc.creationDate = new Date() }
-      if (doc.lastModification == null) { doc.lastModification = new Date() }
-      if (doc.lastModification === 'Invalid date') {
-        doc.lastModification = new Date()
-      }
-      return this.merge.addFileAsync(side, doc)
+    doc.docType = 'file'
+    buildId(doc)
+    if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
+
+    if (doc.creationDate == null) { doc.creationDate = new Date() }
+    if (doc.lastModification == null) { doc.lastModification = new Date() }
+    if (doc.lastModification === 'Invalid date') {
+      doc.lastModification = new Date()
     }
+    return this.merge.addFileAsync(side, doc)
   }
 
   addFile (side, doc, callback) {
@@ -124,23 +119,18 @@ class Prep {
   //   - the file path is present and valid
   //   - the checksum is valid, if present
   async updateFileAsync (side, doc) {
-    if (invalidPath(doc)) {
-      log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
-      throw new Error('Invalid path')
-    } else if (invalidChecksum(doc)) {
-      log.warn(`Invalid checksum: ${JSON.stringify(doc, null, 2)}`)
-      throw new Error('Invalid checksum')
-    } else {
-      doc.docType = 'file'
-      buildId(doc)
-      if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
+    ensureValidPath(doc)
+    ensureValidChecksum(doc)
 
-      if (doc.lastModification == null) { doc.lastModification = new Date() }
-      if (doc.lastModification === 'Invalid date') {
-        doc.lastModification = new Date()
-      }
-      return this.merge.updateFileAsync(side, doc)
+    doc.docType = 'file'
+    buildId(doc)
+    if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
+
+    if (doc.lastModification == null) { doc.lastModification = new Date() }
+    if (doc.lastModification === 'Invalid date') {
+      doc.lastModification = new Date()
     }
+    return this.merge.updateFileAsync(side, doc)
   }
 
   updateFile (side, doc, callback) {
@@ -150,19 +140,16 @@ class Prep {
   // Expectations:
   //   - the folder path is present and valid
   async putFolderAsync (side, doc) {
-    if (invalidPath(doc)) {
-      log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
-      throw new Error('Invalid path')
-    } else {
-      doc.docType = 'folder'
-      buildId(doc)
-      if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
-      if (doc.lastModification == null) { doc.lastModification = new Date() }
-      if (doc.lastModification === 'Invalid date') {
-        doc.lastModification = new Date()
-      }
-      return this.merge.putFolderAsync(side, doc)
+    ensureValidPath(doc)
+
+    doc.docType = 'folder'
+    buildId(doc)
+    if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
+    if (doc.lastModification == null) { doc.lastModification = new Date() }
+    if (doc.lastModification === 'Invalid date') {
+      doc.lastModification = new Date()
     }
+    return this.merge.putFolderAsync(side, doc)
   }
 
   putFolder (side, doc, callback) {
@@ -176,16 +163,11 @@ class Prep {
   //   - the two paths are not the same
   //   - the revision for the old file is present
   async moveFileAsync (side, doc, was) {
-    if (invalidPath(doc)) {
-      log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
-      throw new Error('Invalid path')
-    } else if (invalidPath(was)) {
-      log.warn(`Invalid path: ${JSON.stringify(was, null, 2)}`)
-      throw new Error('Invalid path')
-    } else if (invalidChecksum(doc)) {
-      log.warn(`Invalid checksum: ${JSON.stringify(doc, null, 2)}`)
-      throw new Error('Invalid checksum')
-    } else if (doc.path === was.path) {
+    ensureValidPath(doc)
+    ensureValidPath(was)
+    ensureValidChecksum(doc)
+
+    if (doc.path === was.path) {
       log.warn(`Invalid move: ${JSON.stringify(was, null, 2)}`)
       log.warn(`to ${JSON.stringify(doc, null, 2)}`)
       throw new Error('Invalid move')
@@ -227,13 +209,9 @@ class Prep {
   //   - the two paths are not the same
   //   - the revision for the old folder is present
   async moveFolderAsync (side, doc, was) {
-    if (invalidPath(doc)) {
-      log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
-      throw new Error('Invalid path')
-    } else if (invalidPath(was)) {
-      log.warn(`Invalid path: ${JSON.stringify(was, null, 2)}`)
-      throw new Error('Invalid path')
-    } else if (doc.path === was.path) {
+    ensureValidPath(doc)
+    ensureValidPath(was)
+    if (doc.path === was.path) {
       log.warn(`Invalid move: ${JSON.stringify(doc, null, 2)}`)
       throw new Error('Invalid move')
     } else if (!was._rev) {
@@ -271,15 +249,12 @@ class Prep {
   // Expectations:
   //   - the file path is present and valid
   async deleteFileAsync (side, doc) {
-    if (invalidPath(doc)) {
-      log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
-      throw new Error('Invalid path')
-    } else {
-      doc.docType = 'file'
-      buildId(doc)
-      if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
-      return this.merge.deleteFileAsync(side, doc)
-    }
+    ensureValidPath(doc)
+
+    doc.docType = 'file'
+    buildId(doc)
+    if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
+    return this.merge.deleteFileAsync(side, doc)
   }
 
   deleteFile (side, doc, callback) {
@@ -289,15 +264,12 @@ class Prep {
   // Expectations:
   //   - the folder path is present and valid
   async deleteFolderAsync (side, doc) {
-    if (invalidPath(doc)) {
-      log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
-      throw new Error('Invalid path')
-    } else {
-      doc.docType = 'folder'
-      buildId(doc)
-      if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
-      return this.merge.deleteFolderAsync(side, doc)
-    }
+    ensureValidPath(doc)
+
+    doc.docType = 'folder'
+    buildId(doc)
+    if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
+    return this.merge.deleteFolderAsync(side, doc)
   }
 
   deleteFolder (side, doc, callback) {

@@ -236,7 +236,7 @@ describe('RemoteWatcher', function () {
       }
 
       return this.watcher.onChange(doc)
-        .should.be.rejectedWith({message: 'Invalid path/name'})
+        .should.be.rejectedWith({message: 'Invalid path'})
     })
 
     it('does not fail on ghost file', async function () {
