@@ -3,6 +3,10 @@
 import type { Metadata } from './metadata'
 import type { Callback } from './utils/func'
 
+export type SideName =
+  | "local"
+  | "remote";
+
 // eslint-disable-next-line no-undef
 export interface Side {
   addFile (doc: Metadata, callback: Callback): void;
