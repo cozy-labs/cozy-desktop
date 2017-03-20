@@ -18,6 +18,11 @@ const log = logger({
   prefix: 'Local watcher ',
   date: true
 })
+log.chokidar = logger({
+  prefix: 'Chokidar      ',
+  date: true
+})
+
 // This file contains the filesystem watcher that will trigger operations when
 // a file or a folder is added/removed/changed locally.
 // Operations will be added to the a common operation queue along with the
@@ -200,7 +205,8 @@ class LocalWatcher {
 
   // New file detected
   onAddFile (filePath, stats) {
-    log.debug(`${filePath}: File added`)
+    log.chokidar.debug(`${filePath}: add`)
+    log.chokidar.inspect(stats)
     if (this.paths) { this.paths.push(filePath) }
     this.pending.executeIfAny(filePath)
     this.checksums++
@@ -238,9 +244,10 @@ class LocalWatcher {
 
   // New directory detected
   onAddDir (folderPath, stats) {
+    log.chokidar.debug(`${folderPath}: addDir`)
+    log.chokidar.inspect(stats)
     if (folderPath === '') return
 
-    log.debug(`${folderPath}: Folder added`)
     if (this.paths) { this.paths.push(folderPath) }
     this.pending.executeIfAny(folderPath)
     const doc = {
@@ -257,6 +264,7 @@ class LocalWatcher {
   // It can be a file moved out. So, we wait a bit to see if a file with the
   // same checksum is added and, if not, we declare this file as deleted.
   onUnlinkFile (filePath) {
+    log.chokidar.debug(`${filePath}: unlink`)
     // TODO: Extract delayed execution logic to utils/pending
     let timeout
     const stopChecking = () => {
@@ -282,6 +290,7 @@ class LocalWatcher {
   // We don't want to delete a folder before files inside it. So we wait a bit
   // after chokidar event to declare the folder as deleted.
   onUnlinkDir (folderPath) {
+    log.chokidar.debug(`${folderPath}: unlinkDir`)
     // TODO: Extract repeated check logic to utils/pending
     let interval
     const stopChecking = () => {
@@ -302,7 +311,8 @@ class LocalWatcher {
 
   // File update detected
   onChange (filePath, stats) {
-    log.debug(`${filePath}: File updated`)
+    log.chokidar.debug(`${filePath}: change`)
+    log.chokidar.inspect(stats)
     this.createDoc(filePath, stats, (err, doc) => {
       if (err) {
         log.info(err)

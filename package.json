@@ -44,7 +44,7 @@
     "fauxton": "babel-node ./src/bin/fauxton.js",
     "flow": "flow status --quiet --show-all-errors",
     "lint": "npm run eslint && npm run flow",
-    "repl": "babel-node ./src/bin/repl.js",
+    "repl": "COZY_DESKTOP_HEARTBEAT=5000 babel-node ./src/bin/repl.js",
     "size": "t=\"$(npm pack .)\"; wc -c \"${t}\"; tar tvf \"${t}\"; rm \"${t}\";",
     "start": "COZY_DESKTOP_HEARTBEAT=5000 babel-node ./src/bin/cli.js",
     "test": "installed-check && npm run test-unit && npm run test-integration",
