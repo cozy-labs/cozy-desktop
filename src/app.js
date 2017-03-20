@@ -9,6 +9,7 @@ import path from 'path'
 import readdirp from 'readdirp'
 import url from 'url'
 
+import './globals' // FIXME Use bluebird promises as long as we need asCallback
 import pkg from '../package.json'
 import Config from './config'
 import logger from './logger'

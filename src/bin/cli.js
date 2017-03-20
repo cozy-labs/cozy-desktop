@@ -1,5 +1,4 @@
 import 'source-map-support/register'
-import '../globals'
 
 import read from 'read'
 import path from 'path'
