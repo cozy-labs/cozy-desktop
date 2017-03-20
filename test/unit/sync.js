@@ -266,6 +266,28 @@ function(doc) {
       })
     })
 
+    it('trashes a locally deleted file or folder', function (done) {
+      const change = {
+        seq: 145,
+        doc: {
+          _id: 'foo',
+          path: 'foo',
+          sides: {
+            local: 2,
+            remote: 1
+          },
+          toBeTrashed: true
+        }
+      }
+
+      this.sync.trashLaterWithParentOrByItself = sinon.spy()
+      this.sync.apply(change, err => {
+        should.not.exist(err)
+        should(this.sync.trashLaterWithParentOrByItself.called).be.true()
+        done()
+      })
+    })
+
     it('calls fileChanged for a file', function (done) {
       let change = {
         seq: 123,
