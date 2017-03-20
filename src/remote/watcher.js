@@ -2,7 +2,7 @@
 
 import * as conversion from '../conversion'
 import logger from '../logger'
-import { invalidPath } from '../metadata'
+import { ensureValidPath } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import RemoteCozy from './cozy'
@@ -137,11 +137,8 @@ export default class RemoteWatcher {
   async putDoc (remote: RemoteDoc, was: ?Metadata): Promise<*> {
     let doc: Metadata = conversion.createMetadata(remote)
     const docType = doc.docType
-    if (invalidPath(doc)) {
-      log.error('Invalid path / local id')
-      log.error(doc)
-      throw new Error('Invalid path/name')
-    } else if (!was) {
+    ensureValidPath(doc)
+    if (!was) {
       log.debug(`${doc.path}: ${docType} was added remotely`)
       return this.prep.addDocAsync(SIDE, doc)
     } else if (was.path === doc.path) {
