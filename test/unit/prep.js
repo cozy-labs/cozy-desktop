@@ -16,8 +16,10 @@ describe('Prep', function () {
       moveFileAsync: sinon.stub(),
       moveFolderAsync: sinon.stub(),
       deleteFileAsync: sinon.stub(),
-      deleteFolderAsync: sinon.stub()
+      deleteFolderAsync: sinon.stub(),
+      trashAsync: sinon.stub()
     }
+    this.merge.trashAsync.returnsPromise().resolves()
     this.ignore = new Ignore(['ignored'])
     this.prep = new Prep(this.merge, this.ignore)
   })
@@ -526,6 +528,62 @@ describe('Prep', function () {
           done()
         })
       })
+    })
+  })
+
+  describe('trashFileAsync', () => {
+    it('merges the metadata with an _id and a docType', async function () {
+      const doc = {path: 'file-to-be-trashed'}
+
+      await this.prep.trashFileAsync(this.side, doc)
+
+      should(doc).have.property('_id')
+      should(doc).have.property('docType', 'file')
+      should(this.merge.trashAsync).be.calledOnce()
+    })
+
+    it('throws when path is invalid', async function () {
+      const doc = {path: '/'}
+
+      should(() => {
+        this.prep.trashFileAsync(this.side, doc)
+      }).throw(/Invalid path/)
+    })
+
+    it('does nothing for ignored paths on local', async function () {
+      const doc = {path: 'ignored'}
+
+      await this.prep.trashFileAsync(this.side, doc)
+
+      should(this.merge.trashAsync).not.be.called()
+    })
+  })
+
+  describe('trashFolderAsync', () => {
+    it('merges the metadata with an _id and a docType', async function () {
+      const doc = {path: 'folder-to-be-trashed'}
+
+      await this.prep.trashFolderAsync(this.side, doc)
+
+      should(doc).have.property('_id')
+      should(doc).have.property('docType', 'folder')
+      should(this.merge.trashAsync).be.calledOnce()
+    })
+
+    it('throws when path is invalid', async function () {
+      const doc = {path: '/'}
+
+      should(() => {
+        this.prep.trashFolderAsync(this.side, doc)
+      }).throw(/Invalid path/)
+    })
+
+    it('does nothing for ignored paths on local', async function () {
+      const doc = {path: 'ignored'}
+
+      await this.prep.trashFolderAsync(this.side, doc)
+
+      should(this.merge.trashAsync).not.be.called()
     })
   })
 })
