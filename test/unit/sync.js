@@ -502,7 +502,8 @@ function(doc) {
       this.events = {}
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
 
-      this.sync.trashLaterWithParentOrByItself = sinon.stub()
+      this.local.destroy = sinon.stub().yields()
+      this.remote.destroy = sinon.stub().yields()
     })
 
     it('calls addFile for an added file', function (done) {
@@ -621,7 +622,7 @@ function(doc) {
       })
     })
 
-    it('calls trashLaterWithParentOrByItself for a deleted file', function (done) {
+    it('calls destroy for a deleted file', function (done) {
       let doc = {
         _id: 'foo/baz',
         _rev: '4-1234567890',
@@ -634,7 +635,7 @@ function(doc) {
       }
       this.sync.fileChanged(doc, this.local, 1, err => {
         should.not.exist(err)
-        this.sync.trashLaterWithParentOrByItself.calledWith(doc, this.local).should.be.true()
+        this.local.destroy.calledWith(doc).should.be.true()
         done()
       })
     })
@@ -651,7 +652,7 @@ function(doc) {
       }
       this.sync.fileChanged(doc, this.remote, 0, err => {
         should.not.exist(err)
-        this.sync.trashLaterWithParentOrByItself.called.should.be.false()
+        this.remote.destroy.called.should.be.false()
         done()
       })
     })
@@ -665,7 +666,8 @@ function(doc) {
       this.events = {}
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
 
-      this.sync.trashLaterWithParentOrByItself = sinon.stub()
+      this.local.destroy = sinon.stub().yields()
+      this.remote.destroy = sinon.stub().yields()
     })
 
     it('calls addFolder for an added folder', function (done) {
@@ -741,7 +743,7 @@ function(doc) {
       })
     })
 
-    it('calls trashLaterWithParentOrByItself for a deleted folder', function (done) {
+    it('calls destroy for a deleted folder', function (done) {
       let doc = {
         _id: 'foobar/baz',
         _rev: '4-1234567890',
@@ -754,7 +756,7 @@ function(doc) {
       }
       this.sync.folderChanged(doc, this.local, 1, err => {
         should.not.exist(err)
-        this.sync.trashLaterWithParentOrByItself.calledWith(doc, this.local).should.be.true()
+        this.local.destroy.calledWith(doc).should.be.true()
         done()
       })
     })
@@ -771,7 +773,7 @@ function(doc) {
       }
       this.sync.folderChanged(doc, this.remote, 0, err => {
         should.not.exist(err)
-        this.sync.trashLaterWithParentOrByItself.called.should.be.false()
+        this.remote.destroy.called.should.be.false()
         done()
       })
     })

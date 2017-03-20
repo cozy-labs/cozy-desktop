@@ -366,8 +366,7 @@ class Sync {
         callback()
         break
       case doc._deleted:
-        this.trashLaterWithParentOrByItself(doc, side)
-        callback()
+        side.destroy(doc, callback)
         break
       case rev === 0:
         side.addFile(doc, callback)
@@ -426,8 +425,7 @@ class Sync {
         callback()
         break
       case doc._deleted:
-        this.trashLaterWithParentOrByItself(doc, side)
-        callback()
+        side.destroy(doc, callback)
         break
       case rev === 0:
         side.addFolder(doc, callback)
