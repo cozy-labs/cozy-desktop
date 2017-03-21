@@ -21,6 +21,14 @@ describe('Local', function () {
     this.events = {}
     this.local = new Local(this.config, this.prep, this.pouch, this.events)
     this.local.watcher.pending = new PendingMap()
+
+    // Helpers
+    this.path = (doc) => path.join(this.syncPath, doc.path)
+    this.exists = (doc) => fs.existsSync(this.path(doc))
+    this.writeFile = (doc) => { fs.writeFileSync(this.path(doc), '') }
+    this.ensureDir = (doc) => { fs.ensureDirSync(this.path(doc)) }
+    this.unlink = (doc) => fs.unlinkSync(this.path(doc))
+    this.rmdir = (doc) => fs.rmdirSync(this.path(doc))
   })
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
@@ -288,6 +296,14 @@ describe('Local', function () {
         done()
       })
     })
+
+    it('does nothing when the file was created and trashed remotely before being synced', async function () {
+      const doc = {path: '.cozy_trash/new-trashed-file'}
+
+      await should(this.local.addFileAsync(doc)).be.fulfilled()
+
+      should(this.exists(doc)).be.false()
+    })
   })
 
   describe('addFolder', function () {
@@ -321,9 +337,17 @@ describe('Local', function () {
         done()
       })
     })
+
+    it('does nothing when the folder was created and trashed remotely before being synced', async function () {
+      const doc = {path: '.cozy_trash/new-trashed-folder'}
+
+      await should(this.local.addFolderAsync(doc)).be.fulfilled()
+
+      should(this.exists(doc)).be.false()
+    })
   })
 
-  describe('overwriteFile', () =>
+  describe('overwriteFile', () => {
     it('writes the new content of a file', function (done) {
       this.events.emit = sinon.spy()
       let doc = {
@@ -358,9 +382,18 @@ describe('Local', function () {
         done()
       })
     })
-  )
 
-  describe('updateFileMetadata', () =>
+    it('does nothing when the file is in the trash', async function () {
+      const old = sinon.stub()
+      const doc = {path: '.cozy_trash/file'}
+
+      await should(this.local.overwriteFileAsync(doc, old)).be.fulfilled()
+
+      should(this.exists(doc)).be.false()
+    })
+  })
+
+  describe('updateFileMetadata', () => {
     it('updates metadata', function (done) {
       let doc = {
         path: 'file-to-update',
@@ -377,9 +410,18 @@ describe('Local', function () {
         done()
       })
     })
-  )
 
-  describe('updateFolder', () =>
+    it('does nothing when the file is in the trash', async function () {
+      const old = sinon.stub()
+      const doc = {path: '.cozy_trash/file'}
+
+      await should(this.local.updateFileMetadataAsync(doc, old)).be.fulfilled()
+
+      should(this.exists(doc)).be.false()
+    })
+  })
+
+  describe('updateFolder', () => {
     it('calls addFolder', function (done) {
       let doc = {
         path: 'a-folder-to-update',
@@ -394,7 +436,16 @@ describe('Local', function () {
         done()
       })
     })
-  )
+
+    it('does nothing when the folder is in the trash', async function () {
+      const old = sinon.stub()
+      const doc = {path: '.cozy_trash/folder'}
+
+      await should(this.local.updateFolderAsync(doc, old)).be.fulfilled()
+
+      should(this.exists(doc)).be.false()
+    })
+  })
 
   describe('moveFile', function () {
     it('moves the file', function (done) {
@@ -461,6 +512,47 @@ describe('Local', function () {
         fs.readFileSync(newPath, enc).should.equal('foobar')
         done()
       })
+    })
+
+    it('removes the file when it was trashed', async function () {
+      const old = {path: 'trashed-file'}
+      const doc = {path: '.cozy_trash/trashed-file'}
+      this.writeFile(old)
+
+      await should(this.local.moveFileAsync(doc, old)).be.fulfilled()
+
+      should(this.exists(old)).be.false()
+      should(this.exists(doc)).be.false()
+    })
+
+    it('adds the file back when it was restored', async function () {
+      const old = {path: '.cozy_trash/restored-file'}
+      const doc = {path: 'restored-file'}
+      this.local.other = {
+        createReadStream (docToStream, callback) {
+          const stream = new Readable()
+          stream._read = function () {}
+          stream.push(null)
+          callback(null, stream)
+        }
+      }
+
+      await should(this.local.moveFileAsync(doc, old)).be.fulfilled()
+
+      should(this.exists(old)).be.false()
+      should(this.exists(doc)).be.true()
+
+      this.unlink(doc)
+    })
+
+    it('does nothing when the file stayed in the trash', async function () {
+      const old = {path: '.cozy_trash/old-file'}
+      const doc = {path: '.cozy_trash/new-file'}
+
+      await should(this.local.moveFileAsync(doc, old)).be.fulfilled()
+
+      should(this.exists(old)).be.false()
+      should(this.exists(doc)).be.false()
     })
   })
 
@@ -554,9 +646,42 @@ describe('Local', function () {
         done()
       })
     })
+
+    it('removes the folder when it was trashed', async function () {
+      const old = {path: 'trashed-folder'}
+      const doc = {path: '.cozy_trash/trashed-folder'}
+      this.ensureDir(old)
+
+      await should(this.local.moveFolderAsync(doc, old)).be.fulfilled()
+
+      should(this.exists(old)).be.false()
+      should(this.exists(doc)).be.false()
+    })
+
+    it('adds the folder back when it was restored', async function () {
+      const old = {path: '.cozy_trash/restored-folder'}
+      const doc = {path: 'restored-folder'}
+
+      await should(this.local.moveFolderAsync(doc, old)).be.fulfilled()
+
+      should(this.exists(old)).be.false()
+      should(this.exists(doc)).be.true()
+
+      this.rmdir(doc)
+    })
+
+    it('does nothing when the folder stayed in the trash', async function () {
+      const old = {path: '.cozy_trash/old-folder'}
+      const doc = {path: '.cozy_trash/new-folder'}
+
+      await should(this.local.moveFolderAsync(doc, old)).be.fulfilled()
+
+      should(this.exists(old)).be.false()
+      should(this.exists(doc)).be.false()
+    })
   })
 
-  describe('destroy', () =>
+  describe('destroy', () => {
     it('deletes a file from the local filesystem', function (done) {
       let doc = {
         _id: 'FILE-TO-DELETE',
@@ -578,7 +703,15 @@ describe('Local', function () {
         })
       })
     })
-  )
+
+    it('does nothing when the file or folder is in the trash', async function () {
+      const doc = {path: '.cozy_trash/non-destroyed-file-or-folder'}
+
+      await should(this.local.destroyAsync(doc)).be.fulfilled()
+
+      should(this.exists(doc)).be.false()
+    })
+  })
 
   describe('trash', () =>
     it('deletes a folder from the local filesystem', function (done) {

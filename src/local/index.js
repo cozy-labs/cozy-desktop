@@ -8,7 +8,7 @@ import fs from 'fs-extra'
 import path from 'path'
 
 import logger from '../logger'
-import { extractRevNumber } from '../metadata'
+import { extractRevNumber, inRemoteTrash } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import Watcher from './watcher'
@@ -144,6 +144,10 @@ class Local implements Side {
   // file. The checksum will then be computed and added to the document, and
   // then pushed to CouchDB.
   addFile (doc, callback) {
+    if (inRemoteTrash(doc)) {
+      callback(null)
+      return
+    }
     let tmpFile = path.resolve(this.tmpPath, `${path.basename(doc.path)}.tmp`)
     let filePath = path.resolve(this.syncPath, doc.path)
     let parent = path.resolve(this.syncPath, path.dirname(doc.path))
@@ -220,6 +224,10 @@ class Local implements Side {
 
   // Create a new folder
   addFolder (doc, callback) {
+    if (inRemoteTrash(doc)) {
+      callback(null)
+      return
+    }
     let folderPath = path.join(this.syncPath, doc.path)
     log.info(`Put folder ${folderPath}`)
     return fs.ensureDir(folderPath, err => {
@@ -238,6 +246,10 @@ class Local implements Side {
 
   // Update the metadata of a file
   updateFileMetadata (doc, old, callback) {
+    if (inRemoteTrash(doc)) {
+      callback(null)
+      return
+    }
     return this.metadataUpdater(doc)(callback)
   }
 
@@ -248,6 +260,13 @@ class Local implements Side {
 
   // Move a file from one place to another
   moveFile (doc, old, callback) {
+    if (inRemoteTrash(doc)) {
+      this.destroy(old, callback)
+      return
+    } else if (inRemoteTrash(old)) {
+      this.addFile(doc, callback)
+      return
+    }
     log.info(`Move file ${old.path} → ${doc.path}`)
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
@@ -286,6 +305,13 @@ class Local implements Side {
 
   // Move a folder
   moveFolder (doc, old, callback) {
+    if (inRemoteTrash(doc)) {
+      this.destroy(old, callback)
+      return
+    } else if (inRemoteTrash(old)) {
+      this.addFolder(doc, callback)
+      return
+    }
     log.info(`Move folder ${old.path} → ${doc.path}`)
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
@@ -323,6 +349,10 @@ class Local implements Side {
 
   // Delete a file or folder from the local filesystem
   destroy (doc, callback) {
+    if (inRemoteTrash(doc)) {
+      callback(null)
+      return
+    }
     log.info(`Delete ${doc.path}`)
     this.events.emit('delete-file', doc)
     let fullpath = path.join(this.syncPath, doc.path)
