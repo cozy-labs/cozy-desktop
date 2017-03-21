@@ -1,6 +1,7 @@
 /* @flow weak */
 
 import async from 'async'
+import Promise from 'bluebird'
 import EventEmitter from 'events'
 
 import Ignore from './ignore'
@@ -46,6 +47,8 @@ class Sync {
     this.local.other = this.remote
     this.remote.other = this.local
     this.pending = new PendingMap()
+
+    Promise.promisifyAll(this)
   }
 
   // Start to synchronize the remote cozy with the local filesystem
