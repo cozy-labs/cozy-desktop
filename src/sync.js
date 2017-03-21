@@ -278,7 +278,7 @@ class Sync {
       this.pouch.setLocalSeq(change.seq, callback)
       return
     }
-    this.pouch.db.put(doc, err => {
+    this.pouch.put(doc, err => {
       // If the doc can't be saved, it's because of a new revision.
       // So, we can skip this revision
       if (err) {
@@ -299,7 +299,7 @@ class Sync {
       doc.sides[s] = rev
     }
     delete doc.errors
-    this.pouch.db.put(doc, err => {
+    this.pouch.put(doc, err => {
       // Conflicts can happen here, for example if the data-system has
       // generated a thumbnail before apply has finished. In that case, we
       // try to reconciliate the documents.
@@ -310,7 +310,7 @@ class Sync {
             callback()
           } else {
             doc.sides[side] = rev
-            this.pouch.db.put(doc, function (err) {
+            this.pouch.put(doc, function (err) {
               if (err) { log.warn('Race condition', err) }
               callback()
             })

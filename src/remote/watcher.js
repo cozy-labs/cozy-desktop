@@ -166,6 +166,6 @@ export default class RemoteWatcher {
     log.debug(`${doc.path}: Dissociating from remote...`)
     delete doc.remote
     if (doc.sides) delete doc.sides.remote
-    return this.pouch.db.put(doc)
+    return this.pouch.put(doc)
   }
 }
