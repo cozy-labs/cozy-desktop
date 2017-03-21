@@ -9,8 +9,11 @@ import isEqual from 'lodash.isequal'
 import Config from './config'
 import logger from './logger'
 
+import type { Metadata } from './metadata'
+import type { Callback } from './utils/func'
+
 const log = logger({
-  prefix: 'Local Pouchdb ',
+  prefix: 'Pouch         ',
   date: true
 })
 
@@ -62,6 +65,20 @@ class Pouch {
   }
 
   /* Mini ODM */
+
+  put (doc: Metadata, callback?: Callback) {
+    log.debug(`${doc.path}: Saving metadata:`)
+    log.inspect(doc)
+    return this.db.put(doc).asCallback(callback)
+  }
+
+  bulkDocs (docs: Metadata[], callback?: Callback) {
+    for (const doc of docs) {
+      log.debug(`${doc.path}: Saving bulk metadata:`)
+      log.inspect(doc)
+    }
+    return this.db.bulkDocs(docs).asCallback(callback)
+  }
 
   // Run a query and get all the results
   getAll (query, params, callback) {

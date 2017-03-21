@@ -7,7 +7,8 @@ import {
   gray,
   green,
   magenta,
-  red
+  red,
+  yellow
 } from 'chalk'
 import * as diff from 'diff'
 
@@ -102,6 +103,7 @@ class Logger {
     if (prefix != null) {
       if (prefix.startsWith('Local')) prefix = magenta(prefix)
       if (prefix.startsWith('Remote')) prefix = blue(prefix)
+      if (prefix.startsWith('Pouch')) prefix = yellow(prefix)
       if (level === 'debug') prefix = dim(prefix)
 
       text = `${prefix} | ${text}`

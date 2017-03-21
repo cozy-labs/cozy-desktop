@@ -131,7 +131,7 @@ class Merge {
       if (sameFile(file, doc)) {
         return null
       } else {
-        return this.pouch.db.put(doc)
+        return this.pouch.put(doc)
       }
     } else if (file && file.checksum) {
       if ((side === 'local') && (file.sides.local != null)) {
@@ -143,7 +143,7 @@ class Merge {
       if (file) { doc._rev = file._rev }
       if (doc.tags == null) { doc.tags = [] }
       await this.ensureParentExistAsync(side, doc)
-      return this.pouch.db.put(doc)
+      return this.pouch.put(doc)
     }
   }
 
@@ -207,13 +207,13 @@ class Merge {
         log.success(`${doc.path}: up to date`)
         return null
       } else {
-        return this.pouch.db.put(doc)
+        return this.pouch.put(doc)
       }
     } else {
       if (doc.tags == null) { doc.tags = [] }
       if (doc.creationDate == null) { doc.creationDate = new Date() }
       await this.ensureParentExistAsync(side, doc)
-      return this.pouch.db.put(doc)
+      return this.pouch.put(doc)
     }
   }
 
@@ -241,13 +241,13 @@ class Merge {
         log.success(`${doc.path}: up to date`)
         return null
       } else {
-        return this.pouch.db.put(doc)
+        return this.pouch.put(doc)
       }
     } else {
       if (doc.tags == null) { doc.tags = [] }
       if (doc.creationDate == null) { doc.creationDate = new Date() }
       await this.ensureParentExistAsync(side, doc)
-      return this.pouch.db.put(doc)
+      return this.pouch.put(doc)
     }
   }
 
@@ -281,10 +281,10 @@ class Merge {
         was.moveTo = dst._id
         dst.sides = {}
         dst.sides[side] = 1
-        return this.pouch.db.bulkDocs([was, dst])
+        return this.pouch.bulkDocs([was, dst])
       } else {
         await this.ensureParentExistAsync(side, doc)
-        return this.pouch.db.bulkDocs([was, doc])
+        return this.pouch.bulkDocs([was, doc])
       }
     } else { // It can happen after a conflict
       return this.addFileAsync(side, doc)
@@ -351,7 +351,7 @@ class Merge {
       bulk.push(dst)
       delete dst.errors
     }
-    return this.pouch.db.bulkDocs(bulk)
+    return this.pouch.bulkDocs(bulk)
   }
 
   moveFolderRecursively (folder, was, callback) {
@@ -378,7 +378,7 @@ class Merge {
       markSide(side, file, file)
       file._deleted = true
       delete file.errors
-      return this.pouch.db.put(file)
+      return this.pouch.put(file)
     } else { // It can happen after a conflict
       return null
     }
@@ -434,7 +434,7 @@ class Merge {
       doc._deleted = true
       delete doc.errors
     }
-    return this.pouch.db.bulkDocs(docs)
+    return this.pouch.bulkDocs(docs)
   }
 
   deleteFolderRecursively (side: SideName, folder, callback) {

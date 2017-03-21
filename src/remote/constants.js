@@ -10,3 +10,5 @@ export const FILE_TYPE = 'file'
 // Special document ids
 export const ROOT_DIR_ID = 'io.cozy.files.root-dir'
 export const TRASH_DIR_ID = 'io.cozy.files.trash-dir'
+
+export const TRASH_DIR_NAME = '.cozy_trash'
