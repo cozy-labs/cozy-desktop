@@ -73,7 +73,7 @@
     "lodash.pick": "4.4.0",
     "micromatch": "2.3.11",
     "node-fetch": "1.6.3",
-    "node-uuid": "1.4.7",
+    "node-uuid": "1.4.8",
     "opn": "4.0.2",
     "pouchdb": "6.1.2",
     "progress": "1.1.8",
