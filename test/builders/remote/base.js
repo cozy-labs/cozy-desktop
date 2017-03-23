@@ -1,31 +1,43 @@
 /* @flow */
 
 import { Cozy } from 'cozy-client-js'
+import uuid from 'node-uuid'
 
-import { ROOT_DIR_ID } from '../../../src/remote/constants'
+import { FILES_DOCTYPE, ROOT_DIR_ID } from '../../../src/remote/constants'
 import timestamp from '../../../src/timestamp'
 
 import type { RemoteDoc } from '../../../src/remote/document'
 
+const ROOT_DIR_PROPERTIES = {
+  _id: ROOT_DIR_ID,
+  path: '/'
+}
+
 export default class RemoteBaseBuilder {
   cozy: Cozy
-  options: Object
+  options: {
+    contentType?: string,
+    dir: {_id: string, path: string},
+    name: string,
+    lastModifiedDate: Date
+  }
 
   constructor (cozy: Cozy) {
     this.cozy = cozy
     this.options = {
-      dirID: ROOT_DIR_ID,
+      dir: ROOT_DIR_PROPERTIES,
+      name: '',
       lastModifiedDate: timestamp.current()
     }
   }
 
   inDir (dir: RemoteDoc): this {
-    this.options.dirID = dir._id
+    this.options.dir = dir
     return this
   }
 
   inRootDir (): this {
-    this.options.dirID = ROOT_DIR_ID
+    this.options.dir = ROOT_DIR_PROPERTIES
     return this
   }
 
@@ -37,5 +49,19 @@ export default class RemoteBaseBuilder {
   named (name: string): this {
     this.options.name = name
     return this
+  }
+
+  build (): Object {
+    return {
+      _id: uuid.v4().replace(/-/g, ''),
+      _rev: '1-' + uuid.v4().replace(/-/g, ''),
+      _type: FILES_DOCTYPE,
+      created_at: this.options.lastModifiedDate,
+      dir_id: this.options.dir._id,
+      name: this.options.name,
+      path: `${this.options.dir.path}/${this.options.name}`,
+      tags: [],
+      updated_at: this.options.lastModifiedDate
+    }
   }
 }

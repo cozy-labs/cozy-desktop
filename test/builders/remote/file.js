@@ -47,9 +47,26 @@ export default class RemoteFileBuilder extends RemoteBaseBuilder {
     return this
   }
 
+  build (): RemoteDoc {
+    return {
+      ...super.build(),
+      class: 'application',
+      executable: true,
+      md5sum: 'wVenkDHhxA+FkxgpvF/FUg==',
+      mime: 'application/octet-stream',
+      size: '123',
+      type: 'file'
+    }
+  }
+
   async create (): Promise<RemoteDoc> {
     let doc = jsonApiToRemoteDoc(
-      await this.cozy.files.create(this._data, this.options)
+      await this.cozy.files.create(this._data, {
+        contentType: this.options.contentType,
+        dirID: this.options.dir._id,
+        lastModifiedDate: this.options.lastModifiedDate,
+        name: this.options.name
+      })
     )
 
     const parentDir = await this.cozy.files.statById(doc.dir_id)
