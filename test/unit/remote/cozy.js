@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* @flow weak */
 
 import should from 'should'
 
@@ -57,8 +58,8 @@ describe('RemoteCozy', function () {
     context('when cozy works', function () {
       context('without an update sequence', function () {
         it('lists all changes since the database creation', async function () {
-          let dir = await builders.dir().build()
-          let file = await builders.file().inDir(dir).build()
+          let dir = await builders.remoteDir().create()
+          let file = await builders.remoteFile().inDir(dir).create()
 
           let { ids } = await remoteCozy.changes()
 
@@ -74,8 +75,8 @@ describe('RemoteCozy', function () {
         it('lists only changes that occured since then', async function () {
           let { last_seq } = await remoteCozy.changes()
 
-          let dir = await builders.dir().build()
-          let file = await builders.file().inDir(dir).build()
+          let dir = await builders.remoteDir().create()
+          let file = await builders.remoteFile().inDir(dir).create()
 
           let { ids } = await remoteCozy.changes(last_seq)
 
@@ -87,7 +88,7 @@ describe('RemoteCozy', function () {
 
   describe('find', function () {
     it('fetches a remote directory matching the given id', async function () {
-      const remoteDir = await builders.dir().build()
+      const remoteDir = await builders.remoteDir().create()
 
       const foundDir = await remoteCozy.find(remoteDir._id)
 
@@ -95,7 +96,7 @@ describe('RemoteCozy', function () {
     })
 
     it('fetches a remote root file including its path', async function () {
-      const remoteFile = await builders.file().inRootDir().named('foo').build()
+      const remoteFile = await builders.remoteFile().inRootDir().named('foo').create()
 
       const foundFile = await remoteCozy.find(remoteFile._id)
 
@@ -106,8 +107,8 @@ describe('RemoteCozy', function () {
     })
 
     it('fetches a remote non-root file including its path', async function () {
-      const remoteDir = await builders.dir().named('foo').inRootDir().build()
-      const remoteFile = await builders.file().named('bar').inDir(remoteDir).build()
+      const remoteDir = await builders.remoteDir().named('foo').inRootDir().create()
+      const remoteFile = await builders.remoteFile().named('bar').inDir(remoteDir).create()
 
       const foundFile = await remoteCozy.find(remoteFile._id)
 
@@ -120,7 +121,7 @@ describe('RemoteCozy', function () {
 
   describe('findMaybe', function () {
     it('does the same as find() when file or directory exists', async function () {
-      const remoteDir = await builders.dir().build()
+      const remoteDir = await builders.remoteDir().create()
 
       const foundDir = await remoteCozy.findMaybe(remoteDir._id)
 
@@ -136,8 +137,8 @@ describe('RemoteCozy', function () {
 
   describe('findDirectoryByPath', function () {
     it('resolves when the directory exists remotely', async function () {
-      const dir = await builders.dir().build()
-      const subdir = await builders.dir().inDir(dir).build()
+      const dir = await builders.remoteDir().create()
+      const subdir = await builders.remoteDir().inDir(dir).create()
 
       const foundDir = await remoteCozy.findDirectoryByPath(dir.path)
       foundDir.should.deepEqual(dir)
@@ -147,7 +148,7 @@ describe('RemoteCozy', function () {
     })
 
     it('rejects when the directory does not exist remotely', async function () {
-      await builders.dir().named('existing').inRootDir().build()
+      await builders.remoteFile().named('existing').inRootDir().create()
 
       for (let path of ['/missing', '/existing/missing']) {
         await remoteCozy.findDirectoryByPath(path)
@@ -156,7 +157,7 @@ describe('RemoteCozy', function () {
     })
 
     it('rejects when the path matches a file', async function () {
-      await builders.file().named('foo').inRootDir().build()
+      await builders.remoteFile().named('foo').inRootDir().create()
 
       await remoteCozy.findDirectoryByPath('/foo')
         .should.be.rejectedWith(DirectoryNotFound)
@@ -172,7 +173,7 @@ describe('RemoteCozy', function () {
 
   describe('downloadBinary', function () {
     it('resolves with a Readable stream of the file content', async function () {
-      const remoteFile = await builders.file().data('foo').build()
+      const remoteFile = await builders.remoteFile().data('foo').create()
 
       const stream = await remoteCozy.downloadBinary(remoteFile._id)
 

@@ -20,11 +20,11 @@ export class BuilderFactory {
     this.cozy = cozy
   }
 
-  dir (): RemoteDirBuilder {
+  remoteDir (): RemoteDirBuilder {
     return new RemoteDirBuilder(this.cozy)
   }
 
-  file (): RemoteFileBuilder {
+  remoteFile (): RemoteFileBuilder {
     return new RemoteFileBuilder(this.cozy)
   }
 

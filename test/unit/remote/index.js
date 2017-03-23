@@ -53,8 +53,8 @@ describe('Remote', function () {
       const expectedChecksum = '2NqmrnZqa1zTER40NtPGJg=='
       const fixture = 'test/fixtures/cool-pillow.jpg'
 
-      builders.file().named('pillow.jpg').contentType('image/jpeg')
-        .dataFromFile(fixture).build()
+      builders.remoteFile().named('pillow.jpg').contentType('image/jpeg')
+        .dataFromFile(fixture).create()
         .then(binary => {
           should(binary.md5sum).equal(expectedChecksum)
           this.remote.createReadStream(conversion.createMetadata(binary), function (err, stream) {
@@ -387,8 +387,8 @@ describe('Remote', function () {
     })
 
     it('does not reupload an existing file', async function () {
-      const backupDir = await builders.dir().named('backup').inRootDir().build()
-      await builders.dir().named('ORIGINAL').inRootDir().build()
+      const backupDir = await builders.remoteDir().named('backup').inRootDir().create()
+      await builders.remoteDir().named('ORIGINAL').inRootDir().create()
       let checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
       let doc: Object = {
         _id: 'backup/cat3.jpg',
@@ -470,7 +470,7 @@ describe('Remote', function () {
 
   describe('overwriteFileAsync', function () {
     it('overwrites the binary content', async function () {
-      const created = await builders.file().data('foo').timestamp(2015, 11, 16, 16, 12, 1).build()
+      const created = await builders.remoteFile().data('foo').timestamp(2015, 11, 16, 16, 12, 1).create()
       const old = conversion.createMetadata(created)
       const doc: Metadata = {
         ...old,
@@ -503,7 +503,7 @@ describe('Remote', function () {
     })
 
     it('throws an error if the checksum is invalid', async function () {
-      const created = await builders.file().data('foo').build()
+      const created = await builders.remoteFile().data('foo').create()
       const old = conversion.createMetadata(created)
       const doc = {
         ...old,
@@ -528,13 +528,13 @@ describe('Remote', function () {
 
   describe('updateFileMetadataAsync', () =>
     it('updates the lastModification', async function () {
-      const dir = await builders.dir().named('dir').build()
-      const created = await builders.file()
+      const dir = await builders.remoteDir().named('dir').create()
+      const created = await builders.remoteFile()
         .named('file-7')
         .inDir(dir)
         .data('foo')
         .timestamp(2015, 11, 16, 16, 13, 1)
-        .build()
+        .create()
 
       const doc: Object = {
         path: 'dir/file-7',
@@ -567,14 +567,14 @@ describe('Remote', function () {
 
   describe('updateFolder', function () {
     it('updates the metadata of a folder', async function () {
-      const created: RemoteDoc = await builders.dir()
+      const created: RemoteDoc = await builders.remoteDir()
         .named('old-name')
-        .build()
+        .create()
       const old: Metadata = conversion.createMetadata(created)
-      const newParentDir: RemoteDoc = await builders.dir()
+      const newParentDir: RemoteDoc = await builders.remoteDir()
         .named('new-parent-dir')
         .inRootDir()
-        .build()
+        .create()
       const doc: Metadata = {
         ...old,
         path: `new-parent-dir/new-name`,
@@ -623,10 +623,10 @@ describe('Remote', function () {
   describe('moveFile', () => {
     it('moves the file', async function () {
       const remoteDoc: RemoteDoc = await builders
-        .file()
+        .remoteFile()
         .named('cat6.jpg')
         .data('meow')
-        .build()
+        .create()
       const old: Metadata = conversion.createMetadata(remoteDoc)
       const doc: Metadata = {
         ...old,
@@ -634,10 +634,10 @@ describe('Remote', function () {
         name: 'cat7.jpg',
         remote: undefined
       }
-      const newDir: RemoteDoc = await builders.dir()
+      const newDir: RemoteDoc = await builders.remoteDir()
         .named('moved-to')
         .inRootDir()
-        .build()
+        .create()
 
       const moved: Metadata = await this.remote.moveFileAsync(doc, old)
 
@@ -727,7 +727,7 @@ describe('Remote', function () {
 
   describe('destroy', function () {
     it('deletes a file in couchdb', async function () {
-      const file = await builders.file().build()
+      const file = await builders.remoteFile().create()
       const doc = conversion.createMetadata(file)
 
       await this.remote.destroyAsync(doc)
@@ -740,7 +740,7 @@ describe('Remote', function () {
 
   describe('trash', () =>
     it('moves the file or folder to the Cozy trash', async function () {
-      const folder = await builders.dir().build()
+      const folder = await builders.remoteDir().create()
       const doc = conversion.createMetadata(folder)
 
       await this.remote.trashAsync(doc)
