@@ -47,7 +47,7 @@ export default class RemoteFileBuilder extends RemoteBaseBuilder {
     return this
   }
 
-  async build (): Promise<RemoteDoc> {
+  async create (): Promise<RemoteDoc> {
     let doc = jsonApiToRemoteDoc(
       await this.cozy.files.create(this._data, this.options)
     )

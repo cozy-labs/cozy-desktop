@@ -23,7 +23,7 @@ export default class RemoteDirBuilder extends RemoteBaseBuilder {
     })
   }
 
-  async build (): Promise<RemoteDoc> {
+  async create (): Promise<RemoteDoc> {
     return jsonApiToRemoteDoc(
       await this.cozy.files.createDirectory(this.options)
     )
