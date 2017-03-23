@@ -3,7 +3,7 @@
 import { Cozy } from 'cozy-client-js'
 import uuid from 'node-uuid'
 
-import { FILES_DOCTYPE, ROOT_DIR_ID } from '../../../src/remote/constants'
+import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID, TRASH_DIR_NAME } from '../../../src/remote/constants'
 import timestamp from '../../../src/timestamp'
 
 import type { RemoteDoc } from '../../../src/remote/document'
@@ -11,6 +11,11 @@ import type { RemoteDoc } from '../../../src/remote/document'
 const ROOT_DIR_PROPERTIES = {
   _id: ROOT_DIR_ID,
   path: '/'
+}
+
+const TRASH_DIR_PROPERTIES = {
+  _id: TRASH_DIR_ID,
+  path: `/${TRASH_DIR_NAME}`
 }
 
 export default class RemoteBaseBuilder {
@@ -38,6 +43,11 @@ export default class RemoteBaseBuilder {
 
   inRootDir (): this {
     this.options.dir = ROOT_DIR_PROPERTIES
+    return this
+  }
+
+  trashed (): this {
+    this.options.dir = TRASH_DIR_PROPERTIES
     return this
   }
 
