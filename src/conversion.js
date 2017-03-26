@@ -48,7 +48,7 @@ export function createMetadata (remote: RemoteDoc): Metadata {
 
 // Extract the remote path and name from a local id
 export function extractDirAndName (id: string): [string, string] {
-  const dir = path.dirname(`/${id}`)
+  const dir = '/' + id.split(path.sep).slice(0, -1).join('/')
   const name = path.basename(id)
   return [dir, name]
 }
