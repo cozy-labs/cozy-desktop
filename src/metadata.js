@@ -52,6 +52,11 @@ switch (process.platform) {
   case 'darwin':
     buildId = buildIdHFS
     break
+  case 'win32':
+    // FIXME: Temporary hack to run the CLI on Windows
+    // TODO: Proper implementation of buildId on Windows
+    buildId = buildIdUnix
+    break
   default:
     log.error(`Sorry, ${process.platform} is not supported!`)
     process.exit(1)
