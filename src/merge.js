@@ -348,6 +348,7 @@ class Merge {
       let dst = clone(doc)
       markSide(side, dst, src)
       dst._id = src.moveTo
+      dst.path = doc.path.replace(was.path, folder.path)
       delete dst._rev
       bulk.push(dst)
       delete dst.errors

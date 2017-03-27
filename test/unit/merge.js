@@ -453,6 +453,7 @@ describe('Merge', function () {
             return this.pouch.db.get(`DESTINATION${id}`, (err, res) => {
               should.not.exist(err)
               should.exist(res)
+              should(res.path).eql(`DESTINATION${id}`)
               if (id !== '') { // parent sides are updated in moveFolderAsync()
                 should(res.sides).have.properties({
                   local: 2,
