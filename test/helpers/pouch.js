@@ -38,6 +38,10 @@ export default {
       tags: [],
       remote: {
         _id: `123456789${i}`
+      },
+      sides: {
+        local: 1,
+        remote: 1
       }
     }
     pouch.db.put(doc, callback)
@@ -55,6 +59,10 @@ export default {
       tags: [],
       remote: {
         _id: `1234567890${i}`
+      },
+      sides: {
+        local: 1,
+        remote: 1
       }
     }
     pouch.db.put(doc, callback)

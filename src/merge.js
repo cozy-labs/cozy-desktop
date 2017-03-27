@@ -312,10 +312,10 @@ class Merge {
         const dst = await this.resolveConflictAsync(side, doc)
         dst.sides = {}
         dst.sides[side] = 1
-        return this.moveFolderRecursivelyAsync(dst, was)
+        return this.moveFolderRecursivelyAsync(side, dst, was)
       } else {
         await this.ensureParentExistAsync(side, doc)
-        return this.moveFolderRecursivelyAsync(doc, was)
+        return this.moveFolderRecursivelyAsync(side, doc, was)
       }
     } else { // It can happen after a conflict
       return this.putFolderAsync(side, doc)
@@ -327,7 +327,7 @@ class Merge {
   }
 
   // Move a folder and all the things inside it
-  async moveFolderRecursivelyAsync (folder, was) {
+  async moveFolderRecursivelyAsync (side: SideName, folder, was) {
     let docs
     try {
       docs = await this.pouch.byRecursivePathAsync(was._id)
@@ -346,16 +346,18 @@ class Merge {
       delete src.errors
       bulk.push(src)
       let dst = clone(doc)
+      markSide(side, dst, src)
       dst._id = src.moveTo
+      dst.path = doc.path.replace(was.path, folder.path)
       delete dst._rev
-      bulk.push(dst)
       delete dst.errors
+      bulk.push(dst)
     }
     return this.pouch.bulkDocs(bulk)
   }
 
-  moveFolderRecursively (folder, was, callback) {
-    this.moveFolderRecursivelyAsync(folder, was).asCallback(callback)
+  moveFolderRecursively (side, folder, was, callback) {
+    this.moveFolderRecursivelyAsync(side, folder, was).asCallback(callback)
   }
 
   // Remove a file from PouchDB

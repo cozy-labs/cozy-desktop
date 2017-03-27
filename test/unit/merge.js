@@ -32,9 +32,9 @@ describe('Merge', function () {
         lastModification: new Date(),
         tags: ['courge', 'quux']
       }
-      return this.merge.addFile(this.side, doc, err => {
+      this.merge.addFile(this.side, doc, err => {
         should.not.exist(err)
-        return this.pouch.db.get(doc._id, function (err, res) {
+        this.pouch.db.get(doc._id, function (err, res) {
           should.not.exist(err)
           for (let date of ['creationDate', 'lastModification']) {
             doc[date] = doc[date].toISOString()
@@ -74,9 +74,9 @@ describe('Merge', function () {
         delete doc.mime
         this.file.creationDate = doc.creationDate.toISOString()
         this.file.lastModification = doc.lastModification.toISOString()
-        return this.merge.addFile(this.side, doc, err => {
+        this.merge.addFile(this.side, doc, err => {
           should.not.exist(err)
-          return this.pouch.db.get(doc._id, (err, res) => {
+          this.pouch.db.get(doc._id, (err, res) => {
             should.not.exist(err)
             res.should.have.properties(this.file)
             res.size.should.equal(was.size)
@@ -102,9 +102,9 @@ describe('Merge', function () {
         lastModification: new Date(),
         tags: ['courge', 'quux']
       }
-      return this.merge.updateFile(this.side, doc, err => {
+      this.merge.updateFile(this.side, doc, err => {
         should.not.exist(err)
-        return this.pouch.db.get(doc._id, function (err, res) {
+        this.pouch.db.get(doc._id, function (err, res) {
           should.not.exist(err)
           for (let date of ['creationDate', 'lastModification']) {
             doc[date] = doc[date].toISOString()
@@ -144,9 +144,9 @@ describe('Merge', function () {
         delete doc.mime
         this.file.creationDate = doc.creationDate.toISOString()
         this.file.lastModification = doc.lastModification.toISOString()
-        return this.merge.updateFile(this.side, doc, err => {
+        this.merge.updateFile(this.side, doc, err => {
           should.not.exist(err)
-          return this.pouch.db.get(doc._id, (err, res) => {
+          this.pouch.db.get(doc._id, (err, res) => {
             should.not.exist(err)
             res.should.have.properties(this.file)
             res.size.should.equal(was.size)
@@ -167,9 +167,9 @@ describe('Merge', function () {
           checksum: '3333333333333333333333333333333333333333',
           tags: ['qux', 'quux']
         }
-        return this.merge.updateFile(this.side, clone(doc), err => {
+        this.merge.updateFile(this.side, clone(doc), err => {
           should.not.exist(err)
-          return this.pouch.db.get(this.file._id, function (err, res) {
+          this.pouch.db.get(this.file._id, function (err, res) {
             should.not.exist(err)
             res.should.have.properties(doc)
             should.not.exist(res.size)
@@ -194,11 +194,11 @@ describe('Merge', function () {
         lastModification: new Date(),
         tags: ['courge', 'quux']
       }
-      return this.merge.putFolder(this.side, doc, err => {
+      this.merge.putFolder(this.side, doc, err => {
         should.not.exist(err)
         doc.creationDate = doc.creationDate.toISOString()
         doc.lastModification = doc.lastModification.toISOString()
-        return this.pouch.db.get(doc._id, function (err, res) {
+        this.pouch.db.get(doc._id, function (err, res) {
           should.not.exist(err)
           res.should.have.properties(doc)
           res.sides.local.should.equal(1)
@@ -236,16 +236,16 @@ describe('Merge', function () {
       this.pouch.db.put(clone(was), (err, inserted) => {
         should.not.exist(err)
         was._rev = inserted.rev
-        return this.merge.moveFile(this.side, clone(doc), clone(was), err => {
+        this.merge.moveFile(this.side, clone(doc), clone(was), err => {
           should.not.exist(err)
-          return this.pouch.db.get(doc._id, (err, res) => {
+          this.pouch.db.get(doc._id, (err, res) => {
             should.not.exist(err)
             for (let date of ['creationDate', 'lastModification']) {
               doc[date] = doc[date].toISOString()
             }
             res.should.have.properties(doc)
             res.sides.local.should.equal(1)
-            return this.pouch.db.get(was._id, function (err, res) {
+            this.pouch.db.get(was._id, function (err, res) {
               should.exist(err)
               err.status.should.equal(404)
               done()
@@ -281,9 +281,9 @@ describe('Merge', function () {
       this.pouch.db.put(clone(was), (err, inserted) => {
         should.not.exist(err)
         was._rev = inserted.rev
-        return this.merge.moveFile(this.side, doc, clone(was), err => {
+        this.merge.moveFile(this.side, doc, clone(was), err => {
           should.not.exist(err)
-          return this.pouch.db.get(doc._id, function (err, res) {
+          this.pouch.db.get(doc._id, function (err, res) {
             should.not.exist(err)
             doc.creationDate = doc.creationDate.toISOString()
             res.should.have.properties(doc)
@@ -366,16 +366,16 @@ describe('Merge', function () {
       this.pouch.db.put(clone(was), (err, inserted) => {
         should.not.exist(err)
         was._rev = inserted.rev
-        return this.merge.moveFolder(this.side, clone(doc), clone(was), err => {
+        this.merge.moveFolder(this.side, clone(doc), clone(was), err => {
           should.not.exist(err)
-          return this.pouch.db.get(doc._id, (err, res) => {
+          this.pouch.db.get(doc._id, (err, res) => {
             should.not.exist(err)
             for (let date of ['creationDate', 'lastModification']) {
               doc[date] = doc[date].toISOString()
             }
             res.should.have.properties(doc)
             res.sides.local.should.equal(1)
-            return this.pouch.db.get(was._id, function (err, res) {
+            this.pouch.db.get(was._id, function (err, res) {
               should.exist(err)
               err.status.should.equal(404)
               done()
@@ -428,9 +428,9 @@ describe('Merge', function () {
 
   describe('moveFolderRecursively', function () {
     before(function (done) {
-      return pouchHelpers.createParentFolder(this.pouch, () => {
-        return pouchHelpers.createFolder(this.pouch, 9, () => {
-          return pouchHelpers.createFile(this.pouch, 9, done)
+      pouchHelpers.createParentFolder(this.pouch, () => {
+        pouchHelpers.createFolder(this.pouch, 9, () => {
+          pouchHelpers.createFile(this.pouch, 9, done)
         })
       })
     })
@@ -446,16 +446,23 @@ describe('Merge', function () {
       }
       this.pouch.db.get('my-folder', (err, was) => {
         should.not.exist(err)
-        return this.merge.moveFolderRecursively(doc, was, err => {
+        this.merge.moveFolderRecursively('local', doc, was, err => {
           should.not.exist(err)
           let ids = ['', '/folder-9', '/file-9']
-          return async.eachSeries(ids, (id, next) => {
-            return this.pouch.db.get(`DESTINATION${id}`, (err, res) => {
+          async.eachSeries(ids, (id, next) => {
+            this.pouch.db.get(`DESTINATION${id}`, (err, res) => {
               should.not.exist(err)
               should.exist(res)
-              return this.pouch.db.get(`my-folder${id}`, function (err, res) {
+              should(res.path).eql(`DESTINATION${id}`)
+              if (id !== '') { // parent sides are updated in moveFolderAsync()
+                should(res.sides).have.properties({
+                  local: 2,
+                  remote: 1
+                })
+              }
+              this.pouch.db.get(`my-folder${id}`, function (err, res) {
                 err.status.should.equal(404)
-                return next()
+                next()
               })
             })
           }, done)
@@ -476,9 +483,9 @@ describe('Merge', function () {
       }
       this.pouch.db.put(doc, err => {
         should.not.exist(err)
-        return this.merge.deleteFile(this.side, doc, err => {
+        this.merge.deleteFile(this.side, doc, err => {
           should.not.exist(err)
-          return this.pouch.db.get(doc._id, function (err) {
+          this.pouch.db.get(doc._id, function (err) {
             err.status.should.equal(404)
             done()
           })
@@ -499,9 +506,9 @@ describe('Merge', function () {
       }
       this.pouch.db.put(doc, err => {
         should.not.exist(err)
-        return this.merge.deleteFolder(this.side, doc, err => {
+        this.merge.deleteFolder(this.side, doc, err => {
           should.not.exist(err)
-          return this.pouch.db.get(doc._id, function (err, res) {
+          this.pouch.db.get(doc._id, function (err, res) {
             err.status.should.equal(404)
             done()
           })
@@ -520,18 +527,18 @@ describe('Merge', function () {
       }
       this.pouch.db.put(doc, err => {
         should.not.exist(err)
-        return async.eachSeries(['baz', 'qux', 'quux'], (name, next) => {
+        async.eachSeries(['baz', 'qux', 'quux'], (name, next) => {
           let file = {
             _id: `FOO/TO-REMOVE/${name}`,
             path: `FOO/TO-REMOVE/${name}`,
             docType: 'file'
           }
-          return this.pouch.db.put(file, next)
+          this.pouch.db.put(file, next)
         }, err => {
           should.not.exist(err)
-          return this.merge.deleteFolder(this.side, doc, err => {
+          this.merge.deleteFolder(this.side, doc, err => {
             should.not.exist(err)
-            return this.pouch.byPath('FOO/TO-REMOVE', function (_, docs) {
+            this.pouch.byPath('FOO/TO-REMOVE', function (_, docs) {
               docs.length.should.be.equal(0)
               done()
             })
@@ -542,7 +549,7 @@ describe('Merge', function () {
 
     it('remove nested folders', function (done) {
       let base = 'NESTED/TO-DELETE'
-      return async.eachSeries(['', '/b', '/b/c', '/b/d'], (name, next) => {
+      async.eachSeries(['', '/b', '/b/c', '/b/d'], (name, next) => {
         let doc = {
           _id: `${base}${name}`,
           path: `${base}${name}`,
@@ -551,12 +558,12 @@ describe('Merge', function () {
             local: 1
           }
         }
-        return this.pouch.db.put(doc, next)
+        this.pouch.db.put(doc, next)
       }, err => {
         should.not.exist(err)
-        return this.merge.deleteFolder(this.side, {_id: base, path: base}, err => {
+        this.merge.deleteFolder(this.side, {_id: base, path: base}, err => {
           should.not.exist(err)
-          return this.pouch.db.allDocs(function (err, res) {
+          this.pouch.db.allDocs(function (err, res) {
             should.not.exist(err)
             for (let row of Array.from(res.rows)) {
               row.id.should.not.match(/^NESTED/i)

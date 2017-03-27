@@ -3261,9 +3261,9 @@ node-pre-gyp@^0.6.29, node-pre-gyp@~0.6.31:
     tar "~2.2.1"
     tar-pack "~3.3.0"
 
-node-uuid@1.4.7:
-  version "1.4.7"
-  resolved "https://registry.yarnpkg.com/node-uuid/-/node-uuid-1.4.7.tgz#6da5a17668c4b3dd59623bda11cf7fa4c1f60a6f"
+node-uuid@1.4.8:
+  version "1.4.8"
+  resolved "https://registry.yarnpkg.com/node-uuid/-/node-uuid-1.4.8.tgz#b040eb0923968afabf8d32fb1f17f1167fdab907"
 
 nomnom@^1.8.1:
   version "1.8.1"
