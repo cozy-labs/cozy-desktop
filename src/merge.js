@@ -350,8 +350,8 @@ class Merge {
       dst._id = src.moveTo
       dst.path = doc.path.replace(was.path, folder.path)
       delete dst._rev
-      bulk.push(dst)
       delete dst.errors
+      bulk.push(dst)
     }
     return this.pouch.bulkDocs(bulk)
   }
