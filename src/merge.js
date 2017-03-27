@@ -346,6 +346,7 @@ class Merge {
       delete src.errors
       bulk.push(src)
       let dst = clone(doc)
+      markSide(side, dst, src)
       dst._id = src.moveTo
       delete dst._rev
       bulk.push(dst)
