@@ -9,9 +9,11 @@ import { Client as CozyClient } from 'cozy-client-js'
 
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
-import { COZY_URL } from '../../helpers/cozy'
+import { COZY_URL, builders } from '../../helpers/cozy'
 
-import { FILES_DOCTYPE } from '../../../src/remote/constants'
+import { createMetadata } from '../../../src/conversion'
+import { buildId } from '../../../src/metadata'
+import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } from '../../../src/remote/constants'
 import Prep from '../../../src/prep'
 import RemoteCozy from '../../../src/remote/cozy'
 import RemoteWatcher from '../../../src/remote/watcher'
@@ -439,6 +441,9 @@ describe('RemoteWatcher', function () {
           }
         }
       }
+      const was: Metadata = await this.pouch.db.get('my-folder/file-2')
+      was.toBeTrashed = true
+      await this.pouch.db.put(was)
 
       await this.watcher.onChange(clone(doc))
 
@@ -451,7 +456,8 @@ describe('RemoteWatcher', function () {
         tags: doc.tags,
         remote: {
           _id: '12345678902'
-        }
+        },
+        toBeTrashed: true
       })
       let dst = this.prep.moveDocAsync.args[0][1]
       dst.should.have.properties({
@@ -464,7 +470,54 @@ describe('RemoteWatcher', function () {
           _rev: doc._rev
         }
       })
-      dst.should.not.have.properties(['_rev', 'path', 'name'])
+      dst.should.not.have.properties(['_rev', 'path', 'name', 'toBeTrashed'])
+    })
+
+    it('calls moveDoc when folder is trashed', async function () {
+      this.prep.moveDocAsync = sinon.stub()
+      this.prep.moveDocAsync.returnsPromise().resolves(null)
+      const oldDir: RemoteDoc = builders.remoteDir().named('foo').build()
+      // TODO: builders.dirMetadata().fromRemote(oldDir).create()
+      let oldMeta: Metadata = createMetadata(oldDir)
+      buildId(oldMeta)
+      await this.pouch.db.put(oldMeta)
+      // TODO: builders.remoteDir().was(oldDir).trashed().build()
+      const newDir: RemoteDoc = {...oldDir, path: '/.cozy_trash/foo', dir_id: TRASH_DIR_ID}
+
+      await this.watcher.onChange(newDir)
+
+      should(this.prep.moveDocAsync.called).be.true()
+      const args = this.prep.moveDocAsync.args[0]
+      should(args[0]).equal('remote')
+      should(args[1]).have.properties(createMetadata(newDir))
+      // FIXME: Make sure oldMeta timestamps are formatted as expected by PouchDB
+      delete oldMeta.creationDate
+      delete oldMeta.lastModification
+      should(args[2]).have.properties(oldMeta)
+    })
+
+    it('calls moveDoc when folder is restored', async function () {
+      this.prep.moveDocAsync = sinon.stub()
+      this.prep.moveDocAsync.returnsPromise().resolves(null)
+      const oldDir: RemoteDoc = builders.remoteDir().named('foo').trashed().build()
+      // TODO: builders.dirMetadata().fromRemote(oldDir).create()
+      let oldMeta: Metadata = createMetadata(oldDir)
+      buildId(oldMeta)
+      await this.pouch.db.put(oldMeta)
+      // TODO: builders.remoteDir().was(oldDir).restored().build()
+      const newDir: RemoteDoc = {...oldDir, path: '/foo', dir_id: ROOT_DIR_ID}
+
+      await this.watcher.onChange(newDir)
+
+      should(this.prep.moveDocAsync.called).be.true()
+      const args = this.prep.moveDocAsync.args[0]
+      should(args[0]).equal('remote')
+      should(args[1]).have.properties(createMetadata(newDir))
+      should(args[1]).not.have.property('toBeTrashed')
+      // FIXME: Make sure oldMeta timestamps are formatted as expected by PouchDB
+      delete oldMeta.creationDate
+      delete oldMeta.lastModification
+      should(args[2]).have.properties(oldMeta)
     })
 
     it('calls deleteDoc & addDoc when file has changed completely', async function () {
@@ -508,22 +561,6 @@ describe('RemoteWatcher', function () {
         }
       })
       args[1].should.not.have.properties(['_rev', 'path', 'name'])
-    })
-
-    it('calls deleteDoc for a doc put in the trash', async function () {
-      this.prep.deleteDocAsync = sinon.stub()
-      this.prep.deleteDocAsync.returnsPromise().resolves(null)
-      let doc = {
-        _id: '12345678901',
-        _rev: '7-abcdef',
-        path: '/.cozy_trash/foo'
-      }
-
-      await this.watcher.onChange(doc)
-
-      this.prep.deleteDocAsync.called.should.be.true()
-      let id = this.prep.deleteDocAsync.args[0][1].path
-      id.should.equal('my-folder/file-1')
     })
   })
 

@@ -2,7 +2,7 @@
 
 import * as conversion from '../conversion'
 import logger from '../logger'
-import { ensureValidPath } from '../metadata'
+import { ensureValidPath, inRemoteTrash } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import RemoteCozy from './cozy'
@@ -116,14 +116,7 @@ export default class RemoteWatcher {
     log.debug(`${doc.path}: was:`)
     log.inspect(was)
 
-    if (doc.path && doc.path.startsWith('/.cozy_trash/')) {
-      if (was == null) {
-        log.debug(`${doc.path}: was deleted both remotely and locally`)
-      } else {
-        log.debug(`${was.path}: was deleted remotely`)
-        return this.prep.deleteDocAsync(SIDE, was)
-      }
-    } else if (['directory', 'file'].includes(doc.type)) {
+    if (['directory', 'file'].includes(doc.type)) {
       return this.putDoc(doc, was)
     } else {
       log.error(`Document ${doc._id} is not a file or a directory`)
@@ -146,6 +139,12 @@ export default class RemoteWatcher {
       return this.prep.updateDocAsync(SIDE, doc)
     } else if ((doc.checksum != null) && (was.checksum === doc.checksum)) {
       log.debug(`${doc.path}: ${docType} was moved remotely`)
+      return this.prep.moveDocAsync(SIDE, doc, was)
+    } else if (inRemoteTrash(doc) && !inRemoteTrash(was)) {
+      log.debug(`${doc.path}: ${docType} was trashed remotely`)
+      return this.prep.moveDocAsync(SIDE, doc, was)
+    } else if (inRemoteTrash(was) && !inRemoteTrash(doc)) {
+      log.debug(`${doc.path}: ${docType} was restored remotely`)
       return this.prep.moveDocAsync(SIDE, doc, was)
     } else if ((doc.docType === 'folder') || (was.remote._rev === doc.remote._rev)) {
       log.debug(`${doc.path}: ${docType} was possibly modified and renamed remotely while cozy-desktop was stopped`)
