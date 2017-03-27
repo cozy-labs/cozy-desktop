@@ -231,7 +231,8 @@ describe('Merge', function () {
         sides: {
           local: 1,
           remote: 1
-        }
+        },
+        toBeTrashed: true
       }
       this.pouch.db.put(clone(was), (err, inserted) => {
         should.not.exist(err)
@@ -245,6 +246,7 @@ describe('Merge', function () {
             }
             res.should.have.properties(doc)
             res.sides.local.should.equal(1)
+            should.not.exist(res.toBeTrashed)
             this.pouch.db.get(was._id, function (err, res) {
               should.exist(err)
               err.status.should.equal(404)
@@ -361,7 +363,8 @@ describe('Merge', function () {
         sides: {
           local: 1,
           remote: 1
-        }
+        },
+        toBeTrashed: true
       }
       this.pouch.db.put(clone(was), (err, inserted) => {
         should.not.exist(err)
@@ -375,6 +378,7 @@ describe('Merge', function () {
             }
             res.should.have.properties(doc)
             res.sides.local.should.equal(1)
+            should.not.exist(res.toBeTrashed)
             this.pouch.db.get(was._id, function (err, res) {
               should.exist(err)
               err.status.should.equal(404)
@@ -430,7 +434,12 @@ describe('Merge', function () {
     before(function (done) {
       pouchHelpers.createParentFolder(this.pouch, () => {
         pouchHelpers.createFolder(this.pouch, 9, () => {
-          pouchHelpers.createFile(this.pouch, 9, done)
+          pouchHelpers.createFile(this.pouch, 9, () => {
+            this.pouch.db.get('my-folder/file-9', (err, file) => {
+              should.not.exist(err)
+              this.pouch.db.put({...file, toBeTrashed: true}, done)
+            })
+          })
         })
       })
     })
@@ -454,11 +463,9 @@ describe('Merge', function () {
               should.not.exist(err)
               should.exist(res)
               should(res.path).eql(`DESTINATION${id}`)
+              should.not.exist(res.toBeTrashed)
               if (id !== '') { // parent sides are updated in moveFolderAsync()
-                should(res.sides).have.properties({
-                  local: 2,
-                  remote: 1
-                })
+                should(res.sides.local).not.eql(1)
               }
               this.pouch.db.get(`my-folder${id}`, function (err, res) {
                 err.status.should.equal(404)
