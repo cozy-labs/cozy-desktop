@@ -446,7 +446,7 @@ describe('Merge', function () {
       }
       this.pouch.db.get('my-folder', (err, was) => {
         should.not.exist(err)
-        return this.merge.moveFolderRecursively(doc, was, err => {
+        return this.merge.moveFolderRecursively('local', doc, was, err => {
           should.not.exist(err)
           let ids = ['', '/folder-9', '/file-9']
           return async.eachSeries(ids, (id, next) => {
