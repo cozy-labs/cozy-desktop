@@ -8,6 +8,7 @@ import fs from 'fs'
 import path from 'path'
 
 import logger from '../logger'
+import { inRemoteTrash } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import { PendingMap } from '../utils/pending'
@@ -332,7 +333,7 @@ class LocalWatcher {
           callback(err)
         } else {
           async.eachSeries(docs.reverse(), (doc, next) => {
-            if (this.paths.indexOf(doc.path) !== -1) {
+            if (this.paths.indexOf(doc.path) !== -1 || inRemoteTrash(doc)) {
               async.setImmediate(next)
             } else {
               this.prep.deleteDoc(this.side, doc, next)
