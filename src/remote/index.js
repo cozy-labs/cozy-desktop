@@ -202,11 +202,33 @@ export default class Remote implements Side {
     log.info(`${doc.path}: Updating metadata...`)
     const [newParentDirPath, newName] = conversion.extractDirAndName(doc.path)
     const newParentDir = await this.remoteCozy.findDirectoryByPath(newParentDirPath)
-    const newRemoteDoc = await this.remoteCozy.updateAttributesById(old.remote._id, {
-      name: newName,
-      dir_id: newParentDir._id
-    })
-    doc.remote._rev = newRemoteDoc._rev
+    // XXX: Should we recreate missing parent, or would it duplicate work in Merge#ensureParentExist()?
+    let newRemoteDoc: RemoteDoc
+
+    if (!old.remote) {
+      return this.addFolderAsync(doc)
+    }
+
+    try {
+      newRemoteDoc = await this.remoteCozy.updateAttributesById(old.remote._id, {
+        name: newName,
+        dir_id: newParentDir._id
+      })
+    } catch (err) {
+      if (err.status !== 404) { throw err }
+
+      log.warn(`${doc.path}: Directory doesn't exist anymore. Recreating it...`)
+      newRemoteDoc = await this.remoteCozy.createDirectory({
+        name: newName,
+        dirID: newParentDir._id,
+        lastModifiedDate: doc.lastModification
+      })
+    }
+
+    doc.remote = {
+      _id: newRemoteDoc._id,
+      _rev: newRemoteDoc._rev
+    }
 
     return conversion.createMetadata(newRemoteDoc)
   }
