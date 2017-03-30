@@ -39,8 +39,8 @@ export default class RemoteCozy {
 
     // Aliases:
     this.unregister = this.client.auth.unregisterClient
-    this.createFile = this.client.files.create
-    this.createDirectory = this.client.files.createDirectory
+    this.createFile = composeAsync(this.client.files.create, this.toRemoteDoc)
+    this.createDirectory = composeAsync(this.client.files.createDirectory, this.toRemoteDoc)
     this.updateFileById = composeAsync(this.client.files.updateById, this.toRemoteDoc)
     this.updateAttributesById = composeAsync(this.client.files.updateAttributesById, this.toRemoteDoc)
     this.trashById = this.client.files.trashById
