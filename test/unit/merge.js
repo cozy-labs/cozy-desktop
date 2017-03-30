@@ -617,6 +617,7 @@ describe('Merge', function () {
       it('tries to resolve the conflict', async function () {
         this.merge.local = {resolveConflictAsync: sinon.stub()}
         this.merge.local.resolveConflictAsync.returnsPromise().resolves()
+        sinon.spy(this.pouch, 'put')
 
         const doc = {_id: 'conflicting-doctype', docType: 'folder', path: 'conflicting-doctype'}
         await this.pouch.db.put({...doc, docType: 'file'})
@@ -624,11 +625,14 @@ describe('Merge', function () {
         await this.merge.trashAsync(this.side, doc)
 
         should(this.merge.local.resolveConflictAsync).have.been.calledOnce()
+        should(this.pouch.put).not.have.been.called()
         const [dst, src] = this.merge.local.resolveConflictAsync.getCall(0).args
         should(src).eql(doc)
         should(dst).have.properties({...doc, path: dst.path})
         should(dst.path).match(/conflict/)
         should(dst).not.have.property('toBeTrashed')
+
+        this.pouch.put.restore()
       })
     })
   })

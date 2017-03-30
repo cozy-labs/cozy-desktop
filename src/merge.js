@@ -460,7 +460,8 @@ class Merge {
       throw err
     }
     if (doc.docType !== oldMetadata.docType) {
-      this.resolveConflictAsync(side, doc)
+      await this.resolveConflictAsync(side, doc)
+      return
     }
     const newMetadata = clone(oldMetadata)
     markSide(side, newMetadata, oldMetadata)
