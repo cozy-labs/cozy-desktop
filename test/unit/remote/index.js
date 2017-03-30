@@ -438,8 +438,8 @@ describe('Remote', function () {
     })
   })
 
-  describe('addFolder', () =>
-    it('adds a folder to couchdb', function (done) {
+  describe('addFolderAsync', () => {
+    it('adds a folder to couchdb', async function () {
       const dateString = '2017-02-14T15:03:27Z'
       let doc: Object = {
         path: 'couchdb-folder/folder-1',
@@ -447,26 +447,20 @@ describe('Remote', function () {
         creationDate: dateString,
         lastModification: dateString
       }
-      this.remote.addFolder(doc, (err, created: RemoteDoc) => {
-        should.not.exist(err)
-        should.exist(doc.remote._id)
-        should.exist(doc.remote._rev)
+      const created: RemoteDoc = await this.remote.addFolderAsync(doc)
+      should.exist(doc.remote._id)
+      should.exist(doc.remote._rev)
 
-        cozy.files.statById(created._id)
-          .then(folder => {
-            should(folder.attributes).have.properties({
-              path: '/couchdb-folder/folder-1',
-              name: 'folder-1',
-              type: 'directory',
-              created_at: dateString,
-              updated_at: dateString
-            })
-            done()
-          })
-          .catch(done)
+      const folder = await cozy.files.statById(created._id)
+      should(folder.attributes).have.properties({
+        path: '/couchdb-folder/folder-1',
+        name: 'folder-1',
+        type: 'directory',
+        created_at: dateString,
+        updated_at: dateString
       })
     })
-  )
+  })
 
   describe('overwriteFileAsync', function () {
     it('overwrites the binary content', async function () {

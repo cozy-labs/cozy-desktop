@@ -54,27 +54,28 @@ export default class Remote implements Side {
   }
 
   // Create a folder on the remote cozy instance
-  async addFolder (doc: Metadata, callback: Callback) {
-    try {
-      log.info(`${doc.path}: Creating folder...`)
+  async addFolderAsync (doc: Metadata): Promise<RemoteDoc> {
+    log.info(`${doc.path}: Creating folder...`)
 
-      const [dirPath, name] = conversion.extractDirAndName(doc.path)
-      const dir: RemoteDoc = await this.remoteCozy.findDirectoryByPath(dirPath)
-      const created: RemoteDoc = await this.remoteCozy.createDirectory({
-        name,
-        dirID: dir._id,
-        lastModifiedDate: doc.lastModification
-      })
+    const [dirPath, name] = conversion.extractDirAndName(doc.path)
+    const dir: RemoteDoc = await this.remoteCozy.findDirectoryByPath(dirPath)
+    const created: RemoteDoc = await this.remoteCozy.createDirectory({
+      name,
+      dirID: dir._id,
+      lastModifiedDate: doc.lastModification
+    })
 
-      doc.remote = {
-        _id: created._id,
-        _rev: created._rev
-      }
-
-      callback(null, created)
-    } catch (err) {
-      callback(err)
+    doc.remote = {
+      _id: created._id,
+      _rev: created._rev
     }
+
+    return created
+  }
+
+  async addFolder (doc: Metadata, callback: Callback) {
+    // $FlowFixMe
+    this.addFolderAsync(doc).asCallback(callback)
   }
 
   async addFileAsync (doc: Metadata): Promise<RemoteDoc> {
