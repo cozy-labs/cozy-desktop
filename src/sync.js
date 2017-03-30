@@ -186,6 +186,7 @@ class Sync {
         break
       case (sideName === 'remote' && doc.toBeTrashed && !inRemoteTrash(doc)):
         // File or folder was just deleted locally
+        // TODO: Retry on failure instead of going unsynced
         this.trashLaterWithParentOrByItself(doc, side)
         done()
         break
