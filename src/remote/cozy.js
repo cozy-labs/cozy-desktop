@@ -55,7 +55,7 @@ export default class RemoteCozy {
                          contentType?: ?string,
                          lastModifiedDate?: ?Date}) => Promise<RemoteDoc>
 
-  createDirectory: ({name: string, dirID: string}) => Promise<RemoteDoc>
+  createDirectory: ({name: string, dirID?: string}) => Promise<RemoteDoc>
 
   updateFileById: (id: string,
                    data: Readable,
