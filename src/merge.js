@@ -9,6 +9,7 @@ import { markSide, sameBinary, sameFile, sameFolder } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
 
+import type { Metadata } from './metadata'
 import type { SideName } from './side'
 
 const log = logger({
@@ -271,6 +272,7 @@ class Merge {
       if (doc.class == null) { doc.class = was.class }
       if (doc.mime == null) { doc.mime = was.mime }
       if (doc.tags == null) { doc.tags = was.tags || [] }
+      delete doc.toBeTrashed
       was.moveTo = doc._id
       was._deleted = true
       delete was.errors
@@ -308,6 +310,7 @@ class Merge {
       markSide(side, was, was)
       if (doc.creationDate == null) { doc.creationDate = was.creationDate }
       if (doc.tags == null) { doc.tags = was.tags || [] }
+      delete doc.toBeTrashed
       if (folder) {
         const dst = await this.resolveConflictAsync(side, doc)
         dst.sides = {}
@@ -338,6 +341,8 @@ class Merge {
     was.moveTo = folder._id
     let bulk = [was, folder]
     for (let doc of Array.from(docs)) {
+      // TODO: Extract metadata copy logic
+      delete doc.toBeTrashed
       let src = clone(doc)
       src._deleted = true
       // moveTo is used for comparison. It's safer to take _id
@@ -441,6 +446,28 @@ class Merge {
 
   deleteFolderRecursively (side: SideName, folder, callback) {
     this.deleteFolderRecursivelyAsync(side, folder).asCallback(callback)
+  }
+
+  async trashAsync (side: SideName, doc: Metadata): Promise<void> {
+    let oldMetadata
+    try {
+      oldMetadata = await this.pouch.db.get(doc._id)
+    } catch (err) {
+      if (err.status === 404) {
+        log.debug(`${doc._id}: Nothing to trash`)
+        return
+      }
+      throw err
+    }
+    if (doc.docType !== oldMetadata.docType) {
+      await this.resolveConflictAsync(side, doc)
+      return
+    }
+    const newMetadata = clone(oldMetadata)
+    markSide(side, newMetadata, oldMetadata)
+    newMetadata.toBeTrashed = true
+    // TODO: Handle missing fields?
+    return this.pouch.put(newMetadata)
   }
 }
 

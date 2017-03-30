@@ -8,6 +8,7 @@ import fs from 'fs'
 import path from 'path'
 
 import logger from '../logger'
+import { inRemoteTrash } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import { PendingMap } from '../utils/pending'
@@ -273,7 +274,7 @@ class LocalWatcher {
     }
     const execute = () => {
       log.debug(`${filePath}: File deleted`)
-      this.prep.deleteFile(this.side, {path: filePath}, this.done)
+      this.prep.trashFile(this.side, {path: filePath}, this.done)
     }
     const check = () => {
       if (this.checksums === 0) {
@@ -299,7 +300,7 @@ class LocalWatcher {
     }
     const execute = () => {
       log.debug(`${folderPath}: Folder deleted`)
-      this.prep.deleteFolder(this.side, {path: folderPath}, this.done)
+      this.prep.trashFolder(this.side, {path: folderPath}, this.done)
     }
     const check = () => {
       if (!this.pending.hasPendingChild(folderPath)) {
@@ -332,7 +333,7 @@ class LocalWatcher {
           callback(err)
         } else {
           async.eachSeries(docs.reverse(), (doc, next) => {
-            if (this.paths.indexOf(doc.path) !== -1) {
+            if (this.paths.indexOf(doc.path) !== -1 || inRemoteTrash(doc)) {
               async.setImmediate(next)
             } else {
               this.prep.deleteDoc(this.side, doc, next)

@@ -277,6 +277,32 @@ class Prep {
   deleteFolder (side: SideName, doc, callback) {
     this.deleteFolderAsync(side, doc).asCallback(callback)
   }
+
+  trashFileAsync (side: SideName, doc) {
+    ensureValidPath(doc)
+
+    doc.docType = 'file'
+    buildId(doc)
+    if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
+    return this.merge.trashAsync(side, doc)
+  }
+
+  trashFile (side: SideName, doc, callback) {
+    this.trashFileAsync(side, doc).asCallback(callback)
+  }
+
+  trashFolderAsync (side: SideName, doc) {
+    ensureValidPath(doc)
+
+    doc.docType = 'folder'
+    buildId(doc)
+    if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
+    return this.merge.trashAsync(side, doc)
+  }
+
+  trashFolder (side: SideName, doc, callback) {
+    this.trashFolderAsync(side, doc).asCallback(callback)
+  }
 }
 
 export default Prep

@@ -231,7 +231,8 @@ describe('Merge', function () {
         sides: {
           local: 1,
           remote: 1
-        }
+        },
+        toBeTrashed: true
       }
       this.pouch.db.put(clone(was), (err, inserted) => {
         should.not.exist(err)
@@ -245,6 +246,7 @@ describe('Merge', function () {
             }
             res.should.have.properties(doc)
             res.sides.local.should.equal(1)
+            should.not.exist(res.toBeTrashed)
             this.pouch.db.get(was._id, function (err, res) {
               should.exist(err)
               err.status.should.equal(404)
@@ -361,7 +363,8 @@ describe('Merge', function () {
         sides: {
           local: 1,
           remote: 1
-        }
+        },
+        toBeTrashed: true
       }
       this.pouch.db.put(clone(was), (err, inserted) => {
         should.not.exist(err)
@@ -375,6 +378,7 @@ describe('Merge', function () {
             }
             res.should.have.properties(doc)
             res.sides.local.should.equal(1)
+            should.not.exist(res.toBeTrashed)
             this.pouch.db.get(was._id, function (err, res) {
               should.exist(err)
               err.status.should.equal(404)
@@ -430,7 +434,12 @@ describe('Merge', function () {
     before(function (done) {
       pouchHelpers.createParentFolder(this.pouch, () => {
         pouchHelpers.createFolder(this.pouch, 9, () => {
-          pouchHelpers.createFile(this.pouch, 9, done)
+          pouchHelpers.createFile(this.pouch, 9, () => {
+            this.pouch.db.get('my-folder/file-9', (err, file) => {
+              should.not.exist(err)
+              this.pouch.db.put({...file, toBeTrashed: true}, done)
+            })
+          })
         })
       })
     })
@@ -454,11 +463,9 @@ describe('Merge', function () {
               should.not.exist(err)
               should.exist(res)
               should(res.path).eql(`DESTINATION${id}`)
+              should.not.exist(res.toBeTrashed)
               if (id !== '') { // parent sides are updated in moveFolderAsync()
-                should(res.sides).have.properties({
-                  local: 2,
-                  remote: 1
-                })
+                should(res.sides.local).not.eql(1)
               }
               this.pouch.db.get(`my-folder${id}`, function (err, res) {
                 err.status.should.equal(404)
@@ -571,6 +578,61 @@ describe('Merge', function () {
             done()
           })
         })
+      })
+    })
+  })
+
+  describe('trashAsync', () => {
+    context('when metadata are found in Pouch', () => {
+      it('updates it with toBeTrashed property and up-to-date sides info', async function () {
+        const doc = {_id: 'existing-metadata'}
+        await this.pouch.db.put({...doc, sides: {local: 1, remote: 1}})
+
+        await this.merge.trashAsync(this.side, doc)
+
+        const updated = await this.pouch.db.get(doc._id)
+        should(updated).have.properties({
+          ...doc,
+          toBeTrashed: true,
+          sides: {
+            local: 2,
+            remote: 1
+          }
+        })
+      })
+    })
+
+    context('when metadata are not found in Pouch', () => {
+      it('does nothing', async function () {
+        const doc = {_id: 'missing-metadata'}
+
+        await this.merge.trashAsync(this.side, doc)
+
+        await should(this.pouch.db.get(doc._id))
+          .be.rejectedWith({status: 404})
+      })
+    })
+
+    context('when docType does not match', () => {
+      it('tries to resolve the conflict', async function () {
+        this.merge.local = {resolveConflictAsync: sinon.stub()}
+        this.merge.local.resolveConflictAsync.returnsPromise().resolves()
+        sinon.spy(this.pouch, 'put')
+
+        const doc = {_id: 'conflicting-doctype', docType: 'folder', path: 'conflicting-doctype'}
+        await this.pouch.db.put({...doc, docType: 'file'})
+
+        await this.merge.trashAsync(this.side, doc)
+
+        should(this.merge.local.resolveConflictAsync).have.been.calledOnce()
+        should(this.pouch.put).not.have.been.called()
+        const [dst, src] = this.merge.local.resolveConflictAsync.getCall(0).args
+        should(src).eql(doc)
+        should(dst).have.properties({...doc, path: dst.path})
+        should(dst.path).match(/conflict/)
+        should(dst).not.have.property('toBeTrashed')
+
+        this.pouch.put.restore()
       })
     })
   })

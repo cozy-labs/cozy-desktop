@@ -7,7 +7,7 @@ import EventEmitter from 'events'
 import Ignore from './ignore'
 import Local from './local'
 import logger from './logger'
-import { extractRevNumber } from './metadata'
+import { extractRevNumber, inRemoteTrash } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
 import { REVOKED } from './remote/watcher'
@@ -183,6 +183,12 @@ class Sync {
     switch (true) {
       case side == null:
         this.pouch.setLocalSeq(change.seq, callback)
+        break
+      case (sideName === 'remote' && doc.toBeTrashed && !inRemoteTrash(doc)):
+        // File or folder was just deleted locally
+        // TODO: Retry on failure instead of going unsynced
+        this.trashLaterWithParentOrByItself(doc, side)
+        done()
         break
       case doc.docType === 'file':
         this.fileChanged(doc, side, rev, done)
@@ -361,8 +367,7 @@ class Sync {
         callback()
         break
       case doc._deleted:
-        this.trashLaterWithParentOrByItself(doc, side)
-        callback()
+        side.destroy(doc, callback)
         break
       case rev === 0:
         side.addFile(doc, callback)
@@ -421,8 +426,7 @@ class Sync {
         callback()
         break
       case doc._deleted:
-        this.trashLaterWithParentOrByItself(doc, side)
-        callback()
+        side.destroy(doc, callback)
         break
       case rev === 0:
         side.addFolder(doc, callback)

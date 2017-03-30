@@ -201,7 +201,7 @@ describe('LocalWatcher Tests', function () {
     it('detects when a file is deleted', function (done) {
       fs.ensureFileSync(path.join(this.syncPath, 'aca'))
       this.prep.addFile = () => {  // For aca file
-        this.prep.deleteFile = function (side, doc) {
+        this.prep.trashFile = function (side, doc) {
           side.should.equal('local')
           doc.should.have.properties({
             path: 'aca'})
@@ -217,7 +217,7 @@ describe('LocalWatcher Tests', function () {
     it('detects when a folder is deleted', function (done) {
       fs.mkdirSync(path.join(this.syncPath, 'ada'))
       this.prep.putFolder = () => {  // For ada folder
-        this.prep.deleteFolder = function (side, doc) {
+        this.prep.trashFolder = function (side, doc) {
           side.should.equal('local')
           doc.should.have.properties({
             path: 'ada'})
@@ -331,6 +331,7 @@ describe('LocalWatcher Tests', function () {
           this.prep.deleteFile = sinon.spy()
           this.prep.moveFile = sinon.spy()
           this.prep.deleteFolder = sinon.spy()
+          this.prep.trashFolder = sinon.spy()
           this.prep.putFolder = (side, doc) => {
             side.should.equal('local')
             doc.should.have.properties({
@@ -345,8 +346,9 @@ describe('LocalWatcher Tests', function () {
               src.should.have.properties({path: 'aga/agc'})
               dst = this.prep.moveFile.args[0][1]
               dst.should.have.properties({path: 'agb/agc'})
-              this.prep.deleteFolder.called.should.be.true()
-              let args = this.prep.deleteFolder.args[0][1]
+              // FIXME: Delete moved dirs
+              this.prep.trashFolder.called.should.be.true()
+              let args = this.prep.trashFolder.args[0][1]
               args.should.have.properties({path: 'aga'})
               done()
             }, 4000)
@@ -374,6 +376,11 @@ describe('LocalWatcher Tests', function () {
         path: 'folder2',
         docType: 'folder'
       }
+      const folder3 = {
+        _id: '.cozy_trash/folder3',
+        path: '.cozy_trash/folder3',
+        docType: 'folder'
+      }
       let file1 = {
         _id: 'file1',
         path: 'file1',
@@ -384,7 +391,12 @@ describe('LocalWatcher Tests', function () {
         path: 'file2',
         docType: 'folder'
       }
-      async.each([folder1, folder2, file1, file2], (doc, next) => {
+      const file3 = {
+        _id: '.cozy_trash/folder3/file3',
+        path: '.cozy_trash/folder3/file3',
+        docType: 'file'
+      }
+      async.each([folder1, folder2, folder3, file1, file2, file3], (doc, next) => {
         this.pouch.db.put(doc, next)
       }, () => {
         this.watcher.paths = ['folder1', 'file1']
@@ -392,8 +404,10 @@ describe('LocalWatcher Tests', function () {
           dd.calledTwice.should.be.true()
           dd.calledWithMatch('local', folder1).should.be.false()
           dd.calledWithMatch('local', folder2).should.be.true()
+          dd.calledWithMatch('local', folder3).should.be.false()
           dd.calledWithMatch('local', file1).should.be.false()
           dd.calledWithMatch('local', file2).should.be.true()
+          dd.calledWithMatch('local', file3).should.be.false()
           done()
         })
         cb()
