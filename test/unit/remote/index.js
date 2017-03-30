@@ -373,7 +373,7 @@ describe('Remote', function () {
       should.exist(doc.remote._id)
       should.exist(doc.remote._rev)
 
-      const file = await cozy.files.statById(created._id)
+      const file = await cozy.files.statById(created.remote._id)
       should(file.attributes).have.properties({
         created_at: timestamp.stringify(doc.creationDate),
         dir_id: 'io.cozy.files.root-dir',
@@ -426,7 +426,7 @@ describe('Remote', function () {
 
       should.exist(doc.remote._id)
       should.exist(doc.remote._rev)
-      const file = await cozy.files.statById(created._id)
+      const file = await cozy.files.statById(created.remote._id)
       should(file.attributes).have.properties({
         dir_id: backupDir._id,
         name: 'cat3.jpg',
@@ -447,11 +447,11 @@ describe('Remote', function () {
         creationDate: dateString,
         lastModification: dateString
       }
-      const created: RemoteDoc = await this.remote.addFolderAsync(doc)
+      const created: Metadata = await this.remote.addFolderAsync(doc)
       should.exist(doc.remote._id)
       should.exist(doc.remote._rev)
 
-      const folder = await cozy.files.statById(created._id)
+      const folder = await cozy.files.statById(created.remote._id)
       should(folder.attributes).have.properties({
         path: '/couchdb-folder/folder-1',
         name: 'folder-1',

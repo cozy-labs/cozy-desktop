@@ -54,7 +54,7 @@ export default class Remote implements Side {
   }
 
   // Create a folder on the remote cozy instance
-  async addFolderAsync (doc: Metadata): Promise<RemoteDoc> {
+  async addFolderAsync (doc: Metadata): Promise<Metadata> {
     log.info(`${doc.path}: Creating folder...`)
 
     const [dirPath, name] = conversion.extractDirAndName(doc.path)
@@ -70,7 +70,7 @@ export default class Remote implements Side {
       _rev: created._rev
     }
 
-    return created
+    return conversion.createMetadata(created)
   }
 
   async addFolder (doc: Metadata, callback: Callback) {
@@ -78,7 +78,7 @@ export default class Remote implements Side {
     this.addFolderAsync(doc).asCallback(callback)
   }
 
-  async addFileAsync (doc: Metadata): Promise<RemoteDoc> {
+  async addFileAsync (doc: Metadata): Promise<Metadata> {
     log.info(`${doc.path}: Uploading new file...`)
     const stream = await this.other.createReadStreamAsync(doc)
     const [dirPath, name] = conversion.extractDirAndName(doc.path)
@@ -96,7 +96,7 @@ export default class Remote implements Side {
       _rev: created._rev
     }
 
-    return created
+    return conversion.createMetadata(created)
   }
 
   // FIXME: Drop this wrapper as soon as Sync uses promises
@@ -110,7 +110,7 @@ export default class Remote implements Side {
     }
   }
 
-  async overwriteFileAsync (doc: Metadata, old: Metadata): Promise<RemoteDoc> {
+  async overwriteFileAsync (doc: Metadata, old: Metadata): Promise<Metadata> {
     log.info(`${doc.path}: Uploading new file version...`)
     const stream = await this.other.createReadStreamAsync(doc)
     const updated = await this.remoteCozy.updateFileById(doc.remote._id, stream, {
@@ -121,7 +121,7 @@ export default class Remote implements Side {
 
     doc.remote._rev = updated._rev
 
-    return updated
+    return conversion.createMetadata(updated)
   }
 
   async overwriteFile (doc: Metadata, old: Metadata, callback: Callback) {
@@ -133,7 +133,7 @@ export default class Remote implements Side {
     }
   }
 
-  async updateFileMetadataAsync (doc: Metadata, old: any): Promise<*> {
+  async updateFileMetadataAsync (doc: Metadata, old: any): Promise<Metadata> {
     log.info(`${doc.path}: Updating file metadata...`)
     // TODO: v3: addFile() when no old.remote
 
@@ -151,7 +151,7 @@ export default class Remote implements Side {
       _rev: updated._rev
     }
 
-    return updated
+    return conversion.createMetadata(updated)
   }
 
   updateFileMetadata (doc: Metadata, old: any, callback: Callback) {
