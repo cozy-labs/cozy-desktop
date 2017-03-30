@@ -57,20 +57,29 @@ export default class Remote implements Side {
   async addFolderAsync (doc: Metadata): Promise<Metadata> {
     log.info(`${doc.path}: Creating folder...`)
 
-    const [dirPath, name] = conversion.extractDirAndName(doc.path)
-    const dir: RemoteDoc = await this.remoteCozy.findDirectoryByPath(dirPath)
-    const created: RemoteDoc = await this.remoteCozy.createDirectory({
-      name,
-      dirID: dir._id,
-      lastModifiedDate: doc.lastModification
-    })
+    const [parentPath, name] = conversion.extractDirAndName(doc.path)
+    const parent: RemoteDoc = await this.remoteCozy.findDirectoryByPath(parentPath)
+    let dir: RemoteDoc
 
-    doc.remote = {
-      _id: created._id,
-      _rev: created._rev
+    try {
+      dir = await this.remoteCozy.createDirectory({
+        name,
+        dirID: parent._id,
+        lastModifiedDate: doc.lastModification
+      })
+    } catch (err) {
+      if (err.status !== 409) { throw err }
+
+      log.info(`${doc.path}: Folder already exists`)
+      dir = await this.remoteCozy.findDirectoryByPath(`/${doc.path}`)
     }
 
-    return conversion.createMetadata(created)
+    doc.remote = {
+      _id: dir._id,
+      _rev: dir._rev
+    }
+
+    return conversion.createMetadata(dir)
   }
 
   async addFolder (doc: Metadata, callback: Callback) {

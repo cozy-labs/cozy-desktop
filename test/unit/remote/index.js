@@ -460,6 +460,21 @@ describe('Remote', function () {
         updated_at: dateString
       })
     })
+
+    it('does nothing when the folder already exists', async function () {
+      const remoteDir: RemoteDoc = await builders.remoteDir().create()
+      const metadata: Metadata = {...conversion.createMetadata(remoteDir), remote: undefined}
+
+      const result: Metadata = await this.remote.addFolderAsync(metadata)
+
+      const folder: JsonApiDoc = await cozy.files.statById(result.remote._id)
+      const {path, name, type, created_at, updated_at} = remoteDir
+      should(folder.attributes).have.properties({path, name, type, created_at, updated_at})
+      should(metadata.remote).have.properties({
+        _id: remoteDir._id,
+        _rev: remoteDir._rev
+      })
+    })
   })
 
   describe('overwriteFileAsync', function () {
