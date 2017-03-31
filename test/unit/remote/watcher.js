@@ -442,7 +442,6 @@ describe('RemoteWatcher', function () {
         }
       }
       const was: Metadata = await this.pouch.db.get('my-folder/file-2')
-      was.toBeTrashed = true
       await this.pouch.db.put(was)
 
       await this.watcher.onChange(clone(doc))
@@ -456,8 +455,7 @@ describe('RemoteWatcher', function () {
         tags: doc.tags,
         remote: {
           _id: '12345678902'
-        },
-        toBeTrashed: true
+        }
       })
       let dst = this.prep.moveDocAsync.args[0][1]
       dst.should.have.properties({
@@ -470,12 +468,14 @@ describe('RemoteWatcher', function () {
           _rev: doc._rev
         }
       })
-      dst.should.not.have.properties(['_rev', 'path', 'name', 'toBeTrashed'])
+      dst.should.not.have.properties(['_rev', 'path', 'name'])
     })
 
-    it('calls moveDoc when folder is trashed', async function () {
-      this.prep.moveDocAsync = sinon.stub()
-      this.prep.moveDocAsync.returnsPromise().resolves(null)
+    it('calls deleteDoc & addDoc when trashed', async function () {
+      this.prep.deleteDocAsync = sinon.stub()
+      this.prep.deleteDocAsync.returnsPromise().resolves(null)
+      this.prep.addDocAsync = sinon.stub()
+      this.prep.addDocAsync.returnsPromise().resolves(null)
       const oldDir: RemoteDoc = builders.remoteDir().named('foo').build()
       // TODO: builders.dirMetadata().fromRemote(oldDir).create()
       let oldMeta: Metadata = createMetadata(oldDir)
@@ -486,19 +486,24 @@ describe('RemoteWatcher', function () {
 
       await this.watcher.onChange(newDir)
 
-      should(this.prep.moveDocAsync.called).be.true()
-      const args = this.prep.moveDocAsync.args[0]
-      should(args[0]).equal('remote')
-      should(args[1]).have.properties(createMetadata(newDir))
+      should(this.prep.deleteDocAsync.called).be.true()
+      should(this.prep.addDocAsync.called).be.true()
+      const deleteArgs = this.prep.deleteDocAsync.args[0]
       // FIXME: Make sure oldMeta timestamps are formatted as expected by PouchDB
       delete oldMeta.creationDate
       delete oldMeta.lastModification
-      should(args[2]).have.properties(oldMeta)
+      should(deleteArgs[0]).equal('remote')
+      should(deleteArgs[1]).have.properties(oldMeta)
+      const addArgs = this.prep.addDocAsync.args[0]
+      should(addArgs[0]).equal('remote')
+      should(addArgs[1]).have.properties(createMetadata(newDir))
     })
 
-    it('calls moveDoc when folder is restored', async function () {
-      this.prep.moveDocAsync = sinon.stub()
-      this.prep.moveDocAsync.returnsPromise().resolves(null)
+    it('calls deleteDoc & addDoc when restored', async function () {
+      this.prep.deleteDocAsync = sinon.stub()
+      this.prep.deleteDocAsync.returnsPromise().resolves(null)
+      this.prep.addDocAsync = sinon.stub()
+      this.prep.addDocAsync.returnsPromise().resolves(null)
       const oldDir: RemoteDoc = builders.remoteDir().named('foo').trashed().build()
       // TODO: builders.dirMetadata().fromRemote(oldDir).create()
       let oldMeta: Metadata = createMetadata(oldDir)
@@ -509,15 +514,17 @@ describe('RemoteWatcher', function () {
 
       await this.watcher.onChange(newDir)
 
-      should(this.prep.moveDocAsync.called).be.true()
-      const args = this.prep.moveDocAsync.args[0]
-      should(args[0]).equal('remote')
-      should(args[1]).have.properties(createMetadata(newDir))
-      should(args[1]).not.have.property('toBeTrashed')
+      should(this.prep.deleteDocAsync.called).be.true()
+      should(this.prep.addDocAsync.called).be.true()
+      const deleteArgs = this.prep.deleteDocAsync.args[0]
       // FIXME: Make sure oldMeta timestamps are formatted as expected by PouchDB
       delete oldMeta.creationDate
       delete oldMeta.lastModification
-      should(args[2]).have.properties(oldMeta)
+      should(deleteArgs[0]).equal('remote')
+      should(deleteArgs[1]).have.properties(oldMeta)
+      const addArgs = this.prep.addDocAsync.args[0]
+      should(addArgs[0]).equal('remote')
+      should(addArgs[1]).have.properties(createMetadata(newDir))
     })
 
     it('calls deleteDoc & addDoc when file has changed completely', async function () {
