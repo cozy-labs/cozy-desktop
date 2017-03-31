@@ -31,11 +31,11 @@ export type Metadata = {
   // TODO: v3: Rename to md5sum to match remote
   checksum?: string,
   class?: string,
-  creationDate: string,
+  creationDate: string|Date,
   // TODO: v3: Use the same local *type fields as the remote ones
   docType: string,
   executable?: boolean,
-  lastModification: string,
+  lastModification: string|Date,
   mime?: string,
   path: string,
   remote: MetadataRemoteInfo,
