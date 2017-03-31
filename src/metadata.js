@@ -26,6 +26,7 @@ export type MetadataSidesInfo = {
 
 // The files/dirs metadata, as stored in PouchDB
 export type Metadata = {
+  _deleted?: true,
   _id: string,
   _rev: string,
   // TODO: v3: Rename to md5sum to match remote
@@ -34,9 +35,11 @@ export type Metadata = {
   creationDate: string|Date,
   // TODO: v3: Use the same local *type fields as the remote ones
   docType: string,
+  errors: number,
   executable?: boolean,
   lastModification: string|Date,
   mime?: string,
+  moveTo?: string, // Destination id
   path: string,
   remote: MetadataRemoteInfo,
   size?: string,
