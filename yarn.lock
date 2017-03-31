@@ -3769,7 +3769,7 @@ pouchdb-fauxton@^0.0.6:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/pouchdb-fauxton/-/pouchdb-fauxton-0.0.6.tgz#fcfae265a3d621e913ebd035eec338a4efa92aa1"
 
-pouchdb-find@^0.10.4:
+pouchdb-find@^0.10.4, pouchdb-find@^0.10.5:
   version "0.10.5"
   resolved "https://registry.yarnpkg.com/pouchdb-find/-/pouchdb-find-0.10.5.tgz#34f285b8a56496a98f9cef2e1a1f6a0aac4eae8b"
   dependencies:
