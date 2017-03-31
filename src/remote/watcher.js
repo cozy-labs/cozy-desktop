@@ -137,14 +137,16 @@ export default class RemoteWatcher {
     } else if (was.path === doc.path) {
       log.debug(`${doc.path}: ${docType} was updated remotely`)
       return this.prep.updateDocAsync(SIDE, doc)
-    } else if ((doc.checksum != null) && (was.checksum === doc.checksum)) {
-      log.debug(`${doc.path}: ${docType} was moved remotely`)
-      return this.prep.moveDocAsync(SIDE, doc, was)
     } else if (inRemoteTrash(doc) && !inRemoteTrash(was)) {
       log.debug(`${doc.path}: ${docType} was trashed remotely`)
-      return this.prep.moveDocAsync(SIDE, doc, was)
+      await this.prep.deleteDocAsync(SIDE, was)
+      return this.prep.addDocAsync(SIDE, doc)
     } else if (inRemoteTrash(was) && !inRemoteTrash(doc)) {
       log.debug(`${doc.path}: ${docType} was restored remotely`)
+      await this.prep.deleteDocAsync(SIDE, was)
+      return this.prep.addDocAsync(SIDE, doc)
+    } else if ((doc.checksum != null) && (was.checksum === doc.checksum)) {
+      log.debug(`${doc.path}: ${docType} was moved remotely`)
       return this.prep.moveDocAsync(SIDE, doc, was)
     } else if ((doc.docType === 'folder') || (was.remote._rev === doc.remote._rev)) {
       log.debug(`${doc.path}: ${docType} was possibly modified and renamed remotely while cozy-desktop was stopped`)
