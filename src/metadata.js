@@ -20,8 +20,8 @@ export type MetadataRemoteInfo = {
 }
 
 export type MetadataSidesInfo = {
-  remote?: ?number,
-  local?: ?number
+  remote?: number,
+  local?: number
 }
 
 // The files/dirs metadata, as stored in PouchDB
