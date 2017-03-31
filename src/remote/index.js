@@ -54,30 +54,40 @@ export default class Remote implements Side {
   }
 
   // Create a folder on the remote cozy instance
-  async addFolder (doc: Metadata, callback: Callback) {
-    try {
-      log.info(`${doc.path}: Creating folder...`)
+  async addFolderAsync (doc: Metadata): Promise<Metadata> {
+    log.info(`${doc.path}: Creating folder...`)
 
-      const [dirPath, name] = conversion.extractDirAndName(doc.path)
-      const dir: RemoteDoc = await this.remoteCozy.findDirectoryByPath(dirPath)
-      const created: RemoteDoc = await this.remoteCozy.createDirectory({
+    const [parentPath, name] = conversion.extractDirAndName(doc.path)
+    const parent: RemoteDoc = await this.remoteCozy.findDirectoryByPath(parentPath)
+    let dir: RemoteDoc
+
+    try {
+      dir = await this.remoteCozy.createDirectory({
         name,
-        dirID: dir._id,
+        dirID: parent._id,
         lastModifiedDate: doc.lastModification
       })
-
-      doc.remote = {
-        _id: created._id,
-        _rev: created._rev
-      }
-
-      callback(null, created)
     } catch (err) {
-      callback(err)
+      if (err.status !== 409) { throw err }
+
+      log.info(`${doc.path}: Folder already exists`)
+      dir = await this.remoteCozy.findDirectoryByPath(`/${doc.path}`)
     }
+
+    doc.remote = {
+      _id: dir._id,
+      _rev: dir._rev
+    }
+
+    return conversion.createMetadata(dir)
   }
 
-  async addFileAsync (doc: Metadata): Promise<RemoteDoc> {
+  async addFolder (doc: Metadata, callback: Callback) {
+    // $FlowFixMe
+    this.addFolderAsync(doc).asCallback(callback)
+  }
+
+  async addFileAsync (doc: Metadata): Promise<Metadata> {
     log.info(`${doc.path}: Uploading new file...`)
     const stream = await this.other.createReadStreamAsync(doc)
     const [dirPath, name] = conversion.extractDirAndName(doc.path)
@@ -95,7 +105,7 @@ export default class Remote implements Side {
       _rev: created._rev
     }
 
-    return created
+    return conversion.createMetadata(created)
   }
 
   // FIXME: Drop this wrapper as soon as Sync uses promises
@@ -109,7 +119,7 @@ export default class Remote implements Side {
     }
   }
 
-  async overwriteFileAsync (doc: Metadata, old: Metadata): Promise<RemoteDoc> {
+  async overwriteFileAsync (doc: Metadata, old: Metadata): Promise<Metadata> {
     log.info(`${doc.path}: Uploading new file version...`)
     const stream = await this.other.createReadStreamAsync(doc)
     const updated = await this.remoteCozy.updateFileById(doc.remote._id, stream, {
@@ -120,7 +130,7 @@ export default class Remote implements Side {
 
     doc.remote._rev = updated._rev
 
-    return updated
+    return conversion.createMetadata(updated)
   }
 
   async overwriteFile (doc: Metadata, old: Metadata, callback: Callback) {
@@ -132,7 +142,7 @@ export default class Remote implements Side {
     }
   }
 
-  async updateFileMetadataAsync (doc: Metadata, old: any): Promise<*> {
+  async updateFileMetadataAsync (doc: Metadata, old: any): Promise<Metadata> {
     log.info(`${doc.path}: Updating file metadata...`)
     // TODO: v3: addFile() when no old.remote
 
@@ -150,7 +160,7 @@ export default class Remote implements Side {
       _rev: updated._rev
     }
 
-    return updated
+    return conversion.createMetadata(updated)
   }
 
   updateFileMetadata (doc: Metadata, old: any, callback: Callback) {
@@ -192,11 +202,33 @@ export default class Remote implements Side {
     log.info(`${doc.path}: Updating metadata...`)
     const [newParentDirPath, newName] = conversion.extractDirAndName(doc.path)
     const newParentDir = await this.remoteCozy.findDirectoryByPath(newParentDirPath)
-    const newRemoteDoc = await this.remoteCozy.updateAttributesById(old.remote._id, {
-      name: newName,
-      dir_id: newParentDir._id
-    })
-    doc.remote._rev = newRemoteDoc._rev
+    // XXX: Should we recreate missing parent, or would it duplicate work in Merge#ensureParentExist()?
+    let newRemoteDoc: RemoteDoc
+
+    if (!old.remote) {
+      return this.addFolderAsync(doc)
+    }
+
+    try {
+      newRemoteDoc = await this.remoteCozy.updateAttributesById(old.remote._id, {
+        name: newName,
+        dir_id: newParentDir._id
+      })
+    } catch (err) {
+      if (err.status !== 404) { throw err }
+
+      log.warn(`${doc.path}: Directory doesn't exist anymore. Recreating it...`)
+      newRemoteDoc = await this.remoteCozy.createDirectory({
+        name: newName,
+        dirID: newParentDir._id,
+        lastModifiedDate: doc.lastModification
+      })
+    }
+
+    doc.remote = {
+      _id: newRemoteDoc._id,
+      _rev: newRemoteDoc._rev
+    }
 
     return conversion.createMetadata(newRemoteDoc)
   }

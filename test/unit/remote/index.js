@@ -373,7 +373,7 @@ describe('Remote', function () {
       should.exist(doc.remote._id)
       should.exist(doc.remote._rev)
 
-      const file = await cozy.files.statById(created._id)
+      const file = await cozy.files.statById(created.remote._id)
       should(file.attributes).have.properties({
         created_at: timestamp.stringify(doc.creationDate),
         dir_id: 'io.cozy.files.root-dir',
@@ -426,7 +426,7 @@ describe('Remote', function () {
 
       should.exist(doc.remote._id)
       should.exist(doc.remote._rev)
-      const file = await cozy.files.statById(created._id)
+      const file = await cozy.files.statById(created.remote._id)
       should(file.attributes).have.properties({
         dir_id: backupDir._id,
         name: 'cat3.jpg',
@@ -438,8 +438,8 @@ describe('Remote', function () {
     })
   })
 
-  describe('addFolder', () =>
-    it('adds a folder to couchdb', function (done) {
+  describe('addFolderAsync', () => {
+    it('adds a folder to couchdb', async function () {
       const dateString = '2017-02-14T15:03:27Z'
       let doc: Object = {
         path: 'couchdb-folder/folder-1',
@@ -447,26 +447,35 @@ describe('Remote', function () {
         creationDate: dateString,
         lastModification: dateString
       }
-      this.remote.addFolder(doc, (err, created: RemoteDoc) => {
-        should.not.exist(err)
-        should.exist(doc.remote._id)
-        should.exist(doc.remote._rev)
+      const created: Metadata = await this.remote.addFolderAsync(doc)
+      should.exist(doc.remote._id)
+      should.exist(doc.remote._rev)
 
-        cozy.files.statById(created._id)
-          .then(folder => {
-            should(folder.attributes).have.properties({
-              path: '/couchdb-folder/folder-1',
-              name: 'folder-1',
-              type: 'directory',
-              created_at: dateString,
-              updated_at: dateString
-            })
-            done()
-          })
-          .catch(done)
+      const folder = await cozy.files.statById(created.remote._id)
+      should(folder.attributes).have.properties({
+        path: '/couchdb-folder/folder-1',
+        name: 'folder-1',
+        type: 'directory',
+        created_at: dateString,
+        updated_at: dateString
       })
     })
-  )
+
+    it('does nothing when the folder already exists', async function () {
+      const remoteDir: RemoteDoc = await builders.remoteDir().create()
+      const metadata: Metadata = {...conversion.createMetadata(remoteDir), remote: undefined}
+
+      const result: Metadata = await this.remote.addFolderAsync(metadata)
+
+      const folder: JsonApiDoc = await cozy.files.statById(result.remote._id)
+      const {path, name, type, created_at, updated_at} = remoteDir
+      should(folder.attributes).have.properties({path, name, type, created_at, updated_at})
+      should(metadata.remote).have.properties({
+        _id: remoteDir._id,
+        _rev: remoteDir._rev
+      })
+    })
+  })
 
   describe('overwriteFileAsync', function () {
     it('overwrites the binary content', async function () {
@@ -596,26 +605,61 @@ describe('Remote', function () {
       })
     })
 
-    xit('adds a folder to couchdb if the folder does not exist', function (done) {
-      let doc = {
-        path: 'couchdb-folder/folder-3',
-        docType: 'folder',
-        creationDate: new Date(),
-        lastModification: new Date()
+    it('creates the dir if it does not exist', async function () {
+      const parentDir: RemoteDoc = await builders.remoteDir()
+        .named('parent-dir')
+        .create()
+      const deletedDir: RemoteDoc = await builders.remoteDir()
+        .named('deleted-dir')
+        .inDir(parentDir)
+        .timestamp(2016, 1, 2, 3, 4, 5)
+        .create()
+      const oldMetadata: Metadata = conversion.createMetadata(deletedDir)
+      const newMetadata: Metadata = {
+        ...oldMetadata,
+        name: 'new-dir-name',
+        path: 'parent-dir/new-dir-name'
       }
-      return this.remote.updateFolder(doc, {}, (err, created) => {
-        should.not.exist(err)
-        return this.couch.get(created.id, function (err, folder) {
-          should.not.exist(err)
-          folder.should.have.properties({
-            path: '/couchdb-folder',
-            name: 'folder-3',
-            docType: 'folder',
-            creationDate: doc.creationDate.toISOString(),
-            lastModification: doc.lastModification.toISOString()
-          })
-          done()
-        })
+      await cozy.files.destroyById(deletedDir._id)
+
+      await this.remote.updateFolderAsync(newMetadata, oldMetadata)
+
+      const created: JsonApiDoc = await cozy.files.statByPath('/parent-dir/new-dir-name')
+      should(created.attributes).have.properties({
+        type: 'directory',
+        name: 'new-dir-name',
+        dir_id: deletedDir.dir_id,
+        created_at: newMetadata.creationDate,
+        updated_at: newMetadata.lastModification,
+        tags: newMetadata.tags
+      })
+      should(newMetadata.remote).have.properties({
+        _id: created._id,
+        _rev: created._rev
+      })
+    })
+
+    it('creates the dir if it has no remote info', async function () {
+      const oldMetadata: Metadata = {
+        ...conversion.createMetadata(builders.remoteDir().named('foo').build()),
+        remote: undefined,
+        lastModification: timestamp.stringify(timestamp.build(2015, 1, 1, 1, 1, 1, 1))
+      }
+      const newMetadata: Metadata = {
+        ...oldMetadata,
+        lastModification: timestamp.stringify(timestamp.build(2015, 2, 2, 2, 2, 2, 2))
+      }
+
+      const created: Metadata = await this.remote.updateFolderAsync(newMetadata, oldMetadata)
+
+      const folder: JsonApiDoc = await cozy.files.statById(created.remote._id)
+      should(folder.attributes).have.properties({
+        type: 'directory',
+        name: 'foo',
+        dir_id: 'io.cozy.files.root-dir',
+        created_at: newMetadata.lastModification,
+        updated_at: newMetadata.lastModification,
+        tags: newMetadata.tags
       })
     })
   })
