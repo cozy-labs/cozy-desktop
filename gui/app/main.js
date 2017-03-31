@@ -2,7 +2,7 @@
 
 require('babel-polyfill')
 
-const AutoLaunch = require('auto-launch')
+const AutoLaunch = require('auto-launch-patched')
 const Desktop = require('cozy-desktop').default
 const electron = require('electron')
 const fs = require('fs')
