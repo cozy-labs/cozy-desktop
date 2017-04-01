@@ -38,8 +38,8 @@ describe('RemoteCozy', function () {
         res.end('Not Found')
       })
 
-      return remoteCozy.changes()
-        .should.be.rejectedWith(/Could not fetch/)
+      return should(remoteCozy.changes())
+        .be.rejectedWith(/Could not fetch/)
     })
 
     it('rejects when cozy sends invalid JSON', function () {
@@ -51,8 +51,8 @@ describe('RemoteCozy', function () {
         res.end('')
       })
 
-      return remoteCozy.changes()
-        .should.be.rejectedWith(SyntaxError)
+      return should(remoteCozy.changes())
+        .be.rejectedWith(SyntaxError)
     })
 
     context('when cozy works', function () {
