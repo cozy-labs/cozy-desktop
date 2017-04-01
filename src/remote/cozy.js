@@ -104,7 +104,7 @@ export default class RemoteCozy {
     return {...results[0], _type: FILES_DOCTYPE}
   }
 
-  async downloadBinary (id: string): Promise<?Readable> {
+  async downloadBinary (id: string): Promise<Readable> {
     const resp = await this.client.files.downloadById(id)
     return resp.body
   }
