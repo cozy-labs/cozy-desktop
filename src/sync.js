@@ -30,6 +30,11 @@ type Change = {
   seq: number
 };
 
+export type SyncMode =
+  | "pull"
+  | "push"
+  | "full";
+
 // Sync listens to PouchDB about the metadata changes, and calls local and
 // remote sides to apply the changes on the filesystem and remote CouchDB
 // respectively.
