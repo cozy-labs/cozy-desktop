@@ -6,6 +6,7 @@ import EventEmitter from 'events'
 import clone from 'lodash.clone'
 import fs from 'fs-extra'
 import path from 'path'
+import * as stream from 'stream'
 
 import logger from '../logger'
 import { extractRevNumber, inRemoteTrash } from '../metadata'
@@ -14,7 +15,9 @@ import Prep from '../prep'
 import Watcher from './watcher'
 
 import type { FileStreamProvider } from '../file_stream_provider'
+import type { Metadata } from '../metadata'
 import type { Side } from '../side' // eslint-disable-line
+import type { Callback } from '../utils/func'
 
 const log = logger({
   prefix: 'Local writer  ',
@@ -57,7 +60,7 @@ class Local implements Side {
   }
 
   // Create a readable stream for the given doc
-  createReadStream (doc, callback) {
+  createReadStream (doc: Metadata, callback: Callback) {
     try {
       let filePath = path.resolve(this.syncPath, doc.path)
       let stream = fs.createReadStream(filePath)
@@ -67,6 +70,8 @@ class Local implements Side {
       return callback(new Error('Cannot read the file'))
     }
   }
+
+  createReadStreamAsync: (doc: Metadata) => Promise<stream.Readable>
 
   /* Helpers */
 
