@@ -1,4 +1,4 @@
-/* @flow weak */
+/* @flow */
 
 import async from 'async'
 import Promise from 'bluebird'
@@ -8,6 +8,7 @@ import fs from 'fs-extra'
 import path from 'path'
 import * as stream from 'stream'
 
+import Config from '../config'
 import logger from '../logger'
 import { extractRevNumber, inRemoteTrash } from '../metadata'
 import Pouch from '../pouch'
@@ -35,7 +36,7 @@ class Local implements Side {
   watcher: Watcher
   other: FileStreamProvider
 
-  constructor (config, prep, pouch, events) {
+  constructor (config: Config, prep: Prep, pouch: Pouch, events: EventEmitter) {
     this.prep = prep
     this.pouch = pouch
     this.events = events
@@ -84,9 +85,9 @@ class Local implements Side {
   // - utime for update (content only)
   // This function updates utime and ctime according to the last
   // modification date.
-  metadataUpdater (doc) {
+  metadataUpdater (doc: Metadata) {
     let filePath = path.resolve(this.syncPath, doc.path)
-    return function (callback) {
+    return function (callback: Callback) {
       let next = function (err) {
         if (doc.executable) {
           return fs.chmod(filePath, '755', callback)
@@ -107,14 +108,14 @@ class Local implements Side {
   }
 
   // Return true if the local file is up-to-date for this document
-  isUpToDate (doc) {
+  isUpToDate (doc: Metadata) {
     let currentRev = doc.sides.local || 0
     let lastRev = extractRevNumber(doc)
     return currentRev === lastRev
   }
 
   // Check if a file corresponding to given checksum already exists
-  fileExistsLocally (checksum, callback) {
+  fileExistsLocally (checksum: string, callback: Callback) {
     return this.pouch.byChecksum(checksum, (err, docs) => {
       if (err) {
         return callback(err)
@@ -148,7 +149,7 @@ class Local implements Side {
   // from the remote document. Later, chokidar will fire an event for this new
   // file. The checksum will then be computed and added to the document, and
   // then pushed to CouchDB.
-  addFile (doc, callback) {
+  addFile (doc: Metadata, callback: Callback) {
     if (inRemoteTrash(doc)) {
       callback(null)
       return
@@ -228,7 +229,7 @@ class Local implements Side {
   }
 
   // Create a new folder
-  addFolder (doc, callback) {
+  addFolder (doc: Metadata, callback: Callback) {
     if (inRemoteTrash(doc)) {
       callback(null)
       return
@@ -245,12 +246,12 @@ class Local implements Side {
   }
 
   // Overwrite a file
-  overwriteFile (doc, old, callback) {
+  overwriteFile (doc: Metadata, old: Metadata, callback: Callback) {
     return this.addFile(doc, callback)
   }
 
   // Update the metadata of a file
-  updateFileMetadata (doc, old, callback) {
+  updateFileMetadata (doc: Metadata, old: Metadata, callback: Callback) {
     if (inRemoteTrash(doc)) {
       callback(null)
       return
@@ -259,12 +260,12 @@ class Local implements Side {
   }
 
   // Update a folder
-  updateFolder (doc, old, callback) {
+  updateFolder (doc: Metadata, old: Metadata, callback: Callback) {
     return this.addFolder(doc, callback)
   }
 
   // Move a file from one place to another
-  moveFile (doc, old, callback) {
+  moveFile (doc: Metadata, old: Metadata, callback: Callback) {
     if (inRemoteTrash(doc)) {
       this.destroy(old, callback)
       return
@@ -309,7 +310,7 @@ class Local implements Side {
   }
 
   // Move a folder
-  moveFolder (doc, old, callback) {
+  moveFolder (doc: Metadata, old: Metadata, callback: Callback) {
     if (inRemoteTrash(doc)) {
       this.destroy(old, callback)
       return
@@ -353,7 +354,7 @@ class Local implements Side {
   }
 
   // Delete a file or folder from the local filesystem
-  destroy (doc, callback) {
+  destroy (doc: Metadata, callback: Callback) {
     if (inRemoteTrash(doc)) {
       callback(null)
       return
@@ -364,13 +365,13 @@ class Local implements Side {
     return fs.remove(fullpath, callback)
   }
 
-  trash (doc, callback) {
+  trash (doc: Metadata, callback: Callback) {
     // TODO: v3: Put files and folders into the OS trash
     return this.destroy(doc, callback)
   }
 
   // Rename a file/folder to resolve a conflict
-  resolveConflict (dst, src, callback) {
+  resolveConflict (dst: Metadata, src: Metadata, callback: Callback) {
     log.info(`Resolve a conflict: ${src.path} → ${dst.path}`)
     let srcPath = path.join(this.syncPath, src.path)
     let dstPath = path.join(this.syncPath, dst.path)
