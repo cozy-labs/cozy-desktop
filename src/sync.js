@@ -23,6 +23,13 @@ const log = logger({
 
 export const TRASHING_DELAY = 1000
 
+type Change = {
+  changes: {rev: string}[],
+  doc: Metadata,
+  id: string,
+  seq: number
+};
+
 // Sync listens to PouchDB about the metadata changes, and calls local and
 // remote sides to apply the changes on the filesystem and remote CouchDB
 // respectively.
