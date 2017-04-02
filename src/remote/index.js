@@ -260,10 +260,13 @@ export default class Remote implements Side {
     this.trashAsync(doc).asCallback(callback)
   }
 
-  // FIXME: Temporary stubs so we can do some acceptance testing on file upload
-  //        without getting errors for missing methods.
+  moveFolderAsync (doc: Metadata, from: Metadata): Promise<*> {
+    // TODO: v3: Remote#moveFolderAsync()
+    throw new Error('Remote#moveFolderAsync() is not implemented')
+  }
 
   moveFolder (doc: Metadata, from: Metadata, callback: Callback) {
-    callback(new Error('Remote#moveFolder() is not implemented'))
+    // $FlowFixMe
+    this.moveFolderAsync(doc, from).asCallback(callback)
   }
 }
