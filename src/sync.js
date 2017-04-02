@@ -64,8 +64,6 @@ class Sync {
     // $FlowFixMe
     this.remote.other = this.local
     this.pending = new PendingMap()
-
-    Promise.promisifyAll(this)
   }
 
   // Start to synchronize the remote cozy with the local filesystem
