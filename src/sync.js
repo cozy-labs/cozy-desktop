@@ -499,7 +499,7 @@ class Sync {
           log.debug(`${doc.path}: will be trashed with parent directory`)
         } else {
           log.debug(`${doc.path}: should be trashed by itself`)
-          side.trash(doc, log.errorIfAny)
+          side.trashAsync(doc).catch(log.error)
         }
       }
     })
