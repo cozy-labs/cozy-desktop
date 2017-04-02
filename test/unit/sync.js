@@ -502,11 +502,14 @@ function(doc) {
       this.events = {}
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
 
-      this.local.destroy = sinon.stub().yields()
-      this.remote.destroy = sinon.stub().yields()
+      this.local.destroyAsync = sinon.stub()
+      this.remote.destroyAsync = sinon.stub()
+
+      this.local.destroyAsync.returnsPromise().resolves()
+      this.remote.destroyAsync.returnsPromise().resolves()
     })
 
-    it('calls addFile for an added file', function (done) {
+    it('calls addFileAsync for an added file', function (done) {
       let doc = {
         _id: 'foo/bar',
         _rev: '1-abcdef0123456789',
@@ -516,15 +519,16 @@ function(doc) {
           local: 1
         }
       }
-      this.remote.addFile = sinon.stub().yields()
+      this.remote.addFileAsync = sinon.stub()
+      this.remote.addFileAsync.returnsPromise().resolves()
       this.sync.fileChanged(doc, this.remote, 0, err => {
         should.not.exist(err)
-        this.remote.addFile.calledWith(doc).should.be.true()
+        this.remote.addFileAsync.calledWith(doc).should.be.true()
         done()
       })
     })
 
-    it('calls overwriteFile for an overwritten file', function (done) {
+    it('calls overwriteFileAsync for an overwritten file', function (done) {
       let doc = {
         _id: 'overwrite/foo/bar',
         checksum: '391f7abfca1124c3ca937e5f85687352bcd9f261',
@@ -542,19 +546,21 @@ function(doc) {
           remote: 1
         }
         this.pouch.db.put(doc, (_, updated) => {
-          this.remote.overwriteFile = sinon.stub().yields()
-          this.remote.updateFileMetadata = sinon.stub().yields()
+          this.remote.overwriteFileAsync = sinon.stub()
+          this.remote.overwriteFileAsync.returnsPromise().resolves()
+          this.remote.updateFileMetadataAsync = sinon.stub()
+          this.remote.updateFileMetadataAsync.returnsPromise().resolves()
           this.sync.fileChanged(doc, this.remote, 1, err => {
             should.not.exist(err)
-            this.remote.updateFileMetadata.called.should.be.false()
-            this.remote.overwriteFile.calledWith(doc).should.be.true()
+            this.remote.updateFileMetadataAsync.called.should.be.false()
+            this.remote.overwriteFileAsync.calledWith(doc).should.be.true()
             done()
           })
         })
       })
     })
 
-    it('calls updateFileMetadata for updated file metadata', function (done) {
+    it('calls updateFileMetadataAsync for updated file metadata', function (done) {
       let doc = {
         _id: 'update/foo/bar',
         checksum: '391f7abfca1124c3ca937e5f85687352bcd9f261',
@@ -572,12 +578,14 @@ function(doc) {
           remote: 1
         }
         this.pouch.db.put(doc, (_, updated) => {
-          this.remote.overwriteFile = sinon.stub().yields()
-          this.remote.updateFileMetadata = sinon.stub().yields()
+          this.remote.overwriteFileAsync = sinon.stub()
+          this.remote.overwriteFileAsync.returnsPromise().resolves()
+          this.remote.updateFileMetadataAsync = sinon.stub()
+          this.remote.updateFileMetadataAsync.returnsPromise().resolves()
           this.sync.fileChanged(doc, this.remote, 1, err => {
             should.not.exist(err)
-            this.remote.overwriteFile.called.should.be.false()
-            let ufm = this.remote.updateFileMetadata
+            this.remote.overwriteFileAsync.called.should.be.false()
+            let ufm = this.remote.updateFileMetadataAsync
             ufm.calledWith(doc).should.be.true()
             done()
           })
@@ -585,7 +593,7 @@ function(doc) {
       })
     })
 
-    it('calls moveFile for a moved file', function (done) {
+    it('calls moveFileAsync for a moved file', function (done) {
       let was = {
         _id: 'foo/bar',
         _rev: '3-9876543210',
@@ -607,22 +615,25 @@ function(doc) {
           local: 1
         }
       }
-      this.remote.destroy = sinon.stub().yields()
-      this.remote.addFile = sinon.stub().yields()
-      this.remote.moveFile = sinon.stub().yields()
+      this.remote.destroyAsync = sinon.stub()
+      this.remote.destroyAsync.returnsPromise().resolves()
+      this.remote.addFileAsync = sinon.stub()
+      this.remote.addFileAsync.returnsPromise().resolves()
+      this.remote.moveFileAsync = sinon.stub()
+      this.remote.moveFileAsync.returnsPromise().resolves()
       this.sync.fileChanged(was, this.remote, 2, err => {
         should.not.exist(err)
-        this.remote.destroy.called.should.be.false()
+        this.remote.destroyAsync.called.should.be.false()
         this.sync.fileChanged(doc, this.remote, 0, err => {
           should.not.exist(err)
-          this.remote.addFile.called.should.be.false()
-          this.remote.moveFile.calledWith(doc, was).should.be.true()
+          this.remote.addFileAsync.called.should.be.false()
+          this.remote.moveFileAsync.calledWith(doc, was).should.be.true()
           done()
         })
       })
     })
 
-    it('calls destroy for a deleted file', function (done) {
+    it('calls destroyAsync for a deleted file', function (done) {
       let doc = {
         _id: 'foo/baz',
         _rev: '4-1234567890',
@@ -635,7 +646,7 @@ function(doc) {
       }
       this.sync.fileChanged(doc, this.local, 1, err => {
         should.not.exist(err)
-        this.local.destroy.calledWith(doc).should.be.true()
+        this.local.destroyAsync.calledWith(doc).should.be.true()
         done()
       })
     })
@@ -652,7 +663,7 @@ function(doc) {
       }
       this.sync.fileChanged(doc, this.remote, 0, err => {
         should.not.exist(err)
-        this.remote.destroy.called.should.be.false()
+        this.remote.destroyAsync.called.should.be.false()
         done()
       })
     })
@@ -666,11 +677,11 @@ function(doc) {
       this.events = {}
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
 
-      this.local.destroy = sinon.stub().yields()
-      this.remote.destroy = sinon.stub().yields()
+      this.local.destroyAsync = sinon.stub()
+      this.remote.destroyAsync = sinon.stub()
     })
 
-    it('calls addFolder for an added folder', function (done) {
+    it('calls addFolderAsync for an added folder', function (done) {
       let doc = {
         _id: 'foobar/bar',
         _rev: '1-abcdef0123456789',
@@ -679,15 +690,16 @@ function(doc) {
           local: 1
         }
       }
-      this.remote.addFolder = sinon.stub().yields()
+      this.remote.addFolderAsync = sinon.stub()
+      this.remote.addFolderAsync.returnsPromise().resolves()
       this.sync.folderChanged(doc, this.remote, 0, err => {
         should.not.exist(err)
-        this.remote.addFolder.calledWith(doc).should.be.true()
+        this.remote.addFolderAsync.calledWith(doc).should.be.true()
         done()
       })
     })
 
-    it('calls updateFolder for an updated folder', function (done) {
+    it('calls updateFolderAsync for an updated folder', function (done) {
       let doc = {
         _id: 'foobar/bar',
         _rev: '2-abcdef9876543210',
@@ -698,15 +710,16 @@ function(doc) {
           remote: 2
         }
       }
-      this.local.updateFolder = sinon.stub().yields()
+      this.local.updateFolderAsync = sinon.stub()
+      this.local.updateFolderAsync.returnsPromise().resolves()
       this.sync.folderChanged(doc, this.local, 1, err => {
         should.not.exist(err)
-        this.local.updateFolder.calledWith(doc).should.be.true()
+        this.local.updateFolderAsync.calledWith(doc).should.be.true()
         done()
       })
     })
 
-    it('calls moveFolder for a moved folder', function (done) {
+    it('calls moveFolderAsync for a moved folder', function (done) {
       let was = {
         _id: 'foobar/bar',
         _rev: '3-9876543210',
@@ -728,22 +741,25 @@ function(doc) {
           local: 1
         }
       }
-      this.remote.trash = sinon.stub().yields()
-      this.remote.addFolder = sinon.stub().yields()
-      this.remote.moveFolder = sinon.stub().yields()
+      this.remote.trashAsync = sinon.stub()
+      this.remote.trashAsync.returnsPromise().resolves()
+      this.remote.addFolderAsync = sinon.stub()
+      this.remote.addFolderAsync.returnsPromise().resolves()
+      this.remote.moveFolderAsync = sinon.stub()
+      this.remote.moveFolderAsync.returnsPromise().resolves()
       this.sync.folderChanged(was, this.remote, 2, err => {
         should.not.exist(err)
-        this.remote.trash.called.should.be.false()
+        this.remote.trashAsync.called.should.be.false()
         this.sync.folderChanged(doc, this.remote, 0, err => {
           should.not.exist(err)
-          this.remote.addFolder.called.should.be.false()
-          this.remote.moveFolder.calledWith(doc, was).should.be.true()
+          this.remote.addFolderAsync.called.should.be.false()
+          this.remote.moveFolderAsync.calledWith(doc, was).should.be.true()
           done()
         })
       })
     })
 
-    it('calls destroy for a deleted folder', function (done) {
+    it('calls destroyAsync for a deleted folder', function (done) {
       let doc = {
         _id: 'foobar/baz',
         _rev: '4-1234567890',
@@ -756,7 +772,7 @@ function(doc) {
       }
       this.sync.folderChanged(doc, this.local, 1, err => {
         should.not.exist(err)
-        this.local.destroy.calledWith(doc).should.be.true()
+        this.local.destroyAsync.calledWith(doc).should.be.true()
         done()
       })
     })
@@ -773,7 +789,7 @@ function(doc) {
       }
       this.sync.folderChanged(doc, this.remote, 0, err => {
         should.not.exist(err)
-        this.remote.destroy.called.should.be.false()
+        this.remote.destroyAsync.called.should.be.false()
         done()
       })
     })
@@ -866,8 +882,10 @@ function(doc) {
 
     beforeEach(() => {
       clock = sinon.useFakeTimers()
-      side = {trash: sinon.stub()}
+      side = {trashAsync: sinon.stub()}
       sync = new Sync(null, {}, {}, null, null)
+
+      side.trashAsync.returnsPromise().resolves()
     })
 
     afterEach(() => {
@@ -893,7 +911,7 @@ function(doc) {
         waitAndTrash(bar, qux, baz, foo)
 
         for (let doc of [foo, bar, baz, qux]) {
-          should(side.trash).have.been.calledWith(doc)
+          should(side.trashAsync).have.been.calledWith(doc)
         }
       })
 
@@ -905,9 +923,9 @@ function(doc) {
 
         waitAndTrash(qux, baz, bar, foo)
 
-        should(side.trash).have.been.calledWith(foo)
+        should(side.trashAsync).have.been.calledWith(foo)
         for (let doc of [bar, baz, qux]) {
-          should(side.trash).not.have.been.calledWith(doc)
+          should(side.trashAsync).not.have.been.calledWith(doc)
         }
       })
     })
