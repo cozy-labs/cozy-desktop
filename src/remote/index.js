@@ -1,5 +1,7 @@
 /* @flow */
 
+import * as stream from 'stream'
+
 import Config from '../config'
 import * as conversion from '../conversion'
 import RemoteCozy from './cozy'
@@ -44,13 +46,13 @@ export default class Remote implements Side {
   }
 
   // Create a readable stream for the given doc
-  async createReadStream (doc: Metadata, callback: Callback) {
-    try {
-      const stream = await this.remoteCozy.downloadBinary(doc.remote._id, callback)
-      callback(null, stream)
-    } catch (err) {
-      callback(err)
-    }
+  createReadStreamAsync (doc: Metadata): Promise<stream.Readable> {
+    return this.remoteCozy.downloadBinary(doc.remote._id)
+  }
+
+  createReadStream (doc: Metadata, callback: Callback) {
+    // $FlowFixMe
+    this.createReadStreamAsync(doc).asCallback(callback)
   }
 
   // Create a folder on the remote cozy instance

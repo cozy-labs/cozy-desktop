@@ -1,11 +1,13 @@
-/* @flow weak */
+/* @flow */
 
 import Ignore from './ignore'
 import logger from './logger'
 import Merge from './merge'
 import { buildId, ensureValidChecksum, ensureValidPath } from './metadata'
 
+import type { Metadata } from './metadata'
 import type { SideName } from './side'
+import type { Callback } from './utils/func'
 
 const log = logger({
   prefix: 'Prep          ',
@@ -23,7 +25,7 @@ class Prep {
   merge: Merge
   ignore: Ignore
 
-  constructor (merge, ignore) {
+  constructor (merge: Merge, ignore: Ignore) {
     this.merge = merge
     this.ignore = ignore
   }
@@ -31,7 +33,7 @@ class Prep {
   /* Helpers */
 
   // Simple helper to add a file or a folder
-  async addDocAsync (side: SideName, doc) {
+  async addDocAsync (side: SideName, doc: Metadata) {
     if (doc.docType === 'file') {
       return this.addFileAsync(side, doc)
     } else if (doc.docType === 'folder') {
@@ -41,12 +43,13 @@ class Prep {
     }
   }
 
-  addDoc (side: SideName, doc, callback) {
+  addDoc (side: SideName, doc: Metadata, callback: Callback) {
+    // $FlowFixMe
     this.addDocAsync(side, doc).asCallback(callback)
   }
 
   // Simple helper to update a file or a folder
-  async updateDocAsync (side: SideName, doc) {
+  async updateDocAsync (side: SideName, doc: Metadata) {
     if (doc.docType === 'file') {
       return this.updateFileAsync(side, doc)
     } else if (doc.docType === 'folder') {
@@ -56,12 +59,13 @@ class Prep {
     }
   }
 
-  updateDoc (side: SideName, doc, callback) {
+  updateDoc (side: SideName, doc: Metadata, callback: Callback) {
+    // $FlowFixMe
     this.updateDocAsync(side, doc).asCallback(callback)
   }
 
   // Helper to move/rename a file or a folder
-  async moveDocAsync (side: SideName, doc, was) {
+  async moveDocAsync (side: SideName, doc: Metadata, was: Metadata) {
     if (doc.docType !== was.docType) {
       throw new Error(`Incompatible docTypes: ${doc.docType}`)
     } else if (doc.docType === 'file') {
@@ -73,12 +77,13 @@ class Prep {
     }
   }
 
-  moveDoc (side: SideName, doc, was, callback) {
+  moveDoc (side: SideName, doc: Metadata, was: Metadata, callback: Callback) {
+    // $FlowFixMe
     this.moveDocAsync(side, doc, was).asCallback(callback)
   }
 
   // Simple helper to delete a file or a folder
-  async deleteDocAsync (side: SideName, doc) {
+  async deleteDocAsync (side: SideName, doc: Metadata) {
     if (doc.docType === 'file') {
       return this.deleteFileAsync(side, doc)
     } else if (doc.docType === 'folder') {
@@ -88,7 +93,8 @@ class Prep {
     }
   }
 
-  deleteDoc (side: SideName, doc, callback) {
+  deleteDoc (side: SideName, doc: Metadata, callback: Callback) {
+    // $FlowFixMe
     this.deleteDocAsync(side, doc).asCallback(callback)
   }
 
@@ -97,7 +103,7 @@ class Prep {
   // Expectations:
   //   - the file path is present and valid
   //   - the checksum is valid, if present
-  async addFileAsync (side: SideName, doc) {
+  async addFileAsync (side: SideName, doc: Metadata) {
     ensureValidPath(doc)
     ensureValidChecksum(doc)
 
@@ -113,14 +119,15 @@ class Prep {
     return this.merge.addFileAsync(side, doc)
   }
 
-  addFile (side: SideName, doc, callback) {
+  addFile (side: SideName, doc: Metadata, callback: Callback) {
+    // $FlowFixMe
     this.addFileAsync(side, doc).asCallback(callback)
   }
 
   // Expectations:
   //   - the file path is present and valid
   //   - the checksum is valid, if present
-  async updateFileAsync (side: SideName, doc) {
+  async updateFileAsync (side: SideName, doc: Metadata) {
     ensureValidPath(doc)
     ensureValidChecksum(doc)
 
@@ -135,13 +142,14 @@ class Prep {
     return this.merge.updateFileAsync(side, doc)
   }
 
-  updateFile (side: SideName, doc, callback) {
+  updateFile (side: SideName, doc: Metadata, callback: Callback) {
+    // $FlowFixMe
     this.updateFileAsync(side, doc).asCallback(callback)
   }
 
   // Expectations:
   //   - the folder path is present and valid
-  async putFolderAsync (side: SideName, doc) {
+  async putFolderAsync (side: SideName, doc: *) {
     ensureValidPath(doc)
 
     doc.docType = 'folder'
@@ -154,7 +162,8 @@ class Prep {
     return this.merge.putFolderAsync(side, doc)
   }
 
-  putFolder (side: SideName, doc, callback) {
+  putFolder (side: SideName, doc: *, callback: Callback) {
+    // $FlowFixMe
     this.putFolderAsync(side, doc).asCallback(callback)
   }
 
@@ -164,7 +173,7 @@ class Prep {
   //   - the checksum is valid, if present
   //   - the two paths are not the same
   //   - the revision for the old file is present
-  async moveFileAsync (side: SideName, doc, was) {
+  async moveFileAsync (side: SideName, doc: Metadata, was: Metadata) {
     ensureValidPath(doc)
     ensureValidPath(was)
     ensureValidChecksum(doc)
@@ -181,11 +190,12 @@ class Prep {
     }
   }
 
-  moveFile (side: SideName, doc, was, callback) {
+  moveFile (side: SideName, doc: Metadata, was: Metadata, callback: Callback) {
+    // $FlowFixMe
     this.moveFileAsync(side, doc, was).asCallback(callback)
   }
 
-  doMoveFile (side: SideName, doc, was) {
+  doMoveFile (side: SideName, doc: Metadata, was: Metadata) {
     doc.docType = 'file'
     if (doc.lastModification == null) { doc.lastModification = new Date() }
     if (doc.lastModification === 'Invalid date') {
@@ -210,7 +220,7 @@ class Prep {
   //   - the old folder path is present and valid
   //   - the two paths are not the same
   //   - the revision for the old folder is present
-  async moveFolderAsync (side: SideName, doc, was) {
+  async moveFolderAsync (side: SideName, doc: Metadata, was: Metadata) {
     ensureValidPath(doc)
     ensureValidPath(was)
     if (doc.path === was.path) {
@@ -224,11 +234,12 @@ class Prep {
     }
   }
 
-  moveFolder (side: SideName, doc, was, callback) {
+  moveFolder (side: SideName, doc: Metadata, was: Metadata, callback: Callback) {
+    // $FlowFixMe
     this.moveFolderAsync(side, doc, was).asCallback(callback)
   }
 
-  doMoveFolder (side: SideName, doc, was) {
+  doMoveFolder (side: SideName, doc: Metadata, was: Metadata) {
     doc.docType = 'folder'
     if (doc.lastModification == null) { doc.lastModification = new Date() }
     if (doc.lastModification === 'Invalid date') {
@@ -250,7 +261,7 @@ class Prep {
 
   // Expectations:
   //   - the file path is present and valid
-  async deleteFileAsync (side: SideName, doc) {
+  async deleteFileAsync (side: SideName, doc: Metadata) {
     ensureValidPath(doc)
 
     doc.docType = 'file'
@@ -259,13 +270,14 @@ class Prep {
     return this.merge.deleteFileAsync(side, doc)
   }
 
-  deleteFile (side: SideName, doc, callback) {
+  deleteFile (side: SideName, doc: Metadata, callback: Callback) {
+    // $FlowFixMe
     this.deleteFileAsync(side, doc).asCallback(callback)
   }
 
   // Expectations:
   //   - the folder path is present and valid
-  async deleteFolderAsync (side: SideName, doc) {
+  async deleteFolderAsync (side: SideName, doc: Metadata) {
     ensureValidPath(doc)
 
     doc.docType = 'folder'
@@ -274,11 +286,12 @@ class Prep {
     return this.merge.deleteFolderAsync(side, doc)
   }
 
-  deleteFolder (side: SideName, doc, callback) {
+  deleteFolder (side: SideName, doc: Metadata, callback: Callback) {
+    // $FlowFixMe
     this.deleteFolderAsync(side, doc).asCallback(callback)
   }
 
-  trashFileAsync (side: SideName, doc) {
+  trashFileAsync (side: SideName, doc: *) {
     ensureValidPath(doc)
 
     doc.docType = 'file'
@@ -287,11 +300,12 @@ class Prep {
     return this.merge.trashAsync(side, doc)
   }
 
-  trashFile (side: SideName, doc, callback) {
+  trashFile (side: SideName, doc: *, callback: Callback) {
+    // $FlowFixMe
     this.trashFileAsync(side, doc).asCallback(callback)
   }
 
-  trashFolderAsync (side: SideName, doc) {
+  trashFolderAsync (side: SideName, doc: *) {
     ensureValidPath(doc)
 
     doc.docType = 'folder'
@@ -300,7 +314,8 @@ class Prep {
     return this.merge.trashAsync(side, doc)
   }
 
-  trashFolder (side: SideName, doc, callback) {
+  trashFolder (side: SideName, doc: *, callback: Callback) {
+    // $FlowFixMe
     this.trashFolderAsync(side, doc).asCallback(callback)
   }
 }

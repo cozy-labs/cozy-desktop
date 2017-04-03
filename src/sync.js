@@ -1,4 +1,4 @@
-/* @flow weak */
+/* @flow */
 
 import async from 'async'
 import Promise from 'bluebird'
@@ -14,7 +14,8 @@ import { REVOKED } from './remote/watcher'
 import { PendingMap } from './utils/pending'
 
 import type { Metadata } from './metadata'
-import type { Side } from './side' // eslint-disable-line
+import type { Side, SideName } from './side' // eslint-disable-line
+import type { Callback } from './utils/func'
 
 const log = logger({
   prefix: 'Synchronize   ',
@@ -22,6 +23,18 @@ const log = logger({
 })
 
 export const TRASHING_DELAY = 1000
+
+type Change = {
+  changes: {rev: string}[],
+  doc: Metadata,
+  id: string,
+  seq: number
+};
+
+export type SyncMode =
+  | "pull"
+  | "push"
+  | "full";
 
 // Sync listens to PouchDB about the metadata changes, and calls local and
 // remote sides to apply the changes on the filesystem and remote CouchDB
@@ -35,16 +48,20 @@ class Sync {
   pouch: Pouch
   remote: Remote
   stopped: ?boolean
-  moveFrom: any
+  moveFrom: ?Metadata
   moveTo: ?string
 
-  constructor (pouch, local, remote, ignore, events) {
+  getDiskSpace: (callback: Callback) => void
+
+  constructor (pouch: Pouch, local: Local, remote: Remote, ignore: Ignore, events: EventEmitter) {
     this.pouch = pouch
     this.local = local
     this.remote = remote
     this.ignore = ignore
     this.events = events
+    // $FlowFixMe
     this.local.other = this.remote
+    // $FlowFixMe
     this.remote.other = this.local
     this.pending = new PendingMap()
 
@@ -59,7 +76,7 @@ class Sync {
   // - pull if only changes from the remote cozy are applied to the fs
   // - push if only changes from the fs are applied to the remote cozy
   // - full for the full synchronization of the both sides
-  start (mode) {
+  start (mode: SyncMode) {
     this.stopped = false
     let promise = new Promise((resolve, reject) => {
       this.pouch.addAllViews((err) => {
@@ -103,7 +120,7 @@ class Sync {
   }
 
   // Start taking changes from pouch and applying them
-  sync (callback) {
+  sync (callback: Callback) {
     this.pop((err, change) => {
       if (this.stopped) { return }
       if (err) {
@@ -123,13 +140,13 @@ class Sync {
   //
   // Note: it is difficult to pick only one change at a time because pouch can
   // emit several docs in a row, and `limit: 1` seems to be not effective!
-  pop (callback) {
+  pop (callback: Callback) {
     this.pouch.getLocalSeq((err, seq) => {
       if (err) {
         callback(err)
         return
       }
-      let opts = {
+      let opts: Object = {
         limit: 1,
         since: seq,
         include_docs: true,
@@ -167,7 +184,7 @@ class Sync {
   // Apply a change to both local and remote
   // At least one side should say it has already this change
   // In some cases, both sides have the change
-  apply (change, callback) {
+  apply (change: Change, callback: Callback) {
     let { doc } = change
     log.debug(`${doc.path}: Applying change ${change.seq}...`)
     log.inspect(change)
@@ -203,7 +220,7 @@ class Sync {
 
   // Select which side will apply the change
   // It returns the side, its name, and also the last rev applied by this side
-  selectSide (doc) {
+  selectSide (doc: Metadata) {
     let localRev = doc.sides.local || 0
     let remoteRev = doc.sides.remote || 0
     if (localRev > remoteRev) {
@@ -217,8 +234,8 @@ class Sync {
   }
 
   // Keep track of the sequence number, save side rev, and log errors
-  applied (change, side, callback) {
-    return err => {
+  applied (change: Change, side: SideName, callback: Callback) {
+    return (err: ?Error) => {
       if (err) { log.error(err) }
       if (err && err.code === 'ENOSPC') {
         callback(new Error('The disk space on your computer is full!'))
@@ -264,9 +281,9 @@ class Sync {
   }
 
   // Says is the Cozy has no more free disk space
-  isCozyFull (callback) {
+  isCozyFull (callback: Callback) {
     // TODO: v3: Reimplement Sync#isCozyFull()
-    callback(false)
+    callback(null, false)
     /*
     this.getDiskSpace(function (err, res) {
       if (err) {
@@ -279,7 +296,7 @@ class Sync {
   }
 
   // Increment the counter of errors for this document
-  updateErrors (change, callback) {
+  updateErrors (change: Change, callback: Callback) {
     let { doc } = change
     doc.errors++
     // Don't try more than 10 times for the same operation
@@ -302,7 +319,7 @@ class Sync {
   }
 
   // Update rev numbers for both local and remote sides
-  updateRevs (doc, side, callback) {
+  updateRevs (doc: Metadata, side: SideName, callback: Callback) {
     let rev = extractRevNumber(doc) + 1
     for (let s of ['local', 'remote']) {
       doc.sides[s] = rev
@@ -335,14 +352,15 @@ class Sync {
   // If a file has been changed, we had to check what operation it is.
   // For a move, the first call will just keep a reference to the document,
   // and only at the second call, the move operation will be executed.
-  fileChanged (doc, side: Side, rev, callback) {
+  fileChanged (doc: Metadata, side: Side, rev: number, callback: Callback) {
     let from
     switch (true) {
       case doc._deleted && (rev === 0):
         callback()
         break
       case this.moveFrom != null:
-        from = this.moveFrom
+        // $FlowFixMe
+        from = (this.moveFrom: Metadata)
         this.moveFrom = null
         if (from.moveTo === doc._id) {
           side.moveFile(doc, from, err => {
@@ -390,14 +408,15 @@ class Sync {
   }
 
   // Same as fileChanged, but for folder
-  folderChanged (doc, side: Side, rev, callback) {
+  folderChanged (doc: Metadata, side: Side, rev: number, callback: Callback) {
     let from
     switch (true) {
       case doc._deleted && (rev === 0):
         callback()
         break
       case this.moveFrom != null:
-        from = this.moveFrom
+        // $FlowFixMe
+        from = (this.moveFrom: Metadata)
         this.moveFrom = null
         if (from.moveTo === doc._id) {
           side.moveFolder(doc, from, err => {

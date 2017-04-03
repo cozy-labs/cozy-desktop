@@ -1,4 +1,4 @@
-/* @flow weak */
+/* @flow */
 
 import async from 'async'
 import chokidar from 'chokidar'
@@ -14,6 +14,7 @@ import Prep from '../prep'
 import { PendingMap } from '../utils/pending'
 
 import type { SideName } from '../side'
+import type { Callback } from '../utils/func'
 import type { Pending } from '../utils/pending' // eslint-disable-line
 
 const log = logger({
@@ -45,7 +46,7 @@ class LocalWatcher {
     EXECUTABLE_MASK = 1 << 6
   }
 
-  constructor (syncPath, prep, pouch) {
+  constructor (syncPath: string, prep: Prep, pouch: Pouch) {
     this.syncPath = syncPath
     this.prep = prep
     this.pouch = pouch
@@ -166,7 +167,7 @@ class LocalWatcher {
 
   // An helper to create a document for a file
   // with checksum and mime informations
-  createDoc (filePath, stats, callback) {
+  createDoc (filePath: string, stats: fs.Stats, callback: Callback) {
     const absPath = path.join(this.syncPath, filePath)
     this.checksum(absPath, function (err, checksum) {
       let doc: Object = {
@@ -183,12 +184,12 @@ class LocalWatcher {
   }
 
   // Put a checksum computation in the queue
-  checksum (filePath, callback) {
+  checksum (filePath: string, callback: Callback) {
     this.checksumer.push({filePath}, callback)
   }
 
   // Get checksum for given file
-  computeChecksum (task, callback) {
+  computeChecksum (task: {filePath: string}, callback: Callback) {
     const stream = fs.createReadStream(task.filePath)
     const checksum = crypto.createHash('md5')
     checksum.setEncoding('base64')
@@ -206,7 +207,7 @@ class LocalWatcher {
   /* Actions */
 
   // New file detected
-  onAddFile (filePath, stats) {
+  onAddFile (filePath: string, stats: fs.Stats) {
     log.chokidar.debug(`${filePath}: add`)
     log.chokidar.inspect(stats)
     if (this.paths) { this.paths.push(filePath) }
@@ -245,7 +246,7 @@ class LocalWatcher {
   }
 
   // New directory detected
-  onAddDir (folderPath, stats) {
+  onAddDir (folderPath: string, stats: fs.Stats) {
     log.chokidar.debug(`${folderPath}: addDir`)
     log.chokidar.inspect(stats)
     if (folderPath === '') return
@@ -265,7 +266,7 @@ class LocalWatcher {
   //
   // It can be a file moved out. So, we wait a bit to see if a file with the
   // same checksum is added and, if not, we declare this file as deleted.
-  onUnlinkFile (filePath) {
+  onUnlinkFile (filePath: string) {
     log.chokidar.debug(`${filePath}: unlink`)
     // TODO: Extract delayed execution logic to utils/pending
     let timeout
@@ -291,7 +292,7 @@ class LocalWatcher {
   //
   // We don't want to delete a folder before files inside it. So we wait a bit
   // after chokidar event to declare the folder as deleted.
-  onUnlinkDir (folderPath) {
+  onUnlinkDir (folderPath: string) {
     log.chokidar.debug(`${folderPath}: unlinkDir`)
     // TODO: Extract repeated check logic to utils/pending
     let interval
@@ -312,7 +313,7 @@ class LocalWatcher {
   }
 
   // File update detected
-  onChange (filePath, stats) {
+  onChange (filePath: string, stats: fs.Stats) {
     log.chokidar.debug(`${filePath}: change`)
     log.chokidar.inspect(stats)
     this.createDoc(filePath, stats, (err, doc) => {
@@ -326,7 +327,7 @@ class LocalWatcher {
 
   // Try to detect removed files&folders
   // after chokidar has finished its initial scan
-  onReady (callback) {
+  onReady (callback: Callback) {
     return () => {
       this.pouch.byRecursivePath('', (err, docs) => {
         if (err) {
@@ -349,7 +350,7 @@ class LocalWatcher {
   }
 
   // A callback that logs errors
-  done (err) {
+  done (err: ?Error) {
     if (err) { log.error(err) }
   }
 }

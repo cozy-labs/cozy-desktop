@@ -1,9 +1,10 @@
-/* @flow weak */
+/* @flow */
 
 import { Client as CozyClient } from 'cozy-client-js'
 import path from 'path'
 import { Readable } from 'stream'
 
+import Config from '../config'
 import { FILES_DOCTYPE, DIR_TYPE } from './constants'
 import { jsonApiToRemoteDoc, specialId } from './document'
 import { composeAsync } from '../utils/func'
@@ -27,7 +28,7 @@ export default class RemoteCozy {
   url: string
   client: CozyClient
 
-  constructor (config) {
+  constructor (config: Config) {
     this.url = config.cozyUrl
     this.client = new CozyClient({
       cozyURL: this.url,
@@ -104,7 +105,7 @@ export default class RemoteCozy {
     return {...results[0], _type: FILES_DOCTYPE}
   }
 
-  async downloadBinary (id: string): Promise<?Readable> {
+  async downloadBinary (id: string): Promise<Readable> {
     const resp = await this.client.files.downloadById(id)
     return resp.body
   }

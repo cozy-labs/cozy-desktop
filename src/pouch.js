@@ -277,7 +277,7 @@ class Pouch {
     })
   }
 
-  getPreviousRevAsync: (id: string, shortRev: string) => Promise<string>
+  getPreviousRevAsync: (id: string, shortRev: ?number) => Promise<Metadata>
 
   /* Sequence numbers */
 
