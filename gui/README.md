@@ -18,6 +18,14 @@ This directory is for the graphical interface of cozy-desktop, built with
 
 Follow the instructions on https://docs.cozy.io/en/mobile/desktop.html
 
+If you want to start the application from the sources (debug mode), follow those steps:
+
+```bash
+$ cd gui/
+$ yarn install && yarn build
+$ yarn run up
+```
+
 
 ## FAQ
 
