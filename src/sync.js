@@ -184,7 +184,7 @@ class Sync {
   // In some cases, both sides have the change
   apply (change: Change, callback: Callback) {
     let { doc } = change
-    log.debug(`${doc.path}: Applying change ${change.seq}...`)
+    log.info(`${doc.path}: Applying change ${change.seq}...`)
     log.inspect(change)
 
     if (this.ignore.isIgnored(doc)) {
@@ -226,7 +226,7 @@ class Sync {
     } else if (remoteRev > localRev) {
       return [this.local, 'local', localRev]
     } else {
-      log.debug(`${doc.path}: Nothing to do`)
+      log.success(`${doc.path}: Nothing to do (rev ${localRev})`)
       return []
     }
   }
@@ -265,7 +265,7 @@ class Sync {
           }
         })
       } else {
-        log.debug(`${change.doc.path}: Applied change ${change.seq}`)
+        log.info(`${change.doc.path}: Applied change ${change.seq} on ${side} side`)
         this.pouch.setLocalSeq(change.seq, err => {
           if (err) { log.error(err) }
           if (change.doc._deleted) {
@@ -494,9 +494,9 @@ class Sync {
         this.pending.clear(doc.path)
 
         if (this.pending.hasParentPath(doc.path)) {
-          log.debug(`${doc.path}: will be trashed with parent directory`)
+          log.info(`${doc.path}: will be trashed with parent directory`)
         } else {
-          log.debug(`${doc.path}: should be trashed by itself`)
+          log.info(`${doc.path}: should be trashed by itself`)
           side.trashAsync(doc).catch(log.error)
         }
       }

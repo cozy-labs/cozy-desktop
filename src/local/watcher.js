@@ -220,6 +220,7 @@ class LocalWatcher {
       } else {
         if (this.pending.isEmpty()) {
           this.checksums--
+          log.info(`${filePath}: file added`)
           this.prep.addFile(this.side, doc, this.done)
         } else {
           // Let's see if one of the pending deleted files has the
@@ -228,6 +229,7 @@ class LocalWatcher {
           this.pouch.byChecksum(doc.checksum, (err, docs) => {
             this.checksums--
             if (err) {
+              log.info(`${filePath}: file added`)
               this.prep.addFile(this.side, doc, this.done)
             } else {
               const same = find(docs, d => this.pending.hasPath(d.path))
@@ -236,6 +238,7 @@ class LocalWatcher {
                 this.pending.clear(same.path)
                 this.prep.moveFile(this.side, doc, same, this.done)
               } else {
+                log.info(`${filePath}: file added`)
                 this.prep.addFile(this.side, doc, this.done)
               }
             }
@@ -259,6 +262,7 @@ class LocalWatcher {
       creationDate: stats.ctime,
       lastModification: stats.mtime
     }
+    log.info(`${folderPath}: folder added`)
     this.prep.putFolder(this.side, doc, this.done)
   }
 
@@ -274,7 +278,7 @@ class LocalWatcher {
       clearTimeout(timeout)
     }
     const execute = () => {
-      log.debug(`${filePath}: File deleted`)
+      log.info(`${filePath}: File deleted`)
       this.prep.trashFile(this.side, {path: filePath}, this.done)
     }
     const check = () => {
@@ -300,7 +304,7 @@ class LocalWatcher {
       clearInterval(interval)
     }
     const execute = () => {
-      log.debug(`${folderPath}: Folder deleted`)
+      log.info(`${folderPath}: Folder deleted`)
       this.prep.trashFolder(this.side, {path: folderPath}, this.done)
     }
     const check = () => {
@@ -316,6 +320,7 @@ class LocalWatcher {
   onChange (filePath: string, stats: fs.Stats) {
     log.chokidar.debug(`${filePath}: change`)
     log.chokidar.inspect(stats)
+    log.info(`${filePath}: changed`)
     this.createDoc(filePath, stats, (err, doc) => {
       if (err) {
         log.info(err)
@@ -337,6 +342,7 @@ class LocalWatcher {
             if (this.paths.indexOf(doc.path) !== -1 || inRemoteTrash(doc)) {
               async.setImmediate(next)
             } else {
+              log.info(`${doc.path}: deleted while client was stopped`)
               this.prep.deleteDoc(this.side, doc, next)
             }
           }, err => {

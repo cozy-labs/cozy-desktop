@@ -258,6 +258,7 @@ class Local implements Side {
 
   // Update the metadata of a file
   updateFileMetadata (doc: Metadata, old: Metadata, callback: Callback) {
+    log.info(`${doc.path}: Updating file metadata...`)
     if (inRemoteTrash(doc)) {
       callback(null)
       return
