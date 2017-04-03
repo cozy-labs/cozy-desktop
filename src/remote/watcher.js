@@ -132,29 +132,29 @@ export default class RemoteWatcher {
     const docType = doc.docType
     ensureValidPath(doc)
     if (!was) {
-      log.debug(`${doc.path}: ${docType} was added remotely`)
+      log.info(`${doc.path}: ${docType} was added remotely`)
       return this.prep.addDocAsync(SIDE, doc)
     } else if (was.path === doc.path) {
-      log.debug(`${doc.path}: ${docType} was updated remotely`)
+      log.info(`${doc.path}: ${docType} was updated remotely`)
       return this.prep.updateDocAsync(SIDE, doc)
     } else if (inRemoteTrash(doc) && !inRemoteTrash(was)) {
-      log.debug(`${doc.path}: ${docType} was trashed remotely`)
+      log.info(`${doc.path}: ${docType} was trashed remotely`)
       await this.prep.deleteDocAsync(SIDE, was)
       return this.prep.addDocAsync(SIDE, doc)
     } else if (inRemoteTrash(was) && !inRemoteTrash(doc)) {
-      log.debug(`${doc.path}: ${docType} was restored remotely`)
+      log.info(`${doc.path}: ${docType} was restored remotely`)
       await this.prep.deleteDocAsync(SIDE, was)
       return this.prep.addDocAsync(SIDE, doc)
     } else if ((doc.checksum != null) && (was.checksum === doc.checksum)) {
-      log.debug(`${doc.path}: ${docType} was moved remotely`)
+      log.info(`${doc.path}: ${docType} was moved remotely`)
       return this.prep.moveDocAsync(SIDE, doc, was)
     } else if ((doc.docType === 'folder') || (was.remote._rev === doc.remote._rev)) {
-      log.debug(`${doc.path}: ${docType} was possibly modified and renamed remotely while cozy-desktop was stopped`)
+      log.info(`${doc.path}: ${docType} was possibly modified and renamed remotely while cozy-desktop was stopped`)
       await this.prep.deleteDocAsync(SIDE, was)
       return this.prep.addDocAsync(SIDE, doc)
     } else {
       // TODO: add unit test
-      log.debug(`${doc.path}: ${docType} was possibly renamed remotely while updated locally`)
+      log.info(`${doc.path}: ${docType} was possibly renamed remotely while updated locally`)
       await this.removeRemote(was)
       return this.prep.addDocAsync(SIDE, doc)
     }
@@ -164,7 +164,7 @@ export default class RemoteWatcher {
   // It's useful when a file has diverged (updated/renamed both in local and
   // remote) while cozy-desktop was not running.
   removeRemote (doc: Metadata) {
-    log.debug(`${doc.path}: Dissociating from remote...`)
+    log.info(`${doc.path}: Dissociating from remote...`)
     delete doc.remote
     if (doc.sides) delete doc.sides.remote
     return this.pouch.put(doc)
