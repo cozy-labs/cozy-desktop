@@ -40,7 +40,7 @@ export type Metadata = {
   moveTo?: string, // Destination id
   path: string,
   remote: MetadataRemoteInfo,
-  size?: string,
+  size?: number,
   tags: string[],
   sides: MetadataSidesInfo,
   toBeTrashed?: true
