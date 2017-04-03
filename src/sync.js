@@ -237,8 +237,8 @@ class Sync {
       if (err) { log.error(err) }
       if (err && err.code === 'ENOSPC') {
         callback(new Error('The disk space on your computer is full!'))
-      } else if (err && err.message === REVOKED) {
-        callback(err)
+      } else if (err && err.status === 400) {
+        callback(new Error(REVOKED))
       } else if (err) {
         if (!change.doc.errors) { change.doc.errors = 0 }
         this.isCozyFull((err, full) => {
