@@ -228,6 +228,8 @@ class Local implements Side {
     })
   }
 
+  addFileAsync: (Metadata) => Promise<*>
+
   // Create a new folder
   addFolder (doc: Metadata, callback: Callback) {
     if (inRemoteTrash(doc)) {
@@ -245,10 +247,14 @@ class Local implements Side {
     })
   }
 
+  addFolderAsync: (Metadata) => Promise<*>
+
   // Overwrite a file
-  overwriteFile (doc: Metadata, old: Metadata, callback: Callback) {
+  overwriteFile (doc: Metadata, old: ?Metadata, callback: Callback) {
     return this.addFile(doc, callback)
   }
+
+  overwriteFileAsync: (Metadata, ?Metadata) => Promise<*>
 
   // Update the metadata of a file
   updateFileMetadata (doc: Metadata, old: Metadata, callback: Callback) {
@@ -259,10 +265,14 @@ class Local implements Side {
     return this.metadataUpdater(doc)(callback)
   }
 
+  updateFileMetadataAsync: (Metadata, Metadata) => Promise<*>
+
   // Update a folder
-  updateFolder (doc: Metadata, old: Metadata, callback: Callback) {
+  updateFolder (doc: Metadata, old: ?Metadata, callback: Callback) {
     return this.addFolder(doc, callback)
   }
+
+  updateFolderAsync: (Metadata, ?Metadata) => Promise<*>
 
   // Move a file from one place to another
   moveFile (doc: Metadata, old: Metadata, callback: Callback) {
@@ -309,6 +319,8 @@ class Local implements Side {
     })
   }
 
+  moveFileAsync: (Metadata, Metadata) => Promise<*>
+
   // Move a folder
   moveFolder (doc: Metadata, old: Metadata, callback: Callback) {
     if (inRemoteTrash(doc)) {
@@ -353,6 +365,8 @@ class Local implements Side {
     })
   }
 
+  moveFolderAsync: (Metadata, Metadata) => Promise<*>
+
   // Delete a file or folder from the local filesystem
   destroy (doc: Metadata, callback: Callback) {
     if (inRemoteTrash(doc)) {
@@ -365,10 +379,14 @@ class Local implements Side {
     return fs.remove(fullpath, callback)
   }
 
+  destroyAsync: (Metadata) => Promise<*>
+
   trash (doc: Metadata, callback: Callback) {
     // TODO: v3: Put files and folders into the OS trash
     return this.destroy(doc, callback)
   }
+
+  trashAsync: (Metadata) => Promise<*>
 
   // Rename a file/folder to resolve a conflict
   resolveConflict (dst: Metadata, src: Metadata, callback: Callback) {

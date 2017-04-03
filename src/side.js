@@ -1,7 +1,6 @@
 /* @flow */
 
 import type { Metadata } from './metadata'
-import type { Callback } from './utils/func'
 
 export type SideName =
   | "local"
@@ -9,13 +8,13 @@ export type SideName =
 
 // eslint-disable-next-line no-undef
 export interface Side {
-  addFile (doc: Metadata, callback: Callback): void;
-  addFolder (doc: Metadata, callback: Callback): void|Promise<*>;
-  overwriteFile (doc: Metadata, old: Metadata, callback: Callback): void|Promise<*>;
-  updateFileMetadata (doc: Metadata, old: Metadata, callback: Callback): void;
-  updateFolder (doc: Metadata, old: Metadata, callback: Callback): void;
-  moveFile (doc: Metadata, from: Metadata, callback: Callback): void;
-  moveFolder (doc: Metadata, from: Metadata, callback: Callback): void;
-  trash (doc: Metadata, callback: Callback): void;
-  destroy (doc: Metadata, callback: Callback): void;
+  addFileAsync (doc: Metadata): Promise<*>;
+  addFolderAsync (doc: Metadata): Promise<*>;
+  overwriteFileAsync (doc: Metadata, old: ?Metadata): Promise<*>;
+  updateFileMetadataAsync (doc: Metadata, old: Metadata): Promise<*>;
+  updateFolderAsync (doc: Metadata, old: ?Metadata): Promise<*>;
+  moveFileAsync (doc: Metadata, from: Metadata): Promise<*>;
+  moveFolderAsync (doc: Metadata, from: Metadata): Promise<*>;
+  trashAsync (doc: Metadata): Promise<*>;
+  destroyAsync (doc: Metadata): Promise<*>;
 }

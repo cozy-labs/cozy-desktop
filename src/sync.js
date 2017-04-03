@@ -64,8 +64,6 @@ class Sync {
     // $FlowFixMe
     this.remote.other = this.local
     this.pending = new PendingMap()
-
-    Promise.promisifyAll(this)
   }
 
   // Start to synchronize the remote cozy with the local filesystem
@@ -352,77 +350,87 @@ class Sync {
   // If a file has been changed, we had to check what operation it is.
   // For a move, the first call will just keep a reference to the document,
   // and only at the second call, the move operation will be executed.
-  fileChanged (doc: Metadata, side: Side, rev: number, callback: Callback) {
+  async fileChangedAsync (doc: Metadata, side: Side, rev: number): Promise<void> {
     let from
     switch (true) {
       case doc._deleted && (rev === 0):
-        callback()
-        break
+        return
       case this.moveFrom != null:
         // $FlowFixMe
         from = (this.moveFrom: Metadata)
         this.moveFrom = null
         if (from.moveTo === doc._id) {
-          side.moveFile(doc, from, err => {
-            if (err) { this.moveFrom = from }
-            callback(err)
-          })
+          try {
+            await side.moveFileAsync(doc, from)
+          } catch (err) {
+            this.moveFrom = from
+            throw err
+          }
         } else {
           log.error('Invalid move')
           log.error(from)
           log.error(doc)
-          side.addFile(doc, function (err) {
-            if (err) { log.error(err) }
-            side.destroy(from, function (err) {
-              if (err) { log.error(err) }
-              callback(new Error('Invalid move'))
-            })
-          })
+          try {
+            await side.addFileAsync(doc)
+          } catch (err) {
+            log.error(err)
+          }
+          try {
+            await side.destroyAsync(from)
+          } catch (err) {
+            log.error(err)
+            throw new Error('Invalid move')
+          }
         }
         break
       case doc.moveTo != null:
         this.moveFrom = doc
-        callback()
-        break
+        return
       case doc._deleted:
-        side.destroy(doc, callback)
-        break
+        return side.destroyAsync(doc)
       case rev === 0:
-        side.addFile(doc, callback)
-        break
+        return side.addFileAsync(doc)
       default:
-        this.pouch.getPreviousRev(doc._id, rev, function (err, old) {
-          if (err) {
-            side.overwriteFile(doc, old, callback)
-          } else if (old.checksum === doc.checksum) {
-            side.updateFileMetadata(doc, old, callback)
-          } else if (old.remote && !old.checksum) {
-            // Photos uploaded by cozy-mobile have no checksum,
-            // but it's useless to reupload the binary
-            side.updateFileMetadata(doc, old, callback)
-          } else {
-            side.overwriteFile(doc, old, callback)
-          }
-        })
+        let old
+        try {
+          old = await this.pouch.getPreviousRevAsync(doc._id, rev)
+        } catch (err) {
+          return side.overwriteFileAsync(doc, null)
+        }
+
+        if (old.checksum === doc.checksum) {
+          return side.updateFileMetadataAsync(doc, old)
+        } else if (old.remote && !old.checksum) {
+          // Photos uploaded by cozy-mobile have no checksum,
+          // but it's useless to reupload the binary
+          return side.updateFileMetadataAsync(doc, old)
+        } else {
+          return side.overwriteFileAsync(doc, old)
+        }
     }
   }
 
+  fileChanged (doc: Metadata, side: Side, rev: number, callback: Callback) {
+    this.fileChangedAsync(doc, side, rev).asCallback(callback)
+  }
+
   // Same as fileChanged, but for folder
-  folderChanged (doc: Metadata, side: Side, rev: number, callback: Callback) {
+  async folderChangedAsync (doc: Metadata, side: Side, rev: number) {
     let from
     switch (true) {
       case doc._deleted && (rev === 0):
-        callback()
-        break
+        return
       case this.moveFrom != null:
         // $FlowFixMe
         from = (this.moveFrom: Metadata)
         this.moveFrom = null
         if (from.moveTo === doc._id) {
-          side.moveFolder(doc, from, err => {
-            if (err) { this.moveFrom = from }
-            callback(err)
-          })
+          try {
+            await side.moveFolderAsync(doc, from)
+          } catch (err) {
+            this.moveFrom = from
+            throw err
+          }
         } else {
           // Since a move requires 2 PouchDB writes, in rare cases the source
           // and the destination may not match anymore (race condition).
@@ -431,28 +439,40 @@ class Sync {
           log.error('Invalid move')
           log.error(from)
           log.error(doc)
-          side.addFolder(doc, function (err) {
-            if (err) { log.error(err) }
-            side.trash(from, function (err) {
-              if (err) { log.error(err) }
-              callback(new Error('Invalid move'))
-            })
-          })
+          try {
+            await side.addFolderAsync(doc)
+          } catch (err) {
+            log.error(err)
+          }
+          try {
+            await side.trashAsync(from)
+          } catch (err) {
+            log.error(err)
+            throw new Error('Invalid move')
+          }
         }
         break
       case doc.moveTo != null:
         this.moveFrom = doc
-        callback()
-        break
+        return
       case doc._deleted:
-        side.destroy(doc, callback)
-        break
+        return side.destroyAsync(doc)
       case rev === 0:
-        side.addFolder(doc, callback)
-        break
+        return side.addFolderAsync(doc)
       default:
-        this.pouch.getPreviousRev(doc._id, rev, (_, old) => side.updateFolder(doc, old, callback))
+        let old
+        try {
+          old = await this.pouch.getPreviousRevAsync(doc._id, rev)
+        } catch (_) {
+          return side.updateFolderAsync(doc, null)
+        }
+        return side.updateFolderAsync(doc, old)
     }
+  }
+
+  folderChanged (doc: Metadata, side: Side, rev: number, callback: Callback) {
+    // $FlowFixMe
+    this.folderChangedAsync(doc, side, rev).asCallback(callback)
   }
 
   // Wait for possibly trashed parent directory. Do nothing if any.
@@ -477,7 +497,7 @@ class Sync {
           log.debug(`${doc.path}: will be trashed with parent directory`)
         } else {
           log.debug(`${doc.path}: should be trashed by itself`)
-          side.trash(doc, log.errorIfAny)
+          side.trashAsync(doc).catch(log.error)
         }
       }
     })

@@ -121,7 +121,7 @@ export default class Remote implements Side {
     }
   }
 
-  async overwriteFileAsync (doc: Metadata, old: Metadata): Promise<Metadata> {
+  async overwriteFileAsync (doc: Metadata, old: ?Metadata): Promise<Metadata> {
     log.info(`${doc.path}: Uploading new file version...`)
     const stream = await this.other.createReadStreamAsync(doc)
     const updated = await this.remoteCozy.updateFileById(doc.remote._id, stream, {
@@ -135,7 +135,7 @@ export default class Remote implements Side {
     return conversion.createMetadata(updated)
   }
 
-  async overwriteFile (doc: Metadata, old: Metadata, callback: Callback) {
+  async overwriteFile (doc: Metadata, old: ?Metadata, callback: Callback) {
     try {
       const updated = await this.overwriteFileAsync(doc, old)
       callback(null, updated)
@@ -200,14 +200,14 @@ export default class Remote implements Side {
     this.moveFileAsync(doc, from).asCallback(callback)
   }
 
-  async updateFolderAsync (doc: Metadata, old: Metadata): Promise<Metadata> {
+  async updateFolderAsync (doc: Metadata, old: ?Metadata): Promise<Metadata> {
     log.info(`${doc.path}: Updating metadata...`)
     const [newParentDirPath, newName] = conversion.extractDirAndName(doc.path)
     const newParentDir = await this.remoteCozy.findDirectoryByPath(newParentDirPath)
     // XXX: Should we recreate missing parent, or would it duplicate work in Merge#ensureParentExist()?
     let newRemoteDoc: RemoteDoc
 
-    if (!old.remote) {
+    if (!old || !old.remote) {
       return this.addFolderAsync(doc)
     }
 
@@ -260,10 +260,13 @@ export default class Remote implements Side {
     this.trashAsync(doc).asCallback(callback)
   }
 
-  // FIXME: Temporary stubs so we can do some acceptance testing on file upload
-  //        without getting errors for missing methods.
+  moveFolderAsync (doc: Metadata, from: Metadata): Promise<*> {
+    // TODO: v3: Remote#moveFolderAsync()
+    throw new Error('Remote#moveFolderAsync() is not implemented')
+  }
 
   moveFolder (doc: Metadata, from: Metadata, callback: Callback) {
-    callback(new Error('Remote#moveFolder() is not implemented'))
+    // $FlowFixMe
+    this.moveFolderAsync(doc, from).asCallback(callback)
   }
 }
