@@ -77,7 +77,7 @@
     "opn": "4.0.2",
     "pouchdb": "6.1.2",
     "pouchdb-find": "^0.10.5",
-    "progress": "1.1.8",
+    "progress": "2.0.0",
     "read": "1.0.7",
     "readdirp": "2.1.0",
     "request-json-light": "0.5.25"
