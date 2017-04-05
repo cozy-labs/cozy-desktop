@@ -475,12 +475,12 @@ ipcMain.on('quit-and-install', () => {
 
 ipcMain.on('auto-launcher', (event, enabled) => {
   autoLauncher.isEnabled().then((was) => {
-    if (was === enabled) {
-      return
-    } else if (enabled) {
-      autoLauncher.enable()
-    } else {
-      autoLauncher.disable()
+    if (was !== enabled) {
+      if (enabled) {
+        autoLauncher.enable()
+      } else {
+        autoLauncher.disable()
+      }
     }
   })
 })
