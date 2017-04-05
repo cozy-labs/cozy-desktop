@@ -2364,11 +2364,11 @@ ignore@^3.2.0:
   version "3.2.6"
   resolved "https://registry.yarnpkg.com/ignore/-/ignore-3.2.6.tgz#26e8da0644be0bb4cb39516f6c79f0e0f4ffe48c"
 
-immediate@3.0.6, immediate@^3.0.0, immediate@~3.0.5:
+immediate@3.0.6, immediate@~3.0.5:
   version "3.0.6"
   resolved "https://registry.yarnpkg.com/immediate/-/immediate-3.0.6.tgz#9db1dbd0faf8de6fbe0f5dd5e56bb606280de69b"
 
-immediate@^3.2.2, immediate@^3.2.3:
+immediate@^3.0.0, immediate@^3.2.2, immediate@^3.2.3:
   version "3.2.3"
   resolved "https://registry.yarnpkg.com/immediate/-/immediate-3.2.3.tgz#d140fa8f614659bd6541233097ddaac25cdd991c"
 
@@ -3297,10 +3297,6 @@ node-pre-gyp@^0.6.29, node-pre-gyp@~0.6.31:
     semver "^5.3.0"
     tar "^2.2.1"
     tar-pack "^3.4.0"
-
-node-uuid@1.4.8:
-  version "1.4.8"
-  resolved "https://registry.yarnpkg.com/node-uuid/-/node-uuid-1.4.8.tgz#b040eb0923968afabf8d32fb1f17f1167fdab907"
 
 nomnom@^1.8.1:
   version "1.8.1"
@@ -4611,7 +4607,7 @@ secure-random@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/secure-random/-/secure-random-1.1.1.tgz#0880f2d8c5185f4bcb4684058c836b4ddb07145a"
 
-"semver-set@github:voxpelli/semver-set#7fc070b53130604a9749a642e496ded9aecad98a":
+semver-set@voxpelli/semver-set#7fc070b53130604a9749a642e496ded9aecad98a:
   version "0.1.1"
   resolved "https://codeload.github.com/voxpelli/semver-set/tar.gz/7fc070b53130604a9749a642e496ded9aecad98a"
   dependencies:
