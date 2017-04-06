@@ -2,6 +2,7 @@
 /* eslint-env mocha */
 
 import should from 'should'
+import path from 'path'
 
 import * as conversion from '../../src/conversion'
 import { FILES_DOCTYPE } from '../../src/remote/constants'
@@ -85,14 +86,14 @@ describe('conversion', function () {
 
   describe('extractDirAndName', () =>
     it('returns the remote path and name', function () {
-      let [path, name] = conversion.extractDirAndName('foo')
-      should(path).equal('/')
+      let [dir, name] = conversion.extractDirAndName('foo')
+      should(dir).equal('/')
       should(name).equal('foo');
-      [path, name] = conversion.extractDirAndName('foo/bar')
-      should(path).equal('/foo')
+      [dir, name] = conversion.extractDirAndName(path.normalize('foo/bar'))
+      should(dir).equal('/foo')
       should(name).equal('bar');
-      [path, name] = conversion.extractDirAndName('foo/bar/baz')
-      should(path).equal('/foo/bar')
+      [dir, name] = conversion.extractDirAndName(path.normalize('foo/bar/baz'))
+      should(dir).equal('/foo/bar')
       should(name).equal('baz')
     })
   )
