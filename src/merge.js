@@ -8,6 +8,7 @@ import logger from './logger'
 import { markSide, sameBinary, sameFile, sameFolder } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
+import { otherSide } from './side'
 
 import type { Metadata } from './metadata'
 import type { SideName } from './side'
@@ -392,9 +393,17 @@ class Merge {
     docs = docs.reverse()
     docs.push(folder)
     for (let doc of Array.from(docs)) {
-      markSide(side, doc, doc)
-      doc._deleted = true
-      delete doc.errors
+      if (doc.sides && (doc.sides[side] || 0) < (doc.sides[otherSide(side)] || 0)) {
+        log.warn(`${doc.path}: cannot be deleted with ${folder.path}: ` +
+          `${doc.docType} was modified on the ${otherSide(side)} side`)
+        log.info(`${doc.path}: Dissociating from remote...`)
+        delete doc.remote
+        if (doc.sides) delete doc.sides.remote
+      } else {
+        markSide(side, doc, doc)
+        doc._deleted = true
+        delete doc.errors
+      }
     }
     return this.pouch.bulkDocs(docs)
   }
