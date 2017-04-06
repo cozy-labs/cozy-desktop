@@ -58,9 +58,7 @@ switch (process.platform) {
     buildId = buildIdHFS
     break
   case 'win32':
-    // FIXME: Temporary hack to run the CLI on Windows
-    // TODO: Proper implementation of buildId on Windows
-    buildId = buildIdUnix
+    buildId = buildIdNTFS
     break
   default:
     log.error(`Sorry, ${process.platform} is not supported!`)
@@ -85,6 +83,11 @@ function buildIdHFS (doc: Metadata) {
   let id = doc.path
   if (id.normalize) { id = id.normalize('NFD') }
   doc._id = id.toUpperCase()
+}
+
+// Build an _id from the path for Windows (NTFS file system)
+function buildIdNTFS (doc: Metadata) {
+  doc._id = doc.path.toUpperCase()
 }
 
 // Return true if the document has not a valid path

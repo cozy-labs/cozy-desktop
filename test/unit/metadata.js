@@ -31,6 +31,14 @@ describe('metadata', function () {
         doc._id.should.equal('FOO/BAR/CAFÉ')
       })
     }
+
+    if (process.platform === 'win32') {
+      it('is case sensitive on Windows', () => {
+        let doc = {path: 'foo/bar/caf\u00E9'}
+        buildId(doc)
+        doc._id.should.equal('FOO/BAR/CAF\u00C9')
+      })
+    }
   })
 
   describe('invalidPath', function () {
