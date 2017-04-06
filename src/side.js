@@ -18,3 +18,11 @@ export interface Side {
   trashAsync (doc: Metadata): Promise<*>;
   destroyAsync (doc: Metadata): Promise<*>;
 }
+
+export function otherSide (side: SideName): SideName {
+  switch (side) {
+    case 'local': return 'remote'
+    case 'remote': return 'local'
+    default: throw new Error(`Invalid side name: ${JSON.stringify(side)}`)
+  }
+}
