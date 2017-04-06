@@ -95,7 +95,9 @@ function buildIdNTFS (doc: Metadata) {
 export function invalidPath (doc: Metadata) {
   if (!doc.path) { return true }
   doc.path = path.normalize(doc.path)
-  doc.path = doc.path.replace(/^\//, '')
+  if (doc.path.startsWith(path.sep)) {
+    doc.path = doc.path.slice(1)
+  }
   let parts = doc.path.split(path.sep)
   return (doc.path === '.') ||
           (doc.path === '') ||

@@ -2,6 +2,7 @@
 
 import clone from 'lodash.clone'
 import should from 'should'
+import path from 'path'
 
 import {
   buildId, extractRevNumber, invalidChecksum, invalidPath, markSide,
@@ -42,12 +43,13 @@ describe('metadata', function () {
   })
 
   describe('invalidPath', function () {
-    should.Assertion.add('invalidPath', function() {
+    should.Assertion.add('invalidPath', function () {
       this.params = {operator: 'to make metadata.invalidPath() return', expected: true}
       should(invalidPath(this.obj)).be.exactly(true)
     })
 
     it('returns true if the path is incorrect', function () {
+      should({path: path.sep}).have.invalidPath()
       should({path: '/'}).have.invalidPath()
       should({path: ''}).have.invalidPath()
       should({path: '.'}).have.invalidPath()
