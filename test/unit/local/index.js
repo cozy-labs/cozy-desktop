@@ -89,8 +89,12 @@ describe('Local', function () {
       })
       updater(function (err) {
         should.not.exist(err)
-        let mode = +fs.statSync(filePath).mode;
-        (mode & 0o100).should.not.equal(0)
+        let mode = +fs.statSync(filePath).mode
+        if (process.platform === 'win32') {
+          (mode & 0o100).should.equal(0)
+        } else {
+          (mode & 0o100).should.not.equal(0)
+        }
         done()
       })
     })

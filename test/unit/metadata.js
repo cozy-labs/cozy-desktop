@@ -2,6 +2,7 @@
 
 import clone from 'lodash.clone'
 import should from 'should'
+import path from 'path'
 
 import {
   buildId, extractRevNumber, invalidChecksum, invalidPath, markSide,
@@ -31,40 +32,42 @@ describe('metadata', function () {
         doc._id.should.equal('FOO/BAR/CAFÉ')
       })
     }
+
+    if (process.platform === 'win32') {
+      it('is case sensitive on Windows', () => {
+        let doc = {path: 'foo/bar/caf\u00E9'}
+        buildId(doc)
+        doc._id.should.equal('FOO/BAR/CAF\u00C9')
+      })
+    }
   })
 
   describe('invalidPath', function () {
+    should.Assertion.add('invalidPath', function () {
+      this.params = {operator: 'to make metadata.invalidPath() return', expected: true}
+      should(invalidPath(this.obj)).be.exactly(true)
+    })
+
     it('returns true if the path is incorrect', function () {
-      let ret = invalidPath({path: '/'})
-      ret.should.be.true()
-      ret = invalidPath({path: ''})
-      ret.should.be.true()
-      ret = invalidPath({path: '.'})
-      ret.should.be.true()
-      ret = invalidPath({path: '..'})
-      ret.should.be.true()
-      ret = invalidPath({path: '../foo/bar.png'})
-      ret.should.be.true()
-      ret = invalidPath({path: 'foo/..'})
-      ret.should.be.true()
-      ret = invalidPath({path: 'f/../oo/../../bar/./baz'})
-      ret.should.be.true()
+      should({path: path.sep}).have.invalidPath()
+      should({path: '/'}).have.invalidPath()
+      should({path: ''}).have.invalidPath()
+      should({path: '.'}).have.invalidPath()
+      should({path: '..'}).have.invalidPath()
+      should({path: '../foo/bar.png'}).have.invalidPath()
+      should({path: 'foo/..'}).have.invalidPath()
+      should({path: 'f/../oo/../../bar/./baz'}).have.invalidPath()
     })
 
     it('returns false if everything is OK', function () {
-      let ret = invalidPath({path: 'foo'})
-      ret.should.be.false()
-      ret = invalidPath({path: 'foo/bar'})
-      ret.should.be.false()
-      ret = invalidPath({path: 'foo/bar/baz.jpg'})
-      ret.should.be.false()
+      should({path: 'foo'}).not.have.invalidPath()
+      should({path: 'foo/bar'}).not.have.invalidPath()
+      should({path: 'foo/bar/baz.jpg'}).not.have.invalidPath()
     })
 
     it('returns false for paths with a leading slash', function () {
-      let ret = invalidPath({path: '/foo/bar'})
-      ret.should.be.false()
-      ret = invalidPath({path: '/foo/bar/baz.bmp'})
-      ret.should.be.false()
+      should({path: '/foo/bar'}).not.have.invalidPath()
+      should({path: '/foo/bar/baz.bmp'}).not.have.invalidPath()
     })
   })
 

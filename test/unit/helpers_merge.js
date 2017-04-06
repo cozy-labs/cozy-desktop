@@ -98,7 +98,7 @@ describe('Merge Helpers', function () {
         spy.called.should.be.true()
         let dst = spy.args[0][0]
         let parts = dst.path.split('-conflict-')
-        parts[0].should.equal('foo/bar')
+        parts[0].should.equal(path.normalize('foo/bar'))
         parts = parts[1].split('T')
         parts[0].should.match(/^\d{4}-\d{2}-\d{2}$/)
         parts[1].should.match(/^\d{2}:\d{2}:\d{2}.\d{3}Z$/)

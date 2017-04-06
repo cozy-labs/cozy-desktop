@@ -8,6 +8,7 @@ import App from '../app'
 const app = new App(process.env.COZY_DESKTOP_DIR)
 const config = app.config
 let cozy
+let ls = () => { console.log('ls() not available') }
 
 console.log(`Welcome to the Cozy Desktop REPL!
 
@@ -18,6 +19,15 @@ The following objects are available:
 if (config.isValid()) {
   app.instanciate()
   cozy = app.remote.watcher.remoteCozy.client
+  ls = async function () {
+    const docs = await app.pouch.byRecursivePathAsync('')
+    const lines = docs
+      .sort((doc1, doc2) => doc1.path.localeCompare(doc2.path))
+      .map(doc =>
+        `${doc.path}\t\t\t ${JSON.stringify(doc.sides)} \t ${(doc.remote || {})._id}`)
+
+    console.log(`\n\n${lines.join('\n')}\n`)
+  }
   console.log(`  cozy    A cozy-client-js instance, set up with your config
 
 Since a valid configuration is available, app.instanciate() was already called
@@ -47,5 +57,6 @@ repl.eval = function customEval (cmd, context, filename, callback) {
 Object.assign(repl.context, {
   app,
   config,
-  cozy
+  cozy,
+  ls
 })
