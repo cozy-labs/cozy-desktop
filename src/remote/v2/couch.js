@@ -2,7 +2,7 @@ import PouchDB from 'pouchdb'
 import isEqual from 'lodash.isequal'
 import pick from 'lodash.pick'
 import request from 'request-json-light'
-import uuid from 'node-uuid'
+import uuid from 'uuid/v4'
 import logger from '../../logger'
 
 const log = logger({
@@ -18,7 +18,7 @@ const log = logger({
 class Couch {
   // Create a new unique identifier for CouchDB
   static newId () {
-    return uuid.v4().replace(/-/g, '')
+    return uuid().replace(/-/g, '')
   }
 
   constructor (config, events) {

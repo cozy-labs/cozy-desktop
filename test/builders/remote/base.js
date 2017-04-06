@@ -1,7 +1,7 @@
 /* @flow */
 
 import { Cozy } from 'cozy-client-js'
-import uuid from 'node-uuid'
+import uuid from 'uuid/v4'
 
 import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID, TRASH_DIR_NAME } from '../../../src/remote/constants'
 import timestamp from '../../../src/timestamp'
@@ -63,8 +63,8 @@ export default class RemoteBaseBuilder {
 
   build (): Object {
     return {
-      _id: uuid.v4().replace(/-/g, ''),
-      _rev: '1-' + uuid.v4().replace(/-/g, ''),
+      _id: uuid().replace(/-/g, ''),
+      _rev: '1-' + uuid().replace(/-/g, ''),
       _type: FILES_DOCTYPE,
       created_at: this.options.lastModifiedDate,
       dir_id: this.options.dir._id,
