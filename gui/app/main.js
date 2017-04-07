@@ -17,7 +17,6 @@ const autoLauncher = new AutoLaunch({
 })
 const desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
 const lastFilesPath = path.join(desktop.basePath, 'last-files')
-desktop.writeLogsTo(path.join(desktop.basePath, 'logs.txt'))
 
 app.locale = (() => {
   const env = process.env

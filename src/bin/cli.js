@@ -32,9 +32,6 @@ const askConfirmation = (callback) => {
 
 let sync = function (mode, args) {
   log.info(`Cozy-desktop v${pkg.version} started (PID: ${process.pid})`)
-  if (args.logfile != null) {
-    app.writeLogsTo(args.logfile)
-  }
   if (!app.config.isValid()) {
     log.info('Your configuration file seems invalid.')
     log.info('Have you added a remote cozy?')
@@ -93,7 +90,6 @@ program
 program
   .command('sync')
   .description('Synchronize the local filesystem and the remote cozy')
-  .option('-l, --logfile [logfile]', 'Write logs to this file')
   .action(function (args) {
     try {
       return sync('full', args)
@@ -112,7 +108,6 @@ The README has more instructions about that.
 program
   .command('pull')
   .description('Pull files & folders from a remote cozy to local filesystem')
-  .option('-l, --logfile [logfile]', 'Write logs to this file')
   .action(function (args) {
     try {
       return sync('pull', args)
@@ -131,7 +126,6 @@ The README has more instructions about that.
 program
   .command('push')
   .description('Push files & folders from local filesystem to the remote cozy')
-  .option('-l, --logfile [logfile]', 'Write logs to this file')
   .action(function (args) {
     try {
       return sync('push', args)

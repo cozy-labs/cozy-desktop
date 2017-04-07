@@ -1,7 +1,5 @@
 /* @flow */
 
-// $FlowFixMe
-import { Console } from 'console'
 import EventEmitter from 'events'
 import fs from 'fs-extra'
 import os from 'os'
@@ -32,13 +30,7 @@ const log = logger({
 
 // App is the entry point for the CLI and GUI.
 // They both can do actions and be notified by events via an App instance.
-let MAX_LOG_SIZE
 class App {
-  static initClass () {
-    // When a log file weights more than 0.5Mo, rotate it
-    MAX_LOG_SIZE = 500000
-  }
-
   lang: string
   basePath: string
   config: Config
@@ -62,28 +54,6 @@ class App {
     this.config = new Config(this.basePath)
     this.pouch = new Pouch(this.config)
     this.events = new EventEmitter()
-  }
-
-  // Configure a file to write logs to
-  writeLogsTo (logfile: string) {
-    this.logfile = logfile
-    this.writeToLogfile()
-    if (this.logsInterval) { clearInterval(this.logsInterval) }
-    this.logsInterval = setInterval(this.rotateLogfile, 10000)
-  }
-
-  // Write logs in a file, by overriding the global console
-  writeToLogfile () {
-    let out = fs.createWriteStream(this.logfile, {flags: 'a+', mode: 0o0644})
-    logger.console = new Console(out, out)
-  }
-
-  // Rotate the log file if it's too heavy
-  rotateLogfile () {
-    fs.stat(this.logfile, (err, stats) => {
-      if (err || (stats.size < MAX_LOG_SIZE)) { return }
-      fs.rename(this.logfile, `${this.logfile}.old`, this.writeToLogfile)
-    })
   }
 
   // Parse the URL
@@ -307,6 +277,5 @@ class App {
     })
   }
 }
-App.initClass()
 
 export default App
