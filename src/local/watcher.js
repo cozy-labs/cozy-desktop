@@ -93,6 +93,9 @@ class LocalWatcher {
       followSymlinks: false,
       // The stats object is used in methods below
       alwaysStat: true,
+      // Watching on Windows seems to lock dirs with subdirs, preventing them
+      // from being renamed/moved/deleted.
+      usePolling: (process.platform === 'win32'),
       // Filter out artifacts from editors with atomic writes
       atomic: true,
       // Poll newly created files to detect when the write is finished
