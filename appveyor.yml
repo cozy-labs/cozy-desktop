@@ -1,0 +1,25 @@
+environment:
+  nodejs_version: "6"
+
+install:
+  - ps: Install-Product node $env:nodejs_version
+  - yarn
+  - ps: choco install docker-for-windows --ignore-checksums
+
+build: off
+
+test_script:
+  - node --version
+  - npm --version
+  - yarn --version
+  - docker version
+  - docker-compose version
+  - docker-compose build
+  - docker-compose create
+  - docker-compose start
+  - yarn bootstrap
+  - yarn test-unit
+  - docker-compose stop
+
+on_failure:
+  - ps: cat C:\ProgramData\chocolatey\logs\chocolatey.log
