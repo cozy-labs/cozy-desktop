@@ -11,8 +11,7 @@ import type { Metadata } from '../metadata'
 import type { RemoteDoc } from './document'
 
 const log = logger({
-  prefix: 'Remote watcher',
-  date: true
+  component: 'RemoteWatcher'
 })
 
 export const DEFAULT_HEARTBEAT: number = 1000 * 60 * 3 // 3 minutes

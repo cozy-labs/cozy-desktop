@@ -10,8 +10,7 @@ import type { SideName } from './side'
 import type { Callback } from './utils/func'
 
 const log = logger({
-  prefix: 'Prep          ',
-  date: true
+  component: 'Prep'
 })
 
 // When the local filesystem or the remote cozy detects a change, it calls this

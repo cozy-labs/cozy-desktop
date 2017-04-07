@@ -24,8 +24,7 @@ import type { Callback } from './utils/func'
 import type { SyncMode } from './sync'
 
 const log = logger({
-  prefix: 'Cozy Desktop  ',
-  date: true
+  component: 'App'
 })
 
 // App is the entry point for the CLI and GUI.

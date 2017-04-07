@@ -13,8 +13,7 @@ import type { Metadata } from './metadata'
 import type { Callback } from './utils/func'
 
 const log = logger({
-  prefix: 'Pouch         ',
-  date: true
+  component: 'Pouch'
 })
 
 // Pouchdb is used to store all the metadata about files and folders.

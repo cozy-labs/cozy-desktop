@@ -10,8 +10,7 @@ import App from '../app'
 import logger from '../logger'
 let app = new App(process.env.COZY_DESKTOP_DIR)
 const log = logger({
-  prefix: 'Cozy Desktop  ',
-  date: true
+  component: 'CLI'
 })
 
 let exit = function () {

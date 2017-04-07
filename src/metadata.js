@@ -10,8 +10,7 @@ import { TRASH_DIR_NAME } from './remote/constants'
 import { sameDate } from './timestamp'
 
 const log = logger({
-  prefix: 'Metadata',
-  date: true
+  component: 'Metadata'
 })
 
 export type MetadataRemoteInfo = {

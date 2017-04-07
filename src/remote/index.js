@@ -17,8 +17,7 @@ import type { Side } from '../side' // eslint-disable-line
 import type { Callback } from '../utils/func'
 
 const log = logger({
-  prefix: 'Remote writer ',
-  date: true
+  component: 'RemoteWriter'
 })
 
 export default class Remote implements Side {

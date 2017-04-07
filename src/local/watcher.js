@@ -18,12 +18,10 @@ import type { Callback } from '../utils/func'
 import type { Pending } from '../utils/pending' // eslint-disable-line
 
 const log = logger({
-  prefix: 'Local watcher ',
-  date: true
+  component: 'LocalWatcher'
 })
-log.chokidar = logger({
-  prefix: 'Chokidar      ',
-  date: true
+log.chokidar = log.child({
+  component: 'Chokidar'
 })
 
 // This file contains the filesystem watcher that will trigger operations when

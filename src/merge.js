@@ -14,8 +14,7 @@ import type { SideName } from './side'
 import type { Callback } from './utils/func'
 
 const log = logger({
-  prefix: 'Merge         ',
-  date: true
+  component: 'Merge'
 })
 
 // When the local filesystem or the remote cozy detects a change, it calls this

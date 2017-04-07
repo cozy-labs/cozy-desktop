@@ -18,8 +18,7 @@ import type { Side, SideName } from './side' // eslint-disable-line
 import type { Callback } from './utils/func'
 
 const log = logger({
-  prefix: 'Synchronize   ',
-  date: true
+  component: 'Sync'
 })
 
 export const TRASHING_DELAY = 1000
