@@ -210,7 +210,7 @@ class Merge {
         if (doc.mime == null) { doc.mime = file.mime }
       }
       if (sameFile(file, doc)) {
-        log.success(`${doc.path}: up to date`)
+        log.info({doc}, 'up to date')
         return null
       } else {
         return this.pouch.put(doc)
@@ -245,7 +245,7 @@ class Merge {
       if (doc.creationDate == null) { doc.creationDate = folder.creationDate }
       if (doc.remote == null) { doc.remote = folder.remote }
       if (sameFolder(folder, doc)) {
-        log.success(`${doc.path}: up to date`)
+        log.info({doc}, 'up to date')
         return null
       } else {
         return this.pouch.put(doc)

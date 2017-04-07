@@ -208,8 +208,7 @@ class LocalWatcher {
 
   // New file detected
   onAddFile (filePath: string, stats: fs.Stats) {
-    log.chokidar.debug(`${filePath}: add`)
-    log.chokidar.inspect(stats)
+    log.chokidar.debug({event: 'add', filePath, stats})
     if (this.paths) { this.paths.push(filePath) }
     this.pending.executeIfAny(filePath)
     this.checksums++
@@ -250,8 +249,7 @@ class LocalWatcher {
 
   // New directory detected
   onAddDir (folderPath: string, stats: fs.Stats) {
-    log.chokidar.debug(`${folderPath}: addDir`)
-    log.chokidar.inspect(stats)
+    log.chokidar.debug({event: 'addDir', folderPath, stats})
     if (folderPath === '') return
 
     if (this.paths) { this.paths.push(folderPath) }
@@ -318,8 +316,7 @@ class LocalWatcher {
 
   // File update detected
   onChange (filePath: string, stats: fs.Stats) {
-    log.chokidar.debug(`${filePath}: change`)
-    log.chokidar.inspect(stats)
+    log.chokidar.debug({event: 'change', filePath, stats})
     log.info(`${filePath}: changed`)
     this.createDoc(filePath, stats, (err, doc) => {
       if (err) {

@@ -157,8 +157,7 @@ class Sync {
         .on('complete', info => {
           if (info.results && info.results.length) { return }
           this.events.emit('up-to-date')
-          log.debug('No more metadata changes for now')
-          log.lineBreak()
+          log.debug({event: 'end'}, 'No more metadata changes for now')
           opts.live = true
           opts.returnDocs = false
           this.changes = this.pouch.db.changes(opts)
@@ -184,8 +183,7 @@ class Sync {
   // In some cases, both sides have the change
   apply (change: Change, callback: Callback) {
     let { doc } = change
-    log.info(`${doc.path}: Applying change ${change.seq}...`)
-    log.inspect(change)
+    log.info({change})
 
     if (this.ignore.isIgnored(doc)) {
       this.pouch.setLocalSeq(change.seq, _ => callback())
@@ -226,7 +224,7 @@ class Sync {
     } else if (remoteRev > localRev) {
       return [this.local, 'local', localRev]
     } else {
-      log.success(`${doc.path}: Nothing to do (rev ${localRev})`)
+      log.info({doc}, 'up to date')
       return []
     }
   }
