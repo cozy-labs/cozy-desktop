@@ -1,0 +1,15 @@
+version: '2'
+services:
+  couch:
+    image: klaemo/couchdb:2.0.0
+    ports:
+      - "5984:5984"
+  stack:
+    build: dev/cozy-stack
+    ports:
+      - "8080:8080"
+      - "6060:6060"
+    volumes:
+      - .:/cozy-desktop
+    links:
+      - couch
