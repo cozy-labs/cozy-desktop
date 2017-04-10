@@ -7,7 +7,7 @@ import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } from '../../src/remote/const
 import { BuilderFactory } from '../builders'
 
 // The URL of the Cozy instance used for tests
-export const COZY_URL = process.env.COZY_URL || 'http://test.cozy-desktop.local:8080'
+export const COZY_URL = process.env.COZY_URL || 'http://test.cozy.tools:8080'
 
 if (!process.env.COZY_STACK_TOKEN) {
   const domain = COZY_URL.replace('http://', '')
