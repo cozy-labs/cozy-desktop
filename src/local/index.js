@@ -21,8 +21,7 @@ import type { Side } from '../side' // eslint-disable-line
 import type { Callback } from '../utils/func'
 
 const log = logger({
-  prefix: 'Local writer  ',
-  date: true
+  component: 'LocalWriter'
 })
 // Local is the class that interfaces cozy-desktop with the local filesystem.
 // It uses a watcher, based on chokidar, to listen for file and folder changes.

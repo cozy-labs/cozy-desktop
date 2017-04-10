@@ -11,8 +11,7 @@ import type { Metadata } from '../metadata'
 import type { RemoteDoc } from './document'
 
 const log = logger({
-  prefix: 'Remote watcher',
-  date: true
+  component: 'RemoteWatcher'
 })
 
 export const DEFAULT_HEARTBEAT: number = 1000 * 60 * 3 // 3 minutes
@@ -70,7 +69,7 @@ export default class RemoteWatcher {
 
       await this.pullMany(changes.ids)
       await this.pouch.setRemoteSeqAsync(changes.last_seq)
-      log.lineBreak()
+      log.debug({event: 'end'}, 'No more remote changes for now')
     } catch (err) {
       if (err.message === REVOKED) {
         throw err
@@ -109,12 +108,10 @@ export default class RemoteWatcher {
   }
 
   async onChange (doc: RemoteDoc) {
-    log.debug(`${doc.path}: change detected`)
-    log.inspect(doc)
+    log.debug({event: 'change', doc})
 
     const was: ?Metadata = await this.pouch.byRemoteIdMaybeAsync(doc._id)
-    log.debug(`${doc.path}: was:`)
-    log.inspect(was)
+    log.debug({doc, was})
 
     if (['directory', 'file'].includes(doc.type)) {
       return this.putDoc(doc, was)

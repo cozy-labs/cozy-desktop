@@ -10,8 +10,7 @@ import { TRASH_DIR_NAME } from './remote/constants'
 import { sameDate } from './timestamp'
 
 const log = logger({
-  prefix: 'Metadata',
-  date: true
+  component: 'Metadata'
 })
 
 export type MetadataRemoteInfo = {
@@ -160,7 +159,7 @@ export function sameFolder (one: Metadata, two: Metadata) {
   one = pick(one, fields)
   two = pick(two, fields)
   const same = isEqual(one, two)
-  if (!same) log.diff(one, two)
+  if (!same) log.debug({diff: {one, two}})
   return same
 }
 
@@ -176,7 +175,7 @@ export function sameFile (one: Metadata, two: Metadata) {
   one = {...pick(one, fields), executable: !!one.executable}
   two = {...pick(two, fields), executable: !!two.executable}
   const same = isEqual(one, two)
-  if (!same) log.diff(one, two)
+  if (!same) log.debug({diff: {one, two}})
   return same
 }
 
