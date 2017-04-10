@@ -17,7 +17,6 @@ import type { RemoteDoc, JsonApiDoc } from '../../../src/remote/document'
 
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
-import couchHelpers from '../../helpers/v2/couch'
 import {
   cozy, COZY_URL, builders, deleteAll, createTheCouchdbFolder
 } from '../../helpers/cozy'
@@ -26,8 +25,6 @@ describe('Remote', function () {
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
   before('instanciate pouch', pouchHelpers.createDatabase)
-  // before('start couch server', couchHelpers.startServer)
-  // before('instanciate couch', couchHelpers.createCouchClient)
   before('instanciate remote', function () {
     this.config.cozyUrl = COZY_URL
     this.prep = sinon.createStubInstance(Prep)
@@ -36,7 +33,6 @@ describe('Remote', function () {
   })
   beforeEach(deleteAll)
   beforeEach(createTheCouchdbFolder)
-  // after('stop couch server', couchHelpers.stopServer)
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
@@ -704,41 +700,41 @@ describe('Remote', function () {
   })
 
   xdescribe('moveFolder', function () {
-    it('moves the folder in couchdb', function (done) {
-      return couchHelpers.createFolder(this.couch, 4, (_, created) => {
-        let doc = {
-          path: 'couchdb-folder/folder-5',
-          docType: 'folder',
-          creationDate: new Date(),
-          lastModification: new Date(),
-          remote: {
-            _id: created.id,
-            _rev: created.rev
-          }
-        }
-        let old = {
-          path: 'couchdb-folder/folder-4',
-          docType: 'folder',
-          remote: {
-            _id: created.id,
-            _rev: created.rev
-          }
-        }
-        return this.remote.moveFolder(doc, old, (err, created) => {
-          should.not.exist(err)
-          return this.couch.get(created.id, function (err, folder) {
-            should.not.exist(err)
-            folder.should.have.properties({
-              path: '/couchdb-folder',
-              name: 'folder-5',
-              docType: 'folder',
-              lastModification: doc.lastModification.toISOString()
-            })
-            done()
-          })
-        })
-      })
-    })
+    // it('moves the folder in couchdb', function (done) {
+    //   return couchHelpers.createFolder(this.couch, 4, (_, created) => {
+    //     let doc = {
+    //       path: 'couchdb-folder/folder-5',
+    //       docType: 'folder',
+    //       creationDate: new Date(),
+    //       lastModification: new Date(),
+    //       remote: {
+    //         _id: created.id,
+    //         _rev: created.rev
+    //       }
+    //     }
+    //     let old = {
+    //       path: 'couchdb-folder/folder-4',
+    //       docType: 'folder',
+    //       remote: {
+    //         _id: created.id,
+    //         _rev: created.rev
+    //       }
+    //     }
+    //     return this.remote.moveFolder(doc, old, (err, created) => {
+    //       should.not.exist(err)
+    //       return this.couch.get(created.id, function (err, folder) {
+    //         should.not.exist(err)
+    //         folder.should.have.properties({
+    //           path: '/couchdb-folder',
+    //           name: 'folder-5',
+    //           docType: 'folder',
+    //           lastModification: doc.lastModification.toISOString()
+    //         })
+    //         done()
+    //       })
+    //     })
+    //   })
+    // })
 
     it('adds a folder to couchdb if the folder does not exist', function (done) {
       let doc = {
