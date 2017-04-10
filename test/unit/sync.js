@@ -294,7 +294,7 @@ function(doc) {
         doc: {
           _id: 'foo/bar',
           docType: 'file',
-          checksum: '0000000000000000000000000000000000000000',
+          md5sum: '0000000000000000000000000000000000000000',
           sides: {
             local: 1
           }
@@ -513,7 +513,7 @@ function(doc) {
       let doc = {
         _id: 'foo/bar',
         _rev: '1-abcdef0123456789',
-        checksum: '391f7abfca1124c3ca937e5f85687352bcd9f261',
+        md5sum: '391f7abfca1124c3ca937e5f85687352bcd9f261',
         docType: 'file',
         sides: {
           local: 1
@@ -531,7 +531,7 @@ function(doc) {
     it('calls overwriteFileAsync for an overwritten file', function (done) {
       let doc = {
         _id: 'overwrite/foo/bar',
-        checksum: '391f7abfca1124c3ca937e5f85687352bcd9f261',
+        md5sum: '391f7abfca1124c3ca937e5f85687352bcd9f261',
         docType: 'file',
         sides: {
           local: 1
@@ -540,7 +540,7 @@ function(doc) {
       this.pouch.db.put(doc, (err, created) => {
         should.not.exist(err)
         doc._rev = created.rev
-        doc.checksum = '389dd709c94a6a7ea56e1d55cbf65eef31b9bc5e'
+        doc.md5sum = '389dd709c94a6a7ea56e1d55cbf65eef31b9bc5e'
         doc.sides = {
           local: 2,
           remote: 1
@@ -563,7 +563,7 @@ function(doc) {
     it('calls updateFileMetadataAsync for updated file metadata', function (done) {
       let doc = {
         _id: 'update/foo/bar',
-        checksum: '391f7abfca1124c3ca937e5f85687352bcd9f261',
+        md5sum: '391f7abfca1124c3ca937e5f85687352bcd9f261',
         docType: 'file',
         sides: {
           local: 1

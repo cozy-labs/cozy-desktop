@@ -70,7 +70,7 @@ describe('Local', function () {
         stream.pipe(checksum)
         stream.on('end', function () {
           checksum.end()
-          checksum.read().should.equal(doc.checksum)
+          checksum.read().should.equal(doc.md5sum)
           done()
         })
       })

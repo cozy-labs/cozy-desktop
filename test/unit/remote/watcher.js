@@ -287,7 +287,7 @@ describe('RemoteWatcher', function () {
       args[1].should.have.properties({
         path: 'my-folder',
         docType: 'file',
-        checksum: doc.md5sum,
+        md5sum: doc.md5sum,
         tags: doc.tags,
         remote: {
           _id: doc._id,
@@ -328,7 +328,7 @@ describe('RemoteWatcher', function () {
       args[1].should.have.properties({
         path: 'my-folder/file-1',
         docType: 'file',
-        checksum: doc.md5sum,
+        md5sum: doc.md5sum,
         tags: doc.tags,
         remote: {
           _id: doc._id,
@@ -363,7 +363,7 @@ describe('RemoteWatcher', function () {
       args[1].should.have.properties({
         path: 'my-folder/file-1',
         docType: 'file',
-        checksum: doc.md5sum,
+        md5sum: doc.md5sum,
         tags: doc.tags,
         remote: {
           _id: doc._id,
@@ -399,7 +399,7 @@ describe('RemoteWatcher', function () {
       src.should.have.properties({
         path: 'my-folder/file-2',
         docType: 'file',
-        checksum: doc.md5sum,
+        md5sum: doc.md5sum,
         tags: doc.tags,
         remote: {
           _id: '12345678902'
@@ -409,7 +409,7 @@ describe('RemoteWatcher', function () {
       dst.should.have.properties({
         path: 'my-folder',
         docType: 'file',
-        checksum: doc.md5sum,
+        md5sum: doc.md5sum,
         tags: doc.tags,
         remote: {
           _id: doc._id,
@@ -451,7 +451,7 @@ describe('RemoteWatcher', function () {
       src.should.have.properties({
         path: 'my-folder/file-2',
         docType: 'file',
-        checksum: doc.md5sum,
+        md5sum: doc.md5sum,
         tags: doc.tags,
         remote: {
           _id: '12345678902'
@@ -461,7 +461,7 @@ describe('RemoteWatcher', function () {
       dst.should.have.properties({
         path: 'another-folder/in/some/place',
         docType: 'file',
-        checksum: doc.md5sum,
+        md5sum: doc.md5sum,
         tags: doc.tags,
         remote: {
           _id: doc._id,
@@ -560,7 +560,7 @@ describe('RemoteWatcher', function () {
       args[1].should.have.properties({
         path: 'another-folder/in/some/place',
         docType: 'file',
-        checksum: doc.md5sum,
+        md5sum: doc.md5sum,
         tags: doc.tags,
         remote: {
           _id: doc._id,
@@ -577,7 +577,7 @@ describe('RemoteWatcher', function () {
         _id: 'removeRemote',
         path: 'removeRemote',
         docType: 'file',
-        checksum: 'd3e2163ccd0c497969233a6bd2a4ac843fb8165e',
+        md5sum: 'd3e2163ccd0c497969233a6bd2a4ac843fb8165e',
         creationDate: '2015-09-29T14:13:33.384Z',
         lastModification: '2015-09-29T14:13:33.384Z',
         tags: [],
