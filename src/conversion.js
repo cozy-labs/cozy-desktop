@@ -33,7 +33,7 @@ export function createMetadata (remote: RemoteDoc): Metadata {
   }
 
   if (remote.md5sum) {
-    doc.checksum = remote.md5sum
+    doc.md5sum = remote.md5sum
   }
 
   if (remote.size) {

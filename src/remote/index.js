@@ -125,7 +125,7 @@ export default class Remote implements Side {
     const stream = await this.other.createReadStreamAsync(doc)
     const updated = await this.remoteCozy.updateFileById(doc.remote._id, stream, {
       contentType: doc.mime,
-      checksum: doc.checksum,
+      md5sum: doc.md5sum,
       lastModifiedDate: new Date(doc.lastModification)
     })
 

@@ -161,8 +161,8 @@ class Local implements Side {
 
     return async.waterfall([
       next => {
-        if (doc.checksum != null) {
-          return this.fileExistsLocally(doc.checksum, next)
+        if (doc.md5sum != null) {
+          return this.fileExistsLocally(doc.md5sum, next)
         } else {
           return next(null, false)
         }
@@ -202,11 +202,11 @@ class Local implements Side {
       },
 
       next => {
-        if (doc.checksum != null) {
-          return this.watcher.checksum(tmpFile, function (err, checksum) {
+        if (doc.md5sum != null) {
+          return this.watcher.checksum(tmpFile, function (err, md5sum) {
             if (err) {
               return next(err)
-            } else if (checksum === doc.checksum) {
+            } else if (md5sum === doc.md5sum) {
               return next()
             } else {
               return next(new Error('Invalid checksum'))

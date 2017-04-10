@@ -26,7 +26,7 @@ describe('Merge', function () {
       let doc = {
         _id: 'foo/new-file',
         path: 'foo/new-file',
-        checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc',
+        md5sum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc',
         docType: 'file',
         creationDate: new Date(),
         lastModification: new Date(),
@@ -52,7 +52,7 @@ describe('Merge', function () {
           _id: 'BUZZ.JPG',
           path: 'BUZZ.JPG',
           docType: 'file',
-          checksum: '1111111111111111111111111111111111111111',
+          md5sum: '1111111111111111111111111111111111111111',
           creationDate: new Date(),
           lastModification: new Date(),
           tags: ['foo'],
@@ -96,7 +96,7 @@ describe('Merge', function () {
       let doc = {
         _id: 'FOOBAR/NEW-FILE',
         path: 'FOOBAR/NEW-FILE',
-        checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc',
+        md5sum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc',
         docType: 'file',
         creationDate: new Date(),
         lastModification: new Date(),
@@ -122,7 +122,7 @@ describe('Merge', function () {
           _id: 'FIZZBUZZ.JPG',
           path: 'FIZZBUZZ.JPG',
           docType: 'file',
-          checksum: '1111111111111111111111111111111111111111',
+          md5sum: '1111111111111111111111111111111111111111',
           creationDate: new Date(),
           lastModification: new Date(),
           tags: ['foo'],
@@ -164,7 +164,7 @@ describe('Merge', function () {
           _id: 'FIZZBUZZ.JPG',
           path: 'FIZZBUZZ.JPG',
           docType: 'file',
-          checksum: '3333333333333333333333333333333333333333',
+          md5sum: '3333333333333333333333333333333333333333',
           tags: ['qux', 'quux']
         }
         this.merge.updateFile(this.side, clone(doc), err => {
@@ -214,7 +214,7 @@ describe('Merge', function () {
       let doc = {
         _id: 'FOO/NEW',
         path: 'FOO/NEW',
-        checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
+        md5sum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
         docType: 'file',
         creationDate: new Date(),
         lastModification: new Date(),
@@ -223,7 +223,7 @@ describe('Merge', function () {
       let was = {
         _id: 'FOO/OLD',
         path: 'FOO/OLD',
-        checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
+        md5sum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
         docType: 'file',
         creationDate: new Date(),
         lastModification: new Date(),
@@ -262,12 +262,12 @@ describe('Merge', function () {
       let doc = {
         _id: 'FOO/NEW-MISSING-FIELDS.JPG',
         path: 'FOO/NEW-MISSING-FIELDS.JPG',
-        checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517'
+        md5sum: 'ba1368789cce95b574dec70dfd476e61cbf00517'
       }
       let was = {
         _id: 'FOO/OLD-MISSING-FIELDS.JPG',
         path: 'FOO/OLD-MISSING-FIELDS.JPG',
-        checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
+        md5sum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
         docType: 'file',
         creationDate: new Date(),
         lastModification: new Date(),
@@ -304,7 +304,7 @@ describe('Merge', function () {
       let doc = {
         _id: 'FOO/NEW-HINT',
         path: 'FOO/NEW-HINT',
-        checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
+        md5sum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
         docType: 'file',
         creationDate: new Date(),
         lastModification: new Date(),
@@ -313,7 +313,7 @@ describe('Merge', function () {
       let was = {
         _id: 'FOO/OLD-HINT',
         path: 'FOO/OLD-HINT',
-        checksum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
+        md5sum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
         docType: 'file',
         creationDate: new Date(),
         lastModification: new Date(),

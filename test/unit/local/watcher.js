@@ -80,7 +80,7 @@ describe('LocalWatcher Tests', function () {
           doc.should.have.properties({
             path: 'chat-mignon.jpg',
             docType: 'file',
-            checksum: '+HBGS7uN4XdB0blqLv5tFQ==',
+            md5sum: '+HBGS7uN4XdB0blqLv5tFQ==',
             size: 29865
           })
           doc.should.have.properties([
@@ -145,7 +145,7 @@ describe('LocalWatcher Tests', function () {
           doc.should.have.properties({
             path: 'aaa.jpg',
             docType: 'file',
-            checksum: '+HBGS7uN4XdB0blqLv5tFQ==',
+            md5sum: '+HBGS7uN4XdB0blqLv5tFQ==',
             size: 29865
           })
           done()
@@ -240,7 +240,7 @@ describe('LocalWatcher Tests', function () {
           doc.should.have.properties({
             path: 'aea.jpg',
             docType: 'file',
-            checksum: 'tdmDwDisJe/rJn+2fV+rNA==',
+            md5sum: 'tdmDwDisJe/rJn+2fV+rNA==',
             size: 36901
           })
           done()
@@ -285,13 +285,13 @@ describe('LocalWatcher Tests', function () {
             doc.should.have.properties({
               path: 'afb.jpg',
               docType: 'file',
-              checksum: '+HBGS7uN4XdB0blqLv5tFQ==',
+              md5sum: '+HBGS7uN4XdB0blqLv5tFQ==',
               size: 29865
             })
             was.should.have.properties({
               path: 'afa.jpg',
               docType: 'file',
-              checksum: '+HBGS7uN4XdB0blqLv5tFQ==',
+              md5sum: '+HBGS7uN4XdB0blqLv5tFQ==',
               size: 29865
             })
             done()

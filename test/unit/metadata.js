@@ -75,36 +75,36 @@ describe('metadata', function () {
     it('returns false if the checksum is missing', function () {
       let ret = invalidChecksum({})
       ret.should.be.false()
-      ret = invalidChecksum({checksum: null})
+      ret = invalidChecksum({md5sum: null})
       ret.should.be.false()
-      ret = invalidChecksum({checksum: undefined})
+      ret = invalidChecksum({md5sum: undefined})
       ret.should.be.false()
     })
 
     it('returns true if the checksum is incorrect', function () {
-      let ret = invalidChecksum({checksum: ''})
+      let ret = invalidChecksum({md5sum: ''})
       ret.should.be.true()
-      ret = invalidChecksum({checksum: 'f00'})
+      ret = invalidChecksum({md5sum: 'f00'})
       ret.should.be.true()
       let sha1 = '68b329da9893e34099c7d8ad5cb9c94068b329da'
-      ret = invalidChecksum({checksum: sha1})
+      ret = invalidChecksum({md5sum: sha1})
       ret.should.be.true()
       let md5hex = 'adc83b19e793491b1c6ea0fd8b46cd9f'
-      ret = invalidChecksum({checksum: md5hex})
+      ret = invalidChecksum({md5sum: md5hex})
       ret.should.be.true()
       let md5base64truncated = 'rcg7GeeTSRscbqD9i0bNn'
-      ret = invalidChecksum({checksum: md5base64truncated})
+      ret = invalidChecksum({md5sum: md5base64truncated})
       ret.should.be.true()
       let sha1base64 = 'aLMp2piT40CZx9itXLnJQGizKdo='
-      ret = invalidChecksum({checksum: sha1base64})
+      ret = invalidChecksum({md5sum: sha1base64})
       ret.should.be.true()
       let md5base64NonPadded = 'rcg7GeeTSRscbqD9i0bNnw'
-      ret = invalidChecksum({checksum: md5base64NonPadded})
+      ret = invalidChecksum({md5sum: md5base64NonPadded})
       ret.should.be.true()
     })
 
     it('returns false if the checksum is OK', function () {
-      let doc = {checksum: 'rcg7GeeTSRscbqD9i0bNnw=='}
+      let doc = {md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='}
       let ret = invalidChecksum(doc)
       ret.should.be.false()
     })
@@ -202,7 +202,7 @@ describe('metadata', function () {
         _id: 'FOO/BAR',
         docType: 'file',
         path: 'foo/bar',
-        checksum: '9440ca447681546bd781d6a5166d18737223b3f6',
+        md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
         creationDate: '2015-12-01T11:22:56.517Z',
         lastModification: '2015-12-01T11:22:56.517Z',
         tags: ['qux'],
@@ -215,7 +215,7 @@ describe('metadata', function () {
         _id: 'FOO/BAR',
         docType: 'file',
         path: 'FOO/BAR',
-        checksum: '9440ca447681546bd781d6a5166d18737223b3f6',
+        md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
         creationDate: '2015-12-01T11:22:56.000Z',
         lastModification: '2015-12-01T11:22:57.000Z',
         tags: ['qux'],
@@ -228,7 +228,7 @@ describe('metadata', function () {
         _id: 'FOO/BAR',
         docType: 'file',
         path: 'FOO/BAR',
-        checksum: '000000047681546bd781d6a5166d18737223b3f6',
+        md5sum: '000000047681546bd781d6a5166d18737223b3f6',
         creationDate: '2015-12-01T11:22:56.000Z',
         lastModification: '2015-12-01T11:22:57.000Z',
         tags: ['qux'],
@@ -241,7 +241,7 @@ describe('metadata', function () {
         _id: 'FOO/BAR',
         docType: 'file',
         path: 'FOO/BAR',
-        checksum: '9440ca447681546bd781d6a5166d18737223b3f6',
+        md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
         creationDate: '2015-12-01T11:22:56.000Z',
         lastModification: '2015-12-01T11:22:57.000Z',
         tags: ['qux'],
@@ -254,7 +254,7 @@ describe('metadata', function () {
         _id: 'FOO/BAZ',
         docType: 'file',
         path: 'FOO/BAZ',
-        checksum: '9440ca447681546bd781d6a5166d18737223b3f6',
+        md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
         creationDate: '2015-12-01T11:22:56.000Z',
         lastModification: '2015-12-01T11:22:57.000Z',
         tags: ['qux'],
@@ -267,7 +267,7 @@ describe('metadata', function () {
         _id: 'FOO/BAR',
         docType: 'file',
         path: 'foo/bar',
-        checksum: '9440ca447681546bd781d6a5166d18737223b3f6',
+        md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
         creationDate: '2015-12-01T11:22:56.517Z',
         lastModification: '2015-12-01T11:22:56.517Z',
         size: 12345,
@@ -299,7 +299,7 @@ describe('metadata', function () {
         _id: 'FOO/BAR',
         docType: 'file',
         path: 'foo/bar',
-        checksum: '9440ca447681546bd781d6a5166d18737223b3f6',
+        md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
         creationDate: '2015-12-01T11:22:56.517Z',
         lastModification: '2015-12-01T11:22:56.517Z',
         tags: ['qux'],
@@ -327,11 +327,11 @@ describe('metadata', function () {
     it('returns true for two docs with the same checksum', function () {
       let one = {
         docType: 'file',
-        checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
+        md5sum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
       }
       let two = {
         docType: 'file',
-        checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
+        md5sum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
       }
       let ret = sameBinary(one, two)
       ret.should.be.true()
@@ -339,7 +339,7 @@ describe('metadata', function () {
 
     it('returns true for two docs with the same remote file', function () {
       let one = {
-        checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc',
+        md5sum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc',
         docType: 'file',
         remote: {
           _id: 'f00b4r'
@@ -360,11 +360,11 @@ describe('metadata', function () {
     it('returns false for two different documents', function () {
       let one = {
         docType: 'file',
-        checksum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
+        md5sum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
       }
       let two = {
         docType: 'file',
-        checksum: '2082e7f715f058acab2398d25d135cf5f4c0ce41',
+        md5sum: '2082e7f715f058acab2398d25d135cf5f4c0ce41',
         remote: {
           _id: 'f00b4r'
         }

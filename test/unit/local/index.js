@@ -60,7 +60,7 @@ describe('Local', function () {
       fs.copySync(src, dst)
       let doc = {
         path: 'read-stream.jpg',
-        checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+        md5sum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
       }
       this.local.createReadStream(doc, function (err, stream) {
         should.not.exist(err)
@@ -139,7 +139,7 @@ describe('Local', function () {
         _rev: '1-0123456',
         path: 'foo/bar',
         docType: 'file',
-        checksum: '22f7aca0d717eb322d5ae1c97d8aa26eb440287b',
+        md5sum: '22f7aca0d717eb322d5ae1c97d8aa26eb440287b',
         sides: {
           remote: 1
         }
@@ -165,7 +165,7 @@ describe('Local', function () {
           _id: 'folder/testfile',
           path: 'folder/testfile',
           docType: 'file',
-          checksum: 'deadcafe',
+          md5sum: 'deadcafe',
           sides: {
             local: 1
           }
@@ -188,7 +188,7 @@ describe('Local', function () {
       let doc = {
         path: 'files/file-from-remote',
         lastModification: new Date('2015-10-09T04:05:06Z'),
-        checksum: 'OFj2IjCsPJFfMAxmQxLGPw=='
+        md5sum: 'OFj2IjCsPJFfMAxmQxLGPw=='
       }
       this.local.other = {
         createReadStream (docToStream, callback) {
@@ -220,7 +220,7 @@ describe('Local', function () {
       let doc = {
         path: 'files/file-with-same-checksum',
         lastModification: new Date('2015-10-09T04:05:07Z'),
-        checksum: 'qwesux5JaAGTet+nckJL9w=='
+        md5sum: 'qwesux5JaAGTet+nckJL9w=='
       }
       let alt = path.join(this.syncPath, 'files', 'my-checkum-is-456')
       fs.writeFileSync(alt, 'foo bar baz')
@@ -228,7 +228,7 @@ describe('Local', function () {
       let filePath = path.join(this.syncPath, doc.path)
       this.local.addFile(doc, function (err) {
         stub.restore()
-        stub.calledWith(doc.checksum).should.be.true()
+        stub.calledWith(doc.md5sum).should.be.true()
         should.not.exist(err)
         fs.statSync(filePath).isFile().should.be.true()
         let content = fs.readFileSync(filePath, {encoding: 'utf-8'})
@@ -243,7 +243,7 @@ describe('Local', function () {
       let doc = {
         path: 'file-in-root',
         lastModification: new Date('2015-10-09T04:05:19Z'),
-        checksum: 'gDOOedLKm5wJDrqqLvKTxw=='
+        md5sum: 'gDOOedLKm5wJDrqqLvKTxw=='
       }
       this.local.other = {
         createReadStream (docToStream, callback) {
@@ -276,7 +276,7 @@ describe('Local', function () {
       let doc = {
         path: 'files/file-from-remote-2',
         lastModification: new Date('2015-10-09T04:05:16Z'),
-        checksum: '8843d7f92416211de9ebb963ff4ce28125932878'
+        md5sum: '8843d7f92416211de9ebb963ff4ce28125932878'
       }
       this.local.other = {
         createReadStream (docToStream, callback) {
@@ -358,7 +358,7 @@ describe('Local', function () {
         path: 'a-file-to-overwrite',
         docType: 'file',
         lastModification: new Date('2015-10-09T05:06:07Z'),
-        checksum: 'PiWWCnnbxptnTNTsZ6csYg=='
+        md5sum: 'PiWWCnnbxptnTNTsZ6csYg=='
       }
       this.local.other = {
         createReadStream (docToStream, callback) {

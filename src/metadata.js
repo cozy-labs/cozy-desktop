@@ -28,8 +28,7 @@ export type Metadata = {
   _deleted?: true,
   _id: string,
   _rev: string,
-  // TODO: v3: Rename to md5sum to match remote
-  checksum?: string,
+  md5sum?: string,
   class?: string,
   creationDate: string|Date,
   // TODO: v3: Use the same local *type fields as the remote ones
@@ -116,12 +115,12 @@ export function ensureValidPath (doc: Metadata) {
 // MD5 has 16 bytes.
 // Base64 encoding must include padding.
 export function invalidChecksum (doc: Metadata) {
-  if (doc.checksum == null) return false
+  if (doc.md5sum == null) return false
 
-  const buffer = Buffer.from(doc.checksum, 'base64')
+  const buffer = Buffer.from(doc.md5sum, 'base64')
 
   return buffer.byteLength !== 16 ||
-    buffer.toString('base64') !== doc.checksum
+    buffer.toString('base64') !== doc.md5sum
 }
 
 export function ensureValidChecksum (doc: Metadata) {
@@ -170,7 +169,7 @@ export function sameFolder (one: Metadata, two: Metadata) {
 // rely on file systems to be precise to the millisecond.
 export function sameFile (one: Metadata, two: Metadata) {
   if (!sameDate(one.lastModification, two.lastModification)) { return false }
-  let fields = ['_id', 'docType', 'checksum', 'remote',
+  let fields = ['_id', 'docType', 'md5sum', 'remote',
     'tags', 'size', 'class', 'mime']
   one = {...pick(one, fields), executable: !!one.executable}
   two = {...pick(two, fields), executable: !!two.executable}
@@ -183,7 +182,7 @@ export function sameFile (one: Metadata, two: Metadata) {
 export function sameBinary (one: Metadata, two: Metadata) {
   if ((one.docType !== 'file') || (two.docType !== 'file')) {
     return false
-  } else if ((one.checksum != null) && (one.checksum === two.checksum)) {
+  } else if ((one.md5sum != null) && (one.md5sum === two.md5sum)) {
     return true
   } else if ((one.remote != null) && (two.remote != null)) {
     let oneId = one.remote._id

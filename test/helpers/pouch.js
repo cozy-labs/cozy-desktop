@@ -53,7 +53,7 @@ export default {
       _id: id,
       path: id,
       docType: 'file',
-      checksum: `111111111111111111111111111111111111111${i}`,
+      md5sum: `111111111111111111111111111111111111111${i}`,
       creationDate: new Date(),
       lastModification: new Date(),
       tags: [],

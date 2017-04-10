@@ -108,7 +108,7 @@ export default {
       path: '/couchdb-folder',
       name: `file-${i}`,
       docType: 'file',
-      checksum: `111111111111111111111111111111111111112${i}`,
+      md5sum: `111111111111111111111111111111111111112${i}`,
       creationDate: new Date(),
       lastModification: new Date(),
       tags: []
