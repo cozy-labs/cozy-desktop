@@ -17,7 +17,6 @@ import type { RemoteDoc, JsonApiDoc } from '../../../src/remote/document'
 
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
-import couchHelpers from '../../helpers/v2/couch'
 import {
   cozy, COZY_URL, builders, deleteAll, createTheCouchdbFolder
 } from '../../helpers/cozy'
@@ -26,8 +25,6 @@ describe('Remote', function () {
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
   before('instanciate pouch', pouchHelpers.createDatabase)
-  // before('start couch server', couchHelpers.startServer)
-  // before('instanciate couch', couchHelpers.createCouchClient)
   before('instanciate remote', function () {
     this.config.cozyUrl = COZY_URL
     this.prep = sinon.createStubInstance(Prep)
@@ -36,7 +33,6 @@ describe('Remote', function () {
   })
   beforeEach(deleteAll)
   beforeEach(createTheCouchdbFolder)
-  // after('stop couch server', couchHelpers.stopServer)
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
@@ -78,12 +74,12 @@ describe('Remote', function () {
   xdescribe('uploadBinary', function () {
     it('creates a remote binary document', function (done) {
       this.events.emit = sinon.spy()
-      let checksum = 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+      let md5sum = 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
       let fixture = 'test/fixtures/chat-mignon.jpg'
       let doc = {
         path: 'chat.jpg',
         mime: 'image/jpeg',
-        checksum
+        md5sum
       }
       this.remote.other = {
         createReadStream (localDoc, callback) {
@@ -94,12 +90,12 @@ describe('Remote', function () {
       }
       return this.remote.uploadBinary(doc, (err, binary) => {
         should.not.exist(err)
-        binary._id.should.equal(checksum)
-        return this.remote.couch.get(checksum, function (err, binaryDoc) {
+        binary._id.should.equal(md5sum)
+        return this.remote.couch.get(md5sum, function (err, binaryDoc) {
           should.not.exist(err)
           binaryDoc.should.have.properties({
-            _id: checksum,
-            checksum,
+            _id: md5sum,
+            md5sum,
             docType: 'Binary'
           })
           should.exist(binaryDoc._attachments)
@@ -110,31 +106,31 @@ describe('Remote', function () {
     })
 
     it('does not reupload an existing file', function (done) {
-      let checksum = 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+      let md5sum = 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
       let doc = {
         path: 'chat-bis.jpg',
         mime: 'image/jpeg',
-        checksum
+        md5sum
       }
       return this.remote.uploadBinary(doc, function (err, binary) {
         should.not.exist(err)
-        binary._id.should.equal(checksum)
+        binary._id.should.equal(md5sum)
         done()
       })
     })
 
     it('uploads the file even if a blank binary is present', function (done) {
-      let checksum = '988881adc9fc3655077dc2d4d757d480b5ea0e11'
+      let md5sum = '988881adc9fc3655077dc2d4d757d480b5ea0e11'
       let fixture = 'test/fixtures/foobar.txt'
       let doc = {
         path: 'foobar.txt',
         mime: 'text/plain',
-        checksum
+        md5sum
       }
       let binary = {
-        _id: checksum,
+        _id: md5sum,
         docType: 'Binary',
-        checksum
+        md5sum
       }
       this.remote.other = {
         createReadStream (localDoc, callback) {
@@ -166,7 +162,7 @@ describe('Remote', function () {
         lastModification: '2015-11-12T13:14:32.384Z',
         creationDate: '2015-11-12T13:14:32.384Z',
         tags: ['qux'],
-        checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30',
+        md5sum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30',
         size: 12345,
         class: 'image',
         mime: 'image/jpeg'
@@ -185,7 +181,7 @@ describe('Remote', function () {
         lastModification: '2015-11-12T13:14:32.384Z',
         creationDate: '2015-11-12T13:14:32.384Z',
         tags: ['qux'],
-        checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30',
+        md5sum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30',
         size: 12345,
         class: 'image',
         mime: 'image/jpeg',
@@ -235,7 +231,7 @@ describe('Remote', function () {
         docType: 'file',
         lastModification: '2015-11-12T13:14:32.384Z',
         creationDate: '2015-11-12T13:14:32.384Z',
-        checksum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
+        md5sum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
       }
       let remote = {
         _id: 'fc4de46b9b42aaeb23521ff42e23a18e7a812bda',
@@ -268,7 +264,7 @@ describe('Remote', function () {
     it('deletes the binary if no longer referenced', function (done) {
       let binary = {
         _id: 'binary-5b1b',
-        checksum: '5b1baec8306885df52fdf341efb0087f1a8ac81e',
+        md5sum: '5b1baec8306885df52fdf341efb0087f1a8ac81e',
         docType: 'Binary'
       }
       return this.couch.put(binary, (err, created) => {
@@ -286,14 +282,14 @@ describe('Remote', function () {
     it('keeps the binary if referenced by a file', function (done) {
       let binary = {
         _id: 'binary-b410',
-        checksum: 'b410ffdd571d6e86bb8e8bdd054df91e16dfa75e',
+        md5sum: 'b410ffdd571d6e86bb8e8bdd054df91e16dfa75e',
         docType: 'Binary'
       }
       let file = {
         _id: 'A-FILE-WITH-B410',
         path: 'A-FILE-WITH-B410',
         docType: 'file',
-        checksum: 'b410ffdd571d6e86bb8e8bdd054df91e16dfa75e',
+        md5sum: 'b410ffdd571d6e86bb8e8bdd054df91e16dfa75e',
         remote: {
           id: 'remote-file-b410',
           rev: '1-123456',
@@ -312,7 +308,7 @@ describe('Remote', function () {
             return this.couch.get(binary._id, function (err, doc) {
               should.not.exist(err)
               doc._id.should.equal(binary._id)
-              doc.checksum.should.equal(binary.checksum)
+              doc.md5sum.should.equal(binary.md5sum)
               done()
             })
           })
@@ -328,7 +324,7 @@ describe('Remote', function () {
         _rev: '1-0123456',
         path: 'foo/bar',
         docType: 'file',
-        checksum: '22f7aca0d717eb322d5ae1c97d8aa26eb440287b',
+        md5sum: '22f7aca0d717eb322d5ae1c97d8aa26eb440287b',
         sides: {
           local: 1
         }
@@ -349,7 +345,7 @@ describe('Remote', function () {
         _id: 'cat2.jpg',
         path: 'cat2.jpg',
         docType: 'file',
-        checksum: 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df',
+        md5sum: 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df',
         class: 'image',
         creationDate: timestamp.current(),
         executable: true,
@@ -389,12 +385,12 @@ describe('Remote', function () {
     it('does not reupload an existing file', async function () {
       const backupDir = await builders.remoteDir().named('backup').inRootDir().create()
       await builders.remoteDir().named('ORIGINAL').inRootDir().create()
-      let checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
+      let md5sum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
       let doc: Object = {
         _id: 'backup/cat3.jpg',
         path: 'backup/cat3.jpg',
         docType: 'file',
-        checksum,
+        md5sum,
         creationDate: timestamp.current(),
         lastModification: timestamp.current(),
         size: 36901,
@@ -406,7 +402,7 @@ describe('Remote', function () {
         _id: 'ORIGINAL/CAT3.JPG',
         path: 'ORIGINAL/CAT3.JPG',
         docType: 'file',
-        checksum,
+        md5sum,
         creationDate: timestamp.current(),
         lastModification: timestamp.current(),
         size: 36901,
@@ -484,7 +480,7 @@ describe('Remote', function () {
       const doc: Metadata = {
         ...old,
         _id: created._id,
-        checksum: 'N7UdGUp1E+RbVvZSTy1R8g==',
+        md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
         lastModification: timestamp.stringify(timestamp.build(2015, 11, 16, 16, 12, 1)),
         sides: {
           local: 1
@@ -516,7 +512,7 @@ describe('Remote', function () {
       const old = conversion.createMetadata(created)
       const doc = {
         ...old,
-        checksum: 'Invalid///////////////=='
+        md5sum: 'Invalid///////////////=='
       }
       this.remote.other = {
         createReadStreamAsync (localDoc) {
@@ -530,7 +526,7 @@ describe('Remote', function () {
 
       const file = await cozy.files.statById(doc.remote._id)
       should(file.attributes).have.properties({
-        md5sum: old.checksum
+        md5sum: old.md5sum
       })
     })
   })
@@ -548,13 +544,13 @@ describe('Remote', function () {
       const doc: Object = {
         path: 'dir/file-7',
         docType: 'file',
-        checksum: 'N7UdGUp1E+RbVvZSTy1R8g==', // foo
+        md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==', // foo
         lastModification: '2015-11-16T16:13:01.001Z'
       }
       const old = {
         path: 'dir/file-7',
         docType: 'file',
-        checksum: 'N7UdGUp1E+RbVvZSTy1R8g==',
+        md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
         remote: {
           _id: created._id,
           _rev: created._rev
@@ -704,41 +700,41 @@ describe('Remote', function () {
   })
 
   xdescribe('moveFolder', function () {
-    it('moves the folder in couchdb', function (done) {
-      return couchHelpers.createFolder(this.couch, 4, (_, created) => {
-        let doc = {
-          path: 'couchdb-folder/folder-5',
-          docType: 'folder',
-          creationDate: new Date(),
-          lastModification: new Date(),
-          remote: {
-            _id: created.id,
-            _rev: created.rev
-          }
-        }
-        let old = {
-          path: 'couchdb-folder/folder-4',
-          docType: 'folder',
-          remote: {
-            _id: created.id,
-            _rev: created.rev
-          }
-        }
-        return this.remote.moveFolder(doc, old, (err, created) => {
-          should.not.exist(err)
-          return this.couch.get(created.id, function (err, folder) {
-            should.not.exist(err)
-            folder.should.have.properties({
-              path: '/couchdb-folder',
-              name: 'folder-5',
-              docType: 'folder',
-              lastModification: doc.lastModification.toISOString()
-            })
-            done()
-          })
-        })
-      })
-    })
+    // it('moves the folder in couchdb', function (done) {
+    //   return couchHelpers.createFolder(this.couch, 4, (_, created) => {
+    //     let doc = {
+    //       path: 'couchdb-folder/folder-5',
+    //       docType: 'folder',
+    //       creationDate: new Date(),
+    //       lastModification: new Date(),
+    //       remote: {
+    //         _id: created.id,
+    //         _rev: created.rev
+    //       }
+    //     }
+    //     let old = {
+    //       path: 'couchdb-folder/folder-4',
+    //       docType: 'folder',
+    //       remote: {
+    //         _id: created.id,
+    //         _rev: created.rev
+    //       }
+    //     }
+    //     return this.remote.moveFolder(doc, old, (err, created) => {
+    //       should.not.exist(err)
+    //       return this.couch.get(created.id, function (err, folder) {
+    //         should.not.exist(err)
+    //         folder.should.have.properties({
+    //           path: '/couchdb-folder',
+    //           name: 'folder-5',
+    //           docType: 'folder',
+    //           lastModification: doc.lastModification.toISOString()
+    //         })
+    //         done()
+    //       })
+    //     })
+    //   })
+    // })
 
     it('adds a folder to couchdb if the folder does not exist', function (done) {
       let doc = {
@@ -796,15 +792,15 @@ describe('Remote', function () {
 
   xdescribe('resolveConflict', () =>
     it('renames the file/folder', function (done) {
-      let checksum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
+      let md5sum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
       let binary = {
-        _id: checksum,
+        _id: md5sum,
         _rev: '1-0123456789'
       }
       let src: Object = {
         path: 'cat9.jpg',
         docType: 'file',
-        checksum,
+        md5sum,
         creationDate: new Date().toISOString(),
         lastModification: new Date().toISOString(),
         size: 36901
@@ -812,7 +808,7 @@ describe('Remote', function () {
       let dst = {
         path: 'cat-conflict-2015-12-01T01:02:03Z.jpg',
         docType: 'file',
-        checksum,
+        md5sum,
         creationDate: src.creationDate,
         lastModification: src.lastModification,
         size: 36901
@@ -824,7 +820,7 @@ describe('Remote', function () {
           _id: created.id,
           _rev: created.rev,
           binary: {
-            _id: checksum,
+            _id: md5sum,
             _rev: binary._rev
           }
         }

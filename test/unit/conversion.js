@@ -34,7 +34,7 @@ describe('conversion', function () {
       let metadata : Metadata = conversion.createMetadata(remoteDoc)
 
       should(metadata).deepEqual({
-        checksum: 'N7UdGUp1E+RbVvZSTy1R8g==',
+        md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
         class: 'document',
         creationDate: '2016-01-02T03:04:05Z',
         docType: 'file',

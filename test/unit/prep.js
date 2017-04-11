@@ -152,7 +152,7 @@ describe('Prep', function () {
       it('rejects doc with an invalid checksum', function (done) {
         let doc = {
           path: 'no-checksum',
-          checksum: 'foobar'
+          md5sum: 'foobar'
         }
         return this.prep.addFile(this.side, doc, function (err) {
           should.exist(err)
@@ -165,7 +165,7 @@ describe('Prep', function () {
         this.merge.addFileAsync.returnsPromise().resolves()
         let doc = {
           path: 'foo/missing-fields',
-          checksum: 'rcg7GeeTSRscbqD9i0bNnw=='
+          md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='
         }
         return this.prep.addFile(this.side, doc, err => {
           should.not.exist(err)
@@ -181,7 +181,7 @@ describe('Prep', function () {
       it('does nothing for ignored paths on local', function (done) {
         let doc = {
           path: 'ignored',
-          checksum: 'rcg7GeeTSRscbqD9i0bNnw=='
+          md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='
         }
         return this.prep.addFile('local', doc, err => {
           should.not.exist(err)
@@ -216,7 +216,7 @@ describe('Prep', function () {
       it('rejects doc with an invalid checksum', function (done) {
         let doc = {
           path: 'no-checksum',
-          checksum: 'foobar'
+          md5sum: 'foobar'
         }
         return this.prep.updateFile(this.side, doc, function (err) {
           should.exist(err)
@@ -229,7 +229,7 @@ describe('Prep', function () {
         this.merge.updateFileAsync.returnsPromise().resolves()
         let doc = {
           path: 'foobar/missing-fields',
-          checksum: 'rcg7GeeTSRscbqD9i0bNnw=='
+          md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='
         }
         return this.prep.updateFile(this.side, doc, err => {
           should.not.exist(err)
@@ -244,7 +244,7 @@ describe('Prep', function () {
       it('does nothing for ignored paths on local', function (done) {
         let doc = {
           path: 'ignored',
-          checksum: 'rcg7GeeTSRscbqD9i0bNnw=='
+          md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='
         }
         return this.prep.updateFile('local', doc, err => {
           should.not.exist(err)
@@ -313,7 +313,7 @@ describe('Prep', function () {
         let doc = {
           path: 'foo/bar',
           docType: 'file',
-          checksum: 'invalid'
+          md5sum: 'invalid'
         }
         let was = {path: 'foo/baz'}
         return this.prep.moveFile(this.side, doc, was, function (err) {
@@ -327,12 +327,12 @@ describe('Prep', function () {
         let doc = {
           path: 'foo/bar',
           docType: 'file',
-          checksum: 'VVVVVVVVVVVVVVVVVVVVVQ=='
+          md5sum: 'VVVVVVVVVVVVVVVVVVVVVQ=='
         }
         let was = {
           path: 'foo/bar',
           docType: 'file',
-          checksum: 'VVVVVVVVVVVVVVVVVVVVVQ=='
+          md5sum: 'VVVVVVVVVVVVVVVVVVVVVQ=='
         }
         return this.prep.moveFile(this.side, doc, was, function (err) {
           should.exist(err)
@@ -345,12 +345,12 @@ describe('Prep', function () {
         let doc = {
           path: 'foo/bar',
           docType: 'file',
-          checksum: 'VVVVVVVVVVVVVVVVVVVVVQ=='
+          md5sum: 'VVVVVVVVVVVVVVVVVVVVVQ=='
         }
         let was = {
           path: 'foo/baz',
           docType: 'file',
-          checksum: 'VVVVVVVVVVVVVVVVVVVVVQ=='
+          md5sum: 'VVVVVVVVVVVVVVVVVVVVVQ=='
         }
         return this.prep.moveFile(this.side, doc, was, function (err) {
           should.exist(err)
@@ -363,13 +363,13 @@ describe('Prep', function () {
         this.merge.moveFileAsync.returnsPromise().resolves()
         let doc = {
           path: 'FOO/new-missing-fields.jpg',
-          checksum: 'uhNoeJzOlbV03scN/UduYQ=='
+          md5sum: 'uhNoeJzOlbV03scN/UduYQ=='
         }
         let was = {
           _id: 'FOO/OLD-MISSING-FIELDS.JPG',
           _rev: '456',
           path: 'FOO/OLD-MISSING-FIELDS.JPG',
-          checksum: 'uhNoeJzOlbV03scN/UduYQ==',
+          md5sum: 'uhNoeJzOlbV03scN/UduYQ==',
           docType: 'file',
           creationDate: new Date(),
           lastModification: new Date(),

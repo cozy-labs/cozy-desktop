@@ -59,7 +59,7 @@ describe('Pouch', function () {
           should.not.exist(err)
           docs.length.should.be.equal(1)
           docs[0]._id.should.equal(_id)
-          docs[0].checksum.should.equal(checksum)
+          docs[0].md5sum.should.equal(checksum)
           done()
         })
       })

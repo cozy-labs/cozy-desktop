@@ -103,7 +103,7 @@ Documents schema
 - `_rev`: from PouchDB
 - `docType`: always 'file'
 - `path`: the original path to this file
-- `checksum`: the sha1sum of its content
+- `md5sum`: a checksum of its content
 - `creationDate`: date and time of the creation
 - `lastModification`: date and time of the last modification
 - `tags`: the list of tags, from the remote cozy

@@ -395,9 +395,9 @@ class Sync {
           return side.overwriteFileAsync(doc, null)
         }
 
-        if (old.checksum === doc.checksum) {
+        if (old.md5sum === doc.md5sum) {
           return side.updateFileMetadataAsync(doc, old)
-        } else if (old.remote && !old.checksum) {
+        } else if (old.remote && !old.md5sum) {
           // Photos uploaded by cozy-mobile have no checksum,
           // but it's useless to reupload the binary
           return side.updateFileMetadataAsync(doc, old)

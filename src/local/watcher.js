@@ -170,11 +170,11 @@ class LocalWatcher {
   // with checksum and mime informations
   createDoc (filePath: string, stats: fs.Stats, callback: Callback) {
     const absPath = path.join(this.syncPath, filePath)
-    this.checksum(absPath, function (err, checksum) {
+    this.checksum(absPath, function (err, md5sum) {
       let doc: Object = {
         path: filePath,
         docType: 'file',
-        checksum,
+        md5sum,
         creationDate: stats.birthtime || stats.ctime,
         lastModification: stats.mtime,
         size: stats.size
@@ -226,7 +226,7 @@ class LocalWatcher {
           // Let's see if one of the pending deleted files has the
           // same checksum that the added file. If so, we mark them as
           // a move.
-          this.pouch.byChecksum(doc.checksum, (err, docs) => {
+          this.pouch.byChecksum(doc.md5sum, (err, docs) => {
             this.checksums--
             if (err) {
               log.info(`${filePath}: file added`)

@@ -196,9 +196,9 @@ class Pouch {
     /* istanbul ignore next */
     let query =
       function (doc) {
-        if ('checksum' in doc) {
+        if ('md5sum' in doc) {
           // $FlowFixMe
-          return emit(doc.checksum) // eslint-disable-line no-undef
+          return emit(doc.md5sum) // eslint-disable-line no-undef
         }
       }.toString()
     return this.createDesignDoc('byChecksum', query, callback)

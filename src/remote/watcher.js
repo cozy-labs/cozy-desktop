@@ -142,7 +142,7 @@ export default class RemoteWatcher {
       log.info(`${doc.path}: ${docType} was restored remotely`)
       await this.prep.deleteDocAsync(SIDE, was)
       return this.prep.addDocAsync(SIDE, doc)
-    } else if ((doc.checksum != null) && (was.checksum === doc.checksum)) {
+    } else if ((doc.md5sum != null) && (was.md5sum === doc.md5sum)) {
       log.info(`${doc.path}: ${docType} was moved remotely`)
       return this.prep.moveDocAsync(SIDE, doc, was)
     } else if ((doc.docType === 'folder') || (was.remote._rev === doc.remote._rev)) {

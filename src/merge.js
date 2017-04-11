@@ -120,7 +120,7 @@ class Merge {
       hasSameBinary = sameBinary(file, doc)
       // Photos uploaded by cozy-mobile have no checksum
       // but we should preserve metadata like tags
-      if (!hasSameBinary) { hasSameBinary = file.remote && !file.checksum }
+      if (!hasSameBinary) { hasSameBinary = file.remote && !file.md5sum }
     }
     if (file && file.docType === 'folder') {
       return this.resolveConflictAsync(side, doc)
@@ -136,7 +136,7 @@ class Merge {
       } else {
         return this.pouch.put(doc)
       }
-    } else if (file && file.checksum) {
+    } else if (file && file.md5sum) {
       if ((side === 'local') && (file.sides.local != null)) {
         return this.resolveInitialAddAsync(side, doc, file)
       } else {
@@ -169,7 +169,7 @@ class Merge {
       let shortRev = file.sides.local
       try {
         const prev = await this.pouch.getPreviousRevAsync(doc._id, shortRev)
-        if (prev.checksum === doc.checksum) {
+        if (prev.md5sum === doc.md5sum) {
           // The file was only updated on remote
           return null
         }
