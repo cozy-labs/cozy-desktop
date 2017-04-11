@@ -4,7 +4,6 @@
   "license": "AGPL-3.0",
   "build": {
     "appId": "io.cozy.desktop",
-    "iconUrl": "https://cozy.io/en/images/desktop/icon.ico",
     "linux": {
       "target": [
         "deb"
