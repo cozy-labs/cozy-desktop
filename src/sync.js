@@ -10,7 +10,6 @@ import logger from './logger'
 import { extractRevNumber, inRemoteTrash } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
-import { REVOKED } from './remote/watcher'
 import { PendingMap } from './utils/pending'
 
 import type { Metadata } from './metadata'
@@ -235,7 +234,7 @@ class Sync {
       if (err && err.code === 'ENOSPC') {
         callback(new Error('The disk space on your computer is full!'))
       } else if (err && err.status === 400 && err.message.match(/revoked|Invalid JWT/)) {
-        callback(new Error(REVOKED))
+        callback(new Error('Client has been revoked'))
       } else if (err && err.status === 413) {
         callback(new Error('Your Cozy is full! ' +
           'You can delete some files to be able' +
