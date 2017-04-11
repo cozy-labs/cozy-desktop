@@ -40,6 +40,7 @@ export default class RemoteCozy {
 
     // Aliases:
     this.unregister = this.client.auth.unregisterClient
+    this.diskUsage = this.client.settings.diskUsage
     this.createFile = composeAsync(this.client.files.create, this.toRemoteDoc)
     this.createDirectory = composeAsync(this.client.files.createDirectory, this.toRemoteDoc)
     this.updateFileById = composeAsync(this.client.files.updateById, this.toRemoteDoc)
@@ -49,6 +50,8 @@ export default class RemoteCozy {
   }
 
   unregister: () => Promise<void>
+
+  diskUsage: () => Promise<*>
 
   createFile: (data: Readable,
                options: {name: string,

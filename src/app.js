@@ -185,7 +185,7 @@ class App {
     this.local = this.merge.local = new Local(this.config, this.prep, this.pouch, this.events)
     this.remote = this.merge.remote = new Remote(this.config, this.prep, this.pouch)
     this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
-    this.sync.getDiskSpace = this.getDiskSpace
+    this.sync.diskUsage = this.diskUsage
   }
 
   // Start the synchronization
@@ -262,18 +262,9 @@ class App {
   }
 
   // Get disk space informations from the cozy
-  getDiskSpace (callback: Callback) {
-    // TODO: App.getDiskSpace() v3
-    callback(null, {
-      diskSpace: {
-        usedDiskSpace: 0,
-        usedUnit: '',
-        freeDiskSpace: 9223372036854776000,
-        freeUnit: '',
-        totalDiskSpace: 9223372036854776000,
-        totalUnit: ''
-      }
-    })
+  diskUsage (): Promise<*> {
+    if (!this.remote) this.instanciate()
+    return this.remote.diskUsage()
   }
 }
 

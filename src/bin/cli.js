@@ -144,7 +144,7 @@ program
   .description('List local files that are synchronized with the remote cozy')
   .option('-i, --ignored', 'List ignored files')
   .action(args =>
-    app.walkFiles(args, file => log.info(file))
+    app.walkFiles(args, file => console.log(file))
 )
 
 program
@@ -166,7 +166,7 @@ program
   .action(() => app.allDocs(function (err, results) {
     if (!err) {
       results.rows.forEach(row => {
-        log.info(row.doc)
+        console.log(row.doc)
       })
     }
   }))
@@ -177,7 +177,7 @@ program
   .action(query => app.query(query, function (err, results) {
     if (!err) {
       results.rows.forEach(row => {
-        log.info(row.doc)
+        console.log(row.doc)
       })
     }
   }))
@@ -185,30 +185,29 @@ program
 program
   .command('display-config')
   .description('Display configuration and exit')
-  .action(() => log.info(app.config.toJSON()))
+  .action(() => console.log(app.config.toJSON()))
 
 program
   .command('show-disk-space')
   .description('Show disk space usage for the cozy')
   .action(() =>
-    app.getDiskSpace(function (err, res) {
-      if (err) {
-        return console.log('Error:', err)
-      } else {
-        let space = res.diskSpace
-        console.log(`Used:  ${space.usedDiskSpace} ${space.usedUnit}b`)
-        console.log(`Free:  ${space.freeDiskSpace} ${space.freeUnit}b`)
-        return console.log(`Total: ${space.totalDiskSpace} ${space.totalUnit}b`)
-      }
-    })
+    app.diskUsage().then(
+      (res) => {
+        console.log(`Used: ${res.attributes.used / 1000000}MB`)
+        if (res.attributes.quota) {
+          console.log(`Quota: ${res.attributes.quota / 1000000}MB`)
+        }
+      },
+      (err) => console.log('Error:', err)
+    )
   )
 
 program
   .command('*')
   .description('Display help message for an unknown command.')
   .action(() =>
-      log.info('Unknown command, run "cozy-desktop --help"' +
-               ' to know the list of available commands.')
+      console.log('Unknown command, run "cozy-desktop --help"' +
+        ' to know the list of available commands.')
   )
 
 program

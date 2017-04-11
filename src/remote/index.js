@@ -268,4 +268,8 @@ export default class Remote implements Side {
     // $FlowFixMe
     this.moveFolderAsync(doc, from).asCallback(callback)
   }
+
+  diskUsage (): Promise<*> {
+    return this.remoteCozy.diskUsage()
+  }
 }

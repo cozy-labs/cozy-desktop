@@ -50,7 +50,7 @@ class Sync {
   moveFrom: ?Metadata
   moveTo: ?string
 
-  getDiskSpace: (callback: Callback) => void
+  diskUsage: () => Promise<*>
 
   constructor (pouch: Pouch, local: Local, remote: Remote, ignore: Ignore, events: EventEmitter) {
     this.pouch = pouch
