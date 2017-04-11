@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 
-import async from 'async'
 import sinon from 'sinon'
 import should from 'should'
 
@@ -24,7 +23,7 @@ describe('Sync', function () {
       }
       this.local = {
         start: sinon.stub().resolves(),
-        stop: sinon.stub().resolves(),
+        stop: sinon.stub().resolves()
       }
       this.remote = {
         start: sinon.stub().returns(ret),
