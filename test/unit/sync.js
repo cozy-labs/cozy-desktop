@@ -340,13 +340,6 @@ function(doc) {
       this.ignore = new Ignore([])
       this.events = {}
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
-      this.sync.getDiskSpace = function (callback) {
-        let space = {
-          freeDiskSpace: '10',
-          freeUnit: 'G'
-        }
-        callback(null, {diskSpace: space})
-      }
     })
 
     it('returns a function that saves the seq number if OK', function (done) {

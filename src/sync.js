@@ -236,31 +236,24 @@ class Sync {
         callback(new Error('The disk space on your computer is full!'))
       } else if (err && err.status === 400 && err.message.match(/revoked|Invalid JWT/)) {
         callback(new Error(REVOKED))
+      } else if (err && err.status === 413) {
+        callback(new Error('Your Cozy is full! ' +
+          'You can delete some files to be able' +
+          'to add new ones or upgrade your storage plan.'
+        ))
       } else if (err) {
         if (!change.doc.errors) { change.doc.errors = 0 }
-        this.isCozyFull((err, full) => {
-          if (err) {
-            // TODO: v3: Ping remote on error?
-            callback(err)
-            /*
-            this.remote.couch.ping(available => {
-              if (available) {
-                this.updateErrors(change, callback)
-              } else {
-                this.remote.couch.whenAvailable(callback)
-              }
-            })
-            */
-          } else if (full) {
-            callback(new Error(
-              'Your Cozy is full! ' +
-              'You can delete some files to be able' +
-              'to add new ones or upgrade your storage plan.'
-            ))
-          } else {
+        // TODO: v3: Ping remote on error?
+        /*
+        this.remote.couch.ping(available => {
+          if (available) {
             this.updateErrors(change, callback)
+          } else {
+            this.remote.couch.whenAvailable(callback)
           }
         })
+        */
+        this.updateErrors(change, callback)
       } else {
         log.info(`${change.doc.path}: Applied change ${change.seq} on ${side} side`)
         this.pouch.setLocalSeq(change.seq, err => {
@@ -273,21 +266,6 @@ class Sync {
         })
       }
     }
-  }
-
-  // Says is the Cozy has no more free disk space
-  isCozyFull (callback: Callback) {
-    // TODO: v3: Reimplement Sync#isCozyFull()
-    callback(null, false)
-    /*
-    this.getDiskSpace(function (err, res) {
-      if (err) {
-        callback(err)
-      } else {
-        callback(null, ['', '0'].includes(res.diskSpace.freeDiskSpace))
-      }
-    })
-    */
   }
 
   // Increment the counter of errors for this document
