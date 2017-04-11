@@ -32,6 +32,7 @@
     "build:lib": "cd .. && npm run build",
     "build:tx": "tx pull --all || true",
     "clean": "rm -rf app/elm.js app/app.css* dist/",
+    "codesign-verify": "codesign --verify --deep --strict --verbose=2 dist/mac/cozy-desktop-gui.app",
     "copy:lib": "rsync -av ../lib/ ./app/node_modules/cozy-desktop/lib",
     "dist": "build --x64 --ia32",
     "lint": "standard --verbose app/main.js app/ports.js",
