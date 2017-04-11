@@ -1,5 +1,6 @@
 /* @flow */
 
+import './globals' // FIXME Use bluebird promises as long as we need asCallback
 import Promise from 'bluebird'
 import EventEmitter from 'events'
 
@@ -84,8 +85,12 @@ class Sync {
     }
     await new Promise(async function (resolve, reject) {
       running.catch((err) => reject(err))
-      while (true) {
-        await this.sync()
+      try {
+        while (true) {
+          await this.sync()
+        }
+      } catch (err) {
+        reject(err)
       }
     }.bind(this)).catch((err) => {
       this.stop()
@@ -128,7 +133,7 @@ class Sync {
       filter: '_view',
       view: 'byPath'
     }
-    await new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       this.pouch.db.changes(opts)
         .on('change', info => resolve(info))
         .on('error', err => reject(err))
