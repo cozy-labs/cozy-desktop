@@ -1225,7 +1225,7 @@ couchdb-resp-completer@^1.0.0:
     is-empty "^0.0.1"
     pouchdb-plugin-error "^1.0.1"
 
-cozy-client-js@^0.1.8:
+cozy-client-js@^0.1.11:
   version "0.1.11"
   resolved "https://registry.yarnpkg.com/cozy-client-js/-/cozy-client-js-0.1.11.tgz#6f5204ba769292409f242967c298c880519951d2"
 
