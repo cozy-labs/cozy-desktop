@@ -336,11 +336,7 @@ function(doc) {
 
     beforeEach(function () {
       this.local = {}
-      this.remote = {
-        couch: {
-          ping (callback) { callback(true) }
-        }
-      }
+      this.remote = {}
       this.ignore = new Ignore([])
       this.events = {}
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)

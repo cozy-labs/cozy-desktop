@@ -142,6 +142,7 @@ class Pouch {
       if (err) {
         return callback(err)
       } else if (res.rows.length === 0) {
+        // eslint-disable-next-line standard/no-callback-literal
         return callback({status: 404, message: 'missing'})
       } else {
         return callback(null, res.rows[0].doc)
