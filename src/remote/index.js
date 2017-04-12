@@ -83,11 +83,6 @@ export default class Remote implements Side {
     return conversion.createMetadata(dir)
   }
 
-  async addFolder (doc: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.addFolderAsync(doc).asCallback(callback)
-  }
-
   async addFileAsync (doc: Metadata): Promise<Metadata> {
     log.info(`${doc.path}: Uploading new file...`)
     const stream = await this.other.createReadStreamAsync(doc)
@@ -106,18 +101,8 @@ export default class Remote implements Side {
       _rev: created._rev
     }
 
+    // TODO do we use the returned values somewhere?
     return conversion.createMetadata(created)
-  }
-
-  // FIXME: Drop this wrapper as soon as Sync uses promises
-  addFile (doc: Metadata, callback: Callback) {
-    try {
-      this.addFileAsync(doc)
-        .then(created => callback(null, created))
-        .catch(callback)
-    } catch (err) {
-      callback(err)
-    }
   }
 
   async overwriteFileAsync (doc: Metadata, old: ?Metadata): Promise<Metadata> {
@@ -132,15 +117,6 @@ export default class Remote implements Side {
     doc.remote._rev = updated._rev
 
     return conversion.createMetadata(updated)
-  }
-
-  async overwriteFile (doc: Metadata, old: ?Metadata, callback: Callback) {
-    try {
-      const updated = await this.overwriteFileAsync(doc, old)
-      callback(null, updated)
-    } catch (err) {
-      callback(err)
-    }
   }
 
   async updateFileMetadataAsync (doc: Metadata, old: any): Promise<Metadata> {
@@ -164,16 +140,6 @@ export default class Remote implements Side {
     return conversion.createMetadata(updated)
   }
 
-  updateFileMetadata (doc: Metadata, old: any, callback: Callback) {
-    try {
-      this.updateFileMetadataAsync(doc, old)
-        .then(() => { callback() })
-        .catch(callback)
-    } catch (err) {
-      callback(err)
-    }
-  }
-
   async moveFileAsync (newMetadata: Metadata, oldMetadata: Metadata): Promise<Metadata> {
     log.info(`${oldMetadata.path}: Moving to ${newMetadata.path}`)
     // TODO: v3: Call addFile() when !from.remote?
@@ -192,11 +158,6 @@ export default class Remote implements Side {
     }
 
     return conversion.createMetadata(newRemoteDoc)
-  }
-
-  moveFile (doc: Metadata, from: Metadata, callback: Callback): void {
-    // $FlowFixMe
-    this.moveFileAsync(doc, from).asCallback(callback)
   }
 
   async updateFolderAsync (doc: Metadata, old: ?Metadata): Promise<Metadata> {
@@ -234,19 +195,9 @@ export default class Remote implements Side {
     return conversion.createMetadata(newRemoteDoc)
   }
 
-  updateFolder (doc: Metadata, old: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.updateFolderAsync(doc, old).asCallback(callback)
-  }
-
   async destroyAsync (doc: Metadata): Promise<void> {
     log.info(`${doc.path}: Destroying...`)
     await this.remoteCozy.destroyById(doc.remote._id)
-  }
-
-  destroy (doc: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.destroyAsync(doc).asCallback(callback)
   }
 
   async trashAsync (doc: Metadata): Promise<void> {
@@ -254,19 +205,9 @@ export default class Remote implements Side {
     await this.remoteCozy.trashById(doc.remote._id)
   }
 
-  trash (doc: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.trashAsync(doc).asCallback(callback)
-  }
-
   moveFolderAsync (doc: Metadata, from: Metadata): Promise<*> {
     // TODO: v3: Remote#moveFolderAsync()
     throw new Error('Remote#moveFolderAsync() is not implemented')
-  }
-
-  moveFolder (doc: Metadata, from: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.moveFolderAsync(doc, from).asCallback(callback)
   }
 
   diskUsage (): Promise<*> {
