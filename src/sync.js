@@ -2,6 +2,7 @@
 
 import Promise from 'bluebird'
 import EventEmitter from 'events'
+import path from 'path'
 
 import Ignore from './ignore'
 import Local from './local'
@@ -9,6 +10,7 @@ import logger from './logger'
 import { extractRevNumber, inRemoteTrash } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
+import { HEARTBEAT } from './remote/watcher'
 import { PendingMap } from './utils/pending'
 
 import type { Metadata } from './metadata'
@@ -178,8 +180,8 @@ class Sync {
         return this.pouch.setLocalSeqAsync(change.seq)
       } else if (sideName === 'remote' && doc.toBeTrashed && !inRemoteTrash(doc)) {
         // File or folder was just deleted locally
-        // TODO: Retry on failure instead of going unsynced
-        this.trashLaterWithParentOrByItself(doc, side)
+        const byItself = await this.trashWithParentOrByItself(doc, side)
+        if (!byItself) { return }
       } else if (doc.docType === 'file') {
         await this.fileChangedAsync(doc, side, rev)
       } else if (doc.docType === 'folder') {
@@ -249,15 +251,15 @@ class Sync {
     let { doc } = change
     if (!doc.errors) doc.errors = 0
     doc.errors++
-    // Don't try more than 10 times for the same operation
-    if (doc.errors >= 10) {
+    // Don't try more than 3 times for the same operation
+    if (doc.errors >= 3) {
       return this.pouch.setLocalSeqAsync(change.seq)
     }
     try {
       await this.pouch.db.put(doc)
       // The sync error may be due to the remote cozy being overloaded.
       // So, it's better to wait a bit before trying the next operation.
-      await Promise.delay(3000)
+      await Promise.delay(HEARTBEAT)
     } catch (err) {
       // If the doc can't be saved, it's because of a new revision.
       // So, we can skip this revision
@@ -408,36 +410,31 @@ class Sync {
     }
   }
 
-  // Wait for possibly trashed parent directory. Do nothing if any.
-  // Otherwise trash the file or directory matching the given metadata on the
-  // given side.
-  //
-  // In order to wait for upcoming events, we need not to block them, so
-  // this method doesn't take a callback and returns immediately.
-  trashLaterWithParentOrByItself (doc: Metadata, side: Side) {
-    // TODO: Extract delayed execution logic to utils/pending
-    let timeout
+  // Trash a file or folder. If a folder was deleted on local, we try to trash
+  // only this folder on the remote, not every files and folders inside it, to
+  // preserve the tree in the trash.
+  async trashWithParentOrByItself (doc: Metadata, side: Side): Promise<boolean> {
+    let parentId = path.dirname(doc._id)
+    if (parentId !== '.') {
+      let parent = await this.pouch.db.get(parentId)
 
-    this.pending.add(doc.path, {
-      stopChecking: () => {
-        clearTimeout(timeout)
-      },
-
-      execute: () => {
-        this.pending.clear(doc.path)
-
-        if (this.pending.hasParentPath(doc.path)) {
-          log.info(`${doc.path}: will be trashed with parent directory`)
-        } else {
-          log.info(`${doc.path}: should be trashed by itself`)
-          side.trashAsync(doc).catch(err => log.error(err))
-        }
+      if (!parent.toBeTrashed) {
+        await Promise.delay(TRASHING_DELAY)
+        parent = await this.pouch.db.get(parentId)
       }
-    })
 
-    timeout = setTimeout(() => {
-      this.pending.executeIfAny(doc.path)
-    }, TRASHING_DELAY)
+      if (parent.toBeTrashed && !inRemoteTrash(parent)) {
+        log.info(`${doc.path}: will be trashed with parent directory`)
+        await this.trashWithParentOrByItself(parent, side)
+        // Wait long enough that the remote has fetched one changes feed
+        // TODO find a way to trigger the changes feed instead of waiting for it
+        await Promise.delay(HEARTBEAT)
+        return false
+      }
+    }
+
+    log.info(`${doc.path}: should be trashed by itself`)
+    return side.trashAsync(doc).then(_ => true)
   }
 }
 

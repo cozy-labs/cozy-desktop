@@ -14,7 +14,7 @@ const log = logger({
   component: 'RemoteWatcher'
 })
 
-export const DEFAULT_HEARTBEAT: number = 1000 * 60 * 3 // 3 minutes
+export const DEFAULT_HEARTBEAT: number = 1000 * 60 // 1 minute
 export const HEARTBEAT: number = parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || DEFAULT_HEARTBEAT
 
 const SIDE = 'remote'

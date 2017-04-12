@@ -4,7 +4,7 @@ import sinon from 'sinon'
 import should from 'should'
 
 import Ignore from '../../src/ignore'
-import Sync, { TRASHING_DELAY } from '../../src/sync'
+import Sync from '../../src/sync'
 
 import configHelpers from '../helpers/config'
 import pouchHelpers from '../helpers/pouch'
@@ -252,9 +252,9 @@ function(doc) {
         }
       }
 
-      this.sync.trashLaterWithParentOrByItself = sinon.spy()
+      this.sync.trashWithParentOrByItself = sinon.stub().resolves(true)
       this.sync.apply(change).then(() => {
-        should(this.sync.trashLaterWithParentOrByItself.called).be.true()
+        should(this.sync.trashWithParentOrByItself.called).be.true()
         done()
       })
     })
@@ -325,27 +325,9 @@ function(doc) {
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
     })
 
-    it('sets the errors counter to 1 on first error', function (done) {
+    it('stops retrying after 3 errors', function (done) {
       let doc = {
-        _id: 'first/failure',
-        errors: 0
-      }
-      this.pouch.db.put(doc, (err, infos) => {
-        should.not.exist(err)
-        doc._rev = infos.rev
-        this.sync.updateErrors({doc}).then(() => {
-          this.pouch.db.get(doc._id, function (err, actual) {
-            should.not.exist(err)
-            actual.errors.should.equal(1)
-            done()
-          })
-        })
-      })
-    })
-
-    it('increments the errors counter to 1 on next error', function (done) {
-      let doc = {
-        _id: 'fourth/failure',
+        _id: 'third/failure',
         errors: 3
       }
       this.pouch.db.put(doc, (err, infos) => {
@@ -354,25 +336,7 @@ function(doc) {
         this.sync.updateErrors({doc}).then(() => {
           this.pouch.db.get(doc._id, function (err, actual) {
             should.not.exist(err)
-            actual.errors.should.equal(4)
-            done()
-          })
-        })
-      })
-    })
-
-    it('stops retrying after 10 errors', function (done) {
-      let doc = {
-        _id: 'eleventh/failure',
-        errors: 10
-      }
-      this.pouch.db.put(doc, (err, infos) => {
-        should.not.exist(err)
-        doc._rev = infos.rev
-        this.sync.updateErrors({doc}).then(() => {
-          this.pouch.db.get(doc._id, function (err, actual) {
-            should.not.exist(err)
-            actual.errors.should.equal(10)
+            actual.errors.should.equal(3)
             actual._rev.should.equal(doc._rev)
             done()
           })
@@ -751,57 +715,7 @@ function(doc) {
     })
   })
 
-  describe('trashLaterWithParentOrByItself', () => {
-    let clock, side, sync
-
-    beforeEach(() => {
-      clock = sinon.useFakeTimers()
-      side = {trashAsync: sinon.stub()}
-      sync = new Sync(null, {}, {}, null, null)
-
-      side.trashAsync.returnsPromise().resolves()
-    })
-
-    afterEach(() => {
-      clock.restore()
-    })
-
-    context('after waiting for the trashing delay', () => {
-      const waitAndTrash = (...docs) => {
-        for (let doc of docs) {
-          sync.trashLaterWithParentOrByItself(doc, side)
-          clock.tick(1)
-        }
-
-        clock.tick(TRASHING_DELAY)
-      }
-
-      it('trashes the file or dir by itself when its parent will not be trashed', () => {
-        const foo = {docType: 'folder', path: 'foo'}
-        const bar = {docType: 'file', path: 'bar.txt'}
-        const baz = {docType: 'folder', path: 'other/baz'}
-        const qux = {docType: 'file', path: 'other/qux.txt'}
-
-        waitAndTrash(bar, qux, baz, foo)
-
-        for (let doc of [foo, bar, baz, qux]) {
-          should(side.trashAsync).have.been.calledWith(doc)
-        }
-      })
-
-      it('does nothing when the file or dir will be trashed with its parent', () => {
-        const foo = {docType: 'folder', path: 'foo'}
-        const bar = {docType: 'folder', path: 'foo/bar'}
-        const baz = {docType: 'file', path: 'foo/bar/baz.txt'}
-        const qux = {docType: 'file', path: 'foo/qux.txt'}
-
-        waitAndTrash(qux, baz, bar, foo)
-
-        should(side.trashAsync).have.been.calledWith(foo)
-        for (let doc of [bar, baz, qux]) {
-          should(side.trashAsync).not.have.been.calledWith(doc)
-        }
-      })
-    })
+  describe('trashWithParentOrByItself', () => {
+    it('should be tested')
   })
 })
