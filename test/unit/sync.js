@@ -275,7 +275,18 @@ function(doc) {
       this.sync.apply(change).then(() => {
         this.sync.fileChangedAsync.called.should.be.true()
         this.sync.fileChangedAsync.calledWith(change.doc).should.be.true()
-        done()
+        this.pouch.db.get(change.doc._id, function (err, doc) {
+          should.not.exist(err)
+          doc.should.have.properties({
+            _id: 'foo/bar',
+            docType: 'file',
+            sides: {
+              local: 1,
+              remote: 1
+            }
+          })
+          done()
+        })
       })
     })
 
@@ -295,92 +306,10 @@ function(doc) {
       this.sync.apply(change).then(() => {
         this.sync.folderChangedAsync.called.should.be.true()
         this.sync.folderChangedAsync.calledWith(change.doc).should.be.true()
-        done()
-      })
-    })
-  })
-
-  xdescribe('handleApplyError', function () {
-    this.timeout(5000)
-
-    beforeEach(function () {
-      this.local = {}
-      this.remote = {}
-      this.ignore = new Ignore([])
-      this.events = {}
-      this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
-    })
-
-    it('returns a function that saves the seq number if OK', function (done) {
-      let change = {
-        seq: 125,
-        doc: {
-          _id: 'just/deleted',
-          _deleted: true
-        }
-      }
-      let func = this.sync.applied(change, 'remote', err => {
-        should.not.exist(err)
         this.pouch.getLocalSeq(function (_, seq) {
-          seq.should.equal(125)
+          seq.should.equal(124)
           done()
         })
-      })
-      func()
-    })
-
-    it('saves the revision for the applied side', function (done) {
-      let doc = {
-        _id: 'just/created',
-        docType: 'folder',
-        sides: {
-          local: 1
-        }
-      }
-      this.pouch.db.put(doc, (err, infos) => {
-        should.not.exist(err)
-        this.pouch.setLocalSeq(126, () => {
-          let change = {
-            seq: 127,
-            doc
-          }
-          change.doc._rev = infos.rev
-          let func = this.sync.applied(change, 'remote', err => {
-            should.not.exist(err)
-            this.pouch.db.get(change.doc._id, function (err, doc) {
-              should.not.exist(err)
-              doc.should.have.properties({
-                _id: 'just/created',
-                docType: 'folder',
-                sides: {
-                  local: 2,
-                  remote: 2
-                }
-              })
-              done()
-            })
-          })
-          func()
-        })
-      })
-    })
-
-    it('returns a function that does not touch the seq if error', function (done) {
-      this.pouch.setLocalSeq(128, () => {
-        let change = {
-          seq: 129,
-          doc: {
-            _id: 'not/important'
-          }
-        }
-        let func = this.sync.applied(change, 'remote', err => {
-          should.not.exist(err)
-          this.pouch.getLocalSeq(function (_, seq) {
-            seq.should.equal(128)
-            done()
-          })
-        })
-        func(new Error('Apply failed'))
       })
     })
   })

@@ -1,6 +1,5 @@
 /* @flow */
 
-import './globals' // FIXME Use bluebird promises as long as we need asCallback
 import Promise from 'bluebird'
 import EventEmitter from 'events'
 
@@ -176,7 +175,7 @@ class Sync {
       let [side, sideName, rev] = this.selectSide(doc)
 
       if (!side) {
-        await this.pouch.setLocalSeqAsync(change.seq)
+        return this.pouch.setLocalSeqAsync(change.seq)
       } else if (sideName === 'remote' && doc.toBeTrashed && !inRemoteTrash(doc)) {
         // File or folder was just deleted locally
         // TODO: Retry on failure instead of going unsynced
@@ -220,24 +219,28 @@ class Sync {
     log.error(err)
     if (err.code === 'ENOSPC') {
       throw new Error('The disk space on your computer is full!')
-    } else if (err.status === 400) {
-      throw new Error('Client has been revoked')
     } else if (err.status === 413) {
       throw new Error('Your Cozy is full! ' +
         'You can delete some files to be able' +
         'to add new ones or upgrade your storage plan.'
       )
     }
-    // TODO: v3: Ping remote on error?
-    /*
-    this.remote.couch.ping(available => {
-      if (available) {
-        this.updateErrors(change, callback)
+    try {
+      await this.diskUsage()
+    } catch (err) {
+      if (err.status === 400) {
+        throw new Error('Client has been revoked')
       } else {
-        this.remote.couch.whenAvailable(callback)
+        // The client is offline, wait that it can connect again to the server
+        while (true) {
+          try {
+            await Promise.delay(60000)
+            await this.diskUsage()
+            return
+          } catch (_) {}
+        }
       }
-    })
-    */
+    }
     await this.updateErrors(change)
   }
 
@@ -427,7 +430,7 @@ class Sync {
           log.info(`${doc.path}: will be trashed with parent directory`)
         } else {
           log.info(`${doc.path}: should be trashed by itself`)
-          side.trashAsync(doc).catch(log.error)
+          side.trashAsync(doc).catch(err => log.error(err))
         }
       }
     })
