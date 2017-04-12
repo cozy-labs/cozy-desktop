@@ -8,7 +8,7 @@ export type Callback = (?Error, any) => void;
 export function composeAsync (f1: (...args: Array<*>) => Promise<*>,
                        f2: (*) => Promise<*>):
                       (...args: Array<*>) => Promise<*> {
-  return async function composed (...args: Array<*>): Promise<*> {
-    return f2(await f1(...args))
+  return function composed (...args: Array<*>): Promise<*> {
+    return f1(...args).then(f2)
   }
 }
