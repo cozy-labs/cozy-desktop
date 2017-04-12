@@ -11,7 +11,6 @@ import Remote from './remote'
 
 import type { Metadata } from './metadata'
 import type { SideName } from './side'
-import type { Callback } from './utils/func'
 
 const log = logger({
   component: 'Merge'

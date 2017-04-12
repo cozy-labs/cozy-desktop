@@ -48,7 +48,7 @@ describe('Merge Helpers', function () {
         _id: 'MISSING/CHILD',
         path: 'missing/child'
       }
-      return this.merge.ensureParentExistAsync(this.side, doc).then(() => {
+      this.merge.ensureParentExistAsync(this.side, doc).then(() => {
         this.merge.putFolderAsync.called.should.be.true()
         this.merge.putFolderAsync.args[0][1].should.have.properties({
           _id: 'MISSING',
@@ -65,7 +65,7 @@ describe('Merge Helpers', function () {
         _id: 'a/b/c/d/e',
         path: 'a/b/c/d/e'
       }
-      return this.merge.ensureParentExistAsync(this.side, doc).then(() => {
+      this.merge.ensureParentExistAsync(this.side, doc).then(() => {
         let iterable = ['a', 'a/b', 'a/b/c', 'a/b/c/d']
         for (let i = 0; i < iterable.length; i++) {
           let id = iterable[i]
