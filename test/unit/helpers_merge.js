@@ -23,11 +23,8 @@ describe('Merge Helpers', function () {
   after('clean config directory', configHelpers.cleanConfig)
 
   describe('ensureParentExist', function () {
-    it('works when in the root folder', function (done) {
-      return this.merge.ensureParentExist(this.side, {_id: 'foo'}, function (err) {
-        should.not.exist(err)
-        done()
-      })
+    it('works when in the root folder', function () {
+      return this.merge.ensureParentExistAsync(this.side, {_id: 'foo'})
     })
 
     it('works if the parent directory is present', function (done) {
@@ -41,10 +38,7 @@ describe('Merge Helpers', function () {
       }
       this.pouch.db.put(doc, err => {
         should.not.exist(err)
-        return this.merge.ensureParentExist(this.side, child, function (err) {
-          should.not.exist(err)
-          done()
-        })
+        this.merge.ensureParentExistAsync(this.side, child).then(done)
       })
     })
 
@@ -54,8 +48,7 @@ describe('Merge Helpers', function () {
         _id: 'MISSING/CHILD',
         path: 'missing/child'
       }
-      return this.merge.ensureParentExist(this.side, doc, err => {
-        should.not.exist(err)
+      return this.merge.ensureParentExistAsync(this.side, doc).then(() => {
         this.merge.putFolderAsync.called.should.be.true()
         this.merge.putFolderAsync.args[0][1].should.have.properties({
           _id: 'MISSING',
@@ -72,8 +65,7 @@ describe('Merge Helpers', function () {
         _id: 'a/b/c/d/e',
         path: 'a/b/c/d/e'
       }
-      return this.merge.ensureParentExist(this.side, doc, err => {
-        should.not.exist(err)
+      return this.merge.ensureParentExistAsync(this.side, doc).then(() => {
         let iterable = ['a', 'a/b', 'a/b/c', 'a/b/c/d']
         for (let i = 0; i < iterable.length; i++) {
           let id = iterable[i]
@@ -94,7 +86,7 @@ describe('Merge Helpers', function () {
       let doc = {path: 'foo/bar'}
       let spy = this.merge.local.resolveConflictAsync
       spy.returnsPromise().resolves()
-      return this.merge.resolveConflict(this.side, doc, function () {
+      this.merge.resolveConflictAsync(this.side, doc).then(() => {
         spy.called.should.be.true()
         let dst = spy.args[0][0]
         let parts = dst.path.split('-conflict-')
@@ -112,7 +104,7 @@ describe('Merge Helpers', function () {
       let doc = {path: 'foo/bar.jpg'}
       let spy = this.merge.local.resolveConflictAsync
       spy.returnsPromise().resolves()
-      return this.merge.resolveConflict(this.side, doc, function () {
+      this.merge.resolveConflictAsync(this.side, doc).then(() => {
         spy.called.should.be.true()
         let dst = spy.args[0][0]
         path.extname(dst.path).should.equal('.jpg')

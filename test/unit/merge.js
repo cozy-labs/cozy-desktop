@@ -22,7 +22,6 @@ describe('Merge', function () {
 
   describe('addFile', function () {
     it('saves the new file', function (done) {
-      this.merge.ensureParentExist = sinon.stub().yields(null)
       let doc = {
         _id: 'foo/new-file',
         path: 'foo/new-file',
@@ -32,8 +31,7 @@ describe('Merge', function () {
         lastModification: new Date(),
         tags: ['courge', 'quux']
       }
-      this.merge.addFile(this.side, doc, err => {
-        should.not.exist(err)
+      this.merge.addFileAsync(this.side, doc).then(() => {
         this.pouch.db.get(doc._id, function (err, res) {
           should.not.exist(err)
           for (let date of ['creationDate', 'lastModification']) {
@@ -64,7 +62,6 @@ describe('Merge', function () {
       })
 
       it('can update the metadata', function (done) {
-        this.merge.ensureParentExist = sinon.stub().yields(null)
         let was = clone(this.file)
         this.file.tags = ['bar', 'baz']
         this.file.lastModification = new Date()
@@ -74,8 +71,7 @@ describe('Merge', function () {
         delete doc.mime
         this.file.creationDate = doc.creationDate.toISOString()
         this.file.lastModification = doc.lastModification.toISOString()
-        this.merge.addFile(this.side, doc, err => {
-          should.not.exist(err)
+        this.merge.addFileAsync(this.side, doc).then(() => {
           this.pouch.db.get(doc._id, (err, res) => {
             should.not.exist(err)
             res.should.have.properties(this.file)
@@ -92,7 +88,6 @@ describe('Merge', function () {
 
   describe('updateFile', function () {
     it('saves the new file', function (done) {
-      this.merge.ensureParentExist = sinon.stub().yields(null)
       let doc = {
         _id: 'FOOBAR/NEW-FILE',
         path: 'FOOBAR/NEW-FILE',
@@ -102,8 +97,7 @@ describe('Merge', function () {
         lastModification: new Date(),
         tags: ['courge', 'quux']
       }
-      this.merge.updateFile(this.side, doc, err => {
-        should.not.exist(err)
+      this.merge.updateFileAsync(this.side, doc).then(() => {
         this.pouch.db.get(doc._id, function (err, res) {
           should.not.exist(err)
           for (let date of ['creationDate', 'lastModification']) {
@@ -134,7 +128,6 @@ describe('Merge', function () {
       })
 
       it('can update the metadata', function (done) {
-        this.merge.ensureParentExist = sinon.stub().yields(null)
         let was = clone(this.file)
         this.file.tags = ['bar', 'baz']
         this.file.lastModification = new Date()
@@ -144,8 +137,7 @@ describe('Merge', function () {
         delete doc.mime
         this.file.creationDate = doc.creationDate.toISOString()
         this.file.lastModification = doc.lastModification.toISOString()
-        this.merge.updateFile(this.side, doc, err => {
-          should.not.exist(err)
+        this.merge.updateFileAsync(this.side, doc).then(() => {
           this.pouch.db.get(doc._id, (err, res) => {
             should.not.exist(err)
             res.should.have.properties(this.file)
@@ -159,7 +151,6 @@ describe('Merge', function () {
       })
 
       it('can overwrite the content of a file', function (done) {
-        this.merge.ensureParentExist = sinon.stub().yields(null)
         let doc = {
           _id: 'FIZZBUZZ.JPG',
           path: 'FIZZBUZZ.JPG',
@@ -167,8 +158,7 @@ describe('Merge', function () {
           md5sum: '3333333333333333333333333333333333333333',
           tags: ['qux', 'quux']
         }
-        this.merge.updateFile(this.side, clone(doc), err => {
-          should.not.exist(err)
+        this.merge.updateFileAsync(this.side, clone(doc)).then(() => {
           this.pouch.db.get(this.file._id, function (err, res) {
             should.not.exist(err)
             res.should.have.properties(doc)
@@ -185,7 +175,6 @@ describe('Merge', function () {
 
   describe('putFolder', () =>
     it('saves the new folder', function (done) {
-      this.merge.ensureParentExist = sinon.stub().yields(null)
       let doc = {
         _id: 'FOO/NEW-FOLDER',
         path: 'FOO/NEW-FOLDER',
@@ -194,8 +183,7 @@ describe('Merge', function () {
         lastModification: new Date(),
         tags: ['courge', 'quux']
       }
-      this.merge.putFolder(this.side, doc, err => {
-        should.not.exist(err)
+      this.merge.putFolderAsync(this.side, doc).then(() => {
         doc.creationDate = doc.creationDate.toISOString()
         doc.lastModification = doc.lastModification.toISOString()
         this.pouch.db.get(doc._id, function (err, res) {
@@ -210,7 +198,6 @@ describe('Merge', function () {
 
   describe('moveFile', function () {
     it('saves the new file and deletes the old one', function (done) {
-      this.merge.ensureParentExist = sinon.stub().yields(null)
       let doc = {
         _id: 'FOO/NEW',
         path: 'FOO/NEW',
@@ -237,8 +224,7 @@ describe('Merge', function () {
       this.pouch.db.put(clone(was), (err, inserted) => {
         should.not.exist(err)
         was._rev = inserted.rev
-        this.merge.moveFile(this.side, clone(doc), clone(was), err => {
-          should.not.exist(err)
+        this.merge.moveFileAsync(this.side, clone(doc), clone(was)).then(() => {
           this.pouch.db.get(doc._id, (err, res) => {
             should.not.exist(err)
             for (let date of ['creationDate', 'lastModification']) {
@@ -258,7 +244,6 @@ describe('Merge', function () {
     })
 
     it('adds missing fields', function (done) {
-      this.merge.ensureParentExist = sinon.stub().yields(null)
       let doc = {
         _id: 'FOO/NEW-MISSING-FIELDS.JPG',
         path: 'FOO/NEW-MISSING-FIELDS.JPG',
@@ -283,8 +268,7 @@ describe('Merge', function () {
       this.pouch.db.put(clone(was), (err, inserted) => {
         should.not.exist(err)
         was._rev = inserted.rev
-        this.merge.moveFile(this.side, doc, clone(was), err => {
-          should.not.exist(err)
+        this.merge.moveFileAsync(this.side, doc, clone(was)).then(() => {
           this.pouch.db.get(doc._id, function (err, res) {
             should.not.exist(err)
             doc.creationDate = doc.creationDate.toISOString()
@@ -300,7 +284,6 @@ describe('Merge', function () {
     })
 
     it('adds a hint for writers to know that it is a move', function (done) {
-      this.merge.ensureParentExist = sinon.stub().yields(null)
       let doc = {
         _id: 'FOO/NEW-HINT',
         path: 'FOO/NEW-HINT',
@@ -337,14 +320,14 @@ describe('Merge', function () {
           info.doc.moveTo.should.equal(doc._id)
           done()
         })
-        this.merge.moveFile(this.side, clone(doc), clone(was), err => should.not.exist(err))
+        this.merge.moveFileAsync(this.side, clone(doc), clone(was))
+          .catch(err => should.not.exist(err))
       })
     })
   })
 
   describe('moveFolder', function () {
     it('saves the new folder and deletes the old one', function (done) {
-      this.merge.ensureParentExist = sinon.stub().yields(null)
       let doc = {
         _id: 'FOOBAR/NEW',
         path: 'FOOBAR/NEW',
@@ -369,8 +352,7 @@ describe('Merge', function () {
       this.pouch.db.put(clone(was), (err, inserted) => {
         should.not.exist(err)
         was._rev = inserted.rev
-        this.merge.moveFolder(this.side, clone(doc), clone(was), err => {
-          should.not.exist(err)
+        this.merge.moveFolderAsync(this.side, clone(doc), clone(was)).then(() => {
           this.pouch.db.get(doc._id, (err, res) => {
             should.not.exist(err)
             for (let date of ['creationDate', 'lastModification']) {
@@ -390,7 +372,6 @@ describe('Merge', function () {
     })
 
     it('adds a hint for writers to know that it is a move', function (done) {
-      this.merge.ensureParentExist = sinon.stub().yields(null)
       let doc = {
         _id: 'FOOBAR/NEW-HINT',
         path: 'FOOBAR/NEW-HINT',
@@ -425,7 +406,8 @@ describe('Merge', function () {
           info.doc.moveTo.should.equal(doc._id)
           done()
         })
-        this.merge.moveFolder(this.side, clone(doc), clone(was), err => should.not.exist(err))
+        this.merge.moveFolderAsync(this.side, clone(doc), clone(was))
+          .catch(err => should.not.exist(err))
       })
     })
   })
@@ -455,8 +437,7 @@ describe('Merge', function () {
       }
       this.pouch.db.get('my-folder', (err, was) => {
         should.not.exist(err)
-        this.merge.moveFolderRecursively('local', doc, was, err => {
-          should.not.exist(err)
+        this.merge.moveFolderRecursivelyAsync('local', doc, was).then(() => {
           let ids = ['', '/folder-9', '/file-9']
           async.eachSeries(ids, (id, next) => {
             this.pouch.db.get(`DESTINATION${id}`, (err, res) => {
@@ -490,8 +471,7 @@ describe('Merge', function () {
       }
       this.pouch.db.put(doc, err => {
         should.not.exist(err)
-        this.merge.deleteFile(this.side, doc, err => {
-          should.not.exist(err)
+        this.merge.deleteFileAsync(this.side, doc).then(() => {
           this.pouch.db.get(doc._id, function (err) {
             err.status.should.equal(404)
             done()
@@ -513,7 +493,7 @@ describe('Merge', function () {
       }
       this.pouch.db.put(doc, err => {
         should.not.exist(err)
-        this.merge.deleteFolder(this.side, doc, err => {
+        this.merge.deleteFolderAsync(this.side, doc).then(() => {
           should.not.exist(err)
           this.pouch.db.get(doc._id, function (err, res) {
             err.status.should.equal(404)
@@ -543,8 +523,7 @@ describe('Merge', function () {
           this.pouch.db.put(file, next)
         }, err => {
           should.not.exist(err)
-          this.merge.deleteFolder(this.side, doc, err => {
-            should.not.exist(err)
+          this.merge.deleteFolderAsync(this.side, doc).then(() => {
             this.pouch.byPath('FOO/TO-REMOVE', function (_, docs) {
               docs.length.should.be.equal(0)
               done()
@@ -568,8 +547,7 @@ describe('Merge', function () {
         this.pouch.db.put(doc, next)
       }, err => {
         should.not.exist(err)
-        this.merge.deleteFolder(this.side, {_id: base, path: base}, err => {
-          should.not.exist(err)
+        this.merge.deleteFolderAsync(this.side, {_id: base, path: base}).then(() => {
           this.pouch.db.allDocs(function (err, res) {
             should.not.exist(err)
             for (let row of Array.from(res.rows)) {
