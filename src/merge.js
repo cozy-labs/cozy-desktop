@@ -382,18 +382,15 @@ class Merge {
 
   // Remove a folder and every thing inside it
   async deleteFolderRecursivelyAsync (side: SideName, folder: Metadata) {
-    let docs
-    try {
-      docs = await this.pouch.byRecursivePathAsync(folder._id)
-    } catch (err) {
-      throw err
-    }
+    let other = otherSide(side)
+    let docs = await this.pouch.byRecursivePathAsync(folder._id)
     // In the changes feed, nested subfolder must be deleted
     // before their parents, hence the reverse order.
     docs = docs.reverse()
     docs.push(folder)
     for (let doc of Array.from(docs)) {
-      if (doc.sides && (doc.sides[side] || 0) < (doc.sides[otherSide(side)] || 0)) {
+      if (doc.sides && (doc.sides[side] || 0) < (doc.sides[other] || 0)) {
+        // TODO we should also preserve the parents of this folder
         log.warn(`${doc.path}: cannot be deleted with ${folder.path}: ` +
           `${doc.docType} was modified on the ${otherSide(side)} side`)
         log.info(`${doc.path}: Dissociating from remote...`)

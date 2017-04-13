@@ -365,7 +365,7 @@ describe('LocalWatcher Tests', function () {
     })
 
     it('detects deleted files and folders', function (done) {
-      let dd = this.prep.deleteDoc = sinon.stub().yields()
+      let dd = this.prep.trashDoc = sinon.stub().yields()
       let folder1 = {
         _id: 'folder1',
         path: 'folder1',

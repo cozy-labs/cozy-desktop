@@ -92,9 +92,20 @@ class Prep {
     }
   }
 
-  deleteDoc (side: SideName, doc: Metadata, callback: Callback) {
+  // Simple helper to delete a file or a folder
+  async trashDocAsync (side: SideName, doc: Metadata) {
+    if (doc.docType === 'file') {
+      return this.trashFileAsync(side, doc)
+    } else if (doc.docType === 'folder') {
+      return this.trashFolderAsync(side, doc)
+    } else {
+      throw new Error(`Unexpected docType: ${doc.docType}`)
+    }
+  }
+
+  trashDoc (side: SideName, doc: Metadata, callback: Callback) {
     // $FlowFixMe
-    this.deleteDocAsync(side, doc).asCallback(callback)
+    this.trashDocAsync(side, doc).asCallback(callback)
   }
 
   /* Actions */
