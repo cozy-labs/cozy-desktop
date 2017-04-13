@@ -173,6 +173,8 @@ class Pouch {
     ], err => callback(err))
   }
 
+  addAllViewsAsync: () => Promise<*>
+
   // Create a view to list files and folders inside a path
   // The path for a file/folder in root will be '',
   // not '.' as with node's path.dirname
@@ -291,6 +293,8 @@ class Pouch {
     })
   }
 
+  getLocalSeqAsync: () => Promise<number>
+
   // Set last local replication sequence
   // It is saved in PouchDB as a local document
   // See http://pouchdb.com/guides/local-documents.html
@@ -301,6 +305,8 @@ class Pouch {
     }
     return this.updater.push(task, callback)
   }
+
+  setLocalSeqAsync: (number) => Promise<*>
 
   // Get last remote replication sequence,
   // ie the last change from couchdb that have been saved in pouch

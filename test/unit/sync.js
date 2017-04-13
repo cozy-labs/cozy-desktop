@@ -1,11 +1,10 @@
 /* eslint-env mocha */
 
-import async from 'async'
 import sinon from 'sinon'
 import should from 'should'
 
 import Ignore from '../../src/ignore'
-import Sync, { TRASHING_DELAY } from '../../src/sync'
+import Sync from '../../src/sync'
 
 import configHelpers from '../helpers/config'
 import pouchHelpers from '../helpers/pouch'
@@ -23,22 +22,22 @@ describe('Sync', function () {
         running: new Promise(() => {})
       }
       this.local = {
-        start: sinon.stub().returns(Promise.resolve()),
-        stop: sinon.stub().returns(Promise.resolve())
+        start: sinon.stub().resolves(),
+        stop: sinon.stub().resolves()
       }
       this.remote = {
         start: sinon.stub().returns(ret),
-        stop: sinon.stub().returns(Promise.resolve())
+        stop: sinon.stub().resolves()
       }
       this.ignore = new Ignore([])
       this.events = {}
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
-      this.sync.sync = sinon.stub().yields('stopped')
+      this.sync.sync = sinon.stub().rejects(new Error('stopped'))
     })
 
     it('starts the metadata replication of remote in read only', function (done) {
       this.sync.start('pull').catch(err => {
-        err.should.equal('stopped')
+        err.message.should.equal('stopped')
         this.local.start.called.should.be.false()
         this.remote.start.calledOnce.should.be.true()
         this.sync.sync.calledOnce.should.be.true()
@@ -48,7 +47,7 @@ describe('Sync', function () {
 
     it('starts the metadata replication of local in write only', function (done) {
       this.sync.start('push').catch(err => {
-        err.should.equal('stopped')
+        err.message.should.equal('stopped')
         this.local.start.calledOnce.should.be.true()
         this.remote.start.called.should.be.false()
         this.sync.sync.calledOnce.should.be.true()
@@ -58,7 +57,7 @@ describe('Sync', function () {
 
     it('starts the metadata replication of both in full', function (done) {
       this.sync.start('full').catch(err => {
-        err.should.equal('stopped')
+        err.message.should.equal('stopped')
         this.local.start.calledOnce.should.be.true()
         this.remote.start.calledOnce.should.be.true()
         this.sync.sync.calledOnce.should.be.true()
@@ -67,7 +66,7 @@ describe('Sync', function () {
     })
 
     it('does not start sync if metadata replication fails', function (done) {
-      this.local.start = sinon.stub().returns(Promise.reject(new Error('failed')))
+      this.local.start = sinon.stub().rejects(new Error('failed'))
       this.sync.start('full').catch(err => {
         err.message.should.equal('failed')
         this.local.start.calledOnce.should.be.true()
@@ -85,14 +84,13 @@ describe('Sync', function () {
       this.ignore = new Ignore([])
       this.events = {}
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
-      this.sync.apply = sinon.stub().yields()
+      this.sync.apply = sinon.stub().resolves()
       this.sync.running = true
     })
 
     it('calls pop and apply', function (done) {
-      this.sync.pop = sinon.stub().yields(null, { change: true })
-      this.sync.sync(err => {
-        should.not.exist(err)
+      this.sync.pop = sinon.stub().resolves({ change: true })
+      this.sync.sync().then(() => {
         this.sync.pop.calledOnce.should.be.true()
         this.sync.apply.calledOnce.should.be.true()
         this.sync.apply.calledWith({change: true}).should.be.true()
@@ -101,9 +99,9 @@ describe('Sync', function () {
     })
 
     it('calls pop but not apply if pop has failed', function (done) {
-      this.sync.pop = sinon.stub().yields('failed')
-      this.sync.sync(err => {
-        err.should.equal('failed')
+      this.sync.pop = sinon.stub().rejects(new Error('failed'))
+      this.sync.sync().catch(err => {
+        err.message.should.equal('failed')
         this.sync.pop.calledOnce.should.be.true()
         this.sync.apply.calledOnce.should.be.false()
         done()
@@ -126,8 +124,7 @@ describe('Sync', function () {
     it('gives the next change if there is already one', function (done) {
       pouchHelpers.createFile(this.pouch, 1, err => {
         should.not.exist(err)
-        this.sync.pop((err, change) => {
-          should.not.exist(err)
+        this.sync.pop().then(change => {
           this.pouch.getLocalSeq(function (err, seq) {
             should.not.exist(err)
             change.should.have.properties({
@@ -144,49 +141,27 @@ describe('Sync', function () {
       })
     })
 
-    it('gives only one change', function (done) {
-      async.eachSeries([2, 3, 4, 5], (i, callback) => {
-        pouchHelpers.createFile(this.pouch, i, callback)
-      }, err => {
-        should.not.exist(err)
-        let spy = sinon.spy()
-        this.sync.pop(spy)
-        setTimeout(function () {
-          spy.calledOnce.should.be.true()
-          done()
-        }, 10)
-      })
-    })
-
     it('filters design doc changes', function (done) {
-      let query = `\
+      let query = `
 function(doc) {
     if ('size' in doc) emit(doc.size);
-}\
-`
+}`
       this.pouch.createDesignDoc('bySize', query, err => {
         should.not.exist(err)
         pouchHelpers.createFile(this.pouch, 6, err => {
           should.not.exist(err)
-          let spy = sinon.spy()
-          this.sync.pop(spy)
-          setTimeout(function () {
-            let change
-            spy.calledOnce.should.be.true();
-            [err, change] = spy.args[0]
-            should.not.exist(err)
+          this.sync.pop().then(change => {
             change.doc.docType.should.equal('file')
             done()
-          }, 10)
+          })
         })
       })
     })
 
     it('waits for the next change if there no available change', function (done) {
       let spy = sinon.spy()
-      this.sync.pop((err, change) => {
+      this.sync.pop().then(change => {
         spy()
-        should.not.exist(err)
         this.pouch.getLocalSeq(function (err, seq) {
           should.not.exist(err)
           change.should.have.properties({
@@ -207,14 +182,15 @@ function(doc) {
     })
 
     it('emits up-to-date if there are no available change', function (done) {
-      this.sync.pop(function (err, change) {
-        should.not.exist(err)
-        setTimeout(done, 11)
-      })
-      setTimeout(() => {
-        this.events.emit.calledWith('up-to-date').should.be.true()
+      let emitted = false
+      this.events.emit = () => {
+        emitted = true
         pouchHelpers.createFile(this.pouch, 8, err => should.not.exist(err))
-      }, 10)
+      }
+      this.sync.pop().then(change => {
+        emitted.should.be.true()
+        done()
+      })
     })
   })
 
@@ -239,8 +215,7 @@ function(doc) {
         }
       }
       this.sync.folderChanged = sinon.spy()
-      this.sync.apply(change, err => {
-        should.not.exist(err)
+      this.sync.apply(change).then(() => {
         this.sync.folderChanged.called.should.be.false()
         done()
       })
@@ -259,8 +234,7 @@ function(doc) {
         }
       }
       this.sync.folderChanged = sinon.spy()
-      this.sync.apply(change, err => {
-        should.not.exist(err)
+      this.sync.apply(change).then(() => {
         this.sync.folderChanged.called.should.be.false()
         done()
       })
@@ -280,10 +254,9 @@ function(doc) {
         }
       }
 
-      this.sync.trashLaterWithParentOrByItself = sinon.spy()
-      this.sync.apply(change, err => {
-        should.not.exist(err)
-        should(this.sync.trashLaterWithParentOrByItself.called).be.true()
+      this.sync.trashWithParentOrByItself = sinon.stub().resolves(true)
+      this.sync.apply(change).then(() => {
+        should(this.sync.trashWithParentOrByItself.called).be.true()
         done()
       })
     })
@@ -300,12 +273,22 @@ function(doc) {
           }
         }
       }
-      this.sync.fileChanged = sinon.stub().yields()
-      this.sync.apply(change, err => {
-        should.not.exist(err)
-        this.sync.fileChanged.called.should.be.true()
-        this.sync.fileChanged.calledWith(change.doc).should.be.true()
-        done()
+      this.sync.fileChangedAsync = sinon.stub().resolves()
+      this.sync.apply(change).then(() => {
+        this.sync.fileChangedAsync.called.should.be.true()
+        this.sync.fileChangedAsync.calledWith(change.doc).should.be.true()
+        this.pouch.db.get(change.doc._id, function (err, doc) {
+          should.not.exist(err)
+          doc.should.have.properties({
+            _id: 'foo/bar',
+            docType: 'file',
+            sides: {
+              local: 1,
+              remote: 1
+            }
+          })
+          done()
+        })
       })
     })
 
@@ -321,104 +304,14 @@ function(doc) {
           }
         }
       }
-      this.sync.folderChanged = sinon.stub().yields()
-      this.sync.apply(change, err => {
-        should.not.exist(err)
-        this.sync.folderChanged.called.should.be.true()
-        this.sync.folderChanged.calledWith(change.doc).should.be.true()
-        done()
-      })
-    })
-  })
-
-  describe('applied', function () {
-    this.timeout(5000)
-
-    beforeEach(function () {
-      this.local = {}
-      this.remote = {}
-      this.ignore = new Ignore([])
-      this.events = {}
-      this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
-      this.sync.getDiskSpace = function (callback) {
-        let space = {
-          freeDiskSpace: '10',
-          freeUnit: 'G'
-        }
-        callback(null, {diskSpace: space})
-      }
-    })
-
-    it('returns a function that saves the seq number if OK', function (done) {
-      let change = {
-        seq: 125,
-        doc: {
-          _id: 'just/deleted',
-          _deleted: true
-        }
-      }
-      let func = this.sync.applied(change, 'remote', err => {
-        should.not.exist(err)
+      this.sync.folderChangedAsync = sinon.stub().resolves()
+      this.sync.apply(change).then(() => {
+        this.sync.folderChangedAsync.called.should.be.true()
+        this.sync.folderChangedAsync.calledWith(change.doc).should.be.true()
         this.pouch.getLocalSeq(function (_, seq) {
-          seq.should.equal(125)
+          seq.should.equal(124)
           done()
         })
-      })
-      func()
-    })
-
-    it('saves the revision for the applied side', function (done) {
-      let doc = {
-        _id: 'just/created',
-        docType: 'folder',
-        sides: {
-          local: 1
-        }
-      }
-      this.pouch.db.put(doc, (err, infos) => {
-        should.not.exist(err)
-        this.pouch.setLocalSeq(126, () => {
-          let change = {
-            seq: 127,
-            doc
-          }
-          change.doc._rev = infos.rev
-          let func = this.sync.applied(change, 'remote', err => {
-            should.not.exist(err)
-            this.pouch.db.get(change.doc._id, function (err, doc) {
-              should.not.exist(err)
-              doc.should.have.properties({
-                _id: 'just/created',
-                docType: 'folder',
-                sides: {
-                  local: 2,
-                  remote: 2
-                }
-              })
-              done()
-            })
-          })
-          func()
-        })
-      })
-    })
-
-    it('returns a function that does not touch the seq if error', function (done) {
-      this.pouch.setLocalSeq(128, () => {
-        let change = {
-          seq: 129,
-          doc: {
-            _id: 'not/important'
-          }
-        }
-        let func = this.sync.applied(change, 'remote', err => {
-          should.not.exist(err)
-          this.pouch.getLocalSeq(function (_, seq) {
-            seq.should.equal(128)
-            done()
-          })
-        })
-        func(new Error('Apply failed'))
       })
     })
   })
@@ -434,54 +327,18 @@ function(doc) {
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
     })
 
-    it('sets the errors counter to 1 on first error', function (done) {
+    it('stops retrying after 3 errors', function (done) {
       let doc = {
-        _id: 'first/failure',
-        errors: 0
-      }
-      this.pouch.db.put(doc, (err, infos) => {
-        should.not.exist(err)
-        doc._rev = infos.rev
-        this.sync.updateErrors({doc}, () => {
-          this.pouch.db.get(doc._id, function (err, actual) {
-            should.not.exist(err)
-            actual.errors.should.equal(1)
-            done()
-          })
-        })
-      })
-    })
-
-    it('increments the errors counter to 1 on next error', function (done) {
-      let doc = {
-        _id: 'fourth/failure',
+        _id: 'third/failure',
         errors: 3
       }
       this.pouch.db.put(doc, (err, infos) => {
         should.not.exist(err)
         doc._rev = infos.rev
-        this.sync.updateErrors({doc}, () => {
+        this.sync.updateErrors({doc}).then(() => {
           this.pouch.db.get(doc._id, function (err, actual) {
             should.not.exist(err)
-            actual.errors.should.equal(4)
-            done()
-          })
-        })
-      })
-    })
-
-    it('stops retrying after 10 errors', function (done) {
-      let doc = {
-        _id: 'eleventh/failure',
-        errors: 10
-      }
-      this.pouch.db.put(doc, (err, infos) => {
-        should.not.exist(err)
-        doc._rev = infos.rev
-        this.sync.updateErrors({doc}, () => {
-          this.pouch.db.get(doc._id, function (err, actual) {
-            should.not.exist(err)
-            actual.errors.should.equal(10)
+            actual.errors.should.equal(3)
             actual._rev.should.equal(doc._rev)
             done()
           })
@@ -517,8 +374,7 @@ function(doc) {
       }
       this.remote.addFileAsync = sinon.stub()
       this.remote.addFileAsync.returnsPromise().resolves()
-      this.sync.fileChanged(doc, this.remote, 0, err => {
-        should.not.exist(err)
+      this.sync.fileChangedAsync(doc, this.remote, 0).then(() => {
         this.remote.addFileAsync.calledWith(doc).should.be.true()
         done()
       })
@@ -546,8 +402,7 @@ function(doc) {
           this.remote.overwriteFileAsync.returnsPromise().resolves()
           this.remote.updateFileMetadataAsync = sinon.stub()
           this.remote.updateFileMetadataAsync.returnsPromise().resolves()
-          this.sync.fileChanged(doc, this.remote, 1, err => {
-            should.not.exist(err)
+          this.sync.fileChangedAsync(doc, this.remote, 1).then(() => {
             this.remote.updateFileMetadataAsync.called.should.be.false()
             this.remote.overwriteFileAsync.calledWith(doc).should.be.true()
             done()
@@ -578,8 +433,7 @@ function(doc) {
           this.remote.overwriteFileAsync.returnsPromise().resolves()
           this.remote.updateFileMetadataAsync = sinon.stub()
           this.remote.updateFileMetadataAsync.returnsPromise().resolves()
-          this.sync.fileChanged(doc, this.remote, 1, err => {
-            should.not.exist(err)
+          this.sync.fileChangedAsync(doc, this.remote, 1).then(() => {
             this.remote.overwriteFileAsync.called.should.be.false()
             let ufm = this.remote.updateFileMetadataAsync
             ufm.calledWith(doc).should.be.true()
@@ -617,11 +471,9 @@ function(doc) {
       this.remote.addFileAsync.returnsPromise().resolves()
       this.remote.moveFileAsync = sinon.stub()
       this.remote.moveFileAsync.returnsPromise().resolves()
-      this.sync.fileChanged(was, this.remote, 2, err => {
-        should.not.exist(err)
+      this.sync.fileChangedAsync(was, this.remote, 2).then(() => {
         this.remote.destroyAsync.called.should.be.false()
-        this.sync.fileChanged(doc, this.remote, 0, err => {
-          should.not.exist(err)
+        this.sync.fileChangedAsync(doc, this.remote, 0).then(() => {
           this.remote.addFileAsync.called.should.be.false()
           this.remote.moveFileAsync.calledWith(doc, was).should.be.true()
           done()
@@ -640,8 +492,7 @@ function(doc) {
           remote: 2
         }
       }
-      this.sync.fileChanged(doc, this.local, 1, err => {
-        should.not.exist(err)
+      this.sync.fileChangedAsync(doc, this.local, 1).then(() => {
         this.local.destroyAsync.calledWith(doc).should.be.true()
         done()
       })
@@ -657,8 +508,7 @@ function(doc) {
           local: 2
         }
       }
-      this.sync.fileChanged(doc, this.remote, 0, err => {
-        should.not.exist(err)
+      this.sync.fileChangedAsync(doc, this.remote, 0).then(() => {
         this.remote.destroyAsync.called.should.be.false()
         done()
       })
@@ -688,8 +538,7 @@ function(doc) {
       }
       this.remote.addFolderAsync = sinon.stub()
       this.remote.addFolderAsync.returnsPromise().resolves()
-      this.sync.folderChanged(doc, this.remote, 0, err => {
-        should.not.exist(err)
+      this.sync.folderChangedAsync(doc, this.remote, 0).then(() => {
         this.remote.addFolderAsync.calledWith(doc).should.be.true()
         done()
       })
@@ -708,8 +557,7 @@ function(doc) {
       }
       this.local.updateFolderAsync = sinon.stub()
       this.local.updateFolderAsync.returnsPromise().resolves()
-      this.sync.folderChanged(doc, this.local, 1, err => {
-        should.not.exist(err)
+      this.sync.folderChangedAsync(doc, this.local, 1).then(() => {
         this.local.updateFolderAsync.calledWith(doc).should.be.true()
         done()
       })
@@ -743,11 +591,9 @@ function(doc) {
       this.remote.addFolderAsync.returnsPromise().resolves()
       this.remote.moveFolderAsync = sinon.stub()
       this.remote.moveFolderAsync.returnsPromise().resolves()
-      this.sync.folderChanged(was, this.remote, 2, err => {
-        should.not.exist(err)
+      this.sync.folderChangedAsync(was, this.remote, 2).then(() => {
         this.remote.trashAsync.called.should.be.false()
-        this.sync.folderChanged(doc, this.remote, 0, err => {
-          should.not.exist(err)
+        this.sync.folderChangedAsync(doc, this.remote, 0).then(() => {
           this.remote.addFolderAsync.called.should.be.false()
           this.remote.moveFolderAsync.calledWith(doc, was).should.be.true()
           done()
@@ -766,8 +612,7 @@ function(doc) {
           remote: 2
         }
       }
-      this.sync.folderChanged(doc, this.local, 1, err => {
-        should.not.exist(err)
+      this.sync.folderChangedAsync(doc, this.local, 1).then(() => {
         this.local.destroyAsync.calledWith(doc).should.be.true()
         done()
       })
@@ -783,8 +628,7 @@ function(doc) {
           local: 2
         }
       }
-      this.sync.folderChanged(doc, this.remote, 0, err => {
-        should.not.exist(err)
+      this.sync.folderChangedAsync(doc, this.remote, 0).then(() => {
         this.remote.destroyAsync.called.should.be.false()
         done()
       })
@@ -873,57 +717,7 @@ function(doc) {
     })
   })
 
-  describe('trashLaterWithParentOrByItself', () => {
-    let clock, side, sync
-
-    beforeEach(() => {
-      clock = sinon.useFakeTimers()
-      side = {trashAsync: sinon.stub()}
-      sync = new Sync(null, {}, {}, null, null)
-
-      side.trashAsync.returnsPromise().resolves()
-    })
-
-    afterEach(() => {
-      clock.restore()
-    })
-
-    context('after waiting for the trashing delay', () => {
-      const waitAndTrash = (...docs) => {
-        for (let doc of docs) {
-          sync.trashLaterWithParentOrByItself(doc, side)
-          clock.tick(1)
-        }
-
-        clock.tick(TRASHING_DELAY)
-      }
-
-      it('trashes the file or dir by itself when its parent will not be trashed', () => {
-        const foo = {docType: 'folder', path: 'foo'}
-        const bar = {docType: 'file', path: 'bar.txt'}
-        const baz = {docType: 'folder', path: 'other/baz'}
-        const qux = {docType: 'file', path: 'other/qux.txt'}
-
-        waitAndTrash(bar, qux, baz, foo)
-
-        for (let doc of [foo, bar, baz, qux]) {
-          should(side.trashAsync).have.been.calledWith(doc)
-        }
-      })
-
-      it('does nothing when the file or dir will be trashed with its parent', () => {
-        const foo = {docType: 'folder', path: 'foo'}
-        const bar = {docType: 'folder', path: 'foo/bar'}
-        const baz = {docType: 'file', path: 'foo/bar/baz.txt'}
-        const qux = {docType: 'file', path: 'foo/qux.txt'}
-
-        waitAndTrash(qux, baz, bar, foo)
-
-        should(side.trashAsync).have.been.calledWith(foo)
-        for (let doc of [bar, baz, qux]) {
-          should(side.trashAsync).not.have.been.calledWith(doc)
-        }
-      })
-    })
+  describe('trashWithParentOrByItself', () => {
+    it('should be tested')
   })
 })

@@ -14,9 +14,8 @@ const log = logger({
   component: 'RemoteWatcher'
 })
 
-export const DEFAULT_HEARTBEAT: number = 1000 * 60 * 3 // 3 minutes
+export const DEFAULT_HEARTBEAT: number = 1000 * 60 // 1 minute
 export const HEARTBEAT: number = parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || DEFAULT_HEARTBEAT
-export const REVOKED: string = 'Client has been revoked'
 
 const SIDE = 'remote'
 
@@ -71,7 +70,7 @@ export default class RemoteWatcher {
       await this.pouch.setRemoteSeqAsync(changes.last_seq)
       log.debug({event: 'end'}, 'No more remote changes for now')
     } catch (err) {
-      if (err.message === REVOKED) {
+      if (err.status === 400) {
         throw err
       }
       log.error(err)

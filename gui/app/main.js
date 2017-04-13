@@ -292,26 +292,23 @@ const removeFile = (info) => {
   persistLastFiles()
 }
 
-const sendDiskSpace = () => {
+const sendDiskUsage = () => {
   if (diskTimeout) {
     clearTimeout(diskTimeout)
     diskTimeout = null
   }
   if (mainWindow) {
-    diskTimeout = setTimeout(sendDiskSpace, 10 * 60 * 1000)  // every 10 minutes
-    desktop.getDiskSpace((err, res) => {
-      if (err) {
-        console.error(err)
-      } else if (res.diskSpace) {
+    diskTimeout = setTimeout(sendDiskUsage, 10 * 60 * 1000)  // every 10 minutes
+    desktop.diskUsage().then(
+      (res) => {
         const space = {
-          used: +res.diskSpace.usedDiskSpace,
-          usedUnit: res.diskSpace.usedUnit,
-          total: +res.diskSpace.totalDiskSpace,
-          totalUnit: res.diskSpace.totalUnit
+          used: +res.attributes.used,
+          quota: +res.attributes.quota
         }
         sendToMainWindow('disk-space', space)
-      }
-    })
+      },
+      (err) => console.error(err)
+    )
   }
 }
 
@@ -332,7 +329,7 @@ const startSync = (force) => {
     } else if (state === 'error') {
       sendErrorToMainWindow(errorMessage)
     }
-    sendDiskSpace()
+    sendDiskUsage()
   } else {
     updateState('syncing')
     desktop.events.on('up-to-date', () => {
@@ -359,10 +356,10 @@ const startSync = (force) => {
       .catch((err) => {
         console.error(err)
         updateState('error', err.message)
-        sendDiskSpace()
+        sendDiskUsage()
         sendErrorToMainWindow(err.message)
       })
-    sendDiskSpace()
+    sendDiskUsage()
   }
   autoLauncher.isEnabled().then((enabled) => {
     sendToMainWindow('auto-launch', enabled)

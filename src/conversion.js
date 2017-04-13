@@ -37,7 +37,7 @@ export function createMetadata (remote: RemoteDoc): Metadata {
   }
 
   if (remote.size) {
-    doc.size = parseInt(remote.size)
+    doc.size = parseInt(remote.size, 10)
   }
 
   for (let field of ['class', 'mime', 'tags']) {

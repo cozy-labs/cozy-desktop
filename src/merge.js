@@ -11,7 +11,6 @@ import Remote from './remote'
 
 import type { Metadata } from './metadata'
 import type { SideName } from './side'
-import type { Callback } from './utils/func'
 
 const log = logger({
   component: 'Merge'
@@ -74,11 +73,6 @@ class Merge {
     return this.putFolderAsync(side, parentDoc)
   }
 
-  ensureParentExist (side: SideName, doc: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.ensureParentExistAsync(side, doc).asCallback(callback)
-  }
-
   // Resolve a conflict by renaming a file/folder
   // A suffix composed of -conflict- and the date is added to the path.
   async resolveConflictAsync (side: SideName, doc: Metadata) {
@@ -95,11 +89,6 @@ class Merge {
       throw err
     }
     return dst
-  }
-
-  resolveConflict (side: SideName, doc: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.resolveConflictAsync(side, doc).asCallback(callback)
   }
 
   /* Actions */
@@ -150,11 +139,6 @@ class Merge {
     }
   }
 
-  addFile (side: SideName, doc: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.addFileAsync(side, doc).asCallback(callback)
-  }
-
   // When a file is modified when cozy-desktop is not running,
   // it is detected as a new file when cozy-desktop is started.
   async resolveInitialAddAsync (side: SideName, doc: Metadata, file: Metadata) {
@@ -179,11 +163,6 @@ class Merge {
       if (doc.remote == null) { doc.remote = file.remote }
       return this.resolveConflictAsync('remote', doc)
     }
-  }
-
-  resolveInitialAdd (side: SideName, doc: Metadata, file: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.resolveInitialAddAsync(side, doc, file).asCallback(callback)
   }
 
   // Update a file, when its metadata or its content has changed
@@ -222,11 +201,6 @@ class Merge {
     }
   }
 
-  updateFile (side: SideName, doc: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.updateFileAsync(side, doc).asCallback(callback)
-  }
-
   // Create or update a folder
   async putFolderAsync (side: SideName, doc: *) {
     let folder
@@ -255,11 +229,6 @@ class Merge {
       await this.ensureParentExistAsync(side, doc)
       return this.pouch.put(doc)
     }
-  }
-
-  putFolder (side: SideName, doc: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.putFolderAsync(side, doc).asCallback(callback)
   }
 
   // Rename or move a file
@@ -299,11 +268,6 @@ class Merge {
     }
   }
 
-  moveFile (side: SideName, doc: Metadata, was: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.moveFileAsync(side, doc, was).asCallback(callback)
-  }
-
   // Rename or move a folder (and every file and folder inside it)
   async moveFolderAsync (side: SideName, doc: Metadata, was: Metadata) {
     if (was.sides && was.sides[side]) {
@@ -330,11 +294,6 @@ class Merge {
     } else { // It can happen after a conflict
       return this.putFolderAsync(side, doc)
     }
-  }
-
-  moveFolder (side: SideName, doc: Metadata, was: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.moveFolderAsync(side, doc, was).asCallback(callback)
   }
 
   // Move a folder and all the things inside it
@@ -369,11 +328,6 @@ class Merge {
     return this.pouch.bulkDocs(bulk)
   }
 
-  moveFolderRecursively (side: SideName, folder: Metadata, was: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.moveFolderRecursivelyAsync(side, folder, was).asCallback(callback)
-  }
-
   // Remove a file from PouchDB
   //
   // As the watchers often detect the deletion of a folder before the deletion
@@ -398,11 +352,6 @@ class Merge {
     } else { // It can happen after a conflict
       return null
     }
-  }
-
-  deleteFile (side: SideName, doc: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.deleteFileAsync(side, doc).asCallback(callback)
   }
 
   // Remove a folder
@@ -430,11 +379,6 @@ class Merge {
     }
   }
 
-  deleteFolder (side: SideName, doc: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.deleteFolderAsync(side, doc).asCallback(callback)
-  }
-
   // Remove a folder and every thing inside it
   async deleteFolderRecursivelyAsync (side: SideName, folder: Metadata) {
     let docs
@@ -453,11 +397,6 @@ class Merge {
       delete doc.errors
     }
     return this.pouch.bulkDocs(docs)
-  }
-
-  deleteFolderRecursively (side: SideName, folder: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.deleteFolderRecursivelyAsync(side, folder).asCallback(callback)
   }
 
   async trashAsync (side: SideName, doc: Metadata): Promise<void> {
