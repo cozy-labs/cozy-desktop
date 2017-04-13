@@ -182,13 +182,15 @@ function(doc) {
     })
 
     it('emits up-to-date if there are no available change', function (done) {
-      this.sync.pop().then(change => {
-        setTimeout(done, 11)
-      })
-      setTimeout(() => {
-        this.events.emit.calledWith('up-to-date').should.be.true()
+      let emitted = false
+      this.events.emit = () => {
+        emitted = true
         pouchHelpers.createFile(this.pouch, 8, err => should.not.exist(err))
-      }, 10)
+      }
+      this.sync.pop().then(change => {
+        emitted.should.be.true()
+        done()
+      })
     })
   })
 
