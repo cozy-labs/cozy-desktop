@@ -376,7 +376,11 @@ class Local implements Side {
     log.info(`Delete ${doc.path}`)
     this.events.emit('delete-file', doc)
     let fullpath = path.join(this.syncPath, doc.path)
-    return fs.remove(fullpath, callback)
+    if (doc.docType === 'file') {
+      return fs.unlink(fullpath, callback)
+    } else {
+      return fs.rmdir(fullpath, callback)
+    }
   }
 
   destroyAsync: (Metadata) => Promise<*>
