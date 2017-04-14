@@ -95,31 +95,31 @@ describe('Prep', function () {
       })
     })
 
-    describe('deleteDoc', function () {
-      it('calls deleteFile for a file', function (done) {
+    describe('trashDoc', function () {
+      it('calls trashFile for a file', function (done) {
         let doc = {
-          path: 'delete/name',
+          path: 'trash/name',
           docType: 'file'
         }
-        this.prep.deleteFileAsync = sinon.stub()
-        this.prep.deleteFileAsync.returnsPromise().resolves()
-        return this.prep.deleteDoc(this.side, doc, err => {
+        this.prep.trashFileAsync = sinon.stub()
+        this.prep.trashFileAsync.returnsPromise().resolves()
+        return this.prep.trashDoc(this.side, doc, err => {
           should.not.exist(err)
-          this.prep.deleteFileAsync.calledWith(this.side, doc).should.be.true()
+          this.prep.trashFileAsync.calledWith(this.side, doc).should.be.true()
           done()
         })
       })
 
-      it('calls deleteFolder for a folder', function (done) {
+      it('calls trashFolder for a folder', function (done) {
         let doc = {
-          path: 'delete/folder',
+          path: 'trash/folder',
           docType: 'folder'
         }
-        this.prep.deleteFolderAsync = sinon.stub()
-        this.prep.deleteFolderAsync.returnsPromise().resolves()
-        return this.prep.deleteDoc(this.side, doc, err => {
+        this.prep.trashFolderAsync = sinon.stub()
+        this.prep.trashFolderAsync.returnsPromise().resolves()
+        return this.prep.trashDoc(this.side, doc, err => {
           should.not.exist(err)
-          this.prep.deleteFolderAsync.calledWith(this.side, doc).should.be.true()
+          this.prep.trashFolderAsync.calledWith(this.side, doc).should.be.true()
           done()
         })
       })

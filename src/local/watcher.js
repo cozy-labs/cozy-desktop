@@ -341,7 +341,7 @@ class LocalWatcher {
               async.setImmediate(next)
             } else {
               log.info(`${doc.path}: deleted while client was stopped`)
-              this.prep.deleteDoc(this.side, doc, next)
+              this.prep.trashDoc(this.side, doc, next)
             }
           }, err => {
             // $FlowFixMe

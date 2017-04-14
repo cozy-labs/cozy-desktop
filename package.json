@@ -59,7 +59,7 @@
     "bunyan": "^1.8.10",
     "chokidar": "1.6.1",
     "commander": "2.9.0",
-    "cozy-client-js": "^0.1.11",
+    "cozy-client-js": "^0.2.0",
     "fs-extra": "^2.1.1",
     "isomorphic-fetch": "2.2.1",
     "lodash.clone": "4.5.0",

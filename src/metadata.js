@@ -40,7 +40,7 @@ export type Metadata = {
   moveTo?: string, // Destination id
   path: string,
   remote: MetadataRemoteInfo,
-  size?: string,
+  size?: number,
   tags: string[],
   sides: MetadataSidesInfo,
   toBeTrashed?: true
@@ -169,8 +169,7 @@ export function sameFolder (one: Metadata, two: Metadata) {
 // rely on file systems to be precise to the millisecond.
 export function sameFile (one: Metadata, two: Metadata) {
   if (!sameDate(one.lastModification, two.lastModification)) { return false }
-  let fields = ['_id', 'docType', 'md5sum', 'remote',
-    'tags', 'size', 'class', 'mime']
+  let fields = ['_id', 'docType', 'md5sum', 'remote', 'tags', 'size']
   one = {...pick(one, fields), executable: !!one.executable}
   two = {...pick(two, fields), executable: !!two.executable}
   const same = isEqual(one, two)

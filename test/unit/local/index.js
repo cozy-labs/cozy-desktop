@@ -519,8 +519,8 @@ describe('Local', function () {
     })
 
     it('removes the file when it was trashed', async function () {
-      const old = {path: 'trashed-file'}
-      const doc = {path: '.cozy_trash/trashed-file'}
+      const old = {path: 'trashed-file', docType: 'file'}
+      const doc = {path: '.cozy_trash/trashed-file', docType: 'file'}
       this.writeFile(old)
 
       await should(this.local.moveFileAsync(doc, old)).be.fulfilled()
@@ -726,7 +726,6 @@ describe('Local', function () {
       }
       let folderPath = path.join(this.syncPath, doc.path)
       fs.ensureDirSync(folderPath)
-      fs.ensureFileSync(path.join(folderPath, 'file-inside-folder'))
       this.pouch.db.put(doc, (err, inserted) => {
         should.not.exist(err)
         doc._rev = inserted.rev
