@@ -121,7 +121,7 @@ export default class RemoteCozy {
 
     return {
       ...doc,
-      path: path.join(parentDir.path, doc.name)
+      path: path.posix.join(parentDir.path, doc.name)
     }
   }
 }
