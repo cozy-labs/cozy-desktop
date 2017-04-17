@@ -40,7 +40,13 @@ addons:
 # install cozy stack for integration test
 before_install:
     # CouchDB 2
-    - docker run -d -p 5984:5984 --name couch klaemo/couchdb:2.0.0
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        docker run -d -p 5984:5984 --name couch klaemo/couchdb:2.0.0;
+      fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+        brew cask install apache-couchdb;
+        (/Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/bin/couchdb &);
+      fi
 
     # Go 1.7
     - gimme 1.7
