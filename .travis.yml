@@ -48,8 +48,14 @@ before_install:
         (/Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/bin/couchdb &);
       fi
 
-    # Go 1.7
-    - gimme 1.7
+    # Go 1.7 (already by default on macOS)
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        gimme 1.7;
+      fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+        export GOPATH="$HOME";
+        export PATH="$GOPATH/bin:$PATH";
+      fi
 
     # Cozy stack v3
     - go get -u github.com/cozy/cozy-stack
