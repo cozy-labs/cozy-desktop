@@ -13,9 +13,6 @@ matrix:
           env: CXX=g++-4.8
         - os: osx
           node_js: 6
-    allow_failures:
-        - os: osx
-          node_js: 6
 env:
     global:
         - COZY_DESKTOP_DIR=tmp
