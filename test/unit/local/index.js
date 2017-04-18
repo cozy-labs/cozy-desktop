@@ -685,7 +685,7 @@ describe('Local', function () {
     })
   })
 
-  describe('destroy', () => {
+  describe('trash', () => {
     it('deletes a file from the local filesystem', function (done) {
       let doc = {
         _id: 'FILE-TO-DELETE',
@@ -699,8 +699,7 @@ describe('Local', function () {
         doc._rev = inserted.rev
         this.pouch.db.remove(doc, err => {
           should.not.exist(err)
-          this.local.destroy(doc, function (err) {
-            should.not.exist(err)
+          this.local.trashAsync(doc).then(() => {
             fs.existsSync(filePath).should.be.false()
             done()
           })
@@ -708,16 +707,6 @@ describe('Local', function () {
       })
     })
 
-    it('does nothing when the file or folder is in the trash', async function () {
-      const doc = {path: '.cozy_trash/non-destroyed-file-or-folder'}
-
-      await should(this.local.destroyAsync(doc)).be.fulfilled()
-
-      should(this.exists(doc)).be.false()
-    })
-  })
-
-  describe('trash', () =>
     it('deletes a folder from the local filesystem', function (done) {
       let doc = {
         _id: 'FOLDER-TO-DELETE',
@@ -731,15 +720,14 @@ describe('Local', function () {
         doc._rev = inserted.rev
         this.pouch.db.remove(doc, err => {
           should.not.exist(err)
-          this.local.trash(doc, function (err) {
-            should.not.exist(err)
+          this.local.trashAsync(doc).then(() => {
             fs.existsSync(folderPath).should.be.false()
             done()
           })
         })
       })
     })
-  )
+  })
 
   describe('resolveConflict', () =>
     it('renames the file', function (done) {

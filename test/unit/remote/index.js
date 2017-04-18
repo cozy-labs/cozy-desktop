@@ -747,19 +747,6 @@ describe('Remote', function () {
     })
   })
 
-  describe('destroy', function () {
-    it('deletes a file in couchdb', async function () {
-      const file = await builders.remoteFile().create()
-      const doc = conversion.createMetadata(file)
-
-      await this.remote.destroyAsync(doc)
-        .should.be.fulfilled()
-
-      await cozy.files.statById(doc.remote._id)
-        .should.be.rejectedWith({status: 404})
-    })
-  })
-
   describe('trash', () =>
     it('moves the file or folder to the Cozy trash', async function () {
       const folder = await builders.remoteDir().create()

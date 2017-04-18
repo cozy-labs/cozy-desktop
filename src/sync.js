@@ -320,7 +320,7 @@ class Sync {
             log.error(err)
           }
           try {
-            await side.destroyAsync(from)
+            await side.trashAsync(from)
           } catch (err) {
             log.error(err)
             throw new Error('Invalid move')
@@ -331,7 +331,7 @@ class Sync {
         this.moveFrom = doc
         return
       case doc._deleted:
-        return side.destroyAsync(doc)
+        return side.trashAsync(doc)
       case rev === 0:
         return side.addFileAsync(doc)
       default:
@@ -396,7 +396,7 @@ class Sync {
         this.moveFrom = doc
         return
       case doc._deleted:
-        return side.destroyAsync(doc)
+        return side.trashAsync(doc)
       case rev === 0:
         return side.addFolderAsync(doc)
       default:

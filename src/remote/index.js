@@ -195,11 +195,6 @@ export default class Remote implements Side {
     return conversion.createMetadata(newRemoteDoc)
   }
 
-  async destroyAsync (doc: Metadata): Promise<void> {
-    log.info(`${doc.path}: Destroying...`)
-    await this.remoteCozy.destroyById(doc.remote._id)
-  }
-
   async trashAsync (doc: Metadata): Promise<void> {
     log.info(`${doc.path}: Moving to the trash...`)
     await this.remoteCozy.trashById(doc.remote._id)
@@ -212,5 +207,10 @@ export default class Remote implements Side {
 
   diskUsage (): Promise<*> {
     return this.remoteCozy.diskUsage()
+  }
+
+  resolveConflictAsync (doc: Metadata, from: Metadata): Promise<*> {
+    // TODO
+    throw new Error('Remote#resolveConflictAsync() is not implemented')
   }
 }

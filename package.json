@@ -79,6 +79,7 @@
     "read": "1.0.7",
     "readdirp": "2.1.0",
     "request-json-light": "0.5.25",
+    "trash": "^4.0.1",
     "uuid": "^3.0.1"
   },
   "devDependencies": {

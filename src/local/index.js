@@ -7,6 +7,7 @@ import clone from 'lodash.clone'
 import fs from 'fs-extra'
 import path from 'path'
 import * as stream from 'stream'
+import trash from 'trash'
 
 import Config from '../config'
 import logger from '../logger'
@@ -334,26 +335,12 @@ class Local implements Side {
 
   moveFolderAsync: (Metadata, Metadata) => Promise<*>
 
-  // Delete a file or folder from the local filesystem
-  destroy (doc: Metadata, callback: Callback) {
+  trashAsync (doc: Metadata): Promise<*> {
     log.info(`Delete ${doc.path}`)
     this.events.emit('delete-file', doc)
     let fullpath = path.join(this.syncPath, doc.path)
-    if (doc.docType === 'file') {
-      return fs.unlink(fullpath, callback)
-    } else {
-      return fs.rmdir(fullpath, callback)
-    }
+    return trash([fullpath])
   }
-
-  destroyAsync: (Metadata) => Promise<*>
-
-  trash (doc: Metadata, callback: Callback) {
-    // TODO: v3: Put files and folders into the OS trash
-    return this.destroy(doc, callback)
-  }
-
-  trashAsync: (Metadata) => Promise<*>
 
   // Rename a file/folder to resolve a conflict
   resolveConflict (dst: Metadata, src: Metadata, callback: Callback) {
@@ -367,6 +354,8 @@ class Local implements Side {
       if (p.hasPath(src.path)) { p.clear(src.path) }
     }, 1000)
   }
+
+  resolveConflictAsync: (Metadata, Metadata) => Promise<*>
 }
 
 export default Local
