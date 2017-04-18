@@ -191,7 +191,6 @@ describe('RemoteWatcher', function () {
         dir_id: 'whatever',
         name: 'whatever',
         path: '/whatever',
-        created_at: '2017-01-30T09:09:15.217662611+01:00',
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
         tags: [],
         binary: {
@@ -227,7 +226,6 @@ describe('RemoteWatcher', function () {
         dir_id: 'whatever',
         name: 'whatever',
         path: '',
-        created_at: '2017-01-30T09:09:15.217662611+01:00',
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
         tags: [],
         binary: {
@@ -269,7 +267,6 @@ describe('RemoteWatcher', function () {
         name: 'file-5',
         md5sum: '9999999999999999999999999999999999999999',
         tags: [],
-        created_at: '2017-01-30T09:09:15.217662611+01:00',
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
         binary: {
           file: {
@@ -310,7 +307,6 @@ describe('RemoteWatcher', function () {
         name: 'file-1',
         md5sum: '1111111111111111111111111111111111111111',
         tags: ['foo', 'bar', 'baz'],
-        created_at: '2017-01-30T09:09:15.217662611+01:00',
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
         binary: {
           file: {
@@ -350,7 +346,6 @@ describe('RemoteWatcher', function () {
         path: '/my-folder/file-1',
         name: 'file-1',
         md5sum: '9999999999999999999999999999999999999999',
-        created_at: '2017-01-30T09:09:15.217662611+01:00',
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
         tags: ['foo', 'bar', 'baz']
       }
@@ -386,7 +381,6 @@ describe('RemoteWatcher', function () {
         name: 'file-2-bis',
         md5sum: '1111111111111111111111111111111111111112',
         tags: [],
-        created_at: '2017-01-30T09:09:15.217662611+01:00',
         updated_at: '2017-01-30T09:09:15.217662611+01:00'
       }
 
@@ -432,7 +426,6 @@ describe('RemoteWatcher', function () {
         name: 'file-2-ter',
         md5sum: '1111111111111111111111111111111111111112',
         tags: [],
-        created_at: '2017-01-30T09:09:15.217662611+01:00',
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
         binary: {
           file: {
@@ -490,7 +483,6 @@ describe('RemoteWatcher', function () {
       should(this.prep.addDocAsync.called).be.true()
       const deleteArgs = this.prep.deleteDocAsync.args[0]
       // FIXME: Make sure oldMeta timestamps are formatted as expected by PouchDB
-      delete oldMeta.creationDate
       delete oldMeta.lastModification
       should(deleteArgs[0]).equal('remote')
       should(deleteArgs[1]).have.properties(oldMeta)
@@ -518,7 +510,6 @@ describe('RemoteWatcher', function () {
       should(this.prep.addDocAsync.called).be.true()
       const deleteArgs = this.prep.deleteDocAsync.args[0]
       // FIXME: Make sure oldMeta timestamps are formatted as expected by PouchDB
-      delete oldMeta.creationDate
       delete oldMeta.lastModification
       should(deleteArgs[0]).equal('remote')
       should(deleteArgs[1]).have.properties(oldMeta)
@@ -542,7 +533,6 @@ describe('RemoteWatcher', function () {
         name: 'file-3-bis',
         md5sum: '8888888888888888888888888888888888888888',
         tags: [],
-        created_at: '2017-01-30T09:09:15.217662611+01:00',
         updated_at: '2017-01-30T09:09:15.217662611+01:00'
       }
       let was: Metadata = await this.pouch.db.get('my-folder/file-3')
@@ -578,7 +568,6 @@ describe('RemoteWatcher', function () {
         path: 'removeRemote',
         docType: 'file',
         md5sum: 'd3e2163ccd0c497969233a6bd2a4ac843fb8165e',
-        creationDate: '2015-09-29T14:13:33.384Z',
         lastModification: '2015-09-29T14:13:33.384Z',
         tags: [],
         remote: {

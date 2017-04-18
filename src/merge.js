@@ -60,7 +60,6 @@ class Merge {
       _id: parentId,
       path: path.dirname(doc.path),
       docType: 'folder',
-      creationDate: new Date(),
       lastModification: new Date()
     }
 
@@ -180,8 +179,6 @@ class Merge {
       doc._rev = file._rev
       if (doc.tags == null) { doc.tags = file.tags || [] }
       if (doc.remote == null) { doc.remote = file.remote }
-      // Preserve the creation date even if the file system lost it!
-      doc.creationDate = file.creationDate
       if (sameBinary(file, doc)) {
         if (doc.size == null) { doc.size = file.size }
         if (doc.class == null) { doc.class = file.class }
@@ -195,7 +192,6 @@ class Merge {
       }
     } else {
       if (doc.tags == null) { doc.tags = [] }
-      if (doc.creationDate == null) { doc.creationDate = new Date() }
       await this.ensureParentExistAsync(side, doc)
       return this.pouch.put(doc)
     }
@@ -215,7 +211,6 @@ class Merge {
     } else if (folder) {
       doc._rev = folder._rev
       if (doc.tags == null) { doc.tags = folder.tags || [] }
-      if (doc.creationDate == null) { doc.creationDate = folder.creationDate }
       if (doc.remote == null) { doc.remote = folder.remote }
       if (sameFolder(folder, doc)) {
         log.info({doc}, 'up to date')
@@ -225,7 +220,6 @@ class Merge {
       }
     } else {
       if (doc.tags == null) { doc.tags = [] }
-      if (doc.creationDate == null) { doc.creationDate = new Date() }
       await this.ensureParentExistAsync(side, doc)
       return this.pouch.put(doc)
     }
@@ -242,7 +236,6 @@ class Merge {
       }
       markSide(side, doc, file)
       markSide(side, was, was)
-      if (doc.creationDate == null) { doc.creationDate = was.creationDate }
       if (doc.size == null) { doc.size = was.size }
       if (doc.class == null) { doc.class = was.class }
       if (doc.mime == null) { doc.mime = was.mime }
@@ -279,7 +272,6 @@ class Merge {
       }
       markSide(side, doc, folder)
       markSide(side, was, was)
-      if (doc.creationDate == null) { doc.creationDate = was.creationDate }
       if (doc.tags == null) { doc.tags = was.tags || [] }
       delete doc.trashed
       if (folder) {

@@ -20,7 +20,6 @@ export default {
       _id: 'my-folder',
       path: 'my-folder',
       docType: 'folder',
-      creationDate: new Date(),
       lastModification: new Date(),
       tags: []
     }
@@ -33,7 +32,6 @@ export default {
       _id: id,
       path: id,
       docType: 'folder',
-      creationDate: new Date(),
       lastModification: new Date(),
       tags: [],
       remote: {
@@ -54,7 +52,6 @@ export default {
       path: id,
       docType: 'file',
       md5sum: `111111111111111111111111111111111111111${i}`,
-      creationDate: new Date(),
       lastModification: new Date(),
       tags: [],
       remote: {

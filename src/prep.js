@@ -120,7 +120,6 @@ class Prep {
     buildId(doc)
     if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
 
-    if (doc.creationDate == null) { doc.creationDate = new Date() }
     if (doc.lastModification == null) { doc.lastModification = new Date() }
     if (doc.lastModification === 'Invalid date') {
       doc.lastModification = new Date()

@@ -23,8 +23,7 @@ const log = logger({
 // http://pouchdb.com/2014/06/17/12-pro-tips-for-better-code-with-pouchdb.html
 // http://docs.ehealthafrica.org/couchdb-best-practices/
 //
-// For naming conventions, we kept those used on cozy and its couchdb. So, it's
-// creationDate and lastModification instead of created_at and updated_at. And
+// For naming conventions, we kept those used on cozy and its couchdb. And
 // views name are in camelcase (byChecksum, not by-checksum).
 class Pouch {
   config: Config

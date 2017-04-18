@@ -104,7 +104,6 @@ Documents schema
 - `docType`: always 'file'
 - `path`: the original path to this file
 - `md5sum`: a checksum of its content
-- `creationDate`: date and time of the creation
 - `lastModification`: date and time of the last modification
 - `tags`: the list of tags, from the remote cozy
 - `size`: the size on disk
@@ -121,7 +120,6 @@ Documents schema
 - `_rev`: from PouchDB
 - `docType`: always 'folder'
 - `path`: the original path to this file
-- `creationDate`: date and time of the creation
 - `lastModification`: date and time of the last modification
 - `tags`: the list of tags, from the remote cozy
 - `remote`: id and rev of the associated documents in the remote CouchDB

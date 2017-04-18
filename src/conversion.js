@@ -20,7 +20,6 @@ export function createMetadata (remote: RemoteDoc): Metadata {
   const doc: Object = {
     path: remote.path.substring(1),
     docType: localDocType(remote.type),
-    creationDate: remote.created_at,
     lastModification: remote.updated_at,
     remote: {
       _id: remote._id,
@@ -28,21 +27,14 @@ export function createMetadata (remote: RemoteDoc): Metadata {
     }
   }
 
-  if (remote.executable) {
-    doc.executable = remote.executable
-  }
-
-  if (remote.md5sum) {
-    doc.md5sum = remote.md5sum
-  }
-
   if (remote.size) {
     doc.size = parseInt(remote.size, 10)
   }
 
-  for (let field of ['class', 'mime', 'tags']) {
+  for (let field of ['md5sum', 'executable', 'class', 'mime', 'tags']) {
     if (remote[field]) { doc[field] = remote[field] }
   }
+
   return doc
 }
 

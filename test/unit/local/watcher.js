@@ -84,7 +84,6 @@ describe('LocalWatcher Tests', function () {
             size: 29865
           })
           doc.should.have.properties([
-            'creationDate',
             'lastModification'
           ])
           should.not.exist(doc.executable)
@@ -167,7 +166,6 @@ describe('LocalWatcher Tests', function () {
             docType: 'folder'
           })
           doc.should.have.properties([
-            'creationDate',
             'lastModification'
           ])
           done()
@@ -186,7 +184,6 @@ describe('LocalWatcher Tests', function () {
             docType: 'folder'
           })
           doc.should.have.properties([
-            'creationDate',
             'lastModification'
           ])
           done()

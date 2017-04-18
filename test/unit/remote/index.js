@@ -160,7 +160,6 @@ describe('Remote', function () {
         path: 'foo/bar/baz.jpg',
         docType: 'file',
         lastModification: '2015-11-12T13:14:32.384Z',
-        creationDate: '2015-11-12T13:14:32.384Z',
         tags: ['qux'],
         md5sum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30',
         size: 12345,
@@ -179,7 +178,6 @@ describe('Remote', function () {
         name: 'baz.jpg',
         docType: 'file',
         lastModification: '2015-11-12T13:14:32.384Z',
-        creationDate: '2015-11-12T13:14:32.384Z',
         tags: ['qux'],
         md5sum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30',
         size: 12345,
@@ -199,7 +197,6 @@ describe('Remote', function () {
         path: 'foo/bar/baz',
         docType: 'folder',
         lastModification: '2015-11-12T13:14:33.384Z',
-        creationDate: '2015-11-12T13:14:33.384Z',
         tags: ['courge']
       }
       let doc = this.remote.createRemoteDoc(local)
@@ -208,7 +205,6 @@ describe('Remote', function () {
         name: 'baz',
         docType: 'folder',
         lastModification: '2015-11-12T13:14:33.384Z',
-        creationDate: '2015-11-12T13:14:33.384Z',
         tags: ['courge']})
     })
 
@@ -230,7 +226,6 @@ describe('Remote', function () {
         path: 'foo/bar/baz.jpg',
         docType: 'file',
         lastModification: '2015-11-12T13:14:32.384Z',
-        creationDate: '2015-11-12T13:14:32.384Z',
         md5sum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
       }
       let remote = {
@@ -249,7 +244,6 @@ describe('Remote', function () {
         name: 'baz.jpg',
         docType: 'file',
         lastModification: '2015-11-12T13:14:32.384Z',
-        creationDate: '2015-11-12T13:14:32.384Z',
         binary: {
           file: {
             id: remote.binary._id,
@@ -347,7 +341,6 @@ describe('Remote', function () {
         docType: 'file',
         md5sum: 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df',
         class: 'image',
-        creationDate: timestamp.current(),
         executable: true,
         lastModification: timestamp.current(),
         mime: 'image/jpg',
@@ -371,7 +364,6 @@ describe('Remote', function () {
 
       const file = await cozy.files.statById(created.remote._id)
       should(file.attributes).have.properties({
-        created_at: timestamp.stringify(doc.creationDate),
         dir_id: 'io.cozy.files.root-dir',
         executable: true,
         mime: 'image/jpg',
@@ -391,7 +383,6 @@ describe('Remote', function () {
         path: 'backup/cat3.jpg',
         docType: 'file',
         md5sum,
-        creationDate: timestamp.current(),
         lastModification: timestamp.current(),
         size: 36901,
         sides: {
@@ -403,7 +394,6 @@ describe('Remote', function () {
         path: 'ORIGINAL/CAT3.JPG',
         docType: 'file',
         md5sum,
-        creationDate: timestamp.current(),
         lastModification: timestamp.current(),
         size: 36901,
         remote: {
@@ -427,7 +417,6 @@ describe('Remote', function () {
         dir_id: backupDir._id,
         name: 'cat3.jpg',
         type: 'file',
-        created_at: timestamp.stringify(doc.creationDate),
         updated_at: timestamp.stringify(doc.lastModification),
         size: '36901'
       })
@@ -440,7 +429,6 @@ describe('Remote', function () {
       let doc: Object = {
         path: 'couchdb-folder/folder-1',
         docType: 'folder',
-        creationDate: dateString,
         lastModification: dateString
       }
       const created: Metadata = await this.remote.addFolderAsync(doc)
@@ -452,7 +440,6 @@ describe('Remote', function () {
         path: '/couchdb-folder/folder-1',
         name: 'folder-1',
         type: 'directory',
-        created_at: dateString,
         updated_at: dateString
       })
     })
@@ -464,8 +451,8 @@ describe('Remote', function () {
       const result: Metadata = await this.remote.addFolderAsync(metadata)
 
       const folder: JsonApiDoc = await cozy.files.statById(result.remote._id)
-      const {path, name, type, created_at, updated_at} = remoteDir
-      should(folder.attributes).have.properties({path, name, type, created_at, updated_at})
+      const {path, name, type, updated_at} = remoteDir
+      should(folder.attributes).have.properties({path, name, type, updated_at})
       should(metadata.remote).have.properties({
         _id: remoteDir._id,
         _rev: remoteDir._rev
@@ -625,7 +612,6 @@ describe('Remote', function () {
         type: 'directory',
         name: 'new-dir-name',
         dir_id: deletedDir.dir_id,
-        created_at: newMetadata.creationDate,
         updated_at: newMetadata.lastModification,
         tags: newMetadata.tags
       })
@@ -653,7 +639,6 @@ describe('Remote', function () {
         type: 'directory',
         name: 'foo',
         dir_id: 'io.cozy.files.root-dir',
-        created_at: newMetadata.lastModification,
         updated_at: newMetadata.lastModification,
         tags: newMetadata.tags
       })
@@ -705,7 +690,6 @@ describe('Remote', function () {
     //     let doc = {
     //       path: 'couchdb-folder/folder-5',
     //       docType: 'folder',
-    //       creationDate: new Date(),
     //       lastModification: new Date(),
     //       remote: {
     //         _id: created.id,
@@ -740,7 +724,6 @@ describe('Remote', function () {
       let doc = {
         path: 'couchdb-folder/folder-7',
         docType: 'folder',
-        creationDate: new Date(),
         lastModification: new Date()
       }
       let old = {
@@ -755,7 +738,6 @@ describe('Remote', function () {
             path: '/couchdb-folder',
             name: 'folder-7',
             docType: 'folder',
-            creationDate: doc.creationDate.toISOString(),
             lastModification: doc.lastModification.toISOString()
           })
           done()
@@ -801,7 +783,6 @@ describe('Remote', function () {
         path: 'cat9.jpg',
         docType: 'file',
         md5sum,
-        creationDate: new Date().toISOString(),
         lastModification: new Date().toISOString(),
         size: 36901
       }
@@ -809,7 +790,6 @@ describe('Remote', function () {
         path: 'cat-conflict-2015-12-01T01:02:03Z.jpg',
         docType: 'file',
         md5sum,
-        creationDate: src.creationDate,
         lastModification: src.lastModification,
         size: 36901
       }

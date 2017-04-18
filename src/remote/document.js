@@ -18,7 +18,6 @@ export type RemoteDoc = {
   _rev: string,
   _type: string,
   class?: string,
-  created_at: string,
   dir_id: string,
   executable?: boolean,
   md5sum?: string,
@@ -33,7 +32,6 @@ export type RemoteDoc = {
 
 export type JsonApiAttributes = {
   class?: string, // file only
-  created_at: string,
   dir_id: string,
   executable?: boolean, // file only
   md5sum?: string, // file only
@@ -60,7 +58,6 @@ export function jsonApiToRemoteDoc (json: JsonApiDoc): RemoteDoc {
     _id: json._id,
     _rev: json._rev,
     _type: json._type,
-    created_at: json.attributes.created_at,
     dir_id: json.attributes.dir_id,
     name: json.attributes.name,
     tags: json.attributes.tags,

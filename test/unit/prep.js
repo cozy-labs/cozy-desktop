@@ -172,7 +172,6 @@ describe('Prep', function () {
           this.merge.addFileAsync.calledWith(this.side, doc).should.be.true()
           doc.docType.should.equal('file')
           should.exist(doc._id)
-          should.exist(doc.creationDate)
           should.exist(doc.lastModification)
           done()
         })
@@ -371,7 +370,6 @@ describe('Prep', function () {
           path: 'FOO/OLD-MISSING-FIELDS.JPG',
           md5sum: 'uhNoeJzOlbV03scN/UduYQ==',
           docType: 'file',
-          creationDate: new Date(),
           lastModification: new Date(),
           tags: ['courge', 'quux'],
           size: 5426,
@@ -451,7 +449,6 @@ describe('Prep', function () {
           _rev: '456',
           path: 'FOOBAR/OLD-MISSING-FIELDS',
           docType: 'folder',
-          creationDate: new Date(),
           lastModification: new Date(),
           tags: ['courge', 'quux']
         }
