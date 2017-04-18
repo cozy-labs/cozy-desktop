@@ -320,6 +320,18 @@ class Merge {
     return this.pouch.bulkDocs(bulk)
   }
 
+  async restoreFileAsync (side: SideName, doc: Metadata): Promise<*> {
+    // TODO
+    delete doc.trashed
+    return this.updateFileAsync(side, doc)
+  }
+
+  async restoreFolderAsync (side: SideName, doc: Metadata): Promise<*> {
+    // TODO
+    delete doc.trashed
+    return this.putFolderAsync(side, doc)
+  }
+
   async trashAsync (side: SideName, doc: Metadata): Promise<void> {
     let oldMetadata
     try {

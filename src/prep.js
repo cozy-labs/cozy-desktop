@@ -64,7 +64,18 @@ class Prep {
     }
   }
 
-  // Simple helper to delete a file or a folder
+  // Simple helper to restore a file or a folder
+  async restoreDocAsync (side: SideName, doc: Metadata) {
+    if (doc.docType === 'file') {
+      return this.restoreFileAsync(side, doc)
+    } else if (doc.docType === 'folder') {
+      return this.restoreFolderAsync(side, doc)
+    } else {
+      throw new Error(`Unexpected docType: ${doc.docType}`)
+    }
+  }
+
+  // Simple helper to trash a file or a folder
   async trashDocAsync (side: SideName, doc: Metadata) {
     if (doc.docType === 'file') {
       return this.trashFileAsync(side, doc)
@@ -197,6 +208,18 @@ class Prep {
     } else {
       return this.merge.moveFolderAsync(side, doc, was)
     }
+  }
+
+  async restoreFileAsync (side: SideName, doc: *) {
+    ensureValidPath(doc)
+    buildId(doc)
+    return this.merge.restoreFileAsync(side, doc)
+  }
+
+  async restoreFolderAsync (side: SideName, doc: *) {
+    ensureValidPath(doc)
+    buildId(doc)
+    return this.merge.restoreFolderAsync(side, doc)
   }
 
   async trashFileAsync (side: SideName, doc: *) {
