@@ -6,7 +6,6 @@ import pick from 'lodash.pick'
 import path from 'path'
 
 import logger from './logger'
-import { TRASH_DIR_NAME } from './remote/constants'
 import { sameDate } from './timestamp'
 
 const log = logger({
@@ -212,8 +211,4 @@ export function markSide (side: string, doc: Metadata, prev: ?Metadata): Metadat
   }
   doc.sides[side] = ++rev
   return doc
-}
-
-export function inRemoteTrash (doc: Metadata): boolean {
-  return doc.path.startsWith(TRASH_DIR_NAME)
 }

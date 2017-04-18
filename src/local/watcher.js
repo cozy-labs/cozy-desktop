@@ -9,7 +9,6 @@ import mime from 'mime'
 import path from 'path'
 
 import logger from '../logger'
-import { inRemoteTrash } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import { PendingMap } from '../utils/pending'
@@ -339,7 +338,7 @@ class LocalWatcher {
           callback(err)
         } else {
           async.eachSeries(docs.reverse(), (doc, next) => {
-            if (this.paths.indexOf(doc.path) !== -1 || inRemoteTrash(doc)) {
+            if (this.paths.indexOf(doc.path) !== -1 || doc.trashed) {
               async.setImmediate(next)
             } else {
               log.info(`${doc.path}: deleted while client was stopped`)

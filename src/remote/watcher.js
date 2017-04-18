@@ -2,7 +2,7 @@
 
 import * as conversion from '../conversion'
 import logger from '../logger'
-import { ensureValidPath, inRemoteTrash } from '../metadata'
+import { ensureValidPath } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import RemoteCozy from './cozy'
@@ -130,30 +130,35 @@ export default class RemoteWatcher {
     if (!was) {
       log.info(`${doc.path}: ${docType} was added remotely`)
       return this.prep.addDocAsync(SIDE, doc)
-    } else if (was.path === doc.path) {
+    }
+    if (was.path === doc.path) {
       log.info(`${doc.path}: ${docType} was updated remotely`)
       return this.prep.updateDocAsync(SIDE, doc)
-    } else if (inRemoteTrash(doc) && !inRemoteTrash(was)) {
+    }
+    // FIXME
+    if (doc.trashed && !was.trashed) {
       log.info(`${doc.path}: ${docType} was trashed remotely`)
       await this.prep.deleteDocAsync(SIDE, was)
       return this.prep.addDocAsync(SIDE, doc)
-    } else if (inRemoteTrash(was) && !inRemoteTrash(doc)) {
+    }
+    if (was.trashed && !doc.trashed) {
       log.info(`${doc.path}: ${docType} was restored remotely`)
       await this.prep.deleteDocAsync(SIDE, was)
       return this.prep.addDocAsync(SIDE, doc)
-    } else if ((doc.md5sum != null) && (was.md5sum === doc.md5sum)) {
+    }
+    if ((doc.md5sum != null) && (was.md5sum === doc.md5sum)) {
       log.info(`${doc.path}: ${docType} was moved remotely`)
       return this.prep.moveDocAsync(SIDE, doc, was)
-    } else if ((doc.docType === 'folder') || (was.remote._rev === doc.remote._rev)) {
+    }
+    if ((doc.docType === 'folder') || (was.remote._rev === doc.remote._rev)) {
       log.info(`${doc.path}: ${docType} was possibly modified and renamed remotely while cozy-desktop was stopped`)
       await this.prep.deleteDocAsync(SIDE, was)
       return this.prep.addDocAsync(SIDE, doc)
-    } else {
-      // TODO: add unit test
-      log.info(`${doc.path}: ${docType} was possibly renamed remotely while updated locally`)
-      await this.removeRemote(was)
-      return this.prep.addDocAsync(SIDE, doc)
     }
+    // TODO: add unit test
+    log.info(`${doc.path}: ${docType} was possibly renamed remotely while updated locally`)
+    await this.removeRemote(was)
+    return this.prep.addDocAsync(SIDE, doc)
   }
 
   // Remove the association between a document and its remote

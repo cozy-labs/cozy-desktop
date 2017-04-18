@@ -7,7 +7,7 @@ import path from 'path'
 import Ignore from './ignore'
 import Local from './local'
 import logger from './logger'
-import { extractRevNumber, inRemoteTrash } from './metadata'
+import { extractRevNumber, isUpToDate } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
 import { HEARTBEAT } from './remote/watcher'
@@ -178,7 +178,7 @@ class Sync {
 
       if (!side) {
         return this.pouch.setLocalSeqAsync(change.seq)
-      } else if (sideName === 'remote' && doc.trashed && !inRemoteTrash(doc)) {
+      } else if (sideName === 'remote' && doc.trashed) {
         // File or folder was just deleted locally
         const byItself = await this.trashWithParentOrByItself(doc, side)
         if (!byItself) { return }
@@ -423,7 +423,7 @@ class Sync {
         parent = await this.pouch.db.get(parentId)
       }
 
-      if (parent.trashed && !inRemoteTrash(parent)) {
+      if (parent.trashed && !isUpToDate('remote', parent)) {
         log.info(`${doc.path}: will be trashed with parent directory`)
         await this.trashWithParentOrByItself(parent, side)
         // Wait long enough that the remote has fetched one changes feed
