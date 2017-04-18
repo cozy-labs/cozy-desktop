@@ -7,12 +7,16 @@ import { Client as CozyClient } from 'cozy-client-js'
 const PORT_NUMBER = 3344
 
 export default class Registration {
-  constructor (url, config) {
+  constructor (url, config, onReady=null) {
     this.url = url
     this.config = config
+    this.onReady = onReady || (url => {
+      console.log('Please visit the following url to authorize the application: ', url)
+      opn(url)
+    })
   }
 
-  onRegistered (client, url) {
+  onRegistered (client, url, onReady=null) {
     // TODO if the port is already taken, try again with a new port
     let server
     return new Promise((resolve) => {
@@ -22,10 +26,7 @@ export default class Registration {
           response.end('Cozy-desktop has been successfully registered as a Cozy device')
         }
       })
-      server.listen(PORT_NUMBER, () => {
-        console.log('Please visit the following url to authorize the application: ', url)
-        opn(url)
-      })
+      server.listen(PORT_NUMBER, () => { this.onReady(url) })
     })
       .then(
         (url) => { server.close(); return url },
