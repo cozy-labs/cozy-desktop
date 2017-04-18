@@ -36,7 +36,7 @@ describe('conversion', function () {
         md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
         class: 'document',
         docType: 'file',
-        lastModification: '2017-09-08T07:06:05Z',
+        updated_at: '2017-09-08T07:06:05Z',
         mime: 'test/html',
         path: 'foo/bar',
         remote: {
@@ -69,7 +69,7 @@ describe('conversion', function () {
 
       should(metadata).deepEqual({
         docType: 'folder',
-        lastModification: '2017-09-08T07:06:05Z',
+        updated_at: '2017-09-08T07:06:05Z',
         path: 'foo/bar',
         remote: {
           _id: '12',

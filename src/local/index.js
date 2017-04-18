@@ -94,9 +94,9 @@ class Local implements Side {
           return callback(err)
         }
       }
-      if (doc.lastModification) {
-        let lastModification = new Date(doc.lastModification)
-        return fs.utimes(filePath, lastModification, lastModification, () =>
+      if (doc.updated_at) {
+        let updated = new Date(doc.updated_at)
+        return fs.utimes(filePath, updated, updated, () =>
           // Ignore errors
           next()
         )

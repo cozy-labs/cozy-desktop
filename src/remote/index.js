@@ -66,7 +66,7 @@ export default class Remote implements Side {
       dir = await this.remoteCozy.createDirectory({
         name,
         dirID: parent._id,
-        lastModifiedDate: doc.lastModification
+        lastModifiedDate: doc.updated_at
       })
     } catch (err) {
       if (err.status !== 409) { throw err }
@@ -93,7 +93,7 @@ export default class Remote implements Side {
       dirID: dir._id,
       executable: doc.executable,
       contentType: doc.mime,
-      lastModifiedDate: new Date(doc.lastModification)
+      lastModifiedDate: new Date(doc.updated_at)
     })
 
     doc.remote = {
@@ -111,7 +111,7 @@ export default class Remote implements Side {
     const updated = await this.remoteCozy.updateFileById(doc.remote._id, stream, {
       contentType: doc.mime,
       checksum: doc.md5sum,
-      lastModifiedDate: new Date(doc.lastModification)
+      lastModifiedDate: new Date(doc.updated_at)
     })
 
     doc.remote._rev = updated._rev
@@ -183,7 +183,7 @@ export default class Remote implements Side {
       newRemoteDoc = await this.remoteCozy.createDirectory({
         name: newName,
         dirID: newParentDir._id,
-        lastModifiedDate: doc.lastModification
+        lastModifiedDate: doc.updated_at
       })
     }
 

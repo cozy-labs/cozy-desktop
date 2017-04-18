@@ -177,7 +177,7 @@ class LocalWatcher {
         path: filePath,
         docType: 'file',
         md5sum,
-        lastModification: stats.mtime,
+        updated_at: stats.mtime,
         mime: mimeType,
         class: mimeType.split('/')[0],
         size: stats.size
@@ -261,7 +261,7 @@ class LocalWatcher {
     const doc = {
       path: folderPath,
       docType: 'folder',
-      lastModification: stats.mtime
+      updated_at: stats.mtime
     }
     log.info(`${folderPath}: folder added`)
     this.prep.putFolder(this.side, doc, this.done)

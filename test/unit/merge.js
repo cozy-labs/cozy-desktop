@@ -27,13 +27,13 @@ describe('Merge', function () {
         path: 'foo/new-file',
         md5sum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc',
         docType: 'file',
-        lastModification: new Date(),
+        updated_at: new Date(),
         tags: ['courge', 'quux']
       }
       this.merge.addFileAsync(this.side, doc).then(() => {
         this.pouch.db.get(doc._id, function (err, res) {
           should.not.exist(err)
-          doc.lastModification = doc.lastModification.toISOString()
+          doc.updated_at = doc.updated_at.toISOString()
           res.should.have.properties(doc)
           res.sides.local.should.equal(1)
           done()
@@ -48,7 +48,7 @@ describe('Merge', function () {
           path: 'BUZZ.JPG',
           docType: 'file',
           md5sum: '1111111111111111111111111111111111111111',
-          lastModification: new Date(),
+          updated_at: new Date(),
           tags: ['foo'],
           size: 12345,
           class: 'image',
@@ -60,12 +60,12 @@ describe('Merge', function () {
       it('can update the metadata', function (done) {
         let was = clone(this.file)
         this.file.tags = ['bar', 'baz']
-        this.file.lastModification = new Date()
+        this.file.updated_at = new Date()
         let doc = clone(this.file)
         delete doc.size
         delete doc.class
         delete doc.mime
-        this.file.lastModification = doc.lastModification.toISOString()
+        this.file.updated_at = doc.updated_at.toISOString()
         this.merge.addFileAsync(this.side, doc).then(() => {
           this.pouch.db.get(doc._id, (err, res) => {
             should.not.exist(err)
@@ -88,13 +88,13 @@ describe('Merge', function () {
         path: 'FOOBAR/NEW-FILE',
         md5sum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc',
         docType: 'file',
-        lastModification: new Date(),
+        updated_at: new Date(),
         tags: ['courge', 'quux']
       }
       this.merge.updateFileAsync(this.side, doc).then(() => {
         this.pouch.db.get(doc._id, function (err, res) {
           should.not.exist(err)
-          doc.lastModification = doc.lastModification.toISOString()
+          doc.updated_at = doc.updated_at.toISOString()
           res.should.have.properties(doc)
           res.sides.local.should.equal(1)
           done()
@@ -109,7 +109,7 @@ describe('Merge', function () {
           path: 'FIZZBUZZ.JPG',
           docType: 'file',
           md5sum: '1111111111111111111111111111111111111111',
-          lastModification: new Date(),
+          updated_at: new Date(),
           tags: ['foo'],
           size: 12345,
           class: 'image',
@@ -121,12 +121,12 @@ describe('Merge', function () {
       it('can update the metadata', function (done) {
         let was = clone(this.file)
         this.file.tags = ['bar', 'baz']
-        this.file.lastModification = new Date()
+        this.file.updated_at = new Date()
         let doc = clone(this.file)
         delete doc.size
         delete doc.class
         delete doc.mime
-        this.file.lastModification = doc.lastModification.toISOString()
+        this.file.updated_at = doc.updated_at.toISOString()
         this.merge.updateFileAsync(this.side, doc).then(() => {
           this.pouch.db.get(doc._id, (err, res) => {
             should.not.exist(err)
@@ -169,11 +169,11 @@ describe('Merge', function () {
         _id: 'FOO/NEW-FOLDER',
         path: 'FOO/NEW-FOLDER',
         docType: 'folder',
-        lastModification: new Date(),
+        updated_at: new Date(),
         tags: ['courge', 'quux']
       }
       this.merge.putFolderAsync(this.side, doc).then(() => {
-        doc.lastModification = doc.lastModification.toISOString()
+        doc.updated_at = doc.updated_at.toISOString()
         this.pouch.db.get(doc._id, function (err, res) {
           should.not.exist(err)
           res.should.have.properties(doc)
@@ -191,7 +191,7 @@ describe('Merge', function () {
         path: 'FOO/NEW',
         md5sum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
         docType: 'file',
-        lastModification: new Date(),
+        updated_at: new Date(),
         tags: ['courge', 'quux']
       }
       let was = {
@@ -199,7 +199,7 @@ describe('Merge', function () {
         path: 'FOO/OLD',
         md5sum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
         docType: 'file',
-        lastModification: new Date(),
+        updated_at: new Date(),
         tags: ['courge', 'quux'],
         sides: {
           local: 1,
@@ -213,7 +213,7 @@ describe('Merge', function () {
         this.merge.moveFileAsync(this.side, clone(doc), clone(was)).then(() => {
           this.pouch.db.get(doc._id, (err, res) => {
             should.not.exist(err)
-            doc.lastModification = doc.lastModification.toISOString()
+            doc.updated_at = doc.updated_at.toISOString()
             res.should.have.properties(doc)
             res.sides.local.should.equal(1)
             should.not.exist(res.trashed)
@@ -238,7 +238,7 @@ describe('Merge', function () {
         path: 'FOO/OLD-MISSING-FIELDS.JPG',
         md5sum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
         docType: 'file',
-        lastModification: new Date(),
+        updated_at: new Date(),
         tags: ['courge', 'quux'],
         size: 5426,
         class: 'image',
@@ -270,7 +270,7 @@ describe('Merge', function () {
         path: 'FOO/NEW-HINT',
         md5sum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
         docType: 'file',
-        lastModification: new Date(),
+        updated_at: new Date(),
         tags: ['courge', 'quux']
       }
       let was = {
@@ -278,7 +278,7 @@ describe('Merge', function () {
         path: 'FOO/OLD-HINT',
         md5sum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
         docType: 'file',
-        lastModification: new Date(),
+        updated_at: new Date(),
         tags: ['courge', 'quux'],
         sides: {
           local: 1,
@@ -311,14 +311,14 @@ describe('Merge', function () {
         _id: 'FOOBAR/NEW',
         path: 'FOOBAR/NEW',
         docType: 'folder',
-        lastModification: new Date(),
+        updated_at: new Date(),
         tags: ['courge', 'quux']
       }
       let was = {
         _id: 'FOOBAR/OLD',
         path: 'FOOBAR/OLD',
         docType: 'folder',
-        lastModification: new Date(),
+        updated_at: new Date(),
         tags: ['courge', 'quux'],
         sides: {
           local: 1,
@@ -332,7 +332,7 @@ describe('Merge', function () {
         this.merge.moveFolderAsync(this.side, clone(doc), clone(was)).then(() => {
           this.pouch.db.get(doc._id, (err, res) => {
             should.not.exist(err)
-            doc.lastModification = doc.lastModification.toISOString()
+            doc.updated_at = doc.updated_at.toISOString()
             res.should.have.properties(doc)
             res.sides.local.should.equal(1)
             should.not.exist(res.trashed)
@@ -351,14 +351,14 @@ describe('Merge', function () {
         _id: 'FOOBAR/NEW-HINT',
         path: 'FOOBAR/NEW-HINT',
         docType: 'folder',
-        lastModification: new Date(),
+        updated_at: new Date(),
         tags: ['courge', 'quux']
       }
       let was = {
         _id: 'FOOBAR/OLD-HINT',
         path: 'FOOBAR/OLD-HINT',
         docType: 'folder',
-        lastModification: new Date(),
+        updated_at: new Date(),
         tags: ['courge', 'quux'],
         sides: {
           local: 1,
@@ -404,7 +404,7 @@ describe('Merge', function () {
         _id: 'DESTINATION',
         path: 'DESTINATION',
         docType: 'folder',
-        lastModification: new Date(),
+        updated_at: new Date(),
         tags: []
       }
       this.pouch.db.get('my-folder', (err, was) => {

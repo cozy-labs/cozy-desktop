@@ -84,7 +84,7 @@ describe('Local', function () {
       fs.ensureFileSync(filePath)
       let updater = this.local.metadataUpdater({
         path: 'exec-file',
-        lastModification: date,
+        updated_at: date,
         executable: true
       })
       updater(function (err) {
@@ -105,7 +105,7 @@ describe('Local', function () {
       fs.ensureFileSync(filePath)
       let updater = this.local.metadataUpdater({
         path: 'utimes-file',
-        lastModification: date
+        updated_at: date
       })
       updater(function (err) {
         should.not.exist(err)
@@ -121,7 +121,7 @@ describe('Local', function () {
       fs.ensureDirSync(folderPath)
       let updater = this.local.metadataUpdater({
         path: 'utimes-folder',
-        lastModification: date
+        updated_at: date
       })
       updater(function (err) {
         should.not.exist(err)
@@ -187,7 +187,7 @@ describe('Local', function () {
       this.events.emit = sinon.spy()
       let doc = {
         path: 'files/file-from-remote',
-        lastModification: new Date('2015-10-09T04:05:06Z'),
+        updated_at: new Date('2015-10-09T04:05:06Z'),
         md5sum: 'OFj2IjCsPJFfMAxmQxLGPw=='
       }
       this.local.other = {
@@ -211,7 +211,7 @@ describe('Local', function () {
         let content = fs.readFileSync(filePath, {encoding: 'utf-8'})
         content.should.equal('foobar')
         let mtime = +fs.statSync(filePath).mtime
-        mtime.should.equal(+doc.lastModification)
+        mtime.should.equal(+doc.updated_at)
         done()
       })
     })
@@ -219,7 +219,7 @@ describe('Local', function () {
     it('creates the file from another file with same checksum', function (done) {
       let doc = {
         path: 'files/file-with-same-checksum',
-        lastModification: new Date('2015-10-09T04:05:07Z'),
+        updated_at: new Date('2015-10-09T04:05:07Z'),
         md5sum: 'qwesux5JaAGTet+nckJL9w=='
       }
       let alt = path.join(this.syncPath, 'files', 'my-checkum-is-456')
@@ -234,7 +234,7 @@ describe('Local', function () {
         let content = fs.readFileSync(filePath, {encoding: 'utf-8'})
         content.should.equal('foo bar baz')
         let mtime = +fs.statSync(filePath).mtime
-        mtime.should.equal(+doc.lastModification)
+        mtime.should.equal(+doc.updated_at)
         done()
       })
     })
@@ -242,7 +242,7 @@ describe('Local', function () {
     it('can create a file in the root', function (done) {
       let doc = {
         path: 'file-in-root',
-        lastModification: new Date('2015-10-09T04:05:19Z'),
+        updated_at: new Date('2015-10-09T04:05:19Z'),
         md5sum: 'gDOOedLKm5wJDrqqLvKTxw=='
       }
       this.local.other = {
@@ -266,7 +266,7 @@ describe('Local', function () {
         let content = fs.readFileSync(filePath, {encoding: 'utf-8'})
         content.should.equal('foobaz')
         let mtime = +fs.statSync(filePath).mtime
-        mtime.should.equal(+doc.lastModification)
+        mtime.should.equal(+doc.updated_at)
         done()
       })
     })
@@ -275,7 +275,7 @@ describe('Local', function () {
       this.events.emit = sinon.spy()
       let doc = {
         path: 'files/file-from-remote-2',
-        lastModification: new Date('2015-10-09T04:05:16Z'),
+        updated_at: new Date('2015-10-09T04:05:16Z'),
         md5sum: '8843d7f92416211de9ebb963ff4ce28125932878'
       }
       this.local.other = {
@@ -314,14 +314,14 @@ describe('Local', function () {
     it('creates the folder', function (done) {
       let doc = {
         path: 'parent/folder-to-create',
-        lastModification: new Date('2015-10-09T05:06:08Z')
+        updated_at: new Date('2015-10-09T05:06:08Z')
       }
       let folderPath = path.join(this.syncPath, doc.path)
       this.local.addFolder(doc, function (err) {
         should.not.exist(err)
         fs.statSync(folderPath).isDirectory().should.be.true()
         let mtime = +fs.statSync(folderPath).mtime
-        mtime.should.equal(+doc.lastModification)
+        mtime.should.equal(+doc.updated_at)
         done()
       })
     })
@@ -329,7 +329,7 @@ describe('Local', function () {
     it('updates mtime if the folder already exists', function (done) {
       let doc = {
         path: 'parent/folder-to-create',
-        lastModification: new Date('2015-10-09T05:06:08Z')
+        updated_at: new Date('2015-10-09T05:06:08Z')
       }
       let folderPath = path.join(this.syncPath, doc.path)
       fs.ensureDirSync(folderPath)
@@ -337,7 +337,7 @@ describe('Local', function () {
         should.not.exist(err)
         fs.statSync(folderPath).isDirectory().should.be.true()
         let mtime = +fs.statSync(folderPath).mtime
-        mtime.should.equal(+doc.lastModification)
+        mtime.should.equal(+doc.updated_at)
         done()
       })
     })
@@ -357,7 +357,7 @@ describe('Local', function () {
       let doc = {
         path: 'a-file-to-overwrite',
         docType: 'file',
-        lastModification: new Date('2015-10-09T05:06:07Z'),
+        updated_at: new Date('2015-10-09T05:06:07Z'),
         md5sum: 'PiWWCnnbxptnTNTsZ6csYg=='
       }
       this.local.other = {
@@ -382,7 +382,7 @@ describe('Local', function () {
         let content = fs.readFileSync(filePath, {encoding: 'utf-8'})
         content.should.equal('Hello world')
         let mtime = +fs.statSync(filePath).mtime
-        mtime.should.equal(+doc.lastModification)
+        mtime.should.equal(+doc.updated_at)
         done()
       })
     })
@@ -402,7 +402,7 @@ describe('Local', function () {
       let doc = {
         path: 'file-to-update',
         docType: 'file',
-        lastModification: new Date('2015-11-10T05:06:07Z')
+        updated_at: new Date('2015-11-10T05:06:07Z')
       }
       let filePath = path.join(this.syncPath, doc.path)
       fs.ensureFileSync(filePath)
@@ -410,7 +410,7 @@ describe('Local', function () {
         should.not.exist(err)
         fs.existsSync(filePath).should.be.true()
         let mtime = +fs.statSync(filePath).mtime
-        mtime.should.equal(+doc.lastModification)
+        mtime.should.equal(+doc.updated_at)
         done()
       })
     })
@@ -430,7 +430,7 @@ describe('Local', function () {
       let doc = {
         path: 'a-folder-to-update',
         docType: 'folder',
-        lastModification: new Date()
+        updated_at: new Date()
       }
       sinon.stub(this.local, 'addFolder').yields()
       this.local.updateFolder(doc, {}, err => {
@@ -455,11 +455,11 @@ describe('Local', function () {
     it('moves the file', function (done) {
       let old = {
         path: 'old-parent/file-to-move',
-        lastModification: new Date('2016-10-08T05:05:09Z')
+        updated_at: new Date('2016-10-08T05:05:09Z')
       }
       let doc = {
         path: 'new-parent/file-moved',
-        lastModification: new Date('2015-10-09T05:05:10Z')
+        updated_at: new Date('2015-10-09T05:05:10Z')
       }
       let oldPath = path.join(this.syncPath, old.path)
       let newPath = path.join(this.syncPath, doc.path)
@@ -470,7 +470,7 @@ describe('Local', function () {
         fs.existsSync(oldPath).should.be.false()
         fs.statSync(newPath).isFile().should.be.true()
         let mtime = +fs.statSync(newPath).mtime
-        mtime.should.equal(+doc.lastModification)
+        mtime.should.equal(+doc.updated_at)
         let enc = {encoding: 'utf-8'}
         fs.readFileSync(newPath, enc).should.equal('foobar')
         done()
@@ -480,11 +480,11 @@ describe('Local', function () {
     it('creates the file is the current file is missing', function (done) {
       let old = {
         path: 'old-parent/missing-file',
-        lastModification: new Date('2016-10-08T05:05:11Z')
+        updated_at: new Date('2016-10-08T05:05:11Z')
       }
       let doc = {
         path: 'new-parent/recreated-file',
-        lastModification: new Date('2015-10-09T05:05:12Z')
+        updated_at: new Date('2015-10-09T05:05:12Z')
       }
       let stub = sinon.stub(this.local, 'addFile').yields()
       this.local.moveFile(doc, old, function (err) {
@@ -498,11 +498,11 @@ describe('Local', function () {
     it('does nothing if the file has already been moved', function (done) {
       let old = {
         path: 'old-parent/already-moved',
-        lastModification: new Date('2016-10-08T05:05:11Z')
+        updated_at: new Date('2016-10-08T05:05:11Z')
       }
       let doc = {
         path: 'new-parent/already-here',
-        lastModification: new Date('2015-10-09T05:05:12Z')
+        updated_at: new Date('2015-10-09T05:05:12Z')
       }
       let newPath = path.join(this.syncPath, doc.path)
       fs.ensureDirSync(path.dirname(newPath))
@@ -565,12 +565,12 @@ describe('Local', function () {
       let old = {
         path: 'old-parent/folder-to-move',
         docType: 'folder',
-        lastModification: new Date('2016-10-08T05:06:09Z')
+        updated_at: new Date('2016-10-08T05:06:09Z')
       }
       let doc = {
         path: 'new-parent/folder-moved',
         docType: 'folder',
-        lastModification: new Date('2015-10-09T05:06:10Z')
+        updated_at: new Date('2015-10-09T05:06:10Z')
       }
       let oldPath = path.join(this.syncPath, old.path)
       let folderPath = path.join(this.syncPath, doc.path)
@@ -580,7 +580,7 @@ describe('Local', function () {
         fs.existsSync(oldPath).should.be.false()
         fs.statSync(folderPath).isDirectory().should.be.true()
         let mtime = +fs.statSync(folderPath).mtime
-        mtime.should.equal(+doc.lastModification)
+        mtime.should.equal(+doc.updated_at)
         done()
       })
     })
@@ -589,19 +589,19 @@ describe('Local', function () {
       let old = {
         path: 'old-parent/missing-folder',
         docType: 'folder',
-        lastModification: new Date('2016-10-08T05:06:09Z')
+        updated_at: new Date('2016-10-08T05:06:09Z')
       }
       let doc = {
         path: 'new-parent/recreated-folder',
         docType: 'folder',
-        lastModification: new Date('2015-10-09T05:06:10Z')
+        updated_at: new Date('2015-10-09T05:06:10Z')
       }
       let folderPath = path.join(this.syncPath, doc.path)
       this.local.moveFolder(doc, old, function (err) {
         should.not.exist(err)
         fs.statSync(folderPath).isDirectory().should.be.true()
         let mtime = +fs.statSync(folderPath).mtime
-        mtime.should.equal(+doc.lastModification)
+        mtime.should.equal(+doc.updated_at)
         done()
       })
     })
@@ -609,11 +609,11 @@ describe('Local', function () {
     it('does nothing if the folder has already been moved', function (done) {
       let old = {
         path: 'old-parent/folder-already-moved',
-        lastModification: new Date('2016-10-08T05:05:11Z')
+        updated_at: new Date('2016-10-08T05:05:11Z')
       }
       let doc = {
         path: 'new-parent/folder-already-here',
-        lastModification: new Date('2015-10-09T05:05:12Z')
+        updated_at: new Date('2015-10-09T05:05:12Z')
       }
       let newPath = path.join(this.syncPath, doc.path)
       fs.ensureDirSync(newPath)
@@ -630,11 +630,11 @@ describe('Local', function () {
     it('remove the old directory if everything has been moved', function (done) {
       let old = {
         path: 'old-parent/folder-already-moved',
-        lastModification: new Date('2016-10-08T05:05:11Z')
+        updated_at: new Date('2016-10-08T05:05:11Z')
       }
       let doc = {
         path: 'new-parent/folder-already-here',
-        lastModification: new Date('2015-10-09T05:05:12Z')
+        updated_at: new Date('2015-10-09T05:05:12Z')
       }
       let oldPath = path.join(this.syncPath, old.path)
       let newPath = path.join(this.syncPath, doc.path)
@@ -745,11 +745,11 @@ describe('Local', function () {
     it('renames the file', function (done) {
       let src = {
         path: 'conflict/file',
-        lastModification: new Date('2015-10-08T05:05:09Z')
+        updated_at: new Date('2015-10-08T05:05:09Z')
       }
       let dst = {
         path: 'conflict/file-conflict-2015-10-09T05:05:10Z',
-        lastModification: new Date('2015-10-09T05:05:10Z')
+        updated_at: new Date('2015-10-09T05:05:10Z')
       }
       let srcPath = path.join(this.syncPath, src.path)
       let dstPath = path.join(this.syncPath, dst.path)

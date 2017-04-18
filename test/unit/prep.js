@@ -172,7 +172,7 @@ describe('Prep', function () {
           this.merge.addFileAsync.calledWith(this.side, doc).should.be.true()
           doc.docType.should.equal('file')
           should.exist(doc._id)
-          should.exist(doc.lastModification)
+          should.exist(doc.updated_at)
           done()
         })
       })
@@ -235,7 +235,7 @@ describe('Prep', function () {
           this.merge.updateFileAsync.calledWith(this.side, doc).should.be.true()
           doc.docType.should.equal('file')
           should.exist(doc._id)
-          should.exist(doc.lastModification)
+          should.exist(doc.updated_at)
           done()
         })
       })
@@ -270,7 +270,7 @@ describe('Prep', function () {
           this.merge.putFolderAsync.calledWith(this.side, doc).should.be.true()
           doc.docType.should.equal('folder')
           should.exist(doc._id)
-          should.exist(doc.lastModification)
+          should.exist(doc.updated_at)
           done()
         })
       })
@@ -370,7 +370,7 @@ describe('Prep', function () {
           path: 'FOO/OLD-MISSING-FIELDS.JPG',
           md5sum: 'uhNoeJzOlbV03scN/UduYQ==',
           docType: 'file',
-          lastModification: new Date(),
+          updated_at: new Date(),
           tags: ['courge', 'quux'],
           size: 5426,
           class: 'image',
@@ -381,7 +381,7 @@ describe('Prep', function () {
           this.merge.moveFileAsync.calledWith(this.side, doc, was).should.be.true()
           doc.docType.should.equal('file')
           should.exist(doc._id)
-          should.exist(doc.lastModification)
+          should.exist(doc.updated_at)
           done()
         })
       })
@@ -449,7 +449,7 @@ describe('Prep', function () {
           _rev: '456',
           path: 'FOOBAR/OLD-MISSING-FIELDS',
           docType: 'folder',
-          lastModification: new Date(),
+          updated_at: new Date(),
           tags: ['courge', 'quux']
         }
         return this.prep.moveFolder(this.side, doc, was, err => {
@@ -457,7 +457,7 @@ describe('Prep', function () {
           this.merge.moveFolderAsync.calledWith(this.side, doc, was).should.be.true()
           doc.docType.should.equal('folder')
           should.exist(doc._id)
-          should.exist(doc.lastModification)
+          should.exist(doc.updated_at)
           done()
         })
       })

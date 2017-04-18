@@ -20,7 +20,7 @@ export function createMetadata (remote: RemoteDoc): Metadata {
   const doc: Object = {
     path: remote.path.substring(1),
     docType: localDocType(remote.type),
-    lastModification: remote.updated_at,
+    updated_at: remote.updated_at,
     remote: {
       _id: remote._id,
       _rev: remote._rev

@@ -159,7 +159,7 @@ describe('Remote', function () {
         _id: 'FOO/BAR/BAZ.JPG',
         path: 'foo/bar/baz.jpg',
         docType: 'file',
-        lastModification: '2015-11-12T13:14:32.384Z',
+        updated_at: '2015-11-12T13:14:32.384Z',
         tags: ['qux'],
         md5sum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30',
         size: 12345,
@@ -177,7 +177,7 @@ describe('Remote', function () {
         path: '/foo/bar',
         name: 'baz.jpg',
         docType: 'file',
-        lastModification: '2015-11-12T13:14:32.384Z',
+        updated_at: '2015-11-12T13:14:32.384Z',
         tags: ['qux'],
         md5sum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30',
         size: 12345,
@@ -196,7 +196,7 @@ describe('Remote', function () {
       let local = {
         path: 'foo/bar/baz',
         docType: 'folder',
-        lastModification: '2015-11-12T13:14:33.384Z',
+        updated_at: '2015-11-12T13:14:33.384Z',
         tags: ['courge']
       }
       let doc = this.remote.createRemoteDoc(local)
@@ -204,7 +204,7 @@ describe('Remote', function () {
         path: '/foo/bar',
         name: 'baz',
         docType: 'folder',
-        lastModification: '2015-11-12T13:14:33.384Z',
+        updated_at: '2015-11-12T13:14:33.384Z',
         tags: ['courge']})
     })
 
@@ -225,7 +225,7 @@ describe('Remote', function () {
       let local = {
         path: 'foo/bar/baz.jpg',
         docType: 'file',
-        lastModification: '2015-11-12T13:14:32.384Z',
+        updated_at: '2015-11-12T13:14:32.384Z',
         md5sum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
       }
       let remote = {
@@ -243,7 +243,7 @@ describe('Remote', function () {
         path: '/foo/bar',
         name: 'baz.jpg',
         docType: 'file',
-        lastModification: '2015-11-12T13:14:32.384Z',
+        updated_at: '2015-11-12T13:14:32.384Z',
         binary: {
           file: {
             id: remote.binary._id,
@@ -342,7 +342,7 @@ describe('Remote', function () {
         md5sum: 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df',
         class: 'image',
         executable: true,
-        lastModification: timestamp.current(),
+        updated_at: timestamp.current(),
         mime: 'image/jpg',
         size: 36901,
         sides: {
@@ -370,7 +370,7 @@ describe('Remote', function () {
         name: 'cat2.jpg',
         size: '36901',
         type: 'file',
-        updated_at: timestamp.stringify(doc.lastModification)
+        updated_at: timestamp.stringify(doc.updated_at)
       })
     })
 
@@ -383,7 +383,7 @@ describe('Remote', function () {
         path: 'backup/cat3.jpg',
         docType: 'file',
         md5sum,
-        lastModification: timestamp.current(),
+        updated_at: timestamp.current(),
         size: 36901,
         sides: {
           local: 1
@@ -394,7 +394,7 @@ describe('Remote', function () {
         path: 'ORIGINAL/CAT3.JPG',
         docType: 'file',
         md5sum,
-        lastModification: timestamp.current(),
+        updated_at: timestamp.current(),
         size: 36901,
         remote: {
           _id: '05161241-ca73',
@@ -417,7 +417,7 @@ describe('Remote', function () {
         dir_id: backupDir._id,
         name: 'cat3.jpg',
         type: 'file',
-        updated_at: timestamp.stringify(doc.lastModification),
+        updated_at: timestamp.stringify(doc.updated_at),
         size: '36901'
       })
     })
@@ -429,7 +429,7 @@ describe('Remote', function () {
       let doc: Object = {
         path: 'couchdb-folder/folder-1',
         docType: 'folder',
-        lastModification: dateString
+        updated_at: dateString
       }
       const created: Metadata = await this.remote.addFolderAsync(doc)
       should.exist(doc.remote._id)
@@ -468,7 +468,7 @@ describe('Remote', function () {
         ...old,
         _id: created._id,
         md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
-        lastModification: timestamp.stringify(timestamp.build(2015, 11, 16, 16, 12, 1)),
+        updated_at: timestamp.stringify(timestamp.build(2015, 11, 16, 16, 12, 1)),
         sides: {
           local: 1
         }
@@ -519,7 +519,7 @@ describe('Remote', function () {
   })
 
   describe('updateFileMetadataAsync', () =>
-    it('updates the lastModification', async function () {
+    it('updates the updated_at', async function () {
       const dir = await builders.remoteDir().named('dir').create()
       const created = await builders.remoteFile()
         .named('file-7')
@@ -532,7 +532,7 @@ describe('Remote', function () {
         path: 'dir/file-7',
         docType: 'file',
         md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==', // foo
-        lastModification: '2015-11-16T16:13:01.001Z'
+        updated_at: '2015-11-16T16:13:01.001Z'
       }
       const old = {
         path: 'dir/file-7',
@@ -580,7 +580,7 @@ describe('Remote', function () {
         path: '/new-parent-dir/new-name',
         type: 'directory',
         dir_id: newParentDir._id,
-        updated_at: doc.lastModification
+        updated_at: doc.updated_at
       })
       should(doc.remote).have.properties({
         _id: old.remote._id,
@@ -612,7 +612,7 @@ describe('Remote', function () {
         type: 'directory',
         name: 'new-dir-name',
         dir_id: deletedDir.dir_id,
-        updated_at: newMetadata.lastModification,
+        updated_at: newMetadata.updated_at,
         tags: newMetadata.tags
       })
       should(newMetadata.remote).have.properties({
@@ -625,11 +625,11 @@ describe('Remote', function () {
       const oldMetadata: Metadata = {
         ...conversion.createMetadata(builders.remoteDir().named('foo').build()),
         remote: undefined,
-        lastModification: timestamp.stringify(timestamp.build(2015, 1, 1, 1, 1, 1, 1))
+        updated_at: timestamp.stringify(timestamp.build(2015, 1, 1, 1, 1, 1, 1))
       }
       const newMetadata: Metadata = {
         ...oldMetadata,
-        lastModification: timestamp.stringify(timestamp.build(2015, 2, 2, 2, 2, 2, 2))
+        updated_at: timestamp.stringify(timestamp.build(2015, 2, 2, 2, 2, 2, 2))
       }
 
       const created: Metadata = await this.remote.updateFolderAsync(newMetadata, oldMetadata)
@@ -639,7 +639,7 @@ describe('Remote', function () {
         type: 'directory',
         name: 'foo',
         dir_id: 'io.cozy.files.root-dir',
-        updated_at: newMetadata.lastModification,
+        updated_at: newMetadata.updated_at,
         tags: newMetadata.tags
       })
     })
@@ -678,7 +678,7 @@ describe('Remote', function () {
         dir_id: newDir._id,
         name: 'cat7.jpg',
         type: 'file',
-        updated_at: doc.lastModification,
+        updated_at: doc.updated_at,
         size: '4'
       })
     })
@@ -690,7 +690,7 @@ describe('Remote', function () {
     //     let doc = {
     //       path: 'couchdb-folder/folder-5',
     //       docType: 'folder',
-    //       lastModification: new Date(),
+    //       updated_at: new Date(),
     //       remote: {
     //         _id: created.id,
     //         _rev: created.rev
@@ -712,7 +712,7 @@ describe('Remote', function () {
     //           path: '/couchdb-folder',
     //           name: 'folder-5',
     //           docType: 'folder',
-    //           lastModification: doc.lastModification.toISOString()
+    //           updated_at: doc.updated_at.toISOString()
     //         })
     //         done()
     //       })
@@ -724,7 +724,7 @@ describe('Remote', function () {
       let doc = {
         path: 'couchdb-folder/folder-7',
         docType: 'folder',
-        lastModification: new Date()
+        updated_at: new Date()
       }
       let old = {
         path: 'couchdb-folder/folder-6',
@@ -738,7 +738,7 @@ describe('Remote', function () {
             path: '/couchdb-folder',
             name: 'folder-7',
             docType: 'folder',
-            lastModification: doc.lastModification.toISOString()
+            updated_at: doc.updated_at.toISOString()
           })
           done()
         })
@@ -783,14 +783,14 @@ describe('Remote', function () {
         path: 'cat9.jpg',
         docType: 'file',
         md5sum,
-        lastModification: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         size: 36901
       }
       let dst = {
         path: 'cat-conflict-2015-12-01T01:02:03Z.jpg',
         docType: 'file',
         md5sum,
-        lastModification: src.lastModification,
+        updated_at: src.updated_at,
         size: 36901
       }
       let remoteDoc = this.remote.createRemoteDoc(src, {binary})
@@ -812,7 +812,7 @@ describe('Remote', function () {
               path: '',
               name: dst.path,
               docType: 'file',
-              lastModification: dst.lastModification,
+              updated_at: dst.updated_at,
               size: 36901,
               binary: {
                 file: {

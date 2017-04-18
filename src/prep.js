@@ -120,9 +120,9 @@ class Prep {
     buildId(doc)
     if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
 
-    if (doc.lastModification == null) { doc.lastModification = new Date() }
-    if (doc.lastModification === 'Invalid date') {
-      doc.lastModification = new Date()
+    if (doc.updated_at == null) { doc.updated_at = new Date() }
+    if (doc.updated_at === 'Invalid date') {
+      doc.updated_at = new Date()
     }
     return this.merge.addFileAsync(side, doc)
   }
@@ -143,9 +143,9 @@ class Prep {
     buildId(doc)
     if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
 
-    if (doc.lastModification == null) { doc.lastModification = new Date() }
-    if (doc.lastModification === 'Invalid date') {
-      doc.lastModification = new Date()
+    if (doc.updated_at == null) { doc.updated_at = new Date() }
+    if (doc.updated_at === 'Invalid date') {
+      doc.updated_at = new Date()
     }
     return this.merge.updateFileAsync(side, doc)
   }
@@ -163,9 +163,9 @@ class Prep {
     doc.docType = 'folder'
     buildId(doc)
     if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
-    if (doc.lastModification == null) { doc.lastModification = new Date() }
-    if (doc.lastModification === 'Invalid date') {
-      doc.lastModification = new Date()
+    if (doc.updated_at == null) { doc.updated_at = new Date() }
+    if (doc.updated_at === 'Invalid date') {
+      doc.updated_at = new Date()
     }
     return this.merge.putFolderAsync(side, doc)
   }
@@ -205,9 +205,9 @@ class Prep {
 
   doMoveFile (side: SideName, doc: Metadata, was: Metadata) {
     doc.docType = 'file'
-    if (doc.lastModification == null) { doc.lastModification = new Date() }
-    if (doc.lastModification === 'Invalid date') {
-      doc.lastModification = new Date()
+    if (doc.updated_at == null) { doc.updated_at = new Date() }
+    if (doc.updated_at === 'Invalid date') {
+      doc.updated_at = new Date()
     }
     buildId(doc)
     buildId(was)
@@ -249,9 +249,9 @@ class Prep {
 
   doMoveFolder (side: SideName, doc: Metadata, was: Metadata) {
     doc.docType = 'folder'
-    if (doc.lastModification == null) { doc.lastModification = new Date() }
-    if (doc.lastModification === 'Invalid date') {
-      doc.lastModification = new Date()
+    if (doc.updated_at == null) { doc.updated_at = new Date() }
+    if (doc.updated_at === 'Invalid date') {
+      doc.updated_at = new Date()
     }
     buildId(doc)
     buildId(was)

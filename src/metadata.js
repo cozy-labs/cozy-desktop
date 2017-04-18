@@ -34,11 +34,10 @@ export type Metadata = {
   _rev: string,
   md5sum?: string,
   class?: string,
-  // TODO: v3: Use the same local *type fields as the remote ones
   docType: string,
   errors: number,
   executable?: true,
-  lastModification: string|Date,
+  updated_at: string|Date,
   mime?: string,
   moveTo?: string, // Destination id
   path: string,
@@ -151,10 +150,10 @@ export function isUpToDate (side: SideName, doc: Metadata) {
 }
 
 // Return true if the metadata of the two folders are the same
-// For lastModification, we accept up to 3s of differences because we can't
+// For updated_at, we accept up to 3s of differences because we can't
 // rely on file systems to be precise to the millisecond.
 export function sameFolder (one: Metadata, two: Metadata) {
-  if (!sameDate(one.lastModification, two.lastModification)) {
+  if (!sameDate(one.updated_at, two.updated_at)) {
     log.debug({diff: {one, two}})
     return false
   }
@@ -167,10 +166,10 @@ export function sameFolder (one: Metadata, two: Metadata) {
 }
 
 // Return true if the metadata of the two files are the same
-// For lastModification, we accept up to 3s of differences because we can't
+// For updated_at, we accept up to 3s of differences because we can't
 // rely on file systems to be precise to the millisecond.
 export function sameFile (one: Metadata, two: Metadata) {
-  if (!sameDate(one.lastModification, two.lastModification)) {
+  if (!sameDate(one.updated_at, two.updated_at)) {
     log.debug({diff: {one, two}})
     return false
   }

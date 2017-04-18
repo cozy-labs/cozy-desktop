@@ -483,7 +483,7 @@ describe('RemoteWatcher', function () {
       should(this.prep.addDocAsync.called).be.true()
       const deleteArgs = this.prep.deleteDocAsync.args[0]
       // FIXME: Make sure oldMeta timestamps are formatted as expected by PouchDB
-      delete oldMeta.lastModification
+      delete oldMeta.updated_at
       should(deleteArgs[0]).equal('remote')
       should(deleteArgs[1]).have.properties(oldMeta)
       const addArgs = this.prep.addDocAsync.args[0]
@@ -510,7 +510,7 @@ describe('RemoteWatcher', function () {
       should(this.prep.addDocAsync.called).be.true()
       const deleteArgs = this.prep.deleteDocAsync.args[0]
       // FIXME: Make sure oldMeta timestamps are formatted as expected by PouchDB
-      delete oldMeta.lastModification
+      delete oldMeta.updated_at
       should(deleteArgs[0]).equal('remote')
       should(deleteArgs[1]).have.properties(oldMeta)
       const addArgs = this.prep.addDocAsync.args[0]
@@ -568,7 +568,7 @@ describe('RemoteWatcher', function () {
         path: 'removeRemote',
         docType: 'file',
         md5sum: 'd3e2163ccd0c497969233a6bd2a4ac843fb8165e',
-        lastModification: '2015-09-29T14:13:33.384Z',
+        updated_at: '2015-09-29T14:13:33.384Z',
         tags: [],
         remote: {
           _id: '913F429E-5609-C636-AE9A-CD00BD138B13',

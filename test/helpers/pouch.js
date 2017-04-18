@@ -20,7 +20,7 @@ export default {
       _id: 'my-folder',
       path: 'my-folder',
       docType: 'folder',
-      lastModification: new Date(),
+      updated_at: new Date(),
       tags: []
     }
     pouch.db.put(doc, callback)
@@ -32,7 +32,7 @@ export default {
       _id: id,
       path: id,
       docType: 'folder',
-      lastModification: new Date(),
+      updated_at: new Date(),
       tags: [],
       remote: {
         _id: `123456789${i}`
@@ -52,7 +52,7 @@ export default {
       path: id,
       docType: 'file',
       md5sum: `111111111111111111111111111111111111111${i}`,
-      lastModification: new Date(),
+      updated_at: new Date(),
       tags: [],
       remote: {
         _id: `1234567890${i}`

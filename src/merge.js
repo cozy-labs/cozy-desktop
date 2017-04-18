@@ -60,7 +60,7 @@ class Merge {
       _id: parentId,
       path: path.dirname(doc.path),
       docType: 'folder',
-      lastModification: new Date()
+      updated_at: new Date()
     }
 
     try {

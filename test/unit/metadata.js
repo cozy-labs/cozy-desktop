@@ -127,7 +127,7 @@ describe('metadata', function () {
         _id: 'FOO/BAR',
         docType: 'folder',
         path: 'foo/bar',
-        lastModification: '2015-12-01T11:22:56.517Z',
+        updated_at: '2015-12-01T11:22:56.517Z',
         tags: ['qux'],
         remote: {
           id: '123',
@@ -138,7 +138,7 @@ describe('metadata', function () {
         _id: 'FOO/BAR',
         docType: 'folder',
         path: 'FOO/BAR',
-        lastModification: '2015-12-01T11:22:57.000Z',
+        updated_at: '2015-12-01T11:22:57.000Z',
         tags: ['qux'],
         remote: {
           id: '123',
@@ -149,7 +149,7 @@ describe('metadata', function () {
         _id: 'FOO/BAR',
         docType: 'folder',
         path: 'FOO/BAR',
-        lastModification: '2015-12-01T11:22:57.000Z',
+        updated_at: '2015-12-01T11:22:57.000Z',
         tags: ['qux', 'courge'],
         remote: {
           id: '123',
@@ -160,7 +160,7 @@ describe('metadata', function () {
         _id: 'FOO/BAR',
         docType: 'folder',
         path: 'FOO/BAR',
-        lastModification: '2015-12-01T11:22:57.000Z',
+        updated_at: '2015-12-01T11:22:57.000Z',
         tags: ['qux', 'courge'],
         remote: {
           id: '123',
@@ -171,7 +171,7 @@ describe('metadata', function () {
         _id: 'FOO/BAZ',
         docType: 'folder',
         path: 'FOO/BAZ',
-        lastModification: '2015-12-01T11:22:57.000Z',
+        updated_at: '2015-12-01T11:22:57.000Z',
         tags: ['qux'],
         remote: {
           id: '123',
@@ -198,7 +198,7 @@ describe('metadata', function () {
         docType: 'file',
         path: 'foo/bar',
         md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
-        lastModification: '2015-12-01T11:22:56.517Z',
+        updated_at: '2015-12-01T11:22:56.517Z',
         tags: ['qux'],
         remote: {
           id: '123',
@@ -210,7 +210,7 @@ describe('metadata', function () {
         docType: 'file',
         path: 'FOO/BAR',
         md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
-        lastModification: '2015-12-01T11:22:57.000Z',
+        updated_at: '2015-12-01T11:22:57.000Z',
         tags: ['qux'],
         remote: {
           id: '123',
@@ -222,7 +222,7 @@ describe('metadata', function () {
         docType: 'file',
         path: 'FOO/BAR',
         md5sum: '000000047681546bd781d6a5166d18737223b3f6',
-        lastModification: '2015-12-01T11:22:57.000Z',
+        updated_at: '2015-12-01T11:22:57.000Z',
         tags: ['qux'],
         remote: {
           id: '123',
@@ -234,7 +234,7 @@ describe('metadata', function () {
         docType: 'file',
         path: 'FOO/BAR',
         md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
-        lastModification: '2015-12-01T11:22:57.000Z',
+        updated_at: '2015-12-01T11:22:57.000Z',
         tags: ['qux'],
         remote: {
           id: '123',
@@ -246,7 +246,7 @@ describe('metadata', function () {
         docType: 'file',
         path: 'FOO/BAZ',
         md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
-        lastModification: '2015-12-01T11:22:57.000Z',
+        updated_at: '2015-12-01T11:22:57.000Z',
         tags: ['qux'],
         remote: {
           id: '123',
@@ -258,7 +258,7 @@ describe('metadata', function () {
         docType: 'file',
         path: 'foo/bar',
         md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
-        lastModification: '2015-12-01T11:22:56.517Z',
+        updated_at: '2015-12-01T11:22:56.517Z',
         size: 12345,
         tags: ['qux'],
         remote: {
@@ -289,7 +289,7 @@ describe('metadata', function () {
         docType: 'file',
         path: 'foo/bar',
         md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
-        lastModification: '2015-12-01T11:22:56.517Z',
+        updated_at: '2015-12-01T11:22:56.517Z',
         tags: ['qux'],
         remote: {
           id: '123',
