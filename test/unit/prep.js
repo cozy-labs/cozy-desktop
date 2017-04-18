@@ -543,7 +543,7 @@ describe('Prep', function () {
       const doc = {path: '/'}
 
       return this.prep.trashFileAsync(this.side, doc).then(
-          () => fail(),
+          () => should.fail(),
           (err) => err.should.match(/Invalid path/)
       )
     })
@@ -572,7 +572,7 @@ describe('Prep', function () {
       const doc = {path: '/'}
 
       return this.prep.trashFolderAsync(this.side, doc).then(
-          () => fail(),
+          () => should.fail(),
           (err) => err.should.match(/Invalid path/)
       )
     })

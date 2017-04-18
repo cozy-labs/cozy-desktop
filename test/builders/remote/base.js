@@ -66,6 +66,7 @@ export default class RemoteBaseBuilder {
       _id: uuid().replace(/-/g, ''),
       _rev: '1-' + uuid().replace(/-/g, ''),
       _type: FILES_DOCTYPE,
+      created_at: this.options.lastModifiedDate,
       dir_id: this.options.dir._id,
       name: this.options.name,
       path: `${this.options.dir.path}/${this.options.name}`,

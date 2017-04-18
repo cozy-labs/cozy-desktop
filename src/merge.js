@@ -320,6 +320,28 @@ class Merge {
     return this.pouch.bulkDocs(bulk)
   }
 
+  async trashAsync (side: SideName, doc: Metadata): Promise<void> {
+    let oldMetadata
+    try {
+      oldMetadata = await this.pouch.db.get(doc._id)
+    } catch (err) {
+      if (err.status === 404) {
+        log.debug(`${doc._id}: Nothing to trash`)
+        return
+      }
+      throw err
+    }
+    if (doc.docType !== oldMetadata.docType) {
+      await this.resolveConflictAsync(side, doc)
+      return
+    }
+    const newMetadata = clone(oldMetadata)
+    markSide(side, newMetadata, oldMetadata)
+    newMetadata.trashed = true
+    // TODO: Handle missing fields?
+    return this.pouch.put(newMetadata)
+  }
+
   // Remove a file from PouchDB
   //
   // As the watchers often detect the deletion of a folder before the deletion
@@ -394,28 +416,6 @@ class Merge {
       }
     }
     return this.pouch.bulkDocs(docs)
-  }
-
-  async trashAsync (side: SideName, doc: Metadata): Promise<void> {
-    let oldMetadata
-    try {
-      oldMetadata = await this.pouch.db.get(doc._id)
-    } catch (err) {
-      if (err.status === 404) {
-        log.debug(`${doc._id}: Nothing to trash`)
-        return
-      }
-      throw err
-    }
-    if (doc.docType !== oldMetadata.docType) {
-      await this.resolveConflictAsync(side, doc)
-      return
-    }
-    const newMetadata = clone(oldMetadata)
-    markSide(side, newMetadata, oldMetadata)
-    newMetadata.trashed = true
-    // TODO: Handle missing fields?
-    return this.pouch.put(newMetadata)
   }
 }
 
