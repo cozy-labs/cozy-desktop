@@ -332,17 +332,21 @@ class LocalWatcher {
     return () => {
       this.pouch.byRecursivePath('', async function (err, docs) {
         if (err) { return callback(err) }
-        for (const doc of docs.reverse()) {
-          if (this.paths.indexOf(doc.path) !== -1 || doc.trashed) {
-            continue
-          } else {
-            log.info(`${doc.path}: deleted while client was stopped`)
-            await this.prep.trashDocAsync(this.side, doc)
+        try {
+          for (const doc of docs.reverse()) {
+            if (this.paths.indexOf(doc.path) !== -1 || doc.trashed) {
+              continue
+            } else {
+              log.info(`${doc.path}: deleted while client was stopped`)
+              await this.prep.trashDocAsync(this.side, doc)
+            }
           }
+          this.paths = null
+          callback()
+        } catch (err) {
+          callback(err)
         }
-        this.paths = null
-        callback(err)
-      })
+      }.bind(this))
     }
   }
 }

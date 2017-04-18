@@ -37,15 +37,15 @@ describe('LocalWatcher Tests', function () {
     it('calls addFile/putFolder for files that are aleady here', function (done) {
       fs.ensureDirSync(path.join(this.syncPath, 'aa'))
       fs.ensureFileSync(path.join(this.syncPath, 'aa/ab'))
-      this.prep.putFolder = sinon.spy()
-      this.prep.addFile = sinon.spy()
+      this.prep.putFolderAsync = sinon.stub().resolves()
+      this.prep.addFileAsync = sinon.stub().resolves()
       setTimeout(() => {
-        this.prep.putFolder.called.should.be.true()
-        this.prep.putFolder.args[0][0].should.equal('local')
-        this.prep.putFolder.args[0][1].path.should.equal('aa')
-        this.prep.addFile.called.should.be.true()
-        this.prep.addFile.args[0][0].should.equal('local')
-        this.prep.addFile.args[0][1].path.should.equal('aa/ab')
+        this.prep.putFolderAsync.called.should.be.true()
+        this.prep.putFolderAsync.args[0][0].should.equal('local')
+        this.prep.putFolderAsync.args[0][1].path.should.equal('aa')
+        this.prep.addFileAsync.called.should.be.true()
+        this.prep.addFileAsync.args[0][0].should.equal('local')
+        this.prep.addFileAsync.args[0][1].path.should.equal('aa/ab')
         done()
       }, 1100)
       this.watcher.start()
@@ -139,7 +139,7 @@ describe('LocalWatcher Tests', function () {
   describe('onAddFile', () =>
     it('detects when a file is created', function (done) {
       this.watcher.start().then(() => {
-        this.prep.addFile = function (side, doc) {
+        this.prep.addFileAsync = function (side, doc) {
           side.should.equal('local')
           doc.should.have.properties({
             path: 'aaa.jpg',
@@ -159,7 +159,7 @@ describe('LocalWatcher Tests', function () {
   describe('onAddDir', function () {
     it('detects when a folder is created', function (done) {
       this.watcher.start().then(() => {
-        this.prep.putFolder = function (side, doc) {
+        this.prep.putFolderAsync = function (side, doc) {
           side.should.equal('local')
           doc.should.have.properties({
             path: 'aba',
@@ -171,13 +171,14 @@ describe('LocalWatcher Tests', function () {
           done()
         }
         fs.mkdirSync(path.join(this.syncPath, 'aba'))
+        return Promise.resolve()
       })
     })
 
     it('detects when a sub-folder is created', function (done) {
       fs.mkdirSync(path.join(this.syncPath, 'abb'))
-      this.prep.putFolder = () => {  // For aba folder
-        this.prep.putFolder = function (side, doc) {
+      this.prep.putFolderAsync = () => {  // For aba folder
+        this.prep.putFolderAsync = function (side, doc) {
           side.should.equal('local')
           doc.should.have.properties({
             path: 'abb/abc',
@@ -187,8 +188,10 @@ describe('LocalWatcher Tests', function () {
             'updated_at'
           ])
           done()
+          return Promise.resolve()
         }
         fs.mkdirSync(path.join(this.syncPath, 'abb/abc'))
+        return Promise.resolve()
       }
       this.watcher.start()
     })
@@ -197,14 +200,16 @@ describe('LocalWatcher Tests', function () {
   describe('onUnlinkFile', () =>
     it('detects when a file is deleted', function (done) {
       fs.ensureFileSync(path.join(this.syncPath, 'aca'))
-      this.prep.addFile = () => {  // For aca file
-        this.prep.trashFile = function (side, doc) {
+      this.prep.addFileAsync = () => {  // For aca file
+        this.prep.trashFileAsync = function (side, doc) {
           side.should.equal('local')
           doc.should.have.properties({
             path: 'aca'})
           done()
+          return Promise.resolve()
         }
         fs.unlinkSync(path.join(this.syncPath, 'aca'))
+        return Promise.resolve()
       }
       this.watcher.start()
     })
@@ -213,14 +218,16 @@ describe('LocalWatcher Tests', function () {
   describe('onUnlinkDir', () =>
     it('detects when a folder is deleted', function (done) {
       fs.mkdirSync(path.join(this.syncPath, 'ada'))
-      this.prep.putFolder = () => {  // For ada folder
-        this.prep.trashFolder = function (side, doc) {
+      this.prep.putFolderAsync = () => {  // For ada folder
+        this.prep.trashFolderAsync = function (side, doc) {
           side.should.equal('local')
           doc.should.have.properties({
             path: 'ada'})
           done()
+          return Promise.resolve()
         }
         fs.rmdirSync(path.join(this.syncPath, 'ada'))
+        return Promise.resolve()
       }
       this.watcher.start()
     })
@@ -231,8 +238,8 @@ describe('LocalWatcher Tests', function () {
       let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
       let dst = path.join(this.syncPath, 'aea.jpg')
       fs.copySync(src, dst)
-      this.prep.addFile = () => {
-        this.prep.updateFile = function (side, doc) {
+      this.prep.addFileAsync = () => {
+        this.prep.updateFileAsync = function (side, doc) {
           side.should.equal('local')
           doc.should.have.properties({
             path: 'aea.jpg',
@@ -241,10 +248,12 @@ describe('LocalWatcher Tests', function () {
             size: 36901
           })
           done()
+          return Promise.resolve()
         }
         src = src.replace(/\.jpg$/, '-mod.jpg')
         dst = path.join(this.syncPath, 'aea.jpg')
         fs.copySync(src, dst)
+        return Promise.resolve()
       }
       this.watcher.start()
     })
@@ -267,17 +276,17 @@ describe('LocalWatcher Tests', function () {
       let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
       let dst = path.join(this.syncPath, 'afa.jpg')
       fs.copySync(src, dst)
-      this.prep.addFile = (side, doc) => {
+      this.prep.addFileAsync = (side, doc) => {
         doc._id = doc.path
-        this.pouch.db.put(doc)
+        return this.pouch.db.put(doc)
       }
       this.watcher.start().then(() => {
         setTimeout(() => {
-          this.prep.deleteFile = sinon.spy()
-          this.prep.addFile = sinon.spy()
-          this.prep.moveFile = (side, doc, was) => {
-            this.prep.deleteFile.called.should.be.false()
-            this.prep.addFile.called.should.be.false()
+          this.prep.deleteFileAsync = sinon.stub().resolves()
+          this.prep.addFileAsync = sinon.stub().resolves()
+          this.prep.moveFileAsync = (side, doc, was) => {
+            this.prep.deleteFileAsync.called.should.be.false()
+            this.prep.addFileAsync.called.should.be.false()
             side.should.equal('local')
             doc.should.have.properties({
               path: 'afb.jpg',
@@ -292,6 +301,7 @@ describe('LocalWatcher Tests', function () {
               size: 29865
             })
             done()
+            return Promise.resolve()
           }
           fs.renameSync(dst, path.join(this.syncPath, 'afb.jpg'))
         }, 2000)
@@ -317,38 +327,39 @@ describe('LocalWatcher Tests', function () {
       let dst = path.join(this.syncPath, 'agb')
       fs.ensureDirSync(src)
       fs.writeFileSync(`${src}/agc`, 'agc')
-      this.prep.addFile = this.prep.putFolder = (side, doc) => {
+      this.prep.addFileAsync = this.prep.putFolderAsync = (side, doc) => {
         doc._id = doc.path
-        this.pouch.db.put(doc)
+        return this.pouch.db.put(doc)
       }
       this.watcher.start().then(() => {
         setTimeout(() => {
-          this.prep.updateFile = sinon.spy()
-          this.prep.addFile = sinon.spy()
-          this.prep.deleteFile = sinon.spy()
-          this.prep.moveFile = sinon.spy()
-          this.prep.deleteFolder = sinon.spy()
-          this.prep.trashFolder = sinon.spy()
-          this.prep.putFolder = (side, doc) => {
+          this.prep.updateFileAsync = sinon.stub().resolves()
+          this.prep.addFileAsync = sinon.stub().resolves()
+          this.prep.deleteFileAsync = sinon.stub().resolves()
+          this.prep.moveFileAsync = sinon.stub().resolves()
+          this.prep.deleteFolderAsync = sinon.stub().resolves()
+          this.prep.trashFolderAsync = sinon.stub().resolves()
+          this.prep.putFolderAsync = (side, doc) => {
             side.should.equal('local')
             doc.should.have.properties({
               path: 'agb',
               docType: 'folder'
             })
             setTimeout(() => {
-              this.prep.addFile.called.should.be.false()
-              this.prep.deleteFile.called.should.be.false()
-              this.prep.moveFile.called.should.be.true()
-              src = this.prep.moveFile.args[0][2]
+              this.prep.addFileAsync.called.should.be.false()
+              this.prep.deleteFileAsync.called.should.be.false()
+              this.prep.moveFileAsync.called.should.be.true()
+              src = this.prep.moveFileAsync.args[0][2]
               src.should.have.properties({path: 'aga/agc'})
-              dst = this.prep.moveFile.args[0][1]
+              dst = this.prep.moveFileAsync.args[0][1]
               dst.should.have.properties({path: 'agb/agc'})
               // FIXME: Delete moved dirs
-              this.prep.trashFolder.called.should.be.true()
-              let args = this.prep.trashFolder.args[0][1]
+              this.prep.trashFolderAsync.called.should.be.true()
+              let args = this.prep.trashFolderAsync.args[0][1]
               args.should.have.properties({path: 'aga'})
               done()
             }, 4000)
+            return Promise.resolve()
           }
           fs.renameSync(src, dst)
         }, 1800)
@@ -362,7 +373,7 @@ describe('LocalWatcher Tests', function () {
     })
 
     it('detects deleted files and folders', function (done) {
-      let dd = this.prep.trashDoc = sinon.stub().yields()
+      let dd = this.prep.trashDocAsync = sinon.stub().resolves()
       let folder1 = {
         _id: 'folder1',
         path: 'folder1',
@@ -376,6 +387,7 @@ describe('LocalWatcher Tests', function () {
       const folder3 = {
         _id: '.cozy_trash/folder3',
         path: '.cozy_trash/folder3',
+        trashed: true,
         docType: 'folder'
       }
       let file1 = {
@@ -391,6 +403,7 @@ describe('LocalWatcher Tests', function () {
       const file3 = {
         _id: '.cozy_trash/folder3/file3',
         path: '.cozy_trash/folder3/file3',
+        trashed: true,
         docType: 'file'
       }
       async.each([folder1, folder2, folder3, file1, file2, file3], (doc, next) => {
