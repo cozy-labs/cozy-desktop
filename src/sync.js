@@ -256,10 +256,10 @@ class Sync {
       return this.pouch.setLocalSeqAsync(change.seq)
     }
     try {
-      await this.pouch.db.put(doc)
       // The sync error may be due to the remote cozy being overloaded.
       // So, it's better to wait a bit before trying the next operation.
       await Promise.delay(HEARTBEAT)
+      await this.pouch.db.put(doc)
     } catch (err) {
       // If the doc can't be saved, it's because of a new revision.
       // So, we can skip this revision
