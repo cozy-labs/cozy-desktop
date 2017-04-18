@@ -32,6 +32,7 @@
   ],
   "scripts": {
     "bootstrap": "docker exec -it cozydesktop_stack_1 bootstrap-cozy-desktop.sh",
+    "bootstrap:remote": "babel-node ./dev/remote/generate-test-env.js",
     "build": "babel --source-maps --out-dir lib/ src/",
     "clean": "rm -rf lib/ && rm -rf tmp/",
     "dev-storage": "yarn stack -- tree -aC /storage/dev.cozy.tools:8080",
