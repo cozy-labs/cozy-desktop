@@ -93,6 +93,7 @@
     "babel-preset-es2015": "^6.22.0",
     "babel-preset-es2016": "^6.22.0",
     "babel-preset-es2017": "^6.22.0",
+    "cheerio": "^0.22.0",
     "cross-env": "^4.0.0",
     "del": "^2.2.2",
     "env-cmd": "^5.0.0",
