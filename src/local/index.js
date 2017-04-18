@@ -10,7 +10,7 @@ import * as stream from 'stream'
 
 import Config from '../config'
 import logger from '../logger'
-import { extractRevNumber, inRemoteTrash } from '../metadata'
+import { isUpToDate, inRemoteTrash } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import Watcher from './watcher'
@@ -106,13 +106,6 @@ class Local implements Side {
     }
   }
 
-  // Return true if the local file is up-to-date for this document
-  isUpToDate (doc: Metadata) {
-    let currentRev = doc.sides.local || 0
-    let lastRev = extractRevNumber(doc)
-    return currentRev === lastRev
-  }
-
   // Check if a file corresponding to given checksum already exists
   fileExistsLocally (checksum: string, callback: Callback) {
     return this.pouch.byChecksum(checksum, (err, docs) => {
@@ -121,7 +114,7 @@ class Local implements Side {
       } else if ((docs == null) || (docs.length === 0)) {
         return callback(null, false)
       } else {
-        let paths = Array.from(docs).filter((doc) => this.isUpToDate(doc)).map((doc) =>
+        let paths = Array.from(docs).filter((doc) => isUpToDate('local', doc)).map((doc) =>
                     path.resolve(this.syncPath, doc.path))
         return async.detect(paths, (filePath, next) =>
                     fs.exists(filePath, found => next(null, found))

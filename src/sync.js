@@ -13,8 +13,8 @@ import Remote from './remote'
 import { HEARTBEAT } from './remote/watcher'
 import { PendingMap } from './utils/pending'
 
-import type { Metadata } from './metadata'
-import type { Side, SideName } from './side' // eslint-disable-line
+import type { SideName, Metadata } from './metadata'
+import type { Side } from './side' // eslint-disable-line
 
 const log = logger({
   component: 'Sync'

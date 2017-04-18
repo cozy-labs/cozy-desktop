@@ -10,8 +10,7 @@ import Pouch from './pouch'
 import Remote from './remote'
 import { otherSide } from './side'
 
-import type { Metadata } from './metadata'
-import type { SideName } from './side'
+import type { SideName, Metadata } from './metadata'
 
 const log = logger({
   component: 'Merge'

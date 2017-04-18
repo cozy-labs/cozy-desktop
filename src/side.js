@@ -1,10 +1,6 @@
 /* @flow */
 
-import type { Metadata } from './metadata'
-
-export type SideName =
-  | "local"
-  | "remote";
+import type { SideName, Metadata } from './metadata'
 
 // eslint-disable-next-line no-undef
 export interface Side {

@@ -132,7 +132,7 @@ describe('Local', function () {
     })
   })
 
-  describe('isUpToDate', () =>
+  xdescribe('isUpToDate', () =>
     it('says if the local file is up to date', function () {
       let doc = {
         _id: 'foo/bar',

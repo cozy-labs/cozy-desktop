@@ -5,8 +5,7 @@ import logger from './logger'
 import Merge from './merge'
 import { buildId, ensureValidChecksum, ensureValidPath } from './metadata'
 
-import type { Metadata } from './metadata'
-import type { SideName } from './side'
+import type { SideName, Metadata } from './metadata'
 import type { Callback } from './utils/func'
 
 const log = logger({

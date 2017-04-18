@@ -13,6 +13,10 @@ const log = logger({
   component: 'Metadata'
 })
 
+export type SideName =
+  | "local"
+  | "remote";
+
 export type MetadataRemoteInfo = {
   _id: string,
   _rev: string
@@ -34,7 +38,7 @@ export type Metadata = {
   // TODO: v3: Use the same local *type fields as the remote ones
   docType: string,
   errors: number,
-  executable?: boolean,
+  executable?: true,
   lastModification: string|Date,
   mime?: string,
   moveTo?: string, // Destination id
@@ -141,8 +145,8 @@ export function extractRevNumber (infos: Metadata) {
 }
 
 // Return true if the remote file is up-to-date for this document
-export function isUpToDate (doc: Metadata) {
-  let currentRev = doc.sides.remote || 0
+export function isUpToDate (side: SideName, doc: Metadata) {
+  let currentRev = doc.sides[side] || 0
   let lastRev = extractRevNumber(doc)
   return currentRev === lastRev
 }
@@ -153,7 +157,10 @@ export function isUpToDate (doc: Metadata) {
 // For lastModification, we accept up to 3s of differences because we can't
 // rely on file systems to be precise to the millisecond.
 export function sameFolder (one: Metadata, two: Metadata) {
-  if (!sameDate(one.lastModification, two.lastModification)) { return false }
+  if (!sameDate(one.lastModification, two.lastModification)) {
+    log.debug({diff: {one, two}})
+    return false
+  }
   let fields = ['_id', 'docType', 'remote', 'tags']
   one = pick(one, fields)
   two = pick(two, fields)
@@ -168,7 +175,10 @@ export function sameFolder (one: Metadata, two: Metadata) {
 // For lastModification, we accept up to 3s of differences because we can't
 // rely on file systems to be precise to the millisecond.
 export function sameFile (one: Metadata, two: Metadata) {
-  if (!sameDate(one.lastModification, two.lastModification)) { return false }
+  if (!sameDate(one.lastModification, two.lastModification)) {
+    log.debug({diff: {one, two}})
+    return false
+  }
   let fields = ['_id', 'docType', 'md5sum', 'remote', 'tags', 'size']
   one = {...pick(one, fields), executable: !!one.executable}
   two = {...pick(two, fields), executable: !!two.executable}
