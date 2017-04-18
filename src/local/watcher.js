@@ -5,6 +5,7 @@ import chokidar from 'chokidar'
 import crypto from 'crypto'
 import find from 'lodash.find'
 import fs from 'fs'
+import mime from 'mime'
 import path from 'path'
 
 import logger from '../logger'
@@ -170,6 +171,7 @@ class LocalWatcher {
   // with checksum and mime informations
   createDoc (filePath: string, stats: fs.Stats, callback: Callback) {
     const absPath = path.join(this.syncPath, filePath)
+    const mimeType = mime.lookup(absPath)
     this.checksum(absPath, function (err, md5sum) {
       let doc: Object = {
         path: filePath,
@@ -177,6 +179,8 @@ class LocalWatcher {
         md5sum,
         creationDate: stats.birthtime || stats.ctime,
         lastModification: stats.mtime,
+        mime: mimeType,
+        class: mimeType.split('/')[0],
         size: stats.size
       }
       if ((stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
