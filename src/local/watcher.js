@@ -26,6 +26,8 @@ log.chokidar = log.child({
 
 const EXECUTABLE_MASK = 1 << 6
 
+const SIDE = 'local'
+
 // This file contains the filesystem watcher that will trigger operations when
 // a file or a folder is added/removed/changed locally.
 // Operations will be added to the a common operation queue along with the
@@ -34,7 +36,6 @@ class LocalWatcher {
   syncPath: string
   prep: Prep
   pouch: Pouch
-  side: SideName
   paths: string[]
   pending: PendingMap
   checksums: number
@@ -45,7 +46,6 @@ class LocalWatcher {
     this.syncPath = syncPath
     this.prep = prep
     this.pouch = pouch
-    this.side = 'local'
 
     // Use a queue for checksums to avoid computing many checksums at the
     // same time. It's better for performance (hard disk are faster with
@@ -220,7 +220,7 @@ class LocalWatcher {
         if (this.pending.isEmpty()) {
           this.checksums--
           log.info(`${filePath}: file added`)
-          this.prep.addFileAsync(this.side, doc).catch(err => log.error(err))
+          this.prep.addFileAsync(SIDE, doc).catch(err => log.error(err))
         } else {
           // Let's see if one of the pending deleted files has the
           // same checksum that the added file. If so, we mark them as
@@ -229,16 +229,16 @@ class LocalWatcher {
             this.checksums--
             if (err) {
               log.info(`${filePath}: file added`)
-              this.prep.addFileAsync(this.side, doc).catch(err => log.error(err))
+              this.prep.addFileAsync(SIDE, doc).catch(err => log.error(err))
             } else {
               const same = find(docs, d => this.pending.hasPath(d.path))
               if (same) {
                 log.debug(`${filePath}: was moved from ${same.path}`)
                 this.pending.clear(same.path)
-                this.prep.moveFileAsync(this.side, doc, same).catch(err => log.error(err))
+                this.prep.moveFileAsync(SIDE, doc, same).catch(err => log.error(err))
               } else {
                 log.info(`${filePath}: file added`)
-                this.prep.addFileAsync(this.side, doc).catch(err => log.error(err))
+                this.prep.addFileAsync(SIDE, doc).catch(err => log.error(err))
               }
             }
           })
@@ -260,7 +260,7 @@ class LocalWatcher {
       updated_at: stats.mtime
     }
     log.info(`${folderPath}: folder added`)
-    this.prep.putFolderAsync(this.side, doc).catch(err => log.error(err))
+    this.prep.putFolderAsync(SIDE, doc).catch(err => log.error(err))
   }
 
   // File deletion detected
@@ -276,7 +276,7 @@ class LocalWatcher {
     }
     const execute = () => {
       log.info(`${filePath}: File deleted`)
-      this.prep.trashFileAsync(this.side, {path: filePath}).catch(err => log.error(err))
+      this.prep.trashFileAsync(SIDE, {path: filePath}).catch(err => log.error(err))
     }
     const check = () => {
       if (this.checksums === 0) {
@@ -302,7 +302,7 @@ class LocalWatcher {
     }
     const execute = () => {
       log.info(`${folderPath}: Folder deleted`)
-      this.prep.trashFolderAsync(this.side, {path: folderPath}).catch(err => log.error(err))
+      this.prep.trashFolderAsync(SIDE, {path: folderPath}).catch(err => log.error(err))
     }
     const check = () => {
       if (!this.pending.hasPendingChild(folderPath)) {
@@ -321,7 +321,7 @@ class LocalWatcher {
       if (err) {
         log.info(err)
       } else {
-        this.prep.updateFileAsync(this.side, doc).catch(err => log.error(err))
+        this.prep.updateFileAsync(SIDE, doc).catch(err => log.error(err))
       }
     })
   }
@@ -338,10 +338,10 @@ class LocalWatcher {
               continue
             } else {
               log.info(`${doc.path}: deleted while client was stopped`)
-              await this.prep.trashDocAsync(this.side, doc)
+              await this.prep.trashDocAsync(SIDE, doc)
             }
           }
-          this.paths = null
+          delete this.paths
           callback()
         } catch (err) {
           callback(err)
