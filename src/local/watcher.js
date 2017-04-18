@@ -24,11 +24,12 @@ log.chokidar = log.child({
   component: 'Chokidar'
 })
 
+const EXECUTABLE_MASK = 1 << 6
+
 // This file contains the filesystem watcher that will trigger operations when
 // a file or a folder is added/removed/changed locally.
 // Operations will be added to the a common operation queue along with the
 // remote operations triggered by the remoteEventWatcher.
-let EXECUTABLE_MASK
 class LocalWatcher {
   syncPath: string
   prep: Prep
@@ -39,10 +40,6 @@ class LocalWatcher {
   checksums: number
   checksumer: any // async.queue
   watcher: any // chokidar
-
-  static initClass () {
-    EXECUTABLE_MASK = 1 << 6
-  }
 
   constructor (syncPath: string, prep: Prep, pouch: Pouch) {
     this.syncPath = syncPath
@@ -223,7 +220,7 @@ class LocalWatcher {
         if (this.pending.isEmpty()) {
           this.checksums--
           log.info(`${filePath}: file added`)
-          this.prep.addFile(this.side, doc, this.done)
+          this.prep.addFileAsync(this.side, doc).catch(err => log.error(err))
         } else {
           // Let's see if one of the pending deleted files has the
           // same checksum that the added file. If so, we mark them as
@@ -232,16 +229,16 @@ class LocalWatcher {
             this.checksums--
             if (err) {
               log.info(`${filePath}: file added`)
-              this.prep.addFile(this.side, doc, this.done)
+              this.prep.addFileAsync(this.side, doc).catch(err => log.error(err))
             } else {
               const same = find(docs, d => this.pending.hasPath(d.path))
               if (same) {
                 log.debug(`${filePath}: was moved from ${same.path}`)
                 this.pending.clear(same.path)
-                this.prep.moveFile(this.side, doc, same, this.done)
+                this.prep.moveFileAsync(this.side, doc, same).catch(err => log.error(err))
               } else {
                 log.info(`${filePath}: file added`)
-                this.prep.addFile(this.side, doc, this.done)
+                this.prep.addFileAsync(this.side, doc).catch(err => log.error(err))
               }
             }
           })
@@ -263,7 +260,7 @@ class LocalWatcher {
       updated_at: stats.mtime
     }
     log.info(`${folderPath}: folder added`)
-    this.prep.putFolder(this.side, doc, this.done)
+    this.prep.putFolderAsync(this.side, doc).catch(err => log.error(err))
   }
 
   // File deletion detected
@@ -279,7 +276,7 @@ class LocalWatcher {
     }
     const execute = () => {
       log.info(`${filePath}: File deleted`)
-      this.prep.trashFile(this.side, {path: filePath}, this.done)
+      this.prep.trashFileAsync(this.side, {path: filePath}).catch(err => log.error(err))
     }
     const check = () => {
       if (this.checksums === 0) {
@@ -305,7 +302,7 @@ class LocalWatcher {
     }
     const execute = () => {
       log.info(`${folderPath}: Folder deleted`)
-      this.prep.trashFolder(this.side, {path: folderPath}, this.done)
+      this.prep.trashFolderAsync(this.side, {path: folderPath}).catch(err => log.error(err))
     }
     const check = () => {
       if (!this.pending.hasPendingChild(folderPath)) {
@@ -324,7 +321,7 @@ class LocalWatcher {
       if (err) {
         log.info(err)
       } else {
-        this.prep.updateFile(this.side, doc, this.done)
+        this.prep.updateFileAsync(this.side, doc).catch(err => log.error(err))
       }
     })
   }
@@ -333,32 +330,21 @@ class LocalWatcher {
   // after chokidar has finished its initial scan
   onReady (callback: Callback) {
     return () => {
-      this.pouch.byRecursivePath('', (err, docs) => {
-        if (err) {
-          callback(err)
-        } else {
-          async.eachSeries(docs.reverse(), (doc, next) => {
-            if (this.paths.indexOf(doc.path) !== -1 || doc.trashed) {
-              async.setImmediate(next)
-            } else {
-              log.info(`${doc.path}: deleted while client was stopped`)
-              this.prep.trashDoc(this.side, doc, next)
-            }
-          }, err => {
-            // $FlowFixMe
-            this.paths = null
-            callback(err)
-          })
+      this.pouch.byRecursivePath('', async function (err, docs) {
+        if (err) { return callback(err) }
+        for (const doc of docs.reverse()) {
+          if (this.paths.indexOf(doc.path) !== -1 || doc.trashed) {
+            continue
+          } else {
+            log.info(`${doc.path}: deleted while client was stopped`)
+            await this.prep.trashDocAsync(this.side, doc)
+          }
         }
+        this.paths = null
+        callback(err)
       })
     }
   }
-
-  // A callback that logs errors
-  done (err: ?Error) {
-    if (err) { log.error(err) }
-  }
 }
-LocalWatcher.initClass()
 
 export default LocalWatcher

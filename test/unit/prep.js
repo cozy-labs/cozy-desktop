@@ -25,7 +25,7 @@ describe('Prep', function () {
   })
 
   describe('Helpers', function () {
-    describe('moveDoc', function () {
+    xdescribe('moveDoc', function () {
       it('calls moveFile for a file', function (done) {
         let doc = {
           path: 'move/name',
@@ -95,7 +95,7 @@ describe('Prep', function () {
       })
     })
 
-    describe('trashDoc', function () {
+    xdescribe('trashDoc', function () {
       it('calls trashFile for a file', function (done) {
         let doc = {
           path: 'trash/name',
@@ -127,7 +127,7 @@ describe('Prep', function () {
   })
 
   describe('Put', function () {
-    describe('addFile', function () {
+    xdescribe('addFile', function () {
       it('expects a doc with a valid path', function (done) {
         return this.prep.addFile(this.side, {path: '/'}, function (err) {
           should.exist(err)
@@ -190,7 +190,7 @@ describe('Prep', function () {
       })
     })
 
-    describe('updateFile', function () {
+    xdescribe('updateFile', function () {
       it('expects a doc with a valid path', function (done) {
         return this.prep.updateFile(this.side, {path: '/'}, function (err) {
           should.exist(err)
@@ -253,7 +253,7 @@ describe('Prep', function () {
       })
     })
 
-    describe('putFolder', function () {
+    xdescribe('putFolder', function () {
       it('expects a doc with a valid path', function (done) {
         return this.prep.putFolder(this.side, {path: '..'}, function (err) {
           should.exist(err)
@@ -287,7 +287,7 @@ describe('Prep', function () {
   })
 
   describe('Move', function () {
-    describe('moveFile', function () {
+    xdescribe('moveFile', function () {
       it('expects a doc with a valid path', function (done) {
         let doc = {path: ''}
         let was = {path: 'foo/baz'}
@@ -387,7 +387,7 @@ describe('Prep', function () {
       })
     })
 
-    describe('moveFolder', function () {
+    xdescribe('moveFolder', function () {
       it('expects a doc with a valid path', function (done) {
         let doc = {path: ''}
         let was = {path: 'foo/baz'}
@@ -465,7 +465,7 @@ describe('Prep', function () {
   })
 
   describe('Delete', function () {
-    describe('deleteFile', function () {
+    xdescribe('deleteFile', function () {
       it('expects a doc with a valid path', function (done) {
         return this.prep.deleteFile(this.side, {path: '/'}, function (err) {
           should.exist(err)
@@ -496,7 +496,7 @@ describe('Prep', function () {
       })
     })
 
-    describe('deleteFolder', function () {
+    xdescribe('deleteFolder', function () {
       it('expects a doc with a valid path', function (done) {
         return this.prep.deleteFolder(this.side, {path: '/'}, function (err) {
           should.exist(err)
