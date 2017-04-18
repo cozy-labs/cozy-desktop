@@ -542,9 +542,10 @@ describe('Prep', function () {
     it('throws when path is invalid', async function () {
       const doc = {path: '/'}
 
-      should(() => {
-        this.prep.trashFileAsync(this.side, doc)
-      }).throw(/Invalid path/)
+      return this.prep.trashFileAsync(this.side, doc).then(
+          () => fail(),
+          (err) => err.should.match(/Invalid path/)
+      )
     })
 
     it('does nothing for ignored paths on local', async function () {
@@ -570,9 +571,10 @@ describe('Prep', function () {
     it('throws when path is invalid', async function () {
       const doc = {path: '/'}
 
-      should(() => {
-        this.prep.trashFolderAsync(this.side, doc)
-      }).throw(/Invalid path/)
+      return this.prep.trashFolderAsync(this.side, doc).then(
+          () => fail(),
+          (err) => err.should.match(/Invalid path/)
+      )
     })
 
     it('does nothing for ignored paths on local', async function () {
