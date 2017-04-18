@@ -6,6 +6,7 @@ import { ensureValidPath } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import RemoteCozy from './cozy'
+import { TRASH_DIR_NAME } from './constants'
 
 import type { Metadata } from '../metadata'
 import type { RemoteDoc } from './document'
@@ -162,7 +163,7 @@ export default class RemoteWatcher {
     return this.prep.addDocAsync(SIDE, doc)
   }
 
-  inRemoteTrash (doc: RemoteDoc): boolean {
+  inRemoteTrash (doc: Metadata): boolean {
     return doc.trashed || doc.path.startsWith(TRASH_DIR_NAME)
   }
 
