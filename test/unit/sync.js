@@ -250,7 +250,7 @@ function(doc) {
             local: 2,
             remote: 1
           },
-          toBeTrashed: true
+          trashed: true
         }
       }
 

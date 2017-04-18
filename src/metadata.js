@@ -43,7 +43,7 @@ export type Metadata = {
   size?: number,
   tags: string[],
   sides: MetadataSidesInfo,
-  toBeTrashed?: true
+  trashed?: true
 }
 
 export let buildId: (doc: Metadata) => void = (_) => {}

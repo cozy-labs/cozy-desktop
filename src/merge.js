@@ -248,7 +248,7 @@ class Merge {
       if (doc.class == null) { doc.class = was.class }
       if (doc.mime == null) { doc.mime = was.mime }
       if (doc.tags == null) { doc.tags = was.tags || [] }
-      delete doc.toBeTrashed
+      delete doc.trashed
       was.moveTo = doc._id
       was._deleted = true
       delete was.errors
@@ -282,7 +282,7 @@ class Merge {
       markSide(side, was, was)
       if (doc.creationDate == null) { doc.creationDate = was.creationDate }
       if (doc.tags == null) { doc.tags = was.tags || [] }
-      delete doc.toBeTrashed
+      delete doc.trashed
       if (folder) {
         const dst = await this.resolveConflictAsync(side, doc)
         dst.sides = {}
@@ -310,7 +310,7 @@ class Merge {
     let bulk = [was, folder]
     for (let doc of Array.from(docs)) {
       // TODO: Extract metadata copy logic
-      delete doc.toBeTrashed
+      delete doc.trashed
       let src = clone(doc)
       src._deleted = true
       // moveTo is used for comparison. It's safer to take _id
@@ -422,7 +422,7 @@ class Merge {
     }
     const newMetadata = clone(oldMetadata)
     markSide(side, newMetadata, oldMetadata)
-    newMetadata.toBeTrashed = true
+    newMetadata.trashed = true
     // TODO: Handle missing fields?
     return this.pouch.put(newMetadata)
   }

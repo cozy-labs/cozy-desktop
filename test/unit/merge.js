@@ -219,7 +219,7 @@ describe('Merge', function () {
           local: 1,
           remote: 1
         },
-        toBeTrashed: true
+        trashed: true
       }
       this.pouch.db.put(clone(was), (err, inserted) => {
         should.not.exist(err)
@@ -232,7 +232,7 @@ describe('Merge', function () {
             }
             res.should.have.properties(doc)
             res.sides.local.should.equal(1)
-            should.not.exist(res.toBeTrashed)
+            should.not.exist(res.trashed)
             this.pouch.db.get(was._id, function (err, res) {
               should.exist(err)
               err.status.should.equal(404)
@@ -347,7 +347,7 @@ describe('Merge', function () {
           local: 1,
           remote: 1
         },
-        toBeTrashed: true
+        trashed: true
       }
       this.pouch.db.put(clone(was), (err, inserted) => {
         should.not.exist(err)
@@ -360,7 +360,7 @@ describe('Merge', function () {
             }
             res.should.have.properties(doc)
             res.sides.local.should.equal(1)
-            should.not.exist(res.toBeTrashed)
+            should.not.exist(res.trashed)
             this.pouch.db.get(was._id, function (err, res) {
               should.exist(err)
               err.status.should.equal(404)
@@ -419,7 +419,7 @@ describe('Merge', function () {
           pouchHelpers.createFile(this.pouch, 9, () => {
             this.pouch.db.get('my-folder/file-9', (err, file) => {
               should.not.exist(err)
-              this.pouch.db.put({...file, toBeTrashed: true}, done)
+              this.pouch.db.put({...file, trashed: true}, done)
             })
           })
         })
@@ -444,7 +444,7 @@ describe('Merge', function () {
               should.not.exist(err)
               should.exist(res)
               should(res.path).eql(`DESTINATION${id}`)
-              should.not.exist(res.toBeTrashed)
+              should.not.exist(res.trashed)
               if (id !== '') { // parent sides are updated in moveFolderAsync()
                 should(res.sides.local).not.eql(1)
               }
@@ -562,7 +562,7 @@ describe('Merge', function () {
 
   describe('trashAsync', () => {
     context('when metadata are found in Pouch', () => {
-      it('updates it with toBeTrashed property and up-to-date sides info', async function () {
+      it('updates it with trashed property and up-to-date sides info', async function () {
         const doc = {_id: 'existing-metadata'}
         await this.pouch.db.put({...doc, sides: {local: 1, remote: 1}})
 
@@ -571,7 +571,7 @@ describe('Merge', function () {
         const updated = await this.pouch.db.get(doc._id)
         should(updated).have.properties({
           ...doc,
-          toBeTrashed: true,
+          trashed: true,
           sides: {
             local: 2,
             remote: 1
@@ -608,7 +608,7 @@ describe('Merge', function () {
         should(src).eql(doc)
         should(dst).have.properties({...doc, path: dst.path})
         should(dst.path).match(/conflict/)
-        should(dst).not.have.property('toBeTrashed')
+        should(dst).not.have.property('trashed')
 
         this.pouch.put.restore()
       })

@@ -178,7 +178,7 @@ class Sync {
 
       if (!side) {
         return this.pouch.setLocalSeqAsync(change.seq)
-      } else if (sideName === 'remote' && doc.toBeTrashed && !inRemoteTrash(doc)) {
+      } else if (sideName === 'remote' && doc.trashed && !inRemoteTrash(doc)) {
         // File or folder was just deleted locally
         const byItself = await this.trashWithParentOrByItself(doc, side)
         if (!byItself) { return }
@@ -418,12 +418,12 @@ class Sync {
     if (parentId !== '.') {
       let parent = await this.pouch.db.get(parentId)
 
-      if (!parent.toBeTrashed) {
+      if (!parent.trashed) {
         await Promise.delay(TRASHING_DELAY)
         parent = await this.pouch.db.get(parentId)
       }
 
-      if (parent.toBeTrashed && !inRemoteTrash(parent)) {
+      if (parent.trashed && !inRemoteTrash(parent)) {
         log.info(`${doc.path}: will be trashed with parent directory`)
         await this.trashWithParentOrByItself(parent, side)
         // Wait long enough that the remote has fetched one changes feed
