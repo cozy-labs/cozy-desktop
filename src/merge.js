@@ -5,7 +5,7 @@ import path from 'path'
 
 import Local from './local'
 import logger from './logger'
-import { markSide, sameBinary, sameFile, sameFolder } from './metadata'
+import { isUpToDate, markSide, sameBinary, sameFile, sameFolder } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
 import { otherSide } from './side'
@@ -50,11 +50,12 @@ class Merge {
     let parentId = path.dirname(doc._id)
     if (parentId === '.') { return }
 
-    let folder
     try {
-      folder = await this.pouch.db.get(parentId)
-    } catch (_) {}
-    if (folder) { return }
+      let folder = await this.pouch.db.get(parentId)
+      if (folder) { return }
+    } catch (err) {
+      if (err.status !== 404) { log.warn(err) }
+    }
 
     let parentDoc = {
       _id: parentId,
@@ -80,6 +81,10 @@ class Merge {
     let ext = path.extname(doc.path)
     let dir = path.dirname(doc.path)
     let base = path.basename(doc.path, ext)
+    // 180 is an arbitrary limit to avoid having files with too long names
+    if (base.length > 180) {
+      base = base.slice(0, 180)
+    }
     dst.path = `${path.join(dir, base)}-conflict-${date}${ext}`
     try {
       // $FlowFixMe
@@ -101,18 +106,11 @@ class Merge {
     } catch (err) {
       if (err.status !== 404) { log.warn(err) }
     }
-
     markSide(side, doc, file)
-    let hasSameBinary = false
-    if (file) {
-      hasSameBinary = sameBinary(file, doc)
-      // Photos uploaded by cozy-mobile have no checksum
-      // but we should preserve metadata like tags
-      if (!hasSameBinary) { hasSameBinary = file.remote && !file.md5sum }
-    }
     if (file && file.docType === 'folder') {
       return this.resolveConflictAsync(side, doc)
-    } else if (file && hasSameBinary) {
+    }
+    if (file && sameBinary(file, doc)) {
       doc._rev = file._rev
       if (doc.size == null) { doc.size = file.size }
       if (doc.class == null) { doc.class = file.class }
@@ -124,18 +122,17 @@ class Merge {
       } else {
         return this.pouch.put(doc)
       }
-    } else if (file && file.md5sum) {
+    }
+    if (file) {
       if ((side === 'local') && (file.sides.local != null)) {
         return this.resolveInitialAddAsync(side, doc, file)
       } else {
         return this.resolveConflictAsync(side, doc)
       }
-    } else {
-      if (file) { doc._rev = file._rev }
-      if (doc.tags == null) { doc.tags = [] }
-      await this.ensureParentExistAsync(side, doc)
-      return this.pouch.put(doc)
     }
+    if (doc.tags == null) { doc.tags = [] }
+    await this.ensureParentExistAsync(side, doc)
+    return this.pouch.put(doc)
   }
 
   // When a file is modified when cozy-desktop is not running,
@@ -157,7 +154,6 @@ class Merge {
           return null
         }
       } catch (_) {}
-
       // It's safer to handle it as a conflict
       if (doc.remote == null) { doc.remote = file.remote }
       return this.resolveConflictAsync('remote', doc)
@@ -175,7 +171,8 @@ class Merge {
     markSide(side, doc, file)
     if (file && file.docType === 'folder') {
       throw new Error("Can't resolve this conflict!")
-    } else if (file) {
+    }
+    if (file) {
       doc._rev = file._rev
       if (doc.tags == null) { doc.tags = file.tags || [] }
       if (doc.remote == null) { doc.remote = file.remote }
@@ -190,11 +187,10 @@ class Merge {
       } else {
         return this.pouch.put(doc)
       }
-    } else {
-      if (doc.tags == null) { doc.tags = [] }
-      await this.ensureParentExistAsync(side, doc)
-      return this.pouch.put(doc)
     }
+    if (doc.tags == null) { doc.tags = [] }
+    await this.ensureParentExistAsync(side, doc)
+    return this.pouch.put(doc)
   }
 
   // Create or update a folder
@@ -208,7 +204,8 @@ class Merge {
     markSide(side, doc, folder)
     if (folder && folder.docType === 'file') {
       return this.resolveConflictAsync(side, doc)
-    } else if (folder) {
+    }
+    if (folder) {
       doc._rev = folder._rev
       if (doc.tags == null) { doc.tags = folder.tags || [] }
       if (doc.remote == null) { doc.remote = folder.remote }
@@ -218,11 +215,10 @@ class Merge {
       } else {
         return this.pouch.put(doc)
       }
-    } else {
-      if (doc.tags == null) { doc.tags = [] }
-      await this.ensureParentExistAsync(side, doc)
-      return this.pouch.put(doc)
     }
+    if (doc.tags == null) { doc.tags = [] }
+    await this.ensureParentExistAsync(side, doc)
+    return this.pouch.put(doc)
   }
 
   // Rename or move a file
@@ -356,15 +352,40 @@ class Merge {
       await this.resolveConflictAsync(side, doc)
       return
     }
+    delete oldMetadata.errors
     const newMetadata = clone(oldMetadata)
     markSide(side, newMetadata, oldMetadata)
     newMetadata.trashed = true
-    // TODO: Handle missing fields?
+    if (oldMetadata.sides && oldMetadata.sides[side]) {
+      markSide(side, oldMetadata, oldMetadata)
+      oldMetadata._deleted = true
+      try {
+        await this.pouch.put(oldMetadata)
+      } catch (_) {}
+    }
     return this.pouch.put(newMetadata)
   }
 
   async trashFolderAsync (side: SideName, was: *, doc: *): Promise<void> {
-    // TODO
+    // Don't trash a folder if the other side has added a new file in it (or updated one)
+    let children = await this.pouch.byRecursivePathAsync(was._id)
+    children = children.reverse()
+    for (let child of Array.from(children)) {
+      if (child.docType === 'file' && !isUpToDate(side, child)) {
+        delete was.errors
+        delete was.sides[side]
+        return this.pouch.put(was)
+      }
+    }
+    // Remove in pouchdb the sub-folders
+    for (let child of Array.from(children)) {
+      if (child.docType === 'folder') {
+        try {
+          child._deleted = true
+          await this.pouch.put(child)
+        } catch (_) {}
+      }
+    }
     return this.trashFileAsync(side, was, doc)
   }
 
@@ -421,14 +442,13 @@ class Merge {
 
   // Remove a folder and every thing inside it
   async deleteFolderRecursivelyAsync (side: SideName, folder: Metadata) {
-    let other = otherSide(side)
     let docs = await this.pouch.byRecursivePathAsync(folder._id)
     // In the changes feed, nested subfolder must be deleted
     // before their parents, hence the reverse order.
     docs = docs.reverse()
     docs.push(folder)
     for (let doc of Array.from(docs)) {
-      if (doc.sides && (doc.sides[side] || 0) < (doc.sides[other] || 0)) {
+      if (doc.sides && !isUpToDate(side, doc)) {
         // TODO we should also preserve the parents of this folder
         log.warn(`${doc.path}: cannot be deleted with ${folder.path}: ` +
           `${doc.docType} was modified on the ${otherSide(side)} side`)

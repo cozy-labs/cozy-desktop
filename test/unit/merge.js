@@ -532,7 +532,7 @@ describe('Merge', function () {
     })
   })
 
-  describe('trashAsync', () => {
+  xdescribe('trashAsync', () => {
     context('when metadata are found in Pouch', () => {
       it('updates it with trashed property and up-to-date sides info', async function () {
         const doc = {_id: 'existing-metadata'}
