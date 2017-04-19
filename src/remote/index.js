@@ -14,7 +14,6 @@ import type { RemoteDoc } from './document'
 import type { FileStreamProvider } from '../file_stream_provider'
 import type { Metadata } from '../metadata'
 import type { Side } from '../side' // eslint-disable-line
-import type { Callback } from '../utils/func'
 
 const log = logger({
   component: 'RemoteWriter'
@@ -47,11 +46,6 @@ export default class Remote implements Side {
   // Create a readable stream for the given doc
   createReadStreamAsync (doc: Metadata): Promise<stream.Readable> {
     return this.remoteCozy.downloadBinary(doc.remote._id)
-  }
-
-  createReadStream (doc: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.createReadStreamAsync(doc).asCallback(callback)
   }
 
   // Create a folder on the remote cozy instance

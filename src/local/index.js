@@ -61,18 +61,18 @@ class Local implements Side {
   }
 
   // Create a readable stream for the given doc
-  createReadStream (doc: Metadata, callback: Callback) {
+  createReadStreamAsync (doc: Metadata): Promise<stream.Readable> {
     try {
       let filePath = path.resolve(this.syncPath, doc.path)
       let stream = fs.createReadStream(filePath)
-      return callback(null, stream)
+      return new Promise((resolve, reject) => {
+        stream.on('open', () => resolve(stream))
+        stream.on('error', err => reject(err))
+      })
     } catch (err) {
-      log.error(err)
-      return callback(new Error('Cannot read the file'))
+      return Promise.reject(err)
     }
   }
-
-  createReadStreamAsync: (doc: Metadata) => Promise<stream.Readable>
 
   /* Helpers */
 
@@ -165,28 +165,30 @@ class Local implements Side {
             this.events.emit('transfer-copy', doc)
             return fs.copy(existingFilePath, tmpFile, next)
           } else {
-            return this.other.createReadStream(doc, (err, stream) => {
-              // Don't use async callback here!
-              // Async does some magic and the stream can throw an
-              // 'error' event before the next async is called...
-              if (err) { return next(err) }
-              let target = fs.createWriteStream(tmpFile)
-              stream.pipe(target)
-              target.on('finish', next)
-              target.on('error', next)
-              // Emit events to track the download progress
-              let info = clone(doc)
-              info.way = 'down'
-              info.eventName = `transfer-down-${doc._id}`
-              this.events.emit('transfer-started', info)
-              stream.on('data', data => {
-                return this.events.emit(info.eventName, data)
-              }
-                            )
-              return target.on('finish', () => {
-                return this.events.emit(info.eventName, {finished: true})
-              })
-            })
+            return this.other.createReadStreamAsync(doc).then(
+              (stream) => {
+                // Don't use async callback here!
+                // Async does some magic and the stream can throw an
+                // 'error' event before the next async is called...
+                let target = fs.createWriteStream(tmpFile)
+                stream.pipe(target)
+                target.on('finish', next)
+                target.on('error', next)
+                // Emit events to track the download progress
+                let info = clone(doc)
+                info.way = 'down'
+                info.eventName = `transfer-down-${doc._id}`
+                this.events.emit('transfer-started', info)
+                stream.on('data', data => {
+                  return this.events.emit(info.eventName, data)
+                }
+                              )
+                return target.on('finish', () => {
+                  return this.events.emit(info.eventName, {finished: true})
+                })
+              },
+              (err) => { next(err) }
+            )
           }
         })
       },

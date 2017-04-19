@@ -53,9 +53,7 @@ describe('Remote', function () {
         .dataFromFile(fixture).create()
         .then(binary => {
           should(binary.md5sum).equal(expectedChecksum)
-          this.remote.createReadStream(conversion.createMetadata(binary), function (err, stream) {
-            if (err) done(err)
-            should.not.exist(err)
+          this.remote.createReadStreamAsync(conversion.createMetadata(binary)).then((stream) => {
             should.exist(stream)
             const checksum = crypto.createHash('md5')
             checksum.setEncoding('base64')
@@ -82,10 +80,10 @@ describe('Remote', function () {
         md5sum
       }
       this.remote.other = {
-        createReadStream (localDoc, callback) {
+        createReadStreamAsync (localDoc) {
           localDoc.should.equal(doc)
           let stream = fs.createReadStream(fixture)
-          return callback(null, stream)
+          return Promise.resolve(stream)
         }
       }
       return this.remote.uploadBinary(doc, (err, binary) => {

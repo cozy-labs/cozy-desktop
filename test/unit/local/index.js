@@ -47,9 +47,8 @@ describe('Local', function () {
   describe('createReadStream', function () {
     it('throws an error if no file for this document', function (done) {
       let doc = {path: 'no-such-file'}
-      this.local.createReadStream(doc, function (err, stream) {
+      this.local.createReadStreamAsync(doc).catch((err) => {
         should.exist(err)
-        err.message.should.equal('Cannot read the file')
         done()
       })
     })
@@ -62,8 +61,7 @@ describe('Local', function () {
         path: 'read-stream.jpg',
         md5sum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
       }
-      this.local.createReadStream(doc, function (err, stream) {
-        should.not.exist(err)
+      this.local.createReadStreamAsync(doc).then((stream) => {
         should.exist(stream)
         let checksum = crypto.createHash('sha1')
         checksum.setEncoding('hex')
@@ -191,16 +189,15 @@ describe('Local', function () {
         md5sum: 'OFj2IjCsPJFfMAxmQxLGPw=='
       }
       this.local.other = {
-        createReadStream (docToStream, callback) {
+        createReadStreamAsync (docToStream) {
           docToStream.should.equal(doc)
           let stream = new Readable()
           stream._read = function () {}
           setTimeout(function () {
             stream.push('foobar')
             stream.push(null)
-          }
-                    , 100)
-          callback(null, stream)
+          }, 100)
+          return Promise.resolve(stream)
         }
       }
       let filePath = path.join(this.syncPath, doc.path)
@@ -246,16 +243,15 @@ describe('Local', function () {
         md5sum: 'gDOOedLKm5wJDrqqLvKTxw=='
       }
       this.local.other = {
-        createReadStream (docToStream, callback) {
+        createReadStreamAsync (docToStream) {
           docToStream.should.equal(doc)
           let stream = new Readable()
           stream._read = function () {}
           setTimeout(function () {
             stream.push('foobaz')
             stream.push(null)
-          }
-                    , 100)
-          callback(null, stream)
+          }, 100)
+          return Promise.resolve(stream)
         }
       }
       let filePath = path.join(this.syncPath, doc.path)
@@ -279,16 +275,15 @@ describe('Local', function () {
         md5sum: '8843d7f92416211de9ebb963ff4ce28125932878'
       }
       this.local.other = {
-        createReadStream (docToStream, callback) {
+        createReadStreamAsync (docToStream) {
           docToStream.should.equal(doc)
           let stream = new Readable()
           stream._read = function () {}
           setTimeout(function () {
             stream.push('foo')
             stream.push(null)
-          }
-                    , 100)
-          callback(null, stream)
+          }, 100)
+          return Promise.resolve(stream)
         }
       }
       let filePath = path.join(this.syncPath, doc.path)
@@ -361,16 +356,15 @@ describe('Local', function () {
         md5sum: 'PiWWCnnbxptnTNTsZ6csYg=='
       }
       this.local.other = {
-        createReadStream (docToStream, callback) {
+        createReadStreamAsync (docToStream) {
           docToStream.should.equal(doc)
           let stream = new Readable()
           stream._read = function () {}
           setTimeout(function () {
             stream.push('Hello world')
             stream.push(null)
-          }
-                , 100)
-          callback(null, stream)
+          }, 100)
+          return Promise.resolve(stream)
         }
       }
       let filePath = path.join(this.syncPath, doc.path)
@@ -533,11 +527,11 @@ describe('Local', function () {
       const old = {path: '.cozy_trash/restored-file'}
       const doc = {path: 'restored-file'}
       this.local.other = {
-        createReadStream (docToStream, callback) {
+        createReadStreamAsync (docToStream) {
           const stream = new Readable()
           stream._read = function () {}
           stream.push(null)
-          callback(null, stream)
+          return Promise.resolve(stream)
         }
       }
 
