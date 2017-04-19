@@ -65,7 +65,6 @@
     "cozy-client-js": "^0.2.0",
     "fs-extra": "^2.1.1",
     "isomorphic-fetch": "2.2.1",
-    "leveldown": "^1.6.0",
     "lodash.clone": "4.5.0",
     "lodash.find": "4.6.0",
     "lodash.isequal": "4.5.0",
