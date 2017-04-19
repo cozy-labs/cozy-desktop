@@ -464,7 +464,7 @@ describe('RemoteWatcher', function () {
       dst.should.not.have.properties(['_rev', 'path', 'name'])
     })
 
-    it('calls deleteDoc & addDoc when trashed', async function () {
+    xit('calls deleteDoc & addDoc when trashed', async function () {
       this.prep.deleteDocAsync = sinon.stub()
       this.prep.deleteDocAsync.returnsPromise().resolves(null)
       this.prep.addDocAsync = sinon.stub()
@@ -491,7 +491,7 @@ describe('RemoteWatcher', function () {
       should(addArgs[1]).have.properties(createMetadata(newDir))
     })
 
-    it('calls deleteDoc & addDoc when restored', async function () {
+    xit('calls deleteDoc & addDoc when restored', async function () {
       this.prep.deleteDocAsync = sinon.stub()
       this.prep.deleteDocAsync.returnsPromise().resolves(null)
       this.prep.addDocAsync = sinon.stub()

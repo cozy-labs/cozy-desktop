@@ -124,25 +124,37 @@ export default class RemoteWatcher {
   //
   // In both CouchDB and PouchDB, the filepath includes the name field.
   // And the _id/_rev from CouchDB are saved in the remote field in PouchDB.
+  //
+  // Note that the changes feed can aggregate several changes for many changes
+  // for the same document. For example, if a file is created and then put in
+  // the trash just after, it looks like it appeared directly on the trash.
   async putDoc (remote: RemoteDoc, was: ?Metadata): Promise<*> {
     let doc: Metadata = conversion.createMetadata(remote)
     const docType = doc.docType
     ensureValidPath(doc)
-    if (!was) {
-      log.info(`${doc.path}: ${docType} was added remotely`)
-      return this.prep.addDocAsync(SIDE, doc)
+    if (doc._deleted && !was) {
+      log.debug(`${doc.path}: ${docType} was created, trashed, and removed remotely`)
+      return
     }
     if (doc._deleted) {
       log.info(`${doc.path}: ${docType} was deleted remotely`)
       return this.prep.deleteDocAsync(SIDE, was)
     }
-    if (this.inRemoteTrash(doc) && !was.trashed) {
-      log.info(`${doc.path}: ${docType} was trashed remotely`)
-      return this.prep.trashDocAsync(SIDE, was)
+    if (this.inRemoteTrash(doc) && !was) {
+      log.info(`${doc.path}: ${docType} was created and trashed remotely`)
+      return
     }
-    if (!doc.trashed && this.inRemoteTrash(was)) {
+    if (this.inRemoteTrash(doc)) {
+      log.info(`${doc.path}: ${docType} was trashed remotely`)
+      return this.prep.trashDocAsync(SIDE, was, doc)
+    }
+    if (!was) {
+      log.info(`${doc.path}: ${docType} was added remotely`)
+      return this.prep.addDocAsync(SIDE, doc)
+    }
+    if (!this.inRemoteTrash(doc) && was.trashed) {
       log.info(`${doc.path}: ${docType} was restored remotely`)
-      return this.prep.restoreDocAsync(SIDE, doc)
+      return this.prep.restoreDocAsync(SIDE, doc, was)
     }
     if (was.path === doc.path) {
       log.info(`${doc.path}: ${docType} was updated remotely`)

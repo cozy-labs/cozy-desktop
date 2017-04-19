@@ -320,19 +320,28 @@ class Merge {
     return this.pouch.bulkDocs(bulk)
   }
 
-  async restoreFileAsync (side: SideName, doc: Metadata): Promise<*> {
-    // TODO
-    delete doc.trashed
+  async restoreFileAsync (side: SideName, was: Metadata, doc: Metadata): Promise<*> {
+    // TODO we can probably do something smarter for conflicts and avoiding to
+    // transfer again the file
+    try {
+      await this.deleteFileAsync(side, was)
+    } catch (err) {
+      log.warn(err)
+    }
     return this.updateFileAsync(side, doc)
   }
 
-  async restoreFolderAsync (side: SideName, doc: Metadata): Promise<*> {
-    // TODO
-    delete doc.trashed
+  async restoreFolderAsync (side: SideName, was: Metadata, doc: Metadata): Promise<*> {
+    // TODO we can probably do something smarter for conflicts
+    try {
+      await this.deleteFolderAsync(side, was)
+    } catch (err) {
+      log.warn(err)
+    }
     return this.putFolderAsync(side, doc)
   }
 
-  async trashAsync (side: SideName, doc: Metadata): Promise<void> {
+  async trashFileAsync (side: SideName, was: Metadata, doc: Metadata): Promise<void> {
     let oldMetadata
     try {
       oldMetadata = await this.pouch.db.get(doc._id)
@@ -352,6 +361,11 @@ class Merge {
     newMetadata.trashed = true
     // TODO: Handle missing fields?
     return this.pouch.put(newMetadata)
+  }
+
+  async trashFolderAsync (side: SideName, was: Metadata, doc: Metadata): Promise<void> {
+    // TODO
+    return this.trashFileAsync(side, was, doc)
   }
 
   // Remove a file from PouchDB

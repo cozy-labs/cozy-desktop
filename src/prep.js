@@ -65,24 +65,24 @@ class Prep {
   }
 
   // Simple helper to restore a file or a folder
-  async restoreDocAsync (side: SideName, doc: Metadata) {
+  async restoreDocAsync (side: SideName, was: Metadata, doc: Metadata) {
     if (doc.docType === 'file') {
-      return this.restoreFileAsync(side, doc)
+      return this.restoreFileAsync(side, was, doc)
     } else if (doc.docType === 'folder') {
-      return this.restoreFolderAsync(side, doc)
+      return this.restoreFolderAsync(side, was, doc)
     } else {
       throw new Error(`Unexpected docType: ${doc.docType}`)
     }
   }
 
   // Simple helper to trash a file or a folder
-  async trashDocAsync (side: SideName, doc: Metadata) {
-    if (doc.docType === 'file') {
-      return this.trashFileAsync(side, doc)
-    } else if (doc.docType === 'folder') {
-      return this.trashFolderAsync(side, doc)
+  async trashDocAsync (side: SideName, was: Metadata, doc: ?Metadata) {
+    if (was.docType === 'file') {
+      return this.trashFileAsync(side, was, doc)
+    } else if (was.docType === 'folder') {
+      return this.trashFolderAsync(side, was, doc)
     } else {
-      throw new Error(`Unexpected docType: ${doc.docType}`)
+      throw new Error(`Unexpected docType: ${was.docType}`)
     }
   }
 
@@ -210,34 +210,71 @@ class Prep {
     }
   }
 
-  async restoreFileAsync (side: SideName, doc: *) {
+  // TODO add comments + tests
+  async restoreFileAsync (side: SideName, was: Metadata, doc: Metadata) {
     ensureValidPath(doc)
-    buildId(doc)
-    return this.merge.restoreFileAsync(side, doc)
-  }
+    ensureValidPath(was)
+    ensureValidChecksum(doc)
 
-  async restoreFolderAsync (side: SideName, doc: *) {
-    ensureValidPath(doc)
-    buildId(doc)
-    return this.merge.restoreFolderAsync(side, doc)
-  }
-
-  async trashFileAsync (side: SideName, doc: *) {
-    ensureValidPath(doc)
-
+    delete doc.trashed
     doc.docType = 'file'
     buildId(doc)
-    if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
-    return this.merge.trashAsync(side, doc)
+    buildId(was)
+    // TODO ignore.isIgnored
+    return this.merge.restoreFileAsync(side, was, doc)
   }
 
-  async trashFolderAsync (side: SideName, doc: *) {
+  // TODO add comments + tests
+  async restoreFolderAsync (side: SideName, was: Metadata, doc: Metadata) {
     ensureValidPath(doc)
+    ensureValidPath(was)
 
+    delete doc.trashed
     doc.docType = 'folder'
     buildId(doc)
-    if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
-    return this.merge.trashAsync(side, doc)
+    buildId(was)
+    // TODO ignore.isIgnored
+    return this.merge.restoreFolderAsync(side, was, doc)
+  }
+
+  // TODO add comments + tests
+  async trashFileAsync (side: SideName, was: Metadata, doc: ?Metadata) {
+    ensureValidPath(was)
+
+    if (!doc) {
+      doc = clone(was)
+      doc.path = path.join(TRASH_DIR_NAME, was.path)
+    }
+
+    ensureValidPath(doc)
+    ensureValidChecksum(doc)
+
+    doc.trashed = true
+    doc.docType = 'file'
+    buildId(doc)
+    buildId(was)
+    // TODO ignore.isIgnored
+    return this.merge.trashFileAsync(side, was, doc)
+  }
+
+  // TODO add comments + tests
+  async trashFolderAsync (side: SideName, was: Metadata, doc: ?Metadata) {
+    ensureValidPath(was)
+
+    if (!doc) {
+      doc = clone(was)
+      doc.path = path.join(TRASH_DIR_NAME, was.path)
+    }
+
+    ensureValidPath(doc)
+    ensureValidChecksum(doc)
+
+    doc.trashed = true
+    doc.docType = 'folder'
+    buildId(doc)
+    buildId(was)
+    // TODO ignore.isIgnored
+    return this.merge.trashFolderAsync(side, was, doc)
   }
 
   // Expectations:
