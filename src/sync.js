@@ -338,15 +338,11 @@ class Sync {
         let old
         try {
           old = await this.pouch.getPreviousRevAsync(doc._id, rev)
-        } catch (err) {
+        } catch (_) {
           return side.overwriteFileAsync(doc, null)
         }
 
         if (old.md5sum === doc.md5sum) {
-          return side.updateFileMetadataAsync(doc, old)
-        } else if (old.remote && !old.md5sum) {
-          // Photos uploaded by cozy-mobile have no checksum,
-          // but it's useless to reupload the binary
           return side.updateFileMetadataAsync(doc, old)
         } else {
           return side.overwriteFileAsync(doc, old)

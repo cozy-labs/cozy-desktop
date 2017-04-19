@@ -570,7 +570,7 @@ describe('Remote', function () {
       const doc: Metadata = {
         ...old,
         path: `new-parent-dir/new-name`,
-        updated_at: new Date() // TODO
+        updated_at: '2017-11-16T16:14:45Z'
       }
 
       const updated: Metadata = await this.remote.updateFolderAsync(doc, old)
