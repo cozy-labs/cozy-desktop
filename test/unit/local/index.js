@@ -295,14 +295,6 @@ describe('Local', function () {
         done()
       })
     })
-
-    it('does nothing when the file was created and trashed remotely before being synced', async function () {
-      const doc = {path: '.cozy_trash/new-trashed-file'}
-
-      await should(this.local.addFileAsync(doc)).be.fulfilled()
-
-      should(this.exists(doc)).be.false()
-    })
   })
 
   describe('addFolder', function () {
@@ -335,14 +327,6 @@ describe('Local', function () {
         mtime.should.equal(+doc.updated_at)
         done()
       })
-    })
-
-    it('does nothing when the folder was created and trashed remotely before being synced', async function () {
-      const doc = {path: '.cozy_trash/new-trashed-folder'}
-
-      await should(this.local.addFolderAsync(doc)).be.fulfilled()
-
-      should(this.exists(doc)).be.false()
     })
   })
 
@@ -380,15 +364,6 @@ describe('Local', function () {
         done()
       })
     })
-
-    it('does nothing when the file is in the trash', async function () {
-      const old = sinon.stub()
-      const doc = {path: '.cozy_trash/file'}
-
-      await should(this.local.overwriteFileAsync(doc, old)).be.fulfilled()
-
-      should(this.exists(doc)).be.false()
-    })
   })
 
   describe('updateFileMetadata', () => {
@@ -408,15 +383,6 @@ describe('Local', function () {
         done()
       })
     })
-
-    it('does nothing when the file is in the trash', async function () {
-      const old = sinon.stub()
-      const doc = {path: '.cozy_trash/file'}
-
-      await should(this.local.updateFileMetadataAsync(doc, old)).be.fulfilled()
-
-      should(this.exists(doc)).be.false()
-    })
   })
 
   describe('updateFolder', () => {
@@ -433,15 +399,6 @@ describe('Local', function () {
         this.local.addFolder.restore()
         done()
       })
-    })
-
-    it('does nothing when the folder is in the trash', async function () {
-      const old = sinon.stub()
-      const doc = {path: '.cozy_trash/folder'}
-
-      await should(this.local.updateFolderAsync(doc, old)).be.fulfilled()
-
-      should(this.exists(doc)).be.false()
     })
   })
 
@@ -512,17 +469,6 @@ describe('Local', function () {
       })
     })
 
-    it('removes the file when it was trashed', async function () {
-      const old = {path: 'trashed-file', docType: 'file'}
-      const doc = {path: '.cozy_trash/trashed-file', docType: 'file'}
-      this.writeFile(old)
-
-      await should(this.local.moveFileAsync(doc, old)).be.fulfilled()
-
-      should(this.exists(old)).be.false()
-      should(this.exists(doc)).be.false()
-    })
-
     it('adds the file back when it was restored', async function () {
       const old = {path: '.cozy_trash/restored-file'}
       const doc = {path: 'restored-file'}
@@ -541,16 +487,6 @@ describe('Local', function () {
       should(this.exists(doc)).be.true()
 
       this.unlink(doc)
-    })
-
-    it('does nothing when the file stayed in the trash', async function () {
-      const old = {path: '.cozy_trash/old-file'}
-      const doc = {path: '.cozy_trash/new-file'}
-
-      await should(this.local.moveFileAsync(doc, old)).be.fulfilled()
-
-      should(this.exists(old)).be.false()
-      should(this.exists(doc)).be.false()
     })
   })
 
@@ -645,17 +581,6 @@ describe('Local', function () {
       })
     })
 
-    it('removes the folder when it was trashed', async function () {
-      const old = {path: 'trashed-folder'}
-      const doc = {path: '.cozy_trash/trashed-folder'}
-      this.ensureDir(old)
-
-      await should(this.local.moveFolderAsync(doc, old)).be.fulfilled()
-
-      should(this.exists(old)).be.false()
-      should(this.exists(doc)).be.false()
-    })
-
     it('adds the folder back when it was restored', async function () {
       const old = {path: '.cozy_trash/restored-folder'}
       const doc = {path: 'restored-folder'}
@@ -666,16 +591,6 @@ describe('Local', function () {
       should(this.exists(doc)).be.true()
 
       this.rmdir(doc)
-    })
-
-    it('does nothing when the folder stayed in the trash', async function () {
-      const old = {path: '.cozy_trash/old-folder'}
-      const doc = {path: '.cozy_trash/new-folder'}
-
-      await should(this.local.moveFolderAsync(doc, old)).be.fulfilled()
-
-      should(this.exists(old)).be.false()
-      should(this.exists(doc)).be.false()
     })
   })
 
