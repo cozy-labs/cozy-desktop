@@ -132,19 +132,19 @@ export default class RemoteWatcher {
     let doc: Metadata = conversion.createMetadata(remote)
     const docType = doc.docType
     ensureValidPath(doc)
-    if (doc._deleted && !was) {
-      log.debug(`${doc.path}: ${docType} was created, trashed, and removed remotely`)
-      return
-    }
     if (doc._deleted) {
+      if (!was) {
+        log.debug(`${doc.path}: ${docType} was created, trashed, and removed remotely`)
+        return
+      }
       log.info(`${doc.path}: ${docType} was deleted remotely`)
       return this.prep.deleteDocAsync(SIDE, was)
     }
-    if (this.inRemoteTrash(doc) && !was) {
-      log.info(`${doc.path}: ${docType} was created and trashed remotely`)
-      return
-    }
     if (this.inRemoteTrash(doc)) {
+      if (!was) {
+        log.info(`${doc.path}: ${docType} was created and trashed remotely`)
+        return
+      }
       log.info(`${doc.path}: ${docType} was trashed remotely`)
       return this.prep.trashDocAsync(SIDE, was, doc)
     }

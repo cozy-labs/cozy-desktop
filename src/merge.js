@@ -341,7 +341,7 @@ class Merge {
     return this.putFolderAsync(side, doc)
   }
 
-  async trashFileAsync (side: SideName, was: Metadata, doc: Metadata): Promise<void> {
+  async trashFileAsync (side: SideName, was: *, doc: *): Promise<void> {
     let oldMetadata
     try {
       oldMetadata = await this.pouch.db.get(doc._id)
@@ -363,7 +363,7 @@ class Merge {
     return this.pouch.put(newMetadata)
   }
 
-  async trashFolderAsync (side: SideName, was: Metadata, doc: Metadata): Promise<void> {
+  async trashFolderAsync (side: SideName, was: *, doc: *): Promise<void> {
     // TODO
     return this.trashFileAsync(side, was, doc)
   }

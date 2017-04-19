@@ -1,9 +1,12 @@
 /* @flow */
 
+import clone from 'lodash.clone'
+import path from 'path'
 import Ignore from './ignore'
 import logger from './logger'
 import Merge from './merge'
 import { buildId, ensureValidChecksum, ensureValidPath } from './metadata'
+import { TRASH_DIR_NAME } from './remote/constants'
 
 import type { SideName, Metadata } from './metadata'
 
@@ -238,7 +241,7 @@ class Prep {
   }
 
   // TODO add comments + tests
-  async trashFileAsync (side: SideName, was: Metadata, doc: ?Metadata) {
+  async trashFileAsync (side: SideName, was: *, doc: *) {
     ensureValidPath(was)
 
     if (!doc) {
@@ -258,7 +261,7 @@ class Prep {
   }
 
   // TODO add comments + tests
-  async trashFolderAsync (side: SideName, was: Metadata, doc: ?Metadata) {
+  async trashFolderAsync (side: SideName, was: *, doc: *) {
     ensureValidPath(was)
 
     if (!doc) {
