@@ -340,7 +340,7 @@ class Merge {
   async trashFileAsync (side: SideName, was: *, doc: *): Promise<void> {
     let oldMetadata
     try {
-      oldMetadata = await this.pouch.db.get(doc._id)
+      oldMetadata = await this.pouch.db.get(was._id)
     } catch (err) {
       if (err.status === 404) {
         log.debug(`${doc._id}: Nothing to trash`)
