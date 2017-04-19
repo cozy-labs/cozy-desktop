@@ -237,11 +237,9 @@ class Local implements Side {
   addFolderAsync: (Metadata) => Promise<*>
 
   // Overwrite a file
-  overwriteFile (doc: Metadata, old: ?Metadata, callback: Callback) {
-    return this.addFile(doc, callback)
+  overwriteFileAsync (doc: Metadata, old: ?Metadata): Promise<*> {
+    return this.addFileAsync(doc)
   }
-
-  overwriteFileAsync: (Metadata, ?Metadata) => Promise<*>
 
   // Update the metadata of a file
   updateFileMetadata (doc: Metadata, old: Metadata, callback: Callback) {
@@ -249,8 +247,10 @@ class Local implements Side {
     return this.metadataUpdater(doc)(callback)
   }
 
+  updateFileMetadataAsync: (Metadata, Metadata) => Promise<*>
+
   // Update a folder
-  updateFileMetadataAsync (doc: Metadata, old: Metadata): Promise<*> {
+  updateFolderAsync (doc: Metadata, old: Metadata): Promise<*> {
     return this.addFolderAsync(doc)
   }
 

@@ -187,7 +187,11 @@ export default class Remote implements Side {
 
   async trashAsync (doc: Metadata): Promise<void> {
     log.info(`${doc.path}: Moving to the trash...`)
-    await this.remoteCozy.trashById(doc.remote._id)
+    try {
+      await this.remoteCozy.trashById(doc.remote._id)
+    } catch (err) {
+      throw err
+    }
     // TODO update _rev for the trashed file/folder
   }
 

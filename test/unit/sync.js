@@ -544,7 +544,7 @@ function(doc) {
       })
     })
 
-    it('calls updateFolderAsync for an updated folder', function (done) {
+    xit('calls updateFolderAsync for an updated folder', function (done) {
       let doc = {
         _id: 'foobar/bar',
         _rev: '2-abcdef9876543210',
