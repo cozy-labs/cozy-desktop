@@ -249,14 +249,10 @@ class Local implements Side {
     return this.metadataUpdater(doc)(callback)
   }
 
-  updateFileMetadataAsync: (Metadata, Metadata) => Promise<*>
-
   // Update a folder
-  updateFolder (doc: Metadata, old: ?Metadata, callback: Callback) {
-    return this.addFolder(doc, callback)
+  updateFileMetadataAsync (doc: Metadata, old: Metadata): Promise<*> {
+    return this.addFolderAsync(doc)
   }
-
-  updateFolderAsync: (Metadata, ?Metadata) => Promise<*>
 
   // Move a file from one place to another
   moveFile (doc: Metadata, old: Metadata, callback: Callback) {

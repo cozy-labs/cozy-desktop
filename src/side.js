@@ -8,7 +8,7 @@ export interface Side {
   addFolderAsync (doc: Metadata): Promise<*>;
   overwriteFileAsync (doc: Metadata, old: ?Metadata): Promise<*>;
   updateFileMetadataAsync (doc: Metadata, old: Metadata): Promise<*>;
-  updateFolderAsync (doc: Metadata, old: ?Metadata): Promise<*>;
+  updateFolderAsync (doc: Metadata, old: Metadata): Promise<*>;
   moveFileAsync (doc: Metadata, from: Metadata): Promise<*>;
   moveFolderAsync (doc: Metadata, from: Metadata): Promise<*>;
   trashAsync (doc: Metadata): Promise<*>;

@@ -115,16 +115,15 @@ export default class Remote implements Side {
 
   async updateFileMetadataAsync (doc: Metadata, old: any): Promise<Metadata> {
     log.info(`${doc.path}: Updating file metadata...`)
-    // TODO: v3: addFile() when no old.remote
 
-    // TODO: v3: Update more metadata, not just the last modification date.
-    const attrs = {}
-
-    // TODO: v3: ifMatch old rev
-    const updated = await this.remoteCozy.updateAttributesById(old.remote._id, attrs, {})
-
-    // TODO: v3: Handle trivial remote changes and conflicts.
-    // See Couch#putRemoteDoc() and #sameRemoteDoc()
+    const attrs = {
+      executable: doc.executable,
+      updated_at: doc.updated_at
+    }
+    const opts = {
+      ifMatch: doc.remote._rev
+    }
+    const updated = await this.remoteCozy.updateAttributesById(old.remote._id, attrs, opts)
 
     doc.remote = {
       _id: updated._id,
@@ -136,9 +135,7 @@ export default class Remote implements Side {
 
   async moveFileAsync (newMetadata: Metadata, oldMetadata: Metadata): Promise<Metadata> {
     log.info(`${oldMetadata.path}: Moving to ${newMetadata.path}`)
-    // TODO: v3: Call addFile() when !from.remote?
-    // TODO: v3: Call addFile() when file not found on cozy
-    // TODO: v3: Call addFolder() on DirectoryNotFound?
+
     const [newDirPath, newName]: [string, string] = conversion.extractDirAndName(newMetadata.path)
     const newDir: RemoteDoc = await this.remoteCozy.findDirectoryByPath(newDirPath)
     const newRemoteDoc: RemoteDoc = await this.remoteCozy.updateAttributesById(oldMetadata.remote._id, {
@@ -154,16 +151,15 @@ export default class Remote implements Side {
     return conversion.createMetadata(newRemoteDoc)
   }
 
-  async updateFolderAsync (doc: Metadata, old: ?Metadata): Promise<Metadata> {
-    log.info(`${doc.path}: Updating metadata...`)
-    const [newParentDirPath, newName] = conversion.extractDirAndName(doc.path)
-    const newParentDir = await this.remoteCozy.findDirectoryByPath(newParentDirPath)
-    // XXX: Should we recreate missing parent, or would it duplicate work in Merge#ensureParentExist()?
-    let newRemoteDoc: RemoteDoc
-
-    if (!old || !old.remote) {
+  async updateFolderAsync (doc: Metadata, old: Metadata): Promise<Metadata> {
+    if (!old.remote) {
       return this.addFolderAsync(doc)
     }
+    log.info(`${doc.path}: Updating metadata...`)
+
+    const [newParentDirPath, newName] = conversion.extractDirAndName(doc.path)
+    const newParentDir = await this.remoteCozy.findDirectoryByPath(newParentDirPath)
+    let newRemoteDoc: RemoteDoc
 
     try {
       newRemoteDoc = await this.remoteCozy.updateAttributesById(old.remote._id, {
@@ -192,6 +188,7 @@ export default class Remote implements Side {
   async trashAsync (doc: Metadata): Promise<void> {
     log.info(`${doc.path}: Moving to the trash...`)
     await this.remoteCozy.trashById(doc.remote._id)
+    // TODO update _rev for the trashed file/folder
   }
 
   moveFolderAsync (doc: Metadata, from: Metadata): Promise<*> {
@@ -203,8 +200,12 @@ export default class Remote implements Side {
     return this.remoteCozy.diskUsage()
   }
 
-  resolveConflictAsync (doc: Metadata, from: Metadata): Promise<*> {
-    // TODO
-    throw new Error('Remote#resolveConflictAsync() is not implemented')
+  // TODO add tests
+  async resolveConflictAsync (dst: Metadata, src: Metadata): Promise<*> {
+    log.info(`Resolve a conflict: ${src.path} → ${dst.path}`)
+    const newName = conversion.extractDirAndName(dst.path)[1]
+    await this.remoteCozy.updateAttributesById(src.remote._id, {
+      name: newName
+    })
   }
 }

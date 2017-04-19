@@ -400,7 +400,7 @@ class Sync {
         try {
           old = await this.pouch.getPreviousRevAsync(doc._id, rev)
         } catch (_) {
-          return side.updateFolderAsync(doc, null)
+          return side.addFolderAsync(doc)
         }
         return side.updateFolderAsync(doc, old)
     }
