@@ -447,14 +447,15 @@ class Merge {
     // before their parents, hence the reverse order.
     docs = docs.reverse()
     docs.push(folder)
+    const toPreserve = new Set()
     for (let doc of Array.from(docs)) {
-      if (doc.sides && !isUpToDate(side, doc)) {
-        // TODO we should also preserve the parents of this folder
+      if (toPreserve.has(doc.path) || (doc.sides && !isUpToDate(side, doc))) {
         log.warn(`${doc.path}: cannot be deleted with ${folder.path}: ` +
           `${doc.docType} was modified on the ${otherSide(side)} side`)
         log.info(`${doc.path}: Dissociating from remote...`)
         delete doc.remote
         if (doc.sides) delete doc.sides.remote
+        toPreserve.add(path.dirname(doc.path))
       } else {
         markSide(side, doc, doc)
         doc._deleted = true
