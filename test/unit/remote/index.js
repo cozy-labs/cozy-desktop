@@ -517,7 +517,7 @@ describe('Remote', function () {
   })
 
   describe('updateFileMetadataAsync', () =>
-    it('updates the updated_at', async function () {
+    xit('updates the updated_at', async function () {
       const dir = await builders.remoteDir().named('dir').create()
       const created = await builders.remoteFile()
         .named('file-7')
