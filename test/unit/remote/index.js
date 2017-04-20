@@ -529,6 +529,32 @@ describe('Remote', function () {
         md5sum: old.md5sum
       })
     })
+
+    it('adds the file back when it does not exist anymore', async function () {
+      const oldFile: RemoteDoc = await builders.remoteFile().data('foo').create()
+      const oldMetadata: Metadata = conversion.createMetadata(oldFile)
+      const newMetadata: Metadata = {
+        ...oldMetadata,
+        size: 7,
+        checksum: 'MntvB0NYESObxH4VRDUycw==' // foo bar
+      }
+      await cozy.files.destroyById(oldFile._id)
+      this.remote.other = {
+        createReadStreamAsync (_) {
+          const stream = builders.stream().push('foo bar').build()
+          return Promise.resolve(stream)
+        }
+      }
+
+      const result: Metadata = await this.remote.overwriteFileAsync(newMetadata, oldMetadata)
+
+      const newFile: RemoteDoc = await cozy.files.statByPath(oldFile.path)
+      should(result.remote).have.properties({
+        _id: newFile._id,
+        _rev: newFile._rev
+      })
+      should(result).have.properties(newMetadata)
+    })
   })
 
   describe('updateFileMetadataAsync', () =>
