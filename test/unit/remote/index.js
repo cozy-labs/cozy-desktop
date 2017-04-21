@@ -4,6 +4,7 @@
 import crypto from 'crypto'
 import EventEmitter from 'events'
 import fs from 'fs'
+import path from 'path'
 import sinon from 'sinon'
 import should from 'should'
 
@@ -376,8 +377,8 @@ describe('Remote', function () {
       await builders.remoteDir().named('ORIGINAL').inRootDir().create()
       let md5sum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
       let doc: Object = {
-        _id: 'backup/cat3.jpg',
-        path: 'backup/cat3.jpg',
+        _id: path.normalize('backup/cat3.jpg'),
+        path: path.normalize('backup/cat3.jpg'),
         docType: 'file',
         md5sum,
         updated_at: timestamp.current(),
@@ -387,8 +388,8 @@ describe('Remote', function () {
         }
       }
       let same = {
-        _id: 'ORIGINAL/CAT3.JPG',
-        path: 'ORIGINAL/CAT3.JPG',
+        _id: path.normalize('ORIGINAL/CAT3.JPG'),
+        path: path.normalize('ORIGINAL/CAT3.JPG'),
         docType: 'file',
         md5sum,
         updated_at: timestamp.current(),
@@ -424,7 +425,7 @@ describe('Remote', function () {
     it('adds a folder to couchdb', async function () {
       const dateString = '2017-02-14T15:03:27Z'
       let doc: Object = {
-        path: 'couchdb-folder/folder-1',
+        path: path.normalize('couchdb-folder/folder-1'),
         docType: 'folder',
         updated_at: dateString
       }
@@ -566,7 +567,7 @@ describe('Remote', function () {
         .create()
       const doc: Metadata = {
         ...old,
-        path: `new-parent-dir/new-name`,
+        path: path.normalize('new-parent-dir/new-name'),
         updated_at: '2017-11-16T16:14:45Z'
       }
 
@@ -598,7 +599,7 @@ describe('Remote', function () {
       const newMetadata: Metadata = {
         ...oldMetadata,
         name: 'new-dir-name',
-        path: 'parent-dir/new-dir-name'
+        path: path.normalize('parent-dir/new-dir-name')
       }
       await cozy.files.destroyById(deletedDir._id)
 
@@ -652,7 +653,7 @@ describe('Remote', function () {
       const old: Metadata = conversion.createMetadata(remoteDoc)
       const doc: Metadata = {
         ...old,
-        path: 'moved-to/cat7.jpg',
+        path: path.normalize('moved-to/cat7.jpg'),
         name: 'cat7.jpg',
         remote: undefined
       }

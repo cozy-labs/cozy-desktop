@@ -2,6 +2,7 @@
 
 import async from 'async'
 import clone from 'lodash.clone'
+import path from 'path'
 import sinon from 'sinon'
 import should from 'should'
 
@@ -394,7 +395,7 @@ describe('Merge', function () {
       pouchHelpers.createParentFolder(this.pouch, () => {
         pouchHelpers.createFolder(this.pouch, 9, () => {
           pouchHelpers.createFile(this.pouch, 9, () => {
-            this.pouch.db.get('my-folder/file-9', (err, file) => {
+            this.pouch.db.get(path.normalize('my-folder/file-9'), (err, file) => {
               should.not.exist(err)
               this.pouch.db.put({...file, trashed: true}, done)
             })
@@ -414,7 +415,7 @@ describe('Merge', function () {
       this.pouch.db.get('my-folder', (err, was) => {
         should.not.exist(err)
         this.merge.moveFolderRecursivelyAsync('local', doc, was).then(() => {
-          let ids = ['', '/folder-9', '/file-9']
+          let ids = ['', path.normalize('/folder-9'), path.normalize('/file-9')]
           async.eachSeries(ids, (id, next) => {
             this.pouch.db.get(`DESTINATION${id}`, (err, res) => {
               should.not.exist(err)
@@ -438,8 +439,8 @@ describe('Merge', function () {
   describe('deleteFile', () =>
     it('deletes a file', function (done) {
       let doc = {
-        _id: 'TO-DELETE/FILE',
-        path: 'TO-DELETE/FILE',
+        _id: path.normalize('TO-DELETE/FILE'),
+        path: path.normalize('TO-DELETE/FILE'),
         docType: 'file',
         sides: {
           local: 1
@@ -460,8 +461,8 @@ describe('Merge', function () {
   describe('deleteFolder', function () {
     it('deletes a folder', function (done) {
       let doc = {
-        _id: 'TO-DELETE/FOLDER',
-        path: 'TO-DELETE/FOLDER',
+        _id: path.normalize('TO-DELETE/FOLDER'),
+        path: path.normalize('TO-DELETE/FOLDER'),
         docType: 'folder',
         sides: {
           local: 1
@@ -481,8 +482,8 @@ describe('Merge', function () {
 
     it('remove files in the folder', function (done) {
       let doc = {
-        _id: 'FOO/TO-REMOVE',
-        path: 'FOO/TO-REMOVE',
+        _id: path.normalize('FOO/TO-REMOVE'),
+        path: path.normalize('FOO/TO-REMOVE'),
         docType: 'folder',
         sides: {
           local: 1
@@ -492,15 +493,15 @@ describe('Merge', function () {
         should.not.exist(err)
         async.eachSeries(['baz', 'qux', 'quux'], (name, next) => {
           let file = {
-            _id: `FOO/TO-REMOVE/${name}`,
-            path: `FOO/TO-REMOVE/${name}`,
+            _id: path.normalize(`FOO/TO-REMOVE/${name}`),
+            path: path.normalize(`FOO/TO-REMOVE/${name}`),
             docType: 'file'
           }
           this.pouch.db.put(file, next)
         }, err => {
           should.not.exist(err)
           this.merge.deleteFolderAsync(this.side, doc).then(() => {
-            this.pouch.byPath('FOO/TO-REMOVE', function (_, docs) {
+            this.pouch.byPath(path.normalize('FOO/TO-REMOVE'), function (_, docs) {
               docs.length.should.be.equal(0)
               done()
             })
@@ -510,11 +511,11 @@ describe('Merge', function () {
     })
 
     it('remove nested folders', function (done) {
-      let base = 'NESTED/TO-DELETE'
+      let base = path.normalize('NESTED/TO-DELETE')
       async.eachSeries(['', '/b', '/b/c', '/b/d'], (name, next) => {
         let doc = {
-          _id: `${base}${name}`,
-          path: `${base}${name}`,
+          _id: path.normalize(`${base}${name}`),
+          path: path.normalize(`${base}${name}`),
           docType: 'folder',
           sides: {
             local: 1
