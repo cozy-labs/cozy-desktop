@@ -9,6 +9,7 @@ import { isUpToDate, markSide, sameBinary, sameFile, sameFolder } from './metada
 import Pouch from './pouch'
 import Remote from './remote'
 import { otherSide } from './side'
+import * as fsutils from './utils/fs'
 
 import type { SideName, Metadata } from './metadata'
 
@@ -77,7 +78,7 @@ class Merge {
   // A suffix composed of -conflict- and the date is added to the path.
   async resolveConflictAsync (side: SideName, doc: Metadata) {
     let dst = clone(doc)
-    let date = new Date().toISOString()
+    let date = fsutils.validName(new Date().toISOString())
     let ext = path.extname(doc.path)
     let dir = path.dirname(doc.path)
     let base = path.basename(doc.path, ext)

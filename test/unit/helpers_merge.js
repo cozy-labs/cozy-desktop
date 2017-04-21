@@ -93,7 +93,7 @@ describe('Merge Helpers', function () {
         parts[0].should.equal(path.normalize('foo/bar'))
         parts = parts[1].split('T')
         parts[0].should.match(/^\d{4}-\d{2}-\d{2}$/)
-        parts[1].should.match(/^\d{2}:\d{2}:\d{2}.\d{3}Z$/)
+        parts[1].should.match(/^\d{2}_\d{2}_\d{2}.\d{3}Z$/)
         let src = spy.args[0][1]
         src.path.should.equal(doc.path)
         done()

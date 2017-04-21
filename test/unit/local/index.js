@@ -640,10 +640,10 @@ describe('Local', function () {
     it('renames the file', function (done) {
       let src = {
         path: 'conflict/file',
-        updated_at: new Date('2015-10-08T05:05:09Z')
+        updated_at: new Date('2015-10-08T05_05_09Z')
       }
       let dst = {
-        path: 'conflict/file-conflict-2015-10-09T05:05:10Z',
+        path: 'conflict/file-conflict-2015-10-09T05_05_10Z',
         updated_at: new Date('2015-10-09T05:05:10Z')
       }
       let srcPath = path.join(this.syncPath, src.path)
