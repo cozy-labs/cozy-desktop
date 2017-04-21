@@ -234,10 +234,12 @@ class Sync {
         throw new Error('Client has been revoked')
       } else {
         // The client is offline, wait that it can connect again to the server
+        this.events.emit('offline')
         while (true) {
           try {
             await Promise.delay(60000)
             await this.diskUsage()
+            this.events.emit('online')
             return
           } catch (_) {}
         }
