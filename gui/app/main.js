@@ -5,6 +5,7 @@ require('babel-polyfill')
 const AutoLaunch = require('auto-launch-patched')
 const Desktop = require('cozy-desktop').default
 const electron = require('electron')
+const notify = require('electron-main-notification')
 const fs = require('fs')
 const os = require('os')
 const path = require('path')
@@ -73,6 +74,7 @@ const sendErrorToMainWindow = (msg) => {
   } else {
     sendToMainWindow('sync-error', msg)
   }
+  notify('Cozy-Desktop', { body: msg })
 }
 
 const goToTab = (tab) => {
