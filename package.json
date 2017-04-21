@@ -114,6 +114,7 @@
     "jsverify": "^0.8.0",
     "lodash.uniq": "^4.5.0",
     "mocha": "^3.2.0",
+    "mocha-clean": "^1.0.0",
     "nyc": "^10.1.2",
     "pouchdb-server": "^2.3.4",
     "should": "^11.2.1",
