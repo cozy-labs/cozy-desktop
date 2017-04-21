@@ -223,7 +223,7 @@ class Sync {
       throw new Error('The disk space on your computer is full!')
     } else if (err.status === 413) {
       throw new Error('Your Cozy is full! ' +
-        'You can delete some files to be able' +
+        'You can delete some files to be able ' +
         'to add new ones or upgrade your storage plan.'
       )
     }
