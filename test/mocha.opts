@@ -7,4 +7,5 @@
 --require should
 --require ./test/assertions/timestamp
 --require ./test/helpers/sinon_stub_promise
+--require ./test/helpers/stacktraces
 --recursive
