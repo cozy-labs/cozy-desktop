@@ -16,7 +16,7 @@ const log = logger({
 let exit = function () {
   log.info('Exiting...')
   setTimeout(process.exit, 3500)
-  return app.stopSync(() => process.exit())
+  app.stopSync(() => process.exit())
 }
 
 process.on('SIGINT', exit)
@@ -46,18 +46,18 @@ let sync = function (mode, args) {
         width: 30
       }
       let bar = new Progress(format, options)
-      return app.events.on(info.eventName, function (data) {
+      app.events.on(info.eventName, function (data) {
         if (data.finished) {
-          return app.events.removeAllListeners(info.eventName)
+          app.events.removeAllListeners(info.eventName)
         } else {
-          return bar.tick(data.length)
+          bar.tick(data.length)
         }
       })
     } else {
-      return log.info(`${what} ${filename} (unknown size)`)
+      log.info(`${what} ${filename} (unknown size)`)
     }
   })
-  return app.synchronize(mode)
+  app.synchronize(mode)
     .catch((err) => {
       log.error(err.message)
       process.exit(1)
@@ -91,10 +91,10 @@ program
   .description('Synchronize the local filesystem and the remote cozy')
   .action(function (args) {
     try {
-      return sync('full', args)
+      sync('full', args)
     } catch (err) {
       if (err.message !== 'Incompatible mode') { throw err }
-      return log.info(`
+      log.info(`
 Full sync from a mount point already used otherwise is not supported
 
 You should create a new mount point and use COZY_DESKTOP_DIR.
@@ -109,10 +109,10 @@ program
   .description('Pull files & folders from a remote cozy to local filesystem')
   .action(function (args) {
     try {
-      return sync('pull', args)
+      sync('pull', args)
     } catch (err) {
       if (err.message !== 'Incompatible mode') { throw err }
-      return log.info(`
+      log.info(`
 Pulling from a mount point already used for pushing is not supported
 
 You should create a new mount point and use COZY_DESKTOP_DIR.
@@ -127,9 +127,9 @@ program
   .description('Push files & folders from local filesystem to the remote cozy')
   .action(function (args) {
     try {
-      return sync('push', args)
+      sync('push', args)
     } catch (err) {
-      return log.info(`
+      log.info(`
 Pushing from a mount point already used for pulling is not supported
 
 You should create a new mount point and use COZY_DESKTOP_DIR.

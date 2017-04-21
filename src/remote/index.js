@@ -1,5 +1,7 @@
 /* @flow */
 
+import clone from 'lodash.clone'
+import EventEmitter from 'events'
 import * as stream from 'stream'
 
 import Config from '../config'
@@ -22,11 +24,13 @@ const log = logger({
 export default class Remote implements Side {
   other: FileStreamProvider
   pouch: Pouch
+  events: EventEmitter
   watcher: Watcher
   remoteCozy: RemoteCozy
 
-  constructor (config: Config, prep: Prep, pouch: Pouch) {
+  constructor (config: Config, prep: Prep, pouch: Pouch, events: EventEmitter) {
     this.pouch = pouch
+    this.events = events
     this.remoteCozy = new RemoteCozy(config)
     this.watcher = new Watcher(pouch, prep, this.remoteCozy)
   }
@@ -82,6 +86,19 @@ export default class Remote implements Side {
     const stream = await this.other.createReadStreamAsync(doc)
     const [dirPath, name] = conversion.extractDirAndName(doc.path)
     const dir = await this.remoteCozy.findDirectoryByPath(dirPath)
+
+    // Emit events to track the upload progress
+    let info = clone(doc)
+    info.way = 'up'
+    info.eventName = `transfer-up-${doc._id}`
+    this.events.emit('transfer-started', info)
+    stream.on('data', data => {
+      this.events.emit(info.eventName, data)
+    })
+    stream.on('finish', () => {
+      this.events.emit(info.eventName, {finished: true})
+    })
+
     const created = await this.remoteCozy.createFile(stream, {
       name,
       dirID: dir._id,

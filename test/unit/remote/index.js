@@ -2,6 +2,7 @@
 /* eslint-env mocha */
 
 import crypto from 'crypto'
+import EventEmitter from 'events'
 import fs from 'fs'
 import sinon from 'sinon'
 import should from 'should'
@@ -28,8 +29,8 @@ describe('Remote', function () {
   before('instanciate remote', function () {
     this.config.cozyUrl = COZY_URL
     this.prep = sinon.createStubInstance(Prep)
-    this.events = {}
-    this.remote = new Remote(this.config, this.prep, this.pouch)
+    this.events = new EventEmitter()
+    this.remote = new Remote(this.config, this.prep, this.pouch, this.events)
   })
   beforeEach(deleteAll)
   beforeEach(createTheCouchdbFolder)
@@ -45,7 +46,6 @@ describe('Remote', function () {
 
   describe('createReadStream', () =>
     it('create a readable stream from a remote binary', function (done) {
-      this.events.emit = sinon.spy()
       const expectedChecksum = '2NqmrnZqa1zTER40NtPGJg=='
       const fixture = 'test/fixtures/cool-pillow.jpg'
 
@@ -71,7 +71,6 @@ describe('Remote', function () {
 
   xdescribe('uploadBinary', function () {
     it('creates a remote binary document', function (done) {
-      this.events.emit = sinon.spy()
       let md5sum = 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
       let fixture = 'test/fixtures/chat-mignon.jpg'
       let doc = {

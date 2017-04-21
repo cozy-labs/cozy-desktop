@@ -90,37 +90,37 @@ class Local implements Side {
     return function (callback: Callback) {
       let next = function (err) {
         if (doc.executable) {
-          return fs.chmod(filePath, '755', callback)
+          fs.chmod(filePath, '755', callback)
         } else {
-          return callback(err)
+          callback(err)
         }
       }
       if (doc.updated_at) {
         let updated = new Date(doc.updated_at)
-        return fs.utimes(filePath, updated, updated, () =>
+        fs.utimes(filePath, updated, updated, () =>
           // Ignore errors
           next()
         )
       } else {
-        return next()
+        next()
       }
     }
   }
 
   // Check if a file corresponding to given checksum already exists
   fileExistsLocally (checksum: string, callback: Callback) {
-    return this.pouch.byChecksum(checksum, (err, docs) => {
+    this.pouch.byChecksum(checksum, (err, docs) => {
       if (err) {
-        return callback(err)
+        callback(err)
       } else if ((docs == null) || (docs.length === 0)) {
-        return callback(null, false)
+        callback(null, false)
       } else {
-        let paths = Array.from(docs).filter((doc) => isUpToDate('local', doc)).map((doc) =>
-                    path.resolve(this.syncPath, doc.path))
-        return async.detect(paths, (filePath, next) =>
-                    fs.exists(filePath, found => next(null, found))
-
-        , callback)
+        let paths = Array.from(docs)
+          .filter((doc) => isUpToDate('local', doc))
+          .map((doc) => path.resolve(this.syncPath, doc.path))
+        async.detect(paths,
+            (filePath, next) => fs.exists(filePath, found => next(null, found)),
+            callback)
       }
     })
   }
@@ -149,23 +149,23 @@ class Local implements Side {
 
     log.info(`Put file ${filePath}`)
 
-    return async.waterfall([
+    async.waterfall([
       next => {
         if (doc.md5sum != null) {
-          return this.fileExistsLocally(doc.md5sum, next)
+          this.fileExistsLocally(doc.md5sum, next)
         } else {
-          return next(null, false)
+          next(null, false)
         }
       },
 
       (existingFilePath, next) => {
-        return fs.ensureDir(this.tmpPath, () => {
+        fs.ensureDir(this.tmpPath, () => {
           if (existingFilePath) {
             log.info(`Recopy ${existingFilePath} -> ${filePath}`)
             this.events.emit('transfer-copy', doc)
-            return fs.copy(existingFilePath, tmpFile, next)
+            fs.copy(existingFilePath, tmpFile, next)
           } else {
-            return this.other.createReadStreamAsync(doc).then(
+            this.other.createReadStreamAsync(doc).then(
               (stream) => {
                 // Don't use async callback here!
                 // Async does some magic and the stream can throw an
@@ -180,11 +180,10 @@ class Local implements Side {
                 info.eventName = `transfer-down-${doc._id}`
                 this.events.emit('transfer-started', info)
                 stream.on('data', data => {
-                  return this.events.emit(info.eventName, data)
-                }
-                              )
-                return target.on('finish', () => {
-                  return this.events.emit(info.eventName, {finished: true})
+                  this.events.emit(info.eventName, data)
+                })
+                target.on('finish', () => {
+                  this.events.emit(info.eventName, {finished: true})
                 })
               },
               (err) => { next(err) }
@@ -195,17 +194,17 @@ class Local implements Side {
 
       next => {
         if (doc.md5sum != null) {
-          return this.watcher.checksum(tmpFile, function (err, md5sum) {
+          this.watcher.checksum(tmpFile, function (err, md5sum) {
             if (err) {
-              return next(err)
+              next(err)
             } else if (md5sum === doc.md5sum) {
-              return next()
+              next()
             } else {
-              return next(new Error('Invalid checksum'))
+              next(new Error('Invalid checksum'))
             }
           })
         } else {
-          return next()
+          next()
         }
       },
 
@@ -215,7 +214,7 @@ class Local implements Side {
 
     ], function (err) {
       if (err) { log.warn('addFile failed:', err, doc) }
-      return fs.unlink(tmpFile, () => callback(err))
+      fs.unlink(tmpFile, () => callback(err))
     })
   }
 
@@ -225,11 +224,11 @@ class Local implements Side {
   addFolder (doc: Metadata, callback: Callback) {
     let folderPath = path.join(this.syncPath, doc.path)
     log.info(`Put folder ${folderPath}`)
-    return fs.ensureDir(folderPath, err => {
+    fs.ensureDir(folderPath, err => {
       if (err) {
-        return callback(err)
+        callback(err)
       } else {
-        return this.metadataUpdater(doc)(callback)
+        this.metadataUpdater(doc)(callback)
       }
     })
   }
@@ -244,7 +243,7 @@ class Local implements Side {
   // Update the metadata of a file
   updateFileMetadata (doc: Metadata, old: Metadata, callback: Callback) {
     log.info(`${doc.path}: Updating file metadata...`)
-    return this.metadataUpdater(doc)(callback)
+    this.metadataUpdater(doc)(callback)
   }
 
   updateFileMetadataAsync: (Metadata, Metadata) => Promise<*>
@@ -261,17 +260,17 @@ class Local implements Side {
     let newPath = path.join(this.syncPath, doc.path)
     let parent = path.join(this.syncPath, path.dirname(doc.path))
 
-    return async.waterfall([
+    async.waterfall([
       next => fs.exists(oldPath, function (oldPathExists) {
         if (oldPathExists) {
-          return fs.ensureDir(parent, () => fs.rename(oldPath, newPath, next))
+          fs.ensureDir(parent, () => fs.rename(oldPath, newPath, next))
         } else {
-          return fs.exists(newPath, function (newPathExists) {
+          fs.exists(newPath, function (newPathExists) {
             if (newPathExists) {
-              return next()
+              next()
             } else {
               log.error(`File ${oldPath} not found`)
-              return next(new Error(`${oldPath} not found`))
+              next(new Error(`${oldPath} not found`))
             }
           })
         }
@@ -284,10 +283,10 @@ class Local implements Side {
         log.error(`Error while moving ${JSON.stringify(doc, null, 2)}`)
         log.error(JSON.stringify(old, null, 2))
         log.error(err)
-        return this.addFile(doc, callback)
+        this.addFile(doc, callback)
       } else {
         this.events.emit('transfer-move', doc, old)
-        return callback(null)
+        callback(null)
       }
     })
   }
@@ -301,18 +300,18 @@ class Local implements Side {
     let newPath = path.join(this.syncPath, doc.path)
     let parent = path.join(this.syncPath, path.dirname(doc.path))
 
-    return async.waterfall([
+    async.waterfall([
       next => fs.exists(oldPath, oldPathExists =>
         fs.exists(newPath, function (newPathExists) {
           if (oldPathExists && newPathExists) {
-            return fs.rmdir(oldPath, next)
+            fs.rmdir(oldPath, next)
           } else if (oldPathExists) {
-            return fs.ensureDir(parent, () => fs.rename(oldPath, newPath, next))
+            fs.ensureDir(parent, () => fs.rename(oldPath, newPath, next))
           } else if (newPathExists) {
-            return next()
+            next()
           } else {
             log.error(`Folder ${oldPath} not found`)
-            return next(new Error(`${oldPath} not found`))
+            next(new Error(`${oldPath} not found`))
           }
         })
       ),
@@ -324,9 +323,9 @@ class Local implements Side {
         log.error(`Error while moving ${JSON.stringify(doc, null, 2)}`)
         log.error(JSON.stringify(old, null, 2))
         log.error(err)
-        return this.addFolder(doc, callback)
+        this.addFolder(doc, callback)
       } else {
-        return callback(null)
+        callback(null)
       }
     })
   }
@@ -347,7 +346,7 @@ class Local implements Side {
     let dstPath = path.join(this.syncPath, dst.path)
     fs.rename(srcPath, dstPath, callback)
     // Don't fire an event for the deleted file
-    return setTimeout(() => {
+    setTimeout(() => {
       const p = this.watcher.pending
       if (p.hasPath(src.path)) { p.clear(src.path) }
     }, 1000)
