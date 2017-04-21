@@ -1,10 +1,6 @@
 /* @flow */
 
-import type { Metadata } from './metadata'
-
-export type SideName =
-  | "local"
-  | "remote";
+import type { SideName, Metadata } from './metadata'
 
 // eslint-disable-next-line no-undef
 export interface Side {
@@ -12,11 +8,11 @@ export interface Side {
   addFolderAsync (doc: Metadata): Promise<*>;
   overwriteFileAsync (doc: Metadata, old: ?Metadata): Promise<*>;
   updateFileMetadataAsync (doc: Metadata, old: Metadata): Promise<*>;
-  updateFolderAsync (doc: Metadata, old: ?Metadata): Promise<*>;
+  updateFolderAsync (doc: Metadata, old: Metadata): Promise<*>;
   moveFileAsync (doc: Metadata, from: Metadata): Promise<*>;
   moveFolderAsync (doc: Metadata, from: Metadata): Promise<*>;
   trashAsync (doc: Metadata): Promise<*>;
-  destroyAsync (doc: Metadata): Promise<*>;
+  resolveConflictAsync (doc: Metadata, from: Metadata): Promise<*>;
 }
 
 export function otherSide (side: SideName): SideName {

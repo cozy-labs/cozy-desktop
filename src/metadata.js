@@ -6,12 +6,15 @@ import pick from 'lodash.pick'
 import path from 'path'
 
 import logger from './logger'
-import { TRASH_DIR_NAME } from './remote/constants'
 import { sameDate } from './timestamp'
 
 const log = logger({
   component: 'Metadata'
 })
+
+export type SideName =
+  | "local"
+  | "remote";
 
 export type MetadataRemoteInfo = {
   _id: string,
@@ -30,12 +33,10 @@ export type Metadata = {
   _rev: string,
   md5sum?: string,
   class?: string,
-  creationDate: string|Date,
-  // TODO: v3: Use the same local *type fields as the remote ones
   docType: string,
   errors: number,
-  executable?: boolean,
-  lastModification: string|Date,
+  executable?: true,
+  updated_at: string|Date,
   mime?: string,
   moveTo?: string, // Destination id
   path: string,
@@ -43,7 +44,7 @@ export type Metadata = {
   size?: number,
   tags: string[],
   sides: MetadataSidesInfo,
-  toBeTrashed?: true
+  trashed?: true
 }
 
 export let buildId: (doc: Metadata) => void = (_) => {}
@@ -141,20 +142,21 @@ export function extractRevNumber (infos: Metadata) {
 }
 
 // Return true if the remote file is up-to-date for this document
-export function isUpToDate (doc: Metadata) {
-  let currentRev = doc.sides.remote || 0
+export function isUpToDate (side: SideName, doc: Metadata) {
+  let currentRev = doc.sides[side] || 0
   let lastRev = extractRevNumber(doc)
   return currentRev === lastRev
 }
 
 // Return true if the metadata of the two folders are the same
-// The creationDate of the two folders are not compared, because the local
-// filesystem can't give us a relevant information for that.
-// For lastModification, we accept up to 3s of differences because we can't
+// For updated_at, we accept up to 3s of differences because we can't
 // rely on file systems to be precise to the millisecond.
 export function sameFolder (one: Metadata, two: Metadata) {
-  if (!sameDate(one.lastModification, two.lastModification)) { return false }
-  let fields = ['_id', 'docType', 'remote', 'tags']
+  if (!sameDate(one.updated_at, two.updated_at)) {
+    log.debug({diff: {one, two}})
+    return false
+  }
+  let fields = ['_id', 'docType', 'remote', 'tags', 'trashed']
   one = pick(one, fields)
   two = pick(two, fields)
   const same = isEqual(one, two)
@@ -163,13 +165,14 @@ export function sameFolder (one: Metadata, two: Metadata) {
 }
 
 // Return true if the metadata of the two files are the same
-// The creationDate of the two files are not compared, because the local
-// filesystem can't give us a relevant information for that.
-// For lastModification, we accept up to 3s of differences because we can't
+// For updated_at, we accept up to 3s of differences because we can't
 // rely on file systems to be precise to the millisecond.
 export function sameFile (one: Metadata, two: Metadata) {
-  if (!sameDate(one.lastModification, two.lastModification)) { return false }
-  let fields = ['_id', 'docType', 'md5sum', 'remote', 'tags', 'size']
+  if (!sameDate(one.updated_at, two.updated_at)) {
+    log.debug({diff: {one, two}})
+    return false
+  }
+  let fields = ['_id', 'docType', 'md5sum', 'remote', 'tags', 'size', 'trashed']
   one = {...pick(one, fields), executable: !!one.executable}
   two = {...pick(two, fields), executable: !!two.executable}
   const same = isEqual(one, two)
@@ -208,8 +211,4 @@ export function markSide (side: string, doc: Metadata, prev: ?Metadata): Metadat
   }
   doc.sides[side] = ++rev
   return doc
-}
-
-export function inRemoteTrash (doc: Metadata): boolean {
-  return doc.path.startsWith(TRASH_DIR_NAME)
 }

@@ -7,14 +7,14 @@ import path from 'path'
 import Ignore from './ignore'
 import Local from './local'
 import logger from './logger'
-import { extractRevNumber, inRemoteTrash } from './metadata'
+import { extractRevNumber, isUpToDate } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
 import { HEARTBEAT } from './remote/watcher'
 import { PendingMap } from './utils/pending'
 
-import type { Metadata } from './metadata'
-import type { Side, SideName } from './side' // eslint-disable-line
+import type { SideName, Metadata } from './metadata'
+import type { Side } from './side' // eslint-disable-line
 
 const log = logger({
   component: 'Sync'
@@ -178,7 +178,7 @@ class Sync {
 
       if (!side) {
         return this.pouch.setLocalSeqAsync(change.seq)
-      } else if (sideName === 'remote' && doc.toBeTrashed && !inRemoteTrash(doc)) {
+      } else if (sideName === 'remote' && doc.trashed) {
         // File or folder was just deleted locally
         const byItself = await this.trashWithParentOrByItself(doc, side)
         if (!byItself) { return }
@@ -320,7 +320,7 @@ class Sync {
             log.error(err)
           }
           try {
-            await side.destroyAsync(from)
+            await side.trashAsync(from)
           } catch (err) {
             log.error(err)
             throw new Error('Invalid move')
@@ -331,22 +331,18 @@ class Sync {
         this.moveFrom = doc
         return
       case doc._deleted:
-        return side.destroyAsync(doc)
+        return side.trashAsync(doc)
       case rev === 0:
         return side.addFileAsync(doc)
       default:
         let old
         try {
           old = await this.pouch.getPreviousRevAsync(doc._id, rev)
-        } catch (err) {
+        } catch (_) {
           return side.overwriteFileAsync(doc, null)
         }
 
         if (old.md5sum === doc.md5sum) {
-          return side.updateFileMetadataAsync(doc, old)
-        } else if (old.remote && !old.md5sum) {
-          // Photos uploaded by cozy-mobile have no checksum,
-          // but it's useless to reupload the binary
           return side.updateFileMetadataAsync(doc, old)
         } else {
           return side.overwriteFileAsync(doc, old)
@@ -396,7 +392,7 @@ class Sync {
         this.moveFrom = doc
         return
       case doc._deleted:
-        return side.destroyAsync(doc)
+        return side.trashAsync(doc)
       case rev === 0:
         return side.addFolderAsync(doc)
       default:
@@ -404,7 +400,7 @@ class Sync {
         try {
           old = await this.pouch.getPreviousRevAsync(doc._id, rev)
         } catch (_) {
-          return side.updateFolderAsync(doc, null)
+          return side.addFolderAsync(doc)
         }
         return side.updateFolderAsync(doc, old)
     }
@@ -418,12 +414,12 @@ class Sync {
     if (parentId !== '.') {
       let parent = await this.pouch.db.get(parentId)
 
-      if (!parent.toBeTrashed) {
+      if (!parent.trashed) {
         await Promise.delay(TRASHING_DELAY)
         parent = await this.pouch.db.get(parentId)
       }
 
-      if (parent.toBeTrashed && !inRemoteTrash(parent)) {
+      if (parent.trashed && !isUpToDate('remote', parent)) {
         log.info(`${doc.path}: will be trashed with parent directory`)
         await this.trashWithParentOrByItself(parent, side)
         // Wait long enough that the remote has fetched one changes feed

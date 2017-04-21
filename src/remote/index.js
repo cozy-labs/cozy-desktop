@@ -14,7 +14,6 @@ import type { RemoteDoc } from './document'
 import type { FileStreamProvider } from '../file_stream_provider'
 import type { Metadata } from '../metadata'
 import type { Side } from '../side' // eslint-disable-line
-import type { Callback } from '../utils/func'
 
 const log = logger({
   component: 'RemoteWriter'
@@ -49,11 +48,6 @@ export default class Remote implements Side {
     return this.remoteCozy.downloadBinary(doc.remote._id)
   }
 
-  createReadStream (doc: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.createReadStreamAsync(doc).asCallback(callback)
-  }
-
   // Create a folder on the remote cozy instance
   async addFolderAsync (doc: Metadata): Promise<Metadata> {
     log.info(`${doc.path}: Creating folder...`)
@@ -66,7 +60,7 @@ export default class Remote implements Side {
       dir = await this.remoteCozy.createDirectory({
         name,
         dirID: parent._id,
-        lastModifiedDate: doc.lastModification
+        lastModifiedDate: doc.updated_at
       })
     } catch (err) {
       if (err.status !== 409) { throw err }
@@ -93,7 +87,7 @@ export default class Remote implements Side {
       dirID: dir._id,
       executable: doc.executable,
       contentType: doc.mime,
-      lastModifiedDate: new Date(doc.lastModification)
+      lastModifiedDate: new Date(doc.updated_at)
     })
 
     doc.remote = {
@@ -111,7 +105,7 @@ export default class Remote implements Side {
     const updated = await this.remoteCozy.updateFileById(doc.remote._id, stream, {
       contentType: doc.mime,
       checksum: doc.md5sum,
-      lastModifiedDate: new Date(doc.lastModification)
+      lastModifiedDate: new Date(doc.updated_at)
     })
 
     doc.remote._rev = updated._rev
@@ -121,16 +115,15 @@ export default class Remote implements Side {
 
   async updateFileMetadataAsync (doc: Metadata, old: any): Promise<Metadata> {
     log.info(`${doc.path}: Updating file metadata...`)
-    // TODO: v3: addFile() when no old.remote
 
-    // TODO: v3: Update more metadata, not just the last modification date.
-    const attrs = {}
-
-    // TODO: v3: ifMatch old rev
-    const updated = await this.remoteCozy.updateAttributesById(old.remote._id, attrs, {})
-
-    // TODO: v3: Handle trivial remote changes and conflicts.
-    // See Couch#putRemoteDoc() and #sameRemoteDoc()
+    const attrs = {
+      executable: doc.executable,
+      updated_at: doc.updated_at
+    }
+    const opts = {
+      ifMatch: old.remote._rev
+    }
+    const updated = await this.remoteCozy.updateAttributesById(old.remote._id, attrs, opts)
 
     doc.remote = {
       _id: updated._id,
@@ -142,9 +135,7 @@ export default class Remote implements Side {
 
   async moveFileAsync (newMetadata: Metadata, oldMetadata: Metadata): Promise<Metadata> {
     log.info(`${oldMetadata.path}: Moving to ${newMetadata.path}`)
-    // TODO: v3: Call addFile() when !from.remote?
-    // TODO: v3: Call addFile() when file not found on cozy
-    // TODO: v3: Call addFolder() on DirectoryNotFound?
+
     const [newDirPath, newName]: [string, string] = conversion.extractDirAndName(newMetadata.path)
     const newDir: RemoteDoc = await this.remoteCozy.findDirectoryByPath(newDirPath)
     const newRemoteDoc: RemoteDoc = await this.remoteCozy.updateAttributesById(oldMetadata.remote._id, {
@@ -160,21 +151,21 @@ export default class Remote implements Side {
     return conversion.createMetadata(newRemoteDoc)
   }
 
-  async updateFolderAsync (doc: Metadata, old: ?Metadata): Promise<Metadata> {
-    log.info(`${doc.path}: Updating metadata...`)
-    const [newParentDirPath, newName] = conversion.extractDirAndName(doc.path)
-    const newParentDir = await this.remoteCozy.findDirectoryByPath(newParentDirPath)
-    // XXX: Should we recreate missing parent, or would it duplicate work in Merge#ensureParentExist()?
-    let newRemoteDoc: RemoteDoc
-
-    if (!old || !old.remote) {
+  async updateFolderAsync (doc: Metadata, old: Metadata): Promise<Metadata> {
+    if (!old.remote) {
       return this.addFolderAsync(doc)
     }
+    log.info(`${doc.path}: Updating metadata...`)
+
+    const [newParentDirPath, newName] = conversion.extractDirAndName(doc.path)
+    const newParentDir = await this.remoteCozy.findDirectoryByPath(newParentDirPath)
+    let newRemoteDoc: RemoteDoc
 
     try {
       newRemoteDoc = await this.remoteCozy.updateAttributesById(old.remote._id, {
         name: newName,
-        dir_id: newParentDir._id
+        dir_id: newParentDir._id,
+        updated_at: doc.updated_at
       })
     } catch (err) {
       if (err.status !== 404) { throw err }
@@ -183,7 +174,7 @@ export default class Remote implements Side {
       newRemoteDoc = await this.remoteCozy.createDirectory({
         name: newName,
         dirID: newParentDir._id,
-        lastModifiedDate: doc.lastModification
+        lastModifiedDate: doc.updated_at
       })
     }
 
@@ -195,14 +186,14 @@ export default class Remote implements Side {
     return conversion.createMetadata(newRemoteDoc)
   }
 
-  async destroyAsync (doc: Metadata): Promise<void> {
-    log.info(`${doc.path}: Destroying...`)
-    await this.remoteCozy.destroyById(doc.remote._id)
-  }
-
   async trashAsync (doc: Metadata): Promise<void> {
     log.info(`${doc.path}: Moving to the trash...`)
-    await this.remoteCozy.trashById(doc.remote._id)
+    try {
+      await this.remoteCozy.trashById(doc.remote._id)
+    } catch (err) {
+      throw err
+    }
+    // TODO update _rev for the trashed file/folder
   }
 
   moveFolderAsync (doc: Metadata, from: Metadata): Promise<*> {
@@ -212,5 +203,14 @@ export default class Remote implements Side {
 
   diskUsage (): Promise<*> {
     return this.remoteCozy.diskUsage()
+  }
+
+  // TODO add tests
+  async resolveConflictAsync (dst: Metadata, src: Metadata): Promise<*> {
+    log.info(`Resolve a conflict: ${src.path} → ${dst.path}`)
+    const newName = conversion.extractDirAndName(dst.path)[1]
+    await this.remoteCozy.updateAttributesById(src.remote._id, {
+      name: newName
+    })
   }
 }

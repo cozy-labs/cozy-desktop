@@ -7,10 +7,11 @@ import clone from 'lodash.clone'
 import fs from 'fs-extra'
 import path from 'path'
 import * as stream from 'stream'
+import trash from 'trash'
 
 import Config from '../config'
 import logger from '../logger'
-import { extractRevNumber, inRemoteTrash } from '../metadata'
+import { isUpToDate } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import Watcher from './watcher'
@@ -60,18 +61,18 @@ class Local implements Side {
   }
 
   // Create a readable stream for the given doc
-  createReadStream (doc: Metadata, callback: Callback) {
+  createReadStreamAsync (doc: Metadata): Promise<stream.Readable> {
     try {
       let filePath = path.resolve(this.syncPath, doc.path)
       let stream = fs.createReadStream(filePath)
-      return callback(null, stream)
+      return new Promise((resolve, reject) => {
+        stream.on('open', () => resolve(stream))
+        stream.on('error', err => reject(err))
+      })
     } catch (err) {
-      log.error(err)
-      return callback(new Error('Cannot read the file'))
+      return Promise.reject(err)
     }
   }
-
-  createReadStreamAsync: (doc: Metadata) => Promise<stream.Readable>
 
   /* Helpers */
 
@@ -94,9 +95,9 @@ class Local implements Side {
           return callback(err)
         }
       }
-      if (doc.lastModification) {
-        let lastModification = new Date(doc.lastModification)
-        return fs.utimes(filePath, lastModification, lastModification, () =>
+      if (doc.updated_at) {
+        let updated = new Date(doc.updated_at)
+        return fs.utimes(filePath, updated, updated, () =>
           // Ignore errors
           next()
         )
@@ -104,13 +105,6 @@ class Local implements Side {
         return next()
       }
     }
-  }
-
-  // Return true if the local file is up-to-date for this document
-  isUpToDate (doc: Metadata) {
-    let currentRev = doc.sides.local || 0
-    let lastRev = extractRevNumber(doc)
-    return currentRev === lastRev
   }
 
   // Check if a file corresponding to given checksum already exists
@@ -121,7 +115,7 @@ class Local implements Side {
       } else if ((docs == null) || (docs.length === 0)) {
         return callback(null, false)
       } else {
-        let paths = Array.from(docs).filter((doc) => this.isUpToDate(doc)).map((doc) =>
+        let paths = Array.from(docs).filter((doc) => isUpToDate('local', doc)).map((doc) =>
                     path.resolve(this.syncPath, doc.path))
         return async.detect(paths, (filePath, next) =>
                     fs.exists(filePath, found => next(null, found))
@@ -149,10 +143,6 @@ class Local implements Side {
   // file. The checksum will then be computed and added to the document, and
   // then pushed to CouchDB.
   addFile (doc: Metadata, callback: Callback) {
-    if (inRemoteTrash(doc)) {
-      callback(null)
-      return
-    }
     let tmpFile = path.resolve(this.tmpPath, `${path.basename(doc.path)}.tmp`)
     let filePath = path.resolve(this.syncPath, doc.path)
     let parent = path.resolve(this.syncPath, path.dirname(doc.path))
@@ -175,28 +165,30 @@ class Local implements Side {
             this.events.emit('transfer-copy', doc)
             return fs.copy(existingFilePath, tmpFile, next)
           } else {
-            return this.other.createReadStream(doc, (err, stream) => {
-              // Don't use async callback here!
-              // Async does some magic and the stream can throw an
-              // 'error' event before the next async is called...
-              if (err) { return next(err) }
-              let target = fs.createWriteStream(tmpFile)
-              stream.pipe(target)
-              target.on('finish', next)
-              target.on('error', next)
-              // Emit events to track the download progress
-              let info = clone(doc)
-              info.way = 'down'
-              info.eventName = `transfer-down-${doc._id}`
-              this.events.emit('transfer-started', info)
-              stream.on('data', data => {
-                return this.events.emit(info.eventName, data)
-              }
-                            )
-              return target.on('finish', () => {
-                return this.events.emit(info.eventName, {finished: true})
-              })
-            })
+            return this.other.createReadStreamAsync(doc).then(
+              (stream) => {
+                // Don't use async callback here!
+                // Async does some magic and the stream can throw an
+                // 'error' event before the next async is called...
+                let target = fs.createWriteStream(tmpFile)
+                stream.pipe(target)
+                target.on('finish', next)
+                target.on('error', next)
+                // Emit events to track the download progress
+                let info = clone(doc)
+                info.way = 'down'
+                info.eventName = `transfer-down-${doc._id}`
+                this.events.emit('transfer-started', info)
+                stream.on('data', data => {
+                  return this.events.emit(info.eventName, data)
+                }
+                              )
+                return target.on('finish', () => {
+                  return this.events.emit(info.eventName, {finished: true})
+                })
+              },
+              (err) => { next(err) }
+            )
           }
         })
       },
@@ -231,10 +223,6 @@ class Local implements Side {
 
   // Create a new folder
   addFolder (doc: Metadata, callback: Callback) {
-    if (inRemoteTrash(doc)) {
-      callback(null)
-      return
-    }
     let folderPath = path.join(this.syncPath, doc.path)
     log.info(`Put folder ${folderPath}`)
     return fs.ensureDir(folderPath, err => {
@@ -249,40 +237,25 @@ class Local implements Side {
   addFolderAsync: (Metadata) => Promise<*>
 
   // Overwrite a file
-  overwriteFile (doc: Metadata, old: ?Metadata, callback: Callback) {
-    return this.addFile(doc, callback)
+  overwriteFileAsync (doc: Metadata, old: ?Metadata): Promise<*> {
+    return this.addFileAsync(doc)
   }
-
-  overwriteFileAsync: (Metadata, ?Metadata) => Promise<*>
 
   // Update the metadata of a file
   updateFileMetadata (doc: Metadata, old: Metadata, callback: Callback) {
     log.info(`${doc.path}: Updating file metadata...`)
-    if (inRemoteTrash(doc)) {
-      callback(null)
-      return
-    }
     return this.metadataUpdater(doc)(callback)
   }
 
   updateFileMetadataAsync: (Metadata, Metadata) => Promise<*>
 
   // Update a folder
-  updateFolder (doc: Metadata, old: ?Metadata, callback: Callback) {
-    return this.addFolder(doc, callback)
+  updateFolderAsync (doc: Metadata, old: Metadata): Promise<*> {
+    return this.addFolderAsync(doc)
   }
-
-  updateFolderAsync: (Metadata, ?Metadata) => Promise<*>
 
   // Move a file from one place to another
   moveFile (doc: Metadata, old: Metadata, callback: Callback) {
-    if (inRemoteTrash(doc)) {
-      this.destroy(old, callback)
-      return
-    } else if (inRemoteTrash(old)) {
-      this.addFile(doc, callback)
-      return
-    }
     log.info(`Move file ${old.path} → ${doc.path}`)
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
@@ -323,13 +296,6 @@ class Local implements Side {
 
   // Move a folder
   moveFolder (doc: Metadata, old: Metadata, callback: Callback) {
-    if (inRemoteTrash(doc)) {
-      this.destroy(old, callback)
-      return
-    } else if (inRemoteTrash(old)) {
-      this.addFolder(doc, callback)
-      return
-    }
     log.info(`Move folder ${old.path} → ${doc.path}`)
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
@@ -367,30 +333,12 @@ class Local implements Side {
 
   moveFolderAsync: (Metadata, Metadata) => Promise<*>
 
-  // Delete a file or folder from the local filesystem
-  destroy (doc: Metadata, callback: Callback) {
-    if (inRemoteTrash(doc)) {
-      callback(null)
-      return
-    }
+  trashAsync (doc: Metadata): Promise<*> {
     log.info(`Delete ${doc.path}`)
     this.events.emit('delete-file', doc)
     let fullpath = path.join(this.syncPath, doc.path)
-    if (doc.docType === 'file') {
-      return fs.unlink(fullpath, callback)
-    } else {
-      return fs.rmdir(fullpath, callback)
-    }
+    return trash([fullpath])
   }
-
-  destroyAsync: (Metadata) => Promise<*>
-
-  trash (doc: Metadata, callback: Callback) {
-    // TODO: v3: Put files and folders into the OS trash
-    return this.destroy(doc, callback)
-  }
-
-  trashAsync: (Metadata) => Promise<*>
 
   // Rename a file/folder to resolve a conflict
   resolveConflict (dst: Metadata, src: Metadata, callback: Callback) {
@@ -404,6 +352,8 @@ class Local implements Side {
       if (p.hasPath(src.path)) { p.clear(src.path) }
     }, 1000)
   }
+
+  resolveConflictAsync: (Metadata, Metadata) => Promise<*>
 }
 
 export default Local

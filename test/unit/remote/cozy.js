@@ -141,9 +141,11 @@ describe('RemoteCozy', function () {
       const subdir = await builders.remoteDir().inDir(dir).create()
 
       const foundDir = await remoteCozy.findDirectoryByPath(dir.path)
+      delete foundDir.created_at
       foundDir.should.deepEqual(dir)
 
       const foundSubdir = await remoteCozy.findDirectoryByPath(subdir.path)
+      delete foundSubdir.created_at
       foundSubdir.should.deepEqual(subdir)
     })
 

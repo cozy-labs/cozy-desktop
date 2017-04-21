@@ -46,7 +46,6 @@ export default class RemoteCozy {
     this.updateFileById = composeAsync(this.client.files.updateById, this.toRemoteDoc)
     this.updateAttributesById = composeAsync(this.client.files.updateAttributesById, this.toRemoteDoc)
     this.trashById = this.client.files.trashById
-    this.destroyById = this.client.files.destroyById
   }
 
   unregister: () => Promise<void>
@@ -71,8 +70,6 @@ export default class RemoteCozy {
                          options?: {ifMatch?: string}) => Promise<RemoteDoc>
 
   trashById: (id: string) => Promise<void>
-
-  destroyById: (id: string) => Promise<void>
 
   async changes (seq: number = 0) {
     let json = await this.client.data.changesFeed(FILES_DOCTYPE, { since: seq })

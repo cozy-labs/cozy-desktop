@@ -1,13 +1,14 @@
 /* @flow */
 
+import clone from 'lodash.clone'
+import path from 'path'
 import Ignore from './ignore'
 import logger from './logger'
 import Merge from './merge'
 import { buildId, ensureValidChecksum, ensureValidPath } from './metadata'
+import { TRASH_DIR_NAME } from './remote/constants'
 
-import type { Metadata } from './metadata'
-import type { SideName } from './side'
-import type { Callback } from './utils/func'
+import type { SideName, Metadata } from './metadata'
 
 const log = logger({
   component: 'Prep'
@@ -42,11 +43,6 @@ class Prep {
     }
   }
 
-  addDoc (side: SideName, doc: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.addDocAsync(side, doc).asCallback(callback)
-  }
-
   // Simple helper to update a file or a folder
   async updateDocAsync (side: SideName, doc: Metadata) {
     if (doc.docType === 'file') {
@@ -56,11 +52,6 @@ class Prep {
     } else {
       throw new Error(`Unexpected docType: ${doc.docType}`)
     }
-  }
-
-  updateDoc (side: SideName, doc: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.updateDocAsync(side, doc).asCallback(callback)
   }
 
   // Helper to move/rename a file or a folder
@@ -76,9 +67,26 @@ class Prep {
     }
   }
 
-  moveDoc (side: SideName, doc: Metadata, was: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.moveDocAsync(side, doc, was).asCallback(callback)
+  // Simple helper to restore a file or a folder
+  async restoreDocAsync (side: SideName, was: Metadata, doc: Metadata) {
+    if (doc.docType === 'file') {
+      return this.restoreFileAsync(side, was, doc)
+    } else if (doc.docType === 'folder') {
+      return this.restoreFolderAsync(side, was, doc)
+    } else {
+      throw new Error(`Unexpected docType: ${doc.docType}`)
+    }
+  }
+
+  // Simple helper to trash a file or a folder
+  async trashDocAsync (side: SideName, was: Metadata, doc: ?Metadata) {
+    if (was.docType === 'file') {
+      return this.trashFileAsync(side, was, doc)
+    } else if (was.docType === 'folder') {
+      return this.trashFolderAsync(side, was, doc)
+    } else {
+      throw new Error(`Unexpected docType: ${was.docType}`)
+    }
   }
 
   // Simple helper to delete a file or a folder
@@ -90,22 +98,6 @@ class Prep {
     } else {
       throw new Error(`Unexpected docType: ${doc.docType}`)
     }
-  }
-
-  // Simple helper to delete a file or a folder
-  async trashDocAsync (side: SideName, doc: Metadata) {
-    if (doc.docType === 'file') {
-      return this.trashFileAsync(side, doc)
-    } else if (doc.docType === 'folder') {
-      return this.trashFolderAsync(side, doc)
-    } else {
-      throw new Error(`Unexpected docType: ${doc.docType}`)
-    }
-  }
-
-  trashDoc (side: SideName, doc: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.trashDocAsync(side, doc).asCallback(callback)
   }
 
   /* Actions */
@@ -120,18 +112,7 @@ class Prep {
     doc.docType = 'file'
     buildId(doc)
     if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
-
-    if (doc.creationDate == null) { doc.creationDate = new Date() }
-    if (doc.lastModification == null) { doc.lastModification = new Date() }
-    if (doc.lastModification === 'Invalid date') {
-      doc.lastModification = new Date()
-    }
     return this.merge.addFileAsync(side, doc)
-  }
-
-  addFile (side: SideName, doc: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.addFileAsync(side, doc).asCallback(callback)
   }
 
   // Expectations:
@@ -144,17 +125,7 @@ class Prep {
     doc.docType = 'file'
     buildId(doc)
     if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
-
-    if (doc.lastModification == null) { doc.lastModification = new Date() }
-    if (doc.lastModification === 'Invalid date') {
-      doc.lastModification = new Date()
-    }
     return this.merge.updateFileAsync(side, doc)
-  }
-
-  updateFile (side: SideName, doc: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.updateFileAsync(side, doc).asCallback(callback)
   }
 
   // Expectations:
@@ -165,16 +136,7 @@ class Prep {
     doc.docType = 'folder'
     buildId(doc)
     if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
-    if (doc.lastModification == null) { doc.lastModification = new Date() }
-    if (doc.lastModification === 'Invalid date') {
-      doc.lastModification = new Date()
-    }
     return this.merge.putFolderAsync(side, doc)
-  }
-
-  putFolder (side: SideName, doc: *, callback: Callback) {
-    // $FlowFixMe
-    this.putFolderAsync(side, doc).asCallback(callback)
   }
 
   // Expectations:
@@ -200,17 +162,8 @@ class Prep {
     }
   }
 
-  moveFile (side: SideName, doc: Metadata, was: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.moveFileAsync(side, doc, was).asCallback(callback)
-  }
-
   doMoveFile (side: SideName, doc: Metadata, was: Metadata) {
     doc.docType = 'file'
-    if (doc.lastModification == null) { doc.lastModification = new Date() }
-    if (doc.lastModification === 'Invalid date') {
-      doc.lastModification = new Date()
-    }
     buildId(doc)
     buildId(was)
     let docIgnored = this.ignore.isIgnored(doc)
@@ -244,17 +197,8 @@ class Prep {
     }
   }
 
-  moveFolder (side: SideName, doc: Metadata, was: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.moveFolderAsync(side, doc, was).asCallback(callback)
-  }
-
   doMoveFolder (side: SideName, doc: Metadata, was: Metadata) {
     doc.docType = 'folder'
-    if (doc.lastModification == null) { doc.lastModification = new Date() }
-    if (doc.lastModification === 'Invalid date') {
-      doc.lastModification = new Date()
-    }
     buildId(doc)
     buildId(was)
     let docIgnored = this.ignore.isIgnored(doc)
@@ -269,6 +213,73 @@ class Prep {
     }
   }
 
+  // TODO add comments + tests
+  async restoreFileAsync (side: SideName, was: Metadata, doc: Metadata) {
+    ensureValidPath(doc)
+    ensureValidPath(was)
+    ensureValidChecksum(doc)
+
+    delete doc.trashed
+    doc.docType = 'file'
+    buildId(doc)
+    buildId(was)
+    // TODO ignore.isIgnored
+    return this.merge.restoreFileAsync(side, was, doc)
+  }
+
+  // TODO add comments + tests
+  async restoreFolderAsync (side: SideName, was: Metadata, doc: Metadata) {
+    ensureValidPath(doc)
+    ensureValidPath(was)
+
+    delete doc.trashed
+    doc.docType = 'folder'
+    buildId(doc)
+    buildId(was)
+    // TODO ignore.isIgnored
+    return this.merge.restoreFolderAsync(side, was, doc)
+  }
+
+  // TODO add comments + tests
+  async trashFileAsync (side: SideName, was: *, doc: *) {
+    ensureValidPath(was)
+
+    if (!doc) {
+      doc = clone(was)
+      doc.path = path.join(TRASH_DIR_NAME, was.path)
+    }
+
+    ensureValidPath(doc)
+    ensureValidChecksum(doc)
+
+    doc.trashed = true
+    doc.docType = 'file'
+    buildId(doc)
+    buildId(was)
+    // TODO ignore.isIgnored
+    return this.merge.trashFileAsync(side, was, doc)
+  }
+
+  // TODO add comments + tests
+  async trashFolderAsync (side: SideName, was: *, doc: *) {
+    ensureValidPath(was)
+
+    if (!doc) {
+      doc = clone(was)
+      doc.path = path.join(TRASH_DIR_NAME, was.path)
+    }
+
+    ensureValidPath(doc)
+    ensureValidChecksum(doc)
+
+    doc.trashed = true
+    doc.docType = 'folder'
+    buildId(doc)
+    buildId(was)
+    // TODO ignore.isIgnored
+    return this.merge.trashFolderAsync(side, was, doc)
+  }
+
   // Expectations:
   //   - the file path is present and valid
   async deleteFileAsync (side: SideName, doc: Metadata) {
@@ -280,11 +291,6 @@ class Prep {
     return this.merge.deleteFileAsync(side, doc)
   }
 
-  deleteFile (side: SideName, doc: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.deleteFileAsync(side, doc).asCallback(callback)
-  }
-
   // Expectations:
   //   - the folder path is present and valid
   async deleteFolderAsync (side: SideName, doc: Metadata) {
@@ -294,39 +300,6 @@ class Prep {
     buildId(doc)
     if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
     return this.merge.deleteFolderAsync(side, doc)
-  }
-
-  deleteFolder (side: SideName, doc: Metadata, callback: Callback) {
-    // $FlowFixMe
-    this.deleteFolderAsync(side, doc).asCallback(callback)
-  }
-
-  trashFileAsync (side: SideName, doc: *) {
-    ensureValidPath(doc)
-
-    doc.docType = 'file'
-    buildId(doc)
-    if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
-    return this.merge.trashAsync(side, doc)
-  }
-
-  trashFile (side: SideName, doc: *, callback: Callback) {
-    // $FlowFixMe
-    this.trashFileAsync(side, doc).asCallback(callback)
-  }
-
-  trashFolderAsync (side: SideName, doc: *) {
-    ensureValidPath(doc)
-
-    doc.docType = 'folder'
-    buildId(doc)
-    if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
-    return this.merge.trashAsync(side, doc)
-  }
-
-  trashFolder (side: SideName, doc: *, callback: Callback) {
-    // $FlowFixMe
-    this.trashFolderAsync(side, doc).asCallback(callback)
   }
 }
 
