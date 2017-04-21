@@ -361,7 +361,9 @@ class Merge {
       oldMetadata._deleted = true
       try {
         await this.pouch.put(oldMetadata)
-      } catch (_) {}
+      } catch (err) {
+        log.warn(err)
+      }
     }
     return this.pouch.put(newMetadata)
   }
@@ -383,7 +385,9 @@ class Merge {
         try {
           child._deleted = true
           await this.pouch.put(child)
-        } catch (_) {}
+        } catch (err) {
+          log.warn(err)
+        }
       }
     }
     return this.trashFileAsync(side, was, doc)
