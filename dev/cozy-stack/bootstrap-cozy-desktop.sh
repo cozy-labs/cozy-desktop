@@ -15,6 +15,9 @@ for name in "dev" "test"; do
     $name.cozy.tools:8080
 done
 
+# Install cozy-drive on dev instance
+cozy-stack apps install files git://github.com/cozy/cozy-drive.git#build --domain dev.cozy.tools:8080
+
 # Retrieve test client ID
 client_id=$(cozy-stack instances client-oauth \
   test.cozy.tools:8080 \
