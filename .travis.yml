@@ -24,7 +24,6 @@ services:
     - docker
 cache:
     directories:
-        - node_modules
         - /Library/Caches/Homebrew
 addons:
     apt:
