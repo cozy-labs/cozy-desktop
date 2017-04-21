@@ -368,9 +368,9 @@ describe('RemoteWatcher', function () {
       args[1].should.not.have.properties(['_rev', 'path', 'name'])
     })
 
-    it('calls moveDoc when file is renamed', async function () {
-      this.prep.moveDocAsync = sinon.stub()
-      this.prep.moveDocAsync.returnsPromise().resolves(null)
+    it('calls moveFile when file is renamed', async function () {
+      this.prep.moveFileAsync = sinon.stub()
+      this.prep.moveFileAsync.returnsPromise().resolves(null)
       let doc: RemoteDoc = {
         _id: '12345678902',
         _rev: '4-abcdef',
@@ -386,8 +386,8 @@ describe('RemoteWatcher', function () {
 
       await this.watcher.onChange(clone(doc))
 
-      this.prep.moveDocAsync.called.should.be.true()
-      let args = this.prep.moveDocAsync.args[0]
+      this.prep.moveFileAsync.called.should.be.true()
+      let args = this.prep.moveFileAsync.args[0]
       args[0].should.equal('remote')
       let src = args[2]
       src.should.have.properties({
@@ -413,9 +413,9 @@ describe('RemoteWatcher', function () {
       dst.should.not.have.properties(['_rev', 'path', 'name'])
     })
 
-    it('calls moveDoc when file is moved', async function () {
-      this.prep.moveDocAsync = sinon.stub()
-      this.prep.moveDocAsync.returnsPromise().resolves(null)
+    it('calls moveFile when file is moved', async function () {
+      this.prep.moveFileAsync = sinon.stub()
+      this.prep.moveFileAsync.returnsPromise().resolves(null)
       let doc: RemoteDoc = {
         _id: '12345678902',
         _rev: '5-abcdef',
@@ -439,8 +439,8 @@ describe('RemoteWatcher', function () {
 
       await this.watcher.onChange(clone(doc))
 
-      this.prep.moveDocAsync.called.should.be.true()
-      let src = this.prep.moveDocAsync.args[0][2]
+      this.prep.moveFileAsync.called.should.be.true()
+      let src = this.prep.moveFileAsync.args[0][2]
       src.should.have.properties({
         path: 'my-folder/file-2',
         docType: 'file',
@@ -450,7 +450,7 @@ describe('RemoteWatcher', function () {
           _id: '12345678902'
         }
       })
-      let dst = this.prep.moveDocAsync.args[0][1]
+      let dst = this.prep.moveFileAsync.args[0][1]
       dst.should.have.properties({
         path: 'another-folder/in/some/place',
         docType: 'file',
@@ -516,48 +516,6 @@ describe('RemoteWatcher', function () {
       const addArgs = this.prep.addDocAsync.args[0]
       should(addArgs[0]).equal('remote')
       should(addArgs[1]).have.properties(createMetadata(newDir))
-    })
-
-    it('calls deleteDoc & addDoc when file has changed completely', async function () {
-      this.prep.deleteDocAsync = sinon.stub()
-      this.prep.addDocAsync = sinon.stub()
-      this.prep.deleteDocAsync.returnsPromise().resolves(null)
-      this.prep.addDocAsync.returnsPromise().resolves(null)
-      let doc: RemoteDoc = {
-        _id: '12345678903',
-        _rev: '6-abcdef',
-        _type: FILES_DOCTYPE,
-        type: 'file',
-        dir_id: 'whatever',
-        path: '/another-folder/in/some/place',
-        name: 'file-3-bis',
-        md5sum: '8888888888888888888888888888888888888888',
-        tags: [],
-        updated_at: '2017-01-30T09:09:15.217662611+01:00'
-      }
-      let was: Metadata = await this.pouch.db.get('my-folder/file-3')
-      was.remote._rev = doc._rev
-      await this.pouch.db.put(was)
-
-      await this.watcher.onChange(clone(doc))
-
-      this.prep.deleteDocAsync.called.should.be.true()
-      let id = this.prep.deleteDocAsync.args[0][1].path
-      id.should.equal('my-folder/file-3')
-      this.prep.addDocAsync.called.should.be.true()
-      let args = this.prep.addDocAsync.args[0]
-      args[0].should.equal('remote')
-      args[1].should.have.properties({
-        path: 'another-folder/in/some/place',
-        docType: 'file',
-        md5sum: doc.md5sum,
-        tags: doc.tags,
-        remote: {
-          _id: doc._id,
-          _rev: doc._rev
-        }
-      })
-      args[1].should.not.have.properties(['_rev', 'path', 'name'])
     })
   })
 
