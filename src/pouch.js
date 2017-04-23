@@ -115,15 +115,15 @@ class Pouch {
   }
 
   // Return all the files and folders in this path, even in subfolders
-  byRecursivePath (path, callback) {
+  byRecursivePath (basePath, callback) {
     let params
-    if (path === '') {
+    if (basePath === '') {
       params =
                 {include_docs: true}
     } else {
       params = {
-        startkey: `${path}`,
-        endkey: `${path}/\ufff0`,
+        startkey: `${basePath}`,
+        endkey: `${basePath}${path.sep}\ufff0`,
         include_docs: true
       }
     }
