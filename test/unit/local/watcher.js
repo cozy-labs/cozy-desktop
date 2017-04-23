@@ -92,20 +92,22 @@ describe('LocalWatcher Tests', function () {
       })
     })
 
-    it('sets the executable bit', function (done) {
-      let filePath = path.join(this.syncPath, 'executable')
-      fs.ensureFileSync(filePath)
-      fs.chmodSync(filePath, '755')
-      fs.stat(filePath, (err, stats) => {
-        should.not.exist(err)
-        should.exist(stats)
-        this.watcher.createDoc('executable', stats, function (err, doc) {
+    if (process.platform !== 'win32') {
+      it('sets the executable bit', function (done) {
+        let filePath = path.join(this.syncPath, 'executable')
+        fs.ensureFileSync(filePath)
+        fs.chmodSync(filePath, '755')
+        fs.stat(filePath, (err, stats) => {
           should.not.exist(err)
-          doc.executable.should.be.true()
-          done()
+          should.exist(stats)
+          this.watcher.createDoc('executable', stats, function (err, doc) {
+            should.not.exist(err)
+            should(doc.executable).be.true()
+            done()
+          })
         })
       })
-    })
+    }
 
     it('calls back with an error if the file is missing', function (done) {
       this.watcher.createDoc('no/such/file', {}, function (err, doc) {
