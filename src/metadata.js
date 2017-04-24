@@ -182,17 +182,7 @@ export function sameFile (one: Metadata, two: Metadata) {
 
 // Return true if the two files have the same binary content
 export function sameBinary (one: Metadata, two: Metadata) {
-  if ((one.docType !== 'file') || (two.docType !== 'file')) {
-    return false
-  } else if ((one.md5sum != null) && (one.md5sum === two.md5sum)) {
-    return true
-  } else if ((one.remote != null) && (two.remote != null)) {
-    let oneId = one.remote._id
-    let twoId = two.remote._id
-    return (oneId != null) && (oneId === twoId)
-  } else {
-    return false
-  }
+  return one.md5sum === two.md5sum
 }
 
 // Mark the next rev for this side
