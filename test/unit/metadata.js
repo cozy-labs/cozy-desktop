@@ -325,26 +325,6 @@ describe('metadata', function () {
       ret.should.be.true()
     })
 
-    it('returns true for two docs with the same remote file', function () {
-      let one = {
-        md5sum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc',
-        docType: 'file',
-        remote: {
-          _id: 'f00b4r'
-        }
-      }
-      let two = {
-        docType: 'file',
-        remote: {
-          _id: 'f00b4r'
-        }
-      }
-      let ret = sameBinary(one, two)
-      ret.should.be.true()
-      ret = sameBinary(two, one)
-      ret.should.be.true()
-    })
-
     it('returns false for two different documents', function () {
       let one = {
         docType: 'file',
@@ -357,17 +337,7 @@ describe('metadata', function () {
           _id: 'f00b4r'
         }
       }
-      let three = {
-        docType: 'file',
-        remote: {
-          _id: 'c00463'
-        }
-      }
       let ret = sameBinary(one, two)
-      ret.should.be.false()
-      ret = sameBinary(two, three)
-      ret.should.be.false()
-      ret = sameBinary(three, one)
       ret.should.be.false()
     })
   })
