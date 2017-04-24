@@ -119,11 +119,16 @@ export default class Remote implements Side {
   async overwriteFileAsync (doc: Metadata, old: ?Metadata): Promise<Metadata> {
     log.info(`${doc.path}: Uploading new file version...`)
     const stream = await this.other.createReadStreamAsync(doc)
-    const updated = await this.remoteCozy.updateFileById(doc.remote._id, stream, {
+    const options = {
       contentType: doc.mime,
       checksum: doc.md5sum,
-      lastModifiedDate: new Date(doc.updated_at)
-    })
+      lastModifiedDate: new Date(doc.updated_at),
+      ifMatch: ''
+    }
+    if (old && old.remote) {
+      options.ifMatch = old.remote._rev
+    }
+    const updated = await this.remoteCozy.updateFileById(doc.remote._id, stream, options)
 
     doc.remote._rev = updated._rev
 
