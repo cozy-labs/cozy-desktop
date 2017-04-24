@@ -4,6 +4,7 @@
   "license": "AGPL-3.0",
   "build": {
     "appId": "io.cozy.desktop",
+    "productName": "Cozy Desktop",
     "linux": {
       "target": [
         "deb"
@@ -37,7 +38,8 @@
     "dist": "npm run _dist",
     "_dist": "build --x64 --ia32",
     "lint": "standard --verbose app/main.js app/ports.js",
-    "pack": "build --dir",
+    "pack": "npm run _pack",
+    "_pack": "build --dir",
     "postinstall": "npm run postinstall:electron && npm run postinstall:elm",
     "postinstall:electron": "install-app-deps",
     "postinstall:elm": "elm-package install -y",
