@@ -1,3 +1,15 @@
+## 3.0.0-alpha2 - 2017-04-24
+
+This is for testing purpose only.
+Do not install it, unless you know what you're doing.
+
+* Improve macOS packaging
+* Improve conflict management
+* Improve error management
+* Improve log report
+* Improve Windows support
+
+
 ## 3.0.0-alpha1 - 2017-04-14
 
 This is for testing purpose only.
