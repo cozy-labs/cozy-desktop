@@ -180,7 +180,7 @@ class Merge {
         if (doc.size == null) { doc.size = file.size }
         if (doc.class == null) { doc.class = file.class }
         if (doc.mime == null) { doc.mime = file.mime }
-      } else if (!isUpToDate(side, doc)) {
+      } else if (!isUpToDate(side, file)) {
         return this.resolveConflictAsync(side, doc)
       }
       if (sameFile(file, doc)) {

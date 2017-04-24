@@ -146,7 +146,11 @@ describe('Merge', function () {
           path: 'FIZZBUZZ.JPG',
           docType: 'file',
           md5sum: '3333333333333333333333333333333333333333',
-          tags: ['qux', 'quux']
+          tags: ['qux', 'quux'],
+          sides: {
+            local: 2,
+            remote: 2
+          }
         }
         this.merge.updateFileAsync(this.side, clone(doc)).then(() => {
           this.pouch.db.get(this.file._id, function (err, res) {
