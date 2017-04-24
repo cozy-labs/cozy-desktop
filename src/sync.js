@@ -305,7 +305,7 @@ class Sync {
         // $FlowFixMe
         from = (this.moveFrom: Metadata)
         this.moveFrom = null
-        if (from.moveTo === doc._id) {
+        if (from.moveTo === doc._id && from.md5sum === doc.md5sum) {
           try {
             await side.moveFileAsync(doc, from)
           } catch (err) {
@@ -313,9 +313,9 @@ class Sync {
             throw err
           }
         } else {
-          log.error('Invalid move')
-          log.error(from)
-          log.error(doc)
+          log.warn('Invalid move')
+          log.warn(from)
+          log.warn(doc)
           try {
             await side.addFileAsync(doc)
           } catch (err) {
