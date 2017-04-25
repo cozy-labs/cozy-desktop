@@ -7,9 +7,10 @@ import Config from '../../src/config'
 export default {
   createConfig () {
     let parent = process.env.COZY_DESKTOP_DIR || 'tmp'
-    this.syncPath = path.resolve(`${parent}/${+new Date()}`)
+    const basePath = path.resolve(`${parent}/${+new Date()}`)
+    this.syncPath = path.join(basePath, 'Cozy')
     fs.ensureDirSync(this.syncPath)
-    this.config = new Config(path.join(this.syncPath, '.cozy-desktop'))
+    this.config = new Config(path.join(basePath, '.cozy-desktop'))
     this.config.syncPath = this.syncPath
   },
 

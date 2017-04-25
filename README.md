@@ -1,7 +1,8 @@
 [Cozy][0] Desktop <sup>(beta)</sup>
 ====================================
 
-[![Build Status][1]][2]
+[![Linux & macOS Build Status][1]][2]
+[![Windows build status][21]][22]
 [![Dependency Status][15]][16]
 [![Code Climate][17]][18]
 [![codecov][19]][20]
@@ -218,3 +219,5 @@ You can reach the Cozy Community by:
 [18]: https://codeclimate.com/github/cozy-labs/cozy-desktop
 [19]: https://codecov.io/gh/cozy-labs/cozy-desktop/branch/master/graph/badge.svg
 [20]: https://codecov.io/gh/cozy-labs/cozy-desktop/list/master
+[21]: https://ci.appveyor.com/api/projects/status/4owiq9xl7sc45qak/branch/master?svg=true
+[22]: https://ci.appveyor.com/project/sebn/cozy-desktop/branch/master

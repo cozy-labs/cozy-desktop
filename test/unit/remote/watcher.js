@@ -3,6 +3,7 @@
 
 import async from 'async'
 import clone from 'lodash.clone'
+import path from 'path'
 import sinon from 'sinon'
 import should from 'should'
 import { Client as CozyClient } from 'cozy-client-js'
@@ -322,7 +323,7 @@ describe('RemoteWatcher', function () {
       let args = this.prep.updateDocAsync.args[0]
       args[0].should.equal('remote')
       args[1].should.have.properties({
-        path: 'my-folder/file-1',
+        path: path.normalize('my-folder/file-1'),
         docType: 'file',
         md5sum: doc.md5sum,
         tags: doc.tags,
@@ -356,7 +357,7 @@ describe('RemoteWatcher', function () {
       let args = this.prep.updateDocAsync.args[0]
       args[0].should.equal('remote')
       args[1].should.have.properties({
-        path: 'my-folder/file-1',
+        path: path.normalize('my-folder/file-1'),
         docType: 'file',
         md5sum: doc.md5sum,
         tags: doc.tags,
@@ -391,7 +392,7 @@ describe('RemoteWatcher', function () {
       args[0].should.equal('remote')
       let src = args[2]
       src.should.have.properties({
-        path: 'my-folder/file-2',
+        path: path.normalize('my-folder/file-2'),
         docType: 'file',
         md5sum: doc.md5sum,
         tags: doc.tags,
@@ -434,7 +435,7 @@ describe('RemoteWatcher', function () {
           }
         }
       }
-      const was: Metadata = await this.pouch.db.get('my-folder/file-2')
+      const was: Metadata = await this.pouch.db.get(path.normalize('my-folder/file-2'))
       await this.pouch.db.put(was)
 
       await this.watcher.onChange(clone(doc))
@@ -442,7 +443,7 @@ describe('RemoteWatcher', function () {
       this.prep.moveFileAsync.called.should.be.true()
       let src = this.prep.moveFileAsync.args[0][2]
       src.should.have.properties({
-        path: 'my-folder/file-2',
+        path: path.normalize('my-folder/file-2'),
         docType: 'file',
         md5sum: doc.md5sum,
         tags: doc.tags,
@@ -452,7 +453,7 @@ describe('RemoteWatcher', function () {
       })
       let dst = this.prep.moveFileAsync.args[0][1]
       dst.should.have.properties({
-        path: 'another-folder/in/some/place',
+        path: path.normalize('another-folder/in/some/place'),
         docType: 'file',
         md5sum: doc.md5sum,
         tags: doc.tags,

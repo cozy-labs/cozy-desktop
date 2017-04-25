@@ -5,6 +5,7 @@ import PouchDB from 'pouchdb'
 import async from 'async'
 import fs from 'fs-extra'
 import isEqual from 'lodash.isequal'
+import path from 'path'
 
 import Config from './config'
 import logger from './logger'
@@ -114,15 +115,15 @@ class Pouch {
   }
 
   // Return all the files and folders in this path, even in subfolders
-  byRecursivePath (path, callback) {
+  byRecursivePath (basePath, callback) {
     let params
-    if (path === '') {
+    if (basePath === '') {
       params =
                 {include_docs: true}
     } else {
       params = {
-        startkey: `${path}`,
-        endkey: `${path}/\ufff0`,
+        startkey: `${basePath}`,
+        endkey: `${basePath}${path.sep}\ufff0`,
         include_docs: true
       }
     }
@@ -178,17 +179,16 @@ class Pouch {
   // The path for a file/folder in root will be '',
   // not '.' as with node's path.dirname
   addByPathView (callback) {
-    /* !pragma no-coverage-next */
-    /* istanbul ignore next */
-    let query =
+    const sep = JSON.stringify(path.sep)
+    let query = `
       function (doc) {
         if ('docType' in doc) {
-          let parts = doc._id.split('/')
+          let parts = doc._id.split(${sep})
           parts.pop()
-          // $FlowFixMe
-          return emit(parts.join('/'), {_id: doc._id}) // eslint-disable-line no-undef
+          return emit(parts.join(${sep}), {_id: doc._id})
         }
-      }.toString()
+      }
+    `
     return this.createDesignDoc('byPath', query, callback)
   }
 

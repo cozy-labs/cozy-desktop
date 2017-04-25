@@ -45,7 +45,7 @@ describe('LocalWatcher Tests', function () {
         this.prep.putFolderAsync.args[0][1].path.should.equal('aa')
         this.prep.addFileAsync.called.should.be.true()
         this.prep.addFileAsync.args[0][0].should.equal('local')
-        this.prep.addFileAsync.args[0][1].path.should.equal('aa/ab')
+        this.prep.addFileAsync.args[0][1].path.should.equal(path.normalize('aa/ab'))
         done()
       }, 1100)
       this.watcher.start()
@@ -92,20 +92,22 @@ describe('LocalWatcher Tests', function () {
       })
     })
 
-    it('sets the executable bit', function (done) {
-      let filePath = path.join(this.syncPath, 'executable')
-      fs.ensureFileSync(filePath)
-      fs.chmodSync(filePath, '755')
-      fs.stat(filePath, (err, stats) => {
-        should.not.exist(err)
-        should.exist(stats)
-        this.watcher.createDoc('executable', stats, function (err, doc) {
+    if (process.platform !== 'win32') {
+      it('sets the executable bit', function (done) {
+        let filePath = path.join(this.syncPath, 'executable')
+        fs.ensureFileSync(filePath)
+        fs.chmodSync(filePath, '755')
+        fs.stat(filePath, (err, stats) => {
           should.not.exist(err)
-          doc.executable.should.be.true()
-          done()
+          should.exist(stats)
+          this.watcher.createDoc('executable', stats, function (err, doc) {
+            should.not.exist(err)
+            should(doc.executable).be.true()
+            done()
+          })
         })
       })
-    })
+    }
 
     it('calls back with an error if the file is missing', function (done) {
       this.watcher.createDoc('no/such/file', {}, function (err, doc) {
@@ -181,7 +183,7 @@ describe('LocalWatcher Tests', function () {
         this.prep.putFolderAsync = function (side, doc) {
           side.should.equal('local')
           doc.should.have.properties({
-            path: 'abb/abc',
+            path: path.normalize('abb/abc'),
             docType: 'folder'
           })
           doc.should.have.properties([
@@ -268,7 +270,7 @@ describe('LocalWatcher Tests', function () {
       return
     }
 
-    before('reset pouchdb', function (done) {
+    beforeEach('reset pouchdb', function (done) {
       this.pouch.resetDatabase(done)
     })
 
@@ -350,9 +352,9 @@ describe('LocalWatcher Tests', function () {
               this.prep.deleteFileAsync.called.should.be.false()
               this.prep.moveFileAsync.called.should.be.true()
               src = this.prep.moveFileAsync.args[0][2]
-              src.should.have.properties({path: 'aga/agc'})
+              src.should.have.properties({path: path.normalize('aga/agc')})
               dst = this.prep.moveFileAsync.args[0][1]
-              dst.should.have.properties({path: 'agb/agc'})
+              dst.should.have.properties({path: path.normalize('agb/agc')})
               // FIXME: Delete moved dirs
               this.prep.trashFolderAsync.called.should.be.true()
               let args = this.prep.trashFolderAsync.args[0][1]

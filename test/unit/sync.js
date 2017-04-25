@@ -1,5 +1,6 @@
 /* eslint-env mocha */
 
+import path from 'path'
 import sinon from 'sinon'
 import should from 'should'
 
@@ -128,11 +129,11 @@ describe('Sync', function () {
           this.pouch.getLocalSeq(function (err, seq) {
             should.not.exist(err)
             change.should.have.properties({
-              id: 'my-folder/file-1',
+              id: path.normalize('my-folder/file-1'),
               seq: seq + 1
             })
             change.doc.should.have.properties({
-              _id: 'my-folder/file-1',
+              _id: path.normalize('my-folder/file-1'),
               docType: 'file',
               tags: []})
             done()
@@ -165,11 +166,11 @@ function(doc) {
         this.pouch.getLocalSeq(function (err, seq) {
           should.not.exist(err)
           change.should.have.properties({
-            id: 'my-folder/file-7',
+            id: path.normalize('my-folder/file-7'),
             seq: seq + 1
           })
           change.doc.should.have.properties({
-            _id: 'my-folder/file-7',
+            _id: path.normalize('my-folder/file-7'),
             docType: 'file',
             tags: []})
           done()
