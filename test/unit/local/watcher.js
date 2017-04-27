@@ -138,7 +138,12 @@ describe('LocalWatcher Tests', function () {
     })
   })
 
-  describe('onAddFile', () =>
+  describe('onAddFile', () => {
+    if (process.env.APPVEYOR) {
+      it('is unstable on AppVeyor')
+      return
+    }
+
     it('detects when a file is created', function (done) {
       this.watcher.start().then(() => {
         this.prep.addFileAsync = function (side, doc) {
@@ -156,9 +161,14 @@ describe('LocalWatcher Tests', function () {
         fs.copySync(src, dst)
       })
     })
-  )
+  })
 
   describe('onAddDir', function () {
+    if (process.env.APPVEYOR) {
+      it('is unstable on AppVeyor')
+      return
+    }
+
     it('detects when a folder is created', function (done) {
       this.watcher.start().then(() => {
         this.prep.putFolderAsync = function (side, doc) {
@@ -199,7 +209,12 @@ describe('LocalWatcher Tests', function () {
     })
   })
 
-  describe('onUnlinkFile', () =>
+  describe('onUnlinkFile', () => {
+    if (process.env.APPVEYOR) {
+      it('is unstable on AppVeyor')
+      return
+    }
+
     it('detects when a file is deleted', function (done) {
       fs.ensureFileSync(path.join(this.syncPath, 'aca'))
       this.prep.addFileAsync = () => {  // For aca file
@@ -215,9 +230,14 @@ describe('LocalWatcher Tests', function () {
       }
       this.watcher.start()
     })
-  )
+  })
 
-  describe('onUnlinkDir', () =>
+  describe('onUnlinkDir', () => {
+    if (process.env.APPVEYOR) {
+      it('is unstable on AppVeyor')
+      return
+    }
+
     it('detects when a folder is deleted', function (done) {
       fs.mkdirSync(path.join(this.syncPath, 'ada'))
       this.prep.putFolderAsync = () => {  // For ada folder
@@ -233,7 +253,7 @@ describe('LocalWatcher Tests', function () {
       }
       this.watcher.start()
     })
-  )
+  })
 
   describe('onChange', () =>
     it('detects when a file is changed', function (done) {
