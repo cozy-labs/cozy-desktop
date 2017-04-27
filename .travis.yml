@@ -37,16 +37,16 @@ addons:
 before_install:
     # CouchDB 2
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-        docker run -d -p 5984:5984 --name couch klaemo/couchdb:2.0.0;
+        travis_retry docker run -d -p 5984:5984 --name couch klaemo/couchdb:2.0.0;
       fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-        brew cask install apache-couchdb;
+        travis_retry brew cask install apache-couchdb;
         (/Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/bin/couchdb &);
       fi
 
     # Go 1.7 (already by default on macOS)
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-        gimme 1.7;
+        travis_retry gimme 1.7;
       fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
         export GOPATH="$HOME";
@@ -54,7 +54,7 @@ before_install:
       fi
 
     # Cozy stack v3
-    - go get -u github.com/cozy/cozy-stack
+    - travis_retry go get -u github.com/cozy/cozy-stack
     - curl -X PUT http://127.0.0.1:5984/{_users,_replicator,_global_changes}
     - $GOPATH/bin/cozy-stack serve &
     - sleep 1
@@ -69,11 +69,12 @@ before_install:
     - ln -s /tmp/cozy-desktop tmp
 
 script:
+    # Travis already run yarn install
     - yarn build
     - yarn lint
     - yarn test-unit-coverage
     - cd gui
-    - yarn
+    - travis_retry yarn
     - yarn lint
     - yarn build
     - cd ..

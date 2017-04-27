@@ -26,6 +26,13 @@ export const defaultLogger = bunyan.createLogger({
   ]
 })
 
+if (process.env.DEBUG) {
+  defaultLogger.addStream({
+    stream: process.stdout,
+    level: 'debug'
+  })
+}
+
 function logger (options) {
   return defaultLogger.child(options)
 }

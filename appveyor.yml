@@ -6,9 +6,9 @@ environment:
     secure: YQQimbK6g91kgTePrPHKl92Pu3O1Hjqsm+HjUUTmZEM=
 
 install:
-  - ps: Install-Product node $env:nodejs_version
-  - yarn
-  - yarn bootstrap:remote
+  - cmd: appveyor-retry powershell Install-Product node $env:nodejs_version
+  - cmd: appveyor-retry yarn
+  - cmd: appveyor-retry yarn bootstrap:remote
 
 build: off
 
