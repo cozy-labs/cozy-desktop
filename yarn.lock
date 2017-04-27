@@ -1258,6 +1258,10 @@ cozy-client-js@^0.2.1:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/cozy-client-js/-/cozy-client-js-0.2.1.tgz#1404f4a22be25dd8dfbfd496957bb4c127beca6e"
 
+"cozy-client-js@git://github.com/cozy/cozy-client-js.git":
+  version "0.2.1"
+  resolved "git://github.com/cozy/cozy-client-js.git#08f2bf47ab373ea6fe78ccecbbab1b139e7b4962"
+
 cross-env@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/cross-env/-/cross-env-4.0.0.tgz#16083862d08275a4628b0b243b121bedaa55dd80"
