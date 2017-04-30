@@ -72,7 +72,7 @@
     "micromatch": "2.3.11",
     "mime": "^1.3.4",
     "node-fetch": "1.6.3",
-    "opn": "4.0.2",
+    "opn": "5.0.0",
     "pouchdb": "^6.2.0",
     "pouchdb-find": "^6.2.0",
     "progress": "^2.0.0",
