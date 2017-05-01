@@ -1,6 +1,7 @@
 /* @flow */
 
 import * as conversion from '../conversion'
+import EventEmitter from 'events'
 import logger from '../logger'
 import { ensureValidPath } from '../metadata'
 import Pouch from '../pouch'
@@ -25,13 +26,15 @@ export default class RemoteWatcher {
   pouch: Pouch
   prep: Prep
   remoteCozy: RemoteCozy
+  events: EventEmitter
   intervalID: ?number
   runningResolve: ?() => void
 
-  constructor (pouch: Pouch, prep: Prep, remoteCozy: RemoteCozy) {
+  constructor (pouch: Pouch, prep: Prep, remoteCozy: RemoteCozy, events: EventEmitter) {
     this.pouch = pouch
     this.prep = prep
     this.remoteCozy = remoteCozy
+    this.events = events
   }
 
   start () {

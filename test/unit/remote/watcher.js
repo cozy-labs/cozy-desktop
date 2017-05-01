@@ -2,6 +2,7 @@
 /* eslint-env mocha */
 
 import async from 'async'
+import EventEmitter from 'events'
 import clone from 'lodash.clone'
 import path from 'path'
 import sinon from 'sinon'
@@ -34,7 +35,8 @@ describe('RemoteWatcher', function () {
       cozyUrl: this.config.cozyUrl,
       token: process.env.COZY_STACK_TOKEN
     })
-    this.watcher = new RemoteWatcher(this.pouch, this.prep, this.remoteCozy)
+    this.events = new EventEmitter()
+    this.watcher = new RemoteWatcher(this.pouch, this.prep, this.remoteCozy, this.events)
   })
   after(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
