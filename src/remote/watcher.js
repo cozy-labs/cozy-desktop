@@ -3,7 +3,7 @@
 import * as conversion from '../conversion'
 import EventEmitter from 'events'
 import logger from '../logger'
-import { ensureValidPath } from '../metadata'
+import { ensureValidPath, pathPlatformIncompatibilities } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import RemoteCozy from './cozy'
@@ -135,6 +135,11 @@ export default class RemoteWatcher {
     let doc: Metadata = conversion.createMetadata(remote)
     const docType = doc.docType
     ensureValidPath(doc)
+    const incompatibilities = pathPlatformIncompatibilities(doc)
+    if (incompatibilities) {
+      this.events.emit('platform-incompatibilities', incompatibilities)
+      return
+    }
     if (doc._deleted) {
       if (!was) {
         log.debug(`${doc.path}: ${docType} was created, trashed, and removed remotely`)
