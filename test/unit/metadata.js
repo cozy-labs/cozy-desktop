@@ -4,9 +4,14 @@ import clone from 'lodash.clone'
 import should from 'should'
 import path from 'path'
 
+import { onPlatform } from '../helpers/platform'
+
 import {
   buildId, extractRevNumber, invalidChecksum, invalidPath, markSide,
-  sameBinary, sameFile, sameFolder
+  namePlatformIncompatibilities, pathPlatformIncompatibilities,
+  sameBinary, sameFile, sameFolder,
+  MACOS_RESERVED_CHARS, POSIX_RESERVED_CHARS,
+  WINDOWS_FORBIDDEN_LAST_CHARS, WINDOWS_RESERVED_CHARS, WINDOWS_RESERVED_NAMES
 } from '../../src/metadata'
 
 describe('metadata', function () {
@@ -107,6 +112,193 @@ describe('metadata', function () {
       let doc = {md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='}
       let ret = invalidChecksum(doc)
       ret.should.be.false()
+    })
+  })
+
+  describe('namePlatformIncompatibilities', () => {
+    it('lists multiple illegal characters', () => {
+      const platform = 'win32'
+      const reservedChars = Array.from(WINDOWS_RESERVED_CHARS).slice(0, 2)
+      const name = `foo${reservedChars[0]}bar${reservedChars[1]}`
+
+      should(namePlatformIncompatibilities({name}, platform)).deepEqual({
+        name,
+        reservedChars: new Set(reservedChars),
+        platform
+      })
+    })
+
+    it('is null when name is compatible', () => {
+      should(namePlatformIncompatibilities({name: 'foo'})).equal(null)
+    })
+
+    it('includes the docType when given', () => {
+      const name = 'fo?o'
+      const docType = 'folder'
+      const platform = 'win32'
+      should(namePlatformIncompatibilities({name, docType}, platform))
+        .have.properties({name, docType})
+    })
+
+    context('on Linux', () => {
+      const platform = 'linux'
+
+      it('is incompatible when name contains any of POSIX_RESERVED_CHARS', () => {
+        POSIX_RESERVED_CHARS.forEach(char => {
+          const name = `foo${char}bar`
+
+          should(namePlatformIncompatibilities({name}, platform)).deepEqual({
+            name,
+            reservedChars: new Set(char),
+            platform
+          })
+        })
+      })
+
+      it('is compatible when name contains others WINDOWS_RESERVED_CHARS', () => {
+        WINDOWS_RESERVED_CHARS.forEach(char => {
+          if (!POSIX_RESERVED_CHARS.has(char)) {
+            const name = `foo${char}bar`
+            should(namePlatformIncompatibilities({name}, platform)).equal(null)
+          }
+        })
+      })
+
+      it('is compatible when name ends with any of WINDOWS_FORBIDDEN_LAST_CHARS', () => {
+        WINDOWS_FORBIDDEN_LAST_CHARS.forEach(forbiddenLastChar => {
+          const name = 'foo' + forbiddenLastChar
+          should(namePlatformIncompatibilities({name}, platform)).equal(null)
+        })
+      })
+    })
+
+    context('on macOS', () => {
+      const platform = 'darwin'
+
+      it('is incompatible when name contains any of MACOS_RESERVED_CHARS', () => {
+        MACOS_RESERVED_CHARS.forEach(char => {
+          const name = `foo${char}bar`
+
+          should(namePlatformIncompatibilities({name}, platform)).deepEqual({
+            name,
+            reservedChars: new Set(char),
+            platform
+          })
+        })
+      })
+
+      it('is compatible when name contains others WINDOWS_RESERVED_CHARS', () => {
+        WINDOWS_RESERVED_CHARS.forEach(char => {
+          if (!MACOS_RESERVED_CHARS.has(char)) {
+            const name = `foo${char}bar`
+            should(namePlatformIncompatibilities({name}, platform)).equal(null)
+          }
+        })
+      })
+
+      it('is compatible when name ends with any of WINDOWS_FORBIDDEN_LAST_CHARS', () => {
+        WINDOWS_FORBIDDEN_LAST_CHARS.forEach(forbiddenLastChar => {
+          const name = 'foo' + forbiddenLastChar
+          should(namePlatformIncompatibilities({name}, platform)).equal(null)
+        })
+      })
+    })
+
+    context('on Windows', () => {
+      const platform = 'win32'
+
+      it('is incompatible when name contains any of WINDOWS_RESERVED_CHARS', () => {
+        WINDOWS_RESERVED_CHARS.forEach(char => {
+          const name = `foo${char}bar`
+
+          should(namePlatformIncompatibilities({name}, platform)).deepEqual({
+            name,
+            reservedChars: new Set(char),
+            platform
+          })
+        })
+      })
+
+      it('is incompatible when name is one of WINDOWS_RESERVED_NAMES', () => {
+        WINDOWS_RESERVED_NAMES.forEach(reservedName => {
+          const nameVariants = [
+            reservedName,
+            reservedName.toLowerCase(),
+            `${reservedName}.txt`
+          ]
+
+          nameVariants.forEach(name => {
+            should(namePlatformIncompatibilities({name}, platform)).deepEqual({
+              name,
+              reservedName,
+              platform
+            })
+          })
+        })
+      })
+
+      it('is incompatible when name ends with any of WINDOWS_FORBIDDEN_LAST_CHARS', () => {
+        WINDOWS_FORBIDDEN_LAST_CHARS.forEach(forbiddenLastChar => {
+          const name = 'foo' + forbiddenLastChar
+
+          should(namePlatformIncompatibilities({name}, platform)).deepEqual({
+            name,
+            forbiddenLastChar,
+            platform
+          })
+        })
+      })
+    })
+  })
+
+  describe('pathPlatformIncompatibilities', () => {
+    const platform = process.platform
+
+    it('is null when all names in the path are compatible', () => {
+      const metadata = {path: path.normalize('foo/bar'), docType: 'file'}
+      should(pathPlatformIncompatibilities(metadata)).equal(null)
+    })
+
+    onPlatform('win32', () => {
+      it('lists platform incompatibilities for all names in the path', () => {
+        const path = 'f?o:o\\ba|r\\baz\\q"ux'
+        const metadata = {path, docType: 'file'}
+        should(pathPlatformIncompatibilities(metadata)).deepEqual([
+          {
+            name: 'f?o:o',
+            docType: 'folder',
+            reservedChars: new Set('?:'),
+            platform
+          },
+          {
+            name: 'ba|r',
+            docType: 'folder',
+            reservedChars: new Set('|'),
+            platform
+          },
+          {
+            name: 'q"ux',
+            docType: 'file',
+            reservedChars: new Set('"'),
+            platform
+          }
+        ])
+      })
+    })
+
+    onPlatform('darwin', () => {
+      it('lists platform incompatibilities for all names in the path', () => {
+        const path = 'foo/b:ar/qux'
+        const metadata = {path, docType: 'folder'}
+        should(pathPlatformIncompatibilities(metadata)).deepEqual([
+          {
+            name: 'b:ar',
+            docType: 'folder',
+            reservedChars: new Set(':'),
+            platform
+          }
+        ])
+      })
     })
   })
 
