@@ -33,6 +33,21 @@ const translations = require(`./locales/${app.locale}.json`)
 
 const translate = key => translations[key] || key
 
+const interpolate = (string, ...args) => {
+  return string.replace(/{(\d+)}/g, (_, index) => args[parseInt(index)])
+}
+
+const platformName = () => {
+  switch (process.platform) {
+    case 'darwin': return 'macOS'
+    case 'freebsd': return 'FreeBSD'
+    case 'linux': return 'Linux'
+    case 'sunos': return 'SunOS'
+    case 'win32': return 'Windows'
+    default: return process.platform
+  }
+}
+
 // This server is used for checking if a new release is available
 // and installing the updates
 const nutsServer = 'https://nuts.cozycloud.cc'
@@ -318,6 +333,47 @@ const chooseSyncPath = () => {
   sendToMainWindow('registration-done')
 }
 
+const incompatibilitiesErrorMessage = (i) => {
+  const reasons = []
+  const docType = translate(`Helpers ${i.docType}`)
+  if (i.reservedChars) {
+    reasons.push(
+      interpolate(
+        translate('Error {0} names cannot include « {1} » characters'),
+        docType,
+        Array.from(i.reservedChars).join(' ')
+      )
+    )
+  }
+  if (i.reservedName) {
+    reasons.push(
+      interpolate(
+        translate('Error the « {0} » name is reserved'),
+        i.reservedName
+      )
+    )
+  }
+  if (i.forbiddenLastChar) {
+    reasons.push(
+      interpolate(
+        translate('Error {0} names cannot end with a « {1} » character'),
+        docType,
+        i.forbiddenLastChar
+      )
+    )
+  }
+  return interpolate(
+    translate(
+      'Error The « {0} » {1} cannot be synchronized locally because ' +
+      '{2} on the {3} system.'
+    ),
+    i.name,
+    docType,
+    reasons.join(` ${translate('Helpers and')} `),
+    platformName()
+  ) + '\n\n' + translate('Error You should rename it in your Cozy.')
+}
+
 const startSync = (force) => {
   sendToMainWindow('synchronization', desktop.config.cozyUrl, desktop.config.deviceName)
   for (let file of lastFiles) {
@@ -351,6 +407,12 @@ const startSync = (force) => {
     desktop.events.on('transfer-move', (info, old) => {
       addFile(info)
       removeFile(old)
+    })
+    desktop.events.on('platform-incompatibilities', incompatibilities => {
+      // TODO: Index incompatibilities to prevent notification overload
+      incompatibilities.forEach(i => {
+        sendErrorToMainWindow(incompatibilitiesErrorMessage(i))
+      })
     })
     desktop.events.on('delete-file', removeFile)
     desktop.synchronize('full')
