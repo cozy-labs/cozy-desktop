@@ -48,7 +48,7 @@
     "release:build": "yarn release:check:node-6 && yarn release:build:lib && yarn reinstall && yarn build && yarn dist",
     "release:build:lib": "cd .. && yarn release:build",
     "release:check:node-6": "node -e \"(process.versions.node.split('.')[0] !== '6') && process.exit(1)\"",
-    "start": "electron ./app",
+    "start": "cross-env COZY_DESKTOP_HEARTBEAT=5000 electron ./app",
     "up": "npm run build:lib && npm run copy:lib && DEBUG=true npm start",
     "watch": "env WATCH=true npm run start & npm run watch:css & npm run watch:elm & npm run watch:js",
     "watch:css": "stylus -m -u cozy-ui/lib/stylus -w styles/app.styl -o app/",
