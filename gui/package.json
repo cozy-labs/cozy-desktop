@@ -17,6 +17,7 @@
   "devDependencies": {
     "chokidar-cli": "^1.2.0",
     "cozy-ui": "^0.1.7",
+    "cross-env": "^4.0.0",
     "debug-menu": "^0.6.0",
     "devtron": "^1.4.0",
     "electron": "^1.4.12",
