@@ -15,14 +15,16 @@ type alias Model =
     { address : String
     , error : String
     , busy : Bool
+    , platform : String
     }
 
 
-init : Model
-init =
+init : String -> Model
+init platform =
     { address = ""
     , error = ""
     , busy = False
+    , platform = platform
     }
 
 
@@ -52,7 +54,7 @@ update msg model =
         msg
     of
         FillAddress address ->
-            ( { address = address, error = "", busy = False }, Cmd.none )
+            ( { model | address = address, error = "", busy = False }, Cmd.none )
 
         RegisterRemote ->
             if model.address == "" then
@@ -92,7 +94,7 @@ view helpers model =
         , p []
             [ text (helpers.t "Address This is the web address you use to sign in to your cozy.") ]
         , a
-            [ href "https://cozy.io/en/try-it/"
+            [ href ("https://cozy.io/en/try-it/?from=desktop-" ++ model.platform)
             , class "more-info"
             ]
             [ text (helpers.t "Address Don't have an account? Request one here") ]
