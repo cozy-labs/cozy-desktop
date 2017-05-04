@@ -223,7 +223,7 @@ const updateState = (newState, filename) => {
   ])
   if (!mainWindow) {
     menu.insert(2, new electron.MenuItem({
-      { label: translate('Tray Show application'), click: showWindow }
+      label: translate('Tray Show application'), click: showWindow
     }))
   }
   if (state === 'error') {
