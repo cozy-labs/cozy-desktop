@@ -317,16 +317,11 @@ class Sync {
           log.warn(from)
           log.warn(doc)
           try {
-            await side.addFileAsync(doc)
-          } catch (err) {
-            log.error(err)
-          }
-          try {
             await side.trashAsync(from)
           } catch (err) {
             log.error(err)
-            throw new Error('Invalid move')
           }
+          return side.addFileAsync(doc)
         }
         break
       case doc.moveTo != null:
@@ -378,16 +373,11 @@ class Sync {
           log.error(from)
           log.error(doc)
           try {
-            await side.addFolderAsync(doc)
-          } catch (err) {
-            log.error(err)
-          }
-          try {
             await side.trashAsync(from)
           } catch (err) {
             log.error(err)
-            throw new Error('Invalid move')
           }
+          return side.addFolderAsync(doc)
         }
         break
       case doc.moveTo != null:
