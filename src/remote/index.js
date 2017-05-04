@@ -160,10 +160,17 @@ export default class Remote implements Side {
 
     const [newDirPath, newName]: [string, string] = conversion.extractDirAndName(newMetadata.path)
     const newDir: RemoteDoc = await this.remoteCozy.findDirectoryByPath(newDirPath)
-    const newRemoteDoc: RemoteDoc = await this.remoteCozy.updateAttributesById(oldMetadata.remote._id, {
+
+    const attrs = {
       name: newName,
-      dir_id: newDir._id
-    })
+      dir_id: newDir._id,
+      updated_at: newMetadata.updated_at
+    }
+    const opts = {
+      ifMatch: oldMetadata.remote._rev
+    }
+
+    const newRemoteDoc: RemoteDoc = await this.remoteCozy.updateAttributesById(oldMetadata.remote._id, attrs, opts)
 
     newMetadata.remote = {
       _id: newRemoteDoc._id,
@@ -183,12 +190,17 @@ export default class Remote implements Side {
     const newParentDir = await this.remoteCozy.findDirectoryByPath(newParentDirPath)
     let newRemoteDoc: RemoteDoc
 
+    const attrs = {
+      name: newName,
+      dir_id: newParentDir._id,
+      updated_at: doc.updated_at
+    }
+    const opts = {
+      ifMatch: old.remote._rev
+    }
+
     try {
-      newRemoteDoc = await this.remoteCozy.updateAttributesById(old.remote._id, {
-        name: newName,
-        dir_id: newParentDir._id,
-        updated_at: doc.updated_at
-      })
+      newRemoteDoc = await this.remoteCozy.updateAttributesById(old.remote._id, attrs, opts)
     } catch (err) {
       if (err.status !== 404) { throw err }
 
