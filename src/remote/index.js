@@ -140,7 +140,7 @@ export default class Remote implements Side {
 
     const attrs = {
       executable: doc.executable,
-      updated_at: doc.updated_at
+      lastModifiedDate: doc.updated_at
     }
     const opts = {
       ifMatch: old.remote._rev
@@ -187,7 +187,7 @@ export default class Remote implements Side {
       newRemoteDoc = await this.remoteCozy.updateAttributesById(old.remote._id, {
         name: newName,
         dir_id: newParentDir._id,
-        updated_at: doc.updated_at
+        lastModifiedDate: doc.updated_at
       })
     } catch (err) {
       if (err.status !== 404) { throw err }
