@@ -179,8 +179,8 @@ export function namePlatformIncompatibilities (args: {name: string,
   const {name} = args
   const incompatibilities = {...args, platform}
 
-  const reservedChars = regexp.matchAll(name, reservedCharsRegExp(platform))
-  if (reservedChars.length > 0) {
+  const reservedChars = name.match(reservedCharsRegExp(platform))
+  if (reservedChars) {
     incompatibilities.reservedChars = new Set(reservedChars)
   }
 
