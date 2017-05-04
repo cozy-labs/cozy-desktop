@@ -25,6 +25,7 @@
   "dependencies": {
     "auto-launch-patched": "5.0.2",
     "cozy-desktop": "file:../../",
-    "electron-main-notification": "1.0.1"
+    "electron-main-notification": "1.0.1",
+    "lodash.debounce": "4.0.8"
   }
 }
