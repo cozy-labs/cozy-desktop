@@ -339,7 +339,7 @@ const incompatibilitiesErrorMessage = (i) => {
   if (i.reservedChars) {
     reasons.push(
       interpolate(
-        translate('Error {0} names cannot include « {1} » characters'),
+        translate('Error {0} names cannot include characters {1}'),
         docType,
         Array.from(i.reservedChars).join(' ')
       )
@@ -348,7 +348,7 @@ const incompatibilitiesErrorMessage = (i) => {
   if (i.reservedName) {
     reasons.push(
       interpolate(
-        translate('Error the « {0} » name is reserved'),
+        translate('Error the “{0}” name is reserved'),
         i.reservedName
       )
     )
@@ -356,7 +356,7 @@ const incompatibilitiesErrorMessage = (i) => {
   if (i.forbiddenLastChar) {
     reasons.push(
       interpolate(
-        translate('Error {0} names cannot end with a « {1} » character'),
+        translate('Error {0} names cannot end with character {1}'),
         docType,
         i.forbiddenLastChar
       )
@@ -364,7 +364,7 @@ const incompatibilitiesErrorMessage = (i) => {
   }
   return interpolate(
     translate(
-      'Error The « {0} » {1} cannot be synchronized locally because ' +
+      'Error The “{0}” {1} cannot be synchronized locally because ' +
       '{2} on the {3} system.'
     ),
     i.name,
