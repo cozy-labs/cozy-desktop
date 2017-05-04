@@ -409,7 +409,7 @@ const startSync = (force) => {
       removeFile(old)
     })
     desktop.events.on('platform-incompatibilities', incompatibilities => {
-      // TODO: Index incompatibilities to prevent notification overload
+      // TODO: Debounce to prevent notification overload
       incompatibilities.forEach(i => {
         sendErrorToMainWindow(incompatibilitiesErrorMessage(i))
       })

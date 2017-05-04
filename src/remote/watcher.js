@@ -135,6 +135,7 @@ export default class RemoteWatcher {
     let doc: Metadata = conversion.createMetadata(remote)
     const docType = doc.docType
     ensureValidPath(doc)
+    // TODO: Move to Prep?
     const incompatibilities = pathPlatformIncompatibilities(doc)
     if (incompatibilities) {
       this.events.emit('platform-incompatibilities', incompatibilities)
