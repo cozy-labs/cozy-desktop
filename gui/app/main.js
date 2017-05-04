@@ -7,6 +7,7 @@ const Desktop = require('cozy-desktop').default
 const electron = require('electron')
 const notify = require('electron-main-notification')
 const fs = require('fs')
+const debounce = require('lodash.debounce')
 const os = require('os')
 const path = require('path')
 const {spawn} = require('child_process')
@@ -31,7 +32,23 @@ app.locale = (() => {
 
 const translations = require(`./locales/${app.locale}.json`)
 
-const translate = key => translations[key] || key
+const translate = key => translations[key] ||
+  key.substr(key.indexOf(' ') + 1) // Key without prefix
+
+const interpolate = (string, ...args) => {
+  return string.replace(/{(\d+)}/g, (_, index) => args[parseInt(index)])
+}
+
+const platformName = () => {
+  switch (process.platform) {
+    case 'darwin': return 'macOS'
+    case 'freebsd': return 'FreeBSD'
+    case 'linux': return 'Linux'
+    case 'sunos': return 'SunOS'
+    case 'win32': return 'Windows'
+    default: return process.platform
+  }
+}
 
 // This server is used for checking if a new release is available
 // and installing the updates
@@ -318,6 +335,47 @@ const chooseSyncPath = () => {
   sendToMainWindow('registration-done')
 }
 
+const incompatibilitiesErrorMessage = (i) => {
+  const reasons = []
+  const docType = translate(`Helpers ${i.docType}`)
+  if (i.reservedChars) {
+    reasons.push(
+      interpolate(
+        translate('Error {0} names cannot include characters {1}'),
+        docType,
+        Array.from(i.reservedChars).join(' ')
+      )
+    )
+  }
+  if (i.reservedName) {
+    reasons.push(
+      interpolate(
+        translate('Error the “{0}” name is reserved'),
+        i.reservedName
+      )
+    )
+  }
+  if (i.forbiddenLastChar) {
+    reasons.push(
+      interpolate(
+        translate('Error {0} names cannot end with character {1}'),
+        docType,
+        i.forbiddenLastChar
+      )
+    )
+  }
+  return interpolate(
+    translate(
+      'Error The “{0}” {1} cannot be synchronized locally because ' +
+      '{2} on the {3} system.'
+    ),
+    i.name,
+    docType,
+    reasons.join(` ${translate('Helpers and')} `),
+    platformName()
+  ) + '\n\n' + translate('Error You should rename it in your Cozy.')
+}
+
 const startSync = (force) => {
   sendToMainWindow('synchronization', desktop.config.cozyUrl, desktop.config.deviceName)
   for (let file of lastFiles) {
@@ -351,6 +409,18 @@ const startSync = (force) => {
     desktop.events.on('transfer-move', (info, old) => {
       addFile(info)
       removeFile(old)
+    })
+    const notifyIncompatibilities = debounce(
+      (incompatibilities) => {
+        sendErrorToMainWindow(incompatibilitiesErrorMessage(incompatibilities))
+      },
+      5000,
+      {leading: true}
+    )
+    desktop.events.on('platform-incompatibilities', incompatibilitiesList => {
+      incompatibilitiesList.forEach(incompatibilities => {
+        notifyIncompatibilities(incompatibilities)
+      })
     })
     desktop.events.on('delete-file', removeFile)
     desktop.synchronize('full')

@@ -32,7 +32,7 @@ export default class Remote implements Side {
     this.pouch = pouch
     this.events = events
     this.remoteCozy = new RemoteCozy(config)
-    this.watcher = new Watcher(pouch, prep, this.remoteCozy)
+    this.watcher = new Watcher(pouch, prep, this.remoteCozy, events)
   }
 
   start () {

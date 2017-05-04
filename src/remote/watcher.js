@@ -1,8 +1,9 @@
 /* @flow */
 
 import * as conversion from '../conversion'
+import EventEmitter from 'events'
 import logger from '../logger'
-import { ensureValidPath } from '../metadata'
+import { ensureValidPath, pathPlatformIncompatibilities } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import RemoteCozy from './cozy'
@@ -25,13 +26,15 @@ export default class RemoteWatcher {
   pouch: Pouch
   prep: Prep
   remoteCozy: RemoteCozy
+  events: EventEmitter
   intervalID: ?number
   runningResolve: ?() => void
 
-  constructor (pouch: Pouch, prep: Prep, remoteCozy: RemoteCozy) {
+  constructor (pouch: Pouch, prep: Prep, remoteCozy: RemoteCozy, events: EventEmitter) {
     this.pouch = pouch
     this.prep = prep
     this.remoteCozy = remoteCozy
+    this.events = events
   }
 
   start () {
@@ -132,6 +135,12 @@ export default class RemoteWatcher {
     let doc: Metadata = conversion.createMetadata(remote)
     const docType = doc.docType
     ensureValidPath(doc)
+    // TODO: Move to Prep?
+    const incompatibilities = pathPlatformIncompatibilities(doc)
+    if (incompatibilities) {
+      this.events.emit('platform-incompatibilities', incompatibilities)
+      return
+    }
     if (doc._deleted) {
       if (!was) {
         log.debug(`${doc.path}: ${docType} was created, trashed, and removed remotely`)

@@ -2,6 +2,7 @@
 /* eslint-env mocha */
 
 import async from 'async'
+import EventEmitter from 'events'
 import clone from 'lodash.clone'
 import path from 'path'
 import sinon from 'sinon'
@@ -9,6 +10,7 @@ import should from 'should'
 import { Client as CozyClient } from 'cozy-client-js'
 
 import configHelpers from '../../helpers/config'
+import { onPlatform } from '../../helpers/platform'
 import pouchHelpers from '../../helpers/pouch'
 import { COZY_URL, builders } from '../../helpers/cozy'
 
@@ -34,7 +36,8 @@ describe('RemoteWatcher', function () {
       cozyUrl: this.config.cozyUrl,
       token: process.env.COZY_STACK_TOKEN
     })
-    this.watcher = new RemoteWatcher(this.pouch, this.prep, this.remoteCozy)
+    this.events = new EventEmitter()
+    this.watcher = new RemoteWatcher(this.pouch, this.prep, this.remoteCozy, this.events)
   })
   after(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
@@ -253,6 +256,36 @@ describe('RemoteWatcher', function () {
 
       this.watcher.putDoc.called.should.be.false()
       this.watcher.putDoc.restore()
+    })
+
+    onPlatform('win32', () => {
+      it('emits path/platform incompatibilities if any', async function () {
+        const doc = {
+          _id: 'whatever',
+          path: '/f:oo/b<a>r',
+          type: 'file'
+        }
+        const incompatibilitiesPromise = new Promise((resolve) => {
+          this.events.on('platform-incompatibilities', resolve)
+        })
+        this.watcher.onChange(doc)
+        const incompatibilities = await incompatibilitiesPromise
+        const platform = process.platform
+        should(incompatibilities).deepEqual([
+          {
+            name: 'f:oo',
+            docType: 'folder',
+            reservedChars: new Set(':'),
+            platform
+          },
+          {
+            name: 'b<a>r',
+            docType: 'file',
+            reservedChars: new Set('<>'),
+            platform
+          }
+        ])
+      })
     })
 
     it('calls addDoc for a new doc', async function () {

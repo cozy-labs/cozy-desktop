@@ -3,10 +3,11 @@
 import clone from 'lodash.clone'
 import isEqual from 'lodash.isequal'
 import pick from 'lodash.pick'
-import path from 'path'
+import path, { sep } from 'path'
 
 import logger from './logger'
 import { sameDate } from './timestamp'
+import * as regexp from './utils/regexp'
 
 const log = logger({
   component: 'Metadata'
@@ -108,6 +109,120 @@ export function ensureValidPath (doc: Metadata) {
     log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
     throw new Error('Invalid path')
   }
+}
+
+// See: https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
+export const WINDOWS_RESERVED_CHARS = new Set('<>:"/\\|?*')
+export const WINDOWS_FORBIDDEN_LAST_CHARS = new Set('. ')
+export const WINDOWS_RESERVED_NAMES = new Set([
+  'CON', 'PRN', 'AUX', 'NUL',
+  'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9',
+  'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'
+])
+export const POSIX_RESERVED_CHARS = new Set('/')
+export const MACOS_RESERVED_CHARS = new Set('/:')
+
+const WINDOWS_RESERVED_CHARS_REGEXP = regexp.charsFinder(WINDOWS_RESERVED_CHARS)
+const POSIX_RESERVED_CHARS_REGEXP = regexp.charsFinder(POSIX_RESERVED_CHARS)
+const MACOS_RESERVED_CHARS_REGEXP = regexp.charsFinder(MACOS_RESERVED_CHARS)
+
+// Picks the appropriate reserved chars regexp according to the given platform
+function reservedCharsRegExp (platform: string): RegExp {
+  switch (platform) {
+    case 'darwin': return MACOS_RESERVED_CHARS_REGEXP
+    case 'win32': return WINDOWS_RESERVED_CHARS_REGEXP
+    default: return POSIX_RESERVED_CHARS_REGEXP
+  }
+}
+
+// Returns any matching forbidden last char for the given platform
+function matchingForbiddenLastChar (name: string, platform: string): ?string {
+  const lastChar = name.slice(-1)
+  if (platform === 'win32' &&
+      WINDOWS_FORBIDDEN_LAST_CHARS.has(lastChar)) {
+    return lastChar
+  }
+}
+
+// Picks the appropriate reserved names set according to the given platform
+function reservedNames (platform: string): Set<string> {
+  switch (platform) {
+    case 'win32': return WINDOWS_RESERVED_NAMES
+    default: return new Set()
+  }
+}
+
+// Returns any matching reserved name for the given platform.
+function matchingReservedName (name: string, platform: string): ?string {
+  const upperCaseName = name.toUpperCase()
+  const upperCaseBasename = path.basename(upperCaseName, path.extname(upperCaseName))
+  if (reservedNames(platform).has(upperCaseBasename)) {
+    return upperCaseBasename
+  }
+}
+
+// Describes a file/dir name issue so one could describe it in a user-friendly
+// way: "File X cannot be saved on platform Y because it contains character Z"
+type NamePlatformIncompatibilities = {
+  name: string,
+  docType?: string,
+  reservedChars?: Set<string>,
+  reservedName?: string,
+  forbiddenLastChar?: string,
+  platform: string
+}
+
+// Identifies file/dir name issues that will prevent local synchronization
+export function namePlatformIncompatibilities (args: {name: string,
+                                                      docType: string},
+                                               platform: string): ?NamePlatformIncompatibilities {
+  const {name} = args
+  const incompatibilities = {...args, platform}
+
+  const reservedChars = name.match(reservedCharsRegExp(platform))
+  if (reservedChars) {
+    incompatibilities.reservedChars = new Set(reservedChars)
+  }
+
+  const reservedName = matchingReservedName(name, platform)
+  if (reservedName) {
+    incompatibilities.reservedName = reservedName
+  }
+
+  const forbiddenLastChar = matchingForbiddenLastChar(name, platform)
+  if (forbiddenLastChar) {
+    incompatibilities.forbiddenLastChar = forbiddenLastChar
+  }
+
+  if (incompatibilities.reservedChars ||
+      incompatibilities.reservedName ||
+      incompatibilities.forbiddenLastChar) {
+    return incompatibilities
+  } else {
+    return null
+  }
+}
+
+// Identifies issues in every path item that will prevent local synchronization
+export function pathPlatformIncompatibilities (metadata: Metadata): * {
+  const platform = process.platform
+  const {path, docType} = metadata
+  const ancestorNames = path.split(sep)
+  const childName = ancestorNames.pop()
+  const incompatibilities = ancestorNames
+    .map(name => namePlatformIncompatibilities(
+      {name, docType: 'folder'},
+      platform
+    ))
+    .concat([namePlatformIncompatibilities(
+      {name: childName, docType},
+      platform
+    )])
+    .filter(incompatibility => (
+      incompatibility != null && incompatibility.name
+    ))
+  if (incompatibilities.length === 0) return null
+  return incompatibilities
 }
 
 // Return true if the checksum is invalid
