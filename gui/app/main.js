@@ -221,6 +221,11 @@ const updateState = (newState, filename) => {
     { type: 'separator' },
     { label: translate('Tray Quit application'), click: app.quit }
   ])
+  if (!mainWindow) {
+    menu.insert(2, new electron.MenuItem({
+      { label: translate('Tray Show application'), click: showWindow }
+    }))
+  }
   if (state === 'error') {
     menu.insert(2, new electron.MenuItem({
       label: translate('Tray Relaunch synchronization'), click: () => { startSync(true) }
@@ -458,8 +463,12 @@ const createWindow = () => {
   } else {
     mainWindow.setMenu(null)
   }
-  mainWindow.on('closed', () => { mainWindow = null })
+  mainWindow.on('closed', () => {
+    if (process.platform === 'darwin') { app.dock.hide() }
+    mainWindow = null
+  })
   mainWindow.webContents.on('dom-ready', appLoaded)
+  if (process.platform === 'darwin') { app.dock.show() }
 }
 
 loadLastFiles()
