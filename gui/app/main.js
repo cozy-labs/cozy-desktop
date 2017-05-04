@@ -7,6 +7,7 @@ const Desktop = require('cozy-desktop').default
 const electron = require('electron')
 const notify = require('electron-main-notification')
 const fs = require('fs')
+const debounce = require('lodash.debounce')
 const os = require('os')
 const path = require('path')
 const {spawn} = require('child_process')
@@ -408,10 +409,16 @@ const startSync = (force) => {
       addFile(info)
       removeFile(old)
     })
-    desktop.events.on('platform-incompatibilities', incompatibilities => {
-      // TODO: Debounce to prevent notification overload
-      incompatibilities.forEach(i => {
-        sendErrorToMainWindow(incompatibilitiesErrorMessage(i))
+    const notifyIncompatibilities = debounce(
+      (incompatibilities) => {
+        sendErrorToMainWindow(incompatibilitiesErrorMessage(incompatibilities))
+      },
+      5000,
+      {leading: true}
+    )
+    desktop.events.on('platform-incompatibilities', incompatibilitiesList => {
+      incompatibilitiesList.forEach(incompatibilities => {
+        notifyIncompatibilities(incompatibilities)
       })
     })
     desktop.events.on('delete-file', removeFile)

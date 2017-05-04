@@ -55,5 +55,8 @@
     "watch:elm": "chokidar 'lib/**/*.elm' -c 'npm run build:elm'",
     "watch:js": "chokidar app/main.js app/ports.js -c 'npm run lint'",
     "elm-upgrade": "npm install --save-dev elm@latest elm-upgrade@latest && ./node_modules/.bin/elm-upgrade"
+  },
+  "dependencies": {
+    "lodash.debounce": "^4.0.8"
   }
 }
