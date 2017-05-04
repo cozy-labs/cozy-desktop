@@ -25,10 +25,10 @@ type alias Model =
     }
 
 
-init : String -> Model
-init folder =
+init : String -> String -> Model
+init folder platform =
     { page = WelcomePage
-    , address = Address.init
+    , address = Address.init platform
     , folder = Folder.init folder
     }
 

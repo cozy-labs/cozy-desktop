@@ -51,6 +51,7 @@ type alias Flags =
     { folder : String
     , locale : String
     , locales : Json.Value
+    , platform : String
     , version : String
     }
 
@@ -75,7 +76,7 @@ init flags =
             WizardPage
 
         wizard =
-            Wizard.init flags.folder
+            Wizard.init flags.folder flags.platform
 
         twopanes =
             TwoPanes.init flags.version

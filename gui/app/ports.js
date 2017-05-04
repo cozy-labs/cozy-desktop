@@ -17,6 +17,7 @@ const elmectron = Elm.embed(container, {
     en: remote.require('./locales/en.json'),
     fr: remote.require('./locales/fr.json')
   },
+  platform: remote.process.platform,
   version: pkg.version
 })
 
