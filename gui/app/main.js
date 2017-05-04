@@ -32,7 +32,8 @@ app.locale = (() => {
 
 const translations = require(`./locales/${app.locale}.json`)
 
-const translate = key => translations[key] || key
+const translate = key => translations[key] ||
+  key.substr(key.indexOf(' ') + 1) // Key without prefix
 
 const interpolate = (string, ...args) => {
   return string.replace(/{(\d+)}/g, (_, index) => args[parseInt(index)])
