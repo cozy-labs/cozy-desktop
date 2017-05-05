@@ -39,6 +39,9 @@ describe('RemoteWatcher', function () {
     this.events = new EventEmitter()
     this.watcher = new RemoteWatcher(this.pouch, this.prep, this.remoteCozy, this.events)
   })
+  afterEach(function removeEventListeners () {
+    this.events.removeAllListeners()
+  })
   after(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
