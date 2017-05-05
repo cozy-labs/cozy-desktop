@@ -136,10 +136,12 @@ export default class RemoteWatcher {
     const docType = doc.docType
     ensureValidPath(doc)
     // TODO: Move to Prep?
-    const incompatibilities = pathPlatformIncompatibilities(doc)
-    if (incompatibilities) {
-      this.events.emit('platform-incompatibilities', incompatibilities)
-      return
+    if (!this.inRemoteTrash(doc)) {
+      const incompatibilities = pathPlatformIncompatibilities(doc)
+      if (incompatibilities) {
+        this.events.emit('platform-incompatibilities', incompatibilities)
+        return
+      }
     }
     if (doc._deleted) {
       if (!was) {

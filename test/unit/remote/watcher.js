@@ -286,6 +286,15 @@ describe('RemoteWatcher', function () {
           }
         ])
       })
+
+      it('does not emit when file/dir is in the trash', async function () {
+        this.events.on('platform-incompatibilities', should.not.exist)
+        await this.watcher.onChange({
+          _id: 'whatever',
+          path: '/.cozy_trash/f:oo/b<a>r',
+          type: 'file'
+        })
+      })
     })
 
     it('calls addDoc for a new doc', async function () {
