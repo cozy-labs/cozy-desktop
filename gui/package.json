@@ -5,6 +5,9 @@
   "build": {
     "appId": "io.cozy.desktop",
     "productName": "Cozy Desktop",
+    "win": {
+      "certificateSubjectName": "Cozy Cloud SAS"
+    },
     "linux": {
       "target": [
         "deb"
