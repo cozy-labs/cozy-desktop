@@ -60,7 +60,7 @@
     "bluebird": "^3.5.0",
     "btoa": "1.1.2",
     "bunyan": "^1.8.10",
-    "chokidar": "1.6.1",
+    "chokidar": "1.7.0",
     "commander": "2.9.0",
     "cozy-client-js": "^0.2.4",
     "fs-extra": "^3.0.0",
