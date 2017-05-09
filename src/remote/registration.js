@@ -36,8 +36,7 @@ export default class Registration {
 
   clientParams (pkg, redirectURI, deviceName) {
     if (!deviceName) {
-      deviceName = os.hostname() || pkg.name || 'desktop'
-      deviceName += ` ${new Date()}`
+      deviceName = `Cozy Drive (${os.hostname()})`
     }
     let softwareID = (pkg.repository || 'cozy-desktop')
     if (softwareID.url) {
