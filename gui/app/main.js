@@ -171,7 +171,7 @@ const checkForNewRelease = () => {
   const arch = os.arch()
   const platform = os.platform()
   const version = app.getVersion()
-  if (platform !== 'darwin') {
+  if (platform !== 'darwin' && platform !== 'win32') {
     return
   }
   autoUpdater.addListener('update-downloaded', (event, releaseNotes, releaseName) => {
