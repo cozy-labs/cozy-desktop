@@ -1,3 +1,33 @@
+## 3.0.0-alpha4 - 2017-05-09
+
+This is for testing purpose only.
+Do not install it, unless you know what you're doing.
+
+Improvements for all platforms:
+
+* Files are now synchronized to your *Cozy Drive* folder (to better match the
+  *Cozy Drive* app name). If your already had a *Cozy* folder set up,
+  *Cozy Desktop* will continue to use it. If you want to switch to the new
+  folder, you can disconnect from your Cozy in the Settings, rename your local
+  *Cozy* folder to *Cozy Drive* (so you don't need to download everything
+  again), then restart *Cozy Desktop*, register and use the new folder.
+* Your computer now appears in your Cozy as *Cozy Drive (your computer name)*.
+
+Improvements for Windows users:
+
+* Installer and app are signed now, which should prevent warnings and allow
+  us to support automatic updates. Since we use a standard certificate (not
+  one with Extended Validation), you'll still get a confirmation popup at
+  install time, until the app gets enough reputation in Microsoft SmartScreen
+  (the anti-phishing system included in Windows 8 and later).
+* This release (and upcoming ones) should now support automatic updates. But
+  previous releases didn't, so you'll still have to download and install this
+  one by hand.
+* A third-party component used by *Cozy Desktop* to monitor your local folder
+  was updated, fixing some issues on Windows.
+
+Happy syncing!
+
 ## 3.0.0-alpha3 - 2017-05-05
 
 This is for testing purpose only.
