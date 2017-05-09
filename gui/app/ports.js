@@ -6,7 +6,7 @@ const {ipcRenderer, remote, shell} = electron
 const path = remote.require('path')
 const os = require('os')
 const pkg = remote.require('./package.json')
-const defaultDir = path.join(os.homedir(), 'Cozy')
+const defaultDir = path.join(os.homedir(), 'Cozy Drive')
 const container = document.getElementById('container')
 
 const Elm = require('./elm').Main
