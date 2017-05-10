@@ -239,6 +239,9 @@ class Merge {
       if (doc.class == null) { doc.class = was.class }
       if (doc.mime == null) { doc.mime = was.mime }
       if (doc.tags == null) { doc.tags = was.tags || [] }
+      const wasUpdatedAt = new Date(was.updated_at)
+      const docUpdatedAt = new Date(doc.updated_at)
+      if (docUpdatedAt < wasUpdatedAt) { doc.updated_at = was.updated_at }
       delete doc.trashed
       was.moveTo = doc._id
       was._deleted = true
