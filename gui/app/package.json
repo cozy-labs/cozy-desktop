@@ -1,7 +1,7 @@
 {
   "name": "cozy-desktop-gui",
   "private": true,
-  "version": "3.0.0-alpha4",
+  "version": "3.0.0-alpha5",
   "description": "File Synchronization Client for Cozy Cloud",
   "homepage": "https://github.com/cozy-labs/cozy-desktop",
   "author": "Cozy Cloud <contact@cozycloud.cc> (https://cozycloud.cc/)",

@@ -1,3 +1,25 @@
+## 3.0.0-alpha5 - 2017-05-11
+
+This is for testing purpose only.
+Do not install it, unless you know what you're doing.
+
+Improvements for all platforms:
+
+* A new auto-updates system which should work better on both Windows and macOS
+* Fixed an issue preventing a locally renamed file to be updated on the remote
+  Cozy
+
+Improvements for Windows users:
+
+* The weird animation that was displayed while installing the app since the
+  alpha4 release should be replaced with a normal install dialog.
+
+Finally, we would like to apologize to our Windows users, since auto-updates
+actually didn't work in the alpha4 release. This should be fixed now. Thanks
+for your patience.
+
+Happy syncing!
+
 ## 3.0.0-alpha4 - 2017-05-09
 
 This is for testing purpose only.
