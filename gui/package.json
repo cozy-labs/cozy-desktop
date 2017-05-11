@@ -6,10 +6,7 @@
     "appId": "io.cozy.desktop",
     "productName": "Cozy Desktop",
     "win": {
-      "certificateSubjectName": "Cozy Cloud SAS",
-      "target": [
-        "squirrel"
-      ]
+      "certificateSubjectName": "Cozy Cloud SAS"
     },
     "linux": {
       "target": [
