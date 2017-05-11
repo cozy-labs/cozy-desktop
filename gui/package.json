@@ -4,7 +4,6 @@
   "license": "AGPL-3.0",
   "build": {
     "appId": "io.cozy.desktop",
-    "productName": "Cozy Desktop",
     "win": {
       "certificateSubjectName": "Cozy Cloud SAS",
       "target": [
