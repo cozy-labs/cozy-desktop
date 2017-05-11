@@ -6,7 +6,10 @@
     "appId": "io.cozy.desktop",
     "productName": "Cozy Desktop",
     "win": {
-      "certificateSubjectName": "Cozy Cloud SAS"
+      "certificateSubjectName": "Cozy Cloud SAS",
+      "target": [
+        "nsis"
+      ]
     },
     "linux": {
       "target": [
@@ -14,7 +17,11 @@
       ]
     },
     "mac": {
-      "category": "public.app-category.productivity"
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg",
+        "zip"
+      ]
     }
   },
   "devDependencies": {
