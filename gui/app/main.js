@@ -12,7 +12,8 @@ const os = require('os')
 const path = require('path')
 const {spawn} = require('child_process')
 
-const {app, autoUpdater, BrowserWindow, dialog, ipcMain, Menu, shell, session} = electron
+const {app, BrowserWindow, dialog, ipcMain, Menu, shell, session} = electron
+const autoUpdater = require('electron-updater').autoUpdater
 const autoLauncher = new AutoLaunch({
   name: 'Cozy-Desktop',
   isHidden: true
@@ -49,10 +50,6 @@ const platformName = () => {
     default: return process.platform
   }
 }
-
-// This server is used for checking if a new release is available
-// and installing the updates
-const nutsServer = 'https://nuts.cozycloud.cc'
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -168,9 +165,7 @@ const setTrayIcon = (state) => {
 }
 
 const checkForNewRelease = () => {
-  const arch = os.arch()
   const platform = os.platform()
-  const version = app.getVersion()
   if (platform !== 'darwin' && platform !== 'win32') {
     return
   }
@@ -181,7 +176,6 @@ const checkForNewRelease = () => {
     sendToMainWindow('new-release-available', releaseNotes || '', releaseName || '')
   })
   autoUpdater.addListener('error', (err) => console.error(err))
-  autoUpdater.setFeedURL(`${nutsServer}/update/${platform}_${arch}/${version}`)
   autoUpdater.checkForUpdates()
   setInterval(() => {
     autoUpdater.checkForUpdates()
