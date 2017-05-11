@@ -12,7 +12,8 @@ const os = require('os')
 const path = require('path')
 const {spawn} = require('child_process')
 
-const {app, autoUpdater, BrowserWindow, dialog, ipcMain, Menu, shell, session} = electron
+const {app, BrowserWindow, dialog, ipcMain, Menu, shell, session} = electron
+const autoUpdater = require('electron-updater').autoUpdater
 const autoLauncher = new AutoLaunch({
   name: 'Cozy-Desktop',
   isHidden: true
@@ -181,7 +182,6 @@ const checkForNewRelease = () => {
     sendToMainWindow('new-release-available', releaseNotes || '', releaseName || '')
   })
   autoUpdater.addListener('error', (err) => console.error(err))
-  autoUpdater.setFeedURL(`${nutsServer}/update/${platform}_${arch}/${version}`)
   autoUpdater.checkForUpdates()
   setInterval(() => {
     autoUpdater.checkForUpdates()
