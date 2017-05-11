@@ -51,10 +51,6 @@ const platformName = () => {
   }
 }
 
-// This server is used for checking if a new release is available
-// and installing the updates
-const nutsServer = 'https://nuts.cozycloud.cc'
-
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
@@ -169,9 +165,7 @@ const setTrayIcon = (state) => {
 }
 
 const checkForNewRelease = () => {
-  const arch = os.arch()
   const platform = os.platform()
-  const version = app.getVersion()
   if (platform !== 'darwin' && platform !== 'win32') {
     return
   }
