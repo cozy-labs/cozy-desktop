@@ -2,6 +2,8 @@
 
 import clone from 'lodash.clone'
 import path from 'path'
+
+import Config from './config'
 import Ignore from './ignore'
 import logger from './logger'
 import Merge from './merge'
@@ -24,10 +26,12 @@ const log = logger({
 class Prep {
   merge: Merge
   ignore: Ignore
+  config: Config
 
-  constructor (merge: Merge, ignore: Ignore) {
+  constructor (merge: Merge, ignore: Ignore, config: Config) {
     this.merge = merge
     this.ignore = ignore
+    this.config = Config
   }
 
   /* Helpers */
