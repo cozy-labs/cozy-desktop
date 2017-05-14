@@ -25,7 +25,16 @@ type NameIssue =
   | ReservedNameIssue
   | ForbiddenLastCharIssue
 
-export type PathIssue = NameIssue & {path: string}
+export type PathLengthIssue = {
+  path: string,
+  pathBytes?: number,
+  pathMaxBytes?: number,
+  platform: string
+}
+
+export type PathIssue =
+  | (NameIssue & {path: string})
+  | PathLengthIssue
 
 function pathRestrictions (customs: Object): PathRestrictions {
   const reservedChars = customs.reservedChars || new Set()
@@ -141,4 +150,14 @@ export function detectPathIssues (path: string): Array<PathIssue> {
     .filter(issue => issue != null)
 
   return pathIssues
+}
+
+export function detectPathLengthIssue (path: string, platform: string): ?PathLengthIssue {
+  const { pathMaxBytes } = restrictionsByPlatform(platform)
+  const pathBytes = Buffer.byteLength(path) // TODO: utf16?
+  if (pathBytes > pathMaxBytes) {
+    // FIXME: The name is useless, but could not find a way to make flow happy
+    // without it.
+    return {name: path, path, pathBytes, pathMaxBytes, platform}
+  }
 }

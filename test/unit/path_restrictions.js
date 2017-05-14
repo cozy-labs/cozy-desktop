@@ -3,7 +3,7 @@
 import should from 'should'
 
 import pathRestrictions, {
-  detectNameIssues
+  detectNameIssues, detectPathLengthIssue
 } from '../../src/path_restrictions'
 
 describe('path_restrictions', () => {
@@ -138,6 +138,30 @@ describe('path_restrictions', () => {
           }])
         })
       })
+    })
+  })
+
+  describe('detectPathLengthIssue', () => {
+    const { win } = pathRestrictions
+
+    it('detects paths with a byte size greater than pathMaxBytes', () => {
+      should(detectPathLengthIssue('x'.repeat(win.pathMaxBytes + 1), 'win32'))
+        .have.properties({
+          pathBytes: win.pathMaxBytes + 1,
+          pathMaxBytes: win.pathMaxBytes
+        })
+      should(detectPathLengthIssue('x'.repeat(win.pathMaxBytes), 'win32')).be.undefined()
+      should(detectPathLengthIssue('', 'win32')).be.undefined()
+    })
+
+    it('computes the byte size from utf8 encoding', () => {
+      should(detectPathLengthIssue('é'.repeat(win.pathMaxBytes / 2 + 1), 'win32'))
+        .have.properties({
+          pathBytes: win.pathMaxBytes + 1,
+          pathMaxBytes: win.pathMaxBytes
+        })
+      should(detectPathLengthIssue('é'.repeat(win.pathMaxBytes / 2), 'win32')).be.undefined()
+      should(detectPathLengthIssue('xé', 'win32')).be.undefined()
     })
   })
 })

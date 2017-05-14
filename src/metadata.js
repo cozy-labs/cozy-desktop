@@ -6,7 +6,7 @@ import pick from 'lodash.pick'
 import path, { join } from 'path'
 
 import logger from './logger'
-import { detectPathIssues } from './path_restrictions'
+import { detectPathIssues, detectPathLengthIssue } from './path_restrictions'
 import { sameDate } from './timestamp'
 
 import type { PathIssue } from './path_restrictions'
@@ -119,7 +119,10 @@ export type PlatformIncompatibility = PathIssue & {docType: string}
 // synchronization
 export function detectPlatformIncompatibilities (metadata: Metadata, syncPath: string): Array<PlatformIncompatibility> {
   const {path, docType} = metadata
-  return detectPathIssues(path).map(issue => ({
+  const pathLenghIssue = detectPathLengthIssue(join(syncPath, path), process.platform)
+  const issues: PathIssue[] = detectPathIssues(path)
+  if (pathLenghIssue) issues.unshift(pathLenghIssue)
+  return issues.map(issue => ({
     ...issue,
     docType: issue.path === path ? docType : 'folder'
   }))
