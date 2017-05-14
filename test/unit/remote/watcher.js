@@ -31,6 +31,7 @@ describe('RemoteWatcher', function () {
   before(function instanciateRemoteWatcher () {
     this.prep = sinon.createStubInstance(Prep)
     this.config.cozyUrl = COZY_URL
+    this.prep.config = this.config
     this.remoteCozy = new RemoteCozy(this.config)
     this.remoteCozy.client = new CozyClient({
       cozyUrl: this.config.cozyUrl,

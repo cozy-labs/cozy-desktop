@@ -117,7 +117,7 @@ export type PlatformIncompatibility = PathIssue & {docType: string}
 
 // Identifies platform incompatibilities in metadata that will prevent local
 // synchronization
-export function detectPlatformIncompatibilities (metadata: Metadata): Array<PlatformIncompatibility> {
+export function detectPlatformIncompatibilities (metadata: Metadata, syncPath: string): Array<PlatformIncompatibility> {
   const {path, docType} = metadata
   return detectPathIssues(path).map(issue => ({
     ...issue,

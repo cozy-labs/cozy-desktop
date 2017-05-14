@@ -137,7 +137,10 @@ export default class RemoteWatcher {
     ensureValidPath(doc)
     // TODO: Move to Prep?
     if (!this.inRemoteTrash(doc)) {
-      const incompatibilities = detectPlatformIncompatibilities(doc)
+      const incompatibilities = detectPlatformIncompatibilities(
+        doc,
+        this.prep.config.syncPath
+      )
       if (incompatibilities.length > 0) {
         this.events.emit('platform-incompatibilities', incompatibilities)
         return
