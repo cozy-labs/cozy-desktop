@@ -17,6 +17,8 @@ type PathRestrictions = {
 export type ReservedCharsIssue = {| type: 'reservedChars', name: string, platform: string, reservedChars?: Set<SingleCharString> |}
 export type ReservedNameIssue = {| type: 'reservedName', name: string, platform: string, reservedName?: string |}
 export type ForbiddenLastCharIssue = {| type: 'forbiddenLastChar', name: string, platform: string, forbiddenLastChar?: SingleCharString |}
+export type NameMaxBytesIssue = {| type: 'nameMaxBytes', name: string, platform: string, nameMaxBytes: number |}
+export type DirNameMaxBytesIssue = {| type: 'dirNameMaxBytes', name: string, platform: string, dirNameMaxBytes: number |}
 
 // Describes a file/dir name issue so one could describe it in a user-friendly
 // way: "File X cannot be saved on platform Y because it contains character Z"
@@ -24,6 +26,8 @@ type NameIssue =
   | ReservedCharsIssue
   | ReservedNameIssue
   | ForbiddenLastCharIssue
+  | NameMaxBytesIssue
+  | DirNameMaxBytesIssue
 
 export type PathLengthIssue = {
   path: string,
@@ -108,8 +112,23 @@ function detectReservedName (name: string, restrictions: PathRestrictions): ?str
   }
 }
 
+function detectNameLengthIssue (name: string, restrictions: PathRestrictions): ?number {
+  const { nameMaxBytes } = restrictions
+  const nameBytes = Buffer.byteLength(name) // TODO: utf16?
+  if (nameBytes > nameMaxBytes) {
+    return nameMaxBytes
+  }
+}
+
+function detectDirNameLengthIssue (name: string, restrictions: PathRestrictions): ?number {
+  const { dirNameMaxBytes } = restrictions
+  if (dirNameMaxBytes == null) return detectNameLengthIssue(name, restrictions)
+  // TODO: utf16?
+  if (Buffer.byteLength(name) > dirNameMaxBytes) return dirNameMaxBytes
+}
+
 // Identifies file/dir name issues that will prevent local synchronization
-export function detectNameIssues (name: string, platform: string): NameIssue[] {
+export function detectNameIssues (name: string, type: string, platform: string): NameIssue[] {
   const restrictions = restrictionsByPlatform(platform)
   const issues = []
 
@@ -128,17 +147,35 @@ export function detectNameIssues (name: string, platform: string): NameIssue[] {
     issues.push({type: 'forbiddenLastChar', name, platform, forbiddenLastChar})
   }
 
+  if (type === 'folder') {
+    const dirNameMaxBytes = detectDirNameLengthIssue(name, restrictions)
+    if (dirNameMaxBytes) {
+      issues.push({type: 'dirNameMaxBytes', name, platform, dirNameMaxBytes})
+    }
+  } else if (type === 'file') {
+    const nameMaxBytes = detectNameLengthIssue(name, restrictions)
+    if (nameMaxBytes) {
+      issues.push({type: 'nameMaxBytes', name, platform, nameMaxBytes})
+    }
+  }
+
   return issues
 }
 
 // Identifies issues in every path item that will prevent local synchronization
-export function detectPathIssues (path: string): Array<PathIssue> {
+export function detectPathIssues (path: string, type: string): Array<PathIssue> {
   const platform = process.platform
-  const pathIssues = path
-    .split(sep)
+  const ancestorNames = path.split(sep)
+  const basename = ancestorNames.pop()
+
+  const pathIssues = detectNameIssues(basename, type, platform)
+    .map(nameIssue => ({...nameIssue, path}))
+
+  const recursivePathIssues = ancestorNames
     .reduceRight((previousIssues, name, index, pathComponents) => {
-      const nameIssues = detectNameIssues(name, platform)
       const path = pathComponents.slice(0, index + 1).join(sep)
+      const nameIssues = detectNameIssues(name, 'folder', platform)
+
       return previousIssues.concat(
         nameIssues.map(issue => ({
           ...issue,
@@ -146,10 +183,9 @@ export function detectPathIssues (path: string): Array<PathIssue> {
           path
         })
       ))
-    }, [])
-    .filter(issue => issue != null)
+    }, pathIssues)
 
-  return pathIssues
+  return recursivePathIssues.filter(issue => issue != null)
 }
 
 export function detectPathLengthIssue (path: string, platform: string): ?PathLengthIssue {

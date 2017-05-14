@@ -120,7 +120,7 @@ export type PlatformIncompatibility = PathIssue & {docType: string}
 export function detectPlatformIncompatibilities (metadata: Metadata, syncPath: string): Array<PlatformIncompatibility> {
   const {path, docType} = metadata
   const pathLenghIssue = detectPathLengthIssue(join(syncPath, path), process.platform)
-  const issues: PathIssue[] = detectPathIssues(path)
+  const issues: PathIssue[] = detectPathIssues(path, docType)
   if (pathLenghIssue) issues.unshift(pathLenghIssue)
   return issues.map(issue => ({
     ...issue,
