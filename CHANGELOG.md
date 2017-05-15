@@ -12,6 +12,12 @@ Improvements for all platforms:
 * The app will detect and prevent synchronization of files/folders with
   paths/names too long for your system, so you never end up with unusable
   content on your hard drive.
+* When starting Cozy Desktop, it will detect an already running instance of the
+  app, make it visible and exit (instead of displaying a weird error message).
+
+Improvements for Windows users:
+
+* The app now detects and displays using the user language.
 
 Happy syncing!
 
