@@ -1,3 +1,20 @@
+## 3.0.0-beta.1 - 2017-05-11
+
+This is for testing purpose only.
+Do not install it, unless you know what you're doing.
+
+Improvements for all platforms:
+
+* A beta release! Although some cases remain where synchronization breaks, it
+  mostly works on all 3 platforms. Please report every issue!
+* Switching to beta was good timing to change the version number format, which
+  should finally fix the last auto-updates issue.
+* The app will detect and prevent synchronization of files/folders with
+  paths/names too long for your system, so you never end up with unusable
+  content on your hard drive.
+
+Happy syncing!
+
 ## 3.0.0-alpha5 - 2017-05-11
 
 This is for testing purpose only.
