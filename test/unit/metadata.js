@@ -127,13 +127,15 @@ describe('metadata', function () {
         const metadata = {path, docType: 'file'}
         should(detectPlatformIncompatibilities(metadata, syncPath)).deepEqual([
           {
-            name: 'f?o:o',
-            path: 'f?o:o',
-            docType: 'folder',
-            reservedChars: new Set('?:'),
+            type: 'reservedChars',
+            name: 'q"ux',
+            path: 'f?o:o\\ba|r\\baz\\q"ux',
+            docType: 'file',
+            reservedChars: new Set('"'),
             platform
           },
           {
+            type: 'reservedChars',
             name: 'ba|r',
             path: 'f?o:o\\ba|r',
             docType: 'folder',
@@ -141,10 +143,11 @@ describe('metadata', function () {
             platform
           },
           {
-            name: 'q"ux',
-            path: 'f?o:o\\ba|r\\baz\\q"ux',
-            docType: 'file',
-            reservedChars: new Set('"'),
+            type: 'reservedChars',
+            name: 'f?o:o',
+            path: 'f?o:o',
+            docType: 'folder',
+            reservedChars: new Set('?:'),
             platform
           }
         ])
