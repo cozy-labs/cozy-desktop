@@ -488,6 +488,12 @@ const createWindow = () => {
 
 loadLastFiles()
 
+const shouldQuit = app.makeSingleInstance(showWindow)
+if (shouldQuit) {
+  app.quit()
+  return
+}
+
 app.on('ready', () => {
   setUpLocale()
   setUpTranslations()
