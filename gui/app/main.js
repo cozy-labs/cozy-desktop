@@ -21,19 +21,22 @@ const autoLauncher = new AutoLaunch({
 const desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
 const lastFilesPath = path.join(desktop.basePath, 'last-files')
 
-app.locale = (() => {
-  const env = process.env
-  const envLocale = env.LC_ALL || env.LC_MESSAGES || env.LANG || env.LANGUAGE
-  if (envLocale && envLocale.match(/^fr_/i)) {
-    return 'fr'
+app.locale = 'en'
+const setUpLocale = () => {
+  const locale = app.getLocale()
+  if (locale === 'fr' || locale.match(/^fr_/i)) {
+    app.locale = 'fr'
   } else {
-    return 'en'
+    app.locale = 'en'
   }
-})()
+}
 
-const translations = require(`./locales/${app.locale}.json`)
+app.translations = {}
+const setUpTranslations = () => {
+  app.translations = require(`./locales/${app.locale}.json`)
+}
 
-const translate = key => translations[key] ||
+const translate = key => app.translations[key] ||
   key.substr(key.indexOf(' ') + 1) // Key without prefix
 
 const interpolate = (string, ...args) => {
@@ -486,6 +489,8 @@ const createWindow = () => {
 loadLastFiles()
 
 app.on('ready', () => {
+  setUpLocale()
+  setUpTranslations()
   if (process.argv.indexOf('--hidden') === -1) {
     createWindow()
   } else {
