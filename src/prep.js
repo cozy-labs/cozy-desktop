@@ -31,7 +31,7 @@ class Prep {
   constructor (merge: Merge, ignore: Ignore, config: Config) {
     this.merge = merge
     this.ignore = ignore
-    this.config = Config
+    this.config = config
   }
 
   /* Helpers */
