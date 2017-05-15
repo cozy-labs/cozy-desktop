@@ -363,6 +363,24 @@ const incompatibilitiesErrorMessage = (i) => {
       )
     )
   }
+  if (i.pathMaxBytes) {
+    reasons.push(interpolate(
+      translate('Error it exceeds the path size limit'),
+      docType
+    ))
+  }
+  if (i.nameMaxBytes) {
+    reasons.push(interpolate(
+      translate('Error it exceeds the name size limit'),
+      docType
+    ))
+  }
+  if (i.dirNameMaxBytes) {
+    reasons.push(interpolate(
+      translate('Error it exceeds the folder name size limit'),
+      docType
+    ))
+  }
   return interpolate(
     translate(
       'Error The “{0}” {1} cannot be synchronized locally because ' +
