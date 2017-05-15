@@ -31,6 +31,7 @@ describe('RemoteWatcher', function () {
   before(function instanciateRemoteWatcher () {
     this.prep = sinon.createStubInstance(Prep)
     this.config.cozyUrl = COZY_URL
+    this.prep.config = this.config
     this.remoteCozy = new RemoteCozy(this.config)
     this.remoteCozy.client = new CozyClient({
       cozyUrl: this.config.cozyUrl,
@@ -276,15 +277,19 @@ describe('RemoteWatcher', function () {
         const platform = process.platform
         should(incompatibilities).deepEqual([
           {
-            name: 'f:oo',
-            docType: 'folder',
-            reservedChars: new Set(':'),
+            type: 'reservedChars',
+            name: 'b<a>r',
+            path: 'f:oo\\b<a>r',
+            docType: 'file',
+            reservedChars: new Set('<>'),
             platform
           },
           {
-            name: 'b<a>r',
-            docType: 'file',
-            reservedChars: new Set('<>'),
+            type: 'reservedChars',
+            name: 'f:oo',
+            path: 'f:oo',
+            docType: 'folder',
+            reservedChars: new Set(':'),
             platform
           }
         ])

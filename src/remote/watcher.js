@@ -3,7 +3,7 @@
 import * as conversion from '../conversion'
 import EventEmitter from 'events'
 import logger from '../logger'
-import { ensureValidPath, pathPlatformIncompatibilities } from '../metadata'
+import { ensureValidPath, detectPlatformIncompatibilities } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import RemoteCozy from './cozy'
@@ -137,8 +137,11 @@ export default class RemoteWatcher {
     ensureValidPath(doc)
     // TODO: Move to Prep?
     if (!this.inRemoteTrash(doc)) {
-      const incompatibilities = pathPlatformIncompatibilities(doc)
-      if (incompatibilities) {
+      const incompatibilities = detectPlatformIncompatibilities(
+        doc,
+        this.prep.config.syncPath
+      )
+      if (incompatibilities.length > 0) {
         this.events.emit('platform-incompatibilities', incompatibilities)
         return
       }
