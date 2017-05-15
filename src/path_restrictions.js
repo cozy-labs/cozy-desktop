@@ -179,7 +179,6 @@ export function detectPathIssues (path: string, type: string): Array<PathIssue> 
       return previousIssues.concat(
         nameIssues.map(issue => ({
           ...issue,
-          pathIssue: 'nameIssue',
           path
         })
       ))

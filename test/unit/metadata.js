@@ -157,6 +157,7 @@ describe('metadata', function () {
         const metadata = {path, docType: 'folder'}
         should(detectPlatformIncompatibilities(metadata, syncPath)).deepEqual([
           {
+            type: 'reservedChars',
             name: 'b:ar',
             path: 'foo/b:ar',
             docType: 'folder',
