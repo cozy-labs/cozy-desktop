@@ -58,9 +58,9 @@ function pathRestrictions (customs: Object): PathRestrictions {
 
 // See: https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
 const win = pathRestrictions({
-  pathMaxBytes: 1023, // MAX_PATH without nul
-  nameMaxBytes: 1020, // pathMaxBytes without drive (ex: 'C:\')
-  dirNameMaxBytes: 1007, // nameMaxBytes without an 8.3 filename + separator
+  pathMaxBytes: 259, // MAX_PATH without nul
+  nameMaxBytes: 256, // pathMaxBytes without drive (ex: 'C:\')
+  dirNameMaxBytes: 243, // nameMaxBytes without an 8.3 filename + separator
   reservedChars: new Set('<>:"/\\|?*'),
   forbiddenLastChars: new Set('. '),
   reservedNames: new Set([
