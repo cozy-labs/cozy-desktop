@@ -1,4 +1,4 @@
-## 3.0.0-beta.1 - 2017-05-11
+## 3.0.0-beta.1 - 2017-05-15
 
 This is for testing purpose only.
 Do not install it, unless you know what you're doing.
