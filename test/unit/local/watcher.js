@@ -110,7 +110,12 @@ describe('LocalWatcher Tests', function () {
     }
 
     it('calls back with an error if the file is missing', function (done) {
-      this.watcher.createDoc('no/such/file', {}, function (err, doc) {
+      const whateverStats = {
+        atime: {getTime: () => {}},
+        ctime: {getTime: () => {}},
+        mtime: {getTime: () => {}}
+      }
+      this.watcher.createDoc('no/such/file', whateverStats, function (err, doc) {
         should.exist(err)
         err.code.should.equal('ENOENT')
         done()
