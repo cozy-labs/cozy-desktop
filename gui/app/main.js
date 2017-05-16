@@ -176,7 +176,7 @@ const checkForNewRelease = () => {
     const releaseName = updateInfo.version || 'unknown'
     const releaseNotes = updateInfo.releaseName || `New version ${releaseName} available`
     newReleaseAvailable = true
-    sendToMainWindow('new-release-available', releaseNotes || '', releaseName || '')
+    sendToMainWindow('new-release-available', releaseNotes, releaseName)
   })
   autoUpdater.addListener('error', (err) => console.error(err))
   autoUpdater.checkForUpdates()
