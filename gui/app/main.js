@@ -488,10 +488,10 @@ const createWindow = () => {
 
 loadLastFiles()
 
-const shouldQuit = app.makeSingleInstance(showWindow)
-if (shouldQuit) {
-  app.quit()
-  return
+const shouldExit = app.makeSingleInstance(showWindow)
+if (shouldExit) {
+  console.log('Cozy Desktop is already running. Exiting...')
+  app.exit()
 }
 
 app.on('ready', () => {
