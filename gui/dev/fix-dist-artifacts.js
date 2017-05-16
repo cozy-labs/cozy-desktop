@@ -15,6 +15,6 @@ function fixFile (file, bad, good) {
 //
 // And GitHub will replaces spaces with dots in uploaded release artifacts.
 
-fixFile('dist/latest.yml', 'cozy-desktop-gui-setup', 'Cozy.Desktop.Setup')
+fixFile('dist/latest.yml', 'cozy-desktop-gui-setup-', 'Cozy.Desktop.Setup.')
 fixFile('dist/github/latest-mac.json', 'cozy-desktop-gui', 'Cozy.Desktop')
 
