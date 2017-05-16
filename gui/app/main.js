@@ -172,9 +172,9 @@ const checkForNewRelease = () => {
   if (platform !== 'darwin' && platform !== 'win32') {
     return
   }
-  autoUpdater.addListener('update-downloaded', (event, releaseNotes, releaseName) => {
-    releaseName = releaseName || 'unknown'
-    releaseNotes = releaseNotes || `New version ${releaseName} available`
+  autoUpdater.addListener('update-downloaded', (updateInfo) => {
+    const releaseName = updateInfo.version || 'unknown'
+    const releaseNotes = updateInfo.releaseName || `New version ${releaseName} available`
     newReleaseAvailable = true
     sendToMainWindow('new-release-available', releaseNotes || '', releaseName || '')
   })
