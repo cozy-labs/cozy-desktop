@@ -172,17 +172,17 @@ const checkForNewRelease = () => {
   if (platform !== 'darwin' && platform !== 'win32') {
     return
   }
-  autoUpdater.addListener('update-downloaded', (event, releaseNotes, releaseName) => {
-    releaseName = releaseName || 'unknown'
-    releaseNotes = releaseNotes || `New version ${releaseName} available`
+  autoUpdater.addListener('update-downloaded', (updateInfo) => {
+    const releaseName = updateInfo.version || 'unknown'
+    const releaseNotes = updateInfo.releaseName || `New version ${releaseName} available`
     newReleaseAvailable = true
-    sendToMainWindow('new-release-available', releaseNotes || '', releaseName || '')
+    sendToMainWindow('new-release-available', releaseNotes, releaseName)
   })
   autoUpdater.addListener('error', (err) => console.error(err))
   autoUpdater.checkForUpdates()
   setInterval(() => {
     autoUpdater.checkForUpdates()
-  }, 86400) // Check if a new release is available once per day
+  }, 1000 * 60 * 60 * 24) // Check if a new release is available once per day
 }
 
 const updateState = (newState, filename) => {
