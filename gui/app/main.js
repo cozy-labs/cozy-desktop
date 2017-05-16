@@ -182,7 +182,7 @@ const checkForNewRelease = () => {
   autoUpdater.checkForUpdates()
   setInterval(() => {
     autoUpdater.checkForUpdates()
-  }, 86400) // Check if a new release is available once per day
+  }, 1000 * 60 * 60 * 24) // Check if a new release is available once per day
 }
 
 const updateState = (newState, filename) => {
