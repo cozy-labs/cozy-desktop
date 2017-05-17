@@ -1,3 +1,25 @@
+## 3.0.0-beta.2 - 2017-05-17
+
+This is for testing purpose only.
+Do not install it, unless you know what you're doing.
+
+Improvements for all platforms:
+
+* When an update was available, the app used to display the version number and
+  the release notes in the Settings. This was broken while migrating to the new
+  auto-update system. The issue is partially fixed, but it only shows the
+  summary instead of the full release notes for now.
+* The auto-update migration also revealed another issue: the app was checking
+  for updates every 1 or 2 minutes, triggering successive downloads of the
+  latest release. This should work as expected now.
+
+Improvements for Windows users:
+
+* The app was not downloading updates from the appropriate location on Windows
+  (while it was working on other platforms). This was fixed too.
+
+Happy syncing!
+
 ## 3.0.0-beta.1 - 2017-05-15
 
 This is for testing purpose only.
