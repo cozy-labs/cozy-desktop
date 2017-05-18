@@ -12,6 +12,7 @@ import logger from '../logger'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import { PendingMap } from '../utils/pending'
+import { maxDate } from '../timestamp'
 
 import type { Callback } from '../utils/func'
 import type { Pending } from '../utils/pending' // eslint-disable-line
@@ -167,12 +168,16 @@ class LocalWatcher {
   createDoc (filePath: string, stats: fs.Stats, callback: Callback) {
     const absPath = path.join(this.syncPath, filePath)
     const mimeType = mime.lookup(absPath)
+    const {atime, mtime, ctime} = stats
     this.checksum(absPath, function (err, md5sum) {
       let doc: Object = {
         path: filePath,
         docType: 'file',
         md5sum,
-        updated_at: stats.mtime,
+        // Depending on the event, the filesystem and the OS, there may be
+        // cases where any of atime, mtime and ctime can be greater than the
+        // two other values.
+        updated_at: maxDate(atime, mtime, ctime),
         mime: mimeType,
         class: mimeType.split('/')[0],
         size: stats.size
