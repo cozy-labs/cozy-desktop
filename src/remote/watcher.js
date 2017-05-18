@@ -77,7 +77,7 @@ export default class RemoteWatcher {
       if (err.status === 400) {
         throw err
       }
-      log.error(err)
+      log.error({err})
     }
   }
 
@@ -89,7 +89,7 @@ export default class RemoteWatcher {
       try {
         await this.pullOne(id)
       } catch (err) {
-        log.error(err)
+        log.error({err})
         failedIds.push(id)
       }
     }
@@ -111,10 +111,10 @@ export default class RemoteWatcher {
   }
 
   async onChange (doc: RemoteDoc) {
-    log.debug({event: 'change', doc})
+    log.debug({path: doc.path}, 'change received')
 
     const was: ?Metadata = await this.pouch.byRemoteIdMaybeAsync(doc._id)
-    log.debug({doc, was})
+    log.trace({doc, was})
 
     if (['directory', 'file'].includes(doc.type)) {
       return this.putDoc(doc, was)
@@ -133,8 +133,8 @@ export default class RemoteWatcher {
   // the trash just after, it looks like it appeared directly on the trash.
   async putDoc (remote: RemoteDoc, was: ?Metadata): Promise<*> {
     let doc: Metadata = conversion.createMetadata(remote)
-    const docType = doc.docType
     ensureValidPath(doc)
+    const {docType, path} = doc
     // TODO: Move to Prep?
     if (!this.inRemoteTrash(doc)) {
       const incompatibilities = detectPlatformIncompatibilities(
@@ -148,47 +148,47 @@ export default class RemoteWatcher {
     }
     if (doc._deleted) {
       if (!was) {
-        log.debug(`${doc.path}: ${docType} was created, trashed, and removed remotely`)
+        log.debug({path}, `${docType} was created, trashed, and removed remotely`)
         return
       }
-      log.info(`${doc.path}: ${docType} was deleted remotely`)
+      log.info({path}, `${docType} was deleted remotely`)
       return this.prep.deleteDocAsync(SIDE, was)
     }
     if (this.inRemoteTrash(doc)) {
       if (!was) {
-        log.info(`${doc.path}: ${docType} was created and trashed remotely`)
+        log.info({path}, `${docType} was created and trashed remotely`)
         return
       }
-      log.info(`${doc.path}: ${docType} was trashed remotely`)
+      log.info({path}, `${docType} was trashed remotely`)
       return this.prep.trashDocAsync(SIDE, was, doc)
     }
     if (!was) {
-      log.info(`${doc.path}: ${docType} was added remotely`)
+      log.info({path}, `${docType} was added remotely`)
       return this.prep.addDocAsync(SIDE, doc)
     }
     if (was.remote._rev === doc.remote._rev) {
-      log.info(`${doc.path}: ${docType} is up-to-date`)
+      log.info({path}, `${docType} is up-to-date`)
       return
     }
     if (!this.inRemoteTrash(doc) && was.trashed) {
-      log.info(`${doc.path}: ${docType} was restored remotely`)
+      log.info({path}, `${docType} was restored remotely`)
       return this.prep.restoreDocAsync(SIDE, doc, was)
     }
     if (was.path === doc.path) {
-      log.info(`${doc.path}: ${docType} was updated remotely`)
+      log.info({path}, `${docType} was updated remotely`)
       return this.prep.updateDocAsync(SIDE, doc)
     }
     if ((doc.docType === 'file') && (was.md5sum === doc.md5sum)) {
-      log.info(`${doc.path}: ${docType} was moved remotely`)
+      log.info({path}, `${docType} was moved remotely`)
       return this.prep.moveFileAsync(SIDE, doc, was)
     }
     if (doc.docType === 'folder') {
-      log.info(`${doc.path}: ${docType} was possibly moved or renamed remotely`)
+      log.info({path}, `${docType} was possibly moved or renamed remotely`)
       await this.prep.deleteDocAsync(SIDE, was)
       return this.prep.addDocAsync(SIDE, doc)
     }
     // TODO: add unit test
-    log.info(`${doc.path}: ${docType} was possibly renamed remotely while updated locally`)
+    log.info({path}, `${docType} was possibly renamed remotely while updated locally`)
     await this.removeRemote(was)
     return this.prep.addDocAsync(SIDE, doc)
   }
@@ -201,7 +201,7 @@ export default class RemoteWatcher {
   // It's useful when a file has diverged (updated/renamed both in local and
   // remote) while cozy-desktop was not running.
   removeRemote (doc: Metadata) {
-    log.info(`${doc.path}: Dissociating from remote...`)
+    log.info({path: doc.path}, 'Dissociating from remote...')
     delete doc.remote
     if (doc.sides) delete doc.sides.remote
     return this.pouch.put(doc)
