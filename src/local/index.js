@@ -147,7 +147,7 @@ class Local implements Side {
     let filePath = path.resolve(this.syncPath, doc.path)
     let parent = path.resolve(this.syncPath, path.dirname(doc.path))
 
-    log.info({file: filePath}, 'Put file')
+    log.info({path: filePath}, 'Put file')
 
     async.waterfall([
       next => {
