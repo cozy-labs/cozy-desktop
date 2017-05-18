@@ -168,16 +168,13 @@ class LocalWatcher {
   createDoc (filePath: string, stats: fs.Stats, callback: Callback) {
     const absPath = path.join(this.syncPath, filePath)
     const mimeType = mime.lookup(absPath)
-    const {atime, mtime, ctime} = stats
+    const {mtime, ctime} = stats
     this.checksum(absPath, function (err, md5sum) {
       let doc: Object = {
         path: filePath,
         docType: 'file',
         md5sum,
-        // Depending on the event, the filesystem and the OS, there may be
-        // cases where any of atime, mtime and ctime can be greater than the
-        // two other values.
-        updated_at: maxDate(atime, mtime, ctime),
+        updated_at: maxDate(mtime, ctime),
         mime: mimeType,
         class: mimeType.split('/')[0],
         size: stats.size
