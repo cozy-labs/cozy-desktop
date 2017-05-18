@@ -3,7 +3,7 @@
 import should from 'should'
 import sinon from 'sinon'
 
-import timestamp, { InvalidTimestampError, sameDate } from '../../src/timestamp'
+import timestamp, { InvalidTimestampError, maxDate, sameDate } from '../../src/timestamp'
 
 // XXX: Pass strings to javascript's Date constructor everywhere, so the tests
 //      don't depend on the current timezone.
@@ -87,6 +87,30 @@ describe('timestamp', () => {
       sameDate(d, e).should.be.false()
     })
   )
+
+  describe('maxDate', () => {
+    const d1 = new Date('2017-05-18T08:02:36.000Z')
+    const d2 = new Date('2017-05-18T08:08:00.000Z')
+    const d3 = new Date('2017-05-18T08:03:16.000Z')
+
+    it('is identity when given a single date', () => {
+      should(maxDate(d1)).equal(d1)
+    })
+
+    it('finds the most recent of two dates', () => {
+      should(maxDate(d1, d2)).equal(d2)
+      should(maxDate(d2, d1)).equal(d2)
+    })
+
+    it('is any of two identical dates', () => {
+      should(maxDate(d1, d1)).equal(d1)
+    })
+
+    it('finds the most recent of three dates', () => {
+      should(maxDate(d1, d2, d3)).equal(d2)
+      should(maxDate(d1, d3, d2)).equal(d2)
+    })
+  })
 
   describe('stringify', () => {
     it('returns a golang-compatible RFC3339 representation', () => {

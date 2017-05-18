@@ -52,6 +52,13 @@ export function sameDate (one: any, two: any) {
   return Math.abs(two - one) < 3000
 }
 
+export function maxDate (date: Date, ...dates: Date[]): Date {
+  const datesByTime = new Map([date].concat(dates).map(d => [d.getTime(), d]))
+  const maxTime = Math.max.apply(Math, Array.from(datesByTime.keys()))
+  // $FlowFixMe
+  return datesByTime.get(maxTime)
+}
+
 function stringify (t: Timestamp) {
   ensureValid(t)
 
