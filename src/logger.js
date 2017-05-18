@@ -12,7 +12,7 @@ fs.ensureDirSync(LOG_DIR)
 
 export const defaultLogger = bunyan.createLogger({
   name: 'Cozy Desktop',
-  level: 'debug',
+  level: 'trace',
   serializers: {
     err: bunyan.stdSerializers.err
   },
@@ -29,7 +29,7 @@ export const defaultLogger = bunyan.createLogger({
 if (process.env.DEBUG) {
   defaultLogger.addStream({
     stream: process.stdout,
-    level: 'debug'
+    level: 'trace'
   })
 }
 

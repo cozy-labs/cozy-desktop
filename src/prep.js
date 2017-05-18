@@ -155,12 +155,15 @@ class Prep {
     ensureValidChecksum(doc)
 
     if (doc.path === was.path) {
-      log.warn(`Invalid move: ${JSON.stringify(was, null, 2)}`)
-      log.warn(`to ${JSON.stringify(doc, null, 2)}`)
-      throw new Error('Invalid move')
+      const msg = 'Invalid move'
+      log.warn({path: doc.path}, msg)
+      log.trace({path: doc.path, doc, was})
+      throw new Error(msg)
     } else if (!was._rev) {
-      log.warn(`Missing rev: ${JSON.stringify(was, null, 2)}`)
-      throw new Error('Missing rev')
+      const msg = 'Missing rev'
+      log.warn({path: doc.path}, msg)
+      log.trace({path: doc.path, was})
+      throw new Error(msg)
     } else {
       return this.doMoveFile(side, doc, was)
     }
@@ -191,11 +194,15 @@ class Prep {
     ensureValidPath(doc)
     ensureValidPath(was)
     if (doc.path === was.path) {
-      log.warn(`Invalid move: ${JSON.stringify(doc, null, 2)}`)
-      throw new Error('Invalid move')
+      const msg = 'Invalid move'
+      log.warn({path: doc.path}, msg)
+      log.trace({path: doc.path, doc})
+      throw new Error(msg)
     } else if (!was._rev) {
-      log.warn(`Missing rev: ${JSON.stringify(was, null, 2)}`)
-      throw new Error('Missing rev')
+      const msg = 'Missing rev'
+      log.warn(msg)
+      log.trace({path: doc.path, was})
+      throw new Error(msg)
     } else {
       return this.doMoveFolder(side, doc, was)
     }

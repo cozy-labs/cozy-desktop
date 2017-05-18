@@ -147,7 +147,7 @@ class Local implements Side {
     let filePath = path.resolve(this.syncPath, doc.path)
     let parent = path.resolve(this.syncPath, path.dirname(doc.path))
 
-    log.info(`Put file ${filePath}`)
+    log.info({file: filePath}, 'Put file')
 
     async.waterfall([
       next => {
@@ -213,7 +213,7 @@ class Local implements Side {
       this.metadataUpdater(doc)
 
     ], function (err) {
-      if (err) { log.warn('addFile failed:', err, doc) }
+      if (err) { log.warn({path: doc.path}, 'addFile failed:', err, doc) }
       fs.unlink(tmpFile, () => callback(err))
     })
   }
@@ -223,7 +223,7 @@ class Local implements Side {
   // Create a new folder
   addFolder (doc: Metadata, callback: Callback) {
     let folderPath = path.join(this.syncPath, doc.path)
-    log.info(`Put folder ${folderPath}`)
+    log.info({path: folderPath}, 'Put folder')
     fs.ensureDir(folderPath, err => {
       if (err) {
         callback(err)
@@ -242,7 +242,7 @@ class Local implements Side {
 
   // Update the metadata of a file
   updateFileMetadata (doc: Metadata, old: Metadata, callback: Callback) {
-    log.info(`${doc.path}: Updating file metadata...`)
+    log.info({path: doc.path}, 'Updating file metadata...')
     this.metadataUpdater(doc)(callback)
   }
 
@@ -255,7 +255,7 @@ class Local implements Side {
 
   // Move a file from one place to another
   moveFile (doc: Metadata, old: Metadata, callback: Callback) {
-    log.info(`Move file ${old.path} → ${doc.path}`)
+    log.info({path: doc.path}, `Moving from ${old.path}`)
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
     let parent = path.join(this.syncPath, path.dirname(doc.path))
@@ -269,8 +269,9 @@ class Local implements Side {
             if (newPathExists) {
               next()
             } else {
-              log.error(`File ${oldPath} not found`)
-              next(new Error(`${oldPath} not found`))
+              const msg = `File ${oldPath} not found`
+              log.error({path: newPath}, msg)
+              next(new Error(msg))
             }
           })
         }
@@ -281,8 +282,8 @@ class Local implements Side {
     ], err => {
       if (err) {
         log.error(`Error while moving ${JSON.stringify(doc, null, 2)}`)
-        log.error(JSON.stringify(old, null, 2))
-        log.error(err)
+        log.trace(JSON.stringify(old, null, 2))
+        log.error({err})
         this.addFile(doc, callback)
       } else {
         this.events.emit('transfer-move', doc, old)
@@ -295,7 +296,7 @@ class Local implements Side {
 
   // Move a folder
   moveFolder (doc: Metadata, old: Metadata, callback: Callback) {
-    log.info(`Move folder ${old.path} → ${doc.path}`)
+    log.info({path: doc.path}, `Move folder from ${old.path}`)
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
     let parent = path.join(this.syncPath, path.dirname(doc.path))
@@ -310,8 +311,9 @@ class Local implements Side {
           } else if (newPathExists) {
             next()
           } else {
-            log.error(`Folder ${oldPath} not found`)
-            next(new Error(`${oldPath} not found`))
+            const msg = `Folder ${oldPath} not found`
+            log.error({path: newPath}, msg)
+            next(new Error(msg))
           }
         })
       ),
@@ -320,9 +322,9 @@ class Local implements Side {
 
     ], err => {
       if (err) {
-        log.error(`Error while moving ${JSON.stringify(doc, null, 2)}`)
-        log.error(JSON.stringify(old, null, 2))
-        log.error(err)
+        log.error({path: newPath}, `Error while moving ${JSON.stringify(doc, null, 2)}`)
+        log.trace(JSON.stringify(old, null, 2))
+        log.error({err})
         this.addFolder(doc, callback)
       } else {
         callback(null)
@@ -333,7 +335,7 @@ class Local implements Side {
   moveFolderAsync: (Metadata, Metadata) => Promise<*>
 
   trashAsync (doc: Metadata): Promise<*> {
-    log.info(`Delete ${doc.path}`)
+    log.info({path: doc.path}, 'Moving to the OS trash...')
     this.events.emit('delete-file', doc)
     let fullpath = path.join(this.syncPath, doc.path)
     return trash([fullpath])

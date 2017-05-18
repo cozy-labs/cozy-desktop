@@ -141,7 +141,7 @@ class Sync {
         .on('complete', info => {
           if (info.results && info.results.length) { return }
           this.events.emit('up-to-date')
-          log.debug({event: 'end'}, 'No more metadata changes for now')
+          log.debug('No more metadata changes for now')
           opts.live = true
           opts.returnDocs = false
           this.changes = this.pouch.db.changes(opts)
@@ -166,8 +166,10 @@ class Sync {
   // At least one side should say it has already this change
   // In some cases, both sides have the change
   async apply (change: Change): Promise<*> {
-    let { doc } = change
-    log.info({change})
+    let { doc, seq } = change
+    const changeInfo = {path: doc.path, seq}
+    log.debug(changeInfo, 'Applying change...')
+    log.trace({change})
 
     if (this.ignore.isIgnored(doc)) {
       return this.pouch.setLocalSeqAsync(change.seq)
@@ -190,7 +192,7 @@ class Sync {
         throw new Error(`Unknown doctype: ${doc.docType}`)
       }
 
-      log.info(`${change.doc.path}: Applied change ${change.seq} on ${sideName} side`)
+      log.info(changeInfo, `Applied change on ${sideName} side`)
       await this.pouch.setLocalSeqAsync(change.seq)
       if (!change.doc._deleted) {
         await this.updateRevs(change.doc, sideName)
@@ -210,7 +212,7 @@ class Sync {
     } else if (remoteRev > localRev) {
       return [this.local, 'local', localRev]
     } else {
-      log.info({doc}, 'up to date')
+      log.info({path: doc.path}, 'up to date')
       return []
     }
   }
@@ -218,7 +220,7 @@ class Sync {
   // Make the error explicit (offline, local disk full, quota exceeded, etc.)
   // and keep track of the number of retries
   async handleApplyError (change: Change, err: Error) {
-    log.error(err)
+    log.error({err, path: change.doc.path})
     if (err.code === 'ENOSPC') {
       throw new Error('The disk space on your computer is full!')
     } else if (err.status === 413) {
@@ -288,7 +290,7 @@ class Sync {
         doc.sides[side] = rev
         await this.pouch.put(doc)
       } else {
-        log.warn('Race condition', err)
+        log.warn({path: doc.path, err}, 'Race condition')
       }
     }
   }
@@ -313,13 +315,12 @@ class Sync {
             throw err
           }
         } else {
-          log.warn('Invalid move')
-          log.warn(from)
-          log.warn(doc)
+          log.warn({path: doc.path}, 'Invalid move')
+          log.trace({from, doc})
           try {
             await side.trashAsync(from)
           } catch (err) {
-            log.error(err)
+            log.error({err, path: doc.path})
           }
           return side.addFileAsync(doc)
         }
@@ -369,13 +370,12 @@ class Sync {
           // and the destination may not match anymore (race condition).
           // As a fallback, we try to add the folder that should exist, and to
           // trash the one that shouldn't.
-          log.error('Invalid move')
-          log.error(from)
-          log.error(doc)
+          log.error({path: doc.path}, 'Invalid move')
+          log.trace({from, doc})
           try {
             await side.trashAsync(from)
           } catch (err) {
-            log.error(err)
+            log.error({err})
           }
           return side.addFolderAsync(doc)
         }

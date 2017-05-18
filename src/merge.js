@@ -167,7 +167,7 @@ class Merge {
     try {
       file = await this.pouch.db.get(doc._id)
     } catch (err) {
-      if (err.status !== 404) { log.warn(err) }
+      if (err.status !== 404) { log.warn({err}) }
     }
     markSide(side, doc, file)
     if (file && file.docType === 'folder') {
@@ -185,7 +185,7 @@ class Merge {
         return this.resolveConflictAsync(side, doc)
       }
       if (sameFile(file, doc)) {
-        log.info({doc}, 'up to date')
+        log.info({path: doc.path}, 'up to date')
         return null
       } else {
         return this.pouch.put(doc)
@@ -202,7 +202,7 @@ class Merge {
     try {
       folder = await this.pouch.db.get(doc._id)
     } catch (err) {
-      if (err.status !== 404) { log.warn(err) }
+      if (err.status !== 404) { log.warn({err}) }
     }
     markSide(side, doc, folder)
     if (folder && folder.docType === 'file') {
@@ -213,7 +213,7 @@ class Merge {
       if (doc.tags == null) { doc.tags = folder.tags || [] }
       if (doc.remote == null) { doc.remote = folder.remote }
       if (sameFolder(folder, doc)) {
-        log.info({doc}, 'up to date')
+        log.info({path: doc.path}, 'up to date')
         return null
       } else {
         return this.pouch.put(doc)
@@ -231,7 +231,7 @@ class Merge {
       try {
         file = await this.pouch.db.get(doc._id)
       } catch (err) {
-        if (err.status !== 404) { log.warn(err) }
+        if (err.status !== 404) { log.warn({err}) }
       }
       markSide(side, doc, file)
       markSide(side, was, was)
@@ -270,7 +270,7 @@ class Merge {
       try {
         folder = await this.pouch.db.get(doc._id)
       } catch (err) {
-        if (err.status !== 404) { log.warn(err) }
+        if (err.status !== 404) { log.warn({err}) }
       }
       markSide(side, doc, folder)
       markSide(side, was, was)
@@ -328,7 +328,7 @@ class Merge {
     try {
       await this.deleteFileAsync(side, was)
     } catch (err) {
-      log.warn(err)
+      log.warn({err})
     }
     return this.updateFileAsync(side, doc)
   }
@@ -338,7 +338,7 @@ class Merge {
     try {
       await this.deleteFolderAsync(side, was)
     } catch (err) {
-      log.warn(err)
+      log.warn({err})
     }
     return this.putFolderAsync(side, doc)
   }
@@ -368,7 +368,7 @@ class Merge {
       try {
         await this.pouch.put(oldMetadata)
       } catch (err) {
-        log.warn(err)
+        log.warn({err})
       }
     }
     return this.pouch.put(newMetadata)
@@ -392,7 +392,7 @@ class Merge {
           child._deleted = true
           await this.pouch.put(child)
         } catch (err) {
-          log.warn(err)
+          log.warn({err})
         }
       }
     }
@@ -460,9 +460,10 @@ class Merge {
     const toPreserve = new Set()
     for (let doc of Array.from(docs)) {
       if (toPreserve.has(doc.path) || (doc.sides && !isUpToDate(side, doc))) {
-        log.warn(`${doc.path}: cannot be deleted with ${folder.path}: ` +
+        log.warn({path: folder.path},
+          `${doc.path}: cannot be deleted with ${folder.path}: ` +
           `${doc.docType} was modified on the ${otherSide(side)} side`)
-        log.info(`${doc.path}: Dissociating from remote...`)
+        log.info({path: doc.path}, 'Dissociating from remote...')
         delete doc.remote
         if (doc.sides) delete doc.sides.remote
         toPreserve.add(path.dirname(doc.path))

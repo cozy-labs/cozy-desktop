@@ -116,7 +116,7 @@ class LocalWatcher {
             log.error('Sorry, the kernel is out of inotify watches!')
             log.error('See doc/inotify.md for how to solve this issue.')
           } else {
-            log.error(err)
+            log.error({err})
           }
         })
 
@@ -209,19 +209,20 @@ class LocalWatcher {
 
   // New file detected
   onAddFile (filePath: string, stats: fs.Stats) {
-    log.chokidar.debug({event: 'add', filePath, stats})
+    const logError = (err) => log.error({err, path: filePath})
+    log.chokidar.trace({event: 'add', path: filePath, stats})
     if (this.paths) { this.paths.push(filePath) }
     this.pending.executeIfAny(filePath)
     this.checksums++
     this.createDoc(filePath, stats, (err, doc) => {
       if (err) {
         this.checksums--
-        log.info(err)
+        logError(err)
       } else {
         if (this.pending.isEmpty()) {
           this.checksums--
-          log.info(`${filePath}: file added`)
-          this.prep.addFileAsync(SIDE, doc).catch(err => log.error(err))
+          log.info({path: filePath}, 'file added')
+          this.prep.addFileAsync(SIDE, doc).catch(logError)
         } else {
           // Let's see if one of the pending deleted files has the
           // same checksum that the added file. If so, we mark them as
@@ -229,17 +230,17 @@ class LocalWatcher {
           this.pouch.byChecksum(doc.md5sum, (err, docs) => {
             this.checksums--
             if (err) {
-              log.info(`${filePath}: file added`)
-              this.prep.addFileAsync(SIDE, doc).catch(err => log.error(err))
+              log.info({path: filePath}, 'file added')
+              this.prep.addFileAsync(SIDE, doc).catch(logError)
             } else {
               const same = find(docs, d => this.pending.hasPath(d.path))
               if (same) {
-                log.debug(`${filePath}: was moved from ${same.path}`)
+                log.debug({path: filePath}, `was moved from ${same.path}`)
                 this.pending.clear(same.path)
-                this.prep.moveFileAsync(SIDE, doc, same).catch(err => log.error(err))
+                this.prep.moveFileAsync(SIDE, doc, same).catch(logError)
               } else {
-                log.info(`${filePath}: file added`)
-                this.prep.addFileAsync(SIDE, doc).catch(err => log.error(err))
+                log.info({path: filePath}, 'file added')
+                this.prep.addFileAsync(SIDE, doc).catch(logError)
               }
             }
           })
@@ -250,7 +251,7 @@ class LocalWatcher {
 
   // New directory detected
   onAddDir (folderPath: string, stats: fs.Stats) {
-    log.chokidar.debug({event: 'addDir', folderPath, stats})
+    log.chokidar.trace({event: 'addDir', path: folderPath, stats})
     if (folderPath === '') return
 
     if (this.paths) { this.paths.push(folderPath) }
@@ -260,8 +261,8 @@ class LocalWatcher {
       docType: 'folder',
       updated_at: stats.mtime
     }
-    log.info(`${folderPath}: folder added`)
-    this.prep.putFolderAsync(SIDE, doc).catch(err => log.error(err))
+    log.info({path: folderPath}, 'folder added')
+    this.prep.putFolderAsync(SIDE, doc).catch(err => log.error({err, path: folderPath}))
   }
 
   // File deletion detected
@@ -269,15 +270,15 @@ class LocalWatcher {
   // It can be a file moved out. So, we wait a bit to see if a file with the
   // same checksum is added and, if not, we declare this file as deleted.
   onUnlinkFile (filePath: string) {
-    log.chokidar.debug(`${filePath}: unlink`)
+    log.chokidar.trace({event: 'unlink', path: filePath})
     // TODO: Extract delayed execution logic to utils/pending
     let timeout
     const stopChecking = () => {
       clearTimeout(timeout)
     }
     const execute = () => {
-      log.info(`${filePath}: File deleted`)
-      this.prep.trashFileAsync(SIDE, {path: filePath}).catch(err => log.error(err))
+      log.info({path: filePath}, 'File deleted')
+      this.prep.trashFileAsync(SIDE, {path: filePath}).catch(err => log.error({err, path: filePath}))
     }
     const check = () => {
       if (this.checksums === 0) {
@@ -295,15 +296,15 @@ class LocalWatcher {
   // We don't want to delete a folder before files inside it. So we wait a bit
   // after chokidar event to declare the folder as deleted.
   onUnlinkDir (folderPath: string) {
-    log.chokidar.debug(`${folderPath}: unlinkDir`)
+    log.chokidar.trace({event: 'unlinkDir', path: folderPath})
     // TODO: Extract repeated check logic to utils/pending
     let interval
     const stopChecking = () => {
       clearInterval(interval)
     }
     const execute = () => {
-      log.info(`${folderPath}: Folder deleted`)
-      this.prep.trashFolderAsync(SIDE, {path: folderPath}).catch(err => log.error(err))
+      log.info({path: folderPath}, 'Folder deleted')
+      this.prep.trashFolderAsync(SIDE, {path: folderPath}).catch(err => log.error({err, path: folderPath}))
     }
     const check = () => {
       if (!this.pending.hasPendingChild(folderPath)) {
@@ -316,13 +317,13 @@ class LocalWatcher {
 
   // File update detected
   onChange (filePath: string, stats: fs.Stats) {
-    log.chokidar.debug({event: 'change', filePath, stats})
-    log.info(`${filePath}: changed`)
+    log.chokidar.trace({event: 'change', path: filePath, stats})
+    log.info({path: filePath}, 'File changed')
     this.createDoc(filePath, stats, (err, doc) => {
       if (err) {
         log.info(err)
       } else {
-        this.prep.updateFileAsync(SIDE, doc).catch(err => log.error(err))
+        this.prep.updateFileAsync(SIDE, doc).catch(err => log.error({err, path: filePath}))
       }
     })
   }
@@ -338,7 +339,7 @@ class LocalWatcher {
             if (this.paths.indexOf(doc.path) !== -1 || doc.trashed) {
               continue
             } else {
-              log.info(`${doc.path}: deleted while client was stopped`)
+              log.info({path: doc.path}, 'deleted while client was stopped')
               await this.prep.trashDocAsync(SIDE, doc)
             }
           }
