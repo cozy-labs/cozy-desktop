@@ -111,7 +111,6 @@ describe('LocalWatcher Tests', function () {
 
     it('calls back with an error if the file is missing', function (done) {
       const whateverStats = {
-        atime: {getTime: () => {}},
         ctime: {getTime: () => {}},
         mtime: {getTime: () => {}}
       }
