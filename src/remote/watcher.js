@@ -75,7 +75,7 @@ export default class RemoteWatcher {
       log.debug({event: 'end'}, 'No more remote changes for now')
     } catch (err) {
       if (err.status === 400) {
-        throw err
+        throw new Error('Client has been revoked')
       }
       log.error({err})
     }
