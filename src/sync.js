@@ -222,12 +222,9 @@ class Sync {
   async handleApplyError (change: Change, err: Error) {
     log.error({err, path: change.doc.path})
     if (err.code === 'ENOSPC') {
-      throw new Error('The disk space on your computer is full!')
+      throw new Error('No more disk space')
     } else if (err.status === 413) {
-      throw new Error('Your Cozy is full! ' +
-        'You can delete some files to be able ' +
-        'to add new ones or upgrade your storage plan.'
-      )
+      throw new Error('Cozy is full')
     }
     try {
       await this.diskUsage()

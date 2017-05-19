@@ -45,6 +45,8 @@
   "Error it exceeds the path size limit": "it exceeds the path size limi",
   "Error it exceeds the name size limit": "it exceeds the name size limit",
   "Error it exceeds the folder name size limit": "it exceeds the folder name size limit",
+  "Error Cozy is full": "Your Cozy disk space is full. Please remove files and empty your trash before uploading files again.",
+  "Error No more disk space": "Bummer! The disk space is full on your computer. Try removing some files on your computer to resume the synchronization with your Cozy.",
   "Folder All done": "All done",
   "Folder Select a location for your Cozy folder:": "Select a location for your Cozy folder:",
   "Folder Use Cozy Desktop": "Use Cozy Desktop",

@@ -87,7 +87,11 @@ const sendToMainWindow = (...args) => {
 
 const sendErrorToMainWindow = (msg) => {
   if (msg === 'Client has been revoked') {
+    msg = translate('Revoked It looks like you have revoked your client from your Cozy')
     sendToMainWindow('revoked')
+  } else if (msg === 'Cozy is full' || msg === 'No more disk space') {
+    msg = translate('Error ' + msg)
+    sendToMainWindow('sync-error', msg)
   } else {
     sendToMainWindow('sync-error', msg)
   }
