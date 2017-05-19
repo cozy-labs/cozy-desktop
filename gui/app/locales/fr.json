@@ -89,7 +89,7 @@
   "Password You don't have filled the password!": "Vous n'avez pas rempli le mot de passe !",
   "Password Login": "Se connecter",
   "Revoked Access revoked": "Accès révoqué",
-  "Revoked It looks like you have revoked your client from your Cozy": "Il semblerait que vous ayez révoqué vôtre client depuis vôtre Cozy.",
+  "Revoked It looks like you have revoked your client from your Cozy": "Il semblerait que votre appareil ait été révoqué depuis votre Cozy. Pour continuer la synchronisation, merci de vous authentifier à nouveau.",
   "Revoked If it wasn't you, contact us at contact@cozycloud.cc": "Si ce n'était pas vous, contactez-nous sur contact@cozycloud.cc",
   "Revoked Log out": "Se déconnecter",
   "Settings Settings": "Préférences",
