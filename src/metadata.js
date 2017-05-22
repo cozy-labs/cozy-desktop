@@ -133,7 +133,7 @@ export function detectPlatformIncompatibilities (metadata: Metadata, syncPath: s
 // MD5 has 16 bytes.
 // Base64 encoding must include padding.
 export function invalidChecksum (doc: Metadata) {
-  if (doc.md5sum == null) return true
+  if (doc.md5sum == null) return doc.docType === 'file'
 
   const buffer = Buffer.from(doc.md5sum, 'base64')
 
