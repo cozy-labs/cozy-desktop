@@ -129,12 +129,11 @@ export function detectPlatformIncompatibilities (metadata: Metadata, syncPath: s
 }
 
 // Return true if the checksum is invalid
-// If the checksum is missing, it is not invalid, just missing,
-// so it returns false.
+// If the checksum is missing, it is invalid.
 // MD5 has 16 bytes.
 // Base64 encoding must include padding.
 export function invalidChecksum (doc: Metadata) {
-  if (doc.md5sum == null) return false
+  if (doc.md5sum == null) return true
 
   const buffer = Buffer.from(doc.md5sum, 'base64')
 
