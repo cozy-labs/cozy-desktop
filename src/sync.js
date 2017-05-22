@@ -2,7 +2,7 @@
 
 import Promise from 'bluebird'
 import EventEmitter from 'events'
-import path from 'path'
+import { dirname } from 'path'
 
 import Ignore from './ignore'
 import Local from './local'
@@ -399,7 +399,7 @@ class Sync {
   // only this folder on the remote, not every files and folders inside it, to
   // preserve the tree in the trash.
   async trashWithParentOrByItself (doc: Metadata, side: Side): Promise<boolean> {
-    let parentId = path.dirname(doc._id)
+    let parentId = dirname(doc._id)
     if (parentId !== '.') {
       let parent = await this.pouch.db.get(parentId)
 

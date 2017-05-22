@@ -147,7 +147,7 @@ class Local implements Side {
     let filePath = path.resolve(this.syncPath, doc.path)
     let parent = path.resolve(this.syncPath, path.dirname(doc.path))
 
-    log.info({file: filePath}, 'Put file')
+    log.info({path: filePath}, 'Put file')
 
     async.waterfall([
       next => {
@@ -161,7 +161,7 @@ class Local implements Side {
       (existingFilePath, next) => {
         fs.ensureDir(this.tmpPath, () => {
           if (existingFilePath) {
-            log.info(`Recopy ${existingFilePath} -> ${filePath}`)
+            log.info({path: filePath}, `Recopy ${existingFilePath} -> ${filePath}`)
             this.events.emit('transfer-copy', doc)
             fs.copy(existingFilePath, tmpFile, next)
           } else {
@@ -281,9 +281,9 @@ class Local implements Side {
 
     ], err => {
       if (err) {
-        log.error(`Error while moving ${JSON.stringify(doc, null, 2)}`)
-        log.trace(JSON.stringify(old, null, 2))
-        log.error({err})
+        log.error({path: newPath}, `Error while moving ${JSON.stringify(doc, null, 2)}`)
+        log.trace({path: newPath}, JSON.stringify(old, null, 2))
+        log.error({path: newPath, err})
         this.addFile(doc, callback)
       } else {
         this.events.emit('transfer-move', doc, old)
@@ -323,8 +323,8 @@ class Local implements Side {
     ], err => {
       if (err) {
         log.error({path: newPath}, `Error while moving ${JSON.stringify(doc, null, 2)}`)
-        log.trace(JSON.stringify(old, null, 2))
-        log.error({err})
+        log.trace({path: newPath}, JSON.stringify(old, null, 2))
+        log.error({path: newPath, err})
         this.addFolder(doc, callback)
       } else {
         callback(null)
@@ -343,7 +343,7 @@ class Local implements Side {
 
   // Rename a file/folder to resolve a conflict
   resolveConflict (dst: Metadata, src: Metadata, callback: Callback) {
-    log.info(`Resolve a conflict: ${src.path} → ${dst.path}`)
+    log.info({path: src.path}, `Resolve a conflict: ${src.path} → ${dst.path}`)
     let srcPath = path.join(this.syncPath, src.path)
     let dstPath = path.join(this.syncPath, dst.path)
     fs.rename(srcPath, dstPath, callback)

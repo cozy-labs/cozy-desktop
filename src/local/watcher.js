@@ -113,8 +113,8 @@ class LocalWatcher {
         .on('ready', this.onReady(resolve))
         .on('error', function (err) {
           if (err.message === 'watch ENOSPC') {
-            log.error('Sorry, the kernel is out of inotify watches!')
-            log.error('See doc/inotify.md for how to solve this issue.')
+            log.error('Sorry, the kernel is out of inotify watches! ' +
+              'See doc/inotify.md for how to solve this issue.')
           } else {
             log.error({err})
           }
@@ -321,7 +321,7 @@ class LocalWatcher {
     log.info({path: filePath}, 'File changed')
     this.createDoc(filePath, stats, (err, doc) => {
       if (err) {
-        log.info(err)
+        log.info({path: filePath, err})
       } else {
         this.prep.updateFileAsync(SIDE, doc).catch(err => log.error({err, path: filePath}))
       }

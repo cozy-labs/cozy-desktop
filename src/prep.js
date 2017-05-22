@@ -1,7 +1,7 @@
 /* @flow */
 
 import clone from 'lodash.clone'
-import path from 'path'
+import { join } from 'path'
 
 import Config from './config'
 import Ignore from './ignore'
@@ -150,19 +150,20 @@ class Prep {
   //   - the two paths are not the same
   //   - the revision for the old file is present
   async moveFileAsync (side: SideName, doc: Metadata, was: Metadata) {
+    const {path} = doc
     ensureValidPath(doc)
     ensureValidPath(was)
     ensureValidChecksum(doc)
 
     if (doc.path === was.path) {
       const msg = 'Invalid move'
-      log.warn({path: doc.path}, msg)
-      log.trace({path: doc.path, doc, was})
+      log.warn({path}, msg)
+      log.trace({path})
       throw new Error(msg)
     } else if (!was._rev) {
       const msg = 'Missing rev'
-      log.warn({path: doc.path}, msg)
-      log.trace({path: doc.path, was})
+      log.warn({path}, msg)
+      log.trace({path})
       throw new Error(msg)
     } else {
       return this.doMoveFile(side, doc, was)
@@ -191,17 +192,18 @@ class Prep {
   //   - the two paths are not the same
   //   - the revision for the old folder is present
   async moveFolderAsync (side: SideName, doc: Metadata, was: Metadata) {
+    const {path} = doc
     ensureValidPath(doc)
     ensureValidPath(was)
     if (doc.path === was.path) {
       const msg = 'Invalid move'
-      log.warn({path: doc.path}, msg)
-      log.trace({path: doc.path, doc})
+      log.warn({path}, msg)
+      log.trace({path})
       throw new Error(msg)
     } else if (!was._rev) {
       const msg = 'Missing rev'
-      log.warn(msg)
-      log.trace({path: doc.path, was})
+      log.warn({path}, msg)
+      log.trace({path, was})
       throw new Error(msg)
     } else {
       return this.doMoveFolder(side, doc, was)
@@ -257,7 +259,7 @@ class Prep {
 
     if (!doc) {
       doc = clone(was)
-      doc.path = path.join(TRASH_DIR_NAME, was.path)
+      doc.path = join(TRASH_DIR_NAME, was.path)
     }
 
     ensureValidPath(doc)
@@ -277,7 +279,7 @@ class Prep {
 
     if (!doc) {
       doc = clone(was)
-      doc.path = path.join(TRASH_DIR_NAME, was.path)
+      doc.path = join(TRASH_DIR_NAME, was.path)
     }
 
     ensureValidPath(doc)
