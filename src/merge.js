@@ -1,7 +1,7 @@
 /* @flow */
 
 import clone from 'lodash.clone'
-import path from 'path'
+import { basename, dirname, extname, join } from 'path'
 
 import Local from './local'
 import logger from './logger'
@@ -48,7 +48,7 @@ class Merge {
 
   // Be sure that the tree structure for the given path exists
   async ensureParentExistAsync (side: SideName, doc: *) {
-    let parentId = path.dirname(doc._id)
+    let parentId = dirname(doc._id)
     if (parentId === '.') { return }
 
     try {
@@ -60,7 +60,7 @@ class Merge {
 
     let parentDoc = {
       _id: parentId,
-      path: path.dirname(doc.path),
+      path: dirname(doc.path),
       docType: 'folder',
       updated_at: new Date()
     }
@@ -79,14 +79,14 @@ class Merge {
   async resolveConflictAsync (side: SideName, doc: Metadata) {
     let dst = clone(doc)
     let date = fsutils.validName(new Date().toISOString())
-    let ext = path.extname(doc.path)
-    let dir = path.dirname(doc.path)
-    let base = path.basename(doc.path, ext)
+    let ext = extname(doc.path)
+    let dir = dirname(doc.path)
+    let base = basename(doc.path, ext)
     // 180 is an arbitrary limit to avoid having files with too long names
     if (base.length > 180) {
       base = base.slice(0, 180)
     }
-    dst.path = `${path.join(dir, base)}-conflict-${date}${ext}`
+    dst.path = `${join(dir, base)}-conflict-${date}${ext}`
     try {
       // $FlowFixMe
       await this[side].resolveConflictAsync(dst, doc)
@@ -101,11 +101,12 @@ class Merge {
   // Add a file, if it doesn't already exist,
   // and create the tree structure if needed
   async addFileAsync (side: SideName, doc: Metadata) {
+    const {path} = doc
     let file
     try {
       file = await this.pouch.db.get(doc._id)
     } catch (err) {
-      if (err.status !== 404) { log.warn(err) }
+      if (err.status !== 404) { log.warn({path, err}) }
     }
     markSide(side, doc, file)
     if (file && file.docType === 'folder') {
@@ -163,11 +164,12 @@ class Merge {
 
   // Update a file, when its metadata or its content has changed
   async updateFileAsync (side: SideName, doc: Metadata) {
+    const {path} = doc
     let file
     try {
       file = await this.pouch.db.get(doc._id)
     } catch (err) {
-      if (err.status !== 404) { log.warn({err}) }
+      if (err.status !== 404) { log.warn({path, err}) }
     }
     markSide(side, doc, file)
     if (file && file.docType === 'folder') {
@@ -185,7 +187,7 @@ class Merge {
         return this.resolveConflictAsync(side, doc)
       }
       if (sameFile(file, doc)) {
-        log.info({path: doc.path}, 'up to date')
+        log.info({path}, 'up to date')
         return null
       } else {
         return this.pouch.put(doc)
@@ -198,11 +200,12 @@ class Merge {
 
   // Create or update a folder
   async putFolderAsync (side: SideName, doc: *) {
+    const {path} = doc
     let folder
     try {
       folder = await this.pouch.db.get(doc._id)
     } catch (err) {
-      if (err.status !== 404) { log.warn({err}) }
+      if (err.status !== 404) { log.warn({path, err}) }
     }
     markSide(side, doc, folder)
     if (folder && folder.docType === 'file') {
@@ -213,7 +216,7 @@ class Merge {
       if (doc.tags == null) { doc.tags = folder.tags || [] }
       if (doc.remote == null) { doc.remote = folder.remote }
       if (sameFolder(folder, doc)) {
-        log.info({path: doc.path}, 'up to date')
+        log.info({path}, 'up to date')
         return null
       } else {
         return this.pouch.put(doc)
@@ -226,12 +229,13 @@ class Merge {
 
   // Rename or move a file
   async moveFileAsync (side: SideName, doc: Metadata, was: Metadata) {
+    const {path} = doc
     if (was.sides && was.sides[side]) {
       let file
       try {
         file = await this.pouch.db.get(doc._id)
       } catch (err) {
-        if (err.status !== 404) { log.warn({err}) }
+        if (err.status !== 404) { log.warn({path, err}) }
       }
       markSide(side, doc, file)
       markSide(side, was, was)
@@ -265,12 +269,13 @@ class Merge {
 
   // Rename or move a folder (and every file and folder inside it)
   async moveFolderAsync (side: SideName, doc: Metadata, was: Metadata) {
+    const {path} = doc
     if (was.sides && was.sides[side]) {
       let folder
       try {
         folder = await this.pouch.db.get(doc._id)
       } catch (err) {
-        if (err.status !== 404) { log.warn({err}) }
+        if (err.status !== 404) { log.warn({path, err}) }
       }
       markSide(side, doc, folder)
       markSide(side, was, was)
@@ -323,33 +328,36 @@ class Merge {
   }
 
   async restoreFileAsync (side: SideName, was: Metadata, doc: Metadata): Promise<*> {
+    const {path} = doc
     // TODO we can probably do something smarter for conflicts and avoiding to
     // transfer again the file
     try {
       await this.deleteFileAsync(side, was)
     } catch (err) {
-      log.warn({err})
+      log.warn({path, err})
     }
     return this.updateFileAsync(side, doc)
   }
 
   async restoreFolderAsync (side: SideName, was: Metadata, doc: Metadata): Promise<*> {
+    const {path} = doc
     // TODO we can probably do something smarter for conflicts
     try {
       await this.deleteFolderAsync(side, was)
     } catch (err) {
-      log.warn({err})
+      log.warn({path, err})
     }
     return this.putFolderAsync(side, doc)
   }
 
   async trashFileAsync (side: SideName, was: *, doc: *): Promise<void> {
+    const {path} = doc
     let oldMetadata
     try {
       oldMetadata = await this.pouch.db.get(was._id)
     } catch (err) {
       if (err.status === 404) {
-        log.debug(`${doc._id}: Nothing to trash`)
+        log.debug({path}, 'Nothing to trash')
         return
       }
       throw err
@@ -368,13 +376,14 @@ class Merge {
       try {
         await this.pouch.put(oldMetadata)
       } catch (err) {
-        log.warn({err})
+        log.warn({path, err})
       }
     }
     return this.pouch.put(newMetadata)
   }
 
   async trashFolderAsync (side: SideName, was: *, doc: *): Promise<void> {
+    const {path} = doc
     // Don't trash a folder if the other side has added a new file in it (or updated one)
     let children = await this.pouch.byRecursivePathAsync(was._id)
     children = children.reverse()
@@ -392,7 +401,7 @@ class Merge {
           child._deleted = true
           await this.pouch.put(child)
         } catch (err) {
-          log.warn({err})
+          log.warn({path, err})
         }
       }
     }
@@ -466,7 +475,7 @@ class Merge {
         log.info({path: doc.path}, 'Dissociating from remote...')
         delete doc.remote
         if (doc.sides) delete doc.sides.remote
-        toPreserve.add(path.dirname(doc.path))
+        toPreserve.add(dirname(doc.path))
       } else {
         markSide(side, doc, doc)
         doc._deleted = true

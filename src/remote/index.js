@@ -54,7 +54,8 @@ export default class Remote implements Side {
 
   // Create a folder on the remote cozy instance
   async addFolderAsync (doc: Metadata): Promise<Metadata> {
-    log.info({path: doc.path}, 'Creating folder...')
+    const {path} = doc
+    log.info({path}, 'Creating folder...')
 
     const [parentPath, name] = conversion.extractDirAndName(doc.path)
     const parent: RemoteDoc = await this.remoteCozy.findDirectoryByPath(parentPath)
@@ -69,7 +70,7 @@ export default class Remote implements Side {
     } catch (err) {
       if (err.status !== 409) { throw err }
 
-      log.info(`${doc.path}: Folder already exists`)
+      log.info({path}, 'Folder already exists')
       dir = await this.remoteCozy.findDirectoryByPath(`/${doc.path}`)
     }
 
@@ -82,9 +83,10 @@ export default class Remote implements Side {
   }
 
   async addFileAsync (doc: Metadata): Promise<Metadata> {
-    log.info({path: doc.path}, 'Uploading new file...')
+    const {path} = doc
+    log.info({path}, 'Uploading new file...')
     const stream = await this.other.createReadStreamAsync(doc)
-    const [dirPath, name] = conversion.extractDirAndName(doc.path)
+    const [dirPath, name] = conversion.extractDirAndName(path)
     const dir = await this.remoteCozy.findDirectoryByPath(dirPath)
 
     // Emit events to track the upload progress
@@ -117,7 +119,8 @@ export default class Remote implements Side {
   }
 
   async overwriteFileAsync (doc: Metadata, old: ?Metadata): Promise<Metadata> {
-    log.info({path: doc.path}, 'Uploading new file version...')
+    const {path} = doc
+    log.info({path}, 'Uploading new file version...')
     const stream = await this.other.createReadStreamAsync(doc)
     const options = {
       contentType: doc.mime,
@@ -136,7 +139,8 @@ export default class Remote implements Side {
   }
 
   async updateFileMetadataAsync (doc: Metadata, old: any): Promise<Metadata> {
-    log.info({path: doc.path}, 'Updating file metadata...')
+    const {path} = doc
+    log.info({path}, 'Updating file metadata...')
 
     const attrs = {
       executable: doc.executable,
@@ -156,9 +160,10 @@ export default class Remote implements Side {
   }
 
   async moveFileAsync (newMetadata: Metadata, oldMetadata: Metadata): Promise<Metadata> {
-    log.info({path: newMetadata.path}, `Moving from ${oldMetadata.path} ...`)
+    const {path} = newMetadata
+    log.info({path}, `Moving from ${oldMetadata.path} ...`)
 
-    const [newDirPath, newName]: [string, string] = conversion.extractDirAndName(newMetadata.path)
+    const [newDirPath, newName]: [string, string] = conversion.extractDirAndName(path)
     const newDir: RemoteDoc = await this.remoteCozy.findDirectoryByPath(newDirPath)
 
     const attrs = {
@@ -181,12 +186,13 @@ export default class Remote implements Side {
   }
 
   async updateFolderAsync (doc: Metadata, old: Metadata): Promise<Metadata> {
+    const {path} = doc
     if (!old.remote) {
       return this.addFolderAsync(doc)
     }
-    log.info({path: doc.path}, 'Updating metadata...')
+    log.info({path}, 'Updating metadata...')
 
-    const [newParentDirPath, newName] = conversion.extractDirAndName(doc.path)
+    const [newParentDirPath, newName] = conversion.extractDirAndName(path)
     const newParentDir = await this.remoteCozy.findDirectoryByPath(newParentDirPath)
     let newRemoteDoc: RemoteDoc
 
@@ -204,7 +210,7 @@ export default class Remote implements Side {
     } catch (err) {
       if (err.status !== 404) { throw err }
 
-      log.warn({path: doc.path}, "Directory doesn't exist anymore. Recreating it...")
+      log.warn({path}, "Directory doesn't exist anymore. Recreating it...")
       newRemoteDoc = await this.remoteCozy.createDirectory({
         name: newName,
         dirID: newParentDir._id,
@@ -221,7 +227,8 @@ export default class Remote implements Side {
   }
 
   async trashAsync (doc: Metadata): Promise<void> {
-    log.info({path: doc.path}, 'Moving to the trash...')
+    const {path} = doc
+    log.info({path}, 'Moving to the trash...')
     let newRemoteDoc: RemoteDoc
     try {
       newRemoteDoc = await this.remoteCozy.trashById(doc.remote._id, {
@@ -244,7 +251,8 @@ export default class Remote implements Side {
 
   // TODO add tests
   async resolveConflictAsync (dst: Metadata, src: Metadata): Promise<*> {
-    log.info(`Resolve a conflict: ${src.path} → ${dst.path}`)
+    const {path} = src
+    log.info({path}, `Resolve a conflict: ${path} → ${dst.path}`)
     const newName = conversion.extractDirAndName(dst.path)[1]
     await this.remoteCozy.updateAttributesById(src.remote._id, {
       name: newName

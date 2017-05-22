@@ -72,7 +72,7 @@ export default class RemoteWatcher {
 
       await this.pullMany(changes.ids)
       await this.pouch.setRemoteSeqAsync(changes.last_seq)
-      log.debug({event: 'end'}, 'No more remote changes for now')
+      log.debug('No more remote changes for now')
     } catch (err) {
       if (err.status === 400) {
         throw new Error('Client has been revoked')
@@ -111,7 +111,8 @@ export default class RemoteWatcher {
   }
 
   async onChange (doc: RemoteDoc) {
-    log.debug({path: doc.path}, 'change received')
+    const {path} = doc
+    log.debug({path}, 'change received')
 
     const was: ?Metadata = await this.pouch.byRemoteIdMaybeAsync(doc._id)
     log.trace({doc, was})
@@ -201,7 +202,8 @@ export default class RemoteWatcher {
   // It's useful when a file has diverged (updated/renamed both in local and
   // remote) while cozy-desktop was not running.
   removeRemote (doc: Metadata) {
-    log.info({path: doc.path}, 'Dissociating from remote...')
+    const {path} = doc
+    log.info({path}, 'Dissociating from remote...')
     delete doc.remote
     if (doc.sides) delete doc.sides.remote
     return this.pouch.put(doc)

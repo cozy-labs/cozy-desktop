@@ -108,7 +108,7 @@ export function invalidPath (doc: Metadata) {
 
 export function ensureValidPath (doc: Metadata) {
   if (invalidPath(doc)) {
-    log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`)
+    log.warn({path: doc.path}, `Invalid path: ${JSON.stringify(doc, null, 2)}`)
     throw new Error('Invalid path')
   }
 }
@@ -144,7 +144,7 @@ export function invalidChecksum (doc: Metadata) {
 
 export function ensureValidChecksum (doc: Metadata) {
   if (invalidChecksum(doc)) {
-    log.warn(`Invalid checksum: ${JSON.stringify(doc, null, 2)}`)
+    log.warn({path: doc.path}, `Invalid checksum: ${JSON.stringify(doc, null, 2)}`)
     throw new Error('Invalid checksum')
   }
 }
