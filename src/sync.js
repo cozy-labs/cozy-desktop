@@ -220,7 +220,8 @@ class Sync {
   // Make the error explicit (offline, local disk full, quota exceeded, etc.)
   // and keep track of the number of retries
   async handleApplyError (change: Change, err: Error) {
-    log.error({err, path: change.doc.path})
+    const {path} = change.doc
+    log.error({path, err})
     if (err.code === 'ENOSPC') {
       throw new Error('No more disk space')
     } else if (err.status === 413) {
@@ -233,12 +234,14 @@ class Sync {
         throw new Error('Client has been revoked')
       } else {
         // The client is offline, wait that it can connect again to the server
+        log.warn({path}, 'Client is offline')
         this.events.emit('offline')
         while (true) {
           try {
             await Promise.delay(60000)
             await this.diskUsage()
             this.events.emit('online')
+            log.warn({path}, 'Client is online')
             return
           } catch (_) {}
         }
