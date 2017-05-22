@@ -74,13 +74,17 @@ describe('metadata', function () {
   })
 
   describe('invalidChecksum', function () {
-    it('returns true if the checksum is missing', function () {
-      let ret = invalidChecksum({})
+    it('returns true if the checksum is missing for a file', function () {
+      let ret = invalidChecksum({docType: 'file'})
       ret.should.be.true()
-      ret = invalidChecksum({md5sum: null})
+      ret = invalidChecksum({docType: 'file', md5sum: null})
       ret.should.be.true()
-      ret = invalidChecksum({md5sum: undefined})
+      ret = invalidChecksum({docType: 'file', md5sum: undefined})
       ret.should.be.true()
+    })
+
+    it('returns false if the checksum is missing for a folder', function () {
+      should(invalidChecksum({docType: 'folder'})).be.false()
     })
 
     it('returns true if the checksum is incorrect', function () {
