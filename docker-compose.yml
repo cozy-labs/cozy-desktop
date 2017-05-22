@@ -5,7 +5,7 @@ services:
     ports:
       - "5984:5984"
   stack:
-    build: dev/cozy-stack
+    build: dev/docker
     ports:
       - "8080:8080"
       - "6060:6060"
