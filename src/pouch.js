@@ -73,9 +73,10 @@ class Pouch {
 
   bulkDocs (docs: Metadata[], callback?: Callback) {
     for (const doc of docs) {
-      log.debug({path: doc.path}, 'Saving bulk metadata...')
+      const {path} = doc
+      log.debug({path}, 'Saving bulk metadata...')
+      log.trace({path, doc})
     }
-    log.trace({docs})
     return this.db.bulkDocs(docs).asCallback(callback)
   }
 
