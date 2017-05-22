@@ -283,7 +283,6 @@ class Prep {
     }
 
     ensureValidPath(doc)
-    ensureValidChecksum(doc)
 
     doc.trashed = true
     doc.docType = 'folder'
