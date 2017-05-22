@@ -532,7 +532,7 @@ describe('Prep', function () {
 
   describe('trashFileAsync', () => {
     it('merges the metadata with an _id and a docType', async function () {
-      const doc = {path: 'file-to-be-trashed'}
+      const doc = {path: 'file-to-be-trashed', md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='}
 
       await this.prep.trashFileAsync(this.side, doc)
 
@@ -560,7 +560,7 @@ describe('Prep', function () {
 
   describe('trashFolderAsync', () => {
     it('merges the metadata with an _id and a docType', async function () {
-      const doc = {path: 'folder-to-be-trashed'}
+      const doc = {path: 'folder-to-be-trashed', md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='}
 
       await this.prep.trashFolderAsync(this.side, doc)
 

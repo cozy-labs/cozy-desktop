@@ -74,13 +74,13 @@ describe('metadata', function () {
   })
 
   describe('invalidChecksum', function () {
-    it('returns false if the checksum is missing', function () {
+    it('returns true if the checksum is missing', function () {
       let ret = invalidChecksum({})
-      ret.should.be.false()
+      ret.should.be.true()
       ret = invalidChecksum({md5sum: null})
-      ret.should.be.false()
+      ret.should.be.true()
       ret = invalidChecksum({md5sum: undefined})
-      ret.should.be.false()
+      ret.should.be.true()
     })
 
     it('returns true if the checksum is incorrect', function () {
