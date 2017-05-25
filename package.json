@@ -107,7 +107,7 @@
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^3.0.0",
     "faker": "^4.1.0",
-    "flow-bin": "^0.46.0",
+    "flow-bin": "^0.47.0",
     "flow-typed": "^2.0.0",
     "installed-check": "^2.1.1",
     "istanbul": "^0.4.5",
