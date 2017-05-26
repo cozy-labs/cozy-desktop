@@ -3,6 +3,7 @@
 require('babel-polyfill')
 
 const AutoLaunch = require('auto-launch-patched')
+const childProcess = require('child_process')
 const Desktop = require('cozy-desktop').default
 const electron = require('electron')
 const notify = require('electron-main-notification')
@@ -10,8 +11,10 @@ const fs = require('fs')
 const debounce = require('lodash.debounce')
 const os = require('os')
 const path = require('path')
-const {spawn} = require('child_process')
+const url = require('url')
+const uuid = require('node-uuid')
 
+const {spawn} = childProcess
 const {app, BrowserWindow, dialog, ipcMain, Menu, shell, session} = electron
 const autoUpdater = require('electron-updater').autoUpdater
 const autoLauncher = new AutoLaunch({
@@ -508,6 +511,99 @@ if (shouldExit) {
   app.exit()
 }
 
+// Execute a command synchronously and log both input and output.
+const execSync = (cmd) => {
+  console.log(`+ ${cmd}`)
+  const output = childProcess.execSync(cmd, {encoding: 'utf8'})
+  console.log(output)
+}
+
+// Retrieve the Windows SID for the current user
+const windowsCurrentUserSID = () => {
+  const {username} = os.userInfo()
+  const command = `wmic useraccount where name="${username}" get sid`
+  const output = childProcess.execSync(command, {encoding: 'utf8'})
+  return output.split(/\s+/)[1]
+}
+
+// Compute the Windows sync root id (See windowsRegisterCloudStorageProvider)
+const windowsSyncRootId = (windowsSID, accountID) => {
+  const storageProviderID = 'CozyDrive'
+  return `${storageProviderID}!${windowsSID}!${accountID}`
+}
+
+// See: https://msdn.microsoft.com/en-us/library/windows/desktop/dn889934.aspx
+const windowsRegisterCloudStorageProvider = (syncPath) => {
+  const windowsSID = windowsCurrentUserSID()
+  const syncRootId = windowsSyncRootId(windowsSID, 'default')
+  const clsid = uuid.v4().toUpperCase()
+  const exePath = process.argv[0]
+
+  execSync(`reg add HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\SyncRootManager\\${syncRootId} /v DisplayNameResource /t REG_SZ /d "Cozy Drive" /f`)
+  execSync(`reg add HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\SyncRootManager\\${syncRootId} /v IconResource /t REG_SZ /d "${exePath}" /f`)
+  execSync(`reg add HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\SyncRootManager\\${syncRootId}\\UserSyncRoots /v ${windowsSID} /t REG_SZ /d "${syncPath}" /f`)
+
+  execSync(`reg add HKCU\\Software\\Classes\\CLSID\\{${clsid}} /ve /t REG_SZ /d "Cozy Drive" /f`)
+  execSync(`reg add HKCU\\Software\\Classes\\CLSID\\{${clsid}}\\DefaultIcon /ve /t REG_SZ /d "${exePath}" /f`)
+  execSync(`reg add HKCU\\Software\\Classes\\CLSID\\{${clsid}} /v System.IsPinnedToNameSpaceTree /t REG_DWORD /d 0x1 /f`)
+  execSync(`reg add HKCU\\Software\\Classes\\CLSID\\{${clsid}} /v SortOrderIndex /t REG_DWORD /d 0x42 /f`)
+  execSync(`reg add HKCU\\Software\\Classes\\CLSID\\{${clsid}}\\InProcServer32 /ve /t REG_EXPAND_SZ /d %%systemroot%%\\system32\\shell32.dll /f`)
+  execSync(`reg add HKCU\\Software\\Classes\\CLSID\\{${clsid}}\\Instance /v CLSID /t REG_SZ /d {0E5AAE11-A475-4c5b-AB00-C66DE400274E} /f`)
+  execSync(`reg add HKCU\\Software\\Classes\\CLSID\\{${clsid}}\\Instance\\InitPropertyBag /v Attributes /t REG_DWORD /d 0x11 /f`)
+  execSync(`reg add HKCU\\Software\\Classes\\CLSID\\{${clsid}}\\Instance\\InitPropertyBag /v TargetFolderPath /t REG_EXPAND_SZ /d "${syncPath}" /f`)
+  execSync(`reg add HKCU\\Software\\Classes\\CLSID\\{${clsid}}\\ShellFolder /v FolderValueFlags /t REG_DWORD /d 0x28 /f`)
+  execSync(`reg add HKCU\\Software\\Classes\\CLSID\\{${clsid}}\\ShellFolder /v Attributes /t REG_DWORD /d 0xF080004D /f`)
+  execSync(`reg add HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Desktop\\NameSpace\\{${clsid}} /ve /t REG_SZ /d "Cozy Drive" /f`)
+  execSync(`reg add HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\HideDesktopIcons\\NewStartPanel /v {${clsid}} /t REG_DWORD /d 0x1 /f`)
+
+  return {syncRootId, clsid}
+}
+
+const windowsUnregisterCloudStorageProvider = (windowsConfig) => {
+  const {syncRootId, clsid} = windowsConfig
+
+  execSync(`reg delete HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\SyncRootManager\\${syncRootId} /f`)
+  execSync(`reg delete HKCU\\Software\\Classes\\CLSID\\{${clsid}} /f`)
+  execSync(`reg delete HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Desktop\\NameSpace\\{${clsid}} /f`)
+  execSync(`reg delete HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\HideDesktopIcons\\NewStartPanel /v {${clsid}} /f`)
+}
+
+const sfltoolAddFavorite = (path) => {
+  const item = url.resolve('file://', path)
+  execSync(`sfltool add-item com.apple.LSSharedFileList.FavoriteItems ${item}`)
+}
+
+const platform = process.platform
+const major = Number.parseInt(os.release().split('.')[0])
+// For Darwin <=> macOS version mapping, see:
+// https://en.wikipedia.org/wiki/Darwin_(operating_system)#Release_history
+
+const addFileManagerShortcut = (config) => {
+  if (platform === 'win32' && major >= 10) {
+    const windowsConfig = windowsRegisterCloudStorageProvider(config.syncPath)
+    config.save('windows', windowsConfig).then(() => config.persist())
+  } else if (platform === 'darwin' && major >= 15) {
+    // sfltool is available since 10.11 (El Capitan)
+    sfltoolAddFavorite(config.syncPath)
+  } else {
+    console.log(`Not registering shortcut on ${platform} ${major}`)
+  }
+}
+
+const removeFileManagerShortcut = (config) => {
+  if (platform === 'win32' && major >= 10) {
+    const windowsConfig = config.config.windows
+    if (windowsConfig) {
+      windowsUnregisterCloudStorageProvider(windowsConfig)
+    } else {
+      console.log('Not unregistering shortcut because windows config is missing')
+    }
+  } else {
+    console.log(`Not unregistering shortcut on ${platform} ${major}`)
+  }
+  // FIXME: Not removing favorite on macOS >= 10.11 since sfltool does not support it.
+}
+
 app.on('ready', () => {
   setUpLocale()
   setUpTranslations()
@@ -578,6 +674,7 @@ ipcMain.on('start-sync', (event, arg) => {
   }
   try {
     desktop.saveConfig(desktop.config.cozyUrl, arg)
+    addFileManagerShortcut(desktop.config)
     startSync()
   } catch (err) {
     event.sender.send('folder-error', translate('Error Invalid path'))
@@ -625,6 +722,7 @@ ipcMain.on('unlink-cozy', () => {
       return
     }
     desktop.stopSync().then(() => {
+      removeFileManagerShortcut(desktop.config)
       desktop.removeRemote()
         .then(() => console.log('removed'))
         .then(() => sendToMainWindow('unlinked'))

@@ -61,7 +61,8 @@
     "cozy-desktop": "file:../cli/",
     "electron-main-notification": "1.0.1",
     "electron-updater": "1.15.0",
-    "lodash.debounce": "4.0.8"
+    "lodash.debounce": "4.0.8",
+    "node-uuid": "^1.4.8"
   },
   "devDependencies": {
     "chokidar-cli": "^1.2.0",
