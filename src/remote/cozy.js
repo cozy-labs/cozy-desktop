@@ -69,7 +69,7 @@ export default class RemoteCozy {
                          attrs: Object,
                          options?: {ifMatch?: string}) => Promise<RemoteDoc>
 
-  trashById: (id: string) => Promise<RemoteDoc>
+  trashById: (id: string, options?: {ifMatch: string}) => Promise<RemoteDoc>
 
   async changes (seq: number = 0) {
     let json = await this.client.data.changesFeed(FILES_DOCTYPE, { since: seq })
