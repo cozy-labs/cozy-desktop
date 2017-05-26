@@ -14,6 +14,7 @@ import logger from '../logger'
 import { isUpToDate } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
+import { hideOnWindows } from '../utils/fs'
 import Watcher from './watcher'
 
 import type { FileStreamProvider } from '../file_stream_provider'
@@ -160,6 +161,7 @@ class Local implements Side {
 
       (existingFilePath, next) => {
         fs.ensureDir(this.tmpPath, () => {
+          hideOnWindows(this.tmpPath)
           if (existingFilePath) {
             log.info({path: filePath}, `Recopy ${existingFilePath} -> ${filePath}`)
             this.events.emit('transfer-copy', doc)
