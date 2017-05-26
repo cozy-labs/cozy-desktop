@@ -623,11 +623,11 @@ describe('Remote', function () {
       const oldMetadata: Metadata = {
         ...conversion.createMetadata(builders.remoteDir().named('foo').build()),
         remote: undefined,
-        updated_at: timestamp.stringify(timestamp.build(2015, 1, 1, 1, 1, 1, 1))
+        updated_at: timestamp.stringify(timestamp.build(2015, 1, 1, 1, 1, 1))
       }
       const newMetadata: Metadata = {
         ...oldMetadata,
-        updated_at: timestamp.stringify(timestamp.build(2015, 2, 2, 2, 2, 2, 2))
+        updated_at: timestamp.stringify(timestamp.build(2015, 2, 2, 2, 2, 2))
       }
 
       const created: Metadata = await this.remote.updateFolderAsync(newMetadata, oldMetadata)
