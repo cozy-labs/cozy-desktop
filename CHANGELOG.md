@@ -1,3 +1,23 @@
+## 3.0.0-beta.3 - 2017-05-29
+
+This is for testing purpose only.
+Do not install it, unless you know what you're doing.
+
+Improvements for all users:
+
+* The app now enforces MD5Sum for all files, to ensure data consistency and to
+  prevent weird issues.
+* Disk space and revocation error messages should be clearer.
+* Logs are easier to filter, which should help us to debug synchronization
+  issues.
+
+Improvements for Windows users:
+
+* You should not see weird `.cozy-desktop` directories anymore (including in
+  your home and your `Cozy Drive` directories).
+* Fixed an issue with last modification date, which was preventing a file first
+  uploaded through the Cozy Drive web app, then renamed locally, to be synced.
+
 ## 3.0.0-beta.2 - 2017-05-17
 
 This is for testing purpose only.
