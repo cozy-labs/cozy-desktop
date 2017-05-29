@@ -416,6 +416,10 @@ const startSync = (force) => {
     sendDiskUsage()
   } else {
     updateState('syncing')
+    desktop.events.on('syncing', () => {
+      updateState('syncing')
+      sendToMainWindow('syncing')
+    })
     desktop.events.on('up-to-date', () => {
       updateState('up-to-date')
       sendToMainWindow('up-to-date')

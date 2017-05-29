@@ -114,6 +114,7 @@ class Sync {
     const change = await this.pop()
     if (this.stopped) return
     try {
+      this.events.emit('syncing')
       await this.apply(change)
     } catch (err) {
       if (!this.stopped) throw err
