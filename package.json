@@ -64,6 +64,7 @@
     "commander": "2.9.0",
     "cozy-client-js": "^0.3.0",
     "fs-extra": "^3.0.0",
+    "fswin": "^2.16.1102",
     "isomorphic-fetch": "2.2.1",
     "lodash.clone": "4.5.0",
     "lodash.find": "4.6.0",

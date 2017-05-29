@@ -1,6 +1,8 @@
 import fs from 'fs-extra'
 import path from 'path'
 
+import { hideOnWindows } from './utils/fs'
+
 // Config can keep some configuration parameters in a JSON file,
 // like the devices credentials or the mount path
 export default class Config {
@@ -9,6 +11,7 @@ export default class Config {
     this.configPath = path.join(basePath, 'config.json')
     this.dbPath = path.join(basePath, 'db')
     fs.ensureDirSync(this.dbPath)
+    hideOnWindows(basePath)
     fs.ensureFileSync(this.configPath)
 
     if (fs.readFileSync(this.configPath).toString() === '') {
