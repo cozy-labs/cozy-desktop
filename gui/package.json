@@ -65,10 +65,10 @@
     "stylus": "^0.54.5"
   },
   "scripts": {
-    "build": "npm run build:css & npm run build:tx && npm run build:elm",
+    "build": "yarn build:css & yarn build:tx && yarn build:elm",
     "build:css": "stylus -c -u cozy-ui/lib/stylus styles/app.styl -o app/",
     "build:elm": "elm make lib/Main.elm --output app/elm.js || true",
-    "build:lib": "cd .. && npm run build",
+    "build:lib": "cd .. && yarn build",
     "build:tx": "tx pull --all || true",
     "clean": "rm -rf app/elm.js app/app.css* dist/",
     "codesign-verify": "codesign --verify --deep --strict --verbose=2 dist/mac/cozy-desktop-gui.app",
@@ -78,7 +78,7 @@
     "lint": "standard --verbose app/main.js app/ports.js",
     "pack": "npm run _pack",
     "_pack": "build --dir",
-    "postinstall": "npm run postinstall:electron && npm run postinstall:elm",
+    "postinstall": "yarn postinstall:electron && yarn postinstall:elm",
     "postinstall:electron": "install-app-deps",
     "postinstall:elm": "elm-package install -y",
     "reinstall": "bash -c 'rm -rf ./app/node_modules' && yarn",
@@ -87,10 +87,10 @@
     "release:check:node-6": "node -e \"(process.versions.node.split('.')[0] !== '6') && process.exit(1)\"",
     "release:fix": "node ./dev/fix-dist-artifacts.js",
     "start": "cross-env COZY_DESKTOP_HEARTBEAT=5000 electron .",
-    "watch": "env WATCH=true npm run start & npm run watch:css & npm run watch:elm & npm run watch:js",
+    "watch": "env WATCH=true yarn start & yarn watch:css & yarn watch:elm & yarn watch:js",
     "watch:css": "stylus -m -u cozy-ui/lib/stylus -w styles/app.styl -o app/",
-    "watch:elm": "chokidar 'lib/**/*.elm' -c 'npm run build:elm'",
-    "watch:js": "chokidar app/main.js app/ports.js -c 'npm run lint'",
-    "elm-upgrade": "npm install --save-dev elm@latest elm-upgrade@latest && ./node_modules/.bin/elm-upgrade"
+    "watch:elm": "chokidar 'lib/**/*.elm' -c 'yarn build:elm'",
+    "watch:js": "chokidar app/main.js app/ports.js -c 'yarn lint'",
+    "elm-upgrade": "yarn add --dev elm@latest elm-upgrade@latest && ./node_modules/.bin/elm-upgrade"
   }
 }
