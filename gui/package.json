@@ -71,7 +71,6 @@
     "build:lib": "cd .. && yarn build",
     "build:tx": "tx pull --all || true",
     "clean": "rm -rf app/elm.js app/app.css* dist/",
-    "codesign-verify": "codesign --verify --deep --strict --verbose=2 dist/mac/cozy-desktop-gui.app",
     "dist": "npm run _dist",
     "_dist": "build --x64 --ia32",
     "lint": "standard --verbose app/main.js app/ports.js",
