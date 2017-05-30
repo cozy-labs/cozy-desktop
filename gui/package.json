@@ -87,7 +87,6 @@
     "release:check:node-6": "node -e \"(process.versions.node.split('.')[0] !== '6') && process.exit(1)\"",
     "release:fix": "node ./dev/fix-dist-artifacts.js",
     "start": "cross-env COZY_DESKTOP_HEARTBEAT=5000 electron .",
-    "up": "npm run build:lib && npm run copy:lib && DEBUG=true npm start",
     "watch": "env WATCH=true npm run start & npm run watch:css & npm run watch:elm & npm run watch:js",
     "watch:css": "stylus -m -u cozy-ui/lib/stylus -w styles/app.styl -o app/",
     "watch:elm": "chokidar 'lib/**/*.elm' -c 'npm run build:elm'",
