@@ -39,6 +39,7 @@ export default class RemoteCozy {
     })
 
     // Aliases:
+    this.createJob = this.client.jobs.create
     this.unregister = this.client.auth.unregisterClient
     this.diskUsage = this.client.settings.diskUsage
     this.createFile = composeAsync(this.client.files.create, this.toRemoteDoc)
@@ -47,6 +48,8 @@ export default class RemoteCozy {
     this.updateAttributesById = composeAsync(this.client.files.updateAttributesById, this.toRemoteDoc)
     this.trashById = this.client.files.trashById
   }
+
+  createJob: (workerType: string, args: any) => Promise<*>
 
   unregister: () => Promise<void>
 

@@ -142,26 +142,18 @@ class App {
   }
 
   // Send an issue by mail to the support
-  sendMailToSupport (content: string, callback: Callback) {
-    // FIXME
-    // let conf = this.config.getDevice()
-    // let cozyUrl = conf.url
-    // let { deviceName } = conf
-    // let { passphrase } = conf
-    // let mail = {
-    //   to: 'log-desktop@cozycloud.cc',
-    //   subject: 'Ask support for cozy-desktop',
-    //   content
-    // }
-    // if (this.logfile) {
-    //   let attachment = {
-    //     content: fs.readFileSync(this.logfile, 'utf-8'),
-    //     filename: path.basename(this.logfile),
-    //     contentType: 'application/text'
-    //   }
-    //   mail.attachments = [attachment]
-    // }
-    // device.sendMailFromUser(cozyUrl, deviceName, passphrase, mail, callback)
+  sendMailToSupport (content: string) {
+    const args = {
+      mode: 'from',
+      to: [
+        { name: 'Support', email: 'log-desktop@cozycloud.cc' }
+      ],
+      subject: 'Ask support for cozy-desktop',
+      parts: [
+        { type: 'text/plain', body: content }
+      ]
+    }
+    return this.remote.sendMail(args)
   }
 
   // Load ignore rules

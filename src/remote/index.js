@@ -43,6 +43,10 @@ export default class Remote implements Side {
     return this.watcher.stop()
   }
 
+  sendMail (args: any) {
+    return this.remoteCozy.createJob('sendmail', args)
+  }
+
   unregister () {
     return this.remoteCozy.unregister()
   }

@@ -627,9 +627,10 @@ ipcMain.on('unlink-cozy', () => {
 })
 
 ipcMain.on('send-mail', (event, body) => {
-  desktop.sendMailToSupport(body, (err) => {
-    event.sender.send('mail-sent', err)
-  })
+  desktop.sendMailToSupport(body).then(
+    () => { event.sender.send('mail-sent') },
+    (err) => { event.sender.send('mail-sent', err) }
+  )
 })
 
 ipcMain.on('restart', () => {
