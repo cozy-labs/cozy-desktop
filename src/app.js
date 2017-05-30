@@ -10,7 +10,7 @@ import url from 'url'
 import './globals' // FIXME Use bluebird promises as long as we need asCallback
 import pkg from '../package.json'
 import Config from './config'
-import logger from './logger'
+import logger, { LOG_FILE } from './logger'
 import Pouch from './pouch'
 import Ignore from './ignore'
 import Merge from './merge'
@@ -35,8 +35,6 @@ class App {
   config: Config
   pouch: Pouch
   events: EventEmitter
-  logfile: string
-  logsInterval: any
   ignore: Ignore
   merge: Merge
   prep: Prep
@@ -143,6 +141,7 @@ class App {
 
   // Send an issue by mail to the support
   sendMailToSupport (content: string) {
+    const logs = fs.readFileSync(LOG_FILE, 'utf-8')
     const args = {
       mode: 'from',
       to: [
@@ -151,6 +150,9 @@ class App {
       subject: 'Ask support for cozy-desktop',
       parts: [
         { type: 'text/plain', body: content }
+      ],
+      attachments: [
+        { filename: 'logs.txt', content: logs }
       ]
     }
     return this.remote.sendMail(args)
