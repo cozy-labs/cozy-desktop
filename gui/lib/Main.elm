@@ -183,6 +183,9 @@ port offline : (Bool -> msg) -> Sub msg
 port updated : (Bool -> msg) -> Sub msg
 
 
+port syncing : (Bool -> msg) -> Sub msg
+
+
 port transfer : (Dashboard.File -> msg) -> Sub msg
 
 
@@ -231,6 +234,7 @@ subscriptions model =
         , syncError (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.SetError)
         , offline (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.GoOffline)))
         , updated (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.Updated)))
+        , syncing (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.Syncing)))
         , mail (TwoPanesMsg << TwoPanes.HelpMsg << Help.MailSent)
         , autolaunch (TwoPanesMsg << TwoPanes.SettingsMsg << Settings.AutoLaunchSet)
         , cancelUnlink (always (TwoPanesMsg (TwoPanes.AccountMsg Account.CancelUnlink)))

@@ -83,7 +83,7 @@ describe('Sync', function () {
       this.local = {}
       this.remote = {}
       this.ignore = new Ignore([])
-      this.events = {}
+      this.events = {emit: sinon.spy()}
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
       this.sync.apply = sinon.stub().resolves()
       this.sync.running = true

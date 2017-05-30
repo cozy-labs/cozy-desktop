@@ -115,6 +115,10 @@ ipcRenderer.on('up-to-date', () => {
   elmectron.ports.updated.send(true)
 })
 
+ipcRenderer.on('syncing', () => {
+  elmectron.ports.syncing.send(true)
+})
+
 ipcRenderer.on('transfer', (event, info) => {
   elmectron.ports.transfer.send(info)
 })

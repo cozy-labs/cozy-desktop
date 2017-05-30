@@ -57,6 +57,7 @@ maxActivities =
 
 type Msg
     = Updated
+    | Syncing
     | GoOffline
     | Transfer File
     | Remove File
@@ -75,6 +76,9 @@ update msg model =
     case msg of
         Updated ->
             { model | status = UpToDate }
+
+        Syncing ->
+            { model | status = Sync "…" }
 
         GoOffline ->
             { model | status = Offline }
