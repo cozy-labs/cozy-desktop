@@ -1,7 +1,28 @@
 {
+  "name": "cozy-desktop-gui",
+  "productName": "Cozy Desktop",
   "private": true,
+  "version": "3.0.0-beta.3",
+  "description": "File Synchronization Client for Cozy Cloud",
+  "homepage": "https://github.com/cozy-labs/cozy-desktop",
   "author": "Cozy Cloud <contact@cozycloud.cc> (https://cozycloud.cc/)",
   "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/cozy-labs/cozy-desktop/issues"
+  },
+  "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/cozy-labs/cozy-desktop.git"
+  },
+  "keywords": [
+    "Electron",
+    "desktop",
+    "data",
+    "sync",
+    "files",
+    "cozy"
+  ],
   "build": {
     "appId": "io.cozy.desktop",
     "win": {
@@ -22,6 +43,13 @@
         "zip"
       ]
     }
+  },
+  "dependencies": {
+    "auto-launch-patched": "5.0.2",
+    "cozy-desktop": "file:../",
+    "electron-main-notification": "1.0.1",
+    "electron-updater": "1.15.0",
+    "lodash.debounce": "4.0.8"
   },
   "devDependencies": {
     "chokidar-cli": "^1.2.0",
@@ -58,7 +86,7 @@
     "release:build:lib": "cd .. && yarn release:build",
     "release:check:node-6": "node -e \"(process.versions.node.split('.')[0] !== '6') && process.exit(1)\"",
     "release:fix": "node ./dev/fix-dist-artifacts.js",
-    "start": "cross-env COZY_DESKTOP_HEARTBEAT=5000 electron ./app",
+    "start": "cross-env COZY_DESKTOP_HEARTBEAT=5000 electron .",
     "up": "npm run build:lib && npm run copy:lib && DEBUG=true npm start",
     "watch": "env WATCH=true npm run start & npm run watch:css & npm run watch:elm & npm run watch:js",
     "watch:css": "stylus -m -u cozy-ui/lib/stylus -w styles/app.styl -o app/",
