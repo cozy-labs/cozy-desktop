@@ -233,7 +233,9 @@ class LocalWatcher {
               log.info({path: filePath}, 'file added')
               this.prep.addFileAsync(SIDE, doc).catch(logError)
             } else {
-              const same = find(docs, d => this.pending.hasPath(d.path))
+              const same = find(docs, this.paths
+                  ? d => !fs.existsSync(d.path)
+                  : d => this.pending.hasPath(d.path))
               if (same) {
                 log.debug({path: filePath}, `was moved from ${same.path}`)
                 this.pending.clear(same.path)
@@ -338,9 +340,10 @@ class LocalWatcher {
           for (const doc of docs.reverse()) {
             if (this.paths.indexOf(doc.path) !== -1 || doc.trashed) {
               continue
+            } else if (doc.docType === 'file') {
+              await this.onUnlinkFile(doc.path)
             } else {
-              log.info({path: doc.path}, 'deleted while client was stopped')
-              await this.prep.trashDocAsync(SIDE, doc)
+              await this.onUnlinkDir(doc.path)
             }
           }
           delete this.paths
