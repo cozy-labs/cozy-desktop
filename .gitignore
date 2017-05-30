@@ -1,6 +1,5 @@
-/gui/app/*.css
-/gui/app/*.map
-/gui/app/elm.js
+/gui/app.css
+/gui/elm.js
 /gui/dist
 /gui/elm-stuff
 /lib
