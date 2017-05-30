@@ -82,7 +82,7 @@
     "build:lib": "cd .. && yarn build",
     "build:tx": "tx pull --all || true",
     "clean": "rm -rf elm.js app.css* dist/",
-    "dist": "build --x64 --ia32",
+    "dist": "build --x64",
     "lint": "standard --verbose main.js ports.js",
     "pack": "build --dir",
     "postinstall": "yarn postinstall:electron && yarn postinstall:elm",
