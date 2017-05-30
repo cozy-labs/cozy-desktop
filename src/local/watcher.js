@@ -233,7 +233,9 @@ class LocalWatcher {
               log.info({path: filePath}, 'file added')
               this.prep.addFileAsync(SIDE, doc).catch(logError)
             } else {
-              const same = find(docs, d => this.pending.hasPath(d.path))
+              const same = find(docs, this.paths
+                  ? d => fs.existsSync(d.path)
+                  : d => this.pending.hasPath(d.path))
               if (same) {
                 log.debug({path: filePath}, `was moved from ${same.path}`)
                 this.pending.clear(same.path)
