@@ -25,6 +25,17 @@
   ],
   "build": {
     "appId": "io.cozy.desktop",
+    "files": [
+      "app.css",
+      "elm.js",
+      "fonts",
+      "images",
+      "index.html",
+      "locales",
+      "main.js",
+      "node_modules",
+      "ports.js"
+    ],
     "win": {
       "certificateSubjectName": "Cozy Cloud SAS",
       "target": [
