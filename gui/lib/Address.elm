@@ -3,6 +3,7 @@ port module Address exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import String exposing (contains)
 import Focus exposing (focus)
 import Helpers exposing (Helpers)
 import OnEnter exposing (onEnter)
@@ -59,6 +60,8 @@ update msg model =
         RegisterRemote ->
             if model.address == "" then
                 setError model "Address You don't have filled the address!"
+            else if contains "@" model.address then
+                setError model "Address No email address"
             else
                 ( { model | busy = True }, registerRemote model.address )
 

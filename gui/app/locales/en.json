@@ -13,6 +13,7 @@
   "Address Don't have an account? Request one here": "Don't have an account? Request one here",
   "Address You don't have filled the address!": "You don't have filled the address!",
   "Address No cozy instance at this address!": "No cozy instance at this address!",
+  "Address No email address": "You typed an email address. To connect on your cozy you must type its URL, something like https://tonystark.mycozy.cloud",
   "Address Next": "Next",
   "AppMenu Edit": "Edit",
   "AppMenu Undo": "Undo",
