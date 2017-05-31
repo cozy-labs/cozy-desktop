@@ -7,6 +7,7 @@ import sinon from 'sinon'
 import should from 'should'
 
 import Watcher from '../../../src/local/watcher'
+import { PendingMap } from '../../../src/utils/pending'
 
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
@@ -399,7 +400,8 @@ describe('LocalWatcher Tests', function () {
     })
 
     it('detects deleted files and folders', function (done) {
-      let dd = this.prep.trashDocAsync = sinon.stub().resolves()
+      let tfile = this.prep.trashFileAsync = sinon.stub().resolves()
+      let tfolder = this.prep.trashFolderAsync = sinon.stub().resolves()
       let folder1 = {
         _id: 'folder1',
         path: 'folder1',
@@ -419,12 +421,12 @@ describe('LocalWatcher Tests', function () {
       let file1 = {
         _id: 'file1',
         path: 'file1',
-        docType: 'folder'
+        docType: 'file'
       }
       let file2 = {
         _id: 'file2',
         path: 'file2',
-        docType: 'folder'
+        docType: 'file'
       }
       const file3 = {
         _id: '.cozy_trash/folder3/file3',
@@ -435,15 +437,18 @@ describe('LocalWatcher Tests', function () {
       async.each([folder1, folder2, folder3, file1, file2, file3], (doc, next) => {
         this.pouch.db.put(doc, next)
       }, () => {
+        this.watcher.pending = new PendingMap()
+        this.watcher.checksums = 0
         this.watcher.paths = ['folder1', 'file1']
         let cb = this.watcher.onReady(function () {
-          dd.calledTwice.should.be.true()
-          dd.calledWithMatch('local', folder1).should.be.false()
-          dd.calledWithMatch('local', folder2).should.be.true()
-          dd.calledWithMatch('local', folder3).should.be.false()
-          dd.calledWithMatch('local', file1).should.be.false()
-          dd.calledWithMatch('local', file2).should.be.true()
-          dd.calledWithMatch('local', file3).should.be.false()
+          tfolder.calledOnce.should.be.true()
+          tfolder.calledWithMatch('local', folder1).should.be.false()
+          tfolder.calledWithMatch('local', { path: folder2.path }).should.be.true()
+          tfolder.calledWithMatch('local', folder3).should.be.false()
+          tfile.calledOnce.should.be.true()
+          tfile.calledWithMatch('local', file1).should.be.false()
+          tfile.calledWithMatch('local', { path: file2.path }).should.be.true()
+          tfile.calledWithMatch('local', file3).should.be.false()
           done()
         })
         cb()

@@ -341,13 +341,13 @@ class LocalWatcher {
             if (this.paths.indexOf(doc.path) !== -1 || doc.trashed) {
               continue
             } else if (doc.docType === 'file') {
-              await this.onUnlinkFile(doc.path)
+              this.onUnlinkFile(doc.path)
             } else {
-              await this.onUnlinkDir(doc.path)
+              this.onUnlinkDir(doc.path)
             }
           }
           delete this.paths
-          callback()
+          setTimeout(callback, 3000)
         } catch (err) {
           callback(err)
         }
