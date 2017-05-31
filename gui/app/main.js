@@ -547,6 +547,7 @@ ipcMain.on('register-remote', (event, arg) => {
       (reg) => {
         session.defaultSession.clearStorageData()
         mainWindow.loadURL(reg.client.redirectURI)
+        autoLauncher.enable()
       },
       (err) => {
         console.error(err)
