@@ -366,6 +366,13 @@ class Merge {
       await this.resolveConflictAsync(side, doc)
       return
     }
+    if (side === 'remote' && !sameBinary(oldMetadata, doc)) {
+      // We have a conflict: the file was updated in local and trash on the remote.
+      // We dissociate the file on the remote to be able to apply the local change.
+      delete oldMetadata.remote
+      if (oldMetadata.sides) delete oldMetadata.sides.remote
+      return this.pouch.put(oldMetadata)
+    }
     delete oldMetadata.errors
     const newMetadata = clone(oldMetadata)
     markSide(side, newMetadata, oldMetadata)

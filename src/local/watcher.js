@@ -344,7 +344,7 @@ class LocalWatcher {
             }
           }
           delete this.paths
-          callback()
+          setTimeout(callback, 3000)
         } catch (err) {
           callback(err)
         }
