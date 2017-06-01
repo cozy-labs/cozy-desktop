@@ -85,6 +85,7 @@
     "build:tx": "tx pull --all || true",
     "clean": "rimraf elm.js app.css* dist/",
     "dist": "cross-env DEBUG=electron-builder build --x64",
+    "elm:upgrade": "yarn add --dev elm@latest elm-upgrade@latest && elm-upgrade",
     "lint": "standard --verbose main.js ports.js",
     "pack": "cross-env DEBUG=electron-builder build --dir",
     "postinstall": "yarn postinstall:electron && yarn postinstall:elm",
@@ -99,7 +100,6 @@
     "watch": "cross-env WATCH=true yarn start & yarn watch:css & yarn watch:elm & yarn watch:js",
     "watch:css": "stylus -m -u cozy-ui/lib/stylus -w styles/app.styl -o .",
     "watch:elm": "chokidar 'lib/**/*.elm' -c 'yarn build:elm'",
-    "watch:js": "chokidar main.js ports.js -c 'yarn lint'",
-    "elm-upgrade": "yarn add --dev elm@latest elm-upgrade@latest && ./node_modules/.bin/elm-upgrade"
+    "watch:js": "chokidar main.js ports.js -c 'yarn lint'"
   }
 }

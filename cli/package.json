@@ -47,11 +47,11 @@
     "size": "t=\"$(npm pack .)\"; wc -c \"${t}\"; tar tvf \"${t}\"; rm \"${t}\";",
     "start": "cross-env COZY_DESKTOP_HEARTBEAT=5000 babel-node ./src/bin/cli.js",
     "storage:tree": "yarn docker:exec -- tree -aC /storage/dev.cozy.tools:8080",
-    "test": "installed-check && npm run test-unit && npm run test-integration",
-    "test-coverage": "installed-check && npm run test-unit-coverage && npm run test-integration",
-    "test-integration": "cross-env NODE_ENV=test mocha test/integration/v3",
-    "test-unit": "yarn mocha -- test/unit/",
-    "test-unit-coverage": "cross-env NODE_ENV=test nyc mocha test/unit/",
+    "test": "installed-check && npm run test:unit && npm run test:integration",
+    "test:coverage": "installed-check && npm run test:unit:coverage && npm run test:integration",
+    "test:integration": "cross-env NODE_ENV=test mocha test/integration/v3",
+    "test:unit": "yarn mocha -- test/unit/",
+    "test:unit:coverage": "cross-env NODE_ENV=test nyc mocha test/unit/",
     "watch": "npm run build -- --watch"
   },
   "dependencies": {
