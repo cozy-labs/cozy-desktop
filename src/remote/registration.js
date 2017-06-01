@@ -54,7 +54,11 @@ export default class Registration {
       clientURI: pkg.homepage,
       logoURI: pkg.logo,
       policyURI: 'https://files.cozycloud.cc/cgu.pdf',
-      scopes: ['io.cozy.files', 'io.cozy.settings:GET:io.cozy.settings.disk-usage']
+      scopes: [
+        'io.cozy.files',
+        'io.cozy.settings:GET:io.cozy.settings.disk-usage',
+        'io.cozy.jobs:POST:sendmail:worker'
+      ]
     }
   }
 

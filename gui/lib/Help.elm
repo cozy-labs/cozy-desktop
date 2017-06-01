@@ -124,6 +124,33 @@ view helpers model =
                     ]
                 ]
             , h2 [] [ text (helpers.t "Help Official Support") ]
+            , if model.status == Success then
+                p [ class "message--success" ]
+                    [ text (helpers.t "Help Your mail has been sent. We will try to respond to it really soon!") ]
+              else
+                Html.form [ class "send-mail-to-support" ]
+                    [ case model.status of
+                        Error error ->
+                            p [ class "message--error" ]
+                                [ text ("Error: " ++ error) ]
+
+                        _ ->
+                            p []
+                                [ text (helpers.t "Help You can send us feedback, report bugs and ask for assistance.")
+                                , text " "
+                                , text (helpers.t "Help We will get back to you as soon as possible.")
+                                ]
+                    , textarea [ onInput FillBody ] [ text body ]
+                    , a
+                        [ class "btn btn--msg"
+                        , href "#"
+                        , if model.status == Sending then
+                            attribute "aria-busy" "true"
+                          else
+                            onClick SendMail
+                        ]
+                        [ text (helpers.t "Help Send us a message") ]
+                    ]
             , p [] [ text (helpers.t "Help There are still a few more options to contact us:") ]
             , ul [ class "help-list" ]
                 [ li []

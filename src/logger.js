@@ -5,8 +5,8 @@ import fs from 'fs-extra'
 import os from 'os'
 import path from 'path'
 
-const LOG_DIR = path.join(process.env.COZY_DESKTOP_DIR || os.homedir(), '.cozy-desktop')
-const LOG_FILE = path.join(LOG_DIR, 'logs.txt')
+export const LOG_DIR = path.join(process.env.COZY_DESKTOP_DIR || os.homedir(), '.cozy-desktop')
+export const LOG_FILE = path.join(LOG_DIR, 'logs.txt')
 
 fs.ensureDirSync(LOG_DIR)
 
