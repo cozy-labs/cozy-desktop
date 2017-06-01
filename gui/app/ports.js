@@ -1,7 +1,7 @@
 'use strict'
 
 const electron = require('electron')
-const {ipcRenderer, remote, shell} = electron
+const {ipcRenderer, remote} = electron
 
 const path = remote.require('path')
 const os = require('os')
@@ -136,18 +136,6 @@ ipcRenderer.on('sync-error', (event, err) => {
 
 elmectron.ports.restart.subscribe(() => {
   ipcRenderer.send('restart')
-})
-
-// Open external links in the browser
-function tryToOpenExternalLink (event, target) {
-  if (target && target.matches('a[href^="https"]')) {
-    event.preventDefault()
-    shell.openExternal(target.href)
-  }
-}
-document.addEventListener('click', (event) => {
-  tryToOpenExternalLink(event, event.target)
-  tryToOpenExternalLink(event, event.target.parentElement)
 })
 
 // Give focus to DOM nodes

@@ -491,6 +491,12 @@ const createWindow = () => {
     mainWindow = null
   })
   mainWindow.webContents.on('dom-ready', appLoaded)
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (url.startsWith('http') && !url.match('/auth/authorize')) {
+      event.preventDefault()
+      shell.openExternal(url)
+    }
+  })
   if (process.platform === 'darwin') { app.dock.show() }
 }
 
