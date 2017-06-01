@@ -62,18 +62,19 @@ before_install:
     - export COZY_CLIENT_ID=$($GOPATH/bin/cozy-stack instances client-oauth localhost:8080 http://localhost/ test github.com/cozy-labs/cozy-desktop)
     - export COZY_STACK_TOKEN=$($GOPATH/bin/cozy-stack instances token-oauth localhost:8080 "$COZY_CLIENT_ID" io.cozy.files)
 
-    # Cozy desktop tmp dir
+    # Cozy desktop cli/tmp dir
     - cd $HOME/build/cozy-labs/cozy-desktop
     - pwd
     - mkdir /tmp/cozy-desktop
-    - ln -s /tmp/cozy-desktop tmp
+    - ln -s /tmp/cozy-desktop cli/tmp
 
 script:
-    # Travis already run yarn install
+    - cd cli
+    - travis_retry yarn
     - yarn build
     - yarn lint
     - yarn test-unit-coverage
-    - cd gui
+    - cd ../gui
     - travis_retry yarn
     - yarn lint
     - yarn build
@@ -85,4 +86,4 @@ after_success:
 after_failure:
     - $CXX --version
     - netstat -lntp
-    - ls -alR node_modules/pouchdb/node_modules/leveldown
+    - ls -alR cli/node_modules/pouchdb/node_modules/leveldown

@@ -1,10 +1,12 @@
 version: '2.1'
 services:
   couch:
+    container_name: cozy-desktop-couch
     image: klaemo/couchdb:2.0.0
     ports:
       - "5984:5984"
   stack:
+    container_name: cozy-desktop-stack
     build: dev/docker
     ports:
       - "8080:8080"

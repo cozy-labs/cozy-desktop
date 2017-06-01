@@ -31,11 +31,11 @@
     "package.json"
   ],
   "scripts": {
-    "bootstrap": "docker exec -it cozydesktop_stack_1 bootstrap-cozy-desktop.sh",
+    "bootstrap": "yarn docker:exec -- bootstrap-cozy-desktop.sh",
     "bootstrap:remote": "babel-node ./dev/remote/generate-test-env.js",
     "build": "babel --source-maps --out-dir lib/ src/",
     "clean": "rimraf lib/ tmp/",
-    "docker:exec": "docker exec -it cozydesktop_stack_1",
+    "docker:exec": "docker exec -it cozy-desktop-stack",
     "eslint": "./node_modules/.bin/eslint './src/**/*.js' './test/**/*.js'",
     "fauxton": "babel-node ./src/bin/fauxton.js",
     "flow": "flow status --quiet --show-all-errors",
