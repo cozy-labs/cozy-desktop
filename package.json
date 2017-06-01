@@ -116,7 +116,7 @@
     "lodash.uniq": "^4.5.0",
     "mocha": "^3.4.2",
     "mocha-clean": "^1.0.0",
-    "nyc": "^10.1.2",
+    "nyc": "^11.0.1",
     "pouchdb-server": "^2.3.4",
     "should": "^11.2.1",
     "should-sinon": "^0.0.5",
