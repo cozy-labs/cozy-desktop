@@ -79,7 +79,7 @@
   "scripts": {
     "build": "yarn build:css & yarn build:tx && yarn build:elm",
     "build:css": "stylus -c -u cozy-ui/lib/stylus styles/app.styl -o .",
-    "build:elm": "elm make lib/Main.elm --output elm.js || true",
+    "build:elm": "elm make lib/Main.elm --output elm.js",
     "build:lib": "cd .. && yarn build",
     "build:tx": "tx pull --all || true",
     "clean": "rimraf elm.js app.css* dist/",
