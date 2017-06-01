@@ -35,9 +35,9 @@ describe('Registration', function () {
     should(params.clientURI).equal(pkg.homepage)
     should(params.logoURI).equal(pkg.logo)
     should(params.scopes).eql([
-        'io.cozy.files',
-        'io.cozy.settings:GET:io.cozy.settings.disk-usage',
-        'io.cozy.jobs:POST:sendmail:worker'
+      'io.cozy.files',
+      'io.cozy.settings:GET:io.cozy.settings.disk-usage',
+      'io.cozy.jobs:POST:sendmail:worker'
     ])
   })
 })
