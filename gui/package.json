@@ -70,7 +70,7 @@
     "debug-menu": "^0.6.0",
     "devtron": "^1.4.0",
     "electron": "^1.4.12",
-    "electron-builder": "^18.2.1",
+    "electron-builder": "^18.3.0",
     "elm": "^0.18.0",
     "elm-upgrade": "^0.18.7",
     "rimraf": "^2.6.1",
