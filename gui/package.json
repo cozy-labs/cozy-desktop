@@ -57,6 +57,7 @@
   },
   "dependencies": {
     "auto-launch-patched": "5.0.2",
+    "babel-polyfill": "^6.23.0",
     "cozy-desktop": "file:../",
     "electron-main-notification": "1.0.1",
     "electron-updater": "1.15.0",
