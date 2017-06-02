@@ -1,10 +1,21 @@
-## 3.0.0-beta.3 - 2017-05-29
+## 3.0.0-beta.3 - 2017-06-02
 
 This is for testing purpose only.
 Do not install it, unless you know what you're doing.
 
 Improvements for all users:
 
+* You can now request support directly from the application.
+* On the onboarding screen, you'll be warned in case you typed your email
+  address instead of the address of your Cozy.
+* The app will now start by default on login. You can still disable it in the
+  settings.
+* The activity indicator is now visible on deletions.
+* Links are now opened in a new windows, so users don't end up with no way to
+  get back.
+* The content of a folder renamed offline will not be uploaded again.
+* When a file was both updated locally and trashed remotely, it will be kept
+  with the updated content.
 * The app now enforces MD5Sum for all files, to ensure data consistency and to
   prevent weird issues.
 * Disk space and revocation error messages should be clearer.
