@@ -18,10 +18,8 @@ We use [`mocha`][1] for testing cozy-desktop, the options are in
 
 Integration tests and some unit tests require that you have a Cozy stack up.
 It's also expected that you have an instance registered for
-`test.cozy-desktop.local:8080` with the
+`test.cozy-desktop.tools:8080` with the
 [test passphrase](../test/helpers/passphrase.js).
-
-Don't forget to add `127.0.0.1 test.cozy-desktop.local` to your `/etc/hosts`.
 
 Unit tests
 ----------

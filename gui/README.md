@@ -43,7 +43,7 @@ cozy instance and a local hard drive, for a personal usage. We tried to make
 it simple and easy. So, it has some limitations:
 
 - Files and folders named like this are ignored:
-  - `.cozy-desktop` (they are used to keep internal state)
+  - `.system-tmp-cozy-drive` (they are used to keep internal state)
   - `_design` (special meaning for pouchdb/couchdb)
 
 - It's not a particularly good idea to share code with cozy-desktop:

@@ -52,9 +52,9 @@ describe('LocalWatcher Tests', function () {
       this.watcher.start()
     })
 
-    it('ignores .cozy-desktop', function (done) {
-      fs.ensureDirSync(path.join(this.syncPath, '.cozy-desktop'))
-      fs.ensureFileSync(path.join(this.syncPath, '.cozy-desktop/ac'))
+    it('ignores .system-tmp-cozy-drive', function (done) {
+      fs.ensureDirSync(path.join(this.syncPath, '.system-tmp-cozy-drive'))
+      fs.ensureFileSync(path.join(this.syncPath, '.system-tmp-cozy-drive/ac'))
       this.prep.putFolder = sinon.spy()
       this.prep.addFile = sinon.spy()
       this.prep.updateFile = sinon.spy()
