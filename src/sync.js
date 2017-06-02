@@ -232,6 +232,7 @@ class Sync {
       await this.diskUsage()
     } catch (err) {
       if (err.status === 400) {
+        log.error({err}, 'Client has been revoked')
         throw new Error('Client has been revoked')
       } else {
         // The client is offline, wait that it can connect again to the server
