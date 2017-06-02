@@ -42,7 +42,7 @@ class Local implements Side {
     this.pouch = pouch
     this.events = events
     this.syncPath = config.syncPath
-    this.tmpPath = path.join(this.syncPath, '.cozy-desktop')
+    this.tmpPath = path.join(this.syncPath, '.system-tmp-cozy-drive')
     this.watcher = new Watcher(this.syncPath, this.prep, this.pouch)
     // $FlowFixMe
     this.other = null

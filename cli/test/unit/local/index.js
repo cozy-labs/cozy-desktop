@@ -39,7 +39,7 @@ describe('Local', function () {
     })
 
     it('has a tmp path', function () {
-      let tmpPath = path.join(this.syncPath, '.cozy-desktop')
+      let tmpPath = path.join(this.syncPath, '.system-tmp-cozy-drive')
       this.local.tmpPath.should.equal(tmpPath)
     })
   })

@@ -114,7 +114,7 @@ it simple and easy. So, it has some limitations:
   moment. We are working to improve this in the next weeks.
 
 - Files and folders named like this are ignored:
-  - `.cozy-desktop` (they are used to keep internal state)
+  - `.system-tmp-cozy-drive` (they are used to keep internal state)
   - `_design` (special meaning for pouchdb/couchdb)
 
 - It's not a particularly good idea to share code with cozy-desktop:
