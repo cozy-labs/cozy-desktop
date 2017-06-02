@@ -1,11 +1,22 @@
-#!/usr/bin/env node
-
 const fs = require('fs')
+const yaml = require('js-yaml')
 
-function fixFile (file, bad, good) {
-  if (fs.existsSync(file)) {
-    console.log('Fixing ' + file + ' ...')
-    fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(bad, good))
+function fixLatestYml (yamlPath, bad, good, opts={}) {
+  if (fs.existsSync(yamlPath)) {
+    const goodYaml = fs.readFileSync(yamlPath, 'utf8').replace(bad, good)
+
+    console.log(`Fixing ${yamlPath} ...`)
+    fs.writeFileSync(yamlPath, goodYaml)
+
+    if (opts.generateLegacyJson) {
+      const jsonPath = yamlPath.replace(/\.yml/, '.json')
+      const {version, releaseDate} = yaml.safeLoad(goodYaml)
+      const url = `https://github.com/cozy-labs/cozy-desktop/releases/download/v${version}/Cozy.Desktop-${version}-mac.zip`
+      const goodJson = JSON.stringify({version, releaseDate, url}, null, 2)
+
+      console.log(`Fixing ${jsonPath} ...`)
+      fs.writeFileSync(jsonPath, goodJson)
+    }
   }
 }
 
@@ -15,6 +26,6 @@ function fixFile (file, bad, good) {
 //
 // And GitHub will replaces spaces with dots in uploaded release artifacts.
 
-fixFile('dist/latest.yml', 'cozy-desktop-gui-setup-', 'Cozy.Desktop.Setup.')
-fixFile('dist/github/latest-mac.json', 'cozy-desktop-gui', 'Cozy.Desktop')
+fixLatestYml('dist/latest.yml', 'cozy-desktop-gui-setup-', 'Cozy.Desktop.Setup.')
+fixLatestYml('dist/latest-mac.yml', 'cozy-desktop-gui', 'Cozy.Desktop', {generateLegacyJson: true})
 
