@@ -13,7 +13,7 @@
     "cozy-desktop": "bin/cozy-desktop"
   },
   "repository": "git://github.com/cozy-labs/cozy-desktop.git",
-  "logo": "https://raw.githubusercontent.com/cozy-labs/cozy-desktop/master/gui/app/images/icon.png",
+  "logo": "https://raw.githubusercontent.com/cozy-labs/cozy-desktop/master/gui/images/icon.png",
   "keywords": [
     "desktop",
     "data",
