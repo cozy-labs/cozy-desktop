@@ -2,7 +2,7 @@
 host = https://www.transifex.com
 
 [cozy-desktop.enjson]
-file_filter = app/locales/<lang>.json
-source_file = app/locales/en.json
+file_filter = locales/<lang>.json
+source_file = locales/en.json
 source_lang = en
 type = KEYVALUEJSON
