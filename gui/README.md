@@ -109,7 +109,7 @@ the Elm and Stylus stuff when a change is made.
 ### Troubleshooting
 If you encounter the following error: "Error: cannot find module 'cozy-desktop'", make sure that:
 * you ran `npm run build` in the cozy-desktop folder
-* `rm -rf cozy-desktop/gui/app/node_modules`
+* `rm -rf cozy-desktop/gui/node_modules`
 * `npm install && npm run build`
 
 
