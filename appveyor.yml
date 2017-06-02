@@ -7,13 +7,17 @@ environment:
 
 install:
   - cmd: appveyor-retry powershell Install-Product node $env:nodejs_version
+  - cd cli
   - cmd: appveyor-retry yarn
   - cmd: appveyor-retry yarn bootstrap:remote
+  - cd ..
 
 build: off
 
 test_script:
-  - yarn test-unit
+  - cd cli
+  - yarn build
+  - yarn test:unit
 
 on_failure:
   - node --version

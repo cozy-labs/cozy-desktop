@@ -1,9 +1,41 @@
 {
+  "name": "cozy-desktop-gui",
+  "productName": "Cozy Desktop",
   "private": true,
+  "version": "3.0.0-beta.3",
+  "description": "File Synchronization Client for Cozy Cloud",
+  "homepage": "https://github.com/cozy-labs/cozy-desktop",
   "author": "Cozy Cloud <contact@cozycloud.cc> (https://cozycloud.cc/)",
   "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/cozy-labs/cozy-desktop/issues"
+  },
+  "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/cozy-labs/cozy-desktop.git"
+  },
+  "keywords": [
+    "Electron",
+    "desktop",
+    "data",
+    "sync",
+    "files",
+    "cozy"
+  ],
   "build": {
     "appId": "io.cozy.desktop",
+    "files": [
+      "app.css",
+      "elm.js",
+      "fonts",
+      "images",
+      "index.html",
+      "locales",
+      "main.js",
+      "node_modules",
+      "ports.js"
+    ],
     "win": {
       "certificateSubjectName": "Cozy Cloud SAS",
       "target": [
@@ -23,6 +55,14 @@
       ]
     }
   },
+  "dependencies": {
+    "auto-launch-patched": "5.0.2",
+    "babel-polyfill": "^6.23.0",
+    "cozy-desktop": "file:../cli/",
+    "electron-main-notification": "1.0.1",
+    "electron-updater": "1.15.0",
+    "lodash.debounce": "4.0.8"
+  },
   "devDependencies": {
     "chokidar-cli": "^1.2.0",
     "cozy-ui": "^0.1.7",
@@ -30,40 +70,36 @@
     "debug-menu": "^0.6.0",
     "devtron": "^1.4.0",
     "electron": "^1.4.12",
-    "electron-builder": "^16.6.1",
+    "electron-builder": "^18.3.0",
     "elm": "^0.18.0",
     "elm-upgrade": "^0.18.7",
+    "rimraf": "^2.6.1",
     "standard": "^10.0.2",
     "stylus": "^0.54.5"
   },
   "scripts": {
-    "build": "npm run build:css & npm run build:tx && npm run build:elm",
-    "build:css": "stylus -c -u cozy-ui/lib/stylus styles/app.styl -o app/",
-    "build:elm": "elm make lib/Main.elm --output app/elm.js || true",
-    "build:lib": "cd .. && npm run build",
+    "build": "yarn build:css & yarn build:tx && yarn build:elm",
+    "build:css": "stylus -c -u cozy-ui/lib/stylus styles/app.styl -o .",
+    "build:elm": "elm make lib/Main.elm --output elm.js",
+    "build:cli": "cd ../cli && yarn build",
     "build:tx": "tx pull --all || true",
-    "clean": "rm -rf app/elm.js app/app.css* dist/",
-    "codesign-verify": "codesign --verify --deep --strict --verbose=2 dist/mac/cozy-desktop-gui.app",
-    "copy:lib": "rsync -av ../lib/ ./app/node_modules/cozy-desktop/lib",
-    "dist": "npm run _dist",
-    "_dist": "build --x64 --ia32",
-    "lint": "standard --verbose app/main.js app/ports.js",
-    "pack": "npm run _pack",
-    "_pack": "build --dir",
-    "postinstall": "npm run postinstall:electron && npm run postinstall:elm",
-    "postinstall:electron": "install-app-deps",
+    "clean": "rimraf elm.js app.css* dist/",
+    "dist": "cross-env DEBUG=electron-builder build --x64",
+    "elm:upgrade": "yarn add --dev elm@latest elm-upgrade@latest && elm-upgrade",
+    "lint": "standard --verbose main.js ports.js",
+    "pack": "cross-env DEBUG=electron-builder build --dir",
+    "postinstall": "yarn postinstall:electron && yarn postinstall:elm",
+    "postinstall:electron": "cross-env DEBUG=electron-builder install-app-deps",
     "postinstall:elm": "elm-package install -y",
-    "reinstall": "bash -c 'rm -rf ./app/node_modules' && yarn",
-    "release:build": "yarn release:check:node-6 && yarn release:build:lib && yarn reinstall && yarn build && yarn dist && yarn release:fix",
-    "release:build:lib": "cd .. && yarn release:build",
+    "reinstall": "rimraf node_modules/ && yarn",
+    "release:build": "yarn release:check:node-6 && yarn release:build:cli && yarn reinstall && yarn build && yarn dist && yarn release:fix",
+    "release:build:cli": "cd ../cli && yarn release:build",
     "release:check:node-6": "node -e \"(process.versions.node.split('.')[0] !== '6') && process.exit(1)\"",
     "release:fix": "node ./dev/fix-dist-artifacts.js",
-    "start": "cross-env COZY_DESKTOP_HEARTBEAT=5000 electron ./app",
-    "up": "npm run build:lib && npm run copy:lib && DEBUG=true npm start",
-    "watch": "env WATCH=true npm run start & npm run watch:css & npm run watch:elm & npm run watch:js",
-    "watch:css": "stylus -m -u cozy-ui/lib/stylus -w styles/app.styl -o app/",
-    "watch:elm": "chokidar 'lib/**/*.elm' -c 'npm run build:elm'",
-    "watch:js": "chokidar app/main.js app/ports.js -c 'npm run lint'",
-    "elm-upgrade": "npm install --save-dev elm@latest elm-upgrade@latest && ./node_modules/.bin/elm-upgrade"
+    "start": "cross-env COZY_DESKTOP_HEARTBEAT=5000 electron .",
+    "watch": "cross-env WATCH=true yarn start & yarn watch:css & yarn watch:elm & yarn watch:js",
+    "watch:css": "stylus -m -u cozy-ui/lib/stylus -w styles/app.styl -o .",
+    "watch:elm": "chokidar 'lib/**/*.elm' -c 'yarn build:elm'",
+    "watch:js": "chokidar main.js ports.js -c 'yarn lint'"
   }
 }
