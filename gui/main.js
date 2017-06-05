@@ -667,13 +667,13 @@ ipcMain.on('choose-folder', (event) => {
   }
 })
 
-ipcMain.on('start-sync', (event, arg) => {
+ipcMain.on('start-sync', (event, syncPath) => {
   if (!desktop.config.isValid()) {
     console.error('No client!')
     return
   }
   try {
-    desktop.saveConfig(desktop.config.cozyUrl, arg)
+    desktop.saveConfig(desktop.config.cozyUrl, syncPath)
     addFileManagerShortcut(desktop.config)
     startSync()
   } catch (err) {
