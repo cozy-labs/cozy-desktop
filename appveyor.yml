@@ -3,7 +3,7 @@ environment:
   COZY_URL:
     secure: uO9y1OhE9RrwDoYV5ewQPWITVjiTLzLO+dxhyOxpzoU=
   COZY_PASSPHRASE:
-    secure: tgJZSLSOHKLhxr+7TFh8F1NG9A5GAj5ndmu07IaAB7w=
+    secure: 6A0bzbjM06atb2sN15M0LToiGH1NkvXDh3tPzmbOrzI=
 
 install:
   - cmd: appveyor-retry powershell Install-Product node $env:nodejs_version
