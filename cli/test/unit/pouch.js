@@ -430,7 +430,7 @@ if (doc.docType === 'folder') {
   })
 
   // Disable this test on travis because it can be really slow...
-  if (process.env.TRAVIS) { return }
+  if (process.env.CI) { return }
   describe('byRecursivePath (bis)', function () {
     this.timeout(60000)
 
