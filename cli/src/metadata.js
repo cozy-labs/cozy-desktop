@@ -37,7 +37,7 @@ export type Metadata = {
   md5sum?: string,
   class?: string,
   docType: string,
-  errors: number,
+  errors?: number,
   executable?: true,
   updated_at: string|Date,
   mime?: string,
