@@ -51,6 +51,7 @@ class Ignore {
       '.TemporaryItems',
       '.Trashes',
       '.VolumeIcon.icns',
+      'Icon\r',
 
       // Vim
       '*.sw[px]',
