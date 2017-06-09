@@ -33,11 +33,11 @@ export type MetadataSidesInfo = {
 export type Metadata = {
   _deleted?: true,
   _id: string,
-  _rev: string,
+  _rev?: string,
   md5sum?: string,
   class?: string,
   docType: string,
-  errors: number,
+  errors?: number,
   executable?: true,
   updated_at: string|Date,
   mime?: string,
@@ -151,6 +151,7 @@ export function ensureValidChecksum (doc: Metadata) {
 // Extract the revision number, or 0 it not found
 export function extractRevNumber (infos: Metadata) {
   try {
+    // $FlowFixMe
     let rev = infos._rev.split('-')[0]
     return Number(rev)
   } catch (error) {
