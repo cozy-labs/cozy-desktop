@@ -116,6 +116,7 @@
     "lodash.uniq": "^4.5.0",
     "mocha": "^3.4.2",
     "mocha-clean": "^1.0.0",
+    "node-uuid": "^1.4.8",
     "nyc": "^11.0.1",
     "pouchdb-server": "^2.3.4",
     "rimraf": "^2.6.1",
