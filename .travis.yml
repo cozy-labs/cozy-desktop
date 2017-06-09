@@ -78,7 +78,7 @@ script:
     - travis_retry yarn
     - yarn build
     - yarn lint
-    - yarn test:unit:coverage
+    - yarn test:coverage
     - cd ../gui
     - travis_retry yarn
     - yarn lint
