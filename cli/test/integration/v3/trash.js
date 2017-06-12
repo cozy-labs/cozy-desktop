@@ -24,7 +24,7 @@ suite('Trash', () => {
     return
   }
 
-  let builders, ignore, merge, pouch, prep
+  let builders, config, ignore, merge, pouch, prep
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -33,11 +33,12 @@ suite('Trash', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(function () {
+    config = this.config
     pouch = this.pouch
     builders = new MetadataBuilders(pouch)
     merge = new Merge(pouch)
     ignore = new Ignore([])
-    prep = new Prep(merge, ignore)
+    prep = new Prep(merge, ignore, config)
   })
 
   test('local dir', async () => {
