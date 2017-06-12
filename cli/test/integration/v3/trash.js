@@ -18,7 +18,6 @@ import Prep from '../../../src/prep'
 import Remote from '../../../src/remote'
 import Sync from '../../../src/sync'
 
-import MetadataBuilders from '../../builders/metadata'
 import configHelpers from '../../helpers/config'
 import * as cozyHelpers from '../../helpers/cozy'
 import pouchHelpers from '../../helpers/pouch'
@@ -29,7 +28,7 @@ suite('Trash', () => {
     return
   }
 
-  let builders, config, cozy, events, ignore, local, merge, pouch, prep, remote, sync
+  let config, cozy, events, ignore, local, merge, pouch, prep, remote, sync
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -41,7 +40,6 @@ suite('Trash', () => {
   beforeEach(function () {
     config = this.config
     pouch = this.pouch
-    builders = new MetadataBuilders(pouch)
     merge = new Merge(pouch)
     ignore = new Ignore([])
     prep = new Prep(merge, ignore, config)
@@ -68,8 +66,13 @@ suite('Trash', () => {
   }
 
   test('local dir', async () => {
-    const dir = await builders.dirMetadata().path('parent/dir').create()
-    const child = await builders.dirMetadata().path('parent/dir/child').create()
+    const parent = await cozy.client.files.createDirectory({name: 'parent'})
+    const dir = await cozy.client.files.createDirectory({name: 'dir', dirID: parent._id})
+    const child = await cozy.client.files.createDirectory({name: 'child', dirID: dir._id})
+    await remote.watcher.pullOne(parent._id)
+    await remote.watcher.pullOne(dir._id)
+    await remote.watcher.pullOne(child._id)
+    await syncAll()
     sinon.spy(pouch, 'put')
 
     const promise = prep.trashFolderAsync('local', {path: 'parent/dir'})
