@@ -1,3 +1,4 @@
+import pick from 'lodash.pick'
 import {
   after,
   afterEach,
@@ -6,7 +7,6 @@ import {
   suite,
   test
 } from 'mocha'
-import pick from 'lodash.pick'
 import should from 'should'
 import sinon from 'sinon'
 
