@@ -89,5 +89,13 @@ suite('Trash', () => {
     ])
     await should(pouch.db.get(dir._id)).be.rejectedWith({status: 404})
     await should(pouch.db.get(child._id)).be.rejectedWith({status: 404})
+
+    await syncAll()
+
+    await should(cozy.client.files.statById(child._id)).be.fulfilled()
+    should(await cozy.client.files.statById(dir._id))
+      .have.propertyByPath('attributes', 'path').eql('/.cozy_trash/dir')
+    should(await cozy.client.files.statById(child._id))
+      .have.propertyByPath('attributes', 'path').eql('/.cozy_trash/dir/child')
   })
 })
