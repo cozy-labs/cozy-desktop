@@ -1,3 +1,34 @@
+## 3.0.0-beta.4 - 2017-06-12
+
+Improvements for Windows 10 users:
+
+* When you first register your computer on the Cozy, the app will add your
+  Cozy Drive folder to the Windows Explorer sidebar (near the OneDrive one).
+  If you disconnect from the settings, the sidebar shortcut will be removed.
+
+Improvements for macOS users:
+
+* When you first register your computer on the Cozy, the app will add your
+  Cozy Drive folder to the Finder favorites. It will still have a normal
+  folder icon though (same as the real folder).
+  Also the favorite will not be removed when you disconnect. You can still
+  easily remove it by hand.
+  These small details should be fixed soon.
+* The app will synchronize macOS folders without their custom icons (those
+  are stored in hidden files with weird character in their name, which is
+  not supported by the Cozy at the moment, and was triggering synchronization
+  errors).
+
+Improvements for all users:
+
+* The temporary .cozy-desktop folder inside your Cozy Drive one was renamed
+  to .system-tmp-cozy-desktop, to make sure even people displaying hidden
+  files in their file browser won't try to put files in it and expect them
+  to be synchronized.
+* Logging improvements (for debugging purpose)
+
+Happy syncing!
+
 ## 3.0.0-beta.3 - 2017-06-02
 
 This is for testing purpose only.
