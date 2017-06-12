@@ -1,0 +1,18 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "yarn build:cli && yarn install:gui && yarn build:gui",
+    "build:cli": "cd cli && yarn build && cd .. && yarn uninstall:gui:cli",
+    "build:gui": "cd gui && yarn build && yarn dist",
+    "clean:cli": "rimraf cli/lib/ cli/tmp/",
+    "clean:gui": "rimraf gui/elm.js gui/app.css gui/dist/",
+    "install:cli": "cd cli/ && yarn install && cd .. && yarn uninstall:gui:cli",
+    "install:gui": "cd gui/ && yarn install --check-files",
+    "postinstall": "yarn install:cli && yarn install:gui",
+    "prebuild": "yarn clean:cli && yarn clean:gui",
+    "uninstall:gui:cli": "rimraf gui/node_modules/cozy-desktop"
+  },
+  "devDependencies": {
+    "rimraf": "^2.6.1"
+  }
+}
