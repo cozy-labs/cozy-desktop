@@ -1,3 +1,4 @@
+import EventEmitter from 'events'
 import pick from 'lodash.pick'
 import {
   after,
@@ -11,11 +12,15 @@ import should from 'should'
 import sinon from 'sinon'
 
 import Ignore from '../../../src/ignore'
+import Local from '../../../src/local'
 import Merge from '../../../src/merge'
 import Prep from '../../../src/prep'
+import Remote from '../../../src/remote'
+import Sync from '../../../src/sync'
 
 import MetadataBuilders from '../../builders/metadata'
 import configHelpers from '../../helpers/config'
+import * as cozyHelpers from '../../helpers/cozy'
 import pouchHelpers from '../../helpers/pouch'
 
 suite('Trash', () => {
@@ -24,11 +29,12 @@ suite('Trash', () => {
     return
   }
 
-  let builders, config, ignore, merge, pouch, prep
+  let builders, config, cozy, events, ignore, local, merge, pouch, prep, remote, sync
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
+  beforeEach(cozyHelpers.deleteAll)
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
@@ -39,6 +45,13 @@ suite('Trash', () => {
     merge = new Merge(pouch)
     ignore = new Ignore([])
     prep = new Prep(merge, ignore, config)
+    events = new EventEmitter()
+    local = new Local(config, prep, pouch, events)
+    remote = new Remote(config, prep, pouch, events)
+    sync = new Sync(pouch, local, remote, ignore, events)
+    sync.stopped = false
+    cozy = remote.remoteCozy
+    cozy.client = cozyHelpers.cozy
   })
 
   test('local dir', async () => {
