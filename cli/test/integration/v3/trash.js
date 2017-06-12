@@ -54,6 +54,19 @@ suite('Trash', () => {
     cozy.client = cozyHelpers.cozy
   })
 
+  const syncAll = async () => {
+    const seq = await pouch.getLocalSeqAsync()
+    const changes = await pouch.db.changes({
+      since: seq,
+      include_docs: true,
+      filter: '_view',
+      view: 'byPath'
+    })
+    for (let change of changes.results) {
+      await sync.apply(change)
+    }
+  }
+
   test('local dir', async () => {
     const dir = await builders.dirMetadata().path('parent/dir').create()
     const child = await builders.dirMetadata().path('parent/dir/child').create()
