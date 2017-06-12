@@ -1,5 +1,7 @@
 import {
+  after,
   afterEach,
+  before,
   beforeEach,
   suite,
   test
@@ -24,10 +26,11 @@ suite('Trash', () => {
 
   let builders, ignore, merge, pouch, prep
 
-  beforeEach(configHelpers.createConfig)
+  before(configHelpers.createConfig)
+  before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
   afterEach(pouchHelpers.cleanDatabase)
-  afterEach(configHelpers.cleanConfig)
+  after(configHelpers.cleanConfig)
 
   beforeEach(function () {
     pouch = this.pouch
