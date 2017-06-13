@@ -70,6 +70,10 @@ before_install:
     # COZY_DESKTOP_DIR
     - mkdir -p "$COZY_DESKTOP_DIR"
 
+    # Dummy .env.test (all variables are already set)
+    # env-cmd ignores the file when empty
+    - echo "NODE_ENV=test" > "${TRAVIS_BUILD_DIR}/cli/.env.test"
+
 script:
     - cd cli
     - travis_retry yarn
