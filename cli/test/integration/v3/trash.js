@@ -17,6 +17,11 @@ import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
 
 suite('Trash', () => {
+  if (process.env.APPVEYOR) {
+    test('is unstable on AppVeyor')
+    return
+  }
+
   let builders, ignore, merge, pouch, prep
 
   beforeEach(configHelpers.createConfig)
