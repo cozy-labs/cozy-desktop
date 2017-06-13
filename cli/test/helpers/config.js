@@ -29,6 +29,6 @@ export default {
   },
 
   cleanConfig () {
-    return del.sync(this.syncPath)
+    return del.sync(this.syncPath, {force: process.env.TRAVIS})
   }
 }
