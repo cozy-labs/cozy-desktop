@@ -15,7 +15,7 @@ matrix:
           node_js: 6
 env:
     global:
-        - COZY_DESKTOP_DIR=tmp
+        - COZY_DESKTOP_DIR=/tmp/cozy-desktop
         - COZY_URL="http://localhost:8080"
         - COZY_PASSPHRASE="CozyTest_1"
         - NODE_ENV=test
@@ -67,11 +67,8 @@ before_install:
     - export COZY_CLIENT_ID=$($GOPATH/bin/cozy-stack instances client-oauth localhost:8080 http://localhost/ test github.com/cozy-labs/cozy-desktop)
     - export COZY_STACK_TOKEN=$($GOPATH/bin/cozy-stack instances token-oauth localhost:8080 "$COZY_CLIENT_ID" io.cozy.files)
 
-    # Cozy desktop cli/tmp dir
-    - cd $HOME/build/cozy-labs/cozy-desktop
-    - pwd
-    - mkdir /tmp/cozy-desktop
-    - ln -s /tmp/cozy-desktop cli/tmp
+    # COZY_DESKTOP_DIR
+    - mkdir -p "$COZY_DESKTOP_DIR"
 
 script:
     - cd cli
