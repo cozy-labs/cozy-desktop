@@ -20,7 +20,7 @@ import type { RemoteDoc, JsonApiDoc } from '../../../src/remote/document'
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
 import {
-  cozy, COZY_URL, builders, deleteAll, createTheCouchdbFolder
+  cozy, builders, deleteAll, createTheCouchdbFolder
 } from '../../helpers/cozy'
 
 describe('Remote', function () {
@@ -33,7 +33,6 @@ describe('Remote', function () {
   before('register OAuth client', configHelpers.registerClient)
   before('instanciate pouch', pouchHelpers.createDatabase)
   before('instanciate remote', function () {
-    this.config.cozyUrl = COZY_URL
     this.prep = sinon.createStubInstance(Prep)
     this.events = new EventEmitter()
     this.remote = new Remote(this.config, this.prep, this.pouch, this.events)

@@ -4,6 +4,8 @@ import path from 'path'
 
 import Config from '../../src/config'
 
+import { COZY_URL } from './cozy'
+
 export default {
   createConfig () {
     let parent = process.env.COZY_DESKTOP_DIR || 'tmp'
@@ -12,6 +14,7 @@ export default {
     fs.ensureDirSync(this.syncPath)
     this.config = new Config(path.join(basePath, '.cozy-desktop'))
     this.config.syncPath = this.syncPath
+    this.config.cozyUrl = COZY_URL
   },
 
   registerClient () {

@@ -12,7 +12,7 @@ import { Client as CozyClient } from 'cozy-client-js'
 import configHelpers from '../../helpers/config'
 import { onPlatform } from '../../helpers/platform'
 import pouchHelpers from '../../helpers/pouch'
-import { COZY_URL, builders } from '../../helpers/cozy'
+import { builders } from '../../helpers/cozy'
 
 import { createMetadata } from '../../../src/conversion'
 import { buildId } from '../../../src/metadata'
@@ -30,7 +30,6 @@ describe('RemoteWatcher', function () {
   before(pouchHelpers.createDatabase)
   before(function instanciateRemoteWatcher () {
     this.prep = sinon.createStubInstance(Prep)
-    this.config.cozyUrl = COZY_URL
     this.prep.config = this.config
     this.remoteCozy = new RemoteCozy(this.config)
     this.remoteCozy.client = new CozyClient({

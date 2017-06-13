@@ -9,14 +9,19 @@ import pouchdbBuilders from '../pouchdb'
 
 export default class DirMetadataBuilder {
   pouch: ?Pouch
-  path: string
+  opts: {
+    path: string
+  }
 
   constructor (pouch?: Pouch) {
     this.pouch = pouch
+    this.opts = {
+      path: ''
+    }
   }
 
   path (path: string): this {
-    this.path = path
+    this.opts.path = path
     return this
   }
 
@@ -25,7 +30,7 @@ export default class DirMetadataBuilder {
       _id: '',
       // _rev: pouchdbBuilders.rev(),
       docType: 'folder',
-      path: this.path,
+      path: this.opts.path,
       remote: {
         _id: pouchdbBuilders.id(),
         _rev: pouchdbBuilders.rev()

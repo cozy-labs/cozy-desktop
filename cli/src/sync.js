@@ -282,7 +282,7 @@ class Sync {
     }
     delete doc.errors
     try {
-      await this.pouch.db.put(doc)
+      await this.pouch.put(doc)
     } catch (err) {
       // Conflicts can happen here, for example if the cozy-stack has generated
       // a thumbnail before apply has finished. In that case, we try to

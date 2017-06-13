@@ -33,6 +33,7 @@ token=$(cozy-stack instances token-oauth \
 
 # Generate test env file
 cat >/cozy-desktop/.env.test <<EOF
+COZY_CLIENT_ID=$client_id
 COZY_STACK_TOKEN=$token
 NODE_ENV=test
 EOF
