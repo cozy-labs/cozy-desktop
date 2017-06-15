@@ -6,6 +6,7 @@ import path from 'path'
 import sinon from 'sinon'
 import should from 'should'
 
+import { TMP_DIR_NAME } from '../../../src/local/constants'
 import Watcher from '../../../src/local/watcher'
 import { PendingMap } from '../../../src/utils/pending'
 
@@ -52,9 +53,9 @@ describe('LocalWatcher Tests', function () {
       this.watcher.start()
     })
 
-    it('ignores .system-tmp-cozy-drive', function (done) {
-      fs.ensureDirSync(path.join(this.syncPath, '.system-tmp-cozy-drive'))
-      fs.ensureFileSync(path.join(this.syncPath, '.system-tmp-cozy-drive/ac'))
+    it('ignores the temporary directory', function (done) {
+      fs.ensureDirSync(path.join(this.syncPath, TMP_DIR_NAME))
+      fs.ensureFileSync(path.join(this.syncPath, TMP_DIR_NAME, 'ac'))
       this.prep.putFolder = sinon.spy()
       this.prep.addFile = sinon.spy()
       this.prep.updateFile = sinon.spy()
