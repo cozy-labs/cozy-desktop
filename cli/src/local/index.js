@@ -10,6 +10,7 @@ import * as stream from 'stream'
 import trash from 'trash'
 
 import Config from '../config'
+import { TMP_DIR_NAME } from './constants'
 import logger from '../logger'
 import { isUpToDate } from '../metadata'
 import Pouch from '../pouch'
@@ -42,7 +43,7 @@ class Local implements Side {
     this.pouch = pouch
     this.events = events
     this.syncPath = config.syncPath
-    this.tmpPath = path.join(this.syncPath, '.system-tmp-cozy-drive')
+    this.tmpPath = path.join(this.syncPath, TMP_DIR_NAME)
     this.watcher = new Watcher(this.syncPath, this.prep, this.pouch)
     // $FlowFixMe
     this.other = null

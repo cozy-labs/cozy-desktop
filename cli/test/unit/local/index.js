@@ -8,6 +8,7 @@ import should from 'should'
 import { Readable } from 'stream'
 
 import Local from '../../../src/local'
+import { TMP_DIR_NAME } from '../../../src/local/constants'
 import { PendingMap } from '../../../src/utils/pending'
 
 import configHelpers from '../../helpers/config'
@@ -39,7 +40,7 @@ describe('Local', function () {
     })
 
     it('has a tmp path', function () {
-      let tmpPath = path.join(this.syncPath, '.system-tmp-cozy-drive')
+      let tmpPath = path.join(this.syncPath, TMP_DIR_NAME)
       this.local.tmpPath.should.equal(tmpPath)
     })
   })
