@@ -22,11 +22,8 @@ conversion issues were also fixed afterwards. Build and tools also moved to
 the new language stack. The list of changes can be seen in the corresponding
 GitHub [pull request][7].
 
-Because of lack of time, some minor issues still remain in the ES code, e.g.:
-
-- Useless `return` statements
-- CoffeeScript-only operators that were replaced with generated `__guard*`
-  functions
+Because of lack of time, some minor issues still remain in the ES code,
+like a few useless `return` statements for example.
 
 Those will be adressed progressively while working on new features or
 enhancements. But help is still welcome :smile:

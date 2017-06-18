@@ -1,223 +1,87 @@
-[Cozy][0] Desktop <sup>(beta)</sup>
-====================================
+[Cozy](https://cozy.io) Drive for Desktop <sup>(beta)</sup>
+===========================================================
 
-[![Linux & macOS Build Status][1]][2]
-[![Windows build status][21]][22]
-[![Dependency Status][15]][16]
-[![Code Climate][17]][18]
-[![codecov][19]][20]
-
-:warning: **Cozy Desktop is currently being ported to the [new Cozy stack](https://github.com/cozy/cozy-stack#readme). This work takes place on the master branch. Maintenance for the old stack is occuring on the [v2](https://github.com/cozy-labs/cozy-desktop/tree/v2) branch.**
-
-The Cozy desktop app allows to sync the files stored in your Cozy with your
-laptop and/or your desktop. It replicates your files on your hard drive and
-apply changes you made on them on other synced devices and on your online Cozy.
-
-**Note**: this is currently a **beta** for Linux. We plan to add support for
-OSX and Windows in the coming weeks. Stay tuned!
-
-:warning: **Backup your data before playing with cozy-desktop!**
-
-
-GUI Install
------------
-
-Follow the instructions on https://docs.cozy.io/en/mobile/desktop.html
-
-
-CLI Install
------------
-
-The cozy-desktop requires node.js (6 recommended, but it is tested on 4 and
-7 too) and build tools.
-
-For example, you can install them on debian with:
-
-```bash
-curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
-sudo apt-get install nodejs build-essential
-```
-
-Then you can install cozy-desktop via NPM:
-
-```bash
-sudo npm install cozy-desktop -g
-```
-
-Note: if you see a warning about `fsevents` and you are not on OSX, you can
-safely ignore it. `fsevents` is an optional dependency that is only used on
-OSX.
-
-
-CLI Running
------------
-
-Configure it with your remote Cozy and your local directory:
-
-```bash
-cozy-desktop add-remote-cozy https://url.of.my.cozy/ ~/cozy
-```
-
-It will synchronize your local directory `~/cozy` with your remote cozy.
-
-Then start synchronization daemon:
-
-```bash
-cozy-desktop sync
-```
-
-Other commands can be listed with
-
-```bash
-cozy-desktop -h
-```
-
-
-Advanced use cases
-------------------
-
-It's possible to make cozy-desktop ignore some files and folders by using a
-`.cozyignore` file. It works pretty much like a `.gitignore`, ie you put
-patterns in this file to ignore. The rules for patterns are the same, so you
-can look at
-[git documentation](https://git-scm.com/docs/gitignore/#_pattern_format) to
-see for their format. For example:
-
-```bash
-*.mp4
-heavy-*
-/tmp
-```
-
-Cozy-desktop keeps the metadata in a pouchdb database. If you want to use
-several synchronized directories, you'll have to tell cozy-desktop to keeps
-its metadata database somewhere else. The `COZY_DESKTOP_DIR` env variable has
-this role.
-
-For example, if you want to add a second synchronized directory, you can do:
-
-```bash
-export COZY_DESKTOP_DIR=/sync/other
-cozy-desktop add-remote-cozy https://url.of.my.others.cozy/ /sync/other
-cozy-desktop sync
-```
-
-
-Limitations
------------
-
-Cozy-desktop is designed to synchronize files and folders between a remote
-cozy instance and a local hard drive, for a personal usage. We tried to make
-it simple and easy. So, it has some limitations:
-
-- It's only a command-line interface and it is tested only on Linux for the
-  moment. We are working to improve this in the next weeks.
-
-- Files and folders named like this are ignored:
-  - `.system-tmp-cozy-drive` (they are used to keep internal state)
-  - `_design` (special meaning for pouchdb/couchdb)
-
-- It's not a particularly good idea to share code with cozy-desktop:
-  - `node_modules` have tons of small files
-  - compiled code often has to be recompile to works on another environment
-  - git (and other VCS) repositories are not meant to be shared this way.
-    You may lose your work if you make changes on two laptops synchronized
-    by cozy-desktop (it's the same with [dropbox][4], [google-drive][5],
-    [syncthing][6], etc.)
-  - `cozy-desktop` keeps the time with only a precision of a second, which may
-    trigger unexpected "file changed" notifications in your editor (see
-    [emacs issue](https://github.com/cozy-labs/cozy-desktop/issues/446) and
-    [workaround](https://github.com/cozy-labs/cozy-desktop/issues/446#issuecomment-262239629)).
-
-
-- If the same file has been modified in parallel, cozy-desktop don't try to
-  merge the modifications. It will just rename of one the copies with a
-  `-conflict` suffix. It's the same for folders.
-
-- We expect a personal usage:
-  - a reasonable number of files and folders (< 1.000.000)
-  - a reasonable number of files per folder (< 10.000)
-  - a reasonable size for files (< 1 Tb)
-  - a reasonable size for files and folders path (< 1024 bytes)
-  - not too many changes
-  - etc.
-
-- For OSX, filenames with weird unicode characters may be problematic in some
-  rare cases.
-
-- Symbolic links and ACL are not yet handled.
-
-- The full sync directory must be on the same partition.
-
-- Large files must be uploaded/downloaded in one time (we are thinking about
-  making it possible to split a large file in several blocks for
-  download/upload).
-
-- Due to its nature, cozy-desktop needs resources:
-  - CPU, for checksums in particular
-  - RAM, to keep all the metadata in memory, and for nodejs libraries
-  - Disk, but the overhead from cozy-desktop is low
-  - Network bandwidth obviously
-
-- No advanced feature, like P2P replication between several cozy-desktop
-  instances.
-
-
-Development documentation
--------------------------
-
-You can read more documentation for developer:
-
- - [App design][12]
- - [Tests][14]
- - [Tools for debugging][11]
- - [How to increase the number of inotify watches][13]
-
-
-## License
-
-Cozy Desktop Client is developed by Cozy Cloud and distributed under the AGPL
-v3 license.
-
+[![Latest release](https://img.shields.io/github/release/cozy-labs/cozy-desktop/all.svg)](https://github.com/cozy-labs/cozy-desktop/releases)
+[![Licence](https://img.shields.io/github/license/cozy/cozy-drive.svg)](https://github.com/cozy/cozy-drive/blob/master/LICENSE)
+<br>
+[![Windows build](https://img.shields.io/appveyor/ci/sebn/cozy-desktop/master.svg?label=windows)](https://ci.appveyor.com/project/sebn/cozy-desktop/branch/master)
+[![Linux & macOS build]( 	https://img.shields.io/travis/cozy-labs/cozy-desktop/master.svg?label=mac/linux)](https://travis-ci.org/cozy-labs/cozy-desktop/branches)
+[![Code climate](https://img.shields.io/codeclimate/github/cozy-labs/cozy-desktop.svg)](https://codeclimate.com/github/cozy-labs/cozy-desktop)
+[![Coverage](https://img.shields.io/codecov/c/github/cozy-labs/cozy-desktop/master.svg?label=coverage)](https://codecov.io/gh/cozy-labs/cozy-desktop/list/master)
 
 ## What is Cozy?
 
-![Cozy Logo][7]
+![Cozy Logo](https://raw.github.com/cozy/cozy-setup/gh-pages/assets/images/happycloud.png)
 
-[Cozy][0] is a platform that brings all your web services in the same private
+[Cozy](https://cozy.io/) is a platform that brings all your web services in the same private
 space.  With it, your web apps and your devices can share data easily,
 providing you with a new experience. You can install Cozy on your own hardware
 where no one profiles you.
 
 
-## Community
+## What is Cozy Drive for Desktop?
 
-You can reach the Cozy Community by:
+The Cozy Drive for Desktop application allows to sync the files stored in your
+Cozy with your laptop and/or your desktop. It replicates your files on your
+hard drive and apply changes you made on them on other synced devices and on
+your online Cozy.
 
-* Chatting with us on IRC #cozycloud on irc.freenode.net
-* Posting on our [Forum][8]
-* Posting issues on the [Github repos][9]
-* Mentioning us on [Twitter][10]
+## Disclaimer
 
-[0]:  https://cozy.io
-[1]:  https://travis-ci.org/cozy-labs/cozy-desktop.svg?branch=master
-[2]:  https://travis-ci.org/cozy-labs/cozy-desktop/branches
-[4]:  https://github.com/anishathalye/git-remote-dropbox#faq
-[5]:  https://stackoverflow.com/questions/31984751/google-drive-can-corrupt-repositories-in-github-desktop
-[6]:  https://forum.syncthing.net/t/is-putting-a-git-workspace-in-a-synced-folder-really-a-good-idea/1774
-[7]:  https://raw.github.com/cozy/cozy-setup/gh-pages/assets/images/happycloud.png
-[8]:  https://forum.cozy.io
-[9]:  https://github.com/cozy/
-[10]: https://twitter.com/mycozycloud
-[11]: doc/debug.md
-[12]: doc/design.md
-[13]: doc/inotify.md
-[14]: doc/test.md
-[15]: https://www.versioneye.com/user/projects/58541beead9aa20037389fff/badge.svg?style=flat-square
-[16]: https://www.versioneye.com/user/projects/58541beead9aa20037389fff?child=summary#tab-dependencies
-[17]: https://codeclimate.com/github/cozy-labs/cozy-desktop/badges/gpa.svg
-[18]: https://codeclimate.com/github/cozy-labs/cozy-desktop
-[19]: https://codecov.io/gh/cozy-labs/cozy-desktop/branch/master/graph/badge.svg
-[20]: https://codecov.io/gh/cozy-labs/cozy-desktop/list/master
-[21]: https://ci.appveyor.com/api/projects/status/4owiq9xl7sc45qak/branch/master?svg=true
-[22]: https://ci.appveyor.com/project/sebn/cozy-desktop/branch/master
+:warning: Cozy Drive for Desktop is still in beta version. Backup your data before using it!
+
+
+## Installing & using the application
+
+See the [official documentation](https://docs.cozy.io/en/mobile/desktop.html).
+
+
+## Advanced use cases
+
+- [Installing and using the command-line version](doc/usage/cli.md)
+- [Synchronizing multiple directories](doc/usage/multi_directory_setup.md)
+- [Ignore files](doc/usage/ignore_files.md)
+- [Limitations](doc/usage/limitations.md)
+
+
+## Cozy v2 users
+
+The new Cozy Drive for Desktop application targets the new Cozy stack v3 only.
+
+Maintenance for the old cozy-desktop GUI / CLI (targeting Cozy v2) is still
+occuring here. Support requests are definitely welcome, although we're quite
+busy with the v3 release.
+
+
+## GNU/Linux & BSD users
+
+The new Cozy Drive for Desktop application should actually work on Linux and
+BSD flavors, although not extensively tested at the moment.
+We don't provide packages yet, so you'll have to build and install it by hand.
+Packages for major GNU/Linux distributions should come up soon.
+
+
+## Contributing
+
+- [Setting up a development environment](doc/developer/setup.md)
+- [Other developer documentation](doc/developer/)
+
+
+## Get in touch
+
+The best way to ask for help is through the form embedded in the application.
+
+You can also:
+
+* Discuss on the [Forum](https://forum.cozy.io)
+* Report issues on the [Github repository](https://github.com/cozy-labs/cozy-desktop/)
+* Chat with us on the [IRC channel](irc://irc.freenode.net/cozycloud)
+* Mention us on [Twitter](https://twitter.com/mycozycloud)
+
+The current maintainer of Cozy Drive for Desktop is @sebn, feel free to say
+hello!
+
+## License
+
+*Cozy Drive for Desktop is developed by Cozy Cloud and distributed under the
+AGPL v3 license.*
