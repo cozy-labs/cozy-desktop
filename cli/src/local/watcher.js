@@ -237,7 +237,7 @@ class LocalWatcher {
                   ? d => !fs.existsSync(d.path)
                   : d => this.pending.hasPath(d.path))
               if (same) {
-                log.debug({path: filePath}, `was moved from ${same.path}`)
+                log.info({path: filePath}, `was moved from ${same.path}`)
                 this.pending.clear(same.path)
                 this.prep.moveFileAsync(SIDE, doc, same).catch(logError)
               } else {
