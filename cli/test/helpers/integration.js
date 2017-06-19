@@ -35,7 +35,7 @@ export class IntegrationTestHelpers {
     this._sync = new Sync(pouch, local, this._remote, ignore, events)
     this._sync.stopped = false
     this._pouch = pouch
-    this.local = new LocalTestHelpers(config.syncPath)
+    this.local = new LocalTestHelpers(local)
   }
 
   async syncAll () {
