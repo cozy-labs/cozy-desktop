@@ -149,7 +149,7 @@ export default class RemoteWatcher {
     }
     if (doc._deleted) {
       if (!was) {
-        log.debug({path}, `${docType} was created, trashed, and removed remotely`)
+        log.info({path}, `${docType} was created, trashed, and removed remotely`)
         return
       }
       log.info({path}, `${docType} was deleted remotely`)
