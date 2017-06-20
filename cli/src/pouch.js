@@ -153,6 +153,8 @@ class Pouch {
     })
   }
 
+  byRemoteIdAsync: (id: string) => Promise<*>
+
   byRemoteIdMaybe (id, callback) {
     this.byRemoteId(id, (err, was) => {
       if (err && (err.status !== 404)) {
