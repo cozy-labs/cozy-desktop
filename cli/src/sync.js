@@ -193,7 +193,7 @@ class Sync {
         throw new Error(`Unknown doctype: ${doc.docType}`)
       }
 
-      log.info(changeInfo, `Applied change on ${sideName} side`)
+      log.debug(changeInfo, `Applied change on ${sideName} side`)
       await this.pouch.setLocalSeqAsync(change.seq)
       if (!change.doc._deleted) {
         await this.updateRevs(change.doc, sideName)

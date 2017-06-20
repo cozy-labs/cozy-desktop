@@ -27,10 +27,9 @@ export const defaultLogger = bunyan.createLogger({
 })
 
 if (process.env.DEBUG) {
-  defaultLogger.addStream({
-    stream: process.stdout,
-    level: 'trace'
-  })
+  const logPath = 'debug.log'
+  if (fs.existsSync(logPath)) fs.unlinkSync(logPath)
+  defaultLogger.addStream({type: 'file', path: logPath, level: 'trace'})
 }
 
 function logger (options) {
