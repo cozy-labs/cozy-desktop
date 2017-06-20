@@ -115,12 +115,12 @@ export default class RemoteWatcher {
     log.debug({path}, 'change received')
 
     const was: ?Metadata = await this.pouch.byRemoteIdMaybeAsync(doc._id)
-    log.trace({doc, was})
+    log.trace({path, doc, was})
 
     if (['directory', 'file'].includes(doc.type)) {
       return this.putDoc(doc, was)
     } else {
-      log.error(`Document ${doc._id} is not a file or a directory`)
+      log.error({path}, `Document ${doc._id} is not a file or a directory`)
     }
   }
 
