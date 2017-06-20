@@ -761,6 +761,36 @@ describe('Remote', function () {
     })
   )
 
+  describe('deleteFolderAsync', () => {
+    it('deletes permanently an empty folder', async function () {
+      const folder = await builders.remoteDir().create()
+      const doc = conversion.createMetadata(folder)
+
+      await this.remote.deleteFolderAsync(doc)
+
+      await should(cozy.files.statById(doc.remote._id))
+        .be.rejectedWith({status: 404})
+    })
+
+    it('trashes a non-empty folder', async function () {
+      const dir = await builders.remoteDir().create()
+      const doc = conversion.createMetadata(dir)
+      await builders.remoteDir().inDir(dir).create()
+
+      await this.remote.deleteFolderAsync(doc)
+
+      const trashed = await cozy.files.statById(doc.remote._id)
+      should(trashed).have.propertyByPath('attributes', 'dir_id').eql(TRASH_DIR_ID)
+    })
+
+    it('does not swallow other trash errors', async function () {
+      const doc = {path: 'whatever', remote: {_id: 'missing'}}
+
+      await should(this.remote.deleteFolderAsync(doc))
+        .be.rejectedWith({status: 404})
+    })
+  })
+
   xdescribe('resolveConflict', () =>
     it('renames the file/folder', function (done) {
       let md5sum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'

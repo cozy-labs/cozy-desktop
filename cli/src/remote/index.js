@@ -239,9 +239,28 @@ export default class Remote implements Side {
         ifMatch: doc.remote._rev
       })
     } catch (err) {
+      // FIXME: Don't complain when file/dir is already trashed/deleted?
       throw err
     }
     doc.remote._rev = newRemoteDoc._rev
+  }
+
+  async deleteFolderAsync (doc: Metadata): Promise<void> {
+    await this.trashAsync(doc)
+    const {path} = doc
+
+    // FIXME: We use cozy-client-js directly instead of RemoteCozy because we
+    // want the dir contents.
+    // FIXME: Couldn't we reuse RemoteDoc from trashAsync()
+    const folder = await this.remoteCozy.client.files.statById(doc.remote._id)
+    if (folder.relations('contents').length === 0) {
+      log.info({path}, 'Deleting folder from the Cozy trash...')
+      // FIXME: Would it make sense to have an ifMatch option in destroyById()?
+      // FIXME: Don't complain when user cleared the trash? (race condition)
+      await this.remoteCozy.destroyById(folder._id)
+    } else {
+      log.warn({path}, 'Folder is not empty and cannot be deleted!')
+    }
   }
 
   moveFolderAsync (doc: Metadata, from: Metadata): Promise<*> {
