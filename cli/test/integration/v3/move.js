@@ -131,9 +131,9 @@ suite('Move', () => {
         ...pick(oldFile, ['docType', 'md5sum', 'mime', 'class', 'size'])
       }, oldFile)
       // FIXME: PouchDB 409 conflict errors
-      await should(prep.trashFolderAsync('local', {path: 'parent/src/dir/subdir'})).be.rejectedWith({status: 409})
-      await should(prep.trashFolderAsync('local', {path: 'parent/src/dir/empty-subdir'})).be.rejectedWith({status: 409})
-      await should(prep.trashFolderAsync('local', {path: 'parent/src/dir'})).be.rejectedWith({status: 409})
+      await prep.trashFolderAsync('local', {path: 'parent/src/dir/subdir'})
+      await prep.trashFolderAsync('local', {path: 'parent/src/dir/empty-subdir'})
+      await prep.trashFolderAsync('local', {path: 'parent/src/dir'})
 
       should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
         // Moved file
@@ -145,11 +145,8 @@ suite('Move', () => {
         {path: path.normalize('parent/dst/dir/subdir')},
         // Deleted dirs
         {path: path.normalize('parent/src/dir/subdir'), _deleted: true},
-        {path: path.normalize('parent/src/dir/subdir'), trashed: true},
         {path: path.normalize('parent/src/dir/empty-subdir'), _deleted: true},
-        {path: path.normalize('parent/src/dir/empty-subdir'), trashed: true},
-        {path: path.normalize('parent/src/dir'), _deleted: true},
-        {path: path.normalize('parent/src/dir'), trashed: true}
+        {path: path.normalize('parent/src/dir'), _deleted: true}
       ])
 
       await helpers.syncAll()
