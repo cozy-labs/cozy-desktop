@@ -37,6 +37,7 @@ class Local implements Side {
   tmpPath: string
   watcher: Watcher
   other: FileStreamProvider
+  _trash: (Array<string>) => Promise
 
   constructor (config: Config, prep: Prep, pouch: Pouch, events: EventEmitter) {
     this.prep = prep
@@ -47,6 +48,7 @@ class Local implements Side {
     this.watcher = new Watcher(this.syncPath, this.prep, this.pouch)
     // $FlowFixMe
     this.other = null
+    this._trash = trash
 
     Promise.promisifyAll(this)
   }
@@ -341,7 +343,7 @@ class Local implements Side {
     log.info({path: doc.path}, 'Moving to the OS trash...')
     this.events.emit('delete-file', doc)
     let fullpath = path.join(this.syncPath, doc.path)
-    return trash([fullpath])
+    return this._trash([fullpath])
   }
 
   // Rename a file/folder to resolve a conflict
