@@ -22,6 +22,7 @@ export class IntegrationTestHelpers {
 
   _pouch: Pouch
   _sync: Sync
+  _local: Local
   _remote: Remote
 
   constructor (config: Config, pouch: Pouch, cozyClient: cozy.Client) {
@@ -29,13 +30,13 @@ export class IntegrationTestHelpers {
     const ignore = new Ignore([])
     this.prep = new Prep(merge, ignore, config)
     const events = new EventEmitter()
-    const local = new Local(config, this.prep, pouch, events)
+    this._local = new Local(config, this.prep, pouch, events)
     this._remote = new Remote(config, this.prep, pouch, events)
     this._remote.remoteCozy.client = cozyClient
-    this._sync = new Sync(pouch, local, this._remote, ignore, events)
+    this._sync = new Sync(pouch, this._local, this._remote, ignore, events)
     this._sync.stopped = false
     this._pouch = pouch
-    this.local = new LocalTestHelpers(local)
+    this.local = new LocalTestHelpers(this._local)
   }
 
   async syncAll () {
