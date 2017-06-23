@@ -8,9 +8,8 @@ import {
   suite,
   test
 } from 'mocha'
+import path from 'path'
 import should from 'should'
-
-import { ROOT_DIR_ID, TRASH_DIR_ID } from '../../../src/remote/constants'
 
 import configHelpers from '../../helpers/config'
 import * as cozyHelpers from '../../helpers/cozy'
@@ -39,6 +38,8 @@ suite('Trash', () => {
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
     pouch = helpers._pouch
     prep = helpers.prep
+
+    helpers.local.setupTrash()
   })
 
   suite('file', async () => {
@@ -54,98 +55,105 @@ suite('Trash', () => {
     })
 
     test('local', async () => {
-      await should(prep.trashFileAsync('local', {path: 'parent/file'}))
-        .be.rejectedWith({status: 409, name: 'conflict'})
+      await should(prep.trashFileAsync('local', {path: 'parent/file'})).be.rejectedWith({status: 409})
 
       should(helpers.putDocs('path', '_deleted', 'trashed', 'sides')).deepEqual([
-        {path: 'parent/file', _deleted: true, sides: {local: 3, remote: 2}},
-        {path: 'parent/file', trashed: true, sides: {local: 3, remote: 2}}
+        {path: path.normalize('parent/file'), _deleted: true, sides: {local: 3, remote: 2}},
+        {path: path.normalize('parent/file'), trashed: true, sides: {local: 3, remote: 2}}
       ])
       await should(pouch.db.get(file._id)).be.rejectedWith({status: 404})
 
       await helpers.syncAll()
 
-      await should(await cozy.files.statById(parent._id))
-        .have.propertyByPath('attributes', 'dir_id').eql(ROOT_DIR_ID)
-      await should(await cozy.files.statById(file._id))
-        .have.propertyByPath('attributes', 'dir_id').eql(TRASH_DIR_ID)
+      should(await helpers.remote.tree()).deepEqual([
+        '.cozy_trash/',
+        '.cozy_trash/file',
+        'parent/'
+      ])
     })
 
     test('remote', async () => {
       await cozy.files.trashById(file._id)
 
-      await should(helpers.pullChange(file._id))
-        .be.rejectedWith({status: 409, name: 'conflict'})
+      await should(helpers.pullChange(file._id)).be.rejectedWith({status: 409})
 
       should(helpers.putDocs('path', '_deleted', 'trashed', 'sides')).deepEqual([
-        {path: 'parent/file', _deleted: true, sides: {local: 2, remote: 3}},
-        {path: 'parent/file', trashed: true, sides: {local: 2, remote: 3}}
+        {path: path.normalize('parent/file'), _deleted: true, sides: {local: 2, remote: 3}},
+        {path: path.normalize('parent/file'), trashed: true, sides: {local: 2, remote: 3}}
       ])
       await should(pouch.db.get(file._id)).be.rejectedWith({status: 404})
 
       await helpers.syncAll()
 
       should(await helpers.local.tree()).deepEqual([
+        '/Trash/file',
         'parent/'
       ])
     })
   })
 
   suite('directory', async () => {
-    let parent, dir, child
+    let parent, dir, emptySubdir, subdir, file
 
     beforeEach(async () => {
       parent = await cozy.files.createDirectory({name: 'parent'})
       dir = await cozy.files.createDirectory({name: 'dir', dirID: parent._id})
-      child = await cozy.files.createDirectory({name: 'child', dirID: dir._id})
+      emptySubdir = await cozy.files.createDirectory({name: 'empty-subdir', dirID: dir._id})
+      subdir = await cozy.files.createDirectory({name: 'subdir', dirID: dir._id})
+      file = await cozy.files.create('foo', {name: 'file', dirID: subdir._id})
 
       await helpers.pullChange(parent._id)
       await helpers.pullChange(dir._id)
-      await helpers.pullChange(child._id)
+      await helpers.pullChange(emptySubdir._id)
+      await helpers.pullChange(subdir._id)
+      await helpers.pullChange(file._id)
       await helpers.syncAll()
 
       helpers.spyPouch()
     })
 
     test('local', async () => {
-      const promise = prep.trashFolderAsync('local', {path: 'parent/dir'})
-
-      await should(promise).be.rejectedWith({status: 409, name: 'conflict'})
+      await should(prep.trashFolderAsync('local', {path: path.normalize('parent/dir')})).be.rejectedWith({status: 409})
 
       should(helpers.putDocs('path', '_deleted', 'trashed', 'sides')).deepEqual([
-        {path: 'parent/dir/child', _deleted: true, sides: {local: 2, remote: 2}},
-        {path: 'parent/dir', _deleted: true, sides: {local: 3, remote: 2}},
-        {path: 'parent/dir', trashed: true, sides: {local: 3, remote: 2}}
+        // XXX: Why isn't file deleted? (it works anyway)
+        {path: path.normalize('parent/dir/subdir'), _deleted: true, sides: {local: 2, remote: 2}},
+        {path: path.normalize('parent/dir/empty-subdir'), _deleted: true, sides: {local: 2, remote: 2}},
+        {path: path.normalize('parent/dir'), _deleted: true, sides: {local: 3, remote: 2}},
+        {path: path.normalize('parent/dir'), trashed: true, sides: {local: 3, remote: 2}}
       ])
-      await should(pouch.db.get(dir._id)).be.rejectedWith({status: 404})
-      await should(pouch.db.get(child._id)).be.rejectedWith({status: 404})
 
       await helpers.syncAll()
 
-      await should(cozy.files.statById(child._id)).be.fulfilled()
-      should(await cozy.files.statById(dir._id))
-        .have.propertyByPath('attributes', 'path').eql('/.cozy_trash/dir')
-      should(await cozy.files.statById(child._id))
-        .have.propertyByPath('attributes', 'path').eql('/.cozy_trash/dir/child')
+      should(await helpers.remote.tree()).deepEqual([
+        '.cozy_trash/',
+        '.cozy_trash/dir/',
+        '.cozy_trash/dir/empty-subdir/',
+        '.cozy_trash/dir/subdir/',
+        '.cozy_trash/dir/subdir/file',
+        'parent/'
+      ])
     })
 
     test('remote', async() => {
       // FIXME: should pass a remote doc, or trash from Cozy
-      const promise = prep.trashFolderAsync('remote', {path: 'parent/dir'})
-
-      await should(promise).be.rejectedWith({status: 409, name: 'conflict'})
+      await should(prep.trashFolderAsync('remote', {path: 'parent/dir'})).be.rejectedWith({status: 409})
 
       should(helpers.putDocs('path', '_deleted', 'trashed', 'sides')).deepEqual([
-        {path: 'parent/dir/child', _deleted: true, sides: {local: 2, remote: 2}},
-        {path: 'parent/dir', _deleted: true, sides: {local: 2, remote: 3}},
-        {path: 'parent/dir', trashed: true, sides: {local: 2, remote: 3}}
+        // XXX: Why isn't file deleted? (it works anyway)
+        {path: path.normalize('parent/dir/subdir'), _deleted: true, sides: {local: 2, remote: 2}},
+        {path: path.normalize('parent/dir/empty-subdir'), _deleted: true, sides: {local: 2, remote: 2}},
+        {path: path.normalize('parent/dir'), _deleted: true, sides: {local: 2, remote: 3}},
+        {path: path.normalize('parent/dir'), trashed: true, sides: {local: 2, remote: 3}}
       ])
-      await should(pouch.db.get(dir._id)).be.rejectedWith({status: 404})
-      await should(pouch.db.get(child._id)).be.rejectedWith({status: 404})
 
       await helpers.syncAll()
 
       should(await helpers.local.tree()).deepEqual([
+        '/Trash/dir/',
+        '/Trash/dir/empty-subdir/',
+        '/Trash/dir/subdir/',
+        '/Trash/dir/subdir/file',
         'parent/'
       ])
     })
