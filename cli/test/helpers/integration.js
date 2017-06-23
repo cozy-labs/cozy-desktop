@@ -15,9 +15,11 @@ import Remote from '../../src/remote'
 import Sync from '../../src/sync'
 
 import { LocalTestHelpers } from './local'
+import { RemoteTestHelpers } from './remote'
 
 export class IntegrationTestHelpers {
   local: LocalTestHelpers
+  remote: RemoteTestHelpers
   prep: Prep
 
   _pouch: Pouch
@@ -37,6 +39,7 @@ export class IntegrationTestHelpers {
     this._sync.stopped = false
     this._pouch = pouch
     this.local = new LocalTestHelpers(this._local)
+    this.remote = new RemoteTestHelpers(cozyClient)
   }
 
   async syncAll () {
