@@ -386,7 +386,7 @@ class Sync {
         this.moveFrom = doc
         return
       case doc._deleted:
-        return side.trashAsync(doc)
+        return side.deleteFolderAsync(doc)
       case rev === 0:
         return side.addFolderAsync(doc)
       default:

@@ -613,8 +613,10 @@ function(doc) {
           remote: 2
         }
       }
+      this.local.deleteFolderAsync = sinon.stub()
+      this.local.deleteFolderAsync.returnsPromise().resolves()
       this.sync.folderChangedAsync(doc, this.local, 1).then(() => {
-        this.local.trashAsync.calledWith(doc).should.be.true()
+        this.local.deleteFolderAsync.calledWith(doc).should.be.true()
         done()
       })
     })
