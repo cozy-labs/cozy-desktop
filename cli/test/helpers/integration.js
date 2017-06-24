@@ -39,7 +39,7 @@ export class IntegrationTestHelpers {
     this._sync.stopped = false
     this._pouch = pouch
     this.local = new LocalTestHelpers(this._local)
-    this.remote = new RemoteTestHelpers(cozyClient)
+    this.remote = new RemoteTestHelpers(this._remote)
   }
 
   async syncAll () {

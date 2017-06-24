@@ -3,14 +3,17 @@
 import cozy from 'cozy-client-js'
 import path from 'path'
 
+import Remote from '../../src/remote'
 import { TRASH_DIR_NAME } from '../../src/remote/constants'
 
 export class RemoteTestHelpers {
-  cozy: cozy.Client
+  remote: Remote
 
-  constructor (cozy: cozy.Client) {
-    this.cozy = cozy
+  constructor (remote: Remote) {
+    this.remote = remote
   }
+
+  get cozy (): cozy.Client { return this.remote.remoteCozy.client }
 
   async tree () {
     const pathsToScan = ['/', `/${TRASH_DIR_NAME}`]
