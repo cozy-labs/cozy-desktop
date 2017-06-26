@@ -4,8 +4,6 @@
 import should from 'should'
 
 import RemoteCozy, { DirectoryNotFound } from '../../../src/remote/cozy'
-import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } from '../../../src/remote/constants'
-
 import configHelpers from '../../helpers/config'
 import { COZY_URL, builders, deleteAll } from '../../helpers/cozy'
 import CozyStackDouble from '../../doubles/cozy_stack'
@@ -64,13 +62,12 @@ describe('RemoteCozy', function () {
           let dir = await builders.remoteDir().create()
           let file = await builders.remoteFile().inDir(dir).create()
 
-          let { ids } = await remoteCozy.changes()
+          let { docs } = await remoteCozy.changes()
+          const ids = docs.map(doc => doc._id)
 
-          ids.should.containEql(dir._id)
-          ids.should.containEql(file._id)
-          ids.should.not.containEql(ROOT_DIR_ID)
-          ids.should.not.containEql(TRASH_DIR_ID)
-          ids.should.not.containEql(`_design/${FILES_DOCTYPE}`)
+          should(ids).containEql(dir._id)
+          should(ids).containEql(file._id)
+          should(ids.length).be.greaterThan(2)
         })
       })
 
@@ -81,9 +78,10 @@ describe('RemoteCozy', function () {
           let dir = await builders.remoteDir().create()
           let file = await builders.remoteFile().inDir(dir).create()
 
-          let { ids } = await remoteCozy.changes(last_seq)
+          let { docs } = await remoteCozy.changes(last_seq)
+          const ids = docs.map(doc => doc._id)
 
-          ids.sort().should.eql([file._id, dir._id].sort())
+          should(ids.sort()).eql([file._id, dir._id].sort())
         })
       })
     })

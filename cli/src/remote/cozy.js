@@ -9,7 +9,7 @@ import { FILES_DOCTYPE, DIR_TYPE } from './constants'
 import { jsonApiToRemoteDoc, specialId } from './document'
 import { composeAsync } from '../utils/func'
 
-import type { RemoteDoc } from './document'
+import type { RemoteDoc, RemoteDeletion } from './document'
 
 export function DirectoryNotFound (path: string, cozyURL: string) {
   this.name = 'DirectoryNotFound'
@@ -74,15 +74,18 @@ export default class RemoteCozy {
 
   trashById: (id: string, options?: {ifMatch: string}) => Promise<RemoteDoc>
 
-  async changes (seq: number = 0) {
-    let json = await this.client.data.changesFeed(FILES_DOCTYPE, { since: seq })
+  async changes (since: string = '0'): Promise<{last_seq: string, docs: Array<RemoteDoc|RemoteDeletion>}> {
+    const options = {since, include_docs: true}
+    const {last_seq, results} = await this.client.data.changesFeed(FILES_DOCTYPE, options)
+    let docs = results.filter(r => !specialId(r.id)).map(r => r.doc)
 
-    return {
-      last_seq: json.last_seq,
-      ids: json.results
-        .map(result => result.id)
-        .filter(id => !specialId(id))
+    for (const doc of docs) {
+      if (doc.type !== 'file') continue
+      const parentDir = await this.find(doc.dir_id)
+      doc.path = path.posix.join(parentDir.path, doc.name)
     }
+
+    return {last_seq, docs}
   }
 
   async find (id: string): Promise<RemoteDoc> {
