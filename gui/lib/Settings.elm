@@ -92,11 +92,11 @@ view helpers model =
                     ]
                     []
                 , label [ for "auto-launch" ]
-                    [ text (helpers.t "Settings Start Cozy-Desktop on system startup") ]
+                    [ text (helpers.t "Settings Start Cozy Drive on system startup") ]
                 ]
             , h2 [] [ text (helpers.t "Settings Version") ]
             , p []
-                [ text ("Cozy-Desktop " ++ model.version)
+                [ text ("Cozy Drive for Desktop " ++ model.version)
                 , br [] []
                 , a [ href "https://github.com/cozy-labs/cozy-desktop" ]
                     [ text (helpers.t "Settings Github Page") ]

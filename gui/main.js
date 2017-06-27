@@ -98,7 +98,7 @@ const sendErrorToMainWindow = (msg) => {
   } else {
     sendToMainWindow('sync-error', msg)
   }
-  notify('Cozy-Desktop', { body: msg })
+  notify('Cozy Drive', { body: msg })
 }
 
 const goToTab = (tab) => {
@@ -148,9 +148,9 @@ const buildAppMenu = () => {
 
   if (process.platform === 'darwin') {
     template.unshift({
-      label: 'Cozy Desktop',
+      label: 'Cozy Drive',
       submenu: [
-        { label: translate('AppMenu Hide Cozy Desktop'), accelerator: 'Command+H', role: 'hide' },
+        { label: translate('AppMenu Hide Cozy Drive'), accelerator: 'Command+H', role: 'hide' },
         { label: translate('AppMenu Hide Others'), accelerator: 'Command+Alt+H', role: 'hideothers' },
         { label: translate('AppMenu Show All'), role: 'unhide' },
         { type: 'separator' },
@@ -507,7 +507,7 @@ loadLastFiles()
 
 const shouldExit = app.makeSingleInstance(showWindow)
 if (shouldExit) {
-  console.log('Cozy Desktop is already running. Exiting...')
+  console.log('Cozy Drive is already running. Exiting...')
   app.exit()
 }
 
