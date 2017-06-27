@@ -93,5 +93,5 @@ view helpers model =
             , href "#"
             , onClick StartSync
             ]
-            [ text (helpers.t "Folder Use Cozy Desktop") ]
+            [ text (helpers.t "Folder Use Cozy Drive") ]
         ]

@@ -11,7 +11,7 @@ function fixLatestYml (yamlPath, bad, good, opts={}) {
     if (opts.generateLegacyJson) {
       const jsonPath = yamlPath.replace(/\.yml/, '.json')
       const {version, releaseDate} = yaml.safeLoad(goodYaml)
-      const url = `https://github.com/cozy-labs/cozy-desktop/releases/download/v${version}/Cozy.Desktop-${version}-mac.zip`
+      const url = `https://github.com/cozy-labs/cozy-desktop/releases/download/v${version}/Cozy.Drive-${version}-mac.zip`
       const goodJson = JSON.stringify({version, releaseDate, url}, null, 2)
 
       console.log(`Fixing ${jsonPath} ...`)
@@ -26,6 +26,6 @@ function fixLatestYml (yamlPath, bad, good, opts={}) {
 //
 // And GitHub will replaces spaces with dots in uploaded release artifacts.
 
-fixLatestYml('dist/latest.yml', 'cozy-desktop-gui-setup-', 'Cozy.Desktop.Setup.')
-fixLatestYml('dist/latest-mac.yml', 'cozy-desktop-gui', 'Cozy.Desktop', {generateLegacyJson: true})
+fixLatestYml('dist/latest.yml', 'cozy-desktop-gui-setup-', 'Cozy.Drive.Setup.')
+fixLatestYml('dist/latest-mac.yml', 'cozy-desktop-gui', 'Cozy.Drive', {generateLegacyJson: true})
 
