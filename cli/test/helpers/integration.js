@@ -32,14 +32,14 @@ export class IntegrationTestHelpers {
     const ignore = new Ignore([])
     this.prep = new Prep(merge, ignore, config)
     const events = new EventEmitter()
-    this._local = new Local(config, this.prep, pouch, events)
-    this._remote = new Remote(config, this.prep, pouch, events)
+    this._local = merge.local = new Local(config, this.prep, pouch, events)
+    this._remote = merge.remote = new Remote(config, this.prep, pouch, events)
     this._remote.remoteCozy.client = cozyClient
     this._sync = new Sync(pouch, this._local, this._remote, ignore, events)
     this._sync.stopped = false
     this._pouch = pouch
     this.local = new LocalTestHelpers(this._local)
-    this.remote = new RemoteTestHelpers(cozyClient)
+    this.remote = new RemoteTestHelpers(this._remote)
   }
 
   async syncAll () {

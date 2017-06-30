@@ -3,13 +3,27 @@
 import cozy from 'cozy-client-js'
 import path from 'path'
 
+import Pouch from '../../src/pouch'
+import Remote from '../../src/remote'
 import { TRASH_DIR_NAME } from '../../src/remote/constants'
 
 export class RemoteTestHelpers {
-  cozy: cozy.Client
+  remote: Remote
 
-  constructor (cozy: cozy.Client) {
-    this.cozy = cozy
+  constructor (remote: Remote) {
+    this.remote = remote
+  }
+
+  get cozy (): cozy.Client { return this.remote.remoteCozy.client }
+  get pouch (): Pouch { return this.remote.pouch }
+
+  async ignorePreviousChanges () {
+    const {last_seq} = await this.remote.remoteCozy.changes()
+    await this.pouch.setRemoteSeqAsync(last_seq)
+  }
+
+  async pullChanges () {
+    await this.remote.watcher.watch()
   }
 
   async tree () {
