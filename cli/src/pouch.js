@@ -324,7 +324,7 @@ class Pouch {
     })
   }
 
-  getRemoteSeqAsync: () => number
+  getRemoteSeqAsync: () => string
 
   // Set last remote replication sequence
   // It is saved in PouchDB as a local document
@@ -337,7 +337,7 @@ class Pouch {
     return this.updater.push(task, callback)
   }
 
-  setRemoteSeqAsync: (seq: number) => Promise<*>
+  setRemoteSeqAsync: (seq: string) => Promise<*>
 }
 
 export default Pouch
