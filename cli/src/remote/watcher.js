@@ -10,7 +10,7 @@ import RemoteCozy from './cozy'
 import { TRASH_DIR_NAME } from './constants'
 
 import type { Metadata } from '../metadata'
-import type { RemoteDoc } from './document'
+import type { RemoteDoc, RemoteDeletion } from './document'
 
 const log = logger({
   component: 'RemoteWatcher'
@@ -66,12 +66,12 @@ export default class RemoteWatcher {
   async watch () {
     try {
       const seq = await this.pouch.getRemoteSeqAsync()
-      const changes = await this.remoteCozy.changes(seq)
+      const {last_seq, docs} = await this.remoteCozy.changes(seq)
 
-      if (changes.ids.length === 0) return
+      if (docs.length === 0) return
 
-      await this.pullMany(changes.ids)
-      await this.pouch.setRemoteSeqAsync(changes.last_seq)
+      await this.pullMany(docs)
+      await this.pouch.setRemoteSeqAsync(last_seq)
       log.debug('No more remote changes for now')
     } catch (err) {
       log.error({err})
@@ -82,45 +82,49 @@ export default class RemoteWatcher {
   }
 
   // Pull multiple files/dirs metadata at once, given their ids
-  async pullMany (ids: string[]) {
-    let failedIds = []
+  async pullMany (docs: Array<RemoteDoc|RemoteDeletion>) {
+    let failedDocs = []
 
-    for (let id of ids) {
+    for (const doc of docs) {
       try {
-        await this.pullOne(id)
+        await this.pullOne(doc)
       } catch (err) {
         log.error({err})
-        failedIds.push(id)
+        failedDocs.push(doc)
       }
     }
 
-    if (failedIds.length > 0) {
+    if (failedDocs.length > 0) {
       throw new Error(
-        `Some documents could not be pulled: ${failedIds.join(', ')}`
+        `Some changes could not be pulled:\n${failedDocs.map(doc => JSON.stringify(doc)).join('\n')}`
       )
     }
   }
 
   // Pull a single file/dir metadata, given its id
-  async pullOne (id: string): Promise<*> {
-    const doc: ?RemoteDoc = await this.remoteCozy.findMaybe(id)
-
-    if (doc != null) {
-      return this.onChange(doc)
-    }
+  async pullOne (doc: RemoteDoc|RemoteDeletion): Promise<*> {
+    const was: ?Metadata = await this.pouch.byRemoteIdMaybeAsync(doc._id)
+    return this.onChange(doc, was)
   }
 
-  async onChange (doc: RemoteDoc) {
-    const {path} = doc
-    log.debug({path}, 'change received')
+  async onChange (doc: RemoteDoc|RemoteDeletion, was: ?Metadata) {
+    log.trace({doc, was}, 'change received')
 
-    const was: ?Metadata = await this.pouch.byRemoteIdMaybeAsync(doc._id)
-    log.trace({path, doc, was})
-
-    if (['directory', 'file'].includes(doc.type)) {
-      return this.putDoc(doc, was)
+    if (doc._deleted) {
+      if (!was) {
+        log.info({remoteId: doc._id}, `file or directory was created, trashed, and removed remotely`)
+        return
+      }
+      const {path, docType} = was
+      log.info({path}, `${docType} was deleted remotely`)
+      return this.prep.deleteDocAsync(SIDE, was)
     } else {
-      log.error({path}, `Document ${doc._id} is not a file or a directory`)
+      const {path} = doc
+      if (['directory', 'file'].includes(doc.type)) {
+        return this.putDoc(doc, was)
+      } else {
+        log.error({path}, `Document ${doc._id} is not a file or a directory`)
+      }
     }
   }
 
@@ -147,14 +151,6 @@ export default class RemoteWatcher {
         return
       }
     }
-    if (doc._deleted) {
-      if (!was) {
-        log.info({path}, `${docType} was created, trashed, and removed remotely`)
-        return
-      }
-      log.info({path}, `${docType} was deleted remotely`)
-      return this.prep.deleteDocAsync(SIDE, was)
-    }
     if (this.inRemoteTrash(doc)) {
       if (!was) {
         log.info({path}, `${docType} was created and trashed remotely`)
@@ -167,7 +163,7 @@ export default class RemoteWatcher {
       log.info({path}, `${docType} was added remotely`)
       return this.prep.addDocAsync(SIDE, doc)
     }
-    if (was.remote._rev === doc.remote._rev) {
+    if (was.remote && was.remote._rev === doc.remote._rev) {
       log.info({path}, `${docType} is up-to-date`)
       return
     }
