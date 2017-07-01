@@ -77,8 +77,4 @@ export class IntegrationTestHelpers {
 
     return results
   }
-
-  pullChange (id: string) {
-    return this._remote.watcher.pullOne(id)
-  }
 }
