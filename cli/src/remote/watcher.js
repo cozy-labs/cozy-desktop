@@ -81,7 +81,7 @@ export default class RemoteWatcher {
     }
   }
 
-  // Pull multiple files/dirs metadata at once, given their ids
+  // Pull multiple changed or deleted docs
   async pullMany (docs: Array<RemoteDoc|RemoteDeletion>) {
     let failedDocs = []
 
@@ -101,7 +101,7 @@ export default class RemoteWatcher {
     }
   }
 
-  // Pull a single file/dir metadata, given its id
+  // Pull a single changed or deleted doc
   async pullOne (doc: RemoteDoc|RemoteDeletion): Promise<*> {
     const was: ?Metadata = await this.pouch.byRemoteIdMaybeAsync(doc._id)
     return this.onChange(doc, was)
