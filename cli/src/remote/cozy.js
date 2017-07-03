@@ -5,7 +5,7 @@ import path from 'path'
 import { Readable } from 'stream'
 
 import Config from '../config'
-import { FILES_DOCTYPE, DIR_TYPE } from './constants'
+import { FILES_DOCTYPE, FILE_TYPE } from './constants'
 import { jsonApiToRemoteDoc, specialId } from './document'
 import { composeAsync } from '../utils/func'
 
@@ -80,9 +80,7 @@ export default class RemoteCozy {
     let docs = results.filter(r => !specialId(r.id)).map(r => r.doc)
 
     for (const doc of docs) {
-      if (doc.type !== 'file') continue
-      const parentDir = await this.find(doc.dir_id)
-      doc.path = path.posix.join(parentDir.path, doc.name)
+      if (doc.type === 'file') await this._setPath(doc)
     }
 
     return {last_seq, docs}
@@ -118,13 +116,13 @@ export default class RemoteCozy {
 
   async toRemoteDoc (doc: any): Promise<RemoteDoc> {
     if (doc.attributes) doc = jsonApiToRemoteDoc(doc)
-    if (doc.type === DIR_TYPE) return doc
+    if (doc.type === FILE_TYPE) await this._setPath(doc)
+    return doc
+  }
 
+  // Retrieve the path of a remote file doc
+  async _setPath (doc: any): Promise<void> {
     const parentDir = await this.find(doc.dir_id)
-
-    return {
-      ...doc,
-      path: path.posix.join(parentDir.path, doc.name)
-    }
+    doc.path = path.posix.join(parentDir.path, doc.name)
   }
 }
