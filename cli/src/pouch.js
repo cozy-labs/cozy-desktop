@@ -66,7 +66,7 @@ class Pouch {
   /* Mini ODM */
 
   put (doc: Metadata, callback?: Callback) {
-    log.debug({path: doc.path}, 'Saving metadata...')
+    log.debug({path: doc.path, ...doc.sides}, 'Saving metadata...')
     log.trace({path: doc.path, doc})
     return this.db.put(doc).asCallback(callback)
   }
@@ -74,7 +74,7 @@ class Pouch {
   bulkDocs (docs: Metadata[], callback?: Callback) {
     for (const doc of docs) {
       const {path} = doc
-      log.debug({path}, 'Saving bulk metadata...')
+      log.debug({path, ...doc.sides}, 'Saving bulk metadata...')
       log.trace({path, doc})
     }
     return this.db.bulkDocs(docs).asCallback(callback)
