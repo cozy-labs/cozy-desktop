@@ -9,6 +9,7 @@ import sinon from 'sinon'
 import should from 'should'
 import { Client as CozyClient } from 'cozy-client-js'
 
+import pouchdbBuilders from '../../builders/pouchdb'
 import configHelpers from '../../helpers/config'
 import { onPlatform } from '../../helpers/platform'
 import pouchHelpers from '../../helpers/pouch'
@@ -21,7 +22,7 @@ import Prep from '../../../src/prep'
 import RemoteCozy from '../../../src/remote/cozy'
 import RemoteWatcher from '../../../src/remote/watcher'
 
-import type { RemoteDoc } from '../../../src/remote/document'
+import type { RemoteDoc, RemoteDeletion } from '../../../src/remote/document'
 import type { Metadata } from '../../../src/metadata'
 
 describe('RemoteWatcher', function () {
@@ -99,7 +100,10 @@ describe('RemoteWatcher', function () {
     const lastRemoteSeq = lastLocalSeq + '456'
     const changes = {
       last_seq: lastRemoteSeq,
-      ids: ['1', '2']
+      docs: [
+        builders.remoteFile().build(),
+        builders.remoteDir().build()
+      ]
     }
 
     beforeEach(function () {
@@ -124,7 +128,7 @@ describe('RemoteWatcher', function () {
 
     it('pulls the changed files/dirs', function () {
       this.watcher.pullMany.should.be.calledOnce()
-        .and.be.calledWithExactly(['1', '2'])
+        .and.be.calledWithExactly(changes.docs)
     })
 
     it('updates the last update sequence in local db', function () {
@@ -134,9 +138,9 @@ describe('RemoteWatcher', function () {
   })
 
   describe('pullMany', function () {
-    const ids = [
-      'cb62b7873e1e7f5d7c6946d38f0039eb',
-      '7c72ebd6ae3c13892a9cfcf4b500664f'
+    const changes = [
+      builders.remoteFile().build(),
+      {_id: pouchdbBuilders.id(), _rev: pouchdbBuilders.rev(), _deleted: true}
     ]
     let pullOne
 
@@ -151,27 +155,27 @@ describe('RemoteWatcher', function () {
     it('pulls many changed files/dirs given their ids', async function () {
       pullOne.returnsPromise().resolves()
 
-      await this.watcher.pullMany(ids)
+      await this.watcher.pullMany(changes)
 
       pullOne.callCount.should.equal(2)
-      pullOne.calledWith(ids[0]).should.equal(true)
-      pullOne.calledWith(ids[1]).should.equal(true)
+      pullOne.calledWith(changes[0]).should.equal(true)
+      pullOne.calledWith(changes[1]).should.equal(true)
     })
 
     context('when pullOne() rejects some file/dir', function () {
       beforeEach(function () {
-        pullOne.withArgs(ids[0]).returnsPromise().rejects(new Error('oops'))
-        pullOne.withArgs(ids[1]).returnsPromise().resolves()
+        pullOne.withArgs(changes[0]).returnsPromise().rejects(new Error('oops'))
+        pullOne.withArgs(changes[1]).returnsPromise().resolves()
       })
 
       it('rejects with the failed ids', function () {
-        return this.watcher.pullMany(ids)
-          .should.be.rejectedWith(new RegExp(ids[0]))
+        return this.watcher.pullMany(changes)
+          .should.be.rejectedWith(new RegExp(changes[0]._id))
       })
 
       it('still tries to this.watcher other files/dirs', async function () {
-        try { await this.watcher.pullMany(ids) } catch (_) {}
-        pullOne.calledWith(ids[1]).should.equal(true)
+        try { await this.watcher.pullMany(changes) } catch (_) {}
+        pullOne.calledWith(changes[1]).should.equal(true)
       })
     })
   })
@@ -206,20 +210,24 @@ describe('RemoteWatcher', function () {
           }
         }
       }
-      findMaybe.withArgs(doc._id).returnsPromise().resolves(doc)
 
-      await this.watcher.pullOne(doc._id)
+      await this.watcher.pullOne(doc)
 
-      onChange.calledWith(doc).should.equal(true)
+      should(onChange.calledOnce).be.true()
+      should(onChange.args[0][0]).deepEqual(doc)
     })
 
-    it('does nothing otherwise', async function () {
-      const id = 'missing'
-      findMaybe.withArgs(id).returnsPromise().resolves(null)
+    it('tries to apply a deletion otherwise', async function () {
+      const doc: RemoteDeletion = {
+        _id: 'missing',
+        _rev: 'whatever',
+        _deleted: true
+      }
 
-      await this.watcher.pullOne(id)
+      await this.watcher.pullOne(doc)
 
-      onChange.calledOnce.should.equal(false)
+      should(onChange.calledOnce).be.true()
+      should(onChange.args[0][0]).deepEqual(doc)
     })
   })
 
@@ -365,8 +373,9 @@ describe('RemoteWatcher', function () {
           }
         }
       }
+      const was = await this.pouch.byRemoteIdAsync(doc._id)
 
-      await this.watcher.onChange(clone(doc))
+      await this.watcher.onChange(clone(doc), was)
 
       this.prep.updateDocAsync.called.should.be.true()
       let args = this.prep.updateDocAsync.args[0]
@@ -399,8 +408,9 @@ describe('RemoteWatcher', function () {
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
         tags: ['foo', 'bar', 'baz']
       }
+      const was = await this.pouch.byRemoteIdAsync(doc._id)
 
-      await this.watcher.onChange(clone(doc))
+      await this.watcher.onChange(clone(doc), was)
 
       this.prep.updateDocAsync.called.should.be.true()
       let args = this.prep.updateDocAsync.args[0]
@@ -434,7 +444,8 @@ describe('RemoteWatcher', function () {
         updated_at: '2017-01-30T09:09:15.217662611+01:00'
       }
 
-      await this.watcher.onChange(clone(doc))
+      const was = await this.pouch.byRemoteIdMaybeAsync(doc._id)
+      await this.watcher.onChange(clone(doc), was)
 
       this.prep.moveFileAsync.called.should.be.true()
       let args = this.prep.moveFileAsync.args[0]
@@ -487,7 +498,7 @@ describe('RemoteWatcher', function () {
       const was: Metadata = await this.pouch.db.get(path.normalize('my-folder/file-2'))
       await this.pouch.db.put(was)
 
-      await this.watcher.onChange(clone(doc))
+      await this.watcher.onChange(clone(doc), was)
 
       this.prep.moveFileAsync.called.should.be.true()
       let src = this.prep.moveFileAsync.args[0][2]

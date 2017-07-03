@@ -84,7 +84,7 @@
     "build:css": "stylus -c -u cozy-ui/lib/stylus styles/app.styl -o .",
     "build:elm": "elm make lib/Main.elm --output elm.js",
     "build:cli": "cd ../cli && yarn build",
-    "build:tx": "tx pull --all || true",
+    "build:tx": "tx pull --all --minimum-perc=1 || true",
     "clean": "rimraf elm.js app.css* dist/",
     "dist": "cross-env DEBUG=electron-builder build --x64",
     "elm:upgrade": "yarn add --dev elm@latest elm-upgrade@latest && elm-upgrade",

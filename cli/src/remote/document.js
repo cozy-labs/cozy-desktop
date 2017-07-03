@@ -30,6 +30,12 @@ export type RemoteDoc = {
   updated_at: string
 }
 
+export type RemoteDeletion = {
+  _id: string,
+  _rev: string,
+  _deleted: true
+}
+
 export type JsonApiAttributes = {
   class?: string, // file only
   dir_id: string,
