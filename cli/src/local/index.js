@@ -151,7 +151,7 @@ class Local implements Side {
     let filePath = path.resolve(this.syncPath, doc.path)
     let parent = path.resolve(this.syncPath, path.dirname(doc.path))
 
-    log.info({path: filePath}, 'Put file')
+    log.info({path: doc.path}, 'Put file')
 
     async.waterfall([
       next => {
@@ -228,7 +228,7 @@ class Local implements Side {
   // Create a new folder
   addFolder (doc: Metadata, callback: Callback) {
     let folderPath = path.join(this.syncPath, doc.path)
-    log.info({path: folderPath}, 'Put folder')
+    log.info({path: doc.path}, 'Put folder')
     fs.ensureDir(folderPath, err => {
       if (err) {
         callback(err)
