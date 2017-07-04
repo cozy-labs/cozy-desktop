@@ -104,14 +104,14 @@ suite('Move', () => {
   })
 
   suite('directory', () => {
-    let dir, file, parent, src, subdir
+    let dir, dst, emptySubdir, file, parent, src, subdir
 
     beforeEach(async () => {
       parent = await cozy.files.createDirectory({name: 'parent'})
-      await cozy.files.createDirectory({name: 'dst', dirID: parent._id})
+      dst = await cozy.files.createDirectory({name: 'dst', dirID: parent._id})
       src = await cozy.files.createDirectory({name: 'src', dirID: parent._id})
       dir = await cozy.files.createDirectory({name: 'dir', dirID: src._id})
-      await cozy.files.createDirectory({name: 'empty-subdir', dirID: dir._id})
+      emptySubdir = await cozy.files.createDirectory({name: 'empty-subdir', dirID: dir._id})
       subdir = await cozy.files.createDirectory({name: 'subdir', dirID: dir._id})
       file = await cozy.files.create('foo', {name: 'file', dirID: subdir._id})
 
@@ -170,19 +170,49 @@ suite('Move', () => {
       ])
     })
 
-    test('remote' /* FIXME: Nondeterministic
-    , async () => {
-      const newDirMetadata = await helpers._remote.addFolderAsync({
+    // FIXME: cozy-client-js updateAttributesById(..., {dir_id: ...}) is not detected as a move
+    test.skip('from remote cozy', async () => {
+      await cozy.files.updateAttributesById(dir._id, {dir_id: dst._id})
+      await helpers.remote.pullChanges()
+
+      /* FIXME: Nondeterministic
+      should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
+        {path: 'parent/src/dir/subdir/file', _deleted: true},
+        {path: 'parent/src/dir/subdir', _deleted: true},
+        {path: 'parent/src/dir/empty-subdir', _deleted: true},
+        {path: 'parent/src/dir', _deleted: true},
+        {path: 'parent/dst/dir'},
+        {path: 'parent/dst/dir/subdir'},
+        {path: 'parent/dst/dir/empty-subdir'}
+      ])
+      */
+      await helpers.syncAll()
+      should((await helpers.local.tree())
+        // FIXME: OS trash should be empty after remote dir move
+        .filter(path => !path.startsWith('/Trash/'))
+      ).deepEqual([
+        'parent/',
+        'parent/dst/',
+        'parent/dst/dir/',
+        'parent/dst/dir/empty-subdir/',
+        'parent/dst/dir/subdir/',
+        'parent/dst/dir/subdir/file',
+        'parent/src/'
+      ])
+    })
+
+    test('from remote client', async () => {
+      await helpers._remote.addFolderAsync({
         ...await pouch.byRemoteIdAsync(dir._id),
         path: path.normalize('parent/dst/dir'),
         updated_at: '2017-06-20T12:58:49.681Z'
       })
-      const newEmptySubdirMetadata = await helpers._remote.addFolderAsync({
+      await helpers._remote.addFolderAsync({
         ...await pouch.byRemoteIdAsync(emptySubdir._id),
         path: path.normalize('parent/dst/dir/empty-subdir'),
         updated_at: '2017-06-20T12:58:49.817Z'
       })
-      const newSubdirMetadata = await helpers._remote.addFolderAsync({
+      await helpers._remote.addFolderAsync({
         ...await pouch.byRemoteIdAsync(subdir._id),
         path: path.normalize('parent/dst/dir/subdir'),
         updated_at: '2017-06-20T12:58:49.873Z'
@@ -203,6 +233,7 @@ suite('Move', () => {
 
       await helpers.remote.pullChanges()
 
+      /* FIXME: Nondeterministic
       should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
         // file 1/2
         {path: path.normalize('parent/src/dir/subdir/file'), _deleted: true},
@@ -224,15 +255,14 @@ suite('Move', () => {
         {path: path.normalize('parent/src/dir'), _deleted: true},
         {path: path.normalize('parent/src/dir'), trashed: true}
       ])
+      */
 
       await helpers.syncAll()
 
-      should(await helpers.local.tree()).deepEqual([
+      should((await helpers.local.tree())
         // FIXME: OS trash should be empty after remote dir move
-        '/Trash/dir/',
-        '/Trash/dir/empty-subdir/',
-        '/Trash/subdir/',
-        '/Trash/subdir/file',
+        .filter(path => !path.startsWith('/Trash/'))
+      ).deepEqual([
         'parent/',
         'parent/dst/',
         'parent/dst/dir/',
@@ -241,6 +271,6 @@ suite('Move', () => {
         'parent/dst/dir/subdir/file',
         'parent/src/'
       ])
-    } */)
+    })
   })
 })

@@ -169,7 +169,7 @@ class Sync {
   async apply (change: Change): Promise<*> {
     let { doc, seq } = change
     const changeInfo = {path: doc.path, seq}
-    log.debug(changeInfo, 'Applying change...')
+    log.trace(changeInfo, 'Applying change...')
     log.trace({change})
 
     if (this.ignore.isIgnored(doc)) {
@@ -193,7 +193,7 @@ class Sync {
         throw new Error(`Unknown doctype: ${doc.docType}`)
       }
 
-      log.debug(changeInfo, `Applied change on ${sideName} side`)
+      log.trace(changeInfo, `Applied change on ${sideName} side`)
       await this.pouch.setLocalSeqAsync(change.seq)
       if (!change.doc._deleted) {
         await this.updateRevs(change.doc, sideName)
