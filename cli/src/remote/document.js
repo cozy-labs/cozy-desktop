@@ -1,5 +1,7 @@
 /* @flow */
 
+import uniq from 'lodash.uniq'
+
 import { DIR_TYPE, FILE_TYPE, ROOT_DIR_ID, TRASH_DIR_ID } from './constants'
 
 export function specialId (id: string) {
@@ -34,6 +36,18 @@ export type RemoteDeletion = {
   _id: string,
   _rev: string,
   _deleted: true
+}
+
+export function dropSpecialDocs (docs: RemoteDoc[]) {
+  return docs.filter(doc => !specialId(doc._id))
+}
+
+export function keepFiles (docs: RemoteDoc[]) {
+  return docs.filter(doc => doc.type === FILE_TYPE)
+}
+
+export function parentDirIds (docs: RemoteDoc[]) {
+  return uniq(docs.map(doc => doc.dir_id))
 }
 
 export type JsonApiAttributes = {

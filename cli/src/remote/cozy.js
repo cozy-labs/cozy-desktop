@@ -6,10 +6,15 @@ import { Readable } from 'stream'
 
 import Config from '../config'
 import { FILES_DOCTYPE, FILE_TYPE } from './constants'
-import { jsonApiToRemoteDoc, specialId } from './document'
+import { dropSpecialDocs, jsonApiToRemoteDoc, keepFiles, parentDirIds } from './document'
+import logger from '../logger'
 import { composeAsync } from '../utils/func'
 
 import type { RemoteDoc, RemoteDeletion } from './document'
+
+const log = logger({
+  component: 'RemoteCozy'
+})
 
 export function DirectoryNotFound (path: string, cozyURL: string) {
   this.name = 'DirectoryNotFound'
@@ -77,12 +82,32 @@ export default class RemoteCozy {
   destroyById: (id: string) => Promise<void>
 
   async changes (since: string = '0'): Promise<{last_seq: string, docs: Array<RemoteDoc|RemoteDeletion>}> {
-    const options = {since, include_docs: true}
-    const {last_seq, results} = await this.client.data.changesFeed(FILES_DOCTYPE, options)
-    let docs = results.filter(r => !specialId(r.id)).map(r => r.doc)
+    const {last_seq, results} = await this.client.data.changesFeed(
+      FILES_DOCTYPE, {since, include_docs: true})
 
-    for (const doc of docs) {
-      if (doc.type === 'file') await this._setPath(doc)
+    // The stack docs: dirs, files (without a path), deletions
+    const rawDocs = dropSpecialDocs(results.map(r => r.doc))
+
+    // The parent dirs for each file, indexed by id
+    const fileParentsById = await this.client.data.findMany(FILES_DOCTYPE,
+      parentDirIds(keepFiles(rawDocs)))
+
+    // The final docs with their paths (except for deletions)
+    let docs: Array<RemoteDoc|RemoteDeletion> = []
+
+    for (const doc of rawDocs) {
+      if (doc.type === FILE_TYPE) {
+        // File docs returned by the cozy-stack don't have a path
+        const parent = fileParentsById[doc.dir_id]
+
+        if (parent.error) {
+          log.error(`Could not retrieve path of file ${doc._id}: parent dir ${doc.dir_id}: ${parent.error}`)
+          continue
+        } else {
+          doc.path = path.posix.join(parent.doc.path, doc.name)
+        }
+      }
+      docs.push(doc)
     }
 
     return {last_seq, docs}
