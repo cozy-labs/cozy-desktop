@@ -680,19 +680,11 @@ describe('Local', function () {
       ])
     })
 
-    it('does not complain when folder was already deleted (ENOENT)', async function () {
+    it('does not swallow fs errors', async function () {
       const doc = builders.dirMetadata().build()
 
       await should(this.local.deleteFolderAsync(doc))
-        .be.fulfilled()
-    })
-
-    it('does not swallow other fs errors', async function () {
-      const doc = builders.dirMetadata().build()
-      await fs.ensureFileAsync(fullPath(doc))
-
-      await should(this.local.deleteFolderAsync(doc))
-        .be.rejectedWith(/ENOTDIR/)
+        .be.rejectedWith(/ENOENT/)
     })
 
     it('throws when given non-folder metadata', async function () {

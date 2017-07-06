@@ -358,7 +358,6 @@ class Local implements Side {
       this.events.emit('delete-file', doc)
       return
     } catch (err) {
-      if (err.code === 'ENOENT') return
       if (err.code !== 'ENOTEMPTY') throw err
     }
     log.warn({path: doc.path}, 'Folder is not empty!')
