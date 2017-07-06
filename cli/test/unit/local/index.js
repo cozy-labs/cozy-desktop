@@ -1,5 +1,6 @@
 /* eslint-env mocha */
 
+import Promise from 'bluebird'
 import crypto from 'crypto'
 import fs from 'fs-extra'
 import path from 'path'
@@ -11,8 +12,11 @@ import Local from '../../../src/local'
 import { TMP_DIR_NAME } from '../../../src/local/constants'
 import { PendingMap } from '../../../src/utils/pending'
 
+import MetadataBuilders from '../../builders/metadata'
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
+
+Promise.promisifyAll(fs)
 
 describe('Local', function () {
   before('instanciate config', configHelpers.createConfig)
@@ -634,6 +638,62 @@ describe('Local', function () {
           })
         })
       })
+    })
+  })
+
+  describe('deleteFolderAsync', () => {
+    let builders, fullPath
+
+    beforeEach(function () {
+      builders = new MetadataBuilders(this.pouch)
+      fullPath = (doc) => path.join(this.syncPath, doc.path)
+
+      this.events.emit = sinon.spy()
+      sinon.spy(this.local, 'trashAsync')
+    })
+
+    afterEach(function () {
+      this.local.trashAsync.restore()
+    })
+
+    it('deletes an empty folder', async function () {
+      const doc = builders.dirMetadata().build()
+      await fs.emptyDirAsync(fullPath(doc))
+
+      await this.local.deleteFolderAsync(doc)
+
+      should(await fs.pathExistsAsync(fullPath(doc))).be.false()
+      should(this.events.emit.args).deepEqual([
+        ['delete-file', doc]
+      ])
+    })
+
+    it('trashes a non-empty folder (ENOTEMPTY)', async function () {
+      const doc = builders.dirMetadata().build()
+      await fs.ensureDirAsync(path.join(fullPath(doc), 'something-inside'))
+
+      await this.local.deleteFolderAsync(doc)
+
+      should(await fs.pathExistsAsync(fullPath(doc))).be.false()
+      should(this.local.trashAsync.args).deepEqual([
+        [doc]
+      ])
+    })
+
+    it('does not swallow fs errors', async function () {
+      const doc = builders.dirMetadata().build()
+
+      await should(this.local.deleteFolderAsync(doc))
+        .be.rejectedWith(/ENOENT/)
+    })
+
+    it('throws when given non-folder metadata', async function () {
+      // TODO: FileMetadataBuilder
+      const doc = {path: 'FILE-TO-DELETE', docType: 'file'}
+      await fs.ensureFileAsync(fullPath(doc))
+
+      await should(this.local.deleteFolderAsync(doc))
+        .be.rejectedWith(/metadata/)
     })
   })
 

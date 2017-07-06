@@ -47,6 +47,7 @@ export default class RemoteCozy {
     this.updateFileById = composeAsync(this.client.files.updateById, this.toRemoteDoc)
     this.updateAttributesById = composeAsync(this.client.files.updateAttributesById, this.toRemoteDoc)
     this.trashById = this.client.files.trashById
+    this.destroyById = this.client.files.destroyById
   }
 
   createJob: (workerType: string, args: any) => Promise<*>
@@ -73,6 +74,7 @@ export default class RemoteCozy {
                          options?: {ifMatch?: string}) => Promise<RemoteDoc>
 
   trashById: (id: string, options?: {ifMatch: string}) => Promise<RemoteDoc>
+  destroyById: (id: string) => Promise<void>
 
   async changes (since: string = '0'): Promise<{last_seq: string, docs: Array<RemoteDoc|RemoteDeletion>}> {
     const options = {since, include_docs: true}

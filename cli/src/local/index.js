@@ -23,6 +23,8 @@ import type { Metadata } from '../metadata'
 import type { Side } from '../side' // eslint-disable-line
 import type { Callback } from '../utils/func'
 
+Promise.promisifyAll(fs)
+
 const log = logger({
   component: 'LocalWriter'
 })
@@ -344,6 +346,22 @@ class Local implements Side {
     this.events.emit('delete-file', doc)
     let fullpath = path.join(this.syncPath, doc.path)
     return this._trash([fullpath])
+  }
+
+  async deleteFolderAsync (doc: Metadata): Promise<*> {
+    if (doc.docType !== 'folder') throw new Error(`Not folder metadata: ${doc.path}`)
+    const fullpath = path.join(this.syncPath, doc.path)
+
+    try {
+      log.info({path: doc.path}, 'Deleting empty folder...')
+      await fs.rmdirAsync(fullpath)
+      this.events.emit('delete-file', doc)
+      return
+    } catch (err) {
+      if (err.code !== 'ENOTEMPTY') throw err
+    }
+    log.warn({path: doc.path}, 'Folder is not empty!')
+    return this.trashAsync(doc)
   }
 
   // Rename a file/folder to resolve a conflict

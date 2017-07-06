@@ -12,6 +12,7 @@ export interface Side {
   moveFileAsync (doc: Metadata, from: Metadata): Promise<*>;
   moveFolderAsync (doc: Metadata, from: Metadata): Promise<*>;
   trashAsync (doc: Metadata): Promise<*>;
+  deleteFolderAsync (doc: Metadata): Promise<*>;
   resolveConflictAsync (doc: Metadata, from: Metadata): Promise<*>;
 }
 

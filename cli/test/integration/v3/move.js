@@ -131,9 +131,9 @@ suite('Move', () => {
         ...pick(oldFile, ['docType', 'md5sum', 'mime', 'class', 'size'])
       }, oldFile)
       // FIXME: PouchDB 409 conflict errors
-      await should(prep.trashFolderAsync('local', {path: 'parent/src/dir/subdir'})).be.rejectedWith({status: 409})
-      await should(prep.trashFolderAsync('local', {path: 'parent/src/dir/empty-subdir'})).be.rejectedWith({status: 409})
-      await should(prep.trashFolderAsync('local', {path: 'parent/src/dir'})).be.rejectedWith({status: 409})
+      await prep.trashFolderAsync('local', {path: 'parent/src/dir/subdir'})
+      await prep.trashFolderAsync('local', {path: 'parent/src/dir/empty-subdir'})
+      await prep.trashFolderAsync('local', {path: 'parent/src/dir'})
 
       should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
         // Moved file
@@ -145,21 +145,14 @@ suite('Move', () => {
         {path: path.normalize('parent/dst/dir/subdir')},
         // Deleted dirs
         {path: path.normalize('parent/src/dir/subdir'), _deleted: true},
-        {path: path.normalize('parent/src/dir/subdir'), trashed: true},
         {path: path.normalize('parent/src/dir/empty-subdir'), _deleted: true},
-        {path: path.normalize('parent/src/dir/empty-subdir'), trashed: true},
-        {path: path.normalize('parent/src/dir'), _deleted: true},
-        {path: path.normalize('parent/src/dir'), trashed: true}
+        {path: path.normalize('parent/src/dir'), _deleted: true}
       ])
 
       await helpers.syncAll()
 
       should(await helpers.remote.tree()).deepEqual([
         '.cozy_trash/',
-        // FIXME: Cozy trash should be empty after local dir move
-        '.cozy_trash/dir/',
-        '.cozy_trash/empty-subdir/',
-        '.cozy_trash/subdir/',
         'parent/',
         'parent/dst/',
         'parent/dst/dir/',
@@ -187,10 +180,7 @@ suite('Move', () => {
       ])
       */
       await helpers.syncAll()
-      should((await helpers.local.tree())
-        // FIXME: OS trash should be empty after remote dir move
-        .filter(path => !path.startsWith('/Trash/'))
-      ).deepEqual([
+      should(await helpers.local.tree()).deepEqual([
         'parent/',
         'parent/dst/',
         'parent/dst/dir/',
@@ -202,6 +192,8 @@ suite('Move', () => {
     })
 
     test('from remote client', async () => {
+      // FIXME: Ensure events occur in the same order as resulting from the
+      // local dir test
       await helpers._remote.addFolderAsync({
         ...await pouch.byRemoteIdAsync(dir._id),
         path: path.normalize('parent/dst/dir'),
@@ -225,11 +217,11 @@ suite('Move', () => {
         // updated_at: '2017-06-20T12:58:49.921Z'
       }, oldFileMetadata)
       const oldSubdirMetadata = await pouch.byRemoteIdAsync(subdir._id)
-      await helpers._remote.trashAsync(oldSubdirMetadata)
+      await helpers._remote.deleteFolderAsync(oldSubdirMetadata)
       const oldEmptySubdirMetadata = await pouch.byRemoteIdAsync(emptySubdir._id)
-      await helpers._remote.trashAsync(oldEmptySubdirMetadata)
+      await helpers._remote.deleteFolderAsync(oldEmptySubdirMetadata)
       const oldDirMetadata = await pouch.byRemoteIdAsync(dir._id)
-      await helpers._remote.trashAsync(oldDirMetadata)
+      await helpers._remote.deleteFolderAsync(oldDirMetadata)
 
       await helpers.remote.pullChanges()
 
@@ -260,8 +252,10 @@ suite('Move', () => {
       await helpers.syncAll()
 
       should((await helpers.local.tree())
-        // FIXME: OS trash should be empty after remote dir move
-        .filter(path => !path.startsWith('/Trash/'))
+        // FIXME: Sometimes a copy of the file ends up in the OS trash.
+        // Issue was already occurring from time to time, even before we start
+        // to permanently delete empty dirs.
+        .filter(path => path !== '/Trash/file')
       ).deepEqual([
         'parent/',
         'parent/dst/',

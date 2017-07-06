@@ -50,11 +50,10 @@ suite('Trash', () => {
     })
 
     test('local', async () => {
-      await should(prep.trashFileAsync('local', {path: 'parent/file'})).be.rejectedWith({status: 409})
+      await prep.trashFileAsync('local', {path: 'parent/file'})
 
       should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
-        {path: path.normalize('parent/file'), _deleted: true},
-        {path: path.normalize('parent/file'), trashed: true}
+        {path: path.normalize('parent/file'), _deleted: true}
       ])
       await should(pouch.db.get(file._id)).be.rejectedWith({status: 404})
 
@@ -73,8 +72,7 @@ suite('Trash', () => {
       await helpers.remote.pullChanges()
 
       should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
-        {path: path.normalize('parent/file'), _deleted: true},
-        {path: path.normalize('parent/file'), trashed: true}
+        {path: path.normalize('parent/file'), _deleted: true}
       ])
       await should(pouch.db.get(file._id)).be.rejectedWith({status: 404})
 
@@ -104,14 +102,13 @@ suite('Trash', () => {
     })
 
     test('local', async () => {
-      await should(prep.trashFolderAsync('local', {path: path.normalize('parent/dir')})).be.rejectedWith({status: 409})
+      await prep.trashFolderAsync('local', {path: path.normalize('parent/dir')})
 
       should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
         // XXX: Why isn't file deleted? (it works anyway)
         {path: path.normalize('parent/dir/subdir'), _deleted: true},
         {path: path.normalize('parent/dir/empty-subdir'), _deleted: true},
-        {path: path.normalize('parent/dir'), _deleted: true},
-        {path: path.normalize('parent/dir'), trashed: true}
+        {path: path.normalize('parent/dir'), _deleted: true}
       ])
 
       await helpers.syncAll()
@@ -128,14 +125,13 @@ suite('Trash', () => {
 
     test('remote', async() => {
       // FIXME: should pass a remote doc, or trash from Cozy
-      await should(prep.trashFolderAsync('remote', {path: 'parent/dir'})).be.rejectedWith({status: 409})
+      await prep.trashFolderAsync('remote', {path: 'parent/dir'})
 
       should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
         // XXX: Why isn't file deleted? (it works anyway)
         {path: path.normalize('parent/dir/subdir'), _deleted: true},
         {path: path.normalize('parent/dir/empty-subdir'), _deleted: true},
-        {path: path.normalize('parent/dir'), _deleted: true},
-        {path: path.normalize('parent/dir'), trashed: true}
+        {path: path.normalize('parent/dir'), _deleted: true}
       ])
 
       await helpers.syncAll()
