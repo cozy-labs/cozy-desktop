@@ -16,7 +16,7 @@ export default class DirMetadataBuilder {
   constructor (pouch?: Pouch) {
     this.pouch = pouch
     this.opts = {
-      path: ''
+      path: 'foo'
     }
   }
 
