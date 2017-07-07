@@ -170,15 +170,16 @@ export function isUpToDate (side: SideName, doc: Metadata) {
 // For updated_at, we accept up to 3s of differences because we can't
 // rely on file systems to be precise to the millisecond.
 export function sameFolder (one: Metadata, two: Metadata) {
+  const {path} = two
   if (!sameDate(one.updated_at, two.updated_at)) {
-    log.trace({diff: {one, two}})
+    log.trace({path, diff: {one: pick(one, ['updated_at']), two: pick(two, ['updated_at'])}})
     return false
   }
   let fields = ['_id', 'docType', 'remote', 'tags', 'trashed']
   one = pick(one, fields)
   two = pick(two, fields)
   const same = isEqual(one, two)
-  if (!same) log.trace({diff: {one, two}})
+  if (!same) log.trace({path, diff: {one, two}})
   return same
 }
 
@@ -186,15 +187,16 @@ export function sameFolder (one: Metadata, two: Metadata) {
 // For updated_at, we accept up to 3s of differences because we can't
 // rely on file systems to be precise to the millisecond.
 export function sameFile (one: Metadata, two: Metadata) {
+  const {path} = two
   if (!sameDate(one.updated_at, two.updated_at)) {
-    log.trace({diff: {one, two}})
+    log.trace({path, diff: {one: pick(one, ['updated_at']), two: pick(two, ['updated_at'])}})
     return false
   }
   let fields = ['_id', 'docType', 'md5sum', 'remote', 'tags', 'size', 'trashed']
   one = {...pick(one, fields), executable: !!one.executable}
   two = {...pick(two, fields), executable: !!two.executable}
   const same = isEqual(one, two)
-  if (!same) log.trace({diff: {one, two}})
+  if (!same) log.trace({path, diff: {one, two}})
   return same
 }
 
