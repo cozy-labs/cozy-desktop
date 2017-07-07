@@ -7,7 +7,6 @@ import path, { join } from 'path'
 
 import logger from './logger'
 import { detectPathIssues, detectPathLengthIssue } from './path_restrictions'
-import { sameDate } from './timestamp'
 
 import type { PathIssue } from './path_restrictions'
 
@@ -171,10 +170,6 @@ export function isUpToDate (side: SideName, doc: Metadata) {
 // rely on file systems to be precise to the millisecond.
 export function sameFolder (one: Metadata, two: Metadata) {
   const {path} = two
-  if (!sameDate(one.updated_at, two.updated_at)) {
-    log.trace({path, diff: {one: pick(one, ['updated_at']), two: pick(two, ['updated_at'])}})
-    return false
-  }
   let fields = ['_id', 'docType', 'remote', 'tags', 'trashed']
   one = pick(one, fields)
   two = pick(two, fields)
@@ -188,10 +183,6 @@ export function sameFolder (one: Metadata, two: Metadata) {
 // rely on file systems to be precise to the millisecond.
 export function sameFile (one: Metadata, two: Metadata) {
   const {path} = two
-  if (!sameDate(one.updated_at, two.updated_at)) {
-    log.trace({path, diff: {one: pick(one, ['updated_at']), two: pick(two, ['updated_at'])}})
-    return false
-  }
   let fields = ['_id', 'docType', 'md5sum', 'remote', 'tags', 'size', 'trashed']
   one = {...pick(one, fields), executable: !!one.executable}
   two = {...pick(two, fields), executable: !!two.executable}
