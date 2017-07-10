@@ -1,3 +1,21 @@
+## 3.0.0-beta.5 - 2017-07-10
+
+Improvements for all users:
+
+* **The application was renamed to Cozy Drive!**
+* Deleted files and folders on Cozy are now correctly synchronized on your
+  computer.
+* An infinite synchronization issue between multiple devices was fixed.
+* Network load is now smaller when retrieving changes from the remote Cozy.
+* Most useless copies of folders should not end up in the Windows recycle bin,
+  the macOS trash or the Cozy trash anymore. Some issues remain though.
+* Useless conflicts for trashed files/folders won't happen anymore (this was
+  only visible in logs).
+* Documentation was updated.
+* Some typos in the french locale were fixed.
+* We started adding more automated tests to prevent regressions and ensure a
+  better quality for future releases.
+
 ## 3.0.0-beta.4 - 2017-06-12
 
 Improvements for Windows 10 users:
