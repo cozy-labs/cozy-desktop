@@ -12,7 +12,7 @@ const debounce = require('lodash.debounce')
 const os = require('os')
 const path = require('path')
 const url = require('url')
-const uuid = require('node-uuid')
+// const uuid = require('node-uuid')
 
 const {spawn} = childProcess
 const {app, BrowserWindow, dialog, ipcMain, Menu, shell, session} = electron
@@ -518,6 +518,7 @@ const execSync = (cmd) => {
   console.log(output)
 }
 
+/*
 // Retrieve the Windows SID for the current user
 const windowsCurrentUserSID = () => {
   const {username} = os.userInfo()
@@ -567,6 +568,7 @@ const windowsUnregisterCloudStorageProvider = (windowsConfig) => {
   execSync(`reg delete HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Desktop\\NameSpace\\{${clsid}} /f`)
   execSync(`reg delete HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\HideDesktopIcons\\NewStartPanel /v {${clsid}} /f`)
 }
+*/
 
 const sfltoolAddFavorite = (path) => {
   const item = url.resolve('file://', path)
@@ -579,10 +581,13 @@ const major = Number.parseInt(os.release().split('.')[0])
 // https://en.wikipedia.org/wiki/Darwin_(operating_system)#Release_history
 
 const addFileManagerShortcut = (config) => {
+  /*
   if (platform === 'win32' && major >= 10) {
     const windowsConfig = windowsRegisterCloudStorageProvider(config.syncPath)
     config.save('windows', windowsConfig).then(() => config.persist())
-  } else if (platform === 'darwin' && major >= 15) {
+  } else
+  */
+  if (platform === 'darwin' && major >= 15) {
     // sfltool is available since 10.11 (El Capitan)
     sfltoolAddFavorite(config.syncPath)
   } else {
@@ -591,6 +596,7 @@ const addFileManagerShortcut = (config) => {
 }
 
 const removeFileManagerShortcut = (config) => {
+  /*
   if (platform === 'win32' && major >= 10) {
     const windowsConfig = config.config.windows
     if (windowsConfig) {
@@ -599,8 +605,11 @@ const removeFileManagerShortcut = (config) => {
       console.log('Not unregistering shortcut because windows config is missing')
     }
   } else {
-    console.log(`Not unregistering shortcut on ${platform} ${major}`)
+  */
+  console.log(`Not unregistering shortcut on ${platform} ${major}`)
+  /*
   }
+  */
   // FIXME: Not removing favorite on macOS >= 10.11 since sfltool does not support it.
 }
 
