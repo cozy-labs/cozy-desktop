@@ -1,3 +1,16 @@
+## 3.0.0-beta.6 - 2017-07-11
+
+Improvements for Windows users:
+
+* The Windows 10 cloud storage registration was disabled because it was not
+  stable enough yet. This means you won't get the `Cozy Drive` shortcut in
+  the Windows Explorer sidebar, near the OneDrive one. We'll come up with
+  another solution, possibly compatible with older Windows releases.
+  Please contact us in case you get stuck with broken shortcut(s) in your
+  sidebar, we'll help you to fix it. We apologize for the inconvenience.
+
+Happy syncing!
+
 ## 3.0.0-beta.5 - 2017-07-10
 
 Improvements for all users:
