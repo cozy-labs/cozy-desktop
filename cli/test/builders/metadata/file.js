@@ -1,31 +1,22 @@
-// @flow
+/* @flow */
 
-import { buildId } from '../../../src/metadata'
-import Pouch from '../../../src/pouch'
 import BaseMetadataBuilder from './base'
+import { buildId } from '../../../src/metadata'
 
 import type { Metadata } from '../../../src/metadata'
 
 import pouchdbBuilders from '../pouchdb'
 
-export default class DirMetadataBuilder extends BaseMetadataBuilder {
-  constructor (pouch?: Pouch) {
-    super(pouch)
-  }
-
+export default class FileMetadataBuilder extends BaseMetadataBuilder {
   build (): Metadata {
     const doc = {
       ...this.opts,
       _id: '',
       // _rev: pouchdbBuilders.rev(),
-      docType: 'folder',
+      docType: 'file',
       remote: {
         _id: pouchdbBuilders.id(),
         _rev: pouchdbBuilders.rev()
-      },
-      sides: {
-        local: 1,
-        remote: 1
       },
       tags: [],
       updated_at: '2017-06-08T15:09:52.000Z'
