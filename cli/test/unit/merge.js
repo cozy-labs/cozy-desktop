@@ -2,6 +2,7 @@
 
 import async from 'async'
 import clone from 'lodash.clone'
+import pick from 'lodash.pick'
 import path from 'path'
 import sinon from 'sinon'
 import should from 'should'
@@ -10,13 +11,17 @@ import Merge from '../../src/merge'
 
 import configHelpers from '../helpers/config'
 import pouchHelpers from '../helpers/pouch'
+import MetadataBuilders from '../builders/metadata'
 
 describe('Merge', function () {
+  let builders
+
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
   beforeEach('instanciate merge', function () {
     this.side = 'local'
     this.merge = new Merge(this.pouch)
+    builders = new MetadataBuilders(this.pouch)
   })
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
@@ -433,6 +438,24 @@ describe('Merge', function () {
           }, done)
         })
       })
+    })
+  })
+
+  describe('trashFolderAsync', () => {
+    it('does not trash a folder if the other side has added a new file in it', async function () {
+      const dir = await builders.dirMetadata().path('trashed-folder').trashed().create()
+      await builders.fileMetadata().path(path.normalize('trashed-folder/file')).notUpToDate().create()
+      const was = pick(dir, ['_id', 'path', 'docType', 'trashed'])
+      const doc = {
+        ...was,
+        path: `.cozy_trash/${was.path}`
+      }
+
+      await this.merge.trashFolderAsync(this.side, was, doc)
+
+      const saved = await this.pouch.db.get(was._id)
+      should(saved).not.have.property('trashed')
+      should(saved.sides).deepEqual({remote: 2})
     })
   })
 
