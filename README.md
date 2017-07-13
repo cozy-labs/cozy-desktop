@@ -33,7 +33,7 @@ your online Cozy.
 
 ## Installing & using the application
 
-See the [official documentation](https://docs.cozy.io/en/mobile/desktop.html).
+See the [official documentation](https://docs.cozy.io/en/sync/desktop/).
 
 
 ## Advanced use cases
