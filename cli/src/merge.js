@@ -393,16 +393,24 @@ class Merge {
     return this.pouch.put(newMetadata)
   }
 
-  async trashFolderAsync (side: SideName, was: *, doc: *): Promise<void> {
+  async trashFolderAsync (side: SideName, was: *, doc: *): Promise<*> {
     const {path} = doc
     // Don't trash a folder if the other side has added a new file in it (or updated one)
     let children = await this.pouch.byRecursivePathAsync(was._id)
     children = children.reverse()
     for (let child of Array.from(children)) {
       if (child.docType === 'file' && !isUpToDate(side, child)) {
+        delete was.trashed
         delete was.errors
-        delete was.sides[side]
-        return this.pouch.put(was)
+        if (was.sides) {
+          delete was.sides[side]
+        } else {
+          // When "unlinked" from the local side, a folder doesn't have sides
+          // information.
+          was.sides = {}
+          was.sides[otherSide(side)] = 1
+        }
+        return this.putFolderAsync(otherSide(side), was)
       }
     }
     // Remove in pouchdb the sub-folders
