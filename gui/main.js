@@ -519,7 +519,8 @@ const execSync = (cmd) => {
 }
 
 const win10PinToHome = (path) => {
-  execSync(`powershell -Command "(New-Object -COM shell.application).Namespace('${path}').Self.InvokeVerb('pintohome')"`)
+  const escapedPath = path.replace(/'/g, "''")
+  execSync(`powershell -Command "(New-Object -COM shell.application).Namespace('${escapedPath}').Self.InvokeVerb('pintohome')"`)
 }
 
 const sfltoolAddFavorite = (path) => {
