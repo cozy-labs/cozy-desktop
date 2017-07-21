@@ -13,13 +13,16 @@ and in Windows PowerShell.
 
 ### Windows
 
-**The following assumes you run commands from PowerShell**
-
 If you don't own a Windows license but you still need to build / test the app
 on Windows, you can use the
 [free virtual machines](https://developer.microsoft.com/en-us/microsoft-edge/tools/vms/)
 provided by Microsoft, either in [VirtualBox](https://www.virtualbox.org/) or
 any of the hypervisors supporting the available VM file formats.
+
+**The following assumes you run commands from an administrator command prompt**
+
+To get an administrator prompt, look for *Command Prompt* in the start menu,
+right-click on it and select *Run as administrator*.
 
 Once you are in a running Windows session, you can eventually install
 [Chocolatey](https://chocolatey.org/) from an administrator prompt, then use
@@ -30,12 +33,29 @@ the installers):
     choco install nodejs-lts
     choco install yarn
 
-Then install the Windows build tools as documented in the
-[Microsoft's Node.js guidelines](https://github.com/Microsoft/nodejs-guidelines/blob/master/windows-environment.md#environment-setup-and-configuration).
+Right now the *nodejs-lts* package seems to be broken, you may need to install
+the latest Node 6.x by hand.
+
+You may also need at some point to restart the *Command Prompt*, the whole
+system, or refresh your environment variables using the`refreshenv` command.
+
+Then install the Windows build tools from an admin console as documented in the
+[Microsoft's Node.js guidelines](https://github.com/Microsoft/nodejs-guidelines/blob/master/windows-environment.md#environment-setup-and-configuration):
+
+    npm install -g windows-build-tools
+
+You may still need to manually add the python installation directory to your
+`PATH`.
+To do so, search for *PATH* from the start menu and select
+*Edit environment variables for your account*.
+Then edit the `PATH` user variable (not the system one) and append the
+following to the end (assuming `...` is the current text):
+
+    `...;%USERPROFILE%\.windows-build-tools\python27`
 
 To set up Docker, in case you hardware is old or you don't own a Windows Pro
 license, you may encounter the same issue as on old macOS hardware (see below).
-Please feel free to improve this section.
+*(please feel free to improve this section)*
 
 
 ### macOS
