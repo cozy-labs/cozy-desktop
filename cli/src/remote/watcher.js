@@ -120,10 +120,12 @@ export default class RemoteWatcher {
       return this.prep.deleteDocAsync(SIDE, was)
     } else {
       const {path} = doc
-      if (['directory', 'file'].includes(doc.type)) {
-        return this.putDoc(doc, was)
-      } else {
+      if (doc.type !== 'directory' && doc.type !== 'file') {
         log.error({path}, `Document ${doc._id} is not a file or a directory`)
+      } else if (doc.type === 'file' && (doc.md5sum == null || doc.md5sum === '')) {
+        log.info({path}, `Ignoring temporary file`)
+      } else {
+        return this.putDoc(doc, was)
       }
     }
   }
