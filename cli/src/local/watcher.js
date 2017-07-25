@@ -36,7 +36,7 @@ class LocalWatcher {
   syncPath: string
   prep: Prep
   pouch: Pouch
-  paths: string[]
+  initialScan: ?{paths: string[]}
   pendingDeletions: PendingMap
   checksums: number
   checksumer: any // async.queue
@@ -61,7 +61,7 @@ class LocalWatcher {
     // To detect which files&folders have been removed since the last run of
     // cozy-desktop, we keep all the paths seen by chokidar during its
     // initial scan in @paths to compare them with pouchdb database.
-    this.paths = []
+    this.initialScan = {paths: []}
 
     // A map of pending operations. It's used for detecting move operations,
     // as chokidar only reports adds and deletion. The key is the path (as
@@ -211,7 +211,7 @@ class LocalWatcher {
   onAddFile (filePath: string, stats: fs.Stats) {
     const logError = (err) => log.error({err, path: filePath})
     log.chokidar.trace({event: 'add', path: filePath, stats})
-    if (this.paths) { this.paths.push(filePath) }
+    if (this.initialScan) { this.initialScan.paths.push(filePath) }
     this.pendingDeletions.executeIfAny(filePath)
     this.checksums++
     this.createDoc(filePath, stats, (err, doc) => {
@@ -233,7 +233,7 @@ class LocalWatcher {
               log.info({path: filePath}, 'file added')
               this.prep.addFileAsync(SIDE, doc).catch(logError)
             } else {
-              const same = find(docs, this.paths
+              const same = find(docs, this.initialScan
                   ? d => !fs.existsSync(d.path)
                   : d => this.pendingDeletions.hasPath(d.path))
               if (same) {
@@ -256,7 +256,7 @@ class LocalWatcher {
     log.chokidar.trace({event: 'addDir', path: folderPath, stats})
     if (folderPath === '') return
 
-    if (this.paths) { this.paths.push(folderPath) }
+    if (this.initialScan) { this.initialScan.paths.push(folderPath) }
     this.pendingDeletions.executeIfAny(folderPath)
     const doc = {
       path: folderPath,
@@ -338,7 +338,8 @@ class LocalWatcher {
         if (err) { return callback(err) }
         try {
           for (const doc of docs.reverse()) {
-            if (this.paths.indexOf(doc.path) !== -1 || doc.trashed) {
+            // $FlowFixMe: initialScan cannot be null
+            if (this.initialScan.paths.indexOf(doc.path) !== -1 || doc.trashed) {
               continue
             } else if (doc.docType === 'file') {
               this.onUnlinkFile(doc.path)
@@ -346,7 +347,7 @@ class LocalWatcher {
               this.onUnlinkDir(doc.path)
             }
           }
-          delete this.paths
+          delete this.initialScan
           setTimeout(callback, 3000)
         } catch (err) {
           callback(err)

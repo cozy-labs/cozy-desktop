@@ -440,7 +440,7 @@ describe('LocalWatcher Tests', function () {
       }, () => {
         this.watcher.pendingDeletions = new PendingMap()
         this.watcher.checksums = 0
-        this.watcher.paths = ['folder1', 'file1']
+        this.watcher.initialScan = {paths: ['folder1', 'file1']}
         let cb = this.watcher.onReady(function () {
           tfolder.calledOnce.should.be.true()
           tfolder.calledWithMatch('local', folder1).should.be.false()
