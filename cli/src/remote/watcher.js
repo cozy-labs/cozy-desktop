@@ -112,7 +112,7 @@ export default class RemoteWatcher {
 
     if (doc._deleted) {
       if (!was) {
-        log.info({remoteId: doc._id}, `file or directory was created, trashed, and removed remotely`)
+        log.debug({remoteId: doc._id}, `file or directory was created, trashed, and removed remotely`)
         return
       }
       const {path, docType} = was
