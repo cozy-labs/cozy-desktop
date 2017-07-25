@@ -91,6 +91,15 @@ function assignIdNTFS (doc: Metadata) {
   doc._id = doc.path.toUpperCase()
 }
 
+// Generate an id from the given path.
+// Side-effect-free version of assignId().
+// TODO: Use id() in assignId(), not the opposite.
+export function id (path: string) {
+  const doc: Object = {path}
+  assignId(doc)
+  return doc._id
+}
+
 // Return true if the document has not a valid path
 // (ie a path inside the mount point)
 export function invalidPath (doc: Metadata) {
