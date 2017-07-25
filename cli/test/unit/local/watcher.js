@@ -438,7 +438,7 @@ describe('LocalWatcher Tests', function () {
       async.each([folder1, folder2, folder3, file1, file2, file3], (doc, next) => {
         this.pouch.db.put(doc, next)
       }, () => {
-        this.watcher.pending = new PendingMap()
+        this.watcher.pendingDeletions = new PendingMap()
         this.watcher.checksums = 0
         this.watcher.paths = ['folder1', 'file1']
         let cb = this.watcher.onReady(function () {
