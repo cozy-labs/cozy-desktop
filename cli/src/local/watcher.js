@@ -9,6 +9,7 @@ import mime from 'mime'
 import path from 'path'
 
 import logger from '../logger'
+import * as metadata from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import { PendingMap } from '../utils/pending'
@@ -36,7 +37,7 @@ class LocalWatcher {
   syncPath: string
   prep: Prep
   pouch: Pouch
-  initialScan: ?{paths: string[]}
+  initialScan: ?{ids: string[]}
   pendingDeletions: PendingMap
   checksums: number
   checksumer: any // async.queue
@@ -61,7 +62,7 @@ class LocalWatcher {
     // To detect which files&folders have been removed since the last run of
     // cozy-desktop, we keep all the paths seen by chokidar during its
     // initial scan in @paths to compare them with pouchdb database.
-    this.initialScan = {paths: []}
+    this.initialScan = {ids: []}
 
     // A map of pending operations. It's used for detecting move operations,
     // as chokidar only reports adds and deletion. The key is the path (as
@@ -211,7 +212,7 @@ class LocalWatcher {
   onAddFile (filePath: string, stats: fs.Stats) {
     const logError = (err) => log.error({err, path: filePath})
     log.chokidar.trace({event: 'add', path: filePath, stats})
-    if (this.initialScan) { this.initialScan.paths.push(filePath) }
+    if (this.initialScan) { this.initialScan.ids.push(metadata.id(filePath)) }
     this.pendingDeletions.executeIfAny(filePath)
     this.checksums++
     this.createDoc(filePath, stats, (err, doc) => {
@@ -256,7 +257,7 @@ class LocalWatcher {
     log.chokidar.trace({event: 'addDir', path: folderPath, stats})
     if (folderPath === '') return
 
-    if (this.initialScan) { this.initialScan.paths.push(folderPath) }
+    if (this.initialScan) { this.initialScan.ids.push(metadata.id(folderPath)) }
     this.pendingDeletions.executeIfAny(folderPath)
     const doc = {
       path: folderPath,
@@ -339,7 +340,7 @@ class LocalWatcher {
         try {
           for (const doc of docs.reverse()) {
             // $FlowFixMe: initialScan cannot be null
-            if (this.initialScan.paths.indexOf(doc.path) !== -1 || doc.trashed) {
+            if (this.initialScan.ids.indexOf(metadata.id(doc.path)) !== -1 || doc.trashed) {
               continue
             } else if (doc.docType === 'file') {
               this.onUnlinkFile(doc.path)

@@ -8,6 +8,7 @@ import should from 'should'
 
 import { TMP_DIR_NAME } from '../../../src/local/constants'
 import Watcher from '../../../src/local/watcher'
+import * as metadata from '../../../src/metadata'
 import { PendingMap } from '../../../src/utils/pending'
 
 import configHelpers from '../../helpers/config'
@@ -446,7 +447,7 @@ describe('LocalWatcher Tests', function () {
       }, () => {
         this.watcher.pendingDeletions = new PendingMap()
         this.watcher.checksums = 0
-        this.watcher.initialScan = {paths: ['folder1', 'file1']}
+        this.watcher.initialScan = {ids: ['folder1', 'file1'].map(metadata.id)}
         let cb = this.watcher.onReady(function () {
           tfolder.calledOnce.should.be.true()
           tfolder.calledWithMatch('local', folder1).should.be.false()
