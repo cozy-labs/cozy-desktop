@@ -7,22 +7,22 @@ import path from 'path'
 import { onPlatform } from '../helpers/platform'
 
 import {
-  buildId, extractRevNumber, invalidChecksum, invalidPath, markSide,
+  assignId, extractRevNumber, invalidChecksum, invalidPath, markSide,
   detectPlatformIncompatibilities, sameBinary, sameFile, sameFolder
 } from '../../src/metadata'
 
 describe('metadata', function () {
-  describe('buildId', function () {
+  describe('assignId', function () {
     it('is available', function () {
       let doc = {path: 'FOO'}
-      buildId(doc)
+      assignId(doc)
       doc._id.should.equal('FOO')
     })
 
     if (['linux', 'freebsd', 'sunos'].includes(process.platform)) {
       it('is case insensitive on UNIX', function () {
         let doc = {path: 'foo/bar/café'}
-        buildId(doc)
+        assignId(doc)
         doc._id.should.equal('foo/bar/café')
       })
     }
@@ -30,7 +30,7 @@ describe('metadata', function () {
     if (process.platform === 'darwin') {
       it('is case sensitive on OSX', function () {
         let doc = {path: 'foo/bar/café'}
-        buildId(doc)
+        assignId(doc)
         doc._id.should.equal('FOO/BAR/CAFÉ')
       })
     }
@@ -38,7 +38,7 @@ describe('metadata', function () {
     if (process.platform === 'win32') {
       it('is case sensitive on Windows', () => {
         let doc = {path: 'foo/bar/caf\u00E9'}
-        buildId(doc)
+        assignId(doc)
         doc._id.should.equal('FOO/BAR/CAF\u00C9')
       })
     }

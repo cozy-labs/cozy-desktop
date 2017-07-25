@@ -1,6 +1,6 @@
 // @flow
 
-import { buildId } from '../../../src/metadata'
+import { assignId } from '../../../src/metadata'
 import BaseMetadataBuilder from './base'
 
 import type { Metadata } from '../../../src/metadata'
@@ -25,7 +25,7 @@ export default class DirMetadataBuilder extends BaseMetadataBuilder {
       tags: [],
       updated_at: '2017-06-08T15:09:52.000Z'
     }
-    buildId(doc)
+    assignId(doc)
     return doc
   }
 }
