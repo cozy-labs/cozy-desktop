@@ -63,4 +63,10 @@ export class PendingMap {
       this.map.delete(path)
     }
   }
+
+  clearAll (path: string) {
+    for (const path of this.map.keys()) {
+      this.clear(path)
+    }
+  }
 }

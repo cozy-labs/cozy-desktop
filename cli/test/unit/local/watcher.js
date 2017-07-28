@@ -26,6 +26,9 @@ describe('LocalWatcher Tests', function () {
     if (this.watcher.watcher) {
       this.watcher.watcher.close()
     }
+    if (this.watcher.pendingDeletions) {
+      this.watcher.pendingDeletions.clearAll()
+    }
     fs.emptyDir(this.syncPath, done)
   })
   after('clean pouch', pouchHelpers.cleanDatabase)
