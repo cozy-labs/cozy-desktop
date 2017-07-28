@@ -308,6 +308,7 @@ describe('LocalWatcher Tests', function () {
         doc._id = doc.path
         return this.pouch.db.put(doc)
       }
+      this.prep.updateFileAsync = sinon.stub().resolves()
       this.watcher.start().then(() => {
         setTimeout(() => {
           this.prep.deleteFileAsync = sinon.stub().resolves()
@@ -359,6 +360,7 @@ describe('LocalWatcher Tests', function () {
         doc._id = doc.path
         return this.pouch.db.put(doc)
       }
+      this.prep.updateFileAsync = sinon.stub().resolves()
       this.watcher.start().then(() => {
         setTimeout(() => {
           this.prep.updateFileAsync = sinon.stub().resolves()
