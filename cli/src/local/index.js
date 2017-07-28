@@ -373,7 +373,7 @@ class Local implements Side {
     // Don't fire an event for the deleted file
     setTimeout(() => {
       const p = this.watcher.pendingDeletions
-      if (p.hasPath(src.path)) { p.clear(src.path) }
+      if (p && p.hasPath(src.path)) { p.clear(src.path) }
     }, 1000)
   }
 
