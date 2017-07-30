@@ -44,6 +44,8 @@ before_install:
         travis_retry brew cask install apache-couchdb;
         (/Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/bin/couchdb &);
       fi
+    - sleep 3
+    - curl -X PUT http://127.0.0.1:5984/{_users,_replicator,_global_changes}
 
     # Go 1.8
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
@@ -59,7 +61,6 @@ before_install:
 
     # Cozy stack v3
     - travis_retry go get -u github.com/cozy/cozy-stack
-    - curl -X PUT http://127.0.0.1:5984/{_users,_replicator,_global_changes}
     - $GOPATH/bin/cozy-stack serve &
     - sleep 1
     - $GOPATH/bin/cozy-stack instances add --dev --passphrase "$COZY_PASSPHRASE" localhost:8080
