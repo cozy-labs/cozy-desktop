@@ -17,11 +17,14 @@ import timestamp from '../../../src/timestamp'
 import type { Metadata } from '../../../src/metadata'
 import type { RemoteDoc, JsonApiDoc } from '../../../src/remote/document'
 
+import MetadataBuilders from '../../builders/metadata'
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
 import {
   cozy, builders, deleteAll, createTheCouchdbFolder
 } from '../../helpers/cozy'
+
+const metadataBuilders = new MetadataBuilders()
 
 describe('Remote', function () {
   if (process.env.APPVEYOR) {
@@ -423,6 +426,12 @@ describe('Remote', function () {
         size: '36901'
       })
     })
+
+    it('creates the parent folder when missing', async function () {
+      const metadata: Metadata = metadataBuilders.fileMetadata().path('foo/bar/qux').build()
+      await this.remote.addFileAsync(metadata)
+      await should(cozy.files.statByPath('/foo/bar')).be.fulfilled()
+    })
   })
 
   describe('addFolderAsync', () => {
@@ -459,6 +468,12 @@ describe('Remote', function () {
         _id: remoteDir._id,
         _rev: remoteDir._rev
       })
+    })
+
+    it('creates the parent folder when missing', async function () {
+      const metadata: Metadata = metadataBuilders.dirMetadata().path('foo/bar/qux').build()
+      await this.remote.addFolderAsync(metadata)
+      await should(cozy.files.statByPath('/foo/bar')).be.fulfilled()
     })
   })
 
