@@ -203,6 +203,7 @@ describe('RemoteWatcher', function () {
         name: 'whatever',
         path: '/whatever',
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
+        md5sum: '9999999999999999999999999999999999999999',
         tags: [],
         binary: {
           file: {
@@ -261,6 +262,7 @@ describe('RemoteWatcher', function () {
         _id: '12345678904',
         _rev: '1-abcdef',
         docType: 'file',
+        md5sum: '9999999999999999999999999999999999999999',
         path: 'foo',
         name: 'bar'
       }
@@ -275,6 +277,7 @@ describe('RemoteWatcher', function () {
         const doc = {
           _id: 'whatever',
           path: '/f:oo/b<a>r',
+          md5sum: '9999999999999999999999999999999999999999',
           type: 'file'
         }
         const incompatibilitiesPromise = new Promise((resolve) => {
@@ -308,6 +311,7 @@ describe('RemoteWatcher', function () {
         await this.watcher.onChange({
           _id: 'whatever',
           path: '/.cozy_trash/f:oo/b<a>r',
+          md5sum: '9999999999999999999999999999999999999999',
           type: 'file'
         })
       })
