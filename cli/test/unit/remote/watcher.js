@@ -241,6 +241,7 @@ describe('RemoteWatcher', function () {
         dir_id: 'whatever',
         name: 'whatever',
         path: '',
+        md5sum: '9999999999999999999999999999999999999999',
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
         tags: [],
         binary: {
