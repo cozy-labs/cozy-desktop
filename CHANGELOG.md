@@ -1,3 +1,15 @@
+## 3.0.1 - 2017-07-31
+
+Improvements for all users:
+
+* When creating folders and uploading files on the remote Cozy, sometimes the
+  parent folder doesn't exist yet. This case didn't occur before the 3.0.0
+  release and it didn't happen during the release testing, so we were not
+  handling it correctly. The issue is fixed now. We apologize for the
+  inconvenience.
+
+Happy syncing!
+
 ## 3.0.0 - 2017-07-31
 
 Improvements for all users:
