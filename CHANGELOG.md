@@ -1,3 +1,18 @@
+## 3.0.0 - 2017-07-31
+
+Improvements for all users:
+
+* We improved support for unicode filenames for files already in your synchronization folder before starting cozy-drive
+* Moved folders on your computer does not fill your cozy's trash.
+* We fixed an issue preventing conflict resolution for a folder trashed on one side while content was added on the other side
+
+Improvements for Windows users:
+
+* When you first register your computer on the Cozy, the app will add your Cozy Drive folder to the Windows Explorer sidebar
+
+
+Happy syncing!
+
 ## 3.0.0-beta.6 - 2017-07-11
 
 Improvements for Windows users:
