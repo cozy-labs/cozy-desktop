@@ -12,6 +12,8 @@ import { composeAsync } from '../utils/func'
 
 import type { RemoteDoc, RemoteDeletion } from './document'
 
+const { posix } = path
+
 const log = logger({
   component: 'RemoteCozy'
 })
@@ -134,6 +136,22 @@ export default class RemoteCozy {
 
     // FIXME: cozy-client-js query results have no _type
     return {...results[0], _type: FILES_DOCTYPE}
+  }
+
+  // FIXME: created_at is returned by some methods, but not all of them
+
+  async findOrCreateDirectoryByPath (path: string): Promise<RemoteDoc> {
+    try {
+      return await this.findDirectoryByPath(path)
+    } catch (err) {
+      if (!(err instanceof DirectoryNotFound)) throw err
+
+      const name = posix.basename(path)
+      const parentPath = posix.dirname(path)
+      const parentDir: RemoteDoc = await this.findOrCreateDirectoryByPath(parentPath)
+      const dirID = parentDir._id
+      return this.createDirectory({name, dirID})
+    }
   }
 
   async downloadBinary (id: string): Promise<Readable> {
