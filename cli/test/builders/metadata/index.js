@@ -6,9 +6,9 @@ import DirMetadataBuilder from './dir'
 import FileMetadataBuilder from './file'
 
 export default class MetadataBuilders {
-  pouch: Pouch
+  pouch: ?Pouch
 
-  constructor (pouch: Pouch) {
+  constructor (pouch: ?Pouch) {
     this.pouch = pouch
   }
 
