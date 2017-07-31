@@ -167,6 +167,55 @@ describe('RemoteCozy', function () {
     })
   })
 
+  describe('findOrCreateDirectoryByPath', () => {
+    it('resolves with the exisisting directory if any', async function () {
+      const root = await remoteCozy.findDirectoryByPath('/')
+      const dir = await builders.remoteDir().create()
+      const subdir = await builders.remoteDir().inDir(dir).create()
+
+      let result = await remoteCozy.findOrCreateDirectoryByPath(root.path)
+      should(result).have.properties(root)
+      result = await remoteCozy.findOrCreateDirectoryByPath(dir.path)
+      should(result).have.properties(dir)
+      result = await remoteCozy.findOrCreateDirectoryByPath(subdir.path)
+      should(result).have.properties(subdir)
+    })
+
+    it('creates any missing parent directory', async function () {
+      const dir = await builders.remoteDir().named('dir').create()
+      await builders.remoteDir().named('subdir').inDir(dir).create()
+
+      let result = await remoteCozy.findOrCreateDirectoryByPath('/dir/subdir/foo')
+      should(result).have.properties({
+        type: 'directory',
+        path: '/dir/subdir/foo'
+      })
+      result = await remoteCozy.findOrCreateDirectoryByPath('/dir/bar/baz')
+      should(result).have.properties({
+        type: 'directory',
+        path: '/dir/bar/baz'
+      })
+      result = await remoteCozy.findOrCreateDirectoryByPath('/foo/bar/qux')
+      should(result).have.properties({
+        type: 'directory',
+        path: '/foo/bar/qux'
+      })
+    })
+
+    it('does not swallow errors', async function () {
+      this.config.cozyUrl = cozyStackDouble.url()
+      const remoteCozy = new RemoteCozy(this.config)
+
+      cozyStackDouble.stub((req, res) => {
+        res.writeHead(500, {'Content-Type': 'text/plain'})
+        res.end('Whatever')
+      })
+
+      await should(remoteCozy.findOrCreateDirectoryByPath('/whatever'))
+        .be.rejected()
+    })
+  })
+
   describe('downloadBinary', function () {
     it('resolves with a Readable stream of the file content', async function () {
       const remoteFile = await builders.remoteFile().data('foo').create()

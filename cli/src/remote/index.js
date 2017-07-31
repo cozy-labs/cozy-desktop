@@ -62,7 +62,7 @@ export default class Remote implements Side {
     log.info({path}, 'Creating folder...')
 
     const [parentPath, name] = conversion.extractDirAndName(doc.path)
-    const parent: RemoteDoc = await this.remoteCozy.findDirectoryByPath(parentPath)
+    const parent: RemoteDoc = await this.remoteCozy.findOrCreateDirectoryByPath(parentPath)
     let dir: RemoteDoc
 
     try {
@@ -91,7 +91,7 @@ export default class Remote implements Side {
     log.info({path}, 'Uploading new file...')
     const stream = await this.other.createReadStreamAsync(doc)
     const [dirPath, name] = conversion.extractDirAndName(path)
-    const dir = await this.remoteCozy.findDirectoryByPath(dirPath)
+    const dir = await this.remoteCozy.findOrCreateDirectoryByPath(dirPath)
 
     // Emit events to track the upload progress
     let info = clone(doc)

@@ -12,7 +12,7 @@ export default class BaseMetadataBuilder {
     sides: MetadataSidesInfo
   }
 
-  constructor (pouch?: Pouch) {
+  constructor (pouch: ?Pouch) {
     this.pouch = pouch
     this.opts = {
       path: 'foo',
