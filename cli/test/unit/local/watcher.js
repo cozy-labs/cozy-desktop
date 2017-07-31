@@ -8,6 +8,7 @@ import should from 'should'
 
 import { TMP_DIR_NAME } from '../../../src/local/constants'
 import Watcher from '../../../src/local/watcher'
+import * as metadata from '../../../src/metadata'
 import { PendingMap } from '../../../src/utils/pending'
 
 import configHelpers from '../../helpers/config'
@@ -26,6 +27,10 @@ describe('LocalWatcher Tests', function () {
     if (this.watcher.watcher) {
       this.watcher.watcher.close()
     }
+    if (this.watcher.pendingDeletions) {
+      this.watcher.pendingDeletions.clearAll()
+    }
+    this.watcher.checksumer.kill()
     fs.emptyDir(this.syncPath, done)
   })
   after('clean pouch', pouchHelpers.cleanDatabase)
@@ -308,6 +313,7 @@ describe('LocalWatcher Tests', function () {
         doc._id = doc.path
         return this.pouch.db.put(doc)
       }
+      this.prep.updateFileAsync = sinon.stub().resolves()
       this.watcher.start().then(() => {
         setTimeout(() => {
           this.prep.deleteFileAsync = sinon.stub().resolves()
@@ -359,6 +365,7 @@ describe('LocalWatcher Tests', function () {
         doc._id = doc.path
         return this.pouch.db.put(doc)
       }
+      this.prep.updateFileAsync = sinon.stub().resolves()
       this.watcher.start().then(() => {
         setTimeout(() => {
           this.prep.updateFileAsync = sinon.stub().resolves()
@@ -438,9 +445,9 @@ describe('LocalWatcher Tests', function () {
       async.each([folder1, folder2, folder3, file1, file2, file3], (doc, next) => {
         this.pouch.db.put(doc, next)
       }, () => {
-        this.watcher.pending = new PendingMap()
+        this.watcher.pendingDeletions = new PendingMap()
         this.watcher.checksums = 0
-        this.watcher.paths = ['folder1', 'file1']
+        this.watcher.initialScan = {ids: ['folder1', 'file1'].map(metadata.id)}
         let cb = this.watcher.onReady(function () {
           tfolder.calledOnce.should.be.true()
           tfolder.calledWithMatch('local', folder1).should.be.false()

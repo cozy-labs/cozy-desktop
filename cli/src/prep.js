@@ -7,7 +7,7 @@ import Config from './config'
 import Ignore from './ignore'
 import logger from './logger'
 import Merge from './merge'
-import { buildId, ensureValidChecksum, ensureValidPath } from './metadata'
+import { assignId, ensureValidChecksum, ensureValidPath } from './metadata'
 import { TRASH_DIR_NAME } from './remote/constants'
 
 import type { SideName, Metadata } from './metadata'
@@ -114,7 +114,7 @@ class Prep {
     ensureValidChecksum(doc)
 
     doc.docType = 'file'
-    buildId(doc)
+    assignId(doc)
     if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
     return this.merge.addFileAsync(side, doc)
   }
@@ -127,7 +127,7 @@ class Prep {
     ensureValidChecksum(doc)
 
     doc.docType = 'file'
-    buildId(doc)
+    assignId(doc)
     if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
     return this.merge.updateFileAsync(side, doc)
   }
@@ -138,7 +138,7 @@ class Prep {
     ensureValidPath(doc)
 
     doc.docType = 'folder'
-    buildId(doc)
+    assignId(doc)
     if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
     return this.merge.putFolderAsync(side, doc)
   }
@@ -172,8 +172,8 @@ class Prep {
 
   doMoveFile (side: SideName, doc: Metadata, was: Metadata) {
     doc.docType = 'file'
-    buildId(doc)
-    buildId(was)
+    assignId(doc)
+    assignId(was)
     let docIgnored = this.ignore.isIgnored(doc)
     let wasIgnored = this.ignore.isIgnored(was)
     if ((side === 'local') && docIgnored && wasIgnored) { return }
@@ -212,8 +212,8 @@ class Prep {
 
   doMoveFolder (side: SideName, doc: Metadata, was: Metadata) {
     doc.docType = 'folder'
-    buildId(doc)
-    buildId(was)
+    assignId(doc)
+    assignId(was)
     let docIgnored = this.ignore.isIgnored(doc)
     let wasIgnored = this.ignore.isIgnored(was)
     if ((side === 'local') && docIgnored && wasIgnored) { return }
@@ -234,8 +234,8 @@ class Prep {
 
     delete doc.trashed
     doc.docType = 'file'
-    buildId(doc)
-    buildId(was)
+    assignId(doc)
+    assignId(was)
     // TODO ignore.isIgnored
     return this.merge.restoreFileAsync(side, was, doc)
   }
@@ -247,8 +247,8 @@ class Prep {
 
     delete doc.trashed
     doc.docType = 'folder'
-    buildId(doc)
-    buildId(was)
+    assignId(doc)
+    assignId(was)
     // TODO ignore.isIgnored
     return this.merge.restoreFolderAsync(side, was, doc)
   }
@@ -267,8 +267,8 @@ class Prep {
 
     doc.trashed = true
     doc.docType = 'file'
-    buildId(doc)
-    buildId(was)
+    assignId(doc)
+    assignId(was)
     // TODO ignore.isIgnored
     return this.merge.trashFileAsync(side, was, doc)
   }
@@ -286,8 +286,8 @@ class Prep {
 
     doc.trashed = true
     doc.docType = 'folder'
-    buildId(doc)
-    buildId(was)
+    assignId(doc)
+    assignId(was)
     // TODO ignore.isIgnored
     return this.merge.trashFolderAsync(side, was, doc)
   }
@@ -298,7 +298,7 @@ class Prep {
     ensureValidPath(doc)
 
     doc.docType = 'file'
-    buildId(doc)
+    assignId(doc)
     if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
     return this.merge.deleteFileAsync(side, doc)
   }
@@ -309,7 +309,7 @@ class Prep {
     ensureValidPath(doc)
 
     doc.docType = 'folder'
-    buildId(doc)
+    assignId(doc)
     if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
     return this.merge.deleteFolderAsync(side, doc)
   }

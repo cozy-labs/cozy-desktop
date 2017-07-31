@@ -49,17 +49,17 @@ export type Metadata = {
   trashed?: true
 }
 
-export let buildId: (doc: Metadata) => void = (_) => {}
+export let assignId: (doc: Metadata) => void = (_) => {}
 
 switch (process.platform) {
   case 'linux': case 'freebsd': case 'sunos':
-    buildId = buildIdUnix
+    assignId = assignIdUnix
     break
   case 'darwin':
-    buildId = buildIdHFS
+    assignId = assignIdHFS
     break
   case 'win32':
-    buildId = buildIdNTFS
+    assignId = assignIdNTFS
     break
   default:
     log.error(`Sorry, ${process.platform} is not supported!`)
@@ -67,7 +67,7 @@ switch (process.platform) {
 }
 
 // Build an _id from the path for a case sensitive file system (Linux, BSD)
-function buildIdUnix (doc: Metadata) {
+function assignIdUnix (doc: Metadata) {
   doc._id = doc.path
 }
 
@@ -80,15 +80,24 @@ function buildIdUnix (doc: Metadata) {
 //
 // Note: String.prototype.normalize is not available on node 0.10 and does
 // nothing when node is compiled without intl option.
-function buildIdHFS (doc: Metadata) {
+function assignIdHFS (doc: Metadata) {
   let id = doc.path
   if (id.normalize) { id = id.normalize('NFD') }
   doc._id = id.toUpperCase()
 }
 
 // Build an _id from the path for Windows (NTFS file system)
-function buildIdNTFS (doc: Metadata) {
+function assignIdNTFS (doc: Metadata) {
   doc._id = doc.path.toUpperCase()
+}
+
+// Generate an id from the given path.
+// Side-effect-free version of assignId().
+// TODO: Use id() in assignId(), not the opposite.
+export function id (path: string) {
+  const doc: Object = {path}
+  assignId(doc)
+  return doc._id
 }
 
 // Return true if the document has not a valid path

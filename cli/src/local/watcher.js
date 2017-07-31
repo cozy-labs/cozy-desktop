@@ -9,6 +9,7 @@ import mime from 'mime'
 import path from 'path'
 
 import logger from '../logger'
+import * as metadata from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import { PendingMap } from '../utils/pending'
@@ -36,8 +37,8 @@ class LocalWatcher {
   syncPath: string
   prep: Prep
   pouch: Pouch
-  paths: string[]
-  pending: PendingMap
+  initialScan: ?{ids: string[]}
+  pendingDeletions: PendingMap
   checksums: number
   checksumer: any // async.queue
   watcher: any // chokidar
@@ -61,7 +62,7 @@ class LocalWatcher {
     // To detect which files&folders have been removed since the last run of
     // cozy-desktop, we keep all the paths seen by chokidar during its
     // initial scan in @paths to compare them with pouchdb database.
-    this.paths = []
+    this.initialScan = {ids: []}
 
     // A map of pending operations. It's used for detecting move operations,
     // as chokidar only reports adds and deletion. The key is the path (as
@@ -71,7 +72,7 @@ class LocalWatcher {
     // want to save the operation as it in pouchdb), and the timeout can be
     // cleared to cancel the operation (for example, a deletion is finally
     // seen as a part of a move operation).
-    this.pending = new PendingMap()
+    this.pendingDeletions = new PendingMap()
 
     // A counter of how many files are been read to compute a checksum right
     // now. It's useful because we can't do some operations when a checksum
@@ -129,7 +130,7 @@ class LocalWatcher {
       this.watcher.close()
       this.watcher = null
     }
-    this.pending.executeAll()
+    this.pendingDeletions.executeAll()
     // Give some time for awaitWriteFinish events to be fired
     return new Promise((resolve) => {
       setTimeout(resolve, 3000)
@@ -211,15 +212,15 @@ class LocalWatcher {
   onAddFile (filePath: string, stats: fs.Stats) {
     const logError = (err) => log.error({err, path: filePath})
     log.chokidar.trace({event: 'add', path: filePath, stats})
-    if (this.paths) { this.paths.push(filePath) }
-    this.pending.executeIfAny(filePath)
+    if (this.initialScan) { this.initialScan.ids.push(metadata.id(filePath)) }
+    this.pendingDeletions.executeIfAny(filePath)
     this.checksums++
     this.createDoc(filePath, stats, (err, doc) => {
       if (err) {
         this.checksums--
         logError(err)
       } else {
-        if (this.pending.isEmpty()) {
+        if (this.pendingDeletions.isEmpty()) {
           this.checksums--
           log.info({path: filePath}, 'file added')
           this.prep.addFileAsync(SIDE, doc).catch(logError)
@@ -233,12 +234,12 @@ class LocalWatcher {
               log.info({path: filePath}, 'file added')
               this.prep.addFileAsync(SIDE, doc).catch(logError)
             } else {
-              const same = find(docs, this.paths
+              const same = find(docs, this.initialScan
                   ? d => !fs.existsSync(d.path)
-                  : d => this.pending.hasPath(d.path))
+                  : d => this.pendingDeletions.hasPath(d.path))
               if (same) {
                 log.info({path: filePath}, `was moved from ${same.path}`)
-                this.pending.clear(same.path)
+                this.pendingDeletions.clear(same.path)
                 this.prep.moveFileAsync(SIDE, doc, same).catch(logError)
               } else {
                 log.info({path: filePath}, 'file added')
@@ -256,8 +257,8 @@ class LocalWatcher {
     log.chokidar.trace({event: 'addDir', path: folderPath, stats})
     if (folderPath === '') return
 
-    if (this.paths) { this.paths.push(folderPath) }
-    this.pending.executeIfAny(folderPath)
+    if (this.initialScan) { this.initialScan.ids.push(metadata.id(folderPath)) }
+    this.pendingDeletions.executeIfAny(folderPath)
     const doc = {
       path: folderPath,
       docType: 'folder',
@@ -284,12 +285,12 @@ class LocalWatcher {
     }
     const check = () => {
       if (this.checksums === 0) {
-        this.pending.executeIfAny(filePath)
+        this.pendingDeletions.executeIfAny(filePath)
       } else {
         timeout = setTimeout(check, 100)
       }
     }
-    this.pending.add(filePath, {stopChecking, execute})
+    this.pendingDeletions.add(filePath, {stopChecking, execute})
     timeout = setTimeout(check, 1250)
   }
 
@@ -309,11 +310,11 @@ class LocalWatcher {
       this.prep.trashFolderAsync(SIDE, {path: folderPath}).catch(err => log.error({err, path: folderPath}))
     }
     const check = () => {
-      if (!this.pending.hasPendingChild(folderPath)) {
-        this.pending.executeIfAny(folderPath)
+      if (!this.pendingDeletions.hasPendingChild(folderPath)) {
+        this.pendingDeletions.executeIfAny(folderPath)
       }
     }
-    this.pending.add(folderPath, {stopChecking, execute})
+    this.pendingDeletions.add(folderPath, {stopChecking, execute})
     interval = setInterval(check, 350)
   }
 
@@ -338,7 +339,8 @@ class LocalWatcher {
         if (err) { return callback(err) }
         try {
           for (const doc of docs.reverse()) {
-            if (this.paths.indexOf(doc.path) !== -1 || doc.trashed) {
+            // $FlowFixMe: initialScan cannot be null
+            if (this.initialScan.ids.indexOf(metadata.id(doc.path)) !== -1 || doc.trashed) {
               continue
             } else if (doc.docType === 'file') {
               this.onUnlinkFile(doc.path)
@@ -346,7 +348,7 @@ class LocalWatcher {
               this.onUnlinkDir(doc.path)
             }
           }
-          delete this.paths
+          delete this.initialScan
           setTimeout(callback, 3000)
         } catch (err) {
           callback(err)

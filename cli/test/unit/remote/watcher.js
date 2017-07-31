@@ -16,7 +16,7 @@ import pouchHelpers from '../../helpers/pouch'
 import { builders } from '../../helpers/cozy'
 
 import { createMetadata } from '../../../src/conversion'
-import { buildId } from '../../../src/metadata'
+import { assignId } from '../../../src/metadata'
 import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } from '../../../src/remote/constants'
 import Prep from '../../../src/prep'
 import RemoteCozy from '../../../src/remote/cozy'
@@ -533,7 +533,7 @@ describe('RemoteWatcher', function () {
       const oldDir: RemoteDoc = builders.remoteDir().named('foo').build()
       // TODO: builders.dirMetadata().fromRemote(oldDir).create()
       let oldMeta: Metadata = createMetadata(oldDir)
-      buildId(oldMeta)
+      assignId(oldMeta)
       await this.pouch.db.put(oldMeta)
       // TODO: builders.remoteDir().was(oldDir).trashed().build()
       const newDir: RemoteDoc = {...oldDir, path: '/.cozy_trash/foo', dir_id: TRASH_DIR_ID}
@@ -560,7 +560,7 @@ describe('RemoteWatcher', function () {
       const oldDir: RemoteDoc = builders.remoteDir().named('foo').trashed().build()
       // TODO: builders.dirMetadata().fromRemote(oldDir).create()
       let oldMeta: Metadata = createMetadata(oldDir)
-      buildId(oldMeta)
+      assignId(oldMeta)
       await this.pouch.db.put(oldMeta)
       // TODO: builders.remoteDir().was(oldDir).restored().build()
       const newDir: RemoteDoc = {...oldDir, path: '/foo', dir_id: ROOT_DIR_ID}
