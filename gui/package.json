@@ -82,7 +82,7 @@
   "scripts": {
     "build": "yarn build:css & yarn build:tx && yarn build:elm",
     "build:css": "stylus -c -u cozy-ui/lib/stylus styles/app.styl -o .",
-    "build:elm": "elm make lib/Main.elm --output elm.js",
+    "build:elm": "elm make src/elm/Main.elm --output elm.js",
     "build:cli": "cd ../cli && yarn build",
     "build:tx": "tx pull --all --minimum-perc=1 || true",
     "clean": "rimraf elm.js app.css* dist/",
@@ -101,7 +101,7 @@
     "start": "cross-env COZY_DESKTOP_HEARTBEAT=5000 electron .",
     "watch": "cross-env WATCH=true yarn start & yarn watch:css & yarn watch:elm & yarn watch:js",
     "watch:css": "stylus -m -u cozy-ui/lib/stylus -w styles/app.styl -o .",
-    "watch:elm": "chokidar 'lib/**/*.elm' -c 'yarn build:elm'",
+    "watch:elm": "chokidar 'src/elm/**/*.elm' -c 'yarn build:elm'",
     "watch:js": "chokidar main.js ports.js -c 'yarn lint'"
   }
 }
