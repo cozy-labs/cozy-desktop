@@ -86,7 +86,7 @@
     "build:cli": "cd ../cli && yarn build",
     "build:tx": "tx pull --all --minimum-perc=1 || true",
     "clean": "rimraf elm.js app.css* dist/",
-    "dist": "cross-env DEBUG=electron-builder build --x64",
+    "dist": "cross-env DEBUG=electron-builder build --x64 --ia32",
     "elm:upgrade": "yarn add --dev elm@latest elm-upgrade@latest && elm-upgrade",
     "lint": "standard --verbose main.js ports.js",
     "pack": "cross-env DEBUG=electron-builder build --dir",
