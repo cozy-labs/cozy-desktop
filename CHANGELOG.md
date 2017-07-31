@@ -9,7 +9,7 @@ Improvements for all users:
 Improvements for Windows users:
 
 * When you first register your computer on the Cozy, the app will add your Cozy Drive folder to the Windows Explorer sidebar
-
+* Both the installer and the application should now work on 32-bit Windows.
 
 Happy syncing!
 
