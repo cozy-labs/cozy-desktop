@@ -67,7 +67,7 @@
   },
   "devDependencies": {
     "chokidar-cli": "^1.2.0",
-    "cozy-ui": "^0.1.7",
+    "cozy-ui": "^3.0.0-beta39",
     "cross-env": "^4.0.0",
     "debug-menu": "^0.6.0",
     "devtron": "^1.4.0",
@@ -81,7 +81,7 @@
   },
   "scripts": {
     "build": "yarn build:css & yarn build:tx && yarn build:elm",
-    "build:css": "stylus -c -u cozy-ui/lib/stylus styles/app.styl -o .",
+    "build:css": "stylus -c -u cozy-ui/stylus styles/app.styl -o .",
     "build:elm": "elm make src/elm/Main.elm --output elm.js",
     "build:cli": "cd ../cli && yarn build",
     "build:tx": "tx pull --all --minimum-perc=1 || true",
@@ -100,7 +100,7 @@
     "release:fix": "node ./dev/fix-dist-artifacts.js",
     "start": "cross-env COZY_DESKTOP_HEARTBEAT=5000 electron .",
     "watch": "cross-env WATCH=true yarn start & yarn watch:css & yarn watch:elm & yarn watch:js",
-    "watch:css": "stylus -m -u cozy-ui/lib/stylus -w styles/app.styl -o .",
+    "watch:css": "stylus -m -u cozy-ui/stylus -w styles/app.styl -o .",
     "watch:elm": "chokidar 'src/elm/**/*.elm' -c 'yarn build:elm'",
     "watch:js": "chokidar main.js ports.js -c 'yarn lint'"
   }

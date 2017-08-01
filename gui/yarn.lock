@@ -572,6 +572,10 @@ class-utils@^0.3.4:
     lazy-cache "^2.0.2"
     static-extend "^0.1.1"
 
+classnames@^2.2.5:
+  version "2.2.5"
+  resolved "https://registry.yarnpkg.com/classnames/-/classnames-2.2.5.tgz#fb3801d453467649ef3603c7d61a02bd129bde6d"
+
 cli-boxes@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/cli-boxes/-/cli-boxes-1.0.0.tgz#4fa917c3e59c94a004cd61f8ee509da651687143"
@@ -686,7 +690,7 @@ cozy-client-js@^0.3.9:
   resolved "https://registry.yarnpkg.com/cozy-client-js/-/cozy-client-js-0.3.9.tgz#21899559008bcf671ee132c079532577d2ae1986"
 
 "cozy-desktop@file:../cli/":
-  version "3.0.0-beta.4"
+  version "3.0.1"
   dependencies:
     async "^2.1.5"
     babel-polyfill "^6.23.0"
@@ -717,12 +721,13 @@ cozy-client-js@^0.3.9:
     trash "^4.0.1"
     uuid "^3.0.1"
 
-cozy-ui@^0.1.7:
-  version "0.1.7"
-  resolved "https://registry.yarnpkg.com/cozy-ui/-/cozy-ui-0.1.7.tgz#77949cf67b912f95c9344d7c812a3dc52fa9dbcd"
+cozy-ui@^3.0.0-beta39:
+  version "3.0.0-beta39"
+  resolved "https://registry.yarnpkg.com/cozy-ui/-/cozy-ui-3.0.0-beta39.tgz#413e7f9df0e729c1dcbbd46826538da028e12192"
   dependencies:
-    md5 "^2.0.0"
-    normalize.css "^3.0.3"
+    classnames "^2.2.5"
+    md5 "^2.2.0"
+    normalize.css "5.0.0"
 
 create-error-class@^3.0.0:
   version "3.0.2"
@@ -2642,7 +2647,7 @@ map-visit@^0.1.5:
     lazy-cache "^2.0.1"
     object-visit "^0.3.4"
 
-md5@^2.0.0:
+md5@^2.2.0:
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/md5/-/md5-2.2.1.tgz#53ab38d5fe3c8891ba465329ea23fac0540126f9"
   dependencies:
@@ -2937,9 +2942,9 @@ normalize-path@^2.0.1:
   dependencies:
     remove-trailing-separator "^1.0.1"
 
-normalize.css@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/normalize.css/-/normalize.css-3.0.3.tgz#acc00262e235a2caa91363a2e5e3bfa4f8ad05c6"
+normalize.css@5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/normalize.css/-/normalize.css-5.0.0.tgz#7cec875ce8178a5333c4de80b68ea9c18b9d7c37"
 
 npm-run-path@^1.0.0:
   version "1.0.0"
