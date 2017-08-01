@@ -1,4 +1,4 @@
-@require '_spin'
+// @require '_spin'
 
 .wizard
   overflow hidden
@@ -8,142 +8,89 @@
 
 .on-step-address
   .step
-    transform translate(-100%, 0)
+    transform translate(-100vw, 0)
 
 .on-step-folder
   .step
-    transform translate(-200%, 0)
+    transform translate(-200vw, 0)
 
 .step
   position absolute
   left 0
   top 0
   display flex
-  flex-direction column
+  //flex-direction column
   justify-content space-between
   align-items center
   width 100vw
   height 100vh
-  color white
   transition transform .2s ease-out, background-color .1s
   will-change transform
 
-  .upper
-    flex 1
-    display flex
-    flex-direction column
-    justify-content flex-end
-
   h1
-    flex 1
+    color charcoal-grey
+    font-size: 1.5rem
 
-  input
-    width 50vw
-    background-color transparent
-    border 0
-    font-weight bold
-    font-size 2rem
-    &::-webkit-input-placeholder
-      color rgba(255, 255, 255, .7)
-      font-weight normal
-    &:focus
-      outline none
+a.more-info
+  display: inline-block
+  color dodger-blue
+  padding-top em(13px, 14px)
+  margin-left .25em
+  text-decoration: none
 
-  a, p
-    box-sizing border-box
-    width 50vw
 
-  a
-    color white
+.step-content
+  flex 0 1 40em
+  max-width: 40em
+  margin auto
+  padding 3em 1em
 
-  p
-    flex 1
-    font-size 1.5rem
+.btn
+  @extend $button
+  @extend $button--regular
+  width: 100%
+  font-size: 1.1em
+  margin 1em 0 0 0
 
-  .error-message
-    font-size 2rem
-    vertical-align bottom
-    text-align left
+  // TODO figure out why we need to add that for
+  // properly placed spinner
+  &[aria-busy=true]
+    &::after
+        width 1em
+        height 1em
+        position   relative
+        top        .3em
 
-  .more-info
-    padding-bottom .5em
-    text-decoration none
-    font-size 1.25rem
 
-  .btn
-    box-shadow 0 1px 3px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)
-    color blue
-    background-color white
-    margin-bottom 2em
-    padding 1em
-    text-align center
-    text-transform uppercase
-    text-decoration none
-    font-weight bold
-    font-size 1.25rem
-    border-radius .2em
-    overflow hidden
-    &:hover
-      opacity 0.9
-    &:active
-      opacity 0.8
-    &[aria-busy=true]
-      position relative
-      &:before
-        @extend $icon
-        @extend $spin
-        @extend $icon-16
-        left 33%
+.step-address .coz-form-group
+  @extend $form .coz-form-group
+  @extend $form-text
+  margin-bottom: 1em
+.step-address label
+  @extend $form .coz-form-label
+  font-size: 1em
 
-.step-welcome
-  h1
-    color grey-06
-  .btn
-    color white
-    background-color blue
+.folder__selector
+  @extend $button
+  @extend $form-select select
+  width: 100%
+  font-size: 1.1em
+  line-height: 1em
+  margin 0
+
 
 .step-address
   left 100vw
-  background-color blue
-  .btn
-    &[aria-busy=true]
-      &:before
-        background-image url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='12' height='12' fill='rgb(51,166,255)'><path opacity='.25' d='M16 0a16 16 0 0 0 0 32 16 16 0 0 0 0-32m0 4a12 12 0 0 1 0 24 12 12 0 0 1 0-24'/><path d='M16 0a16 16 0 0 1 16 16h-4a12 12 0 0 0-12-12z'/></svg>")
 
 .step-folder
   left 200vw
-  background-color #9164F5
-  p.spacer
-    flex 2
-  img.done
-    height 25vh
-  label
-    box-sizing border-box
-    width 50vw
-    font-size 1.5rem
-    padding-bottom .5em
-  .folder__selector
-    color white
-    background-color #AF90F8
-    margin-bottom 1em
-    padding 1em
-    text-decoration none
-    font-size 1.25rem
-    font-weight bold
-    border-radius .2em
-    overflow hidden
-    position relative
-    img
-      position absolute
-      top .8em
-      right 1em
-  &.step-error .folder__selector
-    background-color: lighten(red, 30%)
-
-  .btn
-    color #9164F5
+  .svg-wrapper
+    background-color: emerald
 
 .step-error
-  background-color red
+  color pomegranate
+  .svg-wrapper
+    background-color pomegranate
   .btn
-    color red
+    opacity  .5
+    cursor   not-allowed

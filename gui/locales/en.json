@@ -9,6 +9,7 @@
   "Account Are you sure to unlink this account?": "Are you sure to unlink this account?",
   "Account Unlink this Cozy": "Unlink this Cozy",
   "Address Cozy address": "Cozy address",
+  "Address Placeholder": "cloudy.mycozy.cloud",
   "Address This is the web address you use to sign in to your cozy.": "This is the web address you use to sign in to your cozy.",
   "Address Don't have an account? Request one here": "Don't have an account? Request one here",
   "Address You don't have filled the address!": "You don't have filled the address!",
@@ -126,6 +127,6 @@
   "Unlinked If you want to register it again, you can restart Cozy Drive.": "If you want to register it again, you can restart Cozy Drive.",
   "Unlinked Else, you can just close Cozy Drive.": "Else, you can just close Cozy Drive.",
   "Unlinked Restart Cozy Drive": "Restart Cozy Drive",
-  "Welcome Your own private cloud": "Your own private cloud",
+  "Welcome Your own private cloud": "Welcome to the desktop Cozy Drive Application !",
   "Welcome Sign in to your Cozy": "Sign in to your Cozy"
 }
