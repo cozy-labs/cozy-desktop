@@ -30,7 +30,6 @@ view helpers platform =
         [ div
           [ class "step-content" ]
           [ Icons.cozyBigIcon
-          , h1 [] [ text (helpers.t "Welcome Welcome Cozy Desktop") ]
           , h1 [] [ text (helpers.t "Welcome Your own private cloud") ]
           , a
               [ class "btn"
