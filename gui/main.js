@@ -21,8 +21,8 @@ const autoLauncher = new AutoLaunch({
   name: 'Cozy-Desktop',
   isHidden: true
 })
-const desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
-const lastFilesPath = path.join(desktop.basePath, 'last-files')
+let desktop
+let lastFilesPath
 
 app.locale = 'en'
 const setUpLocale = () => {
@@ -503,8 +503,6 @@ const createWindow = () => {
   if (process.platform === 'darwin') { app.dock.show() }
 }
 
-loadLastFiles()
-
 const shouldExit = app.makeSingleInstance(showWindow)
 if (shouldExit) {
   console.log('Cozy Drive is already running. Exiting...')
@@ -545,6 +543,10 @@ const addFileManagerShortcut = (config) => {
 }
 
 app.on('ready', () => {
+  desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
+  lastFilesPath = path.join(desktop.basePath, 'last-files')
+
+  loadLastFiles()
   setUpLocale()
   setUpTranslations()
   if (process.argv.indexOf('--hidden') === -1) {
