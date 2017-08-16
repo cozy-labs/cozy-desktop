@@ -1,9 +1,3 @@
-@font-face
-  font-family 'Source Sans Pro'
-  font-style normal
-  font-weight 400
-  src url('fonts/sourcesanspro-regular.woff') format('woff')
-
 @import 'cozy-ui'
 
 @keyframes spin
@@ -17,6 +11,19 @@
     transform rotate(0deg)
   to
     transform rotate(360deg)
+
+@font-face
+    font-family Lato
+    font-style normal
+    font-weight normal
+    src embedurl('cozy-ui/assets/fonts/Lato-Regular.woff2') format('woff2')
+
+@font-face
+    font-family Lato
+    font-style normal
+    font-weight bold
+    src embedurl('cozy-ui/assets/fonts/Lato-Bold.woff2') format('woff2')
+
 
 blue = dodger-blue
 
@@ -35,13 +42,15 @@ blue = dodger-blue
 
 
 body
-    font-family 'Source Sans Pro', sans-serif
-    margin 0
+  @extend $font-labor
+  margin 0
 
 h1
+  @extend $font-title
   font-size 2rem
 
 h2
+  @extend $font-title
   font-size 1.5rem
 
 p
