@@ -2,12 +2,12 @@ module Icons exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Svg exposing (svg, node, path)
+import Svg exposing (Svg, svg, node, path)
 import Svg.Attributes exposing (fill, d, viewBox)
 
 
 type alias IconFunction msg =
-    Int -> Bool -> Svg.Svg msg
+    Int -> Bool -> Svg msg
 
 
 white : String
@@ -21,7 +21,7 @@ grey =
     "#748192"
 
 
-icon : Int -> List (Svg.Svg msg) -> IconFunction msg
+icon : Int -> List (Svg msg) -> IconFunction msg
 icon viewbox paths size active =
     let
         color =
@@ -45,12 +45,12 @@ icon viewbox paths size active =
             paths
 
 
-path : String -> Svg.Svg msg
+path : String -> Svg msg
 path d =
     Svg.path [ Svg.Attributes.d d ] []
 
 
-polygon : String -> Svg.Svg msg
+polygon : String -> Svg msg
 polygon points =
     Svg.polygon [ Svg.Attributes.points points ] []
 
