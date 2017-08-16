@@ -19,6 +19,7 @@ type Msg
 
 -- VIEW
 
+
 view : Helpers -> String -> Html Msg
 view helpers platform =
     div
@@ -28,19 +29,19 @@ view helpers platform =
             ]
         ]
         [ div
-          [ class "step-content" ]
-          [ Icons.cozyBigIcon
-          , h1 [] [ text (helpers.t "Welcome Your own private cloud") ]
-          , a
-              [ class "btn"
-              , href "#"
-              , onClick NextPage
-              ]
-              [ text (helpers.t "Welcome Sign in to your Cozy") ]
-          , a
-              [ href ("https://cozy.io/en/try-it/?from=desktop-" ++ platform)
-              , class "more-info"
-              ]
-              [ text (helpers.t "Address Don't have an account? Request one here") ]
-          ]
+            [ class "step-content" ]
+            [ Icons.cozyBig
+            , h1 [] [ text (helpers.t "Welcome Your own private cloud") ]
+            , a
+                [ class "btn"
+                , href "#"
+                , onClick NextPage
+                ]
+                [ text (helpers.t "Welcome Sign in to your Cozy") ]
+            , a
+                [ href ("https://cozy.io/en/try-it/?from=desktop-" ++ platform)
+                , class "more-info"
+                ]
+                [ text (helpers.t "Address Don't have an account? Request one here") ]
+            ]
         ]

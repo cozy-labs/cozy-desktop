@@ -82,38 +82,38 @@ view helpers model =
             ]
         ]
         [ div
-          [ class "step-content" ]
-          [ Icons.cozyBigIcon,
-          h1 [] [ text (helpers.t "Address Please introduce your cozy address") ]
-          , if model.error == "" then
-              p [ class"adress-helper"]
-                [ text (helpers.t "Address This is the web address you use to sign in to your cozy.") ]
-            else
-              p [ class "error-message"]
-                [ text (helpers.t model.error) ]
-          , div [class "coz-form-group"]
-            [
-              label [class "coz-form-label"]
-                [text (helpers.t "Address Cozy address")]
-              , input
-                [ placeholder (helpers.t "Address Placeholder")
-                , class "wizard__address"
-                , type_ "text"
-                , value model.address
-                , onInput FillAddress
-                , onEnter RegisterRemote
-                ] []
+            [ class "step-content" ]
+            [ Icons.cozyBig
+            , h1 [] [ text (helpers.t "Address Please introduce your cozy address") ]
+            , if model.error == "" then
+                p [ class "adress-helper" ]
+                    [ text (helpers.t "Address This is the web address you use to sign in to your cozy.") ]
+              else
+                p [ class "error-message" ]
+                    [ text (helpers.t model.error) ]
+            , div [ class "coz-form-group" ]
+                [ label [ class "coz-form-label" ]
+                    [ text (helpers.t "Address Cozy address") ]
+                , input
+                    [ placeholder (helpers.t "Address Placeholder")
+                    , class "wizard__address"
+                    , type_ "text"
+                    , value model.address
+                    , onInput FillAddress
+                    , onEnter RegisterRemote
+                    ]
+                    []
+                ]
+            , a
+                [ class "btn"
+                , href "#"
+                , if model.address == "" then
+                    attribute "disabled" "true"
+                  else if model.busy then
+                    attribute "aria-busy" "true"
+                  else
+                    onClick RegisterRemote
+                ]
+                [ text (helpers.t "Address Next") ]
             ]
-          , a
-              [ class "btn"
-              , href "#"
-              , if model.address == "" then
-                  attribute "disabled" "true"
-                else if model.busy then
-                  attribute "aria-busy" "true"
-                else
-                  onClick RegisterRemote
-              ]
-              [ text (helpers.t "Address Next") ]
-          ]
         ]
