@@ -672,10 +672,14 @@ ipcMain.on('unlink-cozy', () => {
   })
 })
 
+function serializeError (err) {
+  return {message: err.message, name: err.name, stack: err.stack}
+}
+
 ipcMain.on('send-mail', (event, body) => {
   desktop.sendMailToSupport(body).then(
     () => { event.sender.send('mail-sent') },
-    (err) => { event.sender.send('mail-sent', err) }
+    (err) => { event.sender.send('mail-sent', serializeError(err)) }
   )
 })
 
