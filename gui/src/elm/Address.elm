@@ -95,7 +95,7 @@ view helpers model =
                 [ label [ class "coz-form-label" ]
                     [ text (helpers.t "Address Cozy address") ]
                 , input
-                    [ placeholder (helpers.t "Address Placeholder")
+                    [ placeholder ("cloudy.mycozy.cloud")
                     , class "wizard__address"
                     , type_ "text"
                     , value model.address
