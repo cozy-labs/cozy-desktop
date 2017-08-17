@@ -8,6 +8,7 @@ const Desktop = require('cozy-desktop').default
 const electron = require('electron')
 const notify = require('electron-main-notification')
 const fs = require('fs')
+const lnk = require('lnk')
 const debounce = require('lodash.debounce')
 const os = require('os')
 const path = require('path')
@@ -521,6 +522,12 @@ const win10PinToHome = (path) => {
   execSync(`powershell -Command "(New-Object -COM shell.application).Namespace('${escapedPath}').Self.InvokeVerb('pintohome')"`)
 }
 
+const winLinksDir = path.join(os.homedir(), 'Links')
+
+const winAddLink = (path) => {
+  lnk.sync([path], winLinksDir)
+}
+
 const sfltoolAddFavorite = (path) => {
   const item = url.resolve('file://', path)
   execSync(`sfltool add-item com.apple.LSSharedFileList.FavoriteItems ${item}`)
@@ -529,11 +536,17 @@ const sfltoolAddFavorite = (path) => {
 const platform = process.platform
 const major = Number.parseInt(os.release().split('.')[0])
 // For Darwin <=> macOS version mapping, see:
-// https://en.wikipedia.org/wiki/Darwin_(operating_system)#Release_history
+//   https://en.wikipedia.org/wiki/Darwin_(operating_system)#Release_history
+//
+// For Windows <=> NT kernel version mapping, see:
+//   https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
+//   https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions
 
 const addFileManagerShortcut = (config) => {
   if (platform === 'win32' && major >= 10) {
     win10PinToHome(config.syncPath)
+  } else if (platform === 'win32' && major >= 6) {
+    winAddLink(config.syncPath)
   } else if (platform === 'darwin' && major >= 15) {
     // sfltool is available since 10.11 (El Capitan)
     sfltoolAddFavorite(config.syncPath)
