@@ -1,9 +1,3 @@
-@font-face
-  font-family 'Source Sans Pro'
-  font-style normal
-  font-weight 400
-  src url('fonts/sourcesanspro-regular.woff') format('woff')
-
 @import 'cozy-ui'
 
 @keyframes spin
@@ -18,9 +12,24 @@
   to
     transform rotate(360deg)
 
+@font-face
+    font-family Lato
+    font-style normal
+    font-weight normal
+    src url('fonts/lato-regular.woff2') format('woff2')
+
+@font-face
+    font-family Lato
+    font-style normal
+    font-weight bold
+    src url('fonts/lato-bold.woff2') format('woff2')
+
+blue = dodger-blue
+
 @import '_wizard'
 @import '_two_panes'
 @import '_unlinked'
+@import '_icon'
 
 @media (max-width: 1000px)
   html
@@ -30,12 +39,19 @@
   html
     font-size 1.25
 
+
+body
+  @extend $font-labor
+  margin 0
+
 h1
+  @extend $font-title
   font-size 2rem
 
 h2
+  @extend $font-title
   font-size 1.5rem
 
 p
-  font-size 1.25rem
+  font-size 1.1rem
   line-height 1.6

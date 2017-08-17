@@ -20,6 +20,7 @@ type Page
 
 type alias Model =
     { page : Page
+    , platform : String
     , address : Address.Model
     , folder : Folder.Model
     }
@@ -28,7 +29,8 @@ type alias Model =
 init : String -> String -> Model
 init folder platform =
     { page = WelcomePage
-    , address = Address.init platform
+    , platform = platform
+    , address = Address.init
     , folder = Folder.init folder
     }
 
@@ -82,25 +84,15 @@ update msg model =
 
 view : Helpers -> Model -> Html Msg
 view helpers model =
-    let
-        welcomeView =
-            Html.map WelcomeMsg (Welcome.view helpers)
-
-        addressView =
-            Html.map AddressMsg (Address.view helpers model.address)
-
-        folderView =
-            Html.map FolderMsg (Folder.view helpers model.folder)
-    in
-        section
-            [ classList
-                [ ( "wizard", True )
-                , ( "on-step-welcome", model.page == WelcomePage )
-                , ( "on-step-address", model.page == AddressPage )
-                , ( "on-step-folder", model.page == FolderPage )
-                ]
+    section
+        [ classList
+            [ ( "wizard", True )
+            , ( "on-step-welcome", model.page == WelcomePage )
+            , ( "on-step-address", model.page == AddressPage )
+            , ( "on-step-folder", model.page == FolderPage )
             ]
-            [ welcomeView
-            , addressView
-            , folderView
-            ]
+        ]
+        [ Html.map WelcomeMsg (Welcome.view helpers model.platform)
+        , Html.map AddressMsg (Address.view helpers model.address)
+        , Html.map FolderMsg (Folder.view helpers model.folder)
+        ]

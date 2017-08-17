@@ -69,8 +69,8 @@ let lastFiles = []
 let newReleaseAvailable = false
 
 const windowOptions = {
-  width: 1024,
-  height: 768,
+  width: 768,
+  height: 570,
   icon: `${__dirname}/images/icon.png`
 }
 
@@ -484,7 +484,7 @@ const createWindow = () => {
   mainWindow = new BrowserWindow(windowOptions)
   mainWindow.loadURL(`file://${__dirname}/index.html`)
   if (process.env.WATCH === 'true' || process.env.DEBUG === 'true') {
-    mainWindow.setBounds({ x: 0, y: 0, width: 1600, height: 768 })
+    mainWindow.setBounds({ x: 0, y: 0, width: 768, height: 570 })
     mainWindow.webContents.openDevTools()
   } else {
     mainWindow.setMenu(null)

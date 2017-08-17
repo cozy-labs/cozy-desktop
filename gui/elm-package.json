@@ -4,7 +4,7 @@
     "repository": "https://github.com/cozy-labs/cozy-desktop.git",
     "license": "AGPL-3.0",
     "source-directories": [
-        "lib"
+        "src/elm"
     ],
     "exposed-modules": [],
     "dependencies": {

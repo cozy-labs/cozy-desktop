@@ -5,6 +5,7 @@
 /cli/storage/
 
 /gui/app.css
+/gui/app.css.map
 /gui/elm.js
 /gui/dist
 /gui/elm-stuff
