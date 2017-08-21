@@ -77,7 +77,17 @@ export class LocalTestHelpers {
   }
 
   async tree (): Promise<string[]> {
-    return (await tree(this.trashPath))
+    let trashContents
+    try {
+      trashContents = await tree(this.trashPath)
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err
+      throw new Error(
+        'You must call and await helpers.local.setupTrash() (e.g. in a ' +
+        'beforeEach block) before calling helpers.local.tree() in a test'
+      )
+    }
+    return trashContents
       .map(relPath => path.posix.join('/Trash', relPath))
       .concat(await tree(this.syncPath))
   }
