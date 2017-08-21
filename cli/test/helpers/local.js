@@ -5,6 +5,8 @@ import fs from 'fs-extra'
 import path from 'path'
 import rimraf from 'rimraf'
 
+import * as conflictHelpers from './conflict'
+
 import { TMP_DIR_NAME } from '../../src/local/constants'
 import Local from '../../src/local'
 
@@ -90,5 +92,6 @@ export class LocalTestHelpers {
     return trashContents
       .map(relPath => path.posix.join('/Trash', relPath))
       .concat(await tree(this.syncPath))
+      .map(conflictHelpers.ellipsizeDate)
   }
 }

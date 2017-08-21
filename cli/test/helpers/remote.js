@@ -3,6 +3,8 @@
 import cozy from 'cozy-client-js'
 import path from 'path'
 
+import * as conflictHelpers from './conflict'
+
 import Pouch from '../../src/pouch'
 import Remote from '../../src/remote'
 import { TRASH_DIR_NAME } from '../../src/remote/constants'
@@ -49,6 +51,8 @@ export class RemoteTestHelpers {
       }
     }
 
-    return relPaths.sort()
+    return relPaths
+      .sort()
+      .map(conflictHelpers.ellipsizeDate)
   }
 }
