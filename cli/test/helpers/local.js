@@ -6,6 +6,7 @@ import path from 'path'
 import rimraf from 'rimraf'
 
 import * as conflictHelpers from './conflict'
+import { SyncDirTestHelpers } from './sync_dir'
 
 import { TMP_DIR_NAME } from '../../src/local/constants'
 import Local from '../../src/local'
@@ -47,9 +48,11 @@ async function tree (rootPath: string): Promise<string[]> {
 
 export class LocalTestHelpers {
   local: Local
+  syncDir: SyncDirTestHelpers
 
   constructor (local: Local) {
     this.local = local
+    this.syncDir = new SyncDirTestHelpers(local.syncPath)
   }
 
   get syncPath (): string {
