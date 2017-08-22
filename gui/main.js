@@ -632,6 +632,7 @@ ipcMain.on('start-sync', (event, syncPath) => {
     addFileManagerShortcut(desktop.config)
     startSync()
   } catch (err) {
+    console.log(err)
     event.sender.send('folder-error', translate('Error Invalid path'))
   }
 })
