@@ -41,7 +41,7 @@
     "flow": "flow status --quiet --show-all-errors",
     "lint": "npm run eslint && npm run flow",
     "mocha": "env-cmd .env.test mocha",
-    "release:build": "yarn release:check && yarn && yarn build",
+    "release:build": "yarn release:check && yarn && yarn run clean && yarn build",
     "release:check": "babel-node ./dev/check-release-branch.js",
     "repl": "cross-env DEBUG=1 COZY_DESKTOP_HEARTBEAT=5000 babel-node ./src/bin/repl.js",
     "size": "t=\"$(npm pack .)\"; wc -c \"${t}\"; tar tvf \"${t}\"; rm \"${t}\";",
