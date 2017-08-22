@@ -543,15 +543,20 @@ const major = Number.parseInt(os.release().split('.')[0])
 //   https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions
 
 const addFileManagerShortcut = (config) => {
-  if (platform === 'win32' && major >= 10) {
-    win10PinToHome(config.syncPath)
-  } else if (platform === 'win32' && major >= 6) {
-    winAddLink(config.syncPath)
-  } else if (platform === 'darwin' && major >= 15) {
-    // sfltool is available since 10.11 (El Capitan)
-    sfltoolAddFavorite(config.syncPath)
-  } else {
-    console.log(`Not registering shortcut on ${platform} ${major}`)
+  try {
+    if (platform === 'win32' && major >= 10) {
+      win10PinToHome(config.syncPath)
+    } else if (platform === 'win32' && major >= 6) {
+      winAddLink(config.syncPath)
+    } else if (platform === 'darwin' && major >= 15) {
+      // sfltool is available since 10.11 (El Capitan)
+      sfltoolAddFavorite(config.syncPath)
+    } else {
+      console.log(`Not registering shortcut on ${platform} ${major}`)
+    }
+  } catch (err) {
+    // User should still be able to use the app without a shortcut
+    console.error(err)
   }
 }
 
