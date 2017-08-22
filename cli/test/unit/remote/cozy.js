@@ -32,58 +32,40 @@ describe('RemoteCozy', function () {
   })
 
   describe('changes', function () {
-    it('rejects when response status is not ok', function () {
+    it('resolves with changes since then given seq', async function () {
+      const { last_seq } = await remoteCozy.changes()
+
+      const dir = await builders.remoteDir().create()
+      const file = await builders.remoteFile().inDir(dir).create()
+
+      const { docs } = await remoteCozy.changes(last_seq)
+      const ids = docs.map(doc => doc._id)
+
+      should(ids.sort()).eql([file._id, dir._id].sort())
+    })
+
+    it('resolves with all changes since the db creation when no seq given', async function () {
+      const dir = await builders.remoteDir().create()
+      const file = await builders.remoteFile().inDir(dir).create()
+
+      const { docs } = await remoteCozy.changes()
+      const ids = docs.map(doc => doc._id)
+
+      should(ids).containEql(dir._id)
+      should(ids).containEql(file._id)
+      should(ids.length).be.greaterThan(2)
+    })
+
+    it('does not swallow errors', function () {
       this.config.cozyUrl = cozyStackDouble.url()
       const remoteCozy = new RemoteCozy(this.config)
 
       cozyStackDouble.stub((req, res) => {
-        res.writeHead(404, {'Content-Type': 'text/plain'})
-        res.end('Not Found')
+        res.writeHead(500, {'Content-Type': 'text/plain'})
+        res.end('whatever')
       })
 
       return should(remoteCozy.changes()).be.rejected()
-    })
-
-    it('rejects when cozy sends invalid JSON', function () {
-      this.config.cozyUrl = cozyStackDouble.url()
-      const remoteCozy = new RemoteCozy(this.config)
-
-      cozyStackDouble.stub((req, res) => {
-        res.writeHead(200, {'Content-Type': 'application/json'})
-        res.end('')
-      })
-
-      return should(remoteCozy.changes()).be.rejected()
-    })
-
-    context('when cozy works', function () {
-      context('without an update sequence', function () {
-        it('lists all changes since the database creation', async function () {
-          let dir = await builders.remoteDir().create()
-          let file = await builders.remoteFile().inDir(dir).create()
-
-          let { docs } = await remoteCozy.changes()
-          const ids = docs.map(doc => doc._id)
-
-          should(ids).containEql(dir._id)
-          should(ids).containEql(file._id)
-          should(ids.length).be.greaterThan(2)
-        })
-      })
-
-      context('with an update sequence', function () {
-        it('lists only changes that occured since then', async function () {
-          let { last_seq } = await remoteCozy.changes()
-
-          let dir = await builders.remoteDir().create()
-          let file = await builders.remoteFile().inDir(dir).create()
-
-          let { docs } = await remoteCozy.changes(last_seq)
-          const ids = docs.map(doc => doc._id)
-
-          should(ids.sort()).eql([file._id, dir._id].sort())
-        })
-      })
     })
   })
 
