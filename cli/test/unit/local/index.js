@@ -14,11 +14,14 @@ import { PendingMap } from '../../../src/utils/pending'
 
 import MetadataBuilders from '../../builders/metadata'
 import configHelpers from '../../helpers/config'
+import { SyncDirTestHelpers } from '../../helpers/sync_dir'
 import pouchHelpers from '../../helpers/pouch'
 
 Promise.promisifyAll(fs)
 
 describe('Local', function () {
+  let syncDir
+
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
   before('instanciate local', function () {
@@ -27,13 +30,7 @@ describe('Local', function () {
     this.local = new Local(this.config, this.prep, this.pouch, this.events)
     this.local.watcher.pending = new PendingMap()
 
-    // Helpers
-    this.path = (doc) => path.join(this.syncPath, doc.path)
-    this.exists = (doc) => fs.existsSync(this.path(doc))
-    this.writeFile = (doc) => { fs.writeFileSync(this.path(doc), '') }
-    this.ensureDir = (doc) => { fs.ensureDirSync(this.path(doc)) }
-    this.unlink = (doc) => fs.unlinkSync(this.path(doc))
-    this.rmdir = (doc) => fs.rmdirSync(this.path(doc))
+    syncDir = new SyncDirTestHelpers(this.syncPath)
   })
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
@@ -44,7 +41,7 @@ describe('Local', function () {
     })
 
     it('has a tmp path', function () {
-      let tmpPath = path.join(this.syncPath, TMP_DIR_NAME)
+      let tmpPath = syncDir.abspath(TMP_DIR_NAME)
       this.local.tmpPath.should.equal(tmpPath)
     })
   })
@@ -60,7 +57,7 @@ describe('Local', function () {
 
     it('creates a readable stream for the document', function (done) {
       let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
-      let dst = path.join(this.syncPath, 'read-stream.jpg')
+      let dst = syncDir.abspath('read-stream.jpg')
       fs.copySync(src, dst)
       let doc = {
         path: 'read-stream.jpg',
@@ -83,7 +80,7 @@ describe('Local', function () {
   describe('metadataUpdater', function () {
     it('chmod +x for an executable file', function (done) {
       let date = new Date('2015-11-09T05:06:07Z')
-      let filePath = path.join(this.syncPath, 'exec-file')
+      let filePath = syncDir.abspath('exec-file')
       fs.ensureFileSync(filePath)
       let updater = this.local.metadataUpdater({
         path: 'exec-file',
@@ -104,7 +101,7 @@ describe('Local', function () {
 
     it('updates mtime for a file', function (done) {
       let date = new Date('2015-10-09T05:06:07Z')
-      let filePath = path.join(this.syncPath, 'utimes-file')
+      let filePath = syncDir.abspath('utimes-file')
       fs.ensureFileSync(filePath)
       let updater = this.local.metadataUpdater({
         path: 'utimes-file',
@@ -120,7 +117,7 @@ describe('Local', function () {
 
     it('updates mtime for a directory', function (done) {
       let date = new Date('2015-10-09T05:06:07Z')
-      let folderPath = path.join(this.syncPath, 'utimes-folder')
+      let folderPath = syncDir.abspath('utimes-folder')
       fs.ensureDirSync(folderPath)
       let updater = this.local.metadataUpdater({
         path: 'utimes-folder',
@@ -205,7 +202,7 @@ describe('Local', function () {
           return Promise.resolve(stream)
         }
       }
-      let filePath = path.join(this.syncPath, doc.path)
+      let filePath = syncDir.abspath(doc.path)
       this.local.addFile(doc, err => {
         this.local.other = null
         should.not.exist(err)
@@ -224,10 +221,10 @@ describe('Local', function () {
         updated_at: new Date('2015-10-09T04:05:07Z'),
         md5sum: 'qwesux5JaAGTet+nckJL9w=='
       }
-      let alt = path.join(this.syncPath, 'files', 'my-checkum-is-456')
+      let alt = syncDir.abspath('files/my-checkum-is-456')
       fs.writeFileSync(alt, 'foo bar baz')
       let stub = sinon.stub(this.local, 'fileExistsLocally').yields(null, alt)
-      let filePath = path.join(this.syncPath, doc.path)
+      let filePath = syncDir.abspath(doc.path)
       this.local.addFile(doc, function (err) {
         stub.restore()
         stub.calledWith(doc.md5sum).should.be.true()
@@ -259,7 +256,7 @@ describe('Local', function () {
           return Promise.resolve(stream)
         }
       }
-      let filePath = path.join(this.syncPath, doc.path)
+      let filePath = syncDir.abspath(doc.path)
       this.local.addFile(doc, err => {
         this.local.other = null
         should.not.exist(err)
@@ -291,7 +288,7 @@ describe('Local', function () {
           return Promise.resolve(stream)
         }
       }
-      let filePath = path.join(this.syncPath, doc.path)
+      let filePath = syncDir.abspath(doc.path)
       this.local.addFile(doc, err => {
         this.local.other = null
         should.exist(err)
@@ -308,7 +305,7 @@ describe('Local', function () {
         path: 'parent/folder-to-create',
         updated_at: new Date('2015-10-09T05:06:08Z')
       }
-      let folderPath = path.join(this.syncPath, doc.path)
+      let folderPath = syncDir.abspath(doc.path)
       this.local.addFolder(doc, function (err) {
         should.not.exist(err)
         fs.statSync(folderPath).isDirectory().should.be.true()
@@ -323,7 +320,7 @@ describe('Local', function () {
         path: 'parent/folder-to-create',
         updated_at: new Date('2015-10-09T05:06:08Z')
       }
-      let folderPath = path.join(this.syncPath, doc.path)
+      let folderPath = syncDir.abspath(doc.path)
       fs.ensureDirSync(folderPath)
       this.local.addFolder(doc, function (err) {
         should.not.exist(err)
@@ -356,7 +353,7 @@ describe('Local', function () {
           return Promise.resolve(stream)
         }
       }
-      let filePath = path.join(this.syncPath, doc.path)
+      let filePath = syncDir.abspath(doc.path)
       fs.writeFileSync(filePath, 'old content')
       this.local.overwriteFileAsync(doc, {}).then(() => {
         this.local.other = null
@@ -377,7 +374,7 @@ describe('Local', function () {
         docType: 'file',
         updated_at: new Date('2015-11-10T05:06:07Z')
       }
-      let filePath = path.join(this.syncPath, doc.path)
+      let filePath = syncDir.abspath(doc.path)
       fs.ensureFileSync(filePath)
       this.local.updateFileMetadata(doc, {}, function (err) {
         should.not.exist(err)
@@ -415,8 +412,8 @@ describe('Local', function () {
         path: 'new-parent/file-moved',
         updated_at: new Date('2015-10-09T05:05:10Z')
       }
-      let oldPath = path.join(this.syncPath, old.path)
-      let newPath = path.join(this.syncPath, doc.path)
+      let oldPath = syncDir.abspath(old.path)
+      let newPath = syncDir.abspath(doc.path)
       fs.ensureDirSync(path.dirname(oldPath))
       fs.writeFileSync(oldPath, 'foobar')
       this.local.moveFile(doc, old, function (err) {
@@ -458,7 +455,7 @@ describe('Local', function () {
         path: 'new-parent/already-here',
         updated_at: new Date('2015-10-09T05:05:12Z')
       }
-      let newPath = path.join(this.syncPath, doc.path)
+      let newPath = syncDir.abspath(doc.path)
       fs.ensureDirSync(path.dirname(newPath))
       fs.writeFileSync(newPath, 'foobar')
       let stub = sinon.stub(this.local, 'addFile').yields()
@@ -486,10 +483,10 @@ describe('Local', function () {
 
       await should(this.local.moveFileAsync(doc, old)).be.fulfilled()
 
-      should(this.exists(old)).be.false()
-      should(this.exists(doc)).be.true()
+      should(syncDir.existsSync(old)).be.false()
+      should(syncDir.existsSync(doc)).be.true()
 
-      this.unlink(doc)
+      syncDir.unlink(doc)
     })
   })
 
@@ -505,8 +502,8 @@ describe('Local', function () {
         docType: 'folder',
         updated_at: new Date('2015-10-09T05:06:10Z')
       }
-      let oldPath = path.join(this.syncPath, old.path)
-      let folderPath = path.join(this.syncPath, doc.path)
+      let oldPath = syncDir.abspath(old.path)
+      let folderPath = syncDir.abspath(doc.path)
       fs.ensureDirSync(oldPath)
       this.local.moveFolder(doc, old, function (err) {
         should.not.exist(err)
@@ -529,7 +526,7 @@ describe('Local', function () {
         docType: 'folder',
         updated_at: new Date('2015-10-09T05:06:10Z')
       }
-      let folderPath = path.join(this.syncPath, doc.path)
+      let folderPath = syncDir.abspath(doc.path)
       this.local.moveFolder(doc, old, function (err) {
         should.not.exist(err)
         fs.statSync(folderPath).isDirectory().should.be.true()
@@ -548,7 +545,7 @@ describe('Local', function () {
         path: 'new-parent/folder-already-here',
         updated_at: new Date('2015-10-09T05:05:12Z')
       }
-      let newPath = path.join(this.syncPath, doc.path)
+      let newPath = syncDir.abspath(doc.path)
       fs.ensureDirSync(newPath)
       let stub = sinon.stub(this.local, 'addFolder').yields()
       this.local.moveFolder(doc, old, function (err) {
@@ -569,8 +566,8 @@ describe('Local', function () {
         path: 'new-parent/folder-already-here',
         updated_at: new Date('2015-10-09T05:05:12Z')
       }
-      let oldPath = path.join(this.syncPath, old.path)
-      let newPath = path.join(this.syncPath, doc.path)
+      let oldPath = syncDir.abspath(old.path)
+      let newPath = syncDir.abspath(doc.path)
       fs.ensureDirSync(oldPath)
       fs.ensureDirSync(newPath)
       let stub = sinon.stub(this.local, 'addFolder').yields()
@@ -593,7 +590,7 @@ describe('Local', function () {
       should(this.exists(old)).be.false()
       should(this.exists(doc)).be.true()
 
-      this.rmdir(doc)
+      syncDir.rmdir(doc)
     })
   })
 
@@ -604,7 +601,7 @@ describe('Local', function () {
         path: 'FILE-TO-DELETE',
         docType: 'file'
       }
-      let filePath = path.join(this.syncPath, doc.path)
+      let filePath = syncDir.abspath(doc.path)
       fs.ensureFileSync(filePath)
       this.pouch.db.put(doc, (err, inserted) => {
         should.not.exist(err)
@@ -625,7 +622,7 @@ describe('Local', function () {
         path: 'FOLDER-TO-DELETE',
         docType: 'folder'
       }
-      let folderPath = path.join(this.syncPath, doc.path)
+      let folderPath = syncDir.abspath(doc.path)
       fs.ensureDirSync(folderPath)
       this.pouch.db.put(doc, (err, inserted) => {
         should.not.exist(err)
@@ -646,7 +643,7 @@ describe('Local', function () {
 
     beforeEach(function () {
       builders = new MetadataBuilders(this.pouch)
-      fullPath = (doc) => path.join(this.syncPath, doc.path)
+      fullPath = (doc) => syncDir.abspath(doc.path)
 
       this.events.emit = sinon.spy()
       sinon.spy(this.local, 'trashAsync')
@@ -707,8 +704,8 @@ describe('Local', function () {
         path: 'conflict/file-conflict-2015-10-09T05_05_10Z',
         updated_at: new Date('2015-10-09T05:05:10Z')
       }
-      let srcPath = path.join(this.syncPath, src.path)
-      let dstPath = path.join(this.syncPath, dst.path)
+      let srcPath = syncDir.abspath(src.path)
+      let dstPath = syncDir.abspath(dst.path)
       fs.ensureDirSync(path.dirname(srcPath))
       fs.writeFileSync(srcPath, 'foobar')
       this.local.resolveConflict(dst, src, function (err) {
