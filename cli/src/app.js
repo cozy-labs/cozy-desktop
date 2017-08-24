@@ -42,6 +42,8 @@ class App {
   remote: Remote
   sync: Sync
 
+  static logger: Function
+
   // basePath is the directory where the config and pouch are saved
   constructor (basePath: string) {
     this.lang = 'fr'
@@ -261,5 +263,7 @@ class App {
     return this.remote.diskUsage()
   }
 }
+
+App.logger = logger
 
 export default App
