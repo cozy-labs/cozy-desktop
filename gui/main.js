@@ -22,6 +22,10 @@ const autoLauncher = new AutoLaunch({
   name: 'Cozy-Desktop',
   isHidden: true
 })
+const log = Desktop.logger({
+  component: 'GUI'
+})
+process.on('uncaughtException', log.error)
 let desktop
 let lastFilesPath
 
@@ -186,7 +190,7 @@ const checkForNewRelease = () => {
     newReleaseAvailable = true
     sendToMainWindow('new-release-available', releaseNotes, releaseName)
   })
-  autoUpdater.addListener('error', (err) => console.error(err))
+  autoUpdater.addListener('error', log.error)
   autoUpdater.checkForUpdates()
   setInterval(() => {
     autoUpdater.checkForUpdates()
@@ -288,7 +292,7 @@ const persistLastFiles = () => {
   const data = JSON.stringify(lastFiles)
   fs.writeFile(lastFilesPath, data, (err) => {
     if (err) {
-      console.log(err)
+      log.error(err)
     }
   })
 }
@@ -336,7 +340,7 @@ const sendDiskUsage = () => {
         }
         sendToMainWindow('disk-space', space)
       },
-      (err) => console.error(err)
+      (err) => log.error(err)
     )
   }
 }
@@ -458,7 +462,7 @@ const startSync = (force) => {
     desktop.synchronize('full')
       .then(() => sendErrorToMainWindow('stopped'))
       .catch((err) => {
-        console.error(err)
+        log.error(err)
         updateState('error', err.message)
         sendDiskUsage()
         sendErrorToMainWindow(err.message)
@@ -506,15 +510,15 @@ const createWindow = () => {
 
 const shouldExit = app.makeSingleInstance(showWindow)
 if (shouldExit) {
-  console.log('Cozy Drive is already running. Exiting...')
+  log.warn('Cozy Drive is already running. Exiting...')
   app.exit()
 }
 
 // Execute a command synchronously and log both input and output.
 const execSync = (cmd) => {
-  console.log(`+ ${cmd}`)
+  log.debug(`+ ${cmd}`)
   const output = childProcess.execSync(cmd, {encoding: 'utf8'})
-  console.log(output)
+  log.debug(output)
 }
 
 const win10PinToHome = (path) => {
@@ -552,11 +556,11 @@ const addFileManagerShortcut = (config) => {
       // sfltool is available since 10.11 (El Capitan)
       sfltoolAddFavorite(config.syncPath)
     } else {
-      console.log(`Not registering shortcut on ${platform} ${major}`)
+      log.warn(`Not registering shortcut on ${platform} ${major}`)
     }
   } catch (err) {
     // User should still be able to use the app without a shortcut
-    console.error(err)
+    log.error(err)
   }
 }
 
@@ -612,7 +616,7 @@ ipcMain.on('register-remote', (event, arg) => {
         autoLauncher.enable()
       },
       (err) => {
-        console.error(err)
+        log.error(err)
         event.sender.send('registration-error', 'No cozy instance at this address!')
       }
     )
@@ -629,7 +633,7 @@ ipcMain.on('choose-folder', (event) => {
 
 ipcMain.on('start-sync', (event, syncPath) => {
   if (!desktop.config.isValid()) {
-    console.error('No client!')
+    log.error('No client!')
     return
   }
   try {
@@ -637,7 +641,7 @@ ipcMain.on('start-sync', (event, syncPath) => {
     addFileManagerShortcut(desktop.config)
     startSync()
   } catch (err) {
-    console.log(err)
+    log.error(err)
     event.sender.send('folder-error', translate('Error Invalid path'))
   }
 })
@@ -665,7 +669,7 @@ ipcMain.on('logout', () => {
 
 ipcMain.on('unlink-cozy', () => {
   if (!desktop.config.isValid()) {
-    console.error('No client!')
+    log.error('No client!')
     return
   }
   const options = {
@@ -684,9 +688,9 @@ ipcMain.on('unlink-cozy', () => {
     }
     desktop.stopSync().then(() => {
       desktop.removeRemote()
-        .then(() => console.log('removed'))
+        .then(() => log.info('removed'))
         .then(() => sendToMainWindow('unlinked'))
-        .catch((err) => console.error('err', err))
+        .catch((err) => log.error(err))
     })
   })
 })
