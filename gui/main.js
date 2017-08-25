@@ -617,7 +617,7 @@ ipcMain.on('register-remote', (event, arg) => {
       },
       (err) => {
         log.error(err)
-        event.sender.send('registration-error', 'No cozy instance at this address!')
+        event.sender.send('registration-error', translate('Address No cozy instance at this address!'))
       }
     )
 })
