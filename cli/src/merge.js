@@ -378,7 +378,6 @@ class Merge {
     markSide(side, newMetadata, oldMetadata)
     newMetadata._id = doc._id
     newMetadata._rev = doc._rev
-    newMetadata.path = oldMetadata.path
     newMetadata.trashed = true
     if (oldMetadata.sides && oldMetadata.sides[side]) {
       markSide(side, oldMetadata, oldMetadata)
