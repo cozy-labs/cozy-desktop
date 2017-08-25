@@ -5,6 +5,9 @@ import fs from 'fs-extra'
 import path from 'path'
 import rimraf from 'rimraf'
 
+import * as conflictHelpers from './conflict'
+import { SyncDirTestHelpers } from './sync_dir'
+
 import { TMP_DIR_NAME } from '../../src/local/constants'
 import Local from '../../src/local'
 
@@ -45,9 +48,11 @@ async function tree (rootPath: string): Promise<string[]> {
 
 export class LocalTestHelpers {
   local: Local
+  syncDir: SyncDirTestHelpers
 
   constructor (local: Local) {
     this.local = local
+    this.syncDir = new SyncDirTestHelpers(local.syncPath)
   }
 
   get syncPath (): string {
@@ -77,8 +82,19 @@ export class LocalTestHelpers {
   }
 
   async tree (): Promise<string[]> {
-    return (await tree(this.trashPath))
+    let trashContents
+    try {
+      trashContents = await tree(this.trashPath)
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err
+      throw new Error(
+        'You must call and await helpers.local.setupTrash() (e.g. in a ' +
+        'beforeEach block) before calling helpers.local.tree() in a test'
+      )
+    }
+    return trashContents
       .map(relPath => path.posix.join('/Trash', relPath))
       .concat(await tree(this.syncPath))
+      .map(conflictHelpers.ellipsizeDate)
   }
 }
