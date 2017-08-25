@@ -81,7 +81,8 @@ export default class RemoteCozy {
                          options?: {ifMatch?: string}) => Promise<RemoteDoc>
 
   trashById: (id: string, options?: {ifMatch: string}) => Promise<RemoteDoc>
-  destroyById: (id: string) => Promise<void>
+
+  destroyById: (id: string, options?: {ifMatch: string}) => Promise<void>
 
   async changes (since: string = '0'): Promise<{last_seq: string, docs: Array<RemoteDoc|RemoteDeletion>}> {
     const {last_seq, results} = await this.client.data.changesFeed(
