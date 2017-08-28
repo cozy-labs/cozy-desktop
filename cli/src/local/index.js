@@ -377,7 +377,7 @@ class Local implements Side {
     }, 1000)
   }
 
-  renameConflictingDocAsync: (doc: Metadata, newPath: string) => Promise<*>
+  renameConflictingDocAsync: (doc: Metadata, newPath: string) => Promise<void>
 }
 
 export default Local
