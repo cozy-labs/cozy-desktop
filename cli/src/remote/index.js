@@ -275,7 +275,7 @@ export default class Remote implements Side {
   }
 
   // TODO add tests
-  async renameConflictingDocAsync (doc: Metadata, newPath: string): Promise<*> {
+  async renameConflictingDocAsync (doc: Metadata, newPath: string): Promise<void> {
     const {path} = doc
     log.info({path}, `Resolve a conflict: ${path} → ${newPath}`)
     const newName = conversion.extractDirAndName(newPath)[1]
