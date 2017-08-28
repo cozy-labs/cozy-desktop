@@ -13,7 +13,7 @@ export interface Side {
   moveFolderAsync (doc: Metadata, from: Metadata): Promise<*>;
   trashAsync (doc: Metadata): Promise<*>;
   deleteFolderAsync (doc: Metadata): Promise<*>;
-  resolveConflictAsync (doc: Metadata, from: Metadata): Promise<*>;
+  renameConflictingDocAsync (doc: Metadata, from: Metadata): Promise<*>;
 }
 
 export function otherSide (side: SideName): SideName {

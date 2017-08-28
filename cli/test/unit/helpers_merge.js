@@ -17,7 +17,7 @@ describe('Merge Helpers', function () {
     this.merge = new Merge(this.pouch)
     this.merge.putFolderAsync = sinon.stub()
     this.merge.local = {}
-    this.merge.local.resolveConflictAsync = sinon.stub()
+    this.merge.local.renameConflictingDocAsync = sinon.stub()
   })
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
@@ -81,10 +81,10 @@ describe('Merge Helpers', function () {
     })
   })
 
-  describe('resolveConflictDoc', function () {
+  describe('resolveConflict', function () {
     it('appends -conflict- and the date to the path', function (done) {
       let doc = {path: 'foo/bar'}
-      let spy = this.merge.local.resolveConflictAsync
+      let spy = this.merge.local.renameConflictingDocAsync
       spy.resolves()
       this.merge.resolveConflictAsync(this.side, doc).then(() => {
         spy.called.should.be.true()
@@ -102,7 +102,7 @@ describe('Merge Helpers', function () {
 
     it('preserves the extension', function (done) {
       let doc = {path: 'foo/bar.jpg'}
-      let spy = this.merge.local.resolveConflictAsync
+      let spy = this.merge.local.renameConflictingDocAsync
       spy.resolves()
       this.merge.resolveConflictAsync(this.side, doc).then(() => {
         spy.called.should.be.true()
