@@ -112,9 +112,9 @@ describe('RemoteWatcher', function () {
       sinon.stub(this.watcher, 'pullMany')
       sinon.stub(this.remoteCozy, 'changes')
 
-      this.pouch.getRemoteSeqAsync.returnsPromise().resolves(lastLocalSeq)
-      this.watcher.pullMany.returnsPromise().resolves()
-      this.remoteCozy.changes.returnsPromise().resolves(changes)
+      this.pouch.getRemoteSeqAsync.resolves(lastLocalSeq)
+      this.watcher.pullMany.resolves()
+      this.remoteCozy.changes.resolves(changes)
 
       return this.watcher.watch()
     })
@@ -153,7 +153,7 @@ describe('RemoteWatcher', function () {
     })
 
     it('pulls many changed files/dirs given their ids', async function () {
-      pullOne.returnsPromise().resolves()
+      pullOne.resolves()
 
       await this.watcher.pullMany(changes)
 
@@ -164,8 +164,8 @@ describe('RemoteWatcher', function () {
 
     context('when pullOne() rejects some file/dir', function () {
       beforeEach(function () {
-        pullOne.withArgs(changes[0]).returnsPromise().rejects(new Error('oops'))
-        pullOne.withArgs(changes[1]).returnsPromise().resolves()
+        pullOne.withArgs(changes[0]).rejects(new Error('oops'))
+        pullOne.withArgs(changes[1]).resolves()
       })
 
       it('rejects with the failed ids', function () {
@@ -319,7 +319,7 @@ describe('RemoteWatcher', function () {
 
     it('calls addDoc for a new doc', async function () {
       this.prep.addDocAsync = sinon.stub()
-      this.prep.addDocAsync.returnsPromise().resolves(null)
+      this.prep.addDocAsync.resolves(null)
       let doc: RemoteDoc = {
         _id: '12345678905',
         _rev: '1-abcdef',
@@ -359,7 +359,7 @@ describe('RemoteWatcher', function () {
 
     it('calls updateDoc when tags are updated', async function () {
       this.prep.updateDocAsync = sinon.stub()
-      this.prep.updateDocAsync.returnsPromise().resolves(null)
+      this.prep.updateDocAsync.resolves(null)
       let doc: RemoteDoc = {
         _id: '12345678901',
         _rev: '2-abcdef',
@@ -400,7 +400,7 @@ describe('RemoteWatcher', function () {
 
     it('calls updateDoc when content is overwritten', async function () {
       this.prep.updateDocAsync = sinon.stub()
-      this.prep.updateDocAsync.returnsPromise().resolves(null)
+      this.prep.updateDocAsync.resolves(null)
       let doc: RemoteDoc = {
         _id: '12345678901',
         _rev: '3-abcdef',
@@ -435,7 +435,7 @@ describe('RemoteWatcher', function () {
 
     it('calls moveFile when file is renamed', async function () {
       this.prep.moveFileAsync = sinon.stub()
-      this.prep.moveFileAsync.returnsPromise().resolves(null)
+      this.prep.moveFileAsync.resolves(null)
       let doc: RemoteDoc = {
         _id: '12345678902',
         _rev: '4-abcdef',
@@ -481,7 +481,7 @@ describe('RemoteWatcher', function () {
 
     it('calls moveFile when file is moved', async function () {
       this.prep.moveFileAsync = sinon.stub()
-      this.prep.moveFileAsync.returnsPromise().resolves(null)
+      this.prep.moveFileAsync.resolves(null)
       let doc: RemoteDoc = {
         _id: '12345678902',
         _rev: '5-abcdef',

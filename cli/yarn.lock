@@ -5627,10 +5627,6 @@ simple-mime@~0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/simple-mime/-/simple-mime-0.1.0.tgz#95f517c4f466d7cff561a71fc9dab2596ea9ef2e"
 
-sinon-stub-promise@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/sinon-stub-promise/-/sinon-stub-promise-4.0.0.tgz#6d498ba1198557cd01e3466af92dc7df725192c2"
-
 sinon@^2.3.1:
   version "2.3.1"
   resolved "https://registry.yarnpkg.com/sinon/-/sinon-2.3.1.tgz#48c9c758b4d0bb86327486833f1c4298919ce9ee"
