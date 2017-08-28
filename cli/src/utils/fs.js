@@ -1,23 +1,22 @@
+import Promise from 'bluebird'
+import childProcess from 'child_process'
+
 import logger from '../logger'
+
+Promise.promisifyAll(childProcess)
 
 const log = logger({
   component: 'FS'
 })
 
-// The fswin module can only be loaded on Windows
-let fswin
-if (process.platform === 'win32') {
-  fswin = require('fswin')
-}
-
-// Hides a file or directory on Windows.
-// Async so it doesn't block more useful operations.
-// No failure handling because we can't / don't want to do anything anyway.
-export function hideOnWindows (path: string): void {
-  if (!fswin) return
-  fswin.setAttributes(path, {IS_HIDDEN: true}, (succeeded) => {
-    if (!succeeded) log.warn(`Could not set IS_HIDDEN flag on ${path}`)
-  })
+// Hides a directory on Windows.
+// Errors are logged, not thrown.
+export async function hideOnWindows (path: string): Promise<void> {
+  try {
+    await childProcess.execAsync(`attrib +h "${path}"`)
+  } catch (err) {
+    log.error(err)
+  }
 }
 
 const ILLEGAL_CHARACTERS = '/?<>\\:*|"'
