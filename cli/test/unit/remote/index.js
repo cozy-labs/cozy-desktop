@@ -9,6 +9,7 @@ import sinon from 'sinon'
 import should from 'should'
 
 import * as conversion from '../../../src/conversion'
+import { ensureValidPath } from '../../../src/metadata'
 import Prep from '../../../src/prep'
 import Remote from '../../../src/remote'
 import { TRASH_DIR_ID } from '../../../src/remote/constants'
@@ -456,8 +457,10 @@ describe('Remote', function () {
     })
 
     it('does nothing when the folder already exists', async function () {
-      const remoteDir: RemoteDoc = await builders.remoteDir().create()
+      const parentDir: RemoteDoc = await builders.remoteDir().create()
+      const remoteDir: RemoteDoc = await builders.remoteDir().inDir(parentDir).create()
       const metadata: Metadata = {...conversion.createMetadata(remoteDir), remote: undefined}
+      ensureValidPath(metadata)
 
       const result: Metadata = await this.remote.addFolderAsync(metadata)
 
