@@ -4,6 +4,7 @@
 import crypto from 'crypto'
 import EventEmitter from 'events'
 import fs from 'fs'
+import pick from 'lodash.pick'
 import path from 'path'
 import sinon from 'sinon'
 import should from 'should'
@@ -548,58 +549,17 @@ describe('Remote', function () {
     })
   })
 
-  xdescribe('resolveConflict', () =>
-    it('renames the file/folder', function (done) {
-      let md5sum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
-      let binary = {
-        _id: md5sum,
-        _rev: '1-0123456789'
-      }
-      let src: Object = {
-        path: 'cat9.jpg',
-        docType: 'file',
-        md5sum,
-        updated_at: new Date().toISOString(),
-        size: 36901
-      }
-      let dst = {
-        path: 'cat-conflict-2015-12-01T01:02:03Z.jpg',
-        docType: 'file',
-        md5sum,
-        updated_at: src.updated_at,
-        size: 36901
-      }
-      let remoteDoc = this.remote.createRemoteDoc(src, {binary})
-      return this.couch.put(remoteDoc, (err, created) => {
-        should.not.exist(err)
-        src.remote = {
-          _id: created.id,
-          _rev: created.rev,
-          binary: {
-            _id: md5sum,
-            _rev: binary._rev
-          }
-        }
-        return this.remote.resolveConflict(dst, src, (err, moved) => {
-          should.not.exist(err)
-          return this.couch.get(moved.id, function (err, file) {
-            should.not.exist(err)
-            file.should.have.properties({
-              path: '',
-              name: dst.path,
-              docType: 'file',
-              updated_at: dst.updated_at,
-              size: 36901,
-              binary: {
-                file: {
-                  id: binary._id,
-                  rev: binary._rev
-                }
-              }
-            })
-            done()
-          })
-        })
+  describe('renameConflictingDocAsync', () =>
+    it('renames the file/folder', async function () {
+      const remoteDoc: RemoteDoc = await builders.remoteFile().named('cat9').create()
+      const src: Metadata = conversion.createMetadata(remoteDoc)
+      ensureValidPath(src)
+      const newPath = 'cat9-conflict-2015-12-01T01:02:03Z.jpg'
+      await this.remote.renameConflictingDocAsync(src, newPath)
+      const file: JsonApiDoc = await cozy.files.statById(remoteDoc._id)
+      should(file.attributes).have.properties({
+        ...pick(remoteDoc, ['dir_id', 'type', 'updated_at', 'size', 'md5sum']),
+        name: newPath
       })
     })
   )
