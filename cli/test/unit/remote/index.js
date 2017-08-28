@@ -428,7 +428,7 @@ describe('Remote', function () {
     })
 
     it('creates the parent folder when missing', async function () {
-      const metadata: Metadata = metadataBuilders.fileMetadata().path('foo/bar/qux').build()
+      const metadata: Metadata = metadataBuilders.fileMetadata().path(path.join('foo', 'bar', 'qux')).build()
       await this.remote.addFileAsync(metadata)
       await should(cozy.files.statByPath('/foo/bar')).be.fulfilled()
     })
@@ -471,7 +471,7 @@ describe('Remote', function () {
     })
 
     it('creates the parent folder when missing', async function () {
-      const metadata: Metadata = metadataBuilders.dirMetadata().path('foo/bar/qux').build()
+      const metadata: Metadata = metadataBuilders.dirMetadata().path(path.join('foo', 'bar', 'qux')).build()
       await this.remote.addFolderAsync(metadata)
       await should(cozy.files.statByPath('/foo/bar')).be.fulfilled()
     })
