@@ -88,13 +88,13 @@ describe('Merge Helpers', function () {
       spy.resolves()
       this.merge.resolveConflictAsync(this.side, doc).then(() => {
         spy.called.should.be.true()
-        let dst = spy.args[0][0]
-        let parts = dst.path.split('-conflict-')
+        let newPath = spy.args[0][1]
+        let parts = newPath.split('-conflict-')
         parts[0].should.equal(path.normalize('foo/bar'))
         parts = parts[1].split('T')
         parts[0].should.match(/^\d{4}-\d{2}-\d{2}$/)
         parts[1].should.match(/^\d{2}_\d{2}_\d{2}.\d{3}Z$/)
-        let src = spy.args[0][1]
+        let src = spy.args[0][0]
         src.path.should.equal(doc.path)
         done()
       })

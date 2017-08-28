@@ -365,19 +365,19 @@ class Local implements Side {
   }
 
   // Rename a file/folder to resolve a conflict
-  renameConflictingDoc (dst: Metadata, src: Metadata, callback: Callback) {
-    log.info({path: src.path}, `Resolve a conflict: ${src.path} → ${dst.path}`)
-    let srcPath = path.join(this.syncPath, src.path)
-    let dstPath = path.join(this.syncPath, dst.path)
+  renameConflictingDoc (doc: Metadata, newPath: string, callback: Callback) {
+    log.info({path: doc.path}, `Resolve a conflict: ${doc.path} → ${newPath}`)
+    let srcPath = path.join(this.syncPath, doc.path)
+    let dstPath = path.join(this.syncPath, newPath)
     fs.rename(srcPath, dstPath, callback)
     // Don't fire an event for the deleted file
     setTimeout(() => {
       const p = this.watcher.pendingDeletions
-      if (p && p.hasPath(src.path)) { p.clear(src.path) }
+      if (p && p.hasPath(doc.path)) { p.clear(doc.path) }
     }, 1000)
   }
 
-  renameConflictingDocAsync: (Metadata, Metadata) => Promise<*>
+  renameConflictingDocAsync: (doc: Metadata, newPath: string) => Promise<*>
 }
 
 export default Local
