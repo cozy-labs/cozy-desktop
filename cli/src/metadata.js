@@ -101,7 +101,9 @@ export function id (path: string) {
 }
 
 // Return true if the document has not a valid path
-// (ie a path inside the mount point)
+// (ie a path inside the mount point).
+// Normalizes the path as a side-effect.
+// TODO: Separate normalization (side-effect) from validation (pure).
 export function invalidPath (doc: Metadata) {
   if (!doc.path) { return true }
   doc.path = path.normalize(doc.path)
@@ -114,6 +116,7 @@ export function invalidPath (doc: Metadata) {
           (parts.indexOf('..') >= 0)
 }
 
+// Same as invalidPath, except it throws an exception when path is invalid.
 export function ensureValidPath (doc: Metadata) {
   if (invalidPath(doc)) {
     log.warn({path: doc.path}, `Invalid path: ${JSON.stringify(doc, null, 2)}`)
