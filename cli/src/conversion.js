@@ -15,7 +15,9 @@ export function localDocType (remote: string): string {
   }
 }
 
-// Transform a remote document into metadata, as stored in Pouch
+// Transform a remote document into metadata, as stored in Pouch.
+// Please note the path is not normalized yet!
+// Normalization is done as a side effect of metadata.invalidPath() :/
 export function createMetadata (remote: RemoteDoc): Metadata {
   const doc: Object = {
     path: remote.path.substring(1),
