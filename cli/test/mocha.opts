@@ -5,7 +5,7 @@
 --require babel-polyfill
 --require ./src/globals
 --require should
+--require should-sinon
 --require ./test/assertions/timestamp
---require ./test/helpers/sinon_stub_promise
 --require ./test/helpers/stacktraces
 --recursive

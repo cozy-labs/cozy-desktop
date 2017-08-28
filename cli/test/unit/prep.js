@@ -20,8 +20,8 @@ describe('Prep', function () {
       deleteFileAsync: sinon.stub(),
       deleteFolderAsync: sinon.stub()
     }
-    this.merge.trashFileAsync.returnsPromise().resolves()
-    this.merge.trashFolderAsync.returnsPromise().resolves()
+    this.merge.trashFileAsync.resolves()
+    this.merge.trashFolderAsync.resolves()
     this.ignore = new Ignore(['ignored'])
     this.prep = new Prep(this.merge, this.ignore)
   })
@@ -537,7 +537,7 @@ describe('Prep', function () {
       await this.prep.trashFileAsync(this.side, doc)
 
       should(doc).have.property('_id')
-      should(this.merge.trashFileAsync).be.calledOnce()
+      should(this.merge.trashFileAsync.calledOnce).be.true()
     })
 
     it('throws when path is invalid', async function () {

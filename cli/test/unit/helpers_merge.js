@@ -43,7 +43,7 @@ describe('Merge Helpers', function () {
     })
 
     it('creates the parent directory if missing', function (done) {
-      this.merge.putFolderAsync.returnsPromise().resolves('OK')
+      this.merge.putFolderAsync.resolves('OK')
       let doc = {
         _id: 'MISSING/CHILD',
         path: 'missing/child'
@@ -60,7 +60,7 @@ describe('Merge Helpers', function () {
     })
 
     it('creates the full tree if needed', function (done) {
-      this.merge.putFolderAsync.returnsPromise().resolves('OK')
+      this.merge.putFolderAsync.resolves('OK')
       let doc = {
         _id: 'a/b/c/d/e',
         path: 'a/b/c/d/e'
@@ -85,7 +85,7 @@ describe('Merge Helpers', function () {
     it('appends -conflict- and the date to the path', function (done) {
       let doc = {path: 'foo/bar'}
       let spy = this.merge.local.resolveConflictAsync
-      spy.returnsPromise().resolves()
+      spy.resolves()
       this.merge.resolveConflictAsync(this.side, doc).then(() => {
         spy.called.should.be.true()
         let dst = spy.args[0][0]
@@ -103,7 +103,7 @@ describe('Merge Helpers', function () {
     it('preserves the extension', function (done) {
       let doc = {path: 'foo/bar.jpg'}
       let spy = this.merge.local.resolveConflictAsync
-      spy.returnsPromise().resolves()
+      spy.resolves()
       this.merge.resolveConflictAsync(this.side, doc).then(() => {
         spy.called.should.be.true()
         let dst = spy.args[0][0]
