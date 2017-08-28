@@ -365,7 +365,7 @@ class Local implements Side {
   }
 
   // Rename a file/folder to resolve a conflict
-  resolveConflict (dst: Metadata, src: Metadata, callback: Callback) {
+  renameConflictingDoc (dst: Metadata, src: Metadata, callback: Callback) {
     log.info({path: src.path}, `Resolve a conflict: ${src.path} → ${dst.path}`)
     let srcPath = path.join(this.syncPath, src.path)
     let dstPath = path.join(this.syncPath, dst.path)
@@ -377,7 +377,7 @@ class Local implements Side {
     }, 1000)
   }
 
-  resolveConflictAsync: (Metadata, Metadata) => Promise<*>
+  renameConflictingDocAsync: (Metadata, Metadata) => Promise<*>
 }
 
 export default Local

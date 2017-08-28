@@ -694,7 +694,7 @@ describe('Local', function () {
     })
   })
 
-  describe('resolveConflict', () =>
+  describe('renameConflictingDoc', () =>
     it('renames the file', function (done) {
       let src = {
         path: 'conflict/file',
@@ -708,7 +708,7 @@ describe('Local', function () {
       let dstPath = syncDir.abspath(dst.path)
       fs.ensureDirSync(path.dirname(srcPath))
       fs.writeFileSync(srcPath, 'foobar')
-      this.local.resolveConflict(dst, src, function (err) {
+      this.local.renameConflictingDoc(dst, src, function (err) {
         should.not.exist(err)
         fs.existsSync(srcPath).should.be.false()
         fs.statSync(dstPath).isFile().should.be.true()

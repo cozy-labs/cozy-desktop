@@ -89,7 +89,7 @@ class Merge {
     dst.path = `${join(dir, base)}-conflict-${date}${ext}`
     try {
       // $FlowFixMe
-      await this[side].resolveConflictAsync(dst, doc)
+      await this[side].renameConflictingDocAsync(dst, doc)
     } catch (err) {
       throw err
     }
