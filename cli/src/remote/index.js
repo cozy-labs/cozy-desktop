@@ -2,6 +2,7 @@
 
 import clone from 'lodash.clone'
 import EventEmitter from 'events'
+import { posix, sep } from 'path'
 import * as stream from 'stream'
 
 import Config from '../config'
@@ -75,7 +76,8 @@ export default class Remote implements Side {
       if (err.status !== 409) { throw err }
 
       log.info({path}, 'Folder already exists')
-      dir = await this.remoteCozy.findDirectoryByPath(`/${doc.path}`)
+      const remotePath = '/' + posix.join(...doc.path.split(sep))
+      dir = await this.remoteCozy.findDirectoryByPath(remotePath)
     }
 
     doc.remote = {
