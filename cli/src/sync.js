@@ -234,6 +234,9 @@ class Sync {
       if (err.status === 400) {
         log.error({err}, 'Client has been revoked')
         throw new Error('Client has been revoked')
+      } else if (err.status === 403) {
+        log.error({err}, 'Client has wrong permissions (lack disk-usage)')
+        throw new Error('Client has wrong permissions (lack disk-usage)')
       } else {
         // The client is offline, wait that it can connect again to the server
         log.warn({path}, 'Client is offline')
