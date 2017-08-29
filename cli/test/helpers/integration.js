@@ -37,6 +37,7 @@ export class IntegrationTestHelpers {
     this._remote.remoteCozy.client = cozyClient
     this._sync = new Sync(pouch, this._local, this._remote, ignore, events)
     this._sync.stopped = false
+    this._sync.diskUsage = this._remote.diskUsage
     this._pouch = pouch
     this.local = new LocalTestHelpers(this._local)
     this.remote = new RemoteTestHelpers(this._remote)
