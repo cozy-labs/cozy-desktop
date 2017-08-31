@@ -257,7 +257,6 @@ export default class Remote implements Side {
     const folder = await this.remoteCozy.client.files.statById(doc.remote._id)
     if (folder.relations('contents').length === 0) {
       log.info({path}, 'Deleting folder from the Cozy trash...')
-      // FIXME: Would it make sense to have an ifMatch option in destroyById()?
       // FIXME: Don't complain when user cleared the trash? (race condition)
       const opts = doc.remote._rev ? { ifMatch: doc.remote._rev } : undefined
       await this.remoteCozy.destroyById(folder._id, opts)
