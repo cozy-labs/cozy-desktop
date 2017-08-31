@@ -354,7 +354,7 @@ binary-extensions@^1.0.0:
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-1.8.0.tgz#48ec8d16df4377eae5fa5884682480af4d95c774"
 
-bindings@^1.2.1, bindings@~1.2.1:
+bindings@~1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/bindings/-/bindings-1.2.1.tgz#14ad6113812d2d37d72e67b4cacb4bb726505f11"
 
@@ -728,9 +728,9 @@ core-util-is@~1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/core-util-is/-/core-util-is-1.0.2.tgz#b5fd54220aa2bc5ab57aab7140c940754503c1a7"
 
-cozy-client-js@^0.3.9:
-  version "0.3.9"
-  resolved "https://registry.yarnpkg.com/cozy-client-js/-/cozy-client-js-0.3.9.tgz#21899559008bcf671ee132c079532577d2ae1986"
+cozy-client-js@^0.3.13:
+  version "0.3.15"
+  resolved "https://registry.yarnpkg.com/cozy-client-js/-/cozy-client-js-0.3.15.tgz#f87e47f7aa08dbac4309a9a5f94322d747ce9799"
 
 "cozy-desktop@file:../cli/":
   version "3.0.1"
@@ -742,9 +742,8 @@ cozy-client-js@^0.3.9:
     bunyan "^1.8.10"
     chokidar "1.7.0"
     commander "2.9.0"
-    cozy-client-js "^0.3.9"
+    cozy-client-js "^0.3.13"
     fs-extra "^3.0.0"
-    fswin sebn/node-fswin#electron
     isomorphic-fetch "2.2.1"
     lodash.clone "4.5.0"
     lodash.find "4.6.0"
@@ -1805,12 +1804,6 @@ fstream@^1.0.0, fstream@^1.0.10, fstream@^1.0.2:
     inherits "~2.0.0"
     mkdirp ">=0.5 0"
     rimraf "2"
-
-fswin@sebn/node-fswin#electron:
-  version "2.16.501"
-  resolved "https://codeload.github.com/sebn/node-fswin/tar.gz/99c7f27f1d7bfd00c03fa616ac76d6fc1cba5a2a"
-  dependencies:
-    bindings "^1.2.1"
 
 function-bind@^1.0.2, function-bind@^1.1.0:
   version "1.1.0"
