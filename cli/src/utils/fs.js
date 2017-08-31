@@ -12,6 +12,7 @@ const log = logger({
 // Hides a directory on Windows.
 // Errors are logged, not thrown.
 export async function hideOnWindows (path: string): Promise<void> {
+  if (process.platform !== 'win32') return
   try {
     await childProcess.execAsync(`attrib +h "${path}"`)
   } catch (err) {
