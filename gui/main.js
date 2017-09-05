@@ -608,7 +608,7 @@ ipcMain.on('register-remote', (event, arg) => {
     mainWindow.setContentSize(DEFAULT_WIDTH, LOGIN_SCREEN_HEIGHT, true)
     mainWindow.loadURL(url)
     mainWindow.webContents.on('did-get-response-details', (event, status, newUrl, originalUrl, httpResponseCode) => {
-      if (newUrl.match('/auth/authorize\?') && httpResponseCode === 200) {
+      if (newUrl.match(/\/auth\/authorize\?/) && httpResponseCode === 200) {
         mainWindow.setContentSize(DEFAULT_WIDTH, OAUTH_SCREEN_HEIGHT, true)
       }
     })
