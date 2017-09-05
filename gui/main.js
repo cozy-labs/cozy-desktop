@@ -73,9 +73,14 @@ let errorMessage = ''
 let lastFiles = []
 let newReleaseAvailable = false
 
+const DEFAULT_WIDTH = 768
+const DEFAULT_HEIGHT = 570
+const LOGIN_SCREEN_HEIGHT = 700
+const OAUTH_SCREEN_HEIGHT = 900
+
 const windowOptions = {
-  width: 768,
-  height: 570,
+  width: DEFAULT_WIDTH,
+  height: DEFAULT_HEIGHT,
   icon: `${__dirname}/images/icon.png`
 }
 
@@ -600,9 +605,16 @@ ipcMain.on('register-remote', (event, arg) => {
   const onRegistered = (client, url) => {
     let resolveP
     const promise = new Promise((resolve) => { resolveP = resolve })
+    mainWindow.setContentSize(DEFAULT_WIDTH, LOGIN_SCREEN_HEIGHT, true)
     mainWindow.loadURL(url)
+    mainWindow.webContents.on('did-get-response-details', (event, status, newUrl, originalUrl, httpResponseCode) => {
+      if (newUrl.match(/\/auth\/authorize\?/) && httpResponseCode === 200) {
+        mainWindow.setContentSize(DEFAULT_WIDTH, OAUTH_SCREEN_HEIGHT, true)
+      }
+    })
     mainWindow.webContents.on('did-get-redirect-request', (event, oldUrl, newUrl) => {
       if (newUrl.match('file://')) {
+        mainWindow.setContentSize(DEFAULT_WIDTH, DEFAULT_HEIGHT, true)
         resolveP(newUrl)
       }
     })
