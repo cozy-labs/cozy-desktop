@@ -195,15 +195,18 @@
   .progress
     width 100%
     height .5em
-    border 1px solid grey
+    border 1px solid cool-grey
+    border-radius .1em
+    overflow hidden
+    background-color pale-grey
 
     .progress-inner
-      height: 100%
-      background-color: blue
+      height 100%
+      background-color blue
 
   strong
     width 25%
-    color grey
+    color cool-grey
     display inline-block
 
   .btn--danger
@@ -213,6 +216,11 @@
 
     &:active, &:not([disabled]):not([aria-disabled=true]):hover, &:focus
       border 1px solid #fdcbcb
+
+  .toggle
+    margin-left 1em
+    display inline-block
+    vertical-align middle
 
 
 .two-panes__content--help

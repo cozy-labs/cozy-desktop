@@ -99,9 +99,25 @@ update msg model =
 -- VIEW
 
 
-humanReadableDisk : Helpers -> Float -> String
-humanReadableDisk helpers v =
+humanReadableDiskValue : Helpers -> Float -> String
+humanReadableDiskValue helpers v =
     (toString (round (v / 1000000)) ++ " M" ++ (helpers.t "Account b"))
+
+
+diskQuotaLine : Helpers -> Model -> Html Msg
+diskQuotaLine helpers model =
+    if model.disk.quota == 0 then
+        div []
+            [ text ((humanReadableDiskValue helpers model.disk.used) ++ " / ∞") ]
+    else
+        div []
+            [ text
+                ((humanReadableDiskValue helpers model.disk.used)
+                    ++ " / "
+                    ++ (humanReadableDiskValue helpers model.disk.quota)
+                )
+            , (progressbar (model.disk.used / model.disk.quota))
+            ]
 
 
 versionLine : Helpers -> Model -> Html Msg
@@ -120,13 +136,20 @@ versionLine helpers model =
 
 progressbar : Float -> Html Msg
 progressbar ratio =
-    div [ class "progress" ]
-        [ div
-            [ class "progress-inner"
-            , style [ ( "width", (toString (100 * ratio)) ++ "%" ) ]
+    let
+        cappedRatio =
+            (Basics.min 1 ratio)
+
+        percent =
+            (toString (cappedRatio * 100)) ++ "%"
+    in
+        div [ class "progress" ]
+            [ div
+                [ class "progress-inner"
+                , style [ ( "width", percent ) ]
+                ]
+                []
             ]
-            []
-        ]
 
 
 view : Helpers -> Model -> Html Msg
@@ -134,14 +157,7 @@ view helpers model =
     section [ class "two-panes__content two-panes__content--settings" ]
         [ h1 [] [ text (helpers.t "Settings Settings") ]
         , h2 [] [ text (helpers.t "Account Cozy disk space") ]
-        , div []
-            [ text
-                ((humanReadableDisk helpers model.disk.used)
-                    ++ " / "
-                    ++ (humanReadableDisk helpers model.disk.quota)
-                )
-            ]
-        , (progressbar (model.disk.used / (model.disk.quota + 1)))
+        , diskQuotaLine helpers model
         , h2 [] [ text (helpers.t "Settings Startup") ]
         , div
             [ class "coz-form-toggle"
