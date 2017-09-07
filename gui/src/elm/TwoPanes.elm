@@ -7,6 +7,7 @@ import Helpers exposing (Helpers)
 import Icons
 import Dashboard
 import Settings
+import Help
 
 
 -- MODEL
@@ -15,6 +16,7 @@ import Settings
 type Tab
     = DashboardTab
     | SettingsTab
+    | HelpTab
 
 
 
@@ -25,6 +27,7 @@ type alias Model =
     { tab : Tab
     , dashboard : Dashboard.Model
     , settings : Settings.Model
+    , help : Help.Model
     }
 
 
@@ -33,6 +36,7 @@ init version =
     { tab = DashboardTab
     , dashboard = Dashboard.init
     , settings = Settings.init version
+    , help = Help.init
     }
 
 
@@ -47,6 +51,7 @@ type Msg
     | FillAddressAndDevice ( String, String )
     | DashboardMsg Dashboard.Msg
     | SettingsMsg Settings.Msg
+    | HelpMsg Help.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -96,6 +101,13 @@ update msg model =
             in
                 ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
 
+        HelpMsg subMsg ->
+            let
+                ( help, cmd ) =
+                    Help.update subMsg model.help
+            in
+                ( { model | help = help }, Cmd.map HelpMsg cmd )
+
 
 
 -- VIEW
@@ -127,6 +139,7 @@ view helpers model =
                 [ ul []
                     [ menu_item helpers model "Recents" DashboardTab Icons.dashboard
                     , menu_item helpers model "Settings" SettingsTab Icons.settings
+                    , menu_item helpers model "Help" HelpTab Icons.help
                     ]
                 ]
 
@@ -137,5 +150,8 @@ view helpers model =
 
                 SettingsTab ->
                     Html.map SettingsMsg (Settings.view helpers model.settings)
+
+                HelpTab ->
+                    Html.map HelpMsg (Help.view helpers model.help)
     in
         section [ class "two-panes" ] [ menu, content ]

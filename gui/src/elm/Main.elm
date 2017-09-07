@@ -34,7 +34,6 @@ type Page
     | TwoPanesPage
     | UnlinkedPage
     | RevokedPage
-    | HelpPage
 
 
 type alias Model =
@@ -44,7 +43,6 @@ type alias Model =
     , wizard : Wizard.Model
     , twopanes : TwoPanes.Model
     , revoked : Revoked.Model
-    , help : Help.Model
     }
 
 
@@ -89,7 +87,7 @@ init flags =
             Help.init
 
         model =
-            Model localeIdentifier locales page wizard twopanes revoked help
+            Model localeIdentifier locales page wizard twopanes revoked
     in
         ( model, Cmd.none )
 
@@ -103,7 +101,6 @@ type Msg
     | WizardMsg Wizard.Msg
     | SyncStart ( String, String )
     | TwoPanesMsg TwoPanes.Msg
-    | HelpMsg Help.Msg
     | Unlink
     | Revoked
     | RevokedMsg Revoked.Msg
@@ -136,13 +133,6 @@ update msg model =
                     TwoPanes.update subMsg model.twopanes
             in
                 ( { model | twopanes = twopanes }, Cmd.map TwoPanesMsg cmd )
-
-        HelpMsg subMsg ->
-            let
-                ( help, cmd ) =
-                    Help.update subMsg model.help
-            in
-                ( { model | help = help }, Cmd.map HelpMsg cmd )
 
         Unlink ->
             ( { model | page = UnlinkedPage }, Cmd.none )
@@ -247,7 +237,7 @@ subscriptions model =
         , offline (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.GoOffline)))
         , updated (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.Updated)))
         , syncing (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.Syncing)))
-        , mail (HelpMsg << Help.MailSent)
+        , mail (TwoPanesMsg << TwoPanes.HelpMsg << Help.MailSent)
         , autolaunch (TwoPanesMsg << TwoPanes.SettingsMsg << Settings.AutoLaunchSet)
         , cancelUnlink (always (TwoPanesMsg (TwoPanes.SettingsMsg Settings.CancelUnlink)))
         , unlink (always Unlink)
@@ -289,6 +279,3 @@ view model =
 
             RevokedPage ->
                 Html.map RevokedMsg (Revoked.view helpers model.revoked)
-
-            HelpPage ->
-                Html.map HelpMsg (Help.view helpers model.help)
