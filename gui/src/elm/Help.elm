@@ -24,13 +24,21 @@ type alias Model =
     }
 
 
-defaultBody : List String
-defaultBody =
-    [ "Help Hello Cozy,"
-    , "Help I like a lot what you do, but I have an issue:"
-    , "Help [ The more you can say about the issue, the better: do you have many files? Are they big? Is your cozy up-to-date? ]"
-    , "Help Take care!"
-    ]
+bodyOrDefault : Model -> String
+bodyOrDefault model =
+    case
+        model.body
+    of
+        Nothing ->
+            String.join "\n\n"
+                [ "Help Hello Cozy,"
+                , "Help I like a lot what you do, but I have an issue:"
+                , "Help [ The more you can say about the issue, the better: do you have many files? Are they big? Is your cozy up-to-date? ]"
+                , "Help Take care!"
+                ]
+
+        Just body ->
+            body
 
 
 init : Model
@@ -62,18 +70,7 @@ update msg model =
             ( { model | body = Just body, status = Writing }, Cmd.none )
 
         SendMail ->
-            let
-                body =
-                    case
-                        model.body
-                    of
-                        Nothing ->
-                            String.join "\n\n" defaultBody
-
-                        Just body ->
-                            body
-            in
-                ( { model | status = Sending }, sendMail body )
+            ( { model | status = Sending }, sendMail (bodyOrDefault model) )
 
         MailSent Nothing ->
             ( { model | status = Success }, Cmd.none )
@@ -86,90 +83,59 @@ update msg model =
 -- VIEW
 
 
+iconLink : Helpers -> String -> String -> String -> Html Msg
+iconLink helpers linkHref iconName label =
+    li []
+        [ a [ href linkHref ]
+            [ i [ class ("icon icon--" ++ iconName) ] []
+            , text (helpers.t label)
+            ]
+        ]
+
+
 view : Helpers -> Model -> Html Msg
 view helpers model =
-    let
-        body =
-            case
-                model.body
-            of
-                Nothing ->
-                    String.join "\n\n" (List.map helpers.t defaultBody)
-
-                Just body ->
-                    body
-    in
-        section [ class "two-panes__content two-panes__content--help" ]
-            [ h1 [] [ text (helpers.t "Help Help") ]
-            , h2 [] [ text (helpers.t "Help Community Support") ]
-            , p [] [ text (helpers.t "Help Our community grows everyday and will be happy to give you an helping hand in one of these media:") ]
-            , ul [ class "help-list" ]
-                [ li []
-                    [ a [ href "https://forum.cozy.io/" ]
-                        [ i [ class "icon icon--forum" ] []
-                        , text (helpers.t "Help Forum")
-                        ]
-                    ]
-                , li []
-                    [ a [ href "https://webchat.freenode.net/?channels=cozycloud" ]
-                        [ i [ class "icon icon--irc" ] []
-                        , text (helpers.t "Help IRC")
-                        ]
-                    ]
-                , li []
-                    [ a [ href "https://github.com/cozy" ]
-                        [ i [ class "icon icon--github" ] []
-                        , text (helpers.t "Help Github")
-                        ]
-                    ]
-                ]
-            , h2 [] [ text (helpers.t "Help Official Support") ]
-            , if model.status == Success then
-                p [ class "message--success" ]
-                    [ text (helpers.t "Help Your mail has been sent. We will try to respond to it really soon!") ]
-              else
-                Html.form [ class "send-mail-to-support" ]
-                    [ case model.status of
-                        Error error ->
-                            p [ class "message--error" ]
-                                [ text ("Error: " ++ error) ]
-
-                        _ ->
-                            p []
-                                [ text (helpers.t "Help You can send us feedback, report bugs and ask for assistance.")
-                                , text " "
-                                , text (helpers.t "Help We will get back to you as soon as possible.")
-                                ]
-                    , textarea [ onInput FillBody ] [ text body ]
-                    , a
-                        [ class "btn btn--msg"
-                        , href "#"
-                        , if model.status == Sending then
-                            attribute "aria-busy" "true"
-                          else
-                            onClick SendMail
-                        ]
-                        [ text (helpers.t "Help Send us a message") ]
-                    ]
-            , p [] [ text (helpers.t "Help There are still a few more options to contact us:") ]
-            , ul [ class "help-list" ]
-                [ li []
-                    [ a [ href "mailto:support@cozycloud.cc" ]
-                        [ i [ class "icon icon--email" ] []
-                        , text (helpers.t "Help Email")
-                        ]
-                    ]
-                , li []
-                    [ a [ href "https://twitter.com/intent/tweet?text=@mycozycloud%20" ]
-                        [ i [ class "icon icon--twitter" ] []
-                        , text (helpers.t "Help Twitter")
-                        ]
-                    ]
-                , li []
-                    [ a [ href "https://docs.cozy.io/en/" ]
-                        [ i [ class "icon icon--documentation" ] []
-                        , text (helpers.t "Help Documentation")
-                        ]
-                    ]
-                ]
+    section [ class "two-panes__content two-panes__content--help" ]
+        [ h1 [] [ text (helpers.t "Help Help") ]
+        , h2 [] [ text (helpers.t "Help Community Support") ]
+        , p [] [ text (helpers.t "Help Our community grows everyday and will be happy to give you an helping hand in one of these media:") ]
+        , ul [ class "help-list" ]
+            [ (iconLink helpers "https://forum.cozy.io/" "forum" "Help Forum")
+            , (iconLink helpers "https://webchat.freenode.net/?channels=cozycloud" "irc" "Help IRC")
+            , (iconLink helpers "https://github.com/cozy" "github" "Help Github")
             ]
+        , h2 [] [ text (helpers.t "Help Official Support") ]
+        , if model.status == Success then
+            p [ class "message--success" ]
+                [ text (helpers.t "Help Your mail has been sent. We will try to respond to it really soon!") ]
+          else
+            Html.form [ class "send-mail-to-support" ]
+                [ case model.status of
+                    Error error ->
+                        p [ class "message--error" ]
+                            [ text ("Error: " ++ error) ]
+
+                    _ ->
+                        p []
+                            [ text (helpers.t "Help You can send us feedback, report bugs and ask for assistance.")
+                            , text " "
+                            , text (helpers.t "Help We will get back to you as soon as possible.")
+                            ]
+                , textarea [ onInput FillBody ] [ text (bodyOrDefault model) ]
+                , a
+                    [ class "btn btn--msg"
+                    , href "#"
+                    , if model.status == Sending then
+                        attribute "aria-busy" "true"
+                      else
+                        onClick SendMail
+                    ]
+                    [ text (helpers.t "Help Send us a message") ]
+                ]
+        , p [] [ text (helpers.t "Help There are still a few more options to contact us:") ]
+        , ul [ class "help-list" ]
+            [ (iconLink helpers "mailto:support@cozycloud.cc" "email" "Help Email")
+            , (iconLink helpers "https://twitter.com/intent/tweet?text=@mycozycloud%20" "twitter" "Help Twitter")
+            , (iconLink helpers "https://docs.cozy.io/en/" "documentation" "Help Documentation")
+            ]
+        ]

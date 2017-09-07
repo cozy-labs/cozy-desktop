@@ -1,0 +1,43 @@
+// copy pasted from cozy-ui
+
+.coz-form-toggle
+  .toggle
+      display inline-block
+      width   40px
+      height  24px
+
+  .checkbox
+      display none
+
+  .label
+      position      relative
+      display       inline-block
+      width         100%
+      height        100%
+      border-radius 1em
+      background    silver
+      transition    all .2s ease-out
+
+      // added, unlinke other app cozy-desktop is not
+      // full border-box.
+      box-sizing: border-box;
+
+  .label:before
+      position      absolute
+      top           0
+      bottom        0
+      left          2px
+      display       inline-block
+      width         20px
+      height        20px
+      margin        auto
+      border-radius 50%
+      content       ''
+      background    white
+      transition    all .2s ease-out
+
+  .checkbox:checked + .label
+      background emerald
+
+      &:before
+        left 18px

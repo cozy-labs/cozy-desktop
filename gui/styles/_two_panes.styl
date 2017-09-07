@@ -47,46 +47,13 @@
   a
     color blue
     text-decoration none
+
   h2
     margin-top 2em
   h3
     a
       color grey-06
       font-size 1em
-
-  .btn
-    display inline-block
-    width 15em
-    color blue
-    background-color grey-01
-    padding .8em
-    text-align center
-    text-transform uppercase
-    text-decoration none
-    font-weight bold
-    font-size 1.25rem
-    border-radius .25em
-    &:hover
-      background-color grey-03
-    &:active
-      background-color grey-04
-    &[aria-busy=true]
-      position relative
-      &:before
-        @extend $icon
-        @extend $spin
-        @extend $icon-16
-        background-image url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='12' height='12' fill='rgb(255,255,255)'><path opacity='.25' d='M16 0a16 16 0 0 0 0 32 16 16 0 0 0 0-32m0 4a12 12 0 0 1 0 24 12 12 0 0 1 0-24'/><path d='M16 0a16 16 0 0 1 16 16h-4a12 12 0 0 0-12-12z'/></svg>")
-        left 10%
-
-  .btn--action
-    color white
-    background-color blue
-
-  .btn--danger
-    color #FD7461
-    &[aria-busy=true]:before
-      background-image url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='12' height='12' fill='rgb(253,116,97)'><path opacity='.25' d='M16 0a16 16 0 0 0 0 32 16 16 0 0 0 0-32m0 4a12 12 0 0 1 0 24 12 12 0 0 1 0-24'/><path d='M16 0a16 16 0 0 1 16 16h-4a12 12 0 0 0-12-12z'/></svg>")
 
   .help-list
     display flex
@@ -220,6 +187,29 @@
     color red
     font-weight bold
 
-  [data-input=checkbox]
-    label
-      padding-left 1.75em
+
+.two-panes__content--settings
+
+  max-width: 30em
+
+  .progress
+    width 100%
+    height .5em
+    border 1px solid grey
+
+    .progress-inner
+      height: 100%
+      background-color: blue
+
+  strong
+    width 25%
+    color grey
+    display inline-block
+
+  .btn--danger
+    @extend $button
+    @extend $button--danger-outline
+    width 100%
+
+    &:active, &:not([disabled]):not([aria-disabled=true]):hover, &:focus
+      border 1px solid #fdcbcb

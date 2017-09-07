@@ -7,8 +7,6 @@ import Helpers exposing (Helpers)
 import Icons
 import Dashboard
 import Settings
-import Account
-import Help
 
 
 -- MODEL
@@ -17,16 +15,16 @@ import Help
 type Tab
     = DashboardTab
     | SettingsTab
-    | AccountTab
-    | HelpTab
+
+
+
+-- | AppsTab in the future
 
 
 type alias Model =
     { tab : Tab
     , dashboard : Dashboard.Model
     , settings : Settings.Model
-    , account : Account.Model
-    , help : Help.Model
     }
 
 
@@ -35,8 +33,6 @@ init version =
     { tab = DashboardTab
     , dashboard = Dashboard.init
     , settings = Settings.init version
-    , account = Account.init
-    , help = Help.init
     }
 
 
@@ -51,8 +47,6 @@ type Msg
     | FillAddressAndDevice ( String, String )
     | DashboardMsg Dashboard.Msg
     | SettingsMsg Settings.Msg
-    | AccountMsg Account.Msg
-    | HelpMsg Help.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -78,21 +72,15 @@ update msg model =
                 "settings" ->
                     update (GoToTab SettingsTab) model
 
-                "account" ->
-                    update (GoToTab AccountTab) model
-
-                "help" ->
-                    update (GoToTab HelpTab) model
-
                 _ ->
                     update (GoToTab DashboardTab) model
 
         FillAddressAndDevice info ->
             let
-                ( account, _ ) =
-                    Account.update (Account.FillAddressAndDevice info) model.account
+                ( settings, _ ) =
+                    Settings.update (Settings.FillAddressAndDevice info) model.settings
             in
-                ( { model | account = account }, Cmd.none )
+                ( { model | settings = settings }, Cmd.none )
 
         DashboardMsg subMsg ->
             let
@@ -108,61 +96,37 @@ update msg model =
             in
                 ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
 
-        AccountMsg subMsg ->
-            let
-                ( account, cmd ) =
-                    Account.update subMsg model.account
-            in
-                ( { model | account = account }, Cmd.map AccountMsg cmd )
-
-        HelpMsg subMsg ->
-            let
-                ( help, cmd ) =
-                    Help.update subMsg model.help
-            in
-                ( { model | help = help }, Cmd.map HelpMsg cmd )
-
 
 
 -- VIEW
+--menu_item : Helpers -> Model -> String -> Tab -> Icons.IconFunction -> Html Msg
+
+
+menu_item helpers model title tab icon =
+    li
+        [ classList
+            [ ( "two-panes__menu__item", True )
+            , ( "two-panes__menu__item--active", model.tab == tab )
+            ]
+        ]
+        [ a
+            [ href "#"
+            , onClick (GoToTab tab)
+            ]
+            [ icon 20 (model.tab == tab)
+            , text (helpers.t ("TwoPanes " ++ title))
+            ]
+        ]
 
 
 view : Helpers -> Model -> Html Msg
 view helpers model =
     let
-        iconSize =
-            20
-
-        menu_item title tab icon =
-            let
-                active =
-                    model.tab == tab
-
-                translated =
-                    helpers.t ("TwoPanes " ++ title)
-            in
-                li
-                    [ classList
-                        [ ( "two-panes__menu__item", True )
-                        , ( "two-panes__menu__item--active", active )
-                        ]
-                    ]
-                    [ a
-                        [ href "#"
-                        , onClick (GoToTab tab)
-                        ]
-                        [ icon iconSize active
-                        , text translated
-                        ]
-                    ]
-
         menu =
             aside [ class "two-panes__menu" ]
                 [ ul []
-                    [ menu_item "Dashboard" DashboardTab Icons.dashboard
-                    , menu_item "Settings" SettingsTab Icons.settings
-                    , menu_item "Account" AccountTab Icons.account
-                    , menu_item "Help" HelpTab Icons.help
+                    [ menu_item helpers model "Recents" DashboardTab Icons.dashboard
+                    , menu_item helpers model "Settings" SettingsTab Icons.settings
                     ]
                 ]
 
@@ -173,11 +137,5 @@ view helpers model =
 
                 SettingsTab ->
                     Html.map SettingsMsg (Settings.view helpers model.settings)
-
-                AccountTab ->
-                    Html.map AccountMsg (Account.view helpers model.account)
-
-                HelpTab ->
-                    Html.map HelpMsg (Help.view helpers model.help)
     in
         section [ class "two-panes" ] [ menu, content ]

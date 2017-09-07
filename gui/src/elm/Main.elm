@@ -5,14 +5,13 @@ import Dict exposing (Dict)
 import Json.Decode as Json
 import Time exposing (Time)
 import Helpers exposing (Locale)
+import Help
 import Wizard
 import Address
 import Folder
 import TwoPanes
 import Dashboard
 import Settings
-import Account
-import Help
 import Unlinked
 import Revoked
 
@@ -35,6 +34,7 @@ type Page
     | TwoPanesPage
     | UnlinkedPage
     | RevokedPage
+    | HelpPage
 
 
 type alias Model =
@@ -44,6 +44,7 @@ type alias Model =
     , wizard : Wizard.Model
     , twopanes : TwoPanes.Model
     , revoked : Revoked.Model
+    , help : Help.Model
     }
 
 
@@ -84,8 +85,11 @@ init flags =
         revoked =
             Revoked.init
 
+        help =
+            Help.init
+
         model =
-            Model localeIdentifier locales page wizard twopanes revoked
+            Model localeIdentifier locales page wizard twopanes revoked help
     in
         ( model, Cmd.none )
 
@@ -99,6 +103,7 @@ type Msg
     | WizardMsg Wizard.Msg
     | SyncStart ( String, String )
     | TwoPanesMsg TwoPanes.Msg
+    | HelpMsg Help.Msg
     | Unlink
     | Revoked
     | RevokedMsg Revoked.Msg
@@ -131,6 +136,13 @@ update msg model =
                     TwoPanes.update subMsg model.twopanes
             in
                 ( { model | twopanes = twopanes }, Cmd.map TwoPanesMsg cmd )
+
+        HelpMsg subMsg ->
+            let
+                ( help, cmd ) =
+                    Help.update subMsg model.help
+            in
+                ( { model | help = help }, Cmd.map HelpMsg cmd )
 
         Unlink ->
             ( { model | page = UnlinkedPage }, Cmd.none )
@@ -192,7 +204,7 @@ port transfer : (Dashboard.File -> msg) -> Sub msg
 port remove : (Dashboard.File -> msg) -> Sub msg
 
 
-port diskSpace : (Account.DiskSpace -> msg) -> Sub msg
+port diskSpace : (Settings.DiskSpace -> msg) -> Sub msg
 
 
 port syncError : (String -> msg) -> Sub msg
@@ -230,14 +242,14 @@ subscriptions model =
         , Time.every Time.second (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.Tick)
         , transfer (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.Transfer)
         , remove (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.Remove)
-        , diskSpace (TwoPanesMsg << TwoPanes.AccountMsg << Account.UpdateDiskSpace)
+        , diskSpace (TwoPanesMsg << TwoPanes.SettingsMsg << Settings.UpdateDiskSpace)
         , syncError (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.SetError)
         , offline (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.GoOffline)))
         , updated (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.Updated)))
         , syncing (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.Syncing)))
-        , mail (TwoPanesMsg << TwoPanes.HelpMsg << Help.MailSent)
+        , mail (HelpMsg << Help.MailSent)
         , autolaunch (TwoPanesMsg << TwoPanes.SettingsMsg << Settings.AutoLaunchSet)
-        , cancelUnlink (always (TwoPanesMsg (TwoPanes.AccountMsg Account.CancelUnlink)))
+        , cancelUnlink (always (TwoPanesMsg (TwoPanes.SettingsMsg Settings.CancelUnlink)))
         , unlink (always Unlink)
         , revoked (always Revoked)
         ]
@@ -277,3 +289,6 @@ view model =
 
             RevokedPage ->
                 Html.map RevokedMsg (Revoked.view helpers model.revoked)
+
+            HelpPage ->
+                Html.map HelpMsg (Help.view helpers model.help)
