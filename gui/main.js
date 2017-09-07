@@ -73,16 +73,14 @@ let errorMessage = ''
 let lastFiles = []
 let newReleaseAvailable = false
 
-const DEFAULT_WIDTH = 768
-const DEFAULT_HEIGHT = 570
+const ONBOARDING_SCREEN_WIDTH = 768
+const ONBOARDING_SCREEN_HEIGHT = 570
+const LOGIN_SCREEN_WIDTH = ONBOARDING_SCREEN_WIDTH
 const LOGIN_SCREEN_HEIGHT = 700
+const OAUTH_SCREEN_WIDTH = ONBOARDING_SCREEN_WIDTH
 const OAUTH_SCREEN_HEIGHT = 900
-
-const windowOptions = {
-  width: DEFAULT_WIDTH,
-  height: DEFAULT_HEIGHT,
-  icon: `${__dirname}/images/icon.png`
-}
+const DASHBOARD_SCREEN_WIDTH = 1000
+const DASHBOARD_SCREEN_HEIGHT = 1000
 
 const showWindow = () => {
   if (mainWindow) {
@@ -414,6 +412,7 @@ const incompatibilitiesErrorMessage = (i) => {
 }
 
 const startSync = (force) => {
+  if (mainWindow) mainWindow.setContentSize(DASHBOARD_SCREEN_WIDTH, DASHBOARD_SCREEN_HEIGHT)
   sendToMainWindow('synchronization', desktop.config.cozyUrl, desktop.config.deviceName)
   for (let file of lastFiles) {
     sendToMainWindow('transfer', file)
@@ -491,6 +490,14 @@ const appLoaded = () => {
 }
 
 const createWindow = () => {
+  let windowOptions = {icon: `${__dirname}/images/icon.png`}
+  if (desktop && desktop.config.syncPath) {
+    windowOptions.width = DASHBOARD_SCREEN_WIDTH
+    windowOptions.height = DASHBOARD_SCREEN_HEIGHT
+  } else {
+    windowOptions.width = ONBOARDING_SCREEN_WIDTH
+    windowOptions.height = ONBOARDING_SCREEN_HEIGHT
+  }
   mainWindow = new BrowserWindow(windowOptions)
   mainWindow.loadURL(`file://${__dirname}/index.html`)
   if (process.env.WATCH === 'true' || process.env.DEBUG === 'true') {
@@ -605,16 +612,16 @@ ipcMain.on('register-remote', (event, arg) => {
   const onRegistered = (client, url) => {
     let resolveP
     const promise = new Promise((resolve) => { resolveP = resolve })
-    mainWindow.setContentSize(DEFAULT_WIDTH, LOGIN_SCREEN_HEIGHT, true)
+    mainWindow.setContentSize(LOGIN_SCREEN_WIDTH, LOGIN_SCREEN_HEIGHT, true)
     mainWindow.loadURL(url)
     mainWindow.webContents.on('did-get-response-details', (event, status, newUrl, originalUrl, httpResponseCode) => {
       if (newUrl.match(/\/auth\/authorize\?/) && httpResponseCode === 200) {
-        mainWindow.setContentSize(DEFAULT_WIDTH, OAUTH_SCREEN_HEIGHT, true)
+        mainWindow.setContentSize(OAUTH_SCREEN_WIDTH, OAUTH_SCREEN_HEIGHT, true)
       }
     })
     mainWindow.webContents.on('did-get-redirect-request', (event, oldUrl, newUrl) => {
       if (newUrl.match('file://')) {
-        mainWindow.setContentSize(DEFAULT_WIDTH, DEFAULT_HEIGHT, true)
+        mainWindow.setContentSize(ONBOARDING_SCREEN_WIDTH, ONBOARDING_SCREEN_HEIGHT, true)
         resolveP(newUrl)
       }
     })
