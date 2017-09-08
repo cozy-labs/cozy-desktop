@@ -1,3 +1,53 @@
+## 3.1.0-beta.1 - 2017-09-08
+
+Hello there! Sorry for the summer delay, the team took some rest, and recently
+we were quite busy working on some huge synchronization improvements, but
+that's for another story. So let's get back to the current release...
+
+Improvements for all users:
+
+* The onboarding (the successive screens where you configure Cozy Drive for
+  Desktop on first launch) now follows the new Cozy v3 design guidelines and
+  wording. The other screens were mostly updated too, especially the settings
+  which were merged into a single tab. In future releases, the tabs should
+  move to the top and we should progressively transition to a new popover
+  layout sticking to your systray, instead of the current floating window.
+  Some screens will still make use of a separate windows when relevant
+  (e.g. the *Help* one).
+* We also enlarged the Cozy login screen, the authorization screen (were you
+  allow the Cozy Drive for Desktop app to access the data in your Cozy) and
+  the Dashboard screen (the one showing recent updates). In case your display
+  has a small resolution, the app should not exceed the available space and
+  fall back to scrolling.
+* The disk space gauge should now effectively match the available space.
+* The app was occasionnaly crashing on startup with a weird *db Lock* error.
+  This should not happen anymore. Please shout out loud in case it still does
+  for you.
+* We fixed an issue that was preventing errors to be properly notified
+  when sending a support request from the *Help* screen. We also made sure
+  that a favorite creation failure would not block the application.
+* We now have traces of failures for almost everything in the app except for
+  upgrades (which unfortunately seemed to be the source of issues recently, so
+  we'll probably add it too). This should help us fix issues regarding the
+  onboarding step for example.
+* We also added some missing translations.
+* Last but not least we added the hopefully last missing checks to detect
+  conflicts while trashing/deleting folders from the Cozy.
+
+Improvements for Windows users:
+
+* Once configured, the app now adds a favorite to Windows 7 and Windows 8.x
+  explorer.
+* While uploading files from a Windows device, missing folders creation was
+  failing. This is fixed now.
+* We changed the way we hide some special folders on Windows. We extensively
+  checked it was working as usual on every supported Windows version, so this
+  should not be visible in any way for you. But in case you still start seing
+  some weird `.cozy-desktop` or `.system-tmp-cozy-drive` directories, please
+  tell us.
+
+Happy syncing!
+
 ## 3.0.1 - 2017-07-31
 
 Improvements for all users:
