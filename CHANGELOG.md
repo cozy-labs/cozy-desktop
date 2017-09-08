@@ -1,3 +1,13 @@
+## 3.1.0 - 2017-09-08
+
+Improvements for all users:
+
+* Fixed the styling of the *Show more files* button in the *Dashboard* screen.
+* The default content of the support request form should now be translated
+  properly.
+
+Happy syncing!
+
 ## 3.1.0-beta.1 - 2017-09-08
 
 Hello there! Sorry for the summer delay, the team took some rest, and recently
