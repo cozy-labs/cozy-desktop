@@ -5,7 +5,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import List
 import String
-import Helpers exposing (Helpers)
+import Helpers exposing (Helpers, Translate)
 
 
 -- MODEL
@@ -24,18 +24,20 @@ type alias Model =
     }
 
 
-bodyOrDefault : Model -> String
-bodyOrDefault model =
+bodyOrDefault : Translate -> Model -> String
+bodyOrDefault translate model =
     case
         model.body
     of
         Nothing ->
             String.join "\n\n"
-                [ "Help Hello Cozy,"
-                , "Help I like a lot what you do, but I have an issue:"
-                , "Help [ The more you can say about the issue, the better: do you have many files? Are they big? Is your cozy up-to-date? ]"
-                , "Help Take care!"
-                ]
+                (List.map translate
+                    [ "Help Hello Cozy,"
+                    , "Help I like a lot what you do, but I have an issue:"
+                    , "Help [ The more you can say about the issue, the better: do you have many files? Are they big? Is your cozy up-to-date? ]"
+                    , "Help Take care!"
+                    ]
+                )
 
         Just body ->
             body
@@ -54,7 +56,7 @@ init =
 
 type Msg
     = FillBody String
-    | SendMail
+    | SendMail Translate
     | MailSent (Maybe String)
 
 
@@ -69,8 +71,8 @@ update msg model =
         FillBody body ->
             ( { model | body = Just body, status = Writing }, Cmd.none )
 
-        SendMail ->
-            ( { model | status = Sending }, sendMail (bodyOrDefault model) )
+        SendMail translate ->
+            ( { model | status = Sending }, sendMail (bodyOrDefault translate model) )
 
         MailSent Nothing ->
             ( { model | status = Success }, Cmd.none )
@@ -121,14 +123,14 @@ view helpers model =
                             , text " "
                             , text (helpers.t "Help We will get back to you as soon as possible.")
                             ]
-                , textarea [ onInput FillBody ] [ text (bodyOrDefault model) ]
+                , textarea [ onInput FillBody ] [ text (bodyOrDefault helpers.t model) ]
                 , a
                     [ class "btn btn--msg"
                     , href "#"
                     , if model.status == Sending then
                         attribute "aria-busy" "true"
                       else
-                        onClick SendMail
+                        onClick (SendMail helpers.t)
                     ]
                     [ text (helpers.t "Help Send us a message") ]
                 ]
