@@ -1,6 +1,7 @@
 {
   "Account Account": "账号",
-  "Account Device name": "设备名称",
+  "Account About": "About",
+  "Account Device name": "Device",
   "Account Cozy disk space": "Cozy硬盘空间",
   "Account b": "b",
   "Account Unlink Cozy": "取消链接Cozy",
@@ -10,6 +11,7 @@
   "Account Unlink this Cozy": "取消链接此Cozy",
   "Address Cozy address": "Cozy地址",
   "Address Placeholder": "cloudy.mycozy.cloud",
+  "Address Please introduce your cozy address": "Please introduce your Cozy's address",
   "Address This is the web address you use to sign in to your cozy.": "This is the web address you use to sign in to your cozy.",
   "Address Don't have an account? Request one here": "Don't have an account? Request one here",
   "Address You don't have filled the address!": "You don't have filled the address!",
@@ -113,9 +115,8 @@
   "Tray Quit application": "Quit application",
   "Tray Relaunch synchronization": "Relaunch synchronization",
   "Tray A new release is available": "A new release is available",
-  "TwoPanes Dashboard": "Dashboard",
+  "TwoPanes Recents": "Recents",
   "TwoPanes Settings": "Settings",
-  "TwoPanes Account": "Account",
   "TwoPanes Help": "Help",
   "Unlink Title": "Deconnection",
   "Unlink Message": "Are you sure you want to unlink your Cozy?",
@@ -127,6 +128,6 @@
   "Unlinked If you want to register it again, you can restart Cozy Drive.": "If you want to register it again, you can restart Cozy Drive.",
   "Unlinked Else, you can just close Cozy Drive.": "Else, you can just close Cozy Drive.",
   "Unlinked Restart Cozy Drive": "Restart Cozy Drive",
-  "Welcome Your own private cloud": "Your own private cloud",
-  "Welcome Sign in to your Cozy": "Sign in to your Cozy"
+  "Welcome Your own private cloud": "Welcome to Cozy Drive for Desktop !",
+  "Welcome Sign in to your Cozy": "Sign in to my Cozy"
 }

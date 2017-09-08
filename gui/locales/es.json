@@ -1,6 +1,7 @@
 {
   "Account Account": "Cuenta",
-  "Account Device name": "Nombre del periférico",
+  "Account About": "About",
+  "Account Device name": "Device",
   "Account Cozy disk space": "Espacio disco Cozy",
   "Account b": "b",
   "Account Unlink Cozy": "Desvincular Cozy",
@@ -9,7 +10,8 @@
   "Account Are you sure to unlink this account?": "¿Esta seguro de desvincular esta cuenta?",
   "Account Unlink this Cozy": "Desvincular este Cozy",
   "Address Cozy address": "Dirección Cozy",
-  "Address Placeholder": "cloudy.mycozy.cloud",
+  "Address Placeholder": "cloudy.mycozy.cloud\n",
+  "Address Please introduce your cozy address": "Please introduce your Cozy's address",
   "Address This is the web address you use to sign in to your cozy.": "¡No hay una instancia cozy en esta dirección!",
   "Address Don't have an account? Request one here": "¿No tiene una cuenta? Solicite una aquí",
   "Address You don't have filled the address!": "¡Usted no ha llenado la dirección!",
@@ -113,9 +115,8 @@
   "Tray Quit application": "Abandonar la aplicación",
   "Tray Relaunch synchronization": "Relanzar la sincronización",
   "Tray A new release is available": "Una nueva versión está disponible",
-  "TwoPanes Dashboard": "Consola",
+  "TwoPanes Recents": "Recents",
   "TwoPanes Settings": "Ajustes",
-  "TwoPanes Account": "Cuenta",
   "TwoPanes Help": "Ayuda",
   "Unlink Title": "Desconexión",
   "Unlink Message": "¿Está usted seguro que quiere desvincular su Cozy?",
@@ -127,6 +128,6 @@
   "Unlinked If you want to register it again, you can restart Cozy Drive.": "Si quiere registrarlo de nuevo, puede reiniciar Cozy Drive",
   "Unlinked Else, you can just close Cozy Drive.": "Si no, basta con cerrar Cozy Drive.",
   "Unlinked Restart Cozy Drive": "Reiniciar Cozy Drive",
-  "Welcome Your own private cloud": "¡Bienvenid@ al escritorio de la aplicaciónCozy Drive!",
-  "Welcome Sign in to your Cozy": "Reǵístrese en su Cozy"
+  "Welcome Your own private cloud": "Welcome to Cozy Drive for Desktop !",
+  "Welcome Sign in to your Cozy": "Sign in to my Cozy"
 }

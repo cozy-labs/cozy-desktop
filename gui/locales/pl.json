@@ -1,6 +1,7 @@
 {
   "Account Account": "Konto",
-  "Account Device name": "Nazwa urządzenia",
+  "Account About": "About",
+  "Account Device name": "Device",
   "Account Cozy disk space": "Dostępne miejsce na Cozy",
   "Account b": "b",
   "Account Unlink Cozy": "Odłącz od Cozy",
@@ -10,6 +11,7 @@
   "Account Unlink this Cozy": "Odłącz od Cozy",
   "Address Cozy address": "Adres Cozy",
   "Address Placeholder": "cloudy.mycozy.cloud",
+  "Address Please introduce your cozy address": "Please introduce your Cozy's address",
   "Address This is the web address you use to sign in to your cozy.": "To jest adres strony web na której możesz się zalogować do Twojego Cozy",
   "Address Don't have an account? Request one here": "Nie posiadasz jeszcze konta? Wyślij zgłoszenie w tym miejscu",
   "Address You don't have filled the address!": "Nie wypełniłeś pola z adresem!",
@@ -113,9 +115,8 @@
   "Tray Quit application": "Wyjdź z aplikacji",
   "Tray Relaunch synchronization": "Ponów synchronizację",
   "Tray A new release is available": "Dostępna jest nowsza wersja",
-  "TwoPanes Dashboard": "Dashboard",
+  "TwoPanes Recents": "Recents",
   "TwoPanes Settings": "Ustawienia",
-  "TwoPanes Account": "Konto",
   "TwoPanes Help": "Pomoc",
   "Unlink Title": "Deconnection",
   "Unlink Message": "Are you sure you want to unlink your Cozy?",
@@ -127,6 +128,6 @@
   "Unlinked If you want to register it again, you can restart Cozy Drive.": "Jeśli chcesz je ponownie zarejestrować, uruchom ponownie Cozy Drive.",
   "Unlinked Else, you can just close Cozy Drive.": "W przwciwnym razie, poprostu zamknij Cozy Drive.",
   "Unlinked Restart Cozy Drive": "Uruchom ponownie Cozy Drive",
-  "Welcome Your own private cloud": "Twoja prywatna chmura",
-  "Welcome Sign in to your Cozy": "Zaloguj się do twojego Cozy"
+  "Welcome Your own private cloud": "Welcome to Cozy Drive for Desktop !",
+  "Welcome Sign in to your Cozy": "Sign in to my Cozy"
 }
