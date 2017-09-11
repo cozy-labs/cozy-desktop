@@ -89,7 +89,7 @@
     "clean": "rimraf elm.js app.css* dist/",
     "dist": "cross-env DEBUG=electron-builder build --x64 --ia32",
     "elm:upgrade": "yarn add --dev elm@latest elm-upgrade@latest && elm-upgrade",
-    "lint": "standard --verbose main.js ports.js",
+    "lint": "standard --verbose src/main/**.js main.js ports.js",
     "pack": "cross-env DEBUG=electron-builder build --dir",
     "postinstall": "yarn postinstall:electron && yarn postinstall:elm",
     "postinstall:electron": "cross-env DEBUG=electron-builder electron-builder install-app-deps",

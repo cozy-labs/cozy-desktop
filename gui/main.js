@@ -2,65 +2,31 @@
 
 require('babel-polyfill')
 
-const AutoLaunch = require('auto-launch-patched')
 const childProcess = require('child_process')
 const Desktop = require('cozy-desktop').default
 const electron = require('electron')
 const notify = require('electron-main-notification')
-const fs = require('fs')
-const lnk = require('lnk')
+
 const debounce = require('lodash.debounce')
-const os = require('os')
 const path = require('path')
-const url = require('url')
 // const uuid = require('node-uuid')
 
+const autoLaunch = require('./src/main/autolaunch')
+const lastFiles = require('./src/main/lastfiles')
+const {selectIcon} = require('./src/main/fileutils')
+const {buildAppMenu} = require('./src/main/appmenu')
+const {autoUpdater} = require('./src/main/autoupdate')
+const {addFileManagerShortcut} = require('./src/main/shortcut')
+const {init: i18nInit, translate} = require('./src/main/i18n')
+const {incompatibilitiesErrorMessage} = require('./src/main/incompatibilitiesmsg')
 const {spawn} = childProcess
 const {app, BrowserWindow, dialog, ipcMain, Menu, shell, session} = electron
-const autoUpdater = require('electron-updater').autoUpdater
-const autoLauncher = new AutoLaunch({
-  name: 'Cozy-Desktop',
-  isHidden: true
-})
+
 const log = Desktop.logger({
   component: 'GUI'
 })
-process.on('uncaughtException', log.error)
+process.on('uncaughtException', (err) => log.error(err))
 let desktop
-let lastFilesPath
-
-app.locale = 'en'
-const setUpLocale = () => {
-  const locale = app.getLocale()
-  if (locale === 'fr' || locale.match(/^fr_/i)) {
-    app.locale = 'fr'
-  } else {
-    app.locale = 'en'
-  }
-}
-
-app.translations = {}
-const setUpTranslations = () => {
-  app.translations = require(`./locales/${app.locale}.json`)
-}
-
-const translate = key => app.translations[key] ||
-  key.substr(key.indexOf(' ') + 1) // Key without prefix
-
-const interpolate = (string, ...args) => {
-  return string.replace(/{(\d+)}/g, (_, index) => args[parseInt(index)])
-}
-
-const platformName = () => {
-  switch (process.platform) {
-    case 'darwin': return 'macOS'
-    case 'freebsd': return 'FreeBSD'
-    case 'linux': return 'Linux'
-    case 'sunos': return 'SunOS'
-    case 'win32': return 'Windows'
-    default: return process.platform
-  }
-}
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -70,7 +36,6 @@ let diskTimeout
 
 let state = 'not-configured'
 let errorMessage = ''
-let lastFiles = []
 let newReleaseAvailable = false
 
 const ONBOARDING_SCREEN_WIDTH = 768
@@ -129,77 +94,6 @@ const openCozyFolder = () => {
   shell.openItem(desktop.config.syncPath)
 }
 
-const buildAppMenu = () => {
-  const template = [
-    {
-      label: translate('AppMenu Edit'),
-      submenu: [
-        { label: translate('AppMenu Undo'), accelerator: 'CmdOrCtrl+Z', role: 'undo' },
-        { label: translate('AppMenu Redo'), accelerator: 'Shift+CmdOrCtrl+Z', role: 'redo' },
-        { type: 'separator' },
-        { label: translate('AppMenu Select All'), accelerator: 'CmdOrCtrl+A', role: 'selectall' },
-        { type: 'separator' },
-        { label: translate('AppMenu Cut'), accelerator: 'CmdOrCtrl+X', role: 'cut' },
-        { label: translate('AppMenu Copy'), accelerator: 'CmdOrCtrl+C', role: 'copy' },
-        { label: translate('AppMenu Paste'), accelerator: 'CmdOrCtrl+V', role: 'paste' }
-      ]
-    },
-    {
-      label: translate('AppMenu Window'),
-      role: 'window',
-      submenu: [
-        { label: translate('AppMenu Minimize'), accelerator: 'CmdOrCtrl+M', role: 'minimize' },
-        { label: translate('AppMenu Close'), accelerator: 'CmdOrCtrl+W', role: 'close' }
-      ]
-    }
-  ]
-
-  if (process.platform === 'darwin') {
-    template.unshift({
-      label: 'Cozy Drive',
-      submenu: [
-        { label: translate('AppMenu Hide Cozy Drive'), accelerator: 'Command+H', role: 'hide' },
-        { label: translate('AppMenu Hide Others'), accelerator: 'Command+Alt+H', role: 'hideothers' },
-        { label: translate('AppMenu Show All'), role: 'unhide' },
-        { type: 'separator' },
-        { label: translate('AppMenu Quit'), accelerator: 'Command+Q', click () { app.quit() } }
-      ]
-    })
-    template[2].submenu.push({ type: 'separator' })
-    template[2].submenu.push({ label: translate('AppMenu Bring All to Front'), role: 'front' })
-  }
-
-  const menu = Menu.buildFromTemplate(template)
-  Menu.setApplicationMenu(menu)
-}
-
-const setTrayIcon = (state) => {
-  if (process.platform === 'darwin') {
-    tray.setImage(`${__dirname}/images/tray-icon-osx/${state}Template.png`)
-    tray.setPressedImage(`${__dirname}/images/tray-icon-osx/${state}Highlight.png`)
-  } else {
-    tray.setImage(`${__dirname}/images/tray-icon-linux/${state}.png`)
-  }
-}
-
-const checkForNewRelease = () => {
-  const platform = os.platform()
-  if (platform !== 'darwin' && platform !== 'win32') {
-    return
-  }
-  autoUpdater.addListener('update-downloaded', (updateInfo) => {
-    const releaseName = updateInfo.version || 'unknown'
-    const releaseNotes = updateInfo.releaseName || `New version ${releaseName} available`
-    newReleaseAvailable = true
-    sendToMainWindow('new-release-available', releaseNotes, releaseName)
-  })
-  autoUpdater.addListener('error', log.error)
-  autoUpdater.checkForUpdates()
-  setInterval(() => {
-    autoUpdater.checkForUpdates()
-  }, 1000 * 60 * 60 * 24) // Check if a new release is available once per day
-}
-
 const updateState = (newState, filename) => {
   if (state === 'error' && newState === 'offline') {
     return
@@ -207,19 +101,19 @@ const updateState = (newState, filename) => {
   state = newState
   let statusLabel = ''
   if (state === 'error') {
-    setTrayIcon('error')
+    tray.setState('error')
     statusLabel = errorMessage = filename
   } else if (filename) {
-    setTrayIcon('sync')
+    tray.setState('sync')
     statusLabel = `${translate('Tray Syncing')} ‟${filename}“`
   } else if (state === 'up-to-date' || state === 'online') {
-    setTrayIcon('idle')
+    tray.setState('idle')
     statusLabel = translate('Tray Your cozy is up to date')
   } else if (state === 'syncing') {
-    setTrayIcon('sync')
+    tray.setState('sync')
     statusLabel = translate('Tray Syncing') + '…'
   } else if (state === 'offline') {
-    setTrayIcon('pause')
+    tray.setState('pause')
     statusLabel = translate('Tray Offline')
   }
   const menu = Menu.buildFromTemplate([
@@ -252,54 +146,6 @@ const updateState = (newState, filename) => {
   tray.setToolTip(statusLabel)
 }
 
-const selectIcon = (info) => {
-  if (['image', 'video'].indexOf(info.class) !== -1) {
-    return info.class
-  } else if (info.class === 'music') {
-    return 'audio'
-  } else if (info.mime === 'application/pdf') {
-    return 'pdf'
-  } else if (info.mime === 'application/x-binary') {
-    return 'binary'
-  } else if (!info.mime) {
-    return 'file'
-  } else if (info.mime.match(/[/-][bg]?zip2?$/)) {
-    return 'archive'
-  } else if (info.mime.match(/^(text|application)\/(html|xml)/)) {
-    return 'code'
-  } else if (info.mime.match(/^text\//)) {
-    return 'text'
-  } else if (info.mime.match(/^application\/.*rtf/)) {
-    return 'text'
-  } else if (info.mime.match(/word/)) {
-    return 'text'
-  } else if (info.mime.match(/powerpoint/)) {
-    return 'presentation'
-  } else if (info.mime.match(/excel/)) {
-    return 'spreadsheet'
-  }
-  return 'file'
-}
-
-const loadLastFiles = () => {
-  fs.readFile(lastFilesPath, 'utf-8', (err, data) => {
-    if (!err && data) {
-      try {
-        lastFiles = JSON.parse(data)
-      } catch (err) {}
-    }
-  })
-}
-
-const persistLastFiles = () => {
-  const data = JSON.stringify(lastFiles)
-  fs.writeFile(lastFilesPath, data, (err) => {
-    if (err) {
-      log.error(err)
-    }
-  })
-}
-
 const addFile = (info) => {
   const file = {
     filename: path.basename(info.path),
@@ -309,10 +155,9 @@ const addFile = (info) => {
     updated: +new Date()
   }
   updateState('syncing', file.filename)
-  lastFiles.push(file)
-  lastFiles = lastFiles.slice(-250)
+  lastFiles.add(file)
   sendToMainWindow('transfer', file)
-  persistLastFiles()
+  lastFiles.persists()
 }
 
 const removeFile = (info) => {
@@ -323,9 +168,9 @@ const removeFile = (info) => {
     size: 0,
     updated: 0
   }
-  lastFiles = lastFiles.filter((f) => f.path !== file.path)
+  lastFiles.remove(file)
   sendToMainWindow('delete-file', file)
-  persistLastFiles()
+  lastFiles.persists()
 }
 
 const sendDiskUsage = () => {
@@ -348,73 +193,10 @@ const sendDiskUsage = () => {
   }
 }
 
-const chooseSyncPath = () => {
-  sendToMainWindow('registration-done')
-}
-
-const incompatibilitiesErrorMessage = (i) => {
-  const reasons = []
-  const docType = translate(`Helpers ${i.docType}`)
-  if (i.reservedChars) {
-    reasons.push(
-      interpolate(
-        translate('Error {0} names cannot include characters {1}'),
-        docType,
-        Array.from(i.reservedChars).join(' ')
-      )
-    )
-  }
-  if (i.reservedName) {
-    reasons.push(
-      interpolate(
-        translate('Error the “{0}” name is reserved'),
-        i.reservedName
-      )
-    )
-  }
-  if (i.forbiddenLastChar) {
-    reasons.push(
-      interpolate(
-        translate('Error {0} names cannot end with character {1}'),
-        docType,
-        i.forbiddenLastChar
-      )
-    )
-  }
-  if (i.pathMaxBytes) {
-    reasons.push(interpolate(
-      translate('Error it exceeds the path size limit'),
-      docType
-    ))
-  }
-  if (i.nameMaxBytes) {
-    reasons.push(interpolate(
-      translate('Error it exceeds the name size limit'),
-      docType
-    ))
-  }
-  if (i.dirNameMaxBytes) {
-    reasons.push(interpolate(
-      translate('Error it exceeds the folder name size limit'),
-      docType
-    ))
-  }
-  return interpolate(
-    translate(
-      'Error The “{0}” {1} cannot be synchronized locally because ' +
-      '{2} on the {3} system.'
-    ),
-    i.name,
-    docType,
-    reasons.join(` ${translate('Helpers and')} `),
-    platformName()
-  ) + '\n\n' + translate('Error You should rename it in your Cozy.')
-}
-
 const startSync = (force) => {
   if (mainWindow) mainWindow.setContentSize(DASHBOARD_SCREEN_WIDTH, DASHBOARD_SCREEN_HEIGHT)
   sendToMainWindow('synchronization', desktop.config.cozyUrl, desktop.config.deviceName)
-  for (let file of lastFiles) {
+  for (let file of lastFiles.list()) {
     sendToMainWindow('transfer', file)
   }
   if (desktop.sync && !force) {
@@ -473,7 +255,7 @@ const startSync = (force) => {
       })
     sendDiskUsage()
   }
-  autoLauncher.isEnabled().then((enabled) => {
+  autoLaunch.isEnabled().then((enabled) => {
     sendToMainWindow('auto-launch', enabled)
   })
 }
@@ -485,7 +267,7 @@ const appLoaded = () => {
   if (desktop.config.syncPath) {
     setTimeout(startSync, 20)
   } else {
-    setTimeout(chooseSyncPath, 20)
+    setTimeout(() => sendToMainWindow('registration-done'), 20)
   }
 }
 
@@ -501,8 +283,7 @@ const createWindow = () => {
   mainWindow = new BrowserWindow(windowOptions)
   mainWindow.loadURL(`file://${__dirname}/index.html`)
   if (process.env.WATCH === 'true' || process.env.DEBUG === 'true') {
-    mainWindow.setBounds({ x: 0, y: 0, width: 768, height: 570 })
-    mainWindow.webContents.openDevTools()
+    mainWindow.webContents.openDevTools({mode: 'detach'})
   } else {
     mainWindow.setMenu(null)
   }
@@ -526,76 +307,25 @@ if (shouldExit) {
   app.exit()
 }
 
-// Execute a command synchronously and log both input and output.
-const execSync = (cmd) => {
-  log.debug(`+ ${cmd}`)
-  const output = childProcess.execSync(cmd, {encoding: 'utf8'})
-  log.debug(output)
-}
-
-const win10PinToHome = (path) => {
-  const escapedPath = path.replace(/'/g, "''")
-  execSync(`powershell -Command "(New-Object -COM shell.application).Namespace('${escapedPath}').Self.InvokeVerb('pintohome')"`)
-}
-
-const winLinksDir = path.join(os.homedir(), 'Links')
-
-const winAddLink = (path) => {
-  lnk.sync([path], winLinksDir)
-}
-
-const sfltoolAddFavorite = (path) => {
-  const item = url.resolve('file://', path)
-  execSync(`sfltool add-item com.apple.LSSharedFileList.FavoriteItems ${item}`)
-}
-
-const platform = process.platform
-const major = Number.parseInt(os.release().split('.')[0])
-// For Darwin <=> macOS version mapping, see:
-//   https://en.wikipedia.org/wiki/Darwin_(operating_system)#Release_history
-//
-// For Windows <=> NT kernel version mapping, see:
-//   https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
-//   https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions
-
-const addFileManagerShortcut = (config) => {
-  try {
-    if (platform === 'win32' && major >= 10) {
-      win10PinToHome(config.syncPath)
-    } else if (platform === 'win32' && major >= 6) {
-      winAddLink(config.syncPath)
-    } else if (platform === 'darwin' && major >= 15) {
-      // sfltool is available since 10.11 (El Capitan)
-      sfltoolAddFavorite(config.syncPath)
-    } else {
-      log.warn(`Not registering shortcut on ${platform} ${major}`)
-    }
-  } catch (err) {
-    // User should still be able to use the app without a shortcut
-    log.error(err)
-  }
-}
-
 app.on('ready', () => {
   desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
-  lastFilesPath = path.join(desktop.basePath, 'last-files')
 
-  loadLastFiles()
-  setUpLocale()
-  setUpTranslations()
+  lastFiles.init(desktop)
+  i18nInit(app)
   if (process.argv.indexOf('--hidden') === -1) {
     createWindow()
   } else {
     appLoaded()
   }
   tray = new electron.Tray(`${__dirname}/images/tray-icon-linux/idle.png`)
-  setTrayIcon('idle')
+  tray.setState('idle')
   const menu = electron.Menu.buildFromTemplate([
     { label: translate('Tray Show application'), click: showWindow },
     { label: translate('Tray Quit application'), click: app.quit }
   ])
   tray.setContextMenu(menu)
   tray.on('click', showWindow)
+  tray.on('')
 
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
@@ -635,7 +365,7 @@ ipcMain.on('register-remote', (event, arg) => {
       (reg) => {
         session.defaultSession.clearStorageData()
         mainWindow.loadURL(reg.client.redirectURI)
-        autoLauncher.enable()
+        autoLaunch.setEnabled(true)
       },
       (err) => {
         log.error(err)
@@ -660,7 +390,9 @@ ipcMain.on('start-sync', (event, syncPath) => {
   }
   try {
     desktop.saveConfig(desktop.config.cozyUrl, syncPath)
-    addFileManagerShortcut(desktop.config)
+    try {
+      addFileManagerShortcut(desktop.config)
+    } catch (err) { log.error(err) }
     startSync()
   } catch (err) {
     log.error(err)
@@ -672,17 +404,7 @@ ipcMain.on('quit-and-install', () => {
   autoUpdater.quitAndInstall()
 })
 
-ipcMain.on('auto-launcher', (event, enabled) => {
-  autoLauncher.isEnabled().then((was) => {
-    if (was !== enabled) {
-      if (enabled) {
-        autoLauncher.enable()
-      } else {
-        autoLauncher.disable()
-      }
-    }
-  })
-})
+ipcMain.on('auto-launcher', (event, enabled) => autoLaunch.setEnabled(enabled))
 
 ipcMain.on('logout', () => {
   desktop.removeConfig()
@@ -745,8 +467,14 @@ if (process.env.WATCH === 'true') {
     })
 } else {
   app.once('ready', () => {
-    buildAppMenu()
-    checkForNewRelease()
+    Menu.setApplicationMenu(buildAppMenu(app))
+    autoUpdater.checkForNewRelease()
+    .addListener('update-downloaded', (updateInfo) => {
+      const releaseName = updateInfo.version || 'unknown'
+      const releaseNotes = updateInfo.releaseName || `New version ${releaseName} available`
+      newReleaseAvailable = true
+      sendToMainWindow('new-release-available', releaseNotes, releaseName)
+    })
   })
 }
 
