@@ -8,6 +8,8 @@ import fs from 'fs'
 import mime from 'mime'
 import path from 'path'
 
+import * as chokidarEvent from './chokidar_event'
+import LocalEventBuffer from './event_buffer'
 import logger from '../logger'
 import * as metadata from '../metadata'
 import Pouch from '../pouch'
@@ -15,6 +17,7 @@ import Prep from '../prep'
 import { PendingMap } from '../utils/pending'
 import { maxDate } from '../timestamp'
 
+import type { ChokidarFSEvent } from './chokidar_event'
 import type { Callback } from '../utils/func'
 import type { Pending } from '../utils/pending' // eslint-disable-line
 
@@ -42,11 +45,14 @@ class LocalWatcher {
   checksums: number
   checksumer: any // async.queue
   watcher: any // chokidar
+  buffer: LocalEventBuffer<ChokidarFSEvent>
 
   constructor (syncPath: string, prep: Prep, pouch: Pouch) {
     this.syncPath = syncPath
     this.prep = prep
     this.pouch = pouch
+    const timeoutInMs = 1000 // TODO: Read from config
+    this.buffer = new LocalEventBuffer(timeoutInMs, this.handleEvents)
 
     // Use a queue for checksums to avoid computing many checksums at the
     // same time. It's better for performance (hard disk are faster with
@@ -105,14 +111,16 @@ class LocalWatcher {
     })
 
     return new Promise((resolve) => {
+      for (let eventType of ['add', 'addDir', 'change', 'unlink', 'unlinkDir']) {
+        this.watcher.on(eventType, (path?: string, stats?: fs.Stats) => {
+          const newEvent = chokidarEvent.build(eventType, path, stats)
+          this.buffer.push(newEvent)
+        })
+      }
+
       this.watcher
-        .on('add', this.onAddFile)
-        .on('addDir', this.onAddDir)
-        .on('change', this.onChange)
-        .on('unlink', this.onUnlinkFile)
-        .on('unlinkDir', this.onUnlinkDir)
         .on('ready', this.onReady(resolve))
-        .on('error', function (err) {
+        .on('error', (err) => {
           if (err.message === 'watch ENOSPC') {
             log.error('Sorry, the kernel is out of inotify watches! ' +
               'See doc/inotify.md for how to solve this issue.')
@@ -125,11 +133,36 @@ class LocalWatcher {
     })
   }
 
+  handleEvents (events: ChokidarFSEvent[]) {
+    for (let e of events) {
+      switch (e.type) {
+        case 'add':
+          this.onAddFile(e.path, e.stats)
+          break
+        case 'addDir':
+          this.onAddDir(e.path, e.stats)
+          break
+        case 'change':
+          this.onChange(e.path, e.stats)
+          break
+        case 'unlink':
+          this.onUnlinkFile(e.path)
+          break
+        case 'unlinkDir':
+          this.onUnlinkDir(e.path)
+          break
+        default:
+          log.error(`Unknown event type: ${JSON.stringify(e.type)}`)
+      }
+    }
+  }
+
   stop () {
     if (this.watcher) {
       this.watcher.close()
       this.watcher = null
     }
+    this.buffer.switchMode('idle')
     this.pendingDeletions.executeAll()
     // Give some time for awaitWriteFinish events to be fired
     return new Promise((resolve) => {
@@ -331,10 +364,12 @@ class LocalWatcher {
     })
   }
 
-  // Try to detect removed files&folders
-  // after chokidar has finished its initial scan
+  // Called after chokidar has finished its initial scan
   onReady (callback: Callback) {
     return () => {
+      this.buffer.switchMode('timeout')
+
+      // Try to detect removed files & folders
       this.pouch.byRecursivePath('', async function (err, docs) {
         if (err) { return callback(err) }
         try {
