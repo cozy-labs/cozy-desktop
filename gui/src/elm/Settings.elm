@@ -155,8 +155,7 @@ progressbar ratio =
 view : Helpers -> Model -> Html Msg
 view helpers model =
     section [ class "two-panes__content two-panes__content--settings" ]
-        [ h1 [] [ text (helpers.t "Settings Settings") ]
-        , h2 [] [ text (helpers.t "Account Cozy disk space") ]
+        [ h2 [] [ text (helpers.t "Account Cozy disk space") ]
         , diskQuotaLine helpers model
         , h2 [] [ text (helpers.t "Settings Startup") ]
         , div
