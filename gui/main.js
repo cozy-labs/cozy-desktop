@@ -2,148 +2,75 @@
 
 require('babel-polyfill')
 
-const childProcess = require('child_process')
 const Desktop = require('cozy-desktop').default
-const electron = require('electron')
 const notify = require('electron-main-notification')
 
 const debounce = require('lodash.debounce')
 const path = require('path')
-// const uuid = require('node-uuid')
 
 const autoLaunch = require('./src/main/autolaunch')
 const lastFiles = require('./src/main/lastfiles')
+const tray = require('./src/main/tray')
+const trayWindow = require('./src/main/tray.window.js')
+const helpWindow = require('./src/main/help.window.js')
+const onboardingWindow = require('./src/main/onboarding.window.js')
+// const helpWindow = require('./src/main/help.window.js')
+
 const {selectIcon} = require('./src/main/fileutils')
 const {buildAppMenu} = require('./src/main/appmenu')
 const {autoUpdater} = require('./src/main/autoupdate')
-const {addFileManagerShortcut} = require('./src/main/shortcut')
-const {init: i18nInit, translate} = require('./src/main/i18n')
+const i18n = require('./src/main/i18n')
+const {translate} = i18n
 const {incompatibilitiesErrorMessage} = require('./src/main/incompatibilitiesmsg')
-const {spawn} = childProcess
-const {app, BrowserWindow, dialog, ipcMain, Menu, shell, session} = electron
+const {app, Menu, ipcMain} = require('electron')
 
 const log = Desktop.logger({
   component: 'GUI'
 })
 process.on('uncaughtException', (err) => log.error(err))
+
 let desktop
-
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
-let mainWindow
-let tray
-let diskTimeout
-
 let state = 'not-configured'
 let errorMessage = ''
-let newReleaseAvailable = false
+let diskTimeout = null
 
-const ONBOARDING_SCREEN_WIDTH = 768
-const ONBOARDING_SCREEN_HEIGHT = 570
-const LOGIN_SCREEN_WIDTH = ONBOARDING_SCREEN_WIDTH
-const LOGIN_SCREEN_HEIGHT = 700
-const OAUTH_SCREEN_WIDTH = ONBOARDING_SCREEN_WIDTH
-const OAUTH_SCREEN_HEIGHT = 900
-const DASHBOARD_SCREEN_WIDTH = 1000
-const DASHBOARD_SCREEN_HEIGHT = 1000
-
-const showWindow = () => {
-  if (mainWindow) {
-    mainWindow.focus()
+const showWindow = (...args) => {
+  log.debug({config: desktop.config})
+  if (!desktop.config.syncPath) {
+    log.debug({open: 'onboarding1'})
+    onboardingWindow.show(...args)
+    // registration is done, but we need a syncPath
+    log.debug({config: desktop.config, valid: desktop.config.isValid()})
+    if (desktop.config.isValid()) {
+      setTimeout(() => onboardingWindow.send('registration-done'), 20)
+    }
   } else {
-    createWindow()
-  }
-}
-
-const sendToMainWindow = (...args) => {
-  if (mainWindow && mainWindow.webContents) {
-    mainWindow.webContents.send(...args)
+    // registration & syncPath chosen, let's sync
+    setTimeout(() => startSync(false, ...args), 20)
+    // if (process.argv.indexOf('--hidden') !== -1) {
+    //   trayWindow.show(...args)
+    // }
   }
 }
 
 const sendErrorToMainWindow = (msg) => {
   if (msg === 'Client has been revoked') {
     msg = translate('Revoked It looks like you have revoked your client from your Cozy')
-    sendToMainWindow('revoked')
+    trayWindow.send('revoked')
   } else if (msg === 'Cozy is full' || msg === 'No more disk space') {
     msg = translate('Error ' + msg)
-    sendToMainWindow('sync-error', msg)
+    trayWindow.send('sync-error', msg)
   } else {
-    sendToMainWindow('sync-error', msg)
+    trayWindow.send('sync-error', msg)
   }
   notify('Cozy Drive', { body: msg })
 }
 
-const goToTab = (tab) => {
-  const alreadyShown = !!mainWindow
-  showWindow()
-  if (alreadyShown) {
-    sendToMainWindow('go-to-tab', tab)
-  } else {
-    mainWindow.webContents.once('dom-ready', () => {
-      sendToMainWindow('go-to-tab', tab)
-    })
-  }
-}
-
-const goToMyCozy = () => {
-  shell.openExternal(desktop.config.cozyUrl)
-}
-
-const openCozyFolder = () => {
-  shell.openItem(desktop.config.syncPath)
-}
-
 const updateState = (newState, filename) => {
-  if (state === 'error' && newState === 'offline') {
-    return
-  }
+  if (state === 'error') errorMessage = filename
+  if (state === 'error' && newState === 'offline') return
   state = newState
-  let statusLabel = ''
-  if (state === 'error') {
-    tray.setState('error')
-    statusLabel = errorMessage = filename
-  } else if (filename) {
-    tray.setState('sync')
-    statusLabel = `${translate('Tray Syncing')} ‟${filename}“`
-  } else if (state === 'up-to-date' || state === 'online') {
-    tray.setState('idle')
-    statusLabel = translate('Tray Your cozy is up to date')
-  } else if (state === 'syncing') {
-    tray.setState('sync')
-    statusLabel = translate('Tray Syncing') + '…'
-  } else if (state === 'offline') {
-    tray.setState('pause')
-    statusLabel = translate('Tray Offline')
-  }
-  const menu = Menu.buildFromTemplate([
-    { label: statusLabel, enabled: false },
-    { type: 'separator' },
-    { label: translate('Tray Open Cozy folder'), click: openCozyFolder },
-    { label: translate('Tray Go to my Cozy'), click: goToMyCozy },
-    { type: 'separator' },
-    { label: translate('Tray Help'), click: goToTab.bind(null, 'help') },
-    { label: translate('Tray Settings'), click: goToTab.bind(null, 'settings') },
-    { type: 'separator' },
-    { label: translate('Tray Quit application'), click: app.quit }
-  ])
-  if (!mainWindow) {
-    menu.insert(2, new electron.MenuItem({
-      label: translate('Tray Show application'), click: showWindow
-    }))
-  }
-  if (state === 'error') {
-    menu.insert(2, new electron.MenuItem({
-      label: translate('Tray Relaunch synchronization'), click: () => { startSync(true) }
-    }))
-  }
-  if (newReleaseAvailable) {
-    menu.insert(2, new electron.MenuItem({
-      label: translate('Tray A new release is available'), click: goToTab.bind(null, 'settings')
-    }))
-  }
-  tray.setContextMenu(menu)
-  tray.setToolTip(statusLabel)
+  tray.setState(state, filename)
 }
 
 const addFile = (info) => {
@@ -156,7 +83,7 @@ const addFile = (info) => {
   }
   updateState('syncing', file.filename)
   lastFiles.add(file)
-  sendToMainWindow('transfer', file)
+  trayWindow.send('transfer', file)
   lastFiles.persists()
 }
 
@@ -169,7 +96,7 @@ const removeFile = (info) => {
     updated: 0
   }
   lastFiles.remove(file)
-  sendToMainWindow('delete-file', file)
+  trayWindow.send('delete-file', file)
   lastFiles.persists()
 }
 
@@ -178,7 +105,7 @@ const sendDiskUsage = () => {
     clearTimeout(diskTimeout)
     diskTimeout = null
   }
-  if (mainWindow) {
+  if (trayWindow) {
     diskTimeout = setTimeout(sendDiskUsage, 10 * 60 * 1000)  // every 10 minutes
     desktop.diskUsage().then(
       (res) => {
@@ -186,24 +113,26 @@ const sendDiskUsage = () => {
           used: +res.attributes.used,
           quota: +res.attributes.quota
         }
-        sendToMainWindow('disk-space', space)
+        trayWindow.send('disk-space', space)
       },
       (err) => log.error(err)
     )
   }
 }
 
-const startSync = (force) => {
-  if (mainWindow) mainWindow.setContentSize(DASHBOARD_SCREEN_WIDTH, DASHBOARD_SCREEN_HEIGHT)
-  sendToMainWindow('synchronization', desktop.config.cozyUrl, desktop.config.deviceName)
+const startSync = (force, ...args) => {
+  log.debug({startSync: true})
+  if (onboardingWindow) onboardingWindow.hide()
+  trayWindow.show(...args)
+  setTimeout ( () => trayWindow.send('synchronization', desktop.config.cozyUrl, desktop.config.deviceName), 500)
   for (let file of lastFiles.list()) {
-    sendToMainWindow('transfer', file)
+    trayWindow.send('transfer', file)
   }
   if (desktop.sync && !force) {
     if (state === 'up-to-date' || state === 'online') {
-      sendToMainWindow('up-to-date')
+      trayWindow.send('up-to-date')
     } else if (state === 'offline') {
-      sendToMainWindow('offline')
+      trayWindow.send('offline')
     } else if (state === 'error') {
       sendErrorToMainWindow(errorMessage)
     }
@@ -212,19 +141,19 @@ const startSync = (force) => {
     updateState('syncing')
     desktop.events.on('syncing', () => {
       updateState('syncing')
-      sendToMainWindow('syncing')
+      trayWindow.send('syncing')
     })
     desktop.events.on('up-to-date', () => {
       updateState('up-to-date')
-      sendToMainWindow('up-to-date')
+      trayWindow.send('up-to-date')
     })
     desktop.events.on('online', () => {
       updateState('online')
-      sendToMainWindow('up-to-date')
+      trayWindow.send('up-to-date')
     })
     desktop.events.on('offline', () => {
       updateState('offline')
-      sendToMainWindow('offline')
+      trayWindow.send('offline')
     })
     desktop.events.on('transfer-started', addFile)
     desktop.events.on('transfer-copy', addFile)
@@ -256,49 +185,8 @@ const startSync = (force) => {
     sendDiskUsage()
   }
   autoLaunch.isEnabled().then((enabled) => {
-    sendToMainWindow('auto-launch', enabled)
+    trayWindow.send('auto-launch', enabled)
   })
-}
-
-const appLoaded = () => {
-  if (!desktop.config.isValid()) {
-    return
-  }
-  if (desktop.config.syncPath) {
-    setTimeout(startSync, 20)
-  } else {
-    setTimeout(() => sendToMainWindow('registration-done'), 20)
-  }
-}
-
-const createWindow = () => {
-  let windowOptions = {icon: `${__dirname}/images/icon.png`}
-  if (desktop && desktop.config.syncPath) {
-    windowOptions.width = DASHBOARD_SCREEN_WIDTH
-    windowOptions.height = DASHBOARD_SCREEN_HEIGHT
-  } else {
-    windowOptions.width = ONBOARDING_SCREEN_WIDTH
-    windowOptions.height = ONBOARDING_SCREEN_HEIGHT
-  }
-  mainWindow = new BrowserWindow(windowOptions)
-  mainWindow.loadURL(`file://${__dirname}/index.html`)
-  if (process.env.WATCH === 'true' || process.env.DEBUG === 'true') {
-    mainWindow.webContents.openDevTools({mode: 'detach'})
-  } else {
-    mainWindow.setMenu(null)
-  }
-  mainWindow.on('closed', () => {
-    if (process.platform === 'darwin') { app.dock.hide() }
-    mainWindow = null
-  })
-  mainWindow.webContents.on('dom-ready', appLoaded)
-  mainWindow.webContents.on('will-navigate', (event, url) => {
-    if (url.startsWith('http') && !url.match('/auth/authorize')) {
-      event.preventDefault()
-      shell.openExternal(url)
-    }
-  })
-  if (process.platform === 'darwin') { app.dock.show() }
 }
 
 const shouldExit = app.makeSingleInstance(showWindow)
@@ -309,23 +197,18 @@ if (shouldExit) {
 
 app.on('ready', () => {
   desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
-
+  i18n.init(app)
+  tray.init(app, showWindow)
   lastFiles.init(desktop)
-  i18nInit(app)
-  if (process.argv.indexOf('--hidden') === -1) {
-    createWindow()
-  } else {
-    appLoaded()
-  }
-  tray = new electron.Tray(`${__dirname}/images/tray-icon-linux/idle.png`)
-  tray.setState('idle')
-  const menu = electron.Menu.buildFromTemplate([
-    { label: translate('Tray Show application'), click: showWindow },
-    { label: translate('Tray Quit application'), click: app.quit }
-  ])
-  tray.setContextMenu(menu)
-  tray.on('click', showWindow)
-  tray.on('')
+  trayWindow.init(app, desktop)
+  helpWindow.init(app, desktop)
+  onboardingWindow.init(app, desktop)
+  onboardingWindow.onOnboardingDone(startSync)
+
+  showWindow()
+
+  // Os X wants all application to have a menu
+  Menu.setApplicationMenu(buildAppMenu(app))
 
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
@@ -336,121 +219,8 @@ app.on('ready', () => {
 // See http://electron.atom.io/docs/api/app/#event-window-all-closed
 app.on('window-all-closed', () => {})
 
-ipcMain.on('register-remote', (event, arg) => {
-  const cozyUrl = desktop.checkCozyUrl(arg.cozyUrl)
-  desktop.config.cozyUrl = cozyUrl
-  const onRegistered = (client, url) => {
-    let resolveP
-    const promise = new Promise((resolve) => { resolveP = resolve })
-    mainWindow.setContentSize(LOGIN_SCREEN_WIDTH, LOGIN_SCREEN_HEIGHT, true)
-    mainWindow.loadURL(url)
-    mainWindow.webContents.on('did-get-response-details', (event, status, newUrl, originalUrl, httpResponseCode) => {
-      if (newUrl.match(/\/auth\/authorize\?/) && httpResponseCode === 200) {
-        mainWindow.setContentSize(OAUTH_SCREEN_WIDTH, OAUTH_SCREEN_HEIGHT, true)
-      }
-    })
-    mainWindow.webContents.on('did-get-redirect-request', (event, oldUrl, newUrl) => {
-      if (newUrl.match('file://')) {
-        mainWindow.setContentSize(ONBOARDING_SCREEN_WIDTH, ONBOARDING_SCREEN_HEIGHT, true)
-        resolveP(newUrl)
-      }
-    })
-    return promise
-  }
-  desktop.registerRemote(cozyUrl, arg.location, onRegistered)
-    .then(
-      (reg) => {
-        session.defaultSession.clearStorageData()
-        mainWindow.loadURL(reg.client.redirectURI)
-        autoLaunch.setEnabled(true)
-      },
-      (err) => {
-        log.error(err)
-        event.sender.send('registration-error', translate('Address No cozy instance at this address!'))
-      }
-    )
-})
-
-ipcMain.on('choose-folder', (event) => {
-  let folders = dialog.showOpenDialog({
-    properties: ['openDirectory', 'createDirectory']
-  })
-  if (folders && folders.length > 0) {
-    event.sender.send('folder-chosen', folders[0])
-  }
-})
-
-ipcMain.on('start-sync', (event, syncPath) => {
-  if (!desktop.config.isValid()) {
-    log.error('No client!')
-    return
-  }
-  try {
-    desktop.saveConfig(desktop.config.cozyUrl, syncPath)
-    try {
-      addFileManagerShortcut(desktop.config)
-    } catch (err) { log.error(err) }
-    startSync()
-  } catch (err) {
-    log.error(err)
-    event.sender.send('folder-error', translate('Error Invalid path'))
-  }
-})
-
-ipcMain.on('quit-and-install', () => {
-  autoUpdater.quitAndInstall()
-})
-
-ipcMain.on('auto-launcher', (event, enabled) => autoLaunch.setEnabled(enabled))
-
-ipcMain.on('logout', () => {
-  desktop.removeConfig()
-  sendToMainWindow('unlinked')
-})
-
-ipcMain.on('unlink-cozy', () => {
-  if (!desktop.config.isValid()) {
-    log.error('No client!')
-    return
-  }
-  const options = {
-    type: 'question',
-    title: translate('Unlink Title'),
-    message: translate('Unlink Message'),
-    detail: translate('Unlink Detail'),
-    buttons: [translate('Unlink Cancel'), translate('Unlink OK')],
-    cancelId: 0,
-    defaultId: 1
-  }
-  dialog.showMessageBox(mainWindow, options, (response) => {
-    if (response === 0) {
-      sendToMainWindow('cancel-unlink')
-      return
-    }
-    desktop.stopSync().then(() => {
-      desktop.removeRemote()
-        .then(() => log.info('removed'))
-        .then(() => sendToMainWindow('unlinked'))
-        .catch((err) => log.error(err))
-    })
-  })
-})
-
-function serializeError (err) {
-  return {message: err.message, name: err.name, stack: err.stack}
-}
-
-ipcMain.on('send-mail', (event, body) => {
-  desktop.sendMailToSupport(body).then(
-    () => { event.sender.send('mail-sent') },
-    (err) => { event.sender.send('mail-sent', serializeError(err)) }
-  )
-})
-
-ipcMain.on('restart', () => {
-  setTimeout(app.quit, 50)
-  const args = process.argv.slice(1).filter(a => a !== '--isHidden')
-  spawn(process.argv[0], args, { detached: true })
+ipcMain.on('show-help', () => {
+  helpWindow.show()
 })
 
 // On watch mode, automatically reload the window when sources are updated
@@ -458,19 +228,20 @@ if (process.env.WATCH === 'true') {
   const chokidar = require('chokidar')
   chokidar.watch(['*.{html,js,css}'], { cwd: __dirname })
     .on('change', () => {
-      if (mainWindow) {
-        mainWindow.reload()
+      if (trayWindow) {
+        trayWindow.reload()
       }
     })
-} else {
+}
+
+// on non-watch mode, check for updates
+if (process.env.WATCH !== 'true') {
   app.once('ready', () => {
-    Menu.setApplicationMenu(buildAppMenu(app))
     autoUpdater.checkForNewRelease()
     .addListener('update-downloaded', (updateInfo) => {
       const releaseName = updateInfo.version || 'unknown'
       const releaseNotes = updateInfo.releaseName || `New version ${releaseName} available`
-      newReleaseAvailable = true
-      sendToMainWindow('new-release-available', releaseNotes, releaseName)
+      trayWindow.send('new-release-available', releaseNotes, releaseName)
     })
   })
 }

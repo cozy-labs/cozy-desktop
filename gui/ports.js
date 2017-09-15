@@ -11,6 +11,7 @@ const container = document.getElementById('container')
 
 const Elm = require('./elm').Main
 const elmectron = Elm.embed(container, {
+  page: window.location.hash.replace('#', ''),
   folder: defaultDir,
   locale: remote.app.locale,
   locales: {
@@ -38,6 +39,7 @@ ipcRenderer.on('registration-error', (event, err) => {
   elmectron.ports.registrationError.send(err)
 })
 ipcRenderer.on('registration-done', (event) => {
+  console.log("registrationDone in port")
   elmectron.ports.registrationDone.send(true)
 })
 elmectron.ports.registerRemote.subscribe((url) => {

@@ -61,6 +61,7 @@
     "babel-polyfill": "^6.23.0",
     "cozy-desktop": "file:../cli/",
     "electron-main-notification": "1.0.1",
+    "electron-positioner": "^3.0.0",
     "electron-updater": "1.15.0",
     "lnk": "^1.1.0",
     "lodash.debounce": "4.0.8",

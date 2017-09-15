@@ -2,47 +2,27 @@
 
 .two-panes
   display flex
+  flex-direction column
   width 100vw
   height 100vh
 
 .two-panes__menu
+  @extend $tabs-base .coz-tab-list
   display flex
-  flex-direction column
-  width 13em
-  padding-right .5em
-  background-color grey-01
-  font-size 1.25rem
-  font-weight bold
-  ul
-    padding 0
+  flex-direction line
 
 .two-panes__menu__item
-  list-style none
-  border-radius 0 4px 4px 0
-  transition background-color .1s
-  &:hover
-    background-color grey-03
-  a
-    display block
-    padding .6em 2em
-    color grey-06
-    text-decoration none
-    line-height 1
-  svg
-    margin-right .7em
+  @extend $tabs-base .coz-tab
+  flex 0 1 50%
+  text-align: center
 
 .two-panes__menu__item--active
-  background-color blue
-  &:hover
-    background-color blue
-  a
-    color white
+  @extend $tabs-base .coz-tab--active
 
 .two-panes__content
-  flex 1
-  padding 2em
-  color grey-07
-  overflow-x hidden
+  box-sizing border-box
+  padding 1em
+  font-size: .8em
 
   a
     color blue
@@ -51,7 +31,12 @@
       color white
 
   h2
-    margin-top 2em
+    font-size: 1.2em
+    margin-top 1.8em
+
+  h2:first-of-type
+    margin-top .5em
+
   h3
     a
       color grey-06
