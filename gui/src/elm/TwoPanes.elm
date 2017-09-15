@@ -10,13 +10,13 @@ import Settings
 import Help
 
 
+-- @TODO This file should be named tabs
 -- MODEL
 
 
 type Tab
     = DashboardTab
     | SettingsTab
-    | HelpTab
 
 
 
@@ -51,7 +51,6 @@ type Msg
     | FillAddressAndDevice ( String, String )
     | DashboardMsg Dashboard.Msg
     | SettingsMsg Settings.Msg
-    | HelpMsg Help.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -101,57 +100,38 @@ update msg model =
             in
                 ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
 
-        HelpMsg subMsg ->
-            let
-                ( help, cmd ) =
-                    Help.update subMsg model.help
-            in
-                ( { model | help = help }, Cmd.map HelpMsg cmd )
-
 
 
 -- VIEW
---menu_item : Helpers -> Model -> String -> Tab -> Icons.IconFunction -> Html Msg
 
 
-menu_item helpers model title tab icon =
-    li
+menu_item helpers model title tab =
+    div
         [ classList
             [ ( "two-panes__menu__item", True )
             , ( "two-panes__menu__item--active", model.tab == tab )
             ]
+        , onClick (GoToTab tab)
         ]
-        [ a
-            [ href "#"
-            , onClick (GoToTab tab)
-            ]
-            [ icon 20 (model.tab == tab)
-            , text (helpers.t ("TwoPanes " ++ title))
-            ]
+        [ text (helpers.t ("TwoPanes " ++ title))
+        ]
+
+
+menu helpers model =
+    aside [ class "two-panes__menu" ]
+        [ menu_item helpers model "Recents" DashboardTab
+        , menu_item helpers model "Settings" SettingsTab
         ]
 
 
 view : Helpers -> Model -> Html Msg
 view helpers model =
-    let
-        menu =
-            aside [ class "two-panes__menu" ]
-                [ ul []
-                    [ menu_item helpers model "Recents" DashboardTab Icons.dashboard
-                    , menu_item helpers model "Settings" SettingsTab Icons.settings
-                    , menu_item helpers model "Help" HelpTab Icons.help
-                    ]
-                ]
+    section [ class "two-panes" ]
+        [ menu helpers model
+        , case model.tab of
+            DashboardTab ->
+                Html.map DashboardMsg (Dashboard.view helpers model.dashboard)
 
-        content =
-            case model.tab of
-                DashboardTab ->
-                    Html.map DashboardMsg (Dashboard.view helpers model.dashboard)
-
-                SettingsTab ->
-                    Html.map SettingsMsg (Settings.view helpers model.settings)
-
-                HelpTab ->
-                    Html.map HelpMsg (Help.view helpers model.help)
-    in
-        section [ class "two-panes" ] [ menu, content ]
+            SettingsTab ->
+                Html.map SettingsMsg (Settings.view helpers model.settings)
+        ]

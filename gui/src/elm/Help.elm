@@ -132,12 +132,5 @@ view helpers model =
                       else
                         onClick (SendMail helpers.t)
                     ]
-                    [ text (helpers.t "Help Send us a message") ]
                 ]
-        , p [] [ text (helpers.t "Help There are still a few more options to contact us:") ]
-        , ul [ class "help-list" ]
-            [ (iconLink helpers "mailto:support@cozycloud.cc" "email" "Help Email")
-            , (iconLink helpers "https://twitter.com/intent/tweet?text=@mycozycloud%20" "twitter" "Help Twitter")
-            , (iconLink helpers "https://docs.cozy.io/en/" "documentation" "Help Documentation")
-            ]
         ]
