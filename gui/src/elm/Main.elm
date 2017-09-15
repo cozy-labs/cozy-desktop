@@ -34,6 +34,7 @@ type Page
     | TwoPanesPage
     | UnlinkedPage
     | RevokedPage
+    | HelpPage
 
 
 type alias Model =
@@ -43,11 +44,13 @@ type alias Model =
     , wizard : Wizard.Model
     , twopanes : TwoPanes.Model
     , revoked : Revoked.Model
+    , help : Help.Model
     }
 
 
 type alias Flags =
-    { folder : String
+    { page : String
+    , folder : String
     , locale : String
     , locales : Json.Value
     , platform : String
@@ -72,7 +75,17 @@ init flags =
                     Dict.empty
 
         page =
-            WizardPage
+            case flags.page of
+                "onboarding" ->
+                    WizardPage
+
+                "help" ->
+                    HelpPage
+
+                -- Temporarily use the MsgMechanism to
+                -- get to the 2Panes page.
+                _ ->
+                    WizardPage
 
         wizard =
             Wizard.init flags.folder flags.platform
@@ -87,7 +100,7 @@ init flags =
             Help.init
 
         model =
-            Model localeIdentifier locales page wizard twopanes revoked
+            Model localeIdentifier locales page wizard twopanes revoked help
     in
         ( model, Cmd.none )
 
@@ -105,6 +118,7 @@ type Msg
     | Revoked
     | RevokedMsg Revoked.Msg
     | Restart
+    | HelpMsg Help.Msg
 
 
 port restart : Bool -> Cmd msg
@@ -152,6 +166,13 @@ update msg model =
 
         NoOp ->
             ( model, Cmd.none )
+
+        HelpMsg subMsg ->
+            let
+                ( help, cmd ) =
+                    Help.update subMsg model.help
+            in
+                ( { model | help = help }, Cmd.map HelpMsg cmd )
 
 
 
@@ -237,7 +258,7 @@ subscriptions model =
         , offline (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.GoOffline)))
         , updated (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.Updated)))
         , syncing (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.Syncing)))
-        , mail (TwoPanesMsg << TwoPanes.HelpMsg << Help.MailSent)
+        , mail (HelpMsg << Help.MailSent)
         , autolaunch (TwoPanesMsg << TwoPanes.SettingsMsg << Settings.AutoLaunchSet)
         , cancelUnlink (always (TwoPanesMsg (TwoPanes.SettingsMsg Settings.CancelUnlink)))
         , unlink (always Unlink)
@@ -279,3 +300,6 @@ view model =
 
             RevokedPage ->
                 Html.map RevokedMsg (Revoked.view helpers model.revoked)
+
+            HelpPage ->
+                Html.map HelpMsg (Help.view helpers model.help)

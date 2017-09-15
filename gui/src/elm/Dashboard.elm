@@ -209,8 +209,7 @@ view helpers model =
                 recentList
     in
         section [ class "two-panes__content two-panes__content--dashboard" ]
-            [ h1 [] [ text (helpers.t "Dashboard Dashboard") ]
-            , statusMessage
+            [ statusMessage
             , h2 [] [ text (helpers.t "Dashboard Recent activities") ]
             , ul [ class "recent-files" ] recentListWithMore
             ]
