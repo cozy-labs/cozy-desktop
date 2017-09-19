@@ -113,6 +113,8 @@ class LocalWatcher {
     return new Promise((resolve) => {
       for (let eventType of ['add', 'addDir', 'change', 'unlink', 'unlinkDir']) {
         this.watcher.on(eventType, (path?: string, stats?: fs.Stats) => {
+          log.chokidar.debug({path}, eventType)
+          log.chokidar.trace({stats})
           const newEvent = chokidarEvent.build(eventType, path, stats)
           this.buffer.push(newEvent)
         })
@@ -134,6 +136,7 @@ class LocalWatcher {
   }
 
   handleEvents (events: ChokidarFSEvent[]) {
+    log.debug(`Flushed ${events.length} events`)
     for (let e of events) {
       switch (e.type) {
         case 'add':
@@ -244,7 +247,6 @@ class LocalWatcher {
   // New file detected
   onAddFile (filePath: string, stats: fs.Stats) {
     const logError = (err) => log.error({err, path: filePath})
-    log.chokidar.trace({event: 'add', path: filePath, stats})
     if (this.initialScan) { this.initialScan.ids.push(metadata.id(filePath)) }
     this.pendingDeletions.executeIfAny(filePath)
     this.checksums++
@@ -287,7 +289,6 @@ class LocalWatcher {
 
   // New directory detected
   onAddDir (folderPath: string, stats: fs.Stats) {
-    log.chokidar.trace({event: 'addDir', path: folderPath, stats})
     if (folderPath === '') return
 
     if (this.initialScan) { this.initialScan.ids.push(metadata.id(folderPath)) }
@@ -306,7 +307,6 @@ class LocalWatcher {
   // It can be a file moved out. So, we wait a bit to see if a file with the
   // same checksum is added and, if not, we declare this file as deleted.
   onUnlinkFile (filePath: string) {
-    log.chokidar.trace({event: 'unlink', path: filePath})
     // TODO: Extract delayed execution logic to utils/pending
     let timeout
     const stopChecking = () => {
@@ -332,7 +332,6 @@ class LocalWatcher {
   // We don't want to delete a folder before files inside it. So we wait a bit
   // after chokidar event to declare the folder as deleted.
   onUnlinkDir (folderPath: string) {
-    log.chokidar.trace({event: 'unlinkDir', path: folderPath})
     // TODO: Extract repeated check logic to utils/pending
     let interval
     const stopChecking = () => {
@@ -353,7 +352,6 @@ class LocalWatcher {
 
   // File update detected
   onChange (filePath: string, stats: fs.Stats) {
-    log.chokidar.trace({event: 'change', path: filePath, stats})
     log.info({path: filePath}, 'File changed')
     this.createDoc(filePath, stats, (err, doc) => {
       if (err) {
