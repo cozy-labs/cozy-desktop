@@ -82,6 +82,9 @@ init flags =
                 "help" ->
                     HelpPage
 
+                "dashboard" ->
+                    TwoPanesPage
+
                 -- Temporarily use the MsgMechanism to
                 -- get to the 2Panes page.
                 _ ->
