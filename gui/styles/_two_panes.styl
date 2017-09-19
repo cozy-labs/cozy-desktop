@@ -21,14 +21,11 @@
 
 .two-panes__content
   box-sizing border-box
-  padding 1em
   font-size: .8em
 
   a
     color blue
     text-decoration none
-    &.btn
-      color white
 
   h2
     font-size: 1.2em
@@ -78,6 +75,8 @@
   .status
     display flex
     line-height 2
+    padding 1em
+
   .status__icon
     flex-shrink 0
     box-sizing border-box
@@ -112,16 +111,17 @@
       display block
       height 3em
       min-height 48px
-      padding .8em .2em
-      &:not(:last-child)
-        border-bottom 1px solid grey-03
+      padding .8em
+      border-bottom 1px solid grey-03
       span
         color grey-05
   .file-name
     overflow hidden
     text-overflow ellipsis
     white-space nowrap
-    margin .2em 0
+    margin .5em 0px .2em 0px
+    font-weight: normal
+
   .file-size::after
     content ' • '
     margin 0 .25em
@@ -176,8 +176,7 @@
 
 
 .two-panes__content--settings
-
-  max-width: 30em
+  padding 1em
 
   .progress
     width 100%

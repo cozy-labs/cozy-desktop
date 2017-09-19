@@ -210,6 +210,5 @@ view helpers model =
     in
         section [ class "two-panes__content two-panes__content--dashboard" ]
             [ statusMessage
-            , h2 [] [ text (helpers.t "Dashboard Recent activities") ]
             , ul [ class "recent-files" ] recentListWithMore
             ]
