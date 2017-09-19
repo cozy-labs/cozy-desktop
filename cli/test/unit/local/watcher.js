@@ -199,24 +199,25 @@ describe('LocalWatcher Tests', function () {
     })
 
     it('detects when a sub-folder is created', function (done) {
-      fs.mkdirSync(path.join(this.syncPath, 'abb'))
-      this.prep.putFolderAsync = () => {  // For aba folder
-        this.prep.putFolderAsync = function (side, doc) {
-          side.should.equal('local')
-          doc.should.have.properties({
-            path: path.normalize('abb/abc'),
-            docType: 'folder'
-          })
-          doc.should.have.properties([
-            'updated_at'
-          ])
-          done()
+      this.watcher.start().then(() => {
+        this.prep.putFolderAsync = () => {  // For abb folder
+          this.prep.putFolderAsync = function (side, doc) {
+            side.should.equal('local')
+            doc.should.have.properties({
+              path: path.normalize('abb/abc'),
+              docType: 'folder'
+            })
+            doc.should.have.properties([
+              'updated_at'
+            ])
+            done()
+            return Promise.resolve()
+          }
+          fs.mkdirSync(path.join(this.syncPath, 'abb/abc'))
           return Promise.resolve()
         }
-        fs.mkdirSync(path.join(this.syncPath, 'abb/abc'))
-        return Promise.resolve()
-      }
-      this.watcher.start()
+        fs.mkdirSync(path.join(this.syncPath, 'abb'))
+      })
     })
   })
 
@@ -351,6 +352,7 @@ describe('LocalWatcher Tests', function () {
       it('is unstable on travis')
       return
     }
+    this.timeout(15000)
 
     before('reset pouchdb', function (done) {
       this.pouch.resetDatabase(done)
@@ -393,7 +395,7 @@ describe('LocalWatcher Tests', function () {
               let args = this.prep.trashFolderAsync.args[0][1]
               args.should.have.properties({path: 'aga'})
               done()
-            }, 4000)
+            }, 5000)
             return Promise.resolve()
           }
           fs.renameSync(src, dst)
