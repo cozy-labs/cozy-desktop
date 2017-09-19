@@ -39,7 +39,6 @@ ipcRenderer.on('registration-error', (event, err) => {
   elmectron.ports.registrationError.send(err)
 })
 ipcRenderer.on('registration-done', (event) => {
-  console.log("registrationDone in port")
   elmectron.ports.registrationDone.send(true)
 })
 elmectron.ports.registerRemote.subscribe((url) => {
