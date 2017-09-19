@@ -1,5 +1,5 @@
 const {addFileManagerShortcut} = require('./shortcut')
-const {BrowserWindow, dialog, ipcMain, session, Menu} = require('electron')
+const {BrowserWindow, dialog, ipcMain, session} = require('electron')
 const autoLaunch = require('./autolaunch')
 const {translate} = require('./i18n')
 
@@ -52,7 +52,7 @@ module.exports.create = () => {
     height: ONBOARDING_SCREEN_HEIGHT
   })
   win.loadURL(`file://${__dirname}/../../index.html`)
-  //win.setMenu(Menu.buildFromTemplate([]))
+  // win.setMenu(Menu.buildFromTemplate([]))
   behaviours.noMenu(win)
   behaviours.devTools(win)
   behaviours.dockApple(app, win)
@@ -97,7 +97,7 @@ ipcMain.on('register-remote', (event, arg) => {
     .then(
       (reg) => {
         session.defaultSession.clearStorageData()
-        win.webContents.once('dom-ready', () => setTimeout( () => event.sender.send('registration-done') , 20))
+        win.webContents.once('dom-ready', () => setTimeout(() => event.sender.send('registration-done'), 20))
         win.loadURL(reg.client.redirectURI)
         autoLaunch.setEnabled(true)
       },
