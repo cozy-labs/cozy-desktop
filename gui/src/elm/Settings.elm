@@ -54,6 +54,10 @@ type Msg
     | UpdateDiskSpace DiskSpace
     | UnlinkCozy
     | CancelUnlink
+    | ShowHelp
+
+
+port showHelp : () -> Cmd msg
 
 
 port unlinkCozy : () -> Cmd msg
@@ -93,6 +97,9 @@ update msg model =
 
         CancelUnlink ->
             ( { model | busyUnlinking = False }, Cmd.none )
+
+        ShowHelp ->
+            ( model, showHelp () )
 
 
 
@@ -187,6 +194,13 @@ view helpers model =
             [ strong [] [ text ((helpers.t "Settings Version") ++ " ") ]
             , versionLine helpers model
             ]
+        , h2 [] [ text (helpers.t "Help Help") ]
+        , a
+            [ class "btn"
+            , href "#"
+            , onClick ShowHelp
+            ]
+            [ text (helpers.t "Help Send us a message.") ]
         , h2 [] [ text (helpers.t "Account Unlink Cozy") ]
         , p []
             [ text ((helpers.t "Account It will unlink your account to this computer.") ++ " ")

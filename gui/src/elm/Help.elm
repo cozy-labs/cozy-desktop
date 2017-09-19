@@ -99,14 +99,6 @@ view : Helpers -> Model -> Html Msg
 view helpers model =
     section [ class "two-panes__content two-panes__content--help" ]
         [ h1 [] [ text (helpers.t "Help Help") ]
-        , h2 [] [ text (helpers.t "Help Community Support") ]
-        , p [] [ text (helpers.t "Help Our community grows everyday and will be happy to give you an helping hand in one of these media:") ]
-        , ul [ class "help-list" ]
-            [ (iconLink helpers "https://forum.cozy.io/" "forum" "Help Forum")
-            , (iconLink helpers "https://webchat.freenode.net/?channels=cozycloud" "irc" "Help IRC")
-            , (iconLink helpers "https://github.com/cozy" "github" "Help Github")
-            ]
-        , h2 [] [ text (helpers.t "Help Official Support") ]
         , if model.status == Success then
             p [ class "message--success" ]
                 [ text (helpers.t "Help Your mail has been sent. We will try to respond to it really soon!") ]
