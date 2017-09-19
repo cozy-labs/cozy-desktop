@@ -10,4 +10,12 @@ module.exports = {
   actions: [
     {type: "rm", path: "parent/dir"},
   ],
+  expected: {
+    prepCalls: [
+      {method: 'trashFileAsync', path: 'parent/dir/subdir/file'},
+      {method: 'trashFolderAsync', path: 'parent/dir/subdir'},
+      {method: 'trashFolderAsync', path: 'parent/dir/empty-subdir'},
+      {method: 'trashFolderAsync', path: 'parent/dir'}
+    ]
+  },
 }
