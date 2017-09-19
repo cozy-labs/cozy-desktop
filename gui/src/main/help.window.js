@@ -1,5 +1,5 @@
 const {BrowserWindow, ipcMain} = require('electron')
-const {behaviours} = require('./window_behaviour')
+const behaviours = require('./window_behaviour')
 const HELP_SCREEN_WIDTH = 768
 const HELP_SCREEN_HEIGHT = 570
 
@@ -40,3 +40,8 @@ ipcMain.on('send-mail', (event, body) => {
     }
   )
 })
+
+module.exports.show = () => {
+  if (!win) module.exports.create()
+  win.show()
+}
