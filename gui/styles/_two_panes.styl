@@ -8,6 +8,7 @@
 
 .two-panes__menu
   @extend $tabs-base .coz-tab-list
+  flex 0 0 2.5em
   display flex
   flex-direction line
 
@@ -15,15 +16,17 @@
   @extend $tabs-base .coz-tab
   flex 0 1 50%
   text-align: center
+  height: 1.4em
 
 .two-panes__menu__item--active
   @extend $tabs-base .coz-tab--active
 
 .two-panes__content
   box-sizing border-box
-  font-size: .8em
+  font-size .8em
+  overflow-x hidden
 
-  a
+  a:not(.btn)
     color blue
     text-decoration none
 
@@ -210,6 +213,7 @@
 
 
 .two-panes__content--help
+  padding 2em
 
   .btn--msg
     @extend $button

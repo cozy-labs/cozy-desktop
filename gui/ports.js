@@ -150,6 +150,10 @@ elmectron.ports.focus.subscribe((selector) => {
   }, 300)
 })
 
+elmectron.ports.showHelp.subscribe(() => {
+  ipcRenderer.send('show-help')
+})
+
 // Chrome-like "inspect element" for Electron
 if (process.env.WATCH === 'true' || process.env.DEBUG === 'true') {
   const debugMenu = require('debug-menu')
