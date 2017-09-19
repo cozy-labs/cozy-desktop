@@ -55,10 +55,9 @@ busy with the v3 release.
 
 ## GNU/Linux & BSD users
 
-The new Cozy Drive for Desktop application should actually work on Linux and
-BSD flavors, although not extensively tested at the moment.
-We don't provide packages yet, so you'll have to build and install it by hand.
-Packages for major GNU/Linux distributions should come up soon.
+The new Cozy Drive for Desktop application should work on Linux and
+BSD flavors. It has been tested in development on Ubuntu/Gnome, however we do not provide init scripts, service files or packages yet, so you'll have to build and install it by hand. Any contribution in this direction will be appreciated.
+Packages for major GNU/Linux distributions should come up.
 
 
 ## Contributing
