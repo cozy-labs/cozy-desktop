@@ -33,7 +33,7 @@ module.exports.create = () => {
     frame: false,
     show: false,
     skipTaskbar: true,
-    //transparent: true,
+    // transparent: true,
     width: DASHBOARD_SCREEN_WIDTH,
     height: DASHBOARD_SCREEN_HEIGHT
   })
@@ -43,7 +43,7 @@ module.exports.create = () => {
   behaviours.dockApple(app, win)
   behaviours.openExternalLinks(win)
   win.on('closed', () => { win = null })
-  win.on('blur', () => setTimeout(() => { if(!win.isFocused() && !win.isDevToolsFocused()) win.close() }, 400))
+  win.on('blur', () => setTimeout(() => { if (!win.isFocused() && !win.isDevToolsFocused()) win.close() }, 400))
   win.positioner = new Positioner(win)
 }
 
