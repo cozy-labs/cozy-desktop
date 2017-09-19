@@ -35,7 +35,8 @@
       "locales",
       "main.js",
       "node_modules",
-      "ports.js"
+      "ports.js",
+      "src/main"
     ],
     "win": {
       "certificateSubjectName": "Cozy Cloud SAS",
