@@ -132,5 +132,6 @@ view helpers model =
                       else
                         onClick (SendMail helpers.t)
                     ]
+                    [ text (helpers.t "Help Send us a message") ]
                 ]
         ]

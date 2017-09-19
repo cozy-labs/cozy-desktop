@@ -35,21 +35,15 @@ let errorMessage = ''
 let diskTimeout = null
 
 const showWindow = (...args) => {
-  log.debug({config: desktop.config})
   if (!desktop.config.syncPath) {
-    log.debug({open: 'onboarding1'})
     onboardingWindow.show(...args)
     // registration is done, but we need a syncPath
-    log.debug({config: desktop.config, valid: desktop.config.isValid()})
     if (desktop.config.isValid()) {
       setTimeout(() => onboardingWindow.send('registration-done'), 20)
     }
   } else {
-    // registration & syncPath chosen, let's sync
-    setTimeout(() => startSync(false, ...args), 20)
-    // if (process.argv.indexOf('--hidden') !== -1) {
-    //   trayWindow.show(...args)
-    // }
+    trayWindow.show()
+    trayWindow.onReady(startSync)
   }
 }
 
@@ -121,10 +115,7 @@ const sendDiskUsage = () => {
 }
 
 const startSync = (force, ...args) => {
-  log.debug({startSync: true})
-  if (onboardingWindow) onboardingWindow.hide()
-  trayWindow.show(...args)
-  setTimeout ( () => trayWindow.send('synchronization', desktop.config.cozyUrl, desktop.config.deviceName), 500)
+  trayWindow.send('synchronization', desktop.config.cozyUrl, desktop.config.deviceName)
   for (let file of lastFiles.list()) {
     trayWindow.send('transfer', file)
   }
@@ -203,7 +194,11 @@ app.on('ready', () => {
   trayWindow.init(app, desktop)
   helpWindow.init(app, desktop)
   onboardingWindow.init(app, desktop)
-  onboardingWindow.onOnboardingDone(startSync)
+  onboardingWindow.onOnboardingDone(() => {
+    onboardingWindow.hide()
+    trayWindow.show()
+    trayWindow.onReady(startSync)
+  })
 
   showWindow()
 

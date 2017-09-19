@@ -3,7 +3,7 @@ const {spawn} = require('child_process')
 const autoUpdater = require('./autoupdate')
 const autoLaunch = require('./autolaunch')
 const Positioner = require('electron-positioner')
-const DASHBOARD_SCREEN_WIDTH = 400
+const DASHBOARD_SCREEN_WIDTH = 325
 const DASHBOARD_SCREEN_HEIGHT = 600
 
 const {translate} = require('./i18n')
@@ -37,15 +37,20 @@ module.exports.create = () => {
     width: DASHBOARD_SCREEN_WIDTH,
     height: DASHBOARD_SCREEN_HEIGHT
   })
-  win.loadURL(`file://${__dirname}/../../index.html`)
+  win.loadURL(`file://${__dirname}/../../index.html#dashboard`)
   behaviours.noMenu(win)
-  //behaviours.devTools(win)
+  // behaviours.devTools(win)
   behaviours.dockApple(app, win)
   behaviours.openExternalLinks(win)
   win.on('closed', () => { win = null })
   win.on('blur', () => setTimeout(() => { if(!win.isFocused() && !win.isDevToolsFocused()) win.close() }, 400))
-  win.webContents.on('dom-ready', () => setTimeout( () => win.send('synchronization', desktop.config.cozyUrl, desktop.config.deviceName) , 20))
   win.positioner = new Positioner(win)
+}
+
+module.exports.onReady = (cb) => {
+  win && win.webContents && win.webContents.once('dom-ready', () => {
+    setTimeout(cb, 100) // elm initialization
+  })
 }
 
 module.exports.send = (...args) => {
