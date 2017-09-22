@@ -1,13 +1,12 @@
 /* @flow */
 
-import async from 'async'
 import chokidar from 'chokidar'
-import crypto from 'crypto'
 import find from 'lodash.find'
 import fs from 'fs'
 import mime from 'mime'
 import path from 'path'
 
+import { checksumer } from './checksumer'
 import * as chokidarEvent from './chokidar_event'
 import LocalEventBuffer from './event_buffer'
 import logger from '../logger'
@@ -17,6 +16,7 @@ import Prep from '../prep'
 import { PendingMap } from '../utils/pending'
 import { maxDate } from '../timestamp'
 
+import type { Checksumer } from './checksumer'
 import type { ChokidarFSEvent } from './chokidar_event'
 import type { Callback } from '../utils/func'
 import type { Pending } from '../utils/pending' // eslint-disable-line
@@ -43,7 +43,7 @@ class LocalWatcher {
   initialScan: ?{ids: string[]}
   pendingDeletions: PendingMap
   checksums: number
-  checksumer: any // async.queue
+  checksumer: Checksumer
   watcher: any // chokidar
   buffer: LocalEventBuffer<ChokidarFSEvent>
 
@@ -53,11 +53,7 @@ class LocalWatcher {
     this.pouch = pouch
     const timeoutInMs = 1000 // TODO: Read from config
     this.buffer = new LocalEventBuffer(timeoutInMs, this.handleEvents)
-
-    // Use a queue for checksums to avoid computing many checksums at the
-    // same time. It's better for performance (hard disk are faster with
-    // linear readings).
-    this.checksumer = async.queue(this.computeChecksum)
+    this.checksumer = checksumer()
   }
 
   // Start chokidar, the filesystem watcher
@@ -221,25 +217,8 @@ class LocalWatcher {
     })
   }
 
-  // Put a checksum computation in the queue
   checksum (filePath: string, callback: Callback) {
-    this.checksumer.push({filePath}, callback)
-  }
-
-  // Get checksum for given file
-  computeChecksum (task: {filePath: string}, callback: Callback) {
-    const stream = fs.createReadStream(task.filePath)
-    const checksum = crypto.createHash('md5')
-    checksum.setEncoding('base64')
-    stream.on('end', function () {
-      checksum.end()
-      callback(null, checksum.read())
-    })
-    stream.on('error', function (err) {
-      checksum.end()
-      callback(err)
-    })
-    stream.pipe(checksum)
+    this.checksumer.push(filePath, callback)
   }
 
   /* Actions */
