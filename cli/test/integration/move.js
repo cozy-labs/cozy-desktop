@@ -12,11 +12,11 @@ import {
 import path from 'path'
 import should from 'should'
 
-import pouchdbBuilders from '../../builders/pouchdb'
-import configHelpers from '../../helpers/config'
-import * as cozyHelpers from '../../helpers/cozy'
-import pouchHelpers from '../../helpers/pouch'
-import { IntegrationTestHelpers } from '../../helpers/integration'
+import pouchdbBuilders from '../builders/pouchdb'
+import configHelpers from '../helpers/config'
+import * as cozyHelpers from '../helpers/cozy'
+import pouchHelpers from '../helpers/pouch'
+import { IntegrationTestHelpers } from '../helpers/integration'
 
 suite('Move', () => {
   let cozy, helpers, pouch, prep

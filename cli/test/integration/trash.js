@@ -11,10 +11,10 @@ import {
 import path from 'path'
 import should from 'should'
 
-import configHelpers from '../../helpers/config'
-import * as cozyHelpers from '../../helpers/cozy'
-import pouchHelpers from '../../helpers/pouch'
-import { IntegrationTestHelpers } from '../../helpers/integration'
+import configHelpers from '../helpers/config'
+import * as cozyHelpers from '../helpers/cozy'
+import pouchHelpers from '../helpers/pouch'
+import { IntegrationTestHelpers } from '../helpers/integration'
 
 suite('Trash', () => {
   let cozy, helpers, pouch, prep

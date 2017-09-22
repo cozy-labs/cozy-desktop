@@ -49,7 +49,7 @@
     "storage:tree": "yarn docker:exec -- tree -aC /storage/dev.cozy.tools:8080",
     "test": "installed-check && npm run test:unit && npm run test:integration",
     "test:coverage": "installed-check && npm run test:unit:coverage && npm run test:integration",
-    "test:integration": "yarn mocha -- test/integration/v3",
+    "test:integration": "yarn mocha -- test/integration",
     "test:unit": "yarn mocha -- test/unit/",
     "test:unit:coverage": "cross-env NODE_ENV=test nyc mocha test/unit/",
     "watch": "npm run build -- --watch"
