@@ -125,7 +125,7 @@ class LocalWatcher {
         .on('error', (err) => {
           if (err.message === 'watch ENOSPC') {
             log.error('Sorry, the kernel is out of inotify watches! ' +
-              'See doc/inotify.md for how to solve this issue.')
+              'See doc/usage/inotify.md for how to solve this issue.')
           } else {
             log.error({err})
           }
