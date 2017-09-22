@@ -41,6 +41,7 @@
     "flow": "flow status --quiet --show-all-errors",
     "lint": "npm run eslint && npm run flow",
     "mocha": "env-cmd .env.test mocha",
+    "mocha:coverage": "env-cmd .env.test nyc mocha",
     "release:build": "yarn release:check && yarn && yarn run clean && yarn build",
     "release:check": "babel-node ./dev/check-release-branch.js",
     "repl": "cross-env DEBUG=1 COZY_DESKTOP_HEARTBEAT=5000 babel-node ./src/bin/repl.js",
@@ -51,7 +52,7 @@
     "test:coverage": "npm run test:unit:coverage && npm run test:integration",
     "test:integration": "yarn mocha -- test/integration",
     "test:unit": "yarn mocha -- test/unit/",
-    "test:unit:coverage": "cross-env NODE_ENV=test nyc mocha test/unit/",
+    "test:unit:coverage": "yarn mocha:coverage -- test/unit/",
     "watch": "npm run build -- --watch"
   },
   "dependencies": {
