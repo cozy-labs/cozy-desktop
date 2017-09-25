@@ -6,7 +6,7 @@ import fs from 'fs'
 import mime from 'mime'
 import path from 'path'
 
-import { checksumer } from './checksumer'
+import * as checksumer from './checksumer'
 import * as chokidarEvent from './chokidar_event'
 import LocalEventBuffer from './event_buffer'
 import logger from '../logger'
@@ -53,7 +53,7 @@ class LocalWatcher {
     this.pouch = pouch
     const timeoutInMs = 1000 // TODO: Read from config
     this.buffer = new LocalEventBuffer(timeoutInMs, this.handleEvents)
-    this.checksumer = checksumer()
+    this.checksumer = checksumer.init()
   }
 
   // Start chokidar, the filesystem watcher

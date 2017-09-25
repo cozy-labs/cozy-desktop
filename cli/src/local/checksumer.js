@@ -27,7 +27,7 @@ export type Checksumer = {
   kill: () => void
 }
 
-export const checksumer = (): Checksumer => {
+export const init = (): Checksumer => {
   // Use a queue for checksums to avoid computing many checksums at the
   // same time. It's better for performance (hard disk are faster with
   // linear readings).
