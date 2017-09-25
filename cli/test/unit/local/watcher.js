@@ -129,21 +129,28 @@ describe('LocalWatcher Tests', function () {
     })
   })
 
-  describe('checksum', function () {
-    it('returns the checksum of an existing file', function (done) {
-      let filePath = 'test/fixtures/chat-mignon.jpg'
-      this.watcher.checksum(filePath, function (err, sum) {
-        should.not.exist(err)
-        sum.should.equal('+HBGS7uN4XdB0blqLv5tFQ==')
-        done()
+  describe('checksum', () => {
+    const relpath = 'foo.txt'
+    let abspath
+
+    beforeEach(function () {
+      abspath = path.join(this.syncPath, relpath)
+    })
+
+    it('computes the md5sum for the given relative path', function (done) {
+      fs.outputFile(abspath, 'foo', () => {
+        this.watcher.checksum(relpath, (err, md5sum) => {
+          should.not.exist(err)
+          should(md5sum).equal('rL0Y20zC+Fzt72VPzMSk2A==') // foo
+          done()
+        })
       })
     })
 
-    it('returns an error for a missing file', function (done) {
-      let filePath = 'no/such/file'
-      this.watcher.checksum(filePath, function (err, sum) {
-        should.exist(err)
-        err.code.should.equal('ENOENT')
+    it('does not swallow errors', function (done) {
+      this.watcher.checksum(relpath, (err, md5sum) => {
+        should(err).have.property('code', 'ENOENT')
+        should.not.exist(md5sum)
         done()
       })
     })
