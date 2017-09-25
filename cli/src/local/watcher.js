@@ -199,10 +199,9 @@ class LocalWatcher {
   // An helper to create a document for a file
   // with checksum and mime informations
   createDoc (filePath: string, stats: fs.Stats, callback: Callback) {
-    const absPath = path.join(this.syncPath, filePath)
-    const mimeType = mime.lookup(absPath)
+    const mimeType = mime.lookup(filePath)
     const {mtime, ctime} = stats
-    this.checksum(absPath, function (err, md5sum) {
+    this.checksum(filePath, function (err, md5sum) {
       let doc: Object = {
         path: filePath,
         docType: 'file',
@@ -218,7 +217,8 @@ class LocalWatcher {
   }
 
   checksum (filePath: string, callback: Callback) {
-    this.checksumer.push(filePath, callback)
+    const absPath = path.join(this.syncPath, filePath)
+    this.checksumer.push(absPath, callback)
   }
 
   /* Actions */

@@ -130,15 +130,16 @@ describe('LocalWatcher Tests', function () {
   })
 
   describe('checksum', () => {
+    const relpath = 'foo.txt'
     let abspath
 
     beforeEach(function () {
-      abspath = path.join(this.syncPath, 'foo.txt')
+      abspath = path.join(this.syncPath, relpath)
     })
 
-    it('computes the md5sum for the given absolute path', function (done) {
+    it('computes the md5sum for the given relative path', function (done) {
       fs.outputFile(abspath, 'foo', () => {
-        this.watcher.checksum(abspath, (err, md5sum) => {
+        this.watcher.checksum(relpath, (err, md5sum) => {
           should.not.exist(err)
           should(md5sum).equal('rL0Y20zC+Fzt72VPzMSk2A==') // foo
           done()
@@ -147,7 +148,7 @@ describe('LocalWatcher Tests', function () {
     })
 
     it('does not swallow errors', function (done) {
-      this.watcher.checksum(abspath, (err, md5sum) => {
+      this.watcher.checksum(relpath, (err, md5sum) => {
         should(err).have.property('code', 'ENOENT')
         should.not.exist(md5sum)
         done()
