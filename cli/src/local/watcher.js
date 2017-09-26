@@ -138,14 +138,20 @@ class LocalWatcher {
       try {
         switch (e.type) {
           case 'add':
-            await this.onAddFile(e.path, e.stats)
-            break
+            {
+              const md5sum = await this.checksum(e.path)
+              await this.onAddFile(e.path, e.stats, md5sum)
+              break
+            }
           case 'addDir':
             await this.onAddDir(e.path, e.stats)
             break
           case 'change':
-            await this.onChange(e.path, e.stats)
-            break
+            {
+              const md5sum = await this.checksum(e.path)
+              await this.onChange(e.path, e.stats, md5sum)
+              break
+            }
           case 'unlink':
             await this.onUnlinkFile(e.path)
             break
@@ -228,47 +234,40 @@ class LocalWatcher {
   /* Actions */
 
   // New file detected
-  onAddFile (filePath: string, stats: fs.Stats) {
+  onAddFile (filePath: string, stats: fs.Stats, md5sum: string) {
     const logError = (err) => log.error({err, path: filePath})
     if (this.initialScan) { this.initialScan.ids.push(metadata.id(filePath)) }
     this.pendingDeletions.executeIfAny(filePath)
     this.checksums++
-    this.checksum(filePath).asCallback((err, md5sum) => {
-      if (err) {
+    const doc = this.createDoc(filePath, stats, md5sum)
+    if (this.pendingDeletions.isEmpty()) {
+      this.checksums--
+      log.info({path: filePath}, 'file added')
+      this.prep.addFileAsync(SIDE, doc).catch(logError)
+    } else {
+      // Let's see if one of the pending deleted files has the
+      // same checksum that the added file. If so, we mark them as
+      // a move.
+      this.pouch.byChecksum(doc.md5sum, (err, docs) => {
         this.checksums--
-        logError(err)
-      } else {
-        const doc = this.createDoc(filePath, stats, md5sum)
-        if (this.pendingDeletions.isEmpty()) {
-          this.checksums--
+        if (err) {
           log.info({path: filePath}, 'file added')
           this.prep.addFileAsync(SIDE, doc).catch(logError)
         } else {
-          // Let's see if one of the pending deleted files has the
-          // same checksum that the added file. If so, we mark them as
-          // a move.
-          this.pouch.byChecksum(doc.md5sum, (err, docs) => {
-            this.checksums--
-            if (err) {
-              log.info({path: filePath}, 'file added')
-              this.prep.addFileAsync(SIDE, doc).catch(logError)
-            } else {
-              const same = find(docs, this.initialScan
-                  ? d => !fs.existsSync(d.path)
-                  : d => this.pendingDeletions.hasPath(d.path))
-              if (same) {
-                log.info({path: filePath}, `was moved from ${same.path}`)
-                this.pendingDeletions.clear(same.path)
-                this.prep.moveFileAsync(SIDE, doc, same).catch(logError)
-              } else {
-                log.info({path: filePath}, 'file added')
-                this.prep.addFileAsync(SIDE, doc).catch(logError)
-              }
-            }
-          })
+          const same = find(docs, this.initialScan
+              ? d => !fs.existsSync(d.path)
+              : d => this.pendingDeletions.hasPath(d.path))
+          if (same) {
+            log.info({path: filePath}, `was moved from ${same.path}`)
+            this.pendingDeletions.clear(same.path)
+            this.prep.moveFileAsync(SIDE, doc, same).catch(logError)
+          } else {
+            log.info({path: filePath}, 'file added')
+            this.prep.addFileAsync(SIDE, doc).catch(logError)
+          }
         }
-      }
-    })
+      })
+    }
   }
 
   // New directory detected
@@ -335,16 +334,10 @@ class LocalWatcher {
   }
 
   // File update detected
-  onChange (filePath: string, stats: fs.Stats) {
+  onChange (filePath: string, stats: fs.Stats, md5sum: string) {
     log.info({path: filePath}, 'File changed')
-    this.checksum(filePath).asCallback((err, md5sum) => {
-      if (err) {
-        log.info({path: filePath, err})
-      } else {
-        const doc = this.createDoc(filePath, stats, md5sum)
-        return this.prep.updateFileAsync(SIDE, doc)
-      }
-    })
+    const doc = this.createDoc(filePath, stats, md5sum)
+    return this.prep.updateFileAsync(SIDE, doc)
   }
 
   // Called after chokidar has finished its initial scan
