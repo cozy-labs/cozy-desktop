@@ -123,22 +123,15 @@ describe('LocalWatcher Tests', function () {
       abspath = path.join(this.syncPath, relpath)
     })
 
-    it('computes the md5sum for the given relative path', function (done) {
-      fs.outputFile(abspath, 'foo', () => {
-        this.watcher.checksum(relpath, (err, md5sum) => {
-          should.not.exist(err)
-          should(md5sum).equal('rL0Y20zC+Fzt72VPzMSk2A==') // foo
-          done()
-        })
-      })
+    it('resolves with the md5sum for the given relative path', async function () {
+      await fs.outputFile(abspath, 'foo')
+      await should(this.watcher.checksum(relpath))
+        .be.fulfilledWith('rL0Y20zC+Fzt72VPzMSk2A==') // foo
     })
 
-    it('does not swallow errors', function (done) {
-      this.watcher.checksum(relpath, (err, md5sum) => {
-        should(err).have.property('code', 'ENOENT')
-        should.not.exist(md5sum)
-        done()
-      })
+    it('does not swallow errors', async function () {
+      await should(this.watcher.checksum(relpath))
+        .be.rejectedWith({code: 'ENOENT'})
     })
   })
 
