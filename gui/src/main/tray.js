@@ -7,7 +7,8 @@ let tray = null
 const imgs = path.resolve(__dirname, '..', '..', 'images')
 
 module.exports.init = (app, cb) => {
-  tray = new Tray(`${imgs}/tray-icon-linux/idle.png`)
+  let icon = (process.platform === 'darwin') ? `${imgs}/tray-icon-osx/idleTemplate.png` : `${imgs}/tray-icon-linux/idle.png`
+  tray = new Tray(icon)
 
   let cachedBounds = null
   const clicked = (e, bounds) => {
@@ -23,6 +24,7 @@ module.exports.init = (app, cb) => {
    { label: translate('Tray Quit application'), click: app.quit }
   ])
   tray.setContextMenu(cm)
+  module.exports.setState('idle')
 }
 
 // old tray menu
