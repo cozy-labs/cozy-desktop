@@ -173,6 +173,7 @@ describe('LocalWatcher Tests', function () {
             size: 29865
           })
           done()
+          return Promise.resolve()
         }
         let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
         let dst = path.join(this.syncPath, 'aaa.jpg')
