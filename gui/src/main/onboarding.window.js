@@ -22,7 +22,6 @@ module.exports = class OnboardingWM extends WindowManager {
       title: 'ONBOARDING',
       center: true,
       'auto-hide-menu-bar': true,
-      icon: `${__dirname}/images/icon.png`,
       width: ONBOARDING_SCREEN_WIDTH,
       height: ONBOARDING_SCREEN_HEIGHT
     }

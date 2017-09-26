@@ -1,4 +1,5 @@
 const {BrowserWindow, ipcMain, shell} = require('electron')
+const path = require('path')
 
 const ELMSTARTUP = 400
 
@@ -90,7 +91,8 @@ module.exports = class WindowManager {
       setTimeout(() => { resolveRef(this.win) }, ELMSTARTUP)
     })
 
-    this.win.loadURL(`file://${__dirname}/../../index.html${this.hash()}`)
+    let indexPath = path.resolve(__dirname, '..', '..', 'index.html')
+    this.win.loadURL(`file://${indexPath}${this.hash()}`)
 
 
     // devTools

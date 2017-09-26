@@ -18,7 +18,6 @@ module.exports = class TrayWM extends WindowManager {
   windowOptions () {
     return {
       title: 'TRAY',
-      icon: `${__dirname}/images/icon.png`,
       windowPosition: (process.platform === 'win32') ? 'trayBottomCenter' : 'trayCenter',
       frame: false,
       show: false,
