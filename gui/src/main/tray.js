@@ -18,7 +18,7 @@ module.exports.init = (app, cb) => {
   tray.on('double-click', clicked)
   tray.setToolTip('loading')
   let cm = Menu.buildFromTemplate([
-    { label: translate('Tray Quit application'), click: app.quit }
+   { label: translate('Tray Quit application'), click: app.quit }
   ])
   tray.setContextMenu(cm)
 }

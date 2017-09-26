@@ -11,9 +11,9 @@ const path = require('path')
 const autoLaunch = require('./src/main/autolaunch')
 const lastFiles = require('./src/main/lastfiles')
 const tray = require('./src/main/tray')
-const trayWindow = require('./src/main/tray.window.js')
-const helpWindow = require('./src/main/help.window.js')
-const onboardingWindow = require('./src/main/onboarding.window.js')
+const TrayWindowWM = require('./src/main/tray.window.js')
+const HelpWindowWM = require('./src/main/help.window.js')
+const OnboardingWM = require('./src/main/onboarding.window.js')
 // const helpWindow = require('./src/main/help.window.js')
 
 const {selectIcon} = require('./src/main/fileutils')
@@ -33,6 +33,9 @@ let desktop
 let state = 'not-configured'
 let errorMessage = ''
 let diskTimeout = null
+let onboardingWindow = null
+let helpWindow = null
+let trayWindow = null
 
 const showWindow = (...args) => {
   if (!desktop.config.syncPath) {
@@ -42,8 +45,7 @@ const showWindow = (...args) => {
       setTimeout(() => onboardingWindow.send('registration-done'), 20)
     }
   } else {
-    trayWindow.show()
-    trayWindow.onReady(startSync)
+    trayWindow.show().then(() => startSync())
   }
 }
 
@@ -61,7 +63,7 @@ const sendErrorToMainWindow = (msg) => {
 }
 
 const updateState = (newState, filename) => {
-  if (state === 'error') errorMessage = filename
+  if (newState === 'error') errorMessage = filename
   if (state === 'error' && newState === 'offline') return
   state = newState
   tray.setState(state, filename)
@@ -191,16 +193,13 @@ app.on('ready', () => {
   i18n.init(app)
   tray.init(app, showWindow)
   lastFiles.init(desktop)
-  trayWindow.init(app, desktop)
-  helpWindow.init(app, desktop)
-  onboardingWindow.init(app, desktop)
+  trayWindow = new TrayWindowWM(app, desktop)
+  helpWindow = new HelpWindowWM(app, desktop)
+  onboardingWindow = new OnboardingWM(app, desktop)
   onboardingWindow.onOnboardingDone(() => {
     onboardingWindow.hide()
-    trayWindow.show()
-    trayWindow.onReady(startSync)
+    trayWindow.show().then(() => startSync())
   })
-
-  showWindow()
 
   // Os X wants all application to have a menu
   Menu.setApplicationMenu(buildAppMenu(app))
