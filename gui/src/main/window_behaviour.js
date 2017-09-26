@@ -55,7 +55,7 @@ module.exports = class WindowManager {
   }
 
   hash () {
-    return ""
+    return ''
   }
 
   create () {
@@ -93,7 +93,6 @@ module.exports = class WindowManager {
 
     let indexPath = path.resolve(__dirname, '..', '..', 'index.html')
     this.win.loadURL(`file://${indexPath}${this.hash()}`)
-
 
     // devTools
     if (process.env.WATCH === 'true' || process.env.DEBUG === 'true') {
