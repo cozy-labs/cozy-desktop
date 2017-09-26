@@ -19,6 +19,7 @@ import { maxDate } from '../timestamp'
 
 import type { Checksumer } from './checksumer'
 import type { ChokidarFSEvent } from './chokidar_event'
+import type { Metadata } from '../metadata'
 import type { Callback } from '../utils/func'
 import type { Pending } from '../utils/pending' // eslint-disable-line
 
@@ -140,7 +141,16 @@ class LocalWatcher {
           case 'add':
             {
               const md5sum = await this.checksum(e.path)
-              await this.onAddFile(e.path, e.stats, md5sum)
+              // Let's see if one of the pending deleted files has the
+              // same checksum that the added file. If so, we mark them as
+              // a move.
+              let docs = [] // TODO: rename
+              try {
+                docs = await this.pouch.byChecksumAsync(md5sum)
+              } catch (err) {
+                log.trace({err}, `no doc with checksum ${md5sum}`)
+              }
+              await this.onAddFile(e.path, e.stats, md5sum, docs)
               break
             }
           case 'addDir':
@@ -234,7 +244,7 @@ class LocalWatcher {
   /* Actions */
 
   // New file detected
-  onAddFile (filePath: string, stats: fs.Stats, md5sum: string) {
+  onAddFile (filePath: string, stats: fs.Stats, md5sum: string, docs: Metadata[]) {
     const logError = (err) => log.error({err, path: filePath})
     if (this.initialScan) { this.initialScan.ids.push(metadata.id(filePath)) }
     this.pendingDeletions.executeIfAny(filePath)
@@ -245,28 +255,22 @@ class LocalWatcher {
       log.info({path: filePath}, 'file added')
       this.prep.addFileAsync(SIDE, doc).catch(logError)
     } else {
-      // Let's see if one of the pending deleted files has the
-      // same checksum that the added file. If so, we mark them as
-      // a move.
-      this.pouch.byChecksum(doc.md5sum, (err, docs) => {
-        this.checksums--
-        if (err) {
+      this.checksums--
+      if (docs.length === 0) {
+        this.prep.addFileAsync(SIDE, doc).catch(logError)
+      } else {
+        const same = find(docs, this.initialScan
+            ? d => !fs.existsSync(d.path)
+            : d => this.pendingDeletions.hasPath(d.path))
+        if (same) {
+          log.info({path: filePath}, `was moved from ${same.path}`)
+          this.pendingDeletions.clear(same.path)
+          this.prep.moveFileAsync(SIDE, doc, same).catch(logError)
+        } else {
           log.info({path: filePath}, 'file added')
           this.prep.addFileAsync(SIDE, doc).catch(logError)
-        } else {
-          const same = find(docs, this.initialScan
-              ? d => !fs.existsSync(d.path)
-              : d => this.pendingDeletions.hasPath(d.path))
-          if (same) {
-            log.info({path: filePath}, `was moved from ${same.path}`)
-            this.pendingDeletions.clear(same.path)
-            this.prep.moveFileAsync(SIDE, doc, same).catch(logError)
-          } else {
-            log.info({path: filePath}, 'file added')
-            this.prep.addFileAsync(SIDE, doc).catch(logError)
-          }
         }
-      })
+      }
     }
   }
 
