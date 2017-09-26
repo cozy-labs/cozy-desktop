@@ -128,11 +128,24 @@ class LocalWatcher {
 
   async handleEvents (events: ChokidarFSEvent[]) {
     log.debug(`Flushed ${events.length} events`)
+    const pendingDeletions = []
     for (let e of events) {
       try {
+        if (e.type.startsWith('unlink')) {
+          pendingDeletions.push(e)
+        }
         switch (e.type) {
           case 'add':
             {
+              if (this.initialScan) { this.initialScan.ids.push(metadata.id(e.path)) }
+              const unlinkEvent = find(pendingDeletions, e2 => e2.path === e.path)
+              if (unlinkEvent != null) {
+                if (e.type.endsWith('Dir')) {
+                  await this.onUnlinkDir(e.path)
+                } else {
+                  await this.onUnlinkFile(e.path)
+                }
+              }
               const md5sum = await this.checksum(e.path)
               // Let's see if one of the pending deleted files has the
               // same checksum that the added file. If so, we mark them as
@@ -143,7 +156,7 @@ class LocalWatcher {
               } catch (err) {
                 log.trace({err}, `no doc with checksum ${md5sum}`)
               }
-              await this.onAddFile(e.path, e.stats, md5sum, docs)
+              await this.onAddFile(e.path, e.stats, md5sum, docs, pendingDeletions)
               break
             }
           case 'addDir':
@@ -237,24 +250,22 @@ class LocalWatcher {
   /* Actions */
 
   // New file detected
-  onAddFile (filePath: string, stats: fs.Stats, md5sum: string, docs: Metadata[]) {
+  onAddFile (filePath: string, stats: fs.Stats, md5sum: string, docs: Metadata[], pendingDeletions: ChokidarFSEvent[]) {
     const logError = (err) => log.error({err, path: filePath})
-    if (this.initialScan) { this.initialScan.ids.push(metadata.id(filePath)) }
-    this.pendingDeletions.executeIfAny(filePath)
     const doc = this.createDoc(filePath, stats, md5sum)
-    if (this.pendingDeletions.isEmpty()) {
+    if (pendingDeletions.length === 0) {
       log.info({path: filePath}, 'file added')
       this.prep.addFileAsync(SIDE, doc).catch(logError)
     } else {
       if (docs.length === 0) {
         this.prep.addFileAsync(SIDE, doc).catch(logError)
       } else {
-        const same = find(docs, this.initialScan
+        const same: ?Metadata = find(docs, this.initialScan
             ? d => !fs.existsSync(d.path)
-            : d => this.pendingDeletions.hasPath(d.path))
+            : d => find(pendingDeletions, e => e.path === d.path))
         if (same) {
           log.info({path: filePath}, `was moved from ${same.path}`)
-          this.pendingDeletions.clear(same.path)
+          // TODO: pendingDeletions.splice(pendingDeletions.indexOf(same), 1)
           this.prep.moveFileAsync(SIDE, doc, same).catch(logError)
         } else {
           log.info({path: filePath}, 'file added')
@@ -294,11 +305,7 @@ class LocalWatcher {
       this.prep.trashFileAsync(SIDE, {path: filePath}).catch(err => log.error({err, path: filePath}))
     }
     const check = () => {
-      if (this.checksums === 0) {
-        this.pendingDeletions.executeIfAny(filePath)
-      } else {
-        timeout = setTimeout(check, 100)
-      }
+      this.pendingDeletions.executeIfAny(filePath)
     }
     this.pendingDeletions.add(filePath, {stopChecking, execute})
     timeout = setTimeout(check, 1250)
