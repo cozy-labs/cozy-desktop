@@ -198,22 +198,20 @@ class LocalWatcher {
 
   // An helper to create a document for a file
   // with checksum and mime informations
-  createDoc (filePath: string, stats: fs.Stats, callback: Callback) {
+  createDoc (filePath: string, stats: fs.Stats, md5sum: string) {
     const mimeType = mime.lookup(filePath)
     const {mtime, ctime} = stats
-    this.checksum(filePath, function (err, md5sum) {
-      let doc: Object = {
-        path: filePath,
-        docType: 'file',
-        md5sum,
-        updated_at: maxDate(mtime, ctime),
-        mime: mimeType,
-        class: mimeType.split('/')[0],
-        size: stats.size
-      }
-      if ((stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
-      callback(err, doc)
-    })
+    let doc: Object = {
+      path: filePath,
+      docType: 'file',
+      md5sum,
+      updated_at: maxDate(mtime, ctime),
+      mime: mimeType,
+      class: mimeType.split('/')[0],
+      size: stats.size
+    }
+    if ((stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
+    return doc
   }
 
   checksum (filePath: string, callback: Callback) {
@@ -229,11 +227,12 @@ class LocalWatcher {
     if (this.initialScan) { this.initialScan.ids.push(metadata.id(filePath)) }
     this.pendingDeletions.executeIfAny(filePath)
     this.checksums++
-    this.createDoc(filePath, stats, (err, doc) => {
+    this.checksum(filePath, (err, md5sum) => {
       if (err) {
         this.checksums--
         logError(err)
       } else {
+        const doc = this.createDoc(filePath, stats, md5sum)
         if (this.pendingDeletions.isEmpty()) {
           this.checksums--
           log.info({path: filePath}, 'file added')
@@ -332,10 +331,11 @@ class LocalWatcher {
   // File update detected
   onChange (filePath: string, stats: fs.Stats) {
     log.info({path: filePath}, 'File changed')
-    this.createDoc(filePath, stats, (err, doc) => {
+    this.checksum(filePath, (err, md5sum) => {
       if (err) {
         log.info({path: filePath, err})
       } else {
+        const doc = this.createDoc(filePath, stats, md5sum)
         this.prep.updateFileAsync(SIDE, doc).catch(err => log.error({err, path: filePath}))
       }
     })

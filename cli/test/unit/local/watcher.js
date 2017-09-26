@@ -78,55 +78,41 @@ describe('LocalWatcher Tests', function () {
     it('creates a document for an existing file', function (done) {
       let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
       let dst = path.join(this.syncPath, 'chat-mignon.jpg')
+      const md5sum = '+HBGS7uN4XdB0blqLv5tFQ=='
       fs.copySync(src, dst)
       fs.stat(dst, (err, stats) => {
         should.not.exist(err)
         should.exist(stats)
-        this.watcher.createDoc('chat-mignon.jpg', stats, function (err, doc) {
-          should.not.exist(err)
-          doc.should.have.properties({
-            path: 'chat-mignon.jpg',
-            docType: 'file',
-            md5sum: '+HBGS7uN4XdB0blqLv5tFQ==',
-            size: 29865
-          })
-          doc.should.have.properties([
-            'updated_at'
-          ])
-          should.not.exist(doc.executable)
-          done()
+        const doc = this.watcher.createDoc('chat-mignon.jpg', stats, md5sum)
+        doc.should.have.properties({
+          path: 'chat-mignon.jpg',
+          docType: 'file',
+          md5sum,
+          size: 29865
         })
+        doc.should.have.properties([
+          'updated_at'
+        ])
+        should.not.exist(doc.executable)
+        done()
       })
     })
 
     if (process.platform !== 'win32') {
       it('sets the executable bit', function (done) {
         let filePath = path.join(this.syncPath, 'executable')
+        const whateverChecksum = '1B2M2Y8AsgTpgAmY7PhCfg=='
         fs.ensureFileSync(filePath)
         fs.chmodSync(filePath, '755')
         fs.stat(filePath, (err, stats) => {
           should.not.exist(err)
           should.exist(stats)
-          this.watcher.createDoc('executable', stats, function (err, doc) {
-            should.not.exist(err)
-            should(doc.executable).be.true()
-            done()
-          })
+          const doc = this.watcher.createDoc('executable', stats, whateverChecksum)
+          should(doc.executable).be.true()
+          done()
         })
       })
     }
-
-    it('calls back with an error if the file is missing', function (done) {
-      const whateverStats = {
-        ctime: {getTime: () => {}},
-        mtime: {getTime: () => {}}
-      }
-      this.watcher.createDoc('no/such/file', whateverStats, function (err, doc) {
-        should.exist(err)
-        err.code.should.equal('ENOENT')
-        done()
-      })
-    })
   })
 
   describe('checksum', () => {
