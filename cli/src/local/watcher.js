@@ -44,7 +44,6 @@ class LocalWatcher {
   pouch: Pouch
   initialScan: ?{ids: string[]}
   pendingDeletions: PendingMap
-  checksums: number
   checksumer: Checksumer
   watcher: any // chokidar
   buffer: LocalEventBuffer<ChokidarFSEvent>
@@ -77,12 +76,6 @@ class LocalWatcher {
     // cleared to cancel the operation (for example, a deletion is finally
     // seen as a part of a move operation).
     this.pendingDeletions = new PendingMap()
-
-    // A counter of how many files are been read to compute a checksum right
-    // now. It's useful because we can't do some operations when a checksum
-    // is running, like deleting a file, because the checksum operation is
-    // slow but needed to detect move operations.
-    this.checksums = 0
 
     this.watcher = chokidar.watch('.', {
       // Let paths in events be relative to this base path
@@ -248,14 +241,11 @@ class LocalWatcher {
     const logError = (err) => log.error({err, path: filePath})
     if (this.initialScan) { this.initialScan.ids.push(metadata.id(filePath)) }
     this.pendingDeletions.executeIfAny(filePath)
-    this.checksums++
     const doc = this.createDoc(filePath, stats, md5sum)
     if (this.pendingDeletions.isEmpty()) {
-      this.checksums--
       log.info({path: filePath}, 'file added')
       this.prep.addFileAsync(SIDE, doc).catch(logError)
     } else {
-      this.checksums--
       if (docs.length === 0) {
         this.prep.addFileAsync(SIDE, doc).catch(logError)
       } else {
