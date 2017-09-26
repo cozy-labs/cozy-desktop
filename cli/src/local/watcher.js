@@ -218,7 +218,7 @@ class LocalWatcher {
 
   checksum (filePath: string, callback: Callback) {
     const absPath = path.join(this.syncPath, filePath)
-    this.checksumer.push(absPath, callback)
+    this.checksumer.push(absPath).asCallback(callback)
   }
 
   /* Actions */

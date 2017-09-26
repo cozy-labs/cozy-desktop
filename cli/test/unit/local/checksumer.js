@@ -17,22 +17,14 @@ describe('local/checksumer', () => {
   })
 
   describe('push', () => {
-    it('returns the checksum of an existing file', function (done) {
-      let filePath = 'test/fixtures/chat-mignon.jpg'
-      checksumer.push(filePath, function (err, sum) {
-        should.not.exist(err)
-        sum.should.equal('+HBGS7uN4XdB0blqLv5tFQ==')
-        done()
-      })
+    it('resolves with the checksum of an existing file', async () => {
+      await should(checksumer.push('test/fixtures/chat-mignon.jpg'))
+        .be.fulfilledWith('+HBGS7uN4XdB0blqLv5tFQ==')
     })
 
-    it('returns an error for a missing file', function (done) {
-      let filePath = 'no/such/file'
-      checksumer.push(filePath, function (err, sum) {
-        should.exist(err)
-        should(err).have.property('code', 'ENOENT')
-        done()
-      })
+    it('rejects for a missing file', async () => {
+      await should(checksumer.push('no/such/file'))
+        .be.rejectedWith({code: 'ENOENT'})
     })
   })
 })
