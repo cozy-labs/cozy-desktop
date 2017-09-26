@@ -1,7 +1,7 @@
 /* @flow */
 
 type EventBufferMode = 'idle' | 'timeout'
-type FlushCallback<EventType> = (EventType[]) => void
+type FlushCallback<EventType> = (EventType[]) => any
 
 // An event buffer.
 // Needs a flush callback to be called everytime the buffer is flushed.
