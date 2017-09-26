@@ -1,5 +1,6 @@
 /* @flow */
 
+import Promise from 'bluebird'
 import async from 'async'
 import crypto from 'crypto'
 import fs from 'fs'
@@ -23,7 +24,7 @@ const computeChecksum = (filePath: string, callback: Callback) => {
 }
 
 export type Checksumer = {
-  push: (filePath: string, callback: Callback) => void,
+  push: (filePath: string) => Promise<string>,
   kill: () => void
 }
 
@@ -31,5 +32,13 @@ export const init = (): Checksumer => {
   // Use a queue for checksums to avoid computing many checksums at the
   // same time. It's better for performance (hard disk are faster with
   // linear readings).
-  return async.queue(computeChecksum)
+  const queue = Promise.promisifyAll(async.queue(computeChecksum))
+
+  return {
+    push (filePath: string): Promise<string> {
+      return queue.pushAsync(filePath)
+    },
+
+    kill: queue.kill
+  }
 }

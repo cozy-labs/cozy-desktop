@@ -202,7 +202,7 @@ class Local implements Side {
       next => {
         if (doc.md5sum != null) {
           // TODO: Share checksumer instead of chaining properties
-          this.watcher.checksumer.push(tmpFile, function (err, md5sum) {
+          this.watcher.checksumer.push(tmpFile).asCallback(function (err, md5sum) {
             if (err) {
               next(err)
             } else if (md5sum === doc.md5sum) {
