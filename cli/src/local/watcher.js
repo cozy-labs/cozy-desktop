@@ -132,27 +132,32 @@ class LocalWatcher {
     })
   }
 
-  handleEvents (events: ChokidarFSEvent[]) {
+  async handleEvents (events: ChokidarFSEvent[]) {
     log.debug(`Flushed ${events.length} events`)
     for (let e of events) {
-      switch (e.type) {
-        case 'add':
-          this.onAddFile(e.path, e.stats)
-          break
-        case 'addDir':
-          this.onAddDir(e.path, e.stats)
-          break
-        case 'change':
-          this.onChange(e.path, e.stats)
-          break
-        case 'unlink':
-          this.onUnlinkFile(e.path)
-          break
-        case 'unlinkDir':
-          this.onUnlinkDir(e.path)
-          break
-        default:
-          log.error(`Unknown event type: ${JSON.stringify(e.type)}`)
+      try {
+        switch (e.type) {
+          case 'add':
+            await this.onAddFile(e.path, e.stats)
+            break
+          case 'addDir':
+            await this.onAddDir(e.path, e.stats)
+            break
+          case 'change':
+            await this.onChange(e.path, e.stats)
+            break
+          case 'unlink':
+            await this.onUnlinkFile(e.path)
+            break
+          case 'unlinkDir':
+            await this.onUnlinkDir(e.path)
+            break
+          default:
+            throw new TypeError(`Unknown event type: ${e.type}`)
+        }
+      } catch (err) {
+        log.error({err, path: e.path})
+        throw err
       }
     }
   }
