@@ -20,10 +20,12 @@ module.exports.init = (app, cb) => {
   tray.on('right-click', clicked)
   tray.on('double-click', clicked)
   tray.setToolTip('loading')
-  let cm = Menu.buildFromTemplate([
-   { label: translate('Tray Quit application'), click: app.quit }
-  ])
-  tray.setContextMenu(cm)
+  if (process.platform !== 'darwin') {
+    const cm = Menu.buildFromTemplate([
+     { label: translate('Tray Quit application'), click: app.quit }
+    ])
+    tray.setContextMenu(cm)
+  }
   module.exports.setState('idle')
 }
 
