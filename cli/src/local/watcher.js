@@ -1,5 +1,6 @@
 /* @flow */
 
+import Promise from 'bluebird'
 import chokidar from 'chokidar'
 import find from 'lodash.find'
 import fs from 'fs'
@@ -214,9 +215,9 @@ class LocalWatcher {
     return doc
   }
 
-  checksum (filePath: string, callback: Callback) {
+  async checksum (filePath: string): Promise<string> {
     const absPath = path.join(this.syncPath, filePath)
-    this.checksumer.push(absPath).asCallback(callback)
+    return this.checksumer.push(absPath)
   }
 
   /* Actions */
@@ -227,7 +228,7 @@ class LocalWatcher {
     if (this.initialScan) { this.initialScan.ids.push(metadata.id(filePath)) }
     this.pendingDeletions.executeIfAny(filePath)
     this.checksums++
-    this.checksum(filePath, (err, md5sum) => {
+    this.checksum(filePath).asCallback((err, md5sum) => {
       if (err) {
         this.checksums--
         logError(err)
@@ -331,12 +332,12 @@ class LocalWatcher {
   // File update detected
   onChange (filePath: string, stats: fs.Stats) {
     log.info({path: filePath}, 'File changed')
-    this.checksum(filePath, (err, md5sum) => {
+    this.checksum(filePath).asCallback((err, md5sum) => {
       if (err) {
         log.info({path: filePath, err})
       } else {
         const doc = this.createDoc(filePath, stats, md5sum)
-        this.prep.updateFileAsync(SIDE, doc).catch(err => log.error({err, path: filePath}))
+        return this.prep.updateFileAsync(SIDE, doc)
       }
     })
   }
