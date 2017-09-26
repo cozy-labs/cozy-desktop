@@ -1,8 +1,10 @@
 const {Tray, Menu} = require('electron')
-const imgs = `${__dirname}/../../images`
 const {translate} = require('./i18n')
+const path = require('path')
 
 let tray = null
+
+const imgs = path.resolve(__dirname, '..', '..', 'images')
 
 module.exports.init = (app, cb) => {
   tray = new Tray(`${imgs}/tray-icon-linux/idle.png`)

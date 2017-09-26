@@ -6,7 +6,6 @@ module.exports = class TrayWM extends WindowManager {
   windowOptions () {
     return {
       title: 'HELP',
-      icon: `${__dirname}/images/icon.png`,
       width: HELP_SCREEN_WIDTH,
       height: HELP_SCREEN_HEIGHT
     }
