@@ -179,6 +179,7 @@ describe('LocalWatcher Tests', function () {
             'updated_at'
           ])
           done()
+          return Promise.resolve()
         }
         fs.mkdirSync(path.join(this.syncPath, 'aba'))
         return Promise.resolve()
