@@ -16,6 +16,7 @@ import Pouch from '../pouch'
 import Prep from '../prep'
 import { PendingMap } from '../utils/pending'
 import { maxDate } from '../timestamp'
+import { findOldDoc } from './tools'
 
 import type { Checksumer } from './checksumer'
 import type { ChokidarFSEvent } from './chokidar_event'
@@ -150,13 +151,13 @@ class LocalWatcher {
               // Let's see if one of the pending deleted files has the
               // same checksum that the added file. If so, we mark them as
               // a move.
-              let docs = [] // TODO: rename
+              let sameChecksums = [] // TODO: rename
               try {
-                docs = await this.pouch.byChecksumAsync(md5sum)
+                sameChecksums = await this.pouch.byChecksumAsync(md5sum)
               } catch (err) {
                 log.trace({err}, `no doc with checksum ${md5sum}`)
               }
-              await this.onAddFile(e.path, e.stats, md5sum, docs, pendingDeletions)
+              await this.onAddFile(e.path, e.stats, md5sum, sameChecksums, pendingDeletions)
               break
             }
           case 'addDir':
@@ -250,28 +251,16 @@ class LocalWatcher {
   /* Actions */
 
   // New file detected
-  onAddFile (filePath: string, stats: fs.Stats, md5sum: string, docs: Metadata[], pendingDeletions: ChokidarFSEvent[]) {
+  onAddFile (filePath: string, stats: fs.Stats, md5sum: string, sameChecksums: Metadata[], pendingDeletions: ChokidarFSEvent[]) {
     const logError = (err) => log.error({err, path: filePath})
     const doc = this.createDoc(filePath, stats, md5sum)
-    if (pendingDeletions.length === 0) {
+    const old = findOldDoc(!!this.initialScan, sameChecksums, pendingDeletions)
+    if (old) {
+      log.info({path: filePath}, `was moved from ${old.path}`)
+      this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
+    } else {
       log.info({path: filePath}, 'file added')
       this.prep.addFileAsync(SIDE, doc).catch(logError)
-    } else {
-      if (docs.length === 0) {
-        this.prep.addFileAsync(SIDE, doc).catch(logError)
-      } else {
-        const same: ?Metadata = find(docs, this.initialScan
-            ? d => !fs.existsSync(d.path)
-            : d => find(pendingDeletions, e => e.path === d.path))
-        if (same) {
-          log.info({path: filePath}, `was moved from ${same.path}`)
-          // TODO: pendingDeletions.splice(pendingDeletions.indexOf(same), 1)
-          this.prep.moveFileAsync(SIDE, doc, same).catch(logError)
-        } else {
-          log.info({path: filePath}, 'file added')
-          this.prep.addFileAsync(SIDE, doc).catch(logError)
-        }
-      }
     }
   }
 
