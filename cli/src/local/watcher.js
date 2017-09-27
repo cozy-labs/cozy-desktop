@@ -157,7 +157,8 @@ class LocalWatcher {
               } catch (err) {
                 log.trace({err}, `no doc with checksum ${md5sum}`)
               }
-              await this.onAddFile(e.path, e.stats, md5sum, sameChecksums, pendingDeletions)
+              const old = findOldDoc(!!this.initialScan, sameChecksums, pendingDeletions)
+              await this.onAddFile(e.path, e.stats, md5sum, old)
               break
             }
           case 'addDir':
@@ -251,10 +252,9 @@ class LocalWatcher {
   /* Actions */
 
   // New file detected
-  onAddFile (filePath: string, stats: fs.Stats, md5sum: string, sameChecksums: Metadata[], pendingDeletions: ChokidarFSEvent[]) {
+  onAddFile (filePath: string, stats: fs.Stats, md5sum: string, old: Metadata) {
     const logError = (err) => log.error({err, path: filePath})
     const doc = this.createDoc(filePath, stats, md5sum)
-    const old = findOldDoc(!!this.initialScan, sameChecksums, pendingDeletions)
     if (old) {
       log.info({path: filePath}, `was moved from ${old.path}`)
       this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
