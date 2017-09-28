@@ -44,7 +44,7 @@ describe('LocalWatcher fixtures', () => {
   let watcher, eventHandlers, prep
   before('instanciate config', configHelpers.createConfig)
   // FIXME: beforeEach for pouch?
-  before('instanciate pouch', pouchHelpers.createDatabase)
+  beforeEach('instanciate pouch', pouchHelpers.createDatabase)
   beforeEach('instanciate local watcher', async function () {
     prep = new SpyPrep()
     // $FlowFixMe
@@ -58,6 +58,8 @@ describe('LocalWatcher fixtures', () => {
   beforeEach(function () {
     abspath = (relpath) => path.join(this.syncPath, relpath.replace(/\//g, path.sep))
   })
+
+  afterEach('destroy pouch', pouchHelpers.cleanDatabase)
 
   for (let scenario of scenarios) {
     describe(scenario.name, () => {
