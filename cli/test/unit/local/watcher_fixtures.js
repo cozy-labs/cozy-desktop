@@ -101,7 +101,6 @@ describe('LocalWatcher fixtures', () => {
 
       beforeEach('init actions', async () => {
         for (let action of scenario.actions) {
-          console.log(action)
           switch (action.type) {
             case 'mkdir':
               console.log('- mkdir', action.path)
