@@ -43,6 +43,15 @@ var DONE_FILE = '.done'
 var setupInitialState = (scenario) => {
   if (scenario.init == null) return
   console.log('init:')
+  let resolve
+  const donePromise = new Promise((_resolve) => { resolve = _resolve })
+  const watcher = chokidar.watch('.', chokidarOptions)
+  watcher.on('add', relpath => {
+    if (isDone(relpath)) {
+      watcher.close()
+      resolve()
+    }
+  })
   return Promise.each(scenario.init, relpath => {
     if (relpath.endsWith('/')) {
       console.log('- mkdir', relpath)
@@ -52,6 +61,8 @@ var setupInitialState = (scenario) => {
       return fs.outputFile(abspath(relpath), 'whatever')
     }
   })
+  .then(triggerDone)
+  .then(() => donePromise)
 }
 
 var isRootDir = (relpath) => {
@@ -64,11 +75,11 @@ var buildFSEvent = (type, relpath, stats) => {
   return event
 }
 
-var triggerEventsSaving = () => {
+var triggerDone = () => {
   return fs.outputFile(path.join(syncPath, DONE_FILE), '')
 }
 
-var shouldSaveEvents = (relpath) => {
+var isDone = (relpath) => {
   return relpath === DONE_FILE
 }
 
@@ -102,7 +113,7 @@ var runAndRecordFSEvents = (scenario) => {
     for (let eventType of ['add', 'addDir', 'change', 'unlink', 'unlinkDir']) {
       watcher.on(eventType, (relpath, stats) => {
         if (record) {
-          if (shouldSaveEvents(relpath)) {
+          if (isDone(relpath)) {
             logFSEvents(events)
             return saveFSEventsToFile(scenario, events)
               .then(resolve)
@@ -118,7 +129,7 @@ var runAndRecordFSEvents = (scenario) => {
       record = true
       fixturesHelpers.runActions(scenario, abspath)
         .delay(1000)
-        .then(triggerEventsSaving)
+        .then(triggerDone)
         .catch(reject)
     })
 
