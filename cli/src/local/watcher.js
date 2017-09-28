@@ -181,7 +181,7 @@ class LocalWatcher {
             const unlinkEvent = findAndRemove(pendingDeletions, e2 => e2.path === e.path)
             if (unlinkEvent != null) actions.push(prepAction.fromChokidar(unlinkEvent))
 
-            const old = findOldDoc(!!this.initialScan, e.sameChecksums, pendingDeletions)
+            const old = findOldDoc(this.initialScan != null, e.sameChecksums, pendingDeletions)
             if (old) {
               actions.push(prepAction.build('MoveFile', e.path, e.stats, e.md5sum, old))
             } else {
