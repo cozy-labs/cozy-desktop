@@ -5,7 +5,6 @@ import Promise from 'bluebird'
 import fs from 'fs-extra'
 import path from 'path'
 import should from 'should'
-import sinon from 'sinon'
 
 import Watcher from '../../../src/local/watcher'
 import * as metadata from '../../../src/metadata'
@@ -42,7 +41,7 @@ class SpyPrep {
 }
 
 describe('LocalWatcher fixtures', () => {
-  let watcher, eventHandlers, prep
+  let watcher, prep
   before('instanciate config', configHelpers.createConfig)
   // FIXME: beforeEach for pouch?
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
@@ -52,7 +51,9 @@ describe('LocalWatcher fixtures', () => {
     watcher = new Watcher(this.syncPath, prep, this.pouch)
   })
 
-  const { platform } = process
+  beforeEach('cleanup test directory', async function () {
+    await fs.emptyDir(this.syncPath)
+  })
 
   let abspath
 
@@ -101,19 +102,27 @@ describe('LocalWatcher fixtures', () => {
 
       beforeEach('actions', () => runActions(scenario, abspath))
 
-      it(`runs on ${platform}`, async () => {
-        const events = await loadFSEvents(scenario, platform)
-        for (let e of events) {
-          if (e.stats) {
-            e.stats.mtime = new Date(e.stats.mtime)
-            e.stats.ctime = new Date(e.stats.ctime)
+      for (let platform of ['linux', 'darwin', 'win32']) {
+        it(`runs on ${platform}`, async function () {
+          let events
+          try {
+            events = await loadFSEvents(scenario, platform)
+          } catch (err) {
+            return this.skip()
           }
-        }
-        await watcher.onFlush(events)
-        if (scenario.expected && scenario.expected.prepCalls) {
-          should(prep.calls).deepEqual(scenario.expected.prepCalls)
-        }
-      })
+
+          for (let e of events) {
+            if (e.stats) {
+              e.stats.mtime = new Date(e.stats.mtime)
+              e.stats.ctime = new Date(e.stats.ctime)
+            }
+          }
+          await watcher.onFlush(events)
+          if (scenario.expected && scenario.expected.prepCalls) {
+            should(prep.calls).deepEqual(scenario.expected.prepCalls)
+          }
+        })
+      }
     })
   }
 })
