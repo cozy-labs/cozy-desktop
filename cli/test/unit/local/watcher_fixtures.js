@@ -102,7 +102,7 @@ describe('LocalWatcher fixtures', () => {
 
       beforeEach('actions', () => runActions(scenario, abspath))
 
-      for (let platform of ['linux', 'darwin', 'win32']) {
+      for (let platform of ['linux', 'darwin' /* TODO: 'win32' */]) {
         it(`runs on ${platform}`, async function () {
           let events
           try {
