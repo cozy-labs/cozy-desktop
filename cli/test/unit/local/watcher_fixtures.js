@@ -8,6 +8,7 @@ import should from 'should'
 import sinon from 'sinon'
 
 import Watcher from '../../../src/local/watcher'
+import * as metadata from '../../../src/metadata'
 
 import { scenarios, loadFSEvents } from '../../fixtures/local_watcher'
 import configHelpers from '../../helpers/config'
@@ -64,14 +65,35 @@ describe('LocalWatcher fixtures', () => {
   for (let scenario of scenarios) {
     describe(scenario.name, () => {
       if (scenario.init != null) {
-        beforeEach('init', async () => {
+        beforeEach('init', async function () {
           for (let relpath of scenario.init) {
             if (relpath.endsWith('/')) {
               console.log('- mkdir', relpath)
               await fs.ensureDir(abspath(relpath))
+              this.pouch.put({
+                _id: metadata.id(relpath),
+                docType: 'folder',
+                updated_at: new Date(),
+                path: relpath,
+                tags: [],
+                sides: {local: 1, remote: 1}
+              })
             } else {
               console.log('- >', relpath)
               await fs.outputFile(abspath(relpath), '')
+              this.pouch.put({
+                _id: metadata.id(relpath),
+                md5sum: '1B2M2Y8AsgTpgAmY7PhCfg==', // ''
+                class: 'text',
+                docType: 'file',
+                executable: false,
+                updated_at: new Date(),
+                mime: 'text/plain',
+                path: relpath,
+                size: 0,
+                tags: [],
+                sides: {local: 1, remote: 1}
+              })
             }
           }
         })
