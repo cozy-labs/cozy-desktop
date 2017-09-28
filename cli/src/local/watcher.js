@@ -2,6 +2,7 @@
 
 import Promise from 'bluebird'
 import chokidar from 'chokidar'
+import _ from 'lodash'
 import find from 'lodash.find'
 import fs from 'fs'
 import mime from 'mime'
@@ -191,7 +192,7 @@ class LocalWatcher {
             // if no child pending deletion
             //if (!find(pendingDeletions, p => path.dirname(p.path) === e.path)) {
             const unlinkEventD = findAndRemove(pendingDeletions, e2 => e2.path === e.path)
-            if (unlinkEventD != null) actions.push(prepAction.fromChokidar(unlinkEvent))
+            if (unlinkEventD != null) actions.push(prepAction.fromChokidar(unlinkEventD))
             //}//
             actions.push(prepAction.build('AddDir', e.path, e.stats))
             break
@@ -216,7 +217,12 @@ class LocalWatcher {
     // To check : Dossier supprimé après ces enfants
     // Détection de fichier
 
-    for (let p of pendingDeletions) {
+    const sortedDeletions = _.chain(pendingDeletions)
+      .sortBy('path')
+      .reverse()
+      .value()
+
+    for (let p of sortedDeletions) {
       actions.push(prepAction.fromChokidar(p))
     }
     return actions
