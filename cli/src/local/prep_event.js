@@ -1,23 +1,22 @@
 /* @flow */
 
 import fs from 'fs'
-import type {ChokidarFSEvent} from './chokidar_event'
+import type {Metadata} from '../metadata'
 
-type PrepFSEventType = 'moveFileAsync'
-  | 'addFileAsync'
-  | 'putFolderAsync'
-  | 'trashFileAsync'
-  | 'trashFolderAsync'
-  | 'updateFileAsync'
+export type UnlinkDir = {type: 'UnlinkDir', path: string}
+export type UnlinkFile = {type: 'UnlinkFile', path: string}
+export type AddDir = {type: 'AddDir', path: string, stats: fs.Stats}
+export type Change = {type: 'Change', path: string, stats: fs.Stats, md5sum: string}
+export type AddFile = {type: 'AddFile', path: string, stats: fs.Stats, md5sum: string, old: ?Metadata}
 
-export type PrepFSEvent = {
-  action: PrepFSEventType,
-  sourceEvents: ChokidarFSEvent[]
-}
+export type PrepFSEvent =
+  | UnlinkDir
+  | UnlinkFile
+  | AddFile
+  | AddDir
+  | Change
 
-export const build = (type: string, path?: string, stats?: fs.Stats): ChokidarFSEvent => {
-  const event: Object = {type}
-  if (path != null) event.path = path
-  if (stats != null) event.stats = stats
+export const build = (type: string, path?: string, stats?: fs.Stats, md5sum?: string, old?: ?Metadata): PrepFSEvent => {
+  const event: Object = {type, path, stats, md5sum, old}
   return event
 }
