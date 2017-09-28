@@ -35,7 +35,7 @@ module.exports.runActions = (scenario, abspath) => {
         return fs.move(abspath(action.src), abspath(action.dst))
 
       default:
-        return Promise.reject(`Unknown action ${action.type} for scenario ${scenario.name}`)
+        return Promise.reject(new Error(`Unknown action ${action.type} for scenario ${scenario.name}`))
     }
   })
 }

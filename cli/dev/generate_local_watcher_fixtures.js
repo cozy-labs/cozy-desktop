@@ -92,7 +92,7 @@ var runAndRecordFSEvents = (scenario) => {
     const watcher = chokidar.watch('.', chokidarOptions)
     const cleanCallback = cb => function () {
       watcher.close()
-      cb.apply(arguments)
+      cb.apply(null, arguments)
     }
     const resolve = cleanCallback(_resolve)
     const reject = cleanCallback(_reject)
@@ -137,4 +137,4 @@ var runAllScenarios = () => {
 fs.emptyDir(syncPath)
   .then(runAllScenarios)
   .then(() => { console.log('Done with all scenarios.')})
-  .catch(console.error.bind(console))
+  .catch(error => console.error({error}))
