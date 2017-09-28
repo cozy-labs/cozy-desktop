@@ -34,6 +34,10 @@ module.exports.runActions = (scenario, abspath) => {
         console.log('- mv', action.src, action.dst)
         return fs.move(abspath(action.src), abspath(action.dst))
 
+      case 'wait':
+        console.log('- wait', action.ms)
+        return Promise.delay(action.ms)
+
       default:
         return Promise.reject(new Error(`Unknown action ${action.type} for scenario ${scenario.name}`))
     }
