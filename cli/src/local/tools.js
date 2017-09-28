@@ -1,6 +1,6 @@
 /* @flow */
 
-import type { ChokidarFSEvent } from './chokidar_event'
+import type { ContextualizedChokidarFSEvent } from './chokidar_event'
 import type { Metadata } from '../metadata'
 import fs from 'fs'
 import find from 'lodash.find'
@@ -8,7 +8,8 @@ import find from 'lodash.find'
 // scan files with same checksum (sameChecksums) for any file which
 // - does not exists anymore (in initialScan)
 // - has an pendingDeletion for the same path (otherwise)
-export const findOldDoc = (initialScan: boolean, sameChecksums: Metadata[], pendingDeletions: ChokidarFSEvent[]): ?Metadata => {
+// @TODO duck typing of pendingDeletions
+export const findOldDoc = (initialScan: boolean, sameChecksums: Metadata[], pendingDeletions: ContextualizedChokidarFSEvent[]): ?Metadata => {
   for (let sameChecksum of sameChecksums) {
     if (initialScan) {
       if (!fs.existsSync(sameChecksum.path)) return sameChecksum

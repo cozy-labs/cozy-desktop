@@ -163,53 +163,41 @@ class LocalWatcher {
 
   sortAndSquash (events: ContextualizedChokidarFSEvent[]) : PrepAction[] {
     const actions: PrepAction[] = []
-    const pendingDeletions: ChokidarFSEvent[] = []
+    const pendingDeletions: ContextualizedChokidarFSEvent[] = []
+
+    events = events.filter((e) => e.path !== '') // @TODO handle root dir events
+
+    if (this.initialScan != null) {
+      const ids = this.initialScan.ids
+      events.filter((e) => e.type.startsWith('add'))
+            .forEach((e) => ids.push(metadata.id(e.path)))
+    }
+
     for (let e of events) {
       try {
         switch (e.type) {
           case 'add':
-            {
-              if (this.initialScan) { this.initialScan.ids.push(metadata.id(e.path)) }
-              const unlinkEvent = findAndRemove(pendingDeletions, e2 => e2.path === e.path)
-              if (unlinkEvent != null) {
-                if (e.type.endsWith('Dir')) {
-                  actions.push(prepAction.build('UnlinkDir', e.path))
-                } else {
-                  actions.push(prepAction.build('UnlinkFile', e.path))
-                }
-              }
+            const unlinkEvent = findAndRemove(pendingDeletions, e2 => e2.path === e.path)
+            if (unlinkEvent != null) actions.push(prepAction.fromChokidar(unlinkEvent))
 
-              const old = findOldDoc(!!this.initialScan, e.sameChecksums, pendingDeletions)
-              if (old) {
-                actions.push(prepAction.build('MoveFile', e.path, e.stats, e.md5sum, old))
-              } else {
-                actions.push(prepAction.build('AddFile', e.path, e.stats, e.md5sum))
-              }
-              break
-            }
-          case 'addDir':
-            if (e.path !== '') {
-              if (this.initialScan) { this.initialScan.ids.push(metadata.id(e.path)) }
-
-              let hasPendingChild = !!find(pendingDeletions, p => path.dirname(p.path) === e.path)
-              if (!hasPendingChild) {
-                const unlinkEvent = findAndRemove(pendingDeletions, e2 => e2.path === e.path)
-                if (unlinkEvent != null) {
-                  if (e.type.endsWith('Dir')) {
-                    actions.push(prepAction.build('UnlinkDir', e.path))
-                  } else {
-                    actions.push(prepAction.build('UnlinkFile', e.path))
-                  }
-                }
-              }
-              actions.push(prepAction.build('AddDir', e.path, e.stats))
+            const old = findOldDoc(!!this.initialScan, e.sameChecksums, pendingDeletions)
+            if (old) {
+              actions.push(prepAction.build('MoveFile', e.path, e.stats, e.md5sum, old))
+            } else {
+              actions.push(prepAction.build('AddFile', e.path, e.stats, e.md5sum))
             }
             break
+          case 'addDir':
+            // if no child pending deletion
+            //if (!find(pendingDeletions, p => path.dirname(p.path) === e.path)) {
+            const unlinkEventD = findAndRemove(pendingDeletions, e2 => e2.path === e.path)
+            if (unlinkEventD != null) actions.push(prepAction.fromChokidar(unlinkEvent))
+            //}//
+            actions.push(prepAction.build('AddDir', e.path, e.stats))
+            break
           case 'change':
-            {
-              actions.push(prepAction.build('Change', e.path, e.stats, e.md5sum))
-              break
-            }
+            actions.push(prepAction.build('Change', e.path, e.stats, e.md5sum))
+            break
           case 'unlink':
             pendingDeletions.push(e)
             break
@@ -225,12 +213,11 @@ class LocalWatcher {
       }
     }
 
+    // To check : Dossier supprimé après ces enfants
+    // Détection de fichier
+
     for (let p of pendingDeletions) {
-      if (p.type.endsWith('Dir')) {
-        actions.push(prepAction.build('UnlinkDir', p.path))
-      } else {
-        actions.push(prepAction.build('UnlinkFile', p.path))
-      }
+      actions.push(prepAction.fromChokidar(p))
     }
     return actions
   }
