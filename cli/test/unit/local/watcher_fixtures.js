@@ -71,7 +71,7 @@ describe('LocalWatcher fixtures', () => {
               await fs.ensureDir(abspath(relpath))
             } else {
               console.log('- >', relpath)
-              await fs.outputFile(abspath(relpath), 'whatever')
+              await fs.outputFile(abspath(relpath), '')
             }
           }
         })
