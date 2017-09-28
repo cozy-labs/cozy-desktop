@@ -27,12 +27,12 @@ module.exports = class WindowManager {
 
   /* abtract */
   windowOptions () {
-    throw new Error('extends WindowManager before use')
+    throw new Error('extend WindowManager before using')
   }
 
   /* abtract */
   ipcEvents () {
-    throw new Error('extends WindowManager before use')
+    throw new Error('extend WindowManager before using')
   }
 
   show () {
@@ -82,13 +82,13 @@ module.exports = class WindowManager {
     // dont keep  hidden windows objects
     this.win.on('closed', () => { this.win = null })
 
-    let resolveRef = null
-    let pReady = new Promise((resolve, reject) => {
-      resolveRef = resolve
+    let resolveCreate = null
+    let promiseReady = new Promise((resolve, reject) => {
+      resolveCreate = resolve
     }).catch((err) => log.error(err))
 
     this.win.webContents.on('dom-ready', () => {
-      setTimeout(() => { resolveRef(this.win) }, ELMSTARTUP)
+      setTimeout(() => { resolveCreate(this.win) }, ELMSTARTUP)
     })
 
     let indexPath = path.resolve(__dirname, '..', '..', 'index.html')
@@ -99,6 +99,6 @@ module.exports = class WindowManager {
       this.win.webContents.openDevTools({mode: 'detach'})
     }
 
-    return pReady
+    return promiseReady
   }
 }

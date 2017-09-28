@@ -20,13 +20,17 @@ module.exports.init = (app, cb) => {
   tray.on('right-click', clicked)
   tray.on('double-click', clicked)
   tray.setToolTip('loading')
+
+  // on MacOS, if a tray has a contextmenu, click event does not work
+  // on Gnome, if a tray has no contextmenu, tray is not shown
+  // @TODO test on windows
   if (process.platform !== 'darwin') {
     const cm = Menu.buildFromTemplate([
      { label: translate('Tray Quit application'), click: app.quit }
     ])
     tray.setContextMenu(cm)
   }
-  module.exports.setState('idle')
+  setState('idle')
 }
 
 // old tray menu
@@ -72,7 +76,7 @@ if (newReleaseAvailable) {
 tray.setContextMenu(menu)
 */
 
-module.exports.setState = (state, filename) => {
+var setState = module.exports.setState = (state, filename) => {
   let statusLabel = ''
   let icon = 'idle'
   if (state === 'error') {
