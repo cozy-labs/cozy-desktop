@@ -5,6 +5,7 @@ var chokidar = require('chokidar')
 var fs = require('fs-extra')
 var _ = require('lodash')
 var path = require('path')
+var fixturesHelpers = require('../test/fixtures/local_watcher')
 
 var cliDir = path.resolve(path.join(__dirname, '..'))
 var fixturesDir = path.join(cliDir, 'test', 'fixtures', 'local_watcher')
@@ -49,28 +50,6 @@ var setupInitialState = (scenario) => {
     } else {
       console.log('- >', relpath)
       return fs.outputFile(abspath(relpath), 'whatever')
-    }
-  })
-}
-
-var run = (scenario) => {
-  console.log(`actions:`)
-  return Promise.each(scenario.actions, action => {
-    switch (action.type) {
-      case 'mkdir':
-        console.log('- mkdir', action.path)
-        return fs.ensureDir(abspath(action.path))
-
-      case 'rm':
-        console.log('- rm', action.path)
-        return fs.remove(abspath(action.path))
-
-      case 'mv':
-        console.log('- mv', action.src, action.dst)
-        return fs.move(abspath(action.src), abspath(action.dst))
-
-      default:
-        return Promise.reject(`Unknown action ${action.type} for scenario ${scenario.name}`)
     }
   })
 }
@@ -137,7 +116,7 @@ var runAndRecordFSEvents = (scenario) => {
 
     watcher.on('ready', () => {
       record = true
-      run(scenario)
+      fixturesHelpers.runActions(scenario, abspath)
         .delay(1000)
         .then(triggerEventsSaving)
         .catch(reject)

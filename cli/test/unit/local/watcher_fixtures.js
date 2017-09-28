@@ -10,7 +10,7 @@ import sinon from 'sinon'
 import Watcher from '../../../src/local/watcher'
 import * as metadata from '../../../src/metadata'
 
-import { scenarios, loadFSEvents } from '../../fixtures/local_watcher'
+import { scenarios, loadFSEvents, runActions } from '../../fixtures/local_watcher'
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
 
@@ -99,29 +99,7 @@ describe('LocalWatcher fixtures', () => {
         })
       }
 
-      beforeEach('init actions', async () => {
-        for (let action of scenario.actions) {
-          switch (action.type) {
-            case 'mkdir':
-              console.log('- mkdir', action.path)
-              await fs.ensureDir(abspath(action.path))
-              break
-
-            case 'rm':
-              console.log('- rm', action.path)
-              await fs.remove(abspath(action.path))
-              break
-
-            case 'mv':
-              console.log('- mv', action.src, action.dst)
-              await fs.move(abspath(action.src), abspath(action.dst))
-              break
-
-            default:
-              throw new Error(`Unknown action ${action.type} for scenario ${scenario.name}`)
-          }
-        }
-      })
+      beforeEach('actions', () => runActions(scenario, abspath))
 
       it(`runs on ${platform}`, async () => {
         const events = await loadFSEvents(scenario, platform)

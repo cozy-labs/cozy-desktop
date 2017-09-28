@@ -17,3 +17,25 @@ module.exports.loadFSEvents = (scenario, platform) => {
   const eventsFile = scenario.path.replace(/\.scenario\.js$/, `.fsevents.${platform}.json`)
   return fs.readJson(eventsFile)
 }
+
+module.exports.runActions = (scenario, abspath) => {
+  console.log(`actions:`)
+  return Promise.each(scenario.actions, action => {
+    switch (action.type) {
+      case 'mkdir':
+        console.log('- mkdir', action.path)
+        return fs.ensureDir(abspath(action.path))
+
+      case 'rm':
+        console.log('- rm', action.path)
+        return fs.remove(abspath(action.path))
+
+      case 'mv':
+        console.log('- mv', action.src, action.dst)
+        return fs.move(abspath(action.src), abspath(action.dst))
+
+      default:
+        return Promise.reject(`Unknown action ${action.type} for scenario ${scenario.name}`)
+    }
+  })
+}
