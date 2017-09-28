@@ -56,7 +56,7 @@ class LocalWatcher {
     this.prep = prep
     this.pouch = pouch
     const timeoutInMs = 1000 // TODO: Read from config
-    this.buffer = new LocalEventBuffer(timeoutInMs, this.handleEvents)
+    this.buffer = new LocalEventBuffer(timeoutInMs, this.onFlush)
     this.checksumer = checksumer.init()
   }
 
@@ -129,14 +129,41 @@ class LocalWatcher {
     })
   }
 
-  async handleEvents (events: ChokidarFSEvent[]) {
+  async onFlush (events: ChokidarFSEvent[]) {
     log.debug(`Flushed ${events.length} events`)
-    const pendingDeletions: ChokidarFSEvent[] = []
 
     // to become prepareEvents
+    const preparedEvents : ContextualizedChokidarFSEvent[] = await this.prepareEvents(events)
 
     // to become sortAndSquash
+    const actions : PrepAction[] = this.sortAndSquash(preparedEvents)
+
+    await this.sendToPrep(actions)
+  }
+
+  async prepareEvents (events: ChokidarFSEvent[]) : Promise<ContextualizedChokidarFSEvent[]> {
+    return Promise.all(events.map(async (e: ChokidarFSEvent): Promise<ContextualizedChokidarFSEvent> => {
+      let e2: Object = {...e}
+      if (e.type === 'add' || e.type === 'change') {
+        e2.md5sum = await this.checksum(e.path)
+      }
+
+      if (e.type === 'add') {
+        e2.sameChecksums = []
+        try {
+          e2.sameChecksums = await this.pouch.byChecksumAsync(e2.md5sum)
+        } catch (err) {
+          log.trace({err}, `no doc with checksum ${e2.md5sum}`)
+        }
+      }
+
+      return e2
+    }))
+  }
+
+  sortAndSquash (events: ContextualizedChokidarFSEvent[]) : PrepAction[] {
     const actions: PrepAction[] = []
+    const pendingDeletions: ChokidarFSEvent[] = []
     for (let e of events) {
       try {
         switch (e.type) {
@@ -151,21 +178,12 @@ class LocalWatcher {
                   actions.push(prepAction.build('UnlinkFile', e.path))
                 }
               }
-              const md5sum = await this.checksum(e.path)
-              // Let's see if one of the pending deleted files has the
-              // same checksum that the added file. If so, we mark them as
-              // a move.
-              let sameChecksums = [] // TODO: rename
-              try {
-                sameChecksums = await this.pouch.byChecksumAsync(md5sum)
-              } catch (err) {
-                log.trace({err}, `no doc with checksum ${md5sum}`)
-              }
-              const old = findOldDoc(!!this.initialScan, sameChecksums, pendingDeletions)
+
+              const old = findOldDoc(!!this.initialScan, e.sameChecksums, pendingDeletions)
               if (old) {
-                actions.push(prepAction.build('MoveFile', e.path, e.stats, md5sum, old))
+                actions.push(prepAction.build('MoveFile', e.path, e.stats, e.md5sum, old))
               } else {
-                actions.push(prepAction.build('AddFile', e.path, e.stats, md5sum))
+                actions.push(prepAction.build('AddFile', e.path, e.stats, e.md5sum))
               }
               break
             }
@@ -189,8 +207,7 @@ class LocalWatcher {
             break
           case 'change':
             {
-              const md5sum = await this.checksum(e.path)
-              actions.push(prepAction.build('Change', e.path, e.stats, md5sum))
+              actions.push(prepAction.build('Change', e.path, e.stats, e.md5sum))
               break
             }
           case 'unlink':
@@ -215,7 +232,12 @@ class LocalWatcher {
         actions.push(prepAction.build('UnlinkFile', p.path))
       }
     }
+    return actions
+  }
 
+  // @TODO inline this.onXXX in this function
+  // @TODO rename PrepAction types to prep.xxxxxx
+  async sendToPrep (actions: PrepAction[]) {
     // to become sendToPrep
     for (let a of actions) {
       switch (a.type) {
@@ -241,18 +263,6 @@ class LocalWatcher {
           throw new Error('wrong actions')
       }
     }
-  }
-
-  async prepareEvents (events: ChokidarFSEvent[]) : Promise<ContextualizedChokidarFSEvent[]> {
-    return []
-  }
-
-  sortAndSquash (events: ContextualizedChokidarFSEvent[]) : PrepAction[] {
-    return []
-  }
-
-  async sendToPrep (events: PrepAction[]) {
-    return []
   }
 
   stop () {
