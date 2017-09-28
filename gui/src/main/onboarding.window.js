@@ -14,7 +14,7 @@ const LOGIN_SCREEN_HEIGHT = 700
 const OAUTH_SCREEN_WIDTH = ONBOARDING_SCREEN_WIDTH
 const OAUTH_SCREEN_HEIGHT = 930
 
-const WindowManager = require('./window_behaviour')
+const WindowManager = require('./window_manager')
 
 module.exports = class OnboardingWM extends WindowManager {
   windowOptions () {

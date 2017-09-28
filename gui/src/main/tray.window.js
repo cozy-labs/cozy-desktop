@@ -12,7 +12,7 @@ const log = require('cozy-desktop').default.logger({
   component: 'GUI'
 })
 
-const WindowManager = require('./window_behaviour')
+const WindowManager = require('./window_manager')
 
 module.exports = class TrayWM extends WindowManager {
   windowOptions () {
@@ -29,12 +29,9 @@ module.exports = class TrayWM extends WindowManager {
   }
 
   create () {
-    log.debug({tcreate: true})
     let pReady = super.create()
-    log.debug({tcreateafer: true})
     this.positioner = new Positioner(this.win)
     this.win.on('blur', this.onBlur.bind(this))
-    log.debug({tcreateafer2: true})
     return pReady
   }
 

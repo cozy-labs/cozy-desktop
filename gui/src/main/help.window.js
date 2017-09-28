@@ -1,4 +1,4 @@
-const WindowManager = require('./window_behaviour')
+const WindowManager = require('./window_manager')
 const HELP_SCREEN_WIDTH = 768
 const HELP_SCREEN_HEIGHT = 570
 
