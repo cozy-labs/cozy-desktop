@@ -9,7 +9,7 @@ import path from 'path'
 
 import * as checksumer from './checksumer'
 import * as chokidarEvent from './chokidar_event'
-import * as PrepFSEvent from './prep_event'
+import * as prepAction from './prep_action'
 import LocalEventBuffer from './event_buffer'
 import logger from '../logger'
 import * as metadata from '../metadata'
@@ -20,7 +20,8 @@ import { maxDate } from '../timestamp'
 import { findOldDoc, findAndRemove } from './tools'
 
 import type { Checksumer } from './checksumer'
-import type { ChokidarFSEvent, PreparedChokidarFSEvent } from './chokidar_event'
+import type { ChokidarFSEvent, ContextualizedChokidarFSEvent } from './chokidar_event'
+import type {PrepAction} from './prep_action'
 import type { Metadata } from '../metadata'
 import type { Callback } from '../utils/func'
 import type { Pending } from '../utils/pending' // eslint-disable-line
@@ -135,7 +136,7 @@ class LocalWatcher {
     // to become prepareEvents
 
     // to become sortAndSquash
-    const actions: PrepFSEvent.PrepFSEvent[] = []
+    const actions: PrepAction[] = []
     for (let e of events) {
       try {
         switch (e.type) {
@@ -145,9 +146,9 @@ class LocalWatcher {
               const unlinkEvent = findAndRemove(pendingDeletions, e2 => e2.path === e.path)
               if (unlinkEvent != null) {
                 if (e.type.endsWith('Dir')) {
-                  actions.push(PrepFSEvent.build('UnlinkDir', e.path))
+                  actions.push(prepAction.build('UnlinkDir', e.path))
                 } else {
-                  actions.push(PrepFSEvent.build('UnlinkFile', e.path))
+                  actions.push(prepAction.build('UnlinkFile', e.path))
                 }
               }
               const md5sum = await this.checksum(e.path)
@@ -161,7 +162,11 @@ class LocalWatcher {
                 log.trace({err}, `no doc with checksum ${md5sum}`)
               }
               const old = findOldDoc(!!this.initialScan, sameChecksums, pendingDeletions)
-              actions.push(PrepFSEvent.build('AddFile', e.path, e.stats, md5sum, old))
+              if (old) {
+                actions.push(prepAction.build('MoveFile', e.path, e.stats, md5sum, old))
+              } else {
+                actions.push(prepAction.build('AddFile', e.path, e.stats, md5sum))
+              }
               break
             }
           case 'addDir':
@@ -173,19 +178,19 @@ class LocalWatcher {
                 const unlinkEvent = findAndRemove(pendingDeletions, e2 => e2.path === e.path)
                 if (unlinkEvent != null) {
                   if (e.type.endsWith('Dir')) {
-                    actions.push(PrepFSEvent.build('UnlinkDir', e.path))
+                    actions.push(prepAction.build('UnlinkDir', e.path))
                   } else {
-                    actions.push(PrepFSEvent.build('UnlinkFile', e.path))
+                    actions.push(prepAction.build('UnlinkFile', e.path))
                   }
                 }
               }
-              actions.push(PrepFSEvent.build('AddDir', e.path, e.stats))
+              actions.push(prepAction.build('AddDir', e.path, e.stats))
             }
             break
           case 'change':
             {
               const md5sum = await this.checksum(e.path)
-              actions.push(PrepFSEvent.build('Change', e.path, e.stats, md5sum))
+              actions.push(prepAction.build('Change', e.path, e.stats, md5sum))
               break
             }
           case 'unlink':
@@ -205,9 +210,9 @@ class LocalWatcher {
 
     for (let p of pendingDeletions) {
       if (p.type.endsWith('Dir')) {
-        actions.push(PrepFSEvent.build('UnlinkDir', p.path))
+        actions.push(prepAction.build('UnlinkDir', p.path))
       } else {
-        actions.push(PrepFSEvent.build('UnlinkFile', p.path))
+        actions.push(prepAction.build('UnlinkFile', p.path))
       }
     }
 
@@ -215,19 +220,22 @@ class LocalWatcher {
     for (let a of actions) {
       switch (a.type) {
         case 'UnlinkDir':
-          this.onUnlinkDir(a.path)
+          await this.onUnlinkDir(a.path)
           break
         case 'UnlinkFile':
-          this.onUnlinkFile(a.path)
+          await this.onUnlinkFile(a.path)
           break
         case 'AddDir':
-          this.onAddDir(a.path, a.stats)
+          await this.onAddDir(a.path, a.stats)
           break
         case 'Change':
-          this.onChange(a.path, a.stats, a.md5sum)
+          await this.onChange(a.path, a.stats, a.md5sum)
           break
         case 'AddFile':
-          this.onAddFile(a.path, a.stats, a.md5sum, a.old)
+          await this.onAddFile(a.path, a.stats, a.md5sum)
+          break
+        case 'MoveFile':
+          await this.onMoveFile(a.path, a.stats, a.md5sum, a.old)
           break
         default:
           throw new Error('wrong actions')
@@ -235,15 +243,15 @@ class LocalWatcher {
     }
   }
 
-  async prepareEvents (events: ChokidarFSEvent[]) : Promise<PreparedChokidarFSEvent[]> {
+  async prepareEvents (events: ChokidarFSEvent[]) : Promise<ContextualizedChokidarFSEvent[]> {
     return []
   }
 
-  sortAndSquash (events: PreparedChokidarFSEvent[]) : PrepFSEvent.PrepFSEvent[] {
+  sortAndSquash (events: ContextualizedChokidarFSEvent[]) : PrepAction[] {
     return []
   }
 
-  async sendToPrep (events: PrepFSEvent.PrepFSEvent[]) {
+  async sendToPrep (events: PrepAction[]) {
     return []
   }
 
@@ -313,16 +321,18 @@ class LocalWatcher {
   /* Actions */
 
   // New file detected
-  onAddFile (filePath: string, stats: fs.Stats, md5sum: string, old: ?Metadata) {
+  onAddFile (filePath: string, stats: fs.Stats, md5sum: string) {
     const logError = (err) => log.error({err, path: filePath})
     const doc = this.createDoc(filePath, stats, md5sum)
-    if (old) {
-      log.info({path: filePath}, `was moved from ${old.path}`)
-      this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
-    } else {
-      log.info({path: filePath}, 'file added')
-      this.prep.addFileAsync(SIDE, doc).catch(logError)
-    }
+    log.info({path: filePath}, 'file added')
+    this.prep.addFileAsync(SIDE, doc).catch(logError)
+  }
+
+  onMoveFile (filePath: string, stats: fs.Stats, md5sum: string, old: Metadata) {
+    const logError = (err) => log.error({err, path: filePath})
+    const doc = this.createDoc(filePath, stats, md5sum)
+    log.info({path: filePath}, `was moved from ${old.path}`)
+    this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
   }
 
   // New directory detected
