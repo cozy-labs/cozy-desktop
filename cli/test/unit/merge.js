@@ -195,6 +195,11 @@ describe('Merge', function () {
   )
 
   describe('moveFile', function () {
+    // @TODO fixme intermittent failure
+    //  `expected Object {...} } to have property updated_at of
+    //  '2017-08-28T08:42:52.535Z' (got '2017-08-28T08:42:52.536Z')`
+    //   → https://travis-ci.org/cozy-labs/cozy-desktop/jobs/269106206#L1140
+    //   → https://travis-ci.org/cozy-labs/cozy-desktop/jobs/273292815#L1163
     it('saves the new file and deletes the old one', function (done) {
       let doc = {
         _id: 'FOO/NEW',
@@ -316,6 +321,10 @@ describe('Merge', function () {
   })
 
   describe('moveFolder', function () {
+    // @TODO fixme intermittent failure
+    // `Error in .on("change", function): {
+    // AssertionError: expected 'FOOBAR/OLD' to be 'FOOBAR/OLD-HINT'`
+    // → https://travis-ci.org/cozy-labs/cozy-desktop/jobs/269106208#L2224
     it('saves the new folder and deletes the old one', function (done) {
       let doc = {
         _id: 'FOOBAR/NEW',
