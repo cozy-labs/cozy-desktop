@@ -11,6 +11,7 @@ matrix:
         - os: linux
           node_js: 7
           env: CXX=g++-4.8
+          # @TODO macOS build is much slower
         - os: osx
           node_js: 6
 env:
