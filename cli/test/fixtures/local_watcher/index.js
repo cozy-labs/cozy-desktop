@@ -2,6 +2,7 @@ const Promise = require('bluebird')
 const fs = require('fs-extra')
 const path = require('path')
 
+// TODO: Create one dir per scenario with an fsevents subdir
 module.exports.scenarios =
   fs.readdirSync(__dirname)
     .filter(name => name.endsWith('.scenario.js'))
