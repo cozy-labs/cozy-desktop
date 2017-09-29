@@ -27,6 +27,10 @@ module.exports.runActions = (scenario, abspath) => {
         console.log('- mkdir', action.path)
         return fs.ensureDir(abspath(action.path))
 
+      case '>':
+        console.log('- >', action.path)
+        return fs.outputFile(abspath(action.path), 'whatever')
+
       case 'rm':
         console.log('- rm', action.path)
         return fs.remove(abspath(action.path))
