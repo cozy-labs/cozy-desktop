@@ -130,6 +130,8 @@ class LocalWatcher {
     })
   }
 
+  // TODO: Start checksuming as soon as an add/change event is buffered
+  // TODO: Put flushed event batches in a queue
   async onFlush (events: ChokidarFSEvent[]) {
     log.debug(`Flushed ${events.length} events`)
 
@@ -234,6 +236,7 @@ class LocalWatcher {
     // to become sendToPrep
     for (let a of actions) {
       switch (a.type) {
+        // TODO: Inline old LocalWatcher methods
         case 'UnlinkDir':
           await this.onUnlinkDir(a.path)
           break
