@@ -135,16 +135,16 @@ class LocalWatcher {
 
     events = events.filter((e) => e.path !== '') // @TODO handle root dir events
 
-    if (this.initialScan != null) {
-      const ids = this.initialScan.ids
+    const initialScan = this.initialScan
+    if (initialScan != null) {
+      const ids = initialScan.ids
       events.filter((e) => e.type.startsWith('add'))
             .forEach((e) => ids.push(metadata.id(e.path)))
 
       // Try to detect removed files & folders
-      const docs = await this.pouch.byRecursivePath('')
+      const docs = await this.pouch.byRecursivePathAsync('')
       for (const doc of docs.reverse()) {
-        // $FlowFixMe: initialScan cannot be null
-        if (this.initialScan.ids.indexOf(metadata.id(doc.path)) !== -1 || doc.trashed) {
+        if (initialScan.ids.indexOf(metadata.id(doc.path)) !== -1 || doc.trashed) {
           continue
         } else if (doc.docType === 'file') {
           events.unshift({type: 'unlink', path: doc.path})
@@ -153,6 +153,8 @@ class LocalWatcher {
         }
       }
 
+      log.debug({initialEvents: events})
+      initialScan.resolve()
       this.initialScan = null
     }
 
