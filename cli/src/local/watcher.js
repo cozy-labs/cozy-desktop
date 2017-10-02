@@ -145,23 +145,31 @@ class LocalWatcher {
   }
 
   async prepareEvents (events: ChokidarFSEvent[]) : Promise<ContextualizedChokidarFSEvent[]> {
-    return Promise.all(events.map(async (e: ChokidarFSEvent): Promise<ContextualizedChokidarFSEvent> => {
-      let e2: Object = {...e}
-      if (e.type === 'add' || e.type === 'change') {
-        e2.md5sum = await this.checksum(e.path)
-      }
+    return Promise
+      .all(events.map(async (e: ChokidarFSEvent): Promise<?ContextualizedChokidarFSEvent> => {
+        let e2: Object = {...e}
 
-      if (e.type === 'add') {
-        e2.sameChecksums = []
-        try {
-          e2.sameChecksums = await this.pouch.byChecksumAsync(e2.md5sum)
-        } catch (err) {
-          log.trace({err}, `no doc with checksum ${e2.md5sum}`)
+        if (e.type === 'add' || e.type === 'change') {
+          try {
+            e2.md5sum = await this.checksum(e.path)
+          } catch (err) {
+            log.warn({err}, 'could not compute checksum')
+            return null
+          }
         }
-      }
 
-      return e2
-    }))
+        if (e.type === 'add') {
+          e2.sameChecksums = []
+          try {
+            e2.sameChecksums = await this.pouch.byChecksumAsync(e2.md5sum)
+          } catch (err) {
+            log.trace({err}, `no doc with checksum ${e2.md5sum}`)
+          }
+        }
+
+        return e2
+      }))
+      .filter((e: ?ContextualizedChokidarFSEvent) => e != null)
   }
 
   sortAndSquash (events: ContextualizedChokidarFSEvent[]) : PrepAction[] {
@@ -233,31 +241,41 @@ class LocalWatcher {
   // @TODO inline this.onXXX in this function
   // @TODO rename PrepAction types to prep.xxxxxx
   async sendToPrep (actions: PrepAction[]) {
+    const errors: Error[] = []
     // to become sendToPrep
     for (let a of actions) {
-      switch (a.type) {
-        // TODO: Inline old LocalWatcher methods
-        case 'UnlinkDir':
-          await this.onUnlinkDir(a.path)
-          break
-        case 'UnlinkFile':
-          await this.onUnlinkFile(a.path)
-          break
-        case 'AddDir':
-          await this.onAddDir(a.path, a.stats)
-          break
-        case 'Change':
-          await this.onChange(a.path, a.stats, a.md5sum)
-          break
-        case 'AddFile':
-          await this.onAddFile(a.path, a.stats, a.md5sum)
-          break
-        case 'MoveFile':
-          await this.onMoveFile(a.path, a.stats, a.md5sum, a.old)
-          break
-        default:
-          throw new Error('wrong actions')
+      try {
+        switch (a.type) {
+          // TODO: Inline old LocalWatcher methods
+          case 'UnlinkDir':
+            await this.onUnlinkDir(a.path)
+            break
+          case 'UnlinkFile':
+            await this.onUnlinkFile(a.path)
+            break
+          case 'AddDir':
+            await this.onAddDir(a.path, a.stats)
+            break
+          case 'Change':
+            await this.onChange(a.path, a.stats, a.md5sum)
+            break
+          case 'AddFile':
+            await this.onAddFile(a.path, a.stats, a.md5sum)
+            break
+          case 'MoveFile':
+            await this.onMoveFile(a.path, a.stats, a.md5sum, a.old)
+            break
+          default:
+            throw new Error('wrong actions')
+        }
+      } catch (err) {
+        log.error({err})
+        errors.push(err)
       }
+    }
+
+    if (errors.length > 0) {
+      throw new Error(`Could not apply all actions to Prep:\n- ${errors.map(e => e.toString()).join('\n- ')}`)
     }
   }
 
