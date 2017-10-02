@@ -5,10 +5,10 @@ module.exports = {
     'parent/dir/empty-subdir/',
     'parent/dir/subdir/',
     'parent/dir/subdir/file',
-    'parent/other_dir/',
+    'parent/other_dir/'
   ],
   actions: [
-    {type: "rm", path: "parent/dir"},
+    {type: 'rm', path: 'parent/dir'}
   ],
   expected: {
     prepCalls: [
@@ -17,5 +17,5 @@ module.exports = {
       {method: 'trashFolderAsync', path: 'parent/dir/empty-subdir'},
       {method: 'trashFolderAsync', path: 'parent/dir'}
     ]
-  },
+  }
 }
