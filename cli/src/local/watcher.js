@@ -36,6 +36,11 @@ const EXECUTABLE_MASK = 1 << 6
 
 const SIDE = 'local'
 
+type InitialScan = {
+  ids: string[],
+  resolve: () => void
+}
+
 // This file contains the filesystem watcher that will trigger operations when
 // a file or a folder is added/removed/changed locally.
 // Operations will be added to the a common operation queue along with the
@@ -44,7 +49,7 @@ class LocalWatcher {
   syncPath: string
   prep: Prep
   pouch: Pouch
-  initialScan: ?{ids: string[], resolve: ()=>void}
+  initialScan: ?InitialScan
   pendingDeletions: PendingMap
   checksumer: Checksumer
   watcher: any // chokidar
@@ -141,17 +146,7 @@ class LocalWatcher {
       events.filter((e) => e.type.startsWith('add'))
             .forEach((e) => ids.push(metadata.id(e.path)))
 
-      // Try to detect removed files & folders
-      const docs = await this.pouch.byRecursivePathAsync('')
-      for (const doc of docs.reverse()) {
-        if (initialScan.ids.indexOf(metadata.id(doc.path)) !== -1 || doc.trashed) {
-          continue
-        } else if (doc.docType === 'file') {
-          events.unshift({type: 'unlink', path: doc.path})
-        } else {
-          events.unshift({type: 'unlinkDir', path: doc.path})
-        }
-      }
+      await this.prependOfflineUnlinkEvents(events, initialScan)
 
       log.debug({initialEvents: events})
       initialScan.resolve()
@@ -165,6 +160,20 @@ class LocalWatcher {
     const actions : PrepAction[] = this.sortAndSquash(preparedEvents)
 
     await this.sendToPrep(actions)
+  }
+
+  async prependOfflineUnlinkEvents (events: ChokidarFSEvent[], initialScan: InitialScan) {
+    // Try to detect removed files & folders
+    const docs = await this.pouch.byRecursivePathAsync('')
+    for (const doc of docs) {
+      if (initialScan.ids.indexOf(metadata.id(doc.path)) !== -1 || doc.trashed) {
+        continue
+      } else if (doc.docType === 'file') {
+        events.unshift({type: 'unlink', path: doc.path})
+      } else {
+        events.unshift({type: 'unlinkDir', path: doc.path})
+      }
+    }
   }
 
   async prepareEvents (events: ChokidarFSEvent[]) : Promise<ContextualizedChokidarFSEvent[]> {
