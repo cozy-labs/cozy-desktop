@@ -3,7 +3,6 @@
 import Promise from 'bluebird'
 import chokidar from 'chokidar'
 import _ from 'lodash'
-import find from 'lodash.find'
 import fs from 'fs'
 import mime from 'mime'
 import path from 'path'
@@ -24,7 +23,6 @@ import type { Checksumer } from './checksumer'
 import type { ChokidarFSEvent, ContextualizedChokidarFSEvent } from './chokidar_event'
 import type {PrepAction} from './prep_action'
 import type { Metadata } from '../metadata'
-import type { Callback } from '../utils/func'
 import type { Pending } from '../utils/pending' // eslint-disable-line
 
 const log = logger({
@@ -46,7 +44,7 @@ class LocalWatcher {
   syncPath: string
   prep: Prep
   pouch: Pouch
-  initialScan: ?{ids: string[]}
+  initialScan: ?{ids: string[], resolve: ()=>void}
   pendingDeletions: PendingMap
   checksumer: Checksumer
   watcher: any // chokidar
@@ -65,11 +63,6 @@ class LocalWatcher {
   // https://github.com/paulmillr/chokidar
   start () {
     log.debug('Starting...')
-
-    // To detect which files&folders have been removed since the last run of
-    // cozy-desktop, we keep all the paths seen by chokidar during its
-    // initial scan in @paths to compare them with pouchdb database.
-    this.initialScan = {ids: []}
 
     // A map of pending operations. It's used for detecting move operations,
     // as chokidar only reports adds and deletion. The key is the path (as
@@ -115,8 +108,13 @@ class LocalWatcher {
         })
       }
 
+      // To detect which files&folders have been removed since the last run of
+      // cozy-desktop, we keep all the paths seen by chokidar during its
+      // initial scan in @paths to compare them with pouchdb database.
+      this.initialScan = {ids: [], resolve}
+
       this.watcher
-        .on('ready', this.onReady(resolve))
+        .on('ready', () => this.buffer.switchMode('timeout'))
         .on('error', (err) => {
           if (err.message === 'watch ENOSPC') {
             log.error('Sorry, the kernel is out of inotify watches! ' +
@@ -134,6 +132,29 @@ class LocalWatcher {
   // TODO: Put flushed event batches in a queue
   async onFlush (events: ChokidarFSEvent[]) {
     log.debug(`Flushed ${events.length} events`)
+
+    events = events.filter((e) => e.path !== '') // @TODO handle root dir events
+
+    if (this.initialScan != null) {
+      const ids = this.initialScan.ids
+      events.filter((e) => e.type.startsWith('add'))
+            .forEach((e) => ids.push(metadata.id(e.path)))
+
+      // Try to detect removed files & folders
+      const docs = await this.pouch.byRecursivePath('')
+      for (const doc of docs.reverse()) {
+        // $FlowFixMe: initialScan cannot be null
+        if (this.initialScan.ids.indexOf(metadata.id(doc.path)) !== -1 || doc.trashed) {
+          continue
+        } else if (doc.docType === 'file') {
+          events.unshift({type: 'unlink', path: doc.path})
+        } else {
+          events.unshift({type: 'unlinkDir', path: doc.path})
+        }
+      }
+
+      this.initialScan = null
+    }
 
     // to become prepareEvents
     const preparedEvents : ContextualizedChokidarFSEvent[] = await this.prepareEvents(events)
@@ -176,14 +197,6 @@ class LocalWatcher {
     const actions: PrepAction[] = []
     const pendingDeletions: ContextualizedChokidarFSEvent[] = []
 
-    events = events.filter((e) => e.path !== '') // @TODO handle root dir events
-
-    if (this.initialScan != null) {
-      const ids = this.initialScan.ids
-      events.filter((e) => e.type.startsWith('add'))
-            .forEach((e) => ids.push(metadata.id(e.path)))
-    }
-
     for (let e of events) {
       try {
         switch (e.type) {
@@ -200,10 +213,10 @@ class LocalWatcher {
             break
           case 'addDir':
             // if no child pending deletion
-            //if (!find(pendingDeletions, p => path.dirname(p.path) === e.path)) {
+            // if (!find(pendingDeletions, p => path.dirname(p.path) === e.path)) {
             const unlinkEventD = findAndRemove(pendingDeletions, e2 => e2.path === e.path)
             if (unlinkEventD != null) actions.push(prepAction.fromChokidar(unlinkEventD))
-            //}//
+            // }//
             actions.push(prepAction.build('AddDir', e.path, e.stats))
             break
           case 'change':
@@ -393,34 +406,6 @@ class LocalWatcher {
     log.info({path: filePath}, 'File changed')
     const doc = this.createDoc(filePath, stats, md5sum)
     return this.prep.updateFileAsync(SIDE, doc)
-  }
-
-  // Called after chokidar has finished its initial scan
-  onReady (callback: Callback) {
-    return () => {
-      this.buffer.switchMode('timeout')
-
-      // Try to detect removed files & folders
-      this.pouch.byRecursivePath('', async function (err, docs) {
-        if (err) { return callback(err) }
-        try {
-          for (const doc of docs.reverse()) {
-            // $FlowFixMe: initialScan cannot be null
-            if (this.initialScan.ids.indexOf(metadata.id(doc.path)) !== -1 || doc.trashed) {
-              continue
-            } else if (doc.docType === 'file') {
-              this.onUnlinkFile(doc.path)
-            } else {
-              this.onUnlinkDir(doc.path)
-            }
-          }
-          delete this.initialScan
-          setTimeout(callback, 3000)
-        } catch (err) {
-          callback(err)
-        }
-      }.bind(this))
-    }
   }
 }
 
