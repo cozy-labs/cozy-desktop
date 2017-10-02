@@ -40,7 +40,7 @@ class SpyPrep {
   }
 }
 
-describe('LocalWatcher fixtures', () => {
+describe.skip('LocalWatcher fixtures', () => {
   let watcher, prep
   before('instanciate config', configHelpers.createConfig)
   // FIXME: beforeEach for pouch?
