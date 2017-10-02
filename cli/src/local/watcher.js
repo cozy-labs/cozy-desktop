@@ -362,14 +362,14 @@ class LocalWatcher {
     const logError = (err) => log.error({err, path: filePath})
     const doc = this.createDoc(filePath, stats, md5sum)
     log.info({path: filePath}, 'file added')
-    this.prep.addFileAsync(SIDE, doc).catch(logError)
+    return this.prep.addFileAsync(SIDE, doc).catch(logError)
   }
 
   onMoveFile (filePath: string, stats: fs.Stats, md5sum: string, old: Metadata) {
     const logError = (err) => log.error({err, path: filePath})
     const doc = this.createDoc(filePath, stats, md5sum)
     log.info({path: filePath}, `was moved from ${old.path}`)
-    this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
+    return this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
   }
 
   // New directory detected
@@ -380,7 +380,7 @@ class LocalWatcher {
       updated_at: stats.mtime
     }
     log.info({path: folderPath}, 'folder added')
-    this.prep.putFolderAsync(SIDE, doc).catch(err => log.error({err, path: folderPath}))
+    return this.prep.putFolderAsync(SIDE, doc).catch(err => log.error({err, path: folderPath}))
   }
 
   // File deletion detected
@@ -389,7 +389,7 @@ class LocalWatcher {
   // same checksum is added and, if not, we declare this file as deleted.
   onUnlinkFile (filePath: string) {
     log.info({path: filePath}, 'File deleted')
-    this.prep.trashFileAsync(SIDE, {path: filePath}).catch(err => log.error({err, path: filePath}))
+    return this.prep.trashFileAsync(SIDE, {path: filePath}).catch(err => log.error({err, path: filePath}))
   }
 
   // Folder deletion detected
@@ -398,7 +398,7 @@ class LocalWatcher {
   // after chokidar event to declare the folder as deleted.
   onUnlinkDir (folderPath: string) {
     log.info({path: folderPath}, 'Folder deleted')
-    this.prep.trashFolderAsync(SIDE, {path: folderPath}).catch(err => log.error({err, path: folderPath}))
+    return this.prep.trashFolderAsync(SIDE, {path: folderPath}).catch(err => log.error({err, path: folderPath}))
   }
 
   // File update detected
