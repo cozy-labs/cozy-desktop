@@ -57,7 +57,8 @@ describe('Merge', function () {
           tags: ['foo'],
           size: 12345,
           class: 'image',
-          mime: 'image/jpeg'
+          mime: 'image/jpeg',
+          ino: 123
         }
         this.pouch.db.put(this.file, done)
       })
@@ -70,6 +71,7 @@ describe('Merge', function () {
         delete doc.size
         delete doc.class
         delete doc.mime
+        delete doc.ino
         this.file.updated_at = doc.updated_at.toISOString()
         this.merge.addFileAsync(this.side, doc).then(() => {
           this.pouch.db.get(doc._id, (err, res) => {
@@ -79,6 +81,7 @@ describe('Merge', function () {
             res.class.should.equal(was.class)
             res.mime.should.equal(was.mime)
             res.sides.local.should.equal(2)
+            res.ino.should.equal(was.ino)
             done()
           })
         })
@@ -118,7 +121,8 @@ describe('Merge', function () {
           tags: ['foo'],
           size: 12345,
           class: 'image',
-          mime: 'image/jpeg'
+          mime: 'image/jpeg',
+          ino: 3456
         }
         this.pouch.db.put(this.file, done)
       })
@@ -131,6 +135,7 @@ describe('Merge', function () {
         delete doc.size
         delete doc.class
         delete doc.mime
+        delete doc.ino
         this.file.updated_at = doc.updated_at.toISOString()
         this.merge.updateFileAsync(this.side, doc).then(() => {
           this.pouch.db.get(doc._id, (err, res) => {
@@ -139,6 +144,7 @@ describe('Merge', function () {
             res.size.should.equal(was.size)
             res.class.should.equal(was.class)
             res.mime.should.equal(was.mime)
+            res.ino.should.equal(was.ino)
             res.sides.local.should.equal(2)
             done()
           })
@@ -252,6 +258,7 @@ describe('Merge', function () {
         size: 5426,
         class: 'image',
         mime: 'image/jpeg',
+        ino: 3854,
         sides: {
           local: 1,
           remote: 1
@@ -267,6 +274,7 @@ describe('Merge', function () {
             should.exist(res.size)
             should.exist(res.class)
             should.exist(res.mime)
+            should.exist(res.ino)
             done()
           })
         })
@@ -333,6 +341,7 @@ describe('Merge', function () {
           local: 1,
           remote: 1
         },
+        ino: 666,
         trashed: true
       }
       this.pouch.db.put(clone(was), (err, inserted) => {
@@ -344,6 +353,7 @@ describe('Merge', function () {
             doc.updated_at = doc.updated_at.toISOString()
             res.should.have.properties(doc)
             res.sides.local.should.equal(1)
+            res.should.have.property('ino', was.ino)
             should.not.exist(res.trashed)
             this.pouch.db.get(was._id, function (err, res) {
               should.exist(err)
