@@ -21,7 +21,7 @@ module.exports = class WindowManager {
       if (!handlers[name]) {
         throw new Error('undefined handler for event ' + name)
       }
-      ipcMain.on(name, handlers[name])
+      ipcMain.on(name, handlers[name].bind(this))
     })
   }
 
@@ -46,6 +46,10 @@ module.exports = class WindowManager {
     this.win = null
   }
 
+  shown () {
+    return this.win != null
+  }
+
   reload () {
     if (this.win) this.win.reload()
   }
@@ -59,7 +63,9 @@ module.exports = class WindowManager {
   }
 
   create () {
-    this.win = new BrowserWindow(this.windowOptions())
+    const opts = this.windowOptions()
+    opts.show = false
+    this.win = new BrowserWindow(opts)
 
     // openExternalLinks
     this.win.webContents.on('will-navigate', (event, url) => {
@@ -88,7 +94,10 @@ module.exports = class WindowManager {
     }).catch((err) => log.error(err))
 
     this.win.webContents.on('dom-ready', () => {
-      setTimeout(() => { resolveCreate(this.win) }, ELMSTARTUP)
+      setTimeout(() => {
+        this.win.show()
+        resolveCreate(this.win)
+      }, ELMSTARTUP)
     })
 
     let indexPath = path.resolve(__dirname, '..', '..', 'index.html')
