@@ -2,7 +2,7 @@
 
 import Promise from 'bluebird'
 import chokidar from 'chokidar'
-import find from 'lodash.find'
+import { find } from 'lodash'
 import fs from 'fs'
 import mime from 'mime'
 import path from 'path'

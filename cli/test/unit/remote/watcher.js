@@ -3,7 +3,7 @@
 
 import async from 'async'
 import EventEmitter from 'events'
-import clone from 'lodash.clone'
+import { clone } from 'lodash'
 import path from 'path'
 import sinon from 'sinon'
 import should from 'should'

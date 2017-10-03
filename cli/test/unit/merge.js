@@ -1,8 +1,7 @@
 /* eslint-env mocha */
 
 import async from 'async'
-import clone from 'lodash.clone'
-import pick from 'lodash.pick'
+import { clone, pick } from 'lodash'
 import path from 'path'
 import sinon from 'sinon'
 import should from 'should'

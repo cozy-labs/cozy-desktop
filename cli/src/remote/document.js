@@ -1,6 +1,6 @@
 /* @flow */
 
-import uniq from 'lodash.uniq'
+import { uniq } from 'lodash'
 
 import { DIR_TYPE, FILE_TYPE, ROOT_DIR_ID, TRASH_DIR_ID } from './constants'
 
