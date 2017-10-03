@@ -26,7 +26,7 @@ export const findOldDoc = (initialScan: boolean, sameChecksums: Metadata[], pend
   return null
 }
 
-export const findAndRemove = <T>(arr: T[], predicate: (T) => bool): T => {
+export const findAndRemove = <T>(arr: T[], predicate: (T) => bool): ?T => {
   let x = find(arr, predicate)
   if (x != null) {
     arr.splice(arr.indexOf(x), 1)
