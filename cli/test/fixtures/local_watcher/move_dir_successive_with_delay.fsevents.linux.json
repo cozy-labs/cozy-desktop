@@ -1,0 +1,100 @@
+[
+  {
+    "type": "addDir",
+    "path": "parent/dst1/dir",
+    "stats": {
+      "ino": 4530817,
+      "size": 4096,
+      "mtime": "2017-09-28T14:37:40.259Z",
+      "ctime": "2017-09-28T14:37:40.259Z"
+    }
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent/src/dir/subdir"
+  },
+  {
+    "type": "addDir",
+    "path": "parent/dst1/dir/empty-subdir",
+    "stats": {
+      "ino": 4530818,
+      "size": 4096,
+      "mtime": "2017-09-28T14:37:40.259Z",
+      "ctime": "2017-09-28T14:37:40.259Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "parent/dst1/dir/subdir",
+    "stats": {
+      "ino": 4530822,
+      "size": 4096,
+      "mtime": "2017-09-28T14:37:40.259Z",
+      "ctime": "2017-09-28T14:37:40.259Z"
+    }
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent/src/dir/empty-subdir"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent/src/dir"
+  },
+  {
+    "type": "unlink",
+    "path": "parent/src/dir/subdir/file"
+  },
+  {
+    "type": "addDir",
+    "path": "parent/dst2/dir",
+    "stats": {
+      "ino": 4530775,
+      "size": 4096,
+      "mtime": "2017-09-28T14:37:41.263Z",
+      "ctime": "2017-09-28T14:37:41.263Z"
+    }
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent/dst1/dir/subdir"
+  },
+  {
+    "type": "addDir",
+    "path": "parent/dst2/dir/empty-subdir",
+    "stats": {
+      "ino": 4530776,
+      "size": 4096,
+      "mtime": "2017-09-28T14:37:41.263Z",
+      "ctime": "2017-09-28T14:37:41.263Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "parent/dst2/dir/subdir",
+    "stats": {
+      "ino": 4530805,
+      "size": 4096,
+      "mtime": "2017-09-28T14:37:41.263Z",
+      "ctime": "2017-09-28T14:37:41.263Z"
+    }
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent/dst1/dir/empty-subdir"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent/dst1/dir"
+  },
+  {
+    "type": "add",
+    "path": "parent/dst2/dir/subdir/file",
+    "stats": {
+      "ino": 4503236,
+      "size": 8,
+      "mtime": "2017-09-28T14:37:41.263Z",
+      "ctime": "2017-09-28T14:37:41.263Z"
+    }
+  }
+]

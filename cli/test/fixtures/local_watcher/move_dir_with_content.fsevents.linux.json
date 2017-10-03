@@ -1,0 +1,58 @@
+[
+  {
+    "type": "addDir",
+    "path": "parent/dst/dir",
+    "stats": {
+      "ino": 4530805,
+      "size": 4096,
+      "mtime": "2017-09-28T14:37:43.283Z",
+      "ctime": "2017-09-28T14:37:43.283Z"
+    }
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent/src/dir/subdir"
+  },
+  {
+    "type": "addDir",
+    "path": "parent/dst/dir/empty-subdir",
+    "stats": {
+      "ino": 4530817,
+      "size": 4096,
+      "mtime": "2017-09-28T14:37:43.283Z",
+      "ctime": "2017-09-28T14:37:43.283Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "parent/dst/dir/subdir",
+    "stats": {
+      "ino": 4530818,
+      "size": 4096,
+      "mtime": "2017-09-28T14:37:43.283Z",
+      "ctime": "2017-09-28T14:37:43.283Z"
+    }
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent/src/dir/empty-subdir"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent/src/dir"
+  },
+  {
+    "type": "unlink",
+    "path": "parent/src/dir/subdir/file"
+  },
+  {
+    "type": "add",
+    "path": "parent/dst/dir/subdir/file",
+    "stats": {
+      "ino": 4503384,
+      "size": 8,
+      "mtime": "2017-09-28T14:37:43.283Z",
+      "ctime": "2017-09-28T14:37:43.283Z"
+    }
+  }
+]
