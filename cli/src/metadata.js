@@ -181,7 +181,7 @@ export function isUpToDate (side: SideName, doc: Metadata) {
 // rely on file systems to be precise to the millisecond.
 export function sameFolder (one: Metadata, two: Metadata) {
   const {path} = two
-  let fields = ['_id', 'docType', 'remote', 'tags', 'trashed']
+  let fields = ['_id', 'docType', 'remote', 'tags', 'trashed', 'ino']
   one = pick(one, fields)
   two = pick(two, fields)
   const same = isEqual(one, two)
@@ -194,7 +194,7 @@ export function sameFolder (one: Metadata, two: Metadata) {
 // rely on file systems to be precise to the millisecond.
 export function sameFile (one: Metadata, two: Metadata) {
   const {path} = two
-  let fields = ['_id', 'docType', 'md5sum', 'remote', 'tags', 'size', 'trashed']
+  let fields = ['_id', 'docType', 'md5sum', 'remote', 'tags', 'size', 'trashed', 'ino']
   one = {...pick(one, fields), executable: !!one.executable}
   two = {...pick(two, fields), executable: !!two.executable}
   const same = isEqual(one, two)
