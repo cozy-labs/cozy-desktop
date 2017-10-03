@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 
-import async from 'async'
 import fs from 'fs-extra'
 import path from 'path'
 import sinon from 'sinon'
@@ -9,7 +8,6 @@ import should from 'should'
 import { TMP_DIR_NAME } from '../../../src/local/constants'
 import Watcher from '../../../src/local/watcher'
 import * as metadata from '../../../src/metadata'
-import { PendingMap } from '../../../src/utils/pending'
 
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
@@ -392,14 +390,12 @@ describe('LocalWatcher Tests', function () {
     })
   })
 
-  describe('onReady', function () {
+  describe('prependOfflineUnlinkEvents', function () {
     before('reset pouchdb', function (done) {
       this.pouch.resetDatabase(done)
     })
 
-    it('detects deleted files and folders', function (done) {
-      let tfile = this.prep.trashFileAsync = sinon.stub().resolves()
-      let tfolder = this.prep.trashFolderAsync = sinon.stub().resolves()
+    it('detects deleted files and folders', async function () {
       let folder1 = {
         _id: 'folder1',
         path: 'folder1',
@@ -432,25 +428,23 @@ describe('LocalWatcher Tests', function () {
         trashed: true,
         docType: 'file'
       }
-      async.each([folder1, folder2, folder3, file1, file2, file3], (doc, next) => {
-        this.pouch.db.put(doc, next)
-      }, () => {
-        this.watcher.pendingDeletions = new PendingMap()
-        this.watcher.checksums = 0
-        this.watcher.initialScan = {ids: ['folder1', 'file1'].map(metadata.id)}
-        let cb = this.watcher.onReady(function () {
-          tfolder.calledOnce.should.be.true()
-          tfolder.calledWithMatch('local', folder1).should.be.false()
-          tfolder.calledWithMatch('local', { path: folder2.path }).should.be.true()
-          tfolder.calledWithMatch('local', folder3).should.be.false()
-          tfile.calledOnce.should.be.true()
-          tfile.calledWithMatch('local', file1).should.be.false()
-          tfile.calledWithMatch('local', { path: file2.path }).should.be.true()
-          tfile.calledWithMatch('local', file3).should.be.false()
-          done()
-        })
-        cb()
-      })
+      for (let doc of [folder1, folder2, folder3, file1, file2, file3]) {
+        await this.pouch.db.put(doc)
+      }
+      const events = [
+        {type: 'addDir', path: 'folder1'},
+        {type: 'add', path: 'file1'}
+      ]
+      const initialScan = {ids: ['folder1', 'file1'].map(metadata.id)}
+
+      await this.watcher.prependOfflineUnlinkEvents(events, initialScan)
+
+      should(events).deepEqual([
+        {type: 'unlinkDir', path: 'folder2'},
+        {type: 'unlink', path: 'file2'},
+        {type: 'addDir', path: 'folder1'},
+        {type: 'add', path: 'file1'}
+      ])
     })
   })
 })
