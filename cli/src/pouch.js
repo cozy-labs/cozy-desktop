@@ -108,6 +108,8 @@ class Pouch {
     return this.getAll('byChecksum', params, callback)
   }
 
+  byChecksumAsync: (string) => Promise<Metadata[]>
+
   // Return all the files and folders in this path, only at first level
   byPath (path, callback) {
     let params = {
