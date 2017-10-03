@@ -241,6 +241,7 @@ describe('Local', function () {
         content.should.equal('foobar')
         let mtime = +fs.statSync(filePath).mtime
         mtime.should.equal(+doc.updated_at)
+        should(doc.ino).be.a.Number()
         done()
       })
     })
@@ -341,6 +342,7 @@ describe('Local', function () {
         fs.statSync(folderPath).isDirectory().should.be.true()
         let mtime = +fs.statSync(folderPath).mtime
         mtime.should.equal(+doc.updated_at)
+        should(doc.ino).be.a.Number()
         done()
       })
     })
