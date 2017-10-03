@@ -37,7 +37,7 @@ module.exports.runActions = (scenario, abspath) => {
 
       case 'mv':
         console.log('- mv', action.src, action.dst)
-        return fs.move(abspath(action.src), abspath(action.dst))
+        return fs.rename(abspath(action.src), abspath(action.dst))
 
       case 'wait':
         console.log('- wait', action.ms)
