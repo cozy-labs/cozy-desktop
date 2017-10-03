@@ -40,7 +40,7 @@ module.exports = class OnboardingWM extends WindowManager {
   }
 
   onRegisterRemote (event, arg) {
-    let desktop = this.desktop()
+    let desktop = this.desktop
     const cozyUrl = desktop.checkCozyUrl(arg.cozyUrl)
     desktop.config.cozyUrl = cozyUrl
     const onRegistered = (client, url) => {
@@ -59,7 +59,6 @@ module.exports = class OnboardingWM extends WindowManager {
       this.win.webContents.on('did-get-redirect-request', (event, oldUrl, newUrl) => {
         if (newUrl.match('file://')) {
           this.win.setContentSize(ONBOARDING_SCREEN_WIDTH, ONBOARDING_SCREEN_HEIGHT, true)
-          log.logger({'did-get-red': newUrl})
           resolveP(newUrl)
         }
       })
@@ -90,7 +89,7 @@ module.exports = class OnboardingWM extends WindowManager {
   }
 
   onStartSync (event, syncPath) {
-    let desktop = this.desktop()
+    let desktop = this.desktop
     if (!desktop.config.isValid()) {
       log.error('No client!')
       return

@@ -37,6 +37,22 @@ let onboardingWindow = null
 let helpWindow = null
 let trayWindow = null
 
+const toggleWindow = (...args) => {
+  if (trayWindow.shown()) trayWindow.hide()
+  else showWindow(...args)
+}
+
+// @TODO facto with showWindow after making args clear with tray position
+const showWindowStartApp = () => {
+  if (!desktop.config.syncPath) {
+    onboardingWindow.show()
+    // registration is done, but we need a syncPath
+    if (desktop.config.isValid()) {
+      setTimeout(() => onboardingWindow.send('registration-done'), 20)
+    }
+  }
+}
+
 const showWindow = (...args) => {
   if (!desktop.config.syncPath) {
     onboardingWindow.show(...args)
@@ -191,7 +207,7 @@ if (shouldExit) {
 app.on('ready', () => {
   desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
   i18n.init(app)
-  tray.init(app, showWindow)
+  tray.init(app, toggleWindow)
   lastFiles.init(desktop)
   trayWindow = new TrayWM(app, desktop)
   helpWindow = new HelpWM(app, desktop)
@@ -200,6 +216,8 @@ app.on('ready', () => {
     onboardingWindow.hide()
     trayWindow.show().then(() => startSync())
   })
+
+  showWindowStartApp()
 
   // Os X wants all application to have a menu
   Menu.setApplicationMenu(buildAppMenu(app))

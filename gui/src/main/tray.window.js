@@ -3,8 +3,8 @@ const {spawn} = require('child_process')
 const autoUpdater = require('./autoupdate')
 const autoLaunch = require('./autolaunch')
 const Positioner = require('electron-positioner')
-const DASHBOARD_SCREEN_WIDTH = 325
-const DASHBOARD_SCREEN_HEIGHT = 600
+const DASHBOARD_SCREEN_WIDTH = 330
+const DASHBOARD_SCREEN_HEIGHT = 700
 
 const {translate} = require('./i18n')
 
@@ -46,7 +46,6 @@ module.exports = class TrayWM extends WindowManager {
       pos = (process.platform === 'win32') ? 'trayBottomCenter' : 'trayCenter'
     }
     this.positioner.move(pos, trayPos)
-    this.win.show()
 
     return pReady
   }
