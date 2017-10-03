@@ -2,13 +2,14 @@
 
 import Promise from 'bluebird'
 import chokidar from 'chokidar'
-import find from 'lodash.find'
+import _ from 'lodash'
 import fs from 'fs'
 import mime from 'mime'
 import path from 'path'
 
 import * as checksumer from './checksumer'
 import * as chokidarEvent from './chokidar_event'
+import * as prepAction from './prep_action'
 import LocalEventBuffer from './event_buffer'
 import logger from '../logger'
 import * as metadata from '../metadata'
@@ -16,10 +17,12 @@ import Pouch from '../pouch'
 import Prep from '../prep'
 import { PendingMap } from '../utils/pending'
 import { maxDate } from '../timestamp'
+import { findOldDoc, findAndRemove } from './tools'
 
 import type { Checksumer } from './checksumer'
-import type { ChokidarFSEvent } from './chokidar_event'
-import type { Callback } from '../utils/func'
+import type { ChokidarFSEvent, ContextualizedChokidarFSEvent } from './chokidar_event'
+import type {PrepAction} from './prep_action'
+import type { Metadata } from '../metadata'
 import type { Pending } from '../utils/pending' // eslint-disable-line
 
 const log = logger({
@@ -33,6 +36,11 @@ const EXECUTABLE_MASK = 1 << 6
 
 const SIDE = 'local'
 
+type InitialScan = {
+  ids: string[],
+  resolve: () => void
+}
+
 // This file contains the filesystem watcher that will trigger operations when
 // a file or a folder is added/removed/changed locally.
 // Operations will be added to the a common operation queue along with the
@@ -41,9 +49,8 @@ class LocalWatcher {
   syncPath: string
   prep: Prep
   pouch: Pouch
-  initialScan: ?{ids: string[]}
+  initialScan: ?InitialScan
   pendingDeletions: PendingMap
-  checksums: number
   checksumer: Checksumer
   watcher: any // chokidar
   buffer: LocalEventBuffer<ChokidarFSEvent>
@@ -53,7 +60,7 @@ class LocalWatcher {
     this.prep = prep
     this.pouch = pouch
     const timeoutInMs = 1000 // TODO: Read from config
-    this.buffer = new LocalEventBuffer(timeoutInMs, this.handleEvents)
+    this.buffer = new LocalEventBuffer(timeoutInMs, this.onFlush)
     this.checksumer = checksumer.init()
   }
 
@@ -61,11 +68,6 @@ class LocalWatcher {
   // https://github.com/paulmillr/chokidar
   start () {
     log.debug('Starting...')
-
-    // To detect which files&folders have been removed since the last run of
-    // cozy-desktop, we keep all the paths seen by chokidar during its
-    // initial scan in @paths to compare them with pouchdb database.
-    this.initialScan = {ids: []}
 
     // A map of pending operations. It's used for detecting move operations,
     // as chokidar only reports adds and deletion. The key is the path (as
@@ -76,12 +78,6 @@ class LocalWatcher {
     // cleared to cancel the operation (for example, a deletion is finally
     // seen as a part of a move operation).
     this.pendingDeletions = new PendingMap()
-
-    // A counter of how many files are been read to compute a checksum right
-    // now. It's useful because we can't do some operations when a checksum
-    // is running, like deleting a file, because the checksum operation is
-    // slow but needed to detect move operations.
-    this.checksums = 0
 
     this.watcher = chokidar.watch('.', {
       // Let paths in events be relative to this base path
@@ -117,8 +113,13 @@ class LocalWatcher {
         })
       }
 
+      // To detect which files&folders have been removed since the last run of
+      // cozy-desktop, we keep all the paths seen by chokidar during its
+      // initial scan in @paths to compare them with pouchdb database.
+      this.initialScan = {ids: [], resolve}
+
       this.watcher
-        .on('ready', this.onReady(resolve))
+        .on('ready', () => this.buffer.switchMode('timeout'))
         .on('error', (err) => {
           if (err.message === 'watch ENOSPC') {
             log.error('Sorry, the kernel is out of inotify watches! ' +
@@ -132,31 +133,111 @@ class LocalWatcher {
     })
   }
 
-  async handleEvents (events: ChokidarFSEvent[]) {
+  // TODO: Start checksuming as soon as an add/change event is buffered
+  // TODO: Put flushed event batches in a queue
+  async onFlush (events: ChokidarFSEvent[]) {
     log.debug(`Flushed ${events.length} events`)
+
+    events = events.filter((e) => e.path !== '') // @TODO handle root dir events
+
+    const initialScan = this.initialScan
+    if (initialScan != null) {
+      const ids = initialScan.ids
+      events.filter((e) => e.type.startsWith('add'))
+            .forEach((e) => ids.push(metadata.id(e.path)))
+
+      await this.prependOfflineUnlinkEvents(events, initialScan)
+
+      log.debug({initialEvents: events})
+      initialScan.resolve()
+      this.initialScan = null
+    }
+
+    // to become prepareEvents
+    const preparedEvents : ContextualizedChokidarFSEvent[] = await this.prepareEvents(events)
+
+    // to become sortAndSquash
+    const actions : PrepAction[] = this.sortAndSquash(preparedEvents)
+
+    await this.sendToPrep(actions)
+  }
+
+  async prependOfflineUnlinkEvents (events: ChokidarFSEvent[], initialScan: InitialScan) {
+    // Try to detect removed files & folders
+    const docs = await this.pouch.byRecursivePathAsync('')
+    for (const doc of docs) {
+      if (initialScan.ids.indexOf(metadata.id(doc.path)) !== -1 || doc.trashed) {
+        continue
+      } else if (doc.docType === 'file') {
+        events.unshift({type: 'unlink', path: doc.path})
+      } else {
+        events.unshift({type: 'unlinkDir', path: doc.path})
+      }
+    }
+  }
+
+  async prepareEvents (events: ChokidarFSEvent[]) : Promise<ContextualizedChokidarFSEvent[]> {
+    return Promise
+      .all(events.map(async (e: ChokidarFSEvent): Promise<?ContextualizedChokidarFSEvent> => {
+        let e2: Object = {...e}
+
+        if (e.type === 'add' || e.type === 'change') {
+          try {
+            e2.md5sum = await this.checksum(e.path)
+          } catch (err) {
+            log.warn({err}, 'could not compute checksum')
+            return null
+          }
+        }
+
+        if (e.type === 'add') {
+          e2.sameChecksums = []
+          try {
+            e2.sameChecksums = await this.pouch.byChecksumAsync(e2.md5sum)
+          } catch (err) {
+            log.trace({err}, `no doc with checksum ${e2.md5sum}`)
+          }
+        }
+
+        return e2
+      }))
+      .filter((e: ?ContextualizedChokidarFSEvent) => e != null)
+  }
+
+  sortAndSquash (events: ContextualizedChokidarFSEvent[]) : PrepAction[] {
+    const actions: PrepAction[] = []
+    const pendingDeletions: ContextualizedChokidarFSEvent[] = []
+
     for (let e of events) {
       try {
         switch (e.type) {
           case 'add':
-            {
-              const md5sum = await this.checksum(e.path)
-              await this.onAddFile(e.path, e.stats, md5sum)
-              break
+            const unlinkEvent = findAndRemove(pendingDeletions, e2 => e2.path === e.path)
+            if (unlinkEvent != null) actions.push(prepAction.fromChokidar(unlinkEvent))
+
+            const old = findOldDoc(this.initialScan != null, e.sameChecksums, pendingDeletions)
+            if (old) {
+              actions.push(prepAction.build('MoveFile', e.path, e.stats, e.md5sum, old))
+            } else {
+              actions.push(prepAction.build('AddFile', e.path, e.stats, e.md5sum))
             }
+            break
           case 'addDir':
-            await this.onAddDir(e.path, e.stats)
+            // if no child pending deletion
+            // if (!find(pendingDeletions, p => path.dirname(p.path) === e.path)) {
+            const unlinkEventD = findAndRemove(pendingDeletions, e2 => e2.path === e.path)
+            if (unlinkEventD != null) actions.push(prepAction.fromChokidar(unlinkEventD))
+            // }//
+            actions.push(prepAction.build('AddDir', e.path, e.stats))
             break
           case 'change':
-            {
-              const md5sum = await this.checksum(e.path)
-              await this.onChange(e.path, e.stats, md5sum)
-              break
-            }
+            actions.push(prepAction.build('Change', e.path, e.stats, e.md5sum))
+            break
           case 'unlink':
-            await this.onUnlinkFile(e.path)
+            pendingDeletions.push(e)
             break
           case 'unlinkDir':
-            await this.onUnlinkDir(e.path)
+            pendingDeletions.push(e)
             break
           default:
             throw new TypeError(`Unknown event type: ${e.type}`)
@@ -165,6 +246,60 @@ class LocalWatcher {
         log.error({err, path: e.path})
         throw err
       }
+    }
+
+    // To check : Dossier supprimé après ces enfants
+    // Détection de fichier
+
+    const sortedDeletions = _.chain(pendingDeletions)
+      .sortBy('path')
+      .reverse()
+      .value()
+
+    for (let p of sortedDeletions) {
+      actions.push(prepAction.fromChokidar(p))
+    }
+    return actions
+  }
+
+  // @TODO inline this.onXXX in this function
+  // @TODO rename PrepAction types to prep.xxxxxx
+  async sendToPrep (actions: PrepAction[]) {
+    const errors: Error[] = []
+    // to become sendToPrep
+    for (let a of actions) {
+      try {
+        switch (a.type) {
+          // TODO: Inline old LocalWatcher methods
+          case 'UnlinkDir':
+            await this.onUnlinkDir(a.path)
+            break
+          case 'UnlinkFile':
+            await this.onUnlinkFile(a.path)
+            break
+          case 'AddDir':
+            await this.onAddDir(a.path, a.stats)
+            break
+          case 'Change':
+            await this.onChange(a.path, a.stats, a.md5sum)
+            break
+          case 'AddFile':
+            await this.onAddFile(a.path, a.stats, a.md5sum)
+            break
+          case 'MoveFile':
+            await this.onMoveFile(a.path, a.stats, a.md5sum, a.old)
+            break
+          default:
+            throw new Error('wrong actions')
+        }
+      } catch (err) {
+        log.error({err})
+        errors.push(err)
+      }
+    }
+
+    if (errors.length > 0) {
+      throw new Error(`Could not apply all actions to Prep:\n- ${errors.map(e => e.toString()).join('\n- ')}`)
     }
   }
 
@@ -236,53 +371,27 @@ class LocalWatcher {
   // New file detected
   onAddFile (filePath: string, stats: fs.Stats, md5sum: string) {
     const logError = (err) => log.error({err, path: filePath})
-    if (this.initialScan) { this.initialScan.ids.push(metadata.id(filePath)) }
-    this.pendingDeletions.executeIfAny(filePath)
-    this.checksums++
     const doc = this.createDoc(filePath, stats, md5sum)
-    if (this.pendingDeletions.isEmpty()) {
-      this.checksums--
-      log.info({path: filePath}, 'file added')
-      this.prep.addFileAsync(SIDE, doc).catch(logError)
-    } else {
-      // Let's see if one of the pending deleted files has the
-      // same checksum that the added file. If so, we mark them as
-      // a move.
-      this.pouch.byChecksum(doc.md5sum, (err, docs) => {
-        this.checksums--
-        if (err) {
-          log.info({path: filePath}, 'file added')
-          this.prep.addFileAsync(SIDE, doc).catch(logError)
-        } else {
-          const same = find(docs, this.initialScan
-              ? d => !fs.existsSync(d.path)
-              : d => this.pendingDeletions.hasPath(d.path))
-          if (same) {
-            log.info({path: filePath}, `was moved from ${same.path}`)
-            this.pendingDeletions.clear(same.path)
-            this.prep.moveFileAsync(SIDE, doc, same).catch(logError)
-          } else {
-            log.info({path: filePath}, 'file added')
-            this.prep.addFileAsync(SIDE, doc).catch(logError)
-          }
-        }
-      })
-    }
+    log.info({path: filePath}, 'file added')
+    return this.prep.addFileAsync(SIDE, doc).catch(logError)
+  }
+
+  onMoveFile (filePath: string, stats: fs.Stats, md5sum: string, old: Metadata) {
+    const logError = (err) => log.error({err, path: filePath})
+    const doc = this.createDoc(filePath, stats, md5sum)
+    log.info({path: filePath}, `was moved from ${old.path}`)
+    return this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
   }
 
   // New directory detected
   onAddDir (folderPath: string, stats: fs.Stats) {
-    if (folderPath === '') return
-
-    if (this.initialScan) { this.initialScan.ids.push(metadata.id(folderPath)) }
-    this.pendingDeletions.executeIfAny(folderPath)
     const doc = {
       path: folderPath,
       docType: 'folder',
       updated_at: stats.mtime
     }
     log.info({path: folderPath}, 'folder added')
-    this.prep.putFolderAsync(SIDE, doc).catch(err => log.error({err, path: folderPath}))
+    return this.prep.putFolderAsync(SIDE, doc).catch(err => log.error({err, path: folderPath}))
   }
 
   // File deletion detected
@@ -290,24 +399,8 @@ class LocalWatcher {
   // It can be a file moved out. So, we wait a bit to see if a file with the
   // same checksum is added and, if not, we declare this file as deleted.
   onUnlinkFile (filePath: string) {
-    // TODO: Extract delayed execution logic to utils/pending
-    let timeout
-    const stopChecking = () => {
-      clearTimeout(timeout)
-    }
-    const execute = () => {
-      log.info({path: filePath}, 'File deleted')
-      this.prep.trashFileAsync(SIDE, {path: filePath}).catch(err => log.error({err, path: filePath}))
-    }
-    const check = () => {
-      if (this.checksums === 0) {
-        this.pendingDeletions.executeIfAny(filePath)
-      } else {
-        timeout = setTimeout(check, 100)
-      }
-    }
-    this.pendingDeletions.add(filePath, {stopChecking, execute})
-    timeout = setTimeout(check, 1250)
+    log.info({path: filePath}, 'File deleted')
+    return this.prep.trashFileAsync(SIDE, {path: filePath}).catch(err => log.error({err, path: filePath}))
   }
 
   // Folder deletion detected
@@ -315,22 +408,8 @@ class LocalWatcher {
   // We don't want to delete a folder before files inside it. So we wait a bit
   // after chokidar event to declare the folder as deleted.
   onUnlinkDir (folderPath: string) {
-    // TODO: Extract repeated check logic to utils/pending
-    let interval
-    const stopChecking = () => {
-      clearInterval(interval)
-    }
-    const execute = () => {
-      log.info({path: folderPath}, 'Folder deleted')
-      this.prep.trashFolderAsync(SIDE, {path: folderPath}).catch(err => log.error({err, path: folderPath}))
-    }
-    const check = () => {
-      if (!this.pendingDeletions.hasPendingChild(folderPath)) {
-        this.pendingDeletions.executeIfAny(folderPath)
-      }
-    }
-    this.pendingDeletions.add(folderPath, {stopChecking, execute})
-    interval = setInterval(check, 350)
+    log.info({path: folderPath}, 'Folder deleted')
+    return this.prep.trashFolderAsync(SIDE, {path: folderPath}).catch(err => log.error({err, path: folderPath}))
   }
 
   // File update detected
@@ -338,34 +417,6 @@ class LocalWatcher {
     log.info({path: filePath}, 'File changed')
     const doc = this.createDoc(filePath, stats, md5sum)
     return this.prep.updateFileAsync(SIDE, doc)
-  }
-
-  // Called after chokidar has finished its initial scan
-  onReady (callback: Callback) {
-    return () => {
-      this.buffer.switchMode('timeout')
-
-      // Try to detect removed files & folders
-      this.pouch.byRecursivePath('', async function (err, docs) {
-        if (err) { return callback(err) }
-        try {
-          for (const doc of docs.reverse()) {
-            // $FlowFixMe: initialScan cannot be null
-            if (this.initialScan.ids.indexOf(metadata.id(doc.path)) !== -1 || doc.trashed) {
-              continue
-            } else if (doc.docType === 'file') {
-              this.onUnlinkFile(doc.path)
-            } else {
-              this.onUnlinkDir(doc.path)
-            }
-          }
-          delete this.initialScan
-          setTimeout(callback, 3000)
-        } catch (err) {
-          callback(err)
-        }
-      }.bind(this))
-    }
   }
 }
 

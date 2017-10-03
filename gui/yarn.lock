@@ -733,7 +733,7 @@ cozy-client-js@^0.3.13:
   resolved "https://registry.yarnpkg.com/cozy-client-js/-/cozy-client-js-0.3.15.tgz#f87e47f7aa08dbac4309a9a5f94322d747ce9799"
 
 "cozy-desktop@file:../cli/":
-  version "3.1.0-beta.1"
+  version "3.1.0"
   dependencies:
     async "^2.1.5"
     babel-polyfill "^6.23.0"
@@ -745,6 +745,7 @@ cozy-client-js@^0.3.13:
     cozy-client-js "^0.3.13"
     fs-extra "^3.0.0"
     isomorphic-fetch "2.2.1"
+    lodash "^4.17.4"
     lodash.clone "4.5.0"
     lodash.find "4.6.0"
     lodash.isequal "4.5.0"
@@ -2733,7 +2734,7 @@ lodash@^3.7.0:
   version "3.10.1"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-3.10.1.tgz#5bf45e8e49ba4189e17d482789dfd15bd140b7b6"
 
-lodash@^4.0.0, lodash@^4.14.0, lodash@^4.3.0:
+lodash@^4.0.0, lodash@^4.14.0, lodash@^4.17.4, lodash@^4.3.0:
   version "4.17.4"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.4.tgz#78203a4d1c328ae1d86dca6460e369b57f4055ae"
 
