@@ -151,8 +151,6 @@ class LocalWatcher {
       await this.prependOfflineUnlinkEvents(events, initialScan)
 
       log.debug({initialEvents: events})
-      initialScan.resolve()
-      this.initialScan = null
     }
 
     // to become prepareEvents
@@ -162,6 +160,10 @@ class LocalWatcher {
     const actions : PrepAction[] = this.sortAndSquash(preparedEvents)
 
     await this.sendToPrep(actions)
+    if (initialScan != null) {
+      initialScan.resolve()
+      this.initialScan = null
+    }
   }
 
   async prependOfflineUnlinkEvents (events: ChokidarFSEvent[], initialScan: InitialScan) {
