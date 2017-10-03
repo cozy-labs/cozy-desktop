@@ -86,6 +86,7 @@ describe('LocalWatcher Tests', function () {
           path: 'chat-mignon.jpg',
           docType: 'file',
           md5sum,
+          ino: stats.ino,
           size: 29865
         })
         doc.should.have.properties([

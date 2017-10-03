@@ -437,6 +437,7 @@ class LocalWatcher {
       path: filePath,
       docType: 'file',
       md5sum,
+      ino: stats.ino,
       updated_at: maxDate(mtime, ctime),
       mime: mimeType,
       class: mimeType.split('/')[0],
