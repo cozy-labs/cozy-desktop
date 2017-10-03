@@ -175,7 +175,8 @@ describe('LocalWatcher Tests', function () {
             docType: 'folder'
           })
           doc.should.have.properties([
-            'updated_at'
+            'updated_at',
+            'ino'
           ])
           done()
           return Promise.resolve()
