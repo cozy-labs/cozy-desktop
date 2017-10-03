@@ -232,6 +232,7 @@ class Local implements Side {
 
       next => fs.ensureDir(parent, () => fs.rename(tmpFile, filePath, next)),
 
+      this.inodeSetter(doc),
       this.metadataUpdater(doc)
 
     ], function (err) {
@@ -246,13 +247,11 @@ class Local implements Side {
   addFolder (doc: Metadata, callback: Callback) {
     let folderPath = path.join(this.syncPath, doc.path)
     log.info({path: doc.path}, 'Put folder')
-    fs.ensureDir(folderPath, err => {
-      if (err) {
-        callback(err)
-      } else {
-        this.metadataUpdater(doc)(callback)
-      }
-    })
+    async.series([
+      cb => fs.ensureDir(folderPath, cb),
+      this.inodeSetter(doc),
+      this.metadataUpdater(doc),
+    ], callback)
   }
 
   addFolderAsync: (Metadata) => Promise<*>
