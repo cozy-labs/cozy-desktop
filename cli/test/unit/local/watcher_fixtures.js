@@ -3,6 +3,7 @@
 
 import Promise from 'bluebird'
 import fs from 'fs-extra'
+import _ from 'lodash'
 import path from 'path'
 import should from 'should'
 
@@ -21,6 +22,7 @@ class SpyPrep {
 
     this.stub('addFileAsync')
     this.stub('moveFileAsync')
+    this.stub('moveFolderAsync')
     this.stub('putFolderAsync')
     this.stub('trashFileAsync')
     this.stub('trashFolderAsync')
@@ -40,10 +42,9 @@ class SpyPrep {
   }
 }
 
-describe.skip('LocalWatcher fixtures', () => {
+describe('LocalWatcher fixtures', () => {
   let watcher, prep
-  before('instanciate config', configHelpers.createConfig)
-  // FIXME: beforeEach for pouch?
+  beforeEach('instanciate config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
   beforeEach('instanciate local watcher', async function () {
     prep = new SpyPrep()
@@ -62,35 +63,41 @@ describe.skip('LocalWatcher fixtures', () => {
   })
 
   afterEach('destroy pouch', pouchHelpers.cleanDatabase)
+  afterEach('clean config', configHelpers.cleanConfig)
 
   for (let scenario of scenarios) {
     describe(scenario.name, () => {
       if (scenario.init != null) {
         beforeEach('init', async function () {
-          for (let relpath of scenario.init) {
-            if (relpath.endsWith('/')) {
-              console.log('- mkdir', relpath)
-              await fs.ensureDir(abspath(relpath))
-              this.pouch.put({
-                _id: metadata.id(relpath),
+          for (let {path, ino} of scenario.init) {
+            // FIXME: We may not need to create dirs/files in the synced dir
+            // as soon as we stop using the checksum
+            if (path.endsWith('/')) {
+              path = _.trimEnd(path, '/') // XXX: Check in metadata.id?
+              console.log('- mkdir', path)
+              await fs.ensureDir(abspath(path))
+              await this.pouch.put({
+                _id: metadata.id(path),
                 docType: 'folder',
                 updated_at: new Date(),
-                path: relpath,
+                path,
+                ino,
                 tags: [],
                 sides: {local: 1, remote: 1}
               })
             } else {
-              console.log('- >', relpath)
-              await fs.outputFile(abspath(relpath), '')
-              this.pouch.put({
-                _id: metadata.id(relpath),
+              console.log('- >', path)
+              await fs.outputFile(abspath(path), '')
+              await this.pouch.put({
+                _id: metadata.id(path),
                 md5sum: '1B2M2Y8AsgTpgAmY7PhCfg==', // ''
                 class: 'text',
                 docType: 'file',
                 executable: false,
                 updated_at: new Date(),
                 mime: 'text/plain',
-                path: relpath,
+                path,
+                ino,
                 size: 0,
                 tags: [],
                 sides: {local: 1, remote: 1}

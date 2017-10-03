@@ -1,45 +1,45 @@
 [
   {
-    "type": "addDir",
-    "path": "parent/dst/dir",
-    "stats": {
-      "ino": 4530805,
-      "size": 4096,
-      "mtime": "2017-09-28T14:37:43.283Z",
-      "ctime": "2017-09-28T14:37:43.283Z"
-    }
+    "type": "unlinkDir",
+    "path": "parent/src/dir/empty-subdir"
   },
   {
     "type": "unlinkDir",
     "path": "parent/src/dir/subdir"
   },
   {
+    "type": "unlinkDir",
+    "path": "parent/src/dir"
+  },
+  {
+    "type": "addDir",
+    "path": "parent/dst/dir",
+    "stats": {
+      "ino": 4,
+      "size": 4096,
+      "mtime": "2017-10-03T09:58:44.662Z",
+      "ctime": "2017-10-03T09:58:44.674Z"
+    }
+  },
+  {
     "type": "addDir",
     "path": "parent/dst/dir/empty-subdir",
     "stats": {
-      "ino": 4530817,
+      "ino": 5,
       "size": 4096,
-      "mtime": "2017-09-28T14:37:43.283Z",
-      "ctime": "2017-09-28T14:37:43.283Z"
+      "mtime": "2017-10-03T09:58:44.662Z",
+      "ctime": "2017-10-03T09:58:44.662Z"
     }
   },
   {
     "type": "addDir",
     "path": "parent/dst/dir/subdir",
     "stats": {
-      "ino": 4530818,
+      "ino": 6,
       "size": 4096,
-      "mtime": "2017-09-28T14:37:43.283Z",
-      "ctime": "2017-09-28T14:37:43.283Z"
+      "mtime": "2017-10-03T09:58:44.662Z",
+      "ctime": "2017-10-03T09:58:44.662Z"
     }
-  },
-  {
-    "type": "unlinkDir",
-    "path": "parent/src/dir/empty-subdir"
-  },
-  {
-    "type": "unlinkDir",
-    "path": "parent/src/dir"
   },
   {
     "type": "unlink",
@@ -49,10 +49,10 @@
     "type": "add",
     "path": "parent/dst/dir/subdir/file",
     "stats": {
-      "ino": 4503384,
+      "ino": 7,
       "size": 8,
-      "mtime": "2017-09-28T14:37:43.283Z",
-      "ctime": "2017-09-28T14:37:43.283Z"
+      "mtime": "2017-10-03T09:58:44.662Z",
+      "ctime": "2017-10-03T09:58:44.662Z"
     }
   }
 ]

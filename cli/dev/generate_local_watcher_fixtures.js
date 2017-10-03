@@ -40,6 +40,8 @@ scenarios = _.chain(fs.readdirSync(fixturesDir))
 
 var DONE_FILE = '.done'
 
+var mapInode = {}
+
 var setupInitialState = (scenario) => {
   if (scenario.init == null) return
   console.log('init:')
@@ -52,13 +54,18 @@ var setupInitialState = (scenario) => {
       resolve()
     }
   })
-  return Promise.each(scenario.init, relpath => {
+  return Promise.each(scenario.init, (opts) => {
+    let {ino, path: relpath} = opts
     if (relpath.endsWith('/')) {
       console.log('- mkdir', relpath)
       return fs.ensureDir(abspath(relpath))
+             .then(() => fs.stat(abspath(relpath)))
+             .then((stats) => mapInode[stats.ino] = ino)
     } else {
       console.log('- >', relpath)
       return fs.outputFile(abspath(relpath), 'whatever')
+             .then(() => fs.stat(abspath(relpath)))
+             .then((stats) => mapInode[stats.ino] = ino)
     }
   })
   .then(triggerDone)
@@ -119,6 +126,7 @@ var runAndRecordFSEvents = (scenario) => {
               .then(resolve)
               .catch(reject)
           } else {
+            if(stats != null && mapInode[stats.ino]) stats.ino = mapInode[stats.ino]
             events.push(buildFSEvent(eventType, relpath, stats))
           }
         }
