@@ -430,6 +430,7 @@ class LocalWatcher {
 
   // An helper to create a document for a file
   // with checksum and mime informations
+  // TODO: Rename to buildFileMetadata?
   createDoc (filePath: string, stats: fs.Stats, md5sum: string) {
     const mimeType = mime.lookup(filePath)
     const {mtime, ctime} = stats
