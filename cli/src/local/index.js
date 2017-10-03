@@ -113,6 +113,20 @@ class Local implements Side {
     }
   }
 
+  inodeSetter (doc: Metadata) {
+    let abspath = path.resolve(this.syncPath, doc.path)
+    return (callback: Callback) => {
+      fs.stat(abspath, (err, stats) => {
+        if (err) {
+          callback(err)
+        } else {
+          doc.ino = stats.ino
+          callback(null)
+        }
+      })
+    }
+  }
+
   // Check if a file corresponding to given checksum already exists
   fileExistsLocally (checksum: string, callback: Callback) {
     this.pouch.byChecksum(checksum, (err, docs) => {
