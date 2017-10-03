@@ -119,6 +119,7 @@ class Merge {
       if (doc.mime == null) { doc.mime = file.mime }
       if (doc.tags == null) { doc.tags = file.tags || [] }
       if (doc.remote == null) { doc.remote = file.remote }
+      if (doc.ino == null) { doc.ino = file.ino }
       if (sameFile(file, doc)) {
         return null
       } else {
@@ -179,6 +180,7 @@ class Merge {
       doc._rev = file._rev
       if (doc.tags == null) { doc.tags = file.tags || [] }
       if (doc.remote == null) { doc.remote = file.remote }
+      if (doc.ino == null) { doc.ino = file.ino }
       if (sameBinary(file, doc)) {
         if (doc.size == null) { doc.size = file.size }
         if (doc.class == null) { doc.class = file.class }
@@ -215,6 +217,7 @@ class Merge {
       doc._rev = folder._rev
       if (doc.tags == null) { doc.tags = folder.tags || [] }
       if (doc.remote == null) { doc.remote = folder.remote }
+      if (doc.ino == null) { doc.ino = folder.ino }
       if (sameFolder(folder, doc)) {
         log.info({path}, 'up to date')
         return null
@@ -243,6 +246,7 @@ class Merge {
       if (doc.class == null) { doc.class = was.class }
       if (doc.mime == null) { doc.mime = was.mime }
       if (doc.tags == null) { doc.tags = was.tags || [] }
+      if (doc.ino == null) { doc.ino = was.ino }
       const wasUpdatedAt = new Date(was.updated_at)
       const docUpdatedAt = new Date(doc.updated_at)
       if (docUpdatedAt < wasUpdatedAt) { doc.updated_at = was.updated_at }
@@ -280,6 +284,7 @@ class Merge {
       markSide(side, doc, folder)
       markSide(side, was, was)
       if (doc.tags == null) { doc.tags = was.tags || [] }
+      if (doc.ino == null) { doc.ino = was.ino }
       delete doc.trashed
       if (folder) {
         const dst = await this.resolveConflictAsync(side, doc)
