@@ -1,6 +1,6 @@
 /* @flow */
 
-import clone from 'lodash.clone'
+import { clone } from 'lodash'
 import { basename, dirname, extname, join } from 'path'
 
 import Local from './local'

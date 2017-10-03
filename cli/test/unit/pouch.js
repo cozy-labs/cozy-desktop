@@ -5,7 +5,7 @@ import jsv from 'jsverify'
 import path from 'path'
 import should from 'should'
 import sinon from 'sinon'
-import uniq from 'lodash.uniq'
+import { uniq } from 'lodash'
 
 import configHelpers from '../helpers/config'
 import pouchHelpers from '../helpers/pouch'
