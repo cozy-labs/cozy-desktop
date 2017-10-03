@@ -4,7 +4,7 @@
 import crypto from 'crypto'
 import EventEmitter from 'events'
 import fs from 'fs'
-import pick from 'lodash.pick'
+import { pick } from 'lodash'
 import path from 'path'
 import sinon from 'sinon'
 import should from 'should'

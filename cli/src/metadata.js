@@ -1,8 +1,6 @@
 /* @flow */
 
-import clone from 'lodash.clone'
-import isEqual from 'lodash.isequal'
-import pick from 'lodash.pick'
+import { clone, isEqual, pick } from 'lodash'
 import path, { join } from 'path'
 
 import logger from './logger'

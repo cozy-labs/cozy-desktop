@@ -1,6 +1,6 @@
 /* @flow */
 
-import clone from 'lodash.clone'
+import { clone } from 'lodash'
 import { join } from 'path'
 
 import Config from './config'

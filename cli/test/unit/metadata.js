@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 
-import clone from 'lodash.clone'
+import { clone } from 'lodash'
 import should from 'should'
 import path from 'path'
 

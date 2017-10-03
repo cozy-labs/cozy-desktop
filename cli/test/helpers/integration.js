@@ -2,7 +2,7 @@
 
 import cozy from 'cozy-client-js'
 import EventEmitter from 'events'
-import pick from 'lodash.pick'
+import { pick } from 'lodash'
 import sinon from 'sinon'
 
 import Config from '../../src/config'

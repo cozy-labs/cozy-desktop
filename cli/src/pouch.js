@@ -4,7 +4,7 @@ import Promise from 'bluebird'
 import PouchDB from 'pouchdb'
 import async from 'async'
 import fs from 'fs-extra'
-import isEqual from 'lodash.isequal'
+import { isEqual } from 'lodash'
 import path from 'path'
 
 import Config from './config'
