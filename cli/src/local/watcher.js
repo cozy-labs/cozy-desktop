@@ -515,7 +515,7 @@ class LocalWatcher {
     const logError = (err) => log.error({err, path: folderPath})
     const doc = this.buildDirMetadata(folderPath, stats)
     log.info({path: folderPath}, `was moved from ${old.path}`)
-    this.prep.moveFolderAsync(SIDE, doc, old).catch(logError)
+    return this.prep.moveFolderAsync(SIDE, doc, old).catch(logError)
   }
 
   // New directory detected
