@@ -1,4 +1,4 @@
-module TwoPanes exposing (..)
+port module TwoPanes exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -46,6 +46,8 @@ init version =
 
 type Msg
     = NoOp
+    | GoToCozy
+    | GoToFolder
     | GoToTab Tab
     | GoToStrTab String
     | FillAddressAndDevice ( String, String )
@@ -53,11 +55,23 @@ type Msg
     | SettingsMsg Settings.Msg
 
 
+port gotocozy : () -> Cmd msg
+
+
+port gotofolder : () -> Cmd msg
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NoOp ->
             ( model, Cmd.none )
+
+        GoToCozy ->
+            ( model, gotocozy () )
+
+        GoToFolder ->
+            ( model, gotofolder () )
 
         GoToTab tab_ ->
             let
@@ -126,12 +140,80 @@ menu helpers model =
 
 view : Helpers -> Model -> Html Msg
 view helpers model =
-    section [ class "two-panes" ]
-        [ menu helpers model
-        , case model.tab of
-            DashboardTab ->
-                Html.map DashboardMsg (Dashboard.view helpers model.dashboard)
+    div [ class "container" ]
+        [ case
+            model.dashboard.status
+          of
+            Dashboard.UpToDate ->
+                div [ class "status" ]
+                    [ img
+                        [ src "images/tray-icon-osx/idleTemplate@2x.png"
+                        , class "status__icon status__icon--uptodate"
+                        ]
+                        []
+                    , text (helpers.t "Dashboard Your cozy is up to date!")
+                    ]
 
-            SettingsTab ->
-                Html.map SettingsMsg (Settings.view helpers model.settings)
+            Dashboard.Offline ->
+                div [ class "status" ]
+                    [ img
+                        [ src "images/tray-icon-osx/pauseTemplate@2x.png"
+                        , class "status__icon status__icon--offline"
+                        ]
+                        []
+                    , text (helpers.t "Dashboard Offline")
+                    ]
+
+            Dashboard.Sync filename ->
+                div [ class "status" ]
+                    [ img
+                        [ src "images/tray-icon-osx/syncTemplate@2x.png"
+                        , class "status__icon status__icon--sync"
+                        ]
+                        []
+                    , span []
+                        [ text (helpers.t "Dashboard Syncing")
+                        , text " "
+                        , em [] [ text filename ]
+                        ]
+                    ]
+
+            Dashboard.Error message ->
+                div [ class "status" ]
+                    [ img
+                        [ src "images/tray-icon-osx/errorTemplate@2x.png"
+                        , class "status__icon status__icon--error"
+                        ]
+                        []
+                    , span []
+                        [ text (helpers.t "Dashboard Error:")
+                        , text " "
+                        , em [] [ text message ]
+                        ]
+                    ]
+        , section [ class "two-panes" ]
+            [ menu helpers model
+            , case model.tab of
+                DashboardTab ->
+                    Html.map DashboardMsg (Dashboard.view helpers model.dashboard)
+
+                SettingsTab ->
+                    Html.map SettingsMsg (Settings.view helpers model.settings)
+            ]
+        , div [ class "bottom-bar" ]
+            [ a
+                [ href "#"
+                , onClick GoToFolder
+                ]
+                [ Icons.folder 48 False
+                , text (helpers.t "Bar GoToFolder")
+                ]
+            , a
+                [ href "#"
+                , onClick GoToCozy
+                ]
+                [ Icons.globe 48 False
+                , text (helpers.t "Bar GoToCozy")
+                ]
+            ]
         ]

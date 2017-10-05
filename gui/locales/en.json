@@ -33,6 +33,8 @@
   "AppMenu Show All": "Show All",
   "AppMenu Quit": "Quit",
   "AppMenu Bring All to Front": "Bring All to Front",
+  "Bar GoToCozy": "Open Cozy",
+  "Bar GoToFolder": "Open Folder",
   "Dashboard Your cozy is up to date!": "Your cozy is up to date!",
   "Dashboard Offline": "Offline",
   "Dashboard Syncing": "Syncing",
