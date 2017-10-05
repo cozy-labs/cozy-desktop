@@ -9,7 +9,8 @@ var fixturesHelpers = require('../test/fixtures/local_watcher')
 
 var cliDir = path.resolve(path.join(__dirname, '..'))
 var fixturesDir = path.join(cliDir, 'test', 'fixtures', 'local_watcher')
-var syncPath = path.join(cliDir, 'tmp', 'local_watcher')
+var syncPath = path.join(cliDir, 'tmp', 'local_watcher', 'synced_dir')
+var outsidePath = path.join(cliDir, 'tmp', 'local_watcher', 'outside')
 var abspath = (relpath) => path.join(syncPath, relpath.replace(/\//g, path.sep))
 var chokidarOptions = {
   cwd: syncPath,
@@ -162,11 +163,11 @@ var runAllScenarios = () => {
   return Promise.each(scenarios, (scenario) => {
     console.log(`----- ${scenario.name} -----`)
     return fs.emptyDir(syncPath)
+      .then(() => fs.emptyDir(outsidePath))
       .then(() => setupInitialState(scenario))
       .then(() => runAndRecordFSEvents(scenario))
   })
 }
-fs.emptyDir(syncPath)
-  .then(runAllScenarios)
+runAllScenarios()
   .then(() => { console.log('Done with all scenarios.')})
   .catch(error => console.error({error}))
