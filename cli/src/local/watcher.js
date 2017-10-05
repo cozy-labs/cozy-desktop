@@ -183,6 +183,7 @@ class LocalWatcher {
   async prepareEvents (events: ChokidarFSEvent[]) : Promise<ContextualizedChokidarFSEvent[]> {
     return Promise
       .all(events.map(async (e: ChokidarFSEvent): Promise<?ContextualizedChokidarFSEvent> => {
+        const abspath = path.join(this.syncPath, e.path)
         const oldMetadata = async (e: ChokidarFSEvent): Promise<?Metadata> => {
           switch (e.type) {
             case 'unlink':
@@ -205,7 +206,18 @@ class LocalWatcher {
           try {
             e2.md5sum = await this.checksum(e.path)
           } catch (err) {
-            log.warn({err}, 'could not compute checksum')
+            if (err.code.match(/ENOENT/)) {
+              log.debug(`Skipping file as it does not exist anymore: ${abspath}`)
+            } else {
+              log.warn({err}, `Could not compute checksum of file: ${abspath}`)
+            }
+            return null
+          }
+        }
+
+        if (e.type === 'addDir') {
+          if (!await fs.exists(abspath)) {
+            log.debug(`Skipping dir as it does not exist anymore: ${abspath}`)
             return null
           }
         }
@@ -215,7 +227,7 @@ class LocalWatcher {
           try {
             e2.sameChecksums = await this.pouch.byChecksumAsync(e2.md5sum)
           } catch (err) {
-            log.trace({err}, `no doc with checksum ${e2.md5sum}`)
+            log.debug({err}, `no doc with checksum ${e2.md5sum}`)
           }
         }
 
