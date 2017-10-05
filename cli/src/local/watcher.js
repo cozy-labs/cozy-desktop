@@ -282,19 +282,19 @@ class LocalWatcher {
             break
           case 'unlink':
             {
-              const moveAction: ?PrepMoveFile = prepAction.findAndRemove(actions, prepAction.maybeMoveFile, a => a.ino === getInode(e))
-              if (moveAction) {
-                // Unlink move src
-                actions.push(prepAction.build('PrepDeleteFile', moveAction.old.path))
-              } else {
-                const addAction: ?PrepAddFile = prepAction.findAndRemove(actions, prepAction.maybeAddFile, a => a.ino === getInode(e))
-                if (addAction) {
-                  // New move found
-                  actions.push(prepAction.build('PrepMoveFile', addAction.path, _.pick(addAction, ['stats', 'md5sum', 'old', 'ino'])))
-                } else if (getInode(e)) {
-                  actions.push(prepAction.fromChokidar(e))
-                } // else skip
-              }
+              // const moveAction: ?PrepMoveFile = prepAction.findAndRemove(actions, prepAction.maybeMoveFile, a => a.ino === getInode(e))
+              // if (moveAction) {
+              //   // Unlink move src
+              //   actions.push(prepAction.build('PrepDeleteFile', moveAction.old.path))
+              // } else {
+              const addAction: ?PrepAddFile = prepAction.findAndRemove(actions, prepAction.maybeAddFile, a => a.ino === getInode(e))
+              if (addAction) {
+                // New move found
+                actions.push(prepAction.build('PrepMoveFile', addAction.path, _.pick(addAction, ['stats', 'md5sum', 'old', 'ino'])))
+              } else if (getInode(e)) {
+                actions.push(prepAction.fromChokidar(e))
+              } // else skip
+              // }
             }
             break
           case 'unlinkDir':
