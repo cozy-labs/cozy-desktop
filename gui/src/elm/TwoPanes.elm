@@ -147,7 +147,7 @@ view helpers model =
             Dashboard.UpToDate ->
                 div [ class "status" ]
                     [ img
-                        [ src "images/tray-icon-osx/idleTemplate.png"
+                        [ src "images/tray-icon-osx/idleTemplate@2x.png"
                         , class "status__icon status__icon--uptodate"
                         ]
                         []
@@ -157,7 +157,7 @@ view helpers model =
             Dashboard.Offline ->
                 div [ class "status" ]
                     [ img
-                        [ src "images/tray-icon-osx/pauseTemplate.png"
+                        [ src "images/tray-icon-osx/pauseTemplate@2x.png"
                         , class "status__icon status__icon--offline"
                         ]
                         []
@@ -167,7 +167,7 @@ view helpers model =
             Dashboard.Sync filename ->
                 div [ class "status" ]
                     [ img
-                        [ src "images/tray-icon-osx/syncTemplate.png"
+                        [ src "images/tray-icon-osx/syncTemplate@2x.png"
                         , class "status__icon status__icon--sync"
                         ]
                         []
@@ -181,7 +181,7 @@ view helpers model =
             Dashboard.Error message ->
                 div [ class "status" ]
                     [ img
-                        [ src "images/tray-icon-osx/errorTemplate.png"
+                        [ src "images/tray-icon-osx/errorTemplate@2x.png"
                         , class "status__icon status__icon--error"
                         ]
                         []
@@ -203,13 +203,17 @@ view helpers model =
         , div [ class "bottom-bar" ]
             [ a
                 [ href "#"
-                , onClick GoToCozy
-                ]
-                [ text (helpers.t "Bar GoToCozy") ]
-            , a
-                [ href "#"
                 , onClick GoToFolder
                 ]
-                [ text (helpers.t "Bar GoToFolder") ]
+                [ Icons.folder 48 False
+                , text (helpers.t "Bar GoToFolder")
+                ]
+            , a
+                [ href "#"
+                , onClick GoToCozy
+                ]
+                [ Icons.globe 48 False
+                , text (helpers.t "Bar GoToCozy")
+                ]
             ]
         ]

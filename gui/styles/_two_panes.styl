@@ -8,26 +8,37 @@
   border-radius: .5em
 
 .bottom-bar, .status
-  flex 0 0 2em
+  flex 0 0 3em
   background-color pale-grey
-  color slate-grey
-  line-height 2em
+  color #95999D
+  line-height 3em
 
   a
+    font-size: 0.8em
     color inherit
     text-transform uppercase
     text-decoration none
     font-weight bold
-    line-height 30px
-    text-align center
     display inline-block
-    width 50%
+    float right
+    padding 0 2em
 
-  img
+    &:first-of-type
+      float left
+
+    &:hover
+      color slate-grey
+      svg
+        path
+          fill slate-grey
+
+
+  img, svg
     display inline-block
     vertical-align middle
-    height 70%
-    margin 0px .5em
+    height 1.1em
+    width 1.1em
+    margin 0px 0.5em .2em 0.5em
 
 .two-panes
   flex 1 0
