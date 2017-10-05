@@ -72,6 +72,12 @@ ipcRenderer.on('new-release-available', (event, notes, name) => {
 elmectron.ports.quitAndInstall.subscribe(() => {
   ipcRenderer.send('quit-and-install')
 })
+elmectron.ports.gotocozy.subscribe(() => {
+  ipcRenderer.send('go-to-cozy')
+})
+elmectron.ports.gotofolder.subscribe(() => {
+  ipcRenderer.send('go-to-folder')
+})
 
 ipcRenderer.on('auto-launch', (event, enabled) => {
   elmectron.ports.autolaunch.send(enabled)
