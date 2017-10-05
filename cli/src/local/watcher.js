@@ -355,11 +355,46 @@ class LocalWatcher {
       if (process.env.DEBUG) console.log({actions, e})
     }
 
+    // @TODO: tranform into i<l & j<i with 2-way comparison inside.
     for (let i = 0; i < actions.length; i++) {
       for (let j = 0; j < actions.length; j++) {
         if (i !== j && prepAction.isChildMove(actions[i], actions[j])) {
           actions.splice(j, 1)
           j--
+        }
+      }
+    }
+
+    for (let i = 1; i < actions.length; i++) {
+      for (let j = 0; j < i; j++) {
+        let a = actions[i]
+        let b = actions[j]
+
+        if (a.type.startsWith('PrepDelete')
+           && b.type.startsWith('PrepDelete')) {
+
+         if (a.path > b.path) {
+           // a avant b
+           putBefore(a, b)
+         }
+        }
+
+        if a.type == "PrepPutFolder" || a.type == "Prep"
+
+
+        // if a unlink & b move?
+
+
+        if a add & b add & a contient(b)
+          a avant b
+
+        if a add & b add & b contient(a)
+          b avant a
+
+
+
+         prepAction.isChildMove()) {
+
         }
       }
     }
