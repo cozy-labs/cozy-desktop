@@ -311,7 +311,12 @@ class LocalWatcher {
               const addAction: ?PrepAddFile = prepAction.findAndRemove(actions, prepAction.maybeAddFile, a => a.ino === getInode(e))
               if (addAction) {
                 // New move found
-                actions.push(prepAction.build('PrepMoveFile', addAction.path, _.pick(addAction, ['stats', 'md5sum', 'old', 'ino'])))
+                actions.push(prepAction.build('PrepMoveFile', addAction.path, {
+                  stats: addAction.stats,
+                  md5sum: addAction.md5sum,
+                  old: e.old,
+                  ino: addAction.ino
+                }))
               } else if (getInode(e)) {
                 actions.push(prepAction.fromChokidar(e))
               } // else skip
@@ -329,7 +334,11 @@ class LocalWatcher {
               const addAction: ?PrepPutFolder = prepAction.findAndRemove(actions, prepAction.maybePutFolder, a => a.ino === getInode(e))
               if (addAction) {
                 // New move found
-                actions.push(prepAction.build('PrepMoveFolder', addAction.path, _.pick(addAction, ['stats', 'md5sum', 'old', 'ino'])))
+                actions.push(prepAction.build('PrepMoveFolder', addAction.path, {
+                  stats: addAction.stats,
+                  old: e.old,
+                  ino: addAction.ino
+                }))
               } else if (getInode(e)) {
                 actions.push(prepAction.fromChokidar(e))
               } // else skip
