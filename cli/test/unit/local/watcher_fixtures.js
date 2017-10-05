@@ -45,6 +45,9 @@ describe.skip('LocalWatcher fixtures', () => {
   before('instanciate config', configHelpers.createConfig)
   // FIXME: beforeEach for pouch?
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
+  beforeEach('create outside dir', async function () {
+    await fs.emptyDir(path.resolve(path.join(this.syncPath, '..', 'outside')))
+  })
   beforeEach('instanciate local watcher', async function () {
     prep = new SpyPrep()
     // $FlowFixMe
