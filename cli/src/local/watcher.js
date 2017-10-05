@@ -252,6 +252,11 @@ class LocalWatcher {
       }
     }
 
+    const panic = (context, description) => {
+      log.error(context, description)
+      throw new Error(description)
+    }
+
     for (let e: ContextualizedChokidarFSEvent of events) {
       try {
         switch (e.type) {
@@ -259,16 +264,17 @@ class LocalWatcher {
             {
               const moveAction: ?PrepMoveFile = prepAction.find(actions, prepAction.maybeMoveFile, a => a.ino === getInode(e))
               if (moveAction) {
-                // Aggregate with existing move action
-                moveAction.path = e.path // XXX: it the last path the right one? last add event should be right...
+                panic({moveAction, event: e},
+                  'We should not have both move and add actions since ' +
+                  'checksumless adds and inode-less unlink events are dropped')
+              }
+
+              const unlinkAction: ?PrepDeleteFile = prepAction.findAndRemove(actions, prepAction.maybeDeleteFile, a => a.ino === getInode(e))
+              if (unlinkAction) {
+                // New move found
+                actions.push(prepAction.build('PrepMoveFile', e.path, {stats: e.stats, md5sum: e.md5sum, old: unlinkAction.old, ino: unlinkAction.ino}))
               } else {
-                const unlinkAction: ?PrepDeleteFile = prepAction.findAndRemove(actions, prepAction.maybeDeleteFile, a => a.ino === getInode(e))
-                if (unlinkAction) {
-                  // New move found
-                  actions.push(prepAction.build('PrepMoveFile', e.path, {stats: e.stats, md5sum: e.md5sum, old: unlinkAction.old, ino: unlinkAction.ino}))
-                } else {
-                  actions.push(prepAction.fromChokidar(e))
-                }
+                actions.push(prepAction.fromChokidar(e))
               }
             }
             break
@@ -276,16 +282,17 @@ class LocalWatcher {
             {
               const moveAction: ?PrepMoveFolder = prepAction.find(actions, prepAction.maybeMoveFolder, a => a.ino === getInode(e))
               if (moveAction) {
-                // Aggregate with existing move action
-                moveAction.path = e.path // XXX: it the last path the right one? last add event should be right...
+                panic({moveAction, event: e},
+                  'We should not have both move and addDir actions since ' +
+                  'non-existing addDir and inode-less unlinkDir events are dropped')
+              }
+
+              const unlinkAction: ?PrepDeleteFolder = prepAction.findAndRemove(actions, prepAction.maybeDeleteFolder, a => a.ino === getInode(e))
+              if (unlinkAction) {
+                // New move found
+                actions.push(prepAction.build('PrepMoveFolder', e.path, {stats: e.stats, old: unlinkAction.old, ino: unlinkAction.ino}))
               } else {
-                const unlinkAction: ?PrepDeleteFolder = prepAction.findAndRemove(actions, prepAction.maybeDeleteFolder, a => a.ino === getInode(e))
-                if (unlinkAction) {
-                  // New move found
-                  actions.push(prepAction.build('PrepMoveFolder', e.path, {stats: e.stats, old: unlinkAction.old, ino: unlinkAction.ino}))
-                } else {
-                  actions.push(prepAction.fromChokidar(e))
-                }
+                actions.push(prepAction.fromChokidar(e))
               }
             }
             break
@@ -294,11 +301,13 @@ class LocalWatcher {
             break
           case 'unlink':
             {
-              // const moveAction: ?PrepMoveFile = prepAction.findAndRemove(actions, prepAction.maybeMoveFile, a => a.ino === getInode(e))
-              // if (moveAction) {
-              //   // Unlink move src
-              //   actions.push(prepAction.build('PrepDeleteFile', moveAction.old.path))
-              // } else {
+              const moveAction: ?PrepMoveFile = prepAction.findAndRemove(actions, prepAction.maybeMoveFile, a => a.ino === getInode(e))
+              if (moveAction) {
+                panic({moveAction, event: e},
+                  'We should not have both move and unlink actions since ' +
+                  'checksumless adds and inode-less unlink events are dropped')
+              }
+
               const addAction: ?PrepAddFile = prepAction.findAndRemove(actions, prepAction.maybeAddFile, a => a.ino === getInode(e))
               if (addAction) {
                 // New move found
@@ -306,24 +315,24 @@ class LocalWatcher {
               } else if (getInode(e)) {
                 actions.push(prepAction.fromChokidar(e))
               } // else skip
-              // }
             }
             break
           case 'unlinkDir':
             {
               const moveAction: ?PrepMoveFolder = prepAction.findAndRemove(actions, prepAction.maybeMoveFolder, a => a.ino === getInode(e))
               if (moveAction) {
-                // Unlink move src
-                actions.push(prepAction.build('PrepDeleteFolder', moveAction.old.path))
-              } else {
-                const addAction: ?PrepPutFolder = prepAction.findAndRemove(actions, prepAction.maybePutFolder, a => a.ino === getInode(e))
-                if (addAction) {
-                  // New move found
-                  actions.push(prepAction.build('PrepMoveFolder', addAction.path, _.pick(addAction, ['stats', 'md5sum', 'old', 'ino'])))
-                } else if (getInode(e)) {
-                  actions.push(prepAction.fromChokidar(e))
-                } // else skip
+                panic({moveAction, event: e},
+                  'We should not have both move and unlinkDir actions since ' +
+                  'non-existing addDir and inode-less unlinkDir events are dropped')
               }
+
+              const addAction: ?PrepPutFolder = prepAction.findAndRemove(actions, prepAction.maybePutFolder, a => a.ino === getInode(e))
+              if (addAction) {
+                // New move found
+                actions.push(prepAction.build('PrepMoveFolder', addAction.path, _.pick(addAction, ['stats', 'md5sum', 'old', 'ino'])))
+              } else if (getInode(e)) {
+                actions.push(prepAction.fromChokidar(e))
+              } // else skip
             }
             break
           default:
