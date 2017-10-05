@@ -355,6 +355,7 @@ class LocalWatcher {
       if (process.env.DEBUG) console.log({actions, e})
     }
 
+    // @TODO: tranform into i<l & j<i with 2-way comparison inside.
     for (let i = 0; i < actions.length; i++) {
       for (let j = 0; j < actions.length; j++) {
         if (i !== j && prepAction.isChildMove(actions[i], actions[j])) {
@@ -364,16 +365,41 @@ class LocalWatcher {
       }
     }
 
+    const isDelete = (a: PrepAction): boolean => a.type === 'PrepDeleteFolder' || a.type === 'PrepDeleteFile'
+    const isAdd = (a: PrepAction): boolean => a.type === 'PrepPutFolder' || a.type === 'PrepAddFile'
+    const isMove = (a: PrepAction): boolean => a.type === 'PrepMoveFolder' || a.type === 'PrepMoveFile'
+
+    const addPath = (a: PrepAction): ?string => isAdd(a) || isMove(a) ? a.path : null
+    // $FlowFixMe
+    const delPath = (a: PrepAction): ?string => isDelete(a) ? a.path : isMove(a) ? a.old.path : null
+    const childOf = (p1: ?string, p2: ?string): boolean => p1 != null && p2 != null && p2 !== p1 && p2.startsWith(p1)
+
+    if (process.env.DEBUG) console.log('BEFORE sort', actions)
+    for (let i = 1; i < actions.length; i++) {
+      for (let j = 0; j < i; j++) {
+        if (process.env.DEBUG) console.log('i, j =', i, j)
+        let a = actions[i]
+        let b = actions[j]
+        if (childOf(addPath(a), addPath(b)) || childOf(delPath(b), delPath(a))) {
+          if (process.env.DEBUG) console.log('switch')
+          // put A before B
+          actions.splice(i, 1)
+          i--
+          actions.splice(j, 0, a)
+          if (process.env.DEBUG) console.log('a=', actions)
+        }
+      }
+    }
+
     // To check : Dossier supprimé après ces enfants
     // Détection de fichier
-
-    const [deletions, sortedActions] = _.partition(actions, (x) => x.type.startsWith('PrepDelete'))
-    const sortedDeletions = _.chain(deletions)
-      .sortBy('path')
-      .reverse()
-      .value()
-
-    return sortedActions.concat(sortedDeletions)
+    // const [deletions, sortedActions] = _.partition(actions, (x) => x.type.startsWith('PrepDelete'))
+    // const sortedDeletions = _.chain(deletions)
+    //   .sortBy('path')
+    //   .reverse()
+    //   .value()
+    // return sortedActions.concat(sortedDeletions)
+    return actions
   }
 
   // @TODO inline this.onXXX in this function
