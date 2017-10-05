@@ -265,9 +265,31 @@ export default class Remote implements Side {
     }
   }
 
-  moveFolderAsync (doc: Metadata, from: Metadata): Promise<*> {
-    // TODO: v3: Remote#moveFolderAsync()
-    throw new Error('Remote#moveFolderAsync() is not implemented')
+  async moveFolderAsync (newMetadata: Metadata, oldMetadata: Metadata): Promise<*> {
+    // FIXME: same as moveFileAsync? Rename to moveAsync?
+    const {path} = newMetadata
+    log.info({path}, `Moving dir from ${oldMetadata.path} ...`)
+
+    const [newDirPath, newName]: [string, string] = conversion.extractDirAndName(path)
+    const newDir: RemoteDoc = await this.remoteCozy.findDirectoryByPath(newDirPath)
+
+    const attrs = {
+      name: newName,
+      dir_id: newDir._id,
+      updated_at: newMetadata.updated_at
+    }
+    const opts = {
+      ifMatch: oldMetadata.remote._rev
+    }
+
+    const newRemoteDoc: RemoteDoc = await this.remoteCozy.updateAttributesById(oldMetadata.remote._id, attrs, opts)
+
+    newMetadata.remote = {
+      _id: newRemoteDoc._id, // XXX: Why do we reassign id? Isn't it the same as before?
+      _rev: newRemoteDoc._rev
+    }
+
+    return conversion.createMetadata(newRemoteDoc)
   }
 
   diskUsage (): Promise<*> {
