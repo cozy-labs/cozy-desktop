@@ -33,6 +33,8 @@
   "AppMenu Show All": "Tout afficher",
   "AppMenu Quit": "Quitter",
   "AppMenu Bring All to Front": "Tout ramener au premier plan",
+  "Bar GoToCozy": "Ouvrir Cozy",
+  "Bar GoToFolder": "Ouvrir dossier",
   "Dashboard Your cozy is up to date!": "Votre Cozy est à jour !",
   "Dashboard Offline": "Déconnecté",
   "Dashboard Syncing": "En cours de synchronisation",

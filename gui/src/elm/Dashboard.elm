@@ -119,58 +119,6 @@ update msg model =
 view : Helpers -> Model -> Html Msg
 view helpers model =
     let
-        statusMessage =
-            case
-                model.status
-            of
-                UpToDate ->
-                    p [ class "status" ]
-                        [ img
-                            [ src "images/done.svg"
-                            , class "status__icon status__icon--uptodate"
-                            ]
-                            []
-                        , text (helpers.t "Dashboard Your cozy is up to date!")
-                        ]
-
-                Offline ->
-                    p [ class "status" ]
-                        [ img
-                            [ src "images/pause.svg"
-                            , class "status__icon status__icon--offline"
-                            ]
-                            []
-                        , text (helpers.t "Dashboard Offline")
-                        ]
-
-                Sync filename ->
-                    p [ class "status" ]
-                        [ img
-                            [ src "images/sync.svg"
-                            , class "status__icon status__icon--sync"
-                            ]
-                            []
-                        , span []
-                            [ text (helpers.t "Dashboard Syncing")
-                            , text " "
-                            , em [] [ text filename ]
-                            ]
-                        ]
-
-                Error message ->
-                    p [ class "status" ]
-                        [ img
-                            [ src "images/error.svg"
-                            , class "status__icon status__icon--error"
-                            ]
-                            []
-                        , span []
-                            [ text (helpers.t "Dashboard Error:")
-                            , text " "
-                            , em [] [ text message ]
-                            ]
-                        ]
-
         fileToListItem file =
             let
                 file_size =
@@ -209,6 +157,5 @@ view helpers model =
                 recentList
     in
         section [ class "two-panes__content two-panes__content--dashboard" ]
-            [ statusMessage
-            , ul [ class "recent-files" ] recentListWithMore
+            [ ul [ class "recent-files" ] recentListWithMore
             ]
