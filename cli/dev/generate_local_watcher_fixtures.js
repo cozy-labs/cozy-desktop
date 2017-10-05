@@ -31,13 +31,26 @@ var watcher, state, scenarios
 if (watcher != null) { watcher.close(); delete watcher }
 if (state != null) delete state
 
-scenarios = _.chain(fs.readdirSync(fixturesDir))
-  .filter(name => name.endsWith('.scenario.js'))
-  .map(name => {
-    const scenarioPath = path.join(fixturesDir, name)
-    return _.merge({name, path: scenarioPath}, require(scenarioPath))
-  })
-  .value()
+var scenarioExt = '.scenario.js'
+
+var scenarioFilenames = (args) => {
+  const argFilenames = args
+    .filter(a => a.endsWith(scenarioExt))
+    .map(p => path.basename(p))
+
+  if (argFilenames.length > 0) {
+    return argFilenames
+  } else {
+    return fs
+      .readdirSync(fixturesDir)
+      .filter(name => name.endsWith(scenarioExt))
+  }
+}
+
+scenarios = _.map(scenarioFilenames(process.argv), name => {
+  const scenarioPath = path.join(fixturesDir, name)
+  return _.merge({name, path: scenarioPath}, require(scenarioPath))
+})
 
 var DONE_FILE = '.done'
 
