@@ -1,0 +1,26 @@
+[
+  {
+    "type": "unlinkDir",
+    "path": "dir1"
+  },
+  {
+    "type": "addDir",
+    "path": "dir2",
+    "stats": {
+      "ino": 12493297,
+      "size": 102,
+      "mtime": "2017-10-05T14:39:45.000Z",
+      "ctime": "2017-10-05T14:39:45.000Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "dir2/dir1",
+    "stats": {
+      "ino": 1,
+      "size": 68,
+      "mtime": "2017-10-05T14:39:45.000Z",
+      "ctime": "2017-10-05T14:39:45.000Z"
+    }
+  }
+]
