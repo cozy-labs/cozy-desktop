@@ -1,10 +1,49 @@
 @require '_spin'
 
-.two-panes
+.container
   display flex
   flex-direction column
   width 100vw
   height 100vh
+  border-radius: .5em
+
+.bottom-bar, .status
+  flex 0 0 3em
+  background-color pale-grey
+  color #95999D
+  line-height 3em
+
+  a
+    font-size: 0.8em
+    color inherit
+    text-transform uppercase
+    text-decoration none
+    font-weight bold
+    display inline-block
+    float right
+    padding 0 2em
+
+    &:first-of-type
+      float left
+
+    &:hover
+      color slate-grey
+      svg
+        path
+          fill slate-grey
+
+
+  img, svg
+    display inline-block
+    vertical-align middle
+    height 1.1em
+    width 1.1em
+    margin 0px 0.5em .2em 0.5em
+
+.two-panes
+  flex 1 0
+  display flex
+  flex-direction column
 
 .two-panes__menu
   @extend $tabs-base .coz-tab-list
@@ -74,11 +113,6 @@
       background-position -384px 0
     .icon--documentation
       background-position -480px 0
-
-  .status
-    display flex
-    line-height 2
-    padding 1em
 
   .status__icon
     flex-shrink 0
