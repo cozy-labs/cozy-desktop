@@ -74,7 +74,6 @@ describe('LocalWatcher fixtures', () => {
             // as soon as we stop using the checksum
             if (path.endsWith('/')) {
               path = _.trimEnd(path, '/') // XXX: Check in metadata.id?
-              console.log('- mkdir', path)
               await fs.ensureDir(abspath(path))
               await this.pouch.put({
                 _id: metadata.id(path),
@@ -86,7 +85,6 @@ describe('LocalWatcher fixtures', () => {
                 sides: {local: 1, remote: 1}
               })
             } else {
-              console.log('- >', path)
               await fs.outputFile(abspath(path), '')
               await this.pouch.put({
                 _id: metadata.id(path),
