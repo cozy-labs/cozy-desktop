@@ -20,31 +20,32 @@ module.exports.loadFSEvents = (scenario, platform) => {
 }
 
 module.exports.runActions = (scenario, abspath) => {
-  console.log(`actions:`)
+  const debug = process.env.NODE_ENV !== 'test' || process.env.DEBUG != null ? console.log : () => {}
+  debug(`actions:`)
   return Promise.each(scenario.actions, action => {
     switch (action.type) {
       case 'mkdir':
-        console.log('- mkdir', action.path)
+        debug('- mkdir', action.path)
         return fs.ensureDir(abspath(action.path))
 
       case '>':
-        console.log('- >', action.path)
+        debug('- >', action.path)
         return fs.outputFile(abspath(action.path), 'whatever')
 
       case '>>':
-        console.log('- >>', action.path)
+        debug('- >>', action.path)
         return fs.appendFile(abspath(action.path), ' blah')
 
       case 'rm':
-        console.log('- rm', action.path)
+        debug('- rm', action.path)
         return fs.remove(abspath(action.path))
 
       case 'mv':
-        console.log('- mv', action.src, action.dst)
+        debug('- mv', action.src, action.dst)
         return fs.rename(abspath(action.src), abspath(action.dst))
 
       case 'wait':
-        console.log('- wait', action.ms)
+        debug('- wait', action.ms)
         return Promise.delay(action.ms)
 
       default:
