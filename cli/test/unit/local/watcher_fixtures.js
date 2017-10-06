@@ -3,6 +3,7 @@
 
 import Promise from 'bluebird'
 import fs from 'fs-extra'
+import _ from 'lodash'
 import path from 'path'
 import should from 'should'
 
@@ -71,14 +72,16 @@ describe('LocalWatcher fixtures', () => {
     describe(scenario.name, () => {
       if (scenario.init != null) {
         beforeEach('init', async function () {
-          for (let relpath of scenario.init) {
+          for (let {path: relpath, ino} of scenario.init) {
             if (relpath.endsWith('/')) {
+              relpath = _.trimEnd(relpath, '/') // XXX: Check in metadata.id?
               await fs.ensureDir(abspath(relpath))
               await this.pouch.put({
                 _id: metadata.id(relpath),
                 docType: 'folder',
                 updated_at: new Date(),
                 path: relpath,
+                ino,
                 tags: [],
                 sides: {local: 1, remote: 1}
               })
@@ -93,6 +96,7 @@ describe('LocalWatcher fixtures', () => {
                 updated_at: new Date(),
                 mime: 'text/plain',
                 path: relpath,
+                ino,
                 size: 0,
                 tags: [],
                 sides: {local: 1, remote: 1}
