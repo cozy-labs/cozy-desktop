@@ -206,6 +206,7 @@ class LocalWatcher {
           try {
             e2.md5sum = await this.checksum(e.path)
           } catch (err) {
+            // FIXME: err.code === EISDIR => keep the event? (e.g. rm foo && mkdir foo)
             if (err.code.match(/ENOENT/)) {
               log.debug(`Skipping file as it does not exist anymore: ${abspath}`)
             } else {
