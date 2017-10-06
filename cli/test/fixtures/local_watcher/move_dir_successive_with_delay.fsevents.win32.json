@@ -13,12 +13,30 @@
   },
   {
     "type": "addDir",
+    "path": "parent\\dst1\\dir",
+    "stats": {
+      "ino": 5,
+      "size": 0,
+      "mtime": "2017-10-06T19:10:39.708Z",
+      "ctime": "2017-10-06T19:10:41.743Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "parent\\src\\dir\\subdir\\file"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent\\dst1\\dir"
+  },
+  {
+    "type": "addDir",
     "path": "parent\\dst2\\dir",
     "stats": {
       "ino": 5,
       "size": 0,
-      "mtime": "2017-10-06T19:10:34.633Z",
-      "ctime": "2017-10-06T19:10:36.716Z"
+      "mtime": "2017-10-06T19:10:39.708Z",
+      "ctime": "2017-10-06T19:10:42.740Z"
     }
   },
   {
@@ -27,8 +45,8 @@
     "stats": {
       "ino": 6,
       "size": 0,
-      "mtime": "2017-10-06T19:10:34.633Z",
-      "ctime": "2017-10-06T19:10:34.633Z"
+      "mtime": "2017-10-06T19:10:39.708Z",
+      "ctime": "2017-10-06T19:10:39.708Z"
     }
   },
   {
@@ -37,13 +55,9 @@
     "stats": {
       "ino": 7,
       "size": 0,
-      "mtime": "2017-10-06T19:10:34.633Z",
-      "ctime": "2017-10-06T19:10:34.633Z"
+      "mtime": "2017-10-06T19:10:39.708Z",
+      "ctime": "2017-10-06T19:10:39.708Z"
     }
-  },
-  {
-    "type": "unlink",
-    "path": "parent\\src\\dir\\subdir\\file"
   },
   {
     "type": "add",
@@ -51,8 +65,8 @@
     "stats": {
       "ino": 8,
       "size": 8,
-      "mtime": "2017-10-06T19:10:34.665Z",
-      "ctime": "2017-10-06T19:10:34.665Z"
+      "mtime": "2017-10-06T19:10:39.743Z",
+      "ctime": "2017-10-06T19:10:39.743Z"
     }
   }
 ]
