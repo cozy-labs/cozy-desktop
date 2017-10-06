@@ -1,11 +1,11 @@
 module.exports = {
   init: [
-    'parent/',
-    'parent/dir/',
-    'parent/dir/empty-subdir/',
-    'parent/dir/subdir/',
-    'parent/dir/subdir/file',
-    'parent/other_dir/'
+    { ino: 1, path: 'parent/' },
+    { ino: 2, path: 'parent/dir/' },
+    { ino: 3, path: 'parent/dir/empty-subdir/' },
+    { ino: 4, path: 'parent/dir/subdir/' },
+    { ino: 5, path: 'parent/dir/subdir/file' },
+    { ino: 6, path: 'parent/other_dir/' }
   ],
   actions: [
     {type: 'rm', path: 'parent/dir'}
