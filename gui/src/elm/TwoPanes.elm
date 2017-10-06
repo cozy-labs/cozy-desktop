@@ -146,32 +146,38 @@ view helpers model =
           of
             Dashboard.UpToDate ->
                 div [ class "status" ]
-                    [ img
-                        [ src "images/tray-icon-osx/idleTemplate@2x.png"
-                        , class "status__icon status__icon--uptodate"
+                    [ span [ class "status_img" ]
+                        [ img
+                            [ src "images/tray-icon-osx/idleTemplate@2x.png"
+                            , class "status__icon status__icon--uptodate"
+                            ]
+                            []
                         ]
-                        []
-                    , text (helpers.t "Dashboard Your cozy is up to date!")
+                    , span [ class "status_text" ] [ text (helpers.t "Dashboard Your cozy is up to date!") ]
                     ]
 
             Dashboard.Offline ->
                 div [ class "status" ]
-                    [ img
-                        [ src "images/tray-icon-osx/pauseTemplate@2x.png"
-                        , class "status__icon status__icon--offline"
+                    [ span [ class "status_img" ]
+                        [ img
+                            [ src "images/tray-icon-osx/pauseTemplate@2x.png"
+                            , class "status__icon status__icon--offline"
+                            ]
+                            []
                         ]
-                        []
-                    , text (helpers.t "Dashboard Offline")
+                    , span [ class "status_text" ] [ text (helpers.t "Dashboard Offline") ]
                     ]
 
             Dashboard.Sync filename ->
                 div [ class "status" ]
-                    [ img
-                        [ src "images/tray-icon-osx/syncTemplate@2x.png"
-                        , class "status__icon status__icon--sync"
+                    [ span [ class "status_img" ]
+                        [ img
+                            [ src "images/tray-icon-osx/syncTemplate@2x.png"
+                            , class "status__icon status__icon--sync"
+                            ]
+                            []
                         ]
-                        []
-                    , span []
+                    , span [ class "status_text" ]
                         [ text (helpers.t "Dashboard Syncing")
                         , text " "
                         , em [] [ text filename ]
@@ -180,12 +186,14 @@ view helpers model =
 
             Dashboard.Error message ->
                 div [ class "status" ]
-                    [ img
-                        [ src "images/tray-icon-osx/errorTemplate@2x.png"
-                        , class "status__icon status__icon--error"
+                    [ span [ class "status_img" ]
+                        [ img
+                            [ src "images/tray-icon-osx/errorTemplate@2x.png"
+                            , class "status__icon status__icon--error"
+                            ]
+                            []
                         ]
-                        []
-                    , span []
+                    , span [ class "status_text" ]
                         [ text (helpers.t "Dashboard Error:")
                         , text " "
                         , em [] [ text message ]

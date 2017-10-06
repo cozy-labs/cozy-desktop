@@ -5,26 +5,28 @@
   flex-direction column
   width 100vw
   height 100vh
-  border-radius: .5em
 
-.bottom-bar, .status
+.bottom-bar
   flex 0 0 3em
   background-color pale-grey
   color #95999D
   line-height 3em
+  height: 3em
+  width: 100vw
+  display: flex
+  flex-direction: row
+  justify-content: space-around;
+  align-items: center;
 
   a
+    flex 1
     font-size: 0.8em
     color inherit
     text-transform uppercase
     text-decoration none
     font-weight bold
     display inline-block
-    float right
-    padding 0 2em
-
-    &:first-of-type
-      float left
+    text-align: center
 
     &:hover
       color slate-grey
@@ -33,12 +35,33 @@
           fill slate-grey
 
 
-  img, svg
+    svg
+      display inline-block
+      vertical-align middle
+      height 1.1em
+      width 1.1em
+      margin 0px 0.5em .2em 0.5em
+
+.status
+  flex 0 0 3em
+  background-color pale-grey
+  color #95999D
+  line-height 3em
+  height: 3em
+  width: 100vw
+  display: flex
+  align-items: center
+  span.status_text
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  span.status_img
+    flex 0 0 3em
     display inline-block
-    vertical-align middle
-    height 1.1em
-    width 1.1em
-    margin 0px 0.5em .2em 0.5em
+    img
+      width: 50%
+      margin: 25%
+      vertical-align: middle
 
 .two-panes
   flex 1 0
