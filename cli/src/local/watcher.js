@@ -321,6 +321,7 @@ class LocalWatcher {
         log.error({err, path: e.path})
         throw err
       }
+      if (process.env.DEBUG) console.log({actions, e})
     }
 
     for (let i = 0; i < actions.length; i++) {
