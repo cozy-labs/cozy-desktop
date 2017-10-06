@@ -42,8 +42,7 @@ class SpyPrep {
 
 describe.skip('LocalWatcher fixtures', () => {
   let watcher, prep
-  before('instanciate config', configHelpers.createConfig)
-  // FIXME: beforeEach for pouch?
+  beforeEach('instanciate config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
   beforeEach('create outside dir', async function () {
     await fs.emptyDir(path.resolve(path.join(this.syncPath, '..', 'outside')))
@@ -65,6 +64,7 @@ describe.skip('LocalWatcher fixtures', () => {
   })
 
   afterEach('destroy pouch', pouchHelpers.cleanDatabase)
+  afterEach('clean config', configHelpers.cleanConfig)
 
   for (let scenario of scenarios) {
     describe(scenario.name, () => {
