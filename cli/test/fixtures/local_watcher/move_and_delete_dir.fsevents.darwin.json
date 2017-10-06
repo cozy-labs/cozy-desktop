@@ -1,0 +1,20 @@
+[
+  {
+    "type": "unlinkDir",
+    "path": "src/subdir"
+  },
+  {
+    "type": "addDir",
+    "path": "dst/subdir",
+    "stats": {
+      "ino": 3,
+      "size": 68,
+      "mtime": "2017-10-05T09:27:10.000Z",
+      "ctime": "2017-10-05T09:27:10.000Z"
+    }
+  },
+  {
+    "type": "unlinkDir",
+    "path": "dst/subdir"
+  }
+]
