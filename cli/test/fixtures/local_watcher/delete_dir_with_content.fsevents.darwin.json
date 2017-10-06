@@ -1,11 +1,11 @@
 [
   {
     "type": "unlinkDir",
-    "path": "parent/dir/subdir"
+    "path": "parent/dir/empty-subdir"
   },
   {
     "type": "unlinkDir",
-    "path": "parent/dir/empty-subdir"
+    "path": "parent/dir/subdir"
   },
   {
     "type": "unlinkDir",
