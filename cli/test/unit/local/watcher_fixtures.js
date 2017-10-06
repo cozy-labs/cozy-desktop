@@ -73,7 +73,6 @@ describe.skip('LocalWatcher fixtures', () => {
         beforeEach('init', async function () {
           for (let relpath of scenario.init) {
             if (relpath.endsWith('/')) {
-              console.log('- mkdir', relpath)
               await fs.ensureDir(abspath(relpath))
               this.pouch.put({
                 _id: metadata.id(relpath),
@@ -84,7 +83,6 @@ describe.skip('LocalWatcher fixtures', () => {
                 sides: {local: 1, remote: 1}
               })
             } else {
-              console.log('- >', relpath)
               await fs.outputFile(abspath(relpath), '')
               this.pouch.put({
                 _id: metadata.id(relpath),
