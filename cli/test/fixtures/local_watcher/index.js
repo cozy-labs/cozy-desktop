@@ -31,6 +31,10 @@ module.exports.runActions = (scenario, abspath) => {
         console.log('- >', action.path)
         return fs.outputFile(abspath(action.path), 'whatever')
 
+      case '>>':
+        console.log('- >>', action.path)
+        return fs.appendFile(abspath(action.path), ' blah')
+
       case 'rm':
         console.log('- rm', action.path)
         return fs.remove(abspath(action.path))
