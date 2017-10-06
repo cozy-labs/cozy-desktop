@@ -74,7 +74,7 @@ describe.skip('LocalWatcher fixtures', () => {
           for (let relpath of scenario.init) {
             if (relpath.endsWith('/')) {
               await fs.ensureDir(abspath(relpath))
-              this.pouch.put({
+              await this.pouch.put({
                 _id: metadata.id(relpath),
                 docType: 'folder',
                 updated_at: new Date(),
@@ -84,7 +84,7 @@ describe.skip('LocalWatcher fixtures', () => {
               })
             } else {
               await fs.outputFile(abspath(relpath), '')
-              this.pouch.put({
+              await this.pouch.put({
                 _id: metadata.id(relpath),
                 md5sum: '1B2M2Y8AsgTpgAmY7PhCfg==', // ''
                 class: 'text',
