@@ -250,7 +250,7 @@ class Local implements Side {
     async.series([
       cb => fs.ensureDir(folderPath, cb),
       this.inodeSetter(doc),
-      this.metadataUpdater(doc),
+      this.metadataUpdater(doc)
     ], callback)
   }
 

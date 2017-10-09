@@ -2,7 +2,6 @@
 
 import Promise from 'bluebird'
 import chokidar from 'chokidar'
-import _ from 'lodash'
 import fs from 'fs-extra'
 import mime from 'mime'
 import path from 'path'
