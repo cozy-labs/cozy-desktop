@@ -42,6 +42,16 @@ class SpyPrep {
   }
 }
 
+const pathFix = (scenario, p) =>
+  (process.platform === 'win32' || scenario.name.indexOf('win32') === -1) ? p : p.replace(/\\/g, '/')
+
+const fixExpectations = (prepCall) =>
+  (process.platform === 'win32') ? Object.assign({}, prepCall,
+      prepCall.src ? {src: prepCall.src.split('/').join('\\').toUpperCase()} : null, // @TODO why is src in maj
+      prepCall.path ? {path: prepCall.path.split('/').join('\\')} : null,
+      prepCall.dst ? {dst: prepCall.dst.split('/').join('\\')} : null
+    ) : prepCall
+
 describe('LocalWatcher fixtures', () => {
   let watcher, prep
   beforeEach('instanciate config', configHelpers.createConfig)
@@ -75,6 +85,7 @@ describe('LocalWatcher fixtures', () => {
           for (let {path: relpath, ino} of scenario.init) {
             if (relpath.endsWith('/')) {
               relpath = _.trimEnd(relpath, '/') // XXX: Check in metadata.id?
+              if (this.currentTest.title.match(/win32/)) relpath = relpath.replace(/\//g, '\\').toUpperCase()
               await fs.ensureDir(abspath(relpath))
               await this.pouch.put({
                 _id: metadata.id(relpath),
@@ -86,6 +97,7 @@ describe('LocalWatcher fixtures', () => {
                 sides: {local: 1, remote: 1}
               })
             } else {
+              if (this.currentTest.title.match(/win32/)) relpath = relpath.replace(/\//g, '\\').toUpperCase()
               await fs.outputFile(abspath(relpath), '')
               await this.pouch.put({
                 _id: metadata.id(relpath),
@@ -115,10 +127,12 @@ describe('LocalWatcher fixtures', () => {
               e.stats.mtime = new Date(e.stats.mtime)
               e.stats.ctime = new Date(e.stats.ctime)
             }
+            e.path = pathFix(eventsFile, e.path)
           }
           await watcher.onFlush(eventsFile.events)
           if (scenario.expected && scenario.expected.prepCalls) {
-            should(prep.calls).deepEqual(scenario.expected.prepCalls)
+            const expected = scenario.expected.prepCalls.map(eventsFile.name.match(/win32/) ? fixExpectations : (x) => x)
+            should(prep.calls).deepEqual(expected)
           }
         })
       }
