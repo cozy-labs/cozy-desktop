@@ -41,6 +41,7 @@ var setupInitialState = (scenario) => {
   let resolve
   const donePromise = new Promise((_resolve) => { resolve = _resolve })
   const watcher = chokidar.watch('.', chokidarOptions)
+  watcher.on('error', console.log.bind(console))
   watcher.on('add', relpath => {
     if (isDone(relpath)) {
       watcher.close()
@@ -61,6 +62,7 @@ var setupInitialState = (scenario) => {
              .then((stats) => mapInode[stats.ino] = ino)
     }
   })
+  .delay(1000)
   .then(triggerDone)
   .then(() => donePromise)
 }
