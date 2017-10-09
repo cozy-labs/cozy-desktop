@@ -1,22 +1,23 @@
 const Promise = require('bluebird')
 const fs = require('fs-extra')
+const glob = require('glob')
 const path = require('path')
 
 // TODO: Create one dir per scenario with an fsevents subdir
 module.exports.scenarios =
-  fs.readdirSync(__dirname)
-    .filter(name => name.endsWith('.scenario.js'))
-    .map(name => {
-      const scenarioPath = path.join(__dirname, name)
+  glob.sync(path.join(__dirname, '**/scenario.js'), {})
+    .map(scenarioPath => {
+      const name = path.basename(path.dirname(scenarioPath))
       const scenario = require(scenarioPath)
       scenario.name = name
       scenario.path = scenarioPath
       return scenario
     })
 
-module.exports.loadFSEvents = (scenario, platform) => {
-  const eventsFile = scenario.path.replace(/\.scenario\.js$/, `.fsevents.${platform}.json`)
-  return fs.readJson(eventsFile)
+module.exports.loadFSEventFiles = (scenario) => {
+  const eventFiles = glob.sync(path.join(path.dirname(scenario.path), 'fsevents.*.json'))
+  return eventFiles
+    .map(f => ({name: path.basename(f), events: fs.readJsonSync(f)}))
 }
 
 module.exports.runActions = (scenario, abspath) => {

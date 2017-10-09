@@ -31,27 +31,6 @@ var watcher, state, scenarios
 if (watcher != null) { watcher.close(); delete watcher }
 if (state != null) delete state
 
-var scenarioExt = '.scenario.js'
-
-var scenarioFilenames = (args) => {
-  const argFilenames = args
-    .filter(a => a.endsWith(scenarioExt))
-    .map(p => path.basename(p))
-
-  if (argFilenames.length > 0) {
-    return argFilenames
-  } else {
-    return fs
-      .readdirSync(fixturesDir)
-      .filter(name => name.endsWith(scenarioExt))
-  }
-}
-
-scenarios = _.map(scenarioFilenames(process.argv), name => {
-  const scenarioPath = path.join(fixturesDir, name)
-  return _.merge({name, path: scenarioPath}, require(scenarioPath))
-})
-
 var DONE_FILE = '.done'
 
 var mapInode = {}
@@ -107,7 +86,7 @@ var isDone = (relpath) => {
 var saveFSEventsToFile = (scenario, events) => {
   const json = JSON.stringify(events, null, 2)
   const eventsFile = scenario.path
-    .replace(/\.scenario\.js/, `.fsevents.${process.platform}.json`)
+    .replace(/scenario\.js/, `fsevents.${process.platform}.json`)
 
   return fs.outputFile(eventsFile, json)
 }
@@ -160,7 +139,7 @@ var runAndRecordFSEvents = (scenario) => {
 }
 
 var runAllScenarios = () => {
-  return Promise.each(scenarios, (scenario) => {
+  return Promise.each(fixturesHelpers.scenarios, (scenario) => {
     console.log(`----- ${scenario.name} -----`)
     return fs.emptyDir(syncPath)
       .then(() => fs.emptyDir(outsidePath))
