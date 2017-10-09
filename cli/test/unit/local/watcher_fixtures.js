@@ -42,6 +42,9 @@ class SpyPrep {
   }
 }
 
+const pathFix = (scenario, p) =>
+  (process.platform === 'win32' || scenario.name.indexOf('win32') === -1) ? p : p.replace(/\\/g, '/')
+
 describe('LocalWatcher fixtures', () => {
   let watcher, prep
   beforeEach('instanciate config', configHelpers.createConfig)
@@ -115,6 +118,7 @@ describe('LocalWatcher fixtures', () => {
               e.stats.mtime = new Date(e.stats.mtime)
               e.stats.ctime = new Date(e.stats.ctime)
             }
+            e.path = pathFix(eventsFile, e.path)
           }
           await watcher.onFlush(eventsFile.events)
           if (scenario.expected && scenario.expected.prepCalls) {
