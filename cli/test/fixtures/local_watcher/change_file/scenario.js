@@ -1,6 +1,6 @@
 module.exports = {
   init: [
-    { ino: 1, path: 'file' },
+    { ino: 1, path: 'file' }
   ],
   actions: [
     {type: '>>', path: 'file'}
