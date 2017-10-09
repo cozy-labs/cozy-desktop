@@ -12,9 +12,9 @@ module.exports = {
   ],
   expected: {
     prepCalls: [
+      {method: 'trashFolderAsync', path: 'parent/dir/empty-subdir'},
       {method: 'trashFileAsync', path: 'parent/dir/subdir/file'},
       {method: 'trashFolderAsync', path: 'parent/dir/subdir'},
-      {method: 'trashFolderAsync', path: 'parent/dir/empty-subdir'},
       {method: 'trashFolderAsync', path: 'parent/dir'}
     ]
   }
