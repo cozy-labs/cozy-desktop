@@ -10,7 +10,7 @@ import should from 'should'
 import Watcher from '../../../src/local/watcher'
 import * as metadata from '../../../src/metadata'
 
-import { scenarios, loadFSEvents, runActions } from '../../fixtures/local_watcher'
+import { scenarios, loadFSEventFiles, runActions } from '../../fixtures/local_watcher'
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
 
@@ -108,22 +108,15 @@ describe('LocalWatcher fixtures', () => {
 
       beforeEach('actions', () => runActions(scenario, abspath))
 
-      for (let platform of ['linux', 'darwin']) { // TODO: 'win32'
-        it(`runs on ${platform}`, async function () {
-          let events
-          try {
-            events = await loadFSEvents(scenario, platform)
-          } catch (err) {
-            return this.skip()
-          }
-
-          for (let e of events) {
+      for (let eventsFile of loadFSEventFiles(scenario)) {
+        it(eventsFile.name, async function () {
+          for (let e of eventsFile.events) {
             if (e.stats) {
               e.stats.mtime = new Date(e.stats.mtime)
               e.stats.ctime = new Date(e.stats.ctime)
             }
           }
-          await watcher.onFlush(events)
+          await watcher.onFlush(eventsFile.events)
           if (scenario.expected && scenario.expected.prepCalls) {
             should(prep.calls).deepEqual(scenario.expected.prepCalls)
           }
