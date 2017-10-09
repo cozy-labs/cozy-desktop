@@ -1,0 +1,16 @@
+[
+  {
+    "type": "unlinkDir",
+    "path": "src/dir"
+  },
+  {
+    "type": "addDir",
+    "path": "dst/dir",
+    "stats": {
+      "ino": 3,
+      "size": 4096,
+      "mtime": "2017-10-09T10:32:07.453Z",
+      "ctime": "2017-10-09T10:32:09.469Z"
+    }
+  }
+]

@@ -1,0 +1,30 @@
+[
+  {
+    "type": "unlink",
+    "path": "src/file1"
+  },
+  {
+    "type": "add",
+    "path": "dst/file1",
+    "stats": {
+      "ino": 2,
+      "size": 8,
+      "mtime": "2017-10-09T10:32:53.188Z",
+      "ctime": "2017-10-09T10:32:55.200Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "src/file2"
+  },
+  {
+    "type": "add",
+    "path": "dst/file2",
+    "stats": {
+      "ino": 3,
+      "size": 8,
+      "mtime": "2017-10-09T10:32:53.188Z",
+      "ctime": "2017-10-09T10:32:56.700Z"
+    }
+  }
+]

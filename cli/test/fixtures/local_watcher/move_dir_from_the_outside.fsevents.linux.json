@@ -1,0 +1,42 @@
+[
+  {
+    "type": "addDir",
+    "path": "dst/dir",
+    "stats": {
+      "ino": 2,
+      "size": 4096,
+      "mtime": "2017-10-09T10:31:59.416Z",
+      "ctime": "2017-10-09T10:32:01.424Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "dst/dir/empty-subdir",
+    "stats": {
+      "ino": 3,
+      "size": 4096,
+      "mtime": "2017-10-09T10:31:59.416Z",
+      "ctime": "2017-10-09T10:31:59.416Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "dst/dir/subdir",
+    "stats": {
+      "ino": 4,
+      "size": 4096,
+      "mtime": "2017-10-09T10:31:59.416Z",
+      "ctime": "2017-10-09T10:31:59.416Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "dst/dir/subdir/file",
+    "stats": {
+      "ino": 5,
+      "size": 8,
+      "mtime": "2017-10-09T10:31:59.416Z",
+      "ctime": "2017-10-09T10:31:59.416Z"
+    }
+  }
+]

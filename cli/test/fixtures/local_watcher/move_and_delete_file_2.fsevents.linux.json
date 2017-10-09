@@ -1,0 +1,20 @@
+[
+  {
+    "type": "unlink",
+    "path": "src/file"
+  },
+  {
+    "type": "add",
+    "path": "dst/file",
+    "stats": {
+      "ino": 3,
+      "size": 8,
+      "mtime": "2017-10-09T10:31:53.892Z",
+      "ctime": "2017-10-09T10:31:55.904Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "dst/file"
+  }
+]
