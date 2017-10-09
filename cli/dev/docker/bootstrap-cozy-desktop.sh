@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# WARNING: when changing this file, you need to rebuild containers
+
 set -x
 
 # Create CouchDB system tables
@@ -29,10 +31,10 @@ client_id=$(cozy-stack instances client-oauth \
 token=$(cozy-stack instances token-oauth \
   test.cozy.tools:8080 \
   "$client_id" \
-  io.cozy.files)
+  io.cozy.files io.cozy.settings)
 
 # Generate test env file
-cat >/cozy-desktop/.env.test <<EOF
+cat >${ENVFILE:-/cozy-desktop/.env.test} <<EOF
 COZY_CLIENT_ID=$client_id
 COZY_STACK_TOKEN=$token
 NODE_ENV=test
