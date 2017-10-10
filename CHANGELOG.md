@@ -1,3 +1,12 @@
+## 3.1.1 - 2017-10-10
+
+Improvements for Windows users:
+
+* In case you disconnected your computer from the Web interface of your Cozy,
+  when clicking on the *Log out* button of the *Access revoked* screen, the app
+  was failing to properly remove your local configuration and kept showing the
+  same screen. Everything should now work properly.
+
 ## 3.1.0 - 2017-09-08
 
 Improvements for all users:
