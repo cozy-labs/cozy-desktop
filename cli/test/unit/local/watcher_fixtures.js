@@ -48,9 +48,9 @@ const pathFix = (scenario, p) =>
 const fixExpectations = (prepCall) =>
   (process.platform !== 'win32') ? prepCall
     : Object.assign({}, prepCall,
-      prepCall.src ? {src: path.join(...prepCall.src.split('/'))} : null,
-      prepCall.path ? {path: path.join(...prepCall.path.split('/'))} : null,
-      prepCall.dst ? {dst: path.join(...prepCall.dst.split('/'))} : null
+      prepCall.src ? {src: prepCall.src.split('/').join('\\')} : null,
+      prepCall.path ? {path: prepCall.path.split('/').join('\\')} : null,
+      prepCall.dst ? {dst: prepCall.dst.split('/').join('\\')} : null
     )
 
 describe('LocalWatcher fixtures', () => {
