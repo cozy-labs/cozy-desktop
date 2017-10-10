@@ -682,6 +682,14 @@ ipcMain.on('auto-launcher', (event, enabled) => {
 })
 
 ipcMain.on('logout', () => {
+  if (lastFilesPath) {
+    log.info('Deleting last files info...')
+    try {
+      fs.unlinkSync(lastFilesPath)
+    } catch (err) {
+      if (err.code !== 'ENOENT') log.error({err})
+    }
+  }
   desktop.removeConfig().then(() => { sendToMainWindow('unlinked') })
 })
 
