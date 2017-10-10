@@ -354,63 +354,42 @@ class LocalWatcher {
       if (process.env.DEBUG) console.log({actions, e})
     }
 
-    const isDelete = (a: PrepAction): boolean => a.type === 'PrepDeleteFolder' || a.type === 'PrepDeleteFile'
-    const isAdd = (a: PrepAction): boolean => a.type === 'PrepPutFolder' || a.type === 'PrepAddFile'
-    const isMove = (a: PrepAction): boolean => a.type === 'PrepMoveFolder' || a.type === 'PrepMoveFile'
+    const shouldSwitch = (a, b) => {
+      // if one action is a child of another, it takes priority
+      if (prepAction.isChildAdd(a, b)) return true
+      if (prepAction.isChildDelete(b, a)) return true
+      if (prepAction.isChildAdd(b, a)) return false
+      if (prepAction.isChildDelete(a, b)) return false
 
-    const addPath = (a: PrepAction): ?string => isAdd(a) || isMove(a) ? a.path : null
-    // $FlowFixMe
-    const delPath = (a: PrepAction): ?string => isDelete(a) ? a.path : isMove(a) ? a.old.path : null
-    const childOf = (p1: ?string, p2: ?string): boolean => p1 != null && p2 != null && p2 !== p1 && p2.indexOf(p1) === 0
-    const lower = (p1: ?string, p2: ?string): boolean => p1 != null && p2 != null && p2 !== p1 && p1 < p2
+      // otherwise, order by add path
+      if (prepAction.lower(prepAction.addPath(a), prepAction.addPath(b))) return true
+      if (prepAction.lower(prepAction.addPath(b), prepAction.addPath(a))) return false
 
-    const shouldSwitch = (a, b) =>
-      childOf(addPath(a), addPath(b)) ||
-      childOf(delPath(b), delPath(a)) ||
-      (lower(addPath(a), addPath(b)) && !childOf(delPath(a), delPath(b))) ||
-      (lower(delPath(b), delPath(a)) && !childOf(addPath(b), addPath(a)) && !lower(addPath(b), addPath(a)))
+      // if there isnt 2 add paths, sort by del path
+      if (prepAction.lower(prepAction.delPath(b), prepAction.delPath(a))) return true
 
-    // $FlowFixMe
-    const logg = (a): string => a.type + ': ' + (a.old && a.old.path) + '-->' + a.path
+      return false
+    }
 
-    if (process.env.DEBUG) console.log('BEFORE sort', actions.map(logg))
     for (let i = 1; i < actions.length; i++) {
       for (let j = 0; j < i; j++) {
-        if (process.env.DEBUG) console.log('i, j =', i, j)
+        if (process.env.DEBUG) console.log('i, j, a =', i, j, actions.map(prepAction.toString))
         let a = actions[i]
         let b = actions[j]
         if (prepAction.isChildMove(a, b)) {
-          if (process.env.DEBUG) console.log('dropB')
-          // drop B
-          actions.splice(j, 1)
-          j--
-          // i = 1
+          if (process.env.DEBUG) console.log('remove child ', prepAction.toString(b))
+          actions.splice(j--, 1)
         } else if (prepAction.isChildMove(b, a)) {
-          if (process.env.DEBUG) console.log('dropA')
-          // drop A
-          actions.splice(i, 1)
-          i--
-          // j = 0
+          if (process.env.DEBUG) console.log('remove child ', prepAction.toString(a))
+          actions.splice(i--, 1)
         } else if (shouldSwitch(a, b)) {
-          if (process.env.DEBUG) console.log('switch')
-          // switch A & B
-          actions[j] = a
-          actions[i] = b
-          i--
-          j--
+          if (process.env.DEBUG) console.log('switch', prepAction.toString(a), 'with', prepAction.toString(b))
+          actions[j--] = a
+          actions[i--] = b
         }
-        if (process.env.DEBUG) console.log('a=', actions.map(logg))
       }
     }
 
-    // To check : Dossier supprimé après ces enfants
-    // Détection de fichier
-    // const [deletions, sortedActions] = _.partition(actions, (x) => x.type.startsWith('PrepDelete'))
-    // const sortedDeletions = _.chain(deletions)
-    //   .sortBy('path')
-    //   .reverse()
-    //   .value()
-    // return sortedActions.concat(sortedDeletions)
     return actions
   }
 
