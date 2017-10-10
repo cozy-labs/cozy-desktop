@@ -39,6 +39,7 @@ export type Metadata = {
   updated_at: string|Date,
   mime?: string,
   moveTo?: string, // Destination id
+  childMove?: boolean,
   path: string,
   remote: MetadataRemoteInfo,
   size?: number,
