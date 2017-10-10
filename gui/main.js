@@ -682,8 +682,7 @@ ipcMain.on('auto-launcher', (event, enabled) => {
 })
 
 ipcMain.on('logout', () => {
-  desktop.removeConfig()
-  sendToMainWindow('unlinked')
+  desktop.removeConfig().then(() => { sendToMainWindow('unlinked') })
 })
 
 ipcMain.on('unlink-cozy', () => {
