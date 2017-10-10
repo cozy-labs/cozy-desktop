@@ -14,8 +14,7 @@ module.exports = {
       {method: 'putFolderAsync', path: 'dst/dir'},
       {method: 'putFolderAsync', path: 'dst/dir/empty-subdir'},
       {method: 'putFolderAsync', path: 'dst/dir/subdir'},
-      {method: 'addFileAsync', path: 'dst/dir/subdir/file'},
-      {method: 'putFolderAsync', path: 'dst/dir/empty-subdir'}
+      {method: 'addFileAsync', path: 'dst/dir/subdir/file'}
     ]
   }
 }
