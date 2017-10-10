@@ -361,30 +361,45 @@ class LocalWatcher {
     const addPath = (a: PrepAction): ?string => isAdd(a) || isMove(a) ? a.path : null
     // $FlowFixMe
     const delPath = (a: PrepAction): ?string => isDelete(a) ? a.path : isMove(a) ? a.old.path : null
-    const childOf = (p1: ?string, p2: ?string): boolean => p1 != null && p2 != null && p2 !== p1 && p2.startsWith(p1)
+    const childOf = (p1: ?string, p2: ?string): boolean => p1 != null && p2 != null && p2 !== p1 && p2.indexOf(p1) === 0
+    const lower = (p1: ?string, p2: ?string): boolean => p1 != null && p2 != null && p2 !== p1 && p1 < p2
 
-    if (process.env.DEBUG) console.log('BEFORE sort', actions)
+    const shouldSwitch = (a, b) =>
+      childOf(addPath(a), addPath(b)) ||
+      childOf(delPath(b), delPath(a)) ||
+      (lower(addPath(a), addPath(b)) && !childOf(delPath(a), delPath(b))) ||
+      (lower(delPath(b), delPath(a)) && !childOf(addPath(b), addPath(a)) && !lower(addPath(b), addPath(a)))
+
+    // $FlowFixMe
+    const logg = (a): string => a.type + ': ' + (a.old && a.old.path) + '-->' + a.path
+
+    if (process.env.DEBUG) console.log('BEFORE sort', actions.map(logg))
     for (let i = 1; i < actions.length; i++) {
       for (let j = 0; j < i; j++) {
         if (process.env.DEBUG) console.log('i, j =', i, j)
         let a = actions[i]
         let b = actions[j]
         if (prepAction.isChildMove(a, b)) {
+          if (process.env.DEBUG) console.log('dropB')
           // drop B
           actions.splice(j, 1)
           j--
+          // i = 1
         } else if (prepAction.isChildMove(b, a)) {
+          if (process.env.DEBUG) console.log('dropA')
           // drop A
           actions.splice(i, 1)
           i--
-        } else if (childOf(addPath(a), addPath(b)) || childOf(delPath(b), delPath(a))) {
+          // j = 0
+        } else if (shouldSwitch(a, b)) {
           if (process.env.DEBUG) console.log('switch')
-          // put A before B
-          actions.splice(i, 1)
+          // switch A & B
+          actions[j] = a
+          actions[i] = b
           i--
-          actions.splice(j, 0, a)
-          if (process.env.DEBUG) console.log('a=', actions)
+          j--
         }
+        if (process.env.DEBUG) console.log('a=', actions.map(logg))
       }
     }
 
