@@ -46,12 +46,11 @@ const pathFix = (scenario, p) =>
   (process.platform === 'win32' || scenario.name.indexOf('win32') === -1) ? p : p.replace(/\\/g, '/')
 
 const fixExpectations = (prepCall) =>
-  (process.platform !== 'win32') ? prepCall
-    : Object.assign({}, prepCall,
+  (process.platform === 'win32') ? Object.assign({}, prepCall,
       prepCall.src ? {src: prepCall.src.split('/').join('\\')} : null,
       prepCall.path ? {path: prepCall.path.split('/').join('\\')} : null,
       prepCall.dst ? {dst: prepCall.dst.split('/').join('\\')} : null
-    )
+    ) : prepCall
 
 describe('LocalWatcher fixtures', () => {
   let watcher, prep
@@ -132,7 +131,8 @@ describe('LocalWatcher fixtures', () => {
           }
           await watcher.onFlush(eventsFile.events)
           if (scenario.expected && scenario.expected.prepCalls) {
-            should(prep.calls).deepEqual(scenario.expected.prepCalls.map(fixExpectations))
+            const expected = scenario.expected.prepCalls.map(eventsFile.name.match(/win32/) ? fixExpectations : (x) => x)
+            should(prep.calls).deepEqual(expected)
           }
         })
       }
