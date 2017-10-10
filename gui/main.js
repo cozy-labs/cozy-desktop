@@ -733,8 +733,12 @@ ipcMain.on('send-mail', (event, body) => {
 })
 
 ipcMain.on('restart', () => {
-  setTimeout(app.quit, 50)
+  setTimeout(() => {
+    log.info('Exiting old client...')
+    app.quit()
+  }, 50)
   const args = process.argv.slice(1).filter(a => a !== '--isHidden')
+  log.info('Starting new client...')
   spawn(process.argv[0], args, { detached: true })
 })
 
