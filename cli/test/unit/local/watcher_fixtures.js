@@ -45,6 +45,14 @@ class SpyPrep {
 const pathFix = (scenario, p) =>
   (process.platform === 'win32' || scenario.name.indexOf('win32') === -1) ? p : p.replace(/\\/g, '/')
 
+const fixExpectations = (prepCall) =>
+  (process.platform !== 'win32') ? prepCall
+    : Object.assign({}, prepCall,
+      prepCall.src ? {src: path.join(...prepCall.src.split('/'))} : null,
+      prepCall.path ? {path: path.join(...prepCall.path.split('/'))} : null,
+      prepCall.dst ? {dst: path.join(...prepCall.dst.split('/'))} : null
+    )
+
 describe('LocalWatcher fixtures', () => {
   let watcher, prep
   beforeEach('instanciate config', configHelpers.createConfig)
@@ -78,6 +86,7 @@ describe('LocalWatcher fixtures', () => {
           for (let {path: relpath, ino} of scenario.init) {
             if (relpath.endsWith('/')) {
               relpath = _.trimEnd(relpath, '/') // XXX: Check in metadata.id?
+              if (process.platform === 'win32') relpath = relpath.replace(/\\/g, '/')
               await fs.ensureDir(abspath(relpath))
               await this.pouch.put({
                 _id: metadata.id(relpath),
@@ -89,6 +98,7 @@ describe('LocalWatcher fixtures', () => {
                 sides: {local: 1, remote: 1}
               })
             } else {
+              if (process.platform === 'win32') relpath = relpath.replace(/\\/g, '/')
               await fs.outputFile(abspath(relpath), '')
               await this.pouch.put({
                 _id: metadata.id(relpath),
@@ -122,7 +132,7 @@ describe('LocalWatcher fixtures', () => {
           }
           await watcher.onFlush(eventsFile.events)
           if (scenario.expected && scenario.expected.prepCalls) {
-            should(prep.calls).deepEqual(scenario.expected.prepCalls)
+            should(prep.calls).deepEqual(scenario.expected.prepCalls.map(fixExpectations))
           }
         })
       }
