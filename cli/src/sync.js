@@ -313,6 +313,10 @@ class Sync {
         from = (this.moveFrom: Metadata)
         this.moveFrom = null
         if (from.moveTo === doc._id && from.md5sum === doc.md5sum) {
+          if (from.childMove) {
+            await side.assignNewRev(doc)
+            return
+          }
           try {
             await side.moveFileAsync(doc, from)
           } catch (err) {
@@ -364,6 +368,10 @@ class Sync {
         from = (this.moveFrom: Metadata)
         this.moveFrom = null
         if (from.moveTo === doc._id) {
+          if (from.childMove) {
+            await side.assignNewRev(doc)
+            return
+          }
           try {
             await side.moveFolderAsync(doc, from)
           } catch (err) {
