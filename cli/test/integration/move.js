@@ -121,32 +121,21 @@ suite('Move', () => {
     })
 
     test('local', async () => {
-      await prep.putFolderAsync('local', {path: 'parent/dst/dir', docType: 'folder', updated_at: '2017-06-19T08:19:25.489Z'})
-      await prep.putFolderAsync('local', {path: 'parent/dst/dir/empty-subdir', docType: 'folder', updated_at: '2017-06-19T08:19:25.547Z'})
-      await prep.putFolderAsync('local', {path: 'parent/dst/dir/subdir', docType: 'folder', updated_at: '2017-06-19T08:19:25.558Z'})
-      const oldFile = await pouch.byRemoteIdMaybeAsync(file._id)
-      await prep.moveFileAsync('local', {
-        path: 'parent/dst/dir/subdir/file',
-        updated_at: '2017-06-19T08:19:26.769Z',
-        ...pick(oldFile, ['docType', 'md5sum', 'mime', 'class', 'size'])
-      }, oldFile)
-      // FIXME: PouchDB 409 conflict errors
-      await prep.trashFolderAsync('local', {path: 'parent/src/dir/subdir'})
-      await prep.trashFolderAsync('local', {path: 'parent/src/dir/empty-subdir'})
-      await prep.trashFolderAsync('local', {path: 'parent/src/dir'})
+      const oldFolder = await pouch.byRemoteIdMaybeAsync(dir._id)
 
-      should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
-        // Moved file
-        {path: path.normalize('parent/src/dir/subdir/file'), _deleted: true},
-        {path: path.normalize('parent/dst/dir/subdir/file')},
-        // Created dirs
+      await prep.moveFolderAsync('local', {
+        path: 'parent/dst/dir', docType: 'file'
+      }, oldFolder)
+
+      should(helpers.putDocs('path', '_deleted', 'trashed', 'childMove')).deepEqual([
+        {path: path.normalize('parent/src/dir'), _deleted: true},
         {path: path.normalize('parent/dst/dir')},
+        {path: path.normalize('parent/src/dir/empty-subdir'), _deleted: true, childMove: true},
         {path: path.normalize('parent/dst/dir/empty-subdir')},
+        {path: path.normalize('parent/src/dir/subdir'), _deleted: true, childMove: true},
         {path: path.normalize('parent/dst/dir/subdir')},
-        // Deleted dirs
-        {path: path.normalize('parent/src/dir/subdir'), _deleted: true},
-        {path: path.normalize('parent/src/dir/empty-subdir'), _deleted: true},
-        {path: path.normalize('parent/src/dir'), _deleted: true}
+        {path: path.normalize('parent/src/dir/subdir/file'), _deleted: true, childMove: true},
+        {path: path.normalize('parent/dst/dir/subdir/file')}
       ])
 
       await helpers.syncAll()

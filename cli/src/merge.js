@@ -319,6 +319,7 @@ class Merge {
       // moveTo is used for comparison. It's safer to take _id
       // than path for this case, as explained in doc/design.md
       src.moveTo = doc._id.replace(was._id, folder._id)
+      src.childMove = true
       delete src.errors
       bulk.push(src)
       let dst = clone(doc)
