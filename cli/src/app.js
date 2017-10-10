@@ -138,7 +138,16 @@ class App {
   }
 
   async removeConfig () {
-    await fs.remove(this.basePath)
+    try {
+      log.info('Deleting metadata...')
+      await this.pouch.db.destroy()
+      await fs.remove(this.config.dbPath)
+      log.info('Deleting config...')
+      await fs.unlink(this.config.configPath)
+    } catch (err) {
+      log.error({err}, 'Could not remove config and metadata')
+      throw err
+    }
   }
 
   // Send an issue by mail to the support
