@@ -691,6 +691,11 @@ ipcMain.on('logout', () => {
     }
   }
   desktop.removeConfig().then(() => { sendToMainWindow('unlinked') })
+    .catch(err => {
+      // TODO: Have a proper error screen with instructions to report issue
+      // even when disconnected.
+      log.error({err})
+    })
 })
 
 ipcMain.on('unlink-cozy', () => {
