@@ -132,6 +132,36 @@ describe('Local', function () {
     })
   })
 
+  describe('inodeSetter', () => {
+    let fullPath
+
+    beforeEach(() => {
+      fullPath = (doc) => syncDir.abspath(doc.path)
+    })
+
+    it('sets ino for a file', function (done) {
+      const doc = {path: 'file-needs-ino'}
+      fs.ensureFileSync(fullPath(doc))
+      const inodeSetter = this.local.inodeSetter(doc)
+      inodeSetter(err => {
+        should.not.exist(err)
+        should(doc.ino).be.a.Number()
+        done()
+      })
+    })
+
+    it('sets ino for a directory', function (done) {
+      const doc = {path: 'dir-needs-ino'}
+      fs.ensureDirSync(fullPath(doc))
+      const inodeSetter = this.local.inodeSetter(doc)
+      inodeSetter(err => {
+        should.not.exist(err)
+        should(doc.ino).be.a.Number()
+        done()
+      })
+    })
+  })
+
   xdescribe('isUpToDate', () =>
     it('says if the local file is up to date', function () {
       let doc = {
@@ -211,6 +241,7 @@ describe('Local', function () {
         content.should.equal('foobar')
         let mtime = +fs.statSync(filePath).mtime
         mtime.should.equal(+doc.updated_at)
+        should(doc.ino).be.a.Number()
         done()
       })
     })
@@ -311,6 +342,7 @@ describe('Local', function () {
         fs.statSync(folderPath).isDirectory().should.be.true()
         let mtime = +fs.statSync(folderPath).mtime
         mtime.should.equal(+doc.updated_at)
+        should(doc.ino).be.a.Number()
         done()
       })
     })

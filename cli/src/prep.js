@@ -191,7 +191,7 @@ class Prep {
   //   - the old folder path is present and valid
   //   - the two paths are not the same
   //   - the revision for the old folder is present
-  async moveFolderAsync (side: SideName, doc: Metadata, was: Metadata) {
+  async moveFolderAsync (side: SideName, doc: *, was: Metadata) {
     const {path} = doc
     ensureValidPath(doc)
     ensureValidPath(was)

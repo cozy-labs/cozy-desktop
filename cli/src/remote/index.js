@@ -91,7 +91,18 @@ export default class Remote implements Side {
   async addFileAsync (doc: Metadata): Promise<Metadata> {
     const {path} = doc
     log.info({path}, 'Uploading new file...')
-    const stream = await this.other.createReadStreamAsync(doc)
+
+    let stream
+    try {
+      stream = await this.other.createReadStreamAsync(doc)
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        doc._deleted = true
+        return doc
+      }
+      throw err
+    }
+
     const [dirPath, name] = conversion.extractDirAndName(path)
     const dir = await this.remoteCozy.findOrCreateDirectoryByPath(dirPath)
 
@@ -265,9 +276,36 @@ export default class Remote implements Side {
     }
   }
 
-  moveFolderAsync (doc: Metadata, from: Metadata): Promise<*> {
-    // TODO: v3: Remote#moveFolderAsync()
-    throw new Error('Remote#moveFolderAsync() is not implemented')
+  async assignNewRev (doc: Metadata): Promise<*> {
+    log.info({path: doc.path}, 'Assigning new rev...')
+    doc.remote._rev = await this.remoteCozy.client.files.statById(doc.remote._id)
+  }
+
+  async moveFolderAsync (newMetadata: Metadata, oldMetadata: Metadata): Promise<*> {
+    // FIXME: same as moveFileAsync? Rename to moveAsync?
+    const {path} = newMetadata
+    log.info({path}, `Moving dir from ${oldMetadata.path} ...`)
+
+    const [newDirPath, newName]: [string, string] = conversion.extractDirAndName(path)
+    const newDir: RemoteDoc = await this.remoteCozy.findDirectoryByPath(newDirPath)
+
+    const attrs = {
+      name: newName,
+      dir_id: newDir._id,
+      updated_at: newMetadata.updated_at
+    }
+    const opts = {
+      ifMatch: oldMetadata.remote._rev
+    }
+
+    const newRemoteDoc: RemoteDoc = await this.remoteCozy.updateAttributesById(oldMetadata.remote._id, attrs, opts)
+
+    newMetadata.remote = {
+      _id: newRemoteDoc._id, // XXX: Why do we reassign id? Isn't it the same as before?
+      _rev: newRemoteDoc._rev
+    }
+
+    return conversion.createMetadata(newRemoteDoc)
   }
 
   diskUsage (): Promise<*> {

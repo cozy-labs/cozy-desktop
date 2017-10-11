@@ -31,28 +31,9 @@ var watcher, state, scenarios
 if (watcher != null) { watcher.close(); delete watcher }
 if (state != null) delete state
 
-var scenarioExt = '.scenario.js'
-
-var scenarioFilenames = (args) => {
-  const argFilenames = args
-    .filter(a => a.endsWith(scenarioExt))
-    .map(p => path.basename(p))
-
-  if (argFilenames.length > 0) {
-    return argFilenames
-  } else {
-    return fs
-      .readdirSync(fixturesDir)
-      .filter(name => name.endsWith(scenarioExt))
-  }
-}
-
-scenarios = _.map(scenarioFilenames(process.argv), name => {
-  const scenarioPath = path.join(fixturesDir, name)
-  return _.merge({name, path: scenarioPath}, require(scenarioPath))
-})
-
 var DONE_FILE = '.done'
+
+var mapInode = {}
 
 var setupInitialState = (scenario) => {
   if (scenario.init == null) return
@@ -60,21 +41,28 @@ var setupInitialState = (scenario) => {
   let resolve
   const donePromise = new Promise((_resolve) => { resolve = _resolve })
   const watcher = chokidar.watch('.', chokidarOptions)
+  watcher.on('error', console.log.bind(console))
   watcher.on('add', relpath => {
     if (isDone(relpath)) {
       watcher.close()
       resolve()
     }
   })
-  return Promise.each(scenario.init, relpath => {
+  return Promise.each(scenario.init, (opts) => {
+    let {ino, path: relpath} = opts
     if (relpath.endsWith('/')) {
       console.log('- mkdir', relpath)
       return fs.ensureDir(abspath(relpath))
+             .then(() => fs.stat(abspath(relpath)))
+             .then((stats) => mapInode[stats.ino] = ino)
     } else {
       console.log('- >', relpath)
       return fs.outputFile(abspath(relpath), 'whatever')
+             .then(() => fs.stat(abspath(relpath)))
+             .then((stats) => mapInode[stats.ino] = ino)
     }
   })
+  .delay(1000)
   .then(triggerDone)
   .then(() => donePromise)
 }
@@ -100,7 +88,7 @@ var isDone = (relpath) => {
 var saveFSEventsToFile = (scenario, events) => {
   const json = JSON.stringify(events, null, 2)
   const eventsFile = scenario.path
-    .replace(/\.scenario\.js/, `.fsevents.${process.platform}.json`)
+    .replace(/scenario\.js/, `fsevents.${process.platform}.json`)
 
   return fs.outputFile(eventsFile, json)
 }
@@ -133,6 +121,7 @@ var runAndRecordFSEvents = (scenario) => {
               .then(resolve)
               .catch(reject)
           } else {
+            if(stats != null && mapInode[stats.ino]) stats.ino = mapInode[stats.ino]
             events.push(buildFSEvent(eventType, relpath, stats))
           }
         }
@@ -152,7 +141,7 @@ var runAndRecordFSEvents = (scenario) => {
 }
 
 var runAllScenarios = () => {
-  return Promise.each(scenarios, (scenario) => {
+  return Promise.each(fixturesHelpers.scenarios, (scenario) => {
     console.log(`----- ${scenario.name} -----`)
     return fs.emptyDir(syncPath)
       .then(() => fs.emptyDir(outsidePath))
