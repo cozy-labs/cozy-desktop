@@ -3,7 +3,7 @@
     "type": "addDir",
     "path": "parent/dst1/dir",
     "stats": {
-      "ino": 4530852,
+      "ino": 5,
       "size": 4096,
       "mtime": "2017-09-29T08:56:31.248Z",
       "ctime": "2017-09-29T08:56:31.248Z"
@@ -17,7 +17,7 @@
     "type": "addDir",
     "path": "parent/dst1/dir/empty-subdir",
     "stats": {
-      "ino": 4530853,
+      "ino": 6,
       "size": 4096,
       "mtime": "2017-09-29T08:56:31.248Z",
       "ctime": "2017-09-29T08:56:31.248Z"
@@ -27,7 +27,7 @@
     "type": "addDir",
     "path": "parent/dst1/dir/subdir",
     "stats": {
-      "ino": 4530854,
+      "ino": 7,
       "size": 4096,
       "mtime": "2017-09-29T08:56:31.248Z",
       "ctime": "2017-09-29T08:56:31.248Z"
@@ -45,7 +45,7 @@
     "type": "addDir",
     "path": "parent/dst2/dir",
     "stats": {
-      "ino": 4530817,
+      "ino": 5,
       "size": 4096,
       "mtime": "2017-09-29T08:56:31.260Z",
       "ctime": "2017-09-29T08:56:31.260Z"
@@ -67,7 +67,7 @@
     "type": "addDir",
     "path": "parent/dst2/dir/empty-subdir",
     "stats": {
-      "ino": 4530818,
+      "ino": 6,
       "size": 4096,
       "mtime": "2017-09-29T08:56:31.260Z",
       "ctime": "2017-09-29T08:56:31.260Z"
@@ -77,7 +77,7 @@
     "type": "addDir",
     "path": "parent/dst2/dir/subdir",
     "stats": {
-      "ino": 4530848,
+      "ino": 7,
       "size": 4096,
       "mtime": "2017-09-29T08:56:31.260Z",
       "ctime": "2017-09-29T08:56:31.260Z"
@@ -91,7 +91,7 @@
     "type": "add",
     "path": "parent/dst2/dir/subdir/file",
     "stats": {
-      "ino": 4503236,
+      "ino": 8,
       "size": 8,
       "mtime": "2017-09-29T08:56:31.260Z",
       "ctime": "2017-09-29T08:56:31.264Z"
