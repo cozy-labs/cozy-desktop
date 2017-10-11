@@ -85,7 +85,7 @@ describe('LocalWatcher fixtures', () => {
           for (let {path: relpath, ino} of scenario.init) {
             if (relpath.endsWith('/')) {
               relpath = _.trimEnd(relpath, '/') // XXX: Check in metadata.id?
-              if (process.platform === 'win32') relpath = relpath.replace(/\\/g, '/')
+              if (process.platform === 'win32') relpath = relpath.replace(/\//g, '/').toUpperCase()
               await fs.ensureDir(abspath(relpath))
               await this.pouch.put({
                 _id: metadata.id(relpath),
@@ -97,7 +97,7 @@ describe('LocalWatcher fixtures', () => {
                 sides: {local: 1, remote: 1}
               })
             } else {
-              if (process.platform === 'win32') relpath = relpath.replace(/\\/g, '/')
+              if (process.platform === 'win32') relpath = relpath.replace(/\//g, '/').toUpperCase()
               await fs.outputFile(abspath(relpath), '')
               await this.pouch.put({
                 _id: metadata.id(relpath),
