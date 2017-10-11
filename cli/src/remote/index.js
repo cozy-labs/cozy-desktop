@@ -91,7 +91,18 @@ export default class Remote implements Side {
   async addFileAsync (doc: Metadata): Promise<Metadata> {
     const {path} = doc
     log.info({path}, 'Uploading new file...')
-    const stream = await this.other.createReadStreamAsync(doc)
+
+    let stream
+    try {
+      stream = await this.other.createReadStreamAsync(doc)
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        doc._deleted = true
+        return doc
+      }
+      throw err
+    }
+
     const [dirPath, name] = conversion.extractDirAndName(path)
     const dir = await this.remoteCozy.findOrCreateDirectoryByPath(dirPath)
 
