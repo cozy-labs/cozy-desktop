@@ -47,7 +47,7 @@ const pathFix = (scenario, p) =>
 
 const fixExpectations = (prepCall) =>
   (process.platform === 'win32') ? Object.assign({}, prepCall,
-      prepCall.src ? {src: prepCall.src.split('/').join('\\')} : null,
+      prepCall.src ? {src: prepCall.src.split('/').join('\\').toUpperCase()} : null, // @TODO why is src in maj
       prepCall.path ? {path: prepCall.path.split('/').join('\\')} : null,
       prepCall.dst ? {dst: prepCall.dst.split('/').join('\\')} : null
     ) : prepCall
@@ -85,7 +85,7 @@ describe('LocalWatcher fixtures', () => {
           for (let {path: relpath, ino} of scenario.init) {
             if (relpath.endsWith('/')) {
               relpath = _.trimEnd(relpath, '/') // XXX: Check in metadata.id?
-              if (process.platform === 'win32') relpath = relpath.replace(/\//g, '/').toUpperCase()
+              if (this.currentTest.title.match(/win32/)) relpath = relpath.replace(/\//g, '\\').toUpperCase()
               await fs.ensureDir(abspath(relpath))
               await this.pouch.put({
                 _id: metadata.id(relpath),
@@ -97,7 +97,7 @@ describe('LocalWatcher fixtures', () => {
                 sides: {local: 1, remote: 1}
               })
             } else {
-              if (process.platform === 'win32') relpath = relpath.replace(/\//g, '/').toUpperCase()
+              if (this.currentTest.title.match(/win32/)) relpath = relpath.replace(/\//g, '\\').toUpperCase()
               await fs.outputFile(abspath(relpath), '')
               await this.pouch.put({
                 _id: metadata.id(relpath),
