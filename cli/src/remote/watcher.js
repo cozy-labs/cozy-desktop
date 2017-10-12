@@ -158,8 +158,7 @@ export default class RemoteWatcher {
         this.events.emit('platform-incompatibilities', incompatibilities)
         return
       }
-    }
-    if (this.inRemoteTrash(doc)) {
+    } else {
       if (!was) {
         log.info({path}, `${docType} was created and trashed remotely`)
         return
@@ -189,13 +188,11 @@ export default class RemoteWatcher {
     }
     if ((doc.docType === 'file') && (was.md5sum === doc.md5sum)) {
       log.info({path}, `${docType} was moved remotely`)
-      if (docType === 'file') return this.prep.moveFileAsync(SIDE, doc, was)
-      else return this.prep.moveFolderAsync(SIDE, doc, was)
+      return this.prep.moveFileAsync(SIDE, doc, was)
     }
     if (doc.docType === 'folder') {
       log.info({path}, `${docType} was possibly moved or renamed remotely`)
-      await this.prep.deleteFolderAsync(SIDE, was)
-      return this.prep.putFolderAsync(SIDE, doc)
+      return this.prep.moveFolderAsync(SIDE, doc, was)
     }
     // TODO: add unit test
     log.info({path}, `${docType} was possibly renamed remotely while updated locally`)
