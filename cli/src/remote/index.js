@@ -91,7 +91,18 @@ export default class Remote implements Side {
   async addFileAsync (doc: Metadata): Promise<Metadata> {
     const {path} = doc
     log.info({path}, 'Uploading new file...')
-    const stream = await this.other.createReadStreamAsync(doc)
+
+    let stream
+    try {
+      stream = await this.other.createReadStreamAsync(doc)
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        doc._deleted = true
+        return doc
+      }
+      throw err
+    }
+
     const [dirPath, name] = conversion.extractDirAndName(path)
     const dir = await this.remoteCozy.findOrCreateDirectoryByPath(dirPath)
 
@@ -263,6 +274,11 @@ export default class Remote implements Side {
     } else {
       log.warn({path}, 'Folder is not empty and cannot be deleted!')
     }
+  }
+
+  async assignNewRev (doc: Metadata): Promise<*> {
+    log.info({path: doc.path}, 'Assigning new rev...')
+    doc.remote._rev = await this.remoteCozy.client.files.statById(doc.remote._id)
   }
 
   async moveFolderAsync (newMetadata: Metadata, oldMetadata: Metadata): Promise<*> {

@@ -250,7 +250,7 @@ class Local implements Side {
     async.series([
       cb => fs.ensureDir(folderPath, cb),
       this.inodeSetter(doc),
-      this.metadataUpdater(doc),
+      this.metadataUpdater(doc)
     ], callback)
   }
 
@@ -272,6 +272,10 @@ class Local implements Side {
   // Update a folder
   updateFolderAsync (doc: Metadata, old: Metadata): Promise<*> {
     return this.addFolderAsync(doc)
+  }
+
+  async assignNewRev (doc: Metadata): Promise<*> {
+    log.info({path: doc.path}, 'Local assignNewRev = noop')
   }
 
   // Move a file from one place to another

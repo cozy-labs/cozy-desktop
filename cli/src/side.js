@@ -11,6 +11,7 @@ export interface Side {
   updateFolderAsync (doc: Metadata, old: Metadata): Promise<*>;
   moveFileAsync (doc: Metadata, from: Metadata): Promise<*>;
   moveFolderAsync (doc: Metadata, from: Metadata): Promise<*>;
+  assignNewRev (doc: Metadata): Promise<*>;
   trashAsync (doc: Metadata): Promise<*>;
   deleteFolderAsync (doc: Metadata): Promise<*>;
   renameConflictingDocAsync (doc: Metadata, newPath: string): Promise<void>;
