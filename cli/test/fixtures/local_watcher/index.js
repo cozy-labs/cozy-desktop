@@ -2,6 +2,8 @@ const Promise = require('bluebird')
 const fs = require('fs-extra')
 const glob = require('glob')
 const path = require('path')
+const metadata = require('../../../src/metadata')
+const _ = require('lodash')
 
 // TODO: Create one dir per scenario with an fsevents subdir
 module.exports.scenarios =
@@ -53,4 +55,42 @@ module.exports.runActions = (scenario, abspath) => {
         return Promise.reject(new Error(`Unknown action ${action.type} for scenario ${scenario.name}`))
     }
   })
+}
+
+module.exports.applyInit = async function (mochacontext, scenario, abspath) {
+  for (let {path: relpath, ino} of scenario.init) {
+    if (relpath.endsWith('/')) {
+      relpath = _.trimEnd(relpath, '/') // XXX: Check in metadata.id?
+      if (process.platform === 'win32' &&
+          mochacontext.currentTest.title.match(/win32/)) relpath = relpath.replace(/\//g, '\\').toUpperCase()
+      await fs.ensureDir(abspath(relpath))
+      await mochacontext.pouch.put({
+        _id: metadata.id(relpath),
+        docType: 'folder',
+        updated_at: new Date(),
+        path: relpath,
+        ino,
+        tags: [],
+        sides: {local: 1, remote: 1}
+      })
+    } else {
+      if (process.platform === 'win32' &&
+          mochacontext.currentTest.title.match(/win32/)) relpath = relpath.replace(/\//g, '\\').toUpperCase()
+      await fs.outputFile(abspath(relpath), '')
+      await mochacontext.pouch.put({
+        _id: metadata.id(relpath),
+        md5sum: '1B2M2Y8AsgTpgAmY7PhCfg==', // ''
+        class: 'text',
+        docType: 'file',
+        executable: false,
+        updated_at: new Date(),
+        mime: 'text/plain',
+        path: relpath,
+        ino,
+        size: 0,
+        tags: [],
+        sides: {local: 1, remote: 1}
+      })
+    }
+  }
 }

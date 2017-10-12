@@ -3,14 +3,12 @@
 
 import Promise from 'bluebird'
 import fs from 'fs-extra'
-import _ from 'lodash'
 import path from 'path'
 import should from 'should'
 
 import Watcher from '../../../src/local/watcher'
-import * as metadata from '../../../src/metadata'
 
-import { scenarios, loadFSEventFiles, runActions } from '../../fixtures/local_watcher'
+import { scenarios, loadFSEventFiles, runActions, applyInit } from '../../fixtures/local_watcher'
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
 
@@ -81,42 +79,8 @@ describe('LocalWatcher fixtures', () => {
   for (let scenario of scenarios) {
     describe(scenario.name, () => {
       if (scenario.init != null) {
-        beforeEach('init', async function () {
-          for (let {path: relpath, ino} of scenario.init) {
-            if (relpath.endsWith('/')) {
-              relpath = _.trimEnd(relpath, '/') // XXX: Check in metadata.id?
-              if (process.platform === 'win32' &&
-                  this.currentTest.title.match(/win32/)) relpath = relpath.replace(/\//g, '\\').toUpperCase()
-              await fs.ensureDir(abspath(relpath))
-              await this.pouch.put({
-                _id: metadata.id(relpath),
-                docType: 'folder',
-                updated_at: new Date(),
-                path: relpath,
-                ino,
-                tags: [],
-                sides: {local: 1, remote: 1}
-              })
-            } else {
-              if (process.platform === 'win32' &&
-                  this.currentTest.title.match(/win32/)) relpath = relpath.replace(/\//g, '\\').toUpperCase()
-              await fs.outputFile(abspath(relpath), '')
-              await this.pouch.put({
-                _id: metadata.id(relpath),
-                md5sum: '1B2M2Y8AsgTpgAmY7PhCfg==', // ''
-                class: 'text',
-                docType: 'file',
-                executable: false,
-                updated_at: new Date(),
-                mime: 'text/plain',
-                path: relpath,
-                ino,
-                size: 0,
-                tags: [],
-                sides: {local: 1, remote: 1}
-              })
-            }
-          }
+        beforeEach('init', function () {
+          return applyInit(this, scenario, abspath)
         })
       }
 
