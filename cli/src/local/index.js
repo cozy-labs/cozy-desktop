@@ -274,6 +274,10 @@ class Local implements Side {
     return this.addFolderAsync(doc)
   }
 
+  async assignNewRev (doc: Metadata): Promise<*> {
+    log.info({path: doc.path}, 'Local assignNewRev = noop')
+  }
+
   // Move a file from one place to another
   moveFile (doc: Metadata, old: Metadata, callback: Callback) {
     log.info({path: doc.path}, `Moving from ${old.path}`)
