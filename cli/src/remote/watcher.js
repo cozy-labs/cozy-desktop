@@ -75,6 +75,7 @@ export default class RemoteWatcher {
       log.debug('No more remote changes for now')
     } catch (err) {
       log.error({err})
+      console.log("ERROR", err)
       if (err.status === 400) {
         throw new Error('Client has been revoked')
       }
@@ -89,6 +90,7 @@ export default class RemoteWatcher {
       try {
         await this.pullOne(doc)
       } catch (err) {
+        console.log("ERROR", err)
         log.error({err})
         failedDocs.push(doc)
       }
@@ -147,6 +149,8 @@ export default class RemoteWatcher {
     if (doc.docType !== 'file' && doc.docType !== 'folder') {
       throw new Error(`Unexpected docType: ${doc.docType}`)
     }
+
+    console.log('putDoc', remote, was)
 
     // TODO: Move to Prep?
     if (!this.inRemoteTrash(doc)) {
