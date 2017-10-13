@@ -34,7 +34,7 @@ describe('RemoteWatcher', function () {
     this.prep.config = this.config
     this.remoteCozy = new RemoteCozy(this.config)
     this.remoteCozy.client = new CozyClient({
-      cozyUrl: this.config.cozyUrl,
+      cozyURL: this.config.cozyUrl,
       token: process.env.COZY_STACK_TOKEN
     })
     this.events = new EventEmitter()
@@ -318,8 +318,8 @@ describe('RemoteWatcher', function () {
     })
 
     it('calls addDoc for a new doc', async function () {
-      this.prep.addDocAsync = sinon.stub()
-      this.prep.addDocAsync.resolves(null)
+      this.prep.addFileAsync = sinon.stub()
+      this.prep.addFileAsync.resolves(null)
       let doc: RemoteDoc = {
         _id: '12345678905',
         _rev: '1-abcdef',
@@ -341,8 +341,8 @@ describe('RemoteWatcher', function () {
 
       await this.watcher.onChange(clone(doc))
 
-      this.prep.addDocAsync.called.should.be.true()
-      let args = this.prep.addDocAsync.args[0]
+      this.prep.addFileAsync.called.should.be.true()
+      let args = this.prep.addFileAsync.args[0]
       args[0].should.equal('remote')
       args[1].should.have.properties({
         path: 'my-folder',
@@ -358,8 +358,8 @@ describe('RemoteWatcher', function () {
     })
 
     it('calls updateDoc when tags are updated', async function () {
-      this.prep.updateDocAsync = sinon.stub()
-      this.prep.updateDocAsync.resolves(null)
+      this.prep.updateFileAsync = sinon.stub()
+      this.prep.updateFileAsync.resolves(null)
       let doc: RemoteDoc = {
         _id: '12345678901',
         _rev: '2-abcdef',
@@ -382,8 +382,8 @@ describe('RemoteWatcher', function () {
 
       await this.watcher.onChange(clone(doc), was)
 
-      this.prep.updateDocAsync.called.should.be.true()
-      let args = this.prep.updateDocAsync.args[0]
+      this.prep.updateFileAsync.called.should.be.true()
+      let args = this.prep.updateFileAsync.args[0]
       args[0].should.equal('remote')
       args[1].should.have.properties({
         path: path.normalize('my-folder/file-1'),
@@ -399,8 +399,8 @@ describe('RemoteWatcher', function () {
     })
 
     it('calls updateDoc when content is overwritten', async function () {
-      this.prep.updateDocAsync = sinon.stub()
-      this.prep.updateDocAsync.resolves(null)
+      this.prep.updateFileAsync = sinon.stub()
+      this.prep.updateFileAsync.resolves(null)
       let doc: RemoteDoc = {
         _id: '12345678901',
         _rev: '3-abcdef',
@@ -417,8 +417,8 @@ describe('RemoteWatcher', function () {
 
       await this.watcher.onChange(clone(doc), was)
 
-      this.prep.updateDocAsync.called.should.be.true()
-      let args = this.prep.updateDocAsync.args[0]
+      this.prep.updateFileAsync.called.should.be.true()
+      let args = this.prep.updateFileAsync.args[0]
       args[0].should.equal('remote')
       args[1].should.have.properties({
         path: path.normalize('my-folder/file-1'),
@@ -531,10 +531,10 @@ describe('RemoteWatcher', function () {
     })
 
     xit('calls deleteDoc & addDoc when trashed', async function () {
-      this.prep.deleteDocAsync = sinon.stub()
-      this.prep.deleteDocAsync.returnsPromise().resolves(null)
-      this.prep.addDocAsync = sinon.stub()
-      this.prep.addDocAsync.returnsPromise().resolves(null)
+      this.prep.deleteFolderAsync = sinon.stub()
+      this.prep.deleteFolderAsync.returnsPromise().resolves(null)
+      this.prep.addFolderAsync = sinon.stub()
+      this.prep.addFolderAsync.returnsPromise().resolves(null)
       const oldDir: RemoteDoc = builders.remoteDir().named('foo').build()
       // TODO: builders.dirMetadata().fromRemote(oldDir).create()
       let oldMeta: Metadata = createMetadata(oldDir)
@@ -545,23 +545,23 @@ describe('RemoteWatcher', function () {
 
       await this.watcher.onChange(newDir)
 
-      should(this.prep.deleteDocAsync.called).be.true()
-      should(this.prep.addDocAsync.called).be.true()
-      const deleteArgs = this.prep.deleteDocAsync.args[0]
+      should(this.prep.deleteFolderAsync.called).be.true()
+      should(this.prep.addFolderAsync.called).be.true()
+      const deleteArgs = this.prep.deleteFolderAsync.args[0]
       // FIXME: Make sure oldMeta timestamps are formatted as expected by PouchDB
       delete oldMeta.updated_at
       should(deleteArgs[0]).equal('remote')
       should(deleteArgs[1]).have.properties(oldMeta)
-      const addArgs = this.prep.addDocAsync.args[0]
+      const addArgs = this.prep.addFolderAsync.args[0]
       should(addArgs[0]).equal('remote')
       should(addArgs[1]).have.properties(createMetadata(newDir))
     })
 
     xit('calls deleteDoc & addDoc when restored', async function () {
-      this.prep.deleteDocAsync = sinon.stub()
-      this.prep.deleteDocAsync.returnsPromise().resolves(null)
-      this.prep.addDocAsync = sinon.stub()
-      this.prep.addDocAsync.returnsPromise().resolves(null)
+      this.prep.deleteFolder = sinon.stub()
+      this.prep.deleteFolder.returnsPromise().resolves(null)
+      this.prep.addFolderAsync = sinon.stub()
+      this.prep.addFolderAsync.returnsPromise().resolves(null)
       const oldDir: RemoteDoc = builders.remoteDir().named('foo').trashed().build()
       // TODO: builders.dirMetadata().fromRemote(oldDir).create()
       let oldMeta: Metadata = createMetadata(oldDir)
@@ -572,14 +572,14 @@ describe('RemoteWatcher', function () {
 
       await this.watcher.onChange(newDir)
 
-      should(this.prep.deleteDocAsync.called).be.true()
-      should(this.prep.addDocAsync.called).be.true()
-      const deleteArgs = this.prep.deleteDocAsync.args[0]
+      should(this.prep.deleteFolder.called).be.true()
+      should(this.prep.addFolderAsync.called).be.true()
+      const deleteArgs = this.prep.deleteFolder.args[0]
       // FIXME: Make sure oldMeta timestamps are formatted as expected by PouchDB
       delete oldMeta.updated_at
       should(deleteArgs[0]).equal('remote')
       should(deleteArgs[1]).have.properties(oldMeta)
-      const addArgs = this.prep.addDocAsync.args[0]
+      const addArgs = this.prep.addFolderAsync.args[0]
       should(addArgs[0]).equal('remote')
       should(addArgs[1]).have.properties(createMetadata(newDir))
     })
