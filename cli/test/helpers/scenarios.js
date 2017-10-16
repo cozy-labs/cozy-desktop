@@ -15,7 +15,7 @@ module.exports.scenarios =
     })
 
 module.exports.loadFSEventFiles = (scenario) => {
-  const eventFiles = glob.sync(path.join(path.dirname(scenario.path), 'fsevents.*.json'))
+  const eventFiles = glob.sync(path.join(path.dirname(scenario.path), 'local', '*.json'))
   return eventFiles
     .map(f => ({name: path.basename(f), events: fs.readJsonSync(f)}))
 }
