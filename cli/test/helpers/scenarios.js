@@ -5,7 +5,7 @@ const path = require('path')
 
 // TODO: Create one dir per scenario with an fsevents subdir
 module.exports.scenarios =
-  glob.sync(path.join(__dirname, '**/scenario.js'), {})
+  glob.sync(path.join(__dirname, '../scenarios/**/scenario.js'), {})
     .map(scenarioPath => {
       const name = path.basename(path.dirname(scenarioPath))
       const scenario = require(scenarioPath)

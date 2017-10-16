@@ -10,7 +10,7 @@ import should from 'should'
 import Watcher from '../../../src/local/watcher'
 import * as metadata from '../../../src/metadata'
 
-import { scenarios, loadFSEventFiles, runActions } from '../../fixtures/local_watcher'
+import { scenarios, loadFSEventFiles, runActions } from '../../helpers/scenarios'
 import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
 

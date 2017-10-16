@@ -5,7 +5,7 @@ import chokidar from 'chokidar'
 import fs from 'fs-extra'
 import _ from 'lodash'
 import path from 'path'
-import fixturesHelpers from '../test/fixtures/local_watcher'
+import fixturesHelpers from '../test/helpers/scenarios'
 
 const cliDir = path.resolve(path.join(__dirname, '..'))
 const syncPath = path.join(cliDir, 'tmp', 'local_watcher', 'synced_dir')
