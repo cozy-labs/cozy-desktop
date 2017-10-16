@@ -11,6 +11,8 @@ import { SyncDirTestHelpers } from './sync_dir'
 import { TMP_DIR_NAME } from '../../src/local/constants'
 import Local from '../../src/local'
 
+import type { ChokidarFSEvent } from '../../src/local/chokidar_event'
+
 Promise.promisifyAll(fs)
 const rimrafAsync = Promise.promisify(rimraf)
 
@@ -96,5 +98,9 @@ export class LocalTestHelpers {
       .map(relPath => path.posix.join('/Trash', relPath))
       .concat(await tree(this.syncPath))
       .map(conflictHelpers.ellipsizeDate)
+  }
+
+  async simulateEvents (events: ChokidarFSEvent[]) {
+    return this.local.watcher.onFlush(events)
   }
 }
