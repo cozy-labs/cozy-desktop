@@ -117,7 +117,8 @@ export default class RemoteWatcher {
       }
       const {path, docType} = was
       log.info({path}, `${docType} was deleted remotely`)
-      return this.prep.deleteDocAsync(SIDE, was)
+      if (docType === 'file') return this.prep.deleteFileAsync(SIDE, was)
+      else return this.prep.deleteFolderAsync(SIDE, was)
     } else {
       const {path} = doc
       if (doc.type !== 'directory' && doc.type !== 'file') {
@@ -142,6 +143,11 @@ export default class RemoteWatcher {
     let doc: Metadata = conversion.createMetadata(remote)
     ensureValidPath(doc)
     const {docType, path} = doc
+
+    if (doc.docType !== 'file' && doc.docType !== 'folder') {
+      throw new Error(`Unexpected docType: ${doc.docType}`)
+    }
+
     // TODO: Move to Prep?
     if (!this.inRemoteTrash(doc)) {
       const incompatibilities = detectPlatformIncompatibilities(
@@ -159,11 +165,13 @@ export default class RemoteWatcher {
         return
       }
       log.info({path}, `${docType} was trashed remotely`)
-      return this.prep.trashDocAsync(SIDE, was, doc)
+      if (docType === 'file') return this.prep.trashFileAsync(SIDE, was, doc)
+      else return this.prep.trashFolderAsync(SIDE, was, doc)
     }
     if (!was) {
       log.info({path}, `${docType} was added remotely`)
-      return this.prep.addDocAsync(SIDE, doc)
+      if (docType === 'file') return this.prep.addFileAsync(SIDE, doc)
+      else return this.prep.putFolderAsync(SIDE, doc)
     }
     if (was.remote && was.remote._rev === doc.remote._rev) {
       log.info({path}, `${docType} is up-to-date`)
@@ -171,25 +179,29 @@ export default class RemoteWatcher {
     }
     if (!this.inRemoteTrash(doc) && was.trashed) {
       log.info({path}, `${docType} was restored remotely`)
-      return this.prep.restoreDocAsync(SIDE, doc, was)
+      if (docType === 'file') return this.prep.restoreFileAsync(SIDE, doc, was)
+      else return this.prep.restoreFolderAsync(SIDE, doc, was)
     }
     if (was.path === doc.path) {
       log.info({path}, `${docType} was updated remotely`)
-      return this.prep.updateDocAsync(SIDE, doc)
+      if (docType === 'file') return this.prep.updateFileAsync(SIDE, doc)
+      else return this.prep.putFolderAsync(SIDE, doc)
     }
     if ((doc.docType === 'file') && (was.md5sum === doc.md5sum)) {
       log.info({path}, `${docType} was moved remotely`)
-      return this.prep.moveFileAsync(SIDE, doc, was)
+      if (docType === 'file') return this.prep.moveFileAsync(SIDE, doc, was)
+      else return this.prep.moveFolderAsync(SIDE, doc, was)
     }
     if (doc.docType === 'folder') {
       log.info({path}, `${docType} was possibly moved or renamed remotely`)
-      await this.prep.deleteDocAsync(SIDE, was)
-      return this.prep.addDocAsync(SIDE, doc)
+      await this.prep.deleteFolderAsync(SIDE, was)
+      return this.prep.putFolderAsync(SIDE, doc)
     }
     // TODO: add unit test
     log.info({path}, `${docType} was possibly renamed remotely while updated locally`)
     await this.removeRemote(was)
-    return this.prep.addDocAsync(SIDE, doc)
+    if (docType === 'file') return this.prep.addFileAsync(SIDE, doc)
+    else return this.prep.putFolderAsync(SIDE, doc)
   }
 
   inRemoteTrash (doc: Metadata): boolean {
