@@ -16,6 +16,18 @@ module.exports = {
       {method: 'trashFolderAsync', path: 'parent/dir/subdir'},
       {method: 'trashFolderAsync', path: 'parent/dir/empty-subdir'},
       {method: 'trashFolderAsync', path: 'parent/dir'}
+    ],
+    tree: [
+      'parent/',
+      'parent/other_dir/'
+    ],
+    remoteTrash: [
+      'file'
+      // TODO: Trash with ancestor dir:
+      // 'dir/',
+      // 'dir/empty-subdir/',
+      // 'dir/subdir/',
+      // 'dir/subdir/file'
     ]
   }
 }

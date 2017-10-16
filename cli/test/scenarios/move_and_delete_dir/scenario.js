@@ -12,6 +12,11 @@ module.exports = {
   expected: {
     prepCalls: [
       {method: 'trashFolderAsync', path: 'src/subdir'}
-    ]
+    ],
+    tree: [
+      'dst/',
+      'src/'
+    ],
+    remoteTrash: []
   }
 }
