@@ -1,6 +1,7 @@
 /* @flow */
 
 import cozy from 'cozy-client-js'
+import _ from 'lodash'
 import path from 'path'
 
 import * as conflictHelpers from './conflict'
@@ -28,6 +29,8 @@ export class RemoteTestHelpers {
     await this.remote.watcher.watch()
   }
 
+  // TODO: Extract reusable #scan() method from tree*()
+
   async tree () {
     const pathsToScan = ['/', `/${TRASH_DIR_NAME}`]
     const relPaths = [`${TRASH_DIR_NAME}/`]
@@ -54,5 +57,18 @@ export class RemoteTestHelpers {
     return relPaths
       .sort()
       .map(conflictHelpers.ellipsizeDate)
+  }
+
+  async treeWithoutTrash () {
+    return (await this.tree())
+      .filter(p => !p.startsWith(`${TRASH_DIR_NAME}/`))
+  }
+
+  async trash () {
+    const TRASH_REGEXP = new RegExp(`^${TRASH_DIR_NAME}/(.+)$`)
+    return _.chain(await this.tree())
+      .map(p => _.nth(p.match(TRASH_REGEXP), 1))
+      .compact()
+      .value()
   }
 }
