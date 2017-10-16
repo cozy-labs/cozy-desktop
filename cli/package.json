@@ -34,6 +34,7 @@
     "bootstrap": "yarn docker:exec -- bootstrap-cozy-desktop.sh",
     "bootstrap:remote": "babel-node ./dev/remote/generate-test-env.js",
     "build": "babel --source-maps --out-dir lib/ src/",
+    "capture": "env-cmd .env.test babel-node ./dev/capture.js",
     "clean": "rimraf lib/ tmp/",
     "docker:exec": "docker exec -it cozy-desktop-stack",
     "eslint": "./node_modules/.bin/eslint './src/**/*.js' './test/**/*.js'",
