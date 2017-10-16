@@ -1,3 +1,5 @@
+// TODO: Rename to cli/test/helpers/scenarios.js
+
 const Promise = require('bluebird')
 const fs = require('fs-extra')
 const glob = require('glob')
@@ -8,6 +10,7 @@ module.exports.scenarios =
   glob.sync(path.join(__dirname, '../scenarios/**/scenario.js'), {})
     .map(scenarioPath => {
       const name = path.basename(path.dirname(scenarioPath))
+      // $FlowFixMe
       const scenario = require(scenarioPath)
       scenario.name = name
       scenario.path = scenarioPath
