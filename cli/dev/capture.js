@@ -83,7 +83,7 @@ const isDone = (relpath) => {
 const saveFSEventsToFile = (scenario, events) => {
   const json = JSON.stringify(events, null, 2)
   const eventsFile = scenario.path
-    .replace(/scenario\.js/, `fsevents.${process.platform}.json`)
+    .replace(/scenario\.js/, path.join('local', `${process.platform}.json`))
 
   return fs.outputFile(eventsFile, json)
 }
