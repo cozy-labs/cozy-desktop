@@ -10,6 +10,10 @@ module.exports = {
     prepCalls: [
       {method: 'deleteFolderAsync', path: 'foo'},
       {method: 'addFileAsync', path: 'foo'}
-    ]
+    ],
+    tree: [
+      'foo'
+    ],
+    remoteTrash: []
   }
 }
