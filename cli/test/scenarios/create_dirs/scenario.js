@@ -7,6 +7,11 @@ module.exports = {
     prepCalls: [
       {method: 'putFolderAsync', path: 'foo'},
       {method: 'putFolderAsync', path: 'foo/bar'}
-    ]
+    ],
+    tree: [
+      'foo/',
+      'foo/bar/'
+    ],
+    remoteTrash: []
   }
 }

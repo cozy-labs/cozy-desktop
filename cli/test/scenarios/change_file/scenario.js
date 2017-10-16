@@ -8,6 +8,10 @@ module.exports = {
   expected: {
     prepCalls: [
       {method: 'updateFileAsync', path: 'file'}
-    ]
+    ],
+    tree: [
+      'file'
+    ],
+    remoteTrash: []
   }
 }

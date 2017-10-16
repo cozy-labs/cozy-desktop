@@ -10,6 +10,12 @@ module.exports = {
   expected: {
     prepCalls: [
       {method: 'moveFileAsync', dst: 'dst/file', src: 'src/file'}
-    ]
+    ],
+    tree: [
+      'dst/',
+      'dst/file',
+      'src/'
+    ],
+    remoteTrash: []
   }
 }
