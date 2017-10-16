@@ -1,17 +1,17 @@
-#!/usr/bin/env node
+#!/usr/bin/env babel-node
 
-var Promise = require('bluebird')
-var chokidar = require('chokidar')
-var fs = require('fs-extra')
-var _ = require('lodash')
-var path = require('path')
-var fixturesHelpers = require('../test/fixtures/local_watcher')
+import Promise from 'bluebird'
+import chokidar from 'chokidar'
+import fs from 'fs-extra'
+import _ from 'lodash'
+import path from 'path'
+import fixturesHelpers from '../test/fixtures/local_watcher'
 
-var cliDir = path.resolve(path.join(__dirname, '..'))
-var syncPath = path.join(cliDir, 'tmp', 'local_watcher', 'synced_dir')
-var outsidePath = path.join(cliDir, 'tmp', 'local_watcher', 'outside')
-var abspath = (relpath) => path.join(syncPath, relpath.replace(/\//g, path.sep))
-var chokidarOptions = {
+const cliDir = path.resolve(path.join(__dirname, '..'))
+const syncPath = path.join(cliDir, 'tmp', 'local_watcher', 'synced_dir')
+const outsidePath = path.join(cliDir, 'tmp', 'local_watcher', 'outside')
+const abspath = (relpath) => path.join(syncPath, relpath.replace(/\//g, path.sep))
+const chokidarOptions = {
   cwd: syncPath,
   ignored: /(^|[\/\\])\.system-tmp-cozy-drive/,
   followSymlinks: false,
@@ -26,12 +26,11 @@ var chokidarOptions = {
   binaryInterval: 2000,
 }
 
+const DONE_FILE = '.done'
 
-var DONE_FILE = '.done'
+const mapInode = {}
 
-var mapInode = {}
-
-var setupInitialState = (scenario) => {
+const setupInitialState = (scenario) => {
   if (scenario.init == null) return
   console.log('init:')
   let resolve
@@ -63,25 +62,25 @@ var setupInitialState = (scenario) => {
   .then(() => donePromise)
 }
 
-var isRootDir = (relpath) => {
+const isRootDir = (relpath) => {
   relpath === ''
 }
 
-var buildFSEvent = (type, relpath, stats) => {
+const buildFSEvent = (type, relpath, stats) => {
   const event = {type, path: relpath}
   if (stats != null) event.stats = _.pick(stats, ['ino', 'size', 'mtime', 'ctime'])
   return event
 }
 
-var triggerDone = () => {
+const triggerDone = () => {
   return fs.outputFile(path.join(syncPath, DONE_FILE), '')
 }
 
-var isDone = (relpath) => {
+const isDone = (relpath) => {
   return relpath === DONE_FILE
 }
 
-var saveFSEventsToFile = (scenario, events) => {
+const saveFSEventsToFile = (scenario, events) => {
   const json = JSON.stringify(events, null, 2)
   const eventsFile = scenario.path
     .replace(/scenario\.js/, `fsevents.${process.platform}.json`)
@@ -89,14 +88,14 @@ var saveFSEventsToFile = (scenario, events) => {
   return fs.outputFile(eventsFile, json)
 }
 
-var logFSEvents = (events) => {
+const logFSEvents = (events) => {
   console.log('events:')
   for (let e of events) {
     console.log('-', e.type, e.path, `[${e.stats ? e.stats.ino : 'N/A'}]`)
   }
 }
 
-var runAndRecordFSEvents = (scenario) => {
+const runAndRecordFSEvents = (scenario) => {
   return new Promise((_resolve, _reject) => {
     const watcher = chokidar.watch('.', chokidarOptions)
     const cleanCallback = cb => function () {
@@ -136,7 +135,7 @@ var runAndRecordFSEvents = (scenario) => {
   })
 }
 
-var runAllScenarios = () => {
+const runAllScenarios = () => {
   return Promise.each(fixturesHelpers.scenarios, (scenario) => {
     console.log(`----- ${scenario.name} -----`)
     return fs.emptyDir(syncPath)
