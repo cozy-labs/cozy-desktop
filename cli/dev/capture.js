@@ -8,7 +8,6 @@ var path = require('path')
 var fixturesHelpers = require('../test/fixtures/local_watcher')
 
 var cliDir = path.resolve(path.join(__dirname, '..'))
-var fixturesDir = path.join(cliDir, 'test', 'fixtures', 'local_watcher')
 var syncPath = path.join(cliDir, 'tmp', 'local_watcher', 'synced_dir')
 var outsidePath = path.join(cliDir, 'tmp', 'local_watcher', 'outside')
 var abspath = (relpath) => path.join(syncPath, relpath.replace(/\//g, path.sep))
@@ -27,9 +26,6 @@ var chokidarOptions = {
   binaryInterval: 2000,
 }
 
-var watcher, state, scenarios
-if (watcher != null) { watcher.close(); delete watcher }
-if (state != null) delete state
 
 var DONE_FILE = '.done'
 
