@@ -15,6 +15,14 @@ module.exports = {
       {method: 'putFolderAsync', path: 'dst/dir/empty-subdir'},
       {method: 'putFolderAsync', path: 'dst/dir/subdir'},
       {method: 'addFileAsync', path: 'dst/dir/subdir/file'}
-    ]
+    ],
+    tree: [
+      'dst/',
+      'dst/dir/',
+      'dst/dir/empty-subdir/',
+      'dst/dir/subdir/',
+      'dst/dir/subdir/file'
+    ],
+    remoteTrash: []
   }
 }

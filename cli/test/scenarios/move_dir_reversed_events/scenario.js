@@ -11,5 +11,11 @@ module.exports = {
     prepCalls: [
       {method: 'moveFolderAsync', dst: 'dst/dir', src: 'src/dir'}
     ]
-  }
+  },
+  tree: [
+    'dst/',
+    'dst/dir/',
+    'src/'
+  ],
+  remoteTrash: []
 }
