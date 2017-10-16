@@ -14,6 +14,12 @@ module.exports = {
     prepCalls: [ /*
       {method: 'trashFolderAsync', path: 'parent/dirorfile'},
       {method: 'addFileAsync', path: 'parent/dirorfile'}
-    */ ]
+    */ ],
+    // FIXME:
+    // tree: [
+    //   'parent/',
+    //   'parent/dirorfile'
+    // ],
+    remoteTrash: []
   }
 }

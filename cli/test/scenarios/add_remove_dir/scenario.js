@@ -5,7 +5,8 @@ module.exports = {
     {type: 'rm', path: 'dir'}
   ],
   expected: {
-    prepCalls: [
-    ]
+    prepCalls: [],
+    tree: [],
+    remoteTrash: []
   }
 }

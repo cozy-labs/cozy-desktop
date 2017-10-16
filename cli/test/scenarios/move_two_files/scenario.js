@@ -14,6 +14,13 @@ module.exports = {
     prepCalls: [
       {method: 'moveFileAsync', src: 'src/file1', dst: 'dst/file1'},
       {method: 'moveFileAsync', src: 'src/file2', dst: 'dst/file2'}
-    ]
+    ],
+    tree: [
+      'dst/',
+      'dst/file1',
+      'dst/file2',
+      'src/'
+    ],
+    remoteTrash: []
   }
 }
