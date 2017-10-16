@@ -3,7 +3,12 @@
 const Promise = require('bluebird')
 const fs = require('fs-extra')
 const glob = require('glob')
+const _ = require('lodash')
 const path = require('path')
+
+const metadata = require('../../src/metadata')
+
+const { cozy } = require('./cozy')
 
 // TODO: Create one dir per scenario with an fsevents subdir
 module.exports.scenarios =
@@ -31,6 +36,69 @@ module.exports.loadFSEventFiles = (scenario) => {
           return e
         })
     }))
+}
+
+module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
+  for (let {path: relpath, ino} of scenario.init) {
+    const isOutside = relpath.startsWith('../outside')
+    let remoteParent
+    if (!isOutside) {
+      const remoteParentPath = path.posix.join('/', path.posix.dirname(relpath))
+      remoteParent = await cozy.files.statByPath(remoteParentPath)
+    }
+    const lastModifiedDate = new Date('2011-04-11T10:20:30Z')
+    if (relpath.endsWith('/')) {
+      relpath = _.trimEnd(relpath, '/') // XXX: Check in metadata.id?
+      await fs.ensureDir(abspath(relpath))
+      const doc = {
+        _id: metadata.id(relpath),
+        docType: 'folder',
+        updated_at: lastModifiedDate,
+        path: relpath,
+        ino,
+        tags: [],
+        sides: {local: 1, remote: 1}
+      }
+      if (!isOutside) {
+        const remoteDir = await cozy.files.createDirectory({
+          name: path.basename(relpath),
+          dirID: remoteParent._id,
+          lastModifiedDate
+        })
+        doc.remote = _.pick(remoteDir, ['_id', '_rev'])
+      }
+      await pouch.put(doc)
+    } else {
+      const content = 'foo'
+      const md5sum = 'rL0Y20zC+Fzt72VPzMSk2A=='
+      await fs.outputFile(abspath(relpath), content)
+      const doc = {
+        _id: metadata.id(relpath),
+        md5sum,
+        class: 'text',
+        docType: 'file',
+        executable: false,
+        updated_at: lastModifiedDate,
+        mime: 'text/plain',
+        path: relpath,
+        ino,
+        size: 0,
+        tags: [],
+        sides: {local: 1, remote: 1}
+      }
+      if (!isOutside) {
+        const remoteFile = await cozy.files.create(content, {
+          name: path.basename(relpath),
+          dirID: remoteParent._id,
+          checksum: md5sum,
+          contentType: 'text/plain',
+          lastModifiedDate
+        })
+        doc.remote = _.pick(remoteFile, ['_id', '_rev'])
+      }
+      await pouch.put(doc)
+    } // if relpath ...
+  } // for (... of scenario.init)
 }
 
 module.exports.runActions = (scenario, abspath) => {
