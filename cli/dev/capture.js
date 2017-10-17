@@ -1,6 +1,7 @@
 #!/usr/bin/env babel-node
 
 import program from 'commander'
+import path from 'path'
 
 import local from './capture/local'
 import remote from './capture/remote'
@@ -8,9 +9,28 @@ import scenarioHelpers from '../test/helpers/scenarios'
 
 program
   .description('Capture FS events')
+  .arguments('[scenarios...]')
   .option('-l, --local', 'Local events only')
   .option('-r, --remote', 'Remove events only')
   .parse(process.argv)
+
+const scenarioArgPattern = new RegExp(path.join(
+  '^.*', '?test', 'scenarios', `([^${path.sep}]+)`, '?.*$'))
+
+const scenarios = (args) => {
+  if (args.length === 0) return scenarioHelpers.scenarios
+
+  return args.map(arg => {
+    const match = arg.match(scenarioArgPattern)
+    if (match) {
+      return scenarioHelpers.scenarioByPath(path.join(
+        __dirname, '..', 'test', 'scenarios', match[1], 'scenario.js'))
+    } else {
+      console.error(`Invalid argument: ${arg}`)
+      process.exit(1)
+    }
+  })
+}
 
 const sides = []
 if (program.local || !program.remote) sides.push(local)
@@ -37,4 +57,4 @@ const captureScenariosEvents = async (scenarios, sides) => {
   }
 }
 
-captureScenariosEvents(scenarioHelpers.scenarios, sides)
+captureScenariosEvents(scenarios(program.args), sides)
