@@ -1,27 +1,14 @@
-{
-  "last_seq": "10038-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVZLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWQLAhySlJBmmJRBviADIkHt0QEyMjsyRLC2INSQAZUo_wziawIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIO2QrxknpJmkJRMkkELIAbthxp0D2KQmZlJiqkhSQYdgBh0Hxo-bGCDDI1Nk1KT0kgy6AHEIFgYLYZEuaVFWqqxGbq2LACDH617",
-  "pending": 0,
-  "results": [
-    {
-      "id": "0b92f45b12ad022ee57423c4ba31151d",
-      "seq": "10038-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVZLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWQLAhySlJBmmJRBviADIkHt0QEyMjsyRLC2INSQAZUo_wziawIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIO2QrxknpJmkJRMkkELIAbthxp0D2KQmZlJiqkhSQYdgBh0Hxo-bGCDDI1Nk1KT0kgy6AHEIFgYLYZEuaVFWqqxGbq2LACDH617",
-      "doc": {
-        "_id": "0b92f45b12ad022ee57423c4ba31151d",
-        "_rev": "2-f21a9fc598eb409310de6e8ed27c517c",
-        "created_at": "2017-10-17T14:22:23.355026439Z",
-        "dir_id": "io.cozy.files.trash-dir",
-        "name": "dir",
-        "path": "/.cozy_trash/dir",
-        "restore_path": "/",
-        "tags": [],
-        "type": "directory",
-        "updated_at": "2017-10-17T14:22:23.355026439Z"
-      },
-      "changes": [
-        {
-          "rev": "2-f21a9fc598eb409310de6e8ed27c517c"
-        }
-      ]
-    }
-  ]
-}
+[
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba352464",
+    "_rev": "2-21f852f2854362cb23988033e42752f9",
+    "created_at": "2017-10-17T16:30:07.874396564Z",
+    "dir_id": "io.cozy.files.trash-dir",
+    "name": "dir",
+    "path": "/.cozy_trash/dir",
+    "restore_path": "/",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-17T16:30:07.874396564Z"
+  }
+]

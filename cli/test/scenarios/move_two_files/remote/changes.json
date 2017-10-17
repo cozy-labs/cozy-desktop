@@ -1,56 +1,36 @@
-{
-  "last_seq": "10343-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgeVoLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWArAhySlJBmmJRBviADIkHmFIF9gQEyMjsyRLC2INSQAZUo_wzl2wIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIMuQrxknpJmkJRMkkELIAbthxr0F2KQmZlJiqkhSQYdgBh0Hxo-2mCDDI1Nk1KT0kgy6AHEIFgYXYJEuaVFWqqxGbq2LADNB66s",
-  "pending": 0,
-  "results": [
-    {
-      "id": "0b92f45b12ad022ee57423c4ba34152c",
-      "seq": "10342-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgeVoLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWArAhySlJBmmJRBviADIkHmFIF9gQEyMjsyRLC2INSQAZUo_wzl2wIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIMuQrxknpJmkJRMkkELIAbthxr0B2KQmZlJiqkhSQYdgBh0Hxo-2mCDDI1Nk1KT0kgy6AHEIFgYXYJEuaVFWqqxGbq2LADMV66r",
-      "doc": {
-        "_id": "0b92f45b12ad022ee57423c4ba34152c",
-        "_rev": "2-0e6a04b91ee3b291c3b033d675caee07",
-        "class": "files",
-        "created_at": "2017-10-17T14:23:10.183597896Z",
-        "dir_id": "0b92f45b12ad022ee57423c4ba3419ed",
-        "executable": false,
-        "md5sum": "Bg5OnjC8ua5nWoAyioemhw==",
-        "mime": "application/octet-stream",
-        "name": "file2",
-        "size": "20",
-        "tags": [],
-        "trashed": false,
-        "type": "file",
-        "updated_at": "2017-10-17T14:23:10.183597896Z"
-      },
-      "changes": [
-        {
-          "rev": "2-0e6a04b91ee3b291c3b033d675caee07"
-        }
-      ]
-    },
-    {
-      "id": "0b92f45b12ad022ee57423c4ba3414b1",
-      "seq": "10343-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgeVoLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWArAhySlJBmmJRBviADIkHmFIF9gQEyMjsyRLC2INSQAZUo_wzl2wIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIMuQrxknpJmkJRMkkELIAbthxr0F2KQmZlJiqkhSQYdgBh0Hxo-2mCDDI1Nk1KT0kgy6AHEIFgYXYJEuaVFWqqxGbq2LADNB66s",
-      "doc": {
-        "_id": "0b92f45b12ad022ee57423c4ba3414b1",
-        "_rev": "2-c80cfe369bc97e769e9ed8824aa78294",
-        "class": "files",
-        "created_at": "2017-10-17T14:23:10.117207601Z",
-        "dir_id": "0b92f45b12ad022ee57423c4ba3419ed",
-        "executable": false,
-        "md5sum": "Bg5OnjC8ua5nWoAyioemhw==",
-        "mime": "application/octet-stream",
-        "name": "file1",
-        "size": "20",
-        "tags": [],
-        "trashed": false,
-        "type": "file",
-        "updated_at": "2017-10-17T14:23:10.117207601Z"
-      },
-      "changes": [
-        {
-          "rev": "2-c80cfe369bc97e769e9ed8824aa78294"
-        }
-      ]
-    }
-  ]
-}
+[
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba37b98e",
+    "_rev": "2-f36d292f4283407349585143cd4e2272",
+    "class": "files",
+    "created_at": "2017-10-17T16:31:05.956514892Z",
+    "dir_id": "0b92f45b12ad022ee57423c4ba37bcec",
+    "executable": false,
+    "md5sum": "Bg5OnjC8ua5nWoAyioemhw==",
+    "mime": "application/octet-stream",
+    "name": "file2",
+    "size": "20",
+    "tags": [],
+    "trashed": false,
+    "type": "file",
+    "updated_at": "2017-10-17T16:31:05.956514892Z",
+    "path": "/dst/file2"
+  },
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba37b446",
+    "_rev": "2-32781361ca74969d168a0557a80cf0fe",
+    "class": "files",
+    "created_at": "2017-10-17T16:31:05.879370044Z",
+    "dir_id": "0b92f45b12ad022ee57423c4ba37bcec",
+    "executable": false,
+    "md5sum": "Bg5OnjC8ua5nWoAyioemhw==",
+    "mime": "application/octet-stream",
+    "name": "file1",
+    "size": "20",
+    "tags": [],
+    "trashed": false,
+    "type": "file",
+    "updated_at": "2017-10-17T16:31:05.879370044Z",
+    "path": "/dst/file1"
+  }
+]

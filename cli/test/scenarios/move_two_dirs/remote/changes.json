@@ -1,46 +1,24 @@
-{
-  "last_seq": "10329-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgeVILlCMPc042dQkLRVdPQ4TkhSAZJI93BDWArAhySlJBmmJRBviADIkHmFIB9gQEyMjsyRLC2INSQAZUo_wzl2wIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIPOQrxknpJmkJRMkkELIAbthxr0E2KQmZlJiqkhSQYdgBh0Hxo-2mCDDI1Nk1KT0kgy6AHEIFgYnYdEuaVFWqqxGbq2LADA6q6e",
-  "pending": 0,
-  "results": [
-    {
-      "id": "0b92f45b12ad022ee57423c4ba34033b",
-      "seq": "10328-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgeVILlCMPc042dQkLRVdPQ4TkhSAZJI93BDWArAhySlJBmmJRBviADIkHmFIB9gQEyMjsyRLC2INSQAZUo_wzl2wIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIPOQrxknpJmkJRMkkELIAbthxr0E2KQmZlJiqkhSQYdgBh0Hxo-2mCDDI1Nk1KT0kgy6AHEIFgYnYNEuaVFWqqxGbq2LADAzK6d",
-      "doc": {
-        "_id": "0b92f45b12ad022ee57423c4ba34033b",
-        "_rev": "2-f3ad5081d45ee94eb4e3f13120763ff9",
-        "created_at": "2017-10-17T14:23:07.181846718Z",
-        "dir_id": "0b92f45b12ad022ee57423c4ba34048b",
-        "name": "dir2",
-        "path": "/dst/dir2",
-        "tags": [],
-        "type": "directory",
-        "updated_at": "2017-10-17T14:23:07.181846718Z"
-      },
-      "changes": [
-        {
-          "rev": "2-f3ad5081d45ee94eb4e3f13120763ff9"
-        }
-      ]
-    },
-    {
-      "id": "0b92f45b12ad022ee57423c4ba33fb65",
-      "seq": "10329-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgeVILlCMPc042dQkLRVdPQ4TkhSAZJI93BDWArAhySlJBmmJRBviADIkHmFIB9gQEyMjsyRLC2INSQAZUo_wzl2wIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIPOQrxknpJmkJRMkkELIAbthxr0E2KQmZlJiqkhSQYdgBh0Hxo-2mCDDI1Nk1KT0kgy6AHEIFgYnYdEuaVFWqqxGbq2LADA6q6e",
-      "doc": {
-        "_id": "0b92f45b12ad022ee57423c4ba33fb65",
-        "_rev": "2-9eecd6b93391a716efc63c5ee40b7a8b",
-        "created_at": "2017-10-17T14:23:07.046685608Z",
-        "dir_id": "0b92f45b12ad022ee57423c4ba34048b",
-        "name": "dir1",
-        "path": "/dst/dir1",
-        "tags": [],
-        "type": "directory",
-        "updated_at": "2017-10-17T14:23:07.046685608Z"
-      },
-      "changes": [
-        {
-          "rev": "2-9eecd6b93391a716efc63c5ee40b7a8b"
-        }
-      ]
-    }
-  ]
-}
+[
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba3789db",
+    "_rev": "2-62836558861f23a2710912469b16bed4",
+    "created_at": "2017-10-17T16:31:02.267148616Z",
+    "dir_id": "0b92f45b12ad022ee57423c4ba37a2f1",
+    "name": "dir1",
+    "path": "/dst/dir1",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-17T16:31:02.267148616Z"
+  },
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba37963a",
+    "_rev": "2-c01890dac2c30427cd12184f4d5ad655",
+    "created_at": "2017-10-17T16:31:02.406826409Z",
+    "dir_id": "0b92f45b12ad022ee57423c4ba37a2f1",
+    "name": "dir2",
+    "path": "/dst/dir2",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-17T16:31:02.406826409Z"
+  }
+]
