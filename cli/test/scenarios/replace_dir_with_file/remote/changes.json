@@ -1,52 +1,31 @@
-{
-  "last_seq": "10355-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgeV4LlCMPc042dQkLRVdPQ4TkhSAZJI93BDWArAhySlJBmmJRBviADIkHmFIN9gQEyMjsyRLC2INSQAZUo_wzl2wIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIOuQrxknpJmkJRMkkELIAbthxr0H2KQmZlJiqkhSQYdgBh0Hxo-OmCDDI1Nk1KT0kgy6AHEIFgYXYFEuaVFWqqxGbq2LADYl664",
-  "pending": 0,
-  "results": [
-    {
-      "id": "0b92f45b12ad022ee57423c4ba342980",
-      "seq": "10354-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgeV4LlCMPc042dQkLRVdPQ4TkhSAZJI93BDWArAhySlJBmmJRBviADIkHmFIN9gQEyMjsyRLC2INSQAZUo_wzl2wIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIOuQrxknpJmkJRMkkELIAbthxr0H2KQmZlJiqkhSQYdgBh0Hxo-2mCDDI1Nk1KT0kgy6AHEIFgYXYFEuaVFWqqxGbq2LADYMK63",
-      "doc": {
-        "_id": "0b92f45b12ad022ee57423c4ba342980",
-        "_rev": "2-e7269c62e853e1496555fa36ecbbfeca",
-        "created_at": "2017-10-17T14:23:13.204614673Z",
-        "dir_id": "io.cozy.files.trash-dir",
-        "name": "dirorfile",
-        "path": "/.cozy_trash/dirorfile",
-        "restore_path": "/parent",
-        "tags": [],
-        "type": "directory",
-        "updated_at": "2017-10-17T14:23:13.204614673Z"
-      },
-      "changes": [
-        {
-          "rev": "2-e7269c62e853e1496555fa36ecbbfeca"
-        }
-      ]
-    },
-    {
-      "id": "0b92f45b12ad022ee57423c4ba3432a7",
-      "seq": "10355-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgeV4LlCMPc042dQkLRVdPQ4TkhSAZJI93BDWArAhySlJBmmJRBviADIkHmFIN9gQEyMjsyRLC2INSQAZUo_wzl2wIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIOuQrxknpJmkJRMkkELIAbthxr0H2KQmZlJiqkhSQYdgBh0Hxo-OmCDDI1Nk1KT0kgy6AHEIFgYXYFEuaVFWqqxGbq2LADYl664",
-      "doc": {
-        "_id": "0b92f45b12ad022ee57423c4ba3432a7",
-        "_rev": "1-1d502969f7c98bc510a7d01dad5eb3ad",
-        "class": "text",
-        "created_at": "2017-10-17T14:23:13.894660042Z",
-        "dir_id": "0b92f45b12ad022ee57423c4ba341c4e",
-        "executable": false,
-        "md5sum": "AIxZJsqGECPB0qNmU/2I4g==",
-        "mime": "text/plain",
-        "name": "dirorfile",
-        "size": "8",
-        "tags": [],
-        "trashed": false,
-        "type": "file",
-        "updated_at": "2017-10-17T14:23:13.894660042Z"
-      },
-      "changes": [
-        {
-          "rev": "1-1d502969f7c98bc510a7d01dad5eb3ad"
-        }
-      ]
-    }
-  ]
-}
+[
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba37d8da",
+    "_rev": "1-f8c37b636f3cdac8256db5d926b15f29",
+    "class": "text",
+    "created_at": "2017-10-17T16:31:10.429034757Z",
+    "dir_id": "0b92f45b12ad022ee57423c4ba37c700",
+    "executable": false,
+    "md5sum": "AIxZJsqGECPB0qNmU/2I4g==",
+    "mime": "text/plain",
+    "name": "dirorfile",
+    "size": "8",
+    "tags": [],
+    "trashed": false,
+    "type": "file",
+    "updated_at": "2017-10-17T16:31:10.429034757Z",
+    "path": "/parent/dirorfile"
+  },
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba37d0ae",
+    "_rev": "2-19b0366cee0c1fa1539877c5cfd52e17",
+    "created_at": "2017-10-17T16:31:09.360654285Z",
+    "dir_id": "io.cozy.files.trash-dir",
+    "name": "dirorfile",
+    "path": "/.cozy_trash/dirorfile",
+    "restore_path": "/parent",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-17T16:31:09.360654285Z"
+  }
+]
