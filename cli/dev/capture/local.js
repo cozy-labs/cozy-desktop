@@ -30,11 +30,12 @@ const mapInode = {}
 
 const setupInitialState = (scenario) => {
   if (scenario.init == null) return
-  console.log('init:')
-  let resolve
+  const debug = process.env.DEBUG != null ? console.log : () => {}
+  debug('init:')
+  let resolve // TODO: reject on chokidar error?
   const donePromise = new Promise((_resolve) => { resolve = _resolve })
   const watcher = chokidar.watch('.', chokidarOptions)
-  watcher.on('error', console.log.bind(console))
+  watcher.on('error', console.error.bind(console))
   watcher.on('add', relpath => {
     if (isDone(relpath)) {
       watcher.close()
@@ -44,12 +45,12 @@ const setupInitialState = (scenario) => {
   return Promise.each(scenario.init, (opts) => {
     let {ino, path: relpath} = opts
     if (relpath.endsWith('/')) {
-      console.log('- mkdir', relpath)
+      debug('- mkdir', relpath)
       return fs.ensureDir(abspath(relpath))
              .then(() => fs.stat(abspath(relpath)))
              .then((stats) => mapInode[stats.ino] = ino)
     } else {
-      console.log('- >', relpath)
+      debug('- >', relpath)
       return fs.outputFile(abspath(relpath), 'whatever')
              .then(() => fs.stat(abspath(relpath)))
              .then((stats) => mapInode[stats.ino] = ino)
@@ -84,9 +85,11 @@ const saveFSEventsToFile = (scenario, events) => {
     .replace(/scenario\.js/, path.join('local', `${process.platform}.json`))
 
   return fs.outputFile(eventsFile, json)
+    .then(() => path.basename(eventsFile))
 }
 
 const logFSEvents = (events) => {
+  if (process.env.DEBUG == null) return
   console.log('events:')
   for (let e of events) {
     console.log('-', e.type, e.path, `[${e.stats ? e.stats.ino : 'N/A'}]`)
@@ -133,16 +136,14 @@ const runAndRecordFSEvents = (scenario) => {
   })
 }
 
-const runAllScenarios = () => {
-  return Promise.each(fixturesHelpers.scenarios, (scenario) => {
-    console.log(`----- ${scenario.name} -----`)
-    return fs.emptyDir(syncPath)
-      .then(() => fs.emptyDir(outsidePath))
-      .then(() => setupInitialState(scenario))
-      .then(() => runAndRecordFSEvents(scenario))
-  })
+const captureScenario = (scenario) => {
+  return fs.emptyDir(syncPath)
+    .then(() => fs.emptyDir(outsidePath))
+    .then(() => setupInitialState(scenario))
+    .then(() => runAndRecordFSEvents(scenario))
 }
 
 export default {
-  runAllScenarios
+  name: 'local',
+  captureScenario
 }
