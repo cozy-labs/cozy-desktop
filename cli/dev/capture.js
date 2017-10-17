@@ -1,7 +1,40 @@
 #!/usr/bin/env babel-node
 
-import local from './event_recorders/local'
+import program from 'commander'
 
-local.runAllScenarios()
-  .then(() => { console.log('Done with all scenarios.')})
-  .catch(error => console.error({error}))
+import local from './capture/local'
+import remote from './capture/remote'
+import scenarioHelpers from '../test/helpers/scenarios'
+
+program
+  .description('Capture FS events')
+  .option('-l, --local', 'Local events only')
+  .option('-r, --remote', 'Remove events only')
+  .parse(process.argv)
+
+const sides = []
+if (program.local || !program.remote) sides.push(local)
+if (program.remote || !program.local) sides.push(remote)
+
+const captureScenariosEvents = async (scenarios, sides) => {
+  try {
+    console.log('test/scenarios/')
+    for (let scenario of scenarios) {
+      console.log(`  ${scenario.name}/`)
+      for (let side of sides) {
+        try {
+          const outputFilename = await side.captureScenario(scenario)
+          console.log(`    \x1B[1;32m✓\x1B[0m ${side.name}/${outputFilename}`)
+        } catch (err) {
+          console.log(`    \x1B[1;31m✗\x1B[0m ${side.name}/`)
+          console.error('\x1B[1;31m', err, '\x1B[0m')
+        }
+      }
+    }
+    console.log('✨  Done.')
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+captureScenariosEvents(scenarioHelpers.scenarios, sides)
