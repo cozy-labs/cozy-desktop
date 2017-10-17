@@ -70,9 +70,9 @@ describe('test/scenarios/', () => {
   })
 
   afterEach(function () {
-    // TODO: Include in custom assertion
+    // TODO: Include prep actions in custom assertion
     if (this.currentTest.state === 'failed') {
-      console.log('Prep actions:', sendToPrep.getCalls().map(c => c.args[0]))
+      // console.log('Prep actions:', sendToPrep.getCalls().map(c => c.args[0]))
       // TODO: dump logs
     }
   })
