@@ -1,0 +1,52 @@
+{
+  "last_seq": "10092-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVVLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWELAhySlJBmmJRBviADIkHmFICtgQEyMjsyRLC2INSQAZUo_wzi6wIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIN2Q7xknpJmkJRMkkELIAbthxr0EGKQmZlJiqkhSQYdgBh0Hxo-AmCDDI1Nk1KT0kgy6AHEIFgYLYFEuaVFWqqxGbq2LADD5q2x",
+  "pending": 0,
+  "results": [
+    {
+      "id": "0b92f45b12ad022ee57423c4ba31d571",
+      "seq": "10091-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVVLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWELAhySlJBmmJRBviADIkHmFICtgQEyMjsyRLC2INSQAZUo_wzk6wIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIN2Q7xknpJmkJRMkkELIAbthxr0EGKQmZlJiqkhSQYdgBh0Hxo-AmCDDI1Nk1KT0kgy6AHEIFgYLYFEuaVFWqqxGbq2LADCpK2w",
+      "doc": {
+        "_id": "0b92f45b12ad022ee57423c4ba31d571",
+        "_rev": "1-c8423565fcec17373056e631a77d28fe",
+        "created_at": "2017-10-17T14:22:34.336240372Z",
+        "dir_id": "io.cozy.files.root-dir",
+        "name": "foo",
+        "path": "/foo",
+        "tags": [],
+        "type": "directory",
+        "updated_at": "2017-10-17T14:22:34.336240372Z"
+      },
+      "changes": [
+        {
+          "rev": "1-c8423565fcec17373056e631a77d28fe"
+        }
+      ]
+    },
+    {
+      "id": "0b92f45b12ad022ee57423c4ba31cc0c",
+      "seq": "10092-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVVLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWELAhySlJBmmJRBviADIkHmFICtgQEyMjsyRLC2INSQAZUo_wzi6wIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIN2Q7xknpJmkJRMkkELIAbthxr0EGKQmZlJiqkhSQYdgBh0Hxo-AmCDDI1Nk1KT0kgy6AHEIFgYLYFEuaVFWqqxGbq2LADD5q2x",
+      "doc": {
+        "_id": "0b92f45b12ad022ee57423c4ba31cc0c",
+        "_rev": "2-e51fe3e9374d32653222472d895d5704",
+        "class": "files",
+        "created_at": "2017-10-17T14:22:33.660131282Z",
+        "dir_id": "io.cozy.files.trash-dir",
+        "executable": false,
+        "md5sum": "Bg5OnjC8ua5nWoAyioemhw==",
+        "mime": "application/octet-stream",
+        "name": "foo",
+        "restore_path": "/",
+        "size": "20",
+        "tags": [],
+        "trashed": true,
+        "type": "file",
+        "updated_at": "2017-10-17T14:22:33.660131282Z"
+      },
+      "changes": [
+        {
+          "rev": "2-e51fe3e9374d32653222472d895d5704"
+        }
+      ]
+    }
+  ]
+}
