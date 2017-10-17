@@ -10,29 +10,31 @@ const metadata = require('../../src/metadata')
 
 const { cozy } = require('./cozy')
 
-// TODO: Create one dir per scenario with an fsevents subdir
+const scenarioByPath = module.exports.scenarioByPath = scenarioPath => {
+  const name = path.basename(path.dirname(scenarioPath))
+  // $FlowFixMe
+  const scenario = require(scenarioPath)
+  scenario.name = name
+  scenario.path = scenarioPath
+
+  if (process.platform === 'win32' && scenario.expected && scenario.expected.prepCalls) {
+    for (let prepCall of scenario.expected.prepCalls) {
+      if (prepCall.src) {
+        prepCall.src = prepCall.src.split('/').join('\\').toUpperCase()
+        // @TODO why is src in maj
+      }
+      if (prepCall.path) prepCall.path = prepCall.path.split('/').join('\\')
+      if (prepCall.dst) prepCall.dst = prepCall.dst.split('/').join('\\')
+    }
+  }
+
+  return scenario
+}
+
+// TODO: Refactor to function
 module.exports.scenarios =
   glob.sync(path.join(__dirname, '../scenarios/**/scenario.js'), {})
-    .map(scenarioPath => {
-      const name = path.basename(path.dirname(scenarioPath))
-      // $FlowFixMe
-      const scenario = require(scenarioPath)
-      scenario.name = name
-      scenario.path = scenarioPath
-
-      if (process.platform === 'win32' && scenario.expected && scenario.expected.prepCalls) {
-        for (let prepCall of scenario.expected.prepCalls) {
-          if (prepCall.src) {
-            prepCall.src = prepCall.src.split('/').join('\\').toUpperCase()
-            // @TODO why is src in maj
-          }
-          if (prepCall.path) prepCall.path = prepCall.path.split('/').join('\\')
-          if (prepCall.dst) prepCall.dst = prepCall.dst.split('/').join('\\')
-        }
-      }
-
-      return scenario
-    })
+    .map(scenarioByPath)
 
 module.exports.loadFSEventFiles = (scenario) => {
   const eventFiles = glob.sync(path.join(path.dirname(scenario.path), 'local', '*.json'))
