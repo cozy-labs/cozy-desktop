@@ -1,0 +1,52 @@
+{
+  "last_seq": "10068-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVVLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWILAhySlJBmmJRBviADIkHmFIDNgQEyMjsyRLC2INSQAZUo_wzlawIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIN2QLxknpJmkJRMkkELIAbthxr0EGKQmZlJiqkhSQYdgBh0Hxo-XGCDDI1Nk1KT0kgy6AHEIFgYLYFEuaVFWqqxGbq2LACod62Z",
+  "pending": 0,
+  "results": [
+    {
+      "id": "0b92f45b12ad022ee57423c4ba317fbd",
+      "seq": "10067-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVVLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWILAhySlJBmmJRBviADIkHmFINNgQEyMjsyRLC2INSQAZUo_wzlawIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIN2QLxknpJmkJRMkkELIAbthxr0EGKQmZlJiqkhSQYdgBh0Hxo-XGCDDI1Nk1KT0kgy6AHEIFgYLYFEuaVFWqqxGbq2LACm8K2Y",
+      "doc": {
+        "_id": "0b92f45b12ad022ee57423c4ba317fbd",
+        "_rev": "1-f5b95c89012fac6239bd1e72f1b95487",
+        "class": "text",
+        "created_at": "2017-10-17T14:22:31.402625424Z",
+        "dir_id": "io.cozy.files.root-dir",
+        "executable": false,
+        "md5sum": "AIxZJsqGECPB0qNmU/2I4g==",
+        "mime": "text/plain",
+        "name": "foo",
+        "size": "8",
+        "tags": [],
+        "trashed": false,
+        "type": "file",
+        "updated_at": "2017-10-17T14:22:31.402625424Z"
+      },
+      "changes": [
+        {
+          "rev": "1-f5b95c89012fac6239bd1e72f1b95487"
+        }
+      ]
+    },
+    {
+      "id": "0b92f45b12ad022ee57423c4ba3176f8",
+      "seq": "10068-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVVLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWILAhySlJBmmJRBviADIkHmFIDNgQEyMjsyRLC2INSQAZUo_wzlawIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIN2QLxknpJmkJRMkkELIAbthxr0EGKQmZlJiqkhSQYdgBh0Hxo-XGCDDI1Nk1KT0kgy6AHEIFgYLYFEuaVFWqqxGbq2LACod62Z",
+      "doc": {
+        "_id": "0b92f45b12ad022ee57423c4ba3176f8",
+        "_rev": "2-61b798aa42aa99e35315bc138bcac70c",
+        "created_at": "2017-10-17T14:22:30.732768222Z",
+        "dir_id": "io.cozy.files.trash-dir",
+        "name": "foo",
+        "path": "/.cozy_trash/foo",
+        "restore_path": "/",
+        "tags": [],
+        "type": "directory",
+        "updated_at": "2017-10-17T14:22:30.732768222Z"
+      },
+      "changes": [
+        {
+          "rev": "2-61b798aa42aa99e35315bc138bcac70c"
+        }
+      ]
+    }
+  ]
+}

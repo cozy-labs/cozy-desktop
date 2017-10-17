@@ -1,0 +1,46 @@
+{
+  "last_seq": "10061-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVVLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWQLAhySlJBmmJRBviADIkHmFIBNgQEyMjsyRLC2INSQAZUo_wzlawIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIN2QLxknpJmkJRMkkELIAbthxp0H2KQmZlJiqkhSQYdgBh0Hxo-XGCDDI1Nk1KT0kgy6AHEIFgYLYFEuaVFWqqxGbq2LACfL62S",
+  "pending": 0,
+  "results": [
+    {
+      "id": "0b92f45b12ad022ee57423c4ba31699b",
+      "seq": "10060-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVVLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWQLAhySlJBmmJRBviADIkHmFIBNgQEyMjsyRLC2INSQAZUo_wzlawIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIN2QLxknpJmkJRMkkELIAbthxp0D2KQmZlJiqkhSQYdgBh0Hxo-XGCDDI1Nk1KT0kgy6AHEIFgYLYFEuaVFWqqxGbq2LACef62R",
+      "doc": {
+        "_id": "0b92f45b12ad022ee57423c4ba31699b",
+        "_rev": "1-76e0a66ea79dfcad7621984ae4bdb2e5",
+        "created_at": "2017-10-17T14:22:30.380918636Z",
+        "dir_id": "0b92f45b12ad022ee57423c4ba315a7f",
+        "name": "bar",
+        "path": "/foo/bar",
+        "tags": [],
+        "type": "directory",
+        "updated_at": "2017-10-17T14:22:30.380918636Z"
+      },
+      "changes": [
+        {
+          "rev": "1-76e0a66ea79dfcad7621984ae4bdb2e5"
+        }
+      ]
+    },
+    {
+      "id": "0b92f45b12ad022ee57423c4ba315a7f",
+      "seq": "10061-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVVLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWQLAhySlJBmmJRBviADIkHmFIBNgQEyMjsyRLC2INSQAZUo_wzlawIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIN2QLxknpJmkJRMkkELIAbthxp0H2KQmZlJiqkhSQYdgBh0Hxo-XGCDDI1Nk1KT0kgy6AHEIFgYLYFEuaVFWqqxGbq2LACfL62S",
+      "doc": {
+        "_id": "0b92f45b12ad022ee57423c4ba315a7f",
+        "_rev": "1-0a90ba4974c8d4f66646ff0512f3acd2",
+        "created_at": "2017-10-17T14:22:30.243183603Z",
+        "dir_id": "io.cozy.files.root-dir",
+        "name": "foo",
+        "path": "/foo",
+        "tags": [],
+        "type": "directory",
+        "updated_at": "2017-10-17T14:22:30.243183603Z"
+      },
+      "changes": [
+        {
+          "rev": "1-0a90ba4974c8d4f66646ff0512f3acd2"
+        }
+      ]
+    }
+  ]
+}

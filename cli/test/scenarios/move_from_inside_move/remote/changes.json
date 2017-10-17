@@ -1,0 +1,66 @@
+{
+  "last_seq": "10307-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgeVALlCMPc042dQkLRVdPQ4TkhSAZJI93BDWPLAhySlJBmmJRBviADIkHmFIC9gQEyMjsyRLC2INSQAZUo_wzk2wIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIPOQLxknpJmkJRMkkELIAbthxr0DWKQmZlJiqkhSQYdgBh0Hxo-2mCDDI1Nk1KT0kgy6AHEIFgYnYZEuaVFWqqxGbq2LACmaa6I",
+  "pending": 0,
+  "results": [
+    {
+      "id": "0b92f45b12ad022ee57423c4ba33e5e9",
+      "seq": "10305-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgeVALlCMPc042dQkLRVdPQ4TkhSAZJI93BDWPLAhySlJBmmJRBviADIkHmFIM9gQEyMjsyRLC2INSQAZUo_wzg2wIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIPOQLxknpJmkJRMkkELIAbthxr0DWKQmZlJiqkhSQYdgBh0Hxo-2mCDDI1Nk1KT0kgy6AHEIFgYnYZEuaVFWqqxGbq2LACjoK6G",
+      "doc": {
+        "_id": "0b92f45b12ad022ee57423c4ba33e5e9",
+        "_rev": "3-eddfa7e9a39cb2b8805816a19acfd3be",
+        "created_at": "2017-10-17T14:23:05.479912633Z",
+        "dir_id": "0b92f45b12ad022ee57423c4ba33c144",
+        "name": "subdir",
+        "path": "/parent/dst2/subdir",
+        "tags": [],
+        "type": "directory",
+        "updated_at": "2017-10-17T14:23:05.479912633Z"
+      },
+      "changes": [
+        {
+          "rev": "3-eddfa7e9a39cb2b8805816a19acfd3be"
+        }
+      ]
+    },
+    {
+      "id": "0b92f45b12ad022ee57423c4ba33d735",
+      "seq": "10306-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgeVALlCMPc042dQkLRVdPQ4TkhSAZJI93BDWPLAhySlJBmmJRBviADIkHmFIC9gQEyMjsyRLC2INSQAZUo_wzg2wIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIPOQLxknpJmkJRMkkELIAbthxr0DWKQmZlJiqkhSQYdgBh0Hxo-2mCDDI1Nk1KT0kgy6AHEIFgYnYZEuaVFWqqxGbq2LAClJ66H",
+      "doc": {
+        "_id": "0b92f45b12ad022ee57423c4ba33d735",
+        "_rev": "2-85e85a9907b2b0f22da86d767024b543",
+        "created_at": "2017-10-17T14:23:05.277756668Z",
+        "dir_id": "0b92f45b12ad022ee57423c4ba33ce52",
+        "name": "empty-subdir",
+        "path": "/parent/dst/dir/empty-subdir",
+        "tags": [],
+        "type": "directory",
+        "updated_at": "2017-10-17T14:23:05.277756668Z"
+      },
+      "changes": [
+        {
+          "rev": "2-85e85a9907b2b0f22da86d767024b543"
+        }
+      ]
+    },
+    {
+      "id": "0b92f45b12ad022ee57423c4ba33ce52",
+      "seq": "10307-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgeVALlCMPc042dQkLRVdPQ4TkhSAZJI93BDWPLAhySlJBmmJRBviADIkHmFIC9gQEyMjsyRLC2INSQAZUo_wzk2wIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIPOQLxknpJmkJRMkkELIAbthxr0DWKQmZlJiqkhSQYdgBh0Hxo-2mCDDI1Nk1KT0kgy6AHEIFgYnYZEuaVFWqqxGbq2LACmaa6I",
+      "doc": {
+        "_id": "0b92f45b12ad022ee57423c4ba33ce52",
+        "_rev": "2-5baf319ffb7130839ead5b03930bd4d5",
+        "created_at": "2017-10-17T14:23:05.071822461Z",
+        "dir_id": "0b92f45b12ad022ee57423c4ba33bf5e",
+        "name": "dir",
+        "path": "/parent/dst/dir",
+        "tags": [],
+        "type": "directory",
+        "updated_at": "2017-10-17T14:23:05.071822461Z"
+      },
+      "changes": [
+        {
+          "rev": "2-5baf319ffb7130839ead5b03930bd4d5"
+        }
+      ]
+    }
+  ]
+}

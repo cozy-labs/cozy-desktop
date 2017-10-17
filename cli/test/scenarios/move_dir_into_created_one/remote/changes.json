@@ -1,0 +1,46 @@
+{
+  "last_seq": "10149-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVVLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWVLAhySlJBmmJRBviADIkHmFIGtgQEyMjsyRLC2INSQAZUo_wziGwIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIP2QbxknpJmkJRMkkELIAbthxr0AmKQmZlJiqkhSQYdgBh0Hxo-kmCDDI1Nk1KT0kgy6AHEIFgYrYdEuaVFWqqxGbq2LAD8NK3q",
+  "pending": 0,
+  "results": [
+    {
+      "id": "0b92f45b12ad022ee57423c4ba3264cc",
+      "seq": "10148-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVVLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWVLAhySlJBmmJRBviADIkHmFIGtgQEyMjsyRLC2INSQAZUo_wziGwIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIP2QbxknpJmkJRMkkELIAbthxr0AmKQmZlJiqkhSQYdgBh0Hxo-EmCDDI1Nk1KT0kgy6AHEIFgYrYdEuaVFWqqxGbq2LAD7za3p",
+      "doc": {
+        "_id": "0b92f45b12ad022ee57423c4ba3264cc",
+        "_rev": "1-97db44ec8ab826ae35e6b2b61b7e778c",
+        "created_at": "2017-10-17T14:22:45.670245604Z",
+        "dir_id": "io.cozy.files.root-dir",
+        "name": "dir2",
+        "path": "/dir2",
+        "tags": [],
+        "type": "directory",
+        "updated_at": "2017-10-17T14:22:45.670245604Z"
+      },
+      "changes": [
+        {
+          "rev": "1-97db44ec8ab826ae35e6b2b61b7e778c"
+        }
+      ]
+    },
+    {
+      "id": "0b92f45b12ad022ee57423c4ba325c4f",
+      "seq": "10149-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVVLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWVLAhySlJBmmJRBviADIkHmFIGtgQEyMjsyRLC2INSQAZUo_wziGwIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIP2QbxknpJmkJRMkkELIAbthxr0AmKQmZlJiqkhSQYdgBh0Hxo-kmCDDI1Nk1KT0kgy6AHEIFgYrYdEuaVFWqqxGbq2LAD8NK3q",
+      "doc": {
+        "_id": "0b92f45b12ad022ee57423c4ba325c4f",
+        "_rev": "2-d75e688d501a7c0bd3fe548370c58183",
+        "created_at": "2017-10-17T14:22:45.044623356Z",
+        "dir_id": "0b92f45b12ad022ee57423c4ba3264cc",
+        "name": "dir1",
+        "path": "/dir2/dir1",
+        "tags": [],
+        "type": "directory",
+        "updated_at": "2017-10-17T14:22:45.044623356Z"
+      },
+      "changes": [
+        {
+          "rev": "2-d75e688d501a7c0bd3fe548370c58183"
+        }
+      ]
+    }
+  ]
+}
