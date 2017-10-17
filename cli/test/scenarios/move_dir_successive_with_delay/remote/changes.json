@@ -1,0 +1,66 @@
+{
+  "last_seq": "10207-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVzLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWDLAhySlJBmmJRBviADIkHmFIHtgQEyMjsyRLC2INSQAZUo_wzlGwIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIOOQLxknpJmkJRMkkELIAbthxr0FmKQmZlJiqkhSQYdgBh0Hxo-MmCDDI1Nk1KT0kgy6AHEoP8oXkuztEhLNTZD15YFADEvriQ",
+  "pending": 0,
+  "results": [
+    {
+      "id": "0b92f45b12ad022ee57423c4ba32efca",
+      "seq": "10203-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVzLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWDLAhySlJBmmJRBviADIkHmFIHtgQEyMjsyRLC2INSQAZUo_wzlGwIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIOOQLxknpJmkJRMkkELIAbthxr0FmKQmZlJiqkhSQYdgBh0Hxo-MmCDDI1Nk1KT0kgy6AHEIFgYHYBEuaVFWqqxGbq2LAAwt64g",
+      "doc": {
+        "_id": "0b92f45b12ad022ee57423c4ba32efca",
+        "_rev": "3-6bc039a7fe4b7bde87e56e510e94209c",
+        "created_at": "2017-10-17T14:22:51.057046463Z",
+        "dir_id": "0b92f45b12ad022ee57423c4ba32db27",
+        "name": "dir",
+        "path": "/parent/dst2/dir",
+        "tags": [],
+        "type": "directory",
+        "updated_at": "2017-10-17T14:22:51.057046463Z"
+      },
+      "changes": [
+        {
+          "rev": "3-6bc039a7fe4b7bde87e56e510e94209c"
+        }
+      ]
+    },
+    {
+      "id": "0b92f45b12ad022ee57423c4ba32f3ff",
+      "seq": "10206-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVzLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWDLAhySlJBmmJRBviADIkHmFIHtgQEyMjsyRLC2INSQAZUo_wzlGwIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIOOQLxknpJmkJRMkkELIAbthxr0FmKQmZlJiqkhSQYdgBh0Hxo-MmCDDI1Nk1KT0kgy6AHEIFgYHYZEuaVFWqqxGbq2LAAxEa4j",
+      "doc": {
+        "_id": "0b92f45b12ad022ee57423c4ba32f3ff",
+        "_rev": "3-eebd596147ca366987d759182384a6df",
+        "created_at": "2017-10-17T14:22:51.263061005Z",
+        "dir_id": "0b92f45b12ad022ee57423c4ba32efca",
+        "name": "empty-subdir",
+        "path": "/parent/dst2/dir/empty-subdir",
+        "tags": [],
+        "type": "directory",
+        "updated_at": "2017-10-17T14:22:51.263061005Z"
+      },
+      "changes": [
+        {
+          "rev": "3-eebd596147ca366987d759182384a6df"
+        }
+      ]
+    },
+    {
+      "id": "0b92f45b12ad022ee57423c4ba32f548",
+      "seq": "10207-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVzLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWDLAhySlJBmmJRBviADIkHmFIHtgQEyMjsyRLC2INSQAZUo_wzlGwIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIOOQLxknpJmkJRMkkELIAbthxr0FmKQmZlJiqkhSQYdgBh0Hxo-MmCDDI1Nk1KT0kgy6AHEoP8oXkuztEhLNTZD15YFADEvriQ",
+      "doc": {
+        "_id": "0b92f45b12ad022ee57423c4ba32f548",
+        "_rev": "3-0f387e44c17e16e3abcb06c04ad85173",
+        "created_at": "2017-10-17T14:22:51.464636944Z",
+        "dir_id": "0b92f45b12ad022ee57423c4ba32efca",
+        "name": "subdir",
+        "path": "/parent/dst2/dir/subdir",
+        "tags": [],
+        "type": "directory",
+        "updated_at": "2017-10-17T14:22:51.464636944Z"
+      },
+      "changes": [
+        {
+          "rev": "3-0f387e44c17e16e3abcb06c04ad85173"
+        }
+      ]
+    }
+  ]
+}

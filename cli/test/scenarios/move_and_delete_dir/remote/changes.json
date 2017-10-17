@@ -1,0 +1,27 @@
+{
+  "last_seq": "10100-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVVLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWULAhySlJBmmJRBviADIkHmFIGtgQEyMjsyRLC2INSQAZUo_wzm6wIakWZmnGqSZEGpLHAiQZGoAU0Jz5KAYlm6ekGSQlk2TQAohB-6EGPYQYZGZmkmJqSJJBByAG3YeGjwDYIENj06TUpDSSDHoAMQgWRisgUW5pkZZqbIauLQsAynqtuQ",
+  "pending": 0,
+  "results": [
+    {
+      "id": "0b92f45b12ad022ee57423c4ba31f696",
+      "seq": "10100-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVVLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWULAhySlJBmmJRBviADIkHmFIGtgQEyMjsyRLC2INSQAZUo_wzm6wIakWZmnGqSZEGpLHAiQZGoAU0Jz5KAYlm6ekGSQlk2TQAohB-6EGPYQYZGZmkmJqSJJBByAG3YeGjwDYIENj06TUpDSSDHoAMQgWRisgUW5pkZZqbIauLQsAynqtuQ",
+      "doc": {
+        "_id": "0b92f45b12ad022ee57423c4ba31f696",
+        "_rev": "3-48ca832b064a3688bae152188a165f2c",
+        "created_at": "2017-10-17T14:22:34.891576744Z",
+        "dir_id": "io.cozy.files.trash-dir",
+        "name": "subdir",
+        "path": "/.cozy_trash/subdir",
+        "restore_path": "/dst",
+        "tags": [],
+        "type": "directory",
+        "updated_at": "2017-10-17T14:22:34.891576744Z"
+      },
+      "changes": [
+        {
+          "rev": "3-48ca832b064a3688bae152188a165f2c"
+        }
+      ]
+    }
+  ]
+}

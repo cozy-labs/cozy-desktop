@@ -1,0 +1,32 @@
+{
+  "last_seq": "10110-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVVLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWKLAhySlJBmmJRBviADIkHmFIGtgQEyMjsyRLC2INSQAZUo_wzm6wIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIP2QLxknpJmkJRMkkELIAbthxr0EGKQmZlJiqkhSQYdgBh0Hxo-gmCDDI1Nk1KT0kgy6AHEIFgYrYZEuaVFWqqxGbq2LADVMK3D",
+  "pending": 0,
+  "results": [
+    {
+      "id": "0b92f45b12ad022ee57423c4ba3209e3",
+      "seq": "10110-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgWVVLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWKLAhySlJBmmJRBviADIkHmFIGtgQEyMjsyRLC2INSQAZUo_wzm6wIakWZmnGqSZEGpLHAiQZGoAU0Jz5UIP2QLxknpJmkJRMkkELIAbthxr0EGKQmZlJiqkhSQYdgBh0Hxo-gmCDDI1Nk1KT0kgy6AHEIFgYrYZEuaVFWqqxGbq2LADVMK3D",
+      "doc": {
+        "_id": "0b92f45b12ad022ee57423c4ba3209e3",
+        "_rev": "3-6d53ddf601c00a8708f31b3da8720745",
+        "class": "files",
+        "created_at": "2017-10-17T14:22:37.772622886Z",
+        "dir_id": "io.cozy.files.trash-dir",
+        "executable": false,
+        "md5sum": "Bg5OnjC8ua5nWoAyioemhw==",
+        "mime": "application/octet-stream",
+        "name": "file",
+        "restore_path": "/dst",
+        "size": "20",
+        "tags": [],
+        "trashed": true,
+        "type": "file",
+        "updated_at": "2017-10-17T14:22:37.772622886Z"
+      },
+      "changes": [
+        {
+          "rev": "3-6d53ddf601c00a8708f31b3da8720745"
+        }
+      ]
+    }
+  ]
+}
