@@ -1,46 +1,24 @@
-{
-  "last_seq": "10445-g1AAAAI7eJyVz00OgjAQBeCJYNSFZ9Aj8FMqrOQmytA2hCAscK830ZXX0FO4VHceoxZKJJKYwOZNMpn5kpcBwDQxGMzzIi8YD_MiKcp9ptajCHAhpUwTAwHM-07tJsKNPSJ49_6PgEuVuP4i47JGYoaWiHojYYVsWuRSI8RxKAZ-X2RbIYe2zrtGuE-Fy0lPJDdVwlEN5Zwa6KErrZiwMB4EnTV0bWrNNEQpYZ49CLpp6NlATg3ZroccxSDopSH5U00EvuAu7b6lH5azrhM",
-  "pending": 0,
-  "results": [
-    {
-      "id": "0b92f45b12ad022ee57423c4ba350563",
-      "seq": "10444-g1AAAAI7eJzLYWBg4MhgTmHgzcvPy09JdcjLz8gvLskBCjMlMiTJ____PyuDOYmBgeVaLlCMPc042dQkLRVdPQ4TkhSAZJI93BDWYrAhySlJBmmJRBviADIkHmHIMrAhJkZGZkmWFsQakgAypB7hnedgQ1ItzNKMU02INCSPBUgyNAApoDnzoQbdg3jJPCXNICmZJIMWQAzaD_UWJ8QgMzOTFFNDkgw6ADHoPtQgI7BBhsamSalJaSQZ9ABiECyM7kKi3NIiLdXYDF1bFgCWla4S",
-      "doc": {
-        "_id": "0b92f45b12ad022ee57423c4ba350563",
-        "_rev": "2-43f427a6410d3f3ce27945a3c3d5621a",
-        "created_at": "2017-10-17T14:27:42.30498936Z",
-        "dir_id": "0b92f45b12ad022ee57423c4ba351552",
-        "name": "dir1",
-        "path": "/dir2/dir1",
-        "tags": [],
-        "type": "directory",
-        "updated_at": "2017-10-17T14:27:42.30498936Z"
-      },
-      "changes": [
-        {
-          "rev": "2-43f427a6410d3f3ce27945a3c3d5621a"
-        }
-      ]
-    },
-    {
-      "id": "0b92f45b12ad022ee57423c4ba351552",
-      "seq": "10445-g1AAAAI7eJyVz00OgjAQBeCJYNSFZ9Aj8FMqrOQmytA2hCAscK830ZXX0FO4VHceoxZKJJKYwOZNMpn5kpcBwDQxGMzzIi8YD_MiKcp9ptajCHAhpUwTAwHM-07tJsKNPSJ49_6PgEuVuP4i47JGYoaWiHojYYVsWuRSI8RxKAZ-X2RbIYe2zrtGuE-Fy0lPJDdVwlEN5Zwa6KErrZiwMB4EnTV0bWrNNEQpYZ49CLpp6NlATg3ZroccxSDopSH5U00EvuAu7b6lH5azrhM",
-      "doc": {
-        "_id": "0b92f45b12ad022ee57423c4ba351552",
-        "_rev": "1-4e823ddf7c2eb422237f890a5193fc7c",
-        "created_at": "2017-10-17T14:27:42.947285194Z",
-        "dir_id": "io.cozy.files.root-dir",
-        "name": "dir2",
-        "path": "/dir2",
-        "tags": [],
-        "type": "directory",
-        "updated_at": "2017-10-17T14:27:42.947285194Z"
-      },
-      "changes": [
-        {
-          "rev": "1-4e823ddf7c2eb422237f890a5193fc7c"
-        }
-      ]
-    }
-  ]
-}
+[
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba37db2f",
+    "_rev": "2-9ef2bbb93b440d5afe74c7767887ccbd",
+    "created_at": "2017-10-17T16:31:53.198348548Z",
+    "dir_id": "0b92f45b12ad022ee57423c4ba37e265",
+    "name": "dir1",
+    "path": "/dir2/dir1",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-17T16:31:53.198348548Z"
+  },
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba37e265",
+    "_rev": "1-e9942f4b1b94ef23628c6d53b401d792",
+    "created_at": "2017-10-17T16:31:54.197013942Z",
+    "dir_id": "io.cozy.files.root-dir",
+    "name": "dir2",
+    "path": "/dir2",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-17T16:31:54.197013942Z"
+  }
+]
