@@ -158,8 +158,7 @@ export default class RemoteWatcher {
         this.events.emit('platform-incompatibilities', incompatibilities)
         return
       }
-    }
-    if (this.inRemoteTrash(doc)) {
+    } else {
       if (!was) {
         log.info({path}, `${docType} was created and trashed remotely`)
         return
