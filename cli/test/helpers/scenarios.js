@@ -20,7 +20,17 @@ module.exports.scenarios =
 module.exports.loadFSEventFiles = (scenario) => {
   const eventFiles = glob.sync(path.join(path.dirname(scenario.path), 'local', '*.json'))
   return eventFiles
-    .map(f => ({name: path.basename(f), events: fs.readJsonSync(f)}))
+    .map(f => ({
+      name: path.basename(f),
+      events: fs.readJsonSync(f)
+        .map(e => {
+          if (e.stats) {
+            e.stats.mtime = new Date(e.stats.mtime)
+            e.stats.ctime = new Date(e.stats.ctime)
+          }
+          return e
+        })
+    }))
 }
 
 module.exports.runActions = (scenario, abspath) => {
