@@ -59,6 +59,14 @@ module.exports.loadFSEventFiles = (scenario) => {
     })
 }
 
+module.exports.loadRemoteChangesFiles = (scenario) => {
+  const pattern = path.join(path.dirname(scenario.path), 'remote', '*.json')
+  return glob.sync(pattern).map(f => ({
+    name: path.basename(f),
+    changes: fs.readJsonSync(f)
+  }))
+}
+
 module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
   for (let {path: relpath, ino} of scenario.init) {
     const isOutside = relpath.startsWith('../outside')
