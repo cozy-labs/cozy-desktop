@@ -175,7 +175,7 @@ class Sync {
   async apply (change: Change): Promise<*> {
     let { doc, seq } = change
     const changeInfo = {path: doc.path, seq}
-    log.trace(changeInfo, 'Applying change...')
+    log.debug(changeInfo, 'Applying change...')
     log.trace({change})
 
     if (this.ignore.isIgnored(doc)) {

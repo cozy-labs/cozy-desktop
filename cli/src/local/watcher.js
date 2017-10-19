@@ -153,9 +153,9 @@ class LocalWatcher {
     }
 
     // to become prepareEvents
-    console.time('P')
+    log.trace('Prepare events...')
     const preparedEvents : ContextualizedChokidarFSEvent[] = await this.prepareEvents(events)
-    console.timeEnd('P')
+    log.trace('Done with events preparation.')
 
     // to become sortAndSquash
     const actions : PrepAction[] = this.sortAndSquash(preparedEvents)
@@ -252,7 +252,7 @@ class LocalWatcher {
       throw new Error(description)
     }
 
-    console.time('A')
+    log.trace('Analyze events...')
 
     const actionsByInode:Map<number, PrepAction> = new Map()
     const getActionByInode = (e) => {
@@ -360,16 +360,14 @@ class LocalWatcher {
         log.error({err, path: e.path})
         throw err
       }
-      if (process.env.DEBUG) console.log({actions, e})
+      if (process.env.DEBUG) log.trace({currentEvent: e, actions})
     }
 
-    console.timeEnd('A')
-    console.time('A2')
+    log.trace('Flatten actions map...')
 
     for (let a of actionsByInode.values()) actions.push(a)
 
-    console.timeEnd('A2')
-    console.time('B')
+    log.trace('Sort actions before squash...')
 
     actions.sort((a, b) => {
       if (a.type === 'PrepMoveFolder' || a.type === 'PrepMoveFile') {
@@ -384,15 +382,14 @@ class LocalWatcher {
         return 0
       }
     })
-    console.timeEnd('B')
-    console.time('C')
+
+    log.trace('Squash moves...')
 
     for (let i = 0; i < actions.length; i++) {
       let a = actions[i]
 
       if (a.type !== 'PrepMoveFolder' && a.type !== 'PrepMoveFile') break
       for (let j = i + 1; j < actions.length; j++) {
-        // console.log('i, j, a =', i, j, actions.map(prepAction.toString))
         let b = actions[j]
         if (b.type !== 'PrepMoveFolder' && b.type !== 'PrepMoveFile') break
 
@@ -401,13 +398,12 @@ class LocalWatcher {
         b.path.indexOf(a.path + path.sep) === 0 &&
         a.old && b.old &&
         b.old.path.indexOf(a.old.path + path.sep) === 0) {
-          // if (process.env.DEBUG) console.log('remove child ', prepAction.toString(b))
           actions.splice(j--, 1)
         }
       }
     }
-    console.timeEnd('C')
-    console.time('D')
+
+    log.trace('Final sort...')
 
     const sorter = (a, b) => {
       // if one action is a child of another, it takes priority
@@ -427,7 +423,8 @@ class LocalWatcher {
     }
 
     actions.sort(sorter)
-    console.timeEnd('D')
+
+    log.trace('Done with analysis.')
 
     return actions
   }

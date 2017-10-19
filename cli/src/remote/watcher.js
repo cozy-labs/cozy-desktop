@@ -92,13 +92,21 @@ export default class RemoteWatcher {
     const release = await this.pouch.lock()
 
     try {
+      log.trace('Contextualize and analyse changesfeed results...')
       for (let index = 0; index < docs.length; index++) {
         const doc = docs[index]
         const was: ?Metadata = await this.pouch.byRemoteIdMaybeAsync(doc._id)
         changes.push(this.identifyChange(doc, was, index, changes))
       }
+      log.trace('Done with analysis.')
+
+      log.trace('Sort changes...')
       remoteChange.sort(changes)
+
+      log.trace('Apply changes...')
       await this.applyAll(changes)
+
+      log.trace('Done with pull.')
     } finally {
       // TODO: Ensure lock is released
       release()
@@ -106,7 +114,7 @@ export default class RemoteWatcher {
   }
 
   identifyChange (doc: RemoteDoc|RemoteDeletion, was: ?Metadata, changeIndex: number, previousChanges: Change[]): Change {
-    log.trace({doc, was}, 'change received')
+    log.trace({path: was ? was.path : _.get(doc, 'path'), doc, was}, 'change received')
 
     if (doc._deleted) {
       if (was == null) {
@@ -201,6 +209,8 @@ export default class RemoteWatcher {
       // Squash moves
       for (let previousChangeIndex = 0; previousChangeIndex < changeIndex; previousChangeIndex++) {
         const previousChange = previousChanges[previousChangeIndex]
+        const previousDesc = `previous(${previousChange.type} ${_.get(previousChange, 'doc.path')})`
+        const currentDesc = `current(${change.type} ${change.doc.path})`
         if (remoteChange.isChildMove(change, previousChange)) {
           _.assign(previousChange, {
             type: 'IgnoredChange',
