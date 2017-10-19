@@ -34,7 +34,7 @@ describe('RemoteWatcher', function () {
     this.prep.config = this.config
     this.remoteCozy = new RemoteCozy(this.config)
     this.remoteCozy.client = new CozyClient({
-      cozyUrl: this.config.cozyUrl,
+      cozyURL: this.config.cozyUrl,
       token: process.env.COZY_STACK_TOKEN
     })
     this.events = new EventEmitter()
