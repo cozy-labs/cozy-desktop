@@ -85,6 +85,8 @@ export default class RemoteWatcher {
   async pullMany (docs: Array<RemoteDoc|RemoteDeletion>) {
     let failedDocs = []
 
+    const release = await this.prep.merge.pouch.lock()
+
     for (const doc of docs) {
       try {
         await this.pullOne(doc)
@@ -93,6 +95,8 @@ export default class RemoteWatcher {
         failedDocs.push(doc)
       }
     }
+
+    release()
 
     if (failedDocs.length > 0) {
       throw new Error(

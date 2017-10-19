@@ -127,6 +127,8 @@ class Sync {
   // Note: it is difficult to pick only one change at a time because pouch can
   // emit several docs in a row, and `limit: 1` seems to be not effective!
   async pop (): Promise<*> {
+    const release = await this.pouch.lock()
+
     const seq = await this.pouch.getLocalSeqAsync()
     let opts: Object = {
       limit: 1,
@@ -135,7 +137,7 @@ class Sync {
       filter: '_view',
       view: 'byPath'
     }
-    return new Promise((resolve, reject) => {
+    let res = new Promise((resolve, reject) => {
       this.pouch.db.changes(opts)
         .on('change', info => resolve(info))
         .on('error', err => reject(err))
@@ -161,6 +163,10 @@ class Sync {
             })
         })
     })
+
+    release()
+
+    return res
   }
 
   // Apply a change to both local and remote
