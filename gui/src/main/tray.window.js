@@ -52,7 +52,7 @@ module.exports = class TrayWM extends WindowManager {
 
   onBlur () {
     setTimeout(() => {
-      if (!this.win.isFocused() && !this.win.isDevToolsFocused()) this.win.close()
+      if (this.win && !this.win.isFocused() && !this.win.isDevToolsFocused()) this.win.close()
     }, 400)
   }
 
