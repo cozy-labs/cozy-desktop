@@ -429,7 +429,7 @@ class Merge {
         }
       }
     }
-    return this.trashFileAsync(side, was, doc)
+    await this.trashFileAsync(side, was, doc)
   }
 
   // Remove a file from PouchDB
