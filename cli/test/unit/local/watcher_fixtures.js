@@ -123,6 +123,11 @@ describe('LocalWatcher fixtures', () => {
       beforeEach('actions', () => runActions(scenario, abspath))
 
       for (let eventsFile of loadFSEventFiles(scenario)) {
+        if (process.platform === 'win32' && eventsFile.name.indexOf('win32') === -1) {
+          it.skip(`${eventsFile.name}`, () => {})
+          continue
+        }
+
         it(eventsFile.name, async function () {
           for (let e of eventsFile.events) {
             if (e.stats) {

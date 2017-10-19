@@ -2,6 +2,7 @@
 /* @flow */
 
 import fs from 'fs-extra'
+import _ from 'lodash'
 import path from 'path'
 import should from 'should'
 import sinon from 'sinon'
@@ -55,13 +56,22 @@ describe('test/scenarios/', () => {
       describe('local/', () => {
         if (scenario.init) {
           beforeEach('init', async function () {
-            await init(scenario, this.pouch, helpers.local.syncDir.abspath)
+            let relpathFix = _.identity
+            if (process.platform === 'win32' && this.currentTest.title.match(/win32/)) {
+              relpathFix = (relpath) => relpath.replace(/\//g, '\\').toUpperCase()
+            }
+            await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix)
           })
         }
 
         beforeEach('actions', () => runActions(scenario, helpers.local.syncDir.abspath))
 
         for (let eventsFile of loadFSEventFiles(scenario)) {
+          if (process.platform === 'win32' && eventsFile.name.indexOf('win32') === -1) {
+            it.skip(`${eventsFile.name}`, () => {})
+            continue
+          }
+
           it(eventsFile.name, async function () {
             await helpers.local.simulateEvents(eventsFile.events)
             await helpers.syncAll()
