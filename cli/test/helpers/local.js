@@ -100,6 +100,11 @@ export class LocalTestHelpers {
       .map(conflictHelpers.ellipsizeDate)
   }
 
+  async treeWithoutTrash () {
+    return (await this.tree())
+      .filter(p => !p.startsWith('/Trash/'))
+  }
+
   async simulateEvents (events: ChokidarFSEvent[]) {
     return this.local.watcher.onFlush(events)
   }
