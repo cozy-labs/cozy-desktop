@@ -168,6 +168,7 @@ class Sync {
   // In some cases, both sides have the change
   async apply (change: Change): Promise<*> {
     let { doc, seq } = change
+    console.log('Sync#apply', doc.path)
     const changeInfo = {path: doc.path, seq}
     log.trace(changeInfo, 'Applying change...')
     log.trace({change})

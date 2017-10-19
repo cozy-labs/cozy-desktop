@@ -40,6 +40,7 @@ class Prep {
   //   - the file path is present and valid
   //   - the checksum is valid, if present
   async addFileAsync (side: SideName, doc: Metadata) {
+    console.log('Prep#addFileAsync', doc.path)
     ensureValidPath(doc)
     ensureValidChecksum(doc)
 
@@ -53,6 +54,7 @@ class Prep {
   //   - the file path is present and valid
   //   - the checksum is valid, if present
   async updateFileAsync (side: SideName, doc: Metadata) {
+    console.log('Prep#updateFileAsync', doc.path)
     ensureValidPath(doc)
     ensureValidChecksum(doc)
 
@@ -65,6 +67,7 @@ class Prep {
   // Expectations:
   //   - the folder path is present and valid
   async putFolderAsync (side: SideName, doc: *) {
+    console.log('Prep#putFolderAsync', doc.path)
     ensureValidPath(doc)
 
     doc.docType = 'folder'
@@ -80,6 +83,7 @@ class Prep {
   //   - the two paths are not the same
   //   - the revision for the old file is present
   async moveFileAsync (side: SideName, doc: Metadata, was: Metadata) {
+    console.log('Prep#moveFileAsync', doc.path, was.path)
     const {path} = doc
     ensureValidPath(doc)
     ensureValidPath(was)
@@ -122,6 +126,7 @@ class Prep {
   //   - the two paths are not the same
   //   - the revision for the old folder is present
   async moveFolderAsync (side: SideName, doc: *, was: Metadata) {
+    console.log('Prep#moveFolderAsync', doc.path, was.path)
     const {path} = doc
     ensureValidPath(doc)
     ensureValidPath(was)
@@ -158,6 +163,7 @@ class Prep {
 
   // TODO add comments + tests
   async restoreFileAsync (side: SideName, was: Metadata, doc: Metadata) {
+    console.log('Prep#restoreFileAsync', was.path, doc.path)
     ensureValidPath(doc)
     ensureValidPath(was)
     ensureValidChecksum(doc)
@@ -172,6 +178,7 @@ class Prep {
 
   // TODO add comments + tests
   async restoreFolderAsync (side: SideName, was: Metadata, doc: Metadata) {
+    console.log('Prep#restoreFolderAsync', was.path, doc.path)
     ensureValidPath(doc)
     ensureValidPath(was)
 
@@ -185,6 +192,7 @@ class Prep {
 
   // TODO add comments + tests
   async trashFileAsync (side: SideName, was: *, doc: *) {
+    console.log('Prep#trashFileAsync', was.path, doc.path)
     ensureValidPath(was)
 
     if (!doc) {
@@ -205,6 +213,7 @@ class Prep {
 
   // TODO add comments + tests
   async trashFolderAsync (side: SideName, was: *, doc: *) {
+    console.log('Prep#trashFolderAsync', was.path, doc.path)
     ensureValidPath(was)
 
     if (!doc) {
@@ -225,6 +234,7 @@ class Prep {
   // Expectations:
   //   - the file path is present and valid
   async deleteFileAsync (side: SideName, doc: Metadata) {
+    console.log('Prep#deleteFileAsync', doc.path)
     ensureValidPath(doc)
 
     doc.docType = 'file'
@@ -236,6 +246,7 @@ class Prep {
   // Expectations:
   //   - the folder path is present and valid
   async deleteFolderAsync (side: SideName, doc: Metadata) {
+    console.log('Prep#deleteFolderAsync', doc.path)
     ensureValidPath(doc)
 
     doc.docType = 'folder'
