@@ -134,8 +134,7 @@ describe('test/scenarios/', () => {
       describe('remote/', () => {
         if (scenario.init) {
           beforeEach('init', async function () {
-            await remoteScenarioHelpers.createInitialTree(
-              scenario, cozyHelpers.cozy, this.pouch)
+            await init(scenario, this.pouch, helpers.local.syncDir.abspath, _.identity)
           })
         }
 
