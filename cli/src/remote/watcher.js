@@ -189,8 +189,7 @@ export default class RemoteWatcher {
     }
     if ((doc.docType === 'file') && (was.md5sum === doc.md5sum)) {
       log.info({path}, `${docType} was moved remotely`)
-      if (docType === 'file') return this.prep.moveFileAsync(SIDE, doc, was)
-      else return this.prep.moveFolderAsync(SIDE, doc, was)
+      return this.prep.moveFileAsync(SIDE, doc, was)
     }
     if (doc.docType === 'folder') {
       log.info({path}, `${docType} was possibly moved or renamed remotely`)
