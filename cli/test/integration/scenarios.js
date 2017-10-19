@@ -142,29 +142,20 @@ describe('test/scenarios/', () => {
           await remoteScenarioHelpers.runActions(scenario, cozyHelpers.cozy)
         })
 
-        for (let changesFile of loadRemoteChangesFiles(scenario)) {
-          it(changesFile.name, async function () {
-            console.log('simulate remote changes:', changesFile.changes)
-            try {
-              await helpers.remote.simulateChanges(changesFile.changes)
-            } catch (err) {
-              console.error(err)
-              throw err
-            }
-            console.log('sync all...')
-            await helpers.syncAll()
+        it('works', async function () {
+          await helpers.remote.pullChanges()
+          await helpers.syncAll()
 
-            console.log('look for scenario expectations...')
-            if (scenario.expected && scenario.expected.tree) {
-              console.log('gather expected remote & local data...')
-              // if (scenario.expected.prepCalls) {
-              //   should(prepCalls).deepEqual(scenario.expected.prepCalls)
-              // }
-              should(await helpers.local.tree())
-                .deepEqual(scenario.expected.tree)
-            }
-          }) // changes file test
-        } // for changes files
+          // console.log('look for scenario expectations...')
+          if (scenario.expected && scenario.expected.tree) {
+            // console.log('gather expected remote & local data...')
+            // if (scenario.expected.prepCalls) {
+            //   should(prepCalls).deepEqual(scenario.expected.prepCalls)
+            // }
+            should(await helpers.local.tree())
+              .deepEqual(scenario.expected.tree)
+          }
+        }) // changes file test
       }) // describe remote
     }) // scenario
   } // scenarios
