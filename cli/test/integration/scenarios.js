@@ -1,6 +1,7 @@
 /* eslint-env mocha */
 /* @flow */
 
+import Promise from 'bluebird'
 import fs from 'fs-extra'
 import _ from 'lodash'
 import path from 'path'
@@ -144,7 +145,9 @@ describe('test/scenarios/', () => {
 
         it('works', async function () {
           await helpers.remote.pullChanges()
-          await helpers.syncAll()
+          await Promise.each(scenario.actions, async () => {
+            await helpers.syncAll()
+          })
 
           // console.log('look for scenario expectations...')
           if (scenario.expected && scenario.expected.tree) {
