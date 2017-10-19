@@ -45,6 +45,8 @@ describe('test/scenarios/', () => {
                         'moveFileAsync', 'moveFolderAsync', 'deleteFolderAsync',
                         'trashFileAsync', 'trashFolderAsync',
                         'restoreFileAsync', 'restoreFolderAsync']) {
+      // $FlowFixMe
+      const origMethod = helpers.prep[method]
       sinon.stub(helpers.prep, method).callsFake(async (...args) => {
         const call: Object = {method}
         if (method.startsWith('move') || method.startsWith('restore')) {
@@ -59,8 +61,7 @@ describe('test/scenarios/', () => {
         prepCalls.push(call)
 
         // Call the actual method so we can make assertions on metadata & FS
-        // $FlowFixMe
-        helpers.prep[method].apply(helpers.prep, args)
+        origMethod.apply(helpers.prep, args)
       })
     }
 
