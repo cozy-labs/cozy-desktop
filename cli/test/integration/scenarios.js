@@ -155,7 +155,7 @@ describe('test/scenarios/', () => {
             // if (scenario.expected.prepCalls) {
             //   should(prepCalls).deepEqual(scenario.expected.prepCalls)
             // }
-            should(await helpers.local.tree())
+            should(await helpers.local.treeWithoutTrash())
               .deepEqual(scenario.expected.tree)
           }
         }) // changes file test
