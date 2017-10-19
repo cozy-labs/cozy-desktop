@@ -19,23 +19,42 @@ module.exports.scenarios =
       const scenario = require(scenarioPath)
       scenario.name = name
       scenario.path = scenarioPath
+
+      if (process.platform === 'win32' && scenario.expected && scenario.expected.prepCalls) {
+        for (let prepCall of scenario.expected.prepCalls) {
+          if (prepCall.src) {
+            prepCall.src = prepCall.src.split('/').join('\\').toUpperCase()
+            // @TODO why is src in maj
+          }
+          if (prepCall.path) prepCall.path = prepCall.path.split('/').join('\\')
+          if (prepCall.dst) prepCall.dst = prepCall.dst.split('/').join('\\')
+        }
+      }
+
       return scenario
     })
 
 module.exports.loadFSEventFiles = (scenario) => {
   const eventFiles = glob.sync(path.join(path.dirname(scenario.path), 'local', '*.json'))
   return eventFiles
-    .map(f => ({
-      name: path.basename(f),
-      events: fs.readJsonSync(f)
-        .map(e => {
-          if (e.stats) {
-            e.stats.mtime = new Date(e.stats.mtime)
-            e.stats.ctime = new Date(e.stats.ctime)
-          }
-          return e
-        })
-    }))
+    .map(f => {
+      const name = path.basename(f)
+      const events = fs.readJsonSync(f).map(e => {
+        if (e.stats) {
+          e.stats.mtime = new Date(e.stats.mtime)
+          e.stats.ctime = new Date(e.stats.ctime)
+        }
+        if (name.indexOf('win32') !== -1 && process.platform !== 'win32') {
+          e.path = e.path.replace(/\\/g, '/')
+        }
+        if (name.indexOf('win32') === -1 && process.platform === 'win32') {
+          e.path = e.path.replace(/\//g, '\\')
+        }
+        return e
+      })
+
+      return {name, events}
+    })
 }
 
 module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
@@ -49,6 +68,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
     const lastModifiedDate = new Date('2011-04-11T10:20:30Z')
     if (relpath.endsWith('/')) {
       relpath = _.trimEnd(relpath, '/') // XXX: Check in metadata.id?
+      relpath = relpathFix(relpath)
       await fs.ensureDir(abspath(relpath))
       const doc = {
         _id: metadata.id(relpath),
@@ -69,6 +89,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
       }
       await pouch.put(doc)
     } else {
+      relpath = relpathFix(relpath)
       const content = 'foo'
       const md5sum = 'rL0Y20zC+Fzt72VPzMSk2A=='
       await fs.outputFile(abspath(relpath), content)
