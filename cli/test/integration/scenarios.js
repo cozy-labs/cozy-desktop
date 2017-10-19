@@ -7,17 +7,19 @@ import path from 'path'
 import should from 'should'
 import sinon from 'sinon'
 
-import { scenarios, loadFSEventFiles, runActions, init } from '../helpers/scenarios'
+import { scenarios, loadFSEventFiles, loadRemoteChangesFiles, runActions, init } from '../helpers/scenarios'
 import configHelpers from '../helpers/config'
 import * as cozyHelpers from '../helpers/cozy'
 import { IntegrationTestHelpers } from '../helpers/integration'
 import pouchHelpers from '../helpers/pouch'
+import remoteScenarioHelpers from '../../dev/capture/remote'
 
 describe('test/scenarios/', () => {
   let helpers
 
   // Spies
   let sendToPrep
+  let prepCalls
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -37,6 +39,29 @@ describe('test/scenarios/', () => {
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozyHelpers.cozy)
     // TODO: Spy in IntegrationTestHelpers by default
     sendToPrep = sinon.spy(helpers.local.local.watcher, 'sendToPrep')
+    prepCalls = []
+
+    for (let method of ['addFileAsync', 'putFolderAsync', 'updateFileAsync',
+      'moveFileAsync', 'moveFolderAsync', 'deleteFolderAsync', 'trashFileAsync',
+      'trashFolderAsync', 'restoreFileAsync', 'restoreFolderAsync']) {
+      sinon.stub(helpers.prep, method).callsFake(async (...args) => {
+        const call: Object = {method}
+        if (method.startsWith('move') || method.startsWith('restore')) {
+          call.dst = args[1].path
+          call.src = args[2].path
+        } else if (method.startsWith('trash')) {
+          call.src = args[1].path
+          call.dst = args[2].path
+        } else {
+          call.path = args[1].path
+        }
+        prepCalls.push(call)
+
+        // Call the actual method so we can make assertions on metadata & FS
+        // $FlowFixMe
+        helpers.prep[method].apply(helpers.prep, args)
+      })
+    }
 
     // TODO: helpers.setup()
     await helpers.local.setupTrash()
@@ -102,7 +127,61 @@ describe('test/scenarios/', () => {
             // TODO: pull
           })
         } // event files
-      }) // local → remote
+      }) // local
+
+      describe('remote/', () => {
+        if (scenario.init) {
+          beforeEach('init', async function () {
+            await remoteScenarioHelpers.createInitialTree(
+              scenario, cozyHelpers.cozy, this.pouch)
+          })
+        }
+
+        beforeEach('actions', async () => {
+          await remoteScenarioHelpers.runActions(scenario, cozyHelpers.cozy)
+        })
+
+        for (let changesFile of loadRemoteChangesFiles(scenario)) {
+          it(changesFile.name, async function () {
+            console.log('simulate remote changes:', changesFile.changes)
+            try {
+              await helpers.remote.simulateChanges(changesFile.changes)
+            } catch (err) {
+              console.error(err)
+              throw err
+            }
+            console.log('sync all...')
+            await helpers.syncAll()
+
+            console.log('look for scenario expectations...')
+            if (scenario.expected) {
+              console.log('gather expected remote & local data...')
+              // if (scenario.expected.prepCalls) {
+              //   should(prepCalls).deepEqual(scenario.expected.prepCalls)
+              // }
+
+              // TODO: Make local/remote wording direction-independant
+              const expectedRemoteTree = scenario.expected.tree || scenario.expected.localTree
+              const expectedLocalTree = scenario.expected.tree || scenario.expected.remoteTree
+              delete scenario.expected.tree
+              delete scenario.expected.prepCalls // TODO: expect prep actions
+              delete scenario.expected.remoteTrash // TODO: Fake local trash
+              const actual = {}
+
+              if (expectedRemoteTree) {
+                scenario.expected.remoteTree = expectedRemoteTree
+                actual.remoteTree = await helpers.remote.treeWithoutTrash()
+              }
+              if (expectedLocalTree) {
+                scenario.expected.localTree = expectedLocalTree
+                actual.localTree = await helpers.local.tree()
+              }
+
+              should(actual).deepEqual(scenario.expected)
+            }
+          }) // changes file test
+        } // for changes files
+      }) // describe remote
     }) // scenario
   } // scenarios
 })
