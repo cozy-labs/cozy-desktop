@@ -192,7 +192,8 @@ export default class RemoteWatcher {
     }
     if (doc.docType === 'folder') {
       log.info({path}, `${docType} was possibly moved or renamed remotely`)
-      return this.prep.moveFolderAsync(SIDE, doc, was)
+      await this.prep.deleteFolderAsync(SIDE, was)
+      return this.prep.putFolderAsync(SIDE, doc)
     }
     // TODO: add unit test
     log.info({path}, `${docType} was possibly renamed remotely while updated locally`)
