@@ -10,6 +10,8 @@ const metadata = require('../../src/metadata')
 
 const { cozy } = require('./cozy')
 
+const debug = process.env.DEBUG ? console.log : () => {}
+
 const scenarioByPath = module.exports.scenarioByPath = scenarioPath => {
   const name = path.basename(path.dirname(scenarioPath))
   // $FlowFixMe
@@ -68,10 +70,13 @@ module.exports.loadRemoteChangesFiles = (scenario) => {
 }
 
 module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
+  debug('init')
   for (let {path: relpath, ino} of scenario.init) {
+    debug(relpath)
     const isOutside = relpath.startsWith('../outside')
     let remoteParent
     if (!isOutside) {
+      debug('retrieve remote parent...')
       const remoteParentPath = path.posix.join('/', path.posix.dirname(relpath))
       remoteParent = await cozy.files.statByPath(remoteParentPath)
     }
@@ -79,6 +84,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
     if (relpath.endsWith('/')) {
       relpath = _.trimEnd(relpath, '/') // XXX: Check in metadata.id?
       relpath = relpathFix(relpath)
+      debug('create local dir...')
       await fs.ensureDir(abspath(relpath))
       const doc = {
         _id: metadata.id(relpath),
@@ -90,6 +96,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
         sides: {local: 1, remote: 1}
       }
       if (!isOutside) {
+        debug('create remote dir...')
         const remoteDir = await cozy.files.createDirectory({
           name: path.basename(relpath),
           dirID: remoteParent._id,
@@ -97,11 +104,13 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
         })
         doc.remote = _.pick(remoteDir, ['_id', '_rev'])
       }
+      debug('create dir metadata...')
       await pouch.put(doc)
     } else {
       relpath = relpathFix(relpath)
       const content = 'foo'
       const md5sum = 'rL0Y20zC+Fzt72VPzMSk2A=='
+      debug('create local file...')
       await fs.outputFile(abspath(relpath), content)
       const doc = {
         _id: metadata.id(relpath),
@@ -118,6 +127,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
         sides: {local: 1, remote: 1}
       }
       if (!isOutside) {
+        debug('create remote file...')
         const remoteFile = await cozy.files.create(content, {
           name: path.basename(relpath),
           dirID: remoteParent._id,
@@ -127,13 +137,13 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
         })
         doc.remote = _.pick(remoteFile, ['_id', '_rev'])
       }
+      debug('create file metadata...')
       await pouch.put(doc)
     } // if relpath ...
   } // for (... of scenario.init)
 }
 
 module.exports.runActions = (scenario, abspath) => {
-  const debug = process.env.NODE_ENV !== 'test' || process.env.DEBUG != null ? console.log : () => {}
   debug(`actions:`)
   return Promise.each(scenario.actions, action => {
     switch (action.type) {
