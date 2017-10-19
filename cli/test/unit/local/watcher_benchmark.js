@@ -119,8 +119,8 @@ describe('LocalWatcher charge', () => {
   after('clean config', configHelpers.cleanConfig)
 
   describe('with 1000 events', () => {
-    it('takes less than 10s with 1000 events', async function () {
-      this.timeout(10000)
+    it('takes less than 30s with 1000 events', async function () {
+      this.timeout(30000)
       await watcher.onFlush(events)
     })
   })
