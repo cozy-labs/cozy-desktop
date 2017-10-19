@@ -156,30 +156,13 @@ describe('test/scenarios/', () => {
             await helpers.syncAll()
 
             console.log('look for scenario expectations...')
-            if (scenario.expected) {
+            if (scenario.expected && scenario.expected.tree) {
               console.log('gather expected remote & local data...')
               // if (scenario.expected.prepCalls) {
               //   should(prepCalls).deepEqual(scenario.expected.prepCalls)
               // }
-
-              // TODO: Make local/remote wording direction-independant
-              const expectedRemoteTree = scenario.expected.tree || scenario.expected.localTree
-              const expectedLocalTree = scenario.expected.tree || scenario.expected.remoteTree
-              delete scenario.expected.tree
-              delete scenario.expected.prepCalls // TODO: expect prep actions
-              delete scenario.expected.remoteTrash // TODO: Fake local trash
-              const actual = {}
-
-              if (expectedRemoteTree) {
-                scenario.expected.remoteTree = expectedRemoteTree
-                actual.remoteTree = await helpers.remote.treeWithoutTrash()
-              }
-              if (expectedLocalTree) {
-                scenario.expected.localTree = expectedLocalTree
-                actual.localTree = await helpers.local.tree()
-              }
-
-              should(actual).deepEqual(scenario.expected)
+              should(await helpers.local.tree())
+                .deepEqual(scenario.expected.tree)
             }
           }) // changes file test
         } // for changes files
