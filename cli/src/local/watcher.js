@@ -2,8 +2,7 @@
 
 import Promise from 'bluebird'
 import chokidar from 'chokidar'
-import _ from 'lodash'
-import fs from 'fs'
+import fs from 'fs-extra'
 import mime from 'mime'
 import path from 'path'
 
@@ -17,11 +16,13 @@ import Pouch from '../pouch'
 import Prep from '../prep'
 import { PendingMap } from '../utils/pending'
 import { maxDate } from '../timestamp'
-import { findOldDoc, findAndRemove } from './tools'
 
 import type { Checksumer } from './checksumer'
 import type { ChokidarFSEvent, ContextualizedChokidarFSEvent } from './chokidar_event'
-import type {PrepAction} from './prep_action'
+import type {
+  PrepAction, PrepAddFile, PrepPutFolder,
+  PrepDeleteFile, PrepDeleteFolder, PrepMoveFile, PrepMoveFolder
+} from './prep_action'
 import type { Metadata } from '../metadata'
 import type { Pending } from '../utils/pending' // eslint-disable-line
 
@@ -149,8 +150,6 @@ class LocalWatcher {
       await this.prependOfflineUnlinkEvents(events, initialScan)
 
       log.debug({initialEvents: events})
-      initialScan.resolve()
-      this.initialScan = null
     }
 
     // to become prepareEvents
@@ -160,6 +159,10 @@ class LocalWatcher {
     const actions : PrepAction[] = this.sortAndSquash(preparedEvents)
 
     await this.sendToPrep(actions)
+    if (initialScan != null) {
+      initialScan.resolve()
+      this.initialScan = null
+    }
   }
 
   async prependOfflineUnlinkEvents (events: ChokidarFSEvent[], initialScan: InitialScan) {
@@ -179,13 +182,42 @@ class LocalWatcher {
   async prepareEvents (events: ChokidarFSEvent[]) : Promise<ContextualizedChokidarFSEvent[]> {
     return Promise
       .all(events.map(async (e: ChokidarFSEvent): Promise<?ContextualizedChokidarFSEvent> => {
-        let e2: Object = {...e}
+        const abspath = path.join(this.syncPath, e.path)
+        const oldMetadata = async (e: ChokidarFSEvent): Promise<?Metadata> => {
+          switch (e.type) {
+            case 'unlink':
+            case 'unlinkDir':
+              try {
+                return await this.pouch.db.get(metadata.id(e.path))
+              } catch (err) {
+                if (err.status !== 404) log.error({err, event: e})
+              }
+          }
+          return null
+        }
+
+        const e2: Object = {
+          ...e,
+          old: await oldMetadata(e)
+        }
 
         if (e.type === 'add' || e.type === 'change') {
           try {
             e2.md5sum = await this.checksum(e.path)
           } catch (err) {
-            log.warn({err}, 'could not compute checksum')
+            // FIXME: err.code === EISDIR => keep the event? (e.g. rm foo && mkdir foo)
+            if (err.code.match(/ENOENT/)) {
+              log.debug(`Skipping file as it does not exist anymore: ${abspath}`)
+            } else {
+              log.warn({err}, `Could not compute checksum of file: ${abspath}`)
+            }
+            return null
+          }
+        }
+
+        if (e.type === 'addDir') {
+          if (!await fs.exists(abspath)) {
+            log.debug(`Skipping dir as it does not exist anymore: ${abspath}`)
             return null
           }
         }
@@ -195,7 +227,7 @@ class LocalWatcher {
           try {
             e2.sameChecksums = await this.pouch.byChecksumAsync(e2.md5sum)
           } catch (err) {
-            log.trace({err}, `no doc with checksum ${e2.md5sum}`)
+            log.debug({err}, `no doc with checksum ${e2.md5sum}`)
           }
         }
 
@@ -206,38 +238,111 @@ class LocalWatcher {
 
   sortAndSquash (events: ContextualizedChokidarFSEvent[]) : PrepAction[] {
     const actions: PrepAction[] = []
-    const pendingDeletions: ContextualizedChokidarFSEvent[] = []
 
-    for (let e of events) {
+    // TODO: Split by type and move to appropriate modules?
+    const getInode = (e: ContextualizedChokidarFSEvent): ?number => {
+      switch (e.type) {
+        case 'add':
+        case 'addDir':
+        case 'change':
+          return e.stats.ino
+        case 'unlink':
+        case 'unlinkDir':
+          if (e.old != null) return e.old.ino
+      }
+    }
+
+    const panic = (context, description) => {
+      log.error(context, description)
+      throw new Error(description)
+    }
+
+    for (let e: ContextualizedChokidarFSEvent of events) {
       try {
         switch (e.type) {
           case 'add':
-            const unlinkEvent = findAndRemove(pendingDeletions, e2 => e2.path === e.path)
-            if (unlinkEvent != null) actions.push(prepAction.fromChokidar(unlinkEvent))
+            {
+              const moveAction: ?PrepMoveFile = prepAction.find(actions, prepAction.maybeMoveFile, a => a.ino === getInode(e))
+              if (moveAction) {
+                panic({moveAction, event: e},
+                  'We should not have both move and add actions since ' +
+                  'checksumless adds and inode-less unlink events are dropped')
+              }
 
-            const old = findOldDoc(this.initialScan != null, e.sameChecksums, pendingDeletions)
-            if (old) {
-              actions.push(prepAction.build('MoveFile', e.path, e.stats, e.md5sum, old))
-            } else {
-              actions.push(prepAction.build('AddFile', e.path, e.stats, e.md5sum))
+              const unlinkAction: ?PrepDeleteFile = prepAction.findAndRemove(actions, prepAction.maybeDeleteFile, a => a.ino === getInode(e))
+              if (unlinkAction) {
+                // New move found
+                actions.push(prepAction.build('PrepMoveFile', e.path, {stats: e.stats, md5sum: e.md5sum, old: unlinkAction.old, ino: unlinkAction.ino}))
+              } else {
+                actions.push(prepAction.fromChokidar(e))
+              }
             }
             break
           case 'addDir':
-            // if no child pending deletion
-            // if (!find(pendingDeletions, p => path.dirname(p.path) === e.path)) {
-            const unlinkEventD = findAndRemove(pendingDeletions, e2 => e2.path === e.path)
-            if (unlinkEventD != null) actions.push(prepAction.fromChokidar(unlinkEventD))
-            // }//
-            actions.push(prepAction.build('AddDir', e.path, e.stats))
+            {
+              const moveAction: ?PrepMoveFolder = prepAction.find(actions, prepAction.maybeMoveFolder, a => a.ino === getInode(e))
+              if (moveAction) {
+                panic({moveAction, event: e},
+                  'We should not have both move and addDir actions since ' +
+                  'non-existing addDir and inode-less unlinkDir events are dropped')
+              }
+
+              const unlinkAction: ?PrepDeleteFolder = prepAction.findAndRemove(actions, prepAction.maybeDeleteFolder, a => a.ino === getInode(e))
+              if (unlinkAction) {
+                // New move found
+                actions.push(prepAction.build('PrepMoveFolder', e.path, {stats: e.stats, old: unlinkAction.old, ino: unlinkAction.ino}))
+              } else {
+                actions.push(prepAction.fromChokidar(e))
+              }
+            }
             break
           case 'change':
-            actions.push(prepAction.build('Change', e.path, e.stats, e.md5sum))
+            actions.push(prepAction.fromChokidar(e))
             break
           case 'unlink':
-            pendingDeletions.push(e)
+            {
+              const moveAction: ?PrepMoveFile = prepAction.findAndRemove(actions, prepAction.maybeMoveFile, a => a.ino === getInode(e))
+              if (moveAction) {
+                panic({moveAction, event: e},
+                  'We should not have both move and unlink actions since ' +
+                  'checksumless adds and inode-less unlink events are dropped')
+              }
+
+              const addAction: ?PrepAddFile = prepAction.findAndRemove(actions, prepAction.maybeAddFile, a => a.ino === getInode(e))
+              if (addAction) {
+                // New move found
+                actions.push(prepAction.build('PrepMoveFile', addAction.path, {
+                  stats: addAction.stats,
+                  md5sum: addAction.md5sum,
+                  old: e.old,
+                  ino: addAction.ino
+                }))
+              } else if (getInode(e)) {
+                actions.push(prepAction.fromChokidar(e))
+              } // else skip
+            }
             break
           case 'unlinkDir':
-            pendingDeletions.push(e)
+            {
+              const moveAction: ?PrepMoveFolder = prepAction.findAndRemove(actions, prepAction.maybeMoveFolder, a => a.ino === getInode(e))
+              if (moveAction) {
+                panic({moveAction, event: e},
+                  'We should not have both move and unlinkDir actions since ' +
+                  'non-existing addDir and inode-less unlinkDir events are dropped')
+              }
+
+              const addAction: ?PrepPutFolder = prepAction.findAndRemove(actions, prepAction.maybePutFolder, a => a.ino === getInode(e))
+              if (addAction) {
+                // New move found
+                actions.push(prepAction.build('PrepMoveFolder', addAction.path, {
+                  stats: addAction.stats,
+                  old: e.old,
+                  ino: addAction.ino
+                }))
+              } else if (getInode(e)) {
+                actions.push(prepAction.fromChokidar(e))
+              } // else skip
+            }
             break
           default:
             throw new TypeError(`Unknown event type: ${e.type}`)
@@ -246,19 +351,43 @@ class LocalWatcher {
         log.error({err, path: e.path})
         throw err
       }
+      if (process.env.DEBUG) console.log({actions, e})
     }
 
-    // To check : Dossier supprimé après ces enfants
-    // Détection de fichier
+    const sorter = (a, b) => {
+      // if one action is a child of another, it takes priority
+      if (prepAction.isChildAdd(a, b)) return -1
+      if (prepAction.isChildDelete(b, a)) return -1
+      if (prepAction.isChildAdd(b, a)) return 1
+      if (prepAction.isChildDelete(a, b)) return 1
 
-    const sortedDeletions = _.chain(pendingDeletions)
-      .sortBy('path')
-      .reverse()
-      .value()
+      // otherwise, order by add path
+      if (prepAction.lower(prepAction.addPath(a), prepAction.addPath(b))) return -1
+      if (prepAction.lower(prepAction.addPath(b), prepAction.addPath(a))) return 1
 
-    for (let p of sortedDeletions) {
-      actions.push(prepAction.fromChokidar(p))
+      // if there isnt 2 add paths, sort by del path
+      if (prepAction.lower(prepAction.delPath(b), prepAction.delPath(a))) return -1
+
+      return 1
     }
+
+    for (let i = 1; i < actions.length; i++) {
+      for (let j = 0; j < i; j++) {
+        if (process.env.DEBUG) console.log('i, j, a =', i, j, actions.map(prepAction.toString))
+        let a = actions[i]
+        let b = actions[j]
+        if (prepAction.isChildMove(a, b)) {
+          if (process.env.DEBUG) console.log('remove child ', prepAction.toString(b))
+          actions.splice(j--, 1)
+        } else if (prepAction.isChildMove(b, a)) {
+          if (process.env.DEBUG) console.log('remove child ', prepAction.toString(a))
+          actions.splice(i--, 1)
+        }
+      }
+    }
+
+    actions.sort(sorter)
+
     return actions
   }
 
@@ -271,23 +400,26 @@ class LocalWatcher {
       try {
         switch (a.type) {
           // TODO: Inline old LocalWatcher methods
-          case 'UnlinkDir':
+          case 'PrepDeleteFolder':
             await this.onUnlinkDir(a.path)
             break
-          case 'UnlinkFile':
+          case 'PrepDeleteFile':
             await this.onUnlinkFile(a.path)
             break
-          case 'AddDir':
+          case 'PrepPutFolder':
             await this.onAddDir(a.path, a.stats)
             break
-          case 'Change':
+          case 'PrepUpdateFile':
             await this.onChange(a.path, a.stats, a.md5sum)
             break
-          case 'AddFile':
+          case 'PrepAddFile':
             await this.onAddFile(a.path, a.stats, a.md5sum)
             break
-          case 'MoveFile':
+          case 'PrepMoveFile':
             await this.onMoveFile(a.path, a.stats, a.md5sum, a.old)
+            break
+          case 'PrepMoveFolder':
+            await this.onMoveFolder(a.path, a.stats, a.old)
             break
           default:
             throw new Error('wrong actions')
@@ -299,7 +431,7 @@ class LocalWatcher {
     }
 
     if (errors.length > 0) {
-      throw new Error(`Could not apply all actions to Prep:\n- ${errors.map(e => e.toString()).join('\n- ')}`)
+      throw new Error(`Could not apply all actions to Prep:\n- ${errors.map(e => e.stack).join('\n- ')}`)
     }
   }
 
@@ -345,6 +477,7 @@ class LocalWatcher {
 
   // An helper to create a document for a file
   // with checksum and mime informations
+  // TODO: Rename to buildFileMetadata?
   createDoc (filePath: string, stats: fs.Stats, md5sum: string) {
     const mimeType = mime.lookup(filePath)
     const {mtime, ctime} = stats
@@ -352,6 +485,7 @@ class LocalWatcher {
       path: filePath,
       docType: 'file',
       md5sum,
+      ino: stats.ino,
       updated_at: maxDate(mtime, ctime),
       mime: mimeType,
       class: mimeType.split('/')[0],
@@ -364,6 +498,15 @@ class LocalWatcher {
   async checksum (filePath: string): Promise<string> {
     const absPath = path.join(this.syncPath, filePath)
     return this.checksumer.push(absPath)
+  }
+
+  buildDirMetadata (path: string, stats: fs.Stats) {
+    return {
+      path,
+      docType: 'folder',
+      updated_at: stats.mtime,
+      ino: stats.ino
+    }
   }
 
   /* Actions */
@@ -383,13 +526,16 @@ class LocalWatcher {
     return this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
   }
 
+  onMoveFolder (folderPath: string, stats: fs.Stats, old: Metadata) {
+    const logError = (err) => log.error({err, path: folderPath})
+    const doc = this.buildDirMetadata(folderPath, stats)
+    log.info({path: folderPath}, `was moved from ${old.path}`)
+    return this.prep.moveFolderAsync(SIDE, doc, old).catch(logError)
+  }
+
   // New directory detected
   onAddDir (folderPath: string, stats: fs.Stats) {
-    const doc = {
-      path: folderPath,
-      docType: 'folder',
-      updated_at: stats.mtime
-    }
+    const doc = this.buildDirMetadata(folderPath, stats)
     log.info({path: folderPath}, 'folder added')
     return this.prep.putFolderAsync(SIDE, doc).catch(err => log.error({err, path: folderPath}))
   }

@@ -1,35 +1,95 @@
 /* @flow */
 
 import fs from 'fs'
-import type {Metadata} from '../metadata'
-import type {ContextualizedChokidarFSEvent} from './chokidar_event'
+import _ from 'lodash'
 
-export type UnlinkDir = {type: 'UnlinkDir', path: string}
-export type UnlinkFile = {type: 'UnlinkFile', path: string}
-export type AddDir = {type: 'AddDir', path: string, stats: fs.Stats}
-export type Change = {type: 'Change', path: string, stats: fs.Stats, md5sum: string}
-export type AddFile = {type: 'AddFile', path: string, stats: fs.Stats, md5sum: string}
-export type MoveFile = {type: 'AddFile', path: string, stats: fs.Stats, md5sum: string, old: Metadata}
+import type { Metadata } from '../metadata'
+import type { ContextualizedChokidarFSEvent } from './chokidar_event'
+
+export type PrepDeleteFolder = {type: 'PrepDeleteFolder', path: string, old: ?Metadata, ino: ?number}
+export type PrepDeleteFile = {type: 'PrepDeleteFile', path: string, old: ?Metadata, ino: ?number}
+export type PrepPutFolder = {type: 'PrepPutFolder', path: string, ino: number, stats: fs.Stats}
+export type PrepUpdateFile = {type: 'PrepUpdateFile', path: string, ino: number, stats: fs.Stats, md5sum: string}
+export type PrepAddFile = {type: 'PrepAddFile', path: string, ino: number, stats: fs.Stats, md5sum: string}
+export type PrepMoveFile = {type: 'PrepMoveFile', path: string, old: Metadata, ino: number, stats: fs.Stats, md5sum: string}
+export type PrepMoveFolder = {type: 'PrepMoveFolder', path: string, old: Metadata, ino: number, stats: fs.Stats}
 
 export type PrepAction =
-  | UnlinkDir
-  | UnlinkFile
-  | AddFile
-  | AddDir
-  | Change
+  | PrepDeleteFolder
+  | PrepDeleteFile
+  | PrepAddFile
+  | PrepPutFolder
+  | PrepUpdateFile
+  | PrepMoveFile
+  | PrepMoveFolder
 
-export const build = (type: string, path?: string, stats?: fs.Stats, md5sum?: string, old?: ?Metadata): PrepAction => {
-  const event: Object = {type, path, stats, md5sum, old}
+// TODO: Introduce specific builders?
+export const build = (type: string, path: string, opts?: {stats?: fs.Stats, md5sum?: string, old?: ?Metadata}): PrepAction => {
+  const event: Object = _.assign({type, path}, opts)
   return event
 }
 
+export const maybeAddFile = (a: PrepAction): ?PrepAddFile => a.type === 'PrepAddFile' ? a : null
+export const maybePutFolder = (a: PrepAction): ?PrepPutFolder => a.type === 'PrepPutFolder' ? a : null
+export const maybeMoveFile = (a: PrepAction): ?PrepMoveFile => a.type === 'PrepMoveFile' ? a : null
+export const maybeMoveFolder = (a: PrepAction): ?PrepMoveFolder => a.type === 'PrepMoveFolder' ? a : null
+export const maybeDeleteFile = (a: PrepAction): ?PrepDeleteFile => a.type === 'PrepDeleteFile' ? a : null
+export const maybeDeleteFolder = (a: PrepAction): ?PrepDeleteFolder => a.type === 'PrepDeleteFolder' ? a : null
+
+export const find = <T>(actions: PrepAction[], maybeRightType: (PrepAction) => ?T, predicate: (T) => boolean, remove?: true): ?T => {
+  for (let i = 0; i < actions.length; i++) {
+    const anyAction = actions[i]
+    const rightTypeAction: ?T = maybeRightType(anyAction)
+    if (rightTypeAction != null && predicate(rightTypeAction)) {
+      if (remove) actions.splice(i, 1)
+      return rightTypeAction
+    }
+  }
+}
+
+// TODO: Find by maybeType & inode?
+// TODO: Maybe split find and remove?
+export const findAndRemove = <T>(actions: PrepAction[], maybeRightType: (PrepAction) => ?T, predicate: (T) => boolean): ?T => {
+  return find(actions, maybeRightType, predicate, true)
+}
+
+export const isChildMove = (a: PrepAction, b: PrepAction) => {
+  return a.type === 'PrepMoveFolder' &&
+         (b.type === 'PrepMoveFolder' || b.type === 'PrepMoveFile') &&
+        b.path.indexOf(a.path) === 0 &&
+        a.old && b.old &&
+        b.old.path.indexOf(a.old.path) === 0
+}
+
+const isDelete = (a: PrepAction): boolean => a.type === 'PrepDeleteFolder' || a.type === 'PrepDeleteFile'
+const isAdd = (a: PrepAction): boolean => a.type === 'PrepPutFolder' || a.type === 'PrepAddFile'
+const isMove = (a: PrepAction): boolean => a.type === 'PrepMoveFolder' || a.type === 'PrepMoveFile'
+
+export const addPath = (a: PrepAction): ?string => isAdd(a) || isMove(a) ? a.path : null
+// $FlowFixMe
+export const delPath = (a: PrepAction): ?string => isDelete(a) ? a.path : isMove(a) ? a.old.path : null
+export const childOf = (p1: ?string, p2: ?string): boolean => p1 != null && p2 != null && p2 !== p1 && p2.startsWith(p1)
+export const lower = (p1: ?string, p2: ?string): boolean => p1 != null && p2 != null && p2 !== p1 && p1 < p2
+
+export const isChildDelete = (a: PrepAction, b: PrepAction) => childOf(delPath(a), delPath(b))
+export const isChildAdd = (a: PrepAction, b: PrepAction) => childOf(addPath(a), addPath(b))
+
+// $FlowFixMe
+export const toString = (a: PrepAction): string => '(' + a.type + ': ' + (a.old && a.old.path) + '-->' + a.path + ')'
+
 export const fromChokidar = (e: ContextualizedChokidarFSEvent) : PrepAction => {
   switch (e.type) {
-    case 'unlinkDir': return build('UnlinkDir', e.path)
-    case 'unlink': return build('UnlinkFile', e.path)
-    case 'addDir': return build('AddDir', e.path, e.stats)
-    case 'change': return build('Change', e.path, e.stats, e.md5sum)
-    case 'add': return build('AddFile', e.path, e.stats, e.md5sum)
-    default: throw new TypeError(`wrong type ${e.type}`) // @TODO FlowFixMe
+    case 'unlinkDir':
+      return {type: 'PrepDeleteFolder', path: e.path, old: e.old, ino: (e.old != null ? e.old.ino : null)}
+    case 'unlink':
+      return {type: 'PrepDeleteFile', path: e.path, old: e.old, ino: (e.old != null ? e.old.ino : null)}
+    case 'addDir':
+      return {type: 'PrepPutFolder', path: e.path, stats: e.stats, ino: e.stats.ino}
+    case 'change':
+      return {type: 'PrepUpdateFile', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum}
+    case 'add':
+      return {type: 'PrepAddFile', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum}
+    default:
+      throw new TypeError(`wrong type ${e.type}`) // @TODO FlowFixMe
   }
 }

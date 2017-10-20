@@ -34,76 +34,6 @@ class Prep {
     this.config = config
   }
 
-  /* Helpers */
-
-  // Simple helper to add a file or a folder
-  async addDocAsync (side: SideName, doc: Metadata) {
-    if (doc.docType === 'file') {
-      return this.addFileAsync(side, doc)
-    } else if (doc.docType === 'folder') {
-      return this.putFolderAsync(side, doc)
-    } else {
-      throw new Error(`Unexpected docType: ${doc.docType}`)
-    }
-  }
-
-  // Simple helper to update a file or a folder
-  async updateDocAsync (side: SideName, doc: Metadata) {
-    if (doc.docType === 'file') {
-      return this.updateFileAsync(side, doc)
-    } else if (doc.docType === 'folder') {
-      return this.putFolderAsync(side, doc)
-    } else {
-      throw new Error(`Unexpected docType: ${doc.docType}`)
-    }
-  }
-
-  // Helper to move/rename a file or a folder
-  async moveDocAsync (side: SideName, doc: Metadata, was: Metadata) {
-    if (doc.docType !== was.docType) {
-      throw new Error(`Incompatible docTypes: ${doc.docType}`)
-    } else if (doc.docType === 'file') {
-      return this.moveFileAsync(side, doc, was)
-    } else if (doc.docType === 'folder') {
-      return this.moveFolderAsync(side, doc, was)
-    } else {
-      throw new Error(`Unexpected docType: ${doc.docType}`)
-    }
-  }
-
-  // Simple helper to restore a file or a folder
-  async restoreDocAsync (side: SideName, was: Metadata, doc: Metadata) {
-    if (doc.docType === 'file') {
-      return this.restoreFileAsync(side, was, doc)
-    } else if (doc.docType === 'folder') {
-      return this.restoreFolderAsync(side, was, doc)
-    } else {
-      throw new Error(`Unexpected docType: ${doc.docType}`)
-    }
-  }
-
-  // Simple helper to trash a file or a folder
-  async trashDocAsync (side: SideName, was: Metadata, doc: ?Metadata) {
-    if (was.docType === 'file') {
-      return this.trashFileAsync(side, was, doc)
-    } else if (was.docType === 'folder') {
-      return this.trashFolderAsync(side, was, doc)
-    } else {
-      throw new Error(`Unexpected docType: ${was.docType}`)
-    }
-  }
-
-  // Simple helper to delete a file or a folder
-  async deleteDocAsync (side: SideName, doc: Metadata) {
-    if (doc.docType === 'file') {
-      return this.deleteFileAsync(side, doc)
-    } else if (doc.docType === 'folder') {
-      return this.deleteFolderAsync(side, doc)
-    } else {
-      throw new Error(`Unexpected docType: ${doc.docType}`)
-    }
-  }
-
   /* Actions */
 
   // Expectations:
@@ -191,7 +121,7 @@ class Prep {
   //   - the old folder path is present and valid
   //   - the two paths are not the same
   //   - the revision for the old folder is present
-  async moveFolderAsync (side: SideName, doc: Metadata, was: Metadata) {
+  async moveFolderAsync (side: SideName, doc: *, was: Metadata) {
     const {path} = doc
     ensureValidPath(doc)
     ensureValidPath(was)

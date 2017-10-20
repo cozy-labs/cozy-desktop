@@ -18,7 +18,7 @@ const OnboardingWM = require('./src/main/onboarding.window.js')
 
 const {selectIcon} = require('./src/main/fileutils')
 const {buildAppMenu} = require('./src/main/appmenu')
-const {autoUpdater} = require('./src/main/autoupdate')
+const autoUpdater = require('./src/main/autoupdate')
 const i18n = require('./src/main/i18n')
 const {translate} = i18n
 const {incompatibilitiesErrorMessage} = require('./src/main/incompatibilitiesmsg')
@@ -50,6 +50,8 @@ const showWindowStartApp = () => {
     if (desktop.config.isValid()) {
       setTimeout(() => onboardingWindow.send('registration-done'), 20)
     }
+  } else {
+    startSync()
   }
 }
 
@@ -183,7 +185,7 @@ const startSync = (force, ...args) => {
       })
     })
     desktop.events.on('delete-file', removeFile)
-    desktop.synchronize('full')
+    desktop.synchronize(desktop.config.config.mode)
       .then(() => sendErrorToMainWindow('stopped'))
       .catch((err) => {
         log.error(err)
