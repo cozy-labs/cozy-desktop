@@ -41,7 +41,7 @@
     "fauxton": "babel-node ./src/bin/fauxton.js",
     "flow": "flow status --quiet --show-all-errors",
     "lint": "npm run eslint && npm run flow",
-    "mocha": "env-cmd .env.test mocha",
+    "mocha": "cross-env COZY_DESKTOP_HEARTBEAT=1000 env-cmd .env.test mocha",
     "mocha:coverage": "env-cmd .env.test nyc mocha",
     "release:build": "yarn release:check && yarn && yarn run clean && yarn build",
     "release:check": "babel-node ./dev/check-release-branch.js",
