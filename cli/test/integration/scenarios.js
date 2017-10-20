@@ -62,7 +62,7 @@ describe('test/scenarios/', () => {
         prepCalls.push(call)
 
         // Call the actual method so we can make assertions on metadata & FS
-        origMethod.apply(helpers.prep, args)
+        return origMethod.apply(helpers.prep, args)
       })
     }
 
@@ -145,9 +145,10 @@ describe('test/scenarios/', () => {
 
         it('works', async function () {
           await helpers.remote.pullChanges()
-          await Promise.each(scenario.actions, async () => {
+          await helpers.syncAll()
+          for (let i = 0; i < scenario.actions.length + 2; i++) {
             await helpers.syncAll()
-          })
+          }
 
           // console.log('look for scenario expectations...')
           if (scenario.expected && scenario.expected.tree) {
