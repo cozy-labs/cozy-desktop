@@ -185,7 +185,7 @@ const startSync = (force, ...args) => {
       })
     })
     desktop.events.on('delete-file', removeFile)
-    desktop.synchronize('full')
+    desktop.synchronize(desktop.config.config.mode)
       .then(() => sendErrorToMainWindow('stopped'))
       .catch((err) => {
         log.error(err)
