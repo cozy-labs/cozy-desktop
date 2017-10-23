@@ -28,6 +28,7 @@ export type RemoteDoc = {
   path: string, // folder and file
   size?: string,
   tags: string[],
+  trashed?: true,
   type: string,
   updated_at: string
 }
