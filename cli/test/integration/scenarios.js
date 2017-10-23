@@ -149,8 +149,7 @@ describe('test/scenarios/', () => {
 
         it('works', async function () {
           await helpers.remote.pullChanges()
-          await helpers.syncAll()
-          for (let i = 0; i < scenario.actions.length + 2; i++) {
+          for (let i = 0; i < scenario.actions.length + 1; i++) {
             await helpers.syncAll()
           }
 
