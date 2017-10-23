@@ -135,6 +135,7 @@ describe('test/scenarios/', () => {
         if (scenario.init) {
           beforeEach('init', async function () {
             await init(scenario, this.pouch, helpers.local.syncDir.abspath, _.identity)
+            await helpers.remote.ignorePreviousChanges()
           })
         }
 
