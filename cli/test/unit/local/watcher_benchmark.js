@@ -76,6 +76,7 @@ describe('LocalWatcher charge', () => {
     return
   }
 
+  const N = 50 * 1000
   let watcher, prep
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
@@ -98,7 +99,7 @@ describe('LocalWatcher charge', () => {
 
   let events
   before('prepare FS', async function () {
-    let N = 1000
+    this.timeout(10 * 60 * 1000)
     const now = new Date()
     events = new Array(N)
     for (let i = 0; i < N; i++) {
@@ -123,9 +124,10 @@ describe('LocalWatcher charge', () => {
   after('destroy pouch', pouchHelpers.cleanDatabase)
   after('clean config', configHelpers.cleanConfig)
 
-  describe('with 1000 events', () => {
-    it('takes less than 30s with 1000 events', async function () {
-      this.timeout(30000)
+  describe(`with ${N} events`, function () {
+    this.timeout(10 * 60 * 1000)
+    it('takes less than 10min and does not crash', async function () {
+      this.timeout(10 * 60 * 1000)
       await watcher.onFlush(events)
     })
   })
