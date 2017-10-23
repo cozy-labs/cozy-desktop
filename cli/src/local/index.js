@@ -359,11 +359,15 @@ class Local implements Side {
 
   moveFolderAsync: (Metadata, Metadata) => Promise<*>
 
-  trashAsync (doc: Metadata): Promise<*> {
+  async trashAsync (doc: Metadata): Promise<*> {
     log.info({path: doc.path}, 'Moving to the OS trash...')
     this.events.emit('delete-file', doc)
     let fullpath = path.join(this.syncPath, doc.path)
-    return this._trash([fullpath])
+    try {
+      await this._trash([fullpath])
+    } catch (err) {
+      throw err
+    }
   }
 
   async deleteFolderAsync (doc: Metadata): Promise<*> {
@@ -379,7 +383,7 @@ class Local implements Side {
       if (err.code !== 'ENOTEMPTY') throw err
     }
     log.warn({path: doc.path}, 'Folder is not empty!')
-    return this.trashAsync(doc)
+    await this.trashAsync(doc)
   }
 
   // Rename a file/folder to resolve a conflict

@@ -74,7 +74,11 @@ export class LocalTestHelpers {
   async trashFunc (paths: string[]): Promise<void> {
     for (const src of paths) {
       const dst = path.join(this.trashPath, path.basename(src))
-      await fs.renameAsync(src, dst)
+      try {
+        await fs.renameAsync(src, dst)
+      } catch (err) {
+        throw err
+      }
     }
   }
 

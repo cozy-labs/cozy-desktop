@@ -52,14 +52,16 @@ export class IntegrationTestHelpers {
       view: 'byPath'
     })
 
-    console.log("sync wait lock")
     const release = await this._pouch.lock()
-    console.log("sync got lock")
-    for (let change of changes.results) {
-      await this._sync.apply(change)
+    try {
+      for (let change of changes.results) {
+        await this._sync.apply(change)
+      }
+      release()
+    } catch (err) {
+      release()
+      throw err
     }
-    console.log("sync release")
-    release()
   }
 
   spyPouch () {
