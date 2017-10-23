@@ -7,7 +7,7 @@ import { ensureValidPath, detectPlatformIncompatibilities } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import RemoteCozy from './cozy'
-import { TRASH_DIR_NAME } from './constants'
+import { inRemoteTrash } from './document'
 
 import type { Metadata } from '../metadata'
 import type { RemoteDoc, RemoteDeletion } from './document'
@@ -153,7 +153,7 @@ export default class RemoteWatcher {
     }
 
     // TODO: Move to Prep?
-    if (!this.inRemoteTrash(doc)) {
+    if (!inRemoteTrash(remote)) {
       const incompatibilities = detectPlatformIncompatibilities(
         doc,
         this.prep.config.syncPath
@@ -180,7 +180,7 @@ export default class RemoteWatcher {
       log.info({path}, `${docType} is up-to-date`)
       return
     }
-    if (!this.inRemoteTrash(doc) && was.trashed) {
+    if (!inRemoteTrash(remote) && was.trashed) {
       log.info({path}, `${docType} was restored remotely`)
       if (docType === 'file') return this.prep.restoreFileAsync(SIDE, doc, was)
       else return this.prep.restoreFolderAsync(SIDE, doc, was)
@@ -204,10 +204,6 @@ export default class RemoteWatcher {
     await this.removeRemote(was)
     if (docType === 'file') return this.prep.addFileAsync(SIDE, doc)
     else return this.prep.putFolderAsync(SIDE, doc)
-  }
-
-  inRemoteTrash (doc: Metadata): boolean {
-    return doc.trashed || doc.path.startsWith(TRASH_DIR_NAME)
   }
 
   // Remove the association between a document and its remote
