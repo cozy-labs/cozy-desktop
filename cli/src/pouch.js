@@ -133,8 +133,7 @@ class Pouch {
   byRecursivePath (basePath, callback) {
     let params
     if (basePath === '') {
-      params =
-                {include_docs: true}
+      params = {include_docs: true}
     } else {
       params = {
         startkey: `${basePath}`,
