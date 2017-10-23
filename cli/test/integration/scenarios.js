@@ -143,6 +143,11 @@ describe('test/scenarios/', () => {
           await remoteScenarioHelpers.runActions(scenario, cozyHelpers.cozy)
         })
 
+        if (scenario.name.indexOf('outside') !== -1) {
+          it.skip(`no outside on remote`, () => {})
+          return
+        }
+
         it('works', async function () {
           await helpers.remote.pullChanges()
           await helpers.syncAll()
