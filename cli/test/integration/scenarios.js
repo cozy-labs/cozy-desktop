@@ -153,9 +153,7 @@ describe('test/scenarios/', () => {
             await helpers.syncAll()
           }
 
-          // console.log('look for scenario expectations...')
           if (scenario.expected && scenario.expected.tree) {
-            // console.log('gather expected remote & local data...')
             // if (scenario.expected.prepCalls) {
             //   should(prepCalls).deepEqual(scenario.expected.prepCalls)
             // }
