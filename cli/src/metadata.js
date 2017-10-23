@@ -49,6 +49,10 @@ export type Metadata = {
   ino?: ?number
 }
 
+export const isFile = (doc: Metadata): bool => {
+  return doc.docType === 'file'
+}
+
 export let assignId: (doc: Metadata) => void = (_) => {}
 
 switch (process.platform) {
