@@ -155,9 +155,9 @@ describe('test/scenarios/', () => {
           }
 
           if (scenario.expected && scenario.expected.tree) {
-            // if (scenario.expected.prepCalls) {
-            //   should(prepCalls).deepEqual(scenario.expected.prepCalls)
-            // }
+            if (scenario.expected.prepCalls) {
+              should(prepCalls).deepEqual(scenario.expected.prepCalls)
+            }
             should(await helpers.local.treeWithoutTrash())
               .deepEqual(scenario.expected.tree)
           }
