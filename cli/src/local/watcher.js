@@ -237,7 +237,7 @@ class LocalWatcher {
   }
 
   sortAndSquash (events: ContextualizedChokidarFSEvent[]) : PrepAction[] {
-    const actions: PrepAction[] = []
+    const actions: PrepAction[] = new Array(events.length)
 
     // TODO: Split by type and move to appropriate modules?
     const getInode = (e: ContextualizedChokidarFSEvent): ?number => {
@@ -354,6 +354,40 @@ class LocalWatcher {
       if (process.env.DEBUG) console.log({actions, e})
     }
 
+    actions.sort((a, b) => {
+      if (a.type === 'PrepMoveFolder' || a.type === 'PrepMoveFile') {
+        if (b.type === 'PrepMoveFolder' || b.type === 'PrepMoveFolder') {
+          if (a.path < b.path) return -1
+          else if (a.path > b.path) return 1
+          else return 0
+        } else return -1
+      } else if (b.type === 'PrepMoveFolder' || b.type === 'PrepMoveFolder') {
+        return 1
+      } else {
+        return 0
+      }
+    })
+
+    for (let i = 0; i < actions.length; i++) {
+      let a = actions[i]
+
+      if (a.type !== 'PrepMoveFolder' && a.type !== 'PrepMoveFile') break
+      for (let j = i + 1; j < actions.length; j++) {
+        // console.log('i, j, a =', i, j, actions.map(prepAction.toString))
+        let b = actions[j]
+        if (b.type !== 'PrepMoveFolder' && b.type !== 'PrepMoveFile') break
+
+        // inline of PrepAction.isChildMove
+        if (a.type === 'PrepMoveFolder' &&
+        b.path.indexOf(a.path + path.sep) === 0 &&
+        a.old && b.old &&
+        b.old.path.indexOf(a.old.path + path.sep) === 0) {
+          // if (process.env.DEBUG) console.log('remove child ', prepAction.toString(b))
+          actions.splice(j--, 1)
+        }
+      }
+    }
+
     const sorter = (a, b) => {
       // if one action is a child of another, it takes priority
       if (prepAction.isChildAdd(a, b)) return -1
@@ -369,21 +403,6 @@ class LocalWatcher {
       if (prepAction.lower(prepAction.delPath(b), prepAction.delPath(a))) return -1
 
       return 1
-    }
-
-    for (let i = 1; i < actions.length; i++) {
-      for (let j = 0; j < i; j++) {
-        if (process.env.DEBUG) console.log('i, j, a =', i, j, actions.map(prepAction.toString))
-        let a = actions[i]
-        let b = actions[j]
-        if (prepAction.isChildMove(a, b)) {
-          if (process.env.DEBUG) console.log('remove child ', prepAction.toString(b))
-          actions.splice(j--, 1)
-        } else if (prepAction.isChildMove(b, a)) {
-          if (process.env.DEBUG) console.log('remove child ', prepAction.toString(a))
-          actions.splice(i--, 1)
-        }
-      }
     }
 
     actions.sort(sorter)
