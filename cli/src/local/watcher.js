@@ -153,7 +153,9 @@ class LocalWatcher {
     }
 
     // to become prepareEvents
+    console.time('P')
     const preparedEvents : ContextualizedChokidarFSEvent[] = await this.prepareEvents(events)
+    console.timeEnd('P')
 
     // to become sortAndSquash
     const actions : PrepAction[] = this.sortAndSquash(preparedEvents)
@@ -257,6 +259,8 @@ class LocalWatcher {
       throw new Error(description)
     }
 
+    console.time('A')
+
     for (let e: ContextualizedChokidarFSEvent of events) {
       try {
         switch (e.type) {
@@ -354,6 +358,9 @@ class LocalWatcher {
       if (process.env.DEBUG) console.log({actions, e})
     }
 
+    console.timeEnd('A')
+    console.time('B')
+
     actions.sort((a, b) => {
       if (a.type === 'PrepMoveFolder' || a.type === 'PrepMoveFile') {
         if (b.type === 'PrepMoveFolder' || b.type === 'PrepMoveFolder') {
@@ -367,6 +374,8 @@ class LocalWatcher {
         return 0
       }
     })
+    console.timeEnd('B')
+    console.time('C')
 
     for (let i = 0; i < actions.length; i++) {
       let a = actions[i]
@@ -387,6 +396,8 @@ class LocalWatcher {
         }
       }
     }
+    console.timeEnd('C')
+    console.time('D')
 
     const sorter = (a, b) => {
       // if one action is a child of another, it takes priority
@@ -406,6 +417,7 @@ class LocalWatcher {
     }
 
     actions.sort(sorter)
+    console.timeEnd('D')
 
     return actions
   }
