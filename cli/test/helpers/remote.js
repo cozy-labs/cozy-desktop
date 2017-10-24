@@ -72,7 +72,7 @@ export class RemoteTestHelpers {
       .value()
   }
 
-  async simulateChanges(docs: *) {
+  async simulateChanges (docs: *) {
     await this.remote.watcher.pullMany(docs)
   }
 }
