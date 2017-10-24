@@ -193,6 +193,10 @@ class LocalWatcher {
       return null
     }
 
+    // @PERFOPTIM ?
+    //   - db.allDocs(keys: events.pick(path))
+    //   - process.exec('md5sum ' + paths.join(' '))
+
     return Promise.map(events, async (e: ChokidarFSEvent): Promise<?ContextualizedChokidarFSEvent> => {
       const abspath = path.join(this.syncPath, e.path)
 
