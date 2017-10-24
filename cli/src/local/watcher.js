@@ -230,7 +230,7 @@ class LocalWatcher {
   }
 
   sortAndSquash (events: ContextualizedChokidarFSEvent[]) : PrepAction[] {
-    const actions: PrepAction[] = new Array(events.length)
+    const actions: PrepAction[] = [] // Perfsoptim : new Array(events.length)
 
     // TODO: Split by type and move to appropriate modules?
     const getInode = (e: ContextualizedChokidarFSEvent): ?number => {
