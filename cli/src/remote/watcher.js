@@ -2,6 +2,8 @@
 
 import * as conversion from '../conversion'
 import EventEmitter from 'events'
+import _ from 'lodash'
+
 import logger from '../logger'
 import { ensureValidPath, detectPlatformIncompatibilities } from '../metadata'
 import Pouch from '../pouch'
@@ -195,7 +197,26 @@ export default class RemoteWatcher {
       return {type: 'FileMoved', doc, was}
     }
     if (doc.docType === 'folder') {
-      return {type: 'FolderMoved', doc, was}
+      const change = {type: 'FolderMoved', doc, was}
+      // Squash moves
+      for (let previousChangeIndex = 0; previousChangeIndex < changeIndex; previousChangeIndex++) {
+        const previousChange = previousChanges[previousChangeIndex]
+        if (remoteChange.isChildMove(change, previousChange)) {
+          _.assign(previousChange, {
+            type: 'IgnoredChange',
+            detail: `Folder was moved as descendant of ${change.doc.path}`
+          })
+          continue
+        } else if (remoteChange.isChildMove(previousChange, change)) {
+          return {
+            type: 'IgnoredChange',
+            doc,
+            was,
+            detail: `Folder was moved as descendant of ${_.get(previousChange, 'doc.path')}`
+          }
+        }
+      }
+      return change
     }
     // TODO: add unit test
     log.info({path}, `${docType} was possibly renamed remotely while updated locally`)
