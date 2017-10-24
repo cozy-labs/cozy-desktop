@@ -578,11 +578,11 @@ describe('RemoteWatcher', function () {
     })
   })
 
-  describe('removeRemote', function () {
+  describe('dissociateFromRemote', function () {
     it('remove the association between a document and its remote', async function () {
       let doc = {
-        _id: 'removeRemote',
-        path: 'removeRemote',
+        _id: 'dissociateFromRemote',
+        path: 'dissociateFromRemote',
         docType: 'file',
         md5sum: 'd3e2163ccd0c497969233a6bd2a4ac843fb8165e',
         updated_at: '2015-09-29T14:13:33.384Z',
@@ -599,7 +599,7 @@ describe('RemoteWatcher', function () {
       await this.pouch.db.put(doc)
       const was = await this.pouch.db.get(doc._id)
 
-      await this.watcher.removeRemote(was)
+      await this.watcher.dissociateFromRemote(was)
 
       const actual = await this.pouch.db.get(doc._id)
       should.not.exist(actual.sides.remote)
