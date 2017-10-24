@@ -182,20 +182,19 @@ class LocalWatcher {
   }
 
   async prepareEvents (events: ChokidarFSEvent[]) : Promise<ContextualizedChokidarFSEvent[]> {
+    const oldMetadata = async (e: ChokidarFSEvent): Promise<?Metadata> => {
+      if (e.type === 'unlink' || e.type === 'unlinkDir') {
+        try {
+          return await this.pouch.db.get(metadata.id(e.path))
+        } catch (err) {
+          if (err.status !== 404) log.error({err, event: e})
+        }
+      }
+      return null
+    }
+
     return Promise.map(events, async (e: ChokidarFSEvent): Promise<?ContextualizedChokidarFSEvent> => {
       const abspath = path.join(this.syncPath, e.path)
-      const oldMetadata = async (e: ChokidarFSEvent): Promise<?Metadata> => {
-        switch (e.type) {
-          case 'unlink':
-          case 'unlinkDir':
-            try {
-              return await this.pouch.db.get(metadata.id(e.path))
-            } catch (err) {
-              if (err.status !== 404) log.error({err, event: e})
-            }
-        }
-        return null
-      }
 
       const e2: Object = {
         ...e,
