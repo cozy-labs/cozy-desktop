@@ -182,51 +182,50 @@ class LocalWatcher {
   }
 
   async prepareEvents (events: ChokidarFSEvent[]) : Promise<ContextualizedChokidarFSEvent[]> {
-    return Promise
-      .all(events.map(async (e: ChokidarFSEvent): Promise<?ContextualizedChokidarFSEvent> => {
-        const abspath = path.join(this.syncPath, e.path)
-        const oldMetadata = async (e: ChokidarFSEvent): Promise<?Metadata> => {
-          switch (e.type) {
-            case 'unlink':
-            case 'unlinkDir':
-              try {
-                return await this.pouch.db.get(metadata.id(e.path))
-              } catch (err) {
-                if (err.status !== 404) log.error({err, event: e})
-              }
+    return Promise.map(events, async (e: ChokidarFSEvent): Promise<?ContextualizedChokidarFSEvent> => {
+      const abspath = path.join(this.syncPath, e.path)
+      const oldMetadata = async (e: ChokidarFSEvent): Promise<?Metadata> => {
+        switch (e.type) {
+          case 'unlink':
+          case 'unlinkDir':
+            try {
+              return await this.pouch.db.get(metadata.id(e.path))
+            } catch (err) {
+              if (err.status !== 404) log.error({err, event: e})
+            }
+        }
+        return null
+      }
+
+      const e2: Object = {
+        ...e,
+        old: await oldMetadata(e)
+      }
+
+      if (e.type === 'add' || e.type === 'change') {
+        try {
+          e2.md5sum = await this.checksum(e.path)
+        } catch (err) {
+          // FIXME: err.code === EISDIR => keep the event? (e.g. rm foo && mkdir foo)
+          if (err.code.match(/ENOENT/)) {
+            log.debug(`Skipping file as it does not exist anymore: ${abspath}`)
+          } else {
+            log.warn({err}, `Could not compute checksum of file: ${abspath}`)
           }
           return null
         }
+      }
 
-        const e2: Object = {
-          ...e,
-          old: await oldMetadata(e)
+      if (e.type === 'addDir') {
+        if (!await fs.exists(abspath)) {
+          log.debug(`Skipping dir as it does not exist anymore: ${abspath}`)
+          return null
         }
+      }
 
-        if (e.type === 'add' || e.type === 'change') {
-          try {
-            e2.md5sum = await this.checksum(e.path)
-          } catch (err) {
-            // FIXME: err.code === EISDIR => keep the event? (e.g. rm foo && mkdir foo)
-            if (err.code.match(/ENOENT/)) {
-              log.debug(`Skipping file as it does not exist anymore: ${abspath}`)
-            } else {
-              log.warn({err}, `Could not compute checksum of file: ${abspath}`)
-            }
-            return null
-          }
-        }
-
-        if (e.type === 'addDir') {
-          if (!await fs.exists(abspath)) {
-            log.debug(`Skipping dir as it does not exist anymore: ${abspath}`)
-            return null
-          }
-        }
-
-        return e2
-      }))
-      .filter((e: ?ContextualizedChokidarFSEvent) => e != null)
+      return e2
+    }, {concurrency: 50})
+    .filter((e: ?ContextualizedChokidarFSEvent) => e != null)
   }
 
   sortAndSquash (events: ContextualizedChokidarFSEvent[]) : PrepAction[] {
