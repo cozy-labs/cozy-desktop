@@ -90,9 +90,10 @@ export default class RemoteWatcher {
     const release = await this.pouch.lock()
 
     try {
-      for (const doc of docs) {
+      for (let index = 0; index < docs.length; index++) {
+        const doc = docs[index]
         const was: ?Metadata = await this.pouch.byRemoteIdMaybeAsync(doc._id)
-        changes.push(this.identifyChange(doc, was))
+        changes.push(this.identifyChange(doc, was, index, changes))
       }
       remoteChange.sort(changes)
       await this.applyAll(changes)
@@ -102,7 +103,7 @@ export default class RemoteWatcher {
     }
   }
 
-  identifyChange (doc: RemoteDoc|RemoteDeletion, was: ?Metadata): Change {
+  identifyChange (doc: RemoteDoc|RemoteDeletion, was: ?Metadata, changeIndex: number, previousChanges: Change[]): Change {
     log.trace({doc, was}, 'change received')
 
     if (doc._deleted) {
@@ -129,7 +130,7 @@ export default class RemoteWatcher {
           detail: 'Ignoring temporary file'
         }
       } else {
-        return this.identifyExistingDocChange(doc, was)
+        return this.identifyExistingDocChange(doc, was, changeIndex, previousChanges)
       }
     }
   }
@@ -142,7 +143,7 @@ export default class RemoteWatcher {
   // Note that the changes feed can aggregate several changes for many changes
   // for the same document. For example, if a file is created and then put in
   // the trash just after, it looks like it appeared directly on the trash.
-  identifyExistingDocChange (remote: RemoteDoc, was: ?Metadata): * {
+  identifyExistingDocChange (remote: RemoteDoc, was: ?Metadata, changeIndex: number, previousChanges: Change[]): * {
     let doc: Metadata = conversion.createMetadata(remote)
     try {
       ensureValidPath(doc)
