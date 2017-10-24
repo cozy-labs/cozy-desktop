@@ -7,7 +7,7 @@ import path from 'path'
 import should from 'should'
 import sinon from 'sinon'
 
-import { scenarios, loadFSEventFiles, loadRemoteChangesFiles, runActions, init } from '../helpers/scenarios'
+import { scenarios, loadFSEventFiles, runActions, init } from '../helpers/scenarios'
 import configHelpers from '../helpers/config'
 import * as cozyHelpers from '../helpers/cozy'
 import { IntegrationTestHelpers } from '../helpers/integration'
