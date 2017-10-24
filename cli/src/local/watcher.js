@@ -252,90 +252,102 @@ class LocalWatcher {
 
     console.time('A')
 
+    const actionsByInode:Map<number, PrepAction> = new Map()
+    const getActionByInode = (e) => {
+      const ino = getInode(e)
+      if (ino) return actionsByInode.get(ino)
+      else return null
+    }
+    const getAndRemove = getActionByInode
+    const pushAction = (a: PrepAction) => {
+      if (a.ino) actionsByInode.set(a.ino, a)
+      else actions.push(a)
+    }
+
     for (let e: ContextualizedChokidarFSEvent of events) {
       try {
         switch (e.type) {
           case 'add':
             {
-              const moveAction: ?PrepMoveFile = prepAction.find(actions, prepAction.maybeMoveFile, a => a.ino === getInode(e))
+              const moveAction: ?PrepMoveFile = prepAction.maybeMoveFile(getActionByInode(e))
               if (moveAction) {
                 panic({moveAction, event: e},
                   'We should not have both move and add actions since ' +
                   'checksumless adds and inode-less unlink events are dropped')
               }
 
-              const unlinkAction: ?PrepDeleteFile = prepAction.findAndRemove(actions, prepAction.maybeDeleteFile, a => a.ino === getInode(e))
+              const unlinkAction: ?PrepDeleteFile = prepAction.maybeDeleteFile(getAndRemove(e))
               if (unlinkAction) {
                 // New move found
-                actions.push(prepAction.build('PrepMoveFile', e.path, {stats: e.stats, md5sum: e.md5sum, old: unlinkAction.old, ino: unlinkAction.ino}))
+                pushAction(prepAction.build('PrepMoveFile', e.path, {stats: e.stats, md5sum: e.md5sum, old: unlinkAction.old, ino: unlinkAction.ino}))
               } else {
-                actions.push(prepAction.fromChokidar(e))
+                pushAction(prepAction.fromChokidar(e))
               }
             }
             break
           case 'addDir':
             {
-              const moveAction: ?PrepMoveFolder = prepAction.find(actions, prepAction.maybeMoveFolder, a => a.ino === getInode(e))
+              const moveAction: ?PrepMoveFolder = prepAction.maybeMoveFolder(getActionByInode(e))
               if (moveAction) {
                 panic({moveAction, event: e},
                   'We should not have both move and addDir actions since ' +
                   'non-existing addDir and inode-less unlinkDir events are dropped')
               }
 
-              const unlinkAction: ?PrepDeleteFolder = prepAction.findAndRemove(actions, prepAction.maybeDeleteFolder, a => a.ino === getInode(e))
+              const unlinkAction: ?PrepDeleteFolder = prepAction.maybeDeleteFolder(getAndRemove(e))
               if (unlinkAction) {
                 // New move found
-                actions.push(prepAction.build('PrepMoveFolder', e.path, {stats: e.stats, old: unlinkAction.old, ino: unlinkAction.ino}))
+                pushAction(prepAction.build('PrepMoveFolder', e.path, {stats: e.stats, old: unlinkAction.old, ino: unlinkAction.ino}))
               } else {
-                actions.push(prepAction.fromChokidar(e))
+                pushAction(prepAction.fromChokidar(e))
               }
             }
             break
           case 'change':
-            actions.push(prepAction.fromChokidar(e))
+            pushAction(prepAction.fromChokidar(e))
             break
           case 'unlink':
             {
-              const moveAction: ?PrepMoveFile = prepAction.findAndRemove(actions, prepAction.maybeMoveFile, a => a.ino === getInode(e))
+              const moveAction: ?PrepMoveFile = prepAction.maybeMoveFile(getAndRemove(e))
               if (moveAction) {
                 panic({moveAction, event: e},
                   'We should not have both move and unlink actions since ' +
                   'checksumless adds and inode-less unlink events are dropped')
               }
 
-              const addAction: ?PrepAddFile = prepAction.findAndRemove(actions, prepAction.maybeAddFile, a => a.ino === getInode(e))
+              const addAction: ?PrepAddFile = prepAction.maybeAddFile(getAndRemove(e))
               if (addAction) {
                 // New move found
-                actions.push(prepAction.build('PrepMoveFile', addAction.path, {
+                pushAction(prepAction.build('PrepMoveFile', addAction.path, {
                   stats: addAction.stats,
                   md5sum: addAction.md5sum,
                   old: e.old,
                   ino: addAction.ino
                 }))
               } else if (getInode(e)) {
-                actions.push(prepAction.fromChokidar(e))
+                pushAction(prepAction.fromChokidar(e))
               } // else skip
             }
             break
           case 'unlinkDir':
             {
-              const moveAction: ?PrepMoveFolder = prepAction.findAndRemove(actions, prepAction.maybeMoveFolder, a => a.ino === getInode(e))
+              const moveAction: ?PrepMoveFolder = prepAction.maybeMoveFolder(getAndRemove(e))
               if (moveAction) {
                 panic({moveAction, event: e},
                   'We should not have both move and unlinkDir actions since ' +
                   'non-existing addDir and inode-less unlinkDir events are dropped')
               }
 
-              const addAction: ?PrepPutFolder = prepAction.findAndRemove(actions, prepAction.maybePutFolder, a => a.ino === getInode(e))
+              const addAction: ?PrepPutFolder = prepAction.maybePutFolder(getAndRemove(e))
               if (addAction) {
                 // New move found
-                actions.push(prepAction.build('PrepMoveFolder', addAction.path, {
+                pushAction(prepAction.build('PrepMoveFolder', addAction.path, {
                   stats: addAction.stats,
                   old: e.old,
                   ino: addAction.ino
                 }))
               } else if (getInode(e)) {
-                actions.push(prepAction.fromChokidar(e))
+                pushAction(prepAction.fromChokidar(e))
               } // else skip
             }
             break
@@ -350,6 +362,11 @@ class LocalWatcher {
     }
 
     console.timeEnd('A')
+    console.time('A2')
+
+    for (let a of actionsByInode.values()) actions.push(a)
+
+    console.timeEnd('A2')
     console.time('B')
 
     actions.sort((a, b) => {
