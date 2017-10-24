@@ -30,12 +30,12 @@ export const build = (type: string, path: string, opts?: {stats?: fs.Stats, md5s
   return event
 }
 
-export const maybeAddFile = (a: PrepAction): ?PrepAddFile => a.type === 'PrepAddFile' ? a : null
-export const maybePutFolder = (a: PrepAction): ?PrepPutFolder => a.type === 'PrepPutFolder' ? a : null
-export const maybeMoveFile = (a: PrepAction): ?PrepMoveFile => a.type === 'PrepMoveFile' ? a : null
-export const maybeMoveFolder = (a: PrepAction): ?PrepMoveFolder => a.type === 'PrepMoveFolder' ? a : null
-export const maybeDeleteFile = (a: PrepAction): ?PrepDeleteFile => a.type === 'PrepDeleteFile' ? a : null
-export const maybeDeleteFolder = (a: PrepAction): ?PrepDeleteFolder => a.type === 'PrepDeleteFolder' ? a : null
+export const maybeAddFile = (a: ?PrepAction): ?PrepAddFile => (a && a.type === 'PrepAddFile') ? a : null
+export const maybePutFolder = (a: ?PrepAction): ?PrepPutFolder => (a && a.type === 'PrepPutFolder') ? a : null
+export const maybeMoveFile = (a: ?PrepAction): ?PrepMoveFile => (a && a.type === 'PrepMoveFile') ? a : null
+export const maybeMoveFolder = (a: ?PrepAction): ?PrepMoveFolder => (a && a.type === 'PrepMoveFolder') ? a : null
+export const maybeDeleteFile = (a: ?PrepAction): ?PrepDeleteFile => (a && a.type === 'PrepDeleteFile') ? a : null
+export const maybeDeleteFolder = (a: ?PrepAction): ?PrepDeleteFolder => (a && a.type === 'PrepDeleteFolder') ? a : null
 
 export const find = <T>(actions: PrepAction[], maybeRightType: (PrepAction) => ?T, predicate: (T) => boolean, remove?: true): ?T => {
   for (let i = 0; i < actions.length; i++) {
