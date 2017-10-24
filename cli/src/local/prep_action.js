@@ -61,12 +61,11 @@ export const isChildMove = (a: PrepAction, b: PrepAction) => {
         b.old.path.indexOf(a.old.path) === 0
 }
 
-const isDelete = (a: PrepAction): boolean => a.type === 'PrepDeleteFolder' || a.type === 'PrepDeleteFile'
-const isAdd = (a: PrepAction): boolean => a.type === 'PrepPutFolder' || a.type === 'PrepAddFile'
-const isMove = (a: PrepAction): boolean => a.type === 'PrepMoveFolder' || a.type === 'PrepMoveFile'
+const isDelete = (a: PrepAction): boolean %checks => a.type === 'PrepDeleteFolder' || a.type === 'PrepDeleteFile'
+const isAdd = (a: PrepAction): boolean %checks => a.type === 'PrepPutFolder' || a.type === 'PrepAddFile'
+const isMove = (a: PrepAction): boolean %checks => a.type === 'PrepMoveFolder' || a.type === 'PrepMoveFile'
 
 export const addPath = (a: PrepAction): ?string => isAdd(a) || isMove(a) ? a.path : null
-// $FlowFixMe
 export const delPath = (a: PrepAction): ?string => isDelete(a) ? a.path : isMove(a) ? a.old.path : null
 export const childOf = (p1: ?string, p2: ?string): boolean => p1 != null && p2 != null && p2 !== p1 && p2.startsWith(p1)
 export const lower = (p1: ?string, p2: ?string): boolean => p1 != null && p2 != null && p2 !== p1 && p1 < p2
