@@ -51,9 +51,6 @@ describe('test/scenarios/', () => {
         if (method.startsWith('move') || method.startsWith('restore')) {
           call.dst = args[1].path
           call.src = args[2].path
-        } else if (method.startsWith('trash')) {
-          call.src = args[1].path
-          call.dst = args[2].path
         } else {
           call.path = args[1].path
         }
