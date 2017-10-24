@@ -276,8 +276,7 @@ export default class RemoteWatcher {
         break
       case 'FolderMoved':
         log.info({path}, 'folder was moved or renamed remotely')
-        await this.prep.deleteFolderAsync(SIDE, change.was)
-        await this.prep.putFolderAsync(SIDE, change.doc)
+        await this.prep.moveFolderAsync(SIDE, change.doc, change.was)
         break
       case 'FileDissociated':
         log.info({path}, 'file was possibly renamed remotely while updated locally')
