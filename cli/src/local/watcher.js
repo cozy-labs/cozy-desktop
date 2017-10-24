@@ -224,15 +224,6 @@ class LocalWatcher {
           }
         }
 
-        if (e.type === 'add') {
-          e2.sameChecksums = []
-          try {
-            e2.sameChecksums = await this.pouch.byChecksumAsync(e2.md5sum)
-          } catch (err) {
-            log.debug({err}, `no doc with checksum ${e2.md5sum}`)
-          }
-        }
-
         return e2
       }))
       .filter((e: ?ContextualizedChokidarFSEvent) => e != null)
