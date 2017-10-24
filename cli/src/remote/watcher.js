@@ -96,7 +96,10 @@ export default class RemoteWatcher {
         const doc = docs[index]
         const was: ?Metadata = await this.pouch.byRemoteIdMaybeAsync(doc._id)
         changes.push(this.identifyChange(doc, was, index, changes))
+        console.log(changes.map(c => `${c.type} ${_.get(c, 'doc.path')}`).join('\n'))
+        console.log('--- end debug changes in loop --')
       }
+      console.log('--- end identification --')
       remoteChange.sort(changes)
       await this.applyAll(changes)
     } finally {
@@ -201,13 +204,17 @@ export default class RemoteWatcher {
       // Squash moves
       for (let previousChangeIndex = 0; previousChangeIndex < changeIndex; previousChangeIndex++) {
         const previousChange = previousChanges[previousChangeIndex]
+        const previousDesc = `previous(${previousChange.type} ${_.get(previousChange, 'doc.path')})`
+        const currentDesc = `current(${change.type} ${change.doc.path})`
         if (remoteChange.isChildMove(change, previousChange)) {
+          console.log(`${previousDesc} child of ${currentDesc}`)
           _.assign(previousChange, {
             type: 'IgnoredChange',
             detail: `Folder was moved as descendant of ${change.doc.path}`
           })
           continue
         } else if (remoteChange.isChildMove(previousChange, change)) {
+          console.log(`${currentDesc} child of ${previousDesc}`)
           return {
             type: 'IgnoredChange',
             doc,
@@ -215,7 +222,9 @@ export default class RemoteWatcher {
             detail: `Folder was moved as descendant of ${_.get(previousChange, 'doc.path')}`
           }
         }
+        console.log(`${currentDesc} and ${previousDesc} are unrelated changes`)
       }
+      console.log('-----')
       return change
     }
     // TODO: add unit test
