@@ -1,7 +1,6 @@
 /* eslint-env mocha */
 /* @flow */
 
-import Promise from 'bluebird'
 import fs from 'fs-extra'
 import _ from 'lodash'
 import path from 'path'
