@@ -18,7 +18,7 @@ describe('test/scenarios/', () => {
   let helpers
 
   // Spies
-  let sendToPrep
+  // let sendToPrep
   let prepCalls
 
   before(configHelpers.createConfig)
@@ -38,7 +38,7 @@ describe('test/scenarios/', () => {
   beforeEach(async function () {
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozyHelpers.cozy)
     // TODO: Spy in IntegrationTestHelpers by default
-    sendToPrep = sinon.spy(helpers.local.local.watcher, 'sendToPrep')
+    // sendToPrep = sinon.spy(helpers.local.local.watcher, 'sendToPrep')
     prepCalls = []
 
     for (let method of ['addFileAsync', 'putFolderAsync', 'updateFileAsync',
