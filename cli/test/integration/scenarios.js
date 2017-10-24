@@ -43,9 +43,8 @@ describe('test/scenarios/', () => {
     prepCalls = []
 
     for (let method of ['addFileAsync', 'putFolderAsync', 'updateFileAsync',
-                        'moveFileAsync', 'moveFolderAsync', 'deleteFolderAsync',
-                        'trashFileAsync', 'trashFolderAsync',
-                        'restoreFileAsync', 'restoreFolderAsync']) {
+      'moveFileAsync', 'moveFolderAsync', 'deleteFolderAsync', 'trashFileAsync',
+      'trashFolderAsync', 'restoreFileAsync', 'restoreFolderAsync']) {
       // $FlowFixMe
       const origMethod = helpers.prep[method]
       sinon.stub(helpers.prep, method).callsFake(async (...args) => {
