@@ -13,7 +13,7 @@ import RemoteCozy from '../../src/remote/cozy'
 import configHelpers from '../../test/helpers/config'
 import * as cozyHelpers from '../../test/helpers/cozy'
 
-const debug = process.env.DEBUG != null ? console.log : () => {}
+const debug = process.env.DEBUG != null ? console.log : (...args) => {}
 
 const createInitialTree = async function (scenario: *, cozy: *, pouch: Pouch) {
   if (!scenario.init) return
