@@ -2,6 +2,7 @@
 
 import fs from 'fs'
 import _ from 'lodash'
+import path from 'path'
 
 import type { Metadata } from '../metadata'
 import type { ContextualizedChokidarFSEvent } from './chokidar_event'
@@ -67,7 +68,7 @@ const isMove = (a: PrepAction): boolean %checks => a.type === 'PrepMoveFolder' |
 
 export const addPath = (a: PrepAction): ?string => isAdd(a) || isMove(a) ? a.path : null
 export const delPath = (a: PrepAction): ?string => isDelete(a) ? a.path : isMove(a) ? a.old.path : null
-export const childOf = (p1: ?string, p2: ?string): boolean => p1 != null && p2 != null && p2 !== p1 && p2.startsWith(p1)
+export const childOf = (p1: ?string, p2: ?string): boolean => p1 != null && p2 != null && p2 !== p1 && p2.startsWith(p1 + path.sep)
 export const lower = (p1: ?string, p2: ?string): boolean => p1 != null && p2 != null && p2 !== p1 && p1 < p2
 
 export const isChildDelete = (a: PrepAction, b: PrepAction) => childOf(delPath(a), delPath(b))
