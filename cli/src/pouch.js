@@ -77,7 +77,7 @@ class Pouch {
 
   put (doc: Metadata, callback?: Callback) {
     log.debug({path: doc.path, ...doc.sides}, 'Saving metadata...')
-    log.trace({path: doc.path, doc})
+    log.trace({path: doc.path, doc}, 'Pouch#put')
     return this.db.put(doc).asCallback(callback)
   }
 
