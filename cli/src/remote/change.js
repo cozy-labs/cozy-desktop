@@ -9,7 +9,6 @@ import type { Metadata } from '../metadata'
 
 // TODO: Introduce UnidentifiedChange type with doc/was properties?
 // TODO: Merge with local/prep_action?
-// FIXME: IgnoredChange#doc can be a RemoteDeletion?
 export type FileAdded = {type: 'FileAdded', doc: Metadata}
 export type FileDeleted = {type: 'FileDeleted', doc: Metadata}
 export type FileDissociated = {type: 'FileDissociated', doc: Metadata, was: Metadata}
@@ -73,7 +72,6 @@ export const dissociated = (doc: Metadata, was: Metadata): * =>
   ({type: (isFile(doc) ? 'FileDissociated' : 'FolderDissociated'), doc, was})
 
 // TODO: Rename args
-// FIXME: Fix bug found on local side
 export const isChildMove = (a: Change, b: Change) => {
   return a.type === 'FolderMoved' &&
          (b.type === 'FolderMoved') && // (... || b.type === 'FileMoved') &&
