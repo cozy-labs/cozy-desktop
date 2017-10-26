@@ -57,9 +57,9 @@ export const findAndRemove = <T>(actions: PrepAction[], maybeRightType: (PrepAct
 export const isChildMove = (a: PrepAction, b: PrepAction) => {
   return a.type === 'PrepMoveFolder' &&
          (b.type === 'PrepMoveFolder' || b.type === 'PrepMoveFile') &&
-        b.path.indexOf(a.path) === 0 &&
+        b.path.indexOf(a.path + path.sep) === 0 &&
         a.old && b.old &&
-        b.old.path.indexOf(a.old.path) === 0
+        b.old.path.indexOf(a.old.path + path.sep) === 0
 }
 
 const isDelete = (a: PrepAction): boolean %checks => a.type === 'PrepDeleteFolder' || a.type === 'PrepDeleteFile'
