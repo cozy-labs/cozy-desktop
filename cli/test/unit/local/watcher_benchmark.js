@@ -71,6 +71,11 @@ const createDoc = async (pouch, dir, relpath: string, ino) => {
 }
 
 describe('LocalWatcher charge', () => {
+  if (process.env.CI) {
+    it('is unstable on CI')
+    return
+  }
+
   let watcher, prep
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
