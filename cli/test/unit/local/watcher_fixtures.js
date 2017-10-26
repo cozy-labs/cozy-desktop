@@ -47,7 +47,7 @@ const pathFix = (scenario, p) =>
 
 const fixExpectations = (prepCall) =>
   (process.platform === 'win32') ? Object.assign({}, prepCall,
-      prepCall.src ? {src: prepCall.src.split('/').join('\\').toUpperCase()} : null, // @TODO why is src in maj
+      prepCall.src ? {src: prepCall.src.split('/').join('\\').toUpperCase()} : null, // @TODO why is src in caps
       prepCall.path ? {path: prepCall.path.split('/').join('\\')} : null,
       prepCall.dst ? {dst: prepCall.dst.split('/').join('\\')} : null
     ) : prepCall
