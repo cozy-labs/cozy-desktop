@@ -18,7 +18,6 @@ describe('test/scenarios/', () => {
   let helpers
 
   // Spies
-  // let sendToPrep
   let prepCalls
 
   before(configHelpers.createConfig)
@@ -38,7 +37,6 @@ describe('test/scenarios/', () => {
   beforeEach(async function () {
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozyHelpers.cozy)
     // TODO: Spy in IntegrationTestHelpers by default
-    // sendToPrep = sinon.spy(helpers.local.local.watcher, 'sendToPrep')
     prepCalls = []
 
     for (let method of ['addFileAsync', 'putFolderAsync', 'updateFileAsync',
@@ -70,7 +68,6 @@ describe('test/scenarios/', () => {
   afterEach(function () {
     // TODO: Include prep actions in custom assertion
     if (this.currentTest.state === 'failed') {
-      // console.log('Prep actions:', sendToPrep.getCalls().map(c => c.args[0]))
       // TODO: dump logs
     }
   })
