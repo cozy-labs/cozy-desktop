@@ -192,7 +192,7 @@ class Prep {
 
   // TODO add comments + tests
   async trashFileAsync (side: SideName, was: *, doc: *) {
-    console.log('Prep#trashFileAsync', was.path, doc.path)
+    console.log('Prep#trashFileAsync', was.path, doc && doc.path)
     ensureValidPath(was)
 
     if (!doc) {
@@ -213,7 +213,7 @@ class Prep {
 
   // TODO add comments + tests
   async trashFolderAsync (side: SideName, was: *, doc: *) {
-    console.log('Prep#trashFolderAsync', was.path, doc.path)
+    console.log('Prep#trashFolderAsync', was.path, doc && doc.path)
     ensureValidPath(was)
 
     if (!doc) {
