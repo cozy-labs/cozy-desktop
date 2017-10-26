@@ -48,12 +48,6 @@ export const find = <T>(actions: PrepAction[], maybeRightType: (PrepAction) => ?
   }
 }
 
-// TODO: Find by maybeType & inode?
-// TODO: Maybe split find and remove?
-export const findAndRemove = <T>(actions: PrepAction[], maybeRightType: (PrepAction) => ?T, predicate: (T) => boolean): ?T => {
-  return find(actions, maybeRightType, predicate, true)
-}
-
 export const isChildMove = (a: PrepAction, b: PrepAction) => {
   return a.type === 'PrepMoveFolder' &&
          (b.type === 'PrepMoveFolder' || b.type === 'PrepMoveFile') &&
