@@ -159,8 +159,12 @@ module.exports.runActions = (scenario, abspath) => {
         debug('- >>', action.path)
         return fs.appendFile(abspath(action.path), ' blah')
 
-      case 'rm':
-        debug('- rm', action.path)
+      case 'trash':
+        debug('- trash', action.path)
+        return fs.remove(abspath(action.path))
+
+      case 'delete':
+        debug('- delete', action.path)
         return fs.remove(abspath(action.path))
 
       case 'mv':
