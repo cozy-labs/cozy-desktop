@@ -1,0 +1,36 @@
+[
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba37b98e",
+    "_rev": "2-f36d292f4283407349585143cd4e2272",
+    "class": "files",
+    "created_at": "2017-10-17T16:31:05.956514892Z",
+    "dir_id": "0b92f45b12ad022ee57423c4ba37bcec",
+    "executable": false,
+    "md5sum": "Bg5OnjC8ua5nWoAyioemhw==",
+    "mime": "application/octet-stream",
+    "name": "file2",
+    "size": "20",
+    "tags": [],
+    "trashed": false,
+    "type": "file",
+    "updated_at": "2017-10-17T16:31:05.956514892Z",
+    "path": "/dst/file2"
+  },
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba37b446",
+    "_rev": "2-32781361ca74969d168a0557a80cf0fe",
+    "class": "files",
+    "created_at": "2017-10-17T16:31:05.879370044Z",
+    "dir_id": "0b92f45b12ad022ee57423c4ba37bcec",
+    "executable": false,
+    "md5sum": "Bg5OnjC8ua5nWoAyioemhw==",
+    "mime": "application/octet-stream",
+    "name": "file1",
+    "size": "20",
+    "tags": [],
+    "trashed": false,
+    "type": "file",
+    "updated_at": "2017-10-17T16:31:05.879370044Z",
+    "path": "/dst/file1"
+  }
+]

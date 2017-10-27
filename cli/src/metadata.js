@@ -39,12 +39,18 @@ export type Metadata = {
   updated_at: string|Date,
   mime?: string,
   moveTo?: string, // Destination id
+  childMove?: boolean,
   path: string,
   remote: MetadataRemoteInfo,
   size?: number,
   tags: string[],
   sides: MetadataSidesInfo,
-  trashed?: true
+  trashed?: true,
+  ino?: ?number
+}
+
+export const isFile = (doc: Metadata): bool => {
+  return doc.docType === 'file'
 }
 
 export let assignId: (doc: Metadata) => void = (_) => {}
@@ -180,7 +186,7 @@ export function isUpToDate (side: SideName, doc: Metadata) {
 // rely on file systems to be precise to the millisecond.
 export function sameFolder (one: Metadata, two: Metadata) {
   const {path} = two
-  let fields = ['_id', 'docType', 'remote', 'tags', 'trashed']
+  let fields = ['_id', 'docType', 'remote', 'tags', 'trashed', 'ino']
   one = pick(one, fields)
   two = pick(two, fields)
   const same = isEqual(one, two)
@@ -193,7 +199,7 @@ export function sameFolder (one: Metadata, two: Metadata) {
 // rely on file systems to be precise to the millisecond.
 export function sameFile (one: Metadata, two: Metadata) {
   const {path} = two
-  let fields = ['_id', 'docType', 'md5sum', 'remote', 'tags', 'size', 'trashed']
+  let fields = ['_id', 'docType', 'md5sum', 'remote', 'tags', 'size', 'trashed', 'ino']
   one = {...pick(one, fields), executable: !!one.executable}
   two = {...pick(two, fields), executable: !!two.executable}
   const same = isEqual(one, two)

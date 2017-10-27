@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 
-import { clone } from 'lodash'
+import _, { clone } from 'lodash'
 import should from 'should'
 import path from 'path'
 
@@ -198,7 +198,8 @@ describe('metadata', function () {
         remote: {
           id: '123',
           rev: '4-567'
-        }
+        },
+        ino: 234
       }
       let b = {
         _id: 'FOO/BAR',
@@ -209,7 +210,8 @@ describe('metadata', function () {
         remote: {
           id: '123',
           rev: '4-567'
-        }
+        },
+        ino: 234
       }
       let c = {
         _id: 'FOO/BAR',
@@ -244,10 +246,12 @@ describe('metadata', function () {
           rev: '4-567'
         }
       }
+      const g = _.merge({}, a, {ino: a.ino + 2})
       sameFolder(a, b).should.be.true()
       sameFolder(a, c).should.be.false()
       sameFolder(a, d).should.be.false()
       sameFolder(a, e).should.be.false()
+      sameFolder(a, g).should.be.false()
       sameFolder(b, c).should.be.false()
       sameFolder(b, d).should.be.false()
       sameFolder(b, e).should.be.false()
@@ -269,7 +273,8 @@ describe('metadata', function () {
         remote: {
           id: '123',
           rev: '4-567'
-        }
+        },
+        ino: 1
       }
       let b = {
         _id: 'FOO/BAR',
@@ -281,7 +286,8 @@ describe('metadata', function () {
         remote: {
           id: '123',
           rev: '4-567'
-        }
+        },
+        ino: 1
       }
       let c = {
         _id: 'FOO/BAR',
@@ -332,11 +338,13 @@ describe('metadata', function () {
           rev: '4-567'
         }
       }
+      const g = _.merge({}, a, {ino: a.ino + 1})
       sameFile(a, b).should.be.true()
       sameFile(a, c).should.be.false()
       sameFile(a, d).should.be.false()
       sameFile(a, e).should.be.false()
       sameFile(a, f).should.be.false()
+      sameFile(a, g).should.be.false()
       sameFile(b, c).should.be.false()
       sameFile(b, d).should.be.false()
       sameFile(b, e).should.be.false()

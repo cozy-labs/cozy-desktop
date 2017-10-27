@@ -30,9 +30,11 @@ class Pouch {
   config: Config
   db: PouchDB
   updater: any
+  _lock: Promise
 
   constructor (config) {
     this.config = config
+    this._lock = Promise.resolve(null)
     this.db = new PouchDB(this.config.dbPath)
     this.db.setMaxListeners(100)
     this.db.on('error', err => log.warn(err))
@@ -61,6 +63,14 @@ class Pouch {
       this.db.on('error', err => log.warn(err))
       return this.addAllViews(callback)
     })
+  }
+
+  lock (): Promise<Function> {
+    let pCurrent = this._lock
+    let _resolve
+    let pReleased = new Promise((resolve) => { _resolve = resolve })
+    this._lock = pCurrent.then(() => pReleased)
+    return pCurrent.then(() => _resolve)
   }
 
   /* Mini ODM */
@@ -123,8 +133,7 @@ class Pouch {
   byRecursivePath (basePath, callback) {
     let params
     if (basePath === '') {
-      params =
-                {include_docs: true}
+      params = {include_docs: true}
     } else {
       params = {
         startkey: `${basePath}`,

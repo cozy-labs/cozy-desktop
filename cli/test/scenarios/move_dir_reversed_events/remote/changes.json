@@ -1,0 +1,13 @@
+[
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba364364",
+    "_rev": "2-822e63c36f7dd7f33eb8acf03e60bf2c",
+    "created_at": "2017-10-17T16:30:36.210621202Z",
+    "dir_id": "0b92f45b12ad022ee57423c4ba3637ec",
+    "name": "dir",
+    "path": "/dst/dir",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-17T16:30:36.210621202Z"
+  }
+]

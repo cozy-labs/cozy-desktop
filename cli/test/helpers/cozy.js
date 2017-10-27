@@ -45,7 +45,14 @@ async function rootDirContents () {
 export async function deleteAll () {
   const docs = await rootDirContents()
 
-  await Promise.all(docs.map(doc => cozy.files.trashById(doc._id)))
+  await Promise.all(docs.map(async doc => {
+    try {
+      return cozy.files.trashById(doc._id)
+    } catch (err) {
+      // FIXME: Why?
+      console.error(err)
+    }
+  }))
 
   return cozy.files.clearTrash()
 }

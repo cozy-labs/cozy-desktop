@@ -11,6 +11,8 @@ import { SyncDirTestHelpers } from './sync_dir'
 import { TMP_DIR_NAME } from '../../src/local/constants'
 import Local from '../../src/local'
 
+import type { ChokidarFSEvent } from '../../src/local/chokidar_event'
+
 Promise.promisifyAll(fs)
 const rimrafAsync = Promise.promisify(rimraf)
 
@@ -72,7 +74,11 @@ export class LocalTestHelpers {
   async trashFunc (paths: string[]): Promise<void> {
     for (const src of paths) {
       const dst = path.join(this.trashPath, path.basename(src))
-      await fs.renameAsync(src, dst)
+      try {
+        await fs.renameAsync(src, dst)
+      } catch (err) {
+        throw err
+      }
     }
   }
 
@@ -96,5 +102,14 @@ export class LocalTestHelpers {
       .map(relPath => path.posix.join('/Trash', relPath))
       .concat(await tree(this.syncPath))
       .map(conflictHelpers.ellipsizeDate)
+  }
+
+  async treeWithoutTrash () {
+    return (await this.tree())
+      .filter(p => !p.startsWith('/Trash/'))
+  }
+
+  async simulateEvents (events: ChokidarFSEvent[]) {
+    return this.local.watcher.onFlush(events)
   }
 }

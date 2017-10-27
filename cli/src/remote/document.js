@@ -2,7 +2,9 @@
 
 import { uniq } from 'lodash'
 
-import { DIR_TYPE, FILE_TYPE, ROOT_DIR_ID, TRASH_DIR_ID } from './constants'
+import {
+  DIR_TYPE, FILE_TYPE, ROOT_DIR_ID, TRASH_DIR_ID, TRASH_DIR_NAME
+} from './constants'
 
 export function specialId (id: string) {
   return (
@@ -28,6 +30,7 @@ export type RemoteDoc = {
   path: string, // folder and file
   size?: string,
   tags: string[],
+  trashed?: true,
   type: string,
   updated_at: string
 }
@@ -48,6 +51,10 @@ export function keepFiles (docs: RemoteDoc[]) {
 
 export function parentDirIds (docs: RemoteDoc[]) {
   return uniq(docs.map(doc => doc.dir_id))
+}
+
+export function inRemoteTrash (doc: RemoteDoc): boolean {
+  return doc.trashed || doc.path.startsWith(`/${TRASH_DIR_NAME}/`)
 }
 
 export type JsonApiAttributes = {

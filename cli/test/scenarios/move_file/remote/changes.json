@@ -1,0 +1,19 @@
+[
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba37428f",
+    "_rev": "2-6b06b8660be13e8f7236037e28113ae3",
+    "class": "files",
+    "created_at": "2017-10-17T16:30:57.541089418Z",
+    "dir_id": "0b92f45b12ad022ee57423c4ba3734c8",
+    "executable": false,
+    "md5sum": "Bg5OnjC8ua5nWoAyioemhw==",
+    "mime": "application/octet-stream",
+    "name": "file",
+    "size": "20",
+    "tags": [],
+    "trashed": false,
+    "type": "file",
+    "updated_at": "2017-10-17T16:30:57.541089418Z",
+    "path": "/dst/file"
+  }
+]

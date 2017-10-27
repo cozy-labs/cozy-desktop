@@ -113,6 +113,20 @@ class Local implements Side {
     }
   }
 
+  inodeSetter (doc: Metadata) {
+    let abspath = path.resolve(this.syncPath, doc.path)
+    return (callback: Callback) => {
+      fs.stat(abspath, (err, stats) => {
+        if (err) {
+          callback(err)
+        } else {
+          doc.ino = stats.ino
+          callback(null)
+        }
+      })
+    }
+  }
+
   // Check if a file corresponding to given checksum already exists
   fileExistsLocally (checksum: string, callback: Callback) {
     this.pouch.byChecksum(checksum, (err, docs) => {
@@ -218,6 +232,7 @@ class Local implements Side {
 
       next => fs.ensureDir(parent, () => fs.rename(tmpFile, filePath, next)),
 
+      this.inodeSetter(doc),
       this.metadataUpdater(doc)
 
     ], function (err) {
@@ -232,13 +247,11 @@ class Local implements Side {
   addFolder (doc: Metadata, callback: Callback) {
     let folderPath = path.join(this.syncPath, doc.path)
     log.info({path: doc.path}, 'Put folder')
-    fs.ensureDir(folderPath, err => {
-      if (err) {
-        callback(err)
-      } else {
-        this.metadataUpdater(doc)(callback)
-      }
-    })
+    async.series([
+      cb => fs.ensureDir(folderPath, cb),
+      this.inodeSetter(doc),
+      this.metadataUpdater(doc)
+    ], callback)
   }
 
   addFolderAsync: (Metadata) => Promise<*>
@@ -259,6 +272,10 @@ class Local implements Side {
   // Update a folder
   updateFolderAsync (doc: Metadata, old: Metadata): Promise<*> {
     return this.addFolderAsync(doc)
+  }
+
+  async assignNewRev (doc: Metadata): Promise<*> {
+    log.info({path: doc.path}, 'Local assignNewRev = noop')
   }
 
   // Move a file from one place to another
@@ -342,11 +359,15 @@ class Local implements Side {
 
   moveFolderAsync: (Metadata, Metadata) => Promise<*>
 
-  trashAsync (doc: Metadata): Promise<*> {
+  async trashAsync (doc: Metadata): Promise<*> {
     log.info({path: doc.path}, 'Moving to the OS trash...')
     this.events.emit('delete-file', doc)
     let fullpath = path.join(this.syncPath, doc.path)
-    return this._trash([fullpath])
+    try {
+      await this._trash([fullpath])
+    } catch (err) {
+      throw err
+    }
   }
 
   async deleteFolderAsync (doc: Metadata): Promise<*> {
@@ -362,7 +383,7 @@ class Local implements Side {
       if (err.code !== 'ENOTEMPTY') throw err
     }
     log.warn({path: doc.path}, 'Folder is not empty!')
-    return this.trashAsync(doc)
+    await this.trashAsync(doc)
   }
 
   // Rename a file/folder to resolve a conflict

@@ -1,0 +1,24 @@
+[
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba354bf6",
+    "_rev": "1-ad36dd6d8a2fc1d879bb6a09976b2c62",
+    "created_at": "2017-10-17T16:30:15.098107855Z",
+    "dir_id": "0b92f45b12ad022ee57423c4ba35420a",
+    "name": "dir2",
+    "path": "/dst/dir1/dir2",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-17T16:30:15.098107855Z"
+  },
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba35420a",
+    "_rev": "2-1bddf257cbd5a0b765b3fb75c5fce9c0",
+    "created_at": "2017-10-17T16:30:13.936646738Z",
+    "dir_id": "0b92f45b12ad022ee57423c4ba3538f8",
+    "name": "dir1",
+    "path": "/dst/dir1",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-17T16:30:13.936646738Z"
+  }
+]
