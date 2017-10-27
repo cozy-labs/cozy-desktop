@@ -12,12 +12,14 @@ const { cozy } = require('./cozy')
 
 const debug = process.env.DEBUG ? console.log : () => {}
 
+const disabledExtension = '.DISABLED'
+
 const scenarioByPath = module.exports.scenarioByPath = scenarioPath => {
-  const name = path.basename(path.dirname(scenarioPath))
   // $FlowFixMe
   const scenario = require(scenarioPath)
-  scenario.name = name
+  scenario.name = path.basename(path.dirname(scenarioPath), disabledExtension)
   scenario.path = scenarioPath
+  scenario.disabled = scenarioPath.endsWith(disabledExtension) && 'scenario disabled'
 
   if (process.platform === 'win32' && scenario.expected && scenario.expected.prepCalls) {
     for (let prepCall of scenario.expected.prepCalls) {
@@ -35,14 +37,22 @@ const scenarioByPath = module.exports.scenarioByPath = scenarioPath => {
 
 // TODO: Refactor to function
 module.exports.scenarios =
-  glob.sync(path.join(__dirname, '../scenarios/**/scenario.js'), {})
+  glob.sync(path.join(__dirname, '../scenarios/**/scenario.js*'), {})
     .map(scenarioByPath)
 
 module.exports.loadFSEventFiles = (scenario) => {
-  const eventFiles = glob.sync(path.join(path.dirname(scenario.path), 'local', '*.json'))
+  const eventFiles = glob.sync(path.join(path.dirname(scenario.path), 'local', '*.json*'))
+  const disabledEventsFile = (name) => {
+    if (process.platform === 'win32' && name.indexOf('win32') === -1) {
+      return 'darwin/linux test'
+    } else if (name.endsWith(disabledExtension)) {
+      return 'disabled case'
+    }
+  }
   return eventFiles
     .map(f => {
       const name = path.basename(f)
+      const disabled = scenario.disabled || disabledEventsFile(name)
       const events = fs.readJsonSync(f).map(e => {
         if (e.stats) {
           e.stats.mtime = new Date(e.stats.mtime)
@@ -57,16 +67,19 @@ module.exports.loadFSEventFiles = (scenario) => {
         return e
       })
 
-      return {name, events}
+      return {name, events, disabled}
     })
 }
 
 module.exports.loadRemoteChangesFiles = (scenario) => {
-  const pattern = path.join(path.dirname(scenario.path), 'remote', '*.json')
-  return glob.sync(pattern).map(f => ({
-    name: path.basename(f),
-    changes: fs.readJsonSync(f)
-  }))
+  const pattern = path.join(path.dirname(scenario.path), 'remote', '*.json*')
+
+  return glob.sync(pattern).map(f => {
+    const name = path.basename(f)
+    const disabled = scenario.disabled || f.endsWith(disabledExtension)
+    const changes = fs.readJsonSync(f)
+    return {name, disabled, changes}
+  })
 }
 
 module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
