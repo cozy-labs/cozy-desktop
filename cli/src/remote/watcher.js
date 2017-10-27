@@ -209,8 +209,6 @@ export default class RemoteWatcher {
       // Squash moves
       for (let previousChangeIndex = 0; previousChangeIndex < changeIndex; previousChangeIndex++) {
         const previousChange = previousChanges[previousChangeIndex]
-        const previousDesc = `previous(${previousChange.type} ${_.get(previousChange, 'doc.path')})`
-        const currentDesc = `current(${change.type} ${change.doc.path})`
         if (remoteChange.isChildMove(change, previousChange)) {
           _.assign(previousChange, {
             type: 'IgnoredChange',
