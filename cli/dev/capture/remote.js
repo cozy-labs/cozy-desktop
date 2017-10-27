@@ -104,6 +104,13 @@ const runActions = (scenario: *, cozy: *) => {
           return cozy.files.destroyById(remoteDoc._id)
         }
 
+      case 'restore':
+        debug('- restore .cozy_trash/', action.pathInTrash)
+        {
+          const remoteDoc = await cozy.files.statByPath(`/.cozy_trash/${action.pathInTrash}`)
+          return cozy.files.restoreById(remoteDoc._id)
+        }
+
       case 'mv':
         debug('- mv', action.src, action.dst)
         {
