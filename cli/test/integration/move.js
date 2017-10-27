@@ -152,7 +152,6 @@ suite('Move', () => {
       ])
     })
 
-    // FIXME: cozy-client-js updateAttributesById(..., {dir_id: ...}) is not detected as a move
     test('from remote cozy', async () => {
       await cozy.files.updateAttributesById(dir._id, {dir_id: dst._id})
       await helpers.remote.pullChanges()
