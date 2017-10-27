@@ -72,12 +72,13 @@ afterEach(function () {
 
 for (let scenario of scenarios) {
   for (let eventsFile of loadFSEventFiles(scenario)) {
-    if (process.platform === 'win32' && eventsFile.name.indexOf('win32') === -1) {
-      it.skip(`${eventsFile.name}`, () => {})
+    const localTestName = `test/scenarios/${scenario.name}/local/${eventsFile.name}`
+    if (eventsFile.disabled) {
+      it.skip(`${localTestName}  (${eventsFile.disabled})`, () => {})
       continue
     }
 
-    it(`test/scenarios/${scenario.name}/local/${eventsFile.name}`, async function () {
+    it(localTestName, async function () {
       if (scenario.init) {
         let relpathFix = _.identity
         if (process.platform === 'win32' && this.currentTest.title.match(/win32/)) {
@@ -117,12 +118,16 @@ for (let scenario of scenarios) {
     })
   } // event files
 
+  const remoteTestName = `test/scenarios/${scenario.name}/remote/`
   if (scenario.name.indexOf('outside') !== -1) {
-    it.skip(`no outside on remote`, () => {})
+    it.skip(`${remoteTestName}  (skip outside case)`, () => {})
+    continue
+  } else if (scenario.disabled) {
+    it.skip(`${remoteTestName}  (${scenario.disabled})`, () => {})
     continue
   }
 
-  it(`test/scenarios/${scenario.name}/remote/`, async function () {
+  it(remoteTestName, async function () {
     if (scenario.init) {
       await init(scenario, this.pouch, helpers.local.syncDir.abspath, _.identity)
       await helpers.remote.ignorePreviousChanges()
