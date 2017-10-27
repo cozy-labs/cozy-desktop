@@ -2,21 +2,23 @@ module.exports = {
   init: [
     {ino: 1, path: 'dst/'},
     {ino: 2, path: 'src/'},
-    {ino: 3, path: 'src/subdir/'}
+    {ino: 3, path: 'src/file'}
   ],
   actions: [
-    {type: 'mv', src: 'src/subdir', dst: 'dst/subdir'},
+    {type: 'mv', src: 'src/file', dst: 'dst/file'},
     {type: 'wait', ms: 1500},
-    {type: 'rm', path: 'dst/subdir'}
+    {type: 'trash', path: 'dst/file'}
   ],
   expected: {
     prepCalls: [
-      {method: 'trashFolderAsync', path: 'src/subdir'}
+      {method: 'trashFileAsync', path: 'src/file'}
     ],
     tree: [
       'dst/',
       'src/'
     ],
-    remoteTrash: []
+    remoteTrash: [
+      'file'
+    ]
   }
 }
