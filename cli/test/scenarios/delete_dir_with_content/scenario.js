@@ -8,7 +8,7 @@ module.exports = {
     { ino: 6, path: 'parent/other_dir/' }
   ],
   actions: [
-    {type: 'rm', path: 'parent/dir'}
+    {type: 'delete', path: 'parent/dir'}
   ],
   expected: {
     prepCalls: [

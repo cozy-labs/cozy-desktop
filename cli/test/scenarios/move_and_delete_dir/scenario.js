@@ -7,7 +7,7 @@ module.exports = {
   actions: [
     {type: 'mv', src: 'src/subdir', dst: 'dst/subdir'},
     {type: 'wait', ms: 1500},
-    {type: 'rm', path: 'dst/subdir'}
+    {type: 'delete', path: 'dst/subdir'}
   ],
   expected: {
     prepCalls: [
