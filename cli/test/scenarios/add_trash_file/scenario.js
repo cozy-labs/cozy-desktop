@@ -1,8 +1,8 @@
 module.exports = {
   actions: [
-    {type: 'mkdir', path: 'dir'},
+    {type: '>', path: 'file'},
     {type: 'wait', ms: 1500},
-    {type: 'rm', path: 'dir'}
+    {type: 'trash', path: 'file'}
   ],
   expected: {
     prepCalls: [],

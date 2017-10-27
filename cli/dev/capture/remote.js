@@ -89,11 +89,19 @@ const runActions = (scenario: *, cozy: *) => {
           })
         }
 
-      case 'rm':
-        debug('- rm', action.path)
+      case 'trash':
+        debug('- trash', action.path)
         {
-          const remoteFile = await cozy.files.statByPath(`/${action.path}`)
-          return cozy.files.trashById(remoteFile._id)
+          const remoteDoc = await cozy.files.statByPath(`/${action.path}`)
+          return cozy.files.trashById(remoteDoc._id)
+        }
+
+      case 'delete':
+        debug('- delete', action.path)
+        {
+          const remoteDoc = await cozy.files.statByPath(`/${action.path}`)
+          if (!remoteDoc.trashed) await cozy.files.trashById(remoteDoc._id)
+          return cozy.files.destroyById(remoteDoc._id)
         }
 
       case 'mv':
