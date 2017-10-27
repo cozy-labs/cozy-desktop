@@ -159,6 +159,11 @@ module.exports.runActions = (scenario, abspath) => {
         debug('- >>', action.path)
         return fs.appendFile(abspath(action.path), ' blah')
 
+      case 'trash':
+        // FIXME: What is the actual trash action on each platform?
+        debug('- trash', action.path)
+        return fs.remove(abspath(action.path))
+
       case 'delete':
         debug('- delete', action.path)
         return fs.remove(abspath(action.path))
