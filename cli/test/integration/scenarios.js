@@ -14,7 +14,7 @@ import { IntegrationTestHelpers } from '../helpers/integration'
 import pouchHelpers from '../helpers/pouch'
 import remoteCaptureHelpers from '../../dev/capture/remote'
 
-describe('test/scenarios/', () => {
+// describe('test/scenarios/', () => {
   let helpers
 
   // Spies
@@ -73,19 +73,19 @@ describe('test/scenarios/', () => {
   })
 
   for (let scenario of scenarios) {
-    describe(`${scenario.name}/`, () => {
-      describe('local/', () => {
-        if (scenario.init) {
-          beforeEach('init', async function () {
-            let relpathFix = _.identity
-            if (process.platform === 'win32' && this.currentTest.title.match(/win32/)) {
-              relpathFix = (relpath) => relpath.replace(/\//g, '\\').toUpperCase()
-            }
-            await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix)
-          })
-        }
-
-        beforeEach('actions', () => runActions(scenario, helpers.local.syncDir.abspath))
+    // describe(`${scenario.name}/`, () => {
+    //   describe('local/', () => {
+        // if (scenario.init) {
+        //   beforeEach('init', async function () {
+        //     let relpathFix = _.identity
+        //     if (process.platform === 'win32' && this.currentTest.title.match(/win32/)) {
+        //       relpathFix = (relpath) => relpath.replace(/\//g, '\\').toUpperCase()
+        //     }
+        //     await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix)
+        //   })
+        // }
+        //
+        // beforeEach('actions', () => runActions(scenario, helpers.local.syncDir.abspath))
 
         for (let eventsFile of loadFSEventFiles(scenario)) {
           if (process.platform === 'win32' && eventsFile.name.indexOf('win32') === -1) {
@@ -93,7 +93,16 @@ describe('test/scenarios/', () => {
             continue
           }
 
-          it(eventsFile.name, async function () {
+          it(`test/scenarios/${scenario.name}/local/${eventsFile.name}`, async function () {
+            if (scenario.init) {
+              let relpathFix = _.identity
+              if (process.platform === 'win32' && this.currentTest.title.match(/win32/)) {
+                relpathFix = (relpath) => relpath.replace(/\//g, '\\').toUpperCase()
+              }
+              await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix)
+            }
+
+            await runActions(scenario, helpers.local.syncDir.abspath)
             await helpers.local.simulateEvents(eventsFile.events)
             await helpers.syncAll()
 
@@ -123,26 +132,32 @@ describe('test/scenarios/', () => {
             // TODO: pull
           })
         } // event files
-      }) // local
+      // }) // local
 
-      describe('remote/', () => {
+      if (scenario.name.indexOf('outside') !== -1) {
+        it.skip(`no outside on remote`, () => {})
+        continue
+      }
+
+      // describe('remote/', () => {
+      it(`test/scenarios/${scenario.name}/remote/`, async function () {
         if (scenario.init) {
-          beforeEach('init', async function () {
+          // beforeEach('init', async function () {
             await init(scenario, this.pouch, helpers.local.syncDir.abspath, _.identity)
             await helpers.remote.ignorePreviousChanges()
-          })
+          // })
         }
 
-        beforeEach('actions', async () => {
+        // beforeEach('actions', async () => {
           await remoteCaptureHelpers.runActions(scenario, cozyHelpers.cozy)
-        })
+        // })
 
-        if (scenario.name.indexOf('outside') !== -1) {
-          it.skip(`no outside on remote`, () => {})
-          return
-        }
+        // if (scenario.name.indexOf('outside') !== -1) {
+        //   it.skip(`no outside on remote`, () => {})
+        //   return
+        // }
 
-        it('works', async function () {
+        // it('works', async function () {
           await helpers.remote.pullChanges()
           for (let i = 0; i < scenario.actions.length + 1; i++) {
             await helpers.syncAll()
@@ -155,8 +170,8 @@ describe('test/scenarios/', () => {
             should(await helpers.local.treeWithoutTrash())
               .deepEqual(scenario.expected.tree)
           }
-        }) // changes file test
+        // }) // changes file test
       }) // describe remote
-    }) // scenario
+    // }) // scenario
   } // scenarios
-})
+// })
