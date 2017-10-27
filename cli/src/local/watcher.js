@@ -160,7 +160,10 @@ class LocalWatcher {
     // to become sortAndSquash
     const actions : PrepAction[] = this.sortAndSquash(preparedEvents)
 
-    await this.sendToPrep(actions)
+    const release = await this.pouch.lock()
+    try {
+      await this.sendToPrep(actions)
+    } finally { release() }
     if (initialScan != null) {
       initialScan.resolve()
       this.initialScan = null

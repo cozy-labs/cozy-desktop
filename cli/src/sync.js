@@ -111,6 +111,7 @@ class Sync {
 
   // Start taking changes from pouch and applying them
   async sync (): Promise<*> {
+    const release = await this.pouch.lock()
     const change = await this.pop()
     if (this.stopped) return
     try {
@@ -118,6 +119,8 @@ class Sync {
       await this.apply(change)
     } catch (err) {
       if (!this.stopped) throw err
+    } finally {
+      release()
     }
   }
 
@@ -127,8 +130,6 @@ class Sync {
   // Note: it is difficult to pick only one change at a time because pouch can
   // emit several docs in a row, and `limit: 1` seems to be not effective!
   async pop (): Promise<*> {
-    const release = await this.pouch.lock()
-
     const seq = await this.pouch.getLocalSeqAsync()
     let opts: Object = {
       limit: 1,
@@ -163,8 +164,6 @@ class Sync {
             })
         })
     })
-
-    release()
 
     return res
   }
