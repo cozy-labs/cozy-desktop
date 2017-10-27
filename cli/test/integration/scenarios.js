@@ -12,7 +12,7 @@ import configHelpers from '../helpers/config'
 import * as cozyHelpers from '../helpers/cozy'
 import { IntegrationTestHelpers } from '../helpers/integration'
 import pouchHelpers from '../helpers/pouch'
-import remoteScenarioHelpers from '../../dev/capture/remote'
+import remoteCaptureHelpers from '../../dev/capture/remote'
 
 describe('test/scenarios/', () => {
   let helpers
@@ -134,7 +134,7 @@ describe('test/scenarios/', () => {
         }
 
         beforeEach('actions', async () => {
-          await remoteScenarioHelpers.runActions(scenario, cozyHelpers.cozy)
+          await remoteCaptureHelpers.runActions(scenario, cozyHelpers.cozy)
         })
 
         if (scenario.name.indexOf('outside') !== -1) {
