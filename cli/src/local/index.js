@@ -392,11 +392,7 @@ class Local implements Side {
     let srcPath = path.join(this.syncPath, doc.path)
     let dstPath = path.join(this.syncPath, newPath)
     fs.rename(srcPath, dstPath, callback)
-    // Don't fire an event for the deleted file
-    setTimeout(() => {
-      const p = this.watcher.pendingDeletions
-      if (p && p.hasPath(doc.path)) { p.clear(doc.path) }
-    }, 1000)
+    // TODO: Don't fire an event for the deleted file?
   }
 
   renameConflictingDocAsync: (doc: Metadata, newPath: string) => Promise<void>
