@@ -132,6 +132,9 @@ for (let scenario of scenarios) {
       await init(scenario, this.pouch, helpers.local.syncDir.abspath, _.identity)
       await helpers.remote.ignorePreviousChanges()
     }
+    // It is a pain to imitate trashing in init.
+    await helpers.syncAll()
+    await helpers.syncAll()
 
     await remoteCaptureHelpers.runActions(scenario, cozyHelpers.cozy)
 

@@ -84,7 +84,7 @@ module.exports.loadRemoteChangesFiles = (scenario) => {
 
 module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
   debug('init')
-  const remoteDocsToTrash = []
+  const toTrash = []
   for (let {path: relpath, ino, trashed} of scenario.init) {
     debug(relpath)
     const isOutside = relpath.startsWith('../outside')
@@ -115,13 +115,12 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
           lastModifiedDate
         })
         doc.remote = _.pick(remoteDir, ['_id', '_rev'])
-        if (trashed) remoteDocsToTrash.push(remoteDir)
+        if (trashed) toTrash.push({doc, remoteDoc: remoteDir})
       }
-      if (trashed) continue
       debug('create local dir...')
       await fs.ensureDir(abspath(relpath))
       debug('create dir metadata...')
-      await pouch.put(doc)
+      doc._rev = (await pouch.put(doc)).rev
     } else {
       relpath = relpathFix(relpath)
       const content = 'foo'
@@ -150,17 +149,20 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
           lastModifiedDate
         })
         doc.remote = _.pick(remoteFile, ['_id', '_rev'])
-        if (trashed) remoteDocsToTrash.push(remoteFile)
+        if (trashed) toTrash.push({doc, remoteDoc: remoteFile})
       }
-      if (trashed) continue
       debug('create local file...')
       await fs.outputFile(abspath(relpath), content)
       debug('create file metadata...')
-      await pouch.put(doc)
+      doc._rev = (await pouch.put(doc)).rev
     } // if relpath ...
   } // for (... of scenario.init)
-  for (let remoteDoc of remoteDocsToTrash) {
-    await cozy.files.trashById(remoteDoc._id)
+  for (let {doc, remoteDoc} of toTrash) {
+    debug('trashing', {remoteDoc})
+    const newDoc = await cozy.files.trashById(remoteDoc._id)
+    doc.remote._rev = newDoc._rev
+    doc.trashed = true
+    await pouch.put(doc)
   }
 }
 
