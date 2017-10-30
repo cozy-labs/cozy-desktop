@@ -47,7 +47,7 @@ class Local implements Side {
     this.events = events
     this.syncPath = config.syncPath
     this.tmpPath = path.join(this.syncPath, TMP_DIR_NAME)
-    this.watcher = new Watcher(this.syncPath, this.prep, this.pouch)
+    this.watcher = new Watcher(this.syncPath, this.prep, this.pouch, events)
     // $FlowFixMe
     this.other = null
     this._trash = trash

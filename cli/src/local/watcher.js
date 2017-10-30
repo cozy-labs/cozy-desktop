@@ -14,6 +14,7 @@ import logger from '../logger'
 import * as metadata from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
+import * as syncState from '../syncstate'
 import { PendingMap } from '../utils/pending'
 import { maxDate } from '../timestamp'
 
@@ -25,6 +26,7 @@ import type {
 } from './prep_action'
 import type { Metadata } from '../metadata'
 import type { Pending } from '../utils/pending' // eslint-disable-line
+import type EventEmitter from 'events'
 
 const log = logger({
   component: 'LocalWatcher'
@@ -50,16 +52,18 @@ class LocalWatcher {
   syncPath: string
   prep: Prep
   pouch: Pouch
+  events: EventEmitter
   initialScan: ?InitialScan
   pendingDeletions: PendingMap
   checksumer: Checksumer
   watcher: any // chokidar
   buffer: LocalEventBuffer<ChokidarFSEvent>
 
-  constructor (syncPath: string, prep: Prep, pouch: Pouch) {
+  constructor (syncPath: string, prep: Prep, pouch: Pouch, events: EventEmitter) {
     this.syncPath = syncPath
     this.prep = prep
     this.pouch = pouch
+    this.events = events
     const timeoutInMs = 10000 // TODO: Read from config
     this.buffer = new LocalEventBuffer(timeoutInMs, this.onFlush)
     this.checksumer = checksumer.init()
@@ -111,6 +115,7 @@ class LocalWatcher {
           log.chokidar.trace({stats})
           const newEvent = chokidarEvent.build(eventType, path, stats)
           this.buffer.push(newEvent)
+          syncState.onLocalStart(this.events)
         })
       }
 
@@ -163,7 +168,10 @@ class LocalWatcher {
     const release = await this.pouch.lock()
     try {
       await this.sendToPrep(actions)
-    } finally { release() }
+    } finally {
+      release()
+      syncState.onLocalEnd(this.events)
+    }
     if (initialScan != null) {
       initialScan.resolve()
       this.initialScan = null
