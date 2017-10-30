@@ -26,9 +26,6 @@ describe('LocalWatcher Tests', function () {
     if (this.watcher.watcher) {
       this.watcher.watcher.close()
     }
-    if (this.watcher.pendingDeletions) {
-      this.watcher.pendingDeletions.clearAll()
-    }
     this.watcher.checksumer.kill()
     fs.emptyDir(this.syncPath, done)
   })
