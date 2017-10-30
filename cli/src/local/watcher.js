@@ -473,12 +473,13 @@ class LocalWatcher {
     }
   }
 
-  stop () {
+  stop (force?: bool) {
     if (this.watcher) {
       this.watcher.close()
       this.watcher = null
     }
     this.buffer.switchMode('idle')
+    if (force) return Promise.resolve()
     // Give some time for awaitWriteFinish events to be fired
     return new Promise((resolve) => {
       setTimeout(resolve, 3000)
