@@ -4,6 +4,7 @@ import Promise from 'bluebird'
 import EventEmitter from 'events'
 import { dirname } from 'path'
 
+import * as syncState from './syncstate'
 import Ignore from './ignore'
 import Local from './local'
 import logger from './logger'
@@ -115,7 +116,7 @@ class Sync {
     const change = await this.pop()
     if (this.stopped) return
     try {
-      this.events.emit('syncing')
+      syncState.onSyncStart(this.events)
       await this.apply(change)
     } catch (err) {
       if (!this.stopped) throw err
@@ -144,7 +145,7 @@ class Sync {
         .on('error', err => reject(err))
         .on('complete', info => {
           if (info.results && info.results.length) { return }
-          this.events.emit('up-to-date')
+          syncState.onSyncEnd(this.events)
           log.debug('No more metadata changes for now')
           opts.live = true
           opts.returnDocs = false
