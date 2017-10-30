@@ -60,7 +60,7 @@ class LocalWatcher {
     this.syncPath = syncPath
     this.prep = prep
     this.pouch = pouch
-    const timeoutInMs = 1000 // TODO: Read from config
+    const timeoutInMs = 10000 // TODO: Read from config
     this.buffer = new LocalEventBuffer(timeoutInMs, this.onFlush)
     this.checksumer = checksumer.init()
   }
