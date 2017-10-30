@@ -15,7 +15,6 @@ import * as metadata from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import * as syncState from '../syncstate'
-import { PendingMap } from '../utils/pending'
 import { maxDate } from '../timestamp'
 
 import type { Checksumer } from './checksumer'
@@ -54,7 +53,6 @@ class LocalWatcher {
   pouch: Pouch
   events: EventEmitter
   initialScan: ?InitialScan
-  pendingDeletions: PendingMap
   checksumer: Checksumer
   watcher: any // chokidar
   buffer: LocalEventBuffer<ChokidarFSEvent>
@@ -74,16 +72,6 @@ class LocalWatcher {
   // https://github.com/paulmillr/chokidar
   start () {
     log.debug('Starting...')
-
-    // A map of pending operations. It's used for detecting move operations,
-    // as chokidar only reports adds and deletion. The key is the path (as
-    // seen on the filesystem, not normalized as an _id), and the value is
-    // an object, with at least a done method and a timeout value. The done
-    // method can be used to finalized the pending operation (we are sure we
-    // want to save the operation as it in pouchdb), and the timeout can be
-    // cleared to cancel the operation (for example, a deletion is finally
-    // seen as a part of a move operation).
-    this.pendingDeletions = new PendingMap()
 
     this.watcher = chokidar.watch('.', {
       // Let paths in events be relative to this base path
@@ -491,7 +479,6 @@ class LocalWatcher {
       this.watcher = null
     }
     this.buffer.switchMode('idle')
-    this.pendingDeletions.executeAll()
     // Give some time for awaitWriteFinish events to be fired
     return new Promise((resolve) => {
       setTimeout(resolve, 3000)
