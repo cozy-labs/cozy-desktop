@@ -3,6 +3,7 @@
 /cli/coverage
 /cli/lib
 /cli/storage/
+/cli/debug.log
 
 /gui/app.css
 /gui/app.css.map
