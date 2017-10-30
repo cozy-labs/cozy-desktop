@@ -91,6 +91,7 @@ for (let scenario of scenarios) {
       await helpers.local.simulateEvents(eventsFile.events)
       await helpers.syncAll()
 
+      // TODO: Bring back Prep expectations for local tests?
       // TODO: Wrap in custom expectation
       if (scenario.expected) {
         const expectedLocalTree = scenario.expected.tree || scenario.expected.localTree
