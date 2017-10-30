@@ -71,6 +71,25 @@ afterEach(function () {
 })
 
 for (let scenario of scenarios) {
+
+  it(`test/scenarios/${scenario.name}/local/initial-scan`, async function () {
+    if (scenario.init) {
+      let relpathFix = _.identity
+      if (process.platform === 'win32' && this.currentTest.title.match(/win32/)) {
+        relpathFix = (relpath) => relpath.replace(/\//g, '\\').toUpperCase()
+      }
+      await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix)
+    }
+
+    await runActions(scenario, helpers.local.syncDir.abspath)
+    helpers.local.local.watcher.start()
+    // TODO: await helpers.syncAll()
+
+    if (scenario.expected && scenario.expected.prepCalls) {
+      should(prepCalls).deepEqual(scenario.expected.prepCalls)
+    }
+  })
+
   for (let eventsFile of loadFSEventFiles(scenario)) {
     const localTestName = `test/scenarios/${scenario.name}/local/${eventsFile.name}`
     if (eventsFile.disabled) {
