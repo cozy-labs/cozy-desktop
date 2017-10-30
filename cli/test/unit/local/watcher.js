@@ -19,7 +19,8 @@ describe('LocalWatcher Tests', function () {
   before('instanciate pouch', pouchHelpers.createDatabase)
   beforeEach('instanciate local watcher', function () {
     this.prep = {}
-    this.watcher = new Watcher(this.syncPath, this.prep, this.pouch)
+    const events = {emit: sinon.stub()}
+    this.watcher = new Watcher(this.syncPath, this.prep, this.pouch, events)
   })
   afterEach('stop watcher and clean path', function (done) {
     if (this.watcher.watcher) {

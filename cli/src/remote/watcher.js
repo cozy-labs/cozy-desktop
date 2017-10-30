@@ -8,6 +8,7 @@ import logger from '../logger'
 import { ensureValidPath, detectPlatformIncompatibilities } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
+import * as syncState from '../syncstate'
 import RemoteCozy from './cozy'
 import * as remoteChange from './change'
 import { inRemoteTrash } from './document'
@@ -89,9 +90,10 @@ export default class RemoteWatcher {
   // FIXME: Misleading method name?
   async pullMany (docs: Array<RemoteDoc|RemoteDeletion>) {
     const changes: Change[] = []
-    const release = await this.pouch.lock()
 
+    const release = await this.pouch.lock()
     try {
+      syncState.onRemoteStart(this.events)
       log.trace('Contextualize and analyse changesfeed results...')
       for (let index = 0; index < docs.length; index++) {
         const doc = docs[index]
@@ -110,6 +112,7 @@ export default class RemoteWatcher {
     } finally {
       // TODO: Ensure lock is released
       release()
+      syncState.onRemoteEnd(this.events)
     }
   }
 
