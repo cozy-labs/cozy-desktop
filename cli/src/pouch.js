@@ -30,11 +30,13 @@ class Pouch {
   config: Config
   db: PouchDB
   updater: any
-  _lock: Promise
+  _lock: {id: number, promise: Promise}
+  nextLockId: number
 
   constructor (config) {
     this.config = config
-    this._lock = Promise.resolve(null)
+    this.nextLockId = 0
+    this._lock = {id: this.nextLockId++, promise: Promise.resolve(null)}
     this.db = new PouchDB(this.config.dbPath)
     this.db.setMaxListeners(100)
     this.db.on('error', err => log.warn(err))
@@ -66,11 +68,19 @@ class Pouch {
   }
 
   lock (): Promise<Function> {
-    let pCurrent = this._lock
+    const id = this.nextLockId++
+    log.trace({lock: {id, state: 'requested'}})
+    let pCurrent = this._lock.promise
     let _resolve
     let pReleased = new Promise((resolve) => { _resolve = resolve })
-    this._lock = pCurrent.then(() => pReleased)
-    return pCurrent.then(() => _resolve)
+    this._lock = {id, promise: pCurrent.then(() => pReleased)}
+    return pCurrent.then(() => {
+      log.trace({lock: {id, state: 'acquired'}})
+      return () => {
+        log.trace({lock: {id, state: 'released'}})
+        _resolve()
+      }
+    })
   }
 
   /* Mini ODM */
