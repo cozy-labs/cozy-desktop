@@ -110,7 +110,6 @@ export default class RemoteWatcher {
 
       log.trace('Done with pull.')
     } finally {
-      // TODO: Ensure lock is released
       release()
       syncState.onRemoteEnd(this.events)
     }
