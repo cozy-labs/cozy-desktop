@@ -194,6 +194,12 @@ describe('RemoteWatcher', function () {
         should(apply.args[0][0]).have.properties({type: 'IgnoredChange', doc: docs[1]})
         should(apply.args[1][0]).have.properties({type: 'FileAdded', doc: validMetadata(docs[0])})
       })
+
+      it('releases the Pouch lock', async function () {
+        try { await this.watcher.pullMany(docs) } catch (_) {}
+        const nextLockPromise = this.pouch.lock()
+        await should(nextLockPromise).be.fulfilled()
+      })
     })
 
     it('applies the changes when the document still exists on remote', async function () {
