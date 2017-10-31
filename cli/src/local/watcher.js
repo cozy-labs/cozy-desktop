@@ -436,7 +436,7 @@ class LocalWatcher {
 
     actions.sort(sorter)
 
-    log.trace('Done with analysis.')
+    log.debug(`Identified ${actions.length} change(s).`)
 
     return actions
   }
