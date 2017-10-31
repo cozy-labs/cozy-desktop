@@ -1,0 +1,52 @@
+[
+  {
+    "_id": "400e2a97d7232ac819cce569b1129ba3",
+    "_rev": "2-03ef7d14761738c5ceb19799a06ea965",
+    "created_at": "2017-10-31T13:11:30.771715816+01:00",
+    "dir_id": "400e2a97d7232ac819cce569b112873e",
+    "name": "subdir",
+    "path": "/parent/dst/dir/subdir",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-31T13:11:30.771715816+01:00"
+  },
+  {
+    "_id": "400e2a97d7232ac819cce569b112a4e1",
+    "_rev": "2-1835d5ab130f25cc3ee1515aebf0ae51",
+    "class": "files",
+    "created_at": "2017-10-31T13:11:30.855130488+01:00",
+    "dir_id": "400e2a97d7232ac819cce569b1129ba3",
+    "executable": false,
+    "md5sum": "Bg5OnjC8ua5nWoAyioemhw==",
+    "mime": "application/octet-stream",
+    "name": "filerenamed",
+    "size": "20",
+    "tags": [],
+    "trashed": false,
+    "type": "file",
+    "updated_at": "2017-10-31T13:11:30.855130488+01:00",
+    "path": "/parent/dst/dir/subdir/filerenamed"
+  },
+  {
+    "_id": "400e2a97d7232ac819cce569b112873e",
+    "_rev": "2-dd1aaedda7e62ee88d409a8d232f8b9c",
+    "created_at": "2017-10-31T13:11:20.116938994+01:00",
+    "dir_id": "400e2a97d7232ac819cce569b1127260",
+    "name": "dir",
+    "path": "/parent/dst/dir",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-31T13:11:20.116938994+01:00"
+  },
+  {
+    "_id": "400e2a97d7232ac819cce569b11292a0",
+    "_rev": "2-d43a101b99ed79d47225fedb804cb1af",
+    "created_at": "2017-10-31T13:11:25.329686259+01:00",
+    "dir_id": "400e2a97d7232ac819cce569b112873e",
+    "name": "empty-subdir",
+    "path": "/parent/dst/dir/empty-subdir",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-31T13:11:25.329686259+01:00"
+  }
+]
