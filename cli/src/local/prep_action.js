@@ -48,7 +48,7 @@ export const find = <T>(actions: PrepAction[], maybeRightType: (PrepAction) => ?
   }
 }
 
-export const isChildMove = (a: PrepAction, b: PrepAction) => {
+export const isChildMove = (a: PrepAction, b: PrepAction): boolean %checks => {
   return a.type === 'PrepMoveFolder' &&
          (b.type === 'PrepMoveFolder' || b.type === 'PrepMoveFile') &&
         b.path.indexOf(a.path + path.sep) === 0 &&

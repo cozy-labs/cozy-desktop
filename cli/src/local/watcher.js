@@ -363,7 +363,7 @@ class LocalWatcher {
         log.error({err, path: e.path})
         throw err
       }
-      if (process.env.DEBUG) log.trace({currentEvent: e, actions})
+      // if (process.env.DEBUG) log.trace({currentEvent: e, actionsByInode})
     }
 
     log.trace('Flatten actions map...')
@@ -401,7 +401,13 @@ class LocalWatcher {
         b.path.indexOf(a.path + path.sep) === 0 &&
         a.old && b.old &&
         b.old.path.indexOf(a.old.path + path.sep) === 0) {
-          actions.splice(j--, 1)
+          if (b.path.substr(a.path.length) === b.old.path.substr(a.old.path.length)) {
+            actions.splice(j--, 1)
+          } else {
+            // move inside move
+            b.old.path = b.old.path.replace(a.old.path, a.path)
+            b.old.needRefetch = true
+          }
         }
       }
     }
@@ -409,6 +415,9 @@ class LocalWatcher {
     log.trace('Final sort...')
 
     const sorter = (a, b) => {
+      if (prepAction.childOf(prepAction.addPath(a), prepAction.delPath(b))) return -1
+      if (prepAction.childOf(prepAction.addPath(b), prepAction.delPath(a))) return 1
+
       // if one action is a child of another, it takes priority
       if (prepAction.isChildAdd(a, b)) return -1
       if (prepAction.isChildDelete(b, a)) return -1
@@ -560,10 +569,14 @@ class LocalWatcher {
     return this.prep.addFileAsync(SIDE, doc).catch(logError)
   }
 
-  onMoveFile (filePath: string, stats: fs.Stats, md5sum: string, old: Metadata) {
+  async onMoveFile (filePath: string, stats: fs.Stats, md5sum: string, old: Metadata) {
     const logError = (err) => log.error({err, path: filePath})
     const doc = this.createDoc(filePath, stats, md5sum)
     log.info({path: filePath}, `was moved from ${old.path}`)
+    if (old.needRefetch) {
+      old = await this.pouch.db.get(metadata.id(old.path))
+      old.childMove = false
+    }
     return this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
   }
 
