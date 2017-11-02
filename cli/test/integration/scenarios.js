@@ -71,45 +71,51 @@ afterEach(function () {
 })
 
 for (let scenario of scenarios) {
-  it(`test/scenarios/${scenario.name}/local/initial-scan`, async function () {
-    this.timeout(3 * 60 * 1000)
-    if (scenario.init) {
-      let relpathFix = _.identity
-      if (process.platform === 'win32' && this.currentTest.title.match(/win32/)) {
-        relpathFix = (relpath) => relpath.replace(/\//g, '\\').toUpperCase()
-      }
-      await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix, true)
-    }
+  const initialScanTestName = `test/scenarios/${scenario.name}/local/initial-scan`
 
-    await runActions(scenario, helpers.local.syncDir.abspath)
-
-    await helpers.local.local.watcher.start()
-    await helpers.local.local.watcher.stop(true)
-
-    await helpers.syncAll()
-
-    if (scenario.expected) {
-      const expectedLocalTree = scenario.expected.tree || scenario.expected.localTree
-      const expectedRemoteTree = scenario.expected.tree || scenario.expected.remoteTree
-      delete scenario.expected.tree
-      delete scenario.expected.prepCalls // TODO: expect prep actions
-      const actual = {}
-
-      if (expectedLocalTree) {
-        scenario.expected.localTree = expectedLocalTree
-        actual.localTree = await helpers.local.tree()
-      }
-      if (expectedRemoteTree) {
-        scenario.expected.remoteTree = expectedRemoteTree
-        actual.remoteTree = await helpers.remote.treeWithoutTrash()
-      }
-      if (scenario.expected.remoteTrash) {
-        actual.remoteTrash = await helpers.remote.trash()
+  if (scenario.disabled) {
+    it.skip(`${initialScanTestName} (${scenario.disabled})`, () => {})
+  } else {
+    it(initialScanTestName, async function () {
+      this.timeout(3 * 60 * 1000)
+      if (scenario.init) {
+        let relpathFix = _.identity
+        if (process.platform === 'win32' && this.currentTest.title.match(/win32/)) {
+          relpathFix = (relpath) => relpath.replace(/\//g, '\\').toUpperCase()
+        }
+        await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix, true)
       }
 
-      should(actual).deepEqual(scenario.expected)
-    }
-  })
+      await runActions(scenario, helpers.local.syncDir.abspath)
+
+      await helpers.local.local.watcher.start()
+      await helpers.local.local.watcher.stop(true)
+
+      await helpers.syncAll()
+
+      if (scenario.expected) {
+        const expectedLocalTree = scenario.expected.tree || scenario.expected.localTree
+        const expectedRemoteTree = scenario.expected.tree || scenario.expected.remoteTree
+        delete scenario.expected.tree
+        delete scenario.expected.prepCalls // TODO: expect prep actions
+        const actual = {}
+
+        if (expectedLocalTree) {
+          scenario.expected.localTree = expectedLocalTree
+          actual.localTree = await helpers.local.tree()
+        }
+        if (expectedRemoteTree) {
+          scenario.expected.remoteTree = expectedRemoteTree
+          actual.remoteTree = await helpers.remote.treeWithoutTrash()
+        }
+        if (scenario.expected.remoteTrash) {
+          actual.remoteTrash = await helpers.remote.trash()
+        }
+
+        should(actual).deepEqual(scenario.expected)
+      } // scenario.expected
+    }) // test
+  } // !eventsFile.disabled
 
   for (let eventsFile of loadFSEventFiles(scenario)) {
     const localTestName = `test/scenarios/${scenario.name}/local/${eventsFile.name}`
