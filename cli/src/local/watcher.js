@@ -64,7 +64,8 @@ class LocalWatcher {
     this.prep = prep
     this.pouch = pouch
     this.events = events
-    const timeoutInMs = 10000 // TODO: Read from config
+     // TODO: Read from config
+    const timeoutInMs = process.env.NODE_ENV === 'test' ? 1000 : 10000
     this.buffer = new LocalEventBuffer(timeoutInMs, this.onFlush)
     this.checksumer = checksumer.init()
   }
