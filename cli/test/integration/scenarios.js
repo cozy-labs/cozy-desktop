@@ -78,6 +78,7 @@ for (let scenario of scenarios) {
   } else {
     it(initialScanTestName, async function () {
       this.timeout(3 * 60 * 1000)
+      await Promise.delay(500)
       if (scenario.init) {
         let relpathFix = _.identity
         if (process.platform === 'win32' && this.currentTest.title.match(/win32/)) {
