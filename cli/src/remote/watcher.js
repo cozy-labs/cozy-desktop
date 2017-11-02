@@ -91,7 +91,7 @@ export default class RemoteWatcher {
   async pullMany (docs: Array<RemoteDoc|RemoteDeletion>) {
     const changes: Change[] = []
 
-    const release = await this.pouch.lock()
+    const release = await this.pouch.lock(this)
     try {
       syncState.onRemoteStart(this.events)
       log.trace('Contextualize and analyse changesfeed results...')
