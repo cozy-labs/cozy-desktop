@@ -179,7 +179,7 @@ class Sync {
       return this.pouch.setLocalSeqAsync(change.seq)
     }
 
-    const release = await this.pouch.lock()
+    const release = await this.pouch.lock(this)
     try {
       let [side, sideName, rev] = this.selectSide(doc)
 
