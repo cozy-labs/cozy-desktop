@@ -6,14 +6,14 @@ matrix:
     fast_finish: true
     include:
         - os: linux
-          node_js: 6
+          node_js: 8
           env: CXX=g++-4.8
         - os: linux
-          node_js: 7
+          node_js: 6
           env: CXX=g++-4.8
           # @TODO macOS build is much slower
         - os: osx
-          node_js: 6
+          node_js: 8
 env:
     global:
         - COZY_DESKTOP_DIR=/tmp/cozy-desktop
@@ -66,7 +66,7 @@ before_install:
     - sleep 1
     - $GOPATH/bin/cozy-stack instances add --dev --passphrase "$COZY_PASSPHRASE" localhost:8080
     - export COZY_CLIENT_ID=$($GOPATH/bin/cozy-stack instances client-oauth localhost:8080 http://localhost/ test github.com/cozy-labs/cozy-desktop)
-    - export COZY_STACK_TOKEN=$($GOPATH/bin/cozy-stack instances token-oauth localhost:8080 "$COZY_CLIENT_ID" io.cozy.files)
+    - export COZY_STACK_TOKEN=$($GOPATH/bin/cozy-stack instances token-oauth localhost:8080 "$COZY_CLIENT_ID" io.cozy.files io.cozy.settings)
 
     # COZY_DESKTOP_DIR
     - mkdir -p "$COZY_DESKTOP_DIR"

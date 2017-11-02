@@ -1,0 +1,53 @@
+[
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba3575f7",
+    "_rev": "2-74a2cbb4a6623330986897e3d26ab9aa",
+    "created_at": "2017-10-17T16:30:18.602694924Z",
+    "dir_id": "io.cozy.files.trash-dir",
+    "name": "dir",
+    "path": "/.cozy_trash/dir",
+    "restore_path": "/parent",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-17T16:30:18.602694924Z"
+  },
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba35928e",
+    "_rev": "2-be66d5c4e2e25420c62a2fbefc208a02",
+    "created_at": "2017-10-17T16:30:19.012204719Z",
+    "dir_id": "0b92f45b12ad022ee57423c4ba3575f7",
+    "name": "subdir",
+    "path": "/.cozy_trash/dir/subdir",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-17T16:30:19.012204719Z"
+  },
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba3598fb",
+    "_rev": "2-d5289d224a2ca345e14d6f64862fa15d",
+    "class": "files",
+    "created_at": "2017-10-17T16:30:19.11553432Z",
+    "dir_id": "0b92f45b12ad022ee57423c4ba35928e",
+    "executable": false,
+    "md5sum": "Bg5OnjC8ua5nWoAyioemhw==",
+    "mime": "application/octet-stream",
+    "name": "file",
+    "size": "20",
+    "tags": [],
+    "trashed": true,
+    "type": "file",
+    "updated_at": "2017-10-17T16:30:19.11553432Z",
+    "path": "/.cozy_trash/dir/subdir/file"
+  },
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba3582de",
+    "_rev": "2-a83b029d7e214bf3f3203a08b4e969c1",
+    "created_at": "2017-10-17T16:30:18.819894809Z",
+    "dir_id": "0b92f45b12ad022ee57423c4ba3575f7",
+    "name": "empty-subdir",
+    "path": "/.cozy_trash/dir/empty-subdir",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-17T16:30:18.819894809Z"
+  }
+]

@@ -4,6 +4,7 @@ import Promise from 'bluebird'
 import EventEmitter from 'events'
 import { dirname } from 'path'
 
+import * as syncState from './syncstate'
 import Ignore from './ignore'
 import Local from './local'
 import logger from './logger'
@@ -114,7 +115,7 @@ class Sync {
     const change = await this.pop()
     if (this.stopped) return
     try {
-      this.events.emit('syncing')
+      syncState.onSyncStart(this.events)
       await this.apply(change)
     } catch (err) {
       if (!this.stopped) throw err
@@ -135,13 +136,13 @@ class Sync {
       filter: '_view',
       view: 'byPath'
     }
-    return new Promise((resolve, reject) => {
+    let res = new Promise((resolve, reject) => {
       this.pouch.db.changes(opts)
         .on('change', info => resolve(info))
         .on('error', err => reject(err))
         .on('complete', info => {
           if (info.results && info.results.length) { return }
-          this.events.emit('up-to-date')
+          syncState.onSyncEnd(this.events)
           log.debug('No more metadata changes for now')
           opts.live = true
           opts.returnDocs = false
@@ -161,6 +162,8 @@ class Sync {
             })
         })
     })
+
+    return res
   }
 
   // Apply a change to both local and remote
@@ -169,13 +172,14 @@ class Sync {
   async apply (change: Change): Promise<*> {
     let { doc, seq } = change
     const changeInfo = {path: doc.path, seq}
-    log.trace(changeInfo, 'Applying change...')
+    log.debug(changeInfo, 'Applying change...')
     log.trace({change})
 
     if (this.ignore.isIgnored(doc)) {
       return this.pouch.setLocalSeqAsync(change.seq)
     }
 
+    const release = await this.pouch.lock(this)
     try {
       let [side, sideName, rev] = this.selectSide(doc)
 
@@ -200,6 +204,8 @@ class Sync {
       }
     } catch (err) {
       await this.handleApplyError(change, err)
+    } finally {
+      release()
     }
   }
 
@@ -256,13 +262,14 @@ class Sync {
   }
 
   // Increment the counter of errors for this document
-  async updateErrors (change: Change): Promise<*> {
+  async updateErrors (change: Change): Promise<void> {
     let { doc } = change
     if (!doc.errors) doc.errors = 0
     doc.errors++
     // Don't try more than 3 times for the same operation
     if (doc.errors >= 3) {
-      return this.pouch.setLocalSeqAsync(change.seq)
+      await this.pouch.setLocalSeqAsync(change.seq)
+      return
     }
     try {
       // The sync error may be due to the remote cozy being overloaded.
@@ -313,6 +320,10 @@ class Sync {
         from = (this.moveFrom: Metadata)
         this.moveFrom = null
         if (from.moveTo === doc._id && from.md5sum === doc.md5sum) {
+          if (from.childMove) {
+            await side.assignNewRev(doc)
+            return
+          }
           try {
             await side.moveFileAsync(doc, from)
           } catch (err) {
@@ -327,34 +338,41 @@ class Sync {
           } catch (err) {
             log.error({err, path: doc.path})
           }
-          return side.addFileAsync(doc)
+          await side.addFileAsync(doc)
         }
         break
       case doc.moveTo != null:
         this.moveFrom = doc
         return
       case doc._deleted:
-        return side.trashAsync(doc)
+        try {
+          await side.trashAsync(doc)
+        } catch (err) {
+          throw err
+        }
+        break
       case rev === 0:
-        return side.addFileAsync(doc)
+        await side.addFileAsync(doc)
+        break
       default:
         let old
         try {
           old = await this.pouch.getPreviousRevAsync(doc._id, rev)
         } catch (_) {
-          return side.overwriteFileAsync(doc, null)
+          await side.overwriteFileAsync(doc, null)
+          return
         }
 
         if (old.md5sum === doc.md5sum) {
-          return side.updateFileMetadataAsync(doc, old)
+          await side.updateFileMetadataAsync(doc, old)
         } else {
-          return side.overwriteFileAsync(doc, old)
+          await side.overwriteFileAsync(doc, old)
         }
     }
   }
 
   // Same as fileChanged, but for folder
-  async folderChangedAsync (doc: Metadata, side: Side, rev: number) {
+  async folderChangedAsync (doc: Metadata, side: Side, rev: number): Promise<void> {
     let from
     switch (true) {
       case doc._deleted && (rev === 0):
@@ -364,6 +382,10 @@ class Sync {
         from = (this.moveFrom: Metadata)
         this.moveFrom = null
         if (from.moveTo === doc._id) {
+          if (from.childMove) {
+            await side.assignNewRev(doc)
+            return
+          }
           try {
             await side.moveFolderAsync(doc, from)
           } catch (err) {
@@ -382,24 +404,27 @@ class Sync {
           } catch (err) {
             log.error({err})
           }
-          return side.addFolderAsync(doc)
+          await side.addFolderAsync(doc)
         }
         break
       case doc.moveTo != null:
         this.moveFrom = doc
         return
       case doc._deleted:
-        return side.deleteFolderAsync(doc)
+        await side.deleteFolderAsync(doc)
+        return
       case rev === 0:
-        return side.addFolderAsync(doc)
+        await side.addFolderAsync(doc)
+        return
       default:
         let old
         try {
           old = await this.pouch.getPreviousRevAsync(doc._id, rev)
         } catch (_) {
-          return side.addFolderAsync(doc)
+          await side.addFolderAsync(doc)
+          return
         }
-        return side.updateFolderAsync(doc, old)
+        await side.updateFolderAsync(doc, old)
     }
   }
 
@@ -427,7 +452,8 @@ class Sync {
     }
 
     log.info(`${doc.path}: should be trashed by itself`)
-    return side.trashAsync(doc).then(_ => true)
+    await side.trashAsync(doc)
+    return true
   }
 }
 

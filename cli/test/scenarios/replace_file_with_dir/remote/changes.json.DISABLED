@@ -1,0 +1,31 @@
+[
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba35a4e0",
+    "_rev": "2-aac9ace507e84ef74efc87a2835b5364",
+    "class": "files",
+    "created_at": "2017-10-17T16:30:20.803587018Z",
+    "dir_id": "io.cozy.files.trash-dir",
+    "executable": false,
+    "md5sum": "Bg5OnjC8ua5nWoAyioemhw==",
+    "mime": "application/octet-stream",
+    "name": "foo",
+    "restore_path": "/",
+    "size": "20",
+    "tags": [],
+    "trashed": true,
+    "type": "file",
+    "updated_at": "2017-10-17T16:30:20.803587018Z",
+    "path": "/.cozy_trash/foo"
+  },
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba35af82",
+    "_rev": "1-d64413df59c8779d8625a674270e98f6",
+    "created_at": "2017-10-17T16:30:21.874400893Z",
+    "dir_id": "io.cozy.files.root-dir",
+    "name": "foo",
+    "path": "/foo",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-17T16:30:21.874400893Z"
+  }
+]

@@ -1,6 +1,7 @@
 /* eslint-env mocha */
 
 import async from 'async'
+import Promise from 'bluebird'
 import jsv from 'jsverify'
 import path from 'path'
 import should from 'should'
@@ -23,6 +24,27 @@ describe('Pouch', function () {
           return pouchHelpers.createFile(this.pouch, i, callback)
         })
       }, done)
+    })
+  })
+
+  describe('lock', () => {
+    it('ensures nobody else accesses Pouch until released', async function () {
+      const promiseLock1 = this.pouch.lock('lock1')
+      await should(promiseLock1).be.fulfilled()
+      const releaseLock1 = promiseLock1.value()
+      const promiseLock2 = this.pouch.lock('lock2')
+      const promiseLock3 = this.pouch.lock('lock3')
+      should(promiseLock2.isPending()).be.true()
+      should(promiseLock3.isPending()).be.true()
+      releaseLock1()
+      should(promiseLock3.isPending()).be.true()
+      await should(promiseLock2).be.fulfilled()
+      const releaseLock2 = promiseLock2.value()
+      should(promiseLock3.isPending()).be.true()
+      releaseLock2()
+      await should(promiseLock3).be.fulfilled()
+      const releaseLock3 = promiseLock2.value()
+      releaseLock3()
     })
   })
 

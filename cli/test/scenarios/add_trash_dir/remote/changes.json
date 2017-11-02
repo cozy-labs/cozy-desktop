@@ -1,0 +1,14 @@
+[
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba352464",
+    "_rev": "2-21f852f2854362cb23988033e42752f9",
+    "created_at": "2017-10-17T16:30:07.874396564Z",
+    "dir_id": "io.cozy.files.trash-dir",
+    "name": "dir",
+    "path": "/.cozy_trash/dir",
+    "restore_path": "/",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-17T16:30:07.874396564Z"
+  }
+]

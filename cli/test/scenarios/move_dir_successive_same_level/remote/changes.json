@@ -1,0 +1,35 @@
+[
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba366427",
+    "_rev": "3-906f8690295281fd486cd9a7fc26b654",
+    "created_at": "2017-10-17T16:30:38.820214815Z",
+    "dir_id": "0b92f45b12ad022ee57423c4ba36551f",
+    "name": "subdir",
+    "path": "/parent/dst2/dir/subdir",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-17T16:30:38.820214815Z"
+  },
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba36551f",
+    "_rev": "3-e9dfff92ed57bcdf37c99e9b71d7df2b",
+    "created_at": "2017-10-17T16:30:38.386778018Z",
+    "dir_id": "0b92f45b12ad022ee57423c4ba364ffc",
+    "name": "dir",
+    "path": "/parent/dst2/dir",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-17T16:30:38.386778018Z"
+  },
+  {
+    "_id": "0b92f45b12ad022ee57423c4ba3661e7",
+    "_rev": "3-76f230c46bf3f28fdc65369b1a5bd5d6",
+    "created_at": "2017-10-17T16:30:38.606735889Z",
+    "dir_id": "0b92f45b12ad022ee57423c4ba36551f",
+    "name": "empty-subdir",
+    "path": "/parent/dst2/dir/empty-subdir",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2017-10-17T16:30:38.606735889Z"
+  }
+]

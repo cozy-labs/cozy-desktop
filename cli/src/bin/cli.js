@@ -8,10 +8,21 @@ import Progress from 'progress'
 import pkg from '../../package.json'
 import App from '../app'
 import logger from '../logger'
-let app = new App(process.env.COZY_DESKTOP_DIR)
 const log = logger({
   component: 'CLI'
 })
+const fail = (err) => {
+  log.error(err.message)
+  process.exit(1)
+}
+console.log('app...')
+let app
+try {
+  app = new App(process.env.COZY_DESKTOP_DIR)
+} catch (err) {
+  fail(err)
+}
+console.log('app ok')
 
 let exit = function () {
   log.info('Exiting...')
@@ -57,11 +68,11 @@ let sync = function (mode, args) {
       log.info(`${what} ${filename} (unknown size)`)
     }
   })
-  app.synchronize(mode)
-    .catch((err) => {
-      log.error(err.message)
-      process.exit(1)
-    })
+  try {
+    app.synchronize(mode).catch(fail)
+  } catch (err) {
+    fail(err)
+  }
 }
 
 program

@@ -30,9 +30,13 @@ class Pouch {
   config: Config
   db: PouchDB
   updater: any
+  _lock: {id: number, promise: Promise}
+  nextLockId: number
 
   constructor (config) {
     this.config = config
+    this.nextLockId = 0
+    this._lock = {id: this.nextLockId++, promise: Promise.resolve(null)}
     this.db = new PouchDB(this.config.dbPath)
     this.db.setMaxListeners(100)
     this.db.on('error', err => log.warn(err))
@@ -60,6 +64,23 @@ class Pouch {
       this.db.setMaxListeners(100)
       this.db.on('error', err => log.warn(err))
       return this.addAllViews(callback)
+    })
+  }
+
+  lock (component: *): Promise<Function> {
+    const id = this.nextLockId++
+    if (typeof component !== 'string') component = component.constructor.name
+    log.trace({component, lock: {id, state: 'requested'}})
+    let pCurrent = this._lock.promise
+    let _resolve
+    let pReleased = new Promise((resolve) => { _resolve = resolve })
+    this._lock = {id, promise: pCurrent.then(() => pReleased)}
+    return pCurrent.then(() => {
+      log.trace({component, lock: {id, state: 'acquired'}})
+      return () => {
+        log.trace({component, lock: {id, state: 'released'}})
+        _resolve()
+      }
     })
   }
 
@@ -123,8 +144,7 @@ class Pouch {
   byRecursivePath (basePath, callback) {
     let params
     if (basePath === '') {
-      params =
-                {include_docs: true}
+      params = {include_docs: true}
     } else {
       params = {
         startkey: `${basePath}`,
