@@ -52,15 +52,8 @@ export class IntegrationTestHelpers {
       view: 'byPath'
     })
 
-    const release = await this._pouch.lock(this)
-    try {
-      for (let change of changes.results) {
-        await this._sync.apply(change)
-      }
-      release()
-    } catch (err) {
-      release()
-      throw err
+    for (let change of changes.results) {
+      await this._sync.apply(change)
     }
   }
 
