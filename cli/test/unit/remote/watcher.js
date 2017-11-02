@@ -197,7 +197,7 @@ describe('RemoteWatcher', function () {
 
       it('releases the Pouch lock', async function () {
         try { await this.watcher.pullMany(docs) } catch (_) {}
-        const nextLockPromise = this.pouch.lock()
+        const nextLockPromise = this.pouch.lock('nextLock')
         await should(nextLockPromise).be.fulfilled()
       })
     })

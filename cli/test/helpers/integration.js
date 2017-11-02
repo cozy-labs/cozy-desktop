@@ -52,7 +52,7 @@ export class IntegrationTestHelpers {
       view: 'byPath'
     })
 
-    const release = await this._pouch.lock()
+    const release = await this._pouch.lock(this)
     try {
       for (let change of changes.results) {
         await this._sync.apply(change)
