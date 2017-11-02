@@ -174,15 +174,16 @@ class LocalWatcher {
       if (initialScan.ids.indexOf(metadata.id(doc.path)) !== -1 || doc.trashed) {
         continue
       } else if (doc.docType === 'file') {
-        events.unshift({type: 'unlink', path: doc.path})
+        events.unshift({type: 'unlink', path: doc.path, old: doc})
       } else {
-        events.unshift({type: 'unlinkDir', path: doc.path})
+        events.unshift({type: 'unlinkDir', path: doc.path, old: doc})
       }
     }
   }
 
   async prepareEvents (events: ChokidarFSEvent[]) : Promise<ContextualizedChokidarFSEvent[]> {
     const oldMetadata = async (e: ChokidarFSEvent): Promise<?Metadata> => {
+      if (e.old) return e.old
       if (e.type === 'unlink' || e.type === 'unlinkDir') {
         try {
           return await this.pouch.db.get(metadata.id(e.path))
