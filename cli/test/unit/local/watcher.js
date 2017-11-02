@@ -441,7 +441,8 @@ describe('LocalWatcher Tests', function () {
         docType: 'file'
       }
       for (let doc of [folder1, folder2, folder3, file1, file2, file3]) {
-        await this.pouch.db.put(doc)
+        const {rev} = await this.pouch.db.put(doc)
+        doc._rev = rev
       }
       const events = [
         {type: 'addDir', path: 'folder1'},
@@ -452,8 +453,8 @@ describe('LocalWatcher Tests', function () {
       await this.watcher.prependOfflineUnlinkEvents(events, initialScan)
 
       should(events).deepEqual([
-        {type: 'unlinkDir', path: 'folder2'},
-        {type: 'unlink', path: 'file2'},
+        {type: 'unlinkDir', path: 'folder2', old: folder2},
+        {type: 'unlink', path: 'file2', old: file2},
         {type: 'addDir', path: 'folder1'},
         {type: 'add', path: 'file1'}
       ])
