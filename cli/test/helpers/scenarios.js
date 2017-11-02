@@ -98,6 +98,12 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
     if (relpath.endsWith('/')) {
       relpath = _.trimEnd(relpath, '/') // XXX: Check in metadata.id?
       relpath = relpathFix(relpath)
+
+      if (!trashed) {
+        debug('create local dir...')
+        await fs.ensureDir(abspath(relpath))
+      }
+
       const doc = {
         _id: metadata.id(relpath),
         docType: 'folder',
@@ -107,6 +113,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
         tags: [],
         sides: {local: 1, remote: 1}
       }
+
       if (!isOutside) {
         debug('create remote dir...', trashed ? '(trashed)' : '')
         const remoteDir = await cozy.files.createDirectory({
@@ -116,16 +123,21 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
         })
         doc.remote = _.pick(remoteDir, ['_id', '_rev'])
         if (trashed) remoteDocsToTrash.push(remoteDir)
+        else {
+          debug('create dir metadata...')
+          await pouch.put(doc)
+        }
       }
-      if (trashed) continue
-      debug('create local dir...')
-      await fs.ensureDir(abspath(relpath))
-      debug('create dir metadata...')
-      await pouch.put(doc)
     } else {
       relpath = relpathFix(relpath)
       const content = 'foo'
       const md5sum = 'rL0Y20zC+Fzt72VPzMSk2A=='
+
+      if (!trashed) {
+        debug('create local file...')
+        await fs.outputFile(abspath(relpath), content)
+      }
+
       const doc = {
         _id: metadata.id(relpath),
         md5sum,
@@ -151,12 +163,11 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
         })
         doc.remote = _.pick(remoteFile, ['_id', '_rev'])
         if (trashed) remoteDocsToTrash.push(remoteFile)
+        else {
+          debug('create file metadata...')
+          await pouch.put(doc)
+        }
       }
-      if (trashed) continue
-      debug('create local file...')
-      await fs.outputFile(abspath(relpath), content)
-      debug('create file metadata...')
-      await pouch.put(doc)
     } // if relpath ...
   } // for (... of scenario.init)
   for (let remoteDoc of remoteDocsToTrash) {
