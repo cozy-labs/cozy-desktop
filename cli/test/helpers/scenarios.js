@@ -82,7 +82,7 @@ module.exports.loadRemoteChangesFiles = (scenario) => {
   })
 }
 
-module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
+module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
   debug('init')
   const remoteDocsToTrash = []
   for (let {path: relpath, ino, trashed} of scenario.init) {
@@ -102,6 +102,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
       if (!trashed) {
         debug('create local dir...')
         await fs.ensureDir(abspath(relpath))
+        if (trueino) ino = (await fs.stat(abspath(relpath))).ino
       }
 
       const doc = {
@@ -136,6 +137,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix) => {
       if (!trashed) {
         debug('create local file...')
         await fs.outputFile(abspath(relpath), content)
+        if (trueino) ino = (await fs.stat(abspath(relpath))).ino
       }
 
       const doc = {
