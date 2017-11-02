@@ -38,7 +38,7 @@ if (process.env.TESTDEBUG) {
     level: process.env.TESTDEBUG,
     stream: {
       write: function (msg) {
-        console.log(msg.component, msg.path || '', msg.msg, _.omit(msg, ['component', 'pid', 'name', 'hostname', 'level', 'time', 'v']))
+        console.log(msg.component, msg.path || '', msg.msg, _.omit(msg, ['component', 'pid', 'name', 'hostname', 'level', 'time', 'v', 'msg']))
       }
     }
   })
