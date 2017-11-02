@@ -317,6 +317,9 @@ class Sync {
     switch (true) {
       case doc._deleted && (rev === 0):
         return
+      case doc.moveTo != null:
+        this.moveFrom = doc
+        return
       case this.moveFrom != null:
         // $FlowFixMe
         from = (this.moveFrom: Metadata)
@@ -343,9 +346,6 @@ class Sync {
           await side.addFileAsync(doc)
         }
         break
-      case doc.moveTo != null:
-        this.moveFrom = doc
-        return
       case doc._deleted:
         try {
           await side.trashAsync(doc)

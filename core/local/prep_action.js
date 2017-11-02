@@ -12,8 +12,8 @@ export type PrepDeleteFile = {type: 'PrepDeleteFile', path: string, old: ?Metada
 export type PrepPutFolder = {type: 'PrepPutFolder', path: string, ino: number, stats: fs.Stats, wip?: true}
 export type PrepUpdateFile = {type: 'PrepUpdateFile', path: string, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
 export type PrepAddFile = {type: 'PrepAddFile', path: string, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
-export type PrepMoveFile = {type: 'PrepMoveFile', path: string, old: Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
-export type PrepMoveFolder = {type: 'PrepMoveFolder', path: string, old: Metadata, ino: number, stats: fs.Stats, wip?: true}
+export type PrepMoveFile = {type: 'PrepMoveFile', path: string, old: Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true, needRefetch: boolean}
+export type PrepMoveFolder = {type: 'PrepMoveFolder', path: string, old: Metadata, ino: number, stats: fs.Stats, wip?: true, needRefetch: boolean}
 
 export type PrepAction =
   | PrepDeleteFolder
@@ -50,7 +50,7 @@ export const find = <T>(actions: PrepAction[], maybeRightType: (PrepAction) => ?
   }
 }
 
-export const isChildMove = (a: PrepAction, b: PrepAction) => {
+export const isChildMove = (a: PrepAction, b: PrepAction): boolean %checks => {
   return a.type === 'PrepMoveFolder' &&
          (b.type === 'PrepMoveFolder' || b.type === 'PrepMoveFile') &&
         b.path.indexOf(a.path + path.sep) === 0 &&

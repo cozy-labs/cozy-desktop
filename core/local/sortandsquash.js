@@ -240,7 +240,13 @@ export default function sortAndSquash (events: ContextualizedChokidarFSEvent[], 
       b.old.path.indexOf(a.old.path + path.sep) === 0) {
         log.debug({oldpath: b.old.path, path: b.path}, 'descendant move')
         a.wip = a.wip || b.wip
-        actions.splice(j--, 1)
+        if (b.path.substr(a.path.length) === b.old.path.substr(a.old.path.length)) {
+          actions.splice(j--, 1)
+        } else {
+          // move inside move
+          b.old.path = b.old.path.replace(a.old.path, a.path)
+          b.needRefetch = true
+        }
       }
     }
   }
@@ -269,6 +275,9 @@ export default function sortAndSquash (events: ContextualizedChokidarFSEvent[], 
   log.trace('Final sort...')
 
   const sorter = (a, b) => {
+    if (prepAction.childOf(prepAction.addPath(a), prepAction.delPath(b))) return -1
+    if (prepAction.childOf(prepAction.addPath(b), prepAction.delPath(a))) return 1
+
     // if one action is a child of another, it takes priority
     if (prepAction.isChildAdd(a, b)) return -1
     if (prepAction.isChildDelete(b, a)) return -1
