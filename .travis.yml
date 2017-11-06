@@ -43,6 +43,7 @@ before_install:
       fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
         travis_retry brew cask install apache-couchdb;
+        printf "\n[log]\nlevel = warn\n" >> /Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/etc/local.ini;
         (/Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/bin/couchdb &);
       fi
     - sleep 5
