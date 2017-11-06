@@ -179,6 +179,8 @@ class Sync {
       return this.pouch.setLocalSeqAsync(change.seq)
     }
 
+    // FIXME: Acquire lock for as many changes as possible to prevent next huge
+    // remote/local batches to acquite it first?
     const release = await this.pouch.lock(this)
     try {
       let [side, sideName, rev] = this.selectSide(doc)

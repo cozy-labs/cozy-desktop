@@ -267,6 +267,9 @@ describe('RemoteWatcher', function () {
       should(change.error.message).equal('Invalid path')
     })
 
+    // TODO: missing doctype test
+    // TODO: file without checksum
+
     it('does not fail on ghost file', async function () {
       let doc = {
         _id: '12345678904',

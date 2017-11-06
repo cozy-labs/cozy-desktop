@@ -129,6 +129,7 @@ describe('LocalWatcher charge', () => {
     it('takes less than 5min and does not crash', async function () {
       this.timeout(5 * 60 * 1000)
       await watcher.onFlush(events)
+      // TODO: Make benchmark more realistic with real actions, e.g. big moves.
     })
   })
 })
