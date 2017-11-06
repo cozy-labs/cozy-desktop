@@ -78,6 +78,8 @@ describe('Sync', function () {
     })
   })
 
+  // TODO: Test lock request/acquisition/release
+
   describe('sync', function () {
     beforeEach(function () {
       this.local = {}
