@@ -154,6 +154,8 @@ class LocalWatcher {
     // to become sortAndSquash
     const actions : PrepAction[] = this.sortAndSquash(preparedEvents)
 
+    // TODO: Don't even acquire lock actions list is empty
+    // FIXME: Shouldn't we acquire the lock before preparing the events?
     const release = await this.pouch.lock(this)
     try {
       await this.sendToPrep(actions)

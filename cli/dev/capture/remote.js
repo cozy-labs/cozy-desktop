@@ -126,6 +126,7 @@ const runActions = (scenario: *, cozy: *) => {
 
       case 'wait':
         debug('- wait', action.ms)
+        // FIXME: No need to wait on remote?
         return Promise.delay(action.ms)
 
       default:
