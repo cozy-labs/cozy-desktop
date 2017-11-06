@@ -185,7 +185,9 @@ for (let scenario of scenarios) {
 
     await remoteCaptureHelpers.runActions(scenario, cozyHelpers.cozy)
 
+    // TODO: Don't actually merge when scenario has only Prep assertions?
     await helpers.remote.pullChanges()
+    // TODO: Don't sync when scenario doesn't have target FS/trash assertions?
     for (let i = 0; i < scenario.actions.length + 1; i++) {
       await helpers.syncAll()
     }
@@ -197,5 +199,7 @@ for (let scenario of scenarios) {
       should(await helpers.local.treeWithoutTrash())
         .deepEqual(scenario.expected.tree)
     }
+
+    // TODO: Local trash assertions
   }) // describe remote
 } // scenarios
