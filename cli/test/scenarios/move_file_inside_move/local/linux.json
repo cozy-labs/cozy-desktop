@@ -1,11 +1,11 @@
 [
   {
     "type": "unlinkDir",
-    "path": "parent/src/dir/empty-subdir"
+    "path": "parent/src/dir/subdir"
   },
   {
     "type": "unlinkDir",
-    "path": "parent/src/dir/subdir"
+    "path": "parent/src/dir/empty-subdir"
   },
   {
     "type": "unlinkDir",
@@ -17,8 +17,8 @@
     "stats": {
       "ino": 5,
       "size": 4096,
-      "mtime": "2017-10-31T12:11:14.955Z",
-      "ctime": "2017-10-31T12:11:16.975Z"
+      "mtime": "2017-11-07T13:48:01.886Z",
+      "ctime": "2017-11-07T13:48:03.902Z"
     }
   },
   {
@@ -27,8 +27,8 @@
     "stats": {
       "ino": 6,
       "size": 4096,
-      "mtime": "2017-10-31T12:11:14.955Z",
-      "ctime": "2017-10-31T12:11:14.955Z"
+      "mtime": "2017-11-07T13:48:01.886Z",
+      "ctime": "2017-11-07T13:48:01.886Z"
     }
   },
   {
@@ -37,8 +37,8 @@
     "stats": {
       "ino": 7,
       "size": 4096,
-      "mtime": "2017-10-31T12:11:16.975Z",
-      "ctime": "2017-10-31T12:11:16.975Z"
+      "mtime": "2017-11-07T13:48:03.906Z",
+      "ctime": "2017-11-07T13:48:03.906Z"
     }
   },
   {
@@ -46,13 +46,27 @@
     "path": "parent/src/dir/subdir/file"
   },
   {
+    "type": "unlink",
+    "path": "parent/src/dir/subdir/file2"
+  },
+  {
+    "type": "add",
+    "path": "parent/dst/dir/subdir/filerenamed2",
+    "stats": {
+      "ino": 9,
+      "size": 8,
+      "mtime": "2017-11-07T13:48:01.890Z",
+      "ctime": "2017-11-07T13:48:03.906Z"
+    }
+  },
+  {
     "type": "add",
     "path": "parent/dst/dir/subdir/filerenamed",
     "stats": {
       "ino": 8,
       "size": 8,
-      "mtime": "2017-10-31T12:11:14.959Z",
-      "ctime": "2017-10-31T12:11:16.975Z"
+      "mtime": "2017-11-07T13:48:01.886Z",
+      "ctime": "2017-11-07T13:48:03.902Z"
     }
   }
 ]
