@@ -12,8 +12,8 @@ export type PrepDeleteFile = {type: 'PrepDeleteFile', path: string, old: ?Metada
 export type PrepPutFolder = {type: 'PrepPutFolder', path: string, ino: number, stats: fs.Stats}
 export type PrepUpdateFile = {type: 'PrepUpdateFile', path: string, ino: number, stats: fs.Stats, md5sum: string}
 export type PrepAddFile = {type: 'PrepAddFile', path: string, ino: number, stats: fs.Stats, md5sum: string}
-export type PrepMoveFile = {type: 'PrepMoveFile', path: string, old: Metadata, ino: number, stats: fs.Stats, md5sum: string}
-export type PrepMoveFolder = {type: 'PrepMoveFolder', path: string, old: Metadata, ino: number, stats: fs.Stats}
+export type PrepMoveFile = {type: 'PrepMoveFile', path: string, old: Metadata, ino: number, stats: fs.Stats, md5sum: string, needRefetch?: true}
+export type PrepMoveFolder = {type: 'PrepMoveFolder', path: string, old: Metadata, ino: number, stats: fs.Stats, needRefetch?: true}
 
 export type PrepAction =
   | PrepDeleteFolder

@@ -12,7 +12,7 @@ import type { Metadata } from '../metadata'
 export type FileAdded = {type: 'FileAdded', doc: Metadata}
 export type FileDeleted = {type: 'FileDeleted', doc: Metadata}
 export type FileDissociated = {type: 'FileDissociated', doc: Metadata, was: Metadata}
-export type FileMoved = {type: 'FileMoved', doc: Metadata, was: Metadata}
+export type FileMoved = {type: 'FileMoved', doc: Metadata, was: Metadata, needRefetch?: true}
 export type FileRestored = {type: 'FileRestored', doc: Metadata, was: Metadata}
 export type FileTrashed = {type: 'FileTrashed', doc: Metadata, was: Metadata}
 export type FileUpdated = {type: 'FileUpdated', doc: Metadata}
@@ -20,7 +20,7 @@ export type FileUpdated = {type: 'FileUpdated', doc: Metadata}
 export type FolderAdded = {type: 'FolderAdded', doc: Metadata, was: Metadata}
 export type FolderDeleted = {type: 'FolderDeleted', doc: Metadata}
 export type FolderDissociated = {type: 'FolderDissociated', doc: Metadata, was: Metadata}
-export type FolderMoved = {type: 'FolderMoved', doc: Metadata, was: Metadata}
+export type FolderMoved = {type: 'FolderMoved', doc: Metadata, was: Metadata, needRefetch?: true}
 export type FolderRestored = {type: 'FolderRestored', doc: Metadata, was: Metadata}
 export type FolderTrashed = {type: 'FolderTrashed', doc: Metadata, was: Metadata}
 
@@ -72,12 +72,22 @@ export const dissociated = (doc: Metadata, was: Metadata): * =>
   ({type: (isFile(doc) ? 'FileDissociated' : 'FolderDissociated'), doc, was})
 
 // TODO: Rename args
-export const isChildMove = (a: Change, b: Change) => {
+export const isChildMove = (a: Change, b: Change): boolean %checks => {
   return a.type === 'FolderMoved' &&
-         (b.type === 'FolderMoved') && // (... || b.type === 'FileMoved') &&
-        b.doc.path.indexOf(a.doc.path + path.sep) === 0 &&
+        (b.type === 'FolderMoved' || b.type === 'FileMoved') &&
+        (b.doc.path.indexOf(a.doc.path + path.sep) === 0) &&
         a.was && b.was &&
-        b.was.path.indexOf(a.was.path + path.sep) === 0
+        (b.was.path.indexOf(a.was.path + path.sep) === 0) &&
+        a.type === 'FolderMoved' &&
+        (b.type === 'FolderMoved' || b.type === 'FileMoved')
+}
+
+export const isOnlyChildMove = (a: FolderMoved, b: FileMoved|FolderMoved): boolean %checks => {
+  return isChildMove(a, b) && a.doc.path.replace(b.doc.path, '') === a.was.path.replace(b.was.path, '')
+}
+
+export const applyMoveToPath = (a: FolderMoved, p: string): string => {
+  return p.replace(a.was.path, a.doc.path)
 }
 
 const isDelete = (a: Change): boolean %checks => a.type === 'FolderDeleted' || a.type === 'FileDeleted'
@@ -96,6 +106,9 @@ const isChildDelete = (a: Change, b: Change) => childOf(delPath(a), delPath(b))
 const isChildAdd = (a: Change, b: Change) => childOf(addPath(a), addPath(b))
 
 const sorter = (a, b) => {
+  if (childOf(addPath(a), delPath(b))) return -1
+  if (childOf(addPath(b), delPath(a))) return 1
+
   // if one action is a child of another, it takes priority
   if (isChildAdd(a, b)) return -1
   if (isChildDelete(b, a)) return -1

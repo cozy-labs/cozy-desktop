@@ -1,3 +1,5 @@
+// TODO: add a scenario with actions in reverse order
+
 module.exports = {
   init: [
     { ino: 1, path: 'parent/' },
@@ -13,10 +15,10 @@ module.exports = {
     {type: 'mv', src: 'parent/src/dir', dst: 'parent/dst/dir'}
   ],
   expected: {
-    // prepCalls: [
-    //   {method: 'moveFileAsync', dst: 'parent/dst/dir/subdir/filerenamed', src: 'parent/src/dir'},
-    //   {method: 'moveFolderAsync', dst: 'parent/dst/subdir', src: 'parent/src/dir/subdir'}
-    // ],
+    prepCalls: [
+      {method: 'moveFolderAsync', dst: 'parent/dst/dir', src: 'parent/src/dir'},
+      {method: 'moveFileAsync', dst: 'parent/dst/dir/subdir/filerenamed', src: 'parent/dst/dir/subdir/file'}
+    ],
     tree: [
       'parent/',
       'parent/dst/',

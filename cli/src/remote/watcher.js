@@ -14,7 +14,7 @@ import * as remoteChange from './change'
 import { inRemoteTrash } from './document'
 
 import type { Metadata } from '../metadata'
-import type { Change } from './change'
+import type { Change, FileMoved } from './change'
 import type { RemoteDoc, RemoteDeletion } from './document'
 
 const log = logger({
@@ -204,19 +204,47 @@ export default class RemoteWatcher {
       return remoteChange.updated(doc)
     }
     if ((doc.docType === 'file') && (was.md5sum === doc.md5sum)) {
-      return {type: 'FileMoved', doc, was}
+      const change: FileMoved = {type: 'FileMoved', doc, was}
+      // Squash moves
+      for (let previousChangeIndex = 0; previousChangeIndex < changeIndex; previousChangeIndex++) {
+        const previousChange: Change = previousChanges[previousChangeIndex]
+        // FIXME figure out why isChildMove%checks is not enough
+        if (previousChange.type === 'FolderMoved' && remoteChange.isChildMove(previousChange, change)) {
+          if (!remoteChange.isOnlyChildMove(previousChange, change)) {
+            // move inside move
+            change.was.path = remoteChange.applyMoveToPath(previousChange, change.was.path)
+            change.needRefetch = true
+            return change
+          } else {
+            return {
+              type: 'IgnoredChange',
+              doc,
+              was,
+              detail: `File was moved as descendant of ${_.get(previousChange, 'doc.path')}`
+            }
+          }
+        }
+      }
+      return change
     }
     if (doc.docType === 'folder') {
       const change = {type: 'FolderMoved', doc, was}
       // Squash moves
       for (let previousChangeIndex = 0; previousChangeIndex < changeIndex; previousChangeIndex++) {
-        const previousChange = previousChanges[previousChangeIndex]
-        if (remoteChange.isChildMove(change, previousChange)) {
-          _.assign(previousChange, {
-            type: 'IgnoredChange',
-            detail: `Folder was moved as descendant of ${change.doc.path}`
-          })
-          continue
+        const previousChange: Change = previousChanges[previousChangeIndex]
+        // FIXME figure out why isChildMove%checks is not enough
+        if ((previousChange.type === 'FolderMoved' || previousChange.type === 'FileMoved') && remoteChange.isChildMove(change, previousChange)) {
+          if (!remoteChange.isOnlyChildMove(change, previousChange)) {
+            previousChange.was.path = remoteChange.applyMoveToPath(change, previousChange.was.path)
+            previousChange.needRefetch = true
+            continue
+          } else {
+            _.assign(previousChange, {
+              type: 'IgnoredChange',
+              detail: `Folder was moved as descendant of ${change.doc.path}`
+            })
+            continue
+          }
         } else if (remoteChange.isChildMove(previousChange, change)) {
           return {
             type: 'IgnoredChange',
@@ -303,7 +331,11 @@ export default class RemoteWatcher {
         await this.prep.updateFileAsync(SIDE, change.doc)
         break
       case 'FileMoved':
-        log.info({path}, 'file was moved or renamed remotely')
+        log.info({path, wasPath: change.was.path}, 'file was moved or renamed remotely')
+        if (change.needRefetch) {
+          change.was = await this.pouch.byRemoteIdMaybeAsync(change.was.remote._id)
+          change.was.childMove = false
+        }
         await this.prep.moveFileAsync(SIDE, change.doc, change.was)
         break
       case 'FolderMoved':
