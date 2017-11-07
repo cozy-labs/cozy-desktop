@@ -121,9 +121,12 @@ for (let scenario of scenarios) {
   } // event files
 
   const stoppedTestName = `test/scenarios/${scenario.name}/local/stopped`
+  const stoppedEnvVar = 'STOPPED_CLIENT'
 
   if (scenario.disabled) {
     it.skip(`${stoppedTestName} (${scenario.disabled})`, () => {})
+  } else if (process.env[stoppedEnvVar] == null) {
+    it.skip(`${stoppedTestName} (${stoppedEnvVar} is not set)`, () => {})
   } else {
     it(stoppedTestName, async function () {
       this.timeout(3 * 60 * 1000)
