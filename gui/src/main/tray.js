@@ -6,14 +6,14 @@ let tray = null
 
 const imgs = path.resolve(__dirname, '..', '..', 'images')
 
-module.exports.init = (app, cb) => {
+module.exports.init = (app, listener) => {
   let icon = (process.platform === 'darwin') ? `${imgs}/tray-icon-osx/idleTemplate.png` : `${imgs}/tray-icon-linux/idle.png`
   tray = new Tray(icon)
 
   let cachedBounds = null
   const clicked = (e, bounds) => {
-    cachedBounds = bounds || cachedBounds
-    cb((tray.getBounds && tray.getBounds()) || cachedBounds)
+    cachedBounds = (bounds && bounds.y !== 0) ? bounds : cachedBounds
+    listener(tray.getBounds ? tray.getBounds() : cachedBounds)
   }
 
   tray.on('click', clicked)
