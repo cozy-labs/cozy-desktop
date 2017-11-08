@@ -15,6 +15,12 @@ const log = require('cozy-desktop').default.logger({
 const WindowManager = require('./window_manager')
 
 module.exports = class TrayWM extends WindowManager {
+
+  constructor(...opts) {
+    super(...opts)
+    this.create().then(() => this.hide())
+  }
+
   windowOptions () {
     return {
       title: 'TRAY',
@@ -36,7 +42,6 @@ module.exports = class TrayWM extends WindowManager {
   }
 
   show (trayPos) {
-    let pReady = (this.win) ? Promise.resolve(this.win) : this.create()
 
     let pos = null
 
@@ -46,14 +51,23 @@ module.exports = class TrayWM extends WindowManager {
       pos = (process.platform === 'win32') ? 'trayBottomCenter' : 'trayCenter'
     }
     this.positioner.move(pos, trayPos)
+    this.win.show()
 
-    return pReady
+    return Promise.resolve(this.win)
   }
 
   onBlur () {
     setTimeout(() => {
-      if (this.win && !this.win.isFocused() && !this.win.isDevToolsFocused()) this.win.close()
+      if (!this.win.isFocused() && !this.win.isDevToolsFocused()) this.hide()
     }, 400)
+  }
+
+  hide () {
+    if (this.win) this.win.hide()
+  }
+
+  shown () {
+    return this.win.isVisible()
   }
 
   ipcEvents () {

@@ -37,9 +37,9 @@ let onboardingWindow = null
 let helpWindow = null
 let trayWindow = null
 
-const toggleWindow = (...args) => {
+const toggleWindow = (bounds) => {
   if (trayWindow.shown()) trayWindow.hide()
-  else showWindow(...args)
+  else showWindow(bounds)
 }
 
 // @TODO facto with showWindow after making args clear with tray position
@@ -55,15 +55,15 @@ const showWindowStartApp = () => {
   }
 }
 
-const showWindow = (...args) => {
+const showWindow = (bounds) => {
   if (!desktop.config.syncPath) {
-    onboardingWindow.show(...args)
+    onboardingWindow.show(bounds)
     // registration is done, but we need a syncPath
     if (desktop.config.isValid()) {
       setTimeout(() => onboardingWindow.send('registration-done'), 20)
     }
   } else {
-    trayWindow.show().then(() => startSync())
+    trayWindow.show(bounds).then(() => startSync())
   }
 }
 
