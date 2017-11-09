@@ -252,7 +252,10 @@ export default class Remote implements Side {
         ifMatch: doc.remote._rev
       })
     } catch (err) {
-      // FIXME: Don't complain when file/dir is already trashed/deleted?
+      if (err.status === 404) {
+        log.warn({path}, `Cannot trash remotely deleted ${doc.docType}.`)
+        return
+      }
       throw err
     }
     doc.remote._rev = newRemoteDoc._rev

@@ -507,7 +507,7 @@ describe('Remote', function () {
     })
   })
 
-  describe('trash', () =>
+  describe('trash', () => {
     it('moves the file or folder to the Cozy trash', async function () {
       const folder = await builders.remoteDir().create()
       const doc = conversion.createMetadata(folder)
@@ -517,7 +517,17 @@ describe('Remote', function () {
       const trashed = await cozy.files.statById(doc.remote._id)
       should(trashed).have.propertyByPath('attributes', 'dir_id').eql(TRASH_DIR_ID)
     })
-  )
+
+    it('does nothing when file or folder does not exist anymore', async function () {
+      const folder = await builders.remoteDir().build()
+      const doc = conversion.createMetadata(folder)
+
+      await this.remote.trashAsync(doc)
+
+      await should(cozy.files.statById(doc.remote._id))
+        .be.rejectedWith({status: 404})
+    })
+  })
 
   describe('deleteFolderAsync', () => {
     it('deletes permanently an empty folder', async function () {
