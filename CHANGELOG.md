@@ -1,3 +1,42 @@
+## 3.2.0-beta.1 - 2017-11-09
+
+It took us some time, but we're almost there, finally!
+
+Improvements for all users:
+
+* Moving or renaming shared directories should not break the sharing anymore.
+* Moving or renaming connector directories should work as expected (the
+  connector will put upcoming documents to the new location instead of
+  recreating and filling up the old one).
+* Moving or renaming a directory should now be more reliable, even with
+  filesystem events occurring in random order as it seems to happen from time to
+  time.
+
+Known issues that should be fixed in subsequent releases:
+
+* The app now takes some time before actually syncing, and may hold on until
+  there is no more activity.
+* Trashing, restoring and deleting content permanently may not work as expected
+  yet.
+* Moving or renaming multiple files or directories successively may end up
+  with duplicate content.
+* Changing the case of a file or directory name, e.g. renaming *my stuff* to
+  *MY STUFF*, won't work.
+* Actions involving lots of content may take too much time to complete or use
+  too much resources. Currently, adding 50000 files or moving 25000 files should
+  work.
+
+Issues caused by lower-level bugs that will be harder to fix or circumvent:
+
+* Replacing a directory with a file of the same name won't work (same when
+  replacing a file with a directory of the same name).
+* When moving 2 directories at the same time on Windows, possibly only 1 move
+  may be detected.
+
+Please report any other issue you may encounter by using the app help form.
+
+Happy syncing!
+
 ## 3.1.0 - 2017-09-08
 
 Improvements for all users:
