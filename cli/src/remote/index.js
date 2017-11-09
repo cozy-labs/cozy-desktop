@@ -264,7 +264,6 @@ export default class Remote implements Side {
 
     // FIXME: We use cozy-client-js directly instead of RemoteCozy because we
     // want the dir contents.
-    // FIXME: Couldn't we reuse RemoteDoc from trashAsync()
     const folder = await this.remoteCozy.client.files.statById(doc.remote._id)
     if (folder.relations('contents').length === 0) {
       log.info({path}, 'Deleting folder from the Cozy trash...')
