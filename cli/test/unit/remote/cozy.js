@@ -198,6 +198,34 @@ describe('RemoteCozy', function () {
     })
   })
 
+  describe('isEmpty', () => {
+    it('is true when the folder with the given id is empty', async function () {
+      const dir = await builders.remoteDir().create()
+      should(await remoteCozy.isEmpty(dir._id)).be.true()
+
+      const subdir = await builders.remoteDir().inDir(dir).create()
+      should(await remoteCozy.isEmpty(dir._id)).be.false()
+      should(await remoteCozy.isEmpty(subdir._id)).be.true()
+
+      await builders.remoteFile().inDir(dir).create()
+      should(await remoteCozy.isEmpty(dir._id)).be.false()
+      should(await remoteCozy.isEmpty(subdir._id)).be.true()
+
+      await builders.remoteFile().inDir(subdir).create()
+      should(await remoteCozy.isEmpty(dir._id)).be.false()
+      should(await remoteCozy.isEmpty(subdir._id)).be.false()
+    })
+
+    it('rejects when given a file id', async function () {
+      const file = await builders.remoteFile().create()
+      await should(remoteCozy.isEmpty(file._id)).be.rejectedWith(/wrong type/)
+    })
+
+    it('rejects when no document matches the id', async function () {
+      await should(remoteCozy.isEmpty('missing')).be.rejectedWith({status: 404})
+    })
+  })
+
   describe('downloadBinary', function () {
     it('resolves with a Readable stream of the file content', async function () {
       const remoteFile = await builders.remoteFile().data('foo').create()

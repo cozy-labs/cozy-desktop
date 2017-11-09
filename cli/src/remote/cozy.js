@@ -155,6 +155,16 @@ export default class RemoteCozy {
     }
   }
 
+  async isEmpty (id: string): Promise<boolean> {
+    const dir = await this.client.files.statById(id)
+    if (dir.attributes.type !== 'directory') {
+      throw new Error(
+        `Cannot check emptiness of directory ${id}: ` +
+        `wrong type: ${dir.attributes.type}`)
+    }
+    return dir.relations('contents').length === 0
+  }
+
   async downloadBinary (id: string): Promise<Readable> {
     const resp = await this.client.files.downloadById(id)
     return resp.body
