@@ -262,14 +262,11 @@ export default class Remote implements Side {
     await this.trashAsync(doc)
     const {path} = doc
 
-    // FIXME: We use cozy-client-js directly instead of RemoteCozy because we
-    // want the dir contents.
-    const folder = await this.remoteCozy.client.files.statById(doc.remote._id)
-    if (folder.relations('contents').length === 0) {
+    if (await this.remoteCozy.isEmpty(doc.remote._id)) {
       log.info({path}, 'Deleting folder from the Cozy trash...')
       // FIXME: Don't complain when user cleared the trash? (race condition)
       const opts = doc.remote._rev ? { ifMatch: doc.remote._rev } : undefined
-      await this.remoteCozy.destroyById(folder._id, opts)
+      await this.remoteCozy.destroyById(doc.remote._id, opts)
     } else {
       log.warn({path}, 'Folder is not empty and cannot be deleted!')
     }
