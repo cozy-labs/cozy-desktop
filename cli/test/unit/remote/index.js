@@ -551,6 +551,31 @@ describe('Remote', function () {
       should(trashed).have.propertyByPath('attributes', 'dir_id').eql(TRASH_DIR_ID)
     })
 
+    it('resolves when folder does not exist anymore', async function () {
+      const dir = await builders.remoteDir().build()
+      const doc = conversion.createMetadata(dir)
+
+      await this.remote.deleteFolderAsync(doc)
+
+      await should(cozy.files.statById(doc.remote._id))
+        .be.rejectedWith({status: 404})
+    })
+
+    it('resolves when folder is being deleted (race condition)', async function () {
+      const dir = await builders.remoteDir().create()
+      const doc = conversion.createMetadata(dir)
+      sinon.stub(this.remote.remoteCozy, 'isEmpty').callsFake(async (id) => {
+        await cozy.files.destroyById(id)
+        return true
+      })
+
+      try {
+        await should(this.remote.deleteFolderAsync(doc)).be.fulfilled()
+      } finally {
+        this.remote.remoteCozy.isEmpty.restore()
+      }
+    })
+
     it('does not swallow trashing errors', async function () {
       const dir = await builders.remoteDir().trashed().create()
       const doc = conversion.createMetadata(dir)
