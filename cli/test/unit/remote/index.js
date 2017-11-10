@@ -29,11 +29,6 @@ import {
 const metadataBuilders = new MetadataBuilders()
 
 describe('Remote', function () {
-  if (process.env.APPVEYOR) {
-    it('is unstable on AppVeyor')
-    return
-  }
-
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
   before('instanciate pouch', pouchHelpers.createDatabase)

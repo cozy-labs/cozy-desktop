@@ -11,11 +11,6 @@ import CozyStackDouble from '../../doubles/cozy_stack'
 const cozyStackDouble = new CozyStackDouble()
 
 describe('RemoteCozy', function () {
-  if (process.env.APPVEYOR) {
-    it('is unstable on AppVeyor')
-    return
-  }
-
   before(() => cozyStackDouble.start())
   beforeEach(deleteAll)
   before('instanciate config', configHelpers.createConfig)
