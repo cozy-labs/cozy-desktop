@@ -551,11 +551,23 @@ describe('Remote', function () {
       should(trashed).have.propertyByPath('attributes', 'dir_id').eql(TRASH_DIR_ID)
     })
 
-    it('does not swallow other trash errors', async function () {
-      const doc = {path: 'whatever', remote: {_id: 'missing'}}
+    it('does not swallow trashing errors', async function () {
+      const dir = await builders.remoteDir().trashed().create()
+      const doc = conversion.createMetadata(dir)
+      await should(this.remote.deleteFolderAsync(doc)).be.rejected()
+    })
 
-      await should(this.remote.deleteFolderAsync(doc))
-        .be.rejectedWith({status: 404})
+    it('does not swallow emptiness check errors', async function () {
+      const file = await builders.remoteFile().create()
+      const doc = conversion.createMetadata(file)
+      await should(this.remote.deleteFolderAsync(doc)).be.rejected()
+    })
+
+    it('does not swallow destroy errors', async function () {
+      const dir = await builders.remoteDir().create()
+      const doc = conversion.createMetadata(dir)
+      sinon.stub(this.remote.remoteCozy, 'destroyById').rejects('whatever')
+      await should(this.remote.deleteFolderAsync(doc)).be.rejected()
     })
   })
 
