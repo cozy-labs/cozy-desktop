@@ -3,7 +3,7 @@
 
 import async from 'async'
 import EventEmitter from 'events'
-import { clone } from 'lodash'
+import _ from 'lodash'
 import path from 'path'
 import sinon from 'sinon'
 import should from 'should'
@@ -27,6 +27,7 @@ import type { RemoteDoc, RemoteDeletion } from '../../../src/remote/document'
 import type { Metadata } from '../../../src/metadata'
 
 const { assignId, ensureValidPath } = metadata
+const { clone } = _
 
 describe('RemoteWatcher', function () {
   before('instanciate config', configHelpers.createConfig)
@@ -143,6 +144,7 @@ describe('RemoteWatcher', function () {
   const validMetadata = (doc: RemoteDoc): Metadata => {
     const metadata = createMetadata(doc)
     ensureValidPath(metadata)
+    assignId(metadata)
     return metadata
   }
 
@@ -364,6 +366,27 @@ describe('RemoteWatcher', function () {
         }
       })
       should(change.doc).not.have.properties(['_rev', 'path', 'name'])
+    })
+
+    it('compares docs by their id to prevent case & encoding conflicts', async function () {
+      const remoteDoc: RemoteDoc = builders.remote.file().named('\u0065\u0301').build()
+      const oldMetadata: Metadata = createMetadata(_.cloneDeep(remoteDoc))
+      oldMetadata.path = '\u00e9'
+      ensureValidPath(oldMetadata)
+      assignId(oldMetadata)
+      remoteDoc._rev = remoteDoc._rev.replace(/^./, '2')
+
+      const change: Change = this.watcher.identifyChange(
+        _.cloneDeep(remoteDoc), _.cloneDeep(oldMetadata), 0, [])
+
+      should(change).deepEqual({
+        type: 'FileUpdated',
+        doc: {
+          ...oldMetadata,
+          path: remoteDoc.name,
+          remote: _.pick(remoteDoc, ['_id', '_rev'])
+        }
+      })
     })
 
     it('calls updateDoc when tags are updated', async function () {
