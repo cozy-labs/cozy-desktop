@@ -10,9 +10,14 @@ import type { RemoteDoc } from '../../../src/remote/document'
 // Used to generate readable unique dirnames
 var dirNumber = 1
 
-// Create a remote directory for testing purpose
+// Build a RemoteDoc representing a remote Cozy directory:
 //
-//     let dir = builders.dir().build()
+//     const dir: RemoteDoc = builders.remote.dir().inDir(...).build()
+//
+// To actually create the corresponding directory on the Cozy, use the async
+// #create() method instead:
+//
+//     const dir: RemoteDoc = await builders.remote.dir().inDir(...).create()
 //
 export default class RemoteDirBuilder extends RemoteBaseBuilder {
   constructor (cozy: Cozy) {

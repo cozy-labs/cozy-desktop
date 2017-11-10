@@ -14,9 +14,14 @@ import type { RemoteDoc } from '../../../src/remote/document'
 // Used to generate readable unique filenames
 var fileNumber = 1
 
-// Create a remote file for testing purpose:
+// Build a RemoteDoc representing a remote Cozy file:
 //
-//     let remoteFile = this.builders.remoteFile().inDir(...).build()
+//     const file: RemoteDoc = builders.remote.file().inDir(...).build()
+//
+// To actually create the corresponding file on the Cozy, use the async
+// #create() method instead:
+//
+//     const file: RemoteDoc = await builders.remote.file().inDir(...).create()
 //
 export default class RemoteFileBuilder extends RemoteBaseBuilder {
   _data: string | stream.Readable

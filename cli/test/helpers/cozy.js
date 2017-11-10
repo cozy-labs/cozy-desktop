@@ -61,7 +61,7 @@ export async function deleteAll () {
 //
 // TODO: Use test data builders instead
 export async function createTheCouchdbFolder () {
-  await builders.remoteDir()
+  await builders.remote.dir()
     .named('couchdb-folder')
     .inRootDir()
     .create()
