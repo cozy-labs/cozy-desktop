@@ -4,7 +4,7 @@
 import { Client as CozyClient } from 'cozy-client-js'
 
 import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } from '../../src/remote/constants'
-import { BuilderFactory } from '../builders'
+import Builders from '../builders'
 
 // The URL of the Cozy instance used for tests
 export const COZY_URL = process.env.COZY_URL || 'http://test.cozy.tools:8080'
@@ -25,7 +25,7 @@ export const cozy = new CozyClient({
 })
 
 // Facade for all the test data builders
-export const builders = new BuilderFactory(cozy)
+export const builders = new Builders(cozy)
 
 // List files and directories in the root directory
 async function rootDirContents () {

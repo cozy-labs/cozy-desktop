@@ -11,7 +11,7 @@ import StreamBuilder from './stream'
 //     builders.remote.dir()...
 //     builders.stream()...
 //
-export class BuilderFactory {
+export default class Builders {
   cozy: Cozy
 
   constructor (cozy: Cozy) {
