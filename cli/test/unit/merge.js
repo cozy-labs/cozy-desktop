@@ -461,8 +461,8 @@ describe('Merge', function () {
 
   describe('trashFolderAsync', () => {
     it('does not trash a folder if the other side has added a new file in it', async function () {
-      const dir = await builders.dirMetadata().path('trashed-folder').trashed().create()
-      await builders.fileMetadata().path(path.normalize('trashed-folder/file')).notUpToDate().create()
+      const dir = await builders.dir().path('trashed-folder').trashed().create()
+      await builders.file().path(path.normalize('trashed-folder/file')).notUpToDate().create()
       const was = pick(dir, ['_id', 'path', 'docType', 'trashed'])
       const doc = {
         ...was,
