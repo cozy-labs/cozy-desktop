@@ -276,7 +276,7 @@ class Sync {
     try {
       // The sync error may be due to the remote cozy being overloaded.
       // So, it's better to wait a bit before trying the next operation.
-      await Promise.delay(HEARTBEAT)
+      // TODO: Wait for some increasing delay before saving errors
       await this.pouch.db.put(doc)
     } catch (err) {
       // If the doc can't be saved, it's because of a new revision.
