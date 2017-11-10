@@ -507,7 +507,7 @@ describe('Remote', function () {
     })
   })
 
-  describe('trash', () =>
+  describe('trash', () => {
     it('moves the file or folder to the Cozy trash', async function () {
       const folder = await builders.remoteDir().create()
       const doc = conversion.createMetadata(folder)
@@ -517,7 +517,17 @@ describe('Remote', function () {
       const trashed = await cozy.files.statById(doc.remote._id)
       should(trashed).have.propertyByPath('attributes', 'dir_id').eql(TRASH_DIR_ID)
     })
-  )
+
+    it('does nothing when file or folder does not exist anymore', async function () {
+      const folder = await builders.remoteDir().build()
+      const doc = conversion.createMetadata(folder)
+
+      await this.remote.trashAsync(doc)
+
+      await should(cozy.files.statById(doc.remote._id))
+        .be.rejectedWith({status: 404})
+    })
+  })
 
   describe('deleteFolderAsync', () => {
     it('deletes permanently an empty folder', async function () {
@@ -541,11 +551,48 @@ describe('Remote', function () {
       should(trashed).have.propertyByPath('attributes', 'dir_id').eql(TRASH_DIR_ID)
     })
 
-    it('does not swallow other trash errors', async function () {
-      const doc = {path: 'whatever', remote: {_id: 'missing'}}
+    it('resolves when folder does not exist anymore', async function () {
+      const dir = await builders.remoteDir().build()
+      const doc = conversion.createMetadata(dir)
 
-      await should(this.remote.deleteFolderAsync(doc))
+      await this.remote.deleteFolderAsync(doc)
+
+      await should(cozy.files.statById(doc.remote._id))
         .be.rejectedWith({status: 404})
+    })
+
+    it('resolves when folder is being deleted (race condition)', async function () {
+      const dir = await builders.remoteDir().create()
+      const doc = conversion.createMetadata(dir)
+      sinon.stub(this.remote.remoteCozy, 'isEmpty').callsFake(async (id) => {
+        await cozy.files.destroyById(id)
+        return true
+      })
+
+      try {
+        await should(this.remote.deleteFolderAsync(doc)).be.fulfilled()
+      } finally {
+        this.remote.remoteCozy.isEmpty.restore()
+      }
+    })
+
+    it('does not swallow trashing errors', async function () {
+      const dir = await builders.remoteDir().trashed().create()
+      const doc = conversion.createMetadata(dir)
+      await should(this.remote.deleteFolderAsync(doc)).be.rejected()
+    })
+
+    it('does not swallow emptiness check errors', async function () {
+      const file = await builders.remoteFile().create()
+      const doc = conversion.createMetadata(file)
+      await should(this.remote.deleteFolderAsync(doc)).be.rejected()
+    })
+
+    it('does not swallow destroy errors', async function () {
+      const dir = await builders.remoteDir().create()
+      const doc = conversion.createMetadata(dir)
+      sinon.stub(this.remote.remoteCozy, 'destroyById').rejects('whatever')
+      await should(this.remote.deleteFolderAsync(doc)).be.rejected()
     })
   })
 
