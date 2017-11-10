@@ -2,6 +2,9 @@
 
 import type { Cozy } from 'cozy-client-js'
 
+import type Pouch from '../../src/pouch'
+
+import MetadataBuilders from './metadata'
 import RemoteDirBuilder from './remote/dir'
 import RemoteFileBuilder from './remote/file'
 import StreamBuilder from './stream'
@@ -13,9 +16,11 @@ import StreamBuilder from './stream'
 //
 export default class Builders {
   cozy: Cozy
+  metadata: MetadataBuilders
 
-  constructor (cozy: Cozy) {
+  constructor (cozy: Cozy, pouch?: Pouch) {
     this.cozy = cozy
+    this.metadata = new MetadataBuilders(pouch)
   }
 
   get remote (): * {
