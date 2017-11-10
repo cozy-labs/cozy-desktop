@@ -17,7 +17,7 @@ build: off
 test_script:
   - cd cli
   - yarn build
-  - yarn test:unit
+  - yarn test
 
 on_failure:
   - node --version
