@@ -19,6 +19,11 @@ import pouchHelpers from '../helpers/pouch'
 import { IntegrationTestHelpers } from '../helpers/integration'
 
 suite('Move', () => {
+  if (process.env.APPVEYOR) {
+    test('is unstable on AppVeyor')
+    return
+  }
+
   let cozy, helpers, pouch, prep
 
   before(configHelpers.createConfig)
