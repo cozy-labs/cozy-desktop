@@ -52,6 +52,7 @@
     "test": "npm run test:unit && npm run test:integration",
     "test:coverage": "npm run test:unit:coverage && npm run test:integration",
     "test:integration": "yarn mocha -- test/integration",
+    "test:performance": "yarn mocha -- test/performance",
     "test:unit": "yarn mocha -- test/unit/",
     "test:unit:coverage": "yarn mocha:coverage -- test/unit/",
     "watch": "npm run build -- --watch"
