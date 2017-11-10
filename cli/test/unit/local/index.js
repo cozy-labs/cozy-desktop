@@ -686,7 +686,7 @@ describe('Local', function () {
     })
 
     it('deletes an empty folder', async function () {
-      const doc = builders.dirMetadata().build()
+      const doc = builders.dir().build()
       await fs.emptyDirAsync(fullPath(doc))
 
       await this.local.deleteFolderAsync(doc)
@@ -698,7 +698,7 @@ describe('Local', function () {
     })
 
     it('trashes a non-empty folder (ENOTEMPTY)', async function () {
-      const doc = builders.dirMetadata().build()
+      const doc = builders.dir().build()
       await fs.ensureDirAsync(path.join(fullPath(doc), 'something-inside'))
 
       await this.local.deleteFolderAsync(doc)
@@ -710,7 +710,7 @@ describe('Local', function () {
     })
 
     it('does not swallow fs errors', async function () {
-      const doc = builders.dirMetadata().build()
+      const doc = builders.dir().build()
 
       await should(this.local.deleteFolderAsync(doc))
         .be.rejectedWith(/ENOENT/)

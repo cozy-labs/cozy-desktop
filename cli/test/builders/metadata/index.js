@@ -12,11 +12,11 @@ export default class MetadataBuilders {
     this.pouch = pouch
   }
 
-  dirMetadata (): DirMetadataBuilder {
+  dir (): DirMetadataBuilder {
     return new DirMetadataBuilder(this.pouch)
   }
 
-  fileMetadata (): FileMetadataBuilder {
+  file (): FileMetadataBuilder {
     return new FileMetadataBuilder(this.pouch)
   }
 }

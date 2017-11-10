@@ -102,8 +102,8 @@ describe('RemoteWatcher', function () {
     const changes = {
       last_seq: lastRemoteSeq,
       docs: [
-        builders.remoteFile().build(),
-        builders.remoteDir().build()
+        builders.remote.file().build(),
+        builders.remote.dir().build()
       ]
     }
 
@@ -146,7 +146,7 @@ describe('RemoteWatcher', function () {
 
   describe('pullMany', function () {
     const docs = [
-      builders.remoteFile().build(),
+      builders.remote.file().build(),
       {_id: pouchdbBuilders.id(), _rev: pouchdbBuilders.rev(), _deleted: true}
     ]
     let apply
@@ -537,12 +537,12 @@ describe('RemoteWatcher', function () {
       this.prep.deleteFolderAsync.returnsPromise().resolves(null)
       this.prep.addFolderAsync = sinon.stub()
       this.prep.addFolderAsync.returnsPromise().resolves(null)
-      const oldDir: RemoteDoc = builders.remoteDir().named('foo').build()
-      // TODO: builders.dirMetadata().fromRemote(oldDir).create()
+      const oldDir: RemoteDoc = builders.remote.dir().named('foo').build()
+      // TODO: builders.dir().fromRemote(oldDir).create()
       let oldMeta: Metadata = createMetadata(oldDir)
       assignId(oldMeta)
       await this.pouch.db.put(oldMeta)
-      // TODO: builders.remoteDir().was(oldDir).trashed().build()
+      // TODO: builders.remote.dir().was(oldDir).trashed().build()
       const newDir: RemoteDoc = {...oldDir, path: '/.cozy_trash/foo', dir_id: TRASH_DIR_ID}
 
       this.watcher.identifyChange(newDir, null, 0, [])
@@ -564,12 +564,12 @@ describe('RemoteWatcher', function () {
       this.prep.deleteFolder.returnsPromise().resolves(null)
       this.prep.addFolderAsync = sinon.stub()
       this.prep.addFolderAsync.returnsPromise().resolves(null)
-      const oldDir: RemoteDoc = builders.remoteDir().named('foo').trashed().build()
-      // TODO: builders.dirMetadata().fromRemote(oldDir).create()
+      const oldDir: RemoteDoc = builders.remote.dir().named('foo').trashed().build()
+      // TODO: builders.dir().fromRemote(oldDir).create()
       let oldMeta: Metadata = createMetadata(oldDir)
       assignId(oldMeta)
       await this.pouch.db.put(oldMeta)
-      // TODO: builders.remoteDir().was(oldDir).restored().build()
+      // TODO: builders.remote.dir().was(oldDir).restored().build()
       const newDir: RemoteDoc = {...oldDir, path: '/foo', dir_id: ROOT_DIR_ID}
 
       this.watcher.identifyChange(newDir, null, 0, [])

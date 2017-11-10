@@ -1,31 +1,39 @@
 /* @flow */
 
-import { Cozy } from 'cozy-client-js'
+import type { Cozy } from 'cozy-client-js'
 
+import type Pouch from '../../src/pouch'
+
+import MetadataBuilders from './metadata'
 import RemoteDirBuilder from './remote/dir'
 import RemoteFileBuilder from './remote/file'
 import StreamBuilder from './stream'
 
-// Instanciate test data builders with their dependencies.
+// Test data builders facade.
 //
-// Accessible as `this.builders` in tests:
+//     builders.metadata.file()...
+//     builders.remote.dir()...
+//     builders.stream()...
 //
-//     this.builders.dir()...
-//     this.builders.file()...
-//
-export class BuilderFactory {
+export default class Builders {
   cozy: Cozy
+  metadata: MetadataBuilders
 
-  constructor (cozy: Cozy) {
+  constructor (cozy: Cozy, pouch?: Pouch) {
     this.cozy = cozy
+    this.metadata = new MetadataBuilders(pouch)
   }
 
-  remoteDir (): RemoteDirBuilder {
-    return new RemoteDirBuilder(this.cozy)
-  }
+  get remote (): * {
+    if (this.cozy == null) {
+      throw new Error('Cannot create remote files/dirs without a Cozy client.')
+      // TODO: Allow building RemoteDoc instances without a Cozy client
+    }
 
-  remoteFile (): RemoteFileBuilder {
-    return new RemoteFileBuilder(this.cozy)
+    return {
+      dir: () => new RemoteDirBuilder(this.cozy),
+      file: () => new RemoteFileBuilder(this.cozy)
+    }
   }
 
   stream (): StreamBuilder {
