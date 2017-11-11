@@ -3,7 +3,7 @@
 
 import async from 'async'
 import EventEmitter from 'events'
-import { clone } from 'lodash'
+import _ from 'lodash'
 import path from 'path'
 import sinon from 'sinon'
 import should from 'should'
@@ -16,7 +16,7 @@ import pouchHelpers from '../../helpers/pouch'
 import { builders } from '../../helpers/cozy'
 
 import { createMetadata } from '../../../src/conversion'
-import { assignId, ensureValidPath } from '../../../src/metadata'
+import * as metadata from '../../../src/metadata'
 import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } from '../../../src/remote/constants'
 import Prep from '../../../src/prep'
 import RemoteCozy from '../../../src/remote/cozy'
@@ -25,6 +25,9 @@ import RemoteWatcher from '../../../src/remote/watcher'
 import type { Change } from '../../../src/remote/change'
 import type { RemoteDoc, RemoteDeletion } from '../../../src/remote/document'
 import type { Metadata } from '../../../src/metadata'
+
+const { assignId, ensureValidPath } = metadata
+const { clone } = _
 
 describe('RemoteWatcher', function () {
   before('instanciate config', configHelpers.createConfig)
@@ -141,6 +144,7 @@ describe('RemoteWatcher', function () {
   const validMetadata = (doc: RemoteDoc): Metadata => {
     const metadata = createMetadata(doc)
     ensureValidPath(metadata)
+    assignId(metadata)
     return metadata
   }
 
@@ -364,6 +368,27 @@ describe('RemoteWatcher', function () {
       should(change.doc).not.have.properties(['_rev', 'path', 'name'])
     })
 
+    it('compares docs by their id to prevent case & encoding conflicts', async function () {
+      const remoteDoc: RemoteDoc = builders.remote.file().named('\u0065\u0301').build()
+      const oldMetadata: Metadata = createMetadata(_.cloneDeep(remoteDoc))
+      oldMetadata.path = '\u00e9'
+      ensureValidPath(oldMetadata)
+      assignId(oldMetadata)
+      remoteDoc._rev = remoteDoc._rev.replace(/^./, '2')
+
+      const change: Change = this.watcher.identifyChange(
+        _.cloneDeep(remoteDoc), _.cloneDeep(oldMetadata), 0, [])
+
+      should(change).deepEqual({
+        type: 'FileUpdated',
+        doc: {
+          ...oldMetadata,
+          path: remoteDoc.name,
+          remote: _.pick(remoteDoc, ['_id', '_rev'])
+        }
+      })
+    })
+
     it('calls updateDoc when tags are updated', async function () {
       this.prep.updateFileAsync = sinon.stub()
       this.prep.updateFileAsync.resolves(null)
@@ -501,7 +526,7 @@ describe('RemoteWatcher', function () {
           }
         }
       }
-      const was: Metadata = await this.pouch.db.get(path.normalize('my-folder/file-2'))
+      const was: Metadata = await this.pouch.db.get(metadata.id(path.normalize('my-folder/file-2')))
       await this.pouch.db.put(was)
 
       const change: Change = this.watcher.identifyChange(clone(doc), was, 0, [])

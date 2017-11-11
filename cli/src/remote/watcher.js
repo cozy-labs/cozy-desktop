@@ -5,7 +5,7 @@ import EventEmitter from 'events'
 import _ from 'lodash'
 
 import logger from '../logger'
-import { ensureValidPath, detectPlatformIncompatibilities } from '../metadata'
+import { ensureValidPath, assignId, detectPlatformIncompatibilities } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import * as syncState from '../syncstate'
@@ -162,6 +162,7 @@ export default class RemoteWatcher {
     } catch (error) {
       return {type: 'InvalidChange', doc, error}
     }
+    assignId(doc)
     const {docType, path} = doc
 
     if (doc.docType !== 'file' && doc.docType !== 'folder') {
@@ -200,7 +201,7 @@ export default class RemoteWatcher {
     if (!inRemoteTrash(remote) && was.trashed) {
       return remoteChange.restored(doc, was)
     }
-    if (was.path === doc.path) {
+    if (was._id === doc._id) {
       return remoteChange.updated(doc)
     }
     if ((doc.docType === 'file') && (was.md5sum === doc.md5sum)) {

@@ -1,5 +1,6 @@
 import path from 'path'
 
+import { assignId } from '../../src/metadata'
 import Pouch from '../../src/pouch'
 
 export default {
@@ -17,20 +18,18 @@ export default {
 
   createParentFolder (pouch, callback) {
     let doc = {
-      _id: 'my-folder',
       path: 'my-folder',
       docType: 'folder',
       updated_at: new Date(),
       tags: []
     }
+    assignId(doc)
     pouch.db.put(doc, callback)
   },
 
   createFolder (pouch, i, callback) {
-    let id = path.join('my-folder', `folder-${i}`)
     let doc = {
-      _id: id,
-      path: id,
+      path: path.join('my-folder', `folder-${i}`),
       docType: 'folder',
       updated_at: new Date(),
       tags: [],
@@ -42,14 +41,13 @@ export default {
         remote: 1
       }
     }
+    assignId(doc)
     pouch.db.put(doc, callback)
   },
 
   createFile (pouch, i, callback) {
-    let id = path.join('my-folder', `file-${i}`)
     let doc = {
-      _id: id,
-      path: id,
+      path: path.join('my-folder', `file-${i}`),
       docType: 'file',
       md5sum: `111111111111111111111111111111111111111${i}`,
       updated_at: new Date(),
@@ -62,6 +60,7 @@ export default {
         remote: 1
       }
     }
+    assignId(doc)
     pouch.db.put(doc, callback)
   }
 }
