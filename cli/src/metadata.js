@@ -92,7 +92,9 @@ function assignIdHFS (doc: Metadata) {
 
 // Build an _id from the path for Windows (NTFS file system)
 function assignIdNTFS (doc: Metadata) {
-  doc._id = doc.path.toUpperCase()
+  let id = doc.path
+  if (id.normalize) { id = id.normalize('NFD') }
+  doc._id = id.toUpperCase()
 }
 
 // Generate an id from the given path.
