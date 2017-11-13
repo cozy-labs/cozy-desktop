@@ -15,10 +15,9 @@ const log = require('cozy-desktop').default.logger({
 const WindowManager = require('./window_manager')
 
 module.exports = class TrayWM extends WindowManager {
-
   constructor(...opts) {
     super(...opts)
-    this.create().then(() => this.hide())
+    this.create().then( () => this.hide() )
   }
 
   windowOptions () {
@@ -42,7 +41,6 @@ module.exports = class TrayWM extends WindowManager {
   }
 
   show (trayPos) {
-
     let pos = null
 
     if (trayPos === undefined || trayPos.x === 0) {
