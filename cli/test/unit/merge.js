@@ -7,6 +7,7 @@ import sinon from 'sinon'
 import should from 'should'
 
 import Merge from '../../src/merge'
+import * as metadata from '../../src/metadata'
 
 import configHelpers from '../helpers/config'
 import pouchHelpers from '../helpers/pouch'
@@ -28,7 +29,7 @@ describe('Merge', function () {
   describe('addFile', function () {
     it('saves the new file', function (done) {
       let doc = {
-        _id: 'foo/new-file',
+        _id: metadata.id('foo/new-file'),
         path: 'foo/new-file',
         md5sum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc',
         docType: 'file',
@@ -418,7 +419,7 @@ describe('Merge', function () {
       pouchHelpers.createParentFolder(this.pouch, () => {
         pouchHelpers.createFolder(this.pouch, 9, () => {
           pouchHelpers.createFile(this.pouch, 9, () => {
-            this.pouch.db.get(path.normalize('my-folder/file-9'), (err, file) => {
+            this.pouch.db.get(metadata.id(path.normalize('my-folder/file-9')), (err, file) => {
               should.not.exist(err)
               this.pouch.db.put({...file, trashed: true}, done)
             })
@@ -435,12 +436,12 @@ describe('Merge', function () {
         updated_at: new Date(),
         tags: []
       }
-      this.pouch.db.get('my-folder', (err, was) => {
+      this.pouch.db.get(metadata.id('my-folder'), (err, was) => {
         should.not.exist(err)
         this.merge.moveFolderRecursivelyAsync('local', doc, was).then(() => {
           let ids = ['', path.normalize('/folder-9'), path.normalize('/file-9')]
           async.eachSeries(ids, (id, next) => {
-            this.pouch.db.get(`DESTINATION${id}`, (err, res) => {
+            this.pouch.db.get(metadata.id(`DESTINATION${id}`), (err, res) => {
               should.not.exist(err)
               should.exist(res)
               should(res.path).eql(`DESTINATION${id}`)
@@ -448,7 +449,7 @@ describe('Merge', function () {
               if (id !== '') { // parent sides are updated in moveFolderAsync()
                 should(res.sides.local).not.eql(1)
               }
-              this.pouch.db.get(`my-folder${id}`, function (err, res) {
+              this.pouch.db.get(metadata.id(`my-folder${id}`), function (err, res) {
                 err.status.should.equal(404)
                 next()
               })

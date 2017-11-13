@@ -16,7 +16,7 @@ import pouchHelpers from '../../helpers/pouch'
 import { builders } from '../../helpers/cozy'
 
 import { createMetadata } from '../../../src/conversion'
-import { assignId, ensureValidPath } from '../../../src/metadata'
+import * as metadata from '../../../src/metadata'
 import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } from '../../../src/remote/constants'
 import Prep from '../../../src/prep'
 import RemoteCozy from '../../../src/remote/cozy'
@@ -25,6 +25,8 @@ import RemoteWatcher from '../../../src/remote/watcher'
 import type { Change } from '../../../src/remote/change'
 import type { RemoteDoc, RemoteDeletion } from '../../../src/remote/document'
 import type { Metadata } from '../../../src/metadata'
+
+const { assignId, ensureValidPath } = metadata
 
 describe('RemoteWatcher', function () {
   before('instanciate config', configHelpers.createConfig)
@@ -501,7 +503,7 @@ describe('RemoteWatcher', function () {
           }
         }
       }
-      const was: Metadata = await this.pouch.db.get(path.normalize('my-folder/file-2'))
+      const was: Metadata = await this.pouch.db.get(metadata.id(path.normalize('my-folder/file-2')))
       await this.pouch.db.put(was)
 
       const change: Change = this.watcher.identifyChange(clone(doc), was, 0, [])

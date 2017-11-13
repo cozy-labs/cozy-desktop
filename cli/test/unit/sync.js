@@ -5,6 +5,7 @@ import sinon from 'sinon'
 import should from 'should'
 
 import Ignore from '../../src/ignore'
+import * as metadata from '../../src/metadata'
 import Sync from '../../src/sync'
 
 import configHelpers from '../helpers/config'
@@ -131,11 +132,11 @@ describe('Sync', function () {
           this.pouch.getLocalSeq(function (err, seq) {
             should.not.exist(err)
             change.should.have.properties({
-              id: path.normalize('my-folder/file-1'),
+              id: metadata.id(path.normalize('my-folder/file-1')),
               seq: seq + 1
             })
             change.doc.should.have.properties({
-              _id: path.normalize('my-folder/file-1'),
+              _id: metadata.id(path.normalize('my-folder/file-1')),
               docType: 'file',
               tags: []})
             done()
@@ -168,11 +169,11 @@ function(doc) {
         this.pouch.getLocalSeq(function (err, seq) {
           should.not.exist(err)
           change.should.have.properties({
-            id: path.normalize('my-folder/file-7'),
+            id: metadata.id(path.normalize('my-folder/file-7')),
             seq: seq + 1
           })
           change.doc.should.have.properties({
-            _id: path.normalize('my-folder/file-7'),
+            _id: metadata.id(path.normalize('my-folder/file-7')),
             docType: 'file',
             tags: []})
           done()

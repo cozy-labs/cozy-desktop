@@ -8,6 +8,8 @@ import should from 'should'
 import sinon from 'sinon'
 import { uniq } from 'lodash'
 
+import * as metadata from '../../src/metadata'
+
 import configHelpers from '../helpers/config'
 import pouchHelpers from '../helpers/pouch'
 
@@ -52,7 +54,7 @@ describe('Pouch', function () {
     describe('getAll', () =>
       it('returns all the documents matching the query', function (done) {
         let params = {
-          key: 'my-folder',
+          key: metadata.id('my-folder'),
           include_docs: true
         }
         return this.pouch.getAll('byPath', params, function (err, docs) {
@@ -60,11 +62,11 @@ describe('Pouch', function () {
           docs.length.should.equal(6)
           for (let i = 1; i <= 3; i++) {
             docs[i - 1].should.have.properties({
-              _id: path.join('my-folder', `file-${i}`),
+              _id: metadata.id(path.join('my-folder', `file-${i}`)),
               docType: 'file',
               tags: []})
             docs[i + 2].should.have.properties({
-              _id: path.join('my-folder', `folder-${i}`),
+              _id: metadata.id(path.join('my-folder', `folder-${i}`)),
               docType: 'folder',
               tags: []})
           }
@@ -75,7 +77,7 @@ describe('Pouch', function () {
 
     describe('byChecksum', () =>
       it('gets all the files with this checksum', function (done) {
-        let _id = path.join('my-folder', 'file-1')
+        let _id = metadata.id(path.join('my-folder', 'file-1'))
         let checksum = '1111111111111111111111111111111111111111'
         return this.pouch.byChecksum(checksum, function (err, docs) {
           should.not.exist(err)
@@ -89,16 +91,16 @@ describe('Pouch', function () {
 
     describe('byPath', function () {
       it('gets all the files and folders in this path', function (done) {
-        return this.pouch.byPath('my-folder', function (err, docs) {
+        return this.pouch.byPath(metadata.id('my-folder'), function (err, docs) {
           should.not.exist(err)
           docs.length.should.be.equal(6)
           for (let i = 1; i <= 3; i++) {
             docs[i - 1].should.have.properties({
-              _id: path.join('my-folder', `file-${i}`),
+              _id: metadata.id(path.join('my-folder', `file-${i}`)),
               docType: 'file',
               tags: []})
             docs[i + 2].should.have.properties({
-              _id: path.join('my-folder', `folder-${i}`),
+              _id: metadata.id(path.join('my-folder', `folder-${i}`)),
               docType: 'folder',
               tags: []})
           }
@@ -111,14 +113,14 @@ describe('Pouch', function () {
           should.not.exist(err)
           docs.length.should.be.equal(1)
           docs[0].should.have.properties({
-            _id: 'my-folder',
+            _id: metadata.id('my-folder'),
             docType: 'folder',
             tags: []})
           done()
         })
       })
 
-      it('rejects design documents', function (done) {
+      it('ignores design documents', function (done) {
         return this.pouch.byPath('_design', function (err, docs) {
           should.not.exist(err)
           docs.length.should.be.equal(0)
@@ -129,16 +131,16 @@ describe('Pouch', function () {
 
     describe('byRecurivePath', function () {
       it('gets the files and folders in this path recursively', function (done) {
-        return this.pouch.byRecursivePath('my-folder', function (err, docs) {
+        return this.pouch.byRecursivePath(metadata.id('my-folder'), function (err, docs) {
           should.not.exist(err)
           docs.length.should.be.equal(6)
           for (let i = 1; i <= 3; i++) {
             docs[i - 1].should.have.properties({
-              _id: path.join('my-folder', `file-${i}`),
+              _id: metadata.id(path.join('my-folder', `file-${i}`)),
               docType: 'file',
               tags: []})
             docs[i + 2].should.have.properties({
-              _id: path.join('my-folder', `folder-${i}`),
+              _id: metadata.id(path.join('my-folder', `folder-${i}`)),
               docType: 'folder',
               tags: []})
           }
@@ -151,16 +153,16 @@ describe('Pouch', function () {
           should.not.exist(err)
           docs.length.should.be.equal(7)
           docs[0].should.have.properties({
-            _id: 'my-folder',
+            _id: metadata.id('my-folder'),
             docType: 'folder',
             tags: []})
           for (let i = 1; i <= 3; i++) {
             docs[i].should.have.properties({
-              _id: path.join('my-folder', `file-${i}`),
+              _id: metadata.id(path.join('my-folder', `file-${i}`)),
               docType: 'file',
               tags: []})
             docs[i + 3].should.have.properties({
-              _id: path.join('my-folder', `folder-${i}`),
+              _id: metadata.id(path.join('my-folder', `folder-${i}`)),
               docType: 'folder',
               tags: []})
           }
@@ -356,7 +358,7 @@ if (doc.docType === 'folder') {
   describe('Helpers', function () {
     describe('getPreviousRev', () =>
       it('retrieves previous document informations', function (done) {
-        let id = path.join('my-folder', 'folder-1')
+        let id = metadata.id(path.join('my-folder', 'folder-1'))
         this.pouch.db.get(id, (err, doc) => {
           should.not.exist(err)
           doc.tags = ['yipee']
@@ -473,12 +475,15 @@ if (doc.docType === 'folder') {
           })
         }).then(() => {
           return Promise.all(paths.map(p => {
-            let doc = {_id: path.join(base, p), docType: 'folder'}
+            let doc = {
+              _id: metadata.id(path.join(base, p)),
+              docType: 'folder'
+            }
             return this.pouch.db.put(doc)
           }))
         }).then(() => {
           return new Promise((resolve, reject) => {
-            return this.pouch.byRecursivePath(base, function (err, docs) {
+            return this.pouch.byRecursivePath(metadata.id(base), function (err, docs) {
               if (err) {
                 return reject(err)
               } else {
