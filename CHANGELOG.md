@@ -1,3 +1,23 @@
+## 3.2.0-beta.2 - 2017-11-13
+
+Improvements for all users:
+
+* The synchronization now detects when remote files or directories were already
+  deleted. [details](https://trello.com/c/wYoxynqg)
+* The remote Cozy overloading guard was disabled so the app doesn't hold on in
+  case of synchronization errors. An improved version will be reenabled later.
+  [details](https://trello.com/c/SSi06JwO)
+* The authorization screen should not be bigger than screen anymore.
+  [details](https://trello.com/c/YrwWv2mm)
+* Changing only case or encoding in a file or directory name won't trigger
+  conflicts on other devices anymore. The case or encoding won't be synced
+  though. We'll come up with a better solution at some point.
+  [details](https://trello.com/c/krk8ZY9V)
+
+See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.2.0-beta.1 - 2017-11-09
 
 It took us some time, but we're almost there, finally!
