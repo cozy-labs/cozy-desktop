@@ -8,12 +8,8 @@ Please report any other issue you may encounter by using the app help form.
   yet. [details](https://trello.com/c/6jfO4hoB)
 * Moving or renaming multiple files or directories successively may end up
   with duplicate content. [details](https://trello.com/c/ZTD669wz)
-* Changing the case of a file or directory name, e.g. renaming *my stuff* to
-  *MY STUFF*, will create a conflict. [details](https://trello.com/c/Phc3lLEr)
-* Deleting content on both sides generates useless errors that slow down the
-  synchronization. [details](https://trello.com/c/wYoxynqg)
-* The remote Cozy overloading guard is too aggressive (waiting far too long in
-  case of synchronization errors). [details](https://trello.com/c/SSi06JwO)
+* Changing only the case or encoding in a file or directory name, e.g. renaming
+  *my stuff* to *MY STUFF*, won't be synchronized on other devices. [details](https://trello.com/c/Phc3lLEr)
 
 **Performance issues**:
 
@@ -21,8 +17,8 @@ Please report any other issue you may encounter by using the app help form.
   there is no more activity, and uses a lot of CPU on start and when syncing.
   [details](https://trello.com/c/IQEImXQF)
 * Actions involving lots of content may take too much time to complete or use
-  too much resources. Currently, adding 50000 files or moving 25000 files should
-  work. [details](https://trello.com/c/IQEImXQF)
+  too much resources. But adding 100000 files or moving 50000 files should
+  still work. [details](https://trello.com/c/IQEImXQF)
 
 **Issues** caused by lower-level bugs that will be **harder to fix or circumvent**:
 
