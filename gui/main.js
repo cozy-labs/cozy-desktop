@@ -78,7 +78,7 @@ const ONBOARDING_SCREEN_HEIGHT = 570
 const LOGIN_SCREEN_WIDTH = ONBOARDING_SCREEN_WIDTH
 const LOGIN_SCREEN_HEIGHT = 700
 const OAUTH_SCREEN_WIDTH = ONBOARDING_SCREEN_WIDTH
-const OAUTH_SCREEN_HEIGHT = 900
+const OAUTH_SCREEN_HEIGHT = 930
 const DASHBOARD_SCREEN_WIDTH = 1000
 const DASHBOARD_SCREEN_HEIGHT = 1000
 
@@ -616,7 +616,10 @@ ipcMain.on('register-remote', (event, arg) => {
     mainWindow.loadURL(url)
     mainWindow.webContents.on('did-get-response-details', (event, status, newUrl, originalUrl, httpResponseCode) => {
       if (newUrl.match(/\/auth\/authorize\?/) && httpResponseCode === 200) {
-        mainWindow.setContentSize(OAUTH_SCREEN_WIDTH, OAUTH_SCREEN_HEIGHT, true)
+        const bounds = mainWindow.getBounds()
+        const display = electron.screen.getDisplayMatching(bounds)
+        const height = Math.min(display.workAreaSize.height - bounds.y, OAUTH_SCREEN_HEIGHT)
+        mainWindow.setSize(OAUTH_SCREEN_WIDTH, height, true)
       }
     })
     mainWindow.webContents.on('did-get-redirect-request', (event, oldUrl, newUrl) => {
