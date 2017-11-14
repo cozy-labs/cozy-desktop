@@ -6,10 +6,12 @@
     "build:gui": "cd gui && yarn build && yarn dist",
     "clean:cli": "rimraf cli/lib/ cli/tmp/",
     "clean:gui": "rimraf gui/elm.js gui/app.css gui/dist/",
+    "docker:exec": "docker exec -it cozy-desktop-stack",
     "install:cli": "cd cli/ && yarn install && cd .. && yarn uninstall:gui:cli",
     "install:gui": "cd gui/ && yarn install --check-files",
     "postinstall": "yarn install:cli && yarn install:gui",
     "prebuild": "yarn clean:cli && yarn clean:gui",
+    "test:setup": "yarn docker:exec /cozy-desktop/cli/test/setup.sh",
     "uninstall:gui:cli": "rimraf gui/node_modules/cozy-desktop"
   },
   "devDependencies": {

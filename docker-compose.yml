@@ -1,0 +1,11 @@
+version: '2.1'
+services:
+  cozy:
+    container_name: cozy-desktop-stack
+    image: cozy/cozy-app-dev:latest
+    ports:
+      - "8080:8080"
+      - "8025:8025"
+      - "6060:6060"
+    volumes:
+      - .:/cozy-desktop

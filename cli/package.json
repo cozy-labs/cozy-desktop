@@ -31,12 +31,11 @@
     "package.json"
   ],
   "scripts": {
-    "bootstrap": "yarn docker:exec -- bootstrap-cozy-desktop.sh",
+    "bootstrap": "cd .. && yarn test:setup",
     "bootstrap:remote": "babel-node ./dev/remote/generate-test-env.js",
     "build": "babel --source-maps --out-dir lib/ src/",
     "capture": "env-cmd .env.test babel-node ./dev/capture.js",
     "clean": "rimraf lib/ tmp/",
-    "docker:exec": "docker exec -it cozy-desktop-stack",
     "eslint": "./node_modules/.bin/eslint './src/**/*.js' './test/**/*.js'",
     "fauxton": "babel-node ./src/bin/fauxton.js",
     "flow": "flow status --quiet --show-all-errors",
@@ -48,7 +47,6 @@
     "repl": "cross-env DEBUG=1 COZY_DESKTOP_HEARTBEAT=5000 babel-node ./src/bin/repl.js",
     "size": "t=\"$(npm pack .)\"; wc -c \"${t}\"; tar tvf \"${t}\"; rm \"${t}\";",
     "start": "cross-env COZY_DESKTOP_HEARTBEAT=5000 babel-node ./src/bin/cli.js",
-    "storage:tree": "yarn docker:exec -- tree -aC /storage/dev.cozy.tools:8080",
     "test": "npm run test:unit && npm run test:integration",
     "test:coverage": "npm run test:unit:coverage && npm run test:integration",
     "test:integration": "yarn mocha -- test/integration",
