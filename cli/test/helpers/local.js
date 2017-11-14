@@ -45,7 +45,7 @@ async function tree (rootPath: string): Promise<string[]> {
     }
   }
 
-  return relPaths.sort()
+  return relPaths.sort((a, b) => a.localeCompare(b))
 }
 
 export class LocalTestHelpers {
