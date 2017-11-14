@@ -9,5 +9,3 @@ services:
       - "6060:6060"
     volumes:
       - .:/cozy-desktop
-      - ./tmp/cozy/couchdb:/usr/local/couchdb/data
-      - ./tmp/cozy/files:/data/cozy-storage
