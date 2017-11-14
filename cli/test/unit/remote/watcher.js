@@ -143,6 +143,7 @@ describe('RemoteWatcher', function () {
   const validMetadata = (doc: RemoteDoc): Metadata => {
     const metadata = createMetadata(doc)
     ensureValidPath(metadata)
+    assignId(metadata)
     return metadata
   }
 
