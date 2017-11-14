@@ -47,7 +47,7 @@
     "repl": "cross-env DEBUG=1 COZY_DESKTOP_HEARTBEAT=5000 babel-node ./src/bin/repl.js",
     "size": "t=\"$(npm pack .)\"; wc -c \"${t}\"; tar tvf \"${t}\"; rm \"${t}\";",
     "start": "cross-env COZY_DESKTOP_HEARTBEAT=5000 babel-node ./src/bin/cli.js",
-    "test": "npm run test:unit && npm run test:integration",
+    "test": "yarn mocha -- test/unit test/integration",
     "test:coverage": "npm run test:unit:coverage && npm run test:integration",
     "test:integration": "yarn mocha -- test/integration",
     "test:performance": "yarn mocha -- test/performance",
