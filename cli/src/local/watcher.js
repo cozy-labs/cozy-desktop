@@ -156,9 +156,12 @@ class LocalWatcher {
     // TODO: Don't even acquire lock actions list is empty
     // FIXME: Shouldn't we acquire the lock before preparing the events?
     const release = await this.pouch.lock(this)
+    let target = -1
     try {
       await this.sendToPrep(actions)
+      target = (await this.pouch.db.changes({limit: 1, descending: true})).last_seq
     } finally {
+      this.events.emit('sync-target', target)
       release()
       this.events.emit('local-end')
     }

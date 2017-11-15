@@ -91,6 +91,7 @@ export default class RemoteWatcher {
     const changes: Change[] = []
 
     const release = await this.pouch.lock(this)
+    let target = -1
     try {
       this.events.emit('remote-start')
       log.trace('Contextualize and analyse changesfeed results...')
@@ -108,7 +109,9 @@ export default class RemoteWatcher {
       await this.applyAll(changes)
 
       log.trace('Done with pull.')
+      target = (await this.pouch.db.changes({limit: 1, descending: true})).last_seq
     } finally {
+      this.events.emit('sync-target', target)
       release()
       this.events.emit('remote-end')
     }
