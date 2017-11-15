@@ -122,8 +122,21 @@ ipcRenderer.on('up-to-date', () => {
   elmectron.ports.updated.send(true)
 })
 
-ipcRenderer.on('syncing', () => {
-  elmectron.ports.syncing.send(true)
+ipcRenderer.on('sync-status', (event, {label, remaining}) => {
+  switch (label) {
+    case 'sync':
+      elmectron.ports.syncing.send(remaining)
+      break
+    case 'squashprepmerge':
+      elmectron.ports.squashPrepMerge.send(true)
+      break
+    case 'buffering':
+      elmectron.ports.buffering.send(true)
+      break
+    case 'uptodate':
+      elmectron.ports.updated.send(true)
+      break
+  }
 })
 
 ipcRenderer.on('transfer', (event, info) => {

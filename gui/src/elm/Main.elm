@@ -1,19 +1,23 @@
 port module Main exposing (..)
 
-import Html exposing (Html)
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 import Dict exposing (Dict)
 import Json.Decode as Json
 import Time exposing (Time)
 import Helpers exposing (Locale)
+import Model exposing (Status(..))
 import Help
+import Icons
 import Wizard
 import Address
 import Folder
-import TwoPanes
 import Dashboard
 import Settings
 import Unlinked
 import Revoked
+import StatusBar
 
 
 main =
@@ -27,11 +31,15 @@ main =
 
 
 -- MODEL
+-- type Tab
+--     = DashboardPage
+--     | SettingsPage
 
 
 type Page
     = WizardPage
-    | TwoPanesPage
+    | DashboardPage
+    | SettingsPage
     | UnlinkedPage
     | RevokedPage
     | HelpPage
@@ -42,8 +50,10 @@ type alias Model =
     , locales : Dict String Locale
     , page : Page
     , wizard : Wizard.Model
-    , twopanes : TwoPanes.Model
+    , dashboard : Dashboard.Model
+    , settings : Settings.Model
     , revoked : Revoked.Model
+    , status : Status
     , help : Help.Model
     }
 
@@ -83,7 +93,10 @@ init flags =
                     HelpPage
 
                 "dashboard" ->
-                    TwoPanesPage
+                    DashboardPage
+
+                "settings" ->
+                    SettingsPage
 
                 -- Temporarily use the MsgMechanism to
                 -- get to the 2Panes page.
@@ -93,8 +106,14 @@ init flags =
         wizard =
             Wizard.init flags.folder flags.platform
 
-        twopanes =
-            TwoPanes.init flags.version
+        dashboard =
+            Dashboard.init
+
+        settings =
+            Settings.init flags.version
+
+        status =
+            Starting
 
         revoked =
             Revoked.init
@@ -103,7 +122,7 @@ init flags =
             Help.init
 
         model =
-            Model localeIdentifier locales page wizard twopanes revoked help
+            Model localeIdentifier locales page wizard dashboard settings revoked status help
     in
         ( model, Cmd.none )
 
@@ -116,7 +135,18 @@ type Msg
     = NoOp
     | WizardMsg Wizard.Msg
     | SyncStart ( String, String )
-    | TwoPanesMsg TwoPanes.Msg
+    | Updated
+    | StartSyncing Int
+    | StartBuffering
+    | StartSquashPrepMerging
+    | GoOffline
+    | SetError String
+    | DashboardMsg Dashboard.Msg
+    | SettingsMsg Settings.Msg
+    | GoToCozy
+    | GoToFolder
+    | GoToTab Page
+    | GoToStrTab String
     | Unlink
     | Revoked
     | RevokedMsg Revoked.Msg
@@ -139,17 +169,65 @@ update msg model =
 
         SyncStart info ->
             let
-                ( twopanes, _ ) =
-                    TwoPanes.update (TwoPanes.FillAddressAndDevice info) model.twopanes
+                ( settings, _ ) =
+                    Settings.update (Settings.FillAddressAndDevice info) model.settings
             in
-                ( { model | page = TwoPanesPage, twopanes = twopanes }, Cmd.none )
+                ( { model | page = (DashboardPage), settings = settings }, Cmd.none )
 
-        TwoPanesMsg subMsg ->
+        Updated ->
+            ( { model | status = UpToDate }, Cmd.none )
+
+        StartSyncing n ->
+            ( { model | status = Syncing n }, Cmd.none )
+
+        StartBuffering ->
+            ( { model | status = Buffering }, Cmd.none )
+
+        StartSquashPrepMerging ->
+            ( { model | status = SquashPrepMerging }, Cmd.none )
+
+        GoOffline ->
+            ( { model | status = Offline }, Cmd.none )
+
+        SetError error ->
+            ( { model | status = Error error }, Cmd.none )
+
+        GoToCozy ->
+            ( model, gotocozy () )
+
+        GoToFolder ->
+            ( model, gotofolder () )
+
+        GoToTab tab ->
             let
-                ( twopanes, cmd ) =
-                    TwoPanes.update subMsg model.twopanes
+                dashboard =
+                    Dashboard.update Dashboard.Reset model.dashboard
             in
-                ( { model | twopanes = twopanes }, Cmd.map TwoPanesMsg cmd )
+                ( { model | page = (tab), dashboard = dashboard }, Cmd.none )
+
+        GoToStrTab tabstr ->
+            case
+                tabstr
+            of
+                "settings" ->
+                    update (GoToTab SettingsPage) model
+
+                _ ->
+                    update (GoToTab DashboardPage) model
+
+        DashboardMsg subMsg ->
+            let
+                dashboard =
+                    Dashboard.update subMsg model.dashboard
+            in
+                ( { model | dashboard = dashboard }, Cmd.none )
+
+        SettingsMsg subMsg ->
+            let
+                ( settings, cmd ) =
+                    Settings.update subMsg model.settings
+            in
+                ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
 
         Unlink ->
             ( { model | page = UnlinkedPage }, Cmd.none )
@@ -203,13 +281,25 @@ port newRelease : (( String, String ) -> msg) -> Sub msg
 port gototab : (String -> msg) -> Sub msg
 
 
+port gotocozy : () -> Cmd msg
+
+
+port gotofolder : () -> Cmd msg
+
+
 port offline : (Bool -> msg) -> Sub msg
 
 
 port updated : (Bool -> msg) -> Sub msg
 
 
-port syncing : (Bool -> msg) -> Sub msg
+port syncing : (Int -> msg) -> Sub msg
+
+
+port squashPrepMerge : (Bool -> msg) -> Sub msg
+
+
+port buffering : (Bool -> msg) -> Sub msg
 
 
 port transfer : (Dashboard.File -> msg) -> Sub msg
@@ -251,19 +341,21 @@ subscriptions model =
         , folderError (WizardMsg << Wizard.FolderMsg << Folder.SetError)
         , folder (WizardMsg << Wizard.FolderMsg << Folder.FillFolder)
         , synchonization SyncStart
-        , newRelease (TwoPanesMsg << TwoPanes.SettingsMsg << Settings.NewRelease)
-        , gototab (TwoPanesMsg << TwoPanes.GoToStrTab)
-        , Time.every Time.second (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.Tick)
-        , transfer (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.Transfer)
-        , remove (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.Remove)
-        , diskSpace (TwoPanesMsg << TwoPanes.SettingsMsg << Settings.UpdateDiskSpace)
-        , syncError (TwoPanesMsg << TwoPanes.DashboardMsg << Dashboard.SetError)
-        , offline (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.GoOffline)))
-        , updated (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.Updated)))
-        , syncing (always (TwoPanesMsg (TwoPanes.DashboardMsg Dashboard.Syncing)))
+        , newRelease (SettingsMsg << Settings.NewRelease)
+        , gototab (GoToStrTab)
+        , Time.every Time.second (DashboardMsg << Dashboard.Tick)
+        , transfer (DashboardMsg << Dashboard.Transfer)
+        , remove (DashboardMsg << Dashboard.Remove)
+        , diskSpace (SettingsMsg << Settings.UpdateDiskSpace)
+        , syncError (SetError)
+        , offline (always GoOffline)
+        , buffering (always StartBuffering)
+        , squashPrepMerge (always StartSquashPrepMerging)
+        , updated (always Updated)
+        , syncing StartSyncing
         , mail (HelpMsg << Help.MailSent)
-        , autolaunch (TwoPanesMsg << TwoPanes.SettingsMsg << Settings.AutoLaunchSet)
-        , cancelUnlink (always (TwoPanesMsg (TwoPanes.SettingsMsg Settings.CancelUnlink)))
+        , autolaunch (SettingsMsg << Settings.AutoLaunchSet)
+        , cancelUnlink (always (SettingsMsg Settings.CancelUnlink))
         , unlink (always Unlink)
         , revoked (always Revoked)
         ]
@@ -271,6 +363,18 @@ subscriptions model =
 
 
 -- VIEW
+
+
+menu_item helpers model title page =
+    div
+        [ classList
+            [ ( "two-panes__menu__item", True )
+            , ( "two-panes__menu__item--active", model.page == page )
+            ]
+        , onClick (GoToTab page)
+        ]
+        [ text (helpers.t ("TwoPanes " ++ title))
+        ]
 
 
 view : Model -> Html Msg
@@ -295,9 +399,6 @@ view model =
             WizardPage ->
                 Html.map WizardMsg (Wizard.view helpers model.wizard)
 
-            TwoPanesPage ->
-                Html.map TwoPanesMsg (TwoPanes.view helpers model.twopanes)
-
             UnlinkedPage ->
                 Html.map (\_ -> Restart) (Unlinked.view helpers)
 
@@ -306,3 +407,37 @@ view model =
 
             HelpPage ->
                 Html.map HelpMsg (Help.view helpers model.help)
+
+            _ ->
+                div
+                    [ class "container" ]
+                    [ (StatusBar.view helpers model.status)
+                    , section [ class "two-panes" ]
+                        [ aside [ class "two-panes__menu" ]
+                            [ menu_item helpers model "Recents" DashboardPage
+                            , menu_item helpers model "Settings" SettingsPage
+                            ]
+                        , if model.page == DashboardPage then
+                            Html.map DashboardMsg (Dashboard.view helpers model.dashboard)
+                          else if model.page == SettingsPage then
+                            Html.map SettingsMsg (Settings.view helpers model.settings)
+                          else
+                            div [] []
+                        ]
+                    , div [ class "bottom-bar" ]
+                        [ a
+                            [ href "#"
+                            , onClick GoToFolder
+                            ]
+                            [ Icons.folder 48 False
+                            , text (helpers.t "Bar GoToFolder")
+                            ]
+                        , a
+                            [ href "#"
+                            , onClick GoToCozy
+                            ]
+                            [ Icons.globe 48 False
+                            , text (helpers.t "Bar GoToCozy")
+                            ]
+                        ]
+                    ]

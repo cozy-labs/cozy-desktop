@@ -18,6 +18,7 @@ import Prep from './prep'
 import Local from './local'
 import Remote from './remote'
 import Sync from './sync'
+import SyncState from './syncstate'
 import Registration from './remote/registration'
 
 import type { Callback } from './utils/func'
@@ -52,7 +53,7 @@ class App {
     this.basePath = path.join(basePath, '.cozy-desktop')
     this.config = new Config(this.basePath)
     this.pouch = new Pouch(this.config)
-    this.events = new EventEmitter()
+    this.events = new SyncState()
   }
 
   // Parse the URL

@@ -10,13 +10,6 @@ import Helpers exposing (Helpers)
 -- MODEL
 
 
-type Status
-    = UpToDate
-    | Offline
-    | Sync String
-    | Error String
-
-
 type alias File =
     { filename : String
     , icon : String
@@ -27,8 +20,7 @@ type alias File =
 
 
 type alias Model =
-    { status : Status
-    , now : Time
+    { now : Time
     , files : List File
     , page : Int
     }
@@ -36,8 +28,7 @@ type alias Model =
 
 init : Model
 init =
-    { status = Sync "…"
-    , now = 0
+    { now = 0
     , files = []
     , page = 1
     }
@@ -56,14 +47,11 @@ maxActivities =
 
 
 type Msg
-    = Updated
-    | Syncing
-    | GoOffline
-    | Transfer File
+    = Transfer File
     | Remove File
-    | SetError String
     | Tick Time
     | ShowMore
+    | Reset
 
 
 samePath : File -> File -> Bool
@@ -74,26 +62,14 @@ samePath a b =
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        Updated ->
-            { model | status = UpToDate }
-
-        Syncing ->
-            { model | status = Sync "…" }
-
-        GoOffline ->
-            { model | status = Offline }
-
         Transfer file ->
             let
                 files =
                     file
                         :: (List.filter (samePath file >> not) model.files)
                         |> List.take maxActivities
-
-                status =
-                    Sync file.filename
             in
-                { model | status = status, files = files }
+                { model | files = files }
 
         Remove file ->
             let
@@ -102,14 +78,14 @@ update msg model =
             in
                 { model | files = files }
 
-        SetError error ->
-            { model | status = Error error }
-
         Tick now ->
             { model | now = now }
 
         ShowMore ->
             { model | page = model.page + 1 }
+
+        Reset ->
+            { model | page = 1 }
 
 
 

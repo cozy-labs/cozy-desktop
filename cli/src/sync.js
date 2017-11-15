@@ -4,7 +4,6 @@ import Promise from 'bluebird'
 import EventEmitter from 'events'
 import { dirname } from 'path'
 
-import * as syncState from './syncstate'
 import Ignore from './ignore'
 import Local from './local'
 import logger from './logger'
@@ -115,7 +114,9 @@ class Sync {
     const change = await this.pop()
     if (this.stopped) return
     try {
-      syncState.onSyncStart(this.events)
+      const target = (await this.pouch.db.changes({limit: 1, descending: true})).last_seq
+      this.events.emit('sync-target', target)
+      this.events.emit('sync-start')
       await this.apply(change)
     } catch (err) {
       if (!this.stopped) throw err
@@ -136,13 +137,14 @@ class Sync {
       filter: '_view',
       view: 'byPath'
     }
+    this.events.emit('sync-current', seq)
     let res = new Promise((resolve, reject) => {
       this.pouch.db.changes(opts)
         .on('change', info => resolve(info))
         .on('error', err => reject(err))
         .on('complete', info => {
           if (info.results && info.results.length) { return }
-          syncState.onSyncEnd(this.events)
+          this.events.emit('sync-end')
           log.debug('No more metadata changes for now')
           opts.live = true
           opts.returnDocs = false
