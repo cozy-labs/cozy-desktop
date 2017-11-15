@@ -114,8 +114,6 @@ class Sync {
     const change = await this.pop()
     if (this.stopped) return
     try {
-      const target = (await this.pouch.db.changes({limit: 1, descending: true})).last_seq
-      this.events.emit('sync-target', target)
       this.events.emit('sync-start')
       await this.apply(change)
     } catch (err) {

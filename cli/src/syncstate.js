@@ -66,10 +66,12 @@ export default class SyncState extends EventEmitter {
         this.emitStatus()
         break
       case 'sync-target':
-        this.syncLastSeq = args[0]
+        if (args[0] !== -1) this.syncLastSeq = args[0]
+        this.emitStatus()
         break
       case 'sync-current':
         this.syncCurrentSeq = args[0]
+        this.emitStatus()
         break
       default:
         super.emit(name, ...args)
