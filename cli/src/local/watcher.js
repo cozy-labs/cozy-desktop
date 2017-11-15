@@ -14,7 +14,6 @@ import logger from '../logger'
 import * as metadata from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
-import * as syncState from '../syncstate'
 import { maxDate } from '../timestamp'
 
 import type { Checksumer } from './checksumer'
@@ -104,7 +103,7 @@ class LocalWatcher {
           log.chokidar.trace({stats})
           const newEvent = chokidarEvent.build(eventType, path, stats)
           this.buffer.push(newEvent)
-          syncState.onLocalStart(this.events)
+          this.events.emit('local-start')
         })
       }
 
@@ -161,7 +160,7 @@ class LocalWatcher {
       await this.sendToPrep(actions)
     } finally {
       release()
-      syncState.onLocalEnd(this.events)
+      this.events.emit('local-end')
     }
     if (initialScan != null) {
       initialScan.resolve()

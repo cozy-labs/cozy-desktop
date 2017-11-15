@@ -1,42 +1,78 @@
-let syncSyncing = false
-let localSyncing = false
-let remoteSyncing = false
+import EventEmitter from 'events'
 
-export const onLocalStart = (events) => {
-  let was = localSyncing || syncSyncing || remoteSyncing
-  localSyncing = true
-  if (!was) events.emit('syncing')
-}
+export default class SyncState extends EventEmitter {
+  syncLastSeq: number
+  syncCurrentSeq: number
+  buffering: boolean
+  syncSyncing: boolean
+  localSyncing: boolean
+  remoteSyncing: boolean
 
-export const onRemoteStart = (events) => {
-  let was = localSyncing || syncSyncing || remoteSyncing
-  remoteSyncing = true
-  if (!was) events.emit('syncing')
-}
-
-export const onSyncStart = (events) => {
-  let was = localSyncing || syncSyncing || remoteSyncing
-  syncSyncing = true
-  if (!was) events.emit('syncing')
-}
-
-export const onLocalEnd = (events) => {
-  localSyncing = false
-  if (!(localSyncing || syncSyncing || remoteSyncing)) {
-    events.emit('up-to-date')
+  shouldSpin () {
+    return this.localSyncing || this.remoteSyncing || this.syncSyncing
   }
-}
 
-export const onRemoteEnd = (events) => {
-  remoteSyncing = false
-  if (!(localSyncing || syncSyncing || remoteSyncing)) {
-    events.emit('up-to-date')
+  emitStatus () {
+    const label = this.syncSyncing ? 'sync'
+                   : this.localSyncing || this.remoteSyncing ? 'squashprepmerge'
+                   : this.buffering ? 'buffering'
+                   : 'uptodate'
+
+    super.emit('sync-status', {
+      label: label,
+      remaining: this.syncLastSeq - this.syncCurrentSeq
+    })
+
+    if (this.wasSpinning && !this.shouldSpin()) {
+      this.emit('up-to-date')
+    }
+
+    if (this.shouldSpin() && !this.wasSpinning) {
+      this.emit('syncing')
+    }
   }
-}
 
-export const onSyncEnd = (events) => {
-  syncSyncing = false
-  if (!(localSyncing || syncSyncing || remoteSyncing)) {
-    events.emit('up-to-date')
+  emit (name, ...args) {
+    this.wasSpinning = this.shouldSpin()
+    switch (name) {
+      case 'buffering-start':
+        this.buffer = true
+        break
+      case 'buffering-end':
+        this.buffering = false
+        break
+      case 'local-start':
+        this.localSyncing = true
+        this.emitStatus()
+        break
+      case 'remote-start':
+        this.remoteSyncing = true
+        this.emitStatus()
+        break
+      case 'sync-start':
+        this.syncSyncing = true
+        this.emitStatus()
+        break
+      case 'local-end':
+        this.localSyncing = false
+        this.emitStatus()
+        break
+      case 'remote-end':
+        this.remoteSyncing = false
+        this.emitStatus()
+        break
+      case 'sync-end':
+        this.syncSyncing = false
+        this.emitStatus()
+        break
+      case 'sync-target':
+        this.syncLastSeq = args[0]
+        break
+      case 'sync-current':
+        this.syncCurrentSeq = args[0]
+        break
+      default:
+        super.emit(name, ...args)
+    }
   }
 }

@@ -150,14 +150,11 @@ const startSync = (force, ...args) => {
     sendDiskUsage()
   } else {
     updateState('syncing')
-    desktop.events.on('syncing', () => {
-      updateState('syncing')
-      trayWindow.send('syncing')
+    desktop.events.on('sync-status', (status) => {
+      updateState(status.label === 'uptodate')
+      trayWindow.send('sync-status', status)
     })
-    desktop.events.on('up-to-date', () => {
-      updateState('up-to-date')
-      trayWindow.send('up-to-date')
-    })
+
     desktop.events.on('online', () => {
       updateState('online')
       trayWindow.send('up-to-date')

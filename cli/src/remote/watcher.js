@@ -8,7 +8,6 @@ import logger from '../logger'
 import { assignId, ensureValidPath, detectPlatformIncompatibilities } from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
-import * as syncState from '../syncstate'
 import RemoteCozy from './cozy'
 import * as remoteChange from './change'
 import { inRemoteTrash } from './document'
@@ -93,7 +92,7 @@ export default class RemoteWatcher {
 
     const release = await this.pouch.lock(this)
     try {
-      syncState.onRemoteStart(this.events)
+      this.events.emit('remote-start')
       log.trace('Contextualize and analyse changesfeed results...')
       for (let index = 0; index < docs.length; index++) {
         const doc = docs[index]
@@ -111,7 +110,7 @@ export default class RemoteWatcher {
       log.trace('Done with pull.')
     } finally {
       release()
-      syncState.onRemoteEnd(this.events)
+      this.events.emit('remote-end')
     }
   }
 
