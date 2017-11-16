@@ -87,7 +87,7 @@ describe('Test scenarios', function () {
       it(localTestName, async function () {
         if (scenario.init) {
           let relpathFix = _.identity
-          if (process.platform === 'win32' && this.currentTest.title.match(/win32/)) {
+          if (process.platform === 'win32' && localTestName.match(/win32/)) {
             relpathFix = (relpath) => relpath.replace(/\//g, '\\').toUpperCase()
           }
           await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix)
