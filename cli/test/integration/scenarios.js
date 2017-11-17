@@ -88,7 +88,7 @@ describe('Test scenarios', function () {
         if (scenario.init) {
           let relpathFix = _.identity
           if (process.platform === 'win32' && localTestName.match(/win32/)) {
-            relpathFix = (relpath) => relpath.replace(/\//g, '\\').toUpperCase()
+            relpathFix = (relpath) => relpath.replace(/\//g, '\\')
           }
           await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix)
         }
@@ -140,7 +140,7 @@ describe('Test scenarios', function () {
         if (scenario.init) {
           let relpathFix = _.identity
           if (process.platform === 'win32' && this.currentTest.title.match(/win32/)) {
-            relpathFix = (relpath) => relpath.replace(/\//g, '\\').toUpperCase()
+            relpathFix = (relpath) => relpath.replace(/\//g, '\\')
           }
           await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix, true)
         }
@@ -189,7 +189,7 @@ describe('Test scenarios', function () {
       if (scenario.init) {
         let relpathFix = _.identity
         if (process.platform === 'win32') {
-          relpathFix = (relpath) => relpath.replace(/\//g, '\\').toUpperCase()
+          relpathFix = (relpath) => relpath.replace(/\//g, '\\')
         }
         await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix)
         await helpers.remote.ignorePreviousChanges()
