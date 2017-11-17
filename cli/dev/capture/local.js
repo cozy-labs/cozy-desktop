@@ -31,7 +31,7 @@ const mapInode = {}
 const setupInitialState = (scenario) => {
   if (scenario.init == null) return
   const debug = process.env.DEBUG != null ? console.log : () => {}
-  debug('init:')
+  debug('[init]')
   let resolve // TODO: reject on chokidar error?
   const donePromise = new Promise((_resolve) => { resolve = _resolve })
   const watcher = chokidar.watch('.', chokidarOptions)

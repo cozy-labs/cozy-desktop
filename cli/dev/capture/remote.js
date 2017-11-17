@@ -17,7 +17,7 @@ const debug = process.env.DEBUG != null ? console.log : (...args) => {}
 
 const createInitialTree = async function (scenario: *, cozy: *, pouch: Pouch) {
   if (!scenario.init) return
-  debug('init:')
+  debug('[init]')
   for (let doc of scenario.init) {
     let relpath = '/' + doc.path
     if (relpath.endsWith('/')) {
@@ -61,7 +61,7 @@ const createInitialTree = async function (scenario: *, cozy: *, pouch: Pouch) {
 }
 
 const runActions = (scenario: *, cozy: *) => {
-  debug(`actions:`)
+  debug('[actions]')
   return Promise.each(scenario.actions, async (action) => {
     switch (action.type) {
       case 'mkdir':

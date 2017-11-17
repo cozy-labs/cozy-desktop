@@ -83,15 +83,15 @@ module.exports.loadRemoteChangesFiles = (scenario) => {
 }
 
 module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
-  debug('init')
+  debug('[init]')
   const remoteDocsToTrash = []
   for (let {path: relpath, ino, trashed} of scenario.init) {
     debug(relpath)
     const isOutside = relpath.startsWith('../outside')
     let remoteParent
     if (!isOutside) {
-      debug('retrieve remote parent...')
       const remoteParentPath = path.posix.join('/', path.posix.dirname(relpath))
+      debug(`- retrieve remote parent: ${remoteParentPath}`)
       remoteParent = await cozy.files.statByPath(remoteParentPath)
     }
     const remoteName = path.posix.basename(relpath)
@@ -100,7 +100,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
     const lastModifiedDate = new Date('2011-04-11T10:20:30Z')
     if (relpath.endsWith('/')) {
       if (!trashed) {
-        debug('create local dir...')
+        debug(`- create local dir: ${localPath}`)
         await fs.ensureDir(abspath(localPath))
         if (trueino) ino = (await fs.stat(abspath(localPath))).ino
       }
@@ -116,7 +116,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
       }
 
       if (!isOutside) {
-        debug('create remote dir...', trashed ? '(trashed)' : '')
+        debug(`- create${trashed ? ' and trash' : ''} remote dir: ${remotePath}`)
         const remoteDir = await cozy.files.createDirectory({
           name: remoteName,
           dirID: remoteParent._id,
@@ -125,7 +125,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
         doc.remote = _.pick(remoteDir, ['_id', '_rev'])
         if (trashed) remoteDocsToTrash.push(remoteDir)
         else {
-          debug('create dir metadata...')
+          debug(`- create dir metadata: ${doc._id}`)
           await pouch.put(doc)
         }
       }
@@ -134,7 +134,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
       const md5sum = 'rL0Y20zC+Fzt72VPzMSk2A=='
 
       if (!trashed) {
-        debug('create local file...')
+        debug(`- create local file: ${localPath}`)
         await fs.outputFile(abspath(localPath), content)
         if (trueino) ino = (await fs.stat(abspath(localPath))).ino
       }
@@ -154,7 +154,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
         sides: {local: 1, remote: 1}
       }
       if (!isOutside) {
-        debug('create remote file...', trashed ? '(trashed)' : '')
+        debug(`- create${trashed ? ' and trash' : ''} remote file: ${remotePath}`)
         const remoteFile = await cozy.files.create(content, {
           name: remoteName,
           dirID: remoteParent._id,
@@ -165,7 +165,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
         doc.remote = _.pick(remoteFile, ['_id', '_rev'])
         if (trashed) remoteDocsToTrash.push(remoteFile)
         else {
-          debug('create file metadata...')
+          debug(`- create file metadata: ${doc._id}`)
           await pouch.put(doc)
         }
       }
@@ -177,7 +177,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
 }
 
 module.exports.runActions = (scenario, abspath) => {
-  debug(`actions:`)
+  debug('[actions]')
   return Promise.each(scenario.actions, action => {
     switch (action.type) {
       case 'mkdir':
