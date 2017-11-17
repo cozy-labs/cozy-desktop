@@ -187,7 +187,11 @@ describe('Test scenarios', function () {
 
     it(remoteTestName, async function () {
       if (scenario.init) {
-        await init(scenario, this.pouch, helpers.local.syncDir.abspath, _.identity)
+        let relpathFix = _.identity
+        if (process.platform === 'win32') {
+          relpathFix = (relpath) => relpath.replace(/\//g, '\\').toUpperCase()
+        }
+        await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix)
         await helpers.remote.ignorePreviousChanges()
       }
 
