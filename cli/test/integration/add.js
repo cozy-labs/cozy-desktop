@@ -8,6 +8,7 @@ import {
   suite,
   test
 } from 'mocha'
+import path from 'path'
 import should from 'should'
 
 import configHelpers from '../helpers/config'
@@ -49,7 +50,7 @@ suite('Add', () => {
       await helpers.remote.pullChanges()
 
       should(helpers.putDocs('path', '_deleted', 'trashed', 'sides')).deepEqual([
-        {path: 'parent/file', sides: {remote: 1}}
+        {path: path.normalize('parent/file'), sides: {remote: 1}}
       ])
 
       await helpers.syncAll()
