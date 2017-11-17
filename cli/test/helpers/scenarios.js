@@ -24,7 +24,7 @@ const scenarioByPath = module.exports.scenarioByPath = scenarioPath => {
   if (process.platform === 'win32' && scenario.expected && scenario.expected.prepCalls) {
     for (let prepCall of scenario.expected.prepCalls) {
       if (prepCall.src) {
-        prepCall.src = prepCall.src.split('/').join('\\').toUpperCase()
+        prepCall.src = prepCall.src.split('/').join('\\')
         // @TODO why is src in maj
       }
       if (prepCall.path) prepCall.path = prepCall.path.split('/').join('\\')
