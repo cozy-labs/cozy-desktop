@@ -20,7 +20,11 @@ let helpers
 // Spies
 let prepCalls
 
-describe('Test scenarios', () => {
+describe('Test scenarios', function () {
+  if (process.env.CI) {
+    this.timeout(60 * 1000)
+  }
+
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
