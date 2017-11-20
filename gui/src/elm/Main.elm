@@ -309,7 +309,7 @@ port mail : (Maybe String -> msg) -> Sub msg
 port cancelUnlink : (Bool -> msg) -> Sub msg
 
 
-port updateDownloading : (Updater.Progress -> msg) -> Sub msg
+port updateDownloading : (Maybe Updater.Progress -> msg) -> Sub msg
 
 
 

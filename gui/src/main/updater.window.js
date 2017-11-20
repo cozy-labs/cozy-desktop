@@ -18,6 +18,7 @@ module.exports = class UpdaterWM extends WindowManager {
 
     autoUpdater.on('update-available', (info) => {
       console.log("UA")
+      this.send('update-downloading', null)
     })
     autoUpdater.on('update-not-available', (info) => {
       console.log("UTO")
