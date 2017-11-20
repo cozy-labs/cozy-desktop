@@ -34,6 +34,10 @@ const errMessage = (err) => {
   }
 }
 
+ipcRenderer.on('update-downloading', (event, progressObj) => {
+  elmectron.ports.updateDownloading.send(progressObj);
+})
+
 ipcRenderer.on('registration-error', (event, err) => {
   err = errMessage(err)
   elmectron.ports.registrationError.send(err)
