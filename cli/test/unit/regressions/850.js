@@ -41,7 +41,7 @@ describe('issue 850', function () {
     this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
     // this.sync.sync = sinon.stub().rejects(new Error('stopped'))
     this.prep = new Prep(this.merge, this.ignore)
-    this.watcher = new Watcher(this.syncPath, this.prep, this.pouch)
+    this.watcher = new Watcher(this.syncPath, this.prep, this.pouch, this.events)
   })
   after('stop watcher and clean path', function (done) {
     if (this.watcher.watcher) {
