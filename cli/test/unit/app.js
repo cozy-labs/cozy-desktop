@@ -1,6 +1,11 @@
 /* eslint-env mocha */
 
+import fs from 'fs-extra'
+import path from 'path'
+
 import App from '../../src/app'
+
+import configHelpers from '../helpers/config'
 
 describe('App', function () {
   describe('parseCozyUrl', function () {

@@ -128,7 +128,7 @@ class App {
         this.instanciate()
       }
       await this.remote.unregister()
-      this.removeConfig()
+      await this.removeConfig()
       log.info('Current device properly removed from remote cozy.')
       return null
     } catch (err) {
@@ -138,8 +138,8 @@ class App {
     }
   }
 
-  removeConfig () {
-    fs.removeSync(this.basePath)
+  async removeConfig () {
+    await fs.remove(this.basePath)
   }
 
   // Send an issue by mail to the support
