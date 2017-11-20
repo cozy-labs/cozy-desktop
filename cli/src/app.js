@@ -139,6 +139,7 @@ class App {
   }
 
   async removeConfig () {
+    await this.pouch.db.destroy()
     await fs.remove(this.basePath)
   }
 
