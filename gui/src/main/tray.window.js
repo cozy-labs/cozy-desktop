@@ -92,18 +92,15 @@ module.exports = class TrayWM extends WindowManager {
       cancelId: 0,
       defaultId: 1
     }
-    dialog.showMessageBox(null, options, (response) => {
-      if (response === 0) {
-        this.win.send('cancel-unlink')
-        return
-      }
-      this.desktop.stopSync().then(() => {
-        this.desktop.removeRemote()
-          .then(() => log.info('removed'))
-          .then(() => this.doRestart())
-          .catch((err) => log.error(err))
-      })
-    })
+    const response = dialog.showMessageBox(this.win, options)
+    if (response === 0) {
+      return
+    }
+    this.desktop.stopSync()
+      .then(() => this.desktop.removeRemote())
+      .then(() => log.info('removed'))
+      .then(() => this.doRestart())
+      .catch((err) => log.error(err))
   }
 
   doRestart () {
