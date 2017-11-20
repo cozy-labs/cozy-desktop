@@ -16,6 +16,11 @@ import pouchHelpers from '../helpers/pouch'
 import { IntegrationTestHelpers } from '../helpers/integration'
 
 suite('Case or encoding change', () => {
+  if (process.env.TRAVIS && (process.platform === 'darwin')) {
+    test.skip('is unstable on Travis (macOS)')
+    return
+  }
+
   let cozy, helpers
 
   before(configHelpers.createConfig)
