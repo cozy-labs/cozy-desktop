@@ -1,4 +1,4 @@
-port module Updater exposing (..)
+module Updater exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -17,7 +17,7 @@ type alias Progress =
 
 type State
     = Checking
-    | Downloading Progress
+    | Downloading (Maybe Progress)
 
 
 type alias Model =
@@ -38,7 +38,7 @@ init version =
 
 
 type Msg
-    = UpdateDownloading Progress
+    = UpdateDownloading (Maybe Progress)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -83,7 +83,7 @@ view helpers model =
         Checking ->
             div [] [ text (helpers.t "Updater Checking for Update") ]
 
-        Downloading progress ->
+        Downloading (Just progress) ->
             div []
                 [ text
                     ((humanReadableDiskValue helpers progress.transferred)
@@ -91,4 +91,9 @@ view helpers model =
                         ++ (humanReadableDiskValue helpers progress.total)
                     )
                 , (progressbar (progress.transferred / progress.total))
+                ]
+
+        Downloading Nothing ->
+            div []
+                [ text (helpers.t "Updater Downloading")
                 ]
