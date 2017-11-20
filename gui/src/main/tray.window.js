@@ -29,7 +29,10 @@ module.exports = class TrayWM extends WindowManager {
       skipTaskbar: true,
       // transparent: true,
       width: DASHBOARD_SCREEN_WIDTH,
-      height: DASHBOARD_SCREEN_HEIGHT
+      height: DASHBOARD_SCREEN_HEIGHT,
+      resizable: false,
+      movable: false,
+      maximizable: false
     }
   }
 
