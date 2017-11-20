@@ -2,7 +2,6 @@ module Updater exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (..)
 import Helpers exposing (Helpers)
 
 
