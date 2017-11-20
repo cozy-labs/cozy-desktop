@@ -306,6 +306,9 @@ port autolaunch : (Bool -> msg) -> Sub msg
 port mail : (Maybe String -> msg) -> Sub msg
 
 
+port cancelUnlink : (Bool -> msg) -> Sub msg
+
+
 port updateDownloading : (Updater.Progress -> msg) -> Sub msg
 
 
@@ -335,6 +338,7 @@ subscriptions model =
         , syncing StartSyncing
         , mail (HelpMsg << Help.MailSent)
         , autolaunch (SettingsMsg << Settings.AutoLaunchSet)
+        , cancelUnlink (always (SettingsMsg Settings.CancelUnlink))
         , updateDownloading (UpdaterMsg << Updater.UpdateDownloading)
         ]
 
