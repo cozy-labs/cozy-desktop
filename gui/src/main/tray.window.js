@@ -97,6 +97,7 @@ module.exports = class TrayWM extends WindowManager {
     }
     const response = dialog.showMessageBox(this.win, options)
     if (response === 0) {
+      this.send('cancel-unlink')
       return
     }
     this.desktop.stopSync()
