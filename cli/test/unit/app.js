@@ -2,6 +2,7 @@
 
 import fs from 'fs-extra'
 import path from 'path'
+import should from 'should'
 
 import App from '../../src/app'
 
@@ -32,6 +33,24 @@ describe('App', function () {
       parsed.protocol.should.equal('http:')
       parsed.hostname.should.equal('localhost')
       parsed.port.should.equal('9104')
+    })
+  })
+
+  describe('removeConfig', () => {
+    beforeEach(configHelpers.createConfig)
+    beforeEach(configHelpers.registerClient)
+
+    it('removes the config dir', async function () {
+      const configDir = path.dirname(this.config.configPath)
+      const basePath = path.dirname(configDir)
+      const app = new App(basePath)
+      app.config = this.config
+
+      // Make sure Pouch db is being used
+      app.instanciate()
+
+      await app.removeConfig()
+      should(await fs.pathExists(configDir)).be.false()
     })
   })
 })
