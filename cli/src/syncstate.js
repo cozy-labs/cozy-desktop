@@ -20,7 +20,7 @@ export default class SyncState extends EventEmitter {
 
     super.emit('sync-status', {
       label: label,
-      remaining: this.syncLastSeq - this.syncCurrentSeq
+      remaining: Math.max(1, this.syncLastSeq - this.syncCurrentSeq)
     })
 
     if (this.wasSpinning && !this.shouldSpin()) {
