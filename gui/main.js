@@ -80,9 +80,12 @@ const sendErrorToMainWindow = (msg) => {
       cancelId: 0,
       defaultId: 0
     }
-    dialog.showMessageBox(null, options, (response) => {
-      trayWindow.doRestart()
-    })
+    dialog.showMessageBox(null, options)
+    desktop.stopSync()
+      .then(() => desktop.removeConfig())
+      .then(() => log.info('removed'))
+      .then(() => trayWindow.doRestart())
+      .catch((err) => log.error(err))
   } else if (msg === 'Cozy is full' || msg === 'No more disk space') {
     msg = translate('Error ' + msg)
     trayWindow.send('sync-error', msg)
