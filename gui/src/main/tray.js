@@ -102,7 +102,7 @@ var setState = module.exports.setState = (state, filename) => {
   if (process.platform === 'darwin') {
     tray.setImage(`${imgs}/tray-icon-osx/${icon}Template.png`)
     tray.setPressedImage(`${imgs}/tray-icon-osx/${icon}Highlight.png`)
-  } else if (process.platform === 'win32'){
+  } else if (process.platform === 'win32') {
     tray.setImage(`${imgs}/tray-icon-win/${icon}.png`)
   } else {
     tray.setImage(`${imgs}/tray-icon-linux/${icon}.png`)

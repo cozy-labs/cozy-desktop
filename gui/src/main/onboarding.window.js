@@ -1,4 +1,5 @@
 const {addFileManagerShortcut} = require('./shortcut')
+const electron = require('electron')
 const {dialog, session} = require('electron')
 const autoLaunch = require('./autolaunch')
 const {translate} = require('./i18n')
@@ -50,10 +51,10 @@ module.exports = class OnboardingWM extends WindowManager {
       this.win.loadURL(url)
       this.win.webContents.on('did-get-response-details', (event, status, newUrl, originalUrl, httpResponseCode) => {
         if (newUrl.match(/\/auth\/authorize\?/) && httpResponseCode === 200) {
-          const bounds = win.getBounds()
+          const bounds = this.win.getBounds()
           const display = electron.screen.getDisplayMatching(bounds)
           const height = Math.min(display.workAreaSize.height - bounds.y, OAUTH_SCREEN_HEIGHT)
-          win.setSize(OAUTH_SCREEN_WIDTH, height, true)
+          this.win.setSize(OAUTH_SCREEN_WIDTH, height, true)
         }
       })
       this.win.webContents.on('did-get-redirect-request', (event, oldUrl, newUrl) => {

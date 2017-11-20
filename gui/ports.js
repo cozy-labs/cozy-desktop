@@ -90,18 +90,6 @@ ipcRenderer.on('go-to-tab', (event, tab) => {
   elmectron.ports.gototab.send(tab)
 })
 
-ipcRenderer.on('cancel-unlink', (event) => {
-  elmectron.ports.cancelUnlink.send(true)
-})
-ipcRenderer.on('revoked', (event) => {
-  elmectron.ports.revoked.send(true)
-})
-elmectron.ports.logout.subscribe(() => {
-  ipcRenderer.send('logout')
-})
-ipcRenderer.on('unlinked', (event) => {
-  elmectron.ports.unlink.send(true)
-})
 elmectron.ports.unlinkCozy.subscribe(() => {
   ipcRenderer.send('unlink-cozy')
 })
@@ -154,9 +142,6 @@ ipcRenderer.on('sync-error', (event, err) => {
   elmectron.ports.syncError.send(err)
 })
 
-elmectron.ports.restart.subscribe(() => {
-  ipcRenderer.send('restart')
-})
 
 // Give focus to DOM nodes
 elmectron.ports.focus.subscribe((selector) => {
