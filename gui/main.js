@@ -81,7 +81,7 @@ const sendErrorToMainWindow = (msg) => {
       defaultId: 0
     }
     dialog.showMessageBox(null, options, (response) => {
-      trayWindow.onRestart()
+      trayWindow.doRestart()
     })
   } else if (msg === 'Cozy is full' || msg === 'No more disk space') {
     msg = translate('Error ' + msg)
@@ -211,7 +211,7 @@ const startSync = (force, ...args) => {
 
 const shouldExit = app.makeSingleInstance(showWindow)
 if (shouldExit) {
-  cosole.log("EXITING")
+  console.log("EXITING")
   log.warn('Cozy Drive is already running. Exiting...')
   app.exit()
 }
