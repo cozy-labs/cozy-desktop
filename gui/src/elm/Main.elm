@@ -15,8 +15,7 @@ import Address
 import Folder
 import Dashboard
 import Settings
-import Unlinked
-import Revoked
+import Updater
 import StatusBar
 
 
@@ -40,8 +39,7 @@ type Page
     = WizardPage
     | DashboardPage
     | SettingsPage
-    | UnlinkedPage
-    | RevokedPage
+    | UpdaterPage
     | HelpPage
 
 
@@ -52,7 +50,7 @@ type alias Model =
     , wizard : Wizard.Model
     , dashboard : Dashboard.Model
     , settings : Settings.Model
-    , revoked : Revoked.Model
+    , updater : Updater.Model
     , status : Status
     , help : Help.Model
     }
@@ -98,6 +96,9 @@ init flags =
                 "settings" ->
                     SettingsPage
 
+                "updater" ->
+                    UpdaterPage
+
                 -- Temporarily use the MsgMechanism to
                 -- get to the 2Panes page.
                 _ ->
@@ -112,17 +113,17 @@ init flags =
         settings =
             Settings.init flags.version
 
+        updater =
+            Updater.init flags.version
+
         status =
             Starting
-
-        revoked =
-            Revoked.init
 
         help =
             Help.init
 
         model =
-            Model localeIdentifier locales page wizard dashboard settings revoked status help
+            Model localeIdentifier locales page wizard dashboard settings updater status help
     in
         ( model, Cmd.none )
 
@@ -147,14 +148,8 @@ type Msg
     | GoToFolder
     | GoToTab Page
     | GoToStrTab String
-    | Unlink
-    | Revoked
-    | RevokedMsg Revoked.Msg
-    | Restart
     | HelpMsg Help.Msg
-
-
-port restart : Bool -> Cmd msg
+    | UpdaterMsg Updater.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -229,22 +224,6 @@ update msg model =
             in
                 ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
 
-        Unlink ->
-            ( { model | page = UnlinkedPage }, Cmd.none )
-
-        Revoked ->
-            ( { model | page = RevokedPage }, Cmd.none )
-
-        Restart ->
-            ( model, restart True )
-
-        RevokedMsg subMsg ->
-            let
-                ( revoked, cmd ) =
-                    Revoked.update subMsg model.revoked
-            in
-                ( { model | revoked = revoked }, Cmd.map RevokedMsg cmd )
-
         NoOp ->
             ( model, Cmd.none )
 
@@ -254,6 +233,13 @@ update msg model =
                     Help.update subMsg model.help
             in
                 ( { model | help = help }, Cmd.map HelpMsg cmd )
+
+        UpdaterMsg subMsg ->
+            let
+                ( updater, cmd ) =
+                    Updater.update subMsg model.updater
+            in
+                ( { model | updater = updater }, Cmd.map UpdaterMsg cmd )
 
 
 
@@ -320,17 +306,11 @@ port autolaunch : (Bool -> msg) -> Sub msg
 port mail : (Maybe String -> msg) -> Sub msg
 
 
+port updateDownloading : (Updater.Progress -> msg) -> Sub msg
+
+
 
 -- https://github.com/elm-lang/elm-compiler/issues/1367
-
-
-port cancelUnlink : (Bool -> msg) -> Sub msg
-
-
-port unlink : (Bool -> msg) -> Sub msg
-
-
-port revoked : (Bool -> msg) -> Sub msg
 
 
 subscriptions : Model -> Sub Msg
@@ -355,9 +335,7 @@ subscriptions model =
         , syncing StartSyncing
         , mail (HelpMsg << Help.MailSent)
         , autolaunch (SettingsMsg << Settings.AutoLaunchSet)
-        , cancelUnlink (always (SettingsMsg Settings.CancelUnlink))
-        , unlink (always Unlink)
-        , revoked (always Revoked)
+        , updateDownloading (UpdaterMsg << Updater.UpdateDownloading)
         ]
 
 
@@ -399,14 +377,11 @@ view model =
             WizardPage ->
                 Html.map WizardMsg (Wizard.view helpers model.wizard)
 
-            UnlinkedPage ->
-                Html.map (\_ -> Restart) (Unlinked.view helpers)
-
-            RevokedPage ->
-                Html.map RevokedMsg (Revoked.view helpers model.revoked)
-
             HelpPage ->
                 Html.map HelpMsg (Help.view helpers model.help)
+
+            UpdaterPage ->
+                Html.map UpdaterMsg (Updater.view helpers model.updater)
 
             _ ->
                 div

@@ -12,6 +12,7 @@ const autoLaunch = require('./src/main/autolaunch')
 const lastFiles = require('./src/main/lastfiles')
 const tray = require('./src/main/tray')
 const TrayWM = require('./src/main/tray.window.js')
+const UpdaterWM = require('./src/main/updater.window.js')
 const HelpWM = require('./src/main/help.window.js')
 const OnboardingWM = require('./src/main/onboarding.window.js')
 // const helpWindow = require('./src/main/help.window.js')
@@ -22,7 +23,7 @@ const autoUpdater = require('./src/main/autoupdate')
 const i18n = require('./src/main/i18n')
 const {translate} = i18n
 const {incompatibilitiesErrorMessage} = require('./src/main/incompatibilitiesmsg')
-const {app, Menu, ipcMain} = require('electron')
+const {app, Menu, ipcMain, dialog} = require('electron')
 
 const log = Desktop.logger({
   component: 'GUI'
@@ -35,6 +36,7 @@ let errorMessage = ''
 let diskTimeout = null
 let onboardingWindow = null
 let helpWindow = null
+let updaterWindow = null
 let trayWindow = null
 
 const toggleWindow = (bounds) => {
@@ -69,8 +71,18 @@ const showWindow = (bounds) => {
 
 const sendErrorToMainWindow = (msg) => {
   if (msg === 'Client has been revoked') {
-    msg = translate('Revoked It looks like you have revoked your client from your Cozy')
-    trayWindow.send('revoked')
+    const options = {
+      type: 'warning',
+      title: translate('Revoked Title'),
+      message: translate('Revoked It looks like you have revoked your client from your Cozy'),
+      detail: translate('Revoked If it wasn\'t you, contact us at contact@cozycloud.cc'),
+      buttons: [translate('Unlink OK')],
+      cancelId: 0,
+      defaultId: 0
+    }
+    dialog.showMessageBox(null, options, (response) => {
+      trayWindow.onRestart()
+    })
   } else if (msg === 'Cozy is full' || msg === 'No more disk space') {
     msg = translate('Error ' + msg)
     trayWindow.send('sync-error', msg)
@@ -199,24 +211,32 @@ const startSync = (force, ...args) => {
 
 const shouldExit = app.makeSingleInstance(showWindow)
 if (shouldExit) {
+  cosole.log("EXITING")
   log.warn('Cozy Drive is already running. Exiting...')
   app.exit()
 }
 
 app.on('ready', () => {
+  console.log("STUCK")
   desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
   i18n.init(app)
   tray.init(app, toggleWindow)
   lastFiles.init(desktop)
   trayWindow = new TrayWM(app, desktop)
+  console.log("BLOCK")
   helpWindow = new HelpWM(app, desktop)
   onboardingWindow = new OnboardingWM(app, desktop)
   onboardingWindow.onOnboardingDone(() => {
     onboardingWindow.hide()
     trayWindow.show().then(() => startSync())
   })
-
-  showWindowStartApp()
+  console.log("YO")
+  updaterWindow = new UpdaterWM(app, desktop)
+  updaterWindow.onUpToDate(() => {
+    updaterWindow.hide()
+    showWindowStartApp()
+  })
+  updaterWindow.show()
 
   // Os X wants all application to have a menu
   Menu.setApplicationMenu(buildAppMenu(app))
@@ -231,7 +251,7 @@ app.on('ready', () => {
 app.on('window-all-closed', () => {})
 
 ipcMain.on('show-help', () => {
-  helpWindow.show()
+helpWindow.show()
 })
 
 // On watch mode, automatically reload the window when sources are updated

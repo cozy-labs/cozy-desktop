@@ -74,12 +74,7 @@ module.exports = class TrayWM extends WindowManager {
       'go-to-folder': () => shell.openItem(this.desktop.config.syncPath),
       'quit-and-install': () => autoUpdater.quitAndInstall(),
       'auto-launcher': (event, enabled) => autoLaunch.setEnabled(enabled),
-      'logout': () => {
-        this.desktop.removeConfig()
-        this.win.send('unlinked')
-      },
-      'unlink-cozy': this.onUnlink,
-      'restart': this.onRestart
+      'unlink-cozy': this.onUnlink
     }
   }
 
@@ -97,7 +92,7 @@ module.exports = class TrayWM extends WindowManager {
       cancelId: 0,
       defaultId: 1
     }
-    dialog.showMessageBox(this.win, options, (response) => {
+    dialog.showMessageBox(null, options, (response) => {
       if (response === 0) {
         this.win.send('cancel-unlink')
         return
@@ -105,13 +100,13 @@ module.exports = class TrayWM extends WindowManager {
       this.desktop.stopSync().then(() => {
         this.desktop.removeRemote()
           .then(() => log.info('removed'))
-          .then(() => this.win.send('unlinked'))
+          .then(() => this.doRestart())
           .catch((err) => log.error(err))
       })
     })
   }
 
-  onRestart () {
+  doRestart () {
     setTimeout(this.app.quit, 50)
     const args = process.argv.slice(1).filter(a => a !== '--isHidden')
     spawn(process.argv[0], args, { detached: true })

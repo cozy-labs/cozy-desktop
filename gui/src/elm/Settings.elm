@@ -22,7 +22,6 @@ type alias Model =
     , address : String
     , deviceName : String
     , disk : DiskSpace
-    , busyUnlinking : Bool
     }
 
 
@@ -37,7 +36,6 @@ init version =
         { used = 0
         , quota = 0
         }
-    , busyUnlinking = False
     }
 
 
@@ -53,7 +51,6 @@ type Msg
     | FillAddressAndDevice ( String, String )
     | UpdateDiskSpace DiskSpace
     | UnlinkCozy
-    | CancelUnlink
     | ShowHelp
 
 
@@ -83,6 +80,9 @@ update msg model =
         QuitAndInstall ->
             ( model, quitAndInstall () )
 
+        UnlinkCozy ->
+            ( model, unlinkCozy () )
+
         NewRelease ( notes, name ) ->
             ( { model | newRelease = Just ( notes, name ) }, Cmd.none )
 
@@ -91,12 +91,6 @@ update msg model =
 
         UpdateDiskSpace disk ->
             ( { model | disk = disk }, Cmd.none )
-
-        UnlinkCozy ->
-            ( { model | busyUnlinking = True }, unlinkCozy () )
-
-        CancelUnlink ->
-            ( { model | busyUnlinking = False }, Cmd.none )
 
         ShowHelp ->
             ( model, showHelp () )
@@ -210,10 +204,7 @@ view helpers model =
         , a
             [ class "btn btn--danger"
             , href "#"
-            , if model.busyUnlinking then
-                attribute "aria-busy" "true"
-              else
-                onClick UnlinkCozy
+            , onClick UnlinkCozy
             ]
             [ text (helpers.t "Account Unlink this Cozy") ]
         ]
