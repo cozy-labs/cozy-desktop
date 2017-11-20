@@ -265,18 +265,6 @@ if (process.env.WATCH === 'true') {
     })
 }
 
-// on non-watch mode, check for updates
-if (process.env.WATCH !== 'true') {
-  app.once('ready', () => {
-    autoUpdater.checkForNewRelease()
-    .addListener('update-downloaded', (updateInfo) => {
-      const releaseName = updateInfo.version || 'unknown'
-      const releaseNotes = updateInfo.releaseName || `New version ${releaseName} available`
-      trayWindow.send('new-release-available', releaseNotes, releaseName)
-    })
-  })
-}
-
 // Network requests can be stuck with Electron on Linux inside the event loop.
 // A hack to deblock them is push some events in the event loop.
 // See https://github.com/electron/electron/issues/7083#issuecomment-262038387
