@@ -15,7 +15,6 @@ module.exports = class UpdaterWM extends WindowManager {
   }
 
   constructor (...opts) {
-
     autoUpdater.on('update-available', (info) => {
       log.info({update: info}, 'Update available')
       this.send('update-downloading', null)
@@ -37,9 +36,7 @@ module.exports = class UpdaterWM extends WindowManager {
       autoUpdater.quitAndInstall()
     })
 
-    try {
-      super(...opts)
-    } catch (err) { console.log(err) }
+    super(...opts)
   }
 
   onUpToDate (handler) {

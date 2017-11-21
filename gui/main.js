@@ -15,11 +15,9 @@ const TrayWM = require('./src/main/tray.window.js')
 const UpdaterWM = require('./src/main/updater.window.js')
 const HelpWM = require('./src/main/help.window.js')
 const OnboardingWM = require('./src/main/onboarding.window.js')
-// const helpWindow = require('./src/main/help.window.js')
 
 const {selectIcon} = require('./src/main/fileutils')
 const {buildAppMenu} = require('./src/main/appmenu')
-const autoUpdater = require('./src/main/autoupdate')
 const i18n = require('./src/main/i18n')
 const {translate} = i18n
 const {incompatibilitiesErrorMessage} = require('./src/main/incompatibilitiesmsg')
@@ -255,7 +253,7 @@ app.on('ready', () => {
 app.on('window-all-closed', () => {})
 
 ipcMain.on('show-help', () => {
-helpWindow.show()
+  helpWindow.show()
 })
 
 // On watch mode, automatically reload the window when sources are updated

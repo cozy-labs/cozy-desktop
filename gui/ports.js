@@ -35,7 +35,7 @@ const errMessage = (err) => {
 }
 
 ipcRenderer.on('update-downloading', (event, progressObj) => {
-  elmectron.ports.updateDownloading.send(progressObj);
+  elmectron.ports.updateDownloading.send(progressObj)
 })
 
 ipcRenderer.on('registration-error', (event, err) => {
@@ -148,7 +148,6 @@ ipcRenderer.on('disk-space', (event, info) => {
 ipcRenderer.on('sync-error', (event, err) => {
   elmectron.ports.syncError.send(err)
 })
-
 
 // Give focus to DOM nodes
 elmectron.ports.focus.subscribe((selector) => {
