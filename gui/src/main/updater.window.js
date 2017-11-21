@@ -46,7 +46,8 @@ module.exports = class UpdaterWM extends WindowManager {
   show (...opts) {
     let pShown = super.show(...opts)
     log.info('Looking for updates...')
-    autoUpdater.checkForUpdates()
+    if (process.platform === 'linux') this.afterUpToDate()
+    else autoUpdater.checkForUpdates()
     return pShown
   }
 
