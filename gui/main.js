@@ -238,7 +238,7 @@ app.on('ready', () => {
     updaterWindow.hide()
     showWindowStartApp()
   })
-  updaterWindow.show()
+  updaterWindow.checkForUpdates()
 
   // Os X wants all application to have a menu
   Menu.setApplicationMenu(buildAppMenu(app))
