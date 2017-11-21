@@ -271,6 +271,20 @@
     &:active, &:not([disabled]):not([aria-disabled=true]):hover, &:focus
       border 1px solid #fdcbcb
 
+    // TODO figure out why we need to add that for
+    // properly placed spinner
+    &[aria-busy=true]
+      &:hover, &:active, &:focus
+        background-color: white !important
+        cursor: default
+
+      &::after
+          width 1em
+          height 1em
+          position   relative
+          top        .3em
+
+
   .toggle
     margin-left 1em
     display inline-block
@@ -283,3 +297,13 @@
   .btn--msg
     @extend $button
     @extend $button--regular
+
+    // TODO figure out why we need to add that for
+    // properly placed spinner
+    &[aria-busy=true]
+
+      &::after
+          width 1em
+          height 1em
+          position   relative
+          top        .3em
