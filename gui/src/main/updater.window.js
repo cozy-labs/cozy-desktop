@@ -17,24 +17,23 @@ module.exports = class UpdaterWM extends WindowManager {
   constructor (...opts) {
 
     autoUpdater.on('update-available', (info) => {
-      console.log("UA")
+      log.info({update: info}, 'Update available')
       this.send('update-downloading', null)
     })
     autoUpdater.on('update-not-available', (info) => {
-      console.log("UTO")
+      log.info({update: info}, 'No update available')
       this.afterUpToDate()
     })
     autoUpdater.on('error', (err) => {
-      console.log("ERROR")
-      this.log.error('Error in auto-updater. ' + err)
+      log.error({err}, 'Error in auto-updater! ')
       this.afterUpToDate()
     })
     autoUpdater.on('download-progress', (progressObj) => {
-      console.log("DP")
+      log.trace({progress: progressObj}, 'Downloading...')
       this.send('update-downloading', progressObj)
     })
     autoUpdater.on('update-downloaded', (info) => {
-      console.log("DOWNDONE")
+      log.info({update: info}, 'Update downloaded. Exit and install...')
       autoUpdater.quitAndInstall()
     })
 
@@ -44,13 +43,12 @@ module.exports = class UpdaterWM extends WindowManager {
   }
 
   onUpToDate (handler) {
-    console.log("SETHANDLER")
     this.afterUpToDate = handler
   }
 
   show (...opts) {
     let pShown = super.show(...opts)
-    console.log("CHECK FOR UPDATES")
+    log.info('Looking for updates...')
     autoUpdater.checkForUpdates()
     return pShown
   }
