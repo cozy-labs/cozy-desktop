@@ -5,6 +5,7 @@ import path from 'path'
 import should from 'should'
 
 import App from '../../src/app'
+import { LOG_FILENAME } from '../../src/logger'
 
 import configHelpers from '../helpers/config'
 
@@ -40,7 +41,7 @@ describe('App', function () {
     beforeEach(configHelpers.createConfig)
     beforeEach(configHelpers.registerClient)
 
-    it('removes the config dir', async function () {
+    it('removes everything but the logs from the config dir', async function () {
       const configDir = path.dirname(this.config.configPath)
       const basePath = path.dirname(configDir)
       const app = new App(basePath)
@@ -49,8 +50,14 @@ describe('App', function () {
       // Make sure Pouch db is being used
       app.instanciate()
 
+      // Make sure current & rotated logs exist
+      const logFilenames = [LOG_FILENAME, LOG_FILENAME + '.1']
+      for (const filename of logFilenames) {
+        await fs.ensureFile(path.join(configDir, filename))
+      }
+
       await app.removeConfig()
-      should(await fs.pathExists(configDir)).be.false()
+      should(await fs.readdir(configDir)).deepEqual(logFilenames)
     })
   })
 })
