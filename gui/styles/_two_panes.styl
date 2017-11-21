@@ -235,20 +235,28 @@
     font-weight bold
 
 
+.progress
+  width 100%
+  height .5em
+  border 1px solid cool-grey
+  border-radius .1em
+  overflow hidden
+  background-color pale-grey
+
+  .progress-inner
+    height 100%
+    background-color blue
+    transition: .3s
+
+  &.indeterminate
+    .progress-inner
+      width 30%
+      transition: none
+      animation slide 2s infinite linear
+
+
 .two-panes__content--settings
   padding 1em
-
-  .progress
-    width 100%
-    height .5em
-    border 1px solid cool-grey
-    border-radius .1em
-    overflow hidden
-    background-color pale-grey
-
-    .progress-inner
-      height 100%
-      background-color blue
 
   strong
     width 25%

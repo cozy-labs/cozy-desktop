@@ -78,21 +78,40 @@ progressbar ratio =
 
 view : Helpers -> Model -> Html Msg
 view helpers model =
-    case model.state of
-        Checking ->
-            div [] [ text (helpers.t "Updater Checking for Update") ]
+    section [ class "updater" ]
+        (case model.state of
+            Checking ->
+                [ p [] [ text (helpers.t "Updater Checking for Update") ] ]
 
-        Downloading (Just progress) ->
-            div []
-                [ text
-                    ((humanReadableDiskValue helpers progress.transferred)
-                        ++ " / "
-                        ++ (humanReadableDiskValue helpers progress.total)
-                    )
-                , (progressbar (progress.transferred / progress.total))
+            Downloading (Just progress) ->
+                [ h1 [] [ text (helpers.t "Updater Downloading") ]
+                , div [ class "spacer" ]
+                    [ (progressbar (progress.transferred / progress.total))
+                    , div [ class "progress-indicator" ]
+                        [ text
+                            ((humanReadableDiskValue helpers progress.transferred)
+                                ++ " / "
+                                ++ (humanReadableDiskValue helpers progress.total)
+                            )
+                        ]
+                    ]
+                , p []
+                    [ text (helpers.t "Updater Please wait") ]
                 ]
 
-        Downloading Nothing ->
-            div []
-                [ text (helpers.t "Updater Downloading")
+            Downloading Nothing ->
+                [ h1 []
+                    [ text (helpers.t "Updater Downloading") ]
+                , div [ class "spacer" ]
+                    [ div [ class "progress indeterminate" ]
+                        [ div
+                            [ class "progress-inner" ]
+                            []
+                        ]
+                    ]
+                , p []
+                    [ text (helpers.t "Updater Please wait") ]
+
+                --, p [] []
                 ]
+        )
