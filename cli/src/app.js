@@ -10,7 +10,7 @@ import url from 'url'
 import './globals' // FIXME Use bluebird promises as long as we need asCallback
 import pkg from '../package.json'
 import Config from './config'
-import logger, { LOG_FILE } from './logger'
+import logger, { LOG_FILE, LOG_FILENAME } from './logger'
 import Pouch from './pouch'
 import Ignore from './ignore'
 import Merge from './merge'
@@ -140,7 +140,10 @@ class App {
 
   async removeConfig () {
     await this.pouch.db.destroy()
-    await fs.remove(this.basePath)
+    for (const name of await fs.readdir(this.basePath)) {
+      if (name.startsWith(LOG_FILENAME)) continue
+      await fs.remove(path.join(this.basePath, name))
+    }
   }
 
   // Send an issue by mail to the support
