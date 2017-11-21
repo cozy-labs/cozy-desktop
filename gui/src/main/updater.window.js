@@ -10,7 +10,7 @@ module.exports = class UpdaterWM extends WindowManager {
     return {
       title: 'UPDATER',
       width: 500,
-      height: 500
+      height: 400
     }
   }
 
