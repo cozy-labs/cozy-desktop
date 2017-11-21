@@ -214,26 +214,27 @@ const startSync = (force, ...args) => {
 
 const shouldExit = app.makeSingleInstance(showWindow)
 if (shouldExit) {
-  console.log("EXITING")
   log.warn('Cozy Drive is already running. Exiting...')
   app.exit()
 }
 
 app.on('ready', () => {
-  console.log("STUCK")
+  log.info('Loading CLI...')
   desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
   i18n.init(app)
   tray.init(app, toggleWindow)
   lastFiles.init(desktop)
+  log.trace('Setting up tray WM...')
   trayWindow = new TrayWM(app, desktop)
-  console.log("BLOCK")
+  log.trace('Setting up help WM...')
   helpWindow = new HelpWM(app, desktop)
+  log.trace('Setting up onboarding WM...')
   onboardingWindow = new OnboardingWM(app, desktop)
   onboardingWindow.onOnboardingDone(() => {
     onboardingWindow.hide()
     trayWindow.show().then(() => startSync())
   })
-  console.log("YO")
+  log.trace('Setting up updater WM...')
   updaterWindow = new UpdaterWM(app, desktop)
   updaterWindow.onUpToDate(() => {
     updaterWindow.hide()
