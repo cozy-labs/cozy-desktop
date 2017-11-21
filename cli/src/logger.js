@@ -7,7 +7,8 @@ import path from 'path'
 import _ from 'lodash'
 
 export const LOG_DIR = path.join(process.env.COZY_DESKTOP_DIR || os.homedir(), '.cozy-desktop')
-export const LOG_FILE = path.join(LOG_DIR, 'logs.txt')
+export const LOG_FILENAME = 'logs.txt'
+export const LOG_FILE = path.join(LOG_DIR, LOG_FILENAME)
 
 fs.ensureDirSync(LOG_DIR)
 
