@@ -164,7 +164,7 @@ const startSync = (force, ...args) => {
   } else {
     updateState('syncing')
     desktop.events.on('sync-status', (status) => {
-      updateState(status.label === 'uptodate')
+      updateState(status.label === 'uptodate' ? 'online' : 'syncing')
       trayWindow.send('sync-status', status)
     })
 

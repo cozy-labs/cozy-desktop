@@ -103,7 +103,7 @@ class LocalWatcher {
           log.chokidar.trace({stats})
           const newEvent = chokidarEvent.build(eventType, path, stats)
           this.buffer.push(newEvent)
-          this.events.emit('local-start')
+          this.events.emit('buffering-start')
         })
       }
 
@@ -131,6 +131,9 @@ class LocalWatcher {
   // TODO: Put flushed event batches in a queue
   async onFlush (events: ChokidarFSEvent[]) {
     log.debug(`Flushed ${events.length} events`)
+
+    this.events.emit('buffering-end')
+    this.events.emit('local-start')
 
     events = events.filter((e) => e.path !== '') // @TODO handle root dir events
 
