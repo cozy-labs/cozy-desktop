@@ -63,6 +63,14 @@
       margin: 25%
       vertical-align: middle
 
+    .spin
+      @extend $icon-spinner-blue
+      display: inline-block
+      width: 1em
+      height: 1em
+      margin-left: 1em
+      margin-top: 1em
+
 .two-panes
   flex 1 0
   display flex
@@ -153,7 +161,7 @@
   .status__icon--sync
     background-color blue
     padding .1em
-    animation rotate linear 1.3s infinite
+    // animation rotate linear 1.3s infinite
   .status__icon--error
     background-color red
 

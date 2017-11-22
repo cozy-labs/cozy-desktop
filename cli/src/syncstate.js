@@ -14,7 +14,7 @@ export default class SyncState extends EventEmitter {
 
   emitStatus () {
     const label = this.syncSyncing ? 'sync'
-                   : this.localSyncing || this.remoteSyncing ? 'squashprepmerge'
+                   : (this.localSyncing || this.remoteSyncing) ? 'squashprepmerge'
                    : this.buffering ? 'buffering'
                    : 'uptodate'
 
@@ -36,10 +36,12 @@ export default class SyncState extends EventEmitter {
     this.wasSpinning = this.shouldSpin()
     switch (name) {
       case 'buffering-start':
-        this.buffer = true
+        this.buffering = true
+        this.emitStatus()
         break
       case 'buffering-end':
         this.buffering = false
+        this.emitStatus()
         break
       case 'local-start':
         this.localSyncing = true

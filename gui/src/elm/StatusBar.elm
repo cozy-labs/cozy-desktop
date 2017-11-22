@@ -9,39 +9,31 @@ import Model exposing (Status(..))
 
 
 -- Status line component
--- Model
 
 
-iconName : Status -> String
-iconName status =
+imgIcon : String -> String -> Html msg
+imgIcon srcPath className =
+    img
+        [ src srcPath
+        , class <| "status__icon status__icon--" ++ className
+        ]
+        []
+
+
+icon : Status -> Html msg
+icon status =
     case status of
         UpToDate ->
-            "images/tray-icon-osx/idleTemplate@2x.png"
+            imgIcon "images/tray-icon-osx/idleTemplate@2x.png" "uptodate"
 
         Offline ->
-            "images/tray-icon-osx/pauseTemplate@2x.png"
+            imgIcon "images/tray-icon-osx/pauseTemplate@2x.png" "offline"
 
         Error _ ->
-            "images/tray-icon-osx/errorTemplate@2x.png"
+            imgIcon "images/tray-icon-osx/errorTemplate@2x.png" "error"
 
         _ ->
-            "images/tray-icon-osx/syncTemplate@2x.png"
-
-
-iconClass : Status -> String
-iconClass status =
-    case status of
-        UpToDate ->
-            "uptodate"
-
-        Offline ->
-            "offline"
-
-        Error _ ->
-            "error"
-
-        _ ->
-            "sync"
+            span [ class "status__icon spin" ] []
 
 
 viewMessage : Helpers -> Status -> List (Html msg)
@@ -81,12 +73,6 @@ viewMessage helpers status =
 view : Helpers -> Status -> Html msg
 view helpers status =
     div [ class "status" ]
-        [ span [ class "status_img" ]
-            [ img
-                [ src (iconName status)
-                , class <| "status__icon status__icon--" ++ iconClass status
-                ]
-                []
-            ]
+        [ span [ class "status_img" ] [ icon status ]
         , span [ class "status_text" ] (viewMessage helpers status)
         ]
