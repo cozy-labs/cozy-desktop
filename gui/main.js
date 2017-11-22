@@ -67,8 +67,12 @@ const showWindow = (bounds) => {
   }
 }
 
+let revokedAlertShown = false
+
 const sendErrorToMainWindow = (msg) => {
   if (msg === 'Client has been revoked') {
+    if (revokedAlertShown) return
+    revokedAlertShown = true // prevent the alert from appearing twice
     const options = {
       type: 'warning',
       title: translate('Revoked Title'),
