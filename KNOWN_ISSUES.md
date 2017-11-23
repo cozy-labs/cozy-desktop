@@ -5,11 +5,13 @@ Please report any other issue you may encounter by using the app help form.
 **Known issues** that should be fixed in upcoming releases:
 
 * Trashing, restoring and deleting content permanently may not work as expected
-  yet. [details](https://trello.com/c/6jfO4hoB)
+  yet, especially regarding shared folders and connectors.
+  [details](https://trello.com/c/6jfO4hoB)
 * Moving or renaming multiple files or directories successively may end up
   with duplicate content. [details](https://trello.com/c/ZTD669wz)
 * Changing only the case or encoding in a file or directory name, e.g. renaming
-  *my stuff* to *MY STUFF*, won't be synchronized on other devices. [details](https://trello.com/c/Phc3lLEr)
+  *my stuff* to *MY STUFF*, won't be synchronized on other devices.
+  [details](https://trello.com/c/Phc3lLEr)
 
 **Performance issues**:
 

@@ -1,3 +1,28 @@
+## 3.3.0-beta.1 - 2017-11-23
+
+Improvements for all users:
+
+* **Updates will now be detected automatically when starting Cozy Drive**.
+  When an update is available, a splash screen will ask you to wait while
+  downloading (including the download progress on Windows only) and the app
+  will restart automatically. When no update is available, the app will start
+  as usual. Since the update check is quite fast, we decided to display a
+  splash screen only during download, not while checking. In case of network
+  issues, the app may take more time to start than usual, but it should still
+  work.
+* **New revamped UI**: the dashboard window was replaced with a popover showing
+  up next to the (new) system tray icon. The synchronization status on top of
+  the popover should give you more indications about what is actually occurring
+  in the background. Navigation was simplified and moved to the top of the
+  popover and the help form now shows up in its own separate window.
+* **Disconnecting the device from the Cozy or the app** should work as expected
+  now. Also since most people encountering issues were trying to reconfigure
+  their device, we made sure logs were not deleted anymore in the process.
+
+See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.2.0-beta.2 - 2017-11-13
 
 Improvements for all users:
