@@ -200,7 +200,7 @@ view helpers model =
             , href "#"
             , onClick ShowHelp
             ]
-            [ text (helpers.t "Help Send us a message.") ]
+            [ text (helpers.t "Help Send us a message") ]
         , h2 [] [ text (helpers.t "Account Unlink Cozy") ]
         , p []
             [ text ((helpers.t "Account It will unlink your account to this computer.") ++ " ")
