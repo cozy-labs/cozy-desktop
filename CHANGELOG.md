@@ -1,3 +1,13 @@
+## 3.3.0 - 2017-11-24
+
+Improvements for all users:
+
+* Some miscellaneous style and translations fixes
+
+See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.3.0-beta.1 - 2017-11-23
 
 Improvements for all users:
