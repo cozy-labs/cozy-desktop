@@ -164,12 +164,11 @@ view helpers model =
     section [ class "two-panes__content two-panes__content--settings" ]
         [ h2 [] [ text (helpers.t "Account Cozy disk space") ]
         , diskQuotaLine helpers model
-        , h2 [] [ text (helpers.t "Settings Startup") ]
+        , h2 [] [ text (helpers.t "Settings Start Cozy Drive on system startup") ]
         , div
             [ class "coz-form-toggle"
             ]
-            [ text (helpers.t "Settings Start Cozy Drive on system startup")
-            , span [ class "toggle" ]
+            [ span [ class "toggle" ]
                 [ input
                     [ type_ "checkbox"
                     , checked model.autoLaunch
@@ -180,6 +179,7 @@ view helpers model =
                     []
                 , label [ class "label", for "auto-launch" ] []
                 ]
+            , text (helpers.t "Settings Startup")
             ]
         , h2 [] [ text (helpers.t "Account About") ]
         , p []
