@@ -195,7 +195,7 @@ class LocalWatcher {
         try {
           return await this.pouch.db.get(metadata.id(e.path))
         } catch (err) {
-          if (err.status !== 404) log.error({err, event: e})
+          if (err.status !== 404) log.error({path: e.path, err})
         }
       }
       return null
@@ -219,9 +219,9 @@ class LocalWatcher {
         } catch (err) {
           // FIXME: err.code === EISDIR => keep the event? (e.g. rm foo && mkdir foo)
           if (err.code.match(/ENOENT/)) {
-            log.debug(`Skipping file as it does not exist anymore: ${abspath}`)
+            log.debug({path: e.path}, 'Skipping file as it does not exist anymore')
           } else {
-            log.warn({err}, `Could not compute checksum of file: ${abspath}`)
+            log.warn({path: e.path, err}, 'Could not compute checksum')
           }
           return null
         }
@@ -229,7 +229,7 @@ class LocalWatcher {
 
       if (e.type === 'addDir') {
         if (!await fs.exists(abspath)) {
-          log.debug(`Skipping dir as it does not exist anymore: ${abspath}`)
+          log.debug({path: e.path}, 'Skipping dir as it does not exist anymore')
           return null
         }
       }
@@ -281,7 +281,7 @@ class LocalWatcher {
             {
               const moveAction: ?PrepMoveFile = prepAction.maybeMoveFile(getActionByInode(e))
               if (moveAction) {
-                panic({moveAction, event: e},
+                panic({path: e.path, moveAction, event: e},
                   'We should not have both move and add actions since ' +
                   'checksumless adds and inode-less unlink events are dropped')
               }
@@ -299,7 +299,7 @@ class LocalWatcher {
             {
               const moveAction: ?PrepMoveFolder = prepAction.maybeMoveFolder(getActionByInode(e))
               if (moveAction) {
-                panic({moveAction, event: e},
+                panic({path: e.path, moveAction, event: e},
                   'We should not have both move and addDir actions since ' +
                   'non-existing addDir and inode-less unlinkDir events are dropped')
               }
@@ -320,7 +320,7 @@ class LocalWatcher {
             {
               const moveAction: ?PrepMoveFile = prepAction.maybeMoveFile(getAndRemove(e))
               if (moveAction) {
-                panic({moveAction, event: e},
+                panic({path: e.path, moveAction, event: e},
                   'We should not have both move and unlink actions since ' +
                   'checksumless adds and inode-less unlink events are dropped')
               }
@@ -343,7 +343,7 @@ class LocalWatcher {
             {
               const moveAction: ?PrepMoveFolder = prepAction.maybeMoveFolder(getAndRemove(e))
               if (moveAction) {
-                panic({moveAction, event: e},
+                panic({path: e.path, moveAction, event: e},
                   'We should not have both move and unlinkDir actions since ' +
                   'non-existing addDir and inode-less unlinkDir events are dropped')
               }
@@ -471,7 +471,7 @@ class LocalWatcher {
             throw new Error('wrong actions')
         }
       } catch (err) {
-        log.error({err})
+        log.error({path: a.path, err})
         errors.push(err)
       }
     }
