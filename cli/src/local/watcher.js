@@ -383,12 +383,12 @@ class LocalWatcher {
 
     actions.sort((a, b) => {
       if (a.type === 'PrepMoveFolder' || a.type === 'PrepMoveFile') {
-        if (b.type === 'PrepMoveFolder' || b.type === 'PrepMoveFolder') {
+        if (b.type === 'PrepMoveFolder' || b.type === 'PrepMoveFile') {
           if (a.path < b.path) return -1
           else if (a.path > b.path) return 1
           else return 0
         } else return -1
-      } else if (b.type === 'PrepMoveFolder' || b.type === 'PrepMoveFolder') {
+      } else if (b.type === 'PrepMoveFolder' || b.type === 'PrepMoveFile') {
         return 1
       } else {
         return 0
