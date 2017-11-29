@@ -79,7 +79,9 @@ module.exports = class WindowManager {
     this.win.setMenu(null)
     this.win.setAutoHideMenuBar(true)
 
-    // dockApple
+    // Most windows (e.g. onboarding, help...) make the app visible in macOS
+    // dock (and cmd+tab) by default. App is hidden when windows is closed to
+    // allow per-window visibility.
     if (process.platform === 'darwin') {
       this.app.dock.show()
       this.win.on('closed', () => { this.app.dock.hide() })
