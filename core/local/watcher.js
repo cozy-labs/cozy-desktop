@@ -280,7 +280,6 @@ class LocalWatcher {
       if (ino) return actionsByInode.get(ino)
       else return null
     }
-    const getAndRemove = getActionByInode
     const pushAction = (a: PrepAction) => {
       if (a.ino) actionsByInode.set(a.ino, a)
       else actions.push(a)
@@ -317,7 +316,7 @@ class LocalWatcher {
                 break
               }
 
-              const unlinkAction: ?PrepDeleteFile = prepAction.maybeDeleteFile(getAndRemove(e))
+              const unlinkAction: ?PrepDeleteFile = prepAction.maybeDeleteFile(getActionByInode(e))
               if (unlinkAction) {
                 // New move found
                 log.debug({oldpath: unlinkAction.path, path: e.path}, 'move')
@@ -336,7 +335,7 @@ class LocalWatcher {
                   'non-existing addDir and inode-less unlinkDir events are dropped')
               }
 
-              const unlinkAction: ?PrepDeleteFolder = prepAction.maybeDeleteFolder(getAndRemove(e))
+              const unlinkAction: ?PrepDeleteFolder = prepAction.maybeDeleteFolder(getActionByInode(e))
               if (unlinkAction) {
                 // New move found
                 log.debug({oldpath: unlinkAction.path, path: e.path}, 'moveFolder')
@@ -351,14 +350,14 @@ class LocalWatcher {
             break
           case 'unlink':
             {
-              const moveAction: ?PrepMoveFile = prepAction.maybeMoveFile(getAndRemove(e))
+              const moveAction: ?PrepMoveFile = prepAction.maybeMoveFile(getActionByInode(e))
               if (moveAction) {
                 panic({path: e.path, moveAction, event: e},
                   'We should not have both move and unlink actions since ' +
                   'checksumless adds and inode-less unlink events are dropped')
               }
 
-              const addAction: ?PrepAddFile = prepAction.maybeAddFile(getAndRemove(e))
+              const addAction: ?PrepAddFile = prepAction.maybeAddFile(getActionByInode(e))
               if (addAction) {
                 // New move found
                 log.debug({oldpath: e.path, path: addAction.path}, 'move')
@@ -376,14 +375,14 @@ class LocalWatcher {
             break
           case 'unlinkDir':
             {
-              const moveAction: ?PrepMoveFolder = prepAction.maybeMoveFolder(getAndRemove(e))
+              const moveAction: ?PrepMoveFolder = prepAction.maybeMoveFolder(getActionByInode(e))
               if (moveAction) {
                 panic({path: e.path, moveAction, event: e},
                   'We should not have both move and unlinkDir actions since ' +
                   'non-existing addDir and inode-less unlinkDir events are dropped')
               }
 
-              const addAction: ?PrepPutFolder = prepAction.maybePutFolder(getAndRemove(e))
+              const addAction: ?PrepPutFolder = prepAction.maybePutFolder(getActionByInode(e))
               if (addAction) {
                 // New move found
                 log.debug({oldpath: e.path, path: addAction.path}, 'moveFolder')
