@@ -233,7 +233,7 @@ class LocalWatcher {
         } catch (err) {
           // FIXME: err.code === EISDIR => keep the event? (e.g. rm foo && mkdir foo)
           if (err.code.match(/ENOENT/)) {
-            log.debug({path: e.path}, 'File does not exist anymore')
+            log.debug({path: e.path, ino: e.stats.ino}, 'File does not exist anymore')
             e2.wip = true
           } else {
             log.error({path: e.path, err}, 'Could not compute checksum')
@@ -324,7 +324,7 @@ class LocalWatcher {
               const unlinkAction: ?PrepDeleteFile = prepAction.maybeDeleteFile(getActionByInode(e))
               if (unlinkAction) {
                 // New move found
-                log.debug({oldpath: unlinkAction.path, path: e.path}, 'move')
+                log.debug({oldpath: unlinkAction.path, path: e.path, ino: unlinkAction.ino}, 'File moved')
                 pushAction(prepAction.build('PrepMoveFile', e.path, {stats: e.stats, md5sum: e.md5sum, old: unlinkAction.old, ino: unlinkAction.ino, wip: e.wip}))
               } else {
                 pushAction(prepAction.fromChokidar(e))
@@ -365,7 +365,7 @@ class LocalWatcher {
               const addAction: ?PrepAddFile = prepAction.maybeAddFile(getActionByInode(e))
               if (addAction) {
                 // New move found
-                log.debug({oldpath: e.path, path: addAction.path}, 'move')
+                log.debug({oldpath: e.path, path: addAction.path, ino: addAction.ino}, 'File moved')
                 pushAction(prepAction.build('PrepMoveFile', addAction.path, {
                   stats: addAction.stats,
                   md5sum: addAction.md5sum,
