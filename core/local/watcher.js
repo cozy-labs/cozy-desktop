@@ -56,6 +56,7 @@ class LocalWatcher {
   watcher: any // chokidar
   buffer: LocalEventBuffer<ChokidarFSEvent>
   ensureDirInterval: number
+  pendingActions: PrepAction[]
 
   constructor (syncPath: string, prep: Prep, pouch: Pouch, events: EventEmitter) {
     this.syncPath = syncPath
@@ -66,6 +67,7 @@ class LocalWatcher {
     const timeoutInMs = process.env.NODE_ENV === 'test' ? 1000 : 10000
     this.buffer = new LocalEventBuffer(timeoutInMs, this.onFlush)
     this.checksumer = checksumer.init()
+    this.pendingActions = []
   }
 
   ensureDirSync () {
@@ -232,16 +234,18 @@ class LocalWatcher {
           // FIXME: err.code === EISDIR => keep the event? (e.g. rm foo && mkdir foo)
           if (err.code.match(/ENOENT/)) {
             log.debug({path: e.path}, 'File does not exist anymore')
+            e2.wip = true
           } else {
             log.error({path: e.path, err}, 'Could not compute checksum')
+            return null
           }
-          return null
         }
       }
 
       if (e.type === 'addDir') {
         if (!await fs.exists(abspath)) {
           log.debug({path: e.path}, 'Dir does not exist anymore')
+          // e2.wip = true
           return null
         }
       }
@@ -252,10 +256,10 @@ class LocalWatcher {
   }
 
   sortAndSquash (events: ContextualizedChokidarFSEvent[]) : PrepAction[] {
-    const actions: PrepAction[] = [] // Perfsoptim : new Array(events.length)
-
-    // TODO: Split by type and move to appropriate modules?
+    // OPTIMIZE: new Array(events.length)
+    const actions: PrepAction[] = []
     const getInode = (e: ContextualizedChokidarFSEvent): ?number => {
+      // TODO: Split by type and move to appropriate modules?
       switch (e.type) {
         case 'add':
         case 'addDir':
@@ -266,14 +270,10 @@ class LocalWatcher {
           if (e.old != null) return e.old.ino
       }
     }
-
     const panic = (context, description) => {
       log.error(context, description)
       throw new Error(description)
     }
-
-    log.trace('Analyze events...')
-
     const actionsByInode:Map<number, PrepAction> = new Map()
     const getActionByInode = (e) => {
       const ino = getInode(e)
@@ -285,6 +285,14 @@ class LocalWatcher {
       if (a.ino) actionsByInode.set(a.ino, a)
       else actions.push(a)
     }
+
+    if (this.pendingActions.length > 0) {
+      log.warn({actions: this.pendingActions}, `Prepend ${this.pendingActions.length} pending action(s)`)
+      for (const a of this.pendingActions) { pushAction(a) }
+      this.pendingActions = []
+    }
+
+    log.trace('Analyze events...')
 
     for (let e: ContextualizedChokidarFSEvent of events) {
       try {
@@ -302,7 +310,7 @@ class LocalWatcher {
               if (unlinkAction) {
                 // New move found
                 log.debug({oldpath: unlinkAction.path, path: e.path}, 'move')
-                pushAction(prepAction.build('PrepMoveFile', e.path, {stats: e.stats, md5sum: e.md5sum, old: unlinkAction.old, ino: unlinkAction.ino}))
+                pushAction(prepAction.build('PrepMoveFile', e.path, {stats: e.stats, md5sum: e.md5sum, old: unlinkAction.old, ino: unlinkAction.ino, wip: e.wip}))
               } else {
                 pushAction(prepAction.fromChokidar(e))
               }
@@ -321,7 +329,7 @@ class LocalWatcher {
               if (unlinkAction) {
                 // New move found
                 log.debug({oldpath: unlinkAction.path, path: e.path}, 'moveFolder')
-                pushAction(prepAction.build('PrepMoveFolder', e.path, {stats: e.stats, old: unlinkAction.old, ino: unlinkAction.ino}))
+                pushAction(prepAction.build('PrepMoveFolder', e.path, {stats: e.stats, old: unlinkAction.old, ino: unlinkAction.ino, wip: e.wip}))
               } else {
                 pushAction(prepAction.fromChokidar(e))
               }
@@ -347,7 +355,8 @@ class LocalWatcher {
                   stats: addAction.stats,
                   md5sum: addAction.md5sum,
                   old: e.old,
-                  ino: addAction.ino
+                  ino: addAction.ino,
+                  wip: addAction.wip
                 }))
               } else if (getInode(e)) {
                 pushAction(prepAction.fromChokidar(e))
@@ -370,7 +379,8 @@ class LocalWatcher {
                 pushAction(prepAction.build('PrepMoveFolder', addAction.path, {
                   stats: addAction.stats,
                   old: e.old,
-                  ino: addAction.ino
+                  ino: addAction.ino,
+                  wip: addAction.wip
                 }))
               } else if (getInode(e)) {
                 pushAction(prepAction.fromChokidar(e))
@@ -423,8 +433,30 @@ class LocalWatcher {
         a.old && b.old &&
         b.old.path.indexOf(a.old.path + path.sep) === 0) {
           log.debug({oldpath: b.old.path, path: b.path}, 'descendant move')
+          a.wip = a.wip || b.wip
           actions.splice(j--, 1)
         }
+      }
+    }
+
+    log.trace('Reserve actions in progress for next flush...')
+
+    // TODO: Use _.partition()?
+    for (let i = actions.length - 1; i >= 0; i--) {
+      const action = actions[i]
+      if (action.wip) {
+        if (action.type === 'PrepMoveFolder' || action.type === 'PrepMoveFile') {
+          log.debug({
+            action: action.type,
+            oldpath: action.old.path,
+            path: action.path,
+            ino: action.ino
+          }, 'incomplete action')
+        } else {
+          log.debug({action: action.type, path: action.path}, 'incomplete action')
+        }
+        this.pendingActions.push(actions[i])
+        actions.splice(i, 1)
       }
     }
 
