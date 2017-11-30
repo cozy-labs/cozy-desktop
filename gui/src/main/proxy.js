@@ -1,3 +1,5 @@
+/* eslint standard/no-callback-literal: 0 */
+
 const ElectronProxyAgent = require('electron-proxy-agent')
 const url = require('url')
 const http = require('http')
@@ -6,7 +8,6 @@ const https = require('https')
 const log = require('cozy-desktop').default.logger({
   component: 'GUI:proxy'
 })
-
 
 const config = require('yargs')
   .env('COZY_DRIVE')
@@ -22,15 +23,11 @@ const config = require('yargs')
   .help('help')
   .parse()
 
-
 log.warn({config}, 'argv')
-
-
 
 const printCertificate = (certif) => `Certificate(${certif.issuerName} ${certif.subjectName})`
 
 module.exports = (app, session, doneSetup) => {
-
   const loginByRealm = {}
   if (config['login-by-realm']) {
     config['login-by-realm'].split(',').forEach((lbr) => {
@@ -45,7 +42,7 @@ module.exports = (app, session, doneSetup) => {
 
   session.defaultSession.setCertificateVerifyProc((request, callback) => {
     const {hostname, certificate, verificationResult, errorCode} = request
-    if(verificationResult < 0) {
+    if (verificationResult < 0) {
       log.warn({hostname, certificate: printCertificate(certificate), verificationResult, errorCode}, 'Certificate Verification Error')
     } else {
       log.debug({hostname, certificate: printCertificate(certificate), verificationResult, errorCode}, 'Certificate Validated')
@@ -65,8 +62,8 @@ module.exports = (app, session, doneSetup) => {
 
   app.on('login', (event, webContents, request, authInfo, callback) => {
     log.warn({request: request.method + ' ' + request.url, authInfo}, 'Login event')
-    auth = loginByRealm[authInfo.realm]
-    if(auth){
+    const auth = loginByRealm[authInfo.realm]
+    if (auth) {
       event.preventDefault()
       callback(...auth)
     } else {
@@ -74,7 +71,7 @@ module.exports = (app, session, doneSetup) => {
     }
   })
 
-  electronFetch = require('electron-fetch')
+  const electronFetch = require('electron-fetch')
   global.fetch = (url, opts = {}) => {
     opts.session = session.defaultSession
     return electronFetch(url, opts)
