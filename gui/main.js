@@ -8,6 +8,8 @@ const notify = require('electron-main-notification')
 const debounce = require('lodash.debounce')
 const path = require('path')
 
+const setupProxy = require('./src/main/proxy')
+
 const autoLaunch = require('./src/main/autolaunch')
 const lastFiles = require('./src/main/lastfiles')
 const tray = require('./src/main/tray')
@@ -221,35 +223,38 @@ if (shouldExit) {
 }
 
 app.on('ready', () => {
-  log.info('Loading CLI...')
-  desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
-  i18n.init(app)
-  tray.init(app, toggleWindow)
-  lastFiles.init(desktop)
-  log.trace('Setting up tray WM...')
-  trayWindow = new TrayWM(app, desktop)
-  log.trace('Setting up help WM...')
-  helpWindow = new HelpWM(app, desktop)
-  log.trace('Setting up onboarding WM...')
-  onboardingWindow = new OnboardingWM(app, desktop)
-  onboardingWindow.onOnboardingDone(() => {
-    onboardingWindow.hide()
-    trayWindow.show().then(() => startSync())
-  })
-  log.trace('Setting up updater WM...')
-  updaterWindow = new UpdaterWM(app, desktop)
-  updaterWindow.onUpToDate(() => {
-    updaterWindow.hide()
-    showWindowStartApp()
-  })
-  updaterWindow.checkForUpdates()
+  const {session} = require('electron')
+  setupProxy(app, session, () => {
+    log.info('Loading CLI...')
+    desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
+    i18n.init(app)
+    tray.init(app, toggleWindow)
+    lastFiles.init(desktop)
+    log.trace('Setting up tray WM...')
+    trayWindow = new TrayWM(app, desktop)
+    log.trace('Setting up help WM...')
+    helpWindow = new HelpWM(app, desktop)
+    log.trace('Setting up onboarding WM...')
+    onboardingWindow = new OnboardingWM(app, desktop)
+    onboardingWindow.onOnboardingDone(() => {
+      onboardingWindow.hide()
+      trayWindow.show().then(() => startSync())
+    })
+    log.trace('Setting up updater WM...')
+    updaterWindow = new UpdaterWM(app, desktop)
+    updaterWindow.onUpToDate(() => {
+      updaterWindow.hide()
+      showWindowStartApp()
+    })
+    updaterWindow.checkForUpdates()
 
-  // Os X wants all application to have a menu
-  Menu.setApplicationMenu(buildAppMenu(app))
+    // Os X wants all application to have a menu
+    Menu.setApplicationMenu(buildAppMenu(app))
 
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  app.on('activate', showWindow)
+    // On OS X it's common to re-create a window in the app when the
+    // dock icon is clicked and there are no other windows open.
+    app.on('activate', showWindow)
+  })
 })
 
 // Don't quit the app when all windows are closed, keep the tray icon

@@ -75,7 +75,13 @@ module.exports = class OnboardingWM extends WindowManager {
         },
         (err) => {
           log.error(err)
-          event.sender.send('registration-error', translate('Address No cozy instance at this address!'))
+          if (err.code.match(/PROXY/)) {
+            session.defaultSession.resolveProxy(cozyUrl, (p) => {
+              event.sender.send('registration-error', translate('Address Proxy issue') + p)
+            })
+          } else {
+            event.sender.send('registration-error', translate('Address No cozy instance at this address!'))
+          }
         }
       )
   }

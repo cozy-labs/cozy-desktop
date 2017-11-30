@@ -61,12 +61,15 @@
     "auto-launch-patched": "5.0.2",
     "babel-polyfill": "^6.23.0",
     "cozy-desktop": "file:../cli/",
+    "electron-fetch": "^1.1.0",
     "electron-main-notification": "1.0.1",
     "electron-positioner": "^3.0.0",
+    "electron-proxy-agent": "^1.0.2",
     "electron-updater": "1.15.0",
     "lnk": "^1.1.0",
     "lodash.debounce": "4.0.8",
-    "node-uuid": "^1.4.8"
+    "node-uuid": "^1.4.8",
+    "yargs": "^10.0.3"
   },
   "devDependencies": {
     "chokidar-cli": "^1.2.0",
