@@ -1,3 +1,38 @@
+## 3.3.1 - 2017-11-30
+
+Improvements for all users:
+
+* The Cozy Drive app now tries to automatically detect and use any configured
+  proxy (including authentication, i.e. Kerberos authentication shoud
+  *just work*).
+  We also added a few command-line options and environment variables to force
+  the configuration as needed:
+  - `--proxy-script path/to/your/script.pac` or
+    `COZY_DRIVE_PROXY_SCRIPT=path/to/your/script.pac`
+  - `--proxy-ntlm-domains '*example.com,*foobar.com,*baz'` or
+    `COZY_DRIVE_PROXY_NTLM_DOMAINS='*example.com,*foobar.com,*baz'` to specify
+    servers for which integrated authentication is enabled (use `'*'` for all
+    servers).
+  - `--login-by-realm 'realm1:login1:password1,realm2:login2:password2'` or
+    `COZY_DRIVE_LOGIN_BY_REALM='realm1:login1:password1,realm2:login2:password2'`
+    to pass credentials manually.
+  - `--proxy-rules`, `--proxy-bypassrules`, `COZY_DRIVE_PROXY_RULES` and
+    `COZY_DRIVE_PROXYBYPASSRULES` for specifying which proxy should be used in
+    which case (see [details](https://github.com/electron/electron/blob/master/docs/api/session.md#sessetproxyconfig-callback)).
+  Please tell us in case you still can't run the Cozy Drive app behind you
+  proxy so we can support as many configurations as possible.
+* We also fixed an edge case where simultaneous moves ended up with files in the
+  Cozy / OS trash. Expect a few more fixes very soon.
+
+Improvements for macOS users:
+
+* The app is not visible anymore in the dock and with `Cmd+Tab` when running in
+  the background or showing the popover from the systray. It now behaves more
+  like other systray-running apps. Also expect a few more fixes regarding
+  systray integration.
+
+Happy syncing!
+
 ## 3.3.0 - 2017-11-24
 
 Improvements for all users:
