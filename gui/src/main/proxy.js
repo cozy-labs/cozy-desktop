@@ -23,16 +23,16 @@ const config = require('yargs')
   .help('help')
   .parse()
 
-log.warn({config}, 'argv')
+log.debug({config}, 'argv')
 
-const printCertificate = (certif) => `Certificate(${certif.issuerName} ${certif.subjectName})`
+const formatCertificate = (certif) => `Certificate(${certif.issuerName} ${certif.subjectName})`
 
 module.exports = (app, session, doneSetup) => {
   const loginByRealm = {}
   if (config['login-by-realm']) {
     config['login-by-realm'].split(',').forEach((lbr) => {
-      const [realm, username, password] = lbr.split(':')
-      loginByRealm[realm] = [username, password]
+      const [realm, username, ...password] = lbr.split(':')
+      loginByRealm[realm] = [username, password.join(':')]
     })
   }
 
@@ -43,9 +43,9 @@ module.exports = (app, session, doneSetup) => {
   session.defaultSession.setCertificateVerifyProc((request, callback) => {
     const {hostname, certificate, verificationResult, errorCode} = request
     if (verificationResult < 0) {
-      log.warn({hostname, certificate: printCertificate(certificate), verificationResult, errorCode}, 'Certificate Verification Error')
+      log.warn({hostname, certificate: formatCertificate(certificate), verificationResult, errorCode}, 'Certificate Verification Error')
     } else {
-      log.debug({hostname, certificate: printCertificate(certificate), verificationResult, errorCode}, 'Certificate Validated')
+      log.debug({hostname, certificate: formatCertificate(certificate), verificationResult, errorCode}, 'Certificate Validated')
     }
     callback(-3) // use chrome validation
   })
@@ -56,12 +56,12 @@ module.exports = (app, session, doneSetup) => {
   })
 
   app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
-    log.warn({url, error, certificate: printCertificate(certificate)}, 'App Certificate Error')
+    log.warn({url, error, certificate: formatCertificate(certificate)}, 'App Certificate Error')
     callback(false)
   })
 
   app.on('login', (event, webContents, request, authInfo, callback) => {
-    log.warn({request: request.method + ' ' + request.url, authInfo}, 'Login event')
+    log.debug({request: request.method + ' ' + request.url, authInfo}, 'Login event')
     const auth = loginByRealm[authInfo.realm]
     if (auth) {
       event.preventDefault()
