@@ -219,9 +219,9 @@ class LocalWatcher {
         } catch (err) {
           // FIXME: err.code === EISDIR => keep the event? (e.g. rm foo && mkdir foo)
           if (err.code.match(/ENOENT/)) {
-            log.debug({path: e.path}, 'Skipping file as it does not exist anymore')
+            log.debug({path: e.path}, 'File does not exist anymore')
           } else {
-            log.warn({path: e.path, err}, 'Could not compute checksum')
+            log.error({path: e.path, err}, 'Could not compute checksum')
           }
           return null
         }
@@ -229,7 +229,7 @@ class LocalWatcher {
 
       if (e.type === 'addDir') {
         if (!await fs.exists(abspath)) {
-          log.debug({path: e.path}, 'Skipping dir as it does not exist anymore')
+          log.debug({path: e.path}, 'Dir does not exist anymore')
           return null
         }
       }
@@ -289,7 +289,7 @@ class LocalWatcher {
               const unlinkAction: ?PrepDeleteFile = prepAction.maybeDeleteFile(getAndRemove(e))
               if (unlinkAction) {
                 // New move found
-                log.trace({oldpath: unlinkAction.path, path: e.path}, 'move')
+                log.debug({oldpath: unlinkAction.path, path: e.path}, 'move')
                 pushAction(prepAction.build('PrepMoveFile', e.path, {stats: e.stats, md5sum: e.md5sum, old: unlinkAction.old, ino: unlinkAction.ino}))
               } else {
                 pushAction(prepAction.fromChokidar(e))
@@ -308,7 +308,7 @@ class LocalWatcher {
               const unlinkAction: ?PrepDeleteFolder = prepAction.maybeDeleteFolder(getAndRemove(e))
               if (unlinkAction) {
                 // New move found
-                log.trace({oldpath: unlinkAction.path, path: e.path}, 'moveFolder')
+                log.debug({oldpath: unlinkAction.path, path: e.path}, 'moveFolder')
                 pushAction(prepAction.build('PrepMoveFolder', e.path, {stats: e.stats, old: unlinkAction.old, ino: unlinkAction.ino}))
               } else {
                 pushAction(prepAction.fromChokidar(e))
@@ -330,7 +330,7 @@ class LocalWatcher {
               const addAction: ?PrepAddFile = prepAction.maybeAddFile(getAndRemove(e))
               if (addAction) {
                 // New move found
-                log.trace({oldpath: e.path, path: addAction.path}, 'move')
+                log.debug({oldpath: e.path, path: addAction.path}, 'move')
                 pushAction(prepAction.build('PrepMoveFile', addAction.path, {
                   stats: addAction.stats,
                   md5sum: addAction.md5sum,
@@ -354,7 +354,7 @@ class LocalWatcher {
               const addAction: ?PrepPutFolder = prepAction.maybePutFolder(getAndRemove(e))
               if (addAction) {
                 // New move found
-                log.trace({oldpath: e.path, path: addAction.path}, 'moveFolder')
+                log.debug({oldpath: e.path, path: addAction.path}, 'moveFolder')
                 pushAction(prepAction.build('PrepMoveFolder', addAction.path, {
                   stats: addAction.stats,
                   old: e.old,
@@ -410,7 +410,7 @@ class LocalWatcher {
         b.path.indexOf(a.path + path.sep) === 0 &&
         a.old && b.old &&
         b.old.path.indexOf(a.old.path + path.sep) === 0) {
-          log.trace({oldpath: b.old.path, path: b.path}, 'squashed')
+          log.debug({oldpath: b.old.path, path: b.path}, 'descendant move')
           actions.splice(j--, 1)
         }
       }
