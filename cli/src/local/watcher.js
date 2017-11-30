@@ -263,12 +263,17 @@ class LocalWatcher {
       throw new Error(description)
     }
     const actionsByInode:Map<number, PrepAction> = new Map()
+    const actionsByPath:Map<string, PrepAction> = new Map()
     const getActionByInode = (e) => {
       const ino = getInode(e)
       if (ino) return actionsByInode.get(ino)
       else return null
     }
+    const getActionByPath = (e) => {
+      return actionsByPath.get(e.path)
+    }
     const pushAction = (a: PrepAction) => {
+      actionsByPath.set(a.path, a)
       if (a.ino) actionsByInode.set(a.ino, a)
       else actions.push(a)
     }
