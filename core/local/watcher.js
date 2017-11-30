@@ -373,9 +373,20 @@ class LocalWatcher {
                   ino: addAction.ino,
                   wip: addAction.wip
                 }))
+                break
               } else if (getInode(e)) {
                 pushAction(prepAction.fromChokidar(e))
-              } // else skip
+                break
+              }
+              const action: ?PrepMoveFile = prepAction.maybeMoveFile(getActionByPath(e))
+              if (action && action.md5sum == null) {
+                log.debug({path: action.old.path, ino: action.ino}, 'File was moved then deleted. Deleting origin directly.')
+                // $FlowFixMe
+                action.type = 'PrepDeleteFile'
+                action.path = action.old.path
+                delete action.wip
+              }
+              // Otherwise, skip unlink event by multiple moves
             }
             break
           case 'unlinkDir':
