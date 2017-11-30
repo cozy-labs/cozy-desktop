@@ -301,9 +301,20 @@ class LocalWatcher {
             {
               const moveAction: ?PrepMoveFile = prepAction.maybeMoveFile(getActionByInode(e))
               if (moveAction) {
-                panic({path: e.path, moveAction, event: e},
-                  'We should not have both move and add actions since ' +
-                  'checksumless adds and inode-less unlink events are dropped')
+                if (!moveAction.wip) {
+                  panic({path: e.path, moveAction, event: e},
+                    'We should not have both move and add actions since ' +
+                    'checksumless adds and inode-less unlink events are dropped')
+                }
+                moveAction.path = e.path
+                moveAction.ino = e.stats.ino
+                moveAction.stats = e.stats
+                moveAction.md5sum = e.md5sum
+                delete moveAction.wip
+                log.debug(
+                  {path: e.path, oldpath: moveAction.old.path, ino: moveAction.stats.ino},
+                  'File move completing')
+                break
               }
 
               const unlinkAction: ?PrepDeleteFile = prepAction.maybeDeleteFile(getAndRemove(e))
