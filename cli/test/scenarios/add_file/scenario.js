@@ -1,4 +1,8 @@
-module.exports = {
+/* @flow */
+
+import type { Scenario } from '..'
+
+module.exports = ({
   actions: [
     {type: '>', path: 'file'}
   ],
@@ -11,4 +15,4 @@ module.exports = {
     ],
     remoteTrash: []
   }
-}
+}: Scenario)

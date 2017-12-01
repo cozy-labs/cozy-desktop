@@ -1,4 +1,8 @@
-module.exports = {
+/* @flow */
+
+import type { Scenario } from '..'
+
+module.exports = ({
   actions: [
     {type: 'mkdir', path: 'foo'},
     {type: 'mkdir', path: 'foo/bar'}
@@ -14,4 +18,4 @@ module.exports = {
     ],
     remoteTrash: []
   }
-}
+}: Scenario)
