@@ -13,7 +13,7 @@ module.exports = class WindowManager {
     this.app = app
     this.desktop = desktop
     this.log = require('cozy-desktop').default.logger({
-      component: 'window' + this.windowOptions().title
+      component: 'GUI/' + this.windowOptions().title
     })
 
     let handlers = this.ipcEvents()
@@ -37,12 +37,16 @@ module.exports = class WindowManager {
 
   show () {
     if (!this.win) return this.create()
+    this.log.debug('show')
     this.win.show()
     return Promise.resolve(this.win)
   }
 
   hide () {
-    if (this.win) this.win.close()
+    if (this.win) {
+      this.log.debug('hide')
+      this.win.close()
+    }
     this.win = null
   }
 
@@ -51,7 +55,10 @@ module.exports = class WindowManager {
   }
 
   reload () {
-    if (this.win) this.win.reload()
+    if (this.win) {
+      this.log.debug('reload')
+      this.win.reload()
+    }
   }
 
   send (...args) {
@@ -63,6 +70,7 @@ module.exports = class WindowManager {
   }
 
   create () {
+    this.log.debug('create')
     const opts = this.windowOptions()
     opts.show = false
     this.win = new BrowserWindow(opts)
