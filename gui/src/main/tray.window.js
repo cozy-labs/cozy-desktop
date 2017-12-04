@@ -36,12 +36,12 @@ module.exports = class TrayWM extends WindowManager {
     }
   }
 
+  makesAppVisible () {
+    return false
+  }
+
   create () {
     let pReady = super.create()
-    // Once configured and running in the tray, the app doesn't need to be
-    // visible anymore in macOS dock (and cmd+tab), even when the tray popover
-    // is visible, until another window shows up.
-    if (process.platform === 'darwin') this.app.dock.hide()
     this.positioner = new Positioner(this.win)
     this.win.on('blur', this.onBlur.bind(this))
     return pReady
