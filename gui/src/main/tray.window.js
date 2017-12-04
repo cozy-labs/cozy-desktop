@@ -48,6 +48,7 @@ module.exports = class TrayWM extends WindowManager {
   }
 
   show (trayPos) {
+    this.log.debug('show')
     let pos = null
 
     if (trayPos === undefined || trayPos.x === 0) {
@@ -68,7 +69,10 @@ module.exports = class TrayWM extends WindowManager {
   }
 
   hide () {
-    if (this.win) this.win.hide()
+    if (this.win) {
+      this.log.debug('hide')
+      this.win.hide()
+    }
   }
 
   shown () {
