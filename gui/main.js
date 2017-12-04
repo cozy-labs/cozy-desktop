@@ -223,6 +223,11 @@ if (shouldExit) {
 }
 
 app.on('ready', () => {
+  // Once configured and running in the tray, the app doesn't need to be
+  // visible anymore in macOS dock (and cmd+tab), even when the tray popover
+  // is visible, until another window shows up.
+  if (process.platform === 'darwin') app.dock.hide()
+
   const {session} = require('electron')
   setupProxy(app, session, () => {
     log.info('Loading CLI...')

@@ -35,6 +35,10 @@ module.exports = class WindowManager {
     throw new Error('extend WindowManager before using')
   }
 
+  makesAppVisible () {
+    return true
+  }
+
   show () {
     if (!this.win) return this.create()
     this.log.debug('show')
@@ -90,7 +94,7 @@ module.exports = class WindowManager {
     // Most windows (e.g. onboarding, help...) make the app visible in macOS
     // dock (and cmd+tab) by default. App is hidden when windows is closed to
     // allow per-window visibility.
-    if (process.platform === 'darwin') {
+    if (process.platform === 'darwin' && this.makesAppVisible()) {
       this.app.dock.show()
       this.win.on('closed', () => { this.app.dock.hide() })
     }
