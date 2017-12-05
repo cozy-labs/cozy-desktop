@@ -59,24 +59,18 @@ module.exports = class UpdaterWM extends WindowManager {
   }
 
   checkForUpdates () {
-    if (process.platform === 'linux') {
-      log.warn(`Not looking for updates on ${process.platform}.`)
-      this.afterUpToDate()
-      return Promise.resolve()
-    } else {
-      log.info('Looking for updates...')
-      this.timeout = setTimeout(() => {
-        log.warn({timeout: UPDATE_CHECK_TIMEOUT}, 'Updates check is taking too long')
-        this.skipped = true
+    log.info('Looking for updates...')
+    this.timeout = setTimeout(() => {
+      log.warn({timeout: UPDATE_CHECK_TIMEOUT}, 'Updates check is taking too long')
+      this.skipped = true
 
-        // Disable handler & warn on future calls
-        const handler = this.afterUpToDate
-        this.afterUpToDate = () => {}
+      // Disable handler & warn on future calls
+      const handler = this.afterUpToDate
+      this.afterUpToDate = () => {}
 
-        handler()
-      }, UPDATE_CHECK_TIMEOUT)
-      autoUpdater.checkForUpdates()
-    }
+      handler()
+    }, UPDATE_CHECK_TIMEOUT)
+    autoUpdater.checkForUpdates()
   }
 
   hash () {
