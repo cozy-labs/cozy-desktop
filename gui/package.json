@@ -44,17 +44,22 @@
         "nsis"
       ]
     },
-    "linux": {
-      "target": [
-        "deb"
-      ]
-    },
     "mac": {
       "category": "public.app-category.productivity",
       "target": [
         "dmg",
         "zip"
       ]
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "artifactName": "CozyDrive-${version}-${arch}.${ext}",
+      "executableName": "CozyDrive"
+    },
+    "appImage": {
+      "systemIntegration": "doNotAsk"
     }
   },
   "dependencies": {
