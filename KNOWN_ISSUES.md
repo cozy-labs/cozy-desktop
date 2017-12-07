@@ -34,6 +34,19 @@ Please report any other issue you may encounter by using the app help form.
   too much resources. But adding 100000 files or moving 50000 files should
   still work. [details](https://trello.com/c/IQEImXQF)
 
+## macOS integration
+
+* The systray icon/menu doesn't behave exactly the same as native ones: missing
+  background color when selected, clicking on nearby icon doesn't hide the
+  popover...
+* Right-click menu doesn't work, so there is no obvious way to quit
+  (workaround: you can show the help form and then quit via menu or Cmd+Q).
+* Clicking on the systray icon may bring you to the last *space* were it was
+  open.
+* The popover is still moveable with tools like BetterTouchTools.
+* When opening the local synced folder, the Finder windows shows up in the
+  background.
+
 ## GNU/Linux integration
 
 * The icon is broken with alt+tab or in the GNOME 3 application menu.
