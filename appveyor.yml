@@ -4,6 +4,7 @@ environment:
     secure: b06koRZfV6qLnE8RPcbaiUFIXIA3xc9PkepUZTOnpjAa6LnSKmW3RWCE2CZHSiMs
   COZY_PASSPHRASE:
     secure: 3pxc1SL46fjXrugWO5AtTOyrNKZRka4pSWDDTJOBA3A=
+  MOCHA_TIMEOUT: "60000"
 
 install:
   - cmd: appveyor-retry powershell Install-Product node $env:nodejs_version
@@ -17,7 +18,8 @@ build: off
 test_script:
   - cd cli
   - yarn build
-  - yarn test
+  - cmd: yarn test:unit -- --timeout $env:MOCHA_TIMEOUT
+  - cmd: yarn test:integration -- --timeout $env:MOCHA_TIMEOUT
 
 on_failure:
   - node --version
