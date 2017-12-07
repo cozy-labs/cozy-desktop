@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "auto-launch-patched": "5.0.2",
-    "babel-polyfill": "^6.23.0",
+    "babel-polyfill": "^6.26.0",
     "cozy-desktop": "file:../cli/",
     "electron-fetch": "^1.1.0",
     "electron-main-notification": "1.0.1",
@@ -74,15 +74,15 @@
   "devDependencies": {
     "chokidar-cli": "^1.2.0",
     "cozy-ui": "^3.0.0-beta39",
-    "cross-env": "^4.0.0",
-    "debug-menu": "^0.6.0",
+    "cross-env": "^5.1.1",
+    "debug-menu": "^0.6.1",
     "devtron": "^1.4.0",
     "electron": "^1.7.9",
     "electron-builder": "^19.48.2",
     "elm": "^0.18.0",
     "elm-upgrade": "^0.18.7",
-    "rimraf": "^2.6.1",
-    "standard": "^10.0.2",
+    "rimraf": "^2.6.2",
+    "standard": "^10.0.3",
     "stylus": "^0.54.5"
   },
   "scripts": {
