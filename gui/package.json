@@ -77,7 +77,7 @@
     "cross-env": "^4.0.0",
     "debug-menu": "^0.6.0",
     "devtron": "^1.4.0",
-    "electron": "1.7.5",
+    "electron": "^1.7.9",
     "electron-builder": "^19.48.2",
     "elm": "^0.18.0",
     "elm-upgrade": "^0.18.7",
