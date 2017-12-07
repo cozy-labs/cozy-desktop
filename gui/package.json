@@ -58,7 +58,7 @@
     }
   },
   "dependencies": {
-    "auto-launch-patched": "5.0.2",
+    "auto-launch": "^5.0.3",
     "babel-polyfill": "^6.26.0",
     "cozy-desktop": "file:../cli/",
     "electron-fetch": "^1.1.0",

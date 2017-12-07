@@ -303,15 +303,15 @@ atob@^2.0.0:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/atob/-/atob-2.0.3.tgz#19c7a760473774468f20b2d2d03372ad7d4cbf5d"
 
-auto-launch-patched@5.0.2:
-  version "5.0.2"
-  resolved "https://registry.yarnpkg.com/auto-launch-patched/-/auto-launch-patched-5.0.2.tgz#f1ae683c8c131bddcfafaf181ee32ca866f07a33"
+auto-launch@^5.0.3:
+  version "5.0.3"
+  resolved "https://registry.yarnpkg.com/auto-launch/-/auto-launch-5.0.3.tgz#59de27204ad8bd3018ca5fc5603185f4ec373940"
   dependencies:
     applescript "^1.0.0"
     mkdirp "^0.5.1"
     path-is-absolute "^1.0.0"
     untildify "^3.0.2"
-    winreg "1.2.2"
+    winreg "1.2.4"
 
 aws-sign2@~0.6.0:
   version "0.6.0"
@@ -4813,9 +4813,9 @@ window-size@^0.1.4:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/window-size/-/window-size-0.1.4.tgz#f8e1aa1ee5a53ec5bf151ffa09742a6ad7697876"
 
-winreg@1.2.2:
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/winreg/-/winreg-1.2.2.tgz#8509afa3b71c5bbd110a6d7c6247ec67736c598f"
+winreg@1.2.4:
+  version "1.2.4"
+  resolved "https://registry.yarnpkg.com/winreg/-/winreg-1.2.4.tgz#ba065629b7a925130e15779108cf540990e98d1b"
 
 wordwrap@~1.0.0:
   version "1.0.0"
