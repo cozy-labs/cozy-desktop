@@ -1,5 +1,5 @@
 environment:
-  nodejs_version: "6"
+  nodejs_version: "8"
   COZY_URL:
     secure: b06koRZfV6qLnE8RPcbaiUFIXIA3xc9PkepUZTOnpjAa6LnSKmW3RWCE2CZHSiMs
   COZY_PASSPHRASE:
