@@ -1,4 +1,4 @@
-const AutoLaunch = require('auto-launch-patched')
+const AutoLaunch = require('auto-launch')
 const autoLauncher = new AutoLaunch({
   name: 'Cozy-Desktop',
   isHidden: true
