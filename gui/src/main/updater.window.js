@@ -17,6 +17,7 @@ module.exports = class UpdaterWM extends WindowManager {
   }
 
   constructor (...opts) {
+    autoUpdater.logger = log
     autoUpdater.on('update-available', (info) => {
       this.clearTimeoutIfAny()
       log.info({update: info, skipped: this.skipped}, 'Update available')
