@@ -56,7 +56,8 @@
         "AppImage"
       ],
       "artifactName": "CozyDrive-${version}-${arch}.${ext}",
-      "executableName": "CozyDrive"
+      "executableName": "CozyDrive",
+      "category": "Network;FileTransfer;"
     },
     "appImage": {
       "systemIntegration": "doNotAsk"
@@ -70,7 +71,7 @@
     "electron-main-notification": "^1.0.1",
     "electron-positioner": "^3.0.0",
     "electron-proxy-agent": "^1.0.2",
-    "electron-updater": "^2.16.3",
+    "electron-updater": "2.17.6",
     "lnk": "^1.1.0",
     "lodash.debounce": "^4.0.8",
     "node-uuid": "^1.4.8",
@@ -83,7 +84,7 @@
     "debug-menu": "^0.6.1",
     "devtron": "^1.4.0",
     "electron": "^1.7.9",
-    "electron-builder": "^19.48.2",
+    "electron-builder": "^19.48.3",
     "elm": "^0.18.0",
     "elm-upgrade": "^0.18.7",
     "rimraf": "^2.6.2",

@@ -71,6 +71,12 @@ module.exports = class UpdaterWM extends WindowManager {
 
       handler()
     }, UPDATE_CHECK_TIMEOUT)
+    const oldDoRequest = autoUpdater.httpExecutor.doRequest
+    // autoUpdater.httpExecutor.doRequest = function (options, callback) {
+    //     const req = oldDoRequest.call(this, options, callback)
+    //     req.on('redirect', () => req.followRedirect())
+    //     return req
+    // }
     autoUpdater.checkForUpdates()
   }
 

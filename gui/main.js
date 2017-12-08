@@ -58,6 +58,7 @@ const showWindowStartApp = () => {
 }
 
 const showWindow = (bounds) => {
+  if (updaterWindow.shown()) return updaterWindow.focus()
   if (!desktop.config.syncPath) {
     onboardingWindow.show(bounds)
     // registration is done, but we need a syncPath
