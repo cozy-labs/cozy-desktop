@@ -787,8 +787,8 @@ cozy-client-js@^0.3.13:
   version "0.3.15"
   resolved "https://registry.yarnpkg.com/cozy-client-js/-/cozy-client-js-0.3.15.tgz#f87e47f7aa08dbac4309a9a5f94322d747ce9799"
 
-"cozy-desktop@file:../cli/":
-  version "3.3.1"
+"cozy-desktop@file:../cli":
+  version "3.4.0-beta.1"
   dependencies:
     async "^2.1.5"
     babel-polyfill "^6.23.0"
