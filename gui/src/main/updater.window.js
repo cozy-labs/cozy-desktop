@@ -39,7 +39,7 @@ module.exports = class UpdaterWM extends WindowManager {
     })
     autoUpdater.on('update-downloaded', (info) => {
       log.info({update: info}, 'Update downloaded. Exit and install...')
-      autoUpdater.quitAndInstall()
+      setImmediate(() => autoUpdater.quitAndInstall())
     })
 
     super(...opts)
