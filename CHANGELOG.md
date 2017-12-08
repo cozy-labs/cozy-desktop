@@ -1,3 +1,33 @@
+## 3.4.0-beta.1 - 2017-12-08
+
+Improvements for GNU/Linux users:
+
+* **First GNU/Linux release!**
+* Download the `*.AppImage` file, move it wherever you want, make it executable
+  and run it. See [details](https://github.com/cozy-labs/cozy-desktop/blob/master/doc/usage/linux.md).
+* Since GNOME 3 doesn't have a systray anymore by default, you may need to
+  install some third-party extension (e.g. TopIcons-Plus). See the
+  [dedicated section](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md#gnulinux-integration)
+  for remaining GNU/Linux integration issues.
+
+Improvements for macOS users:
+
+* The previous 3.3.1 fix regarding application visibility only worked when you
+  had not pinned the Cozy Drive application in the dock.
+  This should always work from now. See the
+  [dedicated section](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md#macos-integration)
+  for remaining macOS integration issues.
+
+Improvements for all users:
+
+* We upgraded a major third-party component of the application, which may fix
+  a few bugs related to the user interface (including the application hanging
+  when started multiple times).
+
+See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.3.1 - 2017-11-30
 
 Improvements for all users:
