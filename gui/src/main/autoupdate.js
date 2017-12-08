@@ -7,7 +7,7 @@ const log = require('cozy-desktop').default.logger({
 
 module.exports.checkForNewRelease = () => {
   const platform = os.platform()
-  if (platform !== 'darwin' && platform !== 'win32') {
+  if (platform !== 'darwin' && platform !== 'win32' && platform !== 'linux') {
     return
   }
 
