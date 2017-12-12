@@ -4,7 +4,6 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Icons exposing (..)
-import Focus exposing (focus)
 import Helpers exposing (Helpers)
 
 
