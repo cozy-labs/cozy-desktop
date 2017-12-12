@@ -73,36 +73,35 @@ view helpers model =
             ]
         ]
         [ div
-          [ class "step-content" ]
-          [ Icons.bigTick
-          , p [ class "error-message" ]
-              [ text (helpers.t model.error) ]
-          , img
-              [ src "images/done.svg"
-              , class "done"
-              ]
-              []
-          , h1 [] [ text (helpers.t "Folder All done") ]
-          , if model.error == "" then
-              p [ class "folder-helper"]
-                [ text (helpers.t "Folder Select a location for your Cozy folder:") ]
-            else
-              p [ class "error-message"]
+            [ class "step-content" ]
+            [ Icons.bigTick
+            , p [ class "error-message" ]
                 [ text (helpers.t model.error) ]
-          , div [class "coz-form-group"]
-              [
-              a
-                  [ class "folder__selector"
-                  , href "#"
-                  , onClick ChooseFolder
-                  ]
-                  [ text model.folder ]
-              ]
-          , a
-              [ class "btn"
-              , href "#"
-              , onClick StartSync
-              ]
-              [ text (helpers.t "Folder Use Cozy Drive") ]
-          ]
+            , img
+                [ src "images/done.svg"
+                , class "done"
+                ]
+                []
+            , h1 [] [ text (helpers.t "Folder All done") ]
+            , if model.error == "" then
+                p [ class "folder-helper" ]
+                    [ text (helpers.t "Folder Select a location for your Cozy folder:") ]
+              else
+                p [ class "error-message" ]
+                    [ text (helpers.t model.error) ]
+            , div [ class "coz-form-group" ]
+                [ a
+                    [ class "folder__selector"
+                    , href "#"
+                    , onClick ChooseFolder
+                    ]
+                    [ text model.folder ]
+                ]
+            , a
+                [ class "btn"
+                , href "#"
+                , onClick StartSync
+                ]
+                [ text (helpers.t "Folder Use Cozy Drive") ]
+            ]
         ]
