@@ -39,7 +39,13 @@ module.exports = class UpdaterWM extends WindowManager {
     })
     autoUpdater.on('update-downloaded', (info) => {
       log.info({update: info}, 'Update downloaded. Exit and install...')
-      setImmediate(() => autoUpdater.quitAndInstall())
+      setImmediate(() =>
+        this.desktop.stopSync()
+        .then(() => this.desktop.pouch.db.close())
+        .then(() => autoUpdater.quitAndInstall())
+        .then(() => this.app.quit())
+        .then(() => this.app.exit(0))
+      )
     })
 
     super(...opts)
