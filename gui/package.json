@@ -57,7 +57,10 @@
       ],
       "artifactName": "CozyDrive-${version}-${arch}.${ext}",
       "executableName": "CozyDrive",
-      "category": "Network;FileTransfer;"
+      "category": "Network;FileTransfer;",
+      "desktop": {
+        "StartupNotify": "true"
+      }
     },
     "appImage": {
       "systemIntegration": "doNotAsk"
