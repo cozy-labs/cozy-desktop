@@ -110,7 +110,10 @@ view helpers model =
             , a
                 [ class "btn"
                 , href "#"
-                , onClick StartSync
+                , if isValid model then
+                    onClick StartSync
+                  else
+                    attribute "disabled" "true"
                 ]
                 [ text (helpers.t "Folder Use Cozy Drive") ]
             ]
