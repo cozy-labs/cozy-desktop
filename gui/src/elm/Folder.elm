@@ -91,7 +91,10 @@ view helpers model =
         ]
         [ div
             [ class "step-content" ]
-            [ Icons.bigTick
+            [ if isValid model then
+                Icons.bigTick
+              else
+                Icons.bigCross
             , h1 [] [ text (helpers.t "Folder All done") ]
             , p [ class "folder-helper" ]
                 [ text <|
