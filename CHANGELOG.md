@@ -1,3 +1,24 @@
+## 3.4.0-beta.2 - 2017-12-14
+
+Improvements for GNU/Linux users:
+
+* Auto-update works!
+* Auto-launch on system startup too!
+* The application should now be visible as expected on alt+tab.
+
+Improvements for all users:
+
+* Invalid cozy address detection was improved, including automatic detection of
+  `mycoSy.cloud` with an `s` instead of `mycoZy.cloud` with a `z` (which seems
+  to be a common mistake).
+* The app also detects and prevent synchronizing your whole system or personal
+  folder.
+* Auto-update should be more reliable.
+
+See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.4.0-beta.1 - 2017-12-08
 
 Improvements for GNU/Linux users:
