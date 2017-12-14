@@ -255,7 +255,7 @@ port registrationDone : (Bool -> msg) -> Sub msg
 port folderError : (String -> msg) -> Sub msg
 
 
-port folder : (String -> msg) -> Sub msg
+port folder : (Folder.Model -> msg) -> Sub msg
 
 
 port synchonization : (( String, String ) -> msg) -> Sub msg

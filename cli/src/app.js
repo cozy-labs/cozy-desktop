@@ -79,6 +79,27 @@ class App {
     return cozyUrl
   }
 
+  // Returns an object including the syncPath only when valid, or with an error
+  // otherwise.
+  checkSyncPath (syncPath: string) {
+    // We do not allow syncing the whole user home directory, the system users
+    // directory or the whole system:
+    // - It would probably to big regarding the current local events squashing
+    //   implementation.
+    // - It could conflict with another synchronization tool.
+    // - Writing some third-party file with the corresponding app running could
+    //   make it crash.
+    // - Some files are device-specific and should not be synchronized anyway.
+    //
+    // We could exclude relevant files by default at some point, but it would
+    // require many iterations to make it reliable.
+    if ((os.homedir() + path.sep).startsWith(syncPath)) {
+      return {syncPath, error: 'You cannot synchronize your whole system or personal folder'}
+    }
+
+    return {syncPath}
+  }
+
   // Return a promise for registering a device on the remote cozy
   registerRemote (cozyUrl: string, redirectURI: ?string, onRegistered: ?Function, deviceName: string) {
     const registration = new Registration(cozyUrl, this.config)

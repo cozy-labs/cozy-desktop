@@ -143,3 +143,33 @@ bigTick =
                 ]
             ]
         ]
+
+
+{-| FIXME: Not the same as <https://marvelapp.com/2je726b/screen/36177790>
+-}
+bigCross =
+    figure []
+        [ div [ class "svg-wrapper svg-tick-wrapper" ]
+            [ svg [ viewBox "0 0 96 96" ]
+                [ Svg.g
+                    [ style
+                        [ ( "stroke", "none" )
+                        , ( "stroke-width", "1" )
+                        , ( "fill", "none" )
+                        , ( "fill-rule", "evenodd" )
+                        ]
+                    ]
+                    [ Svg.g
+                        [ style
+                            [ ( "stroke", "white" )
+                            , ( "stroke-linecap", "round" )
+                            , ( "stroke-width", "5" )
+                            ]
+                        ]
+                        [ Svg.path [ d "M20,20 L76,76" ] []
+                        , Svg.path [ d "M20,76 L76,20" ] []
+                        ]
+                    ]
+                ]
+            ]
+        ]

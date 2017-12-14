@@ -91,7 +91,11 @@ module.exports = class OnboardingWM extends WindowManager {
       properties: ['openDirectory', 'createDirectory']
     })
     if (folders && folders.length > 0) {
-      event.sender.send('folder-chosen', folders[0])
+      const result = this.desktop.checkSyncPath(folders[0])
+      event.sender.send('folder-chosen', {
+        folder: result.syncPath,
+        error: result.error ? `Folder ${result.error}` : null
+      })
     }
   }
 

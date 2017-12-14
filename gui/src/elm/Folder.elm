@@ -4,7 +4,6 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Icons exposing (..)
-import Focus exposing (focus)
 import Helpers exposing (Helpers)
 
 
@@ -13,15 +12,25 @@ import Helpers exposing (Helpers)
 
 type alias Model =
     { folder : String
-    , error : String
+    , error : Maybe String
     }
 
 
 init : String -> Model
 init folder =
     { folder = folder
-    , error = ""
+    , error = Nothing
     }
+
+
+isValid : Model -> Bool
+isValid model =
+    case model.error of
+        Nothing ->
+            True
+
+        Just _ ->
+            False
 
 
 
@@ -30,7 +39,7 @@ init folder =
 
 type Msg
     = ChooseFolder
-    | FillFolder String
+    | FillFolder Model
     | SetError String
     | StartSync
 
@@ -49,11 +58,19 @@ update msg model =
         ChooseFolder ->
             ( model, chooseFolder () )
 
-        FillFolder folder ->
-            ( { model | folder = folder, error = "" }, Cmd.none )
+        FillFolder model ->
+            ( model, Cmd.none )
 
         SetError error ->
-            ( { model | error = error }, Cmd.none )
+            ( { model
+                | error =
+                    if error == "" then
+                        Nothing
+                    else
+                        Just error
+              }
+            , Cmd.none
+            )
 
         StartSync ->
             ( model, startSync model.folder )
@@ -69,40 +86,48 @@ view helpers model =
         [ classList
             [ ( "step", True )
             , ( "step-folder", True )
-            , ( "step-error", model.error /= "" )
+            , ( "step-error", not (isValid model) )
             ]
         ]
         [ div
-          [ class "step-content" ]
-          [ Icons.bigTick
-          , p [ class "error-message" ]
-              [ text (helpers.t model.error) ]
-          , img
-              [ src "images/done.svg"
-              , class "done"
-              ]
-              []
-          , h1 [] [ text (helpers.t "Folder All done") ]
-          , if model.error == "" then
-              p [ class "folder-helper"]
-                [ text (helpers.t "Folder Select a location for your Cozy folder:") ]
-            else
-              p [ class "error-message"]
-                [ text (helpers.t model.error) ]
-          , div [class "coz-form-group"]
-              [
-              a
-                  [ class "folder__selector"
-                  , href "#"
-                  , onClick ChooseFolder
-                  ]
-                  [ text model.folder ]
-              ]
-          , a
-              [ class "btn"
-              , href "#"
-              , onClick StartSync
-              ]
-              [ text (helpers.t "Folder Use Cozy Drive") ]
-          ]
+            [ class "step-content" ]
+            [ if isValid model then
+                Icons.bigTick
+              else
+                Icons.bigCross
+            , h1 []
+                [ text <|
+                    helpers.t <|
+                        if isValid model then
+                            "Folder All done"
+                        else
+                            "Folder Please choose another folder"
+                ]
+            , p [ class "folder-helper" ]
+                [ text <|
+                    helpers.t "Folder Select a location for your Cozy folder:"
+                ]
+            , div [ class "coz-form-group" ]
+                [ a
+                    [ class "folder__selector"
+                    , href "#"
+                    , onClick ChooseFolder
+                    ]
+                    [ text model.folder ]
+                , p [ class "error-message" ]
+                    [ text <| helpers.t <| Maybe.withDefault "" model.error ]
+
+                -- TODO: Link to the relevant FAQ section?
+                -- TODO: Include button to reset to default?
+                ]
+            , a
+                [ class "btn"
+                , href "#"
+                , if isValid model then
+                    onClick StartSync
+                  else
+                    attribute "disabled" "true"
+                ]
+                [ text (helpers.t "Folder Use Cozy Drive") ]
+            ]
         ]
