@@ -3,7 +3,7 @@
   "productName": "Cozy Drive",
   "private": true,
   "version": "3.4.0-beta.1",
-  "description": "File Synchronization Client for Cozy Cloud",
+  "description": "Cozy Drive is a synchronization tool for your files and folders with Cozy Cloud.",
   "homepage": "https://github.com/cozy-labs/cozy-desktop",
   "author": "Cozy Cloud <contact@cozycloud.cc> (https://cozycloud.cc/)",
   "license": "AGPL-3.0",
@@ -60,7 +60,9 @@
       "category": "Network;FileTransfer;",
       "desktop": {
         "StartupNotify": "true"
-      }
+      },
+      "synopsis": "Cozy Drive is a synchronization tool for your files and folders with Cozy Cloud.",
+      "description": "Save them safely in your open source personal cloud, access them anywhere, anytime with the mobile application and share them with the world or just your friends and colleagues. You can host your own Cozy Cloud, and or use the hosting services. Your freedom to chose is why you can trust us."
     },
     "appImage": {
       "systemIntegration": "doNotAsk"
