@@ -92,8 +92,6 @@ view helpers model =
         [ div
             [ class "step-content" ]
             [ Icons.bigTick
-            , p [ class "error-message" ]
-                [ text <| helpers.t <| Maybe.withDefault "" model.error ]
             , img
                 [ src "images/done.svg"
                 , class "done"
@@ -111,6 +109,8 @@ view helpers model =
                     , onClick ChooseFolder
                     ]
                     [ text model.folder ]
+                , p [ class "error-message" ]
+                    [ text <| helpers.t <| Maybe.withDefault "" model.error ]
                 ]
             , a
                 [ class "btn"
