@@ -58,6 +58,7 @@ const showWindowStartApp = () => {
 }
 
 const showWindow = (bounds) => {
+  if (updaterWindow.shown()) return updaterWindow.focus()
   if (!desktop.config.syncPath) {
     onboardingWindow.show(bounds)
     // registration is done, but we need a syncPath
@@ -264,7 +265,9 @@ app.on('ready', () => {
 
 // Don't quit the app when all windows are closed, keep the tray icon
 // See http://electron.atom.io/docs/api/app/#event-window-all-closed
-app.on('window-all-closed', () => {})
+app.on('window-all-closed', () => {
+  log.debug('All windows closed. Keep running in tray...')
+})
 
 ipcMain.on('show-help', () => {
   helpWindow.show()

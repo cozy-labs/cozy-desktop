@@ -5,6 +5,15 @@ const log = require('cozy-desktop').default.logger({
   component: 'GUI:autoupdater'
 })
 
+// TODO: Remove this monkey-patch as soon as the following issue is fixed:
+// https://github.com/electron-userland/electron-builder/issues/2377
+const oldDoRequest = autoUpdater.httpExecutor.doRequest
+autoUpdater.httpExecutor.doRequest = function (options, callback) {
+    const req = oldDoRequest.call(this, options, callback)
+    req.on('redirect', () => req.followRedirect())
+    return req
+}
+
 const UPDATE_CHECK_TIMEOUT = 5000
 
 module.exports = class UpdaterWM extends WindowManager {
@@ -17,6 +26,7 @@ module.exports = class UpdaterWM extends WindowManager {
   }
 
   constructor (...opts) {
+    autoUpdater.logger = log
     autoUpdater.on('update-available', (info) => {
       this.clearTimeoutIfAny()
       log.info({update: info, skipped: this.skipped}, 'Update available')
@@ -38,7 +48,13 @@ module.exports = class UpdaterWM extends WindowManager {
     })
     autoUpdater.on('update-downloaded', (info) => {
       log.info({update: info}, 'Update downloaded. Exit and install...')
-      autoUpdater.quitAndInstall()
+      setImmediate(() =>
+        this.desktop.stopSync()
+        .then(() => this.desktop.pouch.db.close())
+        .then(() => autoUpdater.quitAndInstall())
+        .then(() => this.app.quit())
+        .then(() => this.app.exit(0))
+      )
     })
 
     super(...opts)

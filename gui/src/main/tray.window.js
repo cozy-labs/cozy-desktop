@@ -1,6 +1,5 @@
 const {dialog, shell} = require('electron')
 const {spawn} = require('child_process')
-const autoUpdater = require('./autoupdate')
 const autoLaunch = require('./autolaunch')
 const Positioner = require('electron-positioner')
 const DASHBOARD_SCREEN_WIDTH = 330
@@ -83,7 +82,6 @@ module.exports = class TrayWM extends WindowManager {
     return {
       'go-to-cozy': () => shell.openExternal(this.desktop.config.cozyUrl),
       'go-to-folder': () => shell.openItem(this.desktop.config.syncPath),
-      'quit-and-install': () => autoUpdater.quitAndInstall(),
       'auto-launcher': (event, enabled) => autoLaunch.setEnabled(enabled),
       'unlink-cozy': this.onUnlink
     }

@@ -3,7 +3,7 @@
   "productName": "Cozy Drive",
   "private": true,
   "version": "3.4.0-beta.1",
-  "description": "File Synchronization Client for Cozy Cloud",
+  "description": "Cozy Drive is a synchronization tool for your files and folders with Cozy Cloud.",
   "homepage": "https://github.com/cozy-labs/cozy-desktop",
   "author": "Cozy Cloud <contact@cozycloud.cc> (https://cozycloud.cc/)",
   "license": "AGPL-3.0",
@@ -56,7 +56,13 @@
         "AppImage"
       ],
       "artifactName": "CozyDrive-${version}-${arch}.${ext}",
-      "executableName": "CozyDrive"
+      "executableName": "CozyDrive",
+      "category": "Network;FileTransfer;",
+      "desktop": {
+        "StartupNotify": "true"
+      },
+      "synopsis": "Cozy Drive is a synchronization tool for your files and folders with Cozy Cloud.",
+      "description": "Save them safely in your open source personal cloud, access them anywhere, anytime with the mobile application and share them with the world or just your friends and colleagues. You can host your own Cozy Cloud, and or use the hosting services. Your freedom to chose is why you can trust us."
     },
     "appImage": {
       "systemIntegration": "doNotAsk"
@@ -70,7 +76,7 @@
     "electron-main-notification": "^1.0.1",
     "electron-positioner": "^3.0.0",
     "electron-proxy-agent": "^1.0.2",
-    "electron-updater": "^2.16.3",
+    "electron-updater": "2.17.6",
     "lnk": "^1.1.0",
     "lodash.debounce": "^4.0.8",
     "node-uuid": "^1.4.8",
@@ -83,7 +89,7 @@
     "debug-menu": "^0.6.1",
     "devtron": "^1.4.0",
     "electron": "^1.7.9",
-    "electron-builder": "^19.48.2",
+    "electron-builder": "^19.48.3",
     "elm": "^0.18.0",
     "elm-upgrade": "^0.18.7",
     "rimraf": "^2.6.2",
