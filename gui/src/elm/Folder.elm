@@ -39,7 +39,7 @@ isValid model =
 
 type Msg
     = ChooseFolder
-    | FillFolder String
+    | FillFolder Model
     | SetError String
     | StartSync
 
@@ -58,8 +58,8 @@ update msg model =
         ChooseFolder ->
             ( model, chooseFolder () )
 
-        FillFolder folder ->
-            ( { model | folder = folder, error = Nothing }, Cmd.none )
+        FillFolder model ->
+            ( model, Cmd.none )
 
         SetError error ->
             ( { model
