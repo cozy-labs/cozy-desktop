@@ -95,7 +95,14 @@ view helpers model =
                 Icons.bigTick
               else
                 Icons.bigCross
-            , h1 [] [ text (helpers.t "Folder All done") ]
+            , h1 []
+                [ text <|
+                    helpers.t <|
+                        if isValid model then
+                            "Folder All done"
+                        else
+                            "Folder Please choose another folder"
+                ]
             , p [ class "folder-helper" ]
                 [ text <|
                     helpers.t "Folder Select a location for your Cozy folder:"
