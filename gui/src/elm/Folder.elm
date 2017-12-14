@@ -12,15 +12,25 @@ import Helpers exposing (Helpers)
 
 type alias Model =
     { folder : String
-    , error : String
+    , error : Maybe String
     }
 
 
 init : String -> Model
 init folder =
     { folder = folder
-    , error = ""
+    , error = Nothing
     }
+
+
+isValid : Model -> Bool
+isValid model =
+    case model.error of
+        Nothing ->
+            True
+
+        Just _ ->
+            False
 
 
 
@@ -49,10 +59,18 @@ update msg model =
             ( model, chooseFolder () )
 
         FillFolder folder ->
-            ( { model | folder = folder, error = "" }, Cmd.none )
+            ( { model | folder = folder, error = Nothing }, Cmd.none )
 
         SetError error ->
-            ( { model | error = error }, Cmd.none )
+            ( { model
+                | error =
+                    if error == "" then
+                        Nothing
+                    else
+                        Just error
+              }
+            , Cmd.none
+            )
 
         StartSync ->
             ( model, startSync model.folder )
@@ -68,26 +86,27 @@ view helpers model =
         [ classList
             [ ( "step", True )
             , ( "step-folder", True )
-            , ( "step-error", model.error /= "" )
+            , ( "step-error", not (isValid model) )
             ]
         ]
         [ div
             [ class "step-content" ]
             [ Icons.bigTick
             , p [ class "error-message" ]
-                [ text (helpers.t model.error) ]
+                [ text <| helpers.t <| Maybe.withDefault "" model.error ]
             , img
                 [ src "images/done.svg"
                 , class "done"
                 ]
                 []
             , h1 [] [ text (helpers.t "Folder All done") ]
-            , if model.error == "" then
-                p [ class "folder-helper" ]
-                    [ text (helpers.t "Folder Select a location for your Cozy folder:") ]
-              else
-                p [ class "error-message" ]
-                    [ text (helpers.t model.error) ]
+            , case model.error of
+                Nothing ->
+                    p [ class "folder-helper" ]
+                        [ text (helpers.t "Folder Select a location for your Cozy folder:") ]
+                Just error ->
+                    p [ class "error-message" ]
+                        [ text (helpers.t error) ]
             , div [ class "coz-form-group" ]
                 [ a
                     [ class "folder__selector"
