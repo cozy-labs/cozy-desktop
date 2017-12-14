@@ -106,6 +106,9 @@ view helpers model =
                     [ text model.folder ]
                 , p [ class "error-message" ]
                     [ text <| helpers.t <| Maybe.withDefault "" model.error ]
+
+                -- TODO: Link to the relevant FAQ section?
+                -- TODO: Include button to reset to default?
                 ]
             , a
                 [ class "btn"
