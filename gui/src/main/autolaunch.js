@@ -1,8 +1,15 @@
 const AutoLaunch = require('auto-launch')
-const autoLauncher = new AutoLaunch({
+
+const opts = {
   name: 'Cozy-Desktop',
   isHidden: true
-})
+}
+
+if (process.env.APPIMAGE) {
+  opts.path = process.env.APPIMAGE
+}
+
+const autoLauncher = new AutoLaunch(opts)
 
 module.exports.isEnabled = () => autoLauncher.isEnabled()
 
