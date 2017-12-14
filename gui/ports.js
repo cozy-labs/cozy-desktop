@@ -83,6 +83,10 @@ elmectron.ports.gotofolder.subscribe(() => {
   ipcRenderer.send('go-to-folder')
 })
 
+elmectron.ports.closeApp.subscribe(() => {
+  ipcRenderer.send('close-app')
+})
+
 ipcRenderer.on('auto-launch', (event, enabled) => {
   elmectron.ports.autolaunch.send(enabled)
 })
