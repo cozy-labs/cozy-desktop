@@ -1,6 +1,7 @@
 /* eslint-env mocha */
 
 import fs from 'fs-extra'
+import os from 'os'
 import path from 'path'
 import should from 'should'
 
@@ -59,5 +60,54 @@ describe('App', function () {
       await app.removeConfig()
       should(await fs.readdir(configDir)).deepEqual(logFilenames)
     })
+  })
+
+  describe('checkSyncPath', () => {
+    it('is cannot be the user home dir', () => {
+      const syncPath = os.homedir()
+      const result = App.prototype.checkSyncPath(syncPath)
+      should(result).have.properties({syncPath})
+      should(result.error).not.be.empty()
+    })
+
+    it('is cannot be the parent of the user home dir', () => {
+      const syncPath = path.dirname(os.homedir())
+      const result = App.prototype.checkSyncPath(syncPath)
+      should(result).have.properties({syncPath})
+      should(result.error).not.be.empty()
+    })
+
+    it('is cannot be the whole system', () => {
+      const syncPath = process.platform === 'win32' ? 'C:\\' : '/'
+      const result = App.prototype.checkSyncPath(syncPath)
+      should(result).have.properties({syncPath})
+      should(result.error).not.be.empty()
+    })
+
+    it('is can be the default dir', () => {
+      const syncPath = path.join(os.homedir(), 'Cozy Drive')
+      const result = App.prototype.checkSyncPath(syncPath)
+      should(result).deepEqual({syncPath})
+    })
+
+    it('is can be a subdir of the user home', () => {
+      const syncPath = path.join(os.homedir(), 'Cozy Drive')
+      const result = App.prototype.checkSyncPath(syncPath)
+      should(result).deepEqual({syncPath})
+    })
+
+    it('is can be a subdir outside the user home', () => {
+      const syncPath = process.platform === 'win32' ? 'C:\\Cozy' : '/cozy'
+      const result = App.prototype.checkSyncPath(syncPath)
+      should(result).deepEqual({syncPath})
+    })
+
+    if (process.platform === 'win32') {
+      it('can be another volume', () => {
+        const syncPath = 'D:\\'
+        const result = App.prototype.checkSyncPath(syncPath)
+        should(result).deepEqual({syncPath})
+      })
+    }
   })
 })

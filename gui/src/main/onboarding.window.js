@@ -42,7 +42,12 @@ module.exports = class OnboardingWM extends WindowManager {
 
   onRegisterRemote (event, arg) {
     let desktop = this.desktop
-    const cozyUrl = desktop.checkCozyUrl(arg.cozyUrl)
+    let cozyUrl
+    try {
+      cozyUrl = desktop.checkCozyUrl(arg.cozyUrl)
+    } catch (err) {
+      return event.sender.send('registration-error', translate('Address Invalid address!'))
+    }
     desktop.config.cozyUrl = cozyUrl
     const onRegistered = (client, url) => {
       let resolveP
@@ -91,7 +96,11 @@ module.exports = class OnboardingWM extends WindowManager {
       properties: ['openDirectory', 'createDirectory']
     })
     if (folders && folders.length > 0) {
-      event.sender.send('folder-chosen', folders[0])
+      const result = this.desktop.checkSyncPath(folders[0])
+      event.sender.send('folder-chosen', {
+        folder: result.syncPath,
+        error: result.error ? `Folder ${result.error}` : null
+      })
     }
   }
 

@@ -55,6 +55,7 @@ type Msg
     | UnlinkCozy
     | CancelUnlink
     | ShowHelp
+    | CloseApp
 
 
 port showHelp : () -> Cmd msg
@@ -67,6 +68,9 @@ port autoLauncher : Bool -> Cmd msg
 
 
 port quitAndInstall : () -> Cmd msg
+
+
+port closeApp : () -> Cmd msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -100,6 +104,9 @@ update msg model =
 
         ShowHelp ->
             ( model, showHelp () )
+
+        CloseApp ->
+            ( model, closeApp () )
 
 
 
@@ -201,6 +208,13 @@ view helpers model =
             , onClick ShowHelp
             ]
             [ text (helpers.t "Help Send us a message") ]
+        , h2 [] [ text (helpers.t "Tray Quit application") ]
+        , a
+            [ class "btn btn--danger"
+            , href "#"
+            , onClick CloseApp
+            ]
+            [ text (helpers.t "AppMenu Quit") ]
         , h2 [] [ text (helpers.t "Account Unlink Cozy") ]
         , p []
             [ text ((helpers.t "Account It will unlink your account to this computer.") ++ " ")
