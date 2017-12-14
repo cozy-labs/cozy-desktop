@@ -92,11 +92,6 @@ view helpers model =
         [ div
             [ class "step-content" ]
             [ Icons.bigTick
-            , img
-                [ src "images/done.svg"
-                , class "done"
-                ]
-                []
             , h1 [] [ text (helpers.t "Folder All done") ]
             , p [ class "folder-helper" ]
                 [ text <|
