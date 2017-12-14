@@ -42,7 +42,12 @@ module.exports = class OnboardingWM extends WindowManager {
 
   onRegisterRemote (event, arg) {
     let desktop = this.desktop
-    const cozyUrl = desktop.checkCozyUrl(arg.cozyUrl)
+    let cozyUrl
+    try {
+      cozyUrl = desktop.checkCozyUrl(arg.cozyUrl)
+    } catch (err) {
+      return event.sender.send('registration-error', translate('Address Invalid address!'))
+    }
     desktop.config.cozyUrl = cozyUrl
     const onRegistered = (client, url) => {
       let resolveP

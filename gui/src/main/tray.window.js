@@ -4,7 +4,7 @@ const autoUpdater = require('./autoupdate')
 const autoLaunch = require('./autolaunch')
 const Positioner = require('electron-positioner')
 const DASHBOARD_SCREEN_WIDTH = 330
-const DASHBOARD_SCREEN_HEIGHT = 700
+const DASHBOARD_SCREEN_HEIGHT = 800
 
 const {translate} = require('./i18n')
 
@@ -85,6 +85,7 @@ module.exports = class TrayWM extends WindowManager {
       'go-to-folder': () => shell.openItem(this.desktop.config.syncPath),
       'quit-and-install': () => autoUpdater.quitAndInstall(),
       'auto-launcher': (event, enabled) => autoLaunch.setEnabled(enabled),
+      'close-app': () => this.desktop.stopSync().then(() => this.app.quit()),
       'unlink-cozy': this.onUnlink
     }
   }

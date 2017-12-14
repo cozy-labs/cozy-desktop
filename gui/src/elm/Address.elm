@@ -61,6 +61,8 @@ update msg model =
                 setError model "Address You don't have filled the address!"
             else if contains "@" model.address then
                 setError model "Address No email address"
+            else if contains "mycosy.cloud" model.address then
+                setError model "Address Cozy not cosy"
             else
                 ( { model | busy = True }, registerRemote model.address )
 
