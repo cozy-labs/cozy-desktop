@@ -17,6 +17,8 @@
   "Address You don't have filled the address!": "You don't have filled the address!",
   "Address No cozy instance at this address!": "No cozy instance at this address!",
   "Address No email address": "You typed an email address. To connect on your cozy you must type its URL, something like https://tonystark.mycozy.cloud",
+  "Address Invalid address": "Woops, the address is not correct. To connect on your cozy you must type its URL, something like https://tonystark.mycozy.cloud",
+  "Address Cozy not cosy": "Woops, the address is not correct. Try with \"cozy\" with a \"z\"!",
   "Address Next": "下一步",
   "AppMenu Edit": "编辑",
   "AppMenu Undo": "撤销",
