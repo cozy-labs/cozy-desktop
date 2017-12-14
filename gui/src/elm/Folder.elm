@@ -100,13 +100,10 @@ view helpers model =
                 ]
                 []
             , h1 [] [ text (helpers.t "Folder All done") ]
-            , case model.error of
-                Nothing ->
-                    p [ class "folder-helper" ]
-                        [ text (helpers.t "Folder Select a location for your Cozy folder:") ]
-                Just error ->
-                    p [ class "error-message" ]
-                        [ text (helpers.t error) ]
+            , p [ class "folder-helper" ]
+                [ text <|
+                    helpers.t "Folder Select a location for your Cozy folder:"
+                ]
             , div [ class "coz-form-group" ]
                 [ a
                     [ class "folder__selector"
