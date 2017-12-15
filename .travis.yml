@@ -74,19 +74,13 @@ before_install:
 
     # Dummy .env.test (all variables are already set)
     # env-cmd ignores the file when empty
-    - echo "NODE_ENV=test" > "${TRAVIS_BUILD_DIR}/cli/.env.test"
+    - echo "NODE_ENV=test" > "${TRAVIS_BUILD_DIR}/.env.test"
 
 script:
-    - cd cli
     - travis_retry yarn
     - yarn build
     - yarn lint
     - yarn test:coverage
-    - cd ../gui
-    - travis_retry yarn
-    - yarn lint
-    - yarn build
-    - cd ..
 
 after_success:
     - bash <(curl -s https://codecov.io/bash)
@@ -94,4 +88,4 @@ after_success:
 after_failure:
     - $CXX --version
     - netstat -lntp
-    - ls -alR cli/node_modules/pouchdb/node_modules/leveldown
+    - ls -alR node_modules/pouchdb/node_modules/leveldown

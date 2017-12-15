@@ -5,7 +5,7 @@ import request from 'request'
 import url from 'url'
 
 import pkg from '../../package.json'
-import Registration from '../../src/remote/registration'
+import Registration from '../../core/remote/registration'
 
 const cozyUrl = process.env.COZY_URL
 const passphrase = process.env.COZY_PASSPHRASE
