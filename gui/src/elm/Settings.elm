@@ -23,6 +23,7 @@ type alias Model =
     , deviceName : String
     , disk : DiskSpace
     , busyUnlinking : Bool
+    , busyQuitting : Bool
     }
 
 
@@ -38,6 +39,7 @@ init version =
         , quota = 0
         }
     , busyUnlinking = False
+    , busyQuitting = False
     }
 
 
@@ -106,7 +108,7 @@ update msg model =
             ( model, showHelp () )
 
         CloseApp ->
-            ( model, closeApp () )
+            ( { model | busyQuitting = True }, closeApp () )
 
 
 
@@ -212,7 +214,10 @@ view helpers model =
         , a
             [ class "btn btn--danger"
             , href "#"
-            , onClick CloseApp
+            , if model.busyQuitting then
+                attribute "aria-busy" "true"
+              else
+                onClick CloseApp
             ]
             [ text (helpers.t "AppMenu Quit") ]
         , h2 [] [ text (helpers.t "Account Unlink Cozy") ]
