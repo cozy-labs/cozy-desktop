@@ -9,9 +9,9 @@ const log = require('cozy-desktop').default.logger({
 // https://github.com/electron-userland/electron-builder/issues/2377
 const oldDoRequest = autoUpdater.httpExecutor.doRequest
 autoUpdater.httpExecutor.doRequest = function (options, callback) {
-    const req = oldDoRequest.call(this, options, callback)
-    req.on('redirect', () => req.followRedirect())
-    return req
+  const req = oldDoRequest.call(this, options, callback)
+  req.on('redirect', () => req.followRedirect())
+  return req
 }
 
 const UPDATE_CHECK_TIMEOUT = 5000
