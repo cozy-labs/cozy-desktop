@@ -20,6 +20,7 @@ env:
         - COZY_URL="http://localhost:8080"
         - COZY_PASSPHRASE="CozyTest_1"
         - GOPATH="$HOME"
+        - MOCHA_TIMEOUT="60000"
         - NODE_ENV=test
         - NPM_CONFIG_PROGRESS=false
 services:
@@ -83,7 +84,8 @@ script:
     - travis_retry yarn
     - yarn build
     - yarn lint
-    - yarn test
+    - yarn test:unit -- --timeout $env:MOCHA_TIMEOUT
+    - yarn test:integration -- --timeout $env:MOCHA_TIMEOUT
 
 after_success:
     - bash <(curl -s https://codecov.io/bash)
