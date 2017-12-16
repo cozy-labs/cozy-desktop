@@ -76,6 +76,9 @@ before_install:
     # env-cmd ignores the file when empty
     - echo "NODE_ENV=test" > "${TRAVIS_BUILD_DIR}/.env.test"
 
+before_script:
+    - export DISPLAY=:99.0; sh -e /etc/init.d/xvfb start
+
 script:
     - travis_retry yarn
     - yarn build
