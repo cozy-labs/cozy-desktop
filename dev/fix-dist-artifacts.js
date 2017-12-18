@@ -1,7 +1,7 @@
 const fs = require('fs')
 const yaml = require('js-yaml')
 
-function fixLatestYml (yamlPath, bad, good, opts={}) {
+function fixLatestYml (yamlPath, bad, good, opts = {}) {
   if (fs.existsSync(yamlPath)) {
     const goodYaml = fs.readFileSync(yamlPath, 'utf8').replace(bad, good)
 
@@ -26,6 +26,5 @@ function fixLatestYml (yamlPath, bad, good, opts={}) {
 //
 // And GitHub will replaces spaces with dots in uploaded release artifacts.
 
-fixLatestYml('dist/latest.yml', 'cozy-desktop-gui-setup-', 'Cozy.Drive.Setup.')
-fixLatestYml('dist/latest-mac.yml', 'cozy-desktop-gui', 'Cozy.Drive', {generateLegacyJson: true})
-
+fixLatestYml('dist/latest.yml', 'cozy-desktop-setup-', 'Cozy.Drive.Setup.')
+fixLatestYml('dist/latest-mac.yml', 'cozy-desktop', 'Cozy.Drive', {generateLegacyJson: true})
