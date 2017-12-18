@@ -321,8 +321,6 @@ function(doc) {
   })
 
   describe('updateErrors', function () {
-    this.timeout(5000)
-
     beforeEach(function () {
       this.local = {}
       this.remote = {}

@@ -21,10 +21,6 @@ let helpers
 let prepCalls
 
 describe('Test scenarios', function () {
-  if (process.env.CI) {
-    this.timeout(60 * 1000)
-  }
-
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)

@@ -1,0 +1,25 @@
+yarn run v1.3.2
+$ cross-env DEBUG=electron-builder build --linux --x64
+electron-builder 19.49.0
+Skip app dependencies rebuild because npmRebuild is set to false
+Packaging for linux x64 using electron 1.7.9 to dist/linux-unpacked
+
+7-Zip (a) [64] 16.02 : Copyright (c) 1999-2016 Igor Pavlov : 2016-05-21
+p7zip Version 16.02 (locale=en_US.UTF-8,Utf16=on,HugeFiles=on,64 bits,8 CPUs Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz (506E3),ASM,AES-NI)
+
+Scanning the drive for archives:
+1 file, 51242189 bytes (49 MiB)
+
+Extracting archive: /home/romain/.cache/electron/electron-v1.7.9-linux-x64.zip
+--
+Path = /home/romain/.cache/electron/electron-v1.7.9-linux-x64.zip
+Type = zip
+Physical Size = 51242189
+
+Everything is Ok
+
+Files: 71
+Size:       134212644
+Compressed: 51242189
+Building AppImage for arch x64
+Done in 13.62s.

@@ -13,7 +13,6 @@ import configHelpers from '../../helpers/config'
 import pouchHelpers from '../../helpers/pouch'
 
 describe('LocalWatcher Tests', function () {
-  this.timeout(10000)
 
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
@@ -347,7 +346,6 @@ describe('LocalWatcher Tests', function () {
       it('is unstable on travis')
       return
     }
-    this.timeout(15000)
 
     before('reset pouchdb', function (done) {
       this.pouch.resetDatabase(done)

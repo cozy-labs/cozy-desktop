@@ -456,8 +456,6 @@ if (doc.docType === 'folder') {
   // Disable this test on travis because it can be really slow...
   if (process.env.CI) { return }
   describe('byRecursivePath (bis)', function () {
-    this.timeout(60000)
-
     // TODO counter  rngState: 0020bacd4697fe1358;
     //               Counterexample: [".", "Æ\u0004]"]
 

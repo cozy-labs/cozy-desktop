@@ -10,7 +10,6 @@ let client = request.newClient(url)
 export default helpers = {
 
   deleteAll (callback) {
-    this.timeout(10000)
     return helpers.getFolderContent({id: 'root'}, (_, items) =>
       async.each(items, function (item, cb) {
         url = `${item.docType.toLowerCase()}s/${item.id}`
