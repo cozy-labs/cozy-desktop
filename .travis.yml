@@ -17,7 +17,7 @@ env:
         - COZY_URL="http://localhost:8080"
         - COZY_PASSPHRASE="CozyTest_1"
         - GOPATH="$HOME"
-        - MOCHA_TIMEOUT="120000"
+        - MOCHA_TIMEOUT="240000"
         - NODE_ENV=test
         - NPM_CONFIG_PROGRESS=false
 services:
