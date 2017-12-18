@@ -8,16 +8,13 @@ environment:
 
 install:
   - cmd: appveyor-retry powershell Install-Product node $env:nodejs_version
-  - cd cli
   - cmd: appveyor-retry yarn
   - cmd: appveyor-retry yarn bootstrap:remote
-  - cd ..
 
 build: off
 
 test_script:
-  - cd cli
-  - yarn build
+  - yarn build:core
   - cmd: yarn test:unit -- --timeout $env:MOCHA_TIMEOUT
   - cmd: yarn test:integration -- --timeout $env:MOCHA_TIMEOUT
 

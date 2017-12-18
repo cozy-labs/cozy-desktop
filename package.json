@@ -1,20 +1,227 @@
 {
+  "name": "cozy-desktop",
+  "productName": "Cozy Drive",
   "private": true,
+  "version": "3.4.0-beta.2",
+  "description": "Cozy Drive is a synchronization tool for your files and folders with Cozy Cloud.",
+  "homepage": "https://github.com/cozy-labs/cozy-desktop",
+  "author": "Cozy Cloud <contact@cozycloud.cc> (https://cozycloud.cc/)",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/cozy-labs/cozy-desktop/issues"
+  },
+  "main": "gui/main.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/cozy-labs/cozy-desktop.git"
+  },
+  "keywords": [
+    "Electron",
+    "desktop",
+    "drive",
+    "data",
+    "sync",
+    "files",
+    "cozy"
+  ],
   "scripts": {
-    "build": "yarn build:cli && yarn install:gui && yarn build:gui",
-    "build:cli": "cd cli && yarn build && cd .. && yarn uninstall:gui:cli",
-    "build:gui": "cd gui && yarn build && yarn dist",
-    "clean:cli": "rimraf cli/lib/ cli/tmp/",
-    "clean:gui": "rimraf gui/elm.js gui/app.css gui/dist/",
-    "docker:exec": "docker exec -it cozy-desktop-stack",
-    "install:cli": "cd cli/ && yarn install && cd .. && yarn uninstall:gui:cli",
-    "install:gui": "cd gui/ && yarn install --check-files",
-    "postinstall": "yarn install:cli && yarn install:gui",
-    "prebuild": "yarn clean:cli && yarn clean:gui",
-    "test:setup": "yarn docker:exec /cozy-desktop/cli/test/setup.sh",
-    "uninstall:gui:cli": "rimraf gui/node_modules/cozy-desktop"
+    "build": "yarn build:core && yarn build:css & yarn build:tx && yarn build:elm",
+    "build:core": "babel --source-maps --out-dir core-built core/",
+    "build:css": "stylus --sourcemap --compress --use cozy-ui/stylus gui/styles/app.styl --out gui",
+    "build:elm": "elm make ./gui/elm/Main.elm --output ./gui/elm.js",
+    "build:tx": "tx pull --all --minimum-perc=1 || true",
+
+    "watch": "yarn watch:core & cross-env WATCH=true yarn start & yarn watch:css & yarn watch:elm & yarn watch:js",
+    "start": "cross-env COZY_DESKTOP_HEARTBEAT=5000 electron .",
+    "watch:core": "yarn build:core --watch",
+    "watch:css": "stylus --sourcemap  --use cozy-ui/stylus --watch gui/styles/app.styl --out gui",
+    "watch:elm": "chokidar 'src/elm/**/*.elm' -c 'yarn gui:build:elm'",
+    "watch:js": "chokidar main.js ports.js -c 'yarn gui:lint'",
+
+    "dist": "cross-env DEBUG=electron-builder build",
+    "pack": "yarn dist --dir",
+    "dist:all": "yarn dist --x64 --ia32",
+    "release:build": "yarn release:check:node-8 && yarn release:build:core && yarn reinstall && yarn run clean && yarn build && yarn dist && yarn release:fix",
+    "release:build:core": "yarn release:check:branch && yarn run clean && yarn build:core",
+    "release:check:branch": "babel-node ./dev/check-release-branch.js",
+    "release:check:node-8": "node -e \"(process.versions.node.split('.')[0] !== '8') && process.exit(1)\"",
+    "release:fix": "node ./dev/fix-dist-artifacts.js",
+
+    "elm:upgrade": "cd gui && yarn add --dev elm@latest elm-upgrade@latest && elm-upgrade",
+
+    "postinstall": "yarn postinstall:electron && yarn postinstall:elm",
+    "postinstall:electron": "cross-env DEBUG=electron-builder electron-builder install-app-deps",
+    "postinstall:elm": "elm-package install -y",
+
+    "reinstall": "bash -c 'rm -rf node_modules/' && yarn",
+
+    "bootstrap": "cd .. && yarn test:setup",
+    "bootstrap:remote": "babel-node ./dev/remote/generate-test-env.js",
+    "capture": "env-cmd .env.test babel-node ./dev/capture.js",
+    "fauxton": "babel-node ./src/bin/fauxton.js",
+    "repl": "cross-env DEBUG=1 COZY_DESKTOP_HEARTBEAT=5000 babel-node ./src/bin/repl.js",
+
+    "test": "yarn test:unit && yarn test:integration",
+    "mocha": "cross-env COZY_DESKTOP_HEARTBEAT=1000 env-cmd .env.test electron-mocha",
+    "mocha:coverage": "env-cmd .env.test nyc mocha",
+    "test:setup": "yarn docker:exec /cozy-desktop/test/setup.sh",
+    "test:coverage": "yarn test:unit:coverage && yarn test:integration",
+    "test:integration": "yarn mocha test/integration",
+    "test:performance": "yarn mocha test/performance",
+    "test:unit": "yarn mocha test/unit/",
+
+    "precoverage:test": "mkdir -p coverage && istanbul instrument mqtt-client.js -o coverage/mqtt-client.instrumented.js",
+    "coverage:test": "istanbul cover electron-mocha -- --renderer --R spec --preload paho/mqttws31.js --preload coverage/mqtt-client.instrumented.js ./test/ ./test/coverage/coverageReport.js",
+    "coverage:details": "istanbul report lcov && opn coverage/lcov-report/index.html",
+    "test:unit:coverage": "yarn mocha:coverage test/unit/",
+
+    "prebuild": "yarn clean",
+    "clean": "rimraf core/lib/ core/tmp/ gui/elm.js gui/app.css* gui/dist/",
+
+    "lint": "npm run lint:flow & npm run lint:eslint && npm run lint:gui",
+    "lint:flow": "flow status --quiet --show-all-errors",
+    "lint:eslint": "eslint './core/**/*.js'",
+    "lint:gui": "standard --verbose gui/js/**.js gui/main.js gui/ports.js",
+
+    "docker:exec": "docker exec -it cozy-desktop-stack"
+  },
+  "dependencies": {
+    "async": "^2.1.5",
+    "babel-polyfill": "^6.23.0",
+    "bluebird": "^3.5.0",
+    "btoa": "1.1.2",
+    "bunyan": "^1.8.10",
+    "chokidar": "1.7.0",
+    "commander": "2.9.0",
+    "cozy-client-js": "^0.3.13",
+    "fs-extra": "^3.0.0",
+    "isomorphic-fetch": "2.2.1",
+    "lodash": "^4.17.4",
+    "micromatch": "3.0.2",
+    "mime": "^1.3.4",
+    "node-fetch": "1.7.0",
+    "opn": "5.0.0",
+    "pouchdb": "^6.2.0",
+    "pouchdb-find": "^6.2.0",
+    "progress": "^2.0.0",
+    "read": "1.0.7",
+    "readdirp": "2.1.0",
+    "request-json-light": "0.5.25",
+    "trash": "^4.0.1",
+    "uuid": "^3.0.1",
+    "auto-launch": "^5.0.3",
+    "babel-polyfill": "^6.26.0",
+    "electron-fetch": "^1.1.0",
+    "electron-main-notification": "^1.0.1",
+    "electron-positioner": "^3.0.0",
+    "electron-proxy-agent": "^1.0.2",
+    "electron-updater": "2.17.6",
+    "lnk": "^1.1.0",
+    "lodash.debounce": "^4.0.8",
+    "node-uuid": "^1.4.8",
+    "yargs": "^10.0.3"
   },
   "devDependencies": {
-    "rimraf": "^2.6.1"
+    "chokidar-cli": "^1.2.0",
+    "cozy-ui": "3.0.0-beta39",
+    "cross-env": "^5.1.1",
+    "debug-menu": "^0.6.1",
+    "devtron": "^1.4.0",
+    "electron": "^1.7.9",
+    "electron-builder": "^19.48.3",
+    "elm": "^0.18.0",
+    "elm-upgrade": "^0.18.7",
+    "rimraf": "^2.6.2",
+    "standard": "^10.0.3",
+    "stylus": "^0.54.5",
+    "rimraf": "^2.6.2",
+    "babel-cli": "^6.22.2",
+    "babel-core": "^6.22.1",
+    "babel-eslint": "^7.1.1",
+    "babel-plugin-array-includes": "^2.0.3",
+    "babel-plugin-autobind-class-methods": "^5.0.1",
+    "babel-plugin-istanbul": "^4.0.0",
+    "babel-plugin-transform-class-properties": "^6.23.0",
+    "babel-plugin-transform-flow-strip-types": "^6.22.0",
+    "babel-plugin-transform-object-rest-spread": "^6.22.0",
+    "babel-preset-es2015": "^6.22.0",
+    "babel-preset-es2016": "^6.22.0",
+    "babel-preset-es2017": "^6.22.0",
+    "cheerio": "^0.22.0",
+    "cross-env": "^5.0.0",
+    "del": "^2.2.2",
+    "env-cmd": "^5.0.0",
+    "eslint": "^3.17.1",
+    "eslint-config-standard": "^10.2.1",
+    "eslint-plugin-flowtype": "^2.30.3",
+    "eslint-plugin-import": "^2.3.0",
+    "eslint-plugin-node": "^5.0.0",
+    "eslint-plugin-promise": "^3.5.0",
+    "eslint-plugin-standard": "^3.0.0",
+    "faker": "^4.1.0",
+    "flow-bin": "^0.47.0",
+    "flow-typed": "^2.0.0",
+    "istanbul": "^0.4.5",
+    "jsverify": "^0.8.0",
+    "mocha": "^3.4.2",
+    "electron-mocha": "^3.4.2",
+    "mocha-clean": "^1.0.0",
+    "node-uuid": "^1.4.8",
+    "pouchdb-server": "^2.3.4",
+    "rimraf": "^2.6.1",
+    "should": "^11.2.1",
+    "should-sinon": "^0.0.5",
+    "sinon": "^2.3.1",
+    "source-map-support": "^0.4.11",
+    "yarn": "^1.3.2"
+  },
+
+  "build": {
+    "appId": "io.cozy.desktop",
+    "files": [
+      "gui/app.css",
+      "core-built/**",
+      "gui/elm.js",
+      "gui/fonts",
+      "gui/images",
+      "gui/index.html",
+      "gui/locales",
+      "gui/main.js",
+      "gui/node_modules",
+      "gui/ports.js",
+      "gui/js"
+    ],
+    "directories": {
+      "buildResources": "gui/assets"
+    },
+    "win": {
+      "certificateSubjectName": "Cozy Cloud SAS",
+      "target": [
+        "nsis"
+      ]
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "artifactName": "CozyDrive-${version}-${arch}.${ext}",
+      "executableName": "CozyDrive",
+      "category": "Network;FileTransfer;",
+      "desktop": {
+        "StartupNotify": "true"
+      },
+      "synopsis": "Cozy Drive is a synchronization tool for your files and folders with Cozy Cloud.",
+      "description": "Save them safely in your open source personal cloud, access them anywhere, anytime with the mobile application and share them with the world or just your friends and colleagues. You can host your own Cozy Cloud, and or use the hosting services. Your freedom to chose is why you can trust us."
+    },
+    "appImage": {
+      "systemIntegration": "doNotAsk"
+    }
   }
 }

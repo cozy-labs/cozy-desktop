@@ -1,6 +1,8 @@
+/.env.test
+/.nyc_output
+/coverage
+
 /cli/.env.test
-/cli/.nyc_output
-/cli/coverage
 /cli/lib
 /cli/storage/
 /cli/debug.log
@@ -8,8 +10,11 @@
 /gui/app.css
 /gui/app.css.map
 /gui/elm.js
-/gui/dist
-/gui/elm-stuff
+/dist
+/elm-stuff
+/core-built
 
 node_modules
 tmp
+
+yarn-error.log
