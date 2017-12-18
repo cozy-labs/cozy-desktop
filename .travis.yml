@@ -11,9 +11,6 @@ matrix:
           # @TODO macOS build is much slower
         - os: osx
           node_js: 8
-        - os: linux
-          node_js: 9
-          env: CXX=g++-4.8
 env:
     global:
         - COZY_DESKTOP_DIR=/tmp/cozy-desktop
