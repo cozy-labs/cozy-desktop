@@ -17,4 +17,5 @@
 node_modules
 tmp
 
+debug.log
 yarn-error.log
