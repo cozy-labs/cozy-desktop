@@ -27,5 +27,9 @@ for (let eventType of ['add', 'addDir', 'change', 'unlink', 'unlinkDir']) {
     console.log(eventType, relpath, `[${ino}]`)
   })
 }
+watcher.on('error', (err) => console.error('error', err))
+watcher.on('raw', (event, path, details) => {
+  console.log('raw:' + event, path, details)
+})
 
 console.log(`Watching ${syncPath}`)

@@ -11,6 +11,7 @@ module.exports.init = (app, listener) => {
      : (process.platform === 'win32') ? `${imgs}/tray-icon-win/idle.png`
      : `${imgs}/tray-icon-linux/idle.png`
   tray = new Tray(icon)
+  app.on('before-quit', () => tray.destroy())
 
   let cachedBounds = null
   const clicked = (e, bounds) => {

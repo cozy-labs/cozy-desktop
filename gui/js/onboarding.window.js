@@ -36,6 +36,24 @@ module.exports = class OnboardingWM extends WindowManager {
     }
   }
 
+  jumpToSyncPath () {
+    this.shouldJumpToSyncPath = true
+    this.send('registration-done')
+    this.win.once('dom-ready', () => {
+      setTimeout(() => this.send('registration-done')
+      , 20)
+    })
+  }
+
+  create () {
+    return super.create()
+      .then(() => {
+        if (this.shouldJumpToSyncPath) {
+          this.send('registration-done')
+        }
+      })
+  }
+
   onOnboardingDone (handler) {
     this.afterOnboarding = handler
   }

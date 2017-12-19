@@ -57,7 +57,7 @@ class Local implements Side {
 
   // Start initial replication + watching changes in live
   start () {
-    fs.ensureDirSync(this.syncPath)
+    this.watcher.ensureDirSync()
     return this.watcher.start()
   }
 
