@@ -1,3 +1,23 @@
+## 3.4.0 - 2017-12-19
+
+Improvements for all users:
+
+* The new quit button now appears busy once clicked.
+* We added a missing french translation for the new message showing when
+  selecting your whole system or personal folder to be synced.
+
+Changes for technical users (contributors, packagers, CLI users):
+
+* We moved to a new flat repository layout: single npm package, single runtime
+  (electron), single node version (the electron one). This is a first step to
+  make development easier and faster. The CLI & code coverage support are
+  temporarily disabled. We should bring them back at some point, although the
+  CLI will probably depend on the electron runtime for now.
+
+See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.4.0-beta.2 - 2017-12-14
 
 Improvements for GNU/Linux users:
@@ -14,6 +34,7 @@ Improvements for all users:
 * The app also detects and prevent synchronizing your whole system or personal
   folder.
 * Auto-update should be more reliable.
+* The settings tab includes a new *quit* button.
 
 See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
 
