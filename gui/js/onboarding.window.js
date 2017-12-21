@@ -38,6 +38,9 @@ module.exports = class OnboardingWM extends WindowManager {
 
   jumpToSyncPath () {
     this.shouldJumpToSyncPath = true
+    // TODO: cleanup state management, ensure elm side sends something
+    // through ports so we can trigger 'registration-done' without relying
+    // on timeouts
     this.send('registration-done')
     this.win.once('dom-ready', () => {
       setTimeout(() => this.send('registration-done')

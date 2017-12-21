@@ -55,7 +55,7 @@ class LocalWatcher {
   checksumer: Checksumer
   watcher: any // chokidar
   buffer: LocalEventBuffer<ChokidarFSEvent>
-  ensureInterval: number
+  ensureDirInterval: number
 
   constructor (syncPath: string, prep: Prep, pouch: Pouch, events: EventEmitter) {
     this.syncPath = syncPath
@@ -81,7 +81,7 @@ class LocalWatcher {
   start () {
     log.debug('Starting...')
 
-    this.ensureInterval = setInterval(this.ensureDirSync.bind(this), 5000)
+    this.ensureDirInterval = setInterval(this.ensureDirSync.bind(this), 5000)
 
     this.watcher = chokidar.watch('.', {
       // Let paths in events be relative to this base path
@@ -503,7 +503,7 @@ class LocalWatcher {
       this.watcher.close()
       this.watcher = null
     }
-    clearInterval(this.ensureInterval)
+    clearInterval(this.ensureDirInterval)
     this.buffer.switchMode('idle')
     if (force) return Promise.resolve()
     // Give some time for awaitWriteFinish events to be fired
