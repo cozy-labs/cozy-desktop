@@ -55,7 +55,7 @@
 
     "reinstall": "bash -c 'rm -rf node_modules/' && yarn",
 
-    "bootstrap": "cd .. && yarn test:setup",
+    "bootstrap": "yarn test:setup",
     "bootstrap:remote": "babel-node ./dev/remote/generate-test-env.js",
     "capture": "env-cmd .env.test babel-node ./dev/capture.js",
     "fauxton": "babel-node ./src/bin/fauxton.js",
