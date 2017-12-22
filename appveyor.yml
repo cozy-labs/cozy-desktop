@@ -14,9 +14,10 @@ install:
 build: off
 
 test_script:
-  - yarn build:core
+  - yarn build
   - cmd: yarn test:unit -- --timeout $env:MOCHA_TIMEOUT
   - cmd: yarn test:integration -- --timeout $env:MOCHA_TIMEOUT
+  - yarn dist:all
 
 on_failure:
   - node --version

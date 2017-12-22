@@ -1,5 +1,5 @@
 {
-  "name": "cozy-desktop",
+  "name": "CozyDrive",
   "productName": "Cozy Drive",
   "private": true,
   "version": "3.4.0",
@@ -195,7 +195,6 @@
       "buildResources": "gui/assets"
     },
     "win": {
-      "certificateSubjectName": "Cozy Cloud SAS",
       "target": [
         "nsis"
       ]
@@ -211,8 +210,6 @@
       "target": [
         "AppImage"
       ],
-      "artifactName": "CozyDrive-${version}-${arch}.${ext}",
-      "executableName": "CozyDrive",
       "category": "Network;FileTransfer;",
       "desktop": {
         "StartupNotify": "true"
