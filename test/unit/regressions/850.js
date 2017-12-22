@@ -44,9 +44,7 @@ describe('issue 850', function () {
     this.watcher = new Watcher(this.syncPath, this.prep, this.pouch, this.events)
   })
   after('stop watcher and clean path', function (done) {
-    if (this.watcher.watcher) {
-      this.watcher.watcher.close()
-    }
+    this.watcher.stop(true)
     this.watcher.checksumer.kill()
     fs.emptyDir(this.syncPath, done)
   })

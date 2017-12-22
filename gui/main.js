@@ -50,7 +50,7 @@ const showWindowStartApp = () => {
     onboardingWindow.show()
     // registration is done, but we need a syncPath
     if (desktop.config.isValid()) {
-      setTimeout(() => onboardingWindow.send('registration-done'), 20)
+      onboardingWindow.jumpToSyncPath()
     }
   } else {
     startSync()
@@ -58,12 +58,13 @@ const showWindowStartApp = () => {
 }
 
 const showWindow = (bounds) => {
+  if (revokedAlertShown || syncDirUnlinkedShown) return
   if (updaterWindow.shown()) return updaterWindow.focus()
   if (!desktop.config.syncPath) {
     onboardingWindow.show(bounds)
     // registration is done, but we need a syncPath
     if (desktop.config.isValid()) {
-      setTimeout(() => onboardingWindow.send('registration-done'), 20)
+      onboardingWindow.jumpToSyncPath()
     }
   } else {
     trayWindow.show(bounds).then(() => startSync())
@@ -71,6 +72,7 @@ const showWindow = (bounds) => {
 }
 
 let revokedAlertShown = false
+let syncDirUnlinkedShown = false
 
 const sendErrorToMainWindow = (msg) => {
   if (msg === 'Client has been revoked') {
@@ -85,12 +87,36 @@ const sendErrorToMainWindow = (msg) => {
       cancelId: 0,
       defaultId: 0
     }
+    trayWindow.hide()
     dialog.showMessageBox(null, options)
     desktop.stopSync()
       .then(() => desktop.removeConfig())
       .then(() => log.info('removed'))
       .then(() => trayWindow.doRestart())
       .catch((err) => log.error(err))
+    return // no notification
+  } else if (msg === 'Syncdir has been unlinked') {
+    if (syncDirUnlinkedShown) return
+    syncDirUnlinkedShown = true // prevent the alert from appearing twice
+    const options = {
+      type: 'warning',
+      title: translate('SyncDirUnlinked Title'),
+      message: translate('SyncDirUnlinked You have removed your sync dir.'),
+      detail: translate('SyncDirUnlinked The client will restart'),
+      buttons: [translate('SyncDirUnlinked Choose Folder')],
+      cancelId: 0,
+      defaultId: 0
+    }
+    trayWindow.hide()
+    dialog.showMessageBox(null, options)
+    desktop.stopSync()
+      .then(() => desktop.pouch.db.destroy())
+      .then(() => { desktop.config.syncPath = undefined })
+      .then(() => desktop.config.persist())
+      .then(() => log.info('removed'))
+      .then(() => trayWindow.doRestart())
+      .catch((err) => log.error(err))
+    return // no notification
   } else if (msg === 'Cozy is full' || msg === 'No more disk space') {
     msg = translate('Error ' + msg)
     trayWindow.send('sync-error', msg)
@@ -200,6 +226,9 @@ const startSync = (force, ...args) => {
       incompatibilitiesList.forEach(incompatibilities => {
         notifyIncompatibilities(incompatibilities)
       })
+    })
+    desktop.events.on('syncdir-unlinked', () => {
+      sendErrorToMainWindow('Syncdir has been unlinked')
     })
     desktop.events.on('delete-file', removeFile)
     desktop.synchronize(desktop.config.config.mode)

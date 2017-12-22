@@ -55,6 +55,7 @@ class LocalWatcher {
   checksumer: Checksumer
   watcher: any // chokidar
   buffer: LocalEventBuffer<ChokidarFSEvent>
+  ensureDirInterval: number
 
   constructor (syncPath: string, prep: Prep, pouch: Pouch, events: EventEmitter) {
     this.syncPath = syncPath
@@ -67,10 +68,20 @@ class LocalWatcher {
     this.checksumer = checksumer.init()
   }
 
+  ensureDirSync () {
+    // This code is duplicated in local/index#start
+    if (!fs.existsSync(this.syncPath)) {
+      this.events.emit('syncdir-unlinked')
+      throw new Error('Syncdir has been unlinked')
+    }
+  }
+
   // Start chokidar, the filesystem watcher
   // https://github.com/paulmillr/chokidar
   start () {
     log.debug('Starting...')
+
+    this.ensureDirInterval = setInterval(this.ensureDirSync.bind(this), 5000)
 
     this.watcher = chokidar.watch('.', {
       // Let paths in events be relative to this base path
@@ -133,6 +144,7 @@ class LocalWatcher {
     log.debug(`Flushed ${events.length} events`)
 
     this.events.emit('buffering-end')
+    this.ensureDirSync()
     this.events.emit('local-start')
 
     events = events.filter((e) => e.path !== '') // @TODO handle root dir events
@@ -491,6 +503,7 @@ class LocalWatcher {
       this.watcher.close()
       this.watcher = null
     }
+    clearInterval(this.ensureDirInterval)
     this.buffer.switchMode('idle')
     if (force) return Promise.resolve()
     // Give some time for awaitWriteFinish events to be fired
