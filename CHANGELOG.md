@@ -1,3 +1,18 @@
+## 3.4.1-beta.1 - 2017-12-26
+
+Improvements for all users:
+
+* Deleting the synchronization folder will not trash all files on the cozy.
+
+Changes for technical users (contributors, packagers, CLI users):
+
+* Builds are now made in CI, which will allow us to quickly send patched versions for specific issues before they make it to the master, as well as quicker testing, so hopefully quicker releases.
+
+See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
+
 ## 3.4.0 - 2017-12-19
 
 Improvements for all users:
