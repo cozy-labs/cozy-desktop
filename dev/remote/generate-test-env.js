@@ -30,8 +30,12 @@ const automatedRegistration = new Registration(cozyUrl, storage, (authorizeUrl) 
         }, {})
 
         console.log('Authorize...')
-        client.post({url: authorizeUrl, form}, (err, res) => {
+        client.post({url: authorizeUrl, form}, (err, res, body) => {
           if (err) { reject(err) }
+
+          if (!res.headers.location) {
+            return reject(new Error('No redirection after authorize, body = ' + body))
+          }
 
           console.log('Save credentials...')
           client({url: res.headers.location}, (err) => {
