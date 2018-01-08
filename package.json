@@ -43,12 +43,11 @@
     "pack": "yarn dist --dir",
     "dist:all": "yarn dist --x64 --ia32",
     "dist:all:debug": "cross-env DEBUG=electron-builder yarn dist:all",
-    "release:build": "yarn release:check:node-8 && yarn release:build:core && yarn reinstall && yarn run clean && yarn build && yarn dist && yarn release:fix",
+    "release:build": "yarn release:check:node-8 && yarn release:build:core && yarn reinstall && yarn run clean && yarn build && yarn dist",
     "release:build:debug": "cross-env DEBUG=electron-builder yarn release:build",
     "release:build:core": "yarn release:check:branch && yarn run clean && yarn build:core",
     "release:check:branch": "babel-node ./dev/check-release-branch.js",
     "release:check:node-8": "node -e \"(process.versions.node.split('.')[0] !== '8') && process.exit(1)\"",
-    "release:fix": "node ./dev/fix-dist-artifacts.js",
 
     "elm:upgrade": "cd gui && yarn add --dev elm@latest elm-upgrade@latest && elm-upgrade",
 
