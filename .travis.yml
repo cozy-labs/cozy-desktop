@@ -23,6 +23,7 @@ env:
 services:
     - docker
 cache:
+    yarn: true
     directories:
         - /Library/Caches/Homebrew
         - node_modules
