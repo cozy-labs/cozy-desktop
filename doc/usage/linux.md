@@ -25,6 +25,26 @@ issues. And the app will auto-update the same way as the Windows or macOS ones.
 We'll provide packages for major distros as soon as possible (unofficial
 nightly builds for Debian and Ubuntu are already being tested internally).
 
+## Supported distributions
+
+The AppImage needs for `GLIBCXX >= 3.4.21`.
+
+| Distribution | supported | `GLIBCXX` |
+| --- | --- | --- |
+| Debian 8 (Jessie) | no | |
+| Fedora 27 | yes | 3.4.24 |
+| Linux Mint 17.1 LTS (Rebecca) | no | |
+| [Add your distribution](https://github.com/cozy-labs/cozy-desktop/edit/master/doc/usage/linux.md) (see below) | ... | ... |
+
+**Before** requesting for your distribution to be added to the list, please:
+
+- Include the exact name and version of your distribution
+- Retrieve your *GLIBCXX*  version by running the following command in a
+  terminal:
+  `strings $(locate -b '\libstdc++.so.6') | grep 'GLIBCXX_[0-9]' | tail -n 1`
+  (and include the output in your request)
+- Install the app, run it and make sure it actually works
+
 ## Install
 
 1. Download the `*.AppImage` file for your architecture from the
