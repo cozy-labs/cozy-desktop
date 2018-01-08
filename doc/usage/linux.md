@@ -27,7 +27,7 @@ nightly builds for Debian and Ubuntu are already being tested internally).
 
 ## Supported distributions
 
-The AppImage needs for `GLIBCXX >= 3.4.21`.
+The AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
 
 | Distribution | supported | `GLIBCXX` |
 | --- | --- | --- |
@@ -44,6 +44,8 @@ The AppImage needs for `GLIBCXX >= 3.4.21`.
   `strings $(locate -b '\libstdc++.so.6') | grep 'GLIBCXX_[0-9]' | tail -n 1`
   (and include the output in your request)
 - Install the app, run it and make sure it actually works
+
+**If your distribution is not supported,** follow [the manual build guide](./build.md)
 
 ## Install
 
