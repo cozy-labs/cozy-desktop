@@ -245,7 +245,7 @@ class LocalWatcher {
       if (e.type === 'addDir') {
         if (!await fs.exists(abspath)) {
           log.debug({path: e.path}, 'Dir does not exist anymore')
-          // e2.wip = true
+          // TODO: e2.wip = true
           return null
         }
       }
@@ -311,7 +311,7 @@ class LocalWatcher {
                     'checksumless adds and inode-less unlink events are dropped')
                 }
                 moveAction.path = e.path
-                moveAction.ino = e.stats.ino
+                moveAction.ino = e.stats.ino // FIXME: useless?
                 moveAction.stats = e.stats
                 moveAction.md5sum = e.md5sum
                 delete moveAction.wip
@@ -335,6 +335,7 @@ class LocalWatcher {
             {
               const moveAction: ?PrepMoveFolder = prepAction.maybeMoveFolder(getActionByInode(e))
               if (moveAction) {
+                // TODO: Reconciliate pending move
                 panic({path: e.path, moveAction, event: e},
                   'We should not have both move and addDir actions since ' +
                   'non-existing addDir and inode-less unlinkDir events are dropped')
@@ -357,6 +358,7 @@ class LocalWatcher {
             {
               const moveAction: ?PrepMoveFile = prepAction.maybeMoveFile(getActionByInode(e))
               if (moveAction) {
+                // TODO: Pending move
                 panic({path: e.path, moveAction, event: e},
                   'We should not have both move and unlink actions since ' +
                   'checksumless adds and inode-less unlink events are dropped')
@@ -365,6 +367,7 @@ class LocalWatcher {
               const addAction: ?PrepAddFile = prepAction.maybeAddFile(getActionByInode(e))
               if (addAction) {
                 // New move found
+                // TODO: pending move
                 log.debug({oldpath: e.path, path: addAction.path, ino: addAction.ino}, 'File moved')
                 pushAction(prepAction.build('PrepMoveFile', addAction.path, {
                   stats: addAction.stats,
@@ -379,7 +382,7 @@ class LocalWatcher {
                 break
               }
               const action: ?PrepMoveFile = prepAction.maybeMoveFile(getActionByPath(e))
-              if (action && action.md5sum == null) {
+              if (action && action.md5sum == null) { // FIXME: if action && action.wip?
                 log.debug({path: action.old.path, ino: action.ino}, 'File was moved then deleted. Deleting origin directly.')
                 // $FlowFixMe
                 action.type = 'PrepDeleteFile'
@@ -393,6 +396,7 @@ class LocalWatcher {
             {
               const moveAction: ?PrepMoveFolder = prepAction.maybeMoveFolder(getActionByInode(e))
               if (moveAction) {
+                // TODO: pending move
                 panic({path: e.path, moveAction, event: e},
                   'We should not have both move and unlinkDir actions since ' +
                   'non-existing addDir and inode-less unlinkDir events are dropped')
@@ -412,6 +416,7 @@ class LocalWatcher {
                 pushAction(prepAction.fromChokidar(e))
               } // else skip
             }
+            // TODO: move & delete dir
             break
           default:
             throw new TypeError(`Unknown event type: ${e.type}`)
