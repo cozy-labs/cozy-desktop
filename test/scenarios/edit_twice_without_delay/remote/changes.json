@@ -1,0 +1,19 @@
+[
+  {
+    "_id": "d6110b37cc3e2a98f2137983711ddd09",
+    "_rev": "3-88c6e90c32a804b75871fa526e30d30b",
+    "class": "text",
+    "created_at": "2017-11-07T08:40:04.90652919Z",
+    "dir_id": "io.cozy.files.root-dir",
+    "executable": false,
+    "md5sum": "NxGkZ67whmFPwEcY5TH2fg==",
+    "mime": "text/plain",
+    "name": "file",
+    "size": "13",
+    "tags": [],
+    "trashed": false,
+    "type": "file",
+    "updated_at": "2017-11-07T08:40:07.30069307Z",
+    "path": "/file"
+  }
+]
