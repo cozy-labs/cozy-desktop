@@ -1,3 +1,24 @@
+## 3.4.1 - 2017-01-09
+
+See [3.4.1-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.4.1-beta.1)
+and [3.4.1-beta.2](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.4.1-beta.2)
+release notes.
+
+Happy syncing!
+
+## 3.4.1-beta.2 - 2017-01-09
+
+Improvements for all users:
+
+* Fix weird packaging issue ([detail](https://trello.com/c/QAOsWBCx))
+
+Known issue for GNU/Linux users:
+
+* The systray icon may appear twice (with only one icon actually working).
+  Workaround: quit and restart. This should not happen on subsequent updates.
+
+Happy syncing!
+
 ## 3.4.1-beta.1 - 2017-12-26
 
 Improvements for all users:
@@ -11,7 +32,6 @@ Changes for technical users (contributors, packagers, CLI users):
 See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
 
 Happy syncing!
-
 
 ## 3.4.0 - 2017-12-19
 
