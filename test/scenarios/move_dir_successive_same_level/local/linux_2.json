@@ -1,5 +1,8 @@
 [
   {
+    "breakpoints": [0, 1, 12]
+  },
+  {
     "type": "addDir",
     "path": "parent/dst1/dir",
     "stats": {
