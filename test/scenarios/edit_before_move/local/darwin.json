@@ -1,0 +1,16 @@
+[
+  {
+    "type": "unlink",
+    "path": "file"
+  },
+  {
+    "type": "add",
+    "path": "renamed-file",
+    "stats": {
+      "ino": 1,
+      "size": 13,
+      "mtime": "2017-11-07T09:20:06.000Z",
+      "ctime": "2017-11-07T09:20:06.000Z"
+    }
+  }
+]
