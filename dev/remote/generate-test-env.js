@@ -14,30 +14,48 @@ const storage = new cozy.MemoryStorage()
 
 const automatedRegistration = new Registration(cozyUrl, storage, (authorizeUrl) => {
   return new Promise((resolve, reject) => {
-    console.log('Login...')
-    client.post({url: url.resolve(cozyUrl, '/auth/login'), form: {passphrase}}, (err) => {
+    console.log('Get CSRF token...')
+    client.get({url: url.resolve(cozyUrl, '/auth/login')}, (err, _, body) => {
       if (err) { reject(err) }
 
-      console.log('Load authorization form...')
-      client({url: authorizeUrl}, (err, _, body) => {
+      const $ = cheerio.load(body)
+      const csrf = $('#csrf_token').val()
+
+      console.log('Login... (csrf = ' + csrf + ')')
+      client.post({
+        url: url.resolve(cozyUrl, '/auth/login'),
+        form: {
+          passphrase,
+          csrf_token: csrf
+        }
+      }, (err) => {
         if (err) { reject(err) }
 
-        console.log('Parse authorization form...')
-        const $ = cheerio.load(body)
-        const form = $('form.auth').serializeArray().reduce((data, param) => {
-          data[param.name] = param.value
-          return data
-        }, {})
-
-        console.log('Authorize...')
-        client.post({url: authorizeUrl, form}, (err, res) => {
+        console.log('Load authorization form...')
+        client({url: authorizeUrl}, (err, _, body) => {
           if (err) { reject(err) }
 
-          console.log('Save credentials...')
-          client({url: res.headers.location}, (err) => {
+          console.log('Parse authorization form...')
+          const $ = cheerio.load(body)
+          const form = $('form.auth').serializeArray().reduce((data, param) => {
+            data[param.name] = param.value
+            return data
+          }, {})
+
+          console.log('Authorize...')
+          client.post({url: authorizeUrl, form}, (err, res, body) => {
             if (err) { reject(err) }
 
-            resolve(cozyUrl)
+            if (!res.headers.location) {
+              return reject(new Error('No redirection after authorize, body = ' + body))
+            }
+
+            console.log('Save credentials...')
+            client({url: res.headers.location}, (err) => {
+              if (err) { reject(err) }
+
+              resolve(cozyUrl)
+            })
           })
         })
       })

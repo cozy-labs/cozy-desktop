@@ -85,6 +85,13 @@ parameters below):
     docker-machine create default
     eval $(docker-machine env default)
 
+### Fedora 27
+
+    sudo dnf install docker gcc-c++ git nodejs
+    cd /etc/yum.repos.d/
+    sudo wget https://dl.yarnpkg.com/rpm/yarn.repo
+    cd -
+    sudo dnf install yarn
 
 ## Get the code
 

@@ -2,7 +2,7 @@
   "name": "CozyDrive",
   "productName": "Cozy Drive",
   "private": true,
-  "version": "3.4.1-beta.1",
+  "version": "3.4.1-beta.2",
   "description": "Cozy Drive is a synchronization tool for your files and folders with Cozy Cloud.",
   "homepage": "https://github.com/cozy-labs/cozy-desktop",
   "author": "Cozy Cloud <contact@cozycloud.cc> (https://cozycloud.cc/)",
@@ -38,19 +38,22 @@
     "watch:elm": "chokidar 'src/elm/**/*.elm' -c 'yarn gui:build:elm'",
     "watch:js": "chokidar main.js ports.js -c 'yarn gui:lint'",
 
-    "dist": "cross-env DEBUG=electron-builder build",
+    "dist": "electron-builder build",
+    "dist:debug": "cross-env DEBUG=electron-builder yarn dist",
     "pack": "yarn dist --dir",
     "dist:all": "yarn dist --x64 --ia32",
-    "release:build": "yarn release:check:node-8 && yarn release:build:core && yarn reinstall && yarn run clean && yarn build && yarn dist && yarn release:fix",
+    "dist:all:debug": "cross-env DEBUG=electron-builder yarn dist:all",
+    "release:build": "yarn release:check:node-8 && yarn release:build:core && yarn reinstall && yarn run clean && yarn build && yarn dist",
+    "release:build:debug": "cross-env DEBUG=electron-builder yarn release:build",
     "release:build:core": "yarn release:check:branch && yarn run clean && yarn build:core",
     "release:check:branch": "babel-node ./dev/check-release-branch.js",
     "release:check:node-8": "node -e \"(process.versions.node.split('.')[0] !== '8') && process.exit(1)\"",
-    "release:fix": "node ./dev/fix-dist-artifacts.js",
 
     "elm:upgrade": "cd gui && yarn add --dev elm@latest elm-upgrade@latest && elm-upgrade",
 
     "postinstall": "yarn postinstall:electron && yarn postinstall:elm",
-    "postinstall:electron": "cross-env DEBUG=electron-builder electron-builder install-app-deps",
+    "postinstall:electron": "electron-builder install-app-deps",
+    "postinstall:electron:debug": "cross-env DEBUG=electron-builder yarn postinstall:electron",
     "postinstall:elm": "elm-package install -y",
 
     "reinstall": "bash -c 'rm -rf node_modules/' && yarn",
@@ -174,51 +177,5 @@
     "sinon": "^2.3.1",
     "source-map-support": "^0.4.11",
     "yarn": "^1.3.2"
-  },
-
-  "build": {
-    "appId": "io.cozy.desktop",
-    "files": [
-      "gui/app.css",
-      "core-built/**",
-      "gui/elm.js",
-      "gui/fonts",
-      "gui/images",
-      "gui/index.html",
-      "gui/locales",
-      "gui/main.js",
-      "gui/node_modules",
-      "gui/ports.js",
-      "gui/js"
-    ],
-    "directories": {
-      "buildResources": "gui/assets"
-    },
-    "win": {
-      "target": [
-        "nsis"
-      ]
-    },
-    "mac": {
-      "category": "public.app-category.productivity",
-      "target": [
-        "dmg",
-        "zip"
-      ]
-    },
-    "linux": {
-      "target": [
-        "AppImage"
-      ],
-      "category": "Network;FileTransfer;",
-      "desktop": {
-        "StartupNotify": "true"
-      },
-      "synopsis": "Cozy Drive is a synchronization tool for your files and folders with Cozy Cloud.",
-      "description": "Save them safely in your open source personal cloud, access them anywhere, anytime with the mobile application and share them with the world or just your friends and colleagues. You can host your own Cozy Cloud, and or use the hosting services. Your freedom to chose is why you can trust us."
-    },
-    "appImage": {
-      "systemIntegration": "doNotAsk"
-    }
   }
 }

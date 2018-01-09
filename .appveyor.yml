@@ -1,9 +1,5 @@
 environment:
   nodejs_version: "8"
-  COZY_URL:
-    secure: b06koRZfV6qLnE8RPcbaiUFIXIA3xc9PkepUZTOnpjAa6LnSKmW3RWCE2CZHSiMs
-  COZY_PASSPHRASE:
-    secure: 3pxc1SL46fjXrugWO5AtTOyrNKZRka4pSWDDTJOBA3A=
   MOCHA_TIMEOUT: "60000"
 
 install:
