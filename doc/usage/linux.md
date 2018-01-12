@@ -62,6 +62,8 @@ The AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
 4. Run the application for the first time by double-clicking it. It will add
    itself to your existing application shortcuts.
 
+**Note for GNOME Users** : From 3.26 onwards, GNOME removed the systray which is the only interface for *Cozy Drive*. It should be replaced in the future by `libcloudprovider`, which we will implement when it spreads. In the meantime, you need to install an extension such as [TopIcons](https://extensions.gnome.org/extension/1031/topicons/)
+
 ## Running
 
 On first run, the application should have configured itself to run automatically
