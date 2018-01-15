@@ -265,6 +265,7 @@ app.on('ready', () => {
     i18n.init(app)
     tray.init(app, toggleWindow)
     lastFiles.init(desktop)
+    app.lastFiles = lastFiles
     log.trace('Setting up tray WM...')
     trayWindow = new TrayWM(app, desktop)
     log.trace('Setting up help WM...')

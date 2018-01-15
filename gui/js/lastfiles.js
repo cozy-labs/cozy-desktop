@@ -8,6 +8,13 @@ const log = require('../../core-built/app.js').default.logger({
   component: 'GUI'
 })
 
+module.exports.clean = () => new Promise((resolve, reject) => {
+  fs.unlinkSync(lastFilesPath, (err) => {
+    if (err && err.code !== 'ENOENT') reject(err)
+    else resolve()
+  })
+})
+
 module.exports.init = (desktop) => {
   lastFilesPath = path.join(desktop.basePath, 'last-files')
   fs.readFile(lastFilesPath, 'utf-8', (err, data) => {
