@@ -4,7 +4,7 @@
 [![Latest release](https://img.shields.io/github/release/cozy-labs/cozy-desktop/all.svg)](https://github.com/cozy-labs/cozy-desktop/releases)
 [![Licence](https://img.shields.io/github/license/cozy/cozy-drive.svg)](https://github.com/cozy/cozy-drive/blob/master/LICENSE)
 <br>
-[![Windows build](https://img.shields.io/appveyor/ci/sebn/cozy-desktop/master.svg?label=windows)](https://ci.appveyor.com/project/sebn/cozy-desktop/branch/master)
+[![Windows build](https://img.shields.io/appveyor/ci/cozy/cozy-desktop/master.svg?label=windows)](https://ci.appveyor.com/project/cozy/cozy-desktop/branch/master)
 [![Linux & macOS build]( 	https://img.shields.io/travis/cozy-labs/cozy-desktop/master.svg?label=mac/linux)](https://travis-ci.org/cozy-labs/cozy-desktop/branches)
 [![Code climate](https://img.shields.io/codeclimate/github/cozy-labs/cozy-desktop.svg)](https://codeclimate.com/github/cozy-labs/cozy-desktop)
 [![Coverage](https://img.shields.io/codecov/c/github/cozy-labs/cozy-desktop/master.svg?label=coverage)](https://codecov.io/gh/cozy-labs/cozy-desktop/list/master)
