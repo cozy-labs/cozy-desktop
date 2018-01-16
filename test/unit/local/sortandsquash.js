@@ -153,4 +153,38 @@ describe('SortAndSquash Unit Tests', function () {
     }])
     should(pendingActions).deepEqual([])
   })
+
+  it('sorts actions', () => {
+    const dirStats = {ino: 1}
+    const subdirStats = {ino: 2}
+    const fileStats = {ino: 3}
+    const otherFileStats = {ino: 4}
+    const otherDirStats = {ino: 5}
+    const dirMetadata: Metadata = metadataBuilders.dir().ino(dirStats.ino).build()
+    const subdirMetadata: Metadata = metadataBuilders.dir().ino(subdirStats.ino).build()
+    const fileMetadata : Metadata = metadataBuilders.file().ino(fileStats.ino).build()
+    const otherFileMetadata : Metadata = metadataBuilders.file().ino(otherFileStats.ino).build()
+    const otherDirMetadata : Metadata = metadataBuilders.dir().ino(otherDirStats.ino).build()
+    const events: ContextualizedChokidarFSEvent[] = [
+      {type: 'unlinkDir', path: 'src/subdir', old: subdirMetadata},
+      {type: 'unlinkDir', path: 'src', old: dirMetadata},
+      {type: 'addDir', path: 'dst', stats: dirStats},
+      {type: 'addDir', path: 'dst/subdir', stats: subdirStats},
+      {type: 'unlink', path: 'src/file', old: fileMetadata},
+      {type: 'add', path: 'dst/file', stats: fileStats},
+      {type: 'change', path: 'other-file', stats: otherFileStats, md5sum: 'yolo', old: otherFileMetadata},
+      {type: 'unlinkDir', path: 'other-dir-src', old: otherDirMetadata},
+      {type: 'addDir', path: 'other-dir-dst', stats: otherDirStats},
+    ]
+    const pendingActions: PrepAction[] = []
+
+    should(sortAndSquash(events, pendingActions)).deepEqual([
+      {type: 'PrepUpdateFile', path: 'other-file', stats: otherFileStats, ino: otherFileStats.ino, md5sum: 'yolo', /* FIXME: */ wip: undefined},
+      {type: 'PrepMoveFolder', path: 'dst', stats: dirStats, ino: dirStats.ino, old: dirMetadata},
+      // FIXME: Move should have been squashed
+      {type: 'PrepMoveFile', path: 'dst/file', stats: fileStats, ino: fileStats.ino, old: fileMetadata},
+      {type: 'PrepMoveFolder', path: 'dst/subdir', stats: subdirStats, ino: subdirStats.ino, old: subdirMetadata},
+      {type: 'PrepMoveFolder', path: 'other-dir-dst', stats: otherDirStats, ino: otherDirStats.ino, old: otherDirMetadata}
+    ])
+  })
 })
