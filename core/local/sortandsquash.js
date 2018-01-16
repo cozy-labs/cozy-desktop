@@ -57,7 +57,7 @@ export default function sortAndSquash (events: ContextualizedChokidarFSEvent[], 
   if (pendingActions.length > 0) {
     log.warn({actions: pendingActions}, `Prepend ${pendingActions.length} pending action(s)`)
     for (const a of pendingActions) { pushAction(a) }
-    pendingActions = []
+    pendingActions.length = 0
   }
 
   log.trace('Analyze events...')
