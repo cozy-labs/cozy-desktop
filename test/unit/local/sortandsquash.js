@@ -118,4 +118,39 @@ describe('SortAndSquash Unit Tests', function () {
     }])
     should(pendingActions).deepEqual([])
   })
+
+  it('handles addDir', () => {
+    const stats = {ino: 1}
+    const events: ContextualizedChokidarFSEvent[] = [
+      {type: 'addDir', path: 'foo', stats}
+    ]
+    const pendingActions: PrepAction[] = []
+
+    should(sortAndSquash(events, pendingActions)).deepEqual([{
+      type: 'PrepPutFolder',
+      path: 'foo',
+      ino: 1,
+      stats
+    }])
+    should(pendingActions).deepEqual([])
+  })
+
+  it('handles addDir+unlinkDir', () => {
+    const old: Metadata = metadataBuilders.dir().ino(1).build()
+    const stats = {ino: 1}
+    const events: ContextualizedChokidarFSEvent[] = [
+      {type: 'addDir', path: 'dst', stats},
+      {type: 'unlinkDir', path: 'src', old}
+    ]
+    const pendingActions: PrepAction[] = []
+
+    should(sortAndSquash(events, pendingActions)).deepEqual([{
+      type: 'PrepMoveFolder',
+      path: 'dst',
+      ino: 1,
+      stats,
+      old
+    }])
+    should(pendingActions).deepEqual([])
+  })
 })
