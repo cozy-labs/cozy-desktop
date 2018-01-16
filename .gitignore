@@ -22,3 +22,4 @@ tmp
 
 debug.log
 yarn-error.log
+*.log
