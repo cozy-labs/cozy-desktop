@@ -27,6 +27,7 @@ export type PrepAction =
 // TODO: Introduce specific builders?
 export const build = (type: string, path: string, opts?: {stats?: fs.Stats, md5sum?: string, old?: ?Metadata}): PrepAction => {
   const event: Object = _.assign({type, path}, opts)
+  if (event.wip == null) delete event.wip
   return event
 }
 

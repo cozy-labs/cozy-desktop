@@ -47,4 +47,24 @@ describe('SortAndSquash Unit Tests', function () {
     should(sortAndSquash(nextEvents, pendingActions)).deepEqual([])
     should(pendingActions).deepEqual([])
   })
+
+  it('handles unlink+add', () => {
+    const old: Metadata = metadataBuilders.file().ino(1).build()
+    const stats = {ino: 1}
+    const events: ContextualizedChokidarFSEvent[] = [
+      {type: 'unlink', path: 'src', old},
+      {type: 'add', path: 'dst', stats, md5sum: 'yolo'}
+    ]
+    const pendingActions: PrepAction[] = []
+
+    should(sortAndSquash(events, pendingActions)).deepEqual([{
+      type: 'PrepMoveFile',
+      path: 'dst',
+      md5sum: 'yolo',
+      ino: 1,
+      stats,
+      old
+    }])
+    should(pendingActions).deepEqual([])
+  })
 })
