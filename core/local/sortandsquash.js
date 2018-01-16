@@ -69,13 +69,13 @@ export default function sortAndSquash (events: ContextualizedChokidarFSEvent[], 
           {
             const moveAction: ?PrepMoveFile = prepAction.maybeMoveFile(getActionByInode(e))
             if (moveAction) {
+              /* istanbul ignore next */
               if (!moveAction.wip) {
                 panic({path: e.path, moveAction, event: e},
                   'We should not have both move and add actions since ' +
                   'checksumless adds and inode-less unlink events are dropped')
               }
               moveAction.path = e.path
-              moveAction.ino = e.stats.ino // FIXME: useless?
               moveAction.stats = e.stats
               moveAction.md5sum = e.md5sum
               delete moveAction.wip
