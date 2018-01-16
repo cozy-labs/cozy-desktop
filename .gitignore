@@ -15,6 +15,8 @@
 /core-built
 /core-cov
 
+/coverage-*
+
 node_modules
 tmp
 
