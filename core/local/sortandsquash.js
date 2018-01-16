@@ -98,6 +98,7 @@ export default function sortAndSquash (events: ContextualizedChokidarFSEvent[], 
         case 'addDir':
           {
             const moveAction: ?PrepMoveFolder = prepAction.maybeMoveFolder(getActionByInode(e))
+            /* istanbul ignore next */
             if (moveAction) {
               // TODO: Reconciliate pending move
               panic({path: e.path, moveAction, event: e},
@@ -121,6 +122,7 @@ export default function sortAndSquash (events: ContextualizedChokidarFSEvent[], 
         case 'unlink':
           {
             const moveAction: ?PrepMoveFile = prepAction.maybeMoveFile(getActionByInode(e))
+            /* istanbul ignore next */
             if (moveAction) {
               // TODO: Pending move
               panic({path: e.path, moveAction, event: e},
@@ -151,6 +153,7 @@ export default function sortAndSquash (events: ContextualizedChokidarFSEvent[], 
               // $FlowFixMe
               action.type = 'PrepDeleteFile'
               action.path = action.old.path
+              delete action.stats
               delete action.wip
             }
             // Otherwise, skip unlink event by multiple moves
@@ -159,6 +162,7 @@ export default function sortAndSquash (events: ContextualizedChokidarFSEvent[], 
         case 'unlinkDir':
           {
             const moveAction: ?PrepMoveFolder = prepAction.maybeMoveFolder(getActionByInode(e))
+            /* istanbul ignore next */
             if (moveAction) {
               // TODO: pending move
               panic({path: e.path, moveAction, event: e},
