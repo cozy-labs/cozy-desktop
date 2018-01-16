@@ -245,7 +245,7 @@ class LocalWatcher {
       if (e.type === 'addDir') {
         if (!await fs.exists(abspath)) {
           log.debug({path: e.path}, 'Dir does not exist anymore')
-          // TODO: e2.wip = true
+          e2.wip = true
           return null
         }
       }
@@ -335,10 +335,17 @@ class LocalWatcher {
             {
               const moveAction: ?PrepMoveFolder = prepAction.maybeMoveFolder(getActionByInode(e))
               if (moveAction) {
-                // TODO: Reconciliate pending move
-                panic({path: e.path, moveAction, event: e},
-                  'We should not have both move and addDir actions since ' +
-                  'non-existing addDir and inode-less unlinkDir events are dropped')
+                if (!moveAction.wip) {
+                  panic({path: e.path, moveAction, event: e},
+                    'We should not have both move and addDir actions since ' +
+                    'non-existing addDir and inode-less unlinkDir events are dropped')
+                }
+                moveAction.path = e.path
+                moveAction.stats = e.stats
+                delete moveAction.wip
+                log.debug(
+                  {path: e.path, oldpath: moveAction.old.path, ino: moveAction.stats.ino},
+                  'Folder move completing')
               }
 
               const unlinkAction: ?PrepDeleteFolder = prepAction.maybeDeleteFolder(getActionByInode(e))

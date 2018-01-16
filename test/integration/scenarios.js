@@ -80,46 +80,62 @@ describe('Test scenarios', function () {
         continue
       }
 
-      it(localTestName, async function () {
-        if (scenario.init) {
-          let relpathFix = _.identity
-          if (process.platform === 'win32' && localTestName.match(/win32/)) {
-            relpathFix = (relpath) => relpath.replace(/\//g, '\\')
-          }
-          await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix)
-        }
+      let breakpoints = []
+      if (eventsFile.events[0] && eventsFile.events[0].breakpoints) {
+        breakpoints = eventsFile.events[0].breakpoints
+        eventsFile.events = eventsFile.events.slice(1)
+      } else {
+        // break between each events
+        for (let i = 0; i < eventsFile.events.length; i++) breakpoints.push(i)
+      }
 
-        await runActions(scenario, helpers.local.syncDir.abspath)
-        await helpers.local.simulateEvents(eventsFile.events)
-        await helpers.syncAll()
-
-        // TODO: Bring back Prep expectations for local tests?
-        // TODO: Wrap in custom expectation
-        if (scenario.expected) {
-          const expectedLocalTree = scenario.expected.tree || scenario.expected.localTree
-          const expectedRemoteTree = scenario.expected.tree || scenario.expected.remoteTree
-          const expected = _.pick(scenario.expected, ['remoteTrash'])
-          const actual = {}
-
-          // TODO: expect prep actions
-          if (expectedLocalTree) {
-            expected.localTree = expectedLocalTree
-            actual.localTree = await helpers.local.tree()
-          }
-          if (expectedRemoteTree) {
-            expected.remoteTree = expectedRemoteTree
-            actual.remoteTree = await helpers.remote.treeWithoutTrash()
-          }
-          if (scenario.expected.remoteTrash) {
-            actual.remoteTrash = await helpers.remote.trash()
+      for (let flushAfter of breakpoints) {
+        it(localTestName + ' flushAfter=' + flushAfter, async function () {
+          if (scenario.init) {
+            let relpathFix = _.identity
+            if (process.platform === 'win32' && localTestName.match(/win32/)) {
+              relpathFix = (relpath) => relpath.replace(/\//g, '\\')
+            }
+            await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix)
           }
 
-          should(actual).deepEqual(expected)
-        }
+          const eventsBefore = eventsFile.events.slice(0, flushAfter)
+          const eventsAfter = eventsFile.events.slice(flushAfter)
 
-        // TODO: pull
-      })
-    } // event files
+          await runActions(scenario, helpers.local.syncDir.abspath)
+          await helpers.local.simulateEvents(eventsBefore)
+          await helpers.syncAll()
+          await helpers.local.simulateEvents(eventsAfter)
+          await helpers.syncAll()
+
+          // TODO: Bring back Prep expectations for local tests?
+          // TODO: Wrap in custom expectation
+          if (scenario.expected) {
+            const expectedLocalTree = scenario.expected.tree || scenario.expected.localTree
+            const expectedRemoteTree = scenario.expected.tree || scenario.expected.remoteTree
+            const expected = _.pick(scenario.expected, ['remoteTrash'])
+            const actual = {}
+
+            // TODO: expect prep actions
+            if (expectedLocalTree) {
+              expected.localTree = expectedLocalTree
+              actual.localTree = await helpers.local.tree()
+            }
+            if (expectedRemoteTree) {
+              expected.remoteTree = expectedRemoteTree
+              actual.remoteTree = await helpers.remote.treeWithoutTrash()
+            }
+            if (scenario.expected.remoteTrash) {
+              actual.remoteTrash = await helpers.remote.trash()
+            }
+
+            should(actual).deepEqual(expected)
+          }
+
+          // TODO: pull
+        })
+      } // event files
+    }
 
     const stoppedTestName = `test/scenarios/${scenario.name}/local/stopped`
     const stoppedEnvVar = 'STOPPED_CLIENT'

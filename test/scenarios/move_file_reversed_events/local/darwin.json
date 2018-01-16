@@ -1,5 +1,8 @@
 [
   {
+    "breakpoints": [0]
+  },
+  {
     "type": "add",
     "path": "dst/file",
     "stats": {
