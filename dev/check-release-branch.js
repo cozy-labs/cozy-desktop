@@ -1,6 +1,6 @@
-#!/usr/bin/env babel-node
+#!/usr/bin/env node
 
-import { execSync } from 'child_process'
+const { execSync } = require('child_process')
 
 execSync('git fetch')
 
