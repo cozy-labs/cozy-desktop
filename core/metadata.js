@@ -5,6 +5,7 @@ import path, { join } from 'path'
 
 import logger from './logger'
 import { detectPathIssues, detectPathLengthIssue } from './path_restrictions'
+import { maxDate } from './timestamp'
 
 import type fs from 'fs'
 import type { PathIssue } from './path_restrictions'
@@ -235,7 +236,7 @@ export function buildDir (path: string, stats: fs.Stats): * {
   return {
     path,
     docType: 'folder',
-    updated_at: stats.mtime,
+    updated_at: maxDate(stats.mtime, stats.ctime),
     ino: stats.ino
   }
 }
