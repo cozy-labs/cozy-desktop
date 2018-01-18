@@ -15,6 +15,9 @@ Please report any other issue you may encounter by using the app help form.
 * Changing only the case or encoding in a file or directory name, e.g. renaming
   *my stuff* to *MY STUFF*, won't be synchronized on other devices.
   [details](https://trello.com/c/Phc3lLEr)
+* When creating a folder with some platform-incompatible character in the name
+  (e.g. `:`), then renaming to a valid name, only its subfolders will be
+  synchronized on Windows & macOS, but not its files.
 
 **Issues** caused by lower-level bugs that will be **harder to fix or circumvent**:
 
