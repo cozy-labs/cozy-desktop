@@ -367,15 +367,6 @@ class LocalWatcher {
     return this.checksumer.push(absPath)
   }
 
-  buildDirMetadata (path: string, stats: fs.Stats) {
-    return {
-      path,
-      docType: 'folder',
-      updated_at: stats.mtime,
-      ino: stats.ino
-    }
-  }
-
   /* Actions */
 
   // New file detected
@@ -395,14 +386,14 @@ class LocalWatcher {
 
   onMoveFolder (folderPath: string, stats: fs.Stats, old: Metadata) {
     const logError = (err) => log.error({err, path: folderPath})
-    const doc = this.buildDirMetadata(folderPath, stats)
+    const doc = metadata.buildDir(folderPath, stats)
     log.info({path: folderPath}, `was moved from ${old.path}`)
     return this.prep.moveFolderAsync(SIDE, doc, old).catch(logError)
   }
 
   // New directory detected
   onAddDir (folderPath: string, stats: fs.Stats) {
-    const doc = this.buildDirMetadata(folderPath, stats)
+    const doc = metadata.buildDir(folderPath, stats)
     log.info({path: folderPath}, 'folder added')
     return this.prep.putFolderAsync(SIDE, doc).catch(err => log.error({err, path: folderPath}))
   }

@@ -6,6 +6,7 @@ import path, { join } from 'path'
 import logger from './logger'
 import { detectPathIssues, detectPathLengthIssue } from './path_restrictions'
 
+import type fs from 'fs'
 import type { PathIssue } from './path_restrictions'
 
 const log = logger({
@@ -228,4 +229,13 @@ export function markSide (side: string, doc: Metadata, prev: ?Metadata): Metadat
   }
   doc.sides[side] = ++rev
   return doc
+}
+
+export function buildDir (path: string, stats: fs.Stats): * {
+  return {
+    path,
+    docType: 'folder',
+    updated_at: stats.mtime,
+    ino: stats.ino
+  }
 }
