@@ -1,3 +1,17 @@
+## 3.4.2-beta.2 - 2017-01-18
+
+Improvements for all users:
+
+- The app now shows the popover on the current workspace.
+- We fixed an edge case where moving files or folders before or after moving
+  their source or destination was generating a conflict.
+- We also fixed another case where a folder created or moved locally could end
+  up with the wrong last modification date.
+
+See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.4.2-beta.1 - 2017-01-18
 
 Improvements for all users:
