@@ -36,6 +36,7 @@ type Msg
     = FillAddress String
     | RegisterRemote
     | RegistrationError String
+    | CorrectAddress
 
 
 port registerRemote : String -> Cmd msg
@@ -48,6 +49,35 @@ setError model message =
     )
 
 
+dropAppName : String -> String
+dropAppName address =
+    if String.endsWith ".mycozy.cloud" address then
+        case String.split "-" address of
+            [] ->
+                ""
+
+            [ instanceName ] ->
+                instanceName ++ ".mycozy.cloud"
+
+            instanceName :: _ ->
+                instanceName ++ ".mycozy.cloud"
+    else
+        address
+
+
+ensureNoHttps : String -> String
+ensureNoHttps address =
+    if String.startsWith "https://" address then
+        String.dropLeft 8 address
+    else
+        address
+
+
+correctAddress : String -> String
+correctAddress address =
+    dropAppName (ensureNoHttps address)
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case
@@ -55,6 +85,9 @@ update msg model =
     of
         FillAddress address ->
             ( { model | address = address, error = "", busy = False }, Cmd.none )
+
+        CorrectAddress ->
+            ( { model | address = correctAddress model.address }, Cmd.none )
 
         RegisterRemote ->
             if model.address == "" then
@@ -64,7 +97,9 @@ update msg model =
             else if contains "mycosy.cloud" model.address then
                 setError model "Address Cozy not cosy"
             else
-                ( { model | busy = True }, registerRemote model.address )
+                ( { model | busy = True, address = correctAddress model.address }
+                , registerRemote (correctAddress model.address)
+                )
 
         RegistrationError error ->
             setError model error
@@ -96,15 +131,25 @@ view helpers model =
             , div [ class "coz-form-group" ]
                 [ label [ class "coz-form-label" ]
                     [ text (helpers.t "Address Cozy address") ]
-                , input
-                    [ placeholder ("cloudy.mycozy.cloud")
-                    , class "wizard__address"
-                    , type_ "text"
-                    , value model.address
-                    , onInput FillAddress
-                    , onEnter RegisterRemote
+                , div [ class "https-input-wrapper" ]
+                    [ span [ class "address_https" ]
+                        [ text ("https://") ]
+                    , input
+                        [ placeholder ("cloudy.mycozy.cloud")
+                        , class "wizard__address"
+                        , type_ "text"
+                        , value model.address
+                        , onInput FillAddress
+                        , onEnter RegisterRemote
+                        , onBlur CorrectAddress
+                        ]
+                        []
                     ]
-                    []
+                ]
+            , div [ class "cozy-form-tip" ]
+                [ text (helpers.t "Address Example Before")
+                , strong [] [ text (helpers.t "Address Example Bold") ]
+                , text (helpers.t "Address Example After")
                 ]
             , a
                 [ class "btn"
