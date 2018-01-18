@@ -1,5 +1,5 @@
 import {describe, it} from 'mocha'
-import * as remoteChange from '../../../src/remote/change'
+import * as remoteChange from '../../../core/remote/change'
 
 describe('remote change sort', () => {
   it('sort correctly move inside move', () => {
