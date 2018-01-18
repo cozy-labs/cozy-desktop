@@ -100,10 +100,17 @@ export default function sortAndSquash (events: ContextualizedChokidarFSEvent[], 
             const moveAction: ?PrepMoveFolder = prepAction.maybeMoveFolder(getActionByInode(e))
             /* istanbul ignore next */
             if (moveAction) {
-              // TODO: Reconciliate pending move
-              panic({path: e.path, moveAction, event: e},
-                'We should not have both move and addDir actions since ' +
-                'non-existing addDir and inode-less unlinkDir events are dropped')
+              if (!moveAction.wip) {
+                panic({path: e.path, moveAction, event: e},
+                 'We should not have both move and addDir actions since ' +
+                 'non-existing addDir and inode-less unlinkDir events are dropped')
+              }
+              moveAction.path = e.path
+              moveAction.stats = e.stats
+              delete moveAction.wip
+              log.debug(
+               {path: e.path, oldpath: moveAction.old.path, ino: moveAction.stats.ino},
+               'Folder move completing')
             }
 
             const unlinkAction: ?PrepDeleteFolder = prepAction.maybeDeleteFolder(getActionByInode(e))

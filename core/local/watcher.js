@@ -243,7 +243,7 @@ class LocalWatcher {
       if (e.type === 'addDir') {
         if (!await fs.exists(abspath)) {
           log.debug({path: e.path}, 'Dir does not exist anymore')
-          // TODO: e2.wip = true
+          e2.wip = true
           return null
         }
       }
