@@ -89,6 +89,8 @@ describe('Test scenarios', function () {
         for (let i = 0; i < eventsFile.events.length; i++) breakpoints.push(i)
       }
 
+      if (process.env.NO_BREAKPOINTS) breakpoints = [0]
+
       for (let flushAfter of breakpoints) {
         it(localTestName + ' flushAfter=' + flushAfter, async function () {
           if (scenario.init) {
