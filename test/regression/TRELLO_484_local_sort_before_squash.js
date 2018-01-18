@@ -36,6 +36,8 @@ describe('TRELLO #484: Local sort before squash (https://trello.com/c/RcRmqymw)'
     for (let method of ['addFileAsync', 'putFolderAsync', 'updateFileAsync',
       'moveFileAsync', 'moveFolderAsync', 'deleteFolderAsync', 'trashFileAsync',
       'trashFolderAsync', 'restoreFileAsync', 'restoreFolderAsync']) {
+      // $FlowFixMe
+      const origMethod = helpers.prep[method]
       sinon.stub(helpers.prep, method).callsFake(async (...args) => {
         const call: Object = {method}
         if (method.startsWith('move') || method.startsWith('restore')) {
@@ -45,6 +47,9 @@ describe('TRELLO #484: Local sort before squash (https://trello.com/c/RcRmqymw)'
           call.path = args[1].path
         }
         prepCalls.push(call)
+
+        // Call the actual method so we can make assertions on metadata & FS
+        return origMethod.apply(helpers.prep, args)
       })
     }
   })
@@ -65,8 +70,8 @@ describe('TRELLO #484: Local sort before squash (https://trello.com/c/RcRmqymw)'
     await runActions({actions: [
       {type: 'mv', src: 'facture-boulanger.pdf', dst: 'Administratif/facture-boulanger.pdf'},
       {type: 'mv', src: 'eBooks', dst: 'Livres'},
-      // File is deleted after flush but before analysis (race condition):
-      {type: 'delete', path: 'Administratif/facture-boulanger.pdf'}
+      // XXX: File is deleted after flush but before analysis (race condition):
+      {type: 'mv', src: 'Administratif/facture-boulanger.pdf', dst: 'Administratif/facture-boulanger2.pdf'}
     ]}, helpers.local.syncDir.abspath, _.identity)
 
     // $FlowFixMe
@@ -90,12 +95,35 @@ describe('TRELLO #484: Local sort before squash (https://trello.com/c/RcRmqymw)'
       {type: 'add', path: 'Livres/Learning JavaScript/Learning JavaScript.epub', stats: {ino: 3, size: 1699609, mtime: new Date('2017-10-09T08:40:52.521Z'), ctime: new Date('2017-10-09T08:40:52.521Z')}},
       {type: 'add', path: 'Livres/Mastering Cassandra/9781782162681_CASSANDRA.pdf', stats: {ino: 5, size: 3091364, mtime: new Date('2017-10-09T08:40:52.522Z'), ctime: new Date('2017-10-09T08:40:52.522Z')}}
     ])
+    await helpers.syncAll()
+
+    // $FlowFixMe
+    await helpers.local.simulateEvents([
+      // XXX: The remaining move events are flushed
+      {type: 'unlink', path: 'Administratif/facture-boulanger.pdf'},
+      {type: 'add', path: 'Administratif/facture-boulanger2.pdf', stats: {ino: 9, size: 209045, mtime: new Date('2017-10-09T08:40:44.298Z'), ctime: new Date('2017-10-09T08:40:44.298Z')}}
+    ])
+    await helpers.syncAll()
 
     should(prepCalls).deepEqual([
-      // XXX: In this case, trashing the file is ok, but it would be a mistake
-      // in case of a move occurring during analysis...
-      {method: 'trashFileAsync', path: 'facture-boulanger.pdf'},
-      {method: 'moveFolderAsync', src: 'eBooks', dst: 'Livres'}
+      // XXX: The folder move aggregated/squashed as usual except it is applied first
+      {method: 'moveFolderAsync', src: 'eBooks', dst: 'Livres'},
+      // XXX: Moves from successive batches are correctly aggregated
+      {method: 'moveFileAsync', src: 'facture-boulanger.pdf', dst: 'Administratif/facture-boulanger2.pdf'}
+    ])
+
+    should(await helpers.remote.tree()).deepEqual([
+      '.cozy_trash/',
+      'Administratif/',
+      'Administratif/facture-boulanger2.pdf',
+      'Livres/',
+      'Livres/Learning JavaScript/',
+      'Livres/Learning JavaScript/Learning JavaScript.epub',
+      'Livres/Mastering Cassandra/',
+      'Livres/Mastering Cassandra/9781782162681_CASSANDRA.pdf',
+      'Livres/Mastering Node.js/',
+      'Livres/Mastering Node.js/book.mobi',
+      'Livres/Mastering Node.js/book.pdf'
     ])
   })
 })

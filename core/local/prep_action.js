@@ -9,11 +9,11 @@ import type { ContextualizedChokidarFSEvent } from './chokidar_event'
 
 export type PrepDeleteFolder = {type: 'PrepDeleteFolder', path: string, old: ?Metadata, ino: ?number}
 export type PrepDeleteFile = {type: 'PrepDeleteFile', path: string, old: ?Metadata, ino: ?number}
-export type PrepPutFolder = {type: 'PrepPutFolder', path: string, ino: number, stats: fs.Stats}
-export type PrepUpdateFile = {type: 'PrepUpdateFile', path: string, ino: number, stats: fs.Stats, md5sum: string}
-export type PrepAddFile = {type: 'PrepAddFile', path: string, ino: number, stats: fs.Stats, md5sum: string}
-export type PrepMoveFile = {type: 'PrepMoveFile', path: string, old: Metadata, ino: number, stats: fs.Stats, md5sum: string}
-export type PrepMoveFolder = {type: 'PrepMoveFolder', path: string, old: Metadata, ino: number, stats: fs.Stats}
+export type PrepPutFolder = {type: 'PrepPutFolder', path: string, ino: number, stats: fs.Stats, wip?: true}
+export type PrepUpdateFile = {type: 'PrepUpdateFile', path: string, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
+export type PrepAddFile = {type: 'PrepAddFile', path: string, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
+export type PrepMoveFile = {type: 'PrepMoveFile', path: string, old: Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
+export type PrepMoveFolder = {type: 'PrepMoveFolder', path: string, old: Metadata, ino: number, stats: fs.Stats, wip?: true}
 
 export type PrepAction =
   | PrepDeleteFolder
@@ -27,6 +27,8 @@ export type PrepAction =
 // TODO: Introduce specific builders?
 export const build = (type: string, path: string, opts?: {stats?: fs.Stats, md5sum?: string, old?: ?Metadata}): PrepAction => {
   const event: Object = _.assign({type, path}, opts)
+  if (event.wip == null) delete event.wip
+  if (event.md5sum == null) delete event.md5sum
   return event
 }
 
@@ -80,9 +82,9 @@ export const fromChokidar = (e: ContextualizedChokidarFSEvent) : PrepAction => {
     case 'addDir':
       return {type: 'PrepPutFolder', path: e.path, stats: e.stats, ino: e.stats.ino}
     case 'change':
-      return {type: 'PrepUpdateFile', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum}
+      return {type: 'PrepUpdateFile', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, wip: e.wip}
     case 'add':
-      return {type: 'PrepAddFile', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum}
+      return {type: 'PrepAddFile', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, wip: e.wip}
     default:
       throw new TypeError(`wrong type ${e.type}`) // @TODO FlowFixMe
   }

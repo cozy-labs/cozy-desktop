@@ -59,10 +59,10 @@ module.exports.loadFSEventFiles = (scenario) => {
           e.stats.ctime = new Date(e.stats.ctime)
         }
         if (name.indexOf('win32') !== -1 && process.platform !== 'win32') {
-          e.path = e.path.replace(/\\/g, '/')
+          e.path = e.path && e.path.replace(/\\/g, '/')
         }
         if (name.indexOf('win32') === -1 && process.platform === 'win32') {
-          e.path = e.path.replace(/\//g, '\\')
+          e.path = e.path && e.path.replace(/\//g, '\\')
         }
         return e
       })

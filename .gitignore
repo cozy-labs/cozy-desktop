@@ -13,9 +13,13 @@
 /dist
 /elm-stuff
 /core-built
+/core-cov
+
+/coverage-*
 
 node_modules
 tmp
 
 debug.log
 yarn-error.log
+*.log

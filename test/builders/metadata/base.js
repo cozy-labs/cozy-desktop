@@ -20,6 +20,11 @@ export default class BaseMetadataBuilder {
     }
   }
 
+  ino (ino: number): this {
+    this.opts.ino = ino
+    return this
+  }
+
   path (path: string): this {
     this.opts.path = path
     return this

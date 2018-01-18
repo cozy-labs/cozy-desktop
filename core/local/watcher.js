@@ -8,7 +8,6 @@ import path from 'path'
 
 import * as checksumer from './checksumer'
 import * as chokidarEvent from './chokidar_event'
-import * as prepAction from './prep_action'
 import LocalEventBuffer from './event_buffer'
 import logger from '../logger'
 import * as metadata from '../metadata'
@@ -16,12 +15,11 @@ import Pouch from '../pouch'
 import Prep from '../prep'
 import { maxDate } from '../timestamp'
 
+import sortAndSquash from './sortandsquash'
+
 import type { Checksumer } from './checksumer'
 import type { ChokidarFSEvent, ContextualizedChokidarFSEvent } from './chokidar_event'
-import type {
-  PrepAction, PrepAddFile, PrepPutFolder,
-  PrepDeleteFile, PrepDeleteFolder, PrepMoveFile, PrepMoveFolder
-} from './prep_action'
+import type { PrepAction } from './prep_action'
 import type { Metadata } from '../metadata'
 import type { Pending } from '../utils/pending' // eslint-disable-line
 import type EventEmitter from 'events'
@@ -56,6 +54,7 @@ class LocalWatcher {
   watcher: any // chokidar
   buffer: LocalEventBuffer<ChokidarFSEvent>
   ensureDirInterval: number
+  pendingActions: PrepAction[]
 
   constructor (syncPath: string, prep: Prep, pouch: Pouch, events: EventEmitter) {
     this.syncPath = syncPath
@@ -66,6 +65,7 @@ class LocalWatcher {
     const timeoutInMs = process.env.NODE_ENV === 'test' ? 1000 : 10000
     this.buffer = new LocalEventBuffer(timeoutInMs, this.onFlush)
     this.checksumer = checksumer.init()
+    this.pendingActions = []
   }
 
   ensureDirSync () {
@@ -166,7 +166,7 @@ class LocalWatcher {
     log.trace('Done with events preparation.')
 
     // to become sortAndSquash
-    const actions : PrepAction[] = this.sortAndSquash(preparedEvents)
+    const actions : PrepAction[] = sortAndSquash(preparedEvents, this.pendingActions)
 
     // TODO: Don't even acquire lock actions list is empty
     // FIXME: Shouldn't we acquire the lock before preparing the events?
@@ -231,17 +231,19 @@ class LocalWatcher {
         } catch (err) {
           // FIXME: err.code === EISDIR => keep the event? (e.g. rm foo && mkdir foo)
           if (err.code.match(/ENOENT/)) {
-            log.debug({path: e.path}, 'Skipping file as it does not exist anymore')
+            log.debug({path: e.path, ino: e.stats.ino}, 'File does not exist anymore')
+            e2.wip = true
           } else {
-            log.warn({path: e.path, err}, 'Could not compute checksum')
+            log.error({path: e.path, err}, 'Could not compute checksum')
+            return null
           }
-          return null
         }
       }
 
       if (e.type === 'addDir') {
         if (!await fs.exists(abspath)) {
-          log.debug({path: e.path}, 'Skipping dir as it does not exist anymore')
+          log.debug({path: e.path}, 'Dir does not exist anymore')
+          e2.wip = true
           return null
         }
       }
@@ -249,209 +251,6 @@ class LocalWatcher {
       return e2
     }, {concurrency: 50})
     .filter((e: ?ContextualizedChokidarFSEvent) => e != null)
-  }
-
-  sortAndSquash (events: ContextualizedChokidarFSEvent[]) : PrepAction[] {
-    const actions: PrepAction[] = [] // Perfsoptim : new Array(events.length)
-
-    // TODO: Split by type and move to appropriate modules?
-    const getInode = (e: ContextualizedChokidarFSEvent): ?number => {
-      switch (e.type) {
-        case 'add':
-        case 'addDir':
-        case 'change':
-          return e.stats.ino
-        case 'unlink':
-        case 'unlinkDir':
-          if (e.old != null) return e.old.ino
-      }
-    }
-
-    const panic = (context, description) => {
-      log.error(context, description)
-      throw new Error(description)
-    }
-
-    log.trace('Analyze events...')
-
-    const actionsByInode:Map<number, PrepAction> = new Map()
-    const getActionByInode = (e) => {
-      const ino = getInode(e)
-      if (ino) return actionsByInode.get(ino)
-      else return null
-    }
-    const getAndRemove = getActionByInode
-    const pushAction = (a: PrepAction) => {
-      if (a.ino) actionsByInode.set(a.ino, a)
-      else actions.push(a)
-    }
-
-    for (let e: ContextualizedChokidarFSEvent of events) {
-      try {
-        switch (e.type) {
-          case 'add':
-            {
-              const moveAction: ?PrepMoveFile = prepAction.maybeMoveFile(getActionByInode(e))
-              if (moveAction) {
-                panic({path: e.path, moveAction, event: e},
-                  'We should not have both move and add actions since ' +
-                  'checksumless adds and inode-less unlink events are dropped')
-              }
-
-              const unlinkAction: ?PrepDeleteFile = prepAction.maybeDeleteFile(getAndRemove(e))
-              if (unlinkAction) {
-                // New move found
-                log.trace({oldpath: unlinkAction.path, path: e.path}, 'move')
-                pushAction(prepAction.build('PrepMoveFile', e.path, {stats: e.stats, md5sum: e.md5sum, old: unlinkAction.old, ino: unlinkAction.ino}))
-              } else {
-                pushAction(prepAction.fromChokidar(e))
-              }
-            }
-            break
-          case 'addDir':
-            {
-              const moveAction: ?PrepMoveFolder = prepAction.maybeMoveFolder(getActionByInode(e))
-              if (moveAction) {
-                panic({path: e.path, moveAction, event: e},
-                  'We should not have both move and addDir actions since ' +
-                  'non-existing addDir and inode-less unlinkDir events are dropped')
-              }
-
-              const unlinkAction: ?PrepDeleteFolder = prepAction.maybeDeleteFolder(getAndRemove(e))
-              if (unlinkAction) {
-                // New move found
-                log.trace({oldpath: unlinkAction.path, path: e.path}, 'moveFolder')
-                pushAction(prepAction.build('PrepMoveFolder', e.path, {stats: e.stats, old: unlinkAction.old, ino: unlinkAction.ino}))
-              } else {
-                pushAction(prepAction.fromChokidar(e))
-              }
-            }
-            break
-          case 'change':
-            pushAction(prepAction.fromChokidar(e))
-            break
-          case 'unlink':
-            {
-              const moveAction: ?PrepMoveFile = prepAction.maybeMoveFile(getAndRemove(e))
-              if (moveAction) {
-                panic({path: e.path, moveAction, event: e},
-                  'We should not have both move and unlink actions since ' +
-                  'checksumless adds and inode-less unlink events are dropped')
-              }
-
-              const addAction: ?PrepAddFile = prepAction.maybeAddFile(getAndRemove(e))
-              if (addAction) {
-                // New move found
-                log.trace({oldpath: e.path, path: addAction.path}, 'move')
-                pushAction(prepAction.build('PrepMoveFile', addAction.path, {
-                  stats: addAction.stats,
-                  md5sum: addAction.md5sum,
-                  old: e.old,
-                  ino: addAction.ino
-                }))
-              } else if (getInode(e)) {
-                pushAction(prepAction.fromChokidar(e))
-              } // else skip
-            }
-            break
-          case 'unlinkDir':
-            {
-              const moveAction: ?PrepMoveFolder = prepAction.maybeMoveFolder(getAndRemove(e))
-              if (moveAction) {
-                panic({path: e.path, moveAction, event: e},
-                  'We should not have both move and unlinkDir actions since ' +
-                  'non-existing addDir and inode-less unlinkDir events are dropped')
-              }
-
-              const addAction: ?PrepPutFolder = prepAction.maybePutFolder(getAndRemove(e))
-              if (addAction) {
-                // New move found
-                log.trace({oldpath: e.path, path: addAction.path}, 'moveFolder')
-                pushAction(prepAction.build('PrepMoveFolder', addAction.path, {
-                  stats: addAction.stats,
-                  old: e.old,
-                  ino: addAction.ino
-                }))
-              } else if (getInode(e)) {
-                pushAction(prepAction.fromChokidar(e))
-              } // else skip
-            }
-            break
-          default:
-            throw new TypeError(`Unknown event type: ${e.type}`)
-        }
-      } catch (err) {
-        log.error({err, path: e.path})
-        throw err
-      }
-      if (process.env.DEBUG) log.trace({currentEvent: e, actions})
-    }
-
-    log.trace('Flatten actions map...')
-
-    for (let a of actionsByInode.values()) actions.push(a)
-
-    log.trace('Sort actions before squash...')
-
-    actions.sort((a, b) => {
-      if (a.type === 'PrepMoveFolder' || a.type === 'PrepMoveFile') {
-        if (b.type === 'PrepMoveFolder' || b.type === 'PrepMoveFile') {
-          if (a.path < b.path) return -1
-          else if (a.path > b.path) return 1
-          else return 0
-        } else return -1
-      } else if (b.type === 'PrepMoveFolder' || b.type === 'PrepMoveFile') {
-        return 1
-      } else {
-        return 0
-      }
-    })
-
-    log.trace('Squash moves...')
-
-    for (let i = 0; i < actions.length; i++) {
-      let a = actions[i]
-
-      if (a.type !== 'PrepMoveFolder' && a.type !== 'PrepMoveFile') break
-      for (let j = i + 1; j < actions.length; j++) {
-        let b = actions[j]
-        if (b.type !== 'PrepMoveFolder' && b.type !== 'PrepMoveFile') break
-
-        // inline of PrepAction.isChildMove
-        if (a.type === 'PrepMoveFolder' &&
-        b.path.indexOf(a.path + path.sep) === 0 &&
-        a.old && b.old &&
-        b.old.path.indexOf(a.old.path + path.sep) === 0) {
-          log.trace({oldpath: b.old.path, path: b.path}, 'squashed')
-          actions.splice(j--, 1)
-        }
-      }
-    }
-
-    log.trace('Final sort...')
-
-    const sorter = (a, b) => {
-      // if one action is a child of another, it takes priority
-      if (prepAction.isChildAdd(a, b)) return -1
-      if (prepAction.isChildDelete(b, a)) return -1
-      if (prepAction.isChildAdd(b, a)) return 1
-      if (prepAction.isChildDelete(a, b)) return 1
-
-      // otherwise, order by add path
-      if (prepAction.lower(prepAction.addPath(a), prepAction.addPath(b))) return -1
-      if (prepAction.lower(prepAction.addPath(b), prepAction.addPath(a))) return 1
-
-      // if there isnt 2 add paths, sort by del path
-      if (prepAction.lower(prepAction.delPath(b), prepAction.delPath(a))) return -1
-
-      return 1
-    }
-
-    actions.sort(sorter)
-
-    log.debug(`Identified ${actions.length} change(s).`)
-
-    return actions
   }
 
   // @TODO inline this.onXXX in this function
