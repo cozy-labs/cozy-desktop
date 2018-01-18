@@ -87,6 +87,8 @@ module.exports = class WindowManager {
       }
     })
 
+    this.win.setVisibleOnAllWorkspaces(true)
+
     // noMenu
     this.win.setMenu(null)
     this.win.setAutoHideMenuBar(true)
