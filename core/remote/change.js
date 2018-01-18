@@ -82,8 +82,12 @@ export const isChildMove = (a: Change, b: Change): boolean %checks => {
         (b.type === 'FolderMoved' || b.type === 'FileMoved')
 }
 
+/*     was           doc
+ a    /a     ->    /a2
+ b    /a/b   ->    /a2/b
+*/
 export const isOnlyChildMove = (a: FolderMoved, b: FileMoved|FolderMoved): boolean %checks => {
-  return isChildMove(a, b) && a.doc.path.replace(b.doc.path, '') === a.was.path.replace(b.was.path, '')
+  return isChildMove(a, b) && b.doc.path.replace(a.doc.path, '') === b.was.path.replace(a.was.path, '')
 }
 
 export const applyMoveToPath = (a: FolderMoved, p: string): string => {
