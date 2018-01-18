@@ -1,0 +1,75 @@
+[
+  {
+    "breakpoints": [0]
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent/src/dir/subdir"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent/src/dir/empty-subdir"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent/src/dir"
+  },
+  {
+    "type": "addDir",
+    "path": "parent/dst/dir",
+    "stats": {
+      "ino": 5,
+      "size": 4096,
+      "mtime": "2017-11-07T13:48:01.886Z",
+      "ctime": "2017-11-07T13:48:03.902Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "parent/dst/dir/empty-subdir",
+    "stats": {
+      "ino": 6,
+      "size": 4096,
+      "mtime": "2017-11-07T13:48:01.886Z",
+      "ctime": "2017-11-07T13:48:01.886Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "parent/dst/dir/subdir",
+    "stats": {
+      "ino": 7,
+      "size": 4096,
+      "mtime": "2017-11-07T13:48:03.906Z",
+      "ctime": "2017-11-07T13:48:03.906Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "parent/src/dir/subdir/file"
+  },
+  {
+    "type": "unlink",
+    "path": "parent/src/dir/subdir/file2"
+  },
+  {
+    "type": "add",
+    "path": "parent/dst/dir/subdir/filerenamed2",
+    "stats": {
+      "ino": 9,
+      "size": 8,
+      "mtime": "2017-11-07T13:48:01.890Z",
+      "ctime": "2017-11-07T13:48:03.906Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "parent/dst/dir/subdir/filerenamed",
+    "stats": {
+      "ino": 8,
+      "size": 8,
+      "mtime": "2017-11-07T13:48:01.886Z",
+      "ctime": "2017-11-07T13:48:03.902Z"
+    }
+  }
+]

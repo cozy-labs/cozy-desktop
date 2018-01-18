@@ -8,6 +8,7 @@ export default class BaseMetadataBuilder {
   pouch: ?Pouch
   opts: {
     path: string,
+    ino?: number,
     trashed?: true,
     sides: MetadataSidesInfo
   }

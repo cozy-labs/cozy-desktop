@@ -278,6 +278,10 @@ class LocalWatcher {
             await this.onAddFile(a.path, a.stats, a.md5sum)
             break
           case 'PrepMoveFile':
+            if (a.needRefetch) {
+              a.old = await this.pouch.db.get(metadata.id(a.old.path))
+              a.old.childMove = false
+            }
             await this.onMoveFile(a.path, a.stats, a.md5sum, a.old)
             break
           case 'PrepMoveFolder':
@@ -382,7 +386,7 @@ class LocalWatcher {
     return this.prep.addFileAsync(SIDE, doc).catch(logError)
   }
 
-  onMoveFile (filePath: string, stats: fs.Stats, md5sum: string, old: Metadata) {
+  async onMoveFile (filePath: string, stats: fs.Stats, md5sum: string, old: Metadata) {
     const logError = (err) => log.error({err, path: filePath})
     const doc = this.createDoc(filePath, stats, md5sum)
     log.info({path: filePath}, `was moved from ${old.path}`)
