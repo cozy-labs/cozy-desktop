@@ -173,7 +173,7 @@ class App {
     const args = {
       mode: 'from',
       to: [
-        { name: 'Support', email: 'log-desktop@cozycloud.cc' }
+        { name: 'Support', email: 'contact@cozycloud.cc' }
       ],
       subject: 'Ask support for cozy-desktop',
       parts: [
