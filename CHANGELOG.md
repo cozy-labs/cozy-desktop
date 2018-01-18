@@ -1,3 +1,28 @@
+## 3.4.2-beta.1 - 2017-01-18
+
+Improvements for all users:
+
+- It was possible in some specific cases to mess up the synchronization by
+  moving around files & folders during the analysis phase. This is fixed now.
+  Feel free to move everything around anytime :)
+- In some cases, moving then immediately deleting a file was handled as 2
+  distinct actions. The file is now directly detected as deleted.
+- The Cozy address page shown during onboarding should now be clearer for people
+  not familiar with URL.
+- When disconnecting then reconnecting to your Cozy, you could eventually see
+  your old files for a few seconds in the dashboard. The fix was published in
+  an old minor release, but not properly integrated to the subsequent releases.
+  This is fixed now.
+
+Improvements for support team & developers:
+
+- Support requests from the app are now sent to the usual support email.
+- Code coverage is back
+
+See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.4.1 - 2017-01-09
 
 See [3.4.1-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.4.1-beta.1)
