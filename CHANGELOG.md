@@ -1,3 +1,19 @@
+## 3.4.2-beta.3 - 2017-01-19
+
+Improvements for all users:
+
+- The app should now log and recover from remote files with an invalid parent
+  directory. This issue was happening rarely and only on old Cozy instances.
+- Showing up the popover near the systray could fail in rare cases for unknown
+  reasons. We temporarily fixed the issue by falling back to showing the popover
+  in the middle of the screen. Please send us a support request from the app in
+  case it happens to you, so we can get all the information we were missing to
+  fix it for good.
+
+See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.4.2-beta.2 - 2017-01-18
 
 Improvements for all users:
