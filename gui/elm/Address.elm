@@ -54,10 +54,10 @@ dropAppName address =
     if String.endsWith ".mycozy.cloud" address then
         case String.split "-" address of
             [] ->
-                ""
+                Debug.crash "String.split \"" ++ address ++ "\" cannot be empty"
 
             [ instanceName ] ->
-                instanceName ++ ".mycozy.cloud"
+                instanceName
 
             instanceName :: _ ->
                 instanceName ++ ".mycozy.cloud"
