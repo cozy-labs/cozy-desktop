@@ -56,11 +56,13 @@ dropAppName address =
             [] ->
                 ""
 
-            [ instanceName ] ->
-                instanceName ++ ".mycozy.cloud"
+            [ wholeaddress ] ->
+                wholeaddress
 
             instanceName :: _ ->
                 instanceName ++ ".mycozy.cloud"
+    else if not (String.contains "." address) then
+        address ++ ".mycozy.cloud"
     else
         address
 
@@ -139,6 +141,7 @@ view helpers model =
                         , class "wizard__address"
                         , type_ "text"
                         , value model.address
+                        , disabled model.busy
                         , onInput FillAddress
                         , onEnter RegisterRemote
                         , onBlur CorrectAddress

@@ -101,7 +101,7 @@ module.exports = class OnboardingWM extends WindowManager {
         },
         (err) => {
           log.error(err)
-          if (err.code.match(/PROXY/)) {
+          if (err.code && err.code.match(/PROXY/)) {
             session.defaultSession.resolveProxy(cozyUrl, (p) => {
               event.sender.send('registration-error', translate('Address Proxy issue') + p)
             })
