@@ -1,3 +1,18 @@
+## 3.4.2-beta.4 - 2017-01-19
+
+Improvements for all users:
+
+- The onboarding includes a few more improvements for people not familiar with URL.
+- We fixed an issue that prevented disconnecting the app from the Cozy.
+
+Improvements for Windows users:
+
+- Files checksum computation will be retried a few times when file is busy.
+
+See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.4.2-beta.3 - 2017-01-19
 
 Improvements for all users:
