@@ -55,7 +55,16 @@ module.exports = class TrayWM extends WindowManager {
     } else {
       pos = (process.platform === 'win32') ? 'trayBottomCenter' : 'trayCenter'
     }
-    this.positioner.move(pos, trayPos)
+    // FIXME: electron-positioner may throw `TypeError: Error processing
+    // argument at index 0, conversion failure from NaN`. Not sure whether it's
+    // a bug in cozy-desktop, electron-positioner or electron.
+    // Catch error, log it & show the popover wherever possible thus user should
+    // report the issue with useful logs but can still use the app.
+    try {
+      this.positioner.move(pos, trayPos)
+    } catch (err) {
+      log.error({err}, `electron-positioner#move(pos=${pos}, trayPos=${trayPos})`)
+    }
     this.win.show()
 
     return Promise.resolve(this.win)
