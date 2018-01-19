@@ -103,8 +103,8 @@ export default class RemoteCozy {
         // File docs returned by the cozy-stack don't have a path
         const parent = fileParentsById[doc.dir_id]
 
-        if (parent.error) {
-          log.error(`Could not retrieve path of file ${doc._id}: parent dir ${doc.dir_id}: ${parent.error}`)
+        if (parent.error || parent.doc == null || parent.doc.path == null) {
+          log.error({doc, parent}, 'Could not compute doc path from parent')
           continue
         } else {
           doc.path = path.posix.join(parent.doc.path, doc.name)
