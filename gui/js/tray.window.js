@@ -118,7 +118,6 @@ module.exports = class TrayWM extends WindowManager {
     }
     this.desktop.stopSync()
       .then(() => this.desktop.removeRemote())
-      .then(() => this.app.lastFiles.clean())
       .then(() => log.info('removed'))
       .then(() => this.doRestart())
       .catch((err) => log.error(err))
