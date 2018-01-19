@@ -57,7 +57,7 @@ dropAppName address =
                 Debug.crash "String.split \"" ++ address ++ "\" cannot be empty"
 
             [ instanceName ] ->
-                instanceName ++ ".mycozy.cloud"
+                instanceName
 
             instanceName :: _ ->
                 instanceName ++ ".mycozy.cloud"
