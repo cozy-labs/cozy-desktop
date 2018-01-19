@@ -72,6 +72,7 @@
     "clean": "rimraf core/lib/ core/tmp/ gui/elm.js gui/app.css* gui/dist/",
     "lint": "npm run lint:flow & npm run lint:eslint && npm run lint:gui",
     "lint:flow": "flow status --quiet --show-all-errors",
+    "lint:elm": "elm-format --validate gui/elm test/elm",
     "lint:eslint": "eslint './core/**/*.js'",
     "lint:gui": "standard --verbose gui/js/**.js gui/main.js gui/ports.js",
     "docker:exec": "docker exec -it cozy-desktop-stack"
@@ -135,6 +136,7 @@
     "electron-builder": "^19.48.3",
     "electron-mocha": "^3.4.2",
     "elm": "^0.18.0",
+    "elm-format": "^0.6.1-alpha",
     "elm-test": "^0.18.12",
     "elm-upgrade": "^0.18.7",
     "env-cmd": "^5.0.0",
