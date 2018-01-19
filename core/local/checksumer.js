@@ -23,6 +23,15 @@ const computeChecksum = (filePath: string, callback: Callback) => {
   stream.pipe(checksum)
 }
 
+const retryComputeChecksum = (filePath: string, callback: Callback) => {
+  async.retry({
+    times: 5,
+    // retry after 1, 2, 4, 8, 16 seconds
+    interval: (count) => 500 * Math.pow(2, count),
+    errorFilter: err => err.code == 'EBUSY'
+  }, (cb) => { computeChecksum(filePath, cb) }, callback)
+}
+
 export type Checksumer = {
   push: (filePath: string) => Promise<string>,
   kill: () => void
@@ -32,7 +41,7 @@ export const init = (): Checksumer => {
   // Use a queue for checksums to avoid computing many checksums at the
   // same time. It's better for performance (hard disk are faster with
   // linear readings).
-  const queue = Promise.promisifyAll(async.queue(computeChecksum))
+  const queue = Promise.promisifyAll(async.queue(retryComputeChecksum))
 
   return {
     push (filePath: string): Promise<string> {
