@@ -3,6 +3,7 @@
 <PROJECT_ROOT>/coverage/.*
 <PROJECT_ROOT>/gui/.*
 <PROJECT_ROOT>/node_modules/config-chain/test/broken.json
+<PROJECT_ROOT>/node_modules/elm-test/.*
 <PROJECT_ROOT>/node_modules/jsverify/.*
 
 [include]

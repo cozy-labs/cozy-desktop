@@ -12,6 +12,7 @@
 /gui/elm.js
 /dist
 /elm-stuff
+/test/elm/elm-stuff
 /core-built
 /core-cov
 
