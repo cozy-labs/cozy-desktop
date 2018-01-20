@@ -70,7 +70,7 @@
     "test:unit:coverage": "yarn mocha:coverage test/unit/",
     "prebuild": "yarn clean",
     "clean": "rimraf core/lib/ core/tmp/ gui/elm.js gui/app.css* gui/dist/",
-    "lint": "npm run lint:flow & npm run lint:eslint && npm run lint:gui",
+    "lint": "npm run lint:flow && npm run lint:eslint && npm run lint:gui",
     "lint:flow": "flow status --quiet --show-all-errors",
     "lint:elm": "elm-format --validate gui/elm test/elm",
     "lint:eslint": "eslint './core/**/*.js'",
