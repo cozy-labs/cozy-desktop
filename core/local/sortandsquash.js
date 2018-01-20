@@ -21,12 +21,24 @@ log.chokidar = log.child({
 
 export default function sortAndSquash (events: ContextualizedChokidarFSEvent[], pendingActions: PrepAction[])
 : PrepAction[] {
+  const actions: PrepAction[] = analyseEvents(events, pendingActions)
+  sortBeforeSquash(actions)
+  squashMoves(actions)
+  separatePendingActions(actions, pendingActions)
+  finalSort(actions)
+
+  log.debug(`Identified ${actions.length} change(s).`)
+  return actions
+}
+
+const panic = (context, description) => {
+  log.error(context, description)
+  throw new Error(description)
+}
+
+function analyseEvents (events: ContextualizedChokidarFSEvent[], pendingActions: PrepAction[]): PrepAction[] {
   // OPTIMIZE: new Array(events.length)
   const actions: PrepAction[] = []
-  const panic = (context, description) => {
-    log.error(context, description)
-    throw new Error(description)
-  }
   const actionsByInode:Map<number, PrepAction> = new Map()
   const actionsByPath:Map<string, PrepAction> = new Map()
   const getActionByInode = (e) => {
@@ -193,11 +205,14 @@ export default function sortAndSquash (events: ContextualizedChokidarFSEvent[], 
   }
 
   log.trace('Flatten actions map...')
-
   for (let a of actionsByInode.values()) actions.push(a)
 
-  log.trace('Sort actions before squash...')
+  return actions
+}
 
+// TODO: Rename according to the sort logic
+function sortBeforeSquash (actions: PrepAction[]) {
+  log.trace('Sort actions before squash...')
   actions.sort((a, b) => {
     if (a.type === 'PrepMoveFolder' || a.type === 'PrepMoveFile') {
       if (b.type === 'PrepMoveFolder' || b.type === 'PrepMoveFile') {
@@ -211,7 +226,9 @@ export default function sortAndSquash (events: ContextualizedChokidarFSEvent[], 
       return 0
     }
   })
+}
 
+function squashMoves (actions: PrepAction[]) {
   log.trace('Squash moves...')
 
   for (let i = 0; i < actions.length; i++) {
@@ -239,7 +256,9 @@ export default function sortAndSquash (events: ContextualizedChokidarFSEvent[], 
       }
     }
   }
+}
 
+function separatePendingActions (actions: PrepAction[], pendingActions: PrepAction[]) {
   log.trace('Reserve actions in progress for next flush...')
 
   // TODO: Use _.partition()?
@@ -260,32 +279,31 @@ export default function sortAndSquash (events: ContextualizedChokidarFSEvent[], 
       actions.splice(i, 1)
     }
   }
+}
 
+// TODO: Rename according to the sort logic
+const finalSorter = (a: PrepAction, b: PrepAction) => {
+  if (prepAction.childOf(prepAction.addPath(a), prepAction.delPath(b))) return -1
+  if (prepAction.childOf(prepAction.addPath(b), prepAction.delPath(a))) return 1
+
+  // if one action is a child of another, it takes priority
+  if (prepAction.isChildAdd(a, b)) return -1
+  if (prepAction.isChildDelete(b, a)) return -1
+  if (prepAction.isChildAdd(b, a)) return 1
+  if (prepAction.isChildDelete(a, b)) return 1
+
+  // otherwise, order by add path
+  if (prepAction.lower(prepAction.addPath(a), prepAction.addPath(b))) return -1
+  if (prepAction.lower(prepAction.addPath(b), prepAction.addPath(a))) return 1
+
+  // if there isnt 2 add paths, sort by del path
+  if (prepAction.lower(prepAction.delPath(b), prepAction.delPath(a))) return -1
+
+  return 1
+}
+
+// TODO: Rename according to the sort logic
+function finalSort (actions: PrepAction[]) {
   log.trace('Final sort...')
-
-  const sorter = (a, b) => {
-    if (prepAction.childOf(prepAction.addPath(a), prepAction.delPath(b))) return -1
-    if (prepAction.childOf(prepAction.addPath(b), prepAction.delPath(a))) return 1
-
-    // if one action is a child of another, it takes priority
-    if (prepAction.isChildAdd(a, b)) return -1
-    if (prepAction.isChildDelete(b, a)) return -1
-    if (prepAction.isChildAdd(b, a)) return 1
-    if (prepAction.isChildDelete(a, b)) return 1
-
-    // otherwise, order by add path
-    if (prepAction.lower(prepAction.addPath(a), prepAction.addPath(b))) return -1
-    if (prepAction.lower(prepAction.addPath(b), prepAction.addPath(a))) return 1
-
-    // if there isnt 2 add paths, sort by del path
-    if (prepAction.lower(prepAction.delPath(b), prepAction.delPath(a))) return -1
-
-    return 1
-  }
-
-  actions.sort(sorter)
-
-  log.debug(`Identified ${actions.length} change(s).`)
-
-  return actions
+  actions.sort(finalSorter)
 }
