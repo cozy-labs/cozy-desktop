@@ -109,4 +109,3 @@ after_success:
 after_failure:
     - $CXX --version
     - netstat -lntp
-    - ls -alR node_modules/leveldown
