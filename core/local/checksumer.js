@@ -28,7 +28,7 @@ const retryComputeChecksum = (filePath: string, callback: Callback) => {
     times: 5,
     // retry after 1, 2, 4, 8, 16 seconds
     interval: (count) => 500 * Math.pow(2, count),
-    errorFilter: err => err.code == 'EBUSY'
+    errorFilter: err => err.code === 'EBUSY'
   }, (cb) => { computeChecksum(filePath, cb) }, callback)
 }
 

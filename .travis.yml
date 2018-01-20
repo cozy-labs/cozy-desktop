@@ -87,7 +87,7 @@ script:
     - travis_retry yarn
     - yarn build
     - yarn lint
-    - yarn test:unit -- --timeout $MOCHA_TIMEOUT
+    - yarn test:unit:coverage -- --timeout $MOCHA_TIMEOUT
     - yarn test:elm
     - yarn test:integration -- --timeout $MOCHA_TIMEOUT
     - |
@@ -104,9 +104,8 @@ script:
       fi
 
 after_success:
-    # - bash <(curl -s https://codecov.io/bash)
+    - bash <(curl -s https://codecov.io/bash)
 
 after_failure:
     - $CXX --version
     - netstat -lntp
-    - ls -alR node_modules/leveldown
