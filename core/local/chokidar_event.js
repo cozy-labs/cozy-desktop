@@ -35,3 +35,15 @@ export type ContextualizedChokidarFSEvent =
   | ContextualizedChokidarChange
   | ContextualizedChokidarUnlink
   | ContextualizedChokidarUnlinkDir
+
+export const getInode = (e: ContextualizedChokidarFSEvent): ?number => {
+  switch (e.type) {
+    case 'add':
+    case 'addDir':
+    case 'change':
+      return e.stats.ino
+    case 'unlink':
+    case 'unlinkDir':
+      if (e.old != null) return e.old.ino
+  }
+}

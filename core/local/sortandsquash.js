@@ -2,6 +2,7 @@
 
 import path from 'path'
 
+import { getInode } from './chokidar_event'
 import * as prepAction from './prep_action'
 import logger from '../logger'
 
@@ -22,18 +23,6 @@ export default function sortAndSquash (events: ContextualizedChokidarFSEvent[], 
 : PrepAction[] {
   // OPTIMIZE: new Array(events.length)
   const actions: PrepAction[] = []
-  const getInode = (e: ContextualizedChokidarFSEvent): ?number => {
-    // TODO: Split by type and move to appropriate modules?
-    switch (e.type) {
-      case 'add':
-      case 'addDir':
-      case 'change':
-        return e.stats.ino
-      case 'unlink':
-      case 'unlinkDir':
-        if (e.old != null) return e.old.ino
-    }
-  }
   const panic = (context, description) => {
     log.error(context, description)
     throw new Error(description)
