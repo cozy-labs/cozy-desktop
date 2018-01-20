@@ -10,7 +10,7 @@ function Istanbul(runner) {
 
     coverageMap.merge(global.__coverage__ || {});
 
-    mainReporter.addAll(['text', 'html']);
+    mainReporter.addAll(['text', 'html', 'lcov']);
     mainReporter.write(coverageMap, {});
   });
 }
