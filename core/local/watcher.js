@@ -54,7 +54,7 @@ class LocalWatcher {
   checksumer: Checksumer
   watcher: any // chokidar
   buffer: LocalEventBuffer<ChokidarEvent>
-  ensureDirInterval: number
+  ensureDirInterval: *
   pendingActions: PrepAction[]
 
   constructor (syncPath: string, prep: Prep, pouch: Pouch, events: EventEmitter) {

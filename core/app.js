@@ -220,6 +220,7 @@ class App {
   // Stop the synchronisation
   stopSync () {
     if (!this.sync) {
+      // $FlowFixMe
       return Promise.resolve()
     }
     return this.sync.stop()
