@@ -18,7 +18,7 @@ import { maxDate } from '../timestamp'
 import sortAndSquash from './sortandsquash'
 
 import type { Checksumer } from './checksumer'
-import type { ChokidarFSEvent } from './chokidar_event'
+import type { ChokidarEvent } from './chokidar_event'
 import type { LocalEvent } from './event'
 import type { PrepAction } from './prep_action'
 import type { Metadata } from '../metadata'
@@ -53,7 +53,7 @@ class LocalWatcher {
   initialScan: ?InitialScan
   checksumer: Checksumer
   watcher: any // chokidar
-  buffer: LocalEventBuffer<ChokidarFSEvent>
+  buffer: LocalEventBuffer<ChokidarEvent>
   ensureDirInterval: number
   pendingActions: PrepAction[]
 
@@ -141,7 +141,7 @@ class LocalWatcher {
 
   // TODO: Start checksuming as soon as an add/change event is buffered
   // TODO: Put flushed event batches in a queue
-  async onFlush (events: ChokidarFSEvent[]) {
+  async onFlush (events: ChokidarEvent[]) {
     log.debug(`Flushed ${events.length} events`)
 
     this.events.emit('buffering-end')
@@ -187,7 +187,7 @@ class LocalWatcher {
     }
   }
 
-  async prependOfflineUnlinkEvents (events: ChokidarFSEvent[], initialScan: InitialScan) {
+  async prependOfflineUnlinkEvents (events: ChokidarEvent[], initialScan: InitialScan) {
     // Try to detect removed files & folders
     const docs = await this.pouch.byRecursivePathAsync('')
     for (const doc of docs) {
@@ -201,8 +201,8 @@ class LocalWatcher {
     }
   }
 
-  async prepareEvents (events: ChokidarFSEvent[]) : Promise<LocalEvent[]> {
-    const oldMetadata = async (e: ChokidarFSEvent): Promise<?Metadata> => {
+  async prepareEvents (events: ChokidarEvent[]) : Promise<LocalEvent[]> {
+    const oldMetadata = async (e: ChokidarEvent): Promise<?Metadata> => {
       if (e.old) return e.old
       if (e.type === 'unlink' || e.type === 'unlinkDir') {
         try {
@@ -218,7 +218,7 @@ class LocalWatcher {
     //   - db.allDocs(keys: events.pick(path))
     //   - process.exec('md5sum ' + paths.join(' '))
 
-    return Promise.map(events, async (e: ChokidarFSEvent): Promise<?LocalEvent> => {
+    return Promise.map(events, async (e: ChokidarEvent): Promise<?LocalEvent> => {
       const abspath = path.join(this.syncPath, e.path)
 
       const e2: Object = {

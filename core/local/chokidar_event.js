@@ -8,14 +8,14 @@ export type ChokidarChange = {type: 'change', path: string, stats: fs.Stats}
 export type ChokidarUnlink = {type: 'unlink', path: string}
 export type ChokidarUnlinkDir = {type: 'unlinkDir', path: string}
 
-export type ChokidarFSEvent =
+export type ChokidarEvent =
   | ChokidarAdd
   | ChokidarAddDir
   | ChokidarChange
   | ChokidarUnlink
   | ChokidarUnlinkDir
 
-export const build = (type: string, path?: string, stats?: fs.Stats): ChokidarFSEvent => {
+export const build = (type: string, path?: string, stats?: fs.Stats): ChokidarEvent => {
   const event: Object = {type}
   if (path != null) event.path = path
   if (stats != null) event.stats = stats
