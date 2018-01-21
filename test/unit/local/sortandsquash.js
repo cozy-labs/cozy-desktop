@@ -7,7 +7,7 @@ import sortAndSquash from '../../../core/local/sortandsquash'
 import MetadataBuilders from '../../builders/metadata'
 
 import type { LocalEvent } from '../../../core/local/event'
-import type { PrepAction } from '../../../core/local/prep_action'
+import type { LocalChange } from '../../../core/local/change'
 import type { Metadata } from '../../../core/metadata'
 
 describe('SortAndSquash Unit Tests', function () {
@@ -17,8 +17,8 @@ describe('SortAndSquash Unit Tests', function () {
 
   it('do not break on empty array', () => {
     const events: LocalEvent[] = []
-    const pendingActions: PrepAction[] = []
-    const result: PrepAction[] = sortAndSquash(events, pendingActions)
+    const pendingChanges: LocalChange[] = []
+    const result: LocalChange[] = sortAndSquash(events, pendingChanges)
     should(result).have.length(0)
   })
 
@@ -30,23 +30,23 @@ describe('SortAndSquash Unit Tests', function () {
       {type: 'unlink', path: 'src', old},
       {type: 'add', path: 'dst2', stats, md5sum: 'yolo'}
     ]
-    const pendingActions: PrepAction[] = []
+    const pendingChanges: LocalChange[] = []
 
-    should(sortAndSquash(events, pendingActions)).deepEqual([{
-      type: 'PrepMoveFile',
+    should(sortAndSquash(events, pendingChanges)).deepEqual([{
+      type: 'LocalFileMove',
       path: 'dst2',
       ino: 1,
       md5sum: 'yolo',
       stats,
       old
     }])
-    should(pendingActions).deepEqual([])
+    should(pendingChanges).deepEqual([])
 
     const nextEvents: LocalEvent[] = [
       {type: 'unlink', path: 'dst1'}
     ]
-    should(sortAndSquash(nextEvents, pendingActions)).deepEqual([])
-    should(pendingActions).deepEqual([])
+    should(sortAndSquash(nextEvents, pendingChanges)).deepEqual([])
+    should(pendingChanges).deepEqual([])
   })
 
   it('handles unlink+add', () => {
@@ -56,17 +56,17 @@ describe('SortAndSquash Unit Tests', function () {
       {type: 'unlink', path: 'src', old},
       {type: 'add', path: 'dst', stats, md5sum: 'yolo'}
     ]
-    const pendingActions: PrepAction[] = []
+    const pendingChanges: LocalChange[] = []
 
-    should(sortAndSquash(events, pendingActions)).deepEqual([{
-      type: 'PrepMoveFile',
+    should(sortAndSquash(events, pendingChanges)).deepEqual([{
+      type: 'LocalFileMove',
       path: 'dst',
       md5sum: 'yolo',
       ino: 1,
       stats,
       old
     }])
-    should(pendingActions).deepEqual([])
+    should(pendingChanges).deepEqual([])
   })
 
   it('handles unlinkDir+addDir', () => {
@@ -76,16 +76,16 @@ describe('SortAndSquash Unit Tests', function () {
       {type: 'unlinkDir', path: 'src', old},
       {type: 'addDir', path: 'dst', stats}
     ]
-    const pendingActions: PrepAction[] = []
+    const pendingChanges: LocalChange[] = []
 
-    should(sortAndSquash(events, pendingActions)).deepEqual([{
-      type: 'PrepMoveFolder',
+    should(sortAndSquash(events, pendingChanges)).deepEqual([{
+      type: 'LocalDirMove',
       path: 'dst',
       ino: 1,
       stats,
       old
     }])
-    should(pendingActions).deepEqual([])
+    should(pendingChanges).deepEqual([])
   })
 
   it('handles partial successive moves (add+unlink+add, then unlink later)', () => {
@@ -95,11 +95,11 @@ describe('SortAndSquash Unit Tests', function () {
       {type: 'unlink', path: 'src', old},
       {type: 'add', path: 'dst1', stats, wip: true}
     ]
-    const pendingActions: PrepAction[] = []
+    const pendingChanges: LocalChange[] = []
 
-    should(sortAndSquash(events, pendingActions)).deepEqual([])
-    should(pendingActions).deepEqual([{
-      type: 'PrepMoveFile',
+    should(sortAndSquash(events, pendingChanges)).deepEqual([])
+    should(pendingChanges).deepEqual([{
+      type: 'LocalFileMove',
       path: 'dst1',
       ino: 1,
       stats,
@@ -110,13 +110,13 @@ describe('SortAndSquash Unit Tests', function () {
     const nextEvents: LocalEvent[] = [
       {type: 'unlink', path: 'dst1'}
     ]
-    should(sortAndSquash(nextEvents, pendingActions)).deepEqual([{
-      type: 'PrepDeleteFile',
+    should(sortAndSquash(nextEvents, pendingChanges)).deepEqual([{
+      type: 'LocalFileDeletion',
       ino: 1,
       path: 'src',
       old
     }])
-    should(pendingActions).deepEqual([])
+    should(pendingChanges).deepEqual([])
   })
 
   it('handles addDir', () => {
@@ -124,15 +124,15 @@ describe('SortAndSquash Unit Tests', function () {
     const events: LocalEvent[] = [
       {type: 'addDir', path: 'foo', stats}
     ]
-    const pendingActions: PrepAction[] = []
+    const pendingChanges: LocalChange[] = []
 
-    should(sortAndSquash(events, pendingActions)).deepEqual([{
-      type: 'PrepPutFolder',
+    should(sortAndSquash(events, pendingChanges)).deepEqual([{
+      type: 'LocalDirAddition',
       path: 'foo',
       ino: 1,
       stats
     }])
-    should(pendingActions).deepEqual([])
+    should(pendingChanges).deepEqual([])
   })
 
   it('handles addDir+unlinkDir', () => {
@@ -142,16 +142,16 @@ describe('SortAndSquash Unit Tests', function () {
       {type: 'addDir', path: 'dst', stats},
       {type: 'unlinkDir', path: 'src', old}
     ]
-    const pendingActions: PrepAction[] = []
+    const pendingChanges: LocalChange[] = []
 
-    should(sortAndSquash(events, pendingActions)).deepEqual([{
-      type: 'PrepMoveFolder',
+    should(sortAndSquash(events, pendingChanges)).deepEqual([{
+      type: 'LocalDirMove',
       path: 'dst',
       ino: 1,
       stats,
       old
     }])
-    should(pendingActions).deepEqual([])
+    should(pendingChanges).deepEqual([])
   })
 
   it('sorts actions', () => {
@@ -176,15 +176,15 @@ describe('SortAndSquash Unit Tests', function () {
       {type: 'unlinkDir', path: 'other-dir-src', old: otherDirMetadata},
       {type: 'addDir', path: 'other-dir-dst', stats: otherDirStats},
     ]
-    const pendingActions: PrepAction[] = []
+    const pendingChanges: LocalChange[] = []
 
-    should(sortAndSquash(events, pendingActions)).deepEqual([
-      {type: 'PrepUpdateFile', path: 'other-file', stats: otherFileStats, ino: otherFileStats.ino, md5sum: 'yolo', /* FIXME: */ wip: undefined},
-      {type: 'PrepMoveFolder', path: 'dst', stats: dirStats, ino: dirStats.ino, old: dirMetadata},
+    should(sortAndSquash(events, pendingChanges)).deepEqual([
+      {type: 'LocalFileUpdate', path: 'other-file', stats: otherFileStats, ino: otherFileStats.ino, md5sum: 'yolo', /* FIXME: */ wip: undefined},
+      {type: 'LocalDirMove', path: 'dst', stats: dirStats, ino: dirStats.ino, old: dirMetadata},
       // FIXME: Move should have been squashed
-      {type: 'PrepMoveFile', path: 'dst/file', stats: fileStats, ino: fileStats.ino, old: fileMetadata},
-      {type: 'PrepMoveFolder', path: 'dst/subdir', stats: subdirStats, ino: subdirStats.ino, old: subdirMetadata},
-      {type: 'PrepMoveFolder', path: 'other-dir-dst', stats: otherDirStats, ino: otherDirStats.ino, old: otherDirMetadata}
+      {type: 'LocalFileMove', path: 'dst/file', stats: fileStats, ino: fileStats.ino, old: fileMetadata},
+      {type: 'LocalDirMove', path: 'dst/subdir', stats: subdirStats, ino: subdirStats.ino, old: subdirMetadata},
+      {type: 'LocalDirMove', path: 'other-dir-dst', stats: otherDirStats, ino: otherDirStats.ino, old: otherDirMetadata}
     ])
   })
 })

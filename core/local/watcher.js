@@ -20,7 +20,7 @@ import sortAndSquash from './sortandsquash'
 import type { Checksumer } from './checksumer'
 import type { ChokidarEvent } from './chokidar_event'
 import type { LocalEvent } from './event'
-import type { PrepAction } from './prep_action'
+import type { LocalChange } from './change'
 import type { Metadata } from '../metadata'
 import type { Pending } from '../utils/pending' // eslint-disable-line
 import type EventEmitter from 'events'
@@ -55,7 +55,7 @@ class LocalWatcher {
   watcher: any // chokidar
   buffer: LocalEventBuffer<ChokidarEvent>
   ensureDirInterval: *
-  pendingActions: PrepAction[]
+  pendingChanges: LocalChange[]
 
   constructor (syncPath: string, prep: Prep, pouch: Pouch, events: EventEmitter) {
     this.syncPath = syncPath
@@ -66,7 +66,7 @@ class LocalWatcher {
     const timeoutInMs = process.env.NODE_ENV === 'test' ? 1000 : 10000
     this.buffer = new LocalEventBuffer(timeoutInMs, this.onFlush)
     this.checksumer = checksumer.init()
-    this.pendingActions = []
+    this.pendingChanges = []
   }
 
   ensureDirSync () {
@@ -167,14 +167,14 @@ class LocalWatcher {
     log.trace('Done with events preparation.')
 
     // to become sortAndSquash
-    const actions : PrepAction[] = sortAndSquash(preparedEvents, this.pendingActions)
+    const changes : LocalChange[] = sortAndSquash(preparedEvents, this.pendingChanges)
 
-    // TODO: Don't even acquire lock actions list is empty
+    // TODO: Don't even acquire lock changes list is empty
     // FIXME: Shouldn't we acquire the lock before preparing the events?
     const release = await this.pouch.lock(this)
     let target = -1
     try {
-      await this.sendToPrep(actions)
+      await this.sendToPrep(changes)
       target = (await this.pouch.db.changes({limit: 1, descending: true})).last_seq
     } finally {
       this.events.emit('sync-target', target)
@@ -255,50 +255,50 @@ class LocalWatcher {
   }
 
   // @TODO inline this.onXXX in this function
-  // @TODO rename PrepAction types to prep.xxxxxx
-  async sendToPrep (actions: PrepAction[]) {
+  // @TODO rename LocalChange types to prep.xxxxxx
+  async sendToPrep (changes: LocalChange[]) {
     const errors: Error[] = []
     // to become sendToPrep
-    for (let a of actions) {
+    for (let c of changes) {
       try {
-        switch (a.type) {
+        switch (c.type) {
           // TODO: Inline old LocalWatcher methods
-          case 'PrepDeleteFolder':
-            await this.onUnlinkDir(a.path)
+          case 'LocalDirDeletion':
+            await this.onUnlinkDir(c.path)
             break
-          case 'PrepDeleteFile':
-            await this.onUnlinkFile(a.path)
+          case 'LocalFileDeletion':
+            await this.onUnlinkFile(c.path)
             break
-          case 'PrepPutFolder':
-            await this.onAddDir(a.path, a.stats)
+          case 'LocalDirAddition':
+            await this.onAddDir(c.path, c.stats)
             break
-          case 'PrepUpdateFile':
-            await this.onChange(a.path, a.stats, a.md5sum)
+          case 'LocalFileUpdate':
+            await this.onChange(c.path, c.stats, c.md5sum)
             break
-          case 'PrepAddFile':
-            await this.onAddFile(a.path, a.stats, a.md5sum)
+          case 'LocalFileAddition':
+            await this.onAddFile(c.path, c.stats, c.md5sum)
             break
-          case 'PrepMoveFile':
-            if (a.needRefetch) {
-              a.old = await this.pouch.db.get(metadata.id(a.old.path))
-              a.old.childMove = false
+          case 'LocalFileMove':
+            if (c.needRefetch) {
+              c.old = await this.pouch.db.get(metadata.id(c.old.path))
+              c.old.childMove = false
             }
-            await this.onMoveFile(a.path, a.stats, a.md5sum, a.old)
+            await this.onMoveFile(c.path, c.stats, c.md5sum, c.old)
             break
-          case 'PrepMoveFolder':
-            await this.onMoveFolder(a.path, a.stats, a.old)
+          case 'LocalDirMove':
+            await this.onMoveFolder(c.path, c.stats, c.old)
             break
           default:
-            throw new Error('wrong actions')
+            throw new Error('wrong changes')
         }
       } catch (err) {
-        log.error({path: a.path, err})
+        log.error({path: c.path, err})
         errors.push(err)
       }
     }
 
     if (errors.length > 0) {
-      throw new Error(`Could not apply all actions to Prep:\n- ${errors.map(e => e.stack).join('\n- ')}`)
+      throw new Error(`Could not apply all changes to Prep:\n- ${errors.map(e => e.stack).join('\n- ')}`)
     }
   }
 
@@ -368,7 +368,7 @@ class LocalWatcher {
     return this.checksumer.push(absPath)
   }
 
-  /* Actions */
+  /* Changes */
 
   // New file detected
   onAddFile (filePath: string, stats: fs.Stats, md5sum: string) {

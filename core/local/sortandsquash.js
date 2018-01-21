@@ -3,14 +3,19 @@
 import path from 'path'
 
 import { getInode } from './event'
-import * as prepAction from './prep_action'
+import * as localChange from './change'
 import logger from '../logger'
 
 import type { LocalEvent } from './event'
 import type {
-  PrepAction, PrepAddFile, PrepPutFolder,
-  PrepDeleteFile, PrepDeleteFolder, PrepMoveFile, PrepMoveFolder
-} from './prep_action'
+  LocalChange,
+  LocalDirAddition,
+  LocalDirDeletion,
+  LocalDirMove,
+  LocalFileAddition,
+  LocalFileDeletion,
+  LocalFileMove
+} from './change'
 
 const log = logger({
   component: 'LocalWatcher'
@@ -19,16 +24,16 @@ log.chokidar = log.child({
   component: 'Chokidar'
 })
 
-export default function sortAndSquash (events: LocalEvent[], pendingActions: PrepAction[])
-: PrepAction[] {
-  const actions: PrepAction[] = analyseEvents(events, pendingActions)
-  sortBeforeSquash(actions)
-  squashMoves(actions)
-  separatePendingActions(actions, pendingActions)
-  finalSort(actions)
+export default function sortAndSquash (events: LocalEvent[], pendingChanges: LocalChange[])
+: LocalChange[] {
+  const changes: LocalChange[] = analyseEvents(events, pendingChanges)
+  sortBeforeSquash(changes)
+  squashMoves(changes)
+  separatePendingChanges(changes, pendingChanges)
+  finalSort(changes)
 
-  log.debug(`Identified ${actions.length} change(s).`)
-  return actions
+  log.debug(`Identified ${changes.length} change(s).`)
+  return changes
 }
 
 const panic = (context, description) => {
@@ -36,29 +41,29 @@ const panic = (context, description) => {
   throw new Error(description)
 }
 
-function analyseEvents (events: LocalEvent[], pendingActions: PrepAction[]): PrepAction[] {
+function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): LocalChange[] {
   // OPTIMIZE: new Array(events.length)
-  const actions: PrepAction[] = []
-  const actionsByInode:Map<number, PrepAction> = new Map()
-  const actionsByPath:Map<string, PrepAction> = new Map()
-  const getActionByInode = (e) => {
+  const changes: LocalChange[] = []
+  const changesByInode:Map<number, LocalChange> = new Map()
+  const changesByPath:Map<string, LocalChange> = new Map()
+  const getChangeByInode = (e) => {
     const ino = getInode(e)
-    if (ino) return actionsByInode.get(ino)
+    if (ino) return changesByInode.get(ino)
     else return null
   }
-  const getActionByPath = (e) => {
-    return actionsByPath.get(e.path)
+  const getChangeByPath = (e) => {
+    return changesByPath.get(e.path)
   }
-  const pushAction = (a: PrepAction) => {
-    actionsByPath.set(a.path, a)
-    if (a.ino) actionsByInode.set(a.ino, a)
-    else actions.push(a)
+  const pushChange = (c: LocalChange) => {
+    changesByPath.set(c.path, c)
+    if (c.ino) changesByInode.set(c.ino, c)
+    else changes.push(c)
   }
 
-  if (pendingActions.length > 0) {
-    log.warn({actions: pendingActions}, `Prepend ${pendingActions.length} pending action(s)`)
-    for (const a of pendingActions) { pushAction(a) }
-    pendingActions.length = 0
+  if (pendingChanges.length > 0) {
+    log.warn({changes: pendingChanges}, `Prepend ${pendingChanges.length} pending change(s)`)
+    for (const a of pendingChanges) { pushChange(a) }
+    pendingChanges.length = 0
   }
 
   log.trace('Analyze events...')
@@ -68,128 +73,128 @@ function analyseEvents (events: LocalEvent[], pendingActions: PrepAction[]): Pre
       switch (e.type) {
         case 'add':
           {
-            const moveAction: ?PrepMoveFile = prepAction.maybeMoveFile(getActionByInode(e))
-            if (moveAction) {
+            const moveChange: ?LocalFileMove = localChange.maybeMoveFile(getChangeByInode(e))
+            if (moveChange) {
               /* istanbul ignore next */
-              if (!moveAction.wip) {
-                panic({path: e.path, moveAction, event: e},
-                  'We should not have both move and add actions since ' +
+              if (!moveChange.wip) {
+                panic({path: e.path, moveChange, event: e},
+                  'We should not have both move and add changes since ' +
                   'checksumless adds and inode-less unlink events are dropped')
               }
-              moveAction.path = e.path
-              moveAction.stats = e.stats
-              moveAction.md5sum = e.md5sum
-              delete moveAction.wip
+              moveChange.path = e.path
+              moveChange.stats = e.stats
+              moveChange.md5sum = e.md5sum
+              delete moveChange.wip
               log.debug(
-                {path: e.path, oldpath: moveAction.old.path, ino: moveAction.stats.ino},
+                {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
                 'File move completing')
               break
             }
 
-            const unlinkAction: ?PrepDeleteFile = prepAction.maybeDeleteFile(getActionByInode(e))
-            if (unlinkAction) {
+            const unlinkChange: ?LocalFileDeletion = localChange.maybeDeleteFile(getChangeByInode(e))
+            if (unlinkChange) {
               // New move found
-              log.debug({oldpath: unlinkAction.path, path: e.path, ino: unlinkAction.ino}, 'File moved')
-              pushAction(prepAction.build('PrepMoveFile', e.path, {stats: e.stats, md5sum: e.md5sum, old: unlinkAction.old, ino: unlinkAction.ino, wip: e.wip}))
+              log.debug({oldpath: unlinkChange.path, path: e.path, ino: unlinkChange.ino}, 'File moved')
+              pushChange(localChange.build('LocalFileMove', e.path, {stats: e.stats, md5sum: e.md5sum, old: unlinkChange.old, ino: unlinkChange.ino, wip: e.wip}))
             } else {
-              pushAction(prepAction.fromChokidar(e))
+              pushChange(localChange.fromChokidar(e))
             }
           }
           break
         case 'addDir':
           {
-            const moveAction: ?PrepMoveFolder = prepAction.maybeMoveFolder(getActionByInode(e))
+            const moveChange: ?LocalDirMove = localChange.maybeMoveFolder(getChangeByInode(e))
             /* istanbul ignore next */
-            if (moveAction) {
-              if (!moveAction.wip) {
-                panic({path: e.path, moveAction, event: e},
-                 'We should not have both move and addDir actions since ' +
+            if (moveChange) {
+              if (!moveChange.wip) {
+                panic({path: e.path, moveChange, event: e},
+                 'We should not have both move and addDir changes since ' +
                  'non-existing addDir and inode-less unlinkDir events are dropped')
               }
-              moveAction.path = e.path
-              moveAction.stats = e.stats
-              delete moveAction.wip
+              moveChange.path = e.path
+              moveChange.stats = e.stats
+              delete moveChange.wip
               log.debug(
-               {path: e.path, oldpath: moveAction.old.path, ino: moveAction.stats.ino},
+               {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
                'Folder move completing')
             }
 
-            const unlinkAction: ?PrepDeleteFolder = prepAction.maybeDeleteFolder(getActionByInode(e))
-            if (unlinkAction) {
+            const unlinkChange: ?LocalDirDeletion = localChange.maybeDeleteFolder(getChangeByInode(e))
+            if (unlinkChange) {
               // New move found
-              log.debug({oldpath: unlinkAction.path, path: e.path}, 'moveFolder')
-              pushAction(prepAction.build('PrepMoveFolder', e.path, {stats: e.stats, old: unlinkAction.old, ino: unlinkAction.ino, wip: e.wip}))
+              log.debug({oldpath: unlinkChange.path, path: e.path}, 'moveFolder')
+              pushChange(localChange.build('LocalDirMove', e.path, {stats: e.stats, old: unlinkChange.old, ino: unlinkChange.ino, wip: e.wip}))
             } else {
-              pushAction(prepAction.fromChokidar(e))
+              pushChange(localChange.fromChokidar(e))
             }
           }
           break
         case 'change':
-          pushAction(prepAction.fromChokidar(e))
+          pushChange(localChange.fromChokidar(e))
           break
         case 'unlink':
           {
-            const moveAction: ?PrepMoveFile = prepAction.maybeMoveFile(getActionByInode(e))
+            const moveChange: ?LocalFileMove = localChange.maybeMoveFile(getChangeByInode(e))
             /* istanbul ignore next */
-            if (moveAction) {
+            if (moveChange) {
               // TODO: Pending move
-              panic({path: e.path, moveAction, event: e},
-                'We should not have both move and unlink actions since ' +
+              panic({path: e.path, moveChange, event: e},
+                'We should not have both move and unlink changes since ' +
                 'checksumless adds and inode-less unlink events are dropped')
             }
 
-            const addAction: ?PrepAddFile = prepAction.maybeAddFile(getActionByInode(e))
-            if (addAction) {
+            const addChange: ?LocalFileAddition = localChange.maybeAddFile(getChangeByInode(e))
+            if (addChange) {
               // New move found
               // TODO: pending move
-              log.debug({oldpath: e.path, path: addAction.path, ino: addAction.ino}, 'File moved')
-              pushAction(prepAction.build('PrepMoveFile', addAction.path, {
-                stats: addAction.stats,
-                md5sum: addAction.md5sum,
+              log.debug({oldpath: e.path, path: addChange.path, ino: addChange.ino}, 'File moved')
+              pushChange(localChange.build('LocalFileMove', addChange.path, {
+                stats: addChange.stats,
+                md5sum: addChange.md5sum,
                 old: e.old,
-                ino: addAction.ino,
-                wip: addAction.wip
+                ino: addChange.ino,
+                wip: addChange.wip
               }))
               break
             } else if (getInode(e)) {
-              pushAction(prepAction.fromChokidar(e))
+              pushChange(localChange.fromChokidar(e))
               break
             }
-            const action: ?PrepMoveFile = prepAction.maybeMoveFile(getActionByPath(e))
-            if (action && action.md5sum == null) { // FIXME: if action && action.wip?
-              log.debug({path: action.old.path, ino: action.ino}, 'File was moved then deleted. Deleting origin directly.')
+            const change: ?LocalFileMove = localChange.maybeMoveFile(getChangeByPath(e))
+            if (change && change.md5sum == null) { // FIXME: if change && change.wip?
+              log.debug({path: change.old.path, ino: change.ino}, 'File was moved then deleted. Deleting origin directly.')
               // $FlowFixMe
-              action.type = 'PrepDeleteFile'
-              action.path = action.old.path
-              delete action.stats
-              delete action.wip
+              change.type = 'LocalFileDeletion'
+              change.path = change.old.path
+              delete change.stats
+              delete change.wip
             }
             // Otherwise, skip unlink event by multiple moves
           }
           break
         case 'unlinkDir':
           {
-            const moveAction: ?PrepMoveFolder = prepAction.maybeMoveFolder(getActionByInode(e))
+            const moveChange: ?LocalDirMove = localChange.maybeMoveFolder(getChangeByInode(e))
             /* istanbul ignore next */
-            if (moveAction) {
+            if (moveChange) {
               // TODO: pending move
-              panic({path: e.path, moveAction, event: e},
-                'We should not have both move and unlinkDir actions since ' +
+              panic({path: e.path, moveChange, event: e},
+                'We should not have both move and unlinkDir changes since ' +
                 'non-existing addDir and inode-less unlinkDir events are dropped')
             }
 
-            const addAction: ?PrepPutFolder = prepAction.maybePutFolder(getActionByInode(e))
-            if (addAction) {
+            const addChange: ?LocalDirAddition = localChange.maybePutFolder(getChangeByInode(e))
+            if (addChange) {
               // New move found
-              log.debug({oldpath: e.path, path: addAction.path}, 'moveFolder')
-              pushAction(prepAction.build('PrepMoveFolder', addAction.path, {
-                stats: addAction.stats,
+              log.debug({oldpath: e.path, path: addChange.path}, 'moveFolder')
+              pushChange(localChange.build('LocalDirMove', addChange.path, {
+                stats: addChange.stats,
                 old: e.old,
-                ino: addAction.ino,
-                wip: addAction.wip
+                ino: addChange.ino,
+                wip: addChange.wip
               }))
             } else if (getInode(e)) {
-              pushAction(prepAction.fromChokidar(e))
+              pushChange(localChange.fromChokidar(e))
             } // else skip
           }
           // TODO: move & delete dir
@@ -201,26 +206,26 @@ function analyseEvents (events: LocalEvent[], pendingActions: PrepAction[]): Pre
       log.error({err, path: e.path})
       throw err
     }
-    if (process.env.DEBUG) log.trace({currentEvent: e, actions})
+    if (process.env.DEBUG) log.trace({currentEvent: e, changes})
   }
 
-  log.trace('Flatten actions map...')
-  for (let a of actionsByInode.values()) actions.push(a)
+  log.trace('Flatten changes map...')
+  for (let a of changesByInode.values()) changes.push(a)
 
-  return actions
+  return changes
 }
 
 // TODO: Rename according to the sort logic
-function sortBeforeSquash (actions: PrepAction[]) {
-  log.trace('Sort actions before squash...')
-  actions.sort((a, b) => {
-    if (a.type === 'PrepMoveFolder' || a.type === 'PrepMoveFile') {
-      if (b.type === 'PrepMoveFolder' || b.type === 'PrepMoveFile') {
+function sortBeforeSquash (changes: LocalChange[]) {
+  log.trace('Sort changes before squash...')
+  changes.sort((a, b) => {
+    if (a.type === 'LocalDirMove' || a.type === 'LocalFileMove') {
+      if (b.type === 'LocalDirMove' || b.type === 'LocalFileMove') {
         if (a.path < b.path) return -1
         else if (a.path > b.path) return 1
         else return 0
       } else return -1
-    } else if (b.type === 'PrepMoveFolder' || b.type === 'PrepMoveFile') {
+    } else if (b.type === 'LocalDirMove' || b.type === 'LocalFileMove') {
       return 1
     } else {
       return 0
@@ -228,26 +233,26 @@ function sortBeforeSquash (actions: PrepAction[]) {
   })
 }
 
-function squashMoves (actions: PrepAction[]) {
+function squashMoves (changes: LocalChange[]) {
   log.trace('Squash moves...')
 
-  for (let i = 0; i < actions.length; i++) {
-    let a = actions[i]
+  for (let i = 0; i < changes.length; i++) {
+    let a = changes[i]
 
-    if (a.type !== 'PrepMoveFolder' && a.type !== 'PrepMoveFile') break
-    for (let j = i + 1; j < actions.length; j++) {
-      let b = actions[j]
-      if (b.type !== 'PrepMoveFolder' && b.type !== 'PrepMoveFile') break
+    if (a.type !== 'LocalDirMove' && a.type !== 'LocalFileMove') break
+    for (let j = i + 1; j < changes.length; j++) {
+      let b = changes[j]
+      if (b.type !== 'LocalDirMove' && b.type !== 'LocalFileMove') break
 
-      // inline of PrepAction.isChildMove
-      if (a.type === 'PrepMoveFolder' &&
+      // inline of LocalChange.isChildMove
+      if (a.type === 'LocalDirMove' &&
       b.path.indexOf(a.path + path.sep) === 0 &&
       a.old && b.old &&
       b.old.path.indexOf(a.old.path + path.sep) === 0) {
         log.debug({oldpath: b.old.path, path: b.path}, 'descendant move')
         a.wip = a.wip || b.wip
         if (b.path.substr(a.path.length) === b.old.path.substr(a.old.path.length)) {
-          actions.splice(j--, 1)
+          changes.splice(j--, 1)
         } else {
           // move inside move
           b.old.path = b.old.path.replace(a.old.path, a.path)
@@ -258,52 +263,52 @@ function squashMoves (actions: PrepAction[]) {
   }
 }
 
-function separatePendingActions (actions: PrepAction[], pendingActions: PrepAction[]) {
-  log.trace('Reserve actions in progress for next flush...')
+function separatePendingChanges (changes: LocalChange[], pendingChanges: LocalChange[]) {
+  log.trace('Reserve changes in progress for next flush...')
 
   // TODO: Use _.partition()?
-  for (let i = actions.length - 1; i >= 0; i--) {
-    const action = actions[i]
-    if (action.wip) {
-      if (action.type === 'PrepMoveFolder' || action.type === 'PrepMoveFile') {
+  for (let i = changes.length - 1; i >= 0; i--) {
+    const change = changes[i]
+    if (change.wip) {
+      if (change.type === 'LocalDirMove' || change.type === 'LocalFileMove') {
         log.debug({
-          action: action.type,
-          oldpath: action.old.path,
-          path: action.path,
-          ino: action.ino
-        }, 'incomplete action')
+          change: change.type,
+          oldpath: change.old.path,
+          path: change.path,
+          ino: change.ino
+        }, 'incomplete change')
       } else {
-        log.debug({action: action.type, path: action.path}, 'incomplete action')
+        log.debug({change: change.type, path: change.path}, 'incomplete change')
       }
-      pendingActions.push(actions[i])
-      actions.splice(i, 1)
+      pendingChanges.push(changes[i])
+      changes.splice(i, 1)
     }
   }
 }
 
 // TODO: Rename according to the sort logic
-const finalSorter = (a: PrepAction, b: PrepAction) => {
-  if (prepAction.childOf(prepAction.addPath(a), prepAction.delPath(b))) return -1
-  if (prepAction.childOf(prepAction.addPath(b), prepAction.delPath(a))) return 1
+const finalSorter = (a: LocalChange, b: LocalChange) => {
+  if (localChange.childOf(localChange.addPath(a), localChange.delPath(b))) return -1
+  if (localChange.childOf(localChange.addPath(b), localChange.delPath(a))) return 1
 
-  // if one action is a child of another, it takes priority
-  if (prepAction.isChildAdd(a, b)) return -1
-  if (prepAction.isChildDelete(b, a)) return -1
-  if (prepAction.isChildAdd(b, a)) return 1
-  if (prepAction.isChildDelete(a, b)) return 1
+  // if one change is a child of another, it takes priority
+  if (localChange.isChildAdd(a, b)) return -1
+  if (localChange.isChildDelete(b, a)) return -1
+  if (localChange.isChildAdd(b, a)) return 1
+  if (localChange.isChildDelete(a, b)) return 1
 
   // otherwise, order by add path
-  if (prepAction.lower(prepAction.addPath(a), prepAction.addPath(b))) return -1
-  if (prepAction.lower(prepAction.addPath(b), prepAction.addPath(a))) return 1
+  if (localChange.lower(localChange.addPath(a), localChange.addPath(b))) return -1
+  if (localChange.lower(localChange.addPath(b), localChange.addPath(a))) return 1
 
   // if there isnt 2 add paths, sort by del path
-  if (prepAction.lower(prepAction.delPath(b), prepAction.delPath(a))) return -1
+  if (localChange.lower(localChange.delPath(b), localChange.delPath(a))) return -1
 
   return 1
 }
 
 // TODO: Rename according to the sort logic
-function finalSort (actions: PrepAction[]) {
+function finalSort (changes: LocalChange[]) {
   log.trace('Final sort...')
-  actions.sort(finalSorter)
+  changes.sort(finalSorter)
 }
