@@ -1,13 +1,12 @@
 /* @flow */
 
-import fs from 'fs'
-import type { Metadata } from '../metadata'
+import type fs from 'fs'
 
-type ChokidarAdd = {type: 'add', path: string, stats: fs.Stats}
-type ChokidarAddDir = {type: 'addDir', path: string, stats: fs.Stats}
-type ChokidarChange = {type: 'change', path: string, stats: fs.Stats}
-type ChokidarUnlink = {type: 'unlink', path: string}
-type ChokidarUnlinkDir = {type: 'unlinkDir', path: string}
+export type ChokidarAdd = {type: 'add', path: string, stats: fs.Stats}
+export type ChokidarAddDir = {type: 'addDir', path: string, stats: fs.Stats}
+export type ChokidarChange = {type: 'change', path: string, stats: fs.Stats}
+export type ChokidarUnlink = {type: 'unlink', path: string}
+export type ChokidarUnlinkDir = {type: 'unlinkDir', path: string}
 
 export type ChokidarFSEvent =
   | ChokidarAdd
@@ -21,29 +20,4 @@ export const build = (type: string, path?: string, stats?: fs.Stats): ChokidarFS
   if (path != null) event.path = path
   if (stats != null) event.stats = stats
   return event
-}
-
-type ContextualizedChokidarAdd = ChokidarAdd & {md5sum: string, wip?: true}
-type ContextualizedChokidarAddDir = ChokidarAddDir & {wip?: true}
-type ContextualizedChokidarChange = ChokidarChange & {md5sum: string, wip?: true}
-type ContextualizedChokidarUnlink = ChokidarUnlink & {old: ?Metadata}
-type ContextualizedChokidarUnlinkDir = ChokidarUnlinkDir & {old: ?Metadata}
-
-export type ContextualizedChokidarFSEvent =
-  | ContextualizedChokidarAdd
-  | ContextualizedChokidarAddDir
-  | ContextualizedChokidarChange
-  | ContextualizedChokidarUnlink
-  | ContextualizedChokidarUnlinkDir
-
-export const getInode = (e: ContextualizedChokidarFSEvent): ?number => {
-  switch (e.type) {
-    case 'add':
-    case 'addDir':
-    case 'change':
-      return e.stats.ino
-    case 'unlink':
-    case 'unlinkDir':
-      if (e.old != null) return e.old.ino
-  }
 }

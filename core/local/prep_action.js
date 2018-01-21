@@ -5,7 +5,7 @@ import _ from 'lodash'
 import path from 'path'
 
 import type { Metadata } from '../metadata'
-import type { ContextualizedChokidarFSEvent } from './chokidar_event'
+import type { LocalEvent } from './event'
 
 export type PrepDeleteFolder = {type: 'PrepDeleteFolder', path: string, old: ?Metadata, ino: ?number}
 export type PrepDeleteFile = {type: 'PrepDeleteFile', path: string, old: ?Metadata, ino: ?number}
@@ -73,7 +73,7 @@ export const isChildAdd = (a: PrepAction, b: PrepAction) => childOf(addPath(a), 
 // $FlowFixMe
 export const toString = (a: PrepAction): string => '(' + a.type + ': ' + (a.old && a.old.path) + '-->' + a.path + ')'
 
-export const fromChokidar = (e: ContextualizedChokidarFSEvent) : PrepAction => {
+export const fromChokidar = (e: LocalEvent) : PrepAction => {
   switch (e.type) {
     case 'unlinkDir':
       return {type: 'PrepDeleteFolder', path: e.path, old: e.old, ino: (e.old != null ? e.old.ino : null)}

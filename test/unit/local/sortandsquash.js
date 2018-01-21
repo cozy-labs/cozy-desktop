@@ -6,7 +6,7 @@ import sortAndSquash from '../../../core/local/sortandsquash'
 
 import MetadataBuilders from '../../builders/metadata'
 
-import type { ContextualizedChokidarFSEvent } from '../../../core/local/chokidar_event'
+import type { LocalEvent } from '../../../core/local/event'
 import type { PrepAction } from '../../../core/local/prep_action'
 import type { Metadata } from '../../../core/metadata'
 
@@ -16,7 +16,7 @@ describe('SortAndSquash Unit Tests', function () {
   before(() => { metadataBuilders = new MetadataBuilders() })
 
   it('do not break on empty array', () => {
-    const events: ContextualizedChokidarFSEvent[] = []
+    const events: LocalEvent[] = []
     const pendingActions: PrepAction[] = []
     const result: PrepAction[] = sortAndSquash(events, pendingActions)
     should(result).have.length(0)
@@ -25,7 +25,7 @@ describe('SortAndSquash Unit Tests', function () {
   it('handles partial successive moves (add+unlink+add, then unlink later)', () => {
     const old: Metadata = metadataBuilders.file().ino(1).build()
     const stats = {ino: 1}
-    const events: ContextualizedChokidarFSEvent[] = [
+    const events: LocalEvent[] = [
       {type: 'add', path: 'dst1', stats, wip: true},
       {type: 'unlink', path: 'src', old},
       {type: 'add', path: 'dst2', stats, md5sum: 'yolo'}
@@ -42,7 +42,7 @@ describe('SortAndSquash Unit Tests', function () {
     }])
     should(pendingActions).deepEqual([])
 
-    const nextEvents: ContextualizedChokidarFSEvent[] = [
+    const nextEvents: LocalEvent[] = [
       {type: 'unlink', path: 'dst1'}
     ]
     should(sortAndSquash(nextEvents, pendingActions)).deepEqual([])
@@ -52,7 +52,7 @@ describe('SortAndSquash Unit Tests', function () {
   it('handles unlink+add', () => {
     const old: Metadata = metadataBuilders.file().ino(1).build()
     const stats = {ino: 1}
-    const events: ContextualizedChokidarFSEvent[] = [
+    const events: LocalEvent[] = [
       {type: 'unlink', path: 'src', old},
       {type: 'add', path: 'dst', stats, md5sum: 'yolo'}
     ]
@@ -72,7 +72,7 @@ describe('SortAndSquash Unit Tests', function () {
   it('handles unlinkDir+addDir', () => {
     const old: Metadata = metadataBuilders.dir().ino(1).build()
     const stats = {ino: 1}
-    const events: ContextualizedChokidarFSEvent[] = [
+    const events: LocalEvent[] = [
       {type: 'unlinkDir', path: 'src', old},
       {type: 'addDir', path: 'dst', stats}
     ]
@@ -91,7 +91,7 @@ describe('SortAndSquash Unit Tests', function () {
   it('handles partial successive moves (add+unlink+add, then unlink later)', () => {
     const old: Metadata = metadataBuilders.file().path('src').ino(1).build()
     const stats = {ino: 1}
-    const events: ContextualizedChokidarFSEvent[] = [
+    const events: LocalEvent[] = [
       {type: 'unlink', path: 'src', old},
       {type: 'add', path: 'dst1', stats, wip: true}
     ]
@@ -107,7 +107,7 @@ describe('SortAndSquash Unit Tests', function () {
       wip: true
     }])
 
-    const nextEvents: ContextualizedChokidarFSEvent[] = [
+    const nextEvents: LocalEvent[] = [
       {type: 'unlink', path: 'dst1'}
     ]
     should(sortAndSquash(nextEvents, pendingActions)).deepEqual([{
@@ -121,7 +121,7 @@ describe('SortAndSquash Unit Tests', function () {
 
   it('handles addDir', () => {
     const stats = {ino: 1}
-    const events: ContextualizedChokidarFSEvent[] = [
+    const events: LocalEvent[] = [
       {type: 'addDir', path: 'foo', stats}
     ]
     const pendingActions: PrepAction[] = []
@@ -138,7 +138,7 @@ describe('SortAndSquash Unit Tests', function () {
   it('handles addDir+unlinkDir', () => {
     const old: Metadata = metadataBuilders.dir().ino(1).build()
     const stats = {ino: 1}
-    const events: ContextualizedChokidarFSEvent[] = [
+    const events: LocalEvent[] = [
       {type: 'addDir', path: 'dst', stats},
       {type: 'unlinkDir', path: 'src', old}
     ]
@@ -165,7 +165,7 @@ describe('SortAndSquash Unit Tests', function () {
     const fileMetadata : Metadata = metadataBuilders.file().ino(fileStats.ino).build()
     const otherFileMetadata : Metadata = metadataBuilders.file().ino(otherFileStats.ino).build()
     const otherDirMetadata : Metadata = metadataBuilders.dir().ino(otherDirStats.ino).build()
-    const events: ContextualizedChokidarFSEvent[] = [
+    const events: LocalEvent[] = [
       {type: 'unlinkDir', path: 'src/subdir', old: subdirMetadata},
       {type: 'unlinkDir', path: 'src', old: dirMetadata},
       {type: 'addDir', path: 'dst', stats: dirStats},
