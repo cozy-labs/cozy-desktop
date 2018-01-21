@@ -256,6 +256,7 @@ class Pouch {
     doc.views[name] = {map: query}
     this.db.get(doc._id, (_, designDoc) => {
       if (designDoc != null) {
+        // $FlowFixMe
         doc._rev = designDoc._rev
         if (isEqual(doc, designDoc)) { return callback() }
       }

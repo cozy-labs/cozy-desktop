@@ -31,7 +31,7 @@ export default class RemoteWatcher {
   prep: Prep
   remoteCozy: RemoteCozy
   events: EventEmitter
-  intervalID: ?number
+  intervalID: *
   runningResolve: ?() => void
 
   constructor (pouch: Pouch, prep: Prep, remoteCozy: RemoteCozy, events: EventEmitter) {
@@ -43,6 +43,7 @@ export default class RemoteWatcher {
 
   start () {
     const started = this.watch()
+    // $FlowFixMe
     const running = started.then(() => {
       return new Promise((resolve, reject) => {
         this.runningResolve = resolve
