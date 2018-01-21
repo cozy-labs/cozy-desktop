@@ -2,11 +2,11 @@
 
 import path from 'path'
 
-import { getInode } from './chokidar_event'
+import { getInode } from './event'
 import * as prepAction from './prep_action'
 import logger from '../logger'
 
-import type { ContextualizedChokidarFSEvent } from './chokidar_event'
+import type { LocalEvent } from './event'
 import type {
   PrepAction, PrepAddFile, PrepPutFolder,
   PrepDeleteFile, PrepDeleteFolder, PrepMoveFile, PrepMoveFolder
@@ -19,7 +19,7 @@ log.chokidar = log.child({
   component: 'Chokidar'
 })
 
-export default function sortAndSquash (events: ContextualizedChokidarFSEvent[], pendingActions: PrepAction[])
+export default function sortAndSquash (events: LocalEvent[], pendingActions: PrepAction[])
 : PrepAction[] {
   const actions: PrepAction[] = analyseEvents(events, pendingActions)
   sortBeforeSquash(actions)
@@ -36,7 +36,7 @@ const panic = (context, description) => {
   throw new Error(description)
 }
 
-function analyseEvents (events: ContextualizedChokidarFSEvent[], pendingActions: PrepAction[]): PrepAction[] {
+function analyseEvents (events: LocalEvent[], pendingActions: PrepAction[]): PrepAction[] {
   // OPTIMIZE: new Array(events.length)
   const actions: PrepAction[] = []
   const actionsByInode:Map<number, PrepAction> = new Map()
@@ -63,7 +63,7 @@ function analyseEvents (events: ContextualizedChokidarFSEvent[], pendingActions:
 
   log.trace('Analyze events...')
 
-  for (let e: ContextualizedChokidarFSEvent of events) {
+  for (let e: LocalEvent of events) {
     try {
       switch (e.type) {
         case 'add':

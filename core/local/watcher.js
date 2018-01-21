@@ -18,7 +18,8 @@ import { maxDate } from '../timestamp'
 import sortAndSquash from './sortandsquash'
 
 import type { Checksumer } from './checksumer'
-import type { ChokidarFSEvent, ContextualizedChokidarFSEvent } from './chokidar_event'
+import type { ChokidarFSEvent } from './chokidar_event'
+import type { LocalEvent } from './event'
 import type { PrepAction } from './prep_action'
 import type { Metadata } from '../metadata'
 import type { Pending } from '../utils/pending' // eslint-disable-line
@@ -162,7 +163,7 @@ class LocalWatcher {
 
     // to become prepareEvents
     log.trace('Prepare events...')
-    const preparedEvents : ContextualizedChokidarFSEvent[] = await this.prepareEvents(events)
+    const preparedEvents : LocalEvent[] = await this.prepareEvents(events)
     log.trace('Done with events preparation.')
 
     // to become sortAndSquash
@@ -200,7 +201,7 @@ class LocalWatcher {
     }
   }
 
-  async prepareEvents (events: ChokidarFSEvent[]) : Promise<ContextualizedChokidarFSEvent[]> {
+  async prepareEvents (events: ChokidarFSEvent[]) : Promise<LocalEvent[]> {
     const oldMetadata = async (e: ChokidarFSEvent): Promise<?Metadata> => {
       if (e.old) return e.old
       if (e.type === 'unlink' || e.type === 'unlinkDir') {
@@ -217,7 +218,7 @@ class LocalWatcher {
     //   - db.allDocs(keys: events.pick(path))
     //   - process.exec('md5sum ' + paths.join(' '))
 
-    return Promise.map(events, async (e: ChokidarFSEvent): Promise<?ContextualizedChokidarFSEvent> => {
+    return Promise.map(events, async (e: ChokidarFSEvent): Promise<?LocalEvent> => {
       const abspath = path.join(this.syncPath, e.path)
 
       const e2: Object = {
@@ -250,7 +251,7 @@ class LocalWatcher {
 
       return e2
     }, {concurrency: 50})
-    .filter((e: ?ContextualizedChokidarFSEvent) => e != null)
+    .filter((e: ?LocalEvent) => e != null)
   }
 
   // @TODO inline this.onXXX in this function
