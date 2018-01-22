@@ -138,7 +138,10 @@ view helpers model =
                         [ text ("https://") ]
                     , input
                         [ placeholder ("cloudy.mycozy.cloud")
-                        , class "wizard__address"
+                        , classList
+                            [ ( "wizard__address", True )
+                            , ( "error", model.error /= "" )
+                            ]
                         , type_ "text"
                         , value model.address
                         , disabled model.busy
