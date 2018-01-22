@@ -4,8 +4,20 @@ import fs from 'fs'
 import _ from 'lodash'
 import path from 'path'
 
+import logger from '../logger'
+
 import type { Metadata } from '../metadata'
-import type { LocalEvent } from './event'
+import type {
+  LocalDirAdded,
+  LocalDirUnlinked,
+  LocalEvent,
+  LocalFileAdded,
+  LocalFileUnlinked
+} from './event'
+
+const log = logger({
+  component: 'LocalWatcher'
+})
 
 export type LocalDirDeletion = {type: 'LocalDirDeletion', path: string, old: ?Metadata, ino: ?number}
 export type LocalFileDeletion = {type: 'LocalFileDeletion', path: string, old: ?Metadata, ino: ?number}
@@ -88,4 +100,95 @@ export const fromEvent = (e: LocalEvent) : LocalChange => {
     default:
       throw new TypeError(`wrong type ${e.type}`) // @TODO FlowFixMe
   }
+}
+
+export const fileMoveFromUnlinkAdd = (unlinkChange: LocalFileDeletion, e: LocalFileAdded): * => {
+  log.debug({oldpath: unlinkChange.path, path: e.path, ino: unlinkChange.ino}, 'File moved')
+  return build('LocalFileMove', e.path, {
+    stats: e.stats,
+    md5sum: e.md5sum,
+    old: unlinkChange.old,
+    ino: unlinkChange.ino,
+    wip: e.wip
+  })
+}
+
+export const dirMoveFromUnlinkAdd = (unlinkChange: LocalDirDeletion, e: LocalDirAdded): * => {
+  log.debug({oldpath: unlinkChange.path, path: e.path}, 'moveFolder')
+  return build('LocalDirMove', e.path, {
+    stats: e.stats,
+    old: unlinkChange.old,
+    ino: unlinkChange.ino,
+    wip: e.wip
+  })
+}
+
+export const fileMoveFromAddUnlink = (addChange: LocalFileAddition, e: LocalFileUnlinked): * => {
+  log.debug({oldpath: e.path, path: addChange.path, ino: addChange.ino}, 'File moved')
+  return build('LocalFileMove', addChange.path, {
+    stats: addChange.stats,
+    md5sum: addChange.md5sum,
+    old: e.old,
+    ino: addChange.ino,
+    wip: addChange.wip
+  })
+}
+
+export const dirMoveFromAddUnlink = (addChange: LocalDirAddition, e: LocalDirUnlinked): * => {
+  log.debug({oldpath: e.path, path: addChange.path}, 'moveFolder')
+  return build('LocalDirMove', addChange.path, {
+    stats: addChange.stats,
+    old: e.old,
+    ino: addChange.ino,
+    wip: addChange.wip
+  })
+}
+
+export type LocalMove = LocalFileMove|LocalDirMove
+
+export type LocalMoveEvent = LocalFileAdded|LocalDirAdded
+
+function InvalidLocalMoveEvent (moveChange: LocalMove, event: LocalMoveEvent) {
+  this.name = 'InvalidLocalMoveEvent'
+  this.moveChange = moveChange
+  this.event = event
+  // FIXME: Include event/change details in message
+  this.message = `Cannot include event ${event.type} into change ${moveChange.type}`
+  Error.captureStackTrace(this, this.constructor)
+}
+
+const ensureValidMoveEvent = (moveChange: LocalMove, event: LocalMoveEvent) => {
+  /* istanbul ignore next */
+  if (!moveChange.wip) throw new InvalidLocalMoveEvent(moveChange, event)
+}
+
+export const includeAddEventInFileMove = (moveChange: LocalFileMove, e: LocalFileAdded) => {
+  ensureValidMoveEvent(moveChange, e)
+  moveChange.path = e.path
+  moveChange.stats = e.stats
+  moveChange.md5sum = e.md5sum
+  delete moveChange.wip
+  log.debug(
+    {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
+    'File move completing')
+}
+
+export const includeAddDirEventInDirMove = (moveChange: LocalDirMove, e: LocalDirAdded) => {
+  ensureValidMoveEvent(moveChange, e)
+  moveChange.path = e.path
+  moveChange.stats = e.stats
+  delete moveChange.wip
+  log.debug(
+   {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
+   'Folder move completing')
+}
+
+export const convertFileMoveToDeletion = (change: LocalFileMove) => {
+  log.debug({path: change.old.path, ino: change.ino},
+    'File was moved then deleted. Deleting origin directly.')
+  // $FlowFixMe
+  change.type = 'LocalFileDeletion'
+  change.path = change.old.path
+  delete change.stats
+  delete change.wip
 }
