@@ -25,7 +25,7 @@
     "cozy"
   ],
   "scripts": {
-    "build": "yarn build:core && yarn build:css & yarn build:tx && yarn build:elm",
+    "build": "yarn build:core && yarn build:css && yarn build:elm && yarn build:tx",
     "build:core": "babel --source-maps --out-dir core-built core/",
     "build:core:coverage": "babel --plugins babel-plugin-istanbul --source-maps --out-dir core-cov core/",
     "build:css": "stylus --sourcemap --compress --use cozy-ui/stylus gui/styles/app.styl --out gui",
