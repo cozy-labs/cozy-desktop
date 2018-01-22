@@ -1,3 +1,15 @@
+## 3.4.2-beta.5 - 2017-01-22
+
+Improvements for all users:
+
+- To mitigate performance issues, we temporarily prevented choosing a non-empty
+  directory to synchronize.
+- Heuristic-based Cozy address correction
+
+See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.4.2-beta.4 - 2017-01-19
 
 Improvements for all users:
