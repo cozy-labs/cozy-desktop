@@ -97,7 +97,7 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
               log.debug({oldpath: unlinkChange.path, path: e.path, ino: unlinkChange.ino}, 'File moved')
               pushChange(localChange.build('LocalFileMove', e.path, {stats: e.stats, md5sum: e.md5sum, old: unlinkChange.old, ino: unlinkChange.ino, wip: e.wip}))
             } else {
-              pushChange(localChange.fromChokidar(e))
+              pushChange(localChange.fromEvent(e))
             }
           }
           break
@@ -125,12 +125,12 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
               log.debug({oldpath: unlinkChange.path, path: e.path}, 'moveFolder')
               pushChange(localChange.build('LocalDirMove', e.path, {stats: e.stats, old: unlinkChange.old, ino: unlinkChange.ino, wip: e.wip}))
             } else {
-              pushChange(localChange.fromChokidar(e))
+              pushChange(localChange.fromEvent(e))
             }
           }
           break
         case 'change':
-          pushChange(localChange.fromChokidar(e))
+          pushChange(localChange.fromEvent(e))
           break
         case 'unlink':
           {
@@ -157,7 +157,7 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
               }))
               break
             } else if (getInode(e)) {
-              pushChange(localChange.fromChokidar(e))
+              pushChange(localChange.fromEvent(e))
               break
             }
             const change: ?LocalFileMove = localChange.maybeMoveFile(getChangeByPath(e))
@@ -194,7 +194,7 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
                 wip: addChange.wip
               }))
             } else if (getInode(e)) {
-              pushChange(localChange.fromChokidar(e))
+              pushChange(localChange.fromEvent(e))
             } // else skip
           }
           // TODO: move & delete dir
