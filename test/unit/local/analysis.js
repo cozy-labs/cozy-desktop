@@ -2,7 +2,7 @@
 
 import should from 'should'
 
-import sortAndSquash from '../../../core/local/sortandsquash'
+import analysis from '../../../core/local/analysis'
 
 import MetadataBuilders from '../../builders/metadata'
 
@@ -10,7 +10,7 @@ import type { LocalEvent } from '../../../core/local/event'
 import type { LocalChange } from '../../../core/local/change'
 import type { Metadata } from '../../../core/metadata'
 
-describe('SortAndSquash Unit Tests', function () {
+describe('core/local/analysis', function () {
   let metadataBuilders
 
   before(() => { metadataBuilders = new MetadataBuilders() })
@@ -18,7 +18,7 @@ describe('SortAndSquash Unit Tests', function () {
   it('do not break on empty array', () => {
     const events: LocalEvent[] = []
     const pendingChanges: LocalChange[] = []
-    const result: LocalChange[] = sortAndSquash(events, pendingChanges)
+    const result: LocalChange[] = analysis(events, pendingChanges)
     should(result).have.length(0)
   })
 
@@ -32,7 +32,7 @@ describe('SortAndSquash Unit Tests', function () {
     ]
     const pendingChanges: LocalChange[] = []
 
-    should(sortAndSquash(events, pendingChanges)).deepEqual([{
+    should(analysis(events, pendingChanges)).deepEqual([{
       type: 'LocalFileMove',
       path: 'dst2',
       ino: 1,
@@ -45,7 +45,7 @@ describe('SortAndSquash Unit Tests', function () {
     const nextEvents: LocalEvent[] = [
       {type: 'unlink', path: 'dst1'}
     ]
-    should(sortAndSquash(nextEvents, pendingChanges)).deepEqual([])
+    should(analysis(nextEvents, pendingChanges)).deepEqual([])
     should(pendingChanges).deepEqual([])
   })
 
@@ -58,7 +58,7 @@ describe('SortAndSquash Unit Tests', function () {
     ]
     const pendingChanges: LocalChange[] = []
 
-    should(sortAndSquash(events, pendingChanges)).deepEqual([{
+    should(analysis(events, pendingChanges)).deepEqual([{
       type: 'LocalFileMove',
       path: 'dst',
       md5sum: 'yolo',
@@ -78,7 +78,7 @@ describe('SortAndSquash Unit Tests', function () {
     ]
     const pendingChanges: LocalChange[] = []
 
-    should(sortAndSquash(events, pendingChanges)).deepEqual([{
+    should(analysis(events, pendingChanges)).deepEqual([{
       type: 'LocalDirMove',
       path: 'dst',
       ino: 1,
@@ -97,7 +97,7 @@ describe('SortAndSquash Unit Tests', function () {
     ]
     const pendingChanges: LocalChange[] = []
 
-    should(sortAndSquash(events, pendingChanges)).deepEqual([])
+    should(analysis(events, pendingChanges)).deepEqual([])
     should(pendingChanges).deepEqual([{
       type: 'LocalFileMove',
       path: 'dst1',
@@ -110,7 +110,7 @@ describe('SortAndSquash Unit Tests', function () {
     const nextEvents: LocalEvent[] = [
       {type: 'unlink', path: 'dst1'}
     ]
-    should(sortAndSquash(nextEvents, pendingChanges)).deepEqual([{
+    should(analysis(nextEvents, pendingChanges)).deepEqual([{
       type: 'LocalFileDeletion',
       ino: 1,
       path: 'src',
@@ -126,7 +126,7 @@ describe('SortAndSquash Unit Tests', function () {
     ]
     const pendingChanges: LocalChange[] = []
 
-    should(sortAndSquash(events, pendingChanges)).deepEqual([{
+    should(analysis(events, pendingChanges)).deepEqual([{
       type: 'LocalDirAddition',
       path: 'foo',
       ino: 1,
@@ -144,7 +144,7 @@ describe('SortAndSquash Unit Tests', function () {
     ]
     const pendingChanges: LocalChange[] = []
 
-    should(sortAndSquash(events, pendingChanges)).deepEqual([{
+    should(analysis(events, pendingChanges)).deepEqual([{
       type: 'LocalDirMove',
       path: 'dst',
       ino: 1,
@@ -178,7 +178,7 @@ describe('SortAndSquash Unit Tests', function () {
     ]
     const pendingChanges: LocalChange[] = []
 
-    should(sortAndSquash(events, pendingChanges)).deepEqual([
+    should(analysis(events, pendingChanges)).deepEqual([
       {type: 'LocalFileUpdate', path: 'other-file', stats: otherFileStats, ino: otherFileStats.ino, md5sum: 'yolo', /* FIXME: */ wip: undefined},
       {type: 'LocalDirMove', path: 'dst', stats: dirStats, ino: dirStats.ino, old: dirMetadata},
       // FIXME: Move should have been squashed
