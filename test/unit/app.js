@@ -63,40 +63,53 @@ describe('App', function () {
   })
 
   describe('checkSyncPath', () => {
-    it('is cannot be the user home dir', () => {
+    it('cannot be the user home dir', () => {
       const syncPath = os.homedir()
       const result = App.prototype.checkSyncPath(syncPath)
       should(result).have.properties({syncPath})
       should(result.error).not.be.empty()
     })
 
-    it('is cannot be the parent of the user home dir', () => {
+    it('cannot be the parent of the user home dir', () => {
       const syncPath = path.dirname(os.homedir())
       const result = App.prototype.checkSyncPath(syncPath)
       should(result).have.properties({syncPath})
       should(result.error).not.be.empty()
     })
 
-    it('is cannot be the whole system', () => {
+    it('cannot be the whole system', () => {
       const syncPath = process.platform === 'win32' ? 'C:\\' : '/'
       const result = App.prototype.checkSyncPath(syncPath)
       should(result).have.properties({syncPath})
       should(result.error).not.be.empty()
     })
 
-    it('is can be the default dir', () => {
+    it('cannot be an existing non-empty dir', () => {
+      const syncPath = fs.mkdtempSync(path.join(os.tmpdir(), 'existing-non-empty-dir'))
+      try {
+        fs.writeFileSync(path.join(syncPath, 'some-file'), 'some-content')
+        const result = App.prototype.checkSyncPath(syncPath)
+        should(result).have.properties({syncPath})
+        should(result).have.property('error')
+      } finally {
+        fs.removeSync(syncPath)
+      }
+    })
+
+    // TODO: Reenable this test when non-empty dirs are allowed again
+    it.skip('can be the default dir', () => {
       const syncPath = path.join(os.homedir(), 'Cozy Drive')
       const result = App.prototype.checkSyncPath(syncPath)
       should(result).deepEqual({syncPath})
     })
 
-    it('is can be a subdir of the user home', () => {
-      const syncPath = path.join(os.homedir(), 'Cozy Drive')
+    it('can be a subdir of the user home', () => {
+      const syncPath = path.join(os.homedir(), 'Cozy Drive Test ' + new Date().getTime())
       const result = App.prototype.checkSyncPath(syncPath)
       should(result).deepEqual({syncPath})
     })
 
-    it('is can be a subdir outside the user home', () => {
+    it('can be a subdir outside the user home', () => {
       const syncPath = process.platform === 'win32' ? 'C:\\Cozy' : '/cozy'
       const result = App.prototype.checkSyncPath(syncPath)
       should(result).deepEqual({syncPath})

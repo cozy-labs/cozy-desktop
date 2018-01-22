@@ -82,6 +82,15 @@ class App {
   // Returns an object including the syncPath only when valid, or with an error
   // otherwise.
   checkSyncPath (syncPath: string) {
+    // FIXME: Temporarily forbid synchronization of a non-empty dir
+    try {
+      if (fs.readdirSync(syncPath).length !== 0) {
+        return {syncPath, error: 'Please choose an empty directory'}
+      }
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err
+    }
+
     // We do not allow syncing the whole user home directory, the system users
     // directory or the whole system:
     // - It would probably to big regarding the current local events squashing
