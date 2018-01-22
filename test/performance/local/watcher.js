@@ -105,7 +105,7 @@ describe('LocalWatcher charge', () => {
     events = new Array(N)
     for (let i = 0; i < N; i++) {
       const type = (i % 2 ? 'add' : 'unlink') + (i % 3 ? 'Dir' : '')
-      const p = (i % 4) + '/' + (i % 5) + '/' + (i % 6) + '/' + i
+      const p = (i % 5) + '/' + (i % 7) + '/' + (i % 11) + '/' + i
       const stats = {ino: i, mtime: now, ctime: now}
       if (i % 2) { // type.startsWith('add')
         if (i % 3) {

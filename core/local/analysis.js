@@ -28,11 +28,8 @@ export default function analysis (events: LocalEvent[], pendingChanges: LocalCha
   const changes: LocalChange[] = analyseEvents(events, pendingChanges)
   sortBeforeSquash(changes)
   squashMoves(changes)
-  separatePendingChanges(changes, pendingChanges)
   finalSort(changes)
-
-  log.debug(`Identified ${changes.length} change(s).`)
-  return changes
+  return separatePendingChanges(changes, pendingChanges)
 }
 
 const panic = (context, description) => {
@@ -215,11 +212,10 @@ function squashMoves (changes: LocalChange[]) {
   }
 }
 
-function separatePendingChanges (changes: LocalChange[], pendingChanges: LocalChange[]) {
+function separatePendingChanges (changes: LocalChange[], pendingChanges: LocalChange[]): LocalChange[] {
   log.trace('Reserve changes in progress for next flush...')
 
-  // TODO: Use _.partition()?
-  for (let i = changes.length - 1; i >= 0; i--) {
+  for (let i = 0; i < changes.length; i++) {
     const change = changes[i]
     if (change.wip) {
       if (change.type === 'LocalDirMove' || change.type === 'LocalFileMove') {
@@ -233,13 +229,21 @@ function separatePendingChanges (changes: LocalChange[], pendingChanges: LocalCh
         log.debug({change: change.type, path: change.path}, 'incomplete change')
       }
       pendingChanges.push(changes[i])
-      changes.splice(i, 1)
+    } else {
+      log.debug(`Identified ${changes.length} change(s).`)
+      log.debug(`${pendingChanges.length} of them are still pending.`)
+      return changes.slice(i)
     }
   }
+  // All actions are WIP
+  return []
 }
 
 // TODO: Rename according to the sort logic
 const finalSorter = (a: LocalChange, b: LocalChange) => {
+  if (a.wip && !b.wip) return -1
+  if (b.wip && !a.wip) return 1
+
   if (localChange.childOf(localChange.addPath(a), localChange.delPath(b))) return -1
   if (localChange.childOf(localChange.addPath(b), localChange.delPath(a))) return 1
 
