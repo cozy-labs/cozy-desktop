@@ -1,4 +1,4 @@
-const {Tray, Menu} = require('electron')
+const {Tray, Menu, MenuItem} = require('electron')
 const {translate} = require('./i18n')
 const path = require('path')
 
@@ -24,13 +24,21 @@ module.exports.init = (app, listener) => {
   tray.on('double-click', clicked)
   tray.setToolTip('loading')
 
-  // on MacOS, if a tray has a contextmenu, click event does not work
+  // on MacOS & Unity, if a tray has a contextmenu, click event does not work
   // on Gnome, if a tray has no contextmenu, tray is not shown
   // @TODO test on windows
-  if (process.platform !== 'darwin') {
+
+  const isMac = process.platform !== 'darwin'
+  const isUnity = process.env.XDG_CURRENT_DESKTOP && process.env.XDG_CURRENT_DESKTOP.match(/Unity/)
+
+  if (isUnity || isMac) {
     const cm = Menu.buildFromTemplate([
      { label: translate('Tray Quit application'), click: app.quit }
     ])
+    if (isUnity) {
+      cm.insert(0, new MenuItem({label: translate('Tray Show application'), click: clicked}))
+      cm.insert(1, new MenuItem({type: 'separator'}))
+    }
     tray.setContextMenu(cm)
   }
   setState('idle')
