@@ -9,10 +9,10 @@ import type {
   ChokidarUnlinkDir
 } from './chokidar_event'
 
-type LocalDirAdded = ChokidarAddDir & {wip?: true}
-type LocalDirUnlinked = ChokidarUnlinkDir & {old: ?Metadata}
-type LocalFileAdded = ChokidarAdd & {md5sum: string, wip?: true}
-type LocalFileUnlinked = ChokidarUnlink & {old: ?Metadata}
+export type LocalDirAdded = ChokidarAddDir & {wip?: true}
+export type LocalDirUnlinked = ChokidarUnlinkDir & {old: ?Metadata}
+export type LocalFileAdded = ChokidarAdd & {md5sum: string, wip?: true}
+export type LocalFileUnlinked = ChokidarUnlink & {old: ?Metadata}
 type LocalFileUpdated = ChokidarChange & {md5sum: string, wip?: true}
 
 export type LocalEvent =
