@@ -246,7 +246,7 @@ const startSync = (force, ...args) => {
   })
 }
 
-const shouldExit = app.makeSingleInstance(showWindow)
+const shouldExit = app.makeSingleInstance(() => showWindow())
 if (shouldExit) {
   log.warn('Cozy Drive is already running. Exiting...')
   app.exit()
