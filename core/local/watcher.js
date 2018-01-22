@@ -6,6 +6,7 @@ import fs from 'fs-extra'
 import mime from 'mime'
 import path from 'path'
 
+import analysis from './analysis'
 import * as checksumer from './checksumer'
 import * as chokidarEvent from './chokidar_event'
 import LocalEventBuffer from './event_buffer'
@@ -14,8 +15,6 @@ import * as metadata from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import { maxDate } from '../timestamp'
-
-import sortAndSquash from './sortandsquash'
 
 import type { Checksumer } from './checksumer'
 import type { ChokidarEvent } from './chokidar_event'
@@ -161,13 +160,11 @@ class LocalWatcher {
       log.debug({initialEvents: events})
     }
 
-    // to become prepareEvents
     log.trace('Prepare events...')
     const preparedEvents : LocalEvent[] = await this.prepareEvents(events)
     log.trace('Done with events preparation.')
 
-    // to become sortAndSquash
-    const changes : LocalChange[] = sortAndSquash(preparedEvents, this.pendingChanges)
+    const changes : LocalChange[] = analysis(preparedEvents, this.pendingChanges)
 
     // TODO: Don't even acquire lock changes list is empty
     // FIXME: Shouldn't we acquire the lock before preparing the events?
@@ -258,7 +255,6 @@ class LocalWatcher {
   // @TODO rename LocalChange types to prep.xxxxxx
   async sendToPrep (changes: LocalChange[]) {
     const errors: Error[] = []
-    // to become sendToPrep
     for (let c of changes) {
       try {
         switch (c.type) {

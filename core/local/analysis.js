@@ -24,8 +24,7 @@ log.chokidar = log.child({
   component: 'Chokidar'
 })
 
-export default function sortAndSquash (events: LocalEvent[], pendingChanges: LocalChange[])
-: LocalChange[] {
+export default function analysis (events: LocalEvent[], pendingChanges: LocalChange[]): LocalChange[] {
   const changes: LocalChange[] = analyseEvents(events, pendingChanges)
   sortBeforeSquash(changes)
   squashMoves(changes)
