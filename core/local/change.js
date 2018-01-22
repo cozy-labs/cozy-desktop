@@ -73,7 +73,7 @@ export const isChildAdd = (a: LocalChange, b: LocalChange) => childOf(addPath(a)
 // $FlowFixMe
 export const toString = (a: LocalChange): string => '(' + a.type + ': ' + (a.old && a.old.path) + '-->' + a.path + ')'
 
-export const fromChokidar = (e: LocalEvent) : LocalChange => {
+export const fromEvent = (e: LocalEvent) : LocalChange => {
   switch (e.type) {
     case 'unlinkDir':
       return {type: 'LocalDirDeletion', path: e.path, old: e.old, ino: (e.old != null ? e.old.ino : null)}
