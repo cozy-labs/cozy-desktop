@@ -27,10 +27,11 @@ nightly builds for Debian and Ubuntu are already being tested internally).
 
 ## Supported distributions
 
-The AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
+The current AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
 
 | Distribution | supported | `GLIBCXX` | comment |
 | --- | --- | --- | --- |
+| Arch Linux | no | 3.4.20 | |
 | Debian 7 (Wheezy) | no | 3.4.17 | |
 | Debian 8 (Jessie) | no | 3.4.20 | |
 | **Debian 9 (Stretch)** | ? | 3.4.22 | **should work** |
