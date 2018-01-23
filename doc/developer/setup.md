@@ -130,3 +130,20 @@ yarn build
 ## Run tests
 
 See [./test.md]().
+
+
+## Cozy Stack
+
+You can run any command in the `cozy-stack` docker container with the
+`yarn docker:exec` script, e.g.:
+
+```
+yarn docker:exec apt-get update
+yarn docker:exec apt-get install git  # So we can install cozy apps
+```
+
+You can also run any cozy-stack command with the `yarn cozy-stack` script, e.g.:
+
+```
+yarn cozy-stack apps install --domain cozy.tools:8080 drive 'git://github.com/cozy/cozy-drive.git#build-drive'
+```

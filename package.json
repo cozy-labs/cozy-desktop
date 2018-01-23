@@ -76,7 +76,8 @@
     "lint:elm": "elm-format --validate gui/elm test/elm",
     "lint:eslint": "eslint './core/**/*.js'",
     "lint:gui": "standard --verbose gui/js/**.js gui/main.js gui/ports.js",
-    "docker:exec": "docker exec -it cozy-desktop-stack"
+    "docker:exec": "docker exec -it cozy-desktop-stack",
+    "cozy-stack": "yarn docker:exec cozy-stack"
   },
   "dependencies": {
     "async": "^2.1.5",
