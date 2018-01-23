@@ -31,7 +31,8 @@ The AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
 
 | Distribution | supported | `GLIBCXX` |
 | --- | --- | --- |
-| Debian 8 (Jessie) | no | |
+| Debian 7 (Wheezy) | no | 3.4.17 |
+| Debian 8 (Jessie) | no | 3.4.20 |
 | Fedora 27 | yes | 3.4.24 |
 | Linux Mint 17.1 LTS (Rebecca) | no | |
 | Ubuntu 14.04 (Trusty Tahr) | no | 3.4.19 |
