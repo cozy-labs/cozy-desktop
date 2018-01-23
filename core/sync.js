@@ -158,7 +158,7 @@ class Sync {
     const opts = await this.baseChangeOptions(seq)
     opts.live = true
     return new Promise((resolve, reject) => {
-      this.changes = this.pouch.db.changes()
+      this.changes = this.pouch.db.changes(opts)
         .on('change', () => {
           if (this.changes) {
             this.changes.cancel()
