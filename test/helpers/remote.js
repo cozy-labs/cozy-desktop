@@ -39,7 +39,14 @@ export class RemoteTestHelpers {
       const dirPath = pathsToScan.shift()
       if (dirPath == null) break
 
-      const dir = await this.cozy.files.statByPath(dirPath)
+      let dir
+      try {
+        dir = await this.cozy.files.statByPath(dirPath)
+      } catch (err) {
+        if (err.status !== 404) throw err
+        // $FlowFixMe
+        dir = {relations: () => [{attributes: {name: '<BROKEN>', type: '<BROKEN>'}}]}
+      }
       for (const content of dir.relations('contents')) {
         const {name, type} = content.attributes
         const remotePath = path.posix.join(dirPath, name)

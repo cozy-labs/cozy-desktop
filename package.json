@@ -58,7 +58,7 @@
     "bootstrap:remote": "babel-node ./dev/remote/generate-test-env.js",
     "capture": "env-cmd .env.test babel-node ./dev/capture.js",
     "fauxton": "babel-node ./src/bin/fauxton.js",
-    "repl": "env-cmd .env.dev babel-node ./src/bin/repl.js",
+    "repl": "env-cmd .env.dev babel-node ./core/bin/repl.js",
     "test": "yarn test:unit && yarn test:elm && yarn test:integration",
     "mocha": "cross-env COZY_DESKTOP_HEARTBEAT=1000 env-cmd .env.test electron-mocha",
     "mocha:coverage": "yarn mocha --require ./test/support/coverage --reporter ./test/support/istanbul_reporter",
