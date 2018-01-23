@@ -1,3 +1,19 @@
+## 3.4.2-beta.6 - 2017-01-22
+
+Improvements for Unity users:
+
+- You can now open the application from the tray icon.
+
+Improvements for all users:
+
+- Attempting to restart the application will open the popover.
+- Improve the design of error case on Cozy address wizard step.
+- Minimal performance improvements. More soon!
+
+See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.4.2-beta.5 - 2017-01-22
 
 Improvements for all users:
