@@ -36,7 +36,7 @@ The AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
 | Linux Mint 17.1 LTS (Rebecca) | no | |
 | Ubuntu 14.04 (Trusty Tahr) | no | 3.4.19 |
 | Ubuntu 16.04 (Xenial Xerus) | yes | 3.4.21 |
-| Ubuntu 17.10 (Artful Aardvark) | yes | |
+| Ubuntu 17.10 (Artful Aardvark) | yes | 3.4.24 |
 | [Add your distribution](https://github.com/cozy-labs/cozy-desktop/edit/master/doc/usage/linux.md) (see below) | ... | ... |
 
 **Before** requesting for your distribution to be added to the list, please:
