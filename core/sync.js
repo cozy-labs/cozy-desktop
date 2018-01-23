@@ -109,61 +109,85 @@ class Sync {
     return Promise.all([this.local.stop(), this.remote.stop()])
   }
 
-  // Start taking changes from pouch and applying them
   async sync (): Promise<*> {
-    const change = await this.pop()
-    if (this.stopped) return
+    let seq = await this.pouch.getLocalSeqAsync()
+    log.trace({seq}, 'Waiting for changes since seq')
+    await this.waitForNewChanges(seq)
+    this.events.emit('sync-start')
+    const release = await this.pouch.lock(this)
     try {
-      this.events.emit('sync-start')
-      await this.apply(change)
-    } catch (err) {
-      if (!this.stopped) throw err
+      let lastSeq = null
+      while (true) {
+        if (this.stopped) break
+        seq = await this.pouch.getLocalSeqAsync()
+        // TODO: if (seq === lastSeq) throw new Error('Infinite loop!')
+        if (seq === lastSeq) log.warn({seq}, 'Seq was already synced!')
+        else lastSeq = seq
+
+        let change = await this.getNextChange(seq)
+        if (change == null) break
+        try {
+          await this.apply(change)
+          // XXX: apply should call setLocalSeqAsync
+        } catch (err) {
+          if (!this.stopped) throw err
+        }
+      }
+    } finally {
+      release()
+      this.events.emit('sync-end')
     }
+    log.debug('No more metadata changes for now')
   }
 
-  // Take the next change from pouch
   // We filter with the byPath view to reject design documents
   //
   // Note: it is difficult to pick only one change at a time because pouch can
   // emit several docs in a row, and `limit: 1` seems to be not effective!
-  async pop (): Promise<*> {
-    const seq = await this.pouch.getLocalSeqAsync()
-    let opts: Object = {
+  async baseChangeOptions (seq: number) : Object {
+    return {
       limit: 1,
       since: seq,
-      include_docs: true,
       filter: '_view',
-      view: 'byPath'
+      view: 'byPath',
+      returnDocs: false
     }
-    this.events.emit('sync-current', seq)
-    let res = new Promise((resolve, reject) => {
+  }
+
+  async waitForNewChanges (seq: number) {
+    const opts = await this.baseChangeOptions(seq)
+    opts.live = true
+    return new Promise((resolve, reject) => {
+      this.changes = this.pouch.db.changes()
+        .on('change', () => {
+          if (this.changes) {
+            this.changes.cancel()
+            this.changes = null
+            resolve()
+          }
+        })
+        .on('error', err => {
+          if (this.changes) {
+            this.changes = null
+            reject(err)
+          }
+        })
+    })
+  }
+
+  async getNextChange (seq: number) : Promise<?Change> {
+    const opts = await this.baseChangeOptions(seq)
+    opts.include_docs = true
+    return new Promise((resolve, reject) => {
       this.pouch.db.changes(opts)
         .on('change', info => resolve(info))
         .on('error', err => reject(err))
         .on('complete', info => {
-          if (info.results && info.results.length) { return }
-          this.events.emit('sync-end')
-          log.debug('No more metadata changes for now')
-          opts.live = true
-          opts.returnDocs = false
-          this.changes = this.pouch.db.changes(opts)
-            .on('change', info => {
-              if (this.changes) {
-                this.changes.cancel()
-                this.changes = null
-                resolve(info)
-              }
-            })
-            .on('error', err => {
-              if (this.changes) {
-                this.changes = null
-                reject(err)
-              }
-            })
+          if (info.results == null || info.results.length === 0) {
+            resolve(null)
+          }
         })
     })
-
-    return res
   }
 
   // Apply a change to both local and remote
@@ -181,7 +205,6 @@ class Sync {
 
     // FIXME: Acquire lock for as many changes as possible to prevent next huge
     // remote/local batches to acquite it first?
-    const release = await this.pouch.lock(this)
     try {
       let [side, sideName, rev] = this.selectSide(doc)
 
@@ -206,8 +229,6 @@ class Sync {
       }
     } catch (err) {
       await this.handleApplyError(change, err)
-    } finally {
-      release()
     }
   }
 

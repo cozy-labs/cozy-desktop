@@ -44,17 +44,7 @@ export class IntegrationTestHelpers {
   }
 
   async syncAll () {
-    const seq = await this._pouch.getLocalSeqAsync()
-    const changes = await this._pouch.db.changes({
-      since: seq,
-      include_docs: true,
-      filter: '_view',
-      view: 'byPath'
-    })
-
-    for (let change of changes.results) {
-      await this._sync.apply(change)
-    }
+    await this._sync.sync()
   }
 
   spyPouch () {
