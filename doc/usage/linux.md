@@ -31,7 +31,7 @@ The current AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
 
 | Distribution | supported | `GLIBCXX` | comment |
 | --- | --- | --- | --- |
-| Arch Linux | no | 3.4.20 | |
+| Arch Linux | | 3.4.24 | **should work** |
 | Debian 7 (Wheezy) | no | 3.4.17 | |
 | Debian 8 (Jessie) | no | 3.4.20 | |
 | **Debian 9 (Stretch)** | ? | 3.4.22 | **should work** |
@@ -47,7 +47,7 @@ The current AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
 - Include the exact name and version of your distribution
 - Retrieve your *GLIBCXX*  version by running the following command in a
   terminal:
-  `strings $(locate -b '\libstdc++.so.6') | grep 'GLIBCXX_[0-9]' | tail -n 1`
+  `strings $(locate -b '\libstdc++.so.6') | grep '^GLIBCXX_[0-9.]*$' | sort -V | tail -n 1`
   (and include the output in your request)
 - Install the app, run it and make sure it actually works
 
