@@ -97,7 +97,8 @@ export default class Remote implements Side {
       stream = await this.other.createReadStreamAsync(doc)
     } catch (err) {
       if (err.code === 'ENOENT') {
-        doc._deleted = true
+        log.warn({path}, 'Local file does not exist anymore.')
+        doc._deleted = true // XXX: This prevents the doc to be saved with new revs
         return doc
       }
       throw err
