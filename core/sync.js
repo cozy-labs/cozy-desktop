@@ -115,6 +115,7 @@ class Sync {
     log.trace({seq}, 'Waiting for changes since seq')
     if (waitForNewChanges) await this.waitForNewChanges(seq)
     this.events.emit('sync-start')
+    this.events.emit('sync-current', seq)
     const release = await this.pouch.lock(this)
     try {
       let lastSeq = null
