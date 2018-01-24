@@ -281,7 +281,8 @@ export default class Remote implements Side {
 
   async assignNewRev (doc: Metadata): Promise<*> {
     log.info({path: doc.path}, 'Assigning new rev...')
-    doc.remote._rev = await this.remoteCozy.client.files.statById(doc.remote._id)
+    const {_rev} = await this.remoteCozy.client.files.statById(doc.remote._id)
+    doc.remote._rev = _rev
   }
 
   async moveFolderAsync (newMetadata: Metadata, oldMetadata: Metadata): Promise<*> {
