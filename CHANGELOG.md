@@ -1,3 +1,27 @@
+## 3.4.2-beta.7 - 2017-01-24
+
+Improvements for all users
+
+- Improvements on synchronization, especially for moves or when changing files
+  on both sides.
+
+Improvements for early adopters with old Cozy instances:
+
+- Recover when Cozy contains invalid data
+
+Improvements for GNU/Linux users:
+
+- We are progressively listing
+  [supported distributions](https://github.com/cozy-labs/cozy-desktop/blob/master/doc/usage/linux.md#supported-distributions).
+
+Improvements for developers:
+
+- `yarn repl` works again, with useful `helpers`, also introduced `yarn cozy-stack`.
+
+See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.4.2-beta.6 - 2017-01-22
 
 Improvements for Unity users:
