@@ -109,10 +109,11 @@ class Sync {
     return Promise.all([this.local.stop(), this.remote.stop()])
   }
 
-  async sync (): Promise<*> {
+  // TODO: remove waitForNewChanges to .start while(true)
+  async sync (waitForNewChanges:boolean = true): Promise<*> {
     let seq = await this.pouch.getLocalSeqAsync()
     log.trace({seq}, 'Waiting for changes since seq')
-    await this.waitForNewChanges(seq)
+    if (waitForNewChanges) await this.waitForNewChanges(seq)
     this.events.emit('sync-start')
     const release = await this.pouch.lock(this)
     try {

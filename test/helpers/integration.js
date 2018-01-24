@@ -44,7 +44,7 @@ export class IntegrationTestHelpers {
   }
 
   async syncAll () {
-    await this._sync.sync()
+    await this._sync.sync(false)
   }
 
   spyPouch () {
