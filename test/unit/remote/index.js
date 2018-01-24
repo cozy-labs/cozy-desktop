@@ -595,6 +595,22 @@ describe('Remote', function () {
     })
   })
 
+  describe('assignNewRev', () => {
+    it('updates the rev of a moved file', async function () {
+      const remote = {src: {}, dst: {}}
+
+      remote.src.dir = await builders.remote.dir().named('src-dir').inRootDir().create()
+      remote.src.foo = await builders.remote.file().named('foo').inDir(remote.src.dir).create()
+      remote.dst.dir = await this.remote.remoteCozy.updateAttributesById(remote.src.dir._id, {name: 'dst-dir'})
+      remote.dst.foo = await this.remote.remoteCozy.find(remote.src.foo._id)
+
+      const doc: Metadata = conversion.createMetadata(remote.src.foo)
+      doc.path = 'dst-dir/foo' // File metadata was updated as part of the move
+      await this.remote.assignNewRev(doc)
+      should(doc).deepEqual(conversion.createMetadata(remote.dst.foo))
+    })
+  })
+
   describe('renameConflictingDocAsync', () =>
     it('renames the file/folder', async function () {
       const remoteDoc: RemoteDoc = await builders.remote.file().named('cat9').create()
