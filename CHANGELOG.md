@@ -1,3 +1,17 @@
+## 3.4.2 - 2017-01-24
+
+Improvements for all users:
+
+- Synchronization & a few performance improvements
+- Starting the app when already running will show the popover
+- The Cozy configuration should be more user-friendly (including automatic address correction)
+- Better support for Windows/macOS workspaces
+- And more... Please [see](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.4.2-beta.7) [the](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.4.2-beta.6) [beta](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.4.2-beta.5) [releases](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.4.2-beta.4) [for](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.4.2-beta.3) [more](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.4.2-beta.2) [details](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.4.2-beta.1).
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.4.2-beta.7 - 2017-01-24
 
 Improvements for all users
