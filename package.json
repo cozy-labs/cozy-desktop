@@ -70,8 +70,8 @@
     "watch": "yarn watch:core & cross-env WATCH=true yarn start & yarn watch:css & yarn watch:elm & yarn watch:js",
     "watch:core": "yarn build:core --watch",
     "watch:css": "stylus --sourcemap  --use cozy-ui/stylus --watch gui/styles/app.styl --out gui",
-    "watch:elm": "chokidar 'src/elm/**/*.elm' -c 'yarn gui:build:elm'",
-    "watch:js": "chokidar main.js ports.js -c 'yarn gui:lint'"
+    "watch:elm": "chokidar 'gui/elm/**/*.elm' -c 'yarn build:elm'",
+    "watch:js": "chokidar 'gui/js/**/*.js' gui/main.js gui/ports.js -c 'eslint {path}'"
   },
   "dependencies": {
     "async": "^2.1.5",
