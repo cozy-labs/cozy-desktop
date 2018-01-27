@@ -13,7 +13,6 @@ import configHelpers from '../../support/helpers/config'
 import pouchHelpers from '../../support/helpers/pouch'
 
 describe('LocalWatcher Tests', function () {
-
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
   beforeEach('instanciate local watcher', function () {

@@ -174,7 +174,7 @@ describe('core/local/analysis', function () {
       {type: 'add', path: 'dst/file', stats: fileStats},
       {type: 'change', path: 'other-file', stats: otherFileStats, md5sum: 'yolo', old: otherFileMetadata},
       {type: 'unlinkDir', path: 'other-dir-src', old: otherDirMetadata},
-      {type: 'addDir', path: 'other-dir-dst', stats: otherDirStats},
+      {type: 'addDir', path: 'other-dir-dst', stats: otherDirStats}
     ]
     const pendingChanges: LocalChange[] = []
 
