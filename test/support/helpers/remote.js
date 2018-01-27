@@ -6,9 +6,9 @@ import path from 'path'
 
 import * as conflictHelpers from './conflict'
 
-import Pouch from '../../core/pouch'
-import Remote from '../../core/remote'
-import { TRASH_DIR_NAME } from '../../core/remote/constants'
+import Pouch from '../../../core/pouch'
+import Remote from '../../../core/remote'
+import { TRASH_DIR_NAME } from '../../../core/remote/constants'
 
 export class RemoteTestHelpers {
   remote: Remote

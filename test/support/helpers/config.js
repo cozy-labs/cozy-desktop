@@ -2,7 +2,7 @@ import fs from 'fs-extra'
 import del from 'del'
 import path from 'path'
 
-import Config from '../../core/config'
+import Config from '../../../core/config'
 
 import { COZY_URL } from './cozy'
 

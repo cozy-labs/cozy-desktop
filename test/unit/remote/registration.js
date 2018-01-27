@@ -4,7 +4,7 @@ import should from 'should'
 
 import Registration from '../../../core/remote/registration'
 
-import configHelpers from '../../helpers/config'
+import configHelpers from '../../support/helpers/config'
 
 describe('Registration', function () {
   before('instanciate config', configHelpers.createConfig)

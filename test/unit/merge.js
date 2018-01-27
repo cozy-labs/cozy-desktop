@@ -9,9 +9,9 @@ import should from 'should'
 import Merge from '../../core/merge'
 import * as metadata from '../../core/metadata'
 
-import configHelpers from '../helpers/config'
-import pouchHelpers from '../helpers/pouch'
-import MetadataBuilders from '../builders/metadata'
+import configHelpers from '../support/helpers/config'
+import pouchHelpers from '../support/helpers/pouch'
+import MetadataBuilders from '../support/builders/metadata'
 
 describe('Merge', function () {
   let builders

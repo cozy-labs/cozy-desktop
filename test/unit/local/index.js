@@ -12,10 +12,10 @@ import Local from '../../../core/local'
 import { TMP_DIR_NAME } from '../../../core/local/constants'
 import { PendingMap } from '../../../core/utils/pending'
 
-import MetadataBuilders from '../../builders/metadata'
-import configHelpers from '../../helpers/config'
-import { SyncDirTestHelpers } from '../../helpers/sync_dir'
-import pouchHelpers from '../../helpers/pouch'
+import MetadataBuilders from '../../support/builders/metadata'
+import configHelpers from '../../support/helpers/config'
+import { SyncDirTestHelpers } from '../../support/helpers/sync_dir'
+import pouchHelpers from '../../support/helpers/pouch'
 
 Promise.promisifyAll(fs)
 

@@ -2,7 +2,7 @@
 
 import type { Cozy } from 'cozy-client-js'
 
-import type Pouch from '../../core/pouch'
+import type Pouch from '../../../core/pouch'
 
 import MetadataBuilders from './metadata'
 import RemoteDirBuilder from './remote/dir'

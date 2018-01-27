@@ -4,7 +4,7 @@ import _, { clone } from 'lodash'
 import should from 'should'
 import path from 'path'
 
-import { onPlatform } from '../helpers/platform'
+import { onPlatform } from '../support/helpers/platform'
 
 import {
   assignId, extractRevNumber, invalidChecksum, invalidPath, markSide,

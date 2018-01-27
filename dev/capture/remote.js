@@ -10,8 +10,8 @@ import Pouch from '../../core/pouch'
 import { FILES_DOCTYPE } from '../../core/remote/constants'
 import RemoteCozy from '../../core/remote/cozy'
 
-import configHelpers from '../../test/helpers/config'
-import * as cozyHelpers from '../../test/helpers/cozy'
+import configHelpers from '../../test/support/helpers/config'
+import * as cozyHelpers from '../../test/support/helpers/cozy'
 
 const debug = process.env.DEBUG != null ? console.log : (...args) => {}
 

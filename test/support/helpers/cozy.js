@@ -3,7 +3,7 @@
 
 import { Client as CozyClient } from 'cozy-client-js'
 
-import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } from '../../core/remote/constants'
+import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } from '../../../core/remote/constants'
 import Builders from '../builders'
 
 // The URL of the Cozy instance used for tests
