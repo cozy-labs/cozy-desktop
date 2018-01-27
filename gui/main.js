@@ -5,7 +5,7 @@ require('babel-polyfill')
 const Desktop = require('../core-built/app.js').default
 const notify = require('electron-main-notification')
 
-const debounce = require('lodash.debounce')
+const debounce = require('lodash').debounce
 const path = require('path')
 
 const setupProxy = require('./js/proxy')
