@@ -8,8 +8,8 @@ import Ignore from '../../core/ignore'
 import * as metadata from '../../core/metadata'
 import Sync from '../../core/sync'
 
-import configHelpers from '../helpers/config'
-import pouchHelpers from '../helpers/pouch'
+import configHelpers from '../support/helpers/config'
+import pouchHelpers from '../support/helpers/pouch'
 
 describe('Sync', function () {
   before('instanciate config', configHelpers.createConfig)

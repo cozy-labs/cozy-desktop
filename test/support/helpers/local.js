@@ -8,10 +8,10 @@ import rimraf from 'rimraf'
 import * as conflictHelpers from './conflict'
 import { SyncDirTestHelpers } from './sync_dir'
 
-import { TMP_DIR_NAME } from '../../core/local/constants'
-import Local from '../../core/local'
+import { TMP_DIR_NAME } from '../../../core/local/constants'
+import Local from '../../../core/local'
 
-import type { ChokidarEvent } from '../../core/local/chokidar_event'
+import type { ChokidarEvent } from '../../../core/local/chokidar_event'
 
 Promise.promisifyAll(fs)
 const rimrafAsync = Promise.promisify(rimraf)

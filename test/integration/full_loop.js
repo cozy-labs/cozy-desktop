@@ -12,10 +12,10 @@ import should from 'should'
 
 import * as metadata from '../../core/metadata'
 
-import configHelpers from '../helpers/config'
-import * as cozyHelpers from '../helpers/cozy'
-import pouchHelpers from '../helpers/pouch'
-import { IntegrationTestHelpers } from '../helpers/integration'
+import configHelpers from '../support/helpers/config'
+import * as cozyHelpers from '../support/helpers/cozy'
+import pouchHelpers from '../support/helpers/pouch'
+import { IntegrationTestHelpers } from '../support/helpers/integration'
 
 const cozy = cozyHelpers.cozy
 

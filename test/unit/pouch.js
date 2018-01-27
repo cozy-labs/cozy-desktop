@@ -10,8 +10,8 @@ import { uniq } from 'lodash'
 
 import * as metadata from '../../core/metadata'
 
-import configHelpers from '../helpers/config'
-import pouchHelpers from '../helpers/pouch'
+import configHelpers from '../support/helpers/config'
+import pouchHelpers from '../support/helpers/pouch'
 
 describe('Pouch', function () {
   before('instanciate config', configHelpers.createConfig)

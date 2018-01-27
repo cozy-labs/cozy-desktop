@@ -7,9 +7,9 @@ import { Cozy } from 'cozy-client-js'
 
 import RemoteBaseBuilder from './base'
 
-import { jsonApiToRemoteDoc } from '../../../core/remote/document'
+import { jsonApiToRemoteDoc } from '../../../../core/remote/document'
 
-import type { RemoteDoc } from '../../../core/remote/document'
+import type { RemoteDoc } from '../../../../core/remote/document'
 
 // Used to generate readable unique filenames
 var fileNumber = 1

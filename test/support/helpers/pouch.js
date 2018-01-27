@@ -1,7 +1,7 @@
 import path from 'path'
 
-import { assignId } from '../../core/metadata'
-import Pouch from '../../core/pouch'
+import { assignId } from '../../../core/metadata'
+import Pouch from '../../../core/pouch'
 
 export default {
   createDatabase (done) {

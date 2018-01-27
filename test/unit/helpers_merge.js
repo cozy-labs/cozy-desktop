@@ -6,8 +6,8 @@ import should from 'should'
 
 import Merge from '../../core/merge'
 
-import configHelpers from '../helpers/config'
-import pouchHelpers from '../helpers/pouch'
+import configHelpers from '../support/helpers/config'
+import pouchHelpers from '../support/helpers/pouch'
 
 describe('Merge Helpers', function () {
   before('instanciate config', configHelpers.createConfig)
