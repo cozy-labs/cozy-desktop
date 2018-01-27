@@ -73,7 +73,7 @@
     "lint": "npm run lint:flow && npm run lint:eslint && npm run lint:gui",
     "lint:flow": "flow status --quiet --show-all-errors",
     "lint:elm": "elm-format --validate gui/elm test/elm",
-    "lint:eslint": "eslint './core/**/*.js'",
+    "lint:eslint": "eslint './core/**/*.js' 'gui/*.js' 'gui/js/**/*.js' './test/**/*.js'",
     "lint:gui": "standard --verbose gui/js/**.js gui/main.js gui/ports.js",
     "docker:exec": "docker exec -it cozy-desktop-stack",
     "cozy-stack": "yarn docker:exec cozy-stack"
