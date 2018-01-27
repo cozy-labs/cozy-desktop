@@ -40,6 +40,10 @@ module.exports.scenarios =
   glob.sync(path.join(scenariosDir, '**/scenario.js*'), {})
     .map(scenarioByPath)
 
+if (module.exports.scenarios.length === 0) {
+  throw new Error(`No scenario found! Please check scenariosDir: ${scenariosDir}`)
+}
+
 module.exports.loadFSEventFiles = (scenario) => {
   const eventFiles = glob.sync(path.join(path.dirname(scenario.path), 'local', '*.json*'))
   const disabledEventsFile = (name) => {
