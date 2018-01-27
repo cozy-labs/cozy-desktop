@@ -15,8 +15,8 @@ import Sync from '../../../core/sync'
 import * as metadata from '../../../core/metadata'
 import * as conversion from '../../../core/conversion'
 
-import configHelpers from '../../helpers/config'
-import pouchHelpers from '../../helpers/pouch'
+import configHelpers from '../../support/helpers/config'
+import pouchHelpers from '../../support/helpers/pouch'
 
 describe('issue 850', function () {
   this.timeout(10000)

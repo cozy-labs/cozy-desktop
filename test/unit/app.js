@@ -8,7 +8,7 @@ import should from 'should'
 import App from '../../core/app'
 import { LOG_FILENAME } from '../../core/logger'
 
-import configHelpers from '../helpers/config'
+import configHelpers from '../support/helpers/config'
 
 describe('App', function () {
   describe('parseCozyUrl', function () {

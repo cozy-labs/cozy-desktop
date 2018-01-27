@@ -9,7 +9,7 @@ import should from 'should'
 
 import { hideOnWindows } from '../../../core/utils/fs'
 
-import configHelpers from '../../helpers/config'
+import configHelpers from '../../support/helpers/config'
 
 Promise.promisifyAll(childProcess)
 Promise.promisifyAll(fs)

@@ -19,12 +19,12 @@ import timestamp from '../../../core/timestamp'
 import type { Metadata } from '../../../core/metadata'
 import type { RemoteDoc, JsonApiDoc } from '../../../core/remote/document'
 
-import MetadataBuilders from '../../builders/metadata'
-import configHelpers from '../../helpers/config'
-import pouchHelpers from '../../helpers/pouch'
+import MetadataBuilders from '../../support/builders/metadata'
+import configHelpers from '../../support/helpers/config'
+import pouchHelpers from '../../support/helpers/pouch'
 import {
   cozy, builders, deleteAll, createTheCouchdbFolder
-} from '../../helpers/cozy'
+} from '../../support/helpers/cozy'
 
 const metadataBuilders = new MetadataBuilders()
 

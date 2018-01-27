@@ -3,7 +3,7 @@
 import path from 'path'
 import should from 'should'
 
-import configHelpers from '../helpers/config'
+import configHelpers from '../support/helpers/config'
 
 import Config from '../../core/config'
 

@@ -4,7 +4,7 @@ import should from 'should'
 
 import analysis from '../../../core/local/analysis'
 
-import MetadataBuilders from '../../builders/metadata'
+import MetadataBuilders from '../../support/builders/metadata'
 
 import type { LocalEvent } from '../../../core/local/event'
 import type { LocalChange } from '../../../core/local/change'

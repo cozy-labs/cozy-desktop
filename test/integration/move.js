@@ -12,11 +12,11 @@ import {
 import path from 'path'
 import should from 'should'
 
-import pouchdbBuilders from '../builders/pouchdb'
-import configHelpers from '../helpers/config'
-import * as cozyHelpers from '../helpers/cozy'
-import pouchHelpers from '../helpers/pouch'
-import { IntegrationTestHelpers } from '../helpers/integration'
+import pouchdbBuilders from '../support/builders/pouchdb'
+import configHelpers from '../support/helpers/config'
+import * as cozyHelpers from '../support/helpers/cozy'
+import pouchHelpers from '../support/helpers/pouch'
+import { IntegrationTestHelpers } from '../support/helpers/integration'
 
 suite('Move', () => {
   if (process.env.APPVEYOR) {

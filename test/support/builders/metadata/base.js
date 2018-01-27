@@ -1,8 +1,8 @@
 /* @flow */
 
-import Pouch from '../../../core/pouch'
+import Pouch from '../../../../core/pouch'
 
-import type { Metadata, MetadataSidesInfo } from '../../../core/metadata'
+import type { Metadata, MetadataSidesInfo } from '../../../../core/metadata'
 
 export default class BaseMetadataBuilder {
   pouch: ?Pouch

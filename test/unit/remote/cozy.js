@@ -4,9 +4,10 @@
 import should from 'should'
 
 import RemoteCozy, { DirectoryNotFound } from '../../../core/remote/cozy'
-import configHelpers from '../../helpers/config'
-import { COZY_URL, builders, deleteAll } from '../../helpers/cozy'
-import CozyStackDouble from '../../doubles/cozy_stack'
+
+import configHelpers from '../../support/helpers/config'
+import { COZY_URL, builders, deleteAll } from '../../support/helpers/cozy'
+import CozyStackDouble from '../../support/doubles/cozy_stack'
 
 const cozyStackDouble = new CozyStackDouble()
 
