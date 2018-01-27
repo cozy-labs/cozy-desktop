@@ -77,8 +77,8 @@ You can also:
 * Chat with us on the [IRC channel](irc://irc.freenode.net/cozycloud)
 * Mention us on [Twitter](https://twitter.com/mycozycloud)
 
-The current maintainer of Cozy Drive for Desktop is @sebn, feel free to say
-hello!
+The current maintainers of Cozy Drive for Desktop are @sebn & @aenario, feel
+free to say hello!
 
 ## License
 
