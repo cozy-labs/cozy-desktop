@@ -44,7 +44,7 @@
     "lint": "npm run lint:flow && npm run lint:eslint",
     "lint:flow": "flow status --quiet --show-all-errors",
     "lint:elm": "elm-format --validate gui/elm test/elm",
-    "lint:eslint": "eslint './core/**/*.js' 'gui/*.js' 'gui/js/**/*.js' './test/**/*.js'",
+    "lint:eslint": "eslint './core/**/*.js' gui/main.js gui/ports.js 'gui/js/**/*.js' './test/**/*.js'",
     "mocha": "env-cmd .env.test electron-mocha",
     "mocha:coverage": "yarn mocha --require ./test/support/coverage --reporter ./test/support/istanbul_reporter",
     "postinstall": "yarn postinstall:electron && yarn postinstall:elm",
