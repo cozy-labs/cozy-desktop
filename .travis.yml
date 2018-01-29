@@ -26,7 +26,6 @@ cache:
     yarn: true
     directories:
         - /Library/Caches/Homebrew
-        - node_modules
         - $HOME/.cache/electron
         - $HOME/.cache/electron-builder
 addons:
