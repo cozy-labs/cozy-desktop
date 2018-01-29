@@ -253,7 +253,7 @@ class Sync {
   // and keep track of the number of retries
   async handleApplyError (change: Change, err: Error) {
     const {path} = change.doc
-    log.error({path, err})
+    log.error({path, err, change})
     if (err.code === 'ENOSPC') {
       throw new Error('No more disk space')
     } else if (err.status === 413) {

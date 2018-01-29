@@ -292,6 +292,8 @@ class Merge {
       markSide(side, was, was)
       if (doc.tags == null) { doc.tags = was.tags || [] }
       if (doc.ino == null) { doc.ino = was.ino }
+      // FIXME: Shouldn't we compare doc/was updated_at & set doc accordingly
+      // as in moveFileAsync?
       delete doc.trashed
       if (folder) {
         const dst = await this.resolveConflictAsync(side, doc)
