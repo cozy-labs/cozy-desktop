@@ -535,6 +535,23 @@ describe('RemoteWatcher', function () {
       should(dst).not.have.properties(['_rev', 'path', 'name'])
     })
 
+    it('is invalid when local or remote file is corrupt', async function () {
+      const doc: RemoteDoc = builders.remote.file().build()
+      const was: Metadata = createMetadata(doc)
+      metadata.ensureValidPath(was)
+      metadata.assignId(was)
+      should(doc.md5sum).equal(was.md5sum)
+      doc.size = '123'
+      was.size = 456
+      was.remote._rev = '0'
+
+      const change: Change = this.watcher.identifyChange(clone(doc), was, 0, [])
+
+      should(change).have.property('type', 'InvalidChange')
+      // $FlowFixMe
+      should(change.error).match(/corrupt/)
+    })
+
     xit('calls deleteDoc & addDoc when trashed', async function () {
       this.prep.deleteFolderAsync = sinon.stub()
       this.prep.deleteFolderAsync.returnsPromise().resolves(null)

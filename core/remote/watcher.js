@@ -205,7 +205,18 @@ export default class RemoteWatcher {
       return remoteChange.restored(doc, was)
     }
     if (was._id === doc._id) {
-      return remoteChange.updated(doc)
+      if (doc.docType === 'file' && doc.md5sum === was.md5sum && doc.size !== was.size) {
+        return {
+          type: 'InvalidChange',
+          doc,
+          was,
+          error: new Error(
+            'File is corrupt on either side (md5sum matches but size does not)'
+          )
+        }
+      } else {
+        return remoteChange.updated(doc)
+      }
     }
     if ((doc.docType === 'file') && (was.md5sum === doc.md5sum)) {
       const change: FileMoved = {type: 'FileMoved', doc, was}
