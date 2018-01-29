@@ -1,12 +1,10 @@
-// TODO: Rename to cli/test/helpers/scenarios.js
-
 const Promise = require('bluebird')
 const fs = require('fs-extra')
 const glob = require('glob')
 const _ = require('lodash')
 const path = require('path')
 
-const metadata = require('../../core/metadata')
+const metadata = require('../../../core/metadata')
 
 const { cozy } = require('./cozy')
 
@@ -35,10 +33,16 @@ const scenarioByPath = module.exports.scenarioByPath = scenarioPath => {
   return scenario
 }
 
+const scenariosDir = path.resolve(__dirname, '../../scenarios')
+
 // TODO: Refactor to function
 module.exports.scenarios =
-  glob.sync(path.join(__dirname, '../scenarios/**/scenario.js*'), {})
+  glob.sync(path.join(scenariosDir, '**/scenario.js*'), {})
     .map(scenarioByPath)
+
+if (module.exports.scenarios.length === 0) {
+  throw new Error(`No scenario found! Please check scenariosDir: ${scenariosDir}`)
+}
 
 module.exports.loadFSEventFiles = (scenario) => {
   const eventFiles = glob.sync(path.join(path.dirname(scenario.path), 'local', '*.json*'))

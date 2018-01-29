@@ -1,6 +1,6 @@
 /* @flow */
 
-import Pouch from '../../../core/pouch'
+import Pouch from '../../../../core/pouch'
 
 import DirMetadataBuilder from './dir'
 import FileMetadataBuilder from './file'

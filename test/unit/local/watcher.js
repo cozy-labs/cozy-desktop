@@ -9,11 +9,10 @@ import { TMP_DIR_NAME } from '../../../core/local/constants'
 import Watcher from '../../../core/local/watcher'
 import * as metadata from '../../../core/metadata'
 
-import configHelpers from '../../helpers/config'
-import pouchHelpers from '../../helpers/pouch'
+import configHelpers from '../../support/helpers/config'
+import pouchHelpers from '../../support/helpers/pouch'
 
 describe('LocalWatcher Tests', function () {
-
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
   beforeEach('instanciate local watcher', function () {

@@ -4,9 +4,9 @@ import Promise from 'bluebird'
 import fs from 'fs-extra'
 import path from 'path'
 
-import { getPath } from '../../core/utils/path'
+import { getPath } from '../../../core/utils/path'
 
-import type { PathObject } from '../../core/utils/path'
+import type { PathObject } from '../../../core/utils/path'
 
 Promise.promisifyAll(fs)
 

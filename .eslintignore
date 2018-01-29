@@ -1,0 +1,8 @@
+core-built
+coverage
+dist
+elm-stuff
+flow-typed
+gui/elm.js
+node_modules
+tmp

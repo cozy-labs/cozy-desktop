@@ -4,7 +4,7 @@ import should from 'should'
 
 import analysis from '../../../core/local/analysis'
 
-import MetadataBuilders from '../../builders/metadata'
+import MetadataBuilders from '../../support/builders/metadata'
 
 import type { LocalEvent } from '../../../core/local/event'
 import type { LocalChange } from '../../../core/local/change'
@@ -174,7 +174,7 @@ describe('core/local/analysis', function () {
       {type: 'add', path: 'dst/file', stats: fileStats},
       {type: 'change', path: 'other-file', stats: otherFileStats, md5sum: 'yolo', old: otherFileMetadata},
       {type: 'unlinkDir', path: 'other-dir-src', old: otherDirMetadata},
-      {type: 'addDir', path: 'other-dir-dst', stats: otherDirStats},
+      {type: 'addDir', path: 'other-dir-dst', stats: otherDirStats}
     ]
     const pendingChanges: LocalChange[] = []
 

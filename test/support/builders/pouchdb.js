@@ -1,8 +1,8 @@
-import uuid from 'node-uuid'
+import uuid from 'uuid/v4'
 
 export default {
   id () {
-    return uuid.v4().replace(/-/g, '')
+    return uuid().replace(/-/g, '')
   },
 
   rev () {

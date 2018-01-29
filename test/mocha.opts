@@ -6,6 +6,6 @@
 --require ./core/globals
 --require should
 --require should-sinon
---require ./test/assertions/timestamp
---require ./test/helpers/stacktraces
+--require ./test/support/assertions/timestamp
+--require ./test/support/stacktraces
 --recursive

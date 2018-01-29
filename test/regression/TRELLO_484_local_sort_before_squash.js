@@ -6,11 +6,11 @@ import _ from 'lodash'
 import should from 'should'
 import sinon from 'sinon'
 
-import { runActions, init } from '../helpers/scenarios'
-import configHelpers from '../helpers/config'
-import * as cozyHelpers from '../helpers/cozy'
-import { IntegrationTestHelpers } from '../helpers/integration'
-import pouchHelpers from '../helpers/pouch'
+import { runActions, init } from '../support/helpers/scenarios'
+import configHelpers from '../support/helpers/config'
+import * as cozyHelpers from '../support/helpers/cozy'
+import { IntegrationTestHelpers } from '../support/helpers/integration'
+import pouchHelpers from '../support/helpers/pouch'
 
 let helpers
 

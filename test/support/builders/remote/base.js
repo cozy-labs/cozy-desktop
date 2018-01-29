@@ -3,10 +3,10 @@
 import { Cozy } from 'cozy-client-js'
 import uuid from 'uuid/v4'
 
-import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID, TRASH_DIR_NAME } from '../../../core/remote/constants'
-import timestamp from '../../../core/timestamp'
+import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID, TRASH_DIR_NAME } from '../../../../core/remote/constants'
+import timestamp from '../../../../core/timestamp'
 
-import type { RemoteDoc } from '../../../core/remote/document'
+import type { RemoteDoc } from '../../../../core/remote/document'
 
 const ROOT_DIR_PROPERTIES = {
   _id: ROOT_DIR_ID,

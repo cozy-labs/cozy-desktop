@@ -8,8 +8,8 @@ import path from 'path'
 import Watcher from '../../../core/local/watcher'
 import * as metadata from '../../../core/metadata'
 
-import configHelpers from '../../helpers/config'
-import pouchHelpers from '../../helpers/pouch'
+import configHelpers from '../../support/helpers/config'
+import pouchHelpers from '../../support/helpers/pouch'
 
 class SpyPrep {
   calls: *

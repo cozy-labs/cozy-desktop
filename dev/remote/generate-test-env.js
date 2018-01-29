@@ -72,6 +72,7 @@ function readAccessToken () {
 function generateTestEnv (accessToken) {
   console.log('Generate .env.test file...')
   fs.writeFileSync('.env.test', `
+COZY_DESKTOP_HEARTBEAT=1000
 COZY_STACK_TOKEN=${accessToken}
 NODE_ENV=test
   `)

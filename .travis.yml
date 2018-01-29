@@ -90,6 +90,7 @@ script:
     - yarn test:unit:coverage -- --timeout $MOCHA_TIMEOUT
     - yarn test:elm
     - yarn test:integration -- --timeout $MOCHA_TIMEOUT
+    - yarn test:scenarios -- --timeout $MOCHA_TIMEOUT
     - |
       if [ "$TRAVIS_OS_NAME" == "linux" ]; then
         docker run --rm \
