@@ -22,7 +22,7 @@ import Prep from '../../../core/prep'
 import RemoteCozy from '../../../core/remote/cozy'
 import RemoteWatcher from '../../../core/remote/watcher'
 
-import type { Change } from '../../../core/remote/change'
+import type { RemoteChange } from '../../../core/remote/change'
 import type { RemoteDoc, RemoteDeletion } from '../../../core/remote/document'
 import type { Metadata } from '../../../core/metadata'
 
@@ -180,8 +180,8 @@ describe('RemoteWatcher', function () {
 
     context('when apply() rejects some file/dir', function () {
       beforeEach(function () {
-        apply.callsFake(async (change: Change): Promise<void> => {
-          if (change.type === 'FileAdded') throw new Error('oops')
+        apply.callsFake(async (change: RemoteChange): Promise<void> => {
+          if (change.type === 'RemoteFileAdded') throw new Error('oops')
         })
       })
 
@@ -194,8 +194,8 @@ describe('RemoteWatcher', function () {
         try { await this.watcher.pullMany(docs) } catch (_) {}
         should(apply).have.been.calledTwice()
         // Changes are sorted before applying (FileAdded was the first one)
-        should(apply.args[0][0]).have.properties({type: 'IgnoredChange', doc: docs[1]})
-        should(apply.args[1][0]).have.properties({type: 'FileAdded', doc: validMetadata(docs[0])})
+        should(apply.args[0][0]).have.properties({type: 'RemoteIgnoredChange', doc: docs[1]})
+        should(apply.args[1][0]).have.properties({type: 'RemoteFileAdded', doc: validMetadata(docs[0])})
       })
 
       it('releases the Pouch lock', async function () {
@@ -264,8 +264,8 @@ describe('RemoteWatcher', function () {
         }
       }
 
-      const change: Change = this.watcher.identifyChange(doc, null, 0, [])
-      should(change.type).equal('InvalidChange')
+      const change: RemoteChange = this.watcher.identifyChange(doc, null, 0, [])
+      should(change.type).equal('RemoteInvalidChange')
       // $FlowFixMe
       should(change.error.message).equal('Invalid path')
     })
@@ -282,9 +282,9 @@ describe('RemoteWatcher', function () {
         path: 'foo',
         name: 'bar'
       }
-      const change: Change = this.watcher.identifyChange(doc, null, 0, [])
+      const change: RemoteChange = this.watcher.identifyChange(doc, null, 0, [])
 
-      should(change.type).equal('InvalidChange')
+      should(change.type).equal('RemoteInvalidChange')
     })
 
     onPlatform('win32', () => {
@@ -295,9 +295,9 @@ describe('RemoteWatcher', function () {
           md5sum: '9999999999999999999999999999999999999999',
           type: 'file'
         }
-        const change: Change = this.watcher.identifyChange(doc, null, 0, [])
+        const change: RemoteChange = this.watcher.identifyChange(doc, null, 0, [])
         const platform = process.platform
-        should(change.type).equal('PlatformIncompatibleChange')
+        should(change.type).equal('RemotePlatformIncompatibleChange')
         should((change: any).incompatibilities).deepEqual([
           {
             type: 'reservedChars',
@@ -319,13 +319,13 @@ describe('RemoteWatcher', function () {
       })
 
       it('does not detect any when file/dir is in the trash', async function () {
-        const change: Change = this.watcher.identifyChange({
+        const change: RemoteChange = this.watcher.identifyChange({
           _id: 'whatever',
           path: '/.cozy_trash/f:oo/b<a>r',
           md5sum: '9999999999999999999999999999999999999999',
           type: 'file'
         }, null, 0, [])
-        should(change.type).not.equal('PlatformIncompatibleChange')
+        should(change.type).not.equal('RemotePlatformIncompatibleChange')
       })
     })
 
@@ -351,9 +351,9 @@ describe('RemoteWatcher', function () {
         }
       }
 
-      const change: Change = this.watcher.identifyChange(clone(doc), null, 0, [])
+      const change: RemoteChange = this.watcher.identifyChange(clone(doc), null, 0, [])
 
-      should(change.type).equal('FileAdded')
+      should(change.type).equal('RemoteFileAdded')
       should(change.doc).have.properties({
         path: 'my-folder',
         docType: 'file',
@@ -390,9 +390,9 @@ describe('RemoteWatcher', function () {
       }
       const was = await this.pouch.byRemoteIdAsync(doc._id)
 
-      const change: Change = this.watcher.identifyChange(clone(doc), was, 0, [])
+      const change: RemoteChange = this.watcher.identifyChange(clone(doc), was, 0, [])
 
-      should(change.type).equal('FileUpdated')
+      should(change.type).equal('RemoteFileUpdated')
       should(change.doc).have.properties({
         path: path.normalize('my-folder/file-1'),
         docType: 'file',
@@ -422,9 +422,9 @@ describe('RemoteWatcher', function () {
       }
       const was = await this.pouch.byRemoteIdAsync(doc._id)
 
-      const change: Change = this.watcher.identifyChange(clone(doc), was, 0, [])
+      const change: RemoteChange = this.watcher.identifyChange(clone(doc), was, 0, [])
 
-      should(change.type).equal('FileUpdated')
+      should(change.type).equal('RemoteFileUpdated')
       should(change.doc).have.properties({
         path: path.normalize('my-folder/file-1'),
         docType: 'file',
@@ -455,9 +455,9 @@ describe('RemoteWatcher', function () {
       }
 
       const was = await this.pouch.byRemoteIdMaybeAsync(doc._id)
-      const change: Change = this.watcher.identifyChange(clone(doc), was, 0, [])
+      const change: RemoteChange = this.watcher.identifyChange(clone(doc), was, 0, [])
 
-      should(change.type).equal('FileMoved')
+      should(change.type).equal('RemoteFileMoved')
       // $FlowFixMe
       const src = change.was
       should(src).have.properties({
@@ -507,9 +507,9 @@ describe('RemoteWatcher', function () {
       const was: Metadata = await this.pouch.db.get(metadata.id(path.normalize('my-folder/file-2')))
       await this.pouch.db.put(was)
 
-      const change: Change = this.watcher.identifyChange(clone(doc), was, 0, [])
+      const change: RemoteChange = this.watcher.identifyChange(clone(doc), was, 0, [])
 
-      should(change.type).equal('FileMoved')
+      should(change.type).equal('RemoteFileMoved')
       // $FlowFixMe
       const src = change.was
       should(src).have.properties({
@@ -545,9 +545,9 @@ describe('RemoteWatcher', function () {
       was.size = 456
       was.remote._rev = '0'
 
-      const change: Change = this.watcher.identifyChange(clone(doc), was, 0, [])
+      const change: RemoteChange = this.watcher.identifyChange(clone(doc), was, 0, [])
 
-      should(change).have.property('type', 'InvalidChange')
+      should(change).have.property('type', 'RemoteInvalidChange')
       // $FlowFixMe
       should(change.error).match(/corrupt/)
     })

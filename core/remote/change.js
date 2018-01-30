@@ -9,105 +9,105 @@ import type { Metadata } from '../metadata'
 
 // TODO: Introduce UnidentifiedChange type with doc/was properties?
 // TODO: Merge with local/prep_action?
-export type FileAdded = {type: 'FileAdded', doc: Metadata}
-export type FileDeleted = {type: 'FileDeleted', doc: Metadata}
-export type FileDissociated = {type: 'FileDissociated', doc: Metadata, was: Metadata}
-export type FileMoved = {type: 'FileMoved', doc: Metadata, was: Metadata, needRefetch?: true}
-export type FileRestored = {type: 'FileRestored', doc: Metadata, was: Metadata}
-export type FileTrashed = {type: 'FileTrashed', doc: Metadata, was: Metadata}
-export type FileUpdated = {type: 'FileUpdated', doc: Metadata}
+export type RemoteFileAdded = {type: 'RemoteFileAdded', doc: Metadata}
+export type RemoteFileDeleted = {type: 'RemoteFileDeleted', doc: Metadata}
+export type RemoteFileDissociated = {type: 'RemoteFileDissociated', doc: Metadata, was: Metadata}
+export type RemoteFileMoved = {type: 'RemoteFileMoved', doc: Metadata, was: Metadata, needRefetch?: true}
+export type RemoteFileRestored = {type: 'RemoteFileRestored', doc: Metadata, was: Metadata}
+export type RemoteFileTrashed = {type: 'RemoteFileTrashed', doc: Metadata, was: Metadata}
+export type RemoteFileUpdated = {type: 'RemoteFileUpdated', doc: Metadata}
 
-export type FolderAdded = {type: 'FolderAdded', doc: Metadata, was: Metadata}
-export type FolderDeleted = {type: 'FolderDeleted', doc: Metadata}
-export type FolderDissociated = {type: 'FolderDissociated', doc: Metadata, was: Metadata}
-export type FolderMoved = {type: 'FolderMoved', doc: Metadata, was: Metadata, needRefetch?: true}
-export type FolderRestored = {type: 'FolderRestored', doc: Metadata, was: Metadata}
-export type FolderTrashed = {type: 'FolderTrashed', doc: Metadata, was: Metadata}
+export type RemoteFolderAdded = {type: 'RemoteFolderAdded', doc: Metadata, was: Metadata}
+export type RemoteFolderDeleted = {type: 'RemoteFolderDeleted', doc: Metadata}
+export type RemoteFolderDissociated = {type: 'RemoteFolderDissociated', doc: Metadata, was: Metadata}
+export type RemoteFolderMoved = {type: 'RemoteFolderMoved', doc: Metadata, was: Metadata, needRefetch?: true}
+export type RemoteFolderRestored = {type: 'RemoteFolderRestored', doc: Metadata, was: Metadata}
+export type RemoteFolderTrashed = {type: 'RemoteFolderTrashed', doc: Metadata, was: Metadata}
 
-export type IgnoredChange = {type: 'IgnoredChange', doc: Metadata|RemoteDoc|RemoteDeletion, detail: string}
-export type InvalidChange = {type: 'InvalidChange', doc: *, error: Error}
+export type RemoteIgnoredChange = {type: 'RemoteIgnoredChange', doc: Metadata|RemoteDoc|RemoteDeletion, detail: string}
+export type RemoteInvalidChange = {type: 'RemoteInvalidChange', doc: *, error: Error}
 // FIXME: use PlatformIncompatibility type
-export type PlatformIncompatibleChange = {type: 'PlatformIncompatibleChange', doc: Metadata, incompatibilities: *}
-export type UpToDate = {type: 'UpToDate', doc: Metadata, was: Metadata}
+export type RemotePlatformIncompatibleChange = {type: 'RemotePlatformIncompatibleChange', doc: Metadata, incompatibilities: *}
+export type RemoteUpToDate = {type: 'RemoteUpToDate', doc: Metadata, was: Metadata}
 
-export type Change =
-  | FileAdded
-  | FileDeleted
-  | FileDissociated
-  | FileMoved
-  | FileRestored
-  | FileTrashed
-  | FileUpdated
-  | FolderAdded
-  | FolderDeleted
-  | FolderDissociated
-  | FolderMoved
-  | FolderRestored
-  | FolderTrashed
-  | IgnoredChange
-  | InvalidChange
-  | PlatformIncompatibleChange
-  | UpToDate
+export type RemoteChange =
+  | RemoteFileAdded
+  | RemoteFileDeleted
+  | RemoteFileDissociated
+  | RemoteFileMoved
+  | RemoteFileRestored
+  | RemoteFileTrashed
+  | RemoteFileUpdated
+  | RemoteFolderAdded
+  | RemoteFolderDeleted
+  | RemoteFolderDissociated
+  | RemoteFolderMoved
+  | RemoteFolderRestored
+  | RemoteFolderTrashed
+  | RemoteIgnoredChange
+  | RemoteInvalidChange
+  | RemotePlatformIncompatibleChange
+  | RemoteUpToDate
 
 // FIXME: return types
 export const added = (doc: Metadata): * =>
-  ({type: (isFile(doc) ? 'FileAdded' : 'FolderAdded'), doc})
+  ({type: (isFile(doc) ? 'RemoteFileAdded' : 'RemoteFolderAdded'), doc})
 
 export const trashed = (doc: Metadata, was: Metadata): * =>
-  ({type: (isFile(doc) ? 'FileTrashed' : 'FolderTrashed'), doc, was})
+  ({type: (isFile(doc) ? 'RemoteFileTrashed' : 'RemoteFolderTrashed'), doc, was})
 
 export const deleted = (doc: Metadata): * =>
-  ({type: (isFile(doc) ? 'FileDeleted' : 'FolderDeleted'), doc})
+  ({type: (isFile(doc) ? 'RemoteFileDeleted' : 'RemoteFolderDeleted'), doc})
 
 export const restored = (doc: Metadata, was: Metadata): * =>
-  ({type: (isFile(doc) ? 'FileRestored' : 'FolderRestored'), doc, was})
+  ({type: (isFile(doc) ? 'RemoteFileRestored' : 'RemoteFolderRestored'), doc, was})
 
 export const upToDate = (doc: Metadata, was: Metadata): * =>
-  ({type: 'UpToDate', doc, was})
+  ({type: 'RemoteUpToDate', doc, was})
 
 export const updated = (doc: Metadata): * =>
-  ({type: (isFile(doc) ? 'FileUpdated' : 'FolderAdded'), doc})
+  ({type: (isFile(doc) ? 'RemoteFileUpdated' : 'RemoteFolderAdded'), doc})
 
 export const dissociated = (doc: Metadata, was: Metadata): * =>
-  ({type: (isFile(doc) ? 'FileDissociated' : 'FolderDissociated'), doc, was})
+  ({type: (isFile(doc) ? 'RemoteFileDissociated' : 'RemoteFolderDissociated'), doc, was})
 
 // TODO: Rename args
-export const isChildMove = (a: Change, b: Change): boolean %checks => {
-  return a.type === 'FolderMoved' &&
-        (b.type === 'FolderMoved' || b.type === 'FileMoved') &&
+export const isChildMove = (a: RemoteChange, b: RemoteChange): boolean %checks => {
+  return a.type === 'RemoteFolderMoved' &&
+        (b.type === 'RemoteFolderMoved' || b.type === 'RemoteFileMoved') &&
         (b.doc.path.indexOf(a.doc.path + path.sep) === 0) &&
         a.was && b.was &&
         (b.was.path.indexOf(a.was.path + path.sep) === 0) &&
-        a.type === 'FolderMoved' &&
-        (b.type === 'FolderMoved' || b.type === 'FileMoved')
+        a.type === 'RemoteFolderMoved' &&
+        (b.type === 'RemoteFolderMoved' || b.type === 'RemoteFileMoved')
 }
 
 /*     was           doc
  a    /a     ->    /a2
  b    /a/b   ->    /a2/b
 */
-export const isOnlyChildMove = (a: FolderMoved, b: FileMoved|FolderMoved): boolean %checks => {
+export const isOnlyChildMove = (a: RemoteFolderMoved, b: RemoteFileMoved|RemoteFolderMoved): boolean %checks => {
   return isChildMove(a, b) && b.doc.path.replace(a.doc.path, '') === b.was.path.replace(a.was.path, '')
 }
 
-export const applyMoveToPath = (a: FolderMoved, p: string): string => {
+export const applyMoveToPath = (a: RemoteFolderMoved, p: string): string => {
   return p.replace(a.was.path, a.doc.path)
 }
 
-const isDelete = (a: Change): boolean %checks => a.type === 'FolderDeleted' || a.type === 'FileDeleted'
-const isAdd = (a: Change): boolean %checks => a.type === 'FolderAdded' || a.type === 'FileAdded'
-const isMove = (a: Change): boolean %checks => a.type === 'FolderMoved' || a.type === 'FileMoved'
-const isTrash = (a: Change): boolean %checks => a.type === 'FolderTrashed' || a.type === 'FileTrashed'
-const isRestore = (a: Change): boolean %checks => a.type === 'FolderRestored' || a.type === 'FileRestored'
-const isDissociate = (a: Change): boolean %checks => a.type === 'FolderDissociated' || a.type === 'FileDissociated'
+const isDelete = (a: RemoteChange): boolean %checks => a.type === 'RemoteFolderDeleted' || a.type === 'RemoteFileDeleted'
+const isAdd = (a: RemoteChange): boolean %checks => a.type === 'RemoteFolderAdded' || a.type === 'RemoteFileAdded'
+const isMove = (a: RemoteChange): boolean %checks => a.type === 'RemoteFolderMoved' || a.type === 'RemoteFileMoved'
+const isTrash = (a: RemoteChange): boolean %checks => a.type === 'RemoteFolderTrashed' || a.type === 'RemoteFileTrashed'
+const isRestore = (a: RemoteChange): boolean %checks => a.type === 'RemoteFolderRestored' || a.type === 'RemoteFileRestored'
+const isDissociate = (a: RemoteChange): boolean %checks => a.type === 'RemoteFolderDissociated' || a.type === 'RemoteFileDissociated'
 
-const addPath = (a: Change): ?string => isAdd(a) || isMove(a) || isRestore(a) || isDissociate(a) ? a.doc.path : null
-const delPath = (a: Change): ?string => isDelete(a) ? a.doc.path : isMove(a) || isTrash(a) ? a.was.path : null
+const addPath = (a: RemoteChange): ?string => isAdd(a) || isMove(a) || isRestore(a) || isDissociate(a) ? a.doc.path : null
+const delPath = (a: RemoteChange): ?string => isDelete(a) ? a.doc.path : isMove(a) || isTrash(a) ? a.was.path : null
 const childOf = (p1: ?string, p2: ?string): boolean => p1 != null && p2 != null && p2 !== p1 && p2.startsWith(p1 + path.sep)
 const lower = (p1: ?string, p2: ?string): boolean => p1 != null && p2 != null && p2 !== p1 && p1 < p2
 
-const isChildDelete = (a: Change, b: Change) => childOf(delPath(a), delPath(b))
-const isChildAdd = (a: Change, b: Change) => childOf(addPath(a), addPath(b))
+const isChildDelete = (a: RemoteChange, b: RemoteChange) => childOf(delPath(a), delPath(b))
+const isChildAdd = (a: RemoteChange, b: RemoteChange) => childOf(addPath(a), addPath(b))
 
 const sorter = (a, b) => {
   if (childOf(addPath(a), delPath(b))) return -1
@@ -129,6 +129,6 @@ const sorter = (a, b) => {
   return 1
 }
 
-export const sort = (changes: Change[]): void => {
+export const sort = (changes: RemoteChange[]): void => {
   changes.sort(sorter)
 }

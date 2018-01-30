@@ -13,7 +13,7 @@ import * as remoteChange from './change'
 import { inRemoteTrash } from './document'
 
 import type { Metadata } from '../metadata'
-import type { Change, FileMoved } from './change'
+import type { RemoteChange, RemoteFileMoved } from './change'
 import type { RemoteDoc, RemoteDeletion } from './document'
 
 const log = logger({
@@ -89,7 +89,7 @@ export default class RemoteWatcher {
   // Pull multiple changed or deleted docs
   // FIXME: Misleading method name?
   async pullMany (docs: Array<RemoteDoc|RemoteDeletion>) {
-    const changes: Change[] = []
+    const changes: RemoteChange[] = []
 
     const release = await this.pouch.lock(this)
     let target = -1
@@ -118,13 +118,13 @@ export default class RemoteWatcher {
     }
   }
 
-  identifyChange (doc: RemoteDoc|RemoteDeletion, was: ?Metadata, changeIndex: number, previousChanges: Change[]): Change {
+  identifyChange (doc: RemoteDoc|RemoteDeletion, was: ?Metadata, changeIndex: number, previousChanges: RemoteChange[]): RemoteChange {
     log.trace({path: was ? was.path : _.get(doc, 'path'), doc, was}, 'change received')
 
     if (doc._deleted) {
       if (was == null) {
         return {
-          type: 'IgnoredChange',
+          type: 'RemoteIgnoredChange',
           doc,
           detail: 'file or directory was created, trashed, and removed remotely'
         }
@@ -134,13 +134,13 @@ export default class RemoteWatcher {
     } else {
       if (doc.type !== 'directory' && doc.type !== 'file') {
         return {
-          type: 'InvalidChange',
+          type: 'RemoteInvalidChange',
           doc,
           error: new Error(`Document ${doc._id} is not a file or a directory`)
         }
       } else if (doc.type === 'file' && (doc.md5sum == null || doc.md5sum === '')) {
         return {
-          type: 'IgnoredChange',
+          type: 'RemoteIgnoredChange',
           doc,
           detail: 'Ignoring temporary file'
         }
@@ -158,19 +158,19 @@ export default class RemoteWatcher {
   // Note that the changes feed can aggregate several changes for many changes
   // for the same document. For example, if a file is created and then put in
   // the trash just after, it looks like it appeared directly on the trash.
-  identifyExistingDocChange (remote: RemoteDoc, was: ?Metadata, changeIndex: number, previousChanges: Change[]): * {
+  identifyExistingDocChange (remote: RemoteDoc, was: ?Metadata, changeIndex: number, previousChanges: RemoteChange[]): * {
     let doc: Metadata = conversion.createMetadata(remote)
     try {
       ensureValidPath(doc)
     } catch (error) {
-      return {type: 'InvalidChange', doc, error}
+      return {type: 'RemoteInvalidChange', doc, error}
     }
     const {docType, path} = doc
     assignId(doc)
 
     if (doc.docType !== 'file' && doc.docType !== 'folder') {
       return {
-        type: 'InvalidChange',
+        type: 'RemoteInvalidChange',
         doc,
         error: new Error(`Unexpected docType: ${doc.docType}`)
       }
@@ -183,12 +183,12 @@ export default class RemoteWatcher {
         this.prep.config.syncPath
       )
       if (incompatibilities.length > 0) {
-        return {type: 'PlatformIncompatibleChange', doc, incompatibilities}
+        return {type: 'RemotePlatformIncompatibleChange', doc, incompatibilities}
       }
     } else {
       if (!was) {
         return {
-          type: 'IgnoredChange',
+          type: 'RemoteIgnoredChange',
           doc,
           detail: `${docType} was created and trashed remotely`
         }
@@ -207,7 +207,7 @@ export default class RemoteWatcher {
     if (was._id === doc._id) {
       if (doc.docType === 'file' && doc.md5sum === was.md5sum && doc.size !== was.size) {
         return {
-          type: 'InvalidChange',
+          type: 'RemoteInvalidChange',
           doc,
           was,
           error: new Error(
@@ -219,12 +219,12 @@ export default class RemoteWatcher {
       }
     }
     if ((doc.docType === 'file') && (was.md5sum === doc.md5sum)) {
-      const change: FileMoved = {type: 'FileMoved', doc, was}
+      const change: RemoteFileMoved = {type: 'RemoteFileMoved', doc, was}
       // Squash moves
       for (let previousChangeIndex = 0; previousChangeIndex < changeIndex; previousChangeIndex++) {
-        const previousChange: Change = previousChanges[previousChangeIndex]
+        const previousChange: RemoteChange = previousChanges[previousChangeIndex]
         // FIXME figure out why isChildMove%checks is not enough
-        if (previousChange.type === 'FolderMoved' && remoteChange.isChildMove(previousChange, change)) {
+        if (previousChange.type === 'RemoteFolderMoved' && remoteChange.isChildMove(previousChange, change)) {
           if (!remoteChange.isOnlyChildMove(previousChange, change)) {
             // move inside move
             change.was.path = remoteChange.applyMoveToPath(previousChange, change.was.path)
@@ -232,7 +232,7 @@ export default class RemoteWatcher {
             return change
           } else {
             return {
-              type: 'IgnoredChange',
+              type: 'RemoteIgnoredChange',
               doc,
               was,
               detail: `File was moved as descendant of ${_.get(previousChange, 'doc.path')}`
@@ -243,26 +243,26 @@ export default class RemoteWatcher {
       return change
     }
     if (doc.docType === 'folder') {
-      const change = {type: 'FolderMoved', doc, was}
+      const change = {type: 'RemoteFolderMoved', doc, was}
       // Squash moves
       for (let previousChangeIndex = 0; previousChangeIndex < changeIndex; previousChangeIndex++) {
-        const previousChange: Change = previousChanges[previousChangeIndex]
+        const previousChange: RemoteChange = previousChanges[previousChangeIndex]
         // FIXME figure out why isChildMove%checks is not enough
-        if ((previousChange.type === 'FolderMoved' || previousChange.type === 'FileMoved') && remoteChange.isChildMove(change, previousChange)) {
+        if ((previousChange.type === 'RemoteFolderMoved' || previousChange.type === 'RemoteFileMoved') && remoteChange.isChildMove(change, previousChange)) {
           if (!remoteChange.isOnlyChildMove(change, previousChange)) {
             previousChange.was.path = remoteChange.applyMoveToPath(change, previousChange.was.path)
             previousChange.needRefetch = true
             continue
           } else {
             _.assign(previousChange, {
-              type: 'IgnoredChange',
+              type: 'RemoteIgnoredChange',
               detail: `Folder was moved as descendant of ${change.doc.path}`
             })
             continue
           }
         } else if (remoteChange.isChildMove(previousChange, change)) {
           return {
-            type: 'IgnoredChange',
+            type: 'RemoteIgnoredChange',
             doc,
             was,
             detail: `Folder was moved as descendant of ${_.get(previousChange, 'doc.path')}`
@@ -276,7 +276,7 @@ export default class RemoteWatcher {
     return remoteChange.dissociated(doc, was)
   }
 
-  async applyAll (changes: Change[]): Promise<void> {
+  async applyAll (changes: RemoteChange[]): Promise<void> {
     const failedChanges = []
 
     for (let change of changes) {
@@ -296,56 +296,56 @@ export default class RemoteWatcher {
     }
   }
 
-  async apply (change: Change): Promise<void> {
+  async apply (change: RemoteChange): Promise<void> {
     const docType = _.get(change, 'doc.docType')
     const path = _.get(change, 'doc.path')
 
     switch (change.type) {
-      case 'InvalidChange':
+      case 'RemoteInvalidChange':
         throw change.error
-      case 'PlatformIncompatibleChange':
+      case 'RemotePlatformIncompatibleChange':
         this.events.emit('platform-incompatibilities', change.incompatibilities)
         break
-      case 'IgnoredChange':
+      case 'RemoteIgnoredChange':
         log.debug({path, remoteId: change.doc._id}, change.detail)
         break
-      case 'FileTrashed':
+      case 'RemoteFileTrashed':
         log.info({path}, 'file was trashed remotely')
         await this.prep.trashFileAsync(SIDE, change.was, change.doc)
         break
-      case 'FolderTrashed':
+      case 'RemoteFolderTrashed':
         log.info({path}, 'folder was trashed remotely')
         await this.prep.trashFolderAsync(SIDE, change.was, change.doc)
         break
-      case 'FileDeleted':
+      case 'RemoteFileDeleted':
         log.info({path}, 'file was deleted permanently')
         await this.prep.deleteFileAsync(SIDE, change.doc)
         break
-      case 'FolderDeleted':
+      case 'RemoteFolderDeleted':
         log.info({path}, 'folder was deleted permanently')
         await this.prep.deleteFolderAsync(SIDE, change.doc)
         break
-      case 'FileAdded':
+      case 'RemoteFileAdded':
         log.info({path}, 'file was added remotely')
         await this.prep.addFileAsync(SIDE, change.doc)
         break
-      case 'FolderAdded':
+      case 'RemoteFolderAdded':
         log.info({path}, 'folder was added remotely')
         await this.prep.putFolderAsync(SIDE, change.doc)
         break
-      case 'FileRestored':
+      case 'RemoteFileRestored':
         log.info({path}, 'file was restored remotely')
         await this.prep.restoreFileAsync(SIDE, change.doc, change.was)
         break
-      case 'FolderRestored':
+      case 'RemoteFolderRestored':
         log.info({path}, 'folder was restored remotely')
         await this.prep.restoreFolderAsync(SIDE, change.doc, change.was)
         break
-      case 'FileUpdated':
+      case 'RemoteFileUpdated':
         log.info({path}, 'file was updated remotely')
         await this.prep.updateFileAsync(SIDE, change.doc)
         break
-      case 'FileMoved':
+      case 'RemoteFileMoved':
         log.info({path, wasPath: change.was.path}, 'file was moved or renamed remotely')
         if (change.needRefetch) {
           change.was = await this.pouch.byRemoteIdMaybeAsync(change.was.remote._id)
@@ -353,21 +353,21 @@ export default class RemoteWatcher {
         }
         await this.prep.moveFileAsync(SIDE, change.doc, change.was)
         break
-      case 'FolderMoved':
+      case 'RemoteFolderMoved':
         log.info({path}, 'folder was moved or renamed remotely')
         await this.prep.moveFolderAsync(SIDE, change.doc, change.was)
         break
-      case 'FileDissociated':
+      case 'RemoteFileDissociated':
         log.info({path}, 'file was possibly renamed remotely while updated locally')
         await this.dissociateFromRemote(change.was)
         await this.prep.addFileAsync(SIDE, change.doc)
         break
-      case 'FolderDissociated':
+      case 'RemoteFolderDissociated':
         log.info({path}, 'folder was possibly renamed remotely while updated locally')
         await this.dissociateFromRemote(change.was)
         await this.prep.putFolderAsync(SIDE, change.doc)
         break
-      case 'UpToDate':
+      case 'RemoteUpToDate':
         log.info({path}, `${docType} is up-to-date`)
         break
       default:
