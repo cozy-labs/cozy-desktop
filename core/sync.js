@@ -22,7 +22,7 @@ const log = logger({
 
 export const TRASHING_DELAY = 1000
 
-type Change = {
+type MetadataChange = {
   changes: {rev: string}[],
   doc: Metadata,
   id: string,
@@ -177,7 +177,7 @@ class Sync {
     })
   }
 
-  async getNextChange (seq: number) : Promise<?Change> {
+  async getNextChange (seq: number) : Promise<?MetadataChange> {
     const opts = await this.baseChangeOptions(seq)
     opts.include_docs = true
     return new Promise((resolve, reject) => {
@@ -195,7 +195,7 @@ class Sync {
   // Apply a change to both local and remote
   // At least one side should say it has already this change
   // In some cases, both sides have the change
-  async apply (change: Change): Promise<*> {
+  async apply (change: MetadataChange): Promise<*> {
     let { doc, seq } = change
     const changeInfo = {path: doc.path, seq}
     log.debug(changeInfo, 'Applying change...')
@@ -251,7 +251,7 @@ class Sync {
 
   // Make the error explicit (offline, local disk full, quota exceeded, etc.)
   // and keep track of the number of retries
-  async handleApplyError (change: Change, err: Error) {
+  async handleApplyError (change: MetadataChange, err: Error) {
     const {path} = change.doc
     log.error({path, err, change})
     if (err.code === 'ENOSPC') {
@@ -287,7 +287,7 @@ class Sync {
   }
 
   // Increment the counter of errors for this document
-  async updateErrors (change: Change): Promise<void> {
+  async updateErrors (change: MetadataChange): Promise<void> {
     let { doc } = change
     if (!doc.errors) doc.errors = 0
     doc.errors++
