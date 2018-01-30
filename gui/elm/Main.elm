@@ -6,7 +6,7 @@ import Html.Events exposing (..)
 import Dict exposing (Dict)
 import Json.Decode as Json
 import Time exposing (Time)
-import Helpers exposing (Locale)
+import Helpers exposing (Helpers, Locale)
 import Model exposing (Status(..))
 import Help
 import Icons
@@ -19,6 +19,7 @@ import Updater
 import StatusBar
 
 
+main : Program Flags Model Msg
 main =
     Html.programWithFlags
         { init = init
@@ -347,6 +348,7 @@ subscriptions model =
 -- VIEW
 
 
+menu_item : Helpers -> Model -> String -> Page -> Html Msg
 menu_item helpers model title page =
     div
         [ classList
