@@ -1,5 +1,6 @@
 port module Address exposing (..)
 
+import Erl
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -67,17 +68,45 @@ dropAppName address =
         address
 
 
-ensureNoHttps : String -> String
-ensureNoHttps address =
-    if String.startsWith "https://" address then
-        String.dropLeft 8 address
-    else
-        address
-
-
 correctAddress : String -> String
 correctAddress address =
-    dropAppName (ensureNoHttps address)
+    let
+        { protocol, host, port_, path } =
+            Erl.parse address
+
+        -- Erl assumes "camillenimbus" is a path, not a host
+        handleInstanceShortName host =
+            if host == [ "" ] then
+                path
+            else
+                host
+
+        prependProtocol =
+            if protocol == "http" || port_ == 80 then
+                (++) "http://"
+            else
+                identity
+
+        appendPort address =
+            case ( protocol, port_ ) of
+                ( "http", 80 ) ->
+                    address
+
+                ( "https", 443 ) ->
+                    address
+
+                ( "", 0 ) ->
+                    address
+
+                _ ->
+                    address ++ ":" ++ (toString port_)
+    in
+        host
+            |> handleInstanceShortName
+            |> String.join "."
+            |> dropAppName
+            |> prependProtocol
+            |> appendPort
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

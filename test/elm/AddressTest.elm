@@ -16,12 +16,19 @@ suite =
             , test "cozy-hosted https trailing slash" <|
                 \_ ->
                     correctAddress "https://camillenimbus.mycozy.cloud/"
-                        |> Expect.equal "camillenimbus.mycozy.cloud/"
-
-            -- , test "cozy-hosted https trailing path" <|
-            --     \_ ->
-            --         correctAddress "https://camillenimbus.mycozy.cloud/#/folder"
-            --             |> Expect.equal "camillenimbus.mycozy.cloud/#/folder"
+                        |> Expect.equal "camillenimbus.mycozy.cloud"
+            , test "cozy-hosted https trailing path" <|
+                \_ ->
+                    correctAddress "https://camillenimbus.mycozy.cloud/"
+                        |> Expect.equal "camillenimbus.mycozy.cloud"
+            , test "cozy-hosted drive web app url" <|
+                \_ ->
+                    correctAddress "https://camillenimbus-drive.mycozy.cloud/#/folder"
+                        |> Expect.equal "camillenimbus.mycozy.cloud"
+            , test "cozy-hosted photos album url" <|
+                \_ ->
+                    correctAddress "https://camillenimbus-photos.mycozy.cloud/#/albums/68b5cda502ae29f5fa73fd89f1be4f92"
+                        |> Expect.equal "camillenimbus.mycozy.cloud"
             , test "cozy-hosted instance full name" <|
                 \_ ->
                     correctAddress "camillenimbus.mycozy.cloud"
