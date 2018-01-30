@@ -58,6 +58,10 @@ module.exports = class WindowManager {
     return this.win != null
   }
 
+  focus () {
+    return this.win && this.win.focus()
+  }
+
   reload () {
     if (this.win) {
       this.log.debug('reload')
