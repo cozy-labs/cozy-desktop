@@ -4,19 +4,23 @@ import Promise from 'bluebird'
 import async from 'async'
 import crypto from 'crypto'
 import fs from 'fs'
+import measureTime from '../perftools'
 
 import type { Callback } from '../utils/func'
 
 // Get checksum for given file
 const computeChecksum = (filePath: string, callback: Callback) => {
+  const stopMeasure = measureTime('LocalWatcher#checksumer')
   const stream = fs.createReadStream(filePath)
   const checksum = crypto.createHash('md5')
   checksum.setEncoding('base64')
   stream.on('end', function () {
+    stopMeasure()
     checksum.end()
     callback(null, checksum.read())
   })
   stream.on('error', function (err) {
+    stopMeasure()
     checksum.end()
     callback(err)
   })

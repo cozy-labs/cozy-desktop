@@ -12,6 +12,7 @@ import Pouch from './pouch'
 import Remote from './remote'
 import { HEARTBEAT } from './remote/watcher'
 import { PendingMap } from './utils/pending'
+import measureTime from './perftools'
 
 import type { SideName, Metadata } from './metadata'
 import type { Side } from './side' // eslint-disable-line
@@ -178,9 +179,10 @@ class Sync {
   }
 
   async getNextChange (seq: number) : Promise<?MetadataChange> {
+    const stopMeasure = measureTime('Sync#getNextChange')
     const opts = await this.baseChangeOptions(seq)
     opts.include_docs = true
-    return new Promise((resolve, reject) => {
+    const p = new Promise((resolve, reject) => {
       this.pouch.db.changes(opts)
         .on('change', info => resolve(info))
         .on('error', err => reject(err))
@@ -190,6 +192,8 @@ class Sync {
           }
         })
     })
+    stopMeasure()
+    return p
   }
 
   // Apply a change to both local and remote
@@ -206,9 +210,11 @@ class Sync {
     }
 
     // FIXME: Acquire lock for as many changes as possible to prevent next huge
-    // remote/local batches to acquite it first?
+    // remote/local batches to acquite it first
+    let stopMeasure = () => {}
     try {
       let [side, sideName, rev] = this.selectSide(doc)
+      stopMeasure = measureTime('Sync#applyChange:' + sideName)
 
       if (!side) {
         return this.pouch.setLocalSeqAsync(change.seq)
@@ -231,6 +237,8 @@ class Sync {
       }
     } catch (err) {
       await this.handleApplyError(change, err)
+    } finally {
+      stopMeasure()
     }
   }
 

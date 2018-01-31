@@ -12,6 +12,7 @@ import logger from '../logger'
 import Pouch from '../pouch'
 import Prep from '../prep'
 import Watcher from './watcher'
+import measureTime from '../perftools'
 
 import type { RemoteDoc } from './document'
 import type { FileStreamProvider } from '../file_stream_provider'
@@ -91,6 +92,7 @@ export default class Remote implements Side {
   async addFileAsync (doc: Metadata): Promise<Metadata> {
     const {path} = doc
     log.info({path}, 'Uploading new file...')
+    const stopMeasure = measureTime('RemoteWriter#addFile')
 
     let stream
     try {
@@ -132,6 +134,7 @@ export default class Remote implements Side {
       _rev: created._rev
     }
 
+    stopMeasure()
     // TODO do we use the returned values somewhere?
     return conversion.createMetadata(created)
   }
