@@ -142,7 +142,19 @@ export default class Remote implements Side {
   async overwriteFileAsync (doc: Metadata, old: ?Metadata): Promise<Metadata> {
     const {path} = doc
     log.info({path}, 'Uploading new file version...')
-    const stream = await this.other.createReadStreamAsync(doc)
+
+    let stream
+    try {
+      stream = await this.other.createReadStreamAsync(doc)
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        log.warn({path}, 'Local file does not exist anymore.')
+        doc._deleted = true // XXX: This prevents the doc to be saved with new revs
+        return doc
+      }
+      throw err
+    }
+
     const options = {
       contentType: doc.mime,
       checksum: doc.md5sum,
