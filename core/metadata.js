@@ -235,10 +235,12 @@ export function markSide (side: string, doc: Metadata, prev: ?Metadata): Metadat
 
 export function buildDir (path: string, stats: fs.Stats): * {
   return {
+    _id: id(path),
     path,
     docType: 'folder',
     updated_at: maxDate(stats.mtime, stats.ctime),
-    ino: stats.ino
+    ino: stats.ino,
+    sides: {}
   }
 }
 
