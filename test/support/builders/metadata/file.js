@@ -19,7 +19,7 @@ export default class FileMetadataBuilder extends BaseMetadataBuilder {
         _rev: pouchdbBuilders.rev()
       },
       tags: [],
-      updated_at: '2017-06-08T15:09:52.000Z'
+      updated_at: new Date()
     }
     assignId(doc)
     return doc
