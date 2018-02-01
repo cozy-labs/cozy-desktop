@@ -2,6 +2,7 @@ const {addFileManagerShortcut} = require('./shortcut')
 const electron = require('electron')
 const {dialog, session} = require('electron')
 const autoLaunch = require('./autolaunch')
+const defaults = require('./defaults')
 const {translate} = require('./i18n')
 
 const log = require('../../core-built/app.js').default.logger({
@@ -40,11 +41,14 @@ module.exports = class OnboardingWM extends WindowManager {
     this.shouldJumpToSyncPath = true
     // TODO: cleanup state management, ensure elm side sends something
     // through ports so we can trigger 'registration-done' without relying
-    // on timeouts
+    // on timeouts.
     this.send('registration-done')
-    this.win.once('dom-ready', () => {
-      setTimeout(() => this.send('registration-done')
-      , 20)
+    this.win.webContents.once('dom-ready', () => {
+      setTimeout(() => {
+        this.send('registration-done')
+        // XXX: Passing this as an event sender is a bit hacky...
+        this.checkSyncPath(defaults.syncPath, this)
+      }, 20)
     })
   }
 
@@ -95,7 +99,12 @@ module.exports = class OnboardingWM extends WindowManager {
       .then(
         (reg) => {
           session.defaultSession.clearStorageData()
-          this.win.webContents.once('dom-ready', () => setTimeout(() => event.sender.send('registration-done'), 20))
+          this.win.webContents.once('dom-ready', () => {
+            setTimeout(() => {
+              event.sender.send('registration-done')
+              this.checkSyncPath(defaults.syncPath, event.sender)
+            }, 20)
+          })
           this.win.loadURL(reg.client.redirectURI)
           autoLaunch.setEnabled(true)
         },
@@ -113,19 +122,31 @@ module.exports = class OnboardingWM extends WindowManager {
   }
 
   onChooseFolder (event) {
+    // FIXME: The modal may appear on background, either every time (e.g. Ubuntu)
+    // or only the second time (e.g. Fedora)
     let folders = dialog.showOpenDialog({
       properties: ['openDirectory', 'createDirectory']
     })
     if (folders && folders.length > 0) {
-      const result = this.desktop.checkSyncPath(folders[0])
-      event.sender.send('folder-chosen', {
-        folder: result.syncPath,
-        error: result.error ? `Folder ${result.error}` : null
-      })
+      this.checkSyncPath(folders[0], event.sender)
     }
   }
 
+  checkSyncPath (syncPath, eventSender) {
+    const result = this.desktop.checkSyncPath(syncPath)
+    eventSender.send('folder-chosen', {
+      folder: result.syncPath,
+      error: result.error ? `Folder ${result.error}` : null
+    })
+    return result
+  }
+
   onStartSync (event, syncPath) {
+    const {error} = this.checkSyncPath(syncPath, event.sender)
+    if (error) {
+      log.warn({err: error})
+      return
+    }
     let desktop = this.desktop
     if (!desktop.config.isValid()) {
       log.error('No client!')
