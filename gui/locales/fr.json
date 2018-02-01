@@ -52,6 +52,7 @@
   "Dashboard Show more files": "Montrer plus de fichiers",
   "Dashboard Dashboard": "Tableau de bord",
   "Dashboard Recent activities": "Activités récentes",
+  "Error Bad GLIBCXX version": "Votre système a une ancienne version de la glibc. Vous devriez mettre à jour votre distribution pour utiliser Cozy Drive, cf https://cozy-labs.github.io/cozy-desktop/doc/usage/linux.html#supported-distributions",
   "Error Invalid path": "Emplacement invalide",
   "Error The “{0}” {1} cannot be synchronized locally because {2} on the {3} system.": "The “{0}” {1} cannot be synchronized locally because {2} on the {3} system.",
   "Error You should rename it in your Cozy.": "You should rename it in your Cozy.",
