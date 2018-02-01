@@ -9,7 +9,7 @@ fs.ensureDirSync(syncPath)
 
 const watcher = chokidar.watch('.', {
   cwd: syncPath,
-  ignored: /(^|[\/\\])\.system-tmp-cozy-drive/,
+  ignored: /(^|[\/\\])\.system-tmp-cozy-drive/, // eslint-disable-line no-useless-escape
   followSymlinks: false,
   alwaysStat: true,
   usePolling: (process.platform === 'win32'),
@@ -19,7 +19,7 @@ const watcher = chokidar.watch('.', {
     stabilityThreshold: 1000
   },
   interval: 1000,
-  binaryInterval: 2000,
+  binaryInterval: 2000
 })
 for (let eventType of ['add', 'addDir', 'change', 'unlink', 'unlinkDir']) {
   watcher.on(eventType, (relpath, stats) => {

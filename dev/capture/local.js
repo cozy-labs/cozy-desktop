@@ -3,7 +3,7 @@ import chokidar from 'chokidar'
 import fs from 'fs-extra'
 import _ from 'lodash'
 import path from 'path'
-import fixturesHelpers from '../../test/helpers/scenarios'
+import fixturesHelpers from '../../test/support/helpers/scenarios'
 
 const cliDir = path.resolve(path.join(__dirname, '..', '..'))
 const syncPath = path.join(cliDir, 'tmp', 'local_watcher', 'synced_dir')
@@ -11,7 +11,7 @@ const outsidePath = path.join(cliDir, 'tmp', 'local_watcher', 'outside')
 const abspath = (relpath) => path.join(syncPath, relpath.replace(/\//g, path.sep))
 const chokidarOptions = {
   cwd: syncPath,
-  ignored: /(^|[\/\\])\.system-tmp-cozy-drive/,
+  ignored: /(^|[\/\\])\.system-tmp-cozy-drive/, // eslint-disable-line no-useless-escape
   followSymlinks: false,
   alwaysStat: true,
   usePolling: (process.platform === 'win32'),
@@ -21,7 +21,7 @@ const chokidarOptions = {
     stabilityThreshold: 1000
   },
   interval: 1000,
-  binaryInterval: 2000,
+  binaryInterval: 2000
 }
 
 const DONE_FILE = '.done'
@@ -32,14 +32,14 @@ const setupInitialState = (scenario) => {
   if (scenario.init == null) return
   const debug = process.env.DEBUG != null ? console.log : () => {}
   debug('[init]')
-  let resolve // TODO: reject on chokidar error?
-  const donePromise = new Promise((_resolve) => { resolve = _resolve })
+  let pResolve // TODO: reject on chokidar error?
+  const donePromise = new Promise(resolve => { pResolve = resolve })
   const watcher = chokidar.watch('.', chokidarOptions)
   watcher.on('error', console.error.bind(console))
   watcher.on('add', relpath => {
     if (isDone(relpath)) {
       watcher.close()
-      resolve()
+      pResolve()
     }
   })
   return Promise.each(scenario.init, (opts) => {
@@ -48,21 +48,17 @@ const setupInitialState = (scenario) => {
       debug('- mkdir', relpath)
       return fs.ensureDir(abspath(relpath))
              .then(() => fs.stat(abspath(relpath)))
-             .then((stats) => mapInode[stats.ino] = ino)
+             .then(stats => { mapInode[stats.ino] = ino })
     } else {
       debug('- >', relpath)
       return fs.outputFile(abspath(relpath), 'whatever')
              .then(() => fs.stat(abspath(relpath)))
-             .then((stats) => mapInode[stats.ino] = ino)
+             .then(stats => { mapInode[stats.ino] = ino })
     }
   })
   .delay(1000)
   .then(triggerDone)
   .then(() => donePromise)
-}
-
-const isRootDir = (relpath) => {
-  relpath === ''
 }
 
 const buildFSEvent = (type, relpath, stats) => {
@@ -97,14 +93,14 @@ const logFSEvents = (events) => {
 }
 
 const runAndRecordFSEvents = (scenario) => {
-  return new Promise((_resolve, _reject) => {
+  return new Promise((resolve, reject) => {
     const watcher = chokidar.watch('.', chokidarOptions)
     const cleanCallback = cb => function () {
       watcher.close()
       cb.apply(null, arguments)
     }
-    const resolve = cleanCallback(_resolve)
-    const reject = cleanCallback(_reject)
+    resolve = cleanCallback(resolve)
+    reject = cleanCallback(reject)
     const events = []
     let record = false
 
@@ -117,7 +113,9 @@ const runAndRecordFSEvents = (scenario) => {
               .then(resolve)
               .catch(reject)
           } else {
-            if(stats != null && mapInode[stats.ino]) stats.ino = mapInode[stats.ino]
+            if (stats != null && mapInode[stats.ino]) {
+              stats.ino = mapInode[stats.ino]
+            }
             events.push(buildFSEvent(eventType, relpath, stats))
           }
         }

@@ -4,7 +4,7 @@ import { start } from 'repl'
 
 import '../core/globals'
 import App from '../core/app'
-import { IntegrationTestHelpers } from '../test/helpers/integration'
+import { IntegrationTestHelpers } from '../test/support/helpers/integration'
 
 const app = new App(process.env.COZY_DESKTOP_DIR)
 const config = app.config

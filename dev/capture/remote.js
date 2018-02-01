@@ -7,7 +7,6 @@ import path from 'path'
 
 import * as metadata from '../../core/metadata'
 import Pouch from '../../core/pouch'
-import { FILES_DOCTYPE } from '../../core/remote/constants'
 import RemoteCozy from '../../core/remote/cozy'
 
 import configHelpers from '../../test/support/helpers/config'
@@ -35,7 +34,7 @@ const createInitialTree = async function (scenario: *, cozy: *, pouch: Pouch) {
         remote: {_id: remoteDir._id, _rev: remoteDir._rev}
       })
     } else {
-    debug('- >', relpath)
+      debug('- >', relpath)
       const parent = await cozy.files.statByPath(path.posix.dirname(relpath))
       let remoteFile = await cozy.files.create(Buffer.from(''), {
         dirID: parent._id,
