@@ -23,7 +23,7 @@ export default class DirMetadataBuilder extends BaseMetadataBuilder {
         remote: 1
       },
       tags: [],
-      updated_at: '2017-06-08T15:09:52.000Z'
+      updated_at: new Date()
     }
     assignId(doc)
     return doc
