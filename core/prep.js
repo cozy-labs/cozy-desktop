@@ -192,7 +192,7 @@ class Prep {
   }
 
   // TODO add comments + tests
-  async trashFileAsync (side: SideName, was: PathObject, doc: *) {
+  async trashFileAsync (side: SideName, was: PathObject, doc?: Metadata) {
     log.debug({path: doc && doc.path, was: was.path}, 'trashFileAsync')
     ensureValidPath(was)
 
@@ -213,7 +213,7 @@ class Prep {
   }
 
   // TODO add comments + tests
-  async trashFolderAsync (side: SideName, was: PathObject, doc: *) {
+  async trashFolderAsync (side: SideName, was: PathObject, doc?: Metadata) {
     log.debug({path: doc && doc.path, was: was.path}, 'trashFolderAsync')
     ensureValidPath(was)
 
