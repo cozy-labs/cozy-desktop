@@ -1,6 +1,7 @@
 /* @flow */
 
 import { clone, isEqual, pick } from 'lodash'
+import mime from 'mime'
 import path, { join } from 'path'
 
 import logger from './logger'
@@ -239,4 +240,23 @@ export function buildDir (path: string, stats: fs.Stats): * {
     updated_at: maxDate(stats.mtime, stats.ctime),
     ino: stats.ino
   }
+}
+
+const EXECUTABLE_MASK = 1 << 6
+
+export const buildFile = (filePath: string, stats: fs.Stats, md5sum: string): Metadata => {
+  const mimeType = mime.lookup(filePath)
+  const {mtime, ctime} = stats
+  let doc: Object = {
+    path: filePath,
+    docType: 'file',
+    md5sum,
+    ino: stats.ino,
+    updated_at: maxDate(mtime, ctime),
+    mime: mimeType,
+    class: mimeType.split('/')[0],
+    size: stats.size
+  }
+  if ((stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
+  return doc
 }

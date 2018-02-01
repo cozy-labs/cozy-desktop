@@ -1,6 +1,7 @@
 /* eslint-env mocha */
 
 import _, { clone } from 'lodash'
+import fs from 'fs-extra'
 import should from 'should'
 import path from 'path'
 
@@ -8,7 +9,8 @@ import { onPlatform } from '../support/helpers/platform'
 
 import {
   assignId, extractRevNumber, invalidChecksum, invalidPath, markSide,
-  detectPlatformIncompatibilities, sameBinary, sameFile, sameFolder, buildDir
+  detectPlatformIncompatibilities, sameBinary, sameFile, sameFolder, buildDir,
+  buildFile
 } from '../../core/metadata'
 
 describe('metadata', function () {
@@ -437,6 +439,35 @@ describe('metadata', function () {
       doc.sides.local.should.equal(6)
       doc.sides.remote.should.equal(5)
     })
+  })
+
+  describe('buildFile', function () {
+    it('creates a document for an existing file', async function () {
+      const stats = await fs.stat(path.join(__dirname, '../fixtures/chat-mignon.jpg'))
+      const md5sum = '+HBGS7uN4XdB0blqLv5tFQ=='
+      const doc = buildFile('chat-mignon.jpg', stats, md5sum)
+      doc.should.have.properties({
+        path: 'chat-mignon.jpg',
+        docType: 'file',
+        md5sum,
+        ino: stats.ino,
+        size: 29865
+      })
+      doc.should.have.property('updated_at')
+      should.not.exist(doc.executable)
+    })
+
+    if (process.platform !== 'win32') {
+      it('sets the executable bit', async function () {
+        const filePath = path.join(__dirname, '../../tmp/test/executable')
+        const whateverChecksum = '1B2M2Y8AsgTpgAmY7PhCfg=='
+        await fs.ensureFile(filePath)
+        await fs.chmod(filePath, '755')
+        const stats = await fs.stat(filePath)
+        const doc = buildFile('executable', stats, whateverChecksum)
+        should(doc.executable).be.true()
+      })
+    }
   })
 
   describe('buildDir', () => {

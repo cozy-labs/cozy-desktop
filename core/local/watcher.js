@@ -3,7 +3,6 @@
 import Promise from 'bluebird'
 import chokidar from 'chokidar'
 import fs from 'fs-extra'
-import mime from 'mime'
 import path from 'path'
 
 import analysis from './analysis'
@@ -14,7 +13,6 @@ import logger from '../logger'
 import * as metadata from '../metadata'
 import Pouch from '../pouch'
 import Prep from '../prep'
-import { maxDate } from '../timestamp'
 
 import type { Checksumer } from './checksumer'
 import type { ChokidarEvent } from './chokidar_event'
@@ -30,8 +28,6 @@ const log = logger({
 log.chokidar = log.child({
   component: 'Chokidar'
 })
-
-const EXECUTABLE_MASK = 1 << 6
 
 const SIDE = 'local'
 
@@ -338,27 +334,6 @@ class LocalWatcher {
   }
 
   /* Helpers */
-
-  // An helper to create a document for a file
-  // with checksum and mime informations
-  // TODO: Rename to buildFileMetadata?
-  createDoc (filePath: string, stats: fs.Stats, md5sum: string) {
-    const mimeType = mime.lookup(filePath)
-    const {mtime, ctime} = stats
-    let doc: Object = {
-      path: filePath,
-      docType: 'file',
-      md5sum,
-      ino: stats.ino,
-      updated_at: maxDate(mtime, ctime),
-      mime: mimeType,
-      class: mimeType.split('/')[0],
-      size: stats.size
-    }
-    if ((stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
-    return doc
-  }
-
   async checksum (filePath: string): Promise<string> {
     const absPath = path.join(this.syncPath, filePath)
     return this.checksumer.push(absPath)
@@ -369,14 +344,14 @@ class LocalWatcher {
   // New file detected
   onAddFile (filePath: string, stats: fs.Stats, md5sum: string) {
     const logError = (err) => log.error({err, path: filePath})
-    const doc = this.createDoc(filePath, stats, md5sum)
+    const doc = metadata.buildFile(filePath, stats, md5sum)
     log.info({path: filePath}, 'file added')
     return this.prep.addFileAsync(SIDE, doc).catch(logError)
   }
 
   async onMoveFile (filePath: string, stats: fs.Stats, md5sum: string, old: Metadata) {
     const logError = (err) => log.error({err, path: filePath})
-    const doc = this.createDoc(filePath, stats, md5sum)
+    const doc = metadata.buildFile(filePath, stats, md5sum)
     log.info({path: filePath}, `was moved from ${old.path}`)
     return this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
   }
@@ -416,7 +391,7 @@ class LocalWatcher {
   // File update detected
   onChange (filePath: string, stats: fs.Stats, md5sum: string) {
     log.info({path: filePath}, 'File changed')
-    const doc = this.createDoc(filePath, stats, md5sum)
+    const doc = metadata.buildFile(filePath, stats, md5sum)
     return this.prep.updateFileAsync(SIDE, doc)
   }
 }
