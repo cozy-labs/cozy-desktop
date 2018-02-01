@@ -11,13 +11,14 @@ import {
 import should from 'should'
 import sinon from 'sinon'
 
+import Builders from '../support/builders'
 import configHelpers from '../support/helpers/config'
 import * as cozyHelpers from '../support/helpers/cozy'
 import pouchHelpers from '../support/helpers/pouch'
 import { IntegrationTestHelpers } from '../support/helpers/integration'
 
 suite('Conflict resolution', () => {
-  let cozy, helpers
+  let builders, cozy, helpers
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -28,6 +29,7 @@ suite('Conflict resolution', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function () {
+    builders = new Builders(cozyHelpers.cozy, this.pouch)
     cozy = cozyHelpers.cozy
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
 
@@ -43,11 +45,7 @@ suite('Conflict resolution', () => {
 
     test('success', async () => {
       await helpers.local.syncDir.ensureDir('foo')
-      await helpers.prep.putFolderAsync('local', {
-        path: 'foo',
-        docType: 'folder',
-        updated_at: new Date()
-      })
+      await helpers.prep.putFolderAsync('local', builders.metadata.dir().path('foo').build())
       should(await helpers.local.tree()).deepEqual([
         'foo-conflict-.../'
       ])
@@ -56,11 +54,7 @@ suite('Conflict resolution', () => {
 
   suite('remote', () => {
     beforeEach('set up conflict', async () => {
-      await helpers.prep.putFolderAsync('local', {
-        path: 'foo',
-        docType: 'folder',
-        updated_at: new Date()
-      })
+      await helpers.prep.putFolderAsync('local', builders.metadata.dir().path('foo').build())
       await cozy.files.create('whatever', {name: 'foo'})
     })
 
