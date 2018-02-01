@@ -10,6 +10,7 @@ import { maxDate } from './timestamp'
 
 import type fs from 'fs'
 import type { PathIssue } from './path_restrictions'
+import type { PathObject } from './utils/path'
 
 const log = logger({
   component: 'Metadata'
@@ -56,7 +57,7 @@ export const isFile = (doc: Metadata): bool => {
   return doc.docType === 'file'
 }
 
-export let assignId: (doc: Metadata) => void = (_) => {}
+export let assignId: (doc: *) => void = (_) => {}
 
 switch (process.platform) {
   case 'linux': case 'freebsd': case 'sunos':
@@ -74,7 +75,7 @@ switch (process.platform) {
 }
 
 // Build an _id from the path for a case sensitive file system (Linux, BSD)
-function assignIdUnix (doc: Metadata) {
+function assignIdUnix (doc: *) {
   doc._id = doc.path
 }
 
@@ -87,14 +88,14 @@ function assignIdUnix (doc: Metadata) {
 //
 // Note: String.prototype.normalize is not available on node 0.10 and does
 // nothing when node is compiled without intl option.
-function assignIdHFS (doc: Metadata) {
+function assignIdHFS (doc: *) {
   let id = doc.path
   if (id.normalize) { id = id.normalize('NFD') }
   doc._id = id.toUpperCase()
 }
 
 // Build an _id from the path for Windows (NTFS file system)
-function assignIdNTFS (doc: Metadata) {
+function assignIdNTFS (doc: *) {
   doc._id = doc.path.toUpperCase()
 }
 
@@ -111,7 +112,7 @@ export function id (path: string) {
 // (ie a path inside the mount point).
 // Normalizes the path as a side-effect.
 // TODO: Separate normalization (side-effect) from validation (pure).
-export function invalidPath (doc: Metadata) {
+export function invalidPath (doc: PathObject) {
   if (!doc.path) { return true }
   doc.path = path.normalize(doc.path)
   if (doc.path.startsWith(path.sep)) {
@@ -124,7 +125,7 @@ export function invalidPath (doc: Metadata) {
 }
 
 // Same as invalidPath, except it throws an exception when path is invalid.
-export function ensureValidPath (doc: Metadata) {
+export function ensureValidPath (doc: PathObject) {
   if (invalidPath(doc)) {
     log.warn({path: doc.path}, `Invalid path: ${JSON.stringify(doc, null, 2)}`)
     throw new Error('Invalid path')
