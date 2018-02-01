@@ -46,7 +46,7 @@ export type Metadata = {
   path: string,
   remote: MetadataRemoteInfo,
   size?: number,
-  tags: string[],
+  tags?: string[],
   sides: MetadataSidesInfo,
   trashed?: true,
   ino?: ?number
