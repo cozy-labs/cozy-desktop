@@ -42,7 +42,7 @@ module.exports = class OnboardingWM extends WindowManager {
     // through ports so we can trigger 'registration-done' without relying
     // on timeouts
     this.send('registration-done')
-    this.win.once('dom-ready', () => {
+    this.win.webContents.once('dom-ready', () => {
       setTimeout(() => this.send('registration-done')
       , 20)
     })
