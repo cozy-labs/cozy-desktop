@@ -233,8 +233,8 @@ export function markSide (side: string, doc: Metadata, prev: ?Metadata): Metadat
   return doc
 }
 
-export function buildDir (path: string, stats: fs.Stats): * {
-  return {
+export function buildDir (path: string, stats: fs.Stats): Metadata {
+  const doc: Object = {
     _id: id(path),
     path,
     docType: 'folder',
@@ -242,6 +242,7 @@ export function buildDir (path: string, stats: fs.Stats): * {
     ino: stats.ino,
     sides: {}
   }
+  return doc
 }
 
 const EXECUTABLE_MASK = 1 << 6
