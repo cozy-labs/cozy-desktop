@@ -47,7 +47,7 @@ class App {
 
   // basePath is the directory where the config and pouch are saved
   constructor (basePath: string) {
-    log.info({version: pkg.version}, 'App initialization')
+    log.info(this.debugInformations(), 'App initialization')
     this.lang = 'fr'
     if (basePath == null) { basePath = os.homedir() }
     basePath = path.resolve(basePath)
@@ -180,7 +180,7 @@ class App {
   // Send an issue by mail to the support
   sendMailToSupport (content: string) {
     const logs = fs.readFileSync(LOG_FILE, 'utf-8')
-    content = 'Version: ' + pkg.version + '\r\n' + content
+    content = JSON.stringify(this.debugInformations()) + '\r\n' + content
     const args = {
       mode: 'from',
       to: [
@@ -252,6 +252,15 @@ class App {
   debugWatchers () {
     if (this.local) {
       this.local.watcher.debug()
+    }
+  }
+
+  debugInformations () {
+    return {
+      appVersion: pkg.version,
+      osType: os.type(),
+      osRelease: os.release(),
+      osArch: os.arch()
     }
   }
 
