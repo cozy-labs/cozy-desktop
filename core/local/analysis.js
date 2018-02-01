@@ -5,6 +5,7 @@ import path from 'path'
 import { getInode } from './event'
 import * as localChange from './change'
 import logger from '../logger'
+import measureTime from '../perftools'
 
 import type { LocalEvent } from './event'
 import type {
@@ -38,6 +39,7 @@ const panic = (context, description) => {
 }
 
 function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): LocalChange[] {
+  const stopMeasure = measureTime('LocalWatcher#analyseEvents')
   // OPTIMIZE: new Array(events.length)
   const changes: LocalChange[] = []
   const changesByInode:Map<number, LocalChange> = new Map()
@@ -161,12 +163,14 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
   log.trace('Flatten changes map...')
   for (let a of changesByInode.values()) changes.push(a)
 
+  stopMeasure()
   return changes
 }
 
 // TODO: Rename according to the sort logic
 function sortBeforeSquash (changes: LocalChange[]) {
   log.trace('Sort changes before squash...')
+  const stopMeasure = measureTime('LocalWatcher#sortBeforeSquash')
   changes.sort((a, b) => {
     if (a.type === 'LocalDirMove' || a.type === 'LocalFileMove') {
       if (b.type === 'LocalDirMove' || b.type === 'LocalFileMove') {
@@ -180,10 +184,12 @@ function sortBeforeSquash (changes: LocalChange[]) {
       return 0
     }
   })
+  stopMeasure()
 }
 
 function squashMoves (changes: LocalChange[]) {
   log.trace('Squash moves...')
+  const stopMeasure = measureTime('LocalWatcher#squashMoves')
 
   for (let i = 0; i < changes.length; i++) {
     let a = changes[i]
@@ -210,6 +216,8 @@ function squashMoves (changes: LocalChange[]) {
       }
     }
   }
+
+  stopMeasure()
 }
 
 function separatePendingChanges (changes: LocalChange[], pendingChanges: LocalChange[]): LocalChange[] {
@@ -266,5 +274,7 @@ const finalSorter = (a: LocalChange, b: LocalChange) => {
 // TODO: Rename according to the sort logic
 function finalSort (changes: LocalChange[]) {
   log.trace('Final sort...')
+  const stopMeasure = measureTime('LocalWatcher#finalSort')
   changes.sort(finalSorter)
+  stopMeasure()
 }

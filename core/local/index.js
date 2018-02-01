@@ -17,6 +17,7 @@ import Pouch from '../pouch'
 import Prep from '../prep'
 import { hideOnWindows } from '../utils/fs'
 import Watcher from './watcher'
+import measureTime from '../perftools'
 
 import type { FileStreamProvider } from '../file_stream_provider'
 import type { Metadata } from '../metadata'
@@ -166,6 +167,7 @@ class Local implements Side {
     let tmpFile = path.resolve(this.tmpPath, `${path.basename(doc.path)}.tmp`)
     let filePath = path.resolve(this.syncPath, doc.path)
     let parent = path.resolve(this.syncPath, path.dirname(doc.path))
+    const stopMeasure = measureTime('LocalWriter#addFile')
 
     log.info({path: doc.path}, 'Put file')
 
@@ -236,6 +238,7 @@ class Local implements Side {
       this.metadataUpdater(doc)
 
     ], function (err) {
+      stopMeasure()
       if (err) { log.warn({path: doc.path}, 'addFile failed:', err, doc) }
       fs.unlink(tmpFile, () => callback(err))
     })
