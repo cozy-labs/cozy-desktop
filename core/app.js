@@ -2,6 +2,7 @@
 
 import EventEmitter from 'events'
 import fs from 'fs-extra'
+import _ from 'lodash'
 import os from 'os'
 import path from 'path'
 import readdirp from 'readdirp'
@@ -180,7 +181,8 @@ class App {
   // Send an issue by mail to the support
   sendMailToSupport (content: string) {
     const logs = fs.readFileSync(LOG_FILE, 'utf-8')
-    content = JSON.stringify(this.debugInformations()) + '\r\n' + content
+    content = content + '\r\n\r\n-------- debug info --------\r\n' +
+      _.map(this.debugInformations(), (v, k) => `${k}: ${v}`).join('\r\n')
     const args = {
       mode: 'from',
       to: [
