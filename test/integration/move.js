@@ -12,6 +12,7 @@ import {
 import path from 'path'
 import should from 'should'
 
+import Builders from '../support/builders'
 import pouchdbBuilders from '../support/builders/pouchdb'
 import configHelpers from '../support/helpers/config'
 import * as cozyHelpers from '../support/helpers/cozy'
@@ -24,7 +25,7 @@ suite('Move', () => {
     return
   }
 
-  let cozy, helpers, pouch, prep
+  let builders, cozy, helpers, pouch, prep
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -36,6 +37,7 @@ suite('Move', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function () {
+    builders = new Builders(cozyHelpers.cozy, this.pouch)
     cozy = cozyHelpers.cozy
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
     pouch = helpers._pouch
@@ -127,10 +129,10 @@ suite('Move', () => {
 
     test('local', async () => {
       const oldFolder = await pouch.byRemoteIdMaybeAsync(dir._id)
+      // FIXME: Why is this a file? And why does it break with a directory?
+      const doc = builders.metadata.file().path('parent/dst/dir').build()
 
-      await prep.moveFolderAsync('local', {
-        path: 'parent/dst/dir', docType: 'file'
-      }, oldFolder)
+      await prep.moveFolderAsync('local', doc, oldFolder)
 
       should(helpers.putDocs('path', '_deleted', 'trashed', 'childMove')).deepEqual([
         {path: path.normalize('parent/src/dir'), _deleted: true},
