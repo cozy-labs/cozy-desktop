@@ -11,6 +11,7 @@ import { assignId, ensureValidChecksum, ensureValidPath } from './metadata'
 import { TRASH_DIR_NAME } from './remote/constants'
 
 import type { SideName, Metadata } from './metadata'
+import type { PathObject } from './utils/path'
 
 const log = logger({
   component: 'Prep'
@@ -191,7 +192,7 @@ class Prep {
   }
 
   // TODO add comments + tests
-  async trashFileAsync (side: SideName, was: *, doc: *) {
+  async trashFileAsync (side: SideName, was: PathObject, doc: *) {
     log.debug({path: doc && doc.path, was: was.path}, 'trashFileAsync')
     ensureValidPath(was)
 
@@ -212,7 +213,7 @@ class Prep {
   }
 
   // TODO add comments + tests
-  async trashFolderAsync (side: SideName, was: *, doc: *) {
+  async trashFolderAsync (side: SideName, was: PathObject, doc: *) {
     log.debug({path: doc && doc.path, was: was.path}, 'trashFolderAsync')
     ensureValidPath(was)
 
