@@ -52,6 +52,7 @@
   "Dashboard Show more files": "Mostrar más archivos",
   "Dashboard Dashboard": "Consola",
   "Dashboard Recent activities": "Actividades recientes",
+  "Error Bad GLIBCXX version": "Your system has an old version of the glibc. You need to update your distribution, see https://cozy-labs.github.io/cozy-desktop/doc/usage/linux.html#supported-distributions",
   "Error Invalid path": "Ruta inválida",
   "Error The “{0}” {1} cannot be synchronized locally because {2} on the {3} system.": "The “{0}” {1} cannot be synchronized locally because {2} on the {3} system.",
   "Error You should rename it in your Cozy.": "Usted tiene que cambiarle el nombre en su Cozy.",

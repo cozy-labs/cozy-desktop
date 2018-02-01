@@ -261,8 +261,19 @@ app.on('ready', () => {
   const {session} = require('electron')
   setupProxy(app, session, () => {
     log.info('Loading CLI...')
-    desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
     i18n.init(app)
+    try {
+      desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
+    } catch (err) {
+      if (err.message.match(/GLIBCXX/)) {
+        dialog.showMessageBox({
+          type: 'error',
+          message: translate('Error Bad GLIBCXX version')
+        })
+        app.quit()
+        return
+      } else throw err
+    }
     tray.init(app, toggleWindow)
     lastFiles.init(desktop)
     log.trace('Setting up tray WM...')
