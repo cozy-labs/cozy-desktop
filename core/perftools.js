@@ -1,5 +1,10 @@
 /* @flow */
 
+import logger from './logger'
+const log = logger({
+  component: 'PerfReports'
+})
+
 var store = {}
 
 function ellapsedMillis (startHRTime: [number, number]) {
@@ -19,10 +24,9 @@ export default function measureTime (key: string): () => void {
 }
 
 function print () {
-  console.log('### PERF REPORT ###')
   for (let key of Object.keys(store)) {
     const {time, nb} = store[key]
-    console.log(key, nb, ' * ', time, ' = ', nb * time)
+    log.trace({function: key}, key + ' ' + nb + ' * ' + time + ' = ' + nb * time)
   }
 }
 
