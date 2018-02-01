@@ -5,7 +5,7 @@ import path from 'path'
 
 import local from './capture/local'
 import remote from './capture/remote'
-import scenarioHelpers from '../test/helpers/scenarios'
+import scenarioHelpers from '../test/support/helpers/scenarios'
 
 program
   .description('Capture FS events')
