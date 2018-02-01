@@ -1,3 +1,43 @@
+## 3.4.3-beta.1 - 2017-02-01
+
+Improvements for all users:
+
+- During onboarding, you can now copy whatever URL from your browser pointing to
+  your **Cozy-hosted** instance and paste it as your Cozy address in the
+  configuration window. When submitted, the application will identify the
+  corresponding Cozy address and remove the useless parts for you. Please tell
+  us in case you find an URL that doesn't work. Also please note that there is
+  no such automation for self-hosted users for now.
+- You'll get quicker visual feedback when trying to select a non-empty directory
+  as your synced location.
+- In some rare cases, users ended up with a few files improperly uploaded to
+  their Cozy. Those files were never considered up-to-date by the app,
+  triggering useless synchronization cycles. They will now be detected and not
+  synchronized indefinitely. Final work to improve upload reliability is planned
+  for week 7 or 8.
+- Support requests sent from the help form will now include more debugging and
+  benchmarking information (including the application & OS versions). Please
+  note debugging information only include filenames as usual, and benchmarking
+  information only include time spent on various operations. This will help us
+  to improve the overall performances.
+- The documentation now lists the supported
+  [Windows](https://github.com/cozy-labs/cozy-desktop/blob/master/doc/usage/windows.md)
+  and [macOS](https://github.com/cozy-labs/cozy-desktop/blob/master/doc/usage/macos.md)
+  versions. Work was previously done on the
+  [GNU/Linux](https://github.com/cozy-labs/cozy-desktop/blob/master/doc/usage/linux.md#supported-distributions)
+  side.
+- An issue was fixed were the application was trying to put the focus
+
+Improvements for GNU/Linux users:
+
+- The application now tries to detect and display a user-friendly message when
+  the system glibc is too old to run properly. Please note we may possibly try
+  to lower the bar regarding the required version at some point.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.4.2 - 2017-01-24
 
 Improvements for all users:
