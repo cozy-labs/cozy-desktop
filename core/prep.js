@@ -66,7 +66,7 @@ class Prep {
 
   // Expectations:
   //   - the folder path is present and valid
-  async putFolderAsync (side: SideName, doc: *) {
+  async putFolderAsync (side: SideName, doc: Metadata) {
     log.debug({path: doc.path}, 'putFolderAsync')
     ensureValidPath(doc)
 
@@ -125,7 +125,7 @@ class Prep {
   //   - the old folder path is present and valid
   //   - the two paths are not the same
   //   - the revision for the old folder is present
-  async moveFolderAsync (side: SideName, doc: *, was: Metadata) {
+  async moveFolderAsync (side: SideName, doc: Metadata, was: Metadata) {
     log.debug({path: doc.path, was: was.path}, 'moveFolderAsync')
     const {path} = doc
     ensureValidPath(doc)
