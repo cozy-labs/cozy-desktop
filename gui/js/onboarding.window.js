@@ -41,11 +41,12 @@ module.exports = class OnboardingWM extends WindowManager {
     this.shouldJumpToSyncPath = true
     // TODO: cleanup state management, ensure elm side sends something
     // through ports so we can trigger 'registration-done' without relying
-    // on timeouts
+    // on timeouts.
     this.send('registration-done')
     this.win.webContents.once('dom-ready', () => {
       setTimeout(() => {
         this.send('registration-done')
+        // XXX: Passing this as an event sender is a bit hacky...
         this.checkSyncPath(defaults.syncPath, this)
       }, 20)
     })
@@ -132,7 +133,6 @@ module.exports = class OnboardingWM extends WindowManager {
   }
 
   checkSyncPath (syncPath, eventSender) {
-    console.log('checkSyncPath', syncPath, eventSender.send)
     const result = this.desktop.checkSyncPath(syncPath)
     eventSender.send('folder-chosen', {
       folder: result.syncPath,
@@ -143,7 +143,10 @@ module.exports = class OnboardingWM extends WindowManager {
 
   onStartSync (event, syncPath) {
     const {error} = this.checkSyncPath(syncPath, event.sender)
-    if (error) return
+    if (error) {
+      log.warn({err: error})
+      return
+    }
     let desktop = this.desktop
     if (!desktop.config.isValid()) {
       log.error('No client!')
