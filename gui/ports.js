@@ -3,16 +3,15 @@
 const electron = require('electron')
 const {ipcRenderer, remote} = electron
 
-const path = remote.require('path')
-const os = require('os')
 const pkg = remote.require('../package.json')
-const defaultDir = path.join(os.homedir(), 'Cozy Drive')
+const defaults = remote.require('./js/defaults')
+
 const container = document.getElementById('container')
 
 const Elm = require('./elm').Main
 const elmectron = Elm.embed(container, {
   page: window.location.hash.replace('#', ''),
-  folder: defaultDir,
+  folder: defaults.syncPath,
   locale: remote.app.locale,
   locales: {
     en: remote.require('./locales/en.json'),
