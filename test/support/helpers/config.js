@@ -10,7 +10,7 @@ export default {
   createConfig () {
     let parent = process.env.COZY_DESKTOP_DIR || 'tmp'
     const basePath = path.resolve(`${parent}/test/${+new Date()}`)
-    this.syncPath = path.join(basePath, 'Cozy')
+    this.syncPath = path.join(basePath, 'Cozy Drive')
     fs.ensureDirSync(this.syncPath)
     this.config = new Config(path.join(basePath, '.cozy-desktop'))
     this.config.syncPath = this.syncPath
