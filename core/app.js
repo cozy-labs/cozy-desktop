@@ -29,6 +29,8 @@ const log = logger({
   component: 'App'
 })
 
+const SUPPORT_EMAIL = process.env.COZY_DESKTOP_SUPPORT_EMAIL || 'contact@cozycloud.cc'
+
 // App is the entry point for the CLI and GUI.
 // They both can do actions and be notified by events via an App instance.
 class App {
@@ -186,7 +188,7 @@ class App {
     const args = {
       mode: 'from',
       to: [
-        { name: 'Support', email: 'contact@cozycloud.cc' }
+        { name: 'Support', email: SUPPORT_EMAIL }
       ],
       subject: 'Ask support for cozy-desktop',
       parts: [
