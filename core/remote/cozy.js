@@ -146,11 +146,14 @@ export default class RemoteCozy {
       return await this.findDirectoryByPath(path)
     } catch (err) {
       if (!(err instanceof DirectoryNotFound)) throw err
+      log.warn({path}, 'Directory not found')
 
       const name = posix.basename(path)
       const parentPath = posix.dirname(path)
       const parentDir: RemoteDoc = await this.findOrCreateDirectoryByPath(parentPath)
       const dirID = parentDir._id
+
+      log.info({path, name, dirID}, 'Creating directory...')
       return this.createDirectory({name, dirID})
     }
   }
