@@ -262,9 +262,15 @@ class App {
   debugInformations () {
     return {
       appVersion: pkg.version,
+      configPath: this.config && this.config.configPath,
+      configVersion: this.config && this.config.config.creds.client.softwareVersion,
+      cozyUrl: this.config && this.config.cozyUrl,
+      deviceName: this.config && this.config.deviceName,
       osType: os.type(),
       osRelease: os.release(),
-      osArch: os.arch()
+      osArch: os.arch(),
+      permissions: this.config && this.config.config.creds.token.scope.split(' '),
+      syncPath: this.config && this.config.syncPath
     }
   }
 
