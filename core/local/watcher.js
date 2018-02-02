@@ -188,11 +188,11 @@ class LocalWatcher {
     for (const doc of docs) {
       if (inInitialScan(doc) || doc.trashed) continue
 
-      if (doc.docType === 'file') {
-        events.unshift({type: 'unlink', path: doc.path, old: doc})
-      } else {
-        events.unshift({type: 'unlinkDir', path: doc.path, old: doc})
-      }
+      const event = (doc.docType === 'file')
+        ? {type: 'unlink', path: doc.path, old: doc}
+        : {type: 'unlinkDir', path: doc.path, old: doc}
+
+      events.unshift(event)
     }
   }
 
