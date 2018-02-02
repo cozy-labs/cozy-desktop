@@ -7,6 +7,7 @@ import should from 'should'
 
 import App from '../../core/app'
 import { LOG_FILENAME } from '../../core/logger'
+import { version } from '../../package.json'
 
 import configHelpers from '../support/helpers/config'
 
@@ -122,5 +123,42 @@ describe('App', function () {
         should(result).deepEqual({syncPath})
       })
     }
+  })
+
+  describe('debugInformations', () => {
+    it('works when app is not configured', () => {
+      const basePath = fs.mkdtempSync(path.join(os.tmpdir(), 'base-dir-'))
+      const app = new App(basePath)
+
+      const info = app.debugInformations()
+
+      should(info.appVersion).equal(version)
+      should(info.configPath).startWith(basePath)
+      should.not.exist(info.configVersion)
+      should.not.exist(info.cozyUrl)
+      should(info.deviceName).equal('')
+      should.exist(info.osRelease)
+      should.exist(info.osType)
+      should(info.permissions).deepEqual([])
+      should.not.exist(info.syncPath)
+    })
+
+    it('works when app is configured', function () {
+      configHelpers.createConfig.call(this)
+      configHelpers.registerClient.call(this)
+      const app = new App(this.basePath)
+
+      const info = app.debugInformations()
+
+      should(info.appVersion).equal(version)
+      should(info.configPath).startWith(this.basePath)
+      should(info.configVersion).equal(this.config.version)
+      should(info.cozyUrl).equal(this.config.cozyUrl)
+      should(info.deviceName).equal(this.config.deviceName)
+      should.exist(info.osRelease)
+      should.exist(info.osType)
+      should(info.permissions).deepEqual(this.config.permissions)
+      should(info.syncPath).equal(this.syncPath)
+    })
   })
 })
