@@ -66,7 +66,7 @@ export default class Config {
 
   // Return the name of the registered client
   get deviceName () {
-    return this.client ? this.client.clientName : ''
+    return _.get(this, 'config.creds.client.clientName', '')
   }
 
   // Return config related to the OAuth client
