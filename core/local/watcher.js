@@ -187,10 +187,12 @@ class LocalWatcher {
   async prependOfflineUnlinkEvents (events: ChokidarEvent[], initialScan: InitialScan) {
     // Try to detect removed files & folders
     const docs = await this.pouch.byRecursivePathAsync('')
+    const inInitialScan = (doc) =>
+      initialScan.ids.indexOf(metadata.id(doc.path)) !== -1
     for (const doc of docs) {
-      if (initialScan.ids.indexOf(metadata.id(doc.path)) !== -1 || doc.trashed) {
-        continue
-      } else if (doc.docType === 'file') {
+      if (inInitialScan(doc) || doc.trashed) continue
+
+      if (doc.docType === 'file') {
         events.unshift({type: 'unlink', path: doc.path, old: doc})
       } else {
         events.unshift({type: 'unlinkDir', path: doc.path, old: doc})
