@@ -77,8 +77,9 @@ class Merge {
 
   // Resolve a conflict by renaming a file/folder
   // A suffix composed of -conflict- and the date is added to the path.
-  async resolveConflictAsync (side: SideName, doc: Metadata) {
+  async resolveConflictAsync (side: SideName, doc: Metadata, was: Metadata) {
     log.debug({path: doc.path}, 'resolveConflictAsync')
+    log.trace({doc, was})
     let dst = clone(doc)
     let date = fsutils.validName(new Date().toISOString())
     let ext = extname(doc.path)
@@ -113,7 +114,7 @@ class Merge {
     }
     markSide(side, doc, file)
     if (file && file.docType === 'folder') {
-      return this.resolveConflictAsync(side, doc)
+      return this.resolveConflictAsync(side, doc, file)
     }
     if (file && sameBinary(file, doc)) {
       doc._rev = file._rev
@@ -133,7 +134,7 @@ class Merge {
       if ((side === 'local') && (file.sides.local != null)) {
         return this.resolveInitialAddAsync(side, doc, file)
       } else {
-        return this.resolveConflictAsync(side, doc)
+        return this.resolveConflictAsync(side, doc, file)
       }
     }
     if (doc.tags == null) { doc.tags = [] }
@@ -162,7 +163,7 @@ class Merge {
       } catch (_) {}
       // It's safer to handle it as a conflict
       if (doc.remote == null) { doc.remote = file.remote }
-      return this.resolveConflictAsync('remote', doc)
+      return this.resolveConflictAsync('remote', doc, file)
     }
   }
 
@@ -190,7 +191,7 @@ class Merge {
         if (doc.class == null) { doc.class = file.class }
         if (doc.mime == null) { doc.mime = file.mime }
       } else if (!isUpToDate(side, file)) {
-        return this.resolveConflictAsync(side, doc)
+        return this.resolveConflictAsync(side, doc, file)
       }
       if (sameFile(file, doc)) {
         log.info({path}, 'up to date')
@@ -216,7 +217,7 @@ class Merge {
     }
     markSide(side, doc, folder)
     if (folder && folder.docType === 'file') {
-      return this.resolveConflictAsync(side, doc)
+      return this.resolveConflictAsync(side, doc, folder)
     }
     if (folder) {
       doc._rev = folder._rev
@@ -263,7 +264,7 @@ class Merge {
       if (file && sameFile(file, doc)) {
         return null
       } else if (file) {
-        const dst = await this.resolveConflictAsync(side, doc)
+        const dst = await this.resolveConflictAsync(side, doc, file)
         was.moveTo = dst._id
         dst.sides = {}
         dst.sides[side] = 1
@@ -296,7 +297,7 @@ class Merge {
       // as in moveFileAsync?
       delete doc.trashed
       if (folder) {
-        const dst = await this.resolveConflictAsync(side, doc)
+        const dst = await this.resolveConflictAsync(side, doc, folder)
         dst.sides = {}
         dst.sides[side] = 1
         return this.moveFolderRecursivelyAsync(side, dst, was)
@@ -381,7 +382,7 @@ class Merge {
       throw err
     }
     if (doc.docType !== oldMetadata.docType) {
-      await this.resolveConflictAsync(side, doc)
+      await this.resolveConflictAsync(side, doc, oldMetadata)
       return
     }
     if (side === 'remote' && !sameBinary(oldMetadata, doc)) {
