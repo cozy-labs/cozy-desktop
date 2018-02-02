@@ -107,7 +107,7 @@ view helpers model =
                 [ case model.status of
                     Error error ->
                         p [ class "message--error" ]
-                            [ text ("Error: " ++ error) ]
+                            [ text (helpers.t error) ]
 
                     _ ->
                         p []
