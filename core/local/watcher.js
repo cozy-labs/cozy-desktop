@@ -196,6 +196,7 @@ class LocalWatcher {
         ? {type: 'unlink', path: doc.path, old: doc}
         : {type: 'unlinkDir', path: doc.path, old: doc}
 
+      log.chokidar.debug({path: doc.path}, event.type)
       events.unshift(event)
     }
   }
