@@ -3,7 +3,7 @@
 
 import crypto from 'crypto'
 import EventEmitter from 'events'
-import fs from 'fs'
+import fs from 'fs-extra'
 import { pick } from 'lodash'
 import path from 'path'
 import sinon from 'sinon'
@@ -168,6 +168,19 @@ describe('Remote', function () {
       await this.remote.addFileAsync(metadata)
       await should(cozy.files.statByPath('/foo/bar')).be.fulfilled()
     })
+
+    it('does not throw if the file does not exists locally anymore', async function () {
+      const metadata: Metadata = metadataBuilders.file().path('foo').build()
+      this.remote.other = {
+        createReadStreamAsync (localDoc) {
+          return fs.readFileAsync('/path/do/not/exists')
+        }
+      }
+      await this.remote.addFileAsync(metadata)
+      should.exist(metadata.remote._id)
+      should.exist(metadata.remote._rev)
+      should.exist(metadata._deleted)
+    })
   })
 
   describe('addFolderAsync', () => {
@@ -273,6 +286,19 @@ describe('Remote', function () {
         should(file.attributes).have.properties({
           md5sum: old.md5sum
         })
+      })
+
+      it('does not throw if the file does not exists locally anymore', async function () {
+        const metadata: Metadata = metadataBuilders.file().path('foo').build()
+        this.remote.other = {
+          createReadStreamAsync (localDoc) {
+            return fs.readFileAsync('/path/do/not/exists')
+          }
+        }
+        await this.remote.addFileAsync(metadata)
+        should.exist(metadata.remote._id)
+        should.exist(metadata.remote._rev)
+        should.exist(metadata._deleted)
       })
     })
   }
