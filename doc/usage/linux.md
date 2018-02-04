@@ -37,6 +37,7 @@ The current AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
 | **Debian 9 (Stretch)** | ? | 3.4.22 | **should work** |
 | **Fedora 27** | **yes** | 3.4.24 | |
 | Linux Mint 17.1 LTS (Rebecca) | no | | |
+| Linux Mint 18.3 (Sylvia) | yes | 3.4.2 | **should work** |
 | Ubuntu 14.04 (Trusty Tahr) | no | 3.4.19 | |
 | **Ubuntu 16.04 (Xenial Xerus)** | **yes** | 3.4.21 | some issues on Unity |
 | **Ubuntu 17.10 (Artful Aardvark)** | **yes** | 3.4.24 | GNOME 3 |
