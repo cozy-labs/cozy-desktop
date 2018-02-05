@@ -9,10 +9,10 @@ import { COZY_URL } from './cozy'
 export default {
   createConfig () {
     let parent = process.env.COZY_DESKTOP_DIR || 'tmp'
-    const basePath = path.resolve(`${parent}/test/${+new Date()}`)
-    this.syncPath = path.join(basePath, 'Cozy Drive')
+    this.basePath = path.resolve(`${parent}/test/${+new Date()}`)
+    this.syncPath = path.join(this.basePath, 'Cozy Drive')
     fs.ensureDirSync(this.syncPath)
-    this.config = new Config(path.join(basePath, '.cozy-desktop'))
+    this.config = new Config(path.join(this.basePath, '.cozy-desktop'))
     this.config.syncPath = this.syncPath
     this.config.cozyUrl = COZY_URL
   },
