@@ -14,7 +14,7 @@ people use many of them. Providing quality packages for everybody can be quite
 time consuming.
 
 So we decided to start with a solution that was easy for us to set up:
-[AppImage](https://appimage.org/). Easy since it's included in electron-builder,
+[AppImage][AppImage]. Easy since it's included in electron-builder,
 the tool we already use to generate the Windows and macOS apps.
 
 User experience definitely won't be the best (it will look a lot like good old
@@ -29,21 +29,21 @@ nightly builds for Debian and Ubuntu are already being tested internally).
 
 The current AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
 
-| Distribution | supported | `GLIBCXX` | comment |
-| --- | --- | --- | --- |
-| Arch Linux | | 3.4.24 | **should work** |
-| Debian 7 (Wheezy) | no | 3.4.17 | |
-| Debian 8 (Jessie) | no | 3.4.20 | |
-| **Debian 9 (Stretch)** | ? | 3.4.22 | **should work** |
-| **Fedora 27** | **yes** | 3.4.24 | |
-| Linux Mint 17.1 LTS (Rebecca) | no | | |
-| Linux Mint 18.3 avec XFCE | yes | | |
-| Linux Mint 18.3 (Sylvia) | yes | 3.4.2 | **should work** |
-| Mageia 6, KDE | yes | | |
-| Ubuntu 14.04 (Trusty Tahr) | no | 3.4.19 | |
-| **Ubuntu 16.04 (Xenial Xerus)** | **yes** | 3.4.21 | some issues on Unity |
-| **Ubuntu 17.10 (Artful Aardvark)** | **yes** | 3.4.24 | GNOME 3 |
-| [Add your distribution](https://github.com/cozy-labs/cozy-desktop/edit/master/doc/usage/linux.md) (see below) | ... | ... | |
+| Distribution                              | supported | `GLIBCXX` | comment               |
+| ----------------------------------------- | --------- | --------- | --------------------- |
+| Arch Linux                                |           | 3.4.24    | **should work**       |
+| Debian 7 (Wheezy)                         | no        | 3.4.17    |                       |
+| Debian 8 (Jessie)                         | no        | 3.4.20    |                       |
+| **Debian 9 (Stretch)**                    | ?         | 3.4.22    | **should work**       |
+| **Fedora 27**                             | **yes**   | 3.4.24    |                       |
+| Linux Mint 17.1 LTS (Rebecca)             | no        |           |                       |
+| **Linux Mint 18.3 (Sylvia)**              | **yes**   | 3.4.2     |                       |
+| **Linux Mint 18.3 (Sylvia) XFCE Edition** | **yes**   |           |                       |
+| **Mageia 6 KDE Edition**                  | **yes**   |           |                       |
+| Ubuntu 14.04 (Trusty Tahr)                | no        | 3.4.19    |                       |
+| **Ubuntu 16.04 (Xenial Xerus)**           | **yes**   | 3.4.21    | some issues on Unity  |
+| **Ubuntu 17.10 (Artful Aardvark)**        | **yes**   | 3.4.24    | GNOME 3               |
+| [Add your distribution][Edit] (see below) | ...       | ...       |                       |
 
 **Before** requesting for your distribution to be added to the list, please:
 
@@ -54,12 +54,12 @@ The current AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
   (and include the output in your request)
 - Install the app, run it and make sure it actually works
 
-**If your distribution is not supported,** follow [the manual build guide](./build.md)
+**If your distribution is not supported,** follow [the manual build guide][Build]
 
 ## Install
 
 1. Download the `*.AppImage` file for your architecture from the
-   [latest release](https://github.com/cozy-labs/cozy-desktop/releases/latest).
+   [latest release][Latest].
 2. You probably don't want to keep the app in your `/Downloads` folder and run
    it from there. You can for example create a macOS-like `Applications` folder
    and move it there. Advanced users may prefer to move it to some special
@@ -71,7 +71,7 @@ The current AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
 4. Run the application for the first time by double-clicking it. It will add
    itself to your existing application shortcuts.
 
-**Note for GNOME Users** : From 3.26 onwards, GNOME removed the systray which is the only interface for *Cozy Drive*. It should be replaced in the future by `libcloudprovider`, which we will implement when it spreads. In the meantime, you need to install an extension such as [TopIcons](https://extensions.gnome.org/extension/1031/topicons/)
+**Note for GNOME Users** : From 3.26 onwards, GNOME removed the systray which is the only interface for *Cozy Drive*. It should be replaced in the future by `libcloudprovider`, which we will implement when it spreads. In the meantime, you need to install an extension such as [TopIcons][TopIcons]
 
 ## Running
 
@@ -97,3 +97,9 @@ logs.
 ## Uninstall
 
 Manually remove the files listed above.
+
+[AppImage]: https://appimage.org/
+[Build]: ./build.md
+[Edit]: https://github.com/cozy-labs/cozy-desktop/edit/master/doc/usage/linux.md
+[Latest]: https://github.com/cozy-labs/cozy-desktop/releases/latest
+[TopIcons]: https://extensions.gnome.org/extension/1031/topicons/
