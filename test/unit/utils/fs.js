@@ -35,7 +35,7 @@ describe('utils/fs', () => {
       it('sets the hidden attribute of the given dir on Windows', async () => {
         await should(hideOnWindows(dirPath)).be.fulfilled()
         // $FlowFixMe
-        const output = await childProcess.execAsync(`dir ${parentPath}`, {encoding: 'utf8'})
+        const output = await childProcess.execAsync(`dir "${parentPath}"`, {encoding: 'utf8'})
         should(output).not.match(dirName)
       })
     } else {
