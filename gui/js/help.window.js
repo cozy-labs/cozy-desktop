@@ -2,6 +2,10 @@ const WindowManager = require('./window_manager')
 const HELP_SCREEN_WIDTH = 768
 const HELP_SCREEN_HEIGHT = 570
 
+const log = require('../../core-built/app.js').default.logger({
+  component: 'GUI'
+})
+
 module.exports = class TrayWM extends WindowManager {
   windowOptions () {
     return {
@@ -22,10 +26,9 @@ module.exports = class TrayWM extends WindowManager {
         that.desktop.sendMailToSupport(body).then(
           () => { event.sender.send('mail-sent') },
           (err) => {
+            log.error({err})
             event.sender.send('mail-sent', {
-              message: err.message,
-              name: err.name,
-              stack: err.stack
+              message: 'Help An error occured while sending your email'
             })
           }
         )

@@ -58,6 +58,7 @@ export default class Registration {
       logoURI: pkg.logo,
       policyURI: 'https://files.cozycloud.cc/cgu.pdf',
       scopes: [
+        // TODO: Implement existing config update in case we change permissions
         'io.cozy.files',
         'io.cozy.settings:GET:io.cozy.settings.disk-usage',
         'io.cozy.jobs:POST:sendmail:worker'

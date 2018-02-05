@@ -1,4 +1,5 @@
 import fs from 'fs-extra'
+import _ from 'lodash'
 import path from 'path'
 
 import { hideOnWindows } from './utils/fs'
@@ -65,7 +66,7 @@ export default class Config {
 
   // Return the name of the registered client
   get deviceName () {
-    return this.client ? this.client.clientName : ''
+    return _.get(this, 'config.creds.client.clientName', '')
   }
 
   // Return config related to the OAuth client
@@ -74,6 +75,15 @@ export default class Config {
       throw new Error(`Device not configured`)
     }
     return this.config.creds.client
+  }
+
+  get version () {
+    return _.get(this, 'config.creds.client.softwareVersion')
+  }
+
+  get permissions () {
+    const scope = _.get(this, 'config.creds.token.scope')
+    return scope ? scope.split(' ') : []
   }
 
   // Set the remote configuration
