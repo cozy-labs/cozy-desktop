@@ -63,7 +63,7 @@ module.exports = class TrayWM extends WindowManager {
     try {
       this.positioner.move(pos, trayPos)
     } catch (err) {
-      log.error({err}, `electron-positioner#move(pos=${pos}, trayPos=${trayPos})`)
+      log.info({err, pos, trayPos, component: 'electron-positioner'})
     }
     this.win.show()
 
