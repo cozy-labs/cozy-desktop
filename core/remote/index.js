@@ -109,18 +109,6 @@ export default class Remote implements Side {
     const [dirPath, name] = conversion.extractDirAndName(path)
     const dir = await this.remoteCozy.findOrCreateDirectoryByPath(dirPath)
 
-    // Emit events to track the upload progress
-    let info = clone(doc)
-    info.way = 'up'
-    info.eventName = `transfer-up-${doc._id}`
-    this.events.emit('transfer-started', info)
-    stream.on('data', data => {
-      this.events.emit(info.eventName, data)
-    })
-    stream.on('finish', () => {
-      this.events.emit(info.eventName, {finished: true})
-    })
-
     const created = await this.remoteCozy.createFile(stream, {
       name,
       dirID: dir._id,
