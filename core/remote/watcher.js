@@ -182,9 +182,7 @@ export default class RemoteWatcher {
         doc,
         this.prep.config.syncPath
       )
-      if (incompatibilities.length > 0) {
-        return {type: 'RemotePlatformIncompatibleChange', doc, incompatibilities}
-      }
+      if (incompatibilities.length > 0) doc.incompatibilities = incompatibilities
     } else {
       if (!was) {
         return {

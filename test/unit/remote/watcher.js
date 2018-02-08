@@ -297,8 +297,8 @@ describe('RemoteWatcher', function () {
         }
         const change: RemoteChange = this.watcher.identifyChange(doc, null, 0, [])
         const platform = process.platform
-        should(change.type).equal('RemotePlatformIncompatibleChange')
-        should((change: any).incompatibilities).deepEqual([
+        should(change.type).equal('RemoteFileAdded')
+        should(change.doc).have.property('incompatibilities', [
           {
             type: 'reservedChars',
             name: 'b<a>r',
@@ -326,6 +326,30 @@ describe('RemoteWatcher', function () {
           type: 'file'
         }, null, 0, [])
         should(change.type).not.equal('RemotePlatformIncompatibleChange')
+      })
+    })
+
+    onPlatform('darwin', () => {
+      it('detects when a new file is incompatible', async function () {
+        const doc = {
+          _id: 'whatever',
+          path: '/f:oo/b<a>r',
+          md5sum: '9999999999999999999999999999999999999999',
+          type: 'file'
+        }
+        const change: RemoteChange = this.watcher.identifyChange(doc, null, 0, [])
+        const platform = process.platform
+        should(change.type).equal('RemoteFileAdded')
+        should((change: any).doc.incompatibilities).deepEqual([
+          {
+            type: 'reservedChars',
+            name: 'f:oo',
+            path: 'f:oo',
+            docType: 'folder',
+            reservedChars: new Set(':'),
+            platform
+          }
+        ])
       })
     })
 
