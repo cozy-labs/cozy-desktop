@@ -50,6 +50,7 @@ export type Metadata = {
   tags?: string[],
   sides: MetadataSidesInfo,
   trashed?: true,
+  incompatibilities?: *,
   ino?: ?number
 }
 
