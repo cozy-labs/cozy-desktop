@@ -304,7 +304,9 @@ export default class RemoteWatcher {
       case 'RemoteInvalidChange':
         throw change.error
       case 'RemotePlatformIncompatibleChange':
-        this.events.emit('platform-incompatibilities', change.incompatibilities)
+        const { incompatibilities } = change
+        log.warn({path, incompatibilities})
+        this.events.emit('platform-incompatibilities', incompatibilities)
         break
       case 'RemoteIgnoredChange':
         log.debug({path, remoteId: change.doc._id}, change.detail)
