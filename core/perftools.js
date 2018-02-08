@@ -23,6 +23,14 @@ export default function measureTime (key: string): () => void {
   }
 }
 
+export function wrapCallback (key: string, originalCb: () => mixed) {
+  const stopMeasure = measureTime(key)
+  return function newCallback (...args: Array<any>) {
+    stopMeasure()
+    originalCb.apply(this, args)
+  }
+}
+
 function print () {
   for (let key of Object.keys(store)) {
     const {time, nb} = store[key]

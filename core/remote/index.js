@@ -93,6 +93,7 @@ export default class Remote implements Side {
     const {path} = doc
     log.info({path}, 'Uploading new file...')
     const stopMeasure = measureTime('RemoteWriter#addFile')
+    const stopCRSA = measureTime('RemoteWriter#addFile#createReadStreamAsync')
 
     let stream
     try {
@@ -107,7 +108,10 @@ export default class Remote implements Side {
     }
 
     const [dirPath, name] = conversion.extractDirAndName(path)
+    stopCRSA()
+    const stopFCDBP = measureTime('RemoteWriter#addFile#findOrCreateDirectoryByPath')
     const dir = await this.remoteCozy.findOrCreateDirectoryByPath(dirPath)
+    stopFCDBP()
 
     // Emit events to track the upload progress
     let info = clone(doc)
@@ -120,6 +124,7 @@ export default class Remote implements Side {
     stream.on('finish', () => {
       this.events.emit(info.eventName, {finished: true})
     })
+    const stopCreateFile = measureTime('RemoteWriter#addFile#createFile')
 
     const created = await this.remoteCozy.createFile(stream, {
       name,
@@ -128,6 +133,8 @@ export default class Remote implements Side {
       contentType: doc.mime,
       lastModifiedDate: new Date(doc.updated_at)
     })
+
+    stopCreateFile()
 
     doc.remote = {
       _id: created._id,

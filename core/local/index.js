@@ -17,7 +17,7 @@ import Pouch from '../pouch'
 import Prep from '../prep'
 import { hideOnWindows } from '../utils/fs'
 import Watcher from './watcher'
-import measureTime from '../perftools'
+import measureTime, {wrapCallback} from '../perftools'
 
 import type { FileStreamProvider } from '../file_stream_provider'
 import type { Metadata } from '../metadata'
@@ -168,6 +168,7 @@ class Local implements Side {
     let filePath = path.resolve(this.syncPath, doc.path)
     let parent = path.resolve(this.syncPath, path.dirname(doc.path))
     const stopMeasure = measureTime('LocalWriter#addFile')
+    const stopMeasure2 = measureTime('LocalWriter#addFile#exists')
 
     log.info({path: doc.path}, 'Put file')
 
@@ -181,13 +182,19 @@ class Local implements Side {
       },
 
       (existingFilePath, next) => {
+        stopMeasure2()
+        const stopMeasure3 = measureTime('LocalWriter#addFile#ensureTmp')
         fs.ensureDir(this.tmpPath, () => {
           hideOnWindows(this.tmpPath)
           if (existingFilePath) {
             log.info({path: filePath}, `Recopy ${existingFilePath} -> ${filePath}`)
             this.events.emit('transfer-copy', doc)
+            stopMeasure3()
+            next = wrapCallback('LocalWriter#addFile#recopy', next)
             fs.copy(existingFilePath, tmpFile, next)
           } else {
+            stopMeasure3()
+            next = wrapCallback('LocalWriter#addFile#download', next)
             this.other.createReadStreamAsync(doc).then(
               (stream) => {
                 // Don't use async callback here!
@@ -216,6 +223,7 @@ class Local implements Side {
       },
 
       next => {
+        next = wrapCallback('LocalWriter#addFile#checksum', next)
         if (doc.md5sum != null) {
           // TODO: Share checksumer instead of chaining properties
           this.watcher.checksumer.push(tmpFile).asCallback(function (err, md5sum) {
@@ -232,7 +240,15 @@ class Local implements Side {
         }
       },
 
-      next => fs.ensureDir(parent, () => fs.rename(tmpFile, filePath, next)),
+      next => {
+        next = wrapCallback('LocalWriter#addFile#ensureParent', next)
+        fs.ensureDir(parent, (err) => next(err))
+      },
+
+      next => {
+        next = wrapCallback('LocalWriter#addFile#makeCopy', next)
+        fs.rename(tmpFile, filePath, next)
+      },
 
       this.inodeSetter(doc),
       this.metadataUpdater(doc)
