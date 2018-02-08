@@ -5,7 +5,7 @@ import { basename, dirname, extname, join } from 'path'
 
 import Local from './local'
 import logger from './logger'
-import { isUpToDate, markSide, sameBinary, sameFile, sameFolder } from './metadata'
+import { isUpToDate, markSide, sameBinary, sameFile, sameFolder, detectPlatformIncompatibilities } from './metadata'
 import Pouch from './pouch'
 import Remote from './remote'
 import { otherSide } from './side'
@@ -338,6 +338,9 @@ class Merge {
       dst.path = doc.path.replace(was.path, folder.path)
       delete dst._rev
       delete dst.errors
+      const incompatibilities = detectPlatformIncompatibilities(dst, this.pouch.config.syncPath)
+      if (incompatibilities.length > 0) dst.incompatibilities = incompatibilities
+      else delete dst.incompatibilities
       bulk.push(dst)
     }
     return this.pouch.bulkDocs(bulk)
