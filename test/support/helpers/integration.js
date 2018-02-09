@@ -47,6 +47,11 @@ export class IntegrationTestHelpers {
     await this._sync.sync(false)
   }
 
+  async pullAndSyncAll () {
+    await this.remote.pullChanges()
+    await this.syncAll()
+  }
+
   spyPouch () {
     sinon.spy(this._pouch, 'put')
     sinon.spy(this._pouch, 'bulkDocs')
