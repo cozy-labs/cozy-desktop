@@ -8,6 +8,7 @@ import Ignore from '../../core/ignore'
 import * as metadata from '../../core/metadata'
 import Sync from '../../core/sync'
 
+import stubSide from '../support/doubles/side'
 import configHelpers from '../support/helpers/config'
 import pouchHelpers from '../support/helpers/pouch'
 
@@ -200,17 +201,11 @@ function(doc) {
 
   describe('apply', function () {
     beforeEach(function () {
-      this.local = {}
-      this.remote = {}
+      this.local = stubSide()
+      this.remote = stubSide()
       this.ignore = new Ignore(['ignored'])
       this.events = {emit: sinon.spy()}
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
-
-      this.local.trashAsync = sinon.stub()
-      this.remote.trashAsync = sinon.stub()
-
-      this.local.trashAsync.resolves()
-      this.remote.trashAsync.resolves()
     })
 
     it('does nothing for an ignored document', function (done) {
@@ -335,8 +330,6 @@ function(doc) {
           local: 1
         }
       }
-      this.remote.addFileAsync = sinon.stub()
-      this.remote.addFileAsync.resolves()
       this.sync.fileChangedAsync(doc, this.remote, 0).then(() => {
         this.remote.addFileAsync.calledWith(doc).should.be.true()
         done()
@@ -361,10 +354,6 @@ function(doc) {
           remote: 1
         }
         this.pouch.db.put(doc, (_, updated) => {
-          this.remote.overwriteFileAsync = sinon.stub()
-          this.remote.overwriteFileAsync.resolves()
-          this.remote.updateFileMetadataAsync = sinon.stub()
-          this.remote.updateFileMetadataAsync.resolves()
           this.sync.fileChangedAsync(doc, this.remote, 1).then(() => {
             this.remote.updateFileMetadataAsync.called.should.be.false()
             this.remote.overwriteFileAsync.calledWith(doc).should.be.true()
@@ -392,10 +381,6 @@ function(doc) {
           remote: 1
         }
         this.pouch.db.put(doc, (_, updated) => {
-          this.remote.overwriteFileAsync = sinon.stub()
-          this.remote.overwriteFileAsync.resolves()
-          this.remote.updateFileMetadataAsync = sinon.stub()
-          this.remote.updateFileMetadataAsync.resolves()
           this.sync.fileChangedAsync(doc, this.remote, 1).then(() => {
             this.remote.overwriteFileAsync.called.should.be.false()
             let ufm = this.remote.updateFileMetadataAsync
@@ -428,12 +413,6 @@ function(doc) {
           local: 1
         }
       }
-      this.remote.trashAsync = sinon.stub()
-      this.remote.trashAsync.resolves()
-      this.remote.addFileAsync = sinon.stub()
-      this.remote.addFileAsync.resolves()
-      this.remote.moveFileAsync = sinon.stub()
-      this.remote.moveFileAsync.resolves()
       this.sync.fileChangedAsync(was, this.remote, 2).then(() => {
         this.remote.trashAsync.called.should.be.false()
         this.sync.fileChangedAsync(doc, this.remote, 0).then(() => {
@@ -486,8 +465,6 @@ function(doc) {
           local: 1
         }
       }
-      this.remote.addFolderAsync = sinon.stub()
-      this.remote.addFolderAsync.resolves()
       this.sync.folderChangedAsync(doc, this.remote, 0).then(() => {
         this.remote.addFolderAsync.calledWith(doc).should.be.true()
         done()
@@ -505,8 +482,6 @@ function(doc) {
           remote: 2
         }
       }
-      this.local.updateFolderAsync = sinon.stub()
-      this.local.updateFolderAsync.returnsPromise().resolves()
       this.sync.folderChangedAsync(doc, this.local, 1).then(() => {
         this.local.updateFolderAsync.calledWith(doc).should.be.true()
         done()
@@ -535,12 +510,6 @@ function(doc) {
           local: 1
         }
       }
-      this.remote.trashAsync = sinon.stub()
-      this.remote.trashAsync.resolves()
-      this.remote.addFolderAsync = sinon.stub()
-      this.remote.addFolderAsync.resolves()
-      this.remote.moveFolderAsync = sinon.stub()
-      this.remote.moveFolderAsync.resolves()
       this.sync.folderChangedAsync(was, this.remote, 2).then(() => {
         this.remote.trashAsync.called.should.be.false()
         this.sync.folderChangedAsync(doc, this.remote, 0).then(() => {
@@ -562,8 +531,6 @@ function(doc) {
           remote: 2
         }
       }
-      this.local.deleteFolderAsync = sinon.stub()
-      this.local.deleteFolderAsync.resolves()
       this.sync.folderChangedAsync(doc, this.local, 1).then(() => {
         this.local.deleteFolderAsync.calledWith(doc).should.be.true()
         done()
