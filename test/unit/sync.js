@@ -205,6 +205,12 @@ function(doc) {
       this.ignore = new Ignore(['ignored'])
       this.events = {}
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
+
+      this.local.trashAsync = sinon.stub()
+      this.remote.trashAsync = sinon.stub()
+
+      this.local.trashAsync.resolves()
+      this.remote.trashAsync.resolves()
     })
 
     it('does nothing for an ignored document', function (done) {
@@ -317,22 +323,6 @@ function(doc) {
           done()
         })
       })
-    })
-  })
-
-  describe('fileChanged', function () {
-    beforeEach(function () {
-      this.local = {}
-      this.remote = {}
-      this.ignore = new Ignore([])
-      this.events = {}
-      this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
-
-      this.local.trashAsync = sinon.stub()
-      this.remote.trashAsync = sinon.stub()
-
-      this.local.trashAsync.resolves()
-      this.remote.trashAsync.resolves()
     })
 
     it('calls addFileAsync for an added file', function (done) {
@@ -485,19 +475,6 @@ function(doc) {
         this.remote.trashAsync.called.should.be.false()
         done()
       })
-    })
-  })
-
-  describe('folderChanged', function () {
-    beforeEach(function () {
-      this.local = {}
-      this.remote = {}
-      this.ignore = new Ignore([])
-      this.events = {}
-      this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
-
-      this.local.trashAsync = sinon.stub()
-      this.remote.trashAsync = sinon.stub()
     })
 
     it('calls addFolderAsync for an added folder', function (done) {
