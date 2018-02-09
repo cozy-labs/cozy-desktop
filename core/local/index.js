@@ -3,7 +3,6 @@
 import async from 'async'
 import Promise from 'bluebird'
 import EventEmitter from 'events'
-import { clone } from 'lodash'
 import fs from 'fs-extra'
 import path from 'path'
 import * as stream from 'stream'

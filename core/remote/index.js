@@ -1,6 +1,5 @@
 /* @flow */
 
-import { clone } from 'lodash'
 import EventEmitter from 'events'
 import { posix, sep } from 'path'
 import * as stream from 'stream'
