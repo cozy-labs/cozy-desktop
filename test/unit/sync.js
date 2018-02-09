@@ -203,7 +203,7 @@ function(doc) {
       this.local = {}
       this.remote = {}
       this.ignore = new Ignore(['ignored'])
-      this.events = {}
+      this.events = {emit: sinon.spy()}
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
 
       this.local.trashAsync = sinon.stub()
