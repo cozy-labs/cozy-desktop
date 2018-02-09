@@ -3,7 +3,6 @@
 import async from 'async'
 import Promise from 'bluebird'
 import EventEmitter from 'events'
-import { clone } from 'lodash'
 import fs from 'fs-extra'
 import path from 'path'
 import * as stream from 'stream'
@@ -197,17 +196,6 @@ class Local implements Side {
                 stream.pipe(target)
                 target.on('finish', next)
                 target.on('error', next)
-                // Emit events to track the download progress
-                let info = clone(doc)
-                info.way = 'down'
-                info.eventName = `transfer-down-${doc._id}`
-                this.events.emit('transfer-started', info)
-                stream.on('data', data => {
-                  this.events.emit(info.eventName, data)
-                })
-                target.on('finish', () => {
-                  this.events.emit(info.eventName, {finished: true})
-                })
               },
               (err) => { next(err) }
             )
