@@ -278,10 +278,7 @@ function(doc) {
           }
         }
       }
-      this.sync.fileChangedAsync = sinon.stub().resolves()
       this.sync.apply(change).then(() => {
-        this.sync.fileChangedAsync.called.should.be.true()
-        this.sync.fileChangedAsync.calledWith(change.doc).should.be.true()
         this.pouch.db.get(change.doc._id, function (err, doc) {
           should.not.exist(err)
           doc.should.have.properties({
@@ -309,10 +306,7 @@ function(doc) {
           }
         }
       }
-      this.sync.folderChangedAsync = sinon.stub().resolves()
       this.sync.apply(change).then(() => {
-        this.sync.folderChangedAsync.called.should.be.true()
-        this.sync.folderChangedAsync.calledWith(change.doc).should.be.true()
         this.pouch.getLocalSeq(function (_, seq) {
           seq.should.equal(124)
           done()
