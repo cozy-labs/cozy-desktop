@@ -720,8 +720,4 @@ function(doc) {
       should.not.exist(rev)
     })
   })
-
-  describe('trashWithParentOrByItself', () => {
-    it('should be tested')
-  })
 })
