@@ -320,35 +320,6 @@ function(doc) {
     })
   })
 
-  describe('updateErrors', function () {
-    beforeEach(function () {
-      this.local = {}
-      this.remote = {}
-      this.ignore = new Ignore([])
-      this.events = {}
-      this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
-    })
-
-    it('stops retrying after 3 errors', function (done) {
-      let doc = {
-        _id: 'third/failure',
-        errors: 3
-      }
-      this.pouch.db.put(doc, (err, infos) => {
-        should.not.exist(err)
-        doc._rev = infos.rev
-        this.sync.updateErrors({doc}).then(() => {
-          this.pouch.db.get(doc._id, function (err, actual) {
-            should.not.exist(err)
-            actual.errors.should.equal(3)
-            actual._rev.should.equal(doc._rev)
-            done()
-          })
-        })
-      })
-    })
-  })
-
   describe('fileChanged', function () {
     beforeEach(function () {
       this.local = {}
@@ -635,6 +606,35 @@ function(doc) {
       this.sync.folderChangedAsync(doc, this.remote, 0).then(() => {
         this.remote.trashAsync.called.should.be.false()
         done()
+      })
+    })
+  })
+
+  describe('updateErrors', function () {
+    beforeEach(function () {
+      this.local = {}
+      this.remote = {}
+      this.ignore = new Ignore([])
+      this.events = {}
+      this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
+    })
+
+    it('stops retrying after 3 errors', function (done) {
+      let doc = {
+        _id: 'third/failure',
+        errors: 3
+      }
+      this.pouch.db.put(doc, (err, infos) => {
+        should.not.exist(err)
+        doc._rev = infos.rev
+        this.sync.updateErrors({doc}).then(() => {
+          this.pouch.db.get(doc._id, function (err, actual) {
+            should.not.exist(err)
+            actual.errors.should.equal(3)
+            actual._rev.should.equal(doc._rev)
+            done()
+          })
+        })
       })
     })
   })
