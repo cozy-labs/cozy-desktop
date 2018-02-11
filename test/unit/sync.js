@@ -18,23 +18,24 @@ describe('Sync', function () {
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
+  beforeEach('instanciate sync', function () {
+    this.local = stubSide()
+    this.remote = stubSide()
+    this.ignore = new Ignore(['ignored'])
+    this.events = {emit: sinon.spy()}
+    this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
+  })
+
   describe('start', function () {
     beforeEach('instanciate sync', function () {
       const ret = {
         started: Promise.resolve(),
         running: new Promise(() => {})
       }
-      this.local = {
-        start: sinon.stub().resolves(),
-        stop: sinon.stub().resolves()
-      }
-      this.remote = {
-        start: sinon.stub().returns(ret),
-        stop: sinon.stub().resolves()
-      }
-      this.ignore = new Ignore([])
-      this.events = {emit: sinon.spy()}
-      this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
+      this.local.start = sinon.stub().resolves()
+      this.local.stop = sinon.stub().resolves()
+      this.remote.start = sinon.stub().returns(ret)
+      this.remote.stop = sinon.stub().resolves()
       this.sync.sync = sinon.stub().rejects(new Error('stopped'))
     })
 
@@ -72,11 +73,6 @@ describe('Sync', function () {
 
   describe.skip('sync', function () {
     beforeEach(function () {
-      this.local = {}
-      this.remote = {}
-      this.ignore = new Ignore([])
-      this.events = {emit: sinon.spy()}
-      this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
       this.sync.apply = sinon.stub().resolves()
       this.sync.running = true
     })
@@ -188,14 +184,6 @@ function(doc) {
   })
 
   describe('apply', function () {
-    beforeEach(function () {
-      this.local = stubSide()
-      this.remote = stubSide()
-      this.ignore = new Ignore(['ignored'])
-      this.events = {emit: sinon.spy()}
-      this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
-    })
-
     it('does nothing for an ignored document', async function () {
       let change = {
         seq: 121,
@@ -496,14 +484,6 @@ function(doc) {
   })
 
   describe('updateErrors', function () {
-    beforeEach(function () {
-      this.local = {}
-      this.remote = {}
-      this.ignore = new Ignore([])
-      this.events = {}
-      this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
-    })
-
     it('stops retrying after 3 errors', async function () {
       let doc = {
         _id: 'third/failure',
@@ -519,14 +499,6 @@ function(doc) {
   })
 
   describe('selectSide', function () {
-    beforeEach(function () {
-      this.local = {}
-      this.remote = {}
-      this.ignore = new Ignore([])
-      this.events = {}
-      this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
-    })
-
     it('selects the local side if remote is up-to-date', function () {
       let doc = {
         _id: 'selectSide/1',
