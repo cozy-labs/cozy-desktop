@@ -1,11 +1,9 @@
 /* eslint-env mocha */
 
-import path from 'path'
 import sinon from 'sinon'
 import should from 'should'
 
 import Ignore from '../../core/ignore'
-import * as metadata from '../../core/metadata'
 import Sync from '../../core/sync'
 
 import stubSide from '../support/doubles/side'
@@ -71,115 +69,19 @@ describe('Sync', function () {
 
   // TODO: Test lock request/acquisition/release
 
-  describe.skip('sync', function () {
-    beforeEach(function () {
-      this.sync.apply = sinon.stub().resolves()
-      this.sync.running = true
-    })
+  describe('sync', function () {
+    it('waits for and applies available changes', async function () {
+      const doc1 = {_id: 'doc1', docType: 'file', sides: {local: 1}}
+      const doc2 = {_id: 'doc2', docType: 'folder', sides: {remote: 1}}
+      await this.pouch.db.put(doc1)
+      await this.pouch.db.put(doc2)
+      const apply = sinon.stub(this.sync, 'apply')
+      apply.callsFake(change => this.pouch.setLocalSeqAsync(change.seq))
 
-    it('calls pop and apply', function (done) {
-      this.sync.pop = sinon.stub().resolves({ change: true })
-      this.sync.sync().then(() => {
-        this.sync.pop.calledOnce.should.be.true()
-        this.sync.apply.calledOnce.should.be.true()
-        this.sync.apply.calledWith({change: true}).should.be.true()
-        done()
-      })
-    })
-
-    it('calls pop but not apply if pop has failed', function (done) {
-      this.sync.pop = sinon.stub().rejects(new Error('failed'))
-      this.sync.sync().catch(err => {
-        err.message.should.equal('failed')
-        this.sync.pop.calledOnce.should.be.true()
-        this.sync.apply.calledOnce.should.be.false()
-        done()
-      })
-    })
-  })
-
-  describe.skip('pop', function () {
-    beforeEach(function (done) {
-      this.local = {}
-      this.remote = {}
-      this.ignore = new Ignore([])
-      this.events = {emit: sinon.spy()}
-      this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
-      this.pouch.db.changes().on('complete', info => {
-        this.pouch.setLocalSeq(info.last_seq, done)
-      })
-    })
-
-    it('gives the next change if there is already one', function (done) {
-      pouchHelpers.createFile(this.pouch, 1, err => {
-        should.not.exist(err)
-        this.sync.pop().then(change => {
-          this.pouch.getLocalSeq(function (err, seq) {
-            should.not.exist(err)
-            change.should.have.properties({
-              id: metadata.id(path.normalize('my-folder/file-1')),
-              seq: seq + 1
-            })
-            change.doc.should.have.properties({
-              _id: metadata.id(path.normalize('my-folder/file-1')),
-              docType: 'file',
-              tags: []})
-            done()
-          })
-        })
-      })
-    })
-
-    it('filters design doc changes', function (done) {
-      let query = `
-function(doc) {
-    if ('size' in doc) emit(doc.size);
-}`
-      this.pouch.createDesignDoc('bySize', query, err => {
-        should.not.exist(err)
-        pouchHelpers.createFile(this.pouch, 6, err => {
-          should.not.exist(err)
-          this.sync.pop().then(change => {
-            change.doc.docType.should.equal('file')
-            done()
-          })
-        })
-      })
-    })
-
-    it('waits for the next change if there no available change', function (done) {
-      let spy = sinon.spy()
-      this.sync.pop().then(change => {
-        spy()
-        this.pouch.getLocalSeq(function (err, seq) {
-          should.not.exist(err)
-          change.should.have.properties({
-            id: metadata.id(path.normalize('my-folder/file-7')),
-            seq: seq + 1
-          })
-          change.doc.should.have.properties({
-            _id: metadata.id(path.normalize('my-folder/file-7')),
-            docType: 'file',
-            tags: []})
-          done()
-        })
-      })
-      setTimeout(() => {
-        spy.called.should.be.false()
-        pouchHelpers.createFile(this.pouch, 7, err => should.not.exist(err))
-      }, 10)
-    })
-
-    it('emits up-to-date if there are no available change', function (done) {
-      let emitted = false
-      this.events.emit = () => {
-        emitted = true
-        pouchHelpers.createFile(this.pouch, 8, err => should.not.exist(err))
-      }
-      this.sync.pop().then(change => {
-        emitted.should.be.true()
-        done()
-      })
+      await this.sync.sync()
+      should(apply).have.been.calledTwice()
+      should(apply.args[0][0].doc).have.properties(doc1)
+      should(apply.args[1][0].doc).have.properties(doc2)
     })
   })
 
