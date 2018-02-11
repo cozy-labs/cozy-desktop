@@ -38,45 +38,33 @@ describe('Sync', function () {
       this.sync.sync = sinon.stub().rejects(new Error('stopped'))
     })
 
-    it('starts the metadata replication of remote in read only', function (done) {
-      this.sync.start('pull').catch(err => {
-        err.message.should.equal('stopped')
-        this.local.start.called.should.be.false()
-        this.remote.start.calledOnce.should.be.true()
-        this.sync.sync.calledOnce.should.be.true()
-        done()
-      })
+    it('starts the metadata replication of remote in read only', async function () {
+      await should(this.sync.start('pull')).be.rejectedWith({message: 'stopped'})
+      this.local.start.called.should.be.false()
+      this.remote.start.calledOnce.should.be.true()
+      this.sync.sync.calledOnce.should.be.true()
     })
 
-    it('starts the metadata replication of local in write only', function (done) {
-      this.sync.start('push').catch(err => {
-        err.message.should.equal('stopped')
-        this.local.start.calledOnce.should.be.true()
-        this.remote.start.called.should.be.false()
-        this.sync.sync.calledOnce.should.be.true()
-        done()
-      })
+    it('starts the metadata replication of local in write only', async function () {
+      await should(this.sync.start('push')).be.rejectedWith({message: 'stopped'})
+      this.local.start.calledOnce.should.be.true()
+      this.remote.start.called.should.be.false()
+      this.sync.sync.calledOnce.should.be.true()
     })
 
-    it('starts the metadata replication of both in full', function (done) {
-      this.sync.start('full').catch(err => {
-        err.message.should.equal('stopped')
-        this.local.start.calledOnce.should.be.true()
-        this.remote.start.calledOnce.should.be.true()
-        this.sync.sync.calledOnce.should.be.true()
-        done()
-      })
+    it('starts the metadata replication of both in full', async function () {
+      await should(this.sync.start('full')).be.rejectedWith({message: 'stopped'})
+      this.local.start.calledOnce.should.be.true()
+      this.remote.start.calledOnce.should.be.true()
+      this.sync.sync.calledOnce.should.be.true()
     })
 
-    it('does not start sync if metadata replication fails', function (done) {
+    it('does not start sync if metadata replication fails', async function () {
       this.local.start = sinon.stub().rejects(new Error('failed'))
-      this.sync.start('full').catch(err => {
-        err.message.should.equal('failed')
-        this.local.start.calledOnce.should.be.true()
-        this.remote.start.called.should.be.false()
-        this.sync.sync.calledOnce.should.be.false()
-        done()
-      })
+      await should(this.sync.start('full')).be.rejectedWith({message: 'failed'})
+      this.local.start.calledOnce.should.be.true()
+      this.remote.start.called.should.be.false()
+      this.sync.sync.calledOnce.should.be.false()
     })
   })
 
@@ -208,7 +196,7 @@ function(doc) {
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
     })
 
-    it('does nothing for an ignored document', function (done) {
+    it('does nothing for an ignored document', async function () {
       let change = {
         seq: 121,
         doc: {
@@ -220,13 +208,11 @@ function(doc) {
         }
       }
       this.sync.folderChanged = sinon.spy()
-      this.sync.apply(change).then(() => {
-        this.sync.folderChanged.called.should.be.false()
-        done()
-      })
+      await this.sync.apply(change)
+      this.sync.folderChanged.called.should.be.false()
     })
 
-    it('does nothing for an up-to-date document', function (done) {
+    it('does nothing for an up-to-date document', async function () {
       let change = {
         seq: 122,
         doc: {
@@ -239,13 +225,11 @@ function(doc) {
         }
       }
       this.sync.folderChanged = sinon.spy()
-      this.sync.apply(change).then(() => {
-        this.sync.folderChanged.called.should.be.false()
-        done()
-      })
+      await this.sync.apply(change)
+      this.sync.folderChanged.called.should.be.false()
     })
 
-    it('trashes a locally deleted file or folder', function (done) {
+    it('trashes a locally deleted file or folder', async function () {
       const change = {
         seq: 145,
         doc: {
@@ -260,13 +244,11 @@ function(doc) {
       }
 
       this.sync.trashWithParentOrByItself = sinon.stub().resolves(true)
-      this.sync.apply(change).then(() => {
-        should(this.sync.trashWithParentOrByItself.called).be.true()
-        done()
-      })
+      await this.sync.apply(change)
+      should(this.sync.trashWithParentOrByItself.called).be.true()
     })
 
-    it('calls fileChanged for a file', function (done) {
+    it('calls fileChanged for a file', async function () {
       let change = {
         seq: 123,
         doc: {
@@ -278,23 +260,19 @@ function(doc) {
           }
         }
       }
-      this.sync.apply(change).then(() => {
-        this.pouch.db.get(change.doc._id, function (err, doc) {
-          should.not.exist(err)
-          doc.should.have.properties({
-            _id: 'foo/bar',
-            docType: 'file',
-            sides: {
-              local: 1,
-              remote: 1
-            }
-          })
-          done()
-        })
+      await this.sync.apply(change)
+      const doc = await this.pouch.db.get(change.doc._id)
+      doc.should.have.properties({
+        _id: 'foo/bar',
+        docType: 'file',
+        sides: {
+          local: 1,
+          remote: 1
+        }
       })
     })
 
-    it('calls folderChanged for a folder', function (done) {
+    it('calls folderChanged for a folder', async function () {
       let change = {
         seq: 124,
         doc: {
@@ -306,15 +284,12 @@ function(doc) {
           }
         }
       }
-      this.sync.apply(change).then(() => {
-        this.pouch.getLocalSeq(function (_, seq) {
-          seq.should.equal(124)
-          done()
-        })
-      })
+      await this.sync.apply(change)
+      const seq = await this.pouch.getLocalSeqAsync()
+      seq.should.equal(124)
     })
 
-    it('calls addFileAsync for an added file', function (done) {
+    it('calls addFileAsync for an added file', async function () {
       let doc = {
         _id: 'foo/bar',
         _rev: '1-abcdef0123456789',
@@ -324,13 +299,11 @@ function(doc) {
           local: 1
         }
       }
-      this.sync.fileChangedAsync(doc, this.remote, 0).then(() => {
-        this.remote.addFileAsync.calledWith(doc).should.be.true()
-        done()
-      })
+      await this.sync.fileChangedAsync(doc, this.remote, 0)
+      this.remote.addFileAsync.calledWith(doc).should.be.true()
     })
 
-    it('calls overwriteFileAsync for an overwritten file', function (done) {
+    it('calls overwriteFileAsync for an overwritten file', async function () {
       let doc = {
         _id: 'overwrite/foo/bar',
         md5sum: '391f7abfca1124c3ca937e5f85687352bcd9f261',
@@ -339,25 +312,20 @@ function(doc) {
           local: 1
         }
       }
-      this.pouch.db.put(doc, (err, created) => {
-        should.not.exist(err)
-        doc._rev = created.rev
-        doc.md5sum = '389dd709c94a6a7ea56e1d55cbf65eef31b9bc5e'
-        doc.sides = {
-          local: 2,
-          remote: 1
-        }
-        this.pouch.db.put(doc, (_, updated) => {
-          this.sync.fileChangedAsync(doc, this.remote, 1).then(() => {
-            this.remote.updateFileMetadataAsync.called.should.be.false()
-            this.remote.overwriteFileAsync.calledWith(doc).should.be.true()
-            done()
-          })
-        })
-      })
+      const created = await this.pouch.db.put(doc)
+      doc._rev = created.rev
+      doc.md5sum = '389dd709c94a6a7ea56e1d55cbf65eef31b9bc5e'
+      doc.sides = {
+        local: 2,
+        remote: 1
+      }
+      await this.pouch.db.put(doc)
+      await this.sync.fileChangedAsync(doc, this.remote, 1)
+      this.remote.updateFileMetadataAsync.called.should.be.false()
+      this.remote.overwriteFileAsync.calledWith(doc).should.be.true()
     })
 
-    it('calls updateFileMetadataAsync for updated file metadata', function (done) {
+    it('calls updateFileMetadataAsync for updated file metadata', async function () {
       let doc = {
         _id: 'update/foo/bar',
         md5sum: '391f7abfca1124c3ca937e5f85687352bcd9f261',
@@ -366,26 +334,21 @@ function(doc) {
           local: 1
         }
       }
-      this.pouch.db.put(doc, (err, created) => {
-        should.not.exist(err)
-        doc._rev = created.rev
-        doc.tags = ['courge']
-        doc.sides = {
-          local: 2,
-          remote: 1
-        }
-        this.pouch.db.put(doc, (_, updated) => {
-          this.sync.fileChangedAsync(doc, this.remote, 1).then(() => {
-            this.remote.overwriteFileAsync.called.should.be.false()
-            let ufm = this.remote.updateFileMetadataAsync
-            ufm.calledWith(doc).should.be.true()
-            done()
-          })
-        })
-      })
+      const created = await this.pouch.db.put(doc)
+      doc._rev = created.rev
+      doc.tags = ['courge']
+      doc.sides = {
+        local: 2,
+        remote: 1
+      }
+      await this.pouch.db.put(doc)
+      await this.sync.fileChangedAsync(doc, this.remote, 1)
+      this.remote.overwriteFileAsync.called.should.be.false()
+      let ufm = this.remote.updateFileMetadataAsync
+      ufm.calledWith(doc).should.be.true()
     })
 
-    it('calls moveFileAsync for a moved file', function (done) {
+    it('calls moveFileAsync for a moved file', async function () {
       let was = {
         _id: 'foo/bar',
         _rev: '3-9876543210',
@@ -407,17 +370,14 @@ function(doc) {
           local: 1
         }
       }
-      this.sync.fileChangedAsync(was, this.remote, 2).then(() => {
-        this.remote.trashAsync.called.should.be.false()
-        this.sync.fileChangedAsync(doc, this.remote, 0).then(() => {
-          this.remote.addFileAsync.called.should.be.false()
-          this.remote.moveFileAsync.calledWith(doc, was).should.be.true()
-          done()
-        })
-      })
+      await this.sync.fileChangedAsync(was, this.remote, 2)
+      this.remote.trashAsync.called.should.be.false()
+      await this.sync.fileChangedAsync(doc, this.remote, 0)
+      this.remote.addFileAsync.called.should.be.false()
+      this.remote.moveFileAsync.calledWith(doc, was).should.be.true()
     })
 
-    it('calls trashAsync for a deleted file', function (done) {
+    it('calls trashAsync for a deleted file', async function () {
       let doc = {
         _id: 'foo/baz',
         _rev: '4-1234567890',
@@ -428,13 +388,11 @@ function(doc) {
           remote: 2
         }
       }
-      this.sync.fileChangedAsync(doc, this.local, 1).then(() => {
-        this.local.trashAsync.calledWith(doc).should.be.true()
-        done()
-      })
+      await this.sync.fileChangedAsync(doc, this.local, 1)
+      this.local.trashAsync.calledWith(doc).should.be.true()
     })
 
-    it('does nothing for a deleted file that was not added', function (done) {
+    it('does nothing for a deleted file that was not added', async function () {
       let doc = {
         _id: 'tmp/fooz',
         _rev: '2-1234567890',
@@ -444,13 +402,11 @@ function(doc) {
           local: 2
         }
       }
-      this.sync.fileChangedAsync(doc, this.remote, 0).then(() => {
-        this.remote.trashAsync.called.should.be.false()
-        done()
-      })
+      await this.sync.fileChangedAsync(doc, this.remote, 0)
+      this.remote.trashAsync.called.should.be.false()
     })
 
-    it('calls addFolderAsync for an added folder', function (done) {
+    it('calls addFolderAsync for an added folder', async function () {
       let doc = {
         _id: 'foobar/bar',
         _rev: '1-abcdef0123456789',
@@ -459,10 +415,8 @@ function(doc) {
           local: 1
         }
       }
-      this.sync.folderChangedAsync(doc, this.remote, 0).then(() => {
-        this.remote.addFolderAsync.calledWith(doc).should.be.true()
-        done()
-      })
+      await this.sync.folderChangedAsync(doc, this.remote, 0)
+      this.remote.addFolderAsync.calledWith(doc).should.be.true()
     })
 
     xit('calls updateFolderAsync for an updated folder', function (done) {
@@ -482,7 +436,7 @@ function(doc) {
       })
     })
 
-    it('calls moveFolderAsync for a moved folder', function (done) {
+    it('calls moveFolderAsync for a moved folder', async function () {
       let was = {
         _id: 'foobar/bar',
         _rev: '3-9876543210',
@@ -504,17 +458,14 @@ function(doc) {
           local: 1
         }
       }
-      this.sync.folderChangedAsync(was, this.remote, 2).then(() => {
-        this.remote.trashAsync.called.should.be.false()
-        this.sync.folderChangedAsync(doc, this.remote, 0).then(() => {
-          this.remote.addFolderAsync.called.should.be.false()
-          this.remote.moveFolderAsync.calledWith(doc, was).should.be.true()
-          done()
-        })
-      })
+      await this.sync.folderChangedAsync(was, this.remote, 2)
+      this.remote.trashAsync.called.should.be.false()
+      await this.sync.folderChangedAsync(doc, this.remote, 0)
+      this.remote.addFolderAsync.called.should.be.false()
+      this.remote.moveFolderAsync.calledWith(doc, was).should.be.true()
     })
 
-    it('calls trashAsync for a deleted folder', function (done) {
+    it('calls trashAsync for a deleted folder', async function () {
       let doc = {
         _id: 'foobar/baz',
         _rev: '4-1234567890',
@@ -525,13 +476,11 @@ function(doc) {
           remote: 2
         }
       }
-      this.sync.folderChangedAsync(doc, this.local, 1).then(() => {
-        this.local.deleteFolderAsync.calledWith(doc).should.be.true()
-        done()
-      })
+      await this.sync.folderChangedAsync(doc, this.local, 1)
+      this.local.deleteFolderAsync.calledWith(doc).should.be.true()
     })
 
-    it('does nothing for a deleted folder that was not added', function (done) {
+    it('does nothing for a deleted folder that was not added', async function () {
       let doc = {
         _id: 'tmp/foobaz',
         _rev: '2-1234567890',
@@ -541,10 +490,8 @@ function(doc) {
           local: 2
         }
       }
-      this.sync.folderChangedAsync(doc, this.remote, 0).then(() => {
-        this.remote.trashAsync.called.should.be.false()
-        done()
-      })
+      await this.sync.folderChangedAsync(doc, this.remote, 0)
+      this.remote.trashAsync.called.should.be.false()
     })
   })
 
@@ -557,23 +504,17 @@ function(doc) {
       this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
     })
 
-    it('stops retrying after 3 errors', function (done) {
+    it('stops retrying after 3 errors', async function () {
       let doc = {
         _id: 'third/failure',
         errors: 3
       }
-      this.pouch.db.put(doc, (err, infos) => {
-        should.not.exist(err)
-        doc._rev = infos.rev
-        this.sync.updateErrors({doc}).then(() => {
-          this.pouch.db.get(doc._id, function (err, actual) {
-            should.not.exist(err)
-            actual.errors.should.equal(3)
-            actual._rev.should.equal(doc._rev)
-            done()
-          })
-        })
-      })
+      const infos = await this.pouch.db.put(doc)
+      doc._rev = infos.rev
+      await this.sync.updateErrors({doc})
+      const actual = await this.pouch.db.get(doc._id)
+      actual.errors.should.equal(3)
+      actual._rev.should.equal(doc._rev)
     })
   })
 
