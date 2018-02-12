@@ -10,6 +10,8 @@ import Pouch from '../../../core/pouch'
 import Remote from '../../../core/remote'
 import { TRASH_DIR_NAME } from '../../../core/remote/constants'
 
+import type { RemoteDoc } from '../../../core/remote/document'
+
 export class RemoteTestHelpers {
   remote: Remote
 
@@ -27,6 +29,24 @@ export class RemoteTestHelpers {
 
   async pullChanges () {
     await this.remote.watcher.watch()
+  }
+
+  async createTree (paths: Array<string>): Promise<{ [string]: RemoteDoc}> {
+    const docsByPath = {}
+    for (const p of paths) {
+      const name = path.posix.basename(p)
+      const parentPath = path.posix.dirname(p)
+      const dirID = (docsByPath[parentPath + '/'] || {})._id
+      if (p.endsWith('/')) {
+        docsByPath[p] = await this.cozy.files.createDirectory(
+          {name, dirID, lastModifiedDate: new Date()})
+      } else {
+        docsByPath[p] = await this.cozy.files.create(`Content of file ${p}`,
+          {name, dirID, lastModifiedDate: new Date()})
+      }
+    }
+
+    return docsByPath
   }
 
   // TODO: Extract reusable #scan() method from tree*()
