@@ -1,3 +1,14 @@
+## 3.4.3 - 2017-02-12
+
+Improvements for all users:
+
+- Added more logs to better debug performance and compatibilities issues.
+- All improvements from [3.4.3-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/3.4.3-beta.1)
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.4.3-beta.1 - 2017-02-01
 
 Improvements for all users:
