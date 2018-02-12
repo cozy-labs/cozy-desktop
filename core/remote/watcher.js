@@ -346,7 +346,7 @@ export default class RemoteWatcher {
         await this.prep.updateFileAsync(SIDE, change.doc)
         break
       case 'RemoteFileMoved':
-        log.info({path, wasPath: change.was.path}, 'file was moved or renamed remotely')
+        log.info({path, oldpath: change.was.path}, 'file was moved or renamed remotely')
         if (change.needRefetch) {
           change.was = await this.pouch.byRemoteIdMaybeAsync(change.was.remote._id)
           change.was.childMove = false
