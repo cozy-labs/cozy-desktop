@@ -338,6 +338,7 @@ class Merge {
       dst.path = doc.path.replace(was.path, folder.path)
       delete dst._rev
       delete dst.errors
+      // FIXME: Find a cleaner way to pass the syncPath to the Merge
       const incompatibilities = detectPlatformIncompatibilities(dst, this.pouch.config.syncPath)
       if (incompatibilities.length > 0) dst.incompatibilities = incompatibilities
       else delete dst.incompatibilities

@@ -137,6 +137,7 @@ export type PlatformIncompatibility = PathIssue & {docType: string}
 
 // Identifies platform incompatibilities in metadata that will prevent local
 // synchronization
+// TODO: return null instead of an empty array when no issue was found?
 export function detectPlatformIncompatibilities (metadata: Metadata, syncPath: string): Array<PlatformIncompatibility> {
   const {path, docType} = metadata
   const pathLenghIssue = detectPathLengthIssue(join(syncPath, path), process.platform)
