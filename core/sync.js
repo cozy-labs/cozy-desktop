@@ -217,6 +217,7 @@ class Sync {
       stopMeasure = measureTime('Sync#applyChange:' + sideName)
 
       if (!side) {
+        log.info({path: doc.path}, 'up to date')
         return this.pouch.setLocalSeqAsync(change.seq)
       } else if (doc.incompatibilities && sideName === 'local') {
         if (this.moveFrom != null) {
@@ -264,7 +265,6 @@ class Sync {
     } else if (remoteRev > localRev) {
       return [this.local, 'local', localRev]
     } else {
-      log.info({path: doc.path}, 'up to date')
       return []
     }
   }
