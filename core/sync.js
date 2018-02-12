@@ -201,7 +201,13 @@ class Sync {
   // In some cases, both sides have the change
   async apply (change: MetadataChange): Promise<*> {
     let { doc, seq } = change
-    const changeInfo = {path: doc.path, seq}
+    const changeInfo = {
+      path: doc.path,
+      seq,
+      sides: doc.sides,
+      moveTo: doc.moveTo,
+      moveFrom: this.moveFrom && this.moveFrom._id
+    }
     log.debug(changeInfo, 'Applying change...')
     log.trace({change})
 
