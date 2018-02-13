@@ -1,9 +1,8 @@
 const {dialog, shell} = require('electron')
 const {spawn} = require('child_process')
 const autoLaunch = require('./autolaunch')
-const Positioner = require('electron-positioner')
 const DASHBOARD_SCREEN_WIDTH = 330
-const DASHBOARD_SCREEN_HEIGHT = 800
+const DASHBOARD_SCREEN_HEIGHT = 830
 
 const {translate} = require('./i18n')
 
@@ -41,32 +40,14 @@ module.exports = class TrayWM extends WindowManager {
 
   create () {
     let pReady = super.create()
-    this.positioner = new Positioner(this.win)
     this.win.on('blur', this.onBlur.bind(this))
     return pReady
   }
 
   show (trayPos) {
     this.log.debug('show')
-    let pos = null
-
-    if (trayPos === undefined || trayPos.x === 0) {
-      pos = (process.platform === 'win32') ? 'bottomRight' : 'topRight'
-    } else {
-      pos = (process.platform === 'win32') ? 'trayBottomCenter' : 'trayCenter'
-    }
-    // FIXME: electron-positioner may throw `TypeError: Error processing
-    // argument at index 0, conversion failure from NaN`. Not sure whether it's
-    // a bug in cozy-desktop, electron-positioner or electron.
-    // Catch error, log it & show the popover wherever possible thus user should
-    // report the issue with useful logs but can still use the app.
-    try {
-      this.positioner.move(pos, trayPos)
-    } catch (err) {
-      log.info({err, pos, trayPos, component: 'electron-positioner'})
-    }
+    this.placeWithTray(DASHBOARD_SCREEN_WIDTH, DASHBOARD_SCREEN_HEIGHT, trayPos)
     this.win.show()
-
     return Promise.resolve(this.win)
   }
 

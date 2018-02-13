@@ -5,15 +5,6 @@ const log = require('../../core-built/app.js').default.logger({
   component: 'GUI:autoupdater'
 })
 
-// TODO: Remove this monkey-patch as soon as the following issue is fixed:
-// https://github.com/electron-userland/electron-builder/issues/2377
-const oldDoRequest = autoUpdater.httpExecutor.doRequest
-autoUpdater.httpExecutor.doRequest = function (options, callback) {
-  const req = oldDoRequest.call(this, options, callback)
-  req.on('redirect', () => req.followRedirect())
-  return req
-}
-
 const UPDATE_CHECK_TIMEOUT = 5000
 
 module.exports = class UpdaterWM extends WindowManager {
