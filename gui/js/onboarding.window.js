@@ -1,5 +1,4 @@
 const {addFileManagerShortcut} = require('./shortcut')
-const electron = require('electron')
 const {dialog, session} = require('electron')
 const autoLaunch = require('./autolaunch')
 const defaults = require('./defaults')
@@ -12,7 +11,7 @@ const log = require('../../core-built/app.js').default.logger({
 const ONBOARDING_SCREEN_WIDTH = 768
 const ONBOARDING_SCREEN_HEIGHT = 570
 const LOGIN_SCREEN_WIDTH = ONBOARDING_SCREEN_WIDTH
-const LOGIN_SCREEN_HEIGHT = 700
+const LOGIN_SCREEN_HEIGHT = 740
 const OAUTH_SCREEN_WIDTH = ONBOARDING_SCREEN_WIDTH
 const OAUTH_SCREEN_HEIGHT = 930
 
@@ -77,19 +76,22 @@ module.exports = class OnboardingWM extends WindowManager {
     const onRegistered = (client, url) => {
       let resolveP
       const promise = new Promise((resolve) => { resolveP = resolve })
-      this.win.setContentSize(LOGIN_SCREEN_WIDTH, LOGIN_SCREEN_HEIGHT, true)
+      // TODO only centerOnScreen if needed to display the whole login screen
+      //      and if the user hasn't moved the window before
+      this.centerOnScreen(LOGIN_SCREEN_WIDTH, LOGIN_SCREEN_HEIGHT)
       this.win.loadURL(url)
       this.win.webContents.on('did-get-response-details', (event, status, newUrl, originalUrl, httpResponseCode) => {
         if (newUrl.match(/\/auth\/authorize\?/) && httpResponseCode === 200) {
-          const bounds = this.win.getBounds()
-          const display = electron.screen.getDisplayMatching(bounds)
-          const height = Math.min(display.workAreaSize.height - bounds.y, OAUTH_SCREEN_HEIGHT)
-          this.win.setSize(OAUTH_SCREEN_WIDTH, height, true)
+          // TODO only centerOnScreen if needed to display the whole oauth screen
+          //      and if the user hasn't moved the window before
+          this.centerOnScreen(OAUTH_SCREEN_WIDTH, OAUTH_SCREEN_HEIGHT)
         }
       })
       this.win.webContents.on('did-get-redirect-request', (event, oldUrl, newUrl) => {
         if (newUrl.match('file://')) {
-          this.win.setContentSize(ONBOARDING_SCREEN_WIDTH, ONBOARDING_SCREEN_HEIGHT, true)
+          // TODO only centerOnScreen if needed to display the whole folder screen
+          //      and if the user hasn't moved the window before
+          this.centerOnScreen(ONBOARDING_SCREEN_WIDTH, ONBOARDING_SCREEN_HEIGHT)
           resolveP(newUrl)
         }
       })
