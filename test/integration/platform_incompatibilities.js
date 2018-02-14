@@ -48,6 +48,11 @@ suite('Platform incompatibilities', () => {
       await helpers.pullAndSyncAll()
       should(await helpers.local.tree()).be.empty()
     })
+    test('add incompatible dir with two colons', async () => {
+      await builders.remote.dir().named('d:i:r').create()
+      await helpers.pullAndSyncAll()
+      should(await helpers.local.tree()).be.empty()
+    })
     test('add compatible dir with some incompatible content', async () => {
       await helpers.remote.createTree([
         'dir/',

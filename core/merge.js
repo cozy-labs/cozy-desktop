@@ -52,6 +52,9 @@ class Merge {
     let parentId = dirname(doc._id)
     if (parentId === '.') { return }
 
+    // BUG on windows with incompatible names like "D:IR"
+    if (dirname(parentId) === parentId) { return }
+
     try {
       let folder = await this.pouch.db.get(parentId)
       if (folder) { return }
