@@ -1,3 +1,21 @@
+## 3.4.4-beta.2 - 2018-02-15
+
+Improvements for all users:
+
+- The remaining files counter didn't update anymore when encountering a
+  synchronization error. Everything should work as expected now.
+- We also fixed a couple of issues regarding the popover positioning. It should
+  now properly detect the systray position and orientation. Please tell us in
+  case the popover still shows up at weird locations on your desktop.
+- We were using a temporary fix for some third-party component to make sure
+  auto-update was working on Windows. The issue was fixed upstream and the
+  component upgraded. Please tell us in case you still encounter auto-update
+  issues, especially on Windows.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.4.4-beta.1 - 2018-02-12
 
 Improvements for all users:
