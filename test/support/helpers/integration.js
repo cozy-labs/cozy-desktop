@@ -1,7 +1,6 @@
 /* @flow */
 
 import cozy from 'cozy-client-js'
-import EventEmitter from 'events'
 import { pick } from 'lodash'
 import sinon from 'sinon'
 
@@ -13,6 +12,7 @@ import Pouch from '../../../core/pouch'
 import Prep from '../../../core/prep'
 import Remote from '../../../core/remote'
 import Sync from '../../../core/sync'
+import SyncState from '../../../core/syncstate'
 
 import { LocalTestHelpers } from './local'
 import { RemoteTestHelpers } from './remote'
@@ -21,6 +21,7 @@ export class IntegrationTestHelpers {
   local: LocalTestHelpers
   remote: RemoteTestHelpers
   prep: Prep
+  events: SyncState
 
   _pouch: Pouch
   _sync: Sync
@@ -31,11 +32,11 @@ export class IntegrationTestHelpers {
     const merge = new Merge(pouch)
     const ignore = new Ignore([])
     this.prep = new Prep(merge, ignore, config)
-    const events = new EventEmitter()
-    this._local = merge.local = new Local(config, this.prep, pouch, events)
-    this._remote = merge.remote = new Remote(config, this.prep, pouch, events)
+    this.events = new SyncState()
+    this._local = merge.local = new Local(config, this.prep, pouch, this.events)
+    this._remote = merge.remote = new Remote(config, this.prep, pouch, this.events)
     this._remote.remoteCozy.client = cozyClient
-    this._sync = new Sync(pouch, this._local, this._remote, ignore, events)
+    this._sync = new Sync(pouch, this._local, this._remote, ignore, this.events)
     this._sync.stopped = false
     this._sync.diskUsage = this._remote.diskUsage
     this._pouch = pouch
