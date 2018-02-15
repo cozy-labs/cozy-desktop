@@ -1,9 +1,9 @@
-## 3.4.4 - 2018-02-12
+## 3.4.4-beta.1 - 2018-02-12
 
 Improvements for all users:
 
 - When creating a folder with some platform-incompatible character in the name
-  (e.g. `:`), then renaming to a valid name, its content is now correctly synchronized. 
+  (e.g. `:`), then renaming to a valid name, its content is now correctly synchronized.
 
 See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
 
