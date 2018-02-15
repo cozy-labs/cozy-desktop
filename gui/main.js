@@ -4,9 +4,11 @@ require('babel-polyfill')
 
 const Desktop = require('../core-built/app.js').default
 const notify = require('electron-main-notification')
+const pkg = require('../package.json')
 
 const debounce = require('lodash').debounce
 const path = require('path')
+const os = require('os')
 
 const setupProxy = require('./js/proxy')
 
@@ -252,6 +254,8 @@ if (shouldExit) {
   app.exit()
 }
 
+const dumbhash = (k) => k.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0)
+
 app.on('ready', () => {
   // Once configured and running in the tray, the app doesn't need to be
   // visible anymore in macOS dock (and cmd+tab), even when the tray popover
@@ -259,7 +263,10 @@ app.on('ready', () => {
   if (process.platform === 'darwin') app.dock.hide()
 
   const {session} = require('electron')
-  setupProxy(app, session, () => {
+
+  const hostID = (dumbhash(os.hostname()) % 4096).toString(16)
+  let userAgent = `Cozy-Desktop-${process.platform}-${pkg.version}-${hostID}`
+  setupProxy(app, session, userAgent, () => {
     log.info('Loading CLI...')
     i18n.init(app)
     try {
