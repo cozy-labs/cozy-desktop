@@ -1,4 +1,4 @@
-## 3.4.4 - 2017-02-12
+## 3.4.4 - 2018-02-12
 
 Improvements for all users:
 
@@ -9,7 +9,7 @@ See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KN
 
 Happy syncing!
 
-## 3.4.3 - 2017-02-12
+## 3.4.3 - 2018-02-12
 
 Improvements for all users:
 
@@ -20,7 +20,7 @@ See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KN
 
 Happy syncing!
 
-## 3.4.3-beta.1 - 2017-02-01
+## 3.4.3-beta.1 - 2018-02-01
 
 Improvements for all users:
 
@@ -60,7 +60,7 @@ See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KN
 
 Happy syncing!
 
-## 3.4.2 - 2017-01-24
+## 3.4.2 - 2018-01-24
 
 Improvements for all users:
 
@@ -74,7 +74,7 @@ See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KN
 
 Happy syncing!
 
-## 3.4.2-beta.7 - 2017-01-24
+## 3.4.2-beta.7 - 2018-01-24
 
 Improvements for all users
 
@@ -98,7 +98,7 @@ See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_I
 
 Happy syncing!
 
-## 3.4.2-beta.6 - 2017-01-22
+## 3.4.2-beta.6 - 2018-01-22
 
 Improvements for Unity users:
 
@@ -114,7 +114,7 @@ See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_I
 
 Happy syncing!
 
-## 3.4.2-beta.5 - 2017-01-22
+## 3.4.2-beta.5 - 2018-01-22
 
 Improvements for all users:
 
@@ -126,7 +126,7 @@ See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_I
 
 Happy syncing!
 
-## 3.4.2-beta.4 - 2017-01-19
+## 3.4.2-beta.4 - 2018-01-19
 
 Improvements for all users:
 
@@ -141,7 +141,7 @@ See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_I
 
 Happy syncing!
 
-## 3.4.2-beta.3 - 2017-01-19
+## 3.4.2-beta.3 - 2018-01-19
 
 Improvements for all users:
 
@@ -157,7 +157,7 @@ See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_I
 
 Happy syncing!
 
-## 3.4.2-beta.2 - 2017-01-18
+## 3.4.2-beta.2 - 2018-01-18
 
 Improvements for all users:
 
@@ -171,7 +171,7 @@ See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_I
 
 Happy syncing!
 
-## 3.4.2-beta.1 - 2017-01-18
+## 3.4.2-beta.1 - 2018-01-18
 
 Improvements for all users:
 
@@ -196,7 +196,7 @@ See [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_I
 
 Happy syncing!
 
-## 3.4.1 - 2017-01-09
+## 3.4.1 - 2018-01-09
 
 See [3.4.1-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.4.1-beta.1)
 and [3.4.1-beta.2](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.4.1-beta.2)
@@ -204,7 +204,7 @@ release notes.
 
 Happy syncing!
 
-## 3.4.1-beta.2 - 2017-01-09
+## 3.4.1-beta.2 - 2018-01-09
 
 Improvements for all users:
 
