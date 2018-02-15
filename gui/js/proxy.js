@@ -27,7 +27,7 @@ log.debug({config}, 'argv')
 
 const formatCertificate = (certif) => `Certificate(${certif.issuerName} ${certif.subjectName})`
 
-module.exports = (app, session, doneSetup) => {
+module.exports = (app, session, userAgent, doneSetup) => {
   const loginByRealm = {}
   if (config['login-by-realm']) {
     config['login-by-realm'].split(',').forEach((lbr) => {
@@ -71,9 +71,12 @@ module.exports = (app, session, doneSetup) => {
     }
   })
 
+  // XXX even if we swicth from electron-fetch, keep the custom user-agent
   const electronFetch = require('electron-fetch')
   global.fetch = (url, opts = {}) => {
     opts.session = session.defaultSession
+    opts.headers = opts.headers || {}
+    opts.headers['User-Agent'] = userAgent
     return electronFetch(url, opts)
   }
   http.Agent.globalAgent = http.globalAgent = https.globalAgent = new ElectronProxyAgent(session.defaultSession)
@@ -81,8 +84,9 @@ module.exports = (app, session, doneSetup) => {
   http.request = function (options, cb) {
     log.warn(options, 'USING RAW HTTP REQUEST')
     options.agent = options.agent || http.globalAgent
-    options.headers = options.headers || {}
     options.headers.host = options.hostname
+    options.headers = options.headers || {}
+    options.headers['User-Agent'] = userAgent
     return _httpRequest.call(http, options, cb)
   }
   const _httpsRequest = https.request
