@@ -127,8 +127,8 @@ class Sync {
         else lastSeq = seq
 
         let change = await this.getNextChange(seq)
-        this.events.emit('sync-current', change.seq)
         if (change == null) break
+        this.events.emit('sync-current', change.seq)
         try {
           await this.apply(change)
           // XXX: apply should call setLocalSeqAsync
