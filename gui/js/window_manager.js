@@ -97,67 +97,6 @@ module.exports = class WindowManager {
     }
   }
 
-  placeWithTray (wantedWidth, wantedHeight, trayposition) {
-    try {
-      const bounds = this.win.getBounds()
-      // TODO : be smarter about which display to use ?
-      const displayObject = electron.screen.getDisplayMatching(bounds)
-      const workArea = displayObject.workArea
-      const display = displayObject.bounds
-      const actualWidth = Math.min(wantedWidth, Math.floor(0.9 * workArea.width))
-      const actualHeight = Math.min(wantedHeight, Math.floor(0.9 * workArea.height))
-
-      const newBounds = {width: actualWidth, height: actualHeight}
-
-      if (process.platform === 'darwin') {
-        // on MacOS, try to center the popup below the tray icon
-        // later we might add a caret.
-
-        if (!trayposition || !trayposition.x) {
-          trayposition = {
-            x: workArea.width,
-            y: workArea.height
-          }
-        }
-
-        const centeredOnIcon = trayposition.x + Math.floor(trayposition.width / 2 - actualWidth / 2)
-        const fullRight = workArea.width - actualWidth
-
-        // in case where the icon is closer to the left border than half the windows width
-        // we put the window against the right border.
-        // later the caret will need to be moved from its center position in this case.
-        newBounds.x = Math.min(centeredOnIcon, fullRight)
-        newBounds.y = workArea.y // at the top
-
-      // all others OS let users define where to put the traybar
-      // icons are always on the right or bottom of the bar
-      // Let's try to guess where the bar is so we can place the window
-      // on window it is not platform-like to center above tray icon
-      // TODO contibute this to electron-positioner
-      } else if (workArea.width < display.width && workArea.x === 0) {
-        // right bar -> place window on bottom right
-        newBounds.x = workArea.width - actualWidth
-        newBounds.y = workArea.y + workArea.height - actualHeight
-      } else if (workArea.width < display.width) {
-        // left bar -> place window on bottom left
-        newBounds.x = workArea.x
-        newBounds.y = workArea.y + workArea.height - actualHeight
-      } else if (workArea.y === 0) {
-        // bottom bar -> place window on bottom right
-        newBounds.x = workArea.width - actualWidth
-        newBounds.y = workArea.y + workArea.height - actualHeight
-      } else {
-        // top bar -> place window on top right
-        newBounds.x = workArea.width - actualWidth
-        newBounds.y = workArea.y
-      }
-      this.win.setBounds(newBounds)
-    } catch (err) {
-      log.error({err, wantedWidth, wantedHeight, trayposition}, 'Fail to placeWithTray')
-      this.centerOnScreen(wantedWidth, wantedHeight)
-    }
-  }
-
   create () {
     this.log.debug('create')
     const opts = this.windowOptions()
