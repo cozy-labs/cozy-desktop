@@ -24,18 +24,19 @@ module.exports.init = (app, listener) => {
   tray.on('double-click', clicked)
   tray.setToolTip('loading')
 
-  // on MacOS & Unity, if a tray has a contextmenu, click event does not work
+  // on MacOS, Unity & KDE, if a tray has a contextmenu, click event does not work
   // on Gnome, if a tray has no contextmenu, tray is not shown
   // @TODO test on windows
 
   const isMac = process.platform !== 'darwin'
   const isUnity = process.env.XDG_CURRENT_DESKTOP && process.env.XDG_CURRENT_DESKTOP.match(/Unity/)
+  const isKDE = process.env.XDG_CURRENT_DESKTOP && process.env.XDG_CURRENT_DESKTOP.match(/KDE/)
 
-  if (isUnity || isMac) {
+  if (isUnity || isMac || isKDE) {
     const cm = Menu.buildFromTemplate([
      { label: translate('Tray Quit application'), click: app.quit }
     ])
-    if (isUnity) {
+    if (isUnity || isKDE) {
       cm.insert(0, new MenuItem({label: translate('Tray Show application'), click: clicked}))
       cm.insert(1, new MenuItem({type: 'separator'}))
     }
