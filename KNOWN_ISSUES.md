@@ -12,6 +12,12 @@ Please report any other issue you may encounter by using the app help form.
 * Changing only the case or encoding in a file or directory name, e.g. renaming
   *my stuff* to *MY STUFF*, won't be synchronized on other devices.
   [details](https://trello.com/c/Phc3lLEr)
+* Symlinks are not supported yet. Symlinks inside the synchronized directory
+  will trigger errors and their content won't be synchronized.
+* Using a mount point as the synchronized folder can have unexpected
+  consequences: in case it is not mounted when the client starts, the directory
+  will appear empty, the client will assume you deleted everything and will
+  update your Cozy accordingly, putting everything in the Cozy trash.
 
 **Issues** caused by lower-level bugs that will be **harder to fix or circumvent**:
 
@@ -30,6 +36,7 @@ Please report any other issue you may encounter by using the app help form.
 * Actions involving lots of content may take too much time to complete or use
   too much resources. But adding 100000 files or moving 50000 files should
   still work. [details](https://trello.com/c/IQEImXQF)
+* Logs can grow up a lot.
 
 ## macOS integration
 
@@ -46,6 +53,10 @@ Please report any other issue you may encounter by using the app help form.
 
 ## GNU/Linux integration
 
+* If the `*.AppImage` file is moved after first run, then the desktop shortcut
+  will always launch the old app version, even after auto-updating
+  (**workaround**: install the *appimaged* daemon as explained in the
+  [linux install doc](https://github.com/cozy-labs/cozy-desktop/blob/master/doc/usage/linux.md#install)).
 * The icon is broken with alt+tab or in the GNOME 3 application menu.
 * The app takes far more time to start.
 * Without an extension like TopIcons-Plus on GNOME 3, the systray icon is not
@@ -54,3 +65,5 @@ Please report any other issue you may encounter by using the app help form.
   with systray support though.
 * The popover is not aligned with the systray icon.
 * The popover may appear on the wrong place with multiple screens.
+* The auto-hiding of the popover makes it almost unusable with tiling window
+  managers. [details](https://github.com/cozy-labs/cozy-desktop/issues/892)
