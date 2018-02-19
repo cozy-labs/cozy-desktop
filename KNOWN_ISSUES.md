@@ -36,7 +36,8 @@ Please report any other issue you may encounter by using the app help form.
 * Actions involving lots of content may take too much time to complete or use
   too much resources. But adding 100000 files or moving 50000 files should
   still work. [details](https://trello.com/c/IQEImXQF)
-* Logs can grow up a lot.
+* Logs can grow up a lot. We want to reduce the default verbosity, but it
+  currently helps us a lot with synchronisation issues.
 
 ## macOS integration
 
