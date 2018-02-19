@@ -31,7 +31,10 @@ The current AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
 
 | Distribution                              | supported | `GLIBCXX` | comment               |
 | ----------------------------------------- | --------- | --------- | --------------------- |
-| Arch Linux                                |           | 3.4.24    | **should work**       |
+| **Archlinux (Gnome 3)**                   | **yes**   | 3.4.24    | WORK with topicons    |
+| **Archlinux (Cinnamon)**                  | **yes**   | 3.4.24    | WORK                  |
+| **Archlinux (KDE PLASMA)**                | **yes**   | 3.4.24    | WORK                  |
+| **Archlinux (Deepin)**                    | **yes**   | 3.4.24    | WORK                  |
 | Debian 7 (Wheezy)                         | no        | 3.4.17    |                       |
 | Debian 8 (Jessie)                         | no        | 3.4.20    |                       |
 | **Debian 9 (Stretch)**                    | ?         | 3.4.22    | **should work**       |
@@ -75,6 +78,8 @@ The current AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
    distribution).
 
 **Note for GNOME Users** : From 3.26 onwards, GNOME removed the systray which is the only interface for *Cozy Drive*. It should be replaced in the future by `libcloudprovider`, which we will implement when it spreads. In the meantime, you need to install an extension such as [TopIcons][TopIcons]
+
+**Note for Archlinux Users** : (19/02/2018) : The "cozy-desktop-gui 0.16.0-2" in AUR is not Up to date and not work with Cozy 3.
 
 ## Running
 
