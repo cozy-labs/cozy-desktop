@@ -105,17 +105,19 @@ module.exports = class TrayWM extends WindowManager {
   }
 
   placeWithTray (wantedWidth, wantedHeight, trayposition) {
-    try {
-      const bounds = this.win.getBounds()
-      // TODO : be smarter about which display to use ?
-      const displayObject = electron.screen.getDisplayMatching(bounds)
-      const workArea = displayObject.workArea
-      const display = displayObject.bounds
-      const newBounds = popoverBounds(wantedWidth, wantedHeight, trayposition, workArea, display, process.platform)
+    const bounds = this.win.getBounds()
+    // TODO : be smarter about which display to use ?
+    const displayObject = electron.screen.getDisplayMatching(bounds)
+    const workArea = displayObject.workArea
+    const display = displayObject.bounds
+    const popover = {bounds, wantedWidth, wantedHeight, trayposition, workArea, display}
 
-      this.win.setBounds(newBounds)
+    try {
+      popover.newBounds = popoverBounds(wantedWidth, wantedHeight, trayposition, workArea, display, process.platform)
+      this.win.setBounds(popover.newBounds)
+      log.trace({popover}, 'placeWithTray ok')
     } catch (err) {
-      log.error({err, wantedWidth, wantedHeight, trayposition}, 'Fail to placeWithTray')
+      log.error({err, popover}, 'Fail to placeWithTray')
       this.centerOnScreen(wantedWidth, wantedHeight)
     }
   }
