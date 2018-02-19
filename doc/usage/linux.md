@@ -70,6 +70,9 @@ The current AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
    `cd /dir/where/you/put/the/file && chmod +x *.AppImage`
 4. Run the application for the first time by double-clicking it. It will add
    itself to your existing application shortcuts.
+5. Optionally install the *appimaged* daemon (it can be downloaded from the
+   [AppImageKit releases][AppImageKitReleases] or installed from your
+   distribution).
 
 **Note for GNOME Users** : From 3.26 onwards, GNOME removed the systray which is the only interface for *Cozy Drive*. It should be replaced in the future by `libcloudprovider`, which we will implement when it spreads. In the meantime, you need to install an extension such as [TopIcons][TopIcons]
 
@@ -99,6 +102,7 @@ logs.
 Manually remove the files listed above.
 
 [AppImage]: https://appimage.org/
+[AppImageKitReleases]: https://github.com/AppImage/AppImageKit/releases
 [Build]: ./build.md
 [Edit]: https://github.com/cozy-labs/cozy-desktop/edit/master/doc/usage/linux.md
 [Latest]: https://github.com/cozy-labs/cozy-desktop/releases/latest
