@@ -93,6 +93,19 @@ parameters below):
     cd -
     sudo dnf install yarn
 
+### Ubuntu
+
+    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+    sudo add-apt-repository \
+     "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+    sudo apt update
+    sudo apt install git nodejs build-essential gcc transifex-client icnsutils graphicsmagick python-pip docker-ce yarn
+    sudo pip install docker-compose
+    sudo groupadd docker
+    sudo usermod -aG docker $USER
+
 ## Get the code
 
 ```
