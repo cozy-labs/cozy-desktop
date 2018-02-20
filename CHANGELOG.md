@@ -1,3 +1,32 @@
+## 3.4.4-beta.3 - 2018-02-20
+
+Improvements for all users:
+
+- We added more traces and test cases to help us fix popover positioning issues.
+  Please send us a message from the app in case you encounter an issue, so we
+  can get your traces and understand your specific case.
+
+Improvements for macOS users:
+
+- Make sure the popover at least shows up to the top right when the reported
+  tray icon position is broken (as it seems to happen from time to time).
+
+Improvements for GNOME 3 + Wayland users:
+
+- Show the popover near the top icon, not at the bottom of the screen.
+
+Improvements for KDE users:
+
+- Fix issue preventing the popover to show up when clicking the systray icon
+  on KDE (@hleroy)
+
+Improvements for developers & contributors:
+
+- Use unique user agent per client instance, so we can know how many people are
+  actually using it.
+- Instructions to set up a development environment on Ubuntu (@hleroy)
+
+
 ## 3.4.4-beta.2 - 2018-02-15
 
 Improvements for all users:
