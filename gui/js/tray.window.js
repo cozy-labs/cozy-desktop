@@ -52,12 +52,12 @@ const popoverBounds = (wantedWidth, wantedHeight, trayposition, workArea, displa
     // left bar -> place window on bottom left
     newBounds.x = workArea.x
     newBounds.y = workArea.y + workArea.height - actualHeight
-  } else if (workArea.y === 0) {
+  } else if (workArea.height < display.height && workArea.y === 0) {
     // bottom bar -> place window on bottom right
     newBounds.x = workArea.width - actualWidth
     newBounds.y = workArea.y + workArea.height - actualHeight
   } else {
-    // top bar -> place window on top right
+    // top bar or unknown -> place window on top right
     newBounds.x = workArea.width - actualWidth
     newBounds.y = workArea.y
   }
