@@ -228,5 +228,33 @@ suite('Platform incompatibilities', () => {
         'dir2/sub:dir/file'
       ])
     })
+
+    test('rename dir compatible -> incompatible -> compatible with compatible content', async () => {
+      const docs = await helpers.remote.createTree([
+        'dir/',
+        'dir/file'
+      ])
+      await helpers.pullAndSyncAll()
+      should(await helpers.local.tree()).deepEqual([
+        'dir/',
+        'dir/file'
+      ])
+
+      await cozy.files.updateAttributesById(docs['dir/']._id, {name: 'd:ir'})
+      await helpers.pullAndSyncAll()
+      should(await helpers.local.tree()).deepEqual([
+        '/Trash/dir/',
+        '/Trash/dir/file'
+      ])
+
+      await cozy.files.updateAttributesById(docs['dir/']._id, {name: 'dir'})
+      await helpers.pullAndSyncAll()
+      should(await helpers.local.tree()).deepEqual([
+        '/Trash/dir/',
+        '/Trash/dir/file',
+        'dir/'
+        // FIXME: 'dir/file'
+      ])
+    })
   }
 })
