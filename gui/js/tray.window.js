@@ -23,7 +23,9 @@ const popoverBounds = (wantedWidth, wantedHeight, trayposition, workArea, displa
 
     if (!trayposition || !trayposition.x) {
       trayposition = {
-        x: workArea.width,
+        width: 1,
+        height: 1,
+        x: workArea.width - 1,
         y: workArea.height
       }
     }
