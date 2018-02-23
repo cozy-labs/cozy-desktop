@@ -221,7 +221,7 @@ export default class RemoteWatcher {
       }
     }
     if ((doc.docType === 'file') && (was.md5sum === doc.md5sum)) {
-      const change: RemoteFileMoved = {type: 'RemoteFileMoved', doc, was}
+      const change: RemoteFileMoved = {sideName, type: 'RemoteFileMoved', doc, was}
       // Squash moves
       for (let previousChangeIndex = 0; previousChangeIndex < changeIndex; previousChangeIndex++) {
         const previousChange: RemoteChange|RemoteNoise = previousChanges[previousChangeIndex]
@@ -245,7 +245,7 @@ export default class RemoteWatcher {
       return change
     }
     if (doc.docType === 'folder') {
-      const change = {type: 'RemoteFolderMoved', doc, was}
+      const change = {sideName, type: 'RemoteFolderMoved', doc, was}
       // Squash moves
       for (let previousChangeIndex = 0; previousChangeIndex < changeIndex; previousChangeIndex++) {
         const previousChange: RemoteChange|RemoteNoise = previousChanges[previousChangeIndex]
