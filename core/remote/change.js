@@ -26,8 +26,6 @@ export type RemoteFolderTrashed = {type: 'RemoteFolderTrashed', doc: Metadata, w
 
 export type RemoteIgnoredChange = {type: 'RemoteIgnoredChange', doc: Metadata|RemoteDoc|RemoteDeletion, detail: string}
 export type RemoteInvalidChange = {type: 'RemoteInvalidChange', doc: *, error: Error}
-// FIXME: use PlatformIncompatibility type
-export type RemotePlatformIncompatibleChange = {type: 'RemotePlatformIncompatibleChange', doc: Metadata, incompatibilities: *}
 export type RemoteUpToDate = {type: 'RemoteUpToDate', doc: Metadata, was: Metadata}
 
 export type RemoteChange =
@@ -46,7 +44,6 @@ export type RemoteChange =
   | RemoteFolderTrashed
   | RemoteIgnoredChange
   | RemoteInvalidChange
-  | RemotePlatformIncompatibleChange
   | RemoteUpToDate
 
 // FIXME: return types
