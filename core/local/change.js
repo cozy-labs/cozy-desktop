@@ -38,10 +38,10 @@ export type LocalChange =
 
 // TODO: Introduce specific builders?
 export const build = (type: string, path: string, opts?: {stats?: fs.Stats, md5sum?: string, old?: ?Metadata}): LocalChange => {
-  const event: Object = _.assign({type, path}, opts)
-  if (event.wip == null) delete event.wip
-  if (event.md5sum == null) delete event.md5sum
-  return event
+  const change: Object = _.assign({type, path}, opts)
+  if (change.wip == null) delete change.wip
+  if (change.md5sum == null) delete change.md5sum
+  return change
 }
 
 export const maybeAddFile = (a: ?LocalChange): ?LocalFileAddition => (a && a.type === 'LocalFileAddition') ? a : null
