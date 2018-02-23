@@ -258,29 +258,29 @@ class LocalWatcher {
       try {
         switch (c.type) {
           // TODO: Inline old LocalWatcher methods
-          case 'LocalDirDeletion':
+          case 'DirDeletion':
             await this.onUnlinkDir(c.path)
             break
-          case 'LocalFileDeletion':
+          case 'FileDeletion':
             await this.onUnlinkFile(c.path)
             break
-          case 'LocalDirAddition':
+          case 'DirAddition':
             await this.onAddDir(c.path, c.stats)
             break
-          case 'LocalFileUpdate':
+          case 'FileUpdate':
             await this.onChange(c.path, c.stats, c.md5sum)
             break
-          case 'LocalFileAddition':
+          case 'FileAddition':
             await this.onAddFile(c.path, c.stats, c.md5sum)
             break
-          case 'LocalFileMove':
+          case 'FileMove':
             if (c.needRefetch) {
               c.old = await this.pouch.db.get(metadata.id(c.old.path))
               c.old.childMove = false
             }
             await this.onMoveFile(c.path, c.stats, c.md5sum, c.old)
             break
-          case 'LocalDirMove':
+          case 'DirMove':
             await this.onMoveFolder(c.path, c.stats, c.old)
             break
           default:

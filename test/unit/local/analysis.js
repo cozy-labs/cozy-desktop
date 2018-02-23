@@ -35,7 +35,7 @@ describe('core/local/analysis', function () {
 
     should(analysis(events, pendingChanges)).deepEqual([{
       sideName,
-      type: 'LocalFileMove',
+      type: 'FileMove',
       path: 'dst2',
       ino: 1,
       md5sum: 'yolo',
@@ -62,7 +62,7 @@ describe('core/local/analysis', function () {
 
     should(analysis(events, pendingChanges)).deepEqual([{
       sideName,
-      type: 'LocalFileMove',
+      type: 'FileMove',
       path: 'dst',
       md5sum: 'yolo',
       ino: 1,
@@ -83,7 +83,7 @@ describe('core/local/analysis', function () {
 
     should(analysis(events, pendingChanges)).deepEqual([{
       sideName,
-      type: 'LocalDirMove',
+      type: 'DirMove',
       path: 'dst',
       ino: 1,
       stats,
@@ -104,7 +104,7 @@ describe('core/local/analysis', function () {
     should(analysis(events, pendingChanges)).deepEqual([])
     should(pendingChanges).deepEqual([{
       sideName,
-      type: 'LocalFileMove',
+      type: 'FileMove',
       path: 'dst1',
       ino: 1,
       stats,
@@ -117,7 +117,7 @@ describe('core/local/analysis', function () {
     ]
     should(analysis(nextEvents, pendingChanges)).deepEqual([{
       sideName,
-      type: 'LocalFileDeletion',
+      type: 'FileDeletion',
       ino: 1,
       path: 'src',
       old
@@ -134,7 +134,7 @@ describe('core/local/analysis', function () {
 
     should(analysis(events, pendingChanges)).deepEqual([{
       sideName,
-      type: 'LocalDirAddition',
+      type: 'DirAddition',
       path: 'foo',
       ino: 1,
       stats
@@ -153,7 +153,7 @@ describe('core/local/analysis', function () {
 
     should(analysis(events, pendingChanges)).deepEqual([{
       sideName,
-      type: 'LocalDirMove',
+      type: 'DirMove',
       path: 'dst',
       ino: 1,
       stats,
@@ -187,12 +187,12 @@ describe('core/local/analysis', function () {
     const pendingChanges: LocalChange[] = []
 
     should(analysis(events, pendingChanges)).deepEqual([
-      {sideName, type: 'LocalFileUpdate', path: 'other-file', stats: otherFileStats, ino: otherFileStats.ino, md5sum: 'yolo', /* FIXME: */ wip: undefined},
-      {sideName, type: 'LocalDirMove', path: 'dst', stats: dirStats, ino: dirStats.ino, old: dirMetadata},
+      {sideName, type: 'FileUpdate', path: 'other-file', stats: otherFileStats, ino: otherFileStats.ino, md5sum: 'yolo', /* FIXME: */ wip: undefined},
+      {sideName, type: 'DirMove', path: 'dst', stats: dirStats, ino: dirStats.ino, old: dirMetadata},
       // FIXME: Move should have been squashed
-      {sideName, type: 'LocalFileMove', path: 'dst/file', stats: fileStats, ino: fileStats.ino, old: fileMetadata},
-      {sideName, type: 'LocalDirMove', path: 'dst/subdir', stats: subdirStats, ino: subdirStats.ino, old: subdirMetadata},
-      {sideName, type: 'LocalDirMove', path: 'other-dir-dst', stats: otherDirStats, ino: otherDirStats.ino, old: otherDirMetadata}
+      {sideName, type: 'FileMove', path: 'dst/file', stats: fileStats, ino: fileStats.ino, old: fileMetadata},
+      {sideName, type: 'DirMove', path: 'dst/subdir', stats: subdirStats, ino: subdirStats.ino, old: subdirMetadata},
+      {sideName, type: 'DirMove', path: 'other-dir-dst', stats: otherDirStats, ino: otherDirStats.ino, old: otherDirMetadata}
     ])
   })
 })

@@ -172,13 +172,13 @@ function sortBeforeSquash (changes: LocalChange[]) {
   log.trace('Sort changes before squash...')
   const stopMeasure = measureTime('LocalWatcher#sortBeforeSquash')
   changes.sort((a, b) => {
-    if (a.type === 'LocalDirMove' || a.type === 'LocalFileMove') {
-      if (b.type === 'LocalDirMove' || b.type === 'LocalFileMove') {
+    if (a.type === 'DirMove' || a.type === 'FileMove') {
+      if (b.type === 'DirMove' || b.type === 'FileMove') {
         if (a.path < b.path) return -1
         else if (a.path > b.path) return 1
         else return 0
       } else return -1
-    } else if (b.type === 'LocalDirMove' || b.type === 'LocalFileMove') {
+    } else if (b.type === 'DirMove' || b.type === 'FileMove') {
       return 1
     } else {
       return 0
@@ -194,13 +194,13 @@ function squashMoves (changes: LocalChange[]) {
   for (let i = 0; i < changes.length; i++) {
     let a = changes[i]
 
-    if (a.type !== 'LocalDirMove' && a.type !== 'LocalFileMove') break
+    if (a.type !== 'DirMove' && a.type !== 'FileMove') break
     for (let j = i + 1; j < changes.length; j++) {
       let b = changes[j]
-      if (b.type !== 'LocalDirMove' && b.type !== 'LocalFileMove') break
+      if (b.type !== 'DirMove' && b.type !== 'FileMove') break
 
       // inline of LocalChange.isChildMove
-      if (a.type === 'LocalDirMove' &&
+      if (a.type === 'DirMove' &&
       b.path.indexOf(a.path + path.sep) === 0 &&
       a.old && b.old &&
       b.old.path.indexOf(a.old.path + path.sep) === 0) {
@@ -226,7 +226,7 @@ function separatePendingChanges (changes: LocalChange[], pendingChanges: LocalCh
   for (let i = 0; i < changes.length; i++) {
     const change = changes[i]
     if (change.wip) {
-      if (change.type === 'LocalDirMove' || change.type === 'LocalFileMove') {
+      if (change.type === 'DirMove' || change.type === 'FileMove') {
         log.debug({
           change: change.type,
           oldpath: change.old.path,
