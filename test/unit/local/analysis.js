@@ -11,6 +11,7 @@ import type { LocalChange } from '../../../core/local/change'
 import type { Metadata } from '../../../core/metadata'
 
 describe('core/local/analysis', function () {
+  const sideName = 'local'
   let metadataBuilders
 
   before(() => { metadataBuilders = new MetadataBuilders() })
@@ -33,6 +34,7 @@ describe('core/local/analysis', function () {
     const pendingChanges: LocalChange[] = []
 
     should(analysis(events, pendingChanges)).deepEqual([{
+      sideName,
       type: 'LocalFileMove',
       path: 'dst2',
       ino: 1,
@@ -59,6 +61,7 @@ describe('core/local/analysis', function () {
     const pendingChanges: LocalChange[] = []
 
     should(analysis(events, pendingChanges)).deepEqual([{
+      sideName,
       type: 'LocalFileMove',
       path: 'dst',
       md5sum: 'yolo',
@@ -79,6 +82,7 @@ describe('core/local/analysis', function () {
     const pendingChanges: LocalChange[] = []
 
     should(analysis(events, pendingChanges)).deepEqual([{
+      sideName,
       type: 'LocalDirMove',
       path: 'dst',
       ino: 1,
@@ -99,6 +103,7 @@ describe('core/local/analysis', function () {
 
     should(analysis(events, pendingChanges)).deepEqual([])
     should(pendingChanges).deepEqual([{
+      sideName,
       type: 'LocalFileMove',
       path: 'dst1',
       ino: 1,
@@ -111,6 +116,7 @@ describe('core/local/analysis', function () {
       {type: 'unlink', path: 'dst1'}
     ]
     should(analysis(nextEvents, pendingChanges)).deepEqual([{
+      sideName,
       type: 'LocalFileDeletion',
       ino: 1,
       path: 'src',
@@ -127,6 +133,7 @@ describe('core/local/analysis', function () {
     const pendingChanges: LocalChange[] = []
 
     should(analysis(events, pendingChanges)).deepEqual([{
+      sideName,
       type: 'LocalDirAddition',
       path: 'foo',
       ino: 1,
@@ -145,6 +152,7 @@ describe('core/local/analysis', function () {
     const pendingChanges: LocalChange[] = []
 
     should(analysis(events, pendingChanges)).deepEqual([{
+      sideName,
       type: 'LocalDirMove',
       path: 'dst',
       ino: 1,
@@ -179,12 +187,12 @@ describe('core/local/analysis', function () {
     const pendingChanges: LocalChange[] = []
 
     should(analysis(events, pendingChanges)).deepEqual([
-      {type: 'LocalFileUpdate', path: 'other-file', stats: otherFileStats, ino: otherFileStats.ino, md5sum: 'yolo', /* FIXME: */ wip: undefined},
-      {type: 'LocalDirMove', path: 'dst', stats: dirStats, ino: dirStats.ino, old: dirMetadata},
+      {sideName, type: 'LocalFileUpdate', path: 'other-file', stats: otherFileStats, ino: otherFileStats.ino, md5sum: 'yolo', /* FIXME: */ wip: undefined},
+      {sideName, type: 'LocalDirMove', path: 'dst', stats: dirStats, ino: dirStats.ino, old: dirMetadata},
       // FIXME: Move should have been squashed
-      {type: 'LocalFileMove', path: 'dst/file', stats: fileStats, ino: fileStats.ino, old: fileMetadata},
-      {type: 'LocalDirMove', path: 'dst/subdir', stats: subdirStats, ino: subdirStats.ino, old: subdirMetadata},
-      {type: 'LocalDirMove', path: 'other-dir-dst', stats: otherDirStats, ino: otherDirStats.ino, old: otherDirMetadata}
+      {sideName, type: 'LocalFileMove', path: 'dst/file', stats: fileStats, ino: fileStats.ino, old: fileMetadata},
+      {sideName, type: 'LocalDirMove', path: 'dst/subdir', stats: subdirStats, ino: subdirStats.ino, old: subdirMetadata},
+      {sideName, type: 'LocalDirMove', path: 'other-dir-dst', stats: otherDirStats, ino: otherDirStats.ino, old: otherDirMetadata}
     ])
   })
 })

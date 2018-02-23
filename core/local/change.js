@@ -19,13 +19,13 @@ const log = logger({
   component: 'LocalWatcher'
 })
 
-export type LocalDirDeletion = {type: 'LocalDirDeletion', path: string, old: ?Metadata, ino: ?number}
-export type LocalFileDeletion = {type: 'LocalFileDeletion', path: string, old: ?Metadata, ino: ?number}
-export type LocalDirAddition = {type: 'LocalDirAddition', path: string, ino: number, stats: fs.Stats, wip?: true}
-export type LocalFileUpdate = {type: 'LocalFileUpdate', path: string, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
-export type LocalFileAddition = {type: 'LocalFileAddition', path: string, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
-export type LocalFileMove = {type: 'LocalFileMove', path: string, old: Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true, needRefetch: boolean}
-export type LocalDirMove = {type: 'LocalDirMove', path: string, old: Metadata, ino: number, stats: fs.Stats, wip?: true, needRefetch: boolean}
+export type LocalDirDeletion = {sideName: 'local', type: 'LocalDirDeletion', path: string, old: ?Metadata, ino: ?number}
+export type LocalFileDeletion = {sideName: 'local', type: 'LocalFileDeletion', path: string, old: ?Metadata, ino: ?number}
+export type LocalDirAddition = {sideName: 'local', type: 'LocalDirAddition', path: string, ino: number, stats: fs.Stats, wip?: true}
+export type LocalFileUpdate = {sideName: 'local', type: 'LocalFileUpdate', path: string, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
+export type LocalFileAddition = {sideName: 'local', type: 'LocalFileAddition', path: string, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
+export type LocalFileMove = {sideName: 'local', type: 'LocalFileMove', path: string, old: Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true, needRefetch: boolean}
+export type LocalDirMove = {sideName: 'local', type: 'LocalDirMove', path: string, old: Metadata, ino: number, stats: fs.Stats, wip?: true, needRefetch: boolean}
 
 export type LocalChange =
   | LocalDirDeletion
@@ -36,9 +36,11 @@ export type LocalChange =
   | LocalFileMove
   | LocalDirMove
 
+const sideName = 'local'
+
 // TODO: Introduce specific builders?
 export const build = (type: string, path: string, opts?: {stats?: fs.Stats, md5sum?: string, old?: ?Metadata}): LocalChange => {
-  const change: Object = _.assign({type, path}, opts)
+  const change: Object = _.assign({sideName, type, path}, opts)
   if (change.wip == null) delete change.wip
   if (change.md5sum == null) delete change.md5sum
   return change
@@ -88,15 +90,15 @@ export const toString = (a: LocalChange): string => '(' + a.type + ': ' + (a.old
 export const fromEvent = (e: LocalEvent) : LocalChange => {
   switch (e.type) {
     case 'unlinkDir':
-      return {type: 'LocalDirDeletion', path: e.path, old: e.old, ino: (e.old != null ? e.old.ino : null)}
+      return {sideName, type: 'LocalDirDeletion', path: e.path, old: e.old, ino: (e.old != null ? e.old.ino : null)}
     case 'unlink':
-      return {type: 'LocalFileDeletion', path: e.path, old: e.old, ino: (e.old != null ? e.old.ino : null)}
+      return {sideName, type: 'LocalFileDeletion', path: e.path, old: e.old, ino: (e.old != null ? e.old.ino : null)}
     case 'addDir':
-      return {type: 'LocalDirAddition', path: e.path, stats: e.stats, ino: e.stats.ino}
+      return {sideName, type: 'LocalDirAddition', path: e.path, stats: e.stats, ino: e.stats.ino}
     case 'change':
-      return {type: 'LocalFileUpdate', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, wip: e.wip}
+      return {sideName, type: 'LocalFileUpdate', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, wip: e.wip}
     case 'add':
-      return {type: 'LocalFileAddition', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, wip: e.wip}
+      return {sideName, type: 'LocalFileAddition', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, wip: e.wip}
     default:
       throw new TypeError(`wrong type ${e.type}`) // @TODO FlowFixMe
   }
