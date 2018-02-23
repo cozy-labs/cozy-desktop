@@ -23,7 +23,7 @@ const log = logger({
 export const DEFAULT_HEARTBEAT: number = 1000 * 60 // 1 minute
 export const HEARTBEAT: number = parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || DEFAULT_HEARTBEAT
 
-const SIDE = 'remote'
+const sideName = 'remote'
 
 // Get changes from the remote Cozy and prepare them for merge
 export default class RemoteWatcher {
@@ -310,39 +310,39 @@ export default class RemoteWatcher {
         break
       case 'RemoteFileTrashed':
         log.info({path}, 'file was trashed remotely')
-        await this.prep.trashFileAsync(SIDE, change.was, change.doc)
+        await this.prep.trashFileAsync(sideName, change.was, change.doc)
         break
       case 'RemoteFolderTrashed':
         log.info({path}, 'folder was trashed remotely')
-        await this.prep.trashFolderAsync(SIDE, change.was, change.doc)
+        await this.prep.trashFolderAsync(sideName, change.was, change.doc)
         break
       case 'RemoteFileDeleted':
         log.info({path}, 'file was deleted permanently')
-        await this.prep.deleteFileAsync(SIDE, change.doc)
+        await this.prep.deleteFileAsync(sideName, change.doc)
         break
       case 'RemoteFolderDeleted':
         log.info({path}, 'folder was deleted permanently')
-        await this.prep.deleteFolderAsync(SIDE, change.doc)
+        await this.prep.deleteFolderAsync(sideName, change.doc)
         break
       case 'RemoteFileAdded':
         log.info({path}, 'file was added remotely')
-        await this.prep.addFileAsync(SIDE, change.doc)
+        await this.prep.addFileAsync(sideName, change.doc)
         break
       case 'RemoteFolderAdded':
         log.info({path}, 'folder was added remotely')
-        await this.prep.putFolderAsync(SIDE, change.doc)
+        await this.prep.putFolderAsync(sideName, change.doc)
         break
       case 'RemoteFileRestored':
         log.info({path}, 'file was restored remotely')
-        await this.prep.restoreFileAsync(SIDE, change.doc, change.was)
+        await this.prep.restoreFileAsync(sideName, change.doc, change.was)
         break
       case 'RemoteFolderRestored':
         log.info({path}, 'folder was restored remotely')
-        await this.prep.restoreFolderAsync(SIDE, change.doc, change.was)
+        await this.prep.restoreFolderAsync(sideName, change.doc, change.was)
         break
       case 'RemoteFileUpdated':
         log.info({path}, 'file was updated remotely')
-        await this.prep.updateFileAsync(SIDE, change.doc)
+        await this.prep.updateFileAsync(sideName, change.doc)
         break
       case 'RemoteFileMoved':
         log.info({path, oldpath: change.was.path}, 'file was moved or renamed remotely')
@@ -350,21 +350,21 @@ export default class RemoteWatcher {
           change.was = await this.pouch.byRemoteIdMaybeAsync(change.was.remote._id)
           change.was.childMove = false
         }
-        await this.prep.moveFileAsync(SIDE, change.doc, change.was)
+        await this.prep.moveFileAsync(sideName, change.doc, change.was)
         break
       case 'RemoteFolderMoved':
         log.info({path}, 'folder was moved or renamed remotely')
-        await this.prep.moveFolderAsync(SIDE, change.doc, change.was)
+        await this.prep.moveFolderAsync(sideName, change.doc, change.was)
         break
       case 'RemoteFileDissociated':
         log.info({path}, 'file was possibly renamed remotely while updated locally')
         await this.dissociateFromRemote(change.was)
-        await this.prep.addFileAsync(SIDE, change.doc)
+        await this.prep.addFileAsync(sideName, change.doc)
         break
       case 'RemoteFolderDissociated':
         log.info({path}, 'folder was possibly renamed remotely while updated locally')
         await this.dissociateFromRemote(change.was)
-        await this.prep.putFolderAsync(SIDE, change.doc)
+        await this.prep.putFolderAsync(sideName, change.doc)
         break
       case 'RemoteUpToDate':
         log.info({path}, `${docType} is up-to-date`)
