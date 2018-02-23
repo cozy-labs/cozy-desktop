@@ -13,7 +13,7 @@ import * as remoteChange from './change'
 import { inRemoteTrash } from './document'
 
 import type { Metadata } from '../metadata'
-import type { RemoteChange, RemoteFileMoved } from './change'
+import type { RemoteChange, RemoteNoise, RemoteFileMoved } from './change'
 import type { RemoteDoc, RemoteDeletion } from './document'
 
 const log = logger({
@@ -89,7 +89,7 @@ export default class RemoteWatcher {
   // Pull multiple changed or deleted docs
   // FIXME: Misleading method name?
   async pullMany (docs: Array<RemoteDoc|RemoteDeletion>) {
-    const changes: RemoteChange[] = []
+    const changes: Array<RemoteChange|RemoteNoise> = []
 
     const release = await this.pouch.lock(this)
     let target = -1
@@ -118,7 +118,7 @@ export default class RemoteWatcher {
     }
   }
 
-  identifyChange (doc: RemoteDoc|RemoteDeletion, was: ?Metadata, changeIndex: number, previousChanges: RemoteChange[]): RemoteChange {
+  identifyChange (doc: RemoteDoc|RemoteDeletion, was: ?Metadata, changeIndex: number, previousChanges: Array<RemoteChange|RemoteNoise>): RemoteChange|RemoteNoise {
     log.trace({path: was ? was.path : _.get(doc, 'path'), doc, was}, 'change received')
 
     if (doc._deleted) {
@@ -158,7 +158,7 @@ export default class RemoteWatcher {
   // Note that the changes feed can aggregate several changes for many changes
   // for the same document. For example, if a file is created and then put in
   // the trash just after, it looks like it appeared directly on the trash.
-  identifyExistingDocChange (remote: RemoteDoc, was: ?Metadata, changeIndex: number, previousChanges: RemoteChange[]): * {
+  identifyExistingDocChange (remote: RemoteDoc, was: ?Metadata, changeIndex: number, previousChanges: Array<RemoteChange|RemoteNoise>): * {
     let doc: Metadata = conversion.createMetadata(remote)
     try {
       ensureValidPath(doc)
@@ -224,7 +224,7 @@ export default class RemoteWatcher {
       const change: RemoteFileMoved = {type: 'RemoteFileMoved', doc, was}
       // Squash moves
       for (let previousChangeIndex = 0; previousChangeIndex < changeIndex; previousChangeIndex++) {
-        const previousChange: RemoteChange = previousChanges[previousChangeIndex]
+        const previousChange: RemoteChange|RemoteNoise = previousChanges[previousChangeIndex]
         // FIXME figure out why isChildMove%checks is not enough
         if (previousChange.type === 'RemoteFolderMoved' && remoteChange.isChildMove(previousChange, change)) {
           if (!remoteChange.isOnlyChildMove(previousChange, change)) {
@@ -248,7 +248,7 @@ export default class RemoteWatcher {
       const change = {type: 'RemoteFolderMoved', doc, was}
       // Squash moves
       for (let previousChangeIndex = 0; previousChangeIndex < changeIndex; previousChangeIndex++) {
-        const previousChange: RemoteChange = previousChanges[previousChangeIndex]
+        const previousChange: RemoteChange|RemoteNoise = previousChanges[previousChangeIndex]
         // FIXME figure out why isChildMove%checks is not enough
         if ((previousChange.type === 'RemoteFolderMoved' || previousChange.type === 'RemoteFileMoved') && remoteChange.isChildMove(change, previousChange)) {
           if (!remoteChange.isOnlyChildMove(change, previousChange)) {
@@ -278,7 +278,7 @@ export default class RemoteWatcher {
     return remoteChange.dissociated(doc, was)
   }
 
-  async applyAll (changes: RemoteChange[]): Promise<void> {
+  async applyAll (changes: Array<RemoteChange|RemoteNoise>): Promise<void> {
     const failedChanges = []
 
     for (let change of changes) {
@@ -298,7 +298,7 @@ export default class RemoteWatcher {
     }
   }
 
-  async apply (change: RemoteChange): Promise<void> {
+  async apply (change: RemoteChange|RemoteNoise): Promise<void> {
     const docType = _.get(change, 'doc.docType')
     const path = _.get(change, 'doc.path')
 

@@ -42,6 +42,8 @@ export type RemoteChange =
   | RemoteFolderMoved
   | RemoteFolderRestored
   | RemoteFolderTrashed
+
+export type RemoteNoise =
   | RemoteIgnoredChange
   | RemoteInvalidChange
   | RemoteUpToDate
@@ -69,7 +71,7 @@ export const dissociated = (doc: Metadata, was: Metadata): * =>
   ({type: (isFile(doc) ? 'RemoteFileDissociated' : 'RemoteFolderDissociated'), doc, was})
 
 // TODO: Rename args
-export const isChildMove = (a: RemoteChange, b: RemoteChange): boolean %checks => {
+export const isChildMove = (a: RemoteChange|RemoteNoise, b: RemoteChange|RemoteNoise): boolean %checks => {
   return a.type === 'RemoteFolderMoved' &&
         (b.type === 'RemoteFolderMoved' || b.type === 'RemoteFileMoved') &&
         (b.doc.path.indexOf(a.doc.path + path.sep) === 0) &&
@@ -91,20 +93,20 @@ export const applyMoveToPath = (a: RemoteFolderMoved, p: string): string => {
   return p.replace(a.was.path, a.doc.path)
 }
 
-const isDelete = (a: RemoteChange): boolean %checks => a.type === 'RemoteFolderDeleted' || a.type === 'RemoteFileDeleted'
-const isAdd = (a: RemoteChange): boolean %checks => a.type === 'RemoteFolderAdded' || a.type === 'RemoteFileAdded'
-const isMove = (a: RemoteChange): boolean %checks => a.type === 'RemoteFolderMoved' || a.type === 'RemoteFileMoved'
-const isTrash = (a: RemoteChange): boolean %checks => a.type === 'RemoteFolderTrashed' || a.type === 'RemoteFileTrashed'
-const isRestore = (a: RemoteChange): boolean %checks => a.type === 'RemoteFolderRestored' || a.type === 'RemoteFileRestored'
-const isDissociate = (a: RemoteChange): boolean %checks => a.type === 'RemoteFolderDissociated' || a.type === 'RemoteFileDissociated'
+const isDelete = (a: RemoteChange|RemoteNoise): boolean %checks => a.type === 'RemoteFolderDeleted' || a.type === 'RemoteFileDeleted'
+const isAdd = (a: RemoteChange|RemoteNoise): boolean %checks => a.type === 'RemoteFolderAdded' || a.type === 'RemoteFileAdded'
+const isMove = (a: RemoteChange|RemoteNoise): boolean %checks => a.type === 'RemoteFolderMoved' || a.type === 'RemoteFileMoved'
+const isTrash = (a: RemoteChange|RemoteNoise): boolean %checks => a.type === 'RemoteFolderTrashed' || a.type === 'RemoteFileTrashed'
+const isRestore = (a: RemoteChange|RemoteNoise): boolean %checks => a.type === 'RemoteFolderRestored' || a.type === 'RemoteFileRestored'
+const isDissociate = (a: RemoteChange|RemoteNoise): boolean %checks => a.type === 'RemoteFolderDissociated' || a.type === 'RemoteFileDissociated'
 
-const addPath = (a: RemoteChange): ?string => isAdd(a) || isMove(a) || isRestore(a) || isDissociate(a) ? a.doc.path : null
-const delPath = (a: RemoteChange): ?string => isDelete(a) ? a.doc.path : isMove(a) || isTrash(a) ? a.was.path : null
+const addPath = (a: RemoteChange|RemoteNoise): ?string => isAdd(a) || isMove(a) || isRestore(a) || isDissociate(a) ? a.doc.path : null
+const delPath = (a: RemoteChange|RemoteNoise): ?string => isDelete(a) ? a.doc.path : isMove(a) || isTrash(a) ? a.was.path : null
 const childOf = (p1: ?string, p2: ?string): boolean => p1 != null && p2 != null && p2 !== p1 && p2.startsWith(p1 + path.sep)
 const lower = (p1: ?string, p2: ?string): boolean => p1 != null && p2 != null && p2 !== p1 && p1 < p2
 
-const isChildDelete = (a: RemoteChange, b: RemoteChange) => childOf(delPath(a), delPath(b))
-const isChildAdd = (a: RemoteChange, b: RemoteChange) => childOf(addPath(a), addPath(b))
+const isChildDelete = (a: RemoteChange|RemoteNoise, b: RemoteChange|RemoteNoise) => childOf(delPath(a), delPath(b))
+const isChildAdd = (a: RemoteChange|RemoteNoise, b: RemoteChange|RemoteNoise) => childOf(addPath(a), addPath(b))
 
 const sorter = (a, b) => {
   if (childOf(addPath(a), delPath(b))) return -1
@@ -126,6 +128,6 @@ const sorter = (a, b) => {
   return 1
 }
 
-export const sort = (changes: RemoteChange[]): void => {
+export const sort = (changes: Array<RemoteChange|RemoteNoise>): void => {
   changes.sort(sorter)
 }
