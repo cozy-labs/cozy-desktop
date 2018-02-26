@@ -1,3 +1,11 @@
+## 3.4.4-beta.4 - 2018-02-26
+
+During onboarding, the selected synchronized directory doesn't need to be empty
+anymore. So you don't end up resynchronizing your whole *Cozy Drive* after being
+[disconnected](https://twitter.com/CozyCloudStatus/status/968022683169509377).
+
+We apologize for the inconvenience.
+
 ## 3.4.4-beta.3 - 2018-02-20
 
 Improvements for all users:
