@@ -85,20 +85,19 @@ describe('App', function () {
       should(result.error).not.be.empty()
     })
 
-    it('cannot be an existing non-empty dir', () => {
+    it('can be an existing non-empty dir', () => {
       const syncPath = fs.mkdtempSync(path.join(os.tmpdir(), 'existing-non-empty-dir'))
       try {
         fs.writeFileSync(path.join(syncPath, 'some-file'), 'some-content')
         const result = App.prototype.checkSyncPath(syncPath)
         should(result).have.properties({syncPath})
-        should(result).have.property('error')
+        should(result).not.have.property('error')
       } finally {
         fs.removeSync(syncPath)
       }
     })
 
-    // TODO: Reenable this test when non-empty dirs are allowed again
-    it.skip('can be the default dir', () => {
+    it('can be the default dir', () => {
       const syncPath = path.join(os.homedir(), 'Cozy Drive')
       const result = App.prototype.checkSyncPath(syncPath)
       should(result).deepEqual({syncPath})
