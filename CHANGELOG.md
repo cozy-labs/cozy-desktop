@@ -1,3 +1,18 @@
+## 3.4.4 - 2018-02-26
+
+Improvements for all users:
+
+- Allow selection of an non-empty sync dir as a quickfix following the 26/02 forced logout production incident.
+
+Also include all changes from [3.4.4-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/3.4.4-beta.1), [3.4.4-beta.2](https://github.com/cozy-labs/cozy-desktop/releases/tag/3.4.4-beta.2) and  
+[3.4.3-beta.3](https://github.com/cozy-labs/cozy-desktop/releases/tag/3.4.4-beta.3).
+
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
+
 ## 3.4.4-beta.3 - 2018-02-20
 
 Improvements for all users:
