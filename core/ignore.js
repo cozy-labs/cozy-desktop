@@ -98,7 +98,7 @@ class Ignore {
       folder = true
     }
     line = line.replace(/^\\/, '')   // Remove leading escaping char
-    line = line.replace(/\s*$/, '')  // Remove trailing spaces
+    line = line.replace(/( |\t)*$/, '')  // Remove trailing spaces
     // Ignore case for case insensitive file-systems
     if (process.platform === 'darwin') {
       line = makeRe(line, {nocase: true})

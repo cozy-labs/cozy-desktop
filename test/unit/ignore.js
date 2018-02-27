@@ -307,4 +307,14 @@ describe('Ignore', function () {
     }
     this.ignore.isIgnored(doc).should.be.true()
   })
+
+  it('does ignore Icon\\r', function () {
+    this.ignore = new Ignore([])
+    this.ignore.addDefaultRules()
+    let doc = {
+      _id: 'path/to/Icon\r',
+      docType: 'file'
+    }
+    this.ignore.isIgnored(doc).should.be.true()
+  })
 })
