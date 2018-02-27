@@ -1,3 +1,18 @@
+## 3.5.0-beta.1 - 2018-02-27
+
+Improvements for KDE users:
+
+- the icon is now correctly sized, thanks to @hleroy
+
+Improvements for all users:
+
+- File uploads are now made with `Content-Length` instead of `Transfer: chunked` which should improve stability.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
+
 ## 3.4.4 & 3.4.5 - 2018-02-26
 
 Improvements for all users:
