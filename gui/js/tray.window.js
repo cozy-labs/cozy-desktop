@@ -46,7 +46,7 @@ const popoverBounds = (wantedWidth, wantedHeight, trayposition, workArea, displa
   // TODO contibute this to electron-positioner
   } else if (workArea.width < display.width && workArea.x === 0) {
     // right bar -> place window on bottom right
-    newBounds.x = workArea.width - actualWidth
+    newBounds.x = workArea.x + workArea.width - actualWidth
     newBounds.y = workArea.y + workArea.height - actualHeight
   } else if (workArea.width < display.width) {
     // left bar -> place window on bottom left
@@ -54,11 +54,11 @@ const popoverBounds = (wantedWidth, wantedHeight, trayposition, workArea, displa
     newBounds.y = workArea.y + workArea.height - actualHeight
   } else if (workArea.height < display.height && workArea.y === 0) {
     // bottom bar -> place window on bottom right
-    newBounds.x = workArea.width - actualWidth
+    newBounds.x = workArea.x + workArea.width - actualWidth
     newBounds.y = workArea.y + workArea.height - actualHeight
   } else {
     // top bar or unknown -> place window on top right
-    newBounds.x = workArea.width - actualWidth
+    newBounds.x = workArea.x + workArea.width - actualWidth
     newBounds.y = workArea.y
   }
 
