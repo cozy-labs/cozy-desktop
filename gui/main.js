@@ -3,7 +3,6 @@
 require('babel-polyfill')
 
 const Desktop = require('../core-built/app.js').default
-const notify = require('electron-main-notification')
 const pkg = require('../package.json')
 
 const debounce = require('lodash').debounce
@@ -25,7 +24,7 @@ const {buildAppMenu} = require('./js/appmenu')
 const i18n = require('./js/i18n')
 const {translate} = i18n
 const {incompatibilitiesErrorMessage} = require('./js/incompatibilitiesmsg')
-const {app, Menu, ipcMain, dialog} = require('electron')
+const {app, Menu, Notification, ipcMain, dialog} = require('electron')
 
 const log = Desktop.logger({
   component: 'GUI'
@@ -125,7 +124,8 @@ const sendErrorToMainWindow = (msg) => {
   } else {
     trayWindow.send('sync-error', msg)
   }
-  notify('Cozy Drive', { body: msg })
+  const notif = new Notification({ title: 'Cozy Drive', body: msg })
+  notif.show()
 }
 
 const updateState = (newState, filename) => {

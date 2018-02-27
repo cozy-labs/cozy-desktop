@@ -1995,12 +1995,6 @@ electron-localshortcut@^3.0.0:
     keyboardevent-from-electron-accelerator "^0.7.0"
     keyboardevents-areequal "^0.2.1"
 
-electron-main-notification@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/electron-main-notification/-/electron-main-notification-1.0.1.tgz#79a57790084c20e2bece6162e4e9545517aee8ac"
-  dependencies:
-    uuid "^2.0.2"
-
 electron-mocha@^3.4.2:
   version "3.5.0"
   resolved "https://registry.yarnpkg.com/electron-mocha/-/electron-mocha-3.5.0.tgz#3182dca8cc0b360db522de628930be949a8db2b2"
@@ -5126,9 +5120,9 @@ pouchdb-abstract-mapreduce@6.3.4:
     pouchdb-promise "6.3.4"
     pouchdb-utils "6.3.4"
 
-"pouchdb-adapter-cordova-sqlite@git+https://github.com/SnceGroup/pouchdb-adapter-cordova-sqlite.git#f3ee23009b70209c611435d57491aa77fb88802a":
+"pouchdb-adapter-cordova-sqlite@https://github.com/SnceGroup/pouchdb-adapter-cordova-sqlite.git#f3ee23009b70209c611435d57491aa77fb88802a":
   version "2.0.2"
-  resolved "git+https://github.com/SnceGroup/pouchdb-adapter-cordova-sqlite.git#f3ee23009b70209c611435d57491aa77fb88802a"
+  resolved "https://github.com/SnceGroup/pouchdb-adapter-cordova-sqlite.git#f3ee23009b70209c611435d57491aa77fb88802a"
   dependencies:
     pouchdb-adapter-websql-core "^6.1.1"
 
@@ -7030,10 +7024,6 @@ util-extend@^1.0.1:
 uuid@3.2.1, uuid@^3.2.1:
   version "3.2.1"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.2.1.tgz#12c528bb9d58d0b9265d9a2f6f0fe8be17ff1f14"
-
-uuid@^2.0.2:
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/uuid/-/uuid-2.0.3.tgz#67e2e863797215530dff318e5bf9dcebfd47b21a"
 
 uuid@^3.0.0, uuid@^3.1.0:
   version "3.1.0"
