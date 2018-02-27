@@ -1,12 +1,12 @@
 /* @flow */
 
 import async from 'async'
-import Promise from 'bluebird'
 import EventEmitter from 'events'
 import fs from 'fs-extra'
 import path from 'path'
-import * as stream from 'stream'
 import trash from 'trash'
+
+import bluebird from 'bluebird'
 
 import Config from '../config'
 import { TMP_DIR_NAME } from './constants'
@@ -17,13 +17,14 @@ import Prep from '../prep'
 import { hideOnWindows } from '../utils/fs'
 import Watcher from './watcher'
 import measureTime from '../perftools'
+import { withContentLength } from '../file_stream_provider'
 
-import type { FileStreamProvider } from '../file_stream_provider'
+import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider'
 import type { Metadata } from '../metadata'
 import type { Side } from '../side' // eslint-disable-line
 import type { Callback } from '../utils/func'
 
-Promise.promisifyAll(fs)
+bluebird.promisifyAll(fs)
 
 const log = logger({
   component: 'LocalWriter'
@@ -39,7 +40,7 @@ class Local implements Side {
   tmpPath: string
   watcher: Watcher
   other: FileStreamProvider
-  _trash: (Array<string>) => Promise
+  _trash: (Array<string>) => Promise<void>
 
   constructor (config: Config, prep: Prep, pouch: Pouch, events: EventEmitter) {
     this.prep = prep
@@ -52,7 +53,7 @@ class Local implements Side {
     this.other = null
     this._trash = trash
 
-    Promise.promisifyAll(this)
+    bluebird.promisifyAll(this)
   }
 
   // Start initial replication + watching changes in live
@@ -67,14 +68,18 @@ class Local implements Side {
   }
 
   // Create a readable stream for the given doc
-  createReadStreamAsync (doc: Metadata): Promise<stream.Readable> {
+  // adds a contentLength property to be used
+  async createReadStreamAsync (doc: Metadata): Promise<ReadableWithContentLength> {
     try {
       let filePath = path.resolve(this.syncPath, doc.path)
-      let stream = fs.createReadStream(filePath)
-      return new Promise((resolve, reject) => {
+      let pStats = fs.statAsync(filePath)
+      let pStream = new Promise((resolve, reject) => {
+        let stream = fs.createReadStream(filePath)
         stream.on('open', () => resolve(stream))
         stream.on('error', err => reject(err))
       })
+      const [stream: ReadableWithContentLength, stat: fs.Stat] = await Promise.all([pStream, pStats])
+      return withContentLength(stream, stat.size)
     } catch (err) {
       return Promise.reject(err)
     }

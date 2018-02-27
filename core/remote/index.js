@@ -2,7 +2,6 @@
 
 import EventEmitter from 'events'
 import { posix, sep } from 'path'
-import * as stream from 'stream'
 
 import Config from '../config'
 import * as conversion from '../conversion'
@@ -12,9 +11,10 @@ import Pouch from '../pouch'
 import Prep from '../prep'
 import Watcher from './watcher'
 import measureTime from '../perftools'
+import { withContentLength } from '../file_stream_provider'
 
 import type { RemoteDoc } from './document'
-import type { FileStreamProvider } from '../file_stream_provider'
+import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider'
 import type { Metadata } from '../metadata'
 import type { Side } from '../side' // eslint-disable-line
 
@@ -53,8 +53,9 @@ export default class Remote implements Side {
   }
 
   // Create a readable stream for the given doc
-  createReadStreamAsync (doc: Metadata): Promise<stream.Readable> {
-    return this.remoteCozy.downloadBinary(doc.remote._id)
+  async createReadStreamAsync (doc: Metadata): Promise<ReadableWithContentLength> {
+    const stream = await this.remoteCozy.downloadBinary(doc.remote._id)
+    return withContentLength(stream, doc.size)
   }
 
   // Create a folder on the remote cozy instance
@@ -93,7 +94,7 @@ export default class Remote implements Side {
     log.info({path}, 'Uploading new file...')
     const stopMeasure = measureTime('RemoteWriter#addFile')
 
-    let stream
+    let stream: ReadableWithContentLength
     try {
       stream = await this.other.createReadStreamAsync(doc)
     } catch (err) {
@@ -112,6 +113,7 @@ export default class Remote implements Side {
       name,
       dirID: dir._id,
       executable: doc.executable,
+      contentLength: stream.contentLength,
       contentType: doc.mime,
       lastModifiedDate: new Date(doc.updated_at)
     })
