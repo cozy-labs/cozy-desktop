@@ -20,6 +20,9 @@ class Ignore {
   static initClass () {
     // See https://github.com/github/gitignore/tree/master/Global
     DefaultRules = [
+      // all hidden files
+      '.*',
+
       // Dropbox
       '.dropbox',
       '.dropbox.attr',
