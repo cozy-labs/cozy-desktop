@@ -51,7 +51,8 @@ class Ignore {
       '.TemporaryItems',
       '.Trashes',
       '.VolumeIcon.icns',
-      'Icon\r',
+      // The only solution found to make Icon^r unit test pass on all platforms
+      process.platform === 'darwin' ? 'Icon\\r' : 'Icon\r',
 
       // Vim
       '*.sw[px]',
