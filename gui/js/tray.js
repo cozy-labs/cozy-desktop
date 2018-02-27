@@ -9,6 +9,7 @@ const imgs = path.resolve(__dirname, '..', 'images')
 module.exports.init = (app, listener) => {
   let icon = (process.platform === 'darwin') ? `${imgs}/tray-icon-osx/idleTemplate.png`
      : (process.platform === 'win32') ? `${imgs}/tray-icon-win/idle.png`
+     : (process.env.XDG_CURRENT_DESKTOP && process.env.XDG_CURRENT_DESKTOP.match(/KDE/)) ? `${imgs}/tray-icon-linux-kde/idle.png`
      : `${imgs}/tray-icon-linux/idle.png`
   tray = new Tray(icon)
   app.on('before-quit', () => tray.destroy())
@@ -114,6 +115,8 @@ var setState = module.exports.setState = (state, filename) => {
     tray.setPressedImage(`${imgs}/tray-icon-osx/${icon}Highlight.png`)
   } else if (process.platform === 'win32') {
     tray.setImage(`${imgs}/tray-icon-win/${icon}.png`)
+  } else if (process.env.XDG_CURRENT_DESKTOP && process.env.XDG_CURRENT_DESKTOP.match(/KDE/)) {
+    tray.setImage(`${imgs}/tray-icon-linux-kde/${icon}.png`)
   } else {
     tray.setImage(`${imgs}/tray-icon-linux/${icon}.png`)
   }
