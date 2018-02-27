@@ -13,7 +13,7 @@ import * as remoteChange from './change'
 import { inRemoteTrash } from './document'
 
 import type { Metadata } from '../metadata'
-import type { RemoteChange, RemoteFileMoved } from './change'
+import type { RemoteChange, RemoteNoise, RemoteFileMove } from './change'
 import type { RemoteDoc, RemoteDeletion } from './document'
 
 const log = logger({
@@ -23,7 +23,7 @@ const log = logger({
 export const DEFAULT_HEARTBEAT: number = 1000 * 60 // 1 minute
 export const HEARTBEAT: number = parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || DEFAULT_HEARTBEAT
 
-const SIDE = 'remote'
+const sideName = 'remote'
 
 // Get changes from the remote Cozy and prepare them for merge
 export default class RemoteWatcher {
@@ -89,7 +89,7 @@ export default class RemoteWatcher {
   // Pull multiple changed or deleted docs
   // FIXME: Misleading method name?
   async pullMany (docs: Array<RemoteDoc|RemoteDeletion>) {
-    const changes: RemoteChange[] = []
+    const changes: Array<RemoteChange|RemoteNoise> = []
 
     const release = await this.pouch.lock(this)
     let target = -1
@@ -118,7 +118,7 @@ export default class RemoteWatcher {
     }
   }
 
-  identifyChange (doc: RemoteDoc|RemoteDeletion, was: ?Metadata, changeIndex: number, previousChanges: RemoteChange[]): RemoteChange {
+  identifyChange (doc: RemoteDoc|RemoteDeletion, was: ?Metadata, changeIndex: number, previousChanges: Array<RemoteChange|RemoteNoise>): RemoteChange|RemoteNoise {
     log.trace({path: was ? was.path : _.get(doc, 'path'), doc, was}, 'change received')
 
     if (doc._deleted) {
@@ -158,7 +158,7 @@ export default class RemoteWatcher {
   // Note that the changes feed can aggregate several changes for many changes
   // for the same document. For example, if a file is created and then put in
   // the trash just after, it looks like it appeared directly on the trash.
-  identifyExistingDocChange (remote: RemoteDoc, was: ?Metadata, changeIndex: number, previousChanges: RemoteChange[]): * {
+  identifyExistingDocChange (remote: RemoteDoc, was: ?Metadata, changeIndex: number, previousChanges: Array<RemoteChange|RemoteNoise>): * {
     let doc: Metadata = conversion.createMetadata(remote)
     try {
       ensureValidPath(doc)
@@ -182,7 +182,11 @@ export default class RemoteWatcher {
         doc,
         this.prep.config.syncPath
       )
-      if (incompatibilities.length > 0) doc.incompatibilities = incompatibilities
+      if (incompatibilities.length > 0) {
+        log.warn({path, incompatibilities})
+        this.events.emit('platform-incompatibilities', incompatibilities)
+        doc.incompatibilities = incompatibilities
+      }
     } else {
       if (!was) {
         return {
@@ -217,12 +221,12 @@ export default class RemoteWatcher {
       }
     }
     if ((doc.docType === 'file') && (was.md5sum === doc.md5sum)) {
-      const change: RemoteFileMoved = {type: 'RemoteFileMoved', doc, was}
+      const change: RemoteFileMove = {sideName, type: 'FileMove', doc, was}
       // Squash moves
       for (let previousChangeIndex = 0; previousChangeIndex < changeIndex; previousChangeIndex++) {
-        const previousChange: RemoteChange = previousChanges[previousChangeIndex]
+        const previousChange: RemoteChange|RemoteNoise = previousChanges[previousChangeIndex]
         // FIXME figure out why isChildMove%checks is not enough
-        if (previousChange.type === 'RemoteFolderMoved' && remoteChange.isChildMove(previousChange, change)) {
+        if (previousChange.type === 'DirMove' && remoteChange.isChildMove(previousChange, change)) {
           if (!remoteChange.isOnlyChildMove(previousChange, change)) {
             // move inside move
             change.was.path = remoteChange.applyMoveToPath(previousChange, change.was.path)
@@ -241,12 +245,12 @@ export default class RemoteWatcher {
       return change
     }
     if (doc.docType === 'folder') {
-      const change = {type: 'RemoteFolderMoved', doc, was}
+      const change = {sideName, type: 'DirMove', doc, was}
       // Squash moves
       for (let previousChangeIndex = 0; previousChangeIndex < changeIndex; previousChangeIndex++) {
-        const previousChange: RemoteChange = previousChanges[previousChangeIndex]
+        const previousChange: RemoteChange|RemoteNoise = previousChanges[previousChangeIndex]
         // FIXME figure out why isChildMove%checks is not enough
-        if ((previousChange.type === 'RemoteFolderMoved' || previousChange.type === 'RemoteFileMoved') && remoteChange.isChildMove(change, previousChange)) {
+        if ((previousChange.type === 'DirMove' || previousChange.type === 'FileMove') && remoteChange.isChildMove(change, previousChange)) {
           if (!remoteChange.isOnlyChildMove(change, previousChange)) {
             previousChange.was.path = remoteChange.applyMoveToPath(change, previousChange.was.path)
             previousChange.needRefetch = true
@@ -274,7 +278,7 @@ export default class RemoteWatcher {
     return remoteChange.dissociated(doc, was)
   }
 
-  async applyAll (changes: RemoteChange[]): Promise<void> {
+  async applyAll (changes: Array<RemoteChange|RemoteNoise>): Promise<void> {
     const failedChanges = []
 
     for (let change of changes) {
@@ -294,78 +298,73 @@ export default class RemoteWatcher {
     }
   }
 
-  async apply (change: RemoteChange): Promise<void> {
+  async apply (change: RemoteChange|RemoteNoise): Promise<void> {
     const docType = _.get(change, 'doc.docType')
     const path = _.get(change, 'doc.path')
 
     switch (change.type) {
       case 'RemoteInvalidChange':
         throw change.error
-      case 'RemotePlatformIncompatibleChange':
-        const { incompatibilities } = change
-        log.warn({path, incompatibilities})
-        this.events.emit('platform-incompatibilities', incompatibilities)
-        break
       case 'RemoteIgnoredChange':
         log.debug({path, remoteId: change.doc._id}, change.detail)
         break
-      case 'RemoteFileTrashed':
+      case 'FileTrashing':
         log.info({path}, 'file was trashed remotely')
-        await this.prep.trashFileAsync(SIDE, change.was, change.doc)
+        await this.prep.trashFileAsync(sideName, change.was, change.doc)
         break
-      case 'RemoteFolderTrashed':
+      case 'DirTrashing':
         log.info({path}, 'folder was trashed remotely')
-        await this.prep.trashFolderAsync(SIDE, change.was, change.doc)
+        await this.prep.trashFolderAsync(sideName, change.was, change.doc)
         break
-      case 'RemoteFileDeleted':
+      case 'FileDeletion':
         log.info({path}, 'file was deleted permanently')
-        await this.prep.deleteFileAsync(SIDE, change.doc)
+        await this.prep.deleteFileAsync(sideName, change.doc)
         break
-      case 'RemoteFolderDeleted':
+      case 'DirDeletion':
         log.info({path}, 'folder was deleted permanently')
-        await this.prep.deleteFolderAsync(SIDE, change.doc)
+        await this.prep.deleteFolderAsync(sideName, change.doc)
         break
-      case 'RemoteFileAdded':
+      case 'FileAddition':
         log.info({path}, 'file was added remotely')
-        await this.prep.addFileAsync(SIDE, change.doc)
+        await this.prep.addFileAsync(sideName, change.doc)
         break
-      case 'RemoteFolderAdded':
+      case 'DirAddition':
         log.info({path}, 'folder was added remotely')
-        await this.prep.putFolderAsync(SIDE, change.doc)
+        await this.prep.putFolderAsync(sideName, change.doc)
         break
-      case 'RemoteFileRestored':
+      case 'FileRestoration':
         log.info({path}, 'file was restored remotely')
-        await this.prep.restoreFileAsync(SIDE, change.doc, change.was)
+        await this.prep.restoreFileAsync(sideName, change.doc, change.was)
         break
-      case 'RemoteFolderRestored':
+      case 'DirRestoration':
         log.info({path}, 'folder was restored remotely')
-        await this.prep.restoreFolderAsync(SIDE, change.doc, change.was)
+        await this.prep.restoreFolderAsync(sideName, change.doc, change.was)
         break
-      case 'RemoteFileUpdated':
+      case 'FileUpdate':
         log.info({path}, 'file was updated remotely')
-        await this.prep.updateFileAsync(SIDE, change.doc)
+        await this.prep.updateFileAsync(sideName, change.doc)
         break
-      case 'RemoteFileMoved':
+      case 'FileMove':
         log.info({path, oldpath: change.was.path}, 'file was moved or renamed remotely')
         if (change.needRefetch) {
           change.was = await this.pouch.byRemoteIdMaybeAsync(change.was.remote._id)
           change.was.childMove = false
         }
-        await this.prep.moveFileAsync(SIDE, change.doc, change.was)
+        await this.prep.moveFileAsync(sideName, change.doc, change.was)
         break
-      case 'RemoteFolderMoved':
+      case 'DirMove':
         log.info({path}, 'folder was moved or renamed remotely')
-        await this.prep.moveFolderAsync(SIDE, change.doc, change.was)
+        await this.prep.moveFolderAsync(sideName, change.doc, change.was)
         break
-      case 'RemoteFileDissociated':
+      case 'FileDissociation':
         log.info({path}, 'file was possibly renamed remotely while updated locally')
         await this.dissociateFromRemote(change.was)
-        await this.prep.addFileAsync(SIDE, change.doc)
+        await this.prep.addFileAsync(sideName, change.doc)
         break
-      case 'RemoteFolderDissociated':
+      case 'DirDissociation':
         log.info({path}, 'folder was possibly renamed remotely while updated locally')
         await this.dissociateFromRemote(change.was)
-        await this.prep.putFolderAsync(SIDE, change.doc)
+        await this.prep.putFolderAsync(sideName, change.doc)
         break
       case 'RemoteUpToDate':
         log.info({path}, `${docType} is up-to-date`)

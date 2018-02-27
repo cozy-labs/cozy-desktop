@@ -181,7 +181,7 @@ describe('RemoteWatcher', function () {
     context('when apply() rejects some file/dir', function () {
       beforeEach(function () {
         apply.callsFake(async (change: RemoteChange): Promise<void> => {
-          if (change.type === 'RemoteFileAdded') throw new Error('oops')
+          if (change.type === 'FileAddition') throw new Error('oops')
         })
       })
 
@@ -195,7 +195,7 @@ describe('RemoteWatcher', function () {
         should(apply).have.been.calledTwice()
         // Changes are sorted before applying (FileAdded was the first one)
         should(apply.args[0][0]).have.properties({type: 'RemoteIgnoredChange', doc: docs[1]})
-        should(apply.args[1][0]).have.properties({type: 'RemoteFileAdded', doc: validMetadata(docs[0])})
+        should(apply.args[1][0]).have.properties({type: 'FileAddition', doc: validMetadata(docs[0])})
       })
 
       it('releases the Pouch lock', async function () {
@@ -297,7 +297,7 @@ describe('RemoteWatcher', function () {
         }
         const change: RemoteChange = this.watcher.identifyChange(doc, null, 0, [])
         const platform = process.platform
-        should(change.type).equal('RemoteFileAdded')
+        should(change.type).equal('FileAddition')
         should(change.doc).have.property('incompatibilities', [
           {
             type: 'reservedChars',
@@ -339,7 +339,7 @@ describe('RemoteWatcher', function () {
         }
         const change: RemoteChange = this.watcher.identifyChange(doc, null, 0, [])
         const platform = process.platform
-        should(change.type).equal('RemoteFileAdded')
+        should(change.type).equal('FileAddition')
         should((change: any).doc.incompatibilities).deepEqual([
           {
             type: 'reservedChars',
@@ -377,7 +377,7 @@ describe('RemoteWatcher', function () {
 
       const change: RemoteChange = this.watcher.identifyChange(clone(doc), null, 0, [])
 
-      should(change.type).equal('RemoteFileAdded')
+      should(change.type).equal('FileAddition')
       should(change.doc).have.properties({
         path: 'my-folder',
         docType: 'file',
@@ -416,7 +416,7 @@ describe('RemoteWatcher', function () {
 
       const change: RemoteChange = this.watcher.identifyChange(clone(doc), was, 0, [])
 
-      should(change.type).equal('RemoteFileUpdated')
+      should(change.type).equal('FileUpdate')
       should(change.doc).have.properties({
         path: path.normalize('my-folder/file-1'),
         docType: 'file',
@@ -448,7 +448,7 @@ describe('RemoteWatcher', function () {
 
       const change: RemoteChange = this.watcher.identifyChange(clone(doc), was, 0, [])
 
-      should(change.type).equal('RemoteFileUpdated')
+      should(change.type).equal('FileUpdate')
       should(change.doc).have.properties({
         path: path.normalize('my-folder/file-1'),
         docType: 'file',
@@ -481,7 +481,7 @@ describe('RemoteWatcher', function () {
       const was = await this.pouch.byRemoteIdMaybeAsync(doc._id)
       const change: RemoteChange = this.watcher.identifyChange(clone(doc), was, 0, [])
 
-      should(change.type).equal('RemoteFileMoved')
+      should(change.type).equal('FileMove')
       // $FlowFixMe
       const src = change.was
       should(src).have.properties({
@@ -533,7 +533,7 @@ describe('RemoteWatcher', function () {
 
       const change: RemoteChange = this.watcher.identifyChange(clone(doc), was, 0, [])
 
-      should(change.type).equal('RemoteFileMoved')
+      should(change.type).equal('FileMove')
       // $FlowFixMe
       const src = change.was
       should(src).have.properties({
