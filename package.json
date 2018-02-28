@@ -29,7 +29,6 @@
     "bootstrap:remote": "babel-node ./dev/remote/generate-test-env.js",
     "build": "yarn build:core && yarn build:css && yarn build:elm && yarn build:tx",
     "build:core": "babel --source-maps --out-dir core-built core/",
-    "build:core:coverage": "babel --plugins babel-plugin-istanbul --source-maps --out-dir core-cov core/",
     "build:css": "stylus --sourcemap --compress --use cozy-ui/stylus gui/styles/app.styl --out gui",
     "build:elm": "elm make ./gui/elm/Main.elm --output ./gui/elm.js",
     "build:tx": "tx pull --all --minimum-perc=1 || true",
