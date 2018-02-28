@@ -68,6 +68,17 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
 
   for (let e: LocalEvent of events) {
     try {
+      // chokidar make mistakes
+      if (e.type === 'unlinkDir' && e.old && e.old.docType === 'file') {
+        // $FlowFixMe
+        e.type = 'unlink'
+      }
+
+      if (e.type === 'unlink' && e.old && e.old.docType === 'folder') {
+        // $FlowFixMe
+        e.type = 'unlinkDir'
+      }
+
       switch (e.type) {
         case 'add':
           {
@@ -105,6 +116,7 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
           break
         case 'unlink':
           {
+
             const moveChange: ?LocalFileMove = localChange.maybeMoveFile(getChangeByInode(e))
             /* istanbul ignore next */
             if (moveChange) {
