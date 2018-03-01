@@ -458,6 +458,8 @@ if (doc.docType === 'folder') {
   describe('byRecursivePath (bis)', function () {
     // TODO counter  rngState: 0020bacd4697fe1358;
     //               Counterexample: [".", "Æ\u0004]"]
+    //               rngState: 0d2c085d3e964fb71a;
+    //               Counterexample: [".", "a\u0012%"];
 
     // jsverify only works with Promise for async stuff
     if (typeof Promise !== 'function') { return }
