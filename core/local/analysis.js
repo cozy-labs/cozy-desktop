@@ -116,7 +116,6 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
           break
         case 'unlink':
           {
-
             const moveChange: ?LocalFileMove = localChange.maybeMoveFile(getChangeByInode(e))
             /* istanbul ignore next */
             if (moveChange) {
