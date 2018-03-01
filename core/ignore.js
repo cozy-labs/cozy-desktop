@@ -51,7 +51,8 @@ class Ignore {
       '.TemporaryItems',
       '.Trashes',
       '.VolumeIcon.icns',
-      'Icon\r',
+      // The only solution found to make Icon^r unit test pass on all platforms
+      process.platform === 'darwin' ? 'Icon\\r' : 'Icon\r',
 
       // Vim
       '*.sw[px]',
@@ -98,7 +99,7 @@ class Ignore {
       folder = true
     }
     line = line.replace(/^\\/, '')   // Remove leading escaping char
-    line = line.replace(/\s*$/, '')  // Remove trailing spaces
+    line = line.replace(/( |\t)*$/, '')  // Remove trailing spaces
     // Ignore case for case insensitive file-systems
     if (process.platform === 'darwin') {
       line = makeRe(line, {nocase: true})
