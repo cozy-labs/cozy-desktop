@@ -1,3 +1,28 @@
+## 3.5.0-beta.2 - 2018-03-01
+
+Improvements for all users:
+
+- All dual-screen window positioning issues should be fixed.
+
+Improvements for macOS users:
+
+- Notifications used to be quite broken on macOS. Everything should just work
+  now.
+- Special `Icon\r` files were not properly ignored during synchronization,
+  probably due to a weird bug in some third-party component. Although it could
+  make sense to synchronize them between 2 macOS computers, the cozy-stack
+  actually doesn't support creating a file with name containing a `\r`
+  character. We made sure those files were properly ignored.
+
+Improvements for developers:
+
+- Test reports recently stopped working when run with coverage enabled (e.g. on
+  CI). Everything is back to normal.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.5.0-beta.1 - 2018-02-27
 
 Improvements for KDE users:
