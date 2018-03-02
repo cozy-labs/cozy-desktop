@@ -81,20 +81,23 @@ const sendErrorToMainWindow = (msg) => {
     revokedAlertShown = true // prevent the alert from appearing twice
     const options = {
       type: 'warning',
-      title: translate('Revoked Title'),
-      message: translate('Revoked It looks like you have revoked your client from your Cozy'),
-      detail: translate('Revoked If it wasn\'t you, contact us at contact@cozycloud.cc'),
-      buttons: [translate('Unlink OK')],
-      cancelId: 0,
-      defaultId: 0
+      title: pkg.productName,
+      message: translate('Revoked Synchronization with your Cozy is unavailable, maybe you revoked this computer?'),
+      detail: translate('Revoked In case you didn\'t, contact us at contact@cozycloud.cc'),
+      buttons: [translate('Revoked Log out'), translate('Revoked Try again later')],
+      defaultId: 1
     }
     trayWindow.hide()
-    dialog.showMessageBox(null, options)
-    desktop.stopSync()
-      .then(() => desktop.removeConfig())
-      .then(() => log.info('removed'))
-      .then(() => trayWindow.doRestart())
-      .catch((err) => log.error(err))
+    const userChoice = dialog.showMessageBox(null, options)
+    if (userChoice === 0) {
+      desktop.stopSync()
+        .then(() => desktop.removeConfig())
+        .then(() => log.info('removed'))
+        .then(() => trayWindow.doRestart())
+        .catch((err) => log.error(err))
+    } else {
+      app.quit()
+    }
     return // no notification
   } else if (msg === 'Syncdir has been unlinked') {
     if (syncDirUnlinkedShown) return
