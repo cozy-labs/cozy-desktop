@@ -1,3 +1,17 @@
+## 3.5.0-beta.3 - 2018-03-02
+
+Improvements for all users:
+
+- A lot of desktop clients were disconnected recently. Although it seems the
+  issue is not on the app side, users were forced to disconnect, go through the
+  onboarding steps again, and synchronize there whole drive back. The latest
+  stable release (v3.4.5) allowed selecting a non empty synced directory to
+  lower the impact of this issue. This new beta release allows user to exit the
+  app from the revocation notification dialog without actually disconnecting
+  and try synchronizing again later.
+
+We apologize for the inconvenience.
+
 ## 3.5.0-beta.2 - 2018-03-01
 
 Improvements for all users:
