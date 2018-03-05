@@ -229,9 +229,14 @@ class Sync {
         if (this.moveFrom != null) {
           const was = this.moveFrom
           this.moveFrom = null
-          log.warn({path: doc.path, oldpath: was.path, incompatibilities: doc.incompatibilities},
-            `Trashing ${sideName} ${doc.docType} since new remote one is incompatible`)
-          await side.trashAsync(was)
+          if (was.childMove == null) {
+            log.warn({path: doc.path, oldpath: was.path, incompatibilities: doc.incompatibilities},
+              `Trashing ${sideName} ${doc.docType} since new remote one is incompatible`)
+            await side.trashAsync(was)
+          } else {
+            log.debug({path: doc.path, incompatibilities: doc.incompatibilities},
+              `incompatible ${doc.docType} should have been trashed with parent`)
+          }
         } else {
           log.warn({path: doc.path, incompatibilities: doc.incompatibilities},
             `Not syncing incompatible ${doc.docType}`)
