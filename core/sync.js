@@ -225,10 +225,11 @@ class Sync {
       if (!side) {
         log.info({path: doc.path}, 'up to date')
         return this.pouch.setLocalSeqAsync(change.seq)
-      } else if (doc.incompatibilities && sideName === 'local') {
-        if (this.moveFrom != null) {
-          const was = this.moveFrom
-          this.moveFrom = null
+      } else if (doc.incompatibilities && sideName === 'local' && doc.moveTo == null) {
+        const was = this.moveFrom
+        this.moveFrom = null
+        if (was != null && was.incompatibilities == null) {
+          // Move compatible -> incompatible
           if (was.childMove == null) {
             log.warn({path: doc.path, oldpath: was.path, incompatibilities: doc.incompatibilities},
               `Trashing ${sideName} ${doc.docType} since new remote one is incompatible`)
@@ -378,6 +379,10 @@ class Sync {
         from = (this.moveFrom: Metadata)
         this.moveFrom = null
         if (from.moveTo === doc._id && from.md5sum === doc.md5sum) {
+          if (from.incompatibilities) {
+            await side.addFileAsync(doc)
+            return
+          }
           if (from.childMove) {
             await side.assignNewRev(doc)
             return
@@ -437,6 +442,10 @@ class Sync {
         from = (this.moveFrom: Metadata)
         this.moveFrom = null
         if (from.moveTo === doc._id) {
+          if (from.incompatibilities) {
+            await side.addFolderAsync(doc)
+            return
+          }
           if (from.childMove) {
             await side.assignNewRev(doc)
             return
