@@ -183,7 +183,7 @@ export default class RemoteWatcher {
         this.prep.config.syncPath
       )
       if (incompatibilities.length > 0) {
-        log.warn({path, incompatibilities})
+        log.trace({path, incompatibilities})
         this.events.emit('platform-incompatibilities', incompatibilities)
         doc.incompatibilities = incompatibilities
       }
