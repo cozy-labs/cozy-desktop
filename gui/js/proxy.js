@@ -84,8 +84,8 @@ module.exports = (app, session, userAgent, doneSetup) => {
   http.request = function (options, cb) {
     log.warn(options, 'USING RAW HTTP REQUEST')
     options.agent = options.agent || http.globalAgent
-    options.headers.host = options.hostname
     options.headers = options.headers || {}
+    if (options.hostname) options.headers.host = options.hostname
     options.headers['User-Agent'] = userAgent
     return _httpRequest.call(http, options, cb)
   }

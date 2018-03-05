@@ -361,6 +361,14 @@ class Pouch {
   }
 
   setRemoteSeqAsync: (seq: string) => Promise<*>
+
+  tree (callback) {
+    this.db.allDocs((err, result) => {
+      if (err) return callback(err)
+      callback(null, result.rows.map(row => row.id).sort())
+    })
+  }
+  treeAsync: () => Promise<Array<string>>
 }
 
 export default Pouch
