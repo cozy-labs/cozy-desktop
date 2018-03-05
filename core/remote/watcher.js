@@ -353,7 +353,7 @@ export default class RemoteWatcher {
         await this.prep.moveFileAsync(sideName, change.doc, change.was)
         break
       case 'DirMove':
-        log.info({path}, 'folder was moved or renamed remotely')
+        log.info({path, oldpath: change.was.path}, 'folder was moved or renamed remotely')
         await this.prep.moveFolderAsync(sideName, change.doc, change.was)
         break
       case 'FileDissociation':
