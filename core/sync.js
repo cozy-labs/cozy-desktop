@@ -232,11 +232,10 @@ class Sync {
           log.warn({path: doc.path, oldpath: was.path, incompatibilities: doc.incompatibilities},
             `Trashing ${sideName} ${doc.docType} since new remote one is incompatible`)
           await side.trashAsync(was)
-          return
+        } else {
+          log.warn({path: doc.path, incompatibilities: doc.incompatibilities},
+            `Not syncing incompatible ${doc.docType}`)
         }
-        log.warn({path: doc.path, incompatibilities: doc.incompatibilities},
-          `Not syncing incompatible ${doc.docType}`)
-        return this.pouch.setLocalSeqAsync(change.seq)
       } else if (sideName === 'remote' && doc.trashed) {
         // File or folder was just deleted locally
         const byItself = await this.trashWithParentOrByItself(doc, side)
