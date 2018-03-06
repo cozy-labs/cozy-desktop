@@ -254,6 +254,7 @@ describe('Sync', function () {
       let doc = {
         _id: 'foo/baz',
         _rev: '1-abcdef',
+        moveFrom: was,
         docType: 'file',
         tags: ['qux'],
         sides: {
@@ -342,6 +343,7 @@ describe('Sync', function () {
       let doc = {
         _id: 'foobar/baz',
         _rev: '1-abcdef',
+        moveFrom: was,
         docType: 'folder',
         tags: ['qux'],
         sides: {

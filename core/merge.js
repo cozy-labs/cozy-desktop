@@ -264,6 +264,7 @@ class Merge {
       was.moveTo = doc._id
       was._deleted = true
       delete was.errors
+      doc.moveFrom = was
       if (file && sameFile(file, doc)) {
         return null
       } else if (file) {
@@ -299,6 +300,7 @@ class Merge {
       // FIXME: Shouldn't we compare doc/was updated_at & set doc accordingly
       // as in moveFileAsync?
       delete doc.trashed
+      doc.moveFrom = was
       if (folder) {
         const dst = await this.resolveConflictAsync(side, doc, folder)
         dst.sides = {}
@@ -339,6 +341,7 @@ class Merge {
       markSide(side, dst, src)
       dst._id = src.moveTo
       dst.path = doc.path.replace(was.path, folder.path)
+      dst.moveFrom = src
       delete dst._rev
       delete dst.errors
       // FIXME: Find a cleaner way to pass the syncPath to the Merge
