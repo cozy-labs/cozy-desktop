@@ -183,7 +183,7 @@ export default class RemoteWatcher {
         this.prep.config.syncPath
       )
       if (incompatibilities.length > 0) {
-        log.warn({path, incompatibilities})
+        log.trace({path, incompatibilities})
         this.events.emit('platform-incompatibilities', incompatibilities)
         doc.incompatibilities = incompatibilities
       }
@@ -353,7 +353,7 @@ export default class RemoteWatcher {
         await this.prep.moveFileAsync(sideName, change.doc, change.was)
         break
       case 'DirMove':
-        log.info({path}, 'folder was moved or renamed remotely')
+        log.info({path, oldpath: change.was.path}, 'folder was moved or renamed remotely')
         await this.prep.moveFolderAsync(sideName, change.doc, change.was)
         break
       case 'FileDissociation':

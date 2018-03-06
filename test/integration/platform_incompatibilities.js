@@ -116,11 +116,12 @@ suite('Platform incompatibilities', () => {
       should(await helpers.local.tree()).be.empty()
     })
 
-    test('add compatible dir with some incompatible content', async () => {
+    test('make compatible bottom-up', async () => {
       const docs = await helpers.remote.createTree([
         'd:ir/',
         'd:ir/sub:dir/',
-        'd:ir/sub:dir/f:ile'
+        'd:ir/sub:dir/f:ile',
+        'd:ir/sub:dir/subsubdir/'
       ])
       await helpers.pullAndSyncAll()
 
@@ -139,7 +140,8 @@ suite('Platform incompatibilities', () => {
       should(await helpers.local.tree()).deepEqual([
         'dir/',
         'dir/subdir/',
-        'dir/subdir/file'
+        'dir/subdir/file',
+        'dir/subdir/subsubdir/'
       ])
     })
 
@@ -250,10 +252,11 @@ suite('Platform incompatibilities', () => {
       await cozy.files.updateAttributesById(docs['dir/']._id, {name: 'dir'})
       await helpers.pullAndSyncAll()
       should(await helpers.local.tree()).deepEqual([
+        // XXX: We don't restore from OS trash for now. Hence the copy.
         '/Trash/dir/',
         '/Trash/dir/file',
-        'dir/'
-        // FIXME: 'dir/file'
+        'dir/',
+        'dir/file'
       ])
     })
   }

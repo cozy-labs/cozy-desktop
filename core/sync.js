@@ -225,18 +225,23 @@ class Sync {
       if (!side) {
         log.info({path: doc.path}, 'up to date')
         return this.pouch.setLocalSeqAsync(change.seq)
-      } else if (doc.incompatibilities && sideName === 'local') {
-        if (this.moveFrom != null) {
-          const was = this.moveFrom
-          this.moveFrom = null
-          log.warn({path: doc.path, oldpath: was.path, incompatibilities: doc.incompatibilities},
-            `Trashing ${sideName} ${doc.docType} since new remote one is incompatible`)
-          await side.trashAsync(was)
-          return
+      } else if (doc.incompatibilities && sideName === 'local' && doc.moveTo == null) {
+        const was = this.moveFrom
+        this.moveFrom = null
+        if (was != null && was.incompatibilities == null) {
+          // Move compatible -> incompatible
+          if (was.childMove == null) {
+            log.warn({path: doc.path, oldpath: was.path, incompatibilities: doc.incompatibilities},
+              `Trashing ${sideName} ${doc.docType} since new remote one is incompatible`)
+            await side.trashAsync(was)
+          } else {
+            log.debug({path: doc.path, incompatibilities: doc.incompatibilities},
+              `incompatible ${doc.docType} should have been trashed with parent`)
+          }
+        } else {
+          log.warn({path: doc.path, incompatibilities: doc.incompatibilities},
+            `Not syncing incompatible ${doc.docType}`)
         }
-        log.warn({path: doc.path, incompatibilities: doc.incompatibilities},
-          `Not syncing incompatible ${doc.docType}`)
-        return this.pouch.setLocalSeqAsync(change.seq)
       } else if (sideName === 'remote' && doc.trashed) {
         // File or folder was just deleted locally
         const byItself = await this.trashWithParentOrByItself(doc, side)
@@ -374,6 +379,10 @@ class Sync {
         from = (this.moveFrom: Metadata)
         this.moveFrom = null
         if (from.moveTo === doc._id && from.md5sum === doc.md5sum) {
+          if (from.incompatibilities) {
+            await side.addFileAsync(doc)
+            return
+          }
           if (from.childMove) {
             await side.assignNewRev(doc)
             return
@@ -433,6 +442,10 @@ class Sync {
         from = (this.moveFrom: Metadata)
         this.moveFrom = null
         if (from.moveTo === doc._id) {
+          if (from.incompatibilities) {
+            await side.addFolderAsync(doc)
+            return
+          }
           if (from.childMove) {
             await side.assignNewRev(doc)
             return
