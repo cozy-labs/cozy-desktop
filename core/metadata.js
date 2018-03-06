@@ -52,7 +52,8 @@ export type Metadata = {
   sides: MetadataSidesInfo,
   trashed?: true,
   incompatibilities?: *,
-  ino?: ?number
+  ino?: ?number,
+  moveFrom?: Metadata
 }
 
 let assignId: (doc: *) => void = (_) => {}
