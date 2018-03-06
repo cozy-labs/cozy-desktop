@@ -227,33 +227,12 @@ class Sync {
       if (!side) {
         log.info({path: doc.path}, 'up to date')
         return this.pouch.setLocalSeqAsync(change.seq)
-      } else if (doc.incompatibilities && sideName === 'local' && doc.moveTo == null) {
-        const was = this.moveFrom
-        this.moveFrom = null
-        if (was != null && was.incompatibilities == null) {
-          // Move compatible -> incompatible
-          if (was.childMove == null) {
-            log.warn({path: doc.path, oldpath: was.path, incompatibilities: doc.incompatibilities},
-              `Trashing ${sideName} ${doc.docType} since new remote one is incompatible`)
-            await side.trashAsync(was)
-          } else {
-            log.debug({path: doc.path, incompatibilities: doc.incompatibilities},
-              `incompatible ${doc.docType} should have been trashed with parent`)
-          }
-        } else {
-          log.warn({path: doc.path, incompatibilities: doc.incompatibilities},
-            `Not syncing incompatible ${doc.docType}`)
-        }
       } else if (sideName === 'remote' && doc.trashed) {
         // File or folder was just deleted locally
         const byItself = await this.trashWithParentOrByItself(doc, side)
         if (!byItself) { return }
-      } else if (doc.docType === 'file') {
-        await this.fileChangedAsync(doc, side, rev)
-      } else if (doc.docType === 'folder') {
-        await this.folderChangedAsync(doc, side, rev)
       } else {
-        throw new Error(`Unknown doctype: ${doc.docType}`)
+        await this.applyDoc(doc, side, sideName, rev)
       }
 
       log.trace(changeInfo, `Applied change on ${sideName} side`)
@@ -265,6 +244,97 @@ class Sync {
       await this.handleApplyError(change, err)
     } finally {
       stopMeasure()
+    }
+  }
+
+  async applyDoc (doc: Metadata, side: Side, sideName:string, rev: number): Promise<*> {
+    if (doc.incompatibilities && sideName === 'local' && doc.moveTo == null) {
+      const was = this.moveFrom
+      this.moveFrom = null
+      if (was != null && was.incompatibilities == null) {
+        // Move compatible -> incompatible
+        if (was.childMove == null) {
+          log.warn({path: doc.path, oldpath: was.path, incompatibilities: doc.incompatibilities},
+            `Trashing ${sideName} ${doc.docType} since new remote one is incompatible`)
+          await side.trashAsync(was)
+        } else {
+          log.debug({path: doc.path, incompatibilities: doc.incompatibilities},
+            `incompatible ${doc.docType} should have been trashed with parent`)
+        }
+      } else {
+        log.warn({path: doc.path, incompatibilities: doc.incompatibilities},
+          `Not syncing incompatible ${doc.docType}`)
+      }
+    } else if (doc.docType !== 'file' && doc.docType !== 'folder') {
+      throw new Error(`Unknown docType: ${doc.docType}`)
+    } else if (doc._deleted && (rev === 0)) {
+      // do nothing
+    } else if (doc.moveTo != null) {
+      // For a move, the first call will just keep a reference to the document,
+      // and only at the second call, the move operation will be executed.
+      this.moveFrom = doc
+    } else if (this.moveFrom != null) {
+      const from = (this.moveFrom: Metadata)
+      this.moveFrom = null
+      if (from.moveTo === doc._id && from.md5sum === doc.md5sum) {
+        if (from.incompatibilities) {
+          if (doc.docType === 'file') await side.addFileAsync(doc)
+          else await side.addFolderAsync(doc)
+        } else if (from.childMove) {
+          await side.assignNewRev(doc)
+        } else {
+          try {
+            if (doc.docType === 'file') await side.moveFileAsync(doc, from)
+            else await side.moveFolderAsync(doc, from)
+          } catch (err) {
+            this.moveFrom = from
+            throw err
+          }
+        }
+      } else {
+        // Since a move requires 2 PouchDB writes, in rare cases the source
+        // and the destination may not match anymore (race condition).
+        // As a fallback, we try to add the folder that should exist, and to
+        // trash the one that shouldn't.
+        log.error({path: doc.path}, 'Invalid move')
+        log.trace({from, doc})
+        try {
+          await side.trashAsync(from)
+        } catch (err) {
+          log.error({err, path: doc.path})
+        }
+        if (doc.docType === 'file') await side.addFileAsync(doc)
+        else await side.addFolderAsync(doc)
+      }
+    } else if (doc._deleted) {
+      if (doc.docType === 'file') await side.trashAsync(doc)
+      else side.deleteFolderAsync(doc)
+    } else if (rev === 0) {
+      if (doc.docType === 'file') await side.addFileAsync(doc)
+      else await side.addFolderAsync(doc)
+    } else {
+      let old
+      try {
+        old = await this.pouch.getPreviousRevAsync(doc._id, rev)
+      } catch (_) {
+        if (doc.docType === 'file') await side.overwriteFileAsync(doc, null)
+        else await side.addFolderAsync(doc)
+      }
+
+      if (old) {
+        if (doc.docType === 'folder') {
+          await side.updateFolderAsync(doc, old)
+        // $FlowFixMe
+        } else if (old.md5sum === doc.md5sum) {
+          if (sameFileIgnoreRev(old, doc)) {
+            log.trace({path: doc.path}, 'ignoring mtime-only change')
+          } else {
+            await side.updateFileMetadataAsync(doc, old)
+          }
+        } else {
+          await side.overwriteFileAsync(doc, old)
+        }
+      }
     }
   }
 
@@ -362,139 +432,6 @@ class Sync {
       } else {
         log.warn({path: doc.path, err}, 'Race condition')
       }
-    }
-  }
-
-  // If a file has been changed, we had to check what operation it is.
-  // For a move, the first call will just keep a reference to the document,
-  // and only at the second call, the move operation will be executed.
-  async fileChangedAsync (doc: Metadata, side: Side, rev: number): Promise<void> {
-    let from
-    switch (true) {
-      case doc._deleted && (rev === 0):
-        return
-      case doc.moveTo != null:
-        this.moveFrom = doc
-        return
-      case this.moveFrom != null:
-        // $FlowFixMe
-        from = (this.moveFrom: Metadata)
-        this.moveFrom = null
-        if (from.moveTo === doc._id && from.md5sum === doc.md5sum) {
-          if (from.incompatibilities) {
-            await side.addFileAsync(doc)
-            return
-          }
-          if (from.childMove) {
-            await side.assignNewRev(doc)
-            return
-          }
-          try {
-            await side.moveFileAsync(doc, from)
-          } catch (err) {
-            this.moveFrom = from
-            throw err
-          }
-        } else {
-          log.warn({path: doc.path}, 'Invalid move')
-          log.trace({from, doc})
-          try {
-            await side.trashAsync(from)
-          } catch (err) {
-            log.error({err, path: doc.path})
-          }
-          await side.addFileAsync(doc)
-        }
-        break
-      case doc._deleted:
-        try {
-          await side.trashAsync(doc)
-        } catch (err) {
-          throw err
-        }
-        break
-      case rev === 0:
-        await side.addFileAsync(doc)
-        break
-      default:
-        let old
-        try {
-          old = await this.pouch.getPreviousRevAsync(doc._id, rev)
-        } catch (_) {
-          await side.overwriteFileAsync(doc, null)
-          return
-        }
-
-        if (old.md5sum === doc.md5sum) {
-          if (sameFileIgnoreRev(old, doc)) {
-            log.trace({path: doc.path}, 'ignoring mtime-only change')
-          } else {
-            await side.updateFileMetadataAsync(doc, old)
-          }
-        } else {
-          await side.overwriteFileAsync(doc, old)
-        }
-    }
-  }
-
-  // Same as fileChanged, but for folder
-  async folderChangedAsync (doc: Metadata, side: Side, rev: number): Promise<void> {
-    let from
-    switch (true) {
-      case doc._deleted && (rev === 0):
-        return
-      case this.moveFrom != null:
-        // $FlowFixMe
-        from = (this.moveFrom: Metadata)
-        this.moveFrom = null
-        if (from.moveTo === doc._id) {
-          if (from.incompatibilities) {
-            await side.addFolderAsync(doc)
-            return
-          }
-          if (from.childMove) {
-            await side.assignNewRev(doc)
-            return
-          }
-          try {
-            await side.moveFolderAsync(doc, from)
-          } catch (err) {
-            this.moveFrom = from
-            throw err
-          }
-        } else {
-          // Since a move requires 2 PouchDB writes, in rare cases the source
-          // and the destination may not match anymore (race condition).
-          // As a fallback, we try to add the folder that should exist, and to
-          // trash the one that shouldn't.
-          log.error({path: doc.path}, 'Invalid move')
-          log.trace({from, doc})
-          try {
-            await side.trashAsync(from)
-          } catch (err) {
-            log.error({err})
-          }
-          await side.addFolderAsync(doc)
-        }
-        break
-      case doc.moveTo != null:
-        this.moveFrom = doc
-        return
-      case doc._deleted:
-        await side.deleteFolderAsync(doc)
-        return
-      case rev === 0:
-        await side.addFolderAsync(doc)
-        return
-      default:
-        let old
-        try {
-          old = await this.pouch.getPreviousRevAsync(doc._id, rev)
-        } catch (_) {
-          await side.addFolderAsync(doc)
-          return
-        }
-        await side.updateFolderAsync(doc, old)
     }
   }
 

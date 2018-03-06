@@ -189,7 +189,7 @@ describe('Sync', function () {
           local: 1
         }
       }
-      await this.sync.fileChangedAsync(doc, this.remote, 0)
+      await this.sync.applyDoc(doc, this.remote, 'remote', 0)
       this.remote.addFileAsync.calledWith(doc).should.be.true()
     })
 
@@ -210,7 +210,7 @@ describe('Sync', function () {
         remote: 1
       }
       await this.pouch.db.put(doc)
-      await this.sync.fileChangedAsync(doc, this.remote, 1)
+      await this.sync.applyDoc(doc, this.remote, 'remote', 1)
       this.remote.updateFileMetadataAsync.called.should.be.false()
       this.remote.overwriteFileAsync.calledWith(doc).should.be.true()
     })
@@ -232,7 +232,7 @@ describe('Sync', function () {
         remote: 1
       }
       await this.pouch.db.put(doc)
-      await this.sync.fileChangedAsync(doc, this.remote, 1)
+      await this.sync.applyDoc(doc, this.remote, 'remote', 1)
       this.remote.overwriteFileAsync.called.should.be.false()
       let ufm = this.remote.updateFileMetadataAsync
       ufm.calledWith(doc).should.be.true()
@@ -261,9 +261,9 @@ describe('Sync', function () {
           local: 1
         }
       }
-      await this.sync.fileChangedAsync(was, this.remote, 2)
+      await this.sync.applyDoc(was, this.remote, 'remote', 2)
       this.remote.trashAsync.called.should.be.false()
-      await this.sync.fileChangedAsync(doc, this.remote, 0)
+      await this.sync.applyDoc(doc, this.remote, 'remote', 0)
       this.remote.addFileAsync.called.should.be.false()
       this.remote.moveFileAsync.calledWith(doc, was).should.be.true()
     })
@@ -279,7 +279,7 @@ describe('Sync', function () {
           remote: 2
         }
       }
-      await this.sync.fileChangedAsync(doc, this.local, 1)
+      await this.sync.applyDoc(doc, this.local, 'local', 1)
       this.local.trashAsync.calledWith(doc).should.be.true()
     })
 
@@ -293,7 +293,7 @@ describe('Sync', function () {
           local: 2
         }
       }
-      await this.sync.fileChangedAsync(doc, this.remote, 0)
+      await this.sync.applyDoc(doc, this.remote, 'remote', 0)
       this.remote.trashAsync.called.should.be.false()
     })
 
@@ -306,7 +306,7 @@ describe('Sync', function () {
           local: 1
         }
       }
-      await this.sync.folderChangedAsync(doc, this.remote, 0)
+      await this.sync.applyDoc(doc, this.remote, 'remote', 0)
       this.remote.addFolderAsync.calledWith(doc).should.be.true()
     })
 
@@ -321,7 +321,7 @@ describe('Sync', function () {
           remote: 2
         }
       }
-      this.sync.folderChangedAsync(doc, this.local, 1).then(() => {
+      this.sync.applyDoc(doc, this.local, 'local', 1).then(() => {
         this.local.updateFolderAsync.calledWith(doc).should.be.true()
         done()
       })
@@ -350,9 +350,9 @@ describe('Sync', function () {
           local: 1
         }
       }
-      await this.sync.folderChangedAsync(was, this.remote, 2)
+      await this.sync.applyDoc(was, this.remote, 'remote', 2)
       this.remote.trashAsync.called.should.be.false()
-      await this.sync.folderChangedAsync(doc, this.remote, 0)
+      await this.sync.applyDoc(doc, this.remote, 'remote', 0)
       this.remote.addFolderAsync.called.should.be.false()
       this.remote.moveFolderAsync.calledWith(doc, was).should.be.true()
     })
@@ -368,7 +368,7 @@ describe('Sync', function () {
           remote: 2
         }
       }
-      await this.sync.folderChangedAsync(doc, this.local, 1)
+      await this.sync.applyDoc(doc, this.local, 'local', 1)
       this.local.deleteFolderAsync.calledWith(doc).should.be.true()
     })
 
@@ -382,7 +382,7 @@ describe('Sync', function () {
           local: 2
         }
       }
-      await this.sync.folderChangedAsync(doc, this.remote, 0)
+      await this.sync.applyDoc(doc, this.remote, 'remote', 0)
       this.remote.trashAsync.called.should.be.false()
     })
   })
