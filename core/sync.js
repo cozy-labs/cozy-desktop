@@ -249,8 +249,7 @@ class Sync {
 
   async applyDoc (doc: Metadata, side: Side, sideName:string, rev: number): Promise<*> {
     if (doc.incompatibilities && sideName === 'local' && doc.moveTo == null) {
-      const was = this.moveFrom
-      this.moveFrom = null
+      const was = doc.moveFrom
       if (was != null && was.incompatibilities == null) {
         // Move compatible -> incompatible
         if (was.childMove == null) {
@@ -270,41 +269,18 @@ class Sync {
     } else if (doc._deleted && (rev === 0)) {
       // do nothing
     } else if (doc.moveTo != null) {
-      // For a move, the first call will just keep a reference to the document,
-      // and only at the second call, the move operation will be executed.
-      this.moveFrom = doc
-    } else if (this.moveFrom != null) {
-      const from = (this.moveFrom: Metadata)
-      this.moveFrom = null
-      if (from.moveTo === doc._id && from.md5sum === doc.md5sum) {
-        if (from.incompatibilities) {
-          if (doc.docType === 'file') await side.addFileAsync(doc)
-          else await side.addFolderAsync(doc)
-        } else if (from.childMove) {
-          await side.assignNewRev(doc)
-        } else {
-          try {
-            if (doc.docType === 'file') await side.moveFileAsync(doc, from)
-            else await side.moveFolderAsync(doc, from)
-          } catch (err) {
-            this.moveFrom = from
-            throw err
-          }
-        }
-      } else {
-        // Since a move requires 2 PouchDB writes, in rare cases the source
-        // and the destination may not match anymore (race condition).
-        // As a fallback, we try to add the folder that should exist, and to
-        // trash the one that shouldn't.
-        log.error({path: doc.path}, 'Invalid move')
-        log.trace({from, doc})
-        try {
-          await side.trashAsync(from)
-        } catch (err) {
-          log.error({err, path: doc.path})
-        }
+      log.debug({path: doc.path}, `Ignoring deleted ${doc.docType} metadata as move source`)
+    } else if (doc.moveFrom != null) {
+      const from = (doc.moveFrom: Metadata)
+      // XXX: if (from.md5sum === doc.md5sum) ?
+      if (from.incompatibilities) {
         if (doc.docType === 'file') await side.addFileAsync(doc)
         else await side.addFolderAsync(doc)
+      } else if (from.childMove) {
+        await side.assignNewRev(doc)
+      } else {
+        if (doc.docType === 'file') await side.moveFileAsync(doc, from)
+        else await side.moveFolderAsync(doc, from)
       }
     } else if (doc._deleted) {
       if (doc.docType === 'file') await side.trashAsync(doc)
