@@ -212,12 +212,11 @@ class App {
       level: 3
     })
     const logs = fs.createReadStream(LOG_FILE)
-    const pouchdbTree = this.pouch.treeAsync().then(ids => JSON.stringify(ids))
+    const pouchdbTree = await this.pouch.treeAsync()
 
-    // Dont await
-    const logsSent = await Promise.all([
+    const logsSent = Promise.all([
       this.uploadFileToSupport(incidentID, 'logs.zip', logs.pipe(zipper)),
-      pouchdbTree.then(tree => this.uploadFileToSupport(incidentID, 'pouchdtree.json', tree))
+      this.uploadFileToSupport(incidentID, 'pouchdtree.json', JSON.stringify(pouchdbTree))
     ]).catch((err) => {
       log.error({err}, 'FAILED TO SEND LOGS')
     })
