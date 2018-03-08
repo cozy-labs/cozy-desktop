@@ -1,3 +1,39 @@
+## 3.5.0-beta.4 - 2018-03-08
+
+Improvements for all users:
+
+* Files and folders with name starting with a `.` will now be ignored by
+  default. We used to blacklist a few special hidden files and folders, but it
+  didn't prove an efficient way to prevent unsupported use cases and issues. So
+  we decided to go the opposite way. Please report specific issues with as many
+  context as possible so we can understand the actual need.
+* When sending a support request from the app, your logs are now uploaded
+  directly to our own servers. They're not sent by email anymore, so it should
+  work even with huge files (although the upload may take some time).
+* The app now detects and handle a few file and folder deletion events
+  miscategorized by a third-party component (very rare bug).
+* A few users where looking for the CLI, not knowing it was actually disabled.
+  The documentation was updated to reflect this.
+
+Improvements for Windows and macOS users:
+
+* When taking a folder with a platform-compatible name, renaming it with a
+  platform-incompatible name then renaming it back to a compatible one, files
+  were still not synced back (it worked in other cases though). This issue is
+  fixed now.
+
+Improvements for Windows users:
+
+* We added UI traces to help us spot a weird issue: at least 2 Windows users
+  recently reported blank windows when starting the app (at least one of them
+  solved the issue by switching to automatic video card selection, but we're
+  still investigating). In case you encountered this issue, please try again
+  with this new release and send us a support request from the app.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.5.0-beta.3 - 2018-03-02
 
 Improvements for all users:
