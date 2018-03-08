@@ -3,6 +3,10 @@
 const electron = require('electron')
 const {ipcRenderer, remote} = electron
 
+window.onerror = (message, url, line, column, err) => {
+  ipcRenderer.send('renderer-error', {message, stack: err.stack})
+}
+
 const pkg = remote.require('../package.json')
 const defaults = remote.require('./js/defaults')
 
