@@ -317,4 +317,14 @@ describe('Ignore', function () {
     }
     this.ignore.isIgnored(doc).should.be.true()
   })
+
+  it('does ignore any hidden file or directory', function () {
+    this.ignore = new Ignore([])
+    this.ignore.addDefaultRules()
+    let doc = {
+      _id: '.eclipse',
+      docType: 'folder'
+    }
+    this.ignore.isIgnored(doc).should.be.true()
+  })
 })
