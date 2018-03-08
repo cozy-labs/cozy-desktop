@@ -112,6 +112,9 @@ module.exports = class WindowManager {
     this.win = new BrowserWindow(opts)
     this.win.on('unresponsive', () => { this.log.warn('Web page becomes unresponsive') })
     this.win.on('responsive', () => { this.log.warn('Web page becomes responsive again') })
+    this.win.webContents.on('did-fail-load', (event, errorCode, errorDescription, url, isMainFrame) => {
+      this.log.error({errorCode, url, isMainFrame}, errorDescription)
+    })
     this.centerOnScreen(opts.width, opts.height)
 
     // openExternalLinks
