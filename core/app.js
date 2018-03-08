@@ -7,6 +7,10 @@ import os from 'os'
 import path from 'path'
 import readdirp from 'readdirp'
 import url from 'url'
+import uuid from 'uuid/v4'
+import https from 'https'
+import stream from 'stream'
+import {createGzip} from 'zlib'
 
 import './globals' // FIXME Use bluebird promises as long as we need asCallback
 import pkg from '../package.json'
@@ -171,11 +175,57 @@ class App {
     }
   }
 
+  async uploadFileToSupport (incident: string, name: string, data: string|stream.Readable) {
+    return new Promise((resolve, reject) => {
+      const req = https.request({
+        method: 'PUT',
+        protocol: 'https:',
+        hostname: 'desktop-upload.cozycloud.cc',
+        path: `/${incident}/${name}`,
+        headers: {
+          'Content-Type': 'text/plain'
+        }
+      }, (res) => {
+        if (res.statusCode === 201) {
+          resolve(null)
+        } else {
+          reject(new Error('Bad Status, expected 201, got ' + res.statusCode))
+        }
+      })
+      req.on('error', reject)
+
+      if (typeof data === 'string') {
+        req.write(data)
+        req.end()
+      } else {
+        data.pipe(req)
+      }
+    })
+  }
+
   // Send an issue by mail to the support
-  sendMailToSupport (content: string) {
-    const logs = fs.readFileSync(LOG_FILE, 'utf-8')
+  async sendMailToSupport (content: string) {
+    const incidentID = uuid()
+    const zipper = createGzip({
+      // TODO tweak this values, low resources for now.
+      memLevel: 7,
+      level: 3
+    })
+    const logs = fs.createReadStream(LOG_FILE)
+    const pouchdbTree = await this.pouch.treeAsync()
+
+    const logsSent = Promise.all([
+      this.uploadFileToSupport(incidentID, 'logs.zip', logs.pipe(zipper)),
+      this.uploadFileToSupport(incidentID, 'pouchdtree.json', JSON.stringify(pouchdbTree))
+    ]).catch((err) => {
+      log.error({err}, 'FAILED TO SEND LOGS')
+    })
+
     content = content + '\r\n\r\n-------- debug info --------\r\n' +
-      _.map(this.debugInformations(), (v, k) => `${k}: ${v}`).join('\r\n')
+      _.map(this.debugInformations(), (v, k) => `${k}: ${v}`).join('\r\n') +
+    '\r\n\r\n-------- log status --------\r\n' +
+    `incidentID: ${incidentID}`
+
     const args = {
       mode: 'from',
       to: [
@@ -184,12 +234,11 @@ class App {
       subject: 'Ask support for cozy-desktop',
       parts: [
         { type: 'text/plain', body: content }
-      ],
-      attachments: [
-        { filename: 'logs.txt', content: logs }
       ]
     }
-    return this.remote.sendMail(args)
+    const mailSent = this.remote.sendMail(args)
+
+    return Promise.all([mailSent, logsSent])
   }
 
   // Load ignore rules
