@@ -1,4 +1,5 @@
 const {BrowserWindow, ipcMain, shell} = require('electron')
+const _ = require('lodash')
 const path = require('path')
 const electron = require('electron')
 
@@ -23,6 +24,13 @@ module.exports = class WindowManager {
         throw new Error('undefined handler for event ' + name)
       }
       ipcMain.on(name, handlers[name].bind(this))
+    })
+    ipcMain.on('renderer-error', (event, err) => {
+      // Sender can be a WebContents instance not yet attached to this.win, so
+      // we compare the title from browserWindowOptions:
+      if (_.get(event, 'sender.browserWindowOptions.title') === this.windowOptions().title) {
+        this.log.error({err}, err.message)
+      }
     })
   }
 
