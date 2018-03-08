@@ -68,6 +68,19 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
 
   for (let e: LocalEvent of events) {
     try {
+      // chokidar make mistakes
+      if (e.type === 'unlinkDir' && e.old && e.old.docType === 'file') {
+        log.warn({event: e, old: e.old}, 'chokidar miscategorized event (was file, event unlinkDir)')
+        // $FlowFixMe
+        e.type = 'unlink'
+      }
+
+      if (e.type === 'unlink' && e.old && e.old.docType === 'folder') {
+        log.warn({event: e, old: e.old}, 'chokidar miscategorized event (was folder, event unlink)')
+        // $FlowFixMe
+        e.type = 'unlinkDir'
+      }
+
       switch (e.type) {
         case 'add':
           {

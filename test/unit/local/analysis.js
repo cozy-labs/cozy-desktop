@@ -162,6 +162,27 @@ describe('core/local/analysis', function () {
     should(pendingChanges).deepEqual([])
   })
 
+  it('handles chokidar mistakes', () => {
+    const old: Metadata = metadataBuilders.file().ino(1).build()
+    const stats = {ino: 1}
+    const events: LocalEvent[] = [
+      {type: 'unlinkDir', path: 'src', old},
+      {type: 'add', path: 'dst', stats, md5sum: 'yolo'}
+    ]
+    const pendingChanges: LocalChange[] = []
+    should(analysis(events, pendingChanges)).deepEqual([
+      {
+        sideName,
+        type: 'FileMove',
+        md5sum: 'yolo',
+        path: 'dst',
+        ino: 1,
+        stats,
+        old
+      }
+    ])
+  })
+
   it('sorts actions', () => {
     const dirStats = {ino: 1}
     const subdirStats = {ino: 2}
