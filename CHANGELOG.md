@@ -1,3 +1,31 @@
+## 3.5.0 - 2018-03-12
+
+This is the same release as [3.5.0-beta.4](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.5.0-beta.4),
+but the version has been updated.
+
+Main changes:
+
+- Improved upload reliability
+- Files and folders with name starting with a `.` are now ignored by default.
+  If this is an issue for you, please contact us and explain your use case.
+- Support requests from the app now uploads your logs directly to our servers.
+- When a platform-incompatible folder name is fixed, its files are synced too.
+- You can choose to sync a non-empty folder.
+- You can exit without confirming unattended revocation and try again later.
+- We added traces to spot weird blank page issue on Windows, please try with
+  this new release and send us your logs.
+
+And more... See previous beta releases for more details:
+
+- [3.5.0-beta.4](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.5.0-beta.4)
+- [3.5.0-beta.3](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.5.0-beta.3)
+- [3.5.0-beta.2](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.5.0-beta.2)
+- [3.5.0-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.5.0-beta.1)
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.5.0-beta.4 - 2018-03-08
 
 Improvements for all users:
