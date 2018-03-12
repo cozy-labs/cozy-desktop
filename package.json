@@ -120,7 +120,7 @@
     "debug-menu": "^0.6.1",
     "del": "^2.2.2",
     "devtron": "^1.4.0",
-    "electron": "^1.7.9",
+    "electron": "^1.8.3",
     "electron-builder": "^19.48.3",
     "electron-mocha": "^3.4.2",
     "elm": "^0.18.0",
