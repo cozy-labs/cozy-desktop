@@ -193,6 +193,7 @@ elmectron.ports.showHelp.subscribe(() => {
 
 // Chrome-like "inspect element" for Electron
 if (process.env.WATCH === 'true' || process.env.DEBUG === 'true') {
+  // eslint-disable-next-line node/no-unpublished-require
   const debugMenu = require('debug-menu')
   debugMenu.install()
   window.elmectron = elmectron
