@@ -1,0 +1,4 @@
+# Make eslint-node happy
+dev/
+elm-stuff/
+test/

@@ -15,6 +15,9 @@
     "type": "git",
     "url": "git://github.com/cozy-labs/cozy-desktop.git"
   },
+  "engines": {
+    "node": ">=8.2.1"
+  },
   "keywords": [
     "Electron",
     "desktop",
