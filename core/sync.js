@@ -232,6 +232,7 @@ class Sync {
         if (!byItself) { return }
       } else {
         await this.applyDoc(doc, side, sideName, rev)
+        delete doc.moveFrom
       }
 
       log.trace(changeInfo, `Applied change on ${sideName} side`)
