@@ -47,7 +47,6 @@ class Sync {
   pouch: Pouch
   remote: Remote
   stopped: ?boolean
-  moveFrom: ?Metadata
   moveTo: ?string
 
   static TRASHING_DELAY = TRASHING_DELAY
@@ -208,7 +207,7 @@ class Sync {
       seq,
       sides: doc.sides,
       moveTo: doc.moveTo,
-      moveFrom: this.moveFrom && this.moveFrom._id
+      moveFrom: doc.moveFrom
     }
     log.debug(changeInfo, 'Applying change...')
     log.trace({change})
