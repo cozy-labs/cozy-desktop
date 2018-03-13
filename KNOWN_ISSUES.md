@@ -39,6 +39,11 @@ Please report any other issue you may encounter by using the app help form.
 * Logs can grow up a lot. We want to reduce the default verbosity, but it
   currently helps us a lot with synchronisation issues.
 
+## Windows specific issues
+
+* In case the app shows a white window, this *may* have something to do with the
+  GPU settings. See [related electron issue](https://github.com/electron/electron/issues/4380).
+
 ## macOS integration
 
 * The systray icon/menu doesn't behave exactly the same as native ones: missing
