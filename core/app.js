@@ -54,7 +54,7 @@ class App {
 
   // basePath is the directory where the config and pouch are saved
   constructor (basePath: string) {
-    log.info(this.debugInformations(), 'App initialization')
+    log.info(this.clientInfo(), 'constructor')
     this.lang = 'fr'
     if (basePath == null) { basePath = os.homedir() }
     basePath = path.resolve(basePath)
@@ -222,7 +222,7 @@ class App {
     })
 
     content = content + '\r\n\r\n-------- debug info --------\r\n' +
-      _.map(this.debugInformations(), (v, k) => `${k}: ${v}`).join('\r\n') +
+      _.map(this.clientInfo(), (v, k) => `${k}: ${v}`).join('\r\n') +
     '\r\n\r\n-------- log status --------\r\n' +
     `incidentID: ${incidentID}`
 
@@ -283,6 +283,7 @@ class App {
 
   // Start database sync process and setup file change watcher
   synchronize (mode: SyncMode) {
+    log.info(this.clientInfo(), 'synchronize')
     if (!this.config.isValid()) {
       log.error('No configuration found, please run add-remote-cozy' +
                 'command before running a synchronization.')
@@ -299,7 +300,7 @@ class App {
     }
   }
 
-  debugInformations () {
+  clientInfo () {
     const config = this.config || {}
 
     return {

@@ -47,6 +47,14 @@ def is_issue: (is_warn or is_conflict) and (is_non_issue | not);
 def select_issue: select(is_issue);
 def find_issues: select_issue|{component,path,msg,time};
 
+# Config info
+def find_client_info:
+  select(.appVersion)
+    |del(.name)
+    |del(.level)
+    |del(.v)
+    ;
+
 # Utils
 def frequencies:
   reduce .[] as $x ({};

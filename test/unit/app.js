@@ -124,12 +124,12 @@ describe('App', function () {
     }
   })
 
-  describe('debugInformations', () => {
+  describe('clientInfo', () => {
     it('works when app is not configured', () => {
       const basePath = fs.mkdtempSync(path.join(os.tmpdir(), 'base-dir-'))
       const app = new App(basePath)
 
-      const info = app.debugInformations()
+      const info = app.clientInfo()
 
       should(info.appVersion).equal(version)
       should(info.configPath).startWith(basePath)
@@ -147,7 +147,7 @@ describe('App', function () {
       configHelpers.registerClient.call(this)
       const app = new App(this.basePath)
 
-      const info = app.debugInformations()
+      const info = app.clientInfo()
 
       should(info.appVersion).equal(version)
       should(info.configPath).startWith(this.basePath)
