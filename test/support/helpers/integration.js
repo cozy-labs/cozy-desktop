@@ -1,23 +1,23 @@
 /* @flow */
 
-import cozy from 'cozy-client-js'
-import { pick } from 'lodash'
-import sinon from 'sinon'
+const cozy = require('cozy-client-js')
+const { pick } = require('lodash')
+const sinon = require('sinon')
 
-import Config from '../../../core/config'
-import Ignore from '../../../core/ignore'
-import Local from '../../../core/local'
-import Merge from '../../../core/merge'
-import Pouch from '../../../core/pouch'
-import Prep from '../../../core/prep'
-import Remote from '../../../core/remote'
-import Sync from '../../../core/sync'
-import SyncState from '../../../core/syncstate'
+const Config = require('../../../core/config')
+const Ignore = require('../../../core/ignore')
+const Local = require('../../../core/local')
+const Merge = require('../../../core/merge')
+const Pouch = require('../../../core/pouch')
+const Prep = require('../../../core/prep')
+const Remote = require('../../../core/remote')
+const Sync = require('../../../core/sync')
+const SyncState = require('../../../core/syncstate')
 
-import { LocalTestHelpers } from './local'
-import { RemoteTestHelpers } from './remote'
+const { LocalTestHelpers } = require('./local')
+const { RemoteTestHelpers } = require('./remote')
 
-export class IntegrationTestHelpers {
+class IntegrationTestHelpers {
   local: LocalTestHelpers
   remote: RemoteTestHelpers
   prep: Prep
@@ -74,4 +74,8 @@ export class IntegrationTestHelpers {
 
     return results
   }
+}
+
+module.exports = {
+  IntegrationTestHelpers
 }

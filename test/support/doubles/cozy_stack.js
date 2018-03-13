@@ -1,8 +1,8 @@
-import http from 'http'
+const http = require('http')
 
 // A fake HTTP server, to be used in place of the cozy-stack for integration
 // testing purpose (e.g. to simulate failures).
-export default class CozyStackDouble {
+module.exports = class CozyStackDouble {
   constructor () {
     this.clearStub()
 

@@ -1,12 +1,5 @@
 /* @flow */
 
-import path from 'path'
-
-import { getInode } from './event'
-import * as localChange from './change'
-import logger from '../logger'
-import measureTime from '../perftools'
-
 import type { LocalEvent } from './event'
 import type {
   LocalChange,
@@ -18,6 +11,13 @@ import type {
   LocalFileMove
 } from './change'
 
+const path = require('path')
+
+const { getInode } = require('./event')
+const localChange = require('./change')
+const logger = require('../logger')
+const measureTime = require('../perftools')
+
 const log = logger({
   component: 'LocalWatcher'
 })
@@ -25,7 +25,7 @@ log.chokidar = log.child({
   component: 'Chokidar'
 })
 
-export default function analysis (events: LocalEvent[], pendingChanges: LocalChange[]): LocalChange[] {
+module.exports = function analysis (events: LocalEvent[], pendingChanges: LocalChange[]): LocalChange[] {
   const changes: LocalChange[] = analyseEvents(events, pendingChanges)
   sortBeforeSquash(changes)
   squashMoves(changes)

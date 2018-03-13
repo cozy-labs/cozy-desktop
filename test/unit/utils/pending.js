@@ -1,9 +1,9 @@
 /* eslint-env mocha */
 /* @flow */
 
-import should from 'should'
+const should = require('should')
 
-import { PendingMap } from '../../../core/utils/pending'
+const { PendingMap } = require('../../../core/utils/pending')
 
 import type { Pending } from '../../../core/utils/pending' // eslint-disable-line
 

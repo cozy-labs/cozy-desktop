@@ -1,10 +1,10 @@
-import 'source-map-support/register'
+require('source-map-support/register')
 
-import { start } from 'repl'
+const { start } = require('repl')
 
-import '../core/globals'
-import App from '../core/app'
-import { IntegrationTestHelpers } from '../test/support/helpers/integration'
+require('../core/globals')
+const App = require('../core/app')
+const { IntegrationTestHelpers } = require('../test/support/helpers/integration')
 
 const app = new App(process.env.COZY_DESKTOP_DIR)
 const config = app.config

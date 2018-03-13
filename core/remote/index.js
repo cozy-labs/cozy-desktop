@@ -1,28 +1,28 @@
 /* @flow */
 
-import EventEmitter from 'events'
-import { posix, sep } from 'path'
-
-import Config from '../config'
-import * as conversion from '../conversion'
-import RemoteCozy from './cozy'
-import logger from '../logger'
-import Pouch from '../pouch'
-import Prep from '../prep'
-import Watcher from './watcher'
-import measureTime from '../perftools'
-import { withContentLength } from '../file_stream_provider'
-
 import type { RemoteDoc } from './document'
-import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider'
+import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider' // eslint-disable-line
 import type { Metadata } from '../metadata'
 import type { Side } from '../side' // eslint-disable-line
+
+const EventEmitter = require('events')
+const { posix, sep } = require('path')
+
+const Config = require('../config')
+const conversion = require('../conversion')
+const RemoteCozy = require('./cozy')
+const logger = require('../logger')
+const Pouch = require('../pouch')
+const Prep = require('../prep')
+const Watcher = require('./watcher')
+const measureTime = require('../perftools')
+const { withContentLength } = require('../file_stream_provider')
 
 const log = logger({
   component: 'RemoteWriter'
 })
 
-export default class Remote implements Side {
+module.exports = class Remote implements Side {
   other: FileStreamProvider
   pouch: Pouch
   events: EventEmitter

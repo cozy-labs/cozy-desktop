@@ -1,15 +1,15 @@
 /* eslint-env mocha */
 
-import fs from 'fs-extra'
-import os from 'os'
-import path from 'path'
-import should from 'should'
+const fs = require('fs-extra')
+const os = require('os')
+const path = require('path')
+const should = require('should')
 
-import App from '../../core/app'
-import { LOG_FILENAME } from '../../core/logger'
-import { version } from '../../package.json'
+const App = require('../../core/app')
+const { LOG_FILENAME } = require('../../core/logger')
+const { version } = require('../../package.json')
 
-import configHelpers from '../support/helpers/config'
+const configHelpers = require('../support/helpers/config')
 
 describe('App', function () {
   describe('parseCozyUrl', function () {

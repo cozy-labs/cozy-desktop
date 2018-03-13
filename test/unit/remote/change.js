@@ -1,5 +1,5 @@
-import {describe, it} from 'mocha'
-import * as remoteChange from '../../../core/remote/change'
+const {describe, it} = require('mocha')
+const remoteChange = require('../../../core/remote/change')
 
 describe('remote change sort', () => {
   it('sort correctly move inside move', () => {

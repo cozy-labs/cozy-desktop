@@ -1,12 +1,12 @@
-import fs from 'fs-extra'
-import _ from 'lodash'
-import path from 'path'
+const fs = require('fs-extra')
+const _ = require('lodash')
+const path = require('path')
 
-import { hideOnWindows } from './utils/fs'
+const { hideOnWindows } = require('./utils/fs')
 
 // Config can keep some configuration parameters in a JSON file,
 // like the devices credentials or the mount path
-export default class Config {
+module.exports = class Config {
   // Create config file if it doesn't exist.
   constructor (basePath) {
     this.configPath = path.join(basePath, 'config.json')

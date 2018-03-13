@@ -1,22 +1,22 @@
 /* @flow */
 
-import Promise from 'bluebird'
-import fs from 'fs-extra'
-import path from 'path'
-import rimraf from 'rimraf'
-
-import * as conflictHelpers from './conflict'
-import { SyncDirTestHelpers } from './sync_dir'
-
-import { TMP_DIR_NAME } from '../../../core/local/constants'
-import Local from '../../../core/local'
-
 import type { ChokidarEvent } from '../../../core/local/chokidar_event'
+
+const Promise = require('bluebird')
+const fs = require('fs-extra')
+const path = require('path')
+const rimraf = require('rimraf')
+
+const conflictHelpers = require('./conflict')
+const { SyncDirTestHelpers } = require('./sync_dir')
+
+const { TMP_DIR_NAME } = require('../../../core/local/constants')
+const Local = require('../../../core/local')
 
 Promise.promisifyAll(fs)
 const rimrafAsync = Promise.promisify(rimraf)
 
-export function posixifyPath (localPath: string): string {
+function posixifyPath (localPath: string): string {
   return localPath.split(path.sep).join(path.posix.sep)
 }
 
@@ -48,7 +48,7 @@ async function tree (rootPath: string): Promise<string[]> {
   return relPaths.sort((a, b) => a.localeCompare(b))
 }
 
-export class LocalTestHelpers {
+class LocalTestHelpers {
   local: Local
   syncDir: SyncDirTestHelpers
 
@@ -112,4 +112,9 @@ export class LocalTestHelpers {
   async simulateEvents (events: ChokidarEvent[]) {
     return this.local.watcher.onFlush(events)
   }
+}
+
+module.exports = {
+  posixifyPath,
+  LocalTestHelpers
 }

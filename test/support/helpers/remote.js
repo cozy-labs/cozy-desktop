@@ -1,18 +1,18 @@
 /* @flow */
 
-import cozy from 'cozy-client-js'
-import _ from 'lodash'
-import path from 'path'
-
-import * as conflictHelpers from './conflict'
-
-import Pouch from '../../../core/pouch'
-import Remote from '../../../core/remote'
-import { TRASH_DIR_NAME } from '../../../core/remote/constants'
-
 import type { RemoteDoc } from '../../../core/remote/document'
 
-export class RemoteTestHelpers {
+const cozy = require('cozy-client-js')
+const _ = require('lodash')
+const path = require('path')
+
+const conflictHelpers = require('./conflict')
+
+const Pouch = require('../../../core/pouch')
+const Remote = require('../../../core/remote')
+const { TRASH_DIR_NAME } = require('../../../core/remote/constants')
+
+class RemoteTestHelpers {
   remote: Remote
 
   constructor (remote: Remote) {
@@ -102,4 +102,8 @@ export class RemoteTestHelpers {
   async simulateChanges (docs: *) {
     await this.remote.watcher.pullMany(docs)
   }
+}
+
+module.exports = {
+  RemoteTestHelpers
 }

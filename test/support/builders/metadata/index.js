@@ -1,11 +1,11 @@
 /* @flow */
 
-import Pouch from '../../../../core/pouch'
+const Pouch = require('../../../../core/pouch')
 
-import DirMetadataBuilder from './dir'
-import FileMetadataBuilder from './file'
+const DirMetadataBuilder = require('./dir')
+const FileMetadataBuilder = require('./file')
 
-export default class MetadataBuilders {
+module.exports = class MetadataBuilders {
   pouch: ?Pouch
 
   constructor (pouch: ?Pouch) {

@@ -1,28 +1,28 @@
 /* @flow */
 
-import async from 'async'
-import EventEmitter from 'events'
-import fs from 'fs-extra'
-import path from 'path'
-import trash from 'trash'
-
-import bluebird from 'bluebird'
-
-import Config from '../config'
-import { TMP_DIR_NAME } from './constants'
-import logger from '../logger'
-import { isUpToDate } from '../metadata'
-import Pouch from '../pouch'
-import Prep from '../prep'
-import { hideOnWindows } from '../utils/fs'
-import Watcher from './watcher'
-import measureTime from '../perftools'
-import { withContentLength } from '../file_stream_provider'
-
-import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider'
+import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider' // eslint-disable-line
 import type { Metadata } from '../metadata'
 import type { Side } from '../side' // eslint-disable-line
 import type { Callback } from '../utils/func'
+
+const async = require('async')
+const EventEmitter = require('events')
+const fs = require('fs-extra')
+const path = require('path')
+const trash = require('trash')
+
+const bluebird = require('bluebird')
+
+const Config = require('../config')
+const { TMP_DIR_NAME } = require('./constants')
+const logger = require('../logger')
+const { isUpToDate } = require('../metadata')
+const Pouch = require('../pouch')
+const Prep = require('../prep')
+const { hideOnWindows } = require('../utils/fs')
+const Watcher = require('./watcher')
+const measureTime = require('../perftools')
+const { withContentLength } = require('../file_stream_provider')
 
 bluebird.promisifyAll(fs)
 
@@ -32,7 +32,7 @@ const log = logger({
 // Local is the class that interfaces cozy-desktop with the local filesystem.
 // It uses a watcher, based on chokidar, to listen for file and folder changes.
 // It also applied changes from the remote cozy on the local filesystem.
-class Local implements Side {
+module.exports = class Local implements Side {
   prep: Prep
   pouch: Pouch
   events: EventEmitter
@@ -393,5 +393,3 @@ class Local implements Side {
 
   renameConflictingDocAsync: (doc: Metadata, newPath: string) => Promise<void>
 }
-
-export default Local

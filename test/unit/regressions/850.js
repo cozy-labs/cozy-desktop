@@ -1,22 +1,22 @@
 /* eslint-env mocha */
 
-import fs from 'fs-extra'
-import path from 'path'
-import sinon from 'sinon'
+const fs = require('fs-extra')
+const path = require('path')
+const sinon = require('sinon')
 // import should from 'should'
 
 // import { TMP_DIR_NAME } from '../../../core/local/constants'
-import * as ChokidarEvent from '../../../core/local/chokidar_event'
-import Watcher from '../../../core/local/watcher'
-import Merge from '../../../core/merge'
-import Prep from '../../../core/prep'
-import Ignore from '../../../core/ignore'
-import Sync from '../../../core/sync'
-import * as metadata from '../../../core/metadata'
-import * as conversion from '../../../core/conversion'
+const ChokidarEvent = require('../../../core/local/chokidar_event')
+const Watcher = require('../../../core/local/watcher')
+const Merge = require('../../../core/merge')
+const Prep = require('../../../core/prep')
+const Ignore = require('../../../core/ignore')
+const Sync = require('../../../core/sync')
+const metadata = require('../../../core/metadata')
+const conversion = require('../../../core/conversion')
 
-import configHelpers from '../../support/helpers/config'
-import pouchHelpers from '../../support/helpers/pouch'
+const configHelpers = require('../../support/helpers/config')
+const pouchHelpers = require('../../support/helpers/pouch')
 
 describe('issue 850', function () {
   this.timeout(10000)

@@ -1,17 +1,17 @@
 /* eslint-env mocha */
 
-import async from 'async'
-import Promise from 'bluebird'
-import jsv from 'jsverify'
-import path from 'path'
-import should from 'should'
-import sinon from 'sinon'
-import { uniq } from 'lodash'
+const async = require('async')
+const Promise = require('bluebird')
+const jsv = require('jsverify')
+const path = require('path')
+const should = require('should')
+const sinon = require('sinon')
+const { uniq } = require('lodash')
 
-import * as metadata from '../../core/metadata'
+const metadata = require('../../core/metadata')
 
-import configHelpers from '../support/helpers/config'
-import pouchHelpers from '../support/helpers/pouch'
+const configHelpers = require('../support/helpers/config')
+const pouchHelpers = require('../support/helpers/pouch')
 
 describe('Pouch', function () {
   before('instanciate config', configHelpers.createConfig)

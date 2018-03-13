@@ -1,13 +1,13 @@
 // @flow
 
-import { assignId } from '../../../../core/metadata'
-import BaseMetadataBuilder from './base'
-
 import type { Metadata } from '../../../../core/metadata'
 
-import pouchdbBuilders from '../pouchdb'
+const { assignId } = require('../../../../core/metadata')
+const BaseMetadataBuilder = require('./base')
 
-export default class DirMetadataBuilder extends BaseMetadataBuilder {
+const pouchdbBuilders = require('../pouchdb')
+
+module.exports = class DirMetadataBuilder extends BaseMetadataBuilder {
   build (): Metadata {
     const doc = {
       ...this.opts,

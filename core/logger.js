@@ -1,18 +1,18 @@
 /* @flow weak */
 
-import bunyan from 'bunyan'
-import fs from 'fs-extra'
-import os from 'os'
-import path from 'path'
-import _ from 'lodash'
+const bunyan = require('bunyan')
+const fs = require('fs-extra')
+const os = require('os')
+const path = require('path')
+const _ = require('lodash')
 
-export const LOG_DIR = path.join(process.env.COZY_DESKTOP_DIR || os.homedir(), '.cozy-desktop')
-export const LOG_FILENAME = 'logs.txt'
-export const LOG_FILE = path.join(LOG_DIR, LOG_FILENAME)
+const LOG_DIR = path.join(process.env.COZY_DESKTOP_DIR || os.homedir(), '.cozy-desktop')
+const LOG_FILENAME = 'logs.txt'
+const LOG_FILE = path.join(LOG_DIR, LOG_FILENAME)
 
 fs.ensureDirSync(LOG_DIR)
 
-export const defaultLogger = bunyan.createLogger({
+const defaultLogger = bunyan.createLogger({
   name: 'Cozy Desktop',
   level: 'trace',
   serializers: {
@@ -49,4 +49,8 @@ function logger (options) {
   return defaultLogger.child(options)
 }
 
-export default logger
+logger.defaultLogger = defaultLogger
+logger.LOG_DIR = LOG_DIR
+logger.LOG_FILENAME = LOG_FILENAME
+logger.LOG_FILE = LOG_FILE
+module.exports = logger

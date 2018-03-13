@@ -1,7 +1,7 @@
 /* @flow weak */
 
-import { basename, dirname } from 'path'
-import { matcher, makeRe } from 'micromatch'
+const { basename, dirname } = require('path')
+const { matcher, makeRe } = require('micromatch')
 
 export type IgnorePattern = {
   match: (string) => boolean,
@@ -152,4 +152,4 @@ class Ignore {
 }
 Ignore.initClass()
 
-export default Ignore
+module.exports = Ignore

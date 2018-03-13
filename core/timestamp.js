@@ -2,7 +2,20 @@
 
 export type Timestamp = Date
 
-export function InvalidTimestampError (obj: any) {
+module.exports = {
+  InvalidTimestampError,
+  valid,
+  ensureValid,
+  build,
+  current,
+  fromDate,
+  same,
+  sameDate,
+  maxDate,
+  stringify
+}
+
+function InvalidTimestampError (obj: any) {
   this.name = 'InvalidTimestampError'
 
   this.message = `
@@ -46,13 +59,13 @@ function same (t1: Timestamp, t2: Timestamp): boolean {
 }
 
 // Return true if the two dates are the same, +/- 3 seconds
-export function sameDate (one: any, two: any) {
+function sameDate (one: any, two: any) {
   one = +new Date(one)
   two = +new Date(two)
   return Math.abs(two - one) < 3000
 }
 
-export function maxDate (d1: Date, d2: Date): Date {
+function maxDate (d1: Date, d2: Date): Date {
   return (d1.getTime() > d2.getTime()) ? d1 : d2
 }
 
@@ -60,14 +73,4 @@ function stringify (t: Timestamp) {
   ensureValid(t)
 
   return t.toISOString().substring(0, 19) + 'Z'
-}
-
-export default {
-  valid,
-  ensureValid,
-  build,
-  current,
-  fromDate,
-  same,
-  stringify
 }

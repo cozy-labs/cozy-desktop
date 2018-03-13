@@ -1,16 +1,17 @@
 /* @flow */
 
-import { clone, isEqual, pick } from 'lodash'
-import mime from 'mime'
-import path, { join } from 'path'
-
-import logger from './logger'
-import { detectPathIssues, detectPathLengthIssue } from './path_restrictions'
-import { maxDate } from './timestamp'
-
 import type fs from 'fs'
 import type { PathIssue } from './path_restrictions'
 import type { PathObject } from './utils/path'
+
+const { clone, isEqual, pick } = require('lodash')
+const mime = require('mime')
+const path = require('path')
+const { join } = path
+
+const logger = require('./logger')
+const { detectPathIssues, detectPathLengthIssue } = require('./path_restrictions')
+const { maxDate } = require('./timestamp')
 
 const log = logger({
   component: 'Metadata'
@@ -54,11 +55,7 @@ export type Metadata = {
   ino?: ?number
 }
 
-export const isFile = (doc: Metadata): bool => {
-  return doc.docType === 'file'
-}
-
-export let assignId: (doc: *) => void = (_) => {}
+let assignId: (doc: *) => void = (_) => {}
 
 switch (process.platform) {
   case 'linux': case 'freebsd': case 'sunos':
@@ -73,6 +70,29 @@ switch (process.platform) {
   default:
     log.error(`Sorry, ${process.platform} is not supported!`)
     process.exit(1)
+}
+
+module.exports = {
+  assignId,
+  isFile,
+  id,
+  invalidPath,
+  ensureValidPath,
+  detectPlatformIncompatibilities,
+  invalidChecksum,
+  ensureValidChecksum,
+  extractRevNumber,
+  isUpToDate,
+  sameFolder,
+  sameFile,
+  sameBinary,
+  markSide,
+  buildDir,
+  buildFile
+}
+
+function isFile (doc: Metadata): bool {
+  return doc.docType === 'file'
 }
 
 // Build an _id from the path for a case sensitive file system (Linux, BSD)
@@ -103,7 +123,7 @@ function assignIdNTFS (doc: *) {
 // Generate an id from the given path.
 // Side-effect-free version of assignId().
 // TODO: Use id() in assignId(), not the opposite.
-export function id (path: string) {
+function id (path: string) {
   const doc: Object = {path}
   assignId(doc)
   return doc._id
@@ -113,7 +133,7 @@ export function id (path: string) {
 // (ie a path inside the mount point).
 // Normalizes the path as a side-effect.
 // TODO: Separate normalization (side-effect) from validation (pure).
-export function invalidPath (doc: PathObject) {
+function invalidPath (doc: PathObject) {
   if (!doc.path) { return true }
   doc.path = path.normalize(doc.path)
   if (doc.path.startsWith(path.sep)) {
@@ -126,7 +146,7 @@ export function invalidPath (doc: PathObject) {
 }
 
 // Same as invalidPath, except it throws an exception when path is invalid.
-export function ensureValidPath (doc: PathObject) {
+function ensureValidPath (doc: PathObject) {
   if (invalidPath(doc)) {
     log.warn({path: doc.path}, `Invalid path: ${JSON.stringify(doc, null, 2)}`)
     throw new Error('Invalid path')
@@ -138,7 +158,7 @@ export type PlatformIncompatibility = PathIssue & {docType: string}
 // Identifies platform incompatibilities in metadata that will prevent local
 // synchronization
 // TODO: return null instead of an empty array when no issue was found?
-export function detectPlatformIncompatibilities (metadata: Metadata, syncPath: string): Array<PlatformIncompatibility> {
+function detectPlatformIncompatibilities (metadata: Metadata, syncPath: string): Array<PlatformIncompatibility> {
   const {path, docType} = metadata
   const pathLenghIssue = detectPathLengthIssue(join(syncPath, path), process.platform)
   const issues: PathIssue[] = detectPathIssues(path, docType)
@@ -153,7 +173,7 @@ export function detectPlatformIncompatibilities (metadata: Metadata, syncPath: s
 // If the checksum is missing, it is invalid.
 // MD5 has 16 bytes.
 // Base64 encoding must include padding.
-export function invalidChecksum (doc: Metadata) {
+function invalidChecksum (doc: Metadata) {
   if (doc.md5sum == null) return doc.docType === 'file'
 
   const buffer = Buffer.from(doc.md5sum, 'base64')
@@ -162,7 +182,7 @@ export function invalidChecksum (doc: Metadata) {
     buffer.toString('base64') !== doc.md5sum
 }
 
-export function ensureValidChecksum (doc: Metadata) {
+function ensureValidChecksum (doc: Metadata) {
   if (invalidChecksum(doc)) {
     log.warn({path: doc.path}, `Invalid checksum: ${JSON.stringify(doc, null, 2)}`)
     throw new Error('Invalid checksum')
@@ -170,7 +190,7 @@ export function ensureValidChecksum (doc: Metadata) {
 }
 
 // Extract the revision number, or 0 it not found
-export function extractRevNumber (infos: Metadata) {
+function extractRevNumber (infos: Metadata) {
   try {
     // $FlowFixMe
     let rev = infos._rev.split('-')[0]
@@ -181,7 +201,7 @@ export function extractRevNumber (infos: Metadata) {
 }
 
 // Return true if the remote file is up-to-date for this document
-export function isUpToDate (side: SideName, doc: Metadata) {
+function isUpToDate (side: SideName, doc: Metadata) {
   let currentRev = doc.sides[side] || 0
   let lastRev = extractRevNumber(doc)
   return currentRev === lastRev
@@ -190,7 +210,7 @@ export function isUpToDate (side: SideName, doc: Metadata) {
 // Return true if the metadata of the two folders are the same
 // For updated_at, we accept up to 3s of differences because we can't
 // rely on file systems to be precise to the millisecond.
-export function sameFolder (one: Metadata, two: Metadata) {
+function sameFolder (one: Metadata, two: Metadata) {
   const {path} = two
   let fields = ['_id', 'docType', 'remote', 'tags', 'trashed', 'ino']
   one = pick(one, fields)
@@ -203,7 +223,7 @@ export function sameFolder (one: Metadata, two: Metadata) {
 // Return true if the metadata of the two files are the same
 // For updated_at, we accept up to 3s of differences because we can't
 // rely on file systems to be precise to the millisecond.
-export function sameFile (one: Metadata, two: Metadata) {
+function sameFile (one: Metadata, two: Metadata) {
   const {path} = two
   let fields = ['_id', 'docType', 'md5sum', 'remote', 'tags', 'size', 'trashed', 'ino']
   one = {...pick(one, fields), executable: !!one.executable}
@@ -214,7 +234,7 @@ export function sameFile (one: Metadata, two: Metadata) {
 }
 
 // Return true if the two files have the same binary content
-export function sameBinary (one: Metadata, two: Metadata) {
+function sameBinary (one: Metadata, two: Metadata) {
   return one.md5sum === two.md5sum
 }
 
@@ -225,7 +245,7 @@ export function sameBinary (one: Metadata, two: Metadata) {
 // revision from the previous state, increment it by one to have the next
 // revision and associate this number to the side that makes the
 // modification.
-export function markSide (side: string, doc: Metadata, prev: ?Metadata): Metadata {
+function markSide (side: string, doc: Metadata, prev: ?Metadata): Metadata {
   let rev = 0
   if (prev) { rev = extractRevNumber(prev) }
   if (doc.sides == null) {
@@ -236,7 +256,7 @@ export function markSide (side: string, doc: Metadata, prev: ?Metadata): Metadat
   return doc
 }
 
-export function buildDir (path: string, stats: fs.Stats): Metadata {
+function buildDir (path: string, stats: fs.Stats): Metadata {
   const doc: Object = {
     _id: id(path),
     path,
@@ -250,7 +270,7 @@ export function buildDir (path: string, stats: fs.Stats): Metadata {
 
 const EXECUTABLE_MASK = 1 << 6
 
-export const buildFile = (filePath: string, stats: fs.Stats, md5sum: string): Metadata => {
+function buildFile (filePath: string, stats: fs.Stats, md5sum: string): Metadata {
   const mimeType = mime.lookup(filePath)
   const {mtime, ctime} = stats
   let doc: Object = {

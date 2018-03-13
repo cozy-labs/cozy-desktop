@@ -1,15 +1,15 @@
 /* eslint-env mocha */
 /* @flow */
 
-import Promise from 'bluebird'
-import fs from 'fs-extra'
-import path from 'path'
+const Promise = require('bluebird')
+const fs = require('fs-extra')
+const path = require('path')
 
-import Watcher from '../../../core/local/watcher'
-import * as metadata from '../../../core/metadata'
+const Watcher = require('../../../core/local/watcher')
+const metadata = require('../../../core/metadata')
 
-import configHelpers from '../../support/helpers/config'
-import pouchHelpers from '../../support/helpers/pouch'
+const configHelpers = require('../../support/helpers/config')
+const pouchHelpers = require('../../support/helpers/pouch')
 
 class SpyPrep {
   calls: *

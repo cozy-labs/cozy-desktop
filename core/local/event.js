@@ -22,7 +22,11 @@ export type LocalEvent =
   | LocalFileUnlinked
   | LocalFileUpdated
 
-export const getInode = (e: LocalEvent): ?number => {
+module.exports = {
+  getInode
+}
+
+function getInode (e: LocalEvent): ?number {
   switch (e.type) {
     case 'add':
     case 'addDir':

@@ -1,17 +1,17 @@
 /* eslint-env mocha */
 
-import _, { clone } from 'lodash'
-import fs from 'fs-extra'
-import should from 'should'
-import path from 'path'
+const _ = require('lodash')
+const fs = require('fs-extra')
+const should = require('should')
+const path = require('path')
 
-import { onPlatform } from '../support/helpers/platform'
+const { onPlatform } = require('../support/helpers/platform')
 
-import {
+const {
   assignId, extractRevNumber, invalidChecksum, invalidPath, markSide,
   detectPlatformIncompatibilities, sameBinary, sameFile, sameFolder, buildDir,
   buildFile
-} from '../../core/metadata'
+} = require('../../core/metadata')
 
 describe('metadata', function () {
   describe('assignId', function () {
@@ -372,11 +372,11 @@ describe('metadata', function () {
           rev: '4-567'
         }
       }
-      let b = clone(a)
+      let b = _.clone(a)
       b.executable = undefined
-      let c = clone(a)
+      let c = _.clone(a)
       c.executable = false
-      let d = clone(a)
+      let d = _.clone(a)
       d.executable = true
       sameFile(a, b).should.be.true()
       sameFile(a, c).should.be.true()

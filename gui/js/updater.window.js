@@ -1,7 +1,7 @@
 const WindowManager = require('./window_manager')
 const {autoUpdater} = require('electron-updater')
 
-const log = require('../../core-built/app.js').default.logger({
+const log = require('../../core-built/app').logger({
   component: 'GUI:autoupdater'
 })
 

@@ -1,9 +1,10 @@
 /* eslint-env mocha */
 
-import should from 'should'
-import sinon from 'sinon'
+const should = require('should')
+const sinon = require('sinon')
 
-import timestamp, { InvalidTimestampError, maxDate, sameDate } from '../../core/timestamp'
+const timestamp = require('../../core/timestamp')
+const { InvalidTimestampError, maxDate, sameDate } = timestamp
 
 // XXX: Pass strings to javascript's Date constructor everywhere, so the tests
 //      don't depend on the current timezone.

@@ -1,9 +1,11 @@
 /* @flow */
 
-import logger from './logger'
+const logger = require('./logger')
 const log = logger({
   component: 'PerfReports'
 })
+
+module.exports = measureTime
 
 var store = {}
 
@@ -12,7 +14,7 @@ function ellapsedMillis (startHRTime: [number, number]) {
   return (sec * 1000) + (nano / 1000000)
 }
 
-export default function measureTime (key: string): () => void {
+function measureTime (key: string): () => void {
   if (!process.env.MEASURE_PERF) return () => {}
   store[key] = store[key] || {nb: 0, time: 0}
   const startTime = process.hrtime()

@@ -1,30 +1,30 @@
 /* @flow */
 /* eslint-env mocha */
 
-import crypto from 'crypto'
-import EventEmitter from 'events'
-import fs from 'fs-extra'
-import { pick } from 'lodash'
-import path from 'path'
-import sinon from 'sinon'
-import should from 'should'
-
-import * as conversion from '../../../core/conversion'
-import { ensureValidPath } from '../../../core/metadata'
-import Prep from '../../../core/prep'
-import Remote from '../../../core/remote'
-import { TRASH_DIR_ID } from '../../../core/remote/constants'
-import timestamp from '../../../core/timestamp'
-
 import type { Metadata } from '../../../core/metadata'
 import type { RemoteDoc, JsonApiDoc } from '../../../core/remote/document'
 
-import MetadataBuilders from '../../support/builders/metadata'
-import configHelpers from '../../support/helpers/config'
-import pouchHelpers from '../../support/helpers/pouch'
-import {
+const crypto = require('crypto')
+const EventEmitter = require('events')
+const fs = require('fs-extra')
+const { pick } = require('lodash')
+const path = require('path')
+const sinon = require('sinon')
+const should = require('should')
+
+const conversion = require('../../../core/conversion')
+const { ensureValidPath } = require('../../../core/metadata')
+const Prep = require('../../../core/prep')
+const Remote = require('../../../core/remote')
+const { TRASH_DIR_ID } = require('../../../core/remote/constants')
+const timestamp = require('../../../core/timestamp')
+
+const MetadataBuilders = require('../../support/builders/metadata')
+const configHelpers = require('../../support/helpers/config')
+const pouchHelpers = require('../../support/helpers/pouch')
+const {
   cozy, builders, deleteAll, createTheCouchdbFolder
-} from '../../support/helpers/cozy'
+} = require('../../support/helpers/cozy')
 
 const metadataBuilders = new MetadataBuilders()
 

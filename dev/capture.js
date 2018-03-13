@@ -1,11 +1,11 @@
 #!/usr/bin/env babel-node
 
-import program from 'commander'
-import path from 'path'
+const program = require('commander')
+const path = require('path')
 
-import local from './capture/local'
-import remote from './capture/remote'
-import scenarioHelpers from '../test/support/helpers/scenarios'
+const local = require('./capture/local')
+const remote = require('./capture/remote')
+const scenarioHelpers = require('../test/support/helpers/scenarios')
 
 program
   .description('Capture FS events')

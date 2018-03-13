@@ -1,30 +1,30 @@
 /* @flow */
 /* eslint-env mocha */
 
-import async from 'async'
-import EventEmitter from 'events'
-import { clone } from 'lodash'
-import path from 'path'
-import sinon from 'sinon'
-import should from 'should'
-import { Client as CozyClient } from 'cozy-client-js'
-
-import pouchdbBuilders from '../../support/builders/pouchdb'
-import configHelpers from '../../support/helpers/config'
-import { onPlatform } from '../../support/helpers/platform'
-import pouchHelpers from '../../support/helpers/pouch'
-import { builders } from '../../support/helpers/cozy'
-
-import { createMetadata } from '../../../core/conversion'
-import * as metadata from '../../../core/metadata'
-import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } from '../../../core/remote/constants'
-import Prep from '../../../core/prep'
-import RemoteCozy from '../../../core/remote/cozy'
-import RemoteWatcher from '../../../core/remote/watcher'
-
 import type { RemoteChange } from '../../../core/remote/change'
 import type { RemoteDoc, RemoteDeletion } from '../../../core/remote/document'
 import type { Metadata } from '../../../core/metadata'
+
+const async = require('async')
+const EventEmitter = require('events')
+const { clone } = require('lodash')
+const path = require('path')
+const sinon = require('sinon')
+const should = require('should')
+const CozyClient = require('cozy-client-js').Client
+
+const pouchdbBuilders = require('../../support/builders/pouchdb')
+const configHelpers = require('../../support/helpers/config')
+const { onPlatform } = require('../../support/helpers/platform')
+const pouchHelpers = require('../../support/helpers/pouch')
+const { builders } = require('../../support/helpers/cozy')
+
+const { createMetadata } = require('../../../core/conversion')
+const metadata = require('../../../core/metadata')
+const { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } = require('../../../core/remote/constants')
+const Prep = require('../../../core/prep')
+const RemoteCozy = require('../../../core/remote/cozy')
+const RemoteWatcher = require('../../../core/remote/watcher')
 
 const { assignId, ensureValidPath } = metadata
 

@@ -1,16 +1,16 @@
 /* @flow */
 
-import { Client as CozyClient } from 'cozy-client-js'
-import path from 'path'
-import { Readable } from 'stream'
-
-import Config from '../config'
-import { FILES_DOCTYPE, FILE_TYPE } from './constants'
-import { dropSpecialDocs, jsonApiToRemoteDoc, keepFiles, parentDirIds } from './document'
-import logger from '../logger'
-import { composeAsync } from '../utils/func'
-
 import type { RemoteDoc, RemoteDeletion } from './document'
+
+const CozyClient = require('cozy-client-js').Client
+const path = require('path')
+const { Readable } = require('stream')
+
+const Config = require('../config')
+const { FILES_DOCTYPE, FILE_TYPE } = require('./constants')
+const { dropSpecialDocs, jsonApiToRemoteDoc, keepFiles, parentDirIds } = require('./document')
+const logger = require('../logger')
+const { composeAsync } = require('../utils/func')
 
 const { posix } = path
 
@@ -18,7 +18,7 @@ const log = logger({
   component: 'RemoteCozy'
 })
 
-export function DirectoryNotFound (path: string, cozyURL: string) {
+function DirectoryNotFound (path: string, cozyURL: string) {
   this.name = 'DirectoryNotFound'
   this.message = `Directory ${path} was not found on Cozy ${cozyURL}`
   this.stack = (new Error()).stack
@@ -31,9 +31,11 @@ export function DirectoryNotFound (path: string, cozyURL: string) {
 // - deal with parsing and errors
 // - provide custom functions (that may eventually be merged into the lib)
 //
-export default class RemoteCozy {
+class RemoteCozy {
   url: string
   client: CozyClient
+
+  static DirectoryNotFound = DirectoryNotFound
 
   constructor (config: Config) {
     this.url = config.cozyUrl
@@ -185,3 +187,5 @@ export default class RemoteCozy {
     doc.path = path.posix.join(parentDir.path, doc.name)
   }
 }
+
+module.exports = RemoteCozy

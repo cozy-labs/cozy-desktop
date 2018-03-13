@@ -1,16 +1,16 @@
 /* @flow */
 
-import Promise from 'bluebird'
-import fs from 'fs-extra'
-import _ from 'lodash'
-import path from 'path'
+const Promise = require('bluebird')
+const fs = require('fs-extra')
+const _ = require('lodash')
+const path = require('path')
 
-import * as metadata from '../../core/metadata'
-import Pouch from '../../core/pouch'
-import RemoteCozy from '../../core/remote/cozy'
+const metadata = require('../../core/metadata')
+const Pouch = require('../../core/pouch')
+const RemoteCozy = require('../../core/remote/cozy')
 
-import configHelpers from '../../test/support/helpers/config'
-import * as cozyHelpers from '../../test/support/helpers/cozy'
+const configHelpers = require('../../test/support/helpers/config')
+const cozyHelpers = require('../../test/support/helpers/cozy')
 
 const debug = process.env.DEBUG != null ? console.log : (...args) => {}
 
@@ -171,7 +171,7 @@ const captureScenario = async (scenario: *) => {
   return path.basename(changesFile)
 }
 
-export default {
+module.exports = {
   name: 'remote',
   createInitialTree,
   runActions,

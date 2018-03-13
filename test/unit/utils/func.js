@@ -1,9 +1,9 @@
 /* @flow */
 /* eslint-env mocha */
 
-import should from 'should'
+const should = require('should')
 
-import { composeAsync } from '../../../core/utils/func'
+const { composeAsync } = require('../../../core/utils/func')
 
 describe('utils', () => {
   describe('composeAsync', () => {

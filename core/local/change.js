@@ -1,11 +1,5 @@
 /* @flow */
 
-import fs from 'fs'
-import _ from 'lodash'
-import path from 'path'
-
-import logger from '../logger'
-
 import type { Metadata } from '../metadata'
 import type {
   LocalDirAdded,
@@ -14,6 +8,39 @@ import type {
   LocalFileAdded,
   LocalFileUnlinked
 } from './event'
+
+const fs = require('fs')
+const _ = require('lodash')
+const path = require('path')
+
+const logger = require('../logger')
+
+module.exports = {
+  build,
+  maybeAddFile,
+  maybePutFolder,
+  maybeMoveFile,
+  maybeMoveFolder,
+  maybeDeleteFile,
+  maybeDeleteFolder,
+  find,
+  isChildMove,
+  addPath,
+  delPath,
+  childOf,
+  lower,
+  isChildDelete,
+  isChildAdd,
+  toString,
+  fromEvent,
+  fileMoveFromUnlinkAdd,
+  dirMoveFromUnlinkAdd,
+  fileMoveFromAddUnlink,
+  dirMoveFromAddUnlink,
+  includeAddEventInFileMove,
+  includeAddDirEventInDirMove,
+  convertFileMoveToDeletion
+}
 
 const log = logger({
   component: 'LocalWatcher'
@@ -39,21 +66,21 @@ export type LocalChange =
 const sideName = 'local'
 
 // TODO: Introduce specific builders?
-export const build = (type: string, path: string, opts?: {stats?: fs.Stats, md5sum?: string, old?: ?Metadata}): LocalChange => {
+function build (type: string, path: string, opts?: {stats?: fs.Stats, md5sum?: string, old?: ?Metadata}): LocalChange {
   const change: Object = _.assign({sideName, type, path}, opts)
   if (change.wip == null) delete change.wip
   if (change.md5sum == null) delete change.md5sum
   return change
 }
 
-export const maybeAddFile = (a: ?LocalChange): ?LocalFileAddition => (a && a.type === 'FileAddition') ? a : null
-export const maybePutFolder = (a: ?LocalChange): ?LocalDirAddition => (a && a.type === 'DirAddition') ? a : null
-export const maybeMoveFile = (a: ?LocalChange): ?LocalFileMove => (a && a.type === 'FileMove') ? a : null
-export const maybeMoveFolder = (a: ?LocalChange): ?LocalDirMove => (a && a.type === 'DirMove') ? a : null
-export const maybeDeleteFile = (a: ?LocalChange): ?LocalFileDeletion => (a && a.type === 'FileDeletion') ? a : null
-export const maybeDeleteFolder = (a: ?LocalChange): ?LocalDirDeletion => (a && a.type === 'DirDeletion') ? a : null
+function maybeAddFile (a: ?LocalChange): ?LocalFileAddition { return (a && a.type === 'FileAddition') ? a : null }
+function maybePutFolder (a: ?LocalChange): ?LocalDirAddition { return (a && a.type === 'DirAddition') ? a : null }
+function maybeMoveFile (a: ?LocalChange): ?LocalFileMove { return (a && a.type === 'FileMove') ? a : null }
+function maybeMoveFolder (a: ?LocalChange): ?LocalDirMove { return (a && a.type === 'DirMove') ? a : null }
+function maybeDeleteFile (a: ?LocalChange): ?LocalFileDeletion { return (a && a.type === 'FileDeletion') ? a : null }
+function maybeDeleteFolder (a: ?LocalChange): ?LocalDirDeletion { return (a && a.type === 'DirDeletion') ? a : null }
 
-export const find = <T>(changes: LocalChange[], maybeRightType: (LocalChange) => ?T, predicate: (T) => boolean, remove?: true): ?T => {
+function find<T> (changes: LocalChange[], maybeRightType: (LocalChange) => ?T, predicate: (T) => boolean, remove?: true): ?T {
   for (let i = 0; i < changes.length; i++) {
     const anyChange = changes[i]
     const rightTypeChange: ?T = maybeRightType(anyChange)
@@ -64,7 +91,7 @@ export const find = <T>(changes: LocalChange[], maybeRightType: (LocalChange) =>
   }
 }
 
-export const isChildMove = (a: LocalChange, b: LocalChange): boolean %checks => {
+function isChildMove (a: LocalChange, b: LocalChange): boolean %checks {
   return a.type === 'DirMove' &&
          (b.type === 'DirMove' || b.type === 'FileMove') &&
         b.path.indexOf(a.path + path.sep) === 0 &&
@@ -76,18 +103,18 @@ const isDelete = (a: LocalChange): boolean %checks => a.type === 'DirDeletion' |
 const isAdd = (a: LocalChange): boolean %checks => a.type === 'DirAddition' || a.type === 'FileAddition'
 const isMove = (a: LocalChange): boolean %checks => a.type === 'DirMove' || a.type === 'FileMove'
 
-export const addPath = (a: LocalChange): ?string => isAdd(a) || isMove(a) ? a.path : null
-export const delPath = (a: LocalChange): ?string => isDelete(a) ? a.path : isMove(a) ? a.old.path : null
-export const childOf = (p1: ?string, p2: ?string): boolean => p1 != null && p2 != null && p2 !== p1 && p2.startsWith(p1 + path.sep)
-export const lower = (p1: ?string, p2: ?string): boolean => p1 != null && p2 != null && p2 !== p1 && p1 < p2
+function addPath (a: LocalChange): ?string { return isAdd(a) || isMove(a) ? a.path : null }
+function delPath (a: LocalChange): ?string { return isDelete(a) ? a.path : isMove(a) ? a.old.path : null }
+function childOf (p1: ?string, p2: ?string): boolean { return p1 != null && p2 != null && p2 !== p1 && p2.startsWith(p1 + path.sep) }
+function lower (p1: ?string, p2: ?string): boolean { return p1 != null && p2 != null && p2 !== p1 && p1 < p2 }
 
-export const isChildDelete = (a: LocalChange, b: LocalChange) => childOf(delPath(a), delPath(b))
-export const isChildAdd = (a: LocalChange, b: LocalChange) => childOf(addPath(a), addPath(b))
+function isChildDelete (a: LocalChange, b: LocalChange) { return childOf(delPath(a), delPath(b)) }
+function isChildAdd (a: LocalChange, b: LocalChange) { return childOf(addPath(a), addPath(b)) }
 
 // $FlowFixMe
-export const toString = (a: LocalChange): string => '(' + a.type + ': ' + (a.old && a.old.path) + '-->' + a.path + ')'
+function toString (a: LocalChange): string { return '(' + a.type + ': ' + (a.old && a.old.path) + '-->' + a.path + ')' }
 
-export const fromEvent = (e: LocalEvent) : LocalChange => {
+function fromEvent (e: LocalEvent): LocalChange {
   switch (e.type) {
     case 'unlinkDir':
       return {sideName, type: 'DirDeletion', path: e.path, old: e.old, ino: (e.old != null ? e.old.ino : null)}
@@ -104,7 +131,7 @@ export const fromEvent = (e: LocalEvent) : LocalChange => {
   }
 }
 
-export const fileMoveFromUnlinkAdd = (unlinkChange: LocalFileDeletion, e: LocalFileAdded): * => {
+function fileMoveFromUnlinkAdd (unlinkChange: LocalFileDeletion, e: LocalFileAdded): * {
   log.debug({oldpath: unlinkChange.path, path: e.path, ino: unlinkChange.ino}, 'File moved')
   return build('FileMove', e.path, {
     stats: e.stats,
@@ -115,7 +142,7 @@ export const fileMoveFromUnlinkAdd = (unlinkChange: LocalFileDeletion, e: LocalF
   })
 }
 
-export const dirMoveFromUnlinkAdd = (unlinkChange: LocalDirDeletion, e: LocalDirAdded): * => {
+function dirMoveFromUnlinkAdd (unlinkChange: LocalDirDeletion, e: LocalDirAdded): * {
   log.debug({oldpath: unlinkChange.path, path: e.path}, 'moveFolder')
   return build('DirMove', e.path, {
     stats: e.stats,
@@ -125,7 +152,7 @@ export const dirMoveFromUnlinkAdd = (unlinkChange: LocalDirDeletion, e: LocalDir
   })
 }
 
-export const fileMoveFromAddUnlink = (addChange: LocalFileAddition, e: LocalFileUnlinked): * => {
+function fileMoveFromAddUnlink (addChange: LocalFileAddition, e: LocalFileUnlinked): * {
   log.debug({oldpath: e.path, path: addChange.path, ino: addChange.ino}, 'File moved')
   return build('FileMove', addChange.path, {
     stats: addChange.stats,
@@ -136,7 +163,7 @@ export const fileMoveFromAddUnlink = (addChange: LocalFileAddition, e: LocalFile
   })
 }
 
-export const dirMoveFromAddUnlink = (addChange: LocalDirAddition, e: LocalDirUnlinked): * => {
+function dirMoveFromAddUnlink (addChange: LocalDirAddition, e: LocalDirUnlinked): * {
   log.debug({oldpath: e.path, path: addChange.path}, 'moveFolder')
   return build('DirMove', addChange.path, {
     stats: addChange.stats,
@@ -164,7 +191,7 @@ const ensureValidMoveEvent = (moveChange: LocalMove, event: LocalMoveEvent) => {
   if (!moveChange.wip) throw new InvalidLocalMoveEvent(moveChange, event)
 }
 
-export const includeAddEventInFileMove = (moveChange: LocalFileMove, e: LocalFileAdded) => {
+function includeAddEventInFileMove (moveChange: LocalFileMove, e: LocalFileAdded) {
   ensureValidMoveEvent(moveChange, e)
   moveChange.path = e.path
   moveChange.stats = e.stats
@@ -175,7 +202,7 @@ export const includeAddEventInFileMove = (moveChange: LocalFileMove, e: LocalFil
     'File move completing')
 }
 
-export const includeAddDirEventInDirMove = (moveChange: LocalDirMove, e: LocalDirAdded) => {
+function includeAddDirEventInDirMove (moveChange: LocalDirMove, e: LocalDirAdded) {
   ensureValidMoveEvent(moveChange, e)
   moveChange.path = e.path
   moveChange.stats = e.stats
@@ -185,7 +212,7 @@ export const includeAddDirEventInDirMove = (moveChange: LocalDirMove, e: LocalDi
    'Folder move completing')
 }
 
-export const convertFileMoveToDeletion = (change: LocalFileMove) => {
+function convertFileMoveToDeletion (change: LocalFileMove) {
   log.debug({path: change.old.path, ino: change.ino},
     'File was moved then deleted. Deleting origin directly.')
   // $FlowFixMe

@@ -1,10 +1,10 @@
 /* @flow */
 
-import Pouch from '../../../../core/pouch'
-
 import type { Metadata, MetadataSidesInfo } from '../../../../core/metadata'
 
-export default class BaseMetadataBuilder {
+const Pouch = require('../../../../core/pouch')
+
+module.exports = class BaseMetadataBuilder {
   pouch: ?Pouch
   opts: {
     path: string,

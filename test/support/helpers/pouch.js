@@ -1,9 +1,9 @@
-import path from 'path'
+const path = require('path')
 
-import { assignId } from '../../../core/metadata'
-import Pouch from '../../../core/pouch'
+const { assignId } = require('../../../core/metadata')
+const Pouch = require('../../../core/pouch')
 
-export default {
+module.exports = {
   createDatabase (done) {
     this.pouch = new Pouch(this.config)
     return this.pouch.addAllViews(done)

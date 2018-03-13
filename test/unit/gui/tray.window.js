@@ -1,8 +1,8 @@
 /* eslint-env mocha */
 
-import should from 'should'
+const should = require('should')
 
-import { popoverBounds } from '../../../gui/js/tray.window'
+const { popoverBounds } = require('../../../gui/js/tray.window')
 
 describe('tray.window', () => {
   describe('popoverBounds', () => {

@@ -1,14 +1,14 @@
 /* eslint-env mocha */
 
-import sinon from 'sinon'
-import should from 'should'
+const sinon = require('sinon')
+const should = require('should')
 
-import Ignore from '../../core/ignore'
-import Sync from '../../core/sync'
+const Ignore = require('../../core/ignore')
+const Sync = require('../../core/sync')
 
-import stubSide from '../support/doubles/side'
-import configHelpers from '../support/helpers/config'
-import pouchHelpers from '../support/helpers/pouch'
+const stubSide = require('../support/doubles/side')
+const configHelpers = require('../support/helpers/config')
+const pouchHelpers = require('../support/helpers/pouch')
 
 describe('Sync', function () {
   before('instanciate config', configHelpers.createConfig)

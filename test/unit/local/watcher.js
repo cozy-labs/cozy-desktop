@@ -1,16 +1,16 @@
 /* eslint-env mocha */
 
-import fs from 'fs-extra'
-import path from 'path'
-import sinon from 'sinon'
-import should from 'should'
+const fs = require('fs-extra')
+const path = require('path')
+const sinon = require('sinon')
+const should = require('should')
 
-import { TMP_DIR_NAME } from '../../../core/local/constants'
-import Watcher from '../../../core/local/watcher'
-import * as metadata from '../../../core/metadata'
+const { TMP_DIR_NAME } = require('../../../core/local/constants')
+const Watcher = require('../../../core/local/watcher')
+const metadata = require('../../../core/metadata')
 
-import configHelpers from '../../support/helpers/config'
-import pouchHelpers from '../../support/helpers/pouch'
+const configHelpers = require('../../support/helpers/config')
+const pouchHelpers = require('../../support/helpers/pouch')
 
 describe('LocalWatcher Tests', function () {
   before('instanciate config', configHelpers.createConfig)

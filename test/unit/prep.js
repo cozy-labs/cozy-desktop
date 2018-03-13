@@ -1,10 +1,10 @@
 /* eslint-env mocha */
 
-import sinon from 'sinon'
-import should from 'should'
+const sinon = require('sinon')
+const should = require('should')
 
-import Ignore from '../../core/ignore'
-import Prep from '../../core/prep'
+const Ignore = require('../../core/ignore')
+const Prep = require('../../core/prep')
 
 describe('Prep', function () {
   beforeEach('instanciate prep', function () {

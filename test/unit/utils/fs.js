@@ -1,15 +1,15 @@
 /* @flow */
 /* eslint-env mocha */
 
-import Promise from 'bluebird'
-import childProcess from 'child_process'
-import fs from 'fs-extra'
-import path from 'path'
-import should from 'should'
+const Promise = require('bluebird')
+const childProcess = require('child_process')
+const fs = require('fs-extra')
+const path = require('path')
+const should = require('should')
 
-import { hideOnWindows } from '../../../core/utils/fs'
+const { hideOnWindows } = require('../../../core/utils/fs')
 
-import configHelpers from '../../support/helpers/config'
+const configHelpers = require('../../support/helpers/config')
 
 Promise.promisifyAll(childProcess)
 Promise.promisifyAll(fs)

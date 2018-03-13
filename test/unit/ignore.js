@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 
-import Ignore from '../../core/ignore'
+const Ignore = require('../../core/ignore')
 
 describe('Ignore', function () {
   it('rejects blank lines for patterns', function () {

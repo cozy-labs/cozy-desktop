@@ -1,12 +1,12 @@
 /* @flow */
 
-import { Cozy } from 'cozy-client-js'
-import uuid from 'uuid/v4'
-
-import { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID, TRASH_DIR_NAME } from '../../../../core/remote/constants'
-import timestamp from '../../../../core/timestamp'
-
 import type { RemoteDoc } from '../../../../core/remote/document'
+
+const { Cozy } = require('cozy-client-js')
+const uuid = require('uuid/v4')
+
+const { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID, TRASH_DIR_NAME } = require('../../../../core/remote/constants')
+const timestamp = require('../../../../core/timestamp')
 
 const ROOT_DIR_PROPERTIES = {
   _id: ROOT_DIR_ID,
@@ -18,7 +18,7 @@ const TRASH_DIR_PROPERTIES = {
   path: `/${TRASH_DIR_NAME}`
 }
 
-export default class RemoteBaseBuilder {
+module.exports = class RemoteBaseBuilder {
   cozy: Cozy
   options: {
     contentType?: string,

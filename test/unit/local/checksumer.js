@@ -1,12 +1,12 @@
 /* eslint-env mocha */
 /* @flow */
 
-import fs from 'fs'
-import should from 'should'
-import sinon from 'sinon'
-import { Readable } from 'stream'
+const fs = require('fs')
+const should = require('should')
+const sinon = require('sinon')
+const { Readable } = require('stream')
 
-import { init } from '../../../core/local/checksumer'
+const { init } = require('../../../core/local/checksumer')
 
 describe('local/checksumer', () => {
   let checksumer

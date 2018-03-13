@@ -1,17 +1,17 @@
 /* @flow */
 
-import { clone } from 'lodash'
-import { basename, dirname, extname, join } from 'path'
-
-import Local from './local'
-import logger from './logger'
-import { isUpToDate, markSide, sameBinary, sameFile, sameFolder, detectPlatformIncompatibilities } from './metadata'
-import Pouch from './pouch'
-import Remote from './remote'
-import { otherSide } from './side'
-import * as fsutils from './utils/fs'
-
 import type { SideName, Metadata } from './metadata'
+
+const { clone } = require('lodash')
+const { basename, dirname, extname, join } = require('path')
+
+const Local = require('./local')
+const logger = require('./logger')
+const { isUpToDate, markSide, sameBinary, sameFile, sameFolder, detectPlatformIncompatibilities } = require('./metadata')
+const Pouch = require('./pouch')
+const Remote = require('./remote')
+const { otherSide } = require('./side')
+const fsutils = require('./utils/fs')
 
 const log = logger({
   component: 'Merge'
@@ -533,4 +533,4 @@ class Merge {
   }
 }
 
-export default Merge
+module.exports = Merge

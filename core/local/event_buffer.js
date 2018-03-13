@@ -16,7 +16,7 @@ type FlushCallback<EventType> = (EventType[]) => any
 //
 // Right now this class is in the local/ namespace because this is where it is
 // used, but it could be anywhere else since it doesn't have any dependency.
-export default class EventBuffer<EventType> {
+module.exports = class EventBuffer<EventType> {
   events: EventType[]
   mode: EventBufferMode
   timeoutInMs: number

@@ -15,7 +15,11 @@ export type ChokidarEvent =
   | ChokidarUnlink
   | ChokidarUnlinkDir
 
-export const build = (type: string, path?: string, stats?: fs.Stats): ChokidarEvent => {
+module.exports = {
+  build
+}
+
+function build (type: string, path?: string, stats?: fs.Stats): ChokidarEvent {
   const event: Object = {type}
   if (path != null) event.path = path
   if (stats != null) event.stats = stats
