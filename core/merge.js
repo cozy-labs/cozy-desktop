@@ -186,6 +186,7 @@ class Merge {
     }
     if (file) {
       doc._rev = file._rev
+      doc.moveFrom = file.moveFrom
       if (doc.tags == null) { doc.tags = file.tags || [] }
       if (doc.remote == null) { doc.remote = file.remote }
       if (doc.ino == null) { doc.ino = file.ino }
