@@ -21,7 +21,11 @@ module.exports = ({
     tree: [
       'dst/',
       'src/'
-    ],
-    remoteTrash: []
+    ]
+    // FIXME: file should be trashed with its parent
+    // remoteTrash: [
+    //   'subdir/',
+    //   'subdir/file'
+    // ]
   }
 }: Scenario)
