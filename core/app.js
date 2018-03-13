@@ -283,6 +283,7 @@ class App {
 
   // Start database sync process and setup file change watcher
   synchronize (mode: SyncMode) {
+    log.info(this.clientInfo(), 'synchronize')
     if (!this.config.isValid()) {
       log.error('No configuration found, please run add-remote-cozy' +
                 'command before running a synchronization.')
