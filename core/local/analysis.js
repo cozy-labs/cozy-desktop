@@ -103,13 +103,13 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
             const moveChange: ?LocalDirMove = localChange.maybeMoveFolder(getChangeByInode(e))
             if (moveChange) {
               localChange.includeAddDirEventInDirMove(moveChange, e)
-            }
-
-            const unlinkChange: ?LocalDirDeletion = localChange.maybeDeleteFolder(getChangeByInode(e))
-            if (unlinkChange) {
-              changeFound(localChange.dirMoveFromUnlinkAdd(unlinkChange, e))
             } else {
-              changeFound(localChange.fromEvent(e))
+              const unlinkChange: ?LocalDirDeletion = localChange.maybeDeleteFolder(getChangeByInode(e))
+              if (unlinkChange) {
+                changeFound(localChange.dirMoveFromUnlinkAdd(unlinkChange, e))
+              } else {
+                changeFound(localChange.fromEvent(e))
+              }
             }
           }
           break
