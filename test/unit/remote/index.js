@@ -430,25 +430,29 @@ describe('Remote', function () {
     })
   })
 
-  describe('moveFile', () => {
-    it('moves the file', async function () {
+  describe('moveFileAsync', () => {
+    let old, doc, newDir
+
+    beforeEach(async () => {
       const remoteDoc: RemoteDoc = await builders
         .remote.file()
         .named('cat6.jpg')
         .data('meow')
         .create()
-      const old: Metadata = conversion.createMetadata(remoteDoc)
-      const doc: Metadata = {
+      old = (conversion.createMetadata(remoteDoc): Metadata)
+      doc = ({
         ...old,
         path: path.normalize('moved-to/cat7.jpg'),
         name: 'cat7.jpg',
         remote: undefined
-      }
-      const newDir: RemoteDoc = await builders.remote.dir()
+      }: Metadata)
+      newDir = (await builders.remote.dir()
         .named('moved-to')
         .inRootDir()
-        .create()
+        .create(): RemoteDoc)
+    })
 
+    it('moves the file', async function () {
       const moved: Metadata = await this.remote.moveFileAsync(doc, old)
 
       should(moved.remote._id).equal(old.remote._id)
@@ -465,6 +469,34 @@ describe('Remote', function () {
         type: 'file',
         updated_at: doc.updated_at,
         size: '4'
+      })
+    })
+
+    it('also updates its content when md5sum changed', async function () {
+      doc.md5sum = 'j9tggB6dOaUoaqAd0fT08w==' // woof
+      this.remote.other = {
+        async createReadStreamAsync (doc) {
+          return builders.stream().push('woof').build()
+        }
+      }
+
+      const moved: Metadata = await this.remote.moveFileAsync(doc, old)
+
+      should(moved.remote._id).equal(old.remote._id)
+      should(moved.remote._rev).not.equal(old.remote._rev)
+      should(doc.remote).have.properties(moved.remote)
+      const file = await cozy.files.statById(moved.remote._id)
+      should(file).have.properties({
+        _id: old.remote._id,
+        _rev: moved.remote._rev
+      })
+      should(file.attributes).have.properties({
+        dir_id: newDir._id,
+        name: 'cat7.jpg',
+        type: 'file',
+        updated_at: doc.updated_at,
+        size: '4',
+        md5sum: 'j9tggB6dOaUoaqAd0fT08w=='
       })
     })
   })
