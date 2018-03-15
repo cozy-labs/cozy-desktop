@@ -85,6 +85,7 @@ module.exports = {
   isUpToDate,
   sameFolder,
   sameFile,
+  sameFileIgnoreRev,
   sameBinary,
   markSide,
   buildDir,
@@ -224,8 +225,18 @@ function sameFolder (one: Metadata, two: Metadata) {
 // For updated_at, we accept up to 3s of differences because we can't
 // rely on file systems to be precise to the millisecond.
 function sameFile (one: Metadata, two: Metadata) {
+  if (!sameFileIgnoreRev(one, two)) return false
+
+  if ((one.remote && one.remote._rev) === (two.remote && two.remote._rev)) {
+    return true
+  } else {
+    log.trace({path, diff: {one, two}})
+  }
+}
+
+function sameFileIgnoreRev (one: Metadata, two: Metadata) {
   const {path} = two
-  let fields = ['_id', 'docType', 'md5sum', 'remote', 'tags', 'size', 'trashed', 'ino']
+  let fields = ['_id', 'docType', 'md5sum', 'remote._id', 'tags', 'size', 'trashed', 'ino']
   one = {...pick(one, fields), executable: !!one.executable}
   two = {...pick(two, fields), executable: !!two.executable}
   const same = isEqual(one, two)

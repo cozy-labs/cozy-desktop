@@ -10,7 +10,7 @@ const { dirname } = require('path')
 const Ignore = require('./ignore')
 const Local = require('./local')
 const logger = require('./logger')
-const { extractRevNumber, isUpToDate } = require('./metadata')
+const { extractRevNumber, isUpToDate, sameFileIgnoreRev } = require('./metadata')
 const Pouch = require('./pouch')
 const Remote = require('./remote')
 const { HEARTBEAT } = require('./remote/watcher')
@@ -426,7 +426,11 @@ class Sync {
         }
 
         if (old.md5sum === doc.md5sum) {
-          await side.updateFileMetadataAsync(doc, old)
+          if (sameFileIgnoreRev(old, doc)) {
+            log.trace({path: doc.path}, 'ignoring mtime-only change')
+          } else {
+            await side.updateFileMetadataAsync(doc, old)
+          }
         } else {
           await side.overwriteFileAsync(doc, old)
         }
