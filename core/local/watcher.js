@@ -239,7 +239,7 @@ module.exports = class LocalWatcher {
 
       if (e.type === 'addDir') {
         if (!await fs.exists(abspath)) {
-          log.debug({path: e.path}, 'Dir does not exist anymore')
+          log.debug({path: e.path, ino: e.stats.ino}, 'Dir does not exist anymore')
           e2.wip = true
         }
       }
