@@ -242,7 +242,7 @@ class Merge {
 
   // Rename or move a file
   async moveFileAsync (side: SideName, doc: Metadata, was: Metadata) {
-    log.debug({path: doc.path, was: was.path}, 'moveFileAsync')
+    log.debug({path: doc.path, oldpath: was.path}, 'moveFileAsync')
     const {path} = doc
     if (was.sides && was.sides[side]) {
       let file
@@ -285,7 +285,7 @@ class Merge {
 
   // Rename or move a folder (and every file and folder inside it)
   async moveFolderAsync (side: SideName, doc: Metadata, was: Metadata) {
-    log.debug({path: doc.path, was: was.path}, 'moveFolderAsync')
+    log.debug({path: doc.path, oldpath: was.path}, 'moveFolderAsync')
     const {path} = doc
     if (was.sides && was.sides[side]) {
       let folder
@@ -355,7 +355,7 @@ class Merge {
   }
 
   async restoreFileAsync (side: SideName, was: Metadata, doc: Metadata): Promise<*> {
-    log.debug({path: doc.path, was: was.path}, 'restoreFileAsync')
+    log.debug({path: doc.path, oldpath: was.path}, 'restoreFileAsync')
     const {path} = doc
     // TODO we can probably do something smarter for conflicts and avoiding to
     // transfer again the file
@@ -368,7 +368,7 @@ class Merge {
   }
 
   async restoreFolderAsync (side: SideName, was: Metadata, doc: Metadata): Promise<*> {
-    log.debug({path: doc.path, was: was.path}, 'restoreFolderAsync')
+    log.debug({path: doc.path, oldpath: was.path}, 'restoreFolderAsync')
     const {path} = doc
     // TODO we can probably do something smarter for conflicts
     try {
@@ -380,7 +380,7 @@ class Merge {
   }
 
   async trashFileAsync (side: SideName, was: *, doc: *): Promise<void> {
-    log.debug({path: doc.path, was: was.path}, 'trashFileAsync')
+    log.debug({path: doc.path, oldpath: was.path}, 'trashFileAsync')
     const {path} = doc
     let oldMetadata
     try {
@@ -423,7 +423,7 @@ class Merge {
   }
 
   async trashFolderAsync (side: SideName, was: *, doc: *): Promise<*> {
-    log.debug({path: doc.path, was: was.path}, 'trashFolderAsync')
+    log.debug({path: doc.path, oldpath: was.path}, 'trashFolderAsync')
     const {path} = doc
     // Don't trash a folder if the other side has added a new file in it (or updated one)
     let children = await this.pouch.byRecursivePathAsync(was._id)

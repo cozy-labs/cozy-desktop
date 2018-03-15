@@ -84,7 +84,7 @@ class Prep {
   //   - the two paths are not the same
   //   - the revision for the old file is present
   async moveFileAsync (side: SideName, doc: Metadata, was: Metadata) {
-    log.debug({path: doc.path, was: was.path}, 'moveFileAsync')
+    log.debug({path: doc.path, oldpath: was.path}, 'moveFileAsync')
     const {path} = doc
     ensureValidPath(doc)
     ensureValidPath(was)
@@ -127,7 +127,7 @@ class Prep {
   //   - the two paths are not the same
   //   - the revision for the old folder is present
   async moveFolderAsync (side: SideName, doc: Metadata, was: Metadata) {
-    log.debug({path: doc.path, was: was.path}, 'moveFolderAsync')
+    log.debug({path: doc.path, oldpath: was.path}, 'moveFolderAsync')
     const {path} = doc
     ensureValidPath(doc)
     ensureValidPath(was)
@@ -164,7 +164,7 @@ class Prep {
 
   // TODO add comments + tests
   async restoreFileAsync (side: SideName, was: Metadata, doc: Metadata) {
-    log.debug({path: doc.path, was: was.path}, 'restoreFileAsync')
+    log.debug({path: doc.path, oldpath: was.path}, 'restoreFileAsync')
     ensureValidPath(doc)
     ensureValidPath(was)
     ensureValidChecksum(doc)
@@ -179,7 +179,7 @@ class Prep {
 
   // TODO add comments + tests
   async restoreFolderAsync (side: SideName, was: Metadata, doc: Metadata) {
-    log.debug({path: doc.path, was: was.path}, 'restoreFolderAsync')
+    log.debug({path: doc.path, oldpath: was.path}, 'restoreFolderAsync')
     ensureValidPath(doc)
     ensureValidPath(was)
 
@@ -193,7 +193,7 @@ class Prep {
 
   // TODO add comments + tests
   async trashFileAsync (side: SideName, was: PathObject, doc?: Metadata) {
-    log.debug({path: doc && doc.path, was: was.path}, 'trashFileAsync')
+    log.debug({path: doc && doc.path, oldpath: was.path}, 'trashFileAsync')
     ensureValidPath(was)
 
     if (!doc) {
@@ -214,7 +214,7 @@ class Prep {
 
   // TODO add comments + tests
   async trashFolderAsync (side: SideName, was: PathObject, doc?: Metadata) {
-    log.debug({path: doc && doc.path, was: was.path}, 'trashFolderAsync')
+    log.debug({path: doc && doc.path, oldpath: was.path}, 'trashFolderAsync')
     ensureValidPath(was)
 
     if (!doc) {
