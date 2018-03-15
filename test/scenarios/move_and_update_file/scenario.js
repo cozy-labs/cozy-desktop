@@ -22,6 +22,9 @@ module.exports = ({
       'dst/',
       'dst/file',
       'src/'
-    ]
+    ],
+    contents: {
+      'dst/file': 'foo blah'
+    }
   }
 }: Scenario)
