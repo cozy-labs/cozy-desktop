@@ -207,7 +207,8 @@ class Sync {
       seq,
       sides: doc.sides,
       moveTo: doc.moveTo,
-      moveFrom: doc.moveFrom
+      moveFrom: doc.moveFrom,
+      _deleted: doc._deleted
     }
     log.debug(changeInfo, 'Applying change...')
     log.trace({change})
