@@ -1,23 +1,23 @@
 /* @flow */
 
-import { pick } from 'lodash'
-import {
+const { pick } = require('lodash')
+const {
   after,
   afterEach,
   before,
   beforeEach,
   suite,
   test
-} from 'mocha'
-import path from 'path'
-import should from 'should'
+} = require('mocha')
+const path = require('path')
+const should = require('should')
 
-import Builders from '../support/builders'
-import pouchdbBuilders from '../support/builders/pouchdb'
-import configHelpers from '../support/helpers/config'
-import * as cozyHelpers from '../support/helpers/cozy'
-import pouchHelpers from '../support/helpers/pouch'
-import { IntegrationTestHelpers } from '../support/helpers/integration'
+const Builders = require('../support/builders')
+const pouchdbBuilders = require('../support/builders/pouchdb')
+const configHelpers = require('../support/helpers/config')
+const cozyHelpers = require('../support/helpers/cozy')
+const pouchHelpers = require('../support/helpers/pouch')
+const { IntegrationTestHelpers } = require('../support/helpers/integration')
 
 suite('Move', () => {
   if (process.env.APPVEYOR) {

@@ -1,13 +1,13 @@
 /* eslint-env mocha */
 
-import path from 'path'
-import sinon from 'sinon'
-import should from 'should'
+const path = require('path')
+const sinon = require('sinon')
+const should = require('should')
 
-import Merge from '../../core/merge'
+const Merge = require('../../core/merge')
 
-import configHelpers from '../support/helpers/config'
-import pouchHelpers from '../support/helpers/pouch'
+const configHelpers = require('../support/helpers/config')
+const pouchHelpers = require('../support/helpers/pouch')
 
 describe('Merge Helpers', function () {
   before('instanciate config', configHelpers.createConfig)

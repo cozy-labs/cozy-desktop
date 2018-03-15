@@ -1,6 +1,6 @@
-import EventEmitter from 'events'
+const EventEmitter = require('events')
 
-export default class SyncState extends EventEmitter {
+module.exports = class SyncState extends EventEmitter {
   syncLastSeq: number
   syncCurrentSeq: number
   buffering: boolean

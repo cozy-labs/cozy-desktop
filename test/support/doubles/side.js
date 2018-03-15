@@ -1,8 +1,8 @@
 /* @flow */
 
-import sinon from 'sinon'
-
 import type { Side } from '../../../core/side'
+
+const sinon = require('sinon')
 
 const METHODS = [
   'addFileAsync',
@@ -18,7 +18,7 @@ const METHODS = [
   'renameConflictingDocAsync'
 ]
 
-export default function stubSide (): Side {
+module.exports = function stubSide (): Side {
   const double = {}
   for (let method of METHODS) {
     double[method] = sinon.stub().resolves()

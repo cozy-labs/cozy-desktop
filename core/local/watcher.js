@@ -1,19 +1,5 @@
 /* @flow */
 
-import Promise from 'bluebird'
-import chokidar from 'chokidar'
-import fs from 'fs-extra'
-import path from 'path'
-
-import analysis from './analysis'
-import * as checksumer from './checksumer'
-import * as chokidarEvent from './chokidar_event'
-import LocalEventBuffer from './event_buffer'
-import logger from '../logger'
-import * as metadata from '../metadata'
-import Pouch from '../pouch'
-import Prep from '../prep'
-
 import type { Checksumer } from './checksumer'
 import type { ChokidarEvent } from './chokidar_event'
 import type { LocalEvent } from './event'
@@ -21,6 +7,20 @@ import type { LocalChange } from './change'
 import type { Metadata } from '../metadata'
 import type { Pending } from '../utils/pending' // eslint-disable-line
 import type EventEmitter from 'events'
+
+const Promise = require('bluebird')
+const chokidar = require('chokidar')
+const fs = require('fs-extra')
+const path = require('path')
+
+const analysis = require('./analysis')
+const checksumer = require('./checksumer')
+const chokidarEvent = require('./chokidar_event')
+const LocalEventBuffer = require('./event_buffer')
+const logger = require('../logger')
+const metadata = require('../metadata')
+const Pouch = require('../pouch')
+const Prep = require('../prep')
 
 const log = logger({
   component: 'LocalWatcher'
@@ -40,7 +40,7 @@ type InitialScan = {
 // a file or a folder is added/removed/changed locally.
 // Operations will be added to the a common operation queue along with the
 // remote operations triggered by the remoteEventWatcher.
-class LocalWatcher {
+module.exports = class LocalWatcher {
   syncPath: string
   prep: Prep
   pouch: Pouch
@@ -398,5 +398,3 @@ class LocalWatcher {
     return this.prep.updateFileAsync(SIDE, doc)
   }
 }
-
-export default LocalWatcher

@@ -1,6 +1,11 @@
-import mocha from 'mocha'
+const mocha = require('mocha')
 
-export function onPlatforms (...platformsAndSpec) {
+module.exports = {
+  onPlatforms,
+  onPlatform
+}
+
+function onPlatforms (...platformsAndSpec) {
   const spec = platformsAndSpec.pop()
   const platforms = platformsAndSpec
 
@@ -9,6 +14,6 @@ export function onPlatforms (...platformsAndSpec) {
   }
 }
 
-export function onPlatform (platform, spec) {
+function onPlatform (platform, spec) {
   onPlatforms(platform, spec)
 }

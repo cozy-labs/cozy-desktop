@@ -1,17 +1,17 @@
 /* eslint-env mocha */
 
-import async from 'async'
-import { clone, pick } from 'lodash'
-import path from 'path'
-import sinon from 'sinon'
-import should from 'should'
+const async = require('async')
+const { clone, pick } = require('lodash')
+const path = require('path')
+const sinon = require('sinon')
+const should = require('should')
 
-import Merge from '../../core/merge'
-import * as metadata from '../../core/metadata'
+const Merge = require('../../core/merge')
+const metadata = require('../../core/metadata')
 
-import configHelpers from '../support/helpers/config'
-import pouchHelpers from '../support/helpers/pouch'
-import MetadataBuilders from '../support/builders/metadata'
+const configHelpers = require('../support/helpers/config')
+const pouchHelpers = require('../support/helpers/pouch')
+const MetadataBuilders = require('../support/builders/metadata')
 
 describe('Merge', function () {
   let builders

@@ -17,7 +17,11 @@ export interface Side {
   renameConflictingDocAsync (doc: Metadata, newPath: string): Promise<void>;
 }
 
-export function otherSide (side: SideName): SideName {
+module.exports = {
+  otherSide
+}
+
+function otherSide (side: SideName): SideName {
   switch (side) {
     case 'local': return 'remote'
     case 'remote': return 'local'

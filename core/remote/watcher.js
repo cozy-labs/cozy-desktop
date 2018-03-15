@@ -1,38 +1,41 @@
 /* @flow */
 
-import * as conversion from '../conversion'
-import EventEmitter from 'events'
-import _ from 'lodash'
-
-import logger from '../logger'
-import { assignId, ensureValidPath, detectPlatformIncompatibilities } from '../metadata'
-import Pouch from '../pouch'
-import Prep from '../prep'
-import RemoteCozy from './cozy'
-import * as remoteChange from './change'
-import { inRemoteTrash } from './document'
-
 import type { Metadata } from '../metadata'
 import type { RemoteChange, RemoteNoise, RemoteFileMove } from './change'
 import type { RemoteDoc, RemoteDeletion } from './document'
+
+const conversion = require('../conversion')
+const EventEmitter = require('events')
+const _ = require('lodash')
+
+const logger = require('../logger')
+const { assignId, ensureValidPath, detectPlatformIncompatibilities } = require('../metadata')
+const Pouch = require('../pouch')
+const Prep = require('../prep')
+const RemoteCozy = require('./cozy')
+const remoteChange = require('./change')
+const { inRemoteTrash } = require('./document')
 
 const log = logger({
   component: 'RemoteWatcher'
 })
 
-export const DEFAULT_HEARTBEAT: number = 1000 * 60 // 1 minute
-export const HEARTBEAT: number = parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || DEFAULT_HEARTBEAT
+const DEFAULT_HEARTBEAT: number = 1000 * 60 // 1 minute
+const HEARTBEAT: number = parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || DEFAULT_HEARTBEAT
 
 const sideName = 'remote'
 
 // Get changes from the remote Cozy and prepare them for merge
-export default class RemoteWatcher {
+class RemoteWatcher {
   pouch: Pouch
   prep: Prep
   remoteCozy: RemoteCozy
   events: EventEmitter
   intervalID: *
   runningResolve: ?() => void
+
+  static DEFAULT_HEARTBEAT = DEFAULT_HEARTBEAT
+  static HEARTBEAT = HEARTBEAT
 
   constructor (pouch: Pouch, prep: Prep, remoteCozy: RemoteCozy, events: EventEmitter) {
     this.pouch = pouch
@@ -385,3 +388,5 @@ export default class RemoteWatcher {
     await this.pouch.put(doc)
   }
 }
+
+module.exports = RemoteWatcher

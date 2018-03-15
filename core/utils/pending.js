@@ -1,6 +1,6 @@
 /* @flow */
 
-import path from 'path'
+const path = require('path')
 
 // A pending operation e.g. on a file or a folder.
 export interface Pending { // eslint-disable-line no-undef
@@ -9,7 +9,7 @@ export interface Pending { // eslint-disable-line no-undef
 }
 
 // A map of pending operations
-export class PendingMap {
+class PendingMap {
   map: Map<string, Pending>; // eslint-disable-line no-undef
 
   constructor () {
@@ -69,4 +69,8 @@ export class PendingMap {
       this.clear(path)
     }
   }
+}
+
+module.exports = {
+  PendingMap
 }

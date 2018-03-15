@@ -1,12 +1,12 @@
 /* @flow */
 
-import * as stream from 'stream'
-
 import type { Metadata } from './metadata'
 
-export class ReadableWithContentLength extends stream.Readable {contentLength: ?number}
+const stream = require('stream')
 
-export function withContentLength (s: stream.Readable, contentLength: ?number): ReadableWithContentLength {
+class ReadableWithContentLength extends stream.Readable {contentLength: ?number}
+
+function withContentLength (s: stream.Readable, contentLength: ?number): ReadableWithContentLength {
   const s2: ReadableWithContentLength = (s: any)
   s2.contentLength = contentLength
   return s2
@@ -16,4 +16,9 @@ export function withContentLength (s: stream.Readable, contentLength: ?number): 
 // given metadata.
 export type FileStreamProvider = {
   createReadStreamAsync: (Metadata) => Promise<ReadableWithContentLength>;
+}
+
+module.exports = {
+  ReadableWithContentLength,
+  withContentLength
 }

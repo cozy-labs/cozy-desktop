@@ -1,10 +1,9 @@
 /* eslint-env mocha */
 
-import should from 'should'
+const should = require('should')
 
-import pathRestrictions, {
-  detectNameIssues, detectPathLengthIssue
-} from '../../core/path_restrictions'
+const pathRestrictions = require('../../core/path_restrictions')
+const { detectNameIssues, detectPathLengthIssue } = pathRestrictions
 
 describe('path_restrictions', () => {
   describe('detectNameIssues', () => {

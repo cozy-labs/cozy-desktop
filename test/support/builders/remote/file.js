@@ -1,15 +1,15 @@
 /* @flow */
 
-import fs from 'fs'
-import path from 'path'
-import * as stream from 'stream'
-import { Cozy } from 'cozy-client-js'
-
-import RemoteBaseBuilder from './base'
-
-import { jsonApiToRemoteDoc } from '../../../../core/remote/document'
-
 import type { RemoteDoc } from '../../../../core/remote/document'
+
+const fs = require('fs')
+const path = require('path')
+const stream = require('stream')
+const { Cozy } = require('cozy-client-js')
+
+const RemoteBaseBuilder = require('./base')
+
+const { jsonApiToRemoteDoc } = require('../../../../core/remote/document')
 
 // Used to generate readable unique filenames
 var fileNumber = 1
@@ -23,7 +23,7 @@ var fileNumber = 1
 //
 //     const file: RemoteDoc = await builders.remote.file().inDir(...).create()
 //
-export default class RemoteFileBuilder extends RemoteBaseBuilder {
+module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
   _data: string | stream.Readable
 
   constructor (cozy: Cozy) {

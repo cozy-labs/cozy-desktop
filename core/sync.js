@@ -1,27 +1,27 @@
 /* @flow */
 
-import Promise from 'bluebird'
-import EventEmitter from 'events'
-import { dirname } from 'path'
-
-import Ignore from './ignore'
-import Local from './local'
-import logger from './logger'
-import { extractRevNumber, isUpToDate } from './metadata'
-import Pouch from './pouch'
-import Remote from './remote'
-import { HEARTBEAT } from './remote/watcher'
-import { PendingMap } from './utils/pending'
-import measureTime from './perftools'
-
 import type { SideName, Metadata } from './metadata'
 import type { Side } from './side' // eslint-disable-line
+
+const Promise = require('bluebird')
+const EventEmitter = require('events')
+const { dirname } = require('path')
+
+const Ignore = require('./ignore')
+const Local = require('./local')
+const logger = require('./logger')
+const { extractRevNumber, isUpToDate } = require('./metadata')
+const Pouch = require('./pouch')
+const Remote = require('./remote')
+const { HEARTBEAT } = require('./remote/watcher')
+const { PendingMap } = require('./utils/pending')
+const measureTime = require('./perftools')
 
 const log = logger({
   component: 'Sync'
 })
 
-export const TRASHING_DELAY = 1000
+const TRASHING_DELAY = 1000
 
 type MetadataChange = {
   changes: {rev: string}[],
@@ -49,6 +49,8 @@ class Sync {
   stopped: ?boolean
   moveFrom: ?Metadata
   moveTo: ?string
+
+  static TRASHING_DELAY = TRASHING_DELAY
 
   diskUsage: () => Promise<*>
 
@@ -521,4 +523,4 @@ class Sync {
   }
 }
 
-export default Sync
+module.exports = Sync

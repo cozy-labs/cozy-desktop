@@ -1,11 +1,11 @@
 /* eslint-env mocha */
 
-import path from 'path'
-import should from 'should'
+const path = require('path')
+const should = require('should')
 
-import configHelpers from '../support/helpers/config'
+const configHelpers = require('../support/helpers/config')
 
-import Config from '../../core/config'
+const Config = require('../../core/config')
 
 describe('Config', function () {
   before('instanciate config', configHelpers.createConfig)

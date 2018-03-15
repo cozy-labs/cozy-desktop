@@ -1,11 +1,11 @@
 /* eslint-env mocha */
 /* @flow */
 
-import * as faker from 'faker'
-import fs from 'fs'
-import should from 'should'
+const faker = require('faker')
+const fs = require('fs')
+const should = require('should')
 
-import * as chokidarEvent from '../../../core/local/chokidar_event'
+const chokidarEvent = require('../../../core/local/chokidar_event')
 
 describe('local/chokidar_event', () => {
   describe('build', () => {

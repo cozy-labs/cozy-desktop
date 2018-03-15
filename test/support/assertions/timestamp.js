@@ -1,6 +1,6 @@
-import should from 'should'
+const should = require('should')
 
-import timestamp from '../../../core/timestamp'
+const timestamp = require('../../../core/timestamp')
 
 should.use(function (should, Assertion) {
   Assertion.add('sameTimestamp', function (expected, message) {

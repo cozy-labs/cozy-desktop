@@ -1,13 +1,14 @@
 /* eslint-env mocha */
 /* @flow weak */
 
-import should from 'should'
+const should = require('should')
 
-import RemoteCozy, { DirectoryNotFound } from '../../../core/remote/cozy'
+const RemoteCozy = require('../../../core/remote/cozy')
+const { DirectoryNotFound } = RemoteCozy
 
-import configHelpers from '../../support/helpers/config'
-import { COZY_URL, builders, deleteAll } from '../../support/helpers/cozy'
-import CozyStackDouble from '../../support/doubles/cozy_stack'
+const configHelpers = require('../../support/helpers/config')
+const { COZY_URL, builders, deleteAll } = require('../../support/helpers/cozy')
+const CozyStackDouble = require('../../support/doubles/cozy_stack')
 
 const cozyStackDouble = new CozyStackDouble()
 

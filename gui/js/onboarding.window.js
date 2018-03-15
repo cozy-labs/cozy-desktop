@@ -4,7 +4,7 @@ const autoLaunch = require('./autolaunch')
 const defaults = require('./defaults')
 const {translate} = require('./i18n')
 
-const log = require('../../core-built/app.js').default.logger({
+const log = require('../../core-built/app').logger({
   component: 'GUI'
 })
 

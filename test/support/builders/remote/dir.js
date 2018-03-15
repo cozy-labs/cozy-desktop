@@ -1,11 +1,11 @@
 /* @flow */
 
-import { Cozy } from 'cozy-client-js'
-
-import RemoteBaseBuilder from './base'
-import { jsonApiToRemoteDoc } from '../../../../core/remote/document'
-
 import type { RemoteDoc } from '../../../../core/remote/document'
+
+const { Cozy } = require('cozy-client-js')
+
+const RemoteBaseBuilder = require('./base')
+const { jsonApiToRemoteDoc } = require('../../../../core/remote/document')
 
 // Used to generate readable unique dirnames
 var dirNumber = 1
@@ -19,7 +19,7 @@ var dirNumber = 1
 //
 //     const dir: RemoteDoc = await builders.remote.dir().inDir(...).create()
 //
-export default class RemoteDirBuilder extends RemoteBaseBuilder {
+module.exports = class RemoteDirBuilder extends RemoteBaseBuilder {
   constructor (cozy: Cozy) {
     super(cozy)
 

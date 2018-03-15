@@ -1,21 +1,21 @@
 /* eslint-env mocha */
 
-import Promise from 'bluebird'
-import crypto from 'crypto'
-import fs from 'fs-extra'
-import path from 'path'
-import sinon from 'sinon'
-import should from 'should'
-import { Readable } from 'stream'
+const Promise = require('bluebird')
+const crypto = require('crypto')
+const fs = require('fs-extra')
+const path = require('path')
+const sinon = require('sinon')
+const should = require('should')
+const { Readable } = require('stream')
 
-import Local from '../../../core/local'
-import { TMP_DIR_NAME } from '../../../core/local/constants'
-import { PendingMap } from '../../../core/utils/pending'
+const Local = require('../../../core/local')
+const { TMP_DIR_NAME } = require('../../../core/local/constants')
+const { PendingMap } = require('../../../core/utils/pending')
 
-import MetadataBuilders from '../../support/builders/metadata'
-import configHelpers from '../../support/helpers/config'
-import { SyncDirTestHelpers } from '../../support/helpers/sync_dir'
-import pouchHelpers from '../../support/helpers/pouch'
+const MetadataBuilders = require('../../support/builders/metadata')
+const configHelpers = require('../../support/helpers/config')
+const { SyncDirTestHelpers } = require('../../support/helpers/sync_dir')
+const pouchHelpers = require('../../support/helpers/pouch')
 
 Promise.promisifyAll(fs)
 

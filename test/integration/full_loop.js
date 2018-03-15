@@ -1,21 +1,21 @@
 /* @flow */
 
-import {
+const {
   after,
   afterEach,
   before,
   beforeEach,
   suite,
   test
-} from 'mocha'
-import should from 'should'
+} = require('mocha')
+const should = require('should')
 
-import * as metadata from '../../core/metadata'
+const metadata = require('../../core/metadata')
 
-import configHelpers from '../support/helpers/config'
-import * as cozyHelpers from '../support/helpers/cozy'
-import pouchHelpers from '../support/helpers/pouch'
-import { IntegrationTestHelpers } from '../support/helpers/integration'
+const configHelpers = require('../support/helpers/config')
+const cozyHelpers = require('../support/helpers/cozy')
+const pouchHelpers = require('../support/helpers/pouch')
+const { IntegrationTestHelpers } = require('../support/helpers/integration')
 
 const cozy = cozyHelpers.cozy
 

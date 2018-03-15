@@ -1,33 +1,34 @@
 /* @flow */
 
-import EventEmitter from 'events'
-import fs from 'fs-extra'
-import _ from 'lodash'
-import os from 'os'
-import path from 'path'
-import readdirp from 'readdirp'
-import url from 'url'
-import uuid from 'uuid/v4'
-import https from 'https'
-import stream from 'stream'
-import {createGzip} from 'zlib'
-
-import './globals' // FIXME Use bluebird promises as long as we need asCallback
-import pkg from '../package.json'
-import Config from './config'
-import logger, { LOG_FILE, LOG_FILENAME } from './logger'
-import Pouch from './pouch'
-import Ignore from './ignore'
-import Merge from './merge'
-import Prep from './prep'
-import Local from './local'
-import Remote from './remote'
-import Sync from './sync'
-import SyncState from './syncstate'
-import Registration from './remote/registration'
-
 import type { Callback } from './utils/func'
 import type { SyncMode } from './sync'
+
+const EventEmitter = require('events')
+const fs = require('fs-extra')
+const _ = require('lodash')
+const os = require('os')
+const path = require('path')
+const readdirp = require('readdirp')
+const url = require('url')
+const uuid = require('uuid/v4')
+const https = require('https')
+const stream = require('stream')
+const {createGzip} = require('zlib')
+
+require('./globals') // FIXME Use bluebird promises as long as we need asCallback
+const pkg = require('../package.json')
+const Config = require('./config')
+const logger = require('./logger')
+const { LOG_FILE, LOG_FILENAME } = logger
+const Pouch = require('./pouch')
+const Ignore = require('./ignore')
+const Merge = require('./merge')
+const Prep = require('./prep')
+const Local = require('./local')
+const Remote = require('./remote')
+const Sync = require('./sync')
+const SyncState = require('./syncstate')
+const Registration = require('./remote/registration')
 
 const log = logger({
   component: 'App'
@@ -37,7 +38,7 @@ const SUPPORT_EMAIL = process.env.COZY_DESKTOP_SUPPORT_EMAIL || 'contact@cozyclo
 
 // App is the entry point for the CLI and GUI.
 // They both can do actions and be notified by events via an App instance.
-class App {
+module.exports = class App {
   lang: string
   basePath: string
   config: Config
@@ -50,7 +51,7 @@ class App {
   remote: Remote
   sync: Sync
 
-  static logger: Function
+  static logger = logger
 
   // basePath is the directory where the config and pouch are saved
   constructor (basePath: string) {
@@ -363,7 +364,3 @@ class App {
     return this.remote.diskUsage()
   }
 }
-
-App.logger = logger
-
-export default App

@@ -1,13 +1,19 @@
 /* @flow */
 
-import path from 'path'
-
-import { DIR_TYPE, FILE_TYPE } from './remote/constants'
-
 import type { RemoteDoc } from './remote/document'
 import type { Metadata } from './metadata'
 
-export function localDocType (remote: string): string {
+const path = require('path')
+
+const { DIR_TYPE, FILE_TYPE } = require('./remote/constants')
+
+module.exports = {
+  localDocType,
+  createMetadata,
+  extractDirAndName
+}
+
+function localDocType (remote: string): string {
   switch (remote) {
     case FILE_TYPE: return 'file'
     case DIR_TYPE: return 'folder'
@@ -18,7 +24,7 @@ export function localDocType (remote: string): string {
 // Transform a remote document into metadata, as stored in Pouch.
 // Please note the path is not normalized yet!
 // Normalization is done as a side effect of metadata.invalidPath() :/
-export function createMetadata (remote: RemoteDoc): Metadata {
+function createMetadata (remote: RemoteDoc): Metadata {
   const doc: Object = {
     path: remote.path.substring(1),
     docType: localDocType(remote.type),
@@ -41,7 +47,7 @@ export function createMetadata (remote: RemoteDoc): Metadata {
 }
 
 // Extract the remote path and name from a local id
-export function extractDirAndName (id: string): [string, string] {
+function extractDirAndName (id: string): [string, string] {
   const dir = '/' + id.split(path.sep).slice(0, -1).join('/')
   const name = path.basename(id)
   return [dir, name]

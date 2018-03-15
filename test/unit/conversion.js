@@ -1,15 +1,15 @@
 /* @flow */
 /* eslint-env mocha */
 
-import should from 'should'
-import path from 'path'
-
-import * as conversion from '../../core/conversion'
-import { FILES_DOCTYPE } from '../../core/remote/constants'
-import timestamp from '../../core/timestamp'
-
 import type { Metadata } from '../../core/metadata'
 import type { RemoteDoc } from '../../core/remote/document'
+
+const should = require('should')
+const path = require('path')
+
+const conversion = require('../../core/conversion')
+const { FILES_DOCTYPE } = require('../../core/remote/constants')
+const timestamp = require('../../core/timestamp')
 
 describe('conversion', function () {
   describe('createMetadata', () => {

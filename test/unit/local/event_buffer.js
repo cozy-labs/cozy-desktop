@@ -1,10 +1,10 @@
 /* eslint-env mocha */
 /* @flow */
 
-import should from 'should'
-import sinon from 'sinon'
+const should = require('should')
+const sinon = require('sinon')
 
-import LocalEventBuffer from '../../../core/local/event_buffer'
+const LocalEventBuffer = require('../../../core/local/event_buffer')
 
 describe('EventBuffer', () => {
   const TIMEOUT_IN_MS = 2000

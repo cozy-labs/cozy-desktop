@@ -1,14 +1,14 @@
 /* eslint-env mocha */
 
-import should from 'should'
-
-import analysis from '../../../core/local/analysis'
-
-import MetadataBuilders from '../../support/builders/metadata'
-
 import type { LocalEvent } from '../../../core/local/event'
 import type { LocalChange } from '../../../core/local/change'
 import type { Metadata } from '../../../core/metadata'
+
+const should = require('should')
+
+const analysis = require('../../../core/local/analysis')
+
+const MetadataBuilders = require('../../support/builders/metadata')
 
 describe('core/local/analysis', function () {
   const sideName = 'local'

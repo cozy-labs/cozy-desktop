@@ -1,10 +1,10 @@
 /* eslint-env mocha */
 
-import should from 'should'
+const should = require('should')
 
-import Registration from '../../../core/remote/registration'
+const Registration = require('../../../core/remote/registration')
 
-import configHelpers from '../../support/helpers/config'
+const configHelpers = require('../../support/helpers/config')
 
 describe('Registration', function () {
   before('instanciate config', configHelpers.createConfig)

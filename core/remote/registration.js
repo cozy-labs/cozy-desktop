@@ -1,12 +1,12 @@
-import os from 'os'
-import http from 'http'
-import opn from 'opn'
+const os = require('os')
+const http = require('http')
+const opn = require('opn')
 
-import { Client as CozyClient } from 'cozy-client-js'
+const CozyClient = require('cozy-client-js').Client
 
 const PORT_NUMBER = 3344
 
-export default class Registration {
+module.exports = class Registration {
   constructor (url, config, onReady = null) {
     this.url = url
     this.config = config

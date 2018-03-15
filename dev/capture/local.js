@@ -1,9 +1,9 @@
-import Promise from 'bluebird'
-import chokidar from 'chokidar'
-import fs from 'fs-extra'
-import _ from 'lodash'
-import path from 'path'
-import fixturesHelpers from '../../test/support/helpers/scenarios'
+const Promise = require('bluebird')
+const chokidar = require('chokidar')
+const fs = require('fs-extra')
+const _ = require('lodash')
+const path = require('path')
+const fixturesHelpers = require('../../test/support/helpers/scenarios')
 
 const cliDir = path.resolve(path.join(__dirname, '..', '..'))
 const syncPath = path.join(cliDir, 'tmp', 'local_watcher', 'synced_dir')
@@ -141,7 +141,7 @@ const captureScenario = (scenario) => {
     .then(() => runAndRecordFSEvents(scenario))
 }
 
-export default {
+module.exports = {
   name: 'local',
   captureScenario
 }

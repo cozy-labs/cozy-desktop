@@ -1,6 +1,7 @@
 /* @flow */
 
-import path, { sep } from 'path'
+const path = require('path')
+const { sep } = path
 
 type SingleCharString = string
 
@@ -84,7 +85,14 @@ const linux = pathRestrictions({
   reservedChars: new Set('/')
 })
 
-export default { win, mac, linux }
+module.exports = {
+  win,
+  mac,
+  linux,
+  detectNameIssues,
+  detectPathIssues,
+  detectPathLengthIssue
+}
 
 function restrictionsByPlatform (platform: string) {
   switch (platform) {
@@ -128,7 +136,7 @@ function detectDirNameLengthIssue (name: string, restrictions: PathRestrictions)
 }
 
 // Identifies file/dir name issues that will prevent local synchronization
-export function detectNameIssues (name: string, type: string, platform: string): NameIssue[] {
+function detectNameIssues (name: string, type: string, platform: string): NameIssue[] {
   const restrictions = restrictionsByPlatform(platform)
   const issues = []
 
@@ -163,7 +171,7 @@ export function detectNameIssues (name: string, type: string, platform: string):
 }
 
 // Identifies issues in every path item that will prevent local synchronization
-export function detectPathIssues (path: string, type: string): Array<PathIssue> {
+function detectPathIssues (path: string, type: string): Array<PathIssue> {
   const platform = process.platform
   const ancestorNames = path.split(sep)
   const basename = ancestorNames.pop()
@@ -187,7 +195,7 @@ export function detectPathIssues (path: string, type: string): Array<PathIssue> 
   return recursivePathIssues.filter(issue => issue != null)
 }
 
-export function detectPathLengthIssue (path: string, platform: string): ?PathLengthIssue {
+function detectPathLengthIssue (path: string, platform: string): ?PathLengthIssue {
   const { pathMaxBytes } = restrictionsByPlatform(platform)
   const pathBytes = Buffer.byteLength(path) // TODO: utf16?
   if (pathBytes > pathMaxBytes) {

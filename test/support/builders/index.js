@@ -2,12 +2,12 @@
 
 import type { Cozy } from 'cozy-client-js'
 
-import type Pouch from '../../../core/pouch'
+const Pouch = require('../../../core/pouch')
 
-import MetadataBuilders from './metadata'
-import RemoteDirBuilder from './remote/dir'
-import RemoteFileBuilder from './remote/file'
-import StreamBuilder from './stream'
+const MetadataBuilders = require('./metadata')
+const RemoteDirBuilder = require('./remote/dir')
+const RemoteFileBuilder = require('./remote/file')
+const StreamBuilder = require('./stream')
 
 // Test data builders facade.
 //
@@ -15,7 +15,7 @@ import StreamBuilder from './stream'
 //     builders.remote.dir()...
 //     builders.stream()...
 //
-export default class Builders {
+module.exports = class Builders {
   cozy: Cozy
   metadata: MetadataBuilders
 

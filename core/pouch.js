@@ -1,17 +1,17 @@
 /* @flow weak */
 
-import Promise from 'bluebird'
-import PouchDB from 'pouchdb'
-import async from 'async'
-import fs from 'fs-extra'
-import { isEqual } from 'lodash'
-import path from 'path'
-
-import Config from './config'
-import logger from './logger'
-
 import type { Metadata } from './metadata'
 import type { Callback } from './utils/func'
+
+const Promise = require('bluebird')
+const PouchDB = require('pouchdb')
+const async = require('async')
+const fs = require('fs-extra')
+const { isEqual } = require('lodash')
+const path = require('path')
+
+const Config = require('./config')
+const logger = require('./logger')
 
 const log = logger({
   component: 'Pouch'
@@ -371,4 +371,4 @@ class Pouch {
   treeAsync: () => Promise<Array<string>>
 }
 
-export default Pouch
+module.exports = Pouch

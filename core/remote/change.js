@@ -1,11 +1,11 @@
 /* @flow */
 
-import path from 'path'
-
-import { isFile } from '../metadata'
-
 import type { RemoteDoc, RemoteDeletion } from './document'
 import type { Metadata } from '../metadata'
+
+const path = require('path')
+
+const { isFile } = require('../metadata')
 
 export type RemoteFileAddition = {sideName: 'remote', type: 'FileAddition', doc: Metadata}
 export type RemoteFileDeletion = {sideName: 'remote', type: 'FileDeletion', doc: Metadata}
@@ -45,32 +45,53 @@ export type RemoteNoise =
   | RemoteInvalidChange
   | RemoteUpToDate
 
+module.exports = {
+  added,
+  trashed,
+  deleted,
+  restored,
+  upToDate,
+  updated,
+  dissociated,
+  isChildMove,
+  isOnlyChildMove,
+  applyMoveToPath,
+  sort
+}
+
 const sideName = 'remote'
 
 // FIXME: return types
-export const added = (doc: Metadata): * =>
-  ({sideName, type: (isFile(doc) ? 'FileAddition' : 'DirAddition'), doc})
+function added (doc: Metadata): * {
+  return {sideName, type: (isFile(doc) ? 'FileAddition' : 'DirAddition'), doc}
+}
 
-export const trashed = (doc: Metadata, was: Metadata): * =>
-  ({sideName, type: (isFile(doc) ? 'FileTrashing' : 'DirTrashing'), doc, was})
+function trashed (doc: Metadata, was: Metadata): * {
+  return {sideName, type: (isFile(doc) ? 'FileTrashing' : 'DirTrashing'), doc, was}
+}
 
-export const deleted = (doc: Metadata): * =>
-  ({sideName, type: (isFile(doc) ? 'FileDeletion' : 'DirDeletion'), doc})
+function deleted (doc: Metadata): * {
+  return {sideName, type: (isFile(doc) ? 'FileDeletion' : 'DirDeletion'), doc}
+}
 
-export const restored = (doc: Metadata, was: Metadata): * =>
-  ({sideName, type: (isFile(doc) ? 'FileRestoration' : 'DirRestoration'), doc, was})
+function restored (doc: Metadata, was: Metadata): * {
+  return {sideName, type: (isFile(doc) ? 'FileRestoration' : 'DirRestoration'), doc, was}
+}
 
-export const upToDate = (doc: Metadata, was: Metadata): * =>
-  ({sideName, type: 'RemoteUpToDate', doc, was})
+function upToDate (doc: Metadata, was: Metadata): * {
+  return {sideName, type: 'RemoteUpToDate', doc, was}
+}
 
-export const updated = (doc: Metadata): * =>
-  ({sideName, type: (isFile(doc) ? 'FileUpdate' : 'DirAddition'), doc})
+function updated (doc: Metadata): * {
+  return {sideName, type: (isFile(doc) ? 'FileUpdate' : 'DirAddition'), doc}
+}
 
-export const dissociated = (doc: Metadata, was: Metadata): * =>
-  ({sideName, type: (isFile(doc) ? 'FileDissociation' : 'DirDissociation'), doc, was})
+function dissociated (doc: Metadata, was: Metadata): * {
+  return {sideName, type: (isFile(doc) ? 'FileDissociation' : 'DirDissociation'), doc, was}
+}
 
 // TODO: Rename args
-export const isChildMove = (a: RemoteChange|RemoteNoise, b: RemoteChange|RemoteNoise): boolean %checks => {
+function isChildMove (a: RemoteChange|RemoteNoise, b: RemoteChange|RemoteNoise): boolean %checks {
   return a.type === 'DirMove' &&
         (b.type === 'DirMove' || b.type === 'FileMove') &&
         (b.doc.path.indexOf(a.doc.path + path.sep) === 0) &&
@@ -84,11 +105,11 @@ export const isChildMove = (a: RemoteChange|RemoteNoise, b: RemoteChange|RemoteN
  a    /a     ->    /a2
  b    /a/b   ->    /a2/b
 */
-export const isOnlyChildMove = (a: RemoteDirMove, b: RemoteFileMove|RemoteDirMove): boolean %checks => {
+function isOnlyChildMove (a: RemoteDirMove, b: RemoteFileMove|RemoteDirMove): boolean %checks {
   return isChildMove(a, b) && b.doc.path.replace(a.doc.path, '') === b.was.path.replace(a.was.path, '')
 }
 
-export const applyMoveToPath = (a: RemoteDirMove, p: string): string => {
+function applyMoveToPath (a: RemoteDirMove, p: string): string {
   return p.replace(a.was.path, a.doc.path)
 }
 
@@ -127,6 +148,6 @@ const sorter = (a, b) => {
   return 1
 }
 
-export const sort = (changes: Array<RemoteChange|RemoteNoise>): void => {
+function sort (changes: Array<RemoteChange|RemoteNoise>): void {
   changes.sort(sorter)
 }

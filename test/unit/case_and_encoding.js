@@ -1,9 +1,9 @@
 /* @flow */
 
-import fs from 'fs-extra'
-import { setup, suite, test } from 'mocha'
-import path from 'path'
-import should from 'should'
+const fs = require('fs-extra')
+const { setup, suite, test } = require('mocha')
+const path = require('path')
+const should = require('should')
 
 should.Assertion.add('hex', function (expectedPretty) {
   const expected = expectedPretty.trim().split(/\s+/)

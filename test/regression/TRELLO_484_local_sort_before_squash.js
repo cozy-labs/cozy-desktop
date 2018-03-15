@@ -1,16 +1,16 @@
 /* eslint-env mocha */
 /* @flow */
 
-import fs from 'fs-extra'
-import _ from 'lodash'
-import should from 'should'
-import sinon from 'sinon'
+const fs = require('fs-extra')
+const _ = require('lodash')
+const should = require('should')
+const sinon = require('sinon')
 
-import { runActions, init } from '../support/helpers/scenarios'
-import configHelpers from '../support/helpers/config'
-import * as cozyHelpers from '../support/helpers/cozy'
-import { IntegrationTestHelpers } from '../support/helpers/integration'
-import pouchHelpers from '../support/helpers/pouch'
+const { runActions, init } = require('../support/helpers/scenarios')
+const configHelpers = require('../support/helpers/config')
+const cozyHelpers = require('../support/helpers/cozy')
+const { IntegrationTestHelpers } = require('../support/helpers/integration')
+const pouchHelpers = require('../support/helpers/pouch')
 
 let helpers
 

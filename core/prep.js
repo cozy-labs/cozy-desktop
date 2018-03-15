@@ -1,17 +1,17 @@
 /* @flow */
 
-import { clone } from 'lodash'
-import { join } from 'path'
-
-import Config from './config'
-import Ignore from './ignore'
-import logger from './logger'
-import Merge from './merge'
-import { assignId, ensureValidChecksum, ensureValidPath } from './metadata'
-import { TRASH_DIR_NAME } from './remote/constants'
-
 import type { SideName, Metadata } from './metadata'
 import type { PathObject } from './utils/path'
+
+const { clone } = require('lodash')
+const { join } = require('path')
+
+const Config = require('./config')
+const Ignore = require('./ignore')
+const logger = require('./logger')
+const Merge = require('./merge')
+const { assignId, ensureValidChecksum, ensureValidPath } = require('./metadata')
+const { TRASH_DIR_NAME } = require('./remote/constants')
 
 const log = logger({
   component: 'Prep'
@@ -257,4 +257,4 @@ class Prep {
   }
 }
 
-export default Prep
+module.exports = Prep

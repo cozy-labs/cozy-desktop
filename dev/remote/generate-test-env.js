@@ -1,11 +1,11 @@
-import cheerio from 'cheerio'
-import cozy from 'cozy-client-js'
-import fs from 'fs'
-import request from 'request'
-import url from 'url'
+const cheerio = require('cheerio')
+const cozy = require('cozy-client-js')
+const fs = require('fs')
+const request = require('request')
+const url = require('url')
 
-import pkg from '../../package.json'
-import Registration from '../../core/remote/registration'
+const pkg = require('../../package.json')
+const Registration = require('../../core/remote/registration')
 
 const cozyUrl = process.env.COZY_URL
 const passphrase = process.env.COZY_PASSPHRASE

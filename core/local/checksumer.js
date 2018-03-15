@@ -1,12 +1,16 @@
 /* @flow */
 
-import Promise from 'bluebird'
-import async from 'async'
-import crypto from 'crypto'
-import fs from 'fs'
-import measureTime from '../perftools'
-
 import type { Callback } from '../utils/func'
+
+const Promise = require('bluebird')
+const async = require('async')
+const crypto = require('crypto')
+const fs = require('fs')
+const measureTime = require('../perftools')
+
+module.exports = {
+  init
+}
 
 // Get checksum for given file
 const computeChecksum = (filePath: string, callback: Callback) => {
@@ -41,7 +45,7 @@ export type Checksumer = {
   kill: () => void
 }
 
-export const init = (): Checksumer => {
+function init (): Checksumer {
   // Use a queue for checksums to avoid computing many checksums at the
   // same time. It's better for performance (hard disk are faster with
   // linear readings).

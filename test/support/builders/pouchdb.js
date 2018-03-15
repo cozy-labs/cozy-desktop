@@ -1,6 +1,6 @@
-import uuid from 'uuid/v4'
+const uuid = require('uuid/v4')
 
-export default {
+module.exports = {
   id () {
     return uuid().replace(/-/g, '')
   },

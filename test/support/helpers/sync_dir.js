@@ -1,16 +1,16 @@
 /* @flow */
 
-import Promise from 'bluebird'
-import fs from 'fs-extra'
-import path from 'path'
-
-import { getPath } from '../../../core/utils/path'
-
 import type { PathObject } from '../../../core/utils/path'
+
+const Promise = require('bluebird')
+const fs = require('fs-extra')
+const path = require('path')
+
+const { getPath } = require('../../../core/utils/path')
 
 Promise.promisifyAll(fs)
 
-export class SyncDirTestHelpers {
+class SyncDirTestHelpers {
   root: string
 
   constructor (root: string) {
@@ -36,4 +36,8 @@ export class SyncDirTestHelpers {
   async rmdir (target: string|PathObject) {
     await fs.rmdirSync(this.abspath(target))
   }
+}
+
+module.exports = {
+  SyncDirTestHelpers
 }

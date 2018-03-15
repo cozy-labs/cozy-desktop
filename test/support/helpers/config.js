@@ -1,12 +1,12 @@
-import fs from 'fs-extra'
-import del from 'del'
-import path from 'path'
+const fs = require('fs-extra')
+const del = require('del')
+const path = require('path')
 
-import Config from '../../../core/config'
+const Config = require('../../../core/config')
 
-import { COZY_URL } from './cozy'
+const { COZY_URL } = require('./cozy')
 
-export default {
+module.exports = {
   createConfig () {
     let parent = process.env.COZY_DESKTOP_DIR || 'tmp'
     this.basePath = path.resolve(`${parent}/test/${+new Date()}`)

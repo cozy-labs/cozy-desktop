@@ -1,8 +1,8 @@
 /* @flow */
 
-import * as stream from 'stream'
+const stream = require('stream')
 
-export default class StreamBuilder {
+module.exports = class StreamBuilder {
   data: string
 
   constructor () {

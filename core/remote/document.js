@@ -1,12 +1,21 @@
 /* @flow */
 
-import { uniq } from 'lodash'
+const { uniq } = require('lodash')
 
-import {
+const {
   DIR_TYPE, FILE_TYPE, ROOT_DIR_ID, TRASH_DIR_ID, TRASH_DIR_NAME
-} from './constants'
+} = require('./constants')
 
-export function specialId (id: string) {
+module.exports = {
+  specialId,
+  dropSpecialDocs,
+  keepFiles,
+  parentDirIds,
+  inRemoteTrash,
+  jsonApiToRemoteDoc
+}
+
+function specialId (id: string) {
   return (
     id === ROOT_DIR_ID ||
     id === TRASH_DIR_ID ||
@@ -41,19 +50,19 @@ export type RemoteDeletion = {
   _deleted: true
 }
 
-export function dropSpecialDocs (docs: RemoteDoc[]) {
+function dropSpecialDocs (docs: RemoteDoc[]) {
   return docs.filter(doc => !specialId(doc._id))
 }
 
-export function keepFiles (docs: RemoteDoc[]) {
+function keepFiles (docs: RemoteDoc[]) {
   return docs.filter(doc => doc.type === FILE_TYPE)
 }
 
-export function parentDirIds (docs: RemoteDoc[]) {
+function parentDirIds (docs: RemoteDoc[]) {
   return uniq(docs.map(doc => doc.dir_id))
 }
 
-export function inRemoteTrash (doc: RemoteDoc): boolean {
+function inRemoteTrash (doc: RemoteDoc): boolean {
   return doc.trashed || doc.path.startsWith(`/${TRASH_DIR_NAME}/`)
 }
 
@@ -78,7 +87,7 @@ export type JsonApiDoc = {
   attributes: JsonApiAttributes,
 }
 
-export function jsonApiToRemoteDoc (json: JsonApiDoc): RemoteDoc {
+function jsonApiToRemoteDoc (json: JsonApiDoc): RemoteDoc {
   let metadata = {}
 
   Object.assign(metadata, {
