@@ -54,7 +54,7 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
   }
   const changeFound = (c: LocalChange) => {
     changesByPath.set(c.path, c)
-    if (c.ino) changesByInode.set(c.ino, c)
+    if (typeof c.ino === 'number') changesByInode.set(c.ino, c)
     else changes.push(c)
   }
 
