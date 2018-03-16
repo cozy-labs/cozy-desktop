@@ -114,7 +114,12 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
           }
           break
         case 'change':
-          changeFound(localChange.fromEvent(e))
+          const moveChange: ?LocalFileMove = localChange.maybeMoveFile(getChangeByInode(e))
+          if (moveChange) {
+            localChange.includeChangeEventIntoFileMove(moveChange, e)
+          } else {
+            changeFound(localChange.fromEvent(e))
+          }
           break
         case 'unlink':
           {

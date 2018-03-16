@@ -72,6 +72,34 @@ describe('core/local/analysis', function () {
     should(pendingChanges).deepEqual([])
   })
 
+  it('handles unlink+add+change', () => {
+    const old: Metadata = metadataBuilders.file().ino(1).build()
+    const stats = {ino: 1}
+    const events: LocalEvent[] = [
+      {type: 'unlink', path: 'src', old},
+      {type: 'add', path: 'dst', stats, md5sum: 'yolo'},
+      {type: 'change', path: 'dst', stats, md5sum: 'yata'}
+    ]
+    const pendingChanges: LocalChange[] = []
+
+    should(analysis(events, pendingChanges)).deepEqual([{
+      sideName,
+      type: 'FileMove',
+      path: 'dst',
+      md5sum: 'yolo',
+      ino: 1,
+      stats,
+      old,
+      update: {
+        type: 'change',
+        path: 'dst',
+        stats,
+        md5sum: 'yata'
+      }
+    }])
+    should(pendingChanges).deepEqual([])
+  })
+
   it('handles unlinkDir+addDir', () => {
     const old: Metadata = metadataBuilders.dir().ino(1).build()
     const stats = {ino: 1}
