@@ -150,7 +150,7 @@ function fileMoveFromUnlinkAdd (unlinkChange: LocalFileDeletion, e: LocalFileAdd
 }
 
 function dirMoveFromUnlinkAdd (unlinkChange: LocalDirDeletion, e: LocalDirAdded): * {
-  log.debug({oldpath: unlinkChange.path, path: e.path}, 'moveFolder')
+  log.debug({oldpath: unlinkChange.path, path: e.path}, 'unlinkDir + addDir = DirMove')
   return build('DirMove', e.path, {
     stats: e.stats,
     old: unlinkChange.old,
@@ -160,7 +160,7 @@ function dirMoveFromUnlinkAdd (unlinkChange: LocalDirDeletion, e: LocalDirAdded)
 }
 
 function fileMoveFromAddUnlink (addChange: LocalFileAddition, e: LocalFileUnlinked): * {
-  log.debug({oldpath: e.path, path: addChange.path, ino: addChange.ino}, 'File moved')
+  log.debug({oldpath: e.path, path: addChange.path, ino: addChange.ino}, 'add + unlink = FileMove')
   return build('FileMove', addChange.path, {
     stats: addChange.stats,
     md5sum: addChange.md5sum,
@@ -171,7 +171,7 @@ function fileMoveFromAddUnlink (addChange: LocalFileAddition, e: LocalFileUnlink
 }
 
 function dirMoveFromAddUnlink (addChange: LocalDirAddition, e: LocalDirUnlinked): * {
-  log.debug({oldpath: e.path, path: addChange.path}, 'moveFolder')
+  log.debug({oldpath: e.path, path: addChange.path}, 'addDir + unlinkDir = DirMove')
   return build('DirMove', addChange.path, {
     stats: addChange.stats,
     old: e.old,
@@ -206,7 +206,7 @@ function includeAddEventInFileMove (moveChange: LocalFileMove, e: LocalFileAdded
   delete moveChange.wip
   log.debug(
     {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
-    'File move completing')
+    'FileMove + add = FileMove')
 }
 
 function includeAddDirEventInDirMove (moveChange: LocalDirMove, e: LocalDirAdded) {
@@ -216,18 +216,18 @@ function includeAddDirEventInDirMove (moveChange: LocalDirMove, e: LocalDirAdded
   delete moveChange.wip
   log.debug(
    {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
-   'Folder move completing')
+   'DirMove + addDir = DirMove')
 }
 
 function includeChangeEventIntoFileMove (moveChange: LocalFileMove, e: LocalFileUpdated) {
-  log.debug({path: e.path}, 'Including change into move')
+  log.debug({path: e.path}, 'FileMove + change')
   moveChange.md5sum = moveChange.old.md5sum || moveChange.md5sum
   moveChange.update = e
 }
 
 function convertFileMoveToDeletion (change: LocalFileMove) {
   log.debug({path: change.old.path, ino: change.ino},
-    'File was moved then deleted. Deleting origin directly.')
+    'FileMove + unlink = FileDeletion')
   // $FlowFixMe
   change.type = 'FileDeletion'
   change.path = change.old.path
@@ -237,7 +237,7 @@ function convertFileMoveToDeletion (change: LocalFileMove) {
 
 function convertDirMoveToDeletion (change: LocalDirMove) {
   log.debug({path: change.old.path, ino: change.ino},
-    'Folder was moved then deleted. Deleting origin directly.')
+    'DirMove + unlinkDir = DirDeletion')
   // $FlowFixMe
   change.type = 'DirDeletion'
   change.path = change.old.path
