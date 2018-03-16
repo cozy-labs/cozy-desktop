@@ -534,6 +534,7 @@ describe('RemoteWatcher', function () {
       const change: RemoteChange = this.watcher.identifyChange(clone(doc), was, 0, [])
 
       should(change.type).equal('FileMove')
+      should(change).not.have.property('update')
       // $FlowFixMe
       const src = change.was
       should(src).have.properties({
@@ -557,6 +558,26 @@ describe('RemoteWatcher', function () {
         }
       })
       should(dst).not.have.properties(['_rev', 'path', 'name'])
+    })
+
+    it('detects when file was both moved and updated', async function () {
+      const file: RemoteDoc = await builders.remote.file().named('meow.txt').data('meow').build()
+      const was: Metadata = createMetadata(file)
+      metadata.ensureValidPath(was)
+      metadata.assignId(was)
+      file._rev = '2'
+      file.name = 'woof.txt'
+      file.path = '/' + file.name
+      file.md5sum = 'j9tggB6dOaUoaqAd0fT08w==' // woof
+
+      const change: RemoteChange = this.watcher.identifyChange(clone(file), was, 0, [])
+
+      should(change).have.properties({
+        type: 'FileMove',
+        update: true
+      })
+      should(change).have.propertyByPath('was', 'path').eql(was.path)
+      should(change).have.propertyByPath('doc', 'path').eql(file.name)
     })
 
     it('is invalid when local or remote file is corrupt', async function () {

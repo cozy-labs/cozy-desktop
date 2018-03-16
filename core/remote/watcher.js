@@ -223,8 +223,10 @@ class RemoteWatcher {
         return remoteChange.updated(doc)
       }
     }
-    if ((doc.docType === 'file') && (was.md5sum === doc.md5sum)) {
+    if ((doc.docType === 'file')) {
       const change: RemoteFileMove = {sideName, type: 'FileMove', doc, was}
+      if (was.md5sum !== doc.md5sum) change.update = true // move + change
+
       // Squash moves
       for (let previousChangeIndex = 0; previousChangeIndex < changeIndex; previousChangeIndex++) {
         const previousChange: RemoteChange|RemoteNoise = previousChanges[previousChangeIndex]
@@ -246,8 +248,7 @@ class RemoteWatcher {
         }
       }
       return change
-    }
-    if (doc.docType === 'folder') {
+    } else { // doc.docType === 'folder'
       const change = {sideName, type: 'DirMove', doc, was}
       // Squash moves
       for (let previousChangeIndex = 0; previousChangeIndex < changeIndex; previousChangeIndex++) {
@@ -276,9 +277,6 @@ class RemoteWatcher {
       }
       return change
     }
-    // TODO: add unit test
-    log.info({path}, `${docType} was possibly renamed remotely while updated locally`)
-    return remoteChange.dissociated(doc, was)
   }
 
   async applyAll (changes: Array<RemoteChange|RemoteNoise>): Promise<void> {
@@ -354,6 +352,9 @@ class RemoteWatcher {
           change.was.childMove = false
         }
         await this.prep.moveFileAsync(sideName, change.doc, change.was)
+        if (change.update) {
+          await this.prep.updateFileAsync(sideName, change.doc)
+        }
         break
       case 'DirMove':
         log.info({path, oldpath: change.was.path}, 'folder was moved or renamed remotely')
