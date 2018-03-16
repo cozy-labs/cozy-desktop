@@ -19,10 +19,10 @@ const logger = require('../logger')
 const measureTime = require('../perftools')
 
 const log = logger({
-  component: 'LocalWatcher'
+  component: 'local/analysis'
 })
 log.chokidar = log.child({
-  component: 'Chokidar'
+  component: 'chokidar'
 })
 
 module.exports = function analysis (events: LocalEvent[], pendingChanges: LocalChange[]): LocalChange[] {
