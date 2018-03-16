@@ -124,7 +124,9 @@ function fromEvent (e: LocalEvent): LocalChange {
     case 'unlink':
       return {sideName, type: 'FileDeletion', path: e.path, old: e.old, ino: (e.old != null ? e.old.ino : null)}
     case 'addDir':
-      return {sideName, type: 'DirAddition', path: e.path, stats: e.stats, ino: e.stats.ino}
+      const change = {sideName, type: 'DirAddition', path: e.path, stats: e.stats, ino: e.stats.ino, wip: e.wip}
+      if (change.wip == null) delete change.wip
+      return change
     case 'change':
       return {sideName, type: 'FileUpdate', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, wip: e.wip}
     case 'add':
