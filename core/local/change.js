@@ -139,7 +139,7 @@ function fromEvent (e: LocalEvent): LocalChange {
 }
 
 function fileMoveFromUnlinkAdd (unlinkChange: LocalFileDeletion, e: LocalFileAdded): * {
-  log.debug({oldpath: unlinkChange.path, path: e.path, ino: unlinkChange.ino}, 'File moved')
+  log.debug({oldpath: unlinkChange.path, path: e.path, ino: unlinkChange.ino}, 'unlink + add = FileMove')
   return build('FileMove', e.path, {
     stats: e.stats,
     md5sum: e.md5sum,
