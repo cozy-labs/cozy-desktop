@@ -40,6 +40,7 @@ module.exports = {
   dirMoveFromAddUnlink,
   includeAddEventInFileMove,
   includeAddDirEventInDirMove,
+  includeChangeEventIntoFileMove,
   convertFileMoveToDeletion,
   convertDirMoveToDeletion
 }
@@ -216,6 +217,12 @@ function includeAddDirEventInDirMove (moveChange: LocalDirMove, e: LocalDirAdded
   log.debug(
    {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
    'Folder move completing')
+}
+
+function includeChangeEventIntoFileMove (moveChange: LocalFileMove, e: LocalFileUpdated) {
+  log.debug({path: e.path}, 'Including change into move')
+  moveChange.md5sum = moveChange.old.md5sum || moveChange.md5sum
+  moveChange.update = e
 }
 
 function convertFileMoveToDeletion (change: LocalFileMove) {
