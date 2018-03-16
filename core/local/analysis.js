@@ -187,7 +187,7 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
       log.error({err, path: e.path})
       throw err
     }
-    if (process.env.DEBUG) log.trace({currentEvent: e, changes})
+    if (process.env.DEBUG) log.trace({currentEvent: e, path: e.path})
   }
 
   log.trace('Flatten changes map...')
