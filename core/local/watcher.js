@@ -278,6 +278,7 @@ module.exports = class LocalWatcher {
               c.old.childMove = false
             }
             await this.onMoveFile(c.path, c.stats, c.md5sum, c.old)
+            if (c.update) await this.onChange(c.update.path, c.update.stats, c.update.md5sum)
             break
           case 'DirMove':
             await this.onMoveFolder(c.path, c.stats, c.old)
