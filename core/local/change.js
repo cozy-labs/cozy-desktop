@@ -46,7 +46,7 @@ module.exports = {
 }
 
 const log = logger({
-  component: 'LocalWatcher'
+  component: 'local/change'
 })
 
 export type LocalDirAddition = {sideName: 'local', type: 'DirAddition', path: string, ino: number, stats: fs.Stats, wip?: true}
