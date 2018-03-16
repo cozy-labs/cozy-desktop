@@ -283,6 +283,8 @@ module.exports = class LocalWatcher {
           case 'DirMove':
             await this.onMoveFolder(c.path, c.stats, c.old)
             break
+          case 'Ignored':
+            break
           default:
             throw new Error('wrong changes')
         }
