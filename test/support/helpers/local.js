@@ -112,6 +112,10 @@ class LocalTestHelpers {
   async simulateEvents (events: ChokidarEvent[]) {
     return this.local.watcher.onFlush(events)
   }
+
+  async readFile (path: string): Promise<string> {
+    return this.syncDir.readFile(path)
+  }
 }
 
 module.exports = {
