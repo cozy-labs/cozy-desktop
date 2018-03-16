@@ -354,14 +354,14 @@ module.exports = class LocalWatcher {
 
   async onMoveFile (filePath: string, stats: fs.Stats, md5sum: string, old: Metadata) {
     const logError = (err) => log.error({err, path: filePath})
-    const doc = metadata.buildFile(filePath, stats, md5sum)
+    const doc = metadata.buildFile(filePath, stats, md5sum, old.remote)
     log.info({path: filePath}, `was moved from ${old.path}`)
     return this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
   }
 
   onMoveFolder (folderPath: string, stats: fs.Stats, old: Metadata) {
     const logError = (err) => log.error({err, path: folderPath})
-    const doc = metadata.buildDir(folderPath, stats)
+    const doc = metadata.buildDir(folderPath, stats, old.remote)
     log.info({path: folderPath}, `was moved from ${old.path}`)
     return this.prep.moveFolderAsync(SIDE, doc, old).catch(logError)
   }
