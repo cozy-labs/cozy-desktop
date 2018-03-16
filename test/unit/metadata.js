@@ -455,6 +455,9 @@ describe('metadata', function () {
       })
       doc.should.have.property('updated_at')
       should.not.exist(doc.executable)
+
+      const remote = {_id: 'foo', _rev: '456'}
+      should(buildFile('chat-mignon.jpg', stats, md5sum, remote).remote).deepEqual(remote)
     })
 
     if (process.platform !== 'win32') {
@@ -479,6 +482,14 @@ describe('metadata', function () {
       should(buildDir(path, {mtime: d1, ctime: d1, ino})).have.property('updated_at', d1)
       should(buildDir(path, {mtime: d1, ctime: d2, ino})).have.property('updated_at', d2)
       should(buildDir(path, {mtime: d2, ctime: d1, ino})).have.property('updated_at', d2)
+    })
+
+    it('accepts remote info', () => {
+      const path = 'whatever'
+      const ctime = new Date()
+      const remote = {_id: 'foo', _rev: '456'}
+      const doc = buildDir(path, {ctime, mtime: ctime, ino: 123}, remote)
+      should(doc.remote).deepEqual(remote)
     })
   })
 })
