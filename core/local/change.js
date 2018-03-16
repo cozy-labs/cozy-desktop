@@ -120,6 +120,12 @@ function isChildAdd (a: LocalChange, b: LocalChange) { return childOf(addPath(a)
 function toString (a: LocalChange): string { return '(' + a.type + ': ' + (a.old && a.old.path) + '-->' + a.path + ')' }
 
 function fromEvent (e: LocalEvent): LocalChange {
+  const change = _fromEvent(e)
+  log.debug(_.pick(change, ['path', 'ino', 'wip']), `${e.type} -> ${change.type}`)
+  return change
+}
+
+function _fromEvent (e: LocalEvent): LocalChange {
   switch (e.type) {
     case 'unlinkDir':
       return {sideName, type: 'DirDeletion', path: e.path, old: e.old, ino: (e.old != null ? e.old.ino : null)}
