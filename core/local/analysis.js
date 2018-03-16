@@ -159,9 +159,21 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
               changeFound(localChange.dirMoveFromAddUnlink(addChange, e))
             } else if (getInode(e)) {
               changeFound(localChange.fromEvent(e))
-            } // else skip
+            } else {
+              const addChangeSamePath: ?LocalDirAddition = localChange.maybePutFolder(getChangeByPath(e))
+              if (addChangeSamePath && addChangeSamePath.wip) {
+                log.debug({path: addChangeSamePath.path, ino: addChangeSamePath.ino},
+                  'Folder was added then deleted. Ignoring add.')
+                // $FlowFixMe
+                addChangeSamePath.type = 'Ignored'
+              }
+
+              const moveChangeSamePath: ?LocalDirMove = localChange.maybeMoveFolder(getChangeByPath(e))
+              if (moveChangeSamePath && moveChangeSamePath.wip) {
+                localChange.convertDirMoveToDeletion(moveChangeSamePath)
+              }
+            }
           }
-          // TODO: move & delete dir
           break
         default:
           throw new TypeError(`Unknown event type: ${e.type}`)
