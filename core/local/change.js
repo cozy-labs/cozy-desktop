@@ -39,7 +39,8 @@ module.exports = {
   dirMoveFromAddUnlink,
   includeAddEventInFileMove,
   includeAddDirEventInDirMove,
-  convertFileMoveToDeletion
+  convertFileMoveToDeletion,
+  convertDirMoveToDeletion
 }
 
 const log = logger({
@@ -219,6 +220,16 @@ function convertFileMoveToDeletion (change: LocalFileMove) {
     'File was moved then deleted. Deleting origin directly.')
   // $FlowFixMe
   change.type = 'FileDeletion'
+  change.path = change.old.path
+  delete change.stats
+  delete change.wip
+}
+
+function convertDirMoveToDeletion (change: LocalDirMove) {
+  log.debug({path: change.old.path, ino: change.ino},
+    'Folder was moved then deleted. Deleting origin directly.')
+  // $FlowFixMe
+  change.type = 'DirDeletion'
   change.path = change.old.path
   delete change.stats
   delete change.wip
