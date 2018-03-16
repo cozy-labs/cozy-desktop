@@ -53,6 +53,7 @@ export type LocalFileAddition = {sideName: 'local', type: 'FileAddition', path: 
 export type LocalFileDeletion = {sideName: 'local', type: 'FileDeletion', path: string, old: ?Metadata, ino: ?number}
 export type LocalFileMove = {sideName: 'local', type: 'FileMove', path: string, old: Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true, needRefetch: boolean}
 export type LocalFileUpdate = {sideName: 'local', type: 'FileUpdate', path: string, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
+export type LocalIgnored = {sideName: 'local', type: 'Ignored', path: string}
 
 export type LocalChange =
   | LocalDirAddition
@@ -62,6 +63,7 @@ export type LocalChange =
   | LocalFileDeletion
   | LocalFileMove
   | LocalFileUpdate
+  | LocalIgnored
 
 const sideName = 'local'
 
