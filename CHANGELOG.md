@@ -1,3 +1,34 @@
+## 3.6.0-beta.1 - 2018-03-19
+
+Improvements for all users:
+
+- Electron was upgraded from 1.7.9 to 1.8.3 (including quite a few security and
+  bug fixes).
+- The file/directory move synchronization logic (the part that takes
+  already-merged metadata changes and turn them into actions on the other side)
+  was substantially rewritten to make it more robust and handle more complex
+  cases (e.g. moving `a/` to `b/` then `c/` to `a/`, or moving `a/` to `b/` then
+  deleting `b/`).
+- A file won't be updated when only its mtime changed. This is a first necessary
+  step to later stop computing checksums for files with unmodified mtime, making
+  the initial scan faster.
+
+Improvements for macOS and BSD users:
+
+- We fixed a weird recurring error that was generating useless logging on every
+  run.
+
+Improvements for developers and support team:
+
+- ES6 modules were replaced with node.js ones. This is a first necessary step
+  to get rid of Babel, simplify our build process and make stacktraces smaller
+  and easier to read.
+- The app now waits for the configuration to be loaded before logging full
+  client information (not just some part of it).
+- We introduced a few [jq](https://stedolan.github.io/jq/) filters to help
+  filtering huge logs. Those should work well with multiple huge log files
+  (e.g. > 1GB).
+
 ## 3.5.0 - 2018-03-12
 
 This is the same release as [3.5.0-beta.4](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.5.0-beta.4),
