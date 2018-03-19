@@ -1,6 +1,7 @@
 /* @flow */
 
 const CozyClient = require('cozy-client-js').Client
+const _ = require('lodash')
 const path = require('path')
 
 const Config = require('../config')
@@ -142,7 +143,7 @@ class RemoteCozy {
     if (results.length === 0) throw new DirectoryNotFound(path, this.url)
 
     // FIXME: cozy-client-js query results have no _type
-    return {...results[0], _type: FILES_DOCTYPE}
+    return _.merge({_type: FILES_DOCTYPE}, results[0])
   }
 
   // FIXME: created_at is returned by some methods, but not all of them

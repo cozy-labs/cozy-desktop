@@ -3,7 +3,7 @@
 
 const async = require('async')
 const EventEmitter = require('events')
-const { clone } = require('lodash')
+const _ = require('lodash')
 const path = require('path')
 const sinon = require('sinon')
 const should = require('should')
@@ -377,7 +377,7 @@ describe('RemoteWatcher', function () {
         }
       }
 
-      const change /*: RemoteChange */ = this.watcher.identifyChange(clone(doc), null, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(doc), null, 0, [])
 
       should(change.type).equal('FileAddition')
       should(change.doc).have.properties({
@@ -416,7 +416,7 @@ describe('RemoteWatcher', function () {
       }
       const was = await this.pouch.byRemoteIdAsync(doc._id)
 
-      const change /*: RemoteChange */ = this.watcher.identifyChange(clone(doc), was, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(doc), was, 0, [])
 
       should(change.type).equal('FileUpdate')
       should(change.doc).have.properties({
@@ -448,7 +448,7 @@ describe('RemoteWatcher', function () {
       }
       const was = await this.pouch.byRemoteIdAsync(doc._id)
 
-      const change /*: RemoteChange */ = this.watcher.identifyChange(clone(doc), was, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(doc), was, 0, [])
 
       should(change.type).equal('FileUpdate')
       should(change.doc).have.properties({
@@ -481,7 +481,7 @@ describe('RemoteWatcher', function () {
       }
 
       const was = await this.pouch.byRemoteIdMaybeAsync(doc._id)
-      const change /*: RemoteChange */ = this.watcher.identifyChange(clone(doc), was, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(doc), was, 0, [])
 
       should(change.type).equal('FileMove')
       // $FlowFixMe
@@ -533,7 +533,7 @@ describe('RemoteWatcher', function () {
       const was /*: Metadata */ = await this.pouch.db.get(metadata.id(path.normalize('my-folder/file-2')))
       await this.pouch.db.put(was)
 
-      const change /*: RemoteChange */ = this.watcher.identifyChange(clone(doc), was, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(doc), was, 0, [])
 
       should(change.type).equal('FileMove')
       should(change).not.have.property('update')
@@ -572,7 +572,7 @@ describe('RemoteWatcher', function () {
       file.path = '/' + file.name
       file.md5sum = 'j9tggB6dOaUoaqAd0fT08w==' // woof
 
-      const change /*: RemoteChange */ = this.watcher.identifyChange(clone(file), was, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(file), was, 0, [])
 
       should(change).have.properties({
         type: 'FileMove',
@@ -592,7 +592,7 @@ describe('RemoteWatcher', function () {
       was.size = 456
       was.remote._rev = '0'
 
-      const change /*: RemoteChange */ = this.watcher.identifyChange(clone(doc), was, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(doc), was, 0, [])
 
       should(change).have.property('type', 'RemoteInvalidChange')
       // $FlowFixMe
@@ -610,7 +610,10 @@ describe('RemoteWatcher', function () {
       assignId(oldMeta)
       await this.pouch.db.put(oldMeta)
       // TODO: builders.remote.dir().was(oldDir).trashed().build()
-      const newDir /*: RemoteDoc */ = {...oldDir, path: '/.cozy_trash/foo', dir_id: TRASH_DIR_ID}
+      const newDir /*: RemoteDoc */ = _.defaults({
+        path: '/.cozy_trash/foo',
+        dir_id: TRASH_DIR_ID
+      }, oldDir)
 
       this.watcher.identifyChange(newDir, null, 0, [])
 
@@ -637,7 +640,10 @@ describe('RemoteWatcher', function () {
       assignId(oldMeta)
       await this.pouch.db.put(oldMeta)
       // TODO: builders.remote.dir().was(oldDir).restored().build()
-      const newDir /*: RemoteDoc */ = {...oldDir, path: '/foo', dir_id: ROOT_DIR_ID}
+      const newDir /*: RemoteDoc */ = _.defaults({
+        path: '/foo',
+        dir_id: ROOT_DIR_ID
+      }, oldDir)
 
       this.watcher.identifyChange(newDir, null, 0, [])
 

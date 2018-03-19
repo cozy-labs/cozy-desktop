@@ -1,6 +1,7 @@
 /* @flow */
 
-const { clone, isEqual, pick } = require('lodash')
+const _ = require('lodash')
+const { clone, isEqual, pick } = _
 const mime = require('mime')
 const path = require('path')
 const { join } = path
@@ -171,10 +172,9 @@ function detectPlatformIncompatibilities (metadata /*: Metadata */, syncPath /*:
   const pathLenghIssue = detectPathLengthIssue(join(syncPath, path), process.platform)
   const issues /*: PathIssue[] */ = detectPathIssues(path, docType)
   if (pathLenghIssue) issues.unshift(pathLenghIssue)
-  return issues.map(issue => ({
-    ...issue,
+  return issues.map(issue => (_.merge({
     docType: issue.path === path ? docType : 'folder'
-  }))
+  }, issue)))
 }
 
 // Return true if the checksum is invalid
@@ -244,8 +244,8 @@ function sameFile (one /*: Metadata */, two /*: Metadata */) {
 function sameFileIgnoreRev (one /*: Metadata */, two /*: Metadata */) {
   const {path} = two
   let fields = ['_id', 'docType', 'md5sum', 'remote._id', 'tags', 'size', 'trashed', 'ino']
-  one = {...pick(one, fields), executable: !!one.executable}
-  two = {...pick(two, fields), executable: !!two.executable}
+  one = _.merge({executable: !!one.executable}, pick(one, fields))
+  two = _.merge({executable: !!two.executable}, pick(two, fields))
   const same = isEqual(one, two)
   if (!same) log.trace({path, diff: {one, two}})
   return same

@@ -1,5 +1,7 @@
 /* @flow */
 
+const _ = require('lodash')
+
 const RemoteBaseBuilder = require('./base')
 const { jsonApiToRemoteDoc } = require('../../../../core/remote/document')
 
@@ -30,10 +32,7 @@ module.exports = class RemoteDirBuilder extends RemoteBaseBuilder {
   }
 
   build () /*: RemoteDoc */ {
-    return {
-      ...super.build(),
-      type: 'directory'
-    }
+    return _.merge({type: 'directory'}, super.build())
   }
 
   async create () /*: Promise<RemoteDoc> */ {

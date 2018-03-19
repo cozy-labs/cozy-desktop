@@ -3,6 +3,8 @@
 const path = require('path')
 const { sep } = path
 
+const _ = require('lodash')
+
 /*::
 type SingleCharString = string
 
@@ -179,7 +181,7 @@ function detectPathIssues (path /*: string */, type /*: string */) /*: Array<Pat
   const basename = ancestorNames.pop()
 
   const pathIssues = detectNameIssues(basename, type, platform)
-    .map(nameIssue => ({...nameIssue, path}))
+    .map(nameIssue => _.merge({path}, nameIssue))
 
   const recursivePathIssues = ancestorNames
     .reduceRight((previousIssues, name, index, pathComponents) => {
@@ -187,11 +189,8 @@ function detectPathIssues (path /*: string */, type /*: string */) /*: Array<Pat
       const nameIssues = detectNameIssues(name, 'folder', platform)
 
       return previousIssues.concat(
-        nameIssues.map(issue => ({
-          ...issue,
-          path
-        })
-      ))
+        nameIssues.map(issue => _.merge({path}, issue))
+      )
     }, pathIssues)
 
   return recursivePathIssues.filter(issue => issue != null)

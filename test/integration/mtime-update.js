@@ -11,7 +11,7 @@ const {
 const should = require('should')
 const fs = require('fs-extra')
 const path = require('path')
-const {pick} = require('lodash')
+const _ = require('lodash')
 
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
@@ -88,11 +88,13 @@ suite('Update only a file mtime', () => {
     helpers.spyPouch()
 
     const oldFile = await helpers._pouch.byRemoteIdMaybeAsync(file._id)
-    await helpers.prep.updateFileAsync('local', {
-      path: 'file',
-      updated_at: d.toISOString(),
-      ...pick(oldFile, ['docType', 'md5sum', 'mime', 'class', 'size', 'remote'])
-    })
+    await helpers.prep.updateFileAsync('local', _.merge(
+      {
+        path: 'file',
+        updated_at: d.toISOString()
+      },
+      _.pick(oldFile, ['docType', 'md5sum', 'mime', 'class', 'size', 'remote'])
+    ))
 
     await helpers.syncAll()
 
