@@ -77,7 +77,7 @@ describe('core/local/analysis', function () {
     const stats = {ino: 1}
     const events: LocalEvent[] = [
       {type: 'unlink', path: 'src', old},
-      {type: 'add', path: 'dst', stats, md5sum: 'yolo'},
+      {type: 'add', path: 'dst', stats, md5sum: old.md5sum},
       {type: 'change', path: 'dst', stats, md5sum: 'yata'}
     ]
     const pendingChanges: LocalChange[] = []
@@ -86,7 +86,7 @@ describe('core/local/analysis', function () {
       sideName,
       type: 'FileMove',
       path: 'dst',
-      md5sum: 'yolo',
+      md5sum: old.md5sum,
       ino: 1,
       stats,
       old,
