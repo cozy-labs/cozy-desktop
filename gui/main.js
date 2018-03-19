@@ -2,7 +2,7 @@
 
 require('babel-polyfill')
 
-const Desktop = require('../core-built/app.js')
+const Desktop = require('../core/app.js')
 const pkg = require('../package.json')
 
 const { debounce, pick } = require('lodash')

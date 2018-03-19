@@ -4,7 +4,7 @@ const path = require('path')
 const url = require('url')
 const childProcess = require('child_process')
 
-const log = require('../../core-built/app').logger({
+const log = require('../../core/app').logger({
   component: 'GUI'
 })
 

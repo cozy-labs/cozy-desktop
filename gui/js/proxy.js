@@ -5,7 +5,7 @@ const url = require('url')
 const http = require('http')
 const https = require('https')
 
-const log = require('../../core-built/app').logger({
+const log = require('../../core/app').logger({
   component: 'GUI:proxy'
 })
 

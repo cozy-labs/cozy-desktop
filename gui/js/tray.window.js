@@ -8,7 +8,7 @@ const DASHBOARD_SCREEN_HEIGHT = 830
 
 const {translate} = require('./i18n')
 
-const log = require('../../core-built/app').logger({
+const log = require('../../core/app').logger({
   component: 'GUI'
 })
 
