@@ -16,6 +16,9 @@ module.exports = ({
     tree: [
       'file'
     ],
-    remoteTrash: []
+    remoteTrash: [],
+    contents: {
+      'file': 'foo blah'
+    }
   }
 }: Scenario)

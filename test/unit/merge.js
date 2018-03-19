@@ -273,7 +273,7 @@ describe('Merge', function () {
       this.pouch.db.put(clone(was), (err, inserted) => {
         should.not.exist(err)
         was._rev = inserted.rev
-        this.merge.moveFileAsync(this.side, doc, clone(was)).then(() => {
+        this.merge.moveFileAsync(this.side, clone(doc), clone(was)).then(() => {
           this.pouch.db.get(doc._id, function (err, res) {
             should.not.exist(err)
             res.should.have.properties(doc)

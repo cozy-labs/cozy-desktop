@@ -102,6 +102,12 @@ class RemoteTestHelpers {
   async simulateChanges (docs: *) {
     await this.remote.watcher.pullMany(docs)
   }
+
+  async readFile (path: string) {
+    if (!path.startsWith('/')) path = '/' + path
+    const resp = await this.cozy.files.downloadByPath(path)
+    return resp.text()
+  }
 }
 
 module.exports = {

@@ -19,10 +19,10 @@ const logger = require('../logger')
 const measureTime = require('../perftools')
 
 const log = logger({
-  component: 'LocalWatcher'
+  component: 'local/analysis'
 })
 log.chokidar = log.child({
-  component: 'Chokidar'
+  component: 'chokidar'
 })
 
 module.exports = function analysis (events: LocalEvent[], pendingChanges: LocalChange[]): LocalChange[] {
@@ -54,7 +54,7 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
   }
   const changeFound = (c: LocalChange) => {
     changesByPath.set(c.path, c)
-    if (c.ino) changesByInode.set(c.ino, c)
+    if (typeof c.ino === 'number') changesByInode.set(c.ino, c)
     else changes.push(c)
   }
 
@@ -103,18 +103,23 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
             const moveChange: ?LocalDirMove = localChange.maybeMoveFolder(getChangeByInode(e))
             if (moveChange) {
               localChange.includeAddDirEventInDirMove(moveChange, e)
-            }
-
-            const unlinkChange: ?LocalDirDeletion = localChange.maybeDeleteFolder(getChangeByInode(e))
-            if (unlinkChange) {
-              changeFound(localChange.dirMoveFromUnlinkAdd(unlinkChange, e))
             } else {
-              changeFound(localChange.fromEvent(e))
+              const unlinkChange: ?LocalDirDeletion = localChange.maybeDeleteFolder(getChangeByInode(e))
+              if (unlinkChange) {
+                changeFound(localChange.dirMoveFromUnlinkAdd(unlinkChange, e))
+              } else {
+                changeFound(localChange.fromEvent(e))
+              }
             }
           }
           break
         case 'change':
-          changeFound(localChange.fromEvent(e))
+          const moveChange: ?LocalFileMove = localChange.maybeMoveFile(getChangeByInode(e))
+          if (moveChange) {
+            localChange.includeChangeEventIntoFileMove(moveChange, e)
+          } else {
+            changeFound(localChange.fromEvent(e))
+          }
           break
         case 'unlink':
           {
@@ -159,9 +164,21 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
               changeFound(localChange.dirMoveFromAddUnlink(addChange, e))
             } else if (getInode(e)) {
               changeFound(localChange.fromEvent(e))
-            } // else skip
+            } else {
+              const addChangeSamePath: ?LocalDirAddition = localChange.maybePutFolder(getChangeByPath(e))
+              if (addChangeSamePath && addChangeSamePath.wip) {
+                log.debug({path: addChangeSamePath.path, ino: addChangeSamePath.ino},
+                  'Folder was added then deleted. Ignoring add.')
+                // $FlowFixMe
+                addChangeSamePath.type = 'Ignored'
+              }
+
+              const moveChangeSamePath: ?LocalDirMove = localChange.maybeMoveFolder(getChangeByPath(e))
+              if (moveChangeSamePath && moveChangeSamePath.wip) {
+                localChange.convertDirMoveToDeletion(moveChangeSamePath)
+              }
+            }
           }
-          // TODO: move & delete dir
           break
         default:
           throw new TypeError(`Unknown event type: ${e.type}`)
@@ -170,7 +187,7 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
       log.error({err, path: e.path})
       throw err
     }
-    if (process.env.DEBUG) log.trace({currentEvent: e, changes})
+    if (process.env.DEBUG) log.trace({currentEvent: e, path: e.path})
   }
 
   log.trace('Flatten changes map...')

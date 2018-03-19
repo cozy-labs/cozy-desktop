@@ -6,7 +6,8 @@ import type {
   LocalDirUnlinked,
   LocalEvent,
   LocalFileAdded,
-  LocalFileUnlinked
+  LocalFileUnlinked,
+  LocalFileUpdated
 } from './event'
 
 const fs = require('fs')
@@ -39,11 +40,13 @@ module.exports = {
   dirMoveFromAddUnlink,
   includeAddEventInFileMove,
   includeAddDirEventInDirMove,
-  convertFileMoveToDeletion
+  includeChangeEventIntoFileMove,
+  convertFileMoveToDeletion,
+  convertDirMoveToDeletion
 }
 
 const log = logger({
-  component: 'LocalWatcher'
+  component: 'local/change'
 })
 
 export type LocalDirAddition = {sideName: 'local', type: 'DirAddition', path: string, ino: number, stats: fs.Stats, wip?: true}
@@ -51,8 +54,9 @@ export type LocalDirDeletion = {sideName: 'local', type: 'DirDeletion', path: st
 export type LocalDirMove = {sideName: 'local', type: 'DirMove', path: string, old: Metadata, ino: number, stats: fs.Stats, wip?: true, needRefetch: boolean}
 export type LocalFileAddition = {sideName: 'local', type: 'FileAddition', path: string, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
 export type LocalFileDeletion = {sideName: 'local', type: 'FileDeletion', path: string, old: ?Metadata, ino: ?number}
-export type LocalFileMove = {sideName: 'local', type: 'FileMove', path: string, old: Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true, needRefetch: boolean}
+export type LocalFileMove = {sideName: 'local', type: 'FileMove', path: string, old: Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true, needRefetch: boolean, update?: LocalFileUpdated}
 export type LocalFileUpdate = {sideName: 'local', type: 'FileUpdate', path: string, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
+export type LocalIgnored = {sideName: 'local', type: 'Ignored', path: string}
 
 export type LocalChange =
   | LocalDirAddition
@@ -62,6 +66,7 @@ export type LocalChange =
   | LocalFileDeletion
   | LocalFileMove
   | LocalFileUpdate
+  | LocalIgnored
 
 const sideName = 'local'
 
@@ -115,13 +120,21 @@ function isChildAdd (a: LocalChange, b: LocalChange) { return childOf(addPath(a)
 function toString (a: LocalChange): string { return '(' + a.type + ': ' + (a.old && a.old.path) + '-->' + a.path + ')' }
 
 function fromEvent (e: LocalEvent): LocalChange {
+  const change = _fromEvent(e)
+  log.debug(_.pick(change, ['path', 'ino', 'wip']), `${e.type} -> ${change.type}`)
+  return change
+}
+
+function _fromEvent (e: LocalEvent): LocalChange {
   switch (e.type) {
     case 'unlinkDir':
       return {sideName, type: 'DirDeletion', path: e.path, old: e.old, ino: (e.old != null ? e.old.ino : null)}
     case 'unlink':
       return {sideName, type: 'FileDeletion', path: e.path, old: e.old, ino: (e.old != null ? e.old.ino : null)}
     case 'addDir':
-      return {sideName, type: 'DirAddition', path: e.path, stats: e.stats, ino: e.stats.ino}
+      const change = {sideName, type: 'DirAddition', path: e.path, stats: e.stats, ino: e.stats.ino, wip: e.wip}
+      if (change.wip == null) delete change.wip
+      return change
     case 'change':
       return {sideName, type: 'FileUpdate', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, wip: e.wip}
     case 'add':
@@ -132,7 +145,7 @@ function fromEvent (e: LocalEvent): LocalChange {
 }
 
 function fileMoveFromUnlinkAdd (unlinkChange: LocalFileDeletion, e: LocalFileAdded): * {
-  log.debug({oldpath: unlinkChange.path, path: e.path, ino: unlinkChange.ino}, 'File moved')
+  log.debug({oldpath: unlinkChange.path, path: e.path, ino: unlinkChange.ino}, 'unlink + add = FileMove')
   return build('FileMove', e.path, {
     stats: e.stats,
     md5sum: e.md5sum,
@@ -143,7 +156,7 @@ function fileMoveFromUnlinkAdd (unlinkChange: LocalFileDeletion, e: LocalFileAdd
 }
 
 function dirMoveFromUnlinkAdd (unlinkChange: LocalDirDeletion, e: LocalDirAdded): * {
-  log.debug({oldpath: unlinkChange.path, path: e.path}, 'moveFolder')
+  log.debug({oldpath: unlinkChange.path, path: e.path}, 'unlinkDir + addDir = DirMove')
   return build('DirMove', e.path, {
     stats: e.stats,
     old: unlinkChange.old,
@@ -153,7 +166,7 @@ function dirMoveFromUnlinkAdd (unlinkChange: LocalDirDeletion, e: LocalDirAdded)
 }
 
 function fileMoveFromAddUnlink (addChange: LocalFileAddition, e: LocalFileUnlinked): * {
-  log.debug({oldpath: e.path, path: addChange.path, ino: addChange.ino}, 'File moved')
+  log.debug({oldpath: e.path, path: addChange.path, ino: addChange.ino}, 'add + unlink = FileMove')
   return build('FileMove', addChange.path, {
     stats: addChange.stats,
     md5sum: addChange.md5sum,
@@ -164,7 +177,7 @@ function fileMoveFromAddUnlink (addChange: LocalFileAddition, e: LocalFileUnlink
 }
 
 function dirMoveFromAddUnlink (addChange: LocalDirAddition, e: LocalDirUnlinked): * {
-  log.debug({oldpath: e.path, path: addChange.path}, 'moveFolder')
+  log.debug({oldpath: e.path, path: addChange.path}, 'addDir + unlinkDir = DirMove')
   return build('DirMove', addChange.path, {
     stats: addChange.stats,
     old: e.old,
@@ -199,7 +212,7 @@ function includeAddEventInFileMove (moveChange: LocalFileMove, e: LocalFileAdded
   delete moveChange.wip
   log.debug(
     {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
-    'File move completing')
+    'FileMove + add = FileMove')
 }
 
 function includeAddDirEventInDirMove (moveChange: LocalDirMove, e: LocalDirAdded) {
@@ -209,14 +222,30 @@ function includeAddDirEventInDirMove (moveChange: LocalDirMove, e: LocalDirAdded
   delete moveChange.wip
   log.debug(
    {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
-   'Folder move completing')
+   'DirMove + addDir = DirMove')
+}
+
+function includeChangeEventIntoFileMove (moveChange: LocalFileMove, e: LocalFileUpdated) {
+  log.debug({path: e.path}, 'FileMove + change')
+  moveChange.md5sum = moveChange.old.md5sum || moveChange.md5sum
+  moveChange.update = e
 }
 
 function convertFileMoveToDeletion (change: LocalFileMove) {
   log.debug({path: change.old.path, ino: change.ino},
-    'File was moved then deleted. Deleting origin directly.')
+    'FileMove + unlink = FileDeletion')
   // $FlowFixMe
   change.type = 'FileDeletion'
+  change.path = change.old.path
+  delete change.stats
+  delete change.wip
+}
+
+function convertDirMoveToDeletion (change: LocalDirMove) {
+  log.debug({path: change.old.path, ino: change.ino},
+    'DirMove + unlinkDir = DirDeletion')
+  // $FlowFixMe
+  change.type = 'DirDeletion'
   change.path = change.old.path
   delete change.stats
   delete change.wip

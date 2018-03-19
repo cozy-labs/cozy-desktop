@@ -130,6 +130,16 @@ describe('Test scenarios', function () {
             if (scenario.expected.remoteTrash) {
               actual.remoteTrash = await helpers.remote.trash()
             }
+            if (scenario.expected.contents) {
+              expected.localContents = scenario.expected.contents
+              expected.remoteContents = scenario.expected.contents
+              actual.localContents = {}
+              actual.remoteContents = {}
+              for (const relpath of _.keys(scenario.expected.contents)) {
+                actual.localContents[relpath] = await helpers.local.readFile(relpath)
+                actual.remoteContents[relpath] = await helpers.remote.readFile(relpath)
+              }
+            }
 
             should(actual).deepEqual(expected)
           }
@@ -225,6 +235,21 @@ describe('Test scenarios', function () {
         }
         should(await helpers.local.treeWithoutTrash())
           .deepEqual(scenario.expected.tree)
+      }
+      if (scenario.expected && scenario.expected.contents) {
+        const expected = {
+          localContents: scenario.expected.contents,
+          remoteContents: scenario.expected.contents
+        }
+        const actual = {
+          localContents: {},
+          remoteContents: {}
+        }
+        for (const relpath of _.keys(scenario.expected.contents)) {
+          actual.localContents[relpath] = await helpers.local.readFile(relpath)
+          actual.remoteContents[relpath] = await helpers.remote.readFile(relpath)
+        }
+        should(actual).deepEqual(expected)
       }
 
       // TODO: Local trash assertions

@@ -52,7 +52,8 @@ export type Metadata = {
   sides: MetadataSidesInfo,
   trashed?: true,
   incompatibilities?: *,
-  ino?: ?number
+  ino?: ?number,
+  moveFrom?: Metadata
 }
 
 let assignId: (doc: *) => void = (_) => {}
@@ -267,21 +268,22 @@ function markSide (side: string, doc: Metadata, prev: ?Metadata): Metadata {
   return doc
 }
 
-function buildDir (path: string, stats: fs.Stats): Metadata {
+function buildDir (path: string, stats: fs.Stats, remote: ?MetadataRemoteInfo): Metadata {
   const doc: Object = {
     _id: id(path),
     path,
     docType: 'folder',
     updated_at: maxDate(stats.mtime, stats.ctime),
     ino: stats.ino,
-    sides: {}
+    sides: {},
+    remote
   }
   return doc
 }
 
 const EXECUTABLE_MASK = 1 << 6
 
-function buildFile (filePath: string, stats: fs.Stats, md5sum: string): Metadata {
+function buildFile (filePath: string, stats: fs.Stats, md5sum: string, remote: ?MetadataRemoteInfo): Metadata {
   const mimeType = mime.lookup(filePath)
   const {mtime, ctime} = stats
   let doc: Object = {
@@ -292,7 +294,8 @@ function buildFile (filePath: string, stats: fs.Stats, md5sum: string): Metadata
     updated_at: maxDate(mtime, ctime),
     mime: mimeType,
     class: mimeType.split('/')[0],
-    size: stats.size
+    size: stats.size,
+    remote
   }
   if ((stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
   return doc

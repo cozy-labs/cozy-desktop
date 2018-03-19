@@ -197,14 +197,20 @@ module.exports = class Remote implements Side {
       ifMatch: oldMetadata.remote._rev
     }
 
-    const newRemoteDoc: RemoteDoc = await this.remoteCozy.updateAttributesById(oldMetadata.remote._id, attrs, opts)
+    let newRemoteDoc: RemoteDoc = await this.remoteCozy.updateAttributesById(oldMetadata.remote._id, attrs, opts)
 
     newMetadata.remote = {
       _id: newRemoteDoc._id,
       _rev: newRemoteDoc._rev
     }
 
-    return conversion.createMetadata(newRemoteDoc)
+    if (newMetadata.md5sum === oldMetadata.md5sum) {
+      // move only
+      return conversion.createMetadata(newRemoteDoc)
+    } else {
+      // move & update
+      return this.overwriteFileAsync(newMetadata, newMetadata)
+    }
   }
 
   async updateFolderAsync (doc: Metadata, old: Metadata): Promise<Metadata> {

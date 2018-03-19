@@ -36,6 +36,14 @@ class SyncDirTestHelpers {
   async rmdir (target: string|PathObject) {
     await fs.rmdirSync(this.abspath(target))
   }
+
+  async readFile (target: string|PathObject): Promise<string> {
+    return fs.readFile(this.abspath(target), 'utf8')
+  }
+
+  async outputFile (target: string|PathObject, data: string) {
+    return fs.outputFile(this.abspath(target), data)
+  }
 }
 
 module.exports = {

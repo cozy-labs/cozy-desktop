@@ -8,13 +8,31 @@
     "path": "dst/subdir",
     "stats": {
       "ino": 3,
-      "size": 68,
-      "mtime": "2017-10-05T09:27:10.000Z",
-      "ctime": "2017-10-05T09:27:10.000Z"
+      "size": 102,
+      "mtime": "2018-03-13T10:51:28.000Z",
+      "ctime": "2018-03-13T10:51:28.000Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "src/subdir/file"
+  },
+  {
+    "type": "add",
+    "path": "dst/subdir/file",
+    "stats": {
+      "ino": 4,
+      "size": 8,
+      "mtime": "2018-03-13T10:51:28.000Z",
+      "ctime": "2018-03-13T10:51:28.000Z"
     }
   },
   {
     "type": "unlinkDir",
     "path": "dst/subdir"
+  },
+  {
+    "type": "unlink",
+    "path": "dst/subdir/file"
   }
 ]

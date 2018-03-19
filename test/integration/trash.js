@@ -101,7 +101,7 @@ suite('Trash', () => {
       helpers.spyPouch()
     })
 
-    test('local', async () => {
+    test.skip('local', async () => {
       await prep.trashFolderAsync('local', {path: path.normalize('parent/dir')})
 
       should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([

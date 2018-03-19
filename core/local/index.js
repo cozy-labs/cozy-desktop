@@ -308,7 +308,14 @@ module.exports = class Local implements Side {
         this.addFile(doc, callback)
       } else {
         this.events.emit('transfer-move', doc, old)
-        callback(null)
+        if (doc.md5sum !== old.md5sum) {
+          this.overwriteFileAsync(doc).then(
+            () => callback(null),
+            err => callback(err)
+          )
+        } else {
+          callback(null)
+        }
       }
     })
   }

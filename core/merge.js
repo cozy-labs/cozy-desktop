@@ -186,6 +186,7 @@ class Merge {
     }
     if (file) {
       doc._rev = file._rev
+      doc.moveFrom = file.moveFrom
       if (doc.tags == null) { doc.tags = file.tags || [] }
       if (doc.remote == null) { doc.remote = file.remote }
       if (doc.ino == null) { doc.ino = file.ino }
@@ -241,7 +242,7 @@ class Merge {
 
   // Rename or move a file
   async moveFileAsync (side: SideName, doc: Metadata, was: Metadata) {
-    log.debug({path: doc.path, was: was.path}, 'moveFileAsync')
+    log.debug({path: doc.path, oldpath: was.path}, 'moveFileAsync')
     const {path} = doc
     if (was.sides && was.sides[side]) {
       let file
@@ -264,6 +265,7 @@ class Merge {
       was.moveTo = doc._id
       was._deleted = true
       delete was.errors
+      doc.moveFrom = was
       if (file && sameFile(file, doc)) {
         return null
       } else if (file) {
@@ -283,7 +285,7 @@ class Merge {
 
   // Rename or move a folder (and every file and folder inside it)
   async moveFolderAsync (side: SideName, doc: Metadata, was: Metadata) {
-    log.debug({path: doc.path, was: was.path}, 'moveFolderAsync')
+    log.debug({path: doc.path, oldpath: was.path}, 'moveFolderAsync')
     const {path} = doc
     if (was.sides && was.sides[side]) {
       let folder
@@ -299,6 +301,7 @@ class Merge {
       // FIXME: Shouldn't we compare doc/was updated_at & set doc accordingly
       // as in moveFileAsync?
       delete doc.trashed
+      doc.moveFrom = was
       if (folder) {
         const dst = await this.resolveConflictAsync(side, doc, folder)
         dst.sides = {}
@@ -339,6 +342,7 @@ class Merge {
       markSide(side, dst, src)
       dst._id = src.moveTo
       dst.path = doc.path.replace(was.path, folder.path)
+      dst.moveFrom = src
       delete dst._rev
       delete dst.errors
       // FIXME: Find a cleaner way to pass the syncPath to the Merge
@@ -351,7 +355,7 @@ class Merge {
   }
 
   async restoreFileAsync (side: SideName, was: Metadata, doc: Metadata): Promise<*> {
-    log.debug({path: doc.path, was: was.path}, 'restoreFileAsync')
+    log.debug({path: doc.path, oldpath: was.path}, 'restoreFileAsync')
     const {path} = doc
     // TODO we can probably do something smarter for conflicts and avoiding to
     // transfer again the file
@@ -364,7 +368,7 @@ class Merge {
   }
 
   async restoreFolderAsync (side: SideName, was: Metadata, doc: Metadata): Promise<*> {
-    log.debug({path: doc.path, was: was.path}, 'restoreFolderAsync')
+    log.debug({path: doc.path, oldpath: was.path}, 'restoreFolderAsync')
     const {path} = doc
     // TODO we can probably do something smarter for conflicts
     try {
@@ -376,7 +380,7 @@ class Merge {
   }
 
   async trashFileAsync (side: SideName, was: *, doc: *): Promise<void> {
-    log.debug({path: doc.path, was: was.path}, 'trashFileAsync')
+    log.debug({path: doc.path, oldpath: was.path}, 'trashFileAsync')
     const {path} = doc
     let oldMetadata
     try {
@@ -419,7 +423,7 @@ class Merge {
   }
 
   async trashFolderAsync (side: SideName, was: *, doc: *): Promise<*> {
-    log.debug({path: doc.path, was: was.path}, 'trashFolderAsync')
+    log.debug({path: doc.path, oldpath: was.path}, 'trashFolderAsync')
     const {path} = doc
     // Don't trash a folder if the other side has added a new file in it (or updated one)
     let children = await this.pouch.byRecursivePathAsync(was._id)

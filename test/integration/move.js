@@ -68,9 +68,9 @@ suite('Move', () => {
         ...pick(oldFile, ['docType', 'md5sum', 'mime', 'class', 'size'])
       }, oldFile)
 
-      should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
+      should(helpers.putDocs('path', '_deleted', 'trashed', 'moveFrom')).deepEqual([
         {path: path.normalize('src/file'), _deleted: true},
-        {path: path.normalize('dst/file')}
+        {path: path.normalize('dst/file'), moveFrom: oldFile}
       ])
 
       await helpers.syncAll()

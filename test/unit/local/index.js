@@ -13,6 +13,7 @@ const { TMP_DIR_NAME } = require('../../../core/local/constants')
 const { PendingMap } = require('../../../core/utils/pending')
 
 const MetadataBuilders = require('../../support/builders/metadata')
+const StreamBuilder = require('../../support/builders/stream')
 const configHelpers = require('../../support/helpers/config')
 const { SyncDirTestHelpers } = require('../../support/helpers/sync_dir')
 const pouchHelpers = require('../../support/helpers/pouch')
@@ -458,6 +459,31 @@ describe('Local', function () {
         fs.readFileSync(newPath, enc).should.equal('foobar')
         done()
       })
+    })
+
+    it('also updates it when md5sum has changed', async function () {
+      const old = {
+        path: 'meow.txt',
+        md5sum: 'SkvkDJasYxTpHZPzgEOmNA=='
+      }
+      await syncDir.outputFile(old, 'meow')
+      const doc = {
+        path: 'woof.txt',
+        md5sum: 'j9tggB6dOaUoaqAd0fT08w=='
+      }
+      this.local.other = {
+        async createReadStreamAsync (doc) {
+          return new StreamBuilder().push('woof').build()
+        }
+      }
+
+      await this.local.moveFileAsync(doc, old)
+
+      should(syncDir.existsSync(old)).be.false()
+      should(syncDir.existsSync(doc)).be.true()
+      should(await syncDir.readFile(doc)).equal('woof')
+
+      syncDir.unlink(doc)
     })
 
     it('creates the file is the current file is missing', function (done) {

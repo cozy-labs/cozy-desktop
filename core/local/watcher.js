@@ -239,9 +239,8 @@ module.exports = class LocalWatcher {
 
       if (e.type === 'addDir') {
         if (!await fs.exists(abspath)) {
-          log.debug({path: e.path}, 'Dir does not exist anymore')
+          log.debug({path: e.path, ino: e.stats.ino}, 'Dir does not exist anymore')
           e2.wip = true
-          return null
         }
       }
 
@@ -279,9 +278,12 @@ module.exports = class LocalWatcher {
               c.old.childMove = false
             }
             await this.onMoveFile(c.path, c.stats, c.md5sum, c.old)
+            if (c.update) await this.onChange(c.update.path, c.update.stats, c.update.md5sum)
             break
           case 'DirMove':
             await this.onMoveFolder(c.path, c.stats, c.old)
+            break
+          case 'Ignored':
             break
           default:
             throw new Error('wrong changes')
@@ -348,28 +350,28 @@ module.exports = class LocalWatcher {
   onAddFile (filePath: string, stats: fs.Stats, md5sum: string) {
     const logError = (err) => log.error({err, path: filePath})
     const doc = metadata.buildFile(filePath, stats, md5sum)
-    log.info({path: filePath}, 'file added')
+    log.info({path: filePath}, 'FileAddition')
     return this.prep.addFileAsync(SIDE, doc).catch(logError)
   }
 
   async onMoveFile (filePath: string, stats: fs.Stats, md5sum: string, old: Metadata) {
     const logError = (err) => log.error({err, path: filePath})
-    const doc = metadata.buildFile(filePath, stats, md5sum)
-    log.info({path: filePath}, `was moved from ${old.path}`)
+    const doc = metadata.buildFile(filePath, stats, md5sum, old.remote)
+    log.info({path: filePath, oldpath: old.path}, 'FileMove')
     return this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
   }
 
   onMoveFolder (folderPath: string, stats: fs.Stats, old: Metadata) {
     const logError = (err) => log.error({err, path: folderPath})
-    const doc = metadata.buildDir(folderPath, stats)
-    log.info({path: folderPath}, `was moved from ${old.path}`)
+    const doc = metadata.buildDir(folderPath, stats, old.remote)
+    log.info({path: folderPath, oldpath: old.path}, 'DirMove')
     return this.prep.moveFolderAsync(SIDE, doc, old).catch(logError)
   }
 
   // New directory detected
   onAddDir (folderPath: string, stats: fs.Stats) {
     const doc = metadata.buildDir(folderPath, stats)
-    log.info({path: folderPath}, 'folder added')
+    log.info({path: folderPath}, 'DirAddition')
     return this.prep.putFolderAsync(SIDE, doc).catch(err => log.error({err, path: folderPath}))
   }
 
@@ -378,7 +380,7 @@ module.exports = class LocalWatcher {
   // It can be a file moved out. So, we wait a bit to see if a file with the
   // same checksum is added and, if not, we declare this file as deleted.
   onUnlinkFile (filePath: string) {
-    log.info({path: filePath}, 'File deleted')
+    log.info({path: filePath}, 'FileDeletion')
     return this.prep.trashFileAsync(SIDE, {path: filePath}).catch(err => log.error({err, path: filePath}))
   }
 
@@ -387,13 +389,13 @@ module.exports = class LocalWatcher {
   // We don't want to delete a folder before files inside it. So we wait a bit
   // after chokidar event to declare the folder as deleted.
   onUnlinkDir (folderPath: string) {
-    log.info({path: folderPath}, 'Folder deleted')
+    log.info({path: folderPath}, 'DirDeletion')
     return this.prep.trashFolderAsync(SIDE, {path: folderPath}).catch(err => log.error({err, path: folderPath}))
   }
 
   // File update detected
   onChange (filePath: string, stats: fs.Stats, md5sum: string) {
-    log.info({path: filePath}, 'File changed')
+    log.info({path: filePath}, 'FileUpdate')
     const doc = metadata.buildFile(filePath, stats, md5sum)
     return this.prep.updateFileAsync(SIDE, doc)
   }
