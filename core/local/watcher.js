@@ -21,6 +21,7 @@ const logger = require('../logger')
 const metadata = require('../metadata')
 const Pouch = require('../pouch')
 const Prep = require('../prep')
+const {sameDate, fromDate} = require('../timestamp')
 
 const log = logger({
   component: 'LocalWatcher'
@@ -157,7 +158,7 @@ module.exports = class LocalWatcher {
     }
 
     log.trace('Prepare events...')
-    const preparedEvents : LocalEvent[] = await this.prepareEvents(events)
+    const preparedEvents : LocalEvent[] = await this.prepareEvents(events, initialScan)
     log.trace('Done with events preparation.')
 
     const changes : LocalChange[] = analysis(preparedEvents, this.pendingChanges)
@@ -197,10 +198,11 @@ module.exports = class LocalWatcher {
     }
   }
 
-  async prepareEvents (events: ChokidarEvent[]) : Promise<LocalEvent[]> {
+  async prepareEvents (events: ChokidarEvent[], initialScan: ?InitialScan) : Promise<LocalEvent[]> {
     const oldMetadata = async (e: ChokidarEvent): Promise<?Metadata> => {
       if (e.old) return e.old
-      if (e.type === 'unlink' || e.type === 'unlinkDir') {
+      if (e.type === 'unlink' || e.type === 'unlinkDir' ||
+          ((e.type === 'add' || e.type === 'addDir') && initialScan)) {
         try {
           return await this.pouch.db.get(metadata.id(e.path))
         } catch (err) {
@@ -223,16 +225,23 @@ module.exports = class LocalWatcher {
       }
 
       if (e.type === 'add' || e.type === 'change') {
-        try {
-          e2.md5sum = await this.checksum(e.path)
-        } catch (err) {
-          // FIXME: err.code === EISDIR => keep the event? (e.g. rm foo && mkdir foo)
-          if (err.code.match(/ENOENT/)) {
-            log.debug({path: e.path, ino: e.stats.ino}, 'File does not exist anymore')
-            e2.wip = true
-          } else {
-            log.error({path: e.path, err}, 'Could not compute checksum')
-            return null
+        if (initialScan && e2.old &&
+          sameDate(fromDate(e2.old.updated_at), fromDate(e2.stats.mtime))) {
+          log.trace({path: e.path}, 'Do not compute checksum : mtime is unchanged')
+          e2.md5sum = e2.old.md5sum
+        } else {
+          try {
+            log.trace({path: e.path}, 'Computing checksum...')
+            e2.md5sum = await this.checksum(e.path)
+          } catch (err) {
+            // FIXME: err.code === EISDIR => keep the event? (e.g. rm foo && mkdir foo)
+            if (err.code.match(/ENOENT/)) {
+              log.debug({path: e.path, ino: e.stats.ino}, 'File does not exist anymore')
+              e2.wip = true
+            } else {
+              log.error({path: e.path, err}, 'Could not compute checksum')
+              return null
+            }
           }
         }
       }
