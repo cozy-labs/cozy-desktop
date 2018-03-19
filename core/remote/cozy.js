@@ -42,8 +42,6 @@ class RemoteCozy {
   client: CozyClient
   */
 
-  // FIXME: static DirectoryNotFound = DirectoryNotFound
-
   constructor (config/*: Config */) {
     this.url = config.cozyUrl
     this.client = new CozyClient({
@@ -213,4 +211,7 @@ class RemoteCozy {
   }
 }
 
-module.exports = RemoteCozy
+module.exports = {
+  DirectoryNotFound,
+  RemoteCozy
+}
