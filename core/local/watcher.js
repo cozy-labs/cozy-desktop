@@ -3,6 +3,7 @@
 const Promise = require('bluebird')
 const chokidar = require('chokidar')
 const fs = require('fs-extra')
+const _ = require('lodash')
 const path = require('path')
 
 const analysis = require('./analysis')
@@ -264,10 +265,9 @@ module.exports = class LocalWatcher {
     return Promise.map(events, async (e /*: ChokidarEvent */) /*: Promise<?LocalEvent> */ => {
       const abspath = path.join(this.syncPath, e.path)
 
-      const e2 /*: Object */ = {
-        ...e,
+      const e2 /*: Object */ = _.merge({
         old: await oldMetadata(e)
-      }
+      }, e)
 
       if (e.type === 'add' || e.type === 'change') {
         if (initialScan && e2.old &&

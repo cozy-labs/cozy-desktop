@@ -1,5 +1,7 @@
 // @flow
 
+const _ = require('lodash')
+
 const { assignId } = require('../../../../core/metadata')
 const BaseMetadataBuilder = require('./base')
 
@@ -11,8 +13,7 @@ import type { Metadata } from '../../../../core/metadata'
 
 module.exports = class DirMetadataBuilder extends BaseMetadataBuilder {
   build () /*: Metadata */ {
-    const doc = {
-      ...this.opts,
+    const doc = _.merge({
       _id: '',
       // _rev: pouchdbBuilders.rev(),
       docType: 'folder',
@@ -26,7 +27,7 @@ module.exports = class DirMetadataBuilder extends BaseMetadataBuilder {
       },
       tags: [],
       updated_at: new Date()
-    }
+    }, this.opts)
     assignId(doc)
     return doc
   }

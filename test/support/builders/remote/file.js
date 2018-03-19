@@ -1,6 +1,7 @@
 /* @flow */
 
 const fs = require('fs')
+const _ = require('lodash')
 const path = require('path')
 
 const RemoteBaseBuilder = require('./base')
@@ -57,15 +58,14 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
   }
 
   build () /*: RemoteDoc */ {
-    return {
-      ...super.build(),
+    return _.merge({
       class: 'application',
       executable: true,
       md5sum: 'wVenkDHhxA+FkxgpvF/FUg==',
       mime: 'application/octet-stream',
       size: '123',
       type: 'file'
-    }
+    }, super.build())
   }
 
   async create () /*: Promise<RemoteDoc> */ {

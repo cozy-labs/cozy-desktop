@@ -1,8 +1,6 @@
 --slow 150
 --timeout 20000
 --reporter spec
---compilers js:babel-core/register
---require babel-polyfill
 --require ./core/globals
 --require should
 --require should-sinon

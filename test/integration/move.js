@@ -1,6 +1,6 @@
 /* @flow */
 
-const { pick } = require('lodash')
+const _ = require('lodash')
 const {
   after,
   afterEach,
@@ -62,11 +62,13 @@ suite('Move', () => {
 
     test('local', async () => {
       const oldFile = await pouch.byRemoteIdMaybeAsync(file._id)
-      await prep.moveFileAsync('local', {
-        path: 'dst/file',
-        updated_at: '2017-06-19T08:19:26.769Z',
-        ...pick(oldFile, ['docType', 'md5sum', 'mime', 'class', 'size'])
-      }, oldFile)
+      await prep.moveFileAsync('local', _.merge(
+        {
+          path: 'dst/file',
+          updated_at: '2017-06-19T08:19:26.769Z'
+        },
+        _.pick(oldFile, ['docType', 'md5sum', 'mime', 'class', 'size'])
+      ), oldFile)
 
       should(helpers.putDocs('path', '_deleted', 'trashed', 'moveFrom')).deepEqual([
         {path: path.normalize('src/file'), _deleted: true},
@@ -85,15 +87,17 @@ suite('Move', () => {
 
     test('remote', async () => {
       const oldFile = await pouch.byRemoteIdMaybeAsync(file._id)
-      await prep.moveFileAsync('remote', {
-        ...pick(oldFile, ['docType', 'size', 'md5sum', 'class', 'mime', 'tags']),
-        path: 'dst/file',
-        updated_at: '2017-06-19T08:19:26.769Z',
-        remote: {
-          _id: file._id,
-          _rev: pouchdbBuilders.rev()
+      await prep.moveFileAsync('remote', _.merge(
+        _.pick(oldFile, ['docType', 'size', 'md5sum', 'class', 'mime', 'tags']),
+        {
+          path: 'dst/file',
+          updated_at: '2017-06-19T08:19:26.769Z',
+          remote: {
+            _id: file._id,
+            _rev: pouchdbBuilders.rev()
+          }
         }
-      }, oldFile)
+      ), oldFile)
 
       should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
         {path: path.normalize('src/file'), _deleted: true},
@@ -189,28 +193,36 @@ suite('Move', () => {
     test('from remote client', async () => {
       // FIXME: Ensure events occur in the same order as resulting from the
       // local dir test
-      await helpers._remote.addFolderAsync({
-        ...await pouch.byRemoteIdAsync(dir._id),
-        path: path.normalize('parent/dst/dir'),
-        updated_at: '2017-06-20T12:58:49.681Z'
-      })
-      await helpers._remote.addFolderAsync({
-        ...await pouch.byRemoteIdAsync(emptySubdir._id),
-        path: path.normalize('parent/dst/dir/empty-subdir'),
-        updated_at: '2017-06-20T12:58:49.817Z'
-      })
-      await helpers._remote.addFolderAsync({
-        ...await pouch.byRemoteIdAsync(subdir._id),
-        path: path.normalize('parent/dst/dir/subdir'),
-        updated_at: '2017-06-20T12:58:49.873Z'
-      })
+      await helpers._remote.addFolderAsync(_.defaults(
+        {
+          path: path.normalize('parent/dst/dir'),
+          updated_at: '2017-06-20T12:58:49.681Z'
+        },
+        await pouch.byRemoteIdAsync(dir._id)
+      ))
+      await helpers._remote.addFolderAsync(_.defaults(
+        {
+          path: path.normalize('parent/dst/dir/empty-subdir'),
+          updated_at: '2017-06-20T12:58:49.817Z'
+        },
+        await pouch.byRemoteIdAsync(emptySubdir._id)
+      ))
+      await helpers._remote.addFolderAsync(_.defaults(
+        {
+          path: path.normalize('parent/dst/dir/subdir'),
+          updated_at: '2017-06-20T12:58:49.873Z'
+        },
+        await pouch.byRemoteIdAsync(subdir._id)
+      ))
       const oldFileMetadata = await pouch.byRemoteIdAsync(file._id)
-      await helpers._remote.moveFileAsync({
-        ...oldFileMetadata,
-        path: path.normalize('parent/dst/dir/subdir/file')
-        // FIXME: Why does moveFileAsync({updated_at: ...}) fail?
-        // updated_at: '2017-06-20T12:58:49.921Z'
-      }, oldFileMetadata)
+      await helpers._remote.moveFileAsync(_.defaults(
+        {
+          path: path.normalize('parent/dst/dir/subdir/file')
+          // FIXME: Why does moveFileAsync({updated_at: ...}) fail?
+          // updated_at: '2017-06-20T12:58:49.921Z'
+        },
+        oldFileMetadata
+      ), oldFileMetadata)
       const oldSubdirMetadata = await pouch.byRemoteIdAsync(subdir._id)
       await helpers._remote.deleteFolderAsync(oldSubdirMetadata)
       const oldEmptySubdirMetadata = await pouch.byRemoteIdAsync(emptySubdir._id)
