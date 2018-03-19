@@ -7,7 +7,7 @@ const path = require('path')
 
 const metadata = require('../../core/metadata')
 const Pouch = require('../../core/pouch')
-const RemoteCozy = require('../../core/remote/cozy')
+const { RemoteCozy } = require('../../core/remote/cozy')
 
 const configHelpers = require('../../test/support/helpers/config')
 const cozyHelpers = require('../../test/support/helpers/cozy')

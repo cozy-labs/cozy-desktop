@@ -5,10 +5,10 @@ const Promise = require('bluebird')
 const { posix, sep } = require('path')
 
 const conversion = require('../conversion')
-const RemoteCozy = require('./cozy')
+const { RemoteCozy } = require('./cozy')
 const logger = require('../logger')
 const { RemoteWarningPoller } = require('./warning_poller')
-const Watcher = require('./watcher')
+const { RemoteWatcher } = require('./watcher')
 const measureTime = require('../perftools')
 const { withContentLength } = require('../file_stream_provider')
 
@@ -32,7 +32,7 @@ module.exports = class Remote /*:: implements Side */ {
   other: FileStreamProvider
   pouch: Pouch
   events: EventEmitter
-  watcher: Watcher
+  watcher: RemoteWatcher
   remoteCozy: RemoteCozy
   warningsPoller: RemoteWarningPoller
   */
@@ -42,7 +42,7 @@ module.exports = class Remote /*:: implements Side */ {
     this.events = events
     this.remoteCozy = new RemoteCozy(config)
     this.warningsPoller = new RemoteWarningPoller(this.remoteCozy, events)
-    this.watcher = new Watcher(pouch, prep, this.remoteCozy, events)
+    this.watcher = new RemoteWatcher(pouch, prep, this.remoteCozy, events)
 
     autoBind(this)
   }

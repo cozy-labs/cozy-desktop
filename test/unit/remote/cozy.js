@@ -4,8 +4,7 @@
 const _ = require('lodash')
 const should = require('should')
 
-const RemoteCozy = require('../../../core/remote/cozy')
-const { DirectoryNotFound } = RemoteCozy
+const { DirectoryNotFound, RemoteCozy } = require('../../../core/remote/cozy')
 
 const configHelpers = require('../../support/helpers/config')
 const { COZY_URL, builders, deleteAll } = require('../../support/helpers/cozy')

@@ -19,8 +19,8 @@ const { createMetadata } = require('../../../core/conversion')
 const metadata = require('../../../core/metadata')
 const { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } = require('../../../core/remote/constants')
 const Prep = require('../../../core/prep')
-const RemoteCozy = require('../../../core/remote/cozy')
-const RemoteWatcher = require('../../../core/remote/watcher')
+const { RemoteCozy } = require('../../../core/remote/cozy')
+const { RemoteWatcher } = require('../../../core/remote/watcher')
 
 const { assignId, ensureValidPath } = metadata
 
