@@ -1,14 +1,16 @@
 /* @flow */
 
+/*::
 import type { Warning } from '../../../../core/remote/warning'
+*/
 
 module.exports = {
-  list (): Warning[] {
+  list () /*: Warning[] */ {
     return [tosUpdated()]
   }
 }
 
-function tosUpdated (): Warning {
+function tosUpdated () /*: Warning */ {
   return {
     error: 'tos-updated',
     title: 'TOS Updated',

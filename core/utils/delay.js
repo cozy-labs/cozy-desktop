@@ -1,7 +1,5 @@
 /* @flow */
 
-export type Delay = number
-
 module.exports = {
   days,
   hours,
@@ -9,18 +7,22 @@ module.exports = {
   seconds
 }
 
-function days (count: number): Delay {
+/*::
+export type Delay = number
+*/
+
+function days (count /*: number */) /*: Delay */ {
   return count * this.hours(24)
 }
 
-function hours (count: number): Delay {
+function hours (count/*: number */) /*: Delay */ {
   return count * this.minutes(60)
 }
 
-function minutes (count: number): Delay {
+function minutes (count/*: number */) /*: Delay */ {
   return count * this.seconds(60)
 }
 
-function seconds (count: number): Delay {
+function seconds (count/*: number */) /*: Delay */ {
   return count * 1000
 }

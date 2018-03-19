@@ -1,6 +1,6 @@
 /* @flow */
 
-import type { Scenario } from '..'
+/*:: import type { Scenario } from '..' */
 
 module.exports = ({
   actions: [
@@ -15,4 +15,4 @@ module.exports = ({
     tree: [],
     remoteTrash: []
   }
-}: Scenario)
+} /*: Scenario */)

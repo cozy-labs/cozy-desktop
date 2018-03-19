@@ -5,13 +5,15 @@ const should = require('should')
 
 const { PendingMap } = require('../../../core/utils/pending')
 
-import type { Pending } from '../../../core/utils/pending' // eslint-disable-line
+/*::
+import type { Pending } from '../../../core/utils/pending'
+*/
 
 describe('utils/pending/PendingMap', () => {
   let map
   beforeEach(() => { map = new PendingMap() })
 
-  const whatever: Pending = {
+  const whatever /*: Pending */ = {
     execute: () => {},
     stopChecking: () => {}
   }

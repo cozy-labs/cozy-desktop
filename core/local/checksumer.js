@@ -1,19 +1,21 @@
 /* @flow */
 
-import type { Callback } from '../utils/func'
-
 const Promise = require('bluebird')
 const async = require('async')
 const crypto = require('crypto')
 const fs = require('fs')
 const measureTime = require('../perftools')
 
+/*::
+import type { Callback } from '../utils/func'
+*/
+
 module.exports = {
   init
 }
 
 // Get checksum for given file
-const computeChecksum = (filePath: string, callback: Callback) => {
+const computeChecksum = (filePath /*: string */, callback /*: Callback */) => {
   const stopMeasure = measureTime('LocalWatcher#checksumer')
   const stream = fs.createReadStream(filePath)
   const checksum = crypto.createHash('md5')
@@ -31,7 +33,7 @@ const computeChecksum = (filePath: string, callback: Callback) => {
   stream.pipe(checksum)
 }
 
-const retryComputeChecksum = (filePath: string, callback: Callback) => {
+const retryComputeChecksum = (filePath /*: string */, callback /*: Callback */) => {
   async.retry({
     times: 5,
     // retry after 1, 2, 4, 8, 16 seconds
@@ -40,19 +42,21 @@ const retryComputeChecksum = (filePath: string, callback: Callback) => {
   }, (cb) => { computeChecksum(filePath, cb) }, callback)
 }
 
+/*::
 export type Checksumer = {
   push: (filePath: string) => Promise<string>,
   kill: () => void
 }
+*/
 
-function init (): Checksumer {
+function init () /*: Checksumer */ {
   // Use a queue for checksums to avoid computing many checksums at the
   // same time. It's better for performance (hard disk are faster with
   // linear readings).
   const queue = Promise.promisifyAll(async.queue(retryComputeChecksum))
 
   return {
-    push (filePath: string): Promise<string> {
+    push (filePath /*: string */) /*: Promise<string> */ {
       return queue.pushAsync(filePath)
     },
 

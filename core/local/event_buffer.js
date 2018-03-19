@@ -1,7 +1,9 @@
 /* @flow */
 
+/*::
 type EventBufferMode = 'idle' | 'timeout'
 type FlushCallback<EventType> = (EventType[]) => any
+*/
 
 // An event buffer.
 // Needs a flush callback to be called everytime the buffer is flushed.
@@ -16,14 +18,16 @@ type FlushCallback<EventType> = (EventType[]) => any
 //
 // Right now this class is in the local/ namespace because this is where it is
 // used, but it could be anywhere else since it doesn't have any dependency.
-module.exports = class EventBuffer<EventType> {
+module.exports = class EventBuffer /*:: <EventType> */ {
+  /*::
   events: EventType[]
   mode: EventBufferMode
   timeoutInMs: number
   timeout: *
   flushed: FlushCallback<EventType>
+  */
 
-  constructor (timeoutInMs: number, flushed: FlushCallback<EventType>) {
+  constructor (timeoutInMs /*: number */, flushed /*: FlushCallback<EventType> */) {
     this.events = []
     this.mode = 'idle'
     this.timeoutInMs = timeoutInMs
@@ -31,31 +35,31 @@ module.exports = class EventBuffer<EventType> {
     this.flushed = flushed
   }
 
-  push (event: EventType): void {
+  push (event /*: EventType */) /*: void */ {
     this.events.push(event)
     this.shiftTimeout()
   }
 
-  unflush (events: Array<EventType>): void {
+  unflush (events /*: Array<EventType> */) /*: void */ {
     this.events = events.concat(this.events)
     this.shiftTimeout()
   }
 
-  shiftTimeout (): void {
+  shiftTimeout () /*: void */ {
     if (this.mode === 'timeout') {
       this.clearTimeout()
       this.timeout = setTimeout(this.flush, this.timeoutInMs)
     }
   }
 
-  clearTimeout (): void {
+  clearTimeout () /*: void */ {
     if (this.timeout != null) {
       clearTimeout(this.timeout)
       delete this.timeout
     }
   }
 
-  flush (): void {
+  flush () /*: void */ {
     this.clearTimeout()
     if (this.events.length > 0) {
       const flushedEvents = this.events
@@ -64,7 +68,7 @@ module.exports = class EventBuffer<EventType> {
     }
   }
 
-  switchMode (mode: EventBufferMode): void {
+  switchMode (mode /*: EventBufferMode */) /*: void */ {
     this.flush()
     this.mode = mode
   }

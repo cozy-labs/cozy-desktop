@@ -245,7 +245,7 @@ describe('RemoteCozy', function () {
       remoteCozy = new RemoteCozy(this.config)
     })
 
-    const stubWarningsResponse = (status: number, data) => {
+    const stubWarningsResponse = (status /*: number */, data) => {
       cozyStackDouble.stub((req, res) => {
         if (req.url === '/status/') res.end('{}')
         else {

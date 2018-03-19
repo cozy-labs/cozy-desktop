@@ -1,9 +1,6 @@
 /* @flow */
 /* eslint-env mocha */
 
-import type { Metadata } from '../../../core/metadata'
-import type { RemoteDoc, JsonApiDoc } from '../../../core/remote/document'
-
 const crypto = require('crypto')
 const EventEmitter = require('events')
 const fs = require('fs-extra')
@@ -27,6 +24,11 @@ const {
 } = require('../../support/helpers/cozy')
 
 const metadataBuilders = new MetadataBuilders()
+
+/*::
+import type { Metadata } from '../../../core/metadata'
+import type { RemoteDoc, JsonApiDoc } from '../../../core/remote/document'
+*/
 
 describe('Remote', function () {
   before('instanciate config', configHelpers.createConfig)
@@ -76,7 +78,7 @@ describe('Remote', function () {
 
   describe('addFileAsync', function () {
     it('adds a file to the remote Cozy', async function () {
-      const doc: Object = {
+      const doc /*: Object */ = {
         _id: 'cat2.jpg',
         path: 'cat2.jpg',
         docType: 'file',
@@ -119,7 +121,7 @@ describe('Remote', function () {
       const backupDir = await builders.remote.dir().named('backup').inRootDir().create()
       await builders.remote.dir().named('ORIGINAL').inRootDir().create()
       let md5sum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
-      let doc: Object = {
+      let doc /*: Object */ = {
         _id: path.normalize('backup/cat3.jpg'),
         path: path.normalize('backup/cat3.jpg'),
         docType: 'file',
@@ -164,13 +166,13 @@ describe('Remote', function () {
     })
 
     it('creates the parent folder when missing', async function () {
-      const metadata: Metadata = metadataBuilders.file().path(path.join('foo', 'bar', 'qux')).build()
+      const metadata /*: Metadata */ = metadataBuilders.file().path(path.join('foo', 'bar', 'qux')).build()
       await this.remote.addFileAsync(metadata)
       await should(cozy.files.statByPath('/foo/bar')).be.fulfilled()
     })
 
     it('does not throw if the file does not exists locally anymore', async function () {
-      const metadata: Metadata = metadataBuilders.file().path('foo').build()
+      const metadata /*: Metadata */ = metadataBuilders.file().path('foo').build()
       this.remote.other = {
         createReadStreamAsync (localDoc) {
           return fs.readFileAsync('/path/do/not/exists')
@@ -186,12 +188,12 @@ describe('Remote', function () {
   describe('addFolderAsync', () => {
     it('adds a folder to couchdb', async function () {
       const dateString = '2017-02-14T15:03:27Z'
-      let doc: Object = {
+      let doc /*: Object */ = {
         path: path.normalize('couchdb-folder/folder-1'),
         docType: 'folder',
         updated_at: dateString
       }
-      const created: Metadata = await this.remote.addFolderAsync(doc)
+      const created /*: Metadata */ = await this.remote.addFolderAsync(doc)
       should.exist(doc.remote._id)
       should.exist(doc.remote._rev)
 
@@ -205,14 +207,14 @@ describe('Remote', function () {
     })
 
     it('does nothing when the folder already exists', async function () {
-      const parentDir: RemoteDoc = await builders.remote.dir().create()
-      const remoteDir: RemoteDoc = await builders.remote.dir().inDir(parentDir).create()
-      const metadata: Metadata = {...conversion.createMetadata(remoteDir), remote: undefined}
+      const parentDir /*: RemoteDoc */ = await builders.remote.dir().create()
+      const remoteDir /*: RemoteDoc */ = await builders.remote.dir().inDir(parentDir).create()
+      const metadata /*: Metadata */ = {...conversion.createMetadata(remoteDir), remote: undefined}
       ensureValidPath(metadata)
 
-      const result: Metadata = await this.remote.addFolderAsync(metadata)
+      const result /*: Metadata */ = await this.remote.addFolderAsync(metadata)
 
-      const folder: JsonApiDoc = await cozy.files.statById(result.remote._id)
+      const folder /*: JsonApiDoc */ = await cozy.files.statById(result.remote._id)
       const {path, name, type, updated_at} = remoteDir
       should(folder.attributes).have.properties({path, name, type, updated_at})
       should(metadata.remote).have.properties({
@@ -222,7 +224,7 @@ describe('Remote', function () {
     })
 
     it('creates the parent folder when missing', async function () {
-      const metadata: Metadata = metadataBuilders.dir().path(path.join('foo', 'bar', 'qux')).build()
+      const metadata /*: Metadata */ = metadataBuilders.dir().path(path.join('foo', 'bar', 'qux')).build()
       await this.remote.addFolderAsync(metadata)
       await should(cozy.files.statByPath('/foo/bar')).be.fulfilled()
     })
@@ -235,7 +237,7 @@ describe('Remote', function () {
       it('overwrites the binary content', async function () {
         const created = await builders.remote.file().data('foo').timestamp(2015, 11, 16, 16, 12, 1).create()
         const old = conversion.createMetadata(created)
-        const doc: Metadata = {
+        const doc /*: Metadata */ = {
           ...old,
           _id: created._id,
           md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
@@ -289,7 +291,7 @@ describe('Remote', function () {
       })
 
       it('does not throw if the file does not exists locally anymore', async function () {
-        const metadata: Metadata = metadataBuilders.file().path('foo').build()
+        const metadata /*: Metadata */ = metadataBuilders.file().path('foo').build()
         this.remote.other = {
           createReadStreamAsync (localDoc) {
             return fs.readFileAsync('/path/do/not/exists')
@@ -313,7 +315,7 @@ describe('Remote', function () {
         .timestamp(2015, 11, 16, 16, 13, 1)
         .create()
 
-      const doc: Object = {
+      const doc /*: Object */ = {
         path: 'dir/file-7',
         docType: 'file',
         md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==', // foo
@@ -344,24 +346,24 @@ describe('Remote', function () {
 
   describe('updateFolder', function () {
     it('updates the metadata of a folder', async function () {
-      const created: RemoteDoc = await builders.remote.dir()
+      const created /*: RemoteDoc */ = await builders.remote.dir()
         .named('old-name')
         .timestamp(2017, 11, 15, 8, 12, 9)
         .create()
-      const old: Metadata = conversion.createMetadata(created)
-      const newParentDir: RemoteDoc = await builders.remote.dir()
+      const old /*: Metadata */ = conversion.createMetadata(created)
+      const newParentDir /*: RemoteDoc */ = await builders.remote.dir()
         .named('new-parent-dir')
         .inRootDir()
         .create()
-      const doc: Metadata = {
+      const doc /*: Metadata */ = {
         ...old,
         path: path.normalize('new-parent-dir/new-name'),
         updated_at: '2017-11-16T16:14:45Z'
       }
 
-      const updated: Metadata = await this.remote.updateFolderAsync(doc, old)
+      const updated /*: Metadata */ = await this.remote.updateFolderAsync(doc, old)
 
-      const folder: JsonApiDoc = await cozy.files.statById(updated.remote._id)
+      const folder /*: JsonApiDoc */ = await cozy.files.statById(updated.remote._id)
       should(folder.attributes).have.properties({
         path: '/new-parent-dir/new-name',
         type: 'directory',
@@ -375,16 +377,16 @@ describe('Remote', function () {
     })
 
     it('creates the dir if it does not exist', async function () {
-      const parentDir: RemoteDoc = await builders.remote.dir()
+      const parentDir /*: RemoteDoc */ = await builders.remote.dir()
         .named('parent-dir')
         .create()
-      const deletedDir: RemoteDoc = await builders.remote.dir()
+      const deletedDir /*: RemoteDoc */ = await builders.remote.dir()
         .named('deleted-dir')
         .inDir(parentDir)
         .timestamp(2016, 1, 2, 3, 4, 5)
         .create()
-      const oldMetadata: Metadata = conversion.createMetadata(deletedDir)
-      const newMetadata: Metadata = {
+      const oldMetadata /*: Metadata */ = conversion.createMetadata(deletedDir)
+      const newMetadata /*: Metadata */ = {
         ...oldMetadata,
         name: 'new-dir-name',
         path: path.normalize('parent-dir/new-dir-name')
@@ -393,7 +395,7 @@ describe('Remote', function () {
 
       await this.remote.updateFolderAsync(newMetadata, oldMetadata)
 
-      const created: JsonApiDoc = await cozy.files.statByPath('/parent-dir/new-dir-name')
+      const created /*: JsonApiDoc */ = await cozy.files.statByPath('/parent-dir/new-dir-name')
       should(created.attributes).have.properties({
         type: 'directory',
         name: 'new-dir-name',
@@ -408,19 +410,19 @@ describe('Remote', function () {
     })
 
     it('creates the dir if it has no remote info', async function () {
-      const oldMetadata: Metadata = {
+      const oldMetadata /*: Metadata */ = {
         ...conversion.createMetadata(builders.remote.dir().named('foo').build()),
         remote: undefined,
         updated_at: timestamp.stringify(timestamp.build(2015, 1, 1, 1, 1, 1))
       }
-      const newMetadata: Metadata = {
+      const newMetadata /*: Metadata */ = {
         ...oldMetadata,
         updated_at: timestamp.stringify(timestamp.build(2015, 2, 2, 2, 2, 2))
       }
 
-      const created: Metadata = await this.remote.updateFolderAsync(newMetadata, oldMetadata)
+      const created /*: Metadata */ = await this.remote.updateFolderAsync(newMetadata, oldMetadata)
 
-      const folder: JsonApiDoc = await cozy.files.statById(created.remote._id)
+      const folder /*: JsonApiDoc */ = await cozy.files.statById(created.remote._id)
       should(folder.attributes).have.properties({
         type: 'directory',
         name: 'foo',
@@ -435,26 +437,26 @@ describe('Remote', function () {
     let old, doc, newDir
 
     beforeEach(async () => {
-      const remoteDoc: RemoteDoc = await builders
+      const remoteDoc /*: RemoteDoc */ = await builders
         .remote.file()
         .named('cat6.jpg')
         .data('meow')
         .create()
-      old = (conversion.createMetadata(remoteDoc): Metadata)
+      old = (conversion.createMetadata(remoteDoc) /*: Metadata */)
       doc = ({
         ...old,
         path: path.normalize('moved-to/cat7.jpg'),
         name: 'cat7.jpg',
         remote: undefined
-      }: Metadata)
+      } /*: Metadata */)
       newDir = (await builders.remote.dir()
         .named('moved-to')
         .inRootDir()
-        .create(): RemoteDoc)
+        .create() /*: RemoteDoc */)
     })
 
     it('moves the file', async function () {
-      const moved: Metadata = await this.remote.moveFileAsync(doc, old)
+      const moved /*: Metadata */ = await this.remote.moveFileAsync(doc, old)
 
       should(moved.remote._id).equal(old.remote._id)
       should(moved.remote._rev).not.equal(old.remote._rev)
@@ -481,7 +483,7 @@ describe('Remote', function () {
         }
       }
 
-      const moved: Metadata = await this.remote.moveFileAsync(doc, old)
+      const moved /*: Metadata */ = await this.remote.moveFileAsync(doc, old)
 
       should(moved.remote._id).equal(old.remote._id)
       should(moved.remote._rev).not.equal(old.remote._rev)
@@ -663,7 +665,7 @@ describe('Remote', function () {
       remote.dst.dir = await this.remote.remoteCozy.updateAttributesById(remote.src.dir._id, {name: 'dst-dir'})
       remote.dst.foo = await this.remote.remoteCozy.find(remote.src.foo._id)
 
-      const doc: Metadata = conversion.createMetadata(remote.src.foo)
+      const doc /*: Metadata */ = conversion.createMetadata(remote.src.foo)
       doc.path = 'dst-dir/foo' // File metadata was updated as part of the move
       await this.remote.assignNewRev(doc)
       should(doc).deepEqual(conversion.createMetadata(remote.dst.foo))
@@ -672,12 +674,12 @@ describe('Remote', function () {
 
   describe('renameConflictingDocAsync', () =>
     it('renames the file/folder', async function () {
-      const remoteDoc: RemoteDoc = await builders.remote.file().named('cat9').create()
-      const src: Metadata = conversion.createMetadata(remoteDoc)
+      const remoteDoc /*: RemoteDoc */ = await builders.remote.file().named('cat9').create()
+      const src /*: Metadata */ = conversion.createMetadata(remoteDoc)
       ensureValidPath(src)
       const newPath = 'cat9-conflict-2015-12-01T01:02:03Z.jpg'
       await this.remote.renameConflictingDocAsync(src, newPath)
-      const file: JsonApiDoc = await cozy.files.statById(remoteDoc._id)
+      const file /*: JsonApiDoc */ = await cozy.files.statById(remoteDoc._id)
       should(file.attributes).have.properties({
         ...pick(remoteDoc, ['dir_id', 'type', 'updated_at', 'size', 'md5sum']),
         name: newPath
