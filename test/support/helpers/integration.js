@@ -1,14 +1,11 @@
 /* @flow */
 
-const cozy = require('cozy-client-js')
 const { pick } = require('lodash')
 const sinon = require('sinon')
 
-const Config = require('../../../core/config')
 const Ignore = require('../../../core/ignore')
 const Local = require('../../../core/local')
 const Merge = require('../../../core/merge')
-const Pouch = require('../../../core/pouch')
 const Prep = require('../../../core/prep')
 const Remote = require('../../../core/remote')
 const Sync = require('../../../core/sync')
@@ -17,7 +14,14 @@ const SyncState = require('../../../core/syncstate')
 const { LocalTestHelpers } = require('./local')
 const { RemoteTestHelpers } = require('./remote')
 
+/*::
+import type cozy from 'cozy-client-js'
+import type Config from '../../../core/config'
+import type Pouch from '../../../core/pouch'
+*/
+
 class IntegrationTestHelpers {
+  /*::
   local: LocalTestHelpers
   remote: RemoteTestHelpers
   prep: Prep
@@ -27,8 +31,9 @@ class IntegrationTestHelpers {
   _sync: Sync
   _local: Local
   _remote: Remote
+  */
 
-  constructor (config: Config, pouch: Pouch, cozyClient: cozy.Client) {
+  constructor (config /*: Config */, pouch /*: Pouch */, cozyClient /*: cozy.Client */) {
     const merge = new Merge(pouch)
     const ignore = new Ignore([])
     this.prep = new Prep(merge, ignore, config)
@@ -58,7 +63,7 @@ class IntegrationTestHelpers {
     sinon.spy(this._pouch, 'bulkDocs')
   }
 
-  putDocs (...props: string[]) {
+  putDocs (...props /*: string[] */) {
     const results = []
 
     for (const args of this._pouch.bulkDocs.args) {

@@ -1,7 +1,5 @@
 /* @flow */
 
-import type { ChokidarEvent } from '../../../core/local/chokidar_event'
-
 const Promise = require('bluebird')
 const fs = require('fs-extra')
 const path = require('path')
@@ -11,19 +9,23 @@ const conflictHelpers = require('./conflict')
 const { SyncDirTestHelpers } = require('./sync_dir')
 
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
-const Local = require('../../../core/local')
 
 Promise.promisifyAll(fs)
 const rimrafAsync = Promise.promisify(rimraf)
 
-function posixifyPath (localPath: string): string {
+/*::
+import type Local from '../../../core/local'
+import type { ChokidarEvent } from '../../../core/local/chokidar_event'
+*/
+
+function posixifyPath (localPath /*: string */) /*: string */ {
   return localPath.split(path.sep).join(path.posix.sep)
 }
 
-async function tree (rootPath: string): Promise<string[]> {
+async function tree (rootPath /*: string */) /*: Promise<string[]> */ {
   const dirsToRead = [rootPath]
   const relPaths = []
-  const makeRelative = (absPath: string) => posixifyPath(absPath.slice(rootPath.length + path.sep.length))
+  const makeRelative = (absPath /*: string */) => posixifyPath(absPath.slice(rootPath.length + path.sep.length))
 
   while (true) {
     const dir = dirsToRead.shift()
@@ -49,19 +51,21 @@ async function tree (rootPath: string): Promise<string[]> {
 }
 
 class LocalTestHelpers {
+  /*::
   local: Local
   syncDir: SyncDirTestHelpers
+  */
 
-  constructor (local: Local) {
+  constructor (local /*: Local */) {
     this.local = local
     this.syncDir = new SyncDirTestHelpers(local.syncPath)
   }
 
-  get syncPath (): string {
+  get syncPath () /*: string */ {
     return path.normalize(this.local.syncPath)
   }
 
-  get trashPath (): string {
+  get trashPath () /*: string */ {
     return path.join(this.local.tmpPath, '.test-trash')
   }
 
@@ -71,7 +75,7 @@ class LocalTestHelpers {
     }
   }
 
-  async trashFunc (paths: string[]): Promise<void> {
+  async trashFunc (paths /*: string[] */) /*: Promise<void> */ {
     for (const src of paths) {
       const dst = path.join(this.trashPath, path.basename(src))
       try {
@@ -87,7 +91,7 @@ class LocalTestHelpers {
     this.local._trash = this.trashFunc
   }
 
-  async tree (): Promise<string[]> {
+  async tree () /*: Promise<string[]> */ {
     let trashContents
     try {
       trashContents = await tree(this.trashPath)
@@ -109,11 +113,11 @@ class LocalTestHelpers {
       .filter(p => !p.startsWith('/Trash/'))
   }
 
-  async simulateEvents (events: ChokidarEvent[]) {
+  async simulateEvents (events /*: ChokidarEvent[] */) {
     return this.local.watcher.onFlush(events)
   }
 
-  async readFile (path: string): Promise<string> {
+  async readFile (path /*: string */) /*: Promise<string> */ {
     return this.syncDir.readFile(path)
   }
 }

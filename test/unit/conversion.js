@@ -1,8 +1,10 @@
 /* @flow */
 /* eslint-env mocha */
 
+/*::
 import type { Metadata } from '../../core/metadata'
 import type { RemoteDoc } from '../../core/remote/document'
+*/
 
 const should = require('should')
 const path = require('path')
@@ -14,7 +16,7 @@ const timestamp = require('../../core/timestamp')
 describe('conversion', function () {
   describe('createMetadata', () => {
     it('builds the metadata for a remote file', () => {
-      let remoteDoc: RemoteDoc = {
+      let remoteDoc /*: RemoteDoc */ = {
         _id: '12',
         _rev: '34',
         _type: FILES_DOCTYPE,
@@ -30,7 +32,7 @@ describe('conversion', function () {
         type: 'file',
         updated_at: timestamp.stringify(timestamp.build(2017, 9, 8, 7, 6, 5))
       }
-      let metadata : Metadata = conversion.createMetadata(remoteDoc)
+      let metadata /*: Metadata */ = conversion.createMetadata(remoteDoc)
 
       should(metadata).deepEqual({
         md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
@@ -53,7 +55,7 @@ describe('conversion', function () {
     })
 
     it('builds the metadata for a remote dir', () => {
-      const remoteDoc: RemoteDoc = {
+      const remoteDoc /*: RemoteDoc */ = {
         _id: '12',
         _rev: '34',
         _type: FILES_DOCTYPE,

@@ -1,18 +1,21 @@
 /* @flow */
 
+const logger = require('../logger')
+const delay = require('../utils/delay')
+
+/*::
+import type EventEmitter from 'events'
+import type { RemoteCozy } from './cozy'
 import type { Warning } from './warning'
 import type { Delay } from '../utils/delay'
 
-const EventEmitter = require('events')
-const RemoteCozy = require('./cozy')
-const logger = require('../logger')
-const delay = require('../utils/delay')
+type Mode = 'slow' | 'medium' | 'fast'
+type Ticks = {next: Delay, rest: Delay[]}
+*/
 
 const log = logger({
   component: 'RemoteWarningPoller'
 })
-
-type Mode = 'slow' | 'medium' | 'fast'
 
 const MODE = {
   SLOW: 'slow',
@@ -22,13 +25,11 @@ const MODE = {
 
 const DEFAULT_MODE = MODE.SLOW
 
-type Ticks = {next: Delay, rest: Delay[]}
-
-function ticks (next: Delay, ...rest: Delay[]): Ticks {
+function ticks (next /*: Delay */, ...rest /*: Delay[] */) /*: Ticks */ {
   return {next, rest}
 }
 
-const TICKS: { [Mode]: Ticks } = {
+const TICKS /*: { [Mode]: Ticks } */ = {
   [MODE.SLOW]: ticks(delay.days(1)),
   [MODE.MEDIUM]: ticks(delay.minutes(1))
 }
@@ -40,20 +41,22 @@ TICKS[MODE.FAST] = ticks.apply(null, [
 
 const DEFAULT_TICKS = TICKS[DEFAULT_MODE]
 
-function shiftTicks (ticks: Ticks): Ticks {
+function shiftTicks (ticks /*: Ticks */) /*: Ticks */ {
   if (ticks.rest.length === 0) return ticks
   const [next, ...rest] = ticks.rest
   return {next, rest}
 }
 
 class RemoteWarningPoller {
+  /*::
   remoteCozy: RemoteCozy
   events: EventEmitter
   polling: ?Promise<*>
   timeout: *
   ticks: Ticks
+  */
 
-  constructor (remoteCozy: RemoteCozy, events: EventEmitter) {
+  constructor (remoteCozy /*: RemoteCozy */, events /*: EventEmitter */) {
     this.remoteCozy = remoteCozy
     this.events = events
     this.ticks = DEFAULT_TICKS
@@ -69,7 +72,7 @@ class RemoteWarningPoller {
     try {
       log.info('Looking for warnings...')
       this.polling = this.remoteCozy.warnings()
-      const warnings: Warning[] = await this.polling
+      const warnings /*: Warning[] */ = await this.polling
 
       log.info(`${warnings.length} warnings`)
       if (warnings.length > 0) log.trace({warnings})
@@ -93,14 +96,14 @@ class RemoteWarningPoller {
     await this.polling
   }
 
-  scheduleNext (ticks: Ticks) {
+  scheduleNext (ticks /*: Ticks */) {
     clearTimeout(this.timeout)
     this.ticks = ticks
     this.timeout = setTimeout(this.poll, ticks.next)
     log.debug({ticks}, `Next polling in ${ticks.next} milliseconds`)
   }
 
-  switchMode (mode: Mode) {
+  switchMode (mode /*: Mode */) {
     log.info({mode})
     const newTicks = TICKS[mode]
     if (newTicks.next < this.ticks.next) {

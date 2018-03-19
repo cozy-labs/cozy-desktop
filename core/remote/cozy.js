@@ -1,11 +1,7 @@
 /* @flow */
 
-import type { RemoteDoc, RemoteDeletion } from './document'
-import type { Warning } from './warning'
-
 const CozyClient = require('cozy-client-js').Client
 const path = require('path')
-const { Readable } = require('stream')
 
 const Config = require('../config')
 const { FILES_DOCTYPE, FILE_TYPE } = require('./constants')
@@ -15,11 +11,17 @@ const { composeAsync } = require('../utils/func')
 
 const { posix } = path
 
+/*::
+import type { Readable } from 'stream'
+import type { RemoteDoc, RemoteDeletion } from './document'
+import type { Warning } from './warning'
+*/
+
 const log = logger({
   component: 'RemoteCozy'
 })
 
-function DirectoryNotFound (path: string, cozyURL: string) {
+function DirectoryNotFound (path/*: string */, cozyURL/*: string */) {
   this.name = 'DirectoryNotFound'
   this.message = `Directory ${path} was not found on Cozy ${cozyURL}`
   this.stack = (new Error()).stack
@@ -33,18 +35,20 @@ function DirectoryNotFound (path: string, cozyURL: string) {
 // - provide custom functions (that may eventually be merged into the lib)
 //
 class RemoteCozy {
+  /*::
   url: string
   client: CozyClient
+  */
 
-  static DirectoryNotFound = DirectoryNotFound
+  // FIXME: static DirectoryNotFound = DirectoryNotFound
 
-  constructor (config: Config) {
+  constructor (config/*: Config */) {
     this.url = config.cozyUrl
     this.client = new CozyClient({
       cozyURL: this.url,
       oauth: {
-        clientParams: config.client,
-        storage: config
+        clientParams: Config.client,
+        storage: Config
       }
     })
 
@@ -60,12 +64,10 @@ class RemoteCozy {
     this.destroyById = this.client.files.destroyById
   }
 
+  /*::
   createJob: (workerType: string, args: any) => Promise<*>
-
   unregister: () => Promise<void>
-
   diskUsage: () => Promise<*>
-
   createFile: (data: Readable,
                options: {name: string,
                          dirID?: ?string,
@@ -86,8 +88,9 @@ class RemoteCozy {
   trashById: (id: string, options?: {ifMatch: string}) => Promise<RemoteDoc>
 
   destroyById: (id: string, options?: {ifMatch: string}) => Promise<void>
+  */
 
-  async changes (since: string = '0'): Promise<{last_seq: string, docs: Array<RemoteDoc|RemoteDeletion>}> {
+  async changes (since/*: string */ = '0') /*: Promise<{last_seq: string, docs: Array<RemoteDoc|RemoteDeletion>}> */ {
     const {last_seq, results} = await this.client.data.changesFeed(
       FILES_DOCTYPE, {since, include_docs: true})
 
@@ -99,7 +102,7 @@ class RemoteCozy {
       parentDirIds(keepFiles(rawDocs)))
 
     // The final docs with their paths (except for deletions)
-    let docs: Array<RemoteDoc|RemoteDeletion> = []
+    let docs /*: Array<RemoteDoc|RemoteDeletion> */ = []
 
     for (const doc of rawDocs) {
       if (doc.type === FILE_TYPE) {
@@ -119,12 +122,12 @@ class RemoteCozy {
     return {last_seq, docs}
   }
 
-  async find (id: string): Promise<RemoteDoc> {
+  async find (id/*: string */)/*: Promise<RemoteDoc> */ {
     const doc = await this.client.files.statById(id)
     return this.toRemoteDoc(doc)
   }
 
-  async findMaybe (id: string): Promise<?RemoteDoc> {
+  async findMaybe (id/*: string */)/*: Promise<?RemoteDoc> */ {
     try {
       return await this.find(id)
     } catch (err) {
@@ -132,7 +135,7 @@ class RemoteCozy {
     }
   }
 
-  async findDirectoryByPath (path: string): Promise<RemoteDoc> {
+  async findDirectoryByPath (path/*: string */)/*: Promise<RemoteDoc> */ {
     const index = await this.client.data.defineIndex(FILES_DOCTYPE, ['path'])
     const results = await this.client.data.query(index, {selector: {path}})
 
@@ -144,7 +147,7 @@ class RemoteCozy {
 
   // FIXME: created_at is returned by some methods, but not all of them
 
-  async findOrCreateDirectoryByPath (path: string): Promise<RemoteDoc> {
+  async findOrCreateDirectoryByPath (path/*: string */)/*: Promise<RemoteDoc> */ {
     try {
       return await this.findDirectoryByPath(path)
     } catch (err) {
@@ -153,7 +156,7 @@ class RemoteCozy {
 
       const name = posix.basename(path)
       const parentPath = posix.dirname(path)
-      const parentDir: RemoteDoc = await this.findOrCreateDirectoryByPath(parentPath)
+      const parentDir /*: RemoteDoc */ = await this.findOrCreateDirectoryByPath(parentPath)
       const dirID = parentDir._id
 
       log.info({path, name, dirID}, 'Creating directory...')
@@ -161,7 +164,7 @@ class RemoteCozy {
     }
   }
 
-  async isEmpty (id: string): Promise<boolean> {
+  async isEmpty (id/*: string */)/*: Promise<boolean> */ {
     const dir = await this.client.files.statById(id)
     if (dir.attributes.type !== 'directory') {
       throw new Error(
@@ -171,24 +174,24 @@ class RemoteCozy {
     return dir.relations('contents').length === 0
   }
 
-  async downloadBinary (id: string): Promise<Readable> {
+  async downloadBinary (id/*: string */)/*: Promise<Readable> */ {
     const resp = await this.client.files.downloadById(id)
     return resp.body
   }
 
-  async toRemoteDoc (doc: any): Promise<RemoteDoc> {
+  async toRemoteDoc (doc /*: any */)/*: Promise<RemoteDoc> */ {
     if (doc.attributes) doc = jsonApiToRemoteDoc(doc)
     if (doc.type === FILE_TYPE) await this._setPath(doc)
     return doc
   }
 
   // Retrieve the path of a remote file doc
-  async _setPath (doc: any): Promise<void> {
+  async _setPath (doc /*: any */) /*: Promise<void> */ {
     const parentDir = await this.find(doc.dir_id)
     doc.path = path.posix.join(parentDir.path, doc.name)
   }
 
-  async warnings (): Promise<Warning[]> {
+  async warnings () /*: Promise<Warning[]> */ {
     const warningsPath = '/settings/warnings'
     try {
       const response = await this.client.fetchJSON('GET', warningsPath)

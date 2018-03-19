@@ -1,8 +1,6 @@
 /* eslint-env mocha */
 /* @flow */
 
-import type { Warning } from '../../../core/remote/warning'
-
 const should = require('should')
 const sinon = require('sinon')
 
@@ -16,6 +14,10 @@ const {
 } = require('../../../core/remote/warning_poller')
 
 const warningBuilders = require('../../support/builders/remote/warning')
+
+/*::
+import type { Warning } from '../../../core/remote/warning'
+*/
 
 describe('remote/warning_poller', () => {
   describe('ticks', () => {
@@ -58,7 +60,7 @@ describe('RemoteWarningPoller', () => {
 
   describe('#poll()', () => {
     it('emits warnings if any', async () => {
-      const warnings: Warning[] = warningBuilders.list()
+      const warnings /*: Warning[] */ = warningBuilders.list()
       remoteCozy.warnings.resolves(warnings)
       await poller.poll()
       should(events.emit).have.been.calledOnce()
@@ -97,7 +99,7 @@ describe('RemoteWarningPoller', () => {
     // FIXME
     it.skip('polls continuously according to POLLING_DELAY', async () => {
       const noWarnings = []
-      const warnings: Warning[] = warningBuilders.list()
+      const warnings /*: Warning[] */ = warningBuilders.list()
       remoteCozy.warnings.onFirstCall().resolves(noWarnings)
       remoteCozy.warnings.onSecondCall().resolves(warnings)
 
@@ -124,7 +126,7 @@ describe('RemoteWarningPoller', () => {
 
     // FIXME
     it.skip('cancels upcoming pollings', () => {
-      const warnings: Warning[] = warningBuilders.list()
+      const warnings /*: Warning[] */ = warningBuilders.list()
       remoteCozy.warnings.onFirstCall().resolves([])
       remoteCozy.warnings.onSecondCall().resolves(warnings)
       clock.tick(DEFAULT_TICKS.next)

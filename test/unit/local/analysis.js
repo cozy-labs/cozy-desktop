@@ -1,14 +1,16 @@
 /* eslint-env mocha */
 
-import type { LocalEvent } from '../../../core/local/event'
-import type { LocalChange } from '../../../core/local/change'
-import type { Metadata } from '../../../core/metadata'
-
 const should = require('should')
 
 const analysis = require('../../../core/local/analysis')
 
 const MetadataBuilders = require('../../support/builders/metadata')
+
+/*::
+import type { LocalEvent } from '../../../core/local/event'
+import type { LocalChange } from '../../../core/local/change'
+import type { Metadata } from '../../../core/metadata'
+*/
 
 describe('core/local/analysis', function () {
   const sideName = 'local'
@@ -17,21 +19,21 @@ describe('core/local/analysis', function () {
   before(() => { metadataBuilders = new MetadataBuilders() })
 
   it('do not break on empty array', () => {
-    const events: LocalEvent[] = []
-    const pendingChanges: LocalChange[] = []
-    const result: LocalChange[] = analysis(events, pendingChanges)
+    const events /*: LocalEvent[] */ = []
+    const pendingChanges /*: LocalChange[] */ = []
+    const result /*: LocalChange[] */ = analysis(events, pendingChanges)
     should(result).have.length(0)
   })
 
   it('handles partial successive moves (add+unlink+add, then unlink later)', () => {
-    const old: Metadata = metadataBuilders.file().ino(1).build()
+    const old /*: Metadata */ = metadataBuilders.file().ino(1).build()
     const stats = {ino: 1}
-    const events: LocalEvent[] = [
+    const events /*: LocalEvent[] */ = [
       {type: 'add', path: 'dst1', stats, wip: true},
       {type: 'unlink', path: 'src', old},
       {type: 'add', path: 'dst2', stats, md5sum: 'yolo'}
     ]
-    const pendingChanges: LocalChange[] = []
+    const pendingChanges /*: LocalChange[] */ = []
 
     should(analysis(events, pendingChanges)).deepEqual([{
       sideName,
@@ -44,7 +46,7 @@ describe('core/local/analysis', function () {
     }])
     should(pendingChanges).deepEqual([])
 
-    const nextEvents: LocalEvent[] = [
+    const nextEvents /*: LocalEvent[] */ = [
       {type: 'unlink', path: 'dst1'}
     ]
     should(analysis(nextEvents, pendingChanges)).deepEqual([])
@@ -52,13 +54,13 @@ describe('core/local/analysis', function () {
   })
 
   it('handles unlink+add', () => {
-    const old: Metadata = metadataBuilders.file().ino(1).build()
+    const old /*: Metadata */ = metadataBuilders.file().ino(1).build()
     const stats = {ino: 1}
-    const events: LocalEvent[] = [
+    const events /*: LocalEvent[] */ = [
       {type: 'unlink', path: 'src', old},
       {type: 'add', path: 'dst', stats, md5sum: 'yolo'}
     ]
-    const pendingChanges: LocalChange[] = []
+    const pendingChanges /*: LocalChange[] */ = []
 
     should(analysis(events, pendingChanges)).deepEqual([{
       sideName,
@@ -73,14 +75,14 @@ describe('core/local/analysis', function () {
   })
 
   it('handles unlink+add+change', () => {
-    const old: Metadata = metadataBuilders.file().ino(1).build()
+    const old /*: Metadata */ = metadataBuilders.file().ino(1).build()
     const stats = {ino: 1}
-    const events: LocalEvent[] = [
+    const events /*: LocalEvent[] */ = [
       {type: 'unlink', path: 'src', old},
       {type: 'add', path: 'dst', stats, md5sum: old.md5sum},
       {type: 'change', path: 'dst', stats, md5sum: 'yata'}
     ]
-    const pendingChanges: LocalChange[] = []
+    const pendingChanges /*: LocalChange[] */ = []
 
     should(analysis(events, pendingChanges)).deepEqual([{
       sideName,
@@ -101,13 +103,13 @@ describe('core/local/analysis', function () {
   })
 
   it('handles unlinkDir+addDir', () => {
-    const old: Metadata = metadataBuilders.dir().ino(1).build()
+    const old /*: Metadata */ = metadataBuilders.dir().ino(1).build()
     const stats = {ino: 1}
-    const events: LocalEvent[] = [
+    const events /*: LocalEvent[] */ = [
       {type: 'unlinkDir', path: 'src', old},
       {type: 'addDir', path: 'dst', stats}
     ]
-    const pendingChanges: LocalChange[] = []
+    const pendingChanges /*: LocalChange[] */ = []
 
     should(analysis(events, pendingChanges)).deepEqual([{
       sideName,
@@ -121,13 +123,13 @@ describe('core/local/analysis', function () {
   })
 
   it('handles partial successive moves (add+unlink+add, then unlink later)', () => {
-    const old: Metadata = metadataBuilders.file().path('src').ino(1).build()
+    const old /*: Metadata */ = metadataBuilders.file().path('src').ino(1).build()
     const stats = {ino: 1}
-    const events: LocalEvent[] = [
+    const events /*: LocalEvent[] */ = [
       {type: 'unlink', path: 'src', old},
       {type: 'add', path: 'dst1', stats, wip: true}
     ]
-    const pendingChanges: LocalChange[] = []
+    const pendingChanges /*: LocalChange[] */ = []
 
     should(analysis(events, pendingChanges)).deepEqual([])
     should(pendingChanges).deepEqual([{
@@ -140,7 +142,7 @@ describe('core/local/analysis', function () {
       wip: true
     }])
 
-    const nextEvents: LocalEvent[] = [
+    const nextEvents /*: LocalEvent[] */ = [
       {type: 'unlink', path: 'dst1'}
     ]
     should(analysis(nextEvents, pendingChanges)).deepEqual([{
@@ -155,10 +157,10 @@ describe('core/local/analysis', function () {
 
   it('handles addDir', () => {
     const stats = {ino: 1}
-    const events: LocalEvent[] = [
+    const events /*: LocalEvent[] */ = [
       {type: 'addDir', path: 'foo', stats}
     ]
-    const pendingChanges: LocalChange[] = []
+    const pendingChanges /*: LocalChange[] */ = []
 
     should(analysis(events, pendingChanges)).deepEqual([{
       sideName,
@@ -171,13 +173,13 @@ describe('core/local/analysis', function () {
   })
 
   it('handles addDir+unlinkDir', () => {
-    const old: Metadata = metadataBuilders.dir().ino(1).build()
+    const old /*: Metadata */ = metadataBuilders.dir().ino(1).build()
     const stats = {ino: 1}
-    const events: LocalEvent[] = [
+    const events /*: LocalEvent[] */ = [
       {type: 'addDir', path: 'dst', stats},
       {type: 'unlinkDir', path: 'src', old}
     ]
-    const pendingChanges: LocalChange[] = []
+    const pendingChanges /*: LocalChange[] */ = []
 
     should(analysis(events, pendingChanges)).deepEqual([{
       sideName,
@@ -191,13 +193,13 @@ describe('core/local/analysis', function () {
   })
 
   it('handles chokidar mistakes', () => {
-    const old: Metadata = metadataBuilders.file().ino(1).build()
+    const old /*: Metadata */ = metadataBuilders.file().ino(1).build()
     const stats = {ino: 1}
-    const events: LocalEvent[] = [
+    const events /*: LocalEvent[] */ = [
       {type: 'unlinkDir', path: 'src', old},
       {type: 'add', path: 'dst', stats, md5sum: 'yolo'}
     ]
-    const pendingChanges: LocalChange[] = []
+    const pendingChanges /*: LocalChange[] */ = []
     should(analysis(events, pendingChanges)).deepEqual([
       {
         sideName,
@@ -217,12 +219,12 @@ describe('core/local/analysis', function () {
     const fileStats = {ino: 3}
     const otherFileStats = {ino: 4}
     const otherDirStats = {ino: 5}
-    const dirMetadata: Metadata = metadataBuilders.dir().ino(dirStats.ino).build()
-    const subdirMetadata: Metadata = metadataBuilders.dir().ino(subdirStats.ino).build()
-    const fileMetadata : Metadata = metadataBuilders.file().ino(fileStats.ino).build()
-    const otherFileMetadata : Metadata = metadataBuilders.file().ino(otherFileStats.ino).build()
-    const otherDirMetadata : Metadata = metadataBuilders.dir().ino(otherDirStats.ino).build()
-    const events: LocalEvent[] = [
+    const dirMetadata /*: Metadata */ = metadataBuilders.dir().ino(dirStats.ino).build()
+    const subdirMetadata /*: Metadata */ = metadataBuilders.dir().ino(subdirStats.ino).build()
+    const fileMetadata  /*: Metadata */ = metadataBuilders.file().ino(fileStats.ino).build()
+    const otherFileMetadata  /*: Metadata */ = metadataBuilders.file().ino(otherFileStats.ino).build()
+    const otherDirMetadata  /*: Metadata */ = metadataBuilders.dir().ino(otherDirStats.ino).build()
+    const events /*: LocalEvent[] */ = [
       {type: 'unlinkDir', path: 'src/subdir', old: subdirMetadata},
       {type: 'unlinkDir', path: 'src', old: dirMetadata},
       {type: 'addDir', path: 'dst', stats: dirStats},
@@ -233,7 +235,7 @@ describe('core/local/analysis', function () {
       {type: 'unlinkDir', path: 'other-dir-src', old: otherDirMetadata},
       {type: 'addDir', path: 'other-dir-dst', stats: otherDirStats}
     ]
-    const pendingChanges: LocalChange[] = []
+    const pendingChanges /*: LocalChange[] */ = []
 
     should(analysis(events, pendingChanges)).deepEqual([
       {sideName, type: 'FileUpdate', path: 'other-file', stats: otherFileStats, ino: otherFileStats.ino, md5sum: 'yolo', /* FIXME: */ wip: undefined},

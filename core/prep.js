@@ -1,17 +1,19 @@
 /* @flow */
 
-import type { SideName, Metadata } from './metadata'
-import type { PathObject } from './utils/path'
-
 const { clone } = require('lodash')
 const { join } = require('path')
 
-const Config = require('./config')
-const Ignore = require('./ignore')
 const logger = require('./logger')
-const Merge = require('./merge')
 const { assignId, ensureValidChecksum, ensureValidPath } = require('./metadata')
 const { TRASH_DIR_NAME } = require('./remote/constants')
+
+/*::
+import type Config from './config'
+import type Ignore from './ignore'
+import type Merge from './merge'
+import type { SideName, Metadata } from './metadata'
+import type { PathObject } from './utils/path'
+*/
 
 const log = logger({
   component: 'Prep'
@@ -25,11 +27,13 @@ const log = logger({
 // are not structured in the same way. In particular, the _id are uuid in CouchDB
 // and the path to the file/folder (in a normalized form) in PouchDB.
 class Prep {
-  merge: Merge
-  ignore: Ignore
-  config: Config
+  /*::
+  merge : Merge
+  ignore : Ignore
+  config : Config
+  */
 
-  constructor (merge: Merge, ignore: Ignore, config: Config) {
+  constructor (merge /*: Merge */, ignore /*: Ignore */, config /*: Config */) {
     this.merge = merge
     this.ignore = ignore
     this.config = config
@@ -40,7 +44,7 @@ class Prep {
   // Expectations:
   //   - the file path is present and valid
   //   - the checksum is valid, if present
-  async addFileAsync (side: SideName, doc: Metadata) {
+  async addFileAsync (side /*: SideName */, doc /*: Metadata */) {
     log.debug({path: doc.path}, 'addFileAsync')
     ensureValidPath(doc)
     ensureValidChecksum(doc)
@@ -54,7 +58,7 @@ class Prep {
   // Expectations:
   //   - the file path is present and valid
   //   - the checksum is valid, if present
-  async updateFileAsync (side: SideName, doc: Metadata) {
+  async updateFileAsync (side /*: SideName */, doc /*: Metadata */) {
     log.debug({path: doc.path}, 'updateFileAsync')
     ensureValidPath(doc)
     ensureValidChecksum(doc)
@@ -67,7 +71,7 @@ class Prep {
 
   // Expectations:
   //   - the folder path is present and valid
-  async putFolderAsync (side: SideName, doc: Metadata) {
+  async putFolderAsync (side /*: SideName */, doc /*: Metadata */) {
     log.debug({path: doc.path}, 'putFolderAsync')
     ensureValidPath(doc)
 
@@ -83,7 +87,7 @@ class Prep {
   //   - the checksum is valid, if present
   //   - the two paths are not the same
   //   - the revision for the old file is present
-  async moveFileAsync (side: SideName, doc: Metadata, was: Metadata) {
+  async moveFileAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */) {
     log.debug({path: doc.path, oldpath: was.path}, 'moveFileAsync')
     const {path} = doc
     ensureValidPath(doc)
@@ -105,7 +109,7 @@ class Prep {
     }
   }
 
-  doMoveFile (side: SideName, doc: Metadata, was: Metadata) {
+  doMoveFile (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */) {
     doc.docType = 'file'
     assignId(doc)
     assignId(was)
@@ -126,7 +130,7 @@ class Prep {
   //   - the old folder path is present and valid
   //   - the two paths are not the same
   //   - the revision for the old folder is present
-  async moveFolderAsync (side: SideName, doc: Metadata, was: Metadata) {
+  async moveFolderAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */) {
     log.debug({path: doc.path, oldpath: was.path}, 'moveFolderAsync')
     const {path} = doc
     ensureValidPath(doc)
@@ -146,7 +150,7 @@ class Prep {
     }
   }
 
-  doMoveFolder (side: SideName, doc: Metadata, was: Metadata) {
+  doMoveFolder (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */) {
     doc.docType = 'folder'
     assignId(doc)
     assignId(was)
@@ -163,7 +167,7 @@ class Prep {
   }
 
   // TODO add comments + tests
-  async restoreFileAsync (side: SideName, was: Metadata, doc: Metadata) {
+  async restoreFileAsync (side /*: SideName */, was /*: Metadata */, doc /*: Metadata */) {
     log.debug({path: doc.path, oldpath: was.path}, 'restoreFileAsync')
     ensureValidPath(doc)
     ensureValidPath(was)
@@ -178,7 +182,7 @@ class Prep {
   }
 
   // TODO add comments + tests
-  async restoreFolderAsync (side: SideName, was: Metadata, doc: Metadata) {
+  async restoreFolderAsync (side /*: SideName */, was /*: Metadata */, doc /*: Metadata */) {
     log.debug({path: doc.path, oldpath: was.path}, 'restoreFolderAsync')
     ensureValidPath(doc)
     ensureValidPath(was)
@@ -192,7 +196,7 @@ class Prep {
   }
 
   // TODO add comments + tests
-  async trashFileAsync (side: SideName, was: PathObject, doc?: Metadata) {
+  async trashFileAsync (side /*: SideName */, was /*: PathObject */, doc /*: ?Metadata */) {
     log.debug({path: doc && doc.path, oldpath: was.path}, 'trashFileAsync')
     ensureValidPath(was)
 
@@ -213,7 +217,7 @@ class Prep {
   }
 
   // TODO add comments + tests
-  async trashFolderAsync (side: SideName, was: PathObject, doc?: Metadata) {
+  async trashFolderAsync (side /*: SideName */, was /*: PathObject */, doc /*: ?Metadata */) {
     log.debug({path: doc && doc.path, oldpath: was.path}, 'trashFolderAsync')
     ensureValidPath(was)
 
@@ -234,7 +238,7 @@ class Prep {
 
   // Expectations:
   //   - the file path is present and valid
-  async deleteFileAsync (side: SideName, doc: Metadata) {
+  async deleteFileAsync (side /*: SideName */, doc /*: Metadata */) {
     log.debug({path: doc.path}, 'deleteFileAsync')
     ensureValidPath(doc)
 
@@ -246,7 +250,7 @@ class Prep {
 
   // Expectations:
   //   - the folder path is present and valid
-  async deleteFolderAsync (side: SideName, doc: Metadata) {
+  async deleteFolderAsync (side /*: SideName */, doc /*: Metadata */) {
     log.debug({path: doc.path}, 'deleteFolderAsync')
     ensureValidPath(doc)
 

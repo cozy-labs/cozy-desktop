@@ -1,44 +1,49 @@
 /* @flow */
 
-import type { Metadata } from '../metadata'
-import type { RemoteChange, RemoteNoise, RemoteFileMove } from './change'
-import type { RemoteDoc, RemoteDeletion } from './document'
-
 const conversion = require('../conversion')
-const EventEmitter = require('events')
+
 const _ = require('lodash')
 
 const logger = require('../logger')
 const { assignId, ensureValidPath, detectPlatformIncompatibilities } = require('../metadata')
-const Pouch = require('../pouch')
-const Prep = require('../prep')
-const RemoteCozy = require('./cozy')
 const remoteChange = require('./change')
 const { inRemoteTrash } = require('./document')
 const userActionRequired = require('./user_action_required')
+
+/*::
+import type EventEmitter from 'events'
+import type Pouch from '../pouch'
+import type Prep from '../prep'
+import type RemoteCozy from './cozy'
+import type { Metadata } from '../metadata'
+import type { RemoteChange, RemoteNoise, RemoteFileMove } from './change'
+import type { RemoteDoc, RemoteDeletion } from './document'
+*/
 
 const log = logger({
   component: 'RemoteWatcher'
 })
 
-const DEFAULT_HEARTBEAT: number = 1000 * 60 // 1 minute
-const HEARTBEAT: number = parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || DEFAULT_HEARTBEAT
+const DEFAULT_HEARTBEAT /*: number */ = 1000 * 60 // 1 minute
+const HEARTBEAT /*: number */ = parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || DEFAULT_HEARTBEAT
 
 const sideName = 'remote'
 
 // Get changes from the remote Cozy and prepare them for merge
 class RemoteWatcher {
+  /*::
   pouch: Pouch
   prep: Prep
   remoteCozy: RemoteCozy
   events: EventEmitter
   runningResolve: ?() => void
   runningReject: ?() => void
+  */
 
-  static DEFAULT_HEARTBEAT = DEFAULT_HEARTBEAT
-  static HEARTBEAT = HEARTBEAT
+  // FIXME: static DEFAULT_HEARTBEAT = DEFAULT_HEARTBEAT
+  // FIXME: static HEARTBEAT = HEARTBEAT
 
-  constructor (pouch: Pouch, prep: Prep, remoteCozy: RemoteCozy, events: EventEmitter) {
+  constructor (pouch /*: Pouch */, prep /*: Prep */, remoteCozy /*: RemoteCozy */, events /*: EventEmitter */) {
     this.pouch = pouch
     this.prep = prep
     this.remoteCozy = remoteCozy
@@ -46,8 +51,8 @@ class RemoteWatcher {
   }
 
   start () {
-    const started: Promise<void> = this.watch()
-    const running: Promise<void> = started.then(() => Promise.race([
+    const started /*: Promise<void> */ = this.watch()
+    const running /*: Promise<void> */ = started.then(() => Promise.race([
       // run until either stop is called or watchLoop reject
       new Promise((resolve) => { this.runningResolve = resolve }),
       this.watchLoop()
@@ -110,12 +115,12 @@ class RemoteWatcher {
 
   // Pull multiple changed or deleted docs
   // FIXME: Misleading method name?
-  async pullMany (docs: Array<RemoteDoc|RemoteDeletion>) {
-    const changes: Array<RemoteChange|RemoteNoise> = []
+  async pullMany (docs /*: Array<RemoteDoc|RemoteDeletion> */) {
+    const changes /*: Array<RemoteChange|RemoteNoise> */ = []
     log.trace('Contextualize and analyse changesfeed results...')
     for (let index = 0; index < docs.length; index++) {
       const doc = docs[index]
-      const was: ?Metadata = await this.pouch.byRemoteIdMaybeAsync(doc._id)
+      const was /*: ?Metadata */ = await this.pouch.byRemoteIdMaybeAsync(doc._id)
       changes.push(this.identifyChange(doc, was, index, changes))
     }
     log.trace('Done with analysis.')
@@ -129,7 +134,7 @@ class RemoteWatcher {
     log.trace('Done with pull.')
   }
 
-  identifyChange (doc: RemoteDoc|RemoteDeletion, was: ?Metadata, changeIndex: number, previousChanges: Array<RemoteChange|RemoteNoise>): RemoteChange|RemoteNoise {
+  identifyChange (doc /*: RemoteDoc|RemoteDeletion */, was /*: ?Metadata */, changeIndex /*: number */, previousChanges /*: Array<RemoteChange|RemoteNoise> */) /*: RemoteChange|RemoteNoise */ {
     log.trace({path: was ? was.path : _.get(doc, 'path'), doc, was}, 'change received')
 
     if (doc._deleted) {
@@ -169,8 +174,8 @@ class RemoteWatcher {
   // Note that the changes feed can aggregate several changes for many changes
   // for the same document. For example, if a file is created and then put in
   // the trash just after, it looks like it appeared directly on the trash.
-  identifyExistingDocChange (remote: RemoteDoc, was: ?Metadata, changeIndex: number, previousChanges: Array<RemoteChange|RemoteNoise>): * {
-    let doc: Metadata = conversion.createMetadata(remote)
+  identifyExistingDocChange (remote /*: RemoteDoc */, was /*: ?Metadata */, changeIndex /*: number */, previousChanges /*: Array<RemoteChange|RemoteNoise> */) /*: * */ {
+    let doc /*: Metadata */ = conversion.createMetadata(remote)
     try {
       ensureValidPath(doc)
     } catch (error) {
@@ -232,12 +237,12 @@ class RemoteWatcher {
       }
     }
     if ((doc.docType === 'file')) {
-      const change: RemoteFileMove = {sideName, type: 'FileMove', doc, was}
+      const change /*: RemoteFileMove */ = {sideName, type: 'FileMove', doc, was}
       if (was.md5sum !== doc.md5sum) change.update = true // move + change
 
       // Squash moves
       for (let previousChangeIndex = 0; previousChangeIndex < changeIndex; previousChangeIndex++) {
-        const previousChange: RemoteChange|RemoteNoise = previousChanges[previousChangeIndex]
+        const previousChange /*: RemoteChange|RemoteNoise */ = previousChanges[previousChangeIndex]
         // FIXME figure out why isChildMove%checks is not enough
         if (previousChange.type === 'DirMove' && remoteChange.isChildMove(previousChange, change)) {
           if (!remoteChange.isOnlyChildMove(previousChange, change)) {
@@ -260,7 +265,7 @@ class RemoteWatcher {
       const change = {sideName, type: 'DirMove', doc, was}
       // Squash moves
       for (let previousChangeIndex = 0; previousChangeIndex < changeIndex; previousChangeIndex++) {
-        const previousChange: RemoteChange|RemoteNoise = previousChanges[previousChangeIndex]
+        const previousChange /*: RemoteChange|RemoteNoise */ = previousChanges[previousChangeIndex]
         // FIXME figure out why isChildMove%checks is not enough
         if ((previousChange.type === 'DirMove' || previousChange.type === 'FileMove') && remoteChange.isChildMove(change, previousChange)) {
           if (!remoteChange.isOnlyChildMove(change, previousChange)) {
@@ -287,7 +292,7 @@ class RemoteWatcher {
     }
   }
 
-  async applyAll (changes: Array<RemoteChange|RemoteNoise>): Promise<void> {
+  async applyAll (changes /*: Array<RemoteChange|RemoteNoise> */) /*: Promise<void> */ {
     const failedChanges = []
 
     for (let change of changes) {
@@ -307,7 +312,7 @@ class RemoteWatcher {
     }
   }
 
-  async apply (change: RemoteChange|RemoteNoise): Promise<void> {
+  async apply (change /*: RemoteChange|RemoteNoise */) /*: Promise<void> */ {
     const docType = _.get(change, 'doc.docType')
     const path = _.get(change, 'doc.path')
 
@@ -389,7 +394,7 @@ class RemoteWatcher {
   // Remove the association between a document and its remote
   // It's useful when a file has diverged (updated/renamed both in local and
   // remote) while cozy-desktop was not running.
-  async dissociateFromRemote (doc: Metadata): Promise<void> {
+  async dissociateFromRemote (doc /*: Metadata */) /*: Promise<void> */ {
     const {path} = doc
     log.info({path}, 'Dissociating from remote...')
     delete doc.remote

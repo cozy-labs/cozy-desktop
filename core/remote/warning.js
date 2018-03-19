@@ -1,5 +1,6 @@
 /* @flow */
 
+/*::
 export type Warning = {
   error: string,
   title: string,
@@ -8,3 +9,4 @@ export type Warning = {
     self: string
   }
 }
+*/

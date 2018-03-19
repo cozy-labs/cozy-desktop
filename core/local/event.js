@@ -1,5 +1,6 @@
 /* @flow */
 
+/*::
 import type { Metadata } from '../metadata'
 import type {
   ChokidarAdd,
@@ -21,12 +22,13 @@ export type LocalEvent =
   | LocalFileAdded
   | LocalFileUnlinked
   | LocalFileUpdated
+*/
 
 module.exports = {
   getInode
 }
 
-function getInode (e: LocalEvent): ?number {
+function getInode (e /*: LocalEvent */) /*: ?number */ {
   switch (e.type) {
     case 'add':
     case 'addDir':
