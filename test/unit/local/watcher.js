@@ -9,6 +9,7 @@ const { TMP_DIR_NAME } = require('../../../core/local/constants')
 const Watcher = require('../../../core/local/watcher')
 const metadata = require('../../../core/metadata')
 
+const MetadataBuilders = require('../../support/builders/metadata')
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
 
@@ -48,6 +49,50 @@ describe('LocalWatcher Tests', function () {
         done()
       }, 1100)
       this.watcher.start()
+    })
+
+    it('only recomputes checksums of changed files', async function () {
+      const builders = new MetadataBuilders(this.pouch)
+      const unchangedFilename = 'unchanged-file.txt'
+      const changedFilename = 'changed-file.txt'
+      const unchangedPath = path.join(this.syncPath, unchangedFilename)
+      const changedPath = path.join(this.syncPath, changedFilename)
+      const unchangedData = 'Unchanged file content'
+      const changedData = 'Changed file initial content'
+      await fs.outputFile(unchangedPath, unchangedData)
+      await fs.outputFile(changedPath, changedData)
+      const unchangedStats = await fs.stat(unchangedPath)
+      const {ino: changedIno} = await fs.stat(changedPath)
+      const unchangedDoc = await builders.file()
+        .upToDate()
+        .path(unchangedFilename)
+        .data(unchangedData)
+        .stats(unchangedStats)
+        .create()
+      const changedDoc = await builders.file()
+        .upToDate()
+        .path(changedFilename)
+        .data(changedData)
+        .ino(changedIno)
+        .updatedAt(new Date('2017-03-19T16:44:39.102Z'))
+        .create()
+
+      await fs.outputFile(changedPath, 'Changed file NEW content')
+      this.prep.addFileAsync = sinon.stub().resolves()
+      sinon.spy(this.watcher, 'checksum')
+
+      try {
+        await this.watcher.start()
+
+        should(this.watcher.checksum.args).deepEqual([[changedFilename]])
+        should(await this.pouch.db.get(unchangedDoc._id)).have.properties(unchangedDoc)
+        should(await this.pouch.db.get(changedDoc._id)).have.properties({
+          ...changedDoc
+        })
+      } finally {
+        await this.pouch.db.remove(unchangedDoc)
+        await this.pouch.db.remove(changedDoc)
+      }
     })
 
     it('ignores the temporary directory', function (done) {
