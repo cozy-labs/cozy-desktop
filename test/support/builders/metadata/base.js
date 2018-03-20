@@ -70,7 +70,8 @@ module.exports = class BaseMetadataBuilder {
     }
     const doc = this.build()
     // $FlowFixMe
-    await this.pouch.put(doc)
+    const {rev} = await this.pouch.put(doc)
+    doc._rev = rev
     return doc
   }
 }
