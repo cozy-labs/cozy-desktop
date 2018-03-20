@@ -343,9 +343,10 @@ describe('Remote', function () {
   )
 
   describe('updateFolder', function () {
-    it.skip('updates the metadata of a folder (FIXME: broken with latest cozy-stack?)', async function () {
+    it('updates the metadata of a folder', async function () {
       const created: RemoteDoc = await builders.remote.dir()
         .named('old-name')
+        .timestamp(2017, 11, 15, 8, 12, 9)
         .create()
       const old: Metadata = conversion.createMetadata(created)
       const newParentDir: RemoteDoc = await builders.remote.dir()
