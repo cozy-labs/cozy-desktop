@@ -31,8 +31,8 @@ class RemoteWatcher {
   prep: Prep
   remoteCozy: RemoteCozy
   events: EventEmitter
-  intervalID: *
   runningResolve: ?() => void
+  runningReject: ?() => void
 
   static DEFAULT_HEARTBEAT = DEFAULT_HEARTBEAT
   static HEARTBEAT = HEARTBEAT
@@ -45,16 +45,13 @@ class RemoteWatcher {
   }
 
   start () {
-    const started = this.watch()
-    // $FlowFixMe
-    const running = started.then(() => {
-      return new Promise((resolve, reject) => {
-        this.runningResolve = resolve
-        this.intervalID = setInterval(() => {
-          this.watch().catch(err => reject(err))
-        }, HEARTBEAT)
-      })
-    })
+    const started: Promise<void> = this.watch()
+    const running: Promise<void> = started.then(() => Promise.race([
+      // run until either stop is called or watchLoop reject
+      new Promise((resolve) => { this.runningResolve = resolve }),
+      this.watchLoop()
+    ]))
+
     return {
       started: started,
       running: running
@@ -62,12 +59,17 @@ class RemoteWatcher {
   }
 
   stop () {
-    if (this.intervalID) {
-      clearInterval(this.intervalID)
-      this.intervalID = null
-    }
     if (this.runningResolve) {
       this.runningResolve()
+      this.runningResolve = null
+    }
+  }
+
+  async watchLoop () {
+    await new Promise((resolve) => { setTimeout(resolve, HEARTBEAT) })
+    if (this.runningResolve) { // stopped
+      await this.watch()
+      await this.watchLoop()
     }
   }
 

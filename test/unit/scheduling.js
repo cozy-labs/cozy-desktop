@@ -34,7 +34,6 @@ describe('Sync', function () {
 
     // remote watcher gets nothings
     this.sandbox.stub(helpers._remote.watcher, 'pullMany').callsFake(() => {
-      console.log("pullMany called")
       return Promise.delay(0.1 * HEARTBEAT)
     })
   })
@@ -47,7 +46,6 @@ describe('Sync', function () {
     // syncBatch takes too long
     this.sandbox.stub(helpers._sync, 'syncBatch')
                 .callsFake(() => {
-                  console.log("syncBatch called")
                   return Promise.delay(5 * HEARTBEAT)
                 })
 
