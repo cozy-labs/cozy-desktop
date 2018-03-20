@@ -78,7 +78,18 @@ class RemoteWatcher {
 
       if (docs.length === 0) return
 
-      await this.pullMany(docs)
+      const release = await this.pouch.lock(this)
+      let target = -1
+      try {
+        this.events.emit('remote-start')
+        await this.pullMany(docs)
+        target = (await this.pouch.db.changes({limit: 1, descending: true})).last_seq
+      } finally {
+        this.events.emit('sync-target', target)
+        release()
+        this.events.emit('remote-end')
+      }
+
       await this.pouch.setRemoteSeqAsync(last_seq)
       log.debug('No more remote changes for now')
     } catch (err) {
@@ -93,32 +104,21 @@ class RemoteWatcher {
   // FIXME: Misleading method name?
   async pullMany (docs: Array<RemoteDoc|RemoteDeletion>) {
     const changes: Array<RemoteChange|RemoteNoise> = []
-
-    const release = await this.pouch.lock(this)
-    let target = -1
-    try {
-      this.events.emit('remote-start')
-      log.trace('Contextualize and analyse changesfeed results...')
-      for (let index = 0; index < docs.length; index++) {
-        const doc = docs[index]
-        const was: ?Metadata = await this.pouch.byRemoteIdMaybeAsync(doc._id)
-        changes.push(this.identifyChange(doc, was, index, changes))
-      }
-      log.trace('Done with analysis.')
-
-      log.trace('Sort changes...')
-      remoteChange.sort(changes)
-
-      log.trace('Apply changes...')
-      await this.applyAll(changes)
-
-      log.trace('Done with pull.')
-      target = (await this.pouch.db.changes({limit: 1, descending: true})).last_seq
-    } finally {
-      this.events.emit('sync-target', target)
-      release()
-      this.events.emit('remote-end')
+    log.trace('Contextualize and analyse changesfeed results...')
+    for (let index = 0; index < docs.length; index++) {
+      const doc = docs[index]
+      const was: ?Metadata = await this.pouch.byRemoteIdMaybeAsync(doc._id)
+      changes.push(this.identifyChange(doc, was, index, changes))
     }
+    log.trace('Done with analysis.')
+
+    log.trace('Sort changes...')
+    remoteChange.sort(changes)
+
+    log.trace('Apply changes...')
+    await this.applyAll(changes)
+
+    log.trace('Done with pull.')
   }
 
   identifyChange (doc: RemoteDoc|RemoteDeletion, was: ?Metadata, changeIndex: number, previousChanges: Array<RemoteChange|RemoteNoise>): RemoteChange|RemoteNoise {
