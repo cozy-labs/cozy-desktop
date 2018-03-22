@@ -313,6 +313,9 @@ port cancelUnlink : (Bool -> msg) -> Sub msg
 port updateDownloading : (Maybe Updater.Progress -> msg) -> Sub msg
 
 
+port updateError : (String -> msg) -> Sub msg
+
+
 
 -- https://github.com/elm-lang/elm-compiler/issues/1367
 
@@ -341,6 +344,7 @@ subscriptions model =
         , autolaunch (SettingsMsg << Settings.AutoLaunchSet)
         , cancelUnlink (always (SettingsMsg Settings.CancelUnlink))
         , updateDownloading (UpdaterMsg << Updater.UpdateDownloading)
+        , updateError (UpdaterMsg << Updater.UpdateError)
         ]
 
 

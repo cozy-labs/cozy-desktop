@@ -17,6 +17,7 @@ type alias Progress =
 type alias Model =
     { version : String
     , progress : Maybe Progress
+    , error : Maybe String
     }
 
 
@@ -24,6 +25,7 @@ init : String -> Model
 init version =
     { version = version
     , progress = Nothing
+    , error = Nothing
     }
 
 
@@ -33,6 +35,7 @@ init version =
 
 type Msg
     = UpdateDownloading (Maybe Progress)
+    | UpdateError String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -40,6 +43,9 @@ update msg model =
     case msg of
         UpdateDownloading progress ->
             ( { model | progress = progress }, Cmd.none )
+
+        UpdateError msg ->
+            ( { model | error = Just msg }, Cmd.none )
 
 
 
@@ -72,8 +78,13 @@ progressbar ratio =
 view : Helpers -> Model -> Html Msg
 view helpers model =
     section [ class "updater" ]
-        (case model.progress of
-            Just progress ->
+        (case ( model.error, model.progress ) of
+            ( Just msg, _ ) ->
+                [ h1 [] [ text (helpers.t "Updater Error") ]
+                , p [] [ text msg ]
+                ]
+
+            ( Nothing, Just progress ) ->
                 [ h1 [] [ text (helpers.t "Updater Downloading") ]
                 , div [ class "spacer" ]
                     [ (progressbar (progress.transferred / progress.total))
@@ -89,7 +100,7 @@ view helpers model =
                     [ text (helpers.t "Updater Please wait") ]
                 ]
 
-            Nothing ->
+            ( Nothing, Nothing ) ->
                 [ h1 []
                     [ text (helpers.t "Updater Downloading") ]
                 , div [ class "spacer" ]
