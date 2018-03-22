@@ -7,7 +7,7 @@ import Dict exposing (Dict)
 import Json.Decode as Json
 import Time exposing (Time)
 import Helpers exposing (Helpers, Locale)
-import Model exposing (Status(..))
+import Model exposing (Status(..), Platform(..))
 import Help
 import Icons
 import Wizard
@@ -54,6 +54,7 @@ type alias Model =
     , updater : Updater.Model
     , status : Status
     , help : Help.Model
+    , platform : Platform
     }
 
 
@@ -70,9 +71,6 @@ type alias Flags =
 init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
-        localeIdentifier =
-            flags.locale
-
         locales =
             case
                 Json.decodeValue (Json.dict (Json.dict Json.string)) flags.locales
@@ -105,26 +103,29 @@ init flags =
                 _ ->
                     WizardPage
 
-        wizard =
-            Wizard.init flags.folder flags.platform
+        platform =
+            case flags.platform of
+                "win32" ->
+                    Windows
 
-        dashboard =
-            Dashboard.init
+                "darwin" ->
+                    Darwin
 
-        settings =
-            Settings.init flags.version
-
-        updater =
-            Updater.init flags.version
-
-        status =
-            Starting
-
-        help =
-            Help.init
+                _ ->
+                    Linux
 
         model =
-            Model localeIdentifier locales page wizard dashboard settings updater status help
+            { localeIdentifier = flags.locale
+            , wizard = Wizard.init flags.folder flags.platform
+            , dashboard = Dashboard.init
+            , settings = Settings.init flags.version
+            , updater = Updater.init flags.version
+            , status = Starting
+            , platform = platform
+            , help = Help.init
+            , locales = locales
+            , page = page
+            }
     in
         ( model, Cmd.none )
 
@@ -392,7 +393,7 @@ view model =
             _ ->
                 div
                     [ class "container" ]
-                    [ (StatusBar.view helpers model.status)
+                    [ (StatusBar.view helpers model.status model.platform)
                     , section [ class "two-panes" ]
                         [ aside [ class "two-panes__menu" ]
                             [ menu_item helpers model "Recents" DashboardPage
