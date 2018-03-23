@@ -1,3 +1,14 @@
+## 3.6.0-beta.2 - 2018-03-22
+
+Improvements for all users:
+
+- The app won't recompute the checksum of a file when its last modification
+  date has not changed.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.6.0-beta.1 - 2018-03-19
 
 Improvements for all users:
