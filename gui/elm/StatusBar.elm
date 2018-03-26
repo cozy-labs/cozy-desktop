@@ -5,7 +5,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Icons
 import Helpers exposing (..)
-import Model exposing (Status(..))
+import Model exposing (Status(..), Platform(..))
 
 
 -- Status line component
@@ -20,20 +20,36 @@ imgIcon srcPath className =
         []
 
 
-icon : Status -> Html msg
-icon status =
-    case status of
-        UpToDate ->
-            imgIcon "images/tray-icon-osx/idleTemplate@2x.png" "uptodate"
+icon : Status -> Platform -> Html msg
+icon status platform =
+    case platform of
+        Darwin ->
+            case status of
+                UpToDate ->
+                    imgIcon "images/tray-icon-osx/idleTemplate@2x.png" "uptodate"
 
-        Offline ->
-            imgIcon "images/tray-icon-osx/pauseTemplate@2x.png" "offline"
+                Offline ->
+                    imgIcon "images/tray-icon-osx/pauseTemplate@2x.png" "offline"
 
-        Error _ ->
-            imgIcon "images/tray-icon-osx/errorTemplate@2x.png" "error"
+                Error _ ->
+                    imgIcon "images/tray-icon-osx/errorTemplate@2x.png" "error"
+
+                _ ->
+                    span [ class "status__icon spin" ] []
 
         _ ->
-            span [ class "status__icon spin" ] []
+            case status of
+                UpToDate ->
+                    imgIcon "images/tray-icon-win/idle.png" "uptodate"
+
+                Offline ->
+                    imgIcon "images/tray-icon-win/pause.png" "offline"
+
+                Error _ ->
+                    imgIcon "images/tray-icon-win/error.png" "error"
+
+                _ ->
+                    span [ class "status__icon spin" ] []
 
 
 viewMessage : Helpers -> Status -> List (Html msg)
@@ -70,9 +86,16 @@ viewMessage helpers status =
             ]
 
 
-view : Helpers -> Status -> Html msg
-view helpers status =
-    div [ class "status" ]
-        [ span [ class "status_img" ] [ icon status ]
+view : Helpers -> Status -> Platform -> Html msg
+view helpers status platform =
+    div
+        [ class
+            (if platform == Darwin then
+                "status"
+             else
+                "status blue"
+            )
+        ]
+        [ span [ class "status_img" ] [ icon status platform ]
         , span [ class "status_text" ] (viewMessage helpers status)
         ]

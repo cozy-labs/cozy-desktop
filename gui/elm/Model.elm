@@ -9,3 +9,9 @@ type Status
     | SquashPrepMerging
     | Syncing Int
     | Error String
+
+
+type Platform
+    = Windows
+    | Linux
+    | Darwin
