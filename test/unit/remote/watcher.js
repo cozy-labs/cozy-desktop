@@ -86,9 +86,9 @@ describe('RemoteWatcher', function () {
 
     it('ensures watch is not called anymore', function () {
       this.watcher.start()
-      should(this.watcher.intervalID).not.be.null()
+      should(this.watcher.runningResolve).not.be.null()
       this.watcher.stop()
-      should(this.watcher.intervalID).be.null()
+      should(this.watcher.runningResolve).be.null()
     })
 
     it('does nothing when called again', function () {
