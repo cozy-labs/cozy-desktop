@@ -285,7 +285,7 @@ class Sync {
       }
     } else if (doc._deleted) {
       if (doc.docType === 'file') await side.trashAsync(doc)
-      else side.deleteFolderAsync(doc)
+      else await side.deleteFolderAsync(doc)
     } else if (rev === 0) {
       if (doc.docType === 'file') await side.addFileAsync(doc)
       else await side.addFolderAsync(doc)
