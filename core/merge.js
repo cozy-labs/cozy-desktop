@@ -379,8 +379,7 @@ class Merge {
     return this.putFolderAsync(side, doc)
   }
 
-  async trashFileAsync (side: SideName, was: *, doc: *): Promise<void> {
-    log.debug({path: doc.path, oldpath: was.path}, 'trashFileAsync')
+  async doTrash (side: SideName, was: *, doc: *): Promise<void> {
     const {path} = doc
     let oldMetadata
     try {
@@ -422,6 +421,11 @@ class Merge {
     return this.pouch.put(newMetadata)
   }
 
+  async trashFileAsync (side: SideName, was: *, doc: *): Promise<void> {
+    log.debug({path: doc.path, oldpath: was.path}, 'trashFileAsync')
+    return this.doTrash(side, was, doc)
+  }
+
   async trashFolderAsync (side: SideName, was: *, doc: *): Promise<*> {
     log.debug({path: doc.path, oldpath: was.path}, 'trashFolderAsync')
     const {path} = doc
@@ -454,7 +458,7 @@ class Merge {
         }
       }
     }
-    await this.trashFileAsync(side, was, doc)
+    await this.doTrash(side, was, doc)
   }
 
   // Remove a file from PouchDB
