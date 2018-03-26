@@ -44,11 +44,6 @@ suite('Sync state', () => {
     ])
     await helpers.syncAll()
     should(events.emit.args).deepEqual([
-      ['remote-start'],
-      ['syncing'],
-      ['sync-target', 4],
-      ['remote-end'],
-      ['up-to-date'],
       ['sync-start'],
       ['syncing'],
       // FIXME: 3 attempts to download a missing file
