@@ -26,6 +26,9 @@ const {translate} = i18n
 const {incompatibilitiesErrorMessage} = require('./js/incompatibilitiesmsg')
 const {app, Menu, Notification, ipcMain, dialog} = require('electron')
 
+// FIXME: https://github.com/electron/electron/issues/10864
+if (process.platform === 'win32') app.setAppUserModelId('io.cozy.desktop')
+
 const log = Desktop.logger({
   component: 'GUI'
 })
