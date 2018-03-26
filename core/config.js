@@ -59,6 +59,10 @@ module.exports = class Config {
     this.config.url = url
   }
 
+  get gui () {
+    return this.config.gui || {}
+  }
+
   // Return true if a device has been configured
   isValid () {
     return !!(this.config.creds && this.cozyUrl)

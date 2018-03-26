@@ -35,6 +35,18 @@ describe('Config', function () {
     })
   })
 
+  describe('gui', () => {
+    it('returns an empty hash by default', function () {
+      should(this.config.gui).deepEqual({})
+    })
+
+    it('returns GUI configuration if any', function () {
+      const guiConfig = {foo: 'bar'}
+      this.config.config.gui = guiConfig
+      should(this.config.gui).deepEqual(guiConfig)
+    })
+  })
+
   describe('Client', function () {
     it('can set a client', function () {
       this.config.client = { clientName: 'test' }
