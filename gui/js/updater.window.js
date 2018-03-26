@@ -1,5 +1,6 @@
 const WindowManager = require('./window_manager')
 const {autoUpdater} = require('electron-updater')
+const {translate} = require('./i18n')
 
 const log = require('../../core-built/app').logger({
   component: 'GUI:autoupdater'
@@ -13,6 +14,14 @@ module.exports = class UpdaterWM extends WindowManager {
       title: 'UPDATER',
       width: 500,
       height: 400
+    }
+  }
+
+  humanError (err) {
+    switch (err.code) {
+      case 'EPERM': return translate('Updater Error EPERM')
+      case 'ENOSP': return translate('Updater Error ENOSPC')
+      default: return translate('Updater Error Other')
     }
   }
 
@@ -30,8 +39,12 @@ module.exports = class UpdaterWM extends WindowManager {
     })
     autoUpdater.on('error', (err) => {
       log.error({err}, 'Error in auto-updater! ')
+      this.clearTimeoutIfAny()
+
+      this.show().then(() => this.send('update-error', this.humanError(err)))
+                 .then(() => Promise.delay(5000))
+                 .then(() => this.afterUpToDate())
       // May happen in dev because of code signature error. Not really an issue.
-      this.afterUpToDate()
     })
     autoUpdater.on('download-progress', (progressObj) => {
       log.trace({progress: progressObj}, 'Downloading...')
@@ -45,6 +58,7 @@ module.exports = class UpdaterWM extends WindowManager {
         .then(() => autoUpdater.quitAndInstall())
         .then(() => this.app.quit())
         .then(() => this.app.exit(0))
+        .catch((err) => this.send('error-updating', this.humanError(err)))
       )
     })
 
