@@ -119,29 +119,35 @@ class Sync {
     this.events.emit('sync-start')
     const release = await this.pouch.lock(this)
     try {
-      let lastSeq = null
-      while (true) {
-        if (this.stopped) break
-        seq = await this.pouch.getLocalSeqAsync()
-        // TODO: if (seq === lastSeq) throw new Error('Infinite loop!')
-        if (seq === lastSeq) log.warn({seq}, 'Seq was already synced!')
-        else lastSeq = seq
-
-        let change = await this.getNextChange(seq)
-        if (change == null) break
-        this.events.emit('sync-current', change.seq)
-        try {
-          await this.apply(change)
-          // XXX: apply should call setLocalSeqAsync
-        } catch (err) {
-          if (!this.stopped) throw err
-        }
-      }
+      await this.syncBatch()
     } finally {
       release()
       this.events.emit('sync-end')
     }
     log.debug('No more metadata changes for now')
+  }
+
+  // sync
+  async syncBatch () {
+    let seq = null
+    let lastSeq = null
+    while (true) {
+      if (this.stopped) break
+      seq = await this.pouch.getLocalSeqAsync()
+      // TODO: if (seq === lastSeq) throw new Error('Infinite loop!')
+      if (seq === lastSeq) log.warn({seq}, 'Seq was already synced!')
+      else lastSeq = seq
+
+      let change = await this.getNextChange(seq)
+      if (change == null) break
+      this.events.emit('sync-current', change.seq)
+      try {
+        await this.apply(change)
+        // XXX: apply should call setLocalSeqAsync
+      } catch (err) {
+        if (!this.stopped) throw err
+      }
+    }
   }
 
   // We filter with the byPath view to reject design documents
