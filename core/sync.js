@@ -6,6 +6,7 @@ import type { Side } from './side' // eslint-disable-line
 const Promise = require('bluebird')
 const EventEmitter = require('events')
 const { dirname } = require('path')
+const { clone } = require('lodash')
 
 const Ignore = require('./ignore')
 const Local = require('./local')
@@ -275,8 +276,7 @@ class Sync {
       const from = (doc.moveFrom: Metadata)
       // XXX: if (from.md5sum === doc.md5sum) ?
       if (from.incompatibilities) {
-        if (doc.docType === 'file') await side.addFileAsync(doc)
-        else await side.addFolderAsync(doc)
+        await this.doAdd(side, doc)
       } else if (from.childMove) {
         await side.assignNewRev(doc)
       } else {
@@ -287,15 +287,13 @@ class Sync {
       if (doc.docType === 'file') await side.trashAsync(doc)
       else await side.deleteFolderAsync(doc)
     } else if (rev === 0) {
-      if (doc.docType === 'file') await side.addFileAsync(doc)
-      else await side.addFolderAsync(doc)
+      await this.doAdd(side, doc)
     } else {
       let old
       try {
         old = await this.pouch.getPreviousRevAsync(doc._id, rev)
       } catch (_) {
-        if (doc.docType === 'file') await side.overwriteFileAsync(doc, null)
-        else await side.addFolderAsync(doc)
+        await this.doOverwrite(side, doc)
       }
 
       if (old) {
@@ -310,8 +308,27 @@ class Sync {
           }
         } else {
           await side.overwriteFileAsync(doc, old)
+          this.events.emit('transfer-started', clone(doc))
         }
       }
+    }
+  }
+
+  async doAdd (side: Side, doc: Metadata) : Promise<void> {
+    if (doc.docType === 'file') {
+      await side.addFileAsync(doc)
+      this.events.emit('transfer-started', clone(doc))
+    } else {
+      await side.addFolderAsync(doc)
+    }
+  }
+
+  async doOverwrite (side: Side, doc: Metadata): Promise<void> {
+    if (doc.docType === 'file') {
+      await side.overwriteFileAsync(doc, null)
+      this.events.emit('transfer-started', clone(doc))
+    } else {
+      await side.addFolderAsync(doc)
     }
   }
 
