@@ -216,7 +216,7 @@ module.exports = class App {
     const pouchdbTree = await this.pouch.treeAsync()
 
     const logsSent = Promise.all([
-      this.uploadFileToSupport(incidentID, 'logs.zip', logs.pipe(zipper)),
+      this.uploadFileToSupport(incidentID, 'logs.gz', logs.pipe(zipper)),
       this.uploadFileToSupport(incidentID, 'pouchdtree.json', JSON.stringify(pouchdbTree))
     ]).catch((err) => {
       log.error({err}, 'FAILED TO SEND LOGS')
