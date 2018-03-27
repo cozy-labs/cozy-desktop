@@ -130,14 +130,10 @@ class Sync {
   // sync
   async syncBatch () {
     let seq = null
-    let lastSeq = null
     while (true) {
       if (this.stopped) break
       seq = await this.pouch.getLocalSeqAsync()
-      // TODO: if (seq === lastSeq) throw new Error('Infinite loop!')
-      if (seq === lastSeq) log.warn({seq}, 'Seq was already synced!')
-      else lastSeq = seq
-
+      // TODO: Prevent infinite loop
       let change = await this.getNextChange(seq)
       if (change == null) break
       this.events.emit('sync-current', change.seq)
