@@ -43,6 +43,8 @@ describe('Sync', function () {
   })
 
   it('does not allow remote watcher to buffer more than one change', async function () {
+    this.timeout(120000)
+
     // syncBatch takes too long
     this.sandbox.stub(helpers._sync, 'syncBatch')
                 .callsFake(() => {

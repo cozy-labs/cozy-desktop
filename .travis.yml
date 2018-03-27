@@ -20,6 +20,7 @@ env:
         - MOCHA_TIMEOUT="240000"
         - NODE_ENV=test
         - NPM_CONFIG_PROGRESS=false
+        - COZY_DESKTOP_HEARTBEAT=1000
 services:
     - docker
 cache:
