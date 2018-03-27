@@ -1,3 +1,34 @@
+## 3.6.0-beta.3 - 2018-03-27
+
+Improvements for all users:
+
+- The app won't poll the Cozy anymore when descendant synchronization is
+  already in progress.
+- Errors occurring during auto-update are now properly reported to the user,
+  with a generic message by default and a more specific one whenever possible
+  (e.g. permission issue or disk full).
+- The app also properly waits for dir trashing to succeed (issue introduced
+  in 3.6.0-beta.1).
+- The icon used in the systray window header is now the official blue one on
+  Windows and GNU/Linux (we still use the symbolic icon on macOS since it
+  integrates better with the overall desktop environment).
+
+Improvements for Windows users:
+
+- We set up a temporary workaround for a bug in electron that is preventing
+  notifications to show up on Windows.
+
+Improvements for i3wm (and possibly other tiling window managers) users:
+
+- You can now force an option so the systray Window stays visible when loosing
+  focus (please look at the [GNU/Linux documentation](https://github.com/cozy-labs/cozy-desktop/blob/master/doc/usage/linux.md#install)
+  for more details). Please tell us whether or not it also helps with other
+  tiling window managers.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.6.0-beta.2 - 2018-03-22
 
 Improvements for all users:
