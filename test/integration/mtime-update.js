@@ -96,7 +96,6 @@ suite('Update only a file mtime', () => {
 
     await helpers.syncAll()
 
-    console.log(helpers.putDocs('path'))
     // no change saved
     should(helpers.putDocs('path')).deepEqual([])
   })
