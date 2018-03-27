@@ -82,6 +82,9 @@ The current AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
 
 **Note for Archlinux Users** : (19/02/2018) : The "cozy-desktop-gui 0.16.0-2" in AUR is not Up to date and not work with Cozy 3.
 
+**Note for i3wm Users** : You can set `"gui": {"visibleOnBlur": true}` in your `~/.cozy-desktop/config.json` so the popover doesn't hide when focusing another
+window.
+
 ## Running
 
 On first run, the application should have configured itself to run automatically
