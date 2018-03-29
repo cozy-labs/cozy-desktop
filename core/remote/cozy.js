@@ -9,7 +9,6 @@ const Config = require('../config')
 const { FILES_DOCTYPE, FILE_TYPE } = require('./constants')
 const { dropSpecialDocs, jsonApiToRemoteDoc, keepFiles, parentDirIds } = require('./document')
 const logger = require('../logger')
-const { composeAsync } = require('../utils/func')
 
 const { posix } = path
 
@@ -53,44 +52,52 @@ class RemoteCozy {
     })
 
     autoBind(this)
-
-    // Aliases:
-    this.createJob = this.client.jobs.create
-    this.unregister = this.client.auth.unregisterClient
-    this.diskUsage = this.client.settings.diskUsage
-    this.createFile = composeAsync(this.client.files.create, this.toRemoteDoc)
-    this.createDirectory = composeAsync(this.client.files.createDirectory, this.toRemoteDoc)
-    this.updateFileById = composeAsync(this.client.files.updateById, this.toRemoteDoc)
-    this.updateAttributesById = composeAsync(this.client.files.updateAttributesById, this.toRemoteDoc)
-    this.trashById = this.client.files.trashById
-    this.destroyById = this.client.files.destroyById
   }
 
-  /*::
-  createJob: (workerType: string, args: any) => Promise<*>
-  unregister: () => Promise<void>
-  diskUsage: () => Promise<*>
-  createFile: (data: Readable,
-               options: {name: string,
-                         dirID?: ?string,
-                         contentType?: ?string,
-                         lastModifiedDate?: ?Date}) => Promise<RemoteDoc>
+  createJob (workerType /*: string */, args /*: any */) /*: Promise<*> */ {
+    return this.client.jobs.create(workerType, args)
+  }
 
-  createDirectory: ({name: string, dirID?: string}) => Promise<RemoteDoc>
+  unregister () /*: Promise<void> */ {
+    return this.client.auth.unregisterClient()
+  }
 
-  updateFileById: (id: string,
-                   data: Readable,
-                   options: {contentType?: ?string,
-                             lastModifiedDate?: ?Date }) => Promise<RemoteDoc>
+  diskUsage () /* Promise<*> */ {
+    return this.client.settings.diskUsage()
+  }
 
-  updateAttributesById: (id: string,
-                         attrs: Object,
-                         options?: {ifMatch?: string}) => Promise<RemoteDoc>
+  createFile (data /*: Readable */,
+              options /*: {name: string,
+                          dirID?: ?string,
+                          contentType?: ?string,
+                          lastModifiedDate?: ?Date} */) /*: Promise<RemoteDoc> */ {
+    return this.client.files.create(data, options).then(this.toRemoteDoc)
+  }
 
-  trashById: (id: string, options?: {ifMatch: string}) => Promise<RemoteDoc>
+  createDirectory (options /*: {name: string, dirID?: string} */) /*: Promise<RemoteDoc> */ {
+    return this.client.files.createDirectory(options).then(this.toRemoteDoc)
+  }
 
-  destroyById: (id: string, options?: {ifMatch: string}) => Promise<void>
-  */
+  updateFileById (id /*: string */,
+                  data /*: Readable */,
+                  options /*: {contentType?: ?string,
+                               lastModifiedDate?: ?Date} */) /*: Promise<RemoteDoc> */ {
+    return this.client.files.updateById(id, data, options).then(this.toRemoteDoc)
+  }
+
+  updateAttributesById (id /*: string */,
+                        attrs /*: Object */,
+                        options /*: ?{ifMatch?: string} */) /*: Promise<RemoteDoc> */ {
+    return this.client.files.updateAttributesById(id, attrs, options).then(this.toRemoteDoc)
+  }
+
+  trashById (id /*: string */, options /*: ?{ifMatch: string} */) /*: Promise<RemoteDoc> */ {
+    return this.client.files.trashById(id, options)
+  }
+
+  destroyById (id /*: string */, options /*: ?{ifMatch: string} */) /*: Promise<void> */ {
+    return this.client.files.destroyById(id, options)
+  }
 
   async changes (since/*: string */ = '0') /*: Promise<{last_seq: string, docs: Array<RemoteDoc|RemoteDeletion>}> */ {
     const {last_seq, results} = await this.client.data.changesFeed(
