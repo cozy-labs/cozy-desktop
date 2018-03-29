@@ -116,7 +116,7 @@ class Pouch {
   bulkDocs (docs /*: Metadata[] */, callback /*: ?Callback */) {
     for (const doc of docs) {
       const {path} = doc
-      const {local, remote} = doc.sides
+      const {local, remote} = doc.sides || {}
       log.debug({path, local, remote, _deleted: doc._deleted}, 'Saving bulk metadata...')
       log.trace({path, doc})
     }
