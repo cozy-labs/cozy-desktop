@@ -1,4 +1,4 @@
-module Dashboard exposing (..)
+port module Dashboard exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -49,6 +49,7 @@ maxActivities =
 type Msg
     = Transfer File
     | Remove File
+    | OpenFile File
     | Tick Time
     | ShowMore
     | Reset
@@ -59,7 +60,10 @@ samePath a b =
     a.path == b.path
 
 
-update : Msg -> Model -> Model
+port openFile : String -> Cmd msg
+
+
+update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
     case msg of
         Transfer file ->
@@ -69,69 +73,85 @@ update msg model =
                         :: (List.filter (samePath file >> not) model.files)
                         |> List.take maxActivities
             in
-                { model | files = files }
+                ( { model | files = files }, Cmd.none )
 
         Remove file ->
             let
                 files =
                     List.filter (samePath file >> not) model.files
             in
-                { model | files = files }
+                ( { model | files = files }, Cmd.none )
+
+        OpenFile file ->
+            ( model, openFile file.path )
 
         Tick now ->
-            { model | now = now }
+            ( { model | now = now }, Cmd.none )
 
         ShowMore ->
-            { model | page = model.page + 1 }
+            ( { model | page = model.page + 1 }, Cmd.none )
 
         Reset ->
-            { model | page = 1 }
+            ( { model | page = 1 }, Cmd.none )
 
 
 
 -- VIEW
 
 
+renderFile : Helpers -> Model -> File -> Html Msg
+renderFile helpers model file =
+    let
+        ( basename, extname ) =
+            Helpers.splitFileName file.filename
+    in
+        div
+            [ class "file-line"
+            , title file.path
+            , onClick (OpenFile file)
+            ]
+            [ div [ class ("file-type file-type-" ++ file.icon) ] []
+            , span [ class "file-name-wrapper" ]
+                [ span [ class "file-name-name" ] [ text basename ]
+                , span [ class "file-name-ext" ] [ text extname ]
+                ]
+            , span [ class "file-extra" ]
+                [ span [ class "file-time-ago" ] [ text (helpers.distance_of_time_in_words file.updated model.now) ]
+                , text file.path
+                ]
+            ]
+
+
+showMoreButton : Helpers -> Html Msg
+showMoreButton helpers =
+    div [ class "show-more-container" ]
+        [ a
+            [ class "show-more-btn"
+            , href "#"
+            , onClick ShowMore
+            ]
+            [ text (helpers.t "Dashboard Show more files") ]
+        ]
+
+
 view : Helpers -> Model -> Html Msg
 view helpers model =
     let
-        fileToListItem file =
-            let
-                file_size =
-                    helpers.number_to_human_size file.size
-
-                time_ago =
-                    helpers.distance_of_time_in_words file.updated model.now
-            in
-                li [ title file.path ]
-                    [ i [ class ("file-type file-type-" ++ file.icon) ] []
-                    , h3 [ class "file-name" ] [ text file.filename ]
-                    , span [ class "file-size" ] [ text file_size ]
-                    , span [ class "file-time-ago" ] [ text time_ago ]
-                    ]
-
         nbFiles =
             model.page * nbActivitiesPerPage
 
-        recentList =
-            List.map fileToListItem (List.take nbFiles model.files)
+        renderLine =
+            renderFile helpers model
 
-        showMoreButton =
-            li []
-                [ a
-                    [ class "btn"
-                    , href "#"
-                    , onClick ShowMore
-                    ]
-                    [ text (helpers.t "Dashboard Show more files") ]
-                ]
-
-        recentListWithMore =
-            if List.length model.files > nbFiles then
-                recentList ++ [ showMoreButton ]
-            else
-                recentList
+        filesToRender =
+            List.take nbFiles model.files
     in
         section [ class "two-panes__content two-panes__content--dashboard" ]
-            [ ul [ class "recent-files" ] recentListWithMore
+            [ div [ class "recent-files" ]
+                ((List.map renderLine filesToRender)
+                    ++ if (List.length model.files > nbFiles) then
+                        [ showMoreButton helpers ]
+                       else
+                        []
+                )
             ]
