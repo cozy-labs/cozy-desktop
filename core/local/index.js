@@ -1,6 +1,7 @@
 /* @flow */
 
 const async = require('async')
+const autoBind = require('auto-bind')
 const fs = require('fs-extra')
 const path = require('path')
 const trash = require('trash')
@@ -57,6 +58,7 @@ module.exports = class Local /*:: implements Side */ {
     this.other = null
     this._trash = trash
 
+    autoBind(this)
     bluebird.promisifyAll(this)
   }
 

@@ -1,5 +1,6 @@
 /* @flow */
 
+const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 
 const { dirname } = require('path')
@@ -73,6 +74,8 @@ class Sync {
     // $FlowFixMe
     this.remote.other = this.local
     this.pending = new PendingMap()
+
+    autoBind(this)
   }
 
   // Start to synchronize the remote cozy with the local filesystem
