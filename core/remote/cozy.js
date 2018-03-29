@@ -48,7 +48,7 @@ class RemoteCozy {
       cozyURL: this.url,
       oauth: {
         clientParams: Config.client,
-        storage: Config
+        storage: config
       }
     })
 
