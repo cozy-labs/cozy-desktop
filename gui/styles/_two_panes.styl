@@ -183,58 +183,90 @@
     margin-right .5em
 
   .recent-files
-    margin-bottom 0
-    padding 0
-    list-style none
-    li
-      display block
-      height 3em
-      min-height 48px
-      padding .8em
-      border-bottom 1px solid grey-03
-      span
-        color grey-05
-  .file-name
+    display flex
+    flex-direction column
+    justify-content center
+    width 100%
+
+  .file-line
+    padding 1.3em .5em 1.3em 5em
+    font-weight: normal
+    position: relative
+    width 100%
+    box-sizing border-box
+    display: flex
+    flex-direction: column
+    border-bottom: 1px solid #d6d8da
+    cursor: pointer;
+    &:hover, &:active
+      .file-path
+        text-decoration: underline
+
+  .file-type
+    content ''
+    position absolute
+    left 1em
+    top 0
+    bottom 0
+    margin auto 0
+    width 2rem
+    height 2rem
+    background-size cover
+    background-position center center
+
+    for mimetype in audio binary code file folder image pdf presentation spreadsheet text video archive
+        &.file-type-{mimetype}
+            background-image url("./images/type-icons/icon-type-" + mimetype + ".svg")
+
+  .file-name-wrapper
+    display table
+    width   100%
+    border-collapse collapse
     overflow hidden
     text-overflow ellipsis
     white-space nowrap
-    margin .5em 0px .2em 0px
-    font-weight: normal
+    width 100%
+    max-width 1px
+    font-size: 1.1em
 
-  .file-size::after
-    content ' • '
-    margin 0 .25em
-  .file-type
-    display block
-    float left
-    width 48px
-    height 48px
-    margin-right .8em
-    background-image url('images/sprite-files-type.svg')
-    &.file-type-folder
-      background-position 0 0
-    &.file-type-file
-      background-position -48px 0
-    &.file-type-archive
-      background-position -96px 0
-    &.file-type-code
-      background-position -144px 0
-    &.file-type-text
-      background-position -192px 0
-    &.file-type-presentation
-      background-position -240px 0
-    &.file-type-spreadsheet
-      background-position -288px 0
-    &.file-type-pdf
-      background-position -336px 0
-    &.file-type-binary
-      background-position -364px 0
-    &.file-type-audio
-      background-position -432px 0
-    &.file-type-video
-      background-position -480px 0
-    &.file-type-image
-      background-position -528px 4px
+    .file-name-name
+      color #32363f
+      font-size: 1.1em
+
+    .file-name-ext
+      color #95999d
+
+  .file-extra
+    overflow hidden
+    text-overflow ellipsis
+    white-space nowrap
+    font-size: 0.9em
+    color #95999d
+    display inline-block
+
+    .file-time-ago::after
+      content ' · '
+
+
+  .show-more-container
+    text-align: center
+    padding 1.8em
+    .show-more-btn
+      border 1px solid #d6d8da
+      background-color transparent
+      text-transform   uppercase
+      text-decoration  none
+      cursor           pointer
+      font-family: Lato
+      color #32363f
+      font-weight: bold;
+      padding: .8em 2em .8em 2em;
+      border: 1px solid #d6d8da;
+      border-radius: 2px
+
+      &:hover, &:active
+        background-color: #d6d8da
+        border 1px solid #d6d8da
 
   .send-mail-to-support
     textarea

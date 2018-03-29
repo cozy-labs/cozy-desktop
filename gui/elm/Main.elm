@@ -197,10 +197,10 @@ update msg model =
 
         GoToTab tab ->
             let
-                dashboard =
+                ( dashboard, cmd ) =
                     Dashboard.update Dashboard.Reset model.dashboard
             in
-                ( { model | page = (tab), dashboard = dashboard }, Cmd.none )
+                ( { model | page = (tab), dashboard = dashboard }, cmd )
 
         GoToStrTab tabstr ->
             case
@@ -214,10 +214,10 @@ update msg model =
 
         DashboardMsg subMsg ->
             let
-                dashboard =
+                ( dashboard, cmd ) =
                     Dashboard.update subMsg model.dashboard
             in
-                ( { model | dashboard = dashboard }, Cmd.none )
+                ( { model | dashboard = dashboard }, cmd )
 
         SettingsMsg subMsg ->
             let

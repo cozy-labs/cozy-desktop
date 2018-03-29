@@ -120,6 +120,10 @@ elmectron.ports.sendMail.subscribe((body) => {
   ipcRenderer.send('send-mail', body)
 })
 
+elmectron.ports.openFile.subscribe((path) => {
+  ipcRenderer.send('open-file', path)
+})
+
 ipcRenderer.on('offline', () => {
   elmectron.ports.offline.send(true)
 })
