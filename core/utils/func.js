@@ -6,14 +6,3 @@
 //        signatures.
 export type Callback = (?Error, any) => void;
 */
-
-module.exports = {
-  composeAsync
-}
-
-function composeAsync (f1 /*: (...args: Array<*>) => Promise<*> */,
-                       f2 /*: (*) => Promise<*> */) /*: (...args: Array<*>) => Promise<*> */ {
-  return function composed (...args /*: Array<*> */) /*: Promise<*> */ {
-    return f1(...args).then(f2)
-  }
-}
