@@ -45,7 +45,10 @@ def is_non_issue:
 # Issues
 def is_issue: (is_warn or is_conflict) and (is_non_issue | not);
 def select_issue: select(is_issue);
-def find_issues: select_issue|{component,path,msg,time};
+def find_issues: select_issue|{component,path,msg,time,level};
+
+# Path filtering
+def filter_path(pattern): select((.path,.oldpath,"")|strings|test(pattern));
 
 # Config info
 def find_client_info:
