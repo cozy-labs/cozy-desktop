@@ -1,3 +1,4 @@
+const autoBind = require('auto-bind')
 const os = require('os')
 const http = require('http')
 const opn = require('opn')
@@ -14,6 +15,8 @@ module.exports = class Registration {
       console.log('Please visit the following url to authorize the application: ', url)
       opn(url)
     })
+
+    autoBind(this)
   }
 
   onRegistered (client, url, onReady = null) {

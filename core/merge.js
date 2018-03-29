@@ -1,5 +1,6 @@
 /* @flow */
 
+const autoBind = require('auto-bind')
 const { clone } = require('lodash')
 const { basename, dirname, extname, join } = require('path')
 
@@ -46,6 +47,7 @@ class Merge {
     this.pouch = pouch
     // $FlowFixMe
     this.local = this.remote = null
+    autoBind(this)
   }
 
   /* Helpers */

@@ -1,5 +1,6 @@
 /* @flow weak */
 
+const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const PouchDB = require('pouchdb')
 const async = require('async')
@@ -57,6 +58,7 @@ class Pouch {
       })
     })
 
+    autoBind(this)
     Promise.promisifyAll(this)
   }
 

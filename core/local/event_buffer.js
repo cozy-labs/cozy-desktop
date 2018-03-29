@@ -1,5 +1,7 @@
 /* @flow */
 
+const autoBind = require('auto-bind')
+
 /*::
 type EventBufferMode = 'idle' | 'timeout'
 type FlushCallback<EventType> = (EventType[]) => any
@@ -33,6 +35,8 @@ module.exports = class EventBuffer /*:: <EventType> */ {
     this.timeoutInMs = timeoutInMs
     this.timeout = null
     this.flushed = flushed
+
+    autoBind(this)
   }
 
   push (event /*: EventType */) /*: void */ {

@@ -1,5 +1,6 @@
 /* @flow */
 
+const autoBind = require('auto-bind')
 const _ = require('lodash')
 const path = require('path')
 
@@ -21,6 +22,7 @@ class RemoteTestHelpers {
 
   constructor (remote /*: Remote */) {
     this.remote = remote
+    autoBind(this)
   }
 
   get cozy () /*: cozy.Client */ { return this.remote.remoteCozy.client }

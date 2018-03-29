@@ -1,5 +1,6 @@
 /* @flow */
 
+const autoBind = require('auto-bind')
 const path = require('path')
 
 /*::
@@ -18,6 +19,7 @@ class PendingMap {
 
   constructor () {
     this.map = new Map()
+    autoBind(this)
   }
 
   add (path /*: string */, pending /*: Pending */) { // eslint-disable-line no-undef

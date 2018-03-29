@@ -1,5 +1,6 @@
 /* @flow */
 
+const autoBind = require('auto-bind')
 const { pick } = require('lodash')
 const sinon = require('sinon')
 
@@ -47,6 +48,8 @@ class IntegrationTestHelpers {
     this._pouch = pouch
     this.local = new LocalTestHelpers(this._local)
     this.remote = new RemoteTestHelpers(this._remote)
+
+    autoBind(this)
   }
 
   async syncAll () {

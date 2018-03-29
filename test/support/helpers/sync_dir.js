@@ -1,5 +1,6 @@
 /* @flow */
 
+const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const fs = require('fs-extra')
 const path = require('path')
@@ -17,6 +18,7 @@ class SyncDirTestHelpers {
 
   constructor (root /*: string */) {
     this.root = root
+    autoBind(this)
   }
 
   abspath (target /*: string|PathObject */) /*: string */ {

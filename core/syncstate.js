@@ -1,3 +1,4 @@
+const autoBind = require('auto-bind')
 const EventEmitter = require('events')
 
 module.exports = class SyncState extends EventEmitter {
@@ -9,6 +10,11 @@ module.exports = class SyncState extends EventEmitter {
   localSyncing: boolean
   remoteSyncing: boolean
   */
+
+  constructor () {
+    super()
+    autoBind(this)
+  }
 
   shouldSpin () {
     return this.localSyncing || this.remoteSyncing || this.syncSyncing

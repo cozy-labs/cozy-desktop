@@ -1,5 +1,6 @@
 /* @flow */
 
+const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const fs = require('fs-extra')
 const path = require('path')
@@ -59,6 +60,7 @@ class LocalTestHelpers {
   constructor (local /*: Local */) {
     this.local = local
     this.syncDir = new SyncDirTestHelpers(local.syncPath)
+    autoBind(this)
   }
 
   get syncPath () /*: string */ {

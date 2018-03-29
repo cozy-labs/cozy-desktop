@@ -1,5 +1,6 @@
 /* @flow */
 
+const autoBind = require('auto-bind')
 const { clone } = require('lodash')
 const { join } = require('path')
 
@@ -37,6 +38,8 @@ class Prep {
     this.merge = merge
     this.ignore = ignore
     this.config = config
+
+    autoBind(this)
   }
 
   /* Actions */

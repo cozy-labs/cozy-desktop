@@ -1,3 +1,4 @@
+// FIXME: const autoBind = require('auto-bind')
 const fs = require('fs-extra')
 const _ = require('lodash')
 const path = require('path')
@@ -20,6 +21,8 @@ module.exports = class Config {
     }
 
     this.config = require(this.configPath)
+
+    // FIXME: autoBind(this)
   }
 
   // Reset the configuration

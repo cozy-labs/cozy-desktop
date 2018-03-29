@@ -1,5 +1,6 @@
 /* @flow */
 
+const autoBind = require('auto-bind')
 const CozyClient = require('cozy-client-js').Client
 const _ = require('lodash')
 const path = require('path')
@@ -52,6 +53,8 @@ class RemoteCozy {
         storage: Config
       }
     })
+
+    autoBind(this)
 
     // Aliases:
     this.createJob = this.client.jobs.create

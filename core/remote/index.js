@@ -1,5 +1,6 @@
 /* @flow */
 
+const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const { posix, sep } = require('path')
 
@@ -42,6 +43,8 @@ module.exports = class Remote /*:: implements Side */ {
     this.remoteCozy = new RemoteCozy(config)
     this.warningsPoller = new RemoteWarningPoller(this.remoteCozy, events)
     this.watcher = new Watcher(pouch, prep, this.remoteCozy, events)
+
+    autoBind(this)
   }
 
   start () {

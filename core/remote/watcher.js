@@ -2,6 +2,7 @@
 
 const conversion = require('../conversion')
 
+const autoBind = require('auto-bind')
 const _ = require('lodash')
 
 const logger = require('../logger')
@@ -48,6 +49,8 @@ class RemoteWatcher {
     this.prep = prep
     this.remoteCozy = remoteCozy
     this.events = events
+
+    autoBind(this)
   }
 
   start () {

@@ -1,5 +1,6 @@
 /* @flow */
 
+const autoBind = require('auto-bind')
 const fs = require('fs-extra')
 const _ = require('lodash')
 const os = require('os')
@@ -67,6 +68,8 @@ module.exports = class App {
     this.config = new Config(this.basePath)
     this.pouch = new Pouch(this.config)
     this.events = new SyncState()
+
+    autoBind(this)
   }
 
   // Parse the URL

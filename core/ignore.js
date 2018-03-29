@@ -1,5 +1,6 @@
 /* @flow weak */
 
+const autoBind = require('auto-bind')
 const { basename, dirname } = require('path')
 const { matcher, makeRe } = require('micromatch')
 
@@ -84,6 +85,7 @@ class Ignore {
       if (line[0] === '#') { continue }      // Comments
       this.patterns.push(this.buildPattern(line))
     }
+    autoBind(this)
   }
 
   // Parse a line and build the corresponding pattern

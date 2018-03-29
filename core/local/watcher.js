@@ -1,5 +1,6 @@
 /* @flow */
 
+const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const chokidar = require('chokidar')
 const fs = require('fs-extra')
@@ -71,6 +72,12 @@ module.exports = class LocalWatcher {
     this.prep = prep
     this.pouch = pouch
     this.events = events
+    this.checksumer = checksumer.init()
+    this.pendingChanges = []
+
+    // XXX: this.onFlush must be bound before being passed to LocalEventBuffer
+    autoBind(this)
+
      // TODO: Read from config
     const timeoutInMs = process.env.NODE_ENV === 'test' ? 1000 : 10000
     this.buffer = new LocalEventBuffer(timeoutInMs, async (rawEvents) => {
@@ -81,8 +88,6 @@ module.exports = class LocalWatcher {
         this._runningReject && this._runningReject(err)
       }
     })
-    this.checksumer = checksumer.init()
-    this.pendingChanges = []
   }
 
   ensureDirSync () {
