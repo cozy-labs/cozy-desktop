@@ -1,3 +1,22 @@
+## 3.6.0-beta.4 - 2018-03-30
+
+Improvements for all users:
+
+- The *Recents* tab is now clearer and more reliable.
+- The app will suggest sending support requests from each desktop device you own
+  so we can pinpoint multi-device issues.
+
+Improvements for developers & support team:
+
+- You can now filter log entries on multiple path fields (e.g.
+  `yarn jq 'filter_path("pattern")'`)
+- User-sent logs archive extension now matches the actual format.
+- Logs also include less noise.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.6.0-beta.3 - 2018-03-27
 
 Improvements for all users:
