@@ -1,7 +1,5 @@
 'use strict'
 
-require('babel-polyfill')
-
 const Desktop = require('../core/app.js')
 const pkg = require('../package.json')
 
