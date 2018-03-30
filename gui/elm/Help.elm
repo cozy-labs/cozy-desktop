@@ -114,6 +114,7 @@ view helpers model =
                             [ text (helpers.t "Help You can send us feedback, report bugs and ask for assistance.")
                             , text " "
                             , text (helpers.t "Help We will get back to you as soon as possible.")
+                            , text (helpers.t "Help Multi Computer")
                             ]
                 , textarea [ onInput FillBody ] [ text (bodyOrDefault helpers.t model) ]
                 , a
