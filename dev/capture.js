@@ -26,8 +26,7 @@ const scenarios = (args) => {
       return scenarioHelpers.scenarioByPath(path.join(
         __dirname, '..', 'test', 'scenarios', match[1], 'scenario.js'))
     } else {
-      console.error(`Invalid argument: ${arg}`)
-      process.exit(1)
+      throw new Error(`Invalid argument: ${arg}`)
     }
   })
 }

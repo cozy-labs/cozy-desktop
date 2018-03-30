@@ -74,8 +74,7 @@ switch (process.platform) {
     assignId = assignIdNTFS
     break
   default:
-    log.error(`Sorry, ${process.platform} is not supported!`)
-    process.exit(1)
+    throw new Error(`Sorry, ${process.platform} is not supported!`)
 }
 
 module.exports = {
