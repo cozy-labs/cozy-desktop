@@ -44,8 +44,6 @@ module.exports = (app, session, userAgent, doneSetup) => {
     const {hostname, certificate, verificationResult, errorCode} = request
     if (verificationResult < 0) {
       log.warn({hostname, certificate: formatCertificate(certificate), verificationResult, errorCode}, 'Certificate Verification Error')
-    } else {
-      log.debug({hostname, certificate: formatCertificate(certificate), verificationResult, errorCode}, 'Certificate Validated')
     }
     callback(-3) // use chrome validation
   })
