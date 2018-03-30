@@ -1,5 +1,3 @@
-#!/usr/bin/env babel-node
-
 const program = require('commander')
 const path = require('path')
 
