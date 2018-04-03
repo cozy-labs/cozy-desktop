@@ -95,9 +95,11 @@ class RemoteWatcher {
       await this.pouch.setRemoteSeqAsync(last_seq)
       log.debug('No more remote changes for now')
     } catch (err) {
-      log.error({err})
       if (err.status === 400) {
+        log.error({err}, 'Client has been revoked')
         throw new Error('Client has been revoked')
+      } else {
+        log.error({err})
       }
     }
   }
