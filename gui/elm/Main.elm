@@ -57,6 +57,7 @@ type alias Model =
     , status : Status
     , help : Help.Model
     , platform : Platform
+    , remoteWarnings : List RemoteWarning
     }
 
 
@@ -127,6 +128,7 @@ init flags =
             , help = Help.init
             , locales = locales
             , page = page
+            , remoteWarnings = []
             }
     in
         ( model, Cmd.none )
@@ -289,6 +291,9 @@ port gotofolder : () -> Cmd msg
 port offline : (Bool -> msg) -> Sub msg
 
 
+port remoteWarnings : (List RemoteWarning -> msg) -> Sub msg
+
+
 port userActionRequired : (UserActionRequiredError -> msg) -> Sub msg
 
 
@@ -351,6 +356,7 @@ subscriptions model =
         , diskSpace (SettingsMsg << Settings.UpdateDiskSpace)
         , syncError (SetError)
         , offline (always GoOffline)
+        , remoteWarnings (DashboardMsg << Dashboard.RemoteWarnings)
         , userActionRequired UserActionRequired
         , buffering (always StartBuffering)
         , squashPrepMerge (always StartSquashPrepMerging)
