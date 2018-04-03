@@ -5,6 +5,7 @@ import type { FileStreamProvider, ReadableWithContentLength } from '../file_stre
 import type { Metadata } from '../metadata'
 import type { Side } from '../side' // eslint-disable-line
 
+const Promise = require('bluebird')
 const EventEmitter = require('events')
 const { posix, sep } = require('path')
 
@@ -14,6 +15,7 @@ const RemoteCozy = require('./cozy')
 const logger = require('../logger')
 const Pouch = require('../pouch')
 const Prep = require('../prep')
+const warnings = require('./warnings')
 const Watcher = require('./watcher')
 const measureTime = require('../perftools')
 const { withContentLength } = require('../file_stream_provider')
@@ -28,20 +30,28 @@ module.exports = class Remote implements Side {
   events: EventEmitter
   watcher: Watcher
   remoteCozy: RemoteCozy
+  warningsPoller: warnings.Poller
 
   constructor (config: Config, prep: Prep, pouch: Pouch, events: EventEmitter) {
     this.pouch = pouch
     this.events = events
     this.remoteCozy = new RemoteCozy(config)
+    this.warningsPoller = new warnings.Poller(this.remoteCozy.client, events)
     this.watcher = new Watcher(pouch, prep, this.remoteCozy, events)
   }
 
   start () {
-    return this.watcher.start()
+    return Promise.all([
+      this.warningsPoller.start(),
+      this.watcher.start()
+    ])
   }
 
   stop () {
-    return this.watcher.stop()
+    return Promise.all([
+      this.watcher.stop(),
+      this.warningsPoller.stop()
+    ])
   }
 
   sendMail (args: any) {
