@@ -18,6 +18,15 @@ type Platform
     | Darwin
 
 
+type alias RemoteWarning =
+    { title : String
+    , details : String
+    , links :
+        { action : String
+        }
+    }
+
+
 type alias UserActionRequiredError =
     { title : String
     , details : String
