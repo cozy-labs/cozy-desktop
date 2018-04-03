@@ -229,6 +229,9 @@ const startSync = (force, ...args) => {
       updateState('offline')
       trayWindow.send('offline')
     })
+    desktop.events.on('remoteWarnings', (warnings) => {
+      trayWindow.send('remoteWarnings', warnings)
+    })
     desktop.events.on('transfer-started', addFile)
     desktop.events.on('transfer-copy', addFile)
     desktop.events.on('transfer-move', (info, old) => {
