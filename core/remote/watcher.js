@@ -98,6 +98,9 @@ class RemoteWatcher {
       if (err.status === 400) {
         log.error({err}, 'Client has been revoked')
         throw new Error('Client has been revoked')
+      } else if (err.status === 402) {
+        log.error({err}, 'User action required')
+        throw err
       } else {
         log.error({err})
       }
