@@ -26,6 +26,9 @@ icon status platform =
                 UpToDate ->
                     imgIcon "images/tray-icon-osx/idleTemplate@2x.png" "uptodate"
 
+                UserActionRequired ->
+                    imgIcon "images/tray-icon-osx/idleTemplate@2x.png" "uptodate"
+
                 Offline ->
                     imgIcon "images/tray-icon-osx/pauseTemplate@2x.png" "offline"
 
@@ -38,6 +41,9 @@ icon status platform =
         _ ->
             case status of
                 UpToDate ->
+                    imgIcon "images/tray-icon-win/idle.png" "uptodate"
+
+                UserActionRequired ->
                     imgIcon "images/tray-icon-win/idle.png" "uptodate"
 
                 Offline ->
@@ -60,6 +66,9 @@ viewMessage helpers status =
 
         Offline ->
             [ text (helpers.t "Dashboard Offline") ]
+
+        UserActionRequired ->
+            [ text (helpers.t "Dashboard Synchronization impossible") ]
 
         Starting ->
             [ text (helpers.t "Dashboard Analyze") ]

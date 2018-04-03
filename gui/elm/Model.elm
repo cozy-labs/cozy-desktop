@@ -5,6 +5,7 @@ type Status
     = Starting
     | UpToDate
     | Offline
+    | UserActionRequired
     | Buffering
     | SquashPrepMerging
     | Syncing Int
