@@ -16,3 +16,12 @@ type Platform
     = Windows
     | Linux
     | Darwin
+
+
+type alias UserActionRequiredError =
+    { title : String
+    , details : String
+    , links :
+        { action : String
+        }
+    }
