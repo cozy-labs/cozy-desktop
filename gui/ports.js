@@ -128,6 +128,10 @@ ipcRenderer.on('offline', () => {
   elmectron.ports.offline.send(true)
 })
 
+ipcRenderer.on('user-action-required', (event, userActionRequired) => {
+  elmectron.ports.userActionRequired.send(userActionRequired)
+})
+
 ipcRenderer.on('up-to-date', () => {
   elmectron.ports.updated.send(true)
 })

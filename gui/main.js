@@ -255,6 +255,9 @@ const startSync = (force, ...args) => {
       .then(() => sendErrorToMainWindow('stopped'))
       .catch((err) => {
         log.error(err)
+        if (err.status === 402) {
+          trayWindow.send('user-action-required', err)
+        }
         updateState('error', err.message)
         sendDiskUsage()
         sendErrorToMainWindow(err.message)
