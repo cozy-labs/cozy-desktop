@@ -17,6 +17,7 @@ import Dashboard
 import Settings
 import Updater
 import StatusBar
+import Page.UserActionRequired
 
 
 main : Program Flags Model Msg
@@ -42,6 +43,7 @@ type Page
     | SettingsPage
     | UpdaterPage
     | HelpPage
+    | UserActionRequiredPage UserActionRequiredError
 
 
 type alias Model =
@@ -398,18 +400,23 @@ view model =
                 div
                     [ class "container" ]
                     [ (StatusBar.view helpers model.status model.platform)
-                    , section [ class "two-panes" ]
-                        [ aside [ class "two-panes__menu" ]
-                            [ menu_item helpers model "Recents" DashboardPage
-                            , menu_item helpers model "Settings" SettingsPage
-                            ]
-                        , if model.page == DashboardPage then
-                            Html.map DashboardMsg (Dashboard.view helpers model.dashboard)
-                          else if model.page == SettingsPage then
-                            Html.map SettingsMsg (Settings.view helpers model.settings)
-                          else
-                            div [] []
-                        ]
+                    , case model.page of
+                        UserActionRequiredPage error ->
+                            Page.UserActionRequired.view error
+
+                        _ ->
+                            section [ class "two-panes" ]
+                                [ aside [ class "two-panes__menu" ]
+                                    [ menu_item helpers model "Recents" DashboardPage
+                                    , menu_item helpers model "Settings" SettingsPage
+                                    ]
+                                , if model.page == DashboardPage then
+                                    Html.map DashboardMsg (Dashboard.view helpers model.dashboard)
+                                  else if model.page == SettingsPage then
+                                    Html.map SettingsMsg (Settings.view helpers model.settings)
+                                  else
+                                    div [] []
+                                ]
                     , div [ class "bottom-bar" ]
                         [ a
                             [ href "#"
