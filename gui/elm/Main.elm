@@ -7,7 +7,7 @@ import Dict exposing (Dict)
 import Json.Decode as Json
 import Time exposing (Time)
 import Helpers exposing (Helpers, Locale)
-import Model exposing (Status(..), Platform(..))
+import Model exposing (..)
 import Help
 import Icons
 import Wizard
@@ -145,6 +145,7 @@ type Msg
     | StartBuffering
     | StartSquashPrepMerging
     | GoOffline
+    | UserActionRequired UserActionRequiredError
     | SetError String
     | DashboardMsg Dashboard.Msg
     | SettingsMsg Settings.Msg
@@ -187,6 +188,14 @@ update msg model =
 
         GoOffline ->
             ( { model | status = Offline }, Cmd.none )
+
+        UserActionRequired error ->
+            ( { model
+                | status = Model.UserActionRequired
+                , page = UserActionRequiredPage error
+              }
+            , Cmd.none
+            )
 
         SetError error ->
             ( { model | status = Error error }, Cmd.none )
