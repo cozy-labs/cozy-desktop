@@ -289,6 +289,9 @@ port gotofolder : () -> Cmd msg
 port offline : (Bool -> msg) -> Sub msg
 
 
+port userActionRequired : (UserActionRequiredError -> msg) -> Sub msg
+
+
 port updated : (Bool -> msg) -> Sub msg
 
 
@@ -348,6 +351,7 @@ subscriptions model =
         , diskSpace (SettingsMsg << Settings.UpdateDiskSpace)
         , syncError (SetError)
         , offline (always GoOffline)
+        , userActionRequired UserActionRequired
         , buffering (always StartBuffering)
         , squashPrepMerge (always StartSquashPrepMerging)
         , updated (always Updated)
