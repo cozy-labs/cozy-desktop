@@ -29,6 +29,7 @@ type alias RemoteWarning =
 
 type alias UserActionRequiredError =
     { title : String
+    , error : String
     , details : String
     , links :
         { action : String

@@ -421,7 +421,7 @@ view model =
                     [ (StatusBar.view helpers model.status model.platform)
                     , case model.page of
                         UserActionRequiredPage error ->
-                            Page.UserActionRequired.view error
+                            Page.UserActionRequired.view helpers error
 
                         _ ->
                             section [ class "two-panes" ]

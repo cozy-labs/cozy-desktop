@@ -27,7 +27,7 @@ icon status platform =
                     imgIcon "images/tray-icon-osx/idleTemplate@2x.png" "uptodate"
 
                 UserActionRequired ->
-                    imgIcon "images/tray-icon-osx/idleTemplate@2x.png" "uptodate"
+                    imgIcon "images/tray-icon-osx/idleTemplate@2x.png" "offline"
 
                 Offline ->
                     imgIcon "images/tray-icon-osx/pauseTemplate@2x.png" "offline"
@@ -44,7 +44,7 @@ icon status platform =
                     imgIcon "images/tray-icon-win/idle.png" "uptodate"
 
                 UserActionRequired ->
-                    imgIcon "images/tray-icon-win/idle.png" "uptodate"
+                    imgIcon "images/tray-icon-win/idle.png" "offline"
 
                 Offline ->
                     imgIcon "images/tray-icon-win/pause.png" "offline"
