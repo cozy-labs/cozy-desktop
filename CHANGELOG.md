@@ -1,3 +1,18 @@
+## 3.6.0-beta.5 - 2018-04-05
+
+Improvements for all users:
+
+- Moved & renamed files are now listed in the *Recents* tab.
+
+Improvements for Windows users:
+
+- Starting from this beta release, the app should be signed with our renewed
+  certificate.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.6.0-beta.4 - 2018-03-30
 
 Improvements for all users:
