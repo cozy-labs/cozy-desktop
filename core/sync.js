@@ -280,8 +280,8 @@ class Sync {
       if (from.incompatibilities) {
         await this.doAdd(side, doc)
       } else if (from.childMove) {
-        this.events.emit('transfer-move', clone(doc), clone(from))
         await side.assignNewRev(doc)
+        this.events.emit('transfer-move', clone(doc), clone(from))
       } else {
         await this.doMove(side, doc, from)
       }
