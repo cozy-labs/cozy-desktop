@@ -400,7 +400,7 @@ describe('LocalWatcher Tests', function () {
     })
   })
 
-  describe('prependOfflineUnlinkEvents', function () {
+  describe('detectOfflineUnlinkEvents', function () {
     before('reset pouchdb', function (done) {
       this.pouch.resetDatabase(done)
     })
@@ -442,19 +442,13 @@ describe('LocalWatcher Tests', function () {
         const {rev} = await this.pouch.db.put(doc)
         doc._rev = rev
       }
-      const events = [
-        {type: 'addDir', path: 'folder1'},
-        {type: 'add', path: 'file1'}
-      ]
       const initialScan = {ids: ['folder1', 'file1'].map(metadata.id)}
 
-      await this.watcher.prependOfflineUnlinkEvents(events, initialScan)
+      const {offlineEvents} = await this.watcher.detectOfflineUnlinkEvents(initialScan)
 
-      should(events).deepEqual([
+      should(offlineEvents).deepEqual([
         {type: 'unlinkDir', path: 'folder2', old: folder2},
-        {type: 'unlink', path: 'file2', old: file2},
-        {type: 'addDir', path: 'folder1'},
-        {type: 'add', path: 'file1'}
+        {type: 'unlink', path: 'file2', old: file2}
       ])
     })
   })

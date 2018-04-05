@@ -36,6 +36,11 @@ module.exports = class EventBuffer<EventType> {
     this.shiftTimeout()
   }
 
+  unflush (events: Array<EventType>): void {
+    this.events = events.concat(this.events)
+    this.shiftTimeout()
+  }
+
   shiftTimeout (): void {
     if (this.mode === 'timeout') {
       this.clearTimeout()
