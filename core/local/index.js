@@ -307,7 +307,6 @@ module.exports = class Local implements Side {
         log.error({path: newPath, err})
         this.addFile(doc, callback)
       } else {
-        this.events.emit('transfer-move', doc, old)
         if (doc.md5sum !== old.md5sum) {
           this.overwriteFileAsync(doc).then(
             () => callback(null),

@@ -281,9 +281,9 @@ class Sync {
         await this.doAdd(side, doc)
       } else if (from.childMove) {
         await side.assignNewRev(doc)
+        this.events.emit('transfer-move', clone(doc), clone(from))
       } else {
-        if (doc.docType === 'file') await side.moveFileAsync(doc, from)
-        else await side.moveFolderAsync(doc, from)
+        await this.doMove(side, doc, from)
       }
     } else if (doc._deleted) {
       if (doc.docType === 'file') await side.trashAsync(doc)
@@ -332,6 +332,13 @@ class Sync {
     } else {
       await side.addFolderAsync(doc)
     }
+  }
+
+  async doMove (side: Side, doc: Metadata, old: Metadata): Promise<void> {
+    if (doc.docType === 'file') {
+      await side.moveFileAsync(doc, old)
+      this.events.emit('transfer-move', clone(doc), clone(old))
+    } else await side.moveFolderAsync(doc, old)
   }
 
   // Select which side will apply the change
