@@ -148,6 +148,7 @@ type Msg
     | StartSquashPrepMerging
     | GoOffline
     | UserActionRequired UserActionRequiredError
+    | RemoteWarnings (List RemoteWarning)
     | SetError String
     | DashboardMsg Dashboard.Msg
     | SettingsMsg Settings.Msg
@@ -198,6 +199,9 @@ update msg model =
               }
             , Cmd.none
             )
+
+        RemoteWarnings warnings ->
+            ( { model | remoteWarnings = warnings }, Cmd.none )
 
         SetError error ->
             ( { model | status = Error error }, Cmd.none )
@@ -356,7 +360,7 @@ subscriptions model =
         , diskSpace (SettingsMsg << Settings.UpdateDiskSpace)
         , syncError (SetError)
         , offline (always GoOffline)
-        , remoteWarnings (DashboardMsg << Dashboard.RemoteWarnings)
+        , remoteWarnings (RemoteWarnings)
         , userActionRequired UserActionRequired
         , buffering (always StartBuffering)
         , squashPrepMerge (always StartSquashPrepMerging)
@@ -385,6 +389,18 @@ menu_item helpers model title page =
         ]
         [ text (helpers.t ("TwoPanes " ++ title))
         ]
+
+
+renderWarnings helpers model =
+    case model.remoteWarnings of
+        { title, details, links } :: _ ->
+            div [ class "warningbar" ]
+                [ p [] [ text details ]
+                , a [ class "btn", href links.action ] [ text (helpers.t "Warning Read") ]
+                ]
+
+        _ ->
+            text ""
 
 
 view : Model -> Html Msg
@@ -436,6 +452,7 @@ view model =
                                   else
                                     div [] []
                                 ]
+                    , renderWarnings helpers model
                     , div [ class "bottom-bar" ]
                         [ a
                             [ href "#"

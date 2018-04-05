@@ -1,6 +1,5 @@
 port module Dashboard exposing (..)
 
-import Model exposing (RemoteWarning)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -24,7 +23,6 @@ type alias Model =
     { now : Time
     , files : List File
     , page : Int
-    , remoteWarnings : List RemoteWarning
     }
 
 
@@ -33,7 +31,6 @@ init =
     { now = 0
     , files = []
     , page = 1
-    , remoteWarnings = []
     }
 
 
@@ -56,7 +53,6 @@ type Msg
     | Tick Time
     | ShowMore
     | Reset
-    | RemoteWarnings (List RemoteWarning)
 
 
 samePath : File -> File -> Bool
@@ -97,9 +93,6 @@ update msg model =
 
         Reset ->
             ( { model | page = 1 }, Cmd.none )
-
-        RemoteWarnings warnings ->
-            ( { model | remoteWarnings = warnings }, Cmd.none )
 
 
 
@@ -161,16 +154,4 @@ view helpers model =
                        else
                         []
                 )
-            , case model.remoteWarnings of
-                { title, details, links } :: _ ->
-                    div []
-                        [ h5 [] [ text title ]
-                        , p [] [ text details ]
-                        , p []
-                            [ button [] [ text links.action ]
-                            ]
-                        ]
-
-                _ ->
-                    text ""
             ]
