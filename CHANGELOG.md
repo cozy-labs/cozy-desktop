@@ -1,3 +1,17 @@
+## 3.6.0 - 2018-04-12
+
+See:
+
+- [3.6.0-beta.5](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.6.0-beta.5)
+- [3.6.0-beta.4](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.6.0-beta.4)
+- [3.6.0-beta.3](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.6.0-beta.3)
+- [3.6.0-beta.2](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.6.0-beta.2)
+- [3.6.0-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.6.0-beta.1)
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.6.0-beta.5 - 2018-04-05
 
 Improvements for all users:
