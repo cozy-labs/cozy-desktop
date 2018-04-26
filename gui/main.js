@@ -128,7 +128,8 @@ const sendErrorToMainWindow = (msg) => {
     msg = translate('Error ' + msg)
     trayWindow.send('sync-error', msg)
   } else if (msg === 'Syncdir is empty') {
-    trayWindow.send('sync-error', translate('Error Syncdir is empty'))
+    msg = translate('Error ' + msg)
+    trayWindow.send('sync-error', msg)
   } else {
     trayWindow.send('sync-error', msg)
   }
