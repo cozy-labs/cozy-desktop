@@ -20,6 +20,7 @@ type Platform
 
 type alias RemoteWarning =
     { title : String
+    , error : String
     , details : String
     , links :
         { action : String
