@@ -23,5 +23,7 @@ module.exports = function stubSide (): Side {
   for (let method of METHODS) {
     double[method] = sinon.stub().resolves()
   }
+  double.watcher = {}
+  double.watcher.running = new Promise((resolve, reject) => {})
   return double
 }

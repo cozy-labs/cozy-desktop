@@ -78,17 +78,18 @@ class Sync {
   async start (mode: SyncMode): Promise<*> {
     this.stopped = false
     await this.pouch.addAllViewsAsync()
+    let sidePromises = []
     if (mode !== 'pull') {
       await this.local.start()
+      sidePromises.push(this.local.watcher.running)
     }
-    let running = Promise.resolve()
     if (mode !== 'push') {
-      const res = this.remote.start()
-      running = res.running
-      await res.started
+      const {running, started} = this.remote.start()
+      sidePromises.push(running)
+      await started
     }
     await new Promise(async function (resolve, reject) {
-      running.catch((err) => reject(err))
+      Promise.all(sidePromises).catch((err) => reject(err))
       try {
         while (true) {
           await this.sync()

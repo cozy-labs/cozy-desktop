@@ -55,6 +55,9 @@ module.exports = class LocalWatcher {
   buffer: LocalEventBuffer<ChokidarEvent>
   ensureDirInterval: *
   pendingChanges: LocalChange[]
+  running: Promise<void>
+  _runningResolve: ?Function
+  _runningReject: ?Function
 
   constructor (syncPath: string, prep: Prep, pouch: Pouch, events: EventEmitter) {
     this.syncPath = syncPath
@@ -63,7 +66,14 @@ module.exports = class LocalWatcher {
     this.events = events
      // TODO: Read from config
     const timeoutInMs = process.env.NODE_ENV === 'test' ? 1000 : 10000
-    this.buffer = new LocalEventBuffer(timeoutInMs, this.onFlush)
+    this.buffer = new LocalEventBuffer(timeoutInMs, async (rawEvents) => {
+      try {
+        await this.onFlush(rawEvents)
+      } catch (err) {
+        log.error({err}, 'onFlushError')
+        this._runningReject && this._runningReject(err)
+      }
+    })
     this.checksumer = checksumer.init()
     this.pendingChanges = []
   }
@@ -107,7 +117,7 @@ module.exports = class LocalWatcher {
       binaryInterval: 2000
     })
 
-    return new Promise((resolve) => {
+    const started = new Promise((resolve) => {
       for (let eventType of ['add', 'addDir', 'change', 'unlink', 'unlinkDir']) {
         this.watcher.on(eventType, (path?: string, stats?: fs.Stats) => {
           log.chokidar.debug({path}, eventType)
@@ -136,6 +146,12 @@ module.exports = class LocalWatcher {
 
       log.info(`Now watching ${this.syncPath}`)
     })
+
+    this.running = new Promise((resolve, reject) => {
+      this._runningResolve = resolve
+      this._runningReject = reject
+    })
+    return started
   }
 
   // TODO: Start checksuming as soon as an add/change event is buffered
@@ -335,6 +351,10 @@ module.exports = class LocalWatcher {
     if (this.watcher) {
       this.watcher.close()
       this.watcher = null
+    }
+    if (this._runningResolve) {
+      this._runningResolve()
+      this._runningResolve = null
     }
     clearInterval(this.ensureDirInterval)
     this.buffer.switchMode('idle')
