@@ -20,19 +20,19 @@ type Platform
 
 type alias RemoteWarning =
     { title : String
-    , error : String
-    , details : String
+    , code : String
+    , detail : String
     , links :
-        { action : String
+        { self : String
         }
     }
 
 
 type alias UserActionRequiredError =
     { title : String
-    , error : String
-    , details : String
+    , code : String
+    , detail : String
     , links :
-        { action : String
+        { self : String
         }
     }

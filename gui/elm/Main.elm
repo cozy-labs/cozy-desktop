@@ -403,19 +403,19 @@ menu_item helpers model title page =
 
 renderWarnings helpers model =
     case model.remoteWarnings of
-        { title, details, links, error } :: _ ->
+        { title, detail, links, code } :: _ ->
             let
                 actionLabel =
-                    if error == "tos_updated" then
+                    if code == "tos-updated" then
                         "Warning Read"
                     else
                         "Warning Ok"
             in
                 div [ class "warningbar" ]
-                    [ p [] [ text details ]
+                    [ p [] [ text detail ]
                     , a
                         [ class "btn"
-                        , href links.action
+                        , href links.self
                         , onClick ClearCurrentWarning
                         ]
                         [ text (helpers.t actionLabel) ]

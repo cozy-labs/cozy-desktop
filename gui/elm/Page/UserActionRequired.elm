@@ -13,9 +13,9 @@ include_GDPR_link base_text url =
 
 
 view : Helpers -> UserActionRequiredError -> Html msg
-view helpers { error, title, details, links } =
+view helpers { code, title, detail, links } =
     div [ class "two-panes two-panes__content user-action-required" ]
-        (if error == "tos_updated" then
+        (if code == "tos-updated" then
             [ img [ class "error_img", src "images/tos_updated.svg" ] []
             , h2 [] [ text (helpers.t "CGU Updated") ]
             , p [] (include_GDPR_link (helpers.t "CGU Updated Detail") (helpers.t "CGU GDPR Link"))
@@ -24,11 +24,11 @@ view helpers { error, title, details, links } =
                 , text " "
                 , text (helpers.t "CGU Updated Required rest")
                 ]
-            , a [ class "btn", href links.action ] [ text (helpers.t "CGU Updated See") ]
+            , a [ class "btn", href links.self ] [ text (helpers.t "CGU Updated See") ]
             ]
          else
             [ h2 [] [ text title ]
-            , p [] [ text details ]
-            , a [ class "btn", href links.action ] [ text (helpers.t "Error Ok") ]
+            , p [] [ text detail ]
+            , a [ class "btn", href links.self ] [ text (helpers.t "Error Ok") ]
             ]
         )
