@@ -165,7 +165,7 @@ module.exports = class LocalWatcher {
         if (--initialScan.emptyDirRetryCount === 0) {
           throw new Error('Syncdir is empty')
         }
-        return
+        return initialScan.resolve()
       }
 
       log.debug({initialEvents: events})
