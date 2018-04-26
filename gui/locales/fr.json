@@ -42,7 +42,7 @@
   "Bar GoToFolder": "Ouvrir le dossier",
   "CGU Updated": "Cozy met à jour ses CGU",
   "CGU GDPR Link": "https://fr.wikipedia.org/wiki/R%C3%A8glement_g%C3%A9n%C3%A9ral_sur_la_protection_des_donn%C3%A9es",
-  "CGU Updated Detail": "Dans le cadre de la GDPR, Cozy mets à jour ses Conditions Générales d'Utilisation",
+  "CGU Updated Detail": "Dans le cadre de la GDPR, Cozy met à jour ses Conditions Générales d'Utilisation",
   "CGU Updated Required strong": "Leur acceptation est requise",
   "CGU Updated Required rest": "pour continuer à utiliser votre Cozy.",
   "CGU Updated See": "Voir les nouvelles CGU",
@@ -71,6 +71,7 @@
   "Error it exceeds the folder name size limit": "it exceeds the folder name size limit",
   "Error Cozy is full": "Your Cozy disk space is full. Please remove files and empty your trash before uploading files again.",
   "Error No more disk space": "Bummer! The disk space is full on your computer. Try removing some files on your computer to resume the synchronization with your Cozy.",
+  "Error Ok": "Ok",
   "Error Syncdir is empty": "Oups! On dirait que votre dossier Cozy a été vidé... Peut-être un disque dur mal branché ? Pour éviter une perte de donnée, cette suppression n'est pas synchronisée.",
   "Folder All done": "C'est bon",
   "Folder Please choose another folder": "Veuillez choisir un autre répertoire",
@@ -169,7 +170,8 @@
   "Unlinked If you want to register it again, you can restart Cozy Drive.": "Si vous souhaitez l'enregistrer à nouveau, vous pouvez relancer Cozy Drive.",
   "Unlinked Else, you can just close Cozy Drive.": "Sinon, vous pouvez juste fermer Cozy Drive.",
   "Unlinked Restart Cozy Drive": "Relancer Cozy Drive",
-  "Warning Read": "Lire Maintenant",
+  "Warning Ok": "Ok",
+  "Warning Read": "Lire maintenant",
   "Welcome Your own private cloud": "Bienvenue sur Cozy Drive pour ordinateur",
   "Welcome Sign in to your Cozy": "Se connecter à mon Cozy"
 }

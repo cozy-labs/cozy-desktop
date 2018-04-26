@@ -29,6 +29,6 @@ view helpers { error, title, details, links } =
          else
             [ h2 [] [ text title ]
             , p [] [ text details ]
-            , a [ class "btn", href links.action ] [ text "Procéder" ]
+            , a [ class "btn", href links.action ] [ text (helpers.t "Error Ok") ]
             ]
         )
