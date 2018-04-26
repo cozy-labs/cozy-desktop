@@ -35,15 +35,20 @@ class Poller {
     log.info('Looking for warnings...')
     let warnings: Warning[] = []
     try {
-      this.currentPolling = this.cozy.fetchJSON('GET', '/settings/warnings')
-      warnings = await this.currentPolling
-      log.info(`Found ${warnings.length} warning(s)`)
+      await this.cozy.fetchJSON('GET', '/settings/warnings')
+      log.info(`No warnings`)
     } catch (err) {
-      if (err.status === 404) {
-        log.warn('/settings/warnings API is not available on this cozy stack.')
-        log.info('Assuming no warnings.')
+      if (err.status === 402) {
+        log.info(`Some warnings`)
+        try {
+          const parsed = JSON.parse(err.message)
+          warnings = parsed.errors
+          log.info(`${warnings.length} warnings`)
+        } catch (err) {
+          log.error({err}, 'Wrongly formatted warnings')
+        }
       } else {
-        log.error({err}, '/settings/warnings')
+        log.warn({err}, '/settings/warnings API is not available.')
       }
     }
     if (warnings.length > 0) {
