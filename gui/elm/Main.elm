@@ -149,6 +149,7 @@ type Msg
     | GoOffline
     | UserActionRequired UserActionRequiredError
     | RemoteWarnings (List RemoteWarning)
+    | ClearCurrentWarning
     | SetError String
     | DashboardMsg Dashboard.Msg
     | SettingsMsg Settings.Msg
@@ -202,6 +203,15 @@ update msg model =
 
         RemoteWarnings warnings ->
             ( { model | remoteWarnings = warnings }, Cmd.none )
+
+        ClearCurrentWarning ->
+            ( { model
+                | remoteWarnings =
+                    List.tail model.remoteWarnings
+                        |> Maybe.withDefault []
+              }
+            , Cmd.none
+            )
 
         SetError error ->
             ( { model | status = Error error }, Cmd.none )
@@ -403,7 +413,12 @@ renderWarnings helpers model =
             in
                 div [ class "warningbar" ]
                     [ p [] [ text details ]
-                    , a [ class "btn", href links.action ] [ text (helpers.t actionLabel) ]
+                    , a
+                        [ class "btn"
+                        , href links.action
+                        , onClick ClearCurrentWarning
+                        ]
+                        [ text (helpers.t actionLabel) ]
                     ]
 
         _ ->
