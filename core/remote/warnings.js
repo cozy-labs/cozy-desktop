@@ -14,9 +14,9 @@ const POLLING_DELAY = 1000 * 60 * 60 * 24
 export type Warning = {
   error: string,
   title: string,
-  details: string,
+  detail: string,
   links: {
-    action: string
+    self: string
   }
 }
 
