@@ -41,10 +41,11 @@ module.exports = class Remote implements Side {
   }
 
   start () {
-    return Promise.all([
-      this.warningsPoller.start(),
-      this.watcher.start()
-    ])
+    const {started, running} = this.watcher.start()
+    return {
+      started: started.then(() => this.warningsPoller.start()),
+      running
+    }
   }
 
   stop () {

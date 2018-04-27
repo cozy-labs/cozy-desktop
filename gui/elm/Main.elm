@@ -402,8 +402,11 @@ menu_item helpers model title page =
 
 
 renderWarnings helpers model =
-    case model.remoteWarnings of
-        { title, detail, links, code } :: _ ->
+    case ( model.page, model.remoteWarnings ) of
+        ( UserActionRequiredPage err, _ ) ->
+            text ""
+
+        ( _, { title, detail, links, code } :: _ ) ->
             let
                 actionLabel =
                     if code == "tos-updated" then

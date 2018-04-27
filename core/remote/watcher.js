@@ -15,6 +15,7 @@ const Prep = require('../prep')
 const RemoteCozy = require('./cozy')
 const remoteChange = require('./change')
 const { inRemoteTrash } = require('./document')
+const warnings = require('./warnings')
 
 const log = logger({
   component: 'RemoteWatcher'
@@ -100,7 +101,7 @@ class RemoteWatcher {
         throw new Error('Client has been revoked')
       } else if (err.status === 402) {
         log.error({err}, 'User action required')
-        throw err
+        throw warnings.includeJSONintoError(err)
       } else {
         log.error({err})
       }
