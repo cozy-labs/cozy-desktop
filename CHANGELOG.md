@@ -1,3 +1,28 @@
+## 3.7.0-beta.1 - 2018-04-27
+
+Improvements for all users:
+
+- The app now detects when the *Cozy Drive* folder was made empty while it
+  used to have contents before. Synchronization is stopped. User can either
+  restart later in case the folder is a mount point that was not available
+  yet, or delete the root folder before restart to actually restart from
+  scratch.
+- Warnings from the Cozy instance (e.g. TOS updates) are now detected.
+  A bottom banner is shown in the UI prompting the user to read the detail
+  before the deadline. After the deadline, synchronisation is stopped and
+  reading the detail will be mandatory.
+- We also fixed an issue that was preventing some errors to be correctly
+  written in logs.
+
+Improvements for developers:
+
+- Logs are dumped on failing test (will help debugging random CI issues)
+- Upgrade to Go 1.9 & Couchdb 2.1 on Travis CI
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.6.0 - 2018-04-12
 
 See:
@@ -245,7 +270,7 @@ Improvements for all users:
 
 The 3.4.4 build was broken.
 
-Also include all changes from [3.4.4-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.4.4-beta.1), [3.4.4-beta.2](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.4.4-beta.2) and  
+Also include all changes from [3.4.4-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.4.4-beta.1), [3.4.4-beta.2](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.4.4-beta.2) and
 [3.4.3-beta.3](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.4.4-beta.3).
 
 
