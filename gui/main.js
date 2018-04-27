@@ -5,7 +5,7 @@ require('babel-polyfill')
 const Desktop = require('../core-built/app.js')
 const pkg = require('../package.json')
 
-const debounce = require('lodash').debounce
+const { debounce, pick } = require('lodash')
 const path = require('path')
 const os = require('os')
 
@@ -37,6 +37,7 @@ process.on('uncaughtException', (err) => log.error(err))
 let desktop
 let state = 'not-configured'
 let errorMessage = ''
+let userActionRequiredError = null
 let diskTimeout = null
 let onboardingWindow = null
 let helpWindow = null
@@ -206,7 +207,9 @@ const startSync = (force, ...args) => {
     trayWindow.send('transfer', file)
   }
   if (desktop.sync && !force) {
-    if (state === 'up-to-date' || state === 'online') {
+    if (userActionRequiredError) {
+      trayWindow.send('user-action-required', userActionRequiredError)
+    } else if (state === 'up-to-date' || state === 'online') {
       trayWindow.send('up-to-date')
     } else if (state === 'offline') {
       trayWindow.send('offline')
@@ -228,6 +231,9 @@ const startSync = (force, ...args) => {
     desktop.events.on('offline', () => {
       updateState('offline')
       trayWindow.send('offline')
+    })
+    desktop.events.on('remoteWarnings', (warnings) => {
+      trayWindow.send('remoteWarnings', warnings)
     })
     desktop.events.on('transfer-started', addFile)
     desktop.events.on('transfer-copy', addFile)
@@ -254,7 +260,14 @@ const startSync = (force, ...args) => {
     desktop.synchronize(desktop.config.config.mode)
       .then(() => sendErrorToMainWindow('stopped'))
       .catch((err) => {
-        log.error(err)
+        log.error({status: err.status}, 'RIGHT RIGHT HERE')
+        if (err.status === 402) {
+          userActionRequiredError = pick(err,
+            ['title', 'code', 'detail', 'links', 'message']
+          )
+          trayWindow.send('user-action-required', userActionRequiredError)
+          return
+        }
         updateState('error', err.message)
         sendDiskUsage()
         sendErrorToMainWindow(err.message)

@@ -7,7 +7,7 @@ import Dict exposing (Dict)
 import Json.Decode as Json
 import Time exposing (Time)
 import Helpers exposing (Helpers, Locale)
-import Model exposing (Status(..), Platform(..))
+import Model exposing (..)
 import Help
 import Icons
 import Wizard
@@ -17,6 +17,7 @@ import Dashboard
 import Settings
 import Updater
 import StatusBar
+import Page.UserActionRequired
 
 
 main : Program Flags Model Msg
@@ -42,6 +43,7 @@ type Page
     | SettingsPage
     | UpdaterPage
     | HelpPage
+    | UserActionRequiredPage UserActionRequiredError
 
 
 type alias Model =
@@ -55,6 +57,7 @@ type alias Model =
     , status : Status
     , help : Help.Model
     , platform : Platform
+    , remoteWarnings : List RemoteWarning
     }
 
 
@@ -125,6 +128,7 @@ init flags =
             , help = Help.init
             , locales = locales
             , page = page
+            , remoteWarnings = []
             }
     in
         ( model, Cmd.none )
@@ -143,6 +147,9 @@ type Msg
     | StartBuffering
     | StartSquashPrepMerging
     | GoOffline
+    | UserActionRequired UserActionRequiredError
+    | RemoteWarnings (List RemoteWarning)
+    | ClearCurrentWarning
     | SetError String
     | DashboardMsg Dashboard.Msg
     | SettingsMsg Settings.Msg
@@ -185,6 +192,26 @@ update msg model =
 
         GoOffline ->
             ( { model | status = Offline }, Cmd.none )
+
+        UserActionRequired error ->
+            ( { model
+                | status = Model.UserActionRequired
+                , page = UserActionRequiredPage error
+              }
+            , Cmd.none
+            )
+
+        RemoteWarnings warnings ->
+            ( { model | remoteWarnings = warnings }, Cmd.none )
+
+        ClearCurrentWarning ->
+            ( { model
+                | remoteWarnings =
+                    List.tail model.remoteWarnings
+                        |> Maybe.withDefault []
+              }
+            , Cmd.none
+            )
 
         SetError error ->
             ( { model | status = Error error }, Cmd.none )
@@ -278,6 +305,12 @@ port gotofolder : () -> Cmd msg
 port offline : (Bool -> msg) -> Sub msg
 
 
+port remoteWarnings : (List RemoteWarning -> msg) -> Sub msg
+
+
+port userActionRequired : (UserActionRequiredError -> msg) -> Sub msg
+
+
 port updated : (Bool -> msg) -> Sub msg
 
 
@@ -337,6 +370,8 @@ subscriptions model =
         , diskSpace (SettingsMsg << Settings.UpdateDiskSpace)
         , syncError (SetError)
         , offline (always GoOffline)
+        , remoteWarnings (RemoteWarnings)
+        , userActionRequired UserActionRequired
         , buffering (always StartBuffering)
         , squashPrepMerge (always StartSquashPrepMerging)
         , updated (always Updated)
@@ -364,6 +399,33 @@ menu_item helpers model title page =
         ]
         [ text (helpers.t ("TwoPanes " ++ title))
         ]
+
+
+renderWarnings helpers model =
+    case ( model.page, model.remoteWarnings ) of
+        ( UserActionRequiredPage err, _ ) ->
+            text ""
+
+        ( _, { title, detail, links, code } :: _ ) ->
+            let
+                actionLabel =
+                    if code == "tos-updated" then
+                        "Warning Read"
+                    else
+                        "Warning Ok"
+            in
+                div [ class "warningbar" ]
+                    [ p [] [ text detail ]
+                    , a
+                        [ class "btn"
+                        , href links.self
+                        , onClick ClearCurrentWarning
+                        ]
+                        [ text (helpers.t actionLabel) ]
+                    ]
+
+        _ ->
+            text ""
 
 
 view : Model -> Html Msg
@@ -398,18 +460,24 @@ view model =
                 div
                     [ class "container" ]
                     [ (StatusBar.view helpers model.status model.platform)
-                    , section [ class "two-panes" ]
-                        [ aside [ class "two-panes__menu" ]
-                            [ menu_item helpers model "Recents" DashboardPage
-                            , menu_item helpers model "Settings" SettingsPage
-                            ]
-                        , if model.page == DashboardPage then
-                            Html.map DashboardMsg (Dashboard.view helpers model.dashboard)
-                          else if model.page == SettingsPage then
-                            Html.map SettingsMsg (Settings.view helpers model.settings)
-                          else
-                            div [] []
-                        ]
+                    , case model.page of
+                        UserActionRequiredPage error ->
+                            Page.UserActionRequired.view helpers error
+
+                        _ ->
+                            section [ class "two-panes" ]
+                                [ aside [ class "two-panes__menu" ]
+                                    [ menu_item helpers model "Recents" DashboardPage
+                                    , menu_item helpers model "Settings" SettingsPage
+                                    ]
+                                , if model.page == DashboardPage then
+                                    Html.map DashboardMsg (Dashboard.view helpers model.dashboard)
+                                  else if model.page == SettingsPage then
+                                    Html.map SettingsMsg (Settings.view helpers model.settings)
+                                  else
+                                    div [] []
+                                ]
+                    , renderWarnings helpers model
                     , div [ class "bottom-bar" ]
                         [ a
                             [ href "#"

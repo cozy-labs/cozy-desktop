@@ -2,8 +2,6 @@ module StatusBar exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (..)
-import Icons
 import Helpers exposing (..)
 import Model exposing (Status(..), Platform(..))
 
@@ -28,6 +26,9 @@ icon status platform =
                 UpToDate ->
                     imgIcon "images/tray-icon-osx/idleTemplate@2x.png" "uptodate"
 
+                UserActionRequired ->
+                    imgIcon "images/tray-icon-osx/idleTemplate@2x.png" "offline"
+
                 Offline ->
                     imgIcon "images/tray-icon-osx/pauseTemplate@2x.png" "offline"
 
@@ -41,6 +42,9 @@ icon status platform =
             case status of
                 UpToDate ->
                     imgIcon "images/tray-icon-win/idle.png" "uptodate"
+
+                UserActionRequired ->
+                    imgIcon "images/tray-icon-win/idle.png" "offline"
 
                 Offline ->
                     imgIcon "images/tray-icon-win/pause.png" "offline"
@@ -62,6 +66,9 @@ viewMessage helpers status =
 
         Offline ->
             [ text (helpers.t "Dashboard Offline") ]
+
+        UserActionRequired ->
+            [ text (helpers.t "Dashboard Synchronization impossible") ]
 
         Starting ->
             [ text (helpers.t "Dashboard Analyze") ]
