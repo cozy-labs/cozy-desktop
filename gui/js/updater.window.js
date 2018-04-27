@@ -38,13 +38,10 @@ module.exports = class UpdaterWM extends WindowManager {
       this.afterUpToDate()
     })
     autoUpdater.on('error', (err) => {
+      // May also happen in dev because of code signature error. Not an issue.
       log.error({err}, 'Error in auto-updater! ')
       this.clearTimeoutIfAny()
-
-      this.show().then(() => this.send('update-error', this.humanError(err)))
-                 .then(() => Promise.delay(5000))
-                 .then(() => this.afterUpToDate())
-      // May happen in dev because of code signature error. Not really an issue.
+      this.afterUpToDate()
     })
     autoUpdater.on('download-progress', (progressObj) => {
       log.trace({progress: progressObj}, 'Downloading...')
