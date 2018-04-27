@@ -1,3 +1,19 @@
+## 3.7.0-beta.2 - 2018-04-27
+
+Improvements for all users:
+
+- The app won't display an error in case of an auto-update failure. Errors
+  are logged anyway and auto-update will be retried automatically at some
+  point.
+
+Improvements for developers:
+
+- Developers won't have to wait for the above error to disappear.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.7.0-beta.1 - 2018-04-27
 
 Improvements for all users:
