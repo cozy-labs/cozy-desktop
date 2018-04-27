@@ -3,18 +3,23 @@
 import type { Warning } from '../../../../core/remote/warnings'
 
 module.exports = {
-  tosUpdated (): Warning {
-    return {
-      error: 'tos_updated',
-      title: 'TOS Updated',
-      details: 'TOS have been updated',
-      links: {
-        action: 'https://manager.cozycloud.cc/cozy/tos?domain=...'
-      }
-    }
-  },
+  list (): {warnings: Warning[], err: Error} {
+    const warnings = [tosUpdated()]
+    const err = new Error(JSON.stringify({errors: warnings}))
+    // $FlowFixMe
+    err.status = 402
 
-  list (): Warning[] {
-    return [this.tosUpdated()]
+    return {warnings, err}
+  }
+}
+
+function tosUpdated (): Warning {
+  return {
+    error: 'tos-updated',
+    title: 'TOS Updated',
+    detail: 'TOS have been updated',
+    links: {
+      self: 'https://manager.cozycloud.cc/cozy/tos?domain=...'
+    }
   }
 }
