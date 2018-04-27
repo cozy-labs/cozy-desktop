@@ -127,6 +127,18 @@ const sendErrorToMainWindow = (msg) => {
   } else if (msg === 'Cozy is full' || msg === 'No more disk space') {
     msg = translate('Error ' + msg)
     trayWindow.send('sync-error', msg)
+  } else if (msg === 'Syncdir is empty') {
+    trayWindow.send('sync-error', translate('SyncDirEmpty Title'))
+    const options = {
+      type: 'warning',
+      title: translate('SyncDirEmpty Title'),
+      message: translate('SyncDirEmpty Message'),
+      detail: translate('SyncDirEmpty Detail')
+    }
+    dialog.showMessageBox(null, options)
+    desktop.stopSync()
+      .catch((err) => log.error(err))
+    return // no notification
   } else {
     trayWindow.send('sync-error', msg)
   }

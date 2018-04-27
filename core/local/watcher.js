@@ -32,8 +32,11 @@ log.chokidar = log.child({
 
 const SIDE = 'local'
 
+const NB_OF_DELETABLE_ELEMENT = 3
+
 type InitialScan = {
   ids: string[],
+  emptyDirRetryCount: number,
   resolve: () => void
 }
 
@@ -52,6 +55,9 @@ module.exports = class LocalWatcher {
   buffer: LocalEventBuffer<ChokidarEvent>
   ensureDirInterval: *
   pendingChanges: LocalChange[]
+  running: Promise<void>
+  _runningResolve: ?Function
+  _runningReject: ?Function
 
   constructor (syncPath: string, prep: Prep, pouch: Pouch, events: EventEmitter) {
     this.syncPath = syncPath
@@ -60,7 +66,14 @@ module.exports = class LocalWatcher {
     this.events = events
      // TODO: Read from config
     const timeoutInMs = process.env.NODE_ENV === 'test' ? 1000 : 10000
-    this.buffer = new LocalEventBuffer(timeoutInMs, this.onFlush)
+    this.buffer = new LocalEventBuffer(timeoutInMs, async (rawEvents) => {
+      try {
+        await this.onFlush(rawEvents)
+      } catch (err) {
+        log.error({err}, 'onFlushError')
+        this._runningReject && this._runningReject(err)
+      }
+    })
     this.checksumer = checksumer.init()
     this.pendingChanges = []
   }
@@ -104,7 +117,7 @@ module.exports = class LocalWatcher {
       binaryInterval: 2000
     })
 
-    return new Promise((resolve) => {
+    const started = new Promise((resolve) => {
       for (let eventType of ['add', 'addDir', 'change', 'unlink', 'unlinkDir']) {
         this.watcher.on(eventType, (path?: string, stats?: fs.Stats) => {
           log.chokidar.debug({path}, eventType)
@@ -118,7 +131,7 @@ module.exports = class LocalWatcher {
       // To detect which files&folders have been removed since the last run of
       // cozy-desktop, we keep all the paths seen by chokidar during its
       // initial scan in @paths to compare them with pouchdb database.
-      this.initialScan = {ids: [], resolve}
+      this.initialScan = {ids: [], emptyDirRetryCount: 3, resolve}
 
       this.watcher
         .on('ready', () => this.buffer.switchMode('timeout'))
@@ -133,18 +146,24 @@ module.exports = class LocalWatcher {
 
       log.info(`Now watching ${this.syncPath}`)
     })
+
+    this.running = new Promise((resolve, reject) => {
+      this._runningResolve = resolve
+      this._runningReject = reject
+    })
+    return started
   }
 
   // TODO: Start checksuming as soon as an add/change event is buffered
   // TODO: Put flushed event batches in a queue
-  async onFlush (events: ChokidarEvent[]) {
-    log.debug(`Flushed ${events.length} events`)
+  async onFlush (rawEvents: ChokidarEvent[]) {
+    log.debug(`Flushed ${rawEvents.length} events`)
 
     this.events.emit('buffering-end')
     this.ensureDirSync()
     this.events.emit('local-start')
 
-    events = events.filter((e) => e.path !== '') // @TODO handle root dir events
+    let events = rawEvents.filter((e) => e.path !== '') // @TODO handle root dir events
 
     const initialScan = this.initialScan
     if (initialScan != null) {
@@ -152,7 +171,18 @@ module.exports = class LocalWatcher {
       events.filter((e) => e.type.startsWith('add'))
             .forEach((e) => ids.push(metadata.id(e.path)))
 
-      await this.prependOfflineUnlinkEvents(events, initialScan)
+      const {offlineEvents, emptySyncDir} = await this.detectOfflineUnlinkEvents(initialScan)
+      events = offlineEvents.concat(events)
+
+      if (emptySyncDir) {
+        // it is possible this is a temporary faillure (too late mounting)
+        // push back the events and wait until next flush.
+        this.buffer.unflush(rawEvents)
+        if (--initialScan.emptyDirRetryCount === 0) {
+          throw new Error('Syncdir is empty')
+        }
+        return initialScan.resolve()
+      }
 
       log.debug({initialEvents: events})
     }
@@ -181,21 +211,30 @@ module.exports = class LocalWatcher {
     }
   }
 
-  async prependOfflineUnlinkEvents (events: ChokidarEvent[], initialScan: InitialScan) {
+  async detectOfflineUnlinkEvents (initialScan: InitialScan): Promise<{offlineEvents: Array<ChokidarEvent>, emptySyncDir: boolean}> {
     // Try to detect removed files & folders
+    const events: Array<ChokidarEvent> = []
     const docs = await this.pouch.byRecursivePathAsync('')
     const inInitialScan = (doc) =>
       initialScan.ids.indexOf(metadata.id(doc.path)) !== -1
+
+    // the Syncdir is empty error only occurs if there was some docs beforehand
+    let emptySyncDir = docs.length > NB_OF_DELETABLE_ELEMENT
+
     for (const doc of docs) {
-      if (inInitialScan(doc) || doc.trashed) continue
+      if (inInitialScan(doc) || doc.trashed) {
+        emptySyncDir = false
+      } else {
+        const event = (doc.docType === 'file')
+          ? {type: 'unlink', path: doc.path, old: doc}
+          : {type: 'unlinkDir', path: doc.path, old: doc}
 
-      const event = (doc.docType === 'file')
-        ? {type: 'unlink', path: doc.path, old: doc}
-        : {type: 'unlinkDir', path: doc.path, old: doc}
-
-      log.chokidar.debug({path: doc.path}, event.type)
-      events.unshift(event)
+        log.chokidar.debug({path: doc.path}, event.type)
+        events.unshift(event)
+      }
     }
+
+    return {offlineEvents: events, emptySyncDir}
   }
 
   async prepareEvents (events: ChokidarEvent[], initialScan: ?InitialScan) : Promise<LocalEvent[]> {
@@ -312,6 +351,10 @@ module.exports = class LocalWatcher {
     if (this.watcher) {
       this.watcher.close()
       this.watcher = null
+    }
+    if (this._runningResolve) {
+      this._runningResolve()
+      this._runningResolve = null
     }
     clearInterval(this.ensureDirInterval)
     this.buffer.switchMode('idle')
