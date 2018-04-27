@@ -13,7 +13,7 @@ describe('remote/warnings.Poller', () => {
 
   beforeEach(() => {
     clock = sinon.useFakeTimers()
-    cozy = {settings: {warnings: sinon.stub().resolves([])}}
+    cozy = {fetchJSON: sinon.stub().resolves()}
     events = {emit: sinon.spy()}
     // $FlowFixMe
     poller = new Poller(cozy, events)
@@ -25,8 +25,8 @@ describe('remote/warnings.Poller', () => {
 
   describe('#poll()', () => {
     it('emits warnings if any', async () => {
-      const warnings = warningBuilders.list()
-      cozy.settings.warnings.resolves(warnings)
+      const {warnings, err} = warningBuilders.list()
+      cozy.fetchJSON.rejects(err)
 
       await poller.poll()
 
@@ -43,14 +43,14 @@ describe('remote/warnings.Poller', () => {
 
   describe('#start()', () => {
     it('polls continuously according to POLLING_DELAY', async () => {
-      const warnings = warningBuilders.list()
-      cozy.settings.warnings.onSecondCall().resolves(warnings)
+      const {warnings, err} = warningBuilders.list()
+      cozy.fetchJSON.onSecondCall().rejects(err)
 
       poller.start()
       clock.tick(POLLING_DELAY)
       await poller.currentPolling
 
-      should(cozy.settings.warnings).have.been.calledTwice()
+      should(cozy.fetchJSON).have.been.calledTwice()
       should(events.emit).have.been.calledOnce()
       should(events.emit).have.been.calledWith('remoteWarnings', warnings)
     })
@@ -67,9 +67,9 @@ describe('remote/warnings.Poller', () => {
     })
 
     it('cancels upcoming pollings', () => {
-      cozy.settings.warnings.onSecondCall().resolves(warningBuilders.list())
+      cozy.fetchJSON.onSecondCall().rejects(warningBuilders.list().err)
       clock.tick(POLLING_DELAY)
-      should(cozy.settings.warnings).have.been.calledOnce()
+      should(cozy.fetchJSON).have.been.calledOnce()
       should(events.emit).not.have.been.called()
     })
   })
