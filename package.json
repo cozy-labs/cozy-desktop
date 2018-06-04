@@ -57,6 +57,7 @@
     "release:check:branch": "node ./dev/check-release-branch.js",
     "release:check:node8": "node -e \"(process.versions.node.split('.')[0] !== '8') && process.exit(1)\"",
     "repl": "env-cmd .env.dev babel-node ./dev/repl.js",
+    "stack:update": "docker pull cozy/cozy-app-dev:2.0.0 && docker rm cozy-desktop-stack",
     "start": "env-cmd .env.dev electron .",
     "test": "yarn test:unit && yarn test:elm && yarn test:integration && yarn test:scenarios",
     "test:coverage": "yarn test:unit:coverage && yarn test:integration",
