@@ -46,6 +46,7 @@ def is_non_issue:
 def is_issue: (is_warn or is_conflict) and (is_non_issue | not);
 def select_issue: select(is_issue);
 def find_issues: select_issue|{component,path,msg,time,level};
+def issues: select_issue;
 
 # Path filtering
 def filter_path(pattern): select((.path,.oldpath,"")|strings|test(pattern));
