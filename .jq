@@ -51,6 +51,11 @@ def issues: select_issue;
 # Path filtering
 def filter_path(pattern): select((.path,.oldpath,"")|strings|test(pattern));
 
+# GUI
+def is_gui: .component | test("GUI");
+def gui: select(is_gui);
+def no_gui: select(is_gui | not);
+
 # Config info
 def find_client_info:
   select(.appVersion)
