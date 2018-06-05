@@ -1,6 +1,6 @@
 # You can use jq to analyse multiple huge log files at once:
 #
-#   `yarn jq find_issues path/to/logs.txt*`
+#   `yarn -s jq -c 'issues|no_gui|xls|short' path/to/logs.txt*`
 #
 # The `yarn jq` script doesn't use `--slurp` so JSON lines are filtered one by
 # one and memory usage is kept below 100MB.
