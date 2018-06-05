@@ -64,6 +64,16 @@ def find_client_info:
     |del(.v)
     ;
 
+# Remove stuff that polutes global overview
+def short:
+  del(.change) |
+  del(.err) |
+  del(.hostname) |
+  del(.level) |
+  del(.name) |
+  del(.pid) |
+  del(.v);
+
 # Utils
 def frequencies:
   reduce .[] as $x ({};
