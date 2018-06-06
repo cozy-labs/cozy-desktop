@@ -9,3 +9,5 @@ services:
       - "5984:5984"
     volumes:
       - .:/cozy-desktop
+      - ./tmp/couchdb:/usr/local/couchdb/data
+      - ./tmp/cozy-storage:/data/cozy-storage
