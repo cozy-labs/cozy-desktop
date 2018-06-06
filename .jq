@@ -1,6 +1,6 @@
 # You can use jq to analyse multiple huge log files at once:
 #
-#   `yarn jq find_issues path/to/logs.txt*`
+#   `yarn -s jq -c 'issues|no_gui|xls|short' path/to/logs.txt*`
 #
 # The `yarn jq` script doesn't use `--slurp` so JSON lines are filtered one by
 # one and memory usage is kept below 100MB.
@@ -46,9 +46,15 @@ def is_non_issue:
 def is_issue: (is_warn or is_conflict) and (is_non_issue | not);
 def select_issue: select(is_issue);
 def find_issues: select_issue|{component,path,msg,time,level};
+def issues: select_issue;
 
 # Path filtering
 def filter_path(pattern): select((.path,.oldpath,"")|strings|test(pattern));
+
+# GUI
+def is_gui: .component | test("GUI");
+def gui: select(is_gui);
+def no_gui: select(is_gui | not);
 
 # Config info
 def find_client_info:
@@ -57,6 +63,29 @@ def find_client_info:
     |del(.level)
     |del(.v)
     ;
+
+# File extensions
+def is_ext(x): .path | test("\\." + x);
+def ext(x): select(is_ext(x));
+def no_ext(x): select(is_ext(x) | not);
+
+# Excel files
+def xls: ext("xls");
+def no_xls: no_ext("xls");
+
+# Text files
+def txt: ext("txt");
+def no_txt: no_ext("txt");
+
+# Remove stuff that polutes global overview
+def short:
+  del(.change) |
+  del(.err) |
+  del(.hostname) |
+  del(.level) |
+  del(.name) |
+  del(.pid) |
+  del(.v);
 
 # Utils
 def frequencies:
