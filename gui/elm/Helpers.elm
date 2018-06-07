@@ -128,22 +128,6 @@ number_to_human_size locale size =
         (toString (toFloat (size // 10 ^ 9) / 10)) ++ " " ++ (translate locale "Helpers GB")
 
 
-splitPath : String -> ( String, ( String, String ) )
-splitPath fullpath =
-    case List.reverse (String.split "/" fullpath) of
-        [] ->
-            ( "", ( "", "" ) )
-
-        [ rest ] ->
-            ( "", ( rest, "" ) )
-
-        [ filename, rest ] ->
-            ( rest ++ "/", (splitFileName filename) )
-
-        filename :: rest ->
-            ( (String.join "/" (List.reverse rest)), splitFileName filename )
-
-
 splitFileName : String -> ( String, String )
 splitFileName filename =
     case List.reverse (String.split "." filename) of
