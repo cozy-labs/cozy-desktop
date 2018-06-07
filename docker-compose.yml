@@ -2,10 +2,12 @@ version: '2.1'
 services:
   cozy:
     container_name: cozy-desktop-stack
-    image: cozy/cozy-app-dev:2018M2S5
+    build: ./dev/cozy-stack
     ports:
       - "8080:8080"
       - "8025:8025"
-      - "6060:6060"
+      - "5984:5984"
     volumes:
       - .:/cozy-desktop
+      - ./tmp/couchdb:/usr/local/couchdb/data
+      - ./tmp/cozy-storage:/data/cozy-storage
