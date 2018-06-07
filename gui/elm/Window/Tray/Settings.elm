@@ -6,6 +6,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Locale exposing (Helpers)
 import Ports
+import View.ProgressBar as ProgressBar
 
 
 -- MODEL
@@ -113,7 +114,7 @@ diskQuotaLine helpers model =
                     ++ " / "
                     ++ (humanReadableDiskValue helpers model.disk.quota)
                 )
-            , (progressbar (model.disk.used / model.disk.quota))
+            , ProgressBar.view (model.disk.used / model.disk.quota)
             ]
 
 
@@ -129,24 +130,6 @@ versionLine helpers model =
 
         Nothing ->
             span [ class "version-uptodate" ] [ text model.version ]
-
-
-progressbar : Float -> Html Msg
-progressbar ratio =
-    let
-        cappedRatio =
-            (Basics.min 1 ratio)
-
-        percent =
-            (toString (cappedRatio * 100)) ++ "%"
-    in
-        div [ class "progress" ]
-            [ div
-                [ class "progress-inner"
-                , style [ ( "width", percent ) ]
-                ]
-                []
-            ]
 
 
 view : Helpers -> Model -> Html Msg

@@ -5,6 +5,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Locale exposing (Helpers)
 import Ports
+import View.ProgressBar as ProgressBar
 
 
 -- MODEL
@@ -65,24 +66,6 @@ humanReadableDiskValue helpers v =
     (toString (round (v / 1000000)) ++ " M" ++ (helpers.t "Account b"))
 
 
-progressbar : Float -> Html Msg
-progressbar ratio =
-    let
-        cappedRatio =
-            (Basics.min 1 ratio)
-
-        percent =
-            (toString (cappedRatio * 100)) ++ "%"
-    in
-        div [ class "progress" ]
-            [ div
-                [ class "progress-inner"
-                , style [ ( "width", percent ) ]
-                ]
-                []
-            ]
-
-
 view : Helpers -> Model -> Html Msg
 view helpers model =
     section [ class "updater" ]
@@ -95,7 +78,7 @@ view helpers model =
             ( Nothing, Just progress ) ->
                 [ h1 [] [ text (helpers.t "Updater Downloading") ]
                 , div [ class "spacer" ]
-                    [ (progressbar (progress.transferred / progress.total))
+                    [ ProgressBar.view (progress.transferred / progress.total)
                     , div [ class "progress-indicator" ]
                         [ text
                             ((humanReadableDiskValue helpers progress.transferred)
