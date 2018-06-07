@@ -1,9 +1,10 @@
-port module Dashboard exposing (..)
+module Dashboard exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Model.File as File exposing (File)
+import Ports
 import Time exposing (Time)
 import Locale exposing (Helpers)
 
@@ -52,9 +53,6 @@ samePath a b =
     a.path == b.path
 
 
-port openFile : String -> Cmd msg
-
-
 update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
     case msg of
@@ -75,7 +73,7 @@ update msg model =
                 ( { model | files = files }, Cmd.none )
 
         OpenFile file ->
-            ( model, openFile file.path )
+            ( model, Ports.openFile file.path )
 
         Tick now ->
             ( { model | now = now }, Cmd.none )

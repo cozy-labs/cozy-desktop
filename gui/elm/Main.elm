@@ -1,4 +1,4 @@
-port module Main exposing (..)
+module Main exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -8,7 +8,7 @@ import Json.Decode as Json
 import Time exposing (Time)
 import Locale exposing (Helpers, Locale)
 import Model exposing (..)
-import Model.File exposing (File)
+import Ports
 import Help
 import Icons
 import Wizard
@@ -218,10 +218,10 @@ update msg model =
             ( { model | status = Error error }, Cmd.none )
 
         GoToCozy ->
-            ( model, gotocozy () )
+            ( model, Ports.gotocozy () )
 
         GoToFolder ->
-            ( model, gotofolder () )
+            ( model, Ports.gotofolder () )
 
         GoToTab tab ->
             let
@@ -274,114 +274,36 @@ update msg model =
 
 
 -- SUBSCRIPTIONS
-
-
-port registrationError : (String -> msg) -> Sub msg
-
-
-port registrationDone : (Bool -> msg) -> Sub msg
-
-
-port folderError : (String -> msg) -> Sub msg
-
-
-port folder : (Folder.Model -> msg) -> Sub msg
-
-
-port synchonization : (( String, String ) -> msg) -> Sub msg
-
-
-port newRelease : (( String, String ) -> msg) -> Sub msg
-
-
-port gototab : (String -> msg) -> Sub msg
-
-
-port gotocozy : () -> Cmd msg
-
-
-port gotofolder : () -> Cmd msg
-
-
-port offline : (Bool -> msg) -> Sub msg
-
-
-port remoteWarnings : (List RemoteWarning -> msg) -> Sub msg
-
-
-port userActionRequired : (UserActionRequiredError -> msg) -> Sub msg
-
-
-port updated : (Bool -> msg) -> Sub msg
-
-
-port syncing : (Int -> msg) -> Sub msg
-
-
-port squashPrepMerge : (Bool -> msg) -> Sub msg
-
-
-port buffering : (Bool -> msg) -> Sub msg
-
-
-port transfer : (File -> msg) -> Sub msg
-
-
-port remove : (File -> msg) -> Sub msg
-
-
-port diskSpace : (DiskSpace -> msg) -> Sub msg
-
-
-port syncError : (String -> msg) -> Sub msg
-
-
-port autolaunch : (Bool -> msg) -> Sub msg
-
-
-port mail : (Maybe String -> msg) -> Sub msg
-
-
-port cancelUnlink : (Bool -> msg) -> Sub msg
-
-
-port updateDownloading : (Maybe Progress -> msg) -> Sub msg
-
-
-port updateError : (String -> msg) -> Sub msg
-
-
-
 -- https://github.com/elm-lang/elm-compiler/issues/1367
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ registrationError (WizardMsg << Wizard.AddressMsg << Address.RegistrationError)
-        , registrationDone (always (WizardMsg Wizard.RegistrationDone))
-        , folderError (WizardMsg << Wizard.FolderMsg << Folder.SetError)
-        , folder (WizardMsg << Wizard.FolderMsg << Folder.FillFolder)
-        , synchonization SyncStart
-        , newRelease (SettingsMsg << Settings.NewRelease)
-        , gototab (GoToStrTab)
+        [ Ports.registrationError (WizardMsg << Wizard.AddressMsg << Address.RegistrationError)
+        , Ports.registrationDone (always (WizardMsg Wizard.RegistrationDone))
+        , Ports.folderError (WizardMsg << Wizard.FolderMsg << Folder.SetError)
+        , Ports.folder (WizardMsg << Wizard.FolderMsg << Folder.FillFolder)
+        , Ports.synchonization SyncStart
+        , Ports.newRelease (SettingsMsg << Settings.NewRelease)
+        , Ports.gototab (GoToStrTab)
         , Time.every Time.second (DashboardMsg << Dashboard.Tick)
-        , transfer (DashboardMsg << Dashboard.Transfer)
-        , remove (DashboardMsg << Dashboard.Remove)
-        , diskSpace (SettingsMsg << Settings.UpdateDiskSpace)
-        , syncError (SetError)
-        , offline (always GoOffline)
-        , remoteWarnings (RemoteWarnings)
-        , userActionRequired UserActionRequired
-        , buffering (always StartBuffering)
-        , squashPrepMerge (always StartSquashPrepMerging)
-        , updated (always Updated)
-        , syncing StartSyncing
-        , mail (HelpMsg << Help.MailSent)
-        , autolaunch (SettingsMsg << Settings.AutoLaunchSet)
-        , cancelUnlink (always (SettingsMsg Settings.CancelUnlink))
-        , updateDownloading (UpdaterMsg << Updater.UpdateDownloading)
-        , updateError (UpdaterMsg << Updater.UpdateError)
+        , Ports.transfer (DashboardMsg << Dashboard.Transfer)
+        , Ports.remove (DashboardMsg << Dashboard.Remove)
+        , Ports.diskSpace (SettingsMsg << Settings.UpdateDiskSpace)
+        , Ports.syncError (SetError)
+        , Ports.offline (always GoOffline)
+        , Ports.remoteWarnings (RemoteWarnings)
+        , Ports.userActionRequired UserActionRequired
+        , Ports.buffering (always StartBuffering)
+        , Ports.squashPrepMerge (always StartSquashPrepMerging)
+        , Ports.updated (always Updated)
+        , Ports.syncing StartSyncing
+        , Ports.mail (HelpMsg << Help.MailSent)
+        , Ports.autolaunch (SettingsMsg << Settings.AutoLaunchSet)
+        , Ports.cancelUnlink (always (SettingsMsg Settings.CancelUnlink))
+        , Ports.updateDownloading (UpdaterMsg << Updater.UpdateDownloading)
+        , Ports.updateError (UpdaterMsg << Updater.UpdateError)
         ]
 
 

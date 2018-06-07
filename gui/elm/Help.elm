@@ -1,9 +1,10 @@
-port module Help exposing (..)
+module Help exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import List
+import Ports
 import String
 import Locale exposing (Helpers, Translate)
 
@@ -60,9 +61,6 @@ type Msg
     | MailSent (Maybe String)
 
 
-port sendMail : String -> Cmd msg
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case
@@ -72,7 +70,9 @@ update msg model =
             ( { model | body = Just body, status = Writing }, Cmd.none )
 
         SendMail translate ->
-            ( { model | status = Sending }, sendMail (bodyOrDefault translate model) )
+            ( { model | status = Sending }
+            , Ports.sendMail (bodyOrDefault translate model)
+            )
 
         MailSent Nothing ->
             ( { model | status = Success }, Cmd.none )

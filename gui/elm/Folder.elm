@@ -1,4 +1,4 @@
-port module Folder exposing (..)
+module Folder exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -6,6 +6,7 @@ import Html.Events exposing (..)
 import Icons exposing (..)
 import Locale exposing (Helpers)
 import Model.SyncFolderConfig as SyncFolderConfig exposing (SyncFolderConfig)
+import Ports
 
 
 -- MODEL
@@ -36,19 +37,13 @@ type Msg
     | StartSync
 
 
-port chooseFolder : () -> Cmd msg
-
-
-port startSync : String -> Cmd msg
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case
         msg
     of
         ChooseFolder ->
-            ( model, chooseFolder () )
+            ( model, Ports.chooseFolder () )
 
         FillFolder model ->
             ( model, Cmd.none )
@@ -65,7 +60,7 @@ update msg model =
             )
 
         StartSync ->
-            ( model, startSync model.folder )
+            ( model, Ports.startSync model.folder )
 
 
 

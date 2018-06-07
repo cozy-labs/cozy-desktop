@@ -1,10 +1,11 @@
-port module Settings exposing (..)
+module Settings exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Locale exposing (Helpers)
 import Model exposing (DiskSpace)
+import Ports
 
 
 -- MODEL
@@ -55,34 +56,19 @@ type Msg
     | CloseApp
 
 
-port showHelp : () -> Cmd msg
-
-
-port unlinkCozy : () -> Cmd msg
-
-
-port autoLauncher : Bool -> Cmd msg
-
-
-port quitAndInstall : () -> Cmd msg
-
-
-port closeApp : () -> Cmd msg
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case
         msg
     of
         SetAutoLaunch autoLaunch ->
-            ( model, autoLauncher autoLaunch )
+            ( model, Ports.autoLauncher autoLaunch )
 
         AutoLaunchSet autoLaunch ->
             ( { model | autoLaunch = autoLaunch }, Cmd.none )
 
         QuitAndInstall ->
-            ( model, quitAndInstall () )
+            ( model, Ports.quitAndInstall () )
 
         NewRelease ( notes, name ) ->
             ( { model | newRelease = Just ( notes, name ) }, Cmd.none )
@@ -94,16 +80,16 @@ update msg model =
             ( { model | disk = disk }, Cmd.none )
 
         UnlinkCozy ->
-            ( { model | busyUnlinking = True }, unlinkCozy () )
+            ( { model | busyUnlinking = True }, Ports.unlinkCozy () )
 
         CancelUnlink ->
             ( { model | busyUnlinking = False }, Cmd.none )
 
         ShowHelp ->
-            ( model, showHelp () )
+            ( model, Ports.showHelp () )
 
         CloseApp ->
-            ( { model | busyQuitting = True }, closeApp () )
+            ( { model | busyQuitting = True }, Ports.closeApp () )
 
 
 

@@ -1,11 +1,11 @@
-port module Address exposing (..)
+module Address exposing (..)
 
 import Erl
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Ports
 import String exposing (contains)
-import Focus exposing (focus)
 import Locale exposing (Helpers)
 import Util.Keyboard as Keyboard
 import Icons
@@ -40,13 +40,10 @@ type Msg
     | CorrectAddress
 
 
-port registerRemote : String -> Cmd msg
-
-
 setError : Model -> String -> ( Model, Cmd msg )
 setError model message =
     ( { model | error = message, busy = False }
-    , focus ".wizard__address"
+    , Ports.focus ".wizard__address"
     )
 
 
@@ -129,7 +126,7 @@ update msg model =
                 setError model "Address Cozy not cosy"
             else
                 ( { model | busy = True, address = correctAddress model.address }
-                , registerRemote (correctAddress model.address)
+                , Ports.registerRemote (correctAddress model.address)
                 )
 
         RegistrationError error ->

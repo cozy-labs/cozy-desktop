@@ -2,8 +2,8 @@ module Wizard exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Focus exposing (focus)
 import Locale exposing (Helpers)
+import Ports
 import Welcome
 import Address
 import Folder
@@ -58,7 +58,9 @@ update msg model =
                 subMsg
             of
                 Welcome.NextPage ->
-                    ( { model | page = AddressPage }, focus ".wizard__address" )
+                    ( { model | page = AddressPage }
+                    , Ports.focus ".wizard__address"
+                    )
 
         AddressMsg subMsg ->
             let
