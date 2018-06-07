@@ -329,7 +329,7 @@ port transfer : (Dashboard.File -> msg) -> Sub msg
 port remove : (Dashboard.File -> msg) -> Sub msg
 
 
-port diskSpace : (Settings.DiskSpace -> msg) -> Sub msg
+port diskSpace : (DiskSpace -> msg) -> Sub msg
 
 
 port syncError : (String -> msg) -> Sub msg

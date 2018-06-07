@@ -4,15 +4,10 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Locale exposing (Helpers)
+import Model exposing (DiskSpace)
 
 
 -- MODEL
-
-
-type alias DiskSpace =
-    { used : Float
-    , quota : Float
-    }
 
 
 type alias Model =

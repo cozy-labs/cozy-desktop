@@ -36,3 +36,9 @@ type alias UserActionRequiredError =
         { self : String
         }
     }
+
+
+type alias DiskSpace =
+    { used : Float
+    , quota : Float
+    }
