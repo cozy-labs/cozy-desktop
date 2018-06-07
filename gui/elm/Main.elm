@@ -135,8 +135,7 @@ init flags =
 
 
 type Msg
-    = NoOp
-    | WizardMsg Wizard.Msg
+    = WizardMsg Wizard.Msg
     | TrayMsg Tray.Msg
     | HelpMsg Help.Msg
     | UpdaterMsg Updater.Msg
@@ -145,9 +144,6 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model, Cmd.none )
-
         WizardMsg subMsg ->
             let
                 ( wizard_, cmd ) =
