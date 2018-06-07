@@ -16,8 +16,8 @@ type alias File =
     }
 
 
-splitName : File -> ( String, String )
-splitName { filename } =
+splitName : String -> ( String, String )
+splitName filename =
     case List.reverse (String.split "." filename) of
         [] ->
             ( "", "" )

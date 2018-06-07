@@ -93,7 +93,7 @@ renderFile : Helpers -> Model -> File -> Html Msg
 renderFile helpers model file =
     let
         ( basename, extname ) =
-            File.splitName file
+            File.splitName file.filename
     in
         div
             [ class "file-line"

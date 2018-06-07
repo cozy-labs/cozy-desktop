@@ -1,13 +1,13 @@
 module AddressTest exposing (..)
 
-import Address exposing (correctAddress)
+import Window.Onboarding.Address exposing (correctAddress)
 import Expect
 import Test exposing (..)
 
 
 suite : Test
 suite =
-    describe "Address"
+    describe "Window.Onboarding.Address"
         [ describe "correctAddress"
             [ test "cozy-hosted https" <|
                 \_ ->
