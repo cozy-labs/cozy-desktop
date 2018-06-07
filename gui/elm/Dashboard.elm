@@ -42,6 +42,25 @@ maxActivities =
     250
 
 
+splitFileName : String -> ( String, String )
+splitFileName filename =
+    case List.reverse (String.split "." filename) of
+        [] ->
+            ( "", "" )
+
+        [ rest ] ->
+            ( rest, "" )
+
+        [ ext, rest ] ->
+            if rest == "" then
+                ( "." ++ ext, "" )
+            else
+                ( rest, "." ++ ext )
+
+        ext :: rest ->
+            ( (String.join "." (List.reverse rest)), "." ++ ext )
+
+
 
 -- UPDATE
 
@@ -103,7 +122,7 @@ renderFile : Helpers -> Model -> File -> Html Msg
 renderFile helpers model file =
     let
         ( basename, extname ) =
-            Helpers.splitFileName file.filename
+            splitFileName file.filename
     in
         div
             [ class "file-line"
