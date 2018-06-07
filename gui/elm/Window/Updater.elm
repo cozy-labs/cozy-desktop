@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Locale exposing (Helpers)
 import Model exposing (Progress)
+import Ports
 
 
 -- MODEL
@@ -41,6 +42,18 @@ update msg model =
 
         UpdateError msg ->
             ( { model | error = Just msg }, Cmd.none )
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ Ports.updateDownloading UpdateDownloading
+        , Ports.updateError UpdateError
+        ]
 
 
 

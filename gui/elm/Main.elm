@@ -3,7 +3,6 @@ module Main exposing (..)
 import Html exposing (..)
 import Dict exposing (Dict)
 import Json.Decode as Json
-import Time exposing (Time)
 import Locale exposing (Helpers, Locale)
 import Model exposing (..)
 import Ports
@@ -185,31 +184,10 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        -- TODO: Move subscriptions to the corresponding windows
-        [ Ports.registrationError (OnboardingMsg << Onboarding.AddressMsg << Address.RegistrationError)
-        , Ports.registrationDone (always (OnboardingMsg Onboarding.RegistrationDone))
-        , Ports.folderError (OnboardingMsg << Onboarding.FolderMsg << Folder.SetError)
-        , Ports.folder (OnboardingMsg << Onboarding.FolderMsg << Folder.FillFolder)
-        , Ports.synchonization (TrayMsg << Tray.SyncStart)
-        , Ports.newRelease (TrayMsg << Tray.SettingsMsg << Settings.NewRelease)
-        , Ports.gototab (TrayMsg << Tray.GoToStrTab)
-        , Time.every Time.second (TrayMsg << Tray.DashboardMsg << Dashboard.Tick)
-        , Ports.transfer (TrayMsg << Tray.DashboardMsg << Dashboard.Transfer)
-        , Ports.remove (TrayMsg << Tray.DashboardMsg << Dashboard.Remove)
-        , Ports.diskSpace (TrayMsg << Tray.SettingsMsg << Settings.UpdateDiskSpace)
-        , Ports.syncError (TrayMsg << Tray.SetError)
-        , Ports.offline (TrayMsg << (always Tray.GoOffline))
-        , Ports.remoteWarnings (TrayMsg << Tray.RemoteWarnings)
-        , Ports.userActionRequired (TrayMsg << Tray.UserActionRequired)
-        , Ports.buffering (TrayMsg << (always Tray.StartBuffering))
-        , Ports.squashPrepMerge (TrayMsg << (always Tray.StartSquashPrepMerging))
-        , Ports.updated (TrayMsg << (always Tray.Updated))
-        , Ports.syncing (TrayMsg << Tray.StartSyncing)
-        , Ports.mail (HelpMsg << Help.MailSent)
-        , Ports.autolaunch (TrayMsg << Tray.SettingsMsg << Settings.AutoLaunchSet)
-        , Ports.cancelUnlink (TrayMsg << (always (Tray.SettingsMsg Settings.CancelUnlink)))
-        , Ports.updateDownloading (UpdaterMsg << Updater.UpdateDownloading)
-        , Ports.updateError (UpdaterMsg << Updater.UpdateError)
+        [ Help.subscriptions model.help |> Sub.map HelpMsg
+        , Onboarding.subscriptions model.onboarding |> Sub.map OnboardingMsg
+        , Tray.subscriptions model.tray |> Sub.map TrayMsg
+        , Updater.subscriptions model.updater |> Sub.map UpdaterMsg
         ]
 
 

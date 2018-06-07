@@ -4,6 +4,7 @@ module Window.Tray
         , Msg(..)
         , Page(..)
         , init
+        , subscriptions
         , update
         , view
         )
@@ -15,10 +16,14 @@ import Icons
 import Locale exposing (Helpers)
 import Model exposing (..)
 import Ports
+import Time exposing (Time)
 import Window.Tray.Dashboard as Dashboard
 import Window.Tray.Settings as Settings
 import Window.Tray.StatusBar as StatusBar
 import Window.Tray.UserActionRequiredPage as UserActionRequiredPage
+
+
+-- MODEL
 
 
 type Page
@@ -47,6 +52,10 @@ init page version platform =
     , status = Starting
     , userActionRequired = Nothing
     }
+
+
+
+-- UPDATE
 
 
 type Msg
@@ -152,6 +161,37 @@ update msg model =
 
                 _ ->
                     update (GoToTab DashboardPage) model
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ Ports.synchonization SyncStart
+        , Ports.newRelease (SettingsMsg << Settings.NewRelease)
+        , Ports.gototab GoToStrTab
+        , Time.every Time.second (DashboardMsg << Dashboard.Tick)
+        , Ports.transfer (DashboardMsg << Dashboard.Transfer)
+        , Ports.remove (DashboardMsg << Dashboard.Remove)
+        , Ports.diskSpace (SettingsMsg << Settings.UpdateDiskSpace)
+        , Ports.syncError SetError
+        , Ports.offline (always GoOffline)
+        , Ports.remoteWarnings RemoteWarnings
+        , Ports.userActionRequired UserActionRequired
+        , Ports.buffering (always StartBuffering)
+        , Ports.squashPrepMerge (always StartSquashPrepMerging)
+        , Ports.updated (always Updated)
+        , Ports.syncing StartSyncing
+        , Ports.autolaunch (SettingsMsg << Settings.AutoLaunchSet)
+        , Ports.cancelUnlink (always (SettingsMsg Settings.CancelUnlink))
+        ]
+
+
+
+-- VIEW
 
 
 view : Helpers -> Model -> Html Msg

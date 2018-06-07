@@ -77,6 +77,20 @@ update msg model =
 
 
 
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ Ports.registrationError (AddressMsg << Address.RegistrationError)
+        , Ports.registrationDone (always RegistrationDone)
+        , Ports.folderError (FolderMsg << Folder.SetError)
+        , Ports.folder (FolderMsg << Folder.FillFolder)
+        ]
+
+
+
 -- VIEW
 
 

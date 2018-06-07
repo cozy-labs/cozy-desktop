@@ -82,6 +82,15 @@ update msg model =
 
 
 
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Ports.mail MailSent
+
+
+
 -- VIEW
 
 
