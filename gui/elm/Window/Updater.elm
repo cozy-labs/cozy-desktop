@@ -1,9 +1,9 @@
 module Window.Updater exposing (..)
 
+import Data.Progress exposing (Progress)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Locale exposing (Helpers)
-import Model exposing (Progress)
 import Ports
 
 

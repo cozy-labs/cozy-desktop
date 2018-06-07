@@ -1,10 +1,10 @@
 module Window.Tray.Settings exposing (..)
 
+import Data.DiskSpace exposing (DiskSpace)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Locale exposing (Helpers)
-import Model exposing (DiskSpace)
 import Ports
 
 

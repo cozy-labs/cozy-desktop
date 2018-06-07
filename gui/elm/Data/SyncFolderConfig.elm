@@ -1,4 +1,4 @@
-module Model.SyncFolderConfig
+module Data.SyncFolderConfig
     exposing
         ( SyncFolderConfig
         , isValid

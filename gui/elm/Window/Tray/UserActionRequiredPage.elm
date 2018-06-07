@@ -1,8 +1,8 @@
 module Window.Tray.UserActionRequiredPage exposing (view)
 
+import Data.UserActionRequiredError exposing (UserActionRequiredError)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Model exposing (UserActionRequiredError)
 import Locale exposing (Helpers)
 
 

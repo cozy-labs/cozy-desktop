@@ -1,4 +1,4 @@
-module Model.File
+module Data.File
     exposing
         ( File
         , splitName

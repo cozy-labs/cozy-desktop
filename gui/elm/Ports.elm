@@ -1,14 +1,11 @@
 port module Ports exposing (..)
 
-import Model
-    exposing
-        ( DiskSpace
-        , Progress
-        , RemoteWarning
-        , UserActionRequiredError
-        )
-import Model.File exposing (File)
-import Model.SyncFolderConfig exposing (SyncFolderConfig)
+import Data.DiskSpace exposing (DiskSpace)
+import Data.File exposing (File)
+import Data.Progress exposing (Progress)
+import Data.RemoteWarning exposing (RemoteWarning)
+import Data.SyncFolderConfig exposing (SyncFolderConfig)
+import Data.UserActionRequiredError exposing (UserActionRequiredError)
 
 
 port autoLauncher : Bool -> Cmd msg

@@ -1,11 +1,11 @@
 module Window.Onboarding.Folder exposing (..)
 
+import Data.SyncFolderConfig as SyncFolderConfig exposing (SyncFolderConfig)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Icons exposing (..)
 import Locale exposing (Helpers)
-import Model.SyncFolderConfig as SyncFolderConfig exposing (SyncFolderConfig)
 import Ports
 
 

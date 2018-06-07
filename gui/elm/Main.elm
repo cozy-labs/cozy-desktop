@@ -1,10 +1,10 @@
 module Main exposing (..)
 
+import Data.Platform exposing (Platform(..))
 import Html exposing (..)
 import Dict exposing (Dict)
 import Json.Decode as Json
 import Locale exposing (Helpers, Locale)
-import Model exposing (..)
 import Ports
 import Window.Tray as Tray
 import Window.Tray.Dashboard as Dashboard

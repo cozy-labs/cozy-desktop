@@ -9,12 +9,15 @@ module Window.Tray
         , view
         )
 
+import Data.Platform exposing (Platform)
+import Data.RemoteWarning exposing (RemoteWarning)
+import Data.Status exposing (Status(..))
+import Data.UserActionRequiredError exposing (UserActionRequiredError)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Icons
 import Locale exposing (Helpers)
-import Model exposing (..)
 import Ports
 import Time exposing (Time)
 import Window.Tray.Dashboard as Dashboard
@@ -118,7 +121,7 @@ update msg model =
 
         UserActionRequired error ->
             ( { model
-                | status = Model.UserActionRequired
+                | status = Data.Status.UserActionRequired
                 , userActionRequired = Just error
               }
             , Cmd.none

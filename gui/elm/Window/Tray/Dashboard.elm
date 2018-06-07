@@ -1,9 +1,9 @@
 module Window.Tray.Dashboard exposing (..)
 
+import Data.File as File exposing (File)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Model.File as File exposing (File)
 import Ports
 import Time exposing (Time)
 import Locale exposing (Helpers)
