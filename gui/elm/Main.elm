@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Data.Platform exposing (Platform(..))
+import Data.Platform as Platform exposing (Platform)
 import Html exposing (..)
 import Dict exposing (Dict)
 import Json.Decode as Json
@@ -99,15 +99,7 @@ init flags =
                     Tray.DashboardPage
 
         platform =
-            case flags.platform of
-                "win32" ->
-                    Windows
-
-                "darwin" ->
-                    Darwin
-
-                _ ->
-                    Linux
+            Platform.fromName flags.platform
 
         model =
             { localeIdentifier = flags.locale
