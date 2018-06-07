@@ -1,4 +1,4 @@
-module Helpers exposing (..)
+module Locale exposing (..)
 
 import Dict exposing (Dict)
 import Regex exposing (replace, regex)
@@ -33,8 +33,8 @@ type alias Helpers =
     }
 
 
-forLocale : Locale -> Helpers
-forLocale locale =
+helpers : Locale -> Helpers
+helpers locale =
     Helpers (translate locale)
         (pluralize locale)
         (distance_of_time_in_words locale)

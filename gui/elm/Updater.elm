@@ -2,7 +2,7 @@ module Updater exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Helpers exposing (Helpers)
+import Locale exposing (Helpers)
 
 
 -- MODEL

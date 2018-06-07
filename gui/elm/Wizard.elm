@@ -3,7 +3,7 @@ module Wizard exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Focus exposing (focus)
-import Helpers exposing (Helpers)
+import Locale exposing (Helpers)
 import Welcome
 import Address
 import Folder

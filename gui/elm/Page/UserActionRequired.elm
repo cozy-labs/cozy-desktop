@@ -3,7 +3,7 @@ module Page.UserActionRequired exposing (view)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Model exposing (UserActionRequiredError)
-import Helpers exposing (Helpers)
+import Locale exposing (Helpers)
 
 
 include_GDPR_link : String -> String -> List (Html msg)

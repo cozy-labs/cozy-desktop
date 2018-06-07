@@ -4,7 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Icons exposing (..)
-import Helpers exposing (Helpers)
+import Locale exposing (Helpers)
 import Svg exposing (svg, node, path)
 import Svg.Attributes exposing (fill, d, viewBox)
 

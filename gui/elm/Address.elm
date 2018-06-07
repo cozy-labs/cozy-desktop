@@ -6,7 +6,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import String exposing (contains)
 import Focus exposing (focus)
-import Helpers exposing (Helpers)
+import Locale exposing (Helpers)
 import OnEnter exposing (onEnter)
 import Icons
 

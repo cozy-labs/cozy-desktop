@@ -6,7 +6,7 @@ import Html.Events exposing (..)
 import Dict exposing (Dict)
 import Json.Decode as Json
 import Time exposing (Time)
-import Helpers exposing (Helpers, Locale)
+import Locale exposing (Helpers, Locale)
 import Model exposing (..)
 import Help
 import Icons
@@ -442,7 +442,7 @@ view model =
                     value
 
         helpers =
-            Helpers.forLocale locale
+            Locale.helpers locale
     in
         case
             model.page

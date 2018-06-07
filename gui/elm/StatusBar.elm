@@ -2,7 +2,7 @@ module StatusBar exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Helpers exposing (..)
+import Locale exposing (..)
 import Model exposing (Status(..), Platform(..))
 
 

@@ -5,7 +5,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import List
 import String
-import Helpers exposing (Helpers, Translate)
+import Locale exposing (Helpers, Translate)
 
 
 -- MODEL
