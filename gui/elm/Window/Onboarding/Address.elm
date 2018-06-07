@@ -1,4 +1,4 @@
-module Window.Wizard.Address exposing (..)
+module Window.Onboarding.Address exposing (..)
 
 import Erl
 import Html exposing (..)

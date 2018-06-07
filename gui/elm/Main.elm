@@ -12,9 +12,9 @@ import Window.Tray.Dashboard as Dashboard
 import Window.Tray.Settings as Settings
 import Window.Help as Help
 import Window.Updater as Updater
-import Window.Wizard as Wizard
-import Window.Wizard.Address as Address
-import Window.Wizard.Folder as Folder
+import Window.Onboarding as Onboarding
+import Window.Onboarding.Address as Address
+import Window.Onboarding.Folder as Folder
 
 
 main : Program Flags Model Msg
@@ -47,7 +47,7 @@ type alias Model =
     , window : Window
 
     -- TODO: Attach submodels to windows
-    , wizard : Wizard.Model
+    , onboarding : Onboarding.Model
     , tray : Tray.Model
     , updater : Updater.Model
     , help : Help.Model
@@ -56,9 +56,9 @@ type alias Model =
 
 type Window
     = HelpWindow
+    | OnboardingWindow
     | TrayWindow
     | UpdaterWindow
-    | WizardWindow
 
 
 init : Flags -> ( Model, Cmd Msg )
@@ -77,7 +77,7 @@ init flags =
         window =
             case flags.page of
                 "onboarding" ->
-                    WizardWindow
+                    OnboardingWindow
 
                 "help" ->
                     HelpWindow
@@ -94,7 +94,7 @@ init flags =
                 -- Temporarily use the MsgMechanism to
                 -- get to the 2Panes page.
                 _ ->
-                    WizardWindow
+                    OnboardingWindow
 
         trayPage =
             case flags.page of
@@ -121,7 +121,7 @@ init flags =
             , window = window
 
             -- TODO: Attach submodels to windows
-            , wizard = Wizard.init flags.folder flags.platform
+            , onboarding = Onboarding.init flags.folder flags.platform
             , tray = Tray.init trayPage flags.version platform
             , updater = Updater.init flags.version
             , help = Help.init
@@ -135,7 +135,7 @@ init flags =
 
 
 type Msg
-    = WizardMsg Wizard.Msg
+    = OnboardingMsg Onboarding.Msg
     | TrayMsg Tray.Msg
     | HelpMsg Help.Msg
     | UpdaterMsg Updater.Msg
@@ -144,12 +144,14 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        WizardMsg subMsg ->
+        OnboardingMsg subMsg ->
             let
-                ( wizard_, cmd ) =
-                    Wizard.update subMsg model.wizard
+                ( onboarding, cmd ) =
+                    Onboarding.update subMsg model.onboarding
             in
-                ( { model | wizard = wizard_ }, Cmd.map WizardMsg cmd )
+                ( { model | onboarding = onboarding }
+                , Cmd.map OnboardingMsg cmd
+                )
 
         TrayMsg subMsg ->
             let
@@ -184,10 +186,10 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         -- TODO: Move subscriptions to the corresponding windows
-        [ Ports.registrationError (WizardMsg << Wizard.AddressMsg << Address.RegistrationError)
-        , Ports.registrationDone (always (WizardMsg Wizard.RegistrationDone))
-        , Ports.folderError (WizardMsg << Wizard.FolderMsg << Folder.SetError)
-        , Ports.folder (WizardMsg << Wizard.FolderMsg << Folder.FillFolder)
+        [ Ports.registrationError (OnboardingMsg << Onboarding.AddressMsg << Address.RegistrationError)
+        , Ports.registrationDone (always (OnboardingMsg Onboarding.RegistrationDone))
+        , Ports.folderError (OnboardingMsg << Onboarding.FolderMsg << Folder.SetError)
+        , Ports.folder (OnboardingMsg << Onboarding.FolderMsg << Folder.FillFolder)
         , Ports.synchonization (TrayMsg << Tray.SyncStart)
         , Ports.newRelease (TrayMsg << Tray.SettingsMsg << Settings.NewRelease)
         , Ports.gototab (TrayMsg << Tray.GoToStrTab)
@@ -232,8 +234,8 @@ view model =
             Locale.helpers locale
     in
         case model.window of
-            WizardWindow ->
-                Html.map WizardMsg (Wizard.view helpers model.wizard)
+            OnboardingWindow ->
+                Html.map OnboardingMsg (Onboarding.view helpers model.onboarding)
 
             HelpWindow ->
                 Html.map HelpMsg (Help.view helpers model.help)

@@ -1,12 +1,12 @@
-module Window.Wizard exposing (..)
+module Window.Onboarding exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Locale exposing (Helpers)
 import Ports
-import Window.Wizard.Address as Address
-import Window.Wizard.Folder as Folder
-import Window.Wizard.Welcome as Welcome
+import Window.Onboarding.Address as Address
+import Window.Onboarding.Folder as Folder
+import Window.Onboarding.Welcome as Welcome
 
 
 -- MODEL

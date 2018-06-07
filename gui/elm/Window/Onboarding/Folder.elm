@@ -1,4 +1,4 @@
-module Window.Wizard.Folder exposing (..)
+module Window.Onboarding.Folder exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
