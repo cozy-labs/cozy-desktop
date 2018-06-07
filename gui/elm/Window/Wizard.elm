@@ -40,8 +40,7 @@ init folder platform =
 
 
 type Msg
-    = NoOp
-    | WelcomeMsg Welcome.Msg
+    = WelcomeMsg Welcome.Msg
     | AddressMsg Address.Msg
     | RegistrationDone
     | FolderMsg Folder.Msg
@@ -50,9 +49,6 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model, Cmd.none )
-
         WelcomeMsg subMsg ->
             case
                 subMsg
