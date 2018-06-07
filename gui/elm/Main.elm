@@ -5,15 +5,10 @@ import Html exposing (..)
 import Dict exposing (Dict)
 import Json.Decode as Json
 import Locale exposing (Helpers, Locale)
-import Ports
 import Window.Tray as Tray
-import Window.Tray.Dashboard as Dashboard
-import Window.Tray.Settings as Settings
 import Window.Help as Help
 import Window.Updater as Updater
 import Window.Onboarding as Onboarding
-import Window.Onboarding.Address as Address
-import Window.Onboarding.Folder as Folder
 
 
 main : Program Flags Model Msg
