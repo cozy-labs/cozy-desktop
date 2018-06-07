@@ -1,4 +1,4 @@
-module Page.UserActionRequired exposing (view)
+module View.UserActionRequiredPage exposing (view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)

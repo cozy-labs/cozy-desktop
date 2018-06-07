@@ -17,7 +17,7 @@ import Dashboard
 import Settings
 import Updater
 import StatusBar
-import Page.UserActionRequired
+import View.UserActionRequiredPage as UserActionRequiredPage
 
 
 main : Program Flags Model Msg
@@ -462,7 +462,7 @@ view model =
                     [ (StatusBar.view helpers model.status model.platform)
                     , case model.page of
                         UserActionRequiredPage error ->
-                            Page.UserActionRequired.view helpers error
+                            UserActionRequiredPage.view helpers error
 
                         _ ->
                             section [ class "two-panes" ]
