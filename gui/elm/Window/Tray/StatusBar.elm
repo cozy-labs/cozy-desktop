@@ -1,4 +1,4 @@
-module StatusBar exposing (..)
+module Window.Tray.StatusBar exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)

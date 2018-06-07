@@ -1,4 +1,4 @@
-module Dashboard exposing (..)
+module Window.Tray.Dashboard exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)

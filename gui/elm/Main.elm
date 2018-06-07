@@ -9,16 +9,16 @@ import Time exposing (Time)
 import Locale exposing (Helpers, Locale)
 import Model exposing (..)
 import Ports
-import Help
 import Icons
-import Wizard
-import Address
-import Folder
-import Dashboard
-import Settings
-import Updater
-import StatusBar
-import View.UserActionRequiredPage as UserActionRequiredPage
+import Window.Tray.Dashboard as Dashboard
+import Window.Tray.Settings as Settings
+import Window.Tray.StatusBar as StatusBar
+import Window.Tray.UserActionRequiredPage as UserActionRequiredPage
+import Window.Help as Help
+import Window.Updater as Updater
+import Window.Wizard as Wizard
+import Window.Wizard.Address as Address
+import Window.Wizard.Folder as Folder
 
 
 main : Program Flags Model Msg

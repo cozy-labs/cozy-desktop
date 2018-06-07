@@ -1,4 +1,4 @@
-module Welcome exposing (..)
+module Window.Wizard.Welcome exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)

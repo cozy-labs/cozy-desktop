@@ -1,4 +1,4 @@
-module Updater exposing (..)
+module Window.Updater exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)

@@ -1,4 +1,4 @@
-module Help exposing (..)
+module Window.Help exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)

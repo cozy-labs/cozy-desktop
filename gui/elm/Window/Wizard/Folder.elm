@@ -1,4 +1,4 @@
-module Folder exposing (..)
+module Window.Wizard.Folder exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)

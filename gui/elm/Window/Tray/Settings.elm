@@ -1,4 +1,4 @@
-module Settings exposing (..)
+module Window.Tray.Settings exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
