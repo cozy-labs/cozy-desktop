@@ -7,7 +7,7 @@ import Html.Events exposing (..)
 import String exposing (contains)
 import Focus exposing (focus)
 import Locale exposing (Helpers)
-import OnEnter exposing (onEnter)
+import Util.Keyboard as Keyboard
 import Icons
 
 
@@ -175,7 +175,7 @@ view helpers model =
                         , value model.address
                         , disabled model.busy
                         , onInput FillAddress
-                        , onEnter RegisterRemote
+                        , Keyboard.onEnter RegisterRemote
                         , onBlur CorrectAddress
                         ]
                         []
