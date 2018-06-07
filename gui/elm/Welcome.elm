@@ -5,8 +5,6 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Icons exposing (..)
 import Locale exposing (Helpers)
-import Svg exposing (svg, node, path)
-import Svg.Attributes exposing (fill, d, viewBox)
 
 
 -- UPDATE
