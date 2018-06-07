@@ -8,6 +8,7 @@ import Json.Decode as Json
 import Time exposing (Time)
 import Locale exposing (Helpers, Locale)
 import Model exposing (..)
+import Model.File exposing (File)
 import Help
 import Icons
 import Wizard
@@ -323,10 +324,10 @@ port squashPrepMerge : (Bool -> msg) -> Sub msg
 port buffering : (Bool -> msg) -> Sub msg
 
 
-port transfer : (Dashboard.File -> msg) -> Sub msg
+port transfer : (File -> msg) -> Sub msg
 
 
-port remove : (Dashboard.File -> msg) -> Sub msg
+port remove : (File -> msg) -> Sub msg
 
 
 port diskSpace : (DiskSpace -> msg) -> Sub msg

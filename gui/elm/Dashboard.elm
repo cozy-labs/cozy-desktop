@@ -3,20 +3,12 @@ port module Dashboard exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Model.File as File exposing (File)
 import Time exposing (Time)
 import Locale exposing (Helpers)
 
 
 -- MODEL
-
-
-type alias File =
-    { filename : String
-    , icon : String
-    , path : String
-    , size : Int
-    , updated : Time
-    }
 
 
 type alias Model =
@@ -40,25 +32,6 @@ nbActivitiesPerPage =
 
 maxActivities =
     250
-
-
-splitFileName : String -> ( String, String )
-splitFileName filename =
-    case List.reverse (String.split "." filename) of
-        [] ->
-            ( "", "" )
-
-        [ rest ] ->
-            ( rest, "" )
-
-        [ ext, rest ] ->
-            if rest == "" then
-                ( "." ++ ext, "" )
-            else
-                ( rest, "." ++ ext )
-
-        ext :: rest ->
-            ( (String.join "." (List.reverse rest)), "." ++ ext )
 
 
 
@@ -122,7 +95,7 @@ renderFile : Helpers -> Model -> File -> Html Msg
 renderFile helpers model file =
     let
         ( basename, extname ) =
-            splitFileName file.filename
+            File.splitName file
     in
         div
             [ class "file-line"
