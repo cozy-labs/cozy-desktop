@@ -3,15 +3,10 @@ module Updater exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Locale exposing (Helpers)
+import Model exposing (Progress)
 
 
 -- MODEL
-
-
-type alias Progress =
-    { total : Float
-    , transferred : Float
-    }
 
 
 type alias Model =

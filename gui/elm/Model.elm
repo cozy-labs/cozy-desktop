@@ -42,3 +42,9 @@ type alias DiskSpace =
     { used : Float
     , quota : Float
     }
+
+
+type alias Progress =
+    { total : Float
+    , transferred : Float
+    }

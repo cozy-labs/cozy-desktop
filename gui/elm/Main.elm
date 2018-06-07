@@ -344,7 +344,7 @@ port mail : (Maybe String -> msg) -> Sub msg
 port cancelUnlink : (Bool -> msg) -> Sub msg
 
 
-port updateDownloading : (Maybe Updater.Progress -> msg) -> Sub msg
+port updateDownloading : (Maybe Progress -> msg) -> Sub msg
 
 
 port updateError : (String -> msg) -> Sub msg
