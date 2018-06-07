@@ -1,19 +1,15 @@
 module Main exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (..)
 import Dict exposing (Dict)
 import Json.Decode as Json
 import Time exposing (Time)
 import Locale exposing (Helpers, Locale)
 import Model exposing (..)
 import Ports
-import Icons
+import Window.Tray as Tray
 import Window.Tray.Dashboard as Dashboard
 import Window.Tray.Settings as Settings
-import Window.Tray.StatusBar as StatusBar
-import Window.Tray.UserActionRequiredPage as UserActionRequiredPage
 import Window.Help as Help
 import Window.Updater as Updater
 import Window.Wizard as Wizard
@@ -31,37 +27,6 @@ main =
         }
 
 
-
--- MODEL
--- type Tab
---     = DashboardPage
---     | SettingsPage
-
-
-type Page
-    = WizardPage
-    | DashboardPage
-    | SettingsPage
-    | UpdaterPage
-    | HelpPage
-    | UserActionRequiredPage UserActionRequiredError
-
-
-type alias Model =
-    { localeIdentifier : String
-    , locales : Dict String Locale
-    , page : Page
-    , wizard : Wizard.Model
-    , dashboard : Dashboard.Model
-    , settings : Settings.Model
-    , updater : Updater.Model
-    , status : Status
-    , help : Help.Model
-    , platform : Platform
-    , remoteWarnings : List RemoteWarning
-    }
-
-
 type alias Flags =
     { page : String
     , folder : String
@@ -70,6 +35,30 @@ type alias Flags =
     , platform : String
     , version : String
     }
+
+
+
+-- MODEL
+
+
+type alias Model =
+    { localeIdentifier : String
+    , locales : Dict String Locale
+    , window : Window
+
+    -- TODO: Attach submodels to windows
+    , wizard : Wizard.Model
+    , tray : Tray.Model
+    , updater : Updater.Model
+    , help : Help.Model
+    }
+
+
+type Window
+    = HelpWindow
+    | TrayWindow
+    | UpdaterWindow
+    | WizardWindow
 
 
 init : Flags -> ( Model, Cmd Msg )
@@ -85,27 +74,35 @@ init flags =
                 Err _ ->
                     Dict.empty
 
-        page =
+        window =
             case flags.page of
                 "onboarding" ->
-                    WizardPage
+                    WizardWindow
 
                 "help" ->
-                    HelpPage
+                    HelpWindow
 
                 "dashboard" ->
-                    DashboardPage
+                    TrayWindow
 
                 "settings" ->
-                    SettingsPage
+                    TrayWindow
 
                 "updater" ->
-                    UpdaterPage
+                    UpdaterWindow
 
                 -- Temporarily use the MsgMechanism to
                 -- get to the 2Panes page.
                 _ ->
-                    WizardPage
+                    WizardWindow
+
+        trayPage =
+            case flags.page of
+                "settings" ->
+                    Tray.SettingsPage
+
+                _ ->
+                    Tray.DashboardPage
 
         platform =
             case flags.platform of
@@ -120,16 +117,14 @@ init flags =
 
         model =
             { localeIdentifier = flags.locale
-            , wizard = Wizard.init flags.folder flags.platform
-            , dashboard = Dashboard.init
-            , settings = Settings.init flags.version
-            , updater = Updater.init flags.version
-            , status = Starting
-            , platform = platform
-            , help = Help.init
             , locales = locales
-            , page = page
-            , remoteWarnings = []
+            , window = window
+
+            -- TODO: Attach submodels to windows
+            , wizard = Wizard.init flags.folder flags.platform
+            , tray = Tray.init trayPage flags.version platform
+            , updater = Updater.init flags.version
+            , help = Help.init
             }
     in
         ( model, Cmd.none )
@@ -142,22 +137,7 @@ init flags =
 type Msg
     = NoOp
     | WizardMsg Wizard.Msg
-    | SyncStart ( String, String )
-    | Updated
-    | StartSyncing Int
-    | StartBuffering
-    | StartSquashPrepMerging
-    | GoOffline
-    | UserActionRequired UserActionRequiredError
-    | RemoteWarnings (List RemoteWarning)
-    | ClearCurrentWarning
-    | SetError String
-    | DashboardMsg Dashboard.Msg
-    | SettingsMsg Settings.Msg
-    | GoToCozy
-    | GoToFolder
-    | GoToTab Page
-    | GoToStrTab String
+    | TrayMsg Tray.Msg
     | HelpMsg Help.Msg
     | UpdaterMsg Updater.Msg
 
@@ -165,6 +145,9 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        NoOp ->
+            ( model, Cmd.none )
+
         WizardMsg subMsg ->
             let
                 ( wizard_, cmd ) =
@@ -172,90 +155,14 @@ update msg model =
             in
                 ( { model | wizard = wizard_ }, Cmd.map WizardMsg cmd )
 
-        SyncStart info ->
+        TrayMsg subMsg ->
             let
-                ( settings, _ ) =
-                    Settings.update (Settings.FillAddressAndDevice info) model.settings
+                ( tray, cmd ) =
+                    Tray.update subMsg model.tray
             in
-                ( { model | page = (DashboardPage), settings = settings }, Cmd.none )
-
-        Updated ->
-            ( { model | status = UpToDate }, Cmd.none )
-
-        StartSyncing n ->
-            ( { model | status = Syncing n }, Cmd.none )
-
-        StartBuffering ->
-            ( { model | status = Buffering }, Cmd.none )
-
-        StartSquashPrepMerging ->
-            ( { model | status = SquashPrepMerging }, Cmd.none )
-
-        GoOffline ->
-            ( { model | status = Offline }, Cmd.none )
-
-        UserActionRequired error ->
-            ( { model
-                | status = Model.UserActionRequired
-                , page = UserActionRequiredPage error
-              }
-            , Cmd.none
-            )
-
-        RemoteWarnings warnings ->
-            ( { model | remoteWarnings = warnings }, Cmd.none )
-
-        ClearCurrentWarning ->
-            ( { model
-                | remoteWarnings =
-                    List.tail model.remoteWarnings
-                        |> Maybe.withDefault []
-              }
-            , Cmd.none
-            )
-
-        SetError error ->
-            ( { model | status = Error error }, Cmd.none )
-
-        GoToCozy ->
-            ( model, Ports.gotocozy () )
-
-        GoToFolder ->
-            ( model, Ports.gotofolder () )
-
-        GoToTab tab ->
-            let
-                ( dashboard, cmd ) =
-                    Dashboard.update Dashboard.Reset model.dashboard
-            in
-                ( { model | page = (tab), dashboard = dashboard }, cmd )
-
-        GoToStrTab tabstr ->
-            case
-                tabstr
-            of
-                "settings" ->
-                    update (GoToTab SettingsPage) model
-
-                _ ->
-                    update (GoToTab DashboardPage) model
-
-        DashboardMsg subMsg ->
-            let
-                ( dashboard, cmd ) =
-                    Dashboard.update subMsg model.dashboard
-            in
-                ( { model | dashboard = dashboard }, cmd )
-
-        SettingsMsg subMsg ->
-            let
-                ( settings, cmd ) =
-                    Settings.update subMsg model.settings
-            in
-                ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
-
-        NoOp ->
-            ( model, Cmd.none )
+                ( { model | tray = tray }
+                , Cmd.map TrayMsg cmd
+                )
 
         HelpMsg subMsg ->
             let
@@ -280,28 +187,29 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
+        -- TODO: Move subscriptions to the corresponding windows
         [ Ports.registrationError (WizardMsg << Wizard.AddressMsg << Address.RegistrationError)
         , Ports.registrationDone (always (WizardMsg Wizard.RegistrationDone))
         , Ports.folderError (WizardMsg << Wizard.FolderMsg << Folder.SetError)
         , Ports.folder (WizardMsg << Wizard.FolderMsg << Folder.FillFolder)
-        , Ports.synchonization SyncStart
-        , Ports.newRelease (SettingsMsg << Settings.NewRelease)
-        , Ports.gototab (GoToStrTab)
-        , Time.every Time.second (DashboardMsg << Dashboard.Tick)
-        , Ports.transfer (DashboardMsg << Dashboard.Transfer)
-        , Ports.remove (DashboardMsg << Dashboard.Remove)
-        , Ports.diskSpace (SettingsMsg << Settings.UpdateDiskSpace)
-        , Ports.syncError (SetError)
-        , Ports.offline (always GoOffline)
-        , Ports.remoteWarnings (RemoteWarnings)
-        , Ports.userActionRequired UserActionRequired
-        , Ports.buffering (always StartBuffering)
-        , Ports.squashPrepMerge (always StartSquashPrepMerging)
-        , Ports.updated (always Updated)
-        , Ports.syncing StartSyncing
+        , Ports.synchonization (TrayMsg << Tray.SyncStart)
+        , Ports.newRelease (TrayMsg << Tray.SettingsMsg << Settings.NewRelease)
+        , Ports.gototab (TrayMsg << Tray.GoToStrTab)
+        , Time.every Time.second (TrayMsg << Tray.DashboardMsg << Dashboard.Tick)
+        , Ports.transfer (TrayMsg << Tray.DashboardMsg << Dashboard.Transfer)
+        , Ports.remove (TrayMsg << Tray.DashboardMsg << Dashboard.Remove)
+        , Ports.diskSpace (TrayMsg << Tray.SettingsMsg << Settings.UpdateDiskSpace)
+        , Ports.syncError (TrayMsg << Tray.SetError)
+        , Ports.offline (TrayMsg << (always Tray.GoOffline))
+        , Ports.remoteWarnings (TrayMsg << Tray.RemoteWarnings)
+        , Ports.userActionRequired (TrayMsg << Tray.UserActionRequired)
+        , Ports.buffering (TrayMsg << (always Tray.StartBuffering))
+        , Ports.squashPrepMerge (TrayMsg << (always Tray.StartSquashPrepMerging))
+        , Ports.updated (TrayMsg << (always Tray.Updated))
+        , Ports.syncing (TrayMsg << Tray.StartSyncing)
         , Ports.mail (HelpMsg << Help.MailSent)
-        , Ports.autolaunch (SettingsMsg << Settings.AutoLaunchSet)
-        , Ports.cancelUnlink (always (SettingsMsg Settings.CancelUnlink))
+        , Ports.autolaunch (TrayMsg << Tray.SettingsMsg << Settings.AutoLaunchSet)
+        , Ports.cancelUnlink (TrayMsg << (always (Tray.SettingsMsg Settings.CancelUnlink)))
         , Ports.updateDownloading (UpdaterMsg << Updater.UpdateDownloading)
         , Ports.updateError (UpdaterMsg << Updater.UpdateError)
         ]
@@ -309,46 +217,6 @@ subscriptions model =
 
 
 -- VIEW
-
-
-menu_item : Helpers -> Model -> String -> Page -> Html Msg
-menu_item helpers model title page =
-    div
-        [ classList
-            [ ( "two-panes__menu__item", True )
-            , ( "two-panes__menu__item--active", model.page == page )
-            ]
-        , onClick (GoToTab page)
-        ]
-        [ text (helpers.t ("TwoPanes " ++ title))
-        ]
-
-
-renderWarnings helpers model =
-    case ( model.page, model.remoteWarnings ) of
-        ( UserActionRequiredPage err, _ ) ->
-            text ""
-
-        ( _, { title, detail, links, code } :: _ ) ->
-            let
-                actionLabel =
-                    if code == "tos-updated" then
-                        "Warning Read"
-                    else
-                        "Warning Ok"
-            in
-                div [ class "warningbar" ]
-                    [ p [] [ text detail ]
-                    , a
-                        [ class "btn"
-                        , href links.self
-                        , onClick ClearCurrentWarning
-                        ]
-                        [ text (helpers.t actionLabel) ]
-                    ]
-
-        _ ->
-            text ""
 
 
 view : Model -> Html Msg
@@ -367,54 +235,15 @@ view model =
         helpers =
             Locale.helpers locale
     in
-        case
-            model.page
-        of
-            WizardPage ->
+        case model.window of
+            WizardWindow ->
                 Html.map WizardMsg (Wizard.view helpers model.wizard)
 
-            HelpPage ->
+            HelpWindow ->
                 Html.map HelpMsg (Help.view helpers model.help)
 
-            UpdaterPage ->
+            UpdaterWindow ->
                 Html.map UpdaterMsg (Updater.view helpers model.updater)
 
-            _ ->
-                div
-                    [ class "container" ]
-                    [ (StatusBar.view helpers model.status model.platform)
-                    , case model.page of
-                        UserActionRequiredPage error ->
-                            UserActionRequiredPage.view helpers error
-
-                        _ ->
-                            section [ class "two-panes" ]
-                                [ aside [ class "two-panes__menu" ]
-                                    [ menu_item helpers model "Recents" DashboardPage
-                                    , menu_item helpers model "Settings" SettingsPage
-                                    ]
-                                , if model.page == DashboardPage then
-                                    Html.map DashboardMsg (Dashboard.view helpers model.dashboard)
-                                  else if model.page == SettingsPage then
-                                    Html.map SettingsMsg (Settings.view helpers model.settings)
-                                  else
-                                    div [] []
-                                ]
-                    , renderWarnings helpers model
-                    , div [ class "bottom-bar" ]
-                        [ a
-                            [ href "#"
-                            , onClick GoToFolder
-                            ]
-                            [ Icons.folder 48 False
-                            , text (helpers.t "Bar GoToFolder")
-                            ]
-                        , a
-                            [ href "#"
-                            , onClick GoToCozy
-                            ]
-                            [ Icons.globe 48 False
-                            , text (helpers.t "Bar GoToCozy")
-                            ]
-                        ]
-                    ]
+            TrayWindow ->
+                Html.map TrayMsg (Tray.view helpers model.tray)
