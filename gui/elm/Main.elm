@@ -2,8 +2,8 @@ module Main exposing (..)
 
 import Data.Platform as Platform exposing (Platform)
 import Data.Window as Window exposing (Window)
-import Html exposing (..)
 import Dict exposing (Dict)
+import Html exposing (..)
 import Json.Decode as Json
 import Locale exposing (Helpers, Locale)
 import Window.Tray as Tray
@@ -52,22 +52,12 @@ type alias Model =
 init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
-        locales =
-            case
-                Json.decodeValue (Json.dict (Json.dict Json.string)) flags.locales
-            of
-                Ok value ->
-                    value
-
-                Err _ ->
-                    Dict.empty
-
         platform =
             Platform.fromName flags.platform
 
         model =
             { localeIdentifier = flags.locale
-            , locales = locales
+            , locales = Locale.decodeAll flags.locales
             , window = Window.fromHash flags.hash
 
             -- TODO: Attach submodels to windows

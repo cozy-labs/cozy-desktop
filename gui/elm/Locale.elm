@@ -1,6 +1,7 @@
 module Locale exposing (..)
 
 import Dict exposing (Dict)
+import Json.Decode as Json
 import Regex exposing (replace, regex)
 import Time exposing (Time)
 
@@ -31,6 +32,21 @@ type alias Helpers =
     , distance_of_time_in_words : DistanceOfTime
     , number_to_human_size : NumberToHumanSize
     }
+
+
+decoder : Json.Decoder Locale
+decoder =
+    Json.dict Json.string
+
+
+decodeAll : Json.Value -> Dict String Locale
+decodeAll json =
+    case Json.decodeValue (Json.dict decoder) json of
+        Ok value ->
+            value
+
+        Err _ ->
+            Dict.empty
 
 
 helpers : Locale -> Helpers
