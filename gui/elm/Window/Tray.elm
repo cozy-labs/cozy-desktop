@@ -206,20 +206,25 @@ view helpers model =
                 UserActionRequiredPage.view helpers error
 
             Nothing ->
-                section [ class "two-panes" ]
-                    [ aside [ class "two-panes__menu" ]
-                        [ viewTab helpers model "Recents" DashboardPage
-                        , viewTab helpers model "Settings" SettingsPage
-                        ]
-                    , case model.page of
-                        DashboardPage ->
-                            Html.map DashboardMsg (Dashboard.view helpers model.dashboard)
-
-                        SettingsPage ->
-                            Html.map SettingsMsg (Settings.view helpers model.settings)
-                    ]
+                viewTabsWithContent helpers model
         , viewWarnings helpers model
         , viewBottomBar helpers
+        ]
+
+
+viewTabsWithContent : Helpers -> Model -> Html Msg
+viewTabsWithContent helpers model =
+    section [ class "two-panes" ]
+        [ aside [ class "two-panes__menu" ]
+            [ viewTab helpers model "Recents" DashboardPage
+            , viewTab helpers model "Settings" SettingsPage
+            ]
+        , case model.page of
+            DashboardPage ->
+                Html.map DashboardMsg (Dashboard.view helpers model.dashboard)
+
+            SettingsPage ->
+                Html.map SettingsMsg (Settings.view helpers model.settings)
         ]
 
 
