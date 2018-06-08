@@ -14,7 +14,7 @@ const container = document.getElementById('container')
 
 const Elm = require('./elm').Main
 const elmectron = Elm.embed(container, {
-  page: window.location.hash.replace('#', ''),
+  hash: window.location.hash,
   folder: defaults.syncPath,
   locale: remote.app.locale,
   locales: {

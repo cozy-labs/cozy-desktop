@@ -22,7 +22,7 @@ main =
 
 
 type alias Flags =
-    { page : String
+    { hash : String
     , folder : String
     , locale : String
     , locales : Json.Value
@@ -69,20 +69,17 @@ init flags =
                     Dict.empty
 
         window =
-            case flags.page of
-                "onboarding" ->
+            case flags.hash of
+                "#onboarding" ->
                     OnboardingWindow
 
-                "help" ->
+                "#help" ->
                     HelpWindow
 
-                "dashboard" ->
+                "#tray" ->
                     TrayWindow
 
-                "settings" ->
-                    TrayWindow
-
-                "updater" ->
+                "#updater" ->
                     UpdaterWindow
 
                 -- Temporarily use the MsgMechanism to
