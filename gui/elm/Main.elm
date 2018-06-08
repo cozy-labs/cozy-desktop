@@ -90,14 +90,6 @@ init flags =
                 _ ->
                     OnboardingWindow
 
-        trayPage =
-            case flags.page of
-                "settings" ->
-                    Tray.SettingsPage
-
-                _ ->
-                    Tray.DashboardPage
-
         platform =
             Platform.fromName flags.platform
 
@@ -108,7 +100,7 @@ init flags =
 
             -- TODO: Attach submodels to windows
             , onboarding = Onboarding.init flags.folder flags.platform
-            , tray = Tray.init trayPage flags.version platform
+            , tray = Tray.init flags.version platform
             , updater = Updater.init flags.version
             , help = Help.init
             }

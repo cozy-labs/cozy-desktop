@@ -45,10 +45,10 @@ type alias Model =
     }
 
 
-init : Page -> String -> Platform -> Model
-init page version platform =
+init : String -> Platform -> Model
+init version platform =
     { dashboard = Dashboard.init
-    , page = page
+    , page = DashboardPage
     , platform = platform
     , remoteWarnings = []
     , settings = Settings.init version
