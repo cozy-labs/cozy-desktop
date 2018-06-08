@@ -1,22 +1,15 @@
-port module Dashboard exposing (..)
+module Window.Tray.Dashboard exposing (..)
 
+import Data.File as File exposing (File)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Ports
 import Time exposing (Time)
-import Helpers exposing (Helpers)
+import Locale exposing (Helpers)
 
 
 -- MODEL
-
-
-type alias File =
-    { filename : String
-    , icon : String
-    , path : String
-    , size : Int
-    , updated : Time
-    }
 
 
 type alias Model =
@@ -60,9 +53,6 @@ samePath a b =
     a.path == b.path
 
 
-port openFile : String -> Cmd msg
-
-
 update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
     case msg of
@@ -83,7 +73,7 @@ update msg model =
                 ( { model | files = files }, Cmd.none )
 
         OpenFile file ->
-            ( model, openFile file.path )
+            ( model, Ports.openFile file.path )
 
         Tick now ->
             ( { model | now = now }, Cmd.none )
@@ -103,7 +93,7 @@ renderFile : Helpers -> Model -> File -> Html Msg
 renderFile helpers model file =
     let
         ( basename, extname ) =
-            Helpers.splitFileName file.filename
+            File.splitName file.filename
     in
         div
             [ class "file-line"

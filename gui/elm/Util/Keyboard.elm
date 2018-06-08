@@ -1,4 +1,4 @@
-module OnEnter exposing (..)
+module Util.Keyboard exposing (onEnter)
 
 import Html
 import Html.Events exposing (on, keyCode)

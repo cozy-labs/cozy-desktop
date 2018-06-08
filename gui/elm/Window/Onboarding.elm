@@ -1,12 +1,12 @@
-module Wizard exposing (..)
+module Window.Onboarding exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Focus exposing (focus)
-import Helpers exposing (Helpers)
-import Welcome
-import Address
-import Folder
+import Locale exposing (Helpers)
+import Ports
+import Window.Onboarding.Address as Address
+import Window.Onboarding.Folder as Folder
+import Window.Onboarding.Welcome as Welcome
 
 
 -- MODEL
@@ -40,8 +40,7 @@ init folder platform =
 
 
 type Msg
-    = NoOp
-    | WelcomeMsg Welcome.Msg
+    = WelcomeMsg Welcome.Msg
     | AddressMsg Address.Msg
     | RegistrationDone
     | FolderMsg Folder.Msg
@@ -50,15 +49,14 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model, Cmd.none )
-
         WelcomeMsg subMsg ->
             case
                 subMsg
             of
                 Welcome.NextPage ->
-                    ( { model | page = AddressPage }, focus ".wizard__address" )
+                    ( { model | page = AddressPage }
+                    , Ports.focus ".wizard__address"
+                    )
 
         AddressMsg subMsg ->
             let
@@ -76,6 +74,20 @@ update msg model =
                     Folder.update subMsg model.folder
             in
                 ( { model | folder = folder }, Cmd.map FolderMsg cmd )
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ Ports.registrationError (AddressMsg << Address.RegistrationError)
+        , Ports.registrationDone (always RegistrationDone)
+        , Ports.folderError (FolderMsg << Folder.SetError)
+        , Ports.folder (FolderMsg << Folder.FillFolder)
+        ]
 
 
 

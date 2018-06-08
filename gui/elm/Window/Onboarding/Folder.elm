@@ -1,36 +1,29 @@
-port module Folder exposing (..)
+module Window.Onboarding.Folder exposing (..)
 
+import Data.SyncFolderConfig as SyncFolderConfig exposing (SyncFolderConfig)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Icons exposing (..)
-import Helpers exposing (Helpers)
+import Locale exposing (Helpers)
+import Ports
 
 
 -- MODEL
 
 
 type alias Model =
-    { folder : String
-    , error : Maybe String
-    }
+    SyncFolderConfig
 
 
-init : String -> Model
-init folder =
-    { folder = folder
-    , error = Nothing
-    }
+init : String -> SyncFolderConfig
+init =
+    SyncFolderConfig.valid
 
 
-isValid : Model -> Bool
-isValid model =
-    case model.error of
-        Nothing ->
-            True
-
-        Just _ ->
-            False
+isValid : SyncFolderConfig -> Bool
+isValid =
+    SyncFolderConfig.isValid
 
 
 
@@ -44,19 +37,13 @@ type Msg
     | StartSync
 
 
-port chooseFolder : () -> Cmd msg
-
-
-port startSync : String -> Cmd msg
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case
         msg
     of
         ChooseFolder ->
-            ( model, chooseFolder () )
+            ( model, Ports.chooseFolder () )
 
         FillFolder model ->
             ( model, Cmd.none )
@@ -73,7 +60,7 @@ update msg model =
             )
 
         StartSync ->
-            ( model, startSync model.folder )
+            ( model, Ports.startSync model.folder )
 
 
 

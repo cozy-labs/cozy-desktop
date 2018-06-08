@@ -1,9 +1,10 @@
-module StatusBar exposing (..)
+module Window.Tray.StatusBar exposing (..)
 
+import Data.Platform exposing (Platform(..))
+import Data.Status exposing (Status(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Helpers exposing (..)
-import Model exposing (Status(..), Platform(..))
+import Locale exposing (..)
 
 
 -- Status line component

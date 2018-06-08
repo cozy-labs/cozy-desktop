@@ -1,8 +1,8 @@
-module Helpers exposing (..)
+module Locale exposing (..)
 
 import Dict exposing (Dict)
+import Json.Decode as Json
 import Regex exposing (replace, regex)
-import String exposing (join, split)
 import Time exposing (Time)
 
 
@@ -34,8 +34,23 @@ type alias Helpers =
     }
 
 
-forLocale : Locale -> Helpers
-forLocale locale =
+decoder : Json.Decoder Locale
+decoder =
+    Json.dict Json.string
+
+
+decodeAll : Json.Value -> Dict String Locale
+decodeAll json =
+    case Json.decodeValue (Json.dict decoder) json of
+        Ok value ->
+            value
+
+        Err _ ->
+            Dict.empty
+
+
+helpers : Locale -> Helpers
+helpers locale =
     Helpers (translate locale)
         (pluralize locale)
         (distance_of_time_in_words locale)
@@ -126,38 +141,3 @@ number_to_human_size locale size =
         (toString (toFloat (size // 10 ^ 5) / 10)) ++ " " ++ (translate locale "Helpers MB")
     else
         (toString (toFloat (size // 10 ^ 9) / 10)) ++ " " ++ (translate locale "Helpers GB")
-
-
-splitPath : String -> ( String, ( String, String ) )
-splitPath fullpath =
-    case List.reverse (String.split "/" fullpath) of
-        [] ->
-            ( "", ( "", "" ) )
-
-        [ rest ] ->
-            ( "", ( rest, "" ) )
-
-        [ filename, rest ] ->
-            ( rest ++ "/", (splitFileName filename) )
-
-        filename :: rest ->
-            ( (String.join "/" (List.reverse rest)), splitFileName filename )
-
-
-splitFileName : String -> ( String, String )
-splitFileName filename =
-    case List.reverse (String.split "." filename) of
-        [] ->
-            ( "", "" )
-
-        [ rest ] ->
-            ( rest, "" )
-
-        [ ext, rest ] ->
-            if rest == "" then
-                ( "." ++ ext, "" )
-            else
-                ( rest, "." ++ ext )
-
-        ext :: rest ->
-            ( (String.join "." (List.reverse rest)), "." ++ ext )

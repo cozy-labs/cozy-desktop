@@ -1,18 +1,15 @@
-port module Settings exposing (..)
+module Window.Tray.Settings exposing (..)
 
+import Data.DiskSpace exposing (DiskSpace)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Helpers exposing (Helpers)
+import Locale exposing (Helpers)
+import Ports
+import View.ProgressBar as ProgressBar
 
 
 -- MODEL
-
-
-type alias DiskSpace =
-    { used : Float
-    , quota : Float
-    }
 
 
 type alias Model =
@@ -60,34 +57,19 @@ type Msg
     | CloseApp
 
 
-port showHelp : () -> Cmd msg
-
-
-port unlinkCozy : () -> Cmd msg
-
-
-port autoLauncher : Bool -> Cmd msg
-
-
-port quitAndInstall : () -> Cmd msg
-
-
-port closeApp : () -> Cmd msg
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case
         msg
     of
         SetAutoLaunch autoLaunch ->
-            ( model, autoLauncher autoLaunch )
+            ( model, Ports.autoLauncher autoLaunch )
 
         AutoLaunchSet autoLaunch ->
             ( { model | autoLaunch = autoLaunch }, Cmd.none )
 
         QuitAndInstall ->
-            ( model, quitAndInstall () )
+            ( model, Ports.quitAndInstall () )
 
         NewRelease ( notes, name ) ->
             ( { model | newRelease = Just ( notes, name ) }, Cmd.none )
@@ -99,16 +81,16 @@ update msg model =
             ( { model | disk = disk }, Cmd.none )
 
         UnlinkCozy ->
-            ( { model | busyUnlinking = True }, unlinkCozy () )
+            ( { model | busyUnlinking = True }, Ports.unlinkCozy () )
 
         CancelUnlink ->
             ( { model | busyUnlinking = False }, Cmd.none )
 
         ShowHelp ->
-            ( model, showHelp () )
+            ( model, Ports.showHelp () )
 
         CloseApp ->
-            ( { model | busyQuitting = True }, closeApp () )
+            ( { model | busyQuitting = True }, Ports.closeApp () )
 
 
 
@@ -132,7 +114,7 @@ diskQuotaLine helpers model =
                     ++ " / "
                     ++ (humanReadableDiskValue helpers model.disk.quota)
                 )
-            , (progressbar (model.disk.used / model.disk.quota))
+            , ProgressBar.view (model.disk.used / model.disk.quota)
             ]
 
 
@@ -148,24 +130,6 @@ versionLine helpers model =
 
         Nothing ->
             span [ class "version-uptodate" ] [ text model.version ]
-
-
-progressbar : Float -> Html Msg
-progressbar ratio =
-    let
-        cappedRatio =
-            (Basics.min 1 ratio)
-
-        percent =
-            (toString (cappedRatio * 100)) ++ "%"
-    in
-        div [ class "progress" ]
-            [ div
-                [ class "progress-inner"
-                , style [ ( "width", percent ) ]
-                ]
-                []
-            ]
 
 
 view : Helpers -> Model -> Html Msg
