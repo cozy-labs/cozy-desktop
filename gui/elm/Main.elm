@@ -70,6 +70,12 @@ init flags =
         ( model, Cmd.none )
 
 
+currentLocale : Model -> Locale
+currentLocale model =
+    Dict.get model.localeIdentifier model.locales
+        |> Maybe.withDefault Dict.empty
+
+
 
 -- UPDATE
 
@@ -139,18 +145,8 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     let
-        locale =
-            case
-                Dict.get model.localeIdentifier model.locales
-            of
-                Nothing ->
-                    Dict.empty
-
-                Just value ->
-                    value
-
         helpers =
-            Locale.helpers locale
+            Locale.helpers (currentLocale model)
     in
         case model.window of
             Window.Onboarding ->
