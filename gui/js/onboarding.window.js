@@ -36,6 +36,10 @@ module.exports = class OnboardingWM extends WindowManager {
     }
   }
 
+  hash () {
+    return '#onboarding'
+  }
+
   jumpToSyncPath () {
     this.shouldJumpToSyncPath = true
     // TODO: cleanup state management, ensure elm side sends something

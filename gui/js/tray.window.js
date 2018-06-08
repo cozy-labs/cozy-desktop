@@ -109,6 +109,10 @@ module.exports = class TrayWM extends WindowManager {
     return Promise.resolve(this.win)
   }
 
+  hash () {
+    return '#tray'
+  }
+
   placeWithTray (wantedWidth, wantedHeight, trayposition) {
     const bounds = this.win.getBounds()
     // TODO : be smarter about which display to use ?
