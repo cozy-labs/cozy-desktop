@@ -199,9 +199,8 @@ subscriptions model =
 
 view : Helpers -> Model -> Html Msg
 view helpers model =
-    div
-        [ class "container" ]
-        [ (StatusBar.view helpers model.status model.platform)
+    div [ class "container" ]
+        [ StatusBar.view helpers model.status model.platform
         , case model.userActionRequired of
             Just error ->
                 UserActionRequiredPage.view helpers error
