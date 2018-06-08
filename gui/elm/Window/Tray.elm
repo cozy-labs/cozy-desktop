@@ -218,7 +218,7 @@ view helpers model =
                         SettingsPage ->
                             Html.map SettingsMsg (Settings.view helpers model.settings)
                     ]
-        , renderWarnings helpers model
+        , viewWarnings helpers model
         , div [ class "bottom-bar" ]
             [ a
                 [ href "#"
@@ -251,7 +251,8 @@ menu_item helpers model title page =
         ]
 
 
-renderWarnings helpers model =
+viewWarnings : Helpers -> Model -> Html Msg
+viewWarnings helpers model =
     case ( model.userActionRequired, model.remoteWarnings ) of
         ( Just err, _ ) ->
             text ""
