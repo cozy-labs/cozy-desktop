@@ -207,7 +207,7 @@ view helpers model =
 
             Nothing ->
                 viewTabsWithContent helpers model
-        , viewWarnings helpers model
+        , viewWarning helpers model
         , viewBottomBar helpers
         ]
 
@@ -241,8 +241,8 @@ viewTab helpers model title page =
         ]
 
 
-viewWarnings : Helpers -> Model -> Html Msg
-viewWarnings helpers model =
+viewWarning : Helpers -> Model -> Html Msg
+viewWarning helpers model =
     case ( model.userActionRequired, model.remoteWarnings ) of
         ( Just err, _ ) ->
             text ""
