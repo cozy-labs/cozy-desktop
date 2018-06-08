@@ -113,4 +113,7 @@ port updateError : (String -> msg) -> Sub msg
 port updated : (Bool -> msg) -> Sub msg
 
 
+port userActionInProgress : () -> Cmd msg
+
+
 port userActionRequired : (UserActionRequiredError -> msg) -> Sub msg

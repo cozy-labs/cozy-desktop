@@ -136,6 +136,10 @@ ipcRenderer.on('user-action-required', (event, userActionRequired) => {
   elmectron.ports.userActionRequired.send(userActionRequired)
 })
 
+elmectron.ports.userActionInProgress.subscribe(() => {
+  ipcRenderer.send('userActionInProgress')
+})
+
 ipcRenderer.on('up-to-date', () => {
   elmectron.ports.updated.send(true)
 })
