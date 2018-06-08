@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Data.Platform as Platform exposing (Platform)
+import Data.Window as Window exposing (Window)
 import Html exposing (..)
 import Dict exposing (Dict)
 import Json.Decode as Json
@@ -48,13 +49,6 @@ type alias Model =
     }
 
 
-type Window
-    = HelpWindow
-    | OnboardingWindow
-    | TrayWindow
-    | UpdaterWindow
-
-
 init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
@@ -68,32 +62,13 @@ init flags =
                 Err _ ->
                     Dict.empty
 
-        window =
-            case flags.hash of
-                "#onboarding" ->
-                    OnboardingWindow
-
-                "#help" ->
-                    HelpWindow
-
-                "#tray" ->
-                    TrayWindow
-
-                "#updater" ->
-                    UpdaterWindow
-
-                -- Temporarily use the MsgMechanism to
-                -- get to the 2Panes page.
-                _ ->
-                    OnboardingWindow
-
         platform =
             Platform.fromName flags.platform
 
         model =
             { localeIdentifier = flags.locale
             , locales = locales
-            , window = window
+            , window = Window.fromHash flags.hash
 
             -- TODO: Attach submodels to windows
             , onboarding = Onboarding.init flags.folder flags.platform
@@ -188,14 +163,14 @@ view model =
             Locale.helpers locale
     in
         case model.window of
-            OnboardingWindow ->
+            Window.Onboarding ->
                 Html.map OnboardingMsg (Onboarding.view helpers model.onboarding)
 
-            HelpWindow ->
+            Window.Help ->
                 Html.map HelpMsg (Help.view helpers model.help)
 
-            UpdaterWindow ->
+            Window.Updater ->
                 Html.map UpdaterMsg (Updater.view helpers model.updater)
 
-            TrayWindow ->
+            Window.Tray ->
                 Html.map TrayMsg (Tray.view helpers model.tray)
