@@ -208,8 +208,8 @@ view helpers model =
             Nothing ->
                 section [ class "two-panes" ]
                     [ aside [ class "two-panes__menu" ]
-                        [ menu_item helpers model "Recents" DashboardPage
-                        , menu_item helpers model "Settings" SettingsPage
+                        [ viewTab helpers model "Recents" DashboardPage
+                        , viewTab helpers model "Settings" SettingsPage
                         ]
                     , case model.page of
                         DashboardPage ->
@@ -223,8 +223,8 @@ view helpers model =
         ]
 
 
-menu_item : Helpers -> Model -> String -> Page -> Html Msg
-menu_item helpers model title page =
+viewTab : Helpers -> Model -> String -> Page -> Html Msg
+viewTab helpers model title page =
     div
         [ classList
             [ ( "two-panes__menu__item", True )
