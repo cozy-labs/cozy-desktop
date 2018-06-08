@@ -69,6 +69,7 @@ type Msg
     | StartSquashPrepMerging
     | GoOffline
     | UserActionRequired UserActionRequiredError
+    | UserActionInProgress
     | RemoteWarnings (List RemoteWarning)
     | ClearCurrentWarning
     | SetError String
@@ -125,6 +126,11 @@ update msg model =
                 , userActionRequired = Just error
               }
             , Cmd.none
+            )
+
+        UserActionInProgress ->
+            ( model
+            , Ports.userActionInProgress ()
             )
 
         RemoteWarnings warnings ->
