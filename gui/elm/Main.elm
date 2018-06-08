@@ -7,6 +7,7 @@ import Html exposing (..)
 import Json.Decode as Json
 import Locale exposing (Helpers, Locale)
 import Window.Tray as Tray
+import Window.Tray.Dashboard as Dashboard
 import Window.Help as Help
 import Window.Updater as Updater
 import Window.Onboarding as Onboarding
@@ -89,7 +90,7 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case msg of
+    case debugLog msg of
         OnboardingMsg subMsg ->
             let
                 ( onboarding, cmd ) =
@@ -121,6 +122,17 @@ update msg model =
                     Updater.update subMsg model.updater
             in
                 ( { model | updater = updater }, Cmd.map UpdaterMsg cmd )
+
+
+debugLog : Msg -> Msg
+debugLog msg =
+    case msg of
+        -- Don't log ticks to prevent flooding
+        TrayMsg (Tray.DashboardMsg (Dashboard.Tick _)) ->
+            msg
+
+        _ ->
+            Debug.log "update" msg
 
 
 
