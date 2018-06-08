@@ -219,22 +219,7 @@ view helpers model =
                             Html.map SettingsMsg (Settings.view helpers model.settings)
                     ]
         , viewWarnings helpers model
-        , div [ class "bottom-bar" ]
-            [ a
-                [ href "#"
-                , onClick GoToFolder
-                ]
-                [ Icons.folder 48 False
-                , text (helpers.t "Bar GoToFolder")
-                ]
-            , a
-                [ href "#"
-                , onClick GoToCozy
-                ]
-                [ Icons.globe 48 False
-                , text (helpers.t "Bar GoToCozy")
-                ]
-            ]
+        , viewBottomBar helpers
         ]
 
 
@@ -277,3 +262,23 @@ viewWarnings helpers model =
 
         _ ->
             text ""
+
+
+viewBottomBar : Helpers -> Html Msg
+viewBottomBar helpers =
+    div [ class "bottom-bar" ]
+        [ a
+            [ href "#"
+            , onClick GoToFolder
+            ]
+            [ Icons.folder 48 False
+            , text (helpers.t "Bar GoToFolder")
+            ]
+        , a
+            [ href "#"
+            , onClick GoToCozy
+            ]
+            [ Icons.globe 48 False
+            , text (helpers.t "Bar GoToCozy")
+            ]
+        ]
