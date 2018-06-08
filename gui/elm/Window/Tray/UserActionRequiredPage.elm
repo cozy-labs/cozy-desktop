@@ -3,6 +3,7 @@ module Window.Tray.UserActionRequiredPage exposing (view)
 import Data.UserActionRequiredError exposing (UserActionRequiredError)
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 import Locale exposing (Helpers)
 
 
@@ -12,8 +13,8 @@ include_GDPR_link base_text url =
         (List.map text (String.split "GDPR" base_text))
 
 
-view : Helpers -> UserActionRequiredError -> Html msg
-view helpers { code, title, detail, links } =
+view : Helpers -> UserActionRequiredError -> msg -> Html msg
+view helpers { code, title, detail, links } msg =
     div [ class "two-panes two-panes__content user-action-required" ]
         (if code == "tos-updated" then
             [ img [ class "error_img", src "images/tos_updated.svg" ] []
@@ -24,11 +25,13 @@ view helpers { code, title, detail, links } =
                 , text " "
                 , text (helpers.t "CGU Updated Required rest")
                 ]
-            , a [ class "btn", href links.self ] [ text (helpers.t "CGU Updated See") ]
+            , a [ class "btn", href links.self, onClick msg ]
+                [ text (helpers.t "CGU Updated See") ]
             ]
          else
             [ h2 [] [ text title ]
             , p [] [ text detail ]
-            , a [ class "btn", href links.self ] [ text (helpers.t "Error Ok") ]
+            , a [ class "btn", href links.self, onClick msg ]
+                [ text (helpers.t "Error Ok") ]
             ]
         )

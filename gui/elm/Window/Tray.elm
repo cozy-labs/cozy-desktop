@@ -209,7 +209,7 @@ view helpers model =
         [ StatusBar.view helpers model.status model.platform
         , case model.userActionRequired of
             Just error ->
-                UserActionRequiredPage.view helpers error
+                UserActionRequiredPage.view helpers error UserActionInProgress
 
             Nothing ->
                 viewTabsWithContent helpers model
