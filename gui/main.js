@@ -233,7 +233,12 @@ const startSync = (force, ...args) => {
       trayWindow.send('offline')
     })
     desktop.events.on('remoteWarnings', (warnings) => {
-      trayWindow.send('remoteWarnings', warnings)
+      if (warnings.length > 0) {
+        trayWindow.send('remoteWarnings', warnings)
+      } else if (userActionRequired) {
+        log.info('User action complete.')
+        trayWindow.doRestart()
+      }
     })
     desktop.events.on('transfer-started', addFile)
     desktop.events.on('transfer-copy', addFile)
@@ -266,6 +271,7 @@ const startSync = (force, ...args) => {
             ['title', 'code', 'detail', 'links', 'message']
           )
           trayWindow.send('user-action-required', userActionRequired)
+          desktop.remote.warningsPoller.switchMode('medium')
           return
         }
         updateState('error', err.message)
@@ -349,6 +355,10 @@ app.on('window-all-closed', () => {
 
 ipcMain.on('show-help', () => {
   helpWindow.show()
+})
+
+ipcMain.on('userActionInProgress', () => {
+  desktop.remote.warningsPoller.switchMode('fast')
 })
 
 // On watch mode, automatically reload the window when sources are updated
