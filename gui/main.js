@@ -37,7 +37,7 @@ process.on('uncaughtException', (err) => log.error(err))
 let desktop
 let state = 'not-configured'
 let errorMessage = ''
-let userActionRequiredError = null
+let userActionRequired = null
 let diskTimeout = null
 let onboardingWindow = null
 let helpWindow = null
@@ -207,8 +207,8 @@ const startSync = (force, ...args) => {
     trayWindow.send('transfer', file)
   }
   if (desktop.sync && !force) {
-    if (userActionRequiredError) {
-      trayWindow.send('user-action-required', userActionRequiredError)
+    if (userActionRequired) {
+      trayWindow.send('user-action-required', userActionRequired)
     } else if (state === 'up-to-date' || state === 'online') {
       trayWindow.send('up-to-date')
     } else if (state === 'offline') {
@@ -262,10 +262,10 @@ const startSync = (force, ...args) => {
       .catch((err) => {
         log.error({status: err.status}, 'RIGHT RIGHT HERE')
         if (err.status === 402) {
-          userActionRequiredError = pick(err,
+          userActionRequired = pick(err,
             ['title', 'code', 'detail', 'links', 'message']
           )
-          trayWindow.send('user-action-required', userActionRequiredError)
+          trayWindow.send('user-action-required', userActionRequired)
           return
         }
         updateState('error', err.message)
