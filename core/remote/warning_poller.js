@@ -1,53 +1,121 @@
 /* @flow */
 
 import type { Warning } from './warning'
+import type { Delay } from '../utils/delay'
 
 const EventEmitter = require('events')
 const RemoteCozy = require('./cozy')
 const logger = require('../logger')
+const delay = require('../utils/delay')
 
 const log = logger({
   component: 'RemoteWarningPoller'
 })
 
-const POLLING_DELAY = 1000 * 60 * 60 * 24
+type Mode = 'slow' | 'medium' | 'fast'
+
+const MODE = {
+  SLOW: 'slow',
+  MEDIUM: 'medium',
+  FAST: 'fast'
+}
+
+const DEFAULT_MODE = MODE.SLOW
+
+type Ticks = {next: Delay, rest: Delay[]}
+
+function ticks (next: Delay, ...rest: Delay[]): Ticks {
+  return {next, rest}
+}
+
+const TICKS: { [Mode]: Ticks } = {
+  [MODE.SLOW]: ticks(delay.days(1)),
+  [MODE.MEDIUM]: ticks(delay.minutes(1))
+}
+TICKS[MODE.FAST] = ticks.apply(null, [
+  5, 5, 5, 5, 5,
+  10, 10, 10,
+  20, 30, 40, 50, 60
+].map(delay.seconds))
+
+const DEFAULT_TICKS = TICKS[DEFAULT_MODE]
+
+function shiftTicks (ticks: Ticks): Ticks {
+  if (ticks.rest.length === 0) return ticks
+  const [next, ...rest] = ticks.rest
+  return {next, rest}
+}
 
 class RemoteWarningPoller {
   remoteCozy: RemoteCozy
   events: EventEmitter
-  interval: *
-  currentPolling: ?Promise<*>
+  polling: ?Promise<*>
+  timeout: *
+  ticks: Ticks
 
   constructor (remoteCozy: RemoteCozy, events: EventEmitter) {
     this.remoteCozy = remoteCozy
     this.events = events
+    this.ticks = DEFAULT_TICKS
   }
 
   async poll () {
-    log.info('Looking for warnings...')
-    const warnings: Warning[] = await this.remoteCozy.warnings()
-
-    log.info(`${warnings.length} warnings`)
-    if (warnings.length > 0) {
-      this.events.emit('remoteWarnings', warnings)
-      log.trace({warnings})
+    if (this.polling) {
+      log.warn('Skipping polling (already in progress)')
+      this.scheduleNext(this.ticks)
+      return
     }
-    this.currentPolling = null
+
+    try {
+      log.info('Looking for warnings...')
+      this.polling = this.remoteCozy.warnings()
+      const warnings: Warning[] = await this.polling
+
+      log.info(`${warnings.length} warnings`)
+      if (warnings.length > 0) log.trace({warnings})
+
+      this.events.emit('remoteWarnings', warnings)
+    } catch (err) {
+      log.error({err})
+      throw err
+    } finally {
+      this.polling = null
+      this.scheduleNext(shiftTicks(this.ticks))
+    }
   }
 
   async start () {
-    this.poll()
-    this.interval = setInterval(this.poll, POLLING_DELAY)
-    await this.currentPolling
+    await this.poll()
   }
 
   async stop () {
-    clearInterval(this.interval)
-    await this.currentPolling
+    clearTimeout(this.timeout)
+    await this.polling
+  }
+
+  scheduleNext (ticks: Ticks) {
+    clearTimeout(this.timeout)
+    this.ticks = ticks
+    this.timeout = setTimeout(this.poll, ticks.next)
+    log.debug({ticks}, `Next polling in ${ticks.next} milliseconds`)
+  }
+
+  switchMode (mode: Mode) {
+    log.info({mode})
+    const newTicks = TICKS[mode]
+    if (newTicks.next < this.ticks.next) {
+      this.scheduleNext(newTicks)
+    } else {
+      log.warn('Sticking up to current mode')
+    }
   }
 }
 
 module.exports = {
-  POLLING_DELAY,
-  RemoteWarningPoller
+  DEFAULT_TICKS,
+  MODE,
+  TICKS,
+  RemoteWarningPoller,
+  shiftTicks,
+  ticks
 }
