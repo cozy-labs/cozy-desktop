@@ -1,6 +1,7 @@
 /* @flow */
 
 import type { RemoteDoc, RemoteDeletion } from './document'
+import type { Warning } from './warning'
 
 const CozyClient = require('cozy-client-js').Client
 const path = require('path')
@@ -185,6 +186,23 @@ class RemoteCozy {
   async _setPath (doc: any): Promise<void> {
     const parentDir = await this.find(doc.dir_id)
     doc.path = path.posix.join(parentDir.path, doc.name)
+  }
+
+  async warnings (): Promise<Warning[]> {
+    const warningsPath = '/settings/warnings'
+    try {
+      const response = await this.client.fetchJSON('GET', warningsPath)
+      log.warn({response}, 'Unexpected warnings response. Assuming no warnings.')
+      return []
+    } catch (err) {
+      const {message, status} = err
+      log.debug({status}, warningsPath)
+      switch (status) {
+        case 402: return JSON.parse(message).errors
+        case 404: return []
+        default: throw err
+      }
+    }
   }
 }
 
