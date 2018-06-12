@@ -238,4 +238,55 @@ describe('RemoteCozy', function () {
       stream.on('end', () => { data.should.equal('foo') })
     })
   })
+
+  describe('#warnings()', () => {
+    beforeEach(function () {
+      this.config.cozyUrl = cozyStackDouble.url()
+      remoteCozy = new RemoteCozy(this.config)
+    })
+
+    const stubWarningsResponse = (status: number, data) => {
+      cozyStackDouble.stub((req, res) => {
+        if (req.url === '/status/') res.end('{}')
+        else {
+          res.writeHead(status)
+          res.end(JSON.stringify(data))
+        }
+      })
+    }
+
+    it('is an array of warnings if any', async () => {
+      // https://docs.cozy.io/en/cozy-stack/user-action-required/#response
+      const warnings = [
+        {
+          status: '402',
+          title: 'TOS Updated',
+          code: 'tos-updated',
+          detail: 'Terms of services have been updated',
+          links: {
+            self: 'https://manager.cozy.test/cozy/tos?domain=whatever.cozy.test'
+          }
+        }
+      ]
+      stubWarningsResponse(402, {errors: warnings})
+      should(await remoteCozy.warnings()).deepEqual(warnings)
+    })
+
+    it('is an empty array on 404 (means either no warnings or API not available)', async () => {
+      stubWarningsResponse(404)
+      should(await remoteCozy.warnings()).deepEqual([])
+    })
+
+    it('assumes no warnings on unexpected 200 response', async () => {
+      stubWarningsResponse(200, {whatever: 'whatever'})
+      should(await remoteCozy.warnings()).deepEqual([])
+    })
+
+    for (let status of [401, 500]) {
+      it(`does not swallow errors ${status}`, async () => {
+        stubWarningsResponse(status)
+        await should(remoteCozy.warnings()).be.rejectedWith({status})
+      })
+    }
+  })
 })

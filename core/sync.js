@@ -14,7 +14,7 @@ const logger = require('./logger')
 const { extractRevNumber, isUpToDate, sameFileIgnoreRev } = require('./metadata')
 const Pouch = require('./pouch')
 const Remote = require('./remote')
-const warnings = require('./remote/warnings')
+const userActionRequired = require('./remote/user_action_required')
 const { HEARTBEAT } = require('./remote/watcher')
 const { PendingMap } = require('./utils/pending')
 const measureTime = require('./perftools')
@@ -375,7 +375,7 @@ class Sync {
         throw new Error('Client has been revoked')
       } else if (err.status === 402) {
         log.error({err}, 'User action required')
-        throw warnings.includeJSONintoError(err)
+        throw userActionRequired.includeJSONintoError(err)
       } else if (err.status === 403) {
         log.error({err}, 'Client has wrong permissions (lack disk-usage)')
         throw new Error('Client has wrong permissions (lack disk-usage)')
