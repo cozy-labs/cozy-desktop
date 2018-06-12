@@ -1,22 +1,27 @@
 /* eslint-env mocha */
 /* @flow */
 
+import type { Warning } from '../../../core/remote/warning'
+
 const should = require('should')
 const sinon = require('sinon')
 
-const { Poller, POLLING_DELAY } = require('../../../core/remote/warnings')
+const {
+  POLLING_DELAY,
+  RemoteWarningPoller
+} = require('../../../core/remote/warning_poller')
 
 const warningBuilders = require('../../support/builders/remote/warning')
 
-describe('remote/warnings.Poller', () => {
-  let clock, cozy, events, poller
+describe('RemoteWarningPoller', () => {
+  let clock, events, poller, remoteCozy
 
   beforeEach(() => {
     clock = sinon.useFakeTimers()
-    cozy = {fetchJSON: sinon.stub().resolves()}
+    remoteCozy = {warnings: sinon.stub().resolves([])}
     events = {emit: sinon.spy()}
     // $FlowFixMe
-    poller = new Poller(cozy, events)
+    poller = new RemoteWarningPoller(remoteCozy, events)
   })
 
   afterEach(() => {
@@ -25,32 +30,29 @@ describe('remote/warnings.Poller', () => {
 
   describe('#poll()', () => {
     it('emits warnings if any', async () => {
-      const {warnings, err} = warningBuilders.list()
-      cozy.fetchJSON.rejects(err)
-
+      const warnings: Warning[] = warningBuilders.list()
+      remoteCozy.warnings.resolves(warnings)
       await poller.poll()
-
       should(events.emit).have.been.calledOnce()
       should(events.emit).have.been.calledWith('remoteWarnings', warnings)
     })
 
-    it('emits nothing otherwise', async () => {
+    it('emits nothing when no warnings', async () => {
       await poller.poll()
-
       should(events.emit).not.have.been.called()
     })
   })
 
   describe('#start()', () => {
     it('polls continuously according to POLLING_DELAY', async () => {
-      const {warnings, err} = warningBuilders.list()
-      cozy.fetchJSON.onSecondCall().rejects(err)
+      const warnings: Warning[] = warningBuilders.list()
+      remoteCozy.warnings.onSecondCall().resolves(warnings)
 
       poller.start()
       clock.tick(POLLING_DELAY)
       await poller.currentPolling
 
-      should(cozy.fetchJSON).have.been.calledTwice()
+      should(remoteCozy.warnings).have.been.calledTwice()
       should(events.emit).have.been.calledOnce()
       should(events.emit).have.been.calledWith('remoteWarnings', warnings)
     })
@@ -67,9 +69,10 @@ describe('remote/warnings.Poller', () => {
     })
 
     it('cancels upcoming pollings', () => {
-      cozy.fetchJSON.onSecondCall().rejects(warningBuilders.list().err)
+      const warnings = warningBuilders.list()
+      remoteCozy.warnings.onSecondCall().resolves(warnings)
       clock.tick(POLLING_DELAY)
-      should(cozy.fetchJSON).have.been.calledOnce()
+      should(remoteCozy.warnings).have.been.calledOnce()
       should(events.emit).not.have.been.called()
     })
   })

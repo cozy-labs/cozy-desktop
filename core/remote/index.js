@@ -15,7 +15,7 @@ const RemoteCozy = require('./cozy')
 const logger = require('../logger')
 const Pouch = require('../pouch')
 const Prep = require('../prep')
-const warnings = require('./warnings')
+const { RemoteWarningPoller } = require('./warning_poller')
 const Watcher = require('./watcher')
 const measureTime = require('../perftools')
 const { withContentLength } = require('../file_stream_provider')
@@ -30,13 +30,13 @@ module.exports = class Remote implements Side {
   events: EventEmitter
   watcher: Watcher
   remoteCozy: RemoteCozy
-  warningsPoller: warnings.Poller
+  warningsPoller: RemoteWarningPoller
 
   constructor (config: Config, prep: Prep, pouch: Pouch, events: EventEmitter) {
     this.pouch = pouch
     this.events = events
     this.remoteCozy = new RemoteCozy(config)
-    this.warningsPoller = new warnings.Poller(this.remoteCozy.client, events)
+    this.warningsPoller = new RemoteWarningPoller(this.remoteCozy, events)
     this.watcher = new Watcher(pouch, prep, this.remoteCozy, events)
   }
 
