@@ -199,48 +199,37 @@ subscriptions model =
 
 view : Helpers -> Model -> Html Msg
 view helpers model =
-    div
-        [ class "container" ]
-        [ (StatusBar.view helpers model.status model.platform)
+    div [ class "container" ]
+        [ StatusBar.view helpers model.status model.platform
         , case model.userActionRequired of
             Just error ->
                 UserActionRequiredPage.view helpers error
 
             Nothing ->
-                section [ class "two-panes" ]
-                    [ aside [ class "two-panes__menu" ]
-                        [ menu_item helpers model "Recents" DashboardPage
-                        , menu_item helpers model "Settings" SettingsPage
-                        ]
-                    , case model.page of
-                        DashboardPage ->
-                            Html.map DashboardMsg (Dashboard.view helpers model.dashboard)
-
-                        SettingsPage ->
-                            Html.map SettingsMsg (Settings.view helpers model.settings)
-                    ]
-        , renderWarnings helpers model
-        , div [ class "bottom-bar" ]
-            [ a
-                [ href "#"
-                , onClick GoToFolder
-                ]
-                [ Icons.folder 48 False
-                , text (helpers.t "Bar GoToFolder")
-                ]
-            , a
-                [ href "#"
-                , onClick GoToCozy
-                ]
-                [ Icons.globe 48 False
-                , text (helpers.t "Bar GoToCozy")
-                ]
-            ]
+                viewTabsWithContent helpers model
+        , viewWarning helpers model
+        , viewBottomBar helpers
         ]
 
 
-menu_item : Helpers -> Model -> String -> Page -> Html Msg
-menu_item helpers model title page =
+viewTabsWithContent : Helpers -> Model -> Html Msg
+viewTabsWithContent helpers model =
+    section [ class "two-panes" ]
+        [ aside [ class "two-panes__menu" ]
+            [ viewTab helpers model "Recents" DashboardPage
+            , viewTab helpers model "Settings" SettingsPage
+            ]
+        , case model.page of
+            DashboardPage ->
+                Html.map DashboardMsg (Dashboard.view helpers model.dashboard)
+
+            SettingsPage ->
+                Html.map SettingsMsg (Settings.view helpers model.settings)
+        ]
+
+
+viewTab : Helpers -> Model -> String -> Page -> Html Msg
+viewTab helpers model title page =
     div
         [ classList
             [ ( "two-panes__menu__item", True )
@@ -252,7 +241,8 @@ menu_item helpers model title page =
         ]
 
 
-renderWarnings helpers model =
+viewWarning : Helpers -> Model -> Html Msg
+viewWarning helpers model =
     case ( model.userActionRequired, model.remoteWarnings ) of
         ( Just err, _ ) ->
             text ""
@@ -277,3 +267,23 @@ renderWarnings helpers model =
 
         _ ->
             text ""
+
+
+viewBottomBar : Helpers -> Html Msg
+viewBottomBar helpers =
+    div [ class "bottom-bar" ]
+        [ a
+            [ href "#"
+            , onClick GoToFolder
+            ]
+            [ Icons.folder 48 False
+            , text (helpers.t "Bar GoToFolder")
+            ]
+        , a
+            [ href "#"
+            , onClick GoToCozy
+            ]
+            [ Icons.globe 48 False
+            , text (helpers.t "Bar GoToCozy")
+            ]
+        ]
