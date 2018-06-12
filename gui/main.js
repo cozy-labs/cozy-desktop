@@ -37,7 +37,7 @@ process.on('uncaughtException', (err) => log.error(err))
 let desktop
 let state = 'not-configured'
 let errorMessage = ''
-let userActionRequiredError = null
+let userActionRequired = null
 let diskTimeout = null
 let onboardingWindow = null
 let helpWindow = null
@@ -207,8 +207,8 @@ const startSync = (force, ...args) => {
     trayWindow.send('transfer', file)
   }
   if (desktop.sync && !force) {
-    if (userActionRequiredError) {
-      trayWindow.send('user-action-required', userActionRequiredError)
+    if (userActionRequired) {
+      trayWindow.send('user-action-required', userActionRequired)
     } else if (state === 'up-to-date' || state === 'online') {
       trayWindow.send('up-to-date')
     } else if (state === 'offline') {
@@ -233,7 +233,12 @@ const startSync = (force, ...args) => {
       trayWindow.send('offline')
     })
     desktop.events.on('remoteWarnings', (warnings) => {
-      trayWindow.send('remoteWarnings', warnings)
+      if (warnings.length > 0) {
+        trayWindow.send('remoteWarnings', warnings)
+      } else if (userActionRequired) {
+        log.info('User action complete.')
+        trayWindow.doRestart()
+      }
     })
     desktop.events.on('transfer-started', addFile)
     desktop.events.on('transfer-copy', addFile)
@@ -262,10 +267,11 @@ const startSync = (force, ...args) => {
       .catch((err) => {
         log.error({status: err.status}, 'RIGHT RIGHT HERE')
         if (err.status === 402) {
-          userActionRequiredError = pick(err,
+          userActionRequired = pick(err,
             ['title', 'code', 'detail', 'links', 'message']
           )
-          trayWindow.send('user-action-required', userActionRequiredError)
+          trayWindow.send('user-action-required', userActionRequired)
+          desktop.remote.warningsPoller.switchMode('medium')
           return
         }
         updateState('error', err.message)
@@ -349,6 +355,10 @@ app.on('window-all-closed', () => {
 
 ipcMain.on('show-help', () => {
   helpWindow.show()
+})
+
+ipcMain.on('userActionInProgress', () => {
+  desktop.remote.warningsPoller.switchMode('fast')
 })
 
 // On watch mode, automatically reload the window when sources are updated
