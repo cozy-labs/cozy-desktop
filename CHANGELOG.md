@@ -1,3 +1,20 @@
+## 3.7.0-beta.3 - 2018-06-12
+
+Improvements for all users:
+
+- The app should detect (may take between 5 seconds and 1 minute according to
+  elapsed time between click inside the app and completion) when required user
+  action has been completed (i.e. new TOS validation) and restart
+  automatically.
+
+Improvements for developers:
+
+- New jq file extension/gui/issues filters for logs
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.7.0-beta.2 - 2018-04-27
 
 Improvements for all users:
