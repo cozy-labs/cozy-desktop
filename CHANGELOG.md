@@ -1,3 +1,16 @@
+## 3.7.0 - 2018-06-13
+
+Improvements for all users:
+
+- Handle [user action required][3.7.0-beta.1] and [action completion][3.7.0-beta.3]
+- Make [Auto-Update Error Transparent][3.7.0-beta.2]
+- Handle [emptied folder][3.7.0-beta.1]
+
+Please see the previous beta releases for more details.
+See also [known issues][KNOWN_ISSUES.md].
+
+Happy syncing!
+
 ## 3.7.0-beta.3 - 2018-06-12
 
 Improvements for all users:
@@ -1099,3 +1112,8 @@ Please note that future releases will only support the new Cozy stack v3.
 ## Previous releases
 
 * Proof of concept
+
+[KNOWN_ISSUES.md]: https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md
+[3.7.0-beta.1]: https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.7.0-beta.1
+[3.7.0-beta.2]: https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.7.0-beta.2
+[3.7.0-beta.3]: https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.7.0-beta.3
