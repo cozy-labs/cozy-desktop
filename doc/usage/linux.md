@@ -80,7 +80,7 @@ The current AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
 
 **Note for GNOME Users** : From 3.26 onwards, GNOME removed the systray which is the only interface for *Cozy Drive*. It should be replaced in the future by `libcloudprovider`, which we will implement when it spreads. In the meantime, you need to install an extension such as [TopIcons][TopIcons]
 
-**Note for Archlinux Users** : (19/02/2018) : The "cozy-desktop-gui 0.16.0-2" in AUR is not Up to date and not work with Cozy 3.
+**Note for Archlinux Users** : You can also install `cozy-desktop` from the [community] repo.
 
 **Note for i3wm Users** : You can set `"gui": {"visibleOnBlur": true}` in your `~/.cozy-desktop/config.json` so the popover doesn't hide when focusing another
 window.
