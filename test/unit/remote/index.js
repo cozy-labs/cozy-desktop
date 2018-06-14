@@ -176,7 +176,7 @@ describe('Remote', function () {
       const metadata /*: Metadata */ = metadataBuilders.file().path('foo').build()
       this.remote.other = {
         createReadStreamAsync (localDoc) {
-          return fs.readFileAsync('/path/do/not/exists')
+          return fs.readFile('/path/do/not/exists')
         }
       }
       await this.remote.addFileAsync(metadata)
@@ -291,7 +291,7 @@ describe('Remote', function () {
         const metadata /*: Metadata */ = metadataBuilders.file().path('foo').build()
         this.remote.other = {
           createReadStreamAsync (localDoc) {
-            return fs.readFileAsync('/path/do/not/exists')
+            return fs.readFile('/path/do/not/exists')
           }
         }
         await this.remote.addFileAsync(metadata)
