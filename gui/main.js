@@ -305,7 +305,7 @@ app.on('ready', () => {
     log.info('Loading CLI...')
     i18n.init(app)
     try {
-      desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
+      desktop = new Desktop.App(process.env.COZY_DESKTOP_DIR)
     } catch (err) {
       if (err.message.match(/GLIBCXX/)) {
         dialog.showMessageBox({
