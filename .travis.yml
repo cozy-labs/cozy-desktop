@@ -46,6 +46,7 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
         travis_retry brew cask install apache-couchdb;
         printf "\n[log]\nlevel = warn\n" >> /Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/etc/local.ini;
+        ulimit -S -n 1024;
         (/Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/bin/couchdb &);
       fi
     - sleep 5
@@ -54,6 +55,7 @@ before_install:
     # Go 1.9
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
         travis_retry brew install gimme;
+        travis_retry brew install imagemagick;
       fi
     - travis_retry gimme 1.9
     - source ~/.gimme/envs/go1.9.env;
@@ -76,7 +78,7 @@ before_install:
 before_script:
     # Set up display for electron-mocha
     - export DISPLAY=:99.0
-    - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then
+    - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
         ( sudo Xvfb :99 -ac -screen 0 1024x768x8; echo ok )&
       else
         sh -e /etc/init.d/xvfb start;
@@ -87,10 +89,10 @@ script:
     - travis_retry yarn
     - yarn build
     - yarn lint
-    - yarn test:unit:coverage -- --timeout $MOCHA_TIMEOUT
+    - yarn test:unit:coverage --timeout $MOCHA_TIMEOUT
     - yarn test:elm
-    - yarn test:integration -- --timeout $MOCHA_TIMEOUT
-    - yarn test:scenarios -- --timeout $MOCHA_TIMEOUT
+    - yarn test:integration --timeout $MOCHA_TIMEOUT
+    - yarn test:scenarios --timeout $MOCHA_TIMEOUT
     - |
       if [ "$TRAVIS_OS_NAME" == "linux" ]; then
         docker run --rm \
