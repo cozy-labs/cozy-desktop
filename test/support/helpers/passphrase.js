@@ -7,6 +7,6 @@ let passphrase = process.env.COZY_PASSPHRASE || 'CozyTest_1'
 //     passphrase = require '.../passphrase'
 module.exports = passphrase
 
-// Running this script directly with `node` or `babel-node` prints the
+// Running this script directly with `node` prints the
 // passphrase to the console (useful for scripting, e.g. on Travis).
 if (require.main === module) { console.log(passphrase) }

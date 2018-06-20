@@ -15,7 +15,7 @@ module.exports = {
   jsonApiToRemoteDoc
 }
 
-function specialId (id: string) {
+function specialId (id /*: string */) {
   return (
     id === ROOT_DIR_ID ||
     id === TRASH_DIR_ID ||
@@ -25,6 +25,7 @@ function specialId (id: string) {
 
 // TODO: Define separate types for files and folders
 
+/*::
 // The remote Cozy metadata, as returned by cozy-client-js
 export type RemoteDoc = {
   _id: string,
@@ -49,23 +50,25 @@ export type RemoteDeletion = {
   _rev: string,
   _deleted: true
 }
+*/
 
-function dropSpecialDocs (docs: RemoteDoc[]) {
+function dropSpecialDocs (docs /*: RemoteDoc[] */) {
   return docs.filter(doc => !specialId(doc._id))
 }
 
-function keepFiles (docs: RemoteDoc[]) {
+function keepFiles (docs /*: RemoteDoc[] */) {
   return docs.filter(doc => doc.type === FILE_TYPE)
 }
 
-function parentDirIds (docs: RemoteDoc[]) {
+function parentDirIds (docs /*: RemoteDoc[] */) {
   return uniq(docs.map(doc => doc.dir_id))
 }
 
-function inRemoteTrash (doc: RemoteDoc): boolean {
+function inRemoteTrash (doc /*: RemoteDoc */) /*: boolean */ {
   return doc.trashed || doc.path.startsWith(`/${TRASH_DIR_NAME}/`)
 }
 
+/*::
 export type JsonApiAttributes = {
   class?: string, // file only
   dir_id: string,
@@ -86,8 +89,9 @@ export type JsonApiDoc = {
   _type: string,
   attributes: JsonApiAttributes,
 }
+*/
 
-function jsonApiToRemoteDoc (json: JsonApiDoc): RemoteDoc {
+function jsonApiToRemoteDoc (json/*: JsonApiDoc */) /*: RemoteDoc */ {
   let metadata = {}
 
   Object.assign(metadata, {

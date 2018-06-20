@@ -5,7 +5,7 @@ const electron = require('electron')
 
 const ELMSTARTUP = 400
 
-const log = require('../../core-built/app').logger({
+const log = require('../../core/app').logger({
   component: 'windows'
 })
 
@@ -14,7 +14,7 @@ module.exports = class WindowManager {
     this.win = null
     this.app = app
     this.desktop = desktop
-    this.log = require('../../core-built/app').logger({
+    this.log = require('../../core/app').logger({
       component: 'GUI/' + this.windowOptions().title
     })
 

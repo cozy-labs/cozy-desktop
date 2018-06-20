@@ -10,7 +10,7 @@ module.exports = {
   includeJSONintoError
 }
 
-function includeJSONintoError (err: Error) {
+function includeJSONintoError (err /*: Error */) {
   let err2 = err
   try {
     const parsed = JSON.parse(err.message)

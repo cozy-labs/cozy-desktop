@@ -1,8 +1,6 @@
 'use strict'
 
-require('babel-polyfill')
-
-const Desktop = require('../core-built/app.js')
+const Desktop = require('../core/app.js')
 const pkg = require('../package.json')
 
 const { debounce, pick } = require('lodash')
@@ -307,7 +305,7 @@ app.on('ready', () => {
     log.info('Loading CLI...')
     i18n.init(app)
     try {
-      desktop = new Desktop(process.env.COZY_DESKTOP_DIR)
+      desktop = new Desktop.App(process.env.COZY_DESKTOP_DIR)
     } catch (err) {
       if (err.message.match(/GLIBCXX/)) {
         dialog.showMessageBox({

@@ -75,7 +75,7 @@ suite('Conflict resolution', () => {
         await helpers.remote.pullChanges()
         should(await helpers.remote.tree()).deepEqual([
           '.cozy_trash/',
-          'foo-conflict-...'
+          'foo'
         ])
 
         // Stack is back, retry...

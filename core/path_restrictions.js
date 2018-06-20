@@ -3,6 +3,9 @@
 const path = require('path')
 const { sep } = path
 
+const _ = require('lodash')
+
+/*::
 type SingleCharString = string
 
 type PathRestrictions = {
@@ -40,8 +43,9 @@ export type PathLengthIssue = {
 export type PathIssue =
   | (NameIssue & {path: string})
   | PathLengthIssue
+*/
 
-function pathRestrictions (customs: Object): PathRestrictions {
+function pathRestrictions (customs /*: Object */) /*: PathRestrictions */ {
   const reservedChars = customs.reservedChars || new Set()
   return Object.assign({
     dirNameMaxBytes: customs.dirNameMaxBytes || customs.nameMaxBytes,
@@ -94,7 +98,7 @@ module.exports = {
   detectPathLengthIssue
 }
 
-function restrictionsByPlatform (platform: string) {
+function restrictionsByPlatform (platform /*: string */) {
   switch (platform) {
     case 'win32': return win
     case 'darwin': return mac
@@ -103,16 +107,16 @@ function restrictionsByPlatform (platform: string) {
   }
 }
 
-function detectReservedChars (name: string, restrictions: PathRestrictions): ?Array<string> {
+function detectReservedChars (name /*: string */, restrictions /*: PathRestrictions */) /*: ?Array<string> */ {
   return name.match(restrictions.reservedCharsRegExp)
 }
 
-function detectForbiddenLastChar (name: string, restrictions: PathRestrictions): ?string {
+function detectForbiddenLastChar (name /*: string */, restrictions /*: PathRestrictions */) /*: ?string */ {
   const lastChar = name.slice(-1)
   if (restrictions.forbiddenLastChars.has(lastChar)) return lastChar
 }
 
-function detectReservedName (name: string, restrictions: PathRestrictions): ?string {
+function detectReservedName (name /*: string */, restrictions /*: PathRestrictions */) /*: ?string */ {
   const upperCaseName = name.toUpperCase()
   const upperCaseBasename = path.basename(upperCaseName, path.extname(upperCaseName))
   if (restrictions.reservedNames.has(upperCaseBasename)) {
@@ -120,7 +124,7 @@ function detectReservedName (name: string, restrictions: PathRestrictions): ?str
   }
 }
 
-function detectNameLengthIssue (name: string, restrictions: PathRestrictions): ?number {
+function detectNameLengthIssue (name /*: string */, restrictions /*: PathRestrictions */) /*: ?number */ {
   const { nameMaxBytes } = restrictions
   const nameBytes = Buffer.byteLength(name) // TODO: utf16?
   if (nameBytes > nameMaxBytes) {
@@ -128,7 +132,7 @@ function detectNameLengthIssue (name: string, restrictions: PathRestrictions): ?
   }
 }
 
-function detectDirNameLengthIssue (name: string, restrictions: PathRestrictions): ?number {
+function detectDirNameLengthIssue (name /*: string */, restrictions /*: PathRestrictions */) /*: ?number */ {
   const { dirNameMaxBytes } = restrictions
   if (dirNameMaxBytes == null) return detectNameLengthIssue(name, restrictions)
   // TODO: utf16?
@@ -136,7 +140,7 @@ function detectDirNameLengthIssue (name: string, restrictions: PathRestrictions)
 }
 
 // Identifies file/dir name issues that will prevent local synchronization
-function detectNameIssues (name: string, type: string, platform: string): NameIssue[] {
+function detectNameIssues (name /*: string */, type /*: string */, platform /*: string */) /*: NameIssue[] */ {
   const restrictions = restrictionsByPlatform(platform)
   const issues = []
 
@@ -171,13 +175,13 @@ function detectNameIssues (name: string, type: string, platform: string): NameIs
 }
 
 // Identifies issues in every path item that will prevent local synchronization
-function detectPathIssues (path: string, type: string): Array<PathIssue> {
+function detectPathIssues (path /*: string */, type /*: string */) /*: Array<PathIssue> */ {
   const platform = process.platform
   const ancestorNames = path.split(sep)
   const basename = ancestorNames.pop()
 
   const pathIssues = detectNameIssues(basename, type, platform)
-    .map(nameIssue => ({...nameIssue, path}))
+    .map(nameIssue => _.merge({path}, nameIssue))
 
   const recursivePathIssues = ancestorNames
     .reduceRight((previousIssues, name, index, pathComponents) => {
@@ -185,17 +189,14 @@ function detectPathIssues (path: string, type: string): Array<PathIssue> {
       const nameIssues = detectNameIssues(name, 'folder', platform)
 
       return previousIssues.concat(
-        nameIssues.map(issue => ({
-          ...issue,
-          path
-        })
-      ))
+        nameIssues.map(issue => _.merge({path}, issue))
+      )
     }, pathIssues)
 
   return recursivePathIssues.filter(issue => issue != null)
 }
 
-function detectPathLengthIssue (path: string, platform: string): ?PathLengthIssue {
+function detectPathLengthIssue (path /*: string */, platform /*: string */) /*: ?PathLengthIssue */ {
   const { pathMaxBytes } = restrictionsByPlatform(platform)
   const pathBytes = Buffer.byteLength(path) // TODO: utf16?
   if (pathBytes > pathMaxBytes) {

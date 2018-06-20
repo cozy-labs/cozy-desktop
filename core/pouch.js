@@ -1,8 +1,6 @@
 /* @flow weak */
 
-import type { Metadata } from './metadata'
-import type { Callback } from './utils/func'
-
+const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const PouchDB = require('pouchdb')
 const async = require('async')
@@ -10,8 +8,13 @@ const fs = require('fs-extra')
 const { isEqual } = require('lodash')
 const path = require('path')
 
-const Config = require('./config')
 const logger = require('./logger')
+
+/*::
+import type Config from './config'
+import type { Metadata } from './metadata'
+import type { Callback } from './utils/func'
+*/
 
 const log = logger({
   component: 'Pouch'
@@ -27,11 +30,13 @@ const log = logger({
 // For naming conventions, we kept those used on cozy and its couchdb. And
 // views name are in camelcase (byChecksum, not by-checksum).
 class Pouch {
+  /*::
   config: Config
   db: PouchDB
   updater: any
   _lock: {id: number, promise: Promise}
   nextLockId: number
+  */
 
   constructor (config) {
     this.config = config
@@ -53,8 +58,23 @@ class Pouch {
       })
     })
 
+    autoBind(this)
     Promise.promisifyAll(this)
   }
+
+  /*::
+  byChecksumAsync: (string) => Promise<Metadata[]>
+  byRecursivePathAsync: (string) => Promise<*>
+  byRemoteIdAsync: (id: string) => Promise<*>
+  byRemoteIdMaybeAsync: (id: string) => Promise<*>
+  addAllViewsAsync: () => Promise<*>
+  getPreviousRevAsync: (id: string, shortRev: ?number) => Promise<Metadata>
+  getLocalSeqAsync: () => Promise<number>
+  setLocalSeqAsync: (number) => Promise<*>
+  getRemoteSeqAsync: () => string
+  setRemoteSeqAsync: (seq: string) => Promise<*>
+  treeAsync: () => Promise<Array<string>>
+  */
 
   // Create database and recreate all filters
   resetDatabase (callback) {
@@ -67,7 +87,7 @@ class Pouch {
     })
   }
 
-  lock (component: *): Promise<Function> {
+  lock (component /*: * */) /*: Promise<Function> */ {
     const id = this.nextLockId++
     if (typeof component !== 'string') component = component.constructor.name
     log.trace({component, lock: {id, state: 'requested'}})
@@ -86,16 +106,18 @@ class Pouch {
 
   /* Mini ODM */
 
-  put (doc: Metadata, callback?: Callback) {
-    log.debug({path: doc.path, ...doc.sides, _deleted: doc._deleted}, 'Saving metadata...')
+  put (doc /*: Metadata */, callback /*: ?Callback */) {
+    const {local, remote} = doc.sides
+    log.debug({path: doc.path, local, remote, _deleted: doc._deleted}, 'Saving metadata...')
     log.trace({path: doc.path, doc})
     return this.db.put(doc).asCallback(callback)
   }
 
-  bulkDocs (docs: Metadata[], callback?: Callback) {
+  bulkDocs (docs /*: Metadata[] */, callback /*: ?Callback */) {
     for (const doc of docs) {
       const {path} = doc
-      log.debug({path, ...doc.sides, _deleted: doc._deleted}, 'Saving bulk metadata...')
+      const {local, remote} = doc.sides || {}
+      log.debug({path, local, remote, _deleted: doc._deleted}, 'Saving bulk metadata...')
       log.trace({path, doc})
     }
     return this.db.bulkDocs(docs).asCallback(callback)
@@ -129,8 +151,6 @@ class Pouch {
     return this.getAll('byChecksum', params, callback)
   }
 
-  byChecksumAsync: (string) => Promise<Metadata[]>
-
   // Return all the files and folders in this path, only at first level
   byPath (path, callback) {
     let params = {
@@ -155,8 +175,6 @@ class Pouch {
     return this.getAll('byPath', params, callback)
   }
 
-  byRecursivePathAsync: (string) => Promise<*>
-
   // Return the file/folder with this remote id
   byRemoteId (id, callback) {
     let params = {
@@ -175,8 +193,6 @@ class Pouch {
     })
   }
 
-  byRemoteIdAsync: (id: string) => Promise<*>
-
   byRemoteIdMaybe (id, callback) {
     this.byRemoteId(id, (err, was) => {
       if (err && (err.status !== 404)) {
@@ -186,8 +202,6 @@ class Pouch {
       }
     })
   }
-
-  byRemoteIdMaybeAsync: (id: string) => Promise<*>
 
   /* Views */
 
@@ -199,8 +213,6 @@ class Pouch {
       this.addByRemoteIdView
     ], err => callback(err))
   }
-
-  addAllViewsAsync: () => Promise<*>
 
   // Create a view to list files and folders inside a path
   // The path for a file/folder in root will be '',
@@ -304,8 +316,6 @@ class Pouch {
     })
   }
 
-  getPreviousRevAsync: (id: string, shortRev: ?number) => Promise<Metadata>
-
   /* Sequence numbers */
 
   // Get last local replication sequence,
@@ -320,8 +330,6 @@ class Pouch {
     })
   }
 
-  getLocalSeqAsync: () => Promise<number>
-
   // Set last local replication sequence
   // It is saved in PouchDB as a local document
   // See http://pouchdb.com/guides/local-documents.html
@@ -332,8 +340,6 @@ class Pouch {
     }
     return this.updater.push(task, callback)
   }
-
-  setLocalSeqAsync: (number) => Promise<*>
 
   // Get last remote replication sequence,
   // ie the last change from couchdb that have been saved in pouch
@@ -347,8 +353,6 @@ class Pouch {
     })
   }
 
-  getRemoteSeqAsync: () => string
-
   // Set last remote replication sequence
   // It is saved in PouchDB as a local document
   // See http://pouchdb.com/guides/local-documents.html
@@ -360,15 +364,12 @@ class Pouch {
     return this.updater.push(task, callback)
   }
 
-  setRemoteSeqAsync: (seq: string) => Promise<*>
-
   tree (callback) {
     this.db.allDocs((err, result) => {
       if (err) return callback(err)
       callback(null, result.rows.map(row => row.id).sort())
     })
   }
-  treeAsync: () => Promise<Array<string>>
 }
 
 module.exports = Pouch

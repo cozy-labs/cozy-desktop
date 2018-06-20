@@ -7,14 +7,14 @@ const path = require('path')
 
 const metadata = require('../../core/metadata')
 const Pouch = require('../../core/pouch')
-const RemoteCozy = require('../../core/remote/cozy')
+const { RemoteCozy } = require('../../core/remote/cozy')
 
 const configHelpers = require('../../test/support/helpers/config')
 const cozyHelpers = require('../../test/support/helpers/cozy')
 
 const debug = process.env.DEBUG != null ? console.log : (...args) => {}
 
-const createInitialTree = async function (scenario: *, cozy: *, pouch: Pouch) {
+const createInitialTree = async function (scenario /*: * */, cozy /*: * */, pouch /*: Pouch */) {
   if (!scenario.init) return
   debug('[init]')
   for (let doc of scenario.init) {
@@ -59,7 +59,7 @@ const createInitialTree = async function (scenario: *, cozy: *, pouch: Pouch) {
   }
 }
 
-const runActions = (scenario: *, cozy: *) => {
+const runActions = (scenario /*: * */, cozy /*: * */) => {
   debug('[actions]')
   return Promise.each(scenario.actions, async (action) => {
     switch (action.type) {
@@ -145,13 +145,13 @@ const setupConfig = () => {
   return config
 }
 
-const setupPouch = async (config: *) => {
+const setupPouch = async (config /*: * */) => {
   const pouch = new Pouch(config)
   await pouch.addAllViewsAsync()
   return pouch
 }
 
-const captureScenario = async (scenario: *) => {
+const captureScenario = async (scenario /*: * */) => {
   // Setup
   const config = setupConfig()
   const pouch = await setupPouch(config)

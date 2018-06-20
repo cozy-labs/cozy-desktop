@@ -1,43 +1,50 @@
 /* @flow */
 
-import type { RemoteDoc } from './document'
-import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider' // eslint-disable-line
-import type { Metadata } from '../metadata'
-import type { Side } from '../side' // eslint-disable-line
-
+const autoBind = require('auto-bind')
 const Promise = require('bluebird')
-const EventEmitter = require('events')
 const { posix, sep } = require('path')
 
-const Config = require('../config')
 const conversion = require('../conversion')
-const RemoteCozy = require('./cozy')
+const { RemoteCozy } = require('./cozy')
 const logger = require('../logger')
-const Pouch = require('../pouch')
-const Prep = require('../prep')
 const { RemoteWarningPoller } = require('./warning_poller')
-const Watcher = require('./watcher')
+const { RemoteWatcher } = require('./watcher')
 const measureTime = require('../perftools')
 const { withContentLength } = require('../file_stream_provider')
+
+/*::
+import type EventEmitter from 'events'
+import type Config from '../config'
+import type { Metadata } from '../metadata'
+import type Pouch from '../pouch'
+import type Prep from '../prep'
+import type { RemoteDoc } from './document'
+import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider' // eslint-disable-line
+import type { Side } from '../side' // eslint-disable-line
+*/
 
 const log = logger({
   component: 'RemoteWriter'
 })
 
-module.exports = class Remote implements Side {
+module.exports = class Remote /*:: implements Side */ {
+  /*::
   other: FileStreamProvider
   pouch: Pouch
   events: EventEmitter
-  watcher: Watcher
+  watcher: RemoteWatcher
   remoteCozy: RemoteCozy
   warningsPoller: RemoteWarningPoller
+  */
 
-  constructor (config: Config, prep: Prep, pouch: Pouch, events: EventEmitter) {
+  constructor (config /*: Config */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */) {
     this.pouch = pouch
     this.events = events
     this.remoteCozy = new RemoteCozy(config)
     this.warningsPoller = new RemoteWarningPoller(this.remoteCozy, events)
-    this.watcher = new Watcher(pouch, prep, this.remoteCozy, events)
+    this.watcher = new RemoteWatcher(pouch, prep, this.remoteCozy, events)
+
+    autoBind(this)
   }
 
   start () {
@@ -55,7 +62,7 @@ module.exports = class Remote implements Side {
     ])
   }
 
-  sendMail (args: any) {
+  sendMail (args /*: any */) {
     return this.remoteCozy.createJob('sendmail', args)
   }
 
@@ -64,19 +71,19 @@ module.exports = class Remote implements Side {
   }
 
   // Create a readable stream for the given doc
-  async createReadStreamAsync (doc: Metadata): Promise<ReadableWithContentLength> {
+  async createReadStreamAsync (doc /*: Metadata */) /*: Promise<ReadableWithContentLength> */ {
     const stream = await this.remoteCozy.downloadBinary(doc.remote._id)
     return withContentLength(stream, doc.size)
   }
 
   // Create a folder on the remote cozy instance
-  async addFolderAsync (doc: Metadata): Promise<Metadata> {
+  async addFolderAsync (doc /*: Metadata */) /*: Promise<Metadata> */ {
     const {path} = doc
     log.info({path}, 'Creating folder...')
 
     const [parentPath, name] = conversion.extractDirAndName(doc.path)
-    const parent: RemoteDoc = await this.remoteCozy.findOrCreateDirectoryByPath(parentPath)
-    let dir: RemoteDoc
+    const parent /*: RemoteDoc */ = await this.remoteCozy.findOrCreateDirectoryByPath(parentPath)
+    let dir /*: RemoteDoc */
 
     try {
       dir = await this.remoteCozy.createDirectory({
@@ -100,12 +107,12 @@ module.exports = class Remote implements Side {
     return conversion.createMetadata(dir)
   }
 
-  async addFileAsync (doc: Metadata): Promise<Metadata> {
+  async addFileAsync (doc /*: Metadata */) /*: Promise<Metadata> */ {
     const {path} = doc
     log.info({path}, 'Uploading new file...')
     const stopMeasure = measureTime('RemoteWriter#addFile')
 
-    let stream: ReadableWithContentLength
+    let stream /*: ReadableWithContentLength */
     try {
       stream = await this.other.createReadStreamAsync(doc)
     } catch (err) {
@@ -139,7 +146,7 @@ module.exports = class Remote implements Side {
     return conversion.createMetadata(created)
   }
 
-  async overwriteFileAsync (doc: Metadata, old: ?Metadata): Promise<Metadata> {
+  async overwriteFileAsync (doc /*: Metadata */, old /*: ?Metadata */) /*: Promise<Metadata> */ {
     const {path} = doc
     log.info({path}, 'Uploading new file version...')
 
@@ -171,7 +178,7 @@ module.exports = class Remote implements Side {
     return conversion.createMetadata(updated)
   }
 
-  async updateFileMetadataAsync (doc: Metadata, old: any): Promise<Metadata> {
+  async updateFileMetadataAsync (doc /*: Metadata */, old /*: any */) /*: Promise<Metadata> */ {
     const {path} = doc
     log.info({path}, 'Updating file metadata...')
 
@@ -192,12 +199,12 @@ module.exports = class Remote implements Side {
     return conversion.createMetadata(updated)
   }
 
-  async moveFileAsync (newMetadata: Metadata, oldMetadata: Metadata): Promise<Metadata> {
+  async moveFileAsync (newMetadata /*: Metadata */, oldMetadata /*: Metadata */) /*: Promise<Metadata> */ {
     const {path} = newMetadata
     log.info({path}, `Moving from ${oldMetadata.path} ...`)
 
-    const [newDirPath, newName]: [string, string] = conversion.extractDirAndName(path)
-    const newDir: RemoteDoc = await this.remoteCozy.findDirectoryByPath(newDirPath)
+    const [newDirPath, newName] /*: [string, string] */ = conversion.extractDirAndName(path)
+    const newDir /*: RemoteDoc */ = await this.remoteCozy.findDirectoryByPath(newDirPath)
 
     const attrs = {
       name: newName,
@@ -208,7 +215,7 @@ module.exports = class Remote implements Side {
       ifMatch: oldMetadata.remote._rev
     }
 
-    let newRemoteDoc: RemoteDoc = await this.remoteCozy.updateAttributesById(oldMetadata.remote._id, attrs, opts)
+    let newRemoteDoc /*: RemoteDoc */ = await this.remoteCozy.updateAttributesById(oldMetadata.remote._id, attrs, opts)
 
     newMetadata.remote = {
       _id: newRemoteDoc._id,
@@ -224,7 +231,7 @@ module.exports = class Remote implements Side {
     }
   }
 
-  async updateFolderAsync (doc: Metadata, old: Metadata): Promise<Metadata> {
+  async updateFolderAsync (doc /*: Metadata */, old /*: Metadata */) /*: Promise<Metadata> */ {
     const {path} = doc
     if (!old.remote) {
       return this.addFolderAsync(doc)
@@ -233,7 +240,7 @@ module.exports = class Remote implements Side {
 
     const [newParentDirPath, newName] = conversion.extractDirAndName(path)
     const newParentDir = await this.remoteCozy.findDirectoryByPath(newParentDirPath)
-    let newRemoteDoc: RemoteDoc
+    let newRemoteDoc /*: RemoteDoc */
 
     const attrs = {
       name: newName,
@@ -265,10 +272,10 @@ module.exports = class Remote implements Side {
     return conversion.createMetadata(newRemoteDoc)
   }
 
-  async trashAsync (doc: Metadata): Promise<void> {
+  async trashAsync (doc /*: Metadata */) /*: Promise<void> */ {
     const {path} = doc
     log.info({path}, 'Moving to the trash...')
-    let newRemoteDoc: RemoteDoc
+    let newRemoteDoc /*: RemoteDoc */
     try {
       newRemoteDoc = await this.remoteCozy.trashById(doc.remote._id, {
         ifMatch: doc.remote._rev
@@ -283,7 +290,7 @@ module.exports = class Remote implements Side {
     doc.remote._rev = newRemoteDoc._rev
   }
 
-  async deleteFolderAsync (doc: Metadata): Promise<void> {
+  async deleteFolderAsync (doc /*: Metadata */) /*: Promise<void> */ {
     await this.trashAsync(doc)
     const {path} = doc
 
@@ -301,19 +308,19 @@ module.exports = class Remote implements Side {
     }
   }
 
-  async assignNewRev (doc: Metadata): Promise<*> {
+  async assignNewRev (doc /*: Metadata */) /*: Promise<*> */ {
     log.info({path: doc.path}, 'Assigning new rev...')
     const {_rev} = await this.remoteCozy.client.files.statById(doc.remote._id)
     doc.remote._rev = _rev
   }
 
-  async moveFolderAsync (newMetadata: Metadata, oldMetadata: Metadata): Promise<*> {
+  async moveFolderAsync (newMetadata /*: Metadata */, oldMetadata /*: Metadata */) /*: Promise<*> */ {
     // FIXME: same as moveFileAsync? Rename to moveAsync?
     const {path} = newMetadata
     log.info({path}, `Moving dir from ${oldMetadata.path} ...`)
 
-    const [newDirPath, newName]: [string, string] = conversion.extractDirAndName(path)
-    const newDir: RemoteDoc = await this.remoteCozy.findDirectoryByPath(newDirPath)
+    const [newDirPath, newName] /*: [string, string] */ = conversion.extractDirAndName(path)
+    const newDir /*: RemoteDoc */ = await this.remoteCozy.findDirectoryByPath(newDirPath)
 
     const attrs = {
       name: newName,
@@ -324,7 +331,7 @@ module.exports = class Remote implements Side {
       ifMatch: oldMetadata.remote._rev
     }
 
-    const newRemoteDoc: RemoteDoc = await this.remoteCozy.updateAttributesById(oldMetadata.remote._id, attrs, opts)
+    const newRemoteDoc /*: RemoteDoc */ = await this.remoteCozy.updateAttributesById(oldMetadata.remote._id, attrs, opts)
 
     newMetadata.remote = {
       _id: newRemoteDoc._id, // XXX: Why do we reassign id? Isn't it the same as before?
@@ -334,12 +341,12 @@ module.exports = class Remote implements Side {
     return conversion.createMetadata(newRemoteDoc)
   }
 
-  diskUsage (): Promise<*> {
+  diskUsage () /*: Promise<*> */ {
     return this.remoteCozy.diskUsage()
   }
 
   // TODO add tests
-  async renameConflictingDocAsync (doc: Metadata, newPath: string): Promise<void> {
+  async renameConflictingDocAsync (doc /*: Metadata */, newPath /*: string */) /*: Promise<void> */ {
     const {path} = doc
     log.info({path}, `Resolve a conflict: ${path} → ${newPath}`)
     const newName = conversion.extractDirAndName(newPath)[1]

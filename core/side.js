@@ -1,8 +1,8 @@
 /* @flow */
 
+/*::
 import type { SideName, Metadata } from './metadata'
 
-// eslint-disable-next-line no-undef
 export interface Side {
   addFileAsync (doc: Metadata): Promise<*>;
   addFolderAsync (doc: Metadata): Promise<*>;
@@ -16,12 +16,13 @@ export interface Side {
   deleteFolderAsync (doc: Metadata): Promise<*>;
   renameConflictingDocAsync (doc: Metadata, newPath: string): Promise<void>;
 }
+*/
 
 module.exports = {
   otherSide
 }
 
-function otherSide (side: SideName): SideName {
+function otherSide (side /*: SideName */) /*: SideName */ {
   switch (side) {
     case 'local': return 'remote'
     case 'remote': return 'local'

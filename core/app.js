@@ -1,9 +1,6 @@
 /* @flow */
 
-import type { Callback } from './utils/func'
-import type { SyncMode } from './sync'
-
-const EventEmitter = require('events')
+const autoBind = require('auto-bind')
 const fs = require('fs-extra')
 const _ = require('lodash')
 const os = require('os')
@@ -12,7 +9,6 @@ const readdirp = require('readdirp')
 const url = require('url')
 const uuid = require('uuid/v4')
 const https = require('https')
-const stream = require('stream')
 const {createGzip} = require('zlib')
 
 require('./globals') // FIXME Use bluebird promises as long as we need asCallback
@@ -30,6 +26,13 @@ const Sync = require('./sync')
 const SyncState = require('./syncstate')
 const Registration = require('./remote/registration')
 
+/*::
+import type EventEmitter from 'events'
+import type stream from 'stream'
+import type { Callback } from './utils/func'
+import type { SyncMode } from './sync'
+*/
+
 const log = logger({
   component: 'App'
 })
@@ -38,7 +41,8 @@ const SUPPORT_EMAIL = process.env.COZY_DESKTOP_SUPPORT_EMAIL || 'contact@cozyclo
 
 // App is the entry point for the CLI and GUI.
 // They both can do actions and be notified by events via an App instance.
-module.exports = class App {
+class App {
+  /*::
   lang: string
   basePath: string
   config: Config
@@ -50,11 +54,10 @@ module.exports = class App {
   local: Local
   remote: Remote
   sync: Sync
-
-  static logger = logger
+  */
 
   // basePath is the directory where the config and pouch are saved
-  constructor (basePath: string) {
+  constructor (basePath /*: string */) {
     log.info(this.clientInfo(), 'constructor')
     this.lang = 'fr'
     if (basePath == null) { basePath = os.homedir() }
@@ -63,10 +66,12 @@ module.exports = class App {
     this.config = new Config(this.basePath)
     this.pouch = new Pouch(this.config)
     this.events = new SyncState()
+
+    autoBind(this)
   }
 
   // Parse the URL
-  parseCozyUrl (cozyUrl: string) {
+  parseCozyUrl (cozyUrl /*: string */) {
     if (cozyUrl.indexOf(':') === -1) {
       if (cozyUrl.indexOf('.') === -1) {
         cozyUrl += '.cozycloud.cc'
@@ -77,7 +82,7 @@ module.exports = class App {
   }
 
   // Check that the cozyUrl is valid
-  checkCozyUrl (cozyUrl: string) {
+  checkCozyUrl (cozyUrl /*: string */) {
     let parsed = this.parseCozyUrl(cozyUrl)
     cozyUrl = url.format(parsed)
     if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) {
@@ -90,7 +95,7 @@ module.exports = class App {
 
   // Returns an object including the syncPath only when valid, or with an error
   // otherwise.
-  checkSyncPath (syncPath: string) {
+  checkSyncPath (syncPath /*: string */) {
     // We do not allow syncing the whole user home directory, the system users
     // directory or the whole system:
     // - It would probably to big regarding the current local events squashing
@@ -110,13 +115,13 @@ module.exports = class App {
   }
 
   // Return a promise for registering a device on the remote cozy
-  registerRemote (cozyUrl: string, redirectURI: ?string, onRegistered: ?Function, deviceName: string) {
+  registerRemote (cozyUrl /*: string */, redirectURI /*: ?string */, onRegistered /*: ?Function */, deviceName /*: string */) {
     const registration = new Registration(cozyUrl, this.config)
     return registration.process(pkg, redirectURI, onRegistered, deviceName)
   }
 
   // Save the config with all the informations for synchonization
-  saveConfig (cozyUrl: string, syncPath: string) {
+  saveConfig (cozyUrl /*: string */, syncPath /*: string */) {
     fs.ensureDirSync(syncPath)
     this.config.cozyUrl = cozyUrl
     this.config.syncPath = syncPath
@@ -127,14 +132,14 @@ module.exports = class App {
 
   // Register current device to remote Cozy and then save related informations
   // to the config file (used by CLI, not GUI)
-  async addRemote (cozyUrl: string, syncPath: string, deviceName: string) {
+  async addRemote (cozyUrl /*: string */, syncPath /*: string */, deviceName /*: string */) {
     try {
       const registered = await this.registerRemote(cozyUrl, null, null, deviceName)
       log.info(`Device ${registered.deviceName} has been added to ${cozyUrl}`)
       this.saveConfig(cozyUrl, syncPath)
     } catch (err) {
       log.error('An error occured while registering your device.')
-      let parsed: Object = this.parseCozyUrl(cozyUrl)
+      let parsed /*: Object */ = this.parseCozyUrl(cozyUrl)
       if (err.code === 'ENOTFOUND') {
         log.warn(`The DNS resolution for ${parsed.hostname} failed.`)
         log.warn('Are you sure the domain is OK?')
@@ -176,7 +181,7 @@ module.exports = class App {
     }
   }
 
-  async uploadFileToSupport (incident: string, name: string, data: string|stream.Readable) {
+  async uploadFileToSupport (incident /*: string */, name /*: string */, data /*: string|stream.Readable */) {
     return new Promise((resolve, reject) => {
       const req = https.request({
         method: 'PUT',
@@ -205,7 +210,7 @@ module.exports = class App {
   }
 
   // Send an issue by mail to the support
-  async sendMailToSupport (content: string) {
+  async sendMailToSupport (content /*: string */) {
     const incidentID = uuid()
     const zipper = createGzip({
       // TODO tweak this values, low resources for now.
@@ -267,7 +272,7 @@ module.exports = class App {
   }
 
   // Start the synchronization
-  startSync (mode: SyncMode) {
+  startSync (mode /*: SyncMode */) {
     this.config.saveMode(mode)
     log.info('Run first synchronisation...')
     return this.sync.start(mode)
@@ -283,7 +288,7 @@ module.exports = class App {
   }
 
   // Start database sync process and setup file change watcher
-  synchronize (mode: SyncMode) {
+  synchronize (mode /*: SyncMode */) {
     log.info(this.clientInfo(), 'synchronize')
     if (!this.config.isValid()) {
       log.error('No configuration found, please run add-remote-cozy' +
@@ -319,7 +324,7 @@ module.exports = class App {
   }
 
   // Call the callback for each file
-  walkFiles (args: {ignored?: any}, callback: Callback) {
+  walkFiles (args /*: {ignored?: any} */, callback /*: Callback */) {
     this.loadIgnore()
     let options = {
       root: this.config.syncPath,
@@ -349,18 +354,23 @@ module.exports = class App {
   }
 
   // Return the whole content of the database
-  allDocs (callback: Callback) {
+  allDocs (callback /*: Callback */) {
     this.pouch.db.allDocs({include_docs: true}, callback)
   }
 
   // Return all docs for a given query
-  query (query: any, callback: Callback) {
+  query (query /*: any */, callback /*: Callback */) {
     this.pouch.db.query(query, {include_docs: true}, callback)
   }
 
   // Get disk space informations from the cozy
-  diskUsage (): Promise<*> {
+  diskUsage ()/*: Promise<*> */ {
     if (!this.remote) this.instanciate()
     return this.remote.diskUsage()
   }
+}
+
+module.exports = {
+  App,
+  logger
 }

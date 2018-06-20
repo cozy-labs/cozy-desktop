@@ -1,5 +1,13 @@
 /* @flow */
 
+const path = require('path')
+
+const { getInode } = require('./event')
+const localChange = require('./change')
+const logger = require('../logger')
+const measureTime = require('../perftools')
+
+/*::
 import type { LocalEvent } from './event'
 import type {
   LocalChange,
@@ -10,13 +18,7 @@ import type {
   LocalFileDeletion,
   LocalFileMove
 } from './change'
-
-const path = require('path')
-
-const { getInode } = require('./event')
-const localChange = require('./change')
-const logger = require('../logger')
-const measureTime = require('../perftools')
+*/
 
 const log = logger({
   component: 'local/analysis'
@@ -25,8 +27,8 @@ log.chokidar = log.child({
   component: 'chokidar'
 })
 
-module.exports = function analysis (events: LocalEvent[], pendingChanges: LocalChange[]): LocalChange[] {
-  const changes: LocalChange[] = analyseEvents(events, pendingChanges)
+module.exports = function analysis (events /*: LocalEvent[] */, pendingChanges /*: LocalChange[] */) /*: LocalChange[] */ {
+  const changes /*: LocalChange[] */ = analyseEvents(events, pendingChanges)
   sortBeforeSquash(changes)
   squashMoves(changes)
   finalSort(changes)
@@ -38,12 +40,12 @@ const panic = (context, description) => {
   throw new Error(description)
 }
 
-function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): LocalChange[] {
+function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChange[] */) /*: LocalChange[] */ {
   const stopMeasure = measureTime('LocalWatcher#analyseEvents')
   // OPTIMIZE: new Array(events.length)
-  const changes: LocalChange[] = []
-  const changesByInode:Map<number, LocalChange> = new Map()
-  const changesByPath:Map<string, LocalChange> = new Map()
+  const changes /*: LocalChange[] */ = []
+  const changesByInode /*: Map<number, LocalChange> */ = new Map()
+  const changesByPath /*: Map<string, LocalChange> */ = new Map()
   const getChangeByInode = (e) => {
     const ino = getInode(e)
     if (ino) return changesByInode.get(ino)
@@ -52,7 +54,7 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
   const getChangeByPath = (e) => {
     return changesByPath.get(e.path)
   }
-  const changeFound = (c: LocalChange) => {
+  const changeFound = (c /*: LocalChange */) => {
     changesByPath.set(c.path, c)
     if (typeof c.ino === 'number') changesByInode.set(c.ino, c)
     else changes.push(c)
@@ -66,7 +68,7 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
 
   log.trace('Analyze events...')
 
-  for (let e: LocalEvent of events) {
+  for (let e/*: LocalEvent */ of events) {
     try {
       // chokidar make mistakes
       if (e.type === 'unlinkDir' && e.old && e.old.docType === 'file') {
@@ -84,13 +86,13 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
       switch (e.type) {
         case 'add':
           {
-            const moveChange: ?LocalFileMove = localChange.maybeMoveFile(getChangeByInode(e))
+            const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(getChangeByInode(e))
             if (moveChange) {
               localChange.includeAddEventInFileMove(moveChange, e)
               break
             }
 
-            const unlinkChange: ?LocalFileDeletion = localChange.maybeDeleteFile(getChangeByInode(e))
+            const unlinkChange /*: ?LocalFileDeletion */ = localChange.maybeDeleteFile(getChangeByInode(e))
             if (unlinkChange) {
               changeFound(localChange.fileMoveFromUnlinkAdd(unlinkChange, e))
             } else {
@@ -100,11 +102,11 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
           break
         case 'addDir':
           {
-            const moveChange: ?LocalDirMove = localChange.maybeMoveFolder(getChangeByInode(e))
+            const moveChange /*: ?LocalDirMove */ = localChange.maybeMoveFolder(getChangeByInode(e))
             if (moveChange) {
               localChange.includeAddDirEventInDirMove(moveChange, e)
             } else {
-              const unlinkChange: ?LocalDirDeletion = localChange.maybeDeleteFolder(getChangeByInode(e))
+              const unlinkChange /*: ?LocalDirDeletion */ = localChange.maybeDeleteFolder(getChangeByInode(e))
               if (unlinkChange) {
                 changeFound(localChange.dirMoveFromUnlinkAdd(unlinkChange, e))
               } else {
@@ -114,7 +116,7 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
           }
           break
         case 'change':
-          const moveChange: ?LocalFileMove = localChange.maybeMoveFile(getChangeByInode(e))
+          const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(getChangeByInode(e))
           if (moveChange) {
             localChange.includeChangeEventIntoFileMove(moveChange, e)
           } else {
@@ -123,7 +125,7 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
           break
         case 'unlink':
           {
-            const moveChange: ?LocalFileMove = localChange.maybeMoveFile(getChangeByInode(e))
+            const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(getChangeByInode(e))
             /* istanbul ignore next */
             if (moveChange) {
               // TODO: Pending move
@@ -132,7 +134,7 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
                 'checksumless adds and inode-less unlink events are dropped')
             }
 
-            const addChange: ?LocalFileAddition = localChange.maybeAddFile(getChangeByInode(e))
+            const addChange /*: ?LocalFileAddition */ = localChange.maybeAddFile(getChangeByInode(e))
             if (addChange) {
               // TODO: pending move
               changeFound(localChange.fileMoveFromAddUnlink(addChange, e))
@@ -141,7 +143,7 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
               changeFound(localChange.fromEvent(e))
               break
             }
-            const change: ?LocalFileMove = localChange.maybeMoveFile(getChangeByPath(e))
+            const change /*: ?LocalFileMove */ = localChange.maybeMoveFile(getChangeByPath(e))
             if (change && change.md5sum == null) { // FIXME: if change && change.wip?
               localChange.convertFileMoveToDeletion(change)
             }
@@ -150,7 +152,7 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
           break
         case 'unlinkDir':
           {
-            const moveChange: ?LocalDirMove = localChange.maybeMoveFolder(getChangeByInode(e))
+            const moveChange /*: ?LocalDirMove */ = localChange.maybeMoveFolder(getChangeByInode(e))
             /* istanbul ignore next */
             if (moveChange) {
               // TODO: pending move
@@ -159,13 +161,13 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
                 'non-existing addDir and inode-less unlinkDir events are dropped')
             }
 
-            const addChange: ?LocalDirAddition = localChange.maybePutFolder(getChangeByInode(e))
+            const addChange /*: ?LocalDirAddition */ = localChange.maybePutFolder(getChangeByInode(e))
             if (addChange) {
               changeFound(localChange.dirMoveFromAddUnlink(addChange, e))
             } else if (getInode(e)) {
               changeFound(localChange.fromEvent(e))
             } else {
-              const addChangeSamePath: ?LocalDirAddition = localChange.maybePutFolder(getChangeByPath(e))
+              const addChangeSamePath /*: ?LocalDirAddition */ = localChange.maybePutFolder(getChangeByPath(e))
               if (addChangeSamePath && addChangeSamePath.wip) {
                 log.debug({path: addChangeSamePath.path, ino: addChangeSamePath.ino},
                   'Folder was added then deleted. Ignoring add.')
@@ -173,7 +175,7 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
                 addChangeSamePath.type = 'Ignored'
               }
 
-              const moveChangeSamePath: ?LocalDirMove = localChange.maybeMoveFolder(getChangeByPath(e))
+              const moveChangeSamePath /*: ?LocalDirMove */ = localChange.maybeMoveFolder(getChangeByPath(e))
               if (moveChangeSamePath && moveChangeSamePath.wip) {
                 localChange.convertDirMoveToDeletion(moveChangeSamePath)
               }
@@ -198,7 +200,7 @@ function analyseEvents (events: LocalEvent[], pendingChanges: LocalChange[]): Lo
 }
 
 // TODO: Rename according to the sort logic
-function sortBeforeSquash (changes: LocalChange[]) {
+function sortBeforeSquash (changes /*: LocalChange[] */) {
   log.trace('Sort changes before squash...')
   const stopMeasure = measureTime('LocalWatcher#sortBeforeSquash')
   changes.sort((a, b) => {
@@ -217,7 +219,7 @@ function sortBeforeSquash (changes: LocalChange[]) {
   stopMeasure()
 }
 
-function squashMoves (changes: LocalChange[]) {
+function squashMoves (changes /*: LocalChange[] */) {
   log.trace('Squash moves...')
   const stopMeasure = measureTime('LocalWatcher#squashMoves')
 
@@ -250,7 +252,7 @@ function squashMoves (changes: LocalChange[]) {
   stopMeasure()
 }
 
-function separatePendingChanges (changes: LocalChange[], pendingChanges: LocalChange[]): LocalChange[] {
+function separatePendingChanges (changes /*: LocalChange[] */, pendingChanges /*: LocalChange[] */) /*: LocalChange[] */ {
   log.trace('Reserve changes in progress for next flush...')
 
   for (let i = 0; i < changes.length; i++) {
@@ -278,7 +280,7 @@ function separatePendingChanges (changes: LocalChange[], pendingChanges: LocalCh
 }
 
 // TODO: Rename according to the sort logic
-const finalSorter = (a: LocalChange, b: LocalChange) => {
+const finalSorter = (a /*: LocalChange */, b /*: LocalChange */) => {
   if (a.wip && !b.wip) return -1
   if (b.wip && !a.wip) return 1
 
@@ -302,7 +304,7 @@ const finalSorter = (a: LocalChange, b: LocalChange) => {
 }
 
 // TODO: Rename according to the sort logic
-function finalSort (changes: LocalChange[]) {
+function finalSort (changes /*: LocalChange[] */) {
   log.trace('Final sort...')
   const stopMeasure = measureTime('LocalWatcher#finalSort')
   changes.sort(finalSorter)

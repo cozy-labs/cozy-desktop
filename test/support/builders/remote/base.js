@@ -1,12 +1,14 @@
 /* @flow */
 
-import type { RemoteDoc } from '../../../../core/remote/document'
-
-const { Cozy } = require('cozy-client-js')
 const uuid = require('uuid/v4')
 
 const { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID, TRASH_DIR_NAME } = require('../../../../core/remote/constants')
 const timestamp = require('../../../../core/timestamp')
+
+/*::
+import type { Cozy } from 'cozy-client-js'
+import type { RemoteDoc } from '../../../../core/remote/document'
+*/
 
 const ROOT_DIR_PROPERTIES = {
   _id: ROOT_DIR_ID,
@@ -19,6 +21,7 @@ const TRASH_DIR_PROPERTIES = {
 }
 
 module.exports = class RemoteBaseBuilder {
+  /*::
   cozy: Cozy
   options: {
     contentType?: string,
@@ -26,8 +29,9 @@ module.exports = class RemoteBaseBuilder {
     name: string,
     lastModifiedDate: Date
   }
+  */
 
-  constructor (cozy: Cozy) {
+  constructor (cozy /*: Cozy */) {
     this.cozy = cozy
     this.options = {
       dir: ROOT_DIR_PROPERTIES,
@@ -36,32 +40,32 @@ module.exports = class RemoteBaseBuilder {
     }
   }
 
-  inDir (dir: RemoteDoc): this {
+  inDir (dir /*: RemoteDoc */) /*: this */ {
     this.options.dir = dir
     return this
   }
 
-  inRootDir (): this {
+  inRootDir () /*: this */ {
     this.options.dir = ROOT_DIR_PROPERTIES
     return this
   }
 
-  trashed (): this {
+  trashed () /*: this */ {
     this.options.dir = TRASH_DIR_PROPERTIES
     return this
   }
 
-  timestamp (...args: number[]): this {
+  timestamp (...args /*: number[] */) /*: this */ {
     this.options.lastModifiedDate = timestamp.build(...args)
     return this
   }
 
-  named (name: string): this {
+  named (name /*: string */) /*: this */ {
     this.options.name = name
     return this
   }
 
-  build (): Object {
+  build () /*: Object */ {
     return {
       _id: uuid().replace(/-/g, ''),
       _rev: '1-' + uuid().replace(/-/g, ''),

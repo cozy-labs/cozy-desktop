@@ -1,6 +1,6 @@
 /* @flow */
 
-import type { Scenario } from '..'
+/*:: import type { Scenario } from '..' */
 
 module.exports = ({
   init: [
@@ -25,4 +25,4 @@ module.exports = ({
     ],
     remoteTrash: []
   }
-}: Scenario)
+} /*: Scenario */)
