@@ -5,7 +5,6 @@ const CozyClient = require('cozy-client-js').Client
 const _ = require('lodash')
 const path = require('path')
 
-const Config = require('../config')
 const { FILES_DOCTYPE, FILE_TYPE } = require('./constants')
 const { dropSpecialDocs, jsonApiToRemoteDoc, keepFiles, parentDirIds } = require('./document')
 const logger = require('../logger')
@@ -13,6 +12,7 @@ const logger = require('../logger')
 const { posix } = path
 
 /*::
+import type Config from '../config'
 import type { Readable } from 'stream'
 import type { RemoteDoc, RemoteDeletion } from './document'
 import type { Warning } from './warning'
@@ -46,7 +46,7 @@ class RemoteCozy {
     this.client = new CozyClient({
       cozyURL: this.url,
       oauth: {
-        clientParams: Config.client,
+        clientParams: config.client,
         storage: config
       }
     })
