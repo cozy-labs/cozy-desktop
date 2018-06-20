@@ -15,7 +15,7 @@ env:
     global:
         - COZY_DESKTOP_DIR=/tmp/cozy-desktop
         - COZY_URL="http://localhost:8080"
-        - COZY_PASSPHRASE="CozyTest_1"
+        - COZY_PASSPHRASE="cozy"
         - GOPATH="$HOME"
         - MOCHA_TIMEOUT="240000"
         - NODE_ENV=test
