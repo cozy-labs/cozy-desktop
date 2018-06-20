@@ -1,67 +1,12 @@
-const cheerio = require('cheerio')
 const cozy = require('cozy-client-js')
 const fs = require('fs')
-const request = require('request')
-const url = require('url')
 
 const pkg = require('../../package.json')
-const Registration = require('../../core/remote/registration')
+const automatedRegistration = require('./automated_registration')
 
 const cozyUrl = process.env.COZY_URL
 const passphrase = process.env.COZY_PASSPHRASE
-const client = request.defaults({jar: true})
 const storage = new cozy.MemoryStorage()
-
-const automatedRegistration = new Registration(cozyUrl, storage, (authorizeUrl) => {
-  return new Promise((resolve, reject) => {
-    console.log('Get CSRF token...')
-    client.get({url: url.resolve(cozyUrl, '/auth/login')}, (err, _, body) => {
-      if (err) { reject(err) }
-
-      const $ = cheerio.load(body)
-      const csrf = $('#csrf_token').val()
-
-      console.log('Login... (csrf = ' + csrf + ')')
-      client.post({
-        url: url.resolve(cozyUrl, '/auth/login'),
-        form: {
-          passphrase,
-          csrf_token: csrf
-        }
-      }, (err) => {
-        if (err) { reject(err) }
-
-        console.log('Load authorization form...')
-        client({url: authorizeUrl}, (err, _, body) => {
-          if (err) { reject(err) }
-
-          console.log('Parse authorization form...')
-          const $ = cheerio.load(body)
-          const form = $('form.auth').serializeArray().reduce((data, param) => {
-            data[param.name] = param.value
-            return data
-          }, {})
-
-          console.log('Authorize...')
-          client.post({url: authorizeUrl, form}, (err, res, body) => {
-            if (err) { reject(err) }
-
-            if (!res.headers.location) {
-              return reject(new Error('No redirection after authorize, body = ' + body))
-            }
-
-            console.log('Save credentials...')
-            client({url: res.headers.location}, (err) => {
-              if (err) { reject(err) }
-
-              resolve(cozyUrl)
-            })
-          })
-        })
-      })
-    })
-  })
-})
 
 function readAccessToken () {
   console.log('Read access token...')
@@ -78,7 +23,8 @@ NODE_ENV=test
   `)
 }
 
-automatedRegistration.process(pkg)
+automatedRegistration(cozyUrl, passphrase, storage)
+  .process(pkg)
   .then(readAccessToken)
   .then(generateTestEnv)
   .catch(console.error)
