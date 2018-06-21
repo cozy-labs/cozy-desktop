@@ -21,22 +21,18 @@ def clean:
 # Errors
 def error_level: 50;
 def is_error: .level >= error_level;
-def select_error: select(is_error);
-def find_errors: select_error|{component,path,msg,time};
+def errors: clean | select(is_error);
 
 # Warnings
 def warn_level: 40;
 def is_warn: .level >= warn_level;
 def is_warn_strict: .level == warn_level;
-def select_warn: select(is_warn);
-def select_warn_strict: select(is_warn_strict);
-def find_warns: select_warn|{component,path,msg,time};
-def find_warns_strict: select_warn_strict|{component,path,msg,time};
+def warns: clean | select(is_warn);
+def warns_strict: clean | select(is_warn_strict);
 
 # Conflicts
 def is_conflict: .msg == "resolveConflictAsync";
-def select_conflict: select(is_conflict);
-def find_conflicts: select_conflict|{path,time};
+def conflicts: clean | select(is_conflict) | {time,path};
 
 # Non-issues
 def is_net_error: .msg | test("net::");
@@ -51,12 +47,10 @@ def is_non_issue:
 
 # Issues
 def is_issue: (is_warn or is_conflict) and (is_non_issue | not);
-def select_issue: select(is_issue);
-def find_issues: select_issue|{component,path,msg,time,level};
-def issues: select_issue;
+def issues: clean | select(is_issue);
 
 # Path filtering
-def filter_path(pattern): select((.path,.oldpath,"")|strings|test(pattern));
+def path(pattern): clean | select((.path,.oldpath,"") | strings | test(pattern));
 
 # GUI
 def is_gui: .component | test("GUI");
@@ -64,7 +58,7 @@ def gui: select(is_gui);
 def no_gui: select(is_gui | not);
 
 # Config info
-def find_client_info:
+def client:
   select(.appVersion)
     |del(.name)
     |del(.level)
