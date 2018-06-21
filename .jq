@@ -68,12 +68,8 @@ def find_client_info:
 def is_ext(x): .path | test("\\." + x);
 def ext(x): select(is_ext(x));
 def no_ext(x): select(is_ext(x) | not);
-
-# Excel files
 def xls: ext("xls");
 def no_xls: no_ext("xls");
-
-# Text files
 def txt: ext("txt");
 def no_txt: no_ext("txt");
 
