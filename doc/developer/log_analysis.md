@@ -33,6 +33,11 @@ Then you can check what happened at some file path:
 
     yarn jq -c 'path(foo/bar)|short' path/to/logs*
 
+Please note that since the path filter takes a regular expression pattern,
+you'll have to double-escape backslashes in Windows paths:
+
+    yarn jq 'path("foo\\\\bar")' path/to/logs*
+
 Then get more details (e.g. dropping `-c` option and `short` filter):
 
     yarn jq 'select(...)' path/to/logs*

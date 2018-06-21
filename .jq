@@ -63,6 +63,7 @@ def issues: clean | select(is_issue);
 # Filter by path (should handle moves, conflict renaming...):
 #
 #     yarn jq 'path("foo/bar")' path/to/logs*
+#     yarn jq 'path("foo\\\\bar")' path/to/logs*
 #
 def path(pattern): clean | select((.path,.oldpath,"") | strings | test(pattern));
 
