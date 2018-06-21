@@ -11,6 +11,13 @@
 # TODO: Find a way to make aggregation work, e.g.:
 #   `yarn jq 'find_issues|.msg' | yarn jq:frequencies`
 
+# Remove fields that are almost never used while debugging
+def clean:
+  del(.hostname) |
+  del(.name) |
+  del(.pid) |
+  del(.v);
+
 # Errors
 def error_level: 50;
 def is_error: .level >= error_level;
