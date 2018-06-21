@@ -113,7 +113,7 @@ class Ignore {
     line = line.replace(/^\\/, '')   // Remove leading escaping char
     line = line.replace(/( |\t)*$/, '')  // Remove trailing spaces
     // Ignore case for case insensitive file-systems
-    if (process.platform === 'darwin') {
+    if (process.platform === 'darwin' || process.platform === 'win32') {
       line = makeRe(line, {nocase: true})
     }
     let pattern = {
