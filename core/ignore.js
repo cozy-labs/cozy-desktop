@@ -57,8 +57,11 @@ class Ignore {
       '.TemporaryItems',
       '.Trashes',
       '.VolumeIcon.icns',
-      // The only solution found to make Icon^r unit test pass on all platforms
-      process.platform === 'darwin' ? 'Icon\\r' : 'Icon\r',
+      // Pattern must be escaped twice on case-insensitive plateforms in order
+      // for makeRe() to work
+      process.platform === 'darwin' || process.platform === 'win32'
+        ? 'Icon\\r'
+        : 'Icon\r',
 
       // Vim
       '*.sw[px]',
@@ -110,7 +113,7 @@ class Ignore {
     line = line.replace(/^\\/, '')   // Remove leading escaping char
     line = line.replace(/( |\t)*$/, '')  // Remove trailing spaces
     // Ignore case for case insensitive file-systems
-    if (process.platform === 'darwin') {
+    if (process.platform === 'darwin' || process.platform === 'win32') {
       line = makeRe(line, {nocase: true})
     }
     let pattern = {

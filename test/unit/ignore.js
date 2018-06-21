@@ -1,6 +1,7 @@
 /* eslint-env mocha */
 
 const Ignore = require('../../core/ignore')
+const metadata = require('../../core/metadata')
 
 describe('Ignore', function () {
   it('rejects blank lines for patterns', function () {
@@ -326,5 +327,13 @@ describe('Ignore', function () {
       docType: 'folder'
     }
     this.ignore.isIgnored(doc).should.be.true()
+  })
+
+  it('ignores Microsoft Office temporary files', function () {
+    this.ignore = new Ignore([])
+    this.ignore.addDefaultRules()
+    this.ignore.isIgnored({_id: metadata.id('~$whatever.docx'), docType: 'file'}).should.be.true()
+    this.ignore.isIgnored({_id: metadata.id('~$whatever.xlsx'), docType: 'file'}).should.be.true()
+    this.ignore.isIgnored({_id: metadata.id('~$whatever.pptx'), docType: 'file'}).should.be.true()
   })
 })
