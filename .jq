@@ -26,6 +26,9 @@ def is_warn: .level >= warn_level;
 def is_warn_strict: .level == warn_level;
 def warn: clean | select(is_warn);
 def warn_strict: clean | select(is_warn_strict);
+def info_level: 30;
+def is_info: .level >= info_level;
+def info: clean | select(is_info);
 
 # Find conflicts:
 #
