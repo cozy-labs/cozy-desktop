@@ -6,6 +6,7 @@ const Promise = require('bluebird')
 const { dirname } = require('path')
 const { clone } = require('lodash')
 
+const { MAX_SYNC_ATTEMPTS } = require('./constants')
 const logger = require('./logger')
 const { extractRevNumber, isUpToDate, sameFileIgnoreRev } = require('./metadata')
 const userActionRequired = require('./remote/user_action_required')
@@ -412,8 +413,8 @@ class Sync {
     let { doc } = change
     if (!doc.errors) doc.errors = 0
     doc.errors++
-    // Don't try more than 3 times for the same operation
-    if (doc.errors >= 3) {
+    // Don't try more than MAX_SYNC_ATTEMPTS for the same operation
+    if (doc.errors >= MAX_SYNC_ATTEMPTS) {
       await this.pouch.setLocalSeqAsync(change.seq)
       return
     }
