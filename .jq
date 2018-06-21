@@ -29,11 +29,16 @@ def warn_strict: clean | select(is_warn_strict);
 def info_level: 30;
 def is_info: .level >= info_level;
 def info: clean | select(is_info);
+def debug_level: 20;
+def is_debug: .level >= debug_level;
+def debug: clean | select(is_debug);
 
 # Components:
 def chokidar: select(.component == "Chokidar");
 def LocalChange: select(.component == "local/change");
 def LocalWatcher: select(.component == "LocalWatcher");
+def Metadata: select(.component == "Metadata");
+def Pouch: select(.component == "Pouch");
 
 # Find conflicts:
 #
@@ -75,6 +80,20 @@ def path(pattern): clean | select((.path,.oldpath,"") | strings | test(pattern))
 def is_gui: .component | test("GUI");
 def gui: select(is_gui);
 def no_gui: select(is_gui | not);
+
+# To make `mocha` component messages more visible in test logs:
+#
+#    yarn jq -c 'debug|short|mocha' debug.log
+#
+# Or to completely ignore them:
+#
+#    yarn jq -c no_mocha debug.log
+#
+# Please note the `mocha` filter should always be the last one since it
+# converts mocha log entries to strings.
+def is_mocha: .component == "mocha";
+def mocha: if is_mocha then .msg | gsub("\\n+"; "") else . end;
+def no_mocha: select(is_mocha | not);
 
 # Find the OS / app versions:
 #
