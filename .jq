@@ -73,15 +73,9 @@ def no_xls: no_ext("xls");
 def txt: ext("txt");
 def no_txt: no_ext("txt");
 
-# Remove stuff that polutes global overview
+# Global overview
 def short:
-  del(.change) |
-  del(.err) |
-  del(.hostname) |
-  del(.level) |
-  del(.name) |
-  del(.pid) |
-  del(.v);
+  {time,component,msg,path};
 
 # Utils
 def frequencies:
