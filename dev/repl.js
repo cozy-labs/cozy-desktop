@@ -1,12 +1,16 @@
+/* @flow */
+
 require('source-map-support/register')
 
 const { start } = require('repl')
 
 require('../core/globals')
-const App = require('../core/app')
+const { App } = require('../core/app')
 const { IntegrationTestHelpers } = require('../test/support/helpers/integration')
 
-const app = new App(process.env.COZY_DESKTOP_DIR)
+const basePath = process.env.COZY_DESKTOP_DIR
+if (basePath == null) throw new Error('COZY_DESKTOP_DIR is undefined')
+const app = new App(basePath)
 const config = app.config
 let cozy, helpers
 
@@ -34,6 +38,7 @@ Skipping app instanciation and cozy / helpers setup.`)
 console.log(`
 Press CTRL+D to exit`)
 
+// $FlowFixMe
 let repl = start()
 const defaultEval = repl.eval
 
