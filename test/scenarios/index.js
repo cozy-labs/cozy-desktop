@@ -1,5 +1,6 @@
 /* @flow */
 
+/*::
 type FSAddDirAction = {type: 'mkdir', path: string}
 type FSAddFileAction = {type: '>', path: string}
 type FSDeleteAction = {type: 'delete', path: string}
@@ -55,3 +56,4 @@ export type Scenario = {
     remoteTrash?: Array<string>
   }
 }
+*/

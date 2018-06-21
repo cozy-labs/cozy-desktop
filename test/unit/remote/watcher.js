@@ -1,13 +1,9 @@
 /* @flow */
 /* eslint-env mocha */
 
-import type { RemoteChange } from '../../../core/remote/change'
-import type { RemoteDoc, RemoteDeletion } from '../../../core/remote/document'
-import type { Metadata } from '../../../core/metadata'
-
 const async = require('async')
 const EventEmitter = require('events')
-const { clone } = require('lodash')
+const _ = require('lodash')
 const path = require('path')
 const sinon = require('sinon')
 const should = require('should')
@@ -23,10 +19,16 @@ const { createMetadata } = require('../../../core/conversion')
 const metadata = require('../../../core/metadata')
 const { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } = require('../../../core/remote/constants')
 const Prep = require('../../../core/prep')
-const RemoteCozy = require('../../../core/remote/cozy')
-const RemoteWatcher = require('../../../core/remote/watcher')
+const { RemoteCozy } = require('../../../core/remote/cozy')
+const { RemoteWatcher } = require('../../../core/remote/watcher')
 
 const { assignId, ensureValidPath } = metadata
+
+/*::
+import type { RemoteChange } from '../../../core/remote/change'
+import type { RemoteDoc, RemoteDeletion } from '../../../core/remote/document'
+import type { Metadata } from '../../../core/metadata'
+*/
 
 describe('RemoteWatcher', function () {
   before('instanciate config', configHelpers.createConfig)
@@ -140,7 +142,7 @@ describe('RemoteWatcher', function () {
     })
   })
 
-  const validMetadata = (doc: RemoteDoc): Metadata => {
+  const validMetadata = (doc /*: RemoteDoc */) /*: Metadata */ => {
     const metadata = createMetadata(doc)
     ensureValidPath(metadata)
     assignId(metadata)
@@ -180,7 +182,7 @@ describe('RemoteWatcher', function () {
 
     context('when apply() rejects some file/dir', function () {
       beforeEach(function () {
-        apply.callsFake(async (change: RemoteChange): Promise<void> => {
+        apply.callsFake(async (change /*: RemoteChange */) /*: Promise<void> */ => {
           if (change.type === 'FileAddition') throw new Error('oops')
         })
       })
@@ -206,7 +208,7 @@ describe('RemoteWatcher', function () {
     })
 
     it('applies the changes when the document still exists on remote', async function () {
-      let doc: RemoteDoc = {
+      let doc /*: RemoteDoc */ = {
         _id: '12345678904',
         _rev: '1-abcdef',
         _type: FILES_DOCTYPE,
@@ -231,7 +233,7 @@ describe('RemoteWatcher', function () {
     })
 
     it('tries to apply a deletion otherwise', async function () {
-      const doc: RemoteDeletion = {
+      const doc /*: RemoteDeletion */ = {
         _id: 'missing',
         _rev: 'whatever',
         _deleted: true
@@ -246,7 +248,7 @@ describe('RemoteWatcher', function () {
 
   describe('identifyChange', function () {
     it('does not fail when the path is missing', function () {
-      let doc: RemoteDoc = {
+      let doc /*: RemoteDoc */ = {
         _id: '12345678904',
         _rev: '1-abcdef',
         _type: FILES_DOCTYPE,
@@ -264,7 +266,7 @@ describe('RemoteWatcher', function () {
         }
       }
 
-      const change: RemoteChange = this.watcher.identifyChange(doc, null, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(doc, null, 0, [])
       should(change.type).equal('RemoteInvalidChange')
       // $FlowFixMe
       should(change.error.message).equal('Invalid path')
@@ -282,7 +284,7 @@ describe('RemoteWatcher', function () {
         path: 'foo',
         name: 'bar'
       }
-      const change: RemoteChange = this.watcher.identifyChange(doc, null, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(doc, null, 0, [])
 
       should(change.type).equal('RemoteInvalidChange')
     })
@@ -295,7 +297,7 @@ describe('RemoteWatcher', function () {
           md5sum: '9999999999999999999999999999999999999999',
           type: 'file'
         }
-        const change: RemoteChange = this.watcher.identifyChange(doc, null, 0, [])
+        const change /*: RemoteChange */ = this.watcher.identifyChange(doc, null, 0, [])
         const platform = process.platform
         should(change.type).equal('FileAddition')
         should(change.doc).have.property('incompatibilities', [
@@ -319,7 +321,7 @@ describe('RemoteWatcher', function () {
       })
 
       it('does not detect any when file/dir is in the trash', async function () {
-        const change: RemoteChange = this.watcher.identifyChange({
+        const change /*: RemoteChange */ = this.watcher.identifyChange({
           _id: 'whatever',
           path: '/.cozy_trash/f:oo/b<a>r',
           md5sum: '9999999999999999999999999999999999999999',
@@ -337,10 +339,10 @@ describe('RemoteWatcher', function () {
           md5sum: '9999999999999999999999999999999999999999',
           type: 'file'
         }
-        const change: RemoteChange = this.watcher.identifyChange(doc, null, 0, [])
+        const change /*: RemoteChange */ = this.watcher.identifyChange(doc, null, 0, [])
         const platform = process.platform
         should(change.type).equal('FileAddition')
-        should((change: any).doc.incompatibilities).deepEqual([
+        should((change /*: any */).doc.incompatibilities).deepEqual([
           {
             type: 'reservedChars',
             name: 'f:oo',
@@ -356,7 +358,7 @@ describe('RemoteWatcher', function () {
     it('calls addDoc for a new doc', async function () {
       this.prep.addFileAsync = sinon.stub()
       this.prep.addFileAsync.resolves(null)
-      let doc: RemoteDoc = {
+      let doc /*: RemoteDoc */ = {
         _id: '12345678905',
         _rev: '1-abcdef',
         _type: FILES_DOCTYPE,
@@ -375,7 +377,7 @@ describe('RemoteWatcher', function () {
         }
       }
 
-      const change: RemoteChange = this.watcher.identifyChange(clone(doc), null, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(doc), null, 0, [])
 
       should(change.type).equal('FileAddition')
       should(change.doc).have.properties({
@@ -394,7 +396,7 @@ describe('RemoteWatcher', function () {
     it('calls updateDoc when tags are updated', async function () {
       this.prep.updateFileAsync = sinon.stub()
       this.prep.updateFileAsync.resolves(null)
-      let doc: RemoteDoc = {
+      let doc /*: RemoteDoc */ = {
         _id: '12345678901',
         _rev: '2-abcdef',
         _type: FILES_DOCTYPE,
@@ -414,7 +416,7 @@ describe('RemoteWatcher', function () {
       }
       const was = await this.pouch.byRemoteIdAsync(doc._id)
 
-      const change: RemoteChange = this.watcher.identifyChange(clone(doc), was, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(doc), was, 0, [])
 
       should(change.type).equal('FileUpdate')
       should(change.doc).have.properties({
@@ -432,7 +434,7 @@ describe('RemoteWatcher', function () {
     it('calls updateDoc when content is overwritten', async function () {
       this.prep.updateFileAsync = sinon.stub()
       this.prep.updateFileAsync.resolves(null)
-      let doc: RemoteDoc = {
+      let doc /*: RemoteDoc */ = {
         _id: '12345678901',
         _rev: '3-abcdef',
         _type: FILES_DOCTYPE,
@@ -446,7 +448,7 @@ describe('RemoteWatcher', function () {
       }
       const was = await this.pouch.byRemoteIdAsync(doc._id)
 
-      const change: RemoteChange = this.watcher.identifyChange(clone(doc), was, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(doc), was, 0, [])
 
       should(change.type).equal('FileUpdate')
       should(change.doc).have.properties({
@@ -465,7 +467,7 @@ describe('RemoteWatcher', function () {
     it('calls moveFile when file is renamed', async function () {
       this.prep.moveFileAsync = sinon.stub()
       this.prep.moveFileAsync.resolves(null)
-      let doc: RemoteDoc = {
+      let doc /*: RemoteDoc */ = {
         _id: '12345678902',
         _rev: '4-abcdef',
         _type: FILES_DOCTYPE,
@@ -479,7 +481,7 @@ describe('RemoteWatcher', function () {
       }
 
       const was = await this.pouch.byRemoteIdMaybeAsync(doc._id)
-      const change: RemoteChange = this.watcher.identifyChange(clone(doc), was, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(doc), was, 0, [])
 
       should(change.type).equal('FileMove')
       // $FlowFixMe
@@ -510,7 +512,7 @@ describe('RemoteWatcher', function () {
     it('calls moveFile when file is moved', async function () {
       this.prep.moveFileAsync = sinon.stub()
       this.prep.moveFileAsync.resolves(null)
-      let doc: RemoteDoc = {
+      let doc /*: RemoteDoc */ = {
         _id: '12345678902',
         _rev: '5-abcdef',
         _type: FILES_DOCTYPE,
@@ -528,10 +530,10 @@ describe('RemoteWatcher', function () {
           }
         }
       }
-      const was: Metadata = await this.pouch.db.get(metadata.id(path.normalize('my-folder/file-2')))
+      const was /*: Metadata */ = await this.pouch.db.get(metadata.id(path.normalize('my-folder/file-2')))
       await this.pouch.db.put(was)
 
-      const change: RemoteChange = this.watcher.identifyChange(clone(doc), was, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(doc), was, 0, [])
 
       should(change.type).equal('FileMove')
       should(change).not.have.property('update')
@@ -561,8 +563,8 @@ describe('RemoteWatcher', function () {
     })
 
     it('detects when file was both moved and updated', async function () {
-      const file: RemoteDoc = await builders.remote.file().named('meow.txt').data('meow').build()
-      const was: Metadata = createMetadata(file)
+      const file /*: RemoteDoc */ = await builders.remote.file().named('meow.txt').data('meow').build()
+      const was /*: Metadata */ = createMetadata(file)
       metadata.ensureValidPath(was)
       metadata.assignId(was)
       file._rev = '2'
@@ -570,7 +572,7 @@ describe('RemoteWatcher', function () {
       file.path = '/' + file.name
       file.md5sum = 'j9tggB6dOaUoaqAd0fT08w==' // woof
 
-      const change: RemoteChange = this.watcher.identifyChange(clone(file), was, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(file), was, 0, [])
 
       should(change).have.properties({
         type: 'FileMove',
@@ -581,8 +583,8 @@ describe('RemoteWatcher', function () {
     })
 
     it('is invalid when local or remote file is corrupt', async function () {
-      const doc: RemoteDoc = builders.remote.file().build()
-      const was: Metadata = createMetadata(doc)
+      const doc /*: RemoteDoc */ = builders.remote.file().build()
+      const was /*: Metadata */ = createMetadata(doc)
       metadata.ensureValidPath(was)
       metadata.assignId(was)
       should(doc.md5sum).equal(was.md5sum)
@@ -590,7 +592,7 @@ describe('RemoteWatcher', function () {
       was.size = 456
       was.remote._rev = '0'
 
-      const change: RemoteChange = this.watcher.identifyChange(clone(doc), was, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(doc), was, 0, [])
 
       should(change).have.property('type', 'RemoteInvalidChange')
       // $FlowFixMe
@@ -602,13 +604,16 @@ describe('RemoteWatcher', function () {
       this.prep.deleteFolderAsync.returnsPromise().resolves(null)
       this.prep.addFolderAsync = sinon.stub()
       this.prep.addFolderAsync.returnsPromise().resolves(null)
-      const oldDir: RemoteDoc = builders.remote.dir().named('foo').build()
+      const oldDir /*: RemoteDoc */ = builders.remote.dir().named('foo').build()
       // TODO: builders.dir().fromRemote(oldDir).create()
-      let oldMeta: Metadata = createMetadata(oldDir)
+      let oldMeta /*: Metadata */ = createMetadata(oldDir)
       assignId(oldMeta)
       await this.pouch.db.put(oldMeta)
       // TODO: builders.remote.dir().was(oldDir).trashed().build()
-      const newDir: RemoteDoc = {...oldDir, path: '/.cozy_trash/foo', dir_id: TRASH_DIR_ID}
+      const newDir /*: RemoteDoc */ = _.defaults({
+        path: '/.cozy_trash/foo',
+        dir_id: TRASH_DIR_ID
+      }, oldDir)
 
       this.watcher.identifyChange(newDir, null, 0, [])
 
@@ -629,13 +634,16 @@ describe('RemoteWatcher', function () {
       this.prep.deleteFolder.returnsPromise().resolves(null)
       this.prep.addFolderAsync = sinon.stub()
       this.prep.addFolderAsync.returnsPromise().resolves(null)
-      const oldDir: RemoteDoc = builders.remote.dir().named('foo').trashed().build()
+      const oldDir /*: RemoteDoc */ = builders.remote.dir().named('foo').trashed().build()
       // TODO: builders.dir().fromRemote(oldDir).create()
-      let oldMeta: Metadata = createMetadata(oldDir)
+      let oldMeta /*: Metadata */ = createMetadata(oldDir)
       assignId(oldMeta)
       await this.pouch.db.put(oldMeta)
       // TODO: builders.remote.dir().was(oldDir).restored().build()
-      const newDir: RemoteDoc = {...oldDir, path: '/foo', dir_id: ROOT_DIR_ID}
+      const newDir /*: RemoteDoc */ = _.defaults({
+        path: '/foo',
+        dir_id: ROOT_DIR_ID
+      }, oldDir)
 
       this.watcher.identifyChange(newDir, null, 0, [])
 

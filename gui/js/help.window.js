@@ -2,7 +2,7 @@ const WindowManager = require('./window_manager')
 const HELP_SCREEN_WIDTH = 768
 const HELP_SCREEN_HEIGHT = 570
 
-const log = require('../../core-built/app').logger({
+const log = require('../../core/app').logger({
   component: 'GUI'
 })
 

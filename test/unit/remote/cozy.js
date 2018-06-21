@@ -1,10 +1,10 @@
 /* eslint-env mocha */
 /* @flow weak */
 
+const _ = require('lodash')
 const should = require('should')
 
-const RemoteCozy = require('../../../core/remote/cozy')
-const { DirectoryNotFound } = RemoteCozy
+const { DirectoryNotFound, RemoteCozy } = require('../../../core/remote/cozy')
 
 const configHelpers = require('../../support/helpers/config')
 const { COZY_URL, builders, deleteAll } = require('../../support/helpers/cozy')
@@ -80,10 +80,7 @@ describe('RemoteCozy', function () {
 
       const foundFile = await remoteCozy.find(remoteFile._id)
 
-      foundFile.should.deepEqual({
-        ...remoteFile,
-        path: '/foo'
-      })
+      foundFile.should.deepEqual(_.defaults({path: '/foo'}, remoteFile))
     })
 
     it('fetches a remote non-root file including its path', async function () {
@@ -92,10 +89,7 @@ describe('RemoteCozy', function () {
 
       const foundFile = await remoteCozy.find(remoteFile._id)
 
-      foundFile.should.deepEqual({
-        ...remoteFile,
-        path: '/foo/bar'
-      })
+      foundFile.should.deepEqual(_.defaults({path: '/foo/bar'}, remoteFile))
     })
   })
 
@@ -245,7 +239,7 @@ describe('RemoteCozy', function () {
       remoteCozy = new RemoteCozy(this.config)
     })
 
-    const stubWarningsResponse = (status: number, data) => {
+    const stubWarningsResponse = (status /*: number */, data) => {
       cozyStackDouble.stub((req, res) => {
         if (req.url === '/status/') res.end('{}')
         else {

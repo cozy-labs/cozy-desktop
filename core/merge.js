@@ -1,17 +1,20 @@
 /* @flow */
 
-import type { SideName, Metadata } from './metadata'
-
+const autoBind = require('auto-bind')
 const { clone } = require('lodash')
 const { basename, dirname, extname, join } = require('path')
 
-const Local = require('./local')
 const logger = require('./logger')
 const { isUpToDate, markSide, sameBinary, sameFile, sameFolder, detectPlatformIncompatibilities } = require('./metadata')
-const Pouch = require('./pouch')
-const Remote = require('./remote')
 const { otherSide } = require('./side')
 const fsutils = require('./utils/fs')
+
+/*::
+import type Local from './local'
+import type { SideName, Metadata } from './metadata'
+import type Pouch from './pouch'
+import type Remote from './remote'
+*/
 
 const log = logger({
   component: 'Merge'
@@ -34,20 +37,23 @@ const log = logger({
 // that are not in the normal flow (rename instead of add, bogus delete) and we
 // need to redirect them.
 class Merge {
+  /*::
   pouch: Pouch
   local: Local
   remote: Remote
+  */
 
-  constructor (pouch: Pouch) {
+  constructor (pouch /*: Pouch */) {
     this.pouch = pouch
     // $FlowFixMe
     this.local = this.remote = null
+    autoBind(this)
   }
 
   /* Helpers */
 
   // Be sure that the tree structure for the given path exists
-  async ensureParentExistAsync (side: SideName, doc: *) {
+  async ensureParentExistAsync (side /*: SideName */, doc /*: * */) {
     log.trace({path: doc.path}, 'ensureParentExistAsync')
     let parentId = dirname(doc._id)
     if (parentId === '.') { return }
@@ -80,7 +86,7 @@ class Merge {
 
   // Resolve a conflict by renaming a file/folder
   // A suffix composed of -conflict- and the date is added to the path.
-  async resolveConflictAsync (side: SideName, doc: Metadata, was: Metadata) {
+  async resolveConflictAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */) {
     log.debug({path: doc.path}, 'resolveConflictAsync')
     log.trace({doc, was})
     let dst = clone(doc)
@@ -106,7 +112,7 @@ class Merge {
 
   // Add a file, if it doesn't already exist,
   // and create the tree structure if needed
-  async addFileAsync (side: SideName, doc: Metadata) {
+  async addFileAsync (side /*: SideName */, doc /*: Metadata */) {
     log.debug({path: doc.path}, 'addFileAsync')
     const {path} = doc
     let file
@@ -147,7 +153,7 @@ class Merge {
 
   // When a file is modified when cozy-desktop is not running,
   // it is detected as a new file when cozy-desktop is started.
-  async resolveInitialAddAsync (side: SideName, doc: Metadata, file: Metadata) {
+  async resolveInitialAddAsync (side /*: SideName */, doc /*: Metadata */, file /*: Metadata */) {
     if (!file.sides.remote) {
       // The file was updated on local before being pushed to remote
       return this.updateFileAsync(side, doc)
@@ -171,7 +177,7 @@ class Merge {
   }
 
   // Update a file, when its metadata or its content has changed
-  async updateFileAsync (side: SideName, doc: Metadata) {
+  async updateFileAsync (side /*: SideName */, doc /*: Metadata */) {
     log.debug({path: doc.path}, 'updateFileAsync')
     const {path} = doc
     let file
@@ -210,7 +216,7 @@ class Merge {
   }
 
   // Create or update a folder
-  async putFolderAsync (side: SideName, doc: *) {
+  async putFolderAsync (side /*: SideName */, doc /*: * */) {
     log.debug({path: doc.path}, 'putFolderAsync')
     const {path} = doc
     let folder
@@ -241,7 +247,7 @@ class Merge {
   }
 
   // Rename or move a file
-  async moveFileAsync (side: SideName, doc: Metadata, was: Metadata) {
+  async moveFileAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */) {
     log.debug({path: doc.path, oldpath: was.path}, 'moveFileAsync')
     const {path} = doc
     if (was.sides && was.sides[side]) {
@@ -284,7 +290,7 @@ class Merge {
   }
 
   // Rename or move a folder (and every file and folder inside it)
-  async moveFolderAsync (side: SideName, doc: Metadata, was: Metadata) {
+  async moveFolderAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */) {
     log.debug({path: doc.path, oldpath: was.path}, 'moveFolderAsync')
     const {path} = doc
     if (was.sides && was.sides[side]) {
@@ -317,7 +323,7 @@ class Merge {
   }
 
   // Move a folder and all the things inside it
-  async moveFolderRecursivelyAsync (side: SideName, folder: Metadata, was: Metadata) {
+  async moveFolderRecursivelyAsync (side /*: SideName */, folder /*: Metadata */, was /*: Metadata */) {
     let docs
     try {
       docs = await this.pouch.byRecursivePathAsync(was._id)
@@ -354,7 +360,7 @@ class Merge {
     return this.pouch.bulkDocs(bulk)
   }
 
-  async restoreFileAsync (side: SideName, was: Metadata, doc: Metadata): Promise<*> {
+  async restoreFileAsync (side /*: SideName */, was /*: Metadata */, doc /*: Metadata */) /*: Promise<*> */ {
     log.debug({path: doc.path, oldpath: was.path}, 'restoreFileAsync')
     const {path} = doc
     // TODO we can probably do something smarter for conflicts and avoiding to
@@ -367,7 +373,7 @@ class Merge {
     return this.updateFileAsync(side, doc)
   }
 
-  async restoreFolderAsync (side: SideName, was: Metadata, doc: Metadata): Promise<*> {
+  async restoreFolderAsync (side /*: SideName */, was /*: Metadata */, doc /*: Metadata */) /*: Promise<*> */ {
     log.debug({path: doc.path, oldpath: was.path}, 'restoreFolderAsync')
     const {path} = doc
     // TODO we can probably do something smarter for conflicts
@@ -379,7 +385,7 @@ class Merge {
     return this.putFolderAsync(side, doc)
   }
 
-  async doTrash (side: SideName, was: *, doc: *): Promise<void> {
+  async doTrash (side /*: SideName */, was /*: * */, doc /*: * */) /*: Promise<void> */ {
     const {path} = doc
     let oldMetadata
     try {
@@ -421,12 +427,12 @@ class Merge {
     return this.pouch.put(newMetadata)
   }
 
-  async trashFileAsync (side: SideName, was: *, doc: *): Promise<void> {
+  async trashFileAsync (side /*: SideName */, was /*: * */, doc /*: * */) /*: Promise<void> */ {
     log.debug({path: doc.path, oldpath: was.path}, 'trashFileAsync')
     return this.doTrash(side, was, doc)
   }
 
-  async trashFolderAsync (side: SideName, was: *, doc: *): Promise<*> {
+  async trashFolderAsync (side /*: SideName */, was /*: * */, doc /*: * */) /*: Promise<*> */ {
     log.debug({path: doc.path, oldpath: was.path}, 'trashFolderAsync')
     const {path} = doc
     // Don't trash a folder if the other side has added a new file in it (or updated one)
@@ -466,7 +472,7 @@ class Merge {
   // As the watchers often detect the deletion of a folder before the deletion
   // of the files inside it, deleteFile can be called for a file that has
   // already been removed. This is not considerated as an error.
-  async deleteFileAsync (side: SideName, doc: Metadata) {
+  async deleteFileAsync (side /*: SideName */, doc /*: Metadata */) {
     log.debug({path: doc.path}, 'deleteFileAsync')
     let file
     try {
@@ -495,7 +501,7 @@ class Merge {
   // of a nested folder after the deletion of its parent. In this case, the
   // call to deleteFolder for the child is considered as successful, even if
   // the folder is missing in pouchdb (error 404).
-  async deleteFolderAsync (side: SideName, doc: Metadata) {
+  async deleteFolderAsync (side /*: SideName */, doc /*: Metadata */) {
     log.debug({path: doc.path}, 'deleteFolderAsync')
     let folder
     try {
@@ -515,7 +521,7 @@ class Merge {
   }
 
   // Remove a folder and every thing inside it
-  async deleteFolderRecursivelyAsync (side: SideName, folder: Metadata) {
+  async deleteFolderRecursivelyAsync (side /*: SideName */, folder /*: Metadata */) {
     let docs = await this.pouch.byRecursivePathAsync(folder._id)
     // In the changes feed, nested subfolder must be deleted
     // before their parents, hence the reverse order.

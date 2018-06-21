@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 const chokidar = require('chokidar')
 const fs = require('fs-extra')
 const path = require('path')

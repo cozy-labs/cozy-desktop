@@ -1,23 +1,27 @@
 /* @flow */
 
-import type { SideName, Metadata } from './metadata'
-import type { Side } from './side' // eslint-disable-line
-
+const autoBind = require('auto-bind')
 const Promise = require('bluebird')
-const EventEmitter = require('events')
+
 const { dirname } = require('path')
 const { clone } = require('lodash')
 
-const Ignore = require('./ignore')
-const Local = require('./local')
 const logger = require('./logger')
 const { extractRevNumber, isUpToDate, sameFileIgnoreRev } = require('./metadata')
-const Pouch = require('./pouch')
-const Remote = require('./remote')
 const userActionRequired = require('./remote/user_action_required')
 const { HEARTBEAT } = require('./remote/watcher')
 const { PendingMap } = require('./utils/pending')
 const measureTime = require('./perftools')
+
+/*::
+import type EventEmitter from 'events'
+import type Ignore from './ignore'
+import type Local from './local'
+import type Pouch from './pouch'
+import type Remote from './remote'
+import type { SideName, Metadata } from './metadata'
+import type { Side } from './side' // eslint-disable-line
+*/
 
 const log = logger({
   component: 'Sync'
@@ -25,6 +29,7 @@ const log = logger({
 
 const TRASHING_DELAY = 1000
 
+/*::
 type MetadataChange = {
   changes: {rev: string}[],
   doc: Metadata,
@@ -36,11 +41,13 @@ export type SyncMode =
   | "pull"
   | "push"
   | "full";
+*/
 
 // Sync listens to PouchDB about the metadata changes, and calls local and
 // remote sides to apply the changes on the filesystem and remote CouchDB
 // respectively.
 class Sync {
+  /*::
   changes: any
   events: EventEmitter
   ignore: Ignore
@@ -51,11 +58,12 @@ class Sync {
   stopped: ?boolean
   moveTo: ?string
 
-  static TRASHING_DELAY = TRASHING_DELAY
-
   diskUsage: () => Promise<*>
+  */
 
-  constructor (pouch: Pouch, local: Local, remote: Remote, ignore: Ignore, events: EventEmitter) {
+  // FIXME: static TRASHING_DELAY = TRASHING_DELAY
+
+  constructor (pouch /*: Pouch */, local /*: Local */, remote /*: Remote */, ignore /*: Ignore */, events /*: EventEmitter */) {
     this.pouch = pouch
     this.local = local
     this.remote = remote
@@ -66,6 +74,8 @@ class Sync {
     // $FlowFixMe
     this.remote.other = this.local
     this.pending = new PendingMap()
+
+    autoBind(this)
   }
 
   // Start to synchronize the remote cozy with the local filesystem
@@ -76,7 +86,7 @@ class Sync {
   // - pull if only changes from the remote cozy are applied to the fs
   // - push if only changes from the fs are applied to the remote cozy
   // - full for the full synchronization of the both sides
-  async start (mode: SyncMode): Promise<*> {
+  async start (mode /*: SyncMode */) /*: Promise<*> */ {
     this.stopped = false
     await this.pouch.addAllViewsAsync()
     let sidePromises = []
@@ -115,7 +125,7 @@ class Sync {
   }
 
   // TODO: remove waitForNewChanges to .start while(true)
-  async sync (waitForNewChanges:boolean = true): Promise<*> {
+  async sync (waitForNewChanges /*: boolean */ = true) /*: Promise<*> */ {
     let seq = await this.pouch.getLocalSeqAsync()
     log.trace({seq}, 'Waiting for changes since seq')
     if (waitForNewChanges) await this.waitForNewChanges(seq)
@@ -153,7 +163,7 @@ class Sync {
   //
   // Note: it is difficult to pick only one change at a time because pouch can
   // emit several docs in a row, and `limit: 1` seems to be not effective!
-  async baseChangeOptions (seq: number) : Object {
+  async baseChangeOptions (seq /*: number */) /*: Object */ {
     return {
       limit: 1,
       since: seq,
@@ -163,7 +173,7 @@ class Sync {
     }
   }
 
-  async waitForNewChanges (seq: number) {
+  async waitForNewChanges (seq /*: number */) {
     const opts = await this.baseChangeOptions(seq)
     opts.live = true
     return new Promise((resolve, reject) => {
@@ -184,7 +194,7 @@ class Sync {
     })
   }
 
-  async getNextChange (seq: number) : Promise<?MetadataChange> {
+  async getNextChange (seq /*: number */) /*: Promise<?MetadataChange> */ {
     const stopMeasure = measureTime('Sync#getNextChange')
     const opts = await this.baseChangeOptions(seq)
     opts.include_docs = true
@@ -205,7 +215,7 @@ class Sync {
   // Apply a change to both local and remote
   // At least one side should say it has already this change
   // In some cases, both sides have the change
-  async apply (change: MetadataChange): Promise<*> {
+  async apply (change /*: MetadataChange */) /*: Promise<*> */ {
     let { doc, seq } = change
     const changeInfo = {
       path: doc.path,
@@ -253,7 +263,7 @@ class Sync {
     }
   }
 
-  async applyDoc (doc: Metadata, side: Side, sideName:string, rev: number): Promise<*> {
+  async applyDoc (doc /*: Metadata */, side /*: Side */, sideName /*: string */, rev /*: number */) /*: Promise<*> */ {
     if (doc.incompatibilities && sideName === 'local' && doc.moveTo == null) {
       const was = doc.moveFrom
       if (was != null && was.incompatibilities == null) {
@@ -277,7 +287,7 @@ class Sync {
     } else if (doc.moveTo != null) {
       log.debug({path: doc.path}, `Ignoring deleted ${doc.docType} metadata as move source`)
     } else if (doc.moveFrom != null) {
-      const from = (doc.moveFrom: Metadata)
+      const from = (doc.moveFrom /*: Metadata */)
       // XXX: if (from.md5sum === doc.md5sum) ?
       if (from.incompatibilities) {
         await this.doAdd(side, doc)
@@ -318,7 +328,7 @@ class Sync {
     }
   }
 
-  async doAdd (side: Side, doc: Metadata) : Promise<void> {
+  async doAdd (side /*: Side */, doc /*: Metadata */) /*: Promise<void> */ {
     if (doc.docType === 'file') {
       await side.addFileAsync(doc)
       this.events.emit('transfer-started', clone(doc))
@@ -327,7 +337,7 @@ class Sync {
     }
   }
 
-  async doOverwrite (side: Side, doc: Metadata): Promise<void> {
+  async doOverwrite (side /*: Side */, doc /*: Metadata */) /*: Promise<void> */ {
     if (doc.docType === 'file') {
       await side.overwriteFileAsync(doc, null)
       this.events.emit('transfer-started', clone(doc))
@@ -336,7 +346,7 @@ class Sync {
     }
   }
 
-  async doMove (side: Side, doc: Metadata, old: Metadata): Promise<void> {
+  async doMove (side /*: Side */, doc /*: Metadata */, old /*: Metadata */) /*: Promise<void> */ {
     if (doc.docType === 'file') {
       await side.moveFileAsync(doc, old)
       this.events.emit('transfer-move', clone(doc), clone(old))
@@ -345,7 +355,7 @@ class Sync {
 
   // Select which side will apply the change
   // It returns the side, its name, and also the last rev applied by this side
-  selectSide (doc: Metadata) {
+  selectSide (doc /*: Metadata */) {
     let localRev = doc.sides.local || 0
     let remoteRev = doc.sides.remote || 0
     if (localRev > remoteRev) {
@@ -359,7 +369,7 @@ class Sync {
 
   // Make the error explicit (offline, local disk full, quota exceeded, etc.)
   // and keep track of the number of retries
-  async handleApplyError (change: MetadataChange, err: Error) {
+  async handleApplyError (change /*: MetadataChange */, err /*: Error */) {
     const {path} = change.doc
     log.error({path, err, change})
     if (err.code === 'ENOSPC') {
@@ -398,7 +408,7 @@ class Sync {
   }
 
   // Increment the counter of errors for this document
-  async updateErrors (change: MetadataChange): Promise<void> {
+  async updateErrors (change /*: MetadataChange */) /*: Promise<void> */ {
     let { doc } = change
     if (!doc.errors) doc.errors = 0
     doc.errors++
@@ -421,7 +431,7 @@ class Sync {
   }
 
   // Update rev numbers for both local and remote sides
-  async updateRevs (doc: Metadata, side: SideName): Promise<*> {
+  async updateRevs (doc /*: Metadata */, side /*: SideName */) /*: Promise<*> */ {
     let rev = extractRevNumber(doc) + 1
     for (let s of ['local', 'remote']) {
       doc.sides[s] = rev
@@ -446,7 +456,7 @@ class Sync {
   // Trash a file or folder. If a folder was deleted on local, we try to trash
   // only this folder on the remote, not every files and folders inside it, to
   // preserve the tree in the trash.
-  async trashWithParentOrByItself (doc: Metadata, side: Side): Promise<boolean> {
+  async trashWithParentOrByItself (doc /*: Metadata */, side /*: Side */) /*: Promise<boolean> */ {
     let parentId = dirname(doc._id)
     if (parentId !== '.') {
       let parent = await this.pouch.db.get(parentId)

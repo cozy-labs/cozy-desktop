@@ -1,22 +1,28 @@
 /* @flow */
 
+const autoBind = require('auto-bind')
 const path = require('path')
 
+/*::
 // A pending operation e.g. on a file or a folder.
 export interface Pending { // eslint-disable-line no-undef
   execute (): void;
   stopChecking (): void;
 }
+*/
 
 // A map of pending operations
 class PendingMap {
-  map: Map<string, Pending>; // eslint-disable-line no-undef
+  /*::
+  map: Map<string, Pending>
+  */
 
   constructor () {
     this.map = new Map()
+    autoBind(this)
   }
 
-  add (path: string, pending: Pending) { // eslint-disable-line no-undef
+  add (path /*: string */, pending /*: Pending */) { // eslint-disable-line no-undef
     this.map.set(path, pending)
   }
 
@@ -26,7 +32,7 @@ class PendingMap {
     }
   }
 
-  executeIfAny (path: string) {
+  executeIfAny (path /*: string */) {
     const pending = this.map.get(path)
     if (pending) {
       this.clear(path)
@@ -34,20 +40,20 @@ class PendingMap {
     }
   }
 
-  isEmpty (): boolean {
+  isEmpty () /*: boolean */ {
     return this.map.size === 0
   }
 
-  hasPath (path: string): boolean {
+  hasPath (path /*: string */) /*: boolean */ {
     return this.map.has(path)
   }
 
-  hasParentPath (childPath: string) {
+  hasParentPath (childPath /*: string */) {
     return this.map.has(path.dirname(childPath))
   }
 
   // Returns true if a direct sub-folder/file of the given path is pending
-  hasPendingChild (folderPath: string) {
+  hasPendingChild (folderPath /*: string */) {
     for (const key of this.map.keys()) {
       if (path.dirname(key) === folderPath) {
         return true
@@ -56,7 +62,7 @@ class PendingMap {
     return false
   }
 
-  clear (path: string) {
+  clear (path /*: string */) {
     const pending = this.map.get(path)
     if (pending) {
       pending.stopChecking()
@@ -64,7 +70,7 @@ class PendingMap {
     }
   }
 
-  clearAll (path: string) {
+  clearAll (path /*: string */) {
     for (const path of this.map.keys()) {
       this.clear(path)
     }

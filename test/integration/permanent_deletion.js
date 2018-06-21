@@ -17,7 +17,7 @@ const { IntegrationTestHelpers } = require('../support/helpers/integration')
 
 const cozy = cozyHelpers.cozy
 
-suite('Permanent deletion (remote only)', () => {
+suite('Permanent deletion remote', () => {
   let helpers
 
   before(configHelpers.createConfig)

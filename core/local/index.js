@@ -1,24 +1,16 @@
 /* @flow */
 
-import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider' // eslint-disable-line
-import type { Metadata } from '../metadata'
-import type { Side } from '../side' // eslint-disable-line
-import type { Callback } from '../utils/func'
-
 const async = require('async')
-const EventEmitter = require('events')
+const autoBind = require('auto-bind')
 const fs = require('fs-extra')
 const path = require('path')
 const trash = require('trash')
 
 const bluebird = require('bluebird')
 
-const Config = require('../config')
 const { TMP_DIR_NAME } = require('./constants')
 const logger = require('../logger')
 const { isUpToDate } = require('../metadata')
-const Pouch = require('../pouch')
-const Prep = require('../prep')
 const { hideOnWindows } = require('../utils/fs')
 const Watcher = require('./watcher')
 const measureTime = require('../perftools')
@@ -26,13 +18,25 @@ const { withContentLength } = require('../file_stream_provider')
 
 bluebird.promisifyAll(fs)
 
+/*::
+import type EventEmitter from 'events'
+import type Config from '../config'
+import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider'
+import type { Metadata } from '../metadata'
+import type Pouch from '../pouch'
+import type Prep from '../prep'
+import type { Side } from '../side' // eslint-disable-line
+import type { Callback } from '../utils/func'
+*/
+
 const log = logger({
   component: 'LocalWriter'
 })
 // Local is the class that interfaces cozy-desktop with the local filesystem.
 // It uses a watcher, based on chokidar, to listen for file and folder changes.
 // It also applied changes from the remote cozy on the local filesystem.
-module.exports = class Local implements Side {
+module.exports = class Local /*:: implements Side */ {
+  /*::
   prep: Prep
   pouch: Pouch
   events: EventEmitter
@@ -41,8 +45,9 @@ module.exports = class Local implements Side {
   watcher: Watcher
   other: FileStreamProvider
   _trash: (Array<string>) => Promise<void>
+  */
 
-  constructor (config: Config, prep: Prep, pouch: Pouch, events: EventEmitter) {
+  constructor (config /*: Config */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */) {
     this.prep = prep
     this.pouch = pouch
     this.events = events
@@ -53,8 +58,18 @@ module.exports = class Local implements Side {
     this.other = null
     this._trash = trash
 
+    autoBind(this)
     bluebird.promisifyAll(this)
   }
+
+  /*::
+  addFileAsync: (Metadata) => Promise<*>
+  addFolderAsync: (Metadata) => Promise<*>
+  updateFileMetadataAsync: (Metadata, Metadata) => Promise<*>
+  moveFileAsync: (Metadata, Metadata) => Promise<*>
+  moveFolderAsync: (Metadata, Metadata) => Promise<*>
+  renameConflictingDocAsync: (doc: Metadata, newPath: string) => Promise<void>
+  */
 
   // Start initial replication + watching changes in live
   start () {
@@ -69,7 +84,7 @@ module.exports = class Local implements Side {
 
   // Create a readable stream for the given doc
   // adds a contentLength property to be used
-  async createReadStreamAsync (doc: Metadata): Promise<ReadableWithContentLength> {
+  async createReadStreamAsync (doc /*: Metadata */) /*: Promise<ReadableWithContentLength> */ {
     try {
       let filePath = path.resolve(this.syncPath, doc.path)
       let pStats = fs.statAsync(filePath)
@@ -78,7 +93,10 @@ module.exports = class Local implements Side {
         stream.on('open', () => resolve(stream))
         stream.on('error', err => reject(err))
       })
-      const [stream: ReadableWithContentLength, stat: fs.Stat] = await Promise.all([pStream, pStats])
+      const [
+        stream /*: ReadableWithContentLength */,
+        stat /*: fs.Stat */
+      ] = await Promise.all([pStream, pStats])
       return withContentLength(stream, stat.size)
     } catch (err) {
       return Promise.reject(err)
@@ -96,9 +114,9 @@ module.exports = class Local implements Side {
   // - utime for update (content only)
   // This function updates utime and ctime according to the last
   // modification date.
-  metadataUpdater (doc: Metadata) {
+  metadataUpdater (doc /*: Metadata */) {
     let filePath = path.resolve(this.syncPath, doc.path)
-    return function (callback: Callback) {
+    return function (callback /*: Callback */) {
       let next = function (err) {
         if (doc.executable) {
           fs.chmod(filePath, '755', callback)
@@ -118,9 +136,9 @@ module.exports = class Local implements Side {
     }
   }
 
-  inodeSetter (doc: Metadata) {
+  inodeSetter (doc /*: Metadata */) {
     let abspath = path.resolve(this.syncPath, doc.path)
-    return (callback: Callback) => {
+    return (callback /*: Callback */) => {
       fs.stat(abspath, (err, stats) => {
         if (err) {
           callback(err)
@@ -133,7 +151,7 @@ module.exports = class Local implements Side {
   }
 
   // Check if a file corresponding to given checksum already exists
-  fileExistsLocally (checksum: string, callback: Callback) {
+  fileExistsLocally (checksum /*: string */, callback /*: Callback */) {
     this.pouch.byChecksum(checksum, (err, docs) => {
       if (err) {
         callback(err)
@@ -167,7 +185,7 @@ module.exports = class Local implements Side {
   // from the remote document. Later, chokidar will fire an event for this new
   // file. The checksum will then be computed and added to the document, and
   // then pushed to CouchDB.
-  addFile (doc: Metadata, callback: Callback) {
+  addFile (doc /*: Metadata */, callback /*: Callback */) {
     let tmpFile = path.resolve(this.tmpPath, `${path.basename(doc.path)}.tmp`)
     let filePath = path.resolve(this.syncPath, doc.path)
     let parent = path.resolve(this.syncPath, path.dirname(doc.path))
@@ -237,10 +255,8 @@ module.exports = class Local implements Side {
     })
   }
 
-  addFileAsync: (Metadata) => Promise<*>
-
   // Create a new folder
-  addFolder (doc: Metadata, callback: Callback) {
+  addFolder (doc /*: Metadata */, callback /*: Callback */) {
     let folderPath = path.join(this.syncPath, doc.path)
     log.info({path: doc.path}, 'Put folder')
     async.series([
@@ -250,32 +266,28 @@ module.exports = class Local implements Side {
     ], callback)
   }
 
-  addFolderAsync: (Metadata) => Promise<*>
-
   // Overwrite a file
-  overwriteFileAsync (doc: Metadata, old: ?Metadata): Promise<*> {
+  overwriteFileAsync (doc /*: Metadata */, old /*: ?Metadata */) /*: Promise<*> */ {
     return this.addFileAsync(doc)
   }
 
   // Update the metadata of a file
-  updateFileMetadata (doc: Metadata, old: Metadata, callback: Callback) {
+  updateFileMetadata (doc /*: Metadata */, old /*: Metadata */, callback /*: Callback */) {
     log.info({path: doc.path}, 'Updating file metadata...')
     this.metadataUpdater(doc)(callback)
   }
 
-  updateFileMetadataAsync: (Metadata, Metadata) => Promise<*>
-
   // Update a folder
-  updateFolderAsync (doc: Metadata, old: Metadata): Promise<*> {
+  updateFolderAsync (doc /*: Metadata */, old /*: Metadata */) /*: Promise<*> */ {
     return this.addFolderAsync(doc)
   }
 
-  async assignNewRev (doc: Metadata): Promise<*> {
+  async assignNewRev (doc /*: Metadata */) /*: Promise<*> */ {
     log.info({path: doc.path}, 'Local assignNewRev = noop')
   }
 
   // Move a file from one place to another
-  moveFile (doc: Metadata, old: Metadata, callback: Callback) {
+  moveFile (doc /*: Metadata */, old /*: Metadata */, callback /*: Callback */) {
     log.info({path: doc.path}, `Moving from ${old.path}`)
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
@@ -319,10 +331,8 @@ module.exports = class Local implements Side {
     })
   }
 
-  moveFileAsync: (Metadata, Metadata) => Promise<*>
-
   // Move a folder
-  moveFolder (doc: Metadata, old: Metadata, callback: Callback) {
+  moveFolder (doc /*: Metadata */, old /*: Metadata */, callback /*: Callback */) {
     log.info({path: doc.path}, `Move folder from ${old.path}`)
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
@@ -359,9 +369,7 @@ module.exports = class Local implements Side {
     })
   }
 
-  moveFolderAsync: (Metadata, Metadata) => Promise<*>
-
-  async trashAsync (doc: Metadata): Promise<*> {
+  async trashAsync (doc /*: Metadata */) /*: Promise<*> */ {
     log.info({path: doc.path}, 'Moving to the OS trash...')
     this.events.emit('delete-file', doc)
     let fullpath = path.join(this.syncPath, doc.path)
@@ -372,7 +380,7 @@ module.exports = class Local implements Side {
     }
   }
 
-  async deleteFolderAsync (doc: Metadata): Promise<*> {
+  async deleteFolderAsync (doc /*: Metadata */) /*: Promise<*> */ {
     if (doc.docType !== 'folder') throw new Error(`Not folder metadata: ${doc.path}`)
     const fullpath = path.join(this.syncPath, doc.path)
 
@@ -389,13 +397,11 @@ module.exports = class Local implements Side {
   }
 
   // Rename a file/folder to resolve a conflict
-  renameConflictingDoc (doc: Metadata, newPath: string, callback: Callback) {
+  renameConflictingDoc (doc /*: Metadata */, newPath /*: string */, callback /*: Callback */) {
     log.info({path: doc.path}, `Resolve a conflict: ${doc.path} → ${newPath}`)
     let srcPath = path.join(this.syncPath, doc.path)
     let dstPath = path.join(this.syncPath, newPath)
     fs.rename(srcPath, dstPath, callback)
     // TODO: Don't fire an event for the deleted file?
   }
-
-  renameConflictingDocAsync: (doc: Metadata, newPath: string) => Promise<void>
 }

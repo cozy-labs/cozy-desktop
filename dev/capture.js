@@ -1,5 +1,3 @@
-#!/usr/bin/env babel-node
-
 const program = require('commander')
 const path = require('path')
 
@@ -26,8 +24,7 @@ const scenarios = (args) => {
       return scenarioHelpers.scenarioByPath(path.join(
         __dirname, '..', 'test', 'scenarios', match[1], 'scenario.js'))
     } else {
-      console.error(`Invalid argument: ${arg}`)
-      process.exit(1)
+      throw new Error(`Invalid argument: ${arg}`)
     }
   })
 }

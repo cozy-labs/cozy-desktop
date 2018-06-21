@@ -10,7 +10,7 @@ const pouchHelpers = require('../support/helpers/pouch')
 const { IntegrationTestHelpers } = require('../support/helpers/integration')
 
 // XXX: duplicated from remote/watcher
-const HEARTBEAT: number = parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || 1000 * 60
+const HEARTBEAT /*: number */ = parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || 1000 * 60
 
 describe('Sync', function () {
   before('instanciate config', configHelpers.createConfig)

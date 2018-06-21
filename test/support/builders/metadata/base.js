@@ -1,12 +1,15 @@
 /* @flow */
 
+const { maxDate } = require('../../../../core/timestamp')
+
+/*::
 import type fs from 'fs-extra'
 import type { Metadata, MetadataSidesInfo } from '../../../../core/metadata'
-
-const { maxDate } = require('../../../../core/timestamp')
-const Pouch = require('../../../../core/pouch')
+import type Pouch from '../../../../core/pouch'
+*/
 
 module.exports = class BaseMetadataBuilder {
+  /*::
   pouch: ?Pouch
   opts: {
     path: string,
@@ -15,8 +18,9 @@ module.exports = class BaseMetadataBuilder {
     trashed?: true,
     sides: MetadataSidesInfo
   }
+  */
 
-  constructor (pouch: ?Pouch) {
+  constructor (pouch /*: ?Pouch */) {
     this.pouch = pouch
     this.opts = {
       path: 'foo',
@@ -24,47 +28,47 @@ module.exports = class BaseMetadataBuilder {
     }
   }
 
-  ino (ino: number): this {
+  ino (ino /*: number */) /*: this */ {
     this.opts.ino = ino
     return this
   }
 
-  stats ({ino, mtime, ctime}: fs.Stats): this {
+  stats ({ino, mtime, ctime} /*: fs.Stats */) /*: this */ {
     return this.ino(ino).updatedAt(maxDate(mtime, ctime))
   }
 
-  path (path: string): this {
+  path (path /*: string */) /*: this */ {
     this.opts.path = path
     return this
   }
 
-  trashed (): this {
+  trashed () /*: this */ {
     this.opts.trashed = true
     return this
   }
 
-  updatedAt (date: Date): this {
+  updatedAt (date /*: Date */) /*: this */ {
     date = new Date(date)
     date.setMilliseconds(0)
     this.opts.updated_at = date.toISOString()
     return this
   }
 
-  upToDate (): this {
+  upToDate () /*: this */ {
     this.opts.sides = {local: 1, remote: 1}
     return this
   }
 
-  notUpToDate (): this {
+  notUpToDate () /*: this */ {
     this.opts.sides = {remote: 1}
     return this
   }
 
-  build (): Metadata {
+  build () /*: Metadata */ {
     throw new Error('BaseMetadataBuilder#build() not implemented')
   }
 
-  async create (): Promise<Metadata> {
+  async create () /*: Promise<Metadata> */ {
     if (this.pouch == null) {
       throw new Error('Cannot create dir metadata without Pouch')
     }

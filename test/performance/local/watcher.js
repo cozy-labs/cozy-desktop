@@ -12,7 +12,9 @@ const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
 
 class SpyPrep {
+  /*::
   calls: *
+  */
 
   constructor () {
     this.calls = []
@@ -26,7 +28,7 @@ class SpyPrep {
     this.stub('updateFileAsync')
   }
 
-  stub (method: string) {
+  stub (method /*: string */) {
     // $FlowFixMe
     this[method] = (side, doc, was) => {
       if (was != null) {
@@ -41,7 +43,7 @@ class SpyPrep {
 
 let abspath
 
-const createDoc = async (pouch, dir, relpath: string, ino) => {
+const createDoc = async (pouch, dir, relpath /*: string */, ino) => {
   if (dir) {
     await pouch.put({
       _id: metadata.id(relpath),

@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 const { execSync } = require('child_process')
 
 execSync('git fetch')
@@ -9,12 +7,10 @@ const localRev = execSync('git rev-parse HEAD', {encoding}).trim()
 const latestMasterRev = execSync('git rev-parse origin/master', {encoding}).trim()
 
 if (localRev !== latestMasterRev) {
-  console.error(`Local rev (${localRev}) doesn't match latest master (${latestMasterRev})`)
-  process.exit(1)
+  throw new Error(`Local rev (${localRev}) doesn't match latest master (${latestMasterRev})`)
 }
 
 const localChanges = execSync('git status --porcelain', {encoding})
 if (localChanges.trim() !== '') {
-  console.error(`You have local changes:\n${localChanges}`)
-  process.exit(1)
+  throw new Error(`You have local changes:\n${localChanges}`)
 }

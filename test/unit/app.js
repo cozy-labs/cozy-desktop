@@ -5,7 +5,7 @@ const os = require('os')
 const path = require('path')
 const should = require('should')
 
-const App = require('../../core/app')
+const { App } = require('../../core/app')
 const { LOG_FILENAME } = require('../../core/logger')
 const pkg = require('../../package.json')
 const { version } = pkg

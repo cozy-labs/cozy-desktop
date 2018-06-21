@@ -46,7 +46,7 @@ describe('Test scenarios', function () {
       // $FlowFixMe
       const origMethod = helpers.prep[method]
       sinon.stub(helpers.prep, method).callsFake(async (...args) => {
-        const call: Object = {method}
+        const call /*: Object */ = {method}
         if (method.startsWith('move') || method.startsWith('restore')) {
           call.dst = args[1].path
           call.src = args[2].path

@@ -1,26 +1,32 @@
 /* @flow */
 
-import type { RemoteDoc } from '../../../core/remote/document'
-
-const cozy = require('cozy-client-js')
+const autoBind = require('auto-bind')
 const _ = require('lodash')
 const path = require('path')
 
 const conflictHelpers = require('./conflict')
 
-const Pouch = require('../../../core/pouch')
-const Remote = require('../../../core/remote')
 const { TRASH_DIR_NAME } = require('../../../core/remote/constants')
 
-class RemoteTestHelpers {
-  remote: Remote
+/*::
+import type cozy from 'cozy-client-js'
+import type Pouch from '../../../core/pouch'
+import type Remote from '../../../core/remote'
+import type { RemoteDoc } from '../../../core/remote/document'
+*/
 
-  constructor (remote: Remote) {
+class RemoteTestHelpers {
+  /*::
+  remote: Remote
+  */
+
+  constructor (remote /*: Remote */) {
     this.remote = remote
+    autoBind(this)
   }
 
-  get cozy (): cozy.Client { return this.remote.remoteCozy.client }
-  get pouch (): Pouch { return this.remote.pouch }
+  get cozy () /*: cozy.Client */ { return this.remote.remoteCozy.client }
+  get pouch () /*: Pouch */ { return this.remote.pouch }
 
   async ignorePreviousChanges () {
     const {last_seq} = await this.remote.remoteCozy.changes()
@@ -31,7 +37,7 @@ class RemoteTestHelpers {
     await this.remote.watcher.watch()
   }
 
-  async createTree (paths: Array<string>): Promise<{ [string]: RemoteDoc}> {
+  async createTree (paths /*: Array<string> */) /*: Promise<{ [string]: RemoteDoc}> */ {
     const docsByPath = {}
     for (const p of paths) {
       const name = path.posix.basename(p)
@@ -99,11 +105,11 @@ class RemoteTestHelpers {
       .value()
   }
 
-  async simulateChanges (docs: *) {
+  async simulateChanges (docs /*: * */) {
     await this.remote.watcher.pullMany(docs)
   }
 
-  async readFile (path: string) {
+  async readFile (path /*: string */) {
     if (!path.startsWith('/')) path = '/' + path
     const resp = await this.cozy.files.downloadByPath(path)
     return resp.text()

@@ -1,14 +1,17 @@
 /* @flow weak */
 
+const autoBind = require('auto-bind')
 const { basename, dirname } = require('path')
 const { matcher, makeRe } = require('micromatch')
 
+/*::
 export type IgnorePattern = {
   match: (string) => boolean,
   basename: boolean,
   folder: boolean,
   negate: boolean
 }
+*/
 
 // Cozy-desktop can ignore some files and folders from a list of patterns in the
 // cozyignore file. This class can be used to know if a file/folder is ignored.
@@ -70,7 +73,9 @@ class Ignore {
             {noextglob: true}
   }
 
+  /*::
   patterns: IgnorePattern[]
+  */
 
   // Load patterns for detecting ignored files and folders
   constructor (lines) {
@@ -80,6 +85,7 @@ class Ignore {
       if (line[0] === '#') { continue }      // Comments
       this.patterns.push(this.buildPattern(line))
     }
+    autoBind(this)
   }
 
   // Parse a line and build the corresponding pattern

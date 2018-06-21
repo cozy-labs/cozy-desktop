@@ -4,7 +4,7 @@ const path = require('path')
 let lastFilesPath = ''
 let lastFiles = []
 
-const log = require('../../core-built/app').logger({
+const log = require('../../core/app').logger({
   component: 'GUI'
 })
 

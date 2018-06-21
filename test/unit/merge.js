@@ -1,7 +1,8 @@
 /* eslint-env mocha */
 
 const async = require('async')
-const { clone, pick } = require('lodash')
+const _ = require('lodash')
+const { clone, pick } = _
 const path = require('path')
 const sinon = require('sinon')
 const should = require('should')
@@ -421,7 +422,7 @@ describe('Merge', function () {
           pouchHelpers.createFile(this.pouch, 9, () => {
             this.pouch.db.get(metadata.id(path.normalize('my-folder/file-9')), (err, file) => {
               should.not.exist(err)
-              this.pouch.db.put({...file, trashed: true}, done)
+              this.pouch.db.put(_.defaults({trashed: true}, file), done)
             })
           })
         })
@@ -465,10 +466,9 @@ describe('Merge', function () {
       const dir = await builders.dir().path('trashed-folder').trashed().create()
       await builders.file().path(path.normalize('trashed-folder/file')).notUpToDate().create()
       const was = pick(dir, ['_id', 'path', 'docType', 'trashed'])
-      const doc = {
-        ...was,
+      const doc = _.defaults({
         path: `.cozy_trash/${was.path}`
-      }
+      }, was)
 
       await this.merge.trashFolderAsync(this.side, was, doc)
 
@@ -583,19 +583,18 @@ describe('Merge', function () {
     context('when metadata are found in Pouch', () => {
       it('updates it with trashed property and up-to-date sides info', async function () {
         const doc = {_id: 'existing-metadata'}
-        await this.pouch.db.put({...doc, sides: {local: 1, remote: 1}})
+        await this.pouch.db.put(_.defaults({sides: {local: 1, remote: 1}}, doc))
 
         await this.merge.trashAsync(this.side, doc)
 
         const updated = await this.pouch.db.get(doc._id)
-        should(updated).have.properties({
-          ...doc,
+        should(updated).have.properties(_.defaults({
           trashed: true,
           sides: {
             local: 2,
             remote: 1
           }
-        })
+        }, doc))
       })
     })
 
@@ -617,7 +616,7 @@ describe('Merge', function () {
         sinon.spy(this.pouch, 'put')
 
         const doc = {_id: 'conflicting-doctype', docType: 'folder', path: 'conflicting-doctype'}
-        await this.pouch.db.put({...doc, docType: 'file'})
+        await this.pouch.db.put(_.defaults({docType: 'file'}, doc))
 
         await this.merge.trashAsync(this.side, doc)
 
@@ -625,7 +624,7 @@ describe('Merge', function () {
         should(this.pouch.put).not.have.been.called()
         const [dst, src] = this.merge.local.resolveConflictAsync.getCall(0).args
         should(src).eql(doc)
-        should(dst).have.properties({...doc, path: dst.path})
+        should(dst).have.properties(_.defaults({path: dst.path}, doc))
         should(dst.path).match(/conflict/)
         should(dst).not.have.property('trashed')
 
