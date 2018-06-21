@@ -30,6 +30,11 @@ def info_level: 30;
 def is_info: .level >= info_level;
 def info: clean | select(is_info);
 
+# Components:
+def chokidar: select(.component == "Chokidar");
+def LocalChange: select(.component == "local/change");
+def LocalWatcher: select(.component == "LocalWatcher");
+
 # Find conflicts:
 #
 #     yarn jq -c conflicts path/to/logs*
