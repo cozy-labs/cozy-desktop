@@ -1,7 +1,7 @@
 'use strict'
 
 // The passphrase used for integration tests:
-let passphrase = process.env.COZY_PASSPHRASE || 'CozyTest_1'
+let passphrase = process.env.COZY_PASSPHRASE || 'cozy'
 
 // You can retrieve it by requiring this module:
 //     passphrase = require '.../passphrase'

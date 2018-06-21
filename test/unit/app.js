@@ -7,9 +7,12 @@ const should = require('should')
 
 const App = require('../../core/app')
 const { LOG_FILENAME } = require('../../core/logger')
-const { version } = require('../../package.json')
+const pkg = require('../../package.json')
+const { version } = pkg
 
+const automatedRegistration = require('../../dev/remote/automated_registration')
 const configHelpers = require('../support/helpers/config')
+const passphrase = require('../support/helpers/passphrase')
 
 describe('App', function () {
   describe('parseCozyUrl', function () {
@@ -36,6 +39,37 @@ describe('App', function () {
       parsed.protocol.should.equal('http:')
       parsed.hostname.should.equal('localhost')
       parsed.port.should.equal('9104')
+    })
+  })
+
+  describe('removeRemote', () => {
+    beforeEach(configHelpers.createConfig)
+
+    // FIXME
+    if (process.env.TRAVIS) {
+      it('does not work on Travis')
+      return
+    }
+
+    it('unregisters the client', async function () {
+      // For some reason, the test won't work using configHelpers because they
+      // don't perfectly fake the actual registration behavior.
+      const registration = automatedRegistration(this.config.cozyUrl, passphrase, this.config)
+      await registration.process(pkg)
+      const configDir = path.dirname(this.config.configPath)
+      const basePath = path.dirname(configDir)
+      const app = new App(basePath)
+      // Ugly hack to inject Config into App, because there is currently no
+      // other way. Working as long as we don't use Pouch, since it will still
+      // have the old config.
+      app.config = this.config
+      app.instanciate()
+
+      const err = await app.removeRemote()
+      // The removeRemote() method has a weird behavior: it may return an
+      // Error object. We better throw it than asserting it doesn't exist, so
+      // we get a readable stack trace.
+      if (err) throw err
     })
   })
 
