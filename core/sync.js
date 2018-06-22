@@ -8,9 +8,10 @@ const { clone } = require('lodash')
 
 const { MAX_SYNC_ATTEMPTS } = require('./constants')
 const logger = require('./logger')
-const { extractRevNumber, isUpToDate, sameFileIgnoreRev } = require('./metadata')
+const { extractRevNumber, isUpToDate, markSide, sameFileIgnoreRev } = require('./metadata')
 const userActionRequired = require('./remote/user_action_required')
 const { HEARTBEAT } = require('./remote/watcher')
+const { otherSide } = require('./side')
 const { PendingMap } = require('./utils/pending')
 const measureTime = require('./perftools')
 
@@ -236,8 +237,8 @@ class Sync {
     // FIXME: Acquire lock for as many changes as possible to prevent next huge
     // remote/local batches to acquite it first
     let stopMeasure = () => {}
+    let [side, sideName, rev] = this.selectSide(doc)
     try {
-      let [side, sideName, rev] = this.selectSide(doc)
       stopMeasure = measureTime('Sync#applyChange:' + sideName)
 
       if (!side) {
@@ -258,7 +259,7 @@ class Sync {
         await this.updateRevs(change.doc, sideName)
       }
     } catch (err) {
-      await this.handleApplyError(change, err)
+      await this.handleApplyError(change, sideName, err)
     } finally {
       stopMeasure()
     }
@@ -370,7 +371,7 @@ class Sync {
 
   // Make the error explicit (offline, local disk full, quota exceeded, etc.)
   // and keep track of the number of retries
-  async handleApplyError (change /*: MetadataChange */, err /*: Error */) {
+  async handleApplyError (change /*: MetadataChange */, sideName /*: SideName */, err /*: Error */) {
     const {path} = change.doc
     log.error({path, err, change})
     if (err.code === 'ENOSPC') {
@@ -405,16 +406,21 @@ class Sync {
         }
       }
     }
-    await this.updateErrors(change)
+    await this.updateErrors(change, sideName)
   }
 
   // Increment the counter of errors for this document
-  async updateErrors (change /*: MetadataChange */) /*: Promise<void> */ {
+  async updateErrors (change /*: MetadataChange */, sideName /*: SideName */) /*: Promise<void> */ {
     let { doc } = change
     if (!doc.errors) doc.errors = 0
     doc.errors++
+
+    // Make sure isUpToDate(sourceSideName, doc) is still true
+    const sourceSideName = otherSide(sideName)
+    markSide(sourceSideName, doc, doc)
+
     // Don't try more than MAX_SYNC_ATTEMPTS for the same operation
-    if (doc.errors >= MAX_SYNC_ATTEMPTS) {
+    if (doc.errors && doc.errors >= MAX_SYNC_ATTEMPTS) {
       await this.pouch.setLocalSeqAsync(change.seq)
       return
     }
