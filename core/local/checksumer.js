@@ -11,11 +11,12 @@ import type { Callback } from '../utils/func'
 */
 
 module.exports = {
+  computeChecksum,
   init
 }
 
 // Get checksum for given file
-const computeChecksum = (filePath /*: string */, callback /*: Callback */) => {
+function computeChecksum (filePath /*: string */, callback /*: Callback */) {
   const stopMeasure = measureTime('LocalWatcher#checksumer')
   const stream = fs.createReadStream(filePath)
   const checksum = crypto.createHash('md5')

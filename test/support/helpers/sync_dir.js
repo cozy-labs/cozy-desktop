@@ -5,9 +5,11 @@ const Promise = require('bluebird')
 const fs = require('fs-extra')
 const path = require('path')
 
+const checksumer = require('../../../core/local/checksumer')
 const { getPath } = require('../../../core/utils/path')
 
-Promise.promisifyAll(fs)
+Promise.promisifyAll(fs) // FIXME: Isn't fs-extra already promisified?
+Promise.promisifyAll(checksumer)
 
 /*:: import type { PathObject } from '../../../core/utils/path' */
 
@@ -47,6 +49,11 @@ class SyncDirTestHelpers {
 
   async outputFile (target /*: string|PathObject */, data /*: string */) {
     return fs.outputFile(this.abspath(target), data)
+  }
+
+  async checksum (target /*: string|PathObject */) /*: Promise<string> */ {
+    // $FlowFixMe
+    return checksumer.computeChecksumAsync(this.abspath(target))
   }
 }
 

@@ -4,6 +4,7 @@ const sinon = require('sinon')
 const should = require('should')
 
 const Ignore = require('../../core/ignore')
+const { isUpToDate } = require('../../core/metadata')
 const Sync = require('../../core/sync')
 
 const stubSide = require('../support/doubles/side')
@@ -388,17 +389,65 @@ describe('Sync', function () {
   })
 
   describe('updateErrors', function () {
-    it('stops retrying after 3 errors', async function () {
+    it('retries on first local -> remote sync error', async function () {
       let doc = {
-        _id: 'third/failure',
-        errors: 3
+        _id: 'first/failure',
+        sides: {
+          local: 1
+        }
       }
       const infos = await this.pouch.db.put(doc)
       doc._rev = infos.rev
-      await this.sync.updateErrors({doc})
+
+      await this.sync.updateErrors({doc}, 'remote')
+
+      const actual = await this.pouch.db.get(doc._id)
+      should(actual.errors).equal(1)
+      should(actual._rev).not.equal(doc._rev)
+      should(actual.sides).deepEqual({local: 2})
+      should(isUpToDate('local', actual)).be.true()
+    })
+
+    it('retries on second remote -> local sync error', async function () {
+      let doc = {
+        _id: 'second/failure',
+        errors: 1,
+        sides: {
+          // XXX: Use dumb values so we don't need to save Pouch doc multiple
+          //      times to get a matching rev.
+          local: 0,
+          remote: 2
+        }
+      }
+      let infos = await this.pouch.db.put(doc)
+      doc._rev = infos.rev
+      infos = await this.pouch.db.put(doc)
+      doc._rev = infos.rev
+
+      await this.sync.updateErrors({doc}, 'local')
+
+      const actual = await this.pouch.db.get(doc._id)
+      should(actual.errors).equal(2)
+      should(actual._rev).not.equal(doc._rev)
+      should(actual.sides).deepEqual({local: 0, remote: 3})
+      should(isUpToDate('remote', actual)).be.true()
+    })
+
+    it('stops retrying after 3 errors', async function () {
+      let doc = {
+        _id: 'third/failure',
+        errors: 3,
+        sides: {
+          remote: 1
+        }
+      }
+      const infos = await this.pouch.db.put(doc)
+      doc._rev = infos.rev
+      await this.sync.updateErrors({doc}, 'local')
       const actual = await this.pouch.db.get(doc._id)
       actual.errors.should.equal(3)
       actual._rev.should.equal(doc._rev)
+      should(isUpToDate('remote', actual)).be.true()
     })
   })
 
