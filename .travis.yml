@@ -88,6 +88,9 @@ before_script:
 script:
     - travis_retry yarn
     - yarn build
+    - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
+        test -f macos/favorite/.build/favorite;
+      fi
     - yarn lint
     - yarn test:unit:coverage --timeout $MOCHA_TIMEOUT
     - yarn test:elm
@@ -112,3 +115,7 @@ after_success:
 after_failure:
     - $CXX --version
     - netstat -lntp
+    - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
+        swift -version;
+        find macos/favorite/.build;
+      fi
