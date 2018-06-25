@@ -91,8 +91,24 @@ describe('Merge', function () {
     })
   })
 
-  describe('updateFile', function () {
-    it('saves the new file', function (done) {
+  describe('updateFile', () => {
+    before('create a file', async function () {
+      this.file = {
+        _id: 'FIZZBUZZ.JPG',
+        path: 'FIZZBUZZ.JPG',
+        docType: 'file',
+        md5sum: '1111111111111111111111111111111111111111',
+        updated_at: new Date(),
+        tags: ['foo'],
+        size: 12345,
+        class: 'image',
+        mime: 'image/jpeg',
+        ino: 3456
+      }
+      await this.pouch.db.put(this.file)
+    })
+
+    it('creates the file if it does not exist', async function () {
       let doc = {
         _id: 'FOOBAR/NEW-FILE',
         path: 'FOOBAR/NEW-FILE',
@@ -101,82 +117,52 @@ describe('Merge', function () {
         updated_at: new Date(),
         tags: ['courge', 'quux']
       }
-      this.merge.updateFileAsync(this.side, doc).then(() => {
-        this.pouch.db.get(doc._id, function (err, res) {
-          should.not.exist(err)
-          doc.updated_at = doc.updated_at.toISOString()
-          res.should.have.properties(doc)
-          res.sides.local.should.equal(1)
-          done()
-        })
-      })
+      await this.merge.updateFileAsync(this.side, doc)
+      const res = await this.pouch.db.get(doc._id)
+      doc.updated_at = doc.updated_at.toISOString()
+      res.should.have.properties(doc)
+      res.sides.local.should.equal(1)
     })
 
-    describe('when a file with the same path exists', function () {
-      before('create a file', function (done) {
-        this.file = {
-          _id: 'FIZZBUZZ.JPG',
-          path: 'FIZZBUZZ.JPG',
-          docType: 'file',
-          md5sum: '1111111111111111111111111111111111111111',
-          updated_at: new Date(),
-          tags: ['foo'],
-          size: 12345,
-          class: 'image',
-          mime: 'image/jpeg',
-          ino: 3456
-        }
-        this.pouch.db.put(this.file, done)
-      })
+    it('updates the metadata when content is the same', async function () {
+      let was = clone(this.file)
+      this.file.tags = ['bar', 'baz']
+      this.file.updated_at = new Date()
+      let doc = clone(this.file)
+      delete doc.size
+      delete doc.class
+      delete doc.mime
+      delete doc.ino
+      this.file.updated_at = doc.updated_at.toISOString()
+      await this.merge.updateFileAsync(this.side, doc)
+      const res = await this.pouch.db.get(doc._id)
+      res.should.have.properties(this.file)
+      res.size.should.equal(was.size)
+      res.class.should.equal(was.class)
+      res.mime.should.equal(was.mime)
+      res.ino.should.equal(was.ino)
+      res.sides.local.should.equal(2)
+    })
 
-      it('can update the metadata', function (done) {
-        let was = clone(this.file)
-        this.file.tags = ['bar', 'baz']
-        this.file.updated_at = new Date()
-        let doc = clone(this.file)
-        delete doc.size
-        delete doc.class
-        delete doc.mime
-        delete doc.ino
-        this.file.updated_at = doc.updated_at.toISOString()
-        this.merge.updateFileAsync(this.side, doc).then(() => {
-          this.pouch.db.get(doc._id, (err, res) => {
-            should.not.exist(err)
-            res.should.have.properties(this.file)
-            res.size.should.equal(was.size)
-            res.class.should.equal(was.class)
-            res.mime.should.equal(was.mime)
-            res.ino.should.equal(was.ino)
-            res.sides.local.should.equal(2)
-            done()
-          })
-        })
-      })
-
-      it('can overwrite the content of a file', function (done) {
-        let doc = {
-          _id: 'FIZZBUZZ.JPG',
-          path: 'FIZZBUZZ.JPG',
-          docType: 'file',
-          md5sum: '3333333333333333333333333333333333333333',
-          tags: ['qux', 'quux'],
-          sides: {
-            local: 2,
-            remote: 2
-          }
+    it('overwrite the content when it was changed', async function () {
+      let doc = {
+        _id: 'FIZZBUZZ.JPG',
+        path: 'FIZZBUZZ.JPG',
+        docType: 'file',
+        md5sum: '3333333333333333333333333333333333333333',
+        tags: ['qux', 'quux'],
+        sides: {
+          local: 2,
+          remote: 2
         }
-        this.merge.updateFileAsync(this.side, clone(doc)).then(() => {
-          this.pouch.db.get(this.file._id, function (err, res) {
-            should.not.exist(err)
-            res.should.have.properties(doc)
-            should.not.exist(res.size)
-            should.not.exist(res.class)
-            should.not.exist(res.mime)
-            res.sides.local.should.equal(3)
-            done()
-          })
-        })
-      })
+      }
+      await this.merge.updateFileAsync(this.side, clone(doc))
+      const res = await this.pouch.db.get(this.file._id)
+      res.should.have.properties(doc)
+      should.not.exist(res.size)
+      should.not.exist(res.class)
+      should.not.exist(res.mime)
+      res.sides.local.should.equal(3)
     })
   })
 
