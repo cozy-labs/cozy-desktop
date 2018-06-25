@@ -42,6 +42,11 @@ Then get more details (e.g. dropping `-c` option and `short` filter):
 
     yarn jq 'select(...)' path/to/logs*
 
+To get an error stack trace as you would expect, you can use *jq*'s `-r` (raw)
+option on the `.stack` property:
+
+    yarn jq -r 'select(.time == "2018-06-21T13:57:40.699Z")|.err|.stack' path/to/logs
+
 See the [`.jq`][.jq] file at the root of the repository to get the complete
 list of custom filters.
 
