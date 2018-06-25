@@ -45,8 +45,7 @@ module.exports = class FileMetadataBuilder extends BaseMetadataBuilder {
         _id: pouchdbBuilders.id(),
         _rev: pouchdbBuilders.rev()
       },
-      tags: [],
-      updated_at: new Date()
+      tags: []
     }, this.opts, this.fileOpts)
     assignId(doc)
     return doc

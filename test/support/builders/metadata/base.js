@@ -24,7 +24,8 @@ module.exports = class BaseMetadataBuilder {
     this.pouch = pouch
     this.opts = {
       path: 'foo',
-      sides: {}
+      sides: {},
+      updated_at: new Date().toISOString()
     }
   }
 
