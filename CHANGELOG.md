@@ -1,3 +1,18 @@
+## 3.8.0-beta.1 - 2018-06-25
+
+Improvements for all users:
+
+- When a file could not be uploaded/downloaded that may generate conflicts when editing/saving a file multiple times.
+- Ignored files (e.g. Office temporary files) should now be effectively ignored on Windows.
+
+Improvements for Arch Linux users:
+
+- You should now be able to install `cozy-desktop` from community repo, courtesy of ArchangeGabriel. Huge thanks to him!
+
+See also [known issues][KNOWN_ISSUES.md].
+
+Happy syncing!
+
 ## 3.7.0 - 2018-06-13
 
 Improvements for all users:
