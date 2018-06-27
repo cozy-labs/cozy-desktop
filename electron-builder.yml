@@ -12,7 +12,10 @@ files:
 - gui/main.js
 - gui/node_modules
 - gui/ports.js
+- macos/favorite/.build/favorite
 - package.json
+asarUnpack:
+- macos/favorite/.build/favorite
 directories:
   buildResources: gui/assets
 win:
