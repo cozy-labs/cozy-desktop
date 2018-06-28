@@ -1,7 +1,6 @@
 const lnk = require('lnk')
 const os = require('os')
 const path = require('path')
-const url = require('url')
 const childProcess = require('child_process')
 
 const log = require('../../core/app').logger({
@@ -28,9 +27,16 @@ const execSync = (cmd) => {
   log.debug(output)
 }
 
-const sfltoolAddFavorite = (path) => {
-  const item = url.resolve('file://', path)
-  execSync(`sfltool add-item com.apple.LSSharedFileList.FavoriteItems ${item}`)
+function quotePath (path) {
+  return `"${path.replace(/"/g, '\\"')}"`
+}
+
+const macosAddFavoriteScript = path
+  .resolve(__dirname, '../scripts/macos-add-favorite.py')
+  .replace('/app.asar/', '/app.asar.unpacked/')
+
+const macosAddFavorite = (path) => {
+  execSync(`/usr/bin/python ${quotePath(macosAddFavoriteScript)} ${quotePath(path)}`)
 }
 
 // For Darwin <=> macOS version mapping, see:
@@ -44,9 +50,8 @@ module.exports.addFileManagerShortcut = (config) => {
     win10PinToHome(config.syncPath)
   } else if (platform === 'win32' && major >= 6) {
     winAddLink(config.syncPath)
-  } else if (platform === 'darwin' && major >= 15) {
-    // sfltool is available since 10.11 (El Capitan)
-    sfltoolAddFavorite(config.syncPath)
+  } else if (platform === 'darwin') {
+    macosAddFavorite(config.syncPath)
   } else {
     throw new Error(`Not registering shortcut on ${platform} ${major}`)
   }

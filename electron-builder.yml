@@ -12,7 +12,10 @@ files:
 - gui/main.js
 - gui/node_modules
 - gui/ports.js
+- gui/scripts/**
 - package.json
+asarUnpack:
+- gui/scripts/**
 directories:
   buildResources: gui/assets
 win:
