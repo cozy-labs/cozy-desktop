@@ -134,6 +134,7 @@ class Merge {
       if (doc.remote == null) { doc.remote = file.remote }
       if (doc.ino == null) { doc.ino = file.ino }
       if (sameFile(file, doc)) {
+        log.info({path}, 'up to date')
         return null
       } else {
         return this.pouch.put(doc)
@@ -273,6 +274,7 @@ class Merge {
       delete was.errors
       doc.moveFrom = was
       if (file && sameFile(file, doc)) {
+        log.info({path}, 'up to date (move)')
         return null
       } else if (file) {
         const dst = await this.resolveConflictAsync(side, doc, file)
