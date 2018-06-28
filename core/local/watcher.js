@@ -42,6 +42,7 @@ const NB_OF_DELETABLE_ELEMENT = 3
 type InitialScan = {
   ids: string[],
   emptyDirRetryCount: number,
+  flushed: boolean,
   resolve: () => void
 }
 */
@@ -132,7 +133,8 @@ module.exports = class LocalWatcher {
     const started = new Promise((resolve) => {
       for (let eventType of ['add', 'addDir', 'change', 'unlink', 'unlinkDir']) {
         this.watcher.on(eventType, (path /*: ?string */, stats /*: ?fs.Stats */) => {
-          log.chokidar.debug({path, stats}, eventType)
+          const isInitialScan = this.initialScan && !this.initialScan.flushed
+          log.chokidar.debug({path, stats, isInitialScan}, eventType)
           const newEvent = chokidarEvent.build(eventType, path, stats)
           this.buffer.push(newEvent)
           this.events.emit('buffering-start')
@@ -142,7 +144,7 @@ module.exports = class LocalWatcher {
       // To detect which files&folders have been removed since the last run of
       // cozy-desktop, we keep all the paths seen by chokidar during its
       // initial scan in @paths to compare them with pouchdb database.
-      this.initialScan = {ids: [], emptyDirRetryCount: 3, resolve}
+      this.initialScan = {ids: [], emptyDirRetryCount: 3, resolve, flushed: false}
 
       this.watcher
         .on('ready', () => this.buffer.switchMode('timeout'))
@@ -170,12 +172,12 @@ module.exports = class LocalWatcher {
   async onFlush (rawEvents /*: ChokidarEvent[] */) {
     log.debug(`Flushed ${rawEvents.length} events`)
 
+    if (this.initialScan) this.initialScan.flushed = true
     this.events.emit('buffering-end')
     this.ensureDirSync()
     this.events.emit('local-start')
 
     let events = rawEvents.filter((e) => e.path !== '') // @TODO handle root dir events
-
     const initialScan = this.initialScan
     if (initialScan != null) {
       const ids = initialScan.ids
