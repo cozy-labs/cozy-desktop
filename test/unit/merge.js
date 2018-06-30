@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 
-const async = require('async')
 const _ = require('lodash')
 const { clone, pick } = _
 const path = require('path')
@@ -28,7 +27,7 @@ describe('Merge', function () {
   after('clean config directory', configHelpers.cleanConfig)
 
   describe('addFile', function () {
-    it('saves the new file', function (done) {
+    it('saves the new file', async function () {
       let doc = {
         _id: metadata.id('foo/new-file'),
         path: 'foo/new-file',
@@ -37,19 +36,15 @@ describe('Merge', function () {
         updated_at: new Date(),
         tags: ['courge', 'quux']
       }
-      this.merge.addFileAsync(this.side, doc).then(() => {
-        this.pouch.db.get(doc._id, function (err, res) {
-          should.not.exist(err)
-          doc.updated_at = doc.updated_at.toISOString()
-          res.should.have.properties(doc)
-          res.sides.local.should.equal(1)
-          done()
-        })
-      })
+      await this.merge.addFileAsync(this.side, doc)
+      const res = await this.pouch.db.get(doc._id)
+      doc.updated_at = doc.updated_at.toISOString()
+      res.should.have.properties(doc)
+      res.sides.local.should.equal(1)
     })
 
     describe('when a file with the same path exists', function () {
-      before('create a file', function (done) {
+      before('create a file', async function () {
         this.file = {
           _id: 'BUZZ.JPG',
           path: 'BUZZ.JPG',
@@ -62,10 +57,10 @@ describe('Merge', function () {
           mime: 'image/jpeg',
           ino: 123
         }
-        this.pouch.db.put(this.file, done)
+        await this.pouch.db.put(this.file)
       })
 
-      it('can update the metadata', function (done) {
+      it('can update the metadata', async function () {
         let was = clone(this.file)
         this.file.tags = ['bar', 'baz']
         this.file.updated_at = new Date()
@@ -75,18 +70,14 @@ describe('Merge', function () {
         delete doc.mime
         delete doc.ino
         this.file.updated_at = doc.updated_at.toISOString()
-        this.merge.addFileAsync(this.side, doc).then(() => {
-          this.pouch.db.get(doc._id, (err, res) => {
-            should.not.exist(err)
-            res.should.have.properties(this.file)
-            res.size.should.equal(was.size)
-            res.class.should.equal(was.class)
-            res.mime.should.equal(was.mime)
-            res.sides.local.should.equal(2)
-            res.ino.should.equal(was.ino)
-            done()
-          })
-        })
+        await this.merge.addFileAsync(this.side, doc)
+        const res = await this.pouch.db.get(doc._id)
+        res.should.have.properties(this.file)
+        res.size.should.equal(was.size)
+        res.class.should.equal(was.class)
+        res.mime.should.equal(was.mime)
+        res.sides.local.should.equal(2)
+        res.ino.should.equal(was.ino)
       })
     })
   })
@@ -167,7 +158,7 @@ describe('Merge', function () {
   })
 
   describe('putFolder', () =>
-    it('saves the new folder', function (done) {
+    it('saves the new folder', async function () {
       let doc = {
         _id: 'FOO/NEW-FOLDER',
         path: 'FOO/NEW-FOLDER',
@@ -175,15 +166,11 @@ describe('Merge', function () {
         updated_at: new Date(),
         tags: ['courge', 'quux']
       }
-      this.merge.putFolderAsync(this.side, doc).then(() => {
-        doc.updated_at = doc.updated_at.toISOString()
-        this.pouch.db.get(doc._id, function (err, res) {
-          should.not.exist(err)
-          res.should.have.properties(doc)
-          res.sides.local.should.equal(1)
-          done()
-        })
-      })
+      await this.merge.putFolderAsync(this.side, doc)
+      doc.updated_at = doc.updated_at.toISOString()
+      const res = await this.pouch.db.get(doc._id)
+      res.should.have.properties(doc)
+      res.sides.local.should.equal(1)
     })
   )
 
@@ -193,7 +180,7 @@ describe('Merge', function () {
     //  '2017-08-28T08:42:52.535Z' (got '2017-08-28T08:42:52.536Z')`
     //   → https://travis-ci.org/cozy-labs/cozy-desktop/jobs/269106206#L1140
     //   → https://travis-ci.org/cozy-labs/cozy-desktop/jobs/273292815#L1163
-    it('saves the new file and deletes the old one', function (done) {
+    it('saves the new file and deletes the old one', async function () {
       let doc = {
         _id: 'FOO/NEW',
         path: 'FOO/NEW',
@@ -215,27 +202,18 @@ describe('Merge', function () {
         },
         trashed: true
       }
-      this.pouch.db.put(clone(was), (err, inserted) => {
-        should.not.exist(err)
-        was._rev = inserted.rev
-        this.merge.moveFileAsync(this.side, clone(doc), clone(was)).then(() => {
-          this.pouch.db.get(doc._id, (err, res) => {
-            should.not.exist(err)
-            doc.updated_at = doc.updated_at.toISOString()
-            res.should.have.properties(doc)
-            res.sides.local.should.equal(1)
-            should.not.exist(res.trashed)
-            this.pouch.db.get(was._id, function (err, res) {
-              should.exist(err)
-              err.status.should.equal(404)
-              done()
-            })
-          })
-        })
-      })
+      const inserted = await this.pouch.db.put(clone(was))
+      was._rev = inserted.rev
+      await this.merge.moveFileAsync(this.side, clone(doc), clone(was))
+      const res = await this.pouch.db.get(doc._id)
+      doc.updated_at = doc.updated_at.toISOString()
+      res.should.have.properties(doc)
+      res.sides.local.should.equal(1)
+      should.not.exist(res.trashed)
+      await should(this.pouch.db.get(was._id)).be.rejectedWith({status: 404})
     })
 
-    it('adds missing fields', function (done) {
+    it('adds missing fields', async function () {
       let doc = {
         _id: 'FOO/NEW-MISSING-FIELDS.JPG',
         path: 'FOO/NEW-MISSING-FIELDS.JPG',
@@ -257,21 +235,15 @@ describe('Merge', function () {
           remote: 1
         }
       }
-      this.pouch.db.put(clone(was), (err, inserted) => {
-        should.not.exist(err)
-        was._rev = inserted.rev
-        this.merge.moveFileAsync(this.side, clone(doc), clone(was)).then(() => {
-          this.pouch.db.get(doc._id, function (err, res) {
-            should.not.exist(err)
-            res.should.have.properties(doc)
-            should.exist(res.size)
-            should.exist(res.class)
-            should.exist(res.mime)
-            should.exist(res.ino)
-            done()
-          })
-        })
-      })
+      const inserted = await this.pouch.db.put(clone(was))
+      was._rev = inserted.rev
+      await this.merge.moveFileAsync(this.side, clone(doc), clone(was))
+      const res = await this.pouch.db.get(doc._id)
+      res.should.have.properties(doc)
+      should.exist(res.size)
+      should.exist(res.class)
+      should.exist(res.mime)
+      should.exist(res.ino)
     })
 
     it('adds a hint for writers to know that it is a move', function (done) {
@@ -320,7 +292,7 @@ describe('Merge', function () {
     // `Error in .on("change", function): {
     // AssertionError: expected 'FOOBAR/OLD' to be 'FOOBAR/OLD-HINT'`
     // → https://travis-ci.org/cozy-labs/cozy-desktop/jobs/269106208#L2224
-    it('saves the new folder and deletes the old one', function (done) {
+    it('saves the new folder and deletes the old one', async function () {
       let doc = {
         _id: 'FOOBAR/NEW',
         path: 'FOOBAR/NEW',
@@ -341,25 +313,16 @@ describe('Merge', function () {
         ino: 666,
         trashed: true
       }
-      this.pouch.db.put(clone(was), (err, inserted) => {
-        should.not.exist(err)
-        was._rev = inserted.rev
-        this.merge.moveFolderAsync(this.side, clone(doc), clone(was)).then(() => {
-          this.pouch.db.get(doc._id, (err, res) => {
-            should.not.exist(err)
-            doc.updated_at = doc.updated_at.toISOString()
-            res.should.have.properties(doc)
-            res.sides.local.should.equal(1)
-            res.should.have.property('ino', was.ino)
-            should.not.exist(res.trashed)
-            this.pouch.db.get(was._id, function (err, res) {
-              should.exist(err)
-              err.status.should.equal(404)
-              done()
-            })
-          })
-        })
-      })
+      const inserted = await this.pouch.db.put(clone(was))
+      was._rev = inserted.rev
+      await this.merge.moveFolderAsync(this.side, clone(doc), clone(was))
+      const res = await this.pouch.db.get(doc._id)
+      doc.updated_at = doc.updated_at.toISOString()
+      res.should.have.properties(doc)
+      res.sides.local.should.equal(1)
+      res.should.have.property('ino', was.ino)
+      should.not.exist(res.trashed)
+      await should(this.pouch.db.get(was._id)).be.rejectedWith({status: 404})
     })
 
     it('adds a hint for writers to know that it is a move', function (done) {
@@ -402,20 +365,16 @@ describe('Merge', function () {
   })
 
   describe('moveFolderRecursively', function () {
-    before(function (done) {
-      pouchHelpers.createParentFolder(this.pouch, () => {
-        pouchHelpers.createFolder(this.pouch, 9, () => {
-          pouchHelpers.createFile(this.pouch, 9, () => {
-            this.pouch.db.get(metadata.id(path.normalize('my-folder/file-9')), (err, file) => {
-              should.not.exist(err)
-              this.pouch.db.put(_.defaults({trashed: true}, file), done)
-            })
-          })
-        })
-      })
+    before(async function () {
+      await pouchHelpers.createParentFolder(this.pouch)
+      await pouchHelpers.createFolder(this.pouch, 9)
+      await pouchHelpers.createFile(this.pouch, 9)
+      // FIXME: Test doesn't fail without those two lines
+      const file = await this.pouch.db.get(metadata.id(path.normalize('my-folder/file-9')))
+      await this.pouch.db.put(_.defaults({trashed: true}, file))
     })
 
-    it('move the folder and files/folders inside it', function (done) {
+    it('move the folder and files/folders inside it', async function () {
       let doc = {
         _id: 'DESTINATION',
         path: 'DESTINATION',
@@ -423,27 +382,20 @@ describe('Merge', function () {
         updated_at: new Date(),
         tags: []
       }
-      this.pouch.db.get(metadata.id('my-folder'), (err, was) => {
-        should.not.exist(err)
-        this.merge.moveFolderRecursivelyAsync('local', doc, was).then(() => {
-          let ids = ['', path.normalize('/folder-9'), path.normalize('/file-9')]
-          async.eachSeries(ids, (id, next) => {
-            this.pouch.db.get(metadata.id(`DESTINATION${id}`), (err, res) => {
-              should.not.exist(err)
-              should.exist(res)
-              should(res.path).eql(`DESTINATION${id}`)
-              should.not.exist(res.trashed)
-              if (id !== '') { // parent sides are updated in moveFolderAsync()
-                should(res.sides.local).not.eql(1)
-              }
-              this.pouch.db.get(metadata.id(`my-folder${id}`), function (err, res) {
-                err.status.should.equal(404)
-                next()
-              })
-            })
-          }, done)
-        })
-      })
+      const was = await this.pouch.db.get(metadata.id('my-folder'))
+      await this.merge.moveFolderRecursivelyAsync('local', doc, was)
+      let ids = ['', path.normalize('/folder-9'), path.normalize('/file-9')]
+      for (let id of ids) {
+        const res = await this.pouch.db.get(metadata.id(`DESTINATION${id}`))
+        should.exist(res)
+        should(res.path).eql(`DESTINATION${id}`)
+        should.not.exist(res.trashed)
+        if (id !== '') { // parent sides are updated in moveFolderAsync()
+          should(res.sides.local).not.eql(1)
+        }
+        await should(this.pouch.db.get(metadata.id(`my-folder${id}`)))
+          .be.rejectedWith({status: 404})
+      }
     })
   })
 
@@ -465,7 +417,7 @@ describe('Merge', function () {
   })
 
   describe('deleteFile', () =>
-    it('deletes a file', function (done) {
+    it('deletes a file', async function () {
       let doc = {
         _id: path.normalize('TO-DELETE/FILE'),
         path: path.normalize('TO-DELETE/FILE'),
@@ -474,20 +426,14 @@ describe('Merge', function () {
           local: 1
         }
       }
-      this.pouch.db.put(doc, err => {
-        should.not.exist(err)
-        this.merge.deleteFileAsync(this.side, doc).then(() => {
-          this.pouch.db.get(doc._id, function (err) {
-            err.status.should.equal(404)
-            done()
-          })
-        })
-      })
+      await this.pouch.db.put(doc)
+      await this.merge.deleteFileAsync(this.side, doc)
+      await should(this.pouch.db.get(doc._id)).be.rejectedWith({status: 404})
     })
   )
 
   describe('deleteFolder', function () {
-    it('deletes a folder', function (done) {
+    it('deletes a folder', async function () {
       let doc = {
         _id: path.normalize('TO-DELETE/FOLDER'),
         path: path.normalize('TO-DELETE/FOLDER'),
@@ -496,19 +442,12 @@ describe('Merge', function () {
           local: 1
         }
       }
-      this.pouch.db.put(doc, err => {
-        should.not.exist(err)
-        this.merge.deleteFolderAsync(this.side, doc).then(() => {
-          should.not.exist(err)
-          this.pouch.db.get(doc._id, function (err, res) {
-            err.status.should.equal(404)
-            done()
-          })
-        })
-      })
+      await this.pouch.db.put(doc)
+      await this.merge.deleteFolderAsync(this.side, doc)
+      await should(this.pouch.db.get(doc._id)).be.rejectedWith({status: 404})
     })
 
-    it('remove files in the folder', function (done) {
+    it('remove files in the folder', async function () {
       let doc = {
         _id: path.normalize('FOO/TO-REMOVE'),
         path: path.normalize('FOO/TO-REMOVE'),
@@ -517,30 +456,23 @@ describe('Merge', function () {
           local: 1
         }
       }
-      this.pouch.db.put(doc, err => {
-        should.not.exist(err)
-        async.eachSeries(['baz', 'qux', 'quux'], (name, next) => {
-          let file = {
-            _id: path.normalize(`FOO/TO-REMOVE/${name}`),
-            path: path.normalize(`FOO/TO-REMOVE/${name}`),
-            docType: 'file'
-          }
-          this.pouch.db.put(file, next)
-        }, err => {
-          should.not.exist(err)
-          this.merge.deleteFolderAsync(this.side, doc).then(() => {
-            this.pouch.byPath(path.normalize('FOO/TO-REMOVE'), function (_, docs) {
-              docs.length.should.be.equal(0)
-              done()
-            })
-          })
-        })
-      })
+      await this.pouch.db.put(doc)
+      for (let name of ['baz', 'qux', 'quux']) {
+        let file = {
+          _id: path.normalize(`FOO/TO-REMOVE/${name}`),
+          path: path.normalize(`FOO/TO-REMOVE/${name}`),
+          docType: 'file'
+        }
+        await this.pouch.db.put(file)
+      }
+      await this.merge.deleteFolderAsync(this.side, doc)
+      const docs = await this.pouch.byPathAsync(path.normalize('FOO/TO-REMOVE'))
+      docs.length.should.be.equal(0)
     })
 
-    it('remove nested folders', function (done) {
+    it('remove nested folders', async function () {
       let base = path.normalize('NESTED/TO-DELETE')
-      async.eachSeries(['', '/b', '/b/c', '/b/d'], (name, next) => {
+      for (let name of ['', '/b', '/b/c', '/b/d']) {
         let doc = {
           _id: path.normalize(`${base}${name}`),
           path: path.normalize(`${base}${name}`),
@@ -549,19 +481,13 @@ describe('Merge', function () {
             local: 1
           }
         }
-        this.pouch.db.put(doc, next)
-      }, err => {
-        should.not.exist(err)
-        this.merge.deleteFolderAsync(this.side, {_id: base, path: base}).then(() => {
-          this.pouch.db.allDocs(function (err, res) {
-            should.not.exist(err)
-            for (let row of Array.from(res.rows)) {
-              row.id.should.not.match(/^NESTED/i)
-            }
-            done()
-          })
-        })
-      })
+        await this.pouch.db.put(doc)
+      }
+      await this.merge.deleteFolderAsync(this.side, {_id: base, path: base})
+      const res = await this.pouch.db.allDocs()
+      for (let row of Array.from(res.rows)) {
+        row.id.should.not.match(/^NESTED/i)
+      }
     })
   })
 
