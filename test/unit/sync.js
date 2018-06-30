@@ -311,7 +311,7 @@ describe('Sync', function () {
       this.remote.addFolderAsync.calledWith(doc).should.be.true()
     })
 
-    xit('calls updateFolderAsync for an updated folder', function (done) {
+    xit('calls updateFolderAsync for an updated folder', async function () {
       let doc = {
         _id: 'foobar/bar',
         _rev: '2-abcdef9876543210',
@@ -322,10 +322,8 @@ describe('Sync', function () {
           remote: 2
         }
       }
-      this.sync.applyDoc(doc, this.local, 'local', 1).then(() => {
-        this.local.updateFolderAsync.calledWith(doc).should.be.true()
-        done()
-      })
+      await this.sync.applyDoc(doc, this.local, 'local', 1)
+      this.local.updateFolderAsync.calledWith(doc).should.be.true()
     })
 
     it('calls moveFolderAsync for a moved folder', async function () {
