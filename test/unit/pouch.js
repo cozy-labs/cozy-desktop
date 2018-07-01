@@ -6,7 +6,8 @@ const jsv = require('jsverify')
 const path = require('path')
 const should = require('should')
 const sinon = require('sinon')
-const { uniq } = require('lodash')
+const _ = require('lodash')
+const { uniq } = _
 
 const metadata = require('../../core/metadata')
 
@@ -445,7 +446,7 @@ if (doc.docType === 'folder') {
       })
 
       it('can be called multiple times in parallel', function (done) {
-        return async.each(__range__(1, 100, true), this.pouch.setRemoteSeq, function (err) {
+        return async.each(_.range(1, 101), this.pouch.setRemoteSeq, function (err) {
           should.not.exist(err)
           done()
         })
@@ -502,13 +503,3 @@ if (doc.docType === 'folder') {
     })
   })
 })
-
-function __range__ (left, right, inclusive) {
-  let range = []
-  let ascending = left < right
-  let end = !inclusive ? right : ascending ? right + 1 : right - 1
-  for (let i = left; ascending ? i < end : i > end; ascending ? i++ : i--) {
-    range.push(i)
-  }
-  return range
-}
