@@ -20,14 +20,12 @@ describe('Pouch', function () {
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
-  before('create folders and files', function (done) {
-    return pouchHelpers.createParentFolder(this.pouch, () => {
-      return async.eachSeries([1, 2, 3], (i, callback) => {
-        return pouchHelpers.createFolder(this.pouch, i, () => {
-          return pouchHelpers.createFile(this.pouch, i, callback)
-        })
-      }, done)
-    })
+  before('create folders and files', async function () {
+    await pouchHelpers.createParentFolder(this.pouch)
+    for (let i of [1, 2, 3]) {
+      await pouchHelpers.createFolder(this.pouch, i)
+      await pouchHelpers.createFile(this.pouch, i)
+    }
   })
 
   describe('lock', () => {
@@ -53,176 +51,151 @@ describe('Pouch', function () {
 
   describe('ODM', function () {
     describe('getAll', () =>
-      it('returns all the documents matching the query', function (done) {
+      it('returns all the documents matching the query', async function () {
         let params = {
           key: metadata.id('my-folder'),
           include_docs: true
         }
-        return this.pouch.getAll('byPath', params, function (err, docs) {
-          should.not.exist(err)
-          docs.length.should.equal(6)
-          for (let i = 1; i <= 3; i++) {
-            docs[i - 1].should.have.properties({
-              _id: metadata.id(path.join('my-folder', `file-${i}`)),
-              docType: 'file',
-              tags: []})
-            docs[i + 2].should.have.properties({
-              _id: metadata.id(path.join('my-folder', `folder-${i}`)),
-              docType: 'folder',
-              tags: []})
-          }
-          done()
-        })
+        const docs = await this.pouch.getAllAsync('byPath', params)
+        docs.length.should.equal(6)
+        for (let i = 1; i <= 3; i++) {
+          docs[i - 1].should.have.properties({
+            _id: metadata.id(path.join('my-folder', `file-${i}`)),
+            docType: 'file',
+            tags: []
+          })
+          docs[i + 2].should.have.properties({
+            _id: metadata.id(path.join('my-folder', `folder-${i}`)),
+            docType: 'folder',
+            tags: []
+          })
+        }
       })
     )
 
     describe('byChecksum', () =>
-      it('gets all the files with this checksum', function (done) {
+      it('gets all the files with this checksum', async function () {
         let _id = metadata.id(path.join('my-folder', 'file-1'))
         let checksum = '1111111111111111111111111111111111111111'
-        return this.pouch.byChecksum(checksum, function (err, docs) {
-          should.not.exist(err)
-          docs.length.should.be.equal(1)
-          docs[0]._id.should.equal(_id)
-          docs[0].md5sum.should.equal(checksum)
-          done()
-        })
+        const docs = await this.pouch.byChecksumAsync(checksum)
+        docs.length.should.be.equal(1)
+        docs[0]._id.should.equal(_id)
+        docs[0].md5sum.should.equal(checksum)
       })
     )
 
     describe('byPath', function () {
-      it('gets all the files and folders in this path', function (done) {
-        return this.pouch.byPath(metadata.id('my-folder'), function (err, docs) {
-          should.not.exist(err)
-          docs.length.should.be.equal(6)
-          for (let i = 1; i <= 3; i++) {
-            docs[i - 1].should.have.properties({
-              _id: metadata.id(path.join('my-folder', `file-${i}`)),
-              docType: 'file',
-              tags: []})
-            docs[i + 2].should.have.properties({
-              _id: metadata.id(path.join('my-folder', `folder-${i}`)),
-              docType: 'folder',
-              tags: []})
-          }
-          done()
-        })
-      })
-
-      it('gets only files and folders in the first level', function (done) {
-        return this.pouch.byPath('', function (err, docs) {
-          should.not.exist(err)
-          docs.length.should.be.equal(1)
-          docs[0].should.have.properties({
-            _id: metadata.id('my-folder'),
+      it('gets all the files and folders in this path', async function () {
+        const docs = await this.pouch.byPathAsync(metadata.id('my-folder'))
+        docs.length.should.be.equal(6)
+        for (let i = 1; i <= 3; i++) {
+          docs[i - 1].should.have.properties({
+            _id: metadata.id(path.join('my-folder', `file-${i}`)),
+            docType: 'file',
+            tags: []
+          })
+          docs[i + 2].should.have.properties({
+            _id: metadata.id(path.join('my-folder', `folder-${i}`)),
             docType: 'folder',
-            tags: []})
-          done()
+            tags: []
+          })
+        }
+      })
+
+      it('gets only files and folders in the first level', async function () {
+        const docs = await this.pouch.byPathAsync('')
+        docs.length.should.be.equal(1)
+        docs[0].should.have.properties({
+          _id: metadata.id('my-folder'),
+          docType: 'folder',
+          tags: []
         })
       })
 
-      it('ignores design documents', function (done) {
-        return this.pouch.byPath('_design', function (err, docs) {
-          should.not.exist(err)
-          docs.length.should.be.equal(0)
-          done()
-        })
+      it('ignores design documents', async function () {
+        const docs = await this.pouch.byPathAsync('_design')
+        docs.length.should.be.equal(0)
       })
     })
 
     describe('byRecurivePath', function () {
-      it('gets the files and folders in this path recursively', function (done) {
-        return this.pouch.byRecursivePath(metadata.id('my-folder'), function (err, docs) {
-          should.not.exist(err)
-          docs.length.should.be.equal(6)
-          for (let i = 1; i <= 3; i++) {
-            docs[i - 1].should.have.properties({
-              _id: metadata.id(path.join('my-folder', `file-${i}`)),
-              docType: 'file',
-              tags: []})
-            docs[i + 2].should.have.properties({
-              _id: metadata.id(path.join('my-folder', `folder-${i}`)),
-              docType: 'folder',
-              tags: []})
-          }
-          done()
-        })
+      it('gets the files and folders in this path recursively', async function () {
+        const docs = await this.pouch.byRecursivePathAsync(metadata.id('my-folder'))
+        docs.length.should.be.equal(6)
+        for (let i = 1; i <= 3; i++) {
+          docs[i - 1].should.have.properties({
+            _id: metadata.id(path.join('my-folder', `file-${i}`)),
+            docType: 'file',
+            tags: []
+          })
+          docs[i + 2].should.have.properties({
+            _id: metadata.id(path.join('my-folder', `folder-${i}`)),
+            docType: 'folder',
+            tags: []
+          })
+        }
       })
 
-      it('gets the files and folders from root', function (done) {
-        return this.pouch.byRecursivePath('', function (err, docs) {
-          should.not.exist(err)
-          docs.length.should.be.equal(7)
-          docs[0].should.have.properties({
-            _id: metadata.id('my-folder'),
-            docType: 'folder',
-            tags: []})
-          for (let i = 1; i <= 3; i++) {
-            docs[i].should.have.properties({
-              _id: metadata.id(path.join('my-folder', `file-${i}`)),
-              docType: 'file',
-              tags: []})
-            docs[i + 3].should.have.properties({
-              _id: metadata.id(path.join('my-folder', `folder-${i}`)),
-              docType: 'folder',
-              tags: []})
-          }
-          done()
+      it('gets the files and folders from root', async function () {
+        const docs = await this.pouch.byRecursivePathAsync('')
+        docs.length.should.be.equal(7)
+        docs[0].should.have.properties({
+          _id: metadata.id('my-folder'),
+          docType: 'folder',
+          tags: []
         })
+        for (let i = 1; i <= 3; i++) {
+          docs[i].should.have.properties({
+            _id: metadata.id(path.join('my-folder', `file-${i}`)),
+            docType: 'file',
+            tags: []
+          })
+          docs[i + 3].should.have.properties({
+            _id: metadata.id(path.join('my-folder', `folder-${i}`)),
+            docType: 'folder',
+            tags: []
+          })
+        }
       })
     })
 
     describe('byRemoteId', function () {
-      it('gets all the file with this remote id', function (done) {
+      it('gets all the file with this remote id', async function () {
         let id = '12345678901'
-        return this.pouch.byRemoteId(id, function (err, doc) {
-          should.not.exist(err)
-          doc.remote._id.should.equal(id)
-          should.exist(doc._id)
-          should.exist(doc.docType)
-          done()
-        })
+        const doc = await this.pouch.byRemoteIdAsync(id)
+        doc.remote._id.should.equal(id)
+        should.exist(doc._id)
+        should.exist(doc.docType)
       })
 
-      it('returns a 404 error if no file matches', function (done) {
+      it('returns a 404 error if no file matches', async function () {
         let id = 'abcdef'
-        return this.pouch.byRemoteId(id, function (err, doc) {
-          should.exist(err)
-          err.status.should.equal(404)
-          done()
-        })
+        await should(this.pouch.byRemoteIdAsync(id))
+          .be.rejectedWith({status: 404})
       })
     })
 
     describe('byRemoteIdMaybe', function () {
-      it('does the same as byRemoteId() when document exists', function (done) {
+      it('does the same as byRemoteId() when document exists', async function () {
         let id = '12345678901'
-        this.pouch.byRemoteIdMaybe(id, function (err, doc) {
-          should.not.exist(err)
-          doc.remote._id.should.equal(id)
-          should.exist(doc._id)
-          should.exist(doc.docType)
-          done()
-        })
+        const doc = await this.pouch.byRemoteIdMaybeAsync(id)
+        doc.remote._id.should.equal(id)
+        should.exist(doc._id)
+        should.exist(doc.docType)
       })
 
-      it('returns null when document does not exist', function (done) {
+      it('returns null when document does not exist', async function () {
         let id = 'abcdef'
-        this.pouch.byRemoteIdMaybe(id, function (err, doc) {
-          should.not.exist(err)
-          should.equal(null, doc)
-          done()
-        })
+        const doc = await this.pouch.byRemoteIdMaybeAsync(id)
+        should.equal(null, doc)
       })
 
-      it('returns any non-404 error', function (done) {
+      it('returns any non-404 error', async function () {
         const otherError = new Error('not a 404')
         sinon.stub(this.pouch, 'byRemoteId').yields(otherError)
 
-        this.pouch.byRemoteIdMaybe('12345678901', function (err, doc) {
-          should.equal(otherError, err)
-          done()
-        })
+        await should(this.pouch.byRemoteIdMaybeAsync('12345678901'))
+          .be.rejectedWith(otherError)
       })
     })
   })
@@ -237,100 +210,62 @@ function (doc) {
 }\
 `
 
-      it('creates a new design doc', function (done) {
-        return this.pouch.createDesignDoc('file', query, err => {
-          should.not.exist(err)
-          return this.pouch.getAll('file', function (err, docs) {
-            should.not.exist(err)
-            docs.length.should.equal(3)
-            for (let i = 1; i <= 3; i++) {
-              docs[i - 1].docType.should.equal('file')
-            }
-            done()
-          })
-        })
+      it('creates a new design doc', async function () {
+        await this.pouch.createDesignDocAsync('file', query)
+        const docs = await this.pouch.getAllAsync('file')
+        docs.length.should.equal(3)
+        for (let i = 1; i <= 3; i++) {
+          docs[i - 1].docType.should.equal('file')
+        }
       })
 
-      it('does not update the same design doc', function (done) {
-        return this.pouch.createDesignDoc('file', query, err => {
-          should.not.exist(err)
-          return this.pouch.db.get('_design/file', (err, was) => {
-            should.not.exist(err)
-            return this.pouch.createDesignDoc('file', query, err => {
-              should.not.exist(err)
-              return this.pouch.db.get('_design/file', function (err, designDoc) {
-                should.not.exist(err)
-                designDoc._id.should.equal(was._id)
-                designDoc._rev.should.equal(was._rev)
-                done()
-              })
-            })
-          })
-        })
+      it('does not update the same design doc', async function () {
+        await this.pouch.createDesignDocAsync('file', query)
+        const was = await this.pouch.db.get('_design/file')
+        await this.pouch.createDesignDocAsync('file', query)
+        const designDoc = await this.pouch.db.get('_design/file')
+        designDoc._id.should.equal(was._id)
+        designDoc._rev.should.equal(was._rev)
       })
 
-      it('updates the design doc if the query change', function (done) {
-        return this.pouch.createDesignDoc('file', query, err => {
-          should.not.exist(err)
-          return this.pouch.db.get('_design/file', (err, was) => {
-            should.not.exist(err)
-            let newQuery = query.replace('file', 'File')
-            return this.pouch.createDesignDoc('file', newQuery, err => {
-              should.not.exist(err)
-              return this.pouch.db.get('_design/file', function (err, designDoc) {
-                should.not.exist(err)
-                designDoc._id.should.equal(was._id)
-                designDoc._rev.should.not.equal(was._rev)
-                designDoc.views.file.map.should.equal(newQuery)
-                done()
-              })
-            })
-          })
-        })
+      it('updates the design doc if the query change', async function () {
+        await this.pouch.createDesignDocAsync('file', query)
+        const was = await this.pouch.db.get('_design/file')
+        let newQuery = query.replace('file', 'File')
+        await this.pouch.createDesignDocAsync('file', newQuery)
+        const designDoc = await this.pouch.db.get('_design/file')
+        designDoc._id.should.equal(was._id)
+        designDoc._rev.should.not.equal(was._rev)
+        designDoc.views.file.map.should.equal(newQuery)
       })
     })
 
     describe('addByPathView', () =>
-      it('creates the path view', function (done) {
-        return this.pouch.addByPathView(err => {
-          should.not.exist(err)
-          return this.pouch.db.get('_design/byPath', function (err, doc) {
-            should.not.exist(err)
-            should.exist(doc)
-            done()
-          })
-        })
+      it('creates the path view', async function () {
+        await this.pouch.addByPathViewAsync()
+        const doc = await this.pouch.db.get('_design/byPath')
+        should.exist(doc)
       })
     )
 
     describe('addByChecksumView', () =>
-      it('creates the checksum view', function (done) {
-        return this.pouch.addByChecksumView(err => {
-          should.not.exist(err)
-          return this.pouch.db.get('_design/byChecksum', function (err, doc) {
-            should.not.exist(err)
-            should.exist(doc)
-            done()
-          })
-        })
+      it('creates the checksum view', async function () {
+        await this.pouch.addByChecksumViewAsync()
+        const doc = await this.pouch.db.get('_design/byChecksum')
+        should.exist(doc)
       })
     )
 
     describe('addByRemoteIdView', () =>
-      it('creates the remote id view', function (done) {
-        return this.pouch.addByRemoteIdView(err => {
-          should.not.exist(err)
-          return this.pouch.db.get('_design/byRemoteId', function (err, doc) {
-            should.not.exist(err)
-            should.exist(doc)
-            done()
-          })
-        })
+      it('creates the remote id view', async function () {
+        await this.pouch.addByRemoteIdViewAsync()
+        const doc = await this.pouch.db.get('_design/byRemoteId')
+        should.exist(doc)
       })
     )
 
     describe('removeDesignDoc', () =>
-      it('removes given view', function (done) {
+      it('removes given view', async function () {
         let query = `\
 function (doc) {
 if (doc.docType === 'folder') {
@@ -338,111 +273,61 @@ if (doc.docType === 'folder') {
 }
 }\
 `
-        return this.pouch.createDesignDoc('folder', query, err => {
-          should.not.exist(err)
-          return this.pouch.getAll('folder', (err, docs) => {
-            should.not.exist(err)
-            docs.length.should.be.above(1)
-            return this.pouch.removeDesignDoc('folder', err => {
-              should.not.exist(err)
-              return this.pouch.getAll('folder', function (err, res) {
-                should.exist(err)
-                done()
-              })
-            })
-          })
-        })
+        await this.pouch.createDesignDocAsync('folder', query)
+        const docs = await this.pouch.getAllAsync('folder')
+        docs.length.should.be.above(1)
+        await this.pouch.removeDesignDocAsync('folder')
+        await should(this.pouch.getAllAsync('folder')).be.rejectedWith({status: 404})
       })
     )
   })
 
   describe('Helpers', function () {
     describe('getPreviousRev', () =>
-      it('retrieves previous document informations', function (done) {
+      it('retrieves previous document informations', async function () {
         let id = metadata.id(path.join('my-folder', 'folder-1'))
-        this.pouch.db.get(id, (err, doc) => {
-          should.not.exist(err)
-          doc.tags = ['yipee']
-          return this.pouch.db.put(doc, (err, updated) => {
-            should.not.exist(err)
-            return this.pouch.db.remove(id, updated.rev, err => {
-              should.not.exist(err)
-              return this.pouch.getPreviousRev(id, 1, (err, doc) => {
-                should.not.exist(err)
-                doc._id.should.equal(id)
-                doc.tags.should.not.equal(['yipee'])
-                return this.pouch.getPreviousRev(id, 2, function (err, doc) {
-                  should.not.exist(err)
-                  doc._id.should.equal(id)
-                  doc.tags.join(',').should.equal('yipee')
-                  done()
-                })
-              })
-            })
-          })
-        })
+        let doc = await this.pouch.db.get(id)
+        doc.tags = ['yipee']
+        const updated = await this.pouch.db.put(doc)
+        await this.pouch.db.remove(id, updated.rev)
+        doc = await this.pouch.getPreviousRevAsync(id, 1)
+        doc._id.should.equal(id)
+        doc.tags.should.not.equal(['yipee'])
+        doc = await this.pouch.getPreviousRevAsync(id, 2)
+        doc._id.should.equal(id)
+        doc.tags.join(',').should.equal('yipee')
       })
     )
   })
 
   describe('Sequence numbers', function () {
     describe('getLocalSeq', () =>
-      it('gets 0 when the local seq number is not initialized', function (done) {
-        return this.pouch.getLocalSeq(function (err, seq) {
-          should.not.exist(err)
-          seq.should.equal(0)
-          done()
-        })
+      it('gets 0 when the local seq number is not initialized', async function () {
+        await should(this.pouch.getLocalSeqAsync()).be.fulfilledWith(0)
       })
     )
 
     describe('setLocalSeq', () =>
-      it('saves the local sequence number', function (done) {
-        return this.pouch.setLocalSeq(21, err => {
-          should.not.exist(err)
-          return this.pouch.getLocalSeq((err, seq) => {
-            should.not.exist(err)
-            seq.should.equal(21)
-            return this.pouch.setLocalSeq(22, err => {
-              should.not.exist(err)
-              return this.pouch.getLocalSeq(function (err, seq) {
-                should.not.exist(err)
-                seq.should.equal(22)
-                done()
-              })
-            })
-          })
-        })
+      it('saves the local sequence number', async function () {
+        await this.pouch.setLocalSeqAsync(21)
+        await should(this.pouch.getLocalSeqAsync()).be.fulfilledWith(21)
+        await this.pouch.setLocalSeqAsync(22)
+        await should(this.pouch.getLocalSeqAsync()).be.fulfilledWith(22)
       })
     )
 
     describe('getRemoteSeq', () =>
-      it('gets 0 when the remote seq number is not initialized', function (done) {
-        return this.pouch.getRemoteSeq(function (err, seq) {
-          should.not.exist(err)
-          seq.should.equal(0)
-          done()
-        })
+      it('gets 0 when the remote seq number is not initialized', async function () {
+        await should(this.pouch.getRemoteSeqAsync()).be.fulfilledWith(0)
       })
     )
 
     describe('setRemoteSeq', function () {
-      it('saves the remote sequence number', function (done) {
-        return this.pouch.setRemoteSeq(31, err => {
-          should.not.exist(err)
-          return this.pouch.getRemoteSeq((err, seq) => {
-            should.not.exist(err)
-            seq.should.equal(31)
-            return this.pouch.setRemoteSeq(32, err => {
-              should.not.exist(err)
-              return this.pouch.getRemoteSeq(function (err, seq) {
-                should.not.exist(err)
-                seq.should.equal(32)
-                done()
-              })
-            })
-          })
-        })
+      it('saves the remote sequence number', async function () {
+        await this.pouch.setRemoteSeqAsync(31)
+        await should(this.pouch.getRemoteSeqAsync()).be.fulfilledWith(31)
+        await this.pouch.setRemoteSeqAsync(32)
+        await should(this.pouch.getRemoteSeqAsync()).be.fulfilledWith(32)
       })
 
       it('can be called multiple times in parallel', function (done) {
@@ -461,6 +346,8 @@ if (doc.docType === 'folder') {
     //               Counterexample: [".", "Æ\u0004]"]
     //               rngState: 0d2c085d3e964fb71a;
     //               Counterexample: [".", "a\u0012%"];
+    //               rngState: 8df0312a56cde9b748;
+    //               Counterexample: ["."];
 
     // jsverify only works with Promise for async stuff
     if (typeof Promise !== 'function') { return }
