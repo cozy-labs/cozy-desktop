@@ -1,3 +1,37 @@
+## 3.8.1 - 2018-07-02
+
+There was no 3.8.0 stable release since we had to release a 3.8.1-alpha first.
+So 3.8.1 is the first stable release since 3.7.0.
+
+Improvements for all users:
+
+- When a change could not be applied on the other side, the document was not
+  considered up-to-date anymore on the source side. This was fixed as part of
+  the [3.8.0-beta.1 release][3.8.0-beta.1].
+
+Improvements for Windows users:
+
+- Office temporary files should be effectively ignored since
+  [3.8.0-beta.1][3.8.0-beta.1] too.
+
+Improvements for macOS users:
+
+- In macOS 10.13 (High Sierra), Apple removed the feature we were using to add
+  the *Cozy Drive* directory to the Finder's favorite items. We had to find
+  another way to bring it back. It should work as expected now.
+
+Improvements for developers / contributors:
+
+- One step less to build the app: `yarn build:core` is not needed anymore. If
+  you were using `yarn build`, it should work the same as before. But now you
+  won't have to rebuild in case of a core change before running the GUI.
+  Less dependencies. Shorter stacktraces. This also fixed a few oddities.
+- We also improved logs and jq filters.
+
+See also [known issues][KNOWN_ISSUES.md].
+
+Happy syncing!
+
 ## 3.8.0-beta.1 - 2018-06-25
 
 Improvements for all users:
@@ -1132,3 +1166,4 @@ Please note that future releases will only support the new Cozy stack v3.
 [3.7.0-beta.1]: https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.7.0-beta.1
 [3.7.0-beta.2]: https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.7.0-beta.2
 [3.7.0-beta.3]: https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.7.0-beta.3
+[3.8.0-beta.1]: https://github.com/cozy-labs/cozy-desktop/releases/v3.8.0-beta.1
