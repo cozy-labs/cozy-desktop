@@ -75,6 +75,9 @@ Please report any other issue you may encounter by using the app help form.
   visible, leaving no other way to access the popover (since we don't bring it
   up when relaunching the app yet). It should work on other GNU/Linux desktops
   with systray support though.
+* On recent distro releases, the app may not show up on click with
+  TopIcons-Plus. Switching back to the original TopIcons extension may fix the
+  issue.
 * Sometimes the systray icon is not visible on Debian Jessie, although the
   popover still works. Please fill separate issues for other distros.
   [details](https://github.com/cozy-labs/cozy-desktop/issues/422)
