@@ -141,6 +141,13 @@ def msg(pattern):
 def time(pattern):
     select(.time | test(pattern));
 
+# Filter things with an attached doc and return it:
+#
+#    yarn jq 'Pouch|doc' path/to/logs*
+#
+def doc:
+  select(.doc) | .doc;
+
 # Get a global overview of another filter:
 #
 #    yarn -s jq -c 'select(...)|short' path/to/logs*
