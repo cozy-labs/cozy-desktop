@@ -37,8 +37,10 @@ def debug: clean | select(is_debug);
 def chokidar: select(.component == "Chokidar");
 def LocalChange: select(.component == "local/change");
 def LocalWatcher: select(.component == "LocalWatcher");
+def Merge: select(.component == "Merge");
 def Metadata: select(.component == "Metadata");
 def Pouch: select(.component == "Pouch");
+def Sync: select(.component == "Sync");
 
 # Find conflicts:
 #
