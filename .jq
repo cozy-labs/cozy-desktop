@@ -124,6 +124,23 @@ def no_xls: no_ext("xls");
 def txt: ext("txt");
 def no_txt: no_ext("txt");
 
+# Filter by msg pattern:
+#
+#    yarn jq 'msg("422")' path/to/logs*
+#    yarn jq 'msg("offline$")' path/to/logs*
+#
+def msg(pattern):
+  select(.msg | test(pattern));
+
+# Filter by time pattern:
+#
+#    yarn jq 'time("2018-04-14T22:34:25.453Z")' path/to/logs*
+#    yarn jq 'time("2018-04-14")' path/to/logs*
+#    yarn jq 'time("T22:34")' path/to/logs*
+#
+def time(pattern):
+    select(.time | test(pattern));
+
 # Get a global overview of another filter:
 #
 #    yarn -s jq -c 'select(...)|short' path/to/logs*
