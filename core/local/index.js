@@ -314,9 +314,7 @@ module.exports = class Local /*:: implements Side */ {
 
     ], err => {
       if (err) {
-        log.error({path: newPath}, `Error while moving ${JSON.stringify(doc, null, 2)}`)
-        log.trace({path: newPath}, JSON.stringify(old, null, 2))
-        log.error({path: newPath, err})
+        log.error({path: newPath, doc, old, err}, 'File move failed! Falling back to file download...')
         this.addFile(doc, callback)
       } else {
         if (doc.md5sum !== old.md5sum) {
@@ -359,9 +357,7 @@ module.exports = class Local /*:: implements Side */ {
 
     ], err => {
       if (err) {
-        log.error({path: newPath}, `Error while moving ${JSON.stringify(doc, null, 2)}`)
-        log.trace({path: newPath}, JSON.stringify(old, null, 2))
-        log.error({path: newPath, err})
+        log.error({path: newPath, doc, old, err}, 'Folder move failed! Falling back to folder creation...')
         this.addFolder(doc, callback)
       } else {
         callback(null)

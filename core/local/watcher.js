@@ -132,8 +132,7 @@ module.exports = class LocalWatcher {
     const started = new Promise((resolve) => {
       for (let eventType of ['add', 'addDir', 'change', 'unlink', 'unlinkDir']) {
         this.watcher.on(eventType, (path /*: ?string */, stats /*: ?fs.Stats */) => {
-          log.chokidar.debug({path}, eventType)
-          log.chokidar.trace({stats})
+          log.chokidar.debug({path, stats}, eventType)
           const newEvent = chokidarEvent.build(eventType, path, stats)
           this.buffer.push(newEvent)
           this.events.emit('buffering-start')
@@ -281,8 +280,8 @@ module.exports = class LocalWatcher {
           e2.md5sum = e2.old.md5sum
         } else {
           try {
-            log.trace({path: e.path}, 'Computing checksum...')
             e2.md5sum = await this.checksum(e.path)
+            log.trace({path: e.path, md5sum: e2.md5sum}, 'Checksum complete')
           } catch (err) {
             // FIXME: err.code === EISDIR => keep the event? (e.g. rm foo && mkdir foo)
             if (err.code.match(/ENOENT/)) {

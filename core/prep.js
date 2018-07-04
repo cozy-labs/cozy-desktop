@@ -99,13 +99,11 @@ class Prep {
 
     if (doc.path === was.path) {
       const msg = 'Invalid move'
-      log.warn({path}, msg)
-      log.trace({path})
+      log.warn({path, doc, was}, msg)
       throw new Error(msg)
     } else if (!was._rev) {
       const msg = 'Missing rev'
-      log.warn({path}, msg)
-      log.trace({path})
+      log.warn({path, doc, was}, msg)
       throw new Error(msg)
     } else {
       return this.doMoveFile(side, doc, was)
@@ -140,13 +138,11 @@ class Prep {
     ensureValidPath(was)
     if (doc.path === was.path) {
       const msg = 'Invalid move'
-      log.warn({path}, msg)
-      log.trace({path})
+      log.warn({path, doc, was}, msg)
       throw new Error(msg)
     } else if (!was._rev) {
       const msg = 'Missing rev'
-      log.warn({path}, msg)
-      log.trace({path, was})
+      log.warn({path, doc, was}, msg)
       throw new Error(msg)
     } else {
       return this.doMoveFolder(side, doc, was)
