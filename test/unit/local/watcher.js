@@ -34,21 +34,18 @@ describe('LocalWatcher Tests', function () {
       this.watcher.start()
     })
 
-    it('calls addFile/putFolder for files that are aleady here', function (done) {
+    it('calls addFile/putFolder for files that are aleady here', async function () {
       fs.ensureDirSync(path.join(this.syncPath, 'aa'))
       fs.ensureFileSync(path.join(this.syncPath, 'aa/ab'))
       this.prep.putFolderAsync = sinon.stub().resolves()
       this.prep.addFileAsync = sinon.stub().resolves()
-      setTimeout(() => {
-        this.prep.putFolderAsync.called.should.be.true()
-        this.prep.putFolderAsync.args[0][0].should.equal('local')
-        this.prep.putFolderAsync.args[0][1].path.should.equal('aa')
-        this.prep.addFileAsync.called.should.be.true()
-        this.prep.addFileAsync.args[0][0].should.equal('local')
-        this.prep.addFileAsync.args[0][1].path.should.equal(path.normalize('aa/ab'))
-        done()
-      }, 1100)
-      this.watcher.start()
+      await this.watcher.start()
+      this.prep.putFolderAsync.called.should.be.true()
+      this.prep.putFolderAsync.args[0][0].should.equal('local')
+      this.prep.putFolderAsync.args[0][1].path.should.equal('aa')
+      this.prep.addFileAsync.called.should.be.true()
+      this.prep.addFileAsync.args[0][0].should.equal('local')
+      this.prep.addFileAsync.args[0][1].path.should.equal(path.normalize('aa/ab'))
     })
 
     it('only recomputes checksums of changed files', async function () {
@@ -93,19 +90,16 @@ describe('LocalWatcher Tests', function () {
       }
     })
 
-    it('ignores the temporary directory', function (done) {
+    it('ignores the temporary directory', async function () {
       fs.ensureDirSync(path.join(this.syncPath, TMP_DIR_NAME))
       fs.ensureFileSync(path.join(this.syncPath, TMP_DIR_NAME, 'ac'))
       this.prep.putFolder = sinon.spy()
       this.prep.addFile = sinon.spy()
       this.prep.updateFile = sinon.spy()
-      setTimeout(() => {
-        this.prep.putFolder.called.should.be.false()
-        this.prep.addFile.called.should.be.false()
-        this.prep.updateFile.called.should.be.false()
-        done()
-      }, 1000)
-      this.watcher.start()
+      await this.watcher.start()
+      this.prep.putFolder.called.should.be.false()
+      this.prep.addFile.called.should.be.false()
+      this.prep.updateFile.called.should.be.false()
     })
   })
 

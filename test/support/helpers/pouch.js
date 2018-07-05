@@ -24,7 +24,7 @@ module.exports = {
       tags: []
     }
     assignId(doc)
-    pouch.db.put(doc, callback)
+    return pouch.db.put(doc).asCallback(callback)
   },
 
   createFolder (pouch, i, callback) {
@@ -42,7 +42,7 @@ module.exports = {
       }
     }
     assignId(doc)
-    pouch.db.put(doc, callback)
+    return pouch.db.put(doc).asCallback(callback)
   },
 
   createFile (pouch, i, callback) {
@@ -61,6 +61,6 @@ module.exports = {
       }
     }
     assignId(doc)
-    pouch.db.put(doc, callback)
+    return pouch.db.put(doc).asCallback(callback)
   }
 }

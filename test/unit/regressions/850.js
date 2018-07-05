@@ -43,10 +43,10 @@ describe('issue 850', function () {
     this.prep = new Prep(this.merge, this.ignore)
     this.watcher = new Watcher(this.syncPath, this.prep, this.pouch, this.events)
   })
-  after('stop watcher and clean path', function (done) {
+  after('stop watcher and clean path', async function () {
     this.watcher.stop(true)
     this.watcher.checksumer.kill()
-    fs.emptyDir(this.syncPath, done)
+    await fs.emptyDir(this.syncPath)
   })
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)

@@ -53,27 +53,27 @@ describe('Remote', function () {
   )
 
   describe('createReadStream', () =>
-    it('create a readable stream from a remote binary', function (done) {
+    it('create a readable stream from a remote binary', async function () {
       const expectedChecksum = '2NqmrnZqa1zTER40NtPGJg=='
       const fixture = 'test/fixtures/cool-pillow.jpg'
 
-      builders.remote.file().named('pillow.jpg').contentType('image/jpeg')
-        .dataFromFile(fixture).create()
-        .then(binary => {
-          should(binary.md5sum).equal(expectedChecksum)
-          this.remote.createReadStreamAsync(conversion.createMetadata(binary)).then((stream) => {
-            should.exist(stream)
-            const checksum = crypto.createHash('md5')
-            checksum.setEncoding('base64')
-            stream.pipe(checksum)
-            stream.on('end', function () {
-              checksum.end()
-              should.equal(expectedChecksum, checksum.read())
-              done()
-            })
-          })
+      const binary = await builders.remote.file().named('pillow.jpg')
+        .contentType('image/jpeg').dataFromFile(fixture).create()
+
+      should(binary.md5sum).equal(expectedChecksum)
+      const stream = await this.remote.createReadStreamAsync(conversion.createMetadata(binary))
+      should.exist(stream)
+      const checksum = crypto.createHash('md5')
+      checksum.setEncoding('base64')
+      stream.pipe(checksum)
+
+      await new Promise((resolve, reject) => {
+        stream.on('end', function () {
+          checksum.end()
+          should.equal(expectedChecksum, checksum.read())
+          resolve()
         })
-        .catch(done)
+      })
     })
   )
 

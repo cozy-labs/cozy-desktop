@@ -1,7 +1,6 @@
 /* @flow */
 /* eslint-env mocha */
 
-const async = require('async')
 const EventEmitter = require('events')
 const _ = require('lodash')
 const path = require('path')
@@ -51,15 +50,13 @@ describe('RemoteWatcher', function () {
   after(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  before(function (done) {
-    // TODO: promisify pouchHelpers
-    pouchHelpers.createParentFolder(this.pouch, () => {
-      async.eachSeries([1, 2, 3], (i, callback) => {
-        pouchHelpers.createFolder(this.pouch, i, () => {
-          pouchHelpers.createFile(this.pouch, i, callback)
-        })
-      }, done)
-    })
+  before(async function () {
+    await pouchHelpers.createParentFolder(this.pouch)
+    // FIXME: Tests pass without folder 3 & file 3
+    for (let i of [1, 2, 3]) {
+      await pouchHelpers.createFolder(this.pouch, i)
+      await pouchHelpers.createFile(this.pouch, i)
+    }
   })
 
   describe('start', function () {
