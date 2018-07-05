@@ -108,8 +108,7 @@ class Pouch {
 
   put (doc /*: Metadata */, callback /*: ?Callback */) {
     const {local, remote} = doc.sides
-    log.debug({path: doc.path, local, remote, _deleted: doc._deleted}, 'Saving metadata...')
-    log.trace({path: doc.path, doc})
+    log.debug({path: doc.path, local, remote, _deleted: doc._deleted, doc}, 'Saving metadata...')
     return this.db.put(doc).asCallback(callback)
   }
 
@@ -117,8 +116,7 @@ class Pouch {
     for (const doc of docs) {
       const {path} = doc
       const {local, remote} = doc.sides || {}
-      log.debug({path, local, remote, _deleted: doc._deleted}, 'Saving bulk metadata...')
-      log.trace({path, doc})
+      log.debug({path, local, remote, _deleted: doc._deleted, doc}, 'Saving bulk metadata...')
     }
     return this.db.bulkDocs(docs).asCallback(callback)
   }

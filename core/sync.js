@@ -219,16 +219,8 @@ class Sync {
   // In some cases, both sides have the change
   async apply (change /*: MetadataChange */) /*: Promise<*> */ {
     let { doc, seq } = change
-    const changeInfo = {
-      path: doc.path,
-      seq,
-      sides: doc.sides,
-      moveTo: doc.moveTo,
-      moveFrom: doc.moveFrom,
-      _deleted: doc._deleted
-    }
-    log.debug(changeInfo, 'Applying change...')
-    log.trace({change})
+    const { path } = doc
+    log.debug({path, seq, doc}, 'Applying change...')
 
     if (this.ignore.isIgnored(doc)) {
       return this.pouch.setLocalSeqAsync(change.seq)
@@ -242,7 +234,7 @@ class Sync {
       stopMeasure = measureTime('Sync#applyChange:' + sideName)
 
       if (!side) {
-        log.info({path: doc.path}, 'up to date')
+        log.info({path}, 'up to date')
         return this.pouch.setLocalSeqAsync(change.seq)
       } else if (sideName === 'remote' && doc.trashed) {
         // File or folder was just deleted locally
@@ -253,7 +245,7 @@ class Sync {
         delete doc.moveFrom
       }
 
-      log.trace(changeInfo, `Applied change on ${sideName} side`)
+      log.trace({path, seq}, `Applied change on ${sideName} side`)
       await this.pouch.setLocalSeqAsync(change.seq)
       if (!change.doc._deleted) {
         await this.updateRevs(change.doc, sideName)
@@ -318,7 +310,7 @@ class Sync {
         // $FlowFixMe
         } else if (old.md5sum === doc.md5sum) {
           if (sameFileIgnoreRev(old, doc)) {
-            log.trace({path: doc.path}, 'ignoring mtime-only change')
+            log.debug({path: doc.path}, 'Ignoring timestamp-only change')
           } else {
             await side.updateFileMetadataAsync(doc, old)
           }
