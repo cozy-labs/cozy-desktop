@@ -34,6 +34,25 @@ describe('Update file', () => {
     await helpers.remote.ignorePreviousChanges()
   })
 
+  describe('inode-only change', () => {
+    // FIXME
+    it.skip('should not write anything on the cozy', async () => {
+      // TODO: Builder
+      const file = await cozy.files.create('Initial content', {name: 'file'})
+      await helpers.remote.pullChanges()
+      await helpers.syncAll()
+      const was = await pouch.byRemoteIdMaybeAsync(file._id)
+
+      await prep.updateFileAsync('local', _.defaults(
+        {ino: was.ino + 1},
+        was
+      ))
+      await helpers.syncAll()
+      const doc = await pouch.byRemoteIdMaybeAsync(file._id)
+      should(doc).have.propertyByPath('remote', '_rev').eql(was.remote._rev)
+    })
+  })
+
   describe('M1, local merge M1, M2, remote sync M1, local merge M2', () => {
     it('fails remote sync M1 & local merge M2', async () => {
       const file = await cozy.files.create('Initial content', {name: 'file'})
