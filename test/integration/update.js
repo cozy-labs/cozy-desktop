@@ -6,6 +6,7 @@ const should = require('should')
 
 const logger = require('../../core/logger')
 
+const Builders = require('../support/builders')
 const { IntegrationTestHelpers } = require('../support/helpers/integration')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
@@ -14,7 +15,7 @@ const pouchHelpers = require('../support/helpers/pouch')
 const log = logger({component: 'mocha'})
 
 describe('Update file', () => {
-  let cozy, helpers, pouch, prep
+  let builders, cozy, helpers, pouch, prep
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -25,6 +26,7 @@ describe('Update file', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function () {
+    builders = new Builders(cozyHelpers.cozy, this.pouch)
     cozy = cozyHelpers.cozy
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
     pouch = helpers._pouch
@@ -32,6 +34,28 @@ describe('Update file', () => {
 
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
+  })
+
+  describe('local inode-only change', () => {
+    // OPTIMIZE: Don't trigger useless remote sync for local inode-only change
+    it('works but triggers useless remote sync', async () => {
+      const file = await builders.remote.file()
+        .named('file')
+        .data('Initial content')
+        .create()
+      await helpers.remote.pullChanges()
+      await helpers.syncAll()
+      const was = await pouch.byRemoteIdMaybeAsync(file._id)
+
+      await prep.updateFileAsync('local', _.defaults({ino: was.ino + 1}, was))
+      await helpers.syncAll()
+      const doc = await pouch.byRemoteIdMaybeAsync(file._id)
+      should(doc).have.propertyByPath('remote', '_rev').not.eql(was.remote._rev)
+
+      // Make sure there is no infinite loop
+      await helpers.remote.pullChanges()
+      await helpers.syncAll()
+    })
   })
 
   describe('M1, local merge M1, M2, remote sync M1, local merge M2', () => {
