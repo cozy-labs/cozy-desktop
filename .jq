@@ -150,6 +150,13 @@ def msg(pattern):
 def time(pattern):
   select(.time | test(pattern));
 
+# Filter inode number(s):
+#
+#    yarn jq 'ino(7852458)' path/to/logs*
+#    yarn jq 'ino(7852458; 464672)' path/to/logs*
+#
+def ino(n): select((.ino // (.doc|.ino) // (.change|.doc|.ino)) as $ino | [n] | flatten | map(. == $ino) | any);
+
 # Filter things with an attached doc and return it:
 #
 #    yarn jq 'Pouch|doc' path/to/logs*
