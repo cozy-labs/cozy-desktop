@@ -148,7 +148,7 @@ def msg(pattern):
 #    yarn jq 'time("T22:34")' path/to/logs*
 #
 def time(pattern):
-    select(.time | test(pattern));
+  select(.time | test(pattern));
 
 # Filter things with an attached doc and return it:
 #
