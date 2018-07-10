@@ -8,8 +8,16 @@ const path = require('path')
 const { onPlatform } = require('../support/helpers/platform')
 
 const {
-  assignId, extractRevNumber, invalidChecksum, invalidPath, markSide,
-  detectPlatformIncompatibilities, sameBinary, sameFile, sameFolder, buildDir,
+  assignId,
+  extractRevNumber,
+  invalidChecksum,
+  invalidPath,
+  markSide,
+  detectPlatformIncompatibilities,
+  sameBinary,
+  sameFile,
+  sameFolder,
+  buildDir,
   buildFile
 } = require('../../core/metadata')
 
