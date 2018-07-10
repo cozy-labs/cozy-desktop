@@ -49,9 +49,7 @@ module.exports = class BaseMetadataBuilder {
   }
 
   updatedAt (date /*: Date */) /*: this */ {
-    date = new Date(date)
-    date.setMilliseconds(0)
-    this.opts.updated_at = date.toISOString()
+    this.opts.updated_at = timestamp.fromDate(date).toISOString()
     return this
   }
 
