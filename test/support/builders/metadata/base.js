@@ -25,7 +25,7 @@ module.exports = class BaseMetadataBuilder {
     this.opts = {
       path: 'foo',
       sides: {},
-      updated_at: new Date().toISOString()
+      updated_at: timestamp.current()
     }
   }
 
