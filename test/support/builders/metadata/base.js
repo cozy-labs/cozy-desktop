@@ -1,6 +1,6 @@
 /* @flow */
 
-const { maxDate } = require('../../../../core/timestamp')
+const timestamp = require('../../../../core/timestamp')
 
 /*::
 import type fs from 'fs-extra'
@@ -25,7 +25,7 @@ module.exports = class BaseMetadataBuilder {
     this.opts = {
       path: 'foo',
       sides: {},
-      updated_at: new Date().toISOString()
+      updated_at: timestamp.current()
     }
   }
 
@@ -35,7 +35,7 @@ module.exports = class BaseMetadataBuilder {
   }
 
   stats ({ino, mtime, ctime} /*: fs.Stats */) /*: this */ {
-    return this.ino(ino).updatedAt(maxDate(mtime, ctime))
+    return this.ino(ino).updatedAt(timestamp.maxDate(mtime, ctime))
   }
 
   path (path /*: string */) /*: this */ {
@@ -49,9 +49,17 @@ module.exports = class BaseMetadataBuilder {
   }
 
   updatedAt (date /*: Date */) /*: this */ {
-    date = new Date(date)
-    date.setMilliseconds(0)
-    this.opts.updated_at = date.toISOString()
+    this.opts.updated_at = timestamp.fromDate(date).toISOString()
+    return this
+  }
+
+  newerThan (doc /*: Metadata */) /*: this */ {
+    this.opts.updated_at = new Date(timestamp.fromDate(doc.updated_at) + 2000)
+    return this
+  }
+
+  olderThan (doc /*: Metadata */) /*: this */ {
+    this.opts.updated_at = new Date(timestamp.fromDate(doc.updated_at) - 2000)
     return this
   }
 

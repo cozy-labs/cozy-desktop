@@ -5,7 +5,15 @@ const { clone } = require('lodash')
 const { basename, dirname, extname, join } = require('path')
 
 const logger = require('./logger')
-const { isUpToDate, markSide, sameBinary, sameFile, sameFolder, detectPlatformIncompatibilities } = require('./metadata')
+const {
+  assignMaxDate,
+  detectPlatformIncompatibilities,
+  isUpToDate,
+  markSide,
+  sameBinary,
+  sameFile,
+  sameFolder
+} = require('./metadata')
 const { otherSide } = require('./side')
 const fsutils = require('./utils/fs')
 
@@ -124,6 +132,7 @@ class Merge {
     if (file && file.docType === 'folder') {
       return this.resolveConflictAsync(side, doc, file)
     }
+    assignMaxDate(doc, file)
     if (file && sameBinary(file, doc)) {
       doc._rev = file._rev
       if (doc.size == null) { doc.size = file.size }
@@ -190,6 +199,7 @@ class Merge {
     if (file && file.docType === 'folder') {
       throw new Error("Can't resolve this conflict!")
     }
+    assignMaxDate(doc, file)
     if (file) {
       doc._rev = file._rev
       doc.moveFrom = file.moveFrom
@@ -229,6 +239,7 @@ class Merge {
     if (folder && folder.docType === 'file') {
       return this.resolveConflictAsync(side, doc, folder)
     }
+    assignMaxDate(doc, folder)
     if (folder) {
       doc._rev = folder._rev
       if (doc.tags == null) { doc.tags = folder.tags || [] }
@@ -259,14 +270,12 @@ class Merge {
       }
       markSide(side, doc, file)
       markSide(side, was, was)
+      assignMaxDate(doc, was)
       if (doc.size == null) { doc.size = was.size }
       if (doc.class == null) { doc.class = was.class }
       if (doc.mime == null) { doc.mime = was.mime }
       if (doc.tags == null) { doc.tags = was.tags || [] }
       if (doc.ino == null) { doc.ino = was.ino }
-      const wasUpdatedAt = new Date(was.updated_at)
-      const docUpdatedAt = new Date(doc.updated_at)
-      if (docUpdatedAt < wasUpdatedAt) { doc.updated_at = was.updated_at }
       delete doc.trashed
       was.moveTo = doc._id
       was._deleted = true
@@ -303,6 +312,7 @@ class Merge {
       }
       markSide(side, doc, folder)
       markSide(side, was, was)
+      assignMaxDate(doc, was)
       if (doc.tags == null) { doc.tags = was.tags || [] }
       if (doc.ino == null) { doc.ino = was.ino }
       // FIXME: Shouldn't we compare doc/was updated_at & set doc accordingly

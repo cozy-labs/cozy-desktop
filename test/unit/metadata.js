@@ -5,11 +5,21 @@ const fs = require('fs-extra')
 const should = require('should')
 const path = require('path')
 
+const MetadataBuilders = require('../support/builders/metadata')
 const { onPlatform } = require('../support/helpers/platform')
 
 const {
-  assignId, extractRevNumber, invalidChecksum, invalidPath, markSide,
-  detectPlatformIncompatibilities, sameBinary, sameFile, sameFolder, buildDir,
+  assignId,
+  assignMaxDate,
+  extractRevNumber,
+  invalidChecksum,
+  invalidPath,
+  markSide,
+  detectPlatformIncompatibilities,
+  sameBinary,
+  sameFile,
+  sameFolder,
+  buildDir,
   buildFile
 } = require('../../core/metadata')
 
@@ -186,6 +196,45 @@ describe('metadata', function () {
 
     it('returns 0 if not found', function () {
       extractRevNumber({}).should.equal(0)
+    })
+  })
+
+  describe('assignMaxDate', () => {
+    const builders = new MetadataBuilders()
+
+    it('assigns the previous timestamp to the doc when it is more recent than the current one to prevent updated_at < created_at errors on remote sync', () => {
+      const was = builders.file().build()
+      const doc = builders.file().olderThan(was).build()
+      should(() => { assignMaxDate(doc, was) }).changeOnly(doc, {
+        updated_at: was.updated_at
+      })
+    })
+
+    it('does nothing when the doc has no previous version', () => {
+      const doc = builders.file().build()
+      should(() => { assignMaxDate(doc) }).not.change(doc)
+    })
+
+    it('does nothing when both current and previous timestamps are the same', () => {
+      const was = builders.file().build()
+      const doc = builders.file().updatedAt(was.updated_at).build()
+      should(() => { assignMaxDate(doc, was) }).not.change(doc)
+    })
+
+    it('does nothing when the current timestamp is more recent than the previous one', () => {
+      const was = builders.file().build()
+      const doc = builders.file().newerThan(was).build()
+      should(() => { assignMaxDate(doc, was) }).not.change(doc)
+    })
+
+    it('nevers changes the previous doc', () => {
+      const was = builders.file().build()
+      const sameDateDoc = builders.file().updatedAt(was.updated_at).build()
+      const newerDoc = builders.file().newerThan(was).build()
+      const olderDoc = builders.file().olderThan(was).build()
+      should(() => { assignMaxDate(sameDateDoc, was) }).not.change(was)
+      should(() => { assignMaxDate(newerDoc, was) }).not.change(was)
+      should(() => { assignMaxDate(olderDoc, was) }).not.change(was)
     })
   })
 
