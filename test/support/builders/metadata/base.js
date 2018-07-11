@@ -53,6 +53,16 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
+  newerThan (doc /*: Metadata */) /*: this */ {
+    this.opts.updated_at = new Date(timestamp.fromDate(doc.updated_at) + 2000)
+    return this
+  }
+
+  olderThan (doc /*: Metadata */) /*: this */ {
+    this.opts.updated_at = new Date(timestamp.fromDate(doc.updated_at) - 2000)
+    return this
+  }
+
   upToDate () /*: this */ {
     this.opts.sides = {local: 1, remote: 1}
     return this
