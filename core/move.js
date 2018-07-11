@@ -31,7 +31,7 @@ function move (src /*: Metadata */, dst /*: Metadata */) {
   // trashed property on the source, or explain why it doesn't.
   delete dst.trashed
 
-  dst.moveFrom = src
+  dst.moveFrom = _.omit(src, 'moveFrom')
 }
 
 // Same as move() but mark the source as a child move so it will be moved with
