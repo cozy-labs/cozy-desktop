@@ -5,7 +5,14 @@ const { clone } = require('lodash')
 const { basename, dirname, extname, join } = require('path')
 
 const logger = require('./logger')
-const { isUpToDate, markSide, sameBinary, sameFile, sameFolder, detectPlatformIncompatibilities } = require('./metadata')
+const {
+  detectPlatformIncompatibilities,
+  isUpToDate,
+  markSide,
+  sameBinary,
+  sameFile,
+  sameFolder
+} = require('./metadata')
 const { otherSide } = require('./side')
 const fsutils = require('./utils/fs')
 
