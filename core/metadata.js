@@ -79,6 +79,7 @@ switch (process.platform) {
 
 module.exports = {
   assignId,
+  assignMaxDate,
   isFile,
   id,
   invalidPath,
@@ -212,6 +213,14 @@ function isUpToDate (side /*: SideName */, doc /*: Metadata */) {
   let currentRev = doc.sides[side] || 0
   let lastRev = extractRevNumber(doc)
   return currentRev === lastRev
+}
+
+// Ensure new timestamp is never older than the previous one
+function assignMaxDate (doc /*: Metadata */, was /*: ?Metadata */) {
+  if (was == null) return
+  const wasUpdatedAt = new Date(was.updated_at)
+  const docUpdatedAt = new Date(doc.updated_at)
+  if (docUpdatedAt < wasUpdatedAt) { doc.updated_at = was.updated_at }
 }
 
 // Return true if the metadata of the two folders are the same

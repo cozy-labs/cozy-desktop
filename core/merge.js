@@ -6,6 +6,7 @@ const { basename, dirname, extname, join } = require('path')
 
 const logger = require('./logger')
 const {
+  assignMaxDate,
   detectPlatformIncompatibilities,
   isUpToDate,
   markSide,
@@ -271,9 +272,7 @@ class Merge {
       if (doc.mime == null) { doc.mime = was.mime }
       if (doc.tags == null) { doc.tags = was.tags || [] }
       if (doc.ino == null) { doc.ino = was.ino }
-      const wasUpdatedAt = new Date(was.updated_at)
-      const docUpdatedAt = new Date(doc.updated_at)
-      if (docUpdatedAt < wasUpdatedAt) { doc.updated_at = was.updated_at }
+      assignMaxDate(doc, was)
       delete doc.trashed
       was.moveTo = doc._id
       was._deleted = true
