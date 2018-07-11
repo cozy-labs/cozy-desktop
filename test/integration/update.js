@@ -58,6 +58,29 @@ describe('Update file', () => {
     })
   })
 
+  describe('older timestamp change', () => {
+    it('should keep the most recent timestamp to prevent 422 errors', async () => {
+      const file = await builders.remote.file()
+        .named('file')
+        .data('Initial content')
+        .timestamp(2018, 5, 15, 21, 1, 53)
+        .create()
+      await helpers.remote.pullChanges()
+      await helpers.syncAll()
+      const was = await pouch.byRemoteIdMaybeAsync(file._id)
+      should(was).have.property('updated_at', '2018-05-15T21:01:53Z')
+
+      await prep.updateFileAsync('local', _.defaults({
+        updated_at: '2017-05-15T21:01:53.000Z',
+        tags: ['some new tag']
+      }, was))
+      helpers._sync.stopped = false
+      await helpers.syncAll()
+      const doc = await pouch.byRemoteIdMaybeAsync(file._id)
+      should(doc.errors).be.undefined()
+    })
+  })
+
   describe('M1, local merge M1, M2, remote sync M1, local merge M2', () => {
     it('fails remote sync M1 & local merge M2', async () => {
       const file = await cozy.files.create('Initial content', {name: 'file'})
