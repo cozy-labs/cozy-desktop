@@ -37,6 +37,7 @@ module.exports = {
   toString,
   fromEvent,
   fileMoveFromUnlinkAdd,
+  fileUnlinkAndMoveFromUnlinkChange,
   dirMoveFromUnlinkAdd,
   fileMoveFromAddUnlink,
   dirMoveFromAddUnlink,
@@ -178,6 +179,25 @@ function fileMoveFromAddUnlink (addChange /*: LocalFileAddition */, e /*: LocalF
     ino: addChange.ino,
     wip: addChange.wip
   })
+}
+
+function fileUnlinkAndMoveFromUnlinkChange (unlinkChange /* :LocalFileDeletion */, e /* : LocalFileUpdated */) {
+  log.debug({oldpath: unlinkChange.path, path: e.path}, 'unlink + change = unlink + move')
+
+
+  const updatedEvent /* : LocalFileUpdate */ = _fromEvent(e)
+
+  const newUnlinkEvent = build('FileDeletion', updatedEvent.path, {
+    old: updatedEvent.old
+  })
+  const moveEvent = build('FileMove', updatedEvent.path, {
+    stats: updatedEvent.stats,
+    old: unlinkChange.old,
+    ino: updatedEvent.ino,
+    wip: updatedEvent.wip
+  })
+
+  return [newUnlinkEvent, moveEvent]
 }
 
 function dirMoveFromAddUnlink (addChange /*: LocalDirAddition */, e /*: LocalDirUnlinked */) /*: * */ {

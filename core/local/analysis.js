@@ -119,6 +119,15 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
           const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(getChangeByInode(e))
           if (moveChange) {
             localChange.includeChangeEventIntoFileMove(moveChange, e)
+            break
+          }
+
+          // This is most probably a move and replace
+          const unlinkChange /*: ?LocalFileDeletion */ = localChange.maybeDeleteFile(getChangeByInode(e))
+          if (unlinkChange) {
+            const [unlinkDestChange, moveChange] = localChange.fileUnlinkAndMoveFromUnlinkChange(unlinkChange, e)
+            changeFound(unlinkDestChange)
+            changeFound(moveChange)
           } else {
             changeFound(localChange.fromEvent(e))
           }
