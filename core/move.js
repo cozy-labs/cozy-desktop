@@ -1,10 +1,19 @@
 /* @flow */
 
+const _ = require('lodash')
+
 /*::
 import type { Metadata } from './metadata'
 */
 
+// Export so the following possible is possible:
+//
+//    const move = require('.../move')
+//    move(src, dst)
+//    move.child(src, dst)
+//
 module.exports = move
+move.child = child
 
 // Modify the given src/dst docs so they can be merged then moved accordingly
 // during sync.
@@ -23,4 +32,16 @@ function move (src /*: Metadata */, dst /*: Metadata */) {
   delete dst.trashed
 
   dst.moveFrom = src
+}
+
+// Same as move() but mark the source as a child move so it will be moved with
+// its ancestor, not by itself, during sync.
+function child (src /*: Metadata */, dst /*: Metadata */) {
+  move(src, dst)
+  src.childMove = true
+
+  // TODO: Find out why _rev is removed only from child move destinations and
+  // explain it here. Or in case it would make sense, move it to the move()
+  // function above.
+  delete dst._rev
 }

@@ -339,23 +339,13 @@ class Merge {
     move(was, folder)
     let bulk = [was, folder]
     for (let doc of Array.from(docs)) {
-      // TODO: Extract metadata copy logic
-      delete doc.trashed
       let src = clone(doc)
-      src._deleted = true
-      // moveTo is used for comparison. It's safer to take _id
-      // than path for this case, as explained in doc/design.md
-      src.moveTo = doc._id.replace(was._id, folder._id)
-      src.childMove = true
-      delete src.errors
-      bulk.push(src)
       let dst = clone(doc)
-      markSide(side, dst, src)
-      dst._id = src.moveTo
+      dst._id = doc._id.replace(was._id, folder._id)
       dst.path = doc.path.replace(was.path, folder.path)
-      dst.moveFrom = src
-      delete dst._rev
-      delete dst.errors
+      move.child(src, dst)
+      markSide(side, dst, src)
+      bulk.push(src)
       // FIXME: Find a cleaner way to pass the syncPath to the Merge
       const incompatibilities = detectPlatformIncompatibilities(dst, this.pouch.config.syncPath)
       if (incompatibilities.length > 0) dst.incompatibilities = incompatibilities
