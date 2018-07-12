@@ -23,8 +23,9 @@ function move (src /*: Metadata */, dst /*: Metadata */) {
   src.moveTo = dst._id
   src._deleted = true
 
-  // Make sure newly moved docs have their fill of sync attempts
   delete src.errors
+
+  // Make sure newly moved docs have their fill of sync attempts
   delete dst.errors
 
   // TODO: Find out wether or not it would make sense to also delete the
