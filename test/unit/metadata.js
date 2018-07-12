@@ -390,12 +390,14 @@ describe('metadata', function () {
         }
       }
       const g = _.merge({}, a, {ino: a.ino + 1})
+      const h = _.merge({}, a, {remote: _.merge({}, a.remote, {_id: '321'})})
       sameFile(a, b).should.be.true()
       sameFile(a, c).should.be.false()
       sameFile(a, d).should.be.false()
       sameFile(a, e).should.be.false()
       sameFile(a, f).should.be.false()
       sameFile(a, g).should.be.false()
+      sameFile(a, h).should.be.false()
       sameFile(b, c).should.be.false()
       sameFile(b, d).should.be.false()
       sameFile(b, e).should.be.false()
