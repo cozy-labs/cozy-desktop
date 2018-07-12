@@ -14,6 +14,7 @@ const {
   sameFile,
   sameFolder
 } = require('./metadata')
+const move = require('./move')
 const { otherSide } = require('./side')
 const fsutils = require('./utils/fs')
 
@@ -276,11 +277,7 @@ class Merge {
       if (doc.mime == null) { doc.mime = was.mime }
       if (doc.tags == null) { doc.tags = was.tags || [] }
       if (doc.ino == null) { doc.ino = was.ino }
-      delete doc.trashed
-      was.moveTo = doc._id
-      was._deleted = true
-      delete was.errors
-      doc.moveFrom = was
+      move(was, doc)
       if (file && sameFile(file, doc)) {
         log.info({path}, 'up to date (move)')
         return null
@@ -317,8 +314,6 @@ class Merge {
       if (doc.ino == null) { doc.ino = was.ino }
       // FIXME: Shouldn't we compare doc/was updated_at & set doc accordingly
       // as in moveFileAsync?
-      delete doc.trashed
-      doc.moveFrom = was
       if (folder) {
         const dst = await this.resolveConflictAsync(side, doc, folder)
         dst.sides = {}
@@ -341,27 +336,16 @@ class Merge {
     } catch (err) {
       throw err
     }
-    was._deleted = true
-    was.moveTo = folder._id
+    move(was, folder)
     let bulk = [was, folder]
     for (let doc of Array.from(docs)) {
-      // TODO: Extract metadata copy logic
-      delete doc.trashed
       let src = clone(doc)
-      src._deleted = true
-      // moveTo is used for comparison. It's safer to take _id
-      // than path for this case, as explained in doc/design.md
-      src.moveTo = doc._id.replace(was._id, folder._id)
-      src.childMove = true
-      delete src.errors
-      bulk.push(src)
       let dst = clone(doc)
-      markSide(side, dst, src)
-      dst._id = src.moveTo
+      dst._id = doc._id.replace(was._id, folder._id)
       dst.path = doc.path.replace(was.path, folder.path)
-      dst.moveFrom = src
-      delete dst._rev
-      delete dst.errors
+      move.child(src, dst)
+      markSide(side, dst, src)
+      bulk.push(src)
       // FIXME: Find a cleaner way to pass the syncPath to the Merge
       const incompatibilities = detectPlatformIncompatibilities(dst, this.pouch.config.syncPath)
       if (incompatibilities.length > 0) dst.incompatibilities = incompatibilities
