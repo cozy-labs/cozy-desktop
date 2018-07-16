@@ -398,7 +398,7 @@ describe('LocalWatcher Tests', function () {
   })
 
   describe('detectOfflineUnlinkEvents', function () {
-    before('reset pouchdb', function (done) {
+    beforeEach('reset pouchdb', function (done) {
       this.pouch.resetDatabase(done)
     })
 
@@ -448,5 +448,15 @@ describe('LocalWatcher Tests', function () {
         {type: 'unlink', path: 'file2', old: file2}
       ])
     })
+
+    if (platform === 'win32' || platform === 'darwin') {
+      it('ignores incompatible docs', async function () {
+        await builders.file().incompatible().create()
+        const initialScan = {ids: []}
+
+        const {offlineEvents} = await this.watcher.detectOfflineUnlinkEvents(initialScan)
+        should(offlineEvents).deepEqual([])
+      })
+    }
   })
 })

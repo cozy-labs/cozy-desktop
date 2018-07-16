@@ -235,7 +235,7 @@ module.exports = class LocalWatcher {
     let emptySyncDir = docs.length > NB_OF_DELETABLE_ELEMENT
 
     for (const doc of docs) {
-      if (inInitialScan(doc) || doc.trashed) {
+      if (inInitialScan(doc) || doc.trashed || doc.incompatibilities) {
         emptySyncDir = false
       } else {
         const event = (doc.docType === 'file')
