@@ -14,9 +14,12 @@ const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
 
 describe('LocalWatcher Tests', function () {
+  let builders
+
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
   beforeEach('instanciate local watcher', function () {
+    builders = new MetadataBuilders(this.pouch)
     this.prep = {}
     const events = {emit: sinon.stub()}
     this.watcher = new Watcher(this.syncPath, this.prep, this.pouch, events)
@@ -49,7 +52,6 @@ describe('LocalWatcher Tests', function () {
     })
 
     it('only recomputes checksums of changed files', async function () {
-      const builders = new MetadataBuilders(this.pouch)
       const unchangedFilename = 'unchanged-file.txt'
       const changedFilename = 'changed-file.txt'
       const unchangedPath = path.join(this.syncPath, unchangedFilename)
