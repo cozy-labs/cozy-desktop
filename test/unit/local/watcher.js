@@ -13,6 +13,9 @@ const MetadataBuilders = require('../../support/builders/metadata')
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
 
+const { TRAVIS } = process.env
+const { platform } = process
+
 describe('LocalWatcher Tests', function () {
   let builders
 
@@ -282,7 +285,7 @@ describe('LocalWatcher Tests', function () {
     // This integration test is unstable on travis + OSX (too often red).
     // It's disabled for the moment, but we should find a way to make it
     // more stable on travis, and enable it again.
-    if (process.env.TRAVIS && (process.platform === 'darwin')) {
+    if (TRAVIS && (platform === 'darwin')) {
       it('is unstable on travis')
       return
     }
@@ -336,7 +339,7 @@ describe('LocalWatcher Tests', function () {
         // This integration test is unstable on travis + OSX (too often red).
         // It's disabled for the moment, but we should find a way to make it
         // more stable on travis, and enable it again.
-    if (process.env.TRAVIS && (process.platform === 'darwin')) {
+    if (TRAVIS && (platform === 'darwin')) {
       it('is unstable on travis')
       return
     }
