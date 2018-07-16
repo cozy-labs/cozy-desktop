@@ -97,6 +97,9 @@ module.exports = class BaseMetadataBuilder {
     }, this.opts, this.attributesByType())
 
     assignId(doc)
+    // Don't detect incompatibilities according to syncPath for test data, to
+    // prevent environment related failures.
+    assignPlatformIncompatibilities(doc, '')
 
     return doc
   }
