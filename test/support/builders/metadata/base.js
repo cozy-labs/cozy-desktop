@@ -37,6 +37,18 @@ module.exports = class BaseMetadataBuilder {
     }
   }
 
+  incompatible () /*: this */ {
+    const { platform } = process
+
+    if (platform === 'win32' || platform === 'darwin') {
+      // Colon is currently considered forbidden on both platforms by the app
+      // (although it probably shouldn't on macOS).
+      return this.path('in:compatible')
+    } else {
+      throw new Error(`Cannot build incompatible doc on ${platform}`)
+    }
+  }
+
   ino (ino /*: number */) /*: this */ {
     this.opts.ino = ino
     return this
