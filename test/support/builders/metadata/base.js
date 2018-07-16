@@ -1,6 +1,14 @@
 /* @flow */
 
+const _ = require('lodash')
+
+const {
+  assignId,
+  assignPlatformIncompatibilities
+} = require('../../../../core/metadata')
 const timestamp = require('../../../../core/timestamp')
+
+const pouchdbBuilders = require('../pouchdb')
 
 /*::
 import type fs from 'fs-extra'
@@ -73,8 +81,24 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
+  attributesByType () /*: * */ {
+    throw new Error('BaseMetadataBuilder#attributesByType() not implemented')
+  }
+
   build () /*: Metadata */ {
-    throw new Error('BaseMetadataBuilder#build() not implemented')
+    const doc = _.merge({
+      _id: '',
+      remote: {
+        _id: pouchdbBuilders.id(),
+        _rev: pouchdbBuilders.rev()
+      },
+      tags: [],
+      updated_at: new Date()
+    }, this.opts, this.attributesByType())
+
+    assignId(doc)
+
+    return doc
   }
 
   async create () /*: Promise<Metadata> */ {
