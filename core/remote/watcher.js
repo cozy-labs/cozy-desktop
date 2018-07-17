@@ -6,7 +6,7 @@ const autoBind = require('auto-bind')
 const _ = require('lodash')
 
 const logger = require('../logger')
-const { assignId, ensureValidPath, detectPlatformIncompatibilities } = require('../metadata')
+const { assignId, ensureValidPath, assignPlatformIncompatibilities } = require('../metadata')
 const remoteChange = require('./change')
 const { inRemoteTrash } = require('./document')
 const userActionRequired = require('./user_action_required')
@@ -195,14 +195,11 @@ class RemoteWatcher {
 
     // TODO: Move to Prep?
     if (!inRemoteTrash(remote)) {
-      const incompatibilities = detectPlatformIncompatibilities(
-        doc,
-        this.prep.config.syncPath
-      )
-      if (incompatibilities.length > 0) {
+      assignPlatformIncompatibilities(doc, this.prep.config.syncPath)
+      const { incompatibilities } = doc
+      if (incompatibilities) {
         log.debug({path, oldpath: was && was.path, incompatibilities})
         this.events.emit('platform-incompatibilities', incompatibilities)
-        doc.incompatibilities = incompatibilities
       }
     } else {
       if (!was) {

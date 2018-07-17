@@ -81,6 +81,7 @@ switch (process.platform) {
 module.exports = {
   assignId,
   assignMaxDate,
+  assignPlatformIncompatibilities,
   isFile,
   id,
   invalidPath,
@@ -176,6 +177,11 @@ function detectPlatformIncompatibilities (metadata /*: Metadata */, syncPath /*:
   return issues.map(issue => (_.merge({
     docType: issue.path === path ? docType : 'folder'
   }, issue)))
+}
+
+function assignPlatformIncompatibilities (doc /*: Metadata */, syncPath /*: string */) /*: void */ {
+  const incompatibilities = detectPlatformIncompatibilities(doc, syncPath)
+  if (incompatibilities.length > 0) doc.incompatibilities = incompatibilities
 }
 
 // Return true if the checksum is invalid

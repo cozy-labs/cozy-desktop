@@ -1,6 +1,14 @@
 /* @flow */
 
+const _ = require('lodash')
+
+const {
+  assignId,
+  assignPlatformIncompatibilities
+} = require('../../../../core/metadata')
 const timestamp = require('../../../../core/timestamp')
+
+const pouchdbBuilders = require('../pouchdb')
 
 /*::
 import type fs from 'fs-extra'
@@ -26,6 +34,18 @@ module.exports = class BaseMetadataBuilder {
       path: 'foo',
       sides: {},
       updated_at: timestamp.current()
+    }
+  }
+
+  incompatible () /*: this */ {
+    const { platform } = process
+
+    if (platform === 'win32' || platform === 'darwin') {
+      // Colon is currently considered forbidden on both platforms by the app
+      // (although it probably shouldn't on macOS).
+      return this.path('in:compatible')
+    } else {
+      throw new Error(`Cannot build incompatible doc on ${platform}`)
     }
   }
 
@@ -73,8 +93,27 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
+  attributesByType () /*: * */ {
+    throw new Error('BaseMetadataBuilder#attributesByType() not implemented')
+  }
+
   build () /*: Metadata */ {
-    throw new Error('BaseMetadataBuilder#build() not implemented')
+    const doc = _.merge({
+      _id: '',
+      remote: {
+        _id: pouchdbBuilders.id(),
+        _rev: pouchdbBuilders.rev()
+      },
+      tags: [],
+      updated_at: new Date()
+    }, this.opts, this.attributesByType())
+
+    assignId(doc)
+    // Don't detect incompatibilities according to syncPath for test data, to
+    // prevent environment related failures.
+    assignPlatformIncompatibilities(doc, '')
+
+    return doc
   }
 
   async create () /*: Promise<Metadata> */ {

@@ -13,10 +13,16 @@ const MetadataBuilders = require('../../support/builders/metadata')
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
 
+const { TRAVIS } = process.env
+const { platform } = process
+
 describe('LocalWatcher Tests', function () {
+  let builders
+
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
   beforeEach('instanciate local watcher', function () {
+    builders = new MetadataBuilders(this.pouch)
     this.prep = {}
     const events = {emit: sinon.stub()}
     this.watcher = new Watcher(this.syncPath, this.prep, this.pouch, events)
@@ -49,7 +55,6 @@ describe('LocalWatcher Tests', function () {
     })
 
     it('only recomputes checksums of changed files', async function () {
-      const builders = new MetadataBuilders(this.pouch)
       const unchangedFilename = 'unchanged-file.txt'
       const changedFilename = 'changed-file.txt'
       const unchangedPath = path.join(this.syncPath, unchangedFilename)
@@ -280,7 +285,7 @@ describe('LocalWatcher Tests', function () {
     // This integration test is unstable on travis + OSX (too often red).
     // It's disabled for the moment, but we should find a way to make it
     // more stable on travis, and enable it again.
-    if (process.env.TRAVIS && (process.platform === 'darwin')) {
+    if (TRAVIS && (platform === 'darwin')) {
       it('is unstable on travis')
       return
     }
@@ -334,7 +339,7 @@ describe('LocalWatcher Tests', function () {
         // This integration test is unstable on travis + OSX (too often red).
         // It's disabled for the moment, but we should find a way to make it
         // more stable on travis, and enable it again.
-    if (process.env.TRAVIS && (process.platform === 'darwin')) {
+    if (TRAVIS && (platform === 'darwin')) {
       it('is unstable on travis')
       return
     }
@@ -393,7 +398,7 @@ describe('LocalWatcher Tests', function () {
   })
 
   describe('detectOfflineUnlinkEvents', function () {
-    before('reset pouchdb', function (done) {
+    beforeEach('reset pouchdb', function (done) {
       this.pouch.resetDatabase(done)
     })
 
@@ -443,5 +448,15 @@ describe('LocalWatcher Tests', function () {
         {type: 'unlink', path: 'file2', old: file2}
       ])
     })
+
+    if (platform === 'win32' || platform === 'darwin') {
+      it('ignores incompatible docs', async function () {
+        await builders.file().incompatible().create()
+        const initialScan = {ids: []}
+
+        const {offlineEvents} = await this.watcher.detectOfflineUnlinkEvents(initialScan)
+        should(offlineEvents).deepEqual([])
+      })
+    }
   })
 })
