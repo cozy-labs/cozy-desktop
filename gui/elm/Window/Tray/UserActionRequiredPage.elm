@@ -16,6 +16,7 @@ include_GDPR_link base_text url =
 view : Helpers -> UserActionRequiredError -> msg -> Html msg
 view helpers { code, title, detail, links } msg =
     div [ class "two-panes two-panes__content user-action-required" ]
+        -- Same logic as gui/js/components/UserActionRequiredDialog.js
         (if code == "tos-updated" then
             [ img [ class "error_img", src "images/tos_updated.svg" ] []
             , h2 [] [ text (helpers.t "CGU Updated") ]
