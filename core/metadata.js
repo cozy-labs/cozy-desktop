@@ -1,8 +1,9 @@
 /* @flow */
 
 const _ = require('lodash')
-const { clone, isEqual, pick } = _
+const { clone } = _
 const mime = require('mime')
+const deepDiff = require('deep-diff').diff
 const path = require('path')
 const { join } = path
 
@@ -223,40 +224,60 @@ function assignMaxDate (doc /*: Metadata */, was /*: ?Metadata */) {
   if (docUpdatedAt < wasUpdatedAt) { doc.updated_at = was.updated_at }
 }
 
-// Return true if the metadata of the two folders are the same
-// For updated_at, we accept up to 3s of differences because we can't
-// rely on file systems to be precise to the millisecond.
-function sameFolder (one /*: Metadata */, two /*: Metadata */) {
-  const {path} = two
-  let fields = ['_id', 'docType', 'remote', 'tags', 'trashed', 'ino']
-  one = pick(one, fields)
-  two = pick(two, fields)
-  const same = isEqual(one, two)
-  if (!same) log.trace({path, diff: {one, two}})
-  return same
+const ensureExecutable = (one, two) => {
+  return [
+    _.merge({executable: !!one.executable}, one),
+    _.merge({executable: !!two.executable}, two)
+  ]
 }
 
-// Return true if the metadata of the two files are the same
-// For updated_at, we accept up to 3s of differences because we can't
-// rely on file systems to be precise to the millisecond.
-function sameFile (one /*: Metadata */, two /*: Metadata */) {
-  if (!sameFileIgnoreRev(one, two)) return false
-
-  if ((one.remote && one.remote._rev) === (two.remote && two.remote._rev)) {
-    return true
-  } else {
-    log.trace({path, diff: {one, two}})
+const makeComparator = (name, interestingFields) => {
+  const interestingPaths = interestingFields.map(f => f.split('.'))
+  const filter = (path, key) => {
+    return !interestingPaths.some(interestingPath => {
+      return interestingPath.every((part, i) => {
+        if (i < path.length) return path[i] === part
+        if (i === path.length) return key === part
+        return true
+      })
+    })
+  }
+  return (one, two) => {
+    const diff = deepDiff(one, two, filter)
+    log.trace({path: two.path, diff}, 'sameFolder')
+    return !diff
   }
 }
 
+// Return true if the metadata of the two folders are the same
+// For updated_at, we accept up to 3s of differences because we can't
+// rely on file systems to be precise to the millisecond.
+const sameFolderComparator = makeComparator('sameFolder',
+  ['_id', 'docType', 'remote', 'tags', 'trashed', 'ino'])
+
+function sameFolder (one /*: Metadata */, two /*: Metadata */) {
+  return sameFolderComparator(one, two)
+}
+
+const sameFileComparator = makeComparator('sameFile',
+  ['_id', 'docType', 'md5sum', 'remote._id', 'remote._rev',
+    'tags', 'size', 'trashed', 'ino', 'executable'])
+
+const sameFileIgnoreRevComparator = makeComparator('sameFileIgnoreRev',
+  ['_id', 'docType', 'md5sum', 'remote._id',
+    'tags', 'size', 'trashed', 'ino', 'executable'])
+
+// Return true if the metadata of the two files are the same
+function sameFile (one /*: Metadata */, two /*: Metadata */) {
+  [one, two] = ensureExecutable(one, two)
+  return sameFileComparator(one, two)
+}
+
+// Return true if the metadata of the two files are the same,
+// ignoring revision
 function sameFileIgnoreRev (one /*: Metadata */, two /*: Metadata */) {
-  const {path} = two
-  let fields = ['_id', 'docType', 'md5sum', 'remote._id', 'tags', 'size', 'trashed', 'ino']
-  one = _.merge({executable: !!one.executable}, pick(one, fields))
-  two = _.merge({executable: !!two.executable}, pick(two, fields))
-  const same = isEqual(one, two)
-  if (!same) log.trace({path, diff: {one, two}})
-  return same
+  [one, two] = ensureExecutable(one, two)
+  return sameFileIgnoreRevComparator(one, two)
 }
 
 // Return true if the two files have the same binary content

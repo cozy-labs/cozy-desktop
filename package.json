@@ -86,6 +86,7 @@
     "chokidar": "1.7.0",
     "commander": "2.9.0",
     "cozy-client-js": "0.7.1",
+    "deep-diff": "^1.0.1",
     "dtrace-provider": ">=0.8.6",
     "electron-fetch": "^1.1.0",
     "electron-positioner": "^3.0.0",
