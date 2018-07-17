@@ -263,7 +263,6 @@ const startSync = (force, ...args) => {
     desktop.synchronize(desktop.config.config.mode)
       .then(() => sendErrorToMainWindow('stopped'))
       .catch((err) => {
-        log.error({status: err.status}, 'RIGHT RIGHT HERE')
         if (err.status === 402) {
           userActionRequired = pick(err,
             ['title', 'code', 'detail', 'links', 'message']
