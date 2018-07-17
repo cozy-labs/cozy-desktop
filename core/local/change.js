@@ -141,7 +141,7 @@ function _fromEvent (e/*: LocalEvent */) /*: LocalChange */ {
       if (change.wip == null) delete change.wip
       return change
     case 'change':
-      return {sideName, type: 'FileUpdate', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, wip: e.wip}
+      return {sideName, type: 'FileUpdate', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, old: e.old, wip: e.wip}
     case 'add':
       return {sideName, type: 'FileAddition', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, wip: e.wip}
     default:
@@ -182,8 +182,7 @@ function fileMoveFromAddUnlink (addChange /*: LocalFileAddition */, e /*: LocalF
 }
 
 function fileUnlinkAndMoveFromUnlinkChange (unlinkChange /* :LocalFileDeletion */, e /* : LocalFileUpdated */) {
-  log.debug({oldpath: unlinkChange.path, path: e.path}, 'unlink + change = unlink + move')
-
+  log.debug({oldpath: unlinkChange.path, path: e.path}, 'unlink + change = FileDeletion + FileMove')
 
   const updatedEvent /* : LocalFileUpdate */ = _fromEvent(e)
 

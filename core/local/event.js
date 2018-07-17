@@ -14,7 +14,7 @@ export type LocalDirAdded = ChokidarAddDir & {wip?: true}
 export type LocalDirUnlinked = ChokidarUnlinkDir & {old: ?Metadata}
 export type LocalFileAdded = ChokidarAdd & {md5sum: string, wip?: true}
 export type LocalFileUnlinked = ChokidarUnlink & {old: ?Metadata}
-export type LocalFileUpdated = ChokidarChange & {md5sum: string, wip?: true}
+export type LocalFileUpdated = ChokidarChange & {md5sum: string, old: ?Metadata, wip?: true}
 
 export type LocalEvent =
   | LocalDirAdded

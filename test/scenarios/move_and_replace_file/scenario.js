@@ -9,6 +9,7 @@ module.exports = ({
     { ino: 3, path: 'src/' },
     { ino: 4, path: 'src/file' }
   ],
+  // @TODO try to add a mv -f and use it.
   actions: [
     {type: 'trash', path: 'dst/file'},
     {type: 'mv', src: 'src/file', dst: 'dst/file'}

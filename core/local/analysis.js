@@ -122,7 +122,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
             break
           }
 
-          // This is most probably a move and replace
+          // There was an unlink on the same file, this is most probably a move and replace
           const unlinkChange /*: ?LocalFileDeletion */ = localChange.maybeDeleteFile(getChangeByInode(e))
           if (unlinkChange) {
             const [unlinkDestChange, moveChange] = localChange.fileUnlinkAndMoveFromUnlinkChange(unlinkChange, e)
@@ -305,6 +305,9 @@ const finalSorter = (a /*: LocalChange */, b /*: LocalChange */) => {
   // otherwise, order by add path
   if (localChange.lower(localChange.addPath(a), localChange.addPath(b))) return -1
   if (localChange.lower(localChange.addPath(b), localChange.addPath(a))) return 1
+
+  if(localChange.delPath(a) === localChange.addPath(b)) return -1
+  if(localChange.delPath(b) === localChange.addPath(a)) return 1
 
   // if there isnt 2 add paths, sort by del path
   if (localChange.lower(localChange.delPath(b), localChange.delPath(a))) return -1

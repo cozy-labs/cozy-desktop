@@ -253,7 +253,7 @@ module.exports = class LocalWatcher {
   async prepareEvents (events /*: ChokidarEvent[] */, initialScan /*: ?InitialScan */) /*: Promise<LocalEvent[]> */ {
     const oldMetadata = async (e /*: ChokidarEvent */) /*: Promise<?Metadata> */ => {
       if (e.old) return e.old
-      if (e.type === 'unlink' || e.type === 'unlinkDir' ||
+      if (e.type === 'unlink' || e.type === 'unlinkDir' || e.type === 'change' ||
           ((e.type === 'add' || e.type === 'addDir') && initialScan)) {
         try {
           return await this.pouch.db.get(metadata.id(e.path))
