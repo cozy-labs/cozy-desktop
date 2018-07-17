@@ -1,3 +1,37 @@
+## 3.9.0-beta.1 - 2018-07-17
+
+Improvements for all users:
+
+- When a file or directory exists in the cozy, the app will never try to
+  assign it an older timestamp anymore. This will ensure synchronization still
+  works, even when the local timestamp is actually more accurate than the remote
+  one. We'll later introduce a way to save the correct timestamp without being
+  rejected by the Cozy.
+- The data comparison algorithm is now diff-based. This will help us investigate
+  a very rare (but hard to fix) bug where a file is detected as modified while
+  no change is actually visible.
+
+Improvements for Windows & macOS users:
+
+- When a file or directory couldn't not be synchronized locally because of
+  some platform incompatibility (e.g. reserved character), it will be properly
+  ignored during initial scan after restarting the app.
+
+Improvements for support:
+
+- Summarized and detailed traces are now always stored together to make
+  analysis easier.
+
+Note for GNOME 3.28 or later users:
+
+- You may have to switch from TopIcons-Plus back to good old TopIcons in case
+  the app doesn't show up when clicking on the tray icon, whatever the app
+  version.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.8.1 - 2018-07-02
 
 There was no 3.8.0 stable release since we had to release a 3.8.1-alpha first.
