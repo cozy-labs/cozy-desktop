@@ -91,6 +91,7 @@ suite('Platform incompatibilities', () => {
       await helpers.pullAndSyncAll()
 
       should(await helpers.local.tree()).be.empty()
+      should(await helpers.metadataTree()).be.empty()
 
       await cozy.files.restoreById(docs['d:ir/']._id)
       await cozy.files.restoreById(docs['f:ile']._id)

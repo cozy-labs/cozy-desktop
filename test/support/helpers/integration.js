@@ -82,6 +82,10 @@ class IntegrationTestHelpers {
 
     return results
   }
+
+  metadataTree () {
+    return this._pouch.byRecursivePathAsync('')
+  }
 }
 
 module.exports = {
