@@ -22,6 +22,7 @@ const {buildAppMenu} = require('./js/appmenu')
 const i18n = require('./js/i18n')
 const {translate} = i18n
 const {incompatibilitiesErrorMessage} = require('./js/incompatibilitiesmsg')
+const UserActionRequiredDialog = require('./js/components/UserActionRequiredDialog')
 const {app, Menu, Notification, ipcMain, dialog} = require('electron')
 
 // FIXME: https://github.com/electron/electron/issues/10864
@@ -263,8 +264,11 @@ const startSync = (force, ...args) => {
     desktop.synchronize(desktop.config.config.mode)
       .then(() => sendErrorToMainWindow('stopped'))
       .catch((err) => {
-        log.error({status: err.status}, 'RIGHT RIGHT HERE')
         if (err.status === 402) {
+          // Only show notification popup on the first check (the GUI will
+          // include a warning anyway).
+          if (!userActionRequired) UserActionRequiredDialog.show(err)
+
           userActionRequired = pick(err,
             ['title', 'code', 'detail', 'links', 'message']
           )
