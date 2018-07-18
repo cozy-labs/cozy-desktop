@@ -7,7 +7,7 @@ module.exports = ({
     { ino: 1, path: 'dst/' },
     { ino: 2, path: 'dst/file' },
     { ino: 3, path: 'src/' },
-    { ino: 4, path: 'src/file' }
+    { ino: 4, path: 'src/file', content: 'src-content' }
   ],
   // @TODO try to add a mv -f and use it.
   actions: [
@@ -26,6 +26,9 @@ module.exports = ({
     ],
     remoteTrash: [
       'file'
-    ]
+    ],
+    contents: {
+      'dst/file': 'src-content'
+    }
   }
 } /*: Scenario */)
