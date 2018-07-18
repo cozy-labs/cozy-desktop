@@ -9,8 +9,9 @@ module.exports = ({
     { ino: 3, path: 'src/' },
     { ino: 4, path: 'src/file', content: 'src-content' }
   ],
-  // @TODO try to add a mv -f and use it.
   actions: [
+    // Trashing is not needed when running the scenario on the local side, but
+    // it is needed when running on the remote side to prevent 409 errors.
     {type: 'trash', path: 'dst/file'},
     {type: 'mv', src: 'src/file', dst: 'dst/file'}
   ],
