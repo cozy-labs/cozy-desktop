@@ -182,21 +182,25 @@ function fileMoveFromAddUnlink (addChange /*: LocalFileAddition */, e /*: LocalF
 }
 
 function fileUnlinkAndMoveFromUnlinkChange (unlinkChange /* :LocalFileDeletion */, e /* : LocalFileUpdated */) {
-  log.debug({oldpath: unlinkChange.path, path: e.path}, 'unlink + change = FileDeletion + FileMove')
+  const src = unlinkChange.old
+  const dst = e.old
+  const newDst = e
+  log.debug({oldpath: unlinkChange.path, path: e.path},
+    'unlink(src) + change(dst -> newDst) = FileDeletion(dst) + FileMove(src, newDst)')
 
-  const newUnlinkEvent = build('FileDeletion', e.path, {
-    old: e.old
+  const fileDeletion = build('FileDeletion', e.path, {
+    old: dst
   })
-  const moveEvent = build('FileMove', e.path, {
-    stats: e.stats,
-    md5sum: e.md5sum,
+  const fileMove = build('FileMove', e.path, {
+    stats: newDst.stats,
+    md5sum: newDst.md5sum,
     overwrite: true,
-    old: unlinkChange.old,
-    ino: e.stats.ino,
+    old: src,
+    ino: newDst.stats.ino,
     wip: e.wip
   })
 
-  return [newUnlinkEvent, moveEvent]
+  return [fileDeletion, fileMove]
 }
 
 function dirMoveFromAddUnlink (addChange /*: LocalDirAddition */, e /*: LocalDirUnlinked */) /*: * */ {
