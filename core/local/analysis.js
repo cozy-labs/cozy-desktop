@@ -306,8 +306,8 @@ const finalSorter = (a /*: LocalChange */, b /*: LocalChange */) => {
   if (localChange.lower(localChange.addPath(a), localChange.addPath(b))) return -1
   if (localChange.lower(localChange.addPath(b), localChange.addPath(a))) return 1
 
-  if(localChange.delPath(a) === localChange.addPath(b)) return -1
-  if(localChange.delPath(b) === localChange.addPath(a)) return 1
+  if (localChange.delPath(a) === localChange.addPath(b)) return -1
+  if (localChange.delPath(b) === localChange.addPath(a)) return 1
 
   // if there isnt 2 add paths, sort by del path
   if (localChange.lower(localChange.delPath(b), localChange.delPath(a))) return -1
