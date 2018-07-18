@@ -5,12 +5,12 @@ describe('remote change sort', () => {
   it('sort correctly move inside move', () => {
     const parent = {
       'doc': {'path': 'parent/dst/dir'},
-      'type': 'FolderMoved',
+      'type': 'FolderMove',
       'was': {'path': 'parent/src/dir'}
     }
     const child = {
       'doc': {'path': 'parent/dst/dir/subdir/filerenamed'},
-      'type': 'FileMoved',
+      'type': 'FileMove',
       'was': {'path': 'parent/dst/dir/subdir/file'}
     }
     const a = [child, parent]
