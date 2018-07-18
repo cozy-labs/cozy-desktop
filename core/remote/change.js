@@ -146,6 +146,9 @@ const sorter = (a, b) => {
   if (lower(addPath(a), addPath(b))) return -1
   if (lower(addPath(b), addPath(a))) return 1
 
+  if (delPath(a) === addPath(b)) return -1
+  if (delPath(b) === addPath(a)) return 1
+
   // if there isnt 2 add paths, sort by del path
   if (lower(delPath(b), delPath(a))) return -1
 
