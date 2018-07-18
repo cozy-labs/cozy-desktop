@@ -170,11 +170,11 @@ describe('RemoteWatcher', function () {
       await this.watcher.pullMany(docs)
 
       apply.callCount.should.equal(2)
-      // Changes are sorted (reversed) before applying (first one was given
+      // Changes are sorted before applying (first one was given
       // Metadata since it is valid, while second one got the original
       // RemoteDeletion)
-      should(apply.args[0][0].doc).deepEqual(docs[1])
-      should(apply.args[1][0].doc).deepEqual(validMetadata(docs[0]))
+      should(apply.args[0][0].doc).deepEqual(validMetadata(docs[0]))
+      should(apply.args[1][0].doc).deepEqual(docs[1])
     })
 
     context('when apply() rejects some file/dir', function () {
@@ -192,9 +192,8 @@ describe('RemoteWatcher', function () {
       it('still tries to pull other files/dirs', async function () {
         try { await this.watcher.pullMany(docs) } catch (_) {}
         should(apply).have.been.calledTwice()
-        // Changes are sorted before applying (FileAdded was the first one)
-        should(apply.args[0][0]).have.properties({type: 'RemoteIgnoredChange', doc: docs[1]})
-        should(apply.args[1][0]).have.properties({type: 'FileAddition', doc: validMetadata(docs[0])})
+        should(apply.args[0][0]).have.properties({type: 'FileAddition', doc: validMetadata(docs[0])})
+        should(apply.args[1][0]).have.properties({type: 'RemoteIgnoredChange', doc: docs[1]})
       })
 
       it('releases the Pouch lock', async function () {
