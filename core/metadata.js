@@ -49,7 +49,7 @@ export type Metadata = {
   updated_at: string|Date,
   mime?: string,
   moveTo?: string, // Destination id
-  overwrite?: true,
+  overwrite?: Metadata,
   childMove?: boolean,
   path: string,
   remote: MetadataRemoteInfo,

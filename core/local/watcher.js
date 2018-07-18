@@ -418,10 +418,10 @@ module.exports = class LocalWatcher {
     return this.prep.addFileAsync(SIDE, doc).catch(logError)
   }
 
-  async onMoveFile (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: string */, old /*: Metadata */, overwrite /*: boolean */) {
+  async onMoveFile (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: string */, old /*: Metadata */, overwrite /*: ?Metadata */) {
     const logError = (err) => log.error({err, path: filePath})
     const doc = metadata.buildFile(filePath, stats, md5sum, old.remote)
-    doc.overwrite = true
+    if (overwrite) doc.overwrite = overwrite
     log.info({path: filePath, oldpath: old.path}, 'FileMove')
     return this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
   }

@@ -194,7 +194,7 @@ function fileUnlinkAndMoveFromUnlinkChange (unlinkChange /* :LocalFileDeletion *
   const fileMove = build('FileMove', e.path, {
     stats: newDst.stats,
     md5sum: newDst.md5sum,
-    overwrite: true,
+    overwrite: dst,
     old: src,
     ino: newDst.stats.ino,
     wip: e.wip
