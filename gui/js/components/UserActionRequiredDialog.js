@@ -1,11 +1,14 @@
 const { dialog } = require('electron')
 const opn = require('opn')
+const path = require('path')
 const { translate } = require('../i18n')
 const { logger } = require('../../../core/app')
 
 const log = logger({
   component: 'UserActionRequiredDialog'
 })
+
+const imgs = path.resolve(__dirname, '..', '..', 'images')
 
 module.exports = {
   show
@@ -18,13 +21,13 @@ function show (err) {
 }
 
 function options (err) {
-  const type = 'warning'
+  const icon = `${imgs}/icon.png`
 
   // Same logic as gui/elm/UserActionRequiredPage.elm
   if (err.code === 'tos-updated') {
     return {
-      type,
-      title: translate('CGU Updated'),
+      icon,
+      title: translate('UserActionRequiredDialog Title'),
       message: translate('CGU Updated'),
       detail: [
         'CGU Updated Detail',
@@ -37,7 +40,7 @@ function options (err) {
     }
   } else {
     return {
-      type,
+      icon,
       title: err.title,
       message: err.message,
       detail: err.detail,
