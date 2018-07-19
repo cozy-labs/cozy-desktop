@@ -3,6 +3,7 @@ const fs = require('fs-extra')
 const glob = require('glob')
 const _ = require('lodash')
 const path = require('path')
+const crypto = require('crypto')
 
 const metadata = require('../../../core/metadata')
 
@@ -89,7 +90,7 @@ module.exports.loadRemoteChangesFiles = (scenario) => {
 module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
   debug('[init]')
   const remoteDocsToTrash = []
-  for (let {path: relpath, ino, trashed} of scenario.init) {
+  for (let {path: relpath, ino, trashed, content} of scenario.init) {
     debug(relpath)
     const isOutside = relpath.startsWith('../outside')
     let remoteParent
@@ -134,8 +135,13 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
         }
       }
     } else {
-      const content = 'foo'
-      const md5sum = 'rL0Y20zC+Fzt72VPzMSk2A=='
+      let md5sum
+      if (!content) {
+        content = 'foo'
+        md5sum = 'rL0Y20zC+Fzt72VPzMSk2A=='
+      } else {
+        md5sum = crypto.createHash('md5').update(content).digest().toString('base64')
+      }
 
       if (!trashed) {
         debug(`- create local file: ${localPath}`)

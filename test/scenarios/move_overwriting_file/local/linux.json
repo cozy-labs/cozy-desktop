@@ -1,0 +1,19 @@
+[
+  {
+    "breakpoints": [0]
+  },
+  {
+    "type": "unlink",
+    "path": "src/file"
+  },
+  {
+    "type": "change",
+    "path": "dst/file",
+    "stats": {
+      "ino": 4,
+      "size": 8,
+      "mtime": "2018-07-17T12:51:19.669Z",
+      "ctime": "2018-07-17T12:51:21.685Z"
+    }
+  }
+]

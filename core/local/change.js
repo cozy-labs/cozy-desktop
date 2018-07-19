@@ -37,6 +37,7 @@ module.exports = {
   toString,
   fromEvent,
   fileMoveFromUnlinkAdd,
+  fileUnlinkAndMoveFromUnlinkChange,
   dirMoveFromUnlinkAdd,
   fileMoveFromAddUnlink,
   dirMoveFromAddUnlink,
@@ -57,7 +58,7 @@ export type LocalDirDeletion = {sideName: 'local', type: 'DirDeletion', path: st
 export type LocalDirMove = {sideName: 'local', type: 'DirMove', path: string, old: Metadata, ino: number, stats: fs.Stats, wip?: true, needRefetch: boolean}
 export type LocalFileAddition = {sideName: 'local', type: 'FileAddition', path: string, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
 export type LocalFileDeletion = {sideName: 'local', type: 'FileDeletion', path: string, old: ?Metadata, ino: ?number}
-export type LocalFileMove = {sideName: 'local', type: 'FileMove', path: string, old: Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true, needRefetch: boolean, update?: LocalFileUpdated}
+export type LocalFileMove = {sideName: 'local', type: 'FileMove', path: string, old: Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true, needRefetch: boolean, update?: LocalFileUpdated, overwrite?: Metadata}
 export type LocalFileUpdate = {sideName: 'local', type: 'FileUpdate', path: string, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
 export type LocalIgnored = {sideName: 'local', type: 'Ignored', path: string}
 
@@ -140,7 +141,7 @@ function _fromEvent (e/*: LocalEvent */) /*: LocalChange */ {
       if (change.wip == null) delete change.wip
       return change
     case 'change':
-      return {sideName, type: 'FileUpdate', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, wip: e.wip}
+      return {sideName, type: 'FileUpdate', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, old: e.old, wip: e.wip}
     case 'add':
       return {sideName, type: 'FileAddition', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, wip: e.wip}
     default:
@@ -178,6 +179,28 @@ function fileMoveFromAddUnlink (addChange /*: LocalFileAddition */, e /*: LocalF
     ino: addChange.ino,
     wip: addChange.wip
   })
+}
+
+function fileUnlinkAndMoveFromUnlinkChange (unlinkChange /* :LocalFileDeletion */, e /* : LocalFileUpdated */) {
+  const src = unlinkChange.old
+  const dst = e.old
+  const newDst = e
+  log.debug({oldpath: unlinkChange.path, path: e.path},
+    'unlink(src) + change(dst -> newDst) = FileDeletion(dst) + FileMove(src, newDst)')
+
+  const fileDeletion = build('FileDeletion', e.path, {
+    old: dst
+  })
+  const fileMove = build('FileMove', e.path, {
+    stats: newDst.stats,
+    md5sum: newDst.md5sum,
+    overwrite: dst,
+    old: src,
+    ino: newDst.stats.ino,
+    wip: e.wip
+  })
+
+  return [fileDeletion, fileMove]
 }
 
 function dirMoveFromAddUnlink (addChange /*: LocalDirAddition */, e /*: LocalDirUnlinked */) /*: * */ {

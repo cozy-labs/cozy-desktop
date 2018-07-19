@@ -12,8 +12,8 @@ program
   .option('-r, --remote', 'Remove events only')
   .parse(process.argv)
 
-const scenarioArgPattern = new RegExp(path.join(
-  '^.*', '?test', 'scenarios', `([^${path.sep}]+)`, '?.*$'))
+const scenarioArgPattern = new RegExp(path.posix.join(
+  '^.*', '?test', 'scenarios', `([^${path.posix.sep}]+)`, '?.*$'))
 
 const scenarios = (args) => {
   if (args.length === 0) return scenarioHelpers.scenarios

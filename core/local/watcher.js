@@ -253,7 +253,7 @@ module.exports = class LocalWatcher {
   async prepareEvents (events /*: ChokidarEvent[] */, initialScan /*: ?InitialScan */) /*: Promise<LocalEvent[]> */ {
     const oldMetadata = async (e /*: ChokidarEvent */) /*: Promise<?Metadata> */ => {
       if (e.old) return e.old
-      if (e.type === 'unlink' || e.type === 'unlinkDir' ||
+      if (e.type === 'unlink' || e.type === 'unlinkDir' || e.type === 'change' ||
           ((e.type === 'add' || e.type === 'addDir') && initialScan)) {
         try {
           return await this.pouch.db.get(metadata.id(e.path))
@@ -337,7 +337,7 @@ module.exports = class LocalWatcher {
               c.old = await this.pouch.db.get(metadata.id(c.old.path))
               c.old.childMove = false
             }
-            await this.onMoveFile(c.path, c.stats, c.md5sum, c.old)
+            await this.onMoveFile(c.path, c.stats, c.md5sum, c.old, c.overwrite)
             if (c.update) await this.onChange(c.update.path, c.update.stats, c.update.md5sum)
             break
           case 'DirMove':
@@ -418,9 +418,10 @@ module.exports = class LocalWatcher {
     return this.prep.addFileAsync(SIDE, doc).catch(logError)
   }
 
-  async onMoveFile (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: string */, old /*: Metadata */) {
+  async onMoveFile (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: string */, old /*: Metadata */, overwrite /*: ?Metadata */) {
     const logError = (err) => log.error({err, path: filePath})
     const doc = metadata.buildFile(filePath, stats, md5sum, old.remote)
+    if (overwrite) doc.overwrite = overwrite
     log.info({path: filePath, oldpath: old.path}, 'FileMove')
     return this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
   }
