@@ -146,6 +146,7 @@
   "Updater Error EPERM": "Une erreur de permission empêche le téléchargement de la mise à jour.",
   "Updater Error ENOSPC": "Votre disque est plein, la mise à jour ne peut pas être téléchargée.",
   "Updater Error Other": "Une erreur inconnue empêche la mise à jour. Veuillez contacter le support.",
+  "UserActionRequiredDialog Title": "Action requise pour continuer à utiliser votre Cozy",
   "Tray Your cozy is up to date": "Votre Cozy est à jour",
   "Tray Syncing": "En cours de synchronisation",
   "Tray Offline": "Déconnecté",

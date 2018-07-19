@@ -24,7 +24,7 @@ function options (err) {
   if (err.code === 'tos-updated') {
     return {
       type,
-      title: translate('CGU Updated'),
+      title: translate('UserActionRequiredDialog Title'),
       message: translate('CGU Updated'),
       detail: [
         'CGU Updated Detail',
