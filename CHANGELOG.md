@@ -1,3 +1,17 @@
+## 3.9.0-beta.2 - 2018-07-19
+
+Improvements for all users:
+
+- Moving a file to overwrite an existing one is now effectively synchronized
+  as expected.
+- Users don't look at the systray popover so often. So people who have not
+  accepted the new TOS may be unaware that the synchronization is currently
+  paused. The app now shows up a reminder dialog on start when appropriate.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.9.0-beta.1 - 2018-07-17
 
 Improvements for all users:
