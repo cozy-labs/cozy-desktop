@@ -341,8 +341,8 @@ class Sync {
   }
 
   async doMove (side /*: Side */, doc /*: Metadata */, old /*: Metadata */) /*: Promise<void> */ {
+    if (doc.overwrite) await this.trashWithParentOrByItself(doc.overwrite, side)
     if (doc.docType === 'file') {
-      if (doc.overwrite) await side.trashAsync(doc.overwrite)
       await side.moveFileAsync(doc, old)
       this.events.emit('transfer-move', clone(doc), clone(old))
     } else await side.moveFolderAsync(doc, old)

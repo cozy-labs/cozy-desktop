@@ -125,8 +125,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
           // There was an unlink on the same file, this is most probably a move and replace
           const unlinkChange /*: ?LocalFileDeletion */ = localChange.maybeDeleteFile(getChangeByInode(e))
           if (unlinkChange) {
-            const [unlinkDestChange, moveChange] = localChange.fileUnlinkAndMoveFromUnlinkChange(unlinkChange, e)
-            changeFound(unlinkDestChange)
+            const moveChange = localChange.fileMoveFromFileDeletionChange(unlinkChange, e)
             changeFound(moveChange)
           } else {
             changeFound(localChange.fromEvent(e))

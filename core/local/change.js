@@ -37,7 +37,7 @@ module.exports = {
   toString,
   fromEvent,
   fileMoveFromUnlinkAdd,
-  fileUnlinkAndMoveFromUnlinkChange,
+  fileMoveFromFileDeletionChange,
   dirMoveFromUnlinkAdd,
   fileMoveFromAddUnlink,
   dirMoveFromAddUnlink,
@@ -55,7 +55,7 @@ const log = logger({
 /*::
 export type LocalDirAddition = {sideName: 'local', type: 'DirAddition', path: string, ino: number, stats: fs.Stats, wip?: true}
 export type LocalDirDeletion = {sideName: 'local', type: 'DirDeletion', path: string, old: ?Metadata, ino: ?number}
-export type LocalDirMove = {sideName: 'local', type: 'DirMove', path: string, old: Metadata, ino: number, stats: fs.Stats, wip?: true, needRefetch: boolean}
+export type LocalDirMove = {sideName: 'local', type: 'DirMove', path: string, old: Metadata, ino: number, stats: fs.Stats, wip?: true, needRefetch: boolean, overwrite: boolean}
 export type LocalFileAddition = {sideName: 'local', type: 'FileAddition', path: string, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
 export type LocalFileDeletion = {sideName: 'local', type: 'FileDeletion', path: string, old: ?Metadata, ino: ?number}
 export type LocalFileMove = {sideName: 'local', type: 'FileMove', path: string, old: Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true, needRefetch: boolean, update?: LocalFileUpdated, overwrite?: Metadata}
@@ -181,16 +181,13 @@ function fileMoveFromAddUnlink (addChange /*: LocalFileAddition */, e /*: LocalF
   })
 }
 
-function fileUnlinkAndMoveFromUnlinkChange (unlinkChange /* :LocalFileDeletion */, e /* : LocalFileUpdated */) {
-  const src = unlinkChange.old
+function fileMoveFromFileDeletionChange (fileDeletion /* :LocalFileDeletion */, e /* : LocalFileUpdated */) {
+  const src = fileDeletion.old
   const dst = e.old
   const newDst = e
-  log.debug({oldpath: unlinkChange.path, path: e.path},
-    'unlink(src) + change(dst -> newDst) = FileDeletion(dst) + FileMove(src, newDst)')
+  log.debug({oldpath: fileDeletion.path, path: e.path},
+    'unlink(src) + change(dst -> newDst) = FileMove.overwrite(src, newDst)')
 
-  const fileDeletion = build('FileDeletion', e.path, {
-    old: dst
-  })
   const fileMove = build('FileMove', e.path, {
     stats: newDst.stats,
     md5sum: newDst.md5sum,
@@ -200,7 +197,7 @@ function fileUnlinkAndMoveFromUnlinkChange (unlinkChange /* :LocalFileDeletion *
     wip: e.wip
   })
 
-  return [fileDeletion, fileMove]
+  return fileMove
 }
 
 function dirMoveFromAddUnlink (addChange /*: LocalDirAddition */, e /*: LocalDirUnlinked */) /*: * */ {
@@ -250,7 +247,14 @@ function includeAddEventInFileMove (moveChange /*: LocalFileMove */, e /*: Local
 function includeAddDirEventInDirMove (moveChange /*: LocalDirMove */, e /*: LocalDirAdded */) {
   if (!moveChange.wip &&
        moveChange.path === e.path &&
-       moveChange.stats.ino === e.stats.ino) return
+       moveChange.stats.ino === e.stats.ino
+     ) {
+    // FIXME This is based on a bug in chokidar where
+    // an overwriting move have two addDir events on mac+APFS
+    // but no unlinkDir for the overwritten destination.
+    moveChange.overwrite = true
+    return
+  }
   ensureValidMoveEvent(moveChange, e)
   moveChange.path = e.path
   moveChange.stats = e.stats
