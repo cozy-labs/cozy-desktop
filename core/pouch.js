@@ -112,13 +112,24 @@ class Pouch {
     return this.db.put(doc).asCallback(callback)
   }
 
-  bulkDocs (docs /*: Metadata[] */, callback /*: ?Callback */) {
+  async bulkDocs (docs /*: Metadata[] */) {
     for (const doc of docs) {
       const {path} = doc
       const {local, remote} = doc.sides || {}
       log.debug({path, local, remote, _deleted: doc._deleted, doc}, 'Saving bulk metadata...')
     }
-    return this.db.bulkDocs(docs).asCallback(callback)
+    const results = await this.db.bulkDocs(docs)
+    for (let [idx, result] of results.entries()) {
+      if (result.error) {
+        const err = new Error(result.message)
+        // $FlowFixMe
+        err.status = result.status
+        err.name = result.name
+        log.error({doc: docs[idx]}, err)
+        throw err
+      }
+    }
+    return results
   }
 
   // Run a query and get all the results
