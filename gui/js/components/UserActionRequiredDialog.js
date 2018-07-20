@@ -33,7 +33,7 @@ function options (err) {
         'CGU Updated Detail',
         'CGU Updated Required strong',
         'CGU Updated Required rest'
-      ].map(translate).join('. '),
+      ].map(translate).join(' '),
       buttons: [
         translate('CGU Updated See')
       ]
