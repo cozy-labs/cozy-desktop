@@ -1,3 +1,27 @@
+## 3.9.0 - 2018-07-20
+
+Improvements for all users:
+
+- Improved timestamp conflict handling (see [3.9.0-beta.1][3.9.0-beta.1])
+- New diff-based data comparison algorithm (see [3.9.0-beta.1][3.9.0-beta.1])
+- Improved file move + overwrite handling (see [3.9.0-beta.2][3.9.0-beta.2])
+- New TOS update dialog (see [3.9.0-beta.2][3.9.0-beta.2])
+
+Improvements for Windows & macOS users:
+
+- Initial scan properly ignores platform-incompatible remote files (see [3.9.0-beta.1][3.9.0-beta.1])
+
+Note for GNOME 3.28 or later users:
+
+- Better use TopIcons, not TopIcons-Plus (see [3.9.0-beta.1][3.9.0-beta.1])
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
+[3.9.0-beta.1]: https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.9.0-beta.1
+[3.9.0-beta.2]: https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.9.0-beta.2
+
 ## 3.9.0-beta.2 - 2018-07-19
 
 Improvements for all users:
