@@ -137,7 +137,9 @@ describe('Test scenarios', function () {
               actual.remoteContents = {}
               for (const relpath of _.keys(scenario.expected.contents)) {
                 actual.localContents[relpath] = await helpers.local.readFile(relpath)
+                    .catch(err => `Error Reading Local(${relpath}): ${err.message}`)
                 actual.remoteContents[relpath] = await helpers.remote.readFile(relpath)
+                    .catch(err => `Error Reading Remote(${relpath}): ${err.message}`)
               }
             }
 
