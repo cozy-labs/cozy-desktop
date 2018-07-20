@@ -9,5 +9,7 @@ services:
       - "5984:5984"
     volumes:
       - .:/cozy-desktop
-      - ./tmp/couchdb:/usr/local/couchdb/data
-      - ./tmp/cozy-storage:/data/cozy-storage
+      # Mounting storage files on a Windows or macOS workstation is a bad idea
+      # since it may generate FS-specific cozy-stack issues.
+      # Better keep them in the GNU/Linux container to match the current
+      # production environment for now.
