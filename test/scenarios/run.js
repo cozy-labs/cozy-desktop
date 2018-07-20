@@ -209,6 +209,9 @@ describe('Test scenarios', function () {
     } else if (scenario.disabled) {
       it.skip(`${remoteTestName}  (${scenario.disabled})`, () => {})
       continue
+    } else if (scenario.noremote) {
+      it.skip(`${remoteTestName}  (skip local only test)`, () => {})
+      continue
     }
 
     it(remoteTestName, async function () {

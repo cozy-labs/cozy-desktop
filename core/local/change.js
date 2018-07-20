@@ -233,6 +233,10 @@ const ensureValidMoveEvent = (moveChange /*: LocalMove */, event /*: LocalMoveEv
 }
 
 function includeAddEventInFileMove (moveChange /*: LocalFileMove */, e /*: LocalFileAdded */) {
+  if (!moveChange.wip &&
+       moveChange.path === e.path &&
+       moveChange.stats.ino === e.stats.ino &&
+       moveChange.md5sum === e.md5sum) return
   ensureValidMoveEvent(moveChange, e)
   moveChange.path = e.path
   moveChange.stats = e.stats
@@ -244,6 +248,9 @@ function includeAddEventInFileMove (moveChange /*: LocalFileMove */, e /*: Local
 }
 
 function includeAddDirEventInDirMove (moveChange /*: LocalDirMove */, e /*: LocalDirAdded */) {
+  if (!moveChange.wip &&
+       moveChange.path === e.path &&
+       moveChange.stats.ino === e.stats.ino) return
   ensureValidMoveEvent(moveChange, e)
   moveChange.path = e.path
   moveChange.stats = e.stats
