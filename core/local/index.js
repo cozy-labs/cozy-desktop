@@ -113,24 +113,10 @@ module.exports = class Local /*:: implements Side */ {
   // This function updates utime and ctime according to the last
   // modification date.
   metadataUpdater (doc /*: Metadata */) {
-    let filePath = path.resolve(this.syncPath, doc.path)
-    return function (callback /*: Callback */) {
-      let next = function (err) {
-        if (doc.executable) {
-          fs.chmod(filePath, '755', callback)
-        } else {
-          callback(err)
-        }
-      }
-      if (doc.updated_at) {
-        let updated = new Date(doc.updated_at)
-        fs.utimes(filePath, updated, updated, () =>
-          // Ignore errors
-          next()
-        )
-      } else {
-        next()
-      }
+    return (callback /*: Callback */) => {
+      this.updateMetadataAsync(doc)
+        .then(() => { callback() })
+        .catch(callback)
     }
   }
 
