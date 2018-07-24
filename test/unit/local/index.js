@@ -548,7 +548,7 @@ describe('Local', function () {
     })
   })
 
-  xdescribe('moveFolder', function () {
+  describe('moveFolder', function () {
     it('moves the folder', function (done) {
       let old = {
         path: 'old-parent/folder-to-move',
