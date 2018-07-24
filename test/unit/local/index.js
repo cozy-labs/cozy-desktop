@@ -436,7 +436,7 @@ describe('Local', function () {
   })
 
   describe('moveFile', function () {
-    it('moves the file', function (done) {
+    it('moves the file', async function () {
       let old = {
         path: 'old-parent/file-to-move',
         updated_at: new Date('2016-10-08T05:05:09Z')
@@ -449,16 +449,13 @@ describe('Local', function () {
       let newPath = syncDir.abspath(doc.path)
       fs.ensureDirSync(path.dirname(oldPath))
       fs.writeFileSync(oldPath, 'foobar')
-      this.local.moveFile(doc, old, function (err) {
-        should.not.exist(err)
-        fs.existsSync(oldPath).should.be.false()
-        fs.statSync(newPath).isFile().should.be.true()
-        let mtime = +fs.statSync(newPath).mtime
-        mtime.should.equal(+doc.updated_at)
-        let enc = {encoding: 'utf-8'}
-        fs.readFileSync(newPath, enc).should.equal('foobar')
-        done()
-      })
+      await this.local.moveFileAsync(doc, old)
+      fs.existsSync(oldPath).should.be.false()
+      fs.statSync(newPath).isFile().should.be.true()
+      let mtime = +fs.statSync(newPath).mtime
+      mtime.should.equal(+doc.updated_at)
+      let enc = {encoding: 'utf-8'}
+      fs.readFileSync(newPath, enc).should.equal('foobar')
     })
 
     it('also updates it when md5sum has changed', async function () {
@@ -486,7 +483,7 @@ describe('Local', function () {
       syncDir.unlink(doc)
     })
 
-    it('creates the file is the current file is missing', function (done) {
+    it('creates the file is the current file is missing', async function () {
       let old = {
         path: 'old-parent/missing-file',
         updated_at: new Date('2016-10-08T05:05:11Z')
@@ -496,15 +493,12 @@ describe('Local', function () {
         updated_at: new Date('2015-10-09T05:05:12Z')
       }
       let stub = sinon.stub(this.local, 'addFile').yields()
-      this.local.moveFile(doc, old, function (err) {
-        stub.restore()
-        stub.calledWith(doc).should.be.true()
-        should.not.exist(err)
-        done()
-      })
+      await this.local.moveFileAsync(doc, old)
+      stub.restore()
+      stub.calledWith(doc).should.be.true()
     })
 
-    it('does nothing if the file has already been moved', function (done) {
+    it('does nothing if the file has already been moved', async function () {
       let old = {
         path: 'old-parent/already-moved',
         updated_at: new Date('2016-10-08T05:05:11Z')
@@ -517,14 +511,11 @@ describe('Local', function () {
       fs.ensureDirSync(path.dirname(newPath))
       fs.writeFileSync(newPath, 'foobar')
       let stub = sinon.stub(this.local, 'addFile').yields()
-      this.local.moveFile(doc, old, function (err) {
-        stub.restore()
-        stub.calledWith(doc).should.be.false()
-        should.not.exist(err)
-        let enc = {encoding: 'utf-8'}
-        fs.readFileSync(newPath, enc).should.equal('foobar')
-        done()
-      })
+      await this.local.moveFileAsync(doc, old)
+      stub.restore()
+      stub.calledWith(doc).should.be.false()
+      let enc = {encoding: 'utf-8'}
+      fs.readFileSync(newPath, enc).should.equal('foobar')
     })
 
     it('adds the file back when it was restored', async function () {
