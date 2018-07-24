@@ -548,7 +548,7 @@ describe('Local', function () {
     })
   })
 
-  xdescribe('moveFolder', function () {
+  describe('moveFolder', function () {
     it('moves the folder', function (done) {
       let old = {
         path: 'old-parent/folder-to-move',
@@ -645,8 +645,8 @@ describe('Local', function () {
 
       await should(this.local.moveFolderAsync(doc, old)).be.fulfilled()
 
-      should(this.exists(old)).be.false()
-      should(this.exists(doc)).be.true()
+      fs.existsSync(syncDir.abspath(old)).should.be.false()
+      fs.existsSync(syncDir.abspath(doc)).should.be.true()
 
       syncDir.rmdir(doc)
     })
