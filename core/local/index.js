@@ -136,6 +136,19 @@ module.exports = class Local /*:: implements Side */ {
     }
   }
 
+  async updateMetadataAsync (doc /*: Metadata */) {
+    let filePath = path.resolve(this.syncPath, doc.path)
+    if (doc.executable) await fs.chmod(filePath, '755')
+    if (doc.updated_at) {
+      let updated = new Date(doc.updated_at)
+      try {
+        await fs.utimes(filePath, updated, updated)
+      } catch (_) {
+        // Ignore errors
+      }
+    }
+  }
+
   inodeSetter (doc /*: Metadata */) {
     let abspath = path.resolve(this.syncPath, doc.path)
     return (callback /*: Callback */) => {
