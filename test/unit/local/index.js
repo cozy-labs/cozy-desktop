@@ -549,7 +549,7 @@ describe('Local', function () {
   })
 
   describe('moveFolder', function () {
-    it('moves the folder', function (done) {
+    it('moves the folder', async function () {
       let old = {
         path: 'old-parent/folder-to-move',
         docType: 'folder',
@@ -563,17 +563,14 @@ describe('Local', function () {
       let oldPath = syncDir.abspath(old.path)
       let folderPath = syncDir.abspath(doc.path)
       fs.ensureDirSync(oldPath)
-      this.local.moveFolder(doc, old, function (err) {
-        should.not.exist(err)
-        fs.existsSync(oldPath).should.be.false()
-        fs.statSync(folderPath).isDirectory().should.be.true()
-        let mtime = +fs.statSync(folderPath).mtime
-        mtime.should.equal(+doc.updated_at)
-        done()
-      })
+      await this.local.moveFolderAsync(doc, old)
+      fs.existsSync(oldPath).should.be.false()
+      fs.statSync(folderPath).isDirectory().should.be.true()
+      let mtime = +fs.statSync(folderPath).mtime
+      mtime.should.equal(+doc.updated_at)
     })
 
-    it('creates the folder is the current directory is missing', function (done) {
+    it('creates the folder is the current directory is missing', async function () {
       let old = {
         path: 'old-parent/missing-folder',
         docType: 'folder',
@@ -585,16 +582,13 @@ describe('Local', function () {
         updated_at: new Date('2015-10-09T05:06:10Z')
       }
       let folderPath = syncDir.abspath(doc.path)
-      this.local.moveFolder(doc, old, function (err) {
-        should.not.exist(err)
-        fs.statSync(folderPath).isDirectory().should.be.true()
-        let mtime = +fs.statSync(folderPath).mtime
-        mtime.should.equal(+doc.updated_at)
-        done()
-      })
+      await this.local.moveFolderAsync(doc, old)
+      fs.statSync(folderPath).isDirectory().should.be.true()
+      let mtime = +fs.statSync(folderPath).mtime
+      mtime.should.equal(+doc.updated_at)
     })
 
-    it('does nothing if the folder has already been moved', function (done) {
+    it('does nothing if the folder has already been moved', async function () {
       let old = {
         path: 'old-parent/folder-already-moved',
         updated_at: new Date('2016-10-08T05:05:11Z')
@@ -606,16 +600,13 @@ describe('Local', function () {
       let newPath = syncDir.abspath(doc.path)
       fs.ensureDirSync(newPath)
       let stub = sinon.stub(this.local, 'addFolder').yields()
-      this.local.moveFolder(doc, old, function (err) {
-        should.not.exist(err)
-        stub.restore()
-        stub.calledWith(doc).should.be.false()
-        fs.statSync(newPath).isDirectory().should.be.true()
-        done()
-      })
+      await this.local.moveFolderAsync(doc, old)
+      stub.restore()
+      stub.calledWith(doc).should.be.false()
+      fs.statSync(newPath).isDirectory().should.be.true()
     })
 
-    it('remove the old directory if everything has been moved', function (done) {
+    it('remove the old directory if everything has been moved', async function () {
       let old = {
         path: 'old-parent/folder-already-moved',
         updated_at: new Date('2016-10-08T05:05:11Z')
@@ -629,14 +620,11 @@ describe('Local', function () {
       fs.ensureDirSync(oldPath)
       fs.ensureDirSync(newPath)
       let stub = sinon.stub(this.local, 'addFolder').yields()
-      this.local.moveFolder(doc, old, function (err) {
-        should.not.exist(err)
-        stub.restore()
-        stub.calledWith(doc).should.be.false()
-        fs.existsSync(oldPath).should.be.false()
-        fs.statSync(newPath).isDirectory().should.be.true()
-        done()
-      })
+      await this.local.moveFolderAsync(doc, old)
+      stub.restore()
+      stub.calledWith(doc).should.be.false()
+      fs.existsSync(oldPath).should.be.false()
+      fs.statSync(newPath).isDirectory().should.be.true()
     })
 
     it('adds the folder back when it was restored', async function () {
