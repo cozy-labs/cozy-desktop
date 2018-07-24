@@ -66,7 +66,6 @@ module.exports = class Local /*:: implements Side */ {
   addFileAsync: (Metadata) => Promise<*>
   addFolderAsync: (Metadata) => Promise<*>
   updateFileMetadataAsync: (Metadata, Metadata) => Promise<*>
-  moveFileAsync: (Metadata, Metadata) => Promise<*>
   renameConflictingDocAsync: (doc: Metadata, newPath: string) => Promise<void>
   */
 
@@ -299,46 +298,35 @@ module.exports = class Local /*:: implements Side */ {
   }
 
   // Move a file from one place to another
-  moveFile (doc /*: Metadata */, old /*: Metadata */, callback /*: Callback */) {
+  async moveFileAsync (doc /*: Metadata */, old /*: Metadata */) {
     log.info({path: doc.path}, `Moving from ${old.path}`)
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
     let parent = path.join(this.syncPath, path.dirname(doc.path))
 
-    async.waterfall([
-      next => fs.exists(oldPath, function (oldPathExists) {
-        if (oldPathExists) {
-          fs.ensureDir(parent, () => fs.rename(oldPath, newPath, next))
-        } else {
-          fs.exists(newPath, function (newPathExists) {
-            if (newPathExists) {
-              next()
-            } else {
-              const msg = `File ${oldPath} not found`
-              log.error({path: newPath}, msg)
-              next(new Error(msg))
-            }
-          })
-        }
-      }),
-
-      this.metadataUpdater(doc)
-
-    ], err => {
-      if (err) {
-        log.error({path: newPath, doc, old, err}, 'File move failed! Falling back to file download...')
-        this.addFile(doc, callback)
+    const oldPathExists = await fs.exists(oldPath)
+    try {
+      if (oldPathExists) {
+        await fs.ensureDir(parent)
+        await fs.rename(oldPath, newPath)
       } else {
-        if (doc.md5sum !== old.md5sum) {
-          this.overwriteFileAsync(doc).then(
-            () => callback(null),
-            err => callback(err)
-          )
-        } else {
-          callback(null)
+        const newPathExists = await fs.exists(newPath)
+        if (!newPathExists) {
+          const msg = `File ${oldPath} not found`
+          log.error({path: newPath}, msg)
+          throw new Error(msg)
         }
       }
-    })
+      await this.updateMetadataAsync(doc)
+    } catch (err) {
+      log.error({path: newPath, doc, old, err}, 'File move failed! Falling back to file download...')
+      await this.addFileAsync(doc)
+      return
+    }
+
+    if (doc.md5sum !== old.md5sum) {
+      await this.overwriteFileAsync(doc)
+    }
   }
 
   // Move a folder
