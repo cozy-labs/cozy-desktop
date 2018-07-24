@@ -67,7 +67,6 @@ module.exports = class Local /*:: implements Side */ {
   addFolderAsync: (Metadata) => Promise<*>
   updateFileMetadataAsync: (Metadata, Metadata) => Promise<*>
   moveFileAsync: (Metadata, Metadata) => Promise<*>
-  moveFolderAsync: (Metadata, Metadata) => Promise<*>
   renameConflictingDocAsync: (doc: Metadata, newPath: string) => Promise<void>
   */
 
@@ -343,39 +342,31 @@ module.exports = class Local /*:: implements Side */ {
   }
 
   // Move a folder
-  moveFolder (doc /*: Metadata */, old /*: Metadata */, callback /*: Callback */) {
+  async moveFolderAsync (doc /*: Metadata */, old /*: Metadata */) {
     log.info({path: doc.path}, `Move folder from ${old.path}`)
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
     let parent = path.join(this.syncPath, path.dirname(doc.path))
 
-    async.waterfall([
-      next => fs.exists(oldPath, oldPathExists =>
-        fs.exists(newPath, function (newPathExists) {
-          if (oldPathExists && newPathExists) {
-            fs.rmdir(oldPath, next)
-          } else if (oldPathExists) {
-            fs.ensureDir(parent, () => fs.rename(oldPath, newPath, next))
-          } else if (newPathExists) {
-            next()
-          } else {
-            const msg = `Folder ${oldPath} not found`
-            log.error({path: newPath}, msg)
-            next(new Error(msg))
-          }
-        })
-      ),
+    const oldPathExists = await fs.exists(oldPath)
+    const newPathExists = await fs.exists(newPath)
 
-      this.metadataUpdater(doc)
-
-    ], err => {
-      if (err) {
-        log.error({path: newPath, doc, old, err}, 'Folder move failed! Falling back to folder creation...')
-        this.addFolder(doc, callback)
-      } else {
-        callback(null)
+    try {
+      if (oldPathExists && newPathExists) {
+        await fs.rmdir(oldPath)
+      } else if (oldPathExists) {
+        await fs.ensureDir(parent)
+        await fs.rename(oldPath, newPath)
+      } else if (!newPathExists) {
+        const msg = `Folder ${oldPath} not found`
+        log.error({path: newPath}, msg)
+        throw new Error(msg)
       }
-    })
+      await this.updateMetadataAsync(doc)
+    } catch (err) {
+      log.error({path: newPath, doc, old, err}, 'Folder move failed! Falling back to folder creation...')
+      await this.addFolderAsync(doc)
+    }
   }
 
   async trashAsync (doc /*: Metadata */) /*: Promise<*> */ {
