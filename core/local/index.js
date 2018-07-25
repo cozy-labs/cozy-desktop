@@ -66,8 +66,6 @@ module.exports = class Local /*:: implements Side */ {
   addFileAsync: (Metadata) => Promise<*>
   addFolderAsync: (Metadata) => Promise<*>
   updateFileMetadataAsync: (Metadata, Metadata) => Promise<*>
-  moveFileAsync: (Metadata, Metadata) => Promise<*>
-  moveFolderAsync: (Metadata, Metadata) => Promise<*>
   renameConflictingDocAsync: (doc: Metadata, newPath: string) => Promise<void>
   */
 
@@ -115,23 +113,22 @@ module.exports = class Local /*:: implements Side */ {
   // This function updates utime and ctime according to the last
   // modification date.
   metadataUpdater (doc /*: Metadata */) {
+    return (callback /*: Callback */) => {
+      this.updateMetadataAsync(doc)
+        .then(() => { callback() })
+        .catch(callback)
+    }
+  }
+
+  async updateMetadataAsync (doc /*: Metadata */) {
     let filePath = path.resolve(this.syncPath, doc.path)
-    return function (callback /*: Callback */) {
-      let next = function (err) {
-        if (doc.executable) {
-          fs.chmod(filePath, '755', callback)
-        } else {
-          callback(err)
-        }
-      }
-      if (doc.updated_at) {
-        let updated = new Date(doc.updated_at)
-        fs.utimes(filePath, updated, updated, () =>
-          // Ignore errors
-          next()
-        )
-      } else {
-        next()
+    if (doc.executable) await fs.chmod(filePath, '755')
+    if (doc.updated_at) {
+      let updated = new Date(doc.updated_at)
+      try {
+        await fs.utimes(filePath, updated, updated)
+      } catch (_) {
+        // Ignore errors
       }
     }
   }
@@ -287,82 +284,63 @@ module.exports = class Local /*:: implements Side */ {
   }
 
   // Move a file from one place to another
-  moveFile (doc /*: Metadata */, old /*: Metadata */, callback /*: Callback */) {
+  async moveFileAsync (doc /*: Metadata */, old /*: Metadata */) {
     log.info({path: doc.path}, `Moving from ${old.path}`)
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
     let parent = path.join(this.syncPath, path.dirname(doc.path))
 
-    async.waterfall([
-      next => fs.exists(oldPath, function (oldPathExists) {
-        if (oldPathExists) {
-          fs.ensureDir(parent, () => fs.rename(oldPath, newPath, next))
-        } else {
-          fs.exists(newPath, function (newPathExists) {
-            if (newPathExists) {
-              next()
-            } else {
-              const msg = `File ${oldPath} not found`
-              log.error({path: newPath}, msg)
-              next(new Error(msg))
-            }
-          })
-        }
-      }),
-
-      this.metadataUpdater(doc)
-
-    ], err => {
-      if (err) {
-        log.error({path: newPath, doc, old, err}, 'File move failed! Falling back to file download...')
-        this.addFile(doc, callback)
+    const oldPathExists = await fs.exists(oldPath)
+    try {
+      if (oldPathExists) {
+        await fs.ensureDir(parent)
+        await fs.rename(oldPath, newPath)
       } else {
-        if (doc.md5sum !== old.md5sum) {
-          this.overwriteFileAsync(doc).then(
-            () => callback(null),
-            err => callback(err)
-          )
-        } else {
-          callback(null)
+        const newPathExists = await fs.exists(newPath)
+        if (!newPathExists) {
+          const msg = `File ${oldPath} not found`
+          log.error({path: newPath}, msg)
+          throw new Error(msg)
         }
       }
-    })
+      await this.updateMetadataAsync(doc)
+    } catch (err) {
+      log.error({path: newPath, doc, old, err}, 'File move failed! Falling back to file download...')
+      await this.addFileAsync(doc)
+      return
+    }
+
+    if (doc.md5sum !== old.md5sum) {
+      await this.overwriteFileAsync(doc)
+    }
   }
 
   // Move a folder
-  moveFolder (doc /*: Metadata */, old /*: Metadata */, callback /*: Callback */) {
+  async moveFolderAsync (doc /*: Metadata */, old /*: Metadata */) {
     log.info({path: doc.path}, `Move folder from ${old.path}`)
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
     let parent = path.join(this.syncPath, path.dirname(doc.path))
 
-    async.waterfall([
-      next => fs.exists(oldPath, oldPathExists =>
-        fs.exists(newPath, function (newPathExists) {
-          if (oldPathExists && newPathExists) {
-            fs.rmdir(oldPath, next)
-          } else if (oldPathExists) {
-            fs.ensureDir(parent, () => fs.rename(oldPath, newPath, next))
-          } else if (newPathExists) {
-            next()
-          } else {
-            const msg = `Folder ${oldPath} not found`
-            log.error({path: newPath}, msg)
-            next(new Error(msg))
-          }
-        })
-      ),
+    const oldPathExists = await fs.exists(oldPath)
+    const newPathExists = await fs.exists(newPath)
 
-      this.metadataUpdater(doc)
-
-    ], err => {
-      if (err) {
-        log.error({path: newPath, doc, old, err}, 'Folder move failed! Falling back to folder creation...')
-        this.addFolder(doc, callback)
-      } else {
-        callback(null)
+    try {
+      if (oldPathExists && newPathExists) {
+        await fs.rmdir(oldPath)
+      } else if (oldPathExists) {
+        await fs.ensureDir(parent)
+        await fs.rename(oldPath, newPath)
+      } else if (!newPathExists) {
+        const msg = `Folder ${oldPath} not found`
+        log.error({path: newPath}, msg)
+        throw new Error(msg)
       }
-    })
+      await this.updateMetadataAsync(doc)
+    } catch (err) {
+      log.error({path: newPath, doc, old, err}, 'Folder move failed! Falling back to folder creation...')
+      await this.addFolderAsync(doc)
+    }
   }
 
   async trashAsync (doc /*: Metadata */) /*: Promise<*> */ {
