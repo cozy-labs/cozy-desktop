@@ -70,6 +70,7 @@
     "test:setup": "yarn docker:exec /cozy-desktop/test/setup.sh",
     "test:unit": "yarn mocha test/unit/",
     "test:unit:coverage": "yarn mocha:coverage test/unit/",
+    "test:world": "yarn mocha test/world/",
     "watch": "yarn watch:core & cross-env WATCH=true yarn start & yarn watch:css & yarn watch:elm & yarn watch:js",
     "watch:core": "yarn build:core --watch",
     "watch:css": "stylus --sourcemap  --use cozy-ui/stylus --watch gui/styles/app.styl --out gui",
