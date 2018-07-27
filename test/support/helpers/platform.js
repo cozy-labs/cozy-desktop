@@ -7,11 +7,14 @@ module.exports = {
 
 function onPlatforms (...platformsAndSpec) {
   const spec = platformsAndSpec.pop()
-  const platforms = platformsAndSpec
+  const expectedPlatforms = platformsAndSpec
+  const currentPlatform = process.platform
 
-  if (platforms.indexOf(process.platform) > -1) {
-    mocha.describe(`on ${platforms.join(' / ')}`, spec)
-  }
+  const describe = expectedPlatforms.indexOf(currentPlatform) > -1
+    ? mocha.describe
+    : mocha.describe.skip
+
+  describe(`on ${expectedPlatforms.join(' / ')}`, spec)
 }
 
 function onPlatform (platform, spec) {
