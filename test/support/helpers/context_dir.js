@@ -13,6 +13,10 @@ Promise.promisifyAll(checksumer)
 
 /*:: import type { PathObject } from '../../../core/utils/path' */
 
+function posixifyPath (localPath /*: string */) /*: string */ {
+  return localPath.split(path.sep).join(path.posix.sep)
+}
+
 // A directory in the context of which we want to perform many FS operations.
 class ContextDir {
   /*::
@@ -26,6 +30,35 @@ class ContextDir {
 
   abspath (target /*: string|PathObject */) /*: string */ {
     return path.join(this.root, getPath(target))
+  }
+
+  relpath (abspath /*: string */) /*: string */ {
+    return posixifyPath(abspath.slice(this.root.length + path.sep.length))
+  }
+
+  async tree () /*: Promise<string[]> */ {
+    const dirsToRead = [this.root]
+    const relPaths = []
+
+    while (true) {
+      const dir = dirsToRead.shift()
+      if (dir == null) break
+
+      for (const name of await fs.readdirAsync(dir)) {
+        const absPath = path.join(dir, name)
+        const stat = await fs.statAsync(absPath)
+        let relPath = this.relpath(absPath)
+
+        if (stat.isDirectory()) {
+          dirsToRead.push(absPath)
+          relPath = relPath + path.posix.sep
+        }
+
+        relPaths.push(relPath)
+      }
+    }
+
+    return relPaths.sort((a, b) => a.localeCompare(b))
   }
 
   existsSync (target /*: string|PathObject */) /*: Promise<bool> */ {
