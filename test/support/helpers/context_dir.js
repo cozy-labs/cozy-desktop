@@ -13,7 +13,8 @@ Promise.promisifyAll(checksumer)
 
 /*:: import type { PathObject } from '../../../core/utils/path' */
 
-class SyncDirTestHelpers {
+// A directory in the context of which we want to perform many FS operations.
+class ContextDir {
   /*::
   root: string
   */
@@ -58,5 +59,5 @@ class SyncDirTestHelpers {
 }
 
 module.exports = {
-  SyncDirTestHelpers
+  ContextDir
 }

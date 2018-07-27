@@ -15,7 +15,7 @@ const { PendingMap } = require('../../../core/utils/pending')
 const MetadataBuilders = require('../../support/builders/metadata')
 const StreamBuilder = require('../../support/builders/stream')
 const configHelpers = require('../../support/helpers/config')
-const { SyncDirTestHelpers } = require('../../support/helpers/sync_dir')
+const { ContextDir } = require('../../support/helpers/context_dir')
 const pouchHelpers = require('../../support/helpers/pouch')
 
 Promise.promisifyAll(fs)
@@ -31,7 +31,7 @@ describe('Local', function () {
     this.local = new Local(this.config, this.prep, this.pouch, this.events)
     this.local.watcher.pending = new PendingMap()
 
-    syncDir = new SyncDirTestHelpers(this.syncPath)
+    syncDir = new ContextDir(this.syncPath)
   })
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)

@@ -7,7 +7,7 @@ const path = require('path')
 const rimraf = require('rimraf')
 
 const conflictHelpers = require('./conflict')
-const { SyncDirTestHelpers } = require('./sync_dir')
+const { ContextDir } = require('./context_dir')
 
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
 
@@ -54,12 +54,12 @@ async function tree (rootPath /*: string */) /*: Promise<string[]> */ {
 class LocalTestHelpers {
   /*::
   local: Local
-  syncDir: SyncDirTestHelpers
+  syncDir: ContextDir
   */
 
   constructor (local /*: Local */) {
     this.local = local
-    this.syncDir = new SyncDirTestHelpers(local.syncPath)
+    this.syncDir = new ContextDir(local.syncPath)
     autoBind(this)
   }
 
