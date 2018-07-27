@@ -61,7 +61,7 @@
     "repl": "env-cmd .env.dev node ./dev/repl.js",
     "stack:reset": "sudo ./node_modules/.bin/rimraf tmp/couchdb tmp/cozy-storage",
     "start": "env-cmd .env.dev electron .",
-    "test": "yarn test:unit && yarn test:elm && yarn test:integration && yarn test:scenarios",
+    "test": "yarn test:world && test:unit && yarn test:elm && yarn test:integration && yarn test:scenarios",
     "test:coverage": "yarn test:unit:coverage && yarn test:integration",
     "test:elm": "elm-test",
     "test:integration": "yarn mocha test/integration",
