@@ -89,6 +89,7 @@ script:
     - travis_retry yarn
     - yarn build
     - yarn lint
+    - yarn test:world --timeout $MOCHA_TIMEOUT
     - yarn test:unit:coverage --timeout $MOCHA_TIMEOUT
     - yarn test:elm
     - yarn test:integration --timeout $MOCHA_TIMEOUT

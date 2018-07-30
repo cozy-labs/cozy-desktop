@@ -12,6 +12,7 @@ build: off
 
 test_script:
   - yarn build
+  - cmd: yarn test:world -- --timeout $env:MOCHA_TIMEOUT
   - cmd: yarn test:unit -- --timeout $env:MOCHA_TIMEOUT
   - cmd: yarn test:integration -- --timeout $env:MOCHA_TIMEOUT
   - cmd: yarn test:scenarios -- --timeout $env:MOCHA_TIMEOUT
