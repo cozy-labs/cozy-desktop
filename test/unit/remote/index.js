@@ -503,66 +503,69 @@ describe('Remote', function () {
     })
   })
 
-  xdescribe('moveFolder', function () {
-    // it('moves the folder in couchdb', function (done) {
-    //   return couchHelpers.createFolder(this.couch, 4, (_, created) => {
-    //     let doc = {
-    //       path: 'couchdb-folder/folder-5',
-    //       docType: 'folder',
-    //       updated_at: new Date(),
-    //       remote: {
-    //         _id: created.id,
-    //         _rev: created.rev
-    //       }
-    //     }
-    //     let old = {
-    //       path: 'couchdb-folder/folder-4',
-    //       docType: 'folder',
-    //       remote: {
-    //         _id: created.id,
-    //         _rev: created.rev
-    //       }
-    //     }
-    //     return this.remote.moveFolder(doc, old, (err, created) => {
-    //       should.not.exist(err)
-    //       return this.couch.get(created.id, function (err, folder) {
-    //         should.not.exist(err)
-    //         folder.should.have.properties({
-    //           path: '/couchdb-folder',
-    //           name: 'folder-5',
-    //           docType: 'folder',
-    //           updated_at: doc.updated_at.toISOString()
-    //         })
-    //         done()
-    //       })
-    //     })
-    //   })
-    // })
-
-    it('adds a folder to couchdb if the folder does not exist', function (done) {
+  describe('moveFolder', function () {
+    it('moves the folder in the Cozy', async function () {
+      const couchdbFolder = await cozy.files.statByPath('/couchdb-folder')
+      const created = await cozy.files.createDirectory({
+        name: 'folder-4',
+        dirID: couchdbFolder._id,
+        lastModifiedDate: '2018-01-02T05:31:30.564Z'
+      })
       let doc = {
-        path: 'couchdb-folder/folder-7',
+        path: path.join('couchdb-folder', 'folder-5'),
         docType: 'folder',
-        updated_at: new Date()
+        updated_at: new Date('2018-07-31T05:37:43.770Z'),
+        remote: {
+          _id: created._id,
+          _rev: created._rev
+        }
       }
       let old = {
-        path: 'couchdb-folder/folder-6',
-        docType: 'folder'
+        path: path.join('couchdb-folder', 'folder-4'),
+        docType: 'folder',
+        remote: {
+          _id: created._id,
+          _rev: created._rev
+        }
       }
-      return this.remote.moveFolder(doc, old, (err, created) => {
-        should.not.exist(err)
-        return this.couch.get(created.id, function (err, folder) {
-          should.not.exist(err)
-          folder.should.have.properties({
-            path: '/couchdb-folder',
-            name: 'folder-7',
-            docType: 'folder',
-            updated_at: doc.updated_at.toISOString()
-          })
-          done()
-        })
+      const { remote } = await this.remote.moveFolderAsync(doc, old)
+      const folder = await cozy.files.statById(remote._id)
+      should(folder.attributes).have.properties({
+        dir_id: couchdbFolder._id,
+        name: 'folder-5',
+        type: 'directory',
+        updated_at: '2018-07-31T05:37:43.77Z' // No ms
+      })
+    })
+
+    it('adds a folder to the Cozy if the folder does not exist', async function () {
+      const couchdbFolder = await cozy.files.statByPath('/couchdb-folder')
+      const created = await cozy.files.createDirectory({
+        name: 'folder-6',
+        dirID: couchdbFolder._id,
+        lastModifiedDate: '2018-01-02T05:31:30.564Z'
+      })
+      let doc = {
+        path: path.join('couchdb-folder', 'folder-7'),
+        docType: 'folder',
+        updated_at: new Date('2018-07-31T05:37:43.770Z')
       }
-            )
+      let old = {
+        path: path.join('couchdb-folder', 'folder-6'),
+        docType: 'folder',
+        remote: {
+          _id: created._id,
+          _rev: created._rev
+        }
+      }
+      const { remote: { _id } } = await this.remote.moveFolderAsync(doc, old)
+      const folder = await cozy.files.statById(_id)
+      should(folder.attributes).have.properties({
+        dir_id: couchdbFolder._id,
+        name: 'folder-7',
+        type: 'directory',
+        updated_at: '2018-07-31T05:37:43.77Z' // No ms
+      })
     })
   })
 
