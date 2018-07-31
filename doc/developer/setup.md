@@ -113,6 +113,9 @@ git clone git@github.com:cozy-labs/cozy-desktop.git
 cd cozy-desktop
 ```
 
+**Warning**: The path to your local repository should not include any space,
+otherwise [installing dependencies will fail](https://github.com/cozy-labs/cozy-desktop/issues/1097).
+
 ## Install dependencies
 
 ```
