@@ -5,6 +5,7 @@
 --require should
 --require should-sinon
 --require ./test/support/assertions/change
+--require ./test/support/assertions/fileContents
 --require ./test/support/assertions/timestamp
 --require ./test/support/stacktraces
 --recursive
