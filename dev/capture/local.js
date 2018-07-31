@@ -143,5 +143,8 @@ const captureScenario = (scenario) => {
 
 module.exports = {
   name: 'local',
+  setupInitialState,
+  syncPath,
+  mapInode,
   captureScenario
 }
