@@ -65,12 +65,14 @@ export type Metadata = {
 
 let assignId /*: (doc: *) => void */ = (_) => {}
 
+// See [test/world/](https://github.com/cozy-labs/cozy-desktop/blob/master/test/world/)
+// for file system behavior examples.
 switch (process.platform) {
   case 'linux': case 'freebsd': case 'sunos':
     assignId = assignIdUnix
     break
   case 'darwin':
-    assignId = assignIdHFS
+    assignId = assignIdApfsOrHfs
     break
   case 'win32':
     assignId = assignIdNTFS
@@ -110,16 +112,27 @@ function assignIdUnix (doc /*: * */) {
   doc._id = doc.path
 }
 
-// Build an _id from the path for OSX (HFS+ file system):
+// Build an _id from the path for macOS, assuming file system is either APFS
+// or HFS+.
+//
+// APFS:
+// - case preservative, but not case sensitive
+// - unicode normalization preservative, but not sensitive
+//
+// HFS+:
 // - case preservative, but not case sensitive
 // - unicode NFD normalization (sort of)
 //
 // See https://nodejs.org/en/docs/guides/working-with-different-filesystems/
 // for why toUpperCase is better than toLowerCase
 //
+// We are using NFD (Normalization Form Canonical Decomposition), but NFC
+// would be fine too. We just need to make sure that 2 files which cannot
+// coexist on APFS or HFS+ have the same identity.
+//
 // Note: String.prototype.normalize is not available on node 0.10 and does
 // nothing when node is compiled without intl option.
-function assignIdHFS (doc /*: * */) {
+function assignIdApfsOrHfs (doc /*: * */) {
   let id = doc.path
   if (id.normalize) { id = id.normalize('NFD') }
   doc._id = id.toUpperCase()
