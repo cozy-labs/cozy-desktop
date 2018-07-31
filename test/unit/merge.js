@@ -246,7 +246,7 @@ describe('Merge', function () {
       should.exist(res.ino)
     })
 
-    it('adds a hint for writers to know that it is a move', function (done) {
+    it('adds a hint for writers to know that it is a move', async function () {
       let doc = {
         _id: 'FOO/NEW-HINT',
         path: 'FOO/NEW-HINT',
@@ -272,18 +272,18 @@ describe('Merge', function () {
         live: true,
         since: 'now'
       }
-      this.pouch.db.put(clone(was), (err, inserted) => {
-        should.not.exist(err)
-        was._rev = inserted.rev
+      const inserted = await this.pouch.db.put(clone(was))
+      was._rev = inserted.rev
+      const infoPromise = new Promise((resolve, reject) => {
         this.pouch.db.changes(opts).on('change', function (info) {
           this.cancel()
-          info.id.should.equal(was._id)
-          info.doc.moveTo.should.equal(doc._id)
-          done()
+          resolve(info)
         })
-        this.merge.moveFileAsync(this.side, clone(doc), clone(was))
-          .catch(err => should.not.exist(err))
       })
+      await this.merge.moveFileAsync(this.side, clone(doc), clone(was))
+      const info = await infoPromise
+      should(info).have.property('id', was._id)
+      should(info.doc).have.property('moveTo', doc._id)
     })
   })
 
@@ -325,7 +325,7 @@ describe('Merge', function () {
       await should(this.pouch.db.get(was._id)).be.rejectedWith({status: 404})
     })
 
-    it('adds a hint for writers to know that it is a move', function (done) {
+    it('adds a hint for writers to know that it is a move', async function () {
       let doc = {
         _id: 'FOOBAR/NEW-HINT',
         path: 'FOOBAR/NEW-HINT',
@@ -349,18 +349,18 @@ describe('Merge', function () {
         live: true,
         since: 'now'
       }
-      this.pouch.db.put(clone(was), (err, inserted) => {
-        should.not.exist(err)
-        was._rev = inserted.rev
+      const inserted = await this.pouch.db.put(clone(was))
+      was._rev = inserted.rev
+      const infoPromise = new Promise((resolve, reject) => {
         this.pouch.db.changes(opts).on('change', function (info) {
           this.cancel()
-          info.id.should.equal(was._id)
-          info.doc.moveTo.should.equal(doc._id)
-          done()
+          resolve(info)
         })
-        this.merge.moveFolderAsync(this.side, clone(doc), clone(was))
-          .catch(err => should.not.exist(err))
       })
+      await this.merge.moveFolderAsync(this.side, clone(doc), clone(was))
+      const info = await infoPromise
+      should(info).have.property('id', was._id)
+      should(info.doc).have.property('moveTo', doc._id)
     })
   })
 
