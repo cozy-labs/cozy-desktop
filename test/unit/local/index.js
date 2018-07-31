@@ -583,8 +583,7 @@ describe('Local', function () {
       fs.statSync(newPath).isDirectory().should.be.true()
     })
 
-    // FIXME
-    xit('adds the folder back when it was restored', async function () {
+    it('adds the folder back when it was restored', async function () {
       const old = {path: '.cozy_trash/restored-folder'}
       const doc = {path: 'restored-folder'}
 
@@ -593,7 +592,7 @@ describe('Local', function () {
       fs.existsSync(syncDir.abspath(old)).should.be.false()
       fs.existsSync(syncDir.abspath(doc)).should.be.true()
 
-      syncDir.rmdir(doc)
+      await syncDir.rmdir(doc)
     })
   })
 
