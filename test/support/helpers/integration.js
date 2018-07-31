@@ -1,7 +1,8 @@
 /* @flow */
 
 const autoBind = require('auto-bind')
-const { pick } = require('lodash')
+const _ = require('lodash')
+const { pick } = _
 const sinon = require('sinon')
 
 const Ignore = require('../../../core/ignore')
@@ -12,6 +13,7 @@ const Remote = require('../../../core/remote')
 const Sync = require('../../../core/sync')
 const SyncState = require('../../../core/syncstate')
 
+const { posixifyPath } = require('./context_dir')
 const { LocalTestHelpers } = require('./local')
 const { RemoteTestHelpers } = require('./remote')
 
@@ -85,6 +87,15 @@ class IntegrationTestHelpers {
 
   metadataTree () {
     return this._pouch.byRecursivePathAsync('')
+  }
+
+  async incompatibleTree () {
+    return _.chain(await this.metadataTree())
+      .filter(doc => doc.incompatibilities)
+      .map(({docType, path}) => posixifyPath(path) + (docType === 'folder' ? '/' : ''))
+      .uniq()
+      .sort()
+      .value()
   }
 }
 
