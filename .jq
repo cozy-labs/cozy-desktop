@@ -72,7 +72,16 @@ def issues: clean | select(is_issue);
 #     yarn jq 'path("foo/bar")' path/to/logs*
 #     yarn jq 'path("foo\\\\bar")' path/to/logs*
 #
-def path(pattern): clean | select((.path,.oldpath,"") | strings | test(pattern));
+def path(pattern):
+  clean | select(
+    (
+      (.path // (.doc | .path) // (.change | .doc | .path)),
+      (.oldpath // (.was | .path)),
+      ""
+    )
+      | strings
+      | test(pattern)
+  );
 
 # Include/exclude GUI stuff:
 #
@@ -139,7 +148,14 @@ def msg(pattern):
 #    yarn jq 'time("T22:34")' path/to/logs*
 #
 def time(pattern):
-    select(.time | test(pattern));
+  select(.time | test(pattern));
+
+# Filter inode number(s):
+#
+#    yarn jq 'ino(7852458)' path/to/logs*
+#    yarn jq 'ino(7852458; 464672)' path/to/logs*
+#
+def ino(n): select((.ino // (.doc|.ino) // (.change|.doc|.ino)) as $ino | [n] | flatten | map(. == $ino) | any);
 
 # Filter things with an attached doc and return it:
 #
