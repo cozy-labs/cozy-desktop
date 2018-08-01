@@ -92,5 +92,6 @@ class ContextDir {
 }
 
 module.exports = {
-  ContextDir
+  ContextDir,
+  posixifyPath
 }
