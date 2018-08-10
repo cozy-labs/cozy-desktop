@@ -7,6 +7,8 @@ const should = require('should')
 
 const MacOSRelease = require('../support/helpers/MacOSRelease')
 
+const { TRAVIS } = process.env
+
 should.Assertion.add('hex', function (expectedPretty) {
   const expected = expectedPretty.trim().split(/\s+/)
   const actual = Buffer.from(this.obj).toString('hex').match(/.{1,2}/g)
@@ -40,7 +42,7 @@ suite('Case and encoding basics', () => {
         should(await listFiles()).deepEqual(['\u00e9'])
         break
       case 'darwin':
-        if (MacOSRelease.isAtLeast(MacOSRelease.HIGH_SIERRA_10_13)) {
+        if (MacOSRelease.isAtLeast(MacOSRelease.HIGH_SIERRA_10_13) && !TRAVIS) {
           should(await listFiles()).deepEqual(['\u00e9'])
         } else {
           should(await listFiles()).deepEqual(['\u0065\u0301'])
@@ -101,7 +103,7 @@ suite('Case and encoding basics', () => {
         should(await listFiles()).deepEqual(['\u00e9'])
         break
       case 'darwin':
-        if (MacOSRelease.isAtLeast(MacOSRelease.HIGH_SIERRA_10_13)) {
+        if (MacOSRelease.isAtLeast(MacOSRelease.HIGH_SIERRA_10_13) && !TRAVIS) {
           should(await listFiles()).deepEqual(['\u00e9'])
         } else {
           should(await listFiles()).deepEqual(['\u0065\u0301'])
