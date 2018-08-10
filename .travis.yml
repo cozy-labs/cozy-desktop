@@ -69,7 +69,12 @@ before_install:
     - export COZY_STACK_TOKEN=$($GOPATH/bin/cozy-stack instances token-oauth localhost:8080 "$COZY_CLIENT_ID" io.cozy.files io.cozy.settings)
 
     # COZY_DESKTOP_DIR
-    - mkdir -p "$COZY_DESKTOP_DIR"
+    - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
+        hdiutil create -megabytes 10 -fs APFS -volname cozy-desktop "$COZY_DESKTOP_DIR";
+        hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR";
+      else
+        mkdir -p "$COZY_DESKTOP_DIR";
+      fi
 
     # Dummy .env.test (all variables are already set)
     # env-cmd ignores the file when empty
