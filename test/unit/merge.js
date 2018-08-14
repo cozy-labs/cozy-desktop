@@ -157,7 +157,7 @@ describe('Merge', function () {
     })
   })
 
-  describe('putFolder', () =>
+  describe('putFolder', () => {
     it('saves the new folder', async function () {
       let doc = {
         _id: 'FOO/NEW-FOLDER',
@@ -172,7 +172,28 @@ describe('Merge', function () {
       res.should.have.properties(doc)
       res.sides.local.should.equal(1)
     })
-  )
+
+    it('saves a new version of an existing folder', async function () {
+      const old = await builders.dir().path('existing-folder').create()
+      const doc = builders.changedFrom(old).onSide(this.side).build()
+
+      await this.merge.putFolderAsync(this.side, doc)
+
+      const result = await this.pouch.db.get(doc._id)
+      should(result._rev).not.equal(old._rev)
+      should(result).have.properties(_.omit(doc, '_rev'))
+    })
+
+    it('does nothing when existing folder is up to date', async function () {
+      const old = await builders.dir().path('up-to-date-folder').create()
+      const doc = _.cloneDeep(old)
+
+      await this.merge.putFolderAsync(this.side, doc)
+
+      const result = await this.pouch.db.get(doc._id)
+      should(result).deepEqual(old)
+    })
+  })
 
   describe('moveFile', function () {
     // @TODO fixme intermittent failure
