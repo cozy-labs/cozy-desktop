@@ -281,13 +281,14 @@ class Merge {
       if (file && sameFile(file, doc)) {
         log.info({path}, 'up to date (move)')
         return null
-      } else if (file) {
+      } else if (file && !doc.overwrite) {
         const dst = await this.resolveConflictAsync(side, doc, file)
         was.moveTo = dst._id
         dst.sides = {}
         dst.sides[side] = 1
         return this.pouch.bulkDocs([was, dst])
       } else {
+        if (file && doc.overwrite) doc._rev = file._rev
         await this.ensureParentExistAsync(side, doc)
         return this.pouch.bulkDocs([was, doc])
       }
@@ -314,12 +315,16 @@ class Merge {
       if (doc.ino == null) { doc.ino = was.ino }
       // FIXME: Shouldn't we compare doc/was updated_at & set doc accordingly
       // as in moveFileAsync?
-      if (folder) {
+      if (folder && !doc.overwrite) {
         const dst = await this.resolveConflictAsync(side, doc, folder)
         dst.sides = {}
         dst.sides[side] = 1
         return this.moveFolderRecursivelyAsync(side, dst, was)
       } else {
+        if (folder && doc.overwrite) {
+          doc.overwrite = folder
+          doc._rev = folder._rev
+        }
         await this.ensureParentExistAsync(side, doc)
         return this.moveFolderRecursivelyAsync(side, doc, was)
       }

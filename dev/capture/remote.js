@@ -118,6 +118,15 @@ const runActions = (scenario /*: * */, cozy /*: * */) => {
           const newParent = await cozy.files.statByPath(
             `/${path.posix.dirname(action.dst)}`)
           const remoteDoc = await cozy.files.statByPath(`/${action.src}`)
+          if (action.merge) throw new Error('Move.merge not implemented on remote')
+          if (action.force) {
+            try {
+              const remoteOverwriten = await cozy.files.statByPath(`/${action.dst}`)
+              await cozy.files.trashById(remoteOverwriten._id)
+            } catch (err) {
+              debug('force not forced', err)
+            }
+          }
           return cozy.files.updateAttributesById(remoteDoc._id, {
             dir_id: newParent._id,
             // path: '/' + action.dst,

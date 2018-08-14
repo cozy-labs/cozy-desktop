@@ -4,6 +4,7 @@ const glob = require('glob')
 const _ = require('lodash')
 const path = require('path')
 const crypto = require('crypto')
+const mergedirs = require('merge-dirs').default
 
 const metadata = require('../../../core/metadata')
 
@@ -211,8 +212,16 @@ module.exports.runActions = (scenario, abspath) => {
         return fs.remove(abspath(action.path))
 
       case 'mv':
-        debug('- mv', action.src, action.dst)
-        return fs.rename(abspath(action.src), abspath(action.dst))
+        debug('- mv', action.force ? 'force' : '', action.src, action.dst)
+        if (action.merge) {
+          // FIXME: Does this preserve inode ?
+          mergedirs(abspath(action.src), abspath(action.dst), 'overwrite')
+          return fs.remove(abspath(action.src))
+        } else if (action.force) {
+          return fs.move(abspath(action.src), abspath(action.dst), {overwrite: true})
+        } else {
+          return fs.rename(abspath(action.src), abspath(action.dst))
+        }
 
       case 'wait':
         debug('- wait', action.ms)

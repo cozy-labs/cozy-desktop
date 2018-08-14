@@ -141,6 +141,7 @@
     "istanbul-lib-coverage": "^1.1.1",
     "istanbul-lib-hook": "^1.1.0",
     "jsverify": "^0.8.0",
+    "merge-dirs": "^0.2.1",
     "mocha": "^3.4.2",
     "mocha-clean": "^1.0.0",
     "request": "^2.83.0",

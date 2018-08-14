@@ -341,7 +341,7 @@ module.exports = class LocalWatcher {
             if (c.update) await this.onChange(c.update.path, c.update.stats, c.update.md5sum)
             break
           case 'DirMove':
-            await this.onMoveFolder(c.path, c.stats, c.old)
+            await this.onMoveFolder(c.path, c.stats, c.old, c.overwrite)
             break
           case 'Ignored':
             break
@@ -426,9 +426,11 @@ module.exports = class LocalWatcher {
     return this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
   }
 
-  onMoveFolder (folderPath /*: string */, stats /*: fs.Stats */, old /*: Metadata */) {
+  onMoveFolder (folderPath /*: string */, stats /*: fs.Stats */, old /*: Metadata */, overwrite /*: boolean */) {
     const logError = (err) => log.error({err, path: folderPath})
     const doc = metadata.buildDir(folderPath, stats, old.remote)
+    // $FlowFixMe we set doc.overwrite to true, it will be replaced by metadata in merge
+    if (overwrite) doc.overwrite = overwrite
     log.info({path: folderPath, oldpath: old.path}, 'DirMove')
     return this.prep.moveFolderAsync(SIDE, doc, old).catch(logError)
   }

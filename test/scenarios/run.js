@@ -137,7 +137,9 @@ describe('Test scenarios', function () {
               actual.remoteContents = {}
               for (const relpath of _.keys(scenario.expected.contents)) {
                 actual.localContents[relpath] = await helpers.local.readFile(relpath)
+                    .catch(err => `Error Reading Local(${relpath}): ${err.message}`)
                 actual.remoteContents[relpath] = await helpers.remote.readFile(relpath)
+                    .catch(err => `Error Reading Remote(${relpath}): ${err.message}`)
               }
             }
 
@@ -206,6 +208,9 @@ describe('Test scenarios', function () {
       continue
     } else if (scenario.disabled) {
       it.skip(`${remoteTestName}  (${scenario.disabled})`, () => {})
+      continue
+    } else if (scenario.noremote) {
+      it.skip(`${remoteTestName}  (skip local only test)`, () => {})
       continue
     }
 
