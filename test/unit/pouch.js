@@ -11,16 +11,17 @@ const { uniq } = _
 
 const metadata = require('../../core/metadata')
 
+const MetadataBuilders = require('../support/builders/metadata')
 const configHelpers = require('../support/helpers/config')
 const pouchHelpers = require('../support/helpers/pouch')
 
 describe('Pouch', function () {
   before('instanciate config', configHelpers.createConfig)
-  before('instanciate pouch', pouchHelpers.createDatabase)
-  after('clean pouch', pouchHelpers.cleanDatabase)
+  beforeEach('instanciate pouch', pouchHelpers.createDatabase)
+  afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
-  before('create folders and files', async function () {
+  beforeEach('create folders and files', async function () {
     await pouchHelpers.createParentFolder(this.pouch)
     for (let i of [1, 2, 3]) {
       await pouchHelpers.createFolder(this.pouch, i)
@@ -50,6 +51,34 @@ describe('Pouch', function () {
   })
 
   describe('ODM', function () {
+    describe('bulkDocs', () => {
+      let doc1, doc2, old1, old2
+
+      beforeEach(async function () {
+        const builders = new MetadataBuilders(this.pouch)
+
+        old1 = await builders.file().path('doc1').create()
+        old2 = await builders.file().path('doc2').create()
+
+        doc1 = _.clone(old1)
+        doc2 = _.clone(old2)
+      })
+
+      it(`does not save two docs swallowing error on first one`, async function () {
+        doc1._rev = '2-badbeef'
+        await should(this.pouch.bulkDocs([doc1, doc2])).be.rejectedWith({status: 409})
+        should((await this.pouch.db.get(doc1._id))._rev).equal(old1._rev)
+        should((await this.pouch.db.get(doc2._id))._rev).not.equal(old2._rev)
+      })
+
+      it(`does not save two docs swallowing error on second one`, async function () {
+        doc2._rev = '2-badbeef'
+        await should(this.pouch.bulkDocs([doc1, doc2])).be.rejectedWith({status: 409})
+        should((await this.pouch.db.get(doc1._id))._rev).not.equal(old1._rev)
+        should((await this.pouch.db.get(doc2._id))._rev).equal(old2._rev)
+      })
+    })
+
     describe('getAll', () =>
       it('returns all the documents matching the query', async function () {
         let params = {

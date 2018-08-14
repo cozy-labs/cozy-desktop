@@ -33,7 +33,7 @@ module.exports = class BaseMetadataBuilder {
     this.opts = {
       path: 'foo',
       sides: {},
-      updated_at: timestamp.current()
+      updated_at: timestamp.stringify(timestamp.current())
     }
   }
 
