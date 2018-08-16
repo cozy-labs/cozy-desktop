@@ -120,7 +120,7 @@ module.exports = class Local /*:: implements Side */ {
     }
   }
 
-  async updateMetadataAsync (doc /*: Metadata */) {
+  async updateMetadataAsync (doc /*: Metadata */) /*: Promise<void> */ {
     let filePath = path.resolve(this.syncPath, doc.path)
     if (doc.executable) await fs.chmod(filePath, '755')
     if (doc.updated_at) {
@@ -182,7 +182,7 @@ module.exports = class Local /*:: implements Side */ {
   // from the remote document. Later, chokidar will fire an event for this new
   // file. The checksum will then be computed and added to the document, and
   // then pushed to CouchDB.
-  addFile (doc /*: Metadata */, callback /*: Callback */) {
+  addFile (doc /*: Metadata */, callback /*: Callback */) /*: void */ {
     let tmpFile = path.resolve(this.tmpPath, `${path.basename(doc.path)}.tmp`)
     let filePath = path.resolve(this.syncPath, doc.path)
     let parent = path.resolve(this.syncPath, path.dirname(doc.path))
@@ -253,7 +253,7 @@ module.exports = class Local /*:: implements Side */ {
   }
 
   // Create a new folder
-  addFolder (doc /*: Metadata */, callback /*: Callback */) {
+  addFolder (doc /*: Metadata */, callback /*: Callback */) /*: void */ {
     let folderPath = path.join(this.syncPath, doc.path)
     log.info({path: doc.path}, 'Put folder')
     async.series([
@@ -264,27 +264,27 @@ module.exports = class Local /*:: implements Side */ {
   }
 
   // Overwrite a file
-  overwriteFileAsync (doc /*: Metadata */, old /*: ?Metadata */) /*: Promise<*> */ {
-    return this.addFileAsync(doc)
+  async overwriteFileAsync (doc /*: Metadata */, old /*: ?Metadata */) /*: Promise<void> */ {
+    await this.addFileAsync(doc)
   }
 
   // Update the metadata of a file
-  updateFileMetadata (doc /*: Metadata */, old /*: Metadata */, callback /*: Callback */) {
+  updateFileMetadata (doc /*: Metadata */, old /*: Metadata */, callback /*: Callback */) /*: void */ {
     log.info({path: doc.path}, 'Updating file metadata...')
     this.metadataUpdater(doc)(callback)
   }
 
   // Update a folder
-  updateFolderAsync (doc /*: Metadata */, old /*: Metadata */) /*: Promise<*> */ {
-    return this.addFolderAsync(doc)
+  async updateFolderAsync (doc /*: Metadata */, old /*: Metadata */) /*: Promise<void> */ {
+    await this.addFolderAsync(doc)
   }
 
-  async assignNewRev (doc /*: Metadata */) /*: Promise<*> */ {
+  async assignNewRev (doc /*: Metadata */) /*: Promise<void> */ {
     log.info({path: doc.path}, 'Local assignNewRev = noop')
   }
 
   // Move a file from one place to another
-  async moveFileAsync (doc /*: Metadata */, old /*: Metadata */) {
+  async moveFileAsync (doc /*: Metadata */, old /*: Metadata */) /*: Promise<void> */ {
     log.info({path: doc.path}, `Moving from ${old.path}`)
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
@@ -316,7 +316,7 @@ module.exports = class Local /*:: implements Side */ {
   }
 
   // Move a folder
-  async moveFolderAsync (doc /*: Metadata */, old /*: Metadata */) {
+  async moveFolderAsync (doc /*: Metadata */, old /*: Metadata */) /*: Promise<void> */ {
     log.info({path: doc.path}, `Move folder from ${old.path}`)
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
@@ -343,7 +343,7 @@ module.exports = class Local /*:: implements Side */ {
     }
   }
 
-  async trashAsync (doc /*: Metadata */) /*: Promise<*> */ {
+  async trashAsync (doc /*: Metadata */) /*: Promise<void> */ {
     log.info({path: doc.path}, 'Moving to the OS trash...')
     this.events.emit('delete-file', doc)
     let fullpath = path.join(this.syncPath, doc.path)
@@ -354,7 +354,7 @@ module.exports = class Local /*:: implements Side */ {
     }
   }
 
-  async deleteFolderAsync (doc /*: Metadata */) /*: Promise<*> */ {
+  async deleteFolderAsync (doc /*: Metadata */) /*: Promise<void> */ {
     if (doc.docType !== 'folder') throw new Error(`Not folder metadata: ${doc.path}`)
     const fullpath = path.join(this.syncPath, doc.path)
 

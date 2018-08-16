@@ -4,16 +4,16 @@
 import type { SideName, Metadata } from './metadata'
 
 export interface Side {
-  addFileAsync (doc: Metadata): Promise<*>;
-  addFolderAsync (doc: Metadata): Promise<*>;
-  overwriteFileAsync (doc: Metadata, old: ?Metadata): Promise<*>;
-  updateFileMetadataAsync (doc: Metadata, old: Metadata): Promise<*>;
-  updateFolderAsync (doc: Metadata, old: Metadata): Promise<*>;
-  moveFileAsync (doc: Metadata, from: Metadata): Promise<*>;
-  moveFolderAsync (doc: Metadata, from: Metadata): Promise<*>;
-  assignNewRev (doc: Metadata): Promise<*>;
-  trashAsync (doc: Metadata): Promise<*>;
-  deleteFolderAsync (doc: Metadata): Promise<*>;
+  addFileAsync (doc: Metadata): Promise<void>;
+  addFolderAsync (doc: Metadata): Promise<void>;
+  overwriteFileAsync (doc: Metadata, old: ?Metadata): Promise<void>;
+  updateFileMetadataAsync (doc: Metadata, old: Metadata): Promise<void>;
+  updateFolderAsync (doc: Metadata, old: Metadata): Promise<void>;
+  moveFileAsync (doc: Metadata, from: Metadata): Promise<void>;
+  moveFolderAsync (doc: Metadata, from: Metadata): Promise<void>;
+  assignNewRev (doc: Metadata): Promise<void>;
+  trashAsync (doc: Metadata): Promise<void>;
+  deleteFolderAsync (doc: Metadata): Promise<void>;
   renameConflictingDocAsync (doc: Metadata, newPath: string): Promise<void>;
 }
 */
