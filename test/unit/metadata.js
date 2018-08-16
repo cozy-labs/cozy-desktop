@@ -24,6 +24,8 @@ const {
 } = require('../../core/metadata')
 
 describe('metadata', function () {
+  const builders = new MetadataBuilders()
+
   describe('assignId', function () {
     it('is available', function () {
       let doc = {path: 'FOO'}
@@ -200,8 +202,6 @@ describe('metadata', function () {
   })
 
   describe('assignMaxDate', () => {
-    const builders = new MetadataBuilders()
-
     it('assigns the previous timestamp to the doc when it is more recent than the current one to prevent updated_at < created_at errors on remote sync', () => {
       const was = builders.file().build()
       const doc = builders.file().olderThan(was).build()
