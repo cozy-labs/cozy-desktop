@@ -12,7 +12,11 @@ const pouchdbBuilders = require('../pouchdb')
 
 /*::
 import type fs from 'fs-extra'
-import type { Metadata, MetadataSidesInfo } from '../../../../core/metadata'
+import type {
+  Metadata,
+  MetadataRemoteInfo,
+  MetadataSidesInfo
+} from '../../../../core/metadata'
 import type Pouch from '../../../../core/pouch'
 */
 
@@ -22,6 +26,7 @@ module.exports = class BaseMetadataBuilder {
   opts: {
     path: string,
     ino?: number,
+    remote: MetadataRemoteInfo,
     updated_at?: string|Date,
     trashed?: true,
     sides: MetadataSidesInfo
@@ -32,6 +37,10 @@ module.exports = class BaseMetadataBuilder {
     this.pouch = pouch
     this.opts = {
       path: 'foo',
+      remote: {
+        _id: pouchdbBuilders.id(),
+        _rev: pouchdbBuilders.rev()
+      },
       sides: {},
       updated_at: timestamp.stringify(timestamp.current())
     }
@@ -83,6 +92,14 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
+  remoteId (_id /*: string */) /*: this */ {
+    this.opts.remote = {
+      _id,
+      _rev: pouchdbBuilders.rev()
+    }
+    return this
+  }
+
   upToDate () /*: this */ {
     this.opts.sides = {local: 1, remote: 1}
     return this
@@ -100,10 +117,6 @@ module.exports = class BaseMetadataBuilder {
   build () /*: Metadata */ {
     const doc = _.merge({
       _id: '',
-      remote: {
-        _id: pouchdbBuilders.id(),
-        _rev: pouchdbBuilders.rev()
-      },
       tags: [],
       updated_at: new Date()
     }, this.opts, this.attributesByType())
