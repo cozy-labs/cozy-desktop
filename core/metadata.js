@@ -21,6 +21,8 @@ const log = logger({
   component: 'Metadata'
 })
 
+const { platform } = process
+
 /*::
 export type SideName =
   | "local"
@@ -67,7 +69,7 @@ let assignId /*: (doc: *) => void */ = (_) => {}
 
 // See [test/world/](https://github.com/cozy-labs/cozy-desktop/blob/master/test/world/)
 // for file system behavior examples.
-switch (process.platform) {
+switch (platform) {
   case 'linux': case 'freebsd': case 'sunos':
     assignId = assignIdUnix
     break
@@ -78,7 +80,7 @@ switch (process.platform) {
     assignId = assignIdNTFS
     break
   default:
-    throw new Error(`Sorry, ${process.platform} is not supported!`)
+    throw new Error(`Sorry, ${platform} is not supported!`)
 }
 
 module.exports = {
@@ -185,7 +187,7 @@ export type PlatformIncompatibility = PathIssue & {docType: string}
 // TODO: return null instead of an empty array when no issue was found?
 function detectPlatformIncompatibilities (metadata /*: Metadata */, syncPath /*: string */) /*: Array<PlatformIncompatibility> */ {
   const {path, docType} = metadata
-  const pathLenghIssue = detectPathLengthIssue(join(syncPath, path), process.platform)
+  const pathLenghIssue = detectPathLengthIssue(join(syncPath, path), platform)
   const issues /*: PathIssue[] */ = detectPathIssues(path, docType)
   if (pathLenghIssue) issues.unshift(pathLenghIssue)
   return issues.map(issue => (_.merge({

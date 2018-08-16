@@ -23,6 +23,8 @@ const {
   buildFile
 } = require('../../core/metadata')
 
+const { platform } = process
+
 describe('metadata', function () {
   const builders = new MetadataBuilders()
 
@@ -33,7 +35,7 @@ describe('metadata', function () {
       doc._id.should.equal('FOO')
     })
 
-    if (['linux', 'freebsd', 'sunos'].includes(process.platform)) {
+    if (['linux', 'freebsd', 'sunos'].includes(platform)) {
       it('is case insensitive on UNIX', function () {
         let doc = {path: 'foo/bar/café'}
         assignId(doc)
@@ -41,7 +43,7 @@ describe('metadata', function () {
       })
     }
 
-    if (process.platform === 'darwin') {
+    if (platform === 'darwin') {
       it('is case sensitive on OSX', function () {
         let doc = {path: 'foo/bar/café'}
         assignId(doc)
@@ -49,7 +51,7 @@ describe('metadata', function () {
       })
     }
 
-    if (process.platform === 'win32') {
+    if (platform === 'win32') {
       it('is case sensitive on Windows', () => {
         let doc = {path: 'foo/bar/caf\u00E9'}
         assignId(doc)
@@ -131,7 +133,6 @@ describe('metadata', function () {
   })
 
   describe('detectPlatformIncompatibilities', () => {
-    const platform = process.platform
     const syncPath = ';'
 
     it('is null when all names in the path are compatible', () => {
@@ -511,7 +512,7 @@ describe('metadata', function () {
       should(buildFile('chat-mignon.jpg', stats, md5sum, remote).remote).deepEqual(remote)
     })
 
-    if (process.platform !== 'win32') {
+    if (platform !== 'win32') {
       it('sets the executable bit', async function () {
         const filePath = path.join(__dirname, '../../tmp/test/executable')
         const whateverChecksum = '1B2M2Y8AsgTpgAmY7PhCfg=='
