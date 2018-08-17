@@ -81,6 +81,11 @@ class LocalTestHelpers {
       .filter(relpath => !relpath.match(TMP_DIR_NAME))
   }
 
+  async scan () {
+    await this.local.watcher.start()
+    await this.local.watcher.stop()
+  }
+
   async treeWithoutTrash () {
     return (await this.tree())
       .filter(p => !p.startsWith('/Trash/'))
