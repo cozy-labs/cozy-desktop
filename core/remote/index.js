@@ -77,7 +77,7 @@ module.exports = class Remote /*:: implements Side */ {
   }
 
   // Create a folder on the remote cozy instance
-  async addFolderAsync (doc /*: Metadata */) /*: Promise<Metadata> */ {
+  async addFolderAsync (doc /*: Metadata */) /*: Promise<void> */ {
     const {path} = doc
     log.info({path}, 'Creating folder...')
 
@@ -103,11 +103,9 @@ module.exports = class Remote /*:: implements Side */ {
       _id: dir._id,
       _rev: dir._rev
     }
-
-    return conversion.createMetadata(dir)
   }
 
-  async addFileAsync (doc /*: Metadata */) /*: Promise<Metadata> */ {
+  async addFileAsync (doc /*: Metadata */) /*: Promise<void> */ {
     const {path} = doc
     log.info({path}, 'Uploading new file...')
     const stopMeasure = measureTime('RemoteWriter#addFile')
@@ -142,11 +140,9 @@ module.exports = class Remote /*:: implements Side */ {
     }
 
     stopMeasure()
-    // TODO do we use the returned values somewhere?
-    return conversion.createMetadata(created)
   }
 
-  async overwriteFileAsync (doc /*: Metadata */, old /*: ?Metadata */) /*: Promise<Metadata> */ {
+  async overwriteFileAsync (doc /*: Metadata */, old /*: ?Metadata */) /*: Promise<void> */ {
     const {path} = doc
     log.info({path}, 'Uploading new file version...')
 
@@ -174,11 +170,9 @@ module.exports = class Remote /*:: implements Side */ {
     const updated = await this.remoteCozy.updateFileById(doc.remote._id, stream, options)
 
     doc.remote._rev = updated._rev
-
-    return conversion.createMetadata(updated)
   }
 
-  async updateFileMetadataAsync (doc /*: Metadata */, old /*: any */) /*: Promise<Metadata> */ {
+  async updateFileMetadataAsync (doc /*: Metadata */, old /*: any */) /*: Promise<void> */ {
     const {path} = doc
     log.info({path}, 'Updating file metadata...')
 
@@ -195,11 +189,9 @@ module.exports = class Remote /*:: implements Side */ {
       _id: updated._id,
       _rev: updated._rev
     }
-
-    return conversion.createMetadata(updated)
   }
 
-  async moveFileAsync (newMetadata /*: Metadata */, oldMetadata /*: Metadata */) /*: Promise<Metadata> */ {
+  async moveFileAsync (newMetadata /*: Metadata */, oldMetadata /*: Metadata */) /*: Promise<void> */ {
     const {path} = newMetadata
     log.info({path}, `Moving file from ${oldMetadata.path} ...`)
 
@@ -222,16 +214,13 @@ module.exports = class Remote /*:: implements Side */ {
       _rev: newRemoteDoc._rev
     }
 
-    if (newMetadata.md5sum === oldMetadata.md5sum) {
-      // move only
-      return conversion.createMetadata(newRemoteDoc)
-    } else {
+    if (newMetadata.md5sum !== oldMetadata.md5sum) {
       // move & update
-      return this.overwriteFileAsync(newMetadata, newMetadata)
+      await this.overwriteFileAsync(newMetadata, newMetadata)
     }
   }
 
-  async updateFolderAsync (doc /*: Metadata */, old /*: Metadata */) /*: Promise<Metadata> */ {
+  async updateFolderAsync (doc /*: Metadata */, old /*: Metadata */) /*: Promise<void> */ {
     const {path} = doc
     if (!old.remote) {
       return this.addFolderAsync(doc)
@@ -268,8 +257,6 @@ module.exports = class Remote /*:: implements Side */ {
       _id: newRemoteDoc._id,
       _rev: newRemoteDoc._rev
     }
-
-    return conversion.createMetadata(newRemoteDoc)
   }
 
   async trashAsync (doc /*: Metadata */) /*: Promise<void> */ {
@@ -308,13 +295,13 @@ module.exports = class Remote /*:: implements Side */ {
     }
   }
 
-  async assignNewRev (doc /*: Metadata */) /*: Promise<*> */ {
+  async assignNewRev (doc /*: Metadata */) /*: Promise<void> */ {
     log.info({path: doc.path}, 'Assigning new rev...')
     const {_rev} = await this.remoteCozy.client.files.statById(doc.remote._id)
     doc.remote._rev = _rev
   }
 
-  async moveFolderAsync (newMetadata /*: Metadata */, oldMetadata /*: Metadata */) /*: Promise<*> */ {
+  async moveFolderAsync (newMetadata /*: Metadata */, oldMetadata /*: Metadata */) /*: Promise<void> */ {
     // FIXME: same as moveFileAsync? Rename to moveAsync?
     const {path} = newMetadata
     log.info({path}, `Moving dir from ${oldMetadata.path} ...`)
@@ -337,8 +324,6 @@ module.exports = class Remote /*:: implements Side */ {
       _id: newRemoteDoc._id, // XXX: Why do we reassign id? Isn't it the same as before?
       _rev: newRemoteDoc._rev
     }
-
-    return conversion.createMetadata(newRemoteDoc)
   }
 
   diskUsage () /*: Promise<*> */ {

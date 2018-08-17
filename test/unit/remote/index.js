@@ -102,11 +102,11 @@ describe('Remote', function () {
         }
       }
 
-      const created = await this.remote.addFileAsync(doc)
+      await this.remote.addFileAsync(doc)
       should.exist(doc.remote._id)
       should.exist(doc.remote._rev)
 
-      const file = await cozy.files.statById(created.remote._id)
+      const file = await cozy.files.statById(doc.remote._id)
       should(file.attributes).have.properties({
         dir_id: 'io.cozy.files.root-dir',
         executable: true,
@@ -152,11 +152,11 @@ describe('Remote', function () {
       await this.pouch.db.put(doc)
       await this.pouch.db.put(same)
 
-      const created = await this.remote.addFileAsync(doc)
+      await this.remote.addFileAsync(doc)
 
       should.exist(doc.remote._id)
       should.exist(doc.remote._rev)
-      const file = await cozy.files.statById(created.remote._id)
+      const file = await cozy.files.statById(doc.remote._id)
       should(file.attributes).have.properties({
         dir_id: backupDir._id,
         name: 'cat3.jpg',
@@ -194,11 +194,11 @@ describe('Remote', function () {
         docType: 'folder',
         updated_at: dateString
       }
-      const created /*: Metadata */ = await this.remote.addFolderAsync(doc)
+      await this.remote.addFolderAsync(doc)
       should.exist(doc.remote._id)
       should.exist(doc.remote._rev)
 
-      const folder = await cozy.files.statById(created.remote._id)
+      const folder = await cozy.files.statById(doc.remote._id)
       should(folder.attributes).have.properties({
         path: '/couchdb-folder/folder-1',
         name: 'folder-1',
@@ -213,9 +213,9 @@ describe('Remote', function () {
       const metadata /*: Metadata */ = _.merge({remote: undefined}, conversion.createMetadata(remoteDir))
       ensureValidPath(metadata)
 
-      const result /*: Metadata */ = await this.remote.addFolderAsync(metadata)
+      await this.remote.addFolderAsync(metadata)
 
-      const folder /*: JsonApiDoc */ = await cozy.files.statById(result.remote._id)
+      const folder /*: JsonApiDoc */ = await cozy.files.statById(metadata.remote._id)
       const {path, name, type, updated_at} = remoteDir
       should(folder.attributes).have.properties({path, name, type, updated_at})
       should(metadata.remote).have.properties({
@@ -294,7 +294,7 @@ describe('Remote', function () {
             return fs.readFile('/path/do/not/exists')
           }
         }
-        await this.remote.addFileAsync(metadata)
+        await this.remote.overwriteFileAsync(metadata)
         should.exist(metadata.remote._id)
         should.exist(metadata.remote._rev)
         should.exist(metadata._deleted)
@@ -357,9 +357,9 @@ describe('Remote', function () {
         updated_at: '2017-11-16T16:14:45Z'
       }, old)
 
-      const updated /*: Metadata */ = await this.remote.updateFolderAsync(doc, old)
+      await this.remote.updateFolderAsync(doc, old)
 
-      const folder /*: JsonApiDoc */ = await cozy.files.statById(updated.remote._id)
+      const folder /*: JsonApiDoc */ = await cozy.files.statById(doc.remote._id)
       should(folder.attributes).have.properties({
         path: '/new-parent-dir/new-name',
         type: 'directory',
@@ -418,9 +418,9 @@ describe('Remote', function () {
         updated_at: timestamp.stringify(timestamp.build(2015, 2, 2, 2, 2, 2))
       }, oldMetadata)
 
-      const created /*: Metadata */ = await this.remote.updateFolderAsync(newMetadata, oldMetadata)
+      await this.remote.updateFolderAsync(newMetadata, oldMetadata)
 
-      const folder /*: JsonApiDoc */ = await cozy.files.statById(created.remote._id)
+      const folder /*: JsonApiDoc */ = await cozy.files.statById(newMetadata.remote._id)
       should(folder.attributes).have.properties({
         type: 'directory',
         name: 'foo',
@@ -455,15 +455,14 @@ describe('Remote', function () {
     })
 
     it('moves the file', async function () {
-      const moved /*: Metadata */ = await this.remote.moveFileAsync(doc, old)
+      await this.remote.moveFileAsync(doc, old)
 
-      should(moved.remote._id).equal(old.remote._id)
-      should(moved.remote._rev).not.equal(old.remote._rev)
-      should(doc.remote).have.properties(moved.remote)
-      const file = await cozy.files.statById(moved.remote._id)
+      should(doc.remote._id).equal(old.remote._id)
+      should(doc.remote._rev).not.equal(old.remote._rev)
+      const file = await cozy.files.statById(doc.remote._id)
       should(file).have.properties({
         _id: old.remote._id,
-        _rev: moved.remote._rev
+        _rev: doc.remote._rev
       })
       should(file.attributes).have.properties({
         dir_id: newDir._id,
@@ -482,15 +481,15 @@ describe('Remote', function () {
         }
       }
 
-      const moved /*: Metadata */ = await this.remote.moveFileAsync(doc, old)
+      await this.remote.moveFileAsync(doc, old)
 
-      should(moved.remote._id).equal(old.remote._id)
-      should(moved.remote._rev).not.equal(old.remote._rev)
-      should(doc.remote).have.properties(moved.remote)
-      const file = await cozy.files.statById(moved.remote._id)
+      should(doc.remote._id).equal(old.remote._id)
+      should(doc.remote._rev).not.equal(old.remote._rev)
+      should(doc.remote).have.properties(doc.remote)
+      const file = await cozy.files.statById(doc.remote._id)
       should(file).have.properties({
         _id: old.remote._id,
-        _rev: moved.remote._rev
+        _rev: doc.remote._rev
       })
       should(file.attributes).have.properties({
         dir_id: newDir._id,
@@ -528,8 +527,8 @@ describe('Remote', function () {
           _rev: created._rev
         }
       }
-      const { remote } = await this.remote.moveFolderAsync(doc, old)
-      const folder = await cozy.files.statById(remote._id)
+      await this.remote.moveFolderAsync(doc, old)
+      const folder = await cozy.files.statById(doc.remote._id)
       should(folder.attributes).have.properties({
         dir_id: couchdbFolder._id,
         name: 'folder-5',
@@ -558,8 +557,9 @@ describe('Remote', function () {
           _rev: created._rev
         }
       }
-      const { remote: { _id } } = await this.remote.moveFolderAsync(doc, old)
-      const folder = await cozy.files.statById(_id)
+      await this.remote.moveFolderAsync(doc, old)
+      // $FlowFixMe
+      const folder = await cozy.files.statById(doc.remote._id)
       should(folder.attributes).have.properties({
         dir_id: couchdbFolder._id,
         name: 'folder-7',
