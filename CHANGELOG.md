@@ -1,3 +1,18 @@
+## 3.9.1-beta.1 - 2018-08-16
+
+Improvements for all users:
+
+- Fix synchronization bugs when merging and overwriting folders.
+
+Improvements for macOS users:
+
+- Better support for APFS
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
+
 ## 3.9.0 - 2018-07-20
 
 Improvements for all users:
