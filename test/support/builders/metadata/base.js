@@ -15,7 +15,8 @@ import type fs from 'fs-extra'
 import type {
   Metadata,
   MetadataRemoteInfo,
-  MetadataSidesInfo
+  MetadataSidesInfo,
+  SideName
 } from '../../../../core/metadata'
 import type Pouch from '../../../../core/pouch'
 */
@@ -24,6 +25,7 @@ module.exports = class BaseMetadataBuilder {
   /*::
   pouch: ?Pouch
   opts: {
+    _rev?: string,
     path: string,
     ino?: number,
     remote: MetadataRemoteInfo,
@@ -44,6 +46,11 @@ module.exports = class BaseMetadataBuilder {
       sides: {},
       updated_at: timestamp.stringify(timestamp.current())
     }
+  }
+
+  rev (rev /*: string */) /*: this */ {
+    this.opts._rev = rev
+    return this
   }
 
   incompatible () /*: this */ {
@@ -107,6 +114,11 @@ module.exports = class BaseMetadataBuilder {
 
   notUpToDate () /*: this */ {
     this.opts.sides = {remote: 1}
+    return this
+  }
+
+  sides (sides /*: MetadataSidesInfo */) /*: this */ {
+    this.opts.sides = sides
     return this
   }
 
