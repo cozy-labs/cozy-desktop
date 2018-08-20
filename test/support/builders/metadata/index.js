@@ -9,6 +9,7 @@ import type {
   Metadata
 } from '../../../../core/metadata'
 import type Pouch from '../../../../core/pouch'
+import type BaseMetadataBuilder from './base'
 */
 
 module.exports = class MetadataBuilders {
@@ -31,5 +32,10 @@ module.exports = class MetadataBuilders {
 
   file () /*: FileMetadataBuilder */ {
     return new FileMetadataBuilder(this.pouch)
+  }
+
+  whatever () /*: BaseMetadataBuilder */ {
+    // FIXME: Find a better way to test both doctypes, possibly combined
+    return this.dir()
   }
 }
