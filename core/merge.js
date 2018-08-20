@@ -245,7 +245,7 @@ class Merge {
       doc._rev = folder._rev
       if (doc.tags == null) { doc.tags = folder.tags || [] }
       if (doc.remote == null) { doc.remote = folder.remote }
-      if (doc.ino == null) { doc.ino = folder.ino }
+      if (doc.ino == null && folder.ino) { doc.ino = folder.ino }
       if (sameFolder(folder, doc)) {
         log.info({path}, 'up to date')
         return null
