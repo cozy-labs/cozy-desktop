@@ -95,7 +95,7 @@ class Merge {
 
   // Resolve a conflict by renaming a file/folder
   // A suffix composed of -conflict- and the date is added to the path.
-  async resolveConflictAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */) {
+  async resolveConflictAsync (side /*: SideName */, doc /*: Metadata */, was /*: ?Metadata */) {
     log.warn({path: doc.path, oldpath: was && was.path, doc, was}, 'resolveConflictAsync')
     let dst = clone(doc)
     let date = fsutils.validName(new Date().toISOString())
