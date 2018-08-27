@@ -77,8 +77,8 @@ suite('Case or encoding change', () => {
       switch (process.platform) {
         case 'win32':
           should(tree).deepEqual([
-            '\u00e9/',
-            'foo/'
+            'foo/',
+            '\u00e9/'
           ])
           break
 
@@ -91,8 +91,8 @@ suite('Case or encoding change', () => {
 
         case 'linux':
           should(tree).deepEqual([
-            '\u00e9/',
-            'FOO/'
+            'FOO/',
+            '\u00e9/'
           ])
       }
     })

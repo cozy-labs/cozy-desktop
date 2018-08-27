@@ -79,6 +79,7 @@ class LocalTestHelpers {
       .concat(await this.syncDir.tree())
       .map(conflictHelpers.ellipsizeDate)
       .filter(relpath => !relpath.match(TMP_DIR_NAME))
+      .sort()
   }
 
   async scan () {
