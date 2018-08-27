@@ -257,7 +257,7 @@ class Sync {
     }
   }
 
-  async applyDoc (doc /*: Metadata */, side /*: Side */, sideName /*: string */, rev /*: number */) /*: Promise<*> */ {
+  async applyDoc (doc /*: Metadata */, side /*: Side */, sideName /*: SideName */, rev /*: number */) /*: Promise<*> */ {
     if (doc.incompatibilities && sideName === 'local' && doc.moveTo == null) {
       const was = doc.moveFrom
       if (was != null && was.incompatibilities == null) {
