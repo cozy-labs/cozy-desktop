@@ -154,6 +154,16 @@ class Pouch {
     })
   }
 
+  async byIdMaybeAsync (id /*: string */) /*: Promise<?Metadata> */ {
+    let doc
+    try {
+      doc = await this.db.get(id)
+    } catch (err) {
+      if (err.status !== 404) throw err
+    }
+    return doc
+  }
+
   // Return all the files with this checksum
   byChecksum (checksum, callback) {
     let params = {

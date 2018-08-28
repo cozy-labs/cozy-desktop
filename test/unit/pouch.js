@@ -102,6 +102,34 @@ describe('Pouch', function () {
       })
     )
 
+    describe('byIdMaybeAsync', () => {
+      it('resolves with a doc matching the given _id if any', async function () {
+        const doc = await this.pouch.byIdMaybeAsync(metadata.id('my-folder'))
+        should(doc).have.properties({
+          docType: 'folder',
+          path: 'my-folder'
+        })
+      })
+
+      it('resolves with nothing otherwise', async function () {
+        const doc = await this.pouch.byIdMaybeAsync('not-found')
+        should(doc).be.undefined()
+      })
+
+      it('does not swallow non-404 errors', async function () {
+        const err = new Error('non-404 error')
+        err.status = 500
+        const get = sinon.stub(this.pouch.db, 'get').rejects(err)
+        try {
+          await should(
+            this.pouch.byIdMaybeAsync(metadata.id('my-folder'))
+          ).be.rejectedWith(err)
+        } finally {
+          get.restore()
+        }
+      })
+    })
+
     describe('byChecksum', () =>
       it('gets all the files with this checksum', async function () {
         let _id = metadata.id(path.join('my-folder', 'file-1'))

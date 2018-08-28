@@ -123,12 +123,7 @@ class Merge {
   async addFileAsync (side /*: SideName */, doc /*: Metadata */) {
     log.debug({path: doc.path}, 'addFileAsync')
     const {path} = doc
-    let file
-    try {
-      file = await this.pouch.db.get(doc._id)
-    } catch (err) {
-      if (err.status !== 404) { log.warn({path, err}) }
-    }
+    const file /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
     markSide(side, doc, file)
     if (file && file.docType === 'folder') {
       return this.resolveConflictAsync(side, doc, file)
@@ -190,12 +185,7 @@ class Merge {
   async updateFileAsync (side /*: SideName */, doc /*: Metadata */) {
     log.debug({path: doc.path}, 'updateFileAsync')
     const {path} = doc
-    let file
-    try {
-      file = await this.pouch.db.get(doc._id)
-    } catch (err) {
-      if (err.status !== 404) { log.warn({path, err}) }
-    }
+    const file /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
     markSide(side, doc, file)
     if (file && file.docType === 'folder') {
       throw new Error("Can't resolve this conflict!")
@@ -230,12 +220,7 @@ class Merge {
   async putFolderAsync (side /*: SideName */, doc /*: * */) {
     log.debug({path: doc.path}, 'putFolderAsync')
     const {path} = doc
-    let folder
-    try {
-      folder = await this.pouch.db.get(doc._id)
-    } catch (err) {
-      if (err.status !== 404) { log.warn({path, err}) }
-    }
+    const folder /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
     markSide(side, doc, folder)
     if (folder && folder.docType === 'file') {
       return this.resolveConflictAsync(side, doc, folder)
@@ -263,12 +248,7 @@ class Merge {
     log.debug({path: doc.path, oldpath: was.path}, 'moveFileAsync')
     const {path} = doc
     if (was.sides && was.sides[side]) {
-      let file
-      try {
-        file = await this.pouch.db.get(doc._id)
-      } catch (err) {
-        if (err.status !== 404) { log.warn({path, err}) }
-      }
+      const file /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
       markSide(side, doc, file)
       markSide(side, was, was)
       assignMaxDate(doc, was)
@@ -300,14 +280,8 @@ class Merge {
   // Rename or move a folder (and every file and folder inside it)
   async moveFolderAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */) {
     log.debug({path: doc.path, oldpath: was.path}, 'moveFolderAsync')
-    const {path} = doc
     if (was.sides && was.sides[side]) {
-      let folder
-      try {
-        folder = await this.pouch.db.get(doc._id)
-      } catch (err) {
-        if (err.status !== 404) { log.warn({path, err}) }
-      }
+      const folder /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
       markSide(side, doc, folder)
       markSide(side, was, was)
       assignMaxDate(doc, was)
@@ -387,15 +361,10 @@ class Merge {
 
   async doTrash (side /*: SideName */, was /*: * */, doc /*: * */) /*: Promise<void> */ {
     const {path} = doc
-    let oldMetadata
-    try {
-      oldMetadata = await this.pouch.db.get(was._id)
-    } catch (err) {
-      if (err.status === 404) {
-        log.debug({path}, 'Nothing to trash')
-        return
-      }
-      throw err
+    const oldMetadata /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(was._id)
+    if (!oldMetadata) {
+      log.debug({path}, 'Nothing to trash')
+      return
     }
     if (doc.docType !== oldMetadata.docType) {
       await this.resolveConflictAsync(side, doc, oldMetadata)
@@ -474,16 +443,8 @@ class Merge {
   // already been removed. This is not considerated as an error.
   async deleteFileAsync (side /*: SideName */, doc /*: Metadata */) {
     log.debug({path: doc.path}, 'deleteFileAsync')
-    let file
-    try {
-      file = await this.pouch.db.get(doc._id)
-    } catch (err) {
-      if (err.status === 404) {
-        return null
-      } else {
-        throw err
-      }
-    }
+    const file /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
+    if (!file) return null
     if (file.sides && file.sides[side]) {
       markSide(side, file, file)
       file._deleted = true
@@ -503,16 +464,8 @@ class Merge {
   // the folder is missing in pouchdb (error 404).
   async deleteFolderAsync (side /*: SideName */, doc /*: Metadata */) {
     log.debug({path: doc.path}, 'deleteFolderAsync')
-    let folder
-    try {
-      folder = await this.pouch.db.get(doc._id)
-    } catch (err) {
-      if (err.status === 404) {
-        return null
-      } else {
-        throw err
-      }
-    }
+    const folder /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
+    if (!folder) return null
     if (folder.sides && folder.sides[side]) {
       return this.deleteFolderRecursivelyAsync(side, folder)
     } else { // It can happen after a conflict
