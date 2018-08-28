@@ -138,6 +138,14 @@ class ContextDir {
   async removeParentDir (target /*: string | {path: string} */) /*: Promise<void> */ {
     await fs.remove(this.abspath(path.dirname(getPath(target))))
   }
+
+  async rename (target /*: string | {path: string} */, newName /*: string */) {
+    const oldPath = this.abspath(target)
+    const oldName = path.basename(oldPath)
+    const newPath = oldPath.replace(oldName, newName)
+
+    await fs.rename(oldPath, newPath)
+  }
 }
 
 module.exports = {

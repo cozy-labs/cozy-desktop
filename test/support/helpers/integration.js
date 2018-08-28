@@ -65,6 +65,11 @@ class IntegrationTestHelpers {
     await this.syncAll()
   }
 
+  async flushLocalAndSyncAll () {
+    await this.local.scan()
+    await this.syncAll()
+  }
+
   spyPouch () {
     sinon.spy(this._pouch, 'put')
     sinon.spy(this._pouch, 'bulkDocs')
@@ -85,6 +90,16 @@ class IntegrationTestHelpers {
     }
 
     return results
+  }
+
+  async trees (...treeNames /*: Array<'local' | 'remote'> */) /*: Promise<*> */ {
+    if (treeNames.length === 0) treeNames = ['local', 'remote']
+
+    const result = {}
+    if (treeNames.includes('local')) result.local = await this.local.tree()
+    if (treeNames.includes('remote')) result.remote = await this.remote.treeWithoutTrash()
+
+    return result
   }
 
   metadataTree () {
