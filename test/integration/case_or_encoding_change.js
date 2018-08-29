@@ -52,19 +52,19 @@ suite('Case or encoding change', () => {
     beforeEach(async () => {
       // This will fail with a 409 conflict error when cozy-stack runs directly
       // on macOS & HFS+ because a file with an equivalent name already exists.
-      dir = await cozy.files.createDirectory({name: '\u0065\u0301'})
+      dir = await cozy.files.createDirectory({name: 'e\u0301'}) // 'é'
       dir2 = await cozy.files.createDirectory({name: 'foo'})
       await helpers.remote.pullChanges()
       await helpers.syncAll()
       helpers.spyPouch()
       should(await helpers.local.tree()).deepEqual([
-        '\u0065\u0301/',
+        'e\u0301/', // 'é/'
         'foo/'
       ])
     })
 
     test('remote', async () => {
-      await cozy.files.updateAttributesById(dir._id, {name: '\u00e9'})
+      await cozy.files.updateAttributesById(dir._id, {name: '\u00e9'}) // 'é'
       await cozy.files.updateAttributesById(dir2._id, {name: 'FOO'})
       await helpers.remote.pullChanges()
 
@@ -77,22 +77,22 @@ suite('Case or encoding change', () => {
       switch (process.platform) {
         case 'win32':
           should(tree).deepEqual([
-            '\u00e9/',
-            'foo/'
+            'foo/',
+            '\u00e9/' // 'é/'
           ])
           break
 
         case 'darwin':
           should(tree).deepEqual([
-            '\u0065\u0301/',
+            'e\u0301/', // 'é/'
             'foo/'
           ])
           break
 
         case 'linux':
           should(tree).deepEqual([
-            '\u00e9/',
-            'FOO/'
+            'FOO/',
+            '\u00e9/' // 'é/'
           ])
       }
     })
