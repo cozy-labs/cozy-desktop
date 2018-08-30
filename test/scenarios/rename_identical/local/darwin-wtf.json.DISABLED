@@ -1,0 +1,82 @@
+[
+  {
+    "type": "addDir",
+    "path": "dir-case",
+    "stats": {
+      "ino": 1,
+      "size": 64,
+      "mtime": "2018-09-03T14:24:11.470Z",
+      "ctime": "2018-09-03T14:24:13.663Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "DIR-CASE",
+    "stats": {
+      "ino": 1,
+      "size": 64,
+      "mtime": "2018-09-03T14:24:11.470Z",
+      "ctime": "2018-09-03T14:24:13.663Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "dir-nfc-to-nfd-é",
+    "stats": {
+      "ino": 3,
+      "size": 64,
+      "mtime": "2018-09-03T14:24:11.507Z",
+      "ctime": "2018-09-03T14:24:13.666Z"
+    }
+  },
+  {
+    "type": "change",
+    "path": "file-case",
+    "stats": {
+      "ino": 2,
+      "size": 8,
+      "mtime": "2018-09-03T14:24:11.503Z",
+      "ctime": "2018-09-03T14:24:13.664Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "FILE-CASE",
+    "stats": {
+      "ino": 2,
+      "size": 8,
+      "mtime": "2018-09-03T14:24:11.503Z",
+      "ctime": "2018-09-03T14:24:13.664Z"
+    }
+  },
+  {
+    "type": "change",
+    "path": "file-nfc-to-nfd-é",
+    "stats": {
+      "ino": 4,
+      "size": 8,
+      "mtime": "2018-09-03T14:24:11.508Z",
+      "ctime": "2018-09-03T14:24:13.667Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "file-nfc-to-nfd-é",
+    "stats": {
+      "ino": 4,
+      "size": 8,
+      "mtime": "2018-09-03T14:24:11.508Z",
+      "ctime": "2018-09-03T14:24:13.667Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "dir-nfc-to-nfd-é",
+    "stats": {
+      "ino": 3,
+      "size": 64,
+      "mtime": "2018-09-03T14:24:11.507Z",
+      "ctime": "2018-09-03T14:24:13.666Z"
+    }
+  }
+]
