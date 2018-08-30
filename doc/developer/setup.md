@@ -3,6 +3,11 @@
 The following commands should work in a Unix shell (Bash or ZSH for example)
 and in Windows PowerShell.
 
+## Code organization and technologies
+
+Cozy Desktop is based on [electron](https://electronjs.org/) and the code is mostly written in JavaScript.
+To start developing, check the prerequisites and follow the guide below.
+
 ## Install requirements
 
 To develop and build the source code, you will need the following:
@@ -25,13 +30,13 @@ cd cozy-desktop
 **Warning**: The path to your local repository should not include any space,
 otherwise [installing dependencies will fail](https://github.com/cozy-labs/cozy-desktop/issues/1097).
 
-## Install dependencies
+### Install dependencies
 
 ```
 yarn install
 ```
 
-## Build everything
+### Build everything
 
 ```
 yarn build
