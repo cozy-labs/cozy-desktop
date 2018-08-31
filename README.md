@@ -7,7 +7,7 @@
 <br>
 [![Windows build](https://img.shields.io/appveyor/ci/cozy/cozy-desktop/master.svg?label=windows)](https://ci.appveyor.com/project/cozy/cozy-desktop/branch/master)
 [![Linux & macOS build](https://img.shields.io/travis/cozy-labs/cozy-desktop/master.svg?label=mac/linux)](https://travis-ci.org/cozy-labs/cozy-desktop/branches)
-[![Code climate](https://img.shields.io/codeclimate/maintainability-percentage/cozy-labs/cozy-desktop.svg)](https://codeclimate.com/github/cozy-labs/cozy-desktop)
+[![Code climate](https://img.shields.io/codeclimate/maintainability/cozy-labs/cozy-desktop.svg)](https://codeclimate.com/github/cozy-labs/cozy-desktop)
 [![Coverage](https://img.shields.io/codecov/c/github/cozy-labs/cozy-desktop/master.svg?label=coverage)](https://codecov.io/gh/cozy-labs/cozy-desktop/list/master)
 
 Cozy Drive for Desktop allows you to synchronize the files stored in [your Cozy](https://cozy.io) with your laptop and/or desktop computer.
