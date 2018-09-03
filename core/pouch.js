@@ -9,6 +9,7 @@ const { isEqual } = require('lodash')
 const path = require('path')
 
 const logger = require('./logger')
+const metadata = require('./metadata')
 
 /*::
 import type Config from './config'
@@ -108,6 +109,7 @@ class Pouch {
 
   put (doc /*: Metadata */, callback /*: ?Callback */) {
     const {local, remote} = doc.sides
+    metadata.invariants(doc)
     log.debug({path: doc.path, local, remote, _deleted: doc._deleted, doc}, 'Saving metadata...')
     return this.db.put(doc).asCallback(callback)
   }
@@ -119,6 +121,7 @@ class Pouch {
     for (const doc of docs) {
       const {path} = doc
       const {local, remote} = doc.sides || {}
+      metadata.invariants(doc)
       log.debug({path, local, remote, _deleted: doc._deleted, doc}, 'Saving bulk metadata...')
     }
     const results = await this.db.bulkDocs(docs)
