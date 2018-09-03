@@ -145,6 +145,10 @@ describe('Merge', function () {
         sides: {
           local: 2,
           remote: 2
+        },
+        remote: {
+          _id: 'XXX',
+          _rev: '2-abc'
         }
       }
       await this.merge.updateFileAsync(this.side, clone(doc))
@@ -221,6 +225,7 @@ describe('Merge', function () {
           local: 1,
           remote: 1
         },
+        remote: {_id: 'XXX', _rev: '1-abc'},
         trashed: true
       }
       const inserted = await this.pouch.db.put(clone(was))
@@ -254,7 +259,8 @@ describe('Merge', function () {
         sides: {
           local: 1,
           remote: 1
-        }
+        },
+        remote: {_id: 'XXX', _rev: '1-abc'}
       }
       const inserted = await this.pouch.db.put(clone(was))
       was._rev = inserted.rev
@@ -286,7 +292,8 @@ describe('Merge', function () {
         sides: {
           local: 1,
           remote: 1
-        }
+        },
+        remote: {_id: 'XXX', _rev: '1-abc'}
       }
       let opts = {
         include_docs: true,
@@ -331,6 +338,7 @@ describe('Merge', function () {
           local: 1,
           remote: 1
         },
+        remote: {_id: 'XXX', _rev: '1-abc'},
         ino: 666,
         trashed: true
       }
@@ -363,7 +371,8 @@ describe('Merge', function () {
         sides: {
           local: 1,
           remote: 1
-        }
+        },
+        remote: {_id: 'XXX', _rev: '1-abc'}
       }
       let opts = {
         include_docs: true,
@@ -401,7 +410,12 @@ describe('Merge', function () {
         path: 'DESTINATION',
         docType: 'folder',
         updated_at: new Date(),
-        tags: []
+        tags: [],
+        sides: {
+          remote: 1,
+          local: 1
+        },
+        remote: {_id: 'XXX', _rev: '1-abc'}
       }
       const was = await this.pouch.db.get(metadata.id('my-folder'))
       await this.merge.moveFolderRecursivelyAsync('local', doc, was)

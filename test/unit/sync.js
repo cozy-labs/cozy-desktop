@@ -147,8 +147,10 @@ describe('Sync', function () {
           docType: 'file',
           md5sum: '0000000000000000000000000000000000000000',
           sides: {
-            local: 1
-          }
+            local: 3,
+            remote: 2
+          },
+          remote: {_id: 'XXX', _rev: '2-abc'}
         }
       }
       await this.sync.apply(change)

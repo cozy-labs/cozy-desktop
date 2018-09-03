@@ -21,7 +21,15 @@ module.exports = {
       path: 'my-folder',
       docType: 'folder',
       updated_at: new Date(),
-      tags: []
+      tags: [],
+      remote: {
+        _id: `XXX`,
+        _rev: '1-abc'
+      },
+      sides: {
+        local: 1,
+        remote: 1
+      }
     }
     assignId(doc)
     return pouch.db.put(doc).asCallback(callback)

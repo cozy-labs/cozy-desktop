@@ -62,7 +62,8 @@ describe('issue 850', function () {
       path: 'dst',
       ino: stat.ino,
       tags: [],
-      sides: {local: 1, remote: 1}
+      sides: {local: 1, remote: 1},
+      remote: {_id: 'XXX', _rev: '1-abc'}
     })
     await this.sync.sync()
   })
