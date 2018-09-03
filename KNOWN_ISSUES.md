@@ -18,6 +18,7 @@ Please report any other issue you may encounter by using the app help form.
   consequences: in case it is not mounted when the client starts, the directory
   will appear empty, the client will assume you deleted everything and will
   update your Cozy accordingly, putting everything in the Cozy trash.
+* Using two clients on two different OS with a shared partition between the two is not supported.
 
 **Issues** caused by lower-level bugs that will be **harder to fix or circumvent**:
 
