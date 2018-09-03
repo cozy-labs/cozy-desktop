@@ -249,15 +249,12 @@ module.exports = class LocalWatcher {
     return {offlineEvents: events, emptySyncDir}
   }
 
-  async oldMetadata (e /*: ChokidarEvent */, initialScan /*: ?InitialScan */) /*: Promise<?Metadata> */ {
+  async oldMetadata (e /*: ChokidarEvent */) /*: Promise<?Metadata> */ {
     if (e.old) return e.old
-    if (e.type === 'unlink' || e.type === 'unlinkDir' || e.type === 'change' ||
-        ((e.type === 'add' || e.type === 'addDir') && initialScan)) {
-      try {
-        return await this.pouch.db.get(metadata.id(e.path))
-      } catch (err) {
-        if (err.status !== 404) log.error({path: e.path, err})
-      }
+    try {
+      return await this.pouch.db.get(metadata.id(e.path))
+    } catch (err) {
+      if (err.status !== 404) log.error({path: e.path, err})
     }
     return null
   }
@@ -270,7 +267,7 @@ module.exports = class LocalWatcher {
       const abspath = path.join(this.syncPath, e.path)
 
       const e2 /*: Object */ = _.merge({
-        old: await this.oldMetadata(e, initialScan)
+        old: await this.oldMetadata(e)
       }, e)
 
       if (e.type === 'add' || e.type === 'change') {
