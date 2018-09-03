@@ -283,64 +283,54 @@ module.exports = class Local /*:: implements Side */ {
     log.info({path: doc.path}, 'Local assignNewRev = noop')
   }
 
-  // Move a file from one place to another
+  /** Move a file, eventually updating its content */
   async moveFileAsync (doc /*: Metadata */, old /*: Metadata */) /*: Promise<void> */ {
     log.info({path: doc.path, oldpath: old.path}, 'Moving file')
-    let oldPath = path.join(this.syncPath, old.path)
-    let newPath = path.join(this.syncPath, doc.path)
-    let parent = path.join(this.syncPath, path.dirname(doc.path))
-
-    const oldPathExists = await fs.exists(oldPath)
-    try {
-      if (oldPathExists) {
-        await fs.ensureDir(parent)
-        await fs.rename(oldPath, newPath)
-      } else {
-        const newPathExists = await fs.exists(newPath)
-        if (!newPathExists) {
-          const msg = `File ${oldPath} not found`
-          log.error({path: newPath}, msg)
-          throw new Error(msg)
-        }
-      }
-      await this.updateMetadataAsync(doc)
-    } catch (err) {
-      log.error({path: newPath, doc, old, err}, 'File move failed! Falling back to file download...')
-      await this.addFileAsync(doc)
-      return
-    }
-
+    await this._move(doc, old)
     if (doc.md5sum !== old.md5sum) {
       await this.overwriteFileAsync(doc)
     }
   }
 
-  // Move a folder
+  /** Move a folder */
   async moveFolderAsync (doc /*: Metadata */, old /*: Metadata */) /*: Promise<void> */ {
     log.info({path: doc.path, oldpath: old.path}, 'Moving folder')
+    await this._move(doc, old)
+  }
+
+  /** Move a file or folder. In case of a file, content is unchanged.
+   *
+   * On GNU/Linux, it should be possible to prevent overwriting the destination
+   * using the `RENAME_NOREPLACE` flag:
+   * http://man7.org/linux/man-pages/man2/rename.2.html
+   *
+   * But since Node's `fs.rename()` doesn't expose any option, the current
+   * implementation uses a separate `fs.stat()` step, which means it doesn't
+   * prevent race conditions:
+   * https://nodejs.org/dist/latest-v8.x/docs/api/fs.html#fs_fs_rename_oldpath_newpath_callback
+   * https://nodejs.org/dist/latest-v8.x/docs/api/fs.html#fs_fs_stat_path_callback
+   *
+   * TODO: atomic local destination check + move
+   */
+  async _move (doc /*: Metadata */, old /*: Metadata */) /*: Promise<void> */ {
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
-    let parent = path.join(this.syncPath, path.dirname(doc.path))
 
-    const oldPathExists = await fs.exists(oldPath)
-    const newPathExists = await fs.exists(newPath)
-
-    try {
-      if (oldPathExists && newPathExists) {
-        await fs.rmdir(oldPath)
-      } else if (oldPathExists) {
-        await fs.ensureDir(parent)
-        await fs.rename(oldPath, newPath)
-      } else if (!newPathExists) {
-        const msg = `Folder ${oldPath} not found`
-        log.error({path: newPath}, msg)
-        throw new Error(msg)
+    if (doc._id !== old._id) {
+      try {
+        const stats = await fs.stat(newPath)
+        const err = new Error(`Move destination already exists: ${newPath}`)
+        // Assign stats to the Error so we can inspect them in logs
+        // $FlowFixMe
+        err.stats = stats
+        throw err
+      } catch (err) {
+        if (err.code !== 'ENOENT') throw err
       }
-      await this.updateMetadataAsync(doc)
-    } catch (err) {
-      log.error({path: newPath, doc, old, err}, 'Folder move failed! Falling back to folder creation...')
-      await this.addFolderAsync(doc)
     }
+
+    await fs.rename(oldPath, newPath)
+    await this.updateMetadataAsync(doc)
   }
 
   async trashAsync (doc /*: Metadata */) /*: Promise<void> */ {

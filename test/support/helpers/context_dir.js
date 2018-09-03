@@ -6,6 +6,7 @@ const fs = require('fs-extra')
 const path = require('path')
 
 const checksumer = require('../../../core/local/checksumer')
+const { TMP_DIR_NAME } = require('../../../core/local/constants')
 const { getPath } = require('../../../core/utils/path')
 
 Promise.promisifyAll(fs) // FIXME: Isn't fs-extra already promisified?
@@ -60,7 +61,7 @@ class ContextDir {
 
     return relPaths
       .sort((a, b) => a.localeCompare(b))
-      .filter(relPath => relPath !== '.system-tmp-cozy-drive/') // FIXME: hardcoded tmp dir name
+      .filter(relPath => relPath !== `${TMP_DIR_NAME}/`)
   }
 
   existsSync (target /*: string|PathObject */) /*: bool */ {
