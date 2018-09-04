@@ -37,6 +37,7 @@ def debug: clean | select(is_debug);
 def chokidar: select(.component == "Chokidar");
 def LocalChange: select(.component == "local/change");
 def LocalWatcher: select(.component == "LocalWatcher");
+def Prep: select(.component == "Prep");
 def Merge: select(.component == "Merge");
 def Metadata: select(.component == "Metadata");
 def Pouch: select(.component == "Pouch");
@@ -150,6 +151,9 @@ def msg(pattern):
 def time(pattern):
   select(.time | test(pattern));
 
+# Drop time properties
+def notime: del(.time);
+
 # Filter inode number(s):
 #
 #    yarn jq 'ino(7852458)' path/to/logs*
@@ -169,7 +173,9 @@ def doc:
 #    yarn -s jq -c 'select(...)|short' path/to/logs*
 #
 def short:
-  {time,component,msg,path};
+  {time,component,msg,path,oldpath}
+    | if .oldpath then . else del(.oldpath) end
+    ;
 
 # FIXME: Find a way to make aggregation work, e.g.:
 #
