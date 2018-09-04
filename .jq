@@ -173,7 +173,9 @@ def doc:
 #    yarn -s jq -c 'select(...)|short' path/to/logs*
 #
 def short:
-  {time,component,msg,path};
+  {time,component,msg,path,oldpath}
+    | if .oldpath then . else del(.oldpath) end
+    ;
 
 # FIXME: Find a way to make aggregation work, e.g.:
 #
