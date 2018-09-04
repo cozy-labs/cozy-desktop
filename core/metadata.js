@@ -90,6 +90,7 @@ module.exports = {
   isFile,
   id,
   invalidPath,
+  invariants,
   ensureValidPath,
   detectPlatformIncompatibilities,
   invalidChecksum,
@@ -175,6 +176,15 @@ function ensureValidPath (doc /*: PathObject */) {
   if (invalidPath(doc)) {
     log.warn({path: doc.path}, `Invalid path: ${JSON.stringify(doc, null, 2)}`)
     throw new Error('Invalid path')
+  }
+}
+
+function invariants (doc /*: Metadata */) {
+  if (!doc.sides) {
+    throw new Error(`${doc._id} has no sides`)
+  }
+  if (doc.sides.remote && !doc.remote) {
+    throw new Error(`${doc._id} has 'sides.remote' but no remote`)
   }
 }
 

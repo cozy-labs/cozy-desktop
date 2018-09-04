@@ -20,7 +20,8 @@ const {
   sameFile,
   sameFolder,
   buildDir,
-  buildFile
+  buildFile,
+  invariants
 } = require('../../core/metadata')
 
 const { platform } = process
@@ -542,6 +543,24 @@ describe('metadata', function () {
       const remote = {_id: 'foo', _rev: '456'}
       const doc = buildDir(path, {ctime, mtime: ctime, ino: 123}, remote)
       should(doc.remote).deepEqual(remote)
+    })
+  })
+
+  describe('invariants', () => {
+    let file
+    beforeEach(async () => {
+      const builders = new MetadataBuilders(this.pouch)
+      file = await builders.whatever().upToDate().remoteId('badbeef').build()
+    })
+
+    it('pouch.put throws when trying to put bad doc (no sides)', async () => {
+      should(() => invariants(Object.assign(file, {sides: null}))
+        ).throw(/sides/)
+    })
+
+    it('pouch.put throws when trying to put bad doc (no remote)', async () => {
+      should(() => invariants(Object.assign(file, {remote: null}))
+        ).throw(/sides\.remote/)
     })
   })
 })
