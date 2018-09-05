@@ -21,7 +21,7 @@ const pouchHelpers = require('../../support/helpers/pouch')
 Promise.promisifyAll(fs)
 
 describe('Local', function () {
-  let syncDir
+  let builders, syncDir
 
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
@@ -31,6 +31,7 @@ describe('Local', function () {
     this.local = new Local(this.config, this.prep, this.pouch, this.events)
     this.local.watcher.pending = new PendingMap()
 
+    builders = new MetadataBuilders(this.pouch)
     syncDir = new ContextDir(this.syncPath)
   })
   after('clean pouch', pouchHelpers.cleanDatabase)
@@ -629,10 +630,9 @@ describe('Local', function () {
   })
 
   describe('deleteFolderAsync', () => {
-    let builders, fullPath
+    let fullPath
 
     beforeEach(function () {
-      builders = new MetadataBuilders(this.pouch)
       fullPath = (doc) => syncDir.abspath(doc.path)
 
       this.events.emit = sinon.spy()
