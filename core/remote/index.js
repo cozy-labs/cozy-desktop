@@ -193,7 +193,7 @@ module.exports = class Remote /*:: implements Side */ {
 
   async moveFileAsync (newMetadata /*: Metadata */, oldMetadata /*: Metadata */) /*: Promise<void> */ {
     const {path} = newMetadata
-    log.info({path}, `Moving file from ${oldMetadata.path} ...`)
+    log.info({path, oldpath: oldMetadata.path}, 'Moving file')
 
     const [newDirPath, newName] /*: [string, string] */ = conversion.extractDirAndName(path)
     const newDir /*: RemoteDoc */ = await this.remoteCozy.findDirectoryByPath(newDirPath)
@@ -304,7 +304,7 @@ module.exports = class Remote /*:: implements Side */ {
   async moveFolderAsync (newMetadata /*: Metadata */, oldMetadata /*: Metadata */) /*: Promise<void> */ {
     // FIXME: same as moveFileAsync? Rename to moveAsync?
     const {path} = newMetadata
-    log.info({path}, `Moving dir from ${oldMetadata.path} ...`)
+    log.info({path, oldpath: oldMetadata.path}, 'Moving dir')
 
     const [newDirPath, newName] /*: [string, string] */ = conversion.extractDirAndName(path)
     const newDir /*: RemoteDoc */ = await this.remoteCozy.findDirectoryByPath(newDirPath)
