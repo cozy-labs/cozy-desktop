@@ -118,3 +118,5 @@ after_success:
 after_failure:
     - $CXX --version
     - netstat -lntp
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew doctor; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew cask doctor; fi
