@@ -67,8 +67,25 @@ class ContextDir {
     return fs.existsSync(this.abspath(target))
   }
 
+  exists (target /*: string|PathObject */) /*: Promise<bool> */ {
+    return fs.exists(this.abspath(target))
+  }
+
+  emptyDir (target /*: string|PathObject */) /*: Promise<void> */ {
+    return fs.emptyDir(this.abspath(target))
+  }
+
   async ensureDir (target /*: string|PathObject */) {
     await fs.ensureDir(this.abspath(target))
+  }
+
+  async ensureParentDir (target /*: string|PathObject */) {
+    await this.ensureDir(path.dirname(getPath(target)))
+  }
+
+  async mtime (target /*: string|PathObject */) /*: Promise<Date> */ {
+    const stats = await this.stat(target)
+    return stats.mtime
   }
 
   async unlink (target /*: string|PathObject */) {
@@ -90,6 +107,18 @@ class ContextDir {
   async checksum (target /*: string|PathObject */) /*: Promise<string> */ {
     // $FlowFixMe
     return checksumer.computeChecksumAsync(this.abspath(target))
+  }
+
+  stat (target /*: string|PathObject */) /*: Promise<fs.Stat> */ {
+    return fs.stat(this.abspath(target))
+  }
+
+  remove (target /*: string|PathObject */) /*: Promise<void> */ {
+    return fs.remove(this.abspath(target))
+  }
+
+  async removeParentDir (target /*: string|PathObject */) /*: Promise<void> */ {
+    await fs.remove(this.abspath(path.dirname(getPath(target))))
   }
 }
 
