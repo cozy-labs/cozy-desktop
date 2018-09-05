@@ -44,7 +44,6 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
         brew update;
         cd /usr/local/Homebrew;
-        git fetch;
         git reset --hard 1.7.2;
         cd -;
       fi
