@@ -63,7 +63,7 @@ class ContextDir {
       .filter(relPath => relPath !== '.system-tmp-cozy-drive/') // FIXME: hardcoded tmp dir name
   }
 
-  existsSync (target /*: string|PathObject */) /*: Promise<bool> */ {
+  existsSync (target /*: string|PathObject */) /*: bool */ {
     return fs.existsSync(this.abspath(target))
   }
 
