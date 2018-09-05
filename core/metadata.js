@@ -225,7 +225,7 @@ function invalidChecksum (doc /*: Metadata */) {
 
 function ensureValidChecksum (doc /*: Metadata */) {
   if (invalidChecksum(doc)) {
-    log.warn({path: doc.path}, `Invalid checksum: ${JSON.stringify(doc, null, 2)}`)
+    log.warn({path: doc.path, doc}, 'Invalid checksum')
     throw new Error('Invalid checksum')
   }
 }
