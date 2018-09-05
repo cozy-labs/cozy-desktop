@@ -234,26 +234,34 @@ describe('Test scenarios', function () {
       }
 
       // TODO: Merge local/stopped/remote expectations
-      if (scenario.expected && scenario.expected.tree) {
-        if (scenario.expected.prepCalls) {
-          should(prepCalls).deepEqual(scenario.expected.prepCalls)
+      if (scenario.expected) {
+        const expectedLocalTree = scenario.expected.tree || scenario.expected.localTree
+        const expectedRemoteTree = scenario.expected.tree || scenario.expected.remoteTree
+        const expected = {}
+        const actual = {}
+
+        // TODO: expect prep actions
+        if (expectedLocalTree) {
+          expected.localTree = expectedLocalTree
+          actual.localTree = await helpers.local.treeWithoutTrash()
         }
-        should(await helpers.local.treeWithoutTrash())
-          .deepEqual(scenario.expected.tree)
-      }
-      if (scenario.expected && scenario.expected.contents) {
-        const expected = {
-          localContents: scenario.expected.contents,
-          remoteContents: scenario.expected.contents
+        if (expectedRemoteTree) {
+          expected.remoteTree = expectedRemoteTree
+          actual.remoteTree = await helpers.remote.treeWithoutTrash()
         }
-        const actual = {
-          localContents: {},
-          remoteContents: {}
+        if (scenario.expected.contents) {
+          expected.localContents = scenario.expected.contents
+          expected.remoteContents = scenario.expected.contents
+          actual.localContents = {}
+          actual.remoteContents = {}
+          for (const relpath of _.keys(scenario.expected.contents)) {
+            actual.localContents[relpath] = await helpers.local.readFile(relpath)
+                .catch(err => `Error Reading Local(${relpath}): ${err.message}`)
+            actual.remoteContents[relpath] = await helpers.remote.readFile(relpath)
+                .catch(err => `Error Reading Remote(${relpath}): ${err.message}`)
+          }
         }
-        for (const relpath of _.keys(scenario.expected.contents)) {
-          actual.localContents[relpath] = await helpers.local.readFile(relpath)
-          actual.remoteContents[relpath] = await helpers.remote.readFile(relpath)
-        }
+
         should(actual).deepEqual(expected)
       }
 
