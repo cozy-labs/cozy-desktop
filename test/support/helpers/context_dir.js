@@ -58,7 +58,9 @@ class ContextDir {
       }
     }
 
-    return relPaths.sort((a, b) => a.localeCompare(b))
+    return relPaths
+      .sort((a, b) => a.localeCompare(b))
+      .filter(relPath => relPath !== '.system-tmp-cozy-drive/') // FIXME: hardcoded tmp dir name
   }
 
   existsSync (target /*: string|PathObject */) /*: Promise<bool> */ {
