@@ -285,7 +285,7 @@ module.exports = class Local /*:: implements Side */ {
 
   // Move a file from one place to another
   async moveFileAsync (doc /*: Metadata */, old /*: Metadata */) /*: Promise<void> */ {
-    log.info({path: doc.path}, `Moving from ${old.path}`)
+    log.info({path: doc.path, oldpath: old.path}, 'Moving file')
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
     let parent = path.join(this.syncPath, path.dirname(doc.path))
@@ -317,7 +317,7 @@ module.exports = class Local /*:: implements Side */ {
 
   // Move a folder
   async moveFolderAsync (doc /*: Metadata */, old /*: Metadata */) /*: Promise<void> */ {
-    log.info({path: doc.path}, `Move folder from ${old.path}`)
+    log.info({path: doc.path, oldpath: old.path}, 'Moving folder')
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
     let parent = path.join(this.syncPath, path.dirname(doc.path))
