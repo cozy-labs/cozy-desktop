@@ -17,6 +17,8 @@ env:
         - COZY_URL="http://localhost:8080"
         - COZY_PASSPHRASE="cozy"
         - GOPATH="$HOME"
+        # FIXME: Homebrew 1.7.3 fails to install cask apache-couchdb
+        - HOMEBREW_NO_AUTO_UPDATE=1
         - MOCHA_TIMEOUT="240000"
         - NODE_ENV=test
         - NPM_CONFIG_PROGRESS=false
@@ -26,7 +28,6 @@ services:
 cache:
     yarn: true
     directories:
-        - /Library/Caches/Homebrew
         - $HOME/.cache/electron
         - $HOME/.cache/electron-builder
 addons:
@@ -39,6 +40,15 @@ addons:
 
 # install cozy stack for integration test
 before_install:
+    # FIXME: Homebrew 1.7.3 fails to install cask apache-couchdb
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+        brew update;
+        cd /usr/local/Homebrew;
+        git fetch;
+        git reset --hard 1.7.2;
+        cd -;
+      fi
+
     # CouchDB 2
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
         travis_retry docker run -d -p 5984:5984 --name couch apache/couchdb:2.1;
