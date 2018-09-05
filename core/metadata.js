@@ -276,7 +276,7 @@ const makeComparator = (name, interestingFields) => {
   }
   return (one, two) => {
     const diff = deepDiff(one, two, filter)
-    log.trace({path: two.path, diff}, 'sameFolder')
+    log.trace({path: two.path, diff}, name)
     return !diff
   }
 }
