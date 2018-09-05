@@ -43,8 +43,13 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
         travis_retry docker run -d -p 5984:5984 --name couch apache/couchdb:2.1;
       fi
+    # FIXME: Homebrew 1.7.3 fails to install cask apache-couchdb
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-        travis_retry brew cask install apache-couchdb;
+        cd /usr/local/Homebrew;
+        git fetch;
+        git reset --hard 1.7.2;
+        cd -;
+        HOMEBREW_NO_AUTO_UPDATE=1 travis_retry brew cask install apache-couchdb;
         printf "\n[log]\nlevel = warn\n" >> /Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/etc/local.ini;
         ulimit -S -n 1024;
         (/Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/bin/couchdb &);
