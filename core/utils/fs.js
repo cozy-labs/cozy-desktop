@@ -11,7 +11,7 @@ module.exports = {
 }
 
 const log = logger({
-  component: 'FS'
+  component: 'Fs'
 })
 
 // Hides a directory on Windows.

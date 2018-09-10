@@ -2,7 +2,7 @@
 
 const logger = require('./logger')
 const log = logger({
-  component: 'PerfReports'
+  component: 'Perfs'
 })
 
 module.exports = measureTime

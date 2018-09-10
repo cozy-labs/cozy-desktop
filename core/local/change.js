@@ -49,7 +49,7 @@ module.exports = {
 }
 
 const log = logger({
-  component: 'local/change'
+  component: 'LocalChange'
 })
 
 /*::

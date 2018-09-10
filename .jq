@@ -34,14 +34,25 @@ def is_debug: .level >= debug_level;
 def debug: clean | select(is_debug);
 
 # Components:
-def chokidar: select(.component == "Chokidar");
-def LocalChange: select(.component == "local/change");
-def LocalWatcher: select(.component == "LocalWatcher");
-def Prep: select(.component == "Prep");
-def Merge: select(.component == "Merge");
-def Metadata: select(.component == "Metadata");
-def Pouch: select(.component == "Pouch");
-def Sync: select(.component == "Sync");
+def component(pattern): select(.component | test(pattern));
+def App: component("^App$");
+def Chokidar: component("^Chokidar|chokidar$");
+def Fs: component("^Fs|FS$");
+def LocalAnalysis: component("^LocalAnalysis|local/analysis$");
+def LocalChange: component("^LocalChange|local/change$");
+def LocalWatcher: component("^LocalWatcher$");
+def LocalWriter: component("^LocalWriter$");
+def Merge: component("^Merge$");
+def Metadata: component("^Metadata$");
+def Perfs: component("^Perfs|PerfReports$");
+def Pouch: component("^Pouch$");
+def Prep: component("^Prep$");
+def RemoteCozy: component("^RemoteCozy$");
+def RemoteUserActionRequired: component("^RemoteUserActionRequired|remote/user_action_required$");
+def RemoteWarningPoller: component("^RemoteWarningPoller$");
+def RemoteWatcher: component("^RemoteWatcher$");
+def RemoteWriter: component("^RemoteWriter$");
+def Sync: component("^Sync$");
 
 # Find conflicts:
 #
