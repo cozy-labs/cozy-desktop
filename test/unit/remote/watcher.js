@@ -6,17 +6,24 @@ const _ = require('lodash')
 const path = require('path')
 const sinon = require('sinon')
 const should = require('should')
+const uuid = require('uuid/v4')
 const CozyClient = require('cozy-client-js').Client
 
 const pouchdbBuilders = require('../../support/builders/pouchdb')
 const configHelpers = require('../../support/helpers/config')
+const { posixifyPath } = require('../../support/helpers/context_dir')
 const { onPlatform } = require('../../support/helpers/platform')
 const pouchHelpers = require('../../support/helpers/pouch')
 const { builders } = require('../../support/helpers/cozy')
 
 const { createMetadata } = require('../../../core/conversion')
 const metadata = require('../../../core/metadata')
-const { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID } = require('../../../core/remote/constants')
+const {
+  FILES_DOCTYPE,
+  ROOT_DIR_ID,
+  TRASH_DIR_ID,
+  TRASH_DIR_NAME
+} = require('../../../core/remote/constants')
 const Prep = require('../../../core/prep')
 const { RemoteCozy } = require('../../../core/remote/cozy')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
@@ -239,6 +246,67 @@ describe('RemoteWatcher', function () {
 
       should(apply.calledOnce).be.true()
       should(apply.args[0][0].doc).deepEqual(doc)
+    })
+  })
+
+  describe('analyse', () => {
+    describe('overwriting move', () => {
+      let srcFileDoc, dstFileDoc, olds, srcFileMoved, dstFileTrashed
+
+      beforeEach(() => {
+        /* Remote tree:
+            /dst/
+            /dst/file
+            /src/
+            /src/file
+        */
+        const srcDir = builders.remote.dir().named('src').build()
+        const dstDir = builders.remote.dir().named('dst').build()
+        const srcFile = builders.remote.file().named('file').inDir(srcDir).build()
+        const dstFile = builders.remote.file().named('file').inDir(dstDir).build()
+
+        /* Files were synced */
+        srcFileDoc = builders.metadata.file().fromRemote(srcFile).upToDate().build()
+        dstFileDoc = builders.metadata.file().fromRemote(dstFile).upToDate().build()
+        olds = [srcFileDoc, dstFileDoc]
+
+        /* Moving /src/file to /dst/file (overwriting the destination) */
+        srcFileMoved = _.defaults({
+          _rev: '2-' + uuid().replace(/-/g, ''),
+          path: dstFile.path
+        }, srcFile)
+        dstFileTrashed = _.defaults({
+          _rev: '2-' + uuid().replace(/-/g, ''),
+          dir_id: TRASH_DIR_ID,
+          path: path.posix.join('/', TRASH_DIR_NAME, dstFile.name)
+        }, dstFile)
+      })
+
+      const relevantChangesProps = changes => changes.map(({type, doc, was}) => {
+        const props /*: Object */ = {type, doc: {path: posixifyPath(doc.path)}}
+        if (was) props.was = {path: posixifyPath(was.path)}
+        if (doc.overwrite) props.doc.overwrite = true
+        if (was.overwrite) props.was.overwrite = true
+        return props
+      })
+
+      it('is detected when moved source is first', function () {
+        const docs = [srcFileMoved, dstFileTrashed]
+        const changes = this.watcher.analyse(docs, olds)
+        should(relevantChangesProps(changes)).deepEqual([
+          {type: 'RemoteIgnoredChange', doc: {path: '.cozy_trash/file'}, was: {path: 'dst/file'}},
+          {type: 'FileMove', doc: {path: 'dst/file', overwrite: true}, was: {path: 'src/file'}}
+        ])
+      })
+
+      it('is detected when trashed destination is first', function () {
+        const docs = [dstFileTrashed, srcFileMoved]
+        const changes = this.watcher.analyse(docs, olds)
+        should(relevantChangesProps(changes)).deepEqual([
+          {type: 'FileMove', doc: {path: 'dst/file', overwrite: true}, was: {path: 'src/file'}},
+          {type: 'RemoteIgnoredChange', doc: {path: '.cozy_trash/file'}, was: {path: 'dst/file'}}
+        ])
+      })
     })
   })
 
