@@ -228,6 +228,12 @@ class Pouch {
     })
   }
 
+  async allByRemoteIds (remoteIds /*: * */) /* Promise<Metadata[]> */ {
+    const params = {keys: Array.from(remoteIds), include_docs: true}
+    const results = await this.db.query('byRemoteId', params)
+    return results.rows.map(row => row.doc)
+  }
+
   /* Views */
 
   // Create all required views in the database

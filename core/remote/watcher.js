@@ -116,11 +116,25 @@ class RemoteWatcher {
   // Pull multiple changed or deleted docs
   // FIXME: Misleading method name?
   async pullMany (docs /*: Array<RemoteDoc|RemoteDeletion> */) {
+    const remoteIds = docs.reduce((ids, doc) => ids.add(doc._id), new Set())
+    const olds = await this.pouch.allByRemoteIds(remoteIds)
+
+    const changes = this.analyse(docs, olds)
+
+    log.trace('Apply changes...')
+    await this.applyAll(changes)
+
+    log.trace('Done with pull.')
+  }
+
+  analyse (docs /*: Array<RemoteDoc|RemoteDeletion> */, olds /*: Array<Metadata> */) /*: Array<RemoteChange|RemoteNoise> */ {
+    const oldsByRemoteId = _.keyBy(olds, 'remote._id')
     const changes /*: Array<RemoteChange|RemoteNoise> */ = []
+
     log.trace('Contextualize and analyse changesfeed results...')
     for (let index = 0; index < docs.length; index++) {
       const doc = docs[index]
-      const was /*: ?Metadata */ = await this.pouch.byRemoteIdMaybeAsync(doc._id)
+      const was /*: ?Metadata */ = oldsByRemoteId[doc._id]
       changes.push(this.identifyChange(doc, was, index, changes))
     }
     log.trace('Done with analysis.')
@@ -128,10 +142,7 @@ class RemoteWatcher {
     log.trace('Sort changes...')
     remoteChange.sort(changes)
 
-    log.trace('Apply changes...')
-    await this.applyAll(changes)
-
-    log.trace('Done with pull.')
+    return changes
   }
 
   identifyChange (doc /*: RemoteDoc|RemoteDeletion */, was /*: ?Metadata */, changeIndex /*: number */, previousChanges /*: Array<RemoteChange|RemoteNoise> */) /*: RemoteChange|RemoteNoise */ {
