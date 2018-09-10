@@ -1,4 +1,4 @@
-# [Cozy](https://cozy.io) Drive for Desktop <sup>(beta)</sup>
+# [Cozy](https://cozy.io) Drive for Desktop
 
 [![Cozy Logo](https://raw.github.com/cozy/cozy-setup/gh-pages/assets/images/happycloud.png)](https://cozy.io)
 
@@ -28,10 +28,6 @@ please see the document [in the doc/developer/ folder](doc/developer/), which co
 
 -   [How to build and run from source](doc/developer/setup.md)
 -   [Other developer documentation](doc/developer/)
-
-## Disclaimer
-
-:warning: Cozy Drive for Desktop is still in beta version. Backup your data before using it!
 
 ## Feedback
 
