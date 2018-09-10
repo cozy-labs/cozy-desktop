@@ -5,9 +5,6 @@ Cozy-desktop is designed to synchronize files and folders between a remote
 cozy instance and a local hard drive, for a personal usage. We tried to make
 it simple and easy. So, it has some limitations:
 
-- It's only a command-line interface and it is tested only on Linux for the
-  moment. We are working to improve this in the next weeks.
-
 - Files and folders named like this are ignored:
   - `.system-tmp-cozy-drive` (they are used to keep internal state)
   - `_design` (special meaning for pouchdb/couchdb)
