@@ -255,6 +255,55 @@ describe('Pouch', function () {
           .be.rejectedWith(otherError)
       })
     })
+
+    describe('#allByRemoteIds()', () => {
+      let dir, file
+
+      beforeEach(async function () {
+        const builders = new MetadataBuilders(this.pouch)
+        dir = await builders.dir().path('dir-with-remote-id').create()
+        file = await builders.file().path('file-with-remote-id').create()
+      })
+
+      it('resolves with docs matching the given remoteIds, in the same order', async function () {
+        const expectedDocs = [file, dir]
+        const remoteIds = expectedDocs.map(doc => doc.remote._id)
+        const docs = await this.pouch.allByRemoteIds(remoteIds)
+        should(docs).deepEqual(expectedDocs)
+      })
+
+      it('resolves with matching docs except missing ones', async function () {
+        const docs = await this.pouch.allByRemoteIds([
+          dir.remote._id,
+          'missing',
+          file.remote._id
+        ])
+        should(docs).deepEqual([dir, file])
+      })
+
+      it('resolves to an empty Array when given a single missing remote id', async function () {
+        const docs = await this.pouch.allByRemoteIds(['missing'])
+        should(docs).deepEqual([])
+      })
+
+      it('resolves to an empty Array when given an empty Array', async function () {
+        const docs = await this.pouch.allByRemoteIds([])
+        should(docs).deepEqual([])
+      })
+
+      it('does not care about duplicate ids & docs', async function () {
+        const id = dir.remote._id
+        const docs = await this.pouch.allByRemoteIds([id, id])
+        should(docs).deepEqual([dir, dir])
+      })
+
+      it('can take a Set of remoteIds instead of an Array', async function () {
+        const expectedDocs = [dir, file]
+        const remoteIds = new Set(expectedDocs.map(doc => doc.remote._id))
+        const docs = await this.pouch.allByRemoteIds(remoteIds)
+        should(docs).deepEqual(expectedDocs)
+      })
+    })
   })
 
   describe('Views', function () {
