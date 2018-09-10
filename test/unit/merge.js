@@ -325,14 +325,14 @@ describe('Merge', function () {
         _id: 'FOOBAR/NEW',
         path: 'FOOBAR/NEW',
         docType: 'folder',
-        updated_at: new Date(),
+        updated_at: new Date('2018-09-02T00:00:00.000Z'),
         tags: ['courge', 'quux']
       }
       let was = {
         _id: 'FOOBAR/OLD',
         path: 'FOOBAR/OLD',
         docType: 'folder',
-        updated_at: new Date(),
+        updated_at: new Date('2018-09-01T00:00:00.000Z'),
         tags: ['courge', 'quux'],
         sides: {
           local: 1,
