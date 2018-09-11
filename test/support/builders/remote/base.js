@@ -1,5 +1,6 @@
 /* @flow */
 
+const path = require('path')
 const uuid = require('uuid/v4')
 
 const { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID, TRASH_DIR_NAME } = require('../../../../core/remote/constants')
@@ -73,7 +74,7 @@ module.exports = class RemoteBaseBuilder {
       created_at: this.options.lastModifiedDate,
       dir_id: this.options.dir._id,
       name: this.options.name,
-      path: `${this.options.dir.path}/${this.options.name}`,
+      path: path.posix.join(this.options.dir.path, this.options.name),
       tags: [],
       updated_at: this.options.lastModifiedDate
     }

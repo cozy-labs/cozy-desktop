@@ -220,6 +220,19 @@ class RemoteWatcher {
           detail: `${docType} was created and trashed remotely`
         }
       }
+      const previousMoveToSamePath = _.find(previousChanges, change =>
+        // $FlowFixMe
+        change.type === 'FileMove' && change.doc.path === was.path)
+
+      if (previousMoveToSamePath) {
+        previousMoveToSamePath.doc.overwrite = was
+        return {
+          type: 'RemoteIgnoredChange',
+          doc,
+          was,
+          detail: `File ${was.path} overwritten by ${previousMoveToSamePath.was.path}`
+        }
+      }
       return remoteChange.trashed(doc, was)
     }
     if (!was) {
@@ -267,6 +280,13 @@ class RemoteWatcher {
               detail: `File was moved as descendant of ${_.get(previousChange, 'doc.path')}`
             }
           }
+        } else if (previousChange.type === 'FileTrashing' && previousChange.was._id === change.doc._id) {
+          _.assign(previousChange, {
+            type: 'RemoteIgnoredChange',
+            detail: `File ${previousChange.was.path} overwritten by ${change.was.path}`
+          })
+          change.doc.overwrite = previousChange.was
+          return change
         }
       }
       return change

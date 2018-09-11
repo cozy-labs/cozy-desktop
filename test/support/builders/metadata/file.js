@@ -1,11 +1,16 @@
 /* @flow */
 
+const _ = require('lodash')
 const crypto = require('crypto')
+
+const { createMetadata } = require('../../../../core/conversion')
+const { ensureValidPath } = require('../../../../core/metadata')
 
 const BaseMetadataBuilder = require('./base')
 
 /*::
 import type Pouch from '../../../../core/pouch'
+import type { RemoteDoc } from '../../../../core/remote/document'
 */
 
 module.exports = class FileMetadataBuilder extends BaseMetadataBuilder {
@@ -24,6 +29,13 @@ module.exports = class FileMetadataBuilder extends BaseMetadataBuilder {
       size: 0,
       md5sum: '1B2M2Y8AsgTpgAmY7PhCfg==' // empty
     }
+  }
+
+  fromRemote (remoteDoc /*: RemoteDoc */) /*: this */ {
+    const doc = createMetadata(remoteDoc)
+    ensureValidPath(doc)
+    this.opts = _.pick(doc, _.keys(this.opts))
+    return this
   }
 
   data (data /*: string */) /*: this */ {
