@@ -2,8 +2,14 @@
 /* @flow weak */
 
 const _ = require('lodash')
+const path = require('path')
 const should = require('should')
 
+const {
+  FILES_DOCTYPE,
+  TRASH_DIR_ID,
+  TRASH_DIR_NAME
+} = require('../../../core/remote/constants')
 const { DirectoryNotFound, RemoteCozy } = require('../../../core/remote/cozy')
 
 const configHelpers = require('../../support/helpers/config')
@@ -190,6 +196,31 @@ describe('RemoteCozy', function () {
 
       await should(remoteCozy.findOrCreateDirectoryByPath('/whatever'))
         .be.rejected()
+    })
+  })
+
+  describe('trashById', () => {
+    it('resolves with a RemoteDoc representing the newly trashed item', async function () {
+      const orig = await builders.remote.file()
+        .timestamp(2017, 1, 1, 1, 1, 1)
+        .create()
+
+      const trashed = await remoteCozy.trashById(orig._id)
+
+      should(trashed).have.properties({
+        _id: orig._id,
+        _type: FILES_DOCTYPE,
+        class: orig.class,
+        dir_id: TRASH_DIR_ID,
+        executable: orig.executable,
+        md5sum: orig.md5sum,
+        mime: orig.mime,
+        name: orig.name,
+        path: path.posix.join('/', TRASH_DIR_NAME, orig.name),
+        size: orig.size,
+        tags: orig.tags,
+        type: orig.type
+      })
     })
   })
 
