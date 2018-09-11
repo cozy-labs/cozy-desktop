@@ -6,6 +6,8 @@ const logger = require('../../core/logger')
 const { defaultLogger } = logger
 const log = logger({component: 'mocha'})
 
+const { CI } = process.env
+
 const lines = []
 
 defaultLogger.addStream({
@@ -27,7 +29,7 @@ beforeEach(function () {
 })
 
 afterEach(function () {
-  if (this.currentTest.state === 'failed') {
+  if (this.currentTest.state === 'failed' && CI) {
     console.log(lines.map(l => JSON.stringify(l)).join('\n'))
   }
 })
