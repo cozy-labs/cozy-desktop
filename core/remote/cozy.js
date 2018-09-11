@@ -92,7 +92,7 @@ class RemoteCozy {
   }
 
   trashById (id /*: string */, options /*: ?{ifMatch: string} */) /*: Promise<RemoteDoc> */ {
-    return this.client.files.trashById(id, options)
+    return this.client.files.trashById(id, options).then(this.toRemoteDoc)
   }
 
   destroyById (id /*: string */, options /*: ?{ifMatch: string} */) /*: Promise<void> */ {
