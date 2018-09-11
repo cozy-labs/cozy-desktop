@@ -122,7 +122,7 @@ module.exports = class Local /*:: implements Side */ {
 
   async updateMetadataAsync (doc /*: Metadata */) /*: Promise<void> */ {
     let filePath = path.resolve(this.syncPath, doc.path)
-    if (doc.executable) await fs.chmod(filePath, '755')
+    if (doc.executable && process.platform !== 'win32') await fs.chmod(filePath, '755')
     if (doc.updated_at) {
       let updated = new Date(doc.updated_at)
       try {

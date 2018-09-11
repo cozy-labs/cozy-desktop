@@ -12,7 +12,8 @@ const {
   markSide,
   sameBinary,
   sameFile,
-  sameFolder
+  sameFolder,
+  copyIfNull
 } = require('./metadata')
 const move = require('./move')
 const { otherSide } = require('./side')
@@ -131,12 +132,7 @@ class Merge {
     assignMaxDate(doc, file)
     if (file && sameBinary(file, doc)) {
       doc._rev = file._rev
-      if (doc.size == null) { doc.size = file.size }
-      if (doc.class == null) { doc.class = file.class }
-      if (doc.mime == null) { doc.mime = file.mime }
-      if (doc.tags == null) { doc.tags = file.tags || [] }
-      if (doc.remote == null) { doc.remote = file.remote }
-      if (doc.ino == null) { doc.ino = file.ino }
+      copyIfNull(doc, ['size', 'class', 'mime', 'tags', 'remote', 'ino', 'executable'], file)
       if (sameFile(file, doc)) {
         log.info({path}, 'up to date')
         return null
@@ -194,13 +190,10 @@ class Merge {
     if (file) {
       doc._rev = file._rev
       doc.moveFrom = file.moveFrom
-      if (doc.tags == null) { doc.tags = file.tags || [] }
-      if (doc.remote == null) { doc.remote = file.remote }
-      if (doc.ino == null) { doc.ino = file.ino }
+      copyIfNull(doc, ['tags', 'remote', 'ino', 'executable'], file)
+      doc.tags = doc.tags || []
       if (sameBinary(file, doc)) {
-        if (doc.size == null) { doc.size = file.size }
-        if (doc.class == null) { doc.class = file.class }
-        if (doc.mime == null) { doc.mime = file.mime }
+        copyIfNull(doc, ['size', 'class', 'mime'], file)
       } else if (!isUpToDate(side, file)) {
         return this.resolveConflictAsync(side, doc, file)
       }
@@ -228,9 +221,7 @@ class Merge {
     assignMaxDate(doc, folder)
     if (folder) {
       doc._rev = folder._rev
-      if (doc.tags == null) { doc.tags = folder.tags || [] }
-      if (doc.remote == null) { doc.remote = folder.remote }
-      if (doc.ino == null && folder.ino) { doc.ino = folder.ino }
+      copyIfNull(doc, ['tags', 'remote', 'ino'], folder)
       if (sameFolder(folder, doc)) {
         log.info({path}, 'up to date')
         return null
@@ -252,11 +243,7 @@ class Merge {
       markSide(side, doc, file)
       markSide(side, was, was)
       assignMaxDate(doc, was)
-      if (doc.size == null) { doc.size = was.size }
-      if (doc.class == null) { doc.class = was.class }
-      if (doc.mime == null) { doc.mime = was.mime }
-      if (doc.tags == null) { doc.tags = was.tags || [] }
-      if (doc.ino == null) { doc.ino = was.ino }
+      copyIfNull(doc, ['size', 'class', 'mime', 'tags', 'ino', 'executable'], was)
       move(was, doc)
       if (file && sameFile(file, doc)) {
         log.info({path}, 'up to date (move)')
@@ -285,8 +272,7 @@ class Merge {
       markSide(side, doc, folder)
       markSide(side, was, was)
       assignMaxDate(doc, was)
-      if (doc.tags == null) { doc.tags = was.tags || [] }
-      if (doc.ino == null) { doc.ino = was.ino }
+      copyIfNull(doc, ['tags', 'ino'], was)
       // FIXME: Shouldn't we compare doc/was updated_at & set doc accordingly
       // as in moveFileAsync?
       if (folder && !doc.overwrite) {
@@ -339,6 +325,7 @@ class Merge {
     const {path} = doc
     // TODO we can probably do something smarter for conflicts and avoiding to
     // transfer again the file
+    // TODO copyIfNull ?
     try {
       await this.deleteFileAsync(side, was)
     } catch (err) {
@@ -351,6 +338,7 @@ class Merge {
     log.debug({path: doc.path, oldpath: was.path}, 'restoreFolderAsync')
     const {path} = doc
     // TODO we can probably do something smarter for conflicts
+    // TODO copyIfNull ?
     try {
       await this.deleteFolderAsync(side, was)
     } catch (err) {

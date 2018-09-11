@@ -443,18 +443,12 @@ module.exports = class LocalWatcher {
   }
 
   // File deletion detected
-  //
-  // It can be a file moved out. So, we wait a bit to see if a file with the
-  // same checksum is added and, if not, we declare this file as deleted.
   onUnlinkFile (filePath /*: string */) {
     log.info({path: filePath}, 'FileDeletion')
     return this.prep.trashFileAsync(SIDE, {path: filePath}).catch(err => log.error({err, path: filePath}))
   }
 
   // Folder deletion detected
-  //
-  // We don't want to delete a folder before files inside it. So we wait a bit
-  // after chokidar event to declare the folder as deleted.
   onUnlinkDir (folderPath /*: string */) {
     log.info({path: folderPath}, 'DirDeletion')
     return this.prep.trashFolderAsync(SIDE, {path: folderPath}).catch(err => log.error({err, path: folderPath}))
