@@ -3,7 +3,7 @@
 const logger = require('../logger')
 
 const log = logger({
-  component: 'remote/user_action_required'
+  component: 'RemoteUserActionRequired'
 })
 
 module.exports = {

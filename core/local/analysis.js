@@ -21,7 +21,7 @@ import type {
 */
 
 const log = logger({
-  component: 'local/analysis'
+  component: 'LocalAnalysis'
 })
 log.chokidar = log.child({
   component: 'chokidar'
