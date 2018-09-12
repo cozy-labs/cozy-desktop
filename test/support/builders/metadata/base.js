@@ -108,7 +108,7 @@ module.exports = class BaseMetadataBuilder {
   }
 
   upToDate () /*: this */ {
-    this.opts.sides = {local: 1, remote: 1}
+    this.opts.sides = {local: 2, remote: 2}
     return this
   }
 
