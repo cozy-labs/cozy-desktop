@@ -7,12 +7,13 @@ const path = require('path')
 
 const checksumer = require('../../../core/local/checksumer')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
-const { getPath } = require('../../../core/utils/path')
 
 Promise.promisifyAll(fs) // FIXME: Isn't fs-extra already promisified?
 Promise.promisifyAll(checksumer)
 
-/*:: import type { PathObject } from '../../../core/utils/path' */
+function getPath (target /*: string | {path: string} */) /*: string */ {
+  return typeof target === 'string' ? target : target.path
+}
 
 function posixifyPath (localPath /*: string */) /*: string */ {
   return localPath.split(path.sep).join(path.posix.sep)
@@ -29,7 +30,7 @@ class ContextDir {
     autoBind(this)
   }
 
-  abspath (target /*: string|PathObject */) /*: string */ {
+  abspath (target /*: string | {path: string} */) /*: string */ {
     return path.join(this.root, getPath(target))
   }
 
@@ -64,61 +65,61 @@ class ContextDir {
       .filter(relPath => relPath !== `${TMP_DIR_NAME}/`)
   }
 
-  existsSync (target /*: string|PathObject */) /*: bool */ {
+  existsSync (target /*: string | {path: string} */) /*: bool */ {
     return fs.existsSync(this.abspath(target))
   }
 
-  exists (target /*: string|PathObject */) /*: Promise<bool> */ {
+  exists (target /*: string | {path: string} */) /*: Promise<bool> */ {
     return fs.exists(this.abspath(target))
   }
 
-  emptyDir (target /*: string|PathObject */) /*: Promise<void> */ {
+  emptyDir (target /*: string | {path: string} */) /*: Promise<void> */ {
     return fs.emptyDir(this.abspath(target))
   }
 
-  async ensureDir (target /*: string|PathObject */) {
+  async ensureDir (target /*: string | {path: string} */) {
     await fs.ensureDir(this.abspath(target))
   }
 
-  async ensureParentDir (target /*: string|PathObject */) {
+  async ensureParentDir (target /*: string | {path: string} */) {
     await this.ensureDir(path.dirname(getPath(target)))
   }
 
-  async mtime (target /*: string|PathObject */) /*: Promise<Date> */ {
+  async mtime (target /*: string | {path: string} */) /*: Promise<Date> */ {
     const stats = await this.stat(target)
     return stats.mtime
   }
 
-  async unlink (target /*: string|PathObject */) {
+  async unlink (target /*: string | {path: string} */) {
     await fs.unlinkAsync(this.abspath(target))
   }
 
-  async rmdir (target /*: string|PathObject */) {
+  async rmdir (target /*: string | {path: string} */) {
     await fs.rmdirSync(this.abspath(target))
   }
 
-  async readFile (target /*: string|PathObject */, opts /*: * */ = 'utf8') /*: Promise<string> */ {
+  async readFile (target /*: string | {path: string} */, opts /*: * */ = 'utf8') /*: Promise<string> */ {
     return fs.readFile(this.abspath(target), opts)
   }
 
-  async outputFile (target /*: string|PathObject */, data /*: string */) {
+  async outputFile (target /*: string | {path: string} */, data /*: string */) {
     return fs.outputFile(this.abspath(target), data)
   }
 
-  async checksum (target /*: string|PathObject */) /*: Promise<string> */ {
+  async checksum (target /*: string | {path: string} */) /*: Promise<string> */ {
     // $FlowFixMe
     return checksumer.computeChecksumAsync(this.abspath(target))
   }
 
-  stat (target /*: string|PathObject */) /*: Promise<fs.Stat> */ {
+  stat (target /*: string | {path: string} */) /*: Promise<fs.Stat> */ {
     return fs.stat(this.abspath(target))
   }
 
-  remove (target /*: string|PathObject */) /*: Promise<void> */ {
+  remove (target /*: string | {path: string} */) /*: Promise<void> */ {
     return fs.remove(this.abspath(target))
   }
 
-  async removeParentDir (target /*: string|PathObject */) /*: Promise<void> */ {
+  async removeParentDir (target /*: string | {path: string} */) /*: Promise<void> */ {
     await fs.remove(this.abspath(path.dirname(getPath(target))))
   }
 }

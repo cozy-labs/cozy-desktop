@@ -13,7 +13,6 @@ import type Config from './config'
 import type Ignore from './ignore'
 import type Merge from './merge'
 import type { SideName, Metadata } from './metadata'
-import type { PathObject } from './utils/path'
 */
 
 const log = logger({
@@ -195,7 +194,7 @@ class Prep {
   }
 
   // TODO add comments + tests
-  async trashFileAsync (side /*: SideName */, was /*: PathObject */, doc /*: ?Metadata */) {
+  async trashFileAsync (side /*: SideName */, was /*: {path: string} */, doc /*: ?Metadata */) {
     log.debug({path: doc && doc.path, oldpath: was.path}, 'trashFileAsync')
     ensureValidPath(was)
 
@@ -216,7 +215,7 @@ class Prep {
   }
 
   // TODO add comments + tests
-  async trashFolderAsync (side /*: SideName */, was /*: PathObject */, doc /*: ?Metadata */) {
+  async trashFolderAsync (side /*: SideName */, was /*: {path: string} */, doc /*: ?Metadata */) {
     log.debug({path: doc && doc.path, oldpath: was.path}, 'trashFolderAsync')
     ensureValidPath(was)
 
