@@ -6,6 +6,7 @@ const fs = require('fs-extra')
 const path = require('path')
 
 const checksumer = require('../../../core/local/checksumer')
+const { TMP_DIR_NAME } = require('../../../core/local/constants')
 const { getPath } = require('../../../core/utils/path')
 
 Promise.promisifyAll(fs) // FIXME: Isn't fs-extra already promisified?
@@ -58,15 +59,34 @@ class ContextDir {
       }
     }
 
-    return relPaths.sort((a, b) => a.localeCompare(b))
+    return relPaths
+      .sort((a, b) => a.localeCompare(b))
+      .filter(relPath => relPath !== `${TMP_DIR_NAME}/`)
   }
 
-  existsSync (target /*: string|PathObject */) /*: Promise<bool> */ {
+  existsSync (target /*: string|PathObject */) /*: bool */ {
     return fs.existsSync(this.abspath(target))
+  }
+
+  exists (target /*: string|PathObject */) /*: Promise<bool> */ {
+    return fs.exists(this.abspath(target))
+  }
+
+  emptyDir (target /*: string|PathObject */) /*: Promise<void> */ {
+    return fs.emptyDir(this.abspath(target))
   }
 
   async ensureDir (target /*: string|PathObject */) {
     await fs.ensureDir(this.abspath(target))
+  }
+
+  async ensureParentDir (target /*: string|PathObject */) {
+    await this.ensureDir(path.dirname(getPath(target)))
+  }
+
+  async mtime (target /*: string|PathObject */) /*: Promise<Date> */ {
+    const stats = await this.stat(target)
+    return stats.mtime
   }
 
   async unlink (target /*: string|PathObject */) {
@@ -77,8 +97,8 @@ class ContextDir {
     await fs.rmdirSync(this.abspath(target))
   }
 
-  async readFile (target /*: string|PathObject */) /*: Promise<string> */ {
-    return fs.readFile(this.abspath(target), 'utf8')
+  async readFile (target /*: string|PathObject */, opts /*: * */ = 'utf8') /*: Promise<string> */ {
+    return fs.readFile(this.abspath(target), opts)
   }
 
   async outputFile (target /*: string|PathObject */, data /*: string */) {
@@ -88,6 +108,18 @@ class ContextDir {
   async checksum (target /*: string|PathObject */) /*: Promise<string> */ {
     // $FlowFixMe
     return checksumer.computeChecksumAsync(this.abspath(target))
+  }
+
+  stat (target /*: string|PathObject */) /*: Promise<fs.Stat> */ {
+    return fs.stat(this.abspath(target))
+  }
+
+  remove (target /*: string|PathObject */) /*: Promise<void> */ {
+    return fs.remove(this.abspath(target))
+  }
+
+  async removeParentDir (target /*: string|PathObject */) /*: Promise<void> */ {
+    await fs.remove(this.abspath(path.dirname(getPath(target))))
   }
 }
 

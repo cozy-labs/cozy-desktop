@@ -21,7 +21,7 @@ const pouchHelpers = require('../../support/helpers/pouch')
 Promise.promisifyAll(fs)
 
 describe('Local', function () {
-  let syncDir
+  let builders, syncDir
 
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
@@ -31,6 +31,7 @@ describe('Local', function () {
     this.local = new Local(this.config, this.prep, this.pouch, this.events)
     this.local.watcher.pending = new PendingMap()
 
+    builders = new MetadataBuilders(this.pouch)
     syncDir = new ContextDir(this.syncPath)
   })
   after('clean pouch', pouchHelpers.cleanDatabase)
@@ -401,198 +402,191 @@ describe('Local', function () {
   })
 
   describe('moveFile', function () {
-    it('moves the file', async function () {
-      let old = {
-        path: 'old-parent/file-to-move',
-        updated_at: new Date('2016-10-08T05:05:09Z')
-      }
-      let doc = {
-        path: 'new-parent/file-moved',
-        updated_at: new Date('2015-10-09T05:05:10Z')
-      }
-      let oldPath = syncDir.abspath(old.path)
-      let newPath = syncDir.abspath(doc.path)
-      fs.ensureDirSync(path.dirname(oldPath))
-      fs.writeFileSync(oldPath, 'foobar')
-      await this.local.moveFileAsync(doc, old)
-      fs.existsSync(oldPath).should.be.false()
-      fs.statSync(newPath).isFile().should.be.true()
-      let mtime = +fs.statSync(newPath).mtime
-      mtime.should.equal(+doc.updated_at)
-      let enc = {encoding: 'utf-8'}
-      fs.readFileSync(newPath, enc).should.equal('foobar')
+    let dstFile, srcFile
+
+    beforeEach(async () => {
+      srcFile = builders.file().path('src/file').build()
+      dstFile = builders.file().path('dst/file').olderThan(srcFile).build()
+
+      await fs.emptyDir(syncDir.root)
     })
 
-    it('also updates it when md5sum has changed', async function () {
-      const old = {
-        path: 'meow.txt',
-        md5sum: 'SkvkDJasYxTpHZPzgEOmNA=='
-      }
-      await syncDir.outputFile(old, 'meow')
-      const doc = {
-        path: 'woof.txt',
-        md5sum: 'j9tggB6dOaUoaqAd0fT08w=='
-      }
+    it('moves the file and updates its mtime', async function () {
+      await syncDir.outputFile(srcFile, 'foobar')
+      await syncDir.ensureParentDir(dstFile)
+
+      await this.local.moveFileAsync(dstFile, srcFile)
+
+      should(await syncDir.tree()).deepEqual([
+        'dst/',
+        'dst/file',
+        'src/'
+      ])
+      should(+(await syncDir.mtime(dstFile))).equal(+dstFile.updated_at)
+      should(await syncDir.readFile(dstFile)).equal('foobar')
+    })
+
+    it('also updates its content when md5sum has changed', async function () {
+      srcFile.md5sum = 'SkvkDJasYxTpHZPzgEOmNA==' // meow
+      dstFile.md5sum = 'j9tggB6dOaUoaqAd0fT08w==' // woof
+      await syncDir.outputFile(srcFile, 'meow')
+      await syncDir.ensureParentDir(dstFile)
       this.local.other = {
         async createReadStreamAsync (doc) {
           return new StreamBuilder().push('woof').build()
         }
       }
 
-      await this.local.moveFileAsync(doc, old)
+      await this.local.moveFileAsync(dstFile, srcFile)
 
-      should(syncDir.existsSync(old)).be.false()
-      should(syncDir.existsSync(doc)).be.true()
-      should(await syncDir.readFile(doc)).equal('woof')
-
-      syncDir.unlink(doc)
+      should(await syncDir.tree()).deepEqual([
+        'dst/',
+        'dst/file',
+        'src/'
+      ])
+      should(await syncDir.readFile(dstFile)).equal('woof')
     })
 
-    it('creates the file is the current file is missing', async function () {
-      let old = {
-        path: 'old-parent/missing-file',
-        updated_at: new Date('2016-10-08T05:05:11Z')
-      }
-      let doc = {
-        path: 'new-parent/recreated-file',
-        updated_at: new Date('2015-10-09T05:05:12Z')
-      }
-      let stub = sinon.stub(this.local, 'addFile').yields()
-      await this.local.moveFileAsync(doc, old)
-      stub.restore()
-      stub.calledWith(doc).should.be.true()
+    it('throws ENOENT on missing source', async function () {
+      await syncDir.emptyDir(path.dirname(srcFile.path))
+      await syncDir.emptyDir(path.dirname(dstFile.path))
+
+      await should(
+        this.local.moveFileAsync(dstFile, srcFile)
+      ).be.rejectedWith({code: 'ENOENT'})
+
+      should(await syncDir.tree()).deepEqual([
+        'dst/',
+        'src/'
+      ])
     })
 
-    it('does nothing if the file has already been moved', async function () {
-      let old = {
-        path: 'old-parent/already-moved',
-        updated_at: new Date('2016-10-08T05:05:11Z')
-      }
-      let doc = {
-        path: 'new-parent/already-here',
-        updated_at: new Date('2015-10-09T05:05:12Z')
-      }
-      let newPath = syncDir.abspath(doc.path)
-      fs.ensureDirSync(path.dirname(newPath))
-      fs.writeFileSync(newPath, 'foobar')
-      let stub = sinon.stub(this.local, 'addFile').yields()
-      await this.local.moveFileAsync(doc, old)
-      stub.restore()
-      stub.calledWith(doc).should.be.false()
-      let enc = {encoding: 'utf-8'}
-      fs.readFileSync(newPath, enc).should.equal('foobar')
+    it('throws ENOENT on missing destination parent', async function () {
+      await syncDir.outputFile(srcFile, 'foobar')
+      await syncDir.removeParentDir(dstFile)
+
+      await should(
+        this.local.moveFileAsync(dstFile, srcFile)
+      ).be.rejectedWith({code: 'ENOENT'})
+
+      should(await syncDir.tree()).deepEqual([
+        'src/',
+        'src/file'
+      ])
     })
 
-    it('adds the file back when it was restored', async function () {
-      const old = {path: '.cozy_trash/restored-file'}
-      const doc = {path: 'restored-file'}
-      this.local.other = {
-        createReadStreamAsync (docToStream) {
-          const stream = new Readable()
-          stream._read = function () {}
-          stream.push(null)
-          return Promise.resolve(stream)
-        }
-      }
+    it('throws a custom Error on existing destination', async function () {
+      await syncDir.outputFile(srcFile, 'src/file content')
+      await syncDir.outputFile(dstFile, 'dst/file content')
 
-      await should(this.local.moveFileAsync(doc, old)).be.fulfilled()
+      await should(
+        this.local.moveFileAsync(dstFile, srcFile)
+      ).be.rejectedWith(/already exists/)
 
-      should(syncDir.existsSync(old)).be.false()
-      should(syncDir.existsSync(doc)).be.true()
+      should(await syncDir.tree()).deepEqual([
+        'dst/',
+        'dst/file',
+        'src/',
+        'src/file'
+      ])
+    })
 
-      syncDir.unlink(doc)
+    it('throws a custom Error on existing destination (and missing source)', async function () {
+      await syncDir.ensureParentDir(srcFile)
+      await syncDir.outputFile(dstFile, 'dst/file content')
+
+      await should(
+        this.local.moveFileAsync(dstFile, srcFile)
+      ).be.rejectedWith(/already exists/)
+
+      should(await syncDir.tree()).deepEqual([
+        'dst/',
+        'dst/file',
+        'src/'
+      ])
     })
   })
 
   describe('moveFolder', function () {
-    it('moves the folder', async function () {
-      let old = {
-        path: 'old-parent/folder-to-move',
-        docType: 'folder',
-        updated_at: new Date('2016-10-08T05:06:09Z')
-      }
-      let doc = {
-        path: 'new-parent/folder-moved',
-        docType: 'folder',
-        updated_at: new Date('2015-10-09T05:06:10Z')
-      }
-      let oldPath = syncDir.abspath(old.path)
-      let folderPath = syncDir.abspath(doc.path)
-      fs.ensureDirSync(oldPath)
-      await this.local.moveFolderAsync(doc, old)
-      fs.existsSync(oldPath).should.be.false()
-      fs.statSync(folderPath).isDirectory().should.be.true()
-      let mtime = +fs.statSync(folderPath).mtime
-      mtime.should.equal(+doc.updated_at)
+    let dstDir, srcDir
+
+    beforeEach(async () => {
+      srcDir = builders.dir().path('src/dir').build()
+      dstDir = builders.dir().path('dst/dir').olderThan(srcDir).build()
+
+      await fs.emptyDir(syncDir.root)
     })
 
-    it('creates the folder is the current directory is missing', async function () {
-      let old = {
-        path: 'old-parent/missing-folder',
-        docType: 'folder',
-        updated_at: new Date('2016-10-08T05:06:09Z')
-      }
-      let doc = {
-        path: 'new-parent/recreated-folder',
-        docType: 'folder',
-        updated_at: new Date('2015-10-09T05:06:10Z')
-      }
-      let folderPath = syncDir.abspath(doc.path)
-      await this.local.moveFolderAsync(doc, old)
-      fs.statSync(folderPath).isDirectory().should.be.true()
-      let mtime = +fs.statSync(folderPath).mtime
-      mtime.should.equal(+doc.updated_at)
+    it('moves the folder and updates its mtime', async function () {
+      await syncDir.ensureDir(srcDir)
+      await syncDir.ensureParentDir(dstDir)
+
+      await this.local.moveFolderAsync(dstDir, srcDir)
+
+      should(await syncDir.tree()).deepEqual([
+        'dst/',
+        'dst/dir/',
+        'src/'
+      ])
+      should(+(await syncDir.mtime(dstDir))).equal(+dstDir.updated_at)
     })
 
-    it('does nothing if the folder has already been moved', async function () {
-      let old = {
-        path: 'old-parent/folder-already-moved',
-        updated_at: new Date('2016-10-08T05:05:11Z')
-      }
-      let doc = {
-        path: 'new-parent/folder-already-here',
-        updated_at: new Date('2015-10-09T05:05:12Z')
-      }
-      let newPath = syncDir.abspath(doc.path)
-      fs.ensureDirSync(newPath)
-      let stub = sinon.stub(this.local, 'addFolder').yields()
-      await this.local.moveFolderAsync(doc, old)
-      stub.restore()
-      stub.calledWith(doc).should.be.false()
-      fs.statSync(newPath).isDirectory().should.be.true()
+    it('throws ENOENT on missing source', async function () {
+      await syncDir.ensureParentDir(srcDir)
+      await syncDir.ensureParentDir(dstDir)
+
+      await should(
+        this.local.moveFolderAsync(dstDir, srcDir)
+      ).be.rejectedWith({code: 'ENOENT'})
+
+      should(await syncDir.tree()).deepEqual([
+        'dst/',
+        'src/'
+      ])
     })
 
-    it('remove the old directory if everything has been moved', async function () {
-      let old = {
-        path: 'old-parent/folder-already-moved',
-        updated_at: new Date('2016-10-08T05:05:11Z')
-      }
-      let doc = {
-        path: 'new-parent/folder-already-here',
-        updated_at: new Date('2015-10-09T05:05:12Z')
-      }
-      let oldPath = syncDir.abspath(old.path)
-      let newPath = syncDir.abspath(doc.path)
-      fs.ensureDirSync(oldPath)
-      fs.ensureDirSync(newPath)
-      let stub = sinon.stub(this.local, 'addFolder').yields()
-      await this.local.moveFolderAsync(doc, old)
-      stub.restore()
-      stub.calledWith(doc).should.be.false()
-      fs.existsSync(oldPath).should.be.false()
-      fs.statSync(newPath).isDirectory().should.be.true()
+    it('throws ENOENT on missing destination parent', async function () {
+      await syncDir.ensureDir(srcDir)
+
+      await should(
+        this.local.moveFolderAsync(dstDir, srcDir)
+      ).be.rejectedWith({code: 'ENOENT'})
+
+      should(await syncDir.tree()).deepEqual([
+        'src/',
+        'src/dir/'
+      ])
     })
 
-    it('adds the folder back when it was restored', async function () {
-      const old = {path: '.cozy_trash/restored-folder'}
-      const doc = {path: 'restored-folder'}
+    it('throws a custom Error on existing destination', async function () {
+      await syncDir.ensureDir(srcDir)
+      await syncDir.ensureDir(dstDir)
 
-      await should(this.local.moveFolderAsync(doc, old)).be.fulfilled()
+      await should(
+        this.local.moveFolderAsync(dstDir, srcDir)
+      ).be.rejectedWith(/already exists/)
 
-      fs.existsSync(syncDir.abspath(old)).should.be.false()
-      fs.existsSync(syncDir.abspath(doc)).should.be.true()
+      should(await syncDir.tree()).deepEqual([
+        'dst/',
+        'dst/dir/',
+        'src/',
+        'src/dir/'
+      ])
+    })
 
-      await syncDir.rmdir(doc)
+    it('throws a custom Error on existing destination (and missing source)', async function () {
+      await syncDir.ensureParentDir(srcDir)
+      await syncDir.ensureDir(dstDir)
+
+      await should(
+        this.local.moveFolderAsync(dstDir, srcDir)
+      ).be.rejectedWith(/already exists/)
+
+      should(await syncDir.tree()).deepEqual([
+        'dst/',
+        'dst/dir/',
+        'src/'
+      ])
     })
   })
 
@@ -629,10 +623,9 @@ describe('Local', function () {
   })
 
   describe('deleteFolderAsync', () => {
-    let builders, fullPath
+    let fullPath
 
     beforeEach(function () {
-      builders = new MetadataBuilders(this.pouch)
       fullPath = (doc) => syncDir.abspath(doc.path)
 
       this.events.emit = sinon.spy()
