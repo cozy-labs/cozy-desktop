@@ -14,7 +14,6 @@ const { maxDate } = require('./timestamp')
 /*::
 import type fs from 'fs'
 import type { PathIssue } from './path_restrictions'
-import type { PathObject } from './utils/path'
 */
 
 const log = logger({
@@ -159,7 +158,7 @@ function id (path /*: string */) {
 // (ie a path inside the mount point).
 // Normalizes the path as a side-effect.
 // TODO: Separate normalization (side-effect) from validation (pure).
-function invalidPath (doc /*: PathObject */) {
+function invalidPath (doc /*: {path: string} */) {
   if (!doc.path) { return true }
   doc.path = path.normalize(doc.path)
   if (doc.path.startsWith(path.sep)) {
@@ -172,7 +171,7 @@ function invalidPath (doc /*: PathObject */) {
 }
 
 // Same as invalidPath, except it throws an exception when path is invalid.
-function ensureValidPath (doc /*: PathObject */) {
+function ensureValidPath (doc /*: {path: string} */) {
   if (invalidPath(doc)) {
     log.warn({path: doc.path}, `Invalid path: ${JSON.stringify(doc, null, 2)}`)
     throw new Error('Invalid path')
