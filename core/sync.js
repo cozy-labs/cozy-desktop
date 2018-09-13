@@ -4,7 +4,7 @@ const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 
 const { dirname } = require('path')
-const { clone } = require('lodash')
+const _ = require('lodash')
 
 const { MAX_SYNC_ATTEMPTS } = require('./constants')
 const logger = require('./logger')
@@ -287,7 +287,7 @@ class Sync {
         await this.doAdd(side, doc)
       } else if (from.childMove) {
         await side.assignNewRev(doc)
-        this.events.emit('transfer-move', clone(doc), clone(from))
+        this.events.emit('transfer-move', _.clone(doc), _.clone(from))
       } else {
         await this.doMove(side, doc, from)
       }
@@ -316,7 +316,7 @@ class Sync {
           }
         } else {
           await side.overwriteFileAsync(doc, old)
-          this.events.emit('transfer-started', clone(doc))
+          this.events.emit('transfer-started', _.clone(doc))
         }
       }
     }
@@ -325,7 +325,7 @@ class Sync {
   async doAdd (side /*: Side */, doc /*: Metadata */) /*: Promise<void> */ {
     if (doc.docType === 'file') {
       await side.addFileAsync(doc)
-      this.events.emit('transfer-started', clone(doc))
+      this.events.emit('transfer-started', _.clone(doc))
     } else {
       await side.addFolderAsync(doc)
     }
@@ -334,7 +334,7 @@ class Sync {
   async doOverwrite (side /*: Side */, doc /*: Metadata */) /*: Promise<void> */ {
     if (doc.docType === 'file') {
       await side.overwriteFileAsync(doc, null)
-      this.events.emit('transfer-started', clone(doc))
+      this.events.emit('transfer-started', _.clone(doc))
     } else {
       await side.addFolderAsync(doc)
     }
@@ -344,7 +344,7 @@ class Sync {
     if (doc.overwrite) await this.trashWithParentOrByItself(doc.overwrite, side)
     if (doc.docType === 'file') {
       await side.moveFileAsync(doc, old)
-      this.events.emit('transfer-move', clone(doc), clone(old))
+      this.events.emit('transfer-move', _.clone(doc), _.clone(old))
     } else await side.moveFolderAsync(doc, old)
   }
 
