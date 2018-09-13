@@ -15,6 +15,7 @@ require('./globals') // FIXME Use bluebird promises as long as we need asCallbac
 const pkg = require('../package.json')
 const Config = require('./config')
 const logger = require('./logger')
+const sentry = require('./sentry')
 const { LOG_FILE, LOG_FILENAME } = logger
 const Pouch = require('./pouch')
 const Ignore = require('./ignore')
@@ -290,6 +291,7 @@ class App {
   // Start database sync process and setup file change watcher
   synchronize (mode /*: SyncMode */) {
     log.info(this.clientInfo(), 'synchronize')
+    sentry.setup(this.clientInfo())
     if (!this.config.isValid()) {
       log.error('No configuration found, please run add-remote-cozy' +
                 'command before running a synchronization.')

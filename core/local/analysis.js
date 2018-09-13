@@ -1,6 +1,7 @@
 /* @flow */
 
 const path = require('path')
+const _ = require('lodash')
 
 const { getInode } = require('./event')
 const localChange = require('./change')
@@ -36,7 +37,7 @@ module.exports = function analysis (events /*: LocalEvent[] */, pendingChanges /
 }
 
 const panic = (context, description) => {
-  log.error(context, description)
+  log.error(_.merge({sentry: true}, context), description)
   throw new Error(description)
 }
 

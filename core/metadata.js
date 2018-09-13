@@ -8,6 +8,7 @@ const path = require('path')
 const { join } = path
 
 const logger = require('./logger')
+const sentry = require('./sentry')
 const { detectPathIssues, detectPathLengthIssue } = require('./path_restrictions')
 const { maxDate } = require('./timestamp')
 
@@ -181,10 +182,10 @@ function ensureValidPath (doc /*: {path: string} */) {
 
 function invariants (doc /*: Metadata */) {
   if (!doc.sides) {
-    throw new Error(`${doc._id} has no sides`)
+    throw sentry.flag(new Error(`${doc._id} has no sides`))
   }
   if (doc.sides.remote && !doc.remote) {
-    throw new Error(`${doc._id} has 'sides.remote' but no remote`)
+    throw sentry.flag(new Error(`${doc._id} has 'sides.remote' but no remote`))
   }
 }
 
