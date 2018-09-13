@@ -1,6 +1,6 @@
 # Use explicit tag (not latest which doesn't necessarily mean the last stable
 # version of the image)
-FROM cozy/cozy-app-dev:2018M2S5
+FROM cozy/cozy-app-dev:2018M3S6
 
 # Bring back git so we can install Cozy apps later
 ARG DEBIAN_FRONTEND=noninteractive
