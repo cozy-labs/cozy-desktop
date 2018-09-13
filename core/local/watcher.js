@@ -19,7 +19,6 @@ const {sameDate, fromDate} = require('../timestamp')
 import type { Metadata } from '../metadata'
 import type Pouch from '../pouch'
 import type Prep from '../prep'
-import type { Pending } from '../utils/pending'
 import type { Checksumer } from './checksumer'
 import type { ChokidarEvent } from './chokidar_event'
 import type { LocalEvent } from './event'
