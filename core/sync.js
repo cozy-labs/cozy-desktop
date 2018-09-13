@@ -12,7 +12,6 @@ const { extractRevNumber, isUpToDate, markSide, sameFileIgnoreRev } = require('.
 const userActionRequired = require('./remote/user_action_required')
 const { HEARTBEAT } = require('./remote/watcher')
 const { otherSide } = require('./side')
-const { PendingMap } = require('./utils/pending')
 const measureTime = require('./perftools')
 
 /*::
@@ -54,7 +53,6 @@ class Sync {
   events: EventEmitter
   ignore: Ignore
   local: Local
-  pending: PendingMap
   pouch: Pouch
   remote: Remote
   stopped: ?boolean
@@ -75,7 +73,6 @@ class Sync {
     this.local.other = this.remote
     // $FlowFixMe
     this.remote.other = this.local
-    this.pending = new PendingMap()
 
     autoBind(this)
   }

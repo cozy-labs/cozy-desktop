@@ -10,7 +10,6 @@ const { Readable } = require('stream')
 
 const Local = require('../../../core/local')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
-const { PendingMap } = require('../../../core/utils/pending')
 
 const MetadataBuilders = require('../../support/builders/metadata')
 const StreamBuilder = require('../../support/builders/stream')
@@ -29,7 +28,6 @@ describe('Local', function () {
     this.prep = {}
     this.events = {}
     this.local = new Local(this.config, this.prep, this.pouch, this.events)
-    this.local.watcher.pending = new PendingMap()
 
     builders = new MetadataBuilders(this.pouch)
     syncDir = new ContextDir(this.syncPath)
