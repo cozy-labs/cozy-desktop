@@ -414,6 +414,10 @@ class Sync {
 
     // Don't try more than MAX_SYNC_ATTEMPTS for the same operation
     if (doc.errors && doc.errors >= MAX_SYNC_ATTEMPTS) {
+      log.error(
+        {path: doc.path, oldpath: _.get(change, 'was.path')},
+        `Failed to sync ${MAX_SYNC_ATTEMPTS} times. Giving up.`
+      )
       await this.pouch.setLocalSeqAsync(change.seq)
       return
     }
