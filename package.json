@@ -44,7 +44,7 @@
     "docker:exec": "docker exec -it cozy-desktop-stack",
     "elm:upgrade": "cd gui && yarn add --dev elm@latest elm-upgrade@latest && elm-upgrade",
     "jq": "cross-env HOME=. nice -n 19 jq",
-    "lint": "npm run lint:flow && npm run lint:eslint",
+    "lint": "yarn lint:flow && yarn lint:eslint",
     "lint:flow": "flow status --quiet --show-all-errors",
     "lint:elm": "elm-format --validate gui/elm test/elm",
     "lint:eslint": "eslint './core/**/*.js' 'dev/**/*.js' gui/main.js gui/ports.js 'gui/js/**/*.js' './test/**/*.js'",
