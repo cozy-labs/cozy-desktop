@@ -12,6 +12,7 @@ const { TMP_DIR_NAME } = require('./constants')
 const logger = require('../logger')
 const { isUpToDate } = require('../metadata')
 const { hideOnWindows } = require('../utils/fs')
+const sentry = require('../sentry')
 const Watcher = require('./watcher')
 const measureTime = require('../perftools')
 const { withContentLength } = require('../file_stream_provider')
@@ -243,6 +244,21 @@ module.exports = class Local /*:: implements Side */ {
         } else {
           next()
         }
+      },
+
+      next => {
+        // After downloading a file, check that the size is correct too
+        // (more protection against stack corruption)
+        if (!doc.size) return next()
+        fs.stat(tmpFile, (err, stats) => {
+          if (err) {
+            next(err)
+          } else if (doc.size === stats.size) {
+            next()
+          } else {
+            next(sentry.flag(new Error('Invalid size')))
+          }
+        })
       },
 
       next => fs.ensureDir(parent, () => fs.rename(tmpFile, filePath, next)),

@@ -64,6 +64,7 @@ class Pouch {
   }
 
   /*::
+  byPathAsync: (string) => Promise<Metadata>
   byChecksumAsync: (string) => Promise<Metadata[]>
   byRecursivePathAsync: (string) => Promise<*>
   byRemoteIdAsync: (id: string) => Promise<*>
