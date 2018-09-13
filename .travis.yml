@@ -56,7 +56,7 @@ before_install:
         travis_retry brew cask install apache-couchdb;
         printf "\n[log]\nlevel = warn\n" >> /Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/etc/local.ini;
         ulimit -S -n 1024;
-        (/Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/bin/couchdb &);
+        (/Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/bin/couchdb >couchdb.log 2>&1 &);
       fi
     - sleep 5
     - curl -X PUT http://127.0.0.1:5984/{_users,_replicator,_global_changes}
@@ -127,3 +127,4 @@ after_success:
 after_failure:
     - $CXX --version
     - netstat -lntp
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cat couchdb.log; fi
