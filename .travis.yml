@@ -66,8 +66,8 @@ before_install:
         travis_retry brew install gimme;
         travis_retry brew install imagemagick;
       fi
-    - travis_retry gimme 1.9
-    - source ~/.gimme/envs/go1.9.env;
+    - travis_retry gimme 1.11
+    - source ~/.gimme/envs/go1.11.env;
 
     # Cozy stack v3
     - travis_retry go get -u github.com/cozy/cozy-stack
