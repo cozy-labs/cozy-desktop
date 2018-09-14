@@ -48,6 +48,7 @@ type PrepExpectation
   | PrepUpdateFileExpectation
 
 export type Scenario = {|
+  platforms?: Array<'win32'|'darwin'|'linux'>,
   side?: SideName,
   init?: Array<{|
     ino: number, path: string, content?: string

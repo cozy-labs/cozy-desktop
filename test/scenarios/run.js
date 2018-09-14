@@ -15,6 +15,8 @@ const { IntegrationTestHelpers } = require('../support/helpers/integration')
 const pouchHelpers = require('../support/helpers/pouch')
 const remoteCaptureHelpers = require('../../dev/capture/remote')
 
+const { platform } = process
+
 let helpers
 
 // Spies
@@ -73,6 +75,11 @@ describe('Test scenarios', function () {
   })
 
   for (let scenario of scenarios) {
+    if (scenario.platforms && !scenario.platforms.includes(platform)) {
+      it.skip(`test/scenarios/${scenario.name}/  (skip on ${platform})`, () => {})
+      continue
+    }
+
     if (scenario.side === 'remote') {
       it.skip(`test/scenarios/${scenario.name}/local/  (skip remote only test)`, () => {})
     } else {
