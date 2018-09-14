@@ -1,6 +1,8 @@
 /* @flow */
 
 /*::
+import type { SideName } from '../../core/metadata'
+
 type FSAddDirAction = {|type: 'mkdir', path: string|}
 type FSAddFileAction = {|type: '>', path: string|}
 type FSDeleteAction = {|type: 'delete', path: string|}
@@ -46,7 +48,7 @@ type PrepExpectation
   | PrepUpdateFileExpectation
 
 export type Scenario = {|
-  side?: 'local',
+  side?: SideName,
   init?: Array<{|
     ino: number, path: string, content?: string
   |}>,

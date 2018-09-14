@@ -3,6 +3,7 @@
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
+  side: 'remote',
   init: [
     { ino: 1, path: 'parent/' },
     { ino: 2, path: 'parent/dir/', trashed: true },

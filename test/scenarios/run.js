@@ -73,45 +73,114 @@ describe('Test scenarios', function () {
   })
 
   for (let scenario of scenarios) {
-    for (let eventsFile of loadFSEventFiles(scenario)) {
-      const localTestName = `test/scenarios/${scenario.name}/local/${eventsFile.name}`
-      if (eventsFile.disabled) {
-        it.skip(`${localTestName}  (${eventsFile.disabled})`, () => {})
-        continue
+    if (scenario.side === 'remote') {
+      it.skip(`test/scenarios/${scenario.name}/local/  (skip remote only test)`, () => {})
+    } else {
+      for (let eventsFile of loadFSEventFiles(scenario)) {
+        const localTestName = `test/scenarios/${scenario.name}/local/${eventsFile.name}`
+        if (eventsFile.disabled) {
+          it.skip(`${localTestName}  (${eventsFile.disabled})`, () => {})
+          continue
+        }
+
+        let breakpoints = []
+        if (eventsFile.events[0] && eventsFile.events[0].breakpoints) {
+          breakpoints = eventsFile.events[0].breakpoints
+          eventsFile.events = eventsFile.events.slice(1)
+        } else {
+          // break between each events
+          for (let i = 0; i < eventsFile.events.length; i++) breakpoints.push(i)
+        }
+
+        if (process.env.NO_BREAKPOINTS) breakpoints = [0]
+
+        for (let flushAfter of breakpoints) {
+          it(localTestName + ' flushAfter=' + flushAfter, async function () {
+            if (scenario.init) {
+              let relpathFix = _.identity
+              if (process.platform === 'win32' && localTestName.match(/win32/)) {
+                relpathFix = (relpath) => relpath.replace(/\//g, '\\')
+              }
+              await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix)
+            }
+
+            const eventsBefore = eventsFile.events.slice(0, flushAfter)
+            const eventsAfter = eventsFile.events.slice(flushAfter)
+
+            await runActions(scenario, helpers.local.syncDir.abspath)
+            await helpers.local.simulateEvents(eventsBefore)
+            await helpers.syncAll()
+            await helpers.local.simulateEvents(eventsAfter)
+            await helpers.syncAll()
+
+            // TODO: Bring back Prep expectations for local tests?
+            // TODO: Wrap in custom expectation
+            if (scenario.expected) {
+              const expectedLocalTree = scenario.expected.tree || scenario.expected.localTree
+              const expectedRemoteTree = scenario.expected.tree || scenario.expected.remoteTree
+              const expected = _.pick(scenario.expected, ['remoteTrash'])
+              const actual = {}
+
+              // TODO: expect prep actions
+              if (expectedLocalTree) {
+                expected.localTree = expectedLocalTree
+                actual.localTree = await helpers.local.tree()
+              }
+              if (expectedRemoteTree) {
+                expected.remoteTree = expectedRemoteTree
+                actual.remoteTree = await helpers.remote.treeWithoutTrash()
+              }
+              if (scenario.expected.remoteTrash) {
+                actual.remoteTrash = await helpers.remote.trash()
+              }
+              if (scenario.expected.contents) {
+                expected.localContents = scenario.expected.contents
+                expected.remoteContents = scenario.expected.contents
+                actual.localContents = {}
+                actual.remoteContents = {}
+                for (const relpath of _.keys(scenario.expected.contents)) {
+                  actual.localContents[relpath] = await helpers.local.readFile(relpath)
+                      .catch(err => `Error Reading Local(${relpath}): ${err.message}`)
+                  actual.remoteContents[relpath] = await helpers.remote.readFile(relpath)
+                      .catch(err => `Error Reading Remote(${relpath}): ${err.message}`)
+                }
+              }
+
+              should(actual).deepEqual(expected)
+            }
+
+            // TODO: pull
+          })
+        } // event files
       }
 
-      let breakpoints = []
-      if (eventsFile.events[0] && eventsFile.events[0].breakpoints) {
-        breakpoints = eventsFile.events[0].breakpoints
-        eventsFile.events = eventsFile.events.slice(1)
+      const stoppedTestName = `test/scenarios/${scenario.name}/local/stopped`
+      const stoppedEnvVar = 'STOPPED_CLIENT'
+
+      if (scenario.disabled) {
+        it.skip(`${stoppedTestName} (${scenario.disabled})`, () => {})
+      } else if (process.env[stoppedEnvVar] == null) {
+        it.skip(`${stoppedTestName} (${stoppedEnvVar} is not set)`, () => {})
       } else {
-        // break between each events
-        for (let i = 0; i < eventsFile.events.length; i++) breakpoints.push(i)
-      }
-
-      if (process.env.NO_BREAKPOINTS) breakpoints = [0]
-
-      for (let flushAfter of breakpoints) {
-        it(localTestName + ' flushAfter=' + flushAfter, async function () {
+        it(stoppedTestName, async function () {
+          this.timeout(3 * 60 * 1000)
+          // TODO: Find why we need this to prevent random failures and fix it.
+          await Promise.delay(500)
           if (scenario.init) {
             let relpathFix = _.identity
-            if (process.platform === 'win32' && localTestName.match(/win32/)) {
+            if (process.platform === 'win32' && this.currentTest.title.match(/win32/)) {
               relpathFix = (relpath) => relpath.replace(/\//g, '\\')
             }
-            await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix)
+            await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix, true)
           }
 
-          const eventsBefore = eventsFile.events.slice(0, flushAfter)
-          const eventsAfter = eventsFile.events.slice(flushAfter)
-
           await runActions(scenario, helpers.local.syncDir.abspath)
-          await helpers.local.simulateEvents(eventsBefore)
-          await helpers.syncAll()
-          await helpers.local.simulateEvents(eventsAfter)
+
+          await helpers.local.local.watcher.start()
+          await helpers.local.local.watcher.stop(true)
+
           await helpers.syncAll()
 
-          // TODO: Bring back Prep expectations for local tests?
-          // TODO: Wrap in custom expectation
           if (scenario.expected) {
             const expectedLocalTree = scenario.expected.tree || scenario.expected.localTree
             const expectedRemoteTree = scenario.expected.tree || scenario.expected.remoteTree
@@ -130,77 +199,12 @@ describe('Test scenarios', function () {
             if (scenario.expected.remoteTrash) {
               actual.remoteTrash = await helpers.remote.trash()
             }
-            if (scenario.expected.contents) {
-              expected.localContents = scenario.expected.contents
-              expected.remoteContents = scenario.expected.contents
-              actual.localContents = {}
-              actual.remoteContents = {}
-              for (const relpath of _.keys(scenario.expected.contents)) {
-                actual.localContents[relpath] = await helpers.local.readFile(relpath)
-                    .catch(err => `Error Reading Local(${relpath}): ${err.message}`)
-                actual.remoteContents[relpath] = await helpers.remote.readFile(relpath)
-                    .catch(err => `Error Reading Remote(${relpath}): ${err.message}`)
-              }
-            }
 
             should(actual).deepEqual(expected)
-          }
-
-          // TODO: pull
-        })
-      } // event files
+          } // scenario.expected
+        }) // test
+      } // !eventsFile.disabled
     }
-
-    const stoppedTestName = `test/scenarios/${scenario.name}/local/stopped`
-    const stoppedEnvVar = 'STOPPED_CLIENT'
-
-    if (scenario.disabled) {
-      it.skip(`${stoppedTestName} (${scenario.disabled})`, () => {})
-    } else if (process.env[stoppedEnvVar] == null) {
-      it.skip(`${stoppedTestName} (${stoppedEnvVar} is not set)`, () => {})
-    } else {
-      it(stoppedTestName, async function () {
-        this.timeout(3 * 60 * 1000)
-        // TODO: Find why we need this to prevent random failures and fix it.
-        await Promise.delay(500)
-        if (scenario.init) {
-          let relpathFix = _.identity
-          if (process.platform === 'win32' && this.currentTest.title.match(/win32/)) {
-            relpathFix = (relpath) => relpath.replace(/\//g, '\\')
-          }
-          await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix, true)
-        }
-
-        await runActions(scenario, helpers.local.syncDir.abspath)
-
-        await helpers.local.local.watcher.start()
-        await helpers.local.local.watcher.stop(true)
-
-        await helpers.syncAll()
-
-        if (scenario.expected) {
-          const expectedLocalTree = scenario.expected.tree || scenario.expected.localTree
-          const expectedRemoteTree = scenario.expected.tree || scenario.expected.remoteTree
-          const expected = _.pick(scenario.expected, ['remoteTrash'])
-          const actual = {}
-
-           // TODO: expect prep actions
-          if (expectedLocalTree) {
-            expected.localTree = expectedLocalTree
-            actual.localTree = await helpers.local.tree()
-          }
-          if (expectedRemoteTree) {
-            expected.remoteTree = expectedRemoteTree
-            actual.remoteTree = await helpers.remote.treeWithoutTrash()
-          }
-          if (scenario.expected.remoteTrash) {
-            actual.remoteTrash = await helpers.remote.trash()
-          }
-
-          should(actual).deepEqual(expected)
-        } // scenario.expected
-      }) // test
-    } // !eventsFile.disabled
 
     const remoteTestName = `test/scenarios/${scenario.name}/remote/`
     if (scenario.name.indexOf('outside') !== -1) {
