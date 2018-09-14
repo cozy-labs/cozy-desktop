@@ -103,11 +103,11 @@ script:
     - travis_retry yarn
     - yarn build
     - yarn lint
-    - yarn test:world --timeout $MOCHA_TIMEOUT
-    - yarn test:unit:coverage --timeout $MOCHA_TIMEOUT
+    - yarn test:world --timeout $MOCHA_TIMEOUT --forbid-only
+    - yarn test:unit:coverage --timeout $MOCHA_TIMEOUT --forbid-only
     - yarn test:elm
-    - yarn test:integration --timeout $MOCHA_TIMEOUT
-    - yarn test:scenarios --timeout $MOCHA_TIMEOUT
+    - yarn test:integration --timeout $MOCHA_TIMEOUT --forbid-only
+    - yarn test:scenarios --timeout $MOCHA_TIMEOUT --forbid-only
     - |
       if [ "$TRAVIS_OS_NAME" == "linux" ]; then
         docker run --rm \
