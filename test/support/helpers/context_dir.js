@@ -3,6 +3,7 @@
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const fs = require('fs-extra')
+const _ = require('lodash')
 const path = require('path')
 
 const checksumer = require('../../../core/local/checksumer')
@@ -90,6 +91,12 @@ class ContextDir {
     return stats.mtime
   }
 
+  /** Octal string representation of file/dir mode, e.g. '755' */
+  async octalMode (target /*: string | {path: string} */) /*: Promise<string> */ {
+    const stats = await this.stat(target)
+    return _.padStart((0o777 & stats.mode).toString(8), 3, '0')
+  }
+
   async unlink (target /*: string | {path: string} */) {
     await fs.unlinkAsync(this.abspath(target))
   }
@@ -100,6 +107,15 @@ class ContextDir {
 
   async readFile (target /*: string | {path: string} */, opts /*: * */ = 'utf8') /*: Promise<string> */ {
     return fs.readFile(this.abspath(target), opts)
+  }
+
+  async chmod (target /*: string | {path: string} */, mode /*: number */) {
+    await fs.chmod(this.abspath(target), mode)
+  }
+
+  async ensureFileMode (target /*: string | {path: string} */, mode /*: number */) {
+    await fs.ensureFile(this.abspath(target))
+    await this.chmod(target, mode) // Post-creation so it ignores umask
   }
 
   async outputFile (target /*: string | {path: string} */, data /*: string */) {
