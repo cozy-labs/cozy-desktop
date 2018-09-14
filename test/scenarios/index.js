@@ -46,7 +46,7 @@ type PrepExpectation
   | PrepUpdateFileExpectation
 
 export type Scenario = {|
-  noremote?: true,
+  side?: 'local',
   init?: Array<{|
     ino: number, path: string, content?: string
   |}>,

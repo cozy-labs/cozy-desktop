@@ -209,7 +209,7 @@ describe('Test scenarios', function () {
     } else if (scenario.disabled) {
       it.skip(`${remoteTestName}  (${scenario.disabled})`, () => {})
       continue
-    } else if (scenario.noremote) {
+    } else if (scenario.side === 'local') {
       it.skip(`${remoteTestName}  (skip local only test)`, () => {})
       continue
     }
