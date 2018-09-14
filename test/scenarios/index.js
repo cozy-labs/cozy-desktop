@@ -54,7 +54,8 @@ export type Scenario = {|
   expected: {|
     prepCalls?: Array<PrepExpectation>,
     tree?: Array<string>,
-    remoteTrash?: Array<string>
+    remoteTrash?: Array<string>,
+    contents?: { [string]: string }
   |}
 |}
 */
