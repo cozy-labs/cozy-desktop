@@ -14,12 +14,12 @@ module.exports = ({
   expected: {
     prepCalls: [
       {method: 'moveFolderAsync', dst: 'dst/dir', src: 'src/dir'}
-    ]
-  },
-  tree: [
-    'dst/',
-    'dst/dir/',
-    'src/'
-  ],
-  remoteTrash: []
+    ],
+    tree: [
+      'dst/',
+      'dst/dir/',
+      'src/'
+    ],
+    remoteTrash: []
+  }
 } /*: Scenario */)
