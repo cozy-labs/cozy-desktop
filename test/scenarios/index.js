@@ -48,7 +48,7 @@ type PrepExpectation
 export type Scenario = {|
   noremote?: true,
   init?: Array<{|
-    ino: number, path: string
+    ino: number, path: string, content?: string
   |}>,
   actions: Array<FSAction>,
   expected: {|
