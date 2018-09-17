@@ -26,6 +26,7 @@ module.exports = class RemoteBaseBuilder {
   cozy: Cozy
   options: {
     contentType?: string,
+    executable?: true,
     dir: {_id: string, path: string},
     name: string,
     lastModifiedDate: Date

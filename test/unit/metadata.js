@@ -507,7 +507,11 @@ describe('metadata', function () {
         size: 29865
       })
       doc.should.have.property('updated_at')
-      should.not.exist(doc.executable)
+      if (process.platform === 'win32') {
+        doc.should.have.property('executable', 'na')
+      } else {
+        should.not.exist(doc.executable)
+      }
 
       const remote = {_id: 'foo', _rev: '456'}
       should(buildFile('chat-mignon.jpg', stats, md5sum, remote).remote).deepEqual(remote)

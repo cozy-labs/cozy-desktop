@@ -81,6 +81,45 @@ describe('Update file', () => {
     })
   })
 
+  describe('executable change', () => {
+    it('should ignore them', async () => {
+      const file = await builders.remote.file()
+        .named('file')
+        .data('Initial content')
+        .executable(false)
+        .create()
+      await helpers.remote.pullChanges()
+      await helpers.syncAll()
+      let doc = await pouch.byRemoteIdMaybeAsync(file._id)
+      should(doc).not.have.property('executable')
+
+      await cozy.files.updateAttributesById(file._id, {executable: true})
+      await helpers.remote.pullChanges()
+      await helpers.syncAll()
+
+      doc = await pouch.byRemoteIdMaybeAsync(file._id)
+      should(doc.errors).be.undefined()
+      should(doc).have.property('executable', true)
+
+      const lastRev = doc._rev
+
+      // up-to-date local event
+      await prep.updateFileAsync('local', _.defaults(
+        {
+          executable: process.platform === 'win32' ? 'na' : true
+        },
+        await pouch.byRemoteIdMaybeAsync(file._id)
+      ))
+
+      // Resync once
+      await helpers.syncAll()
+      should(doc.errors).be.undefined()
+
+      doc = await pouch.byRemoteIdMaybeAsync(file._id)
+      should(lastRev).equal(doc._rev)
+    })
+  })
+
   describe('M1, local merge M1, M2, remote sync M1, local merge M2', () => {
     it('fails remote sync M1 & local merge M2', async () => {
       const file = await cozy.files.create('Initial content', {name: 'file'})

@@ -38,12 +38,19 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
 
     Object.assign(this.options, {
       name: `remote-file-${fileNumber++}`,
-      contentType: undefined
+      contentType: undefined,
+      executable: true
     })
   }
 
   contentType (contentType /*: string */) /*: RemoteFileBuilder */ {
     this.options.contentType = contentType
+    return this
+  }
+
+  executable (executable /*: boolean */) /*: RemoteFileBuilder */ {
+    if (executable) this.options.executable = true
+    else delete this.options.executable
     return this
   }
 
@@ -60,7 +67,7 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
   build () /*: RemoteDoc */ {
     return _.merge({
       class: 'application',
-      executable: true,
+      executable: this.options.executable,
       md5sum: 'wVenkDHhxA+FkxgpvF/FUg==',
       mime: 'application/octet-stream',
       size: '123',
@@ -71,6 +78,7 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
   async create () /*: Promise<RemoteDoc> */ {
     let doc = jsonApiToRemoteDoc(
       await this.cozy.files.create(this._data, {
+        executable: this.options.executable,
         contentType: this.options.contentType,
         dirID: this.options.dir._id,
         lastModifiedDate: this.options.lastModifiedDate,

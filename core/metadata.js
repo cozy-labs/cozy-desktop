@@ -46,7 +46,7 @@ export type Metadata = {
   class?: string,
   docType: string,
   errors?: number,
-  executable?: true,
+  executable?: true|'na',
   updated_at: string|Date,
   mime?: string,
   moveTo?: string, // Destination id
@@ -102,7 +102,8 @@ module.exports = {
   sameBinary,
   markSide,
   buildDir,
-  buildFile
+  buildFile,
+  copyIfNull
 }
 
 function isFile (doc /*: Metadata */) /*: bool */ {
@@ -184,6 +185,18 @@ function invariants (doc /*: Metadata */) {
   }
   if (doc.sides.remote && !doc.remote) {
     throw new Error(`${doc._id} has 'sides.remote' but no remote`)
+  }
+}
+
+function copyIfNull (doc /*: Metadata */, fields /*: Array<string> */, was /*: Metadata */) {
+  for (let field of fields) {
+    if ((doc[field] == null && was[field]) ||
+    (field === 'executable' && doc.executable === 'na')) {
+      doc[field] = was[field]
+    }
+    if (field === 'tags') {
+      doc.tags = doc.tags || []
+    }
   }
 }
 
@@ -290,13 +303,14 @@ function sameFolder (one /*: Metadata */, two /*: Metadata */) {
   return sameFolderComparator(one, two)
 }
 
+const sameFileFields = ['_id', 'docType', 'md5sum', 'remote._id',
+  'tags', 'size', 'trashed', 'ino', 'executable']
+
 const sameFileComparator = makeComparator('sameFile',
-  ['_id', 'docType', 'md5sum', 'remote._id', 'remote._rev',
-    'tags', 'size', 'trashed', 'ino', 'executable'])
+  sameFileFields.concat('remote._rev'))
 
 const sameFileIgnoreRevComparator = makeComparator('sameFileIgnoreRev',
-  ['_id', 'docType', 'md5sum', 'remote._id',
-    'tags', 'size', 'trashed', 'ino', 'executable'])
+  sameFileFields)
 
 // Return true if the metadata of the two files are the same
 function sameFile (one /*: Metadata */, two /*: Metadata */) {
@@ -347,6 +361,7 @@ function buildDir (path /*: string */, stats /*: fs.Stats */, remote /*: ?Metada
   return doc
 }
 
+const IS_WINDOWS = process.platform === 'win32'
 const EXECUTABLE_MASK = 1 << 6
 
 function buildFile (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: string */, remote /*: ?MetadataRemoteInfo */) /*: Metadata */ {
@@ -363,6 +378,10 @@ function buildFile (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: st
     size: stats.size,
     remote
   }
-  if ((stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
+  if (IS_WINDOWS) {
+    doc.executable = 'na'
+  } else if ((stats.mode & EXECUTABLE_MASK) !== 0) {
+    doc.executable = true
+  }
   return doc
 }
