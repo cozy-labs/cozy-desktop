@@ -189,19 +189,18 @@ describe('Executable handling', () => {
     })
 
     describe('making it non-executable remotely', () => {
-      it('is non-executable everywhere, except locally where it is unchanged', async () => {
+      it('is non-executable everywhere', async () => {
         await cozy.files.updateAttributesByPath('/file', {executable: false})
         await helpers.pullAndSyncAll()
 
         should(await executableStatus('file')).deepEqual({
           local: platform === 'win32'
             ? WINDOWS_DEFAULT_MODE
-            : '755', // FIXME
+            : '644',
           pouch: undefined,
           remote: false
         })
-        // FIXME: Linux unsynced
-        // should(await unmergedChanges('file')).deepEqual([])
+        should(await unmergedChanges('file')).deepEqual([])
       })
     })
   })
