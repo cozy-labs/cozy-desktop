@@ -28,6 +28,7 @@ module.exports = class RemoteBaseBuilder {
     contentType?: string,
     dir: {_id: string, path: string},
     name: string,
+    executable?: bool,
     lastModifiedDate: Date
   }
   */
