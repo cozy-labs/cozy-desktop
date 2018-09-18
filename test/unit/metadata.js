@@ -436,7 +436,7 @@ describe('metadata', function () {
       sameFile(a, d).should.be.false()
       sameFile(b, c).should.be.true()
       sameFile(b, d).should.be.false()
-      sameFile(c, d).should.be.false()
+      sameFile(c, d).should.eql(process.platform === 'win32')
     })
   })
 

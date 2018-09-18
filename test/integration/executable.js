@@ -101,8 +101,7 @@ describe('Executable handling', () => {
         pouch: true,
         remote: true
       })
-      // FIXME: Windows unsynced
-      // should(await unmergedChanges('file')).deepEqual([])
+      should(await unmergedChanges('file')).deepEqual([])
     })
   })
 
@@ -158,8 +157,7 @@ describe('Executable handling', () => {
           pouch: true,
           remote: true
         })
-        // FIXME: Windows unsynced
-        // should(await unmergedChanges('file')).deepEqual([])
+        should(await unmergedChanges('file')).deepEqual([])
       })
     })
   })
