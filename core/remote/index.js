@@ -177,7 +177,7 @@ module.exports = class Remote /*:: implements Side */ {
     log.info({path}, 'Updating file metadata...')
 
     const attrs = {
-      executable: doc.executable,
+      executable: doc.executable || false,
       updated_at: doc.updated_at
     }
     const opts = {

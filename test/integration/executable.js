@@ -173,7 +173,7 @@ describe('Executable handling', () => {
 
     describe('making it non-executable locally', () => {
       onPlatforms('darwin', 'linux', () => {
-        it('is non-executable everywhere, except remotely where it is unchanged', async () => {
+        it('is non-executable everywhere', async () => {
           await syncDir.chmod('file', 0o644)
           await helpers.local.scan()
           await helpers.syncAll()
@@ -181,7 +181,7 @@ describe('Executable handling', () => {
           should(await executableStatus('file')).deepEqual({
             local: '644',
             pouch: undefined,
-            remote: true // FIXME
+            remote: false
           })
           should(await unmergedChanges('file')).deepEqual([])
         })
