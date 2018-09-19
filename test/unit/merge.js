@@ -21,8 +21,19 @@ describe('Merge', function () {
   beforeEach('instanciate merge', function () {
     this.side = 'local'
     this.merge = new Merge(this.pouch)
+    this.merge[this.side] = {renameConflictingDocAsync: sinon.stub().resolves()}
     builders = new MetadataBuilders(this.pouch)
+
+    sinon.spy(this.merge, 'resolveConflictAsync')
+    // this.pouch.put & bulkDocs must be spied manually because of test data
+    // builders. But if spied, it will be restored automatically (see hook
+    // below).
   })
+  afterEach(function () {
+    if (this.pouch.put.restore) this.pouch.put.restore()
+    if (this.pouch.bulkDocs.restore) this.pouch.bulkDocs.restore()
+  })
+  // FIXME: Clean everytime to prevent Pouch conflicts & tests coupling
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
@@ -558,24 +569,13 @@ describe('Merge', function () {
 
     context('when docType does not match', () => {
       it('tries to resolve the conflict', async function () {
-        this.merge.local = {resolveConflictAsync: sinon.stub()}
-        this.merge.local.resolveConflictAsync.returnsPromise().resolves()
-        sinon.spy(this.pouch, 'put')
-
         const doc = {_id: 'conflicting-doctype', docType: 'folder', path: 'conflicting-doctype'}
         await this.pouch.db.put(_.defaults({docType: 'file'}, doc))
 
         await this.merge.trashAsync(this.side, doc)
 
-        should(this.merge.local.resolveConflictAsync).have.been.calledOnce()
+        should(this.merge.resolveConflictAsync).have.been.calledWith(this.side, doc)
         should(this.pouch.put).not.have.been.called()
-        const [dst, src] = this.merge.local.resolveConflictAsync.getCall(0).args
-        should(src).eql(doc)
-        should(dst).have.properties(_.defaults({path: dst.path}, doc))
-        should(dst.path).match(/conflict/)
-        should(dst).not.have.property('trashed')
-
-        this.pouch.put.restore()
       })
     })
   })
