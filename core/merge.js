@@ -4,6 +4,7 @@ const autoBind = require('auto-bind')
 const { clone } = require('lodash')
 const { basename, dirname, extname, join } = require('path')
 
+const IdConflict = require('./IdConflict')
 const logger = require('./logger')
 const {
   assignMaxDate,
@@ -19,6 +20,7 @@ const { otherSide } = require('./side')
 const fsutils = require('./utils/fs')
 
 /*::
+import type { IdConflictInfo } from './IdConflict'
 import type Local from './local'
 import type { SideName, Metadata } from './metadata'
 import type Pouch from './pouch'
@@ -125,7 +127,12 @@ class Merge {
     const {path} = doc
     const file /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
     markSide(side, doc, file)
-    if (file && file.docType === 'folder') {
+    const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(side, doc, file)
+    if (idConflict) {
+      log.warn({idConflict}, IdConflict.description(idConflict))
+      await this.resolveConflictAsync(side, doc, file)
+      return
+    } else if (file && file.docType === 'folder') {
       return this.resolveConflictAsync(side, doc, file)
     }
     assignMaxDate(doc, file)
@@ -226,7 +233,12 @@ class Merge {
       return this.resolveConflictAsync(side, doc, folder)
     }
     assignMaxDate(doc, folder)
-    if (folder) {
+    const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(side, doc, folder)
+    if (idConflict) {
+      log.warn({idConflict}, IdConflict.description(idConflict))
+      await this.resolveConflictAsync(side, doc, folder)
+      return
+    } else if (folder) {
       doc._rev = folder._rev
       if (doc.tags == null) { doc.tags = folder.tags || [] }
       if (doc.remote == null) { doc.remote = folder.remote }
@@ -249,6 +261,12 @@ class Merge {
     const {path} = doc
     if (was.sides && was.sides[side]) {
       const file /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
+      const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(side, doc, file)
+      if (idConflict) {
+        log.warn({idConflict}, IdConflict.description(idConflict))
+        await this.resolveConflictAsync(side, doc, file)
+        return
+      }
       markSide(side, doc, file)
       markSide(side, was, was)
       assignMaxDate(doc, was)
@@ -261,7 +279,7 @@ class Merge {
       if (file && sameFile(file, doc)) {
         log.info({path}, 'up to date (move)')
         return null
-      } else if (file && !doc.overwrite) {
+      } else if (file && !doc.overwrite && doc.path === file.path) {
         const dst = await this.resolveConflictAsync(side, doc, file)
         was.moveTo = dst._id
         dst.sides = {}
@@ -289,7 +307,11 @@ class Merge {
       if (doc.ino == null) { doc.ino = was.ino }
       // FIXME: Shouldn't we compare doc/was updated_at & set doc accordingly
       // as in moveFileAsync?
-      if (folder && !doc.overwrite) {
+      const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(side, doc, folder)
+      if (idConflict) {
+        log.warn({idConflict}, IdConflict.description(idConflict))
+        await this.resolveConflictAsync(side, doc, folder)
+      } else if (folder && !doc.overwrite && doc.path === folder.path) {
         const dst = await this.resolveConflictAsync(side, doc, folder)
         dst.sides = {}
         dst.sides[side] = 1
