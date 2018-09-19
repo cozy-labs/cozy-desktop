@@ -249,29 +249,28 @@ module.exports = class LocalWatcher {
     return {offlineEvents: events, emptySyncDir}
   }
 
-  async prepareEvents (events /*: ChokidarEvent[] */, initialScan /*: ?InitialScan */) /*: Promise<LocalEvent[]> */ {
-    const oldMetadata = async (e /*: ChokidarEvent */) /*: Promise<?Metadata> */ => {
-      if (e.old) return e.old
-      if (e.type === 'unlink' || e.type === 'unlinkDir' || e.type === 'change' ||
-          ((e.type === 'add' || e.type === 'addDir') && initialScan)) {
-        try {
-          return await this.pouch.db.get(metadata.id(e.path))
-        } catch (err) {
-          if (err.status !== 404) log.error({path: e.path, err})
-        }
+  async oldMetadata (e /*: ChokidarEvent */, initialScan /*: ?InitialScan */) /*: Promise<?Metadata> */ {
+    if (e.old) return e.old
+    if (e.type === 'unlink' || e.type === 'unlinkDir' || e.type === 'change' ||
+        ((e.type === 'add' || e.type === 'addDir') && initialScan)) {
+      try {
+        return await this.pouch.db.get(metadata.id(e.path))
+      } catch (err) {
+        if (err.status !== 404) log.error({path: e.path, err})
       }
-      return null
     }
+    return null
+  }
 
-    // @PERFOPTIM ?
-    //   - db.allDocs(keys: events.pick(path))
-    //   - process.exec('md5sum ' + paths.join(' '))
-
+  // @PERFOPTIM ?
+  //   - db.allDocs(keys: events.pick(path))
+  //   - process.exec('md5sum ' + paths.join(' '))
+  async prepareEvents (events /*: ChokidarEvent[] */, initialScan /*: ?InitialScan */) /*: Promise<LocalEvent[]> */ {
     return Promise.map(events, async (e /*: ChokidarEvent */) /*: Promise<?LocalEvent> */ => {
       const abspath = path.join(this.syncPath, e.path)
 
       const e2 /*: Object */ = _.merge({
-        old: await oldMetadata(e)
+        old: await this.oldMetadata(e, initialScan)
       }, e)
 
       if (e.type === 'add' || e.type === 'change') {
