@@ -256,6 +256,9 @@ function assignMaxDate (doc /*: Metadata */, was /*: ?Metadata */) {
 }
 
 const ensureExecutable = (one, two) => {
+  two = process.platform === 'win32'
+    ? _.defaults({executable: one.executable}, two)
+    : two
   return [
     _.merge({executable: !!one.executable}, one),
     _.merge({executable: !!two.executable}, two)

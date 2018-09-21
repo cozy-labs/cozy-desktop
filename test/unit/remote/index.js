@@ -302,7 +302,33 @@ describe('Remote', function () {
     })
   }
 
-  describe('updateFileMetadataAsync', () =>
+  describe('updateFileMetadataAsync', () => {
+    it('makes the remote file executable when the local one was made too', async function () {
+      const oldRemote = await builders.remote.file().executable(false).create()
+      const old = conversion.createMetadata(oldRemote)
+      const doc = _.defaults({executable: true}, old)
+
+      await this.remote.updateFileMetadataAsync(doc, old)
+
+      should(doc).have.propertyByPath('remote', '_rev').not.eql(old.remote._rev)
+      const newRemote = await cozy.files.statById(oldRemote._id)
+      should(newRemote).have.propertyByPath('attributes', 'executable').eql(true)
+    })
+
+    it('makes the remote file non-executable when the local one is not anymore', async function () {
+      const oldRemote = await builders.remote.file().executable(true).create()
+      const old = conversion.createMetadata(oldRemote)
+      const doc = _.clone(old)
+      delete doc.executable
+
+      await this.remote.updateFileMetadataAsync(doc, old)
+
+      should(doc).have.propertyByPath('remote', '_rev').not.eql(old.remote._rev)
+      const newRemote = await cozy.files.statById(oldRemote._id)
+      should(newRemote).have.propertyByPath('attributes', 'executable').eql(false)
+    })
+
+    // TODO: Restore test
     xit('updates the updated_at', async function () {
       const dir = await builders.remote.dir().named('dir').create()
       const created = await builders.remote.file()
@@ -339,7 +365,7 @@ describe('Remote', function () {
       })
       should(doc.remote._rev).equal(file._rev)
     })
-  )
+  })
 
   describe('updateFolder', function () {
     it('updates the metadata of a folder', async function () {

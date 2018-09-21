@@ -19,6 +19,10 @@ Please report any other issue you may encounter by using the app help form.
   will appear empty, the client will assume you deleted everything and will
   update your Cozy accordingly, putting everything in the Cozy trash.
 * Using two clients on two different OS with a shared partition between the two is not supported.
+* When a file is made executable / non-executable on the Cozy side (i.e.
+  typically from another device), the local file permissions are set to
+  755 / 644, which means they could be more accessible than they were before
+  for group / others.
 
 **Issues** caused by lower-level bugs that will be **harder to fix or circumvent**:
 

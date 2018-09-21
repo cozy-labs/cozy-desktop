@@ -15,6 +15,7 @@ const MetadataBuilders = require('../../support/builders/metadata')
 const StreamBuilder = require('../../support/builders/stream')
 const configHelpers = require('../../support/helpers/config')
 const { ContextDir } = require('../../support/helpers/context_dir')
+const { WINDOWS_DEFAULT_MODE } = require('../../support/helpers/platform')
 const pouchHelpers = require('../../support/helpers/pouch')
 
 Promise.promisifyAll(fs)
@@ -74,12 +75,32 @@ describe('Local', function () {
     })
   })
 
+  describe('updateMetadataAsync', () => {
+    it('chmod -x for a non-executable file', async function () {
+      const doc = {
+        docType: 'file',
+        path: 'non-exec-file'
+      }
+      await syncDir.ensureFileMode(doc.path, 0o777)
+
+      await this.local.updateMetadataAsync(doc)
+
+      should(await syncDir.octalMode(doc)).equal(
+        process.platform === 'win32'
+          ? WINDOWS_DEFAULT_MODE
+          : '644'
+      )
+    })
+  })
+
+  // TODO: Port to updateMetadataAsync()
   describe('metadataUpdater', function () {
     it('chmod +x for an executable file', function (done) {
       let date = new Date('2015-11-09T05:06:07Z')
       let filePath = syncDir.abspath('exec-file')
       fs.ensureFileSync(filePath)
       let updater = this.local.metadataUpdater({
+        docType: 'file',
         path: 'exec-file',
         updated_at: date,
         executable: true

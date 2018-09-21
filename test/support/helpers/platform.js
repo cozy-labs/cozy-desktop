@@ -8,7 +8,10 @@ const macOSRelease = require('./MacOSRelease')
 import type { MacOSReleaseInfo } from './MacOSRelease'
 */
 
+const WINDOWS_DEFAULT_MODE = '666'
+
 module.exports = {
+  WINDOWS_DEFAULT_MODE,
   onMacOSAtLeast,
   onMacOSAtMost,
   onPlatforms,

@@ -7,6 +7,7 @@ const sinon = require('sinon')
 
 const Ignore = require('../../../core/ignore')
 const Local = require('../../../core/local')
+const metadata = require('../../../core/metadata')
 const Merge = require('../../../core/merge')
 const Prep = require('../../../core/prep')
 const Remote = require('../../../core/remote')
@@ -20,6 +21,7 @@ const { RemoteTestHelpers } = require('./remote')
 /*::
 import type cozy from 'cozy-client-js'
 import type Config from '../../../core/config'
+import type { Metadata } from '../../../core/metadata'
 import type Pouch from '../../../core/pouch'
 */
 
@@ -96,6 +98,12 @@ class IntegrationTestHelpers {
       .uniq()
       .sort()
       .value()
+  }
+
+  async docByPath (relpath /*: string */) /*: Promise<Metadata> */ {
+    const doc = await this._pouch.db.get(metadata.id(relpath))
+    if (doc) return doc
+    else throw new Error(`No doc with path ${JSON.stringify(relpath)}`)
   }
 }
 

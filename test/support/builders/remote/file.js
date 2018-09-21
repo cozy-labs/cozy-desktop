@@ -57,6 +57,11 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
     return this
   }
 
+  executable (isExecutable /*: boolean */) /*: RemoteFileBuilder */ {
+    this.options.executable = isExecutable
+    return this
+  }
+
   build () /*: RemoteDoc */ {
     return _.merge({
       class: 'application',
@@ -73,6 +78,7 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
       await this.cozy.files.create(this._data, {
         contentType: this.options.contentType,
         dirID: this.options.dir._id,
+        executable: this.options.executable,
         lastModifiedDate: this.options.lastModifiedDate,
         name: this.options.name
       })
