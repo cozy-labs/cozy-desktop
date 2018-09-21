@@ -1,3 +1,49 @@
+## 3.9.1-beta.2 - 2018-09-21
+
+Improvements for all users:
+
+- Moves overwriting the destination performed on another device should now be
+  synchronized as expected.
+- Some part of the synchronization engine dating back to Cozy v2 was not
+  necessarily preventing local directory of file overwrites. This part was
+  reworked to reach the same level as the other ones, possibly fixing a couple
+  of bugs.
+- We noticed that synchronizing a local file update to the Cozy could fail in
+  some very rare cases. We added a few automatic verifications which should
+  help us narrow the issue, so hopefully we'll be able to definitely fix it in
+  another release.
+
+Improvements for Windows and macOS users:
+
+- Making the whole or some filename part upper/lower case used to be notably
+  unsupported. It should now work everywhere.
+- When two files and/or directories with only upper/lower case differences in
+  their names are coexisting on your Cozy, only one of them will be
+  synchronized locally on your case-preservative OS and the other one will be
+  renamed as a conflict so you at least have a way to end up with the exact
+  same tree on your Cozy and all your devices.
+
+Improvements for macOS and GNU/Linux users:
+
+- Local files made non-executable will now effectively be synced as
+  non-executable on the Cozy and your other devices.
+- Please note that currently the permissions of your local files may be forced
+  to 755 or 644, depending on the *executable* status. However this should not
+  be a major issue, unless your made both your personal directory and your
+  *Cozy Drive* directory accessible to other users on your device. We'll
+  definitely come up with a better solution at some point to make the
+  executable bits match your existing local read/write ones.
+
+Improvements for Windows users:
+
+- Files made (non-)executable on another macOS or GNU/Linux device were
+  triggering useless synchronization cycles (or conflict in the worst case).
+  This should now work as expected.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.9.1-beta.1 - 2018-08-16
 
 Improvements for all users:
@@ -11,7 +57,6 @@ Improvements for macOS users:
 See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
 
 Happy syncing!
-
 
 ## 3.9.0 - 2018-07-20
 
