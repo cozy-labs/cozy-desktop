@@ -2,7 +2,6 @@
 
 const _ = require('lodash')
 const { posix } = require('path')
-const uuid = require('uuid/v4')
 
 const {
   FILES_DOCTYPE,
@@ -11,6 +10,8 @@ const {
   TRASH_DIR_NAME
 } = require('../../../../core/remote/constants')
 const timestamp = require('../../../../core/timestamp')
+
+const dbBuilders = require('../db')
 
 /*::
 import type { Cozy } from 'cozy-client-js'
@@ -29,8 +30,8 @@ module.exports = class RemoteBaseBuilder {
     this.cozy = cozy
     const name = 'whatever'
     this.doc = {
-      _id: uuid().replace(/-/g, ''),
-      _rev: '1-' + uuid().replace(/-/g, ''),
+      _id: dbBuilders.id(),
+      _rev: dbBuilders.rev(1),
       _type: FILES_DOCTYPE,
       type: 'directory',
       created_at: defaultTimestamp,
