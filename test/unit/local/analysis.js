@@ -102,6 +102,27 @@ describe('core/local/analysis', function () {
     should(pendingChanges).deepEqual([])
   })
 
+  it('identifies add({path: FOO, ino: 1}) + change({path: foo, ino: 1}) as DirMove(foo, FOO)', () => {
+    const old /*: Metadata */ = metadataBuilders.file().path('foo').ino(1).build()
+    const stats = {ino: 1}
+    const { md5sum } = old
+    const events /*: LocalEvent[] */ = [
+      {type: 'add', path: 'FOO', stats, old, md5sum},
+      {type: 'change', path: 'foo', stats, old, md5sum}
+    ]
+    const pendingChanges = []
+
+    should(analysis(events, pendingChanges)).deepEqual([{
+      sideName,
+      type: 'FileMove',
+      path: 'FOO',
+      ino: 1,
+      stats,
+      old,
+      md5sum
+    }])
+  })
+
   it('handles unlinkDir+addDir', () => {
     const old /*: Metadata */ = metadataBuilders.dir().ino(1).build()
     const stats = {ino: 1}
@@ -190,6 +211,25 @@ describe('core/local/analysis', function () {
       old
     }])
     should(pendingChanges).deepEqual([])
+  })
+
+  it('identifies addDir({path: foo, ino: 1}) + addDir({path: FOO, ino: 1}) as DirMove(foo, FOO)', () => {
+    const old /*: Metadata */ = metadataBuilders.dir().path('foo').ino(1).build()
+    const stats = {ino: 1}
+    const events /*: LocalEvent[] */ = [
+      {type: 'addDir', path: 'foo', stats, old},
+      {type: 'addDir', path: 'FOO', stats, old}
+    ]
+    const pendingChanges = []
+
+    should(analysis(events, pendingChanges)).deepEqual([{
+      sideName,
+      type: 'DirMove',
+      path: 'FOO',
+      ino: 1,
+      stats,
+      old
+    }])
   })
 
   it('handles chokidar mistakes', () => {

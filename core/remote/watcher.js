@@ -244,7 +244,7 @@ class RemoteWatcher {
     if (!inRemoteTrash(remote) && was.trashed) {
       return remoteChange.restored(doc, was)
     }
-    if (was._id === doc._id) {
+    if (was._id === doc._id && was.path === doc.path) {
       if (doc.docType === 'file' && doc.md5sum === was.md5sum && doc.size !== was.size) {
         return {
           type: 'RemoteInvalidChange',

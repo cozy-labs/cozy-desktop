@@ -38,9 +38,11 @@ module.exports = {
   fromEvent,
   fileMoveFromUnlinkAdd,
   fileMoveFromFileDeletionChange,
+  fileMoveIdentical,
   dirMoveFromUnlinkAdd,
   fileMoveFromAddUnlink,
   dirMoveFromAddUnlink,
+  dirRenamingCaseOnlyFromAddAdd,
   includeAddEventInFileMove,
   includeAddDirEventInDirMove,
   includeChangeEventIntoFileMove,
@@ -53,13 +55,13 @@ const log = logger({
 })
 
 /*::
-export type LocalDirAddition = {sideName: 'local', type: 'DirAddition', path: string, ino: number, stats: fs.Stats, wip?: true}
+export type LocalDirAddition = {sideName: 'local', type: 'DirAddition', path: string, old: ?Metadata, ino: number, stats: fs.Stats, wip?: true}
 export type LocalDirDeletion = {sideName: 'local', type: 'DirDeletion', path: string, old: ?Metadata, ino: ?number}
 export type LocalDirMove = {sideName: 'local', type: 'DirMove', path: string, old: Metadata, ino: number, stats: fs.Stats, wip?: true, needRefetch: boolean, overwrite: boolean}
-export type LocalFileAddition = {sideName: 'local', type: 'FileAddition', path: string, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
+export type LocalFileAddition = {sideName: 'local', type: 'FileAddition', path: string, old: ?Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
 export type LocalFileDeletion = {sideName: 'local', type: 'FileDeletion', path: string, old: ?Metadata, ino: ?number}
 export type LocalFileMove = {sideName: 'local', type: 'FileMove', path: string, old: Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true, needRefetch: boolean, update?: LocalFileUpdated, overwrite?: Metadata}
-export type LocalFileUpdate = {sideName: 'local', type: 'FileUpdate', path: string, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
+export type LocalFileUpdate = {sideName: 'local', type: 'FileUpdate', path: string, old: ?Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
 export type LocalIgnored = {sideName: 'local', type: 'Ignored', path: string}
 
 export type LocalChange =
@@ -127,6 +129,7 @@ function toString (a /*: LocalChange */) /*: string */ { return '(' + a.type + '
 function fromEvent (e/*: LocalEvent */) /*: LocalChange */ {
   const change = _fromEvent(e)
   log.debug(_.pick(change, ['path', 'ino', 'wip']), `${e.type} -> ${change.type}`)
+  if (change.old == null) delete change.old
   return change
 }
 
@@ -137,13 +140,13 @@ function _fromEvent (e/*: LocalEvent */) /*: LocalChange */ {
     case 'unlink':
       return {sideName, type: 'FileDeletion', path: e.path, old: e.old, ino: (e.old != null ? e.old.ino : null)}
     case 'addDir':
-      const change = {sideName, type: 'DirAddition', path: e.path, stats: e.stats, ino: e.stats.ino, wip: e.wip}
+      const change = {sideName, type: 'DirAddition', old: e.old, path: e.path, stats: e.stats, ino: e.stats.ino, wip: e.wip}
       if (change.wip == null) delete change.wip
       return change
     case 'change':
-      return {sideName, type: 'FileUpdate', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, old: e.old, wip: e.wip}
+      return {sideName, type: 'FileUpdate', path: e.path, old: e.old, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, wip: e.wip}
     case 'add':
-      return {sideName, type: 'FileAddition', path: e.path, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, wip: e.wip}
+      return {sideName, type: 'FileAddition', path: e.path, old: e.old, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, wip: e.wip}
     default:
       throw new TypeError(`wrong type ${e.type}`) // @TODO FlowFixMe
   }
@@ -207,6 +210,27 @@ function dirMoveFromAddUnlink (addChange /*: LocalDirAddition */, e /*: LocalDir
     old: e.old,
     ino: addChange.ino,
     wip: addChange.wip
+  })
+}
+
+function fileMoveIdentical (addChange /*: LocalFileAddition */, e /*: LocalFileUpdated */) /*: * */ {
+  log.debug({oldpath: e.path, path: addChange.path}, 'add + change = FileMove (same id)')
+  return build('FileMove', addChange.path, {
+    stats: e.stats,
+    md5sum: e.md5sum,
+    old: e.old,
+    ino: addChange.ino,
+    wip: addChange.wip
+  })
+}
+
+function dirRenamingCaseOnlyFromAddAdd (addChange /*: LocalDirAddition */, e /*: LocalDirAdded */) /*: * */ {
+  log.debug({oldpath: addChange.path, path: e.path}, 'addDir + addDir = DirMove (same id)')
+  return build('DirMove', e.path, {
+    stats: addChange.stats,
+    old: addChange.old,
+    ino: addChange.ino,
+    wip: e.wip
   })
 }
 

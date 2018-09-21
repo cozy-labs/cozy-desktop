@@ -250,6 +250,26 @@ describe('RemoteWatcher', function () {
   })
 
   describe('analyse', () => {
+    describe('case-only renaming', () => {
+      it('is identified as a move', function () {
+        const oldRemote = builders.remote.file().named('foo').build()
+        const oldDoc = createMetadata(oldRemote)
+        metadata.ensureValidPath(oldDoc)
+        metadata.assignId(oldDoc)
+        const newRemote = _.defaults({
+          _rev: oldRemote._rev.replace(/^1/, '2'),
+          name: 'FOO',
+          path: '/FOO'
+        }, oldRemote)
+
+        const changes = this.watcher.analyse([newRemote], [oldDoc])
+
+        should(changes.map(c => c.type)).deepEqual(['FileMove'])
+        should(changes[0]).have.propertyByPath('doc', 'path').eql('FOO')
+        should(changes[0]).have.propertyByPath('was', 'path').eql('foo')
+      })
+    })
+
     describe('overwriting move', () => {
       let srcFileDoc, dstFileDoc, olds, srcFileMoved, dstFileTrashed
 

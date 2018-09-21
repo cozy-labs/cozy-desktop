@@ -11,6 +11,8 @@ const metadata = require('../../../core/metadata')
 
 const MetadataBuilders = require('../../support/builders/metadata')
 const configHelpers = require('../../support/helpers/config')
+const { ContextDir } = require('../../support/helpers/context_dir')
+const { onPlatforms } = require('../../support/helpers/platform')
 const pouchHelpers = require('../../support/helpers/pouch')
 
 const { TRAVIS } = process.env
@@ -128,6 +130,23 @@ describe('LocalWatcher Tests', function () {
     })
   })
 
+  describe('#oldMetadata()', () => {
+    it('resolves with the metadata whose id matches the event path', async function () {
+      const old = await builders.whatever().create()
+      const resultByEventType = {}
+      for (let type of ['add', 'addDir', 'change', 'unlink', 'unlinkDir']) {
+        resultByEventType[type] = await this.watcher.oldMetadata({type, path: old.path})
+      }
+      should(resultByEventType).deepEqual({
+        add: old,
+        addDir: old,
+        change: old,
+        unlink: old,
+        unlinkDir: old
+      })
+    })
+  })
+
   describe('onAddFile', () => {
     if (process.env.APPVEYOR) {
       it('is unstable on AppVeyor')
@@ -150,6 +169,22 @@ describe('LocalWatcher Tests', function () {
         let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
         let dst = path.join(this.syncPath, 'aaa.jpg')
         fs.copySync(src, dst)
+      })
+    })
+
+    onPlatforms('win32', 'darwin', () => {
+      it('does not skip checksum computation when an identity conflict could occur during initial scan', async function () {
+        const syncDir = new ContextDir(this.syncPath)
+        const existing = await builders.file().path('Alfred').data('Alfred content').sides({remote: 1}).create()
+        this.prep.addFileAsync = sinon.stub().resolves()
+
+        await syncDir.outputFile('alfred', 'alfred content')
+        await this.watcher.start()
+        await this.watcher.stop()
+
+        should(this.prep.addFileAsync).have.been.calledOnce()
+        const doc = this.prep.addFileAsync.args[0][1]
+        should(doc.md5sum).not.equal(existing.md5sum)
       })
     })
   })

@@ -10,6 +10,10 @@ const Merge = require('../../core/merge')
 const metadata = require('../../core/metadata')
 
 const configHelpers = require('../support/helpers/config')
+const {
+  onPlatform,
+  onPlatforms
+} = require('../support/helpers/platform')
 const pouchHelpers = require('../support/helpers/pouch')
 const MetadataBuilders = require('../support/builders/metadata')
 
@@ -21,8 +25,19 @@ describe('Merge', function () {
   beforeEach('instanciate merge', function () {
     this.side = 'local'
     this.merge = new Merge(this.pouch)
+    this.merge[this.side] = {renameConflictingDocAsync: sinon.stub().resolves()}
     builders = new MetadataBuilders(this.pouch)
+
+    sinon.spy(this.merge, 'resolveConflictAsync')
+    // this.pouch.put & bulkDocs must be spied manually because of test data
+    // builders. But if spied, it will be restored automatically (see hook
+    // below).
   })
+  afterEach(function () {
+    if (this.pouch.put.restore) this.pouch.put.restore()
+    if (this.pouch.bulkDocs.restore) this.pouch.bulkDocs.restore()
+  })
+  // FIXME: Clean everytime to prevent Pouch conflicts & tests coupling
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
@@ -78,6 +93,32 @@ describe('Merge', function () {
         res.mime.should.equal(was.mime)
         res.sides.local.should.equal(2)
         res.ino.should.equal(was.ino)
+      })
+    })
+
+    onPlatforms('win32', 'darwin', () => {
+      it('resolves an identity conflict with an existing file', async function () {
+        await builders.file().path('bar').create()
+        const doc = builders.file().path('BAR').build()
+        sinon.spy(this.pouch, 'put')
+
+        await this.merge.addFileAsync(this.side, doc)
+
+        should(this.merge.resolveConflictAsync).have.been.calledWith(this.side, doc)
+        should(this.pouch.put).not.have.been.called()
+      })
+    })
+
+    onPlatforms('linux', () => {
+      it('does not have identity conflicts', async function () {
+        await builders.file().path('bar').create()
+        const doc = builders.file().path('BAR').build()
+        sinon.spy(this.pouch, 'put')
+
+        await this.merge.addFileAsync(this.side, doc)
+
+        should(this.merge.resolveConflictAsync).not.have.been.called()
+        should(this.pouch.put).have.called()
       })
     })
   })
@@ -197,6 +238,32 @@ describe('Merge', function () {
       const result = await this.pouch.db.get(doc._id)
       should(result).deepEqual(old)
     })
+
+    onPlatforms('win32', 'darwin', () => {
+      it('resolves an identity conflict with an existing dir', async function () {
+        const alfred = await builders.dir().path('alfred').create()
+        const Alfred = await builders.dir().path('Alfred').build()
+
+        await this.merge.putFolderAsync(this.side, Alfred)
+
+        should(await this.pouch.db.get(Alfred._id)).deepEqual(alfred)
+        should(this.merge.resolveConflictAsync).have.been.calledWith(this.side, Alfred)
+      })
+    })
+
+    onPlatform('linux', () => {
+      it('does not have identity conflicts', async function () {
+        const alfred = await builders.dir().path('alfred').create()
+        const Alfred = await builders.dir().path('Alfred').build()
+
+        await this.merge.putFolderAsync(this.side, Alfred)
+
+        should(this.merge.resolveConflictAsync).not.have.been.called()
+        // Same as Alfred except _rev was added
+        should(await this.pouch.db.get(Alfred._id)).have.properties(Alfred)
+        should(await this.pouch.db.get(alfred._id)).deepEqual(alfred)
+      })
+    })
   })
 
   describe('moveFile', function () {
@@ -313,6 +380,69 @@ describe('Merge', function () {
       should(info).have.property('id', was._id)
       should(info.doc).have.property('moveTo', doc._id)
     })
+
+    it('does not identify an identical renaming as a conflict', async function () {
+      const banana = await builders.file().path('banana').upToDate().create()
+      const BANANA = _({_id: metadata.id('BANANA'), path: 'BANANA'})
+        .defaults(banana)
+        .omit(['_rev'])
+        .value()
+
+      await this.merge.moveFileAsync(this.side, BANANA, banana)
+
+      should(this.merge.resolveConflictAsync.args).not.have.been.called()
+      should(await this.pouch.db.get(BANANA._id)).have.properties(
+        _.omit(
+          BANANA,
+          ['class', 'mime', 'ino']
+        )
+      )
+      if (banana._id !== BANANA._id) {
+        await should(this.pouch.db.get(banana._id)).be.rejectedWith({status: 404})
+      }
+    })
+
+    onPlatforms('win32', 'darwin', () => {
+      it('resolves an identity conflict with an existing file', async function () {
+        const identical = await builders.file().path('QUX').create()
+        const was = builders.file().path('baz').upToDate().build()
+        const doc = _.defaults({_id: identical._id, path: 'qux'}, was)
+        sinon.spy(this.pouch, 'put')
+        sinon.spy(this.pouch, 'bulkDocs')
+
+        await this.merge.moveFileAsync(this.side, doc, was)
+
+        should(this.merge.resolveConflictAsync.args).deepEqual([
+          [this.side, doc, identical]
+        ])
+        should(this.pouch.put).not.have.been.called()
+        should(this.pouch.bulkDocs).not.have.been.called()
+      })
+    })
+
+    onPlatform('linux', () => {
+      it('does not have identity conflicts', async function () {
+        const QUX = await builders.file().path('QUX').create()
+        const baz = builders.file().path('baz').upToDate().build()
+        const qux = _.defaults({_id: 'qux', path: 'qux'}, baz)
+        sinon.spy(this.pouch, 'put')
+        sinon.spy(this.pouch, 'bulkDocs')
+
+        await this.merge.moveFileAsync(this.side, qux, baz)
+
+        should(this.merge.resolveConflictAsync).not.have.been.called()
+        await should(this.pouch.db.get(baz._id)).be.rejectedWith({status: 404})
+        // Same as qux except _rev was added
+        should(await this.pouch.db.get(qux._id)).have.properties(
+          _.omit(
+            qux,
+            // FIXME: fields set to undefined
+            ['class', 'mime', 'ino']
+          )
+        )
+        should(await this.pouch.db.get(QUX._id)).deepEqual(QUX)
+      })
+    })
   })
 
   describe('moveFolder', function () {
@@ -391,6 +521,63 @@ describe('Merge', function () {
       const info = await infoPromise
       should(info).have.property('id', was._id)
       should(info.doc).have.property('moveTo', doc._id)
+    })
+
+    it('does not identify an identical renaming as a conflict', async function () {
+      const apple = await builders.dir().path('apple').upToDate().create()
+      const APPLE = _({_id: metadata.id('APPLE'), path: 'APPLE'})
+        .defaults(apple)
+        .omit(['_rev'])
+        .value()
+
+      await this.merge.moveFolderAsync(this.side, APPLE, apple)
+
+      should(this.merge.resolveConflictAsync.args).not.have.been.called()
+      should(await this.pouch.db.get(APPLE._id)).have.properties(
+        _.omit(
+          APPLE,
+          ['ino']
+        )
+      )
+      if (apple._id !== APPLE._id) {
+        await should(this.pouch.db.get(apple._id)).be.rejectedWith({status: 404})
+      }
+    })
+
+    onPlatforms('win32', 'darwin', () => {
+      it('resolves an identity conflict with an existing file', async function () {
+        const LINUX = await builders.dir().path('LINUX').create()
+        const torvalds = builders.dir().path('torvalds').upToDate().build()
+        const linux = _.defaults({_id: LINUX._id, path: 'linux'}, torvalds)
+        sinon.spy(this.pouch, 'put')
+        sinon.spy(this.pouch, 'bulkDocs')
+
+        await this.merge.moveFolderAsync(this.side, linux, torvalds)
+
+        should(this.merge.resolveConflictAsync.args).deepEqual([
+          [this.side, linux, LINUX]
+        ])
+        should(this.pouch.put).not.have.been.called()
+        should(this.pouch.bulkDocs).not.have.been.called()
+      })
+    })
+
+    onPlatform('linux', () => {
+      it('does not have identity conflicts', async function () {
+        const NUKEM = await builders.dir().path('NUKEM').create()
+        const duke = builders.dir().path('duke').upToDate().build()
+        const nukem = _.defaults({_id: 'nukem', path: 'nukem'}, duke)
+        sinon.spy(this.pouch, 'put')
+        sinon.spy(this.pouch, 'bulkDocs')
+
+        await this.merge.moveFolderAsync(this.side, nukem, duke)
+
+        should(this.merge.resolveConflictAsync).not.have.been.called()
+        await should(this.pouch.db.get(duke._id)).be.rejectedWith({status: 404})
+        should(await this.pouch.db.get(nukem._id))
+          .have.properties(_.omit(nukem, ['ino']))
+        should(await this.pouch.db.get(NUKEM._id)).deepEqual(NUKEM)
+      })
     })
   })
 
@@ -558,24 +745,13 @@ describe('Merge', function () {
 
     context('when docType does not match', () => {
       it('tries to resolve the conflict', async function () {
-        this.merge.local = {resolveConflictAsync: sinon.stub()}
-        this.merge.local.resolveConflictAsync.returnsPromise().resolves()
-        sinon.spy(this.pouch, 'put')
-
         const doc = {_id: 'conflicting-doctype', docType: 'folder', path: 'conflicting-doctype'}
         await this.pouch.db.put(_.defaults({docType: 'file'}, doc))
 
         await this.merge.trashAsync(this.side, doc)
 
-        should(this.merge.local.resolveConflictAsync).have.been.calledOnce()
+        should(this.merge.resolveConflictAsync).have.been.calledWith(this.side, doc)
         should(this.pouch.put).not.have.been.called()
-        const [dst, src] = this.merge.local.resolveConflictAsync.getCall(0).args
-        should(src).eql(doc)
-        should(dst).have.properties(_.defaults({path: dst.path}, doc))
-        should(dst.path).match(/conflict/)
-        should(dst).not.have.property('trashed')
-
-        this.pouch.put.restore()
       })
     })
   })

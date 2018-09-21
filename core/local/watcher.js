@@ -249,35 +249,32 @@ module.exports = class LocalWatcher {
     return {offlineEvents: events, emptySyncDir}
   }
 
-  async prepareEvents (events /*: ChokidarEvent[] */, initialScan /*: ?InitialScan */) /*: Promise<LocalEvent[]> */ {
-    const oldMetadata = async (e /*: ChokidarEvent */) /*: Promise<?Metadata> */ => {
-      if (e.old) return e.old
-      if (e.type === 'unlink' || e.type === 'unlinkDir' || e.type === 'change' ||
-          ((e.type === 'add' || e.type === 'addDir') && initialScan)) {
-        try {
-          return await this.pouch.db.get(metadata.id(e.path))
-        } catch (err) {
-          if (err.status !== 404) log.error({path: e.path, err})
-        }
-      }
-      return null
+  async oldMetadata (e /*: ChokidarEvent */) /*: Promise<?Metadata> */ {
+    if (e.old) return e.old
+    try {
+      return await this.pouch.db.get(metadata.id(e.path))
+    } catch (err) {
+      if (err.status !== 404) log.error({path: e.path, err})
     }
+    return null
+  }
 
-    // @PERFOPTIM ?
-    //   - db.allDocs(keys: events.pick(path))
-    //   - process.exec('md5sum ' + paths.join(' '))
-
+  // @PERFOPTIM ?
+  //   - db.allDocs(keys: events.pick(path))
+  //   - process.exec('md5sum ' + paths.join(' '))
+  async prepareEvents (events /*: ChokidarEvent[] */, initialScan /*: ?InitialScan */) /*: Promise<LocalEvent[]> */ {
     return Promise.map(events, async (e /*: ChokidarEvent */) /*: Promise<?LocalEvent> */ => {
       const abspath = path.join(this.syncPath, e.path)
 
       const e2 /*: Object */ = _.merge({
-        old: await oldMetadata(e)
+        old: await this.oldMetadata(e)
       }, e)
 
       if (e.type === 'add' || e.type === 'change') {
         if (initialScan && e2.old &&
+          e2.path === e2.old.path &&
           sameDate(fromDate(e2.old.updated_at), fromDate(e2.stats.mtime))) {
-          log.trace({path: e.path}, 'Do not compute checksum : mtime is unchanged')
+          log.trace({path: e.path}, 'Do not compute checksum : mtime & path are unchanged')
           e2.md5sum = e2.old.md5sum
         } else {
           try {
