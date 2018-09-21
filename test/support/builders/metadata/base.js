@@ -9,7 +9,7 @@ const {
 } = require('../../../../core/metadata')
 const timestamp = require('../../../../core/timestamp')
 
-const pouchdbBuilders = require('../pouchdb')
+const dbBuilders = require('../db')
 
 /*::
 import type fs from 'fs-extra'
@@ -35,8 +35,8 @@ module.exports = class BaseMetadataBuilder {
       docType: 'folder', // To make flow happy (overridden by subclasses)
       path: 'foo',
       remote: {
-        _id: pouchdbBuilders.id(),
-        _rev: pouchdbBuilders.rev()
+        _id: dbBuilders.id(),
+        _rev: dbBuilders.rev()
       },
       tags: [],
       sides: {},
@@ -99,7 +99,7 @@ module.exports = class BaseMetadataBuilder {
   remoteId (_id /*: string */) /*: this */ {
     this.doc.remote = {
       _id,
-      _rev: pouchdbBuilders.rev()
+      _rev: dbBuilders.rev()
     }
     return this
   }

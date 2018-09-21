@@ -9,7 +9,7 @@ const should = require('should')
 const uuid = require('uuid/v4')
 const CozyClient = require('cozy-client-js').Client
 
-const pouchdbBuilders = require('../../support/builders/pouchdb')
+const dbBuilders = require('../../support/builders/db')
 const configHelpers = require('../../support/helpers/config')
 const { posixifyPath } = require('../../support/helpers/context_dir')
 const { onPlatform } = require('../../support/helpers/platform')
@@ -156,7 +156,7 @@ describe('RemoteWatcher', function () {
   describe('pullMany', function () {
     const docs = [
       builders.remote.file().build(),
-      {_id: pouchdbBuilders.id(), _rev: pouchdbBuilders.rev(), _deleted: true}
+      {_id: dbBuilders.id(), _rev: dbBuilders.rev(), _deleted: true}
     ]
     let apply
     let findMaybe
