@@ -4,7 +4,8 @@ const _ = require('lodash')
 
 const {
   assignId,
-  assignPlatformIncompatibilities
+  assignPlatformIncompatibilities,
+  id
 } = require('../../../../core/metadata')
 const timestamp = require('../../../../core/timestamp')
 
@@ -24,32 +25,27 @@ import type Pouch from '../../../../core/pouch'
 module.exports = class BaseMetadataBuilder {
   /*::
   pouch: ?Pouch
-  opts: {
-    _rev?: string,
-    path: string,
-    ino?: number,
-    remote: MetadataRemoteInfo,
-    updated_at?: string|Date,
-    trashed?: true,
-    sides: MetadataSidesInfo
-  }
+  doc: Metadata
   */
 
   constructor (pouch /*: ?Pouch */) {
     this.pouch = pouch
-    this.opts = {
+    this.doc = {
+      _id: id('foo'),
+      docType: 'folder', // To make flow happy (overridden by subclasses)
       path: 'foo',
       remote: {
         _id: pouchdbBuilders.id(),
         _rev: pouchdbBuilders.rev()
       },
+      tags: [],
       sides: {},
       updated_at: timestamp.stringify(timestamp.current())
     }
   }
 
   rev (rev /*: string */) /*: this */ {
-    this.opts._rev = rev
+    this.doc._rev = rev
     return this
   }
 
@@ -66,7 +62,7 @@ module.exports = class BaseMetadataBuilder {
   }
 
   ino (ino /*: number */) /*: this */ {
-    this.opts.ino = ino
+    this.doc.ino = ino
     return this
   }
 
@@ -75,32 +71,33 @@ module.exports = class BaseMetadataBuilder {
   }
 
   path (path /*: string */) /*: this */ {
-    this.opts.path = path
+    this.doc.path = path
+    assignId(this.doc)
     return this
   }
 
   trashed () /*: this */ {
-    this.opts.trashed = true
+    this.doc.trashed = true
     return this
   }
 
   updatedAt (date /*: Date */) /*: this */ {
-    this.opts.updated_at = timestamp.fromDate(date).toISOString()
+    this.doc.updated_at = timestamp.fromDate(date).toISOString()
     return this
   }
 
   newerThan (doc /*: Metadata */) /*: this */ {
-    this.opts.updated_at = new Date(timestamp.fromDate(doc.updated_at) + 2000)
+    this.doc.updated_at = new Date(timestamp.fromDate(doc.updated_at) + 2000)
     return this
   }
 
   olderThan (doc /*: Metadata */) /*: this */ {
-    this.opts.updated_at = new Date(timestamp.fromDate(doc.updated_at) - 2000)
+    this.doc.updated_at = new Date(timestamp.fromDate(doc.updated_at) - 2000)
     return this
   }
 
   remoteId (_id /*: string */) /*: this */ {
-    this.opts.remote = {
+    this.doc.remote = {
       _id,
       _rev: pouchdbBuilders.rev()
     }
@@ -108,37 +105,26 @@ module.exports = class BaseMetadataBuilder {
   }
 
   upToDate () /*: this */ {
-    this.opts.sides = {local: 2, remote: 2}
+    this.doc.sides = {local: 2, remote: 2}
     return this
   }
 
   notUpToDate () /*: this */ {
-    this.opts.sides = {remote: 1}
+    this.doc.sides = {remote: 1}
     return this
   }
 
   sides (sides /*: MetadataSidesInfo */) /*: this */ {
-    this.opts.sides = sides
+    this.doc.sides = sides
     return this
   }
 
-  attributesByType () /*: * */ {
-    throw new Error('BaseMetadataBuilder#attributesByType() not implemented')
-  }
-
   build () /*: Metadata */ {
-    const doc = _.merge({
-      _id: '',
-      tags: [],
-      updated_at: new Date()
-    }, this.opts, this.attributesByType())
-
-    assignId(doc)
     // Don't detect incompatibilities according to syncPath for test data, to
     // prevent environment related failures.
-    assignPlatformIncompatibilities(doc, '')
+    assignPlatformIncompatibilities(this.doc, '')
 
-    return doc
+    return _.cloneDeep(this.doc)
   }
 
   async create () /*: Promise<Metadata> */ {
@@ -147,7 +133,7 @@ module.exports = class BaseMetadataBuilder {
     }
     const doc = this.build()
     // $FlowFixMe
-    const {rev} = await this.pouch.put(doc)
+    const { rev } = await this.pouch.put(doc)
     doc._rev = rev
     return doc
   }
