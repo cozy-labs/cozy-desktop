@@ -128,11 +128,10 @@ module.exports = class BaseMetadataBuilder {
   }
 
   async create () /*: Promise<Metadata> */ {
+    const doc = this.build()
     if (this.pouch == null) {
       throw new Error('Cannot create dir metadata without Pouch')
     }
-    const doc = this.build()
-    // $FlowFixMe
     const { rev } = await this.pouch.put(doc)
     doc._rev = rev
     return doc
