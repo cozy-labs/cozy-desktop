@@ -1,9 +1,15 @@
 /* @flow */
 
-const path = require('path')
+const _ = require('lodash')
+const { posix } = require('path')
 const uuid = require('uuid/v4')
 
-const { FILES_DOCTYPE, ROOT_DIR_ID, TRASH_DIR_ID, TRASH_DIR_NAME } = require('../../../../core/remote/constants')
+const {
+  FILES_DOCTYPE,
+  ROOT_DIR_ID,
+  TRASH_DIR_ID,
+  TRASH_DIR_NAME
+} = require('../../../../core/remote/constants')
 const timestamp = require('../../../../core/timestamp')
 
 /*::
@@ -11,73 +17,63 @@ import type { Cozy } from 'cozy-client-js'
 import type { RemoteDoc } from '../../../../core/remote/document'
 */
 
-const ROOT_DIR_PROPERTIES = {
-  _id: ROOT_DIR_ID,
-  path: '/'
-}
-
-const TRASH_DIR_PROPERTIES = {
-  _id: TRASH_DIR_ID,
-  path: `/${TRASH_DIR_NAME}`
-}
+const defaultTimestamp = timestamp.stringify(timestamp.current())
 
 module.exports = class RemoteBaseBuilder {
   /*::
   cozy: Cozy
-  options: {
-    contentType?: string,
-    dir: {_id: string, path: string},
-    name: string,
-    executable?: bool,
-    lastModifiedDate: Date
-  }
+  doc: RemoteDoc
   */
 
   constructor (cozy /*: Cozy */) {
     this.cozy = cozy
-    this.options = {
-      dir: ROOT_DIR_PROPERTIES,
-      name: '',
-      lastModifiedDate: timestamp.current()
+    const name = 'whatever'
+    this.doc = {
+      _id: uuid().replace(/-/g, ''),
+      _rev: '1-' + uuid().replace(/-/g, ''),
+      _type: FILES_DOCTYPE,
+      type: 'directory',
+      created_at: defaultTimestamp,
+      dir_id: ROOT_DIR_ID,
+      name,
+      path: posix.join(posix.sep, name),
+      tags: [],
+      updated_at: defaultTimestamp
     }
   }
 
-  inDir (dir /*: RemoteDoc */) /*: this */ {
-    this.options.dir = dir
+  inDir (dir /*: RemoteDoc | {_id: string, path: string} */) /*: this */ {
+    this.doc.dir_id = dir._id
+    this.doc.path = posix.join(dir.path, this.doc.name)
     return this
   }
 
   inRootDir () /*: this */ {
-    this.options.dir = ROOT_DIR_PROPERTIES
-    return this
+    return this.inDir({
+      _id: ROOT_DIR_ID,
+      path: '/'
+    })
   }
 
   trashed () /*: this */ {
-    this.options.dir = TRASH_DIR_PROPERTIES
-    return this
+    return this.inDir({
+      _id: TRASH_DIR_ID,
+      path: `/${TRASH_DIR_NAME}`
+    })
   }
 
   timestamp (...args /*: number[] */) /*: this */ {
-    this.options.lastModifiedDate = timestamp.build(...args)
+    this.doc.updated_at = timestamp.stringify(timestamp.build(...args))
     return this
   }
 
   named (name /*: string */) /*: this */ {
-    this.options.name = name
+    this.doc.name = name
+    this.doc.path = posix.join(posix.dirname(this.doc.path), name)
     return this
   }
 
   build () /*: Object */ {
-    return {
-      _id: uuid().replace(/-/g, ''),
-      _rev: '1-' + uuid().replace(/-/g, ''),
-      _type: FILES_DOCTYPE,
-      created_at: this.options.lastModifiedDate,
-      dir_id: this.options.dir._id,
-      name: this.options.name,
-      path: path.posix.join(this.options.dir.path, this.options.name),
-      tags: [],
-      updated_at: this.options.lastModifiedDate
-    }
+    return _.clone(this.doc)
   }
 }

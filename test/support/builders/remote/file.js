@@ -1,7 +1,7 @@
 /* @flow */
 
+const crypto = require('crypto')
 const fs = require('fs')
-const _ = require('lodash')
 const path = require('path')
 
 const RemoteBaseBuilder = require('./base')
@@ -34,53 +34,49 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
   constructor (cozy /*: Cozy */) {
     super(cozy)
 
-    this._data = `Content of remote file ${fileNumber}`
+    this.doc.type = 'file'
+    this.named(`remote-file-${fileNumber}`)
+    this.data(`Content of remote file ${fileNumber}`)
+    this.doc.class = 'application'
+    this.doc.mime = 'application/octet-stream'
+    this.doc.executable = true
 
-    Object.assign(this.options, {
-      name: `remote-file-${fileNumber++}`,
-      contentType: undefined
-    })
+    fileNumber++
   }
 
   contentType (contentType /*: string */) /*: RemoteFileBuilder */ {
-    this.options.contentType = contentType
+    this.doc.mime = contentType
     return this
   }
 
   data (data /*: string | stream.Readable */) /*: RemoteFileBuilder */ {
     this._data = data
+    if (typeof data === 'string') {
+      this.doc.size = Buffer.from(data).length.toString()
+      this.doc.md5sum =
+        crypto.createHash('md5').update(data).digest().toString('base64')
+    }
+    // FIXME: Assuming doc will be created with data stream
     return this
   }
 
   dataFromFile (path /*: string */) /*: RemoteFileBuilder */ {
-    this._data = fs.createReadStream(path)
-    return this
+    return this.data(fs.createReadStream(path))
   }
 
   executable (isExecutable /*: boolean */) /*: RemoteFileBuilder */ {
-    this.options.executable = isExecutable
+    this.doc.executable = isExecutable
     return this
   }
 
-  build () /*: RemoteDoc */ {
-    return _.merge({
-      class: 'application',
-      executable: true,
-      md5sum: 'wVenkDHhxA+FkxgpvF/FUg==',
-      mime: 'application/octet-stream',
-      size: '123',
-      type: 'file'
-    }, super.build())
-  }
-
   async create () /*: Promise<RemoteDoc> */ {
-    let doc = jsonApiToRemoteDoc(
+    const doc = jsonApiToRemoteDoc(
       await this.cozy.files.create(this._data, {
-        contentType: this.options.contentType,
-        dirID: this.options.dir._id,
-        executable: this.options.executable,
-        lastModifiedDate: this.options.lastModifiedDate,
-        name: this.options.name
+        contentType: this.doc.mime,
+        dirID: this.doc.dir_id,
+        executable: this.doc.executable,
+        lastModifiedDate: this.doc.updated_at,
+        name: this.doc.name
       })
     )
 

@@ -1,7 +1,5 @@
 /* @flow */
 
-const _ = require('lodash')
-
 const RemoteBaseBuilder = require('./base')
 const { jsonApiToRemoteDoc } = require('../../../../core/remote/document')
 
@@ -25,22 +23,16 @@ var dirNumber = 1
 module.exports = class RemoteDirBuilder extends RemoteBaseBuilder {
   constructor (cozy /*: Cozy */) {
     super(cozy)
-
-    Object.assign(this.options, {
-      name: `directory-${dirNumber++}`
-    })
-  }
-
-  build () /*: RemoteDoc */ {
-    return _.merge({type: 'directory'}, super.build())
+    this.doc.type = 'directory'
+    this.named(`directory-${dirNumber++}`)
   }
 
   async create () /*: Promise<RemoteDoc> */ {
     return jsonApiToRemoteDoc(
       await this.cozy.files.createDirectory({
-        name: this.options.name,
-        dirID: this.options.dir._id,
-        lastModifiedDate: this.options.lastModifiedDate
+        name: this.doc.name,
+        dirID: this.doc.dir_id,
+        lastModifiedDate: this.doc.updated_at
       })
     )
   }
