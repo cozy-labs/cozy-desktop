@@ -2,7 +2,7 @@
 
 const crypto = require('crypto')
 const fs = require('fs')
-const path = require('path')
+const { posix } = require('path')
 
 const RemoteBaseBuilder = require('./base')
 
@@ -81,7 +81,7 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
     )
 
     const parentDir = await this.cozy.files.statById(doc.dir_id)
-    doc.path = path.join(parentDir.attributes.path, doc.name)
+    doc.path = posix.join(parentDir.attributes.path, doc.name)
 
     return doc
   }
