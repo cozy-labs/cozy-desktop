@@ -45,8 +45,8 @@ suite('Platform incompatibilities', () => {
   })
 
   test('add incompatible dir and file', async () => {
-    await builders.remote.dir().named('di:r').create()
-    await builders.remote.file().named('fi:le').create()
+    await builders.remote.dir().name('di:r').create()
+    await builders.remote.file().name('fi:le').create()
     await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).be.empty()
     should(await helpers.incompatibleTree()).deepEqual([
@@ -55,7 +55,7 @@ suite('Platform incompatibilities', () => {
     ])
   })
   test('add incompatible dir with two colons', async () => {
-    await builders.remote.dir().named('d:i:r').create()
+    await builders.remote.dir().name('d:i:r').create()
     await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).be.empty()
     should(await helpers.incompatibleTree()).deepEqual([

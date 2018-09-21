@@ -35,7 +35,7 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
     super(cozy)
 
     this.doc.type = 'file'
-    this.named(`remote-file-${fileNumber}`)
+    this.name(`remote-file-${fileNumber}`)
     this.data(`Content of remote file ${fileNumber}`)
     this.doc.class = 'application'
     this.doc.mime = 'application/octet-stream'

@@ -67,7 +67,7 @@ module.exports = class RemoteBaseBuilder {
     return this
   }
 
-  named (name /*: string */) /*: this */ {
+  name (name /*: string */) /*: this */ {
     this.doc.name = name
     this.doc.path = posix.join(posix.dirname(this.doc.path), name)
     return this

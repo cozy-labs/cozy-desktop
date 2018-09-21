@@ -24,7 +24,7 @@ module.exports = class RemoteDirBuilder extends RemoteBaseBuilder {
   constructor (cozy /*: Cozy */) {
     super(cozy)
     this.doc.type = 'directory'
-    this.named(`directory-${dirNumber++}`)
+    this.name(`directory-${dirNumber++}`)
   }
 
   async create () /*: Promise<RemoteDoc> */ {
