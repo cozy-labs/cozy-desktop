@@ -9,7 +9,7 @@ const should = require('should')
 const uuid = require('uuid/v4')
 const CozyClient = require('cozy-client-js').Client
 
-const pouchdbBuilders = require('../../support/builders/pouchdb')
+const dbBuilders = require('../../support/builders/db')
 const configHelpers = require('../../support/helpers/config')
 const { posixifyPath } = require('../../support/helpers/context_dir')
 const { onPlatform } = require('../../support/helpers/platform')
@@ -156,7 +156,7 @@ describe('RemoteWatcher', function () {
   describe('pullMany', function () {
     const docs = [
       builders.remote.file().build(),
-      {_id: pouchdbBuilders.id(), _rev: pouchdbBuilders.rev(), _deleted: true}
+      {_id: dbBuilders.id(), _rev: dbBuilders.rev(), _deleted: true}
     ]
     let apply
     let findMaybe
@@ -252,7 +252,7 @@ describe('RemoteWatcher', function () {
   describe('analyse', () => {
     describe('case-only renaming', () => {
       it('is identified as a move', function () {
-        const oldRemote = builders.remote.file().named('foo').build()
+        const oldRemote = builders.remote.file().name('foo').build()
         const oldDoc = createMetadata(oldRemote)
         metadata.ensureValidPath(oldDoc)
         metadata.assignId(oldDoc)
@@ -280,10 +280,10 @@ describe('RemoteWatcher', function () {
             /src/
             /src/file
         */
-        const srcDir = builders.remote.dir().named('src').build()
-        const dstDir = builders.remote.dir().named('dst').build()
-        const srcFile = builders.remote.file().named('file').inDir(srcDir).build()
-        const dstFile = builders.remote.file().named('file').inDir(dstDir).build()
+        const srcDir = builders.remote.dir().name('src').build()
+        const dstDir = builders.remote.dir().name('dst').build()
+        const srcFile = builders.remote.file().name('file').inDir(srcDir).build()
+        const dstFile = builders.remote.file().name('file').inDir(dstDir).build()
 
         /* Files were synced */
         srcFileDoc = builders.metadata.file().fromRemote(srcFile).upToDate().build()
@@ -647,7 +647,7 @@ describe('RemoteWatcher', function () {
     })
 
     it('detects when file was both moved and updated', async function () {
-      const file /*: RemoteDoc */ = await builders.remote.file().named('meow.txt').data('meow').build()
+      const file /*: RemoteDoc */ = await builders.remote.file().name('meow.txt').data('meow').build()
       const was /*: Metadata */ = createMetadata(file)
       metadata.ensureValidPath(was)
       metadata.assignId(was)
@@ -688,7 +688,7 @@ describe('RemoteWatcher', function () {
       this.prep.deleteFolderAsync.returnsPromise().resolves(null)
       this.prep.addFolderAsync = sinon.stub()
       this.prep.addFolderAsync.returnsPromise().resolves(null)
-      const oldDir /*: RemoteDoc */ = builders.remote.dir().named('foo').build()
+      const oldDir /*: RemoteDoc */ = builders.remote.dir().name('foo').build()
       // TODO: builders.dir().fromRemote(oldDir).create()
       let oldMeta /*: Metadata */ = createMetadata(oldDir)
       assignId(oldMeta)
@@ -718,7 +718,7 @@ describe('RemoteWatcher', function () {
       this.prep.deleteFolder.returnsPromise().resolves(null)
       this.prep.addFolderAsync = sinon.stub()
       this.prep.addFolderAsync.returnsPromise().resolves(null)
-      const oldDir /*: RemoteDoc */ = builders.remote.dir().named('foo').trashed().build()
+      const oldDir /*: RemoteDoc */ = builders.remote.dir().name('foo').trashed().build()
       // TODO: builders.dir().fromRemote(oldDir).create()
       let oldMeta /*: Metadata */ = createMetadata(oldDir)
       assignId(oldMeta)

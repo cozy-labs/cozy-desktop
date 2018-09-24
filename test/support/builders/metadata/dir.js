@@ -2,10 +2,13 @@
 
 const BaseMetadataBuilder = require('./base')
 
+/*::
+import type Pouch from '../../../../core/pouch'
+*/
+
 module.exports = class DirMetadataBuilder extends BaseMetadataBuilder {
-  attributesByType () /*: * */ {
-    return {
-      docType: 'folder'
-    }
+  constructor (pouch /*: ?Pouch */) {
+    super(pouch)
+    this.doc.docType = 'folder'
   }
 }

@@ -96,6 +96,7 @@ module.exports = {
   ensureValidChecksum,
   extractRevNumber,
   isUpToDate,
+  markAsUpToDate,
   sameFolder,
   sameFile,
   sameFileIgnoreRev,
@@ -245,6 +246,15 @@ function isUpToDate (side /*: SideName */, doc /*: Metadata */) {
   let currentRev = doc.sides[side] || 0
   let lastRev = extractRevNumber(doc)
   return currentRev === lastRev
+}
+
+function markAsUpToDate (doc /*: Metadata */) {
+  let rev = extractRevNumber(doc) + 1
+  for (let s of ['local', 'remote']) {
+    doc.sides[s] = rev
+  }
+  delete doc.errors
+  return rev
 }
 
 // Ensure new timestamp is never older than the previous one

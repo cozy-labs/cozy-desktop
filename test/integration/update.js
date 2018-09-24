@@ -40,7 +40,7 @@ describe('Update file', () => {
     // OPTIMIZE: Don't trigger useless remote sync for local inode-only change
     it('works but triggers useless remote sync', async () => {
       const file = await builders.remote.file()
-        .named('file')
+        .name('file')
         .data('Initial content')
         .create()
       await helpers.remote.pullChanges()
@@ -61,7 +61,7 @@ describe('Update file', () => {
   describe('older timestamp change', () => {
     it('should keep the most recent timestamp to prevent 422 errors', async () => {
       const file = await builders.remote.file()
-        .named('file')
+        .name('file')
         .data('Initial content')
         .timestamp(2018, 5, 15, 21, 1, 53)
         .create()

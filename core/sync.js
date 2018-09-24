@@ -8,7 +8,12 @@ const _ = require('lodash')
 
 const { MAX_SYNC_ATTEMPTS } = require('./constants')
 const logger = require('./logger')
-const { extractRevNumber, isUpToDate, markSide, sameFileIgnoreRev } = require('./metadata')
+const {
+  isUpToDate,
+  markAsUpToDate,
+  markSide,
+  sameFileIgnoreRev
+} = require('./metadata')
 const userActionRequired = require('./remote/user_action_required')
 const { HEARTBEAT } = require('./remote/watcher')
 const { otherSide } = require('./side')
@@ -433,11 +438,7 @@ class Sync {
 
   // Update rev numbers for both local and remote sides
   async updateRevs (doc /*: Metadata */, side /*: SideName */) /*: Promise<*> */ {
-    let rev = extractRevNumber(doc) + 1
-    for (let s of ['local', 'remote']) {
-      doc.sides[s] = rev
-    }
-    delete doc.errors
+    const rev = markAsUpToDate(doc)
     try {
       await this.pouch.put(doc)
     } catch (err) {

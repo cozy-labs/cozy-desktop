@@ -82,7 +82,7 @@ describe('RemoteCozy', function () {
     })
 
     it('fetches a remote root file including its path', async function () {
-      const remoteFile = await builders.remote.file().inRootDir().named('foo').create()
+      const remoteFile = await builders.remote.file().inRootDir().name('foo').create()
 
       const foundFile = await remoteCozy.find(remoteFile._id)
 
@@ -90,8 +90,8 @@ describe('RemoteCozy', function () {
     })
 
     it('fetches a remote non-root file including its path', async function () {
-      const remoteDir = await builders.remote.dir().named('foo').inRootDir().create()
-      const remoteFile = await builders.remote.file().named('bar').inDir(remoteDir).create()
+      const remoteDir = await builders.remote.dir().name('foo').inRootDir().create()
+      const remoteFile = await builders.remote.file().name('bar').inDir(remoteDir).create()
 
       const foundFile = await remoteCozy.find(remoteFile._id)
 
@@ -130,7 +130,7 @@ describe('RemoteCozy', function () {
     })
 
     it('rejects when the directory does not exist remotely', async function () {
-      await builders.remote.file().named('existing').inRootDir().create()
+      await builders.remote.file().name('existing').inRootDir().create()
 
       for (let path of ['/missing', '/existing/missing']) {
         await remoteCozy.findDirectoryByPath(path)
@@ -139,7 +139,7 @@ describe('RemoteCozy', function () {
     })
 
     it('rejects when the path matches a file', async function () {
-      await builders.remote.file().named('foo').inRootDir().create()
+      await builders.remote.file().name('foo').inRootDir().create()
 
       await remoteCozy.findDirectoryByPath('/foo')
         .should.be.rejectedWith(DirectoryNotFound)
@@ -164,8 +164,8 @@ describe('RemoteCozy', function () {
       it.skip('creates any missing parent directory (unstable on AppVeyor)', () => {})
     } else {
       it('creates any missing parent directory', async function () {
-        const dir = await builders.remote.dir().named('dir').create()
-        await builders.remote.dir().named('subdir').inDir(dir).create()
+        const dir = await builders.remote.dir().name('dir').create()
+        await builders.remote.dir().name('subdir').inDir(dir).create()
 
         let result = await remoteCozy.findOrCreateDirectoryByPath('/dir/subdir/foo')
         should(result).have.properties({

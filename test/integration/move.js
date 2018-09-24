@@ -13,7 +13,7 @@ const path = require('path')
 const should = require('should')
 
 const Builders = require('../support/builders')
-const pouchdbBuilders = require('../support/builders/pouchdb')
+const dbBuilders = require('../support/builders/db')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
@@ -94,7 +94,7 @@ suite('Move', () => {
           updated_at: '2017-06-19T08:19:26.769Z',
           remote: {
             _id: file._id,
-            _rev: pouchdbBuilders.rev()
+            _rev: dbBuilders.rev()
           }
         }
       ), oldFile)
