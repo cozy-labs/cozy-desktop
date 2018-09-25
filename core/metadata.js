@@ -187,6 +187,9 @@ function invariants (doc /*: Metadata */) {
   if (doc.sides.remote && !doc.remote) {
     throw sentry.flag(new Error(`${doc._id} has 'sides.remote' but no remote`))
   }
+  if (doc.docType === 'file' && doc.md5sum == null) {
+    throw sentry.flag(new Error(`${doc._id} is a file without checksum`))
+  }
 }
 
 /*::
