@@ -95,9 +95,13 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
             const unlinkChange /*: ?LocalFileDeletion */ = localChange.maybeDeleteFile(getChangeByInode(e))
             if (unlinkChange) {
               changeFound(localChange.fileMoveFromUnlinkAdd(unlinkChange, e))
-            } else {
-              changeFound(localChange.fromEvent(e))
+              break
             }
+
+            changeFound(
+              localChange.fileMoveIdenticalOffline(e) ||
+              localChange.fromEvent(e)
+            )
           }
           break
         case 'addDir':
@@ -117,7 +121,10 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
               changeFound(localChange.dirRenamingCaseOnlyFromAddAdd(addChange, e))
               break
             }
-            changeFound(localChange.fromEvent(e))
+            changeFound(
+              localChange.dirMoveIdenticalOffline(e) ||
+              localChange.fromEvent(e)
+            )
           }
           break
         case 'change':

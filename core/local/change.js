@@ -39,10 +39,12 @@ module.exports = {
   fileMoveFromUnlinkAdd,
   fileMoveFromFileDeletionChange,
   fileMoveIdentical,
+  fileMoveIdenticalOffline,
   dirMoveFromUnlinkAdd,
   fileMoveFromAddUnlink,
   dirMoveFromAddUnlink,
   dirRenamingCaseOnlyFromAddAdd,
+  dirMoveIdenticalOffline,
   includeAddEventInFileMove,
   includeAddDirEventInDirMove,
   includeChangeEventIntoFileMove,
@@ -57,7 +59,7 @@ const log = logger({
 /*::
 export type LocalDirAddition = {sideName: 'local', type: 'DirAddition', path: string, old: ?Metadata, ino: number, stats: fs.Stats, wip?: true}
 export type LocalDirDeletion = {sideName: 'local', type: 'DirDeletion', path: string, old: ?Metadata, ino: ?number}
-export type LocalDirMove = {sideName: 'local', type: 'DirMove', path: string, old: Metadata, ino: number, stats: fs.Stats, wip?: true, needRefetch: boolean, overwrite: boolean}
+export type LocalDirMove = {sideName: 'local', type: 'DirMove', path: string, old: Metadata, ino: number, stats: fs.Stats, wip?: true, needRefetch?: boolean, overwrite?: boolean}
 export type LocalFileAddition = {sideName: 'local', type: 'FileAddition', path: string, old: ?Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
 export type LocalFileDeletion = {sideName: 'local', type: 'FileDeletion', path: string, old: ?Metadata, ino: ?number}
 export type LocalFileMove = {sideName: 'local', type: 'FileMove', path: string, old: Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true, needRefetch?: boolean, update?: LocalFileUpdated, overwrite?: Metadata}
@@ -226,6 +228,21 @@ function fileMoveIdentical (addChange /*: LocalFileAddition */, e /*: LocalFileU
   })
 }
 
+function fileMoveIdenticalOffline (dstEvent /*: LocalFileAdded */) /*: ?LocalFileMove */ {
+  const srcDoc = dstEvent.old
+  if (!srcDoc || srcDoc.path === dstEvent.path || srcDoc.ino !== dstEvent.stats.ino) return
+  log.debug({oldpath: srcDoc.path, path: dstEvent.path}, 'add = FileMove (same id, offline)')
+  return ({
+    sideName,
+    type: 'FileMove',
+    path: dstEvent.path,
+    stats: dstEvent.stats,
+    md5sum: dstEvent.md5sum,
+    old: srcDoc,
+    ino: dstEvent.stats.ino
+  } /*: LocalFileMove */)
+}
+
 function dirRenamingCaseOnlyFromAddAdd (addChange /*: LocalDirAddition */, e /*: LocalDirAdded */) /*: * */ {
   log.debug({oldpath: addChange.path, path: e.path}, 'addDir + addDir = DirMove (same id)')
   return build('DirMove', e.path, {
@@ -234,6 +251,20 @@ function dirRenamingCaseOnlyFromAddAdd (addChange /*: LocalDirAddition */, e /*:
     ino: addChange.ino,
     wip: e.wip
   })
+}
+
+function dirMoveIdenticalOffline (dstEvent /*: LocalDirAdded */) /*: ?LocalDirMove */ {
+  const srcDoc = dstEvent.old
+  if (!srcDoc || srcDoc.path === dstEvent.path || srcDoc.ino !== dstEvent.stats.ino) return
+  log.debug({oldpath: srcDoc.path, path: dstEvent.path}, 'addDir = DirMove (same id, offline)')
+  return {
+    sideName,
+    type: 'DirMove',
+    path: dstEvent.path,
+    stats: dstEvent.stats,
+    old: srcDoc,
+    ino: dstEvent.stats.ino
+  }
 }
 
 /*::
@@ -293,7 +324,15 @@ function includeAddDirEventInDirMove (moveChange /*: LocalDirMove */, e /*: Loca
 function includeChangeEventIntoFileMove (moveChange /*: LocalFileMove */, e /*: LocalFileUpdated */) {
   log.debug({path: e.path}, 'FileMove + change')
   moveChange.md5sum = moveChange.old.md5sum || moveChange.md5sum
-  moveChange.update = e
+  moveChange.update = _.defaults({
+    // In almost all cases, change event has the destination path.
+    // But on macOS identical renaming, it has the source path.
+    // So we make sure the file change being merged after the move
+    // won't erase the destination path with the source one.
+    // Should be a no-op on all other cases anyway, since e.path
+    // should already be the same as moveChange.path
+    path: moveChange.path
+  }, e)
 }
 
 function convertFileMoveToDeletion (change /*: LocalFileMove */) {

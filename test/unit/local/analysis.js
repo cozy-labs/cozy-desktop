@@ -114,6 +114,13 @@ describe('core/local/analysis', function () {
 
     should(analysis(events, pendingChanges)).deepEqual([{
       sideName,
+      update: {
+        md5sum,
+        old,
+        path: 'FOO',
+        stats,
+        type: 'change'
+      },
       type: 'FileMove',
       path: 'FOO',
       ino: 1,
@@ -176,6 +183,28 @@ describe('core/local/analysis', function () {
     should(pendingChanges).deepEqual([])
   })
 
+  it('identifies add({path: FOO, stats: {ino}, old: {path: foo, ino}}) as offline FileMove(foo, FOO)', () => {
+    const ino = 123
+    const stats = {ino}
+    const md5sum = 'badbeef'
+    const old = {path: 'foo', ino}
+    const events /*: LocalEvent[] */ = [
+      {type: 'add', path: 'FOO', md5sum, stats, old}
+    ]
+    const pendingChanges /*: LocalChange[] */ = []
+
+    should(analysis(events, pendingChanges)).deepEqual([{
+      sideName,
+      type: 'FileMove',
+      path: 'FOO',
+      md5sum,
+      ino,
+      stats,
+      old
+    }])
+    should(pendingChanges).deepEqual([])
+  })
+
   it('handles addDir', () => {
     const stats = {ino: 1}
     const events /*: LocalEvent[] */ = [
@@ -230,6 +259,26 @@ describe('core/local/analysis', function () {
       stats,
       old
     }])
+  })
+
+  it('identifies addDir({path: FOO, stats: {ino}, old: {path: foo, ino}}) as offline DirMove(foo, FOO)', () => {
+    const ino = 456
+    const stats = {ino}
+    const old = {path: 'foo', ino}
+    const events /*: LocalEvent[] */ = [
+      {type: 'addDir', path: 'FOO', stats, old}
+    ]
+    const pendingChanges /*: LocalChange[] */ = []
+
+    should(analysis(events, pendingChanges)).deepEqual([{
+      sideName,
+      type: 'DirMove',
+      path: 'FOO',
+      ino,
+      stats,
+      old
+    }])
+    should(pendingChanges).deepEqual([])
   })
 
   it('handles chokidar mistakes', () => {
