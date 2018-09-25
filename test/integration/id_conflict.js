@@ -558,4 +558,39 @@ describe('Identity conflict', () => {
       })
     })
   })
+
+  onPlatform('darwin', () => {
+    describe('initial scan of local HFS+ NFD-normalized file/dir that was initially NFC-normalized in Pouch/Cozy', () => {
+      it('is not identified as a conflict', async () => {
+        const nfcDir = 'dir_\u00e9'
+        const nfdDir = 'dir_e\u0301'
+        const nfcFile = 'file_\u00e9'
+        const nfdFile = 'file_e\u0301'
+
+        // Remote NFC file/dir was synchronized...
+        await cozy.files.createDirectory({name: nfcDir})
+        await cozy.files.create('whatever', {name: nfcFile})
+        await helpers.pullAndSyncAll()
+        // ...and normalized to NFD by HFS+ (simulated here)
+        await helpers.local.syncDir.rename(nfcDir, nfdDir)
+        await helpers.local.syncDir.rename(nfcFile, nfdFile)
+
+        await helpers.local.scan()
+        should(await helpers.trees('local', 'metadata', 'remote')).deepEqual({
+          local: [`${nfdDir}/`, nfdFile],
+          metadata: [`${nfdDir}/`, nfdFile],
+          remote: [`${nfcDir}/`, nfcFile]
+        })
+        await helpers.syncAll()
+        const nfdEverywhere = {
+          local: [`${nfdDir}/`, nfdFile],
+          metadata: [`${nfdDir}/`, nfdFile],
+          remote: [`${nfdDir}/`, nfdFile]
+        }
+        should(await helpers.trees('local', 'metadata', 'remote')).deepEqual(nfdEverywhere)
+        await helpers.remote.pullChanges()
+        should(await helpers.trees('local', 'metadata', 'remote')).deepEqual(nfdEverywhere)
+      })
+    })
+  })
 })
