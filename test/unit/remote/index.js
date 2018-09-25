@@ -1,6 +1,7 @@
 /* @flow */
 /* eslint-env mocha */
 
+const Promise = require('bluebird')
 const crypto = require('crypto')
 const EventEmitter = require('events')
 const fs = require('fs-extra')
@@ -9,8 +10,11 @@ const { pick } = _
 const path = require('path')
 const sinon = require('sinon')
 const should = require('should')
+const stream = require('stream')
 
+const { withContentLength } = require('../../../core/file_stream_provider')
 const conversion = require('../../../core/conversion')
+const checksumer = require('../../../core/local/checksumer')
 const { ensureValidPath } = require('../../../core/metadata')
 const Prep = require('../../../core/prep')
 const Remote = require('../../../core/remote')
@@ -30,6 +34,7 @@ const metadataBuilders = new MetadataBuilders()
 import type { Metadata } from '../../../core/metadata'
 import type { RemoteDoc, JsonApiDoc } from '../../../core/remote/document'
 */
+const CHAT_MIGNON_MOD_PATH = 'test/fixtures/chat-mignon-mod.jpg'
 
 describe('Remote', function () {
   before('instanciate config', configHelpers.createConfig)
@@ -83,7 +88,7 @@ describe('Remote', function () {
         _id: 'cat2.jpg',
         path: 'cat2.jpg',
         docType: 'file',
-        md5sum: 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df',
+        md5sum: await checksumer.computeChecksumAsync(CHAT_MIGNON_MOD_PATH),
         class: 'image',
         executable: true,
         updated_at: timestamp.current(),
@@ -97,7 +102,7 @@ describe('Remote', function () {
 
       this.remote.other = {
         createReadStreamAsync (localDoc) {
-          const stream = fs.createReadStream('test/fixtures/chat-mignon-mod.jpg')
+          const stream = fs.createReadStream(CHAT_MIGNON_MOD_PATH)
           return Promise.resolve(stream)
         }
       }
@@ -121,7 +126,7 @@ describe('Remote', function () {
     it('does not reupload an existing file', async function () {
       const backupDir = await builders.remote.dir().name('backup').inRootDir().create()
       await builders.remote.dir().name('ORIGINAL').inRootDir().create()
-      let md5sum = 'fc7e0b72b8e64eb05e05aef652d6bbed950f85df'
+      let md5sum = await checksumer.computeChecksumAsync(CHAT_MIGNON_MOD_PATH)
       let doc /*: Object */ = {
         _id: path.normalize('backup/cat3.jpg'),
         path: path.normalize('backup/cat3.jpg'),
@@ -168,6 +173,14 @@ describe('Remote', function () {
 
     it('creates the parent folder when missing', async function () {
       const metadata /*: Metadata */ = metadataBuilders.file().path(path.join('foo', 'bar', 'qux')).build()
+      this.remote.other = {
+        createReadStreamAsync (localDoc) {
+          const empty = withContentLength(new stream.Readable({
+            read: function () { this.push(null) }
+          }), 0)
+          return empty
+        }
+      }
       await this.remote.addFileAsync(metadata)
       await should(cozy.files.statByPath('/foo/bar')).be.fulfilled()
     })
