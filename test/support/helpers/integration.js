@@ -92,11 +92,12 @@ class IntegrationTestHelpers {
     return results
   }
 
-  async trees (...treeNames /*: Array<'local' | 'remote'> */) /*: Promise<*> */ {
+  async trees (...treeNames /*: Array<'local' | 'metadata' | 'remote'> */) /*: Promise<*> */ {
     if (treeNames.length === 0) treeNames = ['local', 'remote']
 
     const result = {}
     if (treeNames.includes('local')) result.local = await this.local.tree()
+    if (treeNames.includes('metadata')) result.metadata = (await this.metadataTree())
     if (treeNames.includes('remote')) result.remote = await this.remote.treeWithoutTrash()
 
     return result
