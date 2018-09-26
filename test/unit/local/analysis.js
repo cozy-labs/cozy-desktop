@@ -102,7 +102,7 @@ describe('core/local/analysis', function () {
     should(pendingChanges).deepEqual([])
   })
 
-  it('identifies add({path: FOO, ino: 1}) + change({path: foo, ino: 1}) as DirMove(foo, FOO)', () => {
+  it('identifies add({path: FOO, ino: 1}) + change({path: foo, ino: 1}) as FileMove(foo, FOO)', () => {
     const old /*: Metadata */ = metadataBuilders.file().path('foo').ino(1).build()
     const stats = {ino: 1}
     const { md5sum } = old
