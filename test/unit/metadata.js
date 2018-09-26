@@ -300,7 +300,8 @@ describe('metadata', function () {
         }
       }
       const g = _.merge({}, a, {ino: a.ino + 2})
-      sameFolder(a, b).should.be.true()
+      sameFolder(a, a).should.be.true()
+      sameFolder(a, b).should.be.false()
       sameFolder(a, c).should.be.false()
       sameFolder(a, d).should.be.false()
       sameFolder(a, e).should.be.false()
@@ -311,6 +312,17 @@ describe('metadata', function () {
       sameFolder(c, d).should.be.false()
       sameFolder(c, e).should.be.false()
       sameFolder(d, e).should.be.false()
+      should(sameFolder(a, _.merge({_deleted: true, moveTo: b._id}, a))).be.true()
+      should(sameFolder(b, _.merge({}, b, {
+        _rev: 'whatever-other-rev',
+        errors: 3,
+        updated_at: '1900-01-01T11:22:56.517Z',
+        overwrite: b,
+        childMove: true,
+        sides: {local: 123, remote: 124},
+        incompatibilities: [{type: 'dirNameMaxBytes'}],
+        moveFrom: a
+      }))).be.true()
     })
   )
 
@@ -393,7 +405,8 @@ describe('metadata', function () {
       }
       const g = _.merge({}, a, {ino: a.ino + 1})
       const h = _.merge({}, a, {remote: _.merge({}, a.remote, {_id: '321'})})
-      sameFile(a, b).should.be.true()
+      sameFile(a, a).should.be.true()
+      sameFile(a, b).should.be.false()
       sameFile(a, c).should.be.false()
       sameFile(a, d).should.be.false()
       sameFile(a, e).should.be.false()
@@ -410,6 +423,19 @@ describe('metadata', function () {
       sameFile(d, e).should.be.false()
       sameFile(d, f).should.be.false()
       sameFile(e, f).should.be.false()
+      should(sameFile(a, _.merge({_deleted: true, moveTo: b._id}, a))).be.true()
+      should(sameFile(b, _.merge({}, b, {
+        _rev: 'whatever-other-rev',
+        class: 'other-class',
+        errors: 3,
+        updated_at: '1900-01-01T11:22:56.517Z',
+        mime: 'other-class/other-type',
+        overwrite: b,
+        childMove: true,
+        sides: {local: 123, remote: 124},
+        incompatibilities: [{type: 'nameMaxBytes'}],
+        moveFrom: a
+      }))).be.true()
     })
 
     it('does not fail when one file has executable: undefined', function () {
