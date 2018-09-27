@@ -171,6 +171,32 @@ describe('Remote', function () {
       })
     })
 
+    it('fails if the md5sum does not match the content', async function () {
+      const doc /*: Object */ = {
+        _id: 'cat2b.jpg',
+        path: 'cat2b.jpg',
+        docType: 'file',
+        md5sum: 'BADBEEF',
+        class: 'image',
+        executable: true,
+        updated_at: timestamp.current(),
+        mime: 'image/jpg',
+        size: 36901,
+        sides: {
+          local: 1
+        }
+      }
+      await this.pouch.db.put(doc)
+
+      this.remote.other = {
+        createReadStreamAsync (localDoc) {
+          const stream = fs.createReadStream(CHAT_MIGNON_MOD_PATH)
+          return Promise.resolve(stream)
+        }
+      }
+      await should(this.remote.addFileAsync(doc)).be.rejectedWith({status: 422})
+    })
+
     it('creates the parent folder when missing', async function () {
       const metadata /*: Metadata */ = metadataBuilders.file().path(path.join('foo', 'bar', 'qux')).build()
       this.remote.other = {
