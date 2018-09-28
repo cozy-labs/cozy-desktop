@@ -103,12 +103,15 @@ class IntegrationTestHelpers {
     return result
   }
 
-  metadataTree () {
-    return this._pouch.byRecursivePathAsync('')
+  async metadataTree () {
+    return _.chain(await this._pouch.byRecursivePathAsync(''))
+      .map(({docType, path}) => posixifyPath(path) + (docType === 'folder' ? '/' : ''))
+      .sort()
+      .value()
   }
 
   async incompatibleTree () {
-    return _.chain(await this.metadataTree())
+    return _.chain(await this._pouch.byRecursivePathAsync(''))
       .filter(doc => doc.incompatibilities)
       .map(({docType, path}) => posixifyPath(path) + (docType === 'folder' ? '/' : ''))
       .uniq()
