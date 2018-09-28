@@ -422,7 +422,7 @@ module.exports = class LocalWatcher {
     return this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
   }
 
-  onMoveFolder (folderPath /*: string */, stats /*: fs.Stats */, old /*: Metadata */, overwrite /*: boolean */) {
+  onMoveFolder (folderPath /*: string */, stats /*: fs.Stats */, old /*: Metadata */, overwrite /*: ?boolean */) {
     const logError = (err) => log.error({err, path: folderPath})
     const doc = metadata.buildDir(folderPath, stats, old.remote)
     // $FlowFixMe we set doc.overwrite to true, it will be replaced by metadata in merge
