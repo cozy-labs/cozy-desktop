@@ -1,3 +1,13 @@
+## 3.9.1-beta.3 - 2018-09-28
+
+Improvements for macOS users:
+
+- A regression on folder moves overwriting their destination was fixed (#1181)
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.9.1-beta.2 - 2018-09-21
 
 Improvements for all users:
