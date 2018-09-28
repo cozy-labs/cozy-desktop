@@ -18,7 +18,8 @@ module.exports = ({
     { ino: 11, path: 'src/dir/file', content: 'overwriter' },
     { ino: 12, path: 'src/dir/subdir/file', content: 'sub-overwriter' },
     { ino: 13, path: 'src/dir/subdir/file6', content: 'sub-other' },
-    { ino: 14, path: 'src/dir/file2', content: 'other' }
+    { ino: 14, path: 'src/dir/file2', content: 'other' },
+    { ino: 15, path: 'src/dir/subdir/subsub/' }
   ],
   actions: [
     {type: 'mv', force: true, src: 'src/dir', dst: 'dst/dir'}
@@ -39,6 +40,7 @@ module.exports = ({
       'dst/dir/subdir/',
       'dst/dir/subdir/file',
       'dst/dir/subdir/file6',
+      'dst/dir/subdir/subsub/',
       'src/'
     ],
     // remoteTrash: [
