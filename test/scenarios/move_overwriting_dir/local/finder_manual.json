@@ -21,6 +21,15 @@
   },
   {
     "type": "addDir",
+    "path": "dst/dir/subdir/subsub",
+    "stats": {
+      "ino": 15,
+      "mtime": "2017-10-09T13:21:59.535Z",
+      "ctime": "2017-10-09T13:22:01.546Z"
+    }
+  },
+  {
+    "type": "addDir",
     "path": "dst/dir",
     "stats": {
       "ino": 9,
@@ -44,6 +53,10 @@
   {
     "type": "unlink",
     "path": "dst/dir/subdir/file5"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "dst/dir/subdir/subsub"
   },
   {
     "type": "unlink",

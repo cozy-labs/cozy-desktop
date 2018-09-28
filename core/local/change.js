@@ -81,6 +81,7 @@ const sideName = 'local'
 function build (type /*: string */, path /*: string */, opts /*: ?{stats?: fs.Stats, md5sum?: string, old?: ?Metadata} */) /*: LocalChange */ {
   const change /*: Object */ = _.assign({sideName, type, path}, opts)
   if (change.wip == null) delete change.wip
+  if (change.overwrite == null) delete change.overwrite
   if (change.md5sum == null) delete change.md5sum
   return change
 }
@@ -169,6 +170,7 @@ function dirMoveFromUnlinkAdd (unlinkChange /*: LocalDirDeletion */, e /*: Local
     stats: e.stats,
     old: unlinkChange.old,
     ino: unlinkChange.ino,
+    overwrite: e.old,
     wip: e.wip
   })
 }
