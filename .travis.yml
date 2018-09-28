@@ -71,6 +71,7 @@ before_install:
 
     # Cozy stack v3
     - travis_retry go get -u github.com/cozy/cozy-stack
+    - cp ./dev/cozy-stack/cozy.yaml $HOME/cozy.yaml
     - $GOPATH/bin/cozy-stack serve --log-level warning >/dev/null &
     - sleep 1
     - $GOPATH/bin/cozy-stack instances add --dev --passphrase "$COZY_PASSPHRASE" localhost:8080
