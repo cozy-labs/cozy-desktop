@@ -53,9 +53,10 @@ async function rootDirContents () {
 async function deleteAll () {
   const docs = await rootDirContents()
 
-  await Promise.all(docs.map(doc => cozy.files.trashById(doc._id)))
+  await Promise.all(docs.map(doc => cozy.files.trashById(doc._id)
+      .catch(_ => {}))) // ignore all errors
 
-  return cozy.files.clearTrash()
+  return cozy.files.clearTrash().catch(_ => {})
 }
 
 // Creates a root directory named 'couchdb-folder', used in a lot of v2 tests.
