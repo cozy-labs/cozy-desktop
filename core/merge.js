@@ -345,6 +345,12 @@ class Merge {
       dst._id = doc._id.replace(was._id, folder._id)
       dst.path = doc.path.replace(was.path, folder.path)
       move.child(src, dst)
+
+      // OPTIMIZE: extract pouch queries
+      let existingDst = await this.pouch.byIdMaybeAsync(dst._id)
+      if (existingDst && folder.overwrite) {
+        dst._rev = existingDst._rev
+      }
       markSide(side, dst, src)
       bulk.push(src)
       // FIXME: Find a cleaner way to pass the syncPath to the Merge
