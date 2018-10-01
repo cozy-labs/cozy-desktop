@@ -72,13 +72,13 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
     try {
       // chokidar make mistakes
       if (e.type === 'unlinkDir' && e.old && e.old.docType === 'file') {
-        log.warn({event: e, old: e.old}, 'chokidar miscategorized event (was file, event unlinkDir)')
+        log.warn({event: e, old: e.old, path: e.path}, 'chokidar miscategorized event (was file, event unlinkDir)')
         // $FlowFixMe
         e.type = 'unlink'
       }
 
       if (e.type === 'unlink' && e.old && e.old.docType === 'folder') {
-        log.warn({event: e, old: e.old}, 'chokidar miscategorized event (was folder, event unlink)')
+        log.warn({event: e, old: e.old, path: e.path}, 'chokidar miscategorized event (was folder, event unlink)')
         // $FlowFixMe
         e.type = 'unlinkDir'
       }
