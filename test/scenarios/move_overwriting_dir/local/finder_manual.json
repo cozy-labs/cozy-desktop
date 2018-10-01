@@ -56,15 +56,15 @@
   },
   {
     "type": "unlinkDir",
-    "path": "dst/dir/subdir/subsub"
+    "path": "src/dir/subdir/subsub"
   },
   {
     "type": "unlink",
-    "path": "dst/dir/subdir/file"
+    "path": "src/dir/subdir/file"
   },
   {
     "type": "unlink",
-    "path": "dst/dir/subdir/file6"
+    "path": "src/dir/subdir/file6"
   },
   {
     "type": "unlink",
