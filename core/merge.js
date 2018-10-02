@@ -331,26 +331,25 @@ class Merge {
 
   // Move a folder and all the things inside it
   async moveFolderRecursivelyAsync (side /*: SideName */, folder /*: Metadata */, was /*: Metadata */) {
-    let docs
-    try {
-      docs = await this.pouch.byRecursivePathAsync(was._id)
-    } catch (err) {
-      throw err
-    }
+    const docs = await this.pouch.byRecursivePathAsync(was._id)
     move(was, folder)
     let bulk = [was, folder]
-    for (let doc of Array.from(docs)) {
+
+    const modifiedIDs = docs.map((doc) => doc._id.replace(was._id, folder._id))
+    const result = await this.pouch.db.allDocs({keys: modifiedIDs})
+    const existingsDestinations = {}
+    for (let r of result.rows) if (r.value) existingsDestinations[r.key] = r.value.rev
+
+    for (let doc of docs) {
       let src = clone(doc)
       let dst = clone(doc)
       dst._id = doc._id.replace(was._id, folder._id)
       dst.path = doc.path.replace(was.path, folder.path)
       move.child(src, dst)
 
-      // OPTIMIZE: extract pouch queries
-      let existingDst = await this.pouch.byIdMaybeAsync(dst._id)
-      if (existingDst && folder.overwrite) {
-        dst._rev = existingDst._rev
-      }
+      let existingDstRev = existingsDestinations[dst._id]
+      if (existingDstRev && folder.overwrite) dst._rev = existingDstRev
+
       markSide(side, dst, src)
       bulk.push(src)
       // FIXME: Find a cleaner way to pass the syncPath to the Merge

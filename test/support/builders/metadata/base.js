@@ -76,6 +76,11 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
+  overwrite (existingDoc /*: Metadata */) /*: this */ {
+    this.doc.overwrite = existingDoc
+    return this
+  }
+
   trashed () /*: this */ {
     this.doc.trashed = true
     return this
