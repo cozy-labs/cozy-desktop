@@ -109,6 +109,7 @@ class RemoteWatcher {
         throw userActionRequired.includeJSONintoError(err)
       } else {
         log.error({err})
+        throw err
       }
     }
   }
