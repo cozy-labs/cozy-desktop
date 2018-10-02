@@ -38,8 +38,8 @@ function move (src /*: Metadata */, dst /*: Metadata */) {
 // Same as move() but mark the source as a child move so it will be moved with
 // its ancestor, not by itself, during sync.
 function child (src /*: Metadata */, dst /*: Metadata */) {
-  move(src, dst)
   src.childMove = true
+  move(src, dst)
 
   // TODO: Find out why _rev is removed only from child move destinations and
   // explain it here. Or in case it would make sense, move it to the move()
