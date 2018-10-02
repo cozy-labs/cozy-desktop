@@ -105,6 +105,18 @@ describe('RemoteWatcher', function () {
   })
 
   describe('watch', function () {
+    afterEach(function () {
+      const stubs = [
+        this.remoteCozy.changes,
+        this.watcher.pullMany,
+        this.pouch.setRemoteSeqAsync,
+        this.pouch.getRemoteSeqAsync
+      ]
+      for (let stub of stubs) {
+        if (stub.restore) stub.restore()
+      }
+    })
+
     describe('normal behavior', () => {
       const lastLocalSeq = '123'
       const lastRemoteSeq = lastLocalSeq + '456'
@@ -127,13 +139,6 @@ describe('RemoteWatcher', function () {
         this.remoteCozy.changes.resolves(changes)
 
         return this.watcher.watch()
-      })
-
-      afterEach(function () {
-        this.remoteCozy.changes.restore()
-        this.watcher.pullMany.restore()
-        this.pouch.setRemoteSeqAsync.restore()
-        this.pouch.getRemoteSeqAsync.restore()
       })
 
       it('pulls the changed files/dirs', function () {
