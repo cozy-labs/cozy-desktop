@@ -335,19 +335,17 @@ class Merge {
     move(was, folder)
     let bulk = [was, folder]
 
-    const modifiedIDs = docs.map((doc) => doc._id.replace(was._id, folder._id))
-    const result = await this.pouch.db.allDocs({keys: modifiedIDs})
-    const existingsDestinations = {}
-    for (let r of result.rows) if (r.value) existingsDestinations[r.key] = r.value.rev
+    const makeDestinationID = (doc) => doc._id.replace(was._id, folder._id)
+    const existingDstRevs = await this.pouch.getAllRevsAsync(docs.map(makeDestinationID))
 
     for (let doc of docs) {
       let src = clone(doc)
       let dst = clone(doc)
-      dst._id = doc._id.replace(was._id, folder._id)
+      dst._id = makeDestinationID(doc)
       dst.path = doc.path.replace(was.path, folder.path)
       move.child(src, dst)
 
-      let existingDstRev = existingsDestinations[dst._id]
+      let existingDstRev = existingDstRevs[dst._id]
       if (existingDstRev && folder.overwrite) dst._rev = existingDstRev
 
       markSide(side, dst, src)
