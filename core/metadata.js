@@ -293,22 +293,20 @@ const makeComparator = (name, interestingFields) => {
   }
 }
 
-// Return true if the metadata of the two folders are the same
-// For updated_at, we accept up to 3s of differences because we can't
-// rely on file systems to be precise to the millisecond.
 const sameFolderComparator = makeComparator('sameFolder',
-  ['_id', 'docType', 'remote', 'tags', 'trashed', 'ino'])
+  ['path', 'docType', 'remote', 'tags', 'trashed', 'ino'])
 
+// Return true if the metadata of the two folders are the same
 function sameFolder (one /*: Metadata */, two /*: Metadata */) {
   return sameFolderComparator(one, two)
 }
 
 const sameFileComparator = makeComparator('sameFile',
-  ['_id', 'docType', 'md5sum', 'remote._id', 'remote._rev',
+  ['path', 'docType', 'md5sum', 'remote._id', 'remote._rev',
     'tags', 'size', 'trashed', 'ino', 'executable'])
 
 const sameFileIgnoreRevComparator = makeComparator('sameFileIgnoreRev',
-  ['_id', 'docType', 'md5sum', 'remote._id',
+  ['path', 'docType', 'md5sum', 'remote._id',
     'tags', 'size', 'trashed', 'ino', 'executable'])
 
 // Return true if the metadata of the two files are the same

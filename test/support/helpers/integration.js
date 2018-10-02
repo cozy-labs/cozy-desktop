@@ -92,22 +92,26 @@ class IntegrationTestHelpers {
     return results
   }
 
-  async trees (...treeNames /*: Array<'local' | 'remote'> */) /*: Promise<*> */ {
+  async trees (...treeNames /*: Array<'local' | 'metadata' | 'remote'> */) /*: Promise<*> */ {
     if (treeNames.length === 0) treeNames = ['local', 'remote']
 
     const result = {}
     if (treeNames.includes('local')) result.local = await this.local.tree()
+    if (treeNames.includes('metadata')) result.metadata = (await this.metadataTree())
     if (treeNames.includes('remote')) result.remote = await this.remote.treeWithoutTrash()
 
     return result
   }
 
-  metadataTree () {
-    return this._pouch.byRecursivePathAsync('')
+  async metadataTree () {
+    return _.chain(await this._pouch.byRecursivePathAsync(''))
+      .map(({docType, path}) => posixifyPath(path) + (docType === 'folder' ? '/' : ''))
+      .sort()
+      .value()
   }
 
   async incompatibleTree () {
-    return _.chain(await this.metadataTree())
+    return _.chain(await this._pouch.byRecursivePathAsync(''))
       .filter(doc => doc.incompatibilities)
       .map(({docType, path}) => posixifyPath(path) + (docType === 'folder' ? '/' : ''))
       .uniq()
