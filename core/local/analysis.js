@@ -5,6 +5,7 @@ const _ = require('lodash')
 
 const { getInode } = require('./event')
 const localChange = require('./change')
+const ChangeMap = require('./ChangeMap')
 const logger = require('../logger')
 const measureTime = require('../perftools')
 
@@ -43,27 +44,11 @@ const panic = (context, description) => {
 
 function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChange[] */) /*: LocalChange[] */ {
   const stopMeasure = measureTime('LocalWatcher#analyseEvents')
-  // OPTIMIZE: new Array(events.length)
-  const changes /*: LocalChange[] */ = []
-  const changesByInode /*: Map<number, LocalChange> */ = new Map()
-  const changesByPath /*: Map<string, LocalChange> */ = new Map()
-  const getChangeByInode = (e) => {
-    const ino = getInode(e)
-    if (ino) return changesByInode.get(ino)
-    else return null
-  }
-  const getChangeByPath = (e) => {
-    return changesByPath.get(e.path)
-  }
-  const changeFound = (c /*: LocalChange */) => {
-    changesByPath.set(c.path, c)
-    if (typeof c.ino === 'number') changesByInode.set(c.ino, c)
-    else changes.push(c)
-  }
+  const changes = ChangeMap.init(pendingChanges)
+  const changeFound = (c /*: LocalChange */) => ChangeMap.put(changes, c)
 
   if (pendingChanges.length > 0) {
-    log.warn({changes: pendingChanges}, `Prepend ${pendingChanges.length} pending change(s)`)
-    for (const a of pendingChanges) { changeFound(a) }
+    log.warn({pendingChanges}, `Prepended ${pendingChanges.length} pending change(s)`)
     pendingChanges.length = 0
   }
 
@@ -84,16 +69,19 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
         e.type = 'unlinkDir'
       }
 
+      const sameInodeChange = ChangeMap.byInode(changes, getInode(e))
+      const samePathChange = ChangeMap.byPath(changes, e.path)
+
       switch (e.type) {
         case 'add':
           {
-            const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(getChangeByInode(e))
+            const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(sameInodeChange)
             if (moveChange) {
               localChange.includeAddEventInFileMove(moveChange, e)
               break
             }
 
-            const unlinkChange /*: ?LocalFileDeletion */ = localChange.maybeDeleteFile(getChangeByInode(e))
+            const unlinkChange /*: ?LocalFileDeletion */ = localChange.maybeDeleteFile(sameInodeChange)
             if (unlinkChange) {
               changeFound(localChange.fileMoveFromUnlinkAdd(unlinkChange, e))
               break
@@ -107,17 +95,17 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
           break
         case 'addDir':
           {
-            const moveChange /*: ?LocalDirMove */ = localChange.maybeMoveFolder(getChangeByInode(e))
+            const moveChange /*: ?LocalDirMove */ = localChange.maybeMoveFolder(sameInodeChange)
             if (moveChange) {
               localChange.includeAddDirEventInDirMove(moveChange, e)
               break
             }
-            const unlinkChange /*: ?LocalDirDeletion */ = localChange.maybeDeleteFolder(getChangeByInode(e))
+            const unlinkChange /*: ?LocalDirDeletion */ = localChange.maybeDeleteFolder(sameInodeChange)
             if (unlinkChange) {
               changeFound(localChange.dirMoveFromUnlinkAdd(unlinkChange, e))
               break
             }
-            const addChange /*: ?LocalDirAddition */ = localChange.maybePutFolder(getChangeByInode(e))
+            const addChange /*: ?LocalDirAddition */ = localChange.maybePutFolder(sameInodeChange)
             if (addChange) {
               changeFound(localChange.dirRenamingCaseOnlyFromAddAdd(addChange, e))
               break
@@ -129,21 +117,21 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
           }
           break
         case 'change':
-          const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(getChangeByInode(e))
+          const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(sameInodeChange)
           if (moveChange) {
             localChange.includeChangeEventIntoFileMove(moveChange, e)
             break
           }
 
           // There was an unlink on the same file, this is most probably a move and replace
-          const unlinkChange /*: ?LocalFileDeletion */ = localChange.maybeDeleteFile(getChangeByInode(e))
+          const unlinkChange /*: ?LocalFileDeletion */ = localChange.maybeDeleteFile(sameInodeChange)
           if (unlinkChange) {
             const moveChange = localChange.fileMoveFromFileDeletionChange(unlinkChange, e)
             changeFound(moveChange)
             break
           }
 
-          const addChange /*: ?LocalFileAddition */ = localChange.maybeAddFile(getChangeByInode(e))
+          const addChange /*: ?LocalFileAddition */ = localChange.maybeAddFile(sameInodeChange)
           if (addChange && addChange.path !== e.path) {
             changeFound(localChange.fileMoveIdentical(addChange, e))
             break
@@ -153,7 +141,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
           break
         case 'unlink':
           {
-            const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(getChangeByInode(e))
+            const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(sameInodeChange)
             /* istanbul ignore next */
             if (moveChange) {
               // TODO: Pending move
@@ -162,7 +150,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
                 'checksumless adds and inode-less unlink events are dropped')
             }
 
-            const addChange /*: ?LocalFileAddition */ = localChange.maybeAddFile(getChangeByInode(e))
+            const addChange /*: ?LocalFileAddition */ = localChange.maybeAddFile(sameInodeChange)
             if (addChange) {
               // TODO: pending move
               changeFound(localChange.fileMoveFromAddUnlink(addChange, e))
@@ -171,7 +159,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
               changeFound(localChange.fromEvent(e))
               break
             }
-            const change /*: ?LocalFileMove */ = localChange.maybeMoveFile(getChangeByPath(e))
+            const change /*: ?LocalFileMove */ = localChange.maybeMoveFile(samePathChange)
             if (change && change.md5sum == null) { // FIXME: if change && change.wip?
               localChange.convertFileMoveToDeletion(change)
             }
@@ -180,7 +168,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
           break
         case 'unlinkDir':
           {
-            const moveChange /*: ?LocalDirMove */ = localChange.maybeMoveFolder(getChangeByInode(e))
+            const moveChange /*: ?LocalDirMove */ = localChange.maybeMoveFolder(sameInodeChange)
             /* istanbul ignore next */
             if (moveChange) {
               // TODO: pending move
@@ -189,13 +177,13 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
                 'non-existing addDir and inode-less unlinkDir events are dropped')
             }
 
-            const addChange /*: ?LocalDirAddition */ = localChange.maybePutFolder(getChangeByInode(e))
+            const addChange /*: ?LocalDirAddition */ = localChange.maybePutFolder(sameInodeChange)
             if (addChange) {
               changeFound(localChange.dirMoveFromAddUnlink(addChange, e))
             } else if (getInode(e)) {
               changeFound(localChange.fromEvent(e))
             } else {
-              const addChangeSamePath /*: ?LocalDirAddition */ = localChange.maybePutFolder(getChangeByPath(e))
+              const addChangeSamePath /*: ?LocalDirAddition */ = localChange.maybePutFolder(samePathChange)
               if (addChangeSamePath && addChangeSamePath.wip) {
                 log.debug({path: addChangeSamePath.path, ino: addChangeSamePath.ino},
                   'Folder was added then deleted. Ignoring add.')
@@ -203,7 +191,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
                 addChangeSamePath.type = 'Ignored'
               }
 
-              const moveChangeSamePath /*: ?LocalDirMove */ = localChange.maybeMoveFolder(getChangeByPath(e))
+              const moveChangeSamePath /*: ?LocalDirMove */ = localChange.maybeMoveFolder(samePathChange)
               if (moveChangeSamePath && moveChangeSamePath.wip) {
                 localChange.convertDirMoveToDeletion(moveChangeSamePath)
               }
@@ -221,10 +209,10 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
   }
 
   log.trace('Flatten changes map...')
-  for (let a of changesByInode.values()) changes.push(a)
+  const result = ChangeMap.toArray(changes)
 
   stopMeasure()
-  return changes
+  return result
 }
 
 // TODO: Rename according to the sort logic
