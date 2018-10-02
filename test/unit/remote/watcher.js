@@ -151,6 +151,12 @@ describe('RemoteWatcher', function () {
           .and.be.calledWithExactly(lastRemoteSeq)
       })
     })
+
+    it('does not swallow errors', async function () {
+      const err = new Error('non swallowed error')
+      sinon.stub(this.pouch, 'getRemoteSeqAsync').rejects(err)
+      await should(this.watcher.watch()).be.rejectedWith(err.message)
+    })
   })
 
   const validMetadata = (doc /*: RemoteDoc */) /*: Metadata */ => {
