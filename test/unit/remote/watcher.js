@@ -105,44 +105,46 @@ describe('RemoteWatcher', function () {
   })
 
   describe('watch', function () {
-    const lastLocalSeq = '123'
-    const lastRemoteSeq = lastLocalSeq + '456'
-    const changes = {
-      last_seq: lastRemoteSeq,
-      docs: [
-        builders.remote.file().build(),
-        builders.remote.dir().build()
-      ]
-    }
+    describe('normal behavior', () => {
+      const lastLocalSeq = '123'
+      const lastRemoteSeq = lastLocalSeq + '456'
+      const changes = {
+        last_seq: lastRemoteSeq,
+        docs: [
+          builders.remote.file().build(),
+          builders.remote.dir().build()
+        ]
+      }
 
-    beforeEach(function () {
-      sinon.stub(this.pouch, 'getRemoteSeqAsync')
-      sinon.stub(this.pouch, 'setRemoteSeqAsync')
-      sinon.stub(this.watcher, 'pullMany')
-      sinon.stub(this.remoteCozy, 'changes')
+      beforeEach(function () {
+        sinon.stub(this.pouch, 'getRemoteSeqAsync')
+        sinon.stub(this.pouch, 'setRemoteSeqAsync')
+        sinon.stub(this.watcher, 'pullMany')
+        sinon.stub(this.remoteCozy, 'changes')
 
-      this.pouch.getRemoteSeqAsync.resolves(lastLocalSeq)
-      this.watcher.pullMany.resolves()
-      this.remoteCozy.changes.resolves(changes)
+        this.pouch.getRemoteSeqAsync.resolves(lastLocalSeq)
+        this.watcher.pullMany.resolves()
+        this.remoteCozy.changes.resolves(changes)
 
-      return this.watcher.watch()
-    })
+        return this.watcher.watch()
+      })
 
-    afterEach(function () {
-      this.remoteCozy.changes.restore()
-      this.watcher.pullMany.restore()
-      this.pouch.setRemoteSeqAsync.restore()
-      this.pouch.getRemoteSeqAsync.restore()
-    })
+      afterEach(function () {
+        this.remoteCozy.changes.restore()
+        this.watcher.pullMany.restore()
+        this.pouch.setRemoteSeqAsync.restore()
+        this.pouch.getRemoteSeqAsync.restore()
+      })
 
-    it('pulls the changed files/dirs', function () {
-      this.watcher.pullMany.should.be.calledOnce()
-        .and.be.calledWithExactly(changes.docs)
-    })
+      it('pulls the changed files/dirs', function () {
+        this.watcher.pullMany.should.be.calledOnce()
+          .and.be.calledWithExactly(changes.docs)
+      })
 
-    it('updates the last update sequence in local db', function () {
-      this.pouch.setRemoteSeqAsync.should.be.calledOnce()
-        .and.be.calledWithExactly(lastRemoteSeq)
+      it('updates the last update sequence in local db', function () {
+        this.pouch.setRemoteSeqAsync.should.be.calledOnce()
+          .and.be.calledWithExactly(lastRemoteSeq)
+      })
     })
   })
 
