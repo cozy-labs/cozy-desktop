@@ -311,6 +311,9 @@ const finalSorter = (a /*: LocalChange */, b /*: LocalChange */) => {
   if (a.wip && !b.wip) return -1
   if (b.wip && !a.wip) return 1
 
+  if (!localChange.addPath(b) && localChange.childOf(localChange.addPath(a), localChange.delPath(b))) return 1
+  if (!localChange.addPath(a) && localChange.childOf(localChange.addPath(b), localChange.delPath(a))) return -1
+
   if (localChange.childOf(localChange.addPath(a), localChange.delPath(b))) return -1
   if (localChange.childOf(localChange.addPath(b), localChange.delPath(a))) return 1
 
