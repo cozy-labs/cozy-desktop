@@ -71,7 +71,7 @@ before_install:
 
     # Cozy stack v3
     - travis_retry go get -u github.com/cozy/cozy-stack
-    - $GOPATH/bin/cozy-stack serve --log-level warning >/dev/null &
+    - $GOPATH/bin/cozy-stack serve --fs-url "mem://" --log-level warning >/dev/null &
     - sleep 1
     - $GOPATH/bin/cozy-stack instances add --dev --passphrase "$COZY_PASSPHRASE" localhost:8080
     - export COZY_CLIENT_ID=$($GOPATH/bin/cozy-stack instances client-oauth localhost:8080 http://localhost/ test github.com/cozy-labs/cozy-desktop)

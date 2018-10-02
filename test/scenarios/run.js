@@ -119,6 +119,8 @@ describe('Test scenarios', function () {
             await helpers.syncAll()
             await helpers.local.simulateEvents(eventsAfter)
             await helpers.syncAll()
+            await helpers.remote.pullChanges()
+            await helpers.syncAll()
 
             // TODO: Bring back Prep expectations for local tests?
             // TODO: Wrap in custom expectation
