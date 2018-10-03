@@ -1,3 +1,31 @@
+## 3.9.1-beta.4 - 2018-10-03
+
+Improvements for all users:
+
+- Starting from now, we will be able to automatically receive notifications of
+  errors encountered by our users. Error reports won't include user logs in
+  order to respect your privacy. We'll still have to ask you individually to
+  send us our logs in order to investigate complex issues. But this should help
+  us figuring out which errors occur the most, since not so many people can
+  find the time to report them. For now, the notifications are only sent for a
+  few hard-to-investigate issues, but we'll progressively send more of them.
+- Checksums for new local files were computed but not sent during the initial
+  upload, possibly delaying detection of content issues. Still the checksum was
+  computed by the Cozy and any issue would've be detected during next polling.
+  They will now be effectively detected as soon as they should be.
+
+Improvements for macOS users:
+
+- On devices automatically migrated from HFS+ to APFS while upgrading to macOS
+  High Sierra, the initial scan was mistakenly detecting some files as conflict
+  due to the new way we're detecting case/encoding conflicting files. This
+  should now work as expected. This issue could theoretically have happened on
+  both macOS & Windows in rare cases of weird local filename changes.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.9.1-beta.3 - 2018-09-28
 
 Improvements for macOS users:
