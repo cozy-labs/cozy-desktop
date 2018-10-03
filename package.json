@@ -103,6 +103,7 @@
     "opn": "5.0.0",
     "pouchdb": "^6.2.0",
     "pouchdb-find": "^6.2.0",
+    "raven": "^2.6.4",
     "read": "1.0.7",
     "readdirp": "2.1.0",
     "trash": "^4.0.1",
