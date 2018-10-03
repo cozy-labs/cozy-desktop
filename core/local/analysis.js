@@ -72,13 +72,13 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
     try {
       // chokidar make mistakes
       if (e.type === 'unlinkDir' && e.old && e.old.docType === 'file') {
-        log.warn({event: e, old: e.old}, 'chokidar miscategorized event (was file, event unlinkDir)')
+        log.warn({event: e, old: e.old, path: e.path}, 'chokidar miscategorized event (was file, event unlinkDir)')
         // $FlowFixMe
         e.type = 'unlink'
       }
 
       if (e.type === 'unlink' && e.old && e.old.docType === 'folder') {
-        log.warn({event: e, old: e.old}, 'chokidar miscategorized event (was folder, event unlink)')
+        log.warn({event: e, old: e.old, path: e.path}, 'chokidar miscategorized event (was folder, event unlink)')
         // $FlowFixMe
         e.type = 'unlinkDir'
       }
@@ -310,6 +310,9 @@ function separatePendingChanges (changes /*: LocalChange[] */, pendingChanges /*
 const finalSorter = (a /*: LocalChange */, b /*: LocalChange */) => {
   if (a.wip && !b.wip) return -1
   if (b.wip && !a.wip) return 1
+
+  if (!localChange.addPath(b) && localChange.childOf(localChange.addPath(a), localChange.delPath(b))) return 1
+  if (!localChange.addPath(a) && localChange.childOf(localChange.addPath(b), localChange.delPath(a))) return -1
 
   if (localChange.childOf(localChange.addPath(a), localChange.delPath(b))) return -1
   if (localChange.childOf(localChange.addPath(b), localChange.delPath(a))) return 1

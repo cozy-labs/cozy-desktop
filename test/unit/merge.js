@@ -579,6 +579,16 @@ describe('Merge', function () {
         should(await this.pouch.db.get(NUKEM._id)).deepEqual(NUKEM)
       })
     })
+
+    it('handles overwritten descendants', async function () {
+      await builders.file().path('src/file').upToDate().create()
+      await builders.file().path('dst/file').upToDate().create()
+      const oldDst = builders.dir().path('dst').build()
+      const src = await builders.dir().path('src').upToDate().create()
+      const dst = builders.dir().path('dst').overwrite(oldDst).build()
+
+      await this.merge.moveFolderAsync(this.side, dst, src)
+    })
   })
 
   describe('moveFolderRecursively', function () {

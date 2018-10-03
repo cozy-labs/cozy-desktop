@@ -157,6 +157,15 @@ class Pouch {
     })
   }
 
+  // Get current revision for multiple docs by ids as an index id => rev
+  // non-existing documents will not be added to the index
+  async getAllRevsAsync (ids) {
+    const result = await this.db.allDocs({keys: ids})
+    const index = {}
+    for (let row of result.rows) if (row.value) index[row.key] = row.value.rev
+    return index
+  }
+
   async byIdMaybeAsync (id /*: string */) /*: Promise<?Metadata> */ {
     let doc
     try {
