@@ -654,6 +654,7 @@ describe('Merge', function () {
         _id: path.normalize('TO-DELETE/FILE'),
         path: path.normalize('TO-DELETE/FILE'),
         docType: 'file',
+        md5sum: 'BADBEEF',
         sides: {
           local: 1
         }
@@ -693,7 +694,8 @@ describe('Merge', function () {
         let file = {
           _id: path.normalize(`FOO/TO-REMOVE/${name}`),
           path: path.normalize(`FOO/TO-REMOVE/${name}`),
-          docType: 'file'
+          docType: 'file',
+          md5sum: 'BADBEEF'
         }
         await this.pouch.db.put(file)
       }

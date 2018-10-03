@@ -123,7 +123,6 @@ class ContextDir {
   }
 
   async checksum (target /*: string | {path: string} */) /*: Promise<string> */ {
-    // $FlowFixMe
     return checksumer.computeChecksumAsync(this.abspath(target))
   }
 

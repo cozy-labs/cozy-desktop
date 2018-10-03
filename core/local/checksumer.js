@@ -12,6 +12,7 @@ import type { Callback } from '../utils/func'
 
 module.exports = {
   computeChecksum,
+  computeChecksumAsync: Promise.promisify(computeChecksum),
   init
 }
 

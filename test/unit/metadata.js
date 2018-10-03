@@ -588,5 +588,11 @@ describe('metadata', function () {
       should(() => invariants(Object.assign(file, {remote: null}))
         ).throw(/sides\.remote/)
     })
+
+    it('pouch.put throws when trying to put bad doc (no md5sum)', async () => {
+      file = await builders.file().upToDate().remoteId('badbeef').build()
+      should(() => invariants(Object.assign(file, {md5sum: null}))
+        ).throw(/checksum/)
+    })
   })
 })

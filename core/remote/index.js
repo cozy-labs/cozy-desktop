@@ -128,6 +128,7 @@ module.exports = class Remote /*:: implements Side */ {
     const created = await this.remoteCozy.createFile(stream, {
       name,
       dirID: dir._id,
+      checksum: doc.md5sum,
       executable: doc.executable,
       contentLength: stream.contentLength,
       contentType: doc.mime,
