@@ -26,28 +26,10 @@ module.exports = {
   delPath,
   childOf,
   lower,
+  identify,
   isChildDelete,
   isChildAdd,
-  toString,
-  dirAddedThenDeleted,
-  ensureNotDirMove,
-  ensureNotFileMove,
-  fromEvent,
-  fromEventWithInode,
-  fileMoveFromUnlinkAdd,
-  fileMoveFromFileDeletionChange,
-  fileMoveIdentical,
-  fileMoveIdenticalOffline,
-  dirMoveFromUnlinkAdd,
-  fileMoveFromAddUnlink,
-  dirMoveFromAddUnlink,
-  dirRenamingCaseOnlyFromAddAdd,
-  dirMoveIdenticalOffline,
-  includeAddEventInFileMove,
-  includeAddDirEventInDirMove,
-  includeChangeEventIntoFileMove,
-  convertFileMoveToDeletion,
-  convertDirMoveToDeletion
+  toString
 }
 
 const log = logger({
@@ -119,6 +101,55 @@ function isChildAdd (a /*: LocalChange */, b /*: LocalChange */) { return childO
 
 // $FlowFixMe
 function toString (a /*: LocalChange */) /*: string */ { return '(' + a.type + ': ' + (a.old && a.old.path) + '-->' + a.path + ')' }
+
+function identify (e /*: LocalEvent */, sameInodeChange /*: ?LocalChange */, samePathChange /*: ?LocalChange */) {
+  switch (e.type) {
+    case 'add':
+      return (
+        includeAddEventInFileMove(sameInodeChange, e) ||
+        fileMoveFromUnlinkAdd(sameInodeChange, e) ||
+        fileMoveIdenticalOffline(e) ||
+        fromEvent(e)
+      )
+    case 'addDir':
+      return (
+        includeAddDirEventInDirMove(sameInodeChange, e) ||
+        dirMoveFromUnlinkAdd(sameInodeChange, e) ||
+        dirRenamingCaseOnlyFromAddAdd(sameInodeChange, e) ||
+        dirMoveIdenticalOffline(e) ||
+        fromEvent(e)
+      )
+    case 'change':
+      return (
+        includeChangeEventIntoFileMove(sameInodeChange, e) ||
+        fileMoveFromFileDeletionChange(sameInodeChange, e) ||
+        fileMoveIdentical(sameInodeChange, e) ||
+        fromEvent(e)
+      )
+    case 'unlink':
+      ensureNotFileMove(sameInodeChange, e)
+
+      return (
+        // TODO: pending move
+        fileMoveFromAddUnlink(sameInodeChange, e) ||
+        fromEventWithInode(e) ||
+        convertFileMoveToDeletion(samePathChange)
+        // Otherwise, skip unlink event from intermediate move
+      )
+    case 'unlinkDir':
+      ensureNotDirMove(sameInodeChange, e)
+
+      return (
+        dirMoveFromAddUnlink(sameInodeChange, e) ||
+        fromEventWithInode(e) ||
+        dirAddedThenDeleted(samePathChange) ||
+        convertDirMoveToDeletion(samePathChange)
+        // Otherwise, skip unlinkDir event from intermediate move
+      )
+    default:
+      throw new TypeError(`Unknown event type: ${e.type}`)
+  }
+}
 
 function fromEvent (e/*: LocalEvent */) /*: LocalChange */ {
   const change = _fromEvent(e)
