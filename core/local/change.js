@@ -20,7 +20,6 @@ const logger = require('../logger')
 const { getInode } = require('./event')
 
 module.exports = {
-  find,
   isChildMove,
   addPath,
   delPath,
@@ -66,17 +65,6 @@ function build (type /*: string */, path /*: string */, opts /*: ?{stats?: fs.St
   if (change.overwrite == null) delete change.overwrite
   if (change.md5sum == null) delete change.md5sum
   return change
-}
-
-function find /*:: <T> */ (changes /*: LocalChange[] */, maybeRightType /*: (LocalChange) => ?T */, predicate /*: (T) => boolean */, remove /*: ?true */) /*: ?T */ {
-  for (let i = 0; i < changes.length; i++) {
-    const anyChange = changes[i]
-    const rightTypeChange /*: ?T */ = maybeRightType(anyChange)
-    if (rightTypeChange != null && predicate(rightTypeChange)) {
-      if (remove) changes.splice(i, 1)
-      return rightTypeChange
-    }
-  }
 }
 
 function isChildMove (a /*: LocalChange */, b /*: LocalChange */) /*: boolean %checks */ {
