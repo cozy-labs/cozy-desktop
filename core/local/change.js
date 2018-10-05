@@ -94,23 +94,23 @@ function identify (e /*: LocalEvent */, sameInodeChange /*: ?LocalChange */, sam
   switch (e.type) {
     case 'add':
       return (
-        includeAddEventInFileMove(sameInodeChange, e) ||
-        fileMoveFromUnlinkAdd(sameInodeChange, e) ||
+        fileMoveFromTo(sameInodeChange, e) ||
+        fileMoveSuccessiveTo(sameInodeChange, e) ||
         fileMoveIdenticalOffline(e) ||
         fromEvent(e)
       )
     case 'addDir':
       return (
-        includeAddDirEventInDirMove(sameInodeChange, e) ||
-        dirMoveFromUnlinkAdd(sameInodeChange, e) ||
-        dirRenamingCaseOnlyFromAddAdd(sameInodeChange, e) ||
+        dirMoveSuccessiveTo(sameInodeChange, e) ||
+        dirMoveFromTo(sameInodeChange, e) ||
+        dirMoveIdentical(sameInodeChange, e) ||
         dirMoveIdenticalOffline(e) ||
         fromEvent(e)
       )
     case 'change':
       return (
-        includeChangeEventIntoFileMove(sameInodeChange, e) ||
-        fileMoveFromFileDeletionChange(sameInodeChange, e) ||
+        fileMoveThenUpdate(sameInodeChange, e) ||
+        fileMoveIncompleteThenUpdate(sameInodeChange, e) ||
         fileMoveIdentical(sameInodeChange, e) ||
         fromEvent(e)
       )
@@ -119,19 +119,19 @@ function identify (e /*: LocalEvent */, sameInodeChange /*: ?LocalChange */, sam
 
       return (
         // TODO: pending move
-        fileMoveFromAddUnlink(sameInodeChange, e) ||
+        fileMoveToFrom(sameInodeChange, e) ||
         fromEventWithInode(e) ||
-        convertFileMoveToDeletion(samePathChange)
+        fileMoveThenDeletion(samePathChange)
         // Otherwise, skip unlink event from intermediate move
       )
     case 'unlinkDir':
       ensureNotDirMove(sameInodeChange, e)
 
       return (
-        dirMoveFromAddUnlink(sameInodeChange, e) ||
+        dirMoveToFrom(sameInodeChange, e) ||
         fromEventWithInode(e) ||
-        dirAddedThenDeleted(samePathChange) ||
-        convertDirMoveToDeletion(samePathChange)
+        dirAdditionThenDeletion(samePathChange) ||
+        dirMoveThenDeletion(samePathChange)
         // Otherwise, skip unlinkDir event from intermediate move
       )
     default:
@@ -169,7 +169,7 @@ function _fromEvent (e/*: LocalEvent */) /*: LocalChange */ {
   }
 }
 
-function fileMoveFromUnlinkAdd (existingChange /*: ?LocalChange */, e /*: LocalFileAdded */) /*: * */ {
+function fileMoveSuccessiveTo (existingChange /*: ?LocalChange */, e /*: LocalFileAdded */) /*: * */ {
   if (existingChange && existingChange.type === 'FileDeletion') {
     log.debug({oldpath: existingChange.path, path: e.path, ino: existingChange.ino}, 'FileDeletion + add = FileMove')
 
@@ -183,7 +183,7 @@ function fileMoveFromUnlinkAdd (existingChange /*: ?LocalChange */, e /*: LocalF
   }
 }
 
-function dirMoveFromUnlinkAdd (existingChange /*: ?LocalChange */, e /*: LocalDirAdded */) /*: * */ {
+function dirMoveFromTo (existingChange /*: ?LocalChange */, e /*: LocalDirAdded */) /*: * */ {
   if (existingChange && existingChange.type === 'DirDeletion') {
     log.debug({oldpath: existingChange.path, path: e.path}, 'DirDeletion + addDir = DirMove')
     return build('DirMove', e.path, {
@@ -196,7 +196,7 @@ function dirMoveFromUnlinkAdd (existingChange /*: ?LocalChange */, e /*: LocalDi
   }
 }
 
-function fileMoveFromAddUnlink (addChange /*: ?LocalChange */, e /*: LocalFileUnlinked */) /*: * */ {
+function fileMoveToFrom (addChange /*: ?LocalChange */, e /*: LocalFileUnlinked */) /*: * */ {
   if (addChange && addChange.type === 'FileAddition') {
     log.debug({oldpath: e.path, path: addChange.path, ino: addChange.ino}, 'add + unlink = FileMove')
     return build('FileMove', addChange.path, {
@@ -210,7 +210,7 @@ function fileMoveFromAddUnlink (addChange /*: ?LocalChange */, e /*: LocalFileUn
 }
 
 // There was an unlink on the same file, this is most probably a move and replace
-function fileMoveFromFileDeletionChange (fileDeletion /* : ?LocalChange */, e /* : LocalFileUpdated */) /*: * */ {
+function fileMoveIncompleteThenUpdate (fileDeletion /* : ?LocalChange */, e /* : LocalFileUpdated */) /*: * */ {
   if (fileDeletion && fileDeletion.type === 'FileDeletion') {
     const src = fileDeletion.old
     const dst = e.old
@@ -231,7 +231,7 @@ function fileMoveFromFileDeletionChange (fileDeletion /* : ?LocalChange */, e /*
   }
 }
 
-function dirMoveFromAddUnlink (addChange /*: ?LocalChange */, e /*: LocalDirUnlinked */) /*: * */ {
+function dirMoveToFrom (addChange /*: ?LocalChange */, e /*: LocalDirUnlinked */) /*: * */ {
   if (addChange && addChange.type === 'DirAddition') {
     log.debug({oldpath: e.path, path: addChange.path}, 'addDir + unlinkDir = DirMove')
     return build('DirMove', addChange.path, {
@@ -271,7 +271,7 @@ function fileMoveIdenticalOffline (dstEvent /*: LocalFileAdded */) /*: ?LocalFil
   } /*: LocalFileMove */)
 }
 
-function dirRenamingCaseOnlyFromAddAdd (existingChange /*: ?LocalChange */, e /*: LocalDirAdded */) /*: * */ {
+function dirMoveIdentical (existingChange /*: ?LocalChange */, e /*: LocalDirAdded */) /*: * */ {
   if (existingChange && existingChange.type === 'DirAddition') {
     log.debug({oldpath: existingChange.path, path: e.path}, 'DirAddition + addDir = DirMove (same id)')
 
@@ -317,7 +317,7 @@ const ensureValidMoveEvent = (moveChange /*: LocalMove */, event /*: LocalMoveEv
   if (!moveChange.wip) throw new InvalidLocalMoveEvent(moveChange, event)
 }
 
-function includeAddEventInFileMove (existingChange /*: ?LocalChange */, e /*: LocalFileAdded */) /*: ?LocalFileMove */ {
+function fileMoveFromTo (existingChange /*: ?LocalChange */, e /*: LocalFileAdded */) /*: ?LocalFileMove */ {
   if (existingChange &&
       existingChange.type === 'FileMove') {
     if (!existingChange.wip &&
@@ -337,7 +337,7 @@ function includeAddEventInFileMove (existingChange /*: ?LocalChange */, e /*: Lo
   }
 }
 
-function includeAddDirEventInDirMove (existingMove /*: ?LocalChange */, e /*: LocalDirAdded */) /*: ?LocalDirMove */ {
+function dirMoveSuccessiveTo (existingMove /*: ?LocalChange */, e /*: LocalDirAdded */) /*: ?LocalDirMove */ {
   if (existingMove && existingMove.type === 'DirMove') {
     const moveChange = _.clone(existingMove)
     if (!moveChange.wip &&
@@ -361,7 +361,7 @@ function includeAddDirEventInDirMove (existingMove /*: ?LocalChange */, e /*: Lo
   }
 }
 
-function includeChangeEventIntoFileMove (sameInodeChange /*: ?LocalChange */, e /*: LocalFileUpdated */) /*: ?LocalFileMove */ {
+function fileMoveThenUpdate (sameInodeChange /*: ?LocalChange */, e /*: LocalFileUpdated */) /*: ?LocalFileMove */ {
   if (sameInodeChange && sameInodeChange.type === 'FileMove') {
     const moveChange = _.clone(sameInodeChange)
     log.debug({path: e.path}, 'FileMove + change')
@@ -379,7 +379,7 @@ function includeChangeEventIntoFileMove (sameInodeChange /*: ?LocalChange */, e 
   }
 }
 
-function convertFileMoveToDeletion (samePathChange /*: ?LocalChange */) /*: ?LocalFileMove */ {
+function fileMoveThenDeletion (samePathChange /*: ?LocalChange */) /*: ?LocalFileMove */ {
   if (samePathChange && samePathChange.type === 'FileMove' && samePathChange.md5sum == null) { // FIXME: if change && change.wip?
     const change = _.clone(samePathChange)
     log.debug({path: change.old.path, ino: change.ino},
@@ -393,7 +393,7 @@ function convertFileMoveToDeletion (samePathChange /*: ?LocalChange */) /*: ?Loc
   }
 }
 
-function convertDirMoveToDeletion (samePathChange /*: ?LocalChange */) /*: ?LocalDirMove */ {
+function dirMoveThenDeletion (samePathChange /*: ?LocalChange */) /*: ?LocalDirMove */ {
   if (samePathChange && samePathChange.type === 'DirMove' && samePathChange.wip) {
     const change = _.clone(samePathChange)
     log.debug({path: change.old.path, ino: change.ino},
@@ -407,7 +407,7 @@ function convertDirMoveToDeletion (samePathChange /*: ?LocalChange */) /*: ?Loca
   }
 }
 
-function dirAddedThenDeleted (samePathChange /*: ?LocalChange */) /*: ?LocalIgnored */ {
+function dirAdditionThenDeletion (samePathChange /*: ?LocalChange */) /*: ?LocalIgnored */ {
   if (samePathChange && samePathChange.type === 'DirAddition' && samePathChange.wip) {
     const change = _.clone(samePathChange)
     log.debug({path: change.path, ino: change.ino},
