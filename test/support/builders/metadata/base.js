@@ -5,7 +5,8 @@ const _ = require('lodash')
 const {
   assignId,
   assignPlatformIncompatibilities,
-  id
+  id,
+  markSide
 } = require('../../../../core/metadata')
 const timestamp = require('../../../../core/timestamp')
 
@@ -26,21 +27,28 @@ module.exports = class BaseMetadataBuilder {
   /*::
   pouch: ?Pouch
   doc: Metadata
+  old: ?Metadata
   */
 
-  constructor (pouch /*: ?Pouch */) {
+  constructor (pouch /*: ?Pouch */, old /*: ?Metadata */) {
     this.pouch = pouch
-    this.doc = {
-      _id: id('foo'),
-      docType: 'folder', // To make flow happy (overridden by subclasses)
-      path: 'foo',
-      remote: {
-        _id: dbBuilders.id(),
-        _rev: dbBuilders.rev()
-      },
-      tags: [],
-      sides: {},
-      updated_at: timestamp.stringify(timestamp.current())
+    if (old) {
+      this.old = old
+      this.doc = _.cloneDeep(old)
+      this.doc.tags.push('changed-tag')
+    } else {
+      this.doc = {
+        _id: id('foo'),
+        docType: 'folder', // To make flow happy (overridden by subclasses)
+        path: 'foo',
+        remote: {
+          _id: dbBuilders.id(),
+          _rev: dbBuilders.rev()
+        },
+        tags: [],
+        sides: {},
+        updated_at: timestamp.stringify(timestamp.current())
+      }
     }
   }
 
@@ -116,6 +124,11 @@ module.exports = class BaseMetadataBuilder {
 
   notUpToDate () /*: this */ {
     this.doc.sides = {remote: 1}
+    return this
+  }
+
+  changedSide (side /*: SideName */) /*: this */ {
+    markSide(side, this.doc, this.old)
     return this
   }
 
