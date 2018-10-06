@@ -6,7 +6,6 @@ const fs = require('fs-extra')
 const _ = require('lodash')
 const path = require('path')
 const should = require('should')
-const sinon = require('sinon')
 
 const { scenarios, loadFSEventFiles, runActions, init } = require('../support/helpers/scenarios')
 const configHelpers = require('../support/helpers/config')
@@ -20,7 +19,7 @@ const { platform } = process
 let helpers
 
 // Spies
-let prepCalls
+// FIXME: let prepCalls
 
 describe('Test scenarios', function () {
   before(configHelpers.createConfig)
@@ -39,28 +38,7 @@ describe('Test scenarios', function () {
 
   beforeEach(async function () {
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozyHelpers.cozy)
-    // TODO: Spy in IntegrationTestHelpers by default
-    prepCalls = []
-
-    for (let method of ['addFileAsync', 'putFolderAsync', 'updateFileAsync',
-      'moveFileAsync', 'moveFolderAsync', 'deleteFolderAsync', 'trashFileAsync',
-      'trashFolderAsync', 'restoreFileAsync', 'restoreFolderAsync']) {
-      // $FlowFixMe
-      const origMethod = helpers.prep[method]
-      sinon.stub(helpers.prep, method).callsFake(async (...args) => {
-        const call /*: Object */ = {method}
-        if (method.startsWith('move') || method.startsWith('restore')) {
-          call.dst = args[1].path
-          call.src = args[2].path
-        } else {
-          call.path = args[1].path
-        }
-        prepCalls.push(call)
-
-        // Call the actual method so we can make assertions on metadata & FS
-        return origMethod.apply(helpers.prep, args)
-      })
-    }
+    // FIXME: prepCalls = helpers.spyPrep()
 
     // TODO: helpers.setup()
     await helpers.local.setupTrash()

@@ -70,6 +70,33 @@ class IntegrationTestHelpers {
     await this.syncAll()
   }
 
+  // TODO: Spy by default?
+  spyPrep () {
+    const prepCalls = []
+
+    for (let method of ['addFileAsync', 'putFolderAsync', 'updateFileAsync',
+      'moveFileAsync', 'moveFolderAsync', 'deleteFolderAsync', 'trashFileAsync',
+      'trashFolderAsync', 'restoreFileAsync', 'restoreFolderAsync']) {
+      // $FlowFixMe
+      const origMethod = this.prep[method]
+      sinon.stub(this.prep, method).callsFake(async (...args) => {
+        const call /*: Object */ = {method}
+        if (method.startsWith('move') || method.startsWith('restore')) {
+          call.dst = args[1].path
+          call.src = args[2].path
+        } else {
+          call.path = args[1].path
+        }
+        prepCalls.push(call)
+
+        // Call the actual method so we can make assertions on metadata & FS
+        return origMethod.apply(this.prep, args)
+      })
+    }
+
+    return prepCalls
+  }
+
   spyPouch () {
     sinon.spy(this._pouch, 'put')
     sinon.spy(this._pouch, 'bulkDocs')
