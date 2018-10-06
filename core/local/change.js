@@ -27,8 +27,7 @@ module.exports = {
   lower,
   identify,
   isChildDelete,
-  isChildAdd,
-  toString
+  isChildAdd
 }
 
 const log = logger({
@@ -86,9 +85,6 @@ function lower (p1 /*: ?string */, p2 /*: ?string */) /*: boolean */ { return p1
 
 function isChildDelete (a /*: LocalChange */, b /*: LocalChange */) { return childOf(delPath(a), delPath(b)) }
 function isChildAdd (a /*: LocalChange */, b /*: LocalChange */) { return childOf(addPath(a), addPath(b)) }
-
-// $FlowFixMe
-function toString (a /*: LocalChange */) /*: string */ { return '(' + a.type + ': ' + (a.old && a.old.path) + '-->' + a.path + ')' }
 
 function identify (e /*: LocalEvent */, sameInodeChange /*: ?LocalChange */, samePathChange /*: ?LocalChange */) {
   switch (e.type) {
