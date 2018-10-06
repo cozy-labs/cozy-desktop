@@ -1,13 +1,10 @@
 /* @flow */
 
-const ChangedMetadataBuilder = require('./changed')
 const DirMetadataBuilder = require('./dir')
 const FileMetadataBuilder = require('./file')
 
 /*::
-import type {
-  Metadata
-} from '../../../../core/metadata'
+import type { Metadata } from '../../../../core/metadata'
 import type Pouch from '../../../../core/pouch'
 import type BaseMetadataBuilder from './base'
 */
@@ -21,13 +18,8 @@ module.exports = class MetadataBuilders {
     this.pouch = pouch
   }
 
-  /** Build new metadata from existing ones. */
-  changedFrom (old /*: Metadata */) /*: ChangedMetadataBuilder */ {
-    return new ChangedMetadataBuilder(this.pouch, old)
-  }
-
-  dir () /*: DirMetadataBuilder */ {
-    return new DirMetadataBuilder(this.pouch)
+  dir (old /*: ?Metadata */) /*: DirMetadataBuilder */ {
+    return new DirMetadataBuilder(this.pouch, old)
   }
 
   file () /*: FileMetadataBuilder */ {
