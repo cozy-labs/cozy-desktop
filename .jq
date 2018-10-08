@@ -54,6 +54,9 @@ def RemoteWatcher: component("^RemoteWatcher$");
 def RemoteWriter: component("^RemoteWriter$");
 def Sync: component("^Sync$");
 
+def Local: select(.component | test("^local"; "i"));
+def Remote: select(.component | test("^remote"; "i"));
+
 # Find conflicts:
 #
 #     yarn jq -c conflicts path/to/logs*
