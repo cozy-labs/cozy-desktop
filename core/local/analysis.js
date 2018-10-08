@@ -215,7 +215,8 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
           throw new TypeError(`Unknown event type: ${e.type}`)
       }
     } catch (err) {
-      log.error({err, path: e.path})
+      const sentry = err.name === 'InvalidLocalMoveEvent'
+      log.error({err, path: e.path, sentry})
       throw err
     }
   }
