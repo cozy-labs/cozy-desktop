@@ -6,7 +6,6 @@ const fs = require('fs-extra')
 const _ = require('lodash')
 const path = require('path')
 const should = require('should')
-const sinon = require('sinon')
 
 const { scenarios, loadFSEventFiles, runActions, init } = require('../support/helpers/scenarios')
 const configHelpers = require('../support/helpers/config')
@@ -20,7 +19,7 @@ const { platform } = process
 let helpers
 
 // Spies
-let prepCalls
+// FIXME: let prepCalls
 
 describe('Test scenarios', function () {
   before(configHelpers.createConfig)
@@ -39,28 +38,7 @@ describe('Test scenarios', function () {
 
   beforeEach(async function () {
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozyHelpers.cozy)
-    // TODO: Spy in IntegrationTestHelpers by default
-    prepCalls = []
-
-    for (let method of ['addFileAsync', 'putFolderAsync', 'updateFileAsync',
-      'moveFileAsync', 'moveFolderAsync', 'deleteFolderAsync', 'trashFileAsync',
-      'trashFolderAsync', 'restoreFileAsync', 'restoreFolderAsync']) {
-      // $FlowFixMe
-      const origMethod = helpers.prep[method]
-      sinon.stub(helpers.prep, method).callsFake(async (...args) => {
-        const call /*: Object */ = {method}
-        if (method.startsWith('move') || method.startsWith('restore')) {
-          call.dst = args[1].path
-          call.src = args[2].path
-        } else {
-          call.path = args[1].path
-        }
-        prepCalls.push(call)
-
-        // Call the actual method so we can make assertions on metadata & FS
-        return origMethod.apply(helpers.prep, args)
-      })
-    }
+    // FIXME: prepCalls = helpers.spyPrep()
 
     // TODO: helpers.setup()
     await helpers.local.setupTrash()
@@ -122,41 +100,7 @@ describe('Test scenarios', function () {
             await helpers.remote.pullChanges()
             await helpers.syncAll()
 
-            // TODO: Bring back Prep expectations for local tests?
-            // TODO: Wrap in custom expectation
-            if (scenario.expected) {
-              const expectedLocalTree = scenario.expected.tree || scenario.expected.localTree
-              const expectedRemoteTree = scenario.expected.tree || scenario.expected.remoteTree
-              const expected = _.pick(scenario.expected, ['remoteTrash'])
-              const actual = {}
-
-              // TODO: expect prep actions
-              if (expectedLocalTree) {
-                expected.localTree = expectedLocalTree
-                actual.localTree = await helpers.local.tree()
-              }
-              if (expectedRemoteTree) {
-                expected.remoteTree = expectedRemoteTree
-                actual.remoteTree = await helpers.remote.treeWithoutTrash()
-              }
-              if (scenario.expected.remoteTrash) {
-                actual.remoteTrash = await helpers.remote.trash()
-              }
-              if (scenario.expected.contents) {
-                expected.localContents = scenario.expected.contents
-                expected.remoteContents = scenario.expected.contents
-                actual.localContents = {}
-                actual.remoteContents = {}
-                for (const relpath of _.keys(scenario.expected.contents)) {
-                  actual.localContents[relpath] = await helpers.local.readFile(relpath)
-                      .catch(err => `Error Reading Local(${relpath}): ${err.message}`)
-                  actual.remoteContents[relpath] = await helpers.remote.readFile(relpath)
-                      .catch(err => `Error Reading Remote(${relpath}): ${err.message}`)
-                }
-              }
-
-              should(actual).deepEqual(expected)
-            }
+            await verifyExpectations(scenario, {includeRemoteTrash: true})
 
             // TODO: pull
           })
@@ -190,27 +134,7 @@ describe('Test scenarios', function () {
 
           await helpers.syncAll()
 
-          if (scenario.expected) {
-            const expectedLocalTree = scenario.expected.tree || scenario.expected.localTree
-            const expectedRemoteTree = scenario.expected.tree || scenario.expected.remoteTree
-            const expected = _.pick(scenario.expected, ['remoteTrash'])
-            const actual = {}
-
-            // TODO: expect prep actions
-            if (expectedLocalTree) {
-              expected.localTree = expectedLocalTree
-              actual.localTree = await helpers.local.tree()
-            }
-            if (expectedRemoteTree) {
-              expected.remoteTree = expectedRemoteTree
-              actual.remoteTree = await helpers.remote.treeWithoutTrash()
-            }
-            if (scenario.expected.remoteTrash) {
-              actual.remoteTrash = await helpers.remote.trash()
-            }
-
-            should(actual).deepEqual(expected)
-          } // scenario.expected
+          await verifyExpectations(scenario, {includeRemoteTrash: true})
         }) // test
       } // !eventsFile.disabled
     }
@@ -246,39 +170,47 @@ describe('Test scenarios', function () {
         await helpers.syncAll()
       }
 
-      // TODO: Merge local/stopped/remote expectations
-      if (scenario.expected) {
-        const expectedLocalTree = scenario.expected.tree || scenario.expected.localTree
-        const expectedRemoteTree = scenario.expected.tree || scenario.expected.remoteTree
-        const expected = {}
-        const actual = {}
-
-        // TODO: expect prep actions
-        if (expectedLocalTree) {
-          expected.localTree = expectedLocalTree
-          actual.localTree = await helpers.local.treeWithoutTrash()
-        }
-        if (expectedRemoteTree) {
-          expected.remoteTree = expectedRemoteTree
-          actual.remoteTree = await helpers.remote.treeWithoutTrash()
-        }
-        if (scenario.expected.contents) {
-          expected.localContents = scenario.expected.contents
-          expected.remoteContents = scenario.expected.contents
-          actual.localContents = {}
-          actual.remoteContents = {}
-          for (const relpath of _.keys(scenario.expected.contents)) {
-            actual.localContents[relpath] = await helpers.local.readFile(relpath)
-                .catch(err => `Error Reading Local(${relpath}): ${err.message}`)
-            actual.remoteContents[relpath] = await helpers.remote.readFile(relpath)
-                .catch(err => `Error Reading Remote(${relpath}): ${err.message}`)
-          }
-        }
-
-        should(actual).deepEqual(expected)
-      }
+      await verifyExpectations(scenario, {includeRemoteTrash: false})
 
       // TODO: Local trash assertions
     }) // describe remote
   } // scenarios
 })
+
+async function verifyExpectations (scenario, {includeRemoteTrash}) {
+  // TODO: Bring back Prep expectations for local tests?
+  // TODO: Wrap in custom expectation
+  if (scenario.expected) {
+    const expectedLocalTree = scenario.expected.tree || scenario.expected.localTree
+    const expectedRemoteTree = scenario.expected.tree || scenario.expected.remoteTree
+    const expected = includeRemoteTrash ? _.pick(scenario.expected, ['remoteTrash']) : {}
+    const actual = {}
+
+    // TODO: expect prep actions
+    if (expectedLocalTree) {
+      expected.localTree = expectedLocalTree
+      actual.localTree = await helpers.local.treeWithoutTrash()
+    }
+    if (expectedRemoteTree) {
+      expected.remoteTree = expectedRemoteTree
+      actual.remoteTree = await helpers.remote.treeWithoutTrash()
+    }
+    if (includeRemoteTrash && scenario.expected.remoteTrash) {
+      actual.remoteTrash = await helpers.remote.trash()
+    }
+    if (scenario.expected.contents) {
+      expected.localContents = scenario.expected.contents
+      expected.remoteContents = scenario.expected.contents
+      actual.localContents = {}
+      actual.remoteContents = {}
+      for (const relpath of _.keys(scenario.expected.contents)) {
+        actual.localContents[relpath] = await helpers.local.readFile(relpath)
+            .catch(err => `Error Reading Local(${relpath}): ${err.message}`)
+        actual.remoteContents[relpath] = await helpers.remote.readFile(relpath)
+            .catch(err => `Error Reading Remote(${relpath}): ${err.message}`)
+      }
+    }
+
+    should(actual).deepEqual(expected)
+  }
+}
