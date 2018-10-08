@@ -108,8 +108,8 @@ class Pouch {
   /* Mini ODM */
 
   put (doc /*: Metadata */, callback /*: ?Callback */) {
-    const {local, remote} = doc.sides
     metadata.invariants(doc)
+    const {local, remote} = doc.sides
     log.debug({path: doc.path, local, remote, _deleted: doc._deleted, doc}, 'Saving metadata...')
     return this.db.put(doc).asCallback(callback)
   }
@@ -119,9 +119,9 @@ class Pouch {
   // Make sure lock is acquired before using it to avoid conflict.
   async bulkDocs (docs /*: Metadata[] */) {
     for (const doc of docs) {
+      metadata.invariants(doc)
       const {path} = doc
       const {local, remote} = doc.sides || {}
-      metadata.invariants(doc)
       log.debug({path, local, remote, _deleted: doc._deleted, doc}, 'Saving bulk metadata...')
     }
     const results = await this.db.bulkDocs(docs)
