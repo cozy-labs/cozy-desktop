@@ -172,7 +172,6 @@ function dirMoveFromUnlinkAdd (unlinkChange /*: LocalDirDeletion */, e /*: Local
     stats: e.stats,
     old: unlinkChange.old,
     ino: unlinkChange.ino,
-    overwrite: e.old,
     wip: e.wip
   })
 }
@@ -309,6 +308,9 @@ function includeAddDirEventInDirMove (moveChange /*: LocalDirMove */, e /*: Loca
     // FIXME This is based on a bug in chokidar where
     // an overwriting move have two addDir events on mac+APFS
     // but no unlinkDir for the overwritten destination.
+    log.debug(
+      {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
+      'DirMove(a, b) + addDir(b) = DirMove.overwrite(a, b) [chokidar bug]')
     moveChange.overwrite = true
     return
   }
