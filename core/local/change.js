@@ -172,7 +172,6 @@ function dirMoveFromUnlinkAdd (unlinkChange /*: LocalDirDeletion */, e /*: Local
     stats: e.stats,
     old: unlinkChange.old,
     ino: unlinkChange.ino,
-    overwrite: e.old,
     wip: e.wip
   })
 }
