@@ -1,0 +1,254 @@
+[
+  {
+    "type": "unlinkDir",
+    "path": "a/empty-subdir-a"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "a/subdir"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "a/subdir-a"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "a"
+  },
+  {
+    "type": "addDir",
+    "path": "c",
+    "stats": {
+      "ino": 1,
+      "size": 4096,
+      "mtime": "2018-10-09T09:12:18.178Z",
+      "ctime": "2018-10-09T09:12:20.223Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "c/empty-subdir-a",
+    "stats": {
+      "ino": 2,
+      "size": 4096,
+      "mtime": "2018-10-09T09:12:18.172Z",
+      "ctime": "2018-10-09T09:12:18.172Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "c/subdir",
+    "stats": {
+      "ino": 7,
+      "size": 4096,
+      "mtime": "2018-10-09T09:12:18.179Z",
+      "ctime": "2018-10-09T09:12:18.179Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "c/subdir-a",
+    "stats": {
+      "ino": 5,
+      "size": 4096,
+      "mtime": "2018-10-09T09:12:18.178Z",
+      "ctime": "2018-10-09T09:12:18.178Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "a/subdir/subfile"
+  },
+  {
+    "type": "unlink",
+    "path": "a/subdir/subfile-a"
+  },
+  {
+    "type": "unlink",
+    "path": "a/subdir-a/subfile-a-a"
+  },
+  {
+    "type": "unlink",
+    "path": "a/file"
+  },
+  {
+    "type": "unlink",
+    "path": "a/file-a"
+  },
+  {
+    "type": "add",
+    "path": "c/file",
+    "stats": {
+      "ino": 3,
+      "size": 8,
+      "mtime": "2018-10-09T09:12:18.173Z",
+      "ctime": "2018-10-09T09:12:18.173Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "c/file-a",
+    "stats": {
+      "ino": 4,
+      "size": 8,
+      "mtime": "2018-10-09T09:12:18.175Z",
+      "ctime": "2018-10-09T09:12:18.175Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "c/subdir/subfile",
+    "stats": {
+      "ino": 8,
+      "size": 8,
+      "mtime": "2018-10-09T09:12:18.179Z",
+      "ctime": "2018-10-09T09:12:18.179Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "c/subdir-a/subfile-a-a",
+    "stats": {
+      "ino": 6,
+      "size": 8,
+      "mtime": "2018-10-09T09:12:18.178Z",
+      "ctime": "2018-10-09T09:12:18.178Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "c/subdir/subfile-a",
+    "stats": {
+      "ino": 9,
+      "size": 8,
+      "mtime": "2018-10-09T09:12:18.179Z",
+      "ctime": "2018-10-09T09:12:18.179Z"
+    }
+  },
+  {
+    "type": "unlinkDir",
+    "path": "b/empty-subdir-b"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "b/subdir"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "b/subdir-b"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "b"
+  },
+  {
+    "type": "addDir",
+    "path": "a",
+    "stats": {
+      "ino": 10,
+      "size": 4096,
+      "mtime": "2018-10-09T09:12:18.188Z",
+      "ctime": "2018-10-09T09:12:21.725Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "a/empty-subdir-b",
+    "stats": {
+      "ino": 11,
+      "size": 4096,
+      "mtime": "2018-10-09T09:12:18.183Z",
+      "ctime": "2018-10-09T09:12:18.183Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "a/subdir",
+    "stats": {
+      "ino": 16,
+      "size": 4096,
+      "mtime": "2018-10-09T09:12:18.189Z",
+      "ctime": "2018-10-09T09:12:18.189Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "a/subdir-b",
+    "stats": {
+      "ino": 14,
+      "size": 4096,
+      "mtime": "2018-10-09T09:12:18.187Z",
+      "ctime": "2018-10-09T09:12:18.187Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "b/subdir/subfile"
+  },
+  {
+    "type": "unlink",
+    "path": "b/subdir/subfile-b"
+  },
+  {
+    "type": "unlink",
+    "path": "b/subdir-b/subfile-b-b"
+  },
+  {
+    "type": "unlink",
+    "path": "b/file"
+  },
+  {
+    "type": "unlink",
+    "path": "b/file-b"
+  },
+  {
+    "type": "add",
+    "path": "a/file-b",
+    "stats": {
+      "ino": 13,
+      "size": 8,
+      "mtime": "2018-10-09T09:12:18.185Z",
+      "ctime": "2018-10-09T09:12:18.185Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "a/file",
+    "stats": {
+      "ino": 12,
+      "size": 8,
+      "mtime": "2018-10-09T09:12:18.184Z",
+      "ctime": "2018-10-09T09:12:18.184Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "a/subdir/subfile",
+    "stats": {
+      "ino": 17,
+      "size": 8,
+      "mtime": "2018-10-09T09:12:18.189Z",
+      "ctime": "2018-10-09T09:12:18.189Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "a/subdir-b/subfile-b-b",
+    "stats": {
+      "ino": 15,
+      "size": 8,
+      "mtime": "2018-10-09T09:12:18.187Z",
+      "ctime": "2018-10-09T09:12:18.187Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "a/subdir/subfile-b",
+    "stats": {
+      "ino": 18,
+      "size": 8,
+      "mtime": "2018-10-09T09:12:18.189Z",
+      "ctime": "2018-10-09T09:12:18.189Z"
+    }
+  }
+]
