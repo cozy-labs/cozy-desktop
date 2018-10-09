@@ -8,7 +8,6 @@ const path = require('path')
 const { join } = path
 
 const logger = require('./logger')
-const sentry = require('./sentry')
 const { detectPathIssues, detectPathLengthIssue } = require('./path_restrictions')
 const { maxDate } = require('./timestamp')
 
@@ -181,15 +180,21 @@ function ensureValidPath (doc /*: {path: string} */) {
 }
 
 function invariants (doc /*: Metadata */) {
+  let err
   if (!doc.sides) {
-    throw sentry.flag(new Error(`${doc._id} has no sides`))
+    err = new Error(`${doc._id} has no sides`)
+  } else if (doc.sides.remote && !doc.remote) {
+    err = new Error(`${doc._id} has 'sides.remote' but no remote`)
+  } else if (doc.docType === 'file' && doc.md5sum == null) {
+    err = new Error(`${doc._id} is a file without checksum`)
   }
-  if (doc.sides.remote && !doc.remote) {
-    throw sentry.flag(new Error(`${doc._id} has 'sides.remote' but no remote`))
+
+  if (err) {
+    log.error({err, sentry: true}, err.message)
+    throw err
   }
-  if (doc.docType === 'file' && doc.md5sum == null) {
-    throw sentry.flag(new Error(`${doc._id} is a file without checksum`))
-  }
+
+  return doc
 }
 
 /*::
