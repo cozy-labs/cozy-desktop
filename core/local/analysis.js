@@ -70,6 +70,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
   log.trace('Analyze events...')
 
   for (let e/*: LocalEvent */ of events) {
+    if (process.env.DEBUG) log.trace({currentEvent: e, path: e.path})
     try {
       // chokidar make mistakes
       if (e.type === 'unlinkDir' && e.old && e.old.docType === 'file') {
@@ -217,7 +218,6 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
       log.error({err, path: e.path})
       throw err
     }
-    if (process.env.DEBUG) log.trace({currentEvent: e, path: e.path})
   }
 
   log.trace('Flatten changes map...')
