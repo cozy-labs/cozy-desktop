@@ -4,8 +4,8 @@
 
 module.exports = ({
   init: [
-    {ino: 1, path: 'a'},
-    {ino: 2, path: 'b'}
+    {ino: 1, path: 'a', content: 'content a'},
+    {ino: 2, path: 'b', content: 'content b'}
   ],
   actions: [
     {type: 'mv', src: 'a', dst: 'c'},
@@ -22,6 +22,10 @@ module.exports = ({
       'a',
       'c'
     ],
+    contents: {
+      'a': 'content b',
+      'c': 'content a'
+    },
     remoteTrash: []
   }
 } /*: Scenario */)
