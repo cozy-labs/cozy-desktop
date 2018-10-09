@@ -1,0 +1,27 @@
+[
+  {
+    "breakpoints": [
+      0
+    ]
+  },
+  {
+    "type": "addDir",
+    "path": "dir_case",
+    "stats": {
+      "ino": 1,
+      "size": 64,
+      "mtime": "2018-09-03T14:27:16.753Z",
+      "ctime": "2018-09-03T14:27:18.897Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "DIR_CASE",
+    "stats": {
+      "ino": 1,
+      "size": 64,
+      "mtime": "2018-09-03T14:27:16.753Z",
+      "ctime": "2018-09-03T14:27:18.897Z"
+    }
+  }
+]

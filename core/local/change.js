@@ -314,6 +314,14 @@ function includeAddDirEventInDirMove (moveChange /*: LocalDirMove */, e /*: Loca
     moveChange.overwrite = true
     return
   }
+  if (moveChange.old.path === e.path) {
+    log.debug(
+      {path: moveChange.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
+      `DirMove(a, b) + addDir(a) = Ignored(b, a) (identical renaming loopback)`)
+    // $FlowFixMe
+    moveChange.type = 'Ignored'
+    return
+  }
   ensureValidMoveEvent(moveChange, e)
   moveChange.path = e.path
   moveChange.stats = e.stats
