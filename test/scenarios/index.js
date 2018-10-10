@@ -56,6 +56,8 @@ export type Scenario = {|
   actions: Array<FSAction>,
   expected: {|
     prepCalls?: Array<PrepExpectation>,
+    localTree?: Array<string>,
+    remoteTree?: Array<string>,
     tree?: Array<string>,
     remoteTrash?: Array<string>,
     contents?: { [string]: string }
