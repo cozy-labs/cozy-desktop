@@ -1,0 +1,107 @@
+[
+  {
+    "breakpoints": [
+      0
+    ]
+  },
+  {
+    "type": "addDir",
+    "path": "JOHN",
+    "stats": {
+      "ino": 1468317,
+      "size": 4096,
+      "mtime": "2018-10-10T11:54:48.653Z",
+      "ctime": "2018-10-10T11:54:48.653Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "JOHN/exact-same-subdir",
+    "stats": {
+      "ino": 1582213,
+      "size": 4096,
+      "mtime": "2018-10-10T11:54:48.653Z",
+      "ctime": "2018-10-10T11:54:48.653Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "JOHN/other-subdir-JOHN-1",
+    "stats": {
+      "ino": 1582215,
+      "size": 4096,
+      "mtime": "2018-10-10T11:54:48.653Z",
+      "ctime": "2018-10-10T11:54:48.653Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "john",
+    "stats": {
+      "ino": 1582216,
+      "size": 4096,
+      "mtime": "2018-10-10T11:54:48.658Z",
+      "ctime": "2018-10-10T11:54:48.658Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "JOHN/exact-same-subdir/a.txt",
+    "stats": {
+      "ino": 1573788,
+      "size": 8,
+      "mtime": "2018-10-10T11:54:48.652Z",
+      "ctime": "2018-10-10T11:54:48.652Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "JOHN/exact-same-subdir/b.txt",
+    "stats": {
+      "ino": 1573802,
+      "size": 8,
+      "mtime": "2018-10-10T11:54:48.653Z",
+      "ctime": "2018-10-10T11:54:48.653Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "john/exact-same-subdir",
+    "stats": {
+      "ino": 1582217,
+      "size": 4096,
+      "mtime": "2018-10-10T11:54:48.658Z",
+      "ctime": "2018-10-10T11:54:48.658Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "john/other-subdir-john-2",
+    "stats": {
+      "ino": 1582218,
+      "size": 4096,
+      "mtime": "2018-10-10T11:54:48.658Z",
+      "ctime": "2018-10-10T11:54:48.658Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "john/exact-same-subdir/b.txt",
+    "stats": {
+      "ino": 1573807,
+      "size": 8,
+      "mtime": "2018-10-10T11:54:48.658Z",
+      "ctime": "2018-10-10T11:54:48.658Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "john/exact-same-subdir/a.txt",
+    "stats": {
+      "ino": 1573803,
+      "size": 8,
+      "mtime": "2018-10-10T11:54:48.657Z",
+      "ctime": "2018-10-10T11:54:48.657Z"
+    }
+  }
+]
