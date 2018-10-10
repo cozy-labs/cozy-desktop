@@ -1,0 +1,47 @@
+[
+  {
+    "breakpoints": [
+      0
+    ]
+  },
+  {
+    "type": "addDir",
+    "path": "FOO",
+    "stats": {
+      "ino": 1468317,
+      "size": 4096,
+      "mtime": "2018-10-10T12:45:09.812Z",
+      "ctime": "2018-10-10T12:45:09.812Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "FOO/subdir",
+    "stats": {
+      "ino": 1582213,
+      "size": 4096,
+      "mtime": "2018-10-10T12:45:09.813Z",
+      "ctime": "2018-10-10T12:45:09.813Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "foo",
+    "stats": {
+      "ino": 920033,
+      "size": 8,
+      "mtime": "2018-10-10T12:45:09.814Z",
+      "ctime": "2018-10-10T12:45:09.814Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "FOO/subdir/file",
+    "stats": {
+      "ino": 1573788,
+      "size": 8,
+      "mtime": "2018-10-10T12:45:09.814Z",
+      "ctime": "2018-10-10T12:45:09.814Z"
+    }
+  }
+]
