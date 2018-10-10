@@ -14,10 +14,14 @@ const debug = process.env.DEBUG ? console.log : () => {}
 
 const disabledExtension = '.DISABLED'
 
+const scenariosDir = path.resolve(__dirname, '../../scenarios')
+
 const scenarioByPath = module.exports.scenarioByPath = scenarioPath => {
   // $FlowFixMe
   const scenario = require(scenarioPath)
-  scenario.name = path.basename(path.dirname(scenarioPath), disabledExtension)
+  scenario.name = path.dirname(path.normalize(scenarioPath))
+    .replace(scenariosDir + path.sep, '')
+    .replace(/\\/g, '/')
   scenario.path = scenarioPath
   scenario.disabled = scenarioPath.endsWith(disabledExtension) && 'scenario disabled'
 
@@ -34,8 +38,6 @@ const scenarioByPath = module.exports.scenarioByPath = scenarioPath => {
 
   return scenario
 }
-
-const scenariosDir = path.resolve(__dirname, '../../scenarios')
 
 // TODO: Refactor to function
 module.exports.scenarios =
