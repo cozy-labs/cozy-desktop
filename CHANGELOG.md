@@ -1,3 +1,26 @@
+## 3.10.0-beta.1 - 2018-10-11
+
+Improvements for all users:
+
+* We introduces automatic error notifications in 3.9.4-beta.1, but a few errors
+  were actually not sent. They're effectively sent now.
+* Renaming directories *a* to *c* then *b* to *a* was working for files but not
+  for directories. This now works for simple cases. A few complex ones are
+  still not working however.
+* In some very rare cases where the content of a file in the Cozy doesn't match
+  the correct checksum, the app will check the local file version and reupload
+  it when relevant.
+
+Improvements for Windows & macOS users:
+
+* When renaming a remote directory by only changing its case, the change was
+  applied locally but it was also triggering a weird synchronization loopback
+  error. This should now work as expected.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.9.1-beta.4 - 2018-10-03
 
 Improvements for all users:
