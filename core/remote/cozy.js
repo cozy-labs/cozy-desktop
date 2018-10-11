@@ -16,6 +16,29 @@ import type Config from '../config'
 import type { Readable } from 'stream'
 import type { RemoteDoc, RemoteDeletion } from './document'
 import type { Warning } from './warning'
+
+type ContentMismatch = {
+  md5sum_file: string, // FS/swift
+  md5sum_index: string, // couchdb
+  size_file: number, // FS/swift
+  size_index: number // couchdb
+}
+
+type FsckLog = {
+  content_mismatch?: ContentMismatch,
+  file_doc?: RemoteDoc & {md5sum: string},
+  dir_doc?: RemoteDoc,
+  is_file: boolean,
+  type: string
+}
+
+export type ContentMismatchFsckLog = {
+  content_mismatch: ContentMismatch,
+  file_doc: RemoteDoc & {md5sum: string},
+  is_file: true,
+  type: 'content_mismatch'
+}
+
 */
 
 const log = logger({
@@ -215,6 +238,27 @@ class RemoteCozy {
         default: throw err
       }
     }
+  }
+
+  async fetchFileCorruptions () /*: Promise<ContentMismatchFsckLog[]> */ {
+    const url = '/files/fsck'
+    const fscklogs /*: null|FsckLog[] */ = await this.client.fetchJSON('GET', url)
+    if (fscklogs == null) return []
+
+    const validContentMismatch = (raw /*: FsckLog */)/*: null|ContentMismatchFsckLog */ => {
+      if (raw.is_file && raw.type === 'content_mismatch' && raw.file_doc && raw.content_mismatch && raw.file_doc.md5sum) {
+        return {
+          content_mismatch: raw.content_mismatch,
+          file_doc: raw.file_doc,
+          is_file: true,
+          type: 'content_mismatch'
+        }
+      }
+      if (raw.is_file && raw.type === 'content_mismatch') log.error({sentry: true, raw}, 'bad fscklog')
+      return null
+    }
+
+    return fscklogs.map(validContentMismatch).filter(Boolean)
   }
 }
 

@@ -240,7 +240,7 @@ function ensureValidChecksum (doc /*: Metadata */) {
 }
 
 // Extract the revision number, or 0 it not found
-function extractRevNumber (doc /*: Metadata */) {
+function extractRevNumber (doc /*: Metadata|{_rev: string} */) {
   try {
     // $FlowFixMe
     let rev = doc._rev.split('-')[0]
