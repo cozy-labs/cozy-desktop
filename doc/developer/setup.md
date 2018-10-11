@@ -30,17 +30,33 @@ cd cozy-desktop
 **Warning**: The path to your local repository should not include any space,
 otherwise [installing dependencies will fail](https://github.com/cozy-labs/cozy-desktop/issues/1097).
 
-### Install dependencies
+## Install dependencies
 
 ```
 yarn install
 ```
 
-### Build everything
+## Build everything
 
 ```
 yarn build
 ```
+
+### Transifex (optional)
+
+If you need to update translations, you'll need a Transifex API token at this step (requested automatically if `transifex` is in your $PATH)
+
+- Create an account on http://www.transifex.com
+- Join the Cozy team
+- Get your API token from the account settings page
+
+## Start development version
+
+```
+yarn start
+```
+
+N.B.: the address of the development cozy-stack is http://cozy.tools:8080. Don't forget the protocol part when creating the connection in cozy-desktop for the first time or it won't find the server.
 
 ## Run tests
 

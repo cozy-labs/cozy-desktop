@@ -79,13 +79,13 @@ parameters below):
     docker-machine create default
     eval $(docker-machine env default)
 
-### Fedora 27
+### Fedora 28
 
-    sudo dnf install docker gcc-c++ git nodejs
-    cd /etc/yum.repos.d/
-    sudo wget https://dl.yarnpkg.com/rpm/yarn.repo
-    cd -
-    sudo dnf install yarn
+    sudo wget https://dl.yarnpkg.com/rpm/yarn.repo -O /etc/yum.repos.d/yarn.repo
+    sudo dnf install docker gcc-c++ git nodejs yarn transifex-client python3-pip
+    sudo pip install docker-compose
+    sudo groupadd docker
+    sudo usermod -aG docker $USER # Restart your session so this takes effect
 
 ### Ubuntu
 
@@ -95,22 +95,17 @@ parameters below):
     sudo add-apt-repository \
      "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
     sudo apt update
-    sudo apt install git nodejs build-essential gcc transifex-client icnsutils graphicsmagick python-pip docker-ce yarn
+    sudo apt install git nodejs build-essential gcc transifex-client icnsutils graphicsmagick python3-pip docker-ce yarn
     sudo pip install docker-compose
     sudo groupadd docker
-    sudo usermod -aG docker $USER
+    sudo usermod -aG docker $USER # Restart your session so this takes effect
 
 ## Set up a Cozy stack
 
 If you don't already have a [running Cozy stack](https://github.com/cozy/cozy-stack/blob/master/docs/INSTALL.md), the easiest way to get started is to use Docker:
 
-    cd cli
     docker-compose up
     yarn bootstrap
-
-Otherwise, please refer to the
-[../../cli/dev/docker/bootstrap-cozy-desktop.sh]()
-script to create the appropriate instances, token, etc...
 
 ## Cozy Stack
 
@@ -127,3 +122,7 @@ You can also run any cozy-stack command with the `yarn cozy-stack` script, e.g.:
 ```
 yarn cozy-stack apps install --domain cozy.tools:8080 drive 'git://github.com/cozy/cozy-drive.git#build-drive'
 ```
+
+## Complete your setup
+
+See [./setup.md]()
