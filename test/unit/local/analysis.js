@@ -261,6 +261,25 @@ describe('core/local/analysis', function () {
     }])
   })
 
+  it('identifies addDir({path: foo, ino: 1}) + addDir({path: foo, ino: 1}) as only DirAddition(foo)', () => {
+    const old /*: Metadata */ = metadataBuilders.dir().path('foo').ino(1).build()
+    const stats = {ino: 1}
+    const events /*: LocalEvent[] */ = [
+      {type: 'addDir', path: 'foo', stats, old},
+      {type: 'addDir', path: 'foo', stats, old}
+    ]
+    const pendingChanges = []
+
+    should(analysis(events, pendingChanges)).deepEqual([{
+      sideName,
+      type: 'DirAddition',
+      path: 'foo',
+      ino: 1,
+      stats,
+      old
+    }])
+  })
+
   it('identifies addDir({path: FOO, stats: {ino}, old: {path: foo, ino}}) as offline DirMove(foo, FOO)', () => {
     const ino = 456
     const stats = {ino}
