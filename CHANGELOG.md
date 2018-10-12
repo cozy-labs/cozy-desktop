@@ -1,3 +1,13 @@
+## 3.10.0-beta.2 - 2018-10-12
+
+Improvements for all users:
+
+* We fixed an issue introduced by the recent case/encoding handling changes.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.10.0-beta.1 - 2018-10-11
 
 Improvements for all users:
