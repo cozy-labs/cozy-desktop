@@ -242,6 +242,28 @@ describe('core/local/analysis', function () {
     should(pendingChanges).deepEqual([])
   })
 
+  it('identifies 2 successive addDir on same path/ino but different stats as DirAddition(foo/) with the last stats', () => {
+    const path = 'foo'
+    const ino = 1
+    const old /*: Metadata */ = metadataBuilders.dir().path(path).ino(ino).build()
+    const stats1 = {ino, size: 64}
+    const stats2 = {ino, size: 1312}
+    const events /*: LocalEvent[] */ = [
+      {type: 'addDir', path, stats: stats1, old},
+      {type: 'addDir', path, stats: stats2, old}
+    ]
+    const pendingChanges = []
+
+    should(analysis(events, pendingChanges)).deepEqual([{
+      sideName,
+      type: 'DirAddition',
+      path,
+      ino,
+      stats: stats2,
+      old
+    }])
+  })
+
   it('identifies addDir({path: foo, ino: 1}) + addDir({path: FOO, ino: 1}) as DirMove(foo, FOO)', () => {
     const old /*: Metadata */ = metadataBuilders.dir().path('foo').ino(1).build()
     const stats = {ino: 1}
