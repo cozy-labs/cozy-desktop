@@ -119,7 +119,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
               break
             }
             const addChange /*: ?LocalDirAddition */ = localChange.maybePutFolder(getChangeByInode(e))
-            if (addChange) {
+            if (addChange && addChange.path !== e.path) {
               changeFound(localChange.dirRenamingCaseOnlyFromAddAdd(addChange, e))
               break
             }
