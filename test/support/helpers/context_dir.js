@@ -122,6 +122,10 @@ class ContextDir {
     return fs.outputFile(this.abspath(target), data)
   }
 
+  async move (src /*: string */, dst /*: string */) {
+    return fs.move(this.abspath(src), this.abspath(dst))
+  }
+
   async checksum (target /*: string | {path: string} */) /*: Promise<string> */ {
     return checksumer.computeChecksumAsync(this.abspath(target))
   }

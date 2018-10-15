@@ -3,7 +3,7 @@
 const fs = require('fs-extra')
 const path = require('path')
 
-const rootDir = path.resolve('../../..')
+const rootDir = path.resolve(__dirname, '../..')
 
 // Where can we put temporary stuff
 const tmpDir = path.resolve(process.env.COZY_DESKTOP_DIR || 'tmp')
@@ -27,7 +27,7 @@ async function emptyForTestFile (filename /*: string */) /*: Promise<string> */ 
 }
 
 function pathForTestFile (filename /*: string */) /*: string */ {
-  const abspath = filename.replace(/.js$/, '')
+  const abspath = filename.replace(/.(js|json)$/, '')
   const relpath = abspath.startsWith(rootDir)
     ? abspath.slice(rootDir.length + 1)
     : abspath

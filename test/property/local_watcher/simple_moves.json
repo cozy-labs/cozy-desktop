@@ -1,0 +1,8 @@
+[
+  { "op": "mkdir", "path": "dirA" },
+  { "op": "create_file", "path": "fileA", "size": 16 },
+  { "op": "start" },
+  { "op": "mv", "from": "dirA", "to": "dirB" },
+  { "op": "sleep", "duration": 1000 },
+  { "op": "mv", "from": "dirB", "to": "dirC" }
+]
