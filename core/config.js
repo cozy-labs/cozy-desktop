@@ -4,6 +4,11 @@ const _ = require('lodash')
 const path = require('path')
 
 const { hideOnWindows } = require('./utils/fs')
+const logger = require('./logger')
+
+const log = logger({
+  component: 'Config'
+})
 
 // Config can keep some configuration parameters in a JSON file,
 // like the devices credentials or the mount path
@@ -20,7 +25,17 @@ module.exports = class Config {
       this.reset()
     }
 
-    this.config = require(this.configPath)
+    try {
+      this.config = require(this.configPath)
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        log.error(`Could not read config file at ${this.configPath}:`, e)
+        this.reset()
+        this.config = require(this.configPath)
+      } else {
+        throw e
+      }
+    }
 
     // FIXME: autoBind(this)
   }
