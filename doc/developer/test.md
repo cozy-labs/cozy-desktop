@@ -19,7 +19,14 @@ We use [`mocha`][1] for testing cozy-desktop, the options are in
 Integration tests and some unit tests require that you have a Cozy stack up.
 It's also expected that you have an instance registered for
 `test.cozy-desktop.tools:8080` with the
-[test passphrase](../test/helpers/passphrase.js).
+[test passphrase](../../test/support/helpers/passphrase.js).
+You can start a cozy-stack via the provided docker-compose file:
+
+```
+docker-compose up
+```
+
+See [requirements](./requirements.md) for details on how to setup docker and docker-compose.
 
 Unit tests
 ----------
@@ -27,7 +34,7 @@ Unit tests
 For testing a class in isolation, method per method:
 
 ```bash
-yarn test-unit
+yarn test:unit
 ```
 
 
@@ -42,7 +49,7 @@ You can run the integration suite to test the communication between
 cozy-desktop and a remote cozy stack:
 
 ```bash
-COZY_DESKTOP_DIR=tmp yarn test-integration
+COZY_DESKTOP_DIR=tmp yarn test:integration
 ```
 
 
@@ -88,7 +95,7 @@ COZY_DESKTOP_DIR=tmp yarn test
 To run a specific set of tests (here testing pouch)
 
 ```bash
-NODE_ENV=test node_modules/.bin/mocha test/unit/pouch.js
+yarn mocha test/unit/pouch.js
 ```
 
 For more logs you can activate debug logs:
