@@ -34,7 +34,7 @@ Unit tests
 For testing a class in isolation, method per method:
 
 ```bash
-yarn test-unit
+yarn test:unit
 ```
 
 
@@ -49,7 +49,7 @@ You can run the integration suite to test the communication between
 cozy-desktop and a remote cozy stack:
 
 ```bash
-COZY_DESKTOP_DIR=tmp yarn test-integration
+COZY_DESKTOP_DIR=tmp yarn test:integration
 ```
 
 
@@ -95,7 +95,7 @@ COZY_DESKTOP_DIR=tmp yarn test
 To run a specific set of tests (here testing pouch)
 
 ```bash
-NODE_ENV=test node_modules/.bin/mocha test/unit/pouch.js
+yarn mocha test/unit/pouch.js
 ```
 
 For more logs you can activate debug logs:
