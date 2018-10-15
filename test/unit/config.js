@@ -2,6 +2,7 @@
 
 const path = require('path')
 const should = require('should')
+const fs = require('fs-extra')
 
 const configHelpers = require('../support/helpers/config')
 
@@ -10,6 +11,19 @@ const Config = require('../../core/config')
 describe('Config', function () {
   before('instanciate config', configHelpers.createConfig)
   after('clean config directory', configHelpers.cleanConfig)
+
+  describe('constructor', function () {
+    it('resets corrupted config', function () {
+      const corruptedContent = '\0'
+      fs.writeFileSync(this.config.configPath, corruptedContent)
+
+      let conf
+      (() => {
+        conf = new Config(path.dirname(this.config.configPath))
+      }).should.not.throw()
+      conf.should.be.an.Object()
+    })
+  })
 
   describe('persist', function () {
     it('saves last changes made on the config', function () {
