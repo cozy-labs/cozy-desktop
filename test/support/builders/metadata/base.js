@@ -57,6 +57,11 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
+  noRev () /*: this */ {
+    delete this.doc._rev
+    return this
+  }
+
   incompatible () /*: this */ {
     const { platform } = process
 
