@@ -9,6 +9,7 @@ const path = require('path')
 const { ContextDir } = require('../../support/helpers/context_dir')
 const TmpDir = require('../../support/helpers/TmpDir')
 
+const logger = require('../../../core/logger')
 const Ignore = require('../../../core/ignore')
 const Merge = require('../../../core/merge')
 const Pouch = require('../../../core/pouch')
@@ -20,12 +21,10 @@ PouchDB.plugin(require('pouchdb-adapter-memory'))
 
 
 const events = {
-  emit: (msg) => { /* console.log('Info', msg) */ }
+  emit: (msg) => {}
 }
 
-
 async function play(state, op) {
-  console.log(op)
   switch (op.op) {
     case "start":
       const config = { dbPath: { name: state.name, adapter: 'memory' } }
@@ -57,7 +56,6 @@ async function play(state, op) {
 }
 
 
-// TODO run in parallel with https://github.com/mocha-parallel/mocha-parallel-tests
 describe('Local watcher', () => {
   scenarios = glob.sync(path.join(__dirname, '*.json'))
   scenarios.forEach((scenario) => {

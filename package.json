@@ -67,7 +67,7 @@
     "test:elm": "elm-test",
     "test:integration": "yarn mocha test/integration",
     "test:performance": "yarn mocha test/performance",
-    "test:property": "mocha-parallel-tests --max-parallel 8 test/property",
+    "test:property": "NO_ELECTRON=true mocha-parallel-tests --exit --max-parallel 8 test/property",
     "test:scenarios": "yarn mocha test/scenarios/run.js",
     "test:setup": "yarn docker:exec /cozy-desktop/test/setup.sh",
     "test:unit": "yarn mocha test/unit/",
