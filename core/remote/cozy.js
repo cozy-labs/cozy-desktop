@@ -242,9 +242,9 @@ class RemoteCozy {
 
   async fetchFileCorruptions () /*: Promise<ContentMismatchFsckLog[]> */ {
     const url = '/files/fsck'
-    let fscklogs
+    let fscklogs /*: ?Array<FsckLog> */
     try {
-      fscklogs /*: null|FsckLog[] */ = await this.client.fetchJSON('GET', url)
+      fscklogs = await this.client.fetchJSON('GET', url)
     } catch (err) {
       if (err.status !== 404) throw err
       log.warn(`No ${url} route on old cozy-stack. Skipping.`)
