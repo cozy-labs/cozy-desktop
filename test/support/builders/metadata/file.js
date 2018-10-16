@@ -12,12 +12,13 @@ const BaseMetadataBuilder = require('./base')
 
 /*::
 import type Pouch from '../../../../core/pouch'
+import type { Metadata } from '../../../../core/metadata'
 import type { RemoteDoc } from '../../../../core/remote/document'
 */
 
 module.exports = class FileMetadataBuilder extends BaseMetadataBuilder {
-  constructor (pouch /*: ?Pouch */) {
-    super(pouch)
+  constructor (pouch /*: ?Pouch */, old /*: ?Metadata */) {
+    super(pouch, old)
     this.doc.docType = 'file'
     this.data('')
   }

@@ -22,8 +22,8 @@ module.exports = class MetadataBuilders {
     return new DirMetadataBuilder(this.pouch, old)
   }
 
-  file () /*: FileMetadataBuilder */ {
-    return new FileMetadataBuilder(this.pouch)
+  file (old /*: ?Metadata */) /*: FileMetadataBuilder */ {
+    return new FileMetadataBuilder(this.pouch, old)
   }
 
   whatever () /*: BaseMetadataBuilder */ {
