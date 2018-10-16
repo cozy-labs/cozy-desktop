@@ -179,8 +179,9 @@ describe('App', function () {
     it('works when app is configured', function () {
       configHelpers.createConfig.call(this)
       configHelpers.registerClient.call(this)
-      const app = new App(this.basePath)
+      this.config.persist() // the config helper does not persist it
 
+      const app = new App(this.basePath)
       const info = app.clientInfo()
 
       should(info.appVersion).equal(version)

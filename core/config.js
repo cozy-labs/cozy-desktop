@@ -26,7 +26,7 @@ module.exports = class Config {
     }
 
     try {
-      this.config = require(this.configPath)
+      this.config = fs.readJSONSync(this.configPath)
     } catch (e) {
       if (e instanceof SyntaxError) {
         log.error(`Could not read config file at ${this.configPath}:`, e)
