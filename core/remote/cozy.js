@@ -51,6 +51,8 @@ function DirectoryNotFound (path/*: string */, cozyURL/*: string */) {
   this.stack = (new Error()).stack
 }
 
+const FSCK_PATH = '/files/fsck'
+
 // A remote Cozy instance.
 //
 // This class wraps cozy-client-js to:
@@ -241,8 +243,13 @@ class RemoteCozy {
   }
 
   async fetchFileCorruptions () /*: Promise<ContentMismatchFsckLog[]> */ {
-    const url = '/files/fsck'
-    const fscklogs /*: null|FsckLog[] */ = await this.client.fetchJSON('GET', url)
+    let fscklogs /*: ?Array<FsckLog> */
+    try {
+      fscklogs = await this.client.fetchJSON('GET', FSCK_PATH)
+    } catch (err) {
+      if (err.status !== 404) throw err
+      log.warn(`No ${FSCK_PATH} route on old cozy-stack. Skipping.`)
+    }
     if (fscklogs == null) return []
 
     const validContentMismatch = (raw /*: FsckLog */)/*: null|ContentMismatchFsckLog */ => {
@@ -264,5 +271,6 @@ class RemoteCozy {
 
 module.exports = {
   DirectoryNotFound,
+  FSCK_PATH,
   RemoteCozy
 }

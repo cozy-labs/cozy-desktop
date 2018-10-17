@@ -4,13 +4,18 @@
 const _ = require('lodash')
 const path = require('path')
 const should = require('should')
+const sinon = require('sinon')
 
 const {
   FILES_DOCTYPE,
   TRASH_DIR_ID,
   TRASH_DIR_NAME
 } = require('../../../core/remote/constants')
-const { DirectoryNotFound, RemoteCozy } = require('../../../core/remote/cozy')
+const {
+  DirectoryNotFound,
+  FSCK_PATH,
+  RemoteCozy
+} = require('../../../core/remote/cozy')
 
 const configHelpers = require('../../support/helpers/config')
 const { COZY_URL, builders, deleteAll } = require('../../support/helpers/cozy')
@@ -313,5 +318,24 @@ describe('RemoteCozy', function () {
         await should(remoteCozy.warnings()).be.rejectedWith({status})
       })
     }
+  })
+
+  describe('#fetchFileCorruptions()', () => {
+    const stubFsck = () =>
+      sinon.stub(remoteCozy.client, 'fetchJSON').withArgs('GET', FSCK_PATH)
+
+    it('resolves with an empty array with an old stack without the /fsck route', async () => {
+      stubFsck().rejects({status: 404})
+
+      const contentMismatchFsckLog = await remoteCozy.fetchFileCorruptions()
+
+      should(contentMismatchFsckLog).deepEqual([])
+    })
+
+    it('does not swallow other cozy-stack errors', async () => {
+      const err = {status: 500, message: 'Other fsck error'}
+      stubFsck().rejects(err)
+      await should(remoteCozy.fetchFileCorruptions()).be.rejectedWith(err)
+    })
   })
 })
