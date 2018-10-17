@@ -1,3 +1,29 @@
+## 3.10.0-beta.3 - 2018-10-17
+
+Improvements for all users:
+
+- We fixed an issue occuring when the destination of a file or directory moved
+  on one side was already existing on the other side. The conflict is now
+  properly resolved.
+- In [3.10.0-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.10.0-beta.1)
+  we introduced automatic reupload of content mismatching files. This actually
+  relies upon a recent cozy-stack feature. Old stacks lacking the feature were
+  not handled gracefully. Reupload is now properly disabled for old stacks.
+
+Improvements for Windows users:
+
+- A few users reported that the app couldn't read its configuration anymore,
+  while it used to work. Although were still investigating the issue, the app
+  will now properly warn the user and take her back to the onboarding. We'll
+  soon come up with a way to write the configuration to prevent a theoretically
+  possible issue. Please report to us in case you're still affected (especially
+  including whether or not you opened your `.cozy-desktop/config.json` file
+  with some third-party application).
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.10.0-beta.2 - 2018-10-12
 
 Improvements for all users:
