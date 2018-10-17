@@ -42,8 +42,10 @@ async function play(state, op) {
       await state.dir.ensureDir(op.path)
       break
     case 'create_file':
-      content = await crypto.randomBytes(op.size || 16)
-      await state.dir.outputFile(op.path, content)
+      const content = await crypto.randomBytes(op.size || 16)
+      try {
+        await state.dir.outputFile(op.path, content)
+      } catch (err) {}
       break
     case 'mv':
       try {
@@ -62,10 +64,10 @@ async function play(state, op) {
 }
 
 describe('Local watcher', function() {
-  this.timeout(60000)
-  this.slow(10000)
+  this.timeout(240000)
+  this.slow(30000)
 
-  scenarios = glob.sync(path.join(__dirname, '*.json'))
+  const scenarios = glob.sync(path.join(__dirname, '*.json'))
   scenarios.forEach(scenario => {
     it(`works fine for ${path.basename(scenario)}`, async function() {
       const ops = await fse.readJson(scenario)
@@ -96,6 +98,7 @@ describe('Local watcher', function() {
       expected = expected.map(item => item.replace(/\/$/, ''))
       let actual = await state.pouchdb.treeAsync()
       actual = actual.filter(item => !item.startsWith('_design/'))
+      actual = actual.sort((a, b) => a.localeCompare(b))
       should(actual).deepEqual(expected)
     })
   })
