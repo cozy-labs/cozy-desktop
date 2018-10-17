@@ -381,6 +381,41 @@ describe('Merge', function () {
       should(info.doc).have.property('moveTo', doc._id)
     })
 
+    it('resolves a conflict with an existing destination', async function () {
+      const existing = await builders.file().path('DST_FILE').create()
+      const was = await builders.file().path('SRC_FILE').upToDate().create()
+      const doc = builders.file(was).path(existing.path).noRev().build()
+      sinon.spy(this.pouch, 'bulkDocs')
+
+      await this.merge.moveFileAsync(this.side, _.cloneDeep(doc), _.cloneDeep(was))
+
+      const conflictRenamings = this.merge[this.side].renameConflictingDocAsync.args.map(args => ({
+        srcId: _.get(args, [0, '_id']),
+        dstId: metadata.id(args[1])
+      }))
+      const { dstId } = conflictRenamings[0]
+      const savedDocs = _.chain(this.pouch.bulkDocs.args)
+        .flattenDeep()
+        .map(({_id, _deleted, moveFrom, moveTo}) => {
+          const doc = {_id}
+          if (_deleted) doc._deleted = true
+          if (moveFrom) doc.moveFrom = _.pick(moveFrom, ['_id'])
+          if (moveTo) doc.moveTo = moveTo
+          return doc
+        })
+        .value()
+
+      should({conflictRenamings, savedDocs}).deepEqual({
+        conflictRenamings: [
+          {srcId: doc._id, dstId}
+        ],
+        savedDocs: [
+          {_id: was._id, _deleted: true, moveTo: dstId},
+          {_id: dstId, moveFrom: {_id: was._id}}
+        ]
+      })
+    })
+
     it('does not identify an identical renaming as a conflict', async function () {
       const banana = await builders.file().path('banana').upToDate().create()
       const BANANA = _({_id: metadata.id('BANANA'), path: 'BANANA'})
@@ -521,6 +556,41 @@ describe('Merge', function () {
       const info = await infoPromise
       should(info).have.property('id', was._id)
       should(info.doc).have.property('moveTo', doc._id)
+    })
+
+    it('resolves a conflict with an existing destination', async function () {
+      const existing = await builders.dir().path('DST_DIR').create()
+      const was = await builders.dir().path('SRC_DIR').upToDate().create()
+      const doc = builders.dir(was).path(existing.path).noRev().build()
+      sinon.spy(this.pouch, 'bulkDocs')
+
+      await this.merge.moveFolderAsync(this.side, _.cloneDeep(doc), _.cloneDeep(was))
+
+      const conflictRenamings = this.merge[this.side].renameConflictingDocAsync.args.map(args => ({
+        srcId: _.get(args, [0, '_id']),
+        dstId: metadata.id(args[1])
+      }))
+      const { dstId } = conflictRenamings[0]
+      const savedDocs = _.chain(this.pouch.bulkDocs.args)
+        .flattenDeep()
+        .map(({_id, _deleted, moveFrom, moveTo}) => {
+          const doc = {_id}
+          if (_deleted) doc._deleted = true
+          if (moveFrom) doc.moveFrom = _.pick(moveFrom, ['_id'])
+          if (moveTo) doc.moveTo = moveTo
+          return doc
+        })
+        .value()
+
+      should({conflictRenamings, savedDocs}).deepEqual({
+        conflictRenamings: [
+          {srcId: doc.path, dstId}
+        ],
+        savedDocs: [
+          {_id: was._id, _deleted: true, moveTo: dstId},
+          {_id: dstId, moveFrom: {_id: was._id}}
+        ]
+      })
     })
 
     it('does not identify an identical renaming as a conflict', async function () {

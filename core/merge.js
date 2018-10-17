@@ -7,6 +7,7 @@ const { basename, dirname, extname, join } = require('path')
 const IdConflict = require('./IdConflict')
 const logger = require('./logger')
 const {
+  assignId,
   assignMaxDate,
   detectPlatformIncompatibilities,
   isUpToDate,
@@ -109,6 +110,7 @@ class Merge {
       base = base.slice(0, 180)
     }
     dst.path = `${join(dir, base)}-conflict-${date}${ext}`
+    assignId(dst)
     try {
       // $FlowFixMe
       await this[side].renameConflictingDocAsync(doc, dst.path)
