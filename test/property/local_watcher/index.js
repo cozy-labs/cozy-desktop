@@ -9,6 +9,7 @@ const path = require('path')
 const { ContextDir } = require('../../support/helpers/context_dir')
 const TmpDir = require('../../support/helpers/TmpDir')
 
+const { id } = require('../../../core/metadata')
 const { defaultLogger } = require('../../../core/logger')
 const Ignore = require('../../../core/ignore')
 const Merge = require('../../../core/merge')
@@ -96,6 +97,7 @@ describe('Local watcher', function() {
       // Pouchdb should have the same tree that the file system
       let expected = await state.dir.tree()
       expected = expected.map(item => item.replace(/\/$/, ''))
+      expected = expected.map(item => id(item))
       let actual = await state.pouchdb.treeAsync()
       actual = actual.filter(item => !item.startsWith('_design/'))
       actual = actual.sort((a, b) => a.localeCompare(b))
