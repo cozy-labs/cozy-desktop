@@ -25,13 +25,16 @@ const events = {
 }
 
 async function play(state, op) {
+  // Slow down things to avoid issues with chokidar throttler
+  await Promise.delay(10)
+
   switch (op.op) {
     case 'start':
       const config = { dbPath: { name: state.name, adapter: 'memory' } }
       state.pouchdb = new Pouch(config)
       await state.pouchdb.addAllViewsAsync()
       const merge = new Merge(state.pouchdb)
-      const ignore = new Ignore('')
+      const ignore = new Ignore([])
       const prep = new Prep(merge, ignore, config)
       state.watcher = new Watcher(state.dir.root, prep, state.pouchdb, events)
       state.watcher.start()
@@ -40,9 +43,12 @@ async function play(state, op) {
       await Promise.delay(op.duration)
       break
     case 'mkdir':
-      await state.dir.ensureDir(op.path)
+      try {
+        await state.dir.ensureDir(op.path)
+      } catch (err) {}
       break
     case 'create_file':
+    case 'update_file':
       const content = await crypto.randomBytes(op.size || 16)
       try {
         await state.dir.outputFile(op.path, content)

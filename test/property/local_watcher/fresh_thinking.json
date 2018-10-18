@@ -1,0 +1,36 @@
+[
+  { "op": "mkdir", "path": "toys_crest.i2g" },
+  { "op": "mkdir", "path": "smtp_moratorium_versatile.dmg" },
+  { "op": "mkdir", "path": "generic_rubber_chicken.z4" },
+  { "op": "mkdir", "path": "brand.bdoc" },
+  { "op": "mkdir", "path": "refined_plastic_chicken_rubber_invoice.mp4a" },
+  { "op": "mkdir", "path": "kuwaiti_dinar_turn_key.otp" },
+  { "op": "create_file", "path": "fresh_thinking_virtual.uu", "size": 15 },
+  { "op": "start" },
+  { "op": "create_file", "path": "guyana_connect.cab", "size": 8213 },
+  {
+    "op": "create_file",
+    "path": "generic_generic_frozen_soap_intelligent.ustar",
+    "size": 65557
+  },
+  { "op": "mkdir", "path": "sky_blue_bike_executive.ifm" },
+  { "op": "mkdir", "path": "rustic_taka_eyeballs.pfr" },
+  { "op": "create_file", "path": "concrete.hvp", "size": 16412 },
+  { "op": "update_file", "path": "guyana_connect.cab", "size": 1048587 },
+  { "op": "create_file", "path": "michigan.uvv", "size": 80 },
+  {
+    "op": "create_file",
+    "path": "virginia_next_generation.pkg",
+    "size": 524309
+  },
+  { "op": "mkdir", "path": "pixel_mouse.htc" },
+  { "op": "create_file", "path": "customizable_pink_global.sub", "size": 515 },
+  { "op": "rm", "path": "fresh_thinking_virtual.uu" },
+  { "op": "mkdir", "path": "fresh_thinking_virtual.uu" },
+  { "op": "create_file", "path": "chair_fantastic.zaz", "size": 16416 },
+  { "op": "mkdir", "path": "fresh_thinking_virtual.uu" },
+  { "op": "create_file", "path": "new_jersey.class", "size": 2048 },
+  { "op": "rm", "path": "toys_crest.i2g" },
+  { "op": "rm", "path": "pixel_mouse.htc" },
+  { "op": "sleep", "duration": 16000 }
+]

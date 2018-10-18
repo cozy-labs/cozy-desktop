@@ -147,6 +147,7 @@ module.exports = class LocalWatcher {
 
       this.watcher
         .on('ready', () => this.buffer.switchMode('timeout'))
+        .on('raw', (event, path, details) => log.chokidar.debug({event, path, details}, 'raw'))
         .on('error', (err) => {
           if (err.message === 'watch ENOSPC') {
             log.error('Sorry, the kernel is out of inotify watches! ' +
