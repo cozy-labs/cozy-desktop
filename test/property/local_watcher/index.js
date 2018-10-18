@@ -81,7 +81,7 @@ describe('Local watcher', function() {
       defaultLogger.addStream({
         type: 'file',
         path: state.dir.root + '.log',
-        level: 'trace'
+        level: 'debug'
       })
       for (let op of ops) {
         state = await play(state, op)
