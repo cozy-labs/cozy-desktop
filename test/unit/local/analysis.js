@@ -349,7 +349,7 @@ describe('core/local/analysis', function () {
     const pendingChanges /*: LocalChange[] */ = []
 
     should(analysis(events, pendingChanges)).deepEqual([
-      {sideName, type: 'FileUpdate', path: 'other-file', stats: otherFileStats, ino: otherFileStats.ino, md5sum: 'yolo', old: otherFileMetadata, /* FIXME: */ wip: undefined},
+      {sideName, type: 'FileUpdate', path: 'other-file', stats: otherFileStats, ino: otherFileStats.ino, md5sum: 'yolo', old: otherFileMetadata},
       {sideName, type: 'DirMove', path: 'dst', stats: dirStats, ino: dirStats.ino, old: dirMetadata},
       // FIXME: Move should have been squashed
       {sideName, type: 'FileMove', path: 'dst/file', stats: fileStats, ino: fileStats.ino, old: fileMetadata},

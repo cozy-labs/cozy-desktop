@@ -133,6 +133,7 @@ function fromEvent (e/*: LocalEvent */) /*: LocalChange */ {
   const change = _fromEvent(e)
   log.debug(_.pick(change, ['path', 'ino', 'wip']), `${e.type} -> ${change.type}`)
   if (change.old == null) delete change.old
+  if (change.wip == null) delete change.wip
   return change
 }
 
