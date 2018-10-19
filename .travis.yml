@@ -61,16 +61,21 @@ before_install:
     - sleep 5
     - curl -X PUT http://127.0.0.1:5984/{_users,_replicator,_global_changes}
 
-    # Go 1.9
+    # Cozy stack
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        cozy_stack_url=$(curl https://api.github.com/repos/cozy/cozy-stack/releases/latest | jq '.assets | .[] | select(.name == "cozy-stack-linux-amd64") | .browser_download_url')
+        curl $cozy_stack_url -o $GOPATH/bin/cozy-stack
+        chmod +x $GOPATH/bin/cozy-stack
+      fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
         travis_retry brew install gimme;
         travis_retry brew install imagemagick;
+        travis_retry gimme 1.11
+        source ~/.gimme/envs/go1.11.env;
+        travis_retry go get -u github.com/cozy/cozy-stack
       fi
-    - travis_retry gimme 1.11
-    - source ~/.gimme/envs/go1.11.env;
 
-    # Cozy stack v3
-    - travis_retry go get -u github.com/cozy/cozy-stack
+    # Create a local instance and an OAuth client
     - $GOPATH/bin/cozy-stack serve --log-level warning >/dev/null &
     - sleep 1
     - $GOPATH/bin/cozy-stack instances add --dev --passphrase "$COZY_PASSPHRASE" localhost:8080
