@@ -167,6 +167,7 @@ function fileMoveFromUnlinkAdd (unlinkChange /*: LocalFileDeletion */, e /*: Loc
 }
 
 function dirMoveFromUnlinkAdd (unlinkChange /*: LocalDirDeletion */, e /*: LocalDirAdded */) /*: * */ {
+  if (_.get(unlinkChange, 'old.path') === e.path) return fromEvent(e)
   log.debug({oldpath: unlinkChange.path, path: e.path}, 'unlinkDir + addDir = DirMove')
   return build('DirMove', e.path, {
     stats: e.stats,

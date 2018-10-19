@@ -150,6 +150,28 @@ describe('core/local/analysis', function () {
     should(pendingChanges).deepEqual([])
   })
 
+  it('handles unlinkDir(x,old=X)+addDir(X,old=X) (identical renaming loopback) as DirAddition(X) because we lack an x doc to build DirMove(x → X)', () => {
+    const ino = 1
+    const oldPath = 'x'
+    const newPath = 'X'
+    const old /*: Metadata */ = metadataBuilders.dir().path(newPath).ino(ino).build()
+    const stats = {ino}
+    const events /*: LocalEvent[] */ = [
+      {type: 'unlinkDir', path: oldPath, old},
+      {type: 'addDir', path: newPath, stats, old}
+    ]
+    const pendingChanges = []
+
+    should(analysis(events, pendingChanges)).deepEqual([{
+      sideName,
+      type: 'DirAddition',
+      path: newPath,
+      ino,
+      stats,
+      old
+    }])
+  })
+
   it('handles partial successive moves (add+unlink+add, then unlink later)', () => {
     const old /*: Metadata */ = metadataBuilders.file().path('src').ino(1).build()
     const stats = {ino: 1}
