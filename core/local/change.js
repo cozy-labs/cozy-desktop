@@ -156,6 +156,7 @@ function _fromEvent (e/*: LocalEvent */) /*: LocalChange */ {
 }
 
 function fileMoveFromUnlinkAdd (unlinkChange /*: LocalFileDeletion */, e /*: LocalFileAdded */) /*: * */ {
+  if (_.get(unlinkChange, 'old.path') === e.path) return fromEvent(e)
   log.debug({oldpath: unlinkChange.path, path: e.path, ino: unlinkChange.ino}, 'unlink + add = FileMove')
   return build('FileMove', e.path, {
     stats: e.stats,

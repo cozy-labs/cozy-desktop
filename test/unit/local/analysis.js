@@ -74,6 +74,31 @@ describe('core/local/analysis', function () {
     should(pendingChanges).deepEqual([])
   })
 
+  it('handles unlink(x,old=X)+add(X,old=X) (identical renaming loopback) as FileAddition(X) because we lack an x doc to build FileMove(x → X)', () => {
+    const ino = 1
+    const oldPath = 'x'
+    const newPath = 'X'
+    const old /*: Metadata */ = metadataBuilders.file().path(newPath).ino(ino).build()
+    const { md5sum } = old
+    const stats = {ino}
+    const events /*: LocalEvent[] */ = [
+      {type: 'unlink', path: oldPath, old},
+      {type: 'add', path: newPath, stats, md5sum, old}
+    ]
+    const pendingChanges = []
+
+    should(analysis(events, pendingChanges)).deepEqual([{
+      sideName,
+      type: 'FileAddition',
+      path: newPath,
+      ino,
+      md5sum,
+      stats,
+      old,
+      wip: undefined
+    }])
+  })
+
   it('handles unlink+add+change', () => {
     const old /*: Metadata */ = metadataBuilders.file().ino(1).build()
     const stats = {ino: 1}
