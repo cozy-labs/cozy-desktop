@@ -1,0 +1,33 @@
+[
+  {
+    "breakpoints": [0]
+  },
+  {
+    "type": "unlinkDir",
+    "path": "dir_case"
+  },
+  {
+    "type": "addDir",
+    "path": "DIR_CASE",
+    "stats": {
+      "ino": 1,
+      "size": 0,
+      "mtime": "2018-10-18T14:36:22.899Z",
+      "ctime": "2018-10-18T14:36:25.927Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "file.case"
+  },
+  {
+    "type": "add",
+    "path": "FILE.CASE",
+    "stats": {
+      "ino": 2,
+      "size": 0,
+      "mtime": "2018-10-18T14:36:22.899Z",
+      "ctime": "2018-10-18T14:36:25.927Z"
+    }
+  }
+]

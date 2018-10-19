@@ -1,0 +1,61 @@
+[
+  {
+    "breakpoints": [0]
+  },
+  {
+    "type": "unlinkDir",
+    "path": "dir-case"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "dir-nfc-to-nfd-é"
+  },
+  {
+    "type": "addDir",
+    "path": "DIR-CASE",
+    "stats": {
+      "ino": 1,
+      "size": 0,
+      "mtime": "2018-10-18T14:36:22.899Z",
+      "ctime": "2018-10-18T14:36:25.927Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "dir-nfc-to-nfd-é",
+    "stats": {
+      "ino": 3,
+      "size": 0,
+      "mtime": "2018-10-18T14:36:22.954Z",
+      "ctime": "2018-10-18T14:36:25.931Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "file-nfc-to-nfd-é"
+  },
+  {
+    "type": "unlink",
+    "path": "file-case"
+  },
+  {
+    "type": "add",
+    "path": "FILE-CASE",
+    "stats": {
+      "ino": 2,
+      "size": 8,
+      "mtime": "2018-10-18T14:36:22.953Z",
+      "ctime": "2018-10-18T14:36:25.929Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "file-nfc-to-nfd-é",
+    "stats": {
+      "ino": 4,
+      "size": 8,
+      "mtime": "2018-10-18T14:36:22.958Z",
+      "ctime": "2018-10-18T14:36:25.932Z"
+    }
+  }
+]
