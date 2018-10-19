@@ -10,7 +10,7 @@ const metadata = require('../../../core/metadata')
 
 const { cozy } = require('./cozy')
 
-const debug = process.env.DEBUG ? console.log : () => {}
+const debug = process.env.TESTDEBUG ? console.log : () => {}
 
 const disabledExtension = '.DISABLED'
 
