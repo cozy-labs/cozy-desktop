@@ -100,7 +100,6 @@ before_script:
     - sleep 3 # give xvfb some time to start
 
 script:
-    - travis_retry yarn
     - yarn build
     - yarn lint
     - yarn test:world --timeout $MOCHA_TIMEOUT --forbid-only
