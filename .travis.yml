@@ -48,9 +48,9 @@ before_install:
         cd -;
       fi
 
-    # CouchDB 2
+    # CouchDB
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-        travis_retry docker run -d -p 5984:5984 --name couch apache/couchdb:2.1;
+        travis_retry docker run -d -p 5984:5984 --name couch apache/couchdb:2.2;
       fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
         travis_retry brew cask install apache-couchdb;
