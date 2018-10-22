@@ -1,3 +1,13 @@
+## 3.10.0-beta.4 - 2018-10-22
+
+Improvements for all users:
+
+- We fixed a couple of harmless issues occuring after syncing a move locally.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.10.0-beta.3 - 2018-10-17
 
 Improvements for all users:
