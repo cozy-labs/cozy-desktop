@@ -49,10 +49,23 @@ async function play(state, op) {
       break
     case 'create_file':
     case 'update_file':
-      const content = await crypto.randomBytes(op.size || 16)
+      let size = op.size || 16
+      const block = size > 65536 ? 65536 : size
+      const content = await crypto.randomBytes(block)
+      size -= block
       try {
         await state.dir.outputFile(op.path, content)
       } catch (err) {}
+      for (let i = 0; size > 0; i++) {
+        const block = size > 65536 ? 65536 : size
+        const content = await crypto.randomBytes(block)
+        size -= block
+        setTimeout(async function() {
+          try {
+            await state.dir.outputFile(op.path, content)
+          } catch(err) {}
+        }, (i+1)*10)
+      }
       break
     case 'mv':
       try {
