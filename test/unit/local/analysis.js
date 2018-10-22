@@ -94,8 +94,7 @@ describe('core/local/analysis', function () {
       ino,
       md5sum,
       stats,
-      old,
-      wip: undefined
+      old
     }])
   })
 
