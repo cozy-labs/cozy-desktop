@@ -104,6 +104,7 @@ describe('Local watcher', function() {
       let expected = await state.dir.tree()
       expected = expected.map(item => item.replace(/\/$/, ''))
       expected = expected.map(item => id(item))
+      expected = expected.sort((a, b) => a.localeCompare(b))
       let actual = await state.pouchdb.treeAsync()
       actual = actual.filter(item => !item.startsWith('_design/'))
       actual = actual.sort((a, b) => a.localeCompare(b))

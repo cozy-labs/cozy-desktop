@@ -34,6 +34,9 @@ function newPath() {
   if (faker.random.number(4) === 0) {
     p = faker.random.arrayElement(specialChars) + p
   }
+  if (knownPaths.length > 0 && faker.random.number(3) > 0) {
+    p = faker.random.arrayElement(knownPaths) + '/' + p
+  }
   knownPaths.push(p)
   return p
 }
@@ -127,7 +130,7 @@ function run(ops) {
   const n = faker.random.number(nbRunOps)
   for (let i = 0; i < n; i++) {
     const op = freq([
-      [3, createNewDir],
+      [5, createNewDir],
       [3, createNewFile],
       [1, recreateDeletedDir],
       [1, recreateDeletedFile],
