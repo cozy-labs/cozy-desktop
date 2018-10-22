@@ -2,11 +2,38 @@
 
 const faker = require('faker')
 
+const nbInitOps = 16
+const nbRunOps = 64
+const specialChars = [':', '_', 'é', ' ', '%', '\\', '&', '@', 'É', 'Ç']
+
 let knownPaths = []
 let deletedPaths = []
 
+function similarPath() {
+  let p = faker.random.arrayElement(knownPaths)
+  let q = p.replace('é', '\u00E9')
+  if (p != q) {
+    return q
+  }
+  q = p.toLowerCase()
+  if (p != q) {
+    return q
+  }
+  q = p.toUpperCase()
+  if (p != q) {
+    return q
+  }
+  return p + faker.random.arrayElement(specialChars)
+}
+
 function newPath() {
+  if (knownPaths.length > 0 && faker.random.number(4) === 0) {
+    return similarPath()
+  }
   let p = faker.system.fileName()
+  if (faker.random.number(4) === 0) {
+    p = faker.random.arrayElement(specialChars) + p
+  }
   knownPaths.push(p)
   return p
 }
@@ -85,7 +112,7 @@ function freq(choices) {
 }
 
 function init(ops) {
-  const n = faker.random.number(16)
+  const n = faker.random.number(nbInitOps)
   for (let i = 0; i < n; i++) {
     const op = freq([[1, createNewDir], [1, createNewFile]])
     ops.push(op)
@@ -97,7 +124,7 @@ function start(ops) {
 }
 
 function run(ops) {
-  const n = faker.random.number(32)
+  const n = faker.random.number(nbRunOps)
   for (let i = 0; i < n; i++) {
     const op = freq([
       [3, createNewDir],
@@ -122,5 +149,4 @@ function generate(filename) {
   console.log(JSON.stringify(ops))
 }
 
-// TODO seed
 generate()
