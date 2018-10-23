@@ -1,3 +1,93 @@
+# Cozy Drive for Desktop: Changelog
+
+## 3.10.0 - 2018-10-23
+
+Improvements for all users:
+
+* We fixed a couple of harmless issues occuring after syncing a move locally. (see [3.10.0-beta.4](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.10.0-beta.4))
+* We fixed an issue occuring when the destination of a file or directory moved
+  on one side was already existing on the other side. The conflict is now
+  properly resolved. (see [3.10.0-beta.3](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.10.0-beta.3))
+* Renaming directories *a* to *c* then *b* to *a* was working for files but not
+  for directories. This now works for simple cases. A few complex ones are
+  still not working however. (see [3.10.0-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.10.0-beta.1))
+* In some very rare cases where the content of a file in the Cozy doesn't match
+  the correct checksum, the app will check the local file version and reupload
+  it when relevant. (see [3.10.0-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.10.0-beta.1))
+* Starting from now, we will be able to automatically receive notifications of
+  errors encountered by our users. Error reports won't include user logs in
+  order to respect your privacy. We'll still have to ask you individually to
+  send us our logs in order to investigate complex issues. But this should help
+  us figuring out which errors occur the most, since not so many people can
+  find the time to report them. For now, the notifications are only sent for a
+  few hard-to-investigate issues, but we'll progressively send more of them. (see [3.9.1-beta.4](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.9.1-beta.4))
+* Checksums for new local files were computed but not sent during the initial
+  upload, possibly delaying detection of content issues. Still the checksum was
+  computed by the Cozy and any issue would've be detected during next polling.
+  They will now be effectively detected as soon as they should be. (see [3.9.1-beta.4](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.9.1-beta.4))
+* Moves overwriting the destination performed on another device should now be
+  synchronized as expected. (see [3.9.1-beta.2](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.9.1-beta.2))
+* Some part of the synchronization engine dating back to Cozy v2 was not
+  necessarily preventing local directory of file overwrites. This part was
+  reworked to reach the same level as the other ones, possibly fixing a couple
+  of bugs. (see [3.9.1-beta.2](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.9.1-beta.2))
+* We noticed that synchronizing a local file update to the Cozy could fail in
+  some very rare cases. We added a few automatic verifications which should
+  help us narrow the issue, so hopefully we'll be able to definitely fix it in
+  another release. (see [3.9.1-beta.2](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.9.1-beta.2))
+* Fix synchronization bugs when merging and overwriting folders. (see [3.9.1-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.9.1-beta.1))
+
+Improvements for Windows & macOS users:
+
+* When renaming a remote directory by only changing its case, the change was
+  applied locally but it was also triggering a weird synchronization loopback
+  error. This should now work as expected. (see [3.10.0-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.10.0-beta.1))
+* Making the whole or some filename part upper/lower case used to be notably
+  unsupported. It should now work everywhere. (see [3.9.1-beta.2](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.9.1-beta.2))
+* When two files and/or directories with only upper/lower case differences in
+  their names are coexisting on your Cozy, only one of them will be
+  synchronized locally on your case-preservative OS and the other one will be
+  renamed as a conflict so you at least have a way to end up with the exact
+  same tree on your Cozy and all your devices. (see [3.9.1-beta.2](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.9.1-beta.2))
+
+Improvements for Windows users:
+
+* A few users reported that the app couldn't read its configuration anymore,
+  while it used to work. Although were still investigating the issue, the app
+  will now properly warn the user and take her back to the onboarding. We'll
+  soon come up with a way to write the configuration to prevent a theoretically
+  possible issue. Please report to us in case you're still affected (especially
+  including whether or not you opened your `.cozy-desktop/config.json` file
+  with some third-party application). (see [3.10.0-beta.3](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.10.0-beta.3))
+* Files made (non-)executable on another macOS or GNU/Linux device were
+  triggering useless synchronization cycles (or conflict in the worst case).
+  This should now work as expected. (see [3.9.1-beta.2](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.9.1-beta.2))
+
+Improvements for macOS users:
+
+* On devices automatically migrated from HFS+ to APFS while upgrading to macOS
+  High Sierra, the initial scan was mistakenly detecting some files as conflict
+  due to the new way we're detecting case/encoding conflicting files. This
+  should now work as expected. This issue could theoretically have happened on
+  both macOS & Windows in rare cases of weird local filename changes. (see [3.9.1-beta.4](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.9.1-beta.4))
+* A regression on folder moves overwriting their destination was fixed (#1181) (see [3.9.1-beta.3](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.9.1-beta.3))
+* Better support for APFS (see [3.9.1-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.9.1-beta.1))
+
+Improvements for macOS and GNU/Linux users:
+
+* Local files made non-executable will now effectively be synced as
+  non-executable on the Cozy and your other devices. (see [3.9.1-beta.2](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.9.1-beta.2))
+* Please note that currently the permissions of your local files may be forced
+  to 755 or 644, depending on the *executable* status. However this should not
+  be a major issue, unless your made both your personal directory and your
+  *Cozy Drive* directory accessible to other users on your device. We'll
+  definitely come up with a better solution at some point to make the
+  executable bits match your existing local read/write ones. (see [3.9.1-beta.2](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.9.1-beta.2))
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.10.0-beta.4 - 2018-10-22
 
 Improvements for all users:
