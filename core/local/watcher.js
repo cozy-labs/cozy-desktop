@@ -362,7 +362,7 @@ module.exports = class LocalWatcher {
       // them if they are still in the awaitWriteFinish period
       for (let relpath in this.watcher._pendingWrites) {
         try {
-          const fullpath = path.join(this.watcher.options.cwd, relpath);
+          const fullpath = path.join(this.watcher.options.cwd, relpath)
           const curStat = await fs.stat(fullpath)
           this.watcher.emit('add', relpath, curStat)
         } catch (err) {}

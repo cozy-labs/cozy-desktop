@@ -24,7 +24,7 @@ const events = {
   emit: msg => {}
 }
 
-async function play(state, op) {
+async function play (state, op) {
   // Slow down things to avoid issues with chokidar throttler
   await Promise.delay(10)
 
@@ -60,11 +60,11 @@ async function play(state, op) {
         const block = size > 65536 ? 65536 : size
         const content = await crypto.randomBytes(block)
         size -= block
-        setTimeout(async function() {
+        setTimeout(async function () {
           try {
             await state.dir.outputFile(op.path, content)
-          } catch(err) {}
-        }, (i+1)*10)
+          } catch (err) {}
+        }, (i + 1) * 10)
       }
       break
     case 'mv':
@@ -83,13 +83,13 @@ async function play(state, op) {
   return state
 }
 
-describe('Local watcher', function() {
+describe('Local watcher', function () {
   this.timeout(240000)
   this.slow(30000)
 
   const scenarios = glob.sync(path.join(__dirname, '*.json'))
   scenarios.forEach(scenario => {
-    it(`works fine for ${path.basename(scenario)}`, async function() {
+    it(`works fine for ${path.basename(scenario)}`, async function () {
       const ops = await fse.readJson(scenario)
       if (ops.length > 0 && ops[0].op === 'pending') {
         return this.skip(ops[0].msg || 'pending')

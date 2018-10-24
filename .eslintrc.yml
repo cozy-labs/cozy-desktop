@@ -4,6 +4,8 @@ extends:
   - plugin:import/errors
   - plugin:import/warnings
   - plugin:node/recommended
+rules:
+  node/shebang: off
 settings:
   node:
     allowModules:

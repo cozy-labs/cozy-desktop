@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const chokidar = require('chokidar')
 const program = require('commander')
 const local = require('./capture/local')

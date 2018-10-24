@@ -9,24 +9,24 @@ const specialChars = [':', '_', 'é', ' ', '%', '\\', '&', '@', 'É', 'Ç']
 let knownPaths = []
 let deletedPaths = []
 
-function similarPath() {
+function similarPath () {
   let p = faker.random.arrayElement(knownPaths)
   let q = p.replace('é', '\u00E9')
-  if (p != q) {
+  if (p !== q) {
     return q
   }
   q = p.toLowerCase()
-  if (p != q) {
+  if (p !== q) {
     return q
   }
   q = p.toUpperCase()
-  if (p != q) {
+  if (p !== q) {
     return q
   }
   return p + faker.random.arrayElement(specialChars)
 }
 
-function newPath() {
+function newPath () {
   if (knownPaths.length > 0 && faker.random.number(4) === 0) {
     return similarPath()
   }
@@ -41,69 +41,69 @@ function newPath() {
   return p
 }
 
-function knownPath() {
+function knownPath () {
   if (knownPaths.length === 0) {
     return newPath()
   }
   return faker.random.arrayElement(knownPaths)
 }
 
-function deletedPath() {
+function deletedPath () {
   if (deletedPaths.length === 0) {
     return newPath()
   }
   return faker.random.arrayElement(deletedPaths)
 }
 
-function fileSize() {
+function fileSize () {
   return faker.random.number(32) + 2 ** (1 + faker.random.number(20))
 }
 
-function createNewDir() {
+function createNewDir () {
   return { op: 'mkdir', path: newPath() }
 }
 
-function createNewFile() {
+function createNewFile () {
   return { op: 'create_file', path: newPath(), size: fileSize() }
 }
 
-function recreateDeletedDir() {
+function recreateDeletedDir () {
   return { op: 'mkdir', path: deletedPath() }
 }
 
-function recreateDeletedFile() {
+function recreateDeletedFile () {
   return { op: 'create_file', path: deletedPath() }
 }
 
-function updateFile() {
+function updateFile () {
   return { op: 'update_file', path: knownPath(), size: fileSize() }
 }
 
-function mvToNewPath() {
+function mvToNewPath () {
   let p = knownPath()
   deletedPaths.push(p)
   return { op: 'mv', from: p, to: newPath() }
 }
 
-function mvToDeletedPath() {
+function mvToDeletedPath () {
   let p = knownPath()
   let to = deletedPath()
   deletedPaths.push(p)
   return { op: 'mv', from: p, to: to }
 }
 
-function rm() {
+function rm () {
   let p = knownPath()
   deletedPaths.push(p)
   return { op: 'rm', path: p }
 }
 
-function sleep() {
+function sleep () {
   const s = 2 ** (1 + faker.random.number(3))
   return { op: 'sleep', duration: 1000 * s }
 }
 
-function freq(choices) {
+function freq (choices) {
   const ary = []
   for (let choice of choices) {
     for (let i = 0; i < choice[0]; i++) {
@@ -114,7 +114,7 @@ function freq(choices) {
   return fn()
 }
 
-function init(ops) {
+function init (ops) {
   const n = faker.random.number(nbInitOps)
   for (let i = 0; i < n; i++) {
     const op = freq([[1, createNewDir], [1, createNewFile]])
@@ -122,11 +122,11 @@ function init(ops) {
   }
 }
 
-function start(ops) {
+function start (ops) {
   ops.push({ op: 'start' })
 }
 
-function run(ops) {
+function run (ops) {
   const n = faker.random.number(nbRunOps)
   for (let i = 0; i < n; i++) {
     const op = freq([
@@ -144,7 +144,7 @@ function run(ops) {
   }
 }
 
-function generate(filename) {
+function generate (filename) {
   let ops = []
   init(ops)
   start(ops)
