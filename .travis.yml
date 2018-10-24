@@ -1,6 +1,5 @@
 ---
 dist: trusty
-sudo: false
 language: node_js
 matrix:
     fast_finish: true
@@ -16,6 +15,7 @@ env:
         - COZY_DESKTOP_DIR=/tmp/cozy-desktop
         - COZY_URL="http://localhost:8080"
         - COZY_PASSPHRASE="cozy"
+        - COZY_STACK_STORAGE="$HOME/storage"
         - GOPATH="$HOME"
         # FIXME: Homebrew 1.7.3 fails to install cask apache-couchdb
         - HOMEBREW_NO_AUTO_UPDATE=1
@@ -30,6 +30,7 @@ cache:
     directories:
         - $HOME/.cache/electron
         - $HOME/.cache/electron-builder
+        - $HOME/bin
 addons:
     apt:
         sources:
@@ -48,9 +49,9 @@ before_install:
         cd -;
       fi
 
-    # CouchDB 2
+    # CouchDB
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-        travis_retry docker run -d -p 5984:5984 --name couch apache/couchdb:2.1;
+        travis_retry docker run -d -p 5984:5984 --name couch apache/couchdb:2.2;
       fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
         travis_retry brew cask install apache-couchdb;
@@ -61,17 +62,20 @@ before_install:
     - sleep 5
     - curl -X PUT http://127.0.0.1:5984/{_users,_replicator,_global_changes}
 
-    # Go 1.9
+    # Cozy-stack
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
         travis_retry brew install gimme;
         travis_retry brew install imagemagick;
       fi
-    - travis_retry gimme 1.11
-    - source ~/.gimme/envs/go1.11.env;
+    - if [[ ! -f $GOPATH/bin/cozy-stack ]]; then
+        travis_retry gimme 1.11;
+        source ~/.gimme/envs/go1.11.env;
+        travis_retry go get -u github.com/cozy/cozy-stack;
+      fi
 
-    # Cozy stack v3
-    - travis_retry go get -u github.com/cozy/cozy-stack
-    - $GOPATH/bin/cozy-stack serve --log-level warning >/dev/null &
+    # Create a local instance and an OAuth client
+    - mkdir -p "$COZY_STACK_STORAGE"
+    - $GOPATH/bin/cozy-stack serve --fs-url "file://$COZY_STACK_STORAGE" --log-level warning >/dev/null &
     - sleep 1
     - $GOPATH/bin/cozy-stack instances add --dev --passphrase "$COZY_PASSPHRASE" localhost:8080
     - export COZY_CLIENT_ID=$($GOPATH/bin/cozy-stack instances client-oauth localhost:8080 http://localhost/ test github.com/cozy-labs/cozy-desktop)
@@ -100,7 +104,6 @@ before_script:
     - sleep 3 # give xvfb some time to start
 
 script:
-    - travis_retry yarn
     - yarn build
     - yarn lint
     - yarn test:world --timeout $MOCHA_TIMEOUT --forbid-only
@@ -126,7 +129,9 @@ script:
       fi
 
 after_success:
-    - bash <(curl -s https://codecov.io/bash)
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        bash <(curl -s https://codecov.io/bash);
+      fi
 
 after_failure:
     - $CXX --version
