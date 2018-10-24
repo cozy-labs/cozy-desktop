@@ -1,0 +1,26 @@
+/* @flow */
+
+/*:: import type { Scenario } from '..' */
+
+// FIXME: https://trello.com/c/txhkekhw
+module.exports = ({
+  side: 'remote',
+  init: [
+    {path: 'src/'},
+    {path: 'src/file'}
+  ],
+  actions: [
+    {type: 'mv', src: 'src', dst: 'dst'},
+    {type: '>>', path: 'dst/file'}
+  ],
+  expected: {
+    tree: [
+      'dst/',
+      'dst/file'
+    ],
+    remoteTrash: [],
+    contents: {
+      'dst/file': 'foo blah'
+    }
+  }
+} /*: Scenario */)
