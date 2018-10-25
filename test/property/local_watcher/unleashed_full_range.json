@@ -1,0 +1,91 @@
+[
+  { "op": "create_file", "path": "ssl_ouguiya.ttf", "size": 524304 },
+  {
+    "op": "create_file",
+    "path": "recontextualize_backing_up.meta4",
+    "size": 147
+  },
+  { "op": "mkdir", "path": "Çtasty_rubber_soap_canyon_card.rtf" },
+  {
+    "op": "create_file",
+    "path": "RECONTEXTUALIZE_BACKING_UP.META4",
+    "size": 537
+  },
+  { "op": "mkdir", "path": "agp_oregon.n3" },
+  { "op": "create_file", "path": "licensed_agent.wspolicy", "size": 65542 },
+  { "op": "create_file", "path": "\\optical.atx", "size": 524295 },
+  { "op": "create_file", "path": "unleash_full_range.text", "size": 2097152 },
+  { "op": "mkdir", "path": "SSL_OUGUIYA.TTF" },
+  { "op": "mkdir", "path": "argentine_peso.gramps" },
+  { "op": "create_file", "path": "concrete_persevering.me", "size": 46 },
+  {
+    "op": "mkdir",
+    "path": "tasty_wooden_fish_incredible_concrete_keyboard_towels.lrm"
+  },
+  { "op": "mkdir", "path": "%capacitor_neural.fti" },
+  { "op": "start" },
+  { "op": "rm", "path": "licensed_agent.wspolicy" },
+  { "op": "mkdir", "path": "UNLEASH_FULL_RANGE.TEXT" },
+  { "op": "create_file", "path": "licensed_agent.wspolicy" },
+  {
+    "op": "mv",
+    "from": "%capacitor_neural.fti",
+    "to": "licensed_agent.wspolicy"
+  },
+  {
+    "op": "mv",
+    "from": "tasty_wooden_fish_incredible_concrete_keyboard_towels.lrm",
+    "to": "%capacitor_neural.fti"
+  },
+  {
+    "op": "mv",
+    "from": "licensed_agent.wspolicy",
+    "to": "system_investor_shirt.cdbcmsg"
+  },
+  { "op": "rm", "path": "concrete_persevering.me" },
+  { "op": "sleep", "duration": 16000 },
+  { "op": "create_file", "path": "concrete_persevering.me" },
+  { "op": "mv", "from": "ssl_ouguiya.ttf", "to": "licensed_agent.wspolicy" },
+  { "op": "rm", "path": "concrete_persevering.me" },
+  {
+    "op": "mv",
+    "from": "unleash_full_range.text",
+    "to": "jewelery_product_forges.hvs"
+  },
+  { "op": "mkdir", "path": "brand.tiff" },
+  { "op": "create_file", "path": " bluetooth.p", "size": 143 },
+  { "op": "mv", "from": "argentine_peso.gramps", "to": "ssl_ouguiya.ttf" },
+  {
+    "op": "update_file",
+    "path": "Çtasty_rubber_soap_canyon_card.rtf",
+    "size": 36
+  },
+  {
+    "op": "create_file",
+    "path": "asymmetric_synergies_switchable.ods",
+    "size": 92
+  },
+  {
+    "op": "mv",
+    "from": "unleash_full_range.text",
+    "to": "argentine_peso.gramps"
+  },
+  { "op": "rm", "path": "%capacitor_neural.fti" },
+  { "op": "mkdir", "path": "buckinghamshire_security_music.mcd" },
+  { "op": "create_file", "path": "ssl_ouguiya.ttf" },
+  {
+    "op": "mv",
+    "from": "%capacitor_neural.fti",
+    "to": "%capacitor_neural.fti"
+  },
+  { "op": "create_file", "path": "%capacitor_neural.fti" },
+  { "op": "rm", "path": "Çtasty_rubber_soap_canyon_card.rtf" },
+  { "op": "rm", "path": "buckinghamshire_security_music.mcd" },
+  { "op": "mkdir", "path": " BLUETOOTH.P" },
+  { "op": "mkdir", "path": "argentine_peso.gramps" },
+  { "op": "mv", "from": "agp_oregon.n3", "to": "concrete_persevering.me" },
+  { "op": "mkdir", "path": "%capacitor_neural.fti" },
+  { "op": "mkdir", "path": "ssl_ouguiya.ttf" },
+  { "op": "mkdir", "path": "%CAPACITOR_NEURAL.FTI" },
+  { "op": "rm", "path": "system_investor_shirt.cdbcmsg" }
+]

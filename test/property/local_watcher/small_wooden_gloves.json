@@ -1,0 +1,156 @@
+[
+  { "op": "mkdir", "path": "payment_synthesizing.rpm" },
+  { "op": "create_file", "path": "%orchid_electronics.uu", "size": 65560 },
+  {
+    "op": "mkdir",
+    "path": "%orchid_electronics.uu/content_invoice_kwanza.tcl"
+  },
+  {
+    "op": "create_file",
+    "path": "%orchid_electronics.uu/pines.mime",
+    "size": 14
+  },
+  {
+    "op": "create_file",
+    "path": "%ORCHID_ELECTRONICS.UU/CONTENT_INVOICE_KWANZA.TCL",
+    "size": 44
+  },
+  {
+    "op": "create_file",
+    "path": "%orchid_electronics.uu/pines.mime/bangladesh_redefine.sgml",
+    "size": 539
+  },
+  {
+    "op": "create_file",
+    "path": "cross_platform_savings_account_turquoise.zir",
+    "size": 1048
+  },
+  {
+    "op": "create_file",
+    "path": "%orchid_electronics.uu/content_invoice_kwanza.tcl/stand_alone_bedfordshire.vob",
+    "size": 145
+  },
+  { "op": "create_file", "path": "PAYMENT_SYNTHESIZING.RPM", "size": 2074 },
+  { "op": "mkdir", "path": "small_wooden_gloves.ac" },
+  {
+    "op": "mkdir",
+    "path": "%orchid_electronics.uu/pines.mime/bangladesh_redefine.sgml/\\cross_platform_money_market_account.ddd"
+  },
+  { "op": "mkdir", "path": "payment_synthesizing.rpm/digital.src" },
+  { "op": "start" },
+  {
+    "op": "mv",
+    "from": "%orchid_electronics.uu",
+    "to": "%ORCHID_ELECTRONICS.UU/PINES.MIME/BANGLADESH_REDEFINE.SGML"
+  },
+  {
+    "op": "mv",
+    "from": "%orchid_electronics.uu/pines.mime/bangladesh_redefine.sgml",
+    "to": "%orchid_electronics.uu"
+  },
+  { "op": "mv", "from": "small_wooden_gloves.ac", "to": "Çbedfordshire.qps" },
+  { "op": "sleep", "duration": 8000 },
+  { "op": "create_file", "path": "%orchid_electronics.uu" },
+  { "op": "rm", "path": "cross_platform_savings_account_turquoise.zir" },
+  { "op": "rm", "path": "payment_synthesizing.rpm/digital.src" },
+  {
+    "op": "mv",
+    "from": "%orchid_electronics.uu/pines.mime/bangladesh_redefine.sgml/\\cross_platform_money_market_account.ddd",
+    "to": "small_wooden_gloves.ac"
+  },
+  { "op": "sleep", "duration": 8000 },
+  { "op": "rm", "path": "cross_platform_savings_account_turquoise.zir" },
+  {
+    "op": "mv",
+    "from": "%orchid_electronics.uu/content_invoice_kwanza.tcl",
+    "to": "checking_account_bandwidth_monitored_extranet.wri"
+  },
+  {
+    "op": "update_file",
+    "path": "%orchid_electronics.uu/pines.mime/bangladesh_redefine.sgml/\\cross_platform_money_market_account.ddd",
+    "size": 65552
+  },
+  { "op": "create_file", "path": "çbedfordshire.qps", "size": 24 },
+  {
+    "op": "mv",
+    "from": "small_wooden_gloves.ac",
+    "to": "payment_synthesizing.rpm/digital.src/scalable_minnesota.der"
+  },
+  {
+    "op": "mv",
+    "from": "%orchid_electronics.uu/pines.mime/bangladesh_redefine.sgml",
+    "to": "applications_mobility.3ds"
+  },
+  {
+    "op": "mv",
+    "from": "cross_platform_savings_account_turquoise.zir",
+    "to": "%orchid_electronics.uu/content_invoice_kwanza.tcl/books.xvm"
+  },
+  { "op": "update_file", "path": "Çbedfordshire.qps", "size": 40 },
+  {
+    "op": "mkdir",
+    "path": "%orchid_electronics.uu/pines.mime/strategist_village_research.gram"
+  },
+  {
+    "op": "update_file",
+    "path": "%orchid_electronics.uu/pines.mime/strategist_village_research.gram",
+    "size": 8203
+  },
+  { "op": "mkdir", "path": "auto_loan_account_turn_key.clkk" },
+  { "op": "mkdir", "path": "applications_mobility.3ds/bleeding_edge.hbci" },
+  {
+    "op": "mv",
+    "from": "%orchid_electronics.uu/pines.mime",
+    "to": "small_wooden_gloves.ac"
+  },
+  {
+    "op": "mv",
+    "from": "applications_mobility.3ds",
+    "to": "%orchid_electronics.uu/pines.mime"
+  },
+  {
+    "op": "create_file",
+    "path": "%orchid_electronics.uu/content_invoice_kwanza.tcl/stand_alone_bedfordshire.vob/bypass_withdrawal_fresh.swi",
+    "size": 131087
+  },
+  {
+    "op": "mv",
+    "from": "%orchid_electronics.uu/pines.mime/strategist_village_research.gram",
+    "to": "%orchid_electronics.uu/pines.mime/triple_buffered_auxiliary.osfpvg"
+  },
+  {
+    "op": "mv",
+    "from": "%orchid_electronics.uu/pines.mime/strategist_village_research.gram",
+    "to": "small_wooden_gloves.ac"
+  },
+  {
+    "op": "mv",
+    "from": "%orchid_electronics.uu/pines.mime/triple_buffered_auxiliary.osfpvg",
+    "to": "%orchid_electronics.uu"
+  },
+  {
+    "op": "mkdir",
+    "path": "applications_mobility.3ds/bleeding_edge.hbci/tcp_compressing_trafficway.skd"
+  },
+  {
+    "op": "mkdir",
+    "path": "%orchid_electronics.uu/pines.mime/bangladesh_redefine.sgml/\\cross_platform_money_market_account.ddd/buckinghamshire_handmade_arkansas.pdf"
+  },
+  {
+    "op": "create_file",
+    "path": "%orchid_electronics.uu/pines.mime/triple_buffered_auxiliary.osfpvg"
+  },
+  {
+    "op": "rm",
+    "path": "%orchid_electronics.uu/pines.mime/triple_buffered_auxiliary.osfpvg"
+  },
+  {
+    "op": "rm",
+    "path": "%orchid_electronics.uu/content_invoice_kwanza.tcl/stand_alone_bedfordshire.vob/bypass_withdrawal_fresh.swi"
+  },
+  {
+    "op": "mkdir",
+    "path": "%orchid_electronics.uu/pines.mime/strategist_village_research.gram"
+  },
+  { "op": "rm", "path": "%orchid_electronics.uu/pines.mime" }
+]

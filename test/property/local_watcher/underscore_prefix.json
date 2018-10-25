@@ -1,0 +1,12 @@
+[
+  {
+    "op": "pending",
+    "msg": "path that starts with an underscore are seen as local docs in pouchdb"
+  },
+  { "op": "start" },
+  { "op": "mkdir", "path": "_foo" },
+  { "op": "mkdir", "path": "bar" },
+  { "op": "mkdir", "path": "bar/_baz" },
+  { "op": "create_file", "path": "_courge", "size": 256 },
+  { "op": "create_file", "path": "bar/_qux", "size": 256 }
+]

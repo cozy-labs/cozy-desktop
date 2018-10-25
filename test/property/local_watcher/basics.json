@@ -1,0 +1,11 @@
+[
+  { "op": "mkdir", "path": "existing_dir" },
+  { "op": "mkdir", "path": "existing_dir/sub_dir" },
+  { "op": "create_file", "path": "existing_file", "size": 1024 },
+  { "op": "mkdir", "path": "empty_dir" },
+  { "op": "mkdir", "path": "another_dir" },
+  { "op": "create_file", "path": "another_dir/another_file", "size": 256 },
+  { "op": "start" },
+  { "op": "mkdir", "path": "new_dir" },
+  { "op": "mkdir", "path": "existing_dir/new_subdir" }
+]

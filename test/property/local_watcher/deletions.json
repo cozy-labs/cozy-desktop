@@ -1,0 +1,12 @@
+[
+  { "op": "mkdir", "path": "foo" },
+  { "op": "mkdir", "path": "foo/bar" },
+  { "op": "create_file", "path": "foo/bar/baz", "size": 1024 },
+  { "op": "mkdir", "path": "qux" },
+  { "op": "create_file", "path": "qux/quux", "size": 256 },
+  { "op": "mkdir", "path": "courge" },
+  { "op": "start" },
+  { "op": "sleep", "duration": 1000 },
+  { "op": "rm", "path": "foo" },
+  { "op": "rm", "path": "qux/quux" }
+]

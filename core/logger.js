@@ -46,7 +46,7 @@ if (process.env.TESTDEBUG) {
 }
 
 function logger (options) {
-  return defaultLogger.child(options)
+  return defaultLogger.child(options, true)
 }
 
 logger.defaultLogger = defaultLogger

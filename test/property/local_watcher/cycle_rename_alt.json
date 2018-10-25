@@ -1,0 +1,11 @@
+[
+  { "op": "pending" },
+  { "op": "mkdir", "path": "dir" },
+  { "op": "mkdir", "path": "dir/dir" },
+  { "op": "create_file", "path": "dir/one", "size": 16 },
+  { "op": "create_file", "path": "dir/dir/two", "size": 16 },
+  { "op": "start" },
+  { "op": "mv", "from": "dir/dir", "to": "tmp" },
+  { "op": "mv", "from": "dir", "to": "dir/dir" },
+  { "op": "mv", "from": "tmp", "to": "dir" }
+]

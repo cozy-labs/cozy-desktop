@@ -147,6 +147,7 @@ module.exports = class LocalWatcher {
 
       this.watcher
         .on('ready', () => this.buffer.switchMode('timeout'))
+        .on('raw', (event, path, details) => log.chokidar.debug({event, path, details}, 'raw'))
         .on('error', (err) => {
           if (err.message === 'watch ENOSPC') {
             log.error('Sorry, the kernel is out of inotify watches! ' +
@@ -355,8 +356,17 @@ module.exports = class LocalWatcher {
     }
   }
 
-  stop (force /*: ?bool */) {
+  async stop (force /*: ?bool */) {
     if (this.watcher) {
+      // XXX manually fire events for added file, because chokidar will cancel
+      // them if they are still in the awaitWriteFinish period
+      for (let relpath in this.watcher._pendingWrites) {
+        try {
+          const fullpath = path.join(this.watcher.options.cwd, relpath)
+          const curStat = await fs.stat(fullpath)
+          this.watcher.emit('add', relpath, curStat)
+        } catch (err) {}
+      }
       this.watcher.close()
       this.watcher = null
     }
@@ -367,9 +377,9 @@ module.exports = class LocalWatcher {
     clearInterval(this.ensureDirInterval)
     this.buffer.switchMode('idle')
     if (force) return Promise.resolve()
-    // Give some time for awaitWriteFinish events to be fired
+    // Give some time for awaitWriteFinish events to be managed
     return new Promise((resolve) => {
-      setTimeout(resolve, 3000)
+      setTimeout(resolve, 1000)
     })
   }
 
