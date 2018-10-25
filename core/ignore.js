@@ -33,7 +33,7 @@ function buildPattern (line) {
     line = makeRe(line, { nocase: true })
   }
   let pattern = {
-    match: matcher(line, MicromatchOptions),
+    match: matcher(line, {}),
     basename: noslash, // The pattern can match only the basename
     folder, // The pattern will only match a folder
     negate // The pattern is negated
@@ -62,9 +62,6 @@ function match (path, isFolder, pattern) {
   }
   return match(parent, true, pattern)
 }
-
-// See https://github.com/jonschlinkert/micromatch#options
-const MicromatchOptions = { noextglob: true }
 
 // See https://github.com/github/gitignore/tree/master/Global
 const DefaultRules = [
