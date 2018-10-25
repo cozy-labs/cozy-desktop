@@ -82,6 +82,7 @@ class RemoteWatcher {
   async watch () {
     try {
       const seq = await this.pouch.getRemoteSeqAsync()
+      this.events.emit('online')
       const {last_seq, docs} = await this.remoteCozy.changes(seq)
 
       if (docs.length === 0) return
@@ -109,6 +110,7 @@ class RemoteWatcher {
         throw userActionRequired.includeJSONintoError(err)
       } else {
         log.error({err})
+        this.events.emit('offline')
       }
     }
   }
