@@ -6,8 +6,8 @@ const nbInitOps = 16
 const nbRunOps = 64
 const specialChars = [':', '_', 'é', ' ', '%', '\\', '&', '@', 'É', 'Ç']
 
-let knownPaths = []
-let deletedPaths = []
+const knownPaths = []
+const deletedPaths = []
 
 function similarPath () {
   let p = faker.random.arrayElement(knownPaths)
@@ -144,7 +144,7 @@ function run (ops) {
   }
 }
 
-function generate (filename) {
+function generate () {
   let ops = []
   init(ops)
   start(ops)

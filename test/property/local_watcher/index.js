@@ -24,7 +24,7 @@ const events = {
   emit: msg => {}
 }
 
-async function play (state, op) {
+async function step (state, op) {
   // Slow down things to avoid issues with chokidar throttler
   await Promise.delay(10)
 
@@ -104,7 +104,7 @@ describe('Local watcher', function () {
         level: 'debug'
       })
       for (let op of ops) {
-        state = await play(state, op)
+        state = await step(state, op)
       }
 
       // Wait that the dust settles
