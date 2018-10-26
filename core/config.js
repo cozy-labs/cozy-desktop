@@ -16,28 +16,41 @@ module.exports = class Config {
   // Create config file if it doesn't exist.
   constructor (basePath) {
     this.configPath = path.join(basePath, 'config.json')
+    fs.ensureFileSync(this.configPath)
     this.dbPath = path.join(basePath, 'db')
     fs.ensureDirSync(this.dbPath)
     hideOnWindows(basePath)
-    fs.ensureFileSync(this.configPath)
 
-    if (fs.readFileSync(this.configPath).toString() === '') {
-      this.reset()
-    }
+    this.config = this.read()
+  }
 
+  // Load a config JSON file or return an empty object
+  static safeLoad (configPath) {
     try {
-      this.config = fs.readJSONSync(this.configPath)
+      return fs.readJSONSync(configPath)
     } catch (e) {
       if (e instanceof SyntaxError) {
-        log.error(`Could not read config file at ${this.configPath}:`, e)
-        this.reset()
-        this.config = require(this.configPath)
+        log.error(`Could not read config file at ${configPath}:`, e)
+        fs.unlinkSync(configPath)
+        return {}
       } else {
         throw e
       }
     }
+  }
 
-    // FIXME: autoBind(this)
+  // Read the configuration from disk
+  read () {
+    if (fs.existsSync(this.tmpConfigPath)) {
+      const tmpConfig = Config.safeLoad(this.tmpConfigPath)
+
+      if (_.size(tmpConfig) > 0) {
+        this._moveTmpConfig()
+        return tmpConfig
+      }
+    }
+
+    return Config.safeLoad(this.configPath)
   }
 
   // Reset the configuration
@@ -49,12 +62,28 @@ module.exports = class Config {
 
   // Save configuration to file system.
   persist () {
-    fs.writeFileSync(this.configPath, this.toJSON())
+    this._writeTmpConfig(this.toJSON())
+    this._moveTmpConfig()
+  }
+
+  _writeTmpConfig (config) {
+    fs.ensureFileSync(this.tmpConfigPath)
+    fs.writeFileSync(this.tmpConfigPath, config)
+  }
+
+  _moveTmpConfig () {
+    fs.copySync(this.tmpConfigPath, this.configPath, fs.constants.COPYFILE_FICLONE)
+    fs.unlinkSync(this.tmpConfigPath)
   }
 
   // Transform the config to a JSON string
   toJSON () {
     return JSON.stringify(this.config, null, 2)
+  }
+
+  // Get the tmp config path associated with the current config path
+  get tmpConfigPath () {
+    return this.configPath + '.tmp'
   }
 
   // Get the path on the local file system of the synchronized folder

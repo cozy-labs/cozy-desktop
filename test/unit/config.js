@@ -3,25 +3,139 @@
 const path = require('path')
 const should = require('should')
 const fs = require('fs-extra')
-
 const configHelpers = require('../support/helpers/config')
+const { COZY_URL } = require('../support/helpers/cozy')
 
 const Config = require('../../core/config')
 
 describe('Config', function () {
-  before('instanciate config', configHelpers.createConfig)
-  after('clean config directory', configHelpers.cleanConfig)
+  beforeEach('instanciate config', configHelpers.createConfig)
+  afterEach('clean config directory', configHelpers.cleanConfig)
 
-  describe('constructor', function () {
-    it('resets corrupted config', function () {
-      const corruptedContent = '\0'
-      fs.writeFileSync(this.config.configPath, corruptedContent)
+  describe('read', function () {
+    context('when a tmp config file exists', function () {
+      beforeEach('create tmp config file', function () {
+        fs.ensureFileSync(this.config.tmpConfigPath)
+      })
+      afterEach('remove tmp config file', function () {
+        if (fs.existsSync(this.config.tmpConfigPath)) {
+          fs.unlinkSync(this.config.tmpConfigPath)
+        }
+      })
 
-      let conf
-      (() => {
-        conf = new Config(path.dirname(this.config.configPath))
-      }).should.not.throw()
-      conf.should.be.an.Object()
+      context('and it has a valid JSON content', function () {
+        const config = { 'url': 'https://cozy.test/' }
+
+        beforeEach('write valid content', function () {
+          fs.writeFileSync(this.config.tmpConfigPath, JSON.stringify(config, null, 2))
+        })
+
+        it('reads the tmp config', function () {
+          should(this.config.read()).match(config)
+        })
+
+        it('persists the tmp config file as the new config file', function () {
+          this.config.read()
+
+          const persistedConfig = fs.readJSONSync(this.config.configPath)
+          should(persistedConfig).match(config)
+        })
+      })
+
+      context('and it does not have a valid JSON content', function () {
+        beforeEach('write invalid content', function () {
+          fs.writeFileSync(this.config.tmpConfigPath, '\0')
+          this.config.persist()
+        })
+
+        it('reads the existing config', function () {
+          const config = this.config.read()
+          should(config).be.an.Object()
+          should(config.url).eql(COZY_URL)
+        })
+      })
+    })
+
+    context('when no tmp config files exist', function () {
+      beforeEach('remove any tmp config file', function () {
+        if (fs.existsSync(this.config.tmpConfigPath)) {
+          fs.unlinkSync(this.config.tmpConfigPath)
+        }
+        this.config.persist()
+      })
+
+      it('reads the existing config', function () {
+        const config = this.config.read()
+        should(config).be.an.Object()
+        should(config.url).eql(COZY_URL)
+      })
+    })
+
+    context('when the read config is empty', function () {
+      beforeEach('empty local config', function () {
+        fs.ensureFileSync(this.config.configPath)
+        fs.writeFileSync(this.config.configPath, '')
+      })
+
+      it('creates a new empty one', function () {
+        const config = this.config.read()
+        should(config).be.an.Object()
+        should(config).be.empty()
+      })
+    })
+  })
+
+  describe('safeLoad', function () {
+    context('when the file content is valid JSON', function () {
+      const conf = { 'url': 'https://cozy.test/' }
+
+      beforeEach('write valid content', function () {
+        fs.writeFileSync(this.config.configPath, JSON.stringify(conf, null, 2))
+      })
+
+      it('returns an object matching the file content', function () {
+        const newConf = Config.safeLoad(this.config.configPath)
+        newConf.should.be.an.Object()
+        newConf.url.should.eql(conf.url)
+      })
+    })
+
+    context('when the file does not exist', function () {
+      beforeEach('remove config file', function () {
+        if (fs.existsSync(this.config.configPath)) {
+          fs.unlinkSync(this.config.configPath)
+        }
+      })
+
+      it('throws an error', function () {
+        (() => {
+          Config.safeLoad(this.config.configPath)
+        }).should.throw()
+      })
+    })
+
+    context('when the file content is not valid JSON', function () {
+      beforeEach('write invalid content', function () {
+        fs.writeFileSync(this.config.configPath, '\0')
+      })
+
+      it('does not throw any errors', function () {
+        (() => {
+          Config.safeLoad(this.config.configPath)
+        }).should.not.throw()
+      })
+
+      it('returns an empty object', function () {
+        const config = Config.safeLoad(this.config.configPath)
+        should(config).be.an.Object()
+        should(config).be.empty()
+      })
+
+      it('deletes the file', function () {
+        fs.existsSync(this.config.configPath).should.be.true()
+        Config.safeLoad(this.config.configPath)
+        fs.existsSync(this.config.configPath).should.be.false()
+      })
     })
   })
 
