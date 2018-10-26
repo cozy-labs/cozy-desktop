@@ -6,7 +6,7 @@ const sinon = require('sinon')
 const should = require('should')
 
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
-const Watcher = require('../../../core/local/watcher')
+const Watcher = require('../../../core/local/chokidar_watcher')
 const metadata = require('../../../core/metadata')
 
 const MetadataBuilders = require('../../support/builders/metadata')
