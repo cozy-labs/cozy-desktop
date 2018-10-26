@@ -1,5 +1,18 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.10.1-beta.1 - 2018-10-23
+
+Improvements for all users:
+
+* We fixed handling of connection loss. The Cozy Drive client will now correctly display when it's offline and re-attempt synchronization regularly.
+* We improved the way we save the configuration file and gracefully recover if the configuration file is incorrect.
+* Some text, translations and styles updates on the user interface
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
+
 ## 3.10.0 - 2018-10-23
 
 Improvements for all users:
