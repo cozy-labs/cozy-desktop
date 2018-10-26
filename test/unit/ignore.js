@@ -243,6 +243,15 @@ describe('Ignore', function () {
   })
 
   describe('Negate rules', () => {
+    it('can negate a rule', () => {
+      const ignore = new Ignore(['!foo'])
+      const foo = {
+        _id: 'foo',
+        docType: 'file'
+      }
+      ignore.isIgnored(foo).should.be.false()
+    })
+
     it('can negate a previous rule', function () {
       const ignore = new Ignore(['*.foo', '!bar.foo'])
       const bar = {
@@ -355,6 +364,54 @@ describe('Ignore', function () {
         .isIgnored({
           _id: '$Recycle.bin',
           type: 'folder'
+        })
+        .should.be.true()
+    })
+  })
+
+  describe('OS specific rules', () => {
+    before(() => {
+      this.originalPlatform = Object.getOwnPropertyDescriptor(
+        process,
+        'platform'
+      )
+    })
+
+    after(() => {
+      Object.defineProperty(process, 'platform', this.originalPlatform)
+    })
+    it('does not match files if case does not match', () => {
+      const ignore = new Ignore(['Foo'])
+      ignore
+        .isIgnored({
+          _id: 'foo',
+          type: 'file'
+        })
+        .should.be.false()
+    })
+
+    it('match files even if case does not match on darwin', () => {
+      Object.defineProperty(process, 'platform', {
+        value: 'darwin'
+      })
+      const ignore = new Ignore(['Foo'])
+      ignore
+        .isIgnored({
+          _id: 'foo',
+          type: 'file'
+        })
+        .should.be.true()
+    })
+
+    it('match files even if case does not match on darwin', () => {
+      Object.defineProperty(process, 'platform', {
+        value: 'win32'
+      })
+      const ignore = new Ignore(['Foo'])
+      ignore
+        .isIgnored({
+          _id: 'foo',
+          type: 'file'
         })
         .should.be.true()
     })
