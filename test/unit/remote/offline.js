@@ -37,7 +37,6 @@ describe('Remote', function () {
       let fetchStub = sinon.stub(global, 'fetch').rejects(new Error('net::ERR_INTERNET_DISCONNECTED'))
       let eventsSpy = sinon.spy(this.events, 'emit')
       await this.remote.start().started
-      console.log(eventsSpy.getCalls())
       eventsSpy.should.have.been.calledWith('offline')
       fetchStub.restore()
       // skip waiting for HEARTBEAT
