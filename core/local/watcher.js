@@ -1,6 +1,8 @@
 /* @flow */
 
+const AtomWatcher = require('./atom_watcher')
 const ChokidarWatcher = require('./chokidar_watcher')
+const logger = require('../logger')
 
 /*::
 import type Pouch from '../pouch'
@@ -19,7 +21,18 @@ export type Watcher = {
 }
 */
 
+const log = logger({
+  component: 'LocalWatcher'
+})
+
 function build (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */) /*: Watcher */ {
+  const env = process.env.COZY_FS_WATCHER
+  if (env === 'experimental' || env === 'atom') {
+    if (process.platform === 'linux') {
+      return new AtomWatcher(syncPath, prep, pouch, events)
+    }
+    log.warn('The experimental watcher is only available on Linux')
+  }
   return new ChokidarWatcher(syncPath, prep, pouch, events)
 }
 

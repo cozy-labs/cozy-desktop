@@ -27,7 +27,7 @@ import type EventEmitter from 'events'
 */
 
 const log = logger({
-  component: 'LocalWatcher'
+  component: 'ChokidarWatcher'
 })
 log.chokidar = log.child({
   component: 'Chokidar'
