@@ -5,7 +5,6 @@ const fs = require('fs-extra')
 const _ = require('lodash')
 const os = require('os')
 const path = require('path')
-const readdirp = require('readdirp')
 const url = require('url')
 const uuid = require('uuid/v4')
 const https = require('https')
@@ -301,13 +300,6 @@ class App {
     return this.startSync(mode)
   }
 
-  // Display a list of watchers for debugging purpose
-  debugWatchers () {
-    if (this.local) {
-      this.local.watcher.debug()
-    }
-  }
-
   clientInfo () {
     const config = this.config || {}
 
@@ -323,46 +315,6 @@ class App {
       permissions: config.permissions,
       syncPath: config.syncPath
     }
-  }
-
-  // Call the callback for each file
-  walkFiles (args /*: {ignored?: any} */, callback /*: Callback */) {
-    this.loadIgnore()
-    let options = {
-      root: this.config.syncPath,
-      directoryFilter: '!.cozy-desktop',
-      entryType: 'both'
-    }
-    readdirp(options)
-      .on('warn', err => log.warn(err))
-      .on('error', err => log.error(err))
-      .on('data', data => {
-        let doc = {
-          _id: data.path,
-          docType: data.stat.isFile() ? 'file' : 'folder'
-        }
-        if (this.ignore.isIgnored(doc) === (args.ignored != null)) {
-          callback(data.path)
-        }
-      })
-  }
-
-  // Recreate the local pouch database
-  resetDatabase () {
-    log.info('Recreates the local database...')
-    this.pouch.resetDatabase(function () {
-      log.info('Database recreated')
-    })
-  }
-
-  // Return the whole content of the database
-  allDocs (callback /*: Callback */) {
-    this.pouch.db.allDocs({include_docs: true}, callback)
-  }
-
-  // Return all docs for a given query
-  query (query /*: any */, callback /*: Callback */) {
-    this.pouch.db.query(query, {include_docs: true}, callback)
   }
 
   // Get disk space informations from the cozy

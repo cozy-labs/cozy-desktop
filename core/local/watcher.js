@@ -383,31 +383,6 @@ module.exports = class LocalWatcher {
     })
   }
 
-  // Show watched paths
-  debug () {
-    if (this.watcher) {
-      log.info('This is the list of the paths watched by chokidar:')
-      const object = this.watcher.getWatched()
-      for (let dir in object) {
-        var file
-        const files = object[dir]
-        if (dir === '..') {
-          for (file of Array.from(files)) {
-            log.info(`- ${dir}/${file}`)
-          }
-        } else {
-          if (dir !== '.') { log.info(`- ${dir}`) }
-          for (file of Array.from(files)) {
-            log.info(`  * ${file}`)
-          }
-        }
-      }
-      log.info('--------------------------------------------------')
-    } else {
-      log.warn('The file system is not currrently watched')
-    }
-  }
-
   /* Helpers */
   async checksum (filePath /*: string */) /*: Promise<string> */ {
     const absPath = path.join(this.syncPath, filePath)
