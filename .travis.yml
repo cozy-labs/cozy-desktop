@@ -1,6 +1,9 @@
 ---
 dist: trusty
 language: node_js
+branches:
+    only:
+        - master
 matrix:
     fast_finish: true
     include:
