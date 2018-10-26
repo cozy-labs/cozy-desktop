@@ -341,5 +341,22 @@ describe('Ignore', function () {
         .isIgnored({ _id: metadata.id('~$whatever.pptx'), docType: 'file' })
         .should.be.true()
     })
+
+    it('ignores hidden folder $Recycle.bin', () => {
+      const ignore = new Ignore([])
+      ignore.addDefaultRules()
+      ignore
+        .isIgnored({
+          _id: '$Recycle.bin/foo',
+          type: 'file'
+        })
+        .should.be.true()
+      ignore
+        .isIgnored({
+          _id: '$Recycle.bin',
+          type: 'folder'
+        })
+        .should.be.true()
+    })
   })
 })
