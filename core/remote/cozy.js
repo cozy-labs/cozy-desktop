@@ -247,10 +247,10 @@ class RemoteCozy {
     try {
       fscklogs = await this.client.fetchJSON('GET', FSCK_PATH)
     } catch (err) {
-      if (err.status !== 404) throw err
-      log.warn(`No ${FSCK_PATH} route on old cozy-stack. Skipping.`)
+      if (err.status === 404) log.warn(`No ${FSCK_PATH} route on old cozy-stack. Skipping.`)
+      else log.error({err}, 'Cannot get fileCorruptions')
+      return []
     }
-    if (fscklogs == null) return []
 
     const validContentMismatch = (raw /*: FsckLog */)/*: null|ContentMismatchFsckLog */ => {
       if (raw.is_file && raw.type === 'content_mismatch' && raw.file_doc && raw.content_mismatch && raw.file_doc.md5sum) {

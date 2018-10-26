@@ -332,10 +332,11 @@ describe('RemoteCozy', function () {
       should(contentMismatchFsckLog).deepEqual([])
     })
 
-    it('does not swallow other cozy-stack errors', async () => {
+    it('does swallow other cozy-stack errors', async () => {
       const err = {status: 500, message: 'Other fsck error'}
       stubFsck().rejects(err)
-      await should(remoteCozy.fetchFileCorruptions()).be.rejectedWith(err)
+      const contentMismatchFsckLog = await remoteCozy.fetchFileCorruptions()
+      should(contentMismatchFsckLog).deepEqual([])
     })
   })
 })

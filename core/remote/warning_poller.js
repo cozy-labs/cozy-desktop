@@ -80,7 +80,6 @@ class RemoteWarningPoller {
       this.events.emit('remoteWarnings', warnings)
     } catch (err) {
       log.error({err})
-      throw err
     } finally {
       this.polling = null
       this.scheduleNext(shiftTicks(this.ticks))

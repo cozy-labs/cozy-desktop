@@ -79,7 +79,7 @@ describe('RemoteWarningPoller', () => {
       const err = new Error('whatever')
       remoteCozy.warnings.rejects(err)
       sinon.spy(poller, 'scheduleNext')
-      await should(poller.poll()).be.rejectedWith(err)
+      await should(poller.poll()).not.be.rejected()
       should(poller.scheduleNext).have.been.calledOnce()
     })
 
