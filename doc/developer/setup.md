@@ -33,7 +33,7 @@ otherwise [installing dependencies will fail](https://github.com/cozy-labs/cozy-
 ## Install dependencies
 
 ```
-yarn install
+yarn install:all
 ```
 
 ## Build everything
