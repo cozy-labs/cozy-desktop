@@ -308,11 +308,11 @@ describe('Ignore', function () {
       ignore.isIgnored(doc).should.be.true()
     })
 
-    it('does ignore Icon\\r', function () {
+    it('does ignore Icon', function () {
       const ignore = new Ignore([])
       ignore.addDefaultRules()
       const doc = {
-        _id: 'path/to/Icon\r',
+        _id: 'path/to/Icon',
         docType: 'file'
       }
       ignore.isIgnored(doc).should.be.true()

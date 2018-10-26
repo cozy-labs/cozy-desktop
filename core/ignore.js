@@ -1,7 +1,8 @@
 /* @flow weak */
 
-const { basename, dirname } = require('path')
+const { basename, dirname, resolve } = require('path')
 const { matcher, makeRe } = require('micromatch')
+const fs = require('fs')
 
 // Parse a line and build the corresponding pattern
 function buildPattern (line) {
@@ -63,56 +64,6 @@ function match (path, isFolder, pattern) {
   return match(parent, true, pattern)
 }
 
-// See https://github.com/github/gitignore/tree/master/Global
-const DefaultRules = [
-  // all hidden files
-  '.*',
-
-  // Dropbox
-  '.dropbox',
-  '.dropbox.attr',
-  '.dropbox.cache',
-
-  // Eclipse, SublimeText and many others
-  '*.tmp',
-  '*.bak',
-
-  // Emacs
-  '*~',
-  '\\#*\\#',
-
-  // LibreOffice
-  '.~lock.*#',
-
-  // Linux
-  '.fuse_hidden*',
-  '.Trash-*',
-
-  // Microsoft Office
-  '~$*.{doc,xls,ppt}*',
-
-  // OSX
-  '.DS_Store',
-  '.DocumentRevisions-V100',
-  '.fseventsd',
-  '.Spotlight-V100',
-  '.TemporaryItems',
-  '.Trashes',
-  '.VolumeIcon.icns',
-  // Pattern must be escaped twice on case-insensitive plateforms in order
-  // for makeRe() to work
-  process.platform === 'darwin' || process.platform === 'win32'
-    ? 'Icon\\r'
-    : 'Icon\r',
-
-  // Vim
-  '*.sw[px]',
-
-  // Windows
-  'Thumbs.db',
-  'ehthumbs.db'
-]
-
 // Cozy-desktop can ignore some files and folders from a list of patterns in the
 // cozyignore file. This class can be used to know if a file/folder is ignored.
 //
@@ -129,6 +80,10 @@ class Ignore {
   // Add some rules for things that should be always ignored (temporary
   // files, thumbnails db, trash, etc.)
   addDefaultRules () {
+    // TODO: split on return char depending on the OS
+    const DefaultRules = fs
+      .readFileSync(resolve(__dirname, './config/.cozyignore'), 'utf8')
+      .split('\n')
     let morePatterns = Array.from(DefaultRules).map(buildPattern)
     this.patterns = morePatterns.concat(this.patterns)
     return this
