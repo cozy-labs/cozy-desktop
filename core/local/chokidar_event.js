@@ -19,7 +19,8 @@ export type ChokidarEvent =
 */
 
 module.exports = {
-  build
+  build,
+  pretendUnlinkFromMetadata
 }
 
 function build (type /*: string */, path /*: ?string */, stats /*: ?fs.Stats */) /*: ChokidarEvent */ {
@@ -27,4 +28,11 @@ function build (type /*: string */, path /*: ?string */, stats /*: ?fs.Stats */)
   if (path != null) event.path = path
   if (stats != null) event.stats = stats
   return event
+}
+
+function pretendUnlinkFromMetadata (doc /*: Metadata */) /*: ChokidarUnlink|ChokidarUnlinkDir */ {
+  const type = doc.docType === 'file' ? 'unlink' : 'unlinkDir'
+  const path = doc.path
+  // $FlowFixMe
+  return { type, path, old: doc }
 }
