@@ -11,7 +11,7 @@ const uuid = require('uuid/v4')
 const https = require('https')
 const {createGzip} = require('zlib')
 
-require('./globals') // FIXME Use bluebird promises as long as we need asCallback
+require('./globals')
 const pkg = require('../package.json')
 const Config = require('./config')
 const logger = require('./logger')
