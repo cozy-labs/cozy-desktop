@@ -381,6 +381,9 @@ describe('Ignore', function () {
       Object.defineProperty(process, 'platform', this.originalPlatform)
     })
     it('does not match files if case does not match', () => {
+      Object.defineProperty(process, 'platform', {
+        value: 'linux'
+      })
       const ignore = new Ignore(['Foo'])
       ignore
         .isIgnored({
