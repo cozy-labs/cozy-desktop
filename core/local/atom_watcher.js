@@ -1,10 +1,11 @@
 /* @flow */
 
 const fse = require('fs-extra')
-const watcher = require('@atom/watcher')
 
 const checksumer = require('./checksumer')
 const logger = require('../logger')
+const LinuxSource = require('./layers/linux')
+const Dispatcher = require('./layers/dispatcher')
 
 /*::
 import type Pouch from '../pouch'
@@ -29,6 +30,7 @@ module.exports = class AtomWatcher {
   running: Promise<void>
   _runningResolve: ?Function
   _runningReject: ?Function
+  source: LinuxSource
   */
 
   constructor (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */) {
@@ -38,7 +40,11 @@ module.exports = class AtomWatcher {
     this.events = events
     this.checksumer = checksumer.init()
 
-    watcher.configure({})
+    const dispatcher = new Dispatcher(prep, pouch, events)
+    // const checksum = new ChecksumLayer(dispatcher, this.checksumer)
+    // const assignId = new IdLayer(checksum)
+    // this.source = new LinuxSource(syncPath, assignID)
+    this.source = new LinuxSource(syncPath, dispatcher)
   }
 
   ensureDirSync () {
@@ -56,6 +62,7 @@ module.exports = class AtomWatcher {
       this._runningResolve = resolve
       this._runningReject = reject
     })
+    this.source.start()
   }
 
   stop (force /*: ? bool */) {
@@ -64,6 +71,7 @@ module.exports = class AtomWatcher {
       this._runningResolve = null
     }
     clearInterval(this.ensureDirInterval)
+    this.source.stop()
   }
 
   onFlush (rawEvents /*: ChokidarEvent[] */) {
