@@ -1,8 +1,21 @@
-/* @flow weak */
+// @flow
 
 const { basename, dirname, resolve } = require('path')
 const { matcher, makeRe } = require('micromatch')
 const fs = require('fs')
+
+/*::
+export type IgnorePattern = {
+  match: (string) => boolean,
+  basename: boolean,
+  folder: boolean,
+  negate: boolean
+}
+*/
+
+/* ::
+import type {Metadata} from './metadata.js'
+*/
 
 // Parse a line and build the corresponding pattern
 function buildPattern (line) {
@@ -42,11 +55,11 @@ function buildPattern (line) {
   return pattern
 }
 
-function isNotBlankOrComment (line) {
+function isNotBlankOrComment (line /*: string */) /*: boolean */ {
   return line !== '' && line[0] !== '#'
 }
 
-function match (path, isFolder, pattern) {
+function match (path, isFolder, pattern /*: IgnorePattern */) {
   if (pattern.basename) {
     if (pattern.match(basename(path))) {
       return true
@@ -69,8 +82,13 @@ function match (path, isFolder, pattern) {
 //
 // See https://git-scm.com/docs/gitignore/#_pattern_format
 class Ignore {
+  /*::
+  patterns: IgnorePattern[]
+  match: (string, boolean, IgnorePattern) => boolean
+  */
+
   // Load patterns for detecting ignored files and folders
-  constructor (lines) {
+  constructor (lines /*: string[] */) {
     this.patterns = Array.from(lines)
       .filter(isNotBlankOrComment)
       .map(buildPattern)
@@ -90,7 +108,7 @@ class Ignore {
   }
 
   // Return true if the given file/folder path should be ignored
-  isIgnored (doc) {
+  isIgnored (doc /*: Metadata */) {
     let result = false
     for (let pattern of Array.from(this.patterns)) {
       if (pattern.negate) {
