@@ -97,32 +97,56 @@ stages:
 jobs:
     fast_finish: true
     include:
-        - &test_unit
-          stage: test
-          script: ./dev/ci/tests.sh
-          name: unit and integration tests
-          os: linux
-        - <<: *test_unit
-          os: osx
-        - &test_scenarios
-          stage: test
-          script: ./dev/ci/scenarios.sh
-          name: real life scenarios
-          os: linux
-        - <<: *test_scenarios
-          os: osx
-        - &dist
-          stage: test
-          script: ./dev/ci/dist.sh
-          name: artifacts build
-          os: linux
-        - <<: *dist
-          os: osx
+        # - &test_unit
+        #   stage: test
+        #   script: ./script/unit.sh
+        #   name: unit tests
+        #   os: linux
+        # - <<: *test_unit
+        #   os: osx
+        # - &test_integration
+        #   stage: test
+        #   script: ./script/integration.sh
+        #   name: integration tests
+        #   os: linux
+        # - <<: *test_integration
+        #   os: osx
+        # - &test_scenarios
+        #   stage: test
+        #   script: ./script/scenarios.sh
+        #   name: scenarios tests
+        #   os: linux
+        # - <<: *test_scenarios
+        #   os: osx
+        # - &dist
+        #   stage: test
+        #   script: ./script/dist.sh
+        #   name: artifacts build
+        #   os: linux
+        # - <<: *dist
+        #   os: osx
         - stage: test
-          name: code coverage
-          os: linux
-          after_failure: skip
-          script: ./dev/ci/coverage.sh
+          name: windows build
+          os: windows
+          # before_install: skip
+          before_script:
+              - travis_retry yarn bootstrap:remote
+          script:
+              - yarn build
+              - yarn test:world -- --timeout $env:MOCHA_TIMEOUT
+              - yarn test:unit -- --timeout $env:MOCHA_TIMEOUT
+              - yarn test:integration -- --timeout $env:MOCHA_TIMEOUT
+              - yarn test:scenarios -- --timeout $env:MOCHA_TIMEOUT
+              - yarn dist:all
+          after_failure:
+              - node --version
+              - npm --version
+              - yarn --version
+        # - stage: test
+        #   name: code coverage
+        #   os: linux
+        #   after_failure: skip
+        #   script: ./dev/ci/coverage.sh
         - stage: notify
           name: artifacts built
           services: false
