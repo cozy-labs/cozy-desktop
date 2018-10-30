@@ -189,9 +189,9 @@ describe('Move', () => {
         'parent/src/'
       ])
       // FIXME: https://trello.com/c/ocmgXp9Z
-      // const subdir = await cozy.files.statByPath('/parent/dst/dir/subdir')
-      // should(await helpers._pouch.byRemoteIdAsync(subdir._id))
-      //   .have.propertyByPath('remote', '_rev').eql(subdir._rev)
+      const subdir = await cozy.files.statByPath('/parent/dst/dir/subdir')
+      should(await helpers._pouch.byRemoteIdAsync(subdir._id))
+        .have.propertyByPath('remote', '_rev').eql(subdir._rev)
     })
 
     it('from remote client', async () => {
