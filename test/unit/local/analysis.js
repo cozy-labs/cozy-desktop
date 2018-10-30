@@ -339,6 +339,31 @@ describe('core/local/analysis', function () {
     should(pendingChanges).deepEqual([])
   })
 
+  it('ignores a file added+deleted (e.g. temporary file)', () => {
+    const path = 'whatever'
+    const ino = 532806
+    const stats = {ino}
+    const events /*: LocalEvent[] */ = [
+      {type: 'add', path, stats, old: null, wip: true},
+      {type: 'unlink', path, old: null}
+    ]
+    const pendingChanges /*: LocalChange[] */ = []
+
+    const changes = analysis(events, pendingChanges)
+    should({changes, pendingChanges}).deepEqual({
+      changes: [
+        {
+          sideName,
+          type: 'Ignored',
+          path,
+          ino,
+          stats
+        }
+      ],
+      pendingChanges: []
+    })
+  })
+
   it('handles addDir+unlinkDir', () => {
     const old /*: Metadata */ = metadataBuilders.dir().ino(1).build()
     const stats = {ino: 1}

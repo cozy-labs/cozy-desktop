@@ -177,6 +177,12 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
             if (moveChangeSamePath && moveChangeSamePath.md5sum == null) { // FIXME: if change && change.wip?
               localChange.convertFileMoveToDeletion(moveChangeSamePath)
             }
+            const addChangeSamePath /*: ?LocalFileAddition */ = localChange.maybeAddFile(getChangeByPath(e))
+            if (addChangeSamePath && addChangeSamePath.wip) {
+              // $FlowFixMe
+              addChangeSamePath.type = 'Ignored'
+              delete addChangeSamePath.wip
+              break
             }
             // Otherwise, skip unlink event by multiple moves
           }
