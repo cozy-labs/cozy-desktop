@@ -54,8 +54,20 @@ def RemoteWatcher: component("^RemoteWatcher$");
 def RemoteWriter: component("^RemoteWriter$");
 def Sync: component("^Sync$");
 
-def Local: select(.component | test("^local"; "i"));
+def Local: select(.component | test("^local|chokidar"; "i"));
 def Remote: select(.component | test("^remote"; "i"));
+
+# Exclude "up-to-date" messages
+#
+#     yarn jq nouptodate path/to/logs*
+#
+def nouptodate: select(.msg | test("up[- ]to[- ]date") | not);
+
+# Exclude Proxy stuff:
+#
+#     yarn jq noproxy path/to/logs*
+#
+def noproxy: select(.component | test("GUI:proxy") | not);
 
 # Find conflicts:
 #
@@ -87,6 +99,7 @@ def issues: clean | select(is_issue);
 #     yarn jq 'path("foo/bar")' path/to/logs*
 #     yarn jq 'path("foo\\\\bar")' path/to/logs*
 #
+# FIXME: Should not output the same line twice when both path & oldpath match.
 def path(pattern):
   clean | select(
     (
@@ -161,9 +174,13 @@ def msg(pattern):
 #    yarn jq 'time("2018-04-14T22:34:25.453Z")' path/to/logs*
 #    yarn jq 'time("2018-04-14")' path/to/logs*
 #    yarn jq 'time("T22:34")' path/to/logs*
+#    yarn jq 'before("2018-04-14T22:34:25.453Z")' path/to/logs* // inclusive
+#    yarn jq 'after("2018-04-14T22:34:25.453Z")' path/to/logs* // inclusive
 #
 def time(pattern):
   select(.time | test(pattern));
+def before(time): select(.time <= time);
+def after(time): select(.time >= time);
 
 # Drop time properties
 def notime: del(.time);
