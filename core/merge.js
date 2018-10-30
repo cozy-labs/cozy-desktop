@@ -25,7 +25,7 @@ const fsutils = require('./utils/fs')
 /*::
 import type { IdConflictInfo } from './IdConflict'
 import type Local from './local'
-import type { SideName, Metadata } from './metadata'
+import type { SideName, Metadata, RemoteRevisionsByID } from './metadata'
 import type Pouch from './pouch'
 import type Remote from './remote'
 */
@@ -307,7 +307,7 @@ class Merge {
   }
 
   // Rename or move a folder (and every file and folder inside it)
-  async moveFolderAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */) {
+  async moveFolderAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */, newRemoteRevs /*: ?RemoteRevisionsByID */) {
     log.debug({path: doc.path, oldpath: was.path}, 'moveFolderAsync')
     if (was.sides && was.sides[side]) {
       const folder /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
@@ -326,14 +326,14 @@ class Merge {
         const dst = await this.resolveConflictAsync(side, doc, folder)
         dst.sides = {}
         dst.sides[side] = 1
-        return this.moveFolderRecursivelyAsync(side, dst, was)
+        return this.moveFolderRecursivelyAsync(side, dst, was, newRemoteRevs)
       } else {
         if (folder && doc.overwrite) {
           doc.overwrite = folder
           doc._rev = folder._rev
         }
         await this.ensureParentExistAsync(side, doc)
-        return this.moveFolderRecursivelyAsync(side, doc, was)
+        return this.moveFolderRecursivelyAsync(side, doc, was, newRemoteRevs)
       }
     } else { // It can happen after a conflict
       return this.putFolderAsync(side, doc)
@@ -341,7 +341,7 @@ class Merge {
   }
 
   // Move a folder and all the things inside it
-  async moveFolderRecursivelyAsync (side /*: SideName */, folder /*: Metadata */, was /*: Metadata */) {
+  async moveFolderRecursivelyAsync (side /*: SideName */, folder /*: Metadata */, was /*: Metadata */, newRemoteRevs /*: ?RemoteRevisionsByID */) {
     const docs = await this.pouch.byRecursivePathAsync(was._id)
     move(was, folder)
     let bulk = [was, folder]
@@ -358,6 +358,8 @@ class Merge {
 
       let existingDstRev = existingDstRevs[dst._id]
       if (existingDstRev && folder.overwrite) dst._rev = existingDstRev
+      const newRemoteRev = _.get(newRemoteRevs, _.get(dst, 'remote._id'))
+      if (newRemoteRev) dst.remote._rev = newRemoteRev
 
       markSide(side, dst, src)
       bulk.push(src)

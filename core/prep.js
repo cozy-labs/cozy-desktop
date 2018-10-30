@@ -12,7 +12,7 @@ const { TRASH_DIR_NAME } = require('./remote/constants')
 import type Config from './config'
 import type { Ignore } from './ignore'
 import type Merge from './merge'
-import type { SideName, Metadata } from './metadata'
+import type { SideName, Metadata, RemoteRevisionsByID } from './metadata'
 */
 
 const log = logger({
@@ -130,7 +130,7 @@ class Prep {
   //   - the old folder path is present and valid
   //   - the two paths are not the same
   //   - the revision for the old folder is present
-  async moveFolderAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */) {
+  async moveFolderAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */, newRemoteRevs /*: ?RemoteRevisionsByID */) {
     log.debug({path: doc.path, oldpath: was.path}, 'moveFolderAsync')
     const {path} = doc
     ensureValidPath(doc)
@@ -139,16 +139,14 @@ class Prep {
       const msg = 'Invalid move'
       log.warn({path, doc, was}, msg)
       throw new Error(msg)
-    } else if (!was._rev) {
+    }
+
+    if (!was._rev) {
       const msg = 'Missing rev'
       log.warn({path, doc, was}, msg)
       throw new Error(msg)
-    } else {
-      return this.doMoveFolder(side, doc, was)
     }
-  }
 
-  doMoveFolder (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */) {
     doc.docType = 'folder'
     assignId(doc)
     assignId(was)
@@ -160,7 +158,7 @@ class Prep {
     } else if ((side === 'local') && wasIgnored) {
       return this.merge.putFolderAsync(side, doc)
     } else {
-      return this.merge.moveFolderAsync(side, doc, was)
+      return this.merge.moveFolderAsync(side, doc, was, newRemoteRevs)
     }
   }
 
