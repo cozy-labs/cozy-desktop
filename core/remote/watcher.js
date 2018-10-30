@@ -16,7 +16,7 @@ import type EventEmitter from 'events'
 import type Pouch from '../pouch'
 import type Prep from '../prep'
 import type { RemoteCozy } from './cozy'
-import type { Metadata } from '../metadata'
+import type { Metadata, RemoteRevisionsByID } from '../metadata'
 import type { RemoteChange, RemoteFileMove } from './change'
 import type { RemoteDoc, RemoteDeletion } from './document'
 */
@@ -234,7 +234,7 @@ class RemoteWatcher {
       }
       const previousMoveToSamePath = _.find(previousChanges, change =>
         // $FlowFixMe
-        change.type === 'FileMove' && change.doc.path === was.path)
+        (change.type === 'DescendantChange' || change.type === 'FileMove') && change.doc.path === was.path)
 
       if (previousMoveToSamePath) {
         previousMoveToSamePath.doc.overwrite = was
@@ -285,15 +285,18 @@ class RemoteWatcher {
             // move inside move
             change.was.path = remoteChange.applyMoveToPath(previousChange, change.was.path)
             change.needRefetch = true
-            return change
+            return change // FileMove
           } else {
-            return {
+            const descendantChange = {
               sideName,
-              type: 'IgnoredChange',
+              type: 'DescendantChange',
+              update: change.update,
               doc,
               was,
-              detail: `File was moved as descendant of ${_.get(previousChange, 'doc.path')}`
+              ancestorPath: _.get(previousChange, 'doc.path')
             }
+            if (previousChange.type === 'DirMove') remoteChange.includeDescendant(previousChange, descendantChange)
+            return descendantChange
           }
         } else if (previousChange.type === 'FileTrashing' && previousChange.was._id === change.doc._id) {
           _.assign(previousChange, {
@@ -318,19 +321,23 @@ class RemoteWatcher {
             continue
           } else {
             _.assign(previousChange, {
-              type: 'IgnoredChange',
-              detail: `Folder was moved as descendant of ${change.doc.path}`
+              type: 'DescendantChange',
+              ancestorPath: change.doc.path
             })
+            // $FlowFixMe
+            remoteChange.includeDescendant(change, previousChange)
             continue
           }
         } else if (remoteChange.isChildMove(previousChange, change)) {
-          return {
+          const descendantChange = {
             sideName,
-            type: 'IgnoredChange',
+            type: 'DescendantChange',
             doc,
             was,
-            detail: `Folder was moved as descendant of ${_.get(previousChange, 'doc.path')}`
+            ancestorPath: _.get(previousChange, 'doc.path')
           }
+          if (previousChange.type === 'DirMove') remoteChange.includeDescendant(previousChange, descendantChange)
+          return descendantChange
         }
       }
       return change
@@ -364,6 +371,10 @@ class RemoteWatcher {
     switch (change.type) {
       case 'InvalidChange':
         throw change.error
+      case 'DescendantChange':
+        log.debug({path, remoteId: change.doc._id},
+          `${_.get(change.doc.docType)} was moved as descendant of ${change.ancestorPath}`)
+        break
       case 'IgnoredChange':
         log.debug({path, remoteId: change.doc._id}, change.detail)
         break
@@ -416,7 +427,22 @@ class RemoteWatcher {
         break
       case 'DirMove':
         log.info({path, oldpath: change.was.path}, 'folder was moved or renamed remotely')
-        await this.prep.moveFolderAsync(sideName, change.doc, change.was)
+        const needUpdates /*: any */ = []
+        const newRemoteRevs /*: RemoteRevisionsByID */ = {}
+        for (let descendant of (change.descendantMoves || [])) {
+          if (descendant.update) {
+            needUpdates.push(descendant)
+          }
+          if (descendant.doc.remote) {
+            // $FlowFixMe
+            newRemoteRevs[descendant.doc.remote._id] = descendant.doc.remote._rev
+          }
+        }
+        await this.prep.moveFolderAsync(sideName, change.doc, change.was, newRemoteRevs)
+        for (let needUpdate of needUpdates) {
+          change.was = await this.pouch.byRemoteIdMaybeAsync(change.was.remote._id)
+          await this.prep.updateFileAsync(sideName, needUpdate.doc)
+        }
         break
       case 'FileDissociation':
         log.info({path}, 'file was possibly renamed remotely while updated locally')
