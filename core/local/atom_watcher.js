@@ -5,6 +5,8 @@ const fse = require('fs-extra')
 const checksumer = require('./checksumer')
 const logger = require('../logger')
 const LinuxSource = require('./layers/linux')
+const Identifier = require('./layers/identifier')
+const ChecksumLayer = require('./layers/checksum')
 const Dispatcher = require('./layers/dispatcher')
 
 /*::
@@ -41,10 +43,9 @@ module.exports = class AtomWatcher {
     this.checksumer = checksumer.init()
 
     const dispatcher = new Dispatcher(prep, pouch, events)
-    // const checksum = new ChecksumLayer(dispatcher, this.checksumer)
-    // const assignId = new IdLayer(checksum)
-    // this.source = new LinuxSource(syncPath, assignID)
-    this.source = new LinuxSource(syncPath, dispatcher)
+    const checksum = new ChecksumLayer(dispatcher, this.checksumer)
+    const identifier = new Identifier(checksum)
+    this.source = new LinuxSource(syncPath, identifier)
   }
 
   ensureDirSync () {

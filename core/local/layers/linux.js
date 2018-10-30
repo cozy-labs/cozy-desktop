@@ -69,7 +69,7 @@ module.exports = class LinuxSource {
 
   stop () {
     this.running = false
-    for (const [k, w] of this.watchers) {
+    for (const [, w] of this.watchers) {
       w.dispose()
     }
     this.watchers = new Map()
