@@ -1,0 +1,45 @@
+# See https://github.com/github/gitignore/tree/master/Global
+
+# all hidden files
+.*
+
+# Dropbox
+.dropbox
+.dropbox.attr
+.dropbox.cache
+
+# Eclipse, SublimeText and many others
+*.tmp
+*.bak
+
+# Emacs
+*~
+\\#*\\#
+
+# LibreOffice
+.~lock.*#
+
+# Linux
+.fuse_hidden*
+.Trash-*
+
+# Microsoft Office
+~$*.{doc,xls,ppt}*
+
+# OSX
+.DS_Store
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+Icon
+
+# Vim
+*.sw[px]
+
+# Windows
+Thumbs.db
+ehthumbs.db
+$Recycle.bin
