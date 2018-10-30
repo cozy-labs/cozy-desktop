@@ -284,10 +284,10 @@ module.exports = class LocalWatcher {
           } catch (err) {
             // FIXME: err.code === EISDIR => keep the event? (e.g. rm foo && mkdir foo)
             if (err.code.match(/ENOENT/)) {
-              log.debug({path: e.path, ino: e.stats.ino}, 'File does not exist anymore')
+              log.debug({path: e.path, ino: e.stats.ino}, 'Checksum failed: file does not exist anymore')
               e2.wip = true
             } else {
-              log.error({path: e.path, err}, 'Could not compute checksum')
+              log.error({path: e.path, err}, 'Checksum failed')
               return null
             }
           }
