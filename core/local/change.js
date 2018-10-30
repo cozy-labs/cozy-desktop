@@ -132,21 +132,21 @@ function toString (a /*: LocalChange */) /*: string */ { return '(' + a.type + '
 function fromEvent (e/*: LocalEvent */) /*: LocalChange */ {
   const change = _fromEvent(e)
   log.debug(_.pick(change, ['path', 'ino', 'wip']), `${e.type} -> ${change.type}`)
-  if (change.old == null) delete change.old
-  if (change.wip == null) delete change.wip
+  for (let prop of ['md5sum', 'old', 'wip']) {
+    // $FlowFixMe
+    if (change[prop] == null) delete change[prop]
+  }
   return change
 }
 
 function _fromEvent (e/*: LocalEvent */) /*: LocalChange */ {
   switch (e.type) {
     case 'unlinkDir':
-      return {sideName, type: 'DirDeletion', path: e.path, old: e.old, ino: (e.old != null ? e.old.ino : null)}
+      return {sideName, type: 'DirDeletion', path: e.path, old: e.old, ino: _.get(e, 'old.ino')}
     case 'unlink':
-      return {sideName, type: 'FileDeletion', path: e.path, old: e.old, ino: (e.old != null ? e.old.ino : null)}
+      return {sideName, type: 'FileDeletion', path: e.path, old: e.old, ino: _.get(e, 'old.ino')}
     case 'addDir':
-      const change = {sideName, type: 'DirAddition', old: e.old, path: e.path, stats: e.stats, ino: e.stats.ino, wip: e.wip}
-      if (change.wip == null) delete change.wip
-      return change
+      return {sideName, type: 'DirAddition', old: e.old, path: e.path, stats: e.stats, ino: e.stats.ino, wip: e.wip}
     case 'change':
       return {sideName, type: 'FileUpdate', path: e.path, old: e.old, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, wip: e.wip}
     case 'add':
