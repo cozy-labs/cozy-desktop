@@ -267,7 +267,7 @@ describe('core/local/analysis', function () {
     }])
   })
 
-  it('handles partial successive moves (add+unlink+add, then unlink later)', () => {
+  it('identifies unlink+add then unlink (incomplete move then deletion) as FileDeletion', () => {
     const old /*: Metadata */ = metadataBuilders.file().path('src').ino(1).build()
     const stats = {ino: 1}
     const events /*: LocalEvent[] */ = [
