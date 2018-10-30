@@ -26,6 +26,7 @@ export type RemoteDirTrashing = {sideName: 'remote', type: 'DirTrashing', doc: M
 export type RemoteIgnoredChange = {sideName: 'remote', type: 'IgnoredChange', doc: Metadata|RemoteDoc|RemoteDeletion, detail: string}
 export type RemoteInvalidChange = {sideName: 'remote', type: 'InvalidChange', doc: *, error: Error}
 export type RemoteUpToDate = {sideName: 'remote', type: 'UpToDate', doc: Metadata, was: Metadata}
+export type RemoteDescendantChange = {sideName: 'remote', type: 'DescendantChange', doc: Metadata|RemoteDoc|RemoteDeletion, detail: string}
 
 export type RemoteChange =
   | RemoteDirAddition
@@ -42,6 +43,7 @@ export type RemoteChange =
   | RemoteFileTrashing
   | RemoteFileUpdate
   | RemoteIgnoredChange
+  | RemoteDescendantChange
   | RemoteInvalidChange
   | RemoteUpToDate
 */

@@ -289,7 +289,7 @@ class RemoteWatcher {
           } else {
             return {
               sideName,
-              type: 'IgnoredChange',
+              type: 'DescendantChange',
               doc,
               was,
               detail: `File was moved as descendant of ${_.get(previousChange, 'doc.path')}`
@@ -318,7 +318,7 @@ class RemoteWatcher {
             continue
           } else {
             _.assign(previousChange, {
-              type: 'IgnoredChange',
+              type: 'DescendantChange',
               detail: `Folder was moved as descendant of ${change.doc.path}`
             })
             continue
@@ -326,7 +326,7 @@ class RemoteWatcher {
         } else if (remoteChange.isChildMove(previousChange, change)) {
           return {
             sideName,
-            type: 'IgnoredChange',
+            type: 'DescendantChange',
             doc,
             was,
             detail: `Folder was moved as descendant of ${_.get(previousChange, 'doc.path')}`
@@ -365,6 +365,7 @@ class RemoteWatcher {
       case 'InvalidChange':
         throw change.error
       case 'IgnoredChange':
+      case 'DescendantChange':
         log.debug({path, remoteId: change.doc._id}, change.detail)
         break
       case 'FileTrashing':
