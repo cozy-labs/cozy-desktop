@@ -90,6 +90,10 @@ after_failure: ./dev/ci/after_failure.sh
 branches:
     only:
         - master
+stages:
+    - test
+    - name: notify
+      if: type = pull_request
 jobs:
     fast_finish: true
     include:
@@ -119,3 +123,10 @@ jobs:
           os: linux
           after_failure: skip
           script: ./dev/ci/coverage.sh
+        - stage: notify
+          name: artifacts built
+          services: false
+          cache: false
+          before_install: skip
+          install: skip
+          script: ./dev/ci/notify.sh
