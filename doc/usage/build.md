@@ -15,10 +15,10 @@ git clone git@github.com:cozy-labs/cozy-desktop.git
 cd cozy-desktop
 ```
 
-## Install NPM dependencies
+## Install dependencies
 
 ```
-yarn install
+yarn install:all
 ```
 
 

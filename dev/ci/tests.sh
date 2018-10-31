@@ -4,6 +4,8 @@ set -ex
 
 . "./dev/ci/start_xvfb.sh"
 
+yarn install:electron
+yarn install:elm
 yarn build:elm
 yarn lint
 yarn test:unit
