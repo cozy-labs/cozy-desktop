@@ -1,11 +1,13 @@
 /* @flow */
 
+const Sequential = require('./sequential')
+
 /*::
 import type { Checksumer } from '../checksumer'
 import type { Layer } from './events'
 */
 
-module.exports = class ChecksumLayer {
+module.exports = class ChecksumLayer extends Sequential {
   /*::
   next: Layer
   task : Promise<*>
@@ -13,34 +15,8 @@ module.exports = class ChecksumLayer {
   */
 
   constructor (next /*: Layer */, checksumer /*: Checksumer */) {
-    this.next = next
-    this.task = Promise.resolve()
+    super(next)
     this.checksumer = checksumer
-  }
-
-  async initial () {
-    let result
-    const task = this.task
-    this.task = new Promise(async (resolve) => {
-      await task
-      result = this.next.initial()
-      resolve()
-    })
-    await this.task
-    return result
-  }
-
-  async process (events /*: Array<*> */) {
-    let result
-    const task = this.task
-    this.task = new Promise(async (resolve) => {
-      await task
-      events = await this.doProcess(events)
-      result = this.next.process(events)
-      resolve()
-    })
-    await this.task
-    return result
   }
 
   async doProcess (events /*: Array<*> */) {
