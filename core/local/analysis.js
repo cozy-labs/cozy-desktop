@@ -173,9 +173,16 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
               changeFound(localChange.fromEvent(e))
               break
             }
-            const change /*: ?LocalFileMove */ = localChange.maybeMoveFile(getChangeByPath(e))
-            if (change && change.md5sum == null) { // FIXME: if change && change.wip?
-              localChange.convertFileMoveToDeletion(change)
+            const moveChangeSamePath /*: ?LocalFileMove */ = localChange.maybeMoveFile(getChangeByPath(e))
+            if (moveChangeSamePath && moveChangeSamePath.md5sum == null) { // FIXME: if change && change.wip?
+              localChange.convertFileMoveToDeletion(moveChangeSamePath)
+            }
+            const addChangeSamePath /*: ?LocalFileAddition */ = localChange.maybeAddFile(getChangeByPath(e))
+            if (addChangeSamePath && addChangeSamePath.wip) {
+              // $FlowFixMe
+              addChangeSamePath.type = 'Ignored'
+              delete addChangeSamePath.wip
+              break
             }
             // Otherwise, skip unlink event by multiple moves
           }
