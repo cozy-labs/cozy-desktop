@@ -54,7 +54,6 @@
     "install:electron": "electron-builder install-app-deps",
     "install:elm": "elm-package install -y",
     "prebuild": "yarn clean",
-    "reinstall": "bash -c 'rm -rf node_modules/' && yarn",
     "release:build": "yarn release:check && yarn reinstall && yarn run clean && yarn build && yarn dist --publish onTagOrDraft",
     "release:check": "yarn release:check:node8 && yarn release:check:branch",
     "release:check:branch": "node ./dev/check-release-branch.js",
