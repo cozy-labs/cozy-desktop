@@ -1,6 +1,7 @@
 /* @flow */
 
 const autoBind = require('auto-bind')
+const { buildDir, buildFile } = require('../../metadata')
 const fse = require('fs-extra')
 const path = require('path')
 const watcher = require('@atom/watcher')
@@ -9,6 +10,21 @@ const watcher = require('@atom/watcher')
 import type { Layer } from './events'
 */
 
+// This class is a source, not a typical layer: it has no method initial or
+// process that a predecessor layer can call. It watches the filesystem and the
+// events are created here.
+//
+// On Linux, the API to watch the file system (inotify) is not recursive. It
+// means that we have to add a watcher when we a new directory is added (and to
+// remove a watcher when a watched directory is removed).
+//
+// Ignoring some files/folders could have been done in a separated layer, but
+// it is more efficient to do here, as we can avoid to setup inotify watchers
+// for ignored folders.
+//
+// Even if inotify has a IN_ISDIR hint, atom/watcher does not report it. So, we
+// have to call stat on the path to know if it's a file or a directory for add
+// and update events.
 module.exports = class LinuxSource {
   /*::
   syncPath: string
@@ -31,29 +47,41 @@ module.exports = class LinuxSource {
   }
 
   async watch (relativePath /*: string */) {
-    if (!this.running) {
-      return
-    }
     try {
       const fullPath = path.join(this.syncPath, relativePath)
       const w = await watcher.watchPath(fullPath, {}, this.process)
-      this.watchers.set(relativePath, w)
-      const dirs = []
-      for (const entry of await fse.readdir(fullPath)) {
-        try {
-          const dir = path.join(relativePath, entry)
-          const stat = await fse.stat(path.join(this.syncPath, dir))
-          if (stat != null && stat.isDirectory()) {
-            dirs.push(dir) // FIXME push stats
-          }
-        } catch (err) {}
-      }
-      if (dirs.length === 0) {
+      if (!this.running) {
+        w.dispose()
         return
       }
-      this.next.process(dirs) // FIXME send events with stats
-      for (const dir of dirs) {
-        await this.watch(dir)
+      this.watchers.set(relativePath, w)
+      const batch = []
+      for (const entry of await fse.readdir(fullPath)) {
+        try {
+          const event = { action: 'add', doc: {}, docType: '' }
+          const fpath = path.join(relativePath, entry)
+          const stats = await fse.stat(path.join(this.syncPath, fpath))
+          if (stats != null && stats.isDirectory()) {
+            event.doc = buildDir(fpath, stats)
+            event.docType = 'folder'
+          } else {
+            event.doc = buildFile(fpath, stats, '')
+            event.docType = 'file'
+          }
+          batch.push(event)
+        } catch (err) {
+          // TODO error handling
+        }
+      }
+      // TODO ignore
+      if (batch.length === 0) {
+        return
+      }
+      this.next.process(batch) // FIXME send events with stats
+      for (const event of batch) {
+        if (event.docType === 'folder') {
+          await this.watch(event.doc.path)
+        }
       }
     } catch (err) {
       // The directory may been removed since we wanted to watch it
