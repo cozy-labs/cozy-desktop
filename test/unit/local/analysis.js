@@ -126,6 +126,77 @@ describe('core/local/analysis', function () {
     should(pendingChanges).deepEqual([])
   })
 
+  it('does not mistakenly identifies a partial file addition + a file change on same inode as an identical renaming', () => {
+    const partiallyAddedPath = 'partially-added-file'
+    const changedPath = 'changed-file'
+    const old = metadataBuilders.file().path(changedPath).ino(111).build()
+    const ino = 222
+    const md5sum = 'changedSum'
+    const events /*: LocalEvent[] */ = [
+      {type: 'add', path: partiallyAddedPath, stats: {ino}, old: null, wip: true},
+      // In real life, the partially-added-file would be unlinked here.
+      // But this would defeat the purpose of reproducing this issue.
+      // So let's assume it was not.
+      {type: 'change', path: changedPath, stats: {ino}, md5sum, old}
+    ]
+    const pendingChanges /*: LocalChange[] */ = []
+
+    const changes = analysis(events, pendingChanges)
+
+    should({changes, pendingChanges}).deepEqual({
+      changes: [
+        {
+          sideName,
+          type: 'FileUpdate',
+          path: changedPath,
+          stats: {ino},
+          ino,
+          md5sum,
+          old
+        }
+      ],
+      pendingChanges: [
+        // In real life, the temporary file should have been ignored.
+        // Here, since it has the same inode as the change event, is is overridden.
+        // So no pending change in the end.
+      ]
+    })
+  })
+
+  it('does not mistakenly identifies a partial dir addition + another on same inode as identical renaming', () => {
+    const partiallyAddedPath = 'partially-added-dir'
+    const newAddedPath = 'new-added-dir'
+    const ino = 123
+    const events /*: LocalEvent[] */ = [
+      {type: 'addDir', path: partiallyAddedPath, stats: {ino}, old: null, wip: true},
+      // In real life, it should not happen so often that two addDir events
+      // follow without an intermediate unlinkDir one.
+      // But lets assume it happens in order to reproduce this issue.
+      {type: 'addDir', path: newAddedPath, stats: {ino}, old: null} // not wip because dir still exists
+    ]
+    const pendingChanges /*: LocalChange[] */ = []
+
+    const changes = analysis(events, pendingChanges)
+
+    should({changes, pendingChanges}).deepEqual({
+      changes: [
+        {
+          sideName,
+          type: 'DirAddition',
+          path: newAddedPath,
+          stats: {ino},
+          ino
+        }
+      ],
+      pendingChanges: [
+        // In real life, a dir addition+move analysis would identify only the
+        // addition of the destination.
+        // Here, since both addDir events have the same inode, first one is overridden.
+        // So no pending change in the end.
+      ]
+    })
+  })
+
   it('identifies add({path: FOO, ino: 1}) + change({path: foo, ino: 1}) as FileMove(foo, FOO)', () => {
     const old /*: Metadata */ = metadataBuilders.file().path('foo').ino(1).build()
     const stats = {ino: 1}

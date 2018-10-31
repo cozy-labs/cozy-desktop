@@ -6,6 +6,7 @@ const _ = require('lodash')
 const { getInode } = require('./event')
 const localChange = require('./change')
 const logger = require('../logger')
+const metadata = require('../metadata')
 const measureTime = require('../perftools')
 
 /*::
@@ -119,7 +120,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
               break
             }
             const addChange /*: ?LocalDirAddition */ = localChange.maybePutFolder(getChangeByInode(e))
-            if (addChange && addChange.path !== e.path) {
+            if (addChange && metadata.id(addChange.path) === metadata.id(e.path) && addChange.path !== e.path) {
               changeFound(localChange.dirRenamingCaseOnlyFromAddAdd(addChange, e))
               break
             }
@@ -145,7 +146,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
           }
 
           const addChange /*: ?LocalFileAddition */ = localChange.maybeAddFile(getChangeByInode(e))
-          if (addChange && addChange.path !== e.path) {
+          if (addChange && metadata.id(addChange.path) === metadata.id(e.path) && addChange.path !== e.path) {
             changeFound(localChange.fileMoveIdentical(addChange, e))
             break
           }
