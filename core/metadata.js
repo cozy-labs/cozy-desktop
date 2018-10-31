@@ -64,19 +64,19 @@ export type Metadata = {
 }
 */
 
-let assignId /*: (doc: *) => void */ = (_) => {}
+let id /*: string => string */ = (_) => ''
 
 // See [test/world/](https://github.com/cozy-labs/cozy-desktop/blob/master/test/world/)
 // for file system behavior examples.
 switch (platform) {
   case 'linux': case 'freebsd': case 'sunos':
-    assignId = assignIdUnix
+    id = idUnix
     break
   case 'darwin':
-    assignId = assignIdApfsOrHfs
+    id = idApfsOrHfs
     break
   case 'win32':
-    assignId = assignIdNTFS
+    id = idNTFS
     break
   default:
     throw new Error(`Sorry, ${platform} is not supported!`)
@@ -111,8 +111,8 @@ function isFile (doc /*: Metadata */) /*: bool */ {
 }
 
 // Build an _id from the path for a case sensitive file system (Linux, BSD)
-function assignIdUnix (doc /*: * */) {
-  doc._id = doc.path
+function idUnix (fpath /*: string */) {
+  return fpath
 }
 
 // Build an _id from the path for macOS, assuming file system is either APFS
@@ -135,24 +135,20 @@ function assignIdUnix (doc /*: * */) {
 //
 // Note: String.prototype.normalize is not available on node 0.10 and does
 // nothing when node is compiled without intl option.
-function assignIdApfsOrHfs (doc /*: * */) {
-  let id = doc.path
+function idApfsOrHfs (fpath /*: string */) {
+  let id = fpath
   if (id.normalize) { id = id.normalize('NFD') }
-  doc._id = id.toUpperCase()
+  return id.toUpperCase()
 }
 
 // Build an _id from the path for Windows (NTFS file system)
-function assignIdNTFS (doc /*: * */) {
-  doc._id = doc.path.toUpperCase()
+function idNTFS (fpath /*: string */) {
+  return fpath.toUpperCase()
 }
 
-// Generate an id from the given path.
-// Side-effect-free version of assignId().
-// TODO: Use id() in assignId(), not the opposite.
-function id (path /*: string */) {
-  const doc /*: Object */ = {path}
-  assignId(doc)
-  return doc._id
+// Assign an Id to a document
+function assignId (doc /*: any */) {
+  doc._id = id(doc.path)
 }
 
 // Return true if the document has not a valid path
@@ -354,10 +350,10 @@ function markSide (side /*: string */, doc /*: Metadata */, prev /*: ?Metadata *
   return doc
 }
 
-function buildDir (path /*: string */, stats /*: fs.Stats */, remote /*: ?MetadataRemoteInfo */) /*: Metadata */ {
+function buildDir (fpath /*: string */, stats /*: fs.Stats */, remote /*: ?MetadataRemoteInfo */) /*: Metadata */ {
   const doc /*: Object */ = {
-    _id: id(path),
-    path,
+    _id: id(fpath),
+    path: fpath,
     docType: 'folder',
     updated_at: maxDate(stats.mtime, stats.ctime),
     ino: stats.ino,
@@ -373,6 +369,7 @@ function buildFile (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: st
   const mimeType = mime.lookup(filePath)
   const {mtime, ctime} = stats
   let doc /*: Object */ = {
+    _id: id(filePath),
     path: filePath,
     docType: 'file',
     md5sum,
