@@ -4,11 +4,9 @@
 import type { Layer } from './events'
 */
 
-/**
- * Sequential is a base class for layers that must preserve the orders of
- * initial and process calls. The subclasses must call the super constructor
- * with the next layer and overload the doProcess method.
- */
+// Sequential is a base class for layers that must preserve the orders of
+// initial and process calls. The subclasses must call the super constructor
+// with the next layer and overload the doProcess method.
 module.exports = class Sequential {
   /*::
   next: Layer

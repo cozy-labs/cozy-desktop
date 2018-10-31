@@ -7,6 +7,7 @@ import type { Checksumer } from '../checksumer'
 import type { Layer } from './events'
 */
 
+// This layer computes the md5sum for added and updated files.
 module.exports = class ChecksumLayer extends Sequential {
   /*::
   next: Layer
@@ -23,7 +24,7 @@ module.exports = class ChecksumLayer extends Sequential {
     for (const event of events) {
       if (event.docType === 'file' && ['add', 'update'].includes(event.action)) {
         try {
-          event.doc.checksum = await this.checksumer.push(event.doc.path)
+          event.doc.md5sum = await this.checksumer.push(event.doc.path)
         } catch (err) {
           // TODO
           console.error(err)

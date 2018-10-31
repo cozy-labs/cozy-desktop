@@ -63,7 +63,7 @@ describe('ChecksumLayer', function () {
         for (let event of batch) {
           const doc = { ...event.doc }
           if (event.action === 'add' || event.action === 'update') {
-            doc.checksum = doc.path
+            doc.md5sum = doc.path
           }
           events.push({ ...event, doc })
         }

@@ -14,26 +14,38 @@ module.exports = class Dispatcher {
   target: Prep
   pouch: Pouch
   events: EventEmitter
+  task : Promise<*>
   */
 
   constructor (target /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */) {
     this.target = target
     this.pouch = pouch
     this.events = events
-  }
-
-  async process (events /*: FullEvent[] */) {
-    // TODO we should not start processing a batch of events before the previous one has finished
-    for (const event of events) {
-      // $FlowFixMe
-      await this[event.action + event.doc.docType](event)
-    }
+    this.task = Promise.resolve()
   }
 
   async initial () {
-    // TODO wait that the batches of events are finished
-    // TODO initial diff
-    // TODO emit ready after initial scan
+    const task = this.task
+    this.task = new Promise(async (resolve) => {
+      await task
+      // TODO initial diff
+      // TODO emit ready after initial scan
+      resolve()
+    })
+    return this.task
+  }
+
+  async process (events /*: FullEvent[] */) {
+    const task = this.task
+    this.task = new Promise(async (resolve) => {
+      await task
+      for (const event of events) {
+        // $FlowFixMe
+        await this[event.action + event.docType](event)
+      }
+      resolve()
+    })
+    return this.task
   }
 
   // TODO Fetch old docs from pouch

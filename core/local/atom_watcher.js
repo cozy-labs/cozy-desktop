@@ -42,6 +42,8 @@ module.exports = class AtomWatcher {
     this.events = events
     this.checksumer = checksumer.init()
 
+    // TODO detect platform to build the correct chain of layers
+    // TODO do we need a debounce layer (a port of awaitWriteFinish of chokidar)?
     const dispatcher = new Dispatcher(prep, pouch, events)
     const checksum = new ChecksumLayer(dispatcher, this.checksumer)
     const identifier = new Identifier(checksum)
