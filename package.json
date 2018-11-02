@@ -127,7 +127,7 @@
     "env-cmd": "^5.0.0",
     "eslint": "^3.17.1",
     "eslint-config-standard": "^10.2.1",
-    "eslint-plugin-flowtype": "^2.30.3",
+    "eslint-plugin-flowtype": "^3.2.0",
     "eslint-plugin-import": "^2.3.0",
     "eslint-plugin-node": "^5.0.0",
     "eslint-plugin-promise": "^3.5.0",
