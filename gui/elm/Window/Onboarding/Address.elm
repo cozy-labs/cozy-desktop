@@ -1,6 +1,5 @@
 module Window.Onboarding.Address exposing (Model, Msg(..), correctAddress, dropAppName, init, setError, update, view)
 
-import Erl
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -8,6 +7,7 @@ import Icons
 import Locale exposing (Helpers)
 import Ports
 import String exposing (contains)
+import Url
 import Util.Keyboard as Keyboard
 
 
@@ -72,41 +72,47 @@ correctAddress : String -> String
 correctAddress address =
     let
         { protocol, host, port_, path } =
-            Erl.parse address
+            case Url.fromString address of
+                Just url ->
+                    url
+
+                Nothing ->
+                    Url.Url Url.Https address Nothing "" Nothing Nothing
 
         -- Erl assumes "camillenimbus" is a path, not a host
-        handleInstanceShortName host =
-            if host == [ "" ] then
+        handleInstanceShortName maybeHost =
+            if maybeHost == "" then
                 path
+
             else
-                host
+                maybeHost
 
         prependProtocol =
-            if protocol == "http" || port_ == 80 then
+            if protocol == Url.Http || port_ == Just 80 then
                 (++) "http://"
+
             else
                 identity
 
-        appendPort address =
+        appendPort shortAddress =
             case ( protocol, port_ ) of
-                ( "http", 80 ) ->
-                    address
+                ( Url.Http, Just 80 ) ->
+                    shortAddress
 
-                ( "https", 443 ) ->
-                    address
+                ( Url.Https, Just 443 ) ->
+                    shortAddress
 
-                ( "", 0 ) ->
-                    address
+                ( _, Nothing ) ->
+                    shortAddress
 
-                _ ->
-                    address ++ ":" ++ (toString port_)
+                ( _, Just p ) ->
+                    shortAddress ++ ":" ++ String.fromInt p
     in
-        host
-            |> handleInstanceShortName
-            |> String.join "."
-            |> dropAppName
-            |> prependProtocol
-            |> appendPort
+    host
+        |> handleInstanceShortName
+        |> dropAppName
+        |> prependProtocol
+        |> appendPort
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
