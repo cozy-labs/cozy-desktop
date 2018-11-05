@@ -274,7 +274,7 @@ module.exports = {
   RemoteCozy
 }
 
-async function getChangesFeed (since, client) {
+async function getChangesFeed (since /*: string */, client /*: CozyClient */) /*: Promise<{pending: number, last_seq: string, results: Array<any> }> */ {
   const response = await client.data.changesFeed(FILES_DOCTYPE, { since, include_docs: true, limit: 10000 })
   const {last_seq, pending, results} = response
   if (pending === 0) {
