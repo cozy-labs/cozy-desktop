@@ -125,8 +125,7 @@ class RemoteCozy {
   }
 
   async changes (since/*: string */ = '0') /*: Promise<{last_seq: string, docs: Array<RemoteDoc|RemoteDeletion>}> */ {
-    const {last_seq, results} = await this.client.data.changesFeed(
-      FILES_DOCTYPE, {since, include_docs: true})
+    const {last_seq, results} = await getChangesFeed(since, this.client)
 
     // The stack docs: dirs, files (without a path), deletions
     const rawDocs = dropSpecialDocs(results.map(r => r.doc))
@@ -273,4 +272,20 @@ module.exports = {
   DirectoryNotFound,
   FSCK_PATH,
   RemoteCozy
+}
+
+async function getChangesFeed (since, client) {
+  const response = await client.data.changesFeed(FILES_DOCTYPE, { since, include_docs: true, limit: 10000 })
+  const {last_seq, pending, results} = response
+  if (pending === 0) {
+    return response
+  }
+  const nextResponse = await getChangesFeed(last_seq, client)
+  return {
+    ...nextResponse,
+    results: [
+      ...results,
+      ...nextResponse.results
+    ]
+  }
 }
