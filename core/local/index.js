@@ -13,7 +13,7 @@ const logger = require('../logger')
 const { isUpToDate } = require('../metadata')
 const { hideOnWindows } = require('../utils/fs')
 const sentry = require('../sentry')
-const Watcher = require('./watcher')
+const watcher = require('./watcher')
 const measureTime = require('../perftools')
 const { withContentLength } = require('../file_stream_provider')
 
@@ -28,6 +28,7 @@ import type Pouch from '../pouch'
 import type Prep from '../prep'
 import type { Side } from '../side' // eslint-disable-line
 import type { Callback } from '../utils/func'
+import type { Watcher } from './watcher'
 */
 
 const log = logger({
@@ -54,7 +55,7 @@ module.exports = class Local /*:: implements Side */ {
     this.events = events
     this.syncPath = config.syncPath
     this.tmpPath = path.join(this.syncPath, TMP_DIR_NAME)
-    this.watcher = new Watcher(this.syncPath, this.prep, this.pouch, events)
+    this.watcher = watcher.build(this.syncPath, this.prep, this.pouch, events)
     // $FlowFixMe
     this.other = null
     this._trash = trash

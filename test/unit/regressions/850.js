@@ -7,7 +7,7 @@ const sinon = require('sinon')
 
 // import { TMP_DIR_NAME } from '../../../core/local/constants'
 const ChokidarEvent = require('../../../core/local/chokidar_event')
-const Watcher = require('../../../core/local/watcher')
+const Watcher = require('../../../core/local/chokidar_watcher')
 const Merge = require('../../../core/merge')
 const Prep = require('../../../core/prep')
 const Ignore = require('../../../core/ignore')

@@ -89,7 +89,7 @@ describe('LocalWatcher charge', () => {
     prep = new SpyPrep()
     const events = {emit: () => {}}
     // $FlowFixMe
-    watcher = new Watcher(this.syncPath, prep, this.pouch, events)
+    watcher = Watcher.build(this.syncPath, prep, this.pouch, events)
   })
 
   before('cleanup test directory', async function () {
