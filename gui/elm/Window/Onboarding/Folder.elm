@@ -1,4 +1,4 @@
-module Window.Onboarding.Folder exposing (..)
+module Window.Onboarding.Folder exposing (Model, Msg(..), init, isValid, update, view)
 
 import Data.SyncFolderConfig as SyncFolderConfig exposing (SyncFolderConfig)
 import Html exposing (..)
@@ -7,6 +7,7 @@ import Html.Events exposing (..)
 import Icons exposing (..)
 import Locale exposing (Helpers)
 import Ports
+
 
 
 -- MODEL
@@ -45,14 +46,15 @@ update msg model =
         ChooseFolder ->
             ( model, Ports.chooseFolder () )
 
-        FillFolder model ->
-            ( model, Cmd.none )
+        FillFolder folder ->
+            ( folder, Cmd.none )
 
         SetError error ->
             ( { model
                 | error =
                     if error == "" then
                         Nothing
+
                     else
                         Just error
               }
@@ -80,6 +82,7 @@ view helpers model =
             [ class "step-content" ]
             [ if isValid model then
                 Icons.bigTick
+
               else
                 Icons.bigCross
             , h1 []
@@ -87,6 +90,7 @@ view helpers model =
                     helpers.t <|
                         if isValid model then
                             "Folder All done"
+
                         else
                             "Folder Please choose another folder"
                 ]
@@ -112,6 +116,7 @@ view helpers model =
                 , href "#"
                 , if isValid model then
                     onClick StartSync
+
                   else
                     attribute "disabled" "true"
                 ]

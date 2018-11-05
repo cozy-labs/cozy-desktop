@@ -1,10 +1,11 @@
-module Window.Tray.StatusBar exposing (..)
+module Window.Tray.StatusBar exposing (icon, imgIcon, view, viewMessage)
 
 import Data.Platform exposing (Platform(..))
 import Data.Status exposing (Status(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Locale exposing (..)
+
 
 
 -- Status line component
@@ -100,6 +101,7 @@ view helpers status platform =
         [ class
             (if platform == Darwin then
                 "status"
+
              else
                 "status blue"
             )

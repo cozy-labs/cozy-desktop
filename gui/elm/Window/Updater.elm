@@ -1,4 +1,4 @@
-module Window.Updater exposing (..)
+module Window.Updater exposing (Model, Msg(..), humanReadableDiskValue, init, subscriptions, update, view)
 
 import Data.Progress exposing (Progress)
 import Html exposing (..)
@@ -6,6 +6,7 @@ import Html.Attributes exposing (..)
 import Locale exposing (Helpers)
 import Ports
 import View.ProgressBar as ProgressBar
+
 
 
 -- MODEL
@@ -41,8 +42,8 @@ update msg model =
         UpdateDownloading progress ->
             ( { model | progress = progress }, Cmd.none )
 
-        UpdateError msg ->
-            ( { model | error = Just msg }, Cmd.none )
+        UpdateError subMsg ->
+            ( { model | error = Just subMsg }, Cmd.none )
 
 
 
@@ -63,7 +64,7 @@ subscriptions model =
 
 humanReadableDiskValue : Helpers -> Float -> String
 humanReadableDiskValue helpers v =
-    (toString (round (v / 1000000)) ++ " M" ++ (helpers.t "Account b"))
+    String.fromInt (round (v / 1000000)) ++ " M" ++ helpers.t "Account b"
 
 
 view : Helpers -> Model -> Html Msg
@@ -81,9 +82,9 @@ view helpers model =
                     [ ProgressBar.view (progress.transferred / progress.total)
                     , div [ class "progress-indicator" ]
                         [ text
-                            ((humanReadableDiskValue helpers progress.transferred)
+                            (humanReadableDiskValue helpers progress.transferred
                                 ++ " / "
-                                ++ (humanReadableDiskValue helpers progress.total)
+                                ++ humanReadableDiskValue helpers progress.total
                             )
                         ]
                     ]

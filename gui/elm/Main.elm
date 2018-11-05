@@ -1,21 +1,22 @@
-module Main exposing (..)
+module Main exposing (Flags, Model, Msg(..), currentLocale, debugLog, init, main, subscriptions, update, view)
 
+import Browser
 import Data.Platform as Platform exposing (Platform)
 import Data.Window as Window exposing (Window)
 import Dict exposing (Dict)
 import Html exposing (..)
 import Json.Decode as Json
 import Locale exposing (Helpers, Locale)
+import Window.Help as Help
+import Window.Onboarding as Onboarding
 import Window.Tray as Tray
 import Window.Tray.Dashboard as Dashboard
-import Window.Help as Help
 import Window.Updater as Updater
-import Window.Onboarding as Onboarding
 
 
 main : Program Flags Model Msg
 main =
-    Html.programWithFlags
+    Browser.element
         { init = init
         , update = update
         , view = view
@@ -68,7 +69,7 @@ init flags =
             , help = Help.init
             }
     in
-        ( model, Cmd.none )
+    ( model, Cmd.none )
 
 
 currentLocale : Model -> Locale
@@ -96,32 +97,32 @@ update msg model =
                 ( onboarding, cmd ) =
                     Onboarding.update subMsg model.onboarding
             in
-                ( { model | onboarding = onboarding }
-                , Cmd.map OnboardingMsg cmd
-                )
+            ( { model | onboarding = onboarding }
+            , Cmd.map OnboardingMsg cmd
+            )
 
         TrayMsg subMsg ->
             let
                 ( tray, cmd ) =
                     Tray.update subMsg model.tray
             in
-                ( { model | tray = tray }
-                , Cmd.map TrayMsg cmd
-                )
+            ( { model | tray = tray }
+            , Cmd.map TrayMsg cmd
+            )
 
         HelpMsg subMsg ->
             let
                 ( help, cmd ) =
                     Help.update subMsg model.help
             in
-                ( { model | help = help }, Cmd.map HelpMsg cmd )
+            ( { model | help = help }, Cmd.map HelpMsg cmd )
 
         UpdaterMsg subMsg ->
             let
                 ( updater, cmd ) =
                     Updater.update subMsg model.updater
             in
-                ( { model | updater = updater }, Cmd.map UpdaterMsg cmd )
+            ( { model | updater = updater }, Cmd.map UpdaterMsg cmd )
 
 
 debugLog : Msg -> Msg
@@ -160,15 +161,15 @@ view model =
         helpers =
             Locale.helpers (currentLocale model)
     in
-        case model.window of
-            Window.Onboarding ->
-                Html.map OnboardingMsg (Onboarding.view helpers model.onboarding)
+    case model.window of
+        Window.Onboarding ->
+            Html.map OnboardingMsg (Onboarding.view helpers model.onboarding)
 
-            Window.Help ->
-                Html.map HelpMsg (Help.view helpers model.help)
+        Window.Help ->
+            Html.map HelpMsg (Help.view helpers model.help)
 
-            Window.Updater ->
-                Html.map UpdaterMsg (Updater.view helpers model.updater)
+        Window.Updater ->
+            Html.map UpdaterMsg (Updater.view helpers model.updater)
 
-            Window.Tray ->
-                Html.map TrayMsg (Tray.view helpers model.tray)
+        Window.Tray ->
+            Html.map TrayMsg (Tray.view helpers model.tray)

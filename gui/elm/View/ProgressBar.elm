@@ -8,15 +8,15 @@ view : Float -> Html msg
 view ratio =
     let
         cappedRatio =
-            (Basics.min 1 ratio)
+            Basics.min 1 ratio
 
         percent =
-            (toString (cappedRatio * 100)) ++ "%"
+            String.fromFloat (cappedRatio * 100) ++ "%"
     in
-        div [ class "progress" ]
-            [ div
-                [ class "progress-inner"
-                , style [ ( "width", percent ) ]
-                ]
-                []
+    div [ class "progress" ]
+        [ div
+            [ class "progress-inner"
+            , style "width" percent
             ]
+            []
+        ]

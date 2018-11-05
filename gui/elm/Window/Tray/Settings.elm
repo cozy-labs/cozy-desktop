@@ -1,4 +1,4 @@
-module Window.Tray.Settings exposing (..)
+module Window.Tray.Settings exposing (Model, Msg(..), diskQuotaLine, humanReadableDiskValue, init, update, versionLine, view)
 
 import Data.DiskSpace exposing (DiskSpace)
 import Html exposing (..)
@@ -7,6 +7,7 @@ import Html.Events exposing (..)
 import Locale exposing (Helpers)
 import Ports
 import View.ProgressBar as ProgressBar
+
 
 
 -- MODEL
@@ -63,7 +64,7 @@ update msg model =
         msg
     of
         SetAutoLaunch autoLaunch ->
-            ( model, Ports.autoLauncher autoLaunch )
+            ( { model | autoLaunch = autoLaunch }, Ports.autoLauncher autoLaunch )
 
         AutoLaunchSet autoLaunch ->
             ( { model | autoLaunch = autoLaunch }, Cmd.none )
@@ -99,20 +100,21 @@ update msg model =
 
 humanReadableDiskValue : Helpers -> Float -> String
 humanReadableDiskValue helpers v =
-    (toString (round (v / 1000000)) ++ " M" ++ (helpers.t "Account b"))
+    String.fromInt (round (v / 1000000)) ++ " M" ++ helpers.t "Account b"
 
 
 diskQuotaLine : Helpers -> Model -> Html Msg
 diskQuotaLine helpers model =
     if model.disk.quota == 0 then
         div []
-            [ text ((humanReadableDiskValue helpers model.disk.used) ++ " / ∞") ]
+            [ text (humanReadableDiskValue helpers model.disk.used ++ " / ∞") ]
+
     else
         div []
             [ text
-                ((humanReadableDiskValue helpers model.disk.used)
+                (humanReadableDiskValue helpers model.disk.used
                     ++ " / "
-                    ++ (humanReadableDiskValue helpers model.disk.quota)
+                    ++ humanReadableDiskValue helpers model.disk.quota
                 )
             , ProgressBar.view (model.disk.used / model.disk.quota)
             ]
@@ -156,15 +158,15 @@ view helpers model =
             ]
         , h2 [] [ text (helpers.t "Account About") ]
         , p []
-            [ strong [] [ text ((helpers.t "Account Account") ++ " ") ]
+            [ strong [] [ text (helpers.t "Account Account" ++ " ") ]
             , a [ href model.address ] [ text model.address ]
             ]
         , p []
-            [ strong [] [ text ((helpers.t "Account Device name") ++ " ") ]
+            [ strong [] [ text (helpers.t "Account Device name" ++ " ") ]
             , text model.deviceName
             ]
         , p []
-            [ strong [] [ text ((helpers.t "Settings Version") ++ " ") ]
+            [ strong [] [ text (helpers.t "Settings Version" ++ " ") ]
             , versionLine helpers model
             ]
         , h2 [] [ text (helpers.t "Help Help") ]
@@ -180,21 +182,23 @@ view helpers model =
             , href "#"
             , if model.busyQuitting then
                 attribute "aria-busy" "true"
+
               else
                 onClick CloseApp
             ]
             [ text (helpers.t "AppMenu Quit") ]
         , h2 [] [ text (helpers.t "Account Unlink Cozy") ]
         , p []
-            [ text ((helpers.t "Account It will unlink your account to this computer.") ++ " ")
-            , text ((helpers.t "Account Your files won't be deleted.") ++ " ")
-            , text ((helpers.t "Account Are you sure to unlink this account?") ++ " ")
+            [ text (helpers.t "Account It will unlink your account to this computer." ++ " ")
+            , text (helpers.t "Account Your files won't be deleted." ++ " ")
+            , text (helpers.t "Account Are you sure to unlink this account?" ++ " ")
             ]
         , a
             [ class "btn btn--danger"
             , href "#"
             , if model.busyUnlinking then
                 attribute "aria-busy" "true"
+
               else
                 onClick UnlinkCozy
             ]

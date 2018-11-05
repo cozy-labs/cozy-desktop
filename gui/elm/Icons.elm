@@ -1,9 +1,9 @@
-module Icons exposing (..)
+module Icons exposing (IconFunction, account, bigCross, bigTick, cozyBig, dashboard, folder, globe, grey, help, icon, path, polygon, settings, white)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Svg exposing (Svg, svg, node, path)
-import Svg.Attributes exposing (fill, fillRule, d, viewBox)
+import Svg exposing (Svg, node, path, svg)
+import Svg.Attributes exposing (d, fill, fillRule, viewBox)
 
 
 type alias IconFunction msg =
@@ -27,22 +27,23 @@ icon viewbox paths size active =
         color =
             if active then
                 white
+
             else
                 grey
 
         stringSize =
-            toString size
+            String.fromInt size
 
         viewboxSize =
-            "0 0 " ++ (toString viewbox) ++ " " ++ (toString viewbox)
+            "0 0 " ++ String.fromInt viewbox ++ " " ++ String.fromInt viewbox
     in
-        Svg.svg
-            [ Svg.Attributes.width stringSize
-            , Svg.Attributes.height stringSize
-            , Svg.Attributes.viewBox viewboxSize
-            , Svg.Attributes.fill color
-            ]
-            paths
+    Svg.svg
+        [ Svg.Attributes.width stringSize
+        , Svg.Attributes.height stringSize
+        , Svg.Attributes.viewBox viewboxSize
+        , Svg.Attributes.fill color
+        ]
+        paths
 
 
 path : String -> Svg msg
@@ -152,19 +153,15 @@ bigCross =
         [ div [ class "svg-wrapper svg-tick-wrapper" ]
             [ svg [ viewBox "0 0 96 96" ]
                 [ Svg.g
-                    [ style
-                        [ ( "stroke", "none" )
-                        , ( "stroke-width", "1" )
-                        , ( "fill", "none" )
-                        , ( "fill-rule", "evenodd" )
-                        ]
+                    [ style "stroke" "none"
+                    , style "stroke-width" "1"
+                    , style "fill" "none"
+                    , style "fill-rule" "evenodd"
                     ]
                     [ Svg.g
-                        [ style
-                            [ ( "stroke", "white" )
-                            , ( "stroke-linecap", "round" )
-                            , ( "stroke-width", "5" )
-                            ]
+                        [ style "stroke" "white"
+                        , style "stroke-linecap" "round"
+                        , style "stroke-width" "5"
                         ]
                         [ Svg.path [ d "M20,20 L76,76" ] []
                         , Svg.path [ d "M20,76 L76,20" ] []

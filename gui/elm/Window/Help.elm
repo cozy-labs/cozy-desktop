@@ -1,12 +1,13 @@
-module Window.Help exposing (..)
+module Window.Help exposing (Model, Msg(..), Status(..), bodyOrDefault, iconLink, init, subscriptions, update, view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import List
+import Locale exposing (Helpers, Translate)
 import Ports
 import String
-import Locale exposing (Helpers, Translate)
+
 
 
 -- MODEL
@@ -78,7 +79,7 @@ update msg model =
             ( { model | status = Success }, Cmd.none )
 
         MailSent (Just error) ->
-            ( { model | status = (Error error) }, Cmd.none )
+            ( { model | status = Error error }, Cmd.none )
 
 
 
@@ -111,6 +112,7 @@ view helpers model =
         , if model.status == Success then
             p [ class "message--success" ]
                 [ text (helpers.t "Help Your mail has been sent. We will try to respond to it really soon!") ]
+
           else
             Html.form [ class "send-mail-to-support" ]
                 [ case model.status of
@@ -131,6 +133,7 @@ view helpers model =
                     , href "#"
                     , if model.status == Sending then
                         attribute "aria-busy" "true"
+
                       else
                         onClick (SendMail helpers.t)
                     ]

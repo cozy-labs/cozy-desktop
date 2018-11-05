@@ -29,6 +29,7 @@ view helpers { code, title, detail, links } msg =
             , a [ class "btn", href links.self, onClick msg ]
                 [ text (helpers.t "CGU Updated See") ]
             ]
+
          else
             [ h2 [] [ text title ]
             , p [] [ text detail ]
