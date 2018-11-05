@@ -281,11 +281,14 @@ async function getChangesFeed (since, client) {
     return response
   }
   const nextResponse = await getChangesFeed(last_seq, client)
-  return {
-    ...nextResponse,
-    results: [
-      ...results,
-      ...nextResponse.results
-    ]
-  }
+  return Object.assign(
+    {},
+    nextResponse,
+    {
+      results: [
+        ...results,
+        ...nextResponse.results
+      ]
+    }
+  )
 }
