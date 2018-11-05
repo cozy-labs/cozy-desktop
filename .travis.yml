@@ -118,11 +118,6 @@ jobs:
           os: linux
         - <<: *dist
           os: osx
-        - stage: test
-          name: code coverage
-          os: linux
-          after_failure: skip
-          script: ./dev/ci/coverage.sh
         - stage: notify
           name: artifacts built
           services: false
