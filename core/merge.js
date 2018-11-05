@@ -302,7 +302,7 @@ class Merge {
   }
 
   // Rename or move a folder (and every file and folder inside it)
-  async moveFolderAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */) {
+  async moveFolderAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */, newRevs /*:: ?: { [string]: string} */) {
     log.debug({path: doc.path, oldpath: was.path}, 'moveFolderAsync')
     if (was.sides && was.sides[side]) {
       const folder /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
@@ -321,14 +321,14 @@ class Merge {
         const dst = await this.resolveConflictAsync(side, doc, folder)
         dst.sides = {}
         dst.sides[side] = 1
-        return this.moveFolderRecursivelyAsync(side, dst, was)
+        return this.moveFolderRecursivelyAsync(side, dst, was, newRevs)
       } else {
         if (folder && doc.overwrite) {
           doc.overwrite = folder
           doc._rev = folder._rev
         }
         await this.ensureParentExistAsync(side, doc)
-        return this.moveFolderRecursivelyAsync(side, doc, was)
+        return this.moveFolderRecursivelyAsync(side, doc, was, newRevs)
       }
     } else { // It can happen after a conflict
       return this.putFolderAsync(side, doc)
@@ -336,7 +336,7 @@ class Merge {
   }
 
   // Move a folder and all the things inside it
-  async moveFolderRecursivelyAsync (side /*: SideName */, folder /*: Metadata */, was /*: Metadata */) {
+  async moveFolderRecursivelyAsync (side /*: SideName */, folder /*: Metadata */, was /*: Metadata */, newRevs /*:: ?: { [string]: string } */) {
     const docs = await this.pouch.byRecursivePathAsync(was._id)
     move(was, folder)
     let bulk = [was, folder]
@@ -353,6 +353,9 @@ class Merge {
 
       let existingDstRev = existingDstRevs[dst._id]
       if (existingDstRev && folder.overwrite) dst._rev = existingDstRev
+      if (side === 'remote' && newRevs && newRevs[dst.remote._id]) {
+        dst.remote._rev = newRevs[dst.remote._id]
+      }
 
       markSide(side, dst, src)
       bulk.push(src)

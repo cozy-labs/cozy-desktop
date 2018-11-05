@@ -234,7 +234,7 @@ class RemoteWatcher {
       }
       const previousMoveToSamePath = _.find(previousChanges, change =>
         // $FlowFixMe
-        change.type === 'FileMove' && change.doc.path === was.path)
+        (change.type === 'DescendantChange' || change.type === 'FileMove') && change.doc.path === was.path)
 
       if (previousMoveToSamePath) {
         previousMoveToSamePath.doc.overwrite = was
@@ -285,15 +285,18 @@ class RemoteWatcher {
             // move inside move
             change.was.path = remoteChange.applyMoveToPath(previousChange, change.was.path)
             change.needRefetch = true
-            return change
+            return change // FileMove
           } else {
             return {
               sideName,
               type: 'DescendantChange',
+              update: change.update,
               doc,
               was,
               detail: `File was moved as descendant of ${_.get(previousChange, 'doc.path')}`
             }
+            previousChange.type === 'DirMove' && remoteChange.includeDescendant(previousChange, descendantChange)
+            return descendantChange
           }
         } else if (previousChange.type === 'FileTrashing' && previousChange.was._id === change.doc._id) {
           _.assign(previousChange, {
@@ -321,16 +324,20 @@ class RemoteWatcher {
               type: 'DescendantChange',
               detail: `Folder was moved as descendant of ${change.doc.path}`
             })
+            // $FlowFixMe
+            remoteChange.includeDescendant(change, previousChange)
             continue
           }
         } else if (remoteChange.isChildMove(previousChange, change)) {
-          return {
+          const descendantChange = {
             sideName,
             type: 'DescendantChange',
             doc,
             was,
             detail: `Folder was moved as descendant of ${_.get(previousChange, 'doc.path')}`
           }
+          previousChange.type === 'DirMove' && remoteChange.includeDescendant(previousChange, descendantChange)
+          return descendantChange
         }
       }
       return change
@@ -417,7 +424,22 @@ class RemoteWatcher {
         break
       case 'DirMove':
         log.info({path, oldpath: change.was.path}, 'folder was moved or renamed remotely')
-        await this.prep.moveFolderAsync(sideName, change.doc, change.was)
+        const needUpdates /*: any */ = []
+        const newRevs /*: { [string]: string } */ = {}
+        for (let descendant of (change.descendantDirMoves || [])) {
+          if (descendant.update) {
+            needUpdates.push(descendant)
+          }
+          if (descendant.doc.remote) {
+            // $FlowFixMe
+            newRevs[descendant.doc.remote._id] = descendant.doc.remote._rev
+          }
+        }
+        await this.prep.moveFolderAsync(sideName, change.doc, change.was, newRevs)
+        for (let needUpdate of needUpdates) {
+          change.was = await this.pouch.byRemoteIdMaybeAsync(change.was.remote._id)
+          await this.prep.updateFileAsync(sideName, needUpdate.doc)
+        }
         break
       case 'FileDissociation':
         log.info({path}, 'file was possibly renamed remotely while updated locally')
