@@ -5,8 +5,8 @@ const {
   afterEach,
   before,
   beforeEach,
-  suite,
-  test
+  describe,
+  it
 } = require('mocha')
 const should = require('should')
 const sinon = require('sinon')
@@ -27,7 +27,7 @@ import type { RemoteDoc } from '../../core/remote/document'
 const cozy = cozyHelpers.cozy
 const COUCHDB_URL = process.env.COUCHDB_URL || 'http://localhost:5984'
 
-suite('Re-Upload files when the stack report them as broken', () => {
+describe('Re-Upload files when the stack report them as broken', () => {
   let helpers, builders
 
   before(async function dontRunIfCouchdbIsNotAccessible () {
@@ -61,7 +61,7 @@ suite('Re-Upload files when the stack report them as broken', () => {
   const GOODCHECKSUM = crypto.createHash('md5').update(GOODDATA).digest('base64')
   const BADCHECKSUM = crypto.createHash('md5').update(BADDATA).digest('base64')
 
-  test('No download when the remote file is corrupted (md5sum does not match content) - no download', async () => {
+  it('No download when the remote file is corrupted (md5sum does not match content) - no download', async () => {
     const fileName = 'file-corrupted-md5sum'
     const remoteFile = await setupContentMismatchRemote({
       fileName,
@@ -76,7 +76,7 @@ suite('Re-Upload files when the stack report them as broken', () => {
     should(helpers.local.syncDir.existsSync(fileName)).be.false()
   })
 
-  test('No download when the remote file is corrupted (size does not match content) - no download', async () => {
+  it('No download when the remote file is corrupted (size does not match content) - no download', async () => {
     const fileName = 'file-corrupted-size'
     const remoteFile = await setupContentMismatchRemote({
       fileName,
@@ -91,7 +91,7 @@ suite('Re-Upload files when the stack report them as broken', () => {
     should(helpers.local.syncDir.existsSync(fileName)).be.false()
   })
 
-  test('If the metadata in pouchdb are ok, fix once', async () => {
+  it('If the metadata in pouchdb are ok, fix once', async () => {
     // HACK: to get in the same state than if this desktop had uploaded a file which got corrupted
     const fileName = 'file-corrupted-fixable'
 
@@ -121,7 +121,7 @@ suite('Re-Upload files when the stack report them as broken', () => {
     should(overwriteFileAsync).have.been.calledOnce() // should be uptodate
   })
 
-  test('If the metadata in pouchdb are bad, dont upload', async () => {
+  it('If the metadata in pouchdb are bad, dont upload', async () => {
     // HACK: pretends the file is corrupted in pouchdb
     // This should never happens with newer version of desktop
     // but some installation may have bad data in pouchdb before we started

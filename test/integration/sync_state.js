@@ -5,8 +5,8 @@ const {
   afterEach,
   before,
   beforeEach,
-  suite,
-  test
+  describe,
+  it
 } = require('mocha')
 const should = require('should')
 const sinon = require('sinon')
@@ -17,7 +17,7 @@ const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 const { IntegrationTestHelpers } = require('../support/helpers/integration')
 
-suite('Sync state', () => {
+describe('Sync state', () => {
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
@@ -38,7 +38,7 @@ suite('Sync state', () => {
     // await helpers.remote.ignorePreviousChanges()
   })
 
-  test('1 sync error (missing remote file)', async () => {
+  it('1 sync error (missing remote file)', async () => {
     await helpers._remote.watcher.pullMany([
       builders.remote.file().build()
     ])

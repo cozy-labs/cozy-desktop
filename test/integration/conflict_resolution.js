@@ -5,8 +5,8 @@ const {
   afterEach,
   before,
   beforeEach,
-  suite,
-  test
+  describe,
+  it
 } = require('mocha')
 const should = require('should')
 const sinon = require('sinon')
@@ -17,7 +17,7 @@ const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 const { IntegrationTestHelpers } = require('../support/helpers/integration')
 
-suite('Conflict resolution', () => {
+describe('Conflict resolution', () => {
   let builders, cozy, helpers
 
   before(configHelpers.createConfig)
@@ -37,13 +37,13 @@ suite('Conflict resolution', () => {
     await helpers.remote.ignorePreviousChanges()
   })
 
-  suite('local', () => {
+  describe('local', () => {
     beforeEach('create and merge conflicting remote file', async () => {
       await cozy.files.create('whatever', {name: 'foo'})
       await helpers.remote.pullChanges()
     })
 
-    test('success', async () => {
+    it('success', async () => {
       await helpers.local.syncDir.ensureDir('foo')
       await helpers.prep.putFolderAsync('local', builders.metadata.dir().path('foo').build())
       should(await helpers.local.tree()).deepEqual([
@@ -52,13 +52,13 @@ suite('Conflict resolution', () => {
     })
   })
 
-  suite('remote', () => {
+  describe('remote', () => {
     beforeEach('set up conflict', async () => {
       await helpers.prep.putFolderAsync('local', builders.metadata.dir().path('foo').build())
       await cozy.files.create('whatever', {name: 'foo'})
     })
 
-    test('success', async () => {
+    it('success', async () => {
       await helpers.remote.pullChanges()
       should(await helpers.remote.tree()).deepEqual([
         '.cozy_trash/',
@@ -66,12 +66,12 @@ suite('Conflict resolution', () => {
       ])
     })
 
-    suite('retry', () => {
+    describe('retry', () => {
       beforeEach('simulate stack failure', () => {
         sinon.stub(cozy.files, 'updateAttributesById').throws('FetchError')
       })
 
-      test('success', async () => {
+      it('success', async () => {
         await helpers.remote.pullChanges()
         should(await helpers.remote.tree()).deepEqual([
           '.cozy_trash/',
