@@ -50,14 +50,14 @@ describe('Remote', function () {
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
-  describe('constructor', () =>
+  describe('constructor', () => {
     it('has a remoteCozy and a watcher', function () {
       should.exist(this.remote.remoteCozy)
       should.exist(this.remote.watcher)
     })
-  )
+  })
 
-  describe('createReadStream', () =>
+  describe('createReadStream', () => {
     it('create a readable stream from a remote binary', async function () {
       const expectedChecksum = '2NqmrnZqa1zTER40NtPGJg=='
       const fixture = 'test/fixtures/cool-pillow.jpg'
@@ -80,7 +80,7 @@ describe('Remote', function () {
         })
       })
     })
-  )
+  })
 
   describe('addFileAsync', function () {
     it('adds a file to the remote Cozy', async function () {
@@ -739,7 +739,7 @@ describe('Remote', function () {
     })
   })
 
-  describe('renameConflictingDocAsync', () =>
+  describe('renameConflictingDocAsync', () => {
     it('renames the file/folder', async function () {
       const remoteDoc /*: RemoteDoc */ = await builders.remote.file().name('cat9').create()
       const src /*: Metadata */ = conversion.createMetadata(remoteDoc)
@@ -751,5 +751,5 @@ describe('Remote', function () {
         name: newPath
       }, pick(remoteDoc, ['dir_id', 'type', 'updated_at', 'size', 'md5sum'])))
     })
-  )
+  })
 })
