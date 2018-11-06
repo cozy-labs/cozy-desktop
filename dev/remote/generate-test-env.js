@@ -1,3 +1,4 @@
+require('../../core/globals')
 const cozy = require('cozy-client-js')
 const fs = require('fs')
 
