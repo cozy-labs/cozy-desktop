@@ -3,6 +3,13 @@
 /*::
 import type { Metadata } from '../../metadata'
 
+export type AtomWatcherEvent = {
+  action: "created" | "modified" | "deleted" | "renamed",
+  kind: "file" | "directory" | "symlink" | "unknown",
+  path: string,
+  oldPath: string
+}
+
 export type Action = "add" | "move" | "update" | "remove"
 export type DocType = "file" | "folder"
 

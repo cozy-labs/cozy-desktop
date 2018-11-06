@@ -2,13 +2,14 @@
 
 const autoBind = require('auto-bind')
 const { buildDir, buildFile } = require('../../metadata')
+const fs = require('fs')
 const fse = require('fs-extra')
 const path = require('path')
 const watcher = require('@atom/watcher')
 
 /*::
 import type { Metadata } from '../../metadata'
-import type { Layer, LayerEvent, LayerAddEvent } from './events'
+import type { AtomWatcherEvent, Layer, LayerEvent, LayerAddEvent, LayerUpdateEvent, LayerMoveEvent, LayerRemoveEvent } from './events'
 */
 
 // This class is a source, not a typical layer: it has no method initial or
@@ -69,7 +70,7 @@ module.exports = class LinuxSource {
       if (batch.length === 0) {
         return
       }
-      this.next.process(batch) // FIXME send events with stats
+      this.next.process(batch)
       for (const event of batch) {
         if (event.docType === 'folder') {
           await this.watch(event.doc.path)
@@ -80,6 +81,32 @@ module.exports = class LinuxSource {
     }
   }
 
+  async process (events /*: AtomWatcherEvent[] */) {
+    // TODO ignore
+    // TODO this.watch for new dir
+    // TODO remove watcher for deleted dir
+    const batch /*: LayerEvent[] */ = []
+    for (const event of events) {
+      switch (event.action) {
+        case 'created':
+          batch.push(await this.buildAddEvent(event.path))
+          break
+        case 'updated':
+          batch.push(await this.buildUpdateEvent(event.path))
+          break
+        case 'deleted':
+          batch.push(await this.buildRemoveEvent(event.path))
+          break
+        case 'renamed':
+          batch.push(await this.buildMoveEvent(event.path, event.oldPath))
+          break
+        default:
+          throw new Error(`Unknown atom/watcher action ${event.action}`)
+      }
+    }
+    this.next.process(batch)
+  }
+
   async buildAddEvent (fpath /*: string */) /*: Promise<LayerAddEvent> */ {
     let doc /*: ?Metadata */
     const stats = await fse.stat(path.join(this.syncPath, fpath))
@@ -88,14 +115,37 @@ module.exports = class LinuxSource {
     } else {
       doc = buildFile(fpath, stats, '')
     }
-    return { action: 'add', doc: doc }
+    return { action: 'add', doc }
   }
 
-  process (events /*: * */) {
-    // TODO ignore
-    // TODO this.watch for new dir
-    // TODO remove watcher for deleted dir
-    this.next.process(events) // FIXME send events
+  async buildUpdateEvent (fpath /*: string */) /*: Promise<LayerUpdateEvent> */ {
+    let doc /*: ?Metadata */
+    const stats = await fse.stat(path.join(this.syncPath, fpath))
+    if (stats != null && stats.isDirectory()) {
+      doc = buildDir(fpath, stats)
+    } else {
+      doc = buildFile(fpath, stats, '')
+    }
+    return { action: 'update', doc }
+  }
+
+  async buildRemoveEvent (fpath /*: string */) /*: Promise<LayerRemoveEvent> */ {
+    let doc = buildDir(fpath, new fs.Stats())
+    return { action: 'remove', doc }
+  }
+
+  async buildMoveEvent (fpath /*: string */, oldpath /*: string */) /*: Promise<LayerMoveEvent> */ {
+    let doc /*: ?Metadata */
+    let src /*: ?Metadata */
+    const stats = await fse.stat(path.join(this.syncPath, fpath))
+    if (stats != null && stats.isDirectory()) {
+      doc = buildDir(fpath, stats)
+      src = buildDir(oldpath, new fs.Stats())
+    } else {
+      doc = buildFile(fpath, stats, '')
+      src = buildFile(oldpath, new fs.Stats(), '')
+    }
+    return { action: 'move', doc, src }
   }
 
   stop () {
