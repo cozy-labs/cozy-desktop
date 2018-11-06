@@ -6,8 +6,8 @@
 module.exports = ({
   side: 'remote',
   init: [
-    {path: 'src/'},
-    {path: 'src/file'}
+    {ino: 1, path: 'src/'},
+    {ino: 2, path: 'src/file'}
   ],
   actions: [
     {type: 'mv', src: 'src', dst: 'dst'},
