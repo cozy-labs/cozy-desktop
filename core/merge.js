@@ -10,6 +10,7 @@ const {
   assignId,
   assignMaxDate,
   detectPlatformIncompatibilities,
+  isAtLeastUpToDate,
   isUpToDate,
   markSide,
   sameBinary,
@@ -214,7 +215,7 @@ class Merge {
         if (doc.size == null) { doc.size = file.size }
         if (doc.class == null) { doc.class = file.class }
         if (doc.mime == null) { doc.mime = file.mime }
-      } else if (!isUpToDate(side, file)) {
+      } else if (!isAtLeastUpToDate(side, file)) {
         await this.resolveConflictAsync(side, doc, file)
         if (side === 'remote') {
           // we just renamed the remote folder as a conflict

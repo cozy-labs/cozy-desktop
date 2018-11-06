@@ -96,6 +96,7 @@ module.exports = {
   ensureValidChecksum,
   extractRevNumber,
   isUpToDate,
+  isAtLeastUpToDate,
   markAsUpToDate,
   sameFolder,
   sameFile,
@@ -251,6 +252,12 @@ function isUpToDate (side /*: SideName */, doc /*: Metadata */) {
   let currentRev = doc.sides[side] || 0
   let lastRev = extractRevNumber(doc)
   return currentRev === lastRev
+}
+
+function isAtLeastUpToDate (side /*: SideName */, doc /*: Metadata */) {
+  let currentRev = doc.sides[side] || 0
+  let lastRev = extractRevNumber(doc)
+  return currentRev >= lastRev
 }
 
 function markAsUpToDate (doc /*: Metadata */) {

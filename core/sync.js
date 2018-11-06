@@ -287,7 +287,6 @@ class Sync {
       log.debug({path: doc.path}, `Ignoring deleted ${doc.docType} metadata as move source`)
     } else if (doc.moveFrom != null) {
       const from = (doc.moveFrom /*: Metadata */)
-      // XXX: if (from.md5sum === doc.md5sum) ?
       if (from.incompatibilities) {
         await this.doAdd(side, doc)
       } else if (from.childMove) {
@@ -295,6 +294,9 @@ class Sync {
         this.events.emit('transfer-move', _.clone(doc), _.clone(from))
       } else {
         await this.doMove(side, doc, from)
+      }
+      if (from.md5sum !== doc.md5sum) {
+        await side.overwriteFileAsync(doc, from)
       }
     } else if (doc._deleted) {
       if (doc.docType === 'file') await side.trashAsync(doc)
