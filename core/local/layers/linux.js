@@ -60,8 +60,8 @@ module.exports = class LinuxSource {
       const batch /*: LayerEvent[] */ = []
       for (const entry of await fse.readdir(fullPath)) {
         try {
-          const fpath = path.join(relativePath, entry)
-          batch.push(await this.buildAddEvent(fpath))
+          const abspath = path.join(this.syncPath, relativePath, entry)
+          batch.push(await this.buildAddEvent(abspath))
         } catch (err) {
           // TODO error handling
         }
@@ -82,20 +82,29 @@ module.exports = class LinuxSource {
   }
 
   async process (events /*: AtomWatcherEvent[] */) {
+    // TODO logger
     // TODO ignore
-    // TODO this.watch for new dir
-    // TODO remove watcher for deleted dir
     const batch /*: LayerEvent[] */ = []
     for (const event of events) {
       switch (event.action) {
         case 'created':
-          batch.push(await this.buildAddEvent(event.path))
+          const eAdd = await this.buildAddEvent(event.path)
+          batch.push(eAdd)
+          if (eAdd.doc.docType === 'folder') {
+            this.watch(eAdd.doc.path)
+          }
           break
         case 'updated':
           batch.push(await this.buildUpdateEvent(event.path))
           break
         case 'deleted':
-          batch.push(await this.buildRemoveEvent(event.path))
+          const eDel = await this.buildRemoveEvent(event.path)
+          batch.push(eDel)
+          const w = this.watchers.get(eDel.doc.path)
+          if (w) {
+            w.dispose()
+            this.watchers.delete(eDel.doc.path)
+          }
           break
         case 'renamed':
           batch.push(await this.buildMoveEvent(event.path, event.oldPath))
@@ -107,9 +116,10 @@ module.exports = class LinuxSource {
     this.next.process(batch)
   }
 
-  async buildAddEvent (fpath /*: string */) /*: Promise<LayerAddEvent> */ {
+  async buildAddEvent (abspath /*: string */) /*: Promise<LayerAddEvent> */ {
     let doc /*: ?Metadata */
-    const stats = await fse.stat(path.join(this.syncPath, fpath))
+    const fpath = this.relativePath(abspath)
+    const stats = await fse.stat(abspath)
     if (stats != null && stats.isDirectory()) {
       doc = buildDir(fpath, stats)
     } else {
@@ -118,9 +128,10 @@ module.exports = class LinuxSource {
     return { action: 'add', doc }
   }
 
-  async buildUpdateEvent (fpath /*: string */) /*: Promise<LayerUpdateEvent> */ {
+  async buildUpdateEvent (abspath /*: string */) /*: Promise<LayerUpdateEvent> */ {
     let doc /*: ?Metadata */
-    const stats = await fse.stat(path.join(this.syncPath, fpath))
+    const fpath = this.relativePath(abspath)
+    const stats = await fse.stat(abspath)
     if (stats != null && stats.isDirectory()) {
       doc = buildDir(fpath, stats)
     } else {
@@ -129,15 +140,17 @@ module.exports = class LinuxSource {
     return { action: 'update', doc }
   }
 
-  async buildRemoveEvent (fpath /*: string */) /*: Promise<LayerRemoveEvent> */ {
-    let doc = buildDir(fpath, new fs.Stats())
+  async buildRemoveEvent (abspath /*: string */) /*: Promise<LayerRemoveEvent> */ {
+    const fpath = this.relativePath(abspath)
+    const doc = buildDir(fpath, new fs.Stats())
     return { action: 'remove', doc }
   }
 
-  async buildMoveEvent (fpath /*: string */, oldpath /*: string */) /*: Promise<LayerMoveEvent> */ {
+  async buildMoveEvent (abspath /*: string */, oldpath /*: string */) /*: Promise<LayerMoveEvent> */ {
     let doc /*: ?Metadata */
     let src /*: ?Metadata */
-    const stats = await fse.stat(path.join(this.syncPath, fpath))
+    const fpath = this.relativePath(abspath)
+    const stats = await fse.stat(abspath)
     if (stats != null && stats.isDirectory()) {
       doc = buildDir(fpath, stats)
       src = buildDir(oldpath, new fs.Stats())
@@ -146,6 +159,10 @@ module.exports = class LinuxSource {
       src = buildFile(oldpath, new fs.Stats(), '')
     }
     return { action: 'move', doc, src }
+  }
+
+  relativePath (abspath /*: string */) {
+    return path.relative(this.syncPath, abspath)
   }
 
   stop () {
