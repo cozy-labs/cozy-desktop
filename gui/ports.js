@@ -19,6 +19,7 @@ const elmectron = Elm.embed(container, {
   locale: remote.app.locale,
   locales: {
     en: remote.require('./locales/en.json'),
+    es: remote.require('./locales/es.json'),
     fr: remote.require('./locales/fr.json')
   },
   platform: remote.process.platform,
