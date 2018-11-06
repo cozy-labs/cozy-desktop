@@ -86,7 +86,7 @@
     "bunyan": "^1.8.12",
     "chokidar": "1.7.0",
     "commander": "2.9.0",
-    "cozy-client-js": "0.7.1",
+    "cozy-client-js": "^0.13.0",
     "deep-diff": "^1.0.1",
     "dtrace-provider": ">=0.8.6",
     "electron-fetch": "^1.1.0",
