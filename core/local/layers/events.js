@@ -6,15 +6,31 @@ import type { Metadata } from '../../metadata'
 export type Action = "add" | "move" | "update" | "remove"
 export type DocType = "file" | "folder"
 
-export type FullEvent = {
-  action: Action,
-  docType: DocType,
+export type LayerAddEvent = {
+  action: "add",
+  doc: Metadata
+}
+
+export type LayerUpdateEvent = {
+  action: "update",
+  doc: Metadata
+}
+
+export type LayerMoveEvent = {
+  action: "move",
   doc: Metadata,
   src: Metadata
 }
 
+export type LayerRemoveEvent = {
+  action: "remove",
+  doc: Metadata
+}
+
+export type LayerEvent = LayerAddEvent | LayerUpdateEvent | LayerMoveEvent | LayerRemoveEvent
+
 export interface Layer {
   initial(): Promise<*>,
-  process(events: any): Promise<*>
+  process(events: LayerEvent[]): Promise<*>
 }
 */

@@ -3,7 +3,7 @@
 const { assignId } = require('../../metadata')
 
 /*::
-import type { Layer } from './events'
+import type { Layer, LayerEvent } from './events'
 */
 
 // Identifier just adds IDs to the documents in the events.
@@ -21,13 +21,13 @@ module.exports = class Identifier {
     return this.next.initial()
   }
 
-  process (events /*: Array<*> */) {
+  process (events /*: LayerEvent[] */) {
     for (const event of events) {
       if (event.doc) {
         assignId(event.doc)
       }
-      if (event.was) {
-        assignId(event.was)
+      if (event.action === 'move') {
+        assignId(event.src)
       }
     }
     return this.next.process(events)

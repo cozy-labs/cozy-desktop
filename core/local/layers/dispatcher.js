@@ -3,7 +3,7 @@
 /*::
 import type Pouch from '../../pouch'
 import type Prep from '../../prep'
-import type { FullEvent } from './events'
+import type { LayerEvent, LayerAddEvent, LayerUpdateEvent, LayerMoveEvent, LayerRemoveEvent } from './events'
 import type EventEmitter from 'events'
 */
 
@@ -35,7 +35,7 @@ module.exports = class Dispatcher {
     return this.task
   }
 
-  async process (events /*: FullEvent[] */) {
+  async process (events /*: LayerEvent[] */) {
     const task = this.task
     this.task = new Promise(async (resolve) => {
       await task
@@ -50,35 +50,35 @@ module.exports = class Dispatcher {
 
   // TODO Fetch old docs from pouch
 
-  async addfile (event /*: FullEvent */) {
+  async addfile (event /*: LayerAddEvent */) {
     await this.target.addFileAsync(SIDE, event.doc)
   }
 
-  async movefile (event /*: FullEvent */) {
+  async movefile (event /*: LayerMoveEvent */) {
     await this.target.moveFileAsync(SIDE, event.doc, event.src)
   }
 
-  async updatefile (event /*: FullEvent */) {
+  async updatefile (event /*: LayerUpdateEvent */) {
     await this.target.updateFileAsync(SIDE, event.doc)
   }
 
-  async removefile (event /*: FullEvent */) {
+  async removefile (event /*: LayerRemoveEvent */) {
     await this.target.trashFileAsync(SIDE, event.doc)
   }
 
-  async addfolder (event /*: FullEvent */) {
+  async addfolder (event /*: LayerAddEvent */) {
     await this.target.putFolderAsync(SIDE, event.doc)
   }
 
-  async movefolder (event /*: FullEvent */) {
+  async movefolder (event /*: LayerMoveEvent */) {
     await this.target.moveFolderAsync(SIDE, event.doc, event.src)
   }
 
-  async updatefolder (event /*: FullEvent */) {
+  async updatefolder (event /*: LayerUpdateEvent */) {
     await this.target.putFolderAsync(SIDE, event.doc)
   }
 
-  async removefolder (event /*: FullEvent */) {
+  async removefolder (event /*: LayerRemoveEvent */) {
     await this.target.trashFolderAsync(SIDE, event.doc)
   }
 }

@@ -1,7 +1,7 @@
 /* @flow */
 
 /*::
-import type { Layer } from './events'
+import type { Layer, LayerEvent } from './events'
 */
 
 // Sequential is a base class for layers that must preserve the orders of
@@ -30,7 +30,7 @@ module.exports = class Sequential {
     return result
   }
 
-  async process (events /*: Array<*> */) {
+  async process (events /*: LayerEvent[] */) {
     let result
     const task = this.task
     this.task = new Promise(async (resolve) => {

@@ -4,7 +4,7 @@ const Sequential = require('./sequential')
 
 /*::
 import type { Checksumer } from '../checksumer'
-import type { Layer } from './events'
+import type { Layer, LayerEvent } from './events'
 */
 
 // This layer computes the md5sum for added and updated files.
@@ -20,9 +20,9 @@ module.exports = class ChecksumLayer extends Sequential {
     this.checksumer = checksumer
   }
 
-  async doProcess (events /*: Array<*> */) {
+  async doProcess (events /*: LayerEvent[] */) {
     for (const event of events) {
-      if (event.docType === 'file' && ['add', 'update'].includes(event.action)) {
+      if (['add', 'update'].includes(event.action) && event.doc.docType === 'file') {
         try {
           event.doc.md5sum = await this.checksumer.push(event.doc.path)
         } catch (err) {

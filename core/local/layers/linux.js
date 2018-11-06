@@ -7,7 +7,8 @@ const path = require('path')
 const watcher = require('@atom/watcher')
 
 /*::
-import type { Layer } from './events'
+import type { Metadata } from '../../metadata'
+import type { Layer, LayerEvent, LayerAddEvent } from './events'
 */
 
 // This class is a source, not a typical layer: it has no method initial or
@@ -55,20 +56,11 @@ module.exports = class LinuxSource {
         return
       }
       this.watchers.set(relativePath, w)
-      const batch = []
+      const batch /*: LayerEvent[] */ = []
       for (const entry of await fse.readdir(fullPath)) {
         try {
-          const event = { action: 'add', doc: {}, docType: '' }
           const fpath = path.join(relativePath, entry)
-          const stats = await fse.stat(path.join(this.syncPath, fpath))
-          if (stats != null && stats.isDirectory()) {
-            event.doc = buildDir(fpath, stats)
-            event.docType = 'folder'
-          } else {
-            event.doc = buildFile(fpath, stats, '')
-            event.docType = 'file'
-          }
-          batch.push(event)
+          batch.push(await this.buildAddEvent(fpath))
         } catch (err) {
           // TODO error handling
         }
@@ -86,6 +78,17 @@ module.exports = class LinuxSource {
     } catch (err) {
       // The directory may been removed since we wanted to watch it
     }
+  }
+
+  async buildAddEvent (fpath /*: string */) /*: Promise<LayerAddEvent> */ {
+    let doc /*: ?Metadata */
+    const stats = await fse.stat(path.join(this.syncPath, fpath))
+    if (stats != null && stats.isDirectory()) {
+      doc = buildDir(fpath, stats)
+    } else {
+      doc = buildFile(fpath, stats, '')
+    }
+    return { action: 'add', doc: doc }
   }
 
   process (events /*: * */) {
