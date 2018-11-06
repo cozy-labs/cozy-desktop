@@ -8,6 +8,8 @@ module.exports.init = (appRef) => {
   const locale = app.getLocale()
   if (locale === 'fr' || locale.match(/^fr_/i)) {
     app.locale = 'fr'
+  } else if (locale === 'es' || locale.match(/^es_/i)) {
+    app.locale = 'es'
   } else {
     app.locale = 'en'
   }
