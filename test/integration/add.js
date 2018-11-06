@@ -5,8 +5,8 @@ const {
   afterEach,
   before,
   beforeEach,
-  suite,
-  test
+  describe,
+  it
 } = require('mocha')
 const path = require('path')
 const should = require('should')
@@ -18,7 +18,7 @@ const { IntegrationTestHelpers } = require('../support/helpers/integration')
 
 const cozy = cozyHelpers.cozy
 
-suite('Add', () => {
+describe('Add', () => {
   let helpers, parent
 
   before(configHelpers.createConfig)
@@ -42,10 +42,10 @@ suite('Add', () => {
     helpers.spyPouch()
   })
 
-  suite('file', () => {
-    test('local')
+  describe('file', () => {
+    it('local')
 
-    test('remote', async () => {
+    it('remote', async () => {
       await cozy.files.create('foo', {name: 'file', dirID: parent._id})
       await helpers.remote.pullChanges()
 
@@ -62,10 +62,10 @@ suite('Add', () => {
     })
   })
 
-  suite('dir', () => {
-    test('local')
+  describe('dir', () => {
+    it('local')
 
-    test('remote', async () => {
+    it('remote', async () => {
       const dir = await cozy.files.createDirectory({name: 'dir', dirID: parent._id})
       const subdir = await cozy.files.createDirectory({name: 'subdir', dirID: dir._id})
       await cozy.files.createDirectory({name: 'empty-subdir', dirID: dir._id})

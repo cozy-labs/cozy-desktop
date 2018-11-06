@@ -1,7 +1,7 @@
 /* @flow */
 
 const fs = require('fs-extra')
-const { setup, suite, test } = require('mocha')
+const { setup, describe, it } = require('mocha')
 const path = require('path')
 const should = require('should')
 
@@ -16,7 +16,7 @@ should.Assertion.add('hex', function (expectedPretty) {
   should(actual).deepEqual(expected)
 })
 
-suite('Case and encoding basics', () => {
+describe('Case and encoding basics', () => {
   // Test helpers
   const tmpdir = path.resolve(`tmp/test/unit/case_and_encoding`)
   const abspath = (relpath) => path.join(tmpdir, relpath)
@@ -26,7 +26,7 @@ suite('Case and encoding basics', () => {
 
   setup(() => fs.emptyDir(tmpdir))
 
-  test('Node.js strings', () => {
+  it('Node.js strings', () => {
     should('e').have.hex('            65       ')
     should('é').have.hex('               c3 a9 ')
     should('\u00e9').have.hex('          c3 a9 ')
@@ -34,7 +34,7 @@ suite('Case and encoding basics', () => {
     should('\u0065\u0301').have.hex(' 65 cc 81 ')
   })
 
-  test('create file NFC', async () => {
+  it('create file NFC', async () => {
     await createFile('\u00e9')
     switch (process.platform) {
       case 'linux':
@@ -51,7 +51,7 @@ suite('Case and encoding basics', () => {
     }
   })
 
-  test('create file NFD', async () => {
+  it('create file NFD', async () => {
     await createFile('\u0065\u0301')
     switch (process.platform) {
       case 'linux':
@@ -62,7 +62,7 @@ suite('Case and encoding basics', () => {
     }
   })
 
-  test('upcase file', async () => {
+  it('upcase file', async () => {
     await createFile('foo')
     should(await listFiles()).deepEqual(['foo'])
     await rename('foo', 'FOO')
@@ -75,7 +75,7 @@ suite('Case and encoding basics', () => {
     }
   })
 
-  test('path.join', async () => {
+  it('path.join', async () => {
     switch (process.platform) {
       case 'linux':
       case 'darwin':
@@ -89,12 +89,12 @@ suite('Case and encoding basics', () => {
     }
   })
 
-  test('rename identical', async () => {
+  it('rename identical', async () => {
     await createFile('foo')
     await should(rename('foo', 'foo')).not.be.rejected()
   })
 
-  test('rename file NFD -> NFC', async () => {
+  it('rename file NFD -> NFC', async () => {
     await createFile('\u0065\u0301')
     await rename('\u0065\u0301', '\u00e9')
     switch (process.platform) {
@@ -112,7 +112,7 @@ suite('Case and encoding basics', () => {
     }
   })
 
-  test('rename file NFC -> NFD', async () => {
+  it('rename file NFC -> NFD', async () => {
     await createFile('\u00e9')
     await rename('\u00e9', '\u0065\u0301')
     switch (process.platform) {

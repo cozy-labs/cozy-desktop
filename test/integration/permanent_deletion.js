@@ -5,8 +5,8 @@ const {
   afterEach,
   before,
   beforeEach,
-  suite,
-  test
+  describe,
+  it
 } = require('mocha')
 const should = require('should')
 
@@ -17,7 +17,7 @@ const { IntegrationTestHelpers } = require('../support/helpers/integration')
 
 const cozy = cozyHelpers.cozy
 
-suite('Permanent deletion remote', () => {
+describe('Permanent deletion remote', () => {
   let helpers
 
   before(configHelpers.createConfig)
@@ -34,7 +34,7 @@ suite('Permanent deletion remote', () => {
     helpers.local.setupTrash()
   })
 
-  test('file', async () => {
+  it('file', async () => {
     await helpers.remote.ignorePreviousChanges()
     const file = await cozy.files.create('File content', {name: 'file'})
     await helpers.remote.pullChanges()
