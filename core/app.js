@@ -253,7 +253,7 @@ class App {
     try {
       let syncPath = this.config.syncPath
       ignored = fs.readFileSync(path.join(syncPath, '.cozyignore'))
-      ignored = ignored.toString().split('\n')
+      ignored = ignored.toString().split(/\r?\n/)
     } catch (error) {
       ignored = []
     }
