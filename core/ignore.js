@@ -125,4 +125,6 @@ class Ignore {
   }
 }
 
-module.exports = Ignore
+module.exports = {
+  Ignore
+}

@@ -4,7 +4,7 @@ const fs = require('fs')
 const should = require('should')
 const sinon = require('sinon')
 
-const Ignore = require('../../core/ignore')
+const { Ignore } = require('../../core/ignore')
 const metadata = require('../../core/metadata')
 
 describe('Ignore', function () {
