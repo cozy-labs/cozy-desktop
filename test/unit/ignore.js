@@ -1,13 +1,33 @@
 /* eslint-env mocha */
 
 const fs = require('fs')
+const path = require('path')
 const should = require('should')
 const sinon = require('sinon')
 
-const { Ignore } = require('../../core/ignore')
+const { Ignore, loadSync } = require('../../core/ignore')
 const metadata = require('../../core/metadata')
 
+const TmpDir = require('../support/helpers/TmpDir')
+
 describe('Ignore', function () {
+  describe('.loadSync()', () => {
+    let tmpDir
+
+    beforeEach(async () => {
+      tmpDir = await TmpDir.emptyForTestFile(__filename)
+    })
+
+    const userIgnoreRules = () => path.join(tmpDir, 'user-ignore-rules')
+
+    it('loads user-defined ignore rules', () => {
+      fs.writeFileSync(userIgnoreRules(), 'foo\r\nbar\r\n\r\n')
+      const ignore = loadSync(userIgnoreRules())
+      should(ignore.isIgnored({_id: 'foo'})).be.true()
+      should(ignore.isIgnored({_id: 'bar'})).be.true()
+    })
+  })
+
   describe('Removal of unnecessary lines', () => {
     it('remove blank lines or comments', function () {
       const ignore = new Ignore([

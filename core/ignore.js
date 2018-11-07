@@ -17,6 +17,18 @@ export type IgnorePattern = {
 import type {Metadata} from './metadata.js'
 */
 
+/** Load both given file rules & default ones */
+function loadSync (rulesFilePath /*: string */) /*: Ignore */ {
+  let ignored
+  try {
+    ignored = fs.readFileSync(rulesFilePath)
+    ignored = ignored.toString().split(/\r?\n/)
+  } catch (error) {
+    ignored = []
+  }
+  return new Ignore(ignored).addDefaultRules()
+}
+
 // Parse a line and build the corresponding pattern
 function buildPattern (line) {
   let folder = false
@@ -126,5 +138,6 @@ class Ignore {
 }
 
 module.exports = {
-  Ignore
+  Ignore,
+  loadSync
 }

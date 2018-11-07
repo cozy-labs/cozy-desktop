@@ -17,7 +17,7 @@ const logger = require('./logger')
 const sentry = require('./sentry')
 const { LOG_FILE, LOG_FILENAME } = logger
 const Pouch = require('./pouch')
-const { Ignore } = require('./ignore')
+const Ignore = require('./ignore')
 const Merge = require('./merge')
 const Prep = require('./prep')
 const Local = require('./local')
@@ -48,7 +48,7 @@ class App {
   config: Config
   pouch: Pouch
   events: EventEmitter
-  ignore: Ignore
+  ignore: Ignore.Ignore
   merge: Merge
   prep: Prep
   local: Local
@@ -247,22 +247,14 @@ class App {
     return Promise.all([mailSent, logsSent])
   }
 
-  // Load ignore rules
-  loadIgnore () {
-    let ignored
-    try {
-      let syncPath = this.config.syncPath
-      ignored = fs.readFileSync(path.join(syncPath, '.cozyignore'))
-      ignored = ignored.toString().split(/\r?\n/)
-    } catch (error) {
-      ignored = []
-    }
-    this.ignore = new Ignore(ignored).addDefaultRules()
+  /** Path to the file containing user-defined ignore rules */
+  userIgnoreRules () /*: string */ {
+    return path.join(this.config.syncPath, '.cozyignore')
   }
 
   // Instanciate some objects before sync
   instanciate () {
-    this.loadIgnore()
+    this.ignore = Ignore.loadSync(this.userIgnoreRules())
     this.merge = new Merge(this.pouch)
     this.prep = new Prep(this.merge, this.ignore, this.config)
     this.local = this.merge.local = new Local(this.config, this.prep, this.pouch, this.events)

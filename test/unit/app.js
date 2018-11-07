@@ -158,23 +158,6 @@ describe('App', function () {
     }
   })
 
-  describe('#loadIgnore()', () => {
-    beforeEach(configHelpers.createConfig)
-    afterEach(configHelpers.cleanConfig)
-
-    it('can load user-defined rules from file with CRLF', function () {
-      const app = new App(this.basePath)
-      app.config = this.config
-      fs.writeFileSync(
-        path.join(this.syncPath, '.cozyignore'),
-        'foo\r\nbar\r\n\r\n'
-      )
-      should(() => app.loadIgnore()).not.throwError()
-      should(app.ignore.isIgnored({_id: 'foo'})).be.true()
-      should(app.ignore.isIgnored({_id: 'bar'})).be.true()
-    })
-  })
-
   describe('clientInfo', () => {
     it('works when app is not configured', () => {
       const basePath = fs.mkdtempSync(path.join(os.tmpdir(), 'base-dir-'))
