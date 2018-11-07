@@ -29,7 +29,7 @@
   ],
   "scripts": {
     "bootstrap": "yarn dev:setup && yarn test:setup",
-    "bootstrap:remote": "node ./dev/remote/generate-test-env.js",
+    "bootstrap:remote": "electron ./dev/remote/generate-test-env.js",
     "build": "yarn build:css && yarn build:elm && yarn build:tx",
     "build:css": "stylus --sourcemap --compress --use cozy-ui/stylus gui/styles/app.styl --out gui",
     "build:elm": "elm make ./gui/elm/Main.elm --output ./gui/elm.js",
