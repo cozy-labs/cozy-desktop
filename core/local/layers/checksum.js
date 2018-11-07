@@ -24,7 +24,7 @@ module.exports = class ChecksumLayer extends Sequential {
     for (const event of events) {
       if (['add', 'update'].includes(event.action) && event.doc.docType === 'file') {
         try {
-          event.doc.md5sum = await this.checksumer.push(event.doc.path)
+          event.doc.md5sum = await this.checksumer.push(event.abspath)
         } catch (err) {
           // TODO
           console.error(err)

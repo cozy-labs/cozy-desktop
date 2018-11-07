@@ -15,22 +15,26 @@ export type DocType = "file" | "folder"
 
 export type LayerAddEvent = {
   action: "add",
+  abspath: string,
   doc: Metadata
 }
 
 export type LayerUpdateEvent = {
   action: "update",
+  abspath: string,
   doc: Metadata
 }
 
 export type LayerMoveEvent = {
   action: "move",
+  abspath: string,
   doc: Metadata,
   src: Metadata
 }
 
 export type LayerRemoveEvent = {
   action: "remove",
+  abspath: string,
   doc: Metadata
 }
 

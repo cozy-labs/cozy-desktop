@@ -41,7 +41,11 @@ module.exports = class Dispatcher {
       await task
       for (const event of events) {
         // $FlowFixMe
-        await this[event.action + event.docType](event)
+        try {
+          await this[event.action + event.doc.docType](event)
+        } catch (err) {
+          console.log('Dispatch.process error:', err) // TODO
+        }
       }
       resolve()
     })

@@ -44,7 +44,7 @@ module.exports = class LinuxSource {
 
   async start () {
     this.running = true
-    await this.watch(this.syncPath)
+    await this.watch('.')
     this.next.initial()
   }
 
@@ -72,7 +72,7 @@ module.exports = class LinuxSource {
       }
       this.next.process(batch)
       for (const event of batch) {
-        if (event.docType === 'folder') {
+        if (event.doc.docType === 'folder') {
           await this.watch(event.doc.path)
         }
       }
@@ -94,11 +94,11 @@ module.exports = class LinuxSource {
             this.watch(eAdd.doc.path)
           }
           break
-        case 'updated':
+        case 'modified':
           batch.push(await this.buildUpdateEvent(event.path))
           break
         case 'deleted':
-          const eDel = await this.buildRemoveEvent(event.path)
+          const eDel = await this.buildRemoveEvent(event.path, event.kind)
           batch.push(eDel)
           const w = this.watchers.get(eDel.doc.path)
           if (w) {
@@ -125,7 +125,7 @@ module.exports = class LinuxSource {
     } else {
       doc = buildFile(fpath, stats, '')
     }
-    return { action: 'add', doc }
+    return { action: 'add', abspath, doc }
   }
 
   async buildUpdateEvent (abspath /*: string */) /*: Promise<LayerUpdateEvent> */ {
@@ -137,13 +137,18 @@ module.exports = class LinuxSource {
     } else {
       doc = buildFile(fpath, stats, '')
     }
-    return { action: 'update', doc }
+    return { action: 'update', abspath, doc }
   }
 
-  async buildRemoveEvent (abspath /*: string */) /*: Promise<LayerRemoveEvent> */ {
+  async buildRemoveEvent (abspath /*: string */, kind /*: string */) /*: Promise<LayerRemoveEvent> */ {
     const fpath = this.relativePath(abspath)
-    const doc = buildDir(fpath, new fs.Stats())
-    return { action: 'remove', doc }
+    let doc /*: ?Metadata */
+    if (kind === 'directory') {
+      doc = buildDir(fpath, new fs.Stats())
+    } else {
+      doc = buildFile(fpath, new fs.Stats(), '')
+    }
+    return { action: 'remove', abspath, doc }
   }
 
   async buildMoveEvent (abspath /*: string */, oldpath /*: string */) /*: Promise<LayerMoveEvent> */ {
@@ -158,7 +163,7 @@ module.exports = class LinuxSource {
       doc = buildFile(fpath, stats, '')
       src = buildFile(oldpath, new fs.Stats(), '')
     }
-    return { action: 'move', doc, src }
+    return { action: 'move', abspath, doc, src }
   }
 
   relativePath (abspath /*: string */) {

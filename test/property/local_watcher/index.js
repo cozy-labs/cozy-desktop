@@ -5,6 +5,7 @@ const crypto = require('crypto')
 const fse = require('fs-extra')
 const glob = require('glob')
 const path = require('path')
+const EventEmitter = require('events')
 
 const { ContextDir } = require('../../support/helpers/context_dir')
 const TmpDir = require('../../support/helpers/TmpDir')
@@ -20,9 +21,7 @@ const Watcher = require('../../../core/local/watcher')
 const PouchDB = require('pouchdb')
 PouchDB.plugin(require('pouchdb-adapter-memory'))
 
-const events = {
-  emit: msg => {}
-}
+const events = new EventEmitter()
 
 async function step (state, op) {
   // Slow down things to avoid issues with chokidar throttler
