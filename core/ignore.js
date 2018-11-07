@@ -104,7 +104,6 @@ class Ignore {
     this.patterns = Array.from(lines)
       .filter(isNotBlankOrComment)
       .map(buildPattern)
-    this.match = match
   }
 
   // Add some rules for things that should be always ignored (temporary
@@ -125,11 +124,11 @@ class Ignore {
     for (let pattern of Array.from(this.patterns)) {
       if (pattern.negate) {
         if (result) {
-          result = !this.match(doc._id, doc.docType === 'folder', pattern)
+          result = !match(doc._id, doc.docType === 'folder', pattern)
         }
       } else {
         if (!result) {
-          result = this.match(doc._id, doc.docType === 'folder', pattern)
+          result = match(doc._id, doc.docType === 'folder', pattern)
         }
       }
     }
