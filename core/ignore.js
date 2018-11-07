@@ -89,6 +89,9 @@ function match (path, isFolder, pattern /*: IgnorePattern */) {
   return match(parent, true, pattern)
 }
 
+/** The default rules included in the repo */
+const defaultRulesPath = resolve(__dirname, './config/.cozyignore')
+
 // Cozy-desktop can ignore some files and folders from a list of patterns in the
 // cozyignore file. This class can be used to know if a file/folder is ignored.
 //
@@ -111,7 +114,7 @@ class Ignore {
   addDefaultRules () {
     // TODO: split on return char depending on the OS
     const DefaultRules = fs
-      .readFileSync(resolve(__dirname, './config/.cozyignore'), 'utf8')
+      .readFileSync(defaultRulesPath, 'utf8')
       .split(/\r?\n/)
     let morePatterns = Array.from(DefaultRules).map(buildPattern)
     this.patterns = morePatterns.concat(this.patterns)
