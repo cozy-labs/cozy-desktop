@@ -44,7 +44,7 @@ module.exports = class Local /*:: implements Side */ {
   events: EventEmitter
   syncPath: string
   tmpPath: string
-  watcher: ChokidarWatcher | AtomWatcher
+  watcher: Watcher
   other: FileStreamProvider
   _trash: (Array<string>) => Promise<void>
   */

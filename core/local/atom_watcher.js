@@ -34,6 +34,9 @@ module.exports = class AtomWatcher {
   _runningResolve: ?Function
   _runningReject: ?Function
   source: LinuxSource
+  start: () => Promise<*>
+  stop: (force: ?bool) => Promise<*>
+  ensureDirSync: () => void
   */
 
   constructor (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */) {
@@ -79,9 +82,5 @@ module.exports = class AtomWatcher {
     }
     clearInterval(this.ensureDirInterval)
     this.source.stop()
-  }
-
-  onFlush (rawEvents /*: ChokidarEvent[] */) {
-    log.debug('onFlush', rawEvents)
   }
 }

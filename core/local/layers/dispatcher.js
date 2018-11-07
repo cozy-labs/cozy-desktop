@@ -40,8 +40,8 @@ module.exports = class Dispatcher {
     this.task = new Promise(async (resolve) => {
       await task
       for (const event of events) {
-        // $FlowFixMe
         try {
+          // $FlowFixMe
           await this[event.action + event.doc.docType](event)
         } catch (err) {
           console.log('Dispatch.process error:', err) // TODO

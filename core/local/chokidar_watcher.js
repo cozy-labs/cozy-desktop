@@ -68,7 +68,6 @@ module.exports = class LocalWatcher {
   start: () => Promise<*>
   stop: (force: ?bool) => Promise<*>
   ensureDirSync: () => void
-  onFlush: (ChokidarEvent[]) => *
   */
 
   constructor (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */) {

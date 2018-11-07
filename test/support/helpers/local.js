@@ -93,6 +93,7 @@ class LocalTestHelpers {
   }
 
   async simulateEvents (events /*: ChokidarEvent[] */) {
+    // $FlowFixMe
     return this.local.watcher.onFlush(events)
   }
 

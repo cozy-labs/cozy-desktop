@@ -11,13 +11,12 @@ import type EventEmitter from 'events'
 import type { ChokidarEvent } from './chokidar_event'
 import type { Checksumer } from './checksumer'
 
-export type Watcher = {
+export interface Watcher {
   checksumer: Checksumer,
   running: Promise<*>,
   start: () => Promise<*>,
   stop: (force: ?bool) => Promise<*>,
   ensureDirSync: () => void,
-  onFlush: (ChokidarEvent[]) => *
 }
 */
 
