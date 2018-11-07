@@ -21,12 +21,17 @@ import type {Metadata} from './metadata.js'
 function loadSync (rulesFilePath /*: string */) /*: Ignore */ {
   let ignored
   try {
-    ignored = fs.readFileSync(rulesFilePath)
-    ignored = ignored.toString().split(/\r?\n/)
+    ignored = readLinesSync(rulesFilePath)
   } catch (error) {
     ignored = []
   }
   return new Ignore(ignored).addDefaultRules()
+}
+
+/** Read lines from a file.
+ */
+function readLinesSync (filePath /*: string */) /*: string[] */ {
+  return fs.readFileSync(filePath, 'utf8').split(/\r?\n/)
 }
 
 // Parse a line and build the corresponding pattern
@@ -113,9 +118,7 @@ class Ignore {
   // files, thumbnails db, trash, etc.)
   addDefaultRules () {
     // TODO: split on return char depending on the OS
-    const DefaultRules = fs
-      .readFileSync(defaultRulesPath, 'utf8')
-      .split(/\r?\n/)
+    const DefaultRules = readLinesSync(defaultRulesPath)
     let morePatterns = Array.from(DefaultRules).map(buildPattern)
     this.patterns = morePatterns.concat(this.patterns)
     return this
