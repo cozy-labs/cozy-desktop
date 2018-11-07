@@ -72,6 +72,13 @@ function buildPattern (line) {
   return pattern
 }
 
+/** Parse many lines and build the corresponding pattern array */
+function buildPatternArray (lines /*: string[] */) /*: IgnorePattern[] */ {
+  return Array.from(lines)
+    .filter(isNotBlankOrComment)
+    .map(buildPattern)
+}
+
 function isNotBlankOrComment (line /*: string */) /*: boolean */ {
   return line !== '' && line[0] !== '#'
 }
@@ -109,18 +116,14 @@ class Ignore {
 
   // Load patterns for detecting ignored files and folders
   constructor (lines /*: string[] */) {
-    this.patterns = Array.from(lines)
-      .filter(isNotBlankOrComment)
-      .map(buildPattern)
+    this.patterns = buildPatternArray(lines)
   }
 
   // Add some rules for things that should be always ignored (temporary
   // files, thumbnails db, trash, etc.)
   addDefaultRules () {
-    // TODO: split on return char depending on the OS
-    const DefaultRules = readLinesSync(defaultRulesPath)
-    let morePatterns = Array.from(DefaultRules).map(buildPattern)
-    this.patterns = morePatterns.concat(this.patterns)
+    const defaultPatterns = buildPatternArray(readLinesSync(defaultRulesPath))
+    this.patterns = defaultPatterns.concat(this.patterns)
     return this
   }
 
