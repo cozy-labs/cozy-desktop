@@ -29,7 +29,7 @@ module.exports = class Dispatcher {
     this.task = new Promise(async (resolve) => {
       await task
       // TODO initial diff
-      // TODO emit ready after initial scan
+      this.events.emit('initial-scan-done')
       resolve()
     })
     return this.task

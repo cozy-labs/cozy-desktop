@@ -1,6 +1,7 @@
 /* @flow */
 
 const fse = require('fs-extra')
+const Promise = require('bluebird')
 
 const checksumer = require('./checksumer')
 const logger = require('../logger')
@@ -66,6 +67,9 @@ module.exports = class AtomWatcher {
       this._runningReject = reject
     })
     this.source.start()
+    return new Promise((resolve) => {
+      this.events.on('initial-scan-done', resolve)
+    })
   }
 
   stop (force /*: ? bool */) {
