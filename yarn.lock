@@ -26,10 +26,10 @@
     "7zip-bin-mac" "^1.0.1"
     "7zip-bin-win" "^2.1.1"
 
-"@atom/watcher@1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@atom/watcher/-/watcher-1.2.0.tgz#d07ba92d7168ada260b1d4d2a4353f38db5d1f1c"
-  integrity sha512-X4wN3EORK5ZrSYe8QVi+cQs7MQglKZCIj4pBxH+aO3rktW4ajKutdF7X76lVakWOPWlxI9ii+t7f6lY4ITEP1A==
+"@atom/watcher@^1.2.1":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@atom/watcher/-/watcher-1.2.1.tgz#87d76be21b1967f486700ea8eb86dc3b006fe5ed"
+  integrity sha512-tPnOwmmByY3HGq/Q8whzgsN7YRXT14ebDjQnGA8UVwWNsiYzRm4SDJspS7PO8lvT8bGlKXlsx1g7HCJdEY+itQ==
   dependencies:
     event-kit "^2.5.0"
     fs-extra "^7.0.0"
