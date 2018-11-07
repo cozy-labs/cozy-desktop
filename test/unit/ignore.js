@@ -1,5 +1,9 @@
 /* eslint-env mocha */
 
+const fs = require('fs')
+const should = require('should')
+const sinon = require('sinon')
+
 const Ignore = require('../../core/ignore')
 const metadata = require('../../core/metadata')
 
@@ -366,6 +370,19 @@ describe('Ignore', function () {
           type: 'folder'
         })
         .should.be.true()
+    })
+
+    it('can be loaded from file with CRLF', () => {
+      const ignore = new Ignore([])
+      const readFileSync = sinon.stub(fs, 'readFileSync')
+      try {
+        readFileSync.returns('foo\r\nbar\r\n\r\n')
+        should(() => ignore.addDefaultRules()).not.throwError()
+        should(ignore.isIgnored({_id: 'foo'})).be.true()
+        should(ignore.isIgnored({_id: 'bar'})).be.true()
+      } finally {
+        readFileSync.restore()
+      }
     })
   })
 
