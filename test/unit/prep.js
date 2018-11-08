@@ -3,7 +3,7 @@
 const sinon = require('sinon')
 const should = require('should')
 
-const Ignore = require('../../core/ignore')
+const { Ignore } = require('../../core/ignore')
 const Prep = require('../../core/prep')
 
 describe('Prep', function () {

@@ -5,7 +5,7 @@ const _ = require('lodash')
 const { pick } = _
 const sinon = require('sinon')
 
-const Ignore = require('../../../core/ignore')
+const { Ignore } = require('../../../core/ignore')
 const Local = require('../../../core/local')
 const metadata = require('../../../core/metadata')
 const Merge = require('../../../core/merge')

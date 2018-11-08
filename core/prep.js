@@ -10,7 +10,7 @@ const { TRASH_DIR_NAME } = require('./remote/constants')
 
 /*::
 import type Config from './config'
-import type Ignore from './ignore'
+import type { Ignore } from './ignore'
 import type Merge from './merge'
 import type { SideName, Metadata } from './metadata'
 */

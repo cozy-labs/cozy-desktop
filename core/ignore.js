@@ -4,6 +4,12 @@ const { basename, dirname, resolve } = require('path')
 const { matcher, makeRe } = require('micromatch')
 const fs = require('fs')
 
+const logger = require('./logger')
+
+const log = logger({
+  component: 'Ignore'
+})
+
 /*::
 export type IgnorePattern = {
   match: (string) => boolean,
@@ -16,6 +22,28 @@ export type IgnorePattern = {
 /* ::
 import type {Metadata} from './metadata.js'
 */
+
+/** Load both given file rules & default ones */
+function loadSync (rulesFilePath /*: string */) /*: Ignore */ {
+  let ignored
+  try {
+    ignored = readLinesSync(rulesFilePath)
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      log.info({rulesFilePath}, 'Skip loading of non-existent ignore rules file')
+    } else {
+      log.warn({rulesFilePath, err}, 'Failed loading ignore rules file')
+    }
+    ignored = []
+  }
+  return new Ignore(ignored).addDefaultRules()
+}
+
+/** Read lines from a file.
+ */
+function readLinesSync (filePath /*: string */) /*: string[] */ {
+  return fs.readFileSync(filePath, 'utf8').split(/\r?\n/)
+}
 
 // Parse a line and build the corresponding pattern
 function buildPattern (line) {
@@ -55,6 +83,13 @@ function buildPattern (line) {
   return pattern
 }
 
+/** Parse many lines and build the corresponding pattern array */
+function buildPatternArray (lines /*: string[] */) /*: IgnorePattern[] */ {
+  return Array.from(lines)
+    .filter(isNotBlankOrComment)
+    .map(buildPattern)
+}
+
 function isNotBlankOrComment (line /*: string */) /*: boolean */ {
   return line !== '' && line[0] !== '#'
 }
@@ -77,6 +112,9 @@ function match (path, isFolder, pattern /*: IgnorePattern */) {
   return match(parent, true, pattern)
 }
 
+/** The default rules included in the repo */
+const defaultRulesPath = resolve(__dirname, './config/.cozyignore')
+
 // Cozy-desktop can ignore some files and folders from a list of patterns in the
 // cozyignore file. This class can be used to know if a file/folder is ignored.
 //
@@ -89,21 +127,14 @@ class Ignore {
 
   // Load patterns for detecting ignored files and folders
   constructor (lines /*: string[] */) {
-    this.patterns = Array.from(lines)
-      .filter(isNotBlankOrComment)
-      .map(buildPattern)
-    this.match = match
+    this.patterns = buildPatternArray(lines)
   }
 
   // Add some rules for things that should be always ignored (temporary
   // files, thumbnails db, trash, etc.)
   addDefaultRules () {
-    // TODO: split on return char depending on the OS
-    const DefaultRules = fs
-      .readFileSync(resolve(__dirname, './config/.cozyignore'), 'utf8')
-      .split(/\r?\n/)
-    let morePatterns = Array.from(DefaultRules).map(buildPattern)
-    this.patterns = morePatterns.concat(this.patterns)
+    const defaultPatterns = buildPatternArray(readLinesSync(defaultRulesPath))
+    this.patterns = defaultPatterns.concat(this.patterns)
     return this
   }
 
@@ -113,11 +144,11 @@ class Ignore {
     for (let pattern of Array.from(this.patterns)) {
       if (pattern.negate) {
         if (result) {
-          result = !this.match(doc._id, doc.docType === 'folder', pattern)
+          result = !match(doc._id, doc.docType === 'folder', pattern)
         }
       } else {
         if (!result) {
-          result = this.match(doc._id, doc.docType === 'folder', pattern)
+          result = match(doc._id, doc.docType === 'folder', pattern)
         }
       }
     }
@@ -125,4 +156,7 @@ class Ignore {
   }
 }
 
-module.exports = Ignore
+module.exports = {
+  Ignore,
+  loadSync
+}

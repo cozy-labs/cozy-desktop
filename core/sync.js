@@ -22,7 +22,7 @@ const measureTime = require('./perftools')
 
 /*::
 import type EventEmitter from 'events'
-import type Ignore from './ignore'
+import type { Ignore } from './ignore'
 import type Local from './local'
 import type Pouch from './pouch'
 import type Remote from './remote'
