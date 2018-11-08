@@ -1,10 +1,16 @@
+image: Visual Studio 2017
+
+clone_depth: 10
+
 environment:
-  nodejs_version: "8"
   MOCHA_TIMEOUT: "60000"
   NO_BREAKPOINTS: "1"
 
+cache:
+  - node_modules
+  - '%LOCALAPPDATA%/Yarn'
+
 install:
-  - cmd: appveyor-retry powershell Install-Product node $env:nodejs_version
   - cmd: appveyor-retry yarn install:all
   - cmd: appveyor-retry yarn bootstrap:remote
 
@@ -12,10 +18,10 @@ build: off
 
 test_script:
   - yarn build
-  - cmd: yarn test:world -- --timeout $env:MOCHA_TIMEOUT
-  - cmd: yarn test:unit -- --timeout $env:MOCHA_TIMEOUT
-  - cmd: yarn test:integration -- --timeout $env:MOCHA_TIMEOUT
-  - cmd: yarn test:scenarios -- --timeout $env:MOCHA_TIMEOUT
+  - cmd: yarn test:world --timeout $env:MOCHA_TIMEOUT
+  - cmd: yarn test:unit --timeout $env:MOCHA_TIMEOUT
+  - cmd: yarn test:integration --timeout $env:MOCHA_TIMEOUT
+  - cmd: yarn test:scenarios --timeout $env:MOCHA_TIMEOUT
   - yarn dist:all
 
 on_failure:
