@@ -109,6 +109,10 @@ class Merge {
     if (base.length > 180) {
       base = base.slice(0, 180)
     }
+    // avoid long chain of -conflict-DATE-conflict-DATE-conflict-DATE
+    // TODO unit-test and pick behaviour for files like
+    //                "cat-conflict-20181116...-THE_GOOD_ONE.jpg"
+    base = base.split('-conflict-20')[0]
     dst.path = `${join(dir, base)}-conflict-${date}${ext}`
     assignId(dst)
     try {

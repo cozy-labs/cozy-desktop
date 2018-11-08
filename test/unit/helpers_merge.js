@@ -84,9 +84,7 @@ describe('Merge Helpers', function () {
       let newPath = spy.args[0][1]
       let parts = newPath.split('-conflict-')
       parts[0].should.equal(path.normalize('foo/bar'))
-      parts = parts[1].split('T')
-      parts[0].should.match(/^\d{4}-\d{2}-\d{2}$/)
-      parts[1].should.match(/^\d{2}_\d{2}_\d{2}.\d{3}Z$/)
+      parts[1].should.match(/^\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2}.\d{3}Z$/)
       let src = spy.args[0][0]
       src.path.should.equal(doc.path)
     })
@@ -97,8 +95,19 @@ describe('Merge Helpers', function () {
       spy.resolves()
       await this.merge.resolveConflictAsync(this.side, doc)
       spy.called.should.be.true()
-      let dst = spy.args[0][0]
-      path.extname(dst.path).should.equal('.jpg')
+      let dstPath = spy.args[0][1]
+      dstPath.indexOf('conflict').should.not.equal(-1)
+      path.extname(dstPath).should.equal('.jpg')
+    })
+
+    it('do not chain conflicts', async function () {
+      let doc = {path: 'foo/baz-conflict-2018-11-08T01_02_03.004Z.jpg'}
+      let spy = this.merge.local.renameConflictingDocAsync
+      spy.resolves()
+      await this.merge.resolveConflictAsync(this.side, doc)
+      spy.called.should.be.true()
+      let dstPath = spy.args[0][1]
+      dstPath.split('-conflict-').should.have.length(2)
     })
   })
 })
