@@ -2,6 +2,7 @@
 
 const { random } = require('faker')
 const should = require('should')
+const { clone } = require('lodash')
 
 const Layer = require('../../../../core/local/layers/checksum')
 
@@ -61,11 +62,11 @@ describe('ChecksumLayer', function () {
       for (const batch of batches) {
         const events = []
         for (let event of batch) {
-          const doc = { ...event.doc }
+          event = clone(event)
           if (event.action === 'add' || event.action === 'update') {
-            doc.md5sum = doc.path
+            event.doc.md5sum = event.doc.path
           }
-          events.push({ ...event, doc })
+          events.push(event)
         }
         expected.push(events)
       }
