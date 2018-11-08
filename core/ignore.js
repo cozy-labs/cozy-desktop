@@ -4,6 +4,12 @@ const { basename, dirname, resolve } = require('path')
 const { matcher, makeRe } = require('micromatch')
 const fs = require('fs')
 
+const logger = require('./logger')
+
+const log = logger({
+  component: 'Ignore'
+})
+
 /*::
 export type IgnorePattern = {
   match: (string) => boolean,
@@ -22,7 +28,12 @@ function loadSync (rulesFilePath /*: string */) /*: Ignore */ {
   let ignored
   try {
     ignored = readLinesSync(rulesFilePath)
-  } catch (error) {
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      log.info({rulesFilePath}, 'Skip loading of non-existent ignore rules file')
+    } else {
+      log.warn({rulesFilePath, err}, 'Failed loading ignore rules file')
+    }
     ignored = []
   }
   return new Ignore(ignored).addDefaultRules()
