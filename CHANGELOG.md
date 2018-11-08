@@ -1,5 +1,24 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.10.3-beta.1 - 2018-11-08
+
+Improvements for all users:
+
+- The app is now available in spanish. Huge thanks to our translation
+  contributors, especially Hernando :heart:
+- Files and directories can now only have one `-conflict-...` suffix at a time.
+  Existing ones with multiple suffixes won't be renamed automatically, but in
+  case a new conflict occurs, their suffixes will be squashed into a single
+  one with the new timestamp. Although this doesn't fix the root causes, it
+  should make the symptom easier to deal with. We're sill investigating the
+  underlying issues. Expect more fixes soon.
+- We fixed a couple of issues preventing user-defined ignore rules to be
+  loaded.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.10.2 - 2018-11-06
 
 See [3.10.2-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.10.2-beta.1)
