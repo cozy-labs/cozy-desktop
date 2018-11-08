@@ -13,11 +13,6 @@ module.exports = ({
     {type: 'mv', src: 'b', dst: 'a'}
   ],
   expected: {
-    prepCalls: [
-      // FIXME: a -> c should be first
-      {method: 'moveFileAsync', src: 'a', dst: 'c'},
-      {method: 'moveFileAsync', src: 'b', dst: 'a'}
-    ],
     tree: [
       'a',
       'c'

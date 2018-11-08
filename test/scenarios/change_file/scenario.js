@@ -10,9 +10,6 @@ module.exports = ({
     {type: '>>', path: 'file'}
   ],
   expected: {
-    prepCalls: [
-      {method: 'updateFileAsync', path: 'file'}
-    ],
     tree: [
       'file'
     ],

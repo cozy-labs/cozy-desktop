@@ -15,10 +15,6 @@ module.exports = ({
     {type: 'mv', src: 'src/dir12', dst: 'dst/dir12'}
   ],
   expected: {
-    prepCalls: [
-      {method: 'moveFolderAsync', src: 'src/dir1', dst: 'dst/dir1'},
-      {method: 'moveFolderAsync', src: 'src/dir12', dst: 'dst/dir12'}
-    ],
     tree: [
       'dst/',
       'dst/dir1/',

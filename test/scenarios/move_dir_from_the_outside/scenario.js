@@ -14,12 +14,6 @@ module.exports = ({
     {type: 'mv', src: '../outside/dir', dst: 'dst/dir'}
   ],
   expected: {
-    prepCalls: [
-      {method: 'putFolderAsync', path: 'dst/dir'},
-      {method: 'putFolderAsync', path: 'dst/dir/empty-subdir'},
-      {method: 'putFolderAsync', path: 'dst/dir/subdir'},
-      {method: 'addFileAsync', path: 'dst/dir/subdir/file'}
-    ],
     tree: [
       'dst/',
       'dst/dir/',

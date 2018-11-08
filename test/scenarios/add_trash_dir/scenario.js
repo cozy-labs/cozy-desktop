@@ -9,7 +9,6 @@ module.exports = ({
     {type: 'trash', path: 'dir'}
   ],
   expected: {
-    prepCalls: [],
     tree: [],
     remoteTrash: []
   }

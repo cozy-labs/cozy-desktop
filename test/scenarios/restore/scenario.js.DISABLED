@@ -17,11 +17,6 @@ module.exports = ({
     {type: 'restore', pathInTrash: 'dir'}
   ],
   expected: {
-    prepCalls: [
-      // TODO: detect/squash restored files/dirs
-      {method: 'restoreFolderAsync', dst: 'parent/dir'},
-      {method: 'restoreFileAsync', dst: 'parent/file'}
-    ],
     tree: [
       'parent/',
       'parent/dir/',

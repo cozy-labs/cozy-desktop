@@ -17,11 +17,6 @@ module.exports = {
     {type: 'mv', src: 'parent/dst/dir/subdir/file2', dst: 'parent/dst/dir/subdir/filerenamed2'}
   ],
   expected: {
-    prepCalls: [
-      {method: 'moveFolderAsync', dst: 'parent/dst/dir', src: 'parent/src/dir'},
-      {method: 'moveFileAsync', dst: 'parent/dst/dir/subdir/filerenamed', src: 'parent/dst/dir/subdir/file'},
-      {method: 'moveFileAsync', dst: 'parent/dst/dir/subdir/filerenamed2', src: 'parent/dst/dir/subdir/file2'}
-    ],
     tree: [
       'parent/',
       'parent/dst/',

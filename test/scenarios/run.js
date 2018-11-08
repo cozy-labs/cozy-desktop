@@ -18,9 +18,6 @@ const { platform } = process
 
 let helpers
 
-// Spies
-// FIXME: let prepCalls
-
 describe('Test scenarios', function () {
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -38,7 +35,6 @@ describe('Test scenarios', function () {
 
   beforeEach(async function () {
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozyHelpers.cozy)
-    // FIXME: prepCalls = helpers.spyPrep()
 
     // TODO: helpers.setup()
     await helpers.local.setupTrash()
@@ -46,7 +42,6 @@ describe('Test scenarios', function () {
   })
 
   afterEach(function () {
-    // TODO: Include prep actions in custom assertion
     if (this.currentTest.state === 'failed') {
       // TODO: dump logs
     }
@@ -163,7 +158,6 @@ describe('Test scenarios', function () {
 
       await remoteCaptureHelpers.runActions(scenario, cozyHelpers.cozy)
 
-      // TODO: Don't actually merge when scenario has only Prep assertions?
       await helpers.remote.pullChanges()
       // TODO: Don't sync when scenario doesn't have target FS/trash assertions?
       for (let i = 0; i < scenario.actions.length + 1; i++) {
@@ -178,7 +172,6 @@ describe('Test scenarios', function () {
 })
 
 async function verifyExpectations (scenario, {includeRemoteTrash}) {
-  // TODO: Bring back Prep expectations for local tests?
   // TODO: Wrap in custom expectation
   if (scenario.expected) {
     const expectedLocalTree = scenario.expected.tree || scenario.expected.localTree
@@ -186,7 +179,6 @@ async function verifyExpectations (scenario, {includeRemoteTrash}) {
     const expected = includeRemoteTrash ? _.pick(scenario.expected, ['remoteTrash']) : {}
     const actual = {}
 
-    // TODO: expect prep actions
     if (expectedLocalTree) {
       expected.localTree = expectedLocalTree
       actual.localTree = await helpers.local.treeWithoutTrash()
