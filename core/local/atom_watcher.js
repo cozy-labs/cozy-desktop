@@ -29,7 +29,7 @@ module.exports = class AtomWatcher {
   running: Promise<void>
   _runningResolve: ?Function
   _runningReject: ?Function
-  source: LinuxSource
+  source: LinuxSource | WinSource
   */
 
   constructor (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */) {
@@ -44,6 +44,7 @@ module.exports = class AtomWatcher {
     if (process.platform === 'linux') {
       this.source = new LinuxSource(syncPath, identifier)
     } else if (process.platform === 'win32') {
+      // TODO add a layer to detect moves
       this.source = new WinSource(syncPath, identifier)
     } else {
       throw new Error('The experimental watcher is not available on this platform')

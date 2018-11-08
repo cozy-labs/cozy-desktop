@@ -16,12 +16,21 @@ import type { AtomWatcherEvent, Layer, LayerEvent, LayerAddEvent, LayerUpdateEve
 // process that a predecessor layer can call. It watches the filesystem and the
 // events are created here.
 //
-// TODO explain ReadDirectoryChangesW
+// ReadDirectoryChangesW is the API used on windows for FS notifications. It is
+// recursive and works without too many darts. Still, it doesn't detect the
+// moves and atom/watcher can misunderstand renaming with just case swapping
+// (Foo -> foo).
+//
+// When another important thing to know is that we need to scan added directory:
+// if the directory was restored from the trash or moved from outside the
+// watched directory, ReadDirectoryChangesW won't send us events for the files
+// and sub-directories.
 module.exports = class WinSource {
   /*::
   syncPath: string
   next: Layer
   running: boolean
+  watcher: *
   */
   constructor (syncPath /*: string */, next /*: Layer */) {
     this.syncPath = syncPath
@@ -30,7 +39,7 @@ module.exports = class WinSource {
   }
 
   async start () {
-    this.watcher = watcher.watchPath(fullpath, { recursive: true }, this.process)
+    this.watcher = await watcher.watchPath(this.syncPath, { recursive: true }, this.process)
     await this.initialScan('.')
     this.next.initial()
   }
@@ -67,22 +76,27 @@ module.exports = class WinSource {
     // TODO ignore
     const batch /*: LayerEvent[] */ = []
     for (const event of events) {
-      switch (event.action) {
-        case 'created':
-          batch.push(await this.buildAddEvent(event.path))
-          break
-        case 'modified':
-          batch.push(await this.buildUpdateEvent(event.path))
-          break
-        case 'deleted':
-          batch.push(await this.buildRemoveEvent(event.path, event.kind))
-          break
-        case 'renamed':
-          batch.push(await this.buildMoveEvent(event.path, event.oldPath))
-          break
-        default:
-          throw new Error(`Unknown atom/watcher action ${event.action}`)
+      try {
+        switch (event.action) {
+          case 'created':
+            // TODO scan added directory
+            batch.push(await this.buildAddEvent(event.path))
+            break
+          case 'modified':
+            batch.push(await this.buildUpdateEvent(event.path))
+            break
+          case 'deleted':
+            batch.push(await this.buildRemoveEvent(event.path, event.kind))
+            break
+          case 'renamed':
+            batch.push(await this.buildMoveEvent(event.path, event.oldPath))
+            break
+        }
+      } catch (err) {
+        // If fs.stat fails while building an event, we can ignore the event:
+        // we will probably have a deleted event later.
       }
+      throw new Error(`Unknown atom/watcher action ${event.action}`)
     }
     this.next.process(batch)
   }
