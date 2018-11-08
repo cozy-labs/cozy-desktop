@@ -4,6 +4,7 @@ const Promise = require('bluebird')
 
 const checksumer = require('./checksumer')
 const logger = require('../logger')
+const WinSource = require('./layers/win')
 const LinuxSource = require('./layers/linux')
 const Identifier = require('./layers/identifier')
 const ChecksumLayer = require('./layers/checksum')
@@ -36,12 +37,17 @@ module.exports = class AtomWatcher {
     this.events = events
     this.checksumer = checksumer.init()
 
-    // TODO detect platform to build the correct chain of layers
     // TODO do we need a debounce layer (a port of awaitWriteFinish of chokidar)?
     const dispatcher = new Dispatcher(prep, pouch, events)
     const checksum = new ChecksumLayer(dispatcher, this.checksumer)
     const identifier = new Identifier(checksum)
-    this.source = new LinuxSource(syncPath, identifier)
+    if (process.platform === 'linux') {
+      this.source = new LinuxSource(syncPath, identifier)
+    } else if (process.platform === 'win32') {
+      this.source = new WinSource(syncPath, identifier)
+    } else {
+      throw new Error('The experimental watcher is not available on this platform')
+    }
   }
 
   start () {
