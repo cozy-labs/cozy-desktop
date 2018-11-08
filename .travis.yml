@@ -93,23 +93,29 @@ jobs:
           stage: test
           script: ./dev/ci/tests.sh
           name: unit and integration tests
-          os: linux
-        - <<: *test_unit
           os: osx
+        - <<: *test_unit
+          os: linux
+          env:
+              - CC=gcc-8 CXX=g++-8
         - &test_scenarios
           stage: test
           script: ./dev/ci/scenarios.sh
           name: real life scenarios
-          os: linux
-        - <<: *test_scenarios
           os: osx
+        - <<: *test_scenarios
+          os: linux
+          env:
+              - CC=gcc-8 CXX=g++-8
         - &dist
           stage: test
           script: ./dev/ci/dist.sh
           name: artifacts build
-          os: linux
-        - <<: *dist
           os: osx
+        - <<: *dist
+          os: linux
+          env:
+              - CC=gcc-8 CXX=g++-8
         - stage: notify
           name: artifacts built
           services: false
