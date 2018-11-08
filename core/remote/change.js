@@ -23,6 +23,9 @@ export type RemoteDirDissociation = {sideName: 'remote', type: 'DirDissociation'
 export type RemoteDirMove = {sideName: 'remote', type: 'DirMove', doc: Metadata, was: Metadata, needRefetch?: true}
 export type RemoteDirRestoration = {sideName: 'remote', type: 'DirRestoration', doc: Metadata, was: Metadata}
 export type RemoteDirTrashing = {sideName: 'remote', type: 'DirTrashing', doc: Metadata, was: Metadata}
+export type RemoteIgnoredChange = {sideName: 'remote', type: 'IgnoredChange', doc: Metadata|RemoteDoc|RemoteDeletion, detail: string}
+export type RemoteInvalidChange = {sideName: 'remote', type: 'InvalidChange', doc: *, error: Error}
+export type RemoteUpToDate = {sideName: 'remote', type: 'UpToDate', doc: Metadata, was: Metadata}
 
 export type RemoteChange =
   | RemoteDirAddition
@@ -38,12 +41,6 @@ export type RemoteChange =
   | RemoteFileRestoration
   | RemoteFileTrashing
   | RemoteFileUpdate
-
-export type RemoteIgnoredChange = {type: 'RemoteIgnoredChange', doc: Metadata|RemoteDoc|RemoteDeletion, detail: string}
-export type RemoteInvalidChange = {type: 'RemoteInvalidChange', doc: *, error: Error}
-export type RemoteUpToDate = {type: 'RemoteUpToDate', doc: Metadata, was: Metadata}
-
-export type RemoteNoise =
   | RemoteIgnoredChange
   | RemoteInvalidChange
   | RemoteUpToDate
@@ -83,7 +80,7 @@ function restored (doc /*: Metadata */, was /*: Metadata */) /*: * */ {
 }
 
 function upToDate (doc /*: Metadata */, was /*: Metadata */) /*: * */ {
-  return {sideName, type: 'RemoteUpToDate', doc, was}
+  return {sideName, type: 'UpToDate', doc, was}
 }
 
 function updated (doc /*: Metadata */) /*: * */ {
@@ -95,7 +92,7 @@ function dissociated (doc /*: Metadata */, was /*: Metadata */) /*: * */ {
 }
 
 // TODO: Rename args
-function isChildMove (a /*: RemoteChange|RemoteNoise */, b /*: RemoteChange|RemoteNoise */) /*: boolean %checks */ {
+function isChildMove (a /*: RemoteChange */, b /*: RemoteChange */) /*: boolean %checks */ {
   return a.type === 'DirMove' &&
         (b.type === 'DirMove' || b.type === 'FileMove') &&
         (b.doc.path.indexOf(a.doc.path + path.sep) === 0) &&
@@ -117,20 +114,20 @@ function applyMoveToPath (a /*: RemoteDirMove */, p /*: string */) /*: string */
   return p.replace(a.was.path, a.doc.path)
 }
 
-const isDelete = (a /*: RemoteChange|RemoteNoise */) /*: boolean %checks */ => a.type === 'DirDeletion' || a.type === 'FileDeletion'
-const isAdd = (a /*: RemoteChange|RemoteNoise */) /*: boolean %checks */ => a.type === 'DirAddition' || a.type === 'FileAddition'
-const isMove = (a /*: RemoteChange|RemoteNoise */) /*: boolean %checks */ => a.type === 'DirMove' || a.type === 'FileMove'
-const isTrash = (a /*: RemoteChange|RemoteNoise */) /*: boolean %checks */ => a.type === 'DirTrashing' || a.type === 'FileTrashing'
-const isRestore = (a /*: RemoteChange|RemoteNoise */) /*: boolean %checks */ => a.type === 'DirRestoration' || a.type === 'FileRestoration'
-const isDissociate = (a /*: RemoteChange|RemoteNoise */) /*: boolean %checks */ => a.type === 'DirDissociation' || a.type === 'FileDissociation'
+const isDelete = (a /*: RemoteChange */) /*: boolean %checks */ => a.type === 'DirDeletion' || a.type === 'FileDeletion'
+const isAdd = (a /*: RemoteChange */) /*: boolean %checks */ => a.type === 'DirAddition' || a.type === 'FileAddition'
+const isMove = (a /*: RemoteChange */) /*: boolean %checks */ => a.type === 'DirMove' || a.type === 'FileMove'
+const isTrash = (a /*: RemoteChange */) /*: boolean %checks */ => a.type === 'DirTrashing' || a.type === 'FileTrashing'
+const isRestore = (a /*: RemoteChange */) /*: boolean %checks */ => a.type === 'DirRestoration' || a.type === 'FileRestoration'
+const isDissociate = (a /*: RemoteChange */) /*: boolean %checks */ => a.type === 'DirDissociation' || a.type === 'FileDissociation'
 
-const addPath = (a /*: RemoteChange|RemoteNoise */) /*: ?string */ => isAdd(a) || isMove(a) || isRestore(a) || isDissociate(a) ? a.doc.path : null
-const delPath = (a /*: RemoteChange|RemoteNoise */) /*: ?string */ => isDelete(a) ? a.doc.path : isMove(a) || isTrash(a) ? a.was.path : null
+const addPath = (a /*: RemoteChange */) /*: ?string */ => isAdd(a) || isMove(a) || isRestore(a) || isDissociate(a) ? a.doc.path : null
+const delPath = (a /*: RemoteChange */) /*: ?string */ => isDelete(a) ? a.doc.path : isMove(a) || isTrash(a) ? a.was.path : null
 const childOf = (p1 /*: ?string */, p2 /*: ?string */)/*: boolean */ => p1 != null && p2 != null && p2 !== p1 && p2.startsWith(p1 + path.sep)
 const lower = (p1 /*: ?string */, p2 /*: ?string */)/*: boolean */ => p1 != null && p2 != null && p2 !== p1 && p1 < p2
 
-const isChildDelete = (a /*: RemoteChange|RemoteNoise */, b /*: RemoteChange|RemoteNoise */) => childOf(delPath(a), delPath(b))
-const isChildAdd = (a /*: RemoteChange|RemoteNoise */, b /*: RemoteChange|RemoteNoise */) => childOf(addPath(a), addPath(b))
+const isChildDelete = (a /*: RemoteChange */, b /*: RemoteChange */) => childOf(delPath(a), delPath(b))
+const isChildAdd = (a /*: RemoteChange */, b /*: RemoteChange */) => childOf(addPath(a), addPath(b))
 
 const sorter = (a, b) => {
   if (childOf(addPath(a), delPath(b))) return -1
@@ -155,6 +152,6 @@ const sorter = (a, b) => {
   return 1
 }
 
-function sort (changes /*: Array<RemoteChange|RemoteNoise> */) /*: void */ {
+function sort (changes /*: Array<RemoteChange> */) /*: void */ {
   changes.sort(sorter)
 }
