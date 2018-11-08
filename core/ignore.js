@@ -101,7 +101,7 @@ class Ignore {
     // TODO: split on return char depending on the OS
     const DefaultRules = fs
       .readFileSync(resolve(__dirname, './config/.cozyignore'), 'utf8')
-      .split('\n')
+      .split(/\r?\n/)
     let morePatterns = Array.from(DefaultRules).map(buildPattern)
     this.patterns = morePatterns.concat(this.patterns)
     return this
