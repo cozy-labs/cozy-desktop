@@ -6,8 +6,8 @@ const {
   afterEach,
   before,
   beforeEach,
-  suite,
-  test
+  describe,
+  it
 } = require('mocha')
 const path = require('path')
 const should = require('should')
@@ -19,9 +19,9 @@ const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 const { IntegrationTestHelpers } = require('../support/helpers/integration')
 
-suite('Move', () => {
+describe('Move', () => {
   if (process.env.APPVEYOR) {
-    test('is unstable on AppVeyor')
+    it('is unstable on AppVeyor')
     return
   }
 
@@ -47,7 +47,7 @@ suite('Move', () => {
     await helpers.remote.ignorePreviousChanges()
   })
 
-  suite('file', () => {
+  describe('file', () => {
     let file, src
 
     beforeEach(async () => {
@@ -60,7 +60,7 @@ suite('Move', () => {
       helpers.spyPouch()
     })
 
-    test('local', async () => {
+    it('local', async () => {
       const oldFile = await pouch.byRemoteIdMaybeAsync(file._id)
       await prep.moveFileAsync('local', _.merge(
         {
@@ -85,7 +85,7 @@ suite('Move', () => {
       ])
     })
 
-    test('remote', async () => {
+    it('remote', async () => {
       const oldFile = await pouch.byRemoteIdMaybeAsync(file._id)
       await prep.moveFileAsync('remote', _.merge(
         _.pick(oldFile, ['docType', 'size', 'md5sum', 'class', 'mime', 'tags']),
@@ -114,7 +114,7 @@ suite('Move', () => {
     })
   })
 
-  suite('directory', () => {
+  describe('directory', () => {
     let dir, dst, emptySubdir, file, parent, src, subdir
 
     beforeEach(async () => {
@@ -131,7 +131,7 @@ suite('Move', () => {
       helpers.spyPouch()
     })
 
-    test('local', async () => {
+    it('local', async () => {
       const oldFolder = await pouch.byRemoteIdMaybeAsync(dir._id)
       // FIXME: Why is this a file? And why does it break with a directory?
       const doc = builders.metadata.file().path('parent/dst/dir').build()
@@ -163,7 +163,7 @@ suite('Move', () => {
       ])
     })
 
-    test('from remote cozy', async () => {
+    it('from remote cozy', async () => {
       await cozy.files.updateAttributesById(dir._id, {dir_id: dst._id})
       await helpers.remote.pullChanges()
 
@@ -194,7 +194,7 @@ suite('Move', () => {
       //   .have.propertyByPath('remote', '_rev').eql(subdir._rev)
     })
 
-    test('from remote client', async () => {
+    it('from remote client', async () => {
       // FIXME: Ensure events occur in the same order as resulting from the
       // local dir test
       await helpers._remote.addFolderAsync(_.defaults(

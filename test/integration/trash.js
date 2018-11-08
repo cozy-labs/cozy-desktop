@@ -5,8 +5,8 @@ const {
   afterEach,
   before,
   beforeEach,
-  suite,
-  test
+  describe,
+  it
 } = require('mocha')
 const path = require('path')
 const should = require('should')
@@ -16,7 +16,7 @@ const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 const { IntegrationTestHelpers } = require('../support/helpers/integration')
 
-suite('Trash', () => {
+describe('Trash', () => {
   let cozy, helpers, pouch, prep
 
   before(configHelpers.createConfig)
@@ -38,7 +38,7 @@ suite('Trash', () => {
     await helpers.remote.ignorePreviousChanges()
   })
 
-  suite('file', async () => {
+  describe('file', async () => {
     let parent, file
 
     beforeEach(async () => {
@@ -49,7 +49,7 @@ suite('Trash', () => {
       helpers.spyPouch()
     })
 
-    test('local', async () => {
+    it('local', async () => {
       await prep.trashFileAsync('local', {path: 'parent/file'})
 
       should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
@@ -66,7 +66,7 @@ suite('Trash', () => {
       ])
     })
 
-    test('remote', async () => {
+    it('remote', async () => {
       await cozy.files.trashById(file._id)
 
       await helpers.remote.pullChanges()
@@ -85,7 +85,7 @@ suite('Trash', () => {
     })
   })
 
-  suite('directory', async () => {
+  describe('directory', async () => {
     let parent, dir, subdir
 
     beforeEach(async () => {
@@ -101,7 +101,7 @@ suite('Trash', () => {
       helpers.spyPouch()
     })
 
-    test('local', async () => {
+    it('local', async () => {
       await prep.trashFolderAsync('local', {path: path.normalize('parent/dir')})
 
       should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
@@ -123,7 +123,7 @@ suite('Trash', () => {
       ])
     })
 
-    test('remote', async() => {
+    it('remote', async() => {
       // FIXME: should pass a remote doc, or trash from Cozy
       await prep.trashFolderAsync('remote', {path: 'parent/dir'})
 

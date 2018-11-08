@@ -5,8 +5,8 @@ const {
   afterEach,
   before,
   beforeEach,
-  suite,
-  test
+  describe,
+  it
 } = require('mocha')
 const should = require('should')
 
@@ -18,9 +18,9 @@ const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 const { IntegrationTestHelpers } = require('../support/helpers/integration')
 
-suite('Platform incompatibilities', () => {
+describe('Platform incompatibilities', () => {
   if (process.platform !== 'win32' && process.platform !== 'darwin') {
-    test.skip(`is not tested on ${process.platform}`, () => {})
+    it.skip(`is not tested on ${process.platform}`, () => {})
     return
   }
 
@@ -44,7 +44,7 @@ suite('Platform incompatibilities', () => {
     await helpers.remote.ignorePreviousChanges()
   })
 
-  test('add incompatible dir and file', async () => {
+  it('add incompatible dir and file', async () => {
     await builders.remote.dir().name('di:r').create()
     await builders.remote.file().name('fi:le').create()
     await helpers.pullAndSyncAll()
@@ -54,7 +54,7 @@ suite('Platform incompatibilities', () => {
       'fi:le'
     ])
   })
-  test('add incompatible dir with two colons', async () => {
+  it('add incompatible dir with two colons', async () => {
     await builders.remote.dir().name('d:i:r').create()
     await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).be.empty()
@@ -62,7 +62,7 @@ suite('Platform incompatibilities', () => {
       'd:i:r/'
     ])
   })
-  test('add compatible dir with some incompatible content', async () => {
+  it('add compatible dir with some incompatible content', async () => {
     await helpers.remote.createTree([
       'dir/',
       'dir/file',
@@ -86,7 +86,7 @@ suite('Platform incompatibilities', () => {
       'dir/sub:dir/file'
     ])
   })
-  test('rename incompatible -> incompatible', async () => {
+  it('rename incompatible -> incompatible', async () => {
     await helpers.remote.createTree(['d:ir/', 'f:ile'])
     await helpers.pullAndSyncAll()
 
@@ -100,7 +100,7 @@ suite('Platform incompatibilities', () => {
       'fi:le'
     ])
   })
-  test('trash & restore incompatible', async () => {
+  it('trash & restore incompatible', async () => {
     const docs = await helpers.remote.createTree(['d:ir/', 'f:ile'])
     await helpers.pullAndSyncAll()
 
@@ -123,7 +123,7 @@ suite('Platform incompatibilities', () => {
     ])
   })
 
-  test('destroy & recreate incompatible', async () => {
+  it('destroy & recreate incompatible', async () => {
     const docs = await helpers.remote.createTree(['d:ir/', 'f:ile'])
     await helpers.pullAndSyncAll()
 
@@ -145,7 +145,7 @@ suite('Platform incompatibilities', () => {
     ])
   })
 
-  test('make compatible bottom-up', async () => {
+  it('make compatible bottom-up', async () => {
     const docs = await helpers.remote.createTree([
       'd:ir/',
       'd:ir/sub:dir/',
@@ -186,7 +186,7 @@ suite('Platform incompatibilities', () => {
     should(await helpers.incompatibleTree()).be.empty()
   })
 
-  test('rename dir compatible -> incompatible', async () => {
+  it('rename dir compatible -> incompatible', async () => {
     const docs = await helpers.remote.createTree([
       'dir/',
       'dir/subdir/',
@@ -208,7 +208,7 @@ suite('Platform incompatibilities', () => {
     ])
   })
 
-  test('rename dir compatible -> incompatible with already incompatible content', async () => {
+  it('rename dir compatible -> incompatible with already incompatible content', async () => {
     const docs = await helpers.remote.createTree([
       'dir/',
       'dir/sub:dir/',
@@ -228,7 +228,7 @@ suite('Platform incompatibilities', () => {
     ])
   })
 
-  test('rename file compatible -> incompatible', async () => {
+  it('rename file compatible -> incompatible', async () => {
     const docs = await helpers.remote.createTree([
       'dir/',
       'dir/file'
@@ -246,7 +246,7 @@ suite('Platform incompatibilities', () => {
     ])
   })
 
-  test('rename dir compatible -> compatible with incompatible content', async () => {
+  it('rename dir compatible -> compatible with incompatible content', async () => {
     const docs = await helpers.remote.createTree([
       'dir/',
       'dir/fi:le',
@@ -265,7 +265,7 @@ suite('Platform incompatibilities', () => {
     ])
   })
 
-  test('move local dir with incompatible metadata & remote content', async () => {
+  it('move local dir with incompatible metadata & remote content', async () => {
     const docs = await helpers.remote.createTree([
       'dir/',
       'dir/sub:dir/',
@@ -293,7 +293,7 @@ suite('Platform incompatibilities', () => {
     ])
   })
 
-  test('rename dir compatible -> incompatible -> compatible with compatible content', async () => {
+  it('rename dir compatible -> incompatible -> compatible with compatible content', async () => {
     const docs = await helpers.remote.createTree([
       'dir/',
       'dir/file'

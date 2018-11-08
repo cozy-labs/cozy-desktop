@@ -32,7 +32,7 @@ describe('Remote', function () {
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
-  describe('offline management', () =>
+  describe('offline management', () => {
     it('The remote can be started when offline ', async function () {
       let fetchStub = sinon.stub(global, 'fetch').rejects(new Error('net::ERR_INTERNET_DISCONNECTED'))
       let eventsSpy = sinon.spy(this.events, 'emit')
@@ -44,5 +44,5 @@ describe('Remote', function () {
       eventsSpy.should.have.been.calledWith('online')
       eventsSpy.restore()
     })
-  )
+  })
 })

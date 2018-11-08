@@ -5,8 +5,8 @@ const {
   afterEach,
   before,
   beforeEach,
-  suite,
-  test
+  describe,
+  it
 } = require('mocha')
 const should = require('should')
 
@@ -19,7 +19,7 @@ const { IntegrationTestHelpers } = require('../support/helpers/integration')
 
 const cozy = cozyHelpers.cozy
 
-suite('Full watch/merge/sync/repeat loop', () => {
+describe('Full watch/merge/sync/repeat loop', () => {
   let helpers
 
   before(configHelpers.createConfig)
@@ -42,7 +42,7 @@ suite('Full watch/merge/sync/repeat loop', () => {
     helpers.spyPouch()
   })
 
-  test('remote -> local add file', async () => {
+  it('remote -> local add file', async () => {
     await cozy.files.create('some file content', {name: 'file'})
     await helpers.remote.pullChanges()
     await helpers.syncAll()

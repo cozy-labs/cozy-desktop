@@ -5,8 +5,8 @@ const {
   afterEach,
   before,
   beforeEach,
-  suite,
-  test
+  describe,
+  it
 } = require('mocha')
 const should = require('should')
 const fs = require('fs-extra')
@@ -20,7 +20,7 @@ const { IntegrationTestHelpers } = require('../support/helpers/integration')
 
 const cozy = cozyHelpers.cozy
 
-suite('Update only a file mtime', () => {
+describe('Update only a file mtime', () => {
   let helpers
 
   before(configHelpers.createConfig)
@@ -37,7 +37,7 @@ suite('Update only a file mtime', () => {
     helpers.local.setupTrash()
   })
 
-  test('remote', async () => {
+  it('remote', async () => {
     await helpers.remote.ignorePreviousChanges()
     const localPath = path.join(helpers.local.syncPath, 'file')
 
@@ -73,7 +73,7 @@ suite('Update only a file mtime', () => {
     should((await fs.stat(localPath)).mtime).not.equal(statAfter.mtime)
   })
 
-  test('local', async () => {
+  it('local', async () => {
     await helpers.remote.ignorePreviousChanges()
 
     var d = new Date()

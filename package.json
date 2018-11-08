@@ -29,7 +29,7 @@
   ],
   "scripts": {
     "bootstrap": "yarn dev:setup && yarn test:setup",
-    "bootstrap:remote": "node ./dev/remote/generate-test-env.js",
+    "bootstrap:remote": "electron ./dev/remote/generate-test-env.js",
     "build": "yarn build:css && yarn build:elm && yarn build:tx",
     "build:css": "stylus --sourcemap --compress --use cozy-ui/stylus gui/styles/app.styl --out gui",
     "build:elm": "elm make ./gui/elm/Main.elm --output ./gui/elm.js",
@@ -79,7 +79,7 @@
     "watch:js": "chokidar 'gui/js/**/*.js' gui/main.js gui/ports.js -c 'eslint {path}'"
   },
   "dependencies": {
-    "async": "^2.1.5",
+    "async": "^2.6.1",
     "auto-bind": "^1.2.0",
     "auto-launch": "^5.0.3",
     "bluebird": "^3.5.0",
@@ -97,7 +97,7 @@
     "fs-extra": "^3.0.0",
     "isomorphic-fetch": "2.2.1",
     "lnk": "^1.1.0",
-    "lodash": "^4.17.4",
+    "lodash": "^4.17.11",
     "micromatch": "3.0.2",
     "mime": "^1.3.4",
     "opn": "5.0.0",
@@ -119,7 +119,7 @@
     "devtron": "^1.4.0",
     "electron": "^1.8.3",
     "electron-builder": "^19.48.3",
-    "electron-mocha": "^3.4.2",
+    "electron-mocha": "^6.0.4",
     "elm": "^0.18.0",
     "elm-format": "^0.6.1-alpha",
     "elm-test": "^0.18.12",
@@ -127,14 +127,14 @@
     "env-cmd": "^5.0.0",
     "eslint": "^3.17.1",
     "eslint-config-standard": "^10.2.1",
-    "eslint-plugin-flowtype": "^2.30.3",
+    "eslint-plugin-flowtype": "^3.2.0",
     "eslint-plugin-import": "^2.3.0",
     "eslint-plugin-node": "^5.0.0",
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^3.0.0",
     "faker": "^4.1.0",
     "flow-bin": "^0.63.1",
-    "flow-typed": "^2.0.0",
+    "flow-typed": "^2.4.0",
     "glob": "^7.1.2",
     "istanbul": "^0.4.5",
     "istanbul-api": "^1.2.1",
@@ -142,7 +142,7 @@
     "istanbul-lib-hook": "^1.1.0",
     "jsverify": "^0.8.0",
     "merge-dirs": "^0.2.1",
-    "mocha": "^3.4.2",
+    "mocha": "^5.2.0",
     "mocha-clean": "^1.0.0",
     "pouchdb-adapter-memory": "^7.0.0",
     "request": "^2.83.0",
@@ -152,6 +152,6 @@
     "sinon": "^2.3.1",
     "source-map-support": "^0.4.11",
     "stylus": "^0.54.5",
-    "yarn": "^1.10.0"
+    "yarn": "^1.12.1"
   }
 }

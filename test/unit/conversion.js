@@ -82,7 +82,7 @@ describe('conversion', function () {
     })
   })
 
-  describe('extractDirAndName', () =>
+  describe('extractDirAndName', () => {
     it('returns the remote path and name', function () {
       let [dir, name] = conversion.extractDirAndName('foo')
       should(dir).equal('/')
@@ -94,5 +94,5 @@ describe('conversion', function () {
       should(dir).equal('/foo/bar')
       should(name).equal('baz')
     })
-  )
+  })
 })
