@@ -75,6 +75,42 @@ describe('RemoteCozy', function () {
 
       return should(remoteCozy.changes()).be.rejected()
     })
+
+    it('makes several calls to get changesfeed aka pagination', async () => {
+      const fakeChangesFeed = sinon.stub(remoteCozy.client.data, 'changesFeed')
+      const docsOnServer = [{
+        doc: {
+          _id: 'a'
+        }
+      }, {
+        doc: {
+          _id: 'b'
+        }
+      }, {
+        doc: {
+          _id: 'c'
+        }
+      },
+      {
+        doc: {
+          _id: 'd'
+        }
+      }]
+      fakeChangesFeed
+        .onFirstCall().resolves({
+          last_seq: 'abc',
+          pending: 1,
+          results: docsOnServer.slice(0, 3)
+        })
+      .onSecondCall().resolves({
+        last_seq: 'd',
+        pending: 0,
+        results: docsOnServer.slice(3)
+      })
+
+      const { docs } = await remoteCozy.changes()
+      should(docs.map(doc => ({ doc }))).eql(docsOnServer)
+    })
   })
 
   describe('find', function () {
