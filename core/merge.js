@@ -394,7 +394,7 @@ class Merge {
       return
     }
     if (doc.docType !== oldMetadata.docType) {
-      await this.resolveConflictAsync(side, doc, oldMetadata)
+      log.error({doc, oldMetadata, sentry: true}, 'Mismatch on doctype for doTrash')
       return
     }
     if (side === 'remote' && !sameBinary(oldMetadata, doc)) {
