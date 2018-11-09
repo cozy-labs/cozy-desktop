@@ -1,7 +1,7 @@
 module Util.Keyboard exposing (onEnter)
 
 import Html
-import Html.Events exposing (on, keyCode)
+import Html.Events exposing (keyCode, on)
 import Json.Decode as Json
 
 
@@ -17,5 +17,6 @@ is13 : msg -> Int -> Json.Decoder msg
 is13 message code =
     if code == 13 then
         Json.succeed message
+
     else
         Json.fail "not the right key code"

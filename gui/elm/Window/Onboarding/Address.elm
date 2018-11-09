@@ -1,14 +1,15 @@
-module Window.Onboarding.Address exposing (..)
+module Window.Onboarding.Address exposing (Model, Msg(..), correctAddress, dropAppName, init, setError, update, view)
 
-import Erl
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Icons
+import Locale exposing (Helpers)
 import Ports
 import String exposing (contains)
-import Locale exposing (Helpers)
+import Url
 import Util.Keyboard as Keyboard
-import Icons
+
 
 
 -- MODEL
@@ -59,8 +60,10 @@ dropAppName address =
 
             instanceName :: _ ->
                 instanceName ++ ".mycozy.cloud"
+
     else if not (String.contains "." address) then
         address ++ ".mycozy.cloud"
+
     else
         address
 
@@ -69,41 +72,47 @@ correctAddress : String -> String
 correctAddress address =
     let
         { protocol, host, port_, path } =
-            Erl.parse address
+            case Url.fromString address of
+                Just url ->
+                    url
+
+                Nothing ->
+                    Url.Url Url.Https address Nothing "" Nothing Nothing
 
         -- Erl assumes "camillenimbus" is a path, not a host
-        handleInstanceShortName host =
-            if host == [ "" ] then
+        handleInstanceShortName maybeHost =
+            if maybeHost == "" then
                 path
+
             else
-                host
+                maybeHost
 
         prependProtocol =
-            if protocol == "http" || port_ == 80 then
+            if protocol == Url.Http || port_ == Just 80 then
                 (++) "http://"
+
             else
                 identity
 
-        appendPort address =
+        appendPort shortAddress =
             case ( protocol, port_ ) of
-                ( "http", 80 ) ->
-                    address
+                ( Url.Http, Just 80 ) ->
+                    shortAddress
 
-                ( "https", 443 ) ->
-                    address
+                ( Url.Https, Just 443 ) ->
+                    shortAddress
 
-                ( "", 0 ) ->
-                    address
+                ( _, Nothing ) ->
+                    shortAddress
 
-                _ ->
-                    address ++ ":" ++ (toString port_)
+                ( _, Just p ) ->
+                    shortAddress ++ ":" ++ String.fromInt p
     in
-        host
-            |> handleInstanceShortName
-            |> String.join "."
-            |> dropAppName
-            |> prependProtocol
-            |> appendPort
+    host
+        |> handleInstanceShortName
+        |> dropAppName
+        |> prependProtocol
+        |> appendPort
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -120,10 +129,13 @@ update msg model =
         RegisterRemote ->
             if model.address == "" then
                 setError model "Address You don't have filled the address!"
+
             else if contains "@" model.address then
                 setError model "Address No email address"
+
             else if contains "mycosy.cloud" model.address then
                 setError model "Address Cozy not cosy"
+
             else
                 ( { model | busy = True, address = correctAddress model.address }
                 , Ports.registerRemote (correctAddress model.address)
@@ -153,6 +165,7 @@ view helpers model =
             , if model.error == "" then
                 p [ class "adress-helper" ]
                     [ text (helpers.t "Address This is the web address you use to sign in to your cozy.") ]
+
               else
                 p [ class "error-message" ]
                     [ text (helpers.t model.error) ]
@@ -161,9 +174,9 @@ view helpers model =
                     [ text (helpers.t "Address Cozy address") ]
                 , div [ class "https-input-wrapper" ]
                     [ span [ class "address_https" ]
-                        [ text ("https://") ]
+                        [ text "https://" ]
                     , input
-                        [ placeholder ("cloudy.mycozy.cloud")
+                        [ placeholder "cloudy.mycozy.cloud"
                         , classList
                             [ ( "wizard__address", True )
                             , ( "error", model.error /= "" )
@@ -188,8 +201,10 @@ view helpers model =
                 , href "#"
                 , if model.address == "" then
                     attribute "disabled" "true"
+
                   else if model.busy then
                     attribute "aria-busy" "true"
+
                   else
                     onClick RegisterRemote
                 ]

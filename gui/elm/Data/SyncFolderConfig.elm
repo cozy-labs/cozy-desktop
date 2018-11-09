@@ -1,9 +1,8 @@
-module Data.SyncFolderConfig
-    exposing
-        ( SyncFolderConfig
-        , isValid
-        , valid
-        )
+module Data.SyncFolderConfig exposing
+    ( SyncFolderConfig
+    , isValid
+    , valid
+    )
 
 
 type alias SyncFolderConfig =

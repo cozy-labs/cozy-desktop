@@ -1,4 +1,4 @@
-module Window.Onboarding exposing (..)
+module Window.Onboarding exposing (Model, Msg(..), Page(..), init, subscriptions, update, view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -7,6 +7,7 @@ import Ports
 import Window.Onboarding.Address as Address
 import Window.Onboarding.Folder as Folder
 import Window.Onboarding.Welcome as Welcome
+
 
 
 -- MODEL
@@ -63,7 +64,7 @@ update msg model =
                 ( address, cmd ) =
                     Address.update subMsg model.address
             in
-                ( { model | address = address }, Cmd.map AddressMsg cmd )
+            ( { model | address = address }, Cmd.map AddressMsg cmd )
 
         RegistrationDone ->
             ( { model | page = FolderPage }, Cmd.none )
@@ -73,7 +74,7 @@ update msg model =
                 ( folder, cmd ) =
                     Folder.update subMsg model.folder
             in
-                ( { model | folder = folder }, Cmd.map FolderMsg cmd )
+            ( { model | folder = folder }, Cmd.map FolderMsg cmd )
 
 
 

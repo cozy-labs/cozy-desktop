@@ -1,19 +1,20 @@
-module Window.Tray.Dashboard exposing (..)
+module Window.Tray.Dashboard exposing (Model, Msg(..), init, maxActivities, nbActivitiesPerPage, renderFile, samePath, showMoreButton, update, view)
 
-import Data.File as File exposing (File)
+import Data.File as File exposing (EncodedFile, File)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Ports
-import Time exposing (Time)
 import Locale exposing (Helpers)
+import Ports
+import Time
+
 
 
 -- MODEL
 
 
 type alias Model =
-    { now : Time
+    { now : Time.Posix
     , files : List File
     , page : Int
     }
@@ -21,7 +22,7 @@ type alias Model =
 
 init : Model
 init =
-    { now = 0
+    { now = Time.millisToPosix 0
     , files = []
     , page = 1
     }
@@ -40,10 +41,10 @@ maxActivities =
 
 
 type Msg
-    = Transfer File
-    | Remove File
+    = Transfer EncodedFile
+    | Remove EncodedFile
     | OpenFile File
-    | Tick Time
+    | Tick Time.Posix
     | ShowMore
     | Reset
 
@@ -56,21 +57,27 @@ samePath a b =
 update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
     case msg of
-        Transfer file ->
+        Transfer encodedFile ->
             let
+                file =
+                    File.decode encodedFile
+
                 files =
                     file
-                        :: (List.filter (samePath file >> not) model.files)
+                        :: List.filter (samePath file >> not) model.files
                         |> List.take maxActivities
             in
-                ( { model | files = files }, Cmd.none )
+            ( { model | files = files }, Cmd.none )
 
-        Remove file ->
+        Remove encodedFile ->
             let
+                file =
+                    File.decode encodedFile
+
                 files =
                     List.filter (samePath file >> not) model.files
             in
-                ( { model | files = files }, Cmd.none )
+            ( { model | files = files }, Cmd.none )
 
         OpenFile file ->
             ( model, Ports.openFile file.path )
@@ -95,21 +102,21 @@ renderFile helpers model file =
         ( basename, extname ) =
             File.splitName file.filename
     in
-        div
-            [ class "file-line"
-            , title file.path
-            , onClick (OpenFile file)
+    div
+        [ class "file-line"
+        , title file.path
+        , onClick (OpenFile file)
+        ]
+        [ div [ class ("file-type file-type-" ++ file.icon) ] []
+        , span [ class "file-name-wrapper" ]
+            [ span [ class "file-name-name" ] [ text basename ]
+            , span [ class "file-name-ext" ] [ text extname ]
             ]
-            [ div [ class ("file-type file-type-" ++ file.icon) ] []
-            , span [ class "file-name-wrapper" ]
-                [ span [ class "file-name-name" ] [ text basename ]
-                , span [ class "file-name-ext" ] [ text extname ]
-                ]
-            , span [ class "file-extra" ]
-                [ span [ class "file-time-ago" ] [ text (helpers.distance_of_time_in_words file.updated model.now) ]
-                , text file.path
-                ]
+        , span [ class "file-extra" ]
+            [ span [ class "file-time-ago" ] [ text (helpers.distance_of_time_in_words file.updated model.now) ]
+            , text file.path
             ]
+        ]
 
 
 showMoreButton : Helpers -> Html Msg
@@ -136,12 +143,14 @@ view helpers model =
         filesToRender =
             List.take nbFiles model.files
     in
-        section [ class "two-panes__content two-panes__content--dashboard" ]
-            [ div [ class "recent-files" ]
-                ((List.map renderLine filesToRender)
-                    ++ if (List.length model.files > nbFiles) then
+    section [ class "two-panes__content two-panes__content--dashboard" ]
+        [ div [ class "recent-files" ]
+            (List.map renderLine filesToRender
+                ++ (if List.length model.files > nbFiles then
                         [ showMoreButton helpers ]
-                       else
+
+                    else
                         []
-                )
-            ]
+                   )
+            )
+        ]

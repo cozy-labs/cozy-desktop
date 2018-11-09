@@ -1,4 +1,4 @@
-module SplitFilenameTest exposing (..)
+module SplitFilenameTest exposing (suite)
 
 import Data.File as File
 import Expect

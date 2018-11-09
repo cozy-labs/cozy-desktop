@@ -1,7 +1,7 @@
-port module Ports exposing (..)
+port module Ports exposing (autoLauncher, autolaunch, buffering, cancelUnlink, chooseFolder, closeApp, diskSpace, focus, folder, folderError, gotocozy, gotofolder, gototab, mail, newRelease, offline, openFile, quitAndInstall, registerRemote, registrationDone, registrationError, remoteWarnings, remove, sendMail, showHelp, squashPrepMerge, startSync, syncError, synchonization, syncing, transfer, unlinkCozy, updateDownloading, updateError, updated, userActionInProgress, userActionRequired)
 
 import Data.DiskSpace exposing (DiskSpace)
-import Data.File exposing (File)
+import Data.File exposing (EncodedFile)
 import Data.Progress exposing (Progress)
 import Data.RemoteWarning exposing (RemoteWarning)
 import Data.SyncFolderConfig exposing (SyncFolderConfig)
@@ -74,7 +74,7 @@ port registrationError : (String -> msg) -> Sub msg
 port remoteWarnings : (List RemoteWarning -> msg) -> Sub msg
 
 
-port remove : (File -> msg) -> Sub msg
+port remove : (EncodedFile -> msg) -> Sub msg
 
 
 port sendMail : String -> Cmd msg
@@ -98,7 +98,7 @@ port synchonization : (( String, String ) -> msg) -> Sub msg
 port syncing : (Int -> msg) -> Sub msg
 
 
-port transfer : (File -> msg) -> Sub msg
+port transfer : (EncodedFile -> msg) -> Sub msg
 
 
 port unlinkCozy : () -> Cmd msg

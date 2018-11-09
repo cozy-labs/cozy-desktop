@@ -1,10 +1,11 @@
-module Window.Onboarding.Welcome exposing (..)
+module Window.Onboarding.Welcome exposing (Msg(..), view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Icons exposing (..)
 import Locale exposing (Helpers)
+
 
 
 -- UPDATE

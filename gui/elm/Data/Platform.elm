@@ -1,8 +1,7 @@
-module Data.Platform
-    exposing
-        ( Platform(..)
-        , fromName
-        )
+module Data.Platform exposing
+    ( Platform(..)
+    , fromName
+    )
 
 
 type Platform

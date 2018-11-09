@@ -1,8 +1,8 @@
-module AddressTest exposing (..)
+module AddressTest exposing (suite)
 
-import Window.Onboarding.Address exposing (correctAddress)
 import Expect
 import Test exposing (..)
+import Window.Onboarding.Address exposing (correctAddress)
 
 
 suite : Test

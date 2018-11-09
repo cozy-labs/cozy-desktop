@@ -2,8 +2,7 @@
 
 set -ex
 
-yarn install:electron
-yarn install:elm
+yarn install:all
 yarn build
 
 if [ "$TRAVIS_OS_NAME" == "linux" ]; then

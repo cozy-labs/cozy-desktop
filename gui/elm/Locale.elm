@@ -1,9 +1,9 @@
-module Locale exposing (..)
+module Locale exposing (DistanceOfTime, Helpers, Locale, NumberToHumanSize, Pluralize, Translate, decodeAll, decoder, distance_of_time_in_words, helpers, interpolate, isSingular, number_to_human_size, pluralize, translate)
 
 import Dict exposing (Dict)
 import Json.Decode as Json
-import Regex exposing (replace, regex)
-import Time exposing (Time)
+import Regex exposing (fromString, replace)
+import Time
 
 
 type alias Locale =
@@ -19,7 +19,7 @@ type alias Pluralize =
 
 
 type alias DistanceOfTime =
-    Time -> Time -> String
+    Time.Posix -> Time.Posix -> String
 
 
 type alias NumberToHumanSize =
@@ -80,64 +80,78 @@ pluralize locale count singular plural =
         translated =
             if isSingular count then
                 translate locale singular
+
             else
                 translate locale plural
     in
-        (toString count) ++ " " ++ translated
+    String.fromInt count ++ " " ++ translated
 
 
 interpolate : String -> String -> String
 interpolate string arg =
-    replace Regex.All (regex "\\{\\d\\}") (\_ -> arg) string
+    case fromString "\\{\\d\\}" of
+        Nothing ->
+            string
+
+        Just regex ->
+            replace regex (\_ -> arg) string
 
 
 distance_of_time_in_words : Locale -> DistanceOfTime
 distance_of_time_in_words locale from_time to_time =
     let
         distance =
-            to_time - from_time
+            toFloat (Time.posixToMillis to_time - Time.posixToMillis from_time)
 
         distance_in_minutes =
-            round (Time.inMinutes distance)
+            round (distance / 1000 / 60)
 
         distance_in_hours =
-            round (Time.inHours distance)
+            round (distance / 1000 / 3600)
 
         distance_in_days =
-            round (Time.inHours distance / 24)
+            round (distance / 1000 / 3600 / 24)
 
         distance_in_months =
-            round (Time.inHours distance / (24 * 30))
+            round (distance / 1000 / 3600 / 24 / 30)
 
         transform count what =
             let
                 key =
                     if isSingular count then
                         "Helpers {0} " ++ what ++ " ago"
+
                     else
                         "Helpers {0} " ++ what ++ "s ago"
             in
-                interpolate (translate locale key) (toString count)
+            interpolate (translate locale key) (String.fromInt count)
     in
-        if distance_in_months > 0 then
-            transform distance_in_months "month"
-        else if distance_in_days > 0 then
-            transform distance_in_days "day"
-        else if distance_in_hours > 0 then
-            transform distance_in_hours "hour"
-        else if distance_in_minutes > 0 then
-            transform distance_in_minutes "minute"
-        else
-            translate locale "Helpers Just now"
+    if distance_in_months > 0 then
+        transform distance_in_months "month"
+
+    else if distance_in_days > 0 then
+        transform distance_in_days "day"
+
+    else if distance_in_hours > 0 then
+        transform distance_in_hours "hour"
+
+    else if distance_in_minutes > 0 then
+        transform distance_in_minutes "minute"
+
+    else
+        translate locale "Helpers Just now"
 
 
 number_to_human_size : Locale -> NumberToHumanSize
 number_to_human_size locale size =
     if size < 10 ^ 3 then
         pluralize locale size "Helpers Byte" "Helpers Bytes"
+
     else if size < 10 ^ 6 then
-        (toString (toFloat (size // 10 ^ 2) / 10)) ++ " " ++ (translate locale "Helpers KB")
+        String.fromFloat (toFloat (size // 10 ^ 2) / 10) ++ " " ++ translate locale "Helpers KB"
+
     else if size < 10 ^ 9 then
-        (toString (toFloat (size // 10 ^ 5) / 10)) ++ " " ++ (translate locale "Helpers MB")
+        String.fromFloat (toFloat (size // 10 ^ 5) / 10) ++ " " ++ translate locale "Helpers MB"
+
     else
-        (toString (toFloat (size // 10 ^ 9) / 10)) ++ " " ++ (translate locale "Helpers GB")
+        String.fromFloat (toFloat (size // 10 ^ 9) / 10) ++ " " ++ translate locale "Helpers GB"

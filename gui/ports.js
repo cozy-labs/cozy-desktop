@@ -12,18 +12,21 @@ const defaults = remote.require('./js/defaults')
 
 const container = document.getElementById('container')
 
-const Elm = require('./elm').Main
-const elmectron = Elm.embed(container, {
-  hash: window.location.hash,
-  folder: defaults.syncPath,
-  locale: remote.app.locale,
-  locales: {
-    en: remote.require('./locales/en.json'),
-    es: remote.require('./locales/es.json'),
-    fr: remote.require('./locales/fr.json')
-  },
-  platform: remote.process.platform,
-  version: pkg.version
+const { Elm } = require('./elm')
+const elmectron = Elm.Main.init({
+  node: container,
+  flags: {
+    hash: window.location.hash,
+    folder: defaults.syncPath,
+    locale: remote.app.locale,
+    locales: {
+      en: remote.require('./locales/en.json'),
+      es: remote.require('./locales/es.json'),
+      fr: remote.require('./locales/fr.json')
+    },
+    platform: remote.process.platform,
+    version: pkg.version
+  }
 })
 
 const errMessage = (err) => {

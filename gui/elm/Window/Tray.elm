@@ -1,13 +1,12 @@
-module Window.Tray
-    exposing
-        ( Model
-        , Msg(..)
-        , Page(..)
-        , init
-        , subscriptions
-        , update
-        , view
-        )
+module Window.Tray exposing
+    ( Model
+    , Msg(..)
+    , Page(..)
+    , init
+    , subscriptions
+    , update
+    , view
+    )
 
 import Data.Platform exposing (Platform)
 import Data.RemoteWarning exposing (RemoteWarning)
@@ -19,11 +18,12 @@ import Html.Events exposing (..)
 import Icons
 import Locale exposing (Helpers)
 import Ports
-import Time exposing (Time)
+import Time
 import Window.Tray.Dashboard as Dashboard
 import Window.Tray.Settings as Settings
 import Window.Tray.StatusBar as StatusBar
 import Window.Tray.UserActionRequiredPage as UserActionRequiredPage
+
 
 
 -- MODEL
@@ -89,21 +89,21 @@ update msg model =
                 ( settings, _ ) =
                     Settings.update (Settings.FillAddressAndDevice info) model.settings
             in
-                ( { model | page = (DashboardPage), settings = settings }, Cmd.none )
+            ( { model | page = DashboardPage, settings = settings }, Cmd.none )
 
         DashboardMsg subMsg ->
             let
                 ( dashboard, cmd ) =
                     Dashboard.update subMsg model.dashboard
             in
-                ( { model | dashboard = dashboard }, cmd )
+            ( { model | dashboard = dashboard }, cmd )
 
         SettingsMsg subMsg ->
             let
                 ( settings, cmd ) =
                     Settings.update subMsg model.settings
             in
-                ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
+            ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
 
         Updated ->
             ( { model | status = UpToDate }, Cmd.none )
@@ -159,7 +159,7 @@ update msg model =
                 ( dashboard, cmd ) =
                     Dashboard.update Dashboard.Reset model.dashboard
             in
-                ( { model | page = (tab), dashboard = dashboard }, cmd )
+            ( { model | page = tab, dashboard = dashboard }, cmd )
 
         GoToStrTab tabstr ->
             case
@@ -182,7 +182,7 @@ subscriptions model =
         [ Ports.synchonization SyncStart
         , Ports.newRelease (SettingsMsg << Settings.NewRelease)
         , Ports.gototab GoToStrTab
-        , Time.every Time.second (DashboardMsg << Dashboard.Tick)
+        , Time.every 1000 (DashboardMsg << Dashboard.Tick)
         , Ports.transfer (DashboardMsg << Dashboard.Transfer)
         , Ports.remove (DashboardMsg << Dashboard.Remove)
         , Ports.diskSpace (SettingsMsg << Settings.UpdateDiskSpace)
@@ -258,18 +258,19 @@ viewWarning helpers model =
                 actionLabel =
                     if code == "tos-updated" then
                         "Warning Read"
+
                     else
                         "Warning Ok"
             in
-                div [ class "warningbar" ]
-                    [ p [] [ text detail ]
-                    , a
-                        [ class "btn"
-                        , href links.self
-                        , onClick ClearCurrentWarning
-                        ]
-                        [ text (helpers.t actionLabel) ]
+            div [ class "warningbar" ]
+                [ p [] [ text detail ]
+                , a
+                    [ class "btn"
+                    , href links.self
+                    , onClick ClearCurrentWarning
                     ]
+                    [ text (helpers.t actionLabel) ]
+                ]
 
         _ ->
             text ""
