@@ -6,10 +6,6 @@ environment:
   MOCHA_TIMEOUT: "60000"
   NO_BREAKPOINTS: "1"
 
-cache:
-  - node_modules
-  - '%LOCALAPPDATA%/Yarn'
-
 install:
   - cmd: appveyor-retry yarn install:all
   - cmd: appveyor-retry yarn bootstrap:remote
