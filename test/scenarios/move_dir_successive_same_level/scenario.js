@@ -19,9 +19,6 @@ module.exports = ({
   ],
   // FIXME: eventsBreakpoints: [0, 1, 5],
   expected: {
-    prepCalls: [
-      {method: 'moveFolderAsync', dst: 'parent/dst2/dir', src: 'parent/src/dir'}
-    ],
     tree: [
       'parent/',
       'parent/dst1/',

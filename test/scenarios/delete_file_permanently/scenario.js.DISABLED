@@ -10,9 +10,6 @@ module.exports = ({
     {type: 'delete', path: 'foo'}
   ],
   expected: {
-    prepCalls: [
-      {method: 'trashFileAsync', path: 'foo'}
-    ],
     tree: [],
     remoteTrash: [
       'foo'

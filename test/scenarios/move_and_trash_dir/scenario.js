@@ -15,10 +15,6 @@ module.exports = ({
     {type: 'trash', path: 'dst/subdir'}
   ],
   expected: {
-    // FIXME:
-    // prepCalls: [
-    //   {method: 'trashFolderAsync', path: 'src/subdir'}
-    // ],
     tree: [
       'dst/',
       'src/'

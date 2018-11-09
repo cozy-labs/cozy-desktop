@@ -11,7 +11,6 @@ module.exports = ({
     {type: 'delete', path: 'file'}
   ],
   expected: {
-    prepCalls: [],
     tree: [],
     remoteTrash: []
   }

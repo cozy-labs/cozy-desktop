@@ -19,12 +19,6 @@ module.exports = ({
     {type: 'mv', src: 'file-nfc-to-nfd-\u00e9', dst: 'file-nfc-to-nfd-e\u0301'}
   ],
   expected: {
-    prepCalls: [
-      {method: 'moveFolderAsync', src: 'dir-case', dst: 'DIR-CASE'},
-      {method: 'moveFileAsync', src: 'file-case', dst: 'FILE-CASE'},
-      {method: 'moveFolderAsync', src: 'dir-nfc-to-nfd-\u00e9', dst: 'dir-nfc-to-nfd-e\u0301'},
-      {method: 'moveFileAsync', src: 'file-nfc-to-nfd-\u00e9', dst: 'file-nfc-to-nfd-e\u0301'}
-    ],
     tree: [
       'DIR-CASE/',
       'FILE-CASE',

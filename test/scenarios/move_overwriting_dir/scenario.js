@@ -25,13 +25,6 @@ module.exports = ({
     {type: 'mv', force: true, src: 'src/dir', dst: 'dst/dir'}
   ],
   expected: {
-    prepCalls: [
-      {method: 'trashFileAsync', path: 'dst/dir/file'},
-      {method: 'trashFolderAsync', path: 'dst/dir'},
-      {method: 'moveFileAsync', dst: 'dst/dir/file', src: 'src/dir/file'},
-      {method: 'moveFileAsync', dst: 'dst/dir/file2', src: 'src/dir/file2'},
-      {method: 'moveFileAsync', dst: 'dst/dir/subdir/file6', src: 'src/dir/subdir/file6'}
-    ],
     tree: [
       'dst/',
       'dst/dir/',

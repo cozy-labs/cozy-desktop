@@ -14,10 +14,6 @@ module.exports = ({
     {type: '>>', path: 'dst/file'}
   ],
   expected: {
-    prepCalls: [
-      {method: 'moveFileAsync', src: 'src/file', dst: 'dst/file'},
-      {method: 'updateFileAsync', path: 'dst/file'}
-    ],
     tree: [
       'dst/',
       'dst/file',
