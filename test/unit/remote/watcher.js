@@ -200,7 +200,7 @@ describe('RemoteWatcher', function () {
         try { await this.watcher.pullMany(docs) } catch (_) {}
         should(apply).have.been.calledTwice()
         should(apply.args[0][0]).have.properties({type: 'FileAddition', doc: validMetadata(docs[0])})
-        should(apply.args[1][0]).have.properties({type: 'RemoteIgnoredChange', doc: docs[1]})
+        should(apply.args[1][0]).have.properties({type: 'IgnoredChange', doc: docs[1]})
       })
 
       it('releases the Pouch lock', async function () {
@@ -314,7 +314,7 @@ describe('RemoteWatcher', function () {
         const docs = [srcFileMoved, dstFileTrashed]
         const changes = this.watcher.analyse(docs, olds)
         should(relevantChangesProps(changes)).deepEqual([
-          {type: 'RemoteIgnoredChange', doc: {path: '.cozy_trash/file'}, was: {path: 'dst/file'}},
+          {type: 'IgnoredChange', doc: {path: '.cozy_trash/file'}, was: {path: 'dst/file'}},
           {type: 'FileMove', doc: {path: 'dst/file', overwrite: true}, was: {path: 'src/file'}}
         ])
       })
@@ -324,7 +324,7 @@ describe('RemoteWatcher', function () {
         const changes = this.watcher.analyse(docs, olds)
         should(relevantChangesProps(changes)).deepEqual([
           {type: 'FileMove', doc: {path: 'dst/file', overwrite: true}, was: {path: 'src/file'}},
-          {type: 'RemoteIgnoredChange', doc: {path: '.cozy_trash/file'}, was: {path: 'dst/file'}}
+          {type: 'IgnoredChange', doc: {path: '.cozy_trash/file'}, was: {path: 'dst/file'}}
         ])
       })
     })
@@ -351,7 +351,7 @@ describe('RemoteWatcher', function () {
       }
 
       const change /*: RemoteChange */ = this.watcher.identifyChange(doc, null, 0, [])
-      should(change.type).equal('RemoteInvalidChange')
+      should(change.type).equal('InvalidChange')
       // $FlowFixMe
       should(change.error.message).equal('Invalid path')
     })
@@ -370,7 +370,7 @@ describe('RemoteWatcher', function () {
       }
       const change /*: RemoteChange */ = this.watcher.identifyChange(doc, null, 0, [])
 
-      should(change.type).equal('RemoteInvalidChange')
+      should(change.type).equal('InvalidChange')
     })
 
     onPlatform('win32', () => {
@@ -678,7 +678,7 @@ describe('RemoteWatcher', function () {
 
       const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(doc), was, 0, [])
 
-      should(change).have.property('type', 'RemoteInvalidChange')
+      should(change).have.property('type', 'InvalidChange')
       // $FlowFixMe
       should(change.error).match(/corrupt/)
     })
