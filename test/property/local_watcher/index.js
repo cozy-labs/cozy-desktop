@@ -2,6 +2,7 @@ const { describe, it } = require('mocha')
 const should = require('should')
 
 const crypto = require('crypto')
+const fs = require('fs')
 const fse = require('fs-extra')
 const glob = require('glob')
 const path = require('path')
@@ -21,7 +22,7 @@ const Watcher = require('../../../core/local/watcher')
 const PouchDB = require('pouchdb')
 PouchDB.plugin(require('pouchdb-adapter-memory'))
 
-const events = new EventEmitter()
+Promise.promisifyAll(fs)
 
 async function step (state, op) {
   // Slow down things to avoid issues with chokidar throttler
@@ -29,6 +30,7 @@ async function step (state, op) {
 
   switch (op.op) {
     case 'start':
+      const events = new EventEmitter()
       const config = { dbPath: { name: state.name, adapter: 'memory' } }
       state.pouchdb = new Pouch(config)
       await state.pouchdb.addAllViewsAsync()
@@ -68,7 +70,8 @@ async function step (state, op) {
       break
     case 'mv':
       try {
-        await state.dir.move(op.from, op.to)
+        // XXX fs-extra move can enter in an infinite loop for some stupid moves
+        await fs.move(state.dir.abspath(op.from), state.dir.abspath(op.to))
       } catch (err) {}
       break
     case 'rm':

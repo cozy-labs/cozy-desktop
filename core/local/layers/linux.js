@@ -50,9 +50,12 @@ module.exports = class LinuxSource {
 
   async watch (relativePath /*: string */) {
     try {
+      if (!this.running || this.watchers.has(relativePath)) {
+        return
+      }
       const fullPath = path.join(this.syncPath, relativePath)
       const w = await watcher.watchPath(fullPath, {}, this.process)
-      if (!this.running) {
+      if (!this.running || this.watchers.has(relativePath)) {
         w.dispose()
         return
       }
@@ -82,6 +85,7 @@ module.exports = class LinuxSource {
   }
 
   async process (events /*: AtomWatcherEvent[] */) {
+    // TODO preserve order of batches
     // TODO logger
     // TODO ignore
     const batch /*: LayerEvent[] */ = []
@@ -91,7 +95,7 @@ module.exports = class LinuxSource {
           const eAdd = await this.buildAddEvent(event.path)
           batch.push(eAdd)
           if (eAdd.doc.docType === 'folder') {
-            this.watch(eAdd.doc.path)
+            this.watch(eAdd.doc.path).catch(err => { console.error(err) })
           }
           break
         case 'modified':
