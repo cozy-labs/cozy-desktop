@@ -219,7 +219,7 @@ class Merge {
       } else if (!isAtLeastUpToDate(side, file)) {
         await this.resolveConflictAsync(side, doc, file)
         if (side === 'remote') {
-          // we just renamed the remote folder as a conflict
+          // we just renamed the remote file as a conflict
           // the old file should be dissociated from the remote
           delete file.remote
           if (file.sides) delete file.sides.remote
