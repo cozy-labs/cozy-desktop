@@ -194,6 +194,7 @@ class Sync {
         })
         .on('error', err => {
           if (this.changes) {
+            // FIXME: pas de cancel ici ??
             this.changes = null
             reject(err)
           }

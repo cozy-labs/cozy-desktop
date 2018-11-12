@@ -125,7 +125,7 @@ describe('Move', () => {
       await helpers.local.scan()
     })
 
-    it.only('local', async () => {
+    it('local', async () => {
       should(await helpers.local.tree()).deepEqual([
         'dst/',
         'src/',
@@ -139,12 +139,18 @@ describe('Move', () => {
       await helpers.local.scan()
       await helpers.syncAll()
 
-      should(await helpers.remote.tree()).deepEqual([
-        '.cozy_trash/',
-        'dst/',
-        'dst/file',
-        'src/'
-      ])
+      should(await helpers.trees('metadata', 'remote')).deepEqual({
+        remote: [
+          'dst/',
+          'dst/file',
+          'src/'
+        ],
+        metadata: [
+          'dst/',
+          'dst/file',
+          'src/'
+        ]
+      })
     })
   })
 

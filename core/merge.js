@@ -1,7 +1,8 @@
 /* @flow */
 
 const autoBind = require('auto-bind')
-const { clone } = require('lodash')
+const _ = require('lodash')
+const { clone } = _
 const { basename, dirname, extname, join } = require('path')
 
 const IdConflict = require('./IdConflict')
@@ -14,7 +15,8 @@ const {
   markSide,
   sameBinary,
   sameFile,
-  sameFolder
+  sameFolder,
+  upToDate
 } = require('./metadata')
 const move = require('./move')
 const { otherSide } = require('./side')
@@ -262,10 +264,13 @@ class Merge {
   }
 
   // Rename or move a file
-  async moveFileAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */) {
+  async moveFileAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */) /*: Promise<*> */ {
     log.debug({path: doc.path, oldpath: was.path}, 'moveFileAsync')
     const {path} = doc
-    if (was.sides && was.sides[side]) {
+    if (was.sides && !was.sides[otherSide(side)]) {
+      await this.pouch.remove(upToDate(was))
+      return this.addFileAsync(side, doc)
+    } else if (was.sides && was.sides[side]) {
       const file /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
       const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(side, doc, file)
       if (idConflict) {
