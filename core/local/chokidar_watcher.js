@@ -27,7 +27,7 @@ import type EventEmitter from 'events'
 */
 
 const log = logger({
-  component: 'LocalWatcher'
+  component: 'ChokidarWatcher'
 })
 log.chokidar = log.child({
   component: 'Chokidar'
@@ -65,10 +65,6 @@ module.exports = class LocalWatcher {
   running: Promise<void>
   _runningResolve: ?Function
   _runningReject: ?Function
-  start: () => Promise<*>
-  stop: (force: ?bool) => Promise<*>
-  ensureDirSync: () => void
-  onFlush: (ChokidarEvent[]) => *
   */
 
   constructor (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */) {

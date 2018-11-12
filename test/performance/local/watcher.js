@@ -5,7 +5,7 @@ const Promise = require('bluebird')
 const fs = require('fs-extra')
 const path = require('path')
 
-const Watcher = require('../../../core/local/watcher')
+const Watcher = require('../../../core/local/chokidar_watcher')
 const metadata = require('../../../core/metadata')
 
 const configHelpers = require('../../support/helpers/config')
@@ -89,7 +89,7 @@ describe('LocalWatcher charge', () => {
     prep = new SpyPrep()
     const events = {emit: () => {}}
     // $FlowFixMe
-    watcher = Watcher.build(this.syncPath, prep, this.pouch, events)
+    watcher = new Watcher(this.syncPath, prep, this.pouch, events)
   })
 
   before('cleanup test directory', async function () {
