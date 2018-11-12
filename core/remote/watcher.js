@@ -16,7 +16,7 @@ import type EventEmitter from 'events'
 import type Pouch from '../pouch'
 import type Prep from '../prep'
 import type { RemoteCozy } from './cozy'
-import type { Metadata } from '../metadata'
+import type { Metadata, RemoteRevisionsByID } from '../metadata'
 import type { RemoteChange, RemoteFileMove } from './change'
 import type { RemoteDoc, RemoteDeletion } from './document'
 */
@@ -425,17 +425,17 @@ class RemoteWatcher {
       case 'DirMove':
         log.info({path, oldpath: change.was.path}, 'folder was moved or renamed remotely')
         const needUpdates /*: any */ = []
-        const newRevs /*: { [string]: string } */ = {}
+        const newRemoteRevs /*: RemoteRevisionsByID */ = {}
         for (let descendant of (change.descendantDirMoves || [])) {
           if (descendant.update) {
             needUpdates.push(descendant)
           }
           if (descendant.doc.remote) {
             // $FlowFixMe
-            newRevs[descendant.doc.remote._id] = descendant.doc.remote._rev
+            newRemoteRevs[descendant.doc.remote._id] = descendant.doc.remote._rev
           }
         }
-        await this.prep.moveFolderAsync(sideName, change.doc, change.was, newRevs)
+        await this.prep.moveFolderAsync(sideName, change.doc, change.was, newRemoteRevs)
         for (let needUpdate of needUpdates) {
           change.was = await this.pouch.byRemoteIdMaybeAsync(change.was.remote._id)
           await this.prep.updateFileAsync(sideName, needUpdate.doc)
