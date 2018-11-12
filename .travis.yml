@@ -43,7 +43,7 @@ before_install: | # install cozy stack for integration test
       ulimit -S -n 1024;
       (/Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/bin/couchdb >couchdb.log 2>&1 &);
     fi
-    sleep 5
+    sleep 8
     curl -X PUT http://127.0.0.1:5984/{_users,_replicator,_global_changes}
 
     # Cozy-stack
