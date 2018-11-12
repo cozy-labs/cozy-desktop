@@ -287,7 +287,7 @@ class RemoteWatcher {
             change.needRefetch = true
             return change // FileMove
           } else {
-            return {
+            const descendantChange = {
               sideName,
               type: 'DescendantChange',
               update: change.update,
