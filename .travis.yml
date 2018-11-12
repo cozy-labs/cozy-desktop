@@ -23,7 +23,6 @@ env:
         - COZY_DESKTOP_DIR=/tmp/cozy-desktop
         - COZY_URL="http://localhost:8080"
         - COZY_PASSPHRASE="cozy"
-        - COZY_STACK_STORAGE="$HOME/storage"
         - GOPATH="$HOME"
         # FIXME: Homebrew 1.7.3 fails to install cask apache-couchdb
         - HOMEBREW_NO_AUTO_UPDATE=1
@@ -58,8 +57,7 @@ before_install: | # install cozy stack for integration test
     fi
 
     # Create a local instance and an OAuth client
-    mkdir -p "$COZY_STACK_STORAGE"
-    $GOPATH/bin/cozy-stack serve --fs-url "file://$COZY_STACK_STORAGE" --log-level warning >/dev/null &
+    $GOPATH/bin/cozy-stack serve --fs-url "mem://" --log-level warning >/dev/null &
     sleep 1
     $GOPATH/bin/cozy-stack instances add --dev --passphrase "$COZY_PASSPHRASE" localhost:8080
     export COZY_CLIENT_ID=$($GOPATH/bin/cozy-stack instances client-oauth localhost:8080 http://localhost/ test github.com/cozy-labs/cozy-desktop)
