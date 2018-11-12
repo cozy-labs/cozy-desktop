@@ -102,18 +102,16 @@ module.exports = class WinSource {
   }
 
   async buildAddEvent (abspath /*: string */) /*: Promise<LayerAddEvent> */ {
-    let doc /*: ?Metadata */
-    const fpath = this.relativePath(abspath)
-    const stats = await fse.stat(abspath)
-    if (stats != null && stats.isDirectory()) {
-      doc = buildDir(fpath, stats)
-    } else {
-      doc = buildFile(fpath, stats, '')
-    }
+    const doc = await this.buildDocForAddOrUpdate(abspath)
     return { action: 'add', abspath, doc }
   }
 
   async buildUpdateEvent (abspath /*: string */) /*: Promise<LayerUpdateEvent> */ {
+    const doc = await this.buildDocForAddOrUpdate(abspath)
+    return { action: 'update', abspath, doc }
+  }
+
+  async buildDocForAddOrUpdate (abspath /*: string */) /*: Promise<Metadata> */ {
     let doc /*: ?Metadata */
     const fpath = this.relativePath(abspath)
     const stats = await fse.stat(abspath)
@@ -122,7 +120,7 @@ module.exports = class WinSource {
     } else {
       doc = buildFile(fpath, stats, '')
     }
-    return { action: 'update', abspath, doc }
+    return doc
   }
 
   async buildRemoveEvent (abspath /*: string */, kind /*: string */) /*: Promise<LayerRemoveEvent> */ {
@@ -133,7 +131,7 @@ module.exports = class WinSource {
     } else {
       doc = buildFile(fpath, new fs.Stats(), '')
     }
-    return { action: 'remove', abspath, doc }
+    return { action: 'delete', abspath, doc }
   }
 
   async buildMoveEvent (abspath /*: string */, oldpath /*: string */) /*: Promise<LayerMoveEvent> */ {

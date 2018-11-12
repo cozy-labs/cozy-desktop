@@ -10,7 +10,7 @@ export type AtomWatcherEvent = {
   oldPath: string
 }
 
-export type Action = "add" | "move" | "update" | "remove"
+export type Action = "add" | "move" | "update" | "delete"
 export type DocType = "file" | "folder"
 
 export type LayerAddEvent = {
@@ -33,7 +33,7 @@ export type LayerMoveEvent = {
 }
 
 export type LayerRemoveEvent = {
-  action: "remove",
+  action: "delete",
   abspath: string,
   doc: Metadata
 }

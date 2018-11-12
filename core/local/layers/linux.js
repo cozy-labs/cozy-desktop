@@ -150,7 +150,7 @@ module.exports = class LinuxSource {
     } else {
       doc = buildFile(fpath, new fs.Stats(), '')
     }
-    return { action: 'remove', abspath, doc }
+    return { action: 'delete', abspath, doc }
   }
 
   async buildMoveEvent (abspath /*: string */, oldpath /*: string */) /*: Promise<LayerMoveEvent> */ {
