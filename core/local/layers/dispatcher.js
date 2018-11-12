@@ -3,13 +3,13 @@
 /*::
 import type Pouch from '../../pouch'
 import type Prep from '../../prep'
-import type { LayerEvent, LayerAddEvent, LayerUpdateEvent, LayerMoveEvent, LayerRemoveEvent } from './events'
+import type { Layer, LayerEvent, LayerAddEvent, LayerUpdateEvent, LayerMoveEvent, LayerRemoveEvent } from './events'
 import type EventEmitter from 'events'
 */
 
 const SIDE = 'local'
 
-module.exports = class Dispatcher {
+module.exports = class Dispatcher /*:: implements Layer */ {
   /*::
   target: Prep
   pouch: Pouch

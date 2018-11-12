@@ -8,10 +8,8 @@ import type { Layer, LayerEvent } from './events'
 */
 
 // This layer computes the md5sum for added and updated files.
-module.exports = class ChecksumLayer extends Sequential {
+module.exports = class ChecksumLayer extends Sequential /*:: implements Layer */ {
   /*::
-  next: Layer
-  task : Promise<*>
   checksumer: Checksumer
   */
 

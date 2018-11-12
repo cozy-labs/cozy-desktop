@@ -15,7 +15,6 @@ import type Pouch from '../pouch'
 import type Prep from '../prep'
 import type EventEmitter from 'events'
 import type { Checksumer } from './checksumer'
-import type { ChokidarEvent } from './chokidar_event'
 */
 
 const log = logger({
@@ -25,8 +24,6 @@ const log = logger({
 module.exports = class AtomWatcher {
   /*::
   syncPath: string
-  prep: Prep
-  pouch: Pouch
   events: EventEmitter
   checksumer: Checksumer
   ensureDirInterval: *
@@ -34,15 +31,10 @@ module.exports = class AtomWatcher {
   _runningResolve: ?Function
   _runningReject: ?Function
   source: LinuxSource
-  start: () => Promise<*>
-  stop: (force: ?bool) => Promise<*>
-  ensureDirSync: () => void
   */
 
   constructor (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */) {
     this.syncPath = syncPath
-    this.prep = prep
-    this.pouch = pouch
     this.events = events
     this.checksumer = checksumer.init()
 
@@ -75,7 +67,7 @@ module.exports = class AtomWatcher {
     })
   }
 
-  stop (force /*: ? bool */) {
+  async stop (force /*: ? bool */) /*: Promise<*> */ {
     if (this._runningResolve) {
       this._runningResolve()
       this._runningResolve = null

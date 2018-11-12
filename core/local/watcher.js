@@ -14,9 +14,9 @@ import type { Checksumer } from './checksumer'
 export interface Watcher {
   checksumer: Checksumer,
   running: Promise<*>,
-  start: () => Promise<*>,
-  stop: (force: ?bool) => Promise<*>,
-  ensureDirSync: () => void,
+  start (): Promise<*>,
+  stop (force: ?bool): Promise<*>,
+  ensureDirSync (): void,
 }
 */
 

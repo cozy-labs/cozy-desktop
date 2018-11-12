@@ -8,7 +8,7 @@ import type { Layer, LayerEvent } from './events'
 
 // Identifier just adds IDs to the documents in the events.
 // TODO call metadata.assignPlatformIncompatibilities from here?
-module.exports = class Identifier {
+module.exports = class Identifier /*:: implements Layer */ {
   /*::
   next: Layer
   */

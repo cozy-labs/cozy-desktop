@@ -7,7 +7,7 @@ import type { Layer, LayerEvent } from './events'
 // Sequential is a base class for layers that must preserve the orders of
 // initial and process calls. The subclasses must call the super constructor
 // with the next layer and overload the doProcess method.
-module.exports = class Sequential {
+module.exports = class Sequential /*:: implements Layer */ {
   /*::
   next: Layer
   task : Promise<*>
@@ -20,9 +20,9 @@ module.exports = class Sequential {
 
   async initial () {
     let result
-    const task = this.task
+    const previousTask = this.task
     this.task = new Promise(async (resolve) => {
-      await task
+      await previousTask
       result = this.next.initial()
       resolve()
     })
@@ -32,9 +32,9 @@ module.exports = class Sequential {
 
   async process (events /*: LayerEvent[] */) {
     let result
-    const task = this.task
+    const previousTask = this.task
     this.task = new Promise(async (resolve) => {
-      await task
+      await previousTask
       events = await this.doProcess(events)
       result = this.next.process(events)
       resolve()

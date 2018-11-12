@@ -65,9 +65,6 @@ module.exports = class LocalWatcher {
   running: Promise<void>
   _runningResolve: ?Function
   _runningReject: ?Function
-  start: () => Promise<*>
-  stop: (force: ?bool) => Promise<*>
-  ensureDirSync: () => void
   */
 
   constructor (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */) {
