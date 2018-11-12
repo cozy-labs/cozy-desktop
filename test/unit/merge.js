@@ -267,20 +267,7 @@ describe('Merge', function () {
   })
 
   describe('moveFile', function () {
-    // @TODO fixme intermittent failure
-    //  `expected Object {...} } to have property updated_at of
-    //  '2017-08-28T08:42:52.535Z' (got '2017-08-28T08:42:52.536Z')`
-    //   → https://travis-ci.org/cozy-labs/cozy-desktop/jobs/269106206#L1140
-    //   → https://travis-ci.org/cozy-labs/cozy-desktop/jobs/273292815#L1163
     it('saves the new file and deletes the old one', async function () {
-      let doc = {
-        _id: 'FOO/NEW',
-        path: 'FOO/NEW',
-        md5sum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
-        docType: 'file',
-        updated_at: new Date(),
-        tags: ['courge', 'quux']
-      }
       let was = {
         _id: 'FOO/OLD',
         path: 'FOO/OLD',
@@ -294,6 +281,14 @@ describe('Merge', function () {
         },
         remote: {_id: 'XXX', _rev: '1-abc'},
         trashed: true
+      }
+      let doc = {
+        _id: 'FOO/NEW',
+        path: 'FOO/NEW',
+        md5sum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
+        docType: 'file',
+        updated_at: new Date(),
+        tags: ['courge', 'quux']
       }
       const inserted = await this.pouch.db.put(clone(was))
       was._rev = inserted.rev
