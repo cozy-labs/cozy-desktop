@@ -13,7 +13,8 @@ const {
   markAsUpToDate,
   markSide,
   sameFileIgnoreRev,
-  extractRevNumber
+  extractRevNumber,
+  sameBinary
 } = require('./metadata')
 const userActionRequired = require('./remote/user_action_required')
 const { HEARTBEAT } = require('./remote/watcher')
@@ -295,7 +296,7 @@ class Sync {
       } else {
         await this.doMove(side, doc, from)
       }
-      if (from.md5sum !== doc.md5sum) {
+      if (!sameBinary(from, doc)) {
         await side.overwriteFileAsync(doc, from)
       }
     } else if (doc._deleted) {
@@ -315,7 +316,7 @@ class Sync {
         if (doc.docType === 'folder') {
           await side.updateFolderAsync(doc, old)
         // $FlowFixMe
-        } else if (old.md5sum === doc.md5sum) {
+        } else if (sameBinary(old, doc)) {
           if (sameFileIgnoreRev(old, doc)) {
             log.debug({path: doc.path}, 'Ignoring timestamp-only change')
           } else {
