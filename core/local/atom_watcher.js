@@ -19,6 +19,7 @@ import type Pouch from '../pouch'
 import type Prep from '../prep'
 import type EventEmitter from 'events'
 import type { Checksumer } from './checksumer'
+import type { Runner } from './steps/dispatch'
 */
 
 const log = logger({
@@ -30,10 +31,10 @@ module.exports = class AtomWatcher {
   syncPath: string
   events: EventEmitter
   checksumer: Checksumer
+  runner: Runner
   running: Promise<void>
   _runningResolve: ?Function
   _runningReject: ?Function
-  source: WinSource
   */
 
   constructor (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */) {
@@ -46,13 +47,13 @@ module.exports = class AtomWatcher {
       const initialDiff = InitialDiff(linux)
       const checksum = AddChecksum(initialDiff)
       const dispatch = Dispatch(checksum)
-      this.source = dispatch
+      this.runner = dispatch
     } else if (process.platform === 'win32') {
       // TODO add a layer to detect moves
       // TODO do we need a debounce layer (a port of awaitWriteFinish of chokidar)?
       const dispatcher = new Dispatcher(prep, pouch, events)
       const checksumer = new ChecksumLayer(dispatcher, this.checksumer)
-      this.source = new WinSource(syncPath, checksumer)
+      this.runner = new WinSource(syncPath, checksumer)
     } else {
       throw new Error('The experimental watcher is not available on this platform')
     }
@@ -64,7 +65,7 @@ module.exports = class AtomWatcher {
       this._runningResolve = resolve
       this._runningReject = reject
     })
-    this.source.start()
+    this.runner.start()
     return new Promise((resolve) => {
       this.events.on('initial-scan-done', resolve)
     })
@@ -75,6 +76,6 @@ module.exports = class AtomWatcher {
       this._runningResolve()
       this._runningResolve = null
     }
-    this.source.stop()
+    this.runner.stop()
   }
 }
