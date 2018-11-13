@@ -65,7 +65,7 @@
     "test:elm": "elm-test",
     "test:integration": "yarn mocha test/integration",
     "test:performance": "yarn mocha test/performance",
-    "test:property": "NO_ELECTRON=true mocha test/property",
+    "test:property": "NO_ELECTRON=true mocha --exit test/property",
     "test:scenarios": "yarn mocha test/scenarios/run.js",
     "test:setup": "yarn docker:exec /cozy-desktop/test/setup.sh",
     "test:unit": "yarn mocha test/unit/",

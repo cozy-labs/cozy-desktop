@@ -19,16 +19,20 @@ module.exports = class ChecksumLayer extends Sequential /*:: implements Layer */
   }
 
   async doProcess (events /*: LayerEvent[] */) {
+    const batch = []
     for (const event of events) {
-      if (['add', 'update'].includes(event.action) && event.doc.docType === 'file') {
-        try {
+      try {
+        if (['add', 'update'].includes(event.action) && event.doc.docType === 'file') {
           event.doc.md5sum = await this.checksumer.push(event.abspath)
-        } catch (err) {
-          // TODO
-          console.error(err)
         }
+        batch.push(event)
+      } catch (err) {
+        // TODO Currently, we ignore events when there is an error for
+        // computing the checksum as it is often just because the file has been
+        // deleted since. But we should have a more fine-grained error handling
+        // here.
       }
     }
-    return events
+    return batch
   }
 }

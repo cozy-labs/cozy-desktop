@@ -2,9 +2,9 @@
 
 const faker = require('faker')
 
-const nbInitOps = 16
-const nbRunOps = 64
-const specialChars = [':', '_', 'é', ' ', '%', '\\', '&', '@', 'É', 'Ç']
+const nbInitOps = 32
+const nbRunOps = 128
+const specialChars = [':', '-', 'é', ' ', '%', ',', '&', '@', 'É', 'Ç']
 
 const knownPaths = []
 const deletedPaths = []
