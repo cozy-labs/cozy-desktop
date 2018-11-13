@@ -44,6 +44,7 @@ module.exports = class Local /*:: implements Side */ {
   pouch: Pouch
   events: EventEmitter
   syncPath: string
+  syncDirCheckInterval: IntervalID
   tmpPath: string
   watcher: Watcher
   other: FileStreamProvider
@@ -75,11 +76,13 @@ module.exports = class Local /*:: implements Side */ {
   // Start initial replication + watching changes in live
   start () {
     syncDir.ensureExistsSync(this)
+    this.syncDirCheckInterval = syncDir.startIntervalCheck(this)
     return this.watcher.start()
   }
 
   // Stop watching the file system
   stop () {
+    clearInterval(this.syncDirCheckInterval)
     return this.watcher.stop()
   }
 

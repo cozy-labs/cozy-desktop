@@ -8,7 +8,6 @@ const LinuxSource = require('./layers/linux')
 const Identifier = require('./layers/identifier')
 const ChecksumLayer = require('./layers/checksum')
 const Dispatcher = require('./layers/dispatcher')
-const syncDir = require('./sync_dir')
 
 /*::
 import type Pouch from '../pouch'
@@ -26,7 +25,6 @@ module.exports = class AtomWatcher {
   syncPath: string
   events: EventEmitter
   checksumer: Checksumer
-  ensureDirInterval: *
   running: Promise<void>
   _runningResolve: ?Function
   _runningReject: ?Function
@@ -48,7 +46,6 @@ module.exports = class AtomWatcher {
 
   start () {
     log.debug('starting...')
-    this.ensureDirInterval = syncDir.startIntervalCheck(this)
     this.running = new Promise((resolve, reject) => {
       this._runningResolve = resolve
       this._runningReject = reject
@@ -64,7 +61,6 @@ module.exports = class AtomWatcher {
       this._runningResolve()
       this._runningResolve = null
     }
-    clearInterval(this.ensureDirInterval)
     this.source.stop()
   }
 }

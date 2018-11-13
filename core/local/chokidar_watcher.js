@@ -61,7 +61,6 @@ module.exports = class LocalWatcher {
   checksumer: Checksumer
   watcher: any // chokidar
   buffer: LocalEventBuffer<ChokidarEvent>
-  ensureDirInterval: *
   pendingChanges: LocalChange[]
   running: Promise<void>
   _runningResolve: ?Function
@@ -95,8 +94,6 @@ module.exports = class LocalWatcher {
   // https://github.com/paulmillr/chokidar
   start () {
     log.debug('Starting...')
-
-    this.ensureDirInterval = syncDir.startIntervalCheck(this)
 
     this.watcher = chokidar.watch('.', {
       // Let paths in events be relative to this base path
@@ -367,7 +364,6 @@ module.exports = class LocalWatcher {
       this._runningResolve()
       this._runningResolve = null
     }
-    clearInterval(this.ensureDirInterval)
     this.buffer.switchMode('idle')
     if (force) return Promise.resolve()
     // Give some time for awaitWriteFinish events to be managed
