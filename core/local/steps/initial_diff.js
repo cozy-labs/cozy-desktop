@@ -2,7 +2,11 @@
 
 const { map, merge } = require('rxjs/operators')
 
-module.exports = function ({ initialScan, atomWatcher }) {
+/*::
+import type { Observable } from 'rxjs'
+*/
+
+module.exports = function ({ initialScan, atomWatcher } /*: * */) /*: Observable<*> */ {
   const observable = initialScan.pipe(
     map((x) => [x]) // TODO
   )

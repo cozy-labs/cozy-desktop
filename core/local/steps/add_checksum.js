@@ -2,8 +2,9 @@
 
 const { Observable } = require('rxjs')
 const { concatMap } = require('rxjs/operators')
+const Promise = require('bluebird')
 
-module.exports = function (observable) {
+module.exports = function (observable /*: Observable<*> */) /*: Observable<*> */ {
   return observable.pipe(
     concatMap((batch) => {
       console.log('checksum', batch)
