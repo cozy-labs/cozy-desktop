@@ -257,7 +257,7 @@ function extractRevNumber (doc /*: Metadata|{_rev: string} */) {
 function isUpToDate (side /*: SideName */, doc /*: Metadata */) {
   let currentRev = doc.sides[side] || 0
   let lastRev = extractRevNumber(doc)
-  return currentRev === lastRev
+  return currentRev >= lastRev
 }
 
 function markAsUpToDate (doc /*: Metadata */) {
