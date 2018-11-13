@@ -432,6 +432,38 @@ describe('Merge', function () {
       }
     })
 
+    it('identifies a local move without existing remote side as an addition', async function () {
+      let doc = {
+        _id: 'FOO/NEW',
+        path: 'FOO/NEW',
+        md5sum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
+        docType: 'file',
+        updated_at: new Date(),
+        tags: ['courge', 'quux']
+      }
+      let was = {
+        _id: 'FOO/OLD',
+        path: 'FOO/OLD',
+        md5sum: 'ba1368789cce95b574dec70dfd476e61cbf00517',
+        docType: 'file',
+        updated_at: new Date(),
+        tags: ['courge', 'quux'],
+        sides: {
+          local: 1
+        }
+      }
+      const inserted = await this.pouch.db.put(clone(was))
+      was._rev = inserted.rev
+      await this.merge.moveFileAsync('local', clone(doc), clone(was))
+      const res = await this.pouch.db.get(doc._id)
+      doc.updated_at = doc.updated_at.toISOString()
+      res.should.have.properties(doc)
+      res.sides.local.should.equal(2)
+      should(res.moveFrom).be.undefined()
+      should(res.moveTo).be.undefined()
+      await should(this.pouch.db.get(was._id)).be.rejectedWith({status: 404})
+    })
+
     onPlatforms('win32', 'darwin', () => {
       it('resolves an identity conflict with an existing file', async function () {
         const identical = await builders.file().path('QUX').create()

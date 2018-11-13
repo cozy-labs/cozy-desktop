@@ -5,7 +5,8 @@ const Promise = require('bluebird')
 const PouchDB = require('pouchdb')
 const async = require('async')
 const fs = require('fs-extra')
-const { isEqual } = require('lodash')
+const _ = require('lodash')
+const { isEqual } = _
 const path = require('path')
 
 const logger = require('./logger')
@@ -113,6 +114,10 @@ class Pouch {
     const {local, remote} = doc.sides
     log.debug({path: doc.path, local, remote, _deleted: doc._deleted, doc}, 'Saving metadata...')
     return this.db.put(doc).asCallback(callback)
+  }
+
+  async remove (doc /*: Metadata */) /*: Promise<*> */ {
+    return this.put(_.defaults({ _deleted: true }, doc))
   }
 
   // WARNING: bulkDocs is not a transaction, some updates can be applied while

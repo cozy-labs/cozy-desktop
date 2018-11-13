@@ -21,7 +21,8 @@ const {
   sameFolder,
   buildDir,
   buildFile,
-  invariants
+  invariants,
+  upToDate
 } = require('../../core/metadata')
 
 const { platform } = process
@@ -579,20 +580,56 @@ describe('metadata', function () {
       file = await builders.whatever().upToDate().remoteId('badbeef').build()
     })
 
-    it('pouch.put throws when trying to put bad doc (no sides)', async () => {
+    it('throws when trying to put bad doc (no sides)', async () => {
       should(() => invariants(Object.assign(file, {sides: null}))
         ).throw(/sides/)
     })
 
-    it('pouch.put throws when trying to put bad doc (no remote)', async () => {
+    it('throws when trying to put bad doc (no remote)', async () => {
       should(() => invariants(Object.assign(file, {remote: null}))
         ).throw(/sides\.remote/)
     })
 
-    it('pouch.put throws when trying to put bad doc (no md5sum)', async () => {
+    it('throws when trying to put bad doc (no md5sum)', async () => {
       file = await builders.file().upToDate().remoteId('badbeef').build()
       should(() => invariants(Object.assign(file, {md5sum: null}))
         ).throw(/checksum/)
+    })
+
+    it('does not throw when trying to put bad doc when deleted and up-to-date', async () => {
+      should(() => invariants(Object.assign(file, {
+        _deleted: true, sides: { local: 0, remote: 0 }, remote: null, md5sum: null
+      }))).not.throw()
+    })
+  })
+
+  describe('upToDate', () => {
+    let doc
+    beforeEach(async () => {
+      const builders = new MetadataBuilders(this.pouch)
+      doc = await builders.whatever().notUpToDate().remoteId('badbeef').build()
+    })
+
+    it('returns a clone of the doc', () => {
+      const clone = upToDate(doc)
+
+      should(clone._id).eql(doc._id)
+      should(clone.path).eql(doc.path)
+
+      doc.path = '/new/doc/path'
+      should(clone.path).not.eql(doc.path)
+    })
+
+    it('returns a doc with both sides equal', () => {
+      const clone = upToDate(doc)
+
+      should(clone.sides.local).eql(clone.sides.remote)
+    })
+
+    it('removes errors', () => {
+      doc.errors = 1
+
+      should(upToDate(doc).errors).be.undefined()
     })
   })
 })

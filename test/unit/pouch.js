@@ -51,6 +51,82 @@ describe('Pouch', function () {
   })
 
   describe('ODM', function () {
+    describe('put', () => {
+      let doc, old
+
+      beforeEach(async function () {
+        const builders = new MetadataBuilders(this.pouch)
+
+        old = await builders.file().path('doc').create()
+        doc = _.clone(old)
+      })
+
+      it('does not update doc without sides', async function () {
+        _.unset(doc, 'sides')
+
+        await (() => { this.pouch.put(doc) }).should.throw()
+        should((await this.pouch.db.get(doc._id))._rev).equal(old._rev)
+      })
+
+      context('when doc is not deleted', () => {
+        beforeEach(function () {
+          doc._deleted = false
+        })
+
+        it('does not update doc with a remote side and no remote', async function () {
+          _.assign(doc, { remote: undefined, sides: { remote: 1 } })
+
+          await (() => { this.pouch.put(doc) }).should.throw()
+          should((await this.pouch.db.get(doc._id))._rev).equal(old._rev)
+        })
+      })
+
+      context('when doc is not up to date', () => {
+        beforeEach(function () {
+          doc.sides.local = 1
+          doc.sides.remote = 2
+        })
+
+        it('does not update doc with a remote side and no remote', async function () {
+          _.assign(doc, { remote: undefined })
+
+          await (() => { this.pouch.put(doc) }).should.throw()
+          should((await this.pouch.db.get(doc._id))._rev).equal(old._rev)
+        })
+      })
+
+      context('when doc is deleted and up to date', () => {
+        beforeEach(function () {
+          _.assign(doc, { _deleted: true, sides: { local: 1, remote: 1 } })
+        })
+
+        it('updates doc without remote', async function () {
+          _.assign(doc, { remote: undefined })
+
+          await (() => { this.pouch.put(doc) }).should.not.throw()
+          await should(this.pouch.db.get(doc._id)).be.rejectedWith({status: 404})
+          await should(this.pouch.db.get(old._id)).be.rejectedWith({status: 404})
+        })
+      })
+    })
+
+    describe('remove', () => {
+      let doc, old
+
+      beforeEach(async function () {
+        const builders = new MetadataBuilders(this.pouch)
+
+        old = await builders.file().path('doc').create()
+        doc = _.clone(old)
+      })
+
+      it('updates the _deleted attribute of the doc', async function () {
+        await (() => { this.pouch.remove(doc) }).should.not.throw()
+        await should(this.pouch.db.get(doc._id)).be.rejectedWith({status: 404})
+        await should(this.pouch.db.get(old._id)).be.rejectedWith({status: 404})
+      })
+    })
+
     describe('bulkDocs', () => {
       let doc1, doc2, old1, old2
 
