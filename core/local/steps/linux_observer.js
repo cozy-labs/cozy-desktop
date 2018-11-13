@@ -5,13 +5,17 @@ const fse = require('fs-extra')
 const path = require('path')
 const watcher = require('@atom/watcher')
 
+/*::
+import type { Observer } from 'rxjs'
+*/
+
 module.exports = function (syncPath /*: string */) {
   let running = false
   let watchers = new Map()
   let process = () => {}
   let watch = async () => {}
 
-  const atomWatcher = Observable.create(function (observer) {
+  const atomWatcher = Observable.create(function (observer /*: Observer */) {
     console.log('atomWatcher started')
     running = true
     process = (events) => {
@@ -35,7 +39,7 @@ module.exports = function (syncPath /*: string */) {
     }
   })
 
-  const initialScan = Observable.create(async function (observer) {
+  const initialScan = Observable.create(async function (observer /*: Observer */) {
     console.log('initialScan started')
     watch = async (relativePath) => {
       console.log('watch', relativePath)
@@ -59,12 +63,12 @@ module.exports = function (syncPath /*: string */) {
           batch.push(p)
           observer.next(p)
         }
-        for (const event of batch) {
-          // TODO
-          // if (event.doc.docType === 'folder') {
-          //   await watch(event.doc.path)
-          // }
-        }
+        // TODO
+        // for (const event of batch) {
+        //   if (event.doc.docType === 'folder') {
+        //     await watch(event.doc.path)
+        //   }
+        // }
       } catch (err) {
         // The directory may been removed since we wanted to watch it
       }
