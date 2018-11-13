@@ -16,6 +16,7 @@ const sentry = require('../sentry')
 const watcher = require('./watcher')
 const measureTime = require('../perftools')
 const { withContentLength } = require('../file_stream_provider')
+const syncDir = require('./sync_dir')
 
 bluebird.promisifyAll(fs)
 
@@ -73,7 +74,7 @@ module.exports = class Local /*:: implements Side */ {
 
   // Start initial replication + watching changes in live
   start () {
-    this.watcher.ensureDirSync()
+    syncDir.ensureExistsSync(this)
     return this.watcher.start()
   }
 

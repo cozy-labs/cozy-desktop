@@ -1,6 +1,5 @@
 /* @flow */
 
-const fse = require('fs-extra')
 const Promise = require('bluebird')
 
 const checksumer = require('./checksumer')
@@ -9,6 +8,7 @@ const LinuxSource = require('./layers/linux')
 const Identifier = require('./layers/identifier')
 const ChecksumLayer = require('./layers/checksum')
 const Dispatcher = require('./layers/dispatcher')
+const syncDir = require('./sync_dir')
 
 /*::
 import type Pouch from '../pouch'
@@ -46,17 +46,9 @@ module.exports = class AtomWatcher {
     this.source = new LinuxSource(syncPath, identifier)
   }
 
-  ensureDirSync () {
-    // This code is duplicated in local/index#start
-    if (!fse.existsSync(this.syncPath)) {
-      this.events.emit('syncdir-unlinked')
-      throw new Error('Syncdir has been unlinked')
-    }
-  }
-
   start () {
     log.debug('starting...')
-    this.ensureDirInterval = setInterval(this.ensureDirSync.bind(this), 5000)
+    this.ensureDirInterval = syncDir.startIntervalCheck(this)
     this.running = new Promise((resolve, reject) => {
       this._runningResolve = resolve
       this._runningReject = reject

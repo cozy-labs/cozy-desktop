@@ -14,6 +14,7 @@ const LocalEventBuffer = require('./event_buffer')
 const logger = require('../logger')
 const metadata = require('../metadata')
 const {sameDate, fromDate} = require('../timestamp')
+const syncDir = require('./sync_dir')
 
 /*::
 import type { Metadata } from '../metadata'
@@ -90,20 +91,12 @@ module.exports = class LocalWatcher {
     })
   }
 
-  ensureDirSync () {
-    // This code is duplicated in local/index#start
-    if (!fs.existsSync(this.syncPath)) {
-      this.events.emit('syncdir-unlinked')
-      throw new Error('Syncdir has been unlinked')
-    }
-  }
-
   // Start chokidar, the filesystem watcher
   // https://github.com/paulmillr/chokidar
   start () {
     log.debug('Starting...')
 
-    this.ensureDirInterval = setInterval(this.ensureDirSync.bind(this), 5000)
+    this.ensureDirInterval = syncDir.startIntervalCheck(this)
 
     this.watcher = chokidar.watch('.', {
       // Let paths in events be relative to this base path
@@ -174,7 +167,7 @@ module.exports = class LocalWatcher {
 
     if (this.initialScan) this.initialScan.flushed = true
     this.events.emit('buffering-end')
-    this.ensureDirSync()
+    syncDir.ensureExistsSync(this)
     this.events.emit('local-start')
 
     let events = rawEvents.filter((e) => e.path !== '') // @TODO handle root dir events

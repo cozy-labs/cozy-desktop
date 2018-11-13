@@ -16,7 +16,6 @@ export interface Watcher {
   running: Promise<*>,
   start (): Promise<*>,
   stop (force: ?bool): Promise<*>,
-  ensureDirSync (): void,
 }
 */
 
