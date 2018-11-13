@@ -1,6 +1,5 @@
 /* @flow */
 
-const fse = require('fs-extra')
 const Promise = require('bluebird')
 
 const checksumer = require('./checksumer')
@@ -26,7 +25,6 @@ module.exports = class AtomWatcher {
   syncPath: string
   events: EventEmitter
   checksumer: Checksumer
-  ensureDirInterval: *
   running: Promise<void>
   _runningResolve: ?Function
   _runningReject: ?Function
@@ -46,17 +44,8 @@ module.exports = class AtomWatcher {
     this.source = new LinuxSource(syncPath, identifier)
   }
 
-  ensureDirSync () {
-    // This code is duplicated in local/index#start
-    if (!fse.existsSync(this.syncPath)) {
-      this.events.emit('syncdir-unlinked')
-      throw new Error('Syncdir has been unlinked')
-    }
-  }
-
   start () {
     log.debug('starting...')
-    this.ensureDirInterval = setInterval(this.ensureDirSync.bind(this), 5000)
     this.running = new Promise((resolve, reject) => {
       this._runningResolve = resolve
       this._runningReject = reject
@@ -72,7 +61,6 @@ module.exports = class AtomWatcher {
       this._runningResolve()
       this._runningResolve = null
     }
-    clearInterval(this.ensureDirInterval)
     this.source.stop()
   }
 }
