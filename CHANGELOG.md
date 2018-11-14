@@ -1,5 +1,16 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.10.3-beta.2 - 2018-11-14
+
+Improvements for all users:
+
+- Files moved right after they've been added to the Cozy folder and before we've
+  had the chance to upload them will be synchronized anyway, at the right path.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.10.3-beta.1 - 2018-11-08
 
 Improvements for all users:
