@@ -328,6 +328,51 @@ describe('RemoteWatcher', function () {
         ])
       })
     })
+
+    describe('descendantMoves', () => {
+      it('handles correctly descendantMoves', function () {
+        const remoteDir1 = builders.remote.dir().name('src').build()
+        const remoteDir2 = builders.remote.dir().name('parent').inDir(remoteDir1).build()
+        const remoteFile = builders.remote.file().name('child').inDir(remoteDir2).build()
+        const olds = [remoteDir1, remoteDir2, remoteFile].map((oldRemote) => {
+          const oldDoc = createMetadata(oldRemote)
+          metadata.ensureValidPath(oldDoc)
+          metadata.assignId(oldDoc)
+          return oldDoc
+        })
+
+        const updated = (old, changes) => _.defaults({
+          _rev: old._rev.replace(/^1-[0-9a-z]{3}/, '2-xxx')
+        }, changes, old)
+
+        const shouldBeExpected = (result) => {
+          result.should.have.length(3)
+          result.map(x => x.type).sort().should.deepEqual(
+            ['DescendantChange', 'DescendantChange', 'DirMove']
+          )
+          const dirMoveChange = result.filter(x => x.type === 'DirMove')[0]
+          dirMoveChange.descendantMoves.should.have.length(2)
+        }
+
+        shouldBeExpected(this.watcher.analyse([
+          updated(remoteFile, {path: '/dst/parent/child'}),
+          updated(remoteDir2, {path: '/dst/parent'}),
+          updated(remoteDir1, {name: 'dst', path: '/dst'})
+        ], olds))
+
+        shouldBeExpected(this.watcher.analyse([
+          updated(remoteDir1, {name: 'dst', path: '/dst'}),
+          updated(remoteDir2, {path: '/dst/parent'}),
+          updated(remoteFile, {path: '/dst/parent/child'})
+        ], olds))
+
+        shouldBeExpected(this.watcher.analyse([
+          updated(remoteDir1, {name: 'dst', path: '/dst'}),
+          updated(remoteFile, {path: '/dst/parent/child'}),
+          updated(remoteDir2, {path: '/dst/parent'})
+        ], olds))
+      })
+    })
   })
 
   describe('identifyChange', function () {
