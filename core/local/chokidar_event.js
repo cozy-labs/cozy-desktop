@@ -2,12 +2,13 @@
 
 /*::
 import type fs from 'fs'
+import type {Metadata} from '../metadata'
 
 export type ChokidarAdd = {type: 'add', path: string, stats: fs.Stats}
 export type ChokidarAddDir = {type: 'addDir', path: string, stats: fs.Stats}
 export type ChokidarChange = {type: 'change', path: string, stats: fs.Stats}
-export type ChokidarUnlink = {type: 'unlink', path: string}
-export type ChokidarUnlinkDir = {type: 'unlinkDir', path: string}
+export type ChokidarUnlink = {type: 'unlink', path: string, old?: Metadata}
+export type ChokidarUnlinkDir = {type: 'unlinkDir', path: string, old?: Metadata}
 
 export type ChokidarEvent =
   | ChokidarAdd

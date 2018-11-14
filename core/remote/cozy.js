@@ -219,7 +219,7 @@ class RemoteCozy {
   }
 
   // Retrieve the path of a remote file doc
-  async _setPath (doc /*: any */) /*: Promise<void> */ {
+  async _setPath (doc /*: * */) /*: Promise<*> */ {
     const parentDir = await this.find(doc.dir_id)
     doc.path = path.posix.join(parentDir.path, doc.name)
   }
