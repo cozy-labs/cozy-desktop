@@ -140,12 +140,12 @@ class App {
     } catch (err) {
       log.error('An error occured while registering your device.')
       let parsed /*: Object */ = this.parseCozyUrl(cozyUrl)
-      if (err.code === 'ENOTFOUND') {
-        log.warn(`The DNS resolution for ${parsed.hostname} failed.`)
-        log.warn('Are you sure the domain is OK?')
-      } else if (err === 'Bad credentials') {
+      if (err === 'Bad credentials') {
         log.warn(err)
         log.warn('Are you sure there are no typo on the passphrase?')
+      } else if (err.code === 'ENOTFOUND') {
+        log.warn(`The DNS resolution for ${parsed.hostname} failed.`)
+        log.warn('Are you sure the domain is OK?')
       } else {
         log.error(err)
         if (parsed.protocol === 'http:') {

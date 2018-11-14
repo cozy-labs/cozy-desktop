@@ -52,11 +52,11 @@ export type RemoteDeletion = {
 }
 */
 
-function dropSpecialDocs (docs /*: RemoteDoc[] */) {
+function dropSpecialDocs (docs /*: RemoteDoc[] */) /*: RemoteDoc[] */ {
   return docs.filter(doc => !specialId(doc._id))
 }
 
-function keepFiles (docs /*: RemoteDoc[] */) {
+function keepFiles (docs /*: RemoteDoc[] */) /*: RemoteDoc[] */ {
   return docs.filter(doc => doc.type === FILE_TYPE)
 }
 
@@ -91,7 +91,7 @@ export type JsonApiDoc = {
 }
 */
 
-function jsonApiToRemoteDoc (json/*: JsonApiDoc */) /*: RemoteDoc */ {
+function jsonApiToRemoteDoc (json/*: JsonApiDoc */) /*: * */ {
   let metadata = {}
 
   Object.assign(metadata, {

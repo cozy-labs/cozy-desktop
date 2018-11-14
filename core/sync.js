@@ -371,7 +371,7 @@ class Sync {
 
   // Make the error explicit (offline, local disk full, quota exceeded, etc.)
   // and keep track of the number of retries
-  async handleApplyError (change /*: MetadataChange */, sideName /*: SideName */, err /*: Error */) {
+  async handleApplyError (change /*: MetadataChange */, sideName /*: SideName */, err /*: * */) {
     const {path} = change.doc
     log.error({path, err, change})
     if (err.code === 'ENOSPC') {
