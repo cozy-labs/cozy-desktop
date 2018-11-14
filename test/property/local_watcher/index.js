@@ -91,6 +91,7 @@ describe('Local watcher', function () {
 
   const scenarios = glob.sync(path.join(__dirname, '*.json'))
   scenarios.forEach(scenario => {
+    scenario = path.normalize(scenario)
     it(`works fine for ${path.basename(scenario)}`, async function () {
       const ops = await fse.readJson(scenario)
       if (ops.length > 0 && ops[0].op === 'pending') {
@@ -118,7 +119,7 @@ describe('Local watcher', function () {
       // Pouchdb should have the same tree that the file system
       let expected = await state.dir.tree()
       expected = expected.map(item => item.replace(/\/$/, ''))
-      expected = expected.map(item => id(item))
+      expected = expected.map(item => path.normalize(id(item)))
       expected = expected.sort((a, b) => a.localeCompare(b))
       let actual = await state.pouchdb.treeAsync()
       actual = actual.filter(item => !item.startsWith('_design/'))

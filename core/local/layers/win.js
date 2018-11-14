@@ -2,7 +2,7 @@
 
 const autoBind = require('auto-bind')
 const { buildDir, buildFile } = require('../../metadata')
-const fs = require('fs')
+const fs = require('fs') // TODO use win fs.stat
 const fse = require('fs-extra')
 const path = require('path')
 const watcher = require('@atom/watcher')
@@ -16,50 +16,37 @@ import type { AtomWatcherEvent, Layer, LayerEvent, LayerAddEvent, LayerUpdateEve
 // process that a predecessor layer can call. It watches the filesystem and the
 // events are created here.
 //
-// On Linux, the API to watch the file system (inotify) is not recursive. It
-// means that we have to add a watcher when we a new directory is added (and to
-// remove a watcher when a watched directory is removed).
+// ReadDirectoryChangesW is the API used on windows for FS notifications. It is
+// recursive and works without too many darts. Still, it doesn't detect the
+// moves and atom/watcher can misunderstand renaming with just case swapping
+// (Foo -> foo).
 //
-// Ignoring some files/folders could have been done in a separated layer, but
-// it is more efficient to do here, as we can avoid to setup inotify watchers
-// for ignored folders.
-//
-// Even if inotify has a IN_ISDIR hint, atom/watcher does not report it. So, we
-// have to call stat on the path to know if it's a file or a directory for add
-// and update events.
-module.exports = class LinuxSource {
+// When another important thing to know is that we need to scan added directory:
+// if the directory was restored from the trash or moved from outside the
+// watched directory, ReadDirectoryChangesW won't send us events for the files
+// and sub-directories.
+module.exports = class WinSource {
   /*::
   syncPath: string
   next: Layer
   running: boolean
-  watchers: Map<string, *>
+  watcher: *
   */
   constructor (syncPath /*: string */, next /*: Layer */) {
     this.syncPath = syncPath
     this.next = next
-    this.running = false
-    this.watchers = new Map()
     autoBind(this)
   }
 
   async start () {
-    this.running = true
-    await this.watch('.')
+    this.watcher = await watcher.watchPath(this.syncPath, { recursive: true }, this.process)
+    await this.initialScan('.')
     this.next.initial()
   }
 
-  async watch (relativePath /*: string */) {
+  async initialScan (relativePath /*: string */) {
     try {
-      if (!this.running || this.watchers.has(relativePath)) {
-        return
-      }
       const fullPath = path.join(this.syncPath, relativePath)
-      const w = await watcher.watchPath(fullPath, { recursive: false }, this.process)
-      if (!this.running || this.watchers.has(relativePath)) {
-        w.dispose()
-        return
-      }
-      this.watchers.set(relativePath, w)
       const batch /*: LayerEvent[] */ = []
       for (const entry of await fse.readdir(fullPath)) {
         try {
@@ -76,7 +63,7 @@ module.exports = class LinuxSource {
       this.next.process(batch)
       for (const event of batch) {
         if (event.doc.docType === 'folder') {
-          await this.watch(event.doc.path)
+          await this.initialScan(event.doc.path)
         }
       }
     } catch (err) {
@@ -85,37 +72,31 @@ module.exports = class LinuxSource {
   }
 
   async process (events /*: AtomWatcherEvent[] */) {
-    // TODO preserve order of batches
     // TODO logger
     // TODO ignore
     const batch /*: LayerEvent[] */ = []
     for (const event of events) {
-      switch (event.action) {
-        case 'created':
-          const eAdd = await this.buildAddEvent(event.path)
-          batch.push(eAdd)
-          if (eAdd.doc.docType === 'folder') {
-            this.watch(eAdd.doc.path).catch(err => { console.error(err) })
-          }
-          break
-        case 'modified':
-          batch.push(await this.buildUpdateEvent(event.path))
-          break
-        case 'deleted':
-          const eDel = await this.buildRemoveEvent(event.path, event.kind)
-          batch.push(eDel)
-          const w = this.watchers.get(eDel.doc.path)
-          if (w) {
-            w.dispose()
-            this.watchers.delete(eDel.doc.path)
-          }
-          break
-        case 'renamed':
-          batch.push(await this.buildMoveEvent(event.path, event.oldPath))
-          break
-        default:
-          throw new Error(`Unknown atom/watcher action ${event.action}`)
+      try {
+        switch (event.action) {
+          case 'created':
+            // TODO scan added directory
+            batch.push(await this.buildAddEvent(event.path))
+            break
+          case 'modified':
+            batch.push(await this.buildUpdateEvent(event.path))
+            break
+          case 'deleted':
+            batch.push(await this.buildRemoveEvent(event.path, event.kind))
+            break
+          case 'renamed':
+            batch.push(await this.buildMoveEvent(event.path, event.oldPath))
+            break
+        }
+      } catch (err) {
+        // If fs.stat fails while building an event, we can ignore the event:
+        // we will probably have a deleted event later.
       }
+      throw new Error(`Unknown atom/watcher action ${event.action}`)
     }
     this.next.process(batch)
   }
@@ -173,10 +154,9 @@ module.exports = class LinuxSource {
   }
 
   stop () {
-    this.running = false
-    for (const [, w] of this.watchers) {
-      w.dispose()
+    if (this.watcher) {
+      this.watcher.dispose()
+      this.watcher = null
     }
-    this.watchers = new Map()
   }
 }

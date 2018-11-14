@@ -66,7 +66,7 @@ module.exports = class Dispatcher /*:: implements Layer */ {
     await this.target.updateFileAsync(SIDE, event.doc)
   }
 
-  async removefile (event /*: LayerRemoveEvent */) {
+  async deletefile (event /*: LayerRemoveEvent */) {
     await this.target.trashFileAsync(SIDE, event.doc)
   }
 
@@ -82,7 +82,7 @@ module.exports = class Dispatcher /*:: implements Layer */ {
     await this.target.putFolderAsync(SIDE, event.doc)
   }
 
-  async removefolder (event /*: LayerRemoveEvent */) {
+  async deletefolder (event /*: LayerRemoveEvent */) {
     await this.target.trashFolderAsync(SIDE, event.doc)
   }
 }

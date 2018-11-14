@@ -21,9 +21,9 @@ module.exports = {
 // Usage:
 //     await TmpDir.ensureEmpty(__filename)
 async function emptyForTestFile (filename /*: string */) /*: Promise<string> */ {
-  const path = pathForTestFile(filename)
-  await fs.emptyDir(path)
-  return path
+  const fpath = pathForTestFile(filename)
+  await fs.emptyDir(fpath)
+  return fpath
 }
 
 function pathForTestFile (filename /*: string */) /*: string */ {

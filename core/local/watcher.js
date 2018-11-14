@@ -25,11 +25,12 @@ const log = logger({
 
 function build (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */) /*: Watcher */ {
   const env = process.env.COZY_FS_WATCHER
-  if (env === 'experimental' || env === 'atom') {
-    if (process.platform === 'linux') {
+  if (['experimental', 'atom'].includes(env)) {
+    try {
       return new AtomWatcher(syncPath, prep, pouch, events)
+    } catch (err) {
+      log.error(err)
     }
-    log.warn('The experimental watcher is only available on Linux')
   }
   return new ChokidarWatcher(syncPath, prep, pouch, events)
 }
