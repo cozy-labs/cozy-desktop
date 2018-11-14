@@ -427,21 +427,18 @@ class RemoteWatcher {
         break
       case 'DirMove':
         log.info({path, oldpath: change.was.path}, 'folder was moved or renamed remotely')
-        const needUpdates /*: any */ = []
         const newRemoteRevs /*: RemoteRevisionsByID */ = {}
-        for (let descendant of (change.descendantMoves || [])) {
-          if (descendant.update) {
-            needUpdates.push(descendant)
-          }
+        const descendants = change.descendantMoves || []
+        for (let descendant of descendants) {
           if (descendant.doc.remote) {
-            // $FlowFixMe
             newRemoteRevs[descendant.doc.remote._id] = descendant.doc.remote._rev
           }
         }
         await this.prep.moveFolderAsync(sideName, change.doc, change.was, newRemoteRevs)
-        for (let needUpdate of needUpdates) {
-          change.was = await this.pouch.byRemoteIdMaybeAsync(change.was.remote._id)
-          await this.prep.updateFileAsync(sideName, needUpdate.doc)
+        for (let descendant of descendants) {
+          if (descendant.update) {
+            await this.prep.updateFileAsync(sideName, descendant.doc)
+          }
         }
         break
       case 'FileDissociation':
