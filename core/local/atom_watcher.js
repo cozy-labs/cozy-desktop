@@ -19,7 +19,7 @@ import type Pouch from '../pouch'
 import type Prep from '../prep'
 import type EventEmitter from 'events'
 import type { Checksumer } from './checksumer'
-import type { Runner } from './steps/dispatch'
+import type { Runner } from './steps/linux'
 */
 
 const log = logger({
@@ -44,10 +44,10 @@ module.exports = class AtomWatcher {
 
     if (process.platform === 'linux') {
       const linux = LinuxObserver(syncPath)
-      const initialDiff = InitialDiff(linux)
+      const initialDiff = InitialDiff(linux.generator)
       const checksum = AddChecksum(initialDiff, this.checksumer)
       const dispatch = Dispatch(checksum)
-      this.runner = dispatch
+      this.runner = linux
     } else if (process.platform === 'win32') {
       // TODO add a layer to detect moves
       // TODO do we need a debounce layer (a port of awaitWriteFinish of chokidar)?
