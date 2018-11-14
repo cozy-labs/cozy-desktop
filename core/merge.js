@@ -13,6 +13,8 @@ const {
   detectPlatformIncompatibilities,
   isAtLeastUpToDate,
   isUpToDate,
+  markAsNeverSynced,
+  markAsNew,
   markSide,
   sameBinary,
   sameFile,
@@ -363,14 +365,20 @@ class Merge {
       let dst = clone(doc)
       dst._id = makeDestinationID(doc)
       dst.path = doc.path.replace(was.path, folder.path)
-      move.child(src, dst)
+      if (src.sides && src.sides[side] && !src.sides[otherSide(side)]) {
+        markAsNeverSynced(src)
+        markAsNew(dst)
+        markSide(side, dst)
+      } else {
+        move.child(src, dst)
+        markSide(side, dst, src)
+      }
 
       let existingDstRev = existingDstRevs[dst._id]
       if (existingDstRev && folder.overwrite) dst._rev = existingDstRev
       const newRemoteRev = _.get(newRemoteRevs, _.get(dst, 'remote._id'))
       if (newRemoteRev) dst.remote._rev = newRemoteRev
 
-      markSide(side, dst, src)
       bulk.push(src)
       // FIXME: Find a cleaner way to pass the syncPath to the Merge
       const incompatibilities = detectPlatformIncompatibilities(dst, this.pouch.config.syncPath)
