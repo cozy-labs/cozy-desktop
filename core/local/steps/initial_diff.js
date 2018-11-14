@@ -1,16 +1,8 @@
 /* @flow */
 
-const { map, merge } = require('rxjs/operators')
-
-/*::
-import type { Observable } from 'rxjs'
-*/
-
-module.exports = function ({ initialScan, atomWatcher } /*: * */) /*: Observable<*> */ {
-  const observable = initialScan.pipe(
-    map((x) => [x]) // TODO
-  )
-  return atomWatcher.pipe(
-    merge(observable)
-  )
+module.exports = async function* (generator) {
+  for await (const batch of generator) {
+    console.log('initial_diff', batch.length)
+    yield batch
+  }
 }
