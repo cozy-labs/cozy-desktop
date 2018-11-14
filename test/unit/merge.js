@@ -753,6 +753,21 @@ describe('Merge', function () {
           .be.rejectedWith({status: 404})
       }
     })
+
+    it('adds an unsynced file to the destination folder', async function () {
+      const fileName = 'unsynced-file'
+      const srcFolder = await builders.dir().path('ADDED_DIR').upToDate().create()
+      await builders.file().path(path.normalize(`${srcFolder.path}/${fileName}`)).sides({ local: 1 }).create()
+
+      const dstFolder = builders.dir(srcFolder).path('MOVED_DIR').sides({}).noRev().build()
+      await this.merge.moveFolderRecursivelyAsync('local', dstFolder, srcFolder)
+
+      const movedFile = await this.pouch.db.get(metadata.id(path.normalize(`${dstFolder.path}/${fileName}`)))
+      should(movedFile).have.property('path', path.normalize(`${dstFolder.path}/${fileName}`))
+      await should(
+        this.pouch.db.get(metadata.id(`${srcFolder.path}/{fileName}`))
+      ).be.rejectedWith({status: 404})
+    })
   })
 
   describe('trashFolderAsync', () => {

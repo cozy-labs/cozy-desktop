@@ -104,6 +104,8 @@ module.exports = {
   extractRevNumber,
   isUpToDate,
   isAtLeastUpToDate,
+  markAsNeverSynced,
+  markAsNew,
   markAsUpToDate,
   sameFolder,
   sameFile,
@@ -301,6 +303,16 @@ function isAtLeastUpToDate (side /*: SideName */, doc /*: Metadata */) {
   let currentRev = doc.sides[side] || 0
   let lastRev = extractRevNumber(doc)
   return currentRev >= lastRev
+}
+
+function markAsNeverSynced (doc /*: Metadata */) {
+  doc._deleted = true
+  doc.sides = { local: 1, remote: 1 }
+}
+
+function markAsNew (doc /*: Metadata */) {
+  delete doc._rev
+  delete doc.sides
 }
 
 function markAsUpToDate (doc /*: Metadata */) {
