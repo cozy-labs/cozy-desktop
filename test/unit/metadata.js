@@ -138,15 +138,15 @@ describe('metadata', function () {
     const syncPath = ';'
 
     it('is null when all names in the path are compatible', () => {
-      const metadata = {path: path.normalize('foo/bar'), docType: 'file'}
-      should(detectPlatformIncompatibilities(metadata, syncPath)).deepEqual([])
+      const doc = {path: path.normalize('foo/bar'), docType: 'file'}
+      should(detectPlatformIncompatibilities(doc, syncPath)).deepEqual([])
     })
 
     onPlatform('win32', () => {
       it('lists platform incompatibilities for all names in the path', () => {
         const path = 'f?o:o\\ba|r\\baz\\q"ux'
-        const metadata = {path, docType: 'file'}
-        should(detectPlatformIncompatibilities(metadata, syncPath)).deepEqual([
+        const doc = {path, docType: 'file'}
+        should(detectPlatformIncompatibilities(doc, syncPath)).deepEqual([
           {
             type: 'reservedChars',
             name: 'q"ux',
@@ -178,8 +178,8 @@ describe('metadata', function () {
     onPlatform('darwin', () => {
       it('lists platform incompatibilities for all names in the path', () => {
         const path = 'foo/b:ar/qux'
-        const metadata = {path, docType: 'folder'}
-        should(detectPlatformIncompatibilities(metadata, syncPath)).deepEqual([
+        const doc = {path, docType: 'folder'}
+        should(detectPlatformIncompatibilities(doc, syncPath)).deepEqual([
           {
             type: 'reservedChars',
             name: 'b:ar',

@@ -34,26 +34,26 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
   constructor (cozy /*: Cozy */) {
     super(cozy)
 
-    this.doc.type = 'file'
+    this.remoteDoc.type = 'file'
     this.name(`remote-file-${fileNumber}`)
     this.data(`Content of remote file ${fileNumber}`)
-    this.doc.class = 'application'
-    this.doc.mime = 'application/octet-stream'
-    this.doc.executable = true
+    this.remoteDoc.class = 'application'
+    this.remoteDoc.mime = 'application/octet-stream'
+    this.remoteDoc.executable = true
 
     fileNumber++
   }
 
   contentType (contentType /*: string */) /*: RemoteFileBuilder */ {
-    this.doc.mime = contentType
+    this.remoteDoc.mime = contentType
     return this
   }
 
   data (data /*: string | stream.Readable */) /*: RemoteFileBuilder */ {
     this._data = data
     if (typeof data === 'string') {
-      this.doc.size = Buffer.from(data).length.toString()
-      this.doc.md5sum =
+      this.remoteDoc.size = Buffer.from(data).length.toString()
+      this.remoteDoc.md5sum =
         crypto.createHash('md5').update(data).digest().toString('base64')
     }
     // FIXME: Assuming doc will be created with data stream
@@ -65,18 +65,18 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
   }
 
   executable (isExecutable /*: boolean */) /*: RemoteFileBuilder */ {
-    this.doc.executable = isExecutable
+    this.remoteDoc.executable = isExecutable
     return this
   }
 
   async create () /*: Promise<RemoteDoc> */ {
     const doc = jsonApiToRemoteDoc(
       await this.cozy.files.create(this._data, {
-        contentType: this.doc.mime,
-        dirID: this.doc.dir_id,
-        executable: this.doc.executable,
-        lastModifiedDate: this.doc.updated_at,
-        name: this.doc.name
+        contentType: this.remoteDoc.mime,
+        dirID: this.remoteDoc.dir_id,
+        executable: this.remoteDoc.executable,
+        lastModifiedDate: this.remoteDoc.updated_at,
+        name: this.remoteDoc.name
       })
     )
 

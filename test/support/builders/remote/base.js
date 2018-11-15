@@ -23,13 +23,13 @@ const defaultTimestamp = timestamp.stringify(timestamp.current())
 module.exports = class RemoteBaseBuilder {
   /*::
   cozy: Cozy
-  doc: RemoteDoc
+  remoteDoc: RemoteDoc
   */
 
   constructor (cozy /*: Cozy */) {
     this.cozy = cozy
     const name = 'whatever'
-    this.doc = {
+    this.remoteDoc = {
       _id: dbBuilders.id(),
       _rev: dbBuilders.rev(1),
       _type: FILES_DOCTYPE,
@@ -44,8 +44,8 @@ module.exports = class RemoteBaseBuilder {
   }
 
   inDir (dir /*: RemoteDoc | {_id: string, path: string} */) /*: this */ {
-    this.doc.dir_id = dir._id
-    this.doc.path = posix.join(dir.path, this.doc.name)
+    this.remoteDoc.dir_id = dir._id
+    this.remoteDoc.path = posix.join(dir.path, this.remoteDoc.name)
     return this
   }
 
@@ -64,17 +64,17 @@ module.exports = class RemoteBaseBuilder {
   }
 
   timestamp (...args /*: number[] */) /*: this */ {
-    this.doc.updated_at = timestamp.stringify(timestamp.build(...args))
+    this.remoteDoc.updated_at = timestamp.stringify(timestamp.build(...args))
     return this
   }
 
   name (name /*: string */) /*: this */ {
-    this.doc.name = name
-    this.doc.path = posix.join(posix.dirname(this.doc.path), name)
+    this.remoteDoc.name = name
+    this.remoteDoc.path = posix.join(posix.dirname(this.remoteDoc.path), name)
     return this
   }
 
   build () /*: Object */ {
-    return _.clone(this.doc)
+    return _.clone(this.remoteDoc)
   }
 }

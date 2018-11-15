@@ -158,8 +158,8 @@ describe('Re-Upload files when the stack report them as broken', () => {
     const prefix = rows[0].doc.prefix
     const fileURL = `${COUCHDB_URL}/${prefix}%2Fio-cozy-files/${remoteFile._id}`
     if (merge.size) merge.size = '' + merge.size // size is a string in couchdb
-    const doc = _.merge((await fetchJSON(fileURL)), merge)
-    return fetchJSON(fileURL, {method: 'PUT', body: JSON.stringify(doc)})
+    const remoteDoc = _.merge((await fetchJSON(fileURL)), merge)
+    return fetchJSON(fileURL, {method: 'PUT', body: JSON.stringify(remoteDoc)})
   }
 
   async function setupContentMismatchRemote (opts) {

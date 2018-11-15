@@ -38,7 +38,7 @@ module.exports = {
 // List files and directories in the root directory
 async function rootDirContents () {
   const index = await cozy.data.defineIndex(FILES_DOCTYPE, ['dir_id'])
-  const docs = await cozy.data.query(index, {
+  const remoteDocs = await cozy.data.query(index, {
     selector: {
       dir_id: ROOT_DIR_ID,
       '$not': {_id: TRASH_DIR_ID}
@@ -46,14 +46,14 @@ async function rootDirContents () {
     fields: ['_id', 'dir_id']
   })
 
-  return docs
+  return remoteDocs
 }
 
 // Delete all files and directories
 async function deleteAll () {
-  const docs = await rootDirContents()
+  const remoteDocs = await rootDirContents()
 
-  await Promise.all(docs.map(doc => cozy.files.trashById(doc._id)))
+  await Promise.all(remoteDocs.map(doc => cozy.files.trashById(doc._id)))
 
   return cozy.files.clearTrash()
 }

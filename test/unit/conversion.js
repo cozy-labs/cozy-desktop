@@ -32,9 +32,9 @@ describe('conversion', function () {
         type: 'file',
         updated_at: timestamp.stringify(timestamp.build(2017, 9, 8, 7, 6, 5))
       }
-      let metadata /*: Metadata */ = conversion.createMetadata(remoteDoc)
+      let doc /*: Metadata */ = conversion.createMetadata(remoteDoc)
 
-      should(metadata).deepEqual({
+      should(doc).deepEqual({
         md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
         class: 'document',
         docType: 'file',
@@ -50,8 +50,8 @@ describe('conversion', function () {
       })
 
       remoteDoc.executable = true
-      metadata = conversion.createMetadata(remoteDoc)
-      should(metadata.executable).equal(true)
+      doc = conversion.createMetadata(remoteDoc)
+      should(doc.executable).equal(true)
     })
 
     it('builds the metadata for a remote dir', () => {
@@ -67,9 +67,9 @@ describe('conversion', function () {
         updated_at: timestamp.stringify(timestamp.build(2017, 9, 8, 7, 6, 5))
       }
 
-      const metadata = conversion.createMetadata(remoteDoc)
+      const doc = conversion.createMetadata(remoteDoc)
 
-      should(metadata).deepEqual({
+      should(doc).deepEqual({
         docType: 'folder',
         updated_at: '2017-09-08T07:06:05Z',
         path: 'foo/bar',
