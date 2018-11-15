@@ -32,6 +32,10 @@ export type MetadataRemoteInfo = {
   _rev: string
 }
 
+type RemoteID = string
+type RemoteRev = string
+export type RemoteRevisionsByID = { [RemoteID] : RemoteRev}
+
 export type MetadataSidesInfo = {
   remote?: number,
   local?: number
