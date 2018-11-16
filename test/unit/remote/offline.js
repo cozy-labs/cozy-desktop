@@ -5,7 +5,7 @@ const EventEmitter = require('events')
 const sinon = require('sinon')
 
 const Prep = require('../../../core/prep')
-const Remote = require('../../../core/remote')
+const { Remote } = require('../../../core/remote')
 
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')

@@ -27,7 +27,7 @@ const log = logger({
   component: 'RemoteWriter'
 })
 
-module.exports = class Remote /*:: implements Side */ {
+class Remote /*:: implements Side */ {
   /*::
   other: FileStreamProvider
   pouch: Pouch
@@ -340,4 +340,8 @@ module.exports = class Remote /*:: implements Side */ {
       name: newName
     })
   }
+}
+
+module.exports = {
+  Remote
 }

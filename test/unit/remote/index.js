@@ -17,7 +17,7 @@ const conversion = require('../../../core/conversion')
 const checksumer = require('../../../core/local/checksumer')
 const { ensureValidPath } = require('../../../core/metadata')
 const Prep = require('../../../core/prep')
-const Remote = require('../../../core/remote')
+const { Remote } = require('../../../core/remote')
 const { TRASH_DIR_ID } = require('../../../core/remote/constants')
 const timestamp = require('../../../core/timestamp')
 
@@ -36,7 +36,7 @@ import type { RemoteDoc, JsonApiDoc } from '../../../core/remote/document'
 */
 const CHAT_MIGNON_MOD_PATH = 'test/fixtures/chat-mignon-mod.jpg'
 
-describe('Remote', function () {
+describe('remote.Remote', function () {
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
   before('instanciate pouch', pouchHelpers.createDatabase)
