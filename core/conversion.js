@@ -15,34 +15,34 @@ module.exports = {
   extractDirAndName
 }
 
-function localDocType (remote /*: string */) /*: string */ {
-  switch (remote) {
+function localDocType (remoteDocType /*: string */) /*: string */ {
+  switch (remoteDocType) {
     case FILE_TYPE: return 'file'
     case DIR_TYPE: return 'folder'
-    default: throw new Error(`Unexpected Cozy Files type: ${remote}`)
+    default: throw new Error(`Unexpected Cozy Files type: ${remoteDocType}`)
   }
 }
 
 // Transform a remote document into metadata, as stored in Pouch.
 // Please note the path is not normalized yet!
 // Normalization is done as a side effect of metadata.invalidPath() :/
-function createMetadata (remote /*: RemoteDoc */) /*: Metadata */ {
+function createMetadata (remoteDoc /*: RemoteDoc */) /*: Metadata */ {
   const doc /*: Object */ = {
-    path: remote.path.substring(1),
-    docType: localDocType(remote.type),
-    updated_at: remote.updated_at,
+    path: remoteDoc.path.substring(1),
+    docType: localDocType(remoteDoc.type),
+    updated_at: remoteDoc.updated_at,
     remote: {
-      _id: remote._id,
-      _rev: remote._rev
+      _id: remoteDoc._id,
+      _rev: remoteDoc._rev
     }
   }
 
-  if (remote.size) {
-    doc.size = parseInt(remote.size, 10)
+  if (remoteDoc.size) {
+    doc.size = parseInt(remoteDoc.size, 10)
   }
 
   for (let field of ['md5sum', 'executable', 'class', 'mime', 'tags']) {
-    if (remote[field]) { doc[field] = remote[field] }
+    if (remoteDoc[field]) { doc[field] = remoteDoc[field] }
   }
 
   return doc

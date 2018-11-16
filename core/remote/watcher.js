@@ -129,15 +129,15 @@ class RemoteWatcher {
     log.trace('Done with pull.')
   }
 
-  analyse (docs /*: Array<RemoteDoc|RemoteDeletion> */, olds /*: Array<Metadata> */) /*: Array<RemoteChange> */ {
+  analyse (remoteDocs /*: Array<RemoteDoc|RemoteDeletion> */, olds /*: Array<Metadata> */) /*: Array<RemoteChange> */ {
     const oldsByRemoteId = _.keyBy(olds, 'remote._id')
     const changes /*: Array<RemoteChange> */ = []
 
     log.trace('Contextualize and analyse changesfeed results...')
-    for (let index = 0; index < docs.length; index++) {
-      const doc = docs[index]
-      const was /*: ?Metadata */ = oldsByRemoteId[doc._id]
-      changes.push(this.identifyChange(doc, was, index, changes))
+    for (let index = 0; index < remoteDocs.length; index++) {
+      const remoteDoc = remoteDocs[index]
+      const was /*: ?Metadata */ = oldsByRemoteId[remoteDoc._id]
+      changes.push(this.identifyChange(remoteDoc, was, index, changes))
     }
     log.trace('Done with analysis.')
 
@@ -147,38 +147,38 @@ class RemoteWatcher {
     return changes
   }
 
-  identifyChange (doc /*: RemoteDoc|RemoteDeletion */, was /*: ?Metadata */, changeIndex /*: number */, previousChanges /*: Array<RemoteChange> */) /*: RemoteChange */ {
+  identifyChange (remoteDoc /*: RemoteDoc|RemoteDeletion */, was /*: ?Metadata */, changeIndex /*: number */, previousChanges /*: Array<RemoteChange> */) /*: RemoteChange */ {
     const oldpath /*: ?string */ = was && was.path
-    log.debug({path: (doc /*: Object */).path || oldpath, oldpath, doc, was}, 'change received')
+    log.debug({path: (remoteDoc /*: Object */).path || oldpath, oldpath, remoteDoc, was}, 'change received')
 
-    if (doc._deleted) {
+    if (remoteDoc._deleted) {
       if (was == null) {
         return {
           sideName,
           type: 'IgnoredChange',
-          doc,
+          doc: remoteDoc,
           detail: 'file or directory was created, trashed, and removed remotely'
         }
       }
       // $FlowFixMe
       return remoteChange.deleted(was)
     } else {
-      if (doc.type !== 'directory' && doc.type !== 'file') {
+      if (remoteDoc.type !== 'directory' && remoteDoc.type !== 'file') {
         return {
           sideName,
           type: 'InvalidChange',
-          doc,
-          error: new Error(`Document ${doc._id} is not a file or a directory`)
+          doc: remoteDoc,
+          error: new Error(`Document ${remoteDoc._id} is not a file or a directory`)
         }
-      } else if (doc.type === 'file' && (doc.md5sum == null || doc.md5sum === '')) {
+      } else if (remoteDoc.type === 'file' && (remoteDoc.md5sum == null || remoteDoc.md5sum === '')) {
         return {
           sideName,
           type: 'IgnoredChange',
-          doc,
+          doc: remoteDoc,
           detail: 'Ignoring temporary file'
         }
       } else {
-        return this.identifyExistingDocChange(doc, was, changeIndex, previousChanges)
+        return this.identifyExistingDocChange(remoteDoc, was, changeIndex, previousChanges)
       }
     }
   }
@@ -191,8 +191,8 @@ class RemoteWatcher {
   // Note that the changes feed can aggregate several changes for many changes
   // for the same document. For example, if a file is created and then put in
   // the trash just after, it looks like it appeared directly on the trash.
-  identifyExistingDocChange (remote /*: RemoteDoc */, was /*: ?Metadata */, changeIndex /*: number */, previousChanges /*: Array<RemoteChange> */) /*: * */ {
-    let doc /*: Metadata */ = conversion.createMetadata(remote)
+  identifyExistingDocChange (remoteDoc /*: RemoteDoc */, was /*: ?Metadata */, changeIndex /*: number */, previousChanges /*: Array<RemoteChange> */) /*: * */ {
+    let doc /*: Metadata */ = conversion.createMetadata(remoteDoc)
     try {
       ensureValidPath(doc)
     } catch (error) {
@@ -216,7 +216,7 @@ class RemoteWatcher {
     }
 
     // TODO: Move to Prep?
-    if (!inRemoteTrash(remote)) {
+    if (!inRemoteTrash(remoteDoc)) {
       assignPlatformIncompatibilities(doc, this.prep.config.syncPath)
       const { incompatibilities } = doc
       if (incompatibilities) {
@@ -254,7 +254,7 @@ class RemoteWatcher {
     if (was.remote && was.remote._rev === doc.remote._rev) {
       return remoteChange.upToDate(doc, was)
     }
-    if (!inRemoteTrash(remote) && was.trashed) {
+    if (!inRemoteTrash(remoteDoc) && was.trashed) {
       return remoteChange.restored(doc, was)
     }
     if (was._id === doc._id && was.path === doc.path) {

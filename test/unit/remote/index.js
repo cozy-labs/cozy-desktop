@@ -198,7 +198,7 @@ describe('Remote', function () {
     })
 
     it('creates the parent folder when missing', async function () {
-      const metadata /*: Metadata */ = metadataBuilders.file().path(path.join('foo', 'bar', 'qux')).build()
+      const doc /*: Metadata */ = metadataBuilders.file().path(path.join('foo', 'bar', 'qux')).build()
       this.remote.other = {
         createReadStreamAsync (localDoc) {
           const empty = withContentLength(new stream.Readable({
@@ -207,21 +207,21 @@ describe('Remote', function () {
           return empty
         }
       }
-      await this.remote.addFileAsync(metadata)
+      await this.remote.addFileAsync(doc)
       await should(cozy.files.statByPath('/foo/bar')).be.fulfilled()
     })
 
     it('does not throw if the file does not exists locally anymore', async function () {
-      const metadata /*: Metadata */ = metadataBuilders.file().path('foo').build()
+      const doc /*: Metadata */ = metadataBuilders.file().path('foo').build()
       this.remote.other = {
         createReadStreamAsync (localDoc) {
           return fs.readFile('/path/do/not/exists')
         }
       }
-      await this.remote.addFileAsync(metadata)
-      should.exist(metadata.remote._id)
-      should.exist(metadata.remote._rev)
-      should.exist(metadata._deleted)
+      await this.remote.addFileAsync(doc)
+      should.exist(doc.remote._id)
+      should.exist(doc.remote._rev)
+      should.exist(doc._deleted)
     })
   })
 
@@ -249,23 +249,23 @@ describe('Remote', function () {
     it('does nothing when the folder already exists', async function () {
       const parentDir /*: RemoteDoc */ = await builders.remote.dir().create()
       const remoteDir /*: RemoteDoc */ = await builders.remote.dir().inDir(parentDir).create()
-      const metadata /*: Metadata */ = _.merge({remote: undefined}, conversion.createMetadata(remoteDir))
-      ensureValidPath(metadata)
+      const doc /*: Metadata */ = _.merge({remote: undefined}, conversion.createMetadata(remoteDir))
+      ensureValidPath(doc)
 
-      await this.remote.addFolderAsync(metadata)
+      await this.remote.addFolderAsync(doc)
 
-      const folder /*: JsonApiDoc */ = await cozy.files.statById(metadata.remote._id)
+      const folder /*: JsonApiDoc */ = await cozy.files.statById(doc.remote._id)
       const {path, name, type, updated_at} = remoteDir
       should(folder.attributes).have.properties({path, name, type, updated_at})
-      should(metadata.remote).have.properties({
+      should(doc.remote).have.properties({
         _id: remoteDir._id,
         _rev: remoteDir._rev
       })
     })
 
     it('creates the parent folder when missing', async function () {
-      const metadata /*: Metadata */ = metadataBuilders.dir().path(path.join('foo', 'bar', 'qux')).build()
-      await this.remote.addFolderAsync(metadata)
+      const doc /*: Metadata */ = metadataBuilders.dir().path(path.join('foo', 'bar', 'qux')).build()
+      await this.remote.addFolderAsync(doc)
       await should(cozy.files.statByPath('/foo/bar')).be.fulfilled()
     })
   })
@@ -327,16 +327,16 @@ describe('Remote', function () {
       })
 
       it('does not throw if the file does not exists locally anymore', async function () {
-        const metadata /*: Metadata */ = metadataBuilders.file().path('foo').build()
+        const doc /*: Metadata */ = metadataBuilders.file().path('foo').build()
         this.remote.other = {
           createReadStreamAsync (localDoc) {
             return fs.readFile('/path/do/not/exists')
           }
         }
-        await this.remote.overwriteFileAsync(metadata)
-        should.exist(metadata.remote._id)
-        should.exist(metadata.remote._rev)
-        should.exist(metadata._deleted)
+        await this.remote.overwriteFileAsync(doc)
+        should.exist(doc.remote._id)
+        should.exist(doc.remote._rev)
+        should.exist(doc._deleted)
       })
     })
   }

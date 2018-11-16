@@ -92,9 +92,9 @@ export type JsonApiDoc = {
 */
 
 function jsonApiToRemoteDoc (json/*: JsonApiDoc */) /*: * */ {
-  let metadata = {}
+  let remoteDoc = {}
 
-  Object.assign(metadata, {
+  Object.assign(remoteDoc, {
     _id: json._id,
     _rev: json._rev,
     _type: json._type,
@@ -105,15 +105,15 @@ function jsonApiToRemoteDoc (json/*: JsonApiDoc */) /*: * */ {
     updated_at: json.attributes.updated_at
   })
 
-  switch (metadata.type) {
+  switch (remoteDoc.type) {
     case DIR_TYPE:
-      Object.assign(metadata, {
+      Object.assign(remoteDoc, {
         path: json.attributes.path
       })
       break
 
     case FILE_TYPE:
-      Object.assign(metadata, {
+      Object.assign(remoteDoc, {
         class: json.attributes.class,
         executable: json.attributes.executable,
         md5sum: json.attributes.md5sum,
@@ -123,5 +123,5 @@ function jsonApiToRemoteDoc (json/*: JsonApiDoc */) /*: * */ {
       break
   }
 
-  return metadata
+  return remoteDoc
 }

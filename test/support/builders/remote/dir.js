@@ -23,16 +23,16 @@ var dirNumber = 1
 module.exports = class RemoteDirBuilder extends RemoteBaseBuilder {
   constructor (cozy /*: Cozy */) {
     super(cozy)
-    this.doc.type = 'directory'
+    this.remoteDoc.type = 'directory'
     this.name(`directory-${dirNumber++}`)
   }
 
   async create () /*: Promise<RemoteDoc> */ {
     return jsonApiToRemoteDoc(
       await this.cozy.files.createDirectory({
-        name: this.doc.name,
-        dirID: this.doc.dir_id,
-        lastModifiedDate: this.doc.updated_at
+        name: this.remoteDoc.name,
+        dirID: this.remoteDoc.dir_id,
+        lastModifiedDate: this.remoteDoc.updated_at
       })
     )
   }

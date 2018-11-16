@@ -135,29 +135,30 @@ class RemoteCozy {
       parentDirIds(keepFiles(rawDocs)))
 
     // The final docs with their paths (except for deletions)
-    let docs /*: Array<RemoteDoc|RemoteDeletion> */ = []
+    let remoteDocs /*: Array<RemoteDoc|RemoteDeletion> */ = []
 
-    for (const doc of rawDocs) {
-      if (doc.type === FILE_TYPE) {
+    for (const remoteDoc of rawDocs) {
+      if (remoteDoc.type === FILE_TYPE) {
         // File docs returned by the cozy-stack don't have a path
-        const parent = fileParentsById[doc.dir_id]
+        const parent = fileParentsById[remoteDoc.dir_id]
 
         if (parent.error || parent.doc == null || parent.doc.path == null) {
-          log.error({doc, parent}, 'Could not compute doc path from parent')
+          log.error({remoteDoc, parent}, 'Could not compute doc path from parent')
           continue
         } else {
-          doc.path = path.posix.join(parent.doc.path, doc.name)
+          remoteDoc.path = path.posix.join(parent.doc.path, remoteDoc.name)
         }
       }
-      docs.push(doc)
+      remoteDocs.push(remoteDoc)
     }
 
-    return {last_seq, docs}
+    return {last_seq, docs: remoteDocs}
   }
 
   async find (id/*: string */)/*: Promise<RemoteDoc> */ {
-    const doc = await this.client.files.statById(id)
-    return this.toRemoteDoc(doc)
+    return this.toRemoteDoc(
+      await this.client.files.statById(id)
+    )
   }
 
   async findMaybe (id/*: string */)/*: Promise<?RemoteDoc> */ {
