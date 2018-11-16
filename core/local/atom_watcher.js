@@ -19,7 +19,7 @@ import type Pouch from '../pouch'
 import type Prep from '../prep'
 import type EventEmitter from 'events'
 import type { Checksumer } from './checksumer'
-import type { Runner } from './steps/linux'
+import type { Runner } from './steps/linux_observer'
 */
 
 const log = logger({
@@ -30,6 +30,8 @@ module.exports = class AtomWatcher {
   /*::
   syncPath: string
   events: EventEmitter
+  prep: Prep
+  pouch: Pouch
   checksumer: Checksumer
   runner: Runner
   running: Promise<void>
@@ -39,14 +41,16 @@ module.exports = class AtomWatcher {
 
   constructor (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */) {
     this.syncPath = syncPath
+    this.prep = prep
+    this.pouch = pouch
     this.events = events
     this.checksumer = checksumer.init()
 
     if (process.platform === 'linux') {
-      const linux = LinuxObserver(syncPath)
-      const initialDiff = InitialDiff(linux.generator)
-      const checksum = AddChecksum(initialDiff, this.checksumer)
-      const dispatch = Dispatch(checksum)
+      const linux = LinuxObserver(this)
+      const initialDiff = InitialDiff(linux, this)
+      const checksum = AddChecksum(initialDiff, this)
+      const dispatch = Dispatch(checksum, this)
       this.runner = linux
     } else if (process.platform === 'win32') {
       // TODO add a layer to detect moves
