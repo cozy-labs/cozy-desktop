@@ -5,9 +5,17 @@ const fse = require('fs-extra')
 const pkg = require('../../package.json')
 const automatedRegistration = require('./automated_registration')
 
-const cozyUrl = process.env.COZY_URL
+const cozyUrl = chooseCozyUrl(process.env.APPVEYOR_BUILD_NUMBER)
 const passphrase = process.env.COZY_PASSPHRASE
 const storage = new cozy.MemoryStorage()
+
+function chooseCozyUrl (buildNumber) {
+  if (!!buildNumber && buildNumber % 2 === 1) {
+    return process.env.COZY_URL_2
+  }
+
+  return process.env.COZY_URL_1
+}
 
 function readAccessToken () {
   console.log('Read access token...')
@@ -20,6 +28,7 @@ function generateTestEnv (accessToken) {
   return fse.writeFile('.env.test', `
 COZY_DESKTOP_HEARTBEAT=1000
 COZY_STACK_TOKEN=${accessToken}
+COZY_URL=${cozyUrl}
 NODE_ENV=test
   `)
 }
