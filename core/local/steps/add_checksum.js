@@ -1,16 +1,20 @@
 /* @flow */
 
+const { asyncMap } = require('./utils')
+const path = require('path')
+
 /*::
 import type { Checksumer } from '../checksumer'
 */
 
-module.exports = async function* (generator, checksumer /*: Checksumer */) {
-  for await (const batch of generator) {
+module.exports = async function* (generator /*: AsyncGenerator<*, void, void> */, opts /*: { syncPath: string , checksumer: Checksumer } */) /*: AsyncGenerator<*, void, void> */ {
+  return asyncMap(generator, async (events) => {
     const batch = []
     for (const event of events) {
       try {
         if (['add', 'update'].includes(event.action) && event.docType === 'file') {
-          event.md5sum = await this.checksumer.push(event.abspath)
+          const absPath = path.join(opts.syncPath, event.path)
+          event.md5sum = await opts.checksumer.push(absPath)
         }
         batch.push(event)
       } catch (err) {
@@ -20,6 +24,6 @@ module.exports = async function* (generator, checksumer /*: Checksumer */) {
         // here.
       }
     }
-    yield batch
-  }
+    return batch
+  })
 }
