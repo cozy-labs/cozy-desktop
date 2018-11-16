@@ -13,7 +13,6 @@ const Prep = require('../../../core/prep')
 const { Ignore } = require('../../../core/ignore')
 const Sync = require('../../../core/sync')
 const metadata = require('../../../core/metadata')
-const conversion = require('../../../core/conversion')
 
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
@@ -101,7 +100,7 @@ describe('issue 850', function () {
         _id: 'fakeID',
         _rev: '1-fakeRev'
       }
-      return conversion.createMetadata({
+      return metadata.fromRemoteDoc({
         type: 'file',
         path: '/file',
         updated_at: new Date(),

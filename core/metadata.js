@@ -9,11 +9,13 @@ const { join } = path
 
 const logger = require('./logger')
 const { detectPathIssues, detectPathLengthIssue } = require('./path_restrictions')
+const { DIR_TYPE, FILE_TYPE } = require('./remote/constants')
 const { maxDate } = require('./timestamp')
 
 /*::
 import type fs from 'fs'
 import type { PathIssue } from './path_restrictions'
+import type { RemoteDoc } from './remote/document'
 */
 
 const log = logger({
@@ -90,6 +92,7 @@ module.exports = {
   assignId,
   assignMaxDate,
   assignPlatformIncompatibilities,
+  fromRemoteDoc,
   isFile,
   id,
   invalidPath,
@@ -109,6 +112,39 @@ module.exports = {
   buildDir,
   buildFile,
   upToDate
+}
+
+function localDocType (remoteDocType /*: string */) /*: string */ {
+  switch (remoteDocType) {
+    case FILE_TYPE: return 'file'
+    case DIR_TYPE: return 'folder'
+    default: throw new Error(`Unexpected Cozy Files type: ${remoteDocType}`)
+  }
+}
+
+// Transform a remote document into metadata, as stored in Pouch.
+// Please note the path is not normalized yet!
+// Normalization is done as a side effect of metadata.invalidPath() :/
+function fromRemoteDoc (remoteDoc /*: RemoteDoc */) /*: Metadata */ {
+  const doc /*: Object */ = {
+    path: remoteDoc.path.substring(1),
+    docType: localDocType(remoteDoc.type),
+    updated_at: remoteDoc.updated_at,
+    remote: {
+      _id: remoteDoc._id,
+      _rev: remoteDoc._rev
+    }
+  }
+
+  if (remoteDoc.size) {
+    doc.size = parseInt(remoteDoc.size, 10)
+  }
+
+  for (let field of ['md5sum', 'executable', 'class', 'mime', 'tags']) {
+    if (remoteDoc[field]) { doc[field] = remoteDoc[field] }
+  }
+
+  return doc
 }
 
 function isFile (doc /*: Metadata */) /*: bool */ {
