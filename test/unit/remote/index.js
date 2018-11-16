@@ -17,7 +17,8 @@ const checksumer = require('../../../core/local/checksumer')
 const metadata = require('../../../core/metadata')
 const { ensureValidPath } = metadata
 const Prep = require('../../../core/prep')
-const { Remote } = require('../../../core/remote')
+const remote = require('../../../core/remote')
+const { Remote } = remote
 const { TRASH_DIR_ID } = require('../../../core/remote/constants')
 const timestamp = require('../../../core/timestamp')
 
@@ -750,6 +751,22 @@ describe('remote.Remote', function () {
       should(file.attributes).have.properties(_.merge({
         name: newPath
       }, pick(remoteDoc, ['dir_id', 'type', 'updated_at', 'size', 'md5sum'])))
+    })
+  })
+})
+
+describe('remote', function () {
+  describe('.dirAndName()', () => {
+    it('returns the remote path and name', function () {
+      let [dir, name] = remote.dirAndName('foo')
+      should(dir).equal('/')
+      should(name).equal('foo');
+      [dir, name] = remote.dirAndName(path.normalize('foo/bar'))
+      should(dir).equal('/foo')
+      should(name).equal('bar');
+      [dir, name] = remote.dirAndName(path.normalize('foo/bar/baz'))
+      should(dir).equal('/foo/bar')
+      should(name).equal('baz')
     })
   })
 })

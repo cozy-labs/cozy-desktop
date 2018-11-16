@@ -2,9 +2,9 @@
 
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
-const { posix, sep } = require('path')
+const path = require('path')
+const { posix, sep } = path
 
-const conversion = require('../conversion')
 const { RemoteCozy } = require('./cozy')
 const logger = require('../logger')
 const { RemoteWarningPoller } = require('./warning_poller')
@@ -81,7 +81,7 @@ class Remote /*:: implements Side */ {
     const {path} = doc
     log.info({path}, 'Creating folder...')
 
-    const [parentPath, name] = conversion.extractDirAndName(doc.path)
+    const [parentPath, name] = dirAndName(doc.path)
     const parent /*: RemoteDoc */ = await this.remoteCozy.findOrCreateDirectoryByPath(parentPath)
     let dir /*: RemoteDoc */
 
@@ -122,7 +122,7 @@ class Remote /*:: implements Side */ {
       throw err
     }
 
-    const [dirPath, name] = conversion.extractDirAndName(path)
+    const [dirPath, name] = dirAndName(path)
     const dir = await this.remoteCozy.findOrCreateDirectoryByPath(dirPath)
 
     const created = await this.remoteCozy.createFile(stream, {
@@ -196,7 +196,7 @@ class Remote /*:: implements Side */ {
     const {path} = newMetadata
     log.info({path, oldpath: oldMetadata.path}, 'Moving file')
 
-    const [newDirPath, newName] /*: [string, string] */ = conversion.extractDirAndName(path)
+    const [newDirPath, newName] /*: [string, string] */ = dirAndName(path)
     const newDir /*: RemoteDoc */ = await this.remoteCozy.findDirectoryByPath(newDirPath)
 
     const attrs = {
@@ -228,7 +228,7 @@ class Remote /*:: implements Side */ {
     }
     log.info({path}, 'Updating metadata...')
 
-    const [newParentDirPath, newName] = conversion.extractDirAndName(path)
+    const [newParentDirPath, newName] = dirAndName(path)
     const newParentDir = await this.remoteCozy.findDirectoryByPath(newParentDirPath)
     let newRemoteDoc /*: RemoteDoc */
 
@@ -307,7 +307,7 @@ class Remote /*:: implements Side */ {
     const {path} = newMetadata
     log.info({path, oldpath: oldMetadata.path}, 'Moving dir')
 
-    const [newDirPath, newName] /*: [string, string] */ = conversion.extractDirAndName(path)
+    const [newDirPath, newName] /*: [string, string] */ = dirAndName(path)
     const newDir /*: RemoteDoc */ = await this.remoteCozy.findDirectoryByPath(newDirPath)
 
     const attrs = {
@@ -335,13 +335,21 @@ class Remote /*:: implements Side */ {
   async renameConflictingDocAsync (doc /*: Metadata */, newPath /*: string */) /*: Promise<void> */ {
     const {path} = doc
     log.info({path}, `Resolve a conflict: ${path} → ${newPath}`)
-    const newName = conversion.extractDirAndName(newPath)[1]
+    const newName = dirAndName(newPath)[1]
     await this.remoteCozy.updateAttributesById(doc.remote._id, {
       name: newName
     })
   }
 }
 
+/** Extract the remote parent path and leaf name from a local path */
+function dirAndName (localPath /*: string */) /*: [string, string] */ {
+  const dir = '/' + localPath.split(path.sep).slice(0, -1).join('/')
+  const name = path.basename(localPath)
+  return [dir, name]
+}
+
 module.exports = {
-  Remote
+  Remote,
+  dirAndName
 }
