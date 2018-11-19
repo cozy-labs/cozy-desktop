@@ -1,5 +1,21 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.10.3-beta.3 - 2018-11-20
+
+Improvements for all users:
+
+- When a folder was moved on the Cozy or another device, the metadata of some
+  of its content was not updated properly, although the content was effectively
+  moved to the right place. Subsequent updates to these subfolders & subfiles
+  could then trigger unexpected conflicts. This should now work as expected. (#1274)
+- When a file was effectively edited on 2 devices and the local one was detected
+  first, both were mistakenly renamed with a conflict suffix. Now only one of
+  them will be renamed. (#1285)
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.10.3-beta.2 - 2018-11-14
 
 Improvements for all users:
