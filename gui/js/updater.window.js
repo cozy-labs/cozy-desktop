@@ -1,6 +1,8 @@
 const WindowManager = require('./window_manager')
 const {autoUpdater} = require('electron-updater')
 const {translate} = require('./i18n')
+const {dialog} = require('electron')
+const path = require('path')
 
 const log = require('../../core/app').logger({
   component: 'GUI:autoupdater'
@@ -31,7 +33,25 @@ module.exports = class UpdaterWM extends WindowManager {
       this.clearTimeoutIfAny()
       log.info({update: info, skipped: this.skipped}, 'Update available')
       // Make sure UI don't show up in front of onboarding after timeout
-      if (!this.skipped) this.show()
+      if (!this.skipped) {
+        this.skipped = true
+        const shouldUpdate =
+          dialog.showMessageBox({
+            icon: path.resolve(__dirname, '..', 'images', 'icon.png'),
+            title: 'Cozy Drive',
+            message: 'Cozy Drive',
+            detail: translate(
+              'A new version is available, do you want to update?'
+            ),
+            type: 'question',
+            buttons: ['Update', 'Cancel'].map(translate)
+          }) === 0
+        if (shouldUpdate) {
+          this.show()
+        } else {
+          this.skipped = false
+        }
+      }
     })
     autoUpdater.on('update-not-available', (info) => {
       log.info({update: info}, 'No update available')
