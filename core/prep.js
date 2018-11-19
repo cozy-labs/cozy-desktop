@@ -104,12 +104,8 @@ class Prep {
       const msg = 'Missing rev'
       log.warn({path, doc, was}, msg)
       throw new Error(msg)
-    } else {
-      return this.doMoveFile(side, doc, was)
     }
-  }
 
-  doMoveFile (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */) {
     doc.docType = 'file'
     assignId(doc)
     assignId(was)
