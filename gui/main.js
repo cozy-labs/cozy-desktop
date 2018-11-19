@@ -25,6 +25,8 @@ const {incompatibilitiesErrorMessage} = require('./js/incompatibilitiesmsg')
 const UserActionRequiredDialog = require('./js/components/UserActionRequiredDialog')
 const {app, Menu, Notification, ipcMain, dialog} = require('electron')
 
+const DAILY = 3600 * 24
+
 // FIXME: https://github.com/electron/electron/issues/10864
 if (process.platform === 'win32') app.setAppUserModelId('io.cozy.desktop')
 
@@ -342,6 +344,9 @@ app.on('ready', () => {
 
     // Os X wants all application to have a menu
     Menu.setApplicationMenu(buildAppMenu(app))
+    setInterval(() => {
+      updaterWindow.checkForUpdates()
+    }, DAILY)
 
     // On OS X it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
