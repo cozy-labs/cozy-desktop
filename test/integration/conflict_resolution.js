@@ -69,7 +69,7 @@ describe('Conflict resolution', () => {
       await cozy.files.updateById(remoteFile._id, `content3`, {contentType: 'text/plain'})
     })
 
-    const simulateLocalUpdateEvent = async () => {
+    const simulateLocalUpdateMerge = async () => {
       await helpers.prep.updateFileAsync('local', _.merge(pouchFile, {
         updated_at: new Date().toISOString(),
         md5sum: await helpers.local.syncDir.checksum('concurrent-edited')
@@ -81,8 +81,8 @@ describe('Conflict resolution', () => {
       'concurrent-edited-conflict-...'
     ]
 
-    it('local applied first -> conflict', async () => {
-      await simulateLocalUpdateEvent()
+    it('local merged first -> conflict', async () => {
+      await simulateLocalUpdateMerge()
       await helpers.remote.pullChanges()
       await helpers.syncAll()
       await helpers.remote.pullChanges()
@@ -92,9 +92,9 @@ describe('Conflict resolution', () => {
       should(await helpers.trees()).deepEqual({remote: expectedTree, local: expectedTree})
     })
 
-    it('remote applied first -> conflict', async () => {
+    it('remote merged first -> conflict', async () => {
       await helpers.remote.pullChanges()
-      await simulateLocalUpdateEvent()
+      await simulateLocalUpdateMerge()
       await helpers.syncAll()
       await helpers.remote.pullChanges()
       await helpers.local.scan()
@@ -105,7 +105,7 @@ describe('Conflict resolution', () => {
 
     it('conflict correction local', async () => {
       await helpers.remote.pullChanges()
-      await simulateLocalUpdateEvent()
+      await simulateLocalUpdateMerge()
       await helpers.syncAll()
       await helpers.remote.pullChanges()
       await helpers.local.scan()
@@ -124,7 +124,7 @@ describe('Conflict resolution', () => {
 
     it('conflict correction remote', async () => {
       await helpers.remote.pullChanges()
-      await simulateLocalUpdateEvent()
+      await simulateLocalUpdateMerge()
       await helpers.syncAll()
       await helpers.remote.pullChanges()
       await helpers.local.scan()
