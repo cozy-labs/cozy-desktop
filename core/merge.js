@@ -217,7 +217,15 @@ class Merge {
         if (doc.class == null) { doc.class = file.class }
         if (doc.mime == null) { doc.mime = file.mime }
       } else if (!isUpToDate(side, file)) {
-        return this.resolveConflictAsync(side, doc, file)
+        await this.resolveConflictAsync(side, doc, file)
+        if (side === 'remote') {
+          // we just renamed the remote file as a conflict
+          // the old file should be dissociated from the remote
+          delete file.remote
+          if (file.sides) delete file.sides.remote
+          await this.pouch.put(file)
+        }
+        return
       }
       if (sameFile(file, doc)) {
         log.info({path}, 'up to date')
