@@ -10,7 +10,7 @@ const Local = require('../../../core/local')
 const metadata = require('../../../core/metadata')
 const Merge = require('../../../core/merge')
 const Prep = require('../../../core/prep')
-const Remote = require('../../../core/remote')
+const { Remote } = require('../../../core/remote')
 const Sync = require('../../../core/sync')
 const SyncState = require('../../../core/syncstate')
 

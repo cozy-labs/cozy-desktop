@@ -1,12 +1,15 @@
 /* @flow */
 
-const conversion = require('../conversion')
-
 const autoBind = require('auto-bind')
 const _ = require('lodash')
 
 const logger = require('../logger')
-const { assignId, ensureValidPath, assignPlatformIncompatibilities } = require('../metadata')
+const metadata = require('../metadata')
+const {
+  assignId,
+  ensureValidPath,
+  assignPlatformIncompatibilities
+} = metadata
 const remoteChange = require('./change')
 const { inRemoteTrash } = require('./document')
 const userActionRequired = require('./user_action_required')
@@ -192,7 +195,7 @@ class RemoteWatcher {
   // for the same document. For example, if a file is created and then put in
   // the trash just after, it looks like it appeared directly on the trash.
   identifyExistingDocChange (remoteDoc /*: RemoteDoc */, was /*: ?Metadata */, changeIndex /*: number */, previousChanges /*: Array<RemoteChange> */) /*: * */ {
-    let doc /*: Metadata */ = conversion.createMetadata(remoteDoc)
+    let doc /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
     try {
       ensureValidPath(doc)
     } catch (error) {

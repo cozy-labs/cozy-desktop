@@ -16,7 +16,6 @@ const { onPlatform } = require('../../support/helpers/platform')
 const pouchHelpers = require('../../support/helpers/pouch')
 const { builders } = require('../../support/helpers/cozy')
 
-const { createMetadata } = require('../../../core/conversion')
 const metadata = require('../../../core/metadata')
 const {
   FILES_DOCTYPE,
@@ -147,7 +146,7 @@ describe('RemoteWatcher', function () {
   })
 
   const validMetadata = (remoteDoc /*: RemoteDoc */) /*: Metadata */ => {
-    const doc = createMetadata(remoteDoc)
+    const doc = metadata.fromRemoteDoc(remoteDoc)
     ensureValidPath(doc)
     assignId(doc)
     return doc
@@ -253,7 +252,7 @@ describe('RemoteWatcher', function () {
     describe('case-only renaming', () => {
       it('is identified as a move', function () {
         const oldRemote = builders.remote.file().name('foo').build()
-        const oldDoc = createMetadata(oldRemote)
+        const oldDoc = metadata.fromRemoteDoc(oldRemote)
         metadata.ensureValidPath(oldDoc)
         metadata.assignId(oldDoc)
         const newRemote = _.defaults({
@@ -335,7 +334,7 @@ describe('RemoteWatcher', function () {
         const remoteDir2 = builders.remote.dir().name('parent').inDir(remoteDir1).build()
         const remoteFile = builders.remote.file().name('child').inDir(remoteDir2).build()
         const olds = [remoteDir1, remoteDir2, remoteFile].map((oldRemote) => {
-          const oldDoc = createMetadata(oldRemote)
+          const oldDoc = metadata.fromRemoteDoc(oldRemote)
           metadata.ensureValidPath(oldDoc)
           metadata.assignId(oldDoc)
           return oldDoc
@@ -693,7 +692,7 @@ describe('RemoteWatcher', function () {
 
     it('detects when file was both moved and updated', async function () {
       const file /*: RemoteDoc */ = await builders.remote.file().name('meow.txt').data('meow').build()
-      const was /*: Metadata */ = createMetadata(file)
+      const was /*: Metadata */ = metadata.fromRemoteDoc(file)
       metadata.ensureValidPath(was)
       metadata.assignId(was)
       file._rev = '2'
@@ -713,7 +712,7 @@ describe('RemoteWatcher', function () {
 
     it('is invalid when local or remote file is corrupt', async function () {
       const remoteDoc /*: RemoteDoc */ = builders.remote.file().build()
-      const was /*: Metadata */ = createMetadata(remoteDoc)
+      const was /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
       metadata.ensureValidPath(was)
       metadata.assignId(was)
       should(remoteDoc.md5sum).equal(was.md5sum)
@@ -735,7 +734,7 @@ describe('RemoteWatcher', function () {
       this.prep.addFolderAsync.returnsPromise().resolves(null)
       const oldDir /*: RemoteDoc */ = builders.remote.dir().name('foo').build()
       // TODO: builders.dir().fromRemote(oldDir).create()
-      let oldMeta /*: Metadata */ = createMetadata(oldDir)
+      let oldMeta /*: Metadata */ = metadata.fromRemoteDoc(oldDir)
       assignId(oldMeta)
       await this.pouch.db.put(oldMeta)
       // TODO: builders.remote.dir().was(oldDir).trashed().build()
@@ -755,7 +754,7 @@ describe('RemoteWatcher', function () {
       should(deleteArgs[1]).have.properties(oldMeta)
       const addArgs = this.prep.addFolderAsync.args[0]
       should(addArgs[0]).equal('remote')
-      should(addArgs[1]).have.properties(createMetadata(newDir))
+      should(addArgs[1]).have.properties(metadata.fromRemoteDoc(newDir))
     })
 
     xit('calls deleteDoc & addDoc when restored', async function () {
@@ -765,7 +764,7 @@ describe('RemoteWatcher', function () {
       this.prep.addFolderAsync.returnsPromise().resolves(null)
       const oldDir /*: RemoteDoc */ = builders.remote.dir().name('foo').trashed().build()
       // TODO: builders.dir().fromRemote(oldDir).create()
-      let oldMeta /*: Metadata */ = createMetadata(oldDir)
+      let oldMeta /*: Metadata */ = metadata.fromRemoteDoc(oldDir)
       assignId(oldMeta)
       await this.pouch.db.put(oldMeta)
       // TODO: builders.remote.dir().was(oldDir).restored().build()
@@ -785,7 +784,7 @@ describe('RemoteWatcher', function () {
       should(deleteArgs[1]).have.properties(oldMeta)
       const addArgs = this.prep.addFolderAsync.args[0]
       should(addArgs[0]).equal('remote')
-      should(addArgs[1]).have.properties(createMetadata(newDir))
+      should(addArgs[1]).have.properties(metadata.fromRemoteDoc(newDir))
     })
   })
 

@@ -2,11 +2,11 @@
 
 const crypto = require('crypto')
 
-const { createMetadata } = require('../../../../core/conversion')
+const metadata = require('../../../../core/metadata')
 const {
   assignId,
   ensureValidPath
-} = require('../../../../core/metadata')
+} = metadata
 
 const BaseMetadataBuilder = require('./base')
 
@@ -24,7 +24,7 @@ module.exports = class FileMetadataBuilder extends BaseMetadataBuilder {
   }
 
   fromRemote (remoteDoc /*: RemoteDoc */) /*: this */ {
-    this.doc = createMetadata(remoteDoc)
+    this.doc = metadata.fromRemoteDoc(remoteDoc)
     ensureValidPath(this.doc)
     assignId(this.doc)
     return this

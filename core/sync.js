@@ -25,7 +25,7 @@ import type EventEmitter from 'events'
 import type { Ignore } from './ignore'
 import type Local from './local'
 import type Pouch from './pouch'
-import type Remote from './remote'
+import type { Remote } from './remote'
 import type { ContentMismatchFsckLog } from './remote/cozy'
 import type { SideName, Metadata } from './metadata'
 import type { Side } from './side' // eslint-disable-line
