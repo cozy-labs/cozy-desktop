@@ -57,7 +57,7 @@ class RemoteTestHelpers {
 
   // TODO: Extract reusable #scan() method from tree*()
 
-  async tree () /*: Promise<string[]> */ {
+  async tree (opts /*: {ellipsize: boolean} */ = {ellipsize: true}) /*: Promise<string[]> */ {
     const pathsToScan = ['/', `/${TRASH_DIR_NAME}`]
     const relPaths = [`${TRASH_DIR_NAME}/`]
 
@@ -87,13 +87,14 @@ class RemoteTestHelpers {
       }
     }
 
+    const ellipsizeDate = opts.ellipsize ? conflictHelpers.ellipsizeDate : _.identity
     return relPaths
       .sort()
-      .map(conflictHelpers.ellipsizeDate)
+      .map(ellipsizeDate)
   }
 
-  async treeWithoutTrash () /*: Promise<string[]> */ {
-    return (await this.tree())
+  async treeWithoutTrash (opts /*: {ellipsize: boolean} */ = {ellipsize: true}) /*: Promise<string[]> */ {
+    return (await this.tree(opts))
       .filter(p => !p.startsWith(`${TRASH_DIR_NAME}/`))
   }
 

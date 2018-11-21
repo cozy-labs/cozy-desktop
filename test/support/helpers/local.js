@@ -3,6 +3,7 @@
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const fs = require('fs-extra')
+const _ = require('lodash')
 const path = require('path')
 const rimraf = require('rimraf')
 
@@ -63,7 +64,7 @@ class LocalTestHelpers {
     this.local._trash = this.trashFunc
   }
 
-  async tree () /*: Promise<string[]> */ {
+  async tree (opts /*: {ellipsize: boolean} */ = {ellipsize: true}) /*: Promise<string[]> */ {
     let trashContents
     try {
       trashContents = await this.trashDir.tree()
@@ -74,10 +75,11 @@ class LocalTestHelpers {
         'beforeEach block) before calling helpers.local.tree() in a test'
       )
     }
+    const ellipsizeDate = opts.ellipsize ? conflictHelpers.ellipsizeDate : _.identity
     return trashContents
       .map(relPath => path.posix.join('/Trash', relPath))
       .concat(await this.syncDir.tree())
-      .map(conflictHelpers.ellipsizeDate)
+      .map(ellipsizeDate)
       .filter(relpath => !relpath.match(TMP_DIR_NAME))
       .sort()
   }

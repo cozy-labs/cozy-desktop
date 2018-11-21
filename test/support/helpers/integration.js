@@ -14,6 +14,7 @@ const { Remote } = require('../../../core/remote')
 const Sync = require('../../../core/sync')
 const SyncState = require('../../../core/syncstate')
 
+const conflictHelpers = require('./conflict')
 const { posixifyPath } = require('./context_dir')
 const { LocalTestHelpers } = require('./local')
 const { RemoteTestHelpers } = require('./remote')
@@ -120,12 +121,24 @@ class IntegrationTestHelpers {
   }
 
   async trees (...treeNames /*: Array<'local' | 'metadata' | 'remote'> */) /*: Promise<*> */ {
+    const result = await this.treesNonEllipsized(...treeNames)
+
+    for (const treeName of ['local', 'metadata', 'remote']) {
+      if (result[treeName]) {
+        result[treeName] = result[treeName].map(conflictHelpers.ellipsizeDate)
+      }
+    }
+
+    return result
+  }
+
+  async treesNonEllipsized (...treeNames /*: Array<'local' | 'metadata' | 'remote'> */) /*: Promise<*> */ {
     if (treeNames.length === 0) treeNames = ['local', 'remote']
 
     const result = {}
-    if (treeNames.includes('local')) result.local = await this.local.tree()
+    if (treeNames.includes('local')) result.local = await this.local.tree({ellipsize: false})
     if (treeNames.includes('metadata')) result.metadata = (await this.metadataTree())
-    if (treeNames.includes('remote')) result.remote = await this.remote.treeWithoutTrash()
+    if (treeNames.includes('remote')) result.remote = await this.remote.treeWithoutTrash({ellipsize: false})
 
     return result
   }
