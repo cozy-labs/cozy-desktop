@@ -174,8 +174,12 @@ module.exports = class LocalWatcher {
       events.filter((e) => e.type.startsWith('add'))
             .forEach((e) => ids.push(metadata.id(e.path)))
 
-      const {offlineEvents, emptySyncDir} = await this.detectOfflineUnlinkEvents(initialScan)
+      const {offlineEvents, unappliedMoves, emptySyncDir} = await this.detectOfflineUnlinkEvents(initialScan)
       events = offlineEvents.concat(events)
+
+      events = events.filter((e) => {
+        return unappliedMoves.indexOf(metadata.id(e.path)) === -1
+      })
 
       if (emptySyncDir) {
         // it is possible this is a temporary faillure (too late mounting)
@@ -223,21 +227,21 @@ module.exports = class LocalWatcher {
 
     // the Syncdir is empty error only occurs if there was some docs beforehand
     let emptySyncDir = docs.length > NB_OF_DELETABLE_ELEMENT
+    let unappliedMoves = []
 
     for (const doc of docs) {
       if (inInitialScan(doc) || doc.trashed || doc.incompatibilities) {
         emptySyncDir = false
+      } else if (doc.moveFrom) {
+        // unapplied move
+        unappliedMoves.push(metadata.id(doc.moveFrom.path))
       } else {
-        const event = (doc.docType === 'file')
-          ? {type: 'unlink', path: doc.path, old: doc}
-          : {type: 'unlinkDir', path: doc.path, old: doc}
-
-        log.chokidar.debug({path: doc.path}, event.type)
-        events.unshift(event)
+        log.chokidar.debug({path: doc.path}, 'pretend unlink or unlinkDir')
+        events.unshift(chokidarEvent.pretendUnlinkFromMetadata(doc))
       }
     }
 
-    return {offlineEvents: events, emptySyncDir}
+    return {offlineEvents: events, unappliedMoves, emptySyncDir}
   }
 
   async oldMetadata (e /*: ChokidarEvent */) /*: Promise<?Metadata> */ {
