@@ -6,6 +6,7 @@ const checksumer = require('./checksumer')
 const logger = require('../logger')
 
 const LinuxObserver = require('./steps/linux_observer')
+const FilterIgnored = require('./steps/filter_ignored')
 const InitialDiff = require('./steps/initial_diff')
 const AddChecksum = require('./steps/add_checksum')
 const Dispatch = require('./steps/dispatch')
@@ -18,6 +19,7 @@ const Dispatcher = require('./layers/dispatcher')
 import type Pouch from '../pouch'
 import type Prep from '../prep'
 import type EventEmitter from 'events'
+import type { Ignore } from '../ignore'
 import type { Checksumer } from './checksumer'
 import type { Runner } from './steps/linux_observer'
 */
@@ -29,9 +31,10 @@ const log = logger({
 module.exports = class AtomWatcher {
   /*::
   syncPath: string
-  events: EventEmitter
   prep: Prep
   pouch: Pouch
+  events: EventEmitter
+  ignore: Ignore
   checksumer: Checksumer
   runner: Runner
   running: Promise<void>
@@ -39,16 +42,18 @@ module.exports = class AtomWatcher {
   _runningReject: ?Function
   */
 
-  constructor (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */) {
+  constructor (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */, ignore /*: Ignore */) {
     this.syncPath = syncPath
     this.prep = prep
     this.pouch = pouch
     this.events = events
+    this.ignore = ignore
     this.checksumer = checksumer.init()
 
     if (process.platform === 'linux') {
       const linux = new LinuxObserver(this)
-      const initialDiff = InitialDiff(linux.buffer, this)
+      const ignore = FilterIgnored(linux.buffer, this)
+      const initialDiff = InitialDiff(ignore, this)
       const checksum = AddChecksum(initialDiff, this)
       const dispatch = Dispatch(checksum, this)
       this.runner = linux

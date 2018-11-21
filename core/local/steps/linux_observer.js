@@ -43,6 +43,7 @@ module.exports = class LinuxObserver /*:: implements Runner */ {
       try {
         const absPath = path.join(this.syncPath, relPath, entry)
         const stats = await fse.stat(absPath)
+        // TODO ignore
         entries.push({ action: "scan", path: relPath, stats })
       } catch (err) {
         // TODO error handling
@@ -51,7 +52,7 @@ module.exports = class LinuxObserver /*:: implements Runner */ {
     if (entries.length === 0) {
       return
     }
-    // TODO emits entries
+    this.buffer.push(entries)
     for (const entry of entries) {
       if (entry.stats.isDirectory()) {
         await this.scan(entry.path)
@@ -77,7 +78,7 @@ module.exports = class LinuxObserver /*:: implements Runner */ {
   }
 
   process (batch /*: Array<*> */) {
-    // TODO
+    this.buffer.push(batch)
   }
 
   relativePath (absPath /*: string */) {

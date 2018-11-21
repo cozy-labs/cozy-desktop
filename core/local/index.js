@@ -24,6 +24,7 @@ bluebird.promisifyAll(fs)
 import type EventEmitter from 'events'
 import type Config from '../config'
 import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider'
+import type { Ignore } from '../ignore'
 import type { Metadata } from '../metadata'
 import type Pouch from '../pouch'
 import type Prep from '../prep'
@@ -51,13 +52,13 @@ module.exports = class Local /*:: implements Side */ {
   _trash: (Array<string>) => Promise<void>
   */
 
-  constructor (config /*: Config */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */) {
+  constructor (config /*: Config */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */, ignore /*: Ignore */) {
     this.prep = prep
     this.pouch = pouch
     this.events = events
     this.syncPath = config.syncPath
     this.tmpPath = path.join(this.syncPath, TMP_DIR_NAME)
-    this.watcher = watcher.build(this.syncPath, this.prep, this.pouch, events)
+    this.watcher = watcher.build(this.syncPath, this.prep, this.pouch, events, ignore)
     // $FlowFixMe
     this.other = null
     this._trash = trash
