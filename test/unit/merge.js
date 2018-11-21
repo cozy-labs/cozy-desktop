@@ -122,6 +122,32 @@ describe('Merge', function () {
         should(this.pouch.put).have.called()
       })
     })
+
+    it('overrides an unsynced local update with a new one detected by local initial scan', async function () {
+      const initialMerge = await builders.file().path('yafile').sides({local: 1}).data('initial content').create()
+      const initialSync = await builders.file(initialMerge).sides({local: 2, remote: 2}).create()
+      const was = await builders.file(initialSync).sides({local: 3, remote: 2}).data('first update').create()
+      const doc = builders.file(was).unmerged('local').data('second update').newerThan(was).build()
+
+      sinon.spy(this.pouch, 'put')
+      await this.merge.addFileAsync('local', _.cloneDeep(doc), _.cloneDeep(was))
+
+      const savedDocs = this.pouch.put.args.map(([doc]) =>
+        _.pick(doc, ['md5sum', 'path', 'remote', 'sides'])
+      )
+      const resolveConflictCalls = this.merge.resolveConflictAsync.args
+      should({savedDocs, resolveConflictCalls}).deepEqual({
+        savedDocs: [
+          {
+            md5sum: doc.md5sum,
+            path: doc.path,
+            remote: was.remote,
+            sides: {local: 4, remote: 2}
+          }
+        ],
+        resolveConflictCalls: []
+      })
+    })
   })
 
   describe('updateFile', () => {

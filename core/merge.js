@@ -178,7 +178,7 @@ class Merge {
     if (!file.sides.remote) {
       // The file was updated on local before being pushed to remote
       return this.updateFileAsync(side, doc)
-    } else if (file.sides.remote === file.sides.local) {
+    } else if (file.sides.local && file.sides.local >= file.sides.remote) {
       // The file was updated on local after being synched to remote
       return this.updateFileAsync(side, doc)
     } else {

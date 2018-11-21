@@ -1,6 +1,7 @@
 /* @flow */
 /* eslint-env mocha */
 
+const Promise = require('bluebird')
 const _ = require('lodash')
 const should = require('should')
 
@@ -34,6 +35,55 @@ describe('Update file', () => {
 
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
+  })
+
+  describe('local offline change with unsynced previous local change', () => {
+    beforeEach(async () => {
+      await helpers.local.syncDir.outputFile('file', 'initial content')
+      await helpers.local.scan()
+      await helpers.syncAll()
+
+      await helpers.local.syncDir.outputFile('file', 'first update')
+      await helpers.local.scan()
+    })
+
+    it('synchronizes the latest change everywhere without conflicts', async () => {
+      const secondUpdate = 'second update'
+      await helpers.local.syncDir.outputFile('file', secondUpdate)
+      await helpers.local.scan()
+      await helpers.syncAll()
+      await helpers.pullAndSyncAll()
+
+      const trees = await helpers.treesNonEllipsized()
+      const contents = {
+        local: await Promise.reduce(
+          trees.local,
+          async (localContents, path) => {
+            localContents[path] = await helpers.local.syncDir.readFile(path)
+            return localContents
+          },
+          {}
+        ),
+        remote: await Promise.reduce(
+          trees.remote,
+          async (remoteContents, path) => {
+            remoteContents[path] = await helpers.remote.readFile(path)
+            return remoteContents
+          },
+          {}
+        )
+      }
+      should({trees, contents}).deepEqual({
+        trees: {
+          local: ['file'],
+          remote: ['file']
+        },
+        contents: {
+          local: {file: secondUpdate},
+          remote: {file: secondUpdate}
+        }
+      })
+    })
   })
 
   describe('local inode-only change', () => {
