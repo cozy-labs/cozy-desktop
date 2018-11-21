@@ -321,10 +321,14 @@ const finalSorter = (a /*: LocalChange */, b /*: LocalChange */) => {
   if (a.wip && !b.wip) return -1
   if (b.wip && !a.wip) return 1
 
+  // b is deleting something which is a children of what a adds
   if (!localChange.addPath(b) && localChange.childOf(localChange.addPath(a), localChange.delPath(b))) return 1
+  // a is deleting something which is a children of what b adds
   if (!localChange.addPath(a) && localChange.childOf(localChange.addPath(b), localChange.delPath(a))) return -1
 
+  // b is moving something which is a children of what a adds
   if (localChange.childOf(localChange.addPath(a), localChange.delPath(b))) return -1
+  // a is deleting or moving something which is a children of what b adds
   if (localChange.childOf(localChange.addPath(b), localChange.delPath(a))) return 1
 
   // if one change is a child of another, it takes priority
@@ -333,8 +337,15 @@ const finalSorter = (a /*: LocalChange */, b /*: LocalChange */) => {
   if (localChange.isChildAdd(b, a)) return 1
   if (localChange.isChildDelete(a, b)) return 1
 
+  // a is deleted what b added
   if (localChange.delPath(a) === localChange.addPath(b)) return -1
+  // b is deleting what a added
   if (localChange.delPath(b) === localChange.addPath(a)) return 1
+
+  // both adds at same path (seen with move + add)
+  if (localChange.addPath(a) && localChange.addPath(a) === localChange.addPath(b)) return -1
+  // both deletes at same path (seen with delete + move)
+  if (localChange.delPath(a) && (localChange.delPath(a) === localChange.delPath(b))) return 1
 
   // otherwise, order by add path
   if (localChange.lower(localChange.addPath(a), localChange.addPath(b))) return -1
