@@ -1,5 +1,37 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.10.3 - 2018-11-21
+
+See [3.10.3-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.10.3-beta.1)
+See [3.10.3-beta.2](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.10.3-beta.2)
+See [3.10.3-beta.3](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.10.3-beta.3)
+
+Improvements for all users:
+
+- The app is now available in spanish. Huge thanks to our translation
+  contributors, especially Hernando :heart:
+- Files and directories can now only have one `-conflict-...` suffix at a time.
+  Existing ones with multiple suffixes won't be renamed automatically, but in
+  case a new conflict occurs, their suffixes will be squashed into a single
+  one with the new timestamp. Although this doesn't fix the root causes, it
+  should make the symptom easier to deal with. We're sill investigating the
+  underlying issues. Expect more fixes soon.
+- We fixed a couple of issues preventing user-defined ignore rules to be
+  loaded.
+- Files moved right after they've been added to the Cozy folder and before we've
+  had the chance to upload them will be synchronized anyway, at the right path.
+- When a folder was moved on the Cozy or another device, the metadata of some
+  of its content was not updated properly, although the content was effectively
+  moved to the right place. Subsequent updates to these subfolders & subfiles
+  could then trigger unexpected conflicts. This should now work as expected. (#1274)
+- When a file was effectively edited on 2 devices and the local one was detected
+  first, both were mistakenly renamed with a conflict suffix. Now only one of
+  them will be renamed. (#1285)
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.10.3-beta.3 - 2018-11-20
 
 Improvements for all users:
