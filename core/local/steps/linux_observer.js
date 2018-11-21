@@ -27,6 +27,32 @@ module.exports = class LinuxObserver /*:: implements Runner */ {
     autoBind(this)
   }
 
+  // https://github.com/facebook/flow/issues/3940
+  // https://github.com/facebook/flow/issues/3258#issuecomment-361690526
+  /*::
+  @@asyncIterator(): AsyncGenerator<*, void, void> {
+    // $FlowFixMe
+    return this[Symbol.iterator]()
+  }
+  */
+
+  // $FlowFixMe
+  [Symbol.asyncIterator]() {
+    return this
+  }
+
+  next () /*: Promise<*> */ {
+    return new Promise(resolve => {})
+  }
+
+  return () /*: Promise<*> */ {
+    return new Promise(resolve => {})
+  }
+
+  throw () /*: Promise<*> */ {
+    return new Promise(resolve => {})
+  }
+
   async start () {
     this.running = true
     await this.scan('.')

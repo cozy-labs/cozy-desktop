@@ -1,8 +1,10 @@
 /* @flow */
 
+const { map } = require('./utils')
+
 module.exports = async function* (generator /*: AsyncGenerator<*, void, void> */, opts /*: {} */) /*: AsyncGenerator<*, void, void> */ {
-  for await (const batch of generator) {
+  return map(generator, (batch) => {
     console.log('initial_diff', batch.length)
-    yield batch
-  }
+    return batch
+  })
 }
