@@ -1,6 +1,7 @@
 /* @flow */
 
 const autoBind = require('auto-bind')
+const Buffer = require('./buffer')
 const { buildDir, buildFile } = require('../../metadata')
 const fs = require('fs')
 const fse = require('fs-extra') // Used for await
@@ -16,41 +17,17 @@ export interface Runner {
 
 module.exports = class LinuxObserver /*:: implements Runner */ {
   /*::
+  buffer: Buffer<*>
   syncPath: string
   running: boolean
   watchers: Map<string, *>
   */
   constructor (opts /*: { syncPath : string } */) {
+    this.buffer = new Buffer/*:: <*> */()
     this.syncPath = opts.syncPath
     this.running = false
     this.watchers = new Map()
     autoBind(this)
-  }
-
-  // https://github.com/facebook/flow/issues/3940
-  // https://github.com/facebook/flow/issues/3258#issuecomment-361690526
-  /*::
-  @@asyncIterator(): AsyncGenerator<*, void, void> {
-    // $FlowFixMe
-    return this[Symbol.iterator]()
-  }
-  */
-
-  // $FlowFixMe
-  [Symbol.asyncIterator]() {
-    return this
-  }
-
-  next () /*: Promise<*> */ {
-    return new Promise(resolve => {})
-  }
-
-  return () /*: Promise<*> */ {
-    return new Promise(resolve => {})
-  }
-
-  throw () /*: Promise<*> */ {
-    return new Promise(resolve => {})
   }
 
   async start () {

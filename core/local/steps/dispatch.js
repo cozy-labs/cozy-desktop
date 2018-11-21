@@ -1,7 +1,11 @@
 /* @flow */
 
-module.exports = async function (generator /*: AsyncGenerator<*, void, void> */, opts /*: {} */) {
-  for await (const batch of generator) {
+/*::
+import type Buffer from './buffer'
+*/
+
+module.exports = function (buffer /*: Buffer<*> */, opts /*: {} */) {
+  buffer.forEach((batch) => {
     console.log('dispatch', batch)
-  }
+  })
 }

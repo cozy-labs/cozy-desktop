@@ -1,9 +1,11 @@
 /* @flow */
 
-const { map } = require('./utils')
+/*::
+import type Buffer from './buffer'
+*/
 
-module.exports = async function* (generator /*: AsyncGenerator<*, void, void> */, opts /*: {} */) /*: AsyncGenerator<*, void, void> */ {
-  return map(generator, (batch) => {
+module.exports = function (buffer /*: Buffer<*> */, opts /*: {} */) /*: Buffer<*> */ {
+  return buffer.map((batch) => {
     console.log('initial_diff', batch.length)
     return batch
   })

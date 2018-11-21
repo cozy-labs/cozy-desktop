@@ -48,7 +48,7 @@ module.exports = class AtomWatcher {
 
     if (process.platform === 'linux') {
       const linux = new LinuxObserver(this)
-      const initialDiff = InitialDiff(linux, this)
+      const initialDiff = InitialDiff(linux.buffer, this)
       const checksum = AddChecksum(initialDiff, this)
       const dispatch = Dispatch(checksum, this)
       this.runner = linux

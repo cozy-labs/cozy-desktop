@@ -1,14 +1,14 @@
 /* @flow */
 
-const { asyncMap } = require('./utils')
 const path = require('path')
 
 /*::
+import type Buffer from './buffer'
 import type { Checksumer } from '../checksumer'
 */
 
-module.exports = async function* (generator /*: AsyncGenerator<*, void, void> */, opts /*: { syncPath: string , checksumer: Checksumer } */) /*: AsyncGenerator<*, void, void> */ {
-  return asyncMap(generator, async (events) => {
+module.exports = function (buffer /*: Buffer<*> */, opts /*: { syncPath: string , checksumer: Checksumer } */) /*: Buffer<*> */ {
+  return buffer.asyncMap(async (events) => {
     const batch = []
     for (const event of events) {
       try {
