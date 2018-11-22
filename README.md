@@ -1,6 +1,6 @@
 # [Cozy](https://cozy.io) Drive for Desktop
 
-[![Cozy Logo](https://raw.github.com/cozy/cozy-setup/gh-pages/assets/images/happycloud.png)](https://cozy.io)
+[![Cozy Logo](https://cdn.rawgit.com/cozy/cozy-guidelines/master/templates/cozy_logo_small.svg)](https://cozy.io)
 
 [![Latest release](https://img.shields.io/github/release/cozy-labs/cozy-desktop/all.svg)](https://github.com/cozy-labs/cozy-desktop/releases)
 [![Licence](https://img.shields.io/github/license/cozy/cozy-drive.svg)](https://github.com/cozy/cozy-drive/blob/master/LICENSE)
