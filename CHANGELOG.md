@@ -1,5 +1,23 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.10.4-beta.1 - 2018-11-22
+
+Improvements for all users:
+
+- When the app was stopped in the middle of a synchronization, with folder moves
+  coming from the remote Cozy, we could end up detecting conflicts on those
+  folders undefinitely after restarting it. We now handle unapplied moves upon
+  startup and avoid creating unnecessary `-conflicts-` folders.
+- If a file existing both locally and in the remote Cozy was updated more than
+  once without synchronization, the latest changes would create a conflict and
+  its resolution would override the file with an older version leading to data
+  loss. We now simply override the local version of the file with the latest
+  changes and synchronize them with the remote Cozy.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.10.3 - 2018-11-21
 
 See [3.10.3-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.10.3-beta.1)
