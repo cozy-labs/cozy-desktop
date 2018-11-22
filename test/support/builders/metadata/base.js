@@ -52,6 +52,12 @@ module.exports = class BaseMetadataBuilder {
     }
   }
 
+  unmerged (sideName /*: SideName */) /*: this */ {
+    delete this.sides
+    if (sideName === 'local') delete this.doc.remote
+    return this.noRev()
+  }
+
   rev (rev /*: string */) /*: this */ {
     this.doc._rev = rev
     return this
@@ -105,12 +111,12 @@ module.exports = class BaseMetadataBuilder {
   }
 
   newerThan (doc /*: Metadata */) /*: this */ {
-    this.doc.updated_at = new Date(timestamp.fromDate(doc.updated_at) + 2000)
+    this.doc.updated_at = new Date(timestamp.fromDate(doc.updated_at).getTime() + 2000)
     return this
   }
 
   olderThan (doc /*: Metadata */) /*: this */ {
-    this.doc.updated_at = new Date(timestamp.fromDate(doc.updated_at) - 2000)
+    this.doc.updated_at = new Date(timestamp.fromDate(doc.updated_at).getTime() - 2000)
     return this
   }
 
