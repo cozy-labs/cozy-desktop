@@ -71,10 +71,10 @@ def noproxy: select(.component | test("GUI:proxy") | not);
 
 # Find conflicts:
 #
-#     yarn jq -c conflicts path/to/logs*
+#     yarn jq -c conflict path/to/logs*
 #
 def is_conflict: .msg == "resolveConflictAsync";
-def conflicts: clean | select(is_conflict) | {time,path};
+def conflict: clean | select(is_conflict);
 
 # Non-issue filters (so we can ignore them when looking for real issues):
 def is_net_error: .msg | test("net::");
