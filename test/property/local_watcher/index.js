@@ -45,6 +45,7 @@ async function step (state, op) {
       break
     case 'mkdir':
       try {
+        console.log('mkdir', op.path)
         await state.dir.ensureDir(op.path)
       } catch (err) {}
       break

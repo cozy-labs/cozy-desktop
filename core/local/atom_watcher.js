@@ -8,6 +8,7 @@ const logger = require('../logger')
 const LinuxProducer = require('./steps/linux_producer')
 const AddInfos = require('./steps/add_infos')
 const FilterIgnored = require('./steps/filter_ignored')
+const Recurse = require('./steps/recurse')
 const InitialDiff = require('./steps/initial_diff')
 const AddChecksum = require('./steps/add_checksum')
 const Dispatch = require('./steps/dispatch')
@@ -22,6 +23,7 @@ import type Prep from '../prep'
 import type EventEmitter from 'events'
 import type { Ignore } from '../ignore'
 import type { Checksumer } from './checksumer'
+import type { Adder } from './steps/recurse'
 import type { Runner } from './steps/linux_producer'
 */
 
@@ -37,6 +39,7 @@ module.exports = class AtomWatcher {
   events: EventEmitter
   ignore: Ignore
   checksumer: Checksumer
+  adder: Adder
   runner: Runner
   running: Promise<void>
   _runningResolve: ?Function
@@ -52,11 +55,12 @@ module.exports = class AtomWatcher {
     this.checksumer = checksumer.init()
 
     if (process.platform === 'linux') {
-      this.runner = new LinuxProducer(this)
+      this.runner = this.adder = new LinuxProducer(this)
       const linux = this.runner.buffer
       const infos = AddInfos(linux, this)
       const ignore = FilterIgnored(infos, this)
-      const initialDiff = InitialDiff(ignore, this)
+      const recurse = Recurse(ignore, this)
+      const initialDiff = InitialDiff(recurse, this)
       const checksum = AddChecksum(initialDiff, this)
       Dispatch(checksum, this)
     } else if (process.platform === 'win32') {

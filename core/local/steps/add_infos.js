@@ -18,7 +18,7 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string } *
         if (event.action !== 'initial-scan-done') {
           event._id = id(event.path)
           if (['created', 'modified'].includes(event.action)) {
-            event.stats = await fse.stats(path.join(opts.syncPath, event.path))
+            event.stats = await fse.stat(path.join(opts.syncPath, event.path))
           }
           if (event.stats) { // created, modified, scan
             event.docType = event.stats.isDirectory() ? 'directory' : 'file'
@@ -29,7 +29,7 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string } *
         }
         batch.push(event)
       } catch (err) {
-        // TODO error handling
+        console.log('stats', err) // TODO error handling
       }
     }
     return batch

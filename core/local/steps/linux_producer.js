@@ -46,10 +46,12 @@ module.exports = class LinuxProducer /*:: implements Runner */ {
   }
 
   async scan (relPath /*: string */) {
+    await this.add(relPath)
     const entries = []
     const fullPath = path.join(this.syncPath, relPath)
     for (const entry of await fse.readdir(fullPath)) {
       try {
+        // TODO ignore
         const absPath = path.join(this.syncPath, relPath, entry)
         const stats = await fse.stat(absPath)
         entries.push({
@@ -73,7 +75,7 @@ module.exports = class LinuxProducer /*:: implements Runner */ {
     }
   }
 
-  async watch (relPath /*: string */) {
+  async add (relPath /*: string */) {
     try {
       if (!this.running || this.watchers.has(relPath)) {
         return
@@ -91,6 +93,11 @@ module.exports = class LinuxProducer /*:: implements Runner */ {
   }
 
   process (batch /*: Array<*> */) {
+    // Atom/watcher emits events with an absolute path, but it's more
+    // convenient for us to use a relative path.
+    for (const event of batch) {
+      event.path = path.relative(this.syncPath, event.path)
+    }
     this.buffer.push(batch)
   }
 

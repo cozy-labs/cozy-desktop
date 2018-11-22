@@ -17,7 +17,6 @@ module.exports = function (buffer /*: Buffer */, opts /*: { events: EventEmitter
   events = opts.events
   target = opts.prep
   buffer.asyncForEach(async (batch) => {
-    console.log('dispatch', batch)
     for (const event of batch) {
       try {
         if (event.action === 'initial-scan-done') {

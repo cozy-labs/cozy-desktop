@@ -6,6 +6,10 @@ const Promise = require('bluebird')
 import type { AtomWatcherEvent, Batch } from './event'
 */
 
+// Buffer is a data structure for propagating batches of events from a FS
+// watcher to the Pouch database, via several steps. It's expected that we have
+// only one class/function that pushes in the buffer, and only one
+// class/function that takes batches from the buffer.
 module.exports = class Buffer {
   /*::
   _resolve: ?Promise<Batch>
