@@ -4,7 +4,7 @@
 import type { Stats } from 'fs'
 
 export type AtomWatcherEvent = {
-  action: "created" | "modified" | "deleted" | "renamed" | "scan",
+  action: "created" | "modified" | "deleted" | "renamed" | "scan" | "initial-scan-done",
   kind: "file" | "directory" | "symlink" | "unknown",
   path: string,
   oldPath?: string,

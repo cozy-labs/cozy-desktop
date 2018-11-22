@@ -7,12 +7,13 @@ import type Buffer from './buffer'
 import type { Checksumer } from '../checksumer'
 */
 
+// This step adds md5sum for created and updated files.
 module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: Checksumer } */) /*: Buffer */ {
   return buffer.asyncMap(async (events) => {
     const batch = []
     for (const event of events) {
       try {
-        if (['add', 'update'].includes(event.action) && event.docType === 'file') {
+        if (['created', 'updated'].includes(event.action) && event.docType === 'file') {
           const absPath = path.join(opts.syncPath, event.path)
           event.md5sum = await opts.checksumer.push(absPath)
         }

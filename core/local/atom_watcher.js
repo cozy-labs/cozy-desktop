@@ -5,7 +5,7 @@ const Promise = require('bluebird')
 const checksumer = require('./checksumer')
 const logger = require('../logger')
 
-const LinuxObserver = require('./steps/linux_observer')
+const LinuxProducer = require('./steps/linux_producer')
 const AddInfos = require('./steps/add_infos')
 const FilterIgnored = require('./steps/filter_ignored')
 const InitialDiff = require('./steps/initial_diff')
@@ -22,7 +22,7 @@ import type Prep from '../prep'
 import type EventEmitter from 'events'
 import type { Ignore } from '../ignore'
 import type { Checksumer } from './checksumer'
-import type { Runner } from './steps/linux_observer'
+import type { Runner } from './steps/linux_producer'
 */
 
 const log = logger({
@@ -52,7 +52,7 @@ module.exports = class AtomWatcher {
     this.checksumer = checksumer.init()
 
     if (process.platform === 'linux') {
-      this.runner = new LinuxObserver(this)
+      this.runner = new LinuxProducer(this)
       const linux = this.runner.buffer
       const infos = AddInfos(linux, this)
       const ignore = FilterIgnored(infos, this)

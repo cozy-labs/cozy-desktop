@@ -13,7 +13,17 @@ export interface Runner {
 }
 */
 
-module.exports = class LinuxObserver /*:: implements Runner */ {
+// This class is a producer: it watches the filesystem and the events are
+// created here.
+//
+// On Linux, the API to watch the file system (inotify) is not recursive. It
+// means that we have to add a watcher when we a new directory is added (and to
+// remove a watcher when a watched directory is removed).
+//
+// Even if inotify has a IN_ISDIR hint, atom/watcher does not report it. So, we
+// have to call stat on the path to know if it's a file or a directory for add
+// and update events.
+module.exports = class LinuxProducer /*:: implements Runner */ {
   /*::
   buffer: Buffer
   syncPath: string
@@ -31,7 +41,8 @@ module.exports = class LinuxObserver /*:: implements Runner */ {
   async start () {
     this.running = true
     await this.scan('.')
-    // TODO initial-scan-done
+    const scanDone = { action: 'initial-scan-done', kind: 'unknown', path: '.' }
+    this.buffer.push([scanDone])
   }
 
   async scan (relPath /*: string */) {
@@ -41,7 +52,6 @@ module.exports = class LinuxObserver /*:: implements Runner */ {
       try {
         const absPath = path.join(this.syncPath, relPath, entry)
         const stats = await fse.stat(absPath)
-        // TODO ignore
         entries.push({ action: 'scan', path: relPath, stats, kind: 'unknown' })
       } catch (err) {
         // TODO error handling
