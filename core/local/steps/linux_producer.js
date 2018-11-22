@@ -52,7 +52,12 @@ module.exports = class LinuxProducer /*:: implements Runner */ {
       try {
         const absPath = path.join(this.syncPath, relPath, entry)
         const stats = await fse.stat(absPath)
-        entries.push({ action: 'scan', path: relPath, stats, kind: 'unknown' })
+        entries.push({
+          action: 'scan',
+          path: path.join(relPath, entry),
+          stats,
+          kind: 'unknown'
+        })
       } catch (err) {
         // TODO error handling
       }

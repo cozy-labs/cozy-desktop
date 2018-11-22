@@ -13,7 +13,7 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string , c
     const batch = []
     for (const event of events) {
       try {
-        if (['created', 'updated'].includes(event.action) && event.docType === 'file') {
+        if (['created', 'modified', 'scan'].includes(event.action) && event.docType === 'file') {
           const absPath = path.join(opts.syncPath, event.path)
           event.md5sum = await opts.checksumer.push(absPath)
         }

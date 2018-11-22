@@ -41,6 +41,13 @@ module.exports = class Buffer {
     }
   }
 
+  async asyncForEach (fn /*: (Batch) => Promise<*> */) {
+    while (true) {
+      const batch = await this.pop()
+      await fn(batch)
+    }
+  }
+
   async doMap (fn /*: (Batch) => Batch */, buffer /*: Buffer */) {
     while (true) {
       const batch = fn(await this.pop())

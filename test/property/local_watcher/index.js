@@ -37,7 +37,7 @@ async function step (state, op) {
       const merge = new Merge(state.pouchdb)
       const ignore = new Ignore([])
       const prep = new Prep(merge, ignore, config)
-      state.watcher = Watcher.build(state.dir.root, prep, state.pouchdb, events)
+      state.watcher = Watcher.build(state.dir.root, prep, state.pouchdb, events, ignore)
       state.watcher.start()
       break
     case 'sleep':
