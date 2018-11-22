@@ -613,7 +613,7 @@ describe('Merge', function () {
     })
 
     it('resolves a conflict with an existing destination', async function () {
-      const existing = await builders.dir().path('DST_DIR').create()
+      const existing = await builders.dir().path('DST_DIR').upToDate().create()
       const was = await builders.dir().path('SRC_DIR').upToDate().create()
       const doc = builders.dir(was).path(existing.path).noRev().build()
       sinon.spy(this.pouch, 'bulkDocs')
@@ -624,6 +624,7 @@ describe('Merge', function () {
         srcId: _.get(args, [0, '_id']),
         dstId: metadata.id(args[1])
       }))
+      conflictRenamings.should.have.length(1)
       const { dstId } = conflictRenamings[0]
       const savedDocs = _.chain(this.pouch.bulkDocs.args)
         .flattenDeep()
@@ -645,6 +646,19 @@ describe('Merge', function () {
           {_id: dstId, moveFrom: {_id: was._id}}
         ]
       })
+    })
+
+    it('does not create conflict for local-only existing folder.', async function () {
+      const existing = await builders.dir().sides({local: 1}).unmerged('local').path('DST_DIR2').create()
+      const was = await builders.dir().path('SRC_DIR2').upToDate().create()
+      const doc = builders.dir(was).path(existing.path).noRev().build()
+
+      await this.merge.moveFolderAsync(this.side, doc, was)
+
+      should(this.merge.resolveConflictAsync).not.have.been.called()
+      const newMetadata = await this.pouch.db.get(existing._id)
+      newMetadata.should.have.property('remote')
+      newMetadata.remote.should.have.property('_id', was.remote._id)
     })
 
     it('does not identify an identical renaming as a conflict', async function () {

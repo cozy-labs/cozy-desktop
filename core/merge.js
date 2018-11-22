@@ -338,10 +338,14 @@ class Merge {
     }
 
     if (folder && !doc.overwrite && doc.path === folder.path) {
-      const dst = await this.resolveConflictAsync(side, doc, folder)
-      dst.sides = {}
-      dst.sides[side] = 1
-      return this.moveFolderRecursivelyAsync(side, dst, was, newRemoteRevs)
+      if (side === 'local' && !folder.sides.remote) {
+        doc.overwrite = folder
+      } else {
+        const dst = await this.resolveConflictAsync(side, doc, folder)
+        dst.sides = {}
+        dst.sides[side] = 1
+        return this.moveFolderRecursivelyAsync(side, dst, was, newRemoteRevs)
+      }
     }
 
     if (folder && doc.overwrite) {
