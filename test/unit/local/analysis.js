@@ -1,6 +1,7 @@
 /* eslint-env mocha */
 
 const should = require('should')
+const path = require('path')
 
 const analysis = require('../../../core/local/analysis')
 
@@ -494,16 +495,22 @@ describe('core/local/analysis', function () {
   })
 
   it('sorts actions', () => {
+    const normalizer = (x) => {
+      x.path = path.normalize(x.path)
+      if (x.old) x.old.path = path.normalize(x.old.path)
+      return x
+    }
+
     const dirStats = {ino: 1}
     const subdirStats = {ino: 2}
     const fileStats = {ino: 3}
     const otherFileStats = {ino: 4}
     const otherDirStats = {ino: 5}
-    const dirMetadata /*: Metadata */ = metadataBuilders.dir().path('src').ino(dirStats.ino).build()
-    const subdirMetadata /*: Metadata */ = metadataBuilders.dir().path('src/subdir').ino(subdirStats.ino).build()
-    const fileMetadata  /*: Metadata */ = metadataBuilders.file().path('src/file').ino(fileStats.ino).build()
-    const otherFileMetadata  /*: Metadata */ = metadataBuilders.file().path('other-file').ino(otherFileStats.ino).build()
-    const otherDirMetadata  /*: Metadata */ = metadataBuilders.dir().path('other-dir-src').ino(otherDirStats.ino).build()
+    const dirMetadata /*: Metadata */ = normalizer(metadataBuilders.dir().path('src').ino(dirStats.ino).build())
+    const subdirMetadata /*: Metadata */ = normalizer(metadataBuilders.dir().path('src/subdir').ino(subdirStats.ino).build())
+    const fileMetadata  /*: Metadata */ = normalizer(metadataBuilders.file().path('src/file').ino(fileStats.ino).build())
+    const otherFileMetadata  /*: Metadata */ = normalizer(metadataBuilders.file().path('other-file').ino(otherFileStats.ino).build())
+    const otherDirMetadata  /*: Metadata */ = normalizer(metadataBuilders.dir().path('other-dir-src').ino(otherDirStats.ino).build())
     const events /*: LocalEvent[] */ = [
       {type: 'unlinkDir', path: 'src/subdir', old: subdirMetadata},
       {type: 'unlinkDir', path: 'src', old: dirMetadata},
@@ -514,7 +521,7 @@ describe('core/local/analysis', function () {
       {type: 'change', path: 'other-file', stats: otherFileStats, md5sum: 'yolo', old: otherFileMetadata},
       {type: 'unlinkDir', path: 'other-dir-src', old: otherDirMetadata},
       {type: 'addDir', path: 'other-dir-dst', stats: otherDirStats}
-    ]
+    ].map(normalizer)
     const pendingChanges /*: LocalChange[] */ = []
 
     should(analysis(events, pendingChanges)).deepEqual([
