@@ -2,8 +2,6 @@
 
 const autoBind = require('auto-bind')
 const Buffer = require('./buffer')
-const { buildDir, buildFile } = require('../../metadata')
-const fs = require('fs')
 const fse = require('fs-extra') // Used for await
 const path = require('path')
 const watcher = require('@atom/watcher')
@@ -17,13 +15,13 @@ export interface Runner {
 
 module.exports = class LinuxObserver /*:: implements Runner */ {
   /*::
-  buffer: Buffer<*>
+  buffer: Buffer
   syncPath: string
   running: boolean
   watchers: Map<string, *>
   */
   constructor (opts /*: { syncPath : string } */) {
-    this.buffer = new Buffer/*:: <*> */()
+    this.buffer = new Buffer()
     this.syncPath = opts.syncPath
     this.running = false
     this.watchers = new Map()
@@ -44,7 +42,7 @@ module.exports = class LinuxObserver /*:: implements Runner */ {
         const absPath = path.join(this.syncPath, relPath, entry)
         const stats = await fse.stat(absPath)
         // TODO ignore
-        entries.push({ action: "scan", path: relPath, stats })
+        entries.push({ action: 'scan', path: relPath, stats, kind: 'unknown' })
       } catch (err) {
         // TODO error handling
       }
@@ -54,7 +52,7 @@ module.exports = class LinuxObserver /*:: implements Runner */ {
     }
     this.buffer.push(entries)
     for (const entry of entries) {
-      if (entry.stats.isDirectory()) {
+      if (entry.stats && entry.stats.isDirectory()) {
         await this.scan(entry.path)
       }
     }

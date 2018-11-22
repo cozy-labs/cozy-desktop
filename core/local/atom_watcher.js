@@ -6,6 +6,7 @@ const checksumer = require('./checksumer')
 const logger = require('../logger')
 
 const LinuxObserver = require('./steps/linux_observer')
+const AddInfos = require('./steps/add_infos')
 const FilterIgnored = require('./steps/filter_ignored')
 const InitialDiff = require('./steps/initial_diff')
 const AddChecksum = require('./steps/add_checksum')
@@ -51,12 +52,13 @@ module.exports = class AtomWatcher {
     this.checksumer = checksumer.init()
 
     if (process.platform === 'linux') {
-      const linux = new LinuxObserver(this)
-      const ignore = FilterIgnored(linux.buffer, this)
+      this.runner = new LinuxObserver(this)
+      const linux = this.runner.buffer
+      const infos = AddInfos(linux, this)
+      const ignore = FilterIgnored(infos, this)
       const initialDiff = InitialDiff(ignore, this)
       const checksum = AddChecksum(initialDiff, this)
-      const dispatch = Dispatch(checksum, this)
-      this.runner = linux
+      Dispatch(checksum, this)
     } else if (process.platform === 'win32') {
       // TODO add a layer to detect moves
       // TODO do we need a debounce layer (a port of awaitWriteFinish of chokidar)?

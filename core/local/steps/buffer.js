@@ -2,17 +2,21 @@
 
 const Promise = require('bluebird')
 
-module.exports = class Buffer /*:: <A> */ {
+/*::
+import type { AtomWatcherEvent, Batch } from './event'
+*/
+
+module.exports = class Buffer {
   /*::
-  _resolve: ?Promise<A[]>
-  _buffer: Array<A[]>
+  _resolve: ?Promise<Batch>
+  _buffer: Array<Batch>
   */
   constructor () {
     this._resolve = null
     this._buffer = []
   }
 
-  push (batch /*: A[] */) {
+  push (batch /*: Batch */) {
     if (this._resolve) {
       this._resolve(batch)
       this._resolve = null
@@ -21,7 +25,7 @@ module.exports = class Buffer /*:: <A> */ {
     }
   }
 
-  pop () /*: Promise<A[]> */ {
+  pop () /*: Promise<Batch> */ {
     if (this._buffer.length > 0) {
       const batch = this._buffer.shift()
       return Promise.resolve(batch)
@@ -31,26 +35,26 @@ module.exports = class Buffer /*:: <A> */ {
     })
   }
 
-  async forEach (fn /*: (A[]) => any */) {
+  async forEach (fn /*: (Batch) => void */) {
     while (true) {
       fn(await this.pop())
     }
   }
 
-  async doMap (fn /*: (A[]) => Array<*> */, buffer /*: Buffer<*> */) {
+  async doMap (fn /*: (Batch) => Batch */, buffer /*: Buffer */) {
     while (true) {
       const batch = fn(await this.pop())
       buffer.push(batch)
     }
   }
 
-  map (fn /*: (A[]) => Array<*> */) {
-    const buffer = new Buffer/*:: <*> */()
+  map (fn /*: (Batch) => Batch */) /*: Buffer */ {
+    const buffer = new Buffer()
     this.doMap(fn, buffer)
     return buffer
   }
 
-  async doAsyncMap (fn /*: (A[]) => Promise<Array<*>> */, buffer /*: Buffer<*> */) {
+  async doAsyncMap (fn /*: (Batch) => Promise<Batch> */, buffer /*: Buffer */) {
     while (true) {
       const batch = await this.pop()
       const after = await fn(batch)
@@ -58,8 +62,8 @@ module.exports = class Buffer /*:: <A> */ {
     }
   }
 
-  asyncMap (fn /*: (A[]) => Promise<Array<*>> */) {
-    const buffer = new Buffer/*:: <*> */()
+  asyncMap (fn /*: (Batch) => Promise<Batch> */) /*: Buffer */ {
+    const buffer = new Buffer()
     this.doAsyncMap(fn, buffer)
     return buffer
   }

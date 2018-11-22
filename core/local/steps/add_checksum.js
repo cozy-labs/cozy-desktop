@@ -7,7 +7,7 @@ import type Buffer from './buffer'
 import type { Checksumer } from '../checksumer'
 */
 
-module.exports = function (buffer /*: Buffer<*> */, opts /*: { syncPath: string , checksumer: Checksumer } */) /*: Buffer<*> */ {
+module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: Checksumer } */) /*: Buffer */ {
   return buffer.asyncMap(async (events) => {
     const batch = []
     for (const event of events) {
