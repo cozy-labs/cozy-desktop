@@ -25,7 +25,8 @@ describe('Merge', function () {
   beforeEach('instanciate merge', function () {
     this.side = 'local'
     this.merge = new Merge(this.pouch)
-    this.merge[this.side] = {renameConflictingDocAsync: sinon.stub().resolves()}
+    this.merge.local = {renameConflictingDocAsync: sinon.stub().resolves()}
+    this.merge.remote = {renameConflictingDocAsync: sinon.stub().resolves()}
     builders = new MetadataBuilders(this.pouch)
 
     sinon.spy(this.merge, 'resolveConflictAsync')
