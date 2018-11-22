@@ -52,6 +52,12 @@ module.exports = class BaseMetadataBuilder {
     }
   }
 
+  unmerged (sideName /*: SideName */) /*: this */ {
+    delete this.sides
+    if (sideName === 'local') delete this.doc.remote
+    return this.noRev()
+  }
+
   rev (rev /*: string */) /*: this */ {
     this.doc._rev = rev
     return this
