@@ -1,3 +1,4 @@
+/* @flow */
 /* eslint-env mocha */
 
 const should = require('should')
