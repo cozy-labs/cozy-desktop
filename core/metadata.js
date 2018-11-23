@@ -107,6 +107,7 @@ module.exports = {
   markAsNeverSynced,
   markAsNew,
   markAsUpToDate,
+  remoteId,
   sameFolder,
   sameFile,
   sameFileIgnoreRev,
@@ -455,4 +456,8 @@ function buildFile (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: st
   }
   if ((stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
   return doc
+}
+
+function remoteId (doc /*: ?Metadata */) /*: ?string */ {
+  return _.get(doc, 'remote._id')
 }
