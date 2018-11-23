@@ -11,7 +11,7 @@
  * This is why identity conflicts are always resolved on the remote side.
  */
 
-const _ = require('lodash')
+const metadata = require('./metadata')
 
 /*::
 import type { Metadata, SideName } from './metadata'
@@ -26,8 +26,7 @@ export opaque type IdConflictInfo = {
 
 module.exports = {
   description,
-  detectOnIdentity,
-  existsBetween
+  detectOnIdentity
 }
 
 const { platform } = process
@@ -55,7 +54,15 @@ function description ({ sideName, newDoc, existingDoc, platform } /*: IdConflict
  *        (representing some change to be merged).
  */
 function detectOnIdentity (sideName /*: SideName */, newDoc /*: Metadata */, existingDoc /*: ?Metadata */) /*: ?IdConflictInfo */ {
-  if (existingDoc && existsBetween(newDoc, existingDoc)) {
+  if (!existingDoc) return // Exit early to make flow happy
+
+  const isIdConflict = (
+    newDoc._id === existingDoc._id &&
+    newDoc.path !== existingDoc.path &&
+    metadata.remoteId(newDoc) !== metadata.remoteId(existingDoc)
+  )
+
+  if (isIdConflict) {
     return {
       existingDoc,
       newDoc,
@@ -63,16 +70,4 @@ function detectOnIdentity (sideName /*: SideName */, newDoc /*: Metadata */, exi
       sideName
     }
   }
-}
-
-/** Does an identity conflict exist between two docs?
- *
- * This operation is commutative.
- */
-function existsBetween (doc1 /*: Metadata */, doc2 /*: Metadata */) /*: boolean */ {
-  return (
-    doc1._id === doc2._id &&
-    doc1.path !== doc2.path &&
-    _.get(doc1, 'remote._id') !== _.get(doc2, 'remote._id')
-  )
 }

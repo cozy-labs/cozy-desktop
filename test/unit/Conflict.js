@@ -23,51 +23,22 @@ describe('Conflict', function () {
   describe('.detectOnIdentity()', () => {
     const sideName = 'remote' // whatever
 
-    onPlatforms('win32', 'darwin', () => {
-      it('returns an IdConflict object when a conflict exists between a new doc and an existing one', () => {
-        const existingDoc = builders.whatever().path('alfred').remoteId('1').build()
-        const newDoc = builders.whatever().path('Alfred').remoteId('2').build()
-        should(Conflict.detectOnIdentity(sideName, newDoc, existingDoc)).deepEqual({
-          existingDoc,
-          newDoc,
-          platform,
-          sideName
-        })
-      })
-    })
-
-    onPlatforms('linux', () => {
-      it('returns nothing when a conflict would exist on other platforms', () => {
-        const existingDoc = builders.whatever().path('alfred').remoteId('1').build()
-        const newDoc = builders.whatever().path('Alfred').remoteId('2').build()
-        should(Conflict.detectOnIdentity(sideName, newDoc, existingDoc)).be.undefined()
-      })
-    })
-
-    it('returns nothing when no conflict exists between a new doc and an existing one', () => {
-      const existingDoc = builders.whatever().path('alfred').remoteId('1').build()
-      const newDoc = builders.whatever().path('alfred2').remoteId('2').build()
-      should(Conflict.detectOnIdentity(sideName, newDoc, existingDoc)).be.undefined()
-    })
+    const idCannotBeDifferentForTheSamePath = () => {
+      it.skip('impossible: id cannot be different for the same path')
+    }
 
     it('returns nothing when there is no existing doc', () => {
       const newDoc = builders.whatever().path('Alfred').remoteId('2').build()
       should(Conflict.detectOnIdentity(sideName, newDoc)).be.undefined()
     })
-  })
-
-  describe('.existsBetween()', () => {
-    const idCannotBeDifferentForTheSamePath = () => {
-      it.skip('impossible: id cannot be different for the same path')
-    }
 
     context('with same #_id, same #path, same #remote._id', () => {
       it('detects nothing (either up-to-date or unsynced successive local changes)', () => {
         const doc = builders.whatever().remoteId('1').build()
-        should(Conflict.existsBetween(doc, doc)).be.false()
+        should(Conflict.detectOnIdentity(sideName, doc, doc)).be.undefined()
 
         delete doc.remote
-        should(Conflict.existsBetween(doc, doc)).be.false()
+        should(Conflict.detectOnIdentity(sideName, doc, doc)).be.undefined()
       })
     })
 
@@ -78,13 +49,13 @@ describe('Conflict', function () {
       it('detects nothing (case-or-encoding-only renaming)', () => {
         const doc1 = builders.whatever().path('foo').remoteId('1').build()
         const doc2 = builders.whatever().path('FOO').remoteId('1').build()
-        should(Conflict.existsBetween(doc1, doc2)).be.false()
-        should(Conflict.existsBetween(doc2, doc1)).be.false()
+        should(Conflict.detectOnIdentity(sideName, doc1, doc2)).be.undefined()
+        should(Conflict.detectOnIdentity(sideName, doc2, doc1)).be.undefined()
 
         delete doc1.remote
         delete doc2.remote
-        should(Conflict.existsBetween(doc1, doc2)).be.false()
-        should(Conflict.existsBetween(doc2, doc1)).be.false()
+        should(Conflict.detectOnIdentity(sideName, doc1, doc2)).be.undefined()
+        should(Conflict.detectOnIdentity(sideName, doc2, doc1)).be.undefined()
       })
     })
 
@@ -92,12 +63,12 @@ describe('Conflict', function () {
       it('detects nothing (replacement)', () => {
         const doc1 = builders.whatever().path('foo').remoteId('1').build()
         const doc2 = builders.whatever().path('foo').remoteId('2').build()
-        should(Conflict.existsBetween(doc1, doc2)).be.false()
-        should(Conflict.existsBetween(doc2, doc1)).be.false()
+        should(Conflict.detectOnIdentity(sideName, doc1, doc2)).be.undefined()
+        should(Conflict.detectOnIdentity(sideName, doc2, doc1)).be.undefined()
 
         delete doc2.remote
-        should(Conflict.existsBetween(doc1, doc2)).be.false()
-        should(Conflict.existsBetween(doc2, doc1)).be.false()
+        should(Conflict.detectOnIdentity(sideName, doc1, doc2)).be.undefined()
+        should(Conflict.detectOnIdentity(sideName, doc2, doc1)).be.undefined()
       })
     })
 
@@ -105,13 +76,13 @@ describe('Conflict', function () {
       it('detects nothing (move)', () => {
         const doc1 = builders.whatever().path('foo').remoteId('1').build()
         const doc2 = builders.whatever().path('bar').remoteId('1').build()
-        should(Conflict.existsBetween(doc1, doc2)).be.false()
-        should(Conflict.existsBetween(doc2, doc1)).be.false()
+        should(Conflict.detectOnIdentity(sideName, doc1, doc2)).be.undefined()
+        should(Conflict.detectOnIdentity(sideName, doc2, doc1)).be.undefined()
 
         delete doc1.remote
         delete doc2.remote
-        should(Conflict.existsBetween(doc1, doc2)).be.false()
-        should(Conflict.existsBetween(doc2, doc1)).be.false()
+        should(Conflict.detectOnIdentity(sideName, doc1, doc2)).be.undefined()
+        should(Conflict.detectOnIdentity(sideName, doc2, doc1)).be.undefined()
       })
     })
 
@@ -128,23 +99,43 @@ describe('Conflict', function () {
 
       onPlatforms('win32', 'darwin', () => {
         it('detects an identity conflict (cannot coexist locally)', () => {
-          should(Conflict.existsBetween(doc1, doc2)).be.true()
-          should(Conflict.existsBetween(doc2, doc1)).be.true()
+          should(Conflict.detectOnIdentity(sideName, doc1, doc2)).deepEqual({
+            existingDoc: doc2,
+            newDoc: doc1,
+            platform,
+            sideName
+          })
+          should(Conflict.detectOnIdentity(sideName, doc2, doc1)).deepEqual({
+            existingDoc: doc1,
+            newDoc: doc2,
+            platform,
+            sideName
+          })
 
           delete doc1.remote
-          should(Conflict.existsBetween(doc1, doc2)).be.true()
-          should(Conflict.existsBetween(doc2, doc1)).be.true()
+          should(Conflict.detectOnIdentity(sideName, doc1, doc2)).deepEqual({
+            existingDoc: doc2,
+            newDoc: doc1,
+            platform,
+            sideName
+          })
+          should(Conflict.detectOnIdentity(sideName, doc2, doc1)).deepEqual({
+            existingDoc: doc1,
+            newDoc: doc2,
+            platform,
+            sideName
+          })
         })
       })
 
       onPlatform('linux', () => {
         it('detects nothing (can coexist locally)', () => {
-          should(Conflict.existsBetween(doc1, doc2)).be.false()
-          should(Conflict.existsBetween(doc2, doc1)).be.false()
+          should(Conflict.detectOnIdentity(sideName, doc1, doc2)).be.undefined()
+          should(Conflict.detectOnIdentity(sideName, doc2, doc1)).be.undefined()
 
           delete doc1.remote
-          should(Conflict.existsBetween(doc1, doc2)).be.false()
-          should(Conflict.existsBetween(doc2, doc1)).be.false()
+          should(Conflict.detectOnIdentity(sideName, doc1, doc2)).be.undefined()
+          should(Conflict.detectOnIdentity(sideName, doc2, doc1)).be.undefined()
         })
       })
     })
@@ -153,12 +144,12 @@ describe('Conflict', function () {
       it('detects nothing (totally unrelated)', () => {
         const doc1 = builders.whatever().path('foo').remoteId('1').build()
         const doc2 = builders.whatever().path('bar').remoteId('2').build()
-        should(Conflict.existsBetween(doc1, doc2)).be.false()
-        should(Conflict.existsBetween(doc2, doc1)).be.false()
+        should(Conflict.detectOnIdentity(sideName, doc1, doc2)).be.undefined()
+        should(Conflict.detectOnIdentity(sideName, doc2, doc1)).be.undefined()
 
         delete doc1.remote
-        should(Conflict.existsBetween(doc1, doc2)).be.false()
-        should(Conflict.existsBetween(doc2, doc1)).be.false()
+        should(Conflict.detectOnIdentity(sideName, doc1, doc2)).be.undefined()
+        should(Conflict.detectOnIdentity(sideName, doc2, doc1)).be.undefined()
       })
     })
   })
