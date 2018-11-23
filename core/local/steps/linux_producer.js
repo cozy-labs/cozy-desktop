@@ -75,6 +75,7 @@ module.exports = class LinuxProducer /*:: implements Runner */ {
     }
   }
 
+  // TODO it looks like we don't have renamed events with recursive: false
   async add (relPath /*: string */) {
     try {
       if (!this.running || this.watchers.has(relPath)) {
@@ -88,7 +89,7 @@ module.exports = class LinuxProducer /*:: implements Runner */ {
       }
       this.watchers.set(relPath, w)
     } catch (err) {
-      // The directory may been removed since we wanted to watch it
+      // The directory may have been removed since we wanted to watch it
     }
   }
 

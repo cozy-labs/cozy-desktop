@@ -1,6 +1,7 @@
 /* @flow */
 
 const { buildDir, buildFile } = require('../../metadata')
+const fs = require('fs')
 
 /*::
 import type Buffer from './buffer'
@@ -74,13 +75,13 @@ actions = {
 
   deletedfile: async (event) => {
     // TODO we don't have stats and md5sum for deleted files
-    const doc = buildFile(event.path, event.stats, event.md5sum)
+    const doc = buildFile(event.path, new fs.Stats(), event.md5sum)
     await target.trashFileAsync(SIDE, doc)
   },
 
   deleteddirectory: async (event) => {
     // TODO we don't have stats for deleted folders
-    const doc = buildDir(event.path, event.stats)
+    const doc = buildDir(event.path, new fs.Stats())
     await target.trashFolderAsync(SIDE, doc)
   }
 }
