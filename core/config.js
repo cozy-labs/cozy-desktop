@@ -1,5 +1,5 @@
-// FIXME: const autoBind = require('auto-bind')
-const fs = require('fs-extra')
+const fs = require('fs')
+const fse = require('fs-extra')
 const _ = require('lodash')
 const path = require('path')
 
@@ -16,9 +16,9 @@ module.exports = class Config {
   // Create config file if it doesn't exist.
   constructor (basePath) {
     this.configPath = path.join(basePath, 'config.json')
-    fs.ensureFileSync(this.configPath)
+    fse.ensureFileSync(this.configPath)
     this.dbPath = path.join(basePath, 'db')
-    fs.ensureDirSync(this.dbPath)
+    fse.ensureDirSync(this.dbPath)
     hideOnWindows(basePath)
 
     this.config = this.read()
@@ -27,11 +27,11 @@ module.exports = class Config {
   // Load a config JSON file or return an empty object
   static safeLoad (configPath) {
     try {
-      return fs.readJSONSync(configPath)
+      return fse.readJSONSync(configPath)
     } catch (e) {
       if (e instanceof SyntaxError) {
         log.error(`Could not read config file at ${configPath}:`, e)
-        fs.unlinkSync(configPath)
+        fse.unlinkSync(configPath)
         return {}
       } else {
         throw e
@@ -41,7 +41,7 @@ module.exports = class Config {
 
   // Read the configuration from disk
   read () {
-    if (fs.existsSync(this.tmpConfigPath)) {
+    if (fse.existsSync(this.tmpConfigPath)) {
       const tmpConfig = Config.safeLoad(this.tmpConfigPath)
 
       if (_.size(tmpConfig) > 0) {
@@ -67,13 +67,19 @@ module.exports = class Config {
   }
 
   _writeTmpConfig (config) {
-    fs.ensureFileSync(this.tmpConfigPath)
-    fs.writeFileSync(this.tmpConfigPath, config)
+    fse.ensureFileSync(this.tmpConfigPath)
+    fse.writeFileSync(this.tmpConfigPath, config)
   }
 
   _moveTmpConfig () {
-    fs.copySync(this.tmpConfigPath, this.configPath, fs.constants.COPYFILE_FICLONE)
-    fs.unlinkSync(this.tmpConfigPath)
+    if (fs.copyFileSync && fs.constants.COPYFILE_FICLONE) {
+      // Node v8.5.0+ can use a copy-on-write reflink
+      fs.copyFileSync(this.tmpConfigPath, this.configPath, fs.constants.COPYFILE_FICLONE)
+    } else {
+      // Fallback for old node versions
+      fse.copySync(this.tmpConfigPath, this.configPath)
+    }
+    fse.unlinkSync(this.tmpConfigPath)
   }
 
   // Transform the config to a JSON string
