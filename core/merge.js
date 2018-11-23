@@ -5,7 +5,7 @@ const _ = require('lodash')
 const { clone } = _
 const { basename, dirname, extname, join } = require('path')
 
-const IdConflict = require('./IdConflict')
+const Conflict = require('./Conflict')
 const logger = require('./logger')
 const {
   assignId,
@@ -26,7 +26,7 @@ const { otherSide } = require('./side')
 const fsutils = require('./utils/fs')
 
 /*::
-import type { IdConflictInfo } from './IdConflict'
+import type { IdConflictInfo } from './Conflict'
 import type Local from './local'
 import type { SideName, Metadata, RemoteRevisionsByID } from './metadata'
 import type Pouch from './pouch'
@@ -138,9 +138,9 @@ class Merge {
     const {path} = doc
     const file /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
     markSide(side, doc, file)
-    const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(side, doc, file)
+    const idConflict /*: ?IdConflictInfo */ = Conflict.detectOnIdentity(side, doc, file)
     if (idConflict) {
-      log.warn({idConflict}, IdConflict.description(idConflict))
+      log.warn({idConflict}, Conflict.description(idConflict))
       await this.resolveConflictAsync(side, doc, file)
       return
     } else if (file && file.docType === 'folder') {
@@ -252,9 +252,9 @@ class Merge {
       return this.resolveConflictAsync(side, doc, folder)
     }
     assignMaxDate(doc, folder)
-    const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(side, doc, folder)
+    const idConflict /*: ?IdConflictInfo */ = Conflict.detectOnIdentity(side, doc, folder)
     if (idConflict) {
-      log.warn({idConflict}, IdConflict.description(idConflict))
+      log.warn({idConflict}, Conflict.description(idConflict))
       await this.resolveConflictAsync(side, doc, folder)
       return
     } else if (folder) {
@@ -283,9 +283,9 @@ class Merge {
       return this.addFileAsync(side, doc)
     } else if (was.sides && was.sides[side]) {
       const file /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
-      const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(side, doc, file)
+      const idConflict /*: ?IdConflictInfo */ = Conflict.detectOnIdentity(side, doc, file)
       if (idConflict) {
-        log.warn({idConflict}, IdConflict.description(idConflict))
+        log.warn({idConflict}, Conflict.description(idConflict))
         await this.resolveConflictAsync(side, doc, file)
         return
       }
@@ -331,9 +331,9 @@ class Merge {
     if (doc.tags == null) { doc.tags = was.tags || [] }
     if (doc.ino == null) { doc.ino = was.ino }
 
-    const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(side, doc, folder)
+    const idConflict /*: ?IdConflictInfo */ = Conflict.detectOnIdentity(side, doc, folder)
     if (idConflict) {
-      log.warn({idConflict}, IdConflict.description(idConflict))
+      log.warn({idConflict}, Conflict.description(idConflict))
       return this.resolveConflictAsync(side, doc, folder)
     }
 

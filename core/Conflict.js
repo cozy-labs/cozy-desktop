@@ -26,7 +26,7 @@ export opaque type IdConflictInfo = {
 
 module.exports = {
   description,
-  detect,
+  detectOnIdentity,
   existsBetween
 }
 
@@ -54,7 +54,7 @@ function description ({ sideName, newDoc, existingDoc, platform } /*: IdConflict
  * FIXME: sideName and newDoc probably belong to the same data structure
  *        (representing some change to be merged).
  */
-function detect (sideName /*: SideName */, newDoc /*: Metadata */, existingDoc /*: ?Metadata */) /*: ?IdConflictInfo */ {
+function detectOnIdentity (sideName /*: SideName */, newDoc /*: Metadata */, existingDoc /*: ?Metadata */) /*: ?IdConflictInfo */ {
   if (existingDoc && existsBetween(newDoc, existingDoc)) {
     return {
       existingDoc,
