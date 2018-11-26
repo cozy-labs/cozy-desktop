@@ -191,7 +191,7 @@ const sendDiskUsage = () => {
       (res) => {
         const space = {
           used: +res.attributes.used,
-          quota: +res.attributes.quota
+          quota: +(res.attributes.quota || 0)
         }
         trayWindow.send('disk-space', space)
       },
