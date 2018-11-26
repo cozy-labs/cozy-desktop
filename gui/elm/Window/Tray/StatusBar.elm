@@ -1,4 +1,4 @@
-module Window.Tray.StatusBar exposing (icon, imgIcon, view, viewMessage)
+module Window.Tray.StatusBar exposing (icon, imgIcon, view, viewMessage, statusToString)
 
 import Data.Platform exposing (Platform(..))
 import Data.Status exposing (Status(..))
@@ -58,41 +58,57 @@ icon status platform =
                     span [ class "status__icon spin" ] []
 
 
+statusToString : Helpers -> Status -> String
+statusToString helpers status =
+    case status of
+        UpToDate ->
+            helpers.t "Dashboard Your cozy is up to date!"
+
+        Offline ->
+            helpers.t "Dashboard Offline"
+
+        UserActionRequired ->
+            helpers.t "Dashboard Synchronization impossible"
+
+        Starting ->
+            helpers.t "Dashboard Analyze"
+
+        Buffering ->
+            helpers.t "Dashboard Analyze"
+
+        SquashPrepMerging ->
+            helpers.t "Dashboard Prepare"
+
+        Syncing _ ->
+            helpers.t "Dashboard Synchronize"
+
+
+        Error _ ->
+            helpers.t "Dashboard Error:"
+
+
+
 viewMessage : Helpers -> Status -> List (Html msg)
 viewMessage helpers status =
     case
         status
     of
-        UpToDate ->
-            [ text (helpers.t "Dashboard Your cozy is up to date!") ]
-
-        Offline ->
-            [ text (helpers.t "Dashboard Offline") ]
-
-        UserActionRequired ->
-            [ text (helpers.t "Dashboard Synchronization impossible") ]
-
-        Starting ->
-            [ text (helpers.t "Dashboard Analyze") ]
-
-        Buffering ->
-            [ text (helpers.t "Dashboard Analyze") ]
-
-        SquashPrepMerging ->
-            [ text (helpers.t "Dashboard Prepare") ]
 
         Syncing n ->
-            [ text (helpers.t "Dashboard Synchronize")
+            [ text (statusToString helpers status)
             , text " ("
             , text (helpers.pluralize n "Dashboard left SINGULAR" "Dashboard left PLURAL")
             , text ")"
             ]
 
         Error message ->
-            [ text (helpers.t "Dashboard Error:")
+            [ text (statusToString helpers status)
             , text " "
             , em [] [ text message ]
             ]
+
+        _ ->
+            [ text (statusToString helpers status) ]
 
 
 view : Helpers -> Status -> Platform -> Html msg
