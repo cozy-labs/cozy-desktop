@@ -14,10 +14,6 @@ const InitialDiff = require('./steps/initial_diff')
 const AddChecksum = require('./steps/add_checksum')
 const Dispatch = require('./steps/dispatch')
 
-const WinSource = require('./layers/win')
-const ChecksumLayer = require('./layers/checksum')
-const Dispatcher = require('./layers/dispatcher')
-
 /*::
 import type Pouch from '../pouch'
 import type Prep from '../prep'
@@ -55,24 +51,20 @@ module.exports = class AtomWatcher {
     this.ignore = ignore
     this.checksumer = checksumer.init()
 
+    let steps
     if (process.platform === 'linux') {
       this.runner = this.adder = new LinuxProducer(this)
-      const linux = this.runner.buffer
-      const infos = AddInfos(linux, this)
-      const ignore = FilterIgnored(infos, this)
-      const recurse = Recurse(ignore, this)
-      const initialDiff = InitialDiff(recurse, this)
-      const checksum = AddChecksum(initialDiff, this)
-      Dispatch(checksum, this)
+      steps = [AddInfos, FilterIgnored, Recurse, InitialDiff, AddChecksum]
     } else if (process.platform === 'win32') {
+      this.runner = new WinProducer(this)
       // TODO add a layer to detect moves
       // TODO do we need a debounce layer (a port of awaitWriteFinish of chokidar)?
-      const dispatcher = new Dispatcher(prep, pouch, events)
-      const checksumer = new ChecksumLayer(dispatcher, this.checksumer)
-      this.runner = new WinSource(syncPath, checksumer)
+      steps = [AddInfos, FilterIgnored, InitialDiff, AddChecksum]
     } else {
       throw new Error('The experimental watcher is not available on this platform')
     }
+    let buffer = steps.reduce((buf, step) => step(buf, this), this.runner.buffer)
+    Dispatch(buffer, this)
   }
 
   start () {
