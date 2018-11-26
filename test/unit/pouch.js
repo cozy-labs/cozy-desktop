@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 
-const async = require('async')
 const Promise = require('bluebird')
 const jsv = require('jsverify')
 const path = require('path')
@@ -512,11 +511,12 @@ if (doc.docType === 'folder') {
         await should(this.pouch.getRemoteSeqAsync()).be.fulfilledWith(32)
       })
 
-      it('can be called multiple times in parallel', function (done) {
-        return async.each(_.range(1, 101), this.pouch.setRemoteSeq, function (err) {
-          should.not.exist(err)
-          done()
-        })
+      it('can be called multiple times in parallel', async function () {
+        await Promise.map(
+          _.range(1, 101),
+          seq => this.pouch.setRemoteSeqAsync(seq),
+          {concurrency: 2}
+        )
       })
     })
   })
