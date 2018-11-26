@@ -9,7 +9,6 @@ const LinuxProducer = require('./steps/linux_producer')
 const WinProducer = require('./steps/win_producer')
 const AddInfos = require('./steps/add_infos')
 const FilterIgnored = require('./steps/filter_ignored')
-const Recurse = require('./steps/recurse')
 const InitialDiff = require('./steps/initial_diff')
 const AddChecksum = require('./steps/add_checksum')
 const Dispatch = require('./steps/dispatch')
@@ -36,7 +35,6 @@ module.exports = class AtomWatcher {
   events: EventEmitter
   ignore: Ignore
   checksumer: Checksumer
-  adder: Adder
   runner: Runner
   running: Promise<void>
   _runningResolve: ?Function
@@ -53,8 +51,8 @@ module.exports = class AtomWatcher {
 
     let steps
     if (process.platform === 'linux') {
-      this.runner = this.adder = new LinuxProducer(this)
-      steps = [AddInfos, FilterIgnored, Recurse, InitialDiff, AddChecksum]
+      this.runner = new LinuxProducer(this)
+      steps = [AddInfos, FilterIgnored, InitialDiff, AddChecksum]
     } else if (process.platform === 'win32') {
       this.runner = new WinProducer(this)
       // TODO add a layer to detect moves
