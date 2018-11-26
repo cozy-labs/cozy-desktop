@@ -360,10 +360,14 @@ const makeComparator = (name, interestingFields) => {
       })
     })
   }
+  const canBeIgnoredDiff = (difference) => {
+    const diff = difference.item || difference
+    return _.isNil(diff.lhs) && _.isNil(diff.rhs)
+  }
   return (one, two) => {
     const diff = deepDiff(one, two, filter)
     log.trace({path: two.path, diff}, name)
-    return !diff
+    return !diff || _.every(diff, canBeIgnoredDiff)
   }
 }
 
