@@ -6,6 +6,7 @@ const checksumer = require('./checksumer')
 const logger = require('../logger')
 
 const LinuxProducer = require('./steps/linux_producer')
+const WinProducer = require('./steps/win_producer')
 const AddInfos = require('./steps/add_infos')
 const FilterIgnored = require('./steps/filter_ignored')
 const Recurse = require('./steps/recurse')
@@ -24,7 +25,7 @@ import type EventEmitter from 'events'
 import type { Ignore } from '../ignore'
 import type { Checksumer } from './checksumer'
 import type { Adder } from './steps/recurse'
-import type { Runner } from './steps/linux_producer'
+import type { Runner } from './steps/runner'
 */
 
 const log = logger({
