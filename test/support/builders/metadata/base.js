@@ -35,7 +35,6 @@ module.exports = class BaseMetadataBuilder {
     if (old) {
       this.old = old
       this.doc = _.cloneDeep(old)
-      this.doc.tags.push('changed-tag')
     } else {
       this.doc = {
         _id: id('foo'),
@@ -50,6 +49,13 @@ module.exports = class BaseMetadataBuilder {
         updated_at: timestamp.stringify(timestamp.current())
       }
     }
+  }
+
+  /** Make sure the doc is not the same as before. */
+  whateverChange () /*: this */ {
+    this.doc.tags = this.doc.tags || []
+    this.doc.tags.push('changed-tag')
+    return this
   }
 
   unmerged (sideName /*: SideName */) /*: this */ {
