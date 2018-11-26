@@ -312,7 +312,7 @@ describe('metadata', function () {
     })
   })
 
-  describe('sameFolder', () =>
+  describe('sameFolder', () => {
     it('returns true if the folders are the same', function () {
       let a = {
         _id: 'FOO/BAR',
@@ -396,7 +396,39 @@ describe('metadata', function () {
         moveFrom: a
       }))).be.true()
     })
-  )
+
+    it('does not fail when a property is absent on one side and undefined on the other', function () {
+      let a = {
+        _id: 'FOO/BAR',
+        docType: 'folder',
+        path: 'foo/bar',
+        updated_at: '2015-12-01T11:22:56.517Z',
+        tags: ['qux'],
+        remote: {
+          id: '123',
+          rev: '4-567'
+        },
+        ino: 234,
+        trashed: false
+      }
+
+      _.each(['path', 'docType', 'remote', 'tags', 'trashed', 'ino'], (property) => {
+        let b = _.clone(a)
+        b[property] = undefined
+        let c = _.clone(a)
+        c[property] = null
+        let d = _.clone(a)
+        delete d[property]
+
+        sameFolder(a, b).should.be.false(`undefined ${property} is same as ${a[property]}`)
+        sameFolder(a, c).should.be.false(`null ${property} is same as ${a[property]}`)
+        sameFolder(a, d).should.be.false(`absent ${property} is same as ${a[property]}`)
+        sameFolder(b, c).should.be.true(`undefined ${property} is not same as null`)
+        sameFolder(b, d).should.be.true(`undefined ${property} is not as absent`)
+        sameFolder(c, d).should.be.true(`null ${property} is not same as absent`)
+      })
+    })
+  })
 
   describe('sameFile', function () {
     it('returns true if the files are the same', function () {
@@ -535,6 +567,43 @@ describe('metadata', function () {
       sameFile(b, c).should.be.true()
       sameFile(b, d).should.be.false()
       sameFile(c, d).should.eql(process.platform === 'win32')
+    })
+
+    it('does not fail when a property is absent on one side and undefined on the other', function () {
+      let a = {
+        _id: 'FOO/BAR',
+        docType: 'file',
+        path: 'foo/bar',
+        ino: 23452,
+        md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
+        size: 22,
+        updated_at: '2015-12-01T11:22:56.517Z',
+        tags: ['qux'],
+        remote: {
+          id: '123',
+          rev: '4-567'
+        },
+        trashed: false,
+        executable: false
+      }
+
+      _.each([
+        'path', 'docType', 'md5sum', 'remote', 'remote', 'tags', 'size', 'trashed', 'ino'
+      ], (property) => {
+        let b = _.clone(a)
+        b[property] = undefined
+        let c = _.clone(a)
+        c[property] = null
+        let d = _.clone(a)
+        delete d[property]
+
+        sameFile(a, b).should.be.false(`undefined ${property} is same as ${a[property]}`)
+        sameFile(a, c).should.be.false(`null ${property} is same as ${a[property]}`)
+        sameFile(a, d).should.be.false(`absent ${property} is same as ${a[property]}`)
+        sameFile(b, c).should.be.true(`undefined ${property} is not same as null`)
+        sameFile(b, d).should.be.true(`undefined ${property} is not as absent`)
+        sameFile(c, d).should.be.true(`null ${property} is not same as absent`)
+      })
     })
   })
 
