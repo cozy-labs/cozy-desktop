@@ -95,7 +95,7 @@ update msg model =
             ( { model | busyQuitting = True }, Ports.closeApp () )
 
         Sync ->
-            ( model, Cmd.none )
+            ( model, Ports.manualStartSync () )
 
 
 
