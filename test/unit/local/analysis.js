@@ -1,6 +1,7 @@
 /* eslint-env mocha */
 
 const should = require('should')
+const path = require('path')
 
 const analysis = require('../../../core/local/analysis')
 
@@ -466,17 +467,50 @@ describe('core/local/analysis', function () {
     ])
   })
 
+  it('sort correctly unlink + add + move dir', () => {
+    const dirStats = {ino: 1}
+    const fileStats = {ino: 2}
+    const newFileStats = {ino: 3}
+
+    const oldDirPath = 'root/src/dir'
+    const oldFilePath = 'root/src/dir/file.rtf'
+    const newDirPath = 'root/dir/file.rtf'
+    const newFilePath = 'root/dir/file.rtf'
+
+    const dirMetadata /*: Metadata */ = metadataBuilders.dir().path(oldDirPath).ino(dirStats.ino).build()
+    const fileMetadata  /*: Metadata */ = metadataBuilders.file().path(oldFilePath).ino(fileStats.ino).build()
+
+    const events /*: LocalEvent[] */ = [
+      {type: 'addDir', path: newDirPath, stats: dirStats},
+      {type: 'add', path: newFilePath, stats: newFileStats},
+      {type: 'unlinkDir', path: oldDirPath, old: dirMetadata},
+      {type: 'unlink', path: oldFilePath, old: fileMetadata}
+    ]
+    const pendingChanges /*: LocalChange[] */ = []
+
+    const changes = analysis(events, pendingChanges)
+    changes.map(change => change.type).should.deepEqual([
+      'DirMove', 'FileAddition', 'FileDeletion'
+    ])
+  })
+
   it('sorts actions', () => {
+    const normalizer = (x) => {
+      x.path = path.normalize(x.path)
+      if (x.old) x.old.path = path.normalize(x.old.path)
+      return x
+    }
+
     const dirStats = {ino: 1}
     const subdirStats = {ino: 2}
     const fileStats = {ino: 3}
     const otherFileStats = {ino: 4}
     const otherDirStats = {ino: 5}
-    const dirMetadata /*: Metadata */ = metadataBuilders.dir().ino(dirStats.ino).build()
-    const subdirMetadata /*: Metadata */ = metadataBuilders.dir().ino(subdirStats.ino).build()
-    const fileMetadata  /*: Metadata */ = metadataBuilders.file().ino(fileStats.ino).build()
-    const otherFileMetadata  /*: Metadata */ = metadataBuilders.file().ino(otherFileStats.ino).build()
-    const otherDirMetadata  /*: Metadata */ = metadataBuilders.dir().ino(otherDirStats.ino).build()
+    const dirMetadata /*: Metadata */ = normalizer(metadataBuilders.dir().path('src').ino(dirStats.ino).build())
+    const subdirMetadata /*: Metadata */ = normalizer(metadataBuilders.dir().path('src/subdir').ino(subdirStats.ino).build())
+    const fileMetadata  /*: Metadata */ = normalizer(metadataBuilders.file().path('src/file').ino(fileStats.ino).build())
+    const otherFileMetadata  /*: Metadata */ = normalizer(metadataBuilders.file().path('other-file').ino(otherFileStats.ino).build())
+    const otherDirMetadata  /*: Metadata */ = normalizer(metadataBuilders.dir().path('other-dir-src').ino(otherDirStats.ino).build())
     const events /*: LocalEvent[] */ = [
       {type: 'unlinkDir', path: 'src/subdir', old: subdirMetadata},
       {type: 'unlinkDir', path: 'src', old: dirMetadata},
@@ -487,15 +521,12 @@ describe('core/local/analysis', function () {
       {type: 'change', path: 'other-file', stats: otherFileStats, md5sum: 'yolo', old: otherFileMetadata},
       {type: 'unlinkDir', path: 'other-dir-src', old: otherDirMetadata},
       {type: 'addDir', path: 'other-dir-dst', stats: otherDirStats}
-    ]
+    ].map(normalizer)
     const pendingChanges /*: LocalChange[] */ = []
 
     should(analysis(events, pendingChanges)).deepEqual([
       {sideName, type: 'FileUpdate', path: 'other-file', stats: otherFileStats, ino: otherFileStats.ino, md5sum: 'yolo', old: otherFileMetadata},
-      {sideName, type: 'DirMove', path: 'dst', stats: dirStats, ino: dirStats.ino, old: dirMetadata},
-      // FIXME: Move should have been squashed
-      {sideName, type: 'FileMove', path: 'dst/file', stats: fileStats, ino: fileStats.ino, old: fileMetadata},
-      {sideName, type: 'DirMove', path: 'dst/subdir', stats: subdirStats, ino: subdirStats.ino, old: subdirMetadata},
+      {sideName, type: 'DirMove', path: 'dst', stats: dirStats, ino: dirStats.ino, old: dirMetadata, wip: undefined},
       {sideName, type: 'DirMove', path: 'other-dir-dst', stats: otherDirStats, ino: otherDirStats.ino, old: otherDirMetadata}
     ])
   })
