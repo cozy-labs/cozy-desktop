@@ -645,30 +645,30 @@ describe('metadata', function () {
   })
 
   describe('invariants', () => {
-    let file
+    let doc
     beforeEach(async () => {
       const builders = new MetadataBuilders(this.pouch)
-      file = await builders.whatever().upToDate().remoteId('badbeef').build()
+      doc = await builders.whatever().upToDate().remoteId('badbeef').build()
     })
 
     it('throws when trying to put bad doc (no sides)', async () => {
-      should(() => invariants(Object.assign(file, {sides: null}))
+      should(() => invariants(Object.assign(doc, {sides: null}))
         ).throw(/sides/)
     })
 
     it('throws when trying to put bad doc (no remote)', async () => {
-      should(() => invariants(Object.assign(file, {remote: null}))
+      should(() => invariants(Object.assign(doc, {remote: null}))
         ).throw(/sides\.remote/)
     })
 
     it('throws when trying to put bad doc (no md5sum)', async () => {
-      file = await builders.file().upToDate().remoteId('badbeef').build()
-      should(() => invariants(Object.assign(file, {md5sum: null}))
+      doc = await builders.file().upToDate().remoteId('badbeef').build()
+      should(() => invariants(Object.assign(doc, {md5sum: null}))
         ).throw(/checksum/)
     })
 
     it('does not throw when trying to put bad doc when deleted and up-to-date', async () => {
-      should(() => invariants(Object.assign(file, {
+      should(() => invariants(Object.assign(doc, {
         _deleted: true, sides: { local: 0, remote: 0 }, remote: null, md5sum: null
       }))).not.throw()
     })
