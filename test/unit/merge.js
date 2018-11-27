@@ -247,7 +247,7 @@ describe('Merge', function () {
 
     it('saves a new version of an existing folder', async function () {
       const old = await builders.dir().path('existing-folder').create()
-      const doc = builders.dir(old).changedSide(this.side).build()
+      const doc = builders.dir(old).whateverChange().changedSide(this.side).build()
 
       await this.merge.putFolderAsync(this.side, doc)
 
