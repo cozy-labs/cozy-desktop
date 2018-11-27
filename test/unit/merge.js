@@ -130,7 +130,7 @@ describe('Merge', function () {
       const doc = builders.file(was).unmerged('local').data('second update').newerThan(was).build()
 
       sinon.spy(this.pouch, 'put')
-      await this.merge.addFileAsync('local', _.cloneDeep(doc), _.cloneDeep(was))
+      await this.merge.addFileAsync('local', _.cloneDeep(doc))
 
       const savedDocs = this.pouch.put.args.map(([doc]) =>
         _.pick(doc, ['md5sum', 'path', 'remote', 'sides'])
