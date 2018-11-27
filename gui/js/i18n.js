@@ -2,7 +2,6 @@ let app
 
 module.exports.init = (appRef) => {
   app = appRef
-  app.locale = 'en'
   app.translations = {}
 
   const locale = app.getLocale()
@@ -28,12 +27,11 @@ module.exports.platformName = () => {
     default: return process.platform
   }
 }
-module.exports.selectLocale = (locale) => {
-  if (locale === 'fr' || locale.match(/^fr_/i)) {
-    return 'fr'
-  } else if (locale === 'es' || locale.match(/^es_/i)) {
-    return 'es'
-  } else {
-    return 'en'
-  }
+
+function selectLocale (locale) {
+  const {enabled, defaultLocale} = require('../locales/locales.config.json')
+  const globalLocale = new RegExp('^([a-z]{2})').exec(locale)
+  return enabled.includes(globalLocale[1]) ? globalLocale[1] : defaultLocale
 }
+
+module.exports.selectLocale = selectLocale
