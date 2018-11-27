@@ -29,6 +29,7 @@ module.exports = class UpdaterWM extends WindowManager {
 
   constructor (...opts) {
     autoUpdater.logger = log
+    autoUpdater.autoDownload = false
     autoUpdater.on('update-available', (info) => {
       this.clearTimeoutIfAny()
       log.info({update: info, skipped: this.skipped}, 'Update available')
@@ -47,6 +48,7 @@ module.exports = class UpdaterWM extends WindowManager {
             buttons: ['Update', 'Cancel'].map(translate)
           }) === 0
         if (shouldUpdate) {
+          autoUpdater.downloadUpdate()
           this.show()
         } else {
           this.skipped = false
