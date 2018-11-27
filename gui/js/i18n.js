@@ -6,13 +6,7 @@ module.exports.init = (appRef) => {
   app.translations = {}
 
   const locale = app.getLocale()
-  if (locale === 'fr' || locale.match(/^fr_/i)) {
-    app.locale = 'fr'
-  } else if (locale === 'es' || locale.match(/^es_/i)) {
-    app.locale = 'es'
-  } else {
-    app.locale = 'en'
-  }
+  app.locale = selectLocale(locale)
 
   app.translations = require(`../locales/${app.locale}.json`)
 }
@@ -32,5 +26,14 @@ module.exports.platformName = () => {
     case 'sunos': return 'SunOS'
     case 'win32': return 'Windows'
     default: return process.platform
+  }
+}
+module.exports.selectLocale = (locale) => {
+  if (locale === 'fr' || locale.match(/^fr_/i)) {
+    return 'fr'
+  } else if (locale === 'es' || locale.match(/^es_/i)) {
+    return 'es'
+  } else {
+    return 'en'
   }
 }
