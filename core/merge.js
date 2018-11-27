@@ -320,35 +320,40 @@ class Merge {
   // Rename or move a folder (and every file and folder inside it)
   async moveFolderAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */, newRemoteRevs /*: ?RemoteRevisionsByID */) {
     log.debug({path: doc.path, oldpath: was.path}, 'moveFolderAsync')
-    if (was.sides && was.sides[side]) {
-      const folder /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
-      markSide(side, doc, folder)
-      markSide(side, was, was)
-      assignMaxDate(doc, was)
-      if (doc.tags == null) { doc.tags = was.tags || [] }
-      if (doc.ino == null) { doc.ino = was.ino }
-      // FIXME: Shouldn't we compare doc/was updated_at & set doc accordingly
-      // as in moveFileAsync?
-      const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(side, doc, folder)
-      if (idConflict) {
-        log.warn({idConflict}, IdConflict.description(idConflict))
-        await this.resolveConflictAsync(side, doc, folder)
-      } else if (folder && !doc.overwrite && doc.path === folder.path) {
+    if (!was.sides || !was.sides[side]) { // It can happen after a conflict
+      return this.putFolderAsync(side, doc)
+    }
+
+    const folder /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
+    markSide(side, doc, folder)
+    markSide(side, was, was)
+    assignMaxDate(doc, was)
+    if (doc.tags == null) { doc.tags = was.tags || [] }
+    if (doc.ino == null) { doc.ino = was.ino }
+
+    const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(side, doc, folder)
+    if (idConflict) {
+      log.warn({idConflict}, IdConflict.description(idConflict))
+      return this.resolveConflictAsync(side, doc, folder)
+    }
+
+    if (folder && !doc.overwrite && doc.path === folder.path) {
+      if (side === 'local' && !folder.sides.remote) {
+        doc.overwrite = folder
+      } else {
         const dst = await this.resolveConflictAsync(side, doc, folder)
         dst.sides = {}
         dst.sides[side] = 1
         return this.moveFolderRecursivelyAsync(side, dst, was, newRemoteRevs)
-      } else {
-        if (folder && doc.overwrite) {
-          doc.overwrite = folder
-          doc._rev = folder._rev
-        }
-        await this.ensureParentExistAsync(side, doc)
-        return this.moveFolderRecursivelyAsync(side, doc, was, newRemoteRevs)
       }
-    } else { // It can happen after a conflict
-      return this.putFolderAsync(side, doc)
     }
+
+    if (folder && doc.overwrite) {
+      doc.overwrite = folder
+      doc._rev = folder._rev
+    }
+    await this.ensureParentExistAsync(side, doc)
+    return this.moveFolderRecursivelyAsync(side, doc, was, newRemoteRevs)
   }
 
   // Move a folder and all the things inside it
