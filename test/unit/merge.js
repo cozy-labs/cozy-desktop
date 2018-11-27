@@ -15,13 +15,14 @@ const {
   onPlatforms
 } = require('../support/helpers/platform')
 const pouchHelpers = require('../support/helpers/pouch')
+const dbBuilders = require('../support/builders/db')
 const MetadataBuilders = require('../support/builders/metadata')
 
 describe('Merge', function () {
   let builders
 
   before('instanciate config', configHelpers.createConfig)
-  before('instanciate pouch', pouchHelpers.createDatabase)
+  beforeEach('instanciate pouch', pouchHelpers.createDatabase)
   beforeEach('instanciate merge', function () {
     this.side = 'local'
     this.merge = new Merge(this.pouch)
@@ -38,8 +39,7 @@ describe('Merge', function () {
     if (this.pouch.put.restore) this.pouch.put.restore()
     if (this.pouch.bulkDocs.restore) this.pouch.bulkDocs.restore()
   })
-  // FIXME: Clean everytime to prevent Pouch conflicts & tests coupling
-  after('clean pouch', pouchHelpers.cleanDatabase)
+  afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
   describe('addFile', function () {
@@ -60,7 +60,7 @@ describe('Merge', function () {
     })
 
     describe('when a file with the same path exists', function () {
-      before('create a file', async function () {
+      beforeEach('create a file', async function () {
         this.file = {
           _id: 'BUZZ.JPG',
           path: 'BUZZ.JPG',
@@ -151,7 +151,7 @@ describe('Merge', function () {
   })
 
   describe('updateFile', () => {
-    before('create a file', async function () {
+    beforeEach('simulate local merge', async function () {
       this.file = {
         _id: 'FIZZBUZZ.JPG',
         path: 'FIZZBUZZ.JPG',
@@ -164,7 +164,18 @@ describe('Merge', function () {
         mime: 'image/jpeg',
         ino: 3456
       }
-      await this.pouch.db.put(this.file)
+      metadata.markSide('local', this.file)
+      const { rev } = await this.pouch.db.put(this.file)
+      this.file._rev = rev
+    })
+    beforeEach('simulate remote sync', async function () {
+      this.file.remote = {
+        _id: dbBuilders.id(),
+        _rev: dbBuilders.rev(1)
+      }
+      metadata.markAsUpToDate(this.file)
+      const { rev } = await this.pouch.db.put(this.file)
+      this.file._rev = rev
     })
 
     it('creates the file if it does not exist', async function () {
@@ -195,12 +206,12 @@ describe('Merge', function () {
       this.file.updated_at = doc.updated_at.toISOString()
       await this.merge.updateFileAsync(this.side, doc)
       const res = await this.pouch.db.get(doc._id)
-      res.should.have.properties(this.file)
+      res.should.have.properties(_.omit(this.file, ['_rev']))
       res.size.should.equal(was.size)
       res.class.should.equal(was.class)
       res.mime.should.equal(was.mime)
       res.ino.should.equal(was.ino)
-      res.sides.local.should.equal(2)
+      res.sides.local.should.equal(3)
     })
 
     it('overwrite the content when it was changed', async function () {
@@ -209,15 +220,7 @@ describe('Merge', function () {
         path: 'FIZZBUZZ.JPG',
         docType: 'file',
         md5sum: '3333333333333333333333333333333333333333',
-        tags: ['qux', 'quux'],
-        sides: {
-          local: 2,
-          remote: 2
-        },
-        remote: {
-          _id: 'XXX',
-          _rev: '2-abc'
-        }
+        tags: ['qux', 'quux']
       }
       await this.merge.updateFileAsync(this.side, clone(doc))
       const res = await this.pouch.db.get(this.file._id)
@@ -363,6 +366,7 @@ describe('Merge', function () {
     })
 
     it('adds a hint for writers to know that it is a move', async function () {
+      await builders.dir().path('FOO').create()
       let doc = {
         _id: 'FOO/NEW-HINT',
         path: 'FOO/NEW-HINT',
@@ -485,7 +489,7 @@ describe('Merge', function () {
       const res = await this.pouch.db.get(doc._id)
       doc.updated_at = doc.updated_at.toISOString()
       res.should.have.properties(doc)
-      res.sides.local.should.equal(2)
+      res.sides.local.should.equal(1)
       should(res.moveFrom).be.undefined()
       should(res.moveTo).be.undefined()
       await should(this.pouch.db.get(was._id)).be.rejectedWith({status: 404})
@@ -574,6 +578,7 @@ describe('Merge', function () {
     })
 
     it('adds a hint for writers to know that it is a move', async function () {
+      await builders.dir().path('FOOBAR').create()
       let doc = {
         _id: 'FOOBAR/NEW-HINT',
         path: 'FOOBAR/NEW-HINT',
@@ -730,7 +735,7 @@ describe('Merge', function () {
   })
 
   describe('moveFolderRecursively', function () {
-    before(async function () {
+    beforeEach(async function () {
       await pouchHelpers.createParentFolder(this.pouch)
       await pouchHelpers.createFolder(this.pouch, 9)
       await pouchHelpers.createFile(this.pouch, 9)
