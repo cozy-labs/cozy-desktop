@@ -25,7 +25,7 @@ const {incompatibilitiesErrorMessage} = require('./js/incompatibilitiesmsg')
 const UserActionRequiredDialog = require('./js/components/UserActionRequiredDialog')
 const {app, Menu, Notification, ipcMain, dialog} = require('electron')
 
-const DAILY = 3600 * 24
+const DAILY = 3600 * 24 * 1000
 
 // FIXME: https://github.com/electron/electron/issues/10864
 if (process.platform === 'win32') app.setAppUserModelId('io.cozy.desktop')
