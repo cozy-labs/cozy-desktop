@@ -1,4 +1,4 @@
 {
-  "enabled": ["fr", "es", "en"],
+  "enabled": ["fr", "es", "en", "nl"],
   "defaultLocale": "en"
 }
