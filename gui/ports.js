@@ -11,6 +11,7 @@ const pkg = remote.require('../package.json')
 const defaults = remote.require('./js/defaults')
 
 const container = document.getElementById('container')
+const locales = remote.require('locales.js')
 
 const { Elm } = require('./elm')
 const elmectron = Elm.Main.init({
@@ -19,11 +20,7 @@ const elmectron = Elm.Main.init({
     hash: window.location.hash,
     folder: defaults.syncPath,
     locale: remote.app.locale,
-    locales: {
-      en: remote.require('./locales/en.json'),
-      es: remote.require('./locales/es.json'),
-      fr: remote.require('./locales/fr.json')
-    },
+    locales: locales,
     platform: remote.process.platform,
     version: pkg.version
   }

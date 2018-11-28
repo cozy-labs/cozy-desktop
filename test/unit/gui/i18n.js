@@ -1,10 +1,10 @@
 /* eslint-env mocha */
 
 const should = require('should')
-const { selectLocale } = require('../../../gui/js/i18n')
-const {enabled, defaultLocale} = require('../../../gui/locales/locales.config.json')
 
 describe('Select locale for app', () => {
+  const { selectLocale } = require('../../../gui/js/i18n')
+  const {enabled, defaultLocale} = require('../../../gui/locales/locales.config.json')
   describe('Enabled locales', () => {
     enabled.forEach(enabledLocale => {
       it(`should select ${enabledLocale} as it is enabled`, () => {
@@ -29,6 +29,16 @@ describe('Select locale for app', () => {
       const localizedLocale = `${targetLocale}_FR`
       should(enabled.includes(targetLocale)).be.false()
       should(selectLocale(localizedLocale)).equal('en')
+    })
+  })
+})
+
+describe('Load locales with json', () => {
+  const locales = require('../../../gui/locales')
+  const {enabled} = require('../../../gui/locales/locales.config.json')
+  enabled.forEach(enabledLocale => {
+    it(`should have a object for ${enabledLocale}`, () => {
+      should.exist(locales[enabledLocale])
     })
   })
 })
