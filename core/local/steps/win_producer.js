@@ -77,6 +77,9 @@ module.exports = class WinProducer /*:: implements Runner */ {
     // convenient for us to use a relative path.
     for (const event of batch) {
       event.path = path.relative(this.syncPath, event.path)
+      if (event.oldPath) {
+        event.oldPath = path.relative(this.syncPath, event.oldPath)
+      }
     }
     this.buffer.push(batch)
   }

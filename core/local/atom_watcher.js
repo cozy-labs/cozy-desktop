@@ -50,13 +50,13 @@ module.exports = class AtomWatcher {
     this.checksumer = checksumer.init()
 
     let steps
+    // TODO add a debounce layer (a port of awaitWriteFinish of chokidar)
     if (process.platform === 'linux') {
       this.runner = new LinuxProducer(this)
       steps = [AddInfos, FilterIgnored, InitialDiff, AddChecksum]
     } else if (process.platform === 'win32') {
       this.runner = new WinProducer(this)
       // TODO add a layer to detect moves
-      // TODO do we need a debounce layer (a port of awaitWriteFinish of chokidar)?
       steps = [AddInfos, FilterIgnored, InitialDiff, AddChecksum]
     } else {
       throw new Error('The experimental watcher is not available on this platform')

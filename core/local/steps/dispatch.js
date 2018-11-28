@@ -1,22 +1,24 @@
 /* @flow */
 
-const { buildDir, buildFile } = require('../../metadata')
-const fs = require('fs')
+const { buildDir, buildFile, id } = require('../../metadata')
 
 /*::
 import type Buffer from './buffer'
 import type EventEmitter from 'events'
 import type Prep from '../../prep'
+import type Pouch from '../../pouch'
 */
 
 const SIDE = 'local'
-let events, target, actions
+let events, target, pouch, actions
 
 // Dispatch takes a buffer of AtomWatcherEvents batches, and calls Prep for
 // each event.
-module.exports = function (buffer /*: Buffer */, opts /*: { events: EventEmitter, prep: Prep } */) {
+//
+module.exports = function (buffer /*: Buffer */, opts /*: { events: EventEmitter, prep: Prep, pouch: Pouch } */) {
   events = opts.events
   target = opts.prep
+  pouch = opts.pouch
   buffer.asyncForEach(async (batch) => {
     for (const event of batch) {
       try {
@@ -54,34 +56,95 @@ actions = {
 
   modifiedfile: async (event) => {
     const doc = buildFile(event.path, event.stats, event.md5sum)
+    try {
+      // It looks like merge expects a revision for _rev
+      const old = await fetchOldDoc(id(event.path))
+      doc._rev = old._rev
+    } catch (err) {
+      // TODO should we return target.addFileAsync(SIDE, doc) ?
+    }
     await target.updateFileAsync(SIDE, doc)
   },
 
-  modifieddirectory: (event) => actions.createddirectory(event),
+  modifieddirectory: async (event) => {
+    const doc = buildDir(event.path, event.stats)
+    try {
+      // It looks like merge expects a revision for _rev
+      const old = await fetchOldDoc(id(event.path))
+      doc._rev = old._rev
+    } catch (err) {}
+    await target.putFolderAsync(SIDE, doc)
+  },
 
   renamedfile: async (event) => {
-    // TODO we don't have stats and md5sum
-    const src = buildFile(event.oldPath, event.stats, event.md5sum)
-    const doc = buildFile(event.path, event.stats, event.md5sum)
-    await target.moveFileAsync(SIDE, doc, src)
+    let doc, old
+    try {
+      old = await fetchOldDoc(id(event.oldPath))
+      doc = buildFile(event.path, event.stats, event.md5sum)
+    } catch (err) {
+      // A renamed event where the source does not exist can be seen as just an
+      // add. It can happen on Linux when a file is added when the client is
+      // stopped, and is moved before it was scanned.
+      event.action = 'created'
+      delete event.oldPath
+      return actions.createdfile(event)
+    }
+    await target.moveFileAsync(SIDE, doc, old)
   },
 
   renameddirectory: async (event) => {
-    // TODO we don't have stats
-    const src = buildDir(event.oldPath, event.stats)
-    const doc = buildDir(event.path, event.stats)
-    await target.moveFolderAsync(SIDE, doc, src)
+    let doc, old
+    try {
+      old = await fetchOldDoc(id(event.oldPath))
+      doc = buildDir(event.path, event.stats)
+    } catch (err) {
+      // A renamed event where the source does not exist can be seen as just an
+      // add. It can happen on Linux when a dir is added when the client is
+      // stopped, and is moved before it was scanned.
+      event.action = 'created'
+      delete event.oldPath
+      return actions.createddirectory(event)
+    }
+    await target.moveFolderAsync(SIDE, doc, old)
   },
 
   deletedfile: async (event) => {
-    // TODO we don't have stats and md5sum for deleted files
-    const doc = buildFile(event.path, new fs.Stats(), event.md5sum)
-    await target.trashFileAsync(SIDE, doc)
+    let old
+    try {
+      old = await fetchOldDoc(event._id)
+    } catch (err) {
+      // The file was already marked as deleted in pouchdb
+      // => we can ignore safely this event
+      return
+    }
+    await target.trashFileAsync(SIDE, old)
   },
 
   deleteddirectory: async (event) => {
-    // TODO we don't have stats for deleted folders
-    const doc = buildDir(event.path, new fs.Stats())
-    await target.trashFolderAsync(SIDE, doc)
+    let old
+    try {
+      old = await fetchOldDoc(event._id)
+    } catch (err) {
+      // The dir was already marked as deleted in pouchdb
+      // => we can ignore safely this event
+      return
+    }
+    await target.trashFolderAsync(SIDE, old)
+  }
+}
+
+// We have to call fetchOldDoc from the dispatch step, and not in a separated
+// step before that because we need that all the event batches were passed to
+// prep/merge before trying to fetch the old doc. If it is not the case, if we
+// have in a buffer an add event for 'foo' and just after a renamed event for
+// 'foo' -> 'bar', the fetch old doc won't see 'foo' in pouch and the renamed
+// event will be misleady seen as just a 'created' event for 'bar' (but 'foo'
+// will still be created in pouch and not removed after that).
+async function fetchOldDoc (oldId /*: string */) {
+  const release = await pouch.lock('FetchOldDocs')
+  try {
+    return await pouch.db.get(oldId)
+  } finally {
+    release()
   }
 }

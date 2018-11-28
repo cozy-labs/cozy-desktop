@@ -71,8 +71,12 @@ async function step (state, op) {
     case 'mv':
       try {
         // XXX fs-extra move can enter in an infinite loop for some stupid moves
-        await fs.move(state.dir.abspath(op.from), state.dir.abspath(op.to))
-      } catch (err) {}
+        await new Promise(resolve =>
+          fs.rename(state.dir.abspath(op.from), state.dir.abspath(op.to), resolve)
+        )
+      } catch (err) {
+        console.log('Rename err', err)
+      }
       break
     case 'rm':
       try {

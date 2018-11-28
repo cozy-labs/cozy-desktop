@@ -11,7 +11,7 @@ export type AtomWatcherEvent = {
   _id?: string,
   docType?: string,
   stats?: Stats,
-  md5sum?: string
+  md5sum?: string,
 }
 
 export type Batch = AtomWatcherEvent[]
