@@ -9,6 +9,7 @@ const LinuxProducer = require('./steps/linux_producer')
 const WinProducer = require('./steps/win_producer')
 const AddInfos = require('./steps/add_infos')
 const FilterIgnored = require('./steps/filter_ignored')
+const AwaitWriteFinish = require('./steps/await_write_finish')
 const InitialDiff = require('./steps/initial_diff')
 const AddChecksum = require('./steps/add_checksum')
 const Dispatch = require('./steps/dispatch')
@@ -53,11 +54,11 @@ module.exports = class AtomWatcher {
     // TODO add a debounce layer (a port of awaitWriteFinish of chokidar)
     if (process.platform === 'linux') {
       this.runner = new LinuxProducer(this)
-      steps = [AddInfos, FilterIgnored, InitialDiff, AddChecksum]
+      steps = [AddInfos, FilterIgnored, AwaitWriteFinish, InitialDiff, AddChecksum]
     } else if (process.platform === 'win32') {
       this.runner = new WinProducer(this)
       // TODO add a layer to detect moves
-      steps = [AddInfos, FilterIgnored, InitialDiff, AddChecksum]
+      steps = [AddInfos, FilterIgnored, AwaitWriteFinish, InitialDiff, AddChecksum]
     } else {
       throw new Error('The experimental watcher is not available on this platform')
     }
