@@ -1,5 +1,32 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.11.0-beta.1 - 2018-11-28
+
+Improvements for all users:
+
+- We will now alert you when a new version of the app is available and give you
+  the option of restarting it to download and apply the new version or postpone
+  it.
+- To avoid losing your data, we're very careful when it comes to conflicts and
+  we prefer to leave it to you to choose between the two versions we detected.
+  However, when it comes to changes that haven't been synchronized yet, we can
+  avoid creating a conflict and pick the latest version for you.
+  From now on, we won't create a `-conflict-` version of a folder that has been
+  changed locally and never synchronized remotely with your Cozy.
+- If a file was changed remotely and its parent folder moved or renamed, we
+  could end up moving the file locally but not synchronize its new content.
+  We're now synchronizing all those changes correctly, leaving you with an
+  updated file in the correct location.
+- Similarly, adding a file locally to a folder that was just renamed or moved
+  but not yet fully synchronized with the remote Cozy would result in a
+  situation where the file is never uploaded to the remote Cozy and any changes
+  to it wouldn't be synchronized either. We're now making sure we finish
+  synchronizing the folder change and then synchronize the newly added file.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.10.4 - 2018-11-26
 
 See [3.10.4-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.10.4-beta.1)
