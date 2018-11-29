@@ -164,7 +164,7 @@ describe('Merge', function () {
     })
 
     it('overrides an unsynced local update with a new one detected by local initial scan', async function () {
-      const initialMerge = await builders.file().path('yafile').sides({local: 1}).data('initial content').create()
+      const initialMerge = await builders.file().path('yafile').sides({local: 1}).ino(37).data('initial content').create()
       const initialSync = await builders.file(initialMerge).sides({local: 2, remote: 2}).create()
       const was = await builders.file(initialSync).sides({local: 3, remote: 2}).data('first update').create()
       const doc = builders.file(was).unmerged('local').data('second update').newerThan(was).build()
@@ -178,7 +178,7 @@ describe('Merge', function () {
             _id: initialMerge._id,
             _rev: was._rev,
             docType: initialMerge.docType,
-            ino: undefined,
+            ino: initialMerge.ino,
             md5sum: doc.md5sum,
             moveFrom: undefined, // FIXME
             path: doc.path,
