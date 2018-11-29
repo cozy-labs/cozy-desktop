@@ -7,12 +7,12 @@ const logger = require('../logger')
 
 const LinuxProducer = require('./steps/linux_producer')
 const WinProducer = require('./steps/win_producer')
-const AddInfos = require('./steps/add_infos')
-const FilterIgnored = require('./steps/filter_ignored')
-const AwaitWriteFinish = require('./steps/await_write_finish')
-const InitialDiff = require('./steps/initial_diff')
-const AddChecksum = require('./steps/add_checksum')
-const Dispatch = require('./steps/dispatch')
+const addInfos = require('./steps/add_infos')
+const filterIgnored = require('./steps/filter_ignored')
+const awaitWriteFinish = require('./steps/await_write_finish')
+const initialDiff = require('./steps/initial_diff')
+const addChecksum = require('./steps/add_checksum')
+const dispatch = require('./steps/dispatch')
 
 /*::
 import type Pouch from '../pouch'
@@ -59,16 +59,16 @@ module.exports = class AtomWatcher {
     // TODO add a debounce layer (a port of awaitWriteFinish of chokidar)
     if (process.platform === 'linux') {
       this.runner = new LinuxProducer(this)
-      steps = [AddInfos, FilterIgnored, AwaitWriteFinish, InitialDiff, AddChecksum]
+      steps = [addInfos, filterIgnored, awaitWriteFinish, initialDiff, addChecksum]
     } else if (process.platform === 'win32') {
       this.runner = new WinProducer(this)
       // TODO add a layer to detect moves
-      steps = [AddInfos, FilterIgnored, AwaitWriteFinish, InitialDiff, AddChecksum]
+      steps = [addInfos, filterIgnored, awaitWriteFinish, initialDiff, addChecksum]
     } else {
       throw new Error('The experimental watcher is not available on this platform')
     }
     let buffer = steps.reduce((buf, step) => step(buf, this), this.runner.buffer)
-    Dispatch(buffer, this)
+    dispatch(buffer, this)
   }
 
   start () {

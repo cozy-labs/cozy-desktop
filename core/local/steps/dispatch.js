@@ -13,8 +13,8 @@ const SIDE = 'local'
 let events, target, pouch, actions
 
 // Dispatch takes a buffer of AtomWatcherEvents batches, and calls Prep for
-// each event.
-//
+// each event. It needs to fetch the old documents from pouchdb in some cases
+// to have all the data expected by prep/merge.
 module.exports = function (buffer /*: Buffer */, opts /*: { events: EventEmitter, prep: Prep, pouch: Pouch } */) {
   events = opts.events
   target = opts.prep
