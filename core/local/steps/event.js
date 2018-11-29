@@ -9,7 +9,7 @@ export type AtomWatcherEvent = {
   path: string,
   oldPath?: string,
   _id?: string,
-  docType?: string,
+  docType?: "file" | "directory",
   stats?: Stats,
   md5sum?: string,
 }

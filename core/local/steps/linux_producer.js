@@ -57,6 +57,10 @@ module.exports = class LinuxProducer /*:: implements Runner */ {
     // atom/watcher to finish putting its inotify watches on sub-directories.
     await Promise.delay(1000)
     await this.scan('.')
+    // The initial scan can miss some files or directories that have been
+    // moved. Wait a bit to ensure that the corresponding renamed events have
+    // been emited.
+    await Promise.delay(1000)
     const scanDone = { action: 'initial-scan-done', kind: 'unknown', path: '.' }
     this.buffer.push([scanDone])
   }

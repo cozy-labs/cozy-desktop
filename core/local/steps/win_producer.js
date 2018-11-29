@@ -4,6 +4,7 @@ const autoBind = require('auto-bind')
 const Buffer = require('./buffer')
 const fse = require('fs-extra') // Used for await
 const path = require('path')
+const Promise = require('bluebird')
 const watcher = require('@atom/watcher')
 
 /*::
@@ -39,6 +40,10 @@ module.exports = class WinProducer /*:: implements Runner */ {
   async start () {
     this.watcher = await watcher.watchPath(this.syncPath, { recursive: true }, this.process)
     await this.scan('.')
+    // The initial scan can miss some files or directories that have been
+    // moved. Wait a bit to ensure that the corresponding renamed events have
+    // been emited.
+    await Promise.delay(1000)
     const scanDone = { action: 'initial-scan-done', kind: 'unknown', path: '.' }
     this.buffer.push([scanDone])
   }
