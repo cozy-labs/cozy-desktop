@@ -62,7 +62,7 @@
     "start": "env-cmd .env.dev electron .",
     "test": "yarn test:world && yarn test:unit && yarn test:elm && yarn test:integration && yarn test:scenarios",
     "test:coverage": "yarn test:unit:coverage && yarn test:integration",
-    "test:elm": "elm-test",
+    "test:elm": "elm-test test/elm/*.elm",
     "test:integration": "yarn mocha test/integration",
     "test:performance": "yarn mocha test/performance",
     "test:property": "env NO_ELECTRON=true mocha --exit test/property",
