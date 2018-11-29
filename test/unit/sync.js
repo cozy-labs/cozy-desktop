@@ -273,6 +273,84 @@ describe('Sync', function () {
       this.remote.moveFileAsync.calledWith(doc, was).should.be.true()
     })
 
+    it('calls moveFileAsync and overwriteFileAsync for a moved-updated file', async function () {
+      let was = {
+        _id: 'foo/bar',
+        _rev: '3-9876543210',
+        _deleted: true,
+        moveTo: 'foo/baz',
+        md5sum: 'wasMD5',
+        docType: 'file',
+        tags: ['qux'],
+        sides: {
+          local: 3,
+          remote: 2
+        }
+      }
+      let doc = {
+        _id: 'foo/baz',
+        _rev: '1-abcdef',
+        moveFrom: was,
+        md5sum: 'newMD5',
+        docType: 'file',
+        tags: ['qux'],
+        sides: {
+          local: 1
+        }
+      }
+      await this.sync.applyDoc(was, this.remote, 'remote', 2)
+      this.remote.trashAsync.called.should.be.false()
+      await this.sync.applyDoc(doc, this.remote, 'remote', 0)
+      this.remote.addFileAsync.called.should.be.false()
+      this.remote.moveFileAsync.calledWith(doc, was).should.be.true()
+      this.remote.overwriteFileAsync.calledWith(doc).should.be.true()
+    })
+
+    it('does not break when move works but not update', async function () {
+      let was = {
+        _id: 'foo/bar2',
+        _deleted: true,
+        moveTo: 'foo/baz',
+        md5sum: 'wasMD5',
+        docType: 'file',
+        tags: ['qux'],
+        sides: {
+          local: 3,
+          remote: 2
+        }
+      }
+      let doc = {
+        _id: 'foo/baz2',
+        moveFrom: was,
+        md5sum: 'newMD5',
+        docType: 'file',
+        tags: ['qux'],
+        sides: {
+          local: 1
+        }
+      }
+      was._rev = (await this.pouch.db.put(was)).rev
+      doc._rev = (await this.pouch.db.put(doc)).rev
+
+      // re-stubs overwriteFileAsync to fail
+      this.remote.overwriteFileAsync = sinon.stub().rejects(new Error('bad md5sum mock'))
+      this.sync.diskUsage = sinon.stub().resolves()
+
+      await this.sync.apply({doc: doc}, this.remote, 'remote', 0)
+
+      this.remote.addFileAsync.called.should.be.false()
+      this.remote.trashAsync.called.should.be.false()
+      this.remote.moveFileAsync.calledWith(doc, was).should.be.true()
+      this.remote.overwriteFileAsync.calledWith(doc).should.be.true()
+
+      const newMetadata = await this.pouch.db.get('foo/baz2')
+      should(newMetadata).not.have.property('moveFrom')
+      should(newMetadata).have.property('errors')
+
+      // restore
+      this.remote.overwriteFileAsync = sinon.stub().resolves()
+    })
+
     it('calls trashAsync for a deleted file', async function () {
       let doc = {
         _id: 'foo/baz',

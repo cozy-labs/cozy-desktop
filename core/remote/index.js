@@ -214,11 +214,6 @@ class Remote /*:: implements Side */ {
       _id: newRemoteDoc._id,
       _rev: newRemoteDoc._rev
     }
-
-    if (newMetadata.md5sum !== oldMetadata.md5sum) {
-      // move & update
-      await this.overwriteFileAsync(newMetadata, newMetadata)
-    }
   }
 
   async updateFolderAsync (doc /*: Metadata */, old /*: Metadata */) /*: Promise<void> */ {

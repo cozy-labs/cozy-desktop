@@ -297,8 +297,9 @@ class Sync {
       } else {
         await this.doMove(side, doc, from)
       }
+      delete doc.moveFrom // the move succeeded, delete moveFrom before attempting overwrite
       if (!sameBinary(from, doc)) {
-        await side.overwriteFileAsync(doc, from)
+        await side.overwriteFileAsync(doc, doc) // move & update
       }
     } else if (doc._deleted) {
       if (doc.docType === 'file') await side.trashAsync(doc)
@@ -327,7 +328,7 @@ class Sync {
           await side.overwriteFileAsync(doc, old)
           this.events.emit('transfer-started', _.clone(doc))
         }
-      }
+      } // TODO else what do we do ?
     }
   }
 
