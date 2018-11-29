@@ -164,29 +164,29 @@ describe('Merge', function () {
     })
 
     it('overrides an unsynced local update with a new one detected by local initial scan', async function () {
-      const initialMerge = await builders.file().path('yafile').sides({local: 1}).ino(37).data('initial content').create()
-      const initialSync = await builders.file(initialMerge).sides({local: 2, remote: 2}).create()
-      const was = await builders.file(initialSync).sides({local: 3, remote: 2}).data('first update').create()
-      const doc = builders.file(was).unmerged('local').data('second update').newerThan(was).build()
+      const initial = await builders.file().path('yafile').sides({local: 1}).ino(37).data('initial content').create()
+      const synced = await builders.file(initial).sides({local: 2, remote: 2}).create()
+      const firstUpdate = await builders.file(synced).sides({local: 3, remote: 2}).data('first update').create()
+      const secondUpdate = builders.file(firstUpdate).unmerged('local').data('second update').newerThan(firstUpdate).build()
 
       sinon.spy(this.pouch, 'put')
-      await this.merge.addFileAsync('local', _.cloneDeep(doc))
+      await this.merge.addFileAsync('local', _.cloneDeep(secondUpdate))
 
       should(mergeSideEffects(this)).deepEqual({
         savedDocs: [
           {
-            _id: initialMerge._id,
-            _rev: was._rev,
-            docType: initialMerge.docType,
-            ino: initialMerge.ino,
-            md5sum: doc.md5sum,
+            _id: initial._id,
+            _rev: firstUpdate._rev,
+            docType: initial.docType,
+            ino: initial.ino,
+            md5sum: secondUpdate.md5sum,
             moveFrom: undefined, // FIXME
-            path: doc.path,
-            remote: was.remote,
+            path: initial.path,
+            remote: synced.remote,
             sides: {local: 4, remote: 2},
-            size: doc.size,
-            tags: was.tags,
-            updated_at: doc.updated_at
+            size: secondUpdate.size,
+            tags: initial.tags, // can't have been updated on the local side
+            updated_at: secondUpdate.updated_at
           }
         ],
         resolvedConflicts: []
