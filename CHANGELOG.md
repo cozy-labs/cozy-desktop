@@ -1,5 +1,23 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.11.0-beta.2 - 2018-11-29
+
+Improvements for all users:
+
+- You now have the opportunity to force a manual synchronisation from the
+  settings panel. This will be useful mostly to fetch some remote changes
+  without waiting for the periodic pull.
+- Being always careful when it comes to your data, trying our best not to
+  lose any of it, when we try to reconciliate changes, we try to figure out
+  if the two documents we're comparing are the same. We were a bit too
+  conservative on this side and a lot of changes could lead to false conflicts
+  because of this. We're now doing a smarter comparison which should lead to
+  a lot less `-conflict-` documents being generated.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.11.0-beta.1 - 2018-11-28
 
 Improvements for all users:
