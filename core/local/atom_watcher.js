@@ -50,6 +50,11 @@ module.exports = class AtomWatcher {
     this.ignore = ignore
     this.checksumer = checksumer.init()
 
+    // Here, we build a chain of steps. Each step can be seen as an actor that
+    // communicates with the next one via a buffer. The first step is called
+    // the producer or runner: even if the chain is ready at the end of this
+    // constructor, the runner won't start pushing batches of events until it
+    // is started.
     let steps
     // TODO add a debounce layer (a port of awaitWriteFinish of chokidar)
     if (process.platform === 'linux') {
