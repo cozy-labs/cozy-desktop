@@ -80,6 +80,10 @@ elmectron.ports.startSync.subscribe((folder) => {
   ipcRenderer.send('start-sync', folder)
 })
 
+elmectron.ports.manualStartSync.subscribe(() => {
+  ipcRenderer.send('manual-start-sync')
+})
+
 ipcRenderer.on('new-release-available', (event, notes, name) => {
   console.log('new-release-available', notes, name)
   elmectron.ports.newRelease.send([notes, name])

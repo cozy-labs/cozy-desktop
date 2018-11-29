@@ -7,6 +7,9 @@ import Html.Events exposing (..)
 import Locale exposing (Helpers)
 import Ports
 import View.ProgressBar as ProgressBar
+import Data.Status exposing (Status(..))
+import Window.Tray.StatusBar exposing (statusToString)
+
 
 
 
@@ -22,6 +25,7 @@ type alias Model =
     , disk : DiskSpace
     , busyUnlinking : Bool
     , busyQuitting : Bool
+    , status : Status
     }
 
 
@@ -38,6 +42,7 @@ init version =
         }
     , busyUnlinking = False
     , busyQuitting = False
+    , status = Starting
     }
 
 
@@ -56,6 +61,7 @@ type Msg
     | CancelUnlink
     | ShowHelp
     | CloseApp
+    | Sync
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -92,6 +98,9 @@ update msg model =
 
         CloseApp ->
             ( { model | busyQuitting = True }, Ports.closeApp () )
+
+        Sync ->
+            ( model, Ports.manualStartSync () )
 
 
 
@@ -156,6 +165,8 @@ view helpers model =
                 ]
             , text (helpers.t "Settings Startup")
             ]
+        , h2 [] [ text (helpers.t "Settings Synchronize manually") ]
+        , syncButton helpers model.status
         , h2 [] [ text (helpers.t "Account About") ]
         , p []
             [ strong [] [ text (helpers.t "Account Account" ++ " ") ]
@@ -204,3 +215,18 @@ view helpers model =
             ]
             [ text (helpers.t "Account Unlink this Cozy") ]
         ]
+
+
+syncButton: Helpers -> Status -> Html Msg
+syncButton helpers status =
+    case status of
+        UpToDate -> a [ class "btn"
+            , href "#"
+            , onClick Sync
+            ]
+            [ text (helpers.t "Settings Sync") ]
+        _ -> a [ class "btn"
+                , href "#"
+                , attribute "disabled" "true"
+                ]
+                [ text (statusToString helpers status) ]

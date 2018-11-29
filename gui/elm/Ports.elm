@@ -1,4 +1,4 @@
-port module Ports exposing (autoLauncher, autolaunch, buffering, cancelUnlink, chooseFolder, closeApp, diskSpace, focus, folder, folderError, gotocozy, gotofolder, gototab, mail, newRelease, offline, openFile, quitAndInstall, registerRemote, registrationDone, registrationError, remoteWarnings, remove, sendMail, showHelp, squashPrepMerge, startSync, syncError, synchonization, syncing, transfer, unlinkCozy, updateDownloading, updateError, updated, userActionInProgress, userActionRequired)
+port module Ports exposing (autoLauncher, autolaunch, buffering, cancelUnlink, chooseFolder, closeApp, diskSpace, focus, folder, folderError, gotocozy, gotofolder, gototab, mail, newRelease, offline, openFile, quitAndInstall, registerRemote, registrationDone, registrationError, remoteWarnings, remove, sendMail, showHelp, squashPrepMerge, startSync, syncError, synchonization, syncing, transfer, unlinkCozy, updateDownloading, updateError, updated, userActionInProgress, userActionRequired, manualStartSync)
 
 import Data.DiskSpace exposing (DiskSpace)
 import Data.File exposing (EncodedFile)
@@ -117,3 +117,5 @@ port userActionInProgress : () -> Cmd msg
 
 
 port userActionRequired : (UserActionRequiredError -> msg) -> Sub msg
+
+port manualStartSync : () -> Cmd msg

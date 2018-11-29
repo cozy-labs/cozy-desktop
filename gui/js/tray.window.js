@@ -155,7 +155,8 @@ module.exports = class TrayWM extends WindowManager {
       'auto-launcher': (event, enabled) => autoLaunch.setEnabled(enabled),
       'close-app': () => this.desktop.stopSync().then(() => this.app.quit()),
       'open-file': (event, path) => this.openPath(path),
-      'unlink-cozy': this.onUnlink
+      'unlink-cozy': this.onUnlink,
+      'manual-start-sync': () => this.desktop.stopSync().then(() => { this.desktop.synchronize('full') })
     }
   }
 
