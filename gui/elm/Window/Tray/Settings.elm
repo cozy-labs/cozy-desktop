@@ -56,6 +56,7 @@ type Msg
     | CancelUnlink
     | ShowHelp
     | CloseApp
+    | Sync
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -92,6 +93,9 @@ update msg model =
 
         CloseApp ->
             ( { model | busyQuitting = True }, Ports.closeApp () )
+
+        Sync ->
+            ( model, Cmd.none )
 
 
 
@@ -156,6 +160,13 @@ view helpers model =
                 ]
             , text (helpers.t "Settings Startup")
             ]
+        , h2 [] [ text (helpers.t "Settings Synchronize manually") ]
+        , a
+            [ class "btn"
+            , href "#"
+            , onClick Sync
+            ]
+            [ text (helpers.t "Settings Sync") ]
         , h2 [] [ text (helpers.t "Account About") ]
         , p []
             [ strong [] [ text (helpers.t "Account Account" ++ " ") ]
