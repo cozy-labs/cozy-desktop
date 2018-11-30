@@ -305,8 +305,8 @@ module.exports = class Local /*:: implements Side */ {
     await this.addFolderAsync(doc)
   }
 
-  async assignNewRev (doc /*: Metadata */) /*: Promise<void> */ {
-    log.info({path: doc.path}, 'Local assignNewRev = noop')
+  async readUpdatedRev (doc /*: Metadata */) /*: Promise<void> */ {
+    // noop
   }
 
   /** Move a file, eventually updating its content */

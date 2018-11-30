@@ -14,7 +14,7 @@ const METHODS = [
   'updateFolderAsync',
   'moveFileAsync',
   'moveFolderAsync',
-  'assignNewRev',
+  'readUpdatedRev',
   'trashAsync',
   'deleteFolderAsync',
   'renameConflictingDocAsync'

@@ -296,8 +296,8 @@ class Remote /*:: implements Side */ {
     }
   }
 
-  async assignNewRev (doc /*: Metadata */) /*: Promise<void> */ {
-    log.info({path: doc.path}, 'Assigning new rev...')
+  async readUpdatedRev (doc /*: Metadata */) /*: Promise<void> */ {
+    log.info({path: doc.path}, 'Reading updated rev...')
     const {_rev} = await this.remoteCozy.client.files.statById(doc.remote._id)
     doc.remote._rev = _rev
   }

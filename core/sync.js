@@ -292,7 +292,7 @@ class Sync {
       if (from.incompatibilities) {
         await this.doAdd(side, doc)
       } else if (from.childMove) {
-        await side.assignNewRev(doc)
+        await side.readUpdatedRev(doc)
         this.events.emit('transfer-move', _.clone(doc), _.clone(from))
       } else {
         await this.doMove(side, doc, from)

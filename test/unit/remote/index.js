@@ -724,8 +724,8 @@ describe('remote.Remote', function () {
     })
   })
 
-  describe('assignNewRev', () => {
-    it('updates the rev of a moved file', async function () {
+  describe('readUpdatedRev', () => {
+    it('reads the rev of a moved child and assigns it to its doc', async function () {
       const remote = {src: {}, dst: {}}
 
       remote.src.dir = await builders.remote.dir().name('src-dir').inRootDir().create()
@@ -735,7 +735,7 @@ describe('remote.Remote', function () {
 
       const doc /*: Metadata */ = metadata.fromRemoteDoc(remote.src.foo)
       doc.path = 'dst-dir/foo' // File metadata was updated as part of the move
-      await this.remote.assignNewRev(doc)
+      await this.remote.readUpdatedRev(doc)
       should(doc).deepEqual(metadata.fromRemoteDoc(remote.dst.foo))
     })
   })
