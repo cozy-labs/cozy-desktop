@@ -1,0 +1,44 @@
+[
+  {
+    "type": "unlink",
+    "path": "src/A"
+  },
+  {
+    "type": "add",
+    "path": "src/B",
+    "stats": {
+      "ino": 2,
+      "size": 8,
+      "mtime": "2018-11-28T16:50:06.726Z",
+      "ctime": "2018-11-28T16:50:08.756Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "src/B"
+  },
+  {
+    "type": "add",
+    "path": "src/C",
+    "stats": {
+      "ino": 2,
+      "size": 8,
+      "mtime": "2018-11-28T16:50:06.726Z",
+      "ctime": "2018-11-28T16:50:10.260Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "src/C"
+  },
+  {
+    "type": "add",
+    "path": "src/B",
+    "stats": {
+      "ino": 2,
+      "size": 8,
+      "mtime": "2018-11-28T16:50:06.726Z",
+      "ctime": "2018-11-28T16:50:11.761Z"
+    }
+  }
+]

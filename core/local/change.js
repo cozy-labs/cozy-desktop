@@ -274,33 +274,26 @@ export type LocalMove = LocalFileMove|LocalDirMove
 export type LocalMoveEvent = LocalFileAdded|LocalDirAdded
 */
 
-function InvalidLocalMoveEvent (moveChange /*: LocalMove */, event /*: LocalMoveEvent */) {
-  this.name = 'InvalidLocalMoveEvent'
-  this.moveChange = moveChange
-  this.event = event
-  // FIXME: Include event/change details in message
-  this.message = `Cannot include event ${event.type} into change ${moveChange.type}`
-  Error.captureStackTrace(this, this.constructor)
-}
-
-const ensureValidMoveEvent = (moveChange /*: LocalMove */, event /*: LocalMoveEvent */) => {
-  /* istanbul ignore next */
-  if (!moveChange.wip) throw new InvalidLocalMoveEvent(moveChange, event)
-}
-
 function includeAddEventInFileMove (moveChange /*: LocalFileMove */, e /*: LocalFileAdded */) {
   if (!moveChange.wip &&
        moveChange.path === e.path &&
        moveChange.stats.ino === e.stats.ino &&
        moveChange.md5sum === e.md5sum) return
-  ensureValidMoveEvent(moveChange, e)
   moveChange.path = e.path
   moveChange.stats = e.stats
   moveChange.md5sum = e.md5sum
-  delete moveChange.wip
-  log.debug(
-    {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
-    'FileMove + add = FileMove')
+
+  if (e.md5sum) {
+    delete moveChange.wip
+    log.debug(
+      {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
+      'FileMove + add = FileMove')
+  } else {
+    moveChange.wip = true
+    log.debug(
+      {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
+      'FileMove + add without checksum = FileMove wip')
+  }
 }
 
 function includeAddDirEventInDirMove (moveChange /*: LocalDirMove */, e /*: LocalDirAdded */) {
@@ -325,13 +318,19 @@ function includeAddDirEventInDirMove (moveChange /*: LocalDirMove */, e /*: Loca
     moveChange.type = 'Ignored'
     return
   }
-  ensureValidMoveEvent(moveChange, e)
   moveChange.path = e.path
   moveChange.stats = e.stats
-  delete moveChange.wip
-  log.debug(
-   {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
-   'DirMove + addDir = DirMove')
+  if (!e.wip) {
+    delete moveChange.wip
+    log.debug(
+     {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
+     'DirMove + addDir = DirMove')
+  } else {
+    moveChange.wip = true
+    log.debug(
+      {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
+      'DirMove + addDir wip = DirMove wip')
+  }
 }
 
 function includeChangeEventIntoFileMove (moveChange /*: LocalFileMove */, e /*: LocalFileUpdated */) {

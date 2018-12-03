@@ -1,0 +1,44 @@
+[
+  {
+    "type": "unlinkDir",
+    "path": "src/A"
+  },
+  {
+    "type": "addDir",
+    "path": "src/B",
+    "stats": {
+      "ino": 2,
+      "size": 4096,
+      "mtime": "2018-11-29T16:55:42.930Z",
+      "ctime": "2018-11-29T16:55:44.941Z"
+    }
+  },
+  {
+    "type": "unlinkDir",
+    "path": "src/B"
+  },
+  {
+    "type": "addDir",
+    "path": "src/C",
+    "stats": {
+      "ino": 2,
+      "size": 4096,
+      "mtime": "2018-11-29T16:55:42.930Z",
+      "ctime": "2018-11-29T16:55:46.442Z"
+    }
+  },
+  {
+    "type": "unlinkDir",
+    "path": "src/C"
+  },
+  {
+    "type": "addDir",
+    "path": "src/B",
+    "stats": {
+      "ino": 2,
+      "size": 4096,
+      "mtime": "2018-11-29T16:55:42.930Z",
+      "ctime": "2018-11-29T16:55:47.944Z"
+    }
+  }
+]
