@@ -20,7 +20,6 @@ import type Prep from '../prep'
 import type EventEmitter from 'events'
 import type { Ignore } from '../ignore'
 import type { Checksumer } from './checksumer'
-import type { Adder } from './steps/recurse'
 import type { Runner } from './steps/runner'
 */
 
