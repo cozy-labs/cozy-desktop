@@ -1,6 +1,10 @@
 /* @flow */
 
 const { buildDir, buildFile, id } = require('../../metadata')
+const logger = require('../../logger')
+const log = logger({
+  component: 'dispatch'
+})
 
 /*::
 import type Buffer from './buffer'
@@ -22,6 +26,7 @@ module.exports = function (buffer /*: Buffer */, opts /*: { events: EventEmitter
   buffer.asyncForEach(async (batch) => {
     for (const event of batch) {
       try {
+        log.debug({event}, 'dispatch')
         if (event.action === 'initial-scan-done') {
           actions.initialScanDone()
         } else {

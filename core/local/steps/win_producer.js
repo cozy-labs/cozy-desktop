@@ -7,6 +7,11 @@ const path = require('path')
 const Promise = require('bluebird')
 const watcher = require('@atom/watcher')
 
+const logger = require('../../logger')
+const log = logger({
+  component: 'WinProducer'
+})
+
 /*::
 import type { Runner } from './runner'
 */
@@ -39,7 +44,9 @@ module.exports = class WinProducer /*:: implements Runner */ {
 
   async start () {
     this.watcher = await watcher.watchPath(this.syncPath, { recursive: true }, this.process)
+    log.info(`Now watching ${this.syncPath}`)
     await this.scan('.')
+    log.trace('Scan done')
     // The initial scan can miss some files or directories that have been
     // moved. Wait a bit to ensure that the corresponding renamed events have
     // been emited.
@@ -69,6 +76,7 @@ module.exports = class WinProducer /*:: implements Runner */ {
     if (entries.length === 0) {
       return
     }
+    log.debug({entries}, 'scan')
     this.buffer.push(entries)
     for (const entry of entries) {
       if (entry.stats && entry.stats.isDirectory()) {
@@ -78,6 +86,7 @@ module.exports = class WinProducer /*:: implements Runner */ {
   }
 
   process (batch /*: Array<*> */) {
+    log.info({batch}, 'process')
     // Atom/watcher emits events with an absolute path, but it's more
     // convenient for us to use a relative path.
     for (const event of batch) {
@@ -90,6 +99,7 @@ module.exports = class WinProducer /*:: implements Runner */ {
   }
 
   stop () {
+    log.trace('Stop')
     if (this.watcher) {
       this.watcher.dispose()
       this.watcher = null

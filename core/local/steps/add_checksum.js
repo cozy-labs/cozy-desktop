@@ -2,6 +2,11 @@
 
 const path = require('path')
 
+const logger = require('../../logger')
+const log = logger({
+  component: 'addChecksum'
+})
+
 /*::
 import type Buffer from './buffer'
 import type { Checksumer } from '../checksumer'
@@ -14,6 +19,7 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string , c
     for (const event of events) {
       try {
         if (['created', 'modified', 'scan', 'renamed'].includes(event.action) && event.docType === 'file') {
+          log.debug({path: event.path, action: event.action}, 'checksum')
           const absPath = path.join(opts.syncPath, event.path)
           event.md5sum = await opts.checksumer.push(absPath)
         }
@@ -23,6 +29,7 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string , c
         // computing the checksum as it is often just because the file has been
         // deleted since. But we should have a more fine-grained error handling
         // here.
+        log.info({err, event}, 'Cannot compute checksum')
       }
     }
     return batch

@@ -25,9 +25,6 @@ import type {
 const log = logger({
   component: 'LocalAnalysis'
 })
-log.chokidar = log.child({
-  component: 'chokidar'
-})
 
 module.exports = function analysis (events /*: LocalEvent[] */, pendingChanges /*: LocalChange[] */) /*: LocalChange[] */ {
   const changes /*: LocalChange[] */ = analyseEvents(events, pendingChanges)

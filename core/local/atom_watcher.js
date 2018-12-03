@@ -83,6 +83,7 @@ module.exports = class AtomWatcher {
   }
 
   async stop (force /*: ? bool */) /*: Promise<*> */ {
+    log.debug('stopping...')
     if (this._runningResolve) {
       this._runningResolve()
       this._runningResolve = null

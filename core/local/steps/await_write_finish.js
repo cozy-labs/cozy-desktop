@@ -18,7 +18,7 @@ type PendingItem = {
 }
 */
 
-// TODO add unit tests
+// TODO add unit tests and logs
 
 // This is a port of awaitWriteFinish (aWF) from chokidar. It debounces write
 // events for files, as we can have several of them in a short lapse of time,
