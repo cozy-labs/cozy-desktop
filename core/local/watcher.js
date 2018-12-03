@@ -8,6 +8,7 @@ const logger = require('../logger')
 import type Pouch from '../pouch'
 import type Prep from '../prep'
 import type EventEmitter from 'events'
+import type { Ignore } from '../ignore'
 import type { ChokidarEvent } from './chokidar_event'
 import type { Checksumer } from './checksumer'
 
@@ -23,11 +24,11 @@ const log = logger({
   component: 'LocalWatcher'
 })
 
-function build (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */) /*: Watcher */ {
+function build (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */, ignore /*: Ignore */) /*: Watcher */ {
   const env = process.env.COZY_FS_WATCHER
   if (['experimental', 'atom'].includes(env)) {
     try {
-      return new AtomWatcher(syncPath, prep, pouch, events)
+      return new AtomWatcher(syncPath, prep, pouch, events, ignore)
     } catch (err) {
       log.error(err)
     }

@@ -4,16 +4,24 @@ const Promise = require('bluebird')
 
 const checksumer = require('./checksumer')
 const logger = require('../logger')
-const WinSource = require('./layers/win')
-const LinuxSource = require('./layers/linux')
-const ChecksumLayer = require('./layers/checksum')
-const Dispatcher = require('./layers/dispatcher')
+
+const LinuxProducer = require('./steps/linux_producer')
+const WinProducer = require('./steps/win_producer')
+const AddInfos = require('./steps/add_infos')
+const FilterIgnored = require('./steps/filter_ignored')
+const Recurse = require('./steps/recurse')
+const InitialDiff = require('./steps/initial_diff')
+const AddChecksum = require('./steps/add_checksum')
+const Dispatch = require('./steps/dispatch')
 
 /*::
 import type Pouch from '../pouch'
 import type Prep from '../prep'
 import type EventEmitter from 'events'
+import type { Ignore } from '../ignore'
 import type { Checksumer } from './checksumer'
+import type { Adder } from './steps/recurse'
+import type { Runner } from './steps/runner'
 */
 
 const log = logger({
@@ -23,30 +31,40 @@ const log = logger({
 module.exports = class AtomWatcher {
   /*::
   syncPath: string
+  prep: Prep
+  pouch: Pouch
   events: EventEmitter
+  ignore: Ignore
   checksumer: Checksumer
+  adder: Adder
+  runner: Runner
   running: Promise<void>
   _runningResolve: ?Function
   _runningReject: ?Function
-  source: LinuxSource | WinSource
   */
 
-  constructor (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */) {
+  constructor (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */, ignore /*: Ignore */) {
     this.syncPath = syncPath
+    this.prep = prep
+    this.pouch = pouch
     this.events = events
+    this.ignore = ignore
     this.checksumer = checksumer.init()
 
-    // TODO do we need a debounce layer (a port of awaitWriteFinish of chokidar)?
-    const dispatcher = new Dispatcher(prep, pouch, events)
-    const checksum = new ChecksumLayer(dispatcher, this.checksumer)
+    let steps
     if (process.platform === 'linux') {
-      this.source = new LinuxSource(syncPath, checksum)
+      this.runner = this.adder = new LinuxProducer(this)
+      steps = [AddInfos, FilterIgnored, Recurse, InitialDiff, AddChecksum]
     } else if (process.platform === 'win32') {
+      this.runner = new WinProducer(this)
       // TODO add a layer to detect moves
-      this.source = new WinSource(syncPath, checksum)
+      // TODO do we need a debounce layer (a port of awaitWriteFinish of chokidar)?
+      steps = [AddInfos, FilterIgnored, InitialDiff, AddChecksum]
     } else {
       throw new Error('The experimental watcher is not available on this platform')
     }
+    let buffer = steps.reduce((buf, step) => step(buf, this), this.runner.buffer)
+    Dispatch(buffer, this)
   }
 
   start () {
@@ -55,7 +73,7 @@ module.exports = class AtomWatcher {
       this._runningResolve = resolve
       this._runningReject = reject
     })
-    this.source.start()
+    this.runner.start()
     return new Promise((resolve) => {
       this.events.on('initial-scan-done', resolve)
     })
@@ -66,6 +84,6 @@ module.exports = class AtomWatcher {
       this._runningResolve()
       this._runningResolve = null
     }
-    this.source.stop()
+    this.runner.stop()
   }
 }
