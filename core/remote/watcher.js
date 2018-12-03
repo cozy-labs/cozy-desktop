@@ -1,6 +1,7 @@
 /* @flow */
 
 const autoBind = require('auto-bind')
+const Promise = require('bluebird')
 const _ = require('lodash')
 
 const logger = require('../logger')
@@ -75,10 +76,12 @@ class RemoteWatcher {
   }
 
   async watchLoop () {
-    await new Promise((resolve) => { setTimeout(resolve, HEARTBEAT) })
-    if (this.runningResolve) { // stopped
+    while (true) {
+      await Promise.delay(HEARTBEAT)
+      if (!this.runningResolve) { // stopped
+        return
+      }
       await this.watch()
-      await this.watchLoop()
     }
   }
 
