@@ -99,6 +99,53 @@ describe('core/local/analysis', function () {
     }])
   })
 
+  it('identifies a FileMove + an incomplete FileMove as an incomplete FileMove', () => {
+    const old /*: Metadata */ = metadataBuilders.file().ino(1).build()
+    const stats = {ino: 1}
+    const events /*: LocalEvent[] */ = [
+      {type: 'unlink', path: 'src', old},
+      {type: 'add', path: 'dst1', stats, md5sum: 'yolo'},
+      // dropped: {type: 'unlink', path: 'dst1', old},
+      {type: 'add', path: 'dst2', stats, wip: true}
+    ]
+    const pendingChanges /*: LocalChange[] */ = []
+
+    should(analysis(events, pendingChanges)).deepEqual([])
+    should(pendingChanges).deepEqual([{
+      sideName,
+      type: 'FileMove',
+      path: 'dst2',
+      md5sum: undefined,
+      ino: 1,
+      wip: true,
+      stats,
+      old
+    }])
+  })
+
+  it('identifies an incomplete FileMove + a complete FileMove as a complete FileMove', () => {
+    const old /*: Metadata */ = metadataBuilders.file().ino(1).build()
+    const stats = {ino: 1}
+    const events /*: LocalEvent[] */ = [
+      {type: 'unlink', path: 'src', old},
+      {type: 'add', path: 'dst1', stats, wip: true},
+      // dropped: {type: 'unlink', path: 'dst1', old},
+      {type: 'add', path: 'dst2', stats, md5sum: 'yolo'}
+    ]
+    const pendingChanges /*: LocalChange[] */ = []
+
+    should(analysis(events, pendingChanges)).deepEqual([{
+      sideName,
+      type: 'FileMove',
+      path: 'dst2',
+      ino: 1,
+      md5sum: 'yolo',
+      stats,
+      old
+    }])
+    should(pendingChanges).deepEqual([])
+  })
+
   it('handles unlink+add+change', () => {
     const old /*: Metadata */ = metadataBuilders.file().ino(1).build()
     const stats = {ino: 1}
@@ -296,6 +343,51 @@ describe('core/local/analysis', function () {
       type: 'FileDeletion',
       ino: 1,
       path: 'src',
+      old
+    }])
+    should(pendingChanges).deepEqual([])
+  })
+
+  it('identifies a DirMove + an incomplete DirMove as an incomplete DirMove', () => {
+    const old /*: Metadata */ = metadataBuilders.dir().ino(1).build()
+    const stats = {ino: 1}
+    const events /*: LocalEvent[] */ = [
+      {type: 'unlinkDir', path: 'src', old},
+      {type: 'addDir', path: 'dst1', stats},
+      // dropped: {type: 'unlinkDir', path: 'dst1', old},
+      {type: 'addDir', path: 'dst2', stats, wip: true}
+    ]
+    const pendingChanges /*: LocalChange[] */ = []
+
+    should(analysis(events, pendingChanges)).deepEqual([])
+    should(pendingChanges).deepEqual([{
+      sideName,
+      type: 'DirMove',
+      path: 'dst2',
+      wip: true,
+      ino: 1,
+      stats,
+      old
+    }])
+  })
+
+  it('identifies an incomplete DirMove + a complete DirMove as a complete DirMove', () => {
+    const old /*: Metadata */ = metadataBuilders.dir().ino(1).build()
+    const stats = {ino: 1}
+    const events /*: LocalEvent[] */ = [
+      {type: 'unlinkDir', path: 'src', old},
+      {type: 'addDir', path: 'dst1', stats, wip: true},
+      // dropped: {type: 'unlinkDir', path: 'dst1', old},
+      {type: 'addDir', path: 'dst2', stats}
+    ]
+    const pendingChanges /*: LocalChange[] */ = []
+
+    should(analysis(events, pendingChanges)).deepEqual([{
+      sideName,
+      type: 'DirMove',
+      path: 'dst2',
+      ino: 1,
+      stats,
       old
     }])
     should(pendingChanges).deepEqual([])
