@@ -1,5 +1,44 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.11.0 - 2018-12-03
+
+See [3.11.0-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.11.0-beta.1)
+See [3.11.0-beta.2](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.11.0-beta.2)
+
+Improvements for all users:
+
+- We will now alert you when a new version of the app is available and give you
+  the option of restarting it to download and apply the new version or postpone
+  it.
+- You now have the opportunity to force a manual synchronisation from the
+  settings panel. This will be useful mostly to fetch some remote changes
+  without waiting for the periodic pull.
+- Being always careful when it comes to your data, trying our best not to
+  lose any of it, when we try to reconciliate changes, we try to figure out
+  if the two documents we're comparing are the same. We were a bit too
+  conservative on this side and a lot of changes could lead to false conflicts
+  because of this. We're now doing a smarter comparison which should lead to
+  a lot less `-conflict-` documents being generated.
+- For the same reason, when it comes to conflicts we prefer to leave it to you
+  to choose between the two versions we detected. However, when it comes to
+  changes that haven't been synchronized yet, we can avoid creating a conflict
+  and pick the latest version for you. From now on, we won't create a
+  `-conflict-` version of a folder that has been changed locally and never
+  synchronized remotely with your Cozy.
+- If a file was changed remotely and its parent folder moved or renamed, we
+  could end up moving the file locally but not synchronize its new content.
+  We're now synchronizing all those changes correctly, leaving you with an
+  updated file in the correct location.
+- Similarly, adding a file locally to a folder that was just renamed or moved
+  but not yet fully synchronized with the remote Cozy would result in a
+  situation where the file is never uploaded to the remote Cozy and any changes
+  to it wouldn't be synchronized either. We're now making sure we finish
+  synchronizing the folder change and then synchronize the newly added file.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.11.0-beta.2 - 2018-11-29
 
 Improvements for all users:
