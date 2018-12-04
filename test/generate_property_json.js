@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* @flow */
 
 const faker = require('faker')
 
@@ -8,6 +9,7 @@ const specialChars = [':', '-', 'é', ' ', '%', ',', '&', '@', 'É', 'Ç']
 
 const knownPaths = []
 const deletedPaths = []
+let running = false
 
 function similarPath () {
   let p = faker.random.arrayElement(knownPaths)
@@ -98,6 +100,16 @@ function rm () {
   return { op: 'rm', path: p }
 }
 
+function stopOrRestart () {
+  if (running) {
+    running = false
+    return { op: 'stop' }
+  } else {
+    running = true
+    return { op: 'restart' }
+  }
+}
+
 function sleep () {
   const s = 2 ** (1 + faker.random.number(3))
   return { op: 'sleep', duration: 1000 * s }
@@ -123,6 +135,7 @@ function init (ops) {
 }
 
 function start (ops) {
+  running = true
   ops.push({ op: 'start' })
 }
 
@@ -138,9 +151,13 @@ function run (ops) {
       [2, mvToNewPath],
       [3, mvToDeletedPath],
       [5, rm],
+      [1, stopOrRestart],
       [1, sleep]
     ])
     ops.push(op)
+  }
+  if (!running) {
+    ops.push({ op: 'restart ' })
   }
 }
 

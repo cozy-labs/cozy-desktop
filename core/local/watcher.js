@@ -30,7 +30,7 @@ function build (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, ev
     try {
       return new AtomWatcher(syncPath, prep, pouch, events, ignore)
     } catch (err) {
-      log.error(err)
+      log.error({err}, 'Cannot use AtomWatcher')
     }
   }
   return new ChokidarWatcher(syncPath, prep, pouch, events)

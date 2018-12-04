@@ -1,3 +1,6 @@
+/* @flow */
+/* eslint no-fallthrough: ["error", { "commentPattern": "break omitted" }] */
+
 const { describe, it } = require('mocha')
 const should = require('should')
 
@@ -7,6 +10,7 @@ const fse = require('fs-extra')
 const glob = require('glob')
 const path = require('path')
 const EventEmitter = require('events')
+const Promise = require('bluebird')
 
 const { ContextDir } = require('../../support/helpers/context_dir')
 const TmpDir = require('../../support/helpers/TmpDir')
@@ -22,23 +26,34 @@ const Watcher = require('../../../core/local/watcher')
 const PouchDB = require('pouchdb')
 PouchDB.plugin(require('pouchdb-adapter-memory'))
 
-Promise.promisifyAll(fs)
-
 async function step (state, op) {
   // Slow down things to avoid issues with chokidar throttler
   await Promise.delay(10)
 
   switch (op.op) {
     case 'start':
-      const events = new EventEmitter()
-      const config = { dbPath: { name: state.name, adapter: 'memory' } }
-      state.pouchdb = new Pouch(config)
+      state.config = {
+        dbPath: { name: state.name, adapter: 'memory' },
+        syncPath: state.dir.root
+      }
+      state.pouchdb = new Pouch(state.config)
       await state.pouchdb.addAllViewsAsync()
+      // break omitted intentionally
+    case 'restart':
+      const events = new EventEmitter()
       const merge = new Merge(state.pouchdb)
+      // $FlowFixMe We just want to keep a trace of the conflicts
+      merge.local = merge.remote = {
+        renameConflictingDocAsync: (_, dst) => state.conflicts.push(dst)
+      }
       const ignore = new Ignore([])
-      const prep = new Prep(merge, ignore, config)
+      const prep = new Prep(merge, ignore, state.config)
       state.watcher = Watcher.build(state.dir.root, prep, state.pouchdb, events, ignore)
       state.watcher.start()
+      break
+    case 'stop':
+      await state.watcher.stop()
+      state.watcher = null
       break
     case 'sleep':
       await Promise.delay(op.duration)
@@ -71,8 +86,12 @@ async function step (state, op) {
     case 'mv':
       try {
         // XXX fs-extra move can enter in an infinite loop for some stupid moves
-        await fs.move(state.dir.abspath(op.from), state.dir.abspath(op.to))
-      } catch (err) {}
+        await new Promise(resolve =>
+          fs.rename(state.dir.abspath(op.from), state.dir.abspath(op.to), resolve)
+        )
+      } catch (err) {
+        console.log('Rename err', err)
+      }
       break
     case 'rm':
       try {
@@ -98,7 +117,7 @@ describe('Local watcher', function () {
         return this.skip(ops[0].msg || 'pending')
       }
 
-      let state = { name: scenario }
+      let state /*: Object */ = { name: scenario, conflicts: [] }
       state.dir = new ContextDir(await TmpDir.emptyForTestFile(scenario))
       defaultLogger.streams.length = 0
       defaultLogger.addStream({
@@ -113,7 +132,7 @@ describe('Local watcher', function () {
       // Wait that the dust settles
       should.exists(state.watcher)
       should.exists(state.pouchdb)
-      await Promise.delay(1000)
+      await Promise.delay(2000)
       await state.watcher.stop()
 
       // Pouchdb should have the same tree that the file system
@@ -125,6 +144,9 @@ describe('Local watcher', function () {
       actual = actual.filter(item => !item.startsWith('_design/'))
       actual = actual.sort((a, b) => a.localeCompare(b))
       should(actual).deepEqual(expected)
+
+      // And no conflict should have happened
+      should(state.conflicts).be.empty()
     })
   })
 })
