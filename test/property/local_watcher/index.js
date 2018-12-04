@@ -132,7 +132,7 @@ describe('Local watcher', function () {
       // Wait that the dust settles
       should.exists(state.watcher)
       should.exists(state.pouchdb)
-      await Promise.delay(1000)
+      await Promise.delay(2000)
       await state.watcher.stop()
 
       // Pouchdb should have the same tree that the file system

@@ -26,7 +26,7 @@ module.exports = function (buffer /*: Buffer */, opts /*: { events: EventEmitter
   buffer.asyncForEach(async (batch) => {
     for (const event of batch) {
       try {
-        log.debug({event}, 'dispatch')
+        log.trace({event}, 'dispatch')
         if (event.action === 'initial-scan-done') {
           actions.initialScanDone()
         } else {
@@ -61,31 +61,18 @@ actions = {
 
   modifiedfile: async (event) => {
     const doc = buildFile(event.path, event.stats, event.md5sum)
-    try {
-      // It looks like merge expects a revision for _rev
-      const old = await fetchOldDoc(id(event.path))
-      doc._rev = old._rev
-    } catch (err) {
-      // TODO should we return target.addFileAsync(SIDE, doc) ?
-    }
     await target.updateFileAsync(SIDE, doc)
   },
 
   modifieddirectory: async (event) => {
     const doc = buildDir(event.path, event.stats)
-    try {
-      // It looks like merge expects a revision for _rev
-      const old = await fetchOldDoc(id(event.path))
-      doc._rev = old._rev
-    } catch (err) {}
     await target.putFolderAsync(SIDE, doc)
   },
 
   renamedfile: async (event) => {
-    let doc, old
+    let old
     try {
       old = await fetchOldDoc(id(event.oldPath))
-      doc = buildFile(event.path, event.stats, event.md5sum)
     } catch (err) {
       // A renamed event where the source does not exist can be seen as just an
       // add. It can happen on Linux when a file is added when the client is
@@ -94,14 +81,14 @@ actions = {
       delete event.oldPath
       return actions.createdfile(event)
     }
+    const doc = buildFile(event.path, event.stats, event.md5sum)
     await target.moveFileAsync(SIDE, doc, old)
   },
 
   renameddirectory: async (event) => {
-    let doc, old
+    let old
     try {
       old = await fetchOldDoc(id(event.oldPath))
-      doc = buildDir(event.path, event.stats)
     } catch (err) {
       // A renamed event where the source does not exist can be seen as just an
       // add. It can happen on Linux when a dir is added when the client is
@@ -110,6 +97,7 @@ actions = {
       delete event.oldPath
       return actions.createddirectory(event)
     }
+    const doc = buildDir(event.path, event.stats)
     await target.moveFolderAsync(SIDE, doc, old)
   },
 

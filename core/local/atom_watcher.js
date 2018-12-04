@@ -55,7 +55,6 @@ module.exports = class AtomWatcher {
     // constructor, the runner won't start pushing batches of events until it
     // is started.
     let steps
-    // TODO add a debounce layer (a port of awaitWriteFinish of chokidar)
     if (process.platform === 'linux') {
       this.runner = new LinuxProducer(this)
       steps = [addInfos, filterIgnored, awaitWriteFinish, initialDiff, addChecksum]

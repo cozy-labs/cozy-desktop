@@ -5,7 +5,7 @@ const Buffer = require('./buffer')
 
 // Wait this delay (in milliseconds) after the last event for a given file
 // before pushing this event to the next steps.
-const Delay = 200
+const DELAY = 200
 
 /*::
 import type { AtomWatcherEvent } from './event'
@@ -40,9 +40,9 @@ async function awaitWriteFinish (buffer, out) {
       let item /*: ?PendingItem */ = pending.get(event._id)
       if (['created', 'modified'].includes(event.action)) {
         if (item) {
-          item.event = event
           clearTimeout(item.timeout)
-          item.timeout = setTimeout(item.fire, Delay)
+          item.timeout = setTimeout(item.fire, DELAY)
+          item.event = event
         } else {
           const fire = () => {
             // We want the last event for stats...
@@ -57,7 +57,7 @@ async function awaitWriteFinish (buffer, out) {
             action: event.action,
             event: event,
             fire: fire,
-            timeout: setTimeout(fire, Delay)
+            timeout: setTimeout(fire, DELAY)
           }
         }
         pending.set(event._id, item)
