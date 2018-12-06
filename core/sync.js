@@ -290,6 +290,9 @@ class Sync {
         await side.assignNewRev(doc)
         this.events.emit('transfer-move', _.clone(doc), _.clone(from))
       } else {
+        if (from.moveFrom && from.moveFrom.childMove) {
+          await side.assignNewRev(from)
+        }
         await this.doMove(side, doc, from)
       }
       delete doc.moveFrom // the move succeeded, delete moveFrom before attempting overwrite
