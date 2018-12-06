@@ -150,12 +150,17 @@ describe('Merge', function () {
       it('resolves an identity conflict with an existing file', async function () {
         await builders.file().path('bar').create()
         const doc = builders.file().path('BAR').build()
-        sinon.spy(this.pouch, 'put')
 
-        await this.merge.addFileAsync(this.side, doc)
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.addFileAsync(this.side, doc)
+        )
 
-        should(this.merge.resolveConflictAsync).have.been.calledWith(this.side, doc)
-        should(this.pouch.put).not.have.been.called()
+        should(sideEffects).deepEqual({
+          savedDocs: [],
+          resolvedConflicts: [
+            [this.side, _.pick(doc, ['path', 'remote'])]
+          ]
+        })
       })
     })
 
@@ -163,12 +168,19 @@ describe('Merge', function () {
       it('does not have identity conflicts', async function () {
         await builders.file().path('bar').create()
         const doc = builders.file().path('BAR').build()
-        sinon.spy(this.pouch, 'put')
 
-        await this.merge.addFileAsync(this.side, doc)
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.addFileAsync(this.side, doc)
+        )
 
-        should(this.merge.resolveConflictAsync).not.have.been.called()
-        should(this.pouch.put).have.called()
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults({
+              updated_at: new Date(doc.updated_at) // FIXME: Stop mixing dates & strings
+            }, doc)
+          ],
+          resolvedConflicts: []
+        })
       })
     })
 
@@ -421,7 +433,7 @@ describe('Merge', function () {
             size: mergedLocalUpdate.size,
             // no remote since file was dissociated
             tags: initial.tags, // could only have been updated from a remote update
-            updated_at: new Date(mergedLocalUpdate.updated_at)
+            updated_at: new Date(mergedLocalUpdate.updated_at) // FIXME: Stop mixing dates & strings
           }
         ],
         resolvedConflicts: [
@@ -661,33 +673,48 @@ describe('Merge', function () {
       const existing = await builders.file().path('DST_FILE').create()
       const was = await builders.file().path('SRC_FILE').upToDate().create()
       const doc = builders.file(was).path(existing.path).noRev().build()
-      sinon.spy(this.pouch, 'bulkDocs')
 
-      await this.merge.moveFileAsync(this.side, _.cloneDeep(doc), _.cloneDeep(was))
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.moveFileAsync(this.side, _.cloneDeep(doc), _.cloneDeep(was))
+      )
 
-      const conflictRenamings = this.merge[this.side].renameConflictingDocAsync.args.map(args => ({
-        srcId: _.get(args, [0, '_id']),
-        dstId: metadata.id(args[1])
-      }))
-      const { dstId } = conflictRenamings[0]
-      const savedDocs = _.chain(this.pouch.bulkDocs.args)
-        .flattenDeep()
-        .map(({_id, _deleted, moveFrom, moveTo}) => {
-          const doc = {_id}
-          if (_deleted) doc._deleted = true
-          if (moveFrom) doc.moveFrom = _.pick(moveFrom, ['_id'])
-          if (moveTo) doc.moveTo = moveTo
-          return doc
-        })
-        .value()
-
-      should({conflictRenamings, savedDocs}).deepEqual({
-        conflictRenamings: [
-          {srcId: doc._id, dstId}
-        ],
-        savedDocs: [
-          {_id: was._id, _deleted: true, moveTo: dstId},
-          {_id: dstId, moveFrom: {_id: was._id}}
+      const {_id: dstId, path: dstPath} = _.find(
+        sideEffects.savedDocs,
+        ({path}) => path.match(/conflict/)
+      )
+      const src = {
+        _deleted: true,
+        _id: was._id,
+        docType: was.docType,
+        md5sum: was.md5sum,
+        moveTo: dstId,
+        path: was.path,
+        remote: was.remote,
+        sides: {local: 2, remote: 2},
+        size: was.size,
+        tags: was.tags,
+        updated_at: new Date(was.updated_at) // FIXME: Stop mixing dates & strings
+      }
+      const dst = {
+        _id: dstId,
+        docType: doc.docType,
+        md5sum: doc.md5sum,
+        moveFrom: _.defaults({
+          _rev: was._rev,
+          moveTo: doc._id, // FIXME: Should be doc._id?
+          updated_at: was.updated_at // FIXME: Stop mixing dates & strings
+        }, src),
+        path: dstPath,
+        remote: doc.remote,
+        sides: {local: 1},
+        size: doc.size,
+        tags: doc.tags,
+        updated_at: new Date(doc.updated_at) // FIXME: Stop mixing dates & strings
+      }
+      should(sideEffects).deepEqual({
+        savedDocs: [src, dst],
+        resolvedConflicts: [
+          ['local', {path: doc.path, remote: doc.remote}]
         ]
       })
     })
@@ -750,40 +777,61 @@ describe('Merge', function () {
         const identical = await builders.file().path('QUX').create()
         const was = builders.file().path('baz').upToDate().build()
         const doc = _.defaults({_id: identical._id, path: 'qux'}, was)
-        sinon.spy(this.pouch, 'put')
-        sinon.spy(this.pouch, 'bulkDocs')
 
-        await this.merge.moveFileAsync(this.side, doc, was)
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFileAsync(this.side, doc, was)
+        )
 
-        should(this.merge.resolveConflictAsync.args).deepEqual([
-          [this.side, doc, identical]
-        ])
-        should(this.pouch.put).not.have.been.called()
-        should(this.pouch.bulkDocs).not.have.been.called()
+        should(sideEffects).deepEqual({
+          savedDocs: [],
+          resolvedConflicts: [
+            [this.side, _.pick(doc, ['path', 'remote'])]
+          ]
+        })
       })
     })
 
     onPlatform('linux', () => {
       it('does not have identity conflicts', async function () {
-        const QUX = await builders.file().path('QUX').create()
+        await builders.file().path('QUX').create()
         const baz = builders.file().path('baz').upToDate().build()
         const qux = _.defaults({_id: 'qux', path: 'qux'}, baz)
-        sinon.spy(this.pouch, 'put')
-        sinon.spy(this.pouch, 'bulkDocs')
 
-        await this.merge.moveFileAsync(this.side, qux, baz)
-
-        should(this.merge.resolveConflictAsync).not.have.been.called()
-        await should(this.pouch.db.get(baz._id)).be.rejectedWith({status: 404})
-        // Same as qux except _rev was added
-        should(await this.pouch.db.get(qux._id)).have.properties(
-          _.omit(
-            qux,
-            // FIXME: fields set to undefined
-            ['class', 'mime', 'ino']
-          )
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFileAsync(this.side, _.cloneDeep(qux), _.cloneDeep(baz))
         )
-        should(await this.pouch.db.get(QUX._id)).deepEqual(QUX)
+
+        const src = {
+          _deleted: true,
+          _id: baz._id,
+          docType: baz.docType,
+          md5sum: baz.md5sum,
+          moveTo: qux._id,
+          path: baz.path,
+          remote: baz.remote,
+          sides: {local: 1, remote: 2},
+          size: baz.size,
+          tags: baz.tags,
+          updated_at: new Date(baz.updated_at) // FIXME: Stop mixing dates & strings
+        }
+        const dst = {
+          _id: qux._id,
+          docType: qux.docType,
+          md5sum: baz.md5sum,
+          moveFrom: _.defaults({
+            updated_at: baz.updated_at // FIXME: Stop mixing dates & strings
+          }, src),
+          path: qux.path,
+          remote: qux.remote,
+          sides: {local: 1, remote: 2},
+          size: qux.size,
+          tags: [],
+          updated_at: new Date(qux.updated_at) // FIXME: Stop mixing dates & strings
+        }
+        should(sideEffects).deepEqual({
+          savedDocs: [src, dst],
+          resolvedConflicts: []
+        })
       })
     })
   })
@@ -871,34 +919,44 @@ describe('Merge', function () {
       const existing = await builders.dir().path('DST_DIR').upToDate().create()
       const was = await builders.dir().path('SRC_DIR').upToDate().create()
       const doc = builders.dir(was).path(existing.path).noRev().build()
-      sinon.spy(this.pouch, 'bulkDocs')
 
-      await this.merge.moveFolderAsync(this.side, _.cloneDeep(doc), _.cloneDeep(was))
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.moveFolderAsync(this.side, _.cloneDeep(doc), _.cloneDeep(was))
+      )
 
-      const conflictRenamings = this.merge[this.side].renameConflictingDocAsync.args.map(args => ({
-        srcId: _.get(args, [0, '_id']),
-        dstId: metadata.id(args[1])
-      }))
-      conflictRenamings.should.have.length(1)
-      const { dstId } = conflictRenamings[0]
-      const savedDocs = _.chain(this.pouch.bulkDocs.args)
-        .flattenDeep()
-        .map(({_id, _deleted, moveFrom, moveTo}) => {
-          const doc = {_id}
-          if (_deleted) doc._deleted = true
-          if (moveFrom) doc.moveFrom = _.pick(moveFrom, ['_id'])
-          if (moveTo) doc.moveTo = moveTo
-          return doc
-        })
-        .value()
+      const {_id: dstId, path: dstPath} = _.find(
+        sideEffects.savedDocs,
+        ({path}) => path.match(/conflict/)
+      )
+      const src = {
+        _deleted: true,
+        _id: was._id,
+        docType: was.docType,
+        moveTo: dstId,
+        path: was.path,
+        remote: was.remote,
+        sides: {local: 2, remote: 2},
+        tags: was.tags,
+        updated_at: new Date(was.updated_at) // FIXME: Stop mixing dates & strings
+      }
+      const dst = {
+        _id: dstId,
+        docType: doc.docType,
+        moveFrom: _.defaults({
+          _rev: was._rev,
+          updated_at: was.updated_at
+        }, src),
+        path: dstPath,
+        remote: doc.remote,
+        sides: {local: 1},
+        tags: doc.tags,
+        updated_at: new Date(doc.updated_at) // FIXME: Stop mixing dates & strings
+      }
 
-      should({conflictRenamings, savedDocs}).deepEqual({
-        conflictRenamings: [
-          {srcId: doc.path, dstId}
-        ],
-        savedDocs: [
-          {_id: was._id, _deleted: true, moveTo: dstId},
-          {_id: dstId, moveFrom: {_id: was._id}}
+      should(sideEffects).deepEqual({
+        savedDocs: [src, dst],
+        resolvedConflicts: [
+          [this.side, _.pick(doc, ['path', 'remote'])]
         ]
       })
     })
@@ -942,34 +1000,57 @@ describe('Merge', function () {
         const LINUX = await builders.dir().path('LINUX').create()
         const torvalds = builders.dir().path('torvalds').upToDate().build()
         const linux = _.defaults({_id: LINUX._id, path: 'linux'}, torvalds)
-        sinon.spy(this.pouch, 'put')
-        sinon.spy(this.pouch, 'bulkDocs')
 
-        await this.merge.moveFolderAsync(this.side, linux, torvalds)
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFolderAsync(this.side, linux, torvalds)
+        )
 
-        should(this.merge.resolveConflictAsync.args).deepEqual([
-          [this.side, linux, LINUX]
-        ])
-        should(this.pouch.put).not.have.been.called()
-        should(this.pouch.bulkDocs).not.have.been.called()
+        should(sideEffects).deepEqual({
+          savedDocs: [],
+          resolvedConflicts: [
+            [this.side, _.pick(linux, ['path', 'remote'])]
+          ]
+        })
       })
     })
 
     onPlatform('linux', () => {
       it('does not have identity conflicts', async function () {
-        const NUKEM = await builders.dir().path('NUKEM').create()
+        await builders.dir().path('NUKEM').create()
         const duke = builders.dir().path('duke').upToDate().build()
         const nukem = _.defaults({_id: 'nukem', path: 'nukem'}, duke)
-        sinon.spy(this.pouch, 'put')
-        sinon.spy(this.pouch, 'bulkDocs')
 
-        await this.merge.moveFolderAsync(this.side, nukem, duke)
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFolderAsync(this.side, nukem, duke)
+        )
 
-        should(this.merge.resolveConflictAsync).not.have.been.called()
-        await should(this.pouch.db.get(duke._id)).be.rejectedWith({status: 404})
-        should(await this.pouch.db.get(nukem._id))
-          .have.properties(_.omit(nukem, ['ino']))
-        should(await this.pouch.db.get(NUKEM._id)).deepEqual(NUKEM)
+        const src = {
+          _deleted: true,
+          _id: duke._id,
+          docType: duke.docType,
+          moveTo: nukem._id,
+          path: duke.path,
+          remote: duke.remote,
+          sides: {local: 1, remote: 2},
+          tags: duke.tags,
+          updated_at: new Date(duke.updated_at) // FIXME: Stop mixing dates & strings
+        }
+        const dst = {
+          _id: nukem._id,
+          docType: nukem.docType,
+          moveFrom: _.defaults({
+            updated_at: duke.updated_at // FIXME: Stop mixing dates & strings
+          }, src),
+          path: nukem.path,
+          remote: nukem.remote,
+          sides: {local: 1, remote: 2},
+          tags: nukem.tags,
+          updated_at: new Date(nukem.updated_at) // FIXME: Stop mixing dates & strings
+        }
+        should(sideEffects).deepEqual({
+          savedDocs: [src, dst],
+          resolvedConflicts: []
+        })
       })
     })
 
