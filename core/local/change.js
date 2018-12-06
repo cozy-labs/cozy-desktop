@@ -301,7 +301,11 @@ function dirMoveFromUnlinkAdd (sameInodeChange /*: ?LocalChange */, e /*: LocalD
   const unlinkChange /*: ?LocalDirDeletion */ = maybeDeleteFolder(sameInodeChange)
   if (!unlinkChange) return
   if (_.get(unlinkChange, 'old.path') === e.path) return dirAddition(e)
-  log.debug({oldpath: unlinkChange.path, path: e.path}, 'unlinkDir + addDir = DirMove')
+  if (!e.wip) {
+    log.debug({oldpath: unlinkChange.path, path: e.path}, 'unlinkDir + addDir = DirMove')
+  } else {
+    log.debug({oldpath: unlinkChange.path, path: e.path}, 'unlinkDir + addDir wip = DirMove wip')
+  }
   return build('DirMove', e.path, {
     stats: e.stats,
     old: unlinkChange.old,
