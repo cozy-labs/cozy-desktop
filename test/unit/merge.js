@@ -525,29 +525,38 @@ describe('Merge', function () {
       })
     })
 
-    onPlatforms('win32', 'darwin', () => {
-      it('resolves an identity conflict with an existing dir', async function () {
-        const alfred = await builders.dir().path('alfred').create()
-        const Alfred = await builders.dir().path('Alfred').build()
+    describe('identity conflict with an existing dir', () => {
+      let alfred, Alfred
 
-        await this.merge.putFolderAsync(this.side, Alfred)
-
-        should(await this.pouch.db.get(Alfred._id)).deepEqual(alfred)
-        should(this.merge.resolveConflictAsync).have.been.calledWith(this.side, Alfred)
+      beforeEach(async () => {
+        alfred = await builders.dir().path('alfred').create()
+        Alfred = await builders.dir().path('Alfred').build()
       })
-    })
 
-    onPlatform('linux', () => {
-      it('does not have identity conflicts', async function () {
-        const alfred = await builders.dir().path('alfred').create()
-        const Alfred = await builders.dir().path('Alfred').build()
+      onPlatforms('win32', 'darwin', () => {
+        it('is resolved', async function () {
+          const sideEffects = await mergeSideEffects(this, () =>
+            this.merge.putFolderAsync(this.side, Alfred)
+          )
 
-        await this.merge.putFolderAsync(this.side, Alfred)
+          should(sideEffects).deepEqual({
+            savedDocs: [],
+            resolvedConflicts: [
+              [this.side, _.pick(Alfred, ['path', 'remote'])]
+            ]
+          })
+        })
+      })
 
-        should(this.merge.resolveConflictAsync).not.have.been.called()
-        // Same as Alfred except _rev was added
-        should(await this.pouch.db.get(Alfred._id)).have.properties(Alfred)
-        should(await this.pouch.db.get(alfred._id)).deepEqual(alfred)
+      onPlatform('linux', () => {
+        it('does not happen', async function () {
+          await this.merge.putFolderAsync(this.side, Alfred)
+
+          should(this.merge.resolveConflictAsync).not.have.been.called()
+          // Same as Alfred except _rev was added
+          should(await this.pouch.db.get(Alfred._id)).have.properties(Alfred)
+          should(await this.pouch.db.get(alfred._id)).deepEqual(alfred)
+        })
       })
     })
   })
