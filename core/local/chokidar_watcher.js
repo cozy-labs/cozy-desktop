@@ -307,7 +307,6 @@ module.exports = class LocalWatcher {
         if (c.needRefetch) {
           // $FlowFixMe
           c.old = await this.pouch.db.get(metadata.id(c.old.path))
-          c.old.childMove = false
         }
         switch (c.type) {
           // TODO: Inline old LocalWatcher methods
