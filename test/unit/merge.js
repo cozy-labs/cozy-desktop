@@ -28,9 +28,7 @@ const MetadataBuilders = require('../support/builders/metadata')
 async function mergeSideEffects ({merge, pouch} /*: * */, mergeCall /*: (): Promise<*> */) {
   const { last_seq: lastSeq } = await pouch.db.changes({since: 'now'})
 
-  if (!merge.resolveConflictAsync.restore) {
-    sinon.spy(merge, 'resolveConflictAsync')
-  }
+  sinon.spy(merge, 'resolveConflictAsync')
 
   await mergeCall()
 
@@ -83,10 +81,6 @@ describe('Merge', function () {
     this.merge.local = {renameConflictingDocAsync: sinon.stub().resolves()}
     this.merge.remote = {renameConflictingDocAsync: sinon.stub().resolves()}
     builders = new MetadataBuilders(this.pouch)
-
-    sinon.spy(this.merge, 'resolveConflictAsync')
-    // this.pouch.put & bulkDocs must be spied manually because of test data
-    // builders.
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
@@ -726,6 +720,7 @@ describe('Merge', function () {
         .omit(['_rev'])
         .value()
 
+      sinon.spy(this.merge, 'resolveConflictAsync')
       await this.merge.moveFileAsync(this.side, BANANA, banana)
 
       should(this.merge.resolveConflictAsync.args).not.have.been.called()
@@ -981,6 +976,7 @@ describe('Merge', function () {
         .omit(['_rev'])
         .value()
 
+      sinon.spy(this.merge, 'resolveConflictAsync')
       await this.merge.moveFolderAsync(this.side, APPLE, apple)
 
       should(this.merge.resolveConflictAsync.args).not.have.been.called()
