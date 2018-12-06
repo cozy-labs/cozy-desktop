@@ -162,7 +162,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
         mime: 'text/plain',
         path: localPath,
         ino,
-        size: 0,
+        size: content.length,
         tags: [],
         sides: {local: 1, remote: 1}
       }
