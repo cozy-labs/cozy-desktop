@@ -282,6 +282,8 @@ class Sync {
       log.debug({path: doc.path}, `Ignoring deleted ${doc.docType} metadata as move source`)
     } else if (doc.moveFrom != null) {
       const from = (doc.moveFrom /*: Metadata */)
+      log.debug({path: doc.path}, `Applying ${doc.docType} change with moveFrom`)
+
       if (from.incompatibilities) {
         await this.doAdd(side, doc)
       } else if (from.childMove) {
@@ -295,11 +297,14 @@ class Sync {
         await side.overwriteFileAsync(doc, doc) // move & update
       }
     } else if (doc._deleted) {
+      log.debug({path: doc.path}, `Applying ${doc.docType} deletion`)
       if (doc.docType === 'file') await side.trashAsync(doc)
       else await side.deleteFolderAsync(doc)
     } else if (rev === 0) {
+      log.debug({path: doc.path}, `Applying ${doc.docType} addition`)
       await this.doAdd(side, doc)
     } else {
+      log.debug({path: doc.path}, `Applying else for ${doc.docType} change`)
       let old
       try {
         old = await this.pouch.getPreviousRevAsync(doc._id, rev)

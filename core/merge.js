@@ -337,6 +337,7 @@ class Merge {
 
   // Move a folder and all the things inside it
   async moveFolderRecursivelyAsync (side /*: SideName */, folder /*: Metadata */, was /*: Metadata */, newRemoteRevs /*: ?RemoteRevisionsByID */) {
+    log.debug({path: folder.path, oldpath: was.path}, 'moveFolderRecursivelyAsync')
     const docs = await this.pouch.byRecursivePathAsync(was._id)
     move(was, folder)
     let bulk = [was, folder]
