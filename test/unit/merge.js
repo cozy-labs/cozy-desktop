@@ -72,12 +72,7 @@ describe('Merge', function () {
 
     sinon.spy(this.merge, 'resolveConflictAsync')
     // this.pouch.put & bulkDocs must be spied manually because of test data
-    // builders. But if spied, it will be restored automatically (see hook
-    // below).
-  })
-  afterEach(function () {
-    if (this.pouch.put.restore) this.pouch.put.restore()
-    if (this.pouch.bulkDocs.restore) this.pouch.bulkDocs.restore()
+    // builders.
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
