@@ -1,6 +1,5 @@
 /* @flow */
-
-const mocha = require('mocha')
+/* eslint-env mocha */
 
 const macOSRelease = require('./MacOSRelease')
 
@@ -27,11 +26,11 @@ module.exports = {
 //     })
 //
 function onMacOSAtLeast (minRelease /*: MacOSReleaseInfo */, spec /*: Function */) {
-  const describe = macOSRelease.isAtLeast(minRelease)
-    ? mocha.describe
-    : mocha.describe.skip
+  const describeOrSkip = macOSRelease.isAtLeast(minRelease)
+    ? describe
+    : describe.skip
 
-  describe(`on ${macOSRelease.name(minRelease)} or higher`, spec)
+  describeOrSkip(`on ${macOSRelease.name(minRelease)} or higher`, spec)
 }
 
 // Usage:
@@ -43,11 +42,11 @@ function onMacOSAtLeast (minRelease /*: MacOSReleaseInfo */, spec /*: Function *
 //     })
 //
 function onMacOSAtMost (maxRelease /*: MacOSReleaseInfo */, spec /*: Function */) {
-  const describe = macOSRelease.isAtMost(maxRelease)
-    ? mocha.describe
-    : mocha.describe.skip
+  const describeOrSkip = macOSRelease.isAtMost(maxRelease)
+    ? describe
+    : describe.skip
 
-  describe(`on ${macOSRelease.name(maxRelease)} or lower`, spec)
+  describeOrSkip(`on ${macOSRelease.name(maxRelease)} or lower`, spec)
 }
 
 // $FlowFixMe
@@ -56,11 +55,11 @@ function onPlatforms (...platformsAndSpec) {
   const expectedPlatforms = platformsAndSpec
   const currentPlatform = process.platform
 
-  const describe = expectedPlatforms.indexOf(currentPlatform) > -1
-    ? mocha.describe
-    : mocha.describe.skip
+  const describeOrSkip = expectedPlatforms.indexOf(currentPlatform) > -1
+    ? describe
+    : describe.skip
 
-  describe(`on ${expectedPlatforms.join(' / ')}`, spec)
+  describeOrSkip(`on ${expectedPlatforms.join(' / ')}`, spec)
 }
 
 function onPlatform (platform /*: string */, spec /*: Function */) {

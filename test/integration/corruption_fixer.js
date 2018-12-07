@@ -1,13 +1,6 @@
 /* @flow */
+/* eslint-env mocha */
 
-const {
-  after,
-  afterEach,
-  before,
-  beforeEach,
-  describe,
-  it
-} = require('mocha')
 const should = require('should')
 const sinon = require('sinon')
 const crypto = require('crypto')

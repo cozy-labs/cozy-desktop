@@ -1,7 +1,6 @@
 /* eslint-env mocha */
 /* @flow */
 
-const { describe, it } = require('mocha')
 const should = require('should')
 
 const { ContextDir } = require('../support/helpers/context_dir')
