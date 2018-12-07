@@ -12,6 +12,8 @@ const { detectPathIssues, detectPathLengthIssue } = require('./path_restrictions
 const { DIR_TYPE, FILE_TYPE } = require('./remote/constants')
 const { maxDate } = require('./timestamp')
 
+const fsutils = require('./utils/fs')
+const { extname, dirname, basename } = require('path')
 /*::
 import type fs from 'fs'
 import type { PathIssue } from './path_restrictions'
@@ -114,7 +116,8 @@ module.exports = {
   markSide,
   buildDir,
   buildFile,
-  upToDate
+  upToDate,
+  createConflictingDoc
 }
 
 function localDocType (remoteDocType /*: string */) /*: string */ {
@@ -455,4 +458,29 @@ function buildFile (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: st
   }
   if ((stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
   return doc
+}
+
+/**
+ *
+ * @param {Metadata} doc
+ *
+ * @returns a clone of `doc` with new `path` and `_id` properties
+ */
+function createConflictingDoc (doc /*: Metadata */) {
+  let dst = clone(doc)
+  let date = fsutils.validName(new Date().toISOString())
+  let ext = extname(doc.path)
+  let dir = dirname(doc.path)
+  let base = basename(doc.path, ext)
+  // 180 is an arbitrary limit to avoid having files with too long names
+  if (base.length > 180) {
+    base = base.slice(0, 180)
+  }
+  // avoid long chain of -conflict-DATE-conflict-DATE-conflict-DATE
+  // TODO unit-test and pick behaviour for files like
+  //                "cat-conflict-20181116...-THE_GOOD_ONE.jpg"
+  base = base.split('-conflict-20')[0]
+  dst.path = `${join(dir, base)}-conflict-${date}${ext}`
+  assignId(dst)
+  return dst
 }

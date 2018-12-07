@@ -3,12 +3,11 @@
 const autoBind = require('auto-bind')
 const _ = require('lodash')
 const { clone } = _
-const { basename, dirname, extname, join } = require('path')
+const { dirname } = require('path')
 
 const IdConflict = require('./IdConflict')
 const logger = require('./logger')
 const {
-  assignId,
   assignMaxDate,
   detectPlatformIncompatibilities,
   isAtLeastUpToDate,
@@ -19,11 +18,11 @@ const {
   sameBinary,
   sameFile,
   sameFolder,
-  upToDate
+  upToDate,
+  createConflictingDoc
 } = require('./metadata')
 const move = require('./move')
 const { otherSide } = require('./side')
-const fsutils = require('./utils/fs')
 
 /*::
 import type { IdConflictInfo } from './IdConflict'
@@ -105,21 +104,7 @@ class Merge {
   // A suffix composed of -conflict- and the date is added to the path.
   async resolveConflictAsync (side /*: SideName */, doc /*: Metadata */, was /*: ?Metadata */) {
     log.warn({path: doc.path, oldpath: was && was.path, doc, was}, 'resolveConflictAsync')
-    let dst = clone(doc)
-    let date = fsutils.validName(new Date().toISOString())
-    let ext = extname(doc.path)
-    let dir = dirname(doc.path)
-    let base = basename(doc.path, ext)
-    // 180 is an arbitrary limit to avoid having files with too long names
-    if (base.length > 180) {
-      base = base.slice(0, 180)
-    }
-    // avoid long chain of -conflict-DATE-conflict-DATE-conflict-DATE
-    // TODO unit-test and pick behaviour for files like
-    //                "cat-conflict-20181116...-THE_GOOD_ONE.jpg"
-    base = base.split('-conflict-20')[0]
-    dst.path = `${join(dir, base)}-conflict-${date}${ext}`
-    assignId(dst)
+    let dst = createConflictingDoc(doc)
     try {
       // $FlowFixMe
       await this[side].renameConflictingDocAsync(doc, dst.path)

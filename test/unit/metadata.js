@@ -23,7 +23,8 @@ const {
   buildDir,
   buildFile,
   invariants,
-  upToDate
+  upToDate,
+  createConflictingDoc
 } = metadata
 const { FILES_DOCTYPE } = require('../../core/remote/constants')
 const timestamp = require('../../core/timestamp')
@@ -770,6 +771,48 @@ describe('metadata', function () {
       doc.errors = 1
 
       should(upToDate(doc).errors).be.undefined()
+    })
+  })
+
+  describe('generated a doc with conflict', () => {
+    it('should get the correct path', () => {
+      const doc = {
+        path: 'docname'
+      }
+      const newDoc = createConflictingDoc(doc)
+      const pathRegExp = RegExp(`(${doc.path})-conflict-\\d{4}(?:-\\d{2}){2}T(?:\\d{2}_?){3}.\\d{3}Z`)
+      should(newDoc.path).match(pathRegExp)
+    })
+    it('should get the correct _id', () => {
+      const doc = {
+        path: 'docname'
+      }
+      const newDoc = createConflictingDoc(doc)
+      const pathRegExp = RegExp(`(${doc.path})-conflict-\\d{4}(?:-\\d{2}){2}T(?:\\d{2}_?){3}.\\d{3}Z`)
+      should(newDoc._id).match(pathRegExp)
+    })
+    it('should keep the correct extension', () => {
+      const ext = '.pdf'
+      const doc = {
+        path: `docname${ext}`
+      }
+      const newDoc = createConflictingDoc(doc)
+      should(path.extname(newDoc.path)).equal(ext)
+    })
+    it('should not have more than 180 characters', () => {
+      const doc = {
+        path: 'Lorem ipsum dolor sit amet consectetur adipiscing elit Nam a velit at dolor euismod tincidunt sit amet id ante Cras vehicula lectus purus In lobortis risus lectus vitae rhoncus quam porta nullam'
+      }
+      const newDoc = createConflictingDoc(doc)
+      const newDocBasename = RegExp('(.*)-conflict-\\d{4}(?:-\\d{2}){2}T(?:\\d{2}_?){3}.\\d{3}Z').exec(path.basename(newDoc.path))[1]
+      should(newDocBasename.length).equal(180)
+    })
+    it('should have an id', () => {
+      const doc = {
+        path: 'docname'
+      }
+      const newDoc = createConflictingDoc(doc)
+      should(newDoc).have.property('_id').not.null()
     })
   })
 })
