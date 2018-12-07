@@ -12,7 +12,6 @@ const Local = require('../../../core/local')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
 
 const MetadataBuilders = require('../../support/builders/metadata')
-const StreamBuilder = require('../../support/builders/stream')
 const configHelpers = require('../../support/helpers/config')
 const { ContextDir } = require('../../support/helpers/context_dir')
 const { WINDOWS_DEFAULT_MODE } = require('../../support/helpers/platform')
@@ -443,27 +442,6 @@ describe('Local', function () {
       ])
       should(+(await syncDir.mtime(dstFile))).equal(+dstFile.updated_at)
       should(await syncDir.readFile(dstFile)).equal('foobar')
-    })
-
-    it('also updates its content when md5sum has changed', async function () {
-      srcFile.md5sum = 'SkvkDJasYxTpHZPzgEOmNA==' // meow
-      dstFile.md5sum = 'j9tggB6dOaUoaqAd0fT08w==' // woof
-      await syncDir.outputFile(srcFile, 'meow')
-      await syncDir.ensureParentDir(dstFile)
-      this.local.other = {
-        async createReadStreamAsync (doc) {
-          return new StreamBuilder().push('woof').build()
-        }
-      }
-
-      await this.local.moveFileAsync(dstFile, srcFile)
-
-      should(await syncDir.tree()).deepEqual([
-        'dst/',
-        'dst/file',
-        'src/'
-      ])
-      should(await syncDir.readFile(dstFile)).equal('woof')
     })
 
     it('throws ENOENT on missing source', async function () {

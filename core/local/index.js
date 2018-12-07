@@ -314,9 +314,6 @@ module.exports = class Local /*:: implements Side */ {
   async moveFileAsync (doc /*: Metadata */, old /*: Metadata */) /*: Promise<void> */ {
     log.info({path: doc.path, oldpath: old.path}, 'Moving file')
     await this._move(doc, old)
-    if (doc.md5sum !== old.md5sum) {
-      await this.overwriteFileAsync(doc)
-    }
   }
 
   /** Move a folder */

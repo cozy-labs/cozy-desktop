@@ -538,34 +538,6 @@ describe('remote.Remote', function () {
         size: '4'
       })
     })
-
-    it('also updates its content when md5sum changed', async function () {
-      doc.md5sum = 'j9tggB6dOaUoaqAd0fT08w==' // woof
-      this.remote.other = {
-        async createReadStreamAsync (doc) {
-          return builders.stream().push('woof').build()
-        }
-      }
-
-      await this.remote.moveFileAsync(doc, old)
-
-      should(doc.remote._id).equal(old.remote._id)
-      should(doc.remote._rev).not.equal(old.remote._rev)
-      should(doc.remote).have.properties(doc.remote)
-      const file = await cozy.files.statById(doc.remote._id)
-      should(file).have.properties({
-        _id: old.remote._id,
-        _rev: doc.remote._rev
-      })
-      should(file.attributes).have.properties({
-        dir_id: newDir._id,
-        name: 'cat7.jpg',
-        type: 'file',
-        updated_at: doc.updated_at,
-        size: '4',
-        md5sum: 'j9tggB6dOaUoaqAd0fT08w=='
-      })
-    })
   })
 
   describe('moveFolder', function () {
