@@ -295,7 +295,7 @@ describe('Conflict resolution', () => {
       await fullSyncStartingFrom('local')
 
       should(await helpers.trees()).deepEqual(bothSides([
-        // FIXME: Lost remote._id?
+        'dst-conflict-.../',
         'dst/'
       ]))
     })
