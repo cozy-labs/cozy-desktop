@@ -49,10 +49,9 @@ function onMacOSAtMost (maxRelease /*: MacOSReleaseInfo */, spec /*: Function */
   describeOrSkip(`on ${macOSRelease.name(maxRelease)} or lower`, spec)
 }
 
-// $FlowFixMe
-function onPlatforms (...platformsAndSpec) {
-  const spec = platformsAndSpec.pop()
-  const expectedPlatforms = platformsAndSpec
+function onPlatforms (...platformsAndSpec /*: any[] */) {
+  const spec /*: Function */ = platformsAndSpec.pop()
+  const expectedPlatforms /*: string[] */ = platformsAndSpec
   const currentPlatform = process.platform
 
   const describeOrSkip = expectedPlatforms.indexOf(currentPlatform) > -1

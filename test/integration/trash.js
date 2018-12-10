@@ -31,7 +31,7 @@ describe('Trash', () => {
     await helpers.remote.ignorePreviousChanges()
   })
 
-  describe('file', async () => {
+  describe('file', () => {
     let parent, file
 
     beforeEach(async () => {
@@ -78,7 +78,7 @@ describe('Trash', () => {
     })
   })
 
-  describe('directory', async () => {
+  describe('directory', () => {
     let parent, dir, subdir
 
     beforeEach(async () => {
