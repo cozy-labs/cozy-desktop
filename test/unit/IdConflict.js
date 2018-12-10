@@ -22,7 +22,7 @@ describe('IdConflict', function () {
   describe('.detect()', () => {
     const sideName = 'remote' // whatever
 
-    onPlatforms('win32', 'darwin', () => {
+    onPlatforms(['win32', 'darwin'], () => {
       it('returns an IdConflict object when a conflict exists between a new doc and an existing one', () => {
         const existingDoc = builders.whatever().path('alfred').remoteId('1').build()
         const newDoc = builders.whatever().path('Alfred').remoteId('2').build()
@@ -35,7 +35,7 @@ describe('IdConflict', function () {
       })
     })
 
-    onPlatforms('linux', () => {
+    onPlatform('linux', () => {
       it('returns nothing when a conflict would exist on other platforms', () => {
         const existingDoc = builders.whatever().path('alfred').remoteId('1').build()
         const newDoc = builders.whatever().path('Alfred').remoteId('2').build()
@@ -125,7 +125,7 @@ describe('IdConflict', function () {
         doc2 = builders.whatever().path('Alfred').remoteId('2').build()
       })
 
-      onPlatforms('win32', 'darwin', () => {
+      onPlatforms(['win32', 'darwin'], () => {
         it('detects an identity conflict (cannot coexist locally)', () => {
           should(IdConflict.existsBetween(doc1, doc2)).be.true()
           should(IdConflict.existsBetween(doc2, doc1)).be.true()

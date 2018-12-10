@@ -49,9 +49,7 @@ function onMacOSAtMost (maxRelease /*: MacOSReleaseInfo */, spec /*: Function */
   describeOrSkip(`on ${macOSRelease.name(maxRelease)} or lower`, spec)
 }
 
-function onPlatforms (...platformsAndSpec /*: any[] */) {
-  const spec /*: Function */ = platformsAndSpec.pop()
-  const expectedPlatforms /*: string[] */ = platformsAndSpec
+function onPlatforms (expectedPlatforms /*: Array<string> */, spec /*: Function */) {
   const currentPlatform = process.platform
 
   const describeOrSkip = expectedPlatforms.indexOf(currentPlatform) > -1
@@ -62,5 +60,5 @@ function onPlatforms (...platformsAndSpec /*: any[] */) {
 }
 
 function onPlatform (platform /*: string */, spec /*: Function */) {
-  onPlatforms(platform, spec)
+  onPlatforms([platform], spec)
 }

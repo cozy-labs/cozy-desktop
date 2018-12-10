@@ -172,7 +172,7 @@ describe('LocalWatcher Tests', function () {
       })
     })
 
-    onPlatforms('win32', 'darwin', () => {
+    onPlatforms(['win32', 'darwin'], () => {
       it('does not skip checksum computation when an identity conflict could occur during initial scan', async function () {
         const syncDir = new ContextDir(this.syncPath)
         const existing = await builders.file().path('Alfred').data('Alfred content').sides({remote: 1}).create()

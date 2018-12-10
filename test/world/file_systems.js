@@ -28,7 +28,7 @@ describe('File systems', () => {
     const nfcContent = `content ${nfcFile}`
     const nfdContent = `content ${nfdFile}`
 
-    onPlatforms('win32', 'linux', () => {
+    onPlatforms(['win32', 'linux'], () => {
       describe('assuming NTFS / EXT4', () => {
         it('allows the two files to coexist', async () => {
           await dir.outputFile(nfcFile, nfcContent)
