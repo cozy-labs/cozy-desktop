@@ -51,7 +51,7 @@ describe('Identity conflict', () => {
         await helpers.pullAndSyncAll()
       })
 
-      onPlatforms('win32', 'darwin', () => {
+      onPlatforms(['win32', 'darwin'], () => {
         it('renames the second one remotely to resolve the conflict on next polling', async () => {
           should(await helpers.trees('local', 'remote')).deepEqual({
             local: [
@@ -100,7 +100,7 @@ describe('Identity conflict', () => {
         await helpers.pullAndSyncAll()
       })
 
-      onPlatforms('win32', 'darwin', () => {
+      onPlatforms(['win32', 'darwin'], () => {
         it('renames the remote one to resolve the conflict on next polling', async () => {
           should(await helpers.trees('local', 'remote')).deepEqual({
             local: [
@@ -150,7 +150,7 @@ describe('Identity conflict', () => {
         await helpers.syncAll()
       })
 
-      onPlatforms('win32', 'darwin', () => {
+      onPlatforms(['win32', 'darwin'], () => {
         it('renames the local one to resolve the conflict on next flush', async () => {
           should(await helpers.trees('local', 'remote')).deepEqual({
             local: [
@@ -201,7 +201,7 @@ describe('Identity conflict', () => {
         await helpers.pullAndSyncAll()
       })
 
-      onPlatforms('win32', 'darwin', () => {
+      onPlatforms(['win32', 'darwin'], () => {
         it('renames the moved one to resolve the conflict on next polling', async () => {
           should(await helpers.trees('local', 'remote')).deepEqual({
             local: [
@@ -256,7 +256,7 @@ describe('Identity conflict', () => {
         await helpers.syncAll()
       })
 
-      onPlatforms('win32', 'darwin', () => {
+      onPlatforms(['win32', 'darwin'], () => {
         it('renames the moved one to resolve the conflict on next polling', async () => {
           should(await helpers.trees('local', 'remote')).deepEqual({
             local: [
@@ -310,7 +310,7 @@ describe('Identity conflict', () => {
         await helpers.pullAndSyncAll()
       })
 
-      onPlatforms('win32', 'darwin', () => {
+      onPlatforms(['win32', 'darwin'], () => {
         it('renames the second one remotely to resolve the conflict on next polling', async () => {
           should(await helpers.trees('local', 'remote')).deepEqual({
             local: [
@@ -359,7 +359,7 @@ describe('Identity conflict', () => {
         await helpers.pullAndSyncAll()
       })
 
-      onPlatforms('win32', 'darwin', () => {
+      onPlatforms(['win32', 'darwin'], () => {
         it('renames the remote one to resolve the conflict on next polling', async () => {
           should(await helpers.trees('local', 'remote')).deepEqual({
             local: [
@@ -409,7 +409,7 @@ describe('Identity conflict', () => {
         await helpers.syncAll()
       })
 
-      onPlatforms('win32', 'darwin', () => {
+      onPlatforms(['win32', 'darwin'], () => {
         it('renames the local one to resolve the conflict on next flush', async () => {
           should(await helpers.trees('local', 'remote')).deepEqual({
             local: [
@@ -460,7 +460,7 @@ describe('Identity conflict', () => {
         await helpers.pullAndSyncAll()
       })
 
-      onPlatforms('win32', 'darwin', () => {
+      onPlatforms(['win32', 'darwin'], () => {
         it('renames the moved one to resolve the conflict on next polling', async () => {
           should(await helpers.trees('local', 'remote')).deepEqual({
             local: [
@@ -515,7 +515,7 @@ describe('Identity conflict', () => {
         await helpers.syncAll()
       })
 
-      onPlatforms('win32', 'darwin', () => {
+      onPlatforms(['win32', 'darwin'], () => {
         it('renames the moved one to resolve the conflict on next polling', async () => {
           should(await helpers.trees('local', 'remote')).deepEqual({
             local: [

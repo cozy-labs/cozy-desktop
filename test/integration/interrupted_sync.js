@@ -1,13 +1,6 @@
 /* @flow */
+/* eslint-env mocha */
 
-const {
-  after,
-  afterEach,
-  before,
-  beforeEach,
-  suite,
-  test
-} = require('mocha')
 const should = require('should')
 
 const configHelpers = require('../support/helpers/config')
@@ -17,7 +10,7 @@ const { IntegrationTestHelpers } = require('../support/helpers/integration')
 
 const cozy = cozyHelpers.cozy
 
-suite('Sync gets interrupted, initialScan occurs', () => {
+describe('Sync gets interrupted, initialScan occurs', () => {
   let helpers
 
   before(configHelpers.createConfig)
@@ -40,7 +33,7 @@ suite('Sync gets interrupted, initialScan occurs', () => {
     helpers.spyPouch()
   })
 
-  test('move Folder', async () => {
+  it('move Folder', async () => {
     const docs = await helpers.remote.createTree([
       '/a/',
       '/b/'

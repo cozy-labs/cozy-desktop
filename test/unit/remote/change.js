@@ -1,4 +1,5 @@
-const {describe, it} = require('mocha')
+/* eslint-env mocha */
+
 const remoteChange = require('../../../core/remote/change')
 
 describe('remote change sort', () => {

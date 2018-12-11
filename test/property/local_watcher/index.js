@@ -1,7 +1,7 @@
 /* @flow */
 /* eslint no-fallthrough: ["error", { "commentPattern": "break omitted" }] */
+/* eslint-env mocha */
 
-const { describe, it } = require('mocha')
 const should = require('should')
 
 const crypto = require('crypto')

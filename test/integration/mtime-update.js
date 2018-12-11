@@ -1,13 +1,6 @@
 /* @flow */
+/* eslint-env mocha */
 
-const {
-  after,
-  afterEach,
-  before,
-  beforeEach,
-  describe,
-  it
-} = require('mocha')
 const should = require('should')
 const fs = require('fs-extra')
 const path = require('path')

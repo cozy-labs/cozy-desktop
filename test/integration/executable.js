@@ -55,7 +55,7 @@ describe('Executable handling', () => {
   }
 
   describe('adding a local executable file', () => {
-    onPlatforms('darwin', 'linux', () => {
+    onPlatforms(['darwin', 'linux'], () => {
       it('is executable everywhere', async () => {
         await syncDir.ensureFileMode('file', 0o777)
         await helpers.local.scan()
@@ -129,7 +129,7 @@ describe('Executable handling', () => {
     })
 
     describe('making it executable locally', () => {
-      onPlatforms('darwin', 'linux', () => {
+      onPlatforms(['darwin', 'linux'], () => {
         it('makes it executable everywhere', async () => {
           await syncDir.chmod('file', 0o766)
           await helpers.local.scan()
@@ -170,7 +170,7 @@ describe('Executable handling', () => {
     })
 
     describe('making it non-executable locally', () => {
-      onPlatforms('darwin', 'linux', () => {
+      onPlatforms(['darwin', 'linux'], () => {
         it('is non-executable everywhere', async () => {
           await syncDir.chmod('file', 0o644)
           await helpers.local.scan()

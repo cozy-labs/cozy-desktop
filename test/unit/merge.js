@@ -140,7 +140,7 @@ describe('Merge', function () {
       })
     })
 
-    onPlatforms('win32', 'darwin', () => {
+    onPlatforms(['win32', 'darwin'], () => {
       it('resolves an identity conflict with an existing file', async function () {
         await builders.file().path('bar').create()
         const doc = builders.file().path('BAR').build()
@@ -158,7 +158,7 @@ describe('Merge', function () {
       })
     })
 
-    onPlatforms('linux', () => {
+    onPlatform('linux', () => {
       it('does not have identity conflicts', async function () {
         await builders.file().path('bar').create()
         const doc = builders.file().path('BAR').build()
@@ -533,7 +533,7 @@ describe('Merge', function () {
         Alfred = await builders.dir().path('Alfred').build()
       })
 
-      onPlatforms('win32', 'darwin', () => {
+      onPlatforms(['win32', 'darwin'], () => {
         it('is resolved', async function () {
           const sideEffects = await mergeSideEffects(this, () =>
             this.merge.putFolderAsync(this.side, Alfred)
@@ -776,7 +776,7 @@ describe('Merge', function () {
       await should(this.pouch.db.get(was._id)).be.rejectedWith({status: 404})
     })
 
-    onPlatforms('win32', 'darwin', () => {
+    onPlatforms(['win32', 'darwin'], () => {
       it('resolves an identity conflict with an existing file', async function () {
         const identical = await builders.file().path('QUX').create()
         const was = builders.file().path('baz').upToDate().build()
@@ -1000,7 +1000,7 @@ describe('Merge', function () {
       }
     })
 
-    onPlatforms('win32', 'darwin', () => {
+    onPlatforms(['win32', 'darwin'], () => {
       it('resolves an identity conflict with an existing file', async function () {
         const LINUX = await builders.dir().path('LINUX').create()
         const torvalds = builders.dir().path('torvalds').upToDate().build()

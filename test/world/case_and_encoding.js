@@ -1,7 +1,7 @@
 /* @flow */
+/* eslint-env mocha */
 
 const fs = require('fs-extra')
-const { setup, describe, it } = require('mocha')
 const path = require('path')
 const should = require('should')
 
@@ -24,7 +24,7 @@ describe('Case and encoding basics', () => {
   const rename = (src, dst) => fs.rename(abspath(src), abspath(dst))
   const listFiles = () => fs.readdir(tmpdir)
 
-  setup(() => fs.emptyDir(tmpdir))
+  beforeEach(() => fs.emptyDir(tmpdir))
 
   it('Node.js strings', () => {
     should('e').have.hex('            65       ')
