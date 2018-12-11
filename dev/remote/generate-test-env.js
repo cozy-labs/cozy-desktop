@@ -5,16 +5,14 @@ const fse = require('fs-extra')
 const pkg = require('../../package.json')
 const automatedRegistration = require('./automated_registration')
 
-const cozyUrl = chooseCozyUrl(process.env.APPVEYOR_BUILD_NUMBER)
+const cozyUrl = chooseCozyUrl(process.env.BUILD_JOB)
 const passphrase = process.env.COZY_PASSPHRASE
 const storage = new cozy.MemoryStorage()
 
-function chooseCozyUrl (buildNumber) {
-  if (!!buildNumber && buildNumber % 2 === 1) {
-    return process.env.COZY_URL_2
-  }
-
-  return process.env.COZY_URL_1
+function chooseCozyUrl (buildJob) {
+  return buildJob === 'scenarios_build'
+    ? process.env.COZY_URL_2
+    : process.env.COZY_URL_1
 }
 
 function readAccessToken () {
