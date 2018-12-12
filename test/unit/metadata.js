@@ -774,7 +774,7 @@ describe('metadata', function () {
     })
   })
 
-  describe('generated a doc with conflict', () => {
+  describe('createConflictingDoc', () => {
     it('should get the correct path', () => {
       const doc = {
         path: 'docname'
@@ -798,6 +798,15 @@ describe('metadata', function () {
       }
       const newDoc = createConflictingDoc(doc)
       should(path.extname(newDoc.path)).equal(ext)
+    })
+    it('should but does not handle complex extension `.tar.gz`', () => {
+      // FIXME: must be docname-conflict-:ISODATE:.tar.gz instead of docname.tar-conflict-:ISODATE:.gz
+      const ext = '.tar.gz'
+      const doc = {
+        path: `docname${ext}`
+      }
+      const newDoc = createConflictingDoc(doc)
+      should(path.extname(newDoc.path)).equal('.gz')
     })
     it('should not have more than 180 characters', () => {
       const doc = {

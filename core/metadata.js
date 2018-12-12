@@ -5,7 +5,6 @@ const { clone } = _
 const mime = require('mime')
 const deepDiff = require('deep-diff').diff
 const path = require('path')
-const { join } = path
 
 const logger = require('./logger')
 const { detectPathIssues, detectPathLengthIssue } = require('./path_restrictions')
@@ -13,7 +12,6 @@ const { DIR_TYPE, FILE_TYPE } = require('./remote/constants')
 const { maxDate } = require('./timestamp')
 
 const fsutils = require('./utils/fs')
-const { extname, dirname, basename } = require('path')
 /*::
 import type fs from 'fs'
 import type { PathIssue } from './path_restrictions'
@@ -250,12 +248,11 @@ export type PlatformIncompatibility = PathIssue & {docType: string}
 // synchronization
 // TODO: return null instead of an empty array when no issue was found?
 function detectPlatformIncompatibilities (metadata /*: Metadata */, syncPath /*: string */) /*: Array<PlatformIncompatibility> */ {
-  const {path, docType} = metadata
-  const pathLenghIssue = detectPathLengthIssue(join(syncPath, path), platform)
-  const issues /*: PathIssue[] */ = detectPathIssues(path, docType)
+  const pathLenghIssue = detectPathLengthIssue(path.join(syncPath, metadata.path), platform)
+  const issues /*: PathIssue[] */ = detectPathIssues(metadata.path, metadata.docType)
   if (pathLenghIssue) issues.unshift(pathLenghIssue)
   return issues.map(issue => (_.merge({
-    docType: issue.path === path ? docType : 'folder'
+    docType: issue.path === metadata.path ? metadata.docType : 'folder'
   }, issue)))
 }
 
@@ -469,9 +466,9 @@ function buildFile (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: st
 function createConflictingDoc (doc /*: Metadata */) {
   let dst = clone(doc)
   let date = fsutils.validName(new Date().toISOString())
-  let ext = extname(doc.path)
-  let dir = dirname(doc.path)
-  let base = basename(doc.path, ext)
+  let ext = path.extname(doc.path)
+  let dir = path.dirname(doc.path)
+  let base = path.basename(doc.path, ext)
   // 180 is an arbitrary limit to avoid having files with too long names
   if (base.length > 180) {
     base = base.slice(0, 180)
@@ -480,7 +477,7 @@ function createConflictingDoc (doc /*: Metadata */) {
   // TODO unit-test and pick behaviour for files like
   //                "cat-conflict-20181116...-THE_GOOD_ONE.jpg"
   base = base.split('-conflict-20')[0]
-  dst.path = `${join(dir, base)}-conflict-${date}${ext}`
+  dst.path = `${path.join(dir, base)}-conflict-${date}${ext}`
   assignId(dst)
   return dst
 }
