@@ -16,7 +16,7 @@ install:
 build: off
 
 test_script:
-  - ps: if ($env:BUILD_JOB -eq "short_tests") { yarn build:css; yarn build:elm }
+  - ps: yarn build:css; yarn build:elm
   - ps: if ($env:BUILD_JOB -eq "short_tests") { yarn test:elm }
   - ps: if ($env:BUILD_JOB -eq "short_tests") { yarn test:world --timeout $env:MOCHA_TIMEOUT }
   - ps: if ($env:BUILD_JOB -eq "short_tests") { yarn test:unit --timeout $env:MOCHA_TIMEOUT }
