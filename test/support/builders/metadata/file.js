@@ -2,18 +2,11 @@
 
 const crypto = require('crypto')
 
-const metadata = require('../../../../core/metadata')
-const {
-  assignId,
-  ensureValidPath
-} = metadata
-
 const BaseMetadataBuilder = require('./base')
 
 /*::
 import type Pouch from '../../../../core/pouch'
 import type { Metadata } from '../../../../core/metadata'
-import type { RemoteDoc } from '../../../../core/remote/document'
 */
 
 module.exports = class FileMetadataBuilder extends BaseMetadataBuilder {
@@ -21,13 +14,6 @@ module.exports = class FileMetadataBuilder extends BaseMetadataBuilder {
     super(pouch, old)
     this.doc.docType = 'file'
     this.data('')
-  }
-
-  fromRemote (remoteDoc /*: RemoteDoc */) /*: this */ {
-    this.doc = metadata.fromRemoteDoc(remoteDoc)
-    ensureValidPath(this.doc)
-    assignId(this.doc)
-    return this
   }
 
   data (data /*: string */) /*: this */ {

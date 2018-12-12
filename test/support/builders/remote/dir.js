@@ -21,10 +21,13 @@ var dirNumber = 1
 //     const dir: RemoteDoc = await builders.remoteDir().inDir(...).create()
 //
 module.exports = class RemoteDirBuilder extends RemoteBaseBuilder {
-  constructor (cozy /*: Cozy */) {
-    super(cozy)
+  constructor (cozy /*: Cozy */, old /*: ?RemoteDoc */) {
+    super(cozy, old)
+
+    if (!old) {
+      this.name(`directory-${dirNumber++}`)
+    }
     this.remoteDoc.type = 'directory'
-    this.name(`directory-${dirNumber++}`)
   }
 
   async create () /*: Promise<RemoteDoc> */ {

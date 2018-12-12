@@ -31,15 +31,17 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
   _data: string | stream.Readable | Buffer
   */
 
-  constructor (cozy /*: Cozy */) {
-    super(cozy)
+  constructor (cozy /*: Cozy */, old /*: ?RemoteDoc */) {
+    super(cozy, old)
 
+    if (!old) {
+      this.name(`remote-file-${fileNumber}`)
+      this.data(`Content of remote file ${fileNumber}`)
+      this.remoteDoc.class = 'application'
+      this.remoteDoc.mime = 'application/octet-stream'
+      this.remoteDoc.executable = true
+    }
     this.remoteDoc.type = 'file'
-    this.name(`remote-file-${fileNumber}`)
-    this.data(`Content of remote file ${fileNumber}`)
-    this.remoteDoc.class = 'application'
-    this.remoteDoc.mime = 'application/octet-stream'
-    this.remoteDoc.executable = true
 
     fileNumber++
   }

@@ -1,4 +1,7 @@
 /* @flow */
+const path = require('path')
+
+const { ROOT_DIR_ID } = require('../../../core/remote/constants')
 
 const DirMetadataBuilder = require('./metadata/dir')
 const FileMetadataBuilder = require('./metadata/file')
@@ -11,6 +14,7 @@ import type { Cozy } from 'cozy-client-js'
 import type { Metadata } from '../../../core/metadata'
 import type Pouch from '../../../core/pouch'
 import type { Warning } from '../../../core/remote/warning'
+import type { RemoteDoc } from '../../../core/remote/document'
 */
 
 // Test data builders facade.
@@ -42,12 +46,29 @@ module.exports = class Builders {
     return new FileMetadataBuilder(this.pouch, old)
   }
 
-  remoteDir () /*: RemoteDirBuilder */ {
-    return new RemoteDirBuilder(this.cozy)
+  remoteDir (old /*: ?RemoteDoc */) /*: RemoteDirBuilder */ {
+    return new RemoteDirBuilder(this.cozy, old)
   }
 
-  remoteFile () /*: RemoteFileBuilder */ {
-    return new RemoteFileBuilder(this.cozy)
+  remoteFile (old /*: ?RemoteDoc */) /*: RemoteFileBuilder */ {
+    return new RemoteFileBuilder(this.cozy, old)
+  }
+
+  buildRemoteTree (paths /*: Array<string> */) /*: { [string]: RemoteDoc } */ {
+    const remoteDocsByPath = {}
+    for (const p of paths) {
+      const name = path.posix.basename(p)
+      const parentPath = path.posix.dirname(p)
+      const parentDir = remoteDocsByPath[parentPath + '/'] || { _id: ROOT_DIR_ID, path: '/' }
+
+      if (p.endsWith('/')) {
+        remoteDocsByPath[p] = this.remoteDir().name(name).inDir(parentDir).build()
+      } else {
+        remoteDocsByPath[p] = this.remoteFile().name(name).inDir(parentDir).build()
+      }
+    }
+
+    return remoteDocsByPath
   }
 
   remoteWarnings () /*: Warning[] */ {
