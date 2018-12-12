@@ -5,13 +5,13 @@ const { clone } = _
 const mime = require('mime')
 const deepDiff = require('deep-diff').diff
 const path = require('path')
-const { join } = path
 
 const logger = require('./logger')
 const { detectPathIssues, detectPathLengthIssue } = require('./path_restrictions')
 const { DIR_TYPE, FILE_TYPE } = require('./remote/constants')
 const { maxDate } = require('./timestamp')
 
+const fsutils = require('./utils/fs')
 /*::
 import type fs from 'fs'
 import type { PathIssue } from './path_restrictions'
@@ -114,7 +114,9 @@ module.exports = {
   markSide,
   buildDir,
   buildFile,
-  upToDate
+  upToDate,
+  createConflictingDoc,
+  conflictRegExp
 }
 
 function localDocType (remoteDocType /*: string */) /*: string */ {
@@ -247,12 +249,11 @@ export type PlatformIncompatibility = PathIssue & {docType: string}
 // synchronization
 // TODO: return null instead of an empty array when no issue was found?
 function detectPlatformIncompatibilities (metadata /*: Metadata */, syncPath /*: string */) /*: Array<PlatformIncompatibility> */ {
-  const {path, docType} = metadata
-  const pathLenghIssue = detectPathLengthIssue(join(syncPath, path), platform)
-  const issues /*: PathIssue[] */ = detectPathIssues(path, docType)
+  const pathLenghIssue = detectPathLengthIssue(path.join(syncPath, metadata.path), platform)
+  const issues /*: PathIssue[] */ = detectPathIssues(metadata.path, metadata.docType)
   if (pathLenghIssue) issues.unshift(pathLenghIssue)
   return issues.map(issue => (_.merge({
-    docType: issue.path === path ? docType : 'folder'
+    docType: issue.path === metadata.path ? metadata.docType : 'folder'
   }, issue)))
 }
 
@@ -455,4 +456,27 @@ function buildFile (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: st
   }
   if ((stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
   return doc
+}
+
+const CONFLICT_PATTERN = '-conflict-\\d{4}(?:-\\d{2}){2}T(?:\\d{2}_?){3}.\\d{3}Z'
+
+function conflictRegExp (prefix /*: string */) /*: RegExp */ {
+  return new RegExp(`${prefix}${CONFLICT_PATTERN}`)
+}
+
+function createConflictingDoc (doc /*: Metadata */) /*: Metadata */ {
+  let dst = clone(doc)
+  let date = fsutils.validName(new Date().toISOString())
+  let ext = path.extname(doc.path)
+  let dir = path.dirname(doc.path)
+  let base = path.basename(doc.path, ext)
+  const previousConflictingName = conflictRegExp('(.*)').exec(base)
+  const filename = previousConflictingName
+    ? previousConflictingName[1]
+    : base
+  // 180 is an arbitrary limit to avoid having files with too long names
+  const notToLongFilename = filename.slice(0, 180)
+  dst.path = `${path.join(dir, notToLongFilename)}-conflict-${date}${ext}`
+  assignId(dst)
+  return dst
 }

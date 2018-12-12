@@ -23,7 +23,9 @@ const {
   buildDir,
   buildFile,
   invariants,
-  upToDate
+  upToDate,
+  createConflictingDoc,
+  conflictRegExp
 } = metadata
 const { FILES_DOCTYPE } = require('../../core/remote/constants')
 const timestamp = require('../../core/timestamp')
@@ -770,6 +772,62 @@ describe('metadata', function () {
       doc.errors = 1
 
       should(upToDate(doc).errors).be.undefined()
+    })
+  })
+
+  describe('createConflictingDoc', () => {
+    it('should get the correct path', () => {
+      const doc = {
+        path: 'docname'
+      }
+      const newDoc = createConflictingDoc(doc)
+      const pathRegExp = conflictRegExp(doc.path)
+      should(newDoc.path).be.a.String().and.match(pathRegExp)
+    })
+    it('should get the correct _id', () => {
+      const doc = {
+        path: 'docname'
+      }
+      const newDoc = createConflictingDoc(doc)
+      const pathRegExp = new RegExp(conflictRegExp(doc.path).source, 'i')
+      should(newDoc._id).be.a.String().and.match(pathRegExp)
+    })
+    it('should keep the correct extension', () => {
+      const ext = '.pdf'
+      const doc = {
+        path: `docname${ext}`
+      }
+      const newDoc = createConflictingDoc(doc)
+      should(path.extname(newDoc.path)).equal(ext)
+    })
+    it('should but does not handle complex extension `.tar.gz`', () => {
+      // FIXME: must be docname-conflict-:ISODATE:.tar.gz instead of docname.tar-conflict-:ISODATE:.gz
+      const ext = '.tar.gz'
+      const doc = {
+        path: `docname${ext}`
+      }
+      const newDoc = createConflictingDoc(doc)
+      should(path.extname(newDoc.path)).equal('.gz')
+    })
+    it('should not have more than 180 characters', () => {
+      const doc = {
+        path: 'Lorem ipsum dolor sit amet consectetur adipiscing elit Nam a velit at dolor euismod tincidunt sit amet id ante Cras vehicula lectus purus In lobortis risus lectus vitae rhoncus quam porta nullam'
+      }
+      const newDoc = createConflictingDoc(doc)
+      const newDocBasename = conflictRegExp('(.*)').exec(path.basename(newDoc.path))[1]
+      should(newDocBasename.length).equal(180)
+    })
+    it('should handle the renaming of a conflict', () => {
+      const ext = `.pdf`
+      const base = `docname`
+      const doc = {
+        path: `${base}-conflict-1970-01-01T13_37_00.666Z${ext}`
+      }
+      const secondConflict = createConflictingDoc(doc)
+      const pathRegExp = conflictRegExp(base)
+      should(doc.path).not.equal(secondConflict.path)
+      should(secondConflict.path).be.a.String().and.match(pathRegExp)
+      should(path.extname(secondConflict.path)).equal(ext)
     })
   })
 })
