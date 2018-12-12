@@ -43,6 +43,6 @@ describe('Remote', function () {
       await this.remote.watcher.watch()
       eventsSpy.should.have.been.calledWith('online')
       eventsSpy.restore()
-    })
+    }).timeout(120000)
   })
 })
