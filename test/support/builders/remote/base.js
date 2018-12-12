@@ -2,6 +2,7 @@
 
 const _ = require('lodash')
 const { posix } = require('path')
+const uuid = require('uuid/v4')
 
 const {
   FILES_DOCTYPE,
@@ -26,20 +27,24 @@ module.exports = class RemoteBaseBuilder {
   remoteDoc: RemoteDoc
   */
 
-  constructor (cozy /*: ?Cozy */) {
+  constructor (cozy /*: ?Cozy */, old /*: ?RemoteDoc */) {
     this.cozy = cozy
-    const name = 'whatever'
-    this.remoteDoc = {
-      _id: dbBuilders.id(),
-      _rev: dbBuilders.rev(1),
-      _type: FILES_DOCTYPE,
-      type: 'directory',
-      created_at: defaultTimestamp,
-      dir_id: ROOT_DIR_ID,
-      name,
-      path: posix.join(posix.sep, name),
-      tags: [],
-      updated_at: defaultTimestamp
+    if (old) {
+      this.remoteDoc = _.cloneDeep(old)
+    } else {
+      const name = 'whatever'
+      this.remoteDoc = {
+        _id: dbBuilders.id(),
+        _rev: dbBuilders.rev(1),
+        _type: FILES_DOCTYPE,
+        type: 'directory',
+        created_at: defaultTimestamp,
+        dir_id: ROOT_DIR_ID,
+        name,
+        path: posix.join(posix.sep, name),
+        tags: [],
+        updated_at: defaultTimestamp
+      }
     }
   }
 
@@ -61,6 +66,15 @@ module.exports = class RemoteBaseBuilder {
       _id: TRASH_DIR_ID,
       path: `/${TRASH_DIR_NAME}`
     })
+  }
+
+  restored () /*: this */ {
+    return this.inRootDir()
+  }
+
+  shortRev (revNumber /*: number */) /*: this */ {
+    this.remoteDoc._rev = revNumber.toString() + '-' + uuid().replace(/-/g, '')
+    return this
   }
 
   timestamp (...args /*: number[] */) /*: this */ {

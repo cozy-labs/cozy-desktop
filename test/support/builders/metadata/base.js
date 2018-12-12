@@ -2,12 +2,7 @@
 
 const _ = require('lodash')
 
-const {
-  assignId,
-  assignPlatformIncompatibilities,
-  id,
-  markSide
-} = require('../../../../core/metadata')
+const metadata = require('../../../../core/metadata')
 const timestamp = require('../../../../core/timestamp')
 
 const dbBuilders = require('../db')
@@ -21,6 +16,7 @@ import type {
   SideName
 } from '../../../../core/metadata'
 import type Pouch from '../../../../core/pouch'
+import type { RemoteDoc } from '../../../../core/remote/document'
 */
 
 module.exports = class BaseMetadataBuilder {
@@ -37,7 +33,7 @@ module.exports = class BaseMetadataBuilder {
       this.doc = _.cloneDeep(old)
     } else {
       this.doc = {
-        _id: id('foo'),
+        _id: metadata.id('foo'),
         docType: 'folder', // To make flow happy (overridden by subclasses)
         path: 'foo',
         remote: {
@@ -49,6 +45,13 @@ module.exports = class BaseMetadataBuilder {
         updated_at: timestamp.stringify(timestamp.current())
       }
     }
+  }
+
+  fromRemote (remoteDoc /*: RemoteDoc */) /*: this */ {
+    this.doc = metadata.fromRemoteDoc(remoteDoc)
+    metadata.ensureValidPath(this.doc)
+    metadata.assignId(this.doc)
+    return this
   }
 
   /** Make sure the doc is not the same as before. */
@@ -102,7 +105,7 @@ module.exports = class BaseMetadataBuilder {
 
   path (path /*: string */) /*: this */ {
     this.doc.path = path
-    assignId(this.doc)
+    metadata.assignId(this.doc)
     return this
   }
 
@@ -150,7 +153,7 @@ module.exports = class BaseMetadataBuilder {
   }
 
   changedSide (side /*: SideName */) /*: this */ {
-    markSide(side, this.doc, this.old)
+    metadata.markSide(side, this.doc, this.old)
     return this
   }
 
@@ -162,7 +165,7 @@ module.exports = class BaseMetadataBuilder {
   build () /*: Metadata */ {
     // Don't detect incompatibilities according to syncPath for test data, to
     // prevent environment related failures.
-    assignPlatformIncompatibilities(this.doc, '')
+    metadata.assignPlatformIncompatibilities(this.doc, '')
 
     return _.cloneDeep(this.doc)
   }
