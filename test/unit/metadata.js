@@ -24,7 +24,8 @@ const {
   buildFile,
   invariants,
   upToDate,
-  createConflictingDoc
+  createConflictingDoc,
+  conflictRegExp
 } = metadata
 const { FILES_DOCTYPE } = require('../../core/remote/constants')
 const timestamp = require('../../core/timestamp')
@@ -780,16 +781,16 @@ describe('metadata', function () {
         path: 'docname'
       }
       const newDoc = createConflictingDoc(doc)
-      const pathRegExp = RegExp(`(${doc.path})-conflict-\\d{4}(?:-\\d{2}){2}T(?:\\d{2}_?){3}.\\d{3}Z`)
-      should(newDoc.path).match(pathRegExp)
+      const pathRegExp = conflictRegExp(doc.path)
+      should(newDoc.path).be.a.String().and.match(pathRegExp)
     })
     it('should get the correct _id', () => {
       const doc = {
         path: 'docname'
       }
       const newDoc = createConflictingDoc(doc)
-      const pathRegExp = RegExp(`(${doc.path})-conflict-\\d{4}(?:-\\d{2}){2}T(?:\\d{2}_?){3}.\\d{3}Z`)
-      should(newDoc._id).match(pathRegExp)
+      const pathRegExp = new RegExp(conflictRegExp(doc.path).source, 'i')
+      should(newDoc._id).be.a.String().and.match(pathRegExp)
     })
     it('should keep the correct extension', () => {
       const ext = '.pdf'
@@ -813,15 +814,20 @@ describe('metadata', function () {
         path: 'Lorem ipsum dolor sit amet consectetur adipiscing elit Nam a velit at dolor euismod tincidunt sit amet id ante Cras vehicula lectus purus In lobortis risus lectus vitae rhoncus quam porta nullam'
       }
       const newDoc = createConflictingDoc(doc)
-      const newDocBasename = RegExp('(.*)-conflict-\\d{4}(?:-\\d{2}){2}T(?:\\d{2}_?){3}.\\d{3}Z').exec(path.basename(newDoc.path))[1]
+      const newDocBasename = conflictRegExp('(.*)').exec(path.basename(newDoc.path))[1]
       should(newDocBasename.length).equal(180)
     })
-    it('should have an id', () => {
+    it('should handle the renaming of a conflict', () => {
+      const ext = `.pdf`
+      const base = `docname`
       const doc = {
-        path: 'docname'
+        path: `${base}-conflict-1970-01-01T13_37_00.666Z${ext}`
       }
-      const newDoc = createConflictingDoc(doc)
-      should(newDoc).have.property('_id').not.null()
+      const secondConflict = createConflictingDoc(doc)
+      const pathRegExp = conflictRegExp(base)
+      should(doc.path).not.equal(secondConflict.path)
+      should(secondConflict.path).be.a.String().and.match(pathRegExp)
+      should(path.extname(secondConflict.path)).equal(ext)
     })
   })
 })

@@ -115,7 +115,8 @@ module.exports = {
   buildDir,
   buildFile,
   upToDate,
-  createConflictingDoc
+  createConflictingDoc,
+  conflictRegExp
 }
 
 function localDocType (remoteDocType /*: string */) /*: string */ {
@@ -457,27 +458,25 @@ function buildFile (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: st
   return doc
 }
 
-/**
- *
- * @param {Metadata} doc
- *
- * @returns a clone of `doc` with new `path` and `_id` properties
- */
-function createConflictingDoc (doc /*: Metadata */) {
+const CONFLICT_PATTERN = '-conflict-\\d{4}(?:-\\d{2}){2}T(?:\\d{2}_?){3}.\\d{3}Z'
+
+function conflictRegExp (prefix /*: string */) /*: RegExp */ {
+  return new RegExp(`${prefix}${CONFLICT_PATTERN}`)
+}
+
+function createConflictingDoc (doc /*: Metadata */) /*: Metadata */ {
   let dst = clone(doc)
   let date = fsutils.validName(new Date().toISOString())
   let ext = path.extname(doc.path)
   let dir = path.dirname(doc.path)
   let base = path.basename(doc.path, ext)
+  const previousConflictingName = conflictRegExp('(.*)').exec(base)
+  const filename = previousConflictingName
+    ? previousConflictingName[1]
+    : base
   // 180 is an arbitrary limit to avoid having files with too long names
-  if (base.length > 180) {
-    base = base.slice(0, 180)
-  }
-  // avoid long chain of -conflict-DATE-conflict-DATE-conflict-DATE
-  // TODO unit-test and pick behaviour for files like
-  //                "cat-conflict-20181116...-THE_GOOD_ONE.jpg"
-  base = base.split('-conflict-20')[0]
-  dst.path = `${path.join(dir, base)}-conflict-${date}${ext}`
+  const notToLongFilename = filename.slice(0, 180)
+  dst.path = `${path.join(dir, notToLongFilename)}-conflict-${date}${ext}`
   assignId(dst)
   return dst
 }
