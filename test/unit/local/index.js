@@ -177,28 +177,6 @@ describe('Local', function () {
     })
   })
 
-  xdescribe('isUpToDate', () =>
-    it('says if the local file is up to date', function () {
-      let doc = {
-        _id: 'foo/bar',
-        _rev: '1-0123456',
-        path: 'foo/bar',
-        docType: 'file',
-        md5sum: '22f7aca0d717eb322d5ae1c97d8aa26eb440287b',
-        sides: {
-          remote: 1
-        }
-      }
-      this.local.isUpToDate(doc).should.be.false()
-      doc.sides.local = 2
-      doc._rev = '2-0123456'
-      this.local.isUpToDate(doc).should.be.true()
-      doc.sides.remote = 3
-      doc._rev = '3-0123456'
-      this.local.isUpToDate(doc).should.be.false()
-    })
-  )
-
   describe('fileExistsLocally', () =>
     it('checks file existence as a binary in the db and on disk', async function () {
       let filePath = path.resolve(this.syncPath, 'folder', 'testfile')
