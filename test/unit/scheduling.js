@@ -26,7 +26,7 @@ describe('Sync', function () {
   before('instanciate local, remote & sync', async function () {
     this.sandbox = sinon.sandbox.create()
     const cozy = cozyHelpers.cozy
-    builders = new Builders({cozy})
+    builders = new Builders()
 
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
     await helpers.local.setupTrash()
