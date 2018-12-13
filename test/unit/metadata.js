@@ -277,6 +277,23 @@ describe('metadata', function () {
     })
   })
 
+  describe('isUpToDate', () => {
+    it('is false when the given side is undefined in doc', function () {
+      const doc = builders.metafile().rev('1-0123456').sides({remote: 1}).build()
+      should(metadata.isUpToDate('local', doc)).be.false()
+    })
+
+    it('is true when the given side equals the short rev in doc', () => {
+      const doc = builders.metafile().rev('2-0123456').sides({remote: 1, local: 2}).build()
+      should(metadata.isUpToDate('local', doc)).be.true()
+    })
+
+    it('is false when the given side is lower than the short rev in doc', () => {
+      const doc = builders.metafile().rev('3-0123456').sides({remote: 3, local: 2}).build()
+      should(metadata.isUpToDate('local', doc)).be.false()
+    })
+  })
+
   describe('assignMaxDate', () => {
     it('assigns the previous timestamp to the doc when it is more recent than the current one to prevent updated_at < created_at errors on remote sync', () => {
       const was = builders.metafile().build()
