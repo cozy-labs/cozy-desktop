@@ -28,7 +28,7 @@ var fileNumber = 1
 //
 module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
   /*::
-  _data: string | stream.Readable
+  _data: string | stream.Readable | Buffer
   */
 
   constructor (cozy /*: Cozy */) {
@@ -49,7 +49,7 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
     return this
   }
 
-  data (data /*: string | stream.Readable */) /*: RemoteFileBuilder */ {
+  data (data /*: string | stream.Readable | Buffer */) /*: RemoteFileBuilder */ {
     this._data = data
     if (typeof data === 'string') {
       this.remoteDoc.size = Buffer.from(data).length.toString()
