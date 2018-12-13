@@ -365,8 +365,7 @@ describe('remote.Remote', function () {
       should(newRemote).have.propertyByPath('attributes', 'executable').eql(false)
     })
 
-    // TODO: Restore test
-    xit('updates the updated_at', async function () {
+    it('updates the last modification date of the remote file', async function () {
       const dir = await builders.remoteDir().name('dir').create()
       const created = await builders.remoteFile()
         .name('file-7')
@@ -398,7 +397,7 @@ describe('remote.Remote', function () {
         type: 'file',
         dir_id: dir._id,
         name: 'file-7',
-        updated_at: '2015-11-16T16:13:01Z'
+        updated_at: '2015-11-16T16:13:01.001Z'
       })
       should(doc.remote._rev).equal(file._rev)
     })
