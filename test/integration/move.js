@@ -12,13 +12,16 @@ const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 const { IntegrationTestHelpers } = require('../support/helpers/integration')
 
+const builders = new Builders()
+const cozy = cozyHelpers.cozy
+
 describe('Move', () => {
   if (process.env.APPVEYOR) {
     it('is unstable on AppVeyor')
     return
   }
 
-  let builders, cozy, helpers, pouch, prep
+  let helpers, pouch, prep
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -30,8 +33,6 @@ describe('Move', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function () {
-    builders = new Builders()
-    cozy = cozyHelpers.cozy
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
     pouch = helpers._pouch
     prep = helpers.prep

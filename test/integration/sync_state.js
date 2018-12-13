@@ -10,6 +10,8 @@ const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 const { IntegrationTestHelpers } = require('../support/helpers/integration')
 
+const builders = new Builders()
+
 describe('Sync state', () => {
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -20,11 +22,10 @@ describe('Sync state', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  let builders, events, helpers
+  let events, helpers
 
   beforeEach(function () {
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozyHelpers.cozy)
-    builders = new Builders()
     events = helpers.events
     sinon.spy(events, 'emit')
     // await helpers.local.setupTrash()

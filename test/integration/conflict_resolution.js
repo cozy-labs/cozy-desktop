@@ -12,8 +12,11 @@ const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 const { IntegrationTestHelpers } = require('../support/helpers/integration')
 
+const builders = new Builders()
+const cozy = cozyHelpers.cozy
+
 describe('Conflict resolution', () => {
-  let builders, cozy, helpers
+  let helpers
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -25,8 +28,6 @@ describe('Conflict resolution', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function () {
-    builders = new Builders()
-    cozy = cozyHelpers.cozy
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
 
     await helpers.local.setupTrash()

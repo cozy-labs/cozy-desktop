@@ -12,6 +12,8 @@ const { IntegrationTestHelpers } = require('../support/helpers/integration')
 // XXX: duplicated from remote/watcher
 const HEARTBEAT /*: number */ = parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || 1000 * 60
 
+const builders = new Builders()
+
 describe('Sync', function () {
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
@@ -21,14 +23,11 @@ describe('Sync', function () {
   after('clean config directory', configHelpers.cleanConfig)
   after('clean  local', () => helpers.local.clean())
 
-  let helpers, builders
+  let helpers
 
   before('instanciate local, remote & sync', async function () {
     this.sandbox = sinon.sandbox.create()
-    const cozy = cozyHelpers.cozy
-    builders = new Builders()
-
-    helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
+    helpers = new IntegrationTestHelpers(this.config, this.pouch, cozyHelpers.cozy)
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
 
