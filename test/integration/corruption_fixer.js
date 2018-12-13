@@ -162,7 +162,7 @@ describe('Re-Upload files when the stack report them as broken', () => {
       couchChecksum,
       couchSize
     } = opts
-    const remoteFile = await builders.remote.file()
+    const remoteFile = await builders.remoteFile()
                         .name(fileName)
                         .data(storageContent)
                         .create()

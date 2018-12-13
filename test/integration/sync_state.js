@@ -34,7 +34,7 @@ describe('Sync state', () => {
 
   it('1 sync error (missing remote file)', async () => {
     await helpers._remote.watcher.pullMany([
-      builders.remote.file().build()
+      builders.remoteFile().build()
     ])
     await helpers.syncAll()
     should(events.emit.args).deepEqual([

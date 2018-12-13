@@ -13,7 +13,7 @@ import type Pouch from '../../../core/pouch'
 // Test data builders facade.
 //
 //     builders.metadata.file()...
-//     builders.remote.dir()...
+//     builders.remoteDir()...
 //     builders.stream()...
 //
 module.exports = class Builders {
@@ -27,11 +27,12 @@ module.exports = class Builders {
     this.metadata = new MetadataBuilders(pouch)
   }
 
-  get remote () /*: * */ {
-    return {
-      dir: () => new RemoteDirBuilder(this.cozy),
-      file: () => new RemoteFileBuilder(this.cozy)
-    }
+  remoteDir () /*: RemoteDirBuilder */ {
+    return new RemoteDirBuilder(this.cozy)
+  }
+
+  remoteFile () /*: RemoteFileBuilder */ {
+    return new RemoteFileBuilder(this.cozy)
   }
 
   stream () /*: StreamBuilder */ {

@@ -63,7 +63,7 @@ describe('remote.Remote', function () {
       const expectedChecksum = '2NqmrnZqa1zTER40NtPGJg=='
       const fixture = 'test/fixtures/cool-pillow.jpg'
 
-      const binary = await builders.remote.file().name('pillow.jpg')
+      const binary = await builders.remoteFile().name('pillow.jpg')
         .contentType('image/jpeg').dataFromFile(fixture).create()
 
       should(binary.md5sum).equal(expectedChecksum)
@@ -125,8 +125,8 @@ describe('remote.Remote', function () {
     })
 
     it('does not reupload an existing file', async function () {
-      const backupDir = await builders.remote.dir().name('backup').inRootDir().create()
-      await builders.remote.dir().name('ORIGINAL').inRootDir().create()
+      const backupDir = await builders.remoteDir().name('backup').inRootDir().create()
+      await builders.remoteDir().name('ORIGINAL').inRootDir().create()
       let md5sum = await checksumer.computeChecksumAsync(CHAT_MIGNON_MOD_PATH)
       let doc /*: Object */ = {
         _id: path.normalize('backup/cat3.jpg'),
@@ -248,8 +248,8 @@ describe('remote.Remote', function () {
     })
 
     it('does nothing when the folder already exists', async function () {
-      const parentDir /*: RemoteDoc */ = await builders.remote.dir().create()
-      const remoteDir /*: RemoteDoc */ = await builders.remote.dir().inDir(parentDir).create()
+      const parentDir /*: RemoteDoc */ = await builders.remoteDir().create()
+      const remoteDir /*: RemoteDoc */ = await builders.remoteDir().inDir(parentDir).create()
       const doc /*: Metadata */ = _.merge({remote: undefined}, metadata.fromRemoteDoc(remoteDir))
       ensureValidPath(doc)
 
@@ -276,7 +276,7 @@ describe('remote.Remote', function () {
   } else {
     describe('overwriteFileAsync', function () {
       it('overwrites the binary content', async function () {
-        const created = await builders.remote.file().data('foo').timestamp(2015, 11, 16, 16, 12, 1).create()
+        const created = await builders.remoteFile().data('foo').timestamp(2015, 11, 16, 16, 12, 1).create()
         const old = metadata.fromRemoteDoc(created)
         const doc /*: Metadata */ = _.defaults({
           _id: created._id,
@@ -308,7 +308,7 @@ describe('remote.Remote', function () {
       })
 
       it('throws an error if the checksum is invalid', async function () {
-        const created = await builders.remote.file().data('foo').create()
+        const created = await builders.remoteFile().data('foo').create()
         const old = metadata.fromRemoteDoc(created)
         const doc = _.defaults({md5sum: 'Invalid///////////////=='}, old)
         this.remote.other = {
@@ -344,7 +344,7 @@ describe('remote.Remote', function () {
 
   describe('updateFileMetadataAsync', () => {
     it('makes the remote file executable when the local one was made too', async function () {
-      const oldRemote = await builders.remote.file().executable(false).create()
+      const oldRemote = await builders.remoteFile().executable(false).create()
       const old = metadata.fromRemoteDoc(oldRemote)
       const doc = _.defaults({executable: true}, old)
 
@@ -356,7 +356,7 @@ describe('remote.Remote', function () {
     })
 
     it('makes the remote file non-executable when the local one is not anymore', async function () {
-      const oldRemote = await builders.remote.file().executable(true).create()
+      const oldRemote = await builders.remoteFile().executable(true).create()
       const old = metadata.fromRemoteDoc(oldRemote)
       const doc = _.clone(old)
       delete doc.executable
@@ -370,8 +370,8 @@ describe('remote.Remote', function () {
 
     // TODO: Restore test
     xit('updates the updated_at', async function () {
-      const dir = await builders.remote.dir().name('dir').create()
-      const created = await builders.remote.file()
+      const dir = await builders.remoteDir().name('dir').create()
+      const created = await builders.remoteFile()
         .name('file-7')
         .inDir(dir)
         .data('foo')
@@ -409,12 +409,12 @@ describe('remote.Remote', function () {
 
   describe('updateFolder', function () {
     it('updates the metadata of a folder', async function () {
-      const created /*: RemoteDoc */ = await builders.remote.dir()
+      const created /*: RemoteDoc */ = await builders.remoteDir()
         .name('old-name')
         .timestamp(2017, 11, 15, 8, 12, 9)
         .create()
       const old /*: Metadata */ = metadata.fromRemoteDoc(created)
-      const newParentDir /*: RemoteDoc */ = await builders.remote.dir()
+      const newParentDir /*: RemoteDoc */ = await builders.remoteDir()
         .name('new-parent-dir')
         .inRootDir()
         .create()
@@ -439,10 +439,10 @@ describe('remote.Remote', function () {
     })
 
     it('creates the dir if it does not exist', async function () {
-      const parentDir /*: RemoteDoc */ = await builders.remote.dir()
+      const parentDir /*: RemoteDoc */ = await builders.remoteDir()
         .name('parent-dir')
         .create()
-      const deletedDir /*: RemoteDoc */ = await builders.remote.dir()
+      const deletedDir /*: RemoteDoc */ = await builders.remoteDir()
         .name('deleted-dir')
         .inDir(parentDir)
         .timestamp(2016, 1, 2, 3, 4, 5)
@@ -477,7 +477,7 @@ describe('remote.Remote', function () {
           updated_at: timestamp.stringify(timestamp.build(2015, 1, 1, 1, 1, 1))
         },
         metadata.fromRemoteDoc(
-          builders.remote.dir().name('foo').build()
+          builders.remoteDir().name('foo').build()
         )
       )
       const newMetadata /*: Metadata */ = _.defaults({
@@ -504,7 +504,7 @@ describe('remote.Remote', function () {
 
     beforeEach(async () => {
       const remoteDoc /*: RemoteDoc */ = await builders
-        .remote.file()
+        .remoteFile()
         .name('cat6.jpg')
         .data('meow')
         .create()
@@ -514,7 +514,7 @@ describe('remote.Remote', function () {
         name: 'cat7.jpg',
         remote: undefined
       }, old)
-      newDir = await builders.remote.dir()
+      newDir = await builders.remoteDir()
         .name('moved-to')
         .inRootDir()
         .create()
@@ -609,7 +609,7 @@ describe('remote.Remote', function () {
 
   describe('trash', () => {
     it('moves the file or folder to the Cozy trash', async function () {
-      const folder = await builders.remote.dir().create()
+      const folder = await builders.remoteDir().create()
       const doc = metadata.fromRemoteDoc(folder)
 
       await this.remote.trashAsync(doc)
@@ -619,7 +619,7 @@ describe('remote.Remote', function () {
     })
 
     it('does nothing when file or folder does not exist anymore', async function () {
-      const folder = await builders.remote.dir().build()
+      const folder = await builders.remoteDir().build()
       const doc = metadata.fromRemoteDoc(folder)
 
       await this.remote.trashAsync(doc)
@@ -631,7 +631,7 @@ describe('remote.Remote', function () {
 
   describe('deleteFolderAsync', () => {
     it('deletes permanently an empty folder', async function () {
-      const folder = await builders.remote.dir().create()
+      const folder = await builders.remoteDir().create()
       const doc = metadata.fromRemoteDoc(folder)
 
       await this.remote.deleteFolderAsync(doc)
@@ -641,9 +641,9 @@ describe('remote.Remote', function () {
     })
 
     it('trashes a non-empty folder', async function () {
-      const dir = await builders.remote.dir().create()
+      const dir = await builders.remoteDir().create()
       const doc = metadata.fromRemoteDoc(dir)
-      await builders.remote.dir().inDir(dir).create()
+      await builders.remoteDir().inDir(dir).create()
 
       await this.remote.deleteFolderAsync(doc)
 
@@ -652,7 +652,7 @@ describe('remote.Remote', function () {
     })
 
     it('resolves when folder does not exist anymore', async function () {
-      const dir = await builders.remote.dir().build()
+      const dir = await builders.remoteDir().build()
       const doc = metadata.fromRemoteDoc(dir)
 
       await this.remote.deleteFolderAsync(doc)
@@ -662,7 +662,7 @@ describe('remote.Remote', function () {
     })
 
     it('resolves when folder is being deleted (race condition)', async function () {
-      const dir = await builders.remote.dir().create()
+      const dir = await builders.remoteDir().create()
       const doc = metadata.fromRemoteDoc(dir)
       sinon.stub(this.remote.remoteCozy, 'isEmpty').callsFake(async (id) => {
         await cozy.files.destroyById(id)
@@ -677,19 +677,19 @@ describe('remote.Remote', function () {
     })
 
     it('does not swallow trashing errors', async function () {
-      const dir = await builders.remote.dir().trashed().create()
+      const dir = await builders.remoteDir().trashed().create()
       const doc = metadata.fromRemoteDoc(dir)
       await should(this.remote.deleteFolderAsync(doc)).be.rejected()
     })
 
     it('does not swallow emptiness check errors', async function () {
-      const file = await builders.remote.file().create()
+      const file = await builders.remoteFile().create()
       const doc = metadata.fromRemoteDoc(file)
       await should(this.remote.deleteFolderAsync(doc)).be.rejected()
     })
 
     it('does not swallow destroy errors', async function () {
-      const dir = await builders.remote.dir().create()
+      const dir = await builders.remoteDir().create()
       const doc = metadata.fromRemoteDoc(dir)
       sinon.stub(this.remote.remoteCozy, 'destroyById').rejects('whatever')
       await should(this.remote.deleteFolderAsync(doc)).be.rejected()
@@ -700,8 +700,8 @@ describe('remote.Remote', function () {
     it('updates the rev of a moved file', async function () {
       const remote = {src: {}, dst: {}}
 
-      remote.src.dir = await builders.remote.dir().name('src-dir').inRootDir().create()
-      remote.src.foo = await builders.remote.file().name('foo').inDir(remote.src.dir).create()
+      remote.src.dir = await builders.remoteDir().name('src-dir').inRootDir().create()
+      remote.src.foo = await builders.remoteFile().name('foo').inDir(remote.src.dir).create()
       remote.dst.dir = await this.remote.remoteCozy.updateAttributesById(remote.src.dir._id, {name: 'dst-dir'})
       remote.dst.foo = await this.remote.remoteCozy.find(remote.src.foo._id)
 
@@ -714,7 +714,7 @@ describe('remote.Remote', function () {
 
   describe('renameConflictingDocAsync', () => {
     it('renames the file/folder', async function () {
-      const remoteDoc /*: RemoteDoc */ = await builders.remote.file().name('cat9').create()
+      const remoteDoc /*: RemoteDoc */ = await builders.remoteFile().name('cat9').create()
       const src /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
       ensureValidPath(src)
       const newPath = 'cat9-conflict-2015-12-01T01:02:03Z.jpg'

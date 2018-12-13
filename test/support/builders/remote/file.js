@@ -19,12 +19,12 @@ var fileNumber = 1
 
 // Build a RemoteDoc representing a remote Cozy file:
 //
-//     const file /*: RemoteDoc */ = builders.remote.file().inDir(...).build()
+//     const file /*: RemoteDoc */ = builders.remoteFile().inDir(...).build()
 //
 // To actually create the corresponding file on the Cozy, use the async
 // #create() method instead:
 //
-//     const file /*: RemoteDoc */ = await builders.remote.file().inDir(...).create()
+//     const file /*: RemoteDoc */ = await builders.remoteFile().inDir(...).create()
 //
 module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
   /*::
