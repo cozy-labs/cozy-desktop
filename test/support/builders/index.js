@@ -10,6 +10,7 @@ const StreamBuilder = require('./stream')
 import type { Cozy } from 'cozy-client-js'
 import type { Metadata } from '../../../core/metadata'
 import type Pouch from '../../../core/pouch'
+import type { Warning } from '../../../core/remote/warning'
 */
 
 // Test data builders facade.
@@ -47,6 +48,19 @@ module.exports = class Builders {
 
   remoteFile () /*: RemoteFileBuilder */ {
     return new RemoteFileBuilder(this.cozy)
+  }
+
+  remoteWarnings () /*: Warning[] */ {
+    return [
+      {
+        error: 'tos-updated',
+        title: 'TOS Updated',
+        detail: 'TOS have been updated',
+        links: {
+          self: 'https://manager.cozycloud.cc/cozy/tos?domain=...'
+        }
+      }
+    ]
   }
 
   stream () /*: StreamBuilder */ {
