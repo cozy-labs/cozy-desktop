@@ -18,8 +18,6 @@ const measureTime = require('../perftools')
 const { withContentLength } = require('../file_stream_provider')
 const syncDir = require('./sync_dir')
 
-bluebird.promisifyAll(fse)
-
 /*::
 import type EventEmitter from 'events'
 import type Config from '../config'
@@ -92,7 +90,7 @@ module.exports = class Local /*:: implements Side */ {
   async createReadStreamAsync (doc /*: Metadata */) /*: Promise<ReadableWithContentLength> */ {
     try {
       let filePath = path.resolve(this.syncPath, doc.path)
-      let pStats = fse.statAsync(filePath)
+      let pStats = fse.stat(filePath)
       let pStream = new Promise((resolve, reject) => {
         let stream = fse.createReadStream(filePath)
         stream.on('open', () => resolve(stream))
@@ -374,7 +372,7 @@ module.exports = class Local /*:: implements Side */ {
 
     try {
       log.info({path: doc.path}, 'Deleting empty folder...')
-      await fse.rmdirAsync(fullpath)
+      await fse.rmdir(fullpath)
       this.events.emit('delete-file', doc)
       return
     } catch (err) {

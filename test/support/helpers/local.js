@@ -12,7 +12,6 @@ const { ContextDir } = require('./context_dir')
 
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
 
-Promise.promisifyAll(fse)
 const rimrafAsync = Promise.promisify(rimraf)
 
 /*::
@@ -51,7 +50,7 @@ class LocalTestHelpers {
     for (const src of paths) {
       const dst = path.join(this.trashPath, path.basename(src))
       try {
-        await fse.renameAsync(src, dst)
+        await fse.rename(src, dst)
       } catch (err) {
         throw err
       }

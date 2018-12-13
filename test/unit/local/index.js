@@ -17,8 +17,6 @@ const { ContextDir } = require('../../support/helpers/context_dir')
 const { WINDOWS_DEFAULT_MODE } = require('../../support/helpers/platform')
 const pouchHelpers = require('../../support/helpers/pouch')
 
-Promise.promisifyAll(fse)
-
 describe('Local', function () {
   let builders, syncDir
 
@@ -635,11 +633,11 @@ describe('Local', function () {
 
     it('deletes an empty folder', async function () {
       const doc = builders.metadir().build()
-      await fse.emptyDirAsync(fullPath(doc))
+      await fse.emptyDir(fullPath(doc))
 
       await this.local.deleteFolderAsync(doc)
 
-      should(await fse.pathExistsAsync(fullPath(doc))).be.false()
+      should(await fse.pathExists(fullPath(doc))).be.false()
       should(this.events.emit.args).deepEqual([
         ['delete-file', doc]
       ])
@@ -647,11 +645,11 @@ describe('Local', function () {
 
     it('trashes a non-empty folder (ENOTEMPTY)', async function () {
       const doc = builders.metadir().build()
-      await fse.ensureDirAsync(path.join(fullPath(doc), 'something-inside'))
+      await fse.ensureDir(path.join(fullPath(doc), 'something-inside'))
 
       await this.local.deleteFolderAsync(doc)
 
-      should(await fse.pathExistsAsync(fullPath(doc))).be.false()
+      should(await fse.pathExists(fullPath(doc))).be.false()
       should(this.local.trashAsync.args).deepEqual([
         [doc]
       ])
@@ -667,7 +665,7 @@ describe('Local', function () {
     it('throws when given non-folder metadata', async function () {
       // TODO: FileMetadataBuilder
       const doc = {path: 'FILE-TO-DELETE', docType: 'file'}
-      await fse.ensureFileAsync(fullPath(doc))
+      await fse.ensureFile(fullPath(doc))
 
       await should(this.local.deleteFolderAsync(doc))
         .be.rejectedWith(/metadata/)

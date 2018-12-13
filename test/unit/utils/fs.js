@@ -12,7 +12,6 @@ const { hideOnWindows } = require('../../../core/utils/fs')
 const configHelpers = require('../../support/helpers/config')
 
 Promise.promisifyAll(childProcess)
-Promise.promisifyAll(fse)
 
 describe('utils/fs', () => {
   before('instanciate config', configHelpers.createConfig)
@@ -28,7 +27,7 @@ describe('utils/fs', () => {
       dirPath = path.join(parentPath, dirName)
       missingPath = path.join(parentPath, 'missing')
 
-      await fse.ensureDirAsync(dirPath)
+      await fse.ensureDir(dirPath)
     })
 
     if (platform === 'win32') {

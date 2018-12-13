@@ -9,7 +9,6 @@ const path = require('path')
 const checksumer = require('../../../core/local/checksumer')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
 
-Promise.promisifyAll(fse) // FIXME: Isn't fs-extra already promisified?
 Promise.promisifyAll(checksumer)
 
 function getPath (target /*: string | {path: string} */) /*: string */ {
@@ -47,9 +46,9 @@ class ContextDir {
       const dir = dirsToRead.shift()
       if (dir == null) break
 
-      for (const name of await fse.readdirAsync(dir)) {
+      for (const name of await fse.readdir(dir)) {
         const absPath = path.join(dir, name)
-        const stat = await fse.statAsync(absPath)
+        const stat = await fse.stat(absPath)
         let relPath = this.relpath(absPath)
 
         if (stat.isDirectory()) {
@@ -98,7 +97,7 @@ class ContextDir {
   }
 
   async unlink (target /*: string | {path: string} */) {
-    await fse.unlinkAsync(this.abspath(target))
+    await fse.unlink(this.abspath(target))
   }
 
   async rmdir (target /*: string | {path: string} */) {
