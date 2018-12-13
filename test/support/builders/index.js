@@ -30,8 +30,8 @@ module.exports = class Builders {
     this.pouch = pouch
   }
 
-  metadata () /*: DirMetadataBuilder|FileMetadataBuilder */ {
-    return this.metadir()
+  metadata (old /*: ?Metadata */) /*: DirMetadataBuilder|FileMetadataBuilder */ {
+    return this.metadir(old)
   }
 
   metadir (old /*: ?Metadata */) /*: DirMetadataBuilder */ {
