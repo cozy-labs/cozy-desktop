@@ -1,6 +1,6 @@
 /* @flow */
 
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const path = require('path')
 
 const rootDir = path.resolve(__dirname, '../..')
@@ -22,7 +22,7 @@ module.exports = {
 //     await TmpDir.ensureEmpty(__filename)
 async function emptyForTestFile (filename /*: string */) /*: Promise<string> */ {
   const fpath = pathForTestFile(filename)
-  await fs.emptyDir(fpath)
+  await fse.emptyDir(fpath)
   return fpath
 }
 

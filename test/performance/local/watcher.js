@@ -2,7 +2,7 @@
 /* @flow */
 
 const Promise = require('bluebird')
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const path = require('path')
 
 const Watcher = require('../../../core/local/chokidar_watcher')
@@ -83,7 +83,7 @@ describe('LocalWatcher charge', () => {
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
   before('create outside dir', async function () {
-    await fs.emptyDir(path.resolve(path.join(this.syncPath, '..', 'outside')))
+    await fse.emptyDir(path.resolve(path.join(this.syncPath, '..', 'outside')))
   })
   before('instanciate local watcher', async function () {
     prep = new SpyPrep()
@@ -93,7 +93,7 @@ describe('LocalWatcher charge', () => {
   })
 
   before('cleanup test directory', async function () {
-    await fs.emptyDir(this.syncPath)
+    await fse.emptyDir(this.syncPath)
   })
 
   before(function () {
@@ -111,10 +111,10 @@ describe('LocalWatcher charge', () => {
       const stats = {ino: i, mtime: now, ctime: now}
       if (i % 2) { // type.startsWith('add')
         if (i % 3) {
-          await fs.ensureDir(abspath(p))
+          await fse.ensureDir(abspath(p))
         } else {
-          await fs.ensureDir(path.dirname(abspath(p)))
-          await fs.writeFileSync(abspath(p))
+          await fse.ensureDir(path.dirname(abspath(p)))
+          await fse.writeFileSync(abspath(p))
         }
       } else {
         await createDoc(this.pouch, i % 3, p, i)

@@ -2,7 +2,7 @@
 
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const _ = require('lodash')
 const path = require('path')
 const rimraf = require('rimraf')
@@ -12,7 +12,7 @@ const { ContextDir } = require('./context_dir')
 
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
 
-Promise.promisifyAll(fs)
+Promise.promisifyAll(fse)
 const rimrafAsync = Promise.promisify(rimraf)
 
 /*::
@@ -51,7 +51,7 @@ class LocalTestHelpers {
     for (const src of paths) {
       const dst = path.join(this.trashPath, path.basename(src))
       try {
-        await fs.renameAsync(src, dst)
+        await fse.renameAsync(src, dst)
       } catch (err) {
         throw err
       }
@@ -59,7 +59,7 @@ class LocalTestHelpers {
   }
 
   async setupTrash () {
-    await fs.emptyDir(this.trashPath)
+    await fse.emptyDir(this.trashPath)
     this.trashDir = new ContextDir(this.trashPath)
     this.local._trash = this.trashFunc
   }

@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const path = require('path')
 const sinon = require('sinon')
 const should = require('should')
@@ -32,7 +32,7 @@ describe('LocalWatcher Tests', function () {
   afterEach('stop watcher and clean path', function (done) {
     this.watcher.stop(true)
     this.watcher.checksumer.kill()
-    fs.emptyDir(this.syncPath, done)
+    fse.emptyDir(this.syncPath, done)
   })
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
@@ -43,8 +43,8 @@ describe('LocalWatcher Tests', function () {
     })
 
     it('calls addFile/putFolder for files that are aleady here', async function () {
-      fs.ensureDirSync(path.join(this.syncPath, 'aa'))
-      fs.ensureFileSync(path.join(this.syncPath, 'aa/ab'))
+      fse.ensureDirSync(path.join(this.syncPath, 'aa'))
+      fse.ensureFileSync(path.join(this.syncPath, 'aa/ab'))
       this.prep.putFolderAsync = sinon.stub().resolves()
       this.prep.addFileAsync = sinon.stub().resolves()
       await this.watcher.start()
@@ -63,10 +63,10 @@ describe('LocalWatcher Tests', function () {
       const changedPath = path.join(this.syncPath, changedFilename)
       const unchangedData = 'Unchanged file content'
       const changedData = 'Changed file initial content'
-      await fs.outputFile(unchangedPath, unchangedData)
-      await fs.outputFile(changedPath, changedData)
-      const unchangedStats = await fs.stat(unchangedPath)
-      const {ino: changedIno} = await fs.stat(changedPath)
+      await fse.outputFile(unchangedPath, unchangedData)
+      await fse.outputFile(changedPath, changedData)
+      const unchangedStats = await fse.stat(unchangedPath)
+      const {ino: changedIno} = await fse.stat(changedPath)
       const unchangedDoc = await builders.metafile()
         .upToDate()
         .path(unchangedFilename)
@@ -81,7 +81,7 @@ describe('LocalWatcher Tests', function () {
         .updatedAt(new Date('2017-03-19T16:44:39.102Z'))
         .create()
 
-      await fs.outputFile(changedPath, 'Changed file NEW content')
+      await fse.outputFile(changedPath, 'Changed file NEW content')
       this.prep.addFileAsync = sinon.stub().resolves()
       sinon.spy(this.watcher, 'checksum')
 
@@ -98,8 +98,8 @@ describe('LocalWatcher Tests', function () {
     })
 
     it('ignores the temporary directory', async function () {
-      fs.ensureDirSync(path.join(this.syncPath, TMP_DIR_NAME))
-      fs.ensureFileSync(path.join(this.syncPath, TMP_DIR_NAME, 'ac'))
+      fse.ensureDirSync(path.join(this.syncPath, TMP_DIR_NAME))
+      fse.ensureFileSync(path.join(this.syncPath, TMP_DIR_NAME, 'ac'))
       this.prep.putFolder = sinon.spy()
       this.prep.addFile = sinon.spy()
       this.prep.updateFile = sinon.spy()
@@ -119,7 +119,7 @@ describe('LocalWatcher Tests', function () {
     })
 
     it('resolves with the md5sum for the given relative path', async function () {
-      await fs.outputFile(abspath, 'foo')
+      await fse.outputFile(abspath, 'foo')
       await should(this.watcher.checksum(relpath))
         .be.fulfilledWith('rL0Y20zC+Fzt72VPzMSk2A==') // foo
     })
@@ -168,7 +168,7 @@ describe('LocalWatcher Tests', function () {
         }
         let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
         let dst = path.join(this.syncPath, 'aaa.jpg')
-        fs.copySync(src, dst)
+        fse.copySync(src, dst)
       })
     })
 
@@ -210,7 +210,7 @@ describe('LocalWatcher Tests', function () {
           done()
           return Promise.resolve()
         }
-        fs.mkdirSync(path.join(this.syncPath, 'aba'))
+        fse.mkdirSync(path.join(this.syncPath, 'aba'))
         return Promise.resolve()
       })
     })
@@ -230,10 +230,10 @@ describe('LocalWatcher Tests', function () {
             done()
             return Promise.resolve()
           }
-          fs.mkdirSync(path.join(this.syncPath, 'abb/abc'))
+          fse.mkdirSync(path.join(this.syncPath, 'abb/abc'))
           return Promise.resolve()
         }
-        fs.mkdirSync(path.join(this.syncPath, 'abb'))
+        fse.mkdirSync(path.join(this.syncPath, 'abb'))
       })
     })
   })
@@ -248,7 +248,7 @@ describe('LocalWatcher Tests', function () {
       // This test does not create the file in pouchdb.
       // the watcher will not find a inode number for the unlink
       // and therefore discard it.
-      fs.ensureFileSync(path.join(this.syncPath, 'aca'))
+      fse.ensureFileSync(path.join(this.syncPath, 'aca'))
       this.prep.addFileAsync = () => {  // For aca file
         this.prep.trashFileAsync = function (side, doc) {
           side.should.equal('local')
@@ -257,7 +257,7 @@ describe('LocalWatcher Tests', function () {
           done()
           return Promise.resolve()
         }
-        fs.unlinkSync(path.join(this.syncPath, 'aca'))
+        fse.unlinkSync(path.join(this.syncPath, 'aca'))
         return Promise.resolve()
       }
       this.watcher.start()
@@ -274,7 +274,7 @@ describe('LocalWatcher Tests', function () {
       // This test does not create the file in pouchdb.
       // the watcher will not find a inode number for the unlink
       // and therefore discard it.
-      fs.mkdirSync(path.join(this.syncPath, 'ada'))
+      fse.mkdirSync(path.join(this.syncPath, 'ada'))
       this.prep.putFolderAsync = () => {  // For ada folder
         this.prep.trashFolderAsync = function (side, doc) {
           side.should.equal('local')
@@ -283,7 +283,7 @@ describe('LocalWatcher Tests', function () {
           done()
           return Promise.resolve()
         }
-        fs.rmdirSync(path.join(this.syncPath, 'ada'))
+        fse.rmdirSync(path.join(this.syncPath, 'ada'))
         return Promise.resolve()
       }
       this.watcher.start()
@@ -294,7 +294,7 @@ describe('LocalWatcher Tests', function () {
     it('detects when a file is changed', function (done) {
       let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
       let dst = path.join(this.syncPath, 'aea.jpg')
-      fs.copySync(src, dst)
+      fse.copySync(src, dst)
       this.prep.addFileAsync = () => {
         this.prep.updateFileAsync = function (side, doc) {
           side.should.equal('local')
@@ -309,7 +309,7 @@ describe('LocalWatcher Tests', function () {
         }
         src = src.replace(/\.jpg$/, '-mod.jpg')
         dst = path.join(this.syncPath, 'aea.jpg')
-        fs.copySync(src, dst)
+        fse.copySync(src, dst)
         return Promise.resolve()
       }
       this.watcher.start()
@@ -335,7 +335,7 @@ describe('LocalWatcher Tests', function () {
       // and therefore discard it.
       let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
       let dst = path.join(this.syncPath, 'afa.jpg')
-      fs.copySync(src, dst)
+      fse.copySync(src, dst)
       this.prep.addFileAsync = (side, doc) => {
         doc._id = doc.path
         return this.pouch.db.put(doc)
@@ -364,7 +364,7 @@ describe('LocalWatcher Tests', function () {
             done()
             return Promise.resolve()
           }
-          fs.renameSync(dst, path.join(this.syncPath, 'afb.jpg'))
+          fse.renameSync(dst, path.join(this.syncPath, 'afb.jpg'))
         }, 2000)
       })
     })
@@ -389,8 +389,8 @@ describe('LocalWatcher Tests', function () {
       // and therefore discard it.
       let src = path.join(this.syncPath, 'aga')
       let dst = path.join(this.syncPath, 'agb')
-      fs.ensureDirSync(src)
-      fs.writeFileSync(`${src}/agc`, 'agc')
+      fse.ensureDirSync(src)
+      fse.writeFileSync(`${src}/agc`, 'agc')
       this.prep.addFileAsync = this.prep.putFolderAsync = (side, doc) => {
         doc._id = doc.path
         return this.pouch.db.put(doc)
@@ -426,7 +426,7 @@ describe('LocalWatcher Tests', function () {
             }, 5000)
             return Promise.resolve()
           }
-          fs.renameSync(src, dst)
+          fse.renameSync(src, dst)
         }, 1800)
       })
     })

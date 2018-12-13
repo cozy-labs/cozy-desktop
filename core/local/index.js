@@ -2,7 +2,7 @@
 
 const async = require('async')
 const autoBind = require('auto-bind')
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const path = require('path')
 const trash = require('trash')
 
@@ -18,7 +18,7 @@ const measureTime = require('../perftools')
 const { withContentLength } = require('../file_stream_provider')
 const syncDir = require('./sync_dir')
 
-bluebird.promisifyAll(fs)
+bluebird.promisifyAll(fse)
 
 /*::
 import type EventEmitter from 'events'
@@ -92,9 +92,9 @@ module.exports = class Local /*:: implements Side */ {
   async createReadStreamAsync (doc /*: Metadata */) /*: Promise<ReadableWithContentLength> */ {
     try {
       let filePath = path.resolve(this.syncPath, doc.path)
-      let pStats = fs.statAsync(filePath)
+      let pStats = fse.statAsync(filePath)
       let pStream = new Promise((resolve, reject) => {
-        let stream = fs.createReadStream(filePath)
+        let stream = fse.createReadStream(filePath)
         stream.on('open', () => resolve(stream))
         stream.on('error', err => reject(err))
       })
@@ -132,13 +132,13 @@ module.exports = class Local /*:: implements Side */ {
 
     if (doc.docType === 'file') {
       // TODO: Honor existing read/write permissions
-      await fs.chmod(filePath, doc.executable ? 0o755 : 0o644)
+      await fse.chmod(filePath, doc.executable ? 0o755 : 0o644)
     }
 
     if (doc.updated_at) {
       let updated = new Date(doc.updated_at)
       try {
-        await fs.utimes(filePath, updated, updated)
+        await fse.utimes(filePath, updated, updated)
       } catch (_) {
         // Ignore errors
       }
@@ -148,7 +148,7 @@ module.exports = class Local /*:: implements Side */ {
   inodeSetter (doc /*: Metadata */) {
     let abspath = path.resolve(this.syncPath, doc.path)
     return (callback /*: Callback */) => {
-      fs.stat(abspath, (err, stats) => {
+      fse.stat(abspath, (err, stats) => {
         if (err) {
           callback(err)
         } else {
@@ -171,7 +171,7 @@ module.exports = class Local /*:: implements Side */ {
           .filter((doc) => isUpToDate('local', doc))
           .map((doc) => path.resolve(this.syncPath, doc.path))
         async.detect(paths,
-            (filePath, next) => fs.exists(filePath, found => next(null, found)),
+            (filePath, next) => fse.exists(filePath, found => next(null, found)),
             callback)
       }
     })
@@ -212,19 +212,19 @@ module.exports = class Local /*:: implements Side */ {
       },
 
       (existingFilePath, next) => {
-        fs.ensureDir(this.tmpPath, () => {
+        fse.ensureDir(this.tmpPath, () => {
           hideOnWindows(this.tmpPath)
           if (existingFilePath) {
             log.info({path: filePath}, `Recopy ${existingFilePath} -> ${filePath}`)
             this.events.emit('transfer-copy', doc)
-            fs.copy(existingFilePath, tmpFile, next)
+            fse.copy(existingFilePath, tmpFile, next)
           } else {
             this.other.createReadStreamAsync(doc).then(
               (stream) => {
                 // Don't use async callback here!
                 // Async does some magic and the stream can throw an
                 // 'error' event before the next async is called...
-                let target = fs.createWriteStream(tmpFile)
+                let target = fse.createWriteStream(tmpFile)
                 stream.pipe(target)
                 target.on('finish', next)
                 target.on('error', next)
@@ -256,7 +256,7 @@ module.exports = class Local /*:: implements Side */ {
         // After downloading a file, check that the size is correct too
         // (more protection against stack corruption)
         if (!doc.size) return next()
-        fs.stat(tmpFile, (err, stats) => {
+        fse.stat(tmpFile, (err, stats) => {
           if (err) {
             next(err)
           } else if (doc.size === stats.size) {
@@ -267,7 +267,7 @@ module.exports = class Local /*:: implements Side */ {
         })
       },
 
-      next => fs.ensureDir(parent, () => fs.rename(tmpFile, filePath, next)),
+      next => fse.ensureDir(parent, () => fse.rename(tmpFile, filePath, next)),
 
       this.inodeSetter(doc),
       this.metadataUpdater(doc)
@@ -275,7 +275,7 @@ module.exports = class Local /*:: implements Side */ {
     ], function (err) {
       stopMeasure()
       if (err) { log.warn({path: doc.path}, 'addFile failed:', err, doc) }
-      fs.unlink(tmpFile, () => callback(err))
+      fse.unlink(tmpFile, () => callback(err))
     })
   }
 
@@ -284,7 +284,7 @@ module.exports = class Local /*:: implements Side */ {
     let folderPath = path.join(this.syncPath, doc.path)
     log.info({path: doc.path}, 'Put folder')
     async.series([
-      cb => fs.ensureDir(folderPath, cb),
+      cb => fse.ensureDir(folderPath, cb),
       this.inodeSetter(doc),
       this.metadataUpdater(doc)
     ], callback)
@@ -342,7 +342,7 @@ module.exports = class Local /*:: implements Side */ {
 
     if (doc._id !== old._id) {
       try {
-        const stats = await fs.stat(newPath)
+        const stats = await fse.stat(newPath)
         const err = new Error(`Move destination already exists: ${newPath}`)
         // Assign stats to the Error so we can inspect them in logs
         // $FlowFixMe
@@ -353,7 +353,7 @@ module.exports = class Local /*:: implements Side */ {
       }
     }
 
-    await fs.rename(oldPath, newPath)
+    await fse.rename(oldPath, newPath)
     await this.updateMetadataAsync(doc)
   }
 
@@ -374,7 +374,7 @@ module.exports = class Local /*:: implements Side */ {
 
     try {
       log.info({path: doc.path}, 'Deleting empty folder...')
-      await fs.rmdirAsync(fullpath)
+      await fse.rmdirAsync(fullpath)
       this.events.emit('delete-file', doc)
       return
     } catch (err) {
@@ -389,7 +389,7 @@ module.exports = class Local /*:: implements Side */ {
     log.info({path: doc.path}, `Resolve a conflict: ${doc.path} → ${newPath}`)
     let srcPath = path.join(this.syncPath, doc.path)
     let dstPath = path.join(this.syncPath, newPath)
-    fs.rename(srcPath, dstPath, callback)
+    fse.rename(srcPath, dstPath, callback)
     // TODO: Don't fire an event for the deleted file?
   }
 }

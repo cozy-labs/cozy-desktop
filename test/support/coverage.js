@@ -10,7 +10,7 @@
 
 const glob = require('glob')
 const path = require('path')
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const { hookRequire } = require('istanbul-lib-hook')
 const { createInstrumenter } = require('istanbul-lib-instrument') // eslint-disable-line node/no-extraneous-require
 
@@ -26,17 +26,17 @@ const instrumenter = createInstrumenter()
 const shouldInstrument = fileset.has.bind(fileset)
 const instrumentSync = instrumenter.instrumentSync.bind(instrumenter)
 
-fs.ensureDirSync(tmpd)
+fse.ensureDirSync(tmpd)
 hookRequire(shouldInstrument, instrumentSync, {})
 process.on('exit', () => {
   for (let file of fileset) {
     if (!cov[file]) {
       // Files that are not touched by code ran by the test runner are
       // manually instrumented, to illustrate the missing coverage.
-      instrumentSync(fs.readFileSync(file, 'utf-8'), file)
+      instrumentSync(fse.readFileSync(file, 'utf-8'), file)
       cov[file] = instrumenter.lastFileCoverage()
     }
   }
 
-  fs.writeFileSync(path.join(tmpd, `${process.type}.json`), JSON.stringify(cov), 'utf-8')
+  fse.writeFileSync(path.join(tmpd, `${process.type}.json`), JSON.stringify(cov), 'utf-8')
 })

@@ -1,7 +1,7 @@
 /* @flow */
 
 const autoBind = require('auto-bind')
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const _ = require('lodash')
 const os = require('os')
 const path = require('path')
@@ -122,7 +122,7 @@ class App {
 
   // Save the config with all the informations for synchonization
   saveConfig (cozyUrl /*: string */, syncPath /*: string */) {
-    fs.ensureDirSync(syncPath)
+    fse.ensureDirSync(syncPath)
     this.config.cozyUrl = cozyUrl
     this.config.syncPath = syncPath
     this.config.persist()
@@ -175,9 +175,9 @@ class App {
 
   async removeConfig () {
     await this.pouch.db.destroy()
-    for (const name of await fs.readdir(this.basePath)) {
+    for (const name of await fse.readdir(this.basePath)) {
       if (name.startsWith(LOG_FILENAME)) continue
-      await fs.remove(path.join(this.basePath, name))
+      await fse.remove(path.join(this.basePath, name))
     }
   }
 
@@ -217,7 +217,7 @@ class App {
       memLevel: 7,
       level: 3
     })
-    const logs = fs.createReadStream(LOG_FILE)
+    const logs = fse.createReadStream(LOG_FILE)
     const pouchdbTree = await this.pouch.treeAsync()
 
     const logsSent = Promise.all([

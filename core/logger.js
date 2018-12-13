@@ -1,7 +1,7 @@
 /* @flow weak */
 
 const bunyan = require('bunyan')
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const os = require('os')
 const path = require('path')
 const _ = require('lodash')
@@ -10,7 +10,7 @@ const LOG_DIR = path.join(process.env.COZY_DESKTOP_DIR || os.homedir(), '.cozy-d
 const LOG_FILENAME = 'logs.txt'
 const LOG_FILE = path.join(LOG_DIR, LOG_FILENAME)
 
-fs.ensureDirSync(LOG_DIR)
+fse.ensureDirSync(LOG_DIR)
 
 const defaultLogger = bunyan.createLogger({
   name: 'Cozy Desktop',
@@ -30,7 +30,7 @@ const defaultLogger = bunyan.createLogger({
 
 if (process.env.DEBUG) {
   const logPath = 'debug.log'
-  if (fs.existsSync(logPath)) fs.unlinkSync(logPath)
+  if (fse.existsSync(logPath)) fse.unlinkSync(logPath)
   defaultLogger.addStream({type: 'file', path: logPath, level: 'trace'})
 }
 if (process.env.TESTDEBUG) {

@@ -1,7 +1,7 @@
 /* @flow */
 
 const Promise = require('bluebird')
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const _ = require('lodash')
 const path = require('path')
 
@@ -177,7 +177,7 @@ const captureScenario = async (scenario /*: * */) => {
   const json = JSON.stringify(docs, null, 2)
   const changesFile = scenario.path
     .replace(/scenario\.js/, path.join('remote', 'changes.json'))
-  await fs.outputFile(changesFile, json)
+  await fse.outputFile(changesFile, json)
 
   return path.basename(changesFile)
 }

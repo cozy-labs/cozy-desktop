@@ -2,7 +2,7 @@
 const chokidar = require('chokidar')
 const program = require('commander')
 const local = require('./capture/local')
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const path = require('path')
 const opn = require('opn')
 const scenarioHelpers = require('../test/support/helpers/scenarios')
@@ -33,7 +33,7 @@ function startChokidar () {
   const syncPath = local.syncPath
   opn(syncPath)
 
-  fs.ensureDirSync(syncPath)
+  fse.ensureDirSync(syncPath)
 
   const watcher = chokidar.watch('.', {
     cwd: syncPath,

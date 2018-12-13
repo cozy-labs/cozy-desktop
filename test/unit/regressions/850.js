@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const path = require('path')
 const sinon = require('sinon')
 // import should from 'should'
@@ -45,15 +45,15 @@ describe('issue 850', function () {
   after('stop watcher and clean path', async function () {
     this.watcher.stop(true)
     this.watcher.checksumer.kill()
-    await fs.emptyDir(this.syncPath)
+    await fse.emptyDir(this.syncPath)
   })
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
   before('create dst dir', async function () {
     let dirPath = path.join(this.syncPath, 'dst')
-    await fs.mkdirp(dirPath)
-    let stat = await fs.stat(dirPath)
+    await fse.mkdirp(dirPath)
+    let stat = await fse.stat(dirPath)
     await this.pouch.put({
       _id: metadata.id('dst'),
       docType: 'folder',
@@ -70,11 +70,11 @@ describe('issue 850', function () {
   it('is fixed', async function () {
     let filePath = path.join(this.syncPath, 'file')
     let dstPath = path.join(this.syncPath, 'dst', 'file')
-    await fs.outputFile(filePath, 'whatever')
+    await fse.outputFile(filePath, 'whatever')
     await this.watcher.onFlush([
-      ChokidarEvent.build('add', 'file', await fs.stat(filePath))
+      ChokidarEvent.build('add', 'file', await fse.stat(filePath))
     ])
-    await fs.move(filePath, dstPath)
+    await fse.move(filePath, dstPath)
 
     const doMove = async () => {
       // let _resolve
@@ -86,7 +86,7 @@ describe('issue 850', function () {
       //   return that.pouch.lock()
       // }
       this.watcher.onFlush([
-        ChokidarEvent.build('add', 'dst/file', await fs.stat(dstPath)),
+        ChokidarEvent.build('add', 'dst/file', await fse.stat(dstPath)),
         ChokidarEvent.build('unlink', 'file')
       ])
 
