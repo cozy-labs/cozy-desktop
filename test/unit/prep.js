@@ -33,20 +33,20 @@ describe('Prep', function () {
           .be.rejectedWith('Invalid path')
       })
 
-      // FIXME
-      xit('accepts doc with no checksum', async function () {
+      it('rejects a doc with no checksum', async function () {
         this.merge.addFileAsync.resolves()
         let doc = {
           path: 'no-checksum',
           docType: 'file'
         }
-        await this.prep.addFileAsync(this.side, doc)
-        this.merge.addFileAsync.calledWith(this.side, doc).should.be.true()
+        await should(
+          this.prep.addFileAsync(this.side, doc)
+        ).be.rejectedWith('Invalid checksum')
       })
 
       it('rejects doc with an invalid checksum', async function () {
         let doc = {
-          path: 'no-checksum',
+          path: 'invalid-checksum',
           md5sum: 'foobar'
         }
         await should(this.prep.addFileAsync(this.side, doc))
