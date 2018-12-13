@@ -28,8 +28,9 @@ module.exports = class RemoteDirBuilder extends RemoteBaseBuilder {
   }
 
   async create () /*: Promise<RemoteDoc> */ {
+    const cozy = this._ensureCozy()
     return jsonApiToRemoteDoc(
-      await this.cozy.files.createDirectory({
+      await cozy.files.createDirectory({
         name: this.remoteDoc.name,
         dirID: this.remoteDoc.dir_id,
         lastModifiedDate: this.remoteDoc.updated_at

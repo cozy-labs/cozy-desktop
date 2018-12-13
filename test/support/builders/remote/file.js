@@ -70,8 +70,10 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
   }
 
   async create () /*: Promise<RemoteDoc> */ {
+    const cozy = this._ensureCozy()
+
     const doc = jsonApiToRemoteDoc(
-      await this.cozy.files.create(this._data, {
+      await cozy.files.create(this._data, {
         contentType: this.remoteDoc.mime,
         dirID: this.remoteDoc.dir_id,
         executable: this.remoteDoc.executable,
@@ -80,7 +82,7 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
       })
     )
 
-    const parentDir = await this.cozy.files.statById(doc.dir_id)
+    const parentDir = await cozy.files.statById(doc.dir_id)
     doc.path = posix.join(parentDir.attributes.path, doc.name)
 
     return doc

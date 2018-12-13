@@ -22,11 +22,11 @@ const defaultTimestamp = timestamp.stringify(timestamp.current())
 
 module.exports = class RemoteBaseBuilder {
   /*::
-  cozy: Cozy
+  cozy: ?Cozy
   remoteDoc: RemoteDoc
   */
 
-  constructor (cozy /*: Cozy */) {
+  constructor (cozy /*: ?Cozy */) {
     this.cozy = cozy
     const name = 'whatever'
     this.remoteDoc = {
@@ -76,5 +76,13 @@ module.exports = class RemoteBaseBuilder {
 
   build () /*: Object */ {
     return _.clone(this.remoteDoc)
+  }
+
+  _ensureCozy () /*: Cozy */ {
+    if (this.cozy) {
+      return this.cozy
+    } else {
+      throw new Error('Cannot create remote files/dirs without a Cozy client.')
+    }
   }
 }
