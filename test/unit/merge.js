@@ -1219,45 +1219,62 @@ describe('Merge', function () {
     })
   })
 
-  xdescribe('trashAsync', () => {
+  describe('doTrash', () => {
     context('when metadata are found in Pouch', () => {
-      it('updates it with trashed property and up-to-date sides info', async function () {
-        const doc = {_id: 'existing-metadata'}
-        await this.pouch.db.put(_.defaults({sides: {local: 1, remote: 1}}, doc))
+      it('deletes it with trashed property and up-to-date sides info', async function () {
+        const initial = await builders.metadata().sides({local: 1}).create()
+        const was = await builders.metadata(initial).sides({local: 2, remote: 2}).create()
+        const doc = builders.metadata(was).trashed().build()
 
-        await this.merge.trashAsync(this.side, doc)
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.doTrash('local', was, doc)
+        )
 
-        const updated = await this.pouch.db.get(doc._id)
-        should(updated).have.properties(_.defaults({
-          trashed: true,
-          sides: {
-            local: 2,
-            remote: 1
-          }
-        }, doc))
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.chain(was)
+              .omit(['_rev'])
+              .merge({
+                _deleted: true,
+                sides: {local: 3, remote: 2},
+                updated_at: new Date(doc.updated_at)
+              })
+              .value()
+          ],
+          resolvedConflicts: []
+        })
       })
     })
 
     context('when metadata are not found in Pouch', () => {
       it('does nothing', async function () {
-        const doc = {_id: 'missing-metadata'}
+        const was = builders.metadata().build()
+        const doc = builders.metadata(was).trashed().build()
 
-        await this.merge.trashAsync(this.side, doc)
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.doTrash(this.side, was, doc)
+        )
 
-        await should(this.pouch.db.get(doc._id))
-          .be.rejectedWith({status: 404})
+        should(sideEffects).deepEqual({
+          savedDocs: [],
+          resolvedConflicts: []
+        })
       })
     })
 
     context('when docType does not match', () => {
-      it('tries to resolve the conflict', async function () {
-        const doc = {_id: 'conflicting-doctype', docType: 'folder', path: 'conflicting-doctype'}
-        await this.pouch.db.put(_.defaults({docType: 'file'}, doc))
+      it('does nothing', async function () {
+        const was = await builders.metafile().create()
+        const doc = builders.metadir().path(was.path).trashed().build()
 
-        await this.merge.trashAsync(this.side, doc)
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.doTrash(this.side, was, doc)
+        )
 
-        should(this.merge.resolveConflictAsync).have.been.calledWith(this.side, doc)
-        should(this.pouch.put).not.have.been.called()
+        should(sideEffects).deepEqual({
+          savedDocs: [],
+          resolvedConflicts: []
+        })
       })
     })
   })
