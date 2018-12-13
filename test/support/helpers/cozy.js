@@ -25,7 +25,7 @@ const cozy = new CozyClient({
 })
 
 // Facade for all the test data builders
-const builders = new Builders(cozy)
+const builders = new Builders({cozy})
 
 module.exports = {
   COZY_URL,

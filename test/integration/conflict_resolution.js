@@ -25,7 +25,7 @@ describe('Conflict resolution', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function () {
-    builders = new Builders(cozyHelpers.cozy, this.pouch)
+    builders = new Builders({cozy: cozyHelpers.cozy, pouch: this.pouch})
     cozy = cozyHelpers.cozy
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
 

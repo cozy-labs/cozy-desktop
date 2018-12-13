@@ -22,7 +22,7 @@ module.exports = class Builders {
   metadata: MetadataBuilders
   */
 
-  constructor (cozy /*: Cozy */, pouch /*: ?Pouch */) {
+  constructor ({cozy, pouch} /*: {cozy: Cozy, pouch?: Pouch} */ = {}) {
     this.cozy = cozy
     this.metadata = new MetadataBuilders(pouch)
   }
