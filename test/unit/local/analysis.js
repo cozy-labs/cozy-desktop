@@ -5,7 +5,7 @@ const path = require('path')
 
 const analysis = require('../../../core/local/analysis')
 
-const MetadataBuilders = require('../../support/builders/metadata')
+const Builders = require('../../support/builders')
 
 /*::
 import type { LocalEvent } from '../../../core/local/event'
@@ -15,9 +15,7 @@ import type { Metadata } from '../../../core/metadata'
 
 describe('core/local/analysis', function () {
   const sideName = 'local'
-  let metadataBuilders
-
-  before(() => { metadataBuilders = new MetadataBuilders() })
+  const builders = new Builders()
 
   describe('file changes', () => {
     it('do not break on empty array', () => {
@@ -28,7 +26,7 @@ describe('core/local/analysis', function () {
     })
 
     it('handles partial successive moves (add+unlink+add, then unlink later)', () => {
-      const old /*: Metadata */ = metadataBuilders.file().ino(1).build()
+      const old /*: Metadata */ = builders.metafile().ino(1).build()
       const stats = {ino: 1}
       const events /*: LocalEvent[] */ = [
         {type: 'add', path: 'dst1', stats, wip: true},
@@ -56,7 +54,7 @@ describe('core/local/analysis', function () {
     })
 
     it('handles unlink+add', () => {
-      const old /*: Metadata */ = metadataBuilders.file().ino(1).build()
+      const old /*: Metadata */ = builders.metafile().ino(1).build()
       const stats = {ino: 1}
       const events /*: LocalEvent[] */ = [
         {type: 'unlink', path: 'src', old},
@@ -77,7 +75,7 @@ describe('core/local/analysis', function () {
     })
 
     it('identifies a FileMove + an incomplete FileMove as an incomplete FileMove', () => {
-      const old /*: Metadata */ = metadataBuilders.file().ino(1).build()
+      const old /*: Metadata */ = builders.metafile().ino(1).build()
       const stats = {ino: 1}
       const events /*: LocalEvent[] */ = [
         {type: 'unlink', path: 'src', old},
@@ -101,7 +99,7 @@ describe('core/local/analysis', function () {
     })
 
     it('identifies an incomplete FileMove + a complete FileMove as a complete FileMove', () => {
-      const old /*: Metadata */ = metadataBuilders.file().ino(1).build()
+      const old /*: Metadata */ = builders.metafile().ino(1).build()
       const stats = {ino: 1}
       const events /*: LocalEvent[] */ = [
         {type: 'unlink', path: 'src', old},
@@ -127,7 +125,7 @@ describe('core/local/analysis', function () {
       const ino = 1
       const oldPath = 'x'
       const newPath = 'X'
-      const old /*: Metadata */ = metadataBuilders.file().path(newPath).ino(ino).build()
+      const old /*: Metadata */ = builders.metafile().path(newPath).ino(ino).build()
       const { md5sum } = old
       const stats = {ino}
       const events /*: LocalEvent[] */ = [
@@ -148,7 +146,7 @@ describe('core/local/analysis', function () {
     })
 
     it('handles unlink+add+change', () => {
-      const old /*: Metadata */ = metadataBuilders.file().ino(1).build()
+      const old /*: Metadata */ = builders.metafile().ino(1).build()
       const stats = {ino: 1}
       const events /*: LocalEvent[] */ = [
         {type: 'unlink', path: 'src', old},
@@ -178,7 +176,7 @@ describe('core/local/analysis', function () {
     it('does not mistakenly identifies a partial file addition + a file change on same inode as an identical renaming', () => {
       const partiallyAddedPath = 'partially-added-file'
       const changedPath = 'changed-file'
-      const old = metadataBuilders.file().path(changedPath).ino(111).build()
+      const old = builders.metafile().path(changedPath).ino(111).build()
       const ino = 222
       const md5sum = 'changedSum'
       const events /*: LocalEvent[] */ = [
@@ -213,7 +211,7 @@ describe('core/local/analysis', function () {
     })
 
     it('identifies add({path: FOO, ino: 1}) + change({path: foo, ino: 1}) as FileMove(foo, FOO)', () => {
-      const old /*: Metadata */ = metadataBuilders.file().path('foo').ino(1).build()
+      const old /*: Metadata */ = builders.metafile().path('foo').ino(1).build()
       const stats = {ino: 1}
       const { md5sum } = old
       const events /*: LocalEvent[] */ = [
@@ -241,7 +239,7 @@ describe('core/local/analysis', function () {
     })
 
     it('identifies unlink+add then unlink (incomplete move then deletion) as FileDeletion', () => {
-      const old /*: Metadata */ = metadataBuilders.file().path('src').ino(1).build()
+      const old /*: Metadata */ = builders.metafile().path('src').ino(1).build()
       const stats = {ino: 1}
       const events /*: LocalEvent[] */ = [
         {type: 'unlink', path: 'src', old},
@@ -357,7 +355,7 @@ describe('core/local/analysis', function () {
     })
 
     it('handles unlinkDir+addDir', () => {
-      const old /*: Metadata */ = metadataBuilders.dir().ino(1).build()
+      const old /*: Metadata */ = builders.metadir().ino(1).build()
       const stats = {ino: 1}
       const events /*: LocalEvent[] */ = [
         {type: 'unlinkDir', path: 'src', old},
@@ -377,7 +375,7 @@ describe('core/local/analysis', function () {
     })
 
     it('identifies a DirMove + an incomplete DirMove as an incomplete DirMove', () => {
-      const old /*: Metadata */ = metadataBuilders.dir().ino(1).build()
+      const old /*: Metadata */ = builders.metadir().ino(1).build()
       const stats = {ino: 1}
       const events /*: LocalEvent[] */ = [
         {type: 'unlinkDir', path: 'src', old},
@@ -400,7 +398,7 @@ describe('core/local/analysis', function () {
     })
 
     it('identifies an incomplete DirMove + a complete DirMove as a complete DirMove', () => {
-      const old /*: Metadata */ = metadataBuilders.dir().ino(1).build()
+      const old /*: Metadata */ = builders.metadir().ino(1).build()
       const stats = {ino: 1}
       const events /*: LocalEvent[] */ = [
         {type: 'unlinkDir', path: 'src', old},
@@ -425,7 +423,7 @@ describe('core/local/analysis', function () {
       const ino = 1
       const oldPath = 'x'
       const newPath = 'X'
-      const old /*: Metadata */ = metadataBuilders.dir().path(newPath).ino(ino).build()
+      const old /*: Metadata */ = builders.metadir().path(newPath).ino(ino).build()
       const stats = {ino}
       const events /*: LocalEvent[] */ = [
         {type: 'unlinkDir', path: oldPath, old},
@@ -461,7 +459,7 @@ describe('core/local/analysis', function () {
     })
 
     it('handles addDir+unlinkDir', () => {
-      const old /*: Metadata */ = metadataBuilders.dir().ino(1).build()
+      const old /*: Metadata */ = builders.metadir().ino(1).build()
       const stats = {ino: 1}
       const events /*: LocalEvent[] */ = [
         {type: 'addDir', path: 'dst', stats},
@@ -483,7 +481,7 @@ describe('core/local/analysis', function () {
     it('identifies 2 successive addDir on same path/ino but different stats as DirAddition(foo/) with the last stats', () => {
       const path = 'foo'
       const ino = 1
-      const old /*: Metadata */ = metadataBuilders.dir().path(path).ino(ino).build()
+      const old /*: Metadata */ = builders.metadir().path(path).ino(ino).build()
       const stats1 = {ino, size: 64}
       const stats2 = {ino, size: 1312}
       const events /*: LocalEvent[] */ = [
@@ -503,7 +501,7 @@ describe('core/local/analysis', function () {
     })
 
     it('identifies addDir({path: foo, ino: 1}) + addDir({path: FOO, ino: 1}) as DirMove(foo, FOO)', () => {
-      const old /*: Metadata */ = metadataBuilders.dir().path('foo').ino(1).build()
+      const old /*: Metadata */ = builders.metadir().path('foo').ino(1).build()
       const stats = {ino: 1}
       const events /*: LocalEvent[] */ = [
         {type: 'addDir', path: 'foo', stats, old},
@@ -544,7 +542,7 @@ describe('core/local/analysis', function () {
 
   describe('miscellaneous changes', () => {
     it('handles chokidar mistakes', () => {
-      const old /*: Metadata */ = metadataBuilders.file().ino(1).build()
+      const old /*: Metadata */ = builders.metafile().ino(1).build()
       const stats = {ino: 1}
       const events /*: LocalEvent[] */ = [
         {type: 'unlinkDir', path: 'src', old},
@@ -574,8 +572,8 @@ describe('core/local/analysis', function () {
       const newDirPath = 'root/dir/file.rtf'
       const newFilePath = 'root/dir/file.rtf'
 
-      const dirMetadata /*: Metadata */ = metadataBuilders.dir().path(oldDirPath).ino(dirStats.ino).build()
-      const fileMetadata  /*: Metadata */ = metadataBuilders.file().path(oldFilePath).ino(fileStats.ino).build()
+      const dirMetadata /*: Metadata */ = builders.metadir().path(oldDirPath).ino(dirStats.ino).build()
+      const fileMetadata  /*: Metadata */ = builders.metafile().path(oldFilePath).ino(fileStats.ino).build()
 
       const events /*: LocalEvent[] */ = [
         {type: 'addDir', path: newDirPath, stats: dirStats},
@@ -603,11 +601,11 @@ describe('core/local/analysis', function () {
       const fileStats = {ino: 3}
       const otherFileStats = {ino: 4}
       const otherDirStats = {ino: 5}
-      const dirMetadata /*: Metadata */ = normalizer(metadataBuilders.dir().path('src').ino(dirStats.ino).build())
-      const subdirMetadata /*: Metadata */ = normalizer(metadataBuilders.dir().path('src/subdir').ino(subdirStats.ino).build())
-      const fileMetadata  /*: Metadata */ = normalizer(metadataBuilders.file().path('src/file').ino(fileStats.ino).build())
-      const otherFileMetadata  /*: Metadata */ = normalizer(metadataBuilders.file().path('other-file').ino(otherFileStats.ino).build())
-      const otherDirMetadata  /*: Metadata */ = normalizer(metadataBuilders.dir().path('other-dir-src').ino(otherDirStats.ino).build())
+      const dirMetadata /*: Metadata */ = normalizer(builders.metadir().path('src').ino(dirStats.ino).build())
+      const subdirMetadata /*: Metadata */ = normalizer(builders.metadir().path('src/subdir').ino(subdirStats.ino).build())
+      const fileMetadata  /*: Metadata */ = normalizer(builders.metafile().path('src/file').ino(fileStats.ino).build())
+      const otherFileMetadata  /*: Metadata */ = normalizer(builders.metafile().path('other-file').ino(otherFileStats.ino).build())
+      const otherDirMetadata  /*: Metadata */ = normalizer(builders.metadir().path('other-dir-src').ino(otherDirStats.ino).build())
       const events /*: LocalEvent[] */ = [
         {type: 'unlinkDir', path: 'src/subdir', old: subdirMetadata},
         {type: 'unlinkDir', path: 'src', old: dirMetadata},

@@ -168,7 +168,7 @@ describe('Move', () => {
     it('local', async () => {
       const oldFolder = await pouch.byRemoteIdMaybeAsync(dir._id)
       // FIXME: Why is this a file? And why does it break with a directory?
-      const doc = builders.metadata.file().path('parent/dst/dir').build()
+      const doc = builders.metafile().path('parent/dst/dir').build()
 
       await prep.moveFolderAsync('local', doc, oldFolder)
 

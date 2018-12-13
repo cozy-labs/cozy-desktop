@@ -22,14 +22,11 @@ const { Remote } = remote
 const { TRASH_DIR_ID } = require('../../../core/remote/constants')
 const timestamp = require('../../../core/timestamp')
 
-const MetadataBuilders = require('../../support/builders/metadata')
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
 const {
   cozy, builders, deleteAll, createTheCouchdbFolder
 } = require('../../support/helpers/cozy')
-
-const metadataBuilders = new MetadataBuilders()
 
 /*::
 import type { Metadata } from '../../../core/metadata'
@@ -199,7 +196,7 @@ describe('remote.Remote', function () {
     })
 
     it('creates the parent folder when missing', async function () {
-      const doc /*: Metadata */ = metadataBuilders.file().path(path.join('foo', 'bar', 'qux')).build()
+      const doc /*: Metadata */ = builders.metafile().path(path.join('foo', 'bar', 'qux')).build()
       this.remote.other = {
         createReadStreamAsync (localDoc) {
           const empty = withContentLength(new stream.Readable({
@@ -213,7 +210,7 @@ describe('remote.Remote', function () {
     })
 
     it('does not throw if the file does not exists locally anymore', async function () {
-      const doc /*: Metadata */ = metadataBuilders.file().path('foo').build()
+      const doc /*: Metadata */ = builders.metafile().path('foo').build()
       this.remote.other = {
         createReadStreamAsync (localDoc) {
           return fs.readFile('/path/do/not/exists')
@@ -265,7 +262,7 @@ describe('remote.Remote', function () {
     })
 
     it('creates the parent folder when missing', async function () {
-      const doc /*: Metadata */ = metadataBuilders.dir().path(path.join('foo', 'bar', 'qux')).build()
+      const doc /*: Metadata */ = builders.metadir().path(path.join('foo', 'bar', 'qux')).build()
       await this.remote.addFolderAsync(doc)
       await should(cozy.files.statByPath('/foo/bar')).be.fulfilled()
     })
@@ -328,7 +325,7 @@ describe('remote.Remote', function () {
       })
 
       it('does not throw if the file does not exists locally anymore', async function () {
-        const doc /*: Metadata */ = metadataBuilders.file().path('foo').build()
+        const doc /*: Metadata */ = builders.metafile().path('foo').build()
         this.remote.other = {
           createReadStreamAsync (localDoc) {
             return fs.readFile('/path/do/not/exists')

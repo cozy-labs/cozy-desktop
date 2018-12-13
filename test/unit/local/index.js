@@ -11,7 +11,7 @@ const { Readable } = require('stream')
 const Local = require('../../../core/local')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
 
-const MetadataBuilders = require('../../support/builders/metadata')
+const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
 const { ContextDir } = require('../../support/helpers/context_dir')
 const { WINDOWS_DEFAULT_MODE } = require('../../support/helpers/platform')
@@ -29,7 +29,7 @@ describe('Local', function () {
     this.events = {}
     this.local = new Local(this.config, this.prep, this.pouch, this.events)
 
-    builders = new MetadataBuilders(this.pouch)
+    builders = new Builders({pouch: this.pouch})
     syncDir = new ContextDir(this.syncPath)
   })
   after('clean pouch', pouchHelpers.cleanDatabase)
@@ -423,8 +423,8 @@ describe('Local', function () {
     let dstFile, srcFile
 
     beforeEach(async () => {
-      srcFile = builders.file().path('src/file').build()
-      dstFile = builders.file().path('dst/file').olderThan(srcFile).build()
+      srcFile = builders.metafile().path('src/file').build()
+      dstFile = builders.metafile().path('dst/file').olderThan(srcFile).build()
 
       await fs.emptyDir(syncDir.root)
     })
@@ -508,8 +508,8 @@ describe('Local', function () {
     let dstDir, srcDir
 
     beforeEach(async () => {
-      srcDir = builders.dir().path('src/dir').build()
-      dstDir = builders.dir().path('dst/dir').olderThan(srcDir).build()
+      srcDir = builders.metadir().path('src/dir').build()
+      dstDir = builders.metadir().path('dst/dir').olderThan(srcDir).build()
 
       await fs.emptyDir(syncDir.root)
     })
@@ -634,7 +634,7 @@ describe('Local', function () {
     })
 
     it('deletes an empty folder', async function () {
-      const doc = builders.dir().build()
+      const doc = builders.metadir().build()
       await fs.emptyDirAsync(fullPath(doc))
 
       await this.local.deleteFolderAsync(doc)
@@ -646,7 +646,7 @@ describe('Local', function () {
     })
 
     it('trashes a non-empty folder (ENOTEMPTY)', async function () {
-      const doc = builders.dir().build()
+      const doc = builders.metadir().build()
       await fs.ensureDirAsync(path.join(fullPath(doc), 'something-inside'))
 
       await this.local.deleteFolderAsync(doc)
@@ -658,7 +658,7 @@ describe('Local', function () {
     })
 
     it('does not swallow fs errors', async function () {
-      const doc = builders.dir().build()
+      const doc = builders.metadir().build()
 
       await should(this.local.deleteFolderAsync(doc))
         .be.rejectedWith(/ENOENT/)

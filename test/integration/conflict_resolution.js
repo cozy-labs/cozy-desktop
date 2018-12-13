@@ -42,7 +42,7 @@ describe('Conflict resolution', () => {
 
     it('success', async () => {
       await helpers.local.syncDir.ensureDir('foo')
-      await helpers.prep.putFolderAsync('local', builders.metadata.dir().path('foo').build())
+      await helpers.prep.putFolderAsync('local', builders.metadir().path('foo').build())
       should(await helpers.local.tree()).deepEqual([
         'foo-conflict-.../'
       ])
@@ -146,7 +146,7 @@ describe('Conflict resolution', () => {
 
   describe('remote', () => {
     beforeEach('set up conflict', async () => {
-      await helpers.prep.putFolderAsync('local', builders.metadata.dir().path('foo').build())
+      await helpers.prep.putFolderAsync('local', builders.metadir().path('foo').build())
       await cozy.files.create('whatever', {name: 'foo'})
     })
 

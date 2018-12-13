@@ -285,8 +285,8 @@ describe('RemoteWatcher', function () {
         const dstFile = builders.remoteFile().name('file').inDir(dstDir).build()
 
         /* Files were synced */
-        srcFileDoc = builders.metadata.file().fromRemote(srcFile).upToDate().build()
-        dstFileDoc = builders.metadata.file().fromRemote(dstFile).upToDate().build()
+        srcFileDoc = builders.metafile().fromRemote(srcFile).upToDate().build()
+        dstFileDoc = builders.metafile().fromRemote(dstFile).upToDate().build()
         olds = [srcFileDoc, dstFileDoc]
 
         /* Moving /src/file to /dst/file (overwriting the destination) */
