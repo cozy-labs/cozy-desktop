@@ -24,7 +24,7 @@ describe('Sync state', () => {
 
   beforeEach(function () {
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozyHelpers.cozy)
-    builders = new Builders({cozy: cozyHelpers.cozy, pouch: this.pouch})
+    builders = new Builders({cozy: cozyHelpers.cozy})
     events = helpers.events
     sinon.spy(events, 'emit')
     // await helpers.local.setupTrash()

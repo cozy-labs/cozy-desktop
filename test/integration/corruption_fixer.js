@@ -44,7 +44,7 @@ describe('Re-Upload files when the stack report them as broken', () => {
   beforeEach(function () {
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
     helpers.local.setupTrash()
-    builders = new Builders({cozy, pouch: this.pouch})
+    builders = new Builders({cozy})
   })
 
   const GOODSIZE = 64022

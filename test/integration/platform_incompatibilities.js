@@ -30,7 +30,7 @@ describe('Platform incompatibilities', () => {
 
   beforeEach(async function () {
     cozy = cozyHelpers.cozy
-    builders = new Builders({cozy, pouch: this.pouch})
+    builders = new Builders({cozy})
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
 
     await helpers.local.setupTrash()
