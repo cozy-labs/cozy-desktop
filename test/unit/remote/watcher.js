@@ -787,35 +787,4 @@ describe('RemoteWatcher', function () {
       should(addArgs[1]).have.properties(metadata.fromRemoteDoc(newDir))
     })
   })
-
-  describe('dissociateFromRemote', function () {
-    it('remove the association between a document and its remote', async function () {
-      let remoteDoc = {
-        _id: 'dissociateFromRemote',
-        path: 'dissociateFromRemote',
-        docType: 'file',
-        md5sum: 'd3e2163ccd0c497969233a6bd2a4ac843fb8165e',
-        updated_at: '2015-09-29T14:13:33.384Z',
-        tags: [],
-        remote: {
-          _id: '913F429E-5609-C636-AE9A-CD00BD138B13',
-          _rev: '1-7786acf12a11fad6ad1eeb861953e0d8'
-        },
-        sides: {
-          local: '2',
-          remote: '1'
-        }
-      }
-      await this.pouch.db.put(remoteDoc)
-      const was = await this.pouch.db.get(remoteDoc._id)
-
-      await this.watcher.dissociateFromRemote(was)
-
-      const actual = await this.pouch.db.get(remoteDoc._id)
-      should.not.exist(actual.sides.remote)
-      should.not.exist(actual.remote)
-      actual._id.should.equal(remoteDoc._id)
-      actual.sides.local.should.equal('2')
-    })
-  })
 })

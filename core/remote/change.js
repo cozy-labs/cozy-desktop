@@ -12,14 +12,12 @@ const { isFile } = require('../metadata')
 /*::
 export type RemoteFileAddition = {sideName: 'remote', type: 'FileAddition', doc: Metadata}
 export type RemoteFileDeletion = {sideName: 'remote', type: 'FileDeletion', doc: Metadata}
-export type RemoteFileDissociation = {sideName: 'remote', type: 'FileDissociation', doc: Metadata, was: Metadata}
 export type RemoteFileMove = {sideName: 'remote', type: 'FileMove', doc: Metadata, was: Metadata, needRefetch?: true, update?: true}
 export type RemoteFileRestoration = {sideName: 'remote', type: 'FileRestoration', doc: Metadata, was: Metadata}
 export type RemoteFileTrashing = {sideName: 'remote', type: 'FileTrashing', doc: Metadata, was: Metadata}
 export type RemoteFileUpdate = {sideName: 'remote', type: 'FileUpdate', doc: Metadata}
 export type RemoteDirAddition = {sideName: 'remote', type: 'DirAddition', doc: Metadata, was: Metadata}
 export type RemoteDirDeletion = {sideName: 'remote', type: 'DirDeletion', doc: Metadata}
-export type RemoteDirDissociation = {sideName: 'remote', type: 'DirDissociation', doc: Metadata, was: Metadata}
 export type RemoteDirMove = {sideName: 'remote', type: 'DirMove', doc: Metadata, was: Metadata, needRefetch?: true, descendantMoves?: RemoteDescendantChange[] }
 export type RemoteDirRestoration = {sideName: 'remote', type: 'DirRestoration', doc: Metadata, was: Metadata}
 export type RemoteDirTrashing = {sideName: 'remote', type: 'DirTrashing', doc: Metadata, was: Metadata}
@@ -31,13 +29,11 @@ export type RemoteDescendantChange = {sideName: 'remote', type: 'DescendantChang
 export type RemoteChange =
   | RemoteDirAddition
   | RemoteDirDeletion
-  | RemoteDirDissociation
   | RemoteDirMove
   | RemoteDirRestoration
   | RemoteDirTrashing
   | RemoteFileAddition
   | RemoteFileDeletion
-  | RemoteFileDissociation
   | RemoteFileMove
   | RemoteFileRestoration
   | RemoteFileTrashing
@@ -55,7 +51,6 @@ module.exports = {
   restored,
   upToDate,
   updated,
-  dissociated,
   isChildMove,
   isOnlyChildMove,
   applyMoveToPath,
@@ -90,10 +85,6 @@ function updated (doc /*: Metadata */) /*: * */ {
   return {sideName, type: (isFile(doc) ? 'FileUpdate' : 'DirAddition'), doc}
 }
 
-function dissociated (doc /*: Metadata */, was /*: Metadata */) /*: * */ {
-  return {sideName, type: (isFile(doc) ? 'FileDissociation' : 'DirDissociation'), doc, was}
-}
-
 // TODO: Rename args
 function isChildMove (a /*: RemoteChange */, b /*: RemoteChange */) /*: boolean %checks */ {
   return a.type === 'DirMove' &&
@@ -122,7 +113,6 @@ const isAdd = (a /*: RemoteChange */) /*: boolean %checks */ => a.type === 'DirA
 const isMove = (a /*: RemoteChange */) /*: boolean %checks */ => a.type === 'DirMove' || a.type === 'FileMove'
 const isTrash = (a /*: RemoteChange */) /*: boolean %checks */ => a.type === 'DirTrashing' || a.type === 'FileTrashing'
 const isRestore = (a /*: RemoteChange */) /*: boolean %checks */ => a.type === 'DirRestoration' || a.type === 'FileRestoration'
-const isDissociate = (a /*: RemoteChange */) /*: boolean %checks */ => a.type === 'DirDissociation' || a.type === 'FileDissociation'
 
 function includeDescendant (parent /*: RemoteDirMove */, e /*: RemoteDescendantChange */) {
   parent.descendantMoves = parent.descendantMoves || []
@@ -130,7 +120,7 @@ function includeDescendant (parent /*: RemoteDirMove */, e /*: RemoteDescendantC
   delete e.descendantMoves
 }
 
-const addPath = (a /*: RemoteChange */) /*: ?string */ => isAdd(a) || isMove(a) || isRestore(a) || isDissociate(a) ? a.doc.path : null
+const addPath = (a /*: RemoteChange */) /*: ?string */ => isAdd(a) || isMove(a) || isRestore(a) ? a.doc.path : null
 const delPath = (a /*: RemoteChange */) /*: ?string */ => isDelete(a) ? a.doc.path : isMove(a) || isTrash(a) ? a.was.path : null
 const childOf = (p1 /*: ?string */, p2 /*: ?string */)/*: boolean */ => p1 != null && p2 != null && p2 !== p1 && p2.startsWith(p1 + path.sep)
 const lower = (p1 /*: ?string */, p2 /*: ?string */)/*: boolean */ => p1 != null && p2 != null && p2 !== p1 && p1 < p2

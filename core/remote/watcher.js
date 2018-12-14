@@ -447,33 +447,12 @@ class RemoteWatcher {
           }
         }
         break
-      case 'FileDissociation':
-        log.info({path}, 'file was possibly renamed remotely while updated locally')
-        await this.dissociateFromRemote(change.was)
-        await this.prep.addFileAsync(sideName, change.doc)
-        break
-      case 'DirDissociation':
-        log.info({path}, 'folder was possibly renamed remotely while updated locally')
-        await this.dissociateFromRemote(change.was)
-        await this.prep.putFolderAsync(sideName, change.doc)
-        break
       case 'UpToDate':
         log.info({path}, `${docType} is up-to-date`)
         break
       default:
         throw new Error(`Unexpected change type: ${change.type}`)
     } // switch
-  }
-
-  // Remove the association between a document and its remote
-  // It's useful when a file has diverged (updated/renamed both in local and
-  // remote) while cozy-desktop was not running.
-  async dissociateFromRemote (doc /*: Metadata */) /*: Promise<void> */ {
-    const {path} = doc
-    log.info({path}, 'Dissociating from remote...')
-    delete doc.remote
-    if (doc.sides) delete doc.sides.remote
-    await this.pouch.put(doc)
   }
 }
 
