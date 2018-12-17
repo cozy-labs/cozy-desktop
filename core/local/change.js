@@ -121,7 +121,7 @@ export type LocalFileMove = {
   md5sum: string,
   wip?: true,
   needRefetch?: boolean,
-  update?: LocalFileUpdated,
+  update?: LocalFileAdded|LocalFileUpdated,
   overwrite?: Metadata
 }
 export type LocalFileUpdate = {
@@ -280,14 +280,21 @@ function fileMoveFromUnlinkAdd (sameInodeChange /*: ?LocalChange */, e /*: Local
   const unlinkChange /*: ?LocalFileDeletion */ = maybeDeleteFile(sameInodeChange)
   if (!unlinkChange) return
   if (_.get(unlinkChange, 'old.path') === e.path) return fileAddition(e)
-  log.debug({oldpath: unlinkChange.path, path: e.path, ino: unlinkChange.ino}, 'unlink + add = FileMove')
-  return build('FileMove', e.path, {
+  const fileMove /*: Object */ = build('FileMove', e.path, {
     stats: e.stats,
     md5sum: e.md5sum,
     old: unlinkChange.old,
     ino: unlinkChange.ino,
     wip: e.wip
   })
+  if (e.md5sum && e.md5sum !== (unlinkChange.old && unlinkChange.old.md5sum)) {
+    fileMove.update = e
+  }
+  log.debug(
+    {oldpath: unlinkChange.path, path: e.path, ino: unlinkChange.ino},
+    `unlink + add = FileMove${fileMove.update ? '(update)' : ''}`
+  )
+  return fileMove
 }
 
 function dirMoveFromUnlinkAdd (sameInodeChange /*: ?LocalChange */, e /*: LocalDirAdded */) /*: * */ {
