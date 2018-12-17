@@ -31,6 +31,7 @@ module.exports = {
   maybeDeleteFolder,
   find,
   isChildMove,
+  isChildUpdate,
   addPath,
   delPath,
   childOf,
@@ -190,14 +191,17 @@ function isChildMove (a /*: LocalChange */, b /*: LocalChange */) /*: boolean %c
 const isDelete = (a /*: LocalChange */) /*: boolean %checks */ => a.type === 'DirDeletion' || a.type === 'FileDeletion'
 const isAdd = (a /*: LocalChange */) /*: boolean %checks */ => a.type === 'DirAddition' || a.type === 'FileAddition'
 const isMove = (a /*: LocalChange */) /*: boolean %checks */ => a.type === 'DirMove' || a.type === 'FileMove'
+const isUpdate = (a /*: LocalChange */) /*: boolean %checks */ => a.type === 'FileUpdate'
 
 function addPath (a /*: LocalChange */) /*: ?string */ { return isAdd(a) || isMove(a) ? a.path : null }
 function delPath (a /*: LocalChange */) /*: ?string */ { return isDelete(a) ? a.path : isMove(a) ? a.old.path : null }
+function updatePath (a /*: LocalChange */) /*: ?string */ { return isUpdate(a) ? a.path : null }
 function childOf (p1 /*: ?string */, p2 /*: ?string */) /*: boolean */ { return p1 != null && p2 != null && p2 !== p1 && p2.startsWith(p1 + path.sep) }
 function lower (p1 /*: ?string */, p2 /*: ?string */) /*: boolean */ { return p1 != null && p2 != null && p2 !== p1 && p1 < p2 }
 
 function isChildDelete (a /*: LocalChange */, b /*: LocalChange */) { return childOf(delPath(a), delPath(b)) }
 function isChildAdd (a /*: LocalChange */, b /*: LocalChange */) { return childOf(addPath(a), addPath(b)) }
+function isChildUpdate (a /*: LocalChange */, b /*: LocalChange */) { return childOf(addPath(a), updatePath(b)) }
 
 // $FlowFixMe
 function toString (a /*: LocalChange */) /*: string */ { return '(' + a.type + ': ' + (a.old && a.old.path) + '-->' + a.path + ')' }

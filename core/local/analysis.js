@@ -294,8 +294,10 @@ const finalSorter = (a /*: LocalChange */, b /*: LocalChange */) => {
 
   // if one change is a child of another, it takes priority
   if (localChange.isChildAdd(a, b)) return -1
+  if (localChange.isChildUpdate(a, b)) return -1
   if (localChange.isChildDelete(b, a)) return -1
   if (localChange.isChildAdd(b, a)) return 1
+  if (localChange.isChildUpdate(b, a)) return 1
   if (localChange.isChildDelete(a, b)) return 1
 
   // a is deleted what b added
