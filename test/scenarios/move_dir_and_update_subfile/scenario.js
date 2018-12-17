@@ -2,9 +2,7 @@
 
 /*:: import type { Scenario } from '..' */
 
-// FIXME: https://trello.com/c/txhkekhw
 module.exports = ({
-  side: 'remote',
   init: [
     {ino: 1, path: 'src/'},
     {ino: 2, path: 'src/file', content: 'initial content'}
