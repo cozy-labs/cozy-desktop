@@ -1,5 +1,28 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.11.1 - 2018-12-17
+
+See [3.11.1-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.11.1-beta.1)
+See [3.11.1-beta.2](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.11.1-beta.2)
+
+Improvements for all users:
+
+- Moving a file or a folder multiple times in a row, synchronising them all at
+  once, ending on a path that was also an intermediary step (e.g. move document
+  A to B to C to B) would result in the synchronisation of the movement of the
+  file or folder to the last known path before the movement to the intermediary
+  step path and the addition of a new copy of the file or folder at the path
+  of the intermediary step (i.e. movement from A to C and addition of B). We now
+  correctly interpret those successive movements (i.e. movement from A to B).
+- Editing the content of a file just moved with one of its ancestor could lead
+  to the incorrect detection of a conflict with its remote couterpart. We're now
+  updating its content as expected and thus avoiding creating any `-conflicts-`
+  file.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.11.1-beta.2 - 2018-12-12
 
 Improvements for all users:
