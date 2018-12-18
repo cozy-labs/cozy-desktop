@@ -9,22 +9,34 @@
     <body>
         <div id="container" role="application"></div>
         <script>
-            const node = document.getElementById("container");
-            const flags = {
-                hash: window.location.hash,
-                version: "debug",
-                platform: "linux",
-                locale: "en",
-                locales: {
-                    // FIXME: load locales in elm dev mode
-                    en: {}
-                },
-                folder: "/"
-            };
-            var app = Elm.Main.init({
-                node,
-                flags
-            });
+            function init(locales) {
+                const node = document.getElementById("container");
+                const params = new URL(window.location).searchParams;
+                const flags = {
+                    hash: window.location.hash,
+                    version: "debug",
+                    platform: "linux",
+                    locale: params.get("lang") || "en",
+                    locales,
+                    folder: "/"
+                };
+                var app = Elm.Main.init({
+                    node,
+                    flags
+                });
+            }
+            const downloadLocales = available_locales =>
+                Promise.all(
+                    available_locales.map(lang =>
+                        fetch(`../gui/locales/${lang}.json`)
+                            .then(resp => resp.json())
+                            .then(locales => ({ [lang]: locales }))
+                    )
+                ).then(locales =>
+                    locales.reduce((acc, locale) => ({ ...acc, ...locale }), {})
+                );
+
+            downloadLocales(["en", "fr"]).then(init);
         </script>
     </body>
 </html>
