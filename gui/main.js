@@ -369,13 +369,13 @@ ipcMain.on('userActionInProgress', () => {
 })
 
 // On watch mode, automatically reload the window when sources are updated
-// FIXME: Why does it reload in a new popover with onboarding inside?
 if (process.env.WATCH === 'true') {
   const chokidar = require('chokidar')
-  chokidar.watch(['*.{html,js,css}'], { cwd: __dirname })
-    .on('change', () => {
-      if (trayWindow) {
-        trayWindow.reload()
-      }
-    })
+  chokidar.watch(['*.{html,js,css}'], { cwd: __dirname }).on('change', () => {
+    if (updaterWindow) {
+      updaterWindow.reload()
+    } else if (trayWindow) {
+      trayWindow.reload()
+    }
+  })
 }

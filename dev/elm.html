@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Main</title>
+        <link rel="stylesheet" href="../gui/app.css" />
+        <script src="../gui/elm.js"></script>
+    </head>
+    <body>
+        <div id="container" role="application"></div>
+        <script>
+            const node = document.getElementById("container");
+            const flags = {
+                hash: window.location.hash,
+                version: "debug",
+                platform: "linux",
+                locale: "en",
+                locales: {
+                    // FIXME: load locales in elm dev mode
+                    en: {}
+                },
+                folder: "/"
+            };
+            var app = Elm.Main.init({
+                node,
+                flags
+            });
+        </script>
+    </body>
+</html>

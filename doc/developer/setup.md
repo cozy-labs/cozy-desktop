@@ -61,3 +61,9 @@ N.B.: the address of the development cozy-stack is http://cozy.tools:8080. Don't
 ## Run tests
 
 See [./test.md]().
+
+## Develop Elm
+
+The script `yarn dev:elm` let you develop elm in standalone.
+
+Open the browser at [http://localhost:8000/dev/elm.html#updater](). See [`Window.elm@fromHash`](../../gui/elm/Data/Window.elm) for different windows (updater, tray, help, …).
