@@ -169,7 +169,7 @@
   "Unlinked Your device is no longer registered on your Cozy.": "Your device is no longer registered on your Cozy.",
   "Update": "Update",
   "Updater Checking for Update": "Checking for update…",
-  "Updater Downloading": "An update is available",
+  "Updater Downloading": "Updating Cozy Drive",
   "Updater Error ENOSPC": "Your disk is full, update cannot be downloaded.",
   "Updater Error EPERM": "A permission error prevent updating.",
   "Updater Error Other": "An unspecified error prevented update. Please contact the support.",
