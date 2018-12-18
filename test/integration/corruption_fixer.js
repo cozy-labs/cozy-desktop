@@ -44,7 +44,7 @@ describe('Re-Upload files when the stack report them as broken', () => {
   beforeEach(function () {
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
     helpers.local.setupTrash()
-    builders = new Builders(cozy, this.pouch)
+    builders = new Builders({cozy})
   })
 
   const GOODSIZE = 64022
@@ -162,7 +162,7 @@ describe('Re-Upload files when the stack report them as broken', () => {
       couchChecksum,
       couchSize
     } = opts
-    const remoteFile = await builders.remote.file()
+    const remoteFile = await builders.remoteFile()
                         .name(fileName)
                         .data(storageContent)
                         .create()

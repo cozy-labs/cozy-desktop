@@ -16,7 +16,7 @@ const {
 } = require('../support/helpers/platform')
 const pouchHelpers = require('../support/helpers/pouch')
 const dbBuilders = require('../support/builders/db')
-const MetadataBuilders = require('../support/builders/metadata')
+const Builders = require('../support/builders')
 
 /** Resolves with an object describing the side-effects of a Merge call.
  *
@@ -80,7 +80,7 @@ describe('Merge', function () {
     this.merge = new Merge(this.pouch)
     this.merge.local = {renameConflictingDocAsync: sinon.stub().resolves()}
     this.merge.remote = {renameConflictingDocAsync: sinon.stub().resolves()}
-    builders = new MetadataBuilders(this.pouch)
+    builders = new Builders({pouch: this.pouch})
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
@@ -142,8 +142,8 @@ describe('Merge', function () {
 
     onPlatforms(['win32', 'darwin'], () => {
       it('resolves an identity conflict with an existing file', async function () {
-        await builders.file().path('bar').create()
-        const doc = builders.file().path('BAR').build()
+        await builders.metafile().path('bar').create()
+        const doc = builders.metafile().path('BAR').build()
 
         const sideEffects = await mergeSideEffects(this, () =>
           this.merge.addFileAsync(this.side, doc)
@@ -160,8 +160,8 @@ describe('Merge', function () {
 
     onPlatform('linux', () => {
       it('does not have identity conflicts', async function () {
-        await builders.file().path('bar').create()
-        const doc = builders.file().path('BAR').build()
+        await builders.metafile().path('bar').create()
+        const doc = builders.metafile().path('BAR').build()
 
         const sideEffects = await mergeSideEffects(this, () =>
           this.merge.addFileAsync(this.side, doc)
@@ -179,8 +179,8 @@ describe('Merge', function () {
     })
 
     it('resolves a conflict with an existing dir', async function () {
-      const existingLocalDir = await builders.dir().sides({local: 1}).create()
-      const newRemoteFile = builders.file().path(existingLocalDir.path).unmerged('remote').build()
+      const existingLocalDir = await builders.metadir().sides({local: 1}).create()
+      const newRemoteFile = builders.metafile().path(existingLocalDir.path).unmerged('remote').build()
 
       const sideEffects = await mergeSideEffects(this, () =>
         this.merge.addFileAsync('remote', _.cloneDeep(newRemoteFile))
@@ -195,8 +195,8 @@ describe('Merge', function () {
     })
 
     it('does nothing for an already merged file (aka idempotence)', async function () {
-      const mergedFile = await builders.file().sides({remote: 1}).create()
-      const sameFile = builders.file(mergedFile).unmerged('remote').build()
+      const mergedFile = await builders.metafile().sides({remote: 1}).create()
+      const sameFile = builders.metafile(mergedFile).unmerged('remote').build()
 
       const sideEffects = await mergeSideEffects(this, () =>
         this.merge.addFileAsync('remote', _.cloneDeep(sameFile))
@@ -209,8 +209,8 @@ describe('Merge', function () {
     })
 
     it('resolves a conflict on remote file addition with unsynced local file addition', async function () {
-      const unsyncedLocalFile = await builders.file().sides({local: 1}).noRemote().data('local content').create()
-      const newRemoteFile = builders.file().path(unsyncedLocalFile.path).unmerged('remote').data('remote content').build()
+      const unsyncedLocalFile = await builders.metafile().sides({local: 1}).noRemote().data('local content').create()
+      const newRemoteFile = builders.metafile().path(unsyncedLocalFile.path).unmerged('remote').data('remote content').build()
 
       const sideEffects = await mergeSideEffects(this, () =>
         this.merge.addFileAsync('remote', _.cloneDeep(newRemoteFile))
@@ -225,8 +225,8 @@ describe('Merge', function () {
     })
 
     it('overrides an unsynced local addition with a local update detected by initial scan', async function () {
-      const initialFile = await builders.file().sides({local: 1}).ino(123).noRemote().data('initial content').create()
-      const offUpdate = await builders.file(initialFile).unmerged('local').data('off update').newerThan(initialFile).build()
+      const initialFile = await builders.metafile().sides({local: 1}).ino(123).noRemote().data('initial content').create()
+      const offUpdate = await builders.metafile(initialFile).unmerged('local').data('off update').newerThan(initialFile).build()
 
       const sideEffects = await mergeSideEffects(this, () =>
       this.merge.addFileAsync('local', _.cloneDeep(offUpdate))
@@ -249,10 +249,10 @@ describe('Merge', function () {
     })
 
     it('overrides an unsynced local update with a new one detected by local initial scan', async function () {
-      const initial = await builders.file().path('yafile').sides({local: 1}).ino(37).data('initial content').create()
-      const synced = await builders.file(initial).sides({local: 2, remote: 2}).create()
-      const firstUpdate = await builders.file(synced).sides({local: 3, remote: 2}).data('first update').create()
-      const secondUpdate = builders.file(firstUpdate).unmerged('local').data('second update').newerThan(firstUpdate).build()
+      const initial = await builders.metafile().path('yafile').sides({local: 1}).ino(37).data('initial content').create()
+      const synced = await builders.metafile(initial).sides({local: 2, remote: 2}).create()
+      const firstUpdate = await builders.metafile(synced).sides({local: 3, remote: 2}).data('first update').create()
+      const secondUpdate = builders.metafile(firstUpdate).unmerged('local').data('second update').newerThan(firstUpdate).build()
 
       const sideEffects = await mergeSideEffects(this, () =>
         this.merge.addFileAsync('local', _.cloneDeep(secondUpdate))
@@ -278,10 +278,10 @@ describe('Merge', function () {
     })
 
     it('does not override unsynced remote update with local initial scan of previous file content', async function () {
-      const initial = await builders.file().sides({local: 1}).data('previous content').create()
-      const synced = await builders.file(initial).sides({local: 2, remote: 2}).create()
-      await builders.file(synced).sides({local: 2, remote: 3}).data('remote update').create()
-      const sameAsSynced = builders.file(synced).unmerged('local').build()
+      const initial = await builders.metafile().sides({local: 1}).data('previous content').create()
+      const synced = await builders.metafile(initial).sides({local: 2, remote: 2}).create()
+      await builders.metafile(synced).sides({local: 2, remote: 3}).data('remote update').create()
+      const sameAsSynced = builders.metafile(synced).unmerged('local').build()
 
       const sideEffects = await mergeSideEffects(this, () =>
         this.merge.addFileAsync('local', _.cloneDeep(sameAsSynced))
@@ -294,10 +294,10 @@ describe('Merge', function () {
     })
 
     it('resolves a conflict between a local update detected on initial scan & an already merged remote update', async function () {
-      const initial = await builders.file().sides({local: 1}).data('initial content').create()
-      const synced = await builders.file(initial).sides({local: 2, remote: 2}).create()
-      const remoteUpdate = await builders.file(synced).sides({local: 2, remote: 3}).data('remote update').create()
-      const localUpdate = builders.file(synced).unmerged('local').data('local update').build()
+      const initial = await builders.metafile().sides({local: 1}).data('initial content').create()
+      const synced = await builders.metafile(initial).sides({local: 2, remote: 2}).create()
+      const remoteUpdate = await builders.metafile(synced).sides({local: 2, remote: 3}).data('remote update').create()
+      const localUpdate = builders.metafile(synced).unmerged('local').data('local update').build()
 
       const sideEffects = await mergeSideEffects(this, () =>
         this.merge.addFileAsync('local', localUpdate)
@@ -396,8 +396,8 @@ describe('Merge', function () {
     })
 
     it('resolves a conflict with an existing directory', async function () {
-      const existingLocalDir = await builders.dir().sides({local: 1}).create()
-      const newRemoteFile = builders.file().path(existingLocalDir.path).unmerged('remote').build()
+      const existingLocalDir = await builders.metadir().sides({local: 1}).create()
+      const newRemoteFile = builders.metafile().path(existingLocalDir.path).unmerged('remote').build()
 
       await should(
         this.merge.updateFileAsync('local', newRemoteFile)
@@ -406,10 +406,10 @@ describe('Merge', function () {
     })
 
     it('resolves a conflict between a new remote update and a previous local version', async function () {
-      const initial = await builders.file().sides({local: 1}).ino(456).data('initial content').create()
-      const synced = await builders.file(initial).sides({local: 2, remote: 2}).create()
-      const mergedLocalUpdate = await builders.file(synced).sides({local: 3, remote: 2}).data('local update').create()
-      const newRemoteUpdate = builders.file(synced).unmerged('remote').data('remote update').build()
+      const initial = await builders.metafile().sides({local: 1}).ino(456).data('initial content').create()
+      const synced = await builders.metafile(initial).sides({local: 2, remote: 2}).create()
+      const mergedLocalUpdate = await builders.metafile(synced).sides({local: 3, remote: 2}).data('local update').create()
+      const newRemoteUpdate = builders.metafile(synced).unmerged('remote').data('remote update').build()
 
       const sideEffects = await mergeSideEffects(this, () =>
         this.merge.updateFileAsync('remote', newRemoteUpdate)
@@ -437,10 +437,10 @@ describe('Merge', function () {
     })
 
     it('resolves a conflict between a new local update and a previous remote one', async function () {
-      const initial = await builders.file().sides({local: 1}).data('initial content').create()
-      const synced = await builders.file(initial).sides({local: 2, remote: 2}).create()
-      await builders.file(synced).sides({local: 2, remote: 3}).data('remote update').create()
-      const newLocalUpdate = builders.file(synced).unmerged('local').data('local update').build()
+      const initial = await builders.metafile().sides({local: 1}).data('initial content').create()
+      const synced = await builders.metafile(initial).sides({local: 2, remote: 2}).create()
+      await builders.metafile(synced).sides({local: 2, remote: 3}).data('remote update').create()
+      const newLocalUpdate = builders.metafile(synced).unmerged('local').data('local update').build()
 
       const sideEffects = await mergeSideEffects(this, () =>
         this.merge.updateFileAsync('local', newLocalUpdate)
@@ -455,11 +455,11 @@ describe('Merge', function () {
     })
 
     it('does nothing when existing file is up to date', async function () {
-      const initial = await builders.file().sides({local: 1}).data('initial content').create()
-      const initialSynced = await builders.file(initial).sides({local: 2, remote: 2}).create()
-      const update = await builders.file(initialSynced).sides({local: 3, remote: 2}).data('updated content').create()
-      const updateSynced = await builders.file(update).sides({local: 4, remote: 4}).create()
-      const sameUpdate = builders.file(updateSynced).sides(update.sides).build()
+      const initial = await builders.metafile().sides({local: 1}).data('initial content').create()
+      const initialSynced = await builders.metafile(initial).sides({local: 2, remote: 2}).create()
+      const update = await builders.metafile(initialSynced).sides({local: 3, remote: 2}).data('updated content').create()
+      const updateSynced = await builders.metafile(update).sides({local: 4, remote: 4}).create()
+      const sameUpdate = builders.metafile(updateSynced).sides(update.sides).build()
 
       const sideEffects = await mergeSideEffects(this, () =>
         this.merge.updateFileAsync('local', sameUpdate)
@@ -489,8 +489,8 @@ describe('Merge', function () {
     })
 
     it('saves a new version of an existing folder', async function () {
-      const old = await builders.dir().path('existing-folder').create()
-      const doc = builders.dir(old).whateverChange().changedSide(this.side).build()
+      const old = await builders.metadir().path('existing-folder').create()
+      const doc = builders.metadir(old).whateverChange().changedSide(this.side).build()
 
       await this.merge.putFolderAsync(this.side, doc)
 
@@ -500,7 +500,7 @@ describe('Merge', function () {
     })
 
     it('does nothing when existing folder is up to date', async function () {
-      const old = await builders.dir().path('up-to-date-folder').create()
+      const old = await builders.metadir().path('up-to-date-folder').create()
       const doc = _.cloneDeep(old)
 
       await this.merge.putFolderAsync(this.side, doc)
@@ -510,8 +510,8 @@ describe('Merge', function () {
     })
 
     it('resolves a conflict with an existing file', async function () {
-      const existingLocalFile = await builders.file().sides({local: 1}).create()
-      const newRemoteDir = builders.dir().path(existingLocalFile.path).sides({remote: 1}).build()
+      const existingLocalFile = await builders.metafile().sides({local: 1}).create()
+      const newRemoteDir = builders.metadir().path(existingLocalFile.path).sides({remote: 1}).build()
 
       const sideEffects = await mergeSideEffects(this, () =>
         this.merge.putFolderAsync('remote', newRemoteDir)
@@ -529,8 +529,8 @@ describe('Merge', function () {
       let alfred, Alfred
 
       beforeEach(async () => {
-        alfred = await builders.dir().path('alfred').create()
-        Alfred = await builders.dir().path('Alfred').build()
+        alfred = await builders.metadir().path('alfred').create()
+        Alfred = await builders.metadir().path('Alfred').build()
       })
 
       onPlatforms(['win32', 'darwin'], () => {
@@ -631,7 +631,7 @@ describe('Merge', function () {
     })
 
     it('adds a hint for writers to know that it is a move', async function () {
-      await builders.dir().path('FOO').create()
+      await builders.metadir().path('FOO').create()
       let doc = {
         _id: 'FOO/NEW-HINT',
         path: 'FOO/NEW-HINT',
@@ -673,9 +673,9 @@ describe('Merge', function () {
     })
 
     it('resolves a conflict with an existing destination', async function () {
-      const existing = await builders.file().path('DST_FILE').create()
-      const was = await builders.file().path('SRC_FILE').upToDate().create()
-      const doc = builders.file(was).path(existing.path).noRev().build()
+      const existing = await builders.metafile().path('DST_FILE').create()
+      const was = await builders.metafile().path('SRC_FILE').upToDate().create()
+      const doc = builders.metafile(was).path(existing.path).noRev().build()
 
       const sideEffects = await mergeSideEffects(this, () =>
         this.merge.moveFileAsync(this.side, _.cloneDeep(doc), _.cloneDeep(was))
@@ -723,7 +723,7 @@ describe('Merge', function () {
     })
 
     it('does not identify an identical renaming as a conflict', async function () {
-      const banana = await builders.file().path('banana').upToDate().create()
+      const banana = await builders.metafile().path('banana').upToDate().create()
       const BANANA = _({_id: metadata.id('BANANA'), path: 'BANANA'})
         .defaults(banana)
         .omit(['_rev'])
@@ -778,8 +778,8 @@ describe('Merge', function () {
 
     onPlatforms(['win32', 'darwin'], () => {
       it('resolves an identity conflict with an existing file', async function () {
-        const identical = await builders.file().path('QUX').create()
-        const was = builders.file().path('baz').upToDate().build()
+        const identical = await builders.metafile().path('QUX').create()
+        const was = builders.metafile().path('baz').upToDate().build()
         const doc = _.defaults({_id: identical._id, path: 'qux'}, was)
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -797,8 +797,8 @@ describe('Merge', function () {
 
     onPlatform('linux', () => {
       it('does not have identity conflicts', async function () {
-        await builders.file().path('QUX').create()
-        const baz = builders.file().path('baz').upToDate().build()
+        await builders.metafile().path('QUX').create()
+        const baz = builders.metafile().path('baz').upToDate().build()
         const qux = _.defaults({_id: 'qux', path: 'qux'}, baz)
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -880,7 +880,7 @@ describe('Merge', function () {
     })
 
     it('adds a hint for writers to know that it is a move', async function () {
-      await builders.dir().path('FOOBAR').create()
+      await builders.metadir().path('FOOBAR').create()
       let doc = {
         _id: 'FOOBAR/NEW-HINT',
         path: 'FOOBAR/NEW-HINT',
@@ -920,9 +920,9 @@ describe('Merge', function () {
     })
 
     it('resolves a conflict with an existing destination', async function () {
-      const existing = await builders.dir().path('DST_DIR').upToDate().create()
-      const was = await builders.dir().path('SRC_DIR').upToDate().create()
-      const doc = builders.dir(was).path(existing.path).noRev().build()
+      const existing = await builders.metadir().path('DST_DIR').upToDate().create()
+      const was = await builders.metadir().path('SRC_DIR').upToDate().create()
+      const doc = builders.metadir(was).path(existing.path).noRev().build()
 
       const sideEffects = await mergeSideEffects(this, () =>
         this.merge.moveFolderAsync(this.side, _.cloneDeep(doc), _.cloneDeep(was))
@@ -966,9 +966,9 @@ describe('Merge', function () {
     })
 
     it('does not create conflict for local-only existing folder.', async function () {
-      const existing = await builders.dir().sides({local: 1}).unmerged('local').path('DST_DIR2').create()
-      const was = await builders.dir().path('SRC_DIR2').upToDate().create()
-      const doc = builders.dir(was).path(existing.path).noRev().build()
+      const existing = await builders.metadir().sides({local: 1}).unmerged('local').path('DST_DIR2').create()
+      const was = await builders.metadir().path('SRC_DIR2').upToDate().create()
+      const doc = builders.metadir(was).path(existing.path).noRev().build()
 
       await this.merge.moveFolderAsync(this.side, doc, was)
 
@@ -979,7 +979,7 @@ describe('Merge', function () {
     })
 
     it('does not identify an identical renaming as a conflict', async function () {
-      const apple = await builders.dir().path('apple').upToDate().create()
+      const apple = await builders.metadir().path('apple').upToDate().create()
       const APPLE = _({_id: metadata.id('APPLE'), path: 'APPLE'})
         .defaults(apple)
         .omit(['_rev'])
@@ -1002,8 +1002,8 @@ describe('Merge', function () {
 
     onPlatforms(['win32', 'darwin'], () => {
       it('resolves an identity conflict with an existing file', async function () {
-        const LINUX = await builders.dir().path('LINUX').create()
-        const torvalds = builders.dir().path('torvalds').upToDate().build()
+        const LINUX = await builders.metadir().path('LINUX').create()
+        const torvalds = builders.metadir().path('torvalds').upToDate().build()
         const linux = _.defaults({_id: LINUX._id, path: 'linux'}, torvalds)
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -1021,8 +1021,8 @@ describe('Merge', function () {
 
     onPlatform('linux', () => {
       it('does not have identity conflicts', async function () {
-        await builders.dir().path('NUKEM').create()
-        const duke = builders.dir().path('duke').upToDate().build()
+        await builders.metadir().path('NUKEM').create()
+        const duke = builders.metadir().path('duke').upToDate().build()
         const nukem = _.defaults({_id: 'nukem', path: 'nukem'}, duke)
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -1060,11 +1060,11 @@ describe('Merge', function () {
     })
 
     it('handles overwritten descendants', async function () {
-      await builders.file().path('src/file').upToDate().create()
-      await builders.file().path('dst/file').upToDate().create()
-      const oldDst = builders.dir().path('dst').build()
-      const src = await builders.dir().path('src').upToDate().create()
-      const dst = builders.dir().path('dst').overwrite(oldDst).build()
+      await builders.metafile().path('src/file').upToDate().create()
+      await builders.metafile().path('dst/file').upToDate().create()
+      const oldDst = builders.metadir().path('dst').build()
+      const src = await builders.metadir().path('src').upToDate().create()
+      const dst = builders.metadir().path('dst').overwrite(oldDst).build()
 
       await this.merge.moveFolderAsync(this.side, dst, src)
     })
@@ -1111,10 +1111,10 @@ describe('Merge', function () {
 
     it('adds an unsynced file to the destination folder', async function () {
       const fileName = 'unsynced-file'
-      const srcFolder = await builders.dir().path('ADDED_DIR').upToDate().create()
-      await builders.file().path(path.normalize(`${srcFolder.path}/${fileName}`)).sides({ local: 1 }).create()
+      const srcFolder = await builders.metadir().path('ADDED_DIR').upToDate().create()
+      await builders.metafile().path(path.normalize(`${srcFolder.path}/${fileName}`)).sides({ local: 1 }).create()
 
-      const dstFolder = builders.dir(srcFolder).path('MOVED_DIR').sides({}).noRev().build()
+      const dstFolder = builders.metadir(srcFolder).path('MOVED_DIR').sides({}).noRev().build()
       await this.merge.moveFolderRecursivelyAsync('local', dstFolder, srcFolder)
 
       const movedFile = await this.pouch.db.get(metadata.id(path.normalize(`${dstFolder.path}/${fileName}`)))
@@ -1127,8 +1127,8 @@ describe('Merge', function () {
 
   describe('trashFolderAsync', () => {
     it('does not trash a folder if the other side has added a new file in it', async function () {
-      const dir = await builders.dir().path('trashed-folder').trashed().create()
-      await builders.file().path(path.normalize('trashed-folder/file')).notUpToDate().create()
+      const dir = await builders.metadir().path('trashed-folder').trashed().create()
+      await builders.metafile().path(path.normalize('trashed-folder/file')).notUpToDate().create()
       const was = pick(dir, ['_id', 'path', 'docType', 'trashed'])
       const doc = _.defaults({
         path: `.cozy_trash/${was.path}`

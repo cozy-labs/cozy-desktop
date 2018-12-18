@@ -12,6 +12,8 @@ const { IntegrationTestHelpers } = require('../support/helpers/integration')
 // XXX: duplicated from remote/watcher
 const HEARTBEAT /*: number */ = parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || 1000 * 60
 
+const builders = new Builders()
+
 describe('Sync', function () {
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
@@ -21,14 +23,11 @@ describe('Sync', function () {
   after('clean config directory', configHelpers.cleanConfig)
   after('clean  local', () => helpers.local.clean())
 
-  let helpers, builders
+  let helpers
 
   before('instanciate local, remote & sync', async function () {
     this.sandbox = sinon.sandbox.create()
-    const cozy = cozyHelpers.cozy
-    builders = new Builders(cozy, this.pouch)
-
-    helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
+    helpers = new IntegrationTestHelpers(this.config, this.pouch, cozyHelpers.cozy)
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
 
@@ -54,13 +53,13 @@ describe('Sync', function () {
     helpers._sync.start()
 
     await Promise.delay(1.5 * HEARTBEAT)
-    await helpers.prep.putFolderAsync('local', builders.metadata.dir().path('foo').build())
+    await helpers.prep.putFolderAsync('local', builders.metadir().path('foo').build())
     await cozyHelpers.cozy.files.create('some file content', {name: 'file'})
     await Promise.delay(1.5 * HEARTBEAT)
-    await helpers.prep.putFolderAsync('local', builders.metadata.dir().path('foo2').build())
+    await helpers.prep.putFolderAsync('local', builders.metadir().path('foo2').build())
     await cozyHelpers.cozy.files.create('some file content', {name: 'file2'})
     await Promise.delay(1.5 * HEARTBEAT)
-    await helpers.prep.putFolderAsync('local', builders.metadata.dir().path('foo3').build())
+    await helpers.prep.putFolderAsync('local', builders.metadir().path('foo3').build())
     await cozyHelpers.cozy.files.create('some file content', {name: 'file3'})
     await Promise.delay(1.5 * HEARTBEAT)
     await helpers._sync.stop()

@@ -10,7 +10,7 @@ const { uniq } = _
 
 const metadata = require('../../core/metadata')
 
-const MetadataBuilders = require('../support/builders/metadata')
+const Builders = require('../support/builders')
 const configHelpers = require('../support/helpers/config')
 const pouchHelpers = require('../support/helpers/pouch')
 
@@ -54,9 +54,9 @@ describe('Pouch', function () {
       let doc, old
 
       beforeEach(async function () {
-        const builders = new MetadataBuilders(this.pouch)
+        const builders = new Builders({pouch: this.pouch})
 
-        old = await builders.file().path('doc').create()
+        old = await builders.metafile().path('doc').create()
         doc = _.clone(old)
       })
 
@@ -113,9 +113,9 @@ describe('Pouch', function () {
       let doc, old
 
       beforeEach(async function () {
-        const builders = new MetadataBuilders(this.pouch)
+        const builders = new Builders({pouch: this.pouch})
 
-        old = await builders.file().path('doc').create()
+        old = await builders.metafile().path('doc').create()
         doc = _.clone(old)
       })
 
@@ -130,10 +130,10 @@ describe('Pouch', function () {
       let doc1, doc2, old1, old2
 
       beforeEach(async function () {
-        const builders = new MetadataBuilders(this.pouch)
+        const builders = new Builders({pouch: this.pouch})
 
-        old1 = await builders.file().path('doc1').create()
-        old2 = await builders.file().path('doc2').create()
+        old1 = await builders.metafile().path('doc1').create()
+        old2 = await builders.metafile().path('doc2').create()
 
         doc1 = _.clone(old1)
         doc2 = _.clone(old2)
@@ -335,9 +335,9 @@ describe('Pouch', function () {
       let dir, file
 
       beforeEach(async function () {
-        const builders = new MetadataBuilders(this.pouch)
-        dir = await builders.dir().path('dir-with-remote-id').create()
-        file = await builders.file().path('file-with-remote-id').create()
+        const builders = new Builders({pouch: this.pouch})
+        dir = await builders.metadir().path('dir-with-remote-id').create()
+        file = await builders.metafile().path('file-with-remote-id').create()
       })
 
       it('resolves with docs matching the given remoteIds, in the same order', async function () {

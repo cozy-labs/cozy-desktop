@@ -13,12 +13,12 @@ var dirNumber = 1
 
 // Build a RemoteDoc representing a remote Cozy directory:
 //
-//     const dir: RemoteDoc = builders.remote.dir().inDir(...).build()
+//     const dir: RemoteDoc = builders.remoteDir().inDir(...).build()
 //
 // To actually create the corresponding directory on the Cozy, use the async
 // #create() method instead:
 //
-//     const dir: RemoteDoc = await builders.remote.dir().inDir(...).create()
+//     const dir: RemoteDoc = await builders.remoteDir().inDir(...).create()
 //
 module.exports = class RemoteDirBuilder extends RemoteBaseBuilder {
   constructor (cozy /*: Cozy */) {
@@ -28,8 +28,9 @@ module.exports = class RemoteDirBuilder extends RemoteBaseBuilder {
   }
 
   async create () /*: Promise<RemoteDoc> */ {
+    const cozy = this._ensureCozy()
     return jsonApiToRemoteDoc(
-      await this.cozy.files.createDirectory({
+      await cozy.files.createDirectory({
         name: this.remoteDoc.name,
         dirID: this.remoteDoc.dir_id,
         lastModifiedDate: this.remoteDoc.updated_at

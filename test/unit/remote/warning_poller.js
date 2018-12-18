@@ -13,11 +13,13 @@ const {
   ticks
 } = require('../../../core/remote/warning_poller')
 
-const warningBuilders = require('../../support/builders/remote/warning')
+const Builders = require('../../support/builders')
 
 /*::
 import type { Warning } from '../../../core/remote/warning'
 */
+
+const builders = new Builders()
 
 describe('remote/warning_poller', () => {
   describe('ticks', () => {
@@ -60,7 +62,7 @@ describe('RemoteWarningPoller', () => {
 
   describe('#poll()', () => {
     it('emits warnings if any', async () => {
-      const warnings /*: Warning[] */ = warningBuilders.list()
+      const warnings /*: Warning[] */ = builders.remoteWarnings()
       remoteCozy.warnings.resolves(warnings)
       await poller.poll()
       should(events.emit).have.been.calledOnce()
@@ -99,7 +101,7 @@ describe('RemoteWarningPoller', () => {
     // FIXME
     it.skip('polls continuously according to POLLING_DELAY', async () => {
       const noWarnings = []
-      const warnings /*: Warning[] */ = warningBuilders.list()
+      const warnings /*: Warning[] */ = builders.remoteWarnings()
       remoteCozy.warnings.onFirstCall().resolves(noWarnings)
       remoteCozy.warnings.onSecondCall().resolves(warnings)
 
@@ -126,7 +128,7 @@ describe('RemoteWarningPoller', () => {
 
     // FIXME
     it.skip('cancels upcoming pollings', () => {
-      const warnings /*: Warning[] */ = warningBuilders.list()
+      const warnings /*: Warning[] */ = builders.remoteWarnings()
       remoteCozy.warnings.onFirstCall().resolves([])
       remoteCozy.warnings.onSecondCall().resolves(warnings)
       clock.tick(DEFAULT_TICKS.next)

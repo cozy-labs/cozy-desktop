@@ -12,8 +12,11 @@ const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 const { IntegrationTestHelpers } = require('../support/helpers/integration')
 
+const builders = new Builders()
+const cozy = cozyHelpers.cozy
+
 describe('Conflict resolution', () => {
-  let builders, cozy, helpers
+  let helpers
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -25,8 +28,6 @@ describe('Conflict resolution', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function () {
-    builders = new Builders(cozyHelpers.cozy, this.pouch)
-    cozy = cozyHelpers.cozy
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
 
     await helpers.local.setupTrash()
@@ -41,7 +42,7 @@ describe('Conflict resolution', () => {
 
     it('success', async () => {
       await helpers.local.syncDir.ensureDir('foo')
-      await helpers.prep.putFolderAsync('local', builders.metadata.dir().path('foo').build())
+      await helpers.prep.putFolderAsync('local', builders.metadir().path('foo').build())
       should(await helpers.local.tree()).deepEqual([
         'foo-conflict-.../'
       ])
@@ -145,7 +146,7 @@ describe('Conflict resolution', () => {
 
   describe('remote', () => {
     beforeEach('set up conflict', async () => {
-      await helpers.prep.putFolderAsync('local', builders.metadata.dir().path('foo').build())
+      await helpers.prep.putFolderAsync('local', builders.metadir().path('foo').build())
       await cozy.files.create('whatever', {name: 'foo'})
     })
 

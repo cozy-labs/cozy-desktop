@@ -5,7 +5,7 @@ const fs = require('fs-extra')
 const should = require('should')
 const path = require('path')
 
-const MetadataBuilders = require('../support/builders/metadata')
+const Builders = require('../support/builders')
 const { onPlatform } = require('../support/helpers/platform')
 
 const metadata = require('../../core/metadata')
@@ -33,7 +33,7 @@ const timestamp = require('../../core/timestamp')
 const { platform } = process
 
 describe('metadata', function () {
-  const builders = new MetadataBuilders()
+  const builders = new Builders()
 
   describe('.fromRemoteDoc()', () => {
     it('builds the metadata for a remote file', () => {
@@ -279,35 +279,35 @@ describe('metadata', function () {
 
   describe('assignMaxDate', () => {
     it('assigns the previous timestamp to the doc when it is more recent than the current one to prevent updated_at < created_at errors on remote sync', () => {
-      const was = builders.file().build()
-      const doc = builders.file().olderThan(was).build()
+      const was = builders.metafile().build()
+      const doc = builders.metafile().olderThan(was).build()
       should(() => { assignMaxDate(doc, was) }).changeOnly(doc, {
         updated_at: was.updated_at
       })
     })
 
     it('does nothing when the doc has no previous version', () => {
-      const doc = builders.file().build()
+      const doc = builders.metafile().build()
       should(() => { assignMaxDate(doc) }).not.change(doc)
     })
 
     it('does nothing when both current and previous timestamps are the same', () => {
-      const was = builders.file().build()
-      const doc = builders.file().updatedAt(was.updated_at).build()
+      const was = builders.metafile().build()
+      const doc = builders.metafile().updatedAt(was.updated_at).build()
       should(() => { assignMaxDate(doc, was) }).not.change(doc)
     })
 
     it('does nothing when the current timestamp is more recent than the previous one', () => {
-      const was = builders.file().build()
-      const doc = builders.file().newerThan(was).build()
+      const was = builders.metafile().build()
+      const doc = builders.metafile().newerThan(was).build()
       should(() => { assignMaxDate(doc, was) }).not.change(doc)
     })
 
     it('nevers changes the previous doc', () => {
-      const was = builders.file().build()
-      const sameDateDoc = builders.file().updatedAt(was.updated_at).build()
-      const newerDoc = builders.file().newerThan(was).build()
-      const olderDoc = builders.file().olderThan(was).build()
+      const was = builders.metafile().build()
+      const sameDateDoc = builders.metafile().updatedAt(was.updated_at).build()
+      const newerDoc = builders.metafile().newerThan(was).build()
+      const olderDoc = builders.metafile().olderThan(was).build()
       should(() => { assignMaxDate(sameDateDoc, was) }).not.change(was)
       should(() => { assignMaxDate(newerDoc, was) }).not.change(was)
       should(() => { assignMaxDate(olderDoc, was) }).not.change(was)
@@ -718,8 +718,8 @@ describe('metadata', function () {
   describe('invariants', () => {
     let doc
     beforeEach(async () => {
-      const builders = new MetadataBuilders(this.pouch)
-      doc = await builders.whatever().upToDate().remoteId('badbeef').build()
+      const builders = new Builders({pouch: this.pouch})
+      doc = await builders.metadata().upToDate().remoteId('badbeef').build()
     })
 
     it('throws when trying to put bad doc (no sides)', async () => {
@@ -733,7 +733,7 @@ describe('metadata', function () {
     })
 
     it('throws when trying to put bad doc (no md5sum)', async () => {
-      doc = await builders.file().upToDate().remoteId('badbeef').build()
+      doc = await builders.metafile().upToDate().remoteId('badbeef').build()
       should(() => invariants(Object.assign(doc, {md5sum: null}))
         ).throw(/checksum/)
     })
@@ -748,8 +748,8 @@ describe('metadata', function () {
   describe('upToDate', () => {
     let doc
     beforeEach(async () => {
-      const builders = new MetadataBuilders(this.pouch)
-      doc = await builders.whatever().notUpToDate().remoteId('badbeef').build()
+      const builders = new Builders({pouch: this.pouch})
+      doc = await builders.metadata().notUpToDate().remoteId('badbeef').build()
     })
 
     it('returns a clone of the doc', () => {

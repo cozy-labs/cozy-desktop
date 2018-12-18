@@ -9,7 +9,7 @@ const { TMP_DIR_NAME } = require('../../../core/local/constants')
 const Watcher = require('../../../core/local/chokidar_watcher')
 const metadata = require('../../../core/metadata')
 
-const MetadataBuilders = require('../../support/builders/metadata')
+const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
 const { ContextDir } = require('../../support/helpers/context_dir')
 const { onPlatforms } = require('../../support/helpers/platform')
@@ -24,7 +24,7 @@ describe('LocalWatcher Tests', function () {
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
   beforeEach('instanciate local watcher', function () {
-    builders = new MetadataBuilders(this.pouch)
+    builders = new Builders({pouch: this.pouch})
     this.prep = {}
     const events = {emit: sinon.stub()}
     this.watcher = new Watcher(this.syncPath, this.prep, this.pouch, events)
@@ -67,13 +67,13 @@ describe('LocalWatcher Tests', function () {
       await fs.outputFile(changedPath, changedData)
       const unchangedStats = await fs.stat(unchangedPath)
       const {ino: changedIno} = await fs.stat(changedPath)
-      const unchangedDoc = await builders.file()
+      const unchangedDoc = await builders.metafile()
         .upToDate()
         .path(unchangedFilename)
         .data(unchangedData)
         .stats(unchangedStats)
         .create()
-      const changedDoc = await builders.file()
+      const changedDoc = await builders.metafile()
         .upToDate()
         .path(changedFilename)
         .data(changedData)
@@ -132,7 +132,7 @@ describe('LocalWatcher Tests', function () {
 
   describe('#oldMetadata()', () => {
     it('resolves with the metadata whose id matches the event path', async function () {
-      const old = await builders.whatever().create()
+      const old = await builders.metadata().create()
       const resultByEventType = {}
       for (let type of ['add', 'addDir', 'change', 'unlink', 'unlinkDir']) {
         resultByEventType[type] = await this.watcher.oldMetadata({type, path: old.path})
@@ -175,7 +175,7 @@ describe('LocalWatcher Tests', function () {
     onPlatforms(['win32', 'darwin'], () => {
       it('does not skip checksum computation when an identity conflict could occur during initial scan', async function () {
         const syncDir = new ContextDir(this.syncPath)
-        const existing = await builders.file().path('Alfred').data('Alfred content').sides({remote: 1}).create()
+        const existing = await builders.metafile().path('Alfred').data('Alfred content').sides({remote: 1}).create()
         this.prep.addFileAsync = sinon.stub().resolves()
 
         await syncDir.outputFile('alfred', 'alfred content')
@@ -486,7 +486,7 @@ describe('LocalWatcher Tests', function () {
 
     if (platform === 'win32' || platform === 'darwin') {
       it('ignores incompatible docs', async function () {
-        await builders.file().incompatible().create()
+        await builders.metafile().incompatible().create()
         const initialScan = {ids: []}
 
         const {offlineEvents} = await this.watcher.detectOfflineUnlinkEvents(initialScan)

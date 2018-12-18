@@ -30,7 +30,7 @@ describe('Platform incompatibilities', () => {
 
   beforeEach(async function () {
     cozy = cozyHelpers.cozy
-    builders = new Builders(cozy, this.pouch)
+    builders = new Builders({cozy})
     helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
 
     await helpers.local.setupTrash()
@@ -38,8 +38,8 @@ describe('Platform incompatibilities', () => {
   })
 
   it('add incompatible dir and file', async () => {
-    await builders.remote.dir().name('di:r').create()
-    await builders.remote.file().name('fi:le').create()
+    await builders.remoteDir().name('di:r').create()
+    await builders.remoteFile().name('fi:le').create()
     await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).be.empty()
     should(await helpers.incompatibleTree()).deepEqual([
@@ -48,7 +48,7 @@ describe('Platform incompatibilities', () => {
     ])
   })
   it('add incompatible dir with two colons', async () => {
-    await builders.remote.dir().name('d:i:r').create()
+    await builders.remoteDir().name('d:i:r').create()
     await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).be.empty()
     should(await helpers.incompatibleTree()).deepEqual([

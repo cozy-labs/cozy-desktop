@@ -4,14 +4,14 @@
 const _ = require('lodash')
 const should = require('should')
 const move = require('../../core/move')
-const MetadataBuilders = require('../support/builders/metadata')
+const Builders = require('../support/builders')
 
-const builders = new MetadataBuilders()
+const builders = new Builders()
 
 describe('move', () => {
   describe('.child()', () => {
     it('ensures destination will be moved as part of its ancestor directory', () => {
-      const src = builders.whatever().path('whatever/src').build()
+      const src = builders.metadata().path('whatever/src').build()
       const dst = _.defaults({path: 'whatever/dst'}, src)
 
       move.child(src, dst)

@@ -19,16 +19,16 @@ var fileNumber = 1
 
 // Build a RemoteDoc representing a remote Cozy file:
 //
-//     const file /*: RemoteDoc */ = builders.remote.file().inDir(...).build()
+//     const file /*: RemoteDoc */ = builders.remoteFile().inDir(...).build()
 //
 // To actually create the corresponding file on the Cozy, use the async
 // #create() method instead:
 //
-//     const file /*: RemoteDoc */ = await builders.remote.file().inDir(...).create()
+//     const file /*: RemoteDoc */ = await builders.remoteFile().inDir(...).create()
 //
 module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
   /*::
-  _data: string | stream.Readable
+  _data: string | stream.Readable | Buffer
   */
 
   constructor (cozy /*: Cozy */) {
@@ -49,7 +49,7 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
     return this
   }
 
-  data (data /*: string | stream.Readable */) /*: RemoteFileBuilder */ {
+  data (data /*: string | stream.Readable | Buffer */) /*: RemoteFileBuilder */ {
     this._data = data
     if (typeof data === 'string') {
       this.remoteDoc.size = Buffer.from(data).length.toString()
@@ -70,8 +70,10 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
   }
 
   async create () /*: Promise<RemoteDoc> */ {
+    const cozy = this._ensureCozy()
+
     const doc = jsonApiToRemoteDoc(
-      await this.cozy.files.create(this._data, {
+      await cozy.files.create(this._data, {
         contentType: this.remoteDoc.mime,
         dirID: this.remoteDoc.dir_id,
         executable: this.remoteDoc.executable,
@@ -80,7 +82,7 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
       })
     )
 
-    const parentDir = await this.cozy.files.statById(doc.dir_id)
+    const parentDir = await cozy.files.statById(doc.dir_id)
     doc.path = posix.join(parentDir.attributes.path, doc.name)
 
     return doc

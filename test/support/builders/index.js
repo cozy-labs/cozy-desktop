@@ -1,42 +1,66 @@
 /* @flow */
 
-const MetadataBuilders = require('./metadata')
+const DirMetadataBuilder = require('./metadata/dir')
+const FileMetadataBuilder = require('./metadata/file')
 const RemoteDirBuilder = require('./remote/dir')
 const RemoteFileBuilder = require('./remote/file')
 const StreamBuilder = require('./stream')
 
 /*::
 import type { Cozy } from 'cozy-client-js'
+import type { Metadata } from '../../../core/metadata'
 import type Pouch from '../../../core/pouch'
+import type { Warning } from '../../../core/remote/warning'
 */
 
 // Test data builders facade.
 //
-//     builders.metadata.file()...
-//     builders.remote.dir()...
+//     builders.metafile()...
+//     builders.remoteDir()...
 //     builders.stream()...
 //
 module.exports = class Builders {
   /*::
-  cozy : Cozy
-  metadata: MetadataBuilders
+  cozy: ?Cozy
+  pouch: ?Pouch
   */
 
-  constructor (cozy /*: Cozy */, pouch /*: ?Pouch */) {
+  constructor ({cozy, pouch} /*: {cozy?: Cozy, pouch?: Pouch} */ = {}) {
     this.cozy = cozy
-    this.metadata = new MetadataBuilders(pouch)
+    this.pouch = pouch
   }
 
-  get remote () /*: * */ {
-    if (this.cozy == null) {
-      throw new Error('Cannot create remote files/dirs without a Cozy client.')
-      // TODO: Allow building RemoteDoc instances without a Cozy client
-    }
+  metadata (old /*: ?Metadata */) /*: DirMetadataBuilder|FileMetadataBuilder */ {
+    return this.metadir(old)
+  }
 
-    return {
-      dir: () => new RemoteDirBuilder(this.cozy),
-      file: () => new RemoteFileBuilder(this.cozy)
-    }
+  metadir (old /*: ?Metadata */) /*: DirMetadataBuilder */ {
+    return new DirMetadataBuilder(this.pouch, old)
+  }
+
+  metafile (old /*: ?Metadata */) /*: FileMetadataBuilder */ {
+    return new FileMetadataBuilder(this.pouch, old)
+  }
+
+  remoteDir () /*: RemoteDirBuilder */ {
+    return new RemoteDirBuilder(this.cozy)
+  }
+
+  remoteFile () /*: RemoteFileBuilder */ {
+    return new RemoteFileBuilder(this.cozy)
+  }
+
+  remoteWarnings () /*: Warning[] */ {
+    return [
+      {
+        error: 'tos-updated',
+        title: 'TOS Updated',
+        detail: 'TOS have been updated',
+        links: {
+          self: 'https://manager.cozycloud.cc/cozy/tos?domain=...'
+        }
+      }
+    ]
   }
 
   stream () /*: StreamBuilder */ {
