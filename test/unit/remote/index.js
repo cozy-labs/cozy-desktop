@@ -4,7 +4,7 @@
 const Promise = require('bluebird')
 const crypto = require('crypto')
 const EventEmitter = require('events')
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const _ = require('lodash')
 const { pick } = _
 const path = require('path')
@@ -100,7 +100,7 @@ describe('remote.Remote', function () {
 
       this.remote.other = {
         createReadStreamAsync (localDoc) {
-          const stream = fs.createReadStream(CHAT_MIGNON_MOD_PATH)
+          const stream = fse.createReadStream(CHAT_MIGNON_MOD_PATH)
           return Promise.resolve(stream)
         }
       }
@@ -188,7 +188,7 @@ describe('remote.Remote', function () {
 
       this.remote.other = {
         createReadStreamAsync (localDoc) {
-          const stream = fs.createReadStream(CHAT_MIGNON_MOD_PATH)
+          const stream = fse.createReadStream(CHAT_MIGNON_MOD_PATH)
           return Promise.resolve(stream)
         }
       }
@@ -213,7 +213,7 @@ describe('remote.Remote', function () {
       const doc /*: Metadata */ = builders.metafile().path('foo').build()
       this.remote.other = {
         createReadStreamAsync (localDoc) {
-          return fs.readFile('/path/do/not/exists')
+          return fse.readFile('/path/do/not/exists')
         }
       }
       await this.remote.addFileAsync(doc)
@@ -328,7 +328,7 @@ describe('remote.Remote', function () {
         const doc /*: Metadata */ = builders.metafile().path('foo').build()
         this.remote.other = {
           createReadStreamAsync (localDoc) {
-            return fs.readFile('/path/do/not/exists')
+            return fse.readFile('/path/do/not/exists')
           }
         }
         await this.remote.overwriteFileAsync(doc)

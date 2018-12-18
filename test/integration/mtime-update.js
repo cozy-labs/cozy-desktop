@@ -2,7 +2,7 @@
 /* eslint-env mocha */
 
 const should = require('should')
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const path = require('path')
 const _ = require('lodash')
 
@@ -42,17 +42,17 @@ describe('Update only a file mtime', () => {
     await cozy.files.updateById(file._id, 'changedcontent', {contentType: 'text/plain'})
     await cozy.files.updateById(file._id, 'basecontent', {contentType: 'text/plain'})
 
-    const statBefore = await fs.stat(localPath)
+    const statBefore = await fse.stat(localPath)
     helpers.spyPouch()
     await helpers.remote.pullChanges()
     await helpers.syncAll()
 
-    const statAfter = await fs.stat(localPath)
+    const statAfter = await fse.stat(localPath)
     statBefore.mtime.toISOString().should.equal(statAfter.mtime.toISOString())
 
     // actually change the file
-    await fs.appendFile(localPath, ' appended')
-    const stats = await fs.stat(localPath)
+    await fse.appendFile(localPath, ' appended')
+    const stats = await fse.stat(localPath)
 
     await helpers.local.simulateEvents([{
       type: 'change',
@@ -62,8 +62,8 @@ describe('Update only a file mtime', () => {
 
     await helpers.syncAll()
 
-    should(await fs.readFile(localPath, 'utf8')).equal('basecontent appended')
-    should((await fs.stat(localPath)).mtime).not.equal(statAfter.mtime)
+    should(await fse.readFile(localPath, 'utf8')).equal('basecontent appended')
+    should((await fse.stat(localPath)).mtime).not.equal(statAfter.mtime)
   })
 
   it('local', async () => {

@@ -1,7 +1,7 @@
 /* @flow */
 /* eslint-env mocha */
 
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const path = require('path')
 const should = require('should')
 
@@ -20,11 +20,11 @@ describe('Case and encoding basics', () => {
   // Test helpers
   const tmpdir = path.resolve(`tmp/test/unit/case_and_encoding`)
   const abspath = (relpath) => path.join(tmpdir, relpath)
-  const createFile = (filename) => fs.ensureFile(abspath(filename))
-  const rename = (src, dst) => fs.rename(abspath(src), abspath(dst))
-  const listFiles = () => fs.readdir(tmpdir)
+  const createFile = (filename) => fse.ensureFile(abspath(filename))
+  const rename = (src, dst) => fse.rename(abspath(src), abspath(dst))
+  const listFiles = () => fse.readdir(tmpdir)
 
-  beforeEach(() => fs.emptyDir(tmpdir))
+  beforeEach(() => fse.emptyDir(tmpdir))
 
   it('Node.js strings', () => {
     should('e').have.hex('            65       ')

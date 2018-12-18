@@ -2,7 +2,7 @@
 /* @flow */
 
 const Promise = require('bluebird')
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const _ = require('lodash')
 const path = require('path')
 const should = require('should')
@@ -24,10 +24,10 @@ describe('Test scenarios', function () {
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(cozyHelpers.deleteAll)
   beforeEach('set up synced dir', async function () {
-    await fs.emptyDir(this.syncPath)
+    await fse.emptyDir(this.syncPath)
   })
   beforeEach('set up outside dir', async function () {
-    await fs.emptyDir(path.resolve(path.join(this.syncPath, '..', 'outside')))
+    await fse.emptyDir(path.resolve(path.join(this.syncPath, '..', 'outside')))
   })
 
   afterEach(pouchHelpers.cleanDatabase)

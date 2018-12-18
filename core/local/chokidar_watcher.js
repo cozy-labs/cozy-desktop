@@ -3,7 +3,7 @@
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const chokidar = require('chokidar')
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const _ = require('lodash')
 const path = require('path')
 
@@ -121,7 +121,7 @@ module.exports = class LocalWatcher {
 
     const started = new Promise((resolve) => {
       for (let eventType of ['add', 'addDir', 'change', 'unlink', 'unlinkDir']) {
-        this.watcher.on(eventType, (path /*: ?string */, stats /*: ?fs.Stats */) => {
+        this.watcher.on(eventType, (path /*: ?string */, stats /*: ?fse.Stats */) => {
           const isInitialScan = this.initialScan && !this.initialScan.flushed
           log.chokidar.debug({path, stats, isInitialScan}, eventType)
           const newEvent = chokidarEvent.build(eventType, path, stats)
@@ -289,7 +289,7 @@ module.exports = class LocalWatcher {
       }
 
       if (e.type === 'addDir') {
-        if (!await fs.exists(abspath)) {
+        if (!await fse.exists(abspath)) {
           log.debug({path: e.path, ino: e.stats.ino}, 'Dir does not exist anymore')
           e2.wip = true
         }
@@ -357,7 +357,7 @@ module.exports = class LocalWatcher {
       for (let relpath in this.watcher._pendingWrites) {
         try {
           const fullpath = path.join(this.watcher.options.cwd, relpath)
-          const curStat = await fs.stat(fullpath)
+          const curStat = await fse.stat(fullpath)
           this.watcher.emit('add', relpath, curStat)
         } catch (err) {}
       }
@@ -385,14 +385,14 @@ module.exports = class LocalWatcher {
   /* Changes */
 
   // New file detected
-  onAddFile (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: string */) {
+  onAddFile (filePath /*: string */, stats /*: fse.Stats */, md5sum /*: string */) {
     const logError = (err) => log.error({err, path: filePath})
     const doc = metadata.buildFile(filePath, stats, md5sum)
     log.info({path: filePath}, 'FileAddition')
     return this.prep.addFileAsync(SIDE, doc).catch(logError)
   }
 
-  async onMoveFile (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: string */, old /*: Metadata */, overwrite /*: ?Metadata */) {
+  async onMoveFile (filePath /*: string */, stats /*: fse.Stats */, md5sum /*: string */, old /*: Metadata */, overwrite /*: ?Metadata */) {
     const logError = (err) => log.error({err, path: filePath})
     const doc = metadata.buildFile(filePath, stats, md5sum, old.remote)
     if (overwrite) doc.overwrite = overwrite
@@ -400,7 +400,7 @@ module.exports = class LocalWatcher {
     return this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
   }
 
-  onMoveFolder (folderPath /*: string */, stats /*: fs.Stats */, old /*: Metadata */, overwrite /*: ?boolean */) {
+  onMoveFolder (folderPath /*: string */, stats /*: fse.Stats */, old /*: Metadata */, overwrite /*: ?boolean */) {
     const logError = (err) => log.error({err, path: folderPath})
     const doc = metadata.buildDir(folderPath, stats, old.remote)
     // $FlowFixMe we set doc.overwrite to true, it will be replaced by metadata in merge
@@ -410,7 +410,7 @@ module.exports = class LocalWatcher {
   }
 
   // New directory detected
-  onAddDir (folderPath /*: string */, stats /*: fs.Stats */) {
+  onAddDir (folderPath /*: string */, stats /*: fse.Stats */) {
     const doc = metadata.buildDir(folderPath, stats)
     log.info({path: folderPath}, 'DirAddition')
     return this.prep.putFolderAsync(SIDE, doc).catch(err => log.error({err, path: folderPath}))
@@ -435,7 +435,7 @@ module.exports = class LocalWatcher {
   }
 
   // File update detected
-  onChange (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: string */) {
+  onChange (filePath /*: string */, stats /*: fse.Stats */, md5sum /*: string */) {
     log.info({path: filePath}, 'FileUpdate')
     const doc = metadata.buildFile(filePath, stats, md5sum)
     return this.prep.updateFileAsync(SIDE, doc)

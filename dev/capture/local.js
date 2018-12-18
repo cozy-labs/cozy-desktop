@@ -1,6 +1,6 @@
 const Promise = require('bluebird')
 const chokidar = require('chokidar')
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const _ = require('lodash')
 const path = require('path')
 const fixturesHelpers = require('../../test/support/helpers/scenarios')
@@ -46,13 +46,13 @@ const setupInitialState = (scenario) => {
     let {ino, path: relpath} = opts
     if (relpath.endsWith('/')) {
       debug('- mkdir', relpath)
-      return fs.ensureDir(abspath(relpath))
-             .then(() => fs.stat(abspath(relpath)))
+      return fse.ensureDir(abspath(relpath))
+             .then(() => fse.stat(abspath(relpath)))
              .then(stats => { mapInode[stats.ino] = ino })
     } else {
       debug('- >', relpath)
-      return fs.outputFile(abspath(relpath), 'whatever')
-             .then(() => fs.stat(abspath(relpath)))
+      return fse.outputFile(abspath(relpath), 'whatever')
+             .then(() => fse.stat(abspath(relpath)))
              .then(stats => { mapInode[stats.ino] = ino })
     }
   })
@@ -68,7 +68,7 @@ const buildFSEvent = (type, relpath, stats) => {
 }
 
 const triggerDone = () => {
-  return fs.outputFile(path.join(syncPath, DONE_FILE), '')
+  return fse.outputFile(path.join(syncPath, DONE_FILE), '')
 }
 
 const isDone = (relpath) => {
@@ -80,7 +80,7 @@ const saveFSEventsToFile = (scenario, events) => {
   const eventsFile = scenario.path
     .replace(/scenario\.js/, path.join('local', `${process.platform}.json`))
 
-  return fs.outputFile(eventsFile, json)
+  return fse.outputFile(eventsFile, json)
     .then(() => path.basename(eventsFile))
 }
 
@@ -135,8 +135,8 @@ const runAndRecordFSEvents = (scenario) => {
 }
 
 const captureScenario = (scenario) => {
-  return fs.emptyDir(syncPath)
-    .then(() => fs.emptyDir(outsidePath))
+  return fse.emptyDir(syncPath)
+    .then(() => fse.emptyDir(outsidePath))
     .then(() => setupInitialState(scenario))
     .then(() => runAndRecordFSEvents(scenario))
 }

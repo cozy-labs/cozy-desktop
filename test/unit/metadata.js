@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 
 const _ = require('lodash')
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const should = require('should')
 const path = require('path')
 
@@ -665,7 +665,7 @@ describe('metadata', function () {
 
   describe('buildFile', function () {
     it('creates a document for an existing file', async function () {
-      const stats = await fs.stat(path.join(__dirname, '../fixtures/chat-mignon.jpg'))
+      const stats = await fse.stat(path.join(__dirname, '../fixtures/chat-mignon.jpg'))
       const md5sum = '+HBGS7uN4XdB0blqLv5tFQ=='
       const doc = buildFile('chat-mignon.jpg', stats, md5sum)
       doc.should.have.properties({
@@ -686,9 +686,9 @@ describe('metadata', function () {
       it('sets the executable bit', async function () {
         const filePath = path.join(__dirname, '../../tmp/test/executable')
         const whateverChecksum = '1B2M2Y8AsgTpgAmY7PhCfg=='
-        await fs.ensureFile(filePath)
-        await fs.chmod(filePath, '755')
-        const stats = await fs.stat(filePath)
+        await fse.ensureFile(filePath)
+        await fse.chmod(filePath, '755')
+        const stats = await fse.stat(filePath)
         const doc = buildFile('executable', stats, whateverChecksum)
         should(doc.executable).be.true()
       })

@@ -3,7 +3,7 @@
 
 const Promise = require('bluebird')
 const childProcess = require('child_process')
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const path = require('path')
 const should = require('should')
 
@@ -12,7 +12,6 @@ const { hideOnWindows } = require('../../../core/utils/fs')
 const configHelpers = require('../../support/helpers/config')
 
 Promise.promisifyAll(childProcess)
-Promise.promisifyAll(fs)
 
 describe('utils/fs', () => {
   before('instanciate config', configHelpers.createConfig)
@@ -28,7 +27,7 @@ describe('utils/fs', () => {
       dirPath = path.join(parentPath, dirName)
       missingPath = path.join(parentPath, 'missing')
 
-      await fs.ensureDirAsync(dirPath)
+      await fse.ensureDir(dirPath)
     })
 
     if (platform === 'win32') {

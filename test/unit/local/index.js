@@ -2,7 +2,7 @@
 
 const Promise = require('bluebird')
 const crypto = require('crypto')
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const path = require('path')
 const sinon = require('sinon')
 const should = require('should')
@@ -16,8 +16,6 @@ const configHelpers = require('../../support/helpers/config')
 const { ContextDir } = require('../../support/helpers/context_dir')
 const { WINDOWS_DEFAULT_MODE } = require('../../support/helpers/platform')
 const pouchHelpers = require('../../support/helpers/pouch')
-
-Promise.promisifyAll(fs)
 
 describe('Local', function () {
   let builders, syncDir
@@ -55,7 +53,7 @@ describe('Local', function () {
     it('creates a readable stream for the document', function (done) {
       let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
       let dst = syncDir.abspath('read-stream.jpg')
-      fs.copySync(src, dst)
+      fse.copySync(src, dst)
       let doc = {
         path: 'read-stream.jpg',
         md5sum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
@@ -97,7 +95,7 @@ describe('Local', function () {
     it('chmod +x for an executable file', function (done) {
       let date = new Date('2015-11-09T05:06:07Z')
       let filePath = syncDir.abspath('exec-file')
-      fs.ensureFileSync(filePath)
+      fse.ensureFileSync(filePath)
       let updater = this.local.metadataUpdater({
         docType: 'file',
         path: 'exec-file',
@@ -106,7 +104,7 @@ describe('Local', function () {
       })
       updater(function (err) {
         should.not.exist(err)
-        let mode = +fs.statSync(filePath).mode
+        let mode = +fse.statSync(filePath).mode
         if (process.platform === 'win32') {
           (mode & 0o100).should.equal(0)
         } else {
@@ -119,14 +117,14 @@ describe('Local', function () {
     it('updates mtime for a file', function (done) {
       let date = new Date('2015-10-09T05:06:07Z')
       let filePath = syncDir.abspath('utimes-file')
-      fs.ensureFileSync(filePath)
+      fse.ensureFileSync(filePath)
       let updater = this.local.metadataUpdater({
         path: 'utimes-file',
         updated_at: date
       })
       updater(function (err) {
         should.not.exist(err)
-        let mtime = +fs.statSync(filePath).mtime
+        let mtime = +fse.statSync(filePath).mtime
         mtime.should.equal(+date)
         done()
       })
@@ -135,14 +133,14 @@ describe('Local', function () {
     it('updates mtime for a directory', function (done) {
       let date = new Date('2015-10-09T05:06:07Z')
       let folderPath = syncDir.abspath('utimes-folder')
-      fs.ensureDirSync(folderPath)
+      fse.ensureDirSync(folderPath)
       let updater = this.local.metadataUpdater({
         path: 'utimes-folder',
         updated_at: date
       })
       updater(function (err) {
         should.not.exist(err)
-        let mtime = +fs.statSync(folderPath).mtime
+        let mtime = +fse.statSync(folderPath).mtime
         mtime.should.equal(+date)
         done()
       })
@@ -158,7 +156,7 @@ describe('Local', function () {
 
     it('sets ino for a file', function (done) {
       const doc = {path: 'file-needs-ino'}
-      fs.ensureFileSync(fullPath(doc))
+      fse.ensureFileSync(fullPath(doc))
       const inodeSetter = this.local.inodeSetter(doc)
       inodeSetter(err => {
         should.not.exist(err)
@@ -169,7 +167,7 @@ describe('Local', function () {
 
     it('sets ino for a directory', function (done) {
       const doc = {path: 'dir-needs-ino'}
-      fs.ensureDirSync(fullPath(doc))
+      fse.ensureDirSync(fullPath(doc))
       const inodeSetter = this.local.inodeSetter(doc)
       inodeSetter(err => {
         should.not.exist(err)
@@ -206,7 +204,7 @@ describe('Local', function () {
       let filePath = path.resolve(this.syncPath, 'folder', 'testfile')
       let exist = await this.local.fileExistsLocallyAsync('deadcafe')
       exist.should.not.be.ok()
-      fs.ensureFileSync(filePath)
+      fse.ensureFileSync(filePath)
       let doc = {
         _id: 'folder/testfile',
         path: 'folder/testfile',
@@ -245,10 +243,10 @@ describe('Local', function () {
       let filePath = syncDir.abspath(doc.path)
       await this.local.addFileAsync(doc)
       this.local.other = null
-      fs.statSync(filePath).isFile().should.be.true()
-      let content = fs.readFileSync(filePath, {encoding: 'utf-8'})
+      fse.statSync(filePath).isFile().should.be.true()
+      let content = fse.readFileSync(filePath, {encoding: 'utf-8'})
       content.should.equal('foobar')
-      let mtime = +fs.statSync(filePath).mtime
+      let mtime = +fse.statSync(filePath).mtime
       mtime.should.equal(+doc.updated_at)
       should(doc.ino).be.a.Number()
     })
@@ -260,16 +258,16 @@ describe('Local', function () {
         md5sum: 'qwesux5JaAGTet+nckJL9w=='
       }
       let alt = syncDir.abspath('files/my-checkum-is-456')
-      fs.writeFileSync(alt, 'foo bar baz')
+      fse.writeFileSync(alt, 'foo bar baz')
       let stub = sinon.stub(this.local, 'fileExistsLocally').yields(null, alt)
       let filePath = syncDir.abspath(doc.path)
       await this.local.addFileAsync(doc)
       stub.restore()
       stub.calledWith(doc.md5sum).should.be.true()
-      fs.statSync(filePath).isFile().should.be.true()
-      let content = fs.readFileSync(filePath, {encoding: 'utf-8'})
+      fse.statSync(filePath).isFile().should.be.true()
+      let content = fse.readFileSync(filePath, {encoding: 'utf-8'})
       content.should.equal('foo bar baz')
-      let mtime = +fs.statSync(filePath).mtime
+      let mtime = +fse.statSync(filePath).mtime
       mtime.should.equal(+doc.updated_at)
     })
 
@@ -294,10 +292,10 @@ describe('Local', function () {
       let filePath = syncDir.abspath(doc.path)
       await this.local.addFileAsync(doc)
       this.local.other = null
-      fs.statSync(filePath).isFile().should.be.true()
-      let content = fs.readFileSync(filePath, {encoding: 'utf-8'})
+      fse.statSync(filePath).isFile().should.be.true()
+      let content = fse.readFileSync(filePath, {encoding: 'utf-8'})
       content.should.equal('foobaz')
-      let mtime = +fs.statSync(filePath).mtime
+      let mtime = +fse.statSync(filePath).mtime
       mtime.should.equal(+doc.updated_at)
     })
 
@@ -324,7 +322,7 @@ describe('Local', function () {
       await should(this.local.addFileAsync(doc))
         .be.rejectedWith('Invalid checksum')
       this.local.other = null
-      fs.existsSync(filePath).should.be.false()
+      fse.existsSync(filePath).should.be.false()
     })
   })
 
@@ -336,8 +334,8 @@ describe('Local', function () {
       }
       let folderPath = syncDir.abspath(doc.path)
       await this.local.addFolderAsync(doc)
-      fs.statSync(folderPath).isDirectory().should.be.true()
-      let mtime = +fs.statSync(folderPath).mtime
+      fse.statSync(folderPath).isDirectory().should.be.true()
+      let mtime = +fse.statSync(folderPath).mtime
       mtime.should.equal(+doc.updated_at)
       should(doc.ino).be.a.Number()
     })
@@ -348,10 +346,10 @@ describe('Local', function () {
         updated_at: new Date('2015-10-09T05:06:08Z')
       }
       let folderPath = syncDir.abspath(doc.path)
-      fs.ensureDirSync(folderPath)
+      fse.ensureDirSync(folderPath)
       await this.local.addFolderAsync(doc)
-      fs.statSync(folderPath).isDirectory().should.be.true()
-      let mtime = +fs.statSync(folderPath).mtime
+      fse.statSync(folderPath).isDirectory().should.be.true()
+      let mtime = +fse.statSync(folderPath).mtime
       mtime.should.equal(+doc.updated_at)
     })
   })
@@ -378,13 +376,13 @@ describe('Local', function () {
         }
       }
       let filePath = syncDir.abspath(doc.path)
-      fs.writeFileSync(filePath, 'old content')
+      fse.writeFileSync(filePath, 'old content')
       await this.local.overwriteFileAsync(doc, {})
       this.local.other = null
-      fs.statSync(filePath).isFile().should.be.true()
-      let content = fs.readFileSync(filePath, {encoding: 'utf-8'})
+      fse.statSync(filePath).isFile().should.be.true()
+      let content = fse.readFileSync(filePath, {encoding: 'utf-8'})
       content.should.equal('Hello world')
-      let mtime = +fs.statSync(filePath).mtime
+      let mtime = +fse.statSync(filePath).mtime
       mtime.should.equal(+doc.updated_at)
     })
   })
@@ -397,10 +395,10 @@ describe('Local', function () {
         updated_at: new Date('2015-11-10T05:06:07Z')
       }
       let filePath = syncDir.abspath(doc.path)
-      fs.ensureFileSync(filePath)
+      fse.ensureFileSync(filePath)
       await this.local.updateFileMetadataAsync(doc, {})
-      fs.existsSync(filePath).should.be.true()
-      let mtime = +fs.statSync(filePath).mtime
+      fse.existsSync(filePath).should.be.true()
+      let mtime = +fse.statSync(filePath).mtime
       mtime.should.equal(+doc.updated_at)
     })
   })
@@ -426,7 +424,7 @@ describe('Local', function () {
       srcFile = builders.metafile().path('src/file').build()
       dstFile = builders.metafile().path('dst/file').olderThan(srcFile).build()
 
-      await fs.emptyDir(syncDir.root)
+      await fse.emptyDir(syncDir.root)
     })
 
     it('moves the file and updates its mtime', async function () {
@@ -511,7 +509,7 @@ describe('Local', function () {
       srcDir = builders.metadir().path('src/dir').build()
       dstDir = builders.metadir().path('dst/dir').olderThan(srcDir).build()
 
-      await fs.emptyDir(syncDir.root)
+      await fse.emptyDir(syncDir.root)
     })
 
     it('moves the folder and updates its mtime', async function () {
@@ -595,12 +593,12 @@ describe('Local', function () {
         docType: 'file'
       }
       let filePath = syncDir.abspath(doc.path)
-      fs.ensureFileSync(filePath)
+      fse.ensureFileSync(filePath)
       const inserted = await this.pouch.db.put(doc)
       doc._rev = inserted.rev
       await this.pouch.db.remove(doc)
       await this.local.trashAsync(doc)
-      fs.existsSync(filePath).should.be.false()
+      fse.existsSync(filePath).should.be.false()
     })
 
     it('deletes a folder from the local filesystem', async function () {
@@ -610,12 +608,12 @@ describe('Local', function () {
         docType: 'folder'
       }
       let folderPath = syncDir.abspath(doc.path)
-      fs.ensureDirSync(folderPath)
+      fse.ensureDirSync(folderPath)
       const inserted = await this.pouch.db.put(doc)
       doc._rev = inserted.rev
       await this.pouch.db.remove(doc)
       await this.local.trashAsync(doc)
-      fs.existsSync(folderPath).should.be.false()
+      fse.existsSync(folderPath).should.be.false()
     })
   })
 
@@ -635,11 +633,11 @@ describe('Local', function () {
 
     it('deletes an empty folder', async function () {
       const doc = builders.metadir().build()
-      await fs.emptyDirAsync(fullPath(doc))
+      await fse.emptyDir(fullPath(doc))
 
       await this.local.deleteFolderAsync(doc)
 
-      should(await fs.pathExistsAsync(fullPath(doc))).be.false()
+      should(await fse.pathExists(fullPath(doc))).be.false()
       should(this.events.emit.args).deepEqual([
         ['delete-file', doc]
       ])
@@ -647,11 +645,11 @@ describe('Local', function () {
 
     it('trashes a non-empty folder (ENOTEMPTY)', async function () {
       const doc = builders.metadir().build()
-      await fs.ensureDirAsync(path.join(fullPath(doc), 'something-inside'))
+      await fse.ensureDir(path.join(fullPath(doc), 'something-inside'))
 
       await this.local.deleteFolderAsync(doc)
 
-      should(await fs.pathExistsAsync(fullPath(doc))).be.false()
+      should(await fse.pathExists(fullPath(doc))).be.false()
       should(this.local.trashAsync.args).deepEqual([
         [doc]
       ])
@@ -667,7 +665,7 @@ describe('Local', function () {
     it('throws when given non-folder metadata', async function () {
       // TODO: FileMetadataBuilder
       const doc = {path: 'FILE-TO-DELETE', docType: 'file'}
-      await fs.ensureFileAsync(fullPath(doc))
+      await fse.ensureFile(fullPath(doc))
 
       await should(this.local.deleteFolderAsync(doc))
         .be.rejectedWith(/metadata/)
@@ -683,13 +681,13 @@ describe('Local', function () {
       let newPath = 'conflict/file-conflict-2015-10-09T05_05_10Z'
       let srcPath = syncDir.abspath(doc.path)
       let dstPath = syncDir.abspath(newPath)
-      fs.ensureDirSync(path.dirname(srcPath))
-      fs.writeFileSync(srcPath, 'foobar')
+      fse.ensureDirSync(path.dirname(srcPath))
+      fse.writeFileSync(srcPath, 'foobar')
       await this.local.renameConflictingDocAsync(doc, newPath)
-      fs.existsSync(srcPath).should.be.false()
-      fs.statSync(dstPath).isFile().should.be.true()
+      fse.existsSync(srcPath).should.be.false()
+      fse.statSync(dstPath).isFile().should.be.true()
       let enc = {encoding: 'utf-8'}
-      fs.readFileSync(dstPath, enc).should.equal('foobar')
+      fse.readFileSync(dstPath, enc).should.equal('foobar')
     })
   )
 })

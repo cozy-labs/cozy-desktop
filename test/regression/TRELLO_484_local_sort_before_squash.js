@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 /* @flow */
 
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const _ = require('lodash')
 const should = require('should')
 const sinon = require('sinon')
@@ -23,7 +23,7 @@ describe('TRELLO #484: Local sort before squash (https://trello.com/c/RcRmqymw)'
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(cozyHelpers.deleteAll)
   beforeEach('set up synced dir', async function () {
-    await fs.emptyDir(this.syncPath)
+    await fse.emptyDir(this.syncPath)
   })
 
   afterEach(pouchHelpers.cleanDatabase)

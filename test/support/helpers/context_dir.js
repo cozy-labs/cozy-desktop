@@ -2,14 +2,13 @@
 
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const _ = require('lodash')
 const path = require('path')
 
 const checksumer = require('../../../core/local/checksumer')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
 
-Promise.promisifyAll(fs) // FIXME: Isn't fs-extra already promisified?
 Promise.promisifyAll(checksumer)
 
 function getPath (target /*: string | {path: string} */) /*: string */ {
@@ -47,9 +46,9 @@ class ContextDir {
       const dir = dirsToRead.shift()
       if (dir == null) break
 
-      for (const name of await fs.readdirAsync(dir)) {
+      for (const name of await fse.readdir(dir)) {
         const absPath = path.join(dir, name)
-        const stat = await fs.statAsync(absPath)
+        const stat = await fse.stat(absPath)
         let relPath = this.relpath(absPath)
 
         if (stat.isDirectory()) {
@@ -67,19 +66,19 @@ class ContextDir {
   }
 
   existsSync (target /*: string | {path: string} */) /*: bool */ {
-    return fs.existsSync(this.abspath(target))
+    return fse.existsSync(this.abspath(target))
   }
 
   exists (target /*: string | {path: string} */) /*: Promise<bool> */ {
-    return fs.exists(this.abspath(target))
+    return fse.exists(this.abspath(target))
   }
 
   emptyDir (target /*: string | {path: string} */) /*: Promise<void> */ {
-    return fs.emptyDir(this.abspath(target))
+    return fse.emptyDir(this.abspath(target))
   }
 
   async ensureDir (target /*: string | {path: string} */) {
-    await fs.ensureDir(this.abspath(target))
+    await fse.ensureDir(this.abspath(target))
   }
 
   async ensureParentDir (target /*: string | {path: string} */) {
@@ -98,48 +97,48 @@ class ContextDir {
   }
 
   async unlink (target /*: string | {path: string} */) {
-    await fs.unlinkAsync(this.abspath(target))
+    await fse.unlink(this.abspath(target))
   }
 
   async rmdir (target /*: string | {path: string} */) {
-    await fs.rmdirSync(this.abspath(target))
+    await fse.rmdirSync(this.abspath(target))
   }
 
   async readFile (target /*: string | {path: string} */, opts /*: * */ = 'utf8') /*: Promise<string> */ {
-    return fs.readFile(this.abspath(target), opts)
+    return fse.readFile(this.abspath(target), opts)
   }
 
   async chmod (target /*: string | {path: string} */, mode /*: number */) {
-    await fs.chmod(this.abspath(target), mode)
+    await fse.chmod(this.abspath(target), mode)
   }
 
   async ensureFileMode (target /*: string | {path: string} */, mode /*: number */) {
-    await fs.ensureFile(this.abspath(target))
+    await fse.ensureFile(this.abspath(target))
     await this.chmod(target, mode) // Post-creation so it ignores umask
   }
 
   async outputFile (target /*: string | {path: string} */, data /*: string|Buffer */) {
-    return fs.outputFile(this.abspath(target), data)
+    return fse.outputFile(this.abspath(target), data)
   }
 
   async move (src /*: string */, dst /*: string */) {
-    return fs.move(this.abspath(src), this.abspath(dst))
+    return fse.move(this.abspath(src), this.abspath(dst))
   }
 
   async checksum (target /*: string | {path: string} */) /*: Promise<string> */ {
     return checksumer.computeChecksumAsync(this.abspath(target))
   }
 
-  stat (target /*: string | {path: string} */) /*: Promise<fs.Stat> */ {
-    return fs.stat(this.abspath(target))
+  stat (target /*: string | {path: string} */) /*: Promise<fse.Stat> */ {
+    return fse.stat(this.abspath(target))
   }
 
   remove (target /*: string | {path: string} */) /*: Promise<void> */ {
-    return fs.remove(this.abspath(target))
+    return fse.remove(this.abspath(target))
   }
 
   async removeParentDir (target /*: string | {path: string} */) /*: Promise<void> */ {
-    await fs.remove(this.abspath(path.dirname(getPath(target))))
+    await fse.remove(this.abspath(path.dirname(getPath(target))))
   }
 
   async rename (target /*: string | {path: string} */, newName /*: string */) {
@@ -147,7 +146,7 @@ class ContextDir {
     const oldName = path.basename(oldPath)
     const newPath = oldPath.replace(oldName, newName)
 
-    await fs.rename(oldPath, newPath)
+    await fse.rename(oldPath, newPath)
   }
 }
 

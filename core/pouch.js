@@ -4,7 +4,7 @@ const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const PouchDB = require('pouchdb')
 const async = require('async')
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const _ = require('lodash')
 const { isEqual } = _
 const path = require('path')
@@ -82,7 +82,7 @@ class Pouch {
   // Create database and recreate all filters
   resetDatabase (callback) {
     this.db.destroy(() => {
-      fs.ensureDirSync(this.config.dbPath)
+      fse.ensureDirSync(this.config.dbPath)
       this.db = new PouchDB(this.config.dbPath)
       this.db.setMaxListeners(100)
       this.db.on('error', err => log.warn(err))

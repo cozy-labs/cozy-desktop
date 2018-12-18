@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const os = require('os')
 const path = require('path')
 const should = require('should')
@@ -89,11 +89,11 @@ describe('App', function () {
       // Make sure current & rotated logs exist
       const logFilenames = [LOG_FILENAME, LOG_FILENAME + '.1']
       for (const filename of logFilenames) {
-        await fs.ensureFile(path.join(configDir, filename))
+        await fse.ensureFile(path.join(configDir, filename))
       }
 
       await app.removeConfig()
-      should(await fs.readdir(configDir)).deepEqual(logFilenames)
+      should(await fse.readdir(configDir)).deepEqual(logFilenames)
     })
   })
 
@@ -120,14 +120,14 @@ describe('App', function () {
     })
 
     it('can be an existing non-empty dir', () => {
-      const syncPath = fs.mkdtempSync(path.join(os.tmpdir(), 'existing-non-empty-dir'))
+      const syncPath = fse.mkdtempSync(path.join(os.tmpdir(), 'existing-non-empty-dir'))
       try {
-        fs.writeFileSync(path.join(syncPath, 'some-file'), 'some-content')
+        fse.writeFileSync(path.join(syncPath, 'some-file'), 'some-content')
         const result = App.prototype.checkSyncPath(syncPath)
         should(result).have.properties({syncPath})
         should(result).not.have.property('error')
       } finally {
-        fs.removeSync(syncPath)
+        fse.removeSync(syncPath)
       }
     })
 
@@ -160,7 +160,7 @@ describe('App', function () {
 
   describe('clientInfo', () => {
     it('works when app is not configured', () => {
-      const basePath = fs.mkdtempSync(path.join(os.tmpdir(), 'base-dir-'))
+      const basePath = fse.mkdtempSync(path.join(os.tmpdir(), 'base-dir-'))
       const app = new App(basePath)
 
       const info = app.clientInfo()

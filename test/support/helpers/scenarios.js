@@ -1,5 +1,5 @@
 const Promise = require('bluebird')
-const fs = require('fs-extra')
+const fse = require('fs-extra')
 const glob = require('glob')
 const _ = require('lodash')
 const path = require('path')
@@ -61,7 +61,7 @@ module.exports.loadFSEventFiles = (scenario) => {
     .map(f => {
       const name = path.basename(f)
       const disabled = scenario.disabled || disabledEventsFile(name)
-      const events = fs.readJsonSync(f).map(e => {
+      const events = fse.readJsonSync(f).map(e => {
         if (e.stats) {
           e.stats.mtime = new Date(e.stats.mtime)
           e.stats.ctime = new Date(e.stats.ctime)
@@ -85,7 +85,7 @@ module.exports.loadRemoteChangesFiles = (scenario) => {
   return glob.sync(pattern).map(f => {
     const name = path.basename(f)
     const disabled = scenario.disabled || f.endsWith(disabledExtension)
-    const changes = fs.readJsonSync(f)
+    const changes = fse.readJsonSync(f)
     return {name, disabled, changes}
   })
 }
@@ -109,8 +109,8 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
     if (relpath.endsWith('/')) {
       if (!trashed) {
         debug(`- create local dir: ${localPath}`)
-        await fs.ensureDir(abspath(localPath))
-        if (trueino) ino = (await fs.stat(abspath(localPath))).ino
+        await fse.ensureDir(abspath(localPath))
+        if (trueino) ino = (await fse.stat(abspath(localPath))).ino
       }
 
       const doc = {
@@ -148,8 +148,8 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
 
       if (!trashed) {
         debug(`- create local file: ${localPath}`)
-        await fs.outputFile(abspath(localPath), content)
-        if (trueino) ino = (await fs.stat(abspath(localPath))).ino
+        await fse.outputFile(abspath(localPath), content)
+        if (trueino) ino = (await fse.stat(abspath(localPath))).ino
       }
 
       const doc = {
@@ -195,34 +195,34 @@ module.exports.runActions = (scenario, abspath) => {
     switch (action.type) {
       case 'mkdir':
         debug('- mkdir', action.path)
-        return fs.ensureDir(abspath(action.path))
+        return fse.ensureDir(abspath(action.path))
 
       case '>':
         debug('- >', action.path)
-        return fs.outputFile(abspath(action.path), 'whatever')
+        return fse.outputFile(abspath(action.path), 'whatever')
 
       case '>>':
         debug('- >>', action.path)
-        return fs.appendFile(abspath(action.path), ' blah')
+        return fse.appendFile(abspath(action.path), ' blah')
 
       case 'trash':
         debug('- trash', action.path)
-        return fs.remove(abspath(action.path))
+        return fse.remove(abspath(action.path))
 
       case 'delete':
         debug('- delete', action.path)
-        return fs.remove(abspath(action.path))
+        return fse.remove(abspath(action.path))
 
       case 'mv':
         debug('- mv', action.force ? 'force' : '', action.src, action.dst)
         if (action.merge) {
           // FIXME: Does this preserve inode ?
           mergedirs(abspath(action.src), abspath(action.dst), 'overwrite')
-          return fs.remove(abspath(action.src))
+          return fse.remove(abspath(action.src))
         } else if (action.force) {
-          return fs.move(abspath(action.src), abspath(action.dst), {overwrite: true})
+          return fse.move(abspath(action.src), abspath(action.dst), {overwrite: true})
         } else {
-          return fs.rename(abspath(action.src), abspath(action.dst))
+          return fse.rename(abspath(action.src), abspath(action.dst))
         }
 
       case 'wait':
