@@ -45,6 +45,7 @@ The current AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
 | **Linux Mint 18.3 (Sylvia)**              | **yes**   | 3.4.2     |                       |
 | **Linux Mint 18.3 (Sylvia) XFCE Edition** | **yes**   |           |                       |
 | **Mageia 6 KDE Edition**                  | **yes**   |           |                       |
+| **openSUSE Leap 15.0**                    | **yes**   | 3.4.24    |                       |
 | openSUSE Tumbleweed                       | **yes**   | 3.4.25    |                       |
 | Ubuntu 14.04 (Trusty Tahr)                | no        | 3.4.19    |                       |
 | **Ubuntu 16.04 (Xenial Xerus)**           | **yes**   | 3.4.21    | some issues on Unity  |
