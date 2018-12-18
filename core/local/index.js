@@ -271,11 +271,10 @@ module.exports = class Local /*:: implements Side */ {
       next => {
         // After downloading a file, check that the size is correct too
         // (more protection against stack corruption)
-        if (!doc.size) return next()
         const cbStats = (err, stats) => {
           if (err) {
             next(err)
-          } else if (doc.size === stats.size) {
+          } else if (!doc.size || doc.size === stats.size) {
             doc.ino = stats.ino
             if (stats.fileid) { doc.fileid = stats.fileid }
             next()

@@ -27,6 +27,7 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string } *
     for (const event of events) {
       try {
         if (event.action !== 'initial-scan-done') {
+          // TODO if (event.kind === 'symlink') emit an error
           event._id = id(event.path)
           if (['created', 'modified', 'renamed'].includes(event.action)) {
             log.debug({path: event.path, action: event.action}, 'stat')
