@@ -9,6 +9,11 @@ const log = logger({
   component: 'addInfos'
 })
 
+let winfs
+if (process.platform === 'win32') {
+  winfs = require('@gyselroth/windows-fsstat')
+}
+
 /*::
 import type Buffer from './buffer'
 import type { Checksumer } from '../checksumer'
@@ -24,7 +29,13 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string } *
           event._id = id(event.path)
           if (['created', 'modified', 'renamed'].includes(event.action)) {
             log.debug({path: event.path, action: event.action}, 'stat')
-            event.stats = await fse.stat(path.join(opts.syncPath, event.path))
+            if (winfs) {
+              // XXX It would be better to avoid sync IO operations, but
+              // before node 10.5.0, it's our only choice for reliable fileIDs
+              event.stats = winfs.lstatSync(path.join(opts.syncPath, event.path))
+            } else {
+              event.stats = await fse.stat(path.join(opts.syncPath, event.path))
+            }
           }
           if (event.stats) { // created, modified, renamed, scan
             event.docType = event.stats.isDirectory() ? 'directory' : 'file'
