@@ -38,7 +38,13 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string } *
             }
           }
           if (event.stats) { // created, modified, renamed, scan
-            event.docType = event.stats.isDirectory() ? 'directory' : 'file'
+            let isDir
+            if (winfs) {
+              isDir = event.stats.directory
+            } else {
+              isDir = event.stats.isDirectory()
+            }
+            event.docType = isDir ? 'directory' : 'file'
           } else { // deleted
             // If kind is unknown, we say it's a file arbitrary
             event.docType = event.kind === 'directory' ? 'directory' : 'file'

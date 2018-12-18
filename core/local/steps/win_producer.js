@@ -12,6 +12,11 @@ const log = logger({
   component: 'WinProducer'
 })
 
+let winfs
+if (process.platform === 'win32') {
+  winfs = require('@gyselroth/windows-fsstat')
+}
+
 /*::
 import type { Runner } from './runner'
 */
@@ -62,12 +67,12 @@ module.exports = class WinProducer /*:: implements Runner */ {
       try {
         // TODO ignore
         const absPath = path.join(this.syncPath, relPath, entry)
-        const stats = await fse.stat(absPath)
+        const stats = winfs.lstatSync(absPath)
         entries.push({
           action: 'scan',
           path: path.join(relPath, entry),
           stats,
-          kind: 'unknown'
+          kind: stats.directory ? 'directory' : 'file'
         })
       } catch (err) {
         // TODO error handling
@@ -79,7 +84,7 @@ module.exports = class WinProducer /*:: implements Runner */ {
     log.debug({entries}, 'scan')
     this.buffer.push(entries)
     for (const entry of entries) {
-      if (entry.stats && entry.stats.isDirectory()) {
+      if (entry.stats && entry.stats.directory) {
         await this.scan(entry.path)
       }
     }

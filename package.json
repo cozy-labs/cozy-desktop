@@ -80,7 +80,6 @@
   },
   "dependencies": {
     "@atom/watcher": "^1.2.1",
-    "@gyselroth/windows-fsstat": "^0.0.7",
     "async": "^2.6.1",
     "auto-bind": "^1.2.0",
     "auto-launch": "^5.0.3",
@@ -155,5 +154,8 @@
     "source-map-support": "^0.4.11",
     "stylus": "^0.54.5",
     "yarn": "^1.12.1"
+  },
+  "optionalDependencies": {
+    "@gyselroth/windows-fsstat": "^0.0.7"
   }
 }
