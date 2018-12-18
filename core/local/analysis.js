@@ -273,9 +273,10 @@ function squashMoves (changes /*: LocalChange[] */) {
         log.debug({oldpath: b.old.path, path: b.path}, 'descendant move')
         a.wip = a.wip || b.wip
         if (b.path.substr(a.path.length) === b.old.path.substr(a.old.path.length)) {
+          log.debug({oldpath: b.old.path, path: b.path}, 'ignoring explicit child move')
           changes.splice(j--, 1)
         } else {
-          // move inside move
+          log.debug({oldpath: b.old.path, path: b.path}, 'move inside move')
           b.old.path = b.old.path.replace(a.old.path, a.path)
           b.needRefetch = true
         }

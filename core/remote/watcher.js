@@ -240,7 +240,7 @@ class RemoteWatcher {
       }
       const previousMoveToSamePath = _.find(previousChanges, change =>
         // $FlowFixMe
-        (change.type === 'DescendantChange' || change.type === 'FileMove') && change.doc.path === was.path)
+        (change.type === 'DescendantChange' || change.type === 'FileMove' || change.type === 'DirMove') && change.doc.path === was.path)
 
       if (previousMoveToSamePath) {
         previousMoveToSamePath.doc.overwrite = was
@@ -249,7 +249,7 @@ class RemoteWatcher {
           type: 'IgnoredChange',
           doc,
           was,
-          detail: `File ${was.path} overwritten by ${previousMoveToSamePath.was.path}`
+          detail: `${was.docType} ${was.path} overwritten by ${previousMoveToSamePath.was.path}`
         }
       }
       return remoteChange.trashed(doc, was)
@@ -304,7 +304,7 @@ class RemoteWatcher {
             if (previousChange.type === 'DirMove') remoteChange.includeDescendant(previousChange, descendantChange)
             return descendantChange
           }
-        } else if (previousChange.type === 'FileTrashing' && previousChange.was._id === change.doc._id) {
+        } else if (previousChange.type === 'FileTrashing' && previousChange.was.path === change.doc.path) {
           _.assign(previousChange, {
             type: 'IgnoredChange',
             detail: `File ${previousChange.was.path} overwritten by ${change.was.path}`
@@ -334,6 +334,13 @@ class RemoteWatcher {
             remoteChange.includeDescendant(change, previousChange)
             continue
           }
+        } else if (previousChange.type === 'DirTrashing' && previousChange.was.path === change.doc.path) {
+          _.assign(previousChange, {
+            type: 'IgnoredChange',
+            detail: `Folder ${previousChange.was.path} overwritten by ${change.was.path}`
+          })
+          change.doc.overwrite = previousChange.was
+          return change
         } else if (remoteChange.isChildMove(previousChange, change)) {
           const descendantChange = {
             sideName,

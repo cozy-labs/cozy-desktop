@@ -7,7 +7,7 @@ import type { Metadata } from '../metadata'
 
 const path = require('path')
 
-const { isFile } = require('../metadata')
+const metadata = require('../metadata')
 
 /*::
 export type RemoteFileAddition = {sideName: 'remote', type: 'FileAddition', doc: Metadata}
@@ -62,19 +62,19 @@ const sideName = 'remote'
 
 // FIXME: return types
 function added (doc /*: Metadata */) /*: * */ {
-  return {sideName, type: (isFile(doc) ? 'FileAddition' : 'DirAddition'), doc}
+  return {sideName, type: (metadata.isFile(doc) ? 'FileAddition' : 'DirAddition'), doc}
 }
 
 function trashed (doc /*: Metadata */, was /*: Metadata */) /*: * */ {
-  return {sideName, type: (isFile(doc) ? 'FileTrashing' : 'DirTrashing'), doc, was}
+  return {sideName, type: (metadata.isFile(doc) ? 'FileTrashing' : 'DirTrashing'), doc, was}
 }
 
 function deleted (doc /*: Metadata */) /*: * */ {
-  return {sideName, type: (isFile(doc) ? 'FileDeletion' : 'DirDeletion'), doc}
+  return {sideName, type: (metadata.isFile(doc) ? 'FileDeletion' : 'DirDeletion'), doc}
 }
 
 function restored (doc /*: Metadata */, was /*: Metadata */) /*: * */ {
-  return {sideName, type: (isFile(doc) ? 'FileRestoration' : 'DirRestoration'), doc, was}
+  return {sideName, type: (metadata.isFile(doc) ? 'FileRestoration' : 'DirRestoration'), doc, was}
 }
 
 function upToDate (doc /*: Metadata */, was /*: Metadata */) /*: * */ {
@@ -82,7 +82,7 @@ function upToDate (doc /*: Metadata */, was /*: Metadata */) /*: * */ {
 }
 
 function updated (doc /*: Metadata */) /*: * */ {
-  return {sideName, type: (isFile(doc) ? 'FileUpdate' : 'DirAddition'), doc}
+  return {sideName, type: (metadata.isFile(doc) ? 'FileUpdate' : 'DirAddition'), doc}
 }
 
 // TODO: Rename args
@@ -120,8 +120,8 @@ function includeDescendant (parent /*: RemoteDirMove */, e /*: RemoteDescendantC
   delete e.descendantMoves
 }
 
-const addPath = (a /*: RemoteChange */) /*: ?string */ => isAdd(a) || isMove(a) || isRestore(a) ? a.doc.path : null
-const delPath = (a /*: RemoteChange */) /*: ?string */ => isDelete(a) ? a.doc.path : isMove(a) || isTrash(a) ? a.was.path : null
+const addPath = (a /*: RemoteChange */) /*: ?string */ => isAdd(a) || isMove(a) || isRestore(a) ? metadata.id(a.doc.path) : null
+const delPath = (a /*: RemoteChange */) /*: ?string */ => isDelete(a) ? metadata.id(a.doc.path) : isMove(a) || isTrash(a) ? metadata.id(a.was.path) : null
 const childOf = (p1 /*: ?string */, p2 /*: ?string */)/*: boolean */ => p1 != null && p2 != null && p2 !== p1 && p2.startsWith(p1 + path.sep)
 const lower = (p1 /*: ?string */, p2 /*: ?string */)/*: boolean */ => p1 != null && p2 != null && p2 !== p1 && p1 < p2
 
