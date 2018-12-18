@@ -7,16 +7,11 @@ const path = require('path')
 const Promise = require('bluebird')
 const watcher = require('@atom/watcher')
 
+const stater = require('../stater')
 const logger = require('../../logger')
 const log = logger({
   component: 'WinProducer'
 })
-
-let winfs
-if (process.platform === 'win32') {
-  // $FlowFixMe
-  winfs = require('@gyselroth/windows-fsstat')
-}
 
 /*::
 import type { Runner } from './runner'
@@ -68,12 +63,12 @@ module.exports = class WinProducer /*:: implements Runner */ {
       try {
         // TODO ignore
         const absPath = path.join(this.syncPath, relPath, entry)
-        const stats = winfs.lstatSync(absPath)
+        const stats = await stater.stat(absPath)
         entries.push({
           action: 'scan',
           path: path.join(relPath, entry),
           stats,
-          kind: stats.directory ? 'directory' : 'file'
+          kind: stater.kind(stats)
         })
       } catch (err) {
         // TODO error handling

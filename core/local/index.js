@@ -9,6 +9,7 @@ const trash = require('trash')
 const bluebird = require('bluebird')
 
 const { TMP_DIR_NAME } = require('./constants')
+const stater = require('./stater')
 const logger = require('../logger')
 const { isUpToDate } = require('../metadata')
 const { hideOnWindows } = require('../utils/fs')
@@ -18,14 +19,7 @@ const measureTime = require('../perftools')
 const { withContentLength } = require('../file_stream_provider')
 const syncDir = require('./sync_dir')
 
-let winfs
-if (process.platform === 'win32') {
-  // $FlowFixMe
-  winfs = require('@gyselroth/windows-fsstat')
-}
-
 /*::
-import type fs from 'fs'
 import type EventEmitter from 'events'
 import type Config from '../config'
 import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider'
@@ -153,25 +147,14 @@ module.exports = class Local /*:: implements Side */ {
   inodeSetter (doc /*: Metadata */) {
     let abspath = path.resolve(this.syncPath, doc.path)
     return (callback /*: Callback */) => {
-      const cbStats = (err, stats) => {
+      stater.withStats(abspath, (err, stats) => {
         if (err) {
           callback(err)
         } else {
-          doc.ino = stats.ino
-          if (stats.fileid) { doc.fileid = stats.fileid }
+          stater.assignInoAndFileId(doc, stats)
           callback(null)
         }
-      }
-      if (winfs) {
-        try {
-          const stats = winfs.lstatSync(abspath)
-          cbStats(null, stats)
-        } catch (err) {
-          cbStats(err, {})
-        }
-      } else {
-        fse.stat(abspath, cbStats)
-      }
+      })
     }
   }
 
@@ -271,27 +254,16 @@ module.exports = class Local /*:: implements Side */ {
       next => {
         // After downloading a file, check that the size is correct too
         // (more protection against stack corruption)
-        const cbStats = (err, stats) => {
+        stater.withStats(tmpFile, (err, stats) => {
           if (err) {
             next(err)
           } else if (!doc.size || doc.size === stats.size) {
-            doc.ino = stats.ino
-            if (stats.fileid) { doc.fileid = stats.fileid }
+            stater.assignInoAndFileId(doc, stats)
             next()
           } else {
             next(sentry.flag(new Error('Invalid size')))
           }
-        }
-        if (winfs) {
-          try {
-            const stats = winfs.lstatSync(tmpFile)
-            cbStats(null, stats)
-          } catch (err) {
-            cbStats(err, {})
-          }
-        } else {
-          fse.stat(tmpFile, cbStats)
-        }
+        })
       },
 
       next => fse.ensureDir(parent, () => fse.rename(tmpFile, filePath, next)),

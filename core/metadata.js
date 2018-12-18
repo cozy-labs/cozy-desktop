@@ -16,6 +16,7 @@ const fsutils = require('./utils/fs')
 import type fs from 'fs'
 import type { PathIssue } from './path_restrictions'
 import type { RemoteDoc } from './remote/document'
+import type { Stats } from './local/stater'
 */
 
 const log = logger({
@@ -433,7 +434,7 @@ function markSide (side /*: string */, doc /*: Metadata */, prev /*: ?Metadata *
   return doc
 }
 
-function buildDir (fpath /*: string */, stats /*: fs.Stats */, remote /*: ?MetadataRemoteInfo */) /*: Metadata */ {
+function buildDir (fpath /*: string */, stats /*: Stats */, remote /*: ?MetadataRemoteInfo */) /*: Metadata */ {
   let doc /*: Object */ = {
     _id: id(fpath),
     path: fpath,
@@ -443,14 +444,13 @@ function buildDir (fpath /*: string */, stats /*: fs.Stats */, remote /*: ?Metad
     sides: {},
     remote
   }
-  // $FlowFixMe
   if (stats.fileid) { doc.fileid = stats.fileid }
   return doc
 }
 
 const EXECUTABLE_MASK = 1 << 6
 
-function buildFile (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: string */, remote /*: ?MetadataRemoteInfo */) /*: Metadata */ {
+function buildFile (filePath /*: string */, stats /*: Stats */, md5sum /*: string */, remote /*: ?MetadataRemoteInfo */) /*: Metadata */ {
   const mimeType = mime.lookup(filePath)
   const {mtime, ctime} = stats
   let doc /*: Object */ = {
@@ -465,8 +465,7 @@ function buildFile (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: st
     size: stats.size,
     remote
   }
-  if ((stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
-  // $FlowFixMe
+  if (stats.mode && (+stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
   if (stats.fileid) { doc.fileid = stats.fileid }
   return doc
 }
