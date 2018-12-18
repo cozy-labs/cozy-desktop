@@ -39,6 +39,7 @@
     "clean": "rimraf core/lib/ core/tmp/ gui/elm.js gui/app.css* gui/dist/",
     "cozy-stack": "yarn docker:exec cozy-stack",
     "dev:setup": "bash ./dev/setup.sh",
+    "dev:elm": "yarn watch:css & yarn watch:elm & python2 -m SimpleHTTPServer 8000",
     "dist": "electron-builder build",
     "dist:all": "yarn dist --x64 --ia32",
     "docker:exec": "docker exec -it cozy-desktop-stack",
