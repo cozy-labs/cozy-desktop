@@ -6,23 +6,17 @@ const _ = require('lodash')
 const path = require('path')
 const sinon = require('sinon')
 const should = require('should')
-const uuid = require('uuid/v4')
 const CozyClient = require('cozy-client-js').Client
 
 const dbBuilders = require('../../support/builders/db')
 const configHelpers = require('../../support/helpers/config')
 const { posixifyPath } = require('../../support/helpers/context_dir')
-const { onPlatform } = require('../../support/helpers/platform')
+const { onPlatform, onPlatforms } = require('../../support/helpers/platform')
 const pouchHelpers = require('../../support/helpers/pouch')
 const { builders } = require('../../support/helpers/cozy')
 
 const metadata = require('../../../core/metadata')
-const {
-  FILES_DOCTYPE,
-  ROOT_DIR_ID,
-  TRASH_DIR_ID,
-  TRASH_DIR_NAME
-} = require('../../../core/remote/constants')
+const { FILES_DOCTYPE } = require('../../../core/remote/constants')
 const Prep = require('../../../core/prep')
 const { RemoteCozy } = require('../../../core/remote/cozy')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
@@ -269,36 +263,25 @@ describe('RemoteWatcher', function () {
       })
     })
 
-    describe('overwriting move', () => {
+    describe('file move overwriting trashed destination', () => {
       let srcFileDoc, dstFileDoc, olds, srcFileMoved, dstFileTrashed
 
       beforeEach(() => {
-        /* Remote tree:
-            /dst/
-            /dst/file
-            /src/
-            /src/file
-        */
-        const srcDir = builders.remoteDir().name('src').build()
-        const dstDir = builders.remoteDir().name('dst').build()
-        const srcFile = builders.remoteFile().name('file').inDir(srcDir).build()
-        const dstFile = builders.remoteFile().name('file').inDir(dstDir).build()
+        const remoteDocs = builders.buildRemoteTree([
+          'dst/',
+          'dst/file',
+          'src/',
+          'src/file'
+        ])
 
         /* Files were synced */
-        srcFileDoc = builders.metafile().fromRemote(srcFile).upToDate().build()
-        dstFileDoc = builders.metafile().fromRemote(dstFile).upToDate().build()
+        srcFileDoc = builders.metafile().fromRemote(remoteDocs['src/file']).upToDate().build()
+        dstFileDoc = builders.metafile().fromRemote(remoteDocs['dst/file']).upToDate().build()
         olds = [srcFileDoc, dstFileDoc]
 
         /* Moving /src/file to /dst/file (overwriting the destination) */
-        srcFileMoved = _.defaults({
-          _rev: '2-' + uuid().replace(/-/g, ''),
-          path: dstFile.path
-        }, srcFile)
-        dstFileTrashed = _.defaults({
-          _rev: '2-' + uuid().replace(/-/g, ''),
-          dir_id: TRASH_DIR_ID,
-          path: path.posix.join('/', TRASH_DIR_NAME, dstFile.name)
-        }, dstFile)
+        srcFileMoved = builders.remoteFile(remoteDocs['src/file']).shortRev(2).inDir(remoteDocs['dst/']).build()
+        dstFileTrashed = builders.remoteFile(remoteDocs['dst/file']).shortRev(2).trashed().build()
       })
 
       const relevantChangesProps = changes => changes.map(({type, doc, was}) => {
@@ -325,6 +308,210 @@ describe('RemoteWatcher', function () {
           {type: 'FileMove', doc: {path: 'dst/file', overwrite: true}, was: {path: 'src/file'}},
           {type: 'IgnoredChange', doc: {path: '.cozy_trash/file'}, was: {path: 'dst/file'}}
         ])
+      })
+    })
+
+    describe('file move not overwriting trashed uppercase destination', () => {
+      let srcFileDoc, dstFileDoc, olds, srcFileMoved, dstFileTrashed
+
+      beforeEach(() => {
+        const remoteDocs = builders.buildRemoteTree([
+          'dst/',
+          'dst/FILE',
+          'src/',
+          'src/file'
+        ])
+
+        /* Files were synced */
+        srcFileDoc = builders.metafile().fromRemote(remoteDocs['src/file']).upToDate().build()
+        dstFileDoc = builders.metafile().fromRemote(remoteDocs['dst/FILE']).upToDate().build()
+        olds = [srcFileDoc, dstFileDoc]
+
+        /* Moving /src/file to /dst/file (overwriting the destination) */
+        srcFileMoved = builders.remoteFile(remoteDocs['src/file']).shortRev(2).inDir(remoteDocs['dst/']).build()
+        dstFileTrashed = builders.remoteFile(remoteDocs['dst/FILE']).shortRev(2).trashed().build()
+      })
+
+      const relevantChangesProps = changes => changes.map(({type, doc, was}) => {
+        const props /*: Object */ = {type, doc: {path: posixifyPath(doc.path)}}
+        if (was) props.was = {path: posixifyPath(was.path)}
+        if (doc.overwrite) props.doc.overwrite = true
+        if (was.overwrite) props.was.overwrite = true
+        return props
+      })
+
+      describe('when moved source is first', () => {
+        onPlatforms(['win32', 'darwin'], () => {
+          it('detects the trashing before the move to prevent id confusion', function () {
+            const remoteDocs = [srcFileMoved, dstFileTrashed]
+            const changes = this.watcher.analyse(remoteDocs, olds)
+            should(relevantChangesProps(changes)).deepEqual([
+              {type: 'FileTrashing', doc: {path: '.cozy_trash/FILE'}, was: {path: 'dst/FILE'}},
+              {type: 'FileMove', doc: {path: 'dst/file'}, was: {path: 'src/file'}}
+            ])
+          })
+        })
+
+        onPlatform('linux', () => {
+          it('detects the move before the trashing', function () {
+            const remoteDocs = [srcFileMoved, dstFileTrashed]
+            const changes = this.watcher.analyse(remoteDocs, olds)
+            should(relevantChangesProps(changes)).deepEqual([
+              {type: 'FileMove', doc: {path: 'dst/file'}, was: {path: 'src/file'}},
+              {type: 'FileTrashing', doc: {path: '.cozy_trash/FILE'}, was: {path: 'dst/FILE'}}
+            ])
+          })
+        })
+      })
+
+      describe('when trashed destination is first', () => {
+        onPlatforms(['win32', 'darwin'], () => {
+          it('detects the trashing before the move to prevent id confusion', function () {
+            const remoteDocs = [dstFileTrashed, srcFileMoved]
+            const changes = this.watcher.analyse(remoteDocs, olds)
+            should(relevantChangesProps(changes)).deepEqual([
+              {type: 'FileTrashing', doc: {path: '.cozy_trash/FILE'}, was: {path: 'dst/FILE'}},
+              {type: 'FileMove', doc: {path: 'dst/file'}, was: {path: 'src/file'}}
+            ])
+          })
+        })
+
+        onPlatform('linux', () => {
+          it('detects the move before the trashing', function () {
+            const remoteDocs = [dstFileTrashed, srcFileMoved]
+            const changes = this.watcher.analyse(remoteDocs, olds)
+            should(relevantChangesProps(changes)).deepEqual([
+              {type: 'FileMove', doc: {path: 'dst/file'}, was: {path: 'src/file'}},
+              {type: 'FileTrashing', doc: {path: '.cozy_trash/FILE'}, was: {path: 'dst/FILE'}}
+            ])
+          })
+        })
+      })
+    })
+
+    describe('dir move overwriting trashed destination', () => {
+      let srcDoc, dstDoc, olds, srcMoved, dstTrashed
+
+      beforeEach(() => {
+        const remoteDocs = builders.buildRemoteTree([
+          'dst/',
+          'dst/dir/',
+          'src/',
+          'src/dir/'
+        ])
+
+        /* Directories were synced */
+        srcDoc = builders.metadir().fromRemote(remoteDocs['src/dir/']).upToDate().build()
+        dstDoc = builders.metadir().fromRemote(remoteDocs['dst/dir/']).upToDate().build()
+        olds = [srcDoc, dstDoc]
+
+        /* Moving /src/dir to /dst/dir (overwriting the destination) */
+        srcMoved = builders.remoteDir(remoteDocs['src/dir/']).shortRev(2).inDir(remoteDocs['dst/']).build()
+        dstTrashed = builders.remoteDir(remoteDocs['dst/dir/']).shortRev(2).trashed().build()
+      })
+
+      const relevantChangesProps = changes => changes.map(({type, doc, was}) => {
+        const props /*: Object */ = {type, doc: {path: posixifyPath(doc.path)}}
+        if (was) props.was = {path: posixifyPath(was.path)}
+        if (doc.overwrite) props.doc.overwrite = true
+        if (was.overwrite) props.was.overwrite = true
+        return props
+      })
+
+      it('is detected when moved source is first', function () {
+        const remoteDocs = [srcMoved, dstTrashed]
+        const changes = this.watcher.analyse(remoteDocs, olds)
+        should(relevantChangesProps(changes)).deepEqual([
+          {type: 'IgnoredChange', doc: {path: '.cozy_trash/dir'}, was: {path: 'dst/dir'}},
+          {type: 'DirMove', doc: {path: 'dst/dir', overwrite: true}, was: {path: 'src/dir'}}
+        ])
+      })
+
+      it('is detected when trashed destination is first', function () {
+        const remoteDocs = [dstTrashed, srcMoved]
+        const changes = this.watcher.analyse(remoteDocs, olds)
+        should(relevantChangesProps(changes)).deepEqual([
+          {type: 'DirMove', doc: {path: 'dst/dir', overwrite: true}, was: {path: 'src/dir'}},
+          {type: 'IgnoredChange', doc: {path: '.cozy_trash/dir'}, was: {path: 'dst/dir'}}
+        ])
+      })
+    })
+
+    describe('dir move not overwriting trashed uppercase destination', () => {
+      let srcDoc, dstDoc, olds, srcMoved, dstTrashed
+
+      beforeEach(() => {
+        const remoteDocs = builders.buildRemoteTree([
+          'dst/',
+          'dst/DIR/',
+          'src/',
+          'src/dir/'
+        ])
+
+        /* Directories were synced */
+        srcDoc = builders.metadir().fromRemote(remoteDocs['src/dir/']).upToDate().build()
+        dstDoc = builders.metadir().fromRemote(remoteDocs['dst/DIR/']).upToDate().build()
+        olds = [srcDoc, dstDoc]
+
+        /* Moving /src/dir to /dst/dir (overwriting the destination) */
+        srcMoved = builders.remoteDir(remoteDocs['src/dir/']).shortRev(2).inDir(remoteDocs['dst/']).build()
+        dstTrashed = builders.remoteDir(remoteDocs['dst/DIR/']).shortRev(2).trashed().build()
+      })
+
+      const relevantChangesProps = changes => changes.map(({type, doc, was}) => {
+        const props /*: Object */ = {type, doc: {path: posixifyPath(doc.path)}}
+        if (was) props.was = {path: posixifyPath(was.path)}
+        if (doc.overwrite) props.doc.overwrite = true
+        if (was.overwrite) props.was.overwrite = true
+        return props
+      })
+
+      describe('when moved source is first', () => {
+        onPlatforms(['win32', 'darwin'], () => {
+          it('detects the trashing before the move to prevent id confusion', function () {
+            const remoteDocs = [srcMoved, dstTrashed]
+            const changes = this.watcher.analyse(remoteDocs, olds)
+            should(relevantChangesProps(changes)).deepEqual([
+              {type: 'DirTrashing', doc: {path: '.cozy_trash/DIR'}, was: {path: 'dst/DIR'}},
+              {type: 'DirMove', doc: {path: 'dst/dir'}, was: {path: 'src/dir'}}
+            ])
+          })
+        })
+
+        onPlatform('linux', () => {
+          it('is detects the move before the trashing', function () {
+            const remoteDocs = [srcMoved, dstTrashed]
+            const changes = this.watcher.analyse(remoteDocs, olds)
+            should(relevantChangesProps(changes)).deepEqual([
+              {type: 'DirMove', doc: {path: 'dst/dir'}, was: {path: 'src/dir'}},
+              {type: 'DirTrashing', doc: {path: '.cozy_trash/DIR'}, was: {path: 'dst/DIR'}}
+            ])
+          })
+        })
+      })
+
+      describe('when trashed destination is first', () => {
+        onPlatforms(['win32', 'darwin'], () => {
+          it('detects the trashing before the move to prevent id confusion', function () {
+            const remoteDocs = [dstTrashed, srcMoved]
+            const changes = this.watcher.analyse(remoteDocs, olds)
+            should(relevantChangesProps(changes)).deepEqual([
+              {type: 'DirTrashing', doc: {path: '.cozy_trash/DIR'}, was: {path: 'dst/DIR'}},
+              {type: 'DirMove', doc: {path: 'dst/dir'}, was: {path: 'src/dir'}}
+            ])
+          })
+        })
+
+        onPlatform('linux', () => {
+          it('detects the move before the trashing ', function () {
+            const remoteDocs = [dstTrashed, srcMoved]
+            const changes = this.watcher.analyse(remoteDocs, olds)
+            should(relevantChangesProps(changes)).deepEqual([
+              {type: 'DirMove', doc: {path: 'dst/dir'}, was: {path: 'src/dir'}},
+              {type: 'DirTrashing', doc: {path: '.cozy_trash/DIR'}, was: {path: 'dst/DIR'}}
+            ])
+          })
+        })
       })
     })
 
@@ -733,15 +920,8 @@ describe('RemoteWatcher', function () {
       this.prep.addFolderAsync = sinon.stub()
       this.prep.addFolderAsync.returnsPromise().resolves(null)
       const oldDir /*: RemoteDoc */ = builders.remoteDir().name('foo').build()
-      // TODO: builders.dir().fromRemote(oldDir).create()
-      let oldMeta /*: Metadata */ = metadata.fromRemoteDoc(oldDir)
-      assignId(oldMeta)
-      await this.pouch.db.put(oldMeta)
-      // TODO: builders.remoteDir().was(oldDir).trashed().build()
-      const newDir /*: RemoteDoc */ = _.defaults({
-        path: '/.cozy_trash/foo',
-        dir_id: TRASH_DIR_ID
-      }, oldDir)
+      const oldMeta /*: Metadata */ = await builders.metadir().fromRemote(oldDir).create()
+      const newDir /*: RemoteDoc */ = builders.remoteDir(oldDir).trashed().build()
 
       this.watcher.identifyChange(newDir, null, 0, [])
 
@@ -763,15 +943,8 @@ describe('RemoteWatcher', function () {
       this.prep.addFolderAsync = sinon.stub()
       this.prep.addFolderAsync.returnsPromise().resolves(null)
       const oldDir /*: RemoteDoc */ = builders.remoteDir().name('foo').trashed().build()
-      // TODO: builders.dir().fromRemote(oldDir).create()
-      let oldMeta /*: Metadata */ = metadata.fromRemoteDoc(oldDir)
-      assignId(oldMeta)
-      await this.pouch.db.put(oldMeta)
-      // TODO: builders.remoteDir().was(oldDir).restored().build()
-      const newDir /*: RemoteDoc */ = _.defaults({
-        path: '/foo',
-        dir_id: ROOT_DIR_ID
-      }, oldDir)
+      const oldMeta /*: Metadata */ = await builders.metadir.fromRemote(oldDir).create()
+      const newDir /*: RemoteDoc */ = builders.remoteDir(oldDir).restored().build()
 
       this.watcher.identifyChange(newDir, null, 0, [])
 

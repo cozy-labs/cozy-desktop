@@ -15,16 +15,14 @@ module.exports = ({
   ],
   expected: {
     localTree: [
-      'FOO/',
-      'FOO/subdir/',
-      'FOO/subdir/file'
-      // foo-conflict-... will be synced on next polling
+      'foo'
+      // FOO-conflict-.../ will be synced on next polling
     ],
     remoteTree: [
-      'FOO/',
-      'FOO/subdir/',
-      'FOO/subdir/file',
-      'foo-conflict-...'
+      'FOO-conflict-.../',
+      'FOO-conflict-.../subdir/',
+      'FOO-conflict-.../subdir/file',
+      'foo'
     ],
     remoteTrash: []
   }
