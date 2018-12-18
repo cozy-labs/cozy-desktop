@@ -18,6 +18,11 @@ const measureTime = require('../perftools')
 const { withContentLength } = require('../file_stream_provider')
 const syncDir = require('./sync_dir')
 
+let winfs
+if (process.platform === 'win32') {
+  winfs = require('@gyselroth/windows-fsstat')
+}
+
 /*::
 import type EventEmitter from 'events'
 import type Config from '../config'
@@ -146,14 +151,24 @@ module.exports = class Local /*:: implements Side */ {
   inodeSetter (doc /*: Metadata */) {
     let abspath = path.resolve(this.syncPath, doc.path)
     return (callback /*: Callback */) => {
-      fse.stat(abspath, (err, stats) => {
+      const cbStats = (err, stats) => {
         if (err) {
           callback(err)
         } else {
           doc.ino = stats.ino
           callback(null)
         }
-      })
+      }
+      if (winfs) {
+        try {
+          const stats = winfs.lstatSync(abspath)
+          cbStats(null, stats)
+        } catch (err) {
+          cbStats(err)
+        }
+      } else {
+        fse.stat(abspath, cbStats)
+      }
     }
   }
 
@@ -254,20 +269,31 @@ module.exports = class Local /*:: implements Side */ {
         // After downloading a file, check that the size is correct too
         // (more protection against stack corruption)
         if (!doc.size) return next()
-        fse.stat(tmpFile, (err, stats) => {
+        const cbStats = (err, stats) => {
           if (err) {
             next(err)
           } else if (doc.size === stats.size) {
+            doc.ino = stats.ino
+            if (stats.fileid) { doc.fileid = stats.fileid }
             next()
           } else {
             next(sentry.flag(new Error('Invalid size')))
           }
-        })
+        }
+        if (winfs) {
+          try {
+            const stats = winfs.lstatSync(tmpFile)
+            cbStats(null, stats)
+          } catch (err) {
+            cbStats(err)
+          }
+        } else {
+          fse.stat(tmpFile, cbStats)
+        }
       },
 
       next => fse.ensureDir(parent, () => fse.rename(tmpFile, filePath, next)),
 
-      this.inodeSetter(doc),
       this.metadataUpdater(doc)
 
     ], function (err) {

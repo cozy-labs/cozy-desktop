@@ -127,6 +127,7 @@ class Merge {
       if (doc.tags == null) { doc.tags = file.tags || [] }
       if (doc.remote == null) { doc.remote = file.remote }
       if (doc.ino == null) { doc.ino = file.ino }
+      if (doc.fileid == null) { doc.fileid = file.fileid }
       if (metadata.sameFile(file, doc)) {
         log.info({path}, 'up to date')
         return null
@@ -187,6 +188,7 @@ class Merge {
       if (doc.tags == null) { doc.tags = file.tags || [] }
       if (doc.remote == null) { doc.remote = file.remote }
       if (doc.ino == null) { doc.ino = file.ino }
+      if (doc.fileid == null) { doc.fileid = file.fileid }
       if (metadata.sameBinary(file, doc)) {
         if (doc.size == null) { doc.size = file.size }
         if (doc.class == null) { doc.class = file.class }
@@ -234,6 +236,7 @@ class Merge {
       if (doc.tags == null) { doc.tags = folder.tags || [] }
       if (doc.remote == null) { doc.remote = folder.remote }
       if (doc.ino == null && folder.ino) { doc.ino = folder.ino }
+      if (doc.fileid == null) { doc.fileid = folder.fileid }
       if (metadata.sameFolder(folder, doc)) {
         log.info({path}, 'up to date')
         return null
@@ -269,6 +272,7 @@ class Merge {
       if (doc.mime == null) { doc.mime = was.mime }
       if (doc.tags == null) { doc.tags = was.tags || [] }
       if (doc.ino == null) { doc.ino = was.ino }
+      if (doc.fileid == null) { doc.fileid = was.fileid }
       move(was, doc)
       if (file && metadata.sameFile(file, doc)) {
         log.info({path}, 'up to date (move)')
@@ -302,6 +306,7 @@ class Merge {
     metadata.assignMaxDate(doc, was)
     if (doc.tags == null) { doc.tags = was.tags || [] }
     if (doc.ino == null) { doc.ino = was.ino }
+    if (doc.fileid == null) { doc.fileid = was.fileid }
 
     const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(side, doc, folder)
     if (idConflict) {
