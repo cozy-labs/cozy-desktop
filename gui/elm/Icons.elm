@@ -1,4 +1,4 @@
-module Icons exposing (IconFunction, account, bigCross, bigTick, cozyBig, dashboard, folder, globe, grey, help, icon, path, polygon, settings, white)
+module Icons exposing (IconFunction, account, bigCross, bigTick, cozyBig, dashboard, folder, globe, grey, help, icon, path, polygon, settings, white, logo)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -169,4 +169,15 @@ bigCross =
                     ]
                 ]
             ]
+        ]
+
+
+logo =
+    svg
+        [ viewBox "0 0 90 69" ]
+        [ Svg.path
+            [ d "M66.17 68.92H23.83A23.93 23.93 0 0 1 0 44.94a23.93 23.93 0 0 1 21-23.81A23.89 23.89 0 0 1 44.65 0 23.9 23.9 0 0 1 68.3 21.05 23.96 23.96 0 0 1 90 44.94a23.94 23.94 0 0 1-23.83 23.98zm.1-4.46h.18c10.53 0 19.09-8.67 19.09-19.32s-8.56-19.32-19.09-19.32h-.19c-1.37 0-2.5-1.1-2.53-2.5-.24-10.4-8.8-18.86-19.08-18.86-10.28 0-18.84 8.46-19.08 18.87a2.55 2.55 0 0 1-2.47 2.5c-10.28.24-18.64 8.9-18.64 19.31 0 10.65 8.56 19.32 19.09 19.32h42.72zm-9.4-21.05a.9.9 0 0 1-.48 1.64.88.88 0 0 1-.49-.15 4.9 4.9 0 0 1-1-.86 15.66 15.66 0 0 1-10.54 4.06c-3.77 0-7.54-1.35-10.52-4.05-.27.31-.6.6-.98.85a.88.88 0 0 1-1.23-.25.9.9 0 0 1 .26-1.24 3.78 3.78 0 0 0 1.58-2.87.9.9 0 0 1 .9-.87c.5.01.88.41.87.9 0 .07-.02.93-.44 1.95a13.93 13.93 0 0 0 19.15-.03c-.4-1-.43-1.85-.43-1.92a.89.89 0 0 1 1.77-.03c0 .08.08 1.89 1.58 2.87z"
+            , fill "#297EF1"
+            ]
+            []
         ]
