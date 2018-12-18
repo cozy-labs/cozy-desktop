@@ -443,6 +443,7 @@ function buildDir (fpath /*: string */, stats /*: fs.Stats */, remote /*: ?Metad
     sides: {},
     remote
   }
+  // $FlowFixMe
   if (stats.fileid) { doc.fileid = stats.fileid }
   return doc
 }
@@ -465,6 +466,7 @@ function buildFile (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: st
     remote
   }
   if ((stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
+  // $FlowFixMe
   if (stats.fileid) { doc.fileid = stats.fileid }
   return doc
 }

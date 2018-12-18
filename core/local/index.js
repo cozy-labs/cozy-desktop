@@ -20,10 +20,12 @@ const syncDir = require('./sync_dir')
 
 let winfs
 if (process.platform === 'win32') {
+  // $FlowFixMe
   winfs = require('@gyselroth/windows-fsstat')
 }
 
 /*::
+import type fs from 'fs'
 import type EventEmitter from 'events'
 import type Config from '../config'
 import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider'
@@ -156,6 +158,7 @@ module.exports = class Local /*:: implements Side */ {
           callback(err)
         } else {
           doc.ino = stats.ino
+          if (stats.fileid) { doc.fileid = stats.fileid }
           callback(null)
         }
       }
@@ -164,7 +167,7 @@ module.exports = class Local /*:: implements Side */ {
           const stats = winfs.lstatSync(abspath)
           cbStats(null, stats)
         } catch (err) {
-          cbStats(err)
+          cbStats(err, {})
         }
       } else {
         fse.stat(abspath, cbStats)
@@ -285,7 +288,7 @@ module.exports = class Local /*:: implements Side */ {
             const stats = winfs.lstatSync(tmpFile)
             cbStats(null, stats)
           } catch (err) {
-            cbStats(err)
+            cbStats(err, {})
           }
         } else {
           fse.stat(tmpFile, cbStats)

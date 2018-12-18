@@ -11,6 +11,7 @@ const log = logger({
 
 let winfs
 if (process.platform === 'win32') {
+  // $FlowFixMe
   winfs = require('@gyselroth/windows-fsstat')
 }
 
@@ -40,6 +41,7 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string } *
           if (event.stats) { // created, modified, renamed, scan
             let isDir
             if (winfs) {
+              // $FlowFixMe
               isDir = event.stats.directory
             } else {
               isDir = event.stats.isDirectory()

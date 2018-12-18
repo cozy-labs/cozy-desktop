@@ -14,6 +14,7 @@ const log = logger({
 
 let winfs
 if (process.platform === 'win32') {
+  // $FlowFixMe
   winfs = require('@gyselroth/windows-fsstat')
 }
 

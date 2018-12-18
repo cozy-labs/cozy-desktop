@@ -10,3 +10,4 @@ settings:
   node:
     allowModules:
       - electron
+      - "@gyselroth/windows-fsstat"
