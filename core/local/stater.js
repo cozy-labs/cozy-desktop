@@ -13,7 +13,7 @@ import type { Metadata } from '../metadata'
 import type { Callback } from '../utils/func'
 import type fs from 'fs'
 
-export type WinStats = {
+export type WinStats = {|
   fileid: string,
   ino: number,
   size: number,
@@ -22,7 +22,7 @@ export type WinStats = {
   ctime: Date,
   directory: bool,
   symbolicLink: bool
-}
+|}
 export type Stats = fs.Stats | WinStats
 */
 
@@ -57,7 +57,6 @@ module.exports = {
 
   isDirectory (stats /*: Stats */) {
     if (stats.isDirectory) {
-      // $FlowFixMe
       return stats.isDirectory()
     } else {
       // $FlowFixMe
