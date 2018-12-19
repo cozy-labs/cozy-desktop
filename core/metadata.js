@@ -373,7 +373,7 @@ const makeComparator = (name, interestingFields) => {
     if (diff && !_.every(diff, canBeIgnoredDiff)) {
       return false
     }
-    // XXX The fileid can be missing in some old documents in couchdb.
+    // XXX The fileid can be missing in some old documents in pouchdb.
     // So, we compare them only if it's present on both documents.
     if (process.platform === 'win32' && one.fileid && two.fileid) {
       return one.fileid === two.fileid
@@ -435,7 +435,7 @@ function markSide (side /*: string */, doc /*: Metadata */, prev /*: ?Metadata *
 }
 
 function buildDir (fpath /*: string */, stats /*: Stats */, remote /*: ?MetadataRemoteInfo */) /*: Metadata */ {
-  let doc /*: Object */ = {
+  const doc /*: Object */ = {
     _id: id(fpath),
     path: fpath,
     docType: 'folder',
@@ -453,7 +453,7 @@ const EXECUTABLE_MASK = 1 << 6
 function buildFile (filePath /*: string */, stats /*: Stats */, md5sum /*: string */, remote /*: ?MetadataRemoteInfo */) /*: Metadata */ {
   const mimeType = mime.lookup(filePath)
   const {mtime, ctime} = stats
-  let doc /*: Object */ = {
+  const doc /*: Object */ = {
     _id: id(filePath),
     path: filePath,
     docType: 'file',

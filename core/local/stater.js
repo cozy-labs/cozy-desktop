@@ -35,6 +35,7 @@ module.exports = {
       try {
         // XXX It would be better to avoid sync IO operations, but
         // before node 10.5.0, it's our only choice for reliable fileIDs.
+        // TODO move to node v10.5.0+ when a release of electron supports it
         resolve(winfs.lstatSync(filepath))
       } catch (err) {
         reject(err)
@@ -69,7 +70,6 @@ module.exports = {
 
   assignInoAndFileId (doc /*: Metadata */, stats /*: Stats */) {
     doc.ino = stats.ino
-    // $FlowFixMe
-    if (stats.fileid) { doc.fileid = stats.fileid }
+    if (typeof stats.fileid === 'string') { doc.fileid = stats.fileid }
   }
 }
