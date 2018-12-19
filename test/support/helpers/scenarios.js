@@ -189,7 +189,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
   }
 }
 
-module.exports.runActions = (scenario, abspath) => {
+module.exports.runActions = (scenario, abspath, opts /*: {skipWait?: true} */ = {}) => {
   debug('[actions]')
   return Promise.each(scenario.actions, action => {
     switch (action.type) {
@@ -226,6 +226,7 @@ module.exports.runActions = (scenario, abspath) => {
         }
 
       case 'wait':
+        if (opts.skipWait) return Promise.resolve()
         debug('- wait', action.ms)
         return Promise.delay(action.ms)
 

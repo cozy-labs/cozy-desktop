@@ -87,7 +87,7 @@ describe('Test scenarios', function () {
             const eventsBefore = eventsFile.events.slice(0, flushAfter)
             const eventsAfter = eventsFile.events.slice(flushAfter)
 
-            await runActions(scenario, helpers.local.syncDir.abspath)
+            await runActions(scenario, helpers.local.syncDir.abspath, {skipWait: true})
             await helpers.local.simulateEvents(eventsBefore)
             await helpers.syncAll()
             await helpers.local.simulateEvents(eventsAfter)
@@ -122,7 +122,7 @@ describe('Test scenarios', function () {
             await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix, true)
           }
 
-          await runActions(scenario, helpers.local.syncDir.abspath)
+          await runActions(scenario, helpers.local.syncDir.abspath, {skipWait: true})
 
           await helpers.local.local.watcher.start()
           await helpers.local.local.watcher.stop(true)
