@@ -1,5 +1,6 @@
 /* @flow */
 
+const fs = require('fs')
 const fse = require('fs-extra')
 
 let winfs
@@ -11,7 +12,6 @@ if (process.platform === 'win32') {
 /*::
 import type { Metadata } from '../metadata'
 import type { Callback } from '../utils/func'
-import type fs from 'fs'
 
 export type WinStats = {|
   fileid: string,
@@ -27,7 +27,7 @@ export type Stats = fs.Stats | WinStats
 */
 
 module.exports = {
-  stat: async function (filepath /*: string */) {
+  async stat (filepath /*: string */) {
     if (!winfs) {
       return fse.stat(filepath)
     }
@@ -42,7 +42,7 @@ module.exports = {
     })
   },
 
-  withStats: function (filepath /*: string */, callback /*: Callback */) {
+  withStats (filepath /*: string */, callback /*: Callback */) {
     if (winfs) {
       try {
         const stats = winfs.lstatSync(filepath)
@@ -56,10 +56,9 @@ module.exports = {
   },
 
   isDirectory (stats /*: Stats */) {
-    if (stats.isDirectory) {
+    if (stats instanceof fs.Stats) {
       return stats.isDirectory()
     } else {
-      // $FlowFixMe
       return stats.directory
     }
   },
