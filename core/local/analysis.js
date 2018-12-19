@@ -276,8 +276,7 @@ function squashMoves (changes /*: LocalChange[] */) {
           changes.splice(j--, 1)
         } else {
           // move inside move
-          b.old.path = b.old.path.replace(a.old.path, a.path)
-          b.needRefetch = true
+          b.oldIdToRefetch = metadata.id(b.old.path.replace(a.old.path, a.path))
         }
       }
     }

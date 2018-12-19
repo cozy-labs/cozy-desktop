@@ -59,10 +59,10 @@ const log = logger({
 /*::
 export type LocalDirAddition = {sideName: 'local', type: 'DirAddition', path: string, old: ?Metadata, ino: number, stats: fs.Stats, wip?: true}
 export type LocalDirDeletion = {sideName: 'local', type: 'DirDeletion', path: string, old: ?Metadata, ino: ?number}
-export type LocalDirMove = {sideName: 'local', type: 'DirMove', path: string, old: Metadata, ino: number, stats: fs.Stats, wip?: true, needRefetch?: boolean, overwrite?: boolean}
+export type LocalDirMove = {sideName: 'local', type: 'DirMove', path: string, old: Metadata, ino: number, stats: fs.Stats, wip?: true, oldIdToRefetch?: string, overwrite?: boolean}
 export type LocalFileAddition = {sideName: 'local', type: 'FileAddition', path: string, old: ?Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
 export type LocalFileDeletion = {sideName: 'local', type: 'FileDeletion', path: string, old: ?Metadata, ino: ?number}
-export type LocalFileMove = {sideName: 'local', type: 'FileMove', path: string, old: Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true, needRefetch?: boolean, update?: LocalFileUpdated, overwrite?: Metadata}
+export type LocalFileMove = {sideName: 'local', type: 'FileMove', path: string, old: Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true, oldIdToRefetch?: string, update?: LocalFileUpdated, overwrite?: Metadata}
 export type LocalFileUpdate = {sideName: 'local', type: 'FileUpdate', path: string, old: ?Metadata, ino: number, stats: fs.Stats, md5sum: string, wip?: true}
 export type LocalIgnored = {sideName: 'local', type: 'Ignored', path: string}
 

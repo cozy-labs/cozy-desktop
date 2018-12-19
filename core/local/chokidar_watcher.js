@@ -324,8 +324,8 @@ module.exports = class LocalWatcher {
             await this.onAddFile(c.path, c.stats, c.md5sum)
             break
           case 'FileMove':
-            if (c.needRefetch) {
-              c.old = await this.pouch.db.get(metadata.id(c.old.path))
+            if (c.oldIdToRefetch) {
+              c.old = await this.pouch.db.get(c.oldIdToRefetch)
               c.old.childMove = false
             }
             await this.onMoveFile(c.path, c.stats, c.md5sum, c.old, c.overwrite)
