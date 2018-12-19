@@ -496,7 +496,7 @@ describe('Merge', function () {
 
       const result = await this.pouch.db.get(doc._id)
       should(result._rev).not.equal(old._rev)
-      should(result).have.properties(_.omit(doc, '_rev'))
+      should(result).have.properties(_.omit(doc, ['_rev', 'fileid']))
     })
 
     it('does nothing when existing folder is up to date', async function () {
@@ -736,7 +736,7 @@ describe('Merge', function () {
       should(await this.pouch.db.get(BANANA._id)).have.properties(
         _.omit(
           BANANA,
-          ['class', 'mime', 'ino']
+          ['class', 'mime', 'ino', 'fileid']
         )
       )
       if (banana._id !== BANANA._id) {
@@ -992,7 +992,7 @@ describe('Merge', function () {
       should(await this.pouch.db.get(APPLE._id)).have.properties(
         _.omit(
           APPLE,
-          ['ino']
+          ['ino', 'fileid']
         )
       )
       if (apple._id !== APPLE._id) {

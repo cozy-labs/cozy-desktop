@@ -154,5 +154,8 @@
     "source-map-support": "^0.4.11",
     "stylus": "^0.54.5",
     "yarn": "^1.12.1"
+  },
+  "optionalDependencies": {
+    "@gyselroth/windows-fsstat": "^0.0.7"
   }
 }

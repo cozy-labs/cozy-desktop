@@ -7,6 +7,7 @@ const path = require('path')
 const Promise = require('bluebird')
 const watcher = require('@atom/watcher')
 
+const stater = require('../stater')
 const logger = require('../../logger')
 const log = logger({
   component: 'WinProducer'
@@ -62,12 +63,12 @@ module.exports = class WinProducer /*:: implements Runner */ {
       try {
         // TODO ignore
         const absPath = path.join(this.syncPath, relPath, entry)
-        const stats = await fse.stat(absPath)
+        const stats = await stater.stat(absPath)
         entries.push({
           action: 'scan',
           path: path.join(relPath, entry),
           stats,
-          kind: 'unknown'
+          kind: stater.kind(stats)
         })
       } catch (err) {
         // TODO error handling
@@ -79,7 +80,7 @@ module.exports = class WinProducer /*:: implements Runner */ {
     log.debug({entries}, 'scan')
     this.buffer.push(entries)
     for (const entry of entries) {
-      if (entry.stats && entry.stats.isDirectory()) {
+      if (entry.stats && entry.stats.directory) {
         await this.scan(entry.path)
       }
     }

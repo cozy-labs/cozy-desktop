@@ -9,6 +9,7 @@ const trash = require('trash')
 const bluebird = require('bluebird')
 
 const { TMP_DIR_NAME } = require('./constants')
+const stater = require('./stater')
 const logger = require('../logger')
 const { isUpToDate } = require('../metadata')
 const { hideOnWindows } = require('../utils/fs')
@@ -146,11 +147,11 @@ module.exports = class Local /*:: implements Side */ {
   inodeSetter (doc /*: Metadata */) {
     let abspath = path.resolve(this.syncPath, doc.path)
     return (callback /*: Callback */) => {
-      fse.stat(abspath, (err, stats) => {
+      stater.withStats(abspath, (err, stats) => {
         if (err) {
           callback(err)
         } else {
-          doc.ino = stats.ino
+          stater.assignInoAndFileId(doc, stats)
           callback(null)
         }
       })
@@ -253,11 +254,11 @@ module.exports = class Local /*:: implements Side */ {
       next => {
         // After downloading a file, check that the size is correct too
         // (more protection against stack corruption)
-        if (!doc.size) return next()
-        fse.stat(tmpFile, (err, stats) => {
+        stater.withStats(tmpFile, (err, stats) => {
           if (err) {
             next(err)
-          } else if (doc.size === stats.size) {
+          } else if (!doc.size || doc.size === stats.size) {
+            stater.assignInoAndFileId(doc, stats)
             next()
           } else {
             next(sentry.flag(new Error('Invalid size')))
@@ -267,7 +268,6 @@ module.exports = class Local /*:: implements Side */ {
 
       next => fse.ensureDir(parent, () => fse.rename(tmpFile, filePath, next)),
 
-      this.inodeSetter(doc),
       this.metadataUpdater(doc)
 
     ], function (err) {

@@ -1,9 +1,9 @@
 /* @flow */
 
-const fse = require('fs-extra') // Used for await
 const path = require('path')
 
 const { id } = require('../../metadata')
+const stater = require('../stater')
 const logger = require('../../logger')
 const log = logger({
   component: 'addInfos'
@@ -21,13 +21,14 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string } *
     for (const event of events) {
       try {
         if (event.action !== 'initial-scan-done') {
+          // TODO if (event.kind === 'symlink') emit an error
           event._id = id(event.path)
           if (['created', 'modified', 'renamed'].includes(event.action)) {
             log.debug({path: event.path, action: event.action}, 'stat')
-            event.stats = await fse.stat(path.join(opts.syncPath, event.path))
+            event.stats = await stater.stat(path.join(opts.syncPath, event.path))
           }
           if (event.stats) { // created, modified, renamed, scan
-            event.docType = event.stats.isDirectory() ? 'directory' : 'file'
+            event.docType = stater.kind(event.stats)
           } else { // deleted
             // If kind is unknown, we say it's a file arbitrary
             event.docType = event.kind === 'directory' ? 'directory' : 'file'

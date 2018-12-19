@@ -16,6 +16,7 @@ const fsutils = require('./utils/fs')
 import type fs from 'fs'
 import type { PathIssue } from './path_restrictions'
 import type { RemoteDoc } from './remote/document'
+import type { Stats } from './local/stater'
 */
 
 const log = logger({
@@ -66,6 +67,7 @@ export type Metadata = {
   trashed?: true,
   incompatibilities?: *,
   ino?: ?number,
+  fileid?: ?string,
   moveFrom?: Metadata
 }
 */
@@ -368,7 +370,15 @@ const makeComparator = (name, interestingFields) => {
   return (one, two) => {
     const diff = deepDiff(one, two, filter)
     log.trace({path: two.path, diff}, name)
-    return !diff || _.every(diff, canBeIgnoredDiff)
+    if (diff && !_.every(diff, canBeIgnoredDiff)) {
+      return false
+    }
+    // XXX The fileid can be missing in some old documents in pouchdb.
+    // So, we compare them only if it's present on both documents.
+    if (process.platform === 'win32' && one.fileid && two.fileid) {
+      return one.fileid === two.fileid
+    }
+    return true
   }
 }
 
@@ -424,7 +434,7 @@ function markSide (side /*: string */, doc /*: Metadata */, prev /*: ?Metadata *
   return doc
 }
 
-function buildDir (fpath /*: string */, stats /*: fs.Stats */, remote /*: ?MetadataRemoteInfo */) /*: Metadata */ {
+function buildDir (fpath /*: string */, stats /*: Stats */, remote /*: ?MetadataRemoteInfo */) /*: Metadata */ {
   const doc /*: Object */ = {
     _id: id(fpath),
     path: fpath,
@@ -434,15 +444,16 @@ function buildDir (fpath /*: string */, stats /*: fs.Stats */, remote /*: ?Metad
     sides: {},
     remote
   }
+  if (stats.fileid) { doc.fileid = stats.fileid }
   return doc
 }
 
 const EXECUTABLE_MASK = 1 << 6
 
-function buildFile (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: string */, remote /*: ?MetadataRemoteInfo */) /*: Metadata */ {
+function buildFile (filePath /*: string */, stats /*: Stats */, md5sum /*: string */, remote /*: ?MetadataRemoteInfo */) /*: Metadata */ {
   const mimeType = mime.lookup(filePath)
   const {mtime, ctime} = stats
-  let doc /*: Object */ = {
+  const doc /*: Object */ = {
     _id: id(filePath),
     path: filePath,
     docType: 'file',
@@ -454,7 +465,8 @@ function buildFile (filePath /*: string */, stats /*: fs.Stats */, md5sum /*: st
     size: stats.size,
     remote
   }
-  if ((stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
+  if (stats.mode && (+stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
+  if (stats.fileid) { doc.fileid = stats.fileid }
   return doc
 }
 
