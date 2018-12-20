@@ -9,6 +9,7 @@ const LinuxProducer = require('./steps/linux_producer')
 const WinProducer = require('./steps/win_producer')
 const addInfos = require('./steps/add_infos')
 const filterIgnored = require('./steps/filter_ignored')
+const scanFolder = require('./steps/scan_folder')
 const awaitWriteFinish = require('./steps/await_write_finish')
 const initialDiff = require('./steps/initial_diff')
 const addChecksum = require('./steps/add_checksum')
@@ -56,11 +57,11 @@ module.exports = class AtomWatcher {
     let steps
     if (process.platform === 'linux') {
       this.producer = new LinuxProducer(this)
-      steps = [addInfos, filterIgnored, awaitWriteFinish, initialDiff, addChecksum]
+      steps = [addInfos, filterIgnored, scanFolder, awaitWriteFinish, initialDiff, addChecksum]
     } else if (process.platform === 'win32') {
       this.producer = new WinProducer(this)
       // TODO add a layer to detect moves
-      steps = [addInfos, filterIgnored, awaitWriteFinish, initialDiff, addChecksum]
+      steps = [addInfos, filterIgnored, scanFolder, awaitWriteFinish, initialDiff, addChecksum]
     } else {
       throw new Error('The experimental watcher is not available on this platform')
     }
