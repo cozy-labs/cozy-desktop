@@ -89,7 +89,12 @@ async function step (state, op) {
         // XXX fs-extra move can enter in an infinite loop for some stupid moves
         await new Promise(resolve =>
           fs.rename(state.dir.abspath(op.from), state.dir.abspath(op.to), resolve)
-        )
+        ).then((err) => {
+          if (!err && op.to.match(/^\.\.\/outside/)) {
+            const abspath = state.dir.abspath(op.to)
+            fs.chmodSync(abspath, 0o644)
+          }
+        })
       } catch (err) {
         console.log('Rename err', err)
       }
@@ -98,6 +103,26 @@ async function step (state, op) {
       try {
         await state.dir.remove(op.path)
       } catch (err) {}
+      break
+    case 'reference':
+      let release
+      try {
+        const abspath = state.dir.abspath(op.path)
+        const stats = await fse.stat(abspath)
+        release = await state.pouchdb.lock('test')
+        const doc = await state.pouchdb.byIdMaybeAsync(id(op.path))
+        if (doc && !doc.sides.remote) {
+          doc.sides.remote = doc.sides.local + 1
+          doc.remote = stats.ino
+          await state.pouchdb.put(doc)
+          fs.chmodSync(abspath, 0o777)
+        }
+      } catch (err) {
+      } finally {
+        if (release) {
+          release()
+        }
+      }
       break
     default:
       throw new Error(`${op.op} is an unknown operation`)
@@ -148,6 +173,16 @@ describe('Local watcher', function () {
 
       // And no conflict should have happened
       should(state.conflicts).be.empty()
+
+      // And the references should have kept in pouchdb
+      for (const relpath of expected) {
+        const abspath = state.dir.abspath(relpath)
+        const stats = await fse.stat(abspath)
+        if ((stats.mode & fs.constants.S_IWGRP) !== 0) {
+          const doc = await state.pouchdb.byIdMaybeAsync(id(relpath))
+          should(doc.ino).be.equal(stats.ino)
+        }
+      }
     })
   })
 })
