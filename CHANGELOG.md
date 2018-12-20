@@ -1,5 +1,21 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.11.2-beta.1 - 2018-12-21
+
+Improvements for all users:
+
+- We've improved the wording of the updater window so it says it's downloading
+  the new version and displays the Cozy Cloud logo so you know what's being
+  updated at first glance.
+- If a directory is overwritten by a move on your Cozy, we would move it to the
+  trash and, in some situations, after synchronising your local client, the
+  directory would not be overwritten on your computer. We're now skipping the
+  move to the trash and overwriting the directory.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.11.1 - 2018-12-17
 
 See [3.11.1-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.11.1-beta.1)
