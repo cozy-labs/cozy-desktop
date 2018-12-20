@@ -169,7 +169,7 @@
   "Unlinked Your device is no longer registered on your Cozy.": "Su periférico ya no está registrado en su Cozy.",
   "Update": "Actualizar",
   "Updater Checking for Update": "Verificando las actualizaciones...",
-  "Updater Downloading": "Una actualización está disponible",
+  "Updater Downloading": "Actualizando Cozy Drive",
   "Updater Error ENOSPC": "Su disco está lleno, la actualización no puede cargardse.",
   "Updater Error EPERM": "Al actualizar se produjo un error de permisos",
   "Updater Error Other": "Un error no especificado ha impedido su actualización. Por favor contacte su servicio técnico.",
