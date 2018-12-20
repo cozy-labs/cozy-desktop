@@ -28,10 +28,10 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string } *
             event.stats = await stater.stat(path.join(opts.syncPath, event.path))
           }
           if (event.stats) { // created, modified, renamed, scan
-            event.docType = stater.kind(event.stats)
+            event.kind = stater.kind(event.stats)
           } else { // deleted
             // If kind is unknown, we say it's a file arbitrary
-            event.docType = event.kind === 'directory' ? 'directory' : 'file'
+            event.kind = event.kind === 'directory' ? 'directory' : 'file'
           }
         }
         batch.push(event)

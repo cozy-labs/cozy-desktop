@@ -31,10 +31,10 @@ module.exports = function (buffer /*: Buffer */, opts /*: { events: EventEmitter
           actions.initialScanDone()
         } else {
           // $FlowFixMe
-          await actions[event.action + event.docType](event)
+          await actions[event.action + event.kind](event)
         }
       } catch (err) {
-        console.log('Dispatch error:', err) // TODO
+        console.log('Dispatch error:', err, event) // TODO
       }
     }
   })

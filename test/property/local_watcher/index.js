@@ -52,6 +52,7 @@ async function step (state, op) {
       state.watcher.start()
       break
     case 'stop':
+      await Promise.delay(1000)
       await state.watcher.stop()
       state.watcher = null
       break
