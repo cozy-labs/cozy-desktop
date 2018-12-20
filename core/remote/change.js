@@ -120,35 +120,34 @@ function includeDescendant (parent /*: RemoteDirMove */, e /*: RemoteDescendantC
   delete e.descendantMoves
 }
 
-const addPath = (a /*: RemoteChange */) /*: ?string */ => isAdd(a) || isMove(a) || isRestore(a) ? metadata.id(a.doc.path) : null
-const delPath = (a /*: RemoteChange */) /*: ?string */ => isDelete(a) ? metadata.id(a.doc.path) : isMove(a) || isTrash(a) ? metadata.id(a.was.path) : null
-const childOf = (p1 /*: ?string */, p2 /*: ?string */)/*: boolean */ => p1 != null && p2 != null && p2 !== p1 && p2.startsWith(p1 + path.sep)
-const lower = (p1 /*: ?string */, p2 /*: ?string */)/*: boolean */ => p1 != null && p2 != null && p2 !== p1 && p1 < p2
+const createdId = (a /*: RemoteChange */) /*: ?string */ => isAdd(a) || isMove(a) || isRestore(a) ? metadata.id(a.doc.path) : null
+const deletedId = (a /*: RemoteChange */) /*: ?string */ => isDelete(a) ? metadata.id(a.doc.path) : isMove(a) || isTrash(a) ? metadata.id(a.was.path) : null
+const areParentChild = (p /*: ?string */, c /*: ?string */) /*: boolean */ => !!p && !!c && c.startsWith(p + path.sep)
+const lower = (p1 /*: ?string */, p2 /*: ?string */) /*: boolean */ => !!p1 && !!p2 && p1 < p2
 
-const isChildDelete = (a /*: RemoteChange */, b /*: RemoteChange */) => childOf(delPath(a), delPath(b))
-const isChildAdd = (a /*: RemoteChange */, b /*: RemoteChange */) => childOf(addPath(a), addPath(b))
+const aFirst = -1
+const bFirst = 1
 
 const sorter = (a, b) => {
-  if (childOf(addPath(a), delPath(b))) return -1
-  if (childOf(addPath(b), delPath(a))) return 1
+  if (areParentChild(createdId(a), deletedId(b))) return aFirst
+  if (areParentChild(createdId(b), deletedId(a))) return bFirst
 
   // if one action is a child of another, it takes priority
-  if (isChildAdd(a, b)) return -1
-  if (isChildDelete(b, a)) return -1
-  if (isChildAdd(b, a)) return 1
-  if (isChildDelete(a, b)) return 1
+  if (areParentChild(createdId(a), createdId(b))) return aFirst
+  if (areParentChild(createdId(b), createdId(a))) return bFirst
+  if (areParentChild(deletedId(b), deletedId(a))) return aFirst
+  if (areParentChild(deletedId(a), deletedId(b))) return bFirst
 
-  if (delPath(a) === addPath(b)) return -1
-  if (delPath(b) === addPath(a)) return 1
+  if (deletedId(a) === createdId(b)) return aFirst
+  if (deletedId(b) === createdId(a)) return bFirst
 
   // otherwise, order by add path
-  if (lower(addPath(a), addPath(b))) return -1
-  if (lower(addPath(b), addPath(a))) return 1
+  if (lower(createdId(a), createdId(b))) return aFirst
+  if (lower(createdId(b), createdId(a))) return bFirst
 
   // if there isnt 2 add paths, sort by del path
-  if (lower(delPath(b), delPath(a))) return -1
-
-  return 1
+  if (lower(deletedId(b), deletedId(a))) return aFirst
+  return bFirst
 }
 
 function sort (changes /*: Array<RemoteChange> */) /*: void */ {
