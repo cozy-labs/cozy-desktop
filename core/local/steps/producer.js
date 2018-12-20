@@ -1,7 +1,7 @@
 /* @flow */
 
 /*::
-export interface Runner {
+export interface Producer {
   start(): Promise<*>,
   stop(): *,
 }

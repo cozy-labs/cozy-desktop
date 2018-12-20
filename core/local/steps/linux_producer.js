@@ -13,7 +13,7 @@ const log = logger({
 })
 
 /*::
-import type { Runner } from './runner'
+import type { Producer } from './producer'
 */
 
 // This class is a producer: it watches the filesystem and the events are
@@ -26,7 +26,7 @@ import type { Runner } from './runner'
 // Even if inotify has a IN_ISDIR hint, atom/watcher does not report it. So, we
 // have to call stat on the path to know if it's a file or a directory for add
 // and update events.
-module.exports = class LinuxProducer /*:: implements Runner */ {
+module.exports = class LinuxProducer /*:: implements Producer */ {
   /*::
   buffer: Buffer
   syncPath: string

@@ -20,7 +20,7 @@ import type Prep from '../prep'
 import type EventEmitter from 'events'
 import type { Ignore } from '../ignore'
 import type { Checksumer } from './checksumer'
-import type { Runner } from './steps/runner'
+import type { Producer } from './steps/producer'
 */
 
 const log = logger({
@@ -35,7 +35,7 @@ module.exports = class AtomWatcher {
   events: EventEmitter
   ignore: Ignore
   checksumer: Checksumer
-  runner: Runner
+  producer: Producer
   running: Promise<void>
   _runningResolve: ?Function
   _runningReject: ?Function
@@ -51,21 +51,20 @@ module.exports = class AtomWatcher {
 
     // Here, we build a chain of steps. Each step can be seen as an actor that
     // communicates with the next one via a buffer. The first step is called
-    // the producer or runner: even if the chain is ready at the end of this
-    // constructor, the runner won't start pushing batches of events until it
-    // is started.
+    // the producer: even if the chain is ready at the end of this constructor,
+    // the producer won't start pushing batches of events until it is started.
     let steps
     if (process.platform === 'linux') {
-      this.runner = new LinuxProducer(this)
+      this.producer = new LinuxProducer(this)
       steps = [addInfos, filterIgnored, awaitWriteFinish, initialDiff, addChecksum]
     } else if (process.platform === 'win32') {
-      this.runner = new WinProducer(this)
+      this.producer = new WinProducer(this)
       // TODO add a layer to detect moves
       steps = [addInfos, filterIgnored, awaitWriteFinish, initialDiff, addChecksum]
     } else {
       throw new Error('The experimental watcher is not available on this platform')
     }
-    let buffer = steps.reduce((buf, step) => step(buf, this), this.runner.buffer)
+    let buffer = steps.reduce((buf, step) => step(buf, this), this.producer.buffer)
     dispatch(buffer, this)
   }
 
@@ -75,7 +74,7 @@ module.exports = class AtomWatcher {
       this._runningResolve = resolve
       this._runningReject = reject
     })
-    this.runner.start()
+    this.producer.start()
     return new Promise((resolve) => {
       this.events.on('initial-scan-done', resolve)
     })
@@ -87,6 +86,6 @@ module.exports = class AtomWatcher {
       this._runningResolve()
       this._runningResolve = null
     }
-    this.runner.stop()
+    this.producer.stop()
   }
 }
