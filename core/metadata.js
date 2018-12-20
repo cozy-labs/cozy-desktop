@@ -310,7 +310,7 @@ function isAtLeastUpToDate (side /*: SideName */, doc /*: Metadata */) {
 
 function markAsNeverSynced (doc /*: Metadata */) {
   doc._deleted = true
-  doc.sides = { local: 1, remote: 1 }
+  doc.sides = { local: 0, remote: 0 }
 }
 
 function markAsNew (doc /*: Metadata */) {
