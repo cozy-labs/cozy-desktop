@@ -93,20 +93,6 @@ describe('Pouch', function () {
           should((await this.pouch.db.get(doc._id))._rev).equal(old._rev)
         })
       })
-
-      context('when doc is deleted and up to date', () => {
-        beforeEach(function () {
-          _.assign(doc, { _deleted: true, sides: { local: 1, remote: 1 } })
-        })
-
-        it('updates doc without remote', async function () {
-          _.assign(doc, { remote: undefined })
-
-          await (() => { this.pouch.put(doc) }).should.not.throw()
-          await should(this.pouch.db.get(doc._id)).be.rejectedWith({status: 404})
-          await should(this.pouch.db.get(old._id)).be.rejectedWith({status: 404})
-        })
-      })
     })
 
     describe('remove', () => {

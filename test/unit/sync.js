@@ -603,5 +603,37 @@ describe('Sync', function () {
       should.not.exist(name)
       should.not.exist(rev)
     })
+
+    it('returns an empty array if a local only doc is deleted', function () {
+      let doc = {
+        _id: 'selectSide/5',
+        _rev: '5-0123456789',
+        _deleted: true,
+        docType: 'file',
+        sides: {
+          local: 5
+        }
+      }
+      let [side, name, rev] = this.sync.selectSide(doc)
+      should.not.exist(side)
+      should.not.exist(name)
+      should.not.exist(rev)
+    })
+
+    it('returns an empty array if a remote only doc is deleted', function () {
+      let doc = {
+        _id: 'selectSide/5',
+        _rev: '5-0123456789',
+        _deleted: true,
+        docType: 'file',
+        sides: {
+          remote: 5
+        }
+      }
+      let [side, name, rev] = this.sync.selectSide(doc)
+      should.not.exist(side)
+      should.not.exist(name)
+      should.not.exist(rev)
+    })
   })
 })
