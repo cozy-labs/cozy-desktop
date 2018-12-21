@@ -254,7 +254,8 @@ class Merge {
     log.debug({path: doc.path, oldpath: was.path}, 'moveFileAsync')
     const {path} = doc
     if (was.sides && !was.sides[otherSide(side)]) {
-      await this.pouch.remove(metadata.upToDate(was))
+      metadata.markAsUnsyncable(side, was)
+      await this.pouch.put(was)
       return this.addFileAsync(side, doc)
     } else if (was.sides && was.sides[side]) {
       const file /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
@@ -348,7 +349,7 @@ class Merge {
       dst._id = makeDestinationID(doc)
       dst.path = doc.path.replace(was.path, folder.path)
       if (src.sides && src.sides[side] && !src.sides[otherSide(side)]) {
-        metadata.markAsNeverSynced(src)
+        metadata.markAsUnsyncable(side, src)
         metadata.markAsNew(dst)
         metadata.markSide(side, dst)
       } else {

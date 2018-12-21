@@ -106,8 +106,8 @@ module.exports = {
   extractRevNumber,
   isUpToDate,
   isAtLeastUpToDate,
-  markAsNeverSynced,
   markAsNew,
+  markAsUnsyncable,
   markAsUpToDate,
   sameFolder,
   sameFile,
@@ -227,8 +227,6 @@ function invariants (doc /*: Metadata */) {
   let err
   if (!doc.sides) {
     err = new Error(`${doc._id} has no sides`)
-  } else if (doc._deleted && isUpToDate('local', doc) && isUpToDate('remote', doc)) {
-    err = null
   } else if (doc.sides.remote && !doc.remote) {
     err = new Error(`${doc._id} has 'sides.remote' but no remote`)
   } else if (doc.docType === 'file' && doc.md5sum == null) {
@@ -308,9 +306,9 @@ function isAtLeastUpToDate (side /*: SideName */, doc /*: Metadata */) {
   return currentRev >= lastRev
 }
 
-function markAsNeverSynced (doc /*: Metadata */) {
+function markAsUnsyncable (side /*: SideName */, doc /*: Metadata */) {
   doc._deleted = true
-  doc.sides = { local: 1, remote: 1 }
+  markSide(side, doc, doc)
 }
 
 function markAsNew (doc /*: Metadata */) {

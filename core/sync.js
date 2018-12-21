@@ -364,7 +364,9 @@ class Sync {
   selectSide (doc /*: Metadata */) {
     let localRev = doc.sides.local || 0
     let remoteRev = doc.sides.remote || 0
-    if (localRev > remoteRev) {
+    if ((localRev === 0 || remoteRev === 0) && doc._deleted) {
+      return []
+    } else if (localRev > remoteRev) {
       return [this.remote, 'remote', remoteRev]
     } else if (remoteRev > localRev) {
       return [this.local, 'local', localRev]
