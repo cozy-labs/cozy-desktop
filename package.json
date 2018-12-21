@@ -51,6 +51,7 @@
     "lint:eslint": "eslint './core/**/*.js' 'dev/**/*.js' gui/main.js gui/ports.js 'gui/js/**/*.js' './test/**/*.js'",
     "mocha": "env-cmd .env.test electron-mocha ./test/support/logging.js",
     "mocha:coverage": "yarn mocha --require ./test/support/coverage --reporter ./test/support/istanbul_reporter",
+    "mocha:watch": "./test/watch.sh",
     "install:all": "yarn && yarn install:electron",
     "install:electron": "electron-builder install-app-deps",
     "prebuild": "yarn clean",
