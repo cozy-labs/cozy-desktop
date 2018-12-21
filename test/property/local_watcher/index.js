@@ -26,6 +26,13 @@ const Watcher = require('../../../core/local/watcher')
 const PouchDB = require('pouchdb')
 PouchDB.plugin(require('pouchdb-adapter-memory'))
 
+let winfs
+if (process.platform === 'win32') {
+  // $FlowFixMe
+  winfs = require('@gyselroth/windows-fsstat')
+}
+const byFileIds = new Map()
+
 async function step (state, op) {
   // Slow down things to avoid issues with chokidar throttler
   await Promise.delay(10)
@@ -92,7 +99,12 @@ async function step (state, op) {
         ).then((err) => {
           if (!err && op.to.match(/^\.\.\/outside/)) {
             const abspath = state.dir.abspath(op.to)
-            fs.chmodSync(abspath, 0o644)
+            if (winfs) {
+              const stats = winfs.lstatSync(abspath)
+              byFileIds.delete(stats.fileid)
+            } else {
+              fs.chmodSync(abspath, 0o644)
+            }
           }
         })
       } catch (err) {
@@ -105,17 +117,31 @@ async function step (state, op) {
       } catch (err) {}
       break
     case 'reference':
+      // We have two strategies to keep the information that a file has a reference:
+      // - on windows, we have a map with the fileIds
+      //   (the permissions for the group are ignored)
+      // - on linux&macOS, we use one bit of the permissions (g+w)
+      //   (the inode numbers can be reused)
       let release
       try {
         const abspath = state.dir.abspath(op.path)
-        const stats = await fse.stat(abspath)
+        let stats
+        if (winfs) {
+          stats = winfs.lstatSync(abspath)
+        } else {
+          stats = await fse.stat(abspath)
+        }
         release = await state.pouchdb.lock('test')
         const doc = await state.pouchdb.byIdMaybeAsync(id(op.path))
         if (doc && !doc.sides.remote) {
           doc.sides.remote = doc.sides.local + 1
           doc.remote = stats.ino
           await state.pouchdb.put(doc)
-          fs.chmodSync(abspath, 0o777)
+          if (winfs) {
+            byFileIds.set(stats.fileid, true)
+          } else {
+            fs.chmodSync(abspath, 0o777)
+          }
         }
       } catch (err) {
       } finally {
@@ -176,11 +202,19 @@ describe('Local watcher', function () {
 
       // And the references should have kept in pouchdb
       for (const relpath of expected) {
+        let referenced = false
+        let stats
         const abspath = state.dir.abspath(relpath)
-        const stats = await fse.stat(abspath)
-        if ((stats.mode & fs.constants.S_IWGRP) !== 0) {
+        if (winfs) {
+          stats = winfs.lstatSync(abspath)
+          referenced = byFileIds.has(stats.fileid)
+        } else {
+          stats = await fse.stat(abspath)
+          referenced = (stats.mode & fs.constants.S_IWGRP) !== 0
+        }
+        if (referenced) {
           const doc = await state.pouchdb.byIdMaybeAsync(id(relpath))
-          should(doc.ino).be.equal(stats.ino)
+          should(doc.remote).be.equal(stats.ino)
         }
       }
     })
