@@ -183,7 +183,7 @@ function run (ops) {
     ops.push(op)
   }
   if (!running) {
-    ops.push({ op: 'restart ' })
+    ops.push({ op: 'restart' })
   }
 }
 
