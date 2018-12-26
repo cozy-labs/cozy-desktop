@@ -2,6 +2,10 @@
 
 const { id } = require('../../metadata')
 const Buffer = require('./buffer')
+const logger = require('../../logger')
+const log = logger({
+  component: 'awaitWriteFinish'
+})
 
 // Wait this delay (in milliseconds) after the last event for a given file
 // before pushing this event to the next steps.
@@ -100,5 +104,6 @@ async function awaitWriteFinish (buffer, out) {
 module.exports = function (buffer /*: Buffer */, opts /*: {} */) /*: Buffer */ {
   const out = new Buffer()
   awaitWriteFinish(buffer, out)
+    .catch(err => log.error({err}))
   return out
 }

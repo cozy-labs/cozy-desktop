@@ -2,6 +2,10 @@
 
 const { id } = require('../../metadata')
 const Buffer = require('./buffer')
+const logger = require('../../logger')
+const log = logger({
+  component: 'winDetectMove'
+})
 
 // Wait at most this delay (in milliseconds) to see if it's a move.
 const DELAY = 1000
@@ -48,6 +52,8 @@ async function winDetectMove (buffer, out, pouch) {
         try {
           const was = await pouch.db.get(id(event.path))
           deleted.set(was.fileid, event.path)
+        } catch (err) {
+          // Ignore the error
         } finally {
           release()
         }
@@ -75,6 +81,7 @@ async function winDetectMove (buffer, out, pouch) {
               event.oldPath = e.path
               pending[i].deleted.delete(event.stats.fileid)
               pending[i].events.splice(j, 1)
+              break
             }
           }
         }
@@ -89,5 +96,6 @@ async function winDetectMove (buffer, out, pouch) {
 module.exports = function (buffer /*: Buffer */, opts /*: { pouch: Pouch } */) /*: Buffer */ {
   const out = new Buffer()
   winDetectMove(buffer, out, opts.pouch)
+    .catch(err => log.error({err}))
   return out
 }
