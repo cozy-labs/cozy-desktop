@@ -98,12 +98,13 @@ async function step (state, op) {
           fs.rename(state.dir.abspath(op.from), state.dir.abspath(op.to), resolve)
         ).then((err) => {
           if (!err && op.to.match(/^\.\.\/outside/)) {
+            // Remove the reference for files/dirs moved outside
             const abspath = state.dir.abspath(op.to)
             if (winfs) {
               const stats = winfs.lstatSync(abspath)
               byFileIds.delete(stats.fileid)
             } else {
-              fs.chmodSync(abspath, 0o644)
+              fs.chmodSync(abspath, 0o700)
             }
           }
         })
@@ -200,7 +201,7 @@ describe('Local watcher', function () {
       // And no conflict should have happened
       should(state.conflicts).be.empty()
 
-      // And the references should have kept in pouchdb
+      // And the references should have been kept in pouchdb
       for (const relpath of expected) {
         let referenced = false
         let stats

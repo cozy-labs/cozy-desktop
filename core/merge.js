@@ -303,16 +303,15 @@ class Merge {
     }
 
     const folder /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
-    metadata.markSide(side, doc, folder)
-    metadata.markSide(side, was, was)
-    metadata.assignMaxDate(doc, was)
-
     const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(side, doc, folder)
     if (idConflict) {
       log.warn({idConflict}, IdConflict.description(idConflict))
       return this.resolveConflictAsync(side, doc, folder)
     }
 
+    metadata.markSide(side, doc, folder)
+    metadata.markSide(side, was, was)
+    metadata.assignMaxDate(doc, was)
     if (doc.tags == null) { doc.tags = was.tags || [] }
     if (doc.ino == null) { doc.ino = was.ino }
     if (doc.fileid == null) { doc.fileid = was.fileid }
