@@ -274,6 +274,7 @@ class Merge {
       if (doc.tags == null) { doc.tags = was.tags || [] }
       if (doc.ino == null) { doc.ino = was.ino }
       if (doc.fileid == null) { doc.fileid = was.fileid }
+      if (doc.remote == null) { doc.remote = was.remote }
       move(was, doc)
       if (file && metadata.sameFile(file, doc)) {
         log.info({path}, 'up to date (move)')
@@ -305,15 +306,17 @@ class Merge {
     metadata.markSide(side, doc, folder)
     metadata.markSide(side, was, was)
     metadata.assignMaxDate(doc, was)
-    if (doc.tags == null) { doc.tags = was.tags || [] }
-    if (doc.ino == null) { doc.ino = was.ino }
-    if (doc.fileid == null) { doc.fileid = was.fileid }
 
     const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(side, doc, folder)
     if (idConflict) {
       log.warn({idConflict}, IdConflict.description(idConflict))
       return this.resolveConflictAsync(side, doc, folder)
     }
+
+    if (doc.tags == null) { doc.tags = was.tags || [] }
+    if (doc.ino == null) { doc.ino = was.ino }
+    if (doc.fileid == null) { doc.fileid = was.fileid }
+    if (doc.remote == null) { doc.remote = was.remote }
 
     if (folder && !doc.overwrite && doc.path === folder.path) {
       if (side === 'local' && !folder.sides.remote) {
