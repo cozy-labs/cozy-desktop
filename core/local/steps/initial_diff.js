@@ -24,7 +24,8 @@ async function initialDiff (buffer, out, pouch) {
       // Ignore files/dirs created on the remote and never synchronized
       continue
     }
-    byInode.set(doc.fileid || doc.ino, { path: doc.path, docType: doc.docType })
+    const kind = doc.docType === 'file' ? 'file' : 'directory'
+    byInode.set(doc.fileid || doc.ino, { path: doc.path, kind: kind })
   }
   let done = false
 
@@ -37,6 +38,34 @@ async function initialDiff (buffer, out, pouch) {
 
     const batch = []
     for (const event of events) {
+      // Detect if the file was moved while the client was stopped
+      if (['created', 'scan'].includes(event.action)) {
+        let was
+        if (event.stats.fileid) {
+          was = byInode.get(event.stats.fileid)
+        }
+        if (!was) {
+          was = byInode.get(event.stats.ino)
+        }
+        if (was && was.path !== event.path) {
+          if (was.kind === event.kind) {
+            // TODO for a directory, maybe we should check the children
+            event.action = 'renamed'
+            event.oldPath = was.path
+          } else {
+            // On linux, the inodes can have been reused: a file was deleted
+            // and a directory created just after while the client was stopped
+            // for example.
+            batch.push({
+              action: 'deleted',
+              kind: was.kind,
+              _id: id(was.path),
+              path: was.path
+            })
+          }
+        }
+      }
+
       if (['created', 'modified', 'renamed', 'scan'].includes(event.action)) {
         if (event.stats.fileid) {
           byInode.delete(event.stats.fileid)
@@ -45,11 +74,9 @@ async function initialDiff (buffer, out, pouch) {
       } else if (event.action === 'initial-scan-done') {
         // Emit deleted events for all the remaining files/dirs
         for (const [, doc] of byInode) {
-          const kind = doc.docType === 'file' ? 'file' : 'directory'
           batch.push({
             action: 'deleted',
-            kind: kind,
-            docType: doc.docType,
+            kind: doc.kind,
             _id: id(doc.path),
             path: doc.path
           })

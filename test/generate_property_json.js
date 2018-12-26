@@ -9,6 +9,7 @@ const specialChars = [':', '-', 'é', ' ', '%', ',', '&', '@', 'É', 'Ç']
 
 const knownPaths = []
 const deletedPaths = []
+const outsidePaths = []
 let running = false
 
 function similarPath () {
@@ -82,20 +83,36 @@ function updateFile () {
 }
 
 function mvToNewPath () {
-  let p = knownPath()
+  const p = knownPath()
   deletedPaths.push(p)
   return { op: 'mv', from: p, to: newPath() }
 }
 
 function mvToDeletedPath () {
-  let p = knownPath()
-  let to = deletedPath()
+  const p = knownPath()
+  const to = deletedPath()
   deletedPaths.push(p)
   return { op: 'mv', from: p, to: to }
 }
 
+function mvToOutside () {
+  const src = knownPath()
+  const dst = '../outside/' + faker.system.fileName()
+  outsidePaths.push(dst)
+  return { op: 'mv', from: src, to: dst }
+}
+
+function mvFromOutside () {
+  if (outsidePaths.length === 0) {
+    return mvToOutside()
+  }
+  const src = faker.random.arrayElement(outsidePaths)
+  const dst = newPath()
+  return { op: 'mv', from: src, to: dst }
+}
+
 function rm () {
-  let p = knownPath()
+  const p = knownPath()
   deletedPaths.push(p)
   return { op: 'rm', path: p }
 }
@@ -132,6 +149,7 @@ function init (ops) {
     const op = freq([[1, createNewDir], [1, createNewFile]])
     ops.push(op)
   }
+  ops.push({ op: 'mkdir', path: '../outside' })
 }
 
 function start (ops) {
@@ -150,6 +168,8 @@ function run (ops) {
       [1, updateFile],
       [2, mvToNewPath],
       [3, mvToDeletedPath],
+      [1, mvToOutside],
+      [1, mvFromOutside],
       [5, rm],
       [1, stopOrRestart],
       [1, sleep]

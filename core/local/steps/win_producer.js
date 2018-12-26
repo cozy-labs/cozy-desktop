@@ -14,7 +14,7 @@ const log = logger({
 })
 
 /*::
-import type { Runner } from './runner'
+import type { Producer } from './producer'
 */
 
 // This class is a producer: it watches the filesystem and the events are
@@ -29,7 +29,7 @@ import type { Runner } from './runner'
 // the directory was restored from the trash or moved from outside the watched
 // directory, ReadDirectoryChangesW won't send us events for the files and
 // sub-directories.
-module.exports = class WinProducer /*:: implements Runner */ {
+module.exports = class WinProducer /*:: implements Producer */ {
   /*::
   buffer: Buffer
   syncPath: string
