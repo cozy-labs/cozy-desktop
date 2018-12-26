@@ -26,6 +26,13 @@ const Watcher = require('../../../core/local/watcher')
 const PouchDB = require('pouchdb')
 PouchDB.plugin(require('pouchdb-adapter-memory'))
 
+let winfs
+if (process.platform === 'win32') {
+  // $FlowFixMe
+  winfs = require('@gyselroth/windows-fsstat')
+}
+const byFileIds = new Map()
+
 async function step (state, op) {
   // Slow down things to avoid issues with chokidar throttler
   await Promise.delay(10)
@@ -89,7 +96,18 @@ async function step (state, op) {
         // XXX fs-extra move can enter in an infinite loop for some stupid moves
         await new Promise(resolve =>
           fs.rename(state.dir.abspath(op.from), state.dir.abspath(op.to), resolve)
-        )
+        ).then((err) => {
+          if (!err && op.to.match(/^\.\.\/outside/)) {
+            // Remove the reference for files/dirs moved outside
+            const abspath = state.dir.abspath(op.to)
+            if (winfs) {
+              const stats = winfs.lstatSync(abspath)
+              byFileIds.delete(stats.fileid)
+            } else {
+              fs.chmodSync(abspath, 0o700)
+            }
+          }
+        })
       } catch (err) {
         console.log('Rename err', err)
       }
@@ -98,6 +116,40 @@ async function step (state, op) {
       try {
         await state.dir.remove(op.path)
       } catch (err) {}
+      break
+    case 'reference':
+      // We have two strategies to keep the information that a file has a reference:
+      // - on windows, we have a map with the fileIds
+      //   (the permissions for the group are ignored)
+      // - on linux&macOS, we use one bit of the permissions (g+w)
+      //   (the inode numbers can be reused)
+      let release
+      try {
+        const abspath = state.dir.abspath(op.path)
+        let stats
+        if (winfs) {
+          stats = winfs.lstatSync(abspath)
+        } else {
+          stats = await fse.stat(abspath)
+        }
+        release = await state.pouchdb.lock('test')
+        const doc = await state.pouchdb.byIdMaybeAsync(id(op.path))
+        if (doc && !doc.sides.remote) {
+          doc.sides.remote = doc.sides.local + 1
+          doc.remote = stats.ino
+          await state.pouchdb.put(doc)
+          if (winfs) {
+            byFileIds.set(stats.fileid, true)
+          } else {
+            fs.chmodSync(abspath, 0o777)
+          }
+        }
+      } catch (err) {
+      } finally {
+        if (release) {
+          release()
+        }
+      }
       break
     default:
       throw new Error(`${op.op} is an unknown operation`)
@@ -148,6 +200,24 @@ describe('Local watcher', function () {
 
       // And no conflict should have happened
       should(state.conflicts).be.empty()
+
+      // And the references should have been kept in pouchdb
+      for (const relpath of expected) {
+        let referenced = false
+        let stats
+        const abspath = state.dir.abspath(relpath)
+        if (winfs) {
+          stats = winfs.lstatSync(abspath)
+          referenced = byFileIds.has(stats.fileid)
+        } else {
+          stats = await fse.stat(abspath)
+          referenced = (stats.mode & fs.constants.S_IWGRP) !== 0
+        }
+        if (referenced) {
+          const doc = await state.pouchdb.byIdMaybeAsync(id(relpath))
+          should(doc.remote).be.equal(stats.ino)
+        }
+      }
     })
   })
 })

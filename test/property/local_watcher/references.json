@@ -1,0 +1,335 @@
+[
+  { "op": "create_file", "path": "generate_interface.mxu", "size": 1048583 },
+  {
+    "op": "create_file",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc",
+    "size": 1048594
+  },
+  {
+    "op": "mkdir",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat"
+  },
+  {
+    "op": "create_file",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/oregon_quantifying.csh",
+    "size": 152
+  },
+  {
+    "op": "create_file",
+    "path": "GENERATE_INTERFACE.MXU/PRACTICAL_CONCRETE_PANTS_BERKSHIRE_EXTEND.ONETOC/CREDIT_CARD_ACCOUNT.CHAT/OREGON_QUANTIFYING.CSH",
+    "size": 530
+  },
+  {
+    "op": "mkdir",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/indexing_licensed_functionality.clkw"
+  },
+  {
+    "op": "mkdir",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/oregon_quantifying.csh/program_international_transmitting.hps"
+  },
+  {
+    "op": "mkdir",
+    "path": "GENERATE_INTERFACE.MXU/PRACTICAL_CONCRETE_PANTS_BERKSHIRE_EXTEND.ONETOC/CREDIT_CARD_ACCOUNT.CHAT"
+  },
+  { "op": "mkdir", "path": "generate_interface.mxu/world_class.p7c" },
+  {
+    "op": "create_file",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/@strategist.uvt",
+    "size": 2065
+  },
+  {
+    "op": "create_file",
+    "path": "GENERATE_INTERFACE.MXU/PRACTICAL_CONCRETE_PANTS_BERKSHIRE_EXTEND.ONETOC/CREDIT_CARD_ACCOUNT.CHAT/@STRATEGIST.UVT",
+    "size": 131072
+  },
+  { "op": "mkdir", "path": "tasty_system.nnw" },
+  {
+    "op": "mkdir",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/mexico_streets.texinfo"
+  },
+  {
+    "op": "create_file",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/turquoise_pizza.ghf",
+    "size": 128
+  },
+  {
+    "op": "mkdir",
+    "path": "GENERATE_INTERFACE.MXU/PRACTICAL_CONCRETE_PANTS_BERKSHIRE_EXTEND.ONETOC/CREDIT_CARD_ACCOUNT.CHAT/OREGON_QUANTIFYING.CSH"
+  },
+  {
+    "op": "create_file",
+    "path": "generate_interface.mxu/capacitor_cross_platform_global.oda",
+    "size": 2097175
+  },
+  {
+    "op": "mkdir",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/@strategist.uvt/&back_end.wpl"
+  },
+  {
+    "op": "create_file",
+    "path": "GENERATE_INTERFACE.MXU/PRACTICAL_CONCRETE_PANTS_BERKSHIRE_EXTEND.ONETOC/MEXICO_STREETS.TEXINFO",
+    "size": 159
+  },
+  {
+    "op": "create_file",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/@strategist.uvt/alabama.ink",
+    "size": 43
+  },
+  {
+    "op": "mkdir",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/upward_trending_bricks_and_clicks.gph"
+  },
+  { "op": "mkdir", "path": "../outside" },
+  { "op": "start" },
+  {
+    "op": "mv",
+    "from": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/upward_trending_bricks_and_clicks.gph",
+    "to": "GENERATE_INTERFACE.MXU/PRACTICAL_CONCRETE_PANTS_BERKSHIRE_EXTEND.ONETOC/UPWARD_TRENDING_BRICKS_AND_CLICKS.GPH"
+  },
+  { "op": "sleep", "duration": 2000 },
+  {
+    "op": "create_file",
+    "path": "GENERATE_INTERFACE.MXU/PRACTICAL_CONCRETE_PANTS_BERKSHIRE_EXTEND.ONETOC/CREDIT_CARD_ACCOUNT.CHAT/INDEXING_LICENSED_FUNCTIONALITY.CLKW",
+    "size": 14
+  },
+  {
+    "op": "mv",
+    "from": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/@strategist.uvt/alabama.ink",
+    "to": "../outside/networks.nb"
+  },
+  {
+    "op": "create_file",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/@strategist.uvt/Éplanner_payment.azs",
+    "size": 524292
+  },
+  {
+    "op": "rm",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/oregon_quantifying.csh"
+  },
+  {
+    "op": "mv",
+    "from": "tasty_system.nnw",
+    "to": "../outside/plum_sausages.mp21"
+  },
+  {
+    "op": "create_file",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/oregon_quantifying.csh/jersey_project_causeway.cif",
+    "size": 131099
+  },
+  {
+    "op": "reference",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat"
+  },
+  { "op": "mkdir", "path": "tasty_system.nnw/infrastructure.qxb" },
+  {
+    "op": "reference",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/@strategist.uvt/&back_end.wpl"
+  },
+  { "op": "rm", "path": "tasty_system.nnw" },
+  {
+    "op": "rm",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/oregon_quantifying.csh/program_international_transmitting.hps"
+  },
+  {
+    "op": "mv",
+    "from": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/upward_trending_bricks_and_clicks.gph",
+    "to": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/upward_trending_bricks_and_clicks.gph"
+  },
+  { "op": "reference", "path": "tasty_system.nnw/infrastructure.qxb" },
+  {
+    "op": "create_file",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/upward_trending_bricks_and_clicks.gph"
+  },
+  {
+    "op": "reference",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/oregon_quantifying.csh"
+  },
+  {
+    "op": "mkdir",
+    "path": "GENERATE_INTERFACE.MXU/PRACTICAL_CONCRETE_PANTS_BERKSHIRE_EXTEND.ONETOC/CREDIT_CARD_ACCOUNT.CHAT/@STRATEGIST.UVT"
+  },
+  {
+    "op": "mkdir",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/upward_trending_bricks_and_clicks.gph"
+  },
+  {
+    "op": "create_file",
+    "path": "GENERATE_INTERFACE.MXU/PRACTICAL_CONCRETE_PANTS_BERKSHIRE_EXTEND.ONETOC",
+    "size": 65549
+  },
+  {
+    "op": "mv",
+    "from": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/@strategist.uvt/Éplanner_payment.azs",
+    "to": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/oregon_quantifying.csh"
+  },
+  {
+    "op": "mkdir",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/@strategist.uvt/éplanner_payment.azs"
+  },
+  { "op": "reference", "path": "generate_interface.mxu" },
+  {
+    "op": "rm",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/@strategist.uvt/Éplanner_payment.azs"
+  },
+  {
+    "op": "update_file",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/turquoise_pizza.ghf",
+    "size": 131077
+  },
+  { "op": "reference", "path": "generate_interface.mxu/world_class.p7c" },
+  {
+    "op": "mv",
+    "from": "tasty_system.nnw",
+    "to": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/oregon_quantifying.csh/program_international_transmitting.hps"
+  },
+  {
+    "op": "mkdir",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/mexico_streets.texinfo/white_moldova_calculating.m4p"
+  },
+  {
+    "op": "mkdir",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/oregon_quantifying.csh/program_international_transmitting.hps/%representative.fpx"
+  },
+  {
+    "op": "mv",
+    "from": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/upward_trending_bricks_and_clicks.gph",
+    "to": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/upward_trending_bricks_and_clicks.gph"
+  },
+  { "op": "sleep", "duration": 1000 },
+  { "op": "rm", "path": "generate_interface.mxu" },
+  {
+    "op": "reference",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/oregon_quantifying.csh/program_international_transmitting.hps"
+  },
+  {
+    "op": "reference",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat"
+  },
+  {
+    "op": "mkdir",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/indexing_licensed_functionality.clkw/database_chicken_mouse.oth"
+  },
+  { "op": "rm", "path": "tasty_system.nnw/infrastructure.qxb" },
+  {
+    "op": "create_file",
+    "path": "-markets_senior_open_source.msi",
+    "size": 13
+  },
+  { "op": "create_file", "path": "system_worthy_liaison.pls", "size": 22 },
+  { "op": "sleep", "duration": 2000 },
+  {
+    "op": "mv",
+    "from": "generate_interface.mxu/world_class.p7c",
+    "to": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/oregon_quantifying.csh/program_international_transmitting.hps/automated_cross_platform_directional.portpkg"
+  },
+  {
+    "op": "create_file",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/indexing_licensed_functionality.clkw/database_chicken_mouse.oth/Éviolet_lime_armenian_dram.csml",
+    "size": 40
+  },
+  {
+    "op": "mv",
+    "from": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/upward_trending_bricks_and_clicks.gph",
+    "to": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/upward_trending_bricks_and_clicks.gph"
+  },
+  { "op": "reference", "path": "-markets_senior_open_source.msi" },
+  { "op": "sleep", "duration": 1000 },
+  {
+    "op": "reference",
+    "path": "generate_interface.mxu"
+  },
+  {
+    "op": "mkdir",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/@strategist.uvt/Éplanner_payment.azs"
+  },
+  { "op": "sleep", "duration": 2000 },
+  {
+    "op": "reference",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/oregon_quantifying.csh/program_international_transmitting.hps/automated_cross_platform_directional.portpkg"
+  },
+  {
+    "op": "reference",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/oregon_quantifying.csh/program_international_transmitting.hps/%representative.fpx"
+  },
+  {
+    "op": "rm",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc"
+  },
+  {
+    "op": "mv",
+    "from": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/@strategist.uvt/Éplanner_payment.azs",
+    "to": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/@strategist.uvt/cotton.swi"
+  },
+  {
+    "op": "mv",
+    "from": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/oregon_quantifying.csh/program_international_transmitting.hps/%representative.fpx",
+    "to": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/mexico_streets.texinfo/white_moldova_calculating.m4p/fiji_metal_borders.s3m"
+  },
+  {
+    "op": "mv",
+    "from": "-markets_senior_open_source.msi",
+    "to": "../outside/utah_licensed_wooden_shirt_css.litcoffee"
+  },
+  {
+    "op": "create_file",
+    "path": "GENERATE_INTERFACE.MXU/PRACTICAL_CONCRETE_PANTS_BERKSHIRE_EXTEND.ONETOC/CREDIT_CARD_ACCOUNT.CHAT/INDEXING_LICENSED_FUNCTIONALITY.CLKW/DATABASE_CHICKEN_MOUSE.OTH",
+    "size": 72
+  },
+  {
+    "op": "reference",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/@strategist.uvt/cotton.swi"
+  },
+  {
+    "op": "rm",
+    "path": "generate_interface.mxu/capacitor_cross_platform_global.oda"
+  },
+  { "op": "reference", "path": "tasty_system.nnw" },
+  {
+    "op": "mv",
+    "from": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/mexico_streets.texinfo/white_moldova_calculating.m4p",
+    "to": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/upward_trending_bricks_and_clicks.gph"
+  },
+  {
+    "op": "reference",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/@strategist.uvt/alabama.ink"
+  },
+  {
+    "op": "mv",
+    "from": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/@strategist.uvt/cotton.swi",
+    "to": "GENERATE_INTERFACE.MXU/PRACTICAL_CONCRETE_PANTS_BERKSHIRE_EXTEND.ONETOC/CREDIT_CARD_ACCOUNT.CHAT/OREGON_QUANTIFYING.CSH/JERSEY_PROJECT_CAUSEWAY.CIF"
+  },
+  { "op": "create_file", "path": "tasty_system.nnw/infrastructure.qxb" },
+  {
+    "op": "reference",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/turquoise_pizza.ghf"
+  },
+  {
+    "op": "mkdir",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/mexico_streets.texinfo/:sas_handcrafted_handmade.osfpvg"
+  },
+  {
+    "op": "mv",
+    "from": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/@strategist.uvt/&back_end.wpl",
+    "to": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/@strategist.uvt/cotton.swi"
+  },
+  {
+    "op": "mv",
+    "from": "../outside/plum_sausages.mp21",
+    "to": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/credit_card_account.chat/@strategist.uvt/cotton.swi/back_up_hungary.stylus"
+  },
+  {
+    "op": "create_file",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/mexico_streets.texinfo/white_moldova_calculating.m4p/png.mp3",
+    "size": 16404
+  },
+  { "op": "sleep", "duration": 4000 },
+  {
+    "op": "reference",
+    "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/mexico_streets.texinfo/white_moldova_calculating.m4p"
+  },
+  {
+    "op": "mv",
+    "from": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/mexico_streets.texinfo/:sas_handcrafted_handmade.osfpvg",
+    "to": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/upward_trending_bricks_and_clicks.gph"
+  }
+]

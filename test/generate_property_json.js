@@ -4,7 +4,7 @@
 const faker = require('faker')
 
 const nbInitOps = 32
-const nbRunOps = 128
+const nbRunOps = 256
 const specialChars = [':', '-', 'é', ' ', '%', ',', '&', '@', 'É', 'Ç']
 
 const knownPaths = []
@@ -117,6 +117,11 @@ function rm () {
   return { op: 'rm', path: p }
 }
 
+function addReference () {
+  const p = knownPath()
+  return { op: 'reference', path: p }
+}
+
 function stopOrRestart () {
   if (running) {
     running = false
@@ -171,13 +176,14 @@ function run (ops) {
       [1, mvToOutside],
       [1, mvFromOutside],
       [5, rm],
+      [3, addReference],
       [1, stopOrRestart],
-      [1, sleep]
+      [2, sleep]
     ])
     ops.push(op)
   }
   if (!running) {
-    ops.push({ op: 'restart ' })
+    ops.push({ op: 'restart' })
   }
 }
 
