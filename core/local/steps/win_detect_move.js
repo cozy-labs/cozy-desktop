@@ -8,6 +8,8 @@ const log = logger({
 })
 
 // Wait at most this delay (in milliseconds) to see if it's a move.
+// TODO tweak the value (the initial value was chosen because it looks like a
+//      good value, it is not something that was computed)
 const DELAY = 1000
 
 /*::

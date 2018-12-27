@@ -254,9 +254,6 @@ module.exports = class LocalWatcher {
     return null
   }
 
-  // @PERFOPTIM ?
-  //   - db.allDocs(keys: events.pick(path))
-  //   - process.exec('md5sum ' + paths.join(' '))
   async prepareEvents (events /*: ChokidarEvent[] */, initialScan /*: ?InitialScan */) /*: Promise<LocalEvent[]> */ {
     return Promise.map(events, async (e /*: ChokidarEvent */) /*: Promise<?LocalEvent> */ => {
       const abspath = path.join(this.syncPath, e.path)
@@ -276,7 +273,6 @@ module.exports = class LocalWatcher {
             e2.md5sum = await this.checksum(e.path)
             log.trace({path: e.path, md5sum: e2.md5sum}, 'Checksum complete')
           } catch (err) {
-            // FIXME: err.code === EISDIR => keep the event? (e.g. rm foo && mkdir foo)
             if (err.code.match(/ENOENT/)) {
               log.debug({path: e.path, ino: e.stats.ino}, 'Checksum failed: file does not exist anymore')
               e2.wip = true
