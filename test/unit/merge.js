@@ -278,6 +278,44 @@ describe('Merge', function () {
         })
       })
 
+      onPlatform('win32', () => {
+        it('resolves a conflict after an offline replacement', async function () {
+          const initial = await builders.metafile().path('yafile').sides({local: 1}).fileid('37').data('initial content').create()
+          const synced = await builders.metafile(initial).sides({local: 2, remote: 2}).create()
+          const replacement = builders.metafile(synced).unmerged('local').fileid('38').data('replaced content').newerThan(synced).build()
+
+          const sideEffects = await mergeSideEffects(this, () =>
+            this.merge.addFileAsync('local', _.cloneDeep(replacement))
+          )
+
+          should(sideEffects).deepEqual({
+            savedDocs: [],
+            resolvedConflicts: [
+              ['local', _.pick(replacement, ['path'])]
+            ]
+          })
+        })
+      })
+
+      onPlatforms(['linux', 'darwin'], () => {
+        it('resolves a conflict after an offline replacement', async function () {
+          const initial = await builders.metafile().path('yafile').sides({local: 1}).ino(37).data('initial content').create()
+          const synced = await builders.metafile(initial).sides({local: 2, remote: 2}).create()
+          const replacement = builders.metafile(synced).unmerged('local').ino(38).data('replaced content').newerThan(synced).build()
+
+          const sideEffects = await mergeSideEffects(this, () =>
+            this.merge.addFileAsync('local', _.cloneDeep(replacement))
+          )
+
+          should(sideEffects).deepEqual({
+            savedDocs: [],
+            resolvedConflicts: [
+              ['local', _.pick(replacement, ['path'])]
+            ]
+          })
+        })
+      })
+
       it('resolves a conflict between an unchanged file & an unsynced remote update', async function () {
         const initial = await builders.metafile().sides({local: 1}).data('previous content').create()
         const synced = await builders.metafile(initial).sides({local: 2, remote: 2}).create()

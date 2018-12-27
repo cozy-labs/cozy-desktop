@@ -158,6 +158,14 @@ class Merge {
     }
     metadata.assignMaxDate(doc, file)
     if (file) {
+      let inConflict = doc.ino && doc.ino !== file.ino
+      if (file.fileid && doc.fileid) {
+        inConflict = file.fileid !== doc.fileid
+      }
+      if (inConflict) {
+        return this.resolveConflictAsync(side, doc, file)
+      }
+
       doc._rev = file._rev
       doc.moveFrom = file.moveFrom
       if (doc.tags == null) { doc.tags = file.tags || [] }
