@@ -281,7 +281,7 @@ describe('Merge', function () {
       it('resolves a conflict between an unchanged file & an unsynced remote update', async function () {
         const initial = await builders.metafile().sides({local: 1}).data('previous content').create()
         const synced = await builders.metafile(initial).sides({local: 2, remote: 2}).create()
-        await builders.metafile(synced).sides({local: 2, remote: 3}).data('remote update').create()
+        const remoteUpdate = await builders.metafile(synced).sides({local: 2, remote: 3}).data('remote update').create()
         const sameAsSynced = builders.metafile(synced).unmerged('local').build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -291,7 +291,7 @@ describe('Merge', function () {
         should(sideEffects).deepEqual({
           savedDocs: [],
           resolvedConflicts: [
-            ['local', _.pick(sameAsSynced, ['path'])]
+            ['local', _.pick(remoteUpdate, ['path', 'remote'])]
           ]
         })
       })
@@ -300,17 +300,17 @@ describe('Merge', function () {
         const initial = await builders.metafile().sides({local: 1}).data('initial content').create()
         const synced = await builders.metafile(initial).sides({local: 2, remote: 2}).create()
 
-        await builders.metafile(synced).sides({local: 2, remote: 3}).data('remote update').create()
+        const remoteUpdate = await builders.metafile(synced).sides({local: 2, remote: 3}).data('remote update').create()
         const localUpdate = builders.metafile(synced).unmerged('local').data('local update').build()
 
         const sideEffects = await mergeSideEffects(this, () =>
-          this.merge.addFileAsync('local', localUpdate)
+          this.merge.addFileAsync('local', _.cloneDeep(localUpdate))
         )
 
         should(sideEffects).deepEqual({
           savedDocs: [],
           resolvedConflicts: [
-            ['local', _.pick(localUpdate, ['path'])]
+            ['local', _.pick(remoteUpdate, ['path', 'remote'])]
           ]
         })
       })

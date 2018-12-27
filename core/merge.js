@@ -136,8 +136,8 @@ class Merge {
       }
     }
     if (file) {
-      if ((side === 'local') && (file.sides.local != null)) {
-        return this.resolveInitialAddAsync(side, doc, file)
+      if (side === 'local' && file.sides.local != null) {
+        return this.updateFileAsync('local', doc)
       } else {
         return this.resolveConflictAsync(side, doc, file)
       }
@@ -145,36 +145,6 @@ class Merge {
     if (doc.tags == null) { doc.tags = [] }
     await this.ensureParentExistAsync(side, doc)
     return this.pouch.put(doc)
-  }
-
-  // When a file is modified when cozy-desktop is not running,
-  // it is detected as a new file when cozy-desktop is started.
-  async resolveInitialAddAsync (side /*: SideName */, doc /*: Metadata */, file /*: Metadata */) {
-    if (!file.sides.remote) {
-      // The file was updated on local before being pushed to remote
-      return this.updateFileAsync(side, doc)
-    } else if (file.sides.local && file.sides.local >= file.sides.remote) {
-      // The file was updated on local after being synched to remote
-      return this.updateFileAsync(side, doc)
-    } else if (file.sides.local && file.sides.local < file.sides.remote) {
-      delete doc.remote
-      delete doc.sides
-      metadata.markSide('local', doc)
-      return this.resolveConflictAsync('local', doc, doc)
-    } else {
-      // The file was updated on remote and maybe in local too
-      let shortRev = file.sides.local
-      try {
-        const prev = await this.pouch.getPreviousRevAsync(doc._id, shortRev)
-        if (prev.md5sum === doc.md5sum) {
-          // The file was only updated on remote
-          return null
-        }
-      } catch (_) {}
-      // It's safer to handle it as a conflict
-      if (doc.remote == null) { doc.remote = file.remote }
-      return this.resolveConflictAsync('remote', doc, file)
-    }
   }
 
   // Update a file, when its metadata or its content has changed
