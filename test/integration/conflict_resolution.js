@@ -49,6 +49,54 @@ describe('Conflict resolution', () => {
     })
   })
 
+  describe('with unmerged local and remote changes', () => {
+    beforeEach(async () => {
+      // Create file and synchronise it
+      await helpers.local.syncDir.outputFile('concurrent-edited', 'local-content')
+      await helpers.local.scan()
+      await helpers.syncAll()
+
+      // Update file remotely
+      const remoteFile = await cozy.files.statByPath('/concurrent-edited')
+      await helpers._pouch.byRemoteIdMaybeAsync(remoteFile._id)
+      await cozy.files.updateById(remoteFile._id, 'remote-content', {contentType: 'text/plain'})
+    })
+
+    const expectedTree = [
+      'concurrent-edited',
+      'concurrent-edited-conflict-...'
+    ]
+
+    it('local change', async () => {
+      await helpers.local.syncDir.outputFile('concurrent-edited', 'new-local-content')
+
+      await helpers.local.scan()
+      await helpers.remote.pullChanges()
+      await helpers.syncAll()
+      await helpers.local.scan()
+      await helpers.remote.pullChanges()
+      await helpers.syncAll()
+
+      should(await helpers.trees()).deepEqual({remote: expectedTree, local: expectedTree})
+    })
+
+    it('local replacement', async () => {
+      // Replace file locally with new one (ino needs to be different)
+      await helpers.local.syncDir.outputFile('concurrent-edited2', 'new-local-content')
+      await helpers.local.syncDir.unlink('concurrent-edited')
+      await helpers.local.syncDir.move('concurrent-edited2', 'concurrent-edited')
+
+      await helpers.local.scan()
+      await helpers.remote.pullChanges()
+      await helpers.syncAll()
+      await helpers.local.scan()
+      await helpers.remote.pullChanges()
+      await helpers.syncAll()
+
+      should(await helpers.trees()).deepEqual({remote: expectedTree, local: expectedTree})
+    })
+  })
+
   describe('concurrent edit', () => {
     let remoteFile, pouchFile
     beforeEach(async () => {

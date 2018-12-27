@@ -224,92 +224,95 @@ describe('Merge', function () {
       })
     })
 
-    it('overrides an unsynced local addition with a local update detected by initial scan', async function () {
-      const initialFile = await builders.metafile().sides({local: 1}).ino(123).noRemote().data('initial content').create()
-      const offUpdate = await builders.metafile(initialFile).unmerged('local').data('off update').newerThan(initialFile).build()
+    describe('on initial scan', function () {
+      it('overrides an unsynced local addition with a local update', async function () {
+        const initialFile = await builders.metafile().sides({local: 1}).ino(123).noRemote().data('initial content').create()
+        const offUpdate = await builders.metafile(initialFile).unmerged('local').data('off update').newerThan(initialFile).build()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-      this.merge.addFileAsync('local', _.cloneDeep(offUpdate))
-      )
+        const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.addFileAsync('local', _.cloneDeep(offUpdate))
+        )
 
-      should(sideEffects).deepEqual({
-        savedDocs: [{
-          _id: initialFile._id,
-          docType: 'file',
-          ino: initialFile.ino,
-          md5sum: offUpdate.md5sum,
-          path: initialFile.path,
-          sides: {local: 2},
-          size: offUpdate.size,
-          tags: initialFile.tags, // tags can't be updated on the local side
-          updated_at: offUpdate.updated_at
-        }],
-        resolvedConflicts: []
+        should(sideEffects).deepEqual({
+          savedDocs: [{
+            _id: initialFile._id,
+            docType: 'file',
+            ino: initialFile.ino,
+            md5sum: offUpdate.md5sum,
+            path: initialFile.path,
+            sides: {local: 2},
+            size: offUpdate.size,
+            tags: initialFile.tags, // tags can't be updated on the local side
+            updated_at: offUpdate.updated_at
+          }],
+          resolvedConflicts: []
+        })
       })
-    })
 
-    it('overrides an unsynced local update with a new one detected by local initial scan', async function () {
-      const initial = await builders.metafile().path('yafile').sides({local: 1}).ino(37).data('initial content').create()
-      const synced = await builders.metafile(initial).sides({local: 2, remote: 2}).create()
-      const firstUpdate = await builders.metafile(synced).sides({local: 3, remote: 2}).data('first update').create()
-      const secondUpdate = builders.metafile(firstUpdate).unmerged('local').data('second update').newerThan(firstUpdate).build()
+      it('overrides an unsynced local update with a new one', async function () {
+        const initial = await builders.metafile().path('yafile').sides({local: 1}).ino(37).data('initial content').create()
+        const synced = await builders.metafile(initial).sides({local: 2, remote: 2}).create()
+        const firstUpdate = await builders.metafile(synced).sides({local: 3, remote: 2}).data('first update').create()
+        const secondUpdate = builders.metafile(firstUpdate).unmerged('local').data('second update').newerThan(firstUpdate).build()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.addFileAsync('local', _.cloneDeep(secondUpdate))
-      )
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.addFileAsync('local', _.cloneDeep(secondUpdate))
+        )
 
-      should(sideEffects).deepEqual({
-        savedDocs: [
-          {
-            _id: initial._id,
-            docType: initial.docType,
-            ino: initial.ino,
-            md5sum: secondUpdate.md5sum,
-            path: initial.path,
-            remote: synced.remote,
-            sides: {local: 4, remote: 2},
-            size: secondUpdate.size,
-            tags: initial.tags, // can't have been updated on the local side
-            updated_at: secondUpdate.updated_at
-          }
-        ],
-        resolvedConflicts: []
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            {
+              _id: initial._id,
+              docType: initial.docType,
+              ino: initial.ino,
+              md5sum: secondUpdate.md5sum,
+              path: initial.path,
+              remote: synced.remote,
+              sides: {local: 4, remote: 2},
+              size: secondUpdate.size,
+              tags: initial.tags, // can't have been updated on the local side
+              updated_at: secondUpdate.updated_at
+            }
+          ],
+          resolvedConflicts: []
+        })
       })
-    })
 
-    it('does not override unsynced remote update with local initial scan of previous file content', async function () {
-      const initial = await builders.metafile().sides({local: 1}).data('previous content').create()
-      const synced = await builders.metafile(initial).sides({local: 2, remote: 2}).create()
-      await builders.metafile(synced).sides({local: 2, remote: 3}).data('remote update').create()
-      const sameAsSynced = builders.metafile(synced).unmerged('local').build()
+      it('resolves a conflict between an unchanged file & an unsynced remote update', async function () {
+        const initial = await builders.metafile().sides({local: 1}).data('previous content').create()
+        const synced = await builders.metafile(initial).sides({local: 2, remote: 2}).create()
+        await builders.metafile(synced).sides({local: 2, remote: 3}).data('remote update').create()
+        const sameAsSynced = builders.metafile(synced).unmerged('local').build()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.addFileAsync('local', _.cloneDeep(sameAsSynced))
-      )
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.addFileAsync('local', _.cloneDeep(sameAsSynced))
+        )
 
-      should(sideEffects).deepEqual({
-        savedDocs: [],
-        resolvedConflicts: []
+        should(sideEffects).deepEqual({
+          savedDocs: [],
+          resolvedConflicts: [
+            ['local', _.pick(sameAsSynced, ['path'])]
+          ]
+        })
       })
-    })
 
-    it('resolves a conflict between a local update detected on initial scan & an already merged remote update', async function () {
-      const initial = await builders.metafile().sides({local: 1}).data('initial content').create()
-      const synced = await builders.metafile(initial).sides({local: 2, remote: 2}).create()
-      const remoteUpdate = await builders.metafile(synced).sides({local: 2, remote: 3}).data('remote update').create()
-      const localUpdate = builders.metafile(synced).unmerged('local').data('local update').build()
+      it('resolves a conflict between a local update & an already merged remote update', async function () {
+        const initial = await builders.metafile().sides({local: 1}).data('initial content').create()
+        const synced = await builders.metafile(initial).sides({local: 2, remote: 2}).create()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.addFileAsync('local', localUpdate)
-      )
+        await builders.metafile(synced).sides({local: 2, remote: 3}).data('remote update').create()
+        const localUpdate = builders.metafile(synced).unmerged('local').data('local update').build()
 
-      should(sideEffects).deepEqual({
-        // FIXME: Local update won't be merged until next change/restart?
-        // FIXME: Is remote version properly dissociated from local one?
-        savedDocs: [],
-        resolvedConflicts: [
-          ['remote', _.pick(remoteUpdate, ['path', 'remote'])]
-        ]
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.addFileAsync('local', localUpdate)
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [],
+          resolvedConflicts: [
+            ['local', _.pick(localUpdate, ['path'])]
+          ]
+        })
       })
     })
   })
