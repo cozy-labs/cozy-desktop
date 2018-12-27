@@ -156,6 +156,11 @@ class Merge {
     } else if (file.sides.local && file.sides.local >= file.sides.remote) {
       // The file was updated on local after being synched to remote
       return this.updateFileAsync(side, doc)
+    } else if (file.sides.local && file.sides.local < file.sides.remote) {
+      delete doc.remote
+      delete doc.sides
+      metadata.markSide('local', doc)
+      return this.resolveConflictAsync('local', doc, doc)
     } else {
       // The file was updated on remote and maybe in local too
       let shortRev = file.sides.local
