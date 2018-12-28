@@ -11,7 +11,6 @@ const log = logger({
 
 /*::
 import type Buffer from './buffer'
-import type { Checksumer } from '../checksumer'
 */
 
 // This step adds some basic informations about events: _id, docType and stats.

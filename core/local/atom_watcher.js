@@ -14,6 +14,7 @@ const scanFolder = require('./steps/scan_folder')
 const awaitWriteFinish = require('./steps/await_write_finish')
 const initialDiff = require('./steps/initial_diff')
 const addChecksum = require('./steps/add_checksum')
+const incompleteFixer = require('./steps/incomplete_fixer')
 const dispatch = require('./steps/dispatch')
 
 /*::
@@ -58,10 +59,12 @@ module.exports = class AtomWatcher {
     let steps
     if (process.platform === 'linux') {
       this.producer = new LinuxProducer(this)
-      steps = [addInfos, filterIgnored, scanFolder, awaitWriteFinish, initialDiff, addChecksum]
+      steps = [addInfos, filterIgnored, scanFolder,
+        awaitWriteFinish, initialDiff, addChecksum, incompleteFixer]
     } else if (process.platform === 'win32') {
       this.producer = new WinProducer(this)
-      steps = [addInfos, filterIgnored, winDetectMove, scanFolder, awaitWriteFinish, initialDiff, addChecksum]
+      steps = [addInfos, filterIgnored, winDetectMove, scanFolder,
+        awaitWriteFinish, initialDiff, addChecksum, incompleteFixer]
     } else {
       throw new Error('The experimental watcher is not available on this platform')
     }
