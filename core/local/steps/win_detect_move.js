@@ -38,7 +38,9 @@ async function winDetectMove (buffer, out, pouch) {
       }
       const p = pending.shift()
       clearTimeout(p.timeout)
-      out.push(p.events)
+      if (p.events.length > 0) {
+        out.push(p.events)
+      }
     }
   }
 
