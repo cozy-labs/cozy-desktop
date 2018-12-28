@@ -1,5 +1,28 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.11.2-beta.2 - 2018-12-28
+
+Improvements for all users:
+
+- We've improved the conflict resolution after changes made to local files when
+  the client was stopped. In this situation, we would resolve the conflict on
+  the remote Cozy and end up renaming the local copy with the `-conflict-`
+  suffix and could overwrite its content with the remote content thus losing
+  the latest local changes.
+  We're now resolving the conflict locally, keeping the remote version
+  untouched. This has the additionnal benefit of keeping shared files free from
+  the `-conflict-` suffix.
+- A function we introduced in version 3.11.0 was responsible for an increase in
+  false negatives for an invariant check, leading to errors being thrown and
+  synchronisations blocked.
+  We've reworked said function in a way that won't trigger false negatives for
+  the invariant which will reduce the number of errors and thus block
+  synchronisations.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.11.2-beta.1 - 2018-12-21
 
 Improvements for all users:
