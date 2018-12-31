@@ -79,8 +79,8 @@ const runActions = (scenario /*: * */, cozy /*: * */) => {
           })
         }
 
-      case '>>':
-        debug('- >>', action.path)
+      case 'update_file':
+        debug('- update_file', action.path)
         {
           const remoteFile = await cozy.files.statByPath(`/${action.path}`)
           const resp = await cozy.files.downloadByPath(`/${action.path}`)

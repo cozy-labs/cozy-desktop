@@ -11,7 +11,7 @@ module.exports = ({
   ],
   actions: [
     {type: 'mv', src: 'src', dst: 'dst'},
-    {type: '>>', path: 'dst/file'}
+    {type: 'update_file', path: 'dst/file'}
   ],
   expected: {
     tree: [
