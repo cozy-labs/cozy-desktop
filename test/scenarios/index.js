@@ -37,7 +37,7 @@ type FSTrashAction = {|
 |}
 
 type FSUpdateFileAction = {|
-  type: '>>',
+  type: 'update_file',
   path: string
 |}
 

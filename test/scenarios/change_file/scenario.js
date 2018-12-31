@@ -7,7 +7,7 @@ module.exports = ({
     { ino: 1, path: 'file' }
   ],
   actions: [
-    {type: '>>', path: 'file'}
+    {type: 'update_file', path: 'file'}
   ],
   expected: {
     tree: [

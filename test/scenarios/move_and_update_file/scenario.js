@@ -11,7 +11,7 @@ module.exports = ({
   actions: [
     {type: 'mv', src: 'src/file', dst: 'dst/file'},
     {type: 'wait', ms: 1500},
-    {type: '>>', path: 'dst/file'}
+    {type: 'update_file', path: 'dst/file'}
   ],
   expected: {
     tree: [
