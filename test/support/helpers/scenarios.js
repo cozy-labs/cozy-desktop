@@ -197,8 +197,8 @@ module.exports.runActions = (scenario, abspath, opts /*: {skipWait?: true} */ = 
         debug('- mkdir', action.path)
         return fse.ensureDir(abspath(action.path))
 
-      case '>':
-        debug('- >', action.path)
+      case 'create_file':
+        debug('- create_file', action.path)
         return fse.outputFile(abspath(action.path), 'whatever')
 
       case '>>':

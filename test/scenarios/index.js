@@ -8,8 +8,8 @@ type FSAddDirAction = {|
   path: string
 |}
 
-type FSAddFileAction = {|
-  type: '>',
+type FSCreateFileAction = {|
+  type: 'create_file',
   path: string
 |}
 
@@ -48,7 +48,7 @@ type FSWaitAction = {|
 
 type FSAction
   = FSAddDirAction
-  | FSAddFileAction
+  | FSCreateFileAction
   | FSDeleteAction
   | FSMoveAction
   | FSRestoreAction

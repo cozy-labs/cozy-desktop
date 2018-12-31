@@ -8,7 +8,7 @@ module.exports = ({
   ],
   actions: [
     {type: 'delete', path: 'foo'},
-    {type: '>', path: 'foo'}
+    {type: 'create_file', path: 'foo'}
   ],
   expected: {
     tree: [

@@ -10,8 +10,8 @@ module.exports = ({
   actions: [
     {type: 'mkdir', path: 'FOO'},
     {type: 'mkdir', path: 'FOO/subdir'},
-    {type: '>',     path: 'FOO/subdir/file'},
-    {type: '>',     path: 'foo'}
+    {type: 'create_file', path: 'FOO/subdir/file'},
+    {type: 'create_file', path: 'foo'}
   ],
   expected: {
     localTree: [
