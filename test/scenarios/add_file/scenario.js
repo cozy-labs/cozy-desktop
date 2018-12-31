@@ -4,7 +4,7 @@
 
 module.exports = ({
   actions: [
-    {type: '>', path: 'file'}
+    {type: 'create_file', path: 'file'}
   ],
   expected: {
     tree: [

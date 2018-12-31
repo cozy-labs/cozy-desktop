@@ -34,7 +34,7 @@ const createInitialTree = async function (scenario /*: * */, cozy /*: * */, pouc
         remote: {_id: remoteDir._id, _rev: remoteDir._rev}
       })
     } else {
-      debug('- >', relpath)
+      debug('- create_file', relpath)
       const parent = await cozy.files.statByPath(path.posix.dirname(relpath))
       let remoteFile = await cozy.files.create(Buffer.from(''), {
         dirID: parent._id,
@@ -67,8 +67,8 @@ const runActions = (scenario /*: * */, cozy /*: * */) => {
         debug('- mkdir', action.path)
         return cozy.files.createDirectoryByPath(`/${action.path}`)
 
-      case '>':
-        debug('- >', action.path)
+      case 'create_file':
+        debug('- create_file', action.path)
         {
           const parentDir = await cozy.files.statByPath(
             `/${path.posix.dirname(action.path)}`)
