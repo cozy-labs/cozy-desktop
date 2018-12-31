@@ -3,14 +3,48 @@
 /*::
 import type { SideName } from '../../core/metadata'
 
-type FSAddDirAction = {|type: 'mkdir', path: string|}
-type FSAddFileAction = {|type: '>', path: string|}
-type FSDeleteAction = {|type: 'delete', path: string|}
-type FSMoveAction = {|type: 'mv', force?: true, merge?: true, src: string, dst: string|}
-type FSRestoreAction = {|type: 'restore', pathInTrash: string|}
-type FSTrashAction = {|type: 'trash', path: string|}
-type FSUpdateFileAction = {|type: '>>', path: string|}
-type FSWaitAction = {|type: 'wait', ms: number|}
+type FSAddDirAction = {|
+  type: 'mkdir',
+  path: string
+|}
+
+type FSAddFileAction = {|
+  type: '>',
+  path: string
+|}
+
+type FSDeleteAction = {|
+  type: 'delete',
+  path: string
+|}
+
+type FSMoveAction = {|
+  type: 'mv',
+  force?: true,
+  merge?: true,
+  src: string,
+  dst: string
+|}
+
+type FSRestoreAction = {|
+  type: 'restore',
+  pathInTrash: string
+|}
+
+type FSTrashAction = {|
+  type: 'trash',
+  path: string
+|}
+
+type FSUpdateFileAction = {|
+  type: '>>',
+  path: string
+|}
+
+type FSWaitAction = {|
+  type: 'wait',
+  ms: number
+|}
 
 type FSAction
   = FSAddDirAction
