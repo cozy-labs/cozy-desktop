@@ -154,7 +154,9 @@ class Merge {
     }
     doc.sides[side] = ++rev
     doc._rev = info.rev
-    return this.pouch.put(doc)
+    const result = await this.pouch.put(doc)
+    delete doc._rev
+    return result
   }
 
   // Update a file, when its metadata or its content has changed
@@ -241,7 +243,9 @@ class Merge {
     }
     doc.sides[side] = ++rev
     doc._rev = info.rev
-    return this.pouch.put(doc)
+    const result = await this.pouch.put(doc)
+    delete doc._rev
+    return result
   }
 
   // Rename or move a file

@@ -102,6 +102,39 @@ describe('Merge', function () {
       res.sides.local.should.equal(1)
     })
 
+    describe('when the path was used in the past', function () {
+      it('saves the new file with the correct side number', async function () {
+        let was = {
+          _id: metadata.id('foo/file-created-deleted-and-then-recreated'),
+          path: 'foo/file-created-deleted-and-then-recreated',
+          md5sum: 'e2985ac920325989562a6537abde7668',
+          docType: 'file',
+          updated_at: new Date(),
+          tags: [],
+          sides: {
+            local: 1
+          }
+        }
+        const result = await this.pouch.db.put(was)
+        was._rev = result.rev
+        await this.pouch.remove(was)
+        let doc = {
+          _id: metadata.id('foo/file-created-deleted-and-then-recreated'),
+          path: 'foo/file-created-deleted-and-then-recreated',
+          md5sum: '4721278923f9a4be208ad99e39be757c',
+          docType: 'file',
+          updated_at: new Date(),
+          tags: []
+        }
+        await this.merge.addFileAsync(this.side, doc)
+        const res = await this.pouch.db.get(doc._id)
+        doc.updated_at = doc.updated_at.toISOString()
+        res.should.have.properties(doc)
+        const gen = metadata.extractRevNumber(res)
+        res.sides.local.should.equal(gen)
+      })
+    })
+
     describe('when a file with the same path exists', function () {
       beforeEach('create a file', async function () {
         this.file = {
@@ -500,6 +533,37 @@ describe('Merge', function () {
       const result = await this.pouch.db.get(doc._id)
       should(result._rev).not.equal(old._rev)
       should(result).have.properties(_.omit(doc, ['_rev', 'fileid']))
+    })
+
+    describe('when the path was used in the past', function () {
+      it('saves the new folder with the correct side number', async function () {
+        let was = {
+          _id: metadata.id('foo/folder-created-deleted-and-then-recreated'),
+          path: 'foo/folder-created-deleted-and-then-recreated',
+          docType: 'folder',
+          updated_at: new Date(),
+          tags: [],
+          sides: {
+            local: 1
+          }
+        }
+        const result = await this.pouch.db.put(was)
+        was._rev = result.rev
+        await this.pouch.remove(was)
+        let doc = {
+          _id: metadata.id('foo/folder-created-deleted-and-then-recreated'),
+          path: 'foo/folder-created-deleted-and-then-recreated',
+          docType: 'folder',
+          updated_at: new Date(),
+          tags: []
+        }
+        await this.merge.putFolderAsync(this.side, doc)
+        const res = await this.pouch.db.get(doc._id)
+        doc.updated_at = doc.updated_at.toISOString()
+        res.should.have.properties(doc)
+        const gen = metadata.extractRevNumber(res)
+        res.sides.local.should.equal(gen)
+      })
     })
 
     it('does nothing when existing folder is up to date', async function () {
