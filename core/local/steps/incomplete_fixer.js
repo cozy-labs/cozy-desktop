@@ -39,7 +39,7 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string , c
     for (const event of events) {
       if (event.incomplete) {
         const now = new Date()
-        incompletes.push({ event, timestamp: +now })
+        incompletes.push({ event, timestamp: Number(now) })
         continue
       }
       batch.push(event)
@@ -51,7 +51,7 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string , c
         continue
       }
 
-      const limit = +new Date() - DELAY
+      const limit = Number(new Date()) - DELAY
       for (let i = 0; i < incompletes.length; i++) {
         const item = incompletes[i]
 
@@ -62,7 +62,7 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string , c
           continue
         }
 
-        if (event.oldPath && item.event.path.startsWith(event.oldPath)) {
+        if (event.oldPath && (item.event.path + '/').startsWith(event.oldPath)) {
           // We have a match, try to rebuild the incomplete event
           try {
             const p = item.event.path.replace(event.oldPath, event.path)
