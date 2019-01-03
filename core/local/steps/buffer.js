@@ -20,7 +20,7 @@ module.exports = class Buffer {
     this._buffer = []
   }
 
-  push (batch /*: Batch */) {
+  push (batch /*: Batch */) /*: void */ {
     if (this._resolve) {
       this._resolve(batch)
       this._resolve = null
@@ -39,20 +39,20 @@ module.exports = class Buffer {
     })
   }
 
-  async forEach (fn /*: (Batch) => void */) {
+  async forEach (fn /*: (Batch) => void */) /*: Promise<void> */ {
     while (true) {
       fn(await this.pop())
     }
   }
 
-  async asyncForEach (fn /*: (Batch) => Promise<*> */) {
+  async asyncForEach (fn /*: (Batch) => Promise<void> */) /*: Promise<void> */ {
     while (true) {
       const batch = await this.pop()
       await fn(batch)
     }
   }
 
-  async doMap (fn /*: (Batch) => Batch */, buffer /*: Buffer */) {
+  async doMap (fn /*: (Batch) => Batch */, buffer /*: Buffer */) /*: Promise<void> */ {
     while (true) {
       const batch = fn(await this.pop())
       buffer.push(batch)
@@ -65,7 +65,7 @@ module.exports = class Buffer {
     return buffer
   }
 
-  async doAsyncMap (fn /*: (Batch) => Promise<Batch> */, buffer /*: Buffer */) {
+  async doAsyncMap (fn /*: (Batch) => Promise<Batch> */, buffer /*: Buffer */) /*: Promise<void> */ {
     while (true) {
       const batch = await this.pop()
       const after = await fn(batch)
