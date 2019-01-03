@@ -38,7 +38,8 @@ type FSTrashAction = {|
 
 type FSUpdateFileAction = {|
   type: 'update_file',
-  path: string
+  path: string,
+  content: string
 |}
 
 type FSWaitAction = {|

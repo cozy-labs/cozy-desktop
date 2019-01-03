@@ -203,7 +203,7 @@ module.exports.runActions = (scenario, abspath, opts /*: {skipWait?: true} */ = 
 
       case 'update_file':
         debug('- update_file', action.path)
-        return fse.appendFile(abspath(action.path), ' blah')
+        return fse.writeFile(abspath(action.path), action.content)
 
       case 'trash':
         debug('- trash', action.path)

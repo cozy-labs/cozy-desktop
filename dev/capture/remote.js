@@ -83,9 +83,7 @@ const runActions = (scenario /*: * */, cozy /*: * */) => {
         debug('- update_file', action.path)
         {
           const remoteFile = await cozy.files.statByPath(`/${action.path}`)
-          const resp = await cozy.files.downloadByPath(`/${action.path}`)
-          const contents = await resp.text()
-          return cozy.files.updateById(remoteFile._id, `${contents} blah`, {
+          return cozy.files.updateById(remoteFile._id, action.content, {
             contentType: 'text/plain'
           })
         }
