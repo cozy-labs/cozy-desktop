@@ -144,7 +144,19 @@ class Merge {
     }
     if (doc.tags == null) { doc.tags = [] }
     await this.ensureParentExistAsync(side, doc)
-    return this.pouch.put(doc)
+    const info = await this.pouch.put(doc)
+    // If a file has existed as this ID and was deleted, the pouchdb doc will
+    // have a revision higher than the expected 1-xxx, and we should update the
+    // side in this case
+    let rev = metadata.extractRevNumber({ _rev: info.rev })
+    if (rev === 1) {
+      return info
+    }
+    doc.sides[side] = ++rev
+    doc._rev = info.rev
+    const result = await this.pouch.put(doc)
+    delete doc._rev
+    return result
   }
 
   // Update a file, when its metadata or its content has changed
@@ -221,7 +233,19 @@ class Merge {
     }
     if (doc.tags == null) { doc.tags = [] }
     await this.ensureParentExistAsync(side, doc)
-    return this.pouch.put(doc)
+    const info = await this.pouch.put(doc)
+    // If a folder has existed as this ID and was deleted, the pouchdb doc will
+    // have a revision higher than the expected 1-xxx, and we should update the
+    // side in this case
+    let rev = metadata.extractRevNumber({ _rev: info.rev })
+    if (rev === 1) {
+      return info
+    }
+    doc.sides[side] = ++rev
+    doc._rev = info.rev
+    const result = await this.pouch.put(doc)
+    delete doc._rev
+    return result
   }
 
   // Rename or move a file

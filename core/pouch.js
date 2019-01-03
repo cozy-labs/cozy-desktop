@@ -116,7 +116,7 @@ class Pouch {
     return this.db.put(doc).asCallback(callback)
   }
 
-  async remove (doc /*: Metadata */) /*: Promise<*> */ {
+  remove (doc /*: Metadata */) /*: Promise<*> */ {
     return this.put(_.defaults({ _deleted: true }, doc))
   }
 
