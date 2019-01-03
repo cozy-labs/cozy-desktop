@@ -8,6 +8,7 @@ const FileMetadataBuilder = require('./metadata/file')
 const RemoteDirBuilder = require('./remote/dir')
 const RemoteFileBuilder = require('./remote/file')
 const StreamBuilder = require('./stream')
+const AtomWatcherEventBuilder = require('./atom_watcher_event')
 
 /*::
 import type { Cozy } from 'cozy-client-js'
@@ -86,5 +87,9 @@ module.exports = class Builders {
 
   stream () /*: StreamBuilder */ {
     return new StreamBuilder()
+  }
+
+  event () /*: AtomWatcherEventBuilder */ {
+    return new AtomWatcherEventBuilder()
   }
 }
