@@ -15,7 +15,7 @@ const DELAY = 200
 /*::
 import type { AtomWatcherEvent } from './event'
 
-type WaitingBatch = {
+type WaitingItem = {
   events: AtomWatcherEvent[],
   nbCandidates: number,
   timeout: TimeoutID
@@ -24,24 +24,25 @@ type WaitingBatch = {
 
 // TODO add unit tests and logs
 
+function sendReadyBatches (waiting /*: WaitingItem[] */, out /*: Buffer */) {
+  while (waiting.length > 0) {
+    if (waiting[0].nbCandidates !== 0) {
+      break
+    }
+    const item = waiting.shift()
+    clearTimeout(item.timeout)
+    if (item.events.length > 0) {
+      out.push(item.events)
+    }
+  }
+}
+
 // This is a port of awaitWriteFinish (aWF) from chokidar. It debounces write
 // events for files, as we can have several of them in a short lapse of time,
 // and computing the checksum several times in a row for the same file is not a
 // good idea.
-async function awaitWriteFinish (buffer, out) {
-  const waiting /*: WaitingBatch[] */ = []
-  const sendReadyBatches = () => {
-    while (waiting.length > 0) {
-      if (waiting[0].nbCandidates !== 0) {
-        break
-      }
-      const w = waiting.shift()
-      clearTimeout(w.timeout)
-      if (w.events.length > 0) {
-        out.push(w.events)
-      }
-    }
-  }
+async function awaitWriteFinish (buffer /*: Buffer */, out /*: Buffer */) {
+  const waiting /*: WaitingItem[] */ = []
 
   while (true) {
     // Wait for a new batch of events
@@ -52,7 +53,7 @@ async function awaitWriteFinish (buffer, out) {
       const event = events[i]
 
       // Ignore events that can't be debounced
-      if (event.action === 'initial-scan-done' || event.kind !== 'file') {
+      if (event.kind !== 'file') {
         continue
       }
 
@@ -90,12 +91,12 @@ async function awaitWriteFinish (buffer, out) {
     // Push the new batch of events in the queue
     const timeout = setTimeout(() => {
       out.push(waiting.shift().events)
-      sendReadyBatches()
+      sendReadyBatches(waiting, out)
     }, DELAY)
     waiting.push({ events, nbCandidates, timeout })
 
     // Look if some batches can be sent without waiting
-    sendReadyBatches()
+    sendReadyBatches(waiting, out)
   }
 }
 

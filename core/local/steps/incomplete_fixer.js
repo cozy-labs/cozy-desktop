@@ -56,13 +56,13 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string , c
         const item = incompletes[i]
 
         // Remove the expired incomplete events
-        if (i === 0 && item.timestamp < limit) {
+        if (item.timestamp < limit) {
           incompletes.shift()
           i--
           continue
         }
 
-        if (event.oldPath && (item.event.path + '/').startsWith(event.oldPath)) {
+        if (event.oldPath && item.event.path.startsWith(event.oldPath + '/')) {
           // We have a match, try to rebuild the incomplete event
           try {
             const p = item.event.path.replace(event.oldPath, event.path)
