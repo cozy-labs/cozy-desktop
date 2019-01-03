@@ -4,10 +4,10 @@
 
 module.exports = ({
   init: [
-    { ino: 1, path: 'file' }
+    {ino: 1, path: 'file', content: 'initial content'}
   ],
   actions: [
-    {type: 'update_file', path: 'file'}
+    {type: 'update_file', path: 'file', content: 'updated content'}
   ],
   expected: {
     tree: [
@@ -15,7 +15,7 @@ module.exports = ({
     ],
     remoteTrash: [],
     contents: {
-      'file': 'foo blah'
+      'file': 'updated content'
     }
   }
 } /*: Scenario */)
