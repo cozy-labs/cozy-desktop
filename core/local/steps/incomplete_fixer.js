@@ -57,7 +57,7 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string , c
 
         // Remove the expired incomplete events
         if (item.timestamp < limit) {
-          incompletes.shift()
+          incompletes.splice(i, 1)
           i--
           continue
         }
