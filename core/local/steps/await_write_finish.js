@@ -37,6 +37,19 @@ function sendReadyBatches (waiting /*: WaitingItem[] */, out /*: Buffer */) {
   }
 }
 
+// Count the candidates for debouncing with future events
+function countFileWriteEvents (events /*: AtomWatcherEvent[] */) /*: number */ {
+  let nbCandidates = 0
+  for (let i = 0; i < events.length; i++) {
+    const event = events[i]
+    if (event.kind === 'file' && ['created', 'modified'].includes(event.action)) {
+      nbCandidates++
+    }
+  }
+  return nbCandidates
+}
+
+// Look if we can debounce some waiting events with the current events
 function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] */) {
   for (let i = 0; i < events.length; i++) {
     const event = events[i]
@@ -74,19 +87,8 @@ async function awaitWriteFinish (buffer /*: Buffer */, out /*: Buffer */) {
   const waiting /*: WaitingItem[] */ = []
 
   while (true) {
-    // Wait for a new batch of events
     const events = await buffer.pop()
-    let nbCandidates = 0
-
-    // Count the candidates for debouncing with future events
-    for (let i = 0; i < events.length; i++) {
-      const event = events[i]
-      if (event.kind === 'file' && ['created', 'modified'].includes(event.action)) {
-        nbCandidates++
-      }
-    }
-
-    // Look if we can debounce some past events with the current event
+    let nbCandidates = countFileWriteEvents(events)
     debounce(waiting, events)
 
     // Push the new batch of events in the queue

@@ -23,6 +23,27 @@ type IncompleteItem = {
 }
 */
 
+async function rebuildIncompleteEvent (item /*: IncompleteItem */, event /*: AtomWatcherEvent */, opts /*: { syncPath: string , checksumer: Checksumer } */) /*: Promise<AtomWatcherEvent> */ {
+  // The || '' is just a trick to please flow
+  const oldPath /*: string */ = event.oldPath || ''
+  const p = item.event.path.replace(oldPath, event.path)
+  const absPath = path.join(opts.syncPath, p)
+  const stats = await stater.stat(absPath)
+  const kind = stater.kind(stats)
+  let md5sum
+  if (kind === 'file') {
+    md5sum = await opts.checksumer.push(absPath)
+  }
+  return {
+    action: item.event.action,
+    path: p,
+    _id: id(p),
+    kind,
+    stats,
+    md5sum
+  }
+}
+
 // When a file is added or updated, and it is moved just after, the first event
 // is marked as incomplete by addChecksum because we cannot compute the
 // checksum at the given path. But the event is still relevant, in particular if
@@ -38,8 +59,7 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string , c
     const batch = []
     for (const event of events) {
       if (event.incomplete) {
-        const now = new Date()
-        incompletes.push({ event, timestamp: Number(now) })
+        incompletes.push({ event, timestamp: Date.now() })
         continue
       }
       batch.push(event)
@@ -51,12 +71,12 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string , c
         continue
       }
 
-      const limit = Number(new Date()) - DELAY
+      const now = Date.now()
       for (let i = 0; i < incompletes.length; i++) {
         const item = incompletes[i]
 
         // Remove the expired incomplete events
-        if (item.timestamp < limit) {
+        if (item.timestamp + DELAY < now) {
           incompletes.splice(i, 1)
           i--
           continue
@@ -65,22 +85,8 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string , c
         if (event.oldPath && item.event.path.startsWith(event.oldPath + '/')) {
           // We have a match, try to rebuild the incomplete event
           try {
-            const p = item.event.path.replace(event.oldPath, event.path)
-            const absPath = path.join(opts.syncPath, p)
-            const stats = await stater.stat(absPath)
-            const kind = stater.kind(stats)
-            let md5sum
-            if (kind === 'file') {
-              md5sum = await opts.checksumer.push(absPath)
-            }
-            batch.push({
-              action: item.event.action,
-              path: p,
-              _id: id(p),
-              kind,
-              stats,
-              md5sum
-            })
+            const rebuilt = await rebuildIncompleteEvent(item, event, opts)
+            batch.push(rebuilt)
           } catch (err) {
             // If we have an error, there is probably not much that we can do
           }
