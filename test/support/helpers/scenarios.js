@@ -14,8 +14,6 @@ const { cozy } = require('./cozy')
 // eslint-disable-next-line no-console
 const debug = process.env.TESTDEBUG ? console.log : () => {}
 
-const disabledExtension = '.DISABLED'
-
 const scenariosDir = path.resolve(__dirname, '../../scenarios')
 
 const scenarioByPath = (module.exports.scenarioByPath = scenarioPath => {
@@ -26,8 +24,6 @@ const scenarioByPath = (module.exports.scenarioByPath = scenarioPath => {
     .replace(scenariosDir + path.sep, '')
     .replace(/\\/g, '/')
   scenario.path = scenarioPath
-  scenario.disabled =
-    scenarioPath.endsWith(disabledExtension) && 'scenario disabled'
 
   if (
     process.platform === 'win32' &&
@@ -83,6 +79,20 @@ if (module.exports.scenarios.length === 0) {
   )
 }
 
+const disabledScenario = scenario =>
+  typeof scenario.disabled === 'string' && scenario.disabled
+
+/**
+ * For historical reasons, `disabledScenarioTest()` may receive test names
+ * with file extension. Although it may be useless in many cases, stripping
+ * them will make sure code always works.
+ */
+const disabledScenarioTest = (scenario, testName) =>
+  disabledScenario(scenario) ||
+  _.get(scenario, ['disabled', testName.replace(path.extname(testName), '')])
+
+module.exports.disabledScenarioTest = disabledScenarioTest
+
 module.exports.loadFSEventFiles = scenario => {
   const eventFiles = glob.sync(
     path.join(path.dirname(scenario.path), 'local', '*.json*')
@@ -90,13 +100,13 @@ module.exports.loadFSEventFiles = scenario => {
   const disabledEventsFile = name => {
     if (process.platform === 'win32' && name.indexOf('win32') === -1) {
       return 'darwin/linux test'
-    } else if (name.endsWith(disabledExtension)) {
-      return 'disabled case'
+    } else {
+      return disabledScenarioTest(scenario, `local/${name}`)
     }
   }
   return eventFiles.map(f => {
     const name = path.basename(f)
-    const disabled = scenario.disabled || disabledEventsFile(name)
+    const disabled = disabledScenario(scenario) || disabledEventsFile(name)
     const events = fse.readJsonSync(f).map(e => {
       statsFixer(e)
       windowsPathFixer(name, e)
@@ -116,13 +126,13 @@ module.exports.loadAtomCaptures = scenario => {
       return 'linux test'
     } else if (process.platform === 'linux' && name.indexOf('win32') >= 0) {
       return 'win32 test'
-    } else if (name.endsWith(disabledExtension)) {
-      return 'disabled case'
+    } else {
+      return disabledScenarioTest(scenario, `atom/${name}`)
     }
   }
   return eventFiles.map(f => {
     const name = path.basename(f)
-    const disabled = scenario.disabled || disabledEventsFile(name)
+    const disabled = disabledScenario(scenario) || disabledEventsFile(name)
     const batches = fse.readJsonSync(f).map(batch =>
       batch.map(event => {
         statsFixer(event)
@@ -140,7 +150,7 @@ module.exports.loadRemoteChangesFiles = scenario => {
 
   return glob.sync(pattern).map(f => {
     const name = path.basename(f)
-    const disabled = scenario.disabled || f.endsWith(disabledExtension)
+    const disabled = disabledScenarioTest(scenario, 'remote')
     const changes = fse.readJsonSync(f)
     return { name, disabled, changes }
   })
