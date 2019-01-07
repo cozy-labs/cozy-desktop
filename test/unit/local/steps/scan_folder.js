@@ -7,30 +7,7 @@ const scanFolder = require('../../../../core/local/steps/scan_folder')
 const Buffer = require('../../../../core/local/steps/buffer')
 
 describe('core/local/steps/scan_folder', () => {
-  it('should call the producer scan for action `created`', async () => {
-    const batch = [
-      {
-        action: 'created',
-        kind: 'directory',
-        path: __dirname
-      }
-    ]
-    const buffer = new Buffer()
-    buffer.push(batch)
-    const opts = {
-      producer: {
-        start: () => Promise.resolve(),
-        stop: () => Promise.resolve(),
-        scan: sinon.stub().resolves()
-      }
-    }
-    const enhancedBuffer = scanFolder(buffer, opts)
-    const enhancedBatch = await enhancedBuffer.pop()
-    should(enhancedBatch).eql(batch)
-    should(opts.producer.scan).be.calledOnce()
-  })
-
-  it('should not call the producer scan for action other than `created`', async () => {
+  it('should call the producer scan for action `created` only', async () => {
     const batch = [
       {
         action: 'scan',
@@ -74,7 +51,7 @@ describe('core/local/steps/scan_folder', () => {
     }
     const enhancedBuffer = scanFolder(buffer, opts)
     const enhancedBatch = await enhancedBuffer.pop()
-    should(enhancedBatch).be.length(6)
+    should(enhancedBatch).be.length(batch.length)
     should(opts.producer.scan).be.calledOnce()
   })
 
@@ -107,7 +84,40 @@ describe('core/local/steps/scan_folder', () => {
     }
     const enhancedBuffer = scanFolder(buffer, opts)
     const enhancedBatch = await enhancedBuffer.pop()
-    should(enhancedBatch).be.length(3)
+    should(enhancedBatch).be.length(batch.length)
     should(opts.producer.scan).be.calledThrice()
+  })
+
+  it('should call the producer scan for kind `directory` only', async () => {
+    const batch = [
+      {
+        action: 'created',
+        kind: 'file',
+        path: __dirname
+      },
+      {
+        action: 'created',
+        kind: 'directory',
+        path: __dirname
+      },
+      {
+        action: 'created',
+        kind: 'directory',
+        path: __dirname
+      }
+    ]
+    const buffer = new Buffer()
+    buffer.push(batch)
+    const opts = {
+      producer: {
+        start: () => Promise.resolve(),
+        stop: () => Promise.resolve(),
+        scan: sinon.stub().resolves()
+      }
+    }
+    const enhancedBuffer = scanFolder(buffer, opts)
+    const enhancedBatch = await enhancedBuffer.pop()
+    should(enhancedBatch).be.length(batch.length)
+    should(opts.producer.scan).be.calledTwice()
   })
 })
