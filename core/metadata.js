@@ -29,6 +29,9 @@ const { platform } = process
 export type SideName =
   | "local"
   | "remote";
+export type DocType =
+  | "file"
+  | "folder";
 
 export type MetadataRemoteInfo = {
   _id: string,
@@ -51,7 +54,7 @@ export type Metadata = {
   _rev?: string,
   md5sum?: string,
   class?: string,
-  docType: string,
+  docType: DocType,
   errors?: number,
   executable?: true,
   updated_at: string|Date,
