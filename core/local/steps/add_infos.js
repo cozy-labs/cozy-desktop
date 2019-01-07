@@ -19,7 +19,7 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string } *
     const batch = []
     for (const event of events) {
       if (event.kind === 'symlink') {
-        log.error({event}, 'Symlink are not supported')
+        log.error({event}, 'Symlinks are not supported')
         // TODO display an error in the UI
         continue
       }
