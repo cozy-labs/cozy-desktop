@@ -18,11 +18,36 @@ type PathRestrictions = {
   reservedNames: Set<string>
 }
 
-export type ReservedCharsIssue = {| type: 'reservedChars', name: string, platform: string, reservedChars?: Set<SingleCharString> |}
-export type ReservedNameIssue = {| type: 'reservedName', name: string, platform: string, reservedName?: string |}
-export type ForbiddenLastCharIssue = {| type: 'forbiddenLastChar', name: string, platform: string, forbiddenLastChar?: SingleCharString |}
-export type NameMaxBytesIssue = {| type: 'nameMaxBytes', name: string, platform: string, nameMaxBytes: number |}
-export type DirNameMaxBytesIssue = {| type: 'dirNameMaxBytes', name: string, platform: string, dirNameMaxBytes: number |}
+export type ReservedCharsIssue = {|
+  type: 'reservedChars',
+  name: string,
+  platform: string,
+  reservedChars?: Set<SingleCharString>
+|}
+export type ReservedNameIssue = {|
+  type: 'reservedName',
+  name: string,
+  platform: string,
+  reservedName?: string
+|}
+export type ForbiddenLastCharIssue = {|
+  type: 'forbiddenLastChar',
+  name: string,
+  platform: string,
+  forbiddenLastChar?: SingleCharString
+|}
+export type NameMaxBytesIssue = {|
+  type: 'nameMaxBytes',
+  name: string,
+  platform: string,
+  nameMaxBytes: number
+|}
+export type DirNameMaxBytesIssue = {|
+  type: 'dirNameMaxBytes',
+  name: string,
+  platform: string,
+  dirNameMaxBytes: number
+|}
 
 // Describes a file/dir name issue so one could describe it in a user-friendly
 // way: "File X cannot be saved on platform Y because it contains character Z"
