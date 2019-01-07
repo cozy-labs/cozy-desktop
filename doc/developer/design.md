@@ -168,4 +168,30 @@ The permissions are different on Unix and on Windows. So, the `executable`
 field is just ignored on Windows.
 
 
+Local watcher
+-------------
+
+Historically, the local watcher was based on the chokidar library. Chokidar is
+an high-level library that tries to mask the differences between the API for
+watching files on 3 OSes: ReadDirectoryChangesW on Windows, FsEvents on macOS,
+and inotify on Linux. But, we discover that doing so leads to some pitfalls,
+for our use case. In particular, on Windows, Chokidar works with polling or
+with creating a new watcher per direcotry, while a single watcher on the sync
+path would be enough and more reliable. So, we have started to work on a new
+watcher, based on the @atom/watcher library. This watcher is currently aimed at
+Windows and Linux. For macOS, FsEvents bundles events and it's harder to work
+with bundled events: it was decided that moving to the new watcher on macOS was
+not a priority.
+
+### Linux
+
+![The new watcher steps on Linux][1]
+
+### Windows
+
+![The new watcher steps on Windows][2]
+
+
 [0]:  workflow.png
+[1]:  linux_watcher.png
+[2]:  win_watcher.png
