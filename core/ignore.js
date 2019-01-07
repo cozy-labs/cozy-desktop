@@ -19,10 +19,6 @@ export type IgnorePattern = {
 }
 */
 
-/* ::
-import type {Metadata} from './metadata.js'
-*/
-
 /** Load both given file rules & default ones */
 function loadSync (rulesFilePath /*: string */) /*: Ignore */ {
   let ignored
@@ -46,7 +42,7 @@ function readLinesSync (filePath /*: string */) /*: string[] */ {
 }
 
 // Parse a line and build the corresponding pattern
-function buildPattern (line) {
+function buildPattern (line /*: string */) /*: IgnorePattern */ {
   let folder = false
   let negate = false
   let noslash = line.indexOf('/') === -1
@@ -94,7 +90,7 @@ function isNotBlankOrComment (line /*: string */) /*: boolean */ {
   return line !== '' && line[0] !== '#'
 }
 
-function match (path, isFolder, pattern /*: IgnorePattern */) {
+function match (path /*: string */, isFolder /*: boolean */, pattern /*: IgnorePattern */) /*: boolean */ {
   if (pattern.basename) {
     if (pattern.match(basename(path))) {
       return true
@@ -132,23 +128,23 @@ class Ignore {
 
   // Add some rules for things that should be always ignored (temporary
   // files, thumbnails db, trash, etc.)
-  addDefaultRules () {
+  addDefaultRules () /*: this */ {
     const defaultPatterns = buildPatternArray(readLinesSync(defaultRulesPath))
     this.patterns = defaultPatterns.concat(this.patterns)
     return this
   }
 
   // Return true if the given file/folder path should be ignored
-  isIgnored (doc /*: Metadata */) {
+  isIgnored ({ relativePath, isFolder } /*: {relativePath: string, isFolder: boolean} */) /*: boolean */ {
     let result = false
     for (let pattern of Array.from(this.patterns)) {
       if (pattern.negate) {
         if (result) {
-          result = !match(doc._id, doc.docType === 'folder', pattern)
+          result = !match(relativePath, isFolder, pattern)
         }
       } else {
         if (!result) {
-          result = match(doc._id, doc.docType === 'folder', pattern)
+          result = match(relativePath, isFolder, pattern)
         }
       }
     }

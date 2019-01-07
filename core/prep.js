@@ -53,7 +53,7 @@ class Prep {
 
     doc.docType = 'file'
     metadata.assignId(doc)
-    if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
+    if ((side === 'local') && metadata.shouldIgnore(doc, this.ignore)) { return }
     return this.merge.addFileAsync(side, doc)
   }
 
@@ -67,7 +67,7 @@ class Prep {
 
     doc.docType = 'file'
     metadata.assignId(doc)
-    if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
+    if ((side === 'local') && metadata.shouldIgnore(doc, this.ignore)) { return }
     return this.merge.updateFileAsync(side, doc)
   }
 
@@ -79,7 +79,7 @@ class Prep {
 
     doc.docType = 'folder'
     metadata.assignId(doc)
-    if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
+    if ((side === 'local') && metadata.shouldIgnore(doc, this.ignore)) { return }
     return this.merge.putFolderAsync(side, doc)
   }
 
@@ -109,8 +109,8 @@ class Prep {
     doc.docType = 'file'
     metadata.assignId(doc)
     metadata.assignId(was)
-    let docIgnored = this.ignore.isIgnored(doc)
-    let wasIgnored = this.ignore.isIgnored(was)
+    let docIgnored = metadata.shouldIgnore(doc, this.ignore)
+    let wasIgnored = metadata.shouldIgnore(was, this.ignore)
     if ((side === 'local') && docIgnored && wasIgnored) { return }
     if ((side === 'local') && docIgnored) {
       return this.merge.deleteFileAsync(side, was)
@@ -146,8 +146,8 @@ class Prep {
     doc.docType = 'folder'
     metadata.assignId(doc)
     metadata.assignId(was)
-    let docIgnored = this.ignore.isIgnored(doc)
-    let wasIgnored = this.ignore.isIgnored(was)
+    let docIgnored = metadata.shouldIgnore(doc, this.ignore)
+    let wasIgnored = metadata.shouldIgnore(was, this.ignore)
     if ((side === 'local') && docIgnored && wasIgnored) { return }
     if ((side === 'local') && docIgnored) {
       return this.merge.deleteFolderAsync(side, was)
@@ -169,7 +169,7 @@ class Prep {
     doc.docType = 'file'
     metadata.assignId(doc)
     metadata.assignId(was)
-    // TODO ignore.isIgnored
+    // TODO metadata.shouldIgnore
     return this.merge.restoreFileAsync(side, was, doc)
   }
 
@@ -183,7 +183,7 @@ class Prep {
     doc.docType = 'folder'
     metadata.assignId(doc)
     metadata.assignId(was)
-    // TODO ignore.isIgnored
+    // TODO metadata.shouldIgnore
     return this.merge.restoreFolderAsync(side, was, doc)
   }
 
@@ -203,7 +203,7 @@ class Prep {
     doc.docType = 'file'
     metadata.assignId(doc)
     metadata.assignId(was)
-    // TODO ignore.isIgnored
+    // TODO metadata.shouldIgnore
     return this.merge.trashFileAsync(side, was, doc)
   }
 
@@ -223,7 +223,7 @@ class Prep {
     doc.docType = 'folder'
     metadata.assignId(doc)
     metadata.assignId(was)
-    // TODO ignore.isIgnored
+    // TODO metadata.shouldIgnore
     return this.merge.trashFolderAsync(side, was, doc)
   }
 
@@ -235,7 +235,7 @@ class Prep {
 
     doc.docType = 'file'
     metadata.assignId(doc)
-    if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
+    if ((side === 'local') && metadata.shouldIgnore(doc, this.ignore)) { return }
     return this.merge.deleteFileAsync(side, doc)
   }
 
@@ -247,7 +247,7 @@ class Prep {
 
     doc.docType = 'folder'
     metadata.assignId(doc)
-    if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
+    if ((side === 'local') && metadata.shouldIgnore(doc, this.ignore)) { return }
     return this.merge.deleteFolderAsync(side, doc)
   }
 }
