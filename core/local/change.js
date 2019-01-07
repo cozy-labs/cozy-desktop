@@ -35,7 +35,11 @@ module.exports = {
   isChildDelete,
   isChildAdd,
   toString,
-  fromEvent,
+  dirAddition,
+  dirDeletion,
+  fileAddition,
+  fileDeletion,
+  fileUpdate,
   fileMoveFromUnlinkAdd,
   fileMoveFromFileDeletionChange,
   fileMoveIdentical,
@@ -61,7 +65,7 @@ export type LocalDirAddition = {
   sideName: 'local',
   type: 'DirAddition',
   path: string,
-  old: ?Metadata,
+  old?: Metadata,
   ino: number,
   stats: fs.Stats,
   wip?: true
@@ -70,8 +74,8 @@ export type LocalDirDeletion = {
   sideName: 'local',
   type: 'DirDeletion',
   path: string,
-  old: ?Metadata,
-  ino: ?number
+  old?: Metadata,
+  ino?: number
 }
 export type LocalDirMove = {
   sideName: 'local',
@@ -88,7 +92,7 @@ export type LocalFileAddition = {
   sideName: 'local',
   type: 'FileAddition',
   path: string,
-  old: ?Metadata,
+  old?: Metadata,
   ino: number,
   stats: fs.Stats,
   md5sum: string,
@@ -98,8 +102,8 @@ export type LocalFileDeletion = {
   sideName: 'local',
   type: 'FileDeletion',
   path: string,
-  old: ?Metadata,
-  ino: ?number
+  old?: Metadata,
+  ino?: number
 }
 export type LocalFileMove = {
   sideName: 'local',
@@ -118,7 +122,7 @@ export type LocalFileUpdate = {
   sideName: 'local',
   type: 'FileUpdate',
   path: string,
-  old: ?Metadata,
+  old?: Metadata,
   ino: number,
   stats: fs.Stats,
   md5sum: string,
@@ -193,35 +197,76 @@ function isChildAdd (a /*: LocalChange */, b /*: LocalChange */) { return childO
 // $FlowFixMe
 function toString (a /*: LocalChange */) /*: string */ { return '(' + a.type + ': ' + (a.old && a.old.path) + '-->' + a.path + ')' }
 
-function fromEvent (e/*: LocalEvent */) /*: LocalChange */ {
-  const change = _fromEvent(e)
-  log.debug(_.pick(change, ['path', 'ino', 'wip']), `${e.type} -> ${change.type}`)
-  for (let prop of ['md5sum', 'old', 'wip']) {
-    // $FlowFixMe
-    if (change[prop] == null) delete change[prop]
+function dirAddition (e /*: LocalDirAdded */) /*: LocalDirAddition */ {
+  log.debug({path: e.path}, 'addDir = DirAddition')
+  const change /*: LocalDirAddition */ = {
+    sideName,
+    type: 'DirAddition',
+    path: e.path,
+    stats: e.stats,
+    ino: e.stats.ino
   }
+  if (e.old) change.old = e.old
+  if (e.wip) change.wip = e.wip
   return change
 }
 
-function _fromEvent (e/*: LocalEvent */) /*: LocalChange */ {
-  switch (e.type) {
-    case 'unlinkDir':
-      return {sideName, type: 'DirDeletion', path: e.path, old: e.old, ino: _.get(e, 'old.ino')}
-    case 'unlink':
-      return {sideName, type: 'FileDeletion', path: e.path, old: e.old, ino: _.get(e, 'old.ino')}
-    case 'addDir':
-      return {sideName, type: 'DirAddition', old: e.old, path: e.path, stats: e.stats, ino: e.stats.ino, wip: e.wip}
-    case 'change':
-      return {sideName, type: 'FileUpdate', path: e.path, old: e.old, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, wip: e.wip}
-    case 'add':
-      return {sideName, type: 'FileAddition', path: e.path, old: e.old, stats: e.stats, ino: e.stats.ino, md5sum: e.md5sum, wip: e.wip}
-    default:
-      throw new TypeError(`wrong type ${e.type}`) // @TODO FlowFixMe
+function dirDeletion (e /*: LocalDirUnlinked */) /*: LocalDirDeletion */ {
+  log.debug({path: e.path}, 'unlinkDir = DirDeletion')
+  const change /*: LocalDirDeletion */ = {
+    sideName,
+    type: 'DirDeletion',
+    path: e.path
   }
+  if (e.old) change.old = e.old
+  if (e.old && e.old.ino) change.ino = e.old.ino
+  return change
+}
+
+function fileAddition (e /*: LocalFileAdded */) /*: LocalFileAddition */ {
+  log.debug({path: e.path}, 'add = FileAddition')
+  const change /*: LocalFileAddition */ = {
+    sideName,
+    type: 'FileAddition',
+    path: e.path,
+    stats: e.stats,
+    ino: e.stats.ino,
+    md5sum: e.md5sum
+  }
+  if (e.old) change.old = e.old
+  if (e.wip) change.wip = e.wip
+  return change
+}
+
+function fileDeletion (e /*: LocalFileUnlinked */) /*: LocalFileDeletion */ {
+  log.debug({path: e.path}, 'unlink = FileDeletion')
+  const change /*: LocalFileDeletion */ = {
+    sideName,
+    type: 'FileDeletion',
+    path: e.path
+  }
+  if (e.old) change.old = e.old
+  if (e.old && e.old.ino) change.ino = e.old.ino
+  return change
+}
+
+function fileUpdate (e /*: LocalFileUpdated */) /*: LocalFileUpdate */ {
+  log.debug({path: e.path}, 'change = FileUpdate')
+  const change /*: LocalFileUpdate */ = {
+    sideName,
+    type: 'FileUpdate',
+    path: e.path,
+    stats: e.stats,
+    ino: e.stats.ino,
+    md5sum: e.md5sum
+  }
+  if (e.old) change.old = e.old
+  if (e.wip) change.wip = e.wip
+  return change
 }
 
 function fileMoveFromUnlinkAdd (unlinkChange /*: LocalFileDeletion */, e /*: LocalFileAdded */) /*: * */ {
-  if (_.get(unlinkChange, 'old.path') === e.path) return fromEvent(e)
+  if (_.get(unlinkChange, 'old.path') === e.path) return fileAddition(e)
   log.debug({oldpath: unlinkChange.path, path: e.path, ino: unlinkChange.ino}, 'unlink + add = FileMove')
   return build('FileMove', e.path, {
     stats: e.stats,
@@ -233,7 +278,7 @@ function fileMoveFromUnlinkAdd (unlinkChange /*: LocalFileDeletion */, e /*: Loc
 }
 
 function dirMoveFromUnlinkAdd (unlinkChange /*: LocalDirDeletion */, e /*: LocalDirAdded */) /*: * */ {
-  if (_.get(unlinkChange, 'old.path') === e.path) return fromEvent(e)
+  if (_.get(unlinkChange, 'old.path') === e.path) return dirAddition(e)
   log.debug({oldpath: unlinkChange.path, path: e.path}, 'unlinkDir + addDir = DirMove')
   return build('DirMove', e.path, {
     stats: e.stats,
