@@ -5,7 +5,7 @@ const { clone } = require('lodash')
 const { join } = require('path')
 
 const logger = require('./logger')
-const { assignId, ensureValidChecksum, ensureValidPath } = require('./metadata')
+const metadata = require('./metadata')
 const { TRASH_DIR_NAME } = require('./remote/constants')
 
 /*::
@@ -48,11 +48,11 @@ class Prep {
   //   - the checksum is valid, if present
   async addFileAsync (side /*: SideName */, doc /*: Metadata */) {
     log.debug({path: doc.path}, 'addFileAsync')
-    ensureValidPath(doc)
-    ensureValidChecksum(doc)
+    metadata.ensureValidPath(doc)
+    metadata.ensureValidChecksum(doc)
 
     doc.docType = 'file'
-    assignId(doc)
+    metadata.assignId(doc)
     if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
     return this.merge.addFileAsync(side, doc)
   }
@@ -62,11 +62,11 @@ class Prep {
   //   - the checksum is valid, if present
   async updateFileAsync (side /*: SideName */, doc /*: Metadata */) {
     log.debug({path: doc.path}, 'updateFileAsync')
-    ensureValidPath(doc)
-    ensureValidChecksum(doc)
+    metadata.ensureValidPath(doc)
+    metadata.ensureValidChecksum(doc)
 
     doc.docType = 'file'
-    assignId(doc)
+    metadata.assignId(doc)
     if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
     return this.merge.updateFileAsync(side, doc)
   }
@@ -75,10 +75,10 @@ class Prep {
   //   - the folder path is present and valid
   async putFolderAsync (side /*: SideName */, doc /*: Metadata */) {
     log.debug({path: doc.path}, 'putFolderAsync')
-    ensureValidPath(doc)
+    metadata.ensureValidPath(doc)
 
     doc.docType = 'folder'
-    assignId(doc)
+    metadata.assignId(doc)
     if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
     return this.merge.putFolderAsync(side, doc)
   }
@@ -92,9 +92,9 @@ class Prep {
   async moveFileAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */) {
     log.debug({path: doc.path, oldpath: was.path}, 'moveFileAsync')
     const {path} = doc
-    ensureValidPath(doc)
-    ensureValidPath(was)
-    ensureValidChecksum(doc)
+    metadata.ensureValidPath(doc)
+    metadata.ensureValidPath(was)
+    metadata.ensureValidChecksum(doc)
 
     if (doc.path === was.path) {
       const msg = 'Invalid move'
@@ -107,8 +107,8 @@ class Prep {
     }
 
     doc.docType = 'file'
-    assignId(doc)
-    assignId(was)
+    metadata.assignId(doc)
+    metadata.assignId(was)
     let docIgnored = this.ignore.isIgnored(doc)
     let wasIgnored = this.ignore.isIgnored(was)
     if ((side === 'local') && docIgnored && wasIgnored) { return }
@@ -129,8 +129,8 @@ class Prep {
   async moveFolderAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */, newRemoteRevs /*: ?RemoteRevisionsByID */) {
     log.debug({path: doc.path, oldpath: was.path}, 'moveFolderAsync')
     const {path} = doc
-    ensureValidPath(doc)
-    ensureValidPath(was)
+    metadata.ensureValidPath(doc)
+    metadata.ensureValidPath(was)
     if (doc.path === was.path) {
       const msg = 'Invalid move'
       log.warn({path, doc, was}, msg)
@@ -144,8 +144,8 @@ class Prep {
     }
 
     doc.docType = 'folder'
-    assignId(doc)
-    assignId(was)
+    metadata.assignId(doc)
+    metadata.assignId(was)
     let docIgnored = this.ignore.isIgnored(doc)
     let wasIgnored = this.ignore.isIgnored(was)
     if ((side === 'local') && docIgnored && wasIgnored) { return }
@@ -161,14 +161,14 @@ class Prep {
   // TODO add comments + tests
   async restoreFileAsync (side /*: SideName */, was /*: Metadata */, doc /*: Metadata */) {
     log.debug({path: doc.path, oldpath: was.path}, 'restoreFileAsync')
-    ensureValidPath(doc)
-    ensureValidPath(was)
-    ensureValidChecksum(doc)
+    metadata.ensureValidPath(doc)
+    metadata.ensureValidPath(was)
+    metadata.ensureValidChecksum(doc)
 
     delete doc.trashed
     doc.docType = 'file'
-    assignId(doc)
-    assignId(was)
+    metadata.assignId(doc)
+    metadata.assignId(was)
     // TODO ignore.isIgnored
     return this.merge.restoreFileAsync(side, was, doc)
   }
@@ -176,13 +176,13 @@ class Prep {
   // TODO add comments + tests
   async restoreFolderAsync (side /*: SideName */, was /*: Metadata */, doc /*: Metadata */) {
     log.debug({path: doc.path, oldpath: was.path}, 'restoreFolderAsync')
-    ensureValidPath(doc)
-    ensureValidPath(was)
+    metadata.ensureValidPath(doc)
+    metadata.ensureValidPath(was)
 
     delete doc.trashed
     doc.docType = 'folder'
-    assignId(doc)
-    assignId(was)
+    metadata.assignId(doc)
+    metadata.assignId(was)
     // TODO ignore.isIgnored
     return this.merge.restoreFolderAsync(side, was, doc)
   }
@@ -190,19 +190,19 @@ class Prep {
   // TODO add comments + tests
   async trashFileAsync (side /*: SideName */, was /*: {path: string} */, doc /*: ?Metadata */) {
     log.debug({path: doc && doc.path, oldpath: was.path}, 'trashFileAsync')
-    ensureValidPath(was)
+    metadata.ensureValidPath(was)
 
     if (!doc) {
       doc = clone(was)
       doc.path = join(TRASH_DIR_NAME, was.path)
     }
 
-    ensureValidPath(doc)
+    metadata.ensureValidPath(doc)
 
     doc.trashed = true
     doc.docType = 'file'
-    assignId(doc)
-    assignId(was)
+    metadata.assignId(doc)
+    metadata.assignId(was)
     // TODO ignore.isIgnored
     return this.merge.trashFileAsync(side, was, doc)
   }
@@ -210,19 +210,19 @@ class Prep {
   // TODO add comments + tests
   async trashFolderAsync (side /*: SideName */, was /*: {path: string} */, doc /*: ?Metadata */) {
     log.debug({path: doc && doc.path, oldpath: was.path}, 'trashFolderAsync')
-    ensureValidPath(was)
+    metadata.ensureValidPath(was)
 
     if (!doc) {
       doc = clone(was)
       doc.path = join(TRASH_DIR_NAME, was.path)
     }
 
-    ensureValidPath(doc)
+    metadata.ensureValidPath(doc)
 
     doc.trashed = true
     doc.docType = 'folder'
-    assignId(doc)
-    assignId(was)
+    metadata.assignId(doc)
+    metadata.assignId(was)
     // TODO ignore.isIgnored
     return this.merge.trashFolderAsync(side, was, doc)
   }
@@ -231,10 +231,10 @@ class Prep {
   //   - the file path is present and valid
   async deleteFileAsync (side /*: SideName */, doc /*: Metadata */) {
     log.debug({path: doc.path}, 'deleteFileAsync')
-    ensureValidPath(doc)
+    metadata.ensureValidPath(doc)
 
     doc.docType = 'file'
-    assignId(doc)
+    metadata.assignId(doc)
     if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
     return this.merge.deleteFileAsync(side, doc)
   }
@@ -243,10 +243,10 @@ class Prep {
   //   - the folder path is present and valid
   async deleteFolderAsync (side /*: SideName */, doc /*: Metadata */) {
     log.debug({path: doc.path}, 'deleteFolderAsync')
-    ensureValidPath(doc)
+    metadata.ensureValidPath(doc)
 
     doc.docType = 'folder'
-    assignId(doc)
+    metadata.assignId(doc)
     if ((side === 'local') && this.ignore.isIgnored(doc)) { return }
     return this.merge.deleteFolderAsync(side, doc)
   }
