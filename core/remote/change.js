@@ -10,21 +10,99 @@ const path = require('path')
 const metadata = require('../metadata')
 
 /*::
-export type RemoteFileAddition = {sideName: 'remote', type: 'FileAddition', doc: Metadata}
-export type RemoteFileDeletion = {sideName: 'remote', type: 'FileDeletion', doc: Metadata}
-export type RemoteFileMove = {sideName: 'remote', type: 'FileMove', doc: Metadata, was: Metadata, needRefetch?: true, update?: true}
-export type RemoteFileRestoration = {sideName: 'remote', type: 'FileRestoration', doc: Metadata, was: Metadata}
-export type RemoteFileTrashing = {sideName: 'remote', type: 'FileTrashing', doc: Metadata, was: Metadata}
-export type RemoteFileUpdate = {sideName: 'remote', type: 'FileUpdate', doc: Metadata}
-export type RemoteDirAddition = {sideName: 'remote', type: 'DirAddition', doc: Metadata, was: Metadata}
-export type RemoteDirDeletion = {sideName: 'remote', type: 'DirDeletion', doc: Metadata}
-export type RemoteDirMove = {sideName: 'remote', type: 'DirMove', doc: Metadata, was: Metadata, needRefetch?: true, descendantMoves?: RemoteDescendantChange[] }
-export type RemoteDirRestoration = {sideName: 'remote', type: 'DirRestoration', doc: Metadata, was: Metadata}
-export type RemoteDirTrashing = {sideName: 'remote', type: 'DirTrashing', doc: Metadata, was: Metadata}
-export type RemoteIgnoredChange = {sideName: 'remote', type: 'IgnoredChange', doc: Metadata|RemoteDoc|RemoteDeletion, detail: string}
-export type RemoteInvalidChange = {sideName: 'remote', type: 'InvalidChange', doc: *, error: Error}
-export type RemoteUpToDate = {sideName: 'remote', type: 'UpToDate', doc: Metadata, was: Metadata}
-export type RemoteDescendantChange = {sideName: 'remote', type: 'DescendantChange', doc: Metadata, was: Metadata, ancestorPath: string, descendantMoves?: RemoteDescendantChange[], update?: true}
+export type RemoteFileAddition = {
+  sideName: 'remote',
+  type: 'FileAddition',
+  doc: Metadata
+}
+export type RemoteFileDeletion = {
+  sideName: 'remote',
+  type: 'FileDeletion',
+  doc: Metadata
+}
+export type RemoteFileMove = {
+  sideName: 'remote',
+  type: 'FileMove',
+  doc: Metadata,
+  was: Metadata,
+  needRefetch?: true,
+  update?: true
+}
+export type RemoteFileRestoration = {
+  sideName: 'remote',
+  type: 'FileRestoration',
+  doc: Metadata,
+  was: Metadata
+}
+export type RemoteFileTrashing = {
+  sideName: 'remote',
+  type: 'FileTrashing',
+  doc: Metadata,
+  was: Metadata
+}
+export type RemoteFileUpdate = {
+  sideName: 'remote',
+  type: 'FileUpdate',
+  doc: Metadata
+}
+export type RemoteDirAddition = {
+  sideName: 'remote',
+  type: 'DirAddition',
+  doc: Metadata,
+  was: Metadata
+}
+export type RemoteDirDeletion = {
+  sideName: 'remote',
+  type: 'DirDeletion',
+  doc: Metadata
+}
+export type RemoteDirMove = {
+  sideName: 'remote',
+  type: 'DirMove',
+  doc: Metadata,
+  was: Metadata,
+  needRefetch?: true,
+  descendantMoves?: RemoteDescendantChange[]
+}
+export type RemoteDirRestoration = {
+  sideName: 'remote',
+  type: 'DirRestoration',
+  doc: Metadata,
+  was: Metadata
+}
+export type RemoteDirTrashing = {
+  sideName: 'remote',
+  type: 'DirTrashing',
+  doc: Metadata,
+  was: Metadata
+}
+export type RemoteIgnoredChange = {
+  sideName: 'remote',
+  type: 'IgnoredChange',
+  doc: Metadata|RemoteDoc|RemoteDeletion,
+  detail: string
+}
+export type RemoteInvalidChange = {
+  sideName: 'remote',
+  type: 'InvalidChange',
+  doc: *,
+  error: Error
+}
+export type RemoteUpToDate = {
+  sideName: 'remote',
+  type: 'UpToDate',
+  doc: Metadata,
+  was: Metadata
+}
+export type RemoteDescendantChange = {
+  sideName: 'remote',
+  type: 'DescendantChange',
+  doc: Metadata,
+  was: Metadata,
+  ancestorPath: string,
+  descendantMoves?: RemoteDescendantChange[],
+  update?: true
+}
 
 export type RemoteChange =
   | RemoteDirAddition
