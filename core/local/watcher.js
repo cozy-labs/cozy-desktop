@@ -30,6 +30,11 @@ function build (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, ev
   } else if (env === 'chokidar') {
     watcher = 'chokidar'
   }
+  // FIXME Integration and scenario tests use ChokidarEvents
+  // and are not yet compatible with atom/watcher
+  if (process.env) {
+    watcher = 'chokidar'
+  }
   if (watcher === 'atom') {
     return new AtomWatcher(syncPath, prep, pouch, events, ignore)
   } else {
