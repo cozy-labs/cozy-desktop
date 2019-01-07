@@ -8,14 +8,7 @@ const _ = require('lodash')
 
 const { MAX_SYNC_ATTEMPTS } = require('./constants')
 const logger = require('./logger')
-const {
-  isUpToDate,
-  markAsUpToDate,
-  markSide,
-  sameFileIgnoreRev,
-  extractRevNumber,
-  sameBinary
-} = require('./metadata')
+const metadata = require('./metadata')
 const userActionRequired = require('./remote/user_action_required')
 const { HEARTBEAT } = require('./remote/watcher')
 const { otherSide } = require('./side')
@@ -298,7 +291,7 @@ class Sync {
         await this.doMove(side, doc, from)
       }
       delete doc.moveFrom // the move succeeded, delete moveFrom before attempting overwrite
-      if (!sameBinary(from, doc)) {
+      if (!metadata.sameBinary(from, doc)) {
         await side.overwriteFileAsync(doc, doc) // move & update
       }
     } else if (doc._deleted) {
@@ -318,8 +311,8 @@ class Sync {
         if (doc.docType === 'folder') {
           await side.updateFolderAsync(doc, old)
         // $FlowFixMe
-        } else if (sameBinary(old, doc)) {
-          if (sameFileIgnoreRev(old, doc)) {
+        } else if (metadata.sameBinary(old, doc)) {
+          if (metadata.sameFileIgnoreRev(old, doc)) {
             log.debug({path: doc.path}, 'Ignoring timestamp-only change')
           } else {
             await side.updateFileMetadataAsync(doc, old)
@@ -423,7 +416,7 @@ class Sync {
 
     // Make sure isUpToDate(sourceSideName, doc) is still true
     const sourceSideName = otherSide(sideName)
-    markSide(sourceSideName, doc, doc)
+    metadata.markSide(sourceSideName, doc, doc)
 
     // Don't try more than MAX_SYNC_ATTEMPTS for the same operation
     if (doc.errors && doc.errors >= MAX_SYNC_ATTEMPTS) {
@@ -449,7 +442,7 @@ class Sync {
 
   // Update rev numbers for both local and remote sides
   async updateRevs (doc /*: Metadata */, side /*: SideName */) /*: Promise<*> */ {
-    const rev = markAsUpToDate(doc)
+    const rev = metadata.markAsUpToDate(doc)
     try {
       await this.pouch.put(doc)
     } catch (err) {
@@ -479,7 +472,7 @@ class Sync {
         parent = await this.pouch.db.get(parentId)
       }
 
-      if (parent.trashed && !isUpToDate('remote', parent)) {
+      if (parent.trashed && !metadata.isUpToDate('remote', parent)) {
         log.info(`${doc.path}: will be trashed with parent directory`)
         await this.trashWithParentOrByItself(parent, side)
         // Wait long enough that the remote has fetched one changes feed
@@ -495,8 +488,8 @@ class Sync {
   }
 
   shouldReuploadCorruptFile (doc/*: Metadata */, corruption /*: ContentMismatchFsckLog */) /*: boolean */{
-    const remoteRev = extractRevNumber(doc.remote)
-    const reportedRev = extractRevNumber(corruption.file_doc)
+    const remoteRev = metadata.extractRevNumber(doc.remote)
+    const reportedRev = metadata.extractRevNumber(corruption.file_doc)
     const sameSizeAsCorrupted = doc.size === corruption.content_mismatch.size_file
 
     const result = remoteRev >= reportedRev && !sameSizeAsCorrupted
