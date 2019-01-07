@@ -222,7 +222,7 @@ class Sync {
     const { path } = doc
     log.debug({path, seq, doc}, 'Applying change...')
 
-    if (this.ignore.isIgnored(doc)) {
+    if (metadata.shouldIgnore(doc, this.ignore)) {
       return this.pouch.setLocalSeqAsync(change.seq)
     }
 

@@ -17,6 +17,7 @@ import type fs from 'fs'
 import type { PathIssue } from './path_restrictions'
 import type { RemoteDoc } from './remote/document'
 import type { Stats } from './local/stater'
+import type { Ignore } from './ignore'
 */
 
 const log = logger({
@@ -121,7 +122,8 @@ module.exports = {
   buildFile,
   upToDate,
   createConflictingDoc,
-  conflictRegExp
+  conflictRegExp,
+  shouldIgnore
 }
 
 function localDocType (remoteDocType /*: string */) /*: string */ {
@@ -492,4 +494,8 @@ function createConflictingDoc (doc /*: Metadata */) /*: Metadata */ {
   dst.path = `${path.join(dir, notToLongFilename)}-conflict-${date}${ext}`
   assignId(dst)
   return dst
+}
+
+function shouldIgnore (doc /*: Metadata */, ignoreRules /*: Ignore */) /*: boolean */ {
+  return ignoreRules.isIgnored({ relativePath: doc._id, isFolder: doc.docType === 'folder' })
 }

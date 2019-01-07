@@ -2,8 +2,9 @@
 
 const _ = require('lodash')
 const fse = require('fs-extra')
-const should = require('should')
 const path = require('path')
+const should = require('should')
+const sinon = require('sinon')
 
 const Builders = require('../support/builders')
 const { onPlatform } = require('../support/helpers/platform')
@@ -27,6 +28,7 @@ const {
   createConflictingDoc,
   conflictRegExp
 } = metadata
+const { Ignore } = require('../../core/ignore')
 const { FILES_DOCTYPE } = require('../../core/remote/constants')
 const timestamp = require('../../core/timestamp')
 
@@ -845,6 +847,35 @@ describe('metadata', function () {
       should(doc.path).not.equal(secondConflict.path)
       should(secondConflict.path).be.a.String().and.match(pathRegExp)
       should(path.extname(secondConflict.path)).equal(ext)
+    })
+  })
+
+  describe('shouldIgnore', () => {
+    const ignore = new Ignore(['foo'])
+
+    let isIgnored
+    beforeEach(() => {
+      isIgnored = sinon.spy(ignore, 'isIgnored')
+    })
+
+    afterEach(() => {
+      isIgnored.restore()
+    })
+
+    it('calls isIgnored with the document _id and true when document is a folder', () => {
+      const doc = { _id: 'food', docType: 'folder' }
+      metadata.shouldIgnore(doc, ignore)
+
+      should(isIgnored.calledOnce).be.true()
+      should(isIgnored.args[0]).deepEqual([{ relativePath: doc._id, isFolder: true }])
+    })
+
+    it('calls isIgnored with the document _id and false when document is a file', () => {
+      const doc = { _id: 'food', docType: 'file' }
+      metadata.shouldIgnore(doc, ignore)
+
+      should(isIgnored.calledOnce).be.true()
+      should(isIgnored.args[0]).deepEqual([{ relativePath: doc._id, isFolder: false }])
     })
   })
 })
