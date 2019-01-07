@@ -2,7 +2,6 @@
 
 const AtomWatcher = require('./atom_watcher')
 const ChokidarWatcher = require('./chokidar_watcher')
-const logger = require('../logger')
 
 /*::
 import type Pouch from '../pouch'
@@ -20,20 +19,22 @@ export interface Watcher {
 }
 */
 
-const log = logger({
-  component: 'LocalWatcher'
-})
-
 function build (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */, ignore /*: Ignore */) /*: Watcher */ {
+  let watcher = 'atom'
+  if (process.platform === 'darwin') {
+    watcher = 'chokidar'
+  }
   const env = process.env.COZY_FS_WATCHER
   if (['experimental', 'atom'].includes(env)) {
-    try {
-      return new AtomWatcher(syncPath, prep, pouch, events, ignore)
-    } catch (err) {
-      log.error({err}, 'Cannot use AtomWatcher')
-    }
+    watcher = 'atom'
+  } else if (env === 'chokidar') {
+    watcher = 'chokidar'
   }
-  return new ChokidarWatcher(syncPath, prep, pouch, events)
+  if (watcher === 'atom') {
+    return new AtomWatcher(syncPath, prep, pouch, events, ignore)
+  } else {
+    return new ChokidarWatcher(syncPath, prep, pouch, events)
+  }
 }
 
 module.exports = { build }
