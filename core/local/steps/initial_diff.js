@@ -38,6 +38,11 @@ async function initialDiff (buffer, out, pouch) {
 
     const batch = []
     for (const event of events) {
+      if (event.incomplete) {
+        batch.push(event)
+        continue
+      }
+
       // Detect if the file was moved while the client was stopped
       if (['created', 'scan'].includes(event.action)) {
         let was

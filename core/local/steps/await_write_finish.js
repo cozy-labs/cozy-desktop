@@ -42,6 +42,9 @@ function countFileWriteEvents (events /*: AtomWatcherEvent[] */) /*: number */ {
   let nbCandidates = 0
   for (let i = 0; i < events.length; i++) {
     const event = events[i]
+    if (event.incomplete) {
+      continue
+    }
     if (event.kind === 'file' && ['created', 'modified'].includes(event.action)) {
       nbCandidates++
     }
@@ -53,6 +56,9 @@ function countFileWriteEvents (events /*: AtomWatcherEvent[] */) /*: number */ {
 function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] */) {
   for (let i = 0; i < events.length; i++) {
     const event = events[i]
+    if (event.incomplete) {
+      continue
+    }
     if (event.kind === 'file' && ['modified', 'deleted'].includes(event.action)) {
       for (let j = 0; j < waiting.length; j++) {
         const w = waiting[j]
