@@ -185,16 +185,8 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
           }
           changeFound(
             withChangeByPath(e, samePathChange => {
-              const addChangeSamePath /*: ?LocalDirAddition */ = localChange.maybePutFolder(samePathChange)
-              if (addChangeSamePath && addChangeSamePath.wip) {
-                log.debug({path: addChangeSamePath.path, ino: addChangeSamePath.ino},
-                  'Folder was added then deleted. Ignoring add.')
-                // $FlowFixMe
-                addChangeSamePath.type = 'Ignored'
-                return
-              }
-
               return (
+                localChange.ignoreDirAdditionThenDeletion(samePathChange) ||
                 localChange.convertDirMoveToDeletion(samePathChange)
               )
             })
