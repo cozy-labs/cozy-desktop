@@ -11,6 +11,8 @@ import type { Ignore } from '../ignore'
 import type { ChokidarEvent } from './chokidar_event'
 import type { Checksumer } from './checksumer'
 
+type WatcherType = 'atom' | 'chokidar'
+
 export interface Watcher {
   checksumer: Checksumer,
   running: Promise<*>,
@@ -19,23 +21,29 @@ export interface Watcher {
 }
 */
 
+function userDefinedWatcherType (env) /*: WatcherType | null */ {
+  const { COZY_FS_WATCHER } = env
+  if (COZY_FS_WATCHER === 'atom') {
+    return 'atom'
+  } else if (COZY_FS_WATCHER === 'chokidar') {
+    return 'chokidar'
+  }
+  return null
+}
+
+function platformDefaultWatcherType (platform /*: string */) /*: WatcherType */ {
+  if (platform === 'darwin') {
+    return 'chokidar'
+  }
+  return 'atom'
+}
+
 function build (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */, ignore /*: Ignore */) /*: Watcher */ {
-  let watcher = 'atom'
-  if (process.platform === 'darwin') {
-    watcher = 'chokidar'
-  }
-  const env = process.env.COZY_FS_WATCHER
-  if (['experimental', 'atom'].includes(env)) {
-    watcher = 'atom'
-  } else if (env === 'chokidar') {
-    watcher = 'chokidar'
-  }
-  // FIXME Integration and scenario tests use ChokidarEvents
-  // and are not yet compatible with atom/watcher
-  if (process.env) {
-    watcher = 'chokidar'
-  }
-  if (watcher === 'atom') {
+  const watcherType = (
+    userDefinedWatcherType(process.env) ||
+    platformDefaultWatcherType(process.platform)
+  )
+  if (watcherType === 'atom') {
     return new AtomWatcher(syncPath, prep, pouch, events, ignore)
   } else {
     return new ChokidarWatcher(syncPath, prep, pouch, events)
