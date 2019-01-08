@@ -6,7 +6,6 @@ const _ = require('lodash')
 const { getInode } = require('./event')
 const localChange = require('./change')
 const logger = require('../logger')
-const metadata = require('../metadata')
 const measureTime = require('../perftools')
 
 /*::
@@ -95,25 +94,21 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
 
       switch (e.type) {
         case 'add':
-          {
-            changeFound(
-              localChange.includeAddEventInFileMove(sameInodeChange, e) ||
-              localChange.fileMoveFromUnlinkAdd(sameInodeChange, e) ||
-              localChange.fileMoveIdenticalOffline(e) ||
-              localChange.fileAddition(e)
-            )
-          }
+          changeFound(
+            localChange.includeAddEventInFileMove(sameInodeChange, e) ||
+            localChange.fileMoveFromUnlinkAdd(sameInodeChange, e) ||
+            localChange.fileMoveIdenticalOffline(e) ||
+            localChange.fileAddition(e)
+          )
           break
         case 'addDir':
-          {
-            changeFound(
-              localChange.includeAddDirEventInDirMove(sameInodeChange, e) ||
-              localChange.dirMoveFromUnlinkAdd(sameInodeChange, e) ||
-              localChange.dirRenamingCaseOnlyFromAddAdd(sameInodeChange, e) ||
-              localChange.dirMoveIdenticalOffline(e) ||
-              localChange.dirAddition(e)
-            )
-          }
+          changeFound(
+            localChange.includeAddDirEventInDirMove(sameInodeChange, e) ||
+            localChange.dirMoveFromUnlinkAdd(sameInodeChange, e) ||
+            localChange.dirRenamingCaseOnlyFromAddAdd(sameInodeChange, e) ||
+            localChange.dirMoveIdenticalOffline(e) ||
+            localChange.dirAddition(e)
+          )
           break
         case 'change':
           changeFound(
