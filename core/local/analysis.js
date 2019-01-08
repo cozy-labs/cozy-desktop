@@ -50,8 +50,8 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
     if (ino) return changesByInode.get(ino)
     else return null
   }
-  const getChangeByPath = (e) => {
-    return changesByPath.get(e.path)
+  const withChangeByPath = (e, callback) => {
+    return callback(changesByPath.get(e.path))
   }
   const changeFound = (c /*: ?LocalChange | true */) => {
     if (c == null) {
@@ -180,12 +180,14 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
               changeFound(localChange.fileDeletion(e))
               break
             }
-            const moveChangeSamePath /*: ?LocalFileMove */ = localChange.maybeMoveFile(getChangeByPath(e))
+          }
+          withChangeByPath(e, samePathChange => {
+            const moveChangeSamePath /*: ?LocalFileMove */ = localChange.maybeMoveFile(samePathChange)
             if (moveChangeSamePath && moveChangeSamePath.md5sum == null) { // FIXME: if change && change.wip?
               localChange.convertFileMoveToDeletion(moveChangeSamePath)
-              break
+              return
             }
-            const addChangeSamePath /*: ?LocalFileAddition */ = localChange.maybeAddFile(getChangeByPath(e))
+            const addChangeSamePath /*: ?LocalFileAddition */ = localChange.maybeAddFile(samePathChange)
             if (addChangeSamePath && addChangeSamePath.wip) {
               // $FlowFixMe
               addChangeSamePath.type = 'Ignored'
@@ -193,7 +195,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
               delete addChangeSamePath.md5sum
             }
             // Otherwise, skip unlink event by multiple moves
-          }
+          })
           break
         case 'unlinkDir':
           {
@@ -215,20 +217,22 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
               changeFound(localChange.dirDeletion(e))
               break
             }
-            const addChangeSamePath /*: ?LocalDirAddition */ = localChange.maybePutFolder(getChangeByPath(e))
+          }
+          withChangeByPath(e, samePathChange => {
+            const addChangeSamePath /*: ?LocalDirAddition */ = localChange.maybePutFolder(samePathChange)
             if (addChangeSamePath && addChangeSamePath.wip) {
               log.debug({path: addChangeSamePath.path, ino: addChangeSamePath.ino},
                 'Folder was added then deleted. Ignoring add.')
               // $FlowFixMe
               addChangeSamePath.type = 'Ignored'
-              break
+              return
             }
 
-            const moveChangeSamePath /*: ?LocalDirMove */ = localChange.maybeMoveFolder(getChangeByPath(e))
+            const moveChangeSamePath /*: ?LocalDirMove */ = localChange.maybeMoveFolder(samePathChange)
             if (moveChangeSamePath && moveChangeSamePath.wip) {
               localChange.convertDirMoveToDeletion(moveChangeSamePath)
             }
-          }
+          })
           break
         default:
           throw new TypeError(`Unknown event type: ${e.type}`)
