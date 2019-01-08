@@ -463,7 +463,9 @@ function includeAddDirEventInDirMove (sameInodeChange /*: ?LocalChange */, e /*:
   return true
 }
 
-function includeChangeEventIntoFileMove (moveChange /*: LocalFileMove */, e /*: LocalFileUpdated */) {
+function includeChangeEventIntoFileMove (sameInodeChange /*: ?LocalChange */, e /*: LocalFileUpdated */) {
+  const moveChange /*: ?LocalFileMove */ = maybeMoveFile(sameInodeChange)
+  if (!moveChange) return
   log.debug({path: e.path}, 'FileMove + change')
   moveChange.md5sum = moveChange.old.md5sum || moveChange.md5sum
   moveChange.update = _.defaults({
@@ -475,6 +477,7 @@ function includeChangeEventIntoFileMove (moveChange /*: LocalFileMove */, e /*: 
     // should already be the same as moveChange.path
     path: moveChange.path
   }, e)
+  return true
 }
 
 function convertFileMoveToDeletion (change /*: LocalFileMove */) {
