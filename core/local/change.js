@@ -52,6 +52,7 @@ module.exports = {
   dirRenamingCaseOnlyFromAddAdd,
   dirMoveIdenticalOffline,
   ignoreDirAdditionThenDeletion,
+  ignoreFileAdditionThenDeletion,
   includeAddEventInFileMove,
   includeAddDirEventInDirMove,
   includeChangeEventIntoFileMove,
@@ -511,6 +512,17 @@ function ignoreDirAdditionThenDeletion (samePathChange /*: ?LocalChange */) {
       'Folder was added then deleted. Ignoring add.')
     // $FlowFixMe
     addChangeSamePath.type = 'Ignored'
+    return true
+  }
+}
+
+function ignoreFileAdditionThenDeletion (samePathChange /*: ?LocalChange */) {
+  const addChangeSamePath /*: ?LocalFileAddition */ = maybeAddFile(samePathChange)
+  if (addChangeSamePath && addChangeSamePath.wip) {
+    // $FlowFixMe
+    addChangeSamePath.type = 'Ignored'
+    delete addChangeSamePath.wip
+    delete addChangeSamePath.md5sum
     return true
   }
 }
