@@ -281,7 +281,9 @@ function fileMoveFromUnlinkAdd (sameInodeChange /*: ?LocalChange */, e /*: Local
   })
 }
 
-function dirMoveFromUnlinkAdd (unlinkChange /*: LocalDirDeletion */, e /*: LocalDirAdded */) /*: * */ {
+function dirMoveFromUnlinkAdd (sameInodeChange /*: ?LocalChange */, e /*: LocalDirAdded */) /*: * */ {
+  const unlinkChange /*: ?LocalDirDeletion */ = maybeDeleteFolder(sameInodeChange)
+  if (!unlinkChange) return
   if (_.get(unlinkChange, 'old.path') === e.path) return dirAddition(e)
   log.debug({oldpath: unlinkChange.path, path: e.path}, 'unlinkDir + addDir = DirMove')
   return build('DirMove', e.path, {
