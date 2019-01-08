@@ -53,7 +53,11 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
   const getChangeByPath = (e) => {
     return changesByPath.get(e.path)
   }
-  const changeFound = (c /*: LocalChange */) => {
+  const changeFound = (c /*: LocalChange | true */) => {
+    if (c === true) {
+      // A previous change was transformed. Nothing more to index.
+      return
+    }
     changesByPath.set(c.path, c)
     if (typeof c.ino === 'number') changesByInode.set(c.ino, c)
     else changes.push(c)
