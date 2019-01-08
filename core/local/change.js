@@ -3,6 +3,8 @@
 const _ = require('lodash')
 const path = require('path')
 
+const metadata = require('../metadata')
+
 /*::
 import type fs from 'fs'
 import type { Metadata } from '../metadata'
@@ -356,7 +358,11 @@ function fileMoveIdenticalOffline (dstEvent /*: LocalFileAdded */) /*: ?LocalFil
   } /*: LocalFileMove */)
 }
 
-function dirRenamingCaseOnlyFromAddAdd (addChange /*: LocalDirAddition */, e /*: LocalDirAdded */) /*: * */ {
+function dirRenamingCaseOnlyFromAddAdd (sameInodeChange /*: ?LocalChange */, e /*: LocalDirAdded */) /*: * */ {
+  const addChange /*: ?LocalDirAddition */ = maybePutFolder(sameInodeChange)
+  if (!addChange || metadata.id(addChange.path) !== metadata.id(e.path) || addChange.path === e.path) {
+    return
+  }
   log.debug({oldpath: addChange.path, path: e.path}, 'addDir + addDir = DirMove (same id)')
   return build('DirMove', e.path, {
     stats: addChange.stats,
