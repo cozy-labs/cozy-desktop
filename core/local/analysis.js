@@ -91,16 +91,18 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
         e.type = 'unlinkDir'
       }
 
+      const sameInodeChange = getChangeByInode(e)
+
       switch (e.type) {
         case 'add':
           {
-            const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(getChangeByInode(e))
+            const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(sameInodeChange)
             if (moveChange) {
               localChange.includeAddEventInFileMove(moveChange, e)
               break
             }
 
-            const unlinkChange /*: ?LocalFileDeletion */ = localChange.maybeDeleteFile(getChangeByInode(e))
+            const unlinkChange /*: ?LocalFileDeletion */ = localChange.maybeDeleteFile(sameInodeChange)
             if (unlinkChange) {
               changeFound(localChange.fileMoveFromUnlinkAdd(unlinkChange, e))
               break
@@ -114,17 +116,17 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
           break
         case 'addDir':
           {
-            const moveChange /*: ?LocalDirMove */ = localChange.maybeMoveFolder(getChangeByInode(e))
+            const moveChange /*: ?LocalDirMove */ = localChange.maybeMoveFolder(sameInodeChange)
             if (moveChange) {
               localChange.includeAddDirEventInDirMove(moveChange, e)
               break
             }
-            const unlinkChange /*: ?LocalDirDeletion */ = localChange.maybeDeleteFolder(getChangeByInode(e))
+            const unlinkChange /*: ?LocalDirDeletion */ = localChange.maybeDeleteFolder(sameInodeChange)
             if (unlinkChange) {
               changeFound(localChange.dirMoveFromUnlinkAdd(unlinkChange, e))
               break
             }
-            const addChange /*: ?LocalDirAddition */ = localChange.maybePutFolder(getChangeByInode(e))
+            const addChange /*: ?LocalDirAddition */ = localChange.maybePutFolder(sameInodeChange)
             if (addChange && metadata.id(addChange.path) === metadata.id(e.path) && addChange.path !== e.path) {
               changeFound(localChange.dirRenamingCaseOnlyFromAddAdd(addChange, e))
               break
@@ -136,21 +138,21 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
           }
           break
         case 'change':
-          const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(getChangeByInode(e))
+          const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(sameInodeChange)
           if (moveChange) {
             localChange.includeChangeEventIntoFileMove(moveChange, e)
             break
           }
 
           // There was an unlink on the same file, this is most probably a move and replace
-          const unlinkChange /*: ?LocalFileDeletion */ = localChange.maybeDeleteFile(getChangeByInode(e))
+          const unlinkChange /*: ?LocalFileDeletion */ = localChange.maybeDeleteFile(sameInodeChange)
           if (unlinkChange) {
             const moveChange = localChange.fileMoveFromFileDeletionChange(unlinkChange, e)
             changeFound(moveChange)
             break
           }
 
-          const addChange /*: ?LocalFileAddition */ = localChange.maybeAddFile(getChangeByInode(e))
+          const addChange /*: ?LocalFileAddition */ = localChange.maybeAddFile(sameInodeChange)
           if (addChange && metadata.id(addChange.path) === metadata.id(e.path) && addChange.path !== e.path) {
             changeFound(localChange.fileMoveIdentical(addChange, e))
             break
@@ -160,7 +162,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
           break
         case 'unlink':
           {
-            const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(getChangeByInode(e))
+            const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(sameInodeChange)
             /* istanbul ignore next */
             if (moveChange) {
               // TODO: Pending move
@@ -169,7 +171,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
                 'checksumless adds and inode-less unlink events are dropped')
             }
 
-            const addChange /*: ?LocalFileAddition */ = localChange.maybeAddFile(getChangeByInode(e))
+            const addChange /*: ?LocalFileAddition */ = localChange.maybeAddFile(sameInodeChange)
             if (addChange) {
               // TODO: pending move
               changeFound(localChange.fileMoveFromAddUnlink(addChange, e))
@@ -195,7 +197,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
           break
         case 'unlinkDir':
           {
-            const moveChange /*: ?LocalDirMove */ = localChange.maybeMoveFolder(getChangeByInode(e))
+            const moveChange /*: ?LocalDirMove */ = localChange.maybeMoveFolder(sameInodeChange)
             /* istanbul ignore next */
             if (moveChange) {
               // TODO: pending move
@@ -204,7 +206,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
                 'non-existing addDir and inode-less unlinkDir events are dropped')
             }
 
-            const addChange /*: ?LocalDirAddition */ = localChange.maybePutFolder(getChangeByInode(e))
+            const addChange /*: ?LocalDirAddition */ = localChange.maybePutFolder(sameInodeChange)
             if (addChange) {
               changeFound(localChange.dirMoveFromAddUnlink(addChange, e))
               break
