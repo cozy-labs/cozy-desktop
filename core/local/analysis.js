@@ -146,12 +146,8 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
           }
           changeFound(
             withChangeByPath(e, samePathChange => {
-              const moveChangeSamePath /*: ?LocalFileMove */ = localChange.maybeMoveFile(samePathChange)
-              if (moveChangeSamePath && moveChangeSamePath.md5sum == null) { // FIXME: if change && change.wip?
-                localChange.convertFileMoveToDeletion(moveChangeSamePath)
-                return
-              }
               return (
+                localChange.convertFileMoveToDeletion(samePathChange) ||
                 localChange.ignoreFileAdditionThenDeletion(samePathChange)
               )
               // Otherwise, skip unlink event by multiple moves
