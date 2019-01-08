@@ -51,6 +51,7 @@ module.exports = {
   dirMoveFromAddUnlink,
   dirRenamingCaseOnlyFromAddAdd,
   dirMoveIdenticalOffline,
+  ignoreDirAdditionThenDeletion,
   includeAddEventInFileMove,
   includeAddDirEventInDirMove,
   includeChangeEventIntoFileMove,
@@ -501,4 +502,15 @@ function convertDirMoveToDeletion (samePathChange /*: ?LocalChange */) {
   delete change.stats
   delete change.wip
   return true
+}
+
+function ignoreDirAdditionThenDeletion (samePathChange /*: ?LocalChange */) {
+  const addChangeSamePath /*: ?LocalDirAddition */ = maybePutFolder(samePathChange)
+  if (addChangeSamePath && addChangeSamePath.wip) {
+    log.debug({path: addChangeSamePath.path, ino: addChangeSamePath.ino},
+      'Folder was added then deleted. Ignoring add.')
+    // $FlowFixMe
+    addChangeSamePath.type = 'Ignored'
+    return true
+  }
 }
