@@ -490,7 +490,9 @@ function convertFileMoveToDeletion (change /*: LocalFileMove */) {
   delete change.wip
 }
 
-function convertDirMoveToDeletion (change /*: LocalDirMove */) {
+function convertDirMoveToDeletion (samePathChange /*: ?LocalChange */) {
+  const change /*: ?LocalDirMove */ = maybeMoveFolder(samePathChange)
+  if (!change || !change.wip) return
   log.debug({path: change.old.path, ino: change.ino},
     'DirMove + unlinkDir = DirDeletion')
   // $FlowFixMe
@@ -498,4 +500,5 @@ function convertDirMoveToDeletion (change /*: LocalDirMove */) {
   change.path = change.old.path
   delete change.stats
   delete change.wip
+  return true
 }
