@@ -71,6 +71,9 @@ async function winDetectMove (buffer, out, pouch) {
 
     // Then, see if a created event matches a deleted event
     for (const event of events) {
+      if (event.incomplete) {
+        continue
+      }
       if (event.action === 'created') {
         for (let i = 0; i < pending.length; i++) {
           const path = pending[i].deleted.get(event.stats.fileid)

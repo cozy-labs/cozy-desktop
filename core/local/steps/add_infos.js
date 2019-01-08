@@ -18,9 +18,13 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string } *
   return buffer.asyncMap(async (events) => {
     const batch = []
     for (const event of events) {
+      if (event.kind === 'symlink') {
+        log.error({event}, 'Symlinks are not supported')
+        // TODO display an error in the UI
+        continue
+      }
       try {
         if (event.action !== 'initial-scan-done') {
-          // TODO if (event.kind === 'symlink') emit an error
           event._id = id(event.path)
           if (['created', 'modified', 'renamed'].includes(event.action)) {
             log.debug({path: event.path, action: event.action}, 'stat')
@@ -33,11 +37,11 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string } *
             event.kind = event.kind === 'directory' ? 'directory' : 'file'
           }
         }
-        batch.push(event)
       } catch (err) {
         log.info({err, event}, 'Cannot get infos')
-        console.log('stats', err) // TODO error handling
+        event.incomplete = true
       }
+      batch.push(event)
     }
     return batch
   })

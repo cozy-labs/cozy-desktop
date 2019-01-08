@@ -17,6 +17,9 @@ import type { Producer } from './producer'
 module.exports = function (buffer /*: Buffer */, opts /*: { producer: Producer } */) /*: Buffer */ {
   return buffer.asyncMap(async (batch) => {
     for (const event of batch) {
+      if (event.incomplete) {
+        continue
+      }
       if (event.action === 'created' && event.kind === 'directory') {
         opts.producer.scan(event.path)
           .catch((err) => log.info({err, event}, 'Error on scan'))
