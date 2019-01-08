@@ -96,13 +96,8 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
       switch (e.type) {
         case 'add':
           {
-            const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(sameInodeChange)
-            if (moveChange) {
-              localChange.includeAddEventInFileMove(moveChange, e)
-              break
-            }
-
             changeFound(
+              localChange.includeAddEventInFileMove(sameInodeChange, e) ||
               localChange.fileMoveFromUnlinkAdd(sameInodeChange, e) ||
               localChange.fileMoveIdenticalOffline(e) ||
               localChange.fileAddition(e)
