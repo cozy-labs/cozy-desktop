@@ -151,13 +151,9 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
                 localChange.convertFileMoveToDeletion(moveChangeSamePath)
                 return
               }
-              const addChangeSamePath /*: ?LocalFileAddition */ = localChange.maybeAddFile(samePathChange)
-              if (addChangeSamePath && addChangeSamePath.wip) {
-                // $FlowFixMe
-                addChangeSamePath.type = 'Ignored'
-                delete addChangeSamePath.wip
-                delete addChangeSamePath.md5sum
-              }
+              return (
+                localChange.ignoreFileAdditionThenDeletion(samePathChange)
+              )
               // Otherwise, skip unlink event by multiple moves
             })
           )
