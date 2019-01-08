@@ -102,13 +102,8 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
               break
             }
 
-            const unlinkChange /*: ?LocalFileDeletion */ = localChange.maybeDeleteFile(sameInodeChange)
-            if (unlinkChange) {
-              changeFound(localChange.fileMoveFromUnlinkAdd(unlinkChange, e))
-              break
-            }
-
             changeFound(
+              localChange.fileMoveFromUnlinkAdd(sameInodeChange, e) ||
               localChange.fileMoveIdenticalOffline(e) ||
               localChange.fileAddition(e)
             )
