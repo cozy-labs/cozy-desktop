@@ -173,6 +173,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
             const moveChangeSamePath /*: ?LocalFileMove */ = localChange.maybeMoveFile(getChangeByPath(e))
             if (moveChangeSamePath && moveChangeSamePath.md5sum == null) { // FIXME: if change && change.wip?
               localChange.convertFileMoveToDeletion(moveChangeSamePath)
+              break
             }
             const addChangeSamePath /*: ?LocalFileAddition */ = localChange.maybeAddFile(getChangeByPath(e))
             if (addChangeSamePath && addChangeSamePath.wip) {
@@ -180,7 +181,6 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
               addChangeSamePath.type = 'Ignored'
               delete addChangeSamePath.wip
               delete addChangeSamePath.md5sum
-              break
             }
             // Otherwise, skip unlink event by multiple moves
           }
@@ -211,6 +211,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
                 'Folder was added then deleted. Ignoring add.')
               // $FlowFixMe
               addChangeSamePath.type = 'Ignored'
+              break
             }
 
             const moveChangeSamePath /*: ?LocalDirMove */ = localChange.maybeMoveFolder(getChangeByPath(e))
