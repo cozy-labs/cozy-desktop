@@ -53,7 +53,11 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
   const getChangeByPath = (e) => {
     return changesByPath.get(e.path)
   }
-  const changeFound = (c /*: LocalChange | true */) => {
+  const changeFound = (c /*: ?LocalChange | true */) => {
+    if (c == null) {
+      // No change was found. Nothing to do.
+      return
+    }
     if (c === true) {
       // A previous change was transformed. Nothing more to index.
       return
