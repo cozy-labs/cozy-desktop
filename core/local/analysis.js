@@ -100,7 +100,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
 
             changeFound(
               localChange.fileMoveIdenticalOffline(e) ||
-              localChange.fromEvent(e)
+              localChange.fileAddition(e)
             )
           }
           break
@@ -123,7 +123,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
             }
             changeFound(
               localChange.dirMoveIdenticalOffline(e) ||
-              localChange.fromEvent(e)
+              localChange.dirAddition(e)
             )
           }
           break
@@ -148,7 +148,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
             break
           }
 
-          changeFound(localChange.fromEvent(e))
+          changeFound(localChange.fileUpdate(e))
           break
         case 'unlink':
           {
@@ -167,7 +167,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
               changeFound(localChange.fileMoveFromAddUnlink(addChange, e))
               break
             } else if (getInode(e)) {
-              changeFound(localChange.fromEvent(e))
+              changeFound(localChange.fileDeletion(e))
               break
             }
             const moveChangeSamePath /*: ?LocalFileMove */ = localChange.maybeMoveFile(getChangeByPath(e))
@@ -179,6 +179,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
               // $FlowFixMe
               addChangeSamePath.type = 'Ignored'
               delete addChangeSamePath.wip
+              delete addChangeSamePath.md5sum
               break
             }
             // Otherwise, skip unlink event by multiple moves
@@ -199,7 +200,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
             if (addChange) {
               changeFound(localChange.dirMoveFromAddUnlink(addChange, e))
             } else if (getInode(e)) {
-              changeFound(localChange.fromEvent(e))
+              changeFound(localChange.dirDeletion(e))
             } else {
               const addChangeSamePath /*: ?LocalDirAddition */ = localChange.maybePutFolder(getChangeByPath(e))
               if (addChangeSamePath && addChangeSamePath.wip) {
