@@ -199,21 +199,23 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
             const addChange /*: ?LocalDirAddition */ = localChange.maybePutFolder(getChangeByInode(e))
             if (addChange) {
               changeFound(localChange.dirMoveFromAddUnlink(addChange, e))
-            } else if (getInode(e)) {
+              break
+            }
+            if (getInode(e)) {
               changeFound(localChange.dirDeletion(e))
-            } else {
-              const addChangeSamePath /*: ?LocalDirAddition */ = localChange.maybePutFolder(getChangeByPath(e))
-              if (addChangeSamePath && addChangeSamePath.wip) {
-                log.debug({path: addChangeSamePath.path, ino: addChangeSamePath.ino},
-                  'Folder was added then deleted. Ignoring add.')
-                // $FlowFixMe
-                addChangeSamePath.type = 'Ignored'
-              }
+              break
+            }
+            const addChangeSamePath /*: ?LocalDirAddition */ = localChange.maybePutFolder(getChangeByPath(e))
+            if (addChangeSamePath && addChangeSamePath.wip) {
+              log.debug({path: addChangeSamePath.path, ino: addChangeSamePath.ino},
+                'Folder was added then deleted. Ignoring add.')
+              // $FlowFixMe
+              addChangeSamePath.type = 'Ignored'
+            }
 
-              const moveChangeSamePath /*: ?LocalDirMove */ = localChange.maybeMoveFolder(getChangeByPath(e))
-              if (moveChangeSamePath && moveChangeSamePath.wip) {
-                localChange.convertDirMoveToDeletion(moveChangeSamePath)
-              }
+            const moveChangeSamePath /*: ?LocalDirMove */ = localChange.maybeMoveFolder(getChangeByPath(e))
+            if (moveChangeSamePath && moveChangeSamePath.wip) {
+              localChange.convertDirMoveToDeletion(moveChangeSamePath)
             }
           }
           break
