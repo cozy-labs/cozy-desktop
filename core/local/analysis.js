@@ -145,13 +145,11 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
             }
           }
           changeFound(
-            withChangeByPath(e, samePathChange => {
-              return (
-                localChange.convertFileMoveToDeletion(samePathChange) ||
-                localChange.ignoreFileAdditionThenDeletion(samePathChange)
-              )
+            withChangeByPath(e, samePathChange => (
+              localChange.convertFileMoveToDeletion(samePathChange) ||
+              localChange.ignoreFileAdditionThenDeletion(samePathChange)
               // Otherwise, skip unlink event by multiple moves
-            })
+            ))
           )
           break
         case 'unlinkDir':
@@ -176,12 +174,10 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
             }
           }
           changeFound(
-            withChangeByPath(e, samePathChange => {
-              return (
-                localChange.ignoreDirAdditionThenDeletion(samePathChange) ||
-                localChange.convertDirMoveToDeletion(samePathChange)
-              )
-            })
+            withChangeByPath(e, samePathChange => (
+              localChange.ignoreDirAdditionThenDeletion(samePathChange) ||
+              localChange.convertDirMoveToDeletion(samePathChange)
+            ))
           )
           break
         default:
