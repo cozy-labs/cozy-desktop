@@ -385,7 +385,9 @@ export type LocalMove = LocalFileMove|LocalDirMove
 export type LocalMoveEvent = LocalFileAdded|LocalDirAdded
 */
 
-function includeAddEventInFileMove (moveChange /*: LocalFileMove */, e /*: LocalFileAdded */) {
+function includeAddEventInFileMove (sameInodeChange /*: ?LocalChange */, e /*: LocalFileAdded */) {
+  const moveChange /*: ?LocalFileMove */ = maybeMoveFile(sameInodeChange)
+  if (!moveChange) return
   if (!moveChange.wip &&
        moveChange.path === e.path &&
        moveChange.stats.ino === e.stats.ino &&
@@ -405,6 +407,7 @@ function includeAddEventInFileMove (moveChange /*: LocalFileMove */, e /*: Local
       {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
       'FileMove + add without checksum = FileMove wip')
   }
+  return true
 }
 
 function includeAddDirEventInDirMove (moveChange /*: LocalDirMove */, e /*: LocalDirAdded */) {
