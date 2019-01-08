@@ -1,5 +1,28 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.12.0-alpha.1 - 2019-01-08
+
+Improvements for all users:
+
+- We've improved the way we handle the revision of newly detected documents that
+  are created at paths that have already been synchronised in the past. This was
+  a potential source of conflicts were you to modify the content of such file.
+
+Improvements for Windows and Linux users:
+
+- We're testing a new implementation of our local changes watcher on Windows and
+  Linux. This should bring performance gains, faster change detection and in
+  fine better stability.
+  Some bugs can be present and not all existing features are implemented yet
+  though.
+
+  It is acitvated by default in this early build for testing purposes only and
+  should not be used in other situations.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.11.2 - 2019-01-03
 
 See [3.11.2-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.11.2-beta.1)
