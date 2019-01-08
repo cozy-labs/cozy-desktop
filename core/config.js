@@ -27,7 +27,9 @@ module.exports = class Config {
   // Load a config JSON file or return an empty object
   static safeLoad (configPath) {
     try {
-      return fse.readJSONSync(configPath)
+      const content = fs.readFileSync(configPath, 'utf8')
+      if (content === '') return {}
+      return JSON.parse(content)
     } catch (e) {
       if (e instanceof SyntaxError) {
         log.error(`Could not read config file at ${configPath}:`, e)
