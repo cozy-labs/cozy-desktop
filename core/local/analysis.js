@@ -111,12 +111,8 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
               localChange.includeAddDirEventInDirMove(moveChange, e)
               break
             }
-            const unlinkChange /*: ?LocalDirDeletion */ = localChange.maybeDeleteFolder(sameInodeChange)
-            if (unlinkChange) {
-              changeFound(localChange.dirMoveFromUnlinkAdd(unlinkChange, e))
-              break
-            }
             changeFound(
+              localChange.dirMoveFromUnlinkAdd(sameInodeChange, e) ||
               localChange.dirRenamingCaseOnlyFromAddAdd(sameInodeChange, e) ||
               localChange.dirMoveIdenticalOffline(e) ||
               localChange.dirAddition(e)
