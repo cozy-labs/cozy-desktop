@@ -172,11 +172,11 @@ Local watcher
 -------------
 
 Historically, the local watcher was based on the chokidar library. Chokidar is
-an high-level library that tries to mask the differences between the API for
+a high-level library that tries to mask the differences between the API for
 watching files on 3 OSes: ReadDirectoryChangesW on Windows, FsEvents on macOS,
 and inotify on Linux. But, we discover that doing so leads to some pitfalls,
-for our use case. In particular, on Windows, Chokidar works with polling or
-with creating a new watcher per direcotry, while a single watcher on the sync
+for our use cases. In particular, on Windows, Chokidar works with polling or
+with creating a new watcher per directory, while a single watcher on the sync
 path would be enough and more reliable. So, we have started to work on a new
 watcher, based on the @atom/watcher library. This watcher is currently aimed at
 Windows and Linux. For macOS, FsEvents bundles events and it's harder to work
