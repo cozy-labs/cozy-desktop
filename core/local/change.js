@@ -418,7 +418,9 @@ function includeAddEventInFileMove (sameInodeChange /*: ?LocalChange */, e /*: L
   return true
 }
 
-function includeAddDirEventInDirMove (moveChange /*: LocalDirMove */, e /*: LocalDirAdded */) {
+function includeAddDirEventInDirMove (sameInodeChange /*: ?LocalChange */, e /*: LocalDirAdded */) {
+  const moveChange /*: ?LocalDirMove */ = maybeMoveFolder(sameInodeChange)
+  if (!moveChange) return
   if (!moveChange.wip &&
        moveChange.path === e.path &&
        moveChange.stats.ino === e.stats.ino
@@ -430,7 +432,7 @@ function includeAddDirEventInDirMove (moveChange /*: LocalDirMove */, e /*: Loca
       {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
       'DirMove(a, b) + addDir(b) = DirMove.overwrite(a, b) [chokidar bug]')
     moveChange.overwrite = true
-    return
+    return true
   }
   if (moveChange.old.path === e.path) {
     log.debug(
@@ -438,7 +440,7 @@ function includeAddDirEventInDirMove (moveChange /*: LocalDirMove */, e /*: Loca
       `DirMove(a, b) + addDir(a) = Ignored(b, a) (identical renaming loopback)`)
     // $FlowFixMe
     moveChange.type = 'Ignored'
-    return
+    return true
   }
   moveChange.path = e.path
   moveChange.stats = e.stats
@@ -453,6 +455,7 @@ function includeAddDirEventInDirMove (moveChange /*: LocalDirMove */, e /*: Loca
       {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
       'DirMove + addDir wip = DirMove wip')
   }
+  return true
 }
 
 function includeChangeEventIntoFileMove (moveChange /*: LocalFileMove */, e /*: LocalFileUpdated */) {

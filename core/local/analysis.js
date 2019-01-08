@@ -106,12 +106,8 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
           break
         case 'addDir':
           {
-            const moveChange /*: ?LocalDirMove */ = localChange.maybeMoveFolder(sameInodeChange)
-            if (moveChange) {
-              localChange.includeAddDirEventInDirMove(moveChange, e)
-              break
-            }
             changeFound(
+              localChange.includeAddDirEventInDirMove(sameInodeChange, e) ||
               localChange.dirMoveFromUnlinkAdd(sameInodeChange, e) ||
               localChange.dirRenamingCaseOnlyFromAddAdd(sameInodeChange, e) ||
               localChange.dirMoveIdenticalOffline(e) ||
