@@ -334,7 +334,9 @@ function dirMoveFromAddUnlink (addChange /*: LocalDirAddition */, e /*: LocalDir
   })
 }
 
-function fileMoveIdentical (addChange /*: LocalFileAddition */, e /*: LocalFileUpdated */) /*: * */ {
+function fileMoveIdentical (sameInodeChange /*: ?LocalChange */, e /*: LocalFileUpdated */) /*: * */ {
+  const addChange /*: ?LocalFileAddition */ = maybeAddFile(sameInodeChange)
+  if (!addChange || metadata.id(addChange.path) !== metadata.id(e.path) || addChange.path === e.path) return
   log.debug({oldpath: e.path, path: addChange.path}, 'add + change = FileMove (same id)')
   return build('FileMove', addChange.path, {
     stats: e.stats,
