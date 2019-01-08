@@ -305,7 +305,10 @@ function fileMoveFromAddUnlink (addChange /*: LocalFileAddition */, e /*: LocalF
   })
 }
 
-function fileMoveFromFileDeletionChange (fileDeletion /* :LocalFileDeletion */, e /* : LocalFileUpdated */) {
+function fileMoveFromFileDeletionChange (sameInodeChange /*: ?LocalChange */, e /*: LocalFileUpdated */) {
+  const fileDeletion /*: ?LocalFileDeletion */ = maybeDeleteFile(sameInodeChange)
+  if (!fileDeletion) return
+  // There was an unlink on the same file, this is most probably a move and replace
   const src = fileDeletion.old
   const dst = e.old
   const newDst = e
