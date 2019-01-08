@@ -116,13 +116,8 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
           }
           break
         case 'change':
-          const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(sameInodeChange)
-          if (moveChange) {
-            localChange.includeChangeEventIntoFileMove(moveChange, e)
-            break
-          }
-
           changeFound(
+            localChange.includeChangeEventIntoFileMove(sameInodeChange, e) ||
             localChange.fileMoveFromFileDeletionChange(sameInodeChange, e) ||
             localChange.fileMoveIdentical(sameInodeChange, e) ||
             localChange.fileUpdate(e)
