@@ -482,7 +482,9 @@ function includeChangeEventIntoFileMove (sameInodeChange /*: ?LocalChange */, e 
   return true
 }
 
-function convertFileMoveToDeletion (change /*: LocalFileMove */) {
+function convertFileMoveToDeletion (samePathChange /*: ?LocalChange */) {
+  const change /*: ?LocalFileMove */ = maybeMoveFile(samePathChange)
+  if (!change || change.md5sum) return
   log.debug({path: change.old.path, ino: change.ino},
     'FileMove + unlink = FileDeletion')
   // $FlowFixMe
@@ -490,6 +492,7 @@ function convertFileMoveToDeletion (change /*: LocalFileMove */) {
   change.path = change.old.path
   delete change.stats
   delete change.wip
+  return true
 }
 
 function convertDirMoveToDeletion (samePathChange /*: ?LocalChange */) {
