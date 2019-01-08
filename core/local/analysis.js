@@ -194,10 +194,9 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
                 return
               }
 
-              const moveChangeSamePath /*: ?LocalDirMove */ = localChange.maybeMoveFolder(samePathChange)
-              if (moveChangeSamePath && moveChangeSamePath.wip) {
-                localChange.convertDirMoveToDeletion(moveChangeSamePath)
-              }
+              return (
+                localChange.convertDirMoveToDeletion(samePathChange)
+              )
             })
           )
           break
