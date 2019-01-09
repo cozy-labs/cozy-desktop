@@ -1,5 +1,16 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.12.0-alpha.2 - 2019-01-09
+
+Improvements for all users:
+
+- We fixed the issue preventing the new watcher from working past the initial
+  synchronisation folder scan.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.12.0-alpha.1 - 2019-01-08
 
 Improvements for all users:
