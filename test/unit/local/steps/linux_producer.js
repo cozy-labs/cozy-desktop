@@ -45,7 +45,7 @@ onPlatform('linux', () => {
 
       it('should scan a subfolder tree', async () => {
         const mypath = ['foo', 'bar', 'baz']
-        mkdirSyncRecursive(syncPath, mypath.join('/'))
+        mkdirsSync(path.join(syncPath, ...mypath))
         await producer.start()
 
         const batches = [
@@ -169,9 +169,13 @@ onPlatform('linux', () => {
   })
 })
 
-function mkdirSyncRecursive (syncPath = '/', mypath = '/') {
+function mkdirsSync (mypath = '/') {
   mypath.split('/').reduce((acc, folder) => {
-    fs.mkdirSync(path.join(acc, folder))
+    try {
+      fs.mkdirSync(path.join(acc, folder))
+    } catch (ex) {
+      // `EEXIST ${path.join(acc, folder)}`
+    }
     return `${acc}/${folder}`
-  }, syncPath)
+  }, '/')
 }
