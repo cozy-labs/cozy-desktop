@@ -289,10 +289,12 @@ const startSync = (force, ...args) => {
   })
 }
 
-const shouldExit = app.makeSingleInstance(() => showWindow())
-if (shouldExit) {
-  log.warn('Cozy Drive is already running. Exiting...')
-  app.exit()
+if (!process.env.COZY_DESKTOP_PROPERTY_BASED_TESTING) {
+  const shouldExit = app.makeSingleInstance(() => showWindow())
+  if (shouldExit) {
+    log.warn('Cozy Drive is already running. Exiting...')
+    app.exit()
+  }
 }
 
 const dumbhash = (k) => k.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0)
@@ -340,7 +342,12 @@ app.on('ready', () => {
       updaterWindow.hide()
       showWindowStartApp()
     })
-    updaterWindow.checkForUpdates()
+    if (process.env.COZY_DESKTOP_PROPERTY_BASED_TESTING) {
+      updaterWindow.hide()
+      showWindowStartApp()
+    } else {
+      updaterWindow.checkForUpdates()
+    }
 
     // Os X wants all application to have a menu
     Menu.setApplicationMenu(buildAppMenu(app))
