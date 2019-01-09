@@ -162,14 +162,9 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
                 'We should not have both move and unlinkDir changes since ' +
                 'non-existing addDir and inode-less unlinkDir events are dropped')
             }
-
-            const addChange /*: ?LocalDirAddition */ = localChange.maybePutFolder(sameInodeChange)
-            if (addChange) {
-              changeFound(localChange.dirMoveFromAddUnlink(addChange, e))
-              break
-            }
           }
           changeFound(
+            localChange.dirMoveFromAddUnlink(sameInodeChange, e) ||
             localChange.dirDeletion(e) ||
             withChangeByPath(e, samePathChange => (
               localChange.ignoreDirAdditionThenDeletion(samePathChange) ||
