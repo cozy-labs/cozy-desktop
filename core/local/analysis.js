@@ -168,12 +168,9 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
               changeFound(localChange.dirMoveFromAddUnlink(addChange, e))
               break
             }
-            if (getInode(e)) {
-              changeFound(localChange.dirDeletion(e))
-              break
-            }
           }
           changeFound(
+            localChange.dirDeletion(e) ||
             withChangeByPath(e, samePathChange => (
               localChange.ignoreDirAdditionThenDeletion(samePathChange) ||
               localChange.convertDirMoveToDeletion(samePathChange)
