@@ -5,7 +5,7 @@
   { "op": "create_file", "path": "dirOne/fileOne", "size": 16 },
   { "op": "create_file", "path": "fileTwo", "size": 16 },
   { "op": "create_file", "path": "fileThree", "size": 16 },
-  { "op": "start" },
+  { "op": "start_watcher" },
   { "op": "sleep", "duration": 1000 },
   { "op": "reference", "path": "dirOne" },
   { "op": "reference", "path": "dirTwo" },

@@ -26,7 +26,7 @@
     "op": "mkdir",
     "path": "checking_account_future.dae/copy_analyst.ttc/principal_compressing.clkw"
   },
-  { "op": "start" },
+  { "op": "start_watcher" },
   {
     "op": "mkdir",
     "path": "checking_account_future.dae/,dynamic_checking_account_pound_sterling.svd/web.dae/quantify_content_international.xlsb"

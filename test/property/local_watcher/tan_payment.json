@@ -20,7 +20,7 @@
   { "op": "create_file", "path": "guarani_configuration.ncx", "size": 16409 },
   { "op": "mkdir", "path": "&TAN_PAYMENT.XWD/GARDEN_SDD.X3D" },
   { "op": "mkdir", "path": "../outside" },
-  { "op": "start" },
+  { "op": "start_watcher" },
   {
     "op": "mv",
     "from": "guarani_configuration.ncx",
@@ -89,7 +89,7 @@
     "to": "../outside/representative_fresh_directives.p7b"
   },
   { "op": "mkdir", "path": "&tan_payment.xwd" },
-  { "op": "stop" },
+  { "op": "stop_watcher" },
   {
     "op": "create_file",
     "path": "ergonomic_granite_hat_empowering_rubber.et3",
@@ -256,7 +256,7 @@
     "from": "grenada_cyprus_tuna.pqa",
     "to": "&tan_payment.xwd/garden_sdd.x3d/incredible_application_buckinghamshire.wcm"
   },
-  { "op": "restart" },
+  { "op": "restart_watcher" },
   { "op": "sleep", "duration": 2000 },
   {
     "op": "reference",
@@ -420,7 +420,7 @@
     "op": "mkdir",
     "path": "ivory_rhode_island_quantifying.spc/quantifying.z5"
   },
-  { "op": "stop" },
+  { "op": "stop_watcher" },
   {
     "op": "mkdir",
     "path": "&tan_payment.xwd/handcrafted_dynamic.qxt/integrated.p10"
@@ -610,7 +610,7 @@
     "op": "rm",
     "path": "ergonomic_granite_hat_empowering_rubber.et3/mobility_bus_withdrawal.uvvv"
   },
-  { "op": "restart" },
+  { "op": "restart_watcher" },
   {
     "op": "mv",
     "from": ":rss_impactful_sky_blue.g3w",
@@ -638,7 +638,7 @@
     "op": "rm",
     "path": "&tan_payment.xwd/port_experiences_solid_state.ogv/movies_guinea_bissau_uniform.spl"
   },
-  { "op": "stop" },
+  { "op": "stop_watcher" },
   {
     "op": "mv",
     "from": "guarani_configuration.ncx/fantastic_cotton_soap.sdw",
@@ -844,5 +844,5 @@
     "op": "rm",
     "path": "&tan_payment.xwd/handcrafted_dynamic.qxt/tactics_european_unit_of_account_17(e.u.a._17)_visionary.sit/navigating_international.torrent/sticky_personal_loan_account_visionary.jisp"
   },
-  { "op": "restart" }
+  { "op": "restart_watcher" }
 ]

@@ -6,7 +6,7 @@
   { "op": "mkdir", "path": "refined_plastic_chicken_rubber_invoice.mp4a" },
   { "op": "mkdir", "path": "kuwaiti_dinar_turn_key.otp" },
   { "op": "create_file", "path": "fresh_thinking_virtual.uu", "size": 15 },
-  { "op": "start" },
+  { "op": "start_watcher" },
   { "op": "create_file", "path": "guyana_connect.cab", "size": 8213 },
   {
     "op": "create_file",

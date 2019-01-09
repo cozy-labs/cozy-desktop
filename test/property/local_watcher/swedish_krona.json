@@ -45,7 +45,7 @@
     "op": "mkdir",
     "path": "http_exclusive_exuding.joda/inlet_overpass_orange.zip/Çrubber_massachusetts_revolutionary.gxf"
   },
-  { "op": "start" },
+  { "op": "start_watcher" },
   {
     "op": "create_file",
     "path": "granite_group.knp/licensed_global.kne",

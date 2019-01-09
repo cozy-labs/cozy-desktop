@@ -5,7 +5,7 @@
   { "op": "mkdir", "path": "empty_dir" },
   { "op": "mkdir", "path": "another_dir" },
   { "op": "create_file", "path": "another_dir/another_file", "size": 256 },
-  { "op": "start" },
+  { "op": "start_watcher" },
   { "op": "mkdir", "path": "new_dir" },
   { "op": "mkdir", "path": "existing_dir/new_subdir" }
 ]

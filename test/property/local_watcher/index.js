@@ -38,7 +38,7 @@ async function step (state, op) {
   await Promise.delay(10)
 
   switch (op.op) {
-    case 'start':
+    case 'start_watcher':
       state.config = {
         dbPath: { name: state.name, adapter: 'memory' },
         syncPath: state.dir.root
@@ -46,7 +46,7 @@ async function step (state, op) {
       state.pouchdb = new Pouch(state.config)
       await state.pouchdb.addAllViewsAsync()
       // break omitted intentionally
-    case 'restart':
+    case 'restart_watcher':
       const events = new EventEmitter()
       const merge = new Merge(state.pouchdb)
       // $FlowFixMe We just want to keep a trace of the conflicts
@@ -58,7 +58,7 @@ async function step (state, op) {
       state.watcher = Watcher.build(state.dir.root, prep, state.pouchdb, events, ignore)
       state.watcher.start()
       break
-    case 'stop':
+    case 'stop_watcher':
       await Promise.delay(1000)
       await state.watcher.stop()
       state.watcher = null

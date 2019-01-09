@@ -47,7 +47,7 @@
     "size": 40
   },
   { "op": "mkdir", "path": "../outside" },
-  { "op": "start" },
+  { "op": "start_watcher" },
   { "op": "create_file", "path": " RUSTIC_FORINT.BED", "size": 16408 },
   { "op": "create_file", "path": "refined_architect_cyan.wqd" },
   { "op": "mv", "from": " rustic_forint.bed", "to": "ONLINE.SCM" },
@@ -112,7 +112,7 @@
     "op": "mkdir",
     "path": "keyboard.shtml/5th_generation_wooden.dvb/%borders_technologies.cab"
   },
-  { "op": "stop" },
+  { "op": "stop_watcher" },
   { "op": "mkdir", "path": "colombian_peso_unidad_de_valor_real.ez3" },
   { "op": "mkdir", "path": "sports.umj/metal_bedfordshire_incentivize.h264" },
   {
@@ -144,7 +144,7 @@
     "path": "keyboard.shtml/Égeneric_granite_fish.mseq/mint_green_tasty_plastic_bike.spq/practical_generic_steel_table_junction.ra",
     "size": 131096
   },
-  { "op": "restart" },
+  { "op": "restart_watcher" },
   { "op": "rm", "path": "online.scm" },
   { "op": "mkdir", "path": " rustic_forint.bed/blue_sql.sema" },
   {

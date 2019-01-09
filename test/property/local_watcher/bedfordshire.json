@@ -6,7 +6,7 @@
     "size": 21
   },
   { "op": "mkdir", "path": "INDEXING.GIM" },
-  { "op": "start" },
+  { "op": "start_watcher" },
   { "op": "mkdir", "path": "INDEXING.GIM" },
   { "op": "mkdir", "path": "indexing.gim/buckinghamshire_tools_invoice.hjson" },
   {

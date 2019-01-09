@@ -18,13 +18,14 @@ const commonOps = [
   [1, mvToOutside],
   [1, mvFromOutside],
   [5, rm],
-  [1, stopOrRestart],
   [2, sleep]
 ]
-const localOps = commonOps + [
+const localOps = commonOps.concat([
+  [1, stopOrRestartWatcher],
   [3, addReference]
-]
+])
 const clientOps = commonOps
+// TODO stop/restart client
 // TODO network operations
 
 const knownPaths = []
@@ -142,13 +143,13 @@ function addReference () {
   return { op: 'reference', path: p }
 }
 
-function stopOrRestart () {
+function stopOrRestartWatcher () {
   if (running) {
     running = false
-    return { op: 'stop' }
+    return { op: 'stop_watcher' }
   } else {
     running = true
-    return { op: 'restart' }
+    return { op: 'restart_watcher' }
   }
 }
 
@@ -177,9 +178,14 @@ function init (ops) {
   ops.push({ op: 'mkdir', path: '../outside' })
 }
 
-function start (ops) {
+function startWatcher (ops) {
   running = true
-  ops.push({ op: 'start' })
+  ops.push({ op: 'start_watcher' })
+}
+
+function startClient (ops) {
+  ops.push(sleep())
+  ops.push({ op: 'start_client' })
 }
 
 function run (ops, availableOps) {
@@ -196,18 +202,20 @@ function run (ops, availableOps) {
 function generateLocalWatcher () {
   let ops = []
   init(ops)
-  start(ops)
+  startWatcher(ops)
   run(ops, localOps)
   console.log(JSON.stringify(ops))
 }
 
 function generateTwoClients () {
   let result = { desktop: [], laptop: [] }
-  for (let ops of Object.values(result)) {
+  // Flow doesn't want of:
+  // for (let ops of Object.values(result)) {
+  for (let ops of [result.desktop, result.laptop]) {
     init(ops)
-    start(ops)
+    startClient(ops)
   }
-  for (let ops of Object.values(result)) {
+  for (let ops of [result.desktop, result.laptop]) {
     run(ops, clientOps)
   }
   console.log(JSON.stringify(result))
@@ -222,7 +230,7 @@ function generate (property) {
     console.error(`Usage: ./test/generate_property_json.js [property]`)
   } else {
     console.error(`${property} is not a supported property`)
-    process.exit(1)
+    throw new Error('Unsupported property')
   }
 }
 

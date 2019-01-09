@@ -91,7 +91,7 @@
       "size": 16394
     },
     { "op": "mkdir", "path": "../outside" },
-    { "op": "start" },
+    { "op": "start_client" },
     {
       "op": "mv",
       "from": "soft_chief_convergence.ogv",
@@ -313,7 +313,6 @@
     },
     { "op": "create_file", "path": "TRANSMITTING.JS", "size": 1026 },
     { "op": "mkdir", "path": "24_365.obd/ knoll.wsdl/shirt.odp" },
-    { "op": "restart" },
     {
       "op": "mv",
       "from": "efficient_invoice.stc/grass_roots_planner.nnw/real_time_handmade.cbz",
@@ -503,8 +502,6 @@
       "path": "handcrafted_fresh_computer.mp2a/landing_reinvent.ma",
       "size": 131077
     },
-    { "op": "stop" },
-    { "op": "restart" },
     {
       "op": "mv",
       "from": "efficient_invoice.stc/:team_oriented_global.luac/virtual.cdxml/bacon_avon_overriding.jar/feed.mxml",
@@ -653,8 +650,7 @@
       "op": "mv",
       "from": "handcrafted_fresh_computer.mp2a",
       "to": "configuration_firewall.otc/orchestrate_money_market_account_ram.acutc"
-    },
-    { "op": "restart" }
+    }
   ],
   "laptop": [
     {
@@ -717,7 +713,7 @@
     },
     { "op": "create_file", "path": "AVON.NPX", "size": 2074 },
     { "op": "mkdir", "path": "../outside" },
-    { "op": "start" },
+    { "op": "start_client" },
     {
       "op": "mv",
       "from": "disintermediate_rustic.hvs/,index_matrix.blb/@borders.sql",
@@ -744,7 +740,6 @@
       "from": "disintermediate_rustic.hvs/,index_matrix.blb",
       "to": "efficient_invoice.stc/:team_oriented_global.luac"
     },
-    { "op": "mkdir", "path": "florida_synthesize_input.dist" },
-    { "op": "restart" }
+    { "op": "mkdir", "path": "florida_synthesize_input.dist" }
   ]
 }
