@@ -275,7 +275,7 @@ function fileUpdate (e /*: LocalFileUpdated */) /*: LocalFileUpdate */ {
 function fileMoveFromUnlinkAdd (sameInodeChange /*: ?LocalChange */, e /*: LocalFileAdded */) /*: * */ {
   const unlinkChange /*: ?LocalFileDeletion */ = maybeDeleteFile(sameInodeChange)
   if (!unlinkChange) return
-  if (_.get(unlinkChange, 'old.path') === e.path) return fileAddition(e)
+  if (_.get(unlinkChange, 'old.path') === e.path) return
   log.debug({oldpath: unlinkChange.path, path: e.path, ino: unlinkChange.ino}, 'unlink + add = FileMove')
   return build('FileMove', e.path, {
     stats: e.stats,
@@ -289,7 +289,7 @@ function fileMoveFromUnlinkAdd (sameInodeChange /*: ?LocalChange */, e /*: Local
 function dirMoveFromUnlinkAdd (sameInodeChange /*: ?LocalChange */, e /*: LocalDirAdded */) /*: * */ {
   const unlinkChange /*: ?LocalDirDeletion */ = maybeDeleteFolder(sameInodeChange)
   if (!unlinkChange) return
-  if (_.get(unlinkChange, 'old.path') === e.path) return dirAddition(e)
+  if (_.get(unlinkChange, 'old.path') === e.path) return
   log.debug({oldpath: unlinkChange.path, path: e.path}, 'unlinkDir + addDir = DirMove')
   return build('DirMove', e.path, {
     stats: e.stats,
