@@ -147,7 +147,7 @@
       "op": "mkdir",
       "path": "handcrafted_fresh_computer.mp2a/one_to_one_bedfordshire.uvvg/écircuit.nsc"
     },
-    { "op": "stop" },
+    { "op": "stop_client" },
     {
       "op": "create_file",
       "path": "EFFICIENT_INVOICE.STC/GRASS_ROOTS_PLANNER.NNW/REAL_TIME_HANDMADE.CBZ/BEDFORDSHIRE_EXECUTIVE.CIF",
@@ -516,7 +516,7 @@
       "from": "generating.sse",
       "to": "efficient_invoice.stc/grass_roots_planner.nnw/real_time_handmade.cbz/networked_architect_xss.dataless/deposit.ssf/chair_b2c_health.dsc/ jamaica.m4p"
     },
-    { "op": "stop" },
+    { "op": "stop_client" },
     {
       "op": "mv",
       "from": "../outside/functionality.hbci",
