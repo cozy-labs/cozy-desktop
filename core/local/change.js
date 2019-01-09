@@ -3,6 +3,9 @@
 const _ = require('lodash')
 const path = require('path')
 
+const metadata = require('../metadata')
+const { getInode } = require('./event')
+
 /*::
 import type fs from 'fs'
 import type { Metadata } from '../metadata'
@@ -49,6 +52,8 @@ module.exports = {
   dirMoveFromAddUnlink,
   dirRenamingCaseOnlyFromAddAdd,
   dirMoveIdenticalOffline,
+  ignoreDirAdditionThenDeletion,
+  ignoreFileAdditionThenDeletion,
   includeAddEventInFileMove,
   includeAddDirEventInDirMove,
   includeChangeEventIntoFileMove,
@@ -211,7 +216,8 @@ function dirAddition (e /*: LocalDirAdded */) /*: LocalDirAddition */ {
   return change
 }
 
-function dirDeletion (e /*: LocalDirUnlinked */) /*: LocalDirDeletion */ {
+function dirDeletion (e /*: LocalDirUnlinked */) /*: ?LocalDirDeletion */ {
+  if (!getInode(e)) return
   log.debug({path: e.path}, 'unlinkDir = DirDeletion')
   const change /*: LocalDirDeletion */ = {
     sideName,
@@ -238,7 +244,8 @@ function fileAddition (e /*: LocalFileAdded */) /*: LocalFileAddition */ {
   return change
 }
 
-function fileDeletion (e /*: LocalFileUnlinked */) /*: LocalFileDeletion */ {
+function fileDeletion (e /*: LocalFileUnlinked */) /*: ?LocalFileDeletion */ {
+  if (!getInode(e)) return
   log.debug({path: e.path}, 'unlink = FileDeletion')
   const change /*: LocalFileDeletion */ = {
     sideName,
@@ -265,7 +272,9 @@ function fileUpdate (e /*: LocalFileUpdated */) /*: LocalFileUpdate */ {
   return change
 }
 
-function fileMoveFromUnlinkAdd (unlinkChange /*: LocalFileDeletion */, e /*: LocalFileAdded */) /*: * */ {
+function fileMoveFromUnlinkAdd (sameInodeChange /*: ?LocalChange */, e /*: LocalFileAdded */) /*: * */ {
+  const unlinkChange /*: ?LocalFileDeletion */ = maybeDeleteFile(sameInodeChange)
+  if (!unlinkChange) return
   if (_.get(unlinkChange, 'old.path') === e.path) return fileAddition(e)
   log.debug({oldpath: unlinkChange.path, path: e.path, ino: unlinkChange.ino}, 'unlink + add = FileMove')
   return build('FileMove', e.path, {
@@ -277,7 +286,9 @@ function fileMoveFromUnlinkAdd (unlinkChange /*: LocalFileDeletion */, e /*: Loc
   })
 }
 
-function dirMoveFromUnlinkAdd (unlinkChange /*: LocalDirDeletion */, e /*: LocalDirAdded */) /*: * */ {
+function dirMoveFromUnlinkAdd (sameInodeChange /*: ?LocalChange */, e /*: LocalDirAdded */) /*: * */ {
+  const unlinkChange /*: ?LocalDirDeletion */ = maybeDeleteFolder(sameInodeChange)
+  if (!unlinkChange) return
   if (_.get(unlinkChange, 'old.path') === e.path) return dirAddition(e)
   log.debug({oldpath: unlinkChange.path, path: e.path}, 'unlinkDir + addDir = DirMove')
   return build('DirMove', e.path, {
@@ -288,7 +299,9 @@ function dirMoveFromUnlinkAdd (unlinkChange /*: LocalDirDeletion */, e /*: Local
   })
 }
 
-function fileMoveFromAddUnlink (addChange /*: LocalFileAddition */, e /*: LocalFileUnlinked */) /*: * */ {
+function fileMoveFromAddUnlink (sameInodeChange /*: ?LocalChange */, e /*: LocalFileUnlinked */) /*: * */ {
+  const addChange /*: ?LocalFileAddition */ = maybeAddFile(sameInodeChange)
+  if (!addChange) return
   log.debug({oldpath: e.path, path: addChange.path, ino: addChange.ino}, 'add + unlink = FileMove')
   return build('FileMove', addChange.path, {
     stats: addChange.stats,
@@ -299,7 +312,10 @@ function fileMoveFromAddUnlink (addChange /*: LocalFileAddition */, e /*: LocalF
   })
 }
 
-function fileMoveFromFileDeletionChange (fileDeletion /* :LocalFileDeletion */, e /* : LocalFileUpdated */) {
+function fileMoveFromFileDeletionChange (sameInodeChange /*: ?LocalChange */, e /*: LocalFileUpdated */) {
+  const fileDeletion /*: ?LocalFileDeletion */ = maybeDeleteFile(sameInodeChange)
+  if (!fileDeletion) return
+  // There was an unlink on the same file, this is most probably a move and replace
   const src = fileDeletion.old
   const dst = e.old
   const newDst = e
@@ -318,7 +334,9 @@ function fileMoveFromFileDeletionChange (fileDeletion /* :LocalFileDeletion */, 
   return fileMove
 }
 
-function dirMoveFromAddUnlink (addChange /*: LocalDirAddition */, e /*: LocalDirUnlinked */) /*: * */ {
+function dirMoveFromAddUnlink (sameInodeChange /*: ?LocalChange */, e /*: LocalDirUnlinked */) /*: * */ {
+  const addChange /*: ?LocalDirAddition */ = maybePutFolder(sameInodeChange)
+  if (!addChange) return
   log.debug({oldpath: e.path, path: addChange.path}, 'addDir + unlinkDir = DirMove')
   return build('DirMove', addChange.path, {
     stats: addChange.stats,
@@ -328,7 +346,9 @@ function dirMoveFromAddUnlink (addChange /*: LocalDirAddition */, e /*: LocalDir
   })
 }
 
-function fileMoveIdentical (addChange /*: LocalFileAddition */, e /*: LocalFileUpdated */) /*: * */ {
+function fileMoveIdentical (sameInodeChange /*: ?LocalChange */, e /*: LocalFileUpdated */) /*: * */ {
+  const addChange /*: ?LocalFileAddition */ = maybeAddFile(sameInodeChange)
+  if (!addChange || metadata.id(addChange.path) !== metadata.id(e.path) || addChange.path === e.path) return
   log.debug({oldpath: e.path, path: addChange.path}, 'add + change = FileMove (same id)')
   return build('FileMove', addChange.path, {
     stats: e.stats,
@@ -354,7 +374,11 @@ function fileMoveIdenticalOffline (dstEvent /*: LocalFileAdded */) /*: ?LocalFil
   } /*: LocalFileMove */)
 }
 
-function dirRenamingCaseOnlyFromAddAdd (addChange /*: LocalDirAddition */, e /*: LocalDirAdded */) /*: * */ {
+function dirRenamingCaseOnlyFromAddAdd (sameInodeChange /*: ?LocalChange */, e /*: LocalDirAdded */) /*: * */ {
+  const addChange /*: ?LocalDirAddition */ = maybePutFolder(sameInodeChange)
+  if (!addChange || metadata.id(addChange.path) !== metadata.id(e.path) || addChange.path === e.path) {
+    return
+  }
   log.debug({oldpath: addChange.path, path: e.path}, 'addDir + addDir = DirMove (same id)')
   return build('DirMove', e.path, {
     stats: addChange.stats,
@@ -383,7 +407,9 @@ export type LocalMove = LocalFileMove|LocalDirMove
 export type LocalMoveEvent = LocalFileAdded|LocalDirAdded
 */
 
-function includeAddEventInFileMove (moveChange /*: LocalFileMove */, e /*: LocalFileAdded */) {
+function includeAddEventInFileMove (sameInodeChange /*: ?LocalChange */, e /*: LocalFileAdded */) {
+  const moveChange /*: ?LocalFileMove */ = maybeMoveFile(sameInodeChange)
+  if (!moveChange) return
   if (!moveChange.wip &&
        moveChange.path === e.path &&
        moveChange.stats.ino === e.stats.ino &&
@@ -403,9 +429,12 @@ function includeAddEventInFileMove (moveChange /*: LocalFileMove */, e /*: Local
       {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
       'FileMove + add without checksum = FileMove wip')
   }
+  return true
 }
 
-function includeAddDirEventInDirMove (moveChange /*: LocalDirMove */, e /*: LocalDirAdded */) {
+function includeAddDirEventInDirMove (sameInodeChange /*: ?LocalChange */, e /*: LocalDirAdded */) {
+  const moveChange /*: ?LocalDirMove */ = maybeMoveFolder(sameInodeChange)
+  if (!moveChange) return
   if (!moveChange.wip &&
        moveChange.path === e.path &&
        moveChange.stats.ino === e.stats.ino
@@ -417,7 +446,7 @@ function includeAddDirEventInDirMove (moveChange /*: LocalDirMove */, e /*: Loca
       {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
       'DirMove(a, b) + addDir(b) = DirMove.overwrite(a, b) [chokidar bug]')
     moveChange.overwrite = true
-    return
+    return true
   }
   if (moveChange.old.path === e.path) {
     log.debug(
@@ -425,7 +454,7 @@ function includeAddDirEventInDirMove (moveChange /*: LocalDirMove */, e /*: Loca
       `DirMove(a, b) + addDir(a) = Ignored(b, a) (identical renaming loopback)`)
     // $FlowFixMe
     moveChange.type = 'Ignored'
-    return
+    return true
   }
   moveChange.path = e.path
   moveChange.stats = e.stats
@@ -440,9 +469,12 @@ function includeAddDirEventInDirMove (moveChange /*: LocalDirMove */, e /*: Loca
       {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
       'DirMove + addDir wip = DirMove wip')
   }
+  return true
 }
 
-function includeChangeEventIntoFileMove (moveChange /*: LocalFileMove */, e /*: LocalFileUpdated */) {
+function includeChangeEventIntoFileMove (sameInodeChange /*: ?LocalChange */, e /*: LocalFileUpdated */) {
+  const moveChange /*: ?LocalFileMove */ = maybeMoveFile(sameInodeChange)
+  if (!moveChange) return
   log.debug({path: e.path}, 'FileMove + change')
   moveChange.md5sum = moveChange.old.md5sum || moveChange.md5sum
   moveChange.update = _.defaults({
@@ -454,9 +486,12 @@ function includeChangeEventIntoFileMove (moveChange /*: LocalFileMove */, e /*: 
     // should already be the same as moveChange.path
     path: moveChange.path
   }, e)
+  return true
 }
 
-function convertFileMoveToDeletion (change /*: LocalFileMove */) {
+function convertFileMoveToDeletion (samePathChange /*: ?LocalChange */) {
+  const change /*: ?LocalFileMove */ = maybeMoveFile(samePathChange)
+  if (!change || change.md5sum) return
   log.debug({path: change.old.path, ino: change.ino},
     'FileMove + unlink = FileDeletion')
   // $FlowFixMe
@@ -464,9 +499,12 @@ function convertFileMoveToDeletion (change /*: LocalFileMove */) {
   change.path = change.old.path
   delete change.stats
   delete change.wip
+  return true
 }
 
-function convertDirMoveToDeletion (change /*: LocalDirMove */) {
+function convertDirMoveToDeletion (samePathChange /*: ?LocalChange */) {
+  const change /*: ?LocalDirMove */ = maybeMoveFolder(samePathChange)
+  if (!change || !change.wip) return
   log.debug({path: change.old.path, ino: change.ino},
     'DirMove + unlinkDir = DirDeletion')
   // $FlowFixMe
@@ -474,4 +512,27 @@ function convertDirMoveToDeletion (change /*: LocalDirMove */) {
   change.path = change.old.path
   delete change.stats
   delete change.wip
+  return true
+}
+
+function ignoreDirAdditionThenDeletion (samePathChange /*: ?LocalChange */) {
+  const addChangeSamePath /*: ?LocalDirAddition */ = maybePutFolder(samePathChange)
+  if (addChangeSamePath && addChangeSamePath.wip) {
+    log.debug({path: addChangeSamePath.path, ino: addChangeSamePath.ino},
+      'Folder was added then deleted. Ignoring add.')
+    // $FlowFixMe
+    addChangeSamePath.type = 'Ignored'
+    return true
+  }
+}
+
+function ignoreFileAdditionThenDeletion (samePathChange /*: ?LocalChange */) {
+  const addChangeSamePath /*: ?LocalFileAddition */ = maybeAddFile(samePathChange)
+  if (addChangeSamePath && addChangeSamePath.wip) {
+    // $FlowFixMe
+    addChangeSamePath.type = 'Ignored'
+    delete addChangeSamePath.wip
+    delete addChangeSamePath.md5sum
+    return true
+  }
 }

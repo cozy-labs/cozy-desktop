@@ -6,7 +6,6 @@ const _ = require('lodash')
 const { getInode } = require('./event')
 const localChange = require('./change')
 const logger = require('../logger')
-const metadata = require('../metadata')
 const measureTime = require('../perftools')
 
 /*::
@@ -95,70 +94,29 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
 
       switch (e.type) {
         case 'add':
-          {
-            const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(sameInodeChange)
-            if (moveChange) {
-              localChange.includeAddEventInFileMove(moveChange, e)
-              break
-            }
-
-            const unlinkChange /*: ?LocalFileDeletion */ = localChange.maybeDeleteFile(sameInodeChange)
-            if (unlinkChange) {
-              changeFound(localChange.fileMoveFromUnlinkAdd(unlinkChange, e))
-              break
-            }
-
-            changeFound(
-              localChange.fileMoveIdenticalOffline(e) ||
-              localChange.fileAddition(e)
-            )
-          }
+          changeFound(
+            localChange.includeAddEventInFileMove(sameInodeChange, e) ||
+            localChange.fileMoveFromUnlinkAdd(sameInodeChange, e) ||
+            localChange.fileMoveIdenticalOffline(e) ||
+            localChange.fileAddition(e)
+          )
           break
         case 'addDir':
-          {
-            const moveChange /*: ?LocalDirMove */ = localChange.maybeMoveFolder(sameInodeChange)
-            if (moveChange) {
-              localChange.includeAddDirEventInDirMove(moveChange, e)
-              break
-            }
-            const unlinkChange /*: ?LocalDirDeletion */ = localChange.maybeDeleteFolder(sameInodeChange)
-            if (unlinkChange) {
-              changeFound(localChange.dirMoveFromUnlinkAdd(unlinkChange, e))
-              break
-            }
-            const addChange /*: ?LocalDirAddition */ = localChange.maybePutFolder(sameInodeChange)
-            if (addChange && metadata.id(addChange.path) === metadata.id(e.path) && addChange.path !== e.path) {
-              changeFound(localChange.dirRenamingCaseOnlyFromAddAdd(addChange, e))
-              break
-            }
-            changeFound(
-              localChange.dirMoveIdenticalOffline(e) ||
-              localChange.dirAddition(e)
-            )
-          }
+          changeFound(
+            localChange.includeAddDirEventInDirMove(sameInodeChange, e) ||
+            localChange.dirMoveFromUnlinkAdd(sameInodeChange, e) ||
+            localChange.dirRenamingCaseOnlyFromAddAdd(sameInodeChange, e) ||
+            localChange.dirMoveIdenticalOffline(e) ||
+            localChange.dirAddition(e)
+          )
           break
         case 'change':
-          const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(sameInodeChange)
-          if (moveChange) {
-            localChange.includeChangeEventIntoFileMove(moveChange, e)
-            break
-          }
-
-          // There was an unlink on the same file, this is most probably a move and replace
-          const unlinkChange /*: ?LocalFileDeletion */ = localChange.maybeDeleteFile(sameInodeChange)
-          if (unlinkChange) {
-            const moveChange = localChange.fileMoveFromFileDeletionChange(unlinkChange, e)
-            changeFound(moveChange)
-            break
-          }
-
-          const addChange /*: ?LocalFileAddition */ = localChange.maybeAddFile(sameInodeChange)
-          if (addChange && metadata.id(addChange.path) === metadata.id(e.path) && addChange.path !== e.path) {
-            changeFound(localChange.fileMoveIdentical(addChange, e))
-            break
-          }
-
-          changeFound(localChange.fileUpdate(e))
+          changeFound(
+            localChange.includeChangeEventIntoFileMove(sameInodeChange, e) ||
+            localChange.fileMoveFromFileDeletionChange(sameInodeChange, e) ||
+            localChange.fileMoveIdentical(sameInodeChange, e) ||
+            localChange.fileUpdate(e)
+          )
           break
         case 'unlink':
           {
@@ -170,33 +128,15 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
                 'We should not have both move and unlink changes since ' +
                 'checksumless adds and inode-less unlink events are dropped')
             }
-
-            const addChange /*: ?LocalFileAddition */ = localChange.maybeAddFile(sameInodeChange)
-            if (addChange) {
-              // TODO: pending move
-              changeFound(localChange.fileMoveFromAddUnlink(addChange, e))
-              break
-            } else if (getInode(e)) {
-              changeFound(localChange.fileDeletion(e))
-              break
-            }
           }
           changeFound(
-            withChangeByPath(e, samePathChange => {
-              const moveChangeSamePath /*: ?LocalFileMove */ = localChange.maybeMoveFile(samePathChange)
-              if (moveChangeSamePath && moveChangeSamePath.md5sum == null) { // FIXME: if change && change.wip?
-                localChange.convertFileMoveToDeletion(moveChangeSamePath)
-                return
-              }
-              const addChangeSamePath /*: ?LocalFileAddition */ = localChange.maybeAddFile(samePathChange)
-              if (addChangeSamePath && addChangeSamePath.wip) {
-                // $FlowFixMe
-                addChangeSamePath.type = 'Ignored'
-                delete addChangeSamePath.wip
-                delete addChangeSamePath.md5sum
-              }
+            localChange.fileMoveFromAddUnlink(sameInodeChange, e) ||
+            localChange.fileDeletion(e) ||
+            withChangeByPath(e, samePathChange => (
+              localChange.convertFileMoveToDeletion(samePathChange) ||
+              localChange.ignoreFileAdditionThenDeletion(samePathChange)
               // Otherwise, skip unlink event by multiple moves
-            })
+            ))
           )
           break
         case 'unlinkDir':
@@ -209,33 +149,14 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
                 'We should not have both move and unlinkDir changes since ' +
                 'non-existing addDir and inode-less unlinkDir events are dropped')
             }
-
-            const addChange /*: ?LocalDirAddition */ = localChange.maybePutFolder(sameInodeChange)
-            if (addChange) {
-              changeFound(localChange.dirMoveFromAddUnlink(addChange, e))
-              break
-            }
-            if (getInode(e)) {
-              changeFound(localChange.dirDeletion(e))
-              break
-            }
           }
           changeFound(
-            withChangeByPath(e, samePathChange => {
-              const addChangeSamePath /*: ?LocalDirAddition */ = localChange.maybePutFolder(samePathChange)
-              if (addChangeSamePath && addChangeSamePath.wip) {
-                log.debug({path: addChangeSamePath.path, ino: addChangeSamePath.ino},
-                  'Folder was added then deleted. Ignoring add.')
-                // $FlowFixMe
-                addChangeSamePath.type = 'Ignored'
-                return
-              }
-
-              const moveChangeSamePath /*: ?LocalDirMove */ = localChange.maybeMoveFolder(samePathChange)
-              if (moveChangeSamePath && moveChangeSamePath.wip) {
-                localChange.convertDirMoveToDeletion(moveChangeSamePath)
-              }
-            })
+            localChange.dirMoveFromAddUnlink(sameInodeChange, e) ||
+            localChange.dirDeletion(e) ||
+            withChangeByPath(e, samePathChange => (
+              localChange.ignoreDirAdditionThenDeletion(samePathChange) ||
+              localChange.convertDirMoveToDeletion(samePathChange)
+            ))
           )
           break
         default:
