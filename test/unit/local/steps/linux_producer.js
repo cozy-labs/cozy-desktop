@@ -5,9 +5,10 @@ const should = require('should')
 const os = require('os')
 const fs = require('fs')
 const path = require('path')
+const { onPlatform } = require('../../../support/helpers/platform')
 const LinuxProducer = require('../../../../core/local/steps/linux_producer')
 
-if (os.platform() === 'linux') {
+onPlatform('linux', () => {
   describe('core/local/steps/linux_producer', () => {
     describe('API of the producer', () => {
       let syncPath
@@ -174,7 +175,7 @@ if (os.platform() === 'linux') {
       })
     })
   })
-}
+})
 
 function mkdirSyncRecursive (syncPath = '/', mypath = '/') {
   mypath.split('/').reduce((acc, folder) => {
