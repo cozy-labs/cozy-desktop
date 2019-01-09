@@ -244,7 +244,8 @@ function fileAddition (e /*: LocalFileAdded */) /*: LocalFileAddition */ {
   return change
 }
 
-function fileDeletion (e /*: LocalFileUnlinked */) /*: LocalFileDeletion */ {
+function fileDeletion (e /*: LocalFileUnlinked */) /*: ?LocalFileDeletion */ {
+  if (!getInode(e)) return
   log.debug({path: e.path}, 'unlink = FileDeletion')
   const change /*: LocalFileDeletion */ = {
     sideName,
