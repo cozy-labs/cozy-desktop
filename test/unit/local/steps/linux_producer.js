@@ -4,6 +4,7 @@
 const should = require('should')
 const os = require('os')
 const fs = require('fs')
+const fse = require('fs-extra')
 const path = require('path')
 const { onPlatform } = require('../../../support/helpers/platform')
 const LinuxProducer = require('../../../../core/local/steps/linux_producer')
@@ -169,13 +170,4 @@ onPlatform('linux', () => {
   })
 })
 
-function mkdirsSync (mypath = '/') {
-  mypath.split('/').reduce((acc, folder) => {
-    try {
-      fs.mkdirSync(path.join(acc, folder))
-    } catch (ex) {
-      // `EEXIST ${path.join(acc, folder)}`
-    }
-    return `${acc}/${folder}`
-  }, '/')
-}
+const mkdirsSync = fse.mkdirsSync
