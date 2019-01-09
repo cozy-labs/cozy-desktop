@@ -4,6 +4,7 @@ const _ = require('lodash')
 const path = require('path')
 
 const metadata = require('../metadata')
+const { getInode } = require('./event')
 
 /*::
 import type fs from 'fs'
@@ -215,7 +216,8 @@ function dirAddition (e /*: LocalDirAdded */) /*: LocalDirAddition */ {
   return change
 }
 
-function dirDeletion (e /*: LocalDirUnlinked */) /*: LocalDirDeletion */ {
+function dirDeletion (e /*: LocalDirUnlinked */) /*: ?LocalDirDeletion */ {
+  if (!getInode(e)) return
   log.debug({path: e.path}, 'unlinkDir = DirDeletion')
   const change /*: LocalDirDeletion */ = {
     sideName,
