@@ -47,45 +47,37 @@ onPlatform('linux', () => {
         const mypath = ['foo', 'bar', 'baz']
         mkdirSyncRecursive(syncPath, mypath.join('/'))
         await producer.start()
-        should(
-          (await producer.buffer.pop()).map(({ action, kind, path }) => ({
-            action,
-            kind,
-            path
-          }))
-        ).eql([
+
+        const batches = [
           {
-            action: 'scan',
-            kind: 'unknown',
-            path: mypath[0]
-          }
-        ])
-        should(
-          (await producer.buffer.pop()).map(({ action, kind, path }) => ({
-            action,
-            kind,
-            path
-          }))
-        ).eql([
+            batch: await producer.buffer.pop(),
+            path: path.join(mypath[0])
+          },
           {
-            action: 'scan',
-            kind: 'unknown',
-            path: `${mypath[0]}/${mypath[1]}`
-          }
-        ])
-        should(
-          (await producer.buffer.pop()).map(({ action, kind, path }) => ({
-            action,
-            kind,
-            path
-          }))
-        ).eql([
+            batch: await producer.buffer.pop(),
+            path: path.join(mypath[0], mypath[1])
+          },
           {
-            action: 'scan',
-            kind: 'unknown',
-            path: mypath.join('/')
+            batch: await producer.buffer.pop(),
+            path: path.join(mypath[0], mypath[1], mypath[2])
           }
-        ])
+        ]
+
+        batches.forEach(({ batch, path: originalPath }) => {
+          should(
+            batch.map(({ action, kind, path }) => ({
+              action,
+              kind,
+              path
+            }))
+          ).eql([
+            {
+              action: 'scan',
+              kind: 'unknown',
+              path: originalPath
+            }
+          ])
+        })
       })
     })
 
