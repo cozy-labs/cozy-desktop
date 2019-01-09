@@ -114,6 +114,22 @@ describe('Config', function () {
       })
     })
 
+    context('when the file is empty', function () {
+      beforeEach('create empty file', function () {
+        fse.writeFileSync(this.config.configPath, '')
+      })
+
+      it('returns an empty object', function () {
+        const config = Config.safeLoad(this.config.configPath)
+        should(config).deepEqual({})
+      })
+
+      it('does not delete it', function () {
+        Config.safeLoad(this.config.configPath)
+        should(fse.existsSync(this.config.configPath)).be.true()
+      })
+    })
+
     context('when the file content is not valid JSON', function () {
       beforeEach('write invalid content', function () {
         fse.writeFileSync(this.config.configPath, '\0')
