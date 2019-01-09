@@ -21,6 +21,9 @@ module.exports = function (buffer /*: Buffer */, opts /*: { ignore: Ignore } */)
 
 function buildNotIgnored (ignoreRules /*: Ignore */) /*: ((AtomWatcherEvent) => boolean) */ {
   return (event /*: AtomWatcherEvent */) /*: boolean */ => {
+    if (event.action === 'initial-scan-done') {
+      return true
+    }
     return !ignoreRules.isIgnored({
       relativePath: event.path,
       isFolder: event.kind === 'directory'
